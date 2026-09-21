@@ -126,7 +126,8 @@ export async function buildFDICHoldout(): Promise<void> {
 				continue
 			}
 
-			// Semicolons can't appear in a US street address/city. no escaping needed.
+			// Semicolons can't appear in a US street address/city.
+			// No escaping needed.
 			sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
 
 			written++

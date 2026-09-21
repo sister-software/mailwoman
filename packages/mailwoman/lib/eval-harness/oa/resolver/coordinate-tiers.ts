@@ -13,8 +13,10 @@ import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
 import type { RegionDatabaseProvider } from "#geocode/regions"
 
 /**
- * The postcode database reader the anchor extractor probes — the WOF postcode lookup's structural
- * interface, named here so the eval never has to import the SQLite class it only ever holds by reference.
+ * The postcode database reader the anchor extractor probes.
+ *
+ * The WOF postcode lookup's structural interface, named here so the eval never has
+ * to import the SQLite class it only ever holds by reference.
  */
 export interface PostcodeCentroidLookup extends Disposable {
 	lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
@@ -43,9 +45,9 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// when it has a placed candidate for the eval's country, else falls back to the resolver coord.
 	// So the row isolates exactly what the anchor sharpens: where rather than which place.
 	// `--address-points <db>` (#476): the street-level exact-point tier.
-	// Adds `addressPoints` to resolveOpts. the `neural+addrpt` row keeps neural's
-	// admin flags but takes the coordinate from the address-point hit when present
-	// (the tier's whole contribution is "where", street-level).
+	// Adds `addressPoints` to resolveOpts.
+	// The `neural+addrpt` row keeps neural's admin flags but takes the coordinate from the
+	// address-point hit when present (the tier's whole contribution is "where", street-level).
 	const addressPointsDB = options.addressPoints || ""
 	let addressPoints: AddressPointLookup | null = null
 
@@ -56,9 +58,9 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 
 	// `--interpolation <segments-db>` (#483): the house-number interpolation tier
 	// (StreetInterpolator, tiger-range).
-	// Adds `interpolation` to resolveOpts. the `neural+interp` row takes the
-	// coordinate from the exact point when present, else the interpolated estimate,
-	// else the admin centroid — the full street-level coordinate cascade.
+	// Adds `interpolation` to resolveOpts.
+	// The `neural+interp` row takes the coordinate from the exact point when present, else the
+	// interpolated estimate, else the admin centroid — the full street-level coordinate cascade.
 	// The delta vs `neural+addrpt` is interpolation's lift on the long tail of
 	// valid-but-unlisted numbers the exact tier misses.
 	const interpolationDB = options.interpolation || ""
@@ -137,9 +139,9 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
  * `minConfidence` is the floor below which the anchor's coordinate is not trusted over the resolver's:
  * a penalized house-number span scores ~0.2 (single-country times the house-number penalty)
  * while a genuinely ambiguous real code scores at least 0.52 (valid in three countries or fewer),
- * so a 0.5 floor keeps the latter and rejects the former — a span the position prior reads
- * as a house number falls back to the resolver's coordinate (the right city centroid)
- * instead of placing the address at a far-away same-shaped ZIP.
+ * so a 0.5 floor keeps the latter and rejects the former.
+ * A span the position prior reads as a house number falls back to the resolver's coordinate
+ * (the right city centroid) instead of placing the address at a far-away same-shaped ZIP.
  */
 export interface AnchorSources {
 	postcodeLookup: PostcodeCentroidLookup | null
@@ -156,10 +158,11 @@ export function anchorCoordinateFor(input: string, sources: AnchorSources): { la
 
 	if (!postcodeLookup || !extractAnchors) return null
 	const prefer = (preferCountry && preferCountry.toLowerCase() !== "none" ? preferCountry : "").toUpperCase()
-	// Pick the placed span with the highest position-aware confidence, above the trust floor. The
-	// anchor down-weights a digit-only code that shares its segment with a street word (`12345 Main
-	// St` reads as a house number rather than a postcode), so a real trailing postcode (`… City, ST 90210`)
-	// out-ranks an earlier house number on its own merit — no "take the last span" crutch needed.
+	// Pick the placed span with the highest position-aware confidence, above the trust floor.
+	// The anchor down-weights a digit-only code that shares its segment with a street word
+	// (`12345 Main St` reads as a house number rather than a postcode), so a real trailing
+	// postcode (`… City, ST 90210`) out-ranks an earlier house number on its own merit.
+	// No "take the last span" crutch needed.
 	// Ties break toward the later span (the postcode trails the locality in a rendered address).
 	let best: { lat: number; lon: number; conf: number; start: number } | null = null
 

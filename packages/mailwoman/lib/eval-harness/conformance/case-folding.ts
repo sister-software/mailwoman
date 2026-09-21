@@ -150,8 +150,9 @@ export type CaseApplicabilityRule = (typeof CASE_APPLICABILITY_RULES)[number]
  * with the characters that trigger it.
  *
  * Keyed by ISO-3166 alpha-2 because that is what a fixture's `context.caseCountry` carries.
- * The trigger sets are the letters `SpecialCasing.txt`'s conditional mappings act on. a
- * text carrying none of them cases identically under both locales and stays applicable.
+ * The trigger sets are the letters `SpecialCasing.txt`'s conditional mappings act on.
+ *
+ * A text carrying none of them cases identically under both locales and stays applicable.
  */
 const LOCALE_SENSITIVE_CASING: Record<string, { characters: string; note: string }> = {
 	TR: { characters: "iıIİ", note: "Turkish separates dotted i/İ from dotless ı/I" },
@@ -180,9 +181,10 @@ export interface CaseApplicability {
 /**
  * May `transformation` be stated as a case-folding law over `text` in `country`?
  *
- * `country` is the row's own `context.caseCountry` — the same value that selects the
- * weights overlay the row grades through, so the locale the applicability rule reads
- * and the locale the pipeline runs under are one value rather than two that can disagree.
+ * `country` is the row's own `context.caseCountry`.
+ * The same value that selects the weights overlay the row grades through,
+ * so the locale the applicability rule reads and the locale the pipeline runs under
+ * are one value rather than two that can disagree.
  *
  * The identity rule is tested first, and a row both rules bear on reports that one:
  * a transformation that moves nothing cannot have changed a letter's identity either, so the

@@ -41,11 +41,12 @@ export function formatAblationCell(cell: AblationCell | undefined): string {
 /**
  * Render one cell under the expectation model: `trueFail/ladderGraded`.
  *
- * Absence has one more source here than in
- * {@linkcode formatAblationCell} — a cell can have real support and still have nothing the ladder could grade (no
- * gazetteer, or an anchor that resolved no place id).
- * That is `ladderGradedCount: 0`, and it renders as
- * {@linkcode ABLATION_ABSENT} rather than `0/0`, which would read as "nothing failed here".
+ * Absence has one more source here than in {@linkcode formatAblationCell}.
+ * A cell can have real support and still have nothing the ladder could grade
+ * (no gazetteer, or an anchor that resolved no place id).
+ *
+ * That is `ladderGradedCount: 0`, and it renders as {@linkcode ABLATION_ABSENT}
+ * rather than `0/0`, which would read as "nothing failed here".
  */
 export function formatAblationLadderCell(cell: AblationCell | undefined): string {
 	if (!cell || cell.support === 0 || cell.ladderGradedCount === 0) return ABLATION_ABSENT
@@ -67,8 +68,7 @@ function cellKey(component: string, locale: string): string {
 export function renderAblationMarkdown(
 	cells: readonly AblationCell[],
 	/**
-	 * The per-row outcomes behind `cells`. Needed because percentiles do not aggregate: a global p90 has to be taken over
-	 * the pooled displacements rather than over the per-cell p90s. Pass `[]` to render the matrix alone.
+	 * The per-row outcomes behind `cells`. Needed because percentiles do not aggregate: a global p90 has to be taken over the pooled displacements rather than over the per-cell p90s. Pass `[]` to render the matrix alone.
 	 */
 	rows: readonly AblationRowOutcome[],
 	meta: {
@@ -200,7 +200,8 @@ export function renderAblationMarkdown(
 		const byReason = new Map<string, number>()
 
 		for (const s of meta.skips) {
-			// Reasons carry the offending value inline. bucket by the leading clause so the report counts classes.
+			// Reasons carry the offending value inline.
+			// Bucket by the leading clause so the report counts classes.
 			const cls = s.reason.split(":")[0]!.split(" inside")[0]!
 
 			byReason.set(cls, (byReason.get(cls) ?? 0) + 1)

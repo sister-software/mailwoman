@@ -24,10 +24,12 @@ import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import { JSONSpliterator } from "spliterator"
 
 /**
- * Default check corpus. ratified 2026-07-13 to the triaged set (321 live / 55 tombstones):
+ * Default check corpus.
+ *
+ * Ratified 2026-07-13 to the triaged set (321 live / 55 tombstones):
  * the 22 rules-era no-solution assertions plus 33 gold-triage tombstones
  * (rules-idiosyncratic fixtures a neural parser should not be graded against — solver-permutation
- * probes, autocomplete-era jitter, self-admitted TODOs. each carries a `dropped` reason).
+ * probes, autocomplete-era jitter, self-admitted TODOs. Each carries a `dropped` reason).
  *
  * Proposal
  *
@@ -69,7 +71,8 @@ export interface ParityFixture {
 	 */
 	expect?: Record<string, string[]>
 	/**
-	 * Tombstone reason. the runner skips these rows but the provenance survives.
+	 * Tombstone reason.
+	 * The runner skips these rows but the provenance survives.
 	 */
 	dropped?: string
 	/**
@@ -144,7 +147,9 @@ function loadFixtures(path: string): Promise<ParityFixture[]> {
 }
 
 /**
- * Run the parity-corpus eval. narrates per-label + per-country tables and a floor verdict on stdout.
+ * Run the parity-corpus eval.
+ *
+ * Narrates per-label + per-country tables and a floor verdict on stdout.
  */
 export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalOutcome> {
 	const fixtures = await loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)
@@ -161,8 +166,9 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	let fstGazetteer: FSTMatcher | undefined
 
 	if (options.gazetteerPrior !== false) {
-		// The classifier's own weights-package sibling — the same artifact the runtime loads,
-		// so this grades the prior production would use rather than one resolved by a second ladder.
+		// The classifier's own weights-package sibling.
+		// The same artifact the runtime loads, so this grades the prior production would use
+		// rather than one resolved by a second ladder.
 		const fstPath = (classifier as { fstPath?: string }).fstPath
 
 		if (fstPath) {
@@ -198,13 +204,15 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	}
 
 	const tallies = new Map(PARITY_FLOORS.map((f) => [f.label, { hit: 0, total: 0, failing: [] as string[] }]))
-	// Precision — the half the floors above cannot see. Every floor does `if (!goldValues?.length)
-	// continue`, so a tag emitted where the gold has none costs nothing, forever. That is the same
-	// blind spot T1a found on street (the board flattered the span decode because its failure lived
-	// in the rows the filter dropped) and the deepparse comparison found on postcode: we report
-	// postcode 98.6% and that is recall — on 249 rows with no gold postcode, v264 emits one on 25.
-	// 16 of those are a house_number read as a postcode ("Epleskogen 39A" -> postcode "39A"), and
-	// `39A` is not a postcode in any system. Informational rather than a floor: a floor is the operator's.
+	// Precision — the half the floors above cannot see.
+	// Every floor does `if (!goldValues?.length) continue`, so a tag emitted
+	// where the gold has none costs nothing, forever.
+	// That is the same blind spot T1a found on street (the board flattered the span decode
+	// because its failure lived in the rows the filter dropped) and the deepparse comparison
+	// found on postcode: we report postcode 98.6% and that is recall — on 249 rows with no
+	// gold postcode, v264 emits one on 25. 16 of those are a house_number read as a postcode
+	// ("Epleskogen 39A" -> postcode "39A"), and `39A` is not a postcode in any system.
+	// Informational rather than a floor: a floor is the operator's.
 	const precision = new Map(PARITY_FLOORS.map((f) => [f.label, { spurious: 0, absent: 0, examples: [] as string[] }]))
 	const byCountry = new Map<string, { cases: number; fullAgree: number }>()
 
@@ -216,12 +224,14 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		// so the check must grade the same parse the swapped surfaces serve.
 		// Floors unchanged.
 		// Pre-heal continuity: `--no-word-consistency`.
-		// Production config parity (#1146): the query-shape emission prior is fed on every path
-		// production parses on — `safeClassify` in the runtime pipeline, and `geocode-core`
-		// since #981 (which fixed this same divergence for the drop-in servers).
+		// Production config parity (#1146): the query-shape emission prior is fed
+		// on every path production parses on.
+		// `safeClassify` in the runtime pipeline, and `geocode-core` since #981
+		// (which fixed this same divergence for the drop-in servers).
 		// Without it this check graded a starved parse.
-		// A no-op on inputs carrying no known format and no region abbrev, so the bare `street, city`
-		// class is byte-stable. it warrants its keep on the digit-span / region-abbrev rows.
+		// A no-op on inputs carrying no known format and no region abbrev,
+		// so the bare `street, city` class is byte-stable.
+		// It warrants its keep on the digit-span / region-abbrev rows.
 		const byTag = groupTuplesByTag(
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,
@@ -317,7 +327,9 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		)
 	}
 
-	// The precision half. informational, never a verdict — a floor here is an operator act.
+	// The precision half.
+	// Informational, never a verdict.
+	// A floor here is an operator act.
 	// Reported because "postcode 98.6%" is a recall number and reads like a capability,
 	// and the missing half is where the house_number deficit went.
 	console.log("")

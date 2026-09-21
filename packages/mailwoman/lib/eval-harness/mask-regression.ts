@@ -141,7 +141,7 @@ interface Delta {
 /**
  * Run the mask-off vs mask-on per-tag battery.
  *
- * Returns `pass` (no tag regresses beyond the threshold).
+ * @returns `pass` (no tag regresses beyond the threshold).
  */
 export async function maskRegressionCheck(
 	options: MaskRegressionOptions = {},
@@ -172,8 +172,8 @@ export async function maskRegressionCheck(
 
 		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades (#2048).
 		// The rows are formatted postal addresses, and on those the production pipeline derives
-		// `formatted` and runs the evidence-bundle channels off as a declared ablation. grading
-		// them in the bare-library default measured a path production never takes on these inputs.
+		// `formatted` and runs the evidence-bundle channels off as a declared ablation.
+		// Grading them in the bare-library default measured a path production never takes on these inputs.
 		// The per-tag numbers before this change grade `fragmented`.
 		const { off, on } = await scoreConventionsMaskOffOn(
 			rows,

@@ -170,11 +170,13 @@ export interface PromotionEvalOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us` —
-	 * the #718-safe path that feeds anchor+gazetteer+country via loadFromWeights,
+	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us`.
+	 *
+	 * The #718-safe path that feeds anchor+gazetteer+country via loadFromWeights,
 	 * the only in-distribution grade for a country-channel model (v6.2.0+).
 	 *
-	 * Alternative to --model/--int8. takes precedence.
+	 * Alternative to --model/--int8.
+	 * Takes precedence.
 	 */
 	weightsCache?: string
 	/**
@@ -182,10 +184,12 @@ export interface PromotionEvalOptions {
 	 * pairing them runs the dual fp32+int8 battery entirely package-shaped (#47).
 	 *
 	 * The `--model`+`--int8` dual under-feeds the country channel (channel siblings never load),
-	 * so its absolute floors are invalid and a release grade needed a second, single-artifact
-	 * `--weights-cache` run. a pair makes floors and deltas valid in one run.
-	 * Requires
-	 * {@linkcode PromotionEvalOptions.weightsCache} (the fp32 arm) and excludes the `--model`/`--int8` flow.
+	 * so its absolute floors are invalid and a release grade needed a second,
+	 * single-artifact `--weights-cache` run.
+	 * A pair makes floors and deltas valid in one run.
+	 *
+	 * Requires {@linkcode PromotionEvalOptions.weightsCache} (the fp32 arm)
+	 * and excludes the `--model`/`--int8` flow.
 	 */
 	int8WeightsCache?: string
 	/**
@@ -195,8 +199,10 @@ export interface PromotionEvalOptions {
 	 */
 	outDir?: PathBuilderLike
 	/**
-	 * Write a per-leg wall-time ledger here. profiling only, and the path must name somewhere outside
-	 * {@linkcode PromotionEvalOptions.outDir}: the receipt comparator reads every file under that directory byte-for-byte,
+	 * Write a per-leg wall-time ledger here.
+	 *
+	 * Profiling only, and the path must name somewhere outside {@linkcode PromotionEvalOptions.outDir}:
+	 * the receipt comparator reads every file under that directory byte-for-byte,
 	 * and a wall time differs between two runs of the same artifact.
 	 * Omitted, nothing is written.
 	 */
@@ -206,8 +212,10 @@ export interface PromotionEvalOptions {
 /**
  * Resolve a `--spec` value to a real file.
  *
- * A path that exists wins verbatim. otherwise the basename is looked up in the `checks/` dir shipped
- * beside this module — `new URL`-relative for the source tree, with a compiled-tree fallback
+ * A path that exists wins verbatim.
+ * Otherwise the basename is looked up in the `checks/` dir shipped beside this module.
+ *
+ * `new URL`-relative for the source tree, with a compiled-tree fallback
  * (tsc does not emit readFileSync'd JSON into `out/`, so `packages/mailwoman/out/eval-harness/` reads
  * the source-tree copy at `packages/mailwoman/lib/eval-harness/specs/`; the lint-rules.json pattern).
  * Old `scripts/eval/checks/<spec>.json` invocations therefore keep working by basename.
@@ -331,11 +339,11 @@ async function runLoreGuards(env: {
 	// of every graded artifact, and hard-assert the obvious mislabels: --model must be fp32,
 	// --int8 must actually be quantized and differ from --model.
 	//
-	// Was `grep -c -a DynamicQuantizeLinear <path>`. grep -c counts matching lines
-	// rather than occurrences, and an ONNX file has no meaningful lines — so the number
-	// was only ever read as zero-vs-nonzero, and the scan below reproduces that reading
-	// (it counts newline-delimited chunks carrying the needle, over the raw bytes,
-	// exactly as `grep -a` treated the binary as text).
+	// Was `grep -c -a DynamicQuantizeLinear <path>`.
+	// Grep -c counts matching lines rather than occurrences, and an ONNX file has no meaningful lines.
+	// So the number was only ever read as zero-vs-nonzero, and the scan below
+	// reproduces that reading (it counts newline-delimited chunks carrying the needle,
+	// over the raw bytes, exactly as `grep -a` treated the binary as text).
 	// Kept as a string because it is interpolated verbatim into provenance.txt
 	// and compared against the literal "0".
 	const dql = async (p: string): Promise<string> => {
@@ -456,8 +464,8 @@ async function runLoreGuards(env: {
  * when the DB is absent so CI stays green without it — but an eval spec that floors
  * `cascade.demo_smoke` will then fail on the missing sidecar (by design).
  *
- * Its own function because it is self-contained and `runPromotionEval` is at the statement
- * ceiling. nothing about the leg's behavior changed in the comparison.
+ * Its own function because it is self-contained and `runPromotionEval` is at the statement ceiling.
+ * Nothing about the leg's behavior changed in the comparison.
  */
 async function runDemoCascadeLeg(env: {
 	outDir: PathBuilderLike
@@ -480,8 +488,9 @@ async function runDemoCascadeLeg(env: {
 
 	// nothrow parity: a refusal (missing artifacts / malformed rows) comes back as a
 	// non-zero exitCode, and an unexpected throw is caught and treated the same way.
-	// Only the OUT sink reaches the .md — the child's stderr went nowhere, so a preflight refusal
-	// still leaves an empty cascade-smoke.md and only the runner's own line below explains it.
+	// Only the OUT sink reaches the .md.
+	// The child's stderr went nowhere, so a preflight refusal still leaves an empty
+	// cascade-smoke.md and only the runner's own line below explains it.
 	const cascadeLines: string[] = []
 	let cascadeExit: number
 
@@ -614,8 +623,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	if (guardExit !== null) return guardExit
 
 	// The spec-declared channel config every scorer shares.
-	// Was an argv fragment (`GAZ_ARGS`) spliced into eight command lines. it is now one typed object
-	// spread into eight calls, which is the same interface with the stringly-typed step removed.
+	// Was an argv fragment (`GAZ_ARGS`) spliced into eight command lines.
+	// It is now one typed object spread into eight calls, which is the same interface
+	// with the stringly-typed step removed.
 	const channelOptions: Pick<
 		ScoreAffixOptions,
 		"gazetteerLexicon" | "suppressGazNearPostcode" | "conventions" | "bridgeGaps"
@@ -629,7 +639,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// Conventions channel (#511 Tier A): when the eval spec declares requires_conventions,
 	// every scorer parses with the address-system conventions mask in the declared
 	// mode ("auto" = locale-head detection).
-	// Same interface discipline as the gaz flags — the spec is the ship config.
+	// Same interface discipline as the gaz flags.
+	// The spec is the ship config.
 	const CONV_MODE = check.requires_conventions ?? ""
 
 	if (CONV_MODE) {
@@ -664,18 +675,18 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 		// Package-shaped (#718): the metric probes (which support weightsCache) load all
 		// channels — anchor + gazetteer + country — from the package.
-		// The country-orthogonal de-order watch lens stays on the explicit path
-		// against the cache siblings (EFF_TOK/EFF_CARD);
-		// m = the arm's own model when package-shaped. `wc` is the PER-battery cache root
-		// so a paired int8 arm (#47) loads its own package rather than the fp32 arm's.
+		// The country-orthogonal de-order watch lens stays on the explicit path against the
+		// cache siblings (EFF_TOK/EFF_CARD); m = the arm's own model when package-shaped.
+		// `wc` is the PER-battery cache root so a paired int8 arm (#47) loads its
+		// own package rather than the fp32 arm's.
 		const plOptions = wc
 			? { weightsCache: wc }
 			: { modelPath: m, tokenizerPath: TOK, modelCardPath: CARD, modelAnchorLookupPath: String(LK) }
 
 		const probeOptions = wc ? { weightsCache: wc } : { model: m }
 
-		// The de-order watch lens takes explicit paths, so it names the ARM's own siblings —
-		// a paired int8 arm must not be decoded under the fp32 arm's card if the two bundles ever diverge.
+		// The de-order watch lens takes explicit paths, so it names the ARM's own siblings.
+		// A paired int8 arm must not be decoded under the fp32 arm's card if the two bundles ever diverge.
 		const armPackage = wc ? weightsCachePackageDir(wc, "en-us") : ""
 		const armTok = wc ? resolvePath(armPackage, "tokenizer.model") : EFF_TOK
 		const armCard = wc ? resolvePath(armPackage, "model-card.json") : EFF_CARD
@@ -683,8 +694,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		// Each leg below captured a child's stdout into one `.md`.
 		// In-process the sink collects the same lines and `renderLines` re-adds
 		// the newline console.log would have.
-		// A bare `$` threw on a non-zero exit, aborting the run — these calls throw the same way,
-		// so the abort behavior for the metric probes is unchanged.
+		// A bare `$` threw on a non-zero exit, aborting the run.
+		// These calls throw the same way, so the abort behavior for the metric probes is unchanged.
 		const perLocaleLines: string[] = []
 
 		await profile.time("per-locale", tag, () =>
@@ -708,8 +719,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 		await writeLocalFile(renderLines(perLocaleLines), `${OUT_DIR}/${tag}-per-locale.md`)
 
-		// One helper for the SIX score-affix legs — the runner's most repeated spawn,
-		// and the migration's clearest win: `file`/`json` are the only things that varied.
+		// One helper for the SIX score-affix legs.
+		// The runner's most repeated spawn, and the migration's clearest win:
+		// `file`/`json` are the only things that varied.
 		const runAffix = async (mdName: string, extra: ScoreAffixOptions): Promise<void> => {
 			const lines: string[] = []
 
@@ -734,8 +746,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 				{
 					...probeOptions,
 					...channelOptions,
-					// The country probe always suppresses gaz clues near a postcode, whether or not the
-					// spec asked for the gaz channel — this flag was hard-coded on its command line.
+					// The country probe always suppresses gaz clues near a postcode, whether
+					// or not the spec asked for the gaz channel.
+					// This flag was hard-coded on its command line.
 					suppressGazNearPostcode: true,
 					json: `${OUT_DIR}/${tag}-country.json`,
 				},
@@ -761,8 +774,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		await runAffix(`${tag}-watch-intersection-vt.md`, { file: "data/eval/external/intersection-golden-vt.jsonl" })
 		await runAffix(`${tag}-watch-glue.md`, { file: "data/eval/external/glue-rows-perturb.jsonl" })
 
-		// de-order-eval tolerates its own non-zero regression exit (it wrote a valid report) —
-		// the try/catch is the in-process `nothrow:`, and the two sinks concatenated
+		// de-order-eval tolerates its own non-zero regression exit (it wrote a valid report).
+		// The try/catch is the in-process `nothrow:`, and the two sinks concatenated
 		// below are the `${stdout}${stderr}` the check wrote before.
 		const deorderOut: string[] = []
 		const deorderErr: string[] = []
@@ -778,17 +791,17 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						out: `${OUT_DIR}/${tag}-deorder`,
 						// A repeated gazetteer query answers from a per-run memo: 59-63% of this leg's `findPlace`
 						// calls repeat a key, and US resolve costs 25.5 ms/row without it against 7.4 with.
-						// The databases are sealed, so a query is a pure
-						// function of its arguments. the memo shares hit objects between callers,
-						// so a caller that mutated one would change this leg's report.
+						// The databases are sealed, so a query is a pure function of its arguments.
+						// The memo shares hit objects between callers, so a caller that mutated
+						// one would change this leg's report.
 						lookupMemo: true,
 						// Five of the six runs feed no floor: the verdict reads one cell,
 						// the `native DE` anchor-on locality.
 						// It is also in the fp32↔int8 delta cap.
 						// Therefore, runs on both arms.
 						// The other five are a record, and a record wants one reading per promotion rather than two.
-						// They run on the arm that ships — the second one when the battery is paired,
-						// the only one when it is not.
+						// They run on the arm that ships.
+						// The second one when the battery is paired, the only one when it is not.
 						...(pairedNonShipArm ? { runs: ["de-native-on" as const] } : {}),
 					},
 					(line) => deorderOut.push(line),
@@ -803,11 +816,11 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	}
 
 	// --weights-cache alone grades the single shipped package (int8) in the primary slot.
-	// the verdict reads the `fp32-*` files (its primary-artifact slot) with withInt8=false.
+	// The verdict reads the `fp32-*` files (its primary-artifact slot) with withInt8=false.
 	// Paired (#47), the fp32 arm takes the primary slot and the int8 arm runs the same battery from
 	// its own package, so floors and the delta cap are both graded in-distribution in one run.
 	// The --model path keeps the fp32 + optional int8 dual-artifact flow
-	// (deltas valid. absolute floors under-fed — the country channel's siblings never load there).
+	// (deltas valid. Absolute floors under-fed. The country channel's siblings never load there).
 	if (WC) {
 		await runBattery(WC_MODEL, "fp32")
 
@@ -857,7 +870,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	if ("arena.perturb" in (check.floors ?? {})) {
 		// (Historical note: the compiled v0 arena parser used to enoent on libpostal dicts
 		// because repo.ts's __isCompiledTree detection landed CorePackageAbsolutePath at core/out,
-		// so dict reads went to core/out/data/... while the data lives at core/data/....
+		// so dict reads went to core/out/data/... While the data lives at core/data/....
 		// A local core/out/data symlink bridged the gap. #481 fixed the detection —
 		// the compiled tree now reads core/data directly — so no bridge is needed here anymore.)
 		// Typed options replace the argv the bash-era env threading had already become.
@@ -906,8 +919,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const bareStreetFloor = (check.floors ?? {})["fr.bare_street_intact"]
 
 	if (bareStreetFloor !== undefined) {
-		// The `env: childEnv()` this spawn carried is gone with the child — an in-process call already
-		// runs under the runner's own environment, which is what childEnv() was reconstructing.
+		// The `env: childEnv()` this spawn carried is gone with the child.
+		// An in-process call already runs under the runner's own environment,
+		// which is what childEnv() was reconstructing.
 		const bareOut: string[] = []
 		const bareErr: string[] = []
 		let barePassed: boolean
@@ -955,10 +969,12 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// unfolded F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta
 	// check (it catches indirect mask harms, e.g. forbidding street_suffix depressing street).
 	// Weight-dependent, so it lives on the release path here rather than Test CI (#582).
-	// Only meaningful when the spec declares a conventions mask. skipped = pass otherwise.
+	// Only meaningful when the spec declares a conventions mask.
+	// Skipped = pass otherwise.
 	// Its status folds into the final verdict below.
-	// In-process since the eval-harness migration. the report lines land in mask-regression.md
-	// as the child capture did, and a throw is recorded there like the old child's stderr stack.
+	// In-process since the eval-harness migration.
+	// The report lines land in mask-regression.md as the child capture did,
+	// and a throw is recorded there like the old child's stderr stack.
 	let MASK_CHECK_STATUS = 0
 
 	if (CONV_MODE) {

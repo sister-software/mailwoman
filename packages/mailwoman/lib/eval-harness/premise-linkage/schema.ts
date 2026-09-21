@@ -101,7 +101,8 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
 	 */
 	input: string
 	/**
-	 * The identifier the register holds for this premise — the grading truth, held only while grading.
+	 * The identifier the register holds for this premise.
+	 * The grading truth, held only while grading.
 	 */
 	expectedObjectID: PremiseLinkageObjectID
 	/**
@@ -128,8 +129,10 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
  * a refusal is an arm that declined to name a premise, and an ambiguous answer keeps its candidates.
  * Neither is ever recorded as `wrong`, and an ambiguous answer is never recorded as `exact`.
  *
- * `errored` is not an outcome the arm produced — it marks a row that could not be graded
- * at all (a transport failure, or a match that named no identifier in the graded scheme).
+ * `errored` is not an outcome the arm produced.
+ * It marks a row that could not be graded at all (a transport failure,
+ * or a match that named no identifier in the graded scheme).
+ *
  * It is excluded from every rate and reported as its own count, because folding an unreadable
  * row into a denominator turns "I could not measure this" into "there was none of it".
  */
@@ -153,8 +156,9 @@ export const PremiseLinkageFailureCategory = {
 	/**
 	 * The arm names no premise identifier at all.
 	 *
-	 * The open arm's structural state — it has no authoritative namespace to answer in,
-	 * which is the gap the authoritative arm exists to measure rather than a failure of this row.
+	 * The open arm's structural state.
+	 * It has no authoritative namespace to answer in, which is the gap the authoritative
+	 * arm exists to measure rather than a failure of this row.
 	 */
 	ArmAssertsNoIdentifier: "arm_asserts_no_identifier",
 	/**
@@ -204,8 +208,8 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	/**
 	 * Carried so the report writer can refuse a coordinate on a row whose terms forbid one.
 	 *
-	 * A permission flag is not a licensed value. the check it enables is only
-	 * possible if the flag travels with the row.
+	 * A permission flag is not a licensed value.
+	 * The check it enables is only possible if the flag travels with the row.
 	 */
 	coordinatePublishable: boolean
 	/**
@@ -227,7 +231,8 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 /**
  * A numerator and the denominator it was measured against.
  *
- * Both are always stated. neither is ever inferred from the other.
+ * Both are always stated.
+ * Neither is ever inferred from the other.
  */
 export interface PremiseLinkageCount {
 	n: number
@@ -243,7 +248,8 @@ export interface PremiseLinkageCount {
  *
  * Under `unique_required` it stays in the denominator — and it is still recorded
  * as `refused`, never rewritten to `wrong`.
- * The policy changes what a rate is measured over. it never changes what an arm did.
+ * The policy changes what a rate is measured over.
+ * It never changes what an arm did.
  */
 export const PremiseLinkagePolicy = {
 	UniqueRequired: "unique_required",
@@ -267,9 +273,9 @@ export type PremiseLinkageMode = (typeof PremiseLinkageMode)[keyof typeof Premis
 /**
  * The four identifier rates, each with its own denominator.
  *
- * `exact` and `wrong` are measured over eligible rows (see
- * {@link PremiseLinkagePolicy}); `refused` and `ambiguous` over all rows, so a reader can see how much of the run each
- * abstention class accounts for without reconstructing it.
+ * `exact` and `wrong` are measured over eligible rows (see {@link PremiseLinkagePolicy});
+ * `refused` and `ambiguous` over all rows, so a reader can see how much of the run
+ * each abstention class accounts for without reconstructing it.
  */
 export interface PremiseLinkageRates {
 	exactOverEligible: PremiseLinkageCount
@@ -293,8 +299,8 @@ export interface PremiseLinkageCoordinateThreshold {
  * One arm's aggregate.
  *
  * `perClass` is partial: a class with no rows is absent rather than reported as zero,
- * and a class suppressed for cell size is removed the same way — an absent class
- * means "not published here", which is what both cases are.
+ * and a class suppressed for cell size is removed the same way.
+ * An absent class means "not published here", which is what both cases are.
  */
 export interface PremiseLinkageArmReport {
 	arm: string

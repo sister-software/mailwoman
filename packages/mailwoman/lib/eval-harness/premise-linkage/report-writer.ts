@@ -52,8 +52,8 @@ export type PremiseLinkageRedactionReason =
 /**
  * A refusal to publish, naming the value that caused it.
  *
- * The message carries the path and the reason, never the offending value —
- * an error message is a log line, and a log line is a disclosure.
+ * The message carries the path and the reason, never the offending value.
+ * An error message is a log line, and a log line is a disclosure.
  */
 export class PremiseLinkageRedactionError extends Error {
 	readonly path: string
@@ -106,8 +106,10 @@ const REPORT_KEY_ALLOWLIST: ReadonlySet<string> = new Set<string>([
 ])
 
 /**
- * A house number followed by a name — the shape of every street address in the registers
- * this harness grades against, and the shape no aggregate field has any reason to hold.
+ * A house number followed by a name.
+ *
+ * The shape of every street address in the registers this harness grades against,
+ * and the shape no aggregate field has any reason to hold.
  */
 const ADDRESS_SHAPE = /\d+\s+\p{L}/u
 
@@ -185,8 +187,8 @@ function walkPublishable(value: unknown, path: string, inputs: readonly string[]
 /**
  * What the preflight reads.
  *
- * The rows and the inputs are checked and never written — they are how the writer
- * knows what the report was computed from.
+ * The rows and the inputs are checked and never written.
+ * They are how the writer knows what the report was computed from.
  */
 export interface PremiseLinkagePreflightInput {
 	report: PremiseLinkageReport
@@ -198,8 +200,9 @@ export interface PremiseLinkagePreflightInput {
  * Remove per-class cells and coordinate rows measured over fewer than `minCellSize`
  * rows, and count the removals.
  *
- * A per-class cell's size is the number of rows in that class — `refusedOverAll.of`, which is the
- * only denominator on the rates measured over every row of the class rather than a subset of it.
+ * A per-class cell's size is the number of rows in that class.
+ * `refusedOverAll.of`, which is the only denominator on the rates measured over
+ * every row of the class rather than a subset of it.
  */
 function suppressSmallCells(report: PremiseLinkageReport): PremiseLinkageReport {
 	const minimum = report.minCellSize
@@ -251,7 +254,7 @@ function checkRows(rows: readonly PremiseLinkageResultRow[]): void {
 /**
  * Suppress, check, and return the report that may leave the controlled environment.
  *
- * Throws before producing anything when the run cannot be published.
+ * @throws before producing anything when the run cannot be published.
  */
 export function publishableReport(input: PremiseLinkagePreflightInput): PremiseLinkageReport {
 	const smallestPublishableRun = input.report.minCellSize

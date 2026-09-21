@@ -74,16 +74,17 @@ export class CorpusRowError extends Error {
 /**
  * Read one `<cc>/*.jsonl` file.
  *
- * Blank lines are skipped. the line counter still counts them, so the number in
- * an error is the number your editor shows.
+ * Blank lines are skipped.
+ * The line counter still counts them, so the number in an error is the number your editor shows.
  */
 async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCase[]> {
 	const rows: SeedCase[] = []
 	let line = 0
 
 	// `skipEmpty: false` is what makes the line number true.
-	// On the default (skip), the counter counts rows and silently under-reports by one per blank
-	// line above the failure — the report is then confidently wrong, which is worse than absent.
+	// On the default (skip), the counter counts rows and silently under-reports
+	// by one per blank line above the failure.
+	// The report is then confidently wrong, which is worse than absent.
 	// Blank lines are dropped below, after they have been counted.
 	for await (const raw of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
 		line++
@@ -111,8 +112,8 @@ async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCas
 		}
 
 		// The dir is the country claim.
-		// A row filed under the wrong `cc` still loads and still runs, so nothing downstream
-		// would ever notice. the listing it was filed under would just be quietly wrong.
+		// A row filed under the wrong `cc` still loads and still runs, so nothing downstream would ever notice.
+		// The listing it was filed under would just be quietly wrong.
 		if (result.data.country.toLowerCase() !== expectedCC) {
 			throw new CorpusRowError(
 				path,
@@ -175,9 +176,11 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
  *
  * Order-independent on purpose: it answers "are these the same cases?",
  * never "were they read in the same order?".
- * `load.test.ts` pins it, and that pin is what carried the 2026-08-05 TS-array → jsonl
- * migration across the commit that deleted the array — the hash was measured against the array
- * while both existed, so a later edit that changes corpus content has to change the pin deliberately.
+ * `load.test.ts` pins it, and that pin is what carried the 2026-08-05 TS-array →
+ * jsonl migration across the commit that deleted the array.
+ *
+ * The hash was measured against the array while both existed, so a later edit that
+ * changes corpus content has to change the pin deliberately.
  */
 export function regressionCorpusHash(rows: readonly SeedCase[]): string {
 	return sha256Hex(

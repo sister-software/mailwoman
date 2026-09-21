@@ -19,10 +19,13 @@ import { ABLATION_GRADES, type AblationGrade, emptyGrades } from "#eval-harness/
 import type { ResolutionTier } from "#eval-harness/gauntlet/schema"
 
 /**
- * The component classes this runner deletes — every tag the curated corpus actually asserts, and every one
- * {@linkcode componentOf} can read back off the assembled result (the slot a substitution would land in). A tag with no
- * result field could be deleted but not scored for substitution, which is half a
- * measurement. adding one means adding the field to `GauntletResult` first.
+ * The component classes this runner deletes.
+ *
+ * Every tag the curated corpus actually asserts, and every one {@linkcode componentOf}
+ * can read back off the assembled result (the slot a substitution would land in).
+ * A tag with no result field could be deleted but not scored for substitution, which is half a measurement.
+ *
+ * Adding one means adding the field to `GauntletResult` first.
  */
 export const ABLATABLE_COMPONENTS = [
 	"postcode",
@@ -41,9 +44,10 @@ export type AblatableComponent = (typeof ABLATABLE_COMPONENTS)[number]
 /**
  * Fallback displacement band, in km, for a row that asserts no `expect_tolerance_m`.
  *
- * Rows that do assert one are graded against theirs — a row pinned to an 80 m rooftop
- * and a row pinned to a 500 km "in NY not France" guard are not asking the same question,
- * and one band for both would answer neither.
+ * Rows that do assert one are graded against theirs.
+ * A row pinned to an 80 m rooftop and a row pinned to a 500 km "in NY not France" guard
+ * are not asking the same question, and one band for both would answer neither.
+ *
  * The per-row value used is recorded on every row of the JSON artifact.
  */
 export const DEFAULT_ABLATION_TOLERANCE_KM = 5
@@ -53,8 +57,9 @@ export const DEFAULT_ABLATION_TOLERANCE_KM = 5
  *
  * The suggestion layer reads this as a per-(component, locale) prior on nudge value;
  * §C.5 of its design doc specifies the first eleven fields and this runner owes them exactly.
- * The last three are additive and marked as such — each exists because a specced
- * field is not interpretable without it.
+ * The last three are additive and marked as such.
+ *
+ * Each exists because a specced field is not interpretable without it.
  */
 export interface AblationCell {
 	component: AblatableComponent
@@ -125,7 +130,8 @@ export interface AblationCell {
 	/**
 	 * Additive: rows excluded from the displacement percentiles because the row's own anchor never resolved.
 	 *
-	 * Not a failure of the deletion — there was nothing to measure against.
+	 * Not a failure of the deletion.
+	 * There was nothing to measure against.
 	 * Named so `gradedCount < support` is attributable.
 	 */
 	anchorUnresolvedCount: number
@@ -134,12 +140,12 @@ export interface AblationCell {
 	 */
 	gradedCount: number
 	/**
-	 * Additive (the 2026-08-05 expectation model): rows this cell could grade against a
-	 * degradation ladder — the denominator of every `grades` count below.
+	 * Additive (the 2026-08-05 expectation model): rows this cell could grade against a degradation ladder.
+	 * The denominator of every `grades` count below.
 	 *
-	 * `0` means the expectation model never spoke here (no gazetteer, or the anchor resolved no gazetteer place),
-	 * and a consumer must render that as absence exactly as it does `support: 0` —
-	 * {@linkcode formatAblationLadderCell} is the enforcement.
+	 * `0` means the expectation model never spoke here (no gazetteer, or the anchor resolved
+	 * no gazetteer place), and a consumer must render that as absence exactly as it does
+	 * `support: 0` — {@linkcode formatAblationLadderCell} is the enforcement.
 	 */
 	ladderGradedCount: number
 	/**
@@ -153,8 +159,8 @@ export interface AblationCell {
 	/**
 	 * Additive: the headline three.
 	 *
-	 * `trueFailCount` is everything {@linkcode PASSING_GRADES} does not cover — the number
-	 * that replaces `brokenCount` as the operator's "what is actually wrong here".
+	 * `trueFailCount` is everything {@linkcode PASSING_GRADES} does not cover.
+	 * The number that replaces `brokenCount` as the operator's "what is actually wrong here".
 	 */
 	trueFailCount: number
 	correctlyDegradedCount: number
@@ -176,9 +182,10 @@ export interface AblationCell {
 	 * Additive: rows where the model declined to constrain the answer because a venue or street
 	 * survived the deletion and it has no index for either ({@linkcode UNCONSTRAINED_RUNG}).
 	 *
-	 * Those rows still fail on leaving the ladder, but their passes are weaker evidence than
-	 * the rest of the cell's — a cell whose `ladderGradedCount` is mostly this is a cell to
-	 * read with suspicion, and the only way to know that is for the count to be here.
+	 * Those rows still fail on leaving the ladder, but their passes are weaker
+	 * evidence than the rest of the cell's.
+	 * A cell whose `ladderGradedCount` is mostly this is a cell to read with suspicion,
+	 * and the only way to know that is for the count to be here.
 	 */
 	unconstrainedCount: number
 }
@@ -244,14 +251,16 @@ export interface AblationRowOutcome {
 	 */
 	ladderAnchor: "corpus-expected" | "pipeline-anchor" | null
 	/**
-	 * The rung the undeleted answer reached — the floor this variant was judged from.
+	 * The rung the undeleted answer reached.
+	 * The floor this variant was judged from.
 	 *
 	 * `null` = the anchor is off its own ladder, which makes the row `ungraded`.
 	 */
 	anchorRungDepth: number | null
 	/**
-	 * The deepest rung the ablated answer actually landed in, and its depth — `null` when it
-	 * abstained, or when it landed outside every rung (which is `grade: "wrong"`, not depth 0).
+	 * The deepest rung the ablated answer actually landed in, and its depth.
+	 *
+	 * `null` when it abstained, or when it landed outside every rung (which is `grade: "wrong"`, not depth 0).
 	 */
 	achievedRung: string | null
 	achievedRungDepth: number | null
@@ -299,12 +308,15 @@ export interface AblationVariant {
 }
 
 /**
- * One component's roll-up across every locale — the shared source for the console summary
- * and the markdown report, which had drifted apart by re-deriving these sums independently.
+ * One component's roll-up across every locale.
  *
- * Sums come from the cells. the displacement percentiles come from the pooled rows,
- * because percentiles do not aggregate — a global p90 has to be taken over the
- * pooled displacements, never over the per-cell p90s.
+ * The shared source for the console summary and the markdown report, which had
+ * drifted apart by re-deriving these sums independently.
+ *
+ * Sums come from the cells.
+ * The displacement percentiles come from the pooled rows, because percentiles do not aggregate.
+ *
+ * A global p90 has to be taken over the pooled displacements, never over the per-cell p90s.
  */
 export interface AblationComponentAggregate {
 	component: AblatableComponent
@@ -322,8 +334,10 @@ export interface AblationComponentAggregate {
 }
 
 /**
- * Aggregate the deletion map per component, in {@linkcode ABLATABLE_COMPONENTS} order, omitting
- * components with no cell — a component nobody measured must never render as a row of zeros.
+ * Aggregate the deletion map per component, in {@linkcode ABLATABLE_COMPONENTS} order,
+ * omitting components with no cell.
+ *
+ * A component nobody measured must never render as a row of zeros.
  */
 export function aggregateAblationComponents(
 	cells: readonly AblationCell[],

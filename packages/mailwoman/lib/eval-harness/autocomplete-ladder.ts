@@ -99,9 +99,12 @@ export const FIRST_KEYSTROKE_RUNGS = 3
 /**
  * The prefixes of one input, shortest first, ending with the full string.
  *
- * The first three single characters stand in for the first keystrokes. after that a rung opens at every token boundary
- * — a run of whitespace or a comma — so `Rua Augusta 100, Lisboa` yields `R`, `Ru`, `Rua`, `Rua Augusta`, `Rua Augusta
- * 100`, `Rua Augusta 100, Lisboa`. Trailing separators are trimmed, because a user's screen does not send the space
+ * The first three single characters stand in for the first keystrokes.
+ * After that a rung opens at every token boundary — a run of whitespace
+ * or a comma — so `Rua Augusta 100, Lisboa` yields `R`, `Ru`, `Rua`, `Rua Augusta`,
+ * `Rua Augusta 100`, `Rua Augusta 100, Lisboa`.
+ *
+ * Trailing separators are trimmed, because a user's screen does not send the space
  * until the next letter arrives.
  */
 export function ladderRungs(input: string): string[] {
@@ -213,8 +216,9 @@ export interface LadderRow {
 	 */
 	headline: boolean
 	/**
-	 * The FST locale the `fst` arm read, or `null` when the row's country has none —
-	 * the arm then answered nothing and the row is outside that arm's denominators.
+	 * The FST locale the `fst` arm read, or `null` when the row's country has none.
+	 *
+	 * The arm then answered nothing and the row is outside that arm's denominators.
 	 */
 	fstLocale: string | null
 	arms: Record<LadderArm, RowArmReading>
@@ -389,7 +393,8 @@ export async function runAutocompleteLadder(
 		const matcher = fstLocale ? await matcherFor(fstLocale) : null
 		const rungs = ladderRungs(row.input)
 
-		// The first request of a process pays engine construction. it is not a rung's latency.
+		// The first request of a process pays engine construction.
+		// It is not a rung's latency.
 		if (!warmed) {
 			await deps.geocode(rungs.at(-1)!, geoOpts)
 			warmed = true

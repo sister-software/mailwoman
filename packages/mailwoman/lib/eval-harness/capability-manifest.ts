@@ -113,8 +113,9 @@ const TIERS: Record<string, ScorerOverrides> = {
 const TAGS = UNFOLDED_ADDRESS_TAGS
 
 /**
- * The union of every tag any codex conventions row forbids — the only tags the loader's
- * delta check reads, so the only tags that need a paired `maskOnF1`.
+ * The union of every tag any codex conventions row forbids.
+ *
+ * The only tags the loader's delta check reads, so the only tags that need a paired `maskOnF1`.
  *
  * Derived from the codex so a new forbid row automatically widens the manifest
  * the next time it's regenerated.
@@ -156,8 +157,8 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-			// The generator constructs its scorers while the card's `capabilities` block may not
-			// yet exist. the loader's delta check is a no-op until the block is written.
+			// The generator constructs its scorers while the card's `capabilities` block may not yet exist.
+			// The loader's delta check is a no-op until the block is written.
 			// After a `--write`, regenerating uses the already-written block, but mask-off construction never
 			// trips the check (it only fires for a forbidden certified tag, and mask-off forbids none).
 			// `inputMode: "formatted"`: certification probes are formatted postal addresses,
@@ -179,13 +180,14 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 			const perTag: Record<string, TagCapability> = {}
 
 			for (const t of TAGS) {
-				// Skip tags the model never emits and never sees in gold under either mask —
-				// a 0/0 F1 is not a capability claim, just noise.
+				// Skip tags the model never emits and never sees in gold under either mask.
+				// A 0/0 F1 is not a capability claim, just noise.
 				// (maskOffF1 0 with the tag genuinely present in gold is a real claim and is kept.)
 				if (off[t] === 0 && on[t] === 0 && !rowsHaveTag(rows, t)) continue
 				const cap: TagCapability = { maskOffF1: off[t]! }
 
-				// maskOnF1 only for forbidden-set tags — the only tags the loader's delta check consults.
+				// maskOnF1 only for forbidden-set tags.
+				// The only tags the loader's delta check consults.
 				if (FORBIDDEN_TAGS.has(t)) {
 					cap.maskOnF1 = on[t]!
 				}
@@ -214,7 +216,8 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 //#region Entry
 
 /**
- * Measure the per-tier × system × tag capability manifest. optionally patch it into the model card.
+ * Measure the per-tier × system × tag capability manifest.
+ * Optionally patch it into the model card.
  */
 export async function generateCapabilityManifest(options: CapabilityManifestOptions = {}): Promise<void> {
 	const paths: ResolvedPaths = {
@@ -233,7 +236,8 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 	console.log(prettyJSON({ capabilities }))
 
 	if (WRITE) {
-		// Provenance key alongside the tier keys. ignored by readers (`lookupTagCapability` skips it).
+		// Provenance key alongside the tier keys.
+		// Ignored by readers (`lookupTagCapability` skips it).
 		;(capabilities as Record<string, unknown>).$comment =
 			"Per-tier (server=anchor+gazetteer; pocket=anchor-only) × address-system × tag capability " +
 			"manifest (#718/#719). maskOffF1 = measured per-tag exact-match F1 with the conventions mask " +

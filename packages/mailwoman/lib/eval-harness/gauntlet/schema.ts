@@ -68,10 +68,10 @@ export interface GauntletCaseTable {
 	/**
 	 * OPT-IN multi-script rendering interface as JSON `{ tag: [rendering, …] }` (null = no interface).
 	 *
-	 * For a listed key the grader asserts that `scriptRenderings(got)` contains every
-	 * listed rendering, case-folded, and the same key in
-	 * {@linkcode expect_components} is superseded — see `check-case.ts`. Every list must be non-empty (the seed schema
-	 * refuses an empty one. the grader throws on one that reaches a built DB anyway).
+	 * For a listed key the grader asserts that `scriptRenderings(got)` contains every listed rendering,
+	 * case-folded, and the same key in {@linkcode expect_components} is superseded — see `check-case.ts`.
+	 * Every list must be non-empty (the seed schema refuses an empty one. The grader
+	 * throws on one that reaches a built DB anyway).
 	 */
 	expect_component_renderings: string | null
 	/**
@@ -97,12 +97,13 @@ export interface GauntletCaseTable {
 	expect_lat: number | null
 	expect_lon: number | null
 	/**
-	 * Accepted great-circle tolerance in meters (Pelias's distanceThresh. null defaults at runtime).
+	 * Accepted great-circle tolerance in meters (Pelias's distanceThresh. Null defaults at runtime).
 	 */
 	expect_tolerance_m: number | null
 	/**
-	 * Expected resolution tier — a result that drifts `address_point`→`admin` is
-	 * a regression even within tolerance.
+	 * Expected resolution tier.
+	 *
+	 * A result that drifts `address_point`→`admin` is a regression even within tolerance.
 	 */
 	expect_tier: ResolutionTier | null
 	/**
@@ -142,19 +143,21 @@ export interface GauntletCaseTable {
 	 *
 	 * The runner derives the weights overlay from its region subtag,
 	 * mirroring production's locale-hint routing.
-	 * This is a locale hint, never a country constraint: `--locale` selects an address system
-	 * and supplies a country prior, and an exact foreign match must still resolve under it
-	 * (#1585's interface) — `country` above stays the truth's country, which for a locale
-	 * row can differ (`Paris` under `en-US` is an FR row run with the US overlay).
+	 * This is a locale hint, never a country constraint: `--locale` selects an address system and supplies
+	 * a country prior, and an exact foreign match must still resolve under it (#1585's interface).
+	 *
+	 * `country` above stays the truth's country, which for a locale row can differ
+	 * (`Paris` under `en-US` is an FR row run with the US overlay).
 	 */
 	locale: string | null
 	/**
 	 * 1 = this row's expected outcome is no coordinate — the resolver abstains rather than answering. The grade inverts:
 	 * any resolved coordinate fails the row.
 	 *
-	 * For the #1585 fuzzy-scope class, a scoped-empty typo correction must abstain rather than
-	 * fall through to a world-fuzzy candidate. the abstain pin is the interface, and lands
-	 * re-pinned to real coordinates once coverage arrives (the row's note says which artifact).
+	 * For the #1585 fuzzy-scope class, a scoped-empty typo correction must abstain
+	 * rather than fall through to a world-fuzzy candidate.
+	 * The abstain pin is the interface, and lands re-pinned to real coordinates once
+	 * coverage arrives (the row's note says which artifact).
 	 */
 	expect_abstain: number | null
 }
@@ -162,10 +165,13 @@ export interface GauntletCaseTable {
 /**
  * The build stamp — one row, describing the committed corpus the DB was built from.
  *
- * Exists because `regression.db` is a derived artifact with no link back to its source: on 2026-08-06 `eval
- * gauntlet-build regression-db` rebuilt it from a stale compiled tree (an `out/` loader still holding the deleted
- * pre-jsonl case array), printed "built", and every check afterwards graded a corpus nobody had. Nothing in the DB
- * could contradict it. The stamp is that contradiction — the same posture as #1488's FST freshness stamps.
+ * Exists because `regression.db` is a derived artifact with no link back to its source:
+ * on 2026-08-06 `eval gauntlet-build regression-db` rebuilt it from a stale compiled tree
+ * (an `out/` loader still holding the deleted pre-jsonl case array), printed "built",
+ * and every check afterwards graded a corpus nobody had.
+ * Nothing in the DB could contradict it.
+ *
+ * The stamp is that contradiction — the same posture as #1488's FST freshness stamps.
  */
 export interface GauntletMetaTable {
 	/**
@@ -232,8 +238,7 @@ export const GAUNTLET_CASE_COLUMNS = [
 	"added_at",
 	"bug_ref",
 	"note",
-	// Appended 2026-08-05 (the ablation expectation model). append-only: this list is the positional insert order, so a
-	// new column goes on the END or every existing row shifts.
+	// Appended 2026-08-05 (the ablation expectation model). Append-only: this list is the positional insert order, so a new column goes on the END or every existing row shifts.
 	"ablation_expect",
 	// Appended 2026-08-11 (the per-row multi-script rendering interface). Same append-only rule.
 	"expect_component_renderings",

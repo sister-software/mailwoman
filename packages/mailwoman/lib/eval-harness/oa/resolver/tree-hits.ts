@@ -12,9 +12,9 @@ import { mostSpecificResolved } from "@mailwoman/resolver"
 /**
  * A resolver-attributed node: the WOF place it landed on, that place's name/placetype, and its coordinate.
  *
- * `value` is the parsed span, kept beside the resolver's own `name` because ranking
- * a `postalcode` needs both — a full unit shape the resolver answered with a
- * coarser stem is area-grade, whatever the user typed.
+ * `value` is the parsed span, kept beside the resolver's own `name`
+ * because ranking a `postalcode` needs both.
+ * A full unit shape the resolver answered with a coarser stem is area-grade, whatever the user typed.
  */
 export interface Resolved {
 	id: number
@@ -139,8 +139,10 @@ export function mostSpecific(rs: Resolved[]): Resolved | null {
 }
 
 /**
- * True when the tree carries both a street and a house number — the precondition the
- * street-level tiers need before a miss can be read as a database gap rather than a parse gap.
+ * True when the tree carries both a street and a house number.
+ *
+ * The precondition the street-level tiers need before a miss can be read as a
+ * database gap rather than a parse gap.
  */
 export function hasStreetHouseNumber(tree: AddressTree | null): boolean {
 	if (!tree) return false

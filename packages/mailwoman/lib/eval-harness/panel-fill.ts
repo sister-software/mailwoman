@@ -83,8 +83,9 @@ export function fillStratum<Item, Row>(
 
 	// A copy, so the caller's array is untouched.
 	// The order this walk produces is what selects the rows a frozen panel contains,
-	// and a published record names that panel's digest — so the generator is `SeededRandom`'s,
-	// seeded the way `SeededRandom` seeds it, rather than a normalisation re-typed here.
+	// and a published record names that panel's digest.
+	// So the generator is `SeededRandom`'s, seeded the way `SeededRandom` seeds it,
+	// rather than a normalisation re-typed here.
 	const shuffled = [...eligible]
 
 	new SeededRandom(seed).shuffle(shuffled)
@@ -132,8 +133,9 @@ export function padRowIndex(index: number): string {
 /**
  * The register columns a panel builder reads to select and grade a row.
  *
- * `GeoNamesCity` satisfies it. the builders take this shape rather than that type
- * so the grouping and gold helpers below are not tied to one register's reader.
+ * `GeoNamesCity` satisfies it.
+ * The builders take this shape rather than that type so the grouping and gold
+ * helpers below are not tied to one register's reader.
  */
 export interface PanelSubject {
 	geonameid: string

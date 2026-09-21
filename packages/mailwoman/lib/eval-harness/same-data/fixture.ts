@@ -25,8 +25,9 @@ import { canonicalJSON, definitionContentHash } from "#eval-harness/preregistrat
 /**
  * The row interface's version.
  *
- * A change to the shape of a fixture row bumps it, and a scorer refuses a fixture whose version
- * it does not know — a silently reinterpreted field is the failure this number exists to prevent.
+ * A change to the shape of a fixture row bumps it, and a scorer refuses a
+ * fixture whose version it does not know.
+ * A silently reinterpreted field is the failure this number exists to prevent.
  */
 export const SAME_DATA_SCHEMA_VERSION = 1
 
@@ -80,11 +81,12 @@ export interface SameDataLookup {
 export interface SameDataGold {
 	geonameid: string
 	/**
-	 * The distinct WOF ids that denote this place, ascending — a SET because the gazetteer
-	 * carries 21 of its 10,738 coherently-joined `cities15000.txt` places twice.
+	 * The distinct WOF ids that denote this place, ascending.
 	 *
-	 * A selection naming any member is correct. grading against one arbitrary member
-	 * would measure which duplicate an arm returned.
+	 * A SET because the gazetteer carries 21 of its 10,738 coherently-joined `cities15000.txt` places twice.
+	 *
+	 * A selection naming any member is correct.
+	 * Grading against one arbitrary member would measure which duplicate an arm returned.
 	 */
 	placeIDs: number[]
 	name: string
@@ -115,8 +117,8 @@ export interface SameDataPanelRow {
 	 * False in the withheld-gold stratum, where the recorder filtered every member of
 	 * the gold identity set out of the backend's answers as it recorded.
 	 *
-	 * Drives which denominator the row counts in, and is never inferred from an empty pool —
-	 * a pool can be empty because the gazetteer holds nothing, which is a different fact.
+	 * Drives which denominator the row counts in, and is never inferred from an empty pool.
+	 * A pool can be empty because the gazetteer holds nothing, which is a different fact.
 	 */
 	goldPresent: boolean
 	source: {
@@ -135,8 +137,9 @@ export interface SameDataFixtureRow {
 	/**
 	 * The frozen parse.
 	 *
-	 * Both resolver arms walk this tree rather than parsing, which puts the parser
-	 * outside the scored unit — the claim is about resolution.
+	 * Both resolver arms walk this tree rather than parsing, which puts the parser outside the scored unit.
+	 * The claim is about resolution.
+	 *
 	 * The model version that produced it is recorded in the run receipt.
 	 */
 	tree: AddressTree
@@ -184,8 +187,9 @@ export function candidatePool(lookups: readonly SameDataLookup[]): SameDataCandi
 }
 
 /**
- * One row's evidence digest — the value every arm's receipt carries,
- * and the value the validator compares across arms.
+ * One row's evidence digest.
+ *
+ * The value every arm's receipt carries, and the value the validator compares across arms.
  */
 export function fixtureRowDigest(row: SameDataFixtureRow): string {
 	return definitionContentHash({
@@ -290,7 +294,8 @@ export function validateFixture(
 }
 
 /**
- * What one arm observed of one row's evidence — the receipt the equality check reads.
+ * What one arm observed of one row's evidence.
+ * The receipt the equality check reads.
  */
 export interface ArmEvidenceObservation {
 	arm: string
@@ -406,7 +411,7 @@ export function replayBackend(row: SameDataFixtureRow, misses: string[] = []): R
 
 			// A fresh array and a fresh object per candidate.
 			// The array copy stops an in-place sort inside the walk from reordering the frozen evidence.
-			// the per-candidate copy stops the walk writing to it, because the resolver stamps
+			// The per-candidate copy stops the walk writing to it, because the resolver stamps
 			// verdict fields onto the candidates it is handed (`containedByQualifier`, `mismatch`).
 			// A shared object would leave one arm reading evidence another arm edited.
 			return hit.map((candidate) => ({ ...candidate }))

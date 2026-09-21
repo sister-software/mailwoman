@@ -43,8 +43,8 @@ export function overlayLocale(country: string | undefined): string {
  * package by design, which is its production path.
  * Therefore, calling that degraded would withhold a suggestion the run is entitled to make.
  *
- * `baseOnlyLocales` is keyed by locale because the harness memoizes its fallback per locale —
- * a second country routing to the same overlay takes the cached base classifier
+ * `baseOnlyLocales` is keyed by locale because the harness memoizes its fallback per locale.
+ * A second country routing to the same overlay takes the cached base classifier
  * and never re-enters the failure path, so a set keyed by country would miss it.
  */
 export function gradedBaseOnly(country: string | undefined, baseOnlyLocales: ReadonlySet<string>): boolean {

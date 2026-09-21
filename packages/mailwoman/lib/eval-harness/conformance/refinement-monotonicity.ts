@@ -77,8 +77,8 @@ function segmentsOf(text: string): string[] {
  * Each step's derivation: given the fuller query, return the coarser one,
  * or `null` when the step has nothing to remove.
  *
- * `null` rather than the input unchanged, because a step that removed nothing has not stated the law —
- * the pair would be the identity wearing a refinement label, and it would hold trivially.
+ * `null` rather than the input unchanged, because a step that removed nothing has not stated the law.
+ * The pair would be the identity wearing a refinement label, and it would hold trivially.
  */
 export const REFINEMENT_DERIVATION_BY_STEP: Record<RefinementStep, (text: string) => string | null> = {
 	"drop-leading-segment": (text) => {
@@ -123,8 +123,8 @@ export function classifyRefinementStep(base: string, variant: string): Refinemen
 }
 
 /**
- * Every step that can be stated over `text` at all — the eligibility reading
- * the coverage line is built from.
+ * Every step that can be stated over `text` at all.
+ * The eligibility reading the coverage line is built from.
  */
 export function statableSteps(text: string): RefinementStep[] {
 	return REFINEMENT_STEPS.filter((step) => REFINEMENT_DERIVATION_BY_STEP[step](text) !== null)
@@ -156,7 +156,8 @@ export interface RefinementChain {
 	 */
 	links: string[]
 	/**
-	 * The fullest query in the group — the text the committed row must hold.
+	 * The fullest query in the group.
+	 * The text the committed row must hold.
 	 */
 	tip: string
 }
@@ -165,8 +166,9 @@ export interface RefinementChain {
  * Read the chains a suite states, one per `rowRef`.
  *
  * A group whose links do not join returns a chain whose `links` is shorter than the group;
- * {@linkcode auditRefinementSuite} is what turns that into a refusal. Exported because the suite test checks each `tip`
- * against the committed corpus, which is the check this module cannot perform.
+ * {@linkcode auditRefinementSuite} is what turns that into a refusal.
+ * Exported because the suite test checks each `tip` against the committed corpus,
+ * which is the check this module cannot perform.
  */
 export function refinementChains(fixtures: readonly ConformanceFixture[]): RefinementChain[] {
 	const groups = new Map<string, ConformanceFixture[]>()
@@ -221,7 +223,8 @@ export interface RefinementCoverage {
 	 */
 	read: number
 	/**
-	 * Of those, rows at least one named step can act on — the only rows this law can be stated over.
+	 * Of those, rows at least one named step can act on.
+	 * The only rows this law can be stated over.
 	 */
 	eligible: number
 	/**
@@ -237,9 +240,9 @@ export interface RefinementCoverage {
 	/**
 	 * Eligible rows by the step that can act on them.
 	 *
-	 * A row several steps reach is counted under each, so these do not sum to
-	 * {@linkcode eligible} — the question the breakdown answers is which arms the
-	 * population can state rather than how the rows partition.
+	 * A row several steps reach is counted under each, so these do not sum to {@linkcode eligible}.
+	 * The question the breakdown answers is which arms the population can state
+	 * rather than how the rows partition.
 	 */
 	eligibleByStep: Record<RefinementStep, number>
 }

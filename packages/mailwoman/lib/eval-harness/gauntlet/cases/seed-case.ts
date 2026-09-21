@@ -44,8 +44,9 @@ export interface SeedCase {
 	 * The CLI locale this row runs under (`en-NZ`); the runner derives the weights overlay
 	 * from its region subtag, mirroring production's locale-hint routing.
 	 *
-	 * A locale hint, never a country constraint — `country` above stays the truth's country,
-	 * which for a locale row can differ (`Paris` under `en-US` is an FR row run with the US overlay).
+	 * A locale hint, never a country constraint.
+	 * `country` above stays the truth's country, which for a locale row can differ
+	 * (`Paris` under `en-US` is an FR row run with the US overlay).
 	 * See #1585's interface.
 	 */
 	locale?: string
@@ -55,11 +56,15 @@ export interface SeedCase {
 	 */
 	expectComponents?: Record<string, string>
 	/**
-	 * OPT-IN multi-script rendering interface, per component key — `{ venue: ["Gandantegchinlen Monastery",
-	 * "Гандантэгчинлэн хийд"] }`. For a listed key the grader asserts that `scriptRenderings(got)` contains every listed
-	 * rendering (case-folded), and the same key in {@linkcode expectComponents} is superseded — see `check-case.ts`'s
-	 * component check. Only for a row whose input genuinely carries a span in two or more scripts. every list must be
-	 * non-empty (the schema refuses an empty one).
+	 * OPT-IN multi-script rendering interface, per component
+	 * key — `{ venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"] }`.
+	 *
+	 * For a listed key the grader asserts that `scriptRenderings(got)` contains every
+	 * listed rendering (case-folded), and the same key in {@linkcode expectComponents}
+	 * is superseded — see `check-case.ts`'s component check.
+	 * Only for a row whose input genuinely carries a span in two or more scripts.
+	 *
+	 * Every list must be non-empty (the schema refuses an empty one).
 	 */
 	expectComponentRenderings?: Record<string, string[]>
 	expectPlaceID?: string
@@ -74,23 +79,27 @@ export interface SeedCase {
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
 	/**
-	 * True = the expected outcome is no coordinate: the resolver abstains rather than answering, and any resolved
-	 * coordinate fails the row.
+	 * True = the expected outcome is no coordinate: the resolver abstains rather than answering, and any resolved coordinate fails the row.
 	 *
 	 * Mutually exclusive with `expectLat`/`expectLon` (the schema refuses the combination).
-	 * The
-	 * #1585 fuzzy-scope interface: a scoped-empty typo correction abstains instead of falling through world-fuzzy. such a
-	 * row is re-pinned to real coordinates once coverage arrives (its note names the artifact).
+	 *
+	 * The #1585 fuzzy-scope interface: a scoped-empty typo correction abstains
+	 * instead of falling through world-fuzzy.
+	 * Such a row is re-pinned to real coordinates once coverage arrives (its note names the artifact).
 	 */
 	expectAbstain?: boolean
 	addedAt: string
 	bugRef?: string
 	note?: string
 	/**
-	 * Ablation only: hand-pin the graceful-degradation rung this row's deletions should reach, per deleted component — `{
-	 * country: "region" }`, `{ region: "abstain" }`. Values are `abstain`, `base`, or a WOF placetype. Absent = the
-	 * ablation layer's derived ladder decides, which is the default and should stay the common case. See `schema.ts`'s
-	 * `ablation_expect` for the two classes (territories, dual-role places) this exists for.
+	 * Ablation only: hand-pin the graceful-degradation rung this row's deletions should reach,
+	 * per deleted component — `{ country: "region" }`, `{ region: "abstain" }`.
+	 *
+	 * Values are `abstain`, `base`, or a WOF placetype.
+	 * Absent = the ablation layer's derived ladder decides, which is the default
+	 * and should stay the common case.
+	 *
+	 * See `schema.ts`'s `ablation_expect` for the two classes (territories, dual-role places) this exists for.
 	 */
 	ablationExpect?: Record<string, string>
 }
@@ -164,7 +173,8 @@ export const SeedCaseSchema = zod.strictObject({
  * The compile-time bridge.
  *
  * If you add a field to {@linkcode SeedCase} and not to {@linkcode SeedCaseSchema}
- * (or the other way round), this line is where `tsc` stops you — `true satisfies never` does not compile.
+ * (or the other way round), this line is where `tsc` stops you.
+ * `true satisfies never` does not compile.
  */
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof SeedCaseSchema>, SeedCase>
 

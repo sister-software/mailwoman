@@ -65,8 +65,9 @@ export const GOLD_COHERENCE_KM = 25
 const IDENTIFIERS_PER_QUERY = 900
 
 /**
- * The two tables this reader touches in the WOF admin gazetteer, as the read interface only —
- * the artifact is built elsewhere (`@mailwoman/resolver-wof-sqlite`'s unified schema owns its DDL),
+ * The two tables this reader touches in the WOF admin gazetteer, as the read interface only.
+ *
+ * The artifact is built elsewhere (`@mailwoman/resolver-wof-sqlite`'s unified schema owns its DDL),
  * and a second builder here would be a second definition of a shipped table.
  */
 interface WOFGazetteerDatabase {
@@ -98,8 +99,10 @@ interface ConcordanceRow {
 }
 
 /**
- * The register row a gold set is checked against — the fields the guard reads, so a caller
- * need not pass a whole `GeoNamesCity` and this module need not depend on the panel builder.
+ * The register row a gold set is checked against.
+ *
+ * The fields the guard reads, so a caller need not pass a whole `GeoNamesCity`
+ * and this module need not depend on the panel builder.
  */
 export interface GoldSubject {
 	geonameid: string
@@ -138,9 +141,9 @@ export interface GoldSets {
 /**
  * Read the coherent gold set for each subject.
  *
- * The concordance is queried in chunks and joined to `spr` so the guard can read the
- * other side's placetype, name, country and coordinate — a join that returned ids
- * alone could not tell a locality from the region above it.
+ * The concordance is queried in chunks and joined to `spr` so the guard can read
+ * the other side's placetype, name, country and coordinate.
+ * A join that returned ids alone could not tell a locality from the region above it.
  */
 export async function readGoldSets(databasePath: PathBuilderLike, subjects: readonly GoldSubject[]): Promise<GoldSets> {
 	using db = new DatabaseClient<WOFGazetteerDatabase>(databasePath, { readOnly: true })

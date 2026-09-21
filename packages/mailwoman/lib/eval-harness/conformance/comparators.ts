@@ -59,7 +59,8 @@ export interface ConformanceOutcome {
 	 * imported here: dev-mcp is a private maintainer workspace that depends on `mailwoman`,
 	 * so the dependency can only run in that direction, and a second copy of the
 	 * vocabulary would drift from the predicates that define it.
-	 * The observer supplies the labels. this module compares them and reports what it was given.
+	 * The observer supplies the labels.
+	 * This module compares them and reports what it was given.
 	 *
 	 * `undefined` means no account was attached — see the module docstring for
 	 * why that is not an empty account.
@@ -69,8 +70,9 @@ export interface ConformanceOutcome {
 	 * The resolver's interior for this run (#1721): one record per backend lookup, carrying the
 	 * candidate table, the fetch window it ran under, the `checks` that fired and the pick's provenance.
 	 *
-	 * Supplied by an observer that asked for a trace — the walk does zero bookkeeping
-	 * otherwise, so a comparator cannot turn one on for itself.
+	 * Supplied by an observer that asked for a trace.
+	 * The walk does zero bookkeeping otherwise, so a comparator cannot turn one on for itself.
+	 *
 	 * `[]` is a real reading (the walk performed no lookup); `undefined` is the absence of a trace,
 	 * and {@linkcode compareOutcomes} keeps them apart the way `mechanismShapes` does.
 	 */
@@ -100,8 +102,9 @@ export interface ComparatorReading {
 	comparator: OutcomeComparatorName
 	observed: ObservedRelation
 	/**
-	 * What the comparator actually read on each side, stated whatever the verdict —
-	 * the sentence that keeps an absence from being reported as an agreement.
+	 * What the comparator actually read on each side, stated whatever the verdict.
+	 *
+	 * The sentence that keeps an absence from being reported as an agreement.
 	 */
 	basis: string
 	/**
@@ -135,8 +138,9 @@ function populatedComponents(result: GauntletResult): Record<string, string> {
  * A `placeID` is namespaced (`wof:1108826319`), so the source travels with the key:
  * two ids minted by different gazetteers can never compare equal by accident,
  * which is the provenance half of "stable identity".
- * An entry with no `placeID` is unverifiable, counted apart rather than folded in under
- * its name — a name is not an identity, and counting it as one is how a namesake passes.
+ * An entry with no `placeID` is unverifiable, counted apart rather than folded in under its name.
+ *
+ * A name is not an identity, and counting it as one is how a namesake passes.
  */
 function identityChain(result: GauntletResult): { keys: string[]; unverifiable: number } {
 	const keys: string[] = []
@@ -362,9 +366,10 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 	// A refinement law's variant carries more information, so `compareComponents`'s
 	// hallucination rule does not apply to it: that rule reads a gained critical tag as `lost`
 	// because its premise is that both sides were fed the same information.
-	// Containment plus at least one new component is the refinement reading, and the severity verdict
-	// above still travels with it — an invariance law reaches this branch too, sees `refines`
-	// where it expected `equivalent`, and fails with `lost` printed beside the gained tag.
+	// Containment plus at least one new component is the refinement reading,
+	// and the severity verdict above still travels with it.
+	// An invariance law reaches this branch too, sees `refines` where it expected `equivalent`,
+	// and fails with `lost` printed beside the gained tag.
 	if (added.length && containsAll(a, b)) {
 		return {
 			comparator: "component_map",
@@ -463,9 +468,9 @@ function compareCandidateAdmissibility(base: ConformanceOutcome, variant: Confor
 /**
  * Read a pair of outcomes on the axis the fixture named.
  *
- * Throws on a comparator name outside the closed set.
- * `loadConformanceFixtures` refuses one already, so reaching this means a caller built a
- * fixture by hand and skipped the loader — which is exactly the path that must not default.
+ * @throws on a comparator name outside the closed set.
+ *   `loadConformanceFixtures` refuses one already, so reaching this means a caller built a
+ *   fixture by hand and skipped the loader — which is exactly the path that must not default.
  */
 export function compareOutcomes(
 	fixture: ConformanceFixture,

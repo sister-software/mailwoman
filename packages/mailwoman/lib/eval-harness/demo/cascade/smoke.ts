@@ -101,7 +101,7 @@ export interface DemoCascadeSmokeOptions {
  * What {@linkcode demoCascadeSmoke} returns.
  *
  * `exitCode` carries what the script signalled with `process.exit`: 0 = the run completed
- * (row failures are in the table + sidecar. the check verdict enforces any floor),
+ * (row failures are in the table + sidecar. The check verdict enforces any floor),
  * 2 = missing artifacts or malformed rows.
  * The check reports a non-zero code and continues, exactly as it did with the child.
  */
@@ -140,11 +140,11 @@ export async function demoCascadeSmoke(
 	reportError: (line: string) => void = console.error
 ): Promise<DemoCascadeSmokeResult> {
 	// lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`,
-	// and the CLI's module walk (`mailwoman --help`) loads this file in every clean install —
-	// a top-level import here failed the ci:smoke clean-install leg the day it was added (2026-08-06).
+	// and the CLI's module walk (`mailwoman --help`) loads this file in every clean install.
+	// A top-level import here failed the ci:smoke clean-install leg the day it was added (2026-08-06).
 	// The cascade leg is dev-only (it needs a local wof-hot.db), so the dependency
-	// loads only when the leg actually runs. in a clean install without the package
-	// the leg fails here, loudly, naming the import.
+	// loads only when the leg actually runs.
+	// In a clean install without the package the leg fails here, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = options.stageDir || wofHotStageDir()
 	const DB = options.db || resolveWOFHotDB(String(STAGE))
@@ -262,9 +262,7 @@ export async function demoCascadeSmoke(
 
 		const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
-		// #861: runCascade now takes the tree and runs the shared resolveTree (greedy walk + coherence
-		// passes + span-rescore) over the lookup, exactly as the browser composes it.
-		// The node extraction above stays for the explain output + the anchor-centroid fallback below.
+		// #861: runCascade now takes the tree and runs the shared resolveTree (greedy walk + coherence passes + span-rescore) over the lookup, exactly as the browser composes it. The node extraction above stays for the explain output + the anchor-centroid fallback below.
 		const hits = await runCascade(lookup as Parameters<typeof runCascade>[0], tree, row.input)
 
 		// The demo's anchor-centroid fallback for postcode-only dead ends

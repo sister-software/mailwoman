@@ -55,8 +55,9 @@ export interface PremiseLinkageAdapter {
 /**
  * The scheme every synthetic row grades against.
  *
- * Real UK premise linkage grades against UPRNs. the fixture uses the same scheme name
- * with invented identifiers so the grading path is the one a controlled run takes.
+ * Real UK premise linkage grades against UPRNs.
+ * The fixture uses the same scheme name with invented identifiers so the grading
+ * path is the one a controlled run takes.
  */
 const SYNTHETIC_SCHEME = "uprn"
 
@@ -284,8 +285,9 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 ]
 
 /**
- * The synthetic fixture set — every outcome the harness can record, at least once,
- * across the five shape classes.
+ * The synthetic fixture set.
+ *
+ * Every outcome the harness can record, at least once, across the five shape classes.
  */
 export function syntheticFixtureAdapter(): PremiseLinkageAdapter {
 	return {
@@ -324,8 +326,8 @@ export function syntheticFixtureProvider(options: { log?: AuthoritativeQuery[] }
 
 			if (throwingKeys.some((key) => haystack.includes(key))) {
 				// Logged before the throw so the record is every query the provider received
-				// rather than only the ones it answered — a consult that failed is still a consult,
-				// and a log that omits it under-counts.
+				// rather than only the ones it answered.
+				// A consult that failed is still a consult, and a log that omits it under-counts.
 				options.log?.push(query)
 
 				throw new Error("synthetic transport failure")
@@ -341,8 +343,9 @@ function syntheticNode(partial: Partial<AddressNode> & Pick<AddressNode, "tag" |
 }
 
 /**
- * A pipeline that always resolves to one admin coordinate — the shape of the open
- * arm's answer when it can name a town and not a premise.
+ * A pipeline that always resolves to one admin coordinate.
+ *
+ * The shape of the open arm's answer when it can name a town and not a premise.
  *
  * Fixture-only, and deliberately so: a controlled run supplies real
  * {@link GeocodeDeps} built from the shipped model and gazetteer, and this exists

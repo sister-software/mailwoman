@@ -109,8 +109,8 @@ export function canonicallyVariant(text: string): boolean {
  * `mixed` is a real state and not a bookkeeping leftover: a string assembled from
  * two sources can carry a composed `é` beside a decomposed one and then neither form
  * while being canonically equivalent to both.
- * A text that is not
- * {@linkcode canonicallyVariant} reads `nfc`, because it is — both forms are the same bytes.
+ * A text that is not {@linkcode canonicallyVariant} reads `nfc`, because it is.
+ * Both forms are the same bytes.
  */
 export const CANONICAL_FORM_STATES = ["nfc", "nfd", "mixed"] as const
 
@@ -165,8 +165,8 @@ export type CanonicalApplicabilityRule = (typeof CANONICAL_APPLICABILITY_RULES)[
 /**
  * One applicability reading: whether the transformation may be stated as a law for this text, and why.
  *
- * The reason is populated on both verdicts, for the same reason the three shipped laws populate it
- * on both — a row silently dropped from a law suite is the absence this layer exists to refuse.
+ * The reason is populated on both verdicts, for the same reason the three shipped laws populate it on both.
+ * A row silently dropped from a law suite is the absence this layer exists to refuse.
  */
 export interface CanonicalApplicability {
 	applicable: boolean
@@ -237,7 +237,8 @@ export interface CanonicalFormCoverage {
 	 */
 	read: number
 	/**
-	 * Of those, rows whose text is canonically variant — the only rows this law can be stated over at all.
+	 * Of those, rows whose text is canonically variant.
+	 * The only rows this law can be stated over at all.
 	 */
 	eligible: number
 	/**
@@ -261,9 +262,9 @@ export interface CanonicalFormCoverage {
 /**
  * Measure this suite against the population it draws from.
  *
- * `corpusInputs` is every committed board row's query text. the caller supplies it
- * rather than this module loading the corpus, so the law module stays free of the corpus loader
- * and a caller can measure the suite against any population it can name.
+ * `corpusInputs` is every committed board row's query text.
+ * The caller supplies it rather than this module loading the corpus, so the law module stays free
+ * of the corpus loader and a caller can measure the suite against any population it can name.
  */
 export function canonicalFormCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -291,8 +292,10 @@ export function canonicalFormCoverage(
 }
 
 /**
- * The coverage line a report prints — the DoD's transformed-over-eligible ratio, with the denominator's
- * own breakdown beside it so a reader can see which arms the population is able to state.
+ * The coverage line a report prints.
+ *
+ * The DoD's transformed-over-eligible ratio, with the denominator's own breakdown beside it
+ * so a reader can see which arms the population is able to state.
  */
 export function describeCanonicalFormCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -320,8 +323,8 @@ export function describeCanonicalFormCoverage(
  * Applicability is not re-checked here, unlike the punctuation law's audit, because both
  * of this law's rules are subsumed by the classification: a pair that classifies at all
  * has a base its own transformation moved, so neither rule can fire on a classified pair.
- * The rules do their work in the absent-arm reading, which asks about arms the suite
- * does not carry — a question no audit over the committed rows can pose.
+ * The rules do their work in the absent-arm reading, which asks about arms the suite does not carry.
+ * A question no audit over the committed rows can pose.
  */
 export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, CANONICAL_FORM_LAW, (fixture, label, problems) => {

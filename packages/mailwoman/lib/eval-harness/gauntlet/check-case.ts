@@ -26,10 +26,10 @@ export const DEFAULT_TOL_M = 5000
 /**
  * Map an expect_components key to the assembled-result field it asserts.
  *
- * Exported for the ablation layer, which scores a deletion against the same slot
- * this check grades — a second copy of the mapping would let the two disagree about
- * which field `venue` lives in, and the ablation runner would then report "the slot
- * stayed empty" for a slot it was reading off the wrong field.
+ * Exported for the ablation layer, which scores a deletion against the same slot this check grades.
+ * A second copy of the mapping would let the two disagree about which field `venue`
+ * lives in, and the ablation runner would then report "the slot stayed empty"
+ * for a slot it was reading off the wrong field.
  */
 export function componentOf(r: GauntletResult, key: string): string | null {
 	switch (key) {
@@ -73,8 +73,9 @@ export function componentOf(r: GauntletResult, key: string): string | null {
  *
  * Anything not listed collapses to `"other"`: an unlisted script still forms one run, so a value
  * written in it is never shredded, it only cannot be told apart from another unlisted script.
- * Adding a family here is safe. the only effect is that two renderings previously
- * fused into one `"other"` run become two.
+ * Adding a family here is safe.
+ *
+ * The only effect is that two renderings previously fused into one `"other"` run become two.
  */
 const SCRIPT_FAMILIES: ReadonlyArray<readonly [string, RegExp]> = [
 	["latin", /\p{Script=Latin}/u],
@@ -110,9 +111,11 @@ function scriptFamilyOf(char: string): string | null {
  * The dual-script rows (`mn-ws-gandantegchinlen-dual-script` and its siblings) carry
  * the same address twice — a Cyrillic/Mongolian rendering and a Latin/English one,
  * slash-joined — so a parse that correctly tags both produces one span holding both.
- * Each maximal run of one script family, with the neutral characters between two letters of
- * that family absorbed into it, is one rendering. the neutrals that sit at a family boundary
- * are the joiner and belong to neither (`" / "`, `", "`, `" — "` all fall out the same way).
+ * Each maximal run of one script family, with the neutral characters between two
+ * letters of that family absorbed into it, is one rendering.
+ *
+ * The neutrals that sit at a family boundary are the joiner and belong to neither
+ * (`" / "`, `", "`, `" — "` all fall out the same way).
  *
  * A mono-script value yields exactly one rendering — the value itself, minus any
  * leading/trailing non-letters — so it can never satisfy a interface that lists two.
@@ -120,8 +123,9 @@ function scriptFamilyOf(char: string): string | null {
  * or more scripts, and since 2026-08-11 it speaks only for the rows that OPT IN via
  * `expect_component_renderings` (see {@linkcode checkCase}) — ordinary component assertions never reach it.
  *
- * Exported for `check-case.test.ts`, which pins the family grouping directly — the JP kana case in
- * particular has no reachable expression through `checkCase` (the Latin model never emits the JP tags).
+ * Exported for `check-case.test.ts`, which pins the family grouping directly.
+ * The JP kana case in particular has no reachable expression through `checkCase`
+ * (the Latin model never emits the JP tags).
  */
 export function scriptRenderings(value: string): string[] {
 	const renderings: string[] = []
@@ -139,7 +143,8 @@ export function scriptRenderings(value: string): string[] {
 		}
 
 		if (charFamily === family) {
-			// Same family across the gap — the neutrals were interior rather than a joiner.
+			// Same family across the gap.
+			// The neutrals were interior rather than a joiner.
 			// Keep them.
 			chars.push(...pending, char)
 		} else {
@@ -169,9 +174,10 @@ export function scriptRenderings(value: string): string[] {
  *
  * A global set-based fallback over {@linkcode scriptRenderings} lived here briefly
  * (2026-08-10 → 2026-08-11) so a dual-script span could satisfy a truth freezing one of its renderings.
- * Its cost was a cross-tag bleed grading as a pass — the value alone cannot say
- * whether its two renderings are two writings of the same element or two different elements
- * that ran together, so a `locality` of `四季酒家 Manchester` satisfied `Manchester`.
+ * Its cost was a cross-tag bleed grading as a pass.
+ *
+ * The value alone cannot say whether its two renderings are two writings of the same element or two
+ * different elements that ran together, so a `locality` of `四季酒家 Manchester` satisfied `Manchester`.
  *
  * Review converted the relaxation into the per-row `expect_component_renderings` OPT-IN:
  * a case that genuinely carries a span in two scripts lists the renderings it requires, a key
@@ -183,9 +189,12 @@ export function componentMatches(got: string, expected: string): boolean {
 }
 
 /**
- * Grade one `expect_component_renderings` entry: which of the required renderings are absent from
- * {@linkcode scriptRenderings}`(got)`, case-folded? Empty = the interface is satisfied. Nothing else about `got` is
- * asserted — neutral separators between renderings, and any extra rendering, ride along free.
+ * Grade one `expect_component_renderings` entry: which of the required renderings are
+ * absent from {@linkcode scriptRenderings}`(got)`, case-folded?
+ *
+ * Empty = the interface is satisfied.
+ * Nothing else about `got` is asserted — neutral separators between renderings,
+ * and any extra rendering, ride along free.
  */
 function missingRenderings(got: string, required: readonly string[]): string[] {
 	const present = new Set(scriptRenderings(got).map((rendering) => rendering.toLowerCase()))
@@ -212,14 +221,16 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
 }
 
 /**
- * Assert one assembled result against its stored case. returns the mismatches (empty = the case passes).
+ * Assert one assembled result against its stored case.
+ * Returns the mismatches (empty = the case passes).
  *
  * Four independent checks, all opt-in per row — a null column asserts nothing:
  *
  * 1. Coordinate, great-circle against `expect_tolerance_m` (default {@linkcode DEFAULT_TOL_M}).
  * 2. Tier, strict — an `address_point` that drifts to `admin` is a regression even inside tolerance.
- * 3. Place identity (#1507, wired 2026-08-06) — `expect_place_name` / `expect_place_id` against the resolved
- *    {@linkcode resolvedPlace}. This is the one the other three cannot express: the country sweep's family-A rows
+ * 3. Place identity (#1507, wired 2026-08-06) — `expect_place_name` / `expect_place_id`
+ *    against the resolved {@linkcode resolvedPlace}.
+ *    This is the one the other three cannot express: the country sweep's family-A rows
  *    (Gaborone → the Austrian hamlet `Aichegg`, Kinshasa → `Alionys II`, Djibouti → `Ober-Himmeri`)
  *    came back with the right parsed locality and only a coordinate 8,045 km away to say so, and a row
  *    whose expected place sits inside a 25 km bar of its impostor would have had nothing at all.
@@ -233,17 +244,18 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
  *    `expect_component_renderings` — `{ tag: [rendering, …] }` — and for a listed key the
  *    assertion becomes: {@linkcode scriptRenderings} of the got value must contain every
  *    listed rendering, case-folded (both scripts required when the case defines both).
- *    Nothing else about that value is asserted. precedence: a key present in
- *    `expect_component_renderings` supersedes the same key in `expect_components`;
- *    an empty rendering list throws (an authoring bug the seed schema refuses upstream).
+ *    Nothing else about that value is asserted.
+ *    Precedence: a key present in `expect_component_renderings` supersedes
+ *    the same key in `expect_components`; an empty rendering list throws
+ *    (an authoring bug the seed schema refuses upstream).
  */
 export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	const issues: string[] = []
 
-	// The abstain interface (#1585): the row's expected outcome is no coordinate,
-	// so the grade inverts — any resolved coordinate fails it.
-	// Mutually exclusive with a pinned coordinate. a row carrying both is an authoring
-	// bug that must be loud rather than a precedence question.
+	// The abstain interface (#1585): the row's expected outcome is no coordinate, so the grade inverts.
+	// Any resolved coordinate fails it.
+	// Mutually exclusive with a pinned coordinate.
+	// A row carrying both is an authoring bug that must be loud rather than a precedence question.
 	if (c.expect_abstain) {
 		if (c.expect_lat != null || c.expect_lon != null) {
 			throw new Error(`case ${c.id}: expect_abstain and expect_lat/expect_lon are mutually exclusive`)

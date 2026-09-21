@@ -43,8 +43,9 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Per-locale FST gazetteer (`fst-<locale>.bin`) for the assembled arms (#1497).
 	 *
-	 * Only the assembled arms can use it — the FST is a decode-time prior applied by
-	 * `createRuntimePipeline`, and the bare `neural` arm calls `classifier.parse` directly.
+	 * Only the assembled arms can use it.
+	 * The FST is a decode-time prior applied by `createRuntimePipeline`,
+	 * and the bare `neural` arm calls `classifier.parse` directly.
 	 * Omit for the byte-stable no-FST default.
 	 *
 	 * This is the tree's only FST-sensitive eval.
@@ -116,14 +117,11 @@ export interface OAResolverEvalOptions {
 	 */
 	noAdminCoherence?: boolean
 	/**
-	 * #42 tri-state pin: force postcodeCountryCoherence off — the pre-2026-08-05 configuration. This is the leg that
-	 * measures whether letting a coherent (postcode, locality) pair override `defaultCountry`
-	 * is byte-flat on a US panel, which is the one number the default-on promotion needed
-	 * and could not get from a confound board.
+	 * #42 tri-state pin: force postcodeCountryCoherence off — the pre-2026-08-05 configuration. This is the leg that measures whether letting a coherent (postcode, locality) pair override `defaultCountry` is byte-flat on a US panel, which is the one number the default-on promotion needed and could not get from a confound board.
 	 */
 	noPostcodeCountryCoherence?: boolean
 	/**
-	 * #370 tri-state pin: force postcodeConsistency off — the configuration before the pass was promoted.
+	 * #370 tri-state pin: force postcodeConsistency off. The configuration before the pass was promoted.
 	 *
 	 * Paired with {@link postcodeConsistencyMaxMoveKm} this prices #2301's cap without a sweep:
 	 * the rows whose answer differs between this arm and the shipped one are exactly the rows the pass
@@ -134,18 +132,15 @@ export interface OAResolverEvalOptions {
 	 */
 	noPostcodeConsistency?: boolean
 	/**
-	 * #2301 pin: how far {@link noPostcodeConsistency}'s pass may move a coordinate onto the postcode point. Unset is the
-	 * library default.
+	 * #2301 pin: how far {@link noPostcodeConsistency}'s pass may move a coordinate onto the postcode point. Unset is the library default.
 	 */
 	postcodeConsistencyMaxMoveKm?: number
 	/**
-	 * #2266 pin: a span-rescore sub-span may drop context but never a word of the name. Default-off in the library until
-	 * a measurement carries it, so an unset pin leaves this eval byte-identical.
+	 * #2266 pin: a span-rescore sub-span may drop context but never a word of the name. Default-off in the library until a measurement carries it, so an unset pin leaves this eval byte-identical.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
-	 * #2264 pin: which reading of a weak resolution lifts the #685 span-rescore brake. Unset is the shipped brake, so an
-	 * unset pin leaves this eval byte-identical.
+	 * #2264 pin: which reading of a weak resolution lifts the #685 span-rescore brake. Unset is the shipped brake, so an unset pin leaves this eval byte-identical.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
@@ -153,9 +148,7 @@ export interface OAResolverEvalOptions {
 	 */
 	normalizeCase?: boolean
 	/**
-	 * #42 tri-state pin: force postcodeCountryCoherence on. The library default has been on since 2026-08-05, so this pin
-	 * is now a no-op restatement. it stays because a check leg that says what it
-	 * graded is the point of a tri-state.
+	 * #42 tri-state pin: force postcodeCountryCoherence on. The library default has been on since 2026-08-05, so this pin is now a no-op restatement. It stays because a check leg that says what it graded is the point of a tri-state.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**

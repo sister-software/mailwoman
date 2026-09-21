@@ -73,8 +73,9 @@ export interface SameDataArmDefinition {
 	/**
 	 * The `ResolveOpts` the arm pins.
 	 *
-	 * Present on the ablation arm. absent on the arms that run library defaults,
-	 * where an empty object and "the defaults" would be indistinguishable.
+	 * Present on the ablation arm.
+	 * Absent on the arms that run library defaults, where an empty object
+	 * and "the defaults" would be indistinguishable.
 	 */
 	resolveOpts?: Record<string, boolean>
 }

@@ -79,8 +79,8 @@ export interface ErrorAnalysisOptions {
 	/**
 	 * Parse with the production word-consistency heal (`WORD_CONSISTENCY_SHIP_DEFAULT`, 2026-07-15).
 	 *
-	 * Off by default so pre-flip baselines stay reproducible. pass it to grade
-	 * the shipped pipeline configuration.
+	 * Off by default so pre-flip baselines stay reproducible.
+	 * Pass it to grade the shipped pipeline configuration.
 	 */
 	wordConsistency?: boolean
 	/**

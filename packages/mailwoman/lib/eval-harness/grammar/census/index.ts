@@ -1,7 +1,8 @@
 /**
  * Report-only predicates for the decoder-grammar census.
  *
- * These functions observe a completed decode. they do not score, repair, or replace it.
+ * These functions observe a completed decode.
+ * They do not score, repair, or replace it.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"

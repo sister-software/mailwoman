@@ -200,9 +200,10 @@ export async function oaResolverEval(
 
 	// `--out-resolved <path>`: per-row dump for the PIP-containment
 	// metric (packages/mailwoman/lib/dev-tools/pip-containment.run.ts).
-	// Carries the gold OA point + the neural-resolved locality's WOF id, so an offline pass can test
-	// whether the gold point lies inside the resolved locality's polygon — a name-surface-independent truth
-	// check (the "Plauen" vs gold "Plauen Vogtl" name-match artifact, see the coordinate-first plan).
+	// Carries the gold OA point + the neural-resolved locality's WOF id, so an offline pass
+	// can test whether the gold point lies inside the resolved locality's polygon.
+	// A name-surface-independent truth check (the "Plauen" vs gold "Plauen Vogtl"
+	// name-match artifact, see the coordinate-first plan).
 	const collectResolvedDump = !!(options.outResolved || "")
 	const resolvedRows: Record<string, unknown>[] = []
 
@@ -223,7 +224,8 @@ export async function oaResolverEval(
 
 		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims
 		// it (~380-parse sigkill on the lab box — it crashed the promotion-eval's de-order step tonight).
-		// Periodic forced GC reclaims it. run with `node --expose-gc`.
+		// Periodic forced GC reclaims it.
+		// Run with `node --expose-gc`.
 		// No-op without the flag.
 		// (#787 pattern.)
 		if (i % 50 === 0) {
@@ -282,7 +284,8 @@ export async function oaResolverEval(
 			})
 		}
 
-		// neural + address-points (#476): same admin flags. coordinate from the exact point on hit.
+		// neural + address-points (#476): same admin flags.
+		// Coordinate from the exact point on hit.
 		if (runAddrPt) {
 			const hit = nDecorated ? findAddressPointHit(nDecorated) : null
 			const apErr = hit ? haversineKm(hit.lat, hit.lon, row.lat, row.lon) : ns.err
@@ -296,7 +299,8 @@ export async function oaResolverEval(
 
 		// neural + interpolation (#483): the full street-level cascade — exact point if present,
 		// else the interpolated estimate, else the admin centroid.
-		// Same admin flags. only the coordinate changes.
+		// Same admin flags.
+		// Only the coordinate changes.
 		if (runInterp) {
 			const exact = nDecorated ? findAddressPointHit(nDecorated) : null
 			const interp = nDecorated ? findInterpolatedHit(nDecorated) : null
@@ -311,9 +315,8 @@ export async function oaResolverEval(
 
 			// In diagnostic mode, separate interpolation misses by cause.
 			// The interp tier only runs in resolveTree when the exact tier did not stamp.
-			// So:
-			//   precond met (street+house_number+postcode parsed) + exact miss + interp null ⟹ a genuine
-			//   StreetInterpolator.find() miss (database/normalization gap rather than parse rather than check).
+			// So: precond met (street+house_number+postcode parsed) + exact miss + interp null ⟹ a genuine
+			// StreetInterpolator.find() miss (database/normalization gap rather than parse rather than check).
 			if (diagInterp && nDecorated) {
 				const { street: s, houseNumber: hn, postcode: pc } = findInterpolationSpans(nDecorated)
 				const precond = !!(s && hn && pc)
@@ -358,8 +361,7 @@ export async function oaResolverEval(
 			})
 		}
 
-		// #478 inc 3 leg 2 residue: the assembled (neural pipeline) arm, through the same resolver + nOpts.
-		// The arbitration variant was removed with the v1 rules parser (the rule proposer is gone).
+		// #478 inc 3 leg 2 residue: the assembled (neural pipeline) arm, through the same resolver + nOpts. The arbitration variant was removed with the v1 rules parser (the rule proposer is gone).
 		if (assembledPipeline) {
 			try {
 				const { tree } = await assembledPipeline(row.input, { resolveOpts: nOpts })
@@ -419,7 +421,8 @@ export async function oaResolverEval(
 		reportError(`wrote ${resolvedRows.length} resolved rows → ${options.outResolved || ""}`)
 	}
 
-	// self-emitted. eval figures are never hand-typed into docs)
+	// self-emitted.
+	// Eval figures are never hand-typed into docs)
 	const markdown = await renderOaResolverReport({
 		agg,
 		assembledAgg,

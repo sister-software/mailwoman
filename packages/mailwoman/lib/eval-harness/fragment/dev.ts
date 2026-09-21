@@ -38,7 +38,9 @@ interface DevRow {
 }
 
 /**
- * Score fragment-dev. narrates the separator metrics and returns them for programmatic use.
+ * Score fragment-dev.
+ *
+ * Narrates the separator metrics and returns them for programmatic use.
  */
 export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 	spanExact: number

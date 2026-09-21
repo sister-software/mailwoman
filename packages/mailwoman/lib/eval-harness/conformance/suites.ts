@@ -118,9 +118,9 @@ export const CONFORMANCE_SUITES: readonly ConformanceSuite[] = [
 		law: REFINEMENT_MONOTONICITY_LAW,
 		path: REFINEMENT_MONOTONICITY_SUITE_PATH,
 		audit: auditRefinementSuite,
-		// The step is named from the fuller query to the coarser one, because that is
-		// the direction the derivation runs. the law itself is stated the other way,
-		// which the head line already prints as base → variant.
+		// The step is named from the fuller query to the coarser one, because that
+		// is the direction the derivation runs.
+		// The law itself is stated the other way, which the head line already prints as base → variant.
 		detail: (fixture) => `    xform   : variant −${describeRefinementStep(fixture)} → base`,
 		coverage: describeRefinementCoverage,
 	},
@@ -129,8 +129,9 @@ export const CONFORMANCE_SUITES: readonly ConformanceSuite[] = [
 const SUITE_BY_LAW = new Map(CONFORMANCE_SUITES.map((suite) => [suite.law, suite]))
 
 /**
- * The registered suite for a law, or `undefined` when the law declares none —
- * a fixture file passed to `--suite` may state a law nobody has registered,
+ * The registered suite for a law, or `undefined` when the law declares none.
+ *
+ * A fixture file passed to `--suite` may state a law nobody has registered,
  * and the runner says so rather than defaulting it to another law's audit.
  */
 export function suiteForLaw(law: string): ConformanceSuite | undefined {

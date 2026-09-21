@@ -18,8 +18,10 @@ import { JSONSpliterator } from "spliterator"
 import { flattenNodes } from "#eval-harness/flatten-nodes"
 
 /**
- * Production parse configuration — the query-shape prior is fed on every path
- * production parses on (safeClassify, and geocode-core since #981).
+ * Production parse configuration.
+ *
+ * The query-shape prior is fed on every path production parses on
+ * (safeClassify, and geocode-core since #981).
  *
  * See baselines.json $config.
  */

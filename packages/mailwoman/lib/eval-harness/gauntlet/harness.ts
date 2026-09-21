@@ -63,9 +63,11 @@ export interface GauntletDeps extends Disposable {
 	 *
 	 * A base-only pass is not evidence that the production path passes — the overlay supplies
 	 * the pair index and the dependent-locality prior, so it changes the parse.
-	 * A caller that turns a passing row into a durable claim, such as the regression layer's promote
-	 * suggestion, must ask this first and withhold the claim when it answers true. otherwise a cache
-	 * missing one package writes a base-only result into the board as a regression guard (#2223).
+	 * A caller that turns a passing row into a durable claim, such as the regression layer's
+	 * promote suggestion, must ask this first and withhold the claim when it answers true.
+	 *
+	 * Otherwise a cache missing one package writes a base-only result into the
+	 * board as a regression guard (#2223).
 	 *
 	 * Answers for the state AT call time.
 	 * Overlays load lazily on the first row of their country, so ask after grading that row,
@@ -113,9 +115,12 @@ export interface GauntletDepsOptions {
 	/**
 	 * Replace the kind classifier's top verdict on every input this deps object geocodes.
 	 *
-	 * A declared ablation, and never a shipping configuration. It exists because three arms on the `«locality», «REGION»
-	 * «postcode»` surface each moved something upstream of the verdict and read the effect downstream of it. None of them
-	 * established that the verdict is what limits the decode. This one does, or refuses to.
+	 * A declared ablation, and never a shipping configuration.
+	 * It exists because three arms on the `«locality», «REGION» «postcode»` surface each
+	 * moved something upstream of the verdict and read the effect downstream of it.
+	 *
+	 * None of them established that the verdict is what limits the decode.
+	 * This one does, or refuses to.
 	 *
 	 * Forcing the verdict means forcing the parse REGISTER, which is the whole of
 	 * what the verdict decides on this path.
@@ -142,76 +147,67 @@ export interface GauntletDepsOptions {
  * the exact configuration a ship would use, and a pin that cannot be switched here
  * has never been through the D-rule's standard instrument.
  *
- * The idiom is `eval oa-resolver`'s (`adminCoherence` / `postcodeCountryCoherence`
- * boolean pins forwarded verbatim into the resolve): a pin here is a default-override
- * rather than a new mechanism — every field maps 1:1 onto a
- * {@linkcode geocodeAddress} dep of the same name, and an absent field leaves the production default in force.
+ * The idiom is `eval oa-resolver`'s (`adminCoherence` / `postcodeCountryCoherence` boolean pins
+ * forwarded verbatim into the resolve): a pin here is a default-override rather than a new mechanism.
+ * Every field maps 1:1 onto a {@linkcode geocodeAddress} dep of the same name,
+ * and an absent field leaves the production default in force.
  *
  * `undefined` means "production default", not "off": the library defaults are the
  * thing under test, so the pin only ever speaks when the runner set it.
  */
 export interface GauntletResolverPins {
 	/**
-	 * #42 postcode-country coherence — a (postcode, locality) pair coherent in exactly one country overrides a wrong
-	 * `defaultCountry`.
+	 * #42 postcode-country coherence — a (postcode, locality) pair coherent in exactly one country overrides a wrong `defaultCountry`.
 	 *
 	 * Library default on since the 2026-08-05 promotion (this pin was the D-rule evidence
 	 * path that got it there); the `false` pin now grades the pre-promotion configuration.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
-	 * #1497 — feed the gazetteer FST prior to the parse. Unlike the boolean pins above this one carries an artifact, so
-	 * the harness loads it rather than `resolverPinDeps` (which stays pure).
+	 * #1497 — feed the gazetteer FST prior to the parse. Unlike the boolean pins above this one carries an artifact, so the harness loads it rather than `resolverPinDeps` (which stays pure).
 	 *
 	 * Default-on here since 2026-08-16, matching the library: only an explicit `false`
 	 * withholds the prior, and that pin now grades the pre-promotion configuration.
+	 *
 	 * The board therefore grades with the prior, and a reading that assumes otherwise
 	 * understates every absolute number it touches.
 	 */
 	gazetteerPrior?: boolean
 	/**
-	 * #1717 stage 2 — the admin-containment re-rank: a parsed region qualifier participates in locality-candidate
-	 * selection through the candidate gazetteer's ancestors sidecar.
+	 * #1717 stage 2 — the admin-containment re-rank: a parsed region qualifier participates in locality-candidate selection through the candidate gazetteer's ancestors sidecar.
 	 *
-	 * Library default off (D-rule), so the `true` pin is the one that carries evidence
-	 * today. the `false` pin grades the production default explicitly.
+	 * Library default off (D-rule), so the `true` pin is the one that carries evidence today.
+	 * The `false` pin grades the production default explicitly.
 	 */
 	adminContainmentRerank?: boolean
 	/**
-	 * #1880 — the capital-status ranking axis: bounded national-capital promotion on the bare-toponym class. Like
-	 * `gazetteerPrior` this pin carries an artifact (the candidate `capital` table, repo-file fallback),
-	 * so the harness loads it rather than `resolverPinDeps` (which stays pure).
+	 * #1880 — the capital-status ranking axis: bounded national-capital promotion on the bare-toponym class. Like `gazetteerPrior` this pin carries an artifact (the candidate `capital` table, repo-file fallback), so the harness loads it rather than `resolverPinDeps` (which stays pure).
 	 *
 	 * Library default on (PR #1888's board-651 receipt); unset follows it, `false` pins the off arm,
 	 * and an unset pin degrades on a reference-less artifact exactly as the session does.
 	 */
 	capitalTier?: boolean
 	/**
-	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. The stamp lives in the
-	 * artifact (the candidate build's own-name detector), so against a candidate.db without
-	 * it the exemption matches no row — vary it against a stamped artifact.
+	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. The stamp lives in the artifact (the candidate build's own-name detector), so against a candidate.db without it the exemption matches no row — vary it against a stamped artifact.
 	 *
 	 * Library default on (same receipt); `false` pins the off arm.
 	 */
 	variantAliasExemption?: boolean
 	/**
-	 * #1684's POI half — the opt-in venue tier (`GeocodeDeps.poiVenueTier`): upgrade a venue-led address's admin or
-	 * street answer to the poi.db entity with the venue's name near the resolved anchor.
+	 * #1684's POI half — the opt-in venue tier (`GeocodeDeps.poiVenueTier`): upgrade a venue-led address's admin or street answer to the poi.db entity with the venue's name near the resolved anchor.
 	 *
 	 * Library default off (the D-rule battery is what this pin exists to run); `true` pins it on.
+	 *
 	 * It reads through the poi.db reader the harness already loads for the fork-entity probe, so on a
 	 * machine without poi.db a `true` pin degrades to the incumbent answer the same way that probe does.
 	 */
 	poiVenueTier?: boolean
 	/**
-	 * #2266 — a span-rescore sub-span may drop context but never a word of the name. Library default off (D-rule), so the
-	 * `true` pin is the one that carries evidence today; `false` pins the production default explicitly.
+	 * #2266 — a span-rescore sub-span may drop context but never a word of the name. Library default off (D-rule), so the `true` pin is the one that carries evidence today; `false` pins the production default explicitly.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
-	 * #2264 — which reading of a weak resolution lifts the #685 span-rescore brake. Not a boolean: three readings, and
-	 * the shipped brake is the absence of all of them, so `undefined` is the production arm
-	 * and there is no off pin to pair with a `true` one.
+	 * #2264 — which reading of a weak resolution lifts the #685 span-rescore brake. Not a boolean: three readings, and the shipped brake is the absence of all of them, so `undefined` is the production arm and there is no off pin to pair with a `true` one.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 }
@@ -231,9 +227,9 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
 } {
 	if (!pins) return {}
 
-	// A key is emitted only when the runner SET it — an `undefined` value would still
-	// be an own property, and `{postcodeCountryCoherence: undefined}` spread into
-	// the geocode deps reads as an explicit pin to a reader.
+	// A key is emitted only when the runner SET it.
+	// An `undefined` value would still be an own property, and `{postcodeCountryCoherence: undefined}`
+	// spread into the geocode deps reads as an explicit pin to a reader.
 	return {
 		...(pins.postcodeCountryCoherence === undefined ? {} : { postcodeCountryCoherence: pins.postcodeCountryCoherence }),
 		...(pins.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: pins.adminContainmentRerank }),
@@ -251,12 +247,12 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
  * One-line description of the pinned pins for the run banner.
  *
  * Prints on every run, including the unpinned one, so a reader of two gauntlet
- * logs can tell which configuration each graded — an off/on pair whose logs are
- * indistinguishable is not evidence about the pin.
+ * logs can tell which configuration each graded.
+ * An off/on pair whose logs are indistinguishable is not evidence about the pin.
  */
 export function describeResolverPins(pins: GauntletResolverPins | undefined): string {
-	// `resolverPinDeps` is pure and so cannot see the artifact-carrying pins. describing
-	// only what it returns is how a pinned run prints as "production defaults"
+	// `resolverPinDeps` is pure and so cannot see the artifact-carrying pins.
+	// Describing only what it returns is how a pinned run prints as "production defaults"
 	// and two different configurations produce identical pin logs.
 	// That is precisely the failure this surface exists to prevent, so every pin
 	// is named here rather than just the boolean ones.
@@ -298,30 +294,29 @@ export interface GauntletGeocodeOpts {
 	 * The case's country (ISO-3166 alpha-2) — selects the per-locale weights overlay
 	 * the classifier loads with (GB → en-GB's pair-index, NZ → en-NZ's).
 	 *
-	 * Production routes by locale-hint. a harness that grades every row through the bare en-US
-	 * package silently drops the deploc prior (caught 2026-08-01: 53 operator probes read
-	 * "dependent_locality never emitted" when the mechanism was fine and the instrument was base-only).
+	 * Production routes by locale-hint.
+	 * A harness that grades every row through the bare en-US package silently drops the deploc
+	 * prior (caught 2026-08-01: 53 operator probes read "dependent_locality never emitted"
+	 * when the mechanism was fine and the instrument was base-only).
 	 * Absent → en-US.
 	 */
 	caseCountry?: string
 	/**
-	 * #1585 — the locale hint's country for the typo-fuzzy tier (geocodeAddress's `fuzzyCountryScope`). The runner
-	 * derives it from a row's `locale` field. forwarded verbatim like `defaultCountry`.
+	 * #1585 — the locale hint's country for the typo-fuzzy tier (geocodeAddress's `fuzzyCountryScope`). The runner derives it from a row's `locale` field. Forwarded verbatim like `defaultCountry`.
 	 */
 	fuzzyCountryScope?: string
 }
 
 /**
- * #1024 drift guard: the materialized model the check is about to grade must match the en-us model-card's
- * `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json`
- * (what copy-weights.ts materializes from) drifted once and the superseded
- * model shipped past a silent check.
+ * #1024 drift guard: the materialized model the check is about to grade must match the en-us model-card's `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json` (what copy-weights.ts materializes from) drifted once and the superseded model shipped past a silent check.
  *
  * Throws loudly on mismatch so the release before:release step (releasing.md) blocks the ship.
- * Only the shipped default is checked. a `--candidate` run grades a different artifact by design.
  *
- * Soft-returns when the card / field is absent (a card-format problem is not this guard's job) —
- * the model file itself is always present here (the caller `existsSync`-conditional it).
+ * Only the shipped default is checked.
+ * A `--candidate` run grades a different artifact by design.
+ *
+ * Soft-returns when the card / field is absent (a card-format problem is not this guard's job).
+ * The model file itself is always present here (the caller `existsSync`-conditional it).
  *
  * The md5 it receives is of the model `resolveWeights` returned rather than of a path
  * spelled out here: the guard must check the artifact the run will actually grade,
@@ -332,8 +327,9 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
 
 	if (!(await pathExists(cardPath))) return
 
-	// Soft-return on an unparseable card too — the docstring's interface is that a card-format problem
-	// is not this guard's job (the model file itself is always existsSync-conditional by the caller).
+	// Soft-return on an unparseable card too.
+	// The docstring's interface is that a card-format problem is not this guard's job
+	// (the model file itself is always existsSync-conditional by the caller).
 	const card = tryParsingJSON<{ version?: string; files_md5?: Record<string, string> }>(
 		await readLocalTextFile(cardPath)
 	)
@@ -364,16 +360,19 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
  *
  * The instrument-integrity claim (#1516): a grading environment states its artifact
  * expectations up front, because the failure it is guarding against has no signal of its own.
- * A missing `postcode-us.bin` does not error — the anchor channel resolves to off,
- * the run scores 3-4 baseline cases lower, and the operator reads a model regression.
+ * A missing `postcode-us.bin` does not error.
+ *
+ * The anchor channel resolves to off, the run scores 3-4 baseline cases lower,
+ * and the operator reads a model regression.
  *
  * The classifier's own warning cannot cover this: at load time nothing knows
  * whether this run needs GB anchors.
  *
- * Expectations come from each package'S own card (`files.postcode_anchor`), never from
- * a list kept here. en-gb deliberately ships no binary under the #1476 mitigation
- * until the A4 assembly lands, and en-nz has no WOF NZ postcode database to build one from.
- * a hardcoded list would call both of those supported states broken, and would need editing
+ * Expectations come from each package'S own card (`files.postcode_anchor`), never from a list kept here.
+ * En-gb deliberately ships no binary under the #1476 mitigation until the A4 assembly lands,
+ * and en-nz has no WOF NZ postcode database to build one from.
+ *
+ * A hardcoded list would call both of those supported states broken, and would need editing
  * every time a locale's posture changed — which is the same drift the card exists to prevent.
  *
  * A package that does not resolve at all is not this guard's business: that is
@@ -419,8 +418,9 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 /**
  * Build the geocode deps.
  *
- * `modelPath` swaps only the ONNX (same tokenizer/card/anchor/gazetteer soft-feed), so the
- * held-out check can grade a candidate against production fairly. omit it for the shipped default.
+ * `modelPath` swaps only the ONNX (same tokenizer/card/anchor/gazetteer soft-feed),
+ * so the held-out check can grade a candidate against production fairly.
+ * Omit it for the shipped default.
  *
  * `tokenizerPath` (+ optional `modelCardPath`) additionally swaps the vocab — required to grade
  * a tokenizer-splice candidate (#444/#884/#912), whose model has extra embedding rows a plain
@@ -436,11 +436,11 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// A candidate laid out as a package-shaped weights
 	// dir (`<cacheRoot>/node_modules/@mailwoman/neural-weights-en-us`).
 	// Prefer this over modelPath for a candidate with a different vocab (splice/multisplice):
-	// `loadFromWeights({cacheRoot})` resolves the model + tokenizer + card + anchor/gazetteer
-	// siblings package-shaped, exactly as production does — the
-	// #718-safe path, identical to `eval parity --weights-cache`. A bare `modelPath` swap feeds no soft channels (the
-	// zero-fill trap) and keeps the shipped tokenizer, so a multisplice candidate
-	// would score byte-identical to prod.
+	// `loadFromWeights({cacheRoot})` resolves the model + tokenizer + card +
+	// anchor/gazetteer siblings package-shaped, exactly as production does —
+	// the #718-safe path, identical to `eval parity --weights-cache`.
+	// A bare `modelPath` swap feeds no soft channels (the zero-fill trap) and keeps the
+	// shipped tokenizer, so a multisplice candidate would score byte-identical to prod.
 	const cacheModel = opts.weightsCacheRoot
 		? resolvePath(weightsCachePackageDir(opts.weightsCacheRoot, "en-us"), "model.onnx")
 		: undefined
@@ -467,14 +467,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 		console.error(`[gauntlet] model under test: ${effModel.split("/").slice(-2).join("/")} (md5 ${md5.slice(0, 8)})`)
 
-		// #1024: the transparency stamp exposed a config↔card drift once (release.config.json still pointed at
-		// v220 a64ad2e6 while the v5.4.0 promote shipped v230 ea785a70), so copy-weights.ts
-		// materialized the superseded model and this check silently graded it — a full bisect detour.
-		// Make the stamp assert: the shipped default must match the model-card's
-		// files_md5 (the card is the source of truth).
-		// A `--candidate` run intentionally grades a different artifact, so it is exempt.
-		// This check is wired as the release before:release step (releasing.md),
-		// so failing here guards both the check and the ship.
+		// #1024: the transparency stamp exposed a config↔card drift once (release.config.json still pointed at v220 a64ad2e6 while the v5.4.0 promote shipped v230 ea785a70), so copy-weights.ts materialized the superseded model and this check silently graded it — a full bisect detour. Make the stamp assert: the shipped default must match the model-card's files_md5 (the card is the source of truth). A `--candidate` run intentionally grades a different artifact, so it is exempt. This check is wired as the release before:release step (releasing.md), so failing here guards both the check and the ship.
 		if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot) {
 			await assertShippedModelMatchesCard(md5)
 		}
@@ -515,19 +508,20 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// Per-country overlay classifiers (2026-08-01): a case's country selects the
 	// weights overlay so GB rows grade with en-GB's pair-index + transition-beta
 	// exactly as production's locale-hint routes them.
-	// Lazy + memoized. a missing overlay package (e.g. a candidate weights-cache built without
-	// neural-weights-en-gb) falls back to the base classifier with one loud warning per locale —
-	// base-only grading must never be silent again (the meaning-of-zero rule).
+	// Lazy + memoized.
+	// A missing overlay package (e.g. A candidate weights-cache built without neural-weights-en-gb)
+	// falls back to the base classifier with one loud warning per locale — base-only
+	// grading must never be silent again (the meaning-of-zero rule).
 	// Every locale that ships its own weights overlay belongs here.
 	// A case whose country is absent grades through the base en-US package.
 	// It carries no pair index for that country.
 	// Therefore, its dependent locality silently never fires and the row looks like a model failure.
-	// That exact artifact burned an afternoon in R1, when 53 operator probes read "dependent_locality
-	// never emitted" while the mechanism was fine and the instrument was base-only.
-	// #1516 second half: a grading environment must state its artifact expectations rather than discover them in a
-	// degraded number.
-	// A missing `postcode-us.bin` costs 3-4 baseline cases and produces no failure of its own —
-	// the run simply scores lower, and the operator reads a model regression.
+	// That exact artifact burned an afternoon in R1, when 53 operator probes read
+	// "dependent_locality never emitted" while the mechanism was fine and the instrument
+	// was base-only. #1516 second half: a grading environment must state its artifact
+	// expectations rather than discover them in a degraded number.
+	// A missing `postcode-us.bin` costs 3-4 baseline cases and produces no failure of its own.
+	// The run simply scores lower, and the operator reads a model regression.
 	// Checked for the base locale plus every overlay the corpus can route to (the map above),
 	// because the anchor artifact is per-package.
 	if (!opts.modelPath && !opts.tokenizerPath) {
@@ -619,10 +613,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		})
 	)
 
-	// #1880 — artifact-carrying pin (see GauntletResolverPins.capitalTier): the reference loads here
-	// and becomes the per-candidate capitalLevel closure, exactly as `createGeocodeSession` builds it.
-	// The tri-state mirrors the session: `false` pins the off arm. explicit `true` demands the
-	// reference. unset follows the default, which is on, and degrades on a reference-less artifact.
+	// #1880 — artifact-carrying pin (see GauntletResolverPins.capitalTier): the reference loads here and becomes the per-candidate capitalLevel closure, exactly as `createGeocodeSession` builds it. The tri-state mirrors the session: `false` pins the off arm. Explicit `true` demands the reference. Unset follows the default, which is on, and degrades on a reference-less artifact.
 	const capitalIndex =
 		opts.pins?.capitalTier === false
 			? undefined
@@ -643,10 +634,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
 	const osmProvider = await OSMRegionDatabaseProvider.create(mailwomanDataRoot())
 	// The BAN national-register tier (#1012) sits ahead of OSM in production
-	// (geocode.tsx wires it the same way) — without it here the gauntlet graded an OSM-first
-	// cascade production never runs, and the fr-chevaleret-bare pin silently guarded
-	// the wrong tier (caught 2026-07-10 when the BAN tier's missing bbox fall-through
-	// regressed the bare form in production while this check stayed green).
+	// (geocode.tsx wires it the same way).
+	// Without it here the gauntlet graded an OSM-first cascade production never runs, and the
+	// fr-chevaleret-bare pin silently guarded the wrong tier (caught 2026-07-10 when the BAN tier's
+	// missing bbox fall-through regressed the bare form in production while this check stayed green).
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
 	const banProvider = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 
@@ -657,9 +648,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// The FST ships beside the weights, so the en-GB package carries `fst-en-gb.bin`
 	// and the base carries `fst-en-us.bin`, and they hold different places:
 	// `st margarets hope` is in the GB one and absent from the US one.
-	// Reading the path off the base classifier therefore fed every overlay case a gazetteer for
-	// the wrong country — a GB row graded with en-GB weights and a US FST, which is a pairing
-	// production never runs, since `createGeocodeSession` loads the FST from the classifier IT loaded.
+	// Reading the path off the base classifier therefore fed every overlay case
+	// a gazetteer for the wrong country.
+	// A GB row graded with en-GB weights and a US FST, which is a pairing production never runs,
+	// since `createGeocodeSession` loads the FST from the classifier IT loaded.
 	//
 	// Measured 2026-08-16: `gb-op2-st-margarets-hope` parses `street` under en-GB with no prior
 	// and `locality` with the GB FST fed — so the base-FST wiring hid a row the pin fixes.
@@ -723,7 +715,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like
 	// every optional artifact (a machine without poi.db grades the incumbent behavior.
-	// the fork-entity board rows are improvement_target until it is present).
+	// The fork-entity board rows are improvement_target until it is present).
 	// Mirrors the CLI's wiring exactly, so the board grades what production runs.
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}
 	const poiDBPath = String(dataRootPath("poi", "poi.db"))
@@ -840,18 +832,17 @@ export interface GauntletResult {
 	/**
 	 * The country #42's coherence pass scoped this row to, or null when nothing was overridden.
 	 *
-	 * Not asserted by any case — it is the firing count, so a pinned run can say how
-	 * many rows the mechanism actually spoke on rather than leaving an unchanged
-	 * verdict to mean either "harmless" or "never ran".
+	 * Not asserted by any case.
+	 * It is the firing count, so a pinned run can say how many rows the mechanism actually spoke on
+	 * rather than leaving an unchanged verdict to mean either "harmless" or "never ran".
 	 */
 	postcode_country_scope: string | null
 	/**
 	 * The #1880 capital promotion's firing receipt, projected verbatim: the promoted candidate's
 	 * country, present only when the promotion changed some node's leading candidate.
 	 *
-	 * The same firing-count posture as
-	 * {@linkcode postcode_country_scope} — carried so a pinned comparison counts activity instead of inferring it from
-	 * moved rows.
+	 * The same firing-count posture as {@linkcode postcode_country_scope} — carried
+	 * so a pinned comparison counts activity instead of inferring it from moved rows.
 	 */
 	capital_promotion?: string
 	/**
@@ -860,10 +851,11 @@ export interface GauntletResult {
 	 */
 	variant_alias_exemption?: true
 	/**
-	 * The resolved admin chain, locality → country, verbatim from
-	 * {@linkcode GeocodeResult.hierarchy}. Not asserted by any case: it carries the
-	 * gazetteer `placeID`s, which is what the ablation layer's graceful-degradation ladder
-	 * is synthesized from (the undeleted case's resolved place → its WOF ancestry).
+	 * The resolved admin chain, locality → country, verbatim from {@linkcode GeocodeResult.hierarchy}.
+	 *
+	 * Not asserted by any case: it carries the gazetteer `placeID`s, which is
+	 * what the ablation layer's graceful-degradation ladder is synthesized from
+	 * (the undeleted case's resolved place → its WOF ancestry).
 	 * Only entries the resolver actually decorated appear here, so an empty array means
 	 * the run resolved nothing admin-grade — absence rather than a flat world.
 	 */

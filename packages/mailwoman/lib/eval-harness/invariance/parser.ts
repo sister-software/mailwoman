@@ -37,6 +37,7 @@ export interface ModelSelectOptions {
 	/**
 	 * Package-shaped weights dir (`<root>/node_modules/@mailwoman/neural-weights-<locale>`) —
 	 * #718-safe, resolves model + tokenizer + card + anchor/gazetteer siblings via `loadFromWeights`.
+	 *
 	 * Preferred over `model` for grading a candidate whose vocab differs (splice),
 	 * and the only correct grade for a country-channel model.
 	 * Alternative to `model`.
@@ -46,14 +47,16 @@ export interface ModelSelectOptions {
 	 * BCP-47-ish locale tag for weights-package resolution (which classifier + FST is loaded).
 	 *
 	 * Default `en-US`.
-	 * This is the RUN's locale — the per-row parse locale is derived from each
-	 * fixture row's country via `localeForCountry`.
+	 * This is the RUN's locale.
+	 *
+	 * The per-row parse locale is derived from each fixture row's country via `localeForCountry`.
 	 */
 	locale?: string
 }
 
 /**
- * The suite's fixture rows are keyed by ISO country code. the production pipeline wants a BCP-47 locale tag.
+ * The suite's fixture rows are keyed by ISO country code.
+ * The production pipeline wants a BCP-47 locale tag.
  *
  * These are the tags for the four countries `suite.jsonl` carries (DE, FR, GB, US),
  * and nothing more: the gauntlet's `OVERLAY_LOCALE_BY_COUNTRY` lists the overlay locales

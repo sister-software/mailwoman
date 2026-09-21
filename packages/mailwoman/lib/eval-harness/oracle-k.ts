@@ -180,7 +180,8 @@ export function segmentDecodeKBest(
 		return row.map((value) => value - z)
 	})
 
-	// Group pieces into words. pure-punctuation pieces are their own word.
+	// Group pieces into words.
+	// Pure-punctuation pieces are their own word.
 	const words: number[][] = []
 	let current: number[] = []
 
@@ -330,7 +331,8 @@ function extractSurface(
 }
 
 /**
- * Run the oracle-recall@k eval. narrates the per-floor table on stdout.
+ * Run the oracle-recall@k eval.
+ * Narrates the per-floor table on stdout.
  *
  * Informational — always exits 0.
  */
@@ -354,9 +356,10 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		options.fixturesPath ?? PARITY_FIXTURES_PATH
 	).filter((candidate) => !candidate.dropped && candidate.expect)) {
 		fixtureCount++
-		// Production config parity (#1146): every path production parses on feeds the query-shape
-		// emission prior — `safeClassify` in the runtime pipeline, and `geocode-core`
-		// since #981 (which fixed this same divergence for the drop-in servers).
+		// Production config parity (#1146): every path production parses on feeds
+		// the query-shape emission prior.
+		// `safeClassify` in the runtime pipeline, and `geocode-core` since #981
+		// (which fixed this same divergence for the drop-in servers).
 		// This harness was the last surface still grading a starved parse.
 		// A no-op on inputs carrying no known format and no region abbrev.
 		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))

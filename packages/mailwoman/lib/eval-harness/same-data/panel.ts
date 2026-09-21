@@ -62,8 +62,8 @@ const COUNTRY_INFO_COLUMNS = { iso: 0, country: 4 } as const
  * The postal dump's admin1 code column.
  *
  * `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS} names the admin1 name at index 3
- * because that is what a corpus row renders. this panel keys on the code beside it,
- * which is stable across the register's language variants.
+ * because that is what a corpus row renders.
+ * This panel keys on the code beside it, which is stable across the register's language variants.
  */
 const POSTAL_ADMIN1_CODE_COLUMN = 4
 
@@ -84,9 +84,10 @@ export interface GeoNamesCity {
 /**
  * Parse a GeoNames main-table dump.
  *
- * This benchmark reads `cities15000.txt`, the table filtered to places above 15,000
- * population. a per-country dump (`FR.txt`) carries the same columns and parses here
- * unchanged, which is what a panel reaching below that floor would read.
+ * This benchmark reads `cities15000.txt`, the table filtered to places above 15,000 population.
+ * A per-country dump (`FR.txt`) carries the same columns and parses here unchanged,
+ * which is what a panel reaching below that floor would read.
+ *
  * `header: false`: the dump is headerless, and a spliterator that assumed one would eat the first row.
  */
 export async function readCities(path: string): Promise<GeoNamesCity[]> {
@@ -111,8 +112,10 @@ export async function readCities(path: string): Promise<GeoNamesCity[]> {
 }
 
 /**
- * The English short country names, read from `countryInfo.txt` — the register's own column, so a
- * country qualifier is spelled the way the gold source spells it rather than the way this file would.
+ * The English short country names, read from `countryInfo.txt`.
+ *
+ * The register's own column, so a country qualifier is spelled the way the gold
+ * source spells it rather than the way this file would.
  */
 export async function readCountryNames(path: string): Promise<Map<string, string>> {
 	const names = new Map<string, string>()
@@ -329,8 +332,8 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		}
 	})
 
-	// The register's `(country, admin1)` keys grouped once, in code-point order —
-	// the same walk per row would be a re-scan of the whole index for every candidate.
+	// The register's `(country, admin1)` keys grouped once, in code-point order.
+	// The same walk per row would be a re-scan of the whole index for every candidate.
 	const adminKeysByCountry = new Map<string, string[]>()
 
 	for (const key of [...postcodeByAdmin.keys()].toSorted(compareByCodePoint)) {

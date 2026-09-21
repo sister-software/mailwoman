@@ -153,8 +153,10 @@ export async function scorePerTagF1(
 //#region Classifier construction
 
 /**
- * Options for {@linkcode createUnfoldedEvalClassifier} — the classifier-construction block
- * `score-affix` and `score-country-homograph` carried byte-for-byte before it was shared.
+ * Options for {@linkcode createUnfoldedEvalClassifier}.
+ *
+ * The classifier-construction block `score-affix` and `score-country-homograph`
+ * carried byte-for-byte before it was shared.
  */
 export interface UnfoldedEvalClassifierOptions {
 	/**
@@ -165,14 +167,16 @@ export interface UnfoldedEvalClassifierOptions {
 	model: string
 	/**
 	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft
-	 * channels from the package via `loadFromWeights` — the only in-distribution
-	 * grade for a country-channel model (v6.2.0+).
+	 * channels from the package via `loadFromWeights`.
+	 *
+	 * The only in-distribution grade for a country-channel model (v6.2.0+).
 	 *
 	 * Takes precedence over the explicit {@linkcode UnfoldedEvalClassifierOptions.model} path.
 	 */
 	weightsCache: string
 	/**
-	 * Gazetteer-anchor lexicon path. empty feeds nothing.
+	 * Gazetteer-anchor lexicon path.
+	 * Empty feeds nothing.
 	 */
 	gazetteerLexicon: string
 	/**
@@ -257,9 +261,10 @@ export interface LocaleEvalSpec {
  * is measurable — the folded `per-locale-f1.ts` joins the three street parts and cannot see it.
  * FR uses the dedicated street-prefix eval set (`fr-street-prefix-real.jsonl`, the #719 reproduction),
  * not the broad golden dev set, for the essential tags: golden FR carries only ~7
- * `street_prefix` rows against ~1535 without it, so the unfolded `street_prefix` F1
- * there is dominated by absent-gold rows (measured 5.3) — it would under-certify
- * the very capability the delta check exists to guard.
+ * `street_prefix` rows against ~1535 without it, so the unfolded `street_prefix`
+ * F1 there is dominated by absent-gold rows (measured 5.3).
+ *
+ * It would under-certify the very capability the delta check exists to guard.
  *
  * On the purpose-built eval set the model emits FR `street_prefix` at F1 80.0
  * (the figure the #719 fix cites), which is the honest capability number the loader must guard.
@@ -293,8 +298,9 @@ export interface MaskOffOnOptions {
 	 * pass `"formatted"`: the rows are formatted postal addresses, on which the production pipeline
 	 * derives `formatted` and runs the evidence-bundle channels off as a declared ablation.
 	 * Omitting it grades the bare-library default (`fragmented`), a path production
-	 * does not take on these inputs. the option stays so a caller can measure that
-	 * path on purpose, never by accident (#2048).
+	 * does not take on these inputs.
+	 *
+	 * The option stays so a caller can measure that path on purpose, never by accident (#2048).
 	 */
 	inputMode?: "formatted"
 }

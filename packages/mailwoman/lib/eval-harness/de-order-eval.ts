@@ -39,8 +39,8 @@ import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
 /**
  * The six runs, in the order they execute and by the name each writes its `.md`/`.log` under.
  *
- * `de-native-on` is the only one a promotion floor reads — the `native DE`
- * anchor-on cell of the 2x2 is `de.native_locality`.
+ * `de-native-on` is the only one a promotion floor reads.
+ * The `native DE` anchor-on cell of the 2x2 is `de.native_locality`.
  * It is also in the fp32↔int8 delta cap.
  *
  * Therefore, that run executes on both arms.
@@ -216,9 +216,10 @@ export async function deOrderEval(
 		const anchorOptions = anchorOn ? { modelAnchorLookup: lookup } : { anchorOff: true }
 
 		// The try/catch is the in-process spelling of the `nothrow:` this call used to carry.
-		// oa-resolver-eval signals its own internal regression by exiting non-zero even when it
-		// wrote a valid report. this is a measurement harness (loc() reads the .md), so a thrown
-		// failure must not abort before the 2x2 summary prints (it false-failed de.native_locality).
+		// Oa-resolver-eval signals its own internal regression by exiting non-zero even
+		// when it wrote a valid report.
+		// This is a measurement harness (loc() reads the .md), so a thrown failure must not abort
+		// before the 2x2 summary prints (it false-failed de.native_locality).
 		// The two sinks stay separate because the child's stdout and stderr went to two different files.
 		const outLines: string[] = []
 		const errLines: string[] = []

@@ -42,7 +42,8 @@ export const WRONG_AREA_KM = 25
 /**
  * The ablation arm's pinned options — the six library defaults it turns off.
  *
- * Read from the frozen definition at run time. this constant exists so a unit test can assert the two agree.
+ * Read from the frozen definition at run time.
+ * This constant exists so a unit test can assert the two agree.
  */
 export const ABLATION_RESOLVE_OPTS: ResolveOpts = {
 	adminCoherence: false,
@@ -125,7 +126,8 @@ function placeIDValue(placeID: string): string {
 /**
  * The winner's normalized margin over the runner-up in one trace, in [0, 1].
  *
- * One when the lookup considered a single candidate. zero when the top two tied.
+ * One when the lookup considered a single candidate.
+ * Zero when the top two tied.
  */
 function traceMargin(trace: ResolveNodeTrace): number {
 	const scores = trace.candidates.map((candidate) => candidate.score).toSorted((left, right) => right - left)

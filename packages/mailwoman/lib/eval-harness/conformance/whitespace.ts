@@ -210,8 +210,10 @@ export const WHITESPACE_TRANSFORMATION_BY_NAME: Record<WhitespaceTransformationN
  *
  * Every non-whitespace character survives, in its original order, so this is the strongest available
  * statement of the scope rule: a whitespace transformation preserves token content and token order.
- * `\s` rather than `[ \t]` on purpose — the key is a comparison surface rather than a
- * transformation, and a pair that swapped a space for a newline must still come out equal here
+ * `\s` rather than `[ \t]` on purpose.
+ *
+ * The key is a comparison surface rather than a transformation,
+ * and a pair that swapped a space for a newline must still come out equal here
  * so {@linkcode classifyWhitespaceTransformation} can refuse it by name.
  */
 export function whitespaceBlindKey(text: string): string {
@@ -240,8 +242,8 @@ export function classifyWhitespaceTransformation(base: string, variant: string):
  * - `identity-transformation` — the transformation returns the text unchanged
  *   because the query holds nothing of the kind it acts on: no comma for a separator
  *   transformation, no whitespace at all for a run one.
- *   Such a row is the identity law wearing a whitespace label — it would hold
- *   whatever the pipeline does with spacing.
+ *   Such a row is the identity law wearing a whitespace label.
+ *   It would hold whatever the pipeline does with spacing.
  * - `structural-identifier-space` — the query's every whitespace run sits inside a structured identifier
  *   whose format grammar fixes it (`N7 0BT`), so a run transformation has no safe run to act on.
  *   Reported apart from the identity reading because the two absences say different things,
@@ -254,8 +256,8 @@ export type WhitespaceApplicabilityRule = (typeof WHITESPACE_APPLICABILITY_RULES
 /**
  * One applicability reading: whether the transformation may be stated as a law for this text, and why.
  *
- * The reason is populated on both verdicts, for the same reason the case-folding law populates it
- * on both — a row silently dropped from a law suite is the absence this layer exists to refuse.
+ * The reason is populated on both verdicts, for the same reason the case-folding law populates it on both.
+ * A row silently dropped from a law suite is the absence this layer exists to refuse.
  */
 export interface WhitespaceApplicability {
 	applicable: boolean
@@ -343,13 +345,11 @@ export const WHITESPACE_SUITE_PATH: string = resolvePackagePath(
  * through the base en-US weights package rather than its own overlay, so a whitespace
  * violation would be reported for an instrument that was never pointed at the row's locale.
  *
- * {@linkcode whitespaceApplicability} is deliberately not re-checked here, and the case-folding audit's parallel check
- * is not an oversight in this one.
- * A pair classifies only when its transformation moved something, which is the whole
- * of what applicability asks of a whitespace transformation.
+ * {@linkcode whitespaceApplicability} is deliberately not re-checked here, and the case-folding audit's parallel check is not an oversight in this one. A pair classifies only when its transformation moved something, which is the whole of what applicability asks of a whitespace transformation.
  *
- * Therefore, an inapplicable row cannot reach this function — it fails classification
- * first, naming the transformation set.
+ * Therefore, an inapplicable row cannot reach this function.
+ * It fails classification first, naming the transformation set.
+ *
  * The rules are required one layer out, where the suite's completeness test reads them:
  * an arm absent from a committed row must name the rule that refuses it.
  */

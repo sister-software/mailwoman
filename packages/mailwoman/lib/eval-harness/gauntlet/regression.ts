@@ -70,9 +70,10 @@ export interface GauntletLayerOptions {
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * Resolver-side pin pins (#42's `postcodeCountryCoherence` today) — the resolver
-	 * counterpart to the model swaps above, so a resolver pin can be graded by the
-	 * standard eval instead of by a bespoke probe.
+	 * Resolver-side pin pins (#42's `postcodeCountryCoherence` today).
+	 *
+	 * The resolver counterpart to the model swaps above, so a resolver pin can be
+	 * graded by the standard eval instead of by a bespoke probe.
 	 *
 	 * Omitted → production defaults.
 	 */
@@ -112,7 +113,7 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
 /**
  * Run the curated regression layer.
  *
- * Returns `pass` (every `status=pass` case still passes).
+ * @returns `pass` (every `status=pass` case still passes).
  */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	using kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
@@ -131,23 +132,21 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	// attributable to the production path (#2223).
 	const withheld: string[] = []
 	let counted = 0
-	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row.
-	// otherwise it means "never reached", and the two are indistinguishable without this count.
+	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row. Otherwise it means "never reached", and the two are indistinguishable without this count.
 	const overrides: string[] = []
 
 	for (const c of cases) {
 		// caseCountry selects the per-locale weights overlay (GB → en-GB's pair-index) — see harness.ts.
-		// A row carrying `locale` runs under that locale's overlay instead of the truth country's: a
-		// #1585 locale-arm row like `Paris` under `en-US` is an FR row (country=FR pins the truth) whose
-		// production route goes through the US register.
+		// A row carrying `locale` runs under that locale's overlay instead of the truth
+		// country's: a #1585 locale-arm row like `Paris` under `en-US` is an FR row
+		// (country=FR pins the truth) whose production route goes through the US register.
 		// The region subtag is the overlay key.
 		const overlayCountry = routeCountry(c)
 
 		const geoOpts = {
 			...(c.default_country ? { defaultCountry: c.default_country } : {}),
 			...(overlayCountry ? { caseCountry: overlayCountry } : {}),
-			// #1585: a locale row's hint scopes the typo-fuzzy tier, mirroring the CLI's unconditional
-			// threading of the locale-derived country.
+			// #1585: a locale row's hint scopes the typo-fuzzy tier, mirroring the CLI's unconditional threading of the locale-derived country.
 			...(c.locale ? { fuzzyCountryScope: c.locale.split("-")[1] } : {}),
 		}
 
@@ -171,12 +170,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		} else if (issues.length) {
 			tracked.push(`  ~ ${c.id} [${c.status}${ref}]: ${issues.join("; ")}`)
 		} else if (deps.gradedBaseOnly(overlayCountry)) {
-			// #2223: the overlay this row routes to did not load, so the row graded without its pair index and
-			// dependent-locality prior.
-			// That is not the production path, and a pass on it is not evidence the production path passes —
-			// promoting it would write a base-only result into the board as a regression guard.
-			// Reported rather than dropped: an invisible withholding is indistinguishable
-			// from a row that simply kept failing.
+			// #2223: the overlay this row routes to did not load, so the row graded without its pair index and dependent-locality prior. That is not the production path, and a pass on it is not evidence the production path passes — promoting it would write a base-only result into the board as a regression guard. Reported rather than dropped: an invisible withholding is indistinguishable from a row that simply kept failing.
 			withheld.push(`  · ${c.id} [${c.status}${ref}] passes, but ${overlayCountry} graded BASE-ONLY — not promotable`)
 		} else {
 			newlyPassing.push(`  + ${c.id} [${c.status}${ref}] now PASSES — promote to status=pass`)

@@ -106,8 +106,8 @@ export interface RecordCensus {
 	/**
 	 * Candidate answers the gold filter withheld during recording, counted across every question asked.
 	 *
-	 * Zero everywhere except the withheld-gold stratum. a non-zero value on a
-	 * `goldPresent` row would be a defect.
+	 * Zero everywhere except the withheld-gold stratum.
+	 * A non-zero value on a `goldPresent` row would be a defect.
 	 */
 	removedGold: number
 	/**
@@ -131,8 +131,8 @@ export interface RecordInputs {
 	/**
 	 * Every arm's `ResolveOpts`, so the recording covers each arm's questions.
 	 *
-	 * The production arm's empty option bag must be included explicitly —
-	 * an omitted default is a missing key at replay.
+	 * The production arm's empty option bag must be included explicitly.
+	 * An omitted default is a missing key at replay.
 	 */
 	armOptions: ReadonlyArray<ResolveOpts>
 	/**
@@ -168,8 +168,10 @@ export interface RecordResult {
 /**
  * How far apart two rows with the same folded name may sit and still denote one
  * settlement. 5 km is the radius the `same-data-resolver-v1` correction re-graded at,
- * where it credited 10 of 100 withheld-gold rows. at 25 km it credits 15, so the figure
- * moves with the radius and the radius is stated wherever the figure is.
+ * where it credited 10 of 100 withheld-gold rows.
+ *
+ * At 25 km it credits 15, so the figure moves with the radius and the radius
+ * is stated wherever the figure is.
  */
 const SAME_SETTLEMENT_KM = 5
 
@@ -190,11 +192,12 @@ function settlementKey(name: string): string {
 /**
  * What the recorder withholds for one row, or null when the row carries its gold.
  *
- * The default is id equality — the rule `same-data-resolver-v1` was frozen under.
- * Under
- * {@link RecordInputs.withholdEveryDenotingRow} it also withholds a row whose folded name equals the gold's within
- * {@link SAME_SETTLEMENT_KM}, which is the settlement-identity rule: the gazetteer carries one place at two admin tiers
- * and the concordance links only one of them.
+ * The default is id equality.
+ * The rule `same-data-resolver-v1` was frozen under.
+ *
+ * Under {@link RecordInputs.withholdEveryDenotingRow} it also withholds a row whose folded name
+ * equals the gold's within {@link SAME_SETTLEMENT_KM}, which is the settlement-identity rule:
+ * the gazetteer carries one place at two admin tiers and the concordance links only one of them.
  */
 function withholdPredicate(
 	row: SameDataPanelRow,
@@ -214,8 +217,8 @@ function withholdPredicate(
 		if (!place.name || settlementKey(place.name) !== goldKey) return false
 
 		// Both halves are required.
-		// `Batāla` (IN) and `Batala` (IN) fold equal and sit 1,421 km apart — a real namesake,
-		// and withholding it would remove a candidate the stratum is entitled to offer.
+		// `Batāla` (IN) and `Batala` (IN) fold equal and sit 1,421 km apart.
+		// A real namesake, and withholding it would remove a candidate the stratum is entitled to offer.
 		return haversineKm(place.lat, place.lon, row.gold.lat, row.gold.lon) <= SAME_SETTLEMENT_KM
 	}
 }
@@ -231,9 +234,9 @@ export async function recordFixture(inputs: RecordInputs): Promise<RecordResult>
 	for (const row of panel) {
 		const tree = await parse(row.query)
 		const lookups = new Map<string, SameDataLookup>()
-		// Not `error`: the catch binding below takes that name, and a same-named
-		// outer variable is shadowed — the assignment would write to the parameter
-		// and the receipt would report a clean run over a failed one.
+		// Not `error`: the catch binding below takes that name, and a same-named outer variable is shadowed.
+		// The assignment would write to the parameter and the receipt would report
+		// a clean run over a failed one.
 		let recordingError: string | undefined
 
 		let removedGold = 0

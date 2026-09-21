@@ -223,8 +223,8 @@ export interface Phase2Check {
 	/**
 	 * The registered denominator.
 	 *
-	 * Never "the rows that answered" — a probe that stops being able to read a row
-	 * reports a lower numerator rather than a smaller board.
+	 * Never "the rows that answered".
+	 * A probe that stops being able to read a row reports a lower numerator rather than a smaller board.
 	 */
 	denominator: number
 	baseline: Phase2Baseline
@@ -255,7 +255,8 @@ export interface Phase2Lane {
 	issue: string
 	claim: string
 	/**
-	 * What merged for this lane regardless of its status — a blocked lane is rarely blocked in whole.
+	 * What merged for this lane regardless of its status.
+	 * A blocked lane is rarely blocked in whole.
 	 */
 	landed: string
 	note: string
@@ -311,8 +312,8 @@ export interface Phase2Thresholds {
 	/**
 	 * How many lanes must report.
 	 *
-	 * Equal to the registered measurable-lane count — an instrument that could not run
-	 * leaves a lane unreported, and an unreported lane is not a passing one.
+	 * Equal to the registered measurable-lane count.
+	 * An instrument that could not run leaves a lane unreported, and an unreported lane is not a passing one.
 	 */
 	requiredMeasurableLanes: number
 }
@@ -323,7 +324,7 @@ export interface Phase2Thresholds {
  * Recorded, compared, and reported — never a decision input.
  *
  * A run on a rebuilt `poi.db` or a bumped weights package is still a run.
- * it is just not comparable to the receipts this ruler names as baselines,
+ * It is just not comparable to the receipts this ruler names as baselines,
  * and {@linkcode Phase2Verdict.comparability} is where a reader sees that.
  */
 export interface Phase2ArtifactPins {
@@ -776,8 +777,9 @@ export function describeBar(bar: Phase2Bar): string {
  * Measure every registered check against the readings one run produced.
  *
  * Refuses a check whose measurement no reading answers, rather than treating the absence as a miss.
- * An unread measurement is a broken instrument, and a broken instrument reporting `0` is
- * indistinguishable from a real zero — the one reading a decision must never be built on.
+ * An unread measurement is a broken instrument, and a broken instrument reporting
+ * `0` is indistinguishable from a real zero.
+ * The one reading a decision must never be built on.
  */
 export function evaluatePhase2Checks(
 	definition: Phase2DecisionDefinition,
@@ -838,10 +840,11 @@ export function computePhase2Counts(
  * Order is required, and it is #1928's order.
  * A control miss is checked first and stops under both decisions: a capability bought by
  * moving something that already worked is not a result to act on. proceed-AS-authorized
- * is checked before evidence-only, and requires both tiers — the surface the integration
- * record authorizes serves a category together with the authority that chose it,
- * so the evidence half is a component of proceeding rather than an alternative to it.
- * evidence-only is then exactly the record's §7 outcome: the observation surface holds
+ * is checked before evidence-only, and requires both tiers.
+ *
+ * The surface the integration record authorizes serves a category together with the authority that
+ * chose it, so the evidence half is a component of proceeding rather than an alternative to it.
+ * Evidence-only is then exactly the record's §7 outcome: the observation surface holds
  * and the recognition capability did not reach its bar.
  *
  * A blocked lane changes no arithmetic.

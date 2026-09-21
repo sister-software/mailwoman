@@ -140,8 +140,9 @@ function canonicalizeMap(components: Record<string, string>): Record<string, str
  * Compare two component maps for a given transform id.
  *
  * `abbreviation-swap` canonicalizes both sides to long-form first
- * (see `canonicalizeAbbreviations`'s doc comment) so the transform's own intended text
- * change isn't misread as a violation. every other transform compares verbatim.
+ * (see `canonicalizeAbbreviations`'s doc comment) so the transform's own intended
+ * text change isn't misread as a violation.
+ * Every other transform compares verbatim.
  */
 function compareForTransform(
 	transformID: string,
@@ -169,7 +170,7 @@ function hasCriticalComponent(components: Record<string, string>): boolean {
 /**
  * Run the full suite.
  *
- * Returns a report with per-pair outcomes, summary counts, and the check exit code.
+ * @returns a report with per-pair outcomes, summary counts, and the check exit code.
  */
 export async function runInvarianceSuite(options: RunInvarianceOptions): Promise<InvarianceReport> {
 	const maxDegraded = options.maxDegraded ?? 0
@@ -209,12 +210,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		// reuses it instead of re-parsing the same baseline string per transform.
 		await originalFor(row)
 
-		// #1516 gained-capability class (row-level): the baseline's original parse carries no
-		// CRITICAL_TAGS value while the candidate's does — the baseline never had the
-		// row's core capability (measured: v4.0.1 never emits street/dependent_locality
-		// for the quoted venue in any register. v4.2.0 does in 7/8).
-		// Every violation on such a row is "gained but not register-flat": reported non-blocking,
-		// and never counted as pre-existing — the baseline did not "already violate", it could not.
+		// #1516 gained-capability class (row-level): the baseline's original parse carries no CRITICAL_TAGS value while the candidate's does. The baseline never had the row's core capability (measured: v4.0.1 never emits street/dependent_locality for the quoted venue in any register. v4.2.0 does in 7/8). Every violation on such a row is "gained but not register-flat": reported non-blocking, and never counted as pre-existing. The baseline did not "already violate", it could not.
 		const gainedCapabilityRow =
 			options.baselineParse !== undefined &&
 			!hasCriticalComponent(await baselineOriginalFor(row)) &&
@@ -281,21 +277,21 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 				if (candidateOutcome.verdict === "INVARIANT" && baselineResult.verdict !== "INVARIANT") {
 					// Gained-capability class (#1516): the candidate holds a pair the baseline violated.
-					// A capability that went 0/207 → 205/207 is a gain rather than a violation —
-					// it is reported in its own section below and never touches the check.
+					// A capability that went 0/207 → 205/207 is a gain rather than a violation.
+					// It is reported in its own section below and never touches the check.
 					outcome.verdict = "GAINED"
 				} else {
 					// Severity-aware rather than severity-blind: a violation is pre-existing
 					// only if the candidate's verdict is not worse than the baseline's on this
 					// same (row, transform) pair — invariant < degraded < lost.
 					// Treating two non-invariant verdicts as pre-existing regardless of severity would
-					// let a candidate `lost` slide through as "non-blocking" whenever the baseline
-					// merely degraded on the same pair: baseline drops a non-critical `unit` on
-					// comma-drop, candidate drops the critical `house_number` on the identical pair —
-					// that must check rather than hide. v1 is verdict-severity matching only
+					// let a candidate `lost` slide through as "non-blocking" whenever the baseline merely
+					// degraded on the same pair: baseline drops a non-critical `unit` on comma-drop,
+					// candidate drops the critical `house_number` on the identical pair.
+					// That must check rather than hide. v1 is verdict-severity matching only
 					// rather than content-diff matching: it doesn't check whether the
 					// candidate's `lost` is the same underlying break as the baseline's `lost`
-					// (e.g. same tag, same kind of corruption) — only that it's no worse in kind.
+					// (e.g. Same tag, same kind of corruption) — only that it's no worse in kind.
 					// A future tightening could require the diffs to name the same tag
 					// before calling two LOSTs "the same" pre-existing gap.
 					// Gained-capability rows never reach this severity comparison as
@@ -330,8 +326,8 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		if (o.verdict === "GAINED") {
 			newCounts.gained++
 		} else {
-			// Gained-capability residuals are excluded from newCounts exactly like pre-existing violations —
-			// the baseline never had the row's capability, so the pair cannot be a lost one.
+			// Gained-capability residuals are excluded from newCounts exactly like pre-existing violations.
+			// The baseline never had the row's capability, so the pair cannot be a lost one.
 			const isNew = !options.baselineParse || (!o.preExisting && !o.gainedCapability)
 
 			if (isNew) {
@@ -361,8 +357,8 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 			const tag = v.verdict === "LOST" ? "✗ LOST" : "~ DEGRADED"
 
 			// Print the baseline's actual recorded verdict rather than asserting one: "not pre-existing"
-			// (worse severity than the baseline) does not imply the baseline held invariant —
-			// it could itself have been degraded while the candidate is the strictly-worse `lost`.
+			// (worse severity than the baseline) does not imply the baseline held invariant.
+			// It could itself have been degraded while the candidate is the strictly-worse `lost`.
 			const provenance = options.baselineParse
 				? v.preExisting
 					? " [pre-existing: baseline also violates — non-blocking]"

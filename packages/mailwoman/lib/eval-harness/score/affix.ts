@@ -53,7 +53,8 @@ export interface ScoreAffixOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Write the machine-readable sidecar here — the interface the check verdict reads.
+	 * Write the machine-readable sidecar here.
+	 * The interface the check verdict reads.
 	 *
 	 * The markdown is presentation.
 	 */
@@ -73,8 +74,9 @@ export interface ScoreAffixOptions {
 	suppressGazNearPostcode?: boolean
 	/**
 	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft
-	 * channels (anchor + gazetteer + country) from the package via `loadFromWeights` —
-	 * the only in-distribution grade for a country-channel model (v6.2.0+).
+	 * channels (anchor + gazetteer + country) from the package via `loadFromWeights`.
+	 *
+	 * The only in-distribution grade for a country-channel model (v6.2.0+).
 	 *
 	 * Takes precedence over the explicit {@linkcode ScoreAffixOptions.model} path.
 	 */
@@ -94,8 +96,9 @@ export interface ScoreAffixTag {
 }
 
 /**
- * What {@linkcode scoreAffix} returns — the same object written to the JSON sidecar,
- * so a caller never has to re-read the file it just asked for.
+ * What {@linkcode scoreAffix} returns.
+ *
+ * The same object written to the JSON sidecar, so a caller never has to re-read the file it just asked for.
  */
 export interface ScoreAffixResult {
 	n: number

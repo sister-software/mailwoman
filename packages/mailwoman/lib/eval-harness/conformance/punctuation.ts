@@ -120,12 +120,13 @@ const REMOVED_MARK: Partial<Record<PunctuationTransformationName, string>> = {
 /**
  * The comparators that read the query's own text back out of the result.
  *
- * `parse_whole_strict` and `component_map` both grade component values, and a component
- * value is the span the parser quoted from the query — so a transformation that rewrites
- * a token rewrites the value with it, and the comparator reports the transformation
- * rather than anything the pipeline decided.
- * `resolution_identity` reads namespaced place ids and `assembled_coordinate`
- * reads a coordinate. neither can carry a mark.
+ * `parse_whole_strict` and `component_map` both grade component values,
+ * and a component value is the span the parser quoted from the query.
+ * So a transformation that rewrites a token rewrites the value with it, and the comparator
+ * reports the transformation rather than anything the pipeline decided.
+ *
+ * `resolution_identity` reads namespaced place ids and `assembled_coordinate` reads a coordinate.
+ * Neither can carry a mark.
  */
 const TEXT_ECHOING_COMPARATORS = new Set<OutcomeComparatorName>(["parse_whole_strict", "component_map"])
 
@@ -238,8 +239,8 @@ export function classifyPunctuationTransformation(base: string, variant: string)
  * - `identity-transformation` — the transformation returns the text unchanged
  *   because the query holds nothing of the kind it acts on: no comma to drop,
  *   no straight apostrophe to curl, a query that already ends in a full stop.
- *   Such a row is the identity law wearing a punctuation label — it would hold
- *   whatever the pipeline does with punctuation.
+ *   Such a row is the identity law wearing a punctuation label.
+ *   It would hold whatever the pipeline does with punctuation.
  * - `mark-inside-token` — the query does carry the mark, and every occurrence sits
  *   inside a token (`comer parís.méxico`, `and more...,`).
  *   Removing it would rewrite the token's text and change what the query names,
@@ -262,8 +263,8 @@ export type PunctuationApplicabilityRule = (typeof PUNCTUATION_APPLICABILITY_RUL
 /**
  * One applicability reading: whether the transformation may be stated as a law for this row, and why.
  *
- * The reason is populated on both verdicts, for the same reason the two shipped laws populate it
- * on both — a row silently dropped from a law suite is the absence this layer exists to refuse.
+ * The reason is populated on both verdicts, for the same reason the two shipped laws populate it on both.
+ * A row silently dropped from a law suite is the absence this layer exists to refuse.
  */
 export interface PunctuationApplicability {
 	applicable: boolean

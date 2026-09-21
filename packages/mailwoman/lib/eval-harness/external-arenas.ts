@@ -95,7 +95,7 @@ export interface ExternalArenasOptions {
  * Narration splits across `report`/`reportError` the way the child process's stdout/stderr did,
  * because the check concatenates them in that order into `arenas.md`.
  *
- * Throws on a failed inner probe — the in-process spelling of the non-zero exit the check treats as fatal.
+ * @throws on a failed inner probe — the in-process spelling of the non-zero exit the check treats as fatal.
  */
 export async function externalArenas(
 	options: ExternalArenasOptions = {},
@@ -162,7 +162,8 @@ export async function externalArenas(
 	await copyFileTo("data/eval/external/libpostal-cases.jsonl", join(outDir, "libpostal", "libpostal-cases.jsonl"))
 	await copyFileTo("data/eval/external/postal-cases.jsonl", join(outDir, "postal", "postal-cases.jsonl"))
 
-	// Harness writes its progress to <name>.stderr. we tail the last 40 summary lines off stdout.
+	// Harness writes its progress to <name>.stderr.
+	// We tail the last 40 summary lines off stdout.
 	const runArena = async (name: string, dir: string): Promise<void> => {
 		report(`== arena: ${name} ==`)
 

@@ -46,9 +46,9 @@ export function stripParentheticalQualifier(name: string): string {
 /**
  * Whether {@linkcode stripParentheticalQualifier} would change `name`.
  *
- * Separate from the strip so a caller can count what it changed without comparing
- * strings at the call site — the panel reader reports that count, because a normalizer
- * whose size nobody can see is one nobody can audit.
+ * Separate from the strip so a caller can count what it changed without comparing strings at the call site.
+ * The panel reader reports that count, because a normalizer whose size nobody
+ * can see is one nobody can audit.
  */
 export function hasParentheticalQualifier(name: string): boolean {
 	return stripParentheticalQualifier(name) !== name

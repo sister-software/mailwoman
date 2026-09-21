@@ -21,7 +21,8 @@ import type { Resolved } from "#eval-harness/oa/resolver/tree-hits"
 import { normalizeComponent } from "#eval-harness/per/tag-f1"
 
 /**
- * Shortest token distinctive enough to carry matching weight. shorter ones are articles and directionals.
+ * Shortest token distinctive enough to carry matching weight.
+ * Shorter ones are articles and directionals.
  */
 const MIN_DISTINCTIVE_TOKEN_LENGTH = 4
 
@@ -71,12 +72,13 @@ const normName = (s: string | undefined): string => {
  *
  * Map full name → abbrev so region-match compares like-for-like.
  *
- * Derived from `@mailwoman/codex/us`, the same place the German and French lookups
- * above come from — the table this replaced was embedded because the codex "has no
- * exports map", which has not been true for some time.
- * It carried 52 of the codex's 56 entries, agreeing on every one. the four it
- * lacked are Guam, the US Virgin Islands, the Northern Marianas and American Samoa,
- * whose rows could not match on region at all.
+ * Derived from `@mailwoman/codex/us`, the same place the German and French lookups above come from.
+ * The table this replaced was embedded because the codex "has no exports map",
+ * which has not been true for some time.
+ *
+ * It carried 52 of the codex's 56 entries, agreeing on every one.
+ * The four it lacked are Guam, the US Virgin Islands, the Northern Marianas
+ * and American Samoa, whose rows could not match on region at all.
  */
 const STATE_NAME_TO_ABBR: Record<string, string> = Object.fromEntries(
 	Object.entries(US_STATE_BY_ABBREVIATION).map(([abbreviation, name]) => [normalizeComponent(name), abbreviation])
@@ -177,8 +179,8 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 	// Rather than a hardcoded suffix blacklist (a provenance-first violation),
 	// credit the qualifier only when it matches the resolved place's own WOF ancestry:
 	// `Vogtl`→county `Vogtland`, `Sachs`→region `Sachsen`.
-	// List-free and non-gameable — a genuinely wrong place won't carry the gold's
-	// qualifier among its ancestors.
+	// List-free and non-gameable.
+	// A genuinely wrong place won't carry the gold's qualifier among its ancestors.
 	// `und`/non-latin ancestor names normalize to empty under normName (Cyrillic/CJK are stripped),
 	// so the token set is latin-only without a language filter.
 	const ancestorNamesStmt = adminDB.prepare(

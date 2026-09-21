@@ -56,7 +56,8 @@ import {
  * - `no_poi_branch` — the coordinator never took the POI branch, so there is no POI outcome at all.
  *   This is the measured baseline shape for every target row: an activity phrase scores `0`
  *   against the phrase lexicon, so the input is answered as an address parse of a sentence.
- * - `poi_abstain` — the branch was taken and declined. the reason travels beside the shape.
+ * - `poi_abstain` — the branch was taken and declined.
+ *   The reason travels beside the shape.
  * - `poi_intent_no_results` — the branch was taken, an intent was formed,
  *   and the executor returned nothing.
  * - `poi_intent_results` — the branch was taken and at least one row came back.
@@ -74,8 +75,9 @@ export type POIOutcomeShape = (typeof POI_OUTCOME_SHAPES)[number]
 /**
  * Read the outcome shape off the projection of one pipeline result.
  *
- * Total over the vocabulary above — every reachable combination of `path` and `poiIntent`
- * names exactly one shape, so a caller never has to represent "could not tell".
+ * Total over the vocabulary above.
+ * Every reachable combination of `path` and `poiIntent` names exactly one shape,
+ * so a caller never has to represent "could not tell".
  */
 export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 	if (outcome.path !== "poi" || !outcome.poiIntent) return "no_poi_branch"
@@ -88,7 +90,8 @@ export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 /**
  * The closed set of comparators this probe may register.
  *
- * One entry today. adding one is a reviewed instrument, never an inline callback in the definition file.
+ * One entry today.
+ * Adding one is a reviewed instrument, never an inline callback in the definition file.
  */
 export const PROBE_COMPARATORS = ["poi_board_assembled_answer"] as const
 
@@ -97,8 +100,9 @@ export type ProbeComparatorName = (typeof PROBE_COMPARATORS)[number]
 /**
  * Grade one row with a registered comparator.
  *
- * Refuses an unregistered name with the name in the message — a comparator silently
- * defaulted to another instrument would report a number nobody could trace to a interface.
+ * Refuses an unregistered name with the name in the message.
+ * A comparator silently defaulted to another instrument would report a number
+ * nobody could trace to a interface.
  */
 export function gradeWithComparator(
 	comparator: ProbeComparatorName,
@@ -138,7 +142,8 @@ export interface ProbeTargetRow extends POIBoardFixture {
 	 */
 	anchorFrom: string
 	/**
-	 * The activity phrase that replaces the venue noun — the only thing that varies against `anchorFrom`.
+	 * The activity phrase that replaces the venue noun.
+	 * The only thing that varies against `anchorFrom`.
 	 */
 	activityPhrase: string
 	/**
@@ -154,7 +159,8 @@ export interface ProbeTargetRow extends POIBoardFixture {
 /**
  * The two control groups.
  *
- * Both decide. see the module header for why one alone is vacuous.
+ * Both decide.
+ * See the module header for why one alone is vacuous.
  */
 export const PROBE_CONTROL_GROUPS = ["same_category", "adjacent"] as const
 
@@ -242,8 +248,9 @@ export interface ProbeBaseline {
 	controlHoldNumerator: number
 	receipt: string
 	/**
-	 * What the numbers were measured against, in words — the tree state
-	 * and anything about the run a bare sha does not carry.
+	 * What the numbers were measured against, in words.
+	 *
+	 * The tree state and anything about the run a bare sha does not carry.
 	 */
 	note: string
 }
@@ -528,8 +535,8 @@ export interface ProbeCounts {
 /**
  * Count one run.
  *
- * A target row that produced no outcome at all still counts against the denominator —
- * the denominators are the registered row counts, never the rows that happened to answer,
+ * A target row that produced no outcome at all still counts against the denominator.
+ * The denominators are the registered row counts, never the rows that happened to answer,
  * so a probe that stops being able to read a row reports a lower rate rather than a smaller board.
  */
 export function computeProbeCounts(

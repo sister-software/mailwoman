@@ -33,22 +33,20 @@ export async function buildAssembledArm(
 ) {
 	const { neural, resolver } = rig
 
-	// #478 inc 3 leg 2 — the assembled arms. Route each row through `createRuntimePipeline` using the
-	// same neural classifier (postcodeRepair on, for comparability with the neural arm) and the
-	// same resolver — without (`assembled`) and with (`assembled+arb`) per-component arbitration.
-	// The street+house_number precondition (the thing #566 broke) is counted per arm
-	// so a regression is visible directly.
+	// #478 inc 3 leg 2 — the assembled arms. Route each row through `createRuntimePipeline` using the same neural classifier (postcodeRepair on, for comparability with the neural arm) and the same resolver — without (`assembled`) and with (`assembled+arb`) per-component arbitration. The street+house_number precondition (the thing #566 broke) is counted per arm so a regression is visible directly.
 	//
-	// placeCountry default is off here (`false`) so the assembled arm isolates arbitration from the
-	// #244 coarse prior. But the shipped `createRuntimePipeline`/`geocodeAddress` default is the
+	// placeCountry default is off here (`false`) so the assembled arm isolates
+	// arbitration from the #244 coarse prior.
+	// But the shipped `createRuntimePipeline`/`geocodeAddress` default is the
 	// bundled placer (on, open-set @ 0.9).
 	// `--place-country` flips this eval to the production- representative config —
-	// load the same bundled placer and feed it to the pipeline — which is the
-	// #743 EU country-constraint integrity fix: without it the assembled EU coords are not what a real
-	// caller sees (ambiguous EU names without a country constraint place off-continent).
+	// load the same bundled placer and feed it to the pipeline — which is the #743 EU
+	// country-constraint integrity fix: without it the assembled EU coords are not what a
+	// real caller sees (ambiguous EU names without a country constraint place off-continent).
 	const runAssembled = options.assembled ?? false
-	// `--place-country-hard` (#194/#743) promotes a confident placer guess to a hard country
-	// filter (empty→unresolved) — the change for the low-pop EU tail the soft prior can't move.
+	// `--place-country-hard` (#194/#743) promotes a confident placer guess to a
+	// hard country filter (empty→unresolved).
+	// The change for the low-pop EU tail the soft prior can't move.
 	// Production- representative: conditional by the built-in coverage safelist
 	// (only well-covered countries hard-filter).
 	// `--place-country-hard-all` measures unrestricted

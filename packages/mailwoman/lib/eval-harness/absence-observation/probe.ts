@@ -51,7 +51,8 @@ export type AbsenceExpectedOutcome = (typeof ABSENCE_EXPECTED_OUTCOMES)[number]
 /**
  * The row groups.
  *
- * `target` rows expect the observation. the three control groups expect a named silence.
+ * `target` rows expect the observation.
+ * The three control groups expect a named silence.
  */
 export const ABSENCE_ROW_GROUPS = ["target", "outside_coverage", "wrong_class", "cell_populated"] as const
 
@@ -77,10 +78,9 @@ export interface AbsenceProbeRow {
 	 * The category set the row is graded on, in code-point order — the union the POI
 	 * branch searched after the anchor's country bound the reached set (#1999).
 	 *
-	 * A row's registered outcome binds to the categories the coverage layer surveyed,
-	 * and an activity phrase whose afforded set exceeds them can only be decidable
-	 * if the binding narrowed it. stating the set per row is what lets the runner
-	 * refuse a row that fired for a set nobody registered.
+	 * A row's registered outcome binds to the categories the coverage layer surveyed, and an activity
+	 * phrase whose afforded set exceeds them can only be decidable if the binding narrowed it.
+	 * Stating the set per row is what lets the runner refuse a row that fired for a set nobody registered.
 	 * Optional for a venue-noun row, whose set is the noun.
 	 */
 	searchedCategories?: string[]
@@ -266,8 +266,8 @@ export interface AbsenceRowOutcome {
 	/**
 	 * Named when the row registers a searched set and the observed one differs.
 	 *
-	 * The outcome may still match — a route that fired over a set nobody registered
-	 * is exactly the breach this field exists to name.
+	 * The outcome may still match.
+	 * A route that fired over a set nobody registered is exactly the breach this field exists to name.
 	 */
 	searchedSetBreach?: string
 	/**

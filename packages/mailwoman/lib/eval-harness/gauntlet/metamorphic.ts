@@ -52,7 +52,8 @@ const BAND_NEAR_KM = 5
 interface Base {
 	input: string
 	/**
-	 * Drives the DIR (drop-postcode) test. all bases drive INV + band.
+	 * Drives the DIR (drop-postcode) test.
+	 * All bases drive INV + band.
 	 */
 	postcode: boolean
 	/**
@@ -64,7 +65,8 @@ interface Base {
 /**
  * Base inputs.
  *
- * The postcode'd ones drive the DIR (drop-postcode) test. all drive INV + band.
+ * The postcode'd ones drive the DIR (drop-postcode) test.
+ * All drive INV + band.
  */
 const BASES: Base[] = [
 	{ input: "181 Rue du Chevaleret, Paris", postcode: false, locale: "fr-FR" },
@@ -74,9 +76,7 @@ const BASES: Base[] = [
 	{ input: "350 5th Ave, New York, NY", postcode: false, locale: "en-US" },
 	{ input: "Unter den Linden 77, 10117 Berlin", postcode: true, locale: "de-DE" }, // DE rooftop tier (D10)
 	{ input: "Damrak 1, 1012 LG Amsterdam", postcode: false, locale: "nl-NL" }, // NL rooftop tier (D10); NL postcode ≠ \d{5}, so INV-only
-	// Added for the abbrev + number-spell classes (the original 7 carry no expandable suffix, no ordinal,
-	// no spell-able house number). Verified landmark coordinates cited in the design doc. the metamorphic
-	// relations are self-referential (perturbed-vs-clean), so the base only needs to resolve sanely.
+	// Added for the abbrev + number-spell classes (the original 7 carry no expandable suffix, no ordinal, no spell-able house number). Verified landmark coordinates cited in the design doc. The metamorphic relations are self-referential (perturbed-vs-clean), so the base only needs to resolve sanely.
 	{ input: "350 Fifth Avenue, New York, NY", postcode: false, locale: "en-US" }, // Empire State Building (≈40.7484, -73.9857)
 	{ input: "100 Centre Street, New York, NY", postcode: false, locale: "en-US" }, // Manhattan Municipal Building (≈40.7132, -74.0041)
 	{ input: "2 Boulevard du Palais, 75001 Paris", postcode: false, locale: "fr-FR" }, // Palais de la Cité (≈48.8556, 2.3450)
@@ -272,7 +272,8 @@ interface Perturbation {
 }
 
 /**
- * Label-preserving perturbations — the output must be invariant (≤1m, same tier).
+ * Label-preserving perturbations.
+ * The output must be invariant (≤1m, same tier).
  */
 const INV: Perturbation[] = [
 	{ name: "lower", f: (s) => s.toLowerCase() },
@@ -280,10 +281,7 @@ const INV: Perturbation[] = [
 	{ name: "ws", f: (s) => s.replaceAll(" ", "  ") },
 	{ name: "trail-dot", f: (s) => `${s}.` },
 	{ name: "comma-tight", f: (s) => s.replaceAll(", ", ",") }, // surface-form: drop the space after a comma
-	// Delimiter-free invariant (#1101): a whitespace-only address (commas removed, tokens still
-	// space-separated) must resolve identically — whitespace-only is 64% of the parity gold. The fix
-	// half (punctuation-drop training augmentation) closes any deterministic failure this surfaces. a
-	// failing base lands in KNOWN_INV_XFAIL with a #1101 note until then.
+	// Delimiter-free invariant (#1101): a whitespace-only address (commas removed, tokens still space-separated) must resolve identically — whitespace-only is 64% of the parity gold. The fix half (punctuation-drop training augmentation) closes any deterministic failure this surfaces. A failing base lands in KNOWN_INV_XFAIL with a #1101 note until then.
 	{ name: "comma-drop", f: (s) => s.replaceAll(",", "") },
 	{ name: "abbrev", f: (s, base) => abbreviate(s, base.locale) }, // expanded→abbreviated suffix (trained both ways)
 ]
@@ -315,16 +313,17 @@ const BAND: Perturbation[] = [
  * rather than a model one, and it is a finding rather than a reflex xfail (see note).
  * A new deterministic INV break belongs here with a tracked note, never silently conditional.
  *
- * The
- * #1002 FR `Boulevard→Bd` xfail was removed 2026-07-06 with its fix: the root cause was not the FR gazetteer
- * (street_norm expands `bd` fine) but the model absorbing the undertrained "Bd" into house_number
- * ("2 Bd") pre-lookup — fixed by enabling Stage-1 `expandAbbreviations` in the geocode path
- * with the locale-unknown safe set (Bd/Bvd/Av/Imp. EN suffixes deliberately untouched).
+ * The #1002 FR `Boulevard→Bd` xfail was removed 2026-07-06 with its fix:
+ * the root cause was not the FR gazetteer (street_norm expands `bd` fine)
+ * but the model absorbing the undertrained "Bd" into house_number ("2 Bd") pre-lookup —
+ * fixed by enabling Stage-1 `expandAbbreviations` in the geocode path with the
+ * locale-unknown safe set (Bd/Bvd/Av/Imp. EN suffixes deliberately untouched).
  * Keep the anti-rot loop honest: a new deterministic INV break belongs here with
  * a tracked note, never silently conditional.
  *
- * The #1101 FR comma-drop xfail ("181 Rue du Chevaleret, Paris" losing its rooftop) was removed 2026-08-12
- * when the anti-rot loop flagged it newly passing — the comma-free base now holds its rooftop.
+ * The #1101 FR comma-drop xfail ("181 Rue du Chevaleret, Paris" losing its rooftop)
+ * was removed 2026-08-12 when the anti-rot loop flagged it newly passing.
+ * The comma-free base now holds its rooftop.
  */
 const KNOWN_INV_XFAIL = new Map<string, string>()
 
@@ -339,7 +338,7 @@ const KNOWN_INV_XFAIL = new Map<string, string>()
  * See the input-robustness coverage matrix (docs/articles/concepts/input-robustness.mdx) for the gaps these pin.
  */
 /**
- * All measured anchor-off/gazetteer-off (the harness default. the weights package ships no anchor artifacts).
+ * All measured anchor-off/gazetteer-off (the harness default. The weights package ships no anchor artifacts).
  *
  * The gazetteer soft-feed is exactly the channel that recovers a typo'd locality/street
  * in ship-config, so some of these may hold with the retrieval channels on —
@@ -347,9 +346,9 @@ const KNOWN_INV_XFAIL = new Map<string, string>()
  */
 // Empty on the shipped stack.
 // An entry belongs here only while a band perturbation misses deterministically.
-// the self-check names an entry that has started passing, and it leaves
+// The self-check names an entry that has started passing, and it leaves
 // then (the Damrak locality pair left once the word-level fuzzy measure corrected the
-// corrupted locality. the `100 Centre Street, New York, NY` trio — the spelled house number
+// corrupted locality. The `100 Centre Street, New York, NY` trio — the spelled house number
 // and the two street-token corruptions — left once the rooftop survived them).
 const KNOWN_BAND_XFAIL = new Map<string, string>()
 
@@ -379,7 +378,7 @@ function bump(m: Map<string, Tally>, name: string, key: keyof Tally): void {
 /**
  * Run the metamorphic layer.
  *
- * Returns `pass` (no new INV/DIR/band violation beyond the tracked xfails).
+ * @returns `pass` (no new INV/DIR/band violation beyond the tracked xfails).
  */
 export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
@@ -407,7 +406,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 			if (perturbed == null) continue
 
-			// perturbation not applicable to this base (e.g. no expandable suffix)
+			// perturbation not applicable to this base (e.g. No expandable suffix)
 
 			invChecks++
 			bump(invTally, p.name, "checks")

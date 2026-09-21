@@ -39,8 +39,8 @@ import type { GauntletGeocodeOpts } from "#eval-harness/gauntlet/harness"
 /**
  * The closed set of outcome comparators.
  *
- * Each names an observable interface a law can preserve. adding one is a reviewed
- * instrument in `comparators.ts`, never an inline callback in a fixture.
+ * Each names an observable interface a law can preserve.
+ * Adding one is a reviewed instrument in `comparators.ts`, never an inline callback in a fixture.
  *
  * - `resolution_identity` — which entity was resolved, read from the namespaced place ids and nothing else.
  *   It never reads a coordinate, so an identity law cannot pass because two
@@ -82,13 +82,15 @@ export const CONFORMANCE_RELATIONS = ["equivalent", "refines", "diverges"] as co
 export type ConformanceRelation = (typeof CONFORMANCE_RELATIONS)[number]
 
 /**
- * What a row's outcome is allowed to mean for the verdict — the Gauntlet regression
- * layer's own `CaseStatus`, spelled again here because a law suite grades relations
- * rather than cases and must not import the corpus schema to say so.
+ * What a row's outcome is allowed to mean for the verdict.
+ *
+ * The Gauntlet regression layer's own `CaseStatus`, spelled again here because a law suite
+ * grades relations rather than cases and must not import the corpus schema to say so.
  *
  * - `pass` — the default, and the only status that checks.
  *   A `pass` row whose law is violated fails the run.
- * - `known_fail` / `improvement_target` — the row is run and reported, and does not block.
+ * - `known_fail` / `improvement_target`.
+ *   The row is run and reported, and does not block.
  *   A tracked row that starts holding is printed as a promotion instruction,
  *   which is what keeps the tracked list from becoming a place rows go to be forgotten.
  *
@@ -104,9 +106,11 @@ export type ConformanceStatus = (typeof CONFORMANCE_STATUSES)[number]
  *
  * `parse_whole_strict` and `mechanism_shape` are two-valued by construction: a strict parse is identical
  * or it is not, and a set of mechanism shapes has no containment order that means "more specific".
- * A fixture asking either of them for `refines` is refused at load rather than graded against
- * a relation the instrument cannot report — an unreachable expectation is a row that can only
- * ever fail, which reads as a defect in the pipeline instead of a defect in the fixture.
+ * A fixture asking either of them for `refines` is refused at load rather than
+ * graded against a relation the instrument cannot report.
+ *
+ * An unreachable expectation is a row that can only ever fail, which reads as a
+ * defect in the pipeline instead of a defect in the fixture.
  *
  * `candidate_admissibility` is two-valued for the opposite reason: it reads a candidate pool, where
  * "unchanged" is the degenerate case of "nothing admissible was lost" rather than a separate finding.
@@ -167,8 +171,9 @@ export interface ConformanceFixture {
 	/**
 	 * The query the law's relation is stated to.
 	 *
-	 * May equal {@linkcode ConformanceFixture.base} — an idempotence law states that running the
-	 * same input twice agrees, which is a relation between two runs rather than two strings.
+	 * May equal {@linkcode ConformanceFixture.base}.
+	 * An idempotence law states that running the same input twice agrees,
+	 * which is a relation between two runs rather than two strings.
 	 */
 	variant: string
 	/**
@@ -190,14 +195,15 @@ export interface ConformanceFixture {
 	/**
 	 * Whether this row checks the run.
 	 *
-	 * Absent means {@linkcode CONFORMANCE_STATUSES}'s `pass` — a row says nothing
-	 * about its status only when it is expected to hold.
+	 * Absent means {@linkcode CONFORMANCE_STATUSES}'s `pass`.
+	 * A row says nothing about its status only when it is expected to hold.
 	 */
 	status?: ConformanceStatus
 	/**
 	 * Issue or record this row's tracked status points at, e.g. `#1919`.
 	 *
-	 * Free-form and never graded. it exists so a tracked row names where its diagnosis lives.
+	 * Free-form and never graded.
+	 * It exists so a tracked row names where its diagnosis lives.
 	 */
 	bugRef?: string
 	/**
@@ -297,8 +303,9 @@ function readContext(raw: unknown, label: string): ConformanceContext | undefine
 /**
  * Validate one fixture record and return it typed, or throw naming the fixture.
  *
- * `origin` is the file (and row) the record came from. it is prefixed to every message
- * so a refusal points at the line to edit even when the record has no usable id of its own.
+ * `origin` is the file (and row) the record came from.
+ * It is prefixed to every message so a refusal points at the line to edit even
+ * when the record has no usable id of its own.
  */
 export function parseConformanceFixture(raw: unknown, origin: string): ConformanceFixture {
 	if (!isPlainObject(raw)) {
@@ -479,8 +486,8 @@ export function invarianceExpectProblem(fixture: ConformanceFixture, lawNoun: st
  * The per-fixture frame every law-suite audit opens with: the label a problem line names
  * the row by, and the refusal of a row filed under another suite's law.
  *
- * Suite-specific clauses run in `auditFixture`, in the order the suite states them. a
- * clause that disqualifies the rest of a row's checks returns early.
+ * Suite-specific clauses run in `auditFixture`, in the order the suite states them.
+ * A clause that disqualifies the rest of a row's checks returns early.
  */
 export function auditCommonFixtureFields(
 	fixtures: readonly ConformanceFixture[],

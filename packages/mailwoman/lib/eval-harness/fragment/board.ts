@@ -72,8 +72,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 				`\nFR locale fragment board — ${fixtureCount} fixtures, BAN (Tier A), production config`,
 				`95% Wilson intervals. bare-locality scores the ABSENCE of a street (the hallucination class).\n`,
 			],
-			// hit = the scored assertion held. For positive classes that is street exact-match. for the
-			// negative class it is the absence of a street.
+			// hit = the scored assertion held. For positive classes that is street exact-match. For the negative class it is the absence of a street.
 			grade: (fixture, nodes) => {
 				const street = nodes
 					.filter((node) => STREET_TAGS.has(node.tag))

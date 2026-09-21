@@ -127,8 +127,9 @@ export {
 /**
  * How many substitutions the console summary lists before it truncates.
  *
- * Purely a terminal-legibility cap — the full list is always in the artifact's `rows`,
- * and the summary says how many it withheld.
+ * Purely a terminal-legibility cap.
+ * The full list is always in the artifact's `rows`, and the summary says how many it withheld.
+ *
  * Sized against the S-2 baseline (16 substitutions on the postcode column alone),
  * so a run whose substitution rate is normal prints in full.
  */
@@ -144,8 +145,9 @@ function isWordChar(c: string | undefined): boolean {
  * Every boundary-safe, case-insensitive occurrence of `value` in `input`, as start offsets.
  *
  * Boundary-safe means the character on each side is not a letter or digit.
- * This is the guard that keeps a locality `York` from being carved out of a region `New York` —
- * the class of defect that survives review precisely because it needs a corpus row where one asserted
+ * This is the guard that keeps a locality `York` from being carved out of a region `New York`.
+ *
+ * The class of defect that survives review precisely because it needs a corpus row where one asserted
  * span nests inside another, and this corpus has them (`New York` / `NY`, `Brooklyn` / `Park Slope`).
  *
  * A plain `indexOf`, which is what S-2's single-component stripper could afford,
@@ -189,8 +191,7 @@ export function deleteSpan(input: string, at: number, length: number): string {
 			.replaceAll(/\s{2,}/g, " ")
 			.replaceAll(/\s+,/g, ",")
 			.replaceAll(/,\s*,/g, ",")
-			// Leading/trailing separator debris: deleting a leading postcode ("75013 Paris") or a trailing country
-			// ("…, France") strips the token and leaves the comma orphaned at the edge.
+			// Leading/trailing separator debris: deleting a leading postcode ("75013 Paris") or a trailing country ("…, France") strips the token and leaves the comma orphaned at the edge.
 			.replace(/^[\s,]+/, "")
 			.replace(/[\s,]+$/, "")
 	)
@@ -202,10 +203,11 @@ export function deleteSpan(input: string, at: number, length: number): string {
  * Four refusals, each one a class the corpus actually contains:
  *
  * 1. `empty` — the asserted value is the empty string.
- *    `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty. there
- *    is nothing to delete, and treating it as a deletion would manufacture support.
- * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the resolved value, e.g. `country:
- *    "United States"` against an input saying `USA`). Deleting it would require guessing which span it came from.
+ *    `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty.
+ *    There is nothing to delete, and treating it as a deletion would manufacture support.
+ * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the
+ *    resolved value, e.g. `country: "United States"` against an input saying `USA`).
+ *    Deleting it would require guessing which span it came from.
  * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value
  *    asserted for a second component.
  *    Either way the deletion is not attributable to one component,
@@ -293,8 +295,9 @@ export interface AblationLayerOptions extends GauntletLayerOptions {
 	/**
 	 * Where the artifacts land.
 	 *
-	 * Defaults to `/tmp/ablation-<yyyymmdd-HHmm>` — the `promotion-eval.ts` convention,
-	 * and deliberately not under `$MAILWOMAN_DATA_ROOT`, which this layer only ever reads.
+	 * Defaults to `/tmp/ablation-<yyyymmdd-HHmm>`.
+	 * The `promotion-eval.ts` convention, and deliberately not under `$MAILWOMAN_DATA_ROOT`,
+	 * which this layer only ever reads.
 	 */
 	outDir?: string
 	/**
@@ -397,8 +400,9 @@ function timestampDir(now: Date): string {
 /**
  * Run the ablation layer over the curated corpus.
  *
- * Returns `pass` — which reports only whether the instrument ran (at least one measured cell).
- * A map is not a check. nothing here can fail a ship.
+ * @returns `pass` — which reports only whether the instrument ran (at least one measured cell).
+ *   A map is not a check.
+ *   Nothing here can fail a ship.
  */
 export async function runAblationLayer(
 	options: AblationLayerOptions = {}
@@ -507,8 +511,8 @@ export async function runAblationLayer(
 
 			const built = disagreement ? { ladder: null, reason: disagreement } : drawn
 
-			// Where the undeleted case already stands on its own ladder — the floor every
-			// variant is judged from (`gradeAgainstLadder`).
+			// Where the undeleted case already stands on its own ladder.
+			// The floor every variant is judged from (`gradeAgainstLadder`).
 			// `null` (anchor off its own ladder, or unresolved) makes the whole case ungradable,
 			// which is reported rather than counted as anything.
 			const anchorRungDepth =

@@ -85,7 +85,8 @@ export interface GauntletRunOptions {
 	card?: string
 	/**
 	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`) —
-	 * the #718-safe path for a splice/multisplice candidate. mirrors `eval parity --weights-cache`.
+	 * the #718-safe path for a splice/multisplice candidate.
+	 * Mirrors `eval parity --weights-cache`.
 	 *
 	 * Takes precedence over `candidate`/`tokenizer`.
 	 */
@@ -131,15 +132,15 @@ export interface GauntletRunOptions {
 	/**
 	 * Resolver-side pin (#2266): a span-rescore sub-span may drop context but never a word of the name.
 	 *
-	 * Two-sided like the two above — `undefined` grades the production default (off),
-	 * `true` is the evidence pin, `false` pins the default explicitly so a log labeled
-	 * off really graded with the remainder requirement off.
+	 * Two-sided like the two above.
+	 * `undefined` grades the production default (off), `true` is the evidence pin, `false` pins the
+	 * default explicitly so a log labeled off really graded with the remainder requirement off.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
 	 * Resolver-side pin (#2264): which reading of a weak resolution lifts the #685 span-rescore brake.
 	 *
-	 * Three readings rather than two states, so there is no off spelling to pair with —
+	 * Three readings rather than two states, so there is no off spelling to pair with.
 	 * `undefined` is the production default, which takes a `placeID` at face value.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
@@ -162,8 +163,8 @@ export interface GauntletRunOptions {
 /**
  * The ablation layer's options: the shared model/pin ladder plus its own three.
  *
- * Exported and pure for the same reason as {@linkcode runResolverPins} —
- * a dropped `--components` filter would silently run the whole corpus.
+ * Exported and pure for the same reason as {@linkcode runResolverPins}.
+ * A dropped `--components` filter would silently run the whole corpus.
  */
 export function runAblationOptions(options: GauntletRunOptions): AblationLayerOptions {
 	return {
@@ -179,8 +180,9 @@ export function runAblationOptions(options: GauntletRunOptions): AblationLayerOp
  * is pinned (→ production defaults).
  *
  * Pure and exported: the "a pin reaches every layer" interface is a mapping,
- * and a mapping is cheap to test — the alternative is discovering a dropped pin from two
- * identical pin logs, which is the failure this whole surface exists to prevent.
+ * and a mapping is cheap to test.
+ * The alternative is discovering a dropped pin from two identical pin logs,
+ * which is the failure this whole surface exists to prevent.
  */
 export function runResolverPins(options: GauntletRunOptions): GauntletResolverPins | undefined {
 	const pins: GauntletResolverPins = {
@@ -255,8 +257,8 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 /**
  * Run the Gauntlet.
  *
- * With `layer` set, runs that single layer and returns its exit code verbatim. otherwise runs
- * the combined check (regression + metamorphic, plus held-out when a candidate is given)
+ * With `layer` set, runs that single layer and returns its exit code verbatim.
+ * Otherwise runs the combined check (regression + metamorphic, plus held-out when a candidate is given)
  * and returns 0 only when every layer passes.
  */
 export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ exitCode: number }> {
@@ -267,7 +269,8 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 	const candidate = options.candidate || options.weightsCacheRoot || ""
 	const layers: GauntletLayer[] = ["regression", "metamorphic"]
 
-	// The held-out layer is candidate-vs-prod — it only runs when a candidate model is supplied.
+	// The held-out layer is candidate-vs-prod.
+	// It only runs when a candidate model is supplied.
 	if (candidate) {
 		layers.push("holdout")
 	} else {

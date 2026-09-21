@@ -53,8 +53,9 @@ import { buildGauntletDeps, type GauntletDepsOptions } from "#eval-harness/gaunt
 /**
  * Load every named suite into one fixture list, refusing an id that two files both claim.
  *
- * The per-file loader already refuses a duplicate within its own file. ids name rows in failure output,
- * so two suites sharing one would produce a report line a reader cannot trace back to a file.
+ * The per-file loader already refuses a duplicate within its own file.
+ * Ids name rows in failure output, so two suites sharing one would produce a
+ * report line a reader cannot trace back to a file.
  */
 async function loadSuites(paths: readonly string[]): Promise<ConformanceFixture[]> {
 	const fixtures: ConformanceFixture[] = []
@@ -118,9 +119,9 @@ export interface ConformanceLawMeasurement {
 /**
  * What one conformance run measured.
  *
- * `measured` is absent exactly when `problems` is non-empty — a refused run has no findings,
- * and reporting it as zero findings would read as a suite that passed nothing
- * rather than a suite that ran nothing.
+ * `measured` is absent exactly when `problems` is non-empty.
+ * A refused run has no findings, and reporting it as zero findings would read as a
+ * suite that passed nothing rather than a suite that ran nothing.
  */
 export interface ConformanceMeasurement {
 	laws: string[]
@@ -221,7 +222,7 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 /**
  * Run the conformance-law suites from CLI-shaped options.
  *
- * Returns the process exit code (0 = pass).
+ * @returns the process exit code (0 = pass).
  */
 export async function runConformanceCommand(options: ConformanceCommandOptions = {}): Promise<number> {
 	const { problems, measured } = await measureConformance(options)

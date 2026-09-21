@@ -66,16 +66,19 @@ export interface ConformanceFinding {
  *
  * Takes the function rather than the whole {@linkcode GauntletDeps} so a law suite can hand over a
  * warm session's geocode without this module acquiring an opinion about how the engine was built.
- * No mechanism account is attached — the shape vocabulary lives in the private dev-mcp
- * workspace, and an observer that wants shapes supplies its own.
+ * No mechanism account is attached.
+ *
+ * The shape vocabulary lives in the private dev-mcp workspace, and an observer
+ * that wants shapes supplies its own.
  */
 export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceObserver {
 	return async (query, context) => ({ result: toGauntletResult(await geocode(query, context)) })
 }
 
 /**
- * The same observer with the resolver's interior attached — one trace record per
- * backend lookup, which is what `candidate_admissibility` reads.
+ * The same observer with the resolver's interior attached.
+ *
+ * One trace record per backend lookup, which is what `candidate_admissibility` reads.
  *
  * A second observer rather than a flag on the first, because the walk's trace bookkeeping
  * is a real cost the four answer-axis laws have no use for.
@@ -141,14 +144,16 @@ export interface ConformanceSummary {
 	 *
 	 * These leave {@linkcode unmeasured} rather than joining {@linkcode failures}:
 	 * the run has no evidence the law broke, and no evidence it held.
-	 * Reported in full, never blocking, and never counted toward the hold ratio —
-	 * a suite whose every row goes unmeasured therefore reports `pass: false`,
+	 * Reported in full, never blocking, and never counted toward the hold ratio.
+	 *
+	 * A suite whose every row goes unmeasured therefore reports `pass: false`,
 	 * which is the reading that keeps a blind instrument from looking like a clean one.
 	 */
 	unmeasured: ConformanceFinding[]
 	/**
-	 * How many rows were admitted and decided — the denominator a reader needs
-	 * before the pass count means anything.
+	 * How many rows were admitted and decided.
+	 *
+	 * The denominator a reader needs before the pass count means anything.
 	 */
 	decided: number
 	pass: boolean
@@ -203,8 +208,9 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
  * Names, in this order: the law, the fixture id, the committed row it was drawn from
  * when it has one, the comparator, the expected and observed relations, both queries,
  * what the comparator read, and every difference it found.
- * A violation reported without the row it came from is a claim about a synthetic pair. with it,
- * a reader can go back to the population and ask how common the shape is.
+ * A violation reported without the row it came from is a claim about a synthetic pair.
+ *
+ * With it, a reader can go back to the population and ask how common the shape is.
  */
 export function formatConformanceFinding(finding: ConformanceFinding): string {
 	const { fixture, reading, held } = finding

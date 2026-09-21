@@ -67,8 +67,10 @@ const PQ_NO_COORDINATE = 90
 /**
  * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle for the typo leg.
  *
- * A mutated final letter frequently lands on a real neighbouring unit ("AB55 4BD" → "AB55 4BE"),
- * and resolving those is correct behavior. only a mutant absent from the register demands abstention.
+ * A mutated final letter frequently lands on a real neighbouring unit
+ * ("AB55 4BD" → "AB55 4BE"), and resolving those is correct behavior.
+ * Only a mutant absent from the register demands abstention.
+ *
  * Reasoning "the mutant almost never exists" was measured wrong on the first run
  * (346/600 resolved), which is why this set exists.
  */
@@ -133,9 +135,7 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 		{ leg: "as_published", input: postcode },
 		{ leg: "lower_unspaced", input: postcode.toLowerCase().replaceAll(" ", "") },
 		{ leg: "uk_suffixed", input: `${postcode}, UK` },
-		// The leg that can fail, with the pass condition depending on whether the mutant exists: a real
-		// neighbouring unit must resolve like any postcode. a mutant absent from the register demands
-		// abstention — a "corrected" postcode is a different postcode (the BT3 9QQ → S3 9QQ trap class).
+		// The leg that can fail, with the pass condition depending on whether the mutant exists: a real neighbouring unit must resolve like any postcode. A mutant absent from the register demands abstention. A "corrected" postcode is a different postcode (the BT3 9QQ → S3 9QQ trap class).
 		{ leg: "typo", input: mutateFinalLetter(postcode) },
 	]
 }
@@ -144,7 +144,7 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
  * Deterministically swap the final letter for its alphabet successor (Z→A),
  * skipping letters GB unit postcodes never use in final position
  * (C, I, K, M, O, V are excluded from the alphabet there — stepping into one guarantees
- * the mutant is invalid, which is fine. the pass condition is abstention either way).
+ * the mutant is invalid, which is fine. The pass condition is abstention either way).
  */
 function mutateFinalLetter(postcode: string): string {
 	const last = postcode.at(-1)!

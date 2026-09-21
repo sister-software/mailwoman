@@ -25,7 +25,8 @@
 /**
  * Tags whose change under a transform counts as a real failure.
  *
- * A shifted venue, unit or locality is tolerable. a shifted house number, street or postcode is not.
+ * A shifted venue, unit or locality is tolerable.
+ * A shifted house number, street or postcode is not.
  */
 export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const
 
@@ -62,7 +63,8 @@ function normVal(v: unknown): string {
 /**
  * Compare a baseline (`original`) component map against a perturbed (`transformed`) one.
  *
- * Order-insensitive by construction — both are plain key→value records.
+ * Order-insensitive by construction.
+ * Both are plain key→value records.
  */
 export function compareComponents(
 	original: Record<string, string>,

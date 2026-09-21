@@ -59,7 +59,8 @@ const PIN_PATTERNS: Record<keyof BoardPins, RegExp> = {
 /**
  * Read the committed constants out of the pin test's source.
  *
- * Throws when a constant is missing or duplicated — a reshaped test file needs a human rather than a guess.
+ * @throws when a constant is missing or duplicated.
+ *   A reshaped test file needs a human rather than a guess.
  */
 export function readCommittedPins(testText: string): BoardPins {
 	const read = (key: keyof BoardPins): string => {
@@ -121,8 +122,8 @@ export async function checkBoardPins(): Promise<PinCheck> {
 /**
  * Rewrite the committed constants to the measured values, then re-check.
  *
- * Returns the verifying check, whose `stale` must be empty — a non-empty result
- * after an update means the file reshaped under us.
+ * @returns the verifying check, whose `stale` must be empty.
+ *   A non-empty result after an update means the file reshaped under us.
  */
 export async function updateBoardPins(): Promise<PinCheck> {
 	const path = resolvePath(String(repoRootPath()), PIN_TEST_PATH)

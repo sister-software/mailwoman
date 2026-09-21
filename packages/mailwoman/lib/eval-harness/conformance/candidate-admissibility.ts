@@ -47,8 +47,9 @@ import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/re
  * what was read rather than what it implies for the verdict.
  *
  * - `held` — present in both pools.
- *   Its rank may have moved. a rank change is reported and never fails, because the law
- *   is about admissibility and a reordering leaves every candidate admissible.
+ *   Its rank may have moved.
+ *   A rank change is reported and never fails, because the law is about admissibility
+ *   and a reordering leaves every candidate admissible.
  * - `contradicted` — gone, and the refined lookup ran under a country scope
  *   the candidate's own country fails.
  *   The removal is explained by the information the query added, which is the one removal the law permits.
@@ -69,7 +70,8 @@ export type CandidateAccount = (typeof CANDIDATE_ACCOUNTS)[number]
 /**
  * Which pool a candidate was observed in.
  *
- * `held` candidates are in both. the other two name the side that has it.
+ * `held` candidates are in both.
+ * The other two name the side that has it.
  */
 export const CANDIDATE_DIRECTIONS = ["held", "removed", "added"] as const
 
@@ -175,7 +177,8 @@ export interface LookupFold {
 	/**
 	 * The provenance of the pick, or `null` when the lookup resolved nothing.
 	 *
-	 * `null` is a claim. absence of the fold is the thing that means nobody asked.
+	 * `null` is a claim.
+	 * Absence of the fold is the thing that means nobody asked.
 	 */
 	pickedSource: string | null
 }
@@ -183,9 +186,9 @@ export interface LookupFold {
 /**
  * Fold a run's trace records into one observation per lookup.
  *
- * Exported because both the comparator and the law suite's own tests read the folds
- * directly — a reading that could only be inspected through its final relation would
- * make every disagreement about this module a debugging exercise.
+ * Exported because both the comparator and the law suite's own tests read the folds directly.
+ * A reading that could only be inspected through its final relation would make every
+ * disagreement about this module a debugging exercise.
  */
 export function foldLookups(records: readonly ResolveNodeTrace[]): Map<string, LookupFold> {
 	const folds = new Map<string, LookupFold>()
@@ -278,9 +281,10 @@ function candidateKeyOf(candidate: ResolveCandidateTrace): string {
  *
  * A `parentID` or a region qualifier the coarse query could not supply re-points
  * the lookup at a different population.
- * A country scope is deliberately not read here — it is a per-candidate predicate the
- * candidate row can be tested against, so it warrants the sharper
- * {@linkcode CANDIDATE_ACCOUNTS} `contradicted` account instead.
+ * A country scope is deliberately not read here.
+ *
+ * It is a per-candidate predicate the candidate row can be tested against, so it warrants
+ * the sharper {@linkcode CANDIDATE_ACCOUNTS} `contradicted` account instead.
  */
 function rescopedPath(base: LookupScope, variant: LookupScope): string | null {
 	const parts: string[] = []
@@ -311,7 +315,7 @@ export type CandidateAccountCounts = Record<CandidateAccount, number>
 export interface RefinementReading {
 	/**
 	 * - `refines` — every removal is accounted for and every addition is explained.
-	 *   the law holds over the observed pool.
+	 *   The law holds over the observed pool.
 	 * - `diverges` — a candidate left the pool unexplained, or one entered it unexplained.
 	 * - `unmeasured` — no unexplained movement, but at least one removal sat at a
 	 *   fetch window, so the law is unproven rather than holding.
@@ -323,7 +327,8 @@ export interface RefinementReading {
 	counts: CandidateAccountCounts
 	readings: CandidateReading[]
 	/**
-	 * Lookups both runs performed — the denominator every count above is stated over.
+	 * Lookups both runs performed.
+	 * The denominator every count above is stated over.
 	 */
 	pairedLookups: number
 	/**
@@ -335,8 +340,9 @@ export interface RefinementReading {
 	/**
 	 * Lookups only the base performed.
 	 *
-	 * Reported rather than graded — a refinement that stops probing a value it still carries has
-	 * changed its hierarchy path, and that is a finding a reader wants beside the pool counts.
+	 * Reported rather than graded.
+	 * A refinement that stops probing a value it still carries has changed its hierarchy path,
+	 * and that is a finding a reader wants beside the pool counts.
 	 */
 	droppedLookups: string[]
 }

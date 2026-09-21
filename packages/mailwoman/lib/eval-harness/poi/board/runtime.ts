@@ -31,8 +31,8 @@ export interface POIBoardOptions {
 	 */
 	resolveDB?: string
 	/**
-	 * Byte-range candidate.db for anchor resolution (demo-parity backend) — same semantics as `mailwoman poi
-	 * --candidate-db`.
+	 * Byte-range candidate.db for anchor resolution (demo-parity backend) —
+	 * same semantics as `mailwoman poi --candidate-db`.
 	 */
 	candidateDB?: string
 	/**
@@ -59,8 +59,10 @@ export interface POIBoardOptions {
 	 *
 	 * Default off, and the floors are registered against the off arm: the board grades the construction
 	 * that ships, and a floor measured under an opt-in rung would describe a pipeline no caller runs.
-	 * On, it measures the activity-phrase family — the rows whose subject reaches no committed
-	 * lexicon entry, and which therefore take no POI branch at all with the rung absent.
+	 * On, it measures the activity-phrase family.
+	 *
+	 * The rows whose subject reaches no committed lexicon entry, and which therefore
+	 * take no POI branch at all with the rung absent.
 	 *
 	 * Ignored when {@linkcode poiSemanticLookup} is supplied directly.
 	 */
@@ -134,14 +136,15 @@ export interface POIBoardPipelineHandle extends Disposable {
 }
 
 /**
- * Construct the board's pipeline: classifier + resolver + poi executor, exactly as `commands/poi.tsx` builds it
- * (`NeuralAddressClassifier.loadFromWeights` + the shared resolver-backend selector + `createRuntimePipeline({
- * poiQueryKind: { poiDatabasePath } })`).
+ * Construct the board's pipeline: classifier + resolver + poi executor, exactly as
+ * `commands/poi.tsx` builds it (`NeuralAddressClassifier.loadFromWeights` + the shared
+ * resolver-backend selector + `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })`).
  *
  * Extracted so a probe that grades with {@link gradeCase} runs against the same construction the board does.
- * A second copy of these four calls would let the two drift — a different backend
- * or a different weights locale would change what the probe measures while the grader
- * stayed identical, and the difference would read as a pipeline result.
+ * A second copy of these four calls would let the two drift.
+ *
+ * A different backend or a different weights locale would change what the probe measures
+ * while the grader stayed identical, and the difference would read as a pipeline result.
  */
 export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Promise<POIBoardPipelineHandle> {
 	const db = resolvePath(options.db ?? dataRootPath("poi", "poi.db"))

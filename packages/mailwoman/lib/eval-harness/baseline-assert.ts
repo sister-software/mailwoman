@@ -149,7 +149,8 @@ export interface BaselineViolation {
 	observed: number
 	expected?: number
 	/**
-	 * Signed relative deviation. negative means the observation read low.
+	 * Signed relative deviation.
+	 * Negative means the observation read low.
 	 */
 	deviationRel?: number
 	tolerance?: number
@@ -214,8 +215,8 @@ export async function resolveProfile(name: string): Promise<BaselineProfile> {
 /**
  * Check a harness's readings against a profile.
  *
- * Metric keys the profile doesn't map are ignored — a profile declares what it can vouch for
- * rather than everything a harness happens to compute.
+ * Metric keys the profile doesn't map are ignored.
+ * A profile declares what it can vouch for rather than everything a harness happens to compute.
  */
 export async function assertProfile(name: string, readings: Record<string, number>): Promise<BaselineVerdict> {
 	const profile = await resolveProfile(name)
@@ -234,8 +235,8 @@ export async function assertProfile(name: string, readings: Record<string, numbe
 /**
  * Check observations against the registry.
  *
- * An unregistered id is a violation rather than a pass — an unverifiable reading
- * is exactly the state both incidents were in.
+ * An unregistered id is a violation rather than a pass.
+ * An unverifiable reading is exactly the state both incidents were in.
  */
 export async function assertBaselines(observations: BaselineObservation[]): Promise<BaselineVerdict> {
 	const file = await loadBaselineFile()
@@ -255,7 +256,8 @@ export async function assertBaselines(observations: BaselineObservation[]): Prom
 		// An absolute tolerance wins when declared.
 		// Small-count metrics (a street-evidence rate of 1/63) have a meaningless relative band —
 		// one fixture moves it 100% — so those rows opt out of relative checking entirely.
-		// A zero-valued row must declare one. relative is undefined.
+		// A zero-valued row must declare one.
+		// Relative is undefined.
 		if (baseline.tolerance_abs !== undefined || baseline.value === 0) {
 			const toleranceAbs = baseline.tolerance_abs ?? 0
 			const drift = Math.abs(observation.observed - baseline.value)
@@ -304,7 +306,8 @@ export class BaselineDeviationError extends Error {
 }
 
 /**
- * Render a verdict for a terminal — the message a refusing harness prints instead of a report.
+ * Render a verdict for a terminal.
+ * The message a refusing harness prints instead of a report.
  */
 export function formatVerdict(verdict: BaselineVerdict): string {
 	if (verdict.ok) return `baseline check: ${verdict.checked} observation(s) within tolerance`

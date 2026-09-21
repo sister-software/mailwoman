@@ -31,8 +31,8 @@ import type { GeoNamesCity } from "#eval-harness/same-data/panel"
 /**
  * One panel row.
  *
- * The same shape the same-data fixture, arms and scorer already read, plus the band it was
- * drawn from — so the recorder, the replay and the metrics need no second row interface.
+ * The same shape the same-data fixture, arms and scorer already read, plus the band it was drawn from.
+ * So the recorder, the replay and the metrics need no second row interface.
  */
 export interface ProminencePanelRow extends SameDataPanelRow {
 	band: string
@@ -67,8 +67,8 @@ function panelProvenance(definition: ProminenceFloorDefinition): SameDataPanelRo
 /**
  * Build the panel by executing the frozen selection rules.
  *
- * Strata are filled band by band, in the definition's order, from one shared used-set — so a
- * geonameid taken by the gold-present stratum of any band can never reappear in the withheld-gold
+ * Strata are filled band by band, in the definition's order, from one shared used-set.
+ * So a geonameid taken by the gold-present stratum of any band can never reappear in the withheld-gold
  * stratum, and the two strata of a band are disjoint rather than the same rows graded twice.
  */
 export function buildProminencePanel(inputs: ProminencePanelInputs): ProminencePanelResult {

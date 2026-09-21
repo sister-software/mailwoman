@@ -34,8 +34,8 @@ export const CONFIDENCE_BINS = [0, 0.2, 0.4, 0.6, 0.8, 1] as const
 /**
  * The largest discordant-pair count the exact test computes.
  *
- * The first term is `2 ** -n`, which is representable down to about n = 1074. the bound
- * is well inside that and refusing past it beats returning a silent zero.
+ * The first term is `2 ** -n`, which is representable down to about n = 1074.
+ * The bound is well inside that and refusing past it beats returning a silent zero.
  */
 const MAX_EXACT_N = 1000
 
@@ -88,7 +88,8 @@ export interface Ratio {
 	numerator: number
 	denominator: number
 	/**
-	 * Null when the denominator is zero — an unmeasured rate, never zero.
+	 * Null when the denominator is zero.
+	 * An unmeasured rate, never zero.
 	 */
 	value: number | null
 }
@@ -106,7 +107,8 @@ export interface ArmMetrics {
 	/**
 	 * Rows scored — after errored rows are removed.
 	 *
-	 * This is the row count rather than the denominator of any rate below. each rate carries its own.
+	 * This is the row count rather than the denominator of any rate below.
+	 * Each rate carries its own.
 	 */
 	n: number
 	errors: number
@@ -300,8 +302,8 @@ export function comparePaired(
 /**
  * The registered decision, evaluated.
  *
- * Both conditions must hold. each is reported with what it read, so a refusal
- * names the quantity that refused it.
+ * Both conditions must hold.
+ * Each is reported with what it read, so a refusal names the quantity that refused it.
  */
 export interface BenchmarkVerdict {
 	marginPoints: number

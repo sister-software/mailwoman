@@ -50,8 +50,7 @@ export function classifySlot(deleted: string, emitted: string | null): SlotOutco
  */
 export function tierRank(tier: ResolutionTier): number {
 	switch (tier) {
-		// A resolved entity is house-grade — the poi row is the venue's own point, peer of a situs hit.
-		// A decoded plus code is the user's own house-grade claim, peer of both.
+		// A resolved entity is house-grade. The poi row is the venue's own point, peer of a situs hit. A decoded plus code is the user's own house-grade claim, peer of both.
 		case "venue":
 		case "address_point":
 		case "plus_code":
@@ -106,8 +105,7 @@ export function scoreAblation(
 /**
  * Fold per-row outcomes into the (component, locale) map.
  *
- * A pair with no rows produces no cell — see
- * {@linkcode AblationCell.support}.
+ * A pair with no rows produces no cell — see {@linkcode AblationCell.support}.
  */
 export function aggregateCells(
 	rows: readonly AblationRowOutcome[],
@@ -145,10 +143,11 @@ export function aggregateCells(
 			locale: first.locale,
 			support: bucket.length,
 			brokenCount: bucket.filter((r) => r.broken === true).length,
-			// `percentile` returns null on an empty sample. a cell whose anchors all failed has
-			// no displacement distribution, and -1 would be a number the reader could average.
-			// Encode it as NaN-free absence via
-			// gradedCount === 0 — the consumer's rule is "skip a cell you cannot read", same as support 0.
+			// `percentile` returns null on an empty sample.
+			// A cell whose anchors all failed has no displacement distribution,
+			// and -1 would be a number the reader could average.
+			// Encode it as NaN-free absence via gradedCount === 0.
+			// The consumer's rule is "skip a cell you cannot read", same as support 0.
 			displacementKmP50: percentile(graded, 50) ?? 0,
 			displacementKmP90: percentile(graded, 90) ?? 0,
 			tierDropCount: bucket.filter((r) => r.tierDrop).length,

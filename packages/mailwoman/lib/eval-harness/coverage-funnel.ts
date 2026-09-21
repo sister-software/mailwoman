@@ -309,8 +309,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 							detail: "not admitted by the training config, so it has nothing to draw",
 						}
 
-		// Both stages read the GAUNTLET board alone — `censusCoverage`'s `casesRoot`,
-		// which is `eval-harness/gauntlet/cases`.
+		// Both stages read the GAUNTLET board alone.
+		// `censusCoverage`'s `casesRoot`, which is `eval-harness/gauntlet/cases`.
 		// The golden answer keys, the coordinate panels and the per-locale probe boards are separate sets
 		// and are not counted: `golden/us.jsonl` holds 2,660 rows while the gauntlet tree holds 143 for US.
 		// So `absent` here means "no gauntlet row names this country" rather than "this country

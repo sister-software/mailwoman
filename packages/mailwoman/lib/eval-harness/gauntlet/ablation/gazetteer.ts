@@ -68,8 +68,8 @@ interface CandidateRow {
 }
 
 /**
- * `spr`'s bbox columns are `not NULL default 0`, so an unset extent reads as `min == max` —
- * the meaning-of-zero trap this model must not fall into.
+ * `spr`'s bbox columns are `not NULL default 0`, so an unset extent reads as `min == max`.
+ * The meaning-of-zero trap this model must not fall into.
  *
  * Fold that to `null` at the reader, once, so nothing downstream can mistake it for an extent of zero.
  */
@@ -89,8 +89,9 @@ function bboxOf(
 /**
  * Parse the resolver's `placeID` URI (`wof:85974801`) back to a WOF id.
  *
- * `null` for anything else — the scheme is deliberately simple (`resolver/resolve.ts`),
- * and a future non-WOF backend must not be silently read as one.
+ * `null` for anything else.
+ * The scheme is deliberately simple (`resolver/resolve.ts`), and a future non-WOF
+ * backend must not be silently read as one.
  */
 export function wofIDFromPlaceID(placeID: string | undefined): number | null {
 	if (!placeID) return null
@@ -104,6 +105,7 @@ export function wofIDFromPlaceID(placeID: string | undefined): number | null {
  * Collapse a population-ordered candidate list to distinct places: anything within
  * {@linkcode COINCIDENT_PLACE_KM} of an already-kept, higher-ranked entry is the same physical
  * place (WOF stores a big city as both a `locality` and a `localadmin`, same population).
+ *
  * Exported because it is the step that makes a namesake count mean "namesakes".
  */
 export function collapseCoincident(places: readonly AblationPlace[]): AblationPlace[] {
@@ -122,17 +124,20 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
  * How many candidate rows one name probe reads before collapsing.
  *
  * The probe is a contiguous scan of one `name_key` on the clustered B-tree,
- * so the cost is bounded by the namesake cluster itself. the cap only guards the
- * pathological keys (`San José` carries 886 rows worldwide).
- * Sized well above the corpus's worst (886) so no corpus name is truncated — a truncated list
- * would understate ambiguity, which is the direction that turns an abstain into a false expectation.
+ * so the cost is bounded by the namesake cluster itself.
+ * The cap only guards the pathological keys (`San José` carries 886 rows worldwide).
+ *
+ * Sized well above the corpus's worst (886) so no corpus name is truncated.
+ * A truncated list would understate ambiguity, which is the direction that turns
+ * an abstain into a false expectation.
  */
 const NAME_PROBE_LIMIT = 2000
 
 /**
  * The two-database probe.
  *
- * Construct once per run. disposal releases both handles.
+ * Construct once per run.
+ * Disposal releases both handles.
  */
 export class AblationGazetteer implements AblationGazetteerProbe {
 	readonly available: boolean
@@ -197,9 +202,9 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	/**
 	 * Construct the probe.
 	 *
-	 * The existence check a constructor cannot perform is the caller's: `missingPaths` is the answer
-	 * {@linkcode AblationGazetteer.create} computed with `pathExists`, and the constructor opens nothing while any path is
-	 * named there.
+	 * The existence check a constructor cannot perform is the caller's: `missingPaths`
+	 * is the answer {@linkcode AblationGazetteer.create} computed with `pathExists`,
+	 * and the constructor opens nothing while any path is named there.
 	 */
 	constructor(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike; missingPaths?: readonly string[] } = {}
@@ -225,7 +230,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 		)
 
 		// The `ancestorLineage` walk (resolver-wof-sqlite/ancestry.ts) plus the bbox columns —
-		// same join, same `ancestors_by_id` index. ordering is done in JS below, deepest first.
+		// same join, same `ancestors_by_id` index.
+		// Ordering is done in JS below, deepest first.
 		this.#lineageStatement = this.#ancestry.prepare(
 			`SELECT s.id AS id, a.ancestor_placetype AS placetype, s.name AS name, s.country AS country,
 				s.latitude AS latitude, s.longitude AS longitude,
@@ -277,8 +283,9 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 					lat: row.latitude,
 					lon: row.longitude,
 					bbox: bboxOf(row.min_latitude, row.max_latitude, row.min_longitude, row.max_longitude),
-					// `spr` carries no population column. the ranking margin is only ever taken
-					// over candidate-table rows, so a lineage place's rank is never read.
+					// `spr` carries no population column.
+					// The ranking margin is only ever taken over candidate-table rows,
+					// so a lineage place's rank is never read.
 					negRank: 0,
 					population: null,
 				}
@@ -321,8 +328,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	containingChain(lat: number, lon: number): AblationPlace[] {
 		if (!this.#reverse) return []
 
-		// The reverse hierarchy is already deepest-first. re-read each id off `spr`
-		// so every rung carries the bbox (the reverse candidate shape does not).
+		// The reverse hierarchy is already deepest-first.
+		// Re-read each id off `spr` so every rung carries the bbox (the reverse candidate shape does not).
 		return this.#reverse
 			.reverseGeocodeSync(lat, lon)
 			.hierarchy.map((h) => this.place(h.id))

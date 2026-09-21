@@ -69,8 +69,10 @@ function tableCells(line: string): string[] {
  * #1151 rules-parser deletion the summary carried the v0 comparison columns
  * (`| arena | n | v0 | neural | both | … |`); after it, `summarize-arenas.ts` emits
  * the neural-only shape (`| arena | n | neural | fail | tree-valid |`).
- * A fixed column offset silently reads the wrong cell across that boundary — the pre-#1151 offset for
- * `neural` lands on `fail` in the new table, turning an 80% neural pass into a phantom 20% fail.
+ * A fixed column offset silently reads the wrong cell across that boundary.
+ *
+ * The pre-#1151 offset for `neural` lands on `fail` in the new table,
+ * turning an 80% neural pass into a phantom 20% fail.
  *
  * Locating the column from the header row is robust to both shapes (and any future column addition).
  */
@@ -81,10 +83,13 @@ export function arenaColumn(md: string, arena: string, column: string): number |
 }
 
 /**
- * Pull the per-locale table's per-tag percentage for one locale, by header — the same discipline as
- * {@linkcode arenaColumn}. `per-locale-f1` emits `| Tag | <locale> … | Δ |` with one column per answer-key file, so a
- * locale is found by its column name. a reordered or added locale column
- * then cannot swap one locale's number for another's.
+ * Pull the per-locale table's per-tag percentage for one locale, by header —
+ * the same discipline as {@linkcode arenaColumn}.
+ *
+ * `per-locale-f1` emits `| Tag | <locale> … | Δ |` with one column per answer-key file,
+ * so a locale is found by its column name.
+ * A reordered or added locale column then cannot swap one locale's number for another's.
+ *
  * A missing table, tag or column reads `undefined`, and so does an empty (`—`) cell.
  */
 function perLocale(md: string, tag: string, locale: string): number | undefined {
@@ -121,7 +126,7 @@ function tableCell(md: string, headerPattern: RegExp, column: string, row: strin
 
 /**
  * Sidecar-first reads (the scorers emit JSON beside the markdown since night-11.
- * the regex fallback keeps old out-dirs replayable).
+ * The regex fallback keeps old out-dirs replayable).
  *
  * A sidecar that exists but can't parse is a loud throw — never a silent fallback to presentation parsing.
  */
@@ -158,7 +163,7 @@ export interface PromotionVerdict {
  * Assemble the verdict from the out-dir's battery outputs, write `verdict.json`,
  * and report the per-floor lines.
  *
- * Returns `failed` (any floor missed) — the caller owns the exit code.
+ * @returns `failed` (any floor missed) — the caller owns the exit code.
  */
 export async function assemblePromotionVerdict(
 	options: PromotionVerdictOptions,
@@ -229,10 +234,9 @@ export async function assemblePromotionVerdict(
 			sidecar("cascade-smoke.json"),
 		])
 
-		// Capture the anchor-on native-DE locality (the conditional value) regardless
-		// of the anchor-off cell — the anchor-off cell is a diagnostic and is empty
-		// when the zeroed-anchor run can't satisfy the card's `anchor.required` strict
-		// scorer (`[^|]*` tolerates that empty cell instead of false-failing).
+		// Capture the anchor-on native-DE locality (the conditional value) regardless of the anchor-off cell.
+		// The anchor-off cell is a diagnostic and is empty when the zeroed-anchor run can't satisfy the card's
+		// `anchor.required` strict scorer (`[^|]*` tolerates that empty cell instead of false-failing).
 		const deNative = deorder.match(/native DE\s*\|[^|]*\|\s*([\d.]+)%/)
 		// Locale summary row: `| us | <n> | <macro>% | <micro>% | <exact>% |`
 		const micro = pl.match(/\|\s*us\s*\|\s*\d+\s*\|\s*[\d.]+%\s*\|\s*([\d.]+)%/)
@@ -253,7 +257,8 @@ export async function assemblePromotionVerdict(
 			"fr.region": perLocale(pl, "region", "fr"),
 			"us.po_box_real": poboxJ?.tags?.po_box?.f1 ?? (pobox ? scorerF1(pobox, "po_box") : undefined),
 			"fr.cedex_real": poboxJ?.tags?.cedex?.f1 ?? (pobox ? scorerF1(pobox, "cedex") : undefined),
-			// Graded as the weaker of the two spans — an intersection parse needs both.
+			// Graded as the weaker of the two spans.
+			// An intersection parse needs both.
 			"us.intersection_real": intersectionJ
 				? Math.min(intersectionJ.tags?.intersection_a?.f1 ?? 0, intersectionJ.tags?.intersection_b?.f1 ?? 0)
 				: intersection
@@ -277,8 +282,8 @@ export async function assemblePromotionVerdict(
 	const int8 = options.withInt8 ? await collect("int8") : undefined
 	const graded = int8 ?? fp32 // floors are graded on the ship artifact when present
 
-	// Floors owned by a dedicated leg in promotion-eval.ts (not a per-tag F1 in `graded`) —
-	// that leg runs the check and exits non-zero on failure, so the per-tag aggregator
+	// Floors owned by a dedicated leg in promotion-eval.ts (not a per-tag F1 in `graded`).
+	// That leg runs the check and exits non-zero on failure, so the per-tag aggregator
 	// here must skip them or it spuriously reports "not found" for a floor that
 	// already passed (#949's fr.bare_street_intact).
 	const LEG_HANDLED_FLOORS = new Set(["fr.bare_street_intact"])
@@ -289,7 +294,8 @@ export async function assemblePromotionVerdict(
 	// A leg-handled floor is enforced by its leg but was absent from `results` entirely,
 	// so a reader counting floors here saw 17 where the spec declares 18 — and a floor
 	// that is missing from a report reads as a floor that did not run.
-	// Enforcement stays with the leg. this only completes the record, from the sidecar the leg already writes.
+	// Enforcement stays with the leg.
+	// This only completes the record, from the sidecar the leg already writes.
 	// Reaching this function at all means the leg passed, since it returns non-zero otherwise.
 	const legSidecars: Record<string, { file: string; rate: string }> = {
 		"fr.bare_street_intact": { file: "fr-bare-street.json", rate: "bare_rate" },

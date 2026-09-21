@@ -179,10 +179,10 @@ async function gradeRow(
 	const runOpts: PipelineOpts = row.locale ? { locale: row.locale } : {}
 	const result = await pipeline(row.query, runOpts)
 
-	// The semantic route records a firing per probe of its lexicon rung. draining
-	// keeps one row's firings from being attributed to the next.
-	// This probe does not report them —
-	// #1928's receipt owns that — but leaving them to accumulate would grow unbounded across a run.
+	// The semantic route records a firing per probe of its lexicon rung.
+	// Draining keeps one row's firings from being attributed to the next.
+	// This probe does not report them — #1928's receipt owns that — but leaving them
+	// to accumulate would grow unbounded across a run.
 	semanticRoute?.takeObservations()
 
 	const decision = await absenceRoute.observe(result.poiIntent)

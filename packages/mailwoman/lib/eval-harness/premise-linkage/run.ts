@@ -109,8 +109,8 @@ export interface PremiseLinkageGrade {
 /**
  * Map one arm's authoritative block onto the outcome vocabulary.
  *
- * Pure, and the only place an outcome is decided — both arms are graded through it,
- * so neither can acquire a private definition of `exact`.
+ * Pure, and the only place an outcome is decided.
+ * Both arms are graded through it, so neither can acquire a private definition of `exact`.
  */
 export function outcomeFor(
 	assertion: AuthoritativeAssertion | undefined,
@@ -167,9 +167,9 @@ export function outcomeFor(
  *
  * The #1901 interface includes the provider's coordinate beside Mailwoman's own
  * and leaves the choice to the consumer.
- * This harness is that consumer, and the choice is stated here rather than implied:
- * when the provider committed to a premise, its coordinate is the one the authoritative
- * arm asserted. everywhere else the arm's answer is Mailwoman's.
+ * This harness is that consumer, and the choice is stated here rather than implied: when the
+ * provider committed to a premise, its coordinate is the one the authoritative arm asserted.
+ * Everywhere else the arm's answer is Mailwoman's.
  */
 function gradedCoordinate(
 	result: GeocodeResult,
@@ -256,9 +256,11 @@ function isErrored(row: PremiseLinkageResultRow): boolean {
  * The rows an arm could have answered exactly.
  *
  * Ungradable rows always leave.
- * Refusals leave only under `abstain_ok`, because an arm that was permitted to abstain was
- * not asked to be right on those rows. under `unique_required` they stay in the denominator
- * and count against the exact rate — while remaining `refused` in the row itself.
+ * Refusals leave only under `abstain_ok`, because an arm that was permitted to
+ * abstain was not asked to be right on those rows.
+ *
+ * Under `unique_required` they stay in the denominator and count against the exact rate —
+ * while remaining `refused` in the row itself.
  */
 function eligibleRows(
 	rows: readonly PremiseLinkageResultRow[],
@@ -383,7 +385,8 @@ function compareArms(
 /**
  * The pieces a controlled run supplies.
  *
- * A private config module exports these. the synthetic self-check builds them from the shipped fixture.
+ * A private config module exports these.
+ * The synthetic self-check builds them from the shipped fixture.
  */
 export interface PremiseLinkageRunConfig {
 	adapter: PremiseLinkageAdapter
@@ -476,8 +479,8 @@ function hasRunConfigShape(value: unknown): value is PremiseLinkageRunConfig {
 /**
  * Validate what a private config module exported, before a licensed file is opened.
  *
- * The module may export the configuration directly or a factory that builds it —
- * a real one needs the factory, because opening a gazetteer and a provider
+ * The module may export the configuration directly or a factory that builds it.
+ * A real one needs the factory, because opening a gazetteer and a provider
  * connection at import time makes `--help` do both.
  */
 export async function resolvePremiseLinkageConfig(

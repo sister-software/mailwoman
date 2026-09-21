@@ -45,15 +45,16 @@ export interface Phase2Verdict {
 	/**
 	 * `deviated` when the run's artifacts differ from the pins.
 	 *
-	 * Reported, never a decision input — a decision measured on other artifacts
-	 * is still a decision about those artifacts.
+	 * Reported, never a decision input.
+	 * A decision measured on other artifacts is still a decision about those artifacts.
 	 */
 	comparability: "pinned" | "deviated"
 	pinDeviations: string[]
 	/**
 	 * The default-change bar rows that do not read `met`.
 	 *
-	 * Recorded so nobody reads this decision as authorizing a default change. never an input.
+	 * Recorded so nobody reads this decision as authorizing a default change.
+	 * Never an input.
 	 */
 	defaultChangeBarUnmetRows: number[]
 	reasons: string[]

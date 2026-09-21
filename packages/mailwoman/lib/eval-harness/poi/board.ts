@@ -79,9 +79,11 @@ export {
 export const POI_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl"
 
 /**
- * What a row's grade is allowed to mean for the floors — the conformance layer's own
- * `ConformanceStatus` vocabulary (`conformance/fixture.ts`), restated here because this board grades
- * an assembled answer rather than a law relation and must not import a law schema to say so.
+ * What a row's grade is allowed to mean for the floors.
+ *
+ * The conformance layer's own `ConformanceStatus` vocabulary (`conformance/fixture.ts`),
+ * restated here because this board grades an assembled answer rather than a law relation
+ * and must not import a law schema to say so.
  *
  * - `pass` — the default, and the only status the floors read.
  *   A `pass` row that fails lowers the floor rates.
@@ -299,7 +301,7 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 		}
 	}
 
-	// expect.kind === "results" — either a categoryID or a brandWikidata expectation (never both).
+	// expect.kind === "results". Either a categoryID or a brandWikidata expectation (never both).
 	const expectedLabel =
 		expect.brandWikidata !== undefined ? `brandWikidata=${expect.brandWikidata}` : `categoryID=${expect.categoryID}`
 
@@ -405,9 +407,9 @@ export interface CasePartition {
 /**
  * Split graded cases by their fixture's status.
  *
- * Pure, and keyed by id rather than by position — a grade whose id names no fixture
- * is refused rather than dropped, because a dropped grade leaves the floors reading
- * a smaller board and reports as a higher pass rate.
+ * Pure, and keyed by id rather than by position.
+ * A grade whose id names no fixture is refused rather than dropped, because a dropped
+ * grade leaves the floors reading a smaller board and reports as a higher pass rate.
  */
 export function partitionCases(fixtures: readonly POIBoardFixture[], grades: readonly CaseGrade[]): CasePartition {
 	const byID = new Map(fixtures.map((fixture) => [fixture.id, fixture]))
@@ -588,7 +590,8 @@ export interface POIBoardReport {
 	 */
 	byExpectKind: Record<string, { total: number; pass: number; rate: number }>
 	/**
-	 * Pass rate over the counted rows — the number the `overall` floor is compared against.
+	 * Pass rate over the counted rows.
+	 * The number the `overall` floor is compared against.
 	 */
 	overallPassRate: number
 	/**
@@ -601,7 +604,8 @@ export interface POIBoardReport {
 	/**
 	 * Pre-registered floors graded against this report (spec §3.6).
 	 *
-	 * Printed on every run. enforced under `--enforce`.
+	 * Printed on every run.
+	 * Enforced under `--enforce`.
 	 */
 	floors: FloorEvaluation
 	/**
@@ -849,7 +853,8 @@ function printReport(report: POIBoardReport): void {
 }
 
 /**
- * The failing counted rows — the ones a floor breach is made of.
+ * The failing counted rows.
+ * The ones a floor breach is made of.
  *
  * Tracked failures print in their own block above, so a reader never has to subtract
  * one list from the other to see what actually moved.

@@ -8,8 +8,9 @@
 /**
  * The verdict for one deletion variant under the expectation model.
  *
- * `held` / `degraded` / `correctlyAbstained` are passes. the rest are failures,
- * kept as distinct classes because they ask the operator for different things.
+ * `held` / `degraded` / `correctlyAbstained` are passes.
+ * The rest are failures, kept as distinct classes because they ask the operator for different things.
+ *
  * `lost` is a recall bug, `overconfident` is a calibration bug, `coarser` is a precision
  * bug (it stayed on the ladder but gave up more than the surviving evidence justified),
  * `wrong` is a resolution bug (it left the ladder — a different place),
@@ -29,7 +30,8 @@ export type AblationGrade =
 	| "ungraded"
 
 /**
- * Every {@linkcode AblationGrade}, as data — the histogram-iteration order the reports print in.
+ * Every {@linkcode AblationGrade}, as data.
+ * The histogram-iteration order the reports print in.
  */
 export const ABLATION_GRADES = [
 	"held",

@@ -72,13 +72,15 @@ const MAX_REPORTED_FAILURES = 12
  * and one indistinguishable from the French regression this floor exists to catch.
  *
  * Order matters.
- * A candidate's own siblings come first, so grading a candidate never silently mixes in the
- * shipped lexicon. the data-root overlay is the dev-checkout answer. the tracked workspace
- * is last and is only non-empty on a release checkout where `copy-weights.ts` has run.
+ * A candidate's own siblings come first, so grading a candidate never silently mixes in the shipped lexicon.
  *
- * Throws with every path it tried rather than returning a default.
- * A missing anchor lexicon changes the parse, so a silent fallback here would
- * produce a well-formed wrong floor reading.
+ * The data-root overlay is the dev-checkout answer.
+ * The tracked workspace is last and is only non-empty on a release checkout
+ * where `copy-weights.ts` has run.
+ *
+ * @throws with every path it tried rather than returning a default.
+ *   A missing anchor lexicon changes the parse, so a silent fallback here would
+ *   produce a well-formed wrong floor reading.
  */
 async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<string> {
 	const candidates = [
@@ -108,11 +110,12 @@ export interface FRParseRecallOptions {
 	/**
 	 * Candidate-pair override (the v2.2.0 salvage read).
 	 *
-	 * Omitting {@linkcode FRParseRecallOptions.model} /
-	 * {@linkcode FRParseRecallOptions.tokenizer} uses the installed weights package via `loadFromWeights`, unchanged. When
-	 * a pair is given, the classifier is built manually with the ship-config channels fed from
-	 * the installed package's model-independent artifacts (postcode bins + gazetteer lexicon) —
-	 * the explicit-path `resolveWeights` drops the soft-feed siblings,
+	 * Omitting {@linkcode FRParseRecallOptions.model} / {@linkcode FRParseRecallOptions.tokenizer}
+	 * uses the installed weights package via `loadFromWeights`, unchanged.
+	 * When a pair is given, the classifier is built manually with the ship-config channels fed from
+	 * the installed package's model-independent artifacts (postcode bins + gazetteer lexicon).
+	 *
+	 * The explicit-path `resolveWeights` drops the soft-feed siblings,
 	 * and an unfed arm vs a fed arm is not a comparison.
 	 */
 	model?: string
@@ -135,9 +138,10 @@ export interface FRParseRecallOptions {
 	 */
 	fixture?: string
 	/**
-	 * Re-derive from the live OSM database instead of the fixture — the only
-	 * way the fixture should ever change, and it must be committed deliberately
-	 * (the "pin the golden" discipline. a moving sample is a flaky floor).
+	 * Re-derive from the live OSM database instead of the fixture.
+	 *
+	 * The only way the fixture should ever change, and it must be committed deliberately
+	 * (the "pin the golden" discipline. A moving sample is a flaky floor).
 	 */
 	fromDB?: boolean
 	/**
@@ -207,11 +211,12 @@ function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 /**
  * Measure the FR bare-vs-anchored street parse-recall delta and enforce the `fr.bare_street_intact` floor.
  *
- * The report lines go to `report` and the `fail` line to `reportError`, mirroring
- * the stdout/stderr split the check captured — it wrote `${stdout}${stderr}` into
- * `fr-bare-street.md`, so the two sinks stay separate and are concatenated in that order.
- * The floor verdict comes back as
- * {@linkcode FRParseRecallResult.pass} instead of the old `process.exit(1)`.
+ * The report lines go to `report` and the `fail` line to `reportError`,
+ * mirroring the stdout/stderr split the check captured.
+ * It wrote `${stdout}${stderr}` into `fr-bare-street.md`, so the two sinks stay separate
+ * and are concatenated in that order.
+ *
+ * The floor verdict comes back as {@linkcode FRParseRecallResult.pass} instead of the old `process.exit(1)`.
  */
 export async function frParseRecall(
 	options: FRParseRecallOptions = {},
@@ -235,9 +240,8 @@ export async function frParseRecall(
 					readOnly: true,
 				})
 
-				// Distinct streets with a city + postcode, sampled across the table
-				// (not one street repeated). deterministic (group BY + order BY, no random) —
-				// the same database yields the same 40 rows.
+				// Distinct streets with a city + postcode, sampled across the table (not one street repeated).
+				// Deterministic (group BY + order BY, no random) — the same database yields the same 40 rows.
 				return allRows<FRRow>(
 					db.prepare(
 						`SELECT street_raw, number, locality_norm, postcode FROM address_point
@@ -328,8 +332,9 @@ export async function frParseRecall(
 	const source = args.fromDB ? "live-database" : args.fixture
 
 	if (args.json) {
-		// snake_case wire keys, 2-space indent, trailing newline — the sidecar shape is a
-		// interface with whatever reads it next. the migration keeps it byte-for-byte.
+		// snake_case wire keys, 2-space indent, trailing newline.
+		// The sidecar shape is a interface with whatever reads it next.
+		// The migration keeps it byte-for-byte.
 		await writeLocalTextFile(
 			prettyJSON({
 				bare_intact: bareOk,

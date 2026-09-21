@@ -24,8 +24,9 @@ import type { LookupCensus } from "#eval-harness/oa/resolver/profile"
  *
  * Every tri-state pin below resolves to `undefined` when neither flag is passed,
  * which leaves the library default in force.
- * A check leg that says which side it graded is the point of a tri-state —
- * a silent config shift inside a check battery is the #718 sin.
+ * A check leg that says which side it graded is the point of a tri-state.
+ *
+ * A silent config shift inside a check battery is the #718 sin.
  */
 export async function buildParseRig(
 	options: OAResolverEvalOptions,
@@ -117,8 +118,9 @@ export async function buildParseRig(
 	// and how many of them repeat a key an earlier row already asked.
 	// That separates "the resolver is called often" from "the resolver answers the
 	// same question often", which are different fixes.
-	// The proxy binds every method to the real backend — `WOFSQLitePlaceLookup` holds
-	// private fields, and a method invoked with the proxy as `this` cannot read them.
+	// The proxy binds every method to the real backend.
+	// `WOFSQLitePlaceLookup` holds private fields, and a method invoked with the
+	// proxy as `this` cannot read them.
 	const lookupCensus: LookupCensus | null = options.profileJSON || "" ? { calls: 0, keys: new Set<string>() } : null
 	const lookupMemo = (options.lookupMemo ?? false) ? new Map<string, Promise<unknown>>() : null
 
@@ -165,11 +167,7 @@ export async function buildParseRig(
 
 	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
 
-	// #690/#895: normalizeCase is tri-state so an eval leg can pin either side of the library default
-	// (on at the classifier since #895).
-	// `--normalize-case` pins it on, `--raw-case` pins it off,
-	// neither = the library default. Silent config shifts in a check battery are the #718 sin — pin
-	// explicitly in pre-registered legs.
+	// #690/#895: normalizeCase is tri-state so an eval leg can pin either side of the library default (on at the classifier since #895). `--normalize-case` pins it on, `--raw-case` pins it off, neither = the library default. Silent config shifts in a check battery are the #718 sin — pin explicitly in pre-registered legs.
 	const normalizeCase = (options.normalizeCase ?? false) ? true : (options.rawCase ?? false) ? false : undefined
 
 	const parseOpts = {
@@ -192,8 +190,10 @@ export async function buildParseRig(
  * The `ResolveOpts` a run's flags pin, as a pure function of them.
  *
  * Separate from {@link buildParseRig} so a test can assert the mapping without a model and a gazetteer.
- * A pin the rig silently ignores does not fail — it reports the library default's numbers under
- * the arm's name, and a measuring tool's false negative is indistinguishable from a real absence.
+ * A pin the rig silently ignores does not fail.
+ *
+ * It reports the library default's numbers under the arm's name, and a measuring
+ * tool's false negative is indistinguishable from a real absence.
  *
  * Every tri-state resolves to `undefined` when neither flag is passed, leaving the library default in force.
  */
@@ -201,21 +201,18 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 	// `--hierarchy-completion` (#405, generalizes #387's `--city-state-fallback`): recover the
 	// locality the parser drops for a dual-role place (city-state or capital-seat province),
 	// via the precomputed coincident-roles relation (#403).
-	// Opt-in, default-off → by default this eval is byte-identical. pass it to measure the before/after.
+	// Opt-in, default-off → by default this eval is byte-identical.
+	// Pass it to measure the before/after.
 	// Applied to both the neural and rules resolve paths (they share `resolveOpts`),
 	// so the comparison stays fair.
 	// `--city-state-fallback` kept as an alias.
 	const hierarchyCompletion = options.hierarchyCompletion ?? false
 
-	// #895: adminCoherence is on by default in the resolver now (drift D1 settled). Tri-state pin for check
-	// legs: `--admin-coherence` pins it on, `--no-admin-coherence` pins it off,
-	// neither = the library default.
+	// #895: adminCoherence is on by default in the resolver now (drift D1 settled). Tri-state pin for check legs: `--admin-coherence` pins it on, `--no-admin-coherence` pins it off, neither = the library default.
 	const adminCoherence =
 		(options.adminCoherence ?? false) ? true : (options.noAdminCoherence ?? false) ? false : undefined
 
-	// #42: on by default in the resolver since 2026-08-05, so the pin is a full tri-state like adminCoherence's —
-	// `--postcode-country-coherence` pins it on, `--postcode-country-coherence-off`
-	// pins it off, neither = the library default.
+	// #42: on by default in the resolver since 2026-08-05, so the pin is a full tri-state like adminCoherence's — `--postcode-country-coherence` pins it on, `--postcode-country-coherence-off` pins it off, neither = the library default.
 	const postcodeCountryCoherence =
 		(options.postcodeCountryCoherence ?? false)
 			? true
@@ -228,10 +225,7 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
 		...(adminCoherence !== undefined ? { adminCoherence } : {}),
 		...(postcodeCountryCoherence !== undefined ? { postcodeCountryCoherence } : {}),
-		// #370 is on by default and #2301's cap is unbounded by default, so neither pin set leaves this eval
-		// byte-identical.
-		// The cap is passed through at zero as well as at a distance — zero refuses every fall,
-		// which is the arm that separates the pass's re-pick from its coordinate fallback.
+		// #370 is on by default and #2301's cap is unbounded by default, so neither pin set leaves this eval byte-identical. The cap is passed through at zero as well as at a distance — zero refuses every fall, which is the arm that separates the pass's re-pick from its coordinate fallback.
 		...((options.noPostcodeConsistency ?? false) ? { postcodeConsistency: false } : {}),
 		...(options.postcodeConsistencyMaxMoveKm !== undefined
 			? { postcodeConsistencyMaxMoveKm: options.postcodeConsistencyMaxMoveKm }

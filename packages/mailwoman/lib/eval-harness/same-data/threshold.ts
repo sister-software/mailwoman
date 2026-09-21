@@ -45,8 +45,9 @@ export const THRESHOLD_STEPS = [
  *
  * A withheld row becomes an abstention rather than a wrong answer: `correct` false,
  * no distance, and a mechanism that names the threshold.
- * An errored row passes through untouched — a harness failure is not a selection
- * and the scorer excludes it either way.
+ * An errored row passes through untouched.
+ *
+ * A harness failure is not a selection and the scorer excludes it either way.
  */
 export function applyThreshold(results: readonly ArmRowResult[], threshold: number): ArmRowResult[] {
 	return results.map((result) => {
@@ -66,7 +67,8 @@ export function applyThreshold(results: readonly ArmRowResult[], threshold: numb
 export interface ThresholdPoint {
 	threshold: number
 	/**
-	 * Selections this threshold withheld — the abstentions it adds to the arm's own.
+	 * Selections this threshold withheld.
+	 * The abstentions it adds to the arm's own.
 	 */
 	withheld: number
 	metrics: ArmMetrics

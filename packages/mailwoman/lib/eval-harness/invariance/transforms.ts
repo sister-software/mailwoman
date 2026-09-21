@@ -46,15 +46,17 @@ function commaDrop(raw: string): string | null {
 //#region abbreviation-swap
 
 /**
- * Small, deliberately narrow EN street-suffix table (Ave↔Avenue, St↔Street, Rd↔Road) —
- * the spec's own wording rather than the full `normalize/abbreviations.ts`
+ * Small, deliberately narrow EN street-suffix table (Ave↔Avenue, St↔Street, Rd↔Road).
+ *
+ * The spec's own wording rather than the full `normalize/abbreviations.ts`
  * dictionary the gauntlet's metamorphic layer uses.
  *
  * Keeping it small and separate means this suite exercises a different, independent
  * perturbation source than the gauntlet — two implementations of the same literature class
  * rather than one shared with an inherited bug.
- * FR/DE street types (Rue, Boulevard, Straße, …) are deliberately OUT OF scope for this table. a row
- * without an Ave/St/Rd token gets no abbreviation-swap case (documented per-row in suite.jsonl).
+ * FR/DE street types (Rue, Boulevard, Straße, …) are deliberately OUT OF scope for this table.
+ *
+ * A row without an Ave/St/Rd token gets no abbreviation-swap case (documented per-row in suite.jsonl).
  */
 const LONG_TO_SHORT = new Map([
 	["avenue", "Ave"],
@@ -75,9 +77,10 @@ const SHORT_TO_LONG = new Map([
 const STREET_SUFFIX_WORDS = new Set(["avenue", "ave", "street", "st", "road", "rd"])
 
 /**
- * Secondary-address designators (unit/suite/floor markers) the look-ahead also treats
- * as "not name-shaped" — these are capitalized like a proper noun but are never what
- * follows a genuine Saint-prefix ("St Apt 4B" isn't a place name).
+ * Secondary-address designators (unit/suite/floor markers) the look-ahead also treats as "not name-shaped".
+ *
+ * These are capitalized like a proper noun but are never what follows a genuine
+ * Saint-prefix ("St Apt 4B" isn't a place name).
  *
  * Without this set, `"123 Main St Apt 4B"` / `"...St Ste 1100"` would misread the
  * street-suffix "St" as a Saint-prefix purely because "Apt"/"Ste" are capitalized.
@@ -89,9 +92,10 @@ const SECONDARY_DESIGNATOR_WORDS = new Set(["apt", "ste", "suite", "unit", "fl",
  * both must clear for the guard to fire:
  *
  * 1. The "st" token itself must not be phrase-final (no trailing comma/period of its own).
- *    A Saint-prefix is always immediately adjacent to the name it prefixes ("St Andrews", "St Ives")
- *    and so never carries its own trailing punctuation. a street suffix often closes a
- *    phrase right before the next address component ("...Salmon St, Portland, ...").
+ *    A Saint-prefix is always immediately adjacent to the name it prefixes
+ *    ("St Andrews", "St Ives") and so never carries its own trailing punctuation.
+ *    A street suffix often closes a phrase right before the next address component
+ *    ("...Salmon St, Portland, ...").
  *    This is what lets the guard tell "St Andrews" apart from "...Salmon St, Portland" even
  *    though both have "St" followed by a capitalized non-suffix word.
  * 2. The next token must be capitalized and not itself a street-suffix word
@@ -216,8 +220,8 @@ function lowercase(raw: string): string | null {
 /**
  * Double every literal space character.
  *
- * Applicable only when the input carries a literal space — the guard checks
- * the same class of whitespace the mutation acts on (` `, not any `\s`),
+ * Applicable only when the input carries a literal space.
+ * The guard checks the same class of whitespace the mutation acts on (` `, not any `\s`),
  * so a row whose only whitespace is e.g. a tab never silently reports a no-op invariant
  * (the guard used to accept any `\s` while the mutation only ever touched `" "`,
  * a mismatch that could pass a row through untouched and misreport it as holding).
@@ -254,23 +258,26 @@ function trailingPunct(raw: string): string | null {
  * Always applicable (every string can be wrapped).
  *
  * A correct decode path strips the wrap (boundary-trim, see `core/decoder/build-tree.ts`'s `trimBoundary`)
- * and recovers the identical components — this is a genuine metamorphic invariance
- * rather than a semantic change, so a violation here is a real paired-punctuation regression.
+ * and recovers the identical components.
+ * This is a genuine metamorphic invariance rather than a semantic change,
+ * so a violation here is a real paired-punctuation regression.
  */
 function wrapInQuotes(raw: string): string | null {
 	return `"${raw}"`
 }
 
 /**
- * Append an irrelevant bracketed aside — the paired-punctuation
- * sibling of `trailing-punct`'s "add innocuous trailing content" idiom
+ * Append an irrelevant bracketed aside.
+ *
+ * The paired-punctuation sibling of `trailing-punct`'s "add innocuous trailing content" idiom
  * (Ribeiro et al. 2020's INV class explicitly covers appending irrelevant clauses/asides).
  *
- * The parenthetical content ("main entrance") never appears in any golden component for
- * these rows, so every existing component (house_number, street, locality, postcode, …) must
- * survive unchanged. the aside itself getting no tag (or a `venue`/`unit`-shaped one) is
- * not itself a violation — the runner's `compareComponents` only flags a degradation/loss
- * on components that were present before and change or vanish after.
+ * The parenthetical content ("main entrance") never appears in any golden component for these rows,
+ * so every existing component (house_number, street, locality, postcode, …) must survive unchanged.
+ * The aside itself getting no tag (or a `venue`/`unit`-shaped one) is not itself a violation.
+ *
+ * The runner's `compareComponents` only flags a degradation/loss on components
+ * that were present before and change or vanish after.
  */
 function addParenthetical(raw: string): string | null {
 	return `${raw} (main entrance)`
@@ -365,7 +372,7 @@ const BY_ID = new Map(TRANSFORMS.map((t) => [t.id, t]))
 /**
  * Look up a transform by id.
  *
- * Throws on an unknown id — a typo in `suite.jsonl` should fail loudly.
+ * @throws on an unknown id — a typo in `suite.jsonl` should fail loudly.
  */
 export function getTransform(id: string): Transform {
 	const t = BY_ID.get(id)

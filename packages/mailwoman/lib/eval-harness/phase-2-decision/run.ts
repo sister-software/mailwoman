@@ -78,7 +78,8 @@ interface CollisionCensus {
 export interface Phase2InstrumentRecord {
 	instrument: Phase2Instrument
 	/**
-	 * The instrument's own identity line — the artifacts and the frozen ruler it read.
+	 * The instrument's own identity line.
+	 * The artifacts and the frozen ruler it read.
 	 */
 	identity: string
 }
@@ -135,7 +136,8 @@ export interface Phase2Receipt {
 	/**
 	 * Always `false`.
 	 *
-	 * The ruler maps measurements onto one decision. recording it is the operator's, per #1967.
+	 * The ruler maps measurements onto one decision.
+	 * Recording it is the operator's, per #1967.
 	 */
 	recorded: false
 	recordingNote: string
@@ -438,8 +440,9 @@ async function measure(
 	if (needed.has("poi_board")) {
 		// `quiet` because this receipt is the report: the board's own table would
 		// print 56 rows between two of this ruler's lines.
-		// `enforce` is left off deliberately — the floors are read as a measurement here, and a breach
-		// belongs in the verdict rather than in an exit code the ruler would have to interpret.
+		// `enforce` is left off deliberately.
+		// The floors are read as a measurement here, and a breach belongs in the verdict
+		// rather than in an exit code the ruler would have to interpret.
 		const { report } = await runPOIBoard({
 			...options,
 			quiet: true,
@@ -637,8 +640,8 @@ async function measureMarker(
 			detail: `marker kind ${first.kind}, code ${first.code}, mechanism ${first.mechanism}, evidence names assertion ${String((first.evidence as { assertion?: { id?: string } }).assertion?.id)}`,
 		}
 	} finally {
-		// The runtime pipeline never opens the artifact reader itself, so the route owns nothing
-		// to close. draining keeps one query's firings from being attributed to the next.
+		// The runtime pipeline never opens the artifact reader itself, so the route owns nothing to close.
+		// Draining keeps one query's firings from being attributed to the next.
 		route.takeObservations()
 	}
 }
