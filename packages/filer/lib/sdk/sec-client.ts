@@ -168,8 +168,10 @@ const SEC_ARCHIVE_PATH_PATTERN = /^\/Archives\/edgar\/data\//
  * live at a path of this shape once submitted,
  * e.g. `https://www.sec.gov/Archives/edgar/data/320193/000032019323000106/aapl-20230930.htm`.
  *
- * SEC does not revise a filed document in place — a correction is a new filing at a new path —
- * so a document fetched today reads identically a year from now.
+ * SEC does not revise a filed document in place.
+ * A correction is a new filing at a new path — so a document fetched today
+ * reads identically a year from now.
+ *
  * Caching these effectively forever is the correct, deliberate choice: it saves a network
  * round-trip (and rate-limit budget) on every re-run with zero staleness risk.
  *

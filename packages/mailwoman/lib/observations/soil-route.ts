@@ -19,7 +19,7 @@
  *   the share is not optional, and that is the whole point OF this layer. nrcs's own map-unit aggregation
  *   ships its dominant-condition class beside the share that class covers, with an observed minimum of 2%.
  *   So a caller never receives a class without the share it rests on, and never receives a class at all when
- *   the cell holds none — a cell that is entirely unrated is complete and carries no capability reading,
+ *   the cell holds none. A cell that is entirely unrated is complete and carries no capability reading,
  *   which is a different answer from unmapped ground and from land the survey rated as unsuitable.
  *
  *   the observation is about the MAP, never about the land. nrcs states that its data "do not eliminate the
@@ -30,7 +30,7 @@
  *   survey declines to speak about a specific site.
  *
  *   the provenance carries the survey vintage rather than only the refresh. A polygon republished in the 2025
- *   Annual Soils Refresh can rest on a field survey published in 1960 — that is `IA153`, measured — and the
+ *   Annual Soils Refresh can rest on a field survey published in 1960. That is `IA153`, measured — and the
  *   dataset's own time-period-of-content ends at the refresh, so a consumer reading that as survey currency
  *   reads it wrong by sixty-five years. Both dates reach the caller, apart, with the source title the older
  *   one came from.

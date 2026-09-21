@@ -6,7 +6,7 @@
  *   Decision 6 layer-absent guards — kept out of `cli.ts` in their own importable module so the
  *   branching itself has direct unit coverage (`layer-guards.test.ts`), not just
  *   "the tool handler passes an abstain through" (`tools.test.ts`'s stub-level dispatch tests). `cli.ts`
- *   top-level-`await`s a real stdio transport connection at import time, so IT can't be imported by vitest — these
+ *   top-level-`await`s a real stdio transport connection at import time, so IT can't be imported by vitest. These
  *   three functions have no such dependency (pure existence-check + open, or a thrown Error), so they live here and
  *   `cli.ts` just calls them.
  *

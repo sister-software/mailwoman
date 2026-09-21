@@ -7,7 +7,7 @@
  *   version.
  *
  *   The footer strip carries one line of credit because that is a licence obligation and has to be visible without
- *   asking. This sheet is the rest of the same manifest — a reader who wants to know which DEM, from when, at what
+ *   asking. This sheet is the rest of the same manifest. A reader who wants to know which DEM, from when, at what
  *   size, asks for it here instead of reading the pipeline's source.
  */
 

@@ -10,7 +10,7 @@
  *   loader reads the whole table once into a `CapitalIndex` at session construction, so there is no
  *   per-probe query and no index beyond the rowid.
  *
- *   `keys` holds the entry's folded name set as a JSON array — the name-membership conjunct that
+ *   `keys` holds the entry's folded name set as a JSON array. The name-membership conjunct that
  *   keeps the coordinate radius from promoting a capital's same-name neighbours (`capitals.ts`).
  */
 

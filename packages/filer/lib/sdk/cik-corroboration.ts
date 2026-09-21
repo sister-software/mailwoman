@@ -16,7 +16,7 @@
  *   | `WideOpenWest, Inc.`   | WidePoint Corp — SIC 7373, systems design   | 0.886 |
  *
  *   Both are vendored under their true registrant names in `test-fixtures/edgar/` as evidence. A name
- *   score of 0.886 is not a weak signal — it is a confident one, pointing at the wrong company. No
+ *   score of 0.886 is not a weak signal. It is a confident one, pointing at the wrong company. No
  *   threshold fixes that, because the scores are not the problem: a second, independent signal is what
  *   was missing.
  *

@@ -13,7 +13,7 @@
  *   `mwdev_coverage` answers the same question for the countries that appear in at least one register.
  *   This tool differs in the denominator: it enumerates every ISO 3166-1 alpha-2 code first, then joins
  *   the registers onto it, so a jurisdiction absent from all of them is a row reading zero rather than a
- *   row that does not exist. That distinction is the whole point — an absence nobody has looked at and an
+ *   row that does not exist. That distinction is the whole point. An absence nobody has looked at and an
  *   absence somebody measured are different readings, and a union-of-registers denominator cannot tell
  *   them apart.
  *

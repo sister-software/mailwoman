@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Zod wire schemas for the native `/v1` surface. Unlike the drop-ins (photon, nominatim,
- *   libpostal), nothing here is a vendor interface — this surface is ours to design, so request
+ *   libpostal), nothing here is a vendor interface. This surface is ours to design, so request
  *   bodies are required and validator-enforced (no legacy tolerance to preserve). A `defaultHook`
  *   on the app maps validation failures through the shared `APIErrorSchema` envelope
  *   (`errorResponse(c, 400, "invalid request body", <zod summary>)`) — the pattern boundary every

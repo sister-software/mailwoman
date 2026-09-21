@@ -15,7 +15,7 @@
  *
  *   the mechanism the board exposed: `Hallingrudveien 32` -> locality + postcode, while
  *   `Hallingrudveien 32, 3370 Vikersund` parses perfectly. The street loses its street reading and
- *   the digit loses its anchor together. That is Track A's bare-street licence in Norwegian — the
+ *   the digit loses its anchor together. That is Track A's bare-street licence in Norwegian. The
  *   model will not read a street without its postcode/locality partner — not a digit-ownership prior.
  *   fr-fragment fixed exactly this in French by teaching the street without its partners.
  *
@@ -24,7 +24,7 @@
  *   from "bare toponym -> locality" to "bare toponym -> street", trading one broken prior for
  *   another. Two counter-classes hold the line:
  *     - bare localities (no street) so "bare -> street" is not free.
- *     - bare postcodes so the model does not learn to stop emitting postcode to win the digit — the
+ *     - bare postcodes so the model does not learn to stop emitting postcode to win the digit. The
  *       board 3 bare-pc negative class must stay at 1.000.
  *
  *   slash hazard, pinned deliberately: Norwegian `124/1` is one house_number (cadastral gnr/bnr). AU

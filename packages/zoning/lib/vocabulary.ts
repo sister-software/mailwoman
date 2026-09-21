@@ -111,8 +111,9 @@ export const GZT_LICENSE_CONTRADICTION =
 /**
  * The projected CRS the service and its bulk export both declare.
  *
- * The source is not in WGS84 — it is IRENET95 / Irish Transverse Mercator, in metres —
- * so the ingest reprojects and refuses a source declaring anything else.
+ * The source is not in WGS84.
+ * It is IRENET95 / Irish Transverse Mercator, in metres — so the ingest reprojects
+ * and refuses a source declaring anything else.
  */
 export const GZT_SOURCE_EPSG = 2157
 

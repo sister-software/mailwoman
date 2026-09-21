@@ -6,7 +6,7 @@
  *   `mailwoman gazetteer build nsul` — the GB uprn → unit-postcode register (`nsul.db`): the ONS
  *   National Statistics uprn Lookup joined to OS Open uprn's coordinates, under the layer interface.
  *   Reads a hand-acquired archive from a vintage-dated `<data-root>/nsul/<yyyy-MM>/` directory
- *   (there is no download step — the portal item is fetched by hand beside its `.md5` sidecar and
+ *   (there is no download step, since the portal item is fetched by hand beside its `.md5` sidecar and
  *   `item.json`), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
  *   Nothing on the parse/resolve path reads it yet. the runtime surface is a separate proposal
  *   (#1975, F4).

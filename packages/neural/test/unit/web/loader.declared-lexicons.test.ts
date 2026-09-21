@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The browser loader must resolve evidence-lexicon filenames from the model-card's
- *   `requires.<channel>.lexicon` declarations, exactly as the Node resolver does — the sibling
+ *   `requires.<channel>.lexicon` declarations, exactly as the Node resolver does. The sibling
  *   defaults are a legacy fallback for bundles that predate the declarations rather than the interface.
  *
  *   The incident this pins: the en-us bundle moved to `locality-surface-lexicon-v7.json`

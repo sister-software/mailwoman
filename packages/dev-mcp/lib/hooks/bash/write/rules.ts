@@ -147,7 +147,8 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
  *
  * Measured against the index: no tracked path matches, so removing one deletes nothing
  * a commit holds, and `tsc -b` or `yarn install` restores it.
- * `.yarn/` is not here — it carries the pinned yarn binary, which is tracked.
+ * `.yarn/` is not here.
+ * It carries the pinned yarn binary, which is tracked.
  *
  * The exemption is granted to {@link REMOVER} alone, and the asymmetry is the point:
  * removing derived output restores the derived state, while writing one by hand fabricates it.

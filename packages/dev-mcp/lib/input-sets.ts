@@ -10,7 +10,7 @@
  *   so choosing a small sample is a deliberate act that leaves a record in the result. This inverts the incentive that
  *   produced nine one-off probe scripts in a day, each with a panel its author chose and nobody reviewed.
  *
- *   Every resolved set carries its `sha256`, its selection kind and — where it is a subset — the size of the set it was
+ *   Every resolved set carries its `sha256`, its selection kind and — where it is a subset. The size of the set it was
  *   drawn from, because a denominator that travels with the number is the only kind that survives a relay.
  */
 
@@ -208,8 +208,9 @@ export interface ResolvedInputSet {
 	/**
 	 * How many rows carry each kind of truth.
 	 *
-	 * The per-kind counts overlap — a row can pin components and a coordinate
-	 * and a tier — so they must never be summed.
+	 * The per-kind counts overlap.
+	 * A row can pin components and a coordinate and a tier — so they must never be summed.
+	 *
 	 * `any` is the distinct row count and `none` its complement.
 	 * Those two are what add up to `n`.
 	 *

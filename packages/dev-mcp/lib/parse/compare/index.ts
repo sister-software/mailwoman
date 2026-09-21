@@ -7,7 +7,7 @@
  *
  *   `mwdev_compare` grades geocoders on a coordinate, and libpostal produces none: it is a parser rather than a geocoder, so
  *   an arm that scored it there would record a miss on every row at every threshold. It is also the only genuinely
- *   like-for-like parse comparison available — it is Pelias's parser, and `@mailwoman/libpostal` implements its exact
+ *   like-for-like parse comparison available. It is Pelias's parser, and `@mailwoman/libpostal` implements its exact
  *   `/parse` interface — which is why the question gets its own surface rather than a column in a distance table.
  *
  *   **Both sides are expressed in libpostal's label vocabulary, using the drop-in's own converter.** Mailwoman's tree

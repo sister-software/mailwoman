@@ -18,7 +18,7 @@
  *      spelling loses the service half of the two-path verification and reports a clean run while doing it,
  *      so the misspelling is a named constant in `vocabulary.ts` and never assembled from the product name.
  *   2. freshness cannot be probed BY content length. The download host answers `head` with http 405 and
- *      ignores `Range` — a ranged GET returns 200 with the whole 70,296,882-byte body — so a size probe
+ *      ignores `Range`. A ranged GET returns 200 with the whole 70,296,882-byte body — so a size probe
  *      starts a real transfer. {@linkcode EANCERMClient.readCatalogueRecord} reads the ISO revision date out
  *      of the catalogue entry instead, which is the authority's own statement about what changed.
  *   3. the attribution comes from the structured licence field. The abstract carries the statement twice and

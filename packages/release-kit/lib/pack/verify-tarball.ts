@@ -19,7 +19,7 @@
  *
  *   what is checked:
  *
- *   1. Every literal `files` entry resolves inside the tarball. Globs are skipped — they are
+ *   1. Every literal `files` entry resolves inside the tarball. Globs are skipped. They are
  *        legitimately allowed to match nothing (`**\/*.ts` in a data-only package) — as are the
  *        `!`-negations. A directory entry is satisfied by any member beneath it.
  *   2. Every concrete `exports` target resolves inside the tarball (the pre-existing guard, moved

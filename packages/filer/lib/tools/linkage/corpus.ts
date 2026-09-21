@@ -366,7 +366,7 @@ export function buildTruthRegistrants(
  * Embeds the representative FRN, so two unrelated standalone registrants never
  * collide into one truth family.
  * (Every registrant that does have a parent gets the canonical family id instead, so these
- * labels are unique by construction — nothing downstream needs to special-case the prefix.)
+ * labels are unique by construction, and nothing downstream needs to special-case the prefix.)
  */
 function singletonTruthGroup(representative: FRN): string {
 	return `singleton:${representative}`

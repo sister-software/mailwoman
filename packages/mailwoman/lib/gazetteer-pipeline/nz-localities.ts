@@ -21,7 +21,7 @@
  *   Auckland and a Christchurch suburb), so the group key is the pair. Coordinates are the median
  *   address point (robust against depot-coded outliers); the bbox is the group's p5–p95 envelope.
  *   Placetype is `locality`: that is the tier NZ addressing puts the suburb on, and the tier a bare
- *   parsed toponym queries — a `neighbourhood` row would be invisible to the locality filter group,
+ *   parsed toponym queries. A `neighbourhood` row would be invisible to the locality filter group,
  *   and widening that group is a global ranking change this database must not smuggle in. Population
  *   is deliberately 0/unmeasured (meaning-of-zero: an address-point count is not a population), so
  *   a database row ranks behind any populated namesake and wins only where its key is the answer.

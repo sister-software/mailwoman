@@ -143,7 +143,8 @@ export interface BuildSoilOptions {
 	 */
 	areas: ReadonlyArray<SurveyAreaInput>
 	/**
-	 * The region the layer name carries — the pilot's is `ia`.
+	 * The region the layer name carries.
+	 * The pilot's is `ia`.
 	 */
 	region: string
 	/**
@@ -641,8 +642,9 @@ async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Pro
  *
  * The interior test runs once over the union OF every outline built rather than
  * PER survey area, and the difference is most of a state.
- * The test is conservative — it keeps only cells lying wholly inside — so applied
- * per area it drops every cell a county border crosses.
+ * The test is conservative.
+ *
+ * It keeps only cells lying wholly inside — so applied per area it drops every cell a county border crosses.
  *
  * Measured on Polk County alone at resolution 6: 20 interior cells against the
  * roughly 42 the county spans by area, so more than half of it would read `unknown`

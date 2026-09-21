@@ -161,7 +161,7 @@
  *   required and was never checked — see "Whole-edge parent bias" below for the case where it does not hold and the
  *   opt-in that closes it.
  *   Marker suppression applies to the child exactly as window mode applies it. A venue-embedded
- *   confound at the string start ("Queens Park Cafe …") is rejected by construction — its text is
+ *   confound at the string start ("Queens Park Cafe …") is rejected by construction. Its text is
  *   never immediately left of the post-town anchor.
  *
  *   **Windowing (window mode only).** A candidate is any contiguous run of 1..{@link WINDOW_MAX_WORDS}
@@ -224,12 +224,12 @@
  *   `("church", "some-locality")` would fire on "Church" in "Church House" / "Church Road" / "Church
  *   Court" — none of which are the place "Church", all of which are street/venue names that happen to
  *   start with a word the register also knows as a place name somewhere else in the country. This is a
- *   narrower, purely lexical defense than the venue-confound falsifier above needed — it was never meant
+ *   narrower, purely lexical defense than the venue-confound falsifier above needed. It was never meant
  *   to be a general venue-boundary detector, which is exactly why the segment restriction exists
  *   alongside it rather than instead of it.
  *
  *   **Segment-boundary awareness.** In segment mode, the successor check only suppresses when the
- *   successor word is in the same comma-delimited segment as the candidate — a successor that has already crossed into
+ *   successor word is in the same comma-delimited segment as the candidate. A successor that has already crossed into
  *   the next segment can never be read as a street/venue-head suffix of this candidate, because a comma sits between
  *   them. Worked case: `"Fishburn, 5 Fishburn Road"` — "Fishburn" (segment 0) must not be suppressed by "5"
  *   (segment 1's first word, a house-number shape), because the comma means "5" is never a suffix of "Fishburn" in the

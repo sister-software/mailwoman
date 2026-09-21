@@ -52,8 +52,9 @@ const CODEPOINT_COLUMNS = 10
 /**
  * ONS country codes present in Code-Point Open, and the ISO-3166-2 subdivision each maps to.
  *
- * There are exactly three — the absence of a Northern Ireland code is the product's
- * defining coverage limit rather than an omission here.
+ * There are exactly three.
+ * The absence of a Northern Ireland code is the product's defining coverage limit
+ * rather than an omission here.
  */
 export const CODEPOINT_COUNTRY_CODES = {
 	E92000001: "ENG",

@@ -8,7 +8,7 @@
  *   Two invariants here are not "nice to have":
  *
  *   1. **The split.** A recipe output that trains on its own eval set measures memorization, and nothing
- *      downstream can detect it — the board just reads high and everyone celebrates. The recipe must
+ *      downstream can detect it. The board just reads high and everyone celebrates. The recipe must
  *      refuse to run without the exclusion list and must skip every reserved surface.
  *   2. **The counter-distribution.** Teaching bare streets alone lets the model satisfy every row by
  *      flipping its default from "bare ⇒ locality" to "bare ⇒ street" — trading a broken prior for a

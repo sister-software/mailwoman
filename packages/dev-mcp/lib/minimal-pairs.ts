@@ -14,7 +14,7 @@
  *       07691 Portopetro, Illes Balears, Spain        locality ok   region discarded
  *       15, 07691 Portopetro, Illes Balears, Spain    locality displaced by the region
  *
- *   Read down that ladder and the diagnosis is not "Spain is weak" — it is that a leading postcode discards the
+ *   Read down that ladder and the diagnosis is not "Spain is weak". It is that a leading postcode discards the
  *   region and a house number then displaces the locality, in two separate stages, with no street involved. The
  *   aggregate score for ES says none of that.
  *

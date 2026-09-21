@@ -397,8 +397,9 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	/**
 	 * The interval label for one place, memoized.
 	 *
-	 * `null` is a real answer — the place has no recorded ancestry in the source
-	 * (absence semantics: unverifiable, never a containment verdict) — and is cached as such.
+	 * `null` is a real answer.
+	 * The place has no recorded ancestry in the source (absence semantics: unverifiable,
+	 * never a containment verdict) — and is cached as such.
 	 */
 	#intervalLabel(sprID: number): IntervalLabel | null {
 		if (!this.#intervalProbe) return null
@@ -1000,8 +1001,8 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 				// on 2026-08-10 and covers eleven countries, none of them CA/AU/RU, which makes
 				// it inert on three of the four homonym contests the prior exists to settle.
 				// `PlaceCandidate.encyclopedic` stays reserved for a strict-channel source
-				// (the FTS backend's clauses are strict and today emit NULL for everything —
-				// no shipped admin DB has the split table at all).
+				// (the FTS backend's clauses are strict and today emit NULL for everything,
+				// and no shipped admin DB has the split table at all).
 				// See `candidate-schema.ts` → {@link CandidateTable.importance}.
 				...(typeof row.importance === "number" && Number.isFinite(row.importance)
 					? { importance: row.importance }

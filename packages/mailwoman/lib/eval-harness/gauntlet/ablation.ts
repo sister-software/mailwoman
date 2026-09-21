@@ -12,7 +12,7 @@
  *
  *   This is a measurement layer rather than a check. It never joins the combined verdict (`run.ts` lists only
  *   regression + metamorphic), it has no stored expected values, and its verdict says only whether the
- *   instrument ran — a map of all-zero cells is "not measured", never "nothing broke" (meaning-of-zero).
+ *   instrument ran. A map of all-zero cells is "not measured", never "nothing broke" (meaning-of-zero).
  *
  *   Three ancestors, generalized rather than duplicated:
  *

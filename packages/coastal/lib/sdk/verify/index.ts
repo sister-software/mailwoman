@@ -14,7 +14,7 @@
  *   negative half, and IT matters more here than IT did FOR the flood layer. Inland English points and Welsh
  *   and Scottish coastal points must come back `unknown` with no designation. Wales publishes ncerm on the
  *   previous generation's vocabulary (three periods from a 2005 base, percentile bands) and Scotland's Dynamic
- *   Coast carries an explicit prohibition on property-level assessment — neither is interchangeable with
+ *   Coast carries an explicit prohibition on property-level assessment. Neither is interchangeable with
  *   England's — and an inland English point is the case this layer's whole coverage posture exists for. A
  *   positive-only check would pass on an artifact that reported the entire country as designated.
  *

@@ -13,7 +13,7 @@
  *   never inserted as a bias key. This is the ASR-contextual-biasing "prune the bias list" discipline
  *   and Carmen's index-time token hygiene: the hazard is removed from the artifact rather than
  *   guarded at decode time, so it cannot misfire on lowercase, comma-free, any-locale input. The FST
- *   is a bias list rather than the gazetteer of record — the resolver's candidate tables are untouched, so
+ *   is a bias list rather than the gazetteer of record. The resolver's candidate tables are untouched, so
  *   excluded places stay findable. they just stop nudging the decoder on degenerate keys.
  *
  *   Exclusion sources are the shipped libpostal dictionaries (`core/data/libpostal/dictionaries/`):
@@ -97,7 +97,7 @@ export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
 /**
  * The shipped per-locale FST set (provenance-recovered country scoping. En-nz deliberately has none).
  *
- * An overlay absent here ships with no FST, which makes `--gazetteer-prior` a silent no-op for it —
+ * An overlay absent here ships with no FST, which makes `--gazetteer-prior` a silent no-op for it.
  * the artifact resolves to `undefined` and the run degrades to the base model with extra steps.
  * That is why membership is worth earning rather than assuming: `es-es`
  * and `it-it` were added once a board row measured the cost.

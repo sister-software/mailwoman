@@ -14,7 +14,7 @@
  *   other.
  *
  *   the area check is the hole check and the one thing here that is exact. The service encodes hole
- *   roles by ring orientation, and reading them wrong is silent — a hole read as an exterior produces a
+ *   roles by ring orientation, and reading them wrong is silent. A hole read as an exterior produces a
  *   well-formed polygon that answers "inside" for every location the plan carved out. Measured over the whole
  *   national export: the rings read with their holes total 5,444.5 km² and the Department's own `Shape__Area`
  *   sums to 5,444.5 km²; the same rings read without their holes total 5,666.6 km². The publisher's figure has

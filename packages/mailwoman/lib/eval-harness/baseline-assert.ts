@@ -8,7 +8,7 @@
  *
  *   This is not a promotion eval. `promotion-eval.ts` asks "is this model good enough to ship";
  *   this asks "is this harness measuring what it thinks it is". An eval spec's floors are one-sided
- *   (higher is better, fail below); a baseline is two-sided — a metric 40% above its registered
+ *   (higher is better, fail below); a baseline is two-sided. A metric 40% above its registered
  *   value is as loud a signal as 40% below, because the usual cause is that the number changed
  *   meaning rather than that the model got better. That two-sidedness is the whole point. a one-sided
  *   check would have passed both incidents below.

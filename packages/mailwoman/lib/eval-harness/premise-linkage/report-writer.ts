@@ -9,7 +9,7 @@
  *   The threat this guards against is not a careless operator. It is an ordinary change: someone adds
  *   a field to help debug a bad run, a provider payload rides along inside it, and the report is
  *   already in a pull request before anybody reads the diff closely. So the writer does not trust the
- *   type system to have kept the report clean — the types are what the code was written against, and
+ *   type system to have kept the report clean. The types are what the code was written against, and
  *   the leak arrives in the code that was written afterwards. It re-derives the answer from the values
  *   about to be serialized:
  *

@@ -26,7 +26,7 @@
  *
  *   shared BY every polygon layer rather than copied into each. `@mailwoman/flood` and `@mailwoman/soil`
  *   both store an authority's rings this way, and a second copy of the alignment arithmetic or of the
- *   signed-area reading would be a second thing to get right — both failure modes are silent, since a
+ *   signed-area reading would be a second thing to get right. Both failure modes are silent, since a
  *   mis-read blob answers a containment question wrongly and a hole-blind area reading answers "inside"
  *   for every point in a hole.
  */

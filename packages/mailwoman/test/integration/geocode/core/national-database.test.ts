@@ -11,7 +11,7 @@
  *   - BAN carries its own postcode + commune, so it sets no bbox fall-through (unlike the OSM tier);
  *   - when no national register covers the country, the cascade falls through to the OSM tier;
  *   - a US parse never consults BAN (the US situs path owns address points);
- *   - absent `nationalDatabases`, the cascade is byte-stable — the tier is purely additive.
+ *   - absent `nationalDatabases`, the cascade is byte-stable. The tier is purely additive.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

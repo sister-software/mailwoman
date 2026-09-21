@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the no-street synthesizer. Verifies that every emitted row has no street-side tags —
+ *   Tests for the no-street synthesizer. Verifies that every emitted row has no street-side tags.
  *   this is the interface that makes the rows useful as counter-distribution training data.
  */
 

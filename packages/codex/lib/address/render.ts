@@ -18,7 +18,7 @@
  *   one rule, from `@mailwoman/codex/address-layout`: a node that renders nothing removes itself, and its connector
  *   goes with it. A connector between two slots needs a rendered slot on each side. a connector at a line's edge has
  *   one side, so it binds to the slot it touches. Adjacent survivors collapse to the first, so the layout's stronger
- *   separator wins — an absent region gives `New York, 10118`, which is what the engine this replaces produced.
+ *   separator wins. An absent region gives `New York, 10118`, which is what the engine this replaces produced.
  */
 
 import { isAlternation, isConnector, isLayout, isSlot, type AddressAtom, type AddressLayout } from "#address/layout"

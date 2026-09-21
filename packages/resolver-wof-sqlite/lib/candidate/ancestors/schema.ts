@@ -41,7 +41,7 @@
  *   whole, which is exactly the regime where that cost is void.
  *
  *   the DAG caveat, and the recorded choice: WOF places can carry more than one parent (multiple
- *   hierarchies, ambiguous boundaries). `candidate_ancestor` keeps every parent — the closure rows
+ *   hierarchies, ambiguous boundaries). `candidate_ancestor` keeps every parent. The closure rows
  *   are the complete containment record. A single interval pair can only encode a tree, so the
  *   interval forest links each place to one canonical parent: its depth-1 edge — the finest
  *   containment tier, lowest ancestor id — the same MIN-stability convention the candidate table's

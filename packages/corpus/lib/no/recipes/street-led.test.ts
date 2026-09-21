@@ -13,7 +13,7 @@
  *   fr-fragment's normalizer strips them. If this recipe had reused fr-fragment's `norm`, the recipe
  *   would fold `Tømmerlien` -> `tommerlien`, never match the board's reserved `tømmerlien`, and leak
  *   the surface into training while every check reported success. That failure is invisible
- *   downstream — the board just reads high. So it gets a test with a diacritic surface specifically.
+ *   downstream. The board just reads high. So it gets a test with a diacritic surface specifically.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"

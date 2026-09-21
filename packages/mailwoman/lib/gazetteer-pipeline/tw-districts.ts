@@ -16,7 +16,7 @@
  *   cdla-Permissive-2.0), whose rows come from the 15 civil-affairs bureaus' registers under the Open Government Data
  *   License, Taiwan, v1.0 — the same input and the same license expression as the rooftop tier
  *   (`situs address-points --country TW`). `address_levels[1]` is the 縣市 and `address_levels[2]` the 鄉鎮市區,
- *   the register's own administrative pair. there is no free-text grouping here, so no thin-group threshold either —
+ *   the register's own administrative pair. there is no free-text grouping here, so no thin-group threshold either.
  *   every pair is a real unit, and the smallest (金門縣烏坵鄉, 3 points) is reported rather than dropped.
  *
  *   shape: one `spr` row per (縣市, 鄉鎮市區), placetype `locality` — the tier `placetypeMapForCountry("tw")` maps a
@@ -75,8 +75,9 @@ export interface TaiwanRegionName {
  *    gives the region that became a special municipality after the record was written).
  *
  * Every comparison runs through the `zh` locality fold, so 臺 and 台 spellings meet.
- * `undefined` is a real absence — a 縣市 the admin artifact does not know —
- * and the caller reports it rather than guessing.
+ * `undefined` is a real absence.
+ *
+ * A 縣市 the admin artifact does not know — and the caller reports it rather than guessing.
  */
 export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRegionName[]): number | undefined {
 	const fold = (name: string): string => normalizeLocalityForKeyLocale(name, "zh")

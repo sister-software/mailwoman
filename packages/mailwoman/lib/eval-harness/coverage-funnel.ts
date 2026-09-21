@@ -34,7 +34,7 @@
  *   `admitted` and `sampled` describe the TRAINING CORPUS, which is fed by adapters and carries its own per-row
  *   `SourceProvenance.license`. The two populations overlap without matching: NPPES is `us-health-1` in the register
  *   and `usgov-nppes` at weight 2.0 in the training config, while TIGER and the National Address Database feed the
- *   corpus and appear in no register row. So a jurisdiction does not pass from `licensed` into `corpusRows` — it holds
+ *   corpus and appear in no register row. So a jurisdiction does not pass from `licensed` into `corpusRows`. It holds
  *   both readings at once, about different sets of sources.
  *
  *   That is why the United States reads 9 of 12: 487,234,195 corpus rows and a published package, and 23 registered

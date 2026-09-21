@@ -447,7 +447,8 @@ export class PairIndexResolver {
 	 * Look up the typed edge a folded (child, parent) pair asserts, or `undefined`
 	 * if the index has no entry for it.
 	 *
-	 * @returns Both tags — a caller that only wants the child's reads `.tag`.
+	 * @returns Both tags.
+	 * A caller that only wants the child's reads `.tag`.
 	 * See {@link PairEdge} for why this is not the bare child tag.
 	 */
 	probe(childFolded: string, parentFolded: string): PairEdge | undefined {

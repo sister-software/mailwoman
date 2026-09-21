@@ -6,7 +6,7 @@
  *   The conformance runner's three refusals and its failure line.
  *
  *   `undecidable` must not hold, an empty suite must not pass, and both sides of a law must be observed
- *   independently — a fixture whose base and variant are the same string is the identity law, and answering
+ *   independently. A fixture whose base and variant are the same string is the identity law, and answering
  *   its second side from a cache would turn the strongest nondeterminism check available into a tautology.
  *
  *   `gauntletObserver` is checked against a hand-built `GeocodeResult` so the claim "this runs through the

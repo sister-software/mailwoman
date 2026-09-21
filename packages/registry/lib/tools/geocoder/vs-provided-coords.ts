@@ -13,7 +13,7 @@
  *   geocoder on real facility addresses. it does not touch the matcher.
  *
  *   The provided coordinate is treated as ground truth for _this_ eval, with the honest caveat that
- *   it is itself a third-party geocode of unknown provenance — a large delta is a discrepancy to
+ *   it is itself a third-party geocode of unknown provenance. A large delta is a discrepancy to
  *   inspect rather than automatically our error.
  *
  *   Run: `mailwoman registry scorer-eval vs-provided-coords [--max 1176] [--wof <admin.db>]

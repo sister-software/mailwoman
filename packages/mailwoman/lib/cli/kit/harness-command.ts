@@ -5,7 +5,7 @@
  *
  *   The one-shot harness command: run a task, show the ✓/✗ tail while it runs, print its own output.
  *
- *   Built with `createElement`, not JSX, for the reason `shared.ts` gives in its own header — the kit's index is
+ *   Built with `createElement`, not JSX, for the reason `shared.ts` gives in its own header. The kit's index is
  *   imported under the dev `node →` condition, which strips `.ts` and cannot read `.tsx`.
  *
  *   adopt IT when A command is open anyway, and never as a sweep. The 22 `eval` commands moved together because the

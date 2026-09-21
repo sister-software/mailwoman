@@ -180,7 +180,8 @@ export interface PlaceCandidate {
 	 * `false` = evaluated and not vouched for.
 	 *
 	 * Absent = never evaluated (no qualifier on the query, or an artifact without the sidecar).
-	 * Absence is required — the resolver walk reads it as `unavailable`, never as "not contained".
+	 * Absence is required.
+	 * The resolver walk reads it as `unavailable`, never as "not contained".
 	 */
 	containedByQualifier?: boolean
 	/**

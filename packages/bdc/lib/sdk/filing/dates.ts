@@ -53,9 +53,10 @@ export interface RetrieveFilingDatesParams {
 /**
  * Retrieve the FCC BDC's available filing `as_of_date`s for a given filing type.
  *
- * One `listAsOfDates` call answers every filing type — the full unfiltered response
- * is what the client caches, and this filters it down on read — so asking for a
- * second filing type inside the TTL costs no request at all.
+ * One `listAsOfDates` call answers every filing type.
+ * The full unfiltered response is what the client caches, and this filters it down on read —
+ * so asking for a second filing type inside the TTL costs no request at all.
+ *
  * At ten requests per minute that is worth six seconds each time.
  */
 export async function retrieveFilingDates(

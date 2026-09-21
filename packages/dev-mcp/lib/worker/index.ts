@@ -20,7 +20,7 @@
  *        { type: "result", id, ok: true, value } | { type: "result", id, ok: false, error }
  *
  *   `inputSchema` crosses the boundary as plain JSON Schema (draft-7, what MCP clients expect) because the shim must
- *   register tools without importing zod schemas from this side — that import is exactly the staleness it exists to
+ *   register tools without importing zod schemas from this side. That import is exactly the staleness it exists to
  *   avoid. Tool handlers run here verbatim. the shim adds no behavior beyond transport and restart.
  *
  *   stdout discipline: this process's stdout is piped to the shim's stderr, so library noise can never corrupt the

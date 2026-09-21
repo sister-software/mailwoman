@@ -5,7 +5,7 @@
  *
  *   `prefix-directories.ts` for the Python tree: a repeated underscore prefix among a directory's children is a
  *   hierarchy encoded in names. `audit_epoch_mixture.py` and `audit_suffix_feed.py` do not merely happen to start
- *   alike — they are audits, and belong under `audits/`. Keeping that boundary as a directory lets an import, a file
+ *   alike. They are audits, and belong under `audits/`. Keeping that boundary as a directory lets an import, a file
  *   listing and an editor's tree state the same thing.
  *
  *   The rule is the same and three details differ, each because Python is not TypeScript:

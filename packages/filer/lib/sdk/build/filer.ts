@@ -11,7 +11,7 @@
  *   materialize via `insert … select` → index-after-load → write manifest → `analyze`/`vacuum` →
  *   `sealDatabase` → rename existing `out` to `.prev` → rename `.building` into place. `filer.db` is not a
  *   layer-interface artifact (decision 2), so there is no `@mailwoman/core/layers` call here and no
- *   `asschemadb`-style invariance cast is needed — the manifest is a plain `filer_manifest` insert via
+ *   `asschemadb`-style invariance cast is needed. The manifest is a plain `filer_manifest` insert via
  *   Kysely rather than `writeLayerManifest`.
  *
  *   **Node/edge/family dedup — no staging table needed.** `filer_node` (PK `node_id`), `filer_edge` (PK
@@ -115,7 +115,7 @@
  *      `cik`'s target being "my subsidiary" is exactly `Subsidiary`, matching the plan's own "Parent CIK →
  *      subsidiary name becomes a Subsidiary family edge" wording), `source: "edgar-exhibit-21"`,
  *      `source_vintage`/`valid_from` both the row's `filingDate`. Exhibit 21 is the filer's own filed
- *      statement that a subsidiary by this name exists — that fact is authoritative regardless of whether
+ *      statement that a subsidiary by this name exists. That fact is authoritative regardless of whether
  *      this builder can also work out which registrant, if any, it corresponds to. `subsidiaryNameNode` is
  *      minted the same "global name-node" way as `mintHoldingCompanyNodeID` — the raw string, unnormalized.
  *      see {@link FilerIdentifierType.SubsidiaryName}'s own docstring in `schema.ts`.
@@ -129,7 +129,7 @@
  *      with `Subsidiary` would assert the CIK is the FRN's subsidiary, the wrong way round; `ParentCompany`
  *      is what "the target is my parent" means here — the exact shape `filer/tools/linkage-eval.test.ts`
  *      pins), carrying the `match_score` {@linkcode scoreEdgarSubsidiaryMatch} computes from the two RAW
- *      names. When zero FRNs match, nothing more is written — the disclosure edge above is the whole fact.
+ *      names. When zero FRNs match, nothing more is written. The disclosure edge above is the whole fact.
  *      When two or more distinct FRNs canonicalize to the same name (a genuine collision — 3a's
  *      false-identity-link lesson, `edgar-filings.ts`'s own `resolveCIKCandidates` docstring), this builder
  *      abstains rather than guess which one: no corroboration edge, no family row, for that subsidiary.
@@ -149,7 +149,7 @@
  *   written to both tables (`filer/tools/linkage-eval.test.ts` pins it as a regression test). So the same
  *   inferred FRN↔CIK relationship also becomes a `filer_family` row: `node_id` the FRN node, `family_id` and
  *   `naming_node_id` both the CIK's own node id (`insertFamilyMembership`'s usual `mintFamilyID`
- *   canonicalization is not needed here — a CIK is already a stable, edgar-assigned, collision-free key,
+ *   canonicalization is not needed here, because a CIK is already a stable, edgar-assigned, collision-free key,
  *   unlike a free-text holding-company name that two different spellings can drift across), `relationship:
  *   ParentCompany`, same `assertion: inferred`/`match_score`/`source`/`source_vintage`/`valid_from` as the
  *   edge, `valid_to: null`. This is the only inferred `filer_family` row anything in the repo writes, and the
@@ -167,7 +167,7 @@
  *   multiple vintages into one `buildFilerDatabase` call (e.g. a combined `form499Rows` iterable drawn from
  *   several historical filing snapshots), never by calling this function twice at different `sourceVintage`s
  *   against the same `out`. Any consumer that reads across builds (`cluster-filers.ts`, any future
- *   incremental-build task) must not assume cross-build accumulation — each successful build is a complete,
+ *   incremental-build task) must not assume cross-build accumulation. Each successful build is a complete,
  *   self-contained replacement of what "the crosswalk" means as of that one `sourceVintage`. Multi-vintage
  *   accumulation, if ever needed, would require an accumulate-into-existing-artifact build mode this function
  *   does not implement.

@@ -20,7 +20,7 @@
  *     `name_key`. No center required. if one is given, hits are still distance-sorted.
  *
  *   `latLngToCell`/`gridDisk` come from `h3-js`; the 48-bit short-cell packing that turns a raw H3
- *   cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt` — that math
+ *   cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt`. That math
  *   is never reimplemented here (see agents.md on `@mailwoman/spatial` being the one true home for
  *   it).
  */

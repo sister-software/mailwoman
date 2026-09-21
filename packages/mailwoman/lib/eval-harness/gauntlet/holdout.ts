@@ -8,7 +8,7 @@
  *   sample with truth coordinates (BAN for FR), so the model can't memorize it, and runs both the candidate
  *   and the current production model on the same draw. It checks on a two-proportion z-test: ship only if the
  *   candidate is not statistically worse than production at the locality tolerance. Absolute accuracy is not
- *   the check — the candidate-vs-prod delta is (this controls for data drift + coverage gaps).
+ *   the check. The candidate-vs-prod delta is (this controls for data drift + coverage gaps).
  *
  *   Run: mailwoman eval gauntlet --layer holdout --candidate ./out/v194-final/model.onnx [--n 300]
  */

@@ -86,8 +86,10 @@ export interface APIClientConfig {
 	 * OPT-IN, and absent by default: an `APIClient` without this makes exactly one attempt,
 	 * which is what every existing consumer has always done. 429/5xx/408 and network-class
 	 * failures (dropped socket, DNS, timeout, mid-body-transfer drop) are retried.
-	 * A 403 never is — it means the request failed to identify itself, so retrying
-	 * can only fail identically while burning rate budget.
+	 * A 403 never is.
+	 *
+	 * It means the request failed to identify itself, so retrying can only fail
+	 * identically while burning rate budget.
 	 */
 	retry?: RetryOptions | boolean
 

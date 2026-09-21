@@ -32,7 +32,7 @@
  *
  *   - **Direction 2 — schema-too-wide (overpromises to generated clients), literal form:**
  *     `IsAssignable<Inferred, GeocodeResult>`. If the schema claims a field, or a wider/looser type for
- *     a field, than `GeocodeResult` actually guarantees, this fails to compile — a generated client would
+ *     a field, than `GeocodeResult` actually guarantees, this fails to compile. A generated client would
  *     otherwise trust a promise the real engine can violate. Also incidentally catches a field the schema
  *     dropped (a dropped field vanishes from `Inferred` too, so assigning into `GeocodeResult` — which
  *     still requires it — fails the same way).

@@ -7,7 +7,7 @@
  *   first, then normalized name similarity, then the fixture's canonical candidate order.
  *
  *   It reads the fixture and nothing else: no network, no gazetteer, no ancestry sidecar, no population
- *   prior. A qualifier is resolved inside the pool — the country token is matched against the pool's own
+ *   prior. A qualifier is resolved inside the pool. The country token is matched against the pool's own
  *   country-placetype candidates and the ISO code read off the winner — so `Whitby, United Kingdom` resolves
  *   without a country table, and every fact used is one the production arm also received. A baseline that
  *   could not read a qualifier would lose the homograph stratum to its own blindness rather than to the

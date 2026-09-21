@@ -16,7 +16,7 @@
  *   style: measured at 64.3 ms per call returning 4,819 features over the 79-layer basemap at zoom 14 in Manhattan,
  *   against 4.9 ms and 44 features scoped to that style's 11 label layers. At one call per pointer move the unscoped
  *   form is the map's whole frame budget, so the layer list is resolved once per style and the hover query runs at
- *   most once per animation frame. The click query is not throttled — there is one of those per click.
+ *   most once per animation frame. The click query is not throttled. There is one of those per click.
  */
 
 import { useEffect, useEffectEvent } from "react"

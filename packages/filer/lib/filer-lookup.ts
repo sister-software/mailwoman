@@ -80,7 +80,7 @@
  *   provenance: `source`/`source_vintage` on every fact), and a computed value written there under the
  *   same key as a genuine sourced attribute would silently clobber it (reviewer-confirmed) and, even
  *   without a collision, be visually indistinguishable from one. `primary_frn` carries `derived_from`
- *   and `as_of` instead of `source`/`source_vintage` — its provenance is "this reader's own
+ *   and `as_of` instead of `source`/`source_vintage`. Its provenance is "this reader's own
  *   computation" rather than a row in `filer.db`, and that must stay legible at the call site.
  *
  *   **`families` is a separate rollup from `cluster` (§7-3b criterion 1, required).** `cluster` answers
@@ -104,7 +104,7 @@
  *   **This reader canonicalizes nothing.** `filer.db` is a sealed, shipped artifact
  *   with its own version line; `@mailwoman/record`'s `canonicalizeOrganizationName` lives in another
  *   workspace and its designation/jurisdiction packs are explicitly documented as extensible. So no fact
- *   behind `families`/`display_names` is re-derived here — each is read from a column the builder wrote,
+ *   behind `families`/`display_names` is re-derived here. Each is read from a column the builder wrote,
  *   the naming provenance included: that is what `filer_family.naming_node_id` is for. (Not a claim that
  *   this reader derives nothing at all: `primary_frn` is
  *   openly this reader's own computation, labelled as such at its own docstring below. The distinction is
@@ -613,12 +613,15 @@ export async function readFamilyMembers(
  * general rule is binding: a `display_names` entry is presented as a documented name this
  * family's members actually reported, so an edge inferred by a name-similarity match
  * (a future fuzzy matcher's guess at "these two spellings probably name the same holding company", say)
- * must never surface here — that would restate a guess as a filing, and a dedicated
- * regression test (`family-rollup.test.ts`) pins exactly that case.
- * Edgar's subsidiary-name→FRN corroboration (`build-filer.ts`) is a different shape of inference:
- * the name itself is never guessed — it is the CIK's own node id, established by that
- * same builder's authoritative disclosure edge (`cik -> subsidiaryNameNode`) elsewhere in
- * the graph — only which FRN that already-authoritative name belongs to is inferred.
+ * must never surface here.
+ * That would restate a guess as a filing, and a dedicated regression test
+ * (`family-rollup.test.ts`) pins exactly that case.
+ *
+ * Edgar's subsidiary-name→FRN corroboration (`build-filer.ts`) is a different
+ * shape of inference: the name itself is never guessed.
+ * It is the CIK's own node id, established by that same builder's authoritative
+ * disclosure edge (`cik -> subsidiaryNameNode`) elsewhere in the graph — only
+ * which FRN that already-authoritative name belongs to is inferred.
  *
  * So `source = "edgar-exhibit-21"` is the one case an `assertion: "inferred"` edge is admitted here too.
  * Every other source keeps the strict authoritative-only rule.
@@ -735,7 +738,7 @@ function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string):
  * `relationship: "same_entity"` is required on this edge query too — the same fix
  * `cluster-filers.ts`'s `readAuthoritativeGroups` needed, for the identical reason:
  * without it, a HoldingCompany/ManagementCompany edge between two of `candidateMembers`
- * (in practice, this can only ever be the writer-bug case this fix closes — a same-entity
+ * (in practice, this can only ever be the writer-bug case this fix closes, since a same-entity
  * cluster snapshot should never legitimately contain a holding-/management-company node as a
  * member once `readAuthoritativeGroups` is fixed) could corroborate a cross-entity link this
  * asOf-scoping pass is supposed to be validating rather than merely re-deriving unfiltered.

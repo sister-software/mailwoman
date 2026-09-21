@@ -21,7 +21,7 @@
  *       localize and partition it.
  *
  *   Lineage: the isp-nexus `createPostalAddressID` / `parsePostalAddressID`. `@mailwoman/normalize`
- *   is the descendant of that era's `sanitize`, re-scoped to parser-input prep — this layer is the
+ *   is the descendant of that era's `sanitize`, re-scoped to parser-input prep. This layer is the
  *   keying purpose, kept separate by design. (Self-contained on `h3-js`, not `@mailwoman/spatial`,
  *   which isn't published.)
  */

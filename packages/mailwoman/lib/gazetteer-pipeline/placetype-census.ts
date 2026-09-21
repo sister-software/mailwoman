@@ -19,7 +19,7 @@
  *
  *   Inclusion rule: a parent enters the census only if it has at least one child projecting onto a
  *   tag other than `locality`. A node recording "this locality has 300 locality children" is true
- *   and useless — every locality has those — and including them would inflate the artifact by two
+ *   and useless. Every locality has those — and including them would inflate the artifact by two
  *   orders of magnitude for zero discriminative mass. The tag whose conditional prior this arc is
  *   about (`dependent_locality`) is exactly the one the rule keeps.
  */

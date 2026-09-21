@@ -74,9 +74,10 @@ function immediateSubdirectories(trackedFiles: readonly string[], directory: str
  * and reports each artifact the file does not name.
  *
  * Scoped to directories that already have one.
- * A `data/` directory with no `PROVENANCE.md` is a different claim — that the directory
- * should have one at all — and making this check assert it would turn a documentation gap
- * in unrelated packages into a failing build on the commit that adds this file.
+ * A `data/` directory with no `PROVENANCE.md` is a different claim.
+ *
+ * That the directory should have one at all — and making this check assert it would turn a
+ * documentation gap in unrelated packages into a failing build on the commit that adds this file.
  *
  * Registered in `#registry`, so `mwops health data-provenance` runs it.
  */

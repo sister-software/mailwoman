@@ -11,7 +11,7 @@
  *
  *   Address tags live in the driver's `other_tags` hstore. we pull them with ogrsql `hstore_get_value`
  *   over the `points` (nodes) and `multipolygons` (building ways/relations) layers. `addr:interpolation`
- *   ways are intentionally not read here — the rooftop tier is point-first. explicit interpolation is a
+ *   ways are intentionally not read here. The rooftop tier is point-first. explicit interpolation is a
  *   separate, confidence-restricted tier (never synthesize a number line from scattered points).
  */
 

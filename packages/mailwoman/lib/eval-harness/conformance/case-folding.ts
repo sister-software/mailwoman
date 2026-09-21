@@ -18,7 +18,7 @@
  *   caseApplicability} decides whether a case change of that kind is a semantic equivalent in the row's own
  *   locale, which the key cannot say: `İstanbul` and `istanbul` have matching fold keys and are different
  *   words in Turkish. A pair that clears the first guard and fails the second is excluded before it runs, per
- *   this law's own tradeoff — an invalid transformation must never be tolerated as a failure, because a
+ *   this law's own tradeoff. An invalid transformation must never be tolerated as a failure, because a
  *   failure invites someone to fix the pipeline for an input that was never a case variant.
  *
  *   the variant is derived, never authored. Every committed row's `variant` is exactly the named

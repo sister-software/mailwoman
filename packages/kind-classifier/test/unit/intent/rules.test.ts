@@ -194,7 +194,8 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 	}
 
 	const NEGATIVE = [
-		// An anchor is present — this is answerable without a focus point, so it is not `near_me`.
+		// An anchor is present.
+		// This is answerable without a focus point, so it is not `near_me`.
 		"gas station near Austin",
 		"restaurants near Times Square",
 		"coffee in Paris",

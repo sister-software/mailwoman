@@ -6,7 +6,7 @@
  *   The read half of the `sub-venue` recipe (#35 step 4): which surfaces a locale may emit,
  *   what identifier follows them in that region, and which real names become the confound negatives.
  *   `sub-venue.ts` owns the write half (line rendering + the emit loop) and the recipe registration.
- *   split because the two halves together run past the 750-line file cap, and this is the split — one
+ *   split because the two halves together run past the 750-line file cap, and this is the split. One
  *   side reads disk and the ledger, the other side never touches either.
  *
  *   Every rule in this file is a rule about evidence, and each one has a measurement behind it:

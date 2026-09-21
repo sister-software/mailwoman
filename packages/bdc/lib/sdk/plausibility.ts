@@ -19,7 +19,7 @@
  *     `claim.address` geocoded via `deps.geocode`) and filing evidence goes through
  *     `filingLandscape({ h3Cells: [cell] })` — this is the unsound h3-cell approximation decision 4
  *     pins (a claim's own res-9 cell can differ from its true block centroid's cell), so
- *     `block_resolution` is `"h3_cell_approximation"`. Only one of the two is ever emitted — the union
+ *     `block_resolution` is `"h3_cell_approximation"`. Only one of the two is ever emitted. The union
  *     type is deliberately not `("geoid" | "h3_cell_approximation")[]`.
  *   - **Physical evidence's search center**: independent of the above — `claim.point` (or the geocoded
  *     `claim.address`) directly, whenever available. A geoid-only claim (no point, no address) has no
@@ -48,7 +48,7 @@
  *   still emitted with `corroborates: false` — never treated as disproof of anything.
  *
  *   - bdc.db absent entirely → one `{ type: "abstain", reason: "requires_bdc_layer" }` entry (decision
- *     6); `vintage` stays `null` — the only case it does (per the produced type's own doc comment).
+ *     6); `vintage` stays `null`. The only case it does (per the produced type's own doc comment).
  *   - bdc.db present but the resolved block/cell itself carries no survey evidence (`unknown_block_count`
  *     > 0 for the one queried unit) → `{ type: "abstain", reason: "insufficient_survey_data", layer:
  *     "bdc" }`. `vintage` is still populated here — the layer didn't abstain, only this one cell lacks
@@ -56,7 +56,7 @@
  *   - bdc.db present, block surveyed, zero filings → the spec's positive meaning-of-zero case ("a
  *     genuine 'surveyed, zero providers here' result" — `filing-landscape.ts`'s own docstring). No
  *     `filing` evidence entries are pushed (there's nothing to report), but the filing layer still
- *     counts as covered for `coverage_confidence` — the absence is informative rather than unknown.
+ *     counts as covered for `coverage_confidence`. The absence is informative rather than unknown.
  *
  *   **Physical evidence.** Symmetric to the above, over `nearestInfrastructure`'s hits — every hit
  *   becomes its own `{ type: "physical_plant" }` entry, nearest-first, whatever `nearestInfrastructure`'s
@@ -70,14 +70,14 @@
  *     claim) → no evidence entry, no abstain (see the claim-resolution note above); the axis degrades to
  *     unknown for `coverage_confidence` purposes.
  *   - Otherwise → `nearestInfrastructure` runs. each hit is emitted, and the searched point's own res-6
- *     coverage cell (independent of whether any hit was found — a covered-but-empty cell is real
- *     evidence the area was surveyed) is read directly via `readLayerCoverage` to determine the layer's
+ *     coverage cell (independent of whether any hit was found, since a covered-but-empty cell is real
+ * evidence the area was surveyed) is read directly via `readLayerCoverage` to determine the layer's
  *     coverage state for this claim.
  *
  *   **`coverage_confidence` — survey completeness rather than evidence-found.** This is deliberately orthogonal
  *   to whether any evidence was actually found (spec §4 rule 4: "coverage_confidence is mandatory on
- *   every answer… the product's honesty is this refusal to guess" — a refusal that has to hold even when
- *   the answer turns out to be "nothing found"). Each layer contributes one of `"covered"` / `"unknown"`
+ *   every answer… the product's honesty is this refusal to guess". That refusal holds even when the answer turns out
+ * to be "nothing found"). Each layer contributes one of `"covered"` / `"unknown"`
  *   / `"not_applicable"` (the last only for the physical axis, when the tech maps to no category), and
  *   the pair combines per the brief's literal formula: both covered → `"high"`; either unknown → degrade
  *   to `"low"`; both absent/unknown → `"insufficient_survey_data"`.
@@ -108,7 +108,7 @@
  *   is derived from `BDC_H3_RESOLUTION` regardless of whether `bdcDB` is wired at all — comparing each manifest
  *   against the constant, rather than the two manifests against each other, is what makes a single-layer call
  *   checkable at all. It cannot catch a layer whose row spine is 9 but whose coverage cells were derived at some
- *   other resolution than 6 — that gap needs the schema addition rather than a runtime assertion.
+ *   other resolution than 6. That gap needs the schema addition rather than a runtime assertion.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

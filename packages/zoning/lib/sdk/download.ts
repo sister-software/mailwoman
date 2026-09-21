@@ -17,7 +17,7 @@
  *
  *   the result URL redirects and the fetch must follow IT. The Hub download job answers
  *   `{"status":"Completed","resultUrl":…}`; the result URL itself 302s to the generated file. Node's `fetch`
- *   follows redirects by default, and the option is passed explicitly anyway — a transfer that stopped at the
+ *   follows redirects by default, and the option is passed explicitly anyway. A transfer that stopped at the
  *   redirect would write a short body to disk and report a successful download.
  *
  *   freshness is the item'S own modified date, never A length probe. The cache is keyed on the vintage the

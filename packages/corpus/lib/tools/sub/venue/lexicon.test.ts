@@ -392,8 +392,8 @@ test("deriveHeadNounSurfaces holds the cognate floor at five folded characters",
 })
 
 test("deriveHeadNounSurfaces finds the Japanese head by shared substring", () => {
-	// `ターミナル` is in none of the Wikidata labels on its own — every one of them is a compound —
-	// and it is the form Japanese addresses actually carry (`第1ターミナル`).
+	// `ターミナル` is in none of the Wikidata labels on its own.
+	// Every one of them is a compound — and it is the form Japanese addresses actually carry (`第1ターミナル`).
 	// Nothing else in the pipeline can produce it.
 	const derived = deriveHeadNounSurfaces([
 		surface({ phrase: "ターミナルビル", recordID: "terminal", lang: "ja" }),

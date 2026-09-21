@@ -60,7 +60,7 @@
  *
  *   So the US arm excludes those 2,082 units and computes the centroid and its `radiusP95Km` over the
  *   40,243 that remain. What survives is priced rather than trimmed: Alaska's 995/996/997 report
- *   p95 radii of 614–1,030 km, which is not contamination — that is the size of an Alaskan mail
+ *   p95 radii of 614–1,030 km, which is not contamination. That is the size of an Alaskan mail
  *   catchment, and a consumer reading 1,030 km learns exactly what the prefix is worth.
  *
  *   ## Why US ancestry is point-in-polygon rather than a gazetteer join

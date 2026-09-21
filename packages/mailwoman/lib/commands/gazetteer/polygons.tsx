@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer polygons` — build the crisp-polygon sibling for the demo's map. (The slim
- *   `wof-hot.db` points source is retired 2026-06-20 — the admin tier resolves against the
+ *   `wof-hot.db` points source is retired 2026-06-20. The admin tier resolves against the
  *   candidate table now. build polygons with `--admin` below, keyed by the same WOF spr ids the
  *   candidate table returns.) The demo's map draws the WOF rectangle (`place_bbox`) today. this
  *   packs the real admin geometry — simplified — so the demo can draw an actual boundary, loaded

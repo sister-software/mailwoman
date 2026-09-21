@@ -337,7 +337,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 			// P2 — Receipt: 0/81 coord-safe structured fixtures trip the guard.
 			// Fresh: 0/78.
 			// Zero false fallbacks is
-			//      the guard's whole justification — a non-zero here means it would bounce good geocodes to fallback.
+			//      the guard's whole justification. A non-zero here means it would bounce good geocodes to fallback.
 			expect(guardFalsePositives, "plausibility-guard false fallbacks on coord-safe structured fixtures").toBe(0)
 
 			// P3 — Receipt (guard A+B): 3/321 = 0.9%; fresh (shipped guard A / country-centroid only): 5/321 = 1.56%.

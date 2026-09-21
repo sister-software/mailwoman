@@ -146,15 +146,17 @@ export interface ResolvedPlace {
 	 *
 	 * The value is the score source's legacy blended importance: the concordance's encyclopedia-derived
 	 * channel where a concordance matched, a population-derived proxy everywhere else.
-	 * The blend is deliberate — it is the only scale on which every bearer of a name is scored comparably
+	 * The blend is deliberate.
+	 *
+	 * It is the only scale on which every bearer of a name is scored comparably
 	 * (the strict channel reaches eleven countries and is blind on CA/AU/RU, exactly the homonym
 	 * contests the prior exists to settle. See `candidate-schema.ts` → `CandidateTable.importance`).
 	 *
 	 * Consumed by `rankByImportance` (`resolver/toponym-prior.ts`), a soft tier-safe re-rank, never a filter.
 	 *
-	 * Absent means unmeasured — the score source had no row, the join refused it,
-	 * or the artifact predates the column — and an unmeasured candidate holds the rank
-	 * population gave it (meaning-of-zero: never fill a 0 in).
+	 * Absent means unmeasured.
+	 * The score source had no row, the join refused it, or the artifact predates the column —
+	 * and an unmeasured candidate holds the rank population gave it (meaning-of-zero: never fill a 0 in).
 	 */
 	importance?: number
 	/**
@@ -1008,12 +1010,12 @@ export interface ResolveOpts {
 	 * either way the span's contribution to the resolve is stripped); no confident siblings abstain.
 	 *
 	 * `defaultCountry` is never evidence (B1-3's confound: "Sydney NSW 2000,
-	 * Australia" reached with a US default must not have its 2000 excluded —
-	 * that row is exactly what {@link postcodeCountryCoherence} rescues).
+	 * Australia" reached with a US default must not have its 2000 excluded. That row
+	 * is exactly what {@link postcodeCountryCoherence} rescues).
 	 * Confirmed spans narrow the country-scope pass's candidate list to the
 	 * intersection (a pure subset, safe).
 	 *
-	 * **Default off** (D-rule: demotion is the failure mode with teeth — a default-on promotion needs
+	 * **Default off** (D-rule: demotion is the failure mode with teeth. A default-on promotion needs
 	 * the full B1 criterion set from `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`:
 	 * B1-1 byte-stability, B1-2 exclusion board ≥90% with the correct sibling tag surviving,
 	 * B1-3 confound ≤2% false exclusions, kill on any δ).

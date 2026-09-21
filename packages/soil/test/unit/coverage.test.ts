@@ -11,7 +11,7 @@
  *   PER survey area it also drops every cell a county border crosses, and at resolution 6 those cells are
  *   about 6.5 km across against a county roughly 50 km across: measured on Polk County, 20 interior cells
  *   against the ~42 it spans by area. More than half the county would have read `unknown` while sitting
- *   inside a survey the build had ingested — an artifact that is complete, well-formed, and silently
+ *   inside a survey the build had ingested. An artifact that is complete, well-formed, and silently
  *   answers "no survey here" over ground it holds.
  *
  *   The fix is to run the test once over the union. This file pins it with two adjacent fixture areas that
@@ -44,8 +44,8 @@ const { lat, lon } = FIXTURE_ORIGIN
 /**
  * Half the width of each fixture county, in degrees.
  *
- * Wide enough that resolution-6 cells fit wholly inside one, so a per-area build is not
- * vacuously empty — it produces cells, just not the ones on the shared edge.
+ * Wide enough that resolution-6 cells fit wholly inside one, so a per-area build is not vacuously empty.
+ * It produces cells, just not the ones on the shared edge.
  */
 const COUNTY_HALF_WIDTH = 0.9
 

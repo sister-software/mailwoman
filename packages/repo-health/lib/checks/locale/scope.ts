@@ -18,7 +18,7 @@
  *   the second invariant is the one the first cannot SEE. Two registers can agree with each other and both omit a
  *   country that ships. GB, IN and NZ are in that state today: three published weights packages, no tier between them,
  *   because the table was declared on 2026-07-02 and the overlays shipped after it. So a shipping locale must be
- *   tiered or named in `untieredShippingLocales` with a reason someone can read — the same posture
+ *   tiered or named in `untieredShippingLocales` with a reason someone can read. The same posture
  *   `SANCTIONED_RELEASE_ABSENCES` takes toward a workspace held out of the release list, and for the same reason: a
  *   flag is checkable, a silence is not.
  *

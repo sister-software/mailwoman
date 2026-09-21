@@ -83,7 +83,7 @@
  *   until cores and edgar land in Phase 3b, so it's explicitly deferred there rather than attempted here.
  *
  *   **Decision 5 / criterion 2, binding and required:** an inferred link must never alter an
- *   authoritative cluster assignment. This is not a runtime check on the inferred pass's output — it
+ *   authoritative cluster assignment. This is not a runtime check on the inferred pass's output. It
  *   is a structural property of where each pass writes: (a) only ever touches `filer_cluster` rows
  *   `where assertion = 'authoritative'`; (b) only ever touches rows `where assertion = 'inferred'`
  *   (a disjoint set, by construction — every row this module writes carries the assertion it was
@@ -127,7 +127,7 @@
  *   edge survives with `valid_to: null` ("still valid"), directly contradicting the current
  *   `filer_cluster` snapshot. A rebuild at the same `sourceVintage` (e.g. filer.db corrected and
  *   rebuilt without bumping the clustering vintage label) reaches the identical contradiction by a
- *   narrower route — an earlier-vintage-only comparison is strict, so it never touches a row already AT
+ *   narrower route. An earlier-vintage-only comparison is strict, so it never touches a row already AT
  *   that vintage.
  *
  *   Hence two separate operations, at the start of every {@linkcode clusterInferredLinks} call,

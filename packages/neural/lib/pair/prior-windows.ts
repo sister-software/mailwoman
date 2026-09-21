@@ -80,8 +80,9 @@ export function looksLikeHouseNumber(token: string): boolean {
 
 /**
  * Venue-title prepositions (beta refinement, 2026-07-24 — v2 battery bar-2 regression):
- * when the word-group immediately preceding the child window folds to one of these, the transition
- * adjustment (transition-beta) is withheld for that hit — the emission bias stays exactly as-is.
+ * when the word-group immediately preceding the child window folds to one of these,
+ * the transition adjustment (transition-beta) is withheld for that hit.
+ * The emission bias stays exactly as-is.
  *
  * Rationale: an immediately-preceding "at"/"of" marks a lexicalized venue title
  * ("New Inn at Hoff", "Church of St Mary").

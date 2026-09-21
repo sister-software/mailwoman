@@ -28,7 +28,7 @@
  */
 
 /* oxlint-disable mailwoman/prefer-home -- this adapter reads Australia's national register and writes AU surfaces
-   only. One of the forms below is a deliberate malformation — the postcode-first order is the dominant failure this
+   only. One of the forms below is a deliberate malformation. The postcode-first order is the dominant failure this
    source exists to teach against — and a renderer that produces well-formed addresses cannot express it. */
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"

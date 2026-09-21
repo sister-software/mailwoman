@@ -5,7 +5,7 @@
  * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the action it needs, and reports each as a diagnostic.
  *
  *   The sweep that removes these words is only safe if each site's replacement is decided by a rule rather than guessed
- *   at, one comment at a time — a careless reword drops the invariant or the measured number the comment existed to
+ *   at, one comment at a time. A careless reword drops the invariant or the measured number the comment existed to
  *   state. `shard` reached zero from 3,481 the same way: its four concepts were named first, so every site had one
  *   agreed replacement.
  *
@@ -110,8 +110,10 @@ const EMPTY_MODIFIERS = new Set([
  *
  * A bare `//` line shifts Vale's line numbers: measured on @vvago/vale 3.17.0,
  * a hit on line 5 with two empty comment lines above it is reported as line 6.
- * The count is unaffected — the hit is real either way — but the census indexes source by that
- * number to derive a modifier, and a reader following the output would be sent to the wrong line.
+ * The count is unaffected.
+ *
+ * The hit is real either way — but the census indexes source by that number to derive a
+ * modifier, and a reader following the output would be sent to the wrong line.
  *
  * Searching a window rather than trusting the number makes the instrument self-correcting.
  * Three lines is measured rather than guessed: the two files in this repository

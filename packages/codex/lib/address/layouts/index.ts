@@ -280,8 +280,8 @@ ${country}`,
 	// 〒%Z%n%S%n%A%n%O%n%N, with the prefecture joined to the run below it.
 	//
 	// The dataset breaks the line between %S and %A because an envelope prints them on separate lines.
-	// Written on one line — which is what a geocoder query and a corpus row are — the whole admin
-	// run is unseparated and only the postal code takes a space: `〒100-0005 東京都千代田区丸の内1-9-1`.
+	// Written on one line — which is what a geocoder query and a corpus row are.
+	// The whole admin run is unseparated and only the postal code takes a space: `〒100-0005 東京都千代田区丸の内1-9-1`.
 	// Keeping the dataset's break would put a space after the prefecture, which no Japanese address carries.
 	JP: addr`${country}
 〒${postcode}

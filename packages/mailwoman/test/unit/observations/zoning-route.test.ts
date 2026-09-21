@@ -6,7 +6,7 @@
  *   #1995: the zoning route on the geocode path, exercised through `geocodeAddress` with mock
  *   classifier/resolver deps and a fixture-built zoning layer.
  *
- *   the first test is the one that matters. With the layer absent — which is every default construction —
+ *   the first test is the one that matters. With the layer absent — which is every default construction.
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.

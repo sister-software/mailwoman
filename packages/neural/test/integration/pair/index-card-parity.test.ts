@@ -18,7 +18,7 @@
  *   staged for a release. the release-side check in `packages/release-kit/lib/release/verify-metadata.ts` is where
  *   staged bytes get checked.
  *
- *   Skips per-package when the binary is absent — these are derived artifacts, gitignored and built
+ *   Skips per-package when the binary is absent. These are derived artifacts, gitignored and built
  *   by each package's `link-dev-weights.ts`, so a lean checkout legitimately has none.
  */
 

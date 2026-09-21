@@ -331,7 +331,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 /**
  * The `@mailwoman/fastify` plugin, wrapped with `fastify-plugin` so the `fastify.mailwoman`
  * decorator + the routes land on the instance the caller registered against
- * (encapsulation is broken deliberately — the decorator is meant to be shared).
+ * (encapsulation is broken deliberately, since the decorator is meant to be shared).
  *
  * Register with `fastify.register(mailwomanFastify, options)`.
  */

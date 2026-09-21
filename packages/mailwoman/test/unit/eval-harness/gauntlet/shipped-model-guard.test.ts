@@ -18,7 +18,7 @@
  *   own path literal.
  *
  *   This is a source check rather than a behavioural one because the property is about how the path is
- *   obtained, and the failure is an absence — there is no wrong answer to assert against, only a check that
+ *   obtained, and the failure is an absence. There is no wrong answer to assert against, only a check that
  *   quietly stopped happening.
  */
 

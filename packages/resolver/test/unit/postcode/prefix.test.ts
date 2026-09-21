@@ -9,7 +9,7 @@
  *
  *   - **B3-2** — ≥60% of held-out units within 10 km, zero worse than the abstention arm. The
  *     within-10-km population is a data property of a real PFX1 artifact (a GB one is being built
- *     build-side); what the resolver-level legs below pin is the interface the artifact rides on —
+ *     build-side); what the resolver-level legs below pin is the interface the artifact rides on.
  *     a hit resolves to the index node's coordinate, the node's `radiusP95Km` rides along (never
  *     read a coordinate without its radius), and an abstention arm (no index) resolves nothing, so
  *     a hit is never worse than abstention by construction.

@@ -5,7 +5,7 @@
  *
  *   Row schema + loud validation for the demo-cascade smoke eval (#524). Split out of the runner
  *   (`demo-cascade-smoke.ts`) so the schema interface is unit-testable without loading the model /
- *   the hot DB — a malformed row must fail naming the row, never silently skip or crash mid-run.
+ *   the hot DB. A malformed row must fail naming the row, never silently skip or crash mid-run.
  *
  *   Row convention (see `data/eval/external/demo-cascade-smoke.readme.md`): each row asserts the
  *   resolved WOF place ID of the top cascade hit — the whole-stack interface — not parse components.

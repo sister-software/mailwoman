@@ -25,7 +25,7 @@
  *   source can change a geocode are re-pointed into the worktree.
  *
  *   Only those, and the exception is not cosmetic. The `neural-weights-*` workspaces ship `model.onnx` and
- *   `tokenizer.model`, which are not committed — they are materialized into the checkout from
+ *   `tokenizer.model`, which are not committed. They are materialized into the checkout from
  *   `$MAILWOMAN_DATA_ROOT` by each package's `link-dev-weights.ts`. Re-pointing them at a fresh worktree
  *   gives the child a weights package with no weights in it, and the failure is loud but misleading:
  *   "geocode requires the neural weights. Install @mailwoman/neural-weights-en-us". The list of workspaces
@@ -224,8 +224,8 @@ export async function runWorktreeArm(args: {
 
 	// The uncommitted working tree, which no git ref can name and which is the arm a
 	// maintainer reaches for most: "what I have edited" against "what is committed".
-	// It needs no worktree and no farm — the main checkout already has both —
-	// only its own process, which is the entire point.
+	// It needs no worktree and no farm.
+	// The main checkout already has both — only its own process, which is the entire point.
 	// Spawning it through the same runner as a ref arm is what keeps the comparison honest:
 	// one script, one config path, so a difference between the arms is a difference
 	// in source rather than in how each side was invoked.

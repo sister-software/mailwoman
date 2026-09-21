@@ -152,8 +152,10 @@ export class UPRNLookup implements Disposable {
 	 * Bounded two ways: `radiusM` is capped at {@link UPRN_MAX_NEAREST_RADIUS_M},
 	 * and rings expand outward only until no unprobed cell could beat the best hit found
 	 * so far (or the radius, when nothing has been found).
-	 * The stop rule is geometric — a cell at grid distance `g` holds no point nearer than `g` ×
-	 * spacing floor − cell radius, using the same conservative constants the reach math uses —
+	 * The stop rule is geometric.
+	 *
+	 * A cell at grid distance `g` holds no point nearer than `g` × spacing floor
+	 * − cell radius, using the same conservative constants the reach math uses —
 	 * so unlike POILookup's row-count accumulation there is no early-exit ambiguity:
 	 * a break can never strand a nearer point in an unprobed ring.
 	 *

@@ -729,7 +729,8 @@ describe("buildFilerDatabase", () => {
 				expect(family.source_vintage).toBe("2026-05-01")
 				expect(family.valid_from).toBe("2026-05-01")
 				expect(family.valid_to).toBeNull()
-				// A 499 row naming its own holding company is the filing — nothing was matched.
+				// A 499 row naming its own holding company is the filing.
+				// Nothing was matched.
 				// The edgar block below pins the opposite grading from the same builder.
 				expect(family.assertion).toBe(FilerEdgeAssertion.Authoritative)
 				expect(family.match_score).toBeNull()

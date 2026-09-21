@@ -5,7 +5,7 @@
  *
  *   The #1649 first-refusal check: a lexicon-aware kind classifier, when the caller injects one, gets
  *   first look at the query. A top-slot `poi_query` / `poi_category` / `near_me` verdict means the
- *   string asks for a thing rather than an address — the address lanes can only manufacture confident
+ *   string asks for a thing rather than an address. The address lanes can only manufacture confident
  *   nonsense from it ("Statue of Liberty" resolved Of, Trabzon through a fuzzy locality; "Restaurants
  *   in London" resolved London, Kentucky). The geocode abstains with the verdict's intent markers
  *   attached. POI-lane answering lives in the runtime pipeline's poiIntent stage. The refusal is a

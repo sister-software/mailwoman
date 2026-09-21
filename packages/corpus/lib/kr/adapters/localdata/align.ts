@@ -15,7 +15,7 @@
  *   `<시도> <시군구> <법정동> [<리>] [산]<본번>[-<부번>]` followed by whatever the clerk added.
  *
  *   alignment is exact against {@link KeyIndex}, never fuzzy. A string that satisfies the whole key becomes a training
- *   row whose spans are the matched pieces. One that does not is a board row — an address the model will be read on and
+ *   row whose spans are the matched pieces. One that does not is a board row, an address the model will be read on and
  *   never trained on. The rate per file is measured and reported before any row enters a corpus, which is the rule an
  *   `observation` source is admitted under.
  */

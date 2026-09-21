@@ -604,9 +604,9 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	test.skipIf(!haveModel || !haveCLI)(
 		"en-us: ships its OWN us-conditional pair index — a GB-shaped input still applies NO placetype-pair bias",
 		async () => {
-			// en-us ships `pair-index-us.bin` (49,033 WOF-sourced pairs), so the property worth
-			// protecting is not the packaging fact that no sibling exists — it does exist —
-			// but that the index is still inert on GB input.
+			// en-us ships `pair-index-us.bin` (49,033 WOF-sourced pairs), so the property
+			// worth protecting is not the packaging fact that no sibling exists.
+			// It does exist — but that the index is still inert on GB input.
 			// Two independent things keep it inert.
 			// The header's hard country restriction, and the plain fact that US pairs don't
 			// contain GB place names (measured: the US index misses all five GB canonical pairs).

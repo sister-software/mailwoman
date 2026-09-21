@@ -98,7 +98,9 @@ export interface SynthesizedBoundaryStressRow {
 }
 
 /**
- * Multi-word street names — the suffix boundary only bites when "Club" could be read as part of the name.
+ * Multi-word street names.
+ *
+ * The suffix boundary only bites when "Club" could be read as part of the name.
  *
  * Single-word names alone teach nothing about the suffix edge.
  * Multi-word names are what make the suffix boundary bite

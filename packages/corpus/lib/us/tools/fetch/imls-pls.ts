@@ -9,7 +9,7 @@
  *
  *   The FY 2023 release is the most current as of 2026-05. IMLS ships a single ZIP containing CSV,
  *   SAS, and spss variants. We extract the outlet-level CSV (pls_fy*_outlet*.csv or similar) and
- *   discard the rest. The administrative-entity (system-level) CSV is intentionally skipped — it has
+ *   discard the rest. The administrative-entity (system-level) CSV is intentionally skipped. It has
  *   no per-branch address detail.
  *
  *   Uses Node's built-in fetch (gzip/brotli) and streaming sha256 instead of curl + sha256sum. The

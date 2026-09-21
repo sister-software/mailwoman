@@ -50,8 +50,9 @@ describe("isAtLeastAsSpecific", () => {
 	})
 
 	it("puts a borough BELOW localadmin rather than level with it", () => {
-		// This pair was tied on the reasoning that WOF uses both for the same tier in different countries,
-		// which is true — an Alaska borough is county-tier — but a tie is not a neutral answer.
+		// This pair was tied on the reasoning that WOF uses both for the same tier
+		// in different countries, which is true.
+		// An Alaska borough is county-tier — but a tie is not a neutral answer.
 		// It made each cover the other, and one rung up that same tie let a live
 		// NYC-shaped borough cover its own dead parent locality.
 		// WOF's own containment ladder commits to sub-locality.

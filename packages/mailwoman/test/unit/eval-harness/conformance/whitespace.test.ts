@@ -8,7 +8,7 @@
  *   The required pair is `whitespaceBlindKey` and `whitespaceApplicability`, and the reason both exist is
  *   here in executable form: the key refuses a pair that changed anything besides whitespace, and the
  *   applicability rules refuse a pair the key accepts but whose spacing the transformation could never have
- *   moved. A space swapped for a newline clears the first and is refused by neither — it is refused because
+ *   moved. A space swapped for a newline clears the first and is refused by neither. It is refused because
  *   no named transformation produces it, which is how this law keeps the segmentation grammar out.
  *
  *   Every exclusion is exercised against a real committed board row rather than an invented string: the bare

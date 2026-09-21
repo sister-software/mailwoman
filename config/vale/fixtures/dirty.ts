@@ -35,6 +35,9 @@
 // A capital before a dash is the same shape: the flag is FIXED — nothing else moved; Default OFF —
 // set it per locale; and a clause that opens a comment line, # NEW — added this run, trips it too.
 
+// `CommentDashJoint.yml` refuses a dash left standing between two clauses, and this line
+// must trip it: the rule carries one token — the sweep script holds the same one.
+
 /**
  * Anchors the fixture as a module.
  *

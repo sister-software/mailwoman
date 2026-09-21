@@ -5,7 +5,7 @@
  *
  *   The client-generation pipeline behind `mailwoman clients generate`: emit all four surfaces'
  *   OpenAPI documents (both flavors), generate a Python package and a Rust crate from them, then
- *   verify both actually build. Everything is one-directional and local — nothing generated here is
+ *   verify both actually build. Everything is one-directional and local. Nothing generated here is
  *   committed; `clients-build/` is gitignored. This is the local proof the conditional CI job (Phase 5 Task
  *   4) replays on dispatch.
  *

@@ -595,7 +595,8 @@ export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, un
  * A still-running check gets no partial reading: its numbers live in `verdict.json`.
  * It the assembler writes at the END.
  *
- * Therefore, anything read before then is not a partial answer — it is no answer.
+ * Therefore, anything read before then is not a partial answer.
+ * It is no answer.
  */
 export function summarizeJob(
 	state: string,

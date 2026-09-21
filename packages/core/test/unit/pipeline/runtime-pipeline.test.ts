@@ -807,9 +807,9 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
  * measured on the mailfail probes, 10 of 110 inputs crashed the classifier while the pipeline
  * reported success (`size-10kb` produced a tidy five-field parse off a 3,031-node tree).
  *
- * The interface now is that the wrapper still degrades — it does not abort the pipeline —
- * but it records what it caught on `PipelineResult.faults`, so "the model faulted"
- * is distinguishable from "the model found nothing".
+ * The interface now is that the wrapper still degrades.
+ * It does not abort the pipeline — but it records what it caught on `PipelineResult.faults`,
+ * so "the model faulted" is distinguishable from "the model found nothing".
  */
 describe("stage faults — a swallowed stage crash is recorded, never silent (#40)", () => {
 	const throwingClassifier = (error: unknown): AddressClassifier => ({

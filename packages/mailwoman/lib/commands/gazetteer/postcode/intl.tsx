@@ -32,7 +32,7 @@
  *   Progress streams to stderr. the final summary is on stdout.
  *
  *   note: the database `--out` DB is written directly (the table is dropped + recreated in place on
- *   re-run), and `--fold-out` is a build-on-copy of `--fold-into` — neither uses an atomic
+ *   re-run), and `--fold-out` is a build-on-copy of `--fold-into`. Neither uses an atomic
  *   temp-swap. This preserves the original `scripts/build-geonames-postcode-database.ts` behavior
  *   verbatim.
  */

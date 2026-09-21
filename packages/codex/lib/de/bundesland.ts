@@ -7,7 +7,7 @@
  *
  *   The US analog is `us/state.ts`. The informative difference: a US state's two-letter code (`CA`)
  *   is the USPS abbreviation people actually write in an address, whereas a German address almost
- *   never carries the Bundesland at all — it is `PLZ City`, and the state is inferred. So these
+ *   never carries the Bundesland at all. It is `PLZ City`, and the state is inferred. So these
  *   codes matter for resolver region-matching and display rather than for parsing the surface string.
  */
 

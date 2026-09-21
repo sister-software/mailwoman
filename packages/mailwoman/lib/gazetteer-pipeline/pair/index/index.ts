@@ -18,7 +18,7 @@
  *   reader's caller (`fst-prior.ts`'s `groupPiecesIntoWords`) applies at query time.
  *
  *   parent TAG (PIX2 / schema 3): the caller supplies it per row, because only the caller knows what
- *   its source's parent column is. `addRow` will not default one — every source that feeds this
+ *   its source's parent column is. `addRow` will not default one. Every source that feeds this
  *   builder has to name the slot it read (post town → `locality`, WOF `borough` parent row →
  *   `dependent_locality`, and so on), and the serializer refuses an entry that arrives without one.
  *

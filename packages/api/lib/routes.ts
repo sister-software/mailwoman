@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Route definitions + handlers for the native `/v1` surface. The OpenAPI document is emitted from
- *   these definitions — there is no handwritten spec. Unlike the drop-ins (photon, nominatim,
+ *   these definitions. There is no handwritten spec. Unlike the drop-ins (photon, nominatim,
  *   libpostal), nothing here mimics a vendor's legacy query-parsing tolerance: request bodies are
  *   validator-enforced, and a validation failure always answers through the shared api-kit envelope
  *   (`apiError`), never the raw zod shape. `GET /v1/parse` is the one query-string route, and it

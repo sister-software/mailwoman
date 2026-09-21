@@ -7,7 +7,7 @@
  *
  *   The property under test throughout is that the four states stay distinct. A report that collapsed
  *   "has no manifest" into "could not be opened", or counted a third party's artifact as our debt, would
- *   still print a number — it would just print one nobody can act on, which is the failure mode this
+ *   still print a number. It would just print one nobody can act on, which is the failure mode this
  *   whole phase exists to fix.
  */
 

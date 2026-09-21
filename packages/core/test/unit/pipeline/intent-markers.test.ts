@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The coordinator's half of the ROAD_TO_V9 §4 interface: `intentMarkers` is always an array on
- *   every return path, and the coordinator lifts rather than invents — it never adds a marker the
+ *   every return path, and the coordinator lifts rather than invents. It never adds a marker the
  *   classifier did not raise, and it never drops one it did.
  */
 

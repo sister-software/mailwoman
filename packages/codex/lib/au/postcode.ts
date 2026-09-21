@@ -13,7 +13,7 @@
  *       falls in the range 3000-3999 the State abbreviation will be VIC. 4000-4999 will be QLD,
  *       etc. … Exceptions to this include ACT Postcodes and Postcodes located on State borders."
  *       Because the booklet only enumerates VIC and QLD and flags exceptions, this module
- *       deliberately does not ship a full first-digit → state table — the shape is the interface,
+ *       deliberately does not ship a full first-digit → state table. The shape is the interface,
  *       the geographic prior is the gazetteer's job.
  *
  *   Note the shape collides with New Zealand's (also 4 digits) — `candidateSystemsForPostcode`

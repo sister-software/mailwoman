@@ -394,8 +394,8 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 		expect(bundle.vintage).toBeNull()
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
-		// The filing axis names why it's not covered — the layer was never wired —
-		// distinct from a wired-but-unsurveyed cell (see the next test).
+		// The filing axis names why it's not covered.
+		// The layer was never wired — distinct from a wired-but-unsurveyed cell (see the next test).
 		expect(bundle.coverage_detail.filing).toBe("layer_missing")
 	})
 

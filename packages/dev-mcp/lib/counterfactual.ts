@@ -6,7 +6,7 @@
  *   The smallest single-setting flip that changes a row's answer (#1722).
  *
  *   An account says what the pipeline did. A counterfactual says what it would have done under one different setting,
- *   which is the only way to turn "this mechanism ran" into "this mechanism decided" — the L2 rung the activation
+ *   which is the only way to turn "this mechanism ran" into "this mechanism decided". The L2 rung the activation
  *   census deliberately does not measure. One setting moves per flip, always, because a flip that moves two settings
  *   cannot attribute the change to either.
  *

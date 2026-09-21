@@ -70,7 +70,7 @@
  *   gazetteer name in a non-Latin script folds to the empty string and could never match — Москва was
  *   not in that candidate list to be ranked, and Moscow, Idaho won by default among the Latin-named
  *   bearers. Athens survived the same trap only because it reaches the admin walk instead (`Αθήνα`
- *   wins there on prominence). **Closed by #1546**: the primary-name re-check was dropped — the
+ *   wins there on prominence). **Closed by #1546**: the primary-name re-check was dropped. The
  *   backend's `exactMatch` is the name-or-alias surface equality (names table / alt_names bag), so a
  *   query matches a place when any stored name equals it, Москва's "Moscow" alias included — and
  *   population-first ranking then picks Москва RU. The postcode-consistency check still applies to

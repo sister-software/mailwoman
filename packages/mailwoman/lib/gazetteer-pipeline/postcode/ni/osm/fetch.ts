@@ -23,7 +23,7 @@
  *   ## Why not `@mailwoman/poi-taxonomy`'s emitter
  *
  *   `emitOverpassQL` renders a query from a POI intent (a category/brand/name subject plus an anchor).
- *   This query has no subject — it is a bounding box plus a tag regex — so the emitter has nothing to
+ *   This query has no subject. It is a bounding box plus a tag regex — so the emitter has nothing to
  *   emit from. The query text is a constant here, which is also what makes it hashable into provenance.
  *
  *   ## Licence

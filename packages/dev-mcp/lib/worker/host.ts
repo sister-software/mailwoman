@@ -13,7 +13,7 @@
  *
  *   Restart semantics, stated where a caller will read them:
  *
- *   - In-flight tool calls are rejected with a restart error — they were running against the old module graph and
+ *   - In-flight tool calls are rejected with a restart error. They were running against the old module graph and
  *     their results would be unattributable.
  *   - Background jobs die with the child (the worker's sigterm handler cancels them); the restart result includes the
  *     aborted-call count so nothing disappears silently.

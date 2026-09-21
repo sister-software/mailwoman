@@ -36,8 +36,10 @@ export declare class SentencePieceProcessor {
 	/**
 	 * Load a `tokenizer.model` from its serialized-proto bytes.
 	 *
-	 * Takes a `Uint8Array` — the binding deliberately does not accept a string
+	 * Takes a `Uint8Array`.
+	 * The binding deliberately does not accept a string
 	 * (embind marshals JS strings to `std::string` as UTF-8, which corrupts arbitrary binary).
+	 *
 	 * Returns `""` on success, the sentencepiece status message on failure.
 	 */
 	loadFromSerializedProto(serialized: Uint8Array): string

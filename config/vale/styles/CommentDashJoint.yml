@@ -1,15 +1,22 @@
 ## Mailwoman code-comment rule: a dash is not a semicolon.
 ##
-## `CommentSemicolons` closed the semicolon and left this open, so a sentence that wanted
-## to join two clauses reached for an em dash instead: 33 semicolons survive in comments
-## against roughly 7,400 dashes joining two independent clauses (measured 2026-09-21).
+## `CommentSemicolons` closed the semicolon and left this open, so a sentence that wanted to join
+## two clauses reached for an em dash instead: 33 semicolons survived in comments against roughly
+## 7,400 dashes standing between two clauses (measured 2026-09-21).
 ##
-## This rule fires only on that use. A paired dash around an aside, and a dash introducing
-## a noun phrase rather than a clause, both stay legal.
+## The token is the joint and nothing else. It asks for a finite verb on the left, no sentence
+## punctuation and no bracket between that verb and the dash, and a determiner-led clause with its
+## own finite verb on the right. A paired dash around an aside fails the second half, a dash
+## introducing a noun phrase fails it too, and a list item that glosses a name has no verb on
+## the left. What is left reads as two sentences a dash is holding together.
 ##
-## Off in `.vale-code.ini` until the dash sweep lands, for the reason recorded there.
+## `config/oxlint/comment-reflow/joint-sweep.ts` carries the same token and answers what this
+## reports: a full stop, or a comma where the right half glosses the left rather than standing on
+## its own. Run `yarn comments:joints <file>` and then `yarn fix:oxlint`. The verb and determiner
+## lists are shared by hand, so a word added here belongs there as well.
 extends: existence
 message: "'%s' joins two clauses with a dash — split the sentence or use a full stop."
 level: error
+ignorecase: true
 tokens:
-  - '[—–]\s+(?:[Tt]he|[Aa]|[Aa]n|[Ii]t|[Tt]his|[Tt]hat|[Tt]hey|[Ww]e|[Tt]here|[Ee]ach|[Ee]very|[Nn]othing|[Nn]obody)\s+\w+(?:\s+\w+){0,6}\s+(?:is|are|was|were|has|have|had|does|do|did|will|would|can|could|should|must|never|only)\b'
+  - '\b(?:is|are|was|were|has|have|had|does|do|did|will|would|can|could|should|must|makes|leaves|reads|names|holds|keeps|gives|takes|means|stays|comes|goes|sits|carries|returns|fires|fails|needs|wants|uses|writes|reports|answers|drops|adds|counts|costs|pays|prefers|refuses|resolves|produces|reaches|wins)\b[^—–\n.!?;:()\[\]]{0,90}\s[—–]\s(?:the|a|an|it|this|that|they|we|there|each|every|its|their|these|those|both|neither|either|one|no|nothing)\s+(?:[^\s—–,.!?;:]+\s+){0,6}(?:is|are|was|were|has|have|had|does|do|did|will|would|can|could|should|must|makes|leaves|reads|names|holds|keeps|gives|takes|means|stays|comes|goes|sits|carries|returns|fires|fails|needs|wants|uses|writes|reports|answers|drops|adds|counts|costs|pays|prefers|refuses|resolves|produces|reaches|wins)\b\s'

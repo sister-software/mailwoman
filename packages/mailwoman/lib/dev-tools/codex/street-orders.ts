@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Where the house number sits relative to the street name, per country — the one fact libaddressinput does not carry.
+ *   Where the house number sits relative to the street name, per country. The one fact libaddressinput does not carry.
  *
  *   Its `fmt` models the street address as a single opaque `%A`, so a skeleton transcribed from it says which line the
  *   street occupies and nothing about how that line is spelled. The split — house number leading or following — is read

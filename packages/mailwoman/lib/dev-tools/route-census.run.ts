@@ -291,8 +291,10 @@ const movedByPostcode: MovedRow[] = []
  * and only where that router abstained.
  *
  * Reported separately rather than as one arm.
- * They are different classes of evidence — one reads where a script sits, one reads a
- * postal format — and a combined count would not say which reading claimed a row.
+ * They are different classes of evidence.
+ *
+ * One reads where a script sits, one reads a postal format — and a combined count
+ * would not say which reading claimed a row.
  */
 const CANDIDATES: ReadonlyArray<{ name: string; route: (text: string) => string; moved: MovedRow[] }> = [
 	{

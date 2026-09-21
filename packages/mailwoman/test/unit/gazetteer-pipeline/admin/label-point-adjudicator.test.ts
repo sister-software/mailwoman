@@ -56,7 +56,8 @@ describe("choosePoint (#1905)", () => {
 	it(`agreement within ${LABEL_GEOM_DISAGREEMENT_KM} km never consults the anchor`, () => {
 		const geom = { latitude: 48.8566, longitude: 2.3522 }
 		const lbl = { latitude: 48.86, longitude: 2.35 }
-		// An anchor that would pick geom if consulted — it must not be.
+		// An anchor that would pick geom if consulted.
+		// It must not be.
 		const chosen = choosePoint(geom, lbl, geom)
 
 		expect(chosen.choice).toBe("lbl")

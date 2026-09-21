@@ -17,7 +17,7 @@
  *   should discriminate: {@linkcode HardCase.probeSurface} is the token whose gazetteer bias is
  *   under test, and {@linkcode HardCase.popBias} / {@linkcode HardCase.impBias} are that
  *   surface's measured max-importance under each FST arm (see `dev-tools/probe-fst-bias.run.ts`). A row
- *   whose two biases are equal is a negative control — it must not move — and one whose biases differ
+ *   whose two biases are equal is a negative control. It must not move — and one whose biases differ
  *   sharply but ties anyway is a finding about the FST's reach rather than a reason to add rows.
  *
  *   the reach field is required, and IT is not about whether bias applies. `fst-<locale>.bin` is
@@ -41,7 +41,7 @@
  *   either carries `expectLat` + `expectLon` + `expectToleranceM` together, or asserts no coordinate at
  *   all. {@linkcode HardCaseSchema} refuses every partial combination. A silently-defaulted
  *   tolerance is a number nobody chose, and a row with a coordinate but no tolerance would inherit a bar
- *   it was never graded against — the absence of a coordinate is absence rather than zero, and not a
+ *   it was never graded against. The absence of a coordinate is absence rather than zero, and not a
  *   permissive default.
  *
  *   Conventions follow `gauntlet/cases/seed-case.ts` (interface as source of truth, strict zod shadow,

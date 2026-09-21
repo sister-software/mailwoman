@@ -78,9 +78,9 @@ function recordingBackend(
 
 			if (!into.has(key)) {
 				// The stored query is parsed back from the key rather than kept by reference.
-				// The walk reuses and mutates its query object after the call returns — it adds
-				// `parentID` once a parent resolves — so a stored reference ends up describing a
-				// question that was never asked, and the fixture's key and query disagree.
+				// The walk reuses and mutates its query object after the call returns.
+				// It adds `parentID` once a parent resolves — so a stored reference ends up describing
+				// a question that was never asked, and the fixture's key and query disagree.
 				// Round-tripping through the key also makes the two agree by construction.
 				into.set(key, {
 					key,

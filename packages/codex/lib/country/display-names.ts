@@ -7,7 +7,7 @@
  *
  *   The gazetteer holds country names in English and little else, which is why a bare `格鲁吉亚` (Georgia the country,
  *   Chinese), `沙特阿拉伯` or `巴布亚新几内亚` resolves to nothing while `佐治亚州` (Georgia the US state) resolves
- *   correctly — the state is a real WOF record carrying multilingual names, and 140 of the 237 country rows are
+ *   correctly. The state is a real WOF record carrying multilingual names, and 140 of the 237 country rows are
  *   synthetic and carry only a canonical English name. Measured 2026-08-15. WOF has no Chinese country names at all,
  *   and `geonames-aliases.ts` filters every alias through a Latin-script regex.
  *

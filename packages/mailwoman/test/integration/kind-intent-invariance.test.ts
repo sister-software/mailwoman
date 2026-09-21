@@ -26,7 +26,7 @@
  *   A verdict whose top `kind` and `confidence` are unchanged cannot move any of the three. So the
  *   pin below is over `(kind, confidence, inputMode)` for every committed corpus row (the size test pins the count) in both
  *   registers, computed against a from-scratch replay of the PRE-§4 scorer set. That is a stronger
- *   receipt than a sample of parses would be — it is every row, it is exact rather than
+ *   receipt than a sample of parses would be. It is every row, it is exact rather than
  *   within-tolerance, and it needs no weights, so it runs in CI on every commit rather than on the
  *   days someone has the ~9 GB database set mounted.
  *

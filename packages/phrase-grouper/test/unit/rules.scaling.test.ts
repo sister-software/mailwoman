@@ -12,7 +12,7 @@
  *   identical result.
  *
  *   Correctness tests cannot catch that: bounded and unbounded walks emit the same proposals, which is what makes the
- *   waste invisible. Only the growth curve separates them. The curve is measured by operation count — the number of
+ *   waste invisible. Only the growth curve separates them. The curve is measured by operation count. The number of
  *   token reads a rule makes, observed through a `Proxy` over the token array — rather than by wall clock: a token
  *   read is what the walk spends, it is exact, and it does not move with whatever else the host is running — a
  *   wall-clock ratio on a shared host cannot tell a load change between its two measurements from a complexity change.

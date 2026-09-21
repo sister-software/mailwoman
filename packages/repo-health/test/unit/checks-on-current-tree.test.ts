@@ -14,7 +14,7 @@
  *   prevent.
  *
  *   A check that walks tracked files belongs here once it passes `existingOnly: true`. The index can name a file the
- *   working tree no longer has — a rename staged and not committed is enough — and a walk that opens every path it is
+ *   working tree no longer has. A rename staged and not committed is enough — and a walk that opens every path it is
  *   given throws enoent on that one, failing for a reason that has nothing to do with what it measures.
  */
 

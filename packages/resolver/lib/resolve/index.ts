@@ -274,7 +274,7 @@ class WOFResolver implements Resolver {
 
 		// The pre-scope's receipt (#1735): consumers that select country-scoped artifacts
 		// after the walk (geocode-core's rooftop-extract second pass) key on a scope stamp.
-		// Without this, an address whose country was right from the tree never writes one —
+		// Without this, an address whose country was right from the tree never writes one.
 		// the #42 pass stays silent because the default is already coherent — and the FR
 		// rooftop extract silently stops loading for "…, France" inputs under a non-FR locale
 		// (six board venue rows dropped from rooftop to city centroid. The battery caught it).

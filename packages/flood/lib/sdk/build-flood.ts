@@ -25,7 +25,7 @@
  *   say the location will not flood, and the authority itself declines that second statement.
  *
  *   the coverage cell OF A row is `cellToParent` OF its finer cell, never a fresh `latLngToCell` at the
- *   coarse resolution — that is what every existing reader in this repo does, and the two agree for a
+ *   coarse resolution. That is what every existing reader in this repo does, and the two agree for a
  *   point but not for a cell.
  *
  *   the area cross-check is belt and braces and IT stays. The EA's rings nest their holes properly, so the

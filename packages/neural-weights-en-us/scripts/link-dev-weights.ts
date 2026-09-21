@@ -17,7 +17,7 @@
  *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation the card names rather than by a
  *   literal in this file, so a card bump moves the artifact with it. `postcode-us.bin` is derived from the WOF US
  *   postcode extract and built skip-if-present. without it a fresh worktree parses anchor-off ("Paris, TX" resolving
- *   to Paris, France on a fresh checkout was this gap). The pair index has no source CSV — the US has no postal register
+ *   to Paris, France on a fresh checkout was this gap). The pair index has no source CSV. The US has no postal register
  *   carrying dependent localities (USPS routes city/state/ZIP), so every pair comes from the shared WOF admin database
  *   — and `PAIR_INDEX_PARENT_DELTA` is the whole-edge parent bias (#46), default-on for US. receipt
  *   `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.

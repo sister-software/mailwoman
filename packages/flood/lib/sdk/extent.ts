@@ -7,7 +7,7 @@
  *
  *   the footprint is the coverage statement, never the polygon union. The EA states that the Flood Zone
  *   mapping "covers all of England". Zone 1 is defined as the land outside Zones 2 and 3, so the union of
- *   the hazard polygons is the mapped area minus Zone 1 — a footprint taken from the polygons would report
+ *   the hazard polygons is the mapped area minus Zone 1. A footprint taken from the polygons would report
  *   every Zone 1 location as unmapped, which inverts the one reading this layer exists to get right.
  *
  *   the flood authority does not publish where england is, so a second authority's artifact is needed to
@@ -147,8 +147,8 @@ export function outlineFromGeoJSON(document: unknown, origin: string): ParsedGeo
  *
  * @throws {Error} When the outline yields no interior cell at `coverageResolution`.
  * That is not an empty country: it means the resolution is coarser than the outline,
- * and a zero-cell footprint would silently write no coverage rows — an artifact that
- * answers "unknown" everywhere while reporting a successful build.
+ * and a zero-cell footprint would silently write no coverage rows.
+ * An artifact that answers "unknown" everywhere while reporting a successful build.
  */
 export function realizeFloodMapExtent(options: RealizeExtentOptions): FloodMapExtent {
 	const coverageCells = interiorCoverageCellSet(options.geometry, options.coverageResolution)

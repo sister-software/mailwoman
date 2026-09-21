@@ -24,7 +24,8 @@ describe("license exclusion (#26)", () => {
 		expect(licenseExcluded("ODbL-1.0", p)).toBe(true)
 		expect(licenseExcluded("odbl-1.0", p)).toBe(true) // case-insensitive
 		expect(licenseExcluded("CC-BY-SA-3.0", p)).toBe(true)
-		// CC-BY (Tier B) must not be caught by a CC-BY-SA exclusion — the prefix is anchored.
+		// CC-BY (Tier B) must not be caught by a CC-BY-SA exclusion.
+		// The prefix is anchored.
 		expect(licenseExcluded("CC-BY-4.0", p)).toBe(false)
 		expect(licenseExcluded("Licence Ouverte 2.0", p)).toBe(false)
 	})

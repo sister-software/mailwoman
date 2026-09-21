@@ -109,8 +109,8 @@ export const SUBVENUE_TAG_RULES: SubVenueTagRule[] = [
 /**
  * The OSM driver layers that can carry a named transport structure: nodes and closed ways/relations.
  *
- * `lines` is excluded — a platform mapped as an open way is an edge case whose
- * name duplicates the node or area version.
+ * `lines` is excluded.
+ * A platform mapped as an open way is an edge case whose name duplicates the node or area version.
  */
 export const SUBVENUE_LAYERS = ["points", "multipolygons"] as const
 

@@ -15,12 +15,12 @@
  *   - **Meta+backspace (`\x1b\x7f`)** arrives correctly flagged (`key.backspace` + `key.meta`, empty input) and is
  *     then treated as a plain backspace — one character rather than one word.
  *
- *   Both are the same defect: the modifier is delivered and ignored. So the rule here is inverted — an unhandled
+ *   Both are the same defect: the modifier is delivered and ignored. So the rule here is inverted. An unhandled
  *   ctrl/meta chord is dropped, never inserted. A control byte can only ever reach the value as an edit.
  *
  *   JSX-free on purpose (`.ts`, `createElement`): bare node strips types but does not transform JSX, so this is the
  *   form that lets the pty probe run the real component from source, the way `map-tui`'s pty test runs its real bin.
- *   The component is one `<Text>` — the JSX would have bought nothing.
+ *   The component is one `<Text>`. The JSX would have bought nothing.
  */
 
 import { Text, useInput, type Key } from "ink"

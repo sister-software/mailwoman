@@ -7,7 +7,7 @@
  *   Property Reference Number with OS's own WGS84 point, under the layer interface. Acquires the
  *   archive from the open OS Downloads API (same product family as Code-Point Open), verifies it
  *   against OS's published md5, and writes a sealed, atomically-swapped artifact. The layer is an
- *   interoperability key source — nothing on the parse/resolve path reads it.
+ *   interoperability key source. Nothing on the parse/resolve path reads it.
  *
  *   Coverage is England, Scotland and Wales. Northern Ireland's identifiers live in LPS Pointer rather than
  *   any OS OpenData product, and the layer's own coverage rows say so. See

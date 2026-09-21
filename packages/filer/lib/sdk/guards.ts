@@ -12,7 +12,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *   coupling that gets worse with every new filer.db writer this phase adds. This module is the neutral
  *   home every writer imports the guard from instead.
  *
- *   The export's name and behavior are unchanged from the pre-move implementation — this is a
+ *   The export's name and behavior are unchanged from the pre-move implementation. This is a
  *   relocation rather than a rewrite.
  */
 

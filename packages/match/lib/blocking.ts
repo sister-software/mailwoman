@@ -14,7 +14,7 @@
  *   any rule catches is scored. {@link conjunction} builds the and-style key Geo-ER uses
  *   (`name-cell and geo-cell`) when a single rule is too loose.
  *
- *   Recall is the priority — a pair the blocker never proposes can never match, the most dangerous
+ *   Recall is the priority. A pair the blocker never proposes can never match, the most dangerous
  *   silent failure in record linkage. So the spatial grid is generous and neighbour-expanded by
  *   default, and any block too large to scan is _reported_, never silently dropped.
  */

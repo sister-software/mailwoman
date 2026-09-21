@@ -18,7 +18,7 @@
  *   so in place rather than omitting the field.
  *
  *   an ARM label is not A measurement OF what RAN. `semanticRoute` records whether the injected route was
- *   actually built, and what it was built from — a route dropped on the way in produces exactly the numbers
+ *   actually built, and what it was built from. A route dropped on the way in produces exactly the numbers
  *   a route that changed nothing produces, and the two are opposite findings. Every firing is recorded
  *   beside its row as an observation carrying the assertion, its modality and every provenance record
  *   behind it, so the receipt states on whose authority each answered row's category was chosen.

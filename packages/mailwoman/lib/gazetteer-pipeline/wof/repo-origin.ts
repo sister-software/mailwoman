@@ -9,7 +9,7 @@
  *   `Rochester`, `Gillingham`, `Swansea`, `Telford` and 50 others with no successor (`gazetteer triage` reports the
  *   whole class): every one is a live settlement, and a geocoder that cannot name them is wrong today, whatever the
  *   upstream PR queue does. Forking is how a correction ships without waiting and without becoming a private patch
- *   nobody else can see — the fork is public, the diff is a normal WOF record change, and the upstream PR is a push
+ *   nobody else can see. The fork is public, the diff is a normal WOF record change, and the upstream PR is a push
  *   away from the same branch.
  *
  *   The preference is divergence-based, and must be: the fork org holds a fork of every `whosonfirst-data-*` repo,

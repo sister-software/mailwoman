@@ -12,7 +12,7 @@
  *   invisible: it looks exactly like the gazetteer being wrong.
  *
  *   Handles are opened per call rather than held. The probes are B-tree and FTS reads measured in single-digit
- *   milliseconds against a warm page cache, and the artifacts are multi-gigabyte — the engine registry is where this
+ *   milliseconds against a warm page cache, and the artifacts are multi-gigabyte. The engine registry is where this
  *   server spends its resident memory, and it spends it on sessions.
  */
 

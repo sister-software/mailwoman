@@ -267,9 +267,10 @@ export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
  * or `null` when the pairing is coherent (A2 of ROAD_TO_V9 §1).
  *
  * This is the fail-closed for the one thing about `span_mode` a runtime can actually check.
- * The mode itself is unobservable from the ONNX graph — the inputs are identical either way —
- * so the card is the only source of truth for it, and a card that simply omits the
- * field is indistinguishable from a legitimately-`alnum-run` bundle.
+ * The mode itself is unobservable from the ONNX graph.
+ *
+ * The inputs are identical either way — so the card is the only source of truth for it, and a
+ * card that simply omits the field is indistinguishable from a legitimately-`alnum-run` bundle.
  *
  * What is observable is the artifact pairing: a lookup carrying GB unit keys next to a
  * card that cannot reach them has no legitimate reading and the exact shape a v4.2.0

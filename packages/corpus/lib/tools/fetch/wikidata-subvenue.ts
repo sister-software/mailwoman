@@ -138,9 +138,9 @@ const WDQS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
  * `wbsearchentities` for "wing" returns a surname, two English villages,
  * a rugby position and a drone company.
  *
- * Since `wing` is the single most valuable designator in the arc — `West Wing` is the
- * one modifier case that already parses, and `East Wing` is the one that does not —
- * its localized surfaces have to come from somewhere else.
+ * Since `wing` is the single most valuable designator in the arc — `West Wing` is
+ * the one modifier case that already parses, and `East Wing` is the one that does
+ * not. its localized surfaces have to come from somewhere else.
  * See the wave-1 report.
  */
 export interface SubVenueConcept {

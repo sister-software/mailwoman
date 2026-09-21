@@ -5,7 +5,7 @@
  *
  *   The JS k-best decode is verified against brute-force enumeration of every valid segmentation, the
  *   same discipline the python side got (`tests/mailwoman_train/test_span_scorer.py`). A DP that is
- *   subtly wrong still returns plausible-looking spans — the oracle is the point.
+ *   subtly wrong still returns plausible-looking spans. The oracle is the point.
  */
 
 import { makeGlibcLcgFloat64 } from "@mailwoman/core/random"

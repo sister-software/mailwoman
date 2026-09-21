@@ -13,7 +13,7 @@
  *
  *   `bare_toponym` and `route_pair` are scored below the structural kind that already owns their
  *   population (`locality_only`, 0.85). They therefore surface in `QueryKindResult.alternatives` and
- *   never as the top kind. That is not timidity — it is the D-rule discharge. The top kind is the
+ *   never as the top kind. That is not timidity. It is the D-rule discharge. The top kind is the
  *   only thing the coordinator routes on (`deriveInputMode`, `canShortCircuit`, the POI branch), so
  *   pinning it is what makes these additions provably answer-neutral on the bare-city-name register,
  *   which is the single largest population in map search. The intent they carry travels on the

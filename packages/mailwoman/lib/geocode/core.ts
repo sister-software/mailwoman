@@ -739,8 +739,8 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// The placer's prediction, computed once and unrestricted (so it's available even for a
 	// bare-locality tree, where the #912 change below deliberately withholds it from the anchor).
 	// Reused by that change and by the #1042 street tier's country hint
-	// (a bare thoroughfare "Avenue des Champs-Élysées, Paris" is a bare-locality tree —
-	// the only reliable FR signal there is this unrestricted placer).
+	// (a bare thoroughfare "Avenue des Champs-Élysées, Paris" is a bare-locality tree,
+	// and the only reliable FR signal there is this unrestricted placer).
 	// Byte-stable: the anchor/hardCountry logic stays conditional exactly as before.
 	const placerResult = placeCountry ? placeCountry(parseInput) : null
 

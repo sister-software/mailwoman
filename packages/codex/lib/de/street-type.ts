@@ -17,7 +17,7 @@
  *   (Hamburg), `-dorf` (Düsseldorf), `-feld`, `-hof`, `-stadt`. If those counted as street markers,
  *   the city token in a `PLZ City` segment would masquerade as a street and wrongly flag the
  *   postcode as a house number. {@link DE_STREET_SUFFIXES} is therefore a curated, place-name-safe
- *   set — the suffixes that are distinctively streets and (almost) never the tail of a city name.
+ *   set. The suffixes that are distinctively streets and (almost) never the tail of a city name.
  */
 
 /**

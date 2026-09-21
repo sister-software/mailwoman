@@ -19,7 +19,7 @@
  *   field ("Spain", "United Kingdom") so one recipe serves every extraction.
  *
  *   postcode-prefixed forms (2026-08-20, #1748). The two bare forms above were the whole recipe, and the
- *   board row this recipe was written for is not bare — it reads `…, 07691 Portopetro, Illes Balears,
+ *   board row this recipe was written for is not bare. It reads `…, 07691 Portopetro, Illes Balears,
  *   Spain`. Measured over both built recipe outputs: 88,904 rows, zero containing a postcode. So the model
  *   learned the bare tail correctly and had never once seen the shape it was failing on, which is why no
  *   decode change moved it.

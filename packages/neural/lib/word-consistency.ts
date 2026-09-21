@@ -34,7 +34,7 @@
  *   a clean win — net-regressed street −12.6 on the adversarial golden — so it shipped default-off,
  *   with a confidence-thresholded variant hypothesized as the path to a clean win.
  *
- *   Re-diagnosis (2026-07-15): the regression was not vote noise — it was two defects in this module.
+ *   Re-diagnosis (2026-07-15): the regression was not vote noise. It was two defects in this module.
  *   (1) The heal re-decoded words whose pieces already agreed whenever the local type-mass preferred
  *   another type, overriding viterbi (`▁Broadway` B-street→O. all-street `Gamle`→locality). Fixed
  *   structurally: the vote now only runs on words whose pieces disagree in type. (2) Punctuation

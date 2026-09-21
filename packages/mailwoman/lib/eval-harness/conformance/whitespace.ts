@@ -67,9 +67,9 @@ export const WHITESPACE_LAW = "whitespace-invariance"
  * The six whitespace transformations this law states, and the only six a committed row may use.
  *
  * - `leading` / `trailing` — the pasted-cell registers: one ascii space bolted onto an end.
- *   Separate names because Stage 1 reaches them through separate code — the leading
- *   trim takes whitespace only, the trailing trim takes whitespace and the sentence
- *   punctuation a user appends — so one can regress without the other.
+ *   Separate names because Stage 1 reaches them through separate code.
+ *   The leading trim takes whitespace only, the trailing trim takes whitespace
+ *   and the sentence punctuation a user appends — so one can regress without the other.
  * - `repeated` — every safe internal run doubled: the concatenated-column register.
  * - `tabbed` — every safe internal run replaced by one tab: the TSV-export register, and the arm
  *   that states the collapse still shields the segmentation grammar (see the module docstring).

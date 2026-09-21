@@ -5,7 +5,7 @@
  *
  *   The argv accessors, checked through the barrel their callers actually import.
  *
- *   `arguments.ts` is not a public subpath — every consumer reaches these through `@mailwoman/core/scripting/utils`,
+ *   `arguments.ts` is not a public subpath. Every consumer reaches these through `@mailwoman/core/scripting/utils`,
  *   which re-exports them by name. A function added to the module but not to that list is importable in the editor and
  *   `undefined` at runtime, which is a defect no type-check catches.
  */

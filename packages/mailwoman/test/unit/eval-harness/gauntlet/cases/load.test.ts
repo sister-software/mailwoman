@@ -301,8 +301,9 @@ const CORPUS_HASH = "7b5d32485dd7f46dd7e2dae9d14beb3584d49740a45ee5d13c7833addbc
  *
  * The id is content-addressed and not order-addressed, which is what carried it
  * unchanged across the 2026-08-05 array → jsonl migration.
- * The country sweep is the opposite kind of change — it adds 114 rows — so this one moves,
- * and it should: the ablation board is genuinely a different board.
+ * The country sweep is the opposite kind of change.
+ *
+ * It adds 114 rows — so this one moves, and it should: the ablation board is genuinely a different board.
  *
  * Same again for the 24-row world-structures batch on 2026-08-10
  * (`@490:c7bd678905d0` → `@514:5c5fca20db47`), for the 8-row bare-foreign-postcode

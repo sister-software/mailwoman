@@ -28,7 +28,7 @@
  *   raises a marker for a designated absence, because inside England a location with no flood polygon is
  *   Flood Zone 1 by the Planning Practice Guidance's own definition. ncerm publishes no coverage statement at
  *   all, so a location with no erosion polygon is either inland or on the coast outside the mapped risk area
- *   and the product cannot tell those apart. There is therefore no absence observation to raise — an
+ *   and the product cannot tell those apart. There is therefore no absence observation to raise. An
  *   advisory there would be a determination nobody made — and the named refusal is what a receipt carries
  *   instead.
  *

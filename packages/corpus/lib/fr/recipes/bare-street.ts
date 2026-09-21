@@ -13,7 +13,7 @@
  *
  *   Each tuple → `<n> <Rue/Avenue/…> <proper-noun name>, <City>` with the FR prefix split
  *   ({@link decomposeFrStreet}: "Rue" → street_prefix, the rest → street). Tuples whose street carries
- *   no recognized FR type word are skipped — the failing class is precisely the prefix-led street.
+ *   no recognized FR type word are skipped. The failing class is precisely the prefix-led street.
  *
  *   ⚠ Convention loss-mask: this recipe teaches FR `street_prefix`. The conventions loss-mask forbids it
  *   for FR and will `-inf` these gold labels (the v1.6.0 ~7M-loss blow-up). Disable that mask for any

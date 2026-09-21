@@ -9,7 +9,7 @@
  *   Wikidata's label for a concept is the encyclopaedic name (`terminal aeroportuaria`, `letištní
  *   terminál`, `havalimanı terminali`), while the addressed form is the bare head (`Terminal`,
  *   `Terminál`, `Terminali`). Nothing can promote the encyclopaedic form, so the head has to be
- *   extracted before the curation pass has anything to decide about — that gap is why the first wave of
+ *   extracted before the curation pass has anything to decide about. That gap is why the first wave of
  *   this table shipped 1,014 uncurated surfaces.
  *
  *   Everything derived lands `curated: false`. A derivation is a hypothesis about what the addressed

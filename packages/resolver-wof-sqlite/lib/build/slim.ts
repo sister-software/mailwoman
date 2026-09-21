@@ -22,7 +22,7 @@
  *   repos; `scripts/build-unified-wof.ts` extracts `wof:population` straight into
  *   `place_population` (and the bbox into `spr`) at ingest and never persists a `geojson` table. So
  *   the source admin DB carries population in `place_population`, and this builder consumes it
- *   directly — there is nothing to extract from, and nothing to drop.
+ *   directly. There is nothing to extract from, and nothing to drop.
  *
  *   The output DB has the resolver-facing schema: `spr`, `names`, `place_population`, plus the
  *   `place_search` FTS5 / `place_bbox` R*Tree virtual tables rebuilt against the trimmed row set

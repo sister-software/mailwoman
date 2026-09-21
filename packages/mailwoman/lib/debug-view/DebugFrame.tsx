@@ -5,7 +5,7 @@
  *
  *   The pure debug-view layout: an input area (the raw query, its parsed span ribbon, and the model-evidence rows)
  *   above a two-pane row (the resolved output on the left, the map render on the right), with one line of key hints
- *   along the bottom. Every value comes from props — no hook reaches for stdin/stdout/terminal size, so the same tree
+ *   along the bottom. Every value comes from props. No hook reaches for stdin/stdout/terminal size, so the same tree
  *   renders identically through `renderInkToString` (a component test, or a `--once` static capture) and through Ink's
  *   interactive `render()`.
  *
@@ -30,7 +30,7 @@
  *     ({@link MAP_PANE_CHROME_COLUMNS}); pane height minus MapPane's own four chrome rows — top+bottom border, the
  *     title line, and the attribution line ({@link MAP_PANE_CHROME_ROWS}) — so a frame built to exactly these
  *     dimensions fills MapPane without any row getting clipped. Measured 2026-08-13: Ink does not grow a `Box` past a
- *     fixed `height` when its children need more room — it silently drops rows (observed: the title line disappeared
+ *     fixed `height` when its children need more room. It silently drops rows (observed: the title line disappeared
  *     first, then a trailing frame line) rather than overflowing the terminal output, so an undercounted chrome budget
  *     is invisible to a plain output-line-count check. Verified in `DebugFrame.test.tsx` by filling every frame cell
  *     with a marker character and counting marked lines against `cellSize.rows`, plus asserting the title and
@@ -96,7 +96,7 @@ export interface DebugFrameProps {
 	/**
 	 * A failed re-run's message, rendered red at the top of the output pane.
 	 *
-	 * The interactive session keeps the previous result on screen when a geocode rejects —
+	 * The interactive session keeps the previous result on screen when a geocode rejects.
 	 * the failure is one line of news rather than a reason to blank three panes —
 	 * so the note needs a home that is neither the result nor the map.
 	 * Static renders pass nothing.

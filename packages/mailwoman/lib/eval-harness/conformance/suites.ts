@@ -8,7 +8,7 @@
  *
  *   A suite outside this register never runs. `mailwoman eval conformance` reads it to decide what a default
  *   run covers and which audit each law gets, so a committed `.jsonl` nobody registered is not a suite that
- *   runs unaudited — it is a suite that runs never, and reports as an absence. `conformance-suites.test.ts`
+ *   runs unaudited. It is a suite that runs never, and reports as an absence. `conformance-suites.test.ts`
  *   walks the directory and refuses a file no entry names, which is the only check that can see that gap.
  *
  *   It lives apart from `command.ts` because that module imports the Gauntlet harness, and the harness pulls

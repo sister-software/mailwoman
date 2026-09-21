@@ -11,13 +11,13 @@
  *   them are smaller than a res-9 cell, 75.1% smaller than a res-10 cell and 34.5% smaller than a res-11 one.
  *   So the `partial` share sits near 100% at every candidate and cannot choose between them.
  *
- *   two numbers can. candidates PER cell is what a probe pays — a cell naming eight polygons is eight
+ *   two numbers can. candidates PER cell is what a probe pays. A cell naming eight polygons is eight
  *   bounding-box tests and up to eight ray casts — and the polyfill-only zero-cell count is how many features
  *   the obvious index would have dropped, each of which would read downstream as an absence of zoning. Both
  *   are reported per resolution and the `partial` share rides beside them.
  *
  *   one stream, every resolution. Re-reading the export per candidate costs a full pass each and buys
- *   nothing — the classification is per feature, so every candidate index folds the same feature in turn. The
+ *   nothing. The classification is per feature, so every candidate index folds the same feature in turn. The
  *   cost is memory: each resolution holds its own cell sets, and the finest candidate dominates. A caller that
  *   runs out of headroom runs the candidates in separate invocations.
  */

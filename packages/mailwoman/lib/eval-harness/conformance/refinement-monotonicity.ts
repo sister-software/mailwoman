@@ -108,9 +108,10 @@ export const REFINEMENT_DERIVATION_BY_STEP: Record<RefinementStep, (text: string
  * strings already say, and the copy is what goes stale.
  *
  * The steps are tried in {@linkcode REFINEMENT_STEPS} order and the first match wins.
- * Two steps can agree on a pair — a two-token single-segment query is reachable by
- * both a segment step and the numeric one — and the order determines the result
- * rather than leaving the name to whichever branch ran last.
+ * Two steps can agree on a pair.
+ *
+ * A two-token single-segment query is reachable by both a segment step and the numeric one —
+ * and the order determines the result rather than leaving the name to whichever branch ran last.
  */
 export function classifyRefinementStep(base: string, variant: string): RefinementStep | null {
 	if (base === variant) return null

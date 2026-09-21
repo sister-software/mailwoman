@@ -221,9 +221,9 @@ export type WeightsOrigin = (typeof WeightsOrigin)[keyof typeof WeightsOrigin]
 /**
  * One artifact's resolution outcome.
  *
- * `path: null` with `origin: null` is absence — the artifact was looked for
- * and not found — and is reported rather than omitted, because an omitted entry
- * cannot be told apart from a field this build never had.
+ * `path: null` with `origin: null` is absence.
+ * The artifact was looked for and not found — and is reported rather than omitted,
+ * because an omitted entry cannot be told apart from a field this build never had.
  */
 export interface WeightsArtifactReport {
 	name: string
@@ -294,7 +294,7 @@ export interface ResolvedWeights {
 	 * Path to the gazetteer-anchor lexicon (`anchor-lexicon-v1.json`, #464) shipped beside the resolved model.
 	 *
 	 * `undefined` when the package doesn't ship it, or when `opts.tier === "pocket"`
-	 * (pocket is anchor-only — the gazetteer channel is deliberately skipped).
+	 * (pocket is anchor-only, so the gazetteer channel is deliberately skipped).
 	 * Read by the `loadFromWeights` soft-feed via `parseGazetteerLexicon`.
 	 */
 	gazetteerLexiconPath?: string

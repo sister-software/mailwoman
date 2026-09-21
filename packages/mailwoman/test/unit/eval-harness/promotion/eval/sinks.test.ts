@@ -6,7 +6,7 @@
  *   The de-shell migration's safety net (2026-08-06). When `promotion-eval.ts` spawned its battery as
  *   eight child processes, two things were true for free: a child's stdout arrived as bytes, and a
  *   child's non-zero exit was a number the check could branch on. In-process, both are things this
- *   code now has to GET right, and neither shows up in a type error if it is wrong — the check would
+ *   code now has to GET right, and neither shows up in a type error if it is wrong. The check would
  *   simply write a subtly different `.md`, or tolerate a leg it used to abort on.
  *
  *   So this file pins the two invariants the migration rests on:

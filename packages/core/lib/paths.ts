@@ -74,8 +74,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * Equal depth removes the branch that bug lived in.
  *
  * If a future layout change breaks that equality — moving this file to a different
- * depth under `lib/`, or pointing `outDir` somewhere that is not a sibling of `lib/` —
- * the fix is to restore the equality rather than to reintroduce the flag.
+ * depth under `lib/`, or pointing `outDir` somewhere that is not a sibling of
+ * `lib/`. the fix is to restore the equality rather than to reintroduce the flag.
  * {@link PathReflection} is the single declaration of that shared depth.
  *
  * Why not native resolution (2026-08-05 triage, still current).
@@ -88,9 +88,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * and that build maps every `node:` specifier to an empty shim
  * (`docs/plugins/demo-assets/plugin.ts` lists `node:module` beside `node:path` and `node:url`).
  *
- * A shimmed builtin fails silently — the import succeeds and the binding is `undefined` —
- * so a `node:module` call here would be an undefined call at module top level
- * rather than a resolution error someone sees.
+ * A shimmed builtin fails silently.
+ * The import succeeds and the binding is `undefined` — so a `node:module` call here would
+ * be an undefined call at module top level rather than a resolution error someone sees.
  * Keep the string arithmetic.
  */
 const __upCount = PathReflection.length

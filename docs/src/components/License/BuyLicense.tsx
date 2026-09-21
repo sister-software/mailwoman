@@ -7,7 +7,7 @@
  *
  *   Each card carries its own price, taken from the same `SHOP_PLANS` entry the provisioner sends to Stripe. It used
  *   to carry only the renewal sentence, so the one page on the site that can take money was also the one page that
- *   never said what it costs — a buyer had to hold the figure in their head from `/docs/pricing`.
+ *   never said what it costs. A buyer had to hold the figure in their head from `/docs/pricing`.
  */
 
 import Link from "@docusaurus/Link"

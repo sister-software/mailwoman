@@ -6,7 +6,7 @@
  *   Pairwise grouping precision/recall/F1 (§7-3b decision 4) — scores a predicted "same group"
  *   judgment against a truth partition over the same id universe. Built for {@linkcode filerLinkageEval}
  *   (`linkage-eval.ts`), which scores the corporate-family membership a `filer.db` build asserts
- *   (`filer_family`) against held-out `holdingCompany` truth. The types here are generic — nothing below is
+ *   (`filer_family`) against held-out `holdingCompany` truth. The types here are generic. Nothing below is
  *   filer-specific — because the same shape ("does this grouping recover a held-out one?") recurs anywhere
  *   this SDK adds a linkage eval.
  *
@@ -14,7 +14,7 @@
  *   an unordered pair of ids judged to belong to the same group — true/false positive/negative are counted
  *   over pairs, never over groups, so no group-to-group correspondence ever has to be chosen. That matters
  *   for {@linkcode filerLinkageEval}'s use: a predicted family's id is derived from the canonicalized
- *   parent name, so there is no correspondence problem to solve and no alignment step to get wrong — the
+ *   parent name, so there is no correspondence problem to solve and no alignment step to get wrong. The
  *   only question that matters is "are these two records correctly judged together or apart," which is
  *   well-defined over pairs without an alignment step. (The scorecard states the same rationale. keep the
  *   two in step — a module and its published page disagreeing about why a metric was chosen is its own

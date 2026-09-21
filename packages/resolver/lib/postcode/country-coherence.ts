@@ -302,9 +302,10 @@ function collectInDocumentOrder(nodes: readonly AddressNode[], tag: string, out:
 /**
  * Over-fetch for the unscoped holder probes (#24).
  *
- * Postcodes are bounded and small — the 2026-08-10 candidate gazetteer's
- * most-shared code carries 12 rows across 8 countries — so 20 sees every bearer
- * and the postcode holder set is complete rather than a sample.
+ * Postcodes are bounded and small.
+ * The 2026-08-10 candidate gazetteer's most-shared code carries 12 rows across 8 countries —
+ * so 20 sees every bearer and the postcode holder set is complete rather than a sample.
+ *
  * Locality names are not bounded that way (`rampur` has 1,096 rows, `bara` spans 42 countries),
  * so 30 is a population-first window: it can only ever hide a country, which turns a
  * "more than one country" abstention into a false "exactly one".
@@ -641,7 +642,8 @@ export async function findPostcodeCountryScope(
 	if (verdicts.size > 1) return null
 
 	// 4b.
-	// The postcode is held in exactly one country and the locality half is silent everywhere — no value
+	// The postcode is held in exactly one country and the locality half is silent everywhere.
+	// No value
 	//     is domestic and no value names any country. `Biskupcova 1843/3, 13000 Praha 3`: `13000` is a CZ
 	//     code and nothing else, anywhere, and `Praha 3` (a municipal district) is in no admin gazetteer.
 	if (!anyDomestic && !anyLocalityKnown && pcHolders.size === 1) {

@@ -195,8 +195,9 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 	)
 
 	test("adminCoherence (default-ON, #895) binds a namesake to its region token even with no country scope", async () => {
-		// The #833 class: with coherence on (the default), "Paris, TX" under `--default-country none`
-		// stays Paris, Texas — the region token wins over the more-populous foreign twin.
+		// The #833 class: with coherence on (the default), "Paris, TX" under
+		// `--default-country none` stays Paris, Texas.
+		// The region token wins over the more-populous foreign twin.
 		// This is the behavior the greedy probe above must pin off to observe raw ranking.
 		const lat = localityLat((await run("Paris, TX", ["--default-country", "none"])).stdout)
 

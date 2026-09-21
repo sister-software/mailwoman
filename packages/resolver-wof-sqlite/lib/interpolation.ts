@@ -16,8 +16,8 @@
  *   Every answer is honest about being an estimate: `interpolated: true`, `parityMatched` (false when
  *   only the opposite side's range contained the number — usually the right block, wrong side of
  *   the street), and `uncertaintyM` (half the matched segment's length — the #483 issue's honest
- *   default). Scoping is postcode-first (a given ZIP that scopes to nothing is a miss — the
- *   statewide retry was measured and rejected, see `find()`); without a postcode the statewide name
+ *   default). Scoping is postcode-first (a given ZIP that scopes to nothing is a miss, and the
+ * statewide retry was measured and rejected, see `find()`); without a postcode the statewide name
  *   match must agree on a single postcode or the lookup abstains (a common street name spanning
  *   towns is ambiguity rather than an answer).
  *

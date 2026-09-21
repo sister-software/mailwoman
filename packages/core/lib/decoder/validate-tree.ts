@@ -34,9 +34,9 @@ import type { AddressNode, AddressTree } from "#decoder/types"
  *
  * If none of a tag's allowed parents appear anywhere in the tree, the node is an orphan fragment.
  *
- * This set is also the denominator of the stranded-dependent check —
- * the classes that can fire — so a caller counting which ones do reads it here
- * rather than re-listing the tags, which would drift the moment one is added.
+ * This set is also the denominator of the stranded-dependent check. the classes that can fire —
+ * so a caller counting which ones do reads it here rather than re-listing the tags,
+ * which would drift the moment one is added.
  */
 export const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
 	"street_prefix",

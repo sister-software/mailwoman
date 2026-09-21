@@ -305,7 +305,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 
 	// Parsed ahead of the expect_components loop because its keys take precedence there.
 	// `undefined` tolerated alongside null: a pre-2026-08-11 regression.db has no such column
-	// at all (not that the runner would grade one — the corpus stamp refuses first).
+	// at all (not that the runner would grade one, since the corpus stamp refuses first).
 	const renderinginterface =
 		c.expect_component_renderings != null
 			? tryParsingJSON<Record<string, string[]>>(c.expect_component_renderings)

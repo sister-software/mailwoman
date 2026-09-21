@@ -24,7 +24,7 @@
  *   Bakery, Springfield, IL 62701"` is a perfectly ordinary address form.
  *
  *   Venue pool: PLAIN_VENUES from `no-street.ts` (re-exported here). Adversarial venues
- *   are deliberately not used here — the point is to teach co-occurrence rather than to re-introduce
+ *   are deliberately not used here. The point is to teach co-occurrence rather than to re-introduce
  *   decompose-mode pressure.
  */
 

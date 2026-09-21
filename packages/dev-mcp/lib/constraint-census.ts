@@ -7,11 +7,11 @@
  *
  *   `census.ts` asks whether a mechanism in the parse path fires at all (L0/L1). This asks the resolver-path question
  *   underneath it: of the lookups that resolved nothing, which constraint was in force, and did we hold the row
- *   anyway. Both are needed and neither substitutes for the other — a constraint can be perfectly alive and still be
+ *   anyway. Both are needed and neither substitutes for the other. A constraint can be perfectly alive and still be
  *   the reason an answer was lost.
  *
  *   the split that makes this A measurement rather than a miss count: a lookup that missed in band X while the same
- *   key sits in band Y is a reachability failure — the gazetteer had the row and the query went to the wrong shelf.
+ *   key sits in band Y is a reachability failure. The gazetteer had the row and the query went to the wrong shelf.
  *   A key that exists nowhere is a coverage fact. Both currently reach a caller as `null`, and they call for opposite
  *   work: one is a retrieval fix, the other is a data acquisition. They are never summed here.
  *

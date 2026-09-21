@@ -75,8 +75,8 @@ function regionSurface(country: string, name: string): string {
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
  *
  * Per-adapter deliberately (the admin adapter carries its own): each table is a
- * record filter for its adapter's emission set — this one keeps `postalcode` plus the
- * ancestry placetypes its variants render — not a shared vocabulary.
+ * record filter for its adapter's emission set.
+ * This one keeps `postalcode` plus the ancestry placetypes its variants render — not a shared vocabulary.
  */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {

@@ -88,7 +88,8 @@ describe("parseForm499Workbook — lifecycle and footprint", () => {
 			unrecognized: 0,
 		})
 
-		// The successor is in this same sheet — the chain resolves rather than dangling.
+		// The successor is in this same sheet.
+		// The chain resolves rather than dangling.
 		expect(rows.some((row) => row.form499ID === corr?.lifecycle?.replacedByForm499ID)).toBe(true)
 	})
 

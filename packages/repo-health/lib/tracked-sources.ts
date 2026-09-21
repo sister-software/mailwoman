@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The tracked-source enumerator the checks share: a filter over `RepoContext.trackedFiles`.
  *
- *   Enumerated from the index rather than the filesystem. A file set read off the disk is not a property of the repository —
+ *   Enumerated from the index rather than the filesystem. A file set read off the disk is not a property of the repository.
  *   it is a property of whichever files happen to be sitting in that checkout. A tree carrying gitignored scratch
  *   scripts counted 166 `asNever` against a clean checkout's 85 at the same commit, so the debt check failed on files no
  *   commit contains. a directory walk likewise kept flagging `scratchpad/` probes and agent worktrees — hits that fail

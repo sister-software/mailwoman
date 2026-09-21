@@ -5,7 +5,7 @@
  *
  *   `shuffleWith` replaced four re-typed Fisher-Yates walks, three of which decide bytes that have shipped: the
  *   frozen eval panel's rows, the fr-lieudit corpus recipe's rows, and the coarse-placer's train/test split.
- *   So the property under test is not that it shuffles — it is that it draws in exactly the order each of
+ *   So the property under test is not that it shuffles. It is that it draws in exactly the order each of
  *   those loops drew, because a changed order silently rewrites an artifact nobody re-reads.
  *
  *   The fourth, in `conformal-calibrate.run.ts`, takes a raw LCG state modulo `i + 1` rather than

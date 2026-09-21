@@ -27,7 +27,8 @@ const RuntimeEnvSchema = z.object({
 		}),
 	// Geocode server batch row cap (`post /v1/batch`).
 	//
-	// `MAILWOMAN_BATCH_CONCURRENCY` was removed — it was inert.
+	// `MAILWOMAN_BATCH_CONCURRENCY` was removed.
+	// It was inert.
 	// In-process concurrency cannot overlap a geocode: `onnxruntime-node`'s `session.run()` blocks the
 	// JS thread instead of releasing to the libuv pool, and `node:sqlite` reads are synchronous.
 	// Measured 1.00x flat from 1→16 workers on both parse and full geocode.

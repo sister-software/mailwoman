@@ -8,7 +8,7 @@
  *   files **plus** a sibling `manifest.json` capturing the origin URL, fetch timestamp, byte count,
  *   and sha256 so downstream adapters can verify provenance.
  *
- *   The corpus build pipeline itself does not call these modules — the existing convention is for
+ *   The corpus build pipeline itself does not call these modules. The existing convention is for
  *   operators to pre-download into an out-root and point adapters at the resulting files. These
  *   modules exist for **reproducibility** (disk-loss recovery, weekly refresh, fresh-environment
  *   bootstrap).

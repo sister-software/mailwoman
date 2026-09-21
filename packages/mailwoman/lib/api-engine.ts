@@ -8,7 +8,7 @@
  *   `/api/batch`, `/api/resolve-tree`, `/api/reload` handlers, `AddressRouter`'s retired `/parse`
  *   handler, and `HealthRouter`'s `/health` data block — onto the engine-agnostic `@mailwoman/api`
  *   interface's live routes (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/reload`).
- *   `mailwoman/server/` is deleted — this file is its sole successor, a fresh port rather
+ *   `mailwoman/server/` is deleted. This file is its sole successor, a fresh port rather
  *   than a thin wrapper.
  *
  *   `createServeEngine` builds the shared stack once, at boot, instead of express's lazy

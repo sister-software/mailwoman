@@ -228,7 +228,8 @@ export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
  * Two consequences set the size:
  *
  * 1. A source's share of an epoch is `weight / Σweights`, independent of how many rows it has.
- * 2. **A source that exhausts is deleted from the multinomial** — there is no cycling.
+ * 2. **A source that exhausts is deleted from the multinomial**.
+ *    There is no cycling.
  *    Under-size the recipe output and its nominal reps per row are fiction for the rest of the epoch.
  *
  * Measured against the shipped `v4.1.0-gb-venue-l1e4-2k` weight table: 33 sources summing to 144.5.

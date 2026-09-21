@@ -10,7 +10,7 @@
  *   parameter instead (the FCC partitions availability files per provider, so the caller already knows it),
  *   and FRN/brand/state/H3 join concerns are a 2c registry-join boundary.
  *
- *   Two projection decisions are required and pre-registered. `location_id` (column 3) stays a string —
+ *   Two projection decisions are required and pre-registered. `location_id` (column 3) stays a string.
  *   the FCC's values are zero-padded 10-digit strings and `parseInt` would lose the leading zeros (decision
  *   1). `geoid` (column 10) is a string joining `TIGERBlockTable.geoid` (decision 3).
  *
@@ -27,7 +27,7 @@
  *   carry two ("FiberFirst, LLC", "Valor Telecommunications of Texas, LP"). A delimiter scan blind to quotes
  *   shifts every column right of `brand_name` on 4% of rows — measured exactly, a quote-blind
  *   `String.split(",")` mismatches 81,095 of 2,000,000 real rows. Quote-aware parsing also keeps an
- *   embedded newline inside its row — no row in that file needs it (the 12/13/14-field line counts sum
+ *   embedded newline inside its row. No row in that file needs it (the 12/13/14-field line counts sum
  *   exactly to `wc -l`, so no record is split across lines), but the guarantee is what makes the reader safe
  *   on a file nobody has measured yet.
  *

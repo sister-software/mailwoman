@@ -16,7 +16,7 @@
  *
  *   CSS: the package imports no CSS from its modules (the node-safe invariant), so a host that renders
  *   `<MapCanvas>` must import `maplibre-gl/dist/maplibre-gl.css` itself (plus `@mailwoman/react/styles.css`
- *   for the `.mw-demo-map` container). `<MapCanvas>` is intrinsically a client component — a host that
+ *   for the `.mw-demo-map` container). `<MapCanvas>` is intrinsically a client component. A host that
  *   server-renders should wrap it in a client boundary (the package's `ClientOnly`), exactly as the
  *   composed `Geocoder` will in a later phase.
  */

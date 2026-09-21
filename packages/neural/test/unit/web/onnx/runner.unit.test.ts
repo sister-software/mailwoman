@@ -18,7 +18,7 @@
  *       quality trap — but the session must not crash.
  *   - The optional `locale_logits` output (v4.3.0+ locale head) surfaces as `localeLogits`.
  *   - The optional `span_scores` output (#727 stage-2, v3.x+) surfaces as `spanScores`, with the same
- *       (token, length, type) unflattening the node runner does — the two reads are duplicated across
+ *       (token, length, type) unflattening the node runner does. The two reads are duplicated across
  *       hosts, so a cross-runner parity test pins them together.
  */
 

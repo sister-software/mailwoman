@@ -30,7 +30,7 @@
  *       Bags" page (GPO Box: "Lease a single GPO Box, or the same box number in each capital city
  *       with our Common Box service"; Common Box numbers run 9800–9999). PO Box, GPO Box, Locked
  *       Bag, and Private Bag appear on those current pages. the rural/community types (RSD, RMB,
- *       RMS, MS, CMB, CMA, CPA, Care PO) appear only in the amas table and are flagged `legacy` —
+ *       RMS, MS, CMB, CMA, CPA, Care PO) appear only in the amas table and are flagged `legacy`.
  *       the parser must still recognize them on older addresses.
  *
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf Australia Post barcode addressing booklet (Postal Delivery Type table)}

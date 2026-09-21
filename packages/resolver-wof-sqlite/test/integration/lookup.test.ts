@@ -321,8 +321,9 @@ afterEach(() => {
 
 describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	test('"Paris" with no country/parent filter returns both Paris,FR and Paris,US as localities', async () => {
-		// Without a popularity signal (real WOF has wof:population. v0.1 doesn't model it) the
-		// resolver has no reason to prefer one Paris over the other — both are valid candidates.
+		// Without a popularity signal (real WOF has wof:population. v0.1 doesn't model it)
+		// the resolver has no reason to prefer one Paris over the other.
+		// Both are valid candidates.
 		// Callers disambiguate via country / parentID / alt-name match.
 		const candidates = await lookup.findPlace({ text: "Paris" })
 		const names = candidates.map((c) => `${c.name},${c.country}`)

@@ -33,7 +33,7 @@
  *   why this runner exists AT all — the FST's reach is narrower than it looks. `eval oa-resolver`
  *   without `--assembled`, and `eval gauntlet` in every mode, grade through `geocode-core.ts`'s
  *   `parseForGeocode`, which calls `classifier.parse` with no `fst` key. The gazetteer prior is
- *   therefore not merely weak on those paths — it is never constructed. `createRuntimePipeline` is the
+ *   therefore not merely weak on those paths. It is never constructed. `createRuntimePipeline` is the
  *   only entry point that wires `opts.fst`, so this runner drives the pipeline directly. A board scored
  *   through `geocodeAddress` would tie across all three arms no matter what the board contained.
  *

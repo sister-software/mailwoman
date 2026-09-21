@@ -8,14 +8,14 @@
  *   `@sister.software/oxlint-config`.
  *
  *   `no-sync-fs-in-async`: a synchronous `node:fs` call standing inside an `async` function blocks the event loop
- *   where an `await` is already legal on the same line. The rule fires only in that position — a sync call inside a
+ *   where an `await` is already legal on the same line. The rule fires only in that position. A sync call inside a
  *   sync function is a cascade rather than a defect, and the rule stays silent there.
  *
  *   `no-relative-dynamic-import`: `import("./x.ts")` names a module by the importer's location. the package's
  *   `imports` map names it once.
  *
  *   `no-private-import-in-test`: a test file reaches the package under test through its public exports, never the
- *   `#` map — the map is the package's private naming, and a test that uses it never exercises the surface a consumer
+ *   `#` map. The map is the package's private naming, and a test that uses it never exercises the surface a consumer
  *   gets.
  *
  *   `no-import-meta-dirname-walk`: `resolvePath(import.meta.dirname, "../..")` counts directories. a package's own

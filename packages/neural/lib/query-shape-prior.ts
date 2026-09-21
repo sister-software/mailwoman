@@ -26,7 +26,7 @@
  *   built to counter no longer reproduces — the model outgrew it (same lifecycle as the #956-era
  *   near-postcode suppression, also measured negative in M1). The known-format boosts below remain.
  *
- *   Uses structural typing for the QueryShape value so a caller may pass any compatible object — the shape
+ *   Uses structural typing for the QueryShape value so a caller may pass any compatible object. The shape
  *   itself is never imported. The format-name convention is imported from its owner rather than restated,
  *   because a restated convention drops the formats added after it was restated and reports nothing.
  */

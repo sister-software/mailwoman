@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Fixture rows for the golden street-suffix relabel (v0.1.2 → v0.1.3). Every class the tool
- *   distinguishes gets a row here, including the ones it must leave alone — those are the
+ *   distinguishes gets a row here, including the ones it must leave alone. Those are the
  *   interesting half, because a relabel that over-reaches silently rewrites the answer key.
  */
 

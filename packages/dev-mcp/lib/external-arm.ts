@@ -121,8 +121,9 @@ const TOP_N = 1
  * What one arm answered for one input.
  *
  * `noResultReason` is the whole point of the shape.
- * A geocoder that returns an empty array has said something specific — it does not hold
- * this address — and that is not the same fact as a query that failed, nor a score of zero.
+ * A geocoder that returns an empty array has said something specific.
+ *
+ * It does not hold this address — and that is not the same fact as a query that failed, nor a score of zero.
  *
  * Both still count as a miss at every threshold under the pre-registered protocol,
  * but the result reports which happened.
@@ -433,9 +434,9 @@ export class ExternalGeocoderClient extends APIClient {
 	 * Top-1 for one raw query string.
 	 *
 	 * @throws On a transport or http failure that survived the retry ceiling.
-	 * Throwing rather than returning a no-result is what lets the caller separate
-	 * "this endpoint does not hold this address" from "this endpoint is gone" —
-	 * the second must not be able to accumulate silently into a row of misses.
+	 * Throwing rather than returning a no-result is what lets the caller separate "this
+	 * endpoint does not hold this address" from "this endpoint is gone". the second
+	 * must not be able to accumulate silently into a row of misses.
 	 */
 	async search(query: string): Promise<ExternalAnswer> {
 		const response = await this.fetch<unknown>({ url: `${this.endpoint}${this.#protocol.searchPath(query)}` })

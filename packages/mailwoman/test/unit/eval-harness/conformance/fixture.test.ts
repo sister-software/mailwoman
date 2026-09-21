@@ -8,7 +8,7 @@
  *
  *   The required pair is `rejects a fixture with no comparator` and `rejects an unknown comparator`:
  *   between them they are the whole reason the comparator set is closed, and both messages must carry the
- *   fixture's own id — a refusal that does not name the row sends the reader to a file with no line to open.
+ *   fixture's own id. A refusal that does not name the row sends the reader to a file with no line to open.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

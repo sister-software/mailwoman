@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Route definitions + handlers for the libpostal-compatible surface. The OpenAPI document is
- *   emitted from these definitions — there is no handwritten spec. Wire shapes (bodies, error
+ *   emitted from these definitions. There is no handwritten spec. Wire shapes (bodies, error
  *   envelopes, status codes) are the vendor interface. see schema.ts.
  */
 

@@ -45,8 +45,10 @@ export type UnassertedPolicy = (typeof UnassertedPolicy)[keyof typeof Unasserted
 /**
  * How a component's confidence is folded out of its tokens.
  *
- * `min` is the weakest link — a span is only as trustworthy as its least certain piece —
- * and is the default because that is the reading an eval should use.
+ * `min` is the weakest link.
+ * A span is only as trustworthy as its least certain piece — and is the default
+ * because that is the reading an eval should use.
+ *
  * `mean` exists because it is what `AddressNode.confidence` already reports (`build-tree.ts`),
  * so a caller calibrating the number a tree consumer actually reads can ask for it.
  *

@@ -9,7 +9,7 @@
  *   fields, on the same artifacts.
  *
  *   the frozen copy is the point. `legacyAutocomplete` below is the pre-migration implementation,
- *   verbatim. It exists only here, as the reference the adapter is measured against — the shipped
+ *   verbatim. It exists only here, as the reference the adapter is measured against. The shipped
  *   code path is the ancestrie-backed one. If a deliberate behavior change ever lands in ancestrie's
  *   `autocomplete`, this suite fails and the change must be RE-ratified by updating the frozen copy
  *   in the same commit, which is what makes drift between the two homes visible (the #861 rule: the

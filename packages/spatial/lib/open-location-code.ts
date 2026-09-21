@@ -10,7 +10,7 @@
  *   no dependency, no I/O.
  *
  *   A full code (8 digits, a `+`, then 2–3 more) decodes directly. A short code (2–6 leading digits
- *   removed, e.g. `VFQ6+92P`) is only meaningful near a reference point — the removed prefix is
+ *   removed, e.g. `VFQ6+92P`) is only meaningful near a reference point. The removed prefix is
  *   recovered from the reference, then the candidate cell is shifted by whole prefix-resolutions if
  *   a neighboring cell sits closer (the spec's `recoverNearest`). The reference in an address is the
  *   resolved locality, which is why the geocode wiring recovers after the admin walk.

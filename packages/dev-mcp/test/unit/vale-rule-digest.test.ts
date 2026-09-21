@@ -7,7 +7,7 @@
  *
  *   Two things are worth pinning, and neither is the wording. The first is that the listing is derived: a rule added
  *   to the style directory reaches the listing without anyone editing prose, which is the whole reason it reads the
- *   files. The second is the withholding — a rule that bans a word must not print the word, because the listing is
+ *   files. The second is the withholding. A rule that bans a word must not print the word, because the listing is
  *   injected into a session and naming the word is how it enters a reply. That discipline is prose in agents.md and
  *   in the output style, and an assertion is the only form of it that cannot quietly lapse.
  */

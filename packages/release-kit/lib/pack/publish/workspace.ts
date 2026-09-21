@@ -15,7 +15,7 @@
  *        condition is rewritten to emitted JavaScript (the repo runs source under node. consumers get `out/`). The dev
  *        `exports` in each workspace's package.json is the single source of truth. there is no
  *        hand-maintained `publishConfig.exports` (that duplication shipped a fully-broken v7.2.0
- *        when it was removed without a replacement — this transform is the replacement). A guard
+ *        when it was removed without a replacement, and this transform is the replacement). A guard
  *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points at a
  *        file the tarball doesn't contain.
  *   3. `npm publish <tmpfile>` — npm CLI is the right tool for the actual publish because it

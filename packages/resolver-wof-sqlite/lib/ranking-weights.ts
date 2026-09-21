@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The locality-ranking weights and their shipped defaults. Its own module because every value here is
- *   a measured tuning decision with its rationale attached — the block reads as a reference table rather than
+ *   a measured tuning decision with its rationale attached. The block reads as a reference table rather than
  *   as part of the lookup's control flow, and the tests import it directly to pin one change at a time.
  */
 

@@ -192,9 +192,11 @@ export interface LocaleHint {
 	 * under one of them, and the rule that picks it answers `ja-JP` for every CJK input.
 	 * On the Korean reference set that is every row.
 	 *
-	 * The tag is not wrong about routing — the character path is one weights family for Japanese,
-	 * Korean and Chinese — it is wrong about what it says, and a consumer reading the hint
-	 * could not tell "Japanese" from "a script I cannot resolve a language for".
+	 * The tag is not wrong about routing.
+	 * The character path is one weights family for Japanese, Korean and Chinese.
+	 *
+	 * It is wrong about what it says, and a consumer reading the hint could not tell
+	 * "Japanese" from "a script I cannot resolve a language for".
 	 *
 	 * This field lets it say the second.
 	 * `locale` keeps its current meaning and its current values.

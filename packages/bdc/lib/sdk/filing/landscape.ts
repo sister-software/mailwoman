@@ -12,7 +12,7 @@
  *   zero-filing claim.
  *
  *   - For a `geoids` query, the candidate res-9 cell is read off the block's own `bdc_availability`
- *     rows — a geoid with zero rows has no derivable cell at all (never guessed, matching the builder's
+ *     rows. A geoid with zero rows has no derivable cell at all (never guessed, matching the builder's
  *     "unknown geoid" discipline in `build-bdc.ts`), so it falls straight to unknown.
  *   - For an `h3Cells` query, the caller supplies the res-9 cell directly, so coverage can be checked
  *     even for a cell with no filing rows of its own — a genuine "surveyed, zero providers here" result,

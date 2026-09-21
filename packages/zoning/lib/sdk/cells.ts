@@ -22,7 +22,7 @@
  *
  *   the zero-cell count is A measurement OF the alternative rather than OF this index. `classifyFeatureCells` takes
  *   overlapping containment and refuses a feature that reaches no cell, so this index's own zero-cell count is
- *   zero by construction. What the column reports is what `polygonToCells` — the centre-in-polygon polyfill a
+ *   zero by construction. What the column reports is what `polygonToCells`. The centre-in-polygon polyfill a
  *   builder reaches for first — would have returned nothing for, and every one of those would have read
  *   downstream as an absence of zoning.
  */
@@ -185,8 +185,8 @@ export class ZoningCellIndex {
 	 *
 	 * The compacted count is an approximation of what the build stores and is reported as one:
 	 * the build compacts each feature's whole set, while this compacts the union of them.
-	 * The union can only compact at least as far, so this is a lower bound on the stored row count —
-	 * the direction a size estimate should err in — and the build's own receipt reports the real number.
+	 * The union can only compact at least as far, so this is a lower bound on the stored row count. the
+	 * direction a size estimate should err in — and the build's own receipt reports the real number.
 	 */
 	finish(): CellIndexMeasurement {
 		const compacted = compactAcrossResolutions(this.#whole).length

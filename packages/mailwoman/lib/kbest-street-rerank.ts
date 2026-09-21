@@ -15,7 +15,7 @@
  *   date-name +40.7pp). Receipt: `docs/articles/evals/2026-07-18-phase4c-wiring.md`.
  *
  *   three things make IT golden-safe:
- *   1. anchor condition. The rerank fires only on an anchorless fragment — the class it was measured on.
+ *   1. anchor condition. The rerank fires only on an anchorless fragment, the class it was measured on.
  *      If the argmax parse already carries a `country` or `region`, the input is structured and the
  *      model is reliable. a name-index collision then does damage (it steals a token the model
  *      correctly labeled — "France, Creuse, …" → the FR street "France" overrides the country; "Best

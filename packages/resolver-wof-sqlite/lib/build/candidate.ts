@@ -12,7 +12,7 @@
  *   resolve is one contiguous B-tree probe (a handful of pages → 1-2 chunk fetches, regardless of
  *   global volume).
  *
- *   Each row is denormalized — it carries the place's display `name`, centroid (`latitude`/
+ *   Each row is denormalized. It carries the place's display `name`, centroid (`latitude`/
  *   `longitude`), and `min/max` bbox — so a resolve is one statement, no FTS, no join to spr:
  *   select spr_id, name, latitude, longitude, min_lat, ... from candidate where name_key = ? and
  *   country_id = ? and placetype_id IN (...) and latitude between ... (the bbox clause, optional) order BY

@@ -1426,7 +1426,8 @@ describe("§7-3b criteria", () => {
 
 			const result = await filerLookup(db, { frn: FRN_TWO_SPELLINGS, asOf: "2026-12-31" })
 
-			// One family, both names — the widened key must not turn into a duplicated `families` entry.
+			// One family, both names.
+			// The widened key must not turn into a duplicated `families` entry.
 			expect(result.families).toHaveLength(1)
 			expect(result.families[0]?.family_id).toBe(familyID)
 			expect(result.families[0]?.display_names).toEqual(expectedSpellings)
@@ -1824,11 +1825,10 @@ describe("§7-3b criteria", () => {
 	 * Real `buildFilerDatabase` (with an `edgarRows` source alongside `form499Rows`) +
 	 * real `clusterAuthoritativeComponents`, exactly like criterion 1's own
 	 * real-builder test above — proving the existing relationship-based filters
-	 * (`readAuthoritativeGroups`'s `relationship: same_entity`, `identifiers`' identical filter)
-	 * generalize correctly to edgar's new `Subsidiary`/`ParentCompany` relationship kinds without
-	 * any code change, while the positive half (the family surfaces do pick up the edgar row)
-	 * is asserted too — an assertion that that only checked absence could pass just
-	 * as well with the whole edgar path deleted.
+	 * (`readAuthoritativeGroups`'s `relationship: same_entity`, `identifiers`' identical filter) generalize
+	 * correctly to edgar's new `Subsidiary`/`ParentCompany` relationship kinds without any code change,
+	 * while the positive half (the family surfaces do pick up the edgar row) is asserted too.
+	 * An assertion that that only checked absence could pass just as well with the whole edgar path deleted.
 	 */
 	describe("2. EDGAR-sourced families extend checks 1-2", () => {
 		it("an inferred EDGAR subsidiary relationship never leaks into entity clustering or identifiers, but DOES surface as a family via familyRollup/filerLookup.families", async () => {

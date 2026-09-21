@@ -18,7 +18,7 @@
  *   its anchor resolves into and the `observed_rows` that cell carries. The rows were selected by walking
  *   the pilot layer's own zero-observed cells, taking gazetteer places whose coordinates fall inside one,
  *   and keeping the ones whose resolved search centre lands back in the same cell. No address is written
- *   by hand anywhere in the definition, and a cell centroid is a coordinate — the row's anchor is a place
+ *   by hand anywhere in the definition, and a cell centroid is a coordinate. The row's anchor is a place
  *   the gazetteer already carries rather than a street line composed to fit.
  *
  *   the controls split the conjunction. `outside_coverage` rows put the same query and the same empty

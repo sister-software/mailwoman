@@ -104,9 +104,9 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
  * Coarse per-country bounding boxes `[latMin, latMax, lonMin, lonMax]` for
  * the cross-country guard (guard B).
  *
- * These are deliberately rough — a guard needs "obviously the wrong country",
- * not cartography — and they mirror the boxes the 2026-07-15 coordinate-parity
- * receipt harness measured with (`scratchpad/coord-parity.mjs`).
+ * These are deliberately rough.
+ * A guard needs "obviously the wrong country", not cartography — and they mirror the boxes the
+ * 2026-07-15 coordinate-parity receipt harness measured with (`scratchpad/coord-parity.mjs`).
  * The US box spans Alaska → the mainland east coast.
  *
  * Continental FR only.

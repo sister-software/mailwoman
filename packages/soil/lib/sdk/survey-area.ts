@@ -18,8 +18,8 @@
  *   reads it wrong by sixty-five years. Both dates are stored, apart, with the title the older one came
  *   from so it is checkable rather than assertible.
  *
- *   two scales, also different facts. `legend.projectscale` is 12,000 for `IA153` — the scale the map units
- *   were digitized at. The 1960 source citation's own `srcscale` is 15,840 — the scale the ground was
+ *   two scales, also different facts. `legend.projectscale` is 12,000 for `IA153`, the scale the map units
+ *   were digitized at. The 1960 source citation's own `srcscale` is 15,840, the scale the ground was
  *   walked at. Storing one as the other would answer the enlargement caveat's question wrongly.
  *
  *   the licence is checked PER survey area, against the `useconst` element of the metadata that area ships.

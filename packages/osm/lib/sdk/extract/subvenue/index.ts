@@ -43,7 +43,7 @@
  *   changes either `attributes=` line breaks the bare-column assumption. not a concern for the shipped
  *   default.
  *
- *   A promoted key is not repeated inside `other_tags` — that is the whole point of promotion — so the
+ *   A promoted key is not repeated inside `other_tags`. That is the whole point of promotion — so the
  *   JS-side re-check reads promoted keys off the feature's own properties and everything else out of
  *   the parsed hstore. {@link toSubVenueSourceRow} merges the two before matching.
  *
@@ -345,8 +345,9 @@ async function* runSubVenueLayer(
  *
  * A feature mapped as both a node and an area (common for large terminals) yields twice,
  * once per layer, with different coordinates.
- * De-duplication is the consumer's call — the lexicon build counts distinct surfaces
- * and does not care, while a corpus extract would.
+ * De-duplication is the consumer's call.
+ *
+ * The lexicon build counts distinct surfaces and does not care, while a corpus extract would.
  */
 export async function* extractOSMSubVenues(
 	pbfPath: string,

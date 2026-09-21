@@ -157,9 +157,9 @@ export async function findLocaleTables(context: {
 	repoRoot: string
 	trackedFiles: readonly string[]
 }): Promise<LocaleTable[]> {
-	// `existingOnly`: the index can name a file the working tree no longer has — a rename staged
-	// and not committed is enough — and this walk opens every path it is given, so the absent
-	// one throws enoent and the check fails for a reason that has nothing to do with the tables.
+	// `existingOnly`: the index can name a file the working tree no longer has.
+	// A rename staged and not committed is enough — and this walk opens every path it is given, so the
+	// absent one throws enoent and the check fails for a reason that has nothing to do with the tables.
 	// Every other tracked-file walk in this package passes it.
 	const sources = (await trackedSourcePaths(context, { existingOnly: true }))
 		.map((path) => relative(context.repoRoot, path))

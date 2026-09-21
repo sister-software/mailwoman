@@ -37,7 +37,7 @@
  *   1. **Tier-safe.** `exactMatch` stays the primary key. A soft prior re-orders within a tier. it never
  *      promotes a partial match over an exact one.
  *   2. **Positive evidence only.** An absent score is unmeasured rather than zero (the meaning-of-zero rule), so an
- *      unscored candidate is never moved BY the signal and never penalized FOR lacking it — it keeps the
+ *      unscored candidate is never moved BY the signal and never penalized FOR lacking it. It keeps the
  *      rank population gave it while the scored rows reorder among themselves. On a candidate.db built
  *      before the #28 `importance` column, nothing is scored, so {@link rankByImportance} is
  *      byte-stable by construction.

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Compose a region outline, one class's rows from two inventories, and a capture-recapture estimate into
- *   the coverage cells a layer writes — the only path in this pipeline that reaches
+ *   the coverage cells a layer writes. The only path in this pipeline that reaches
  *   {@link CoverageBasis.Surveyed}.
  *
  *   Pure. The IO (ogr2ogr for the outline and the OSM rows, SQLite for the reference inventory) belongs to

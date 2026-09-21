@@ -96,10 +96,10 @@ const overlay = await materializeDevOverlay({
 // loaded, so it is built only when the card says the model can use it.
 //
 // The history in one paragraph.
-// This script used to build the bin unconditionally. #1467 removed it, because the
-// encoder's GB anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`) had
-// taken no gradient — every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`,
-// 67,708 keys, zero letter-containing, US/DE/FR only.
+// This script used to build the bin unconditionally. #1467 removed it, because the encoder's GB
+// anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`) had taken no gradient.
+// Every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`, 67,708 keys,
+// zero letter-containing, US/DE/FR only.
 // Feeding slot 4 on a model that never trained it cost 24 exact postcodes on the
 // 120-row gb-golden board (294/318 anchor-on vs 318/318 anchor-off).
 // Then a bare `existsSync` skip turned out to be worse than never building: a bin left by

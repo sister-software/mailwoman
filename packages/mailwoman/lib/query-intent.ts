@@ -20,7 +20,7 @@
  *   from the ablation-expectation model rather than restated. Both are measured numbers with a table
  *   behind them (see that module's docstring: below 0.5 the top-ranked place is the intended one
  *   52.4% of the time, above it 89.1%), and a second copy would be a second thing to keep in sync
- *   with a measurement nobody re-runs. `dominanceMarginLog10` itself is imported too — the
+ *   with a measurement nobody re-runs. `dominanceMarginLog10` itself is imported too. The
  *   subtraction is three lines, and the point is that there is one definition of "decisive" in this
  *   repo.
  *
@@ -185,7 +185,8 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 	const ranked = [self, ...((node.alternatives as ReadonlyArray<RankedPlaceLike> | undefined) ?? [])]
 	const places = ranked.map(toAblationPlace).filter((p): p is AblationPlace => p !== null)
 
-	// Fewer than two rankable candidates is not "decisive" and not "ambiguous" — it is unmeasured.
+	// Fewer than two rankable candidates is not "decisive" and not "ambiguous".
+	// It is unmeasured.
 	// The resolver may simply not have stamped a prominence (the FTS path does not always),
 	// and asserting decisiveness off a list of one that we could not rank would be
 	// exactly the meaning-of-zero error this repo keeps writing down.

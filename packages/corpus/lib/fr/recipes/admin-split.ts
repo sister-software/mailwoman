@@ -71,8 +71,8 @@ interface AdminSplitVariant {
 async function readCommunes(path: string): Promise<CommuneRow[]> {
 	const rows: CommuneRow[] = []
 
-	// The TSV is headerless — every line is a commune tuple — so `header: false` keeps row 1
-	// instead of spending it on column names.
+	// The TSV is headerless.
+	// Every line is a commune tuple — so `header: false` keeps row 1 instead of spending it on column names.
 	// Source is repo-generated (LF); even under crlf only the trailing `lat` column carries a CR,
 	// and it's consumed via `Number()` (whitespace-trimming), so it stays harmless.
 	for await (const [commune, postcode, lon, lat] of CSVSpliterator.fromAsync(path, {

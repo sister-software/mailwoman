@@ -567,9 +567,9 @@ export async function packageHasBinaries(dir: PathBuilderLike): Promise<boolean>
  * the char encoder that reads it.
  *
  * The two ship together, so the pairing is the whole signal that this is a character-path family.
- * Answering `false` for a half-materialized one degrades it to a Latin model
- * and the parse is merely wrong — a bare kanji line comes back as one locality —
- * where a refusal names the file that is missing.
+ * Answering `false` for a half-materialized one degrades it to a Latin model and the parse is merely wrong.
+ *
+ * A bare kanji line comes back as one locality — where a refusal names the file that is missing.
  */
 async function assertNoOrphanedCharVocab(dir: PathBuilderLike, cardPath: PathBuilderLike): Promise<void> {
 	if (!(await pathExists(resolvePath(dir, "char-vocab.json")))) return

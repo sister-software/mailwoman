@@ -13,7 +13,7 @@
  *   to disk on raw `fetch`, and `download.ts` says so in place.
  *
  *   freshness cannot be probed BY content length. The EA's download host answers `head` with http 405 and
- *   ignores `Range` — it returns 200 with the whole file — so a size probe starts a real 367 MB download.
+ *   ignores `Range`. It returns 200 with the whole file — so a size probe starts a real 367 MB download.
  *   {@linkcode EAFloodClient.readCatalogueRecord} reads the ISO revision date out of the catalogue entry
  *   instead, which is the authority's own statement about what changed and the only cheap freshness signal
  *   that exists here. The EA's own dataset page cannot supply it: `environment.data.gov.uk` serves that

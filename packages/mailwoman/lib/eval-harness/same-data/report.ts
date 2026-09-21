@@ -11,7 +11,7 @@
  *   frozen candidate set. They share a word and measure different layers.
  *
  *   Every rate prints its denominator, and a rate nobody could compute prints as `unmeasured` rather than as
- *   zero — a wrong-area rate over no coordinate-containing selection is not 0%.
+ *   zero. A wrong-area rate over no coordinate-containing selection is not 0%.
  *
  *   `renderLosses` lists the rows the baseline won and Mailwoman did not, with the query in view. A report
  *   of aggregates alone cannot be audited, and those rows name the mechanism.

@@ -8,12 +8,12 @@
  *   the candidate is derived, so its manifest names its input rather than restating the input's sources.
  *   `buildCandidateTable` reads an admin gazetteer plus postcode and locality databases. it ingests nothing
  *   from WOF, Overture or GeoNames directly. A manifest that repeated "whosonfirst+overture+geonames" here
- *   would be true of the ancestor and unfalsifiable of this file — it could not tell you which admin build
+ *   would be true of the ancestor and unfalsifiable of this file. It could not tell you which admin build
  *   this came from, which is the only question a reproduction actually asks.
  *
  *   So the source is the ancestor's identity, read out of the ancestor's own manifest when it has one:
  *   `admin-global-priority@2026-08-17.0`. That makes provenance a chain, and a chain is what survives the
- *   thing the flat form cannot — the lab holds thirteen candidate builds and about ten admin builds, and
+ *   thing the flat form cannot. The lab holds thirteen candidate builds and about ten admin builds, and
  *   which pairs with which is currently recorded nowhere.
  *
  *   an unprovenanced ancestor is reported rather than hidden. Every admin build that predates phase 3 has no
@@ -32,8 +32,9 @@ import { probeManifest } from "#data/inventory"
 /**
  * The ancestor's identity as this manifest records it.
  *
- * `unknown` is a measured state — the admin build had no manifest — and is deliberately
- * distinguishable from an admin build whose manifest says its version is literally unknown.
+ * `unknown` is a measured state.
+ * The admin build had no manifest — and is deliberately distinguishable from an admin
+ * build whose manifest says its version is literally unknown.
  */
 export async function ancestorIdentity(adminDBPath: string): Promise<string> {
 	if (!(await pathExists(adminDBPath))) return "unknown (admin gazetteer not found)"

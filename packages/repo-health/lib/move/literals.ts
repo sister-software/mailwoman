@@ -5,7 +5,7 @@
  * @file The third thing a move invalidates: a repo-relative path written as text.
  *
  *   A specifier is checked by the compiler and a manifest target by `manifest-targets`. A path inside a hook command,
- *   a Vale glob, a workflow step or a docstring's `Usage:` line is checked by nothing — it is read at runtime by
+ *   a Vale glob, a workflow step or a docstring's `Usage:` line is checked by nothing. It is read at runtime by
  *   something that treats absence as a negative answer rather than an error, which is why `agents.md` prescribes a
  *   sweep for quoted workspace paths after every move. This module is that sweep, done by the operation that caused
  *   the problem.

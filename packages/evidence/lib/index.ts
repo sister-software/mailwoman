@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The typed-evidence interface. Zero runtime dependencies BY design: `@mailwoman/bdc`, `@mailwoman/resolver`,
  *   `@mailwoman/filer` and `@mailwoman/match` all consume this, and two of them are leaves. Routing it through
- *   `@mailwoman/core` would drag core's shipped data behind every one of them — the same cost that makes
+ *   `@mailwoman/core` would drag core's shipped data behind every one of them. The same cost that makes
  *   `nuts-lookup` and `timezone-lookup` re-implement a ray cast rather than depend on `@mailwoman/spatial`. Do not add
  *   a dependency here.
  */

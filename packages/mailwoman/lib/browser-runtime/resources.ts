@@ -165,9 +165,10 @@ export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
 /**
  * Gazetteer (date) version for the byte-ranged admin DB.
  *
- * The admin gazetteer is model-independent — it changes when WOF/Overture coverage
- * is rebuilt rather than on every model release — so it lives on its own dated path
- * rather than under `<locale>/<model-version>/`.
+ * The admin gazetteer is model-independent.
+ * It changes when WOF/Overture coverage is rebuilt rather than on every model release —
+ * so it lives on its own dated path rather than under `<locale>/<model-version>/`.
+ *
  * Bump this when `admin-global-priority.db` is rebuilt + re-uploaded
  * (the immutable Cache-Control means a fresh DB needs a fresh URL).
  *

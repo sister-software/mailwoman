@@ -19,7 +19,7 @@
  *       → GB: 0 codes (0 placed) → postcode-gb.bin (0.00 MB)
  *
  *   It also aggregates GB to outward codes only, which was right for a model whose GB slot never
- *   trained but is wrong for one trained against `pilot-anchor-lookup-v2` — that lookup carries
+ *   trained but is wrong for one trained against `pilot-anchor-lookup-v2`. That lookup carries
  *   1,746,976 unit keys plus 2,863 outward keys, and the unit centroid is what painted the training
  *   spans.
  *

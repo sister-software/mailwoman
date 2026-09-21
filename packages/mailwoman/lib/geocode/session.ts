@@ -98,8 +98,9 @@ export interface GeocodeSessionOptions {
 	 * Known residual, carried deliberately: under fr-FR weights the US bucket moves 54/99 → 53/99.
 	 * Every floor is identical there too, so that row moved on a NON-floor tag.
 	 *
-	 * It is a US row parsed with FR weights — a pairing production does not route —
-	 * and the FR bucket itself is unchanged, so the D-rule's tier-1 test is met.
+	 * It is a US row parsed with FR weights.
+	 * A pairing production does not route — and the FR bucket itself is unchanged,
+	 * so the D-rule's tier-1 test is met.
 	 */
 	gazetteerPrior?: boolean
 	locale: string

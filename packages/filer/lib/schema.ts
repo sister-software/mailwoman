@@ -68,7 +68,7 @@
  *   the correct shape under this project's binding rule (provenance on every edge): a
  *   family-membership row would otherwise record the fact without recording what produced it.
  *
- *   **`filer_family` carries `assertion` + `match_score` too** — the two columns {@link FilerEdgeTable}
+ *   **`filer_family` carries `assertion` + `match_score` too**. The two columns {@link FilerEdgeTable}
  *   has carried since 3a. Criterion 2 ("inferred never merges with authoritative") enforced on `filer_edge`
  *   alone stops at the table boundary, and `build-filer.ts`'s edgar ingest writes inferred family
  *   memberships — a name-match guess at which FRN a disclosed subsidiary name belongs to. Without these

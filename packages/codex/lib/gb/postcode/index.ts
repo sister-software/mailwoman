@@ -7,7 +7,7 @@
  *   split.
  *
  *   This is the most complex postcode of any system in the codex, and the contrast is the whole point
- *   of the file. A US ZIP, a German PLZ, and a French code postal are all a fixed five digits — the
+ *   of the file. A US ZIP, a German PLZ, and a French code postal are all a fixed five digits. The
  *   shape is trivial and the only interesting question is what admin unit the prefix maps to. The
  *   UK postcode is none of that:
  *

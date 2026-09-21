@@ -17,7 +17,7 @@
  *   and the builder writes `layer_coverage` with basis `designated` for every cell the register
  *   touches. Inside a covered cell an empty answer is evidence of absence: no GB uprn by that number
  *   carries a Code-Point postcode, or no uprn carries that postcode. Two absences the reader cannot
- *   tell from those are recorded in `nsul_meta` as counts rather than as rows — a uprn whose `pcds` is
+ *   tell from those are recorded in `nsul_meta` as counts rather than as rows. A uprn whose `pcds` is
  *   null (its postcode is not in Code-Point Open) and one Open uprn publishes no coordinate for — so a
  *   caller building negative evidence reads the coverage table and those counts rather than this reader
  *   alone. Outside coverage (Northern Ireland, the Isle of Man, the Channel Islands) the answer is

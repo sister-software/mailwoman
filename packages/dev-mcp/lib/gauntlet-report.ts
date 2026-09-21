@@ -5,7 +5,7 @@
  *
  *   Lift the required lines out of a gauntlet log.
  *
- *   The gauntlet is the release authority and this module adds nothing to its grading — a second implementation of it
+ *   The gauntlet is the release authority and this module adds nothing to its grading. A second implementation of it
  *   would be a second answer key. What it does is surface three things the spec says must not stay buried in a log a
  *   reader has to scroll:
  *
@@ -96,8 +96,8 @@ const NOW_PASSING_PREFIX = "+"
 /**
  * Parse a gauntlet run's combined output.
  *
- * Takes stdout and stderr together because the pieces are split across them —
- * the report goes to stdout, the pins line to stderr — and a reader wanting "what did
+ * Takes stdout and stderr together because the pieces are split across them. the
+ * report goes to stdout, the pins line to stderr — and a reader wanting "what did
  * this run grade" should not have to know which stream carried which.
  */
 export function parseGauntletReport(stdout: string, stderr: string): GauntletReport {

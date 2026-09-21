@@ -223,8 +223,9 @@ export function familyByID(family: string): WeightsFamily | undefined {
  * and `zh-TW` reach the character family without a weights package of their own.
  *
  * A locale absent from both is a locale with no declared graph.
- * That is a finding rather than a default — the `weights-family` check reports it —
- * so callers must not read `undefined` as the Latin family.
+ * That is a finding rather than a default.
+ *
+ * The `weights-family` check reports it — so callers must not read `undefined` as the Latin family.
  */
 export function familyForLocale(locale: string): WeightsFamily | undefined {
 	const code = locale.toLowerCase()

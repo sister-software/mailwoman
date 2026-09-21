@@ -106,8 +106,9 @@ export const NCERM_DATASET_URL = `https://environment.data.gov.uk/dataset/${NCER
 /**
  * The projected CRS every published layer declares.
  *
- * The file is not in WGS84 — it is OSGB36 / British National Grid, in metres —
- * so the ingest reprojects and the builder refuses a source that declares anything else.
+ * The file is not in WGS84.
+ * It is OSGB36 / British National Grid, in metres — so the ingest reprojects
+ * and the builder refuses a source that declares anything else.
  */
 export const NCERM_SOURCE_EPSG = 27_700
 

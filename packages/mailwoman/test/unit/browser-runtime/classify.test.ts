@@ -31,7 +31,7 @@ const AT_BBOX = { minLat: 46.4, maxLat: 49, minLon: 9.5, maxLon: 17.2 }
 /**
  * A candidate-table-shaped stub: exact normalized-name match (candidate rows are always `exactMatch`),
  * score-ordered (population-first), honoring country/bbox/placetype filters
- * and ignoring parentID (the table has none — the adapter must translate).
+ * and ignoring parentID (the table has none, so the adapter must translate).
  */
 function stubLookup(places: StubPlace[]): MailwomanLookupLike {
 	return {
@@ -172,8 +172,8 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 	})
 
 	test("cross-country postcode check: a foreign postcode match cannot out-pin the parsed city", async () => {
-		// "10115"-class: the postcode string resolves to a DE row, the city is a US
-		// locality — the locality wins the pin.
+		// "10115"-class: the postcode string resolves to a DE row, the city is a US locality.
+		// The locality wins the pin.
 		// The postcode stays in the hit list.
 		const lookup = stubLookup([
 			{ id: 30, name: "10115", placetype: "postalcode", country: "DE", lat: 52.53, lon: 13.38, score: 2 },

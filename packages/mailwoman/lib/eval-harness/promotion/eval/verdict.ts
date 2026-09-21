@@ -271,7 +271,7 @@ export async function assemblePromotionVerdict(
 			"arena.perturb": arenas ? arenaColumn(arenas, "perturb", "neural") : undefined,
 			// Demo-cascade smoke pass rate (#524) — whole-stack parse→reconcile→resolve against the slim hot DB.
 			// Like the arena leg it runs once on the ship artifact (no fp32/int8 split);
-			// sidecar only (the leg is new — there are no pre-sidecar out-dirs to replay).
+			// sidecar only (the leg is new, so there are no pre-sidecar out-dirs to replay).
 			// Absent sidecar (DB not staged / runner errored) reads undefined → a floored
 			// spec fails loudly, an unfloored spec ignores it.
 			"cascade.demo_smoke": cascadeJ?.summary?.pass_rate_pct,

@@ -7,7 +7,7 @@
  *
  *   The compiler validates by delegation: `parseGeographicModelDocument` is the only thing that
  *   decides whether a document is well formed, and it throws with every violation before a single byte
- *   is computed. There is no second validator here, and no partial artifact on failure — a compile
+ *   is computed. There is no second validator here, and no partial artifact on failure. A compile
  *   either produces the whole artifact or produces nothing.
  *
  *   **`isA` alone defines semantic inheritance.** Two things follow from it, and they are the whole

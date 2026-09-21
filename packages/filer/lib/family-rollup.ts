@@ -14,7 +14,7 @@
  *   Query shape mirrors `filerLookup`'s XOR discipline: exactly one of `familyID`/`nodeID` is required.
  *   Given a `familyID`, this returns that one family's membership (0 or 1 elements — see the return-shape
  *   note below). Given a `nodeID`, it resolves every family (if any) that node belongs to as of that date
- *   and returns the full rollup for each — a node can legitimately belong to more than one family at once
+ *   and returns the full rollup for each. A node can legitimately belong to more than one family at once
  *   (a filer whose holding company differs from its management company gets two different family
  *   memberships), and this is a normal shape rather than an exceptional one to guess around or refuse:
  *   `filerLookup.ts`'s own `families` field answers the identical "which families does this node belong to"

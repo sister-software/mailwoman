@@ -26,8 +26,9 @@ export const GLOSS_KEY_THRESHOLD = 50
 /**
  * Placetypes the gloss detector never flags.
  *
- * A country or region legitimately carries a name in every language — that is what
- * an exonym set is — so key volume discriminates nothing there.
+ * A country or region legitimately carries a name in every language.
+ * That is what an exonym set is — so key volume discriminates nothing there.
+ *
  * The detector's population is the non-admin tail, where a place named by a common noun
  * ("Poisson", "Sunday") accumulating 200+ translations is a machine-translated gloss set rather than fame.
  */

@@ -154,8 +154,8 @@ export function cacheRootPath(...segments: string[]): string {
  *   never published, so on any machine that did not build it the `existsSync` filter
  *   simply drops it and GB postcode queries behave as they did before.
  *   It is listed rather than special-cased because that filter is the tier's enforcement.
- *   It is also the only GB-claiming extract in this list — the Code-Point Open extract
- *   is not here — so nothing competes with it for `BT` routing.
+ *   It is also the only GB-claiming extract in this list.
+ *   The Code-Point Open extract is not here — so nothing competes with it for `BT` routing.
  */
 export function wofExtractPaths(dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
 	return Object.values(wofExtractPathsByName(dataRoot))

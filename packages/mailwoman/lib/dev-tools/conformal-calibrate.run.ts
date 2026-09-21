@@ -44,7 +44,7 @@
  *   [--wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,…]\
  *   [--cal-frac 0.5] [--alpha 0.9] [--seed 20260614]
  *
- *   Do not change the resolver or parser — this script only reads stamped metadata.
+ *   Do not change the resolver or parser. This script only reads stamped metadata.
  */
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"

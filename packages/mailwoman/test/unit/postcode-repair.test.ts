@@ -5,7 +5,7 @@
  *
  *   #1735 pins. The rung's whole interface is its checks: it fires on the recorded contradiction (letter-digit postcode
  *   span, ≥0.9 shape confidence, only misread-family nodes wholly inside it) and on nothing else. The veto cases are
- *   the tests that matter — each one is an input the rung must leave byte-identical.
+ *   the tests that matter. Each one is an input the rung must leave byte-identical.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

@@ -11,7 +11,7 @@
  *   `alternateScreen: true`, and Ink enters before its first frame and leaves from `unmount()` — which its
  *   `signal-exit` subscription reaches on a signal death too. The buffer is what makes the full-height frame safe at
  *   all: Ink emits `\x1b[2J\x1b[3J\x1b[H` for a frame as tall as the terminal, and `3J` wipes the scrollback (the
- *   #1577 damage `geocode.tsx`'s one-shot path exists to avoid). On the alternate screen that clear costs nothing —
+ *   #1577 damage `geocode.tsx`'s one-shot path exists to avoid). On the alternate screen that clear costs nothing.
  *   the buffer has no scrollback of its own, and leaving it restores the primary buffer untouched. So this component
  *   may render a full-height frame from its first frame. there is no primary buffer underneath to guard.
  *
@@ -19,7 +19,7 @@
  *   not open (missing weights/gazetteer, whose {@link CommandError} messages are the CLI's error interface). It is
  *   reported by exiting the app with the error rather than by rendering it: Ink treats alternate-screen teardown
  *   output as disposable, so a message painted here would be erased by the buffer switch on the way out. `command.tsx`
- *   writes it to stderr once the primary buffer is back. Failures after the first result are not fatal — a rejected
+ *   writes it to stderr once the primary buffer is back. Failures after the first result are not fatal. A rejected
  *   re-run reports in the output pane and keeps the previous result, and a map render that throws degrades that pane
  *   to a note.
  */
@@ -225,8 +225,8 @@ function closeResources(resources: Resources | null): void {
 
 /* oxlint-disable react-hooks/exhaustive-deps -- The mount effect is one-shot BY interface: it opens the
 	 session, the tile archive and the first geocode, and its cleanup is the only thing that closes them.
-	 Tracking `options`/`initialInput` would re-open every handle on any identity change — a fresh options
-	 object per render is enough. The empty deps array is the point, same as `useCommandTask`. */
+	 Tracking `options`/`initialInput` would re-open every handle on any identity change. A fresh options object
+	 per render is enough. The empty deps array is the point, same as `useCommandTask`. */
 
 export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps): React.ReactElement | null {
 	const { exit } = useApp()

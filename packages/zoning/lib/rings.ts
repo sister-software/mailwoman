@@ -8,7 +8,7 @@
  *   the code itself lives IN `@mailwoman/spatial`, re-exported here so this package's call sites and its
  *   `@mailwoman/zoning/rings` subpath keep reading the same. Nothing in it is zoning-specific: it is byte
  *   layout plus spherical geometry, and a second copy of the alignment arithmetic or of the signed-area
- *   reading is a second place for either to stop being right. Both failure modes are silent — a mis-read blob
+ *   reading is a second place for either to stop being right. Both failure modes are silent. A mis-read blob
  *   answers a containment question wrongly, and a hole-blind area reading answers "inside" for every point in
  *   a hole.
  *

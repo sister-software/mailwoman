@@ -9,14 +9,14 @@
  *
  *   the marker interface is the whole reason this is the carrier, and it is inviolable here. A marker is
  *   additive, attributed, and always accompanied by the ordinary answer. it never changes which answer wins.
- *   That is exactly what an observation is — the authority behind an answer the pipeline had already
+ *   That is exactly what an observation is. The authority behind an answer the pipeline had already
  *   reached — so nothing in this module reads or returns a candidate, a coordinate, or an ordering. The
  *   `mechanism` field names the rule in the `family:rule` form the vocabulary uses, and `evidence` carries
  *   the assertion, the mapping and every provenance record, so a reader can check the claim rather than
  *   take it.
  *
  *   the pipeline still learns nothing. `createRuntimePipeline` takes the semantic route as a plain
- *   `POIPhraseLookup` and is told nothing about where the evidence came from — the property that keeps the
+ *   `POIPhraseLookup` and is told nothing about where the evidence came from. The property that keeps the
  *   integration point one optional argument instead of a branch. So the conversion happens at the caller.
  *   The caller built the route and already holds it: run the query, drain the route, convert, attach. A pipeline
  *   that attached these itself would have to know the difference.
@@ -24,7 +24,7 @@
  *   A marker must name A kind the verdict carries. `QueryIntentMarker.kind` is documented as a kind present
  *   in the result as either the top kind or an alternative, and a marker naming one that is in neither is a
  *   producer bug. So the conversion is handed the verdict and finds the POI kind in it. a verdict carrying
- *   none yields no marker rather than an invented one. That silence is a real reading — the observation was
+ *   none yields no marker rather than an invented one. That silence is a real reading. The observation was
  *   recorded on a query the classifier did not route as a POI query — and it is not the same as there being
  *   nothing to say.
  */

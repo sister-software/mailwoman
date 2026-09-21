@@ -15,7 +15,7 @@
  *   ── Determinism ──────────────────────────────────────────────────────────────────────────────────
  *   {@link buildSubVenueLexicon} is a pure function of its inputs with a stable sort on every array, so
  *   a regenerate against the same fetch outputs is byte-identical. No timestamp is emitted for the same
- *   reason `taxonomy.json` carries none — a clock in the artifact makes every regenerate a diff.
+ *   reason `taxonomy.json` carries none. A clock in the artifact makes every regenerate a diff.
  *   Vintages live in `sources[]`, taken from the fetch manifests.
  *
  *   ── Where the stages live ────────────────────────────────────────────────────────────────────────

@@ -24,7 +24,7 @@
  *
  *   SO the constructor refuses A coverage row that would support an exclusion. Every row must read
  *   `source_present`; `supportsExclusion` must be false for all of them. That is not a convention this reader
- *   follows — it is a condition it checks at open time, so the day someone writes a stronger basis without
+ *   follows. It is a condition it checks at open time, so the day someone writes a stronger basis without
  *   settling the footprint question, the layer refuses to open rather than answering confidently.
  *
  *   neither reading is A statement about what may be built. The layer reports what a plan assigns at a

@@ -30,7 +30,7 @@
  *   **Ambiguity stops the registrant, it does not get resolved here.** When the top score is a genuine tie
  *   between different CIKs and more than one survives corroboration, this abstains and counts it. Picking
  *   one would be the exact false-identity-link failure `resolveCIKCandidates` refuses to commit, relocated
- *   one file downstream. A pinned CIK that is among the tied survivors does break the tie — an operator
+ *   one file downstream. A pinned CIK that is among the tied survivors does break the tie. An operator
  *   decision about one registrant's identity is a stronger signal than a name score.
  */
 

@@ -176,7 +176,8 @@ export const EA_DECLARED_BBOX: readonly [number, number, number, number] = [
 /**
  * The projected CRS the published geodatabase declares.
  *
- * The file is not in WGS84 — it is OSGB36 / British National Grid, in metres —
- * so the ingest reprojects and the builder refuses a source that declares anything else.
+ * The file is not in WGS84.
+ * It is OSGB36 / British National Grid, in metres — so the ingest reprojects
+ * and the builder refuses a source that declares anything else.
  */
 export const EA_SOURCE_EPSG = 27_700

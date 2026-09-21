@@ -25,7 +25,7 @@
  *     both. Vale's markdown parser skips inline code and fences natively, which is the whole reason
  *     those two en-GB-looking identifiers can stay on the swap list.
  *   - `promotion-eval.ts`, `packages/corpus/lib/recipes/` and `mailwoman eval promote` are
- *     backticked, so `AmbiguousShorthand` must stay quiet on all three — that is how a
+ *     backticked, so `AmbiguousShorthand` must stay quiet on all three. That is how a
  *     interface-tied name survives the vocabulary ban without being renamed.
  *
  *   The code leg exists because that last mechanism does not reach a source comment. Vale's
@@ -142,13 +142,14 @@ const LEGS: StyleLeg[] = [
 		config: ".vale-code.ini",
 		dirtyFixture: "fixtures/dirty.ts",
 		cleanFixture: "fixtures/clean.ts",
-		minDirtyErrors: 7,
+		minDirtyErrors: 8,
 		ruleChecks: [
 			"styles.AmbiguousShorthandCode",
 			"styles.EmphasisCapitals",
 			"styles.ShellNoun",
 			"styles.MedicalMetaphor",
 			"styles.CommentSemicolons",
+			"styles.CommentDashJoint",
 			"styles.Negation",
 			"styles.Grammar.SentenceFragments",
 			"styles.Grammar.EllipticalCoordination",

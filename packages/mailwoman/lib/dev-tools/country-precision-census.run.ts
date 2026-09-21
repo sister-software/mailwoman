@@ -7,7 +7,7 @@
  *
  *   Operator framing, 2026-09-15: a tier is a claim about behavior rather than about coverage, and
  *   "it would be a massive failure if given an address that had a country in it that we somehow got
- *   that wrong at parsing time." This measures exactly that failure, and it needs no new truth — the
+ *   that wrong at parsing time." This measures exactly that failure, and it needs no new truth. The
  *   country is IN the string, so the string is its own gold.
  *
  *   why IT is not already graded. 375 of the 982 regression-board rows name a country in their input

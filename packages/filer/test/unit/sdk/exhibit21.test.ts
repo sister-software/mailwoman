@@ -172,9 +172,11 @@ describe("parseExhibit21 — header-mapped columns and the indented corporate tr
 	 * Telephone and Data Systems indents each subsidiary one column to the right of
 	 * its parent, and 132 of its 183 subsidiaries sit on such a row.
 	 *
-	 * The name is not in doubt on those rows — the header says the jurisdiction is to its right,
-	 * so the only non-blank column between the two is the name — and the nesting depth is
-	 * discarded, since an Exhibit 21 row is a registrant→subsidiary edge either way.
+	 * The name is not in doubt on those rows.
+	 * The header says the jurisdiction is to its right, so the only non-blank
+	 * column between the two is the name — and the nesting depth is discarded,
+	 * since an Exhibit 21 row is a registrant→subsidiary edge either way.
+	 *
 	 * TDS's own filing is 176 KB and is not vendored.
 	 * This is its shape.
 	 */

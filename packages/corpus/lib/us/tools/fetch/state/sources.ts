@@ -6,7 +6,7 @@
  *   Re-fetch the state-level open-data sources (NY/TX/DE/or notaries, IA contractors, WA health
  *   providers, HI lobbyists). Reproducible recovery if `$MAILWOMAN_DATA_ROOT` is lost.
  *
- *   HI public schools is fetched separately by `mailwoman corpus fetch state-hi-schools` — its
+ *   HI public schools is fetched separately by `mailwoman corpus fetch state-hi-schools`. Its
  *   upstream is an xlsx workbook that requires an openpyxl-driven sheet-concatenation pre-step
  *   before the adapter can consume it.
  *

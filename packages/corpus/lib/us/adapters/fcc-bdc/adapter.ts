@@ -17,7 +17,7 @@
  *   Following the `tiger` / `wof-admin` pattern, this adapter consumes a SQLite database the operator
  *   pre-builds via the isp-nexus BDC ETL (`/srv/isp-nexus/sync/fcc/bdc/`) or any equivalent
  *   host-side pipeline. The mailwoman side does not download or parse the raw CSV/ZIP distribution
- *   directly — that keeps the adapter narrow and the BDC ingest pluggable.
+ *   directly. That keeps the adapter narrow and the BDC ingest pluggable.
  *
  *   The SQLite schema is documented in readme.md and modeled after `NTIARecord`
  *   (`isp-nexus/fcc/bdc/data-collection.ts`): one row per `location_id`. The adapter splits

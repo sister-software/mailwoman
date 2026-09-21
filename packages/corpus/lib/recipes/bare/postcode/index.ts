@@ -172,9 +172,9 @@ export async function findMissingPostcodeSources(
  * Every surface a country writes for one postcode, spaced form first, or `[]` when this
  * recipe carries no form for that country or the code does not fit the one it carries.
  *
- * Exported because it is the half of the recipe a test can reach: `run` reads a 500 MB
- * archive from the data root, and the interface worth pinning — that every surface this
- * renders is one {@linkcode detectedAsPostcode} accepts — needs neither.
+ * Exported because it is the half of the recipe a test can reach: `run` reads a 500
+ * MB archive from the data root, and the interface worth pinning.
+ * That every surface this renders is one {@linkcode detectedAsPostcode} accepts — needs neither.
  */
 export function renderBarePostcode(country: string, postcode: string): string[] {
 	const form = WRITTEN_FORMS.get(country.trim().toUpperCase())

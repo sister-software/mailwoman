@@ -7,7 +7,7 @@
  *
  *   A locality miss has two causes that a rate cannot tell apart. ranking: the right place is in the candidate set and
  *   something else outranked it. reachability: the right place carries no row under that key, so no ranking could have
- *   reached it at any position. The fixes are opposite — one is a weight, the other is data — and every board rate in
+ *   reached it at any position. The fixes are opposite. One is a weight, the other is data — and every board rate in
  *   this repository pools them.
  *
  *   `La Grange, IL 60525` is the reachability case. The decode labels `La` a street and asks the backend for `Grange`;

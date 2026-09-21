@@ -22,7 +22,7 @@
  *     `POILookup`'s open/dispose lifecycle (`using poiLookup = new POILookup(...)`), we just call
  *     `.search()` on it.
  *   - **`nearestInfrastructure` is `async`, not sync.** `readLayerCoverage`
- *     (`@mailwoman/core/layers`) is `Promise`-returning — every layer-interface read in this codebase is
+ *     (`@mailwoman/core/layers`) is `Promise`-returning. Every layer-interface read in this codebase is
  *     (`readLayerManifest`, `filingLandscape` itself) — so pairing each POI hit with its coverage cell
  *     means awaiting one `readLayerCoverage` call per hit. A sync signature can't await that.
  *

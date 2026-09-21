@@ -8,7 +8,7 @@
  *   mini street-type + locality-surface lexicons and per-piece features painted by corpus-python's
  *   real painter. this test replays the same lexicons + piece offsets through the generic TS painter
  *   (`buildGazetteerFeatures`) and asserts byte equality. Train and inference must share one
- *   computation — this is the fence.
+ *   computation. This is the fence.
  *
  *   The probe set deliberately carries the classes that have bitten: hyphen/apostrophe folds (a
  *   Phase-1 defect made them unreachable keys), uppercase-conditional short codes, homograph bits,

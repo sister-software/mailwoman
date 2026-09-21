@@ -13,7 +13,7 @@
  *   1. The glossary term is a common noun (starts lowercase) — acronym/name terms (FST, BAN, WOF)
  *      are exempt so "admin FST" keeps its tooltip.
  *   2. The matched display text is capitalized — lowercase usage ("the city of…") keeps its tooltip.
- *   3. An adjacent word is also capitalized — the match is the interior/tail of a multi-word proper
+ *   3. An adjacent word is also capitalized. The match is the interior/tail of a multi-word proper
  *      noun ("New York City", "United States of America", "State Street"). A capitalized match at a
  *      plain sentence start has no capitalized neighbor and keeps its tooltip.
  *

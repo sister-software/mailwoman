@@ -159,9 +159,9 @@ function candidateSelect(hasNameRole: boolean): string {
  *
  * Two values in a hit are zeros that must not be read as absences, and two absences are not zeros:
  *
- * - `importance: null` is unmeasured — the score source had no row for that place —
- *   while `population: 0` and a `(0, 0)` centroid are the build's own written
- *   values (the latter its unlocated sentinel).
+ * - `importance: null` is unmeasured.
+ *   The score source had no row for that place — while `population: 0` and a `(0, 0)`
+ *   centroid are the build's own written values (the latter its unlocated sentinel).
  * - A `country` naming no `country_codes` entry means the artifact carries no rows
  *   for that country at all, so the miss is a coverage gap.
  *   A country it does carry, with rows under the key elsewhere, is a filter miss
@@ -497,7 +497,8 @@ export interface WOFExtract<DB> {
  * `fts` is what the resolver can reach.
  *
  * The FTS5 content is built with `is_current != 0 and is_deprecated = 0` applied,
- * so a deprecated record is not merely filtered at query time — it was never indexed.
+ * so a deprecated record is not merely filtered at query time.
+ * It was never indexed.
  *
  * `names-exact` is the byte-exact probe on the indexed `names` table, which carries
  * deprecated records and is the only cheap way to see them.

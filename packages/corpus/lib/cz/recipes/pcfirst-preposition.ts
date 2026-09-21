@@ -8,7 +8,7 @@
  *   class: a leading postcode mis-assigned as house_number while the multi-word "nad/pod/u X"
  *   locality shatters ("51244 Rokytnice nad Jizerou, Dolní Rokytnice 111" → street
  *   'RokytnicenadJizerou' + house_number '51244'). That leading-5-digit confusion is the
- *   anchor-pollution class whose decode-time override was correctly killed in #723 — this recipe is
+ *   anchor-pollution class whose decode-time override was correctly killed in #723. This recipe is
  *   the model-first fix as data: real prepositional localities in the order that breaks, so the
  *   model learns that a leading postcode before a multi-word name is a postcode. pc-first leads the
  *   cycle (the lesson); canonical and city-first keep the polarity balanced (the v1.9.9 lesson).

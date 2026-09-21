@@ -5,7 +5,7 @@
  *
  *   Tests for the fragment board's interval math and fixture interface (#727 stage-2, Tier 1c).
  *
- *   The interval is the whole reason this board exists — it is what turns "3/15" into "somewhere
+ *   The interval is the whole reason this board exists. It is what turns "3/15" into "somewhere
  *   between 4% and 48%, so stop quoting it". If the math is wrong the board is worse than no board,
  *   because it launders an anecdote into a decimal.
  */

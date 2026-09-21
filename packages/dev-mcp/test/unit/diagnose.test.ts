@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The account assembly and the shape predicates, driven off hand-built facts so no weights load and no gazetteer
- *   opens. Every case here is a claim about what A predicate means — the point of a v1 classifier is that its
+ *   opens. Every case here is a claim about what A predicate means. The point of a v1 classifier is that its
  *   definitions are readable, so the tests are where the definitions are pinned.
  */
 

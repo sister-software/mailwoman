@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Allowlists for `check-docs-structure.ts`. Every entry carries a reason — an allowance without
+ *   Allowlists for `check-docs-structure.ts`. Every entry carries a reason. An allowance without
  *   one is a bug rather than a policy. Adding an entry here is a reviewable act: prefer fixing the page,
  *   and allowlist only when the collision/orphan is deliberate or belongs to another workstream.
  *
- *   both lists are empty, and that is the intended steady state — the docs-reorg site has no
+ *   both lists are empty, and that is the intended steady state. The docs-reorg site has no
  *   orphans and no duplicate titles by construction. The three entries carried since 2026-08-03
  *   (docs-reorg Phase 0 task 2) were retired by tree surgery rather than by allowance: Task 4 moved
  *   `evals/` and `retrospectives/` to `docs/records/`, taking both `Retrospectives`-titled landing

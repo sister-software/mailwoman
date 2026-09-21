@@ -431,9 +431,9 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 	const lookups = records.map((record): LookupFact => {
 		const picked = record.picked
 		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : undefined
-		// The rank vector's key order is the resolver's stage execution order —
-		// the recorder writes one entry per stage as it runs — so the first key is the
-		// backend's own order and the last is the order the pick came from.
+		// The rank vector's key order is the resolver's stage execution order. the recorder
+		// writes one entry per stage as it runs — so the first key is the backend's own order
+		// and the last is the order the pick came from.
 		const stages = pickedRow ? Object.keys(pickedRow.ranks) : []
 		const firstStage = stages[0]
 		const initialRank = pickedRow && firstStage ? (pickedRow.ranks[firstStage] ?? null) : null

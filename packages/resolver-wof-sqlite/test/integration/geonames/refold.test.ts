@@ -7,7 +7,7 @@
  *
  *   The synthetic id a GeoNames place gets is its position in the run (`GEONAMES_ID_BASE + n`,
  *   counted across the country list in order), not a derivation from its geonameid. So two runs with
- *   different country lists put different places at the same id. That alone is survivable — a fold
+ *   different country lists put different places at the same id. That alone is survivable. A fold
  *   output is only ever read as a whole — but the writes were not: `spr`/`place_population` used
  *   `insert or replace` (overwrite the prefix the new run reaches, leave the tail), while
  *   `names`/`ancestors` used a bare `insert` (append, never clear). Re-folding therefore left the

@@ -10,7 +10,7 @@
  *       expanded↔abbreviated suffix) must not move the assembled coordinate or tier. A drift is a
  *       surface-form robustness bug. `abbrev` inverts the `normalize/abbreviations.ts` table — the model
  *       trains on both `Avenue` and `Ave`, so the coordinate must not budge.
- *   - DIR (directional, ≤5km): dropping the postcode must not break resolution — the result must still
+ *   - DIR (directional, ≤5km): dropping the postcode must not break resolution. The result must still
  *       land near the with-postcode coordinate. This is exactly the #251 failure class, frozen as a
  *       standing property.
  *   - band (tolerance, ≤5km): a corrupting perturbation (single-char transpose / substitution, ordinal

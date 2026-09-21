@@ -333,8 +333,9 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
  *
  * Tokenizing first is what makes this safe: a code span, a link and a `{@link}` are
  * single tokens, so a period inside one is never a boundary.
- * A terminator inside parentheses is not one either — an aside carries its own full stop
- * and the sentence continues past the closing bracket.
+ * A terminator inside parentheses is not one either.
+ *
+ * An aside carries its own full stop and the sentence continues past the closing bracket.
  */
 export function splitSentences(text: string): string[] {
 	const tokens = words(text)

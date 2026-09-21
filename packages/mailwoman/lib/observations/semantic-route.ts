@@ -13,7 +13,7 @@
  *   a declared surface form names an activity concept. the compiled artifact says which entity kinds
  *   assert `affords` against that activity. a committed external mapping translates each of those
  *   concepts into a `@mailwoman/poi-taxonomy` category id. the category id goes back as positive
- *   evidence. No ordering, no weight, no boost, no penalty is authored anywhere along it — the value the
+ *   evidence. No ordering, no weight, no boost, no penalty is authored anywhere along it. The value the
  *   match reports as its `confidence` is the one the committed exact-phrase rung reports for the same
  *   kind of hit, and it decides which query kind is chosen rather than how any candidate is ordered.
  *
@@ -50,7 +50,7 @@
  *   locale scope is the phrase'S and binds TO the caller. country scope is the assertion'S and binds TO
  *   the place. A phrase's locale scope says who uses that wording, so it is read here against the caller's
  *   locale. A `RelationAssertion`'s country list says where the establishments it describes exist, so it is
- *   judged against the country of the resolved anchor rather than the caller's locale — the locale is the lens the
+ *   judged against the country of the resolved anchor rather than the caller's locale. The locale is the lens the
  *   phrase is read through rather than a definition of where the condition is true. This route therefore returns every
  *   kind the activity reaches and stamps each match with the assertion's `countryScope`;
  *   `createPOIIntentStage` drops the members whose scope excludes the anchor's country once the anchor

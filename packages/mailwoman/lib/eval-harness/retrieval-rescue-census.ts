@@ -8,7 +8,7 @@
  *   ignoring `fork-entity.ts` check 1), or sitting unpicked in the resolver's own ranked `candidates` list.
  *
  *   The question this measures is the next release's framing: when a parse goes wrong, how often is the right answer
- *   already on hand? `comer parís.méxico` is the worked case both ways — the shipped model wins it because a wrong but
+ *   already on hand? `comer parís.méxico` is the worked case both ways. The shipped model wins it because a wrong but
  *   unresolvable parse lets the incumbent abstain and the entity layer answer. the v5-line candidates lose it because a
  *   wrong but resolvable parse (locality "comer" → Comer, Georgia, US) silences the same on-hand answer.
  *

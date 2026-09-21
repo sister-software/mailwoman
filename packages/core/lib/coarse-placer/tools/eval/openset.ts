@@ -9,7 +9,7 @@
  *   does a different open-set score, read off the same frozen weights, clear the 90/90 the softmax
  *   can't?
  *
- *   The 11-way routing (argmax over the in-map classes) is fixed — the model is unchanged. The only
+ *   The 11-way routing (argmax over the in-map classes) is fixed. The model is unchanged. The only
  *   thing each score changes is the reject decision (keep the in-map route vs. abstain → other). We
  *   sweep each score's threshold and trace its (in-map accuracy, heldout-caught) Pareto.
  *

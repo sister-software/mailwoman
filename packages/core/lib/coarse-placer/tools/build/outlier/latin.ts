@@ -77,7 +77,9 @@ export interface BuildOutlierLatinResult {
  * Off-map (not among the trained countries) and Latin-script.
  *
  * Train feeds the `other` class.
- * Heldout is test-only — the generalization probe (unseen off-map countries should still route `other`).
+ * Heldout is test-only.
+ *
+ * The generalization probe (unseen off-map countries should still route `other`).
  * #743: PL/PT/CZ moved from `other` to first-class in-map countries
  * (they're now in COARSE_CLASSES), so they're removed here — keeping them would feed
  * contradictory gold (the same address labelled both PL and `other`).

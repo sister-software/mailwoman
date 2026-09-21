@@ -6,7 +6,7 @@
  *   The two arm kinds that are not a live geocoder: a metered reference oracle, and a stored past run.
  *
  *   Separate from `compare.test.ts` because neither touches the http transport, and because both are about the same
- *   thing — a comparison that must not produce a verdict, for two different reasons.
+ *   thing. A comparison that must not produce a verdict, for two different reasons.
  */
 
 import { createPostalAddressID } from "@mailwoman/address-id"

@@ -328,9 +328,9 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	/**
 	 * Whether a row's own postcode or locality names a different place than the query did.
 	 *
-	 * Absent scope on the row is not a contradiction — it is the case the bbox rung was
-	 * built for — and a rung that matched on a field cannot contradict it, so at the
-	 * postcode rung only the locality can disagree and at the bbox rung either can.
+	 * Absent scope on the row is not a contradiction.
+	 * It is the case the bbox rung was built for — and a rung that matched on a field cannot contradict
+	 * it, so at the postcode rung only the locality can disagree and at the bbox rung either can.
 	 *
 	 * The locality is consulted only on an extract whose keys are full names
 	 * (the constructor's `localityKeys`).

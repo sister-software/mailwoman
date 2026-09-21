@@ -5,7 +5,7 @@
  * @file Form 499 filer database, read from the FCC's own xlsx export.
  *
  *   `form499.ts`'s {@linkcode parseForm499} reads a headerless 17-column TSV. That shape is not something
- *   the FCC publishes — it is what a human produced by hand-massaging this workbook, column by column, into
+ *   the FCC publishes. It is what a human produced by hand-massaging this workbook, column by column, into
  *   the tuple Nexus's `csv.parse` was configured with. The tuple being positional is why the massaging had
  *   to be exact, and the massaging is why the pipeline could never be re-run from source.
  *

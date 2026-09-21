@@ -15,7 +15,7 @@
  *
  *   - The release is pinned in every artifact path. The addresses theme is alpha. rows churn between
  *       monthly releases. Two releases never mix in one artifact.
- *   - The per-row `sources` array is preserved verbatim — it is what makes leakage-free eval filtering
+ *   - The per-row `sources` array is preserved verbatim. It is what makes leakage-free eval filtering
  *       possible (#472) and satisfies the provenance-per-row rule.
  *   - Overture's `id` (gers) rides along as a nullable passthrough column. Nothing joins on it.
  *

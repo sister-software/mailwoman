@@ -6,7 +6,7 @@
  *   Build the national FR rooftop address-point extract from the BAN `adresses-<dept>.csv` dumps
  *   (adresse.data.gouv.fr), on the shared situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`)
  *   so the existing `AddressPointSqliteLookup` reads it with zero changes (#1012). BAN is a structured
- *   government register — every row carries `numero`/`nom_voie`/`code_postal`/`nom_commune`/`lon`/`lat`,
+ *   government register. Every row carries `numero`/`nom_voie`/`code_postal`/`nom_commune`/`lon`/`lat`,
  *   so there is no OSM-style association gap: we write the exact source coordinate for every valid row.
  *
  *   The `rep` (repetition: bis/ter/…) is folded into the house-number key (`"8 bis"`), so a parsed

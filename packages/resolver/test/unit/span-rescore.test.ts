@@ -121,7 +121,7 @@ const PLACES: FixturePlace[] = [
 		score: 9,
 		exactMatch: true,
 	},
-	// #1546: the non-Latin-primary namesake, modeled on the live shipped board. Moscow RU (pop 12.7M, primary "Москва") is admitted to a "Moscow" query only through its alias surface — the backend stamps exactMatch via the "Moscow" names row — and it ranks first (population-first). The old span-rescore filter re-checked the primary name folded to [a-z0-9 ], and norm("Москва") is "". So the RU entry was dropped and Moscow, Idaho won by default among the Latin-named bearers.
+	// #1546: the non-Latin-primary namesake, modeled on the live shipped board. Moscow RU (pop 12.7M, primary "Москва") is admitted to a "Moscow" query only through its alias surface (the backend stamps exactMatch via the "Moscow" names row), and it ranks first (population-first). The old span-rescore filter re-checked the primary name folded to [a-z0-9 ], and norm("Москва") is "". So the RU entry was dropped and Moscow, Idaho won by default among the Latin-named bearers.
 	{
 		id: 30,
 		name: "Москва",

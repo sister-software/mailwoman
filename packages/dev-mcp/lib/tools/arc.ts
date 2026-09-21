@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `mwdev_arc` tool definition. The protocol lives in `../arc.ts`; this file is the interface, and the description
- *   is the required half — it is what stops the next agent reaching for a bare two-arm compare.
+ *   is the required half. It is what stops the next agent reaching for a bare two-arm compare.
  */
 
 import { z } from "zod"

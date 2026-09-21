@@ -421,9 +421,9 @@ export interface JurisdictionRecord {
 	/**
 	 * The propositions the pass expected this jurisdiction's sources to carry, in its own prose.
 	 *
-	 * It is not the `AssertedProposition` vocabulary — it uses wider words such as
-	 * `admin` and `global geometry` — and is carried verbatim rather than mapped,
-	 * because mapping it would invent precision the pass did not have.
+	 * It is not the `AssertedProposition` vocabulary.
+	 * It uses wider words such as `admin` and `global geometry` — and is carried verbatim
+	 * rather than mapped, because mapping it would invent precision the pass did not have.
 	 */
 	assertionPlan: string
 	note: string

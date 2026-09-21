@@ -13,7 +13,7 @@
  *
  *   Two absences are distinguished everywhere, because they are different answers. A lookup for a
  *   concept the artifact does not carry returns `undefined` — the model cannot speak to it. A lookup
- *   for a concept it does carry, which nothing was derived about, returns an empty list — the model
+ *   for a concept it does carry, which nothing was derived about, returns an empty list. The model
  *   carries it and states nothing. A reader that collapsed the two would report "no ancestors" for a
  *   concept it had never heard of.
  */
@@ -77,7 +77,8 @@ function externalKey(vocabulary: ExternalVocabulary, externalID: string): string
  * Index a compiled artifact for reading.
  *
  * Every table is walked once here so that no table is ever walked again.
- * Nothing is copied — the records handed back are the artifact's own.
+ * Nothing is copied.
+ * The records handed back are the artifact's own.
  */
 export function createGeographicModelIndex(model: CompiledGeographicModel): GeographicModelIndex {
 	const concepts = new Map<string, ConceptRecord>(model.concepts.map((concept) => [String(concept.id), concept]))

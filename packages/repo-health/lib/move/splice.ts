@@ -6,7 +6,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  * @author Teffen Ellis, et al.
  * @file Replacing strings at known offsets, shared by the planner and the writer.
  *
- *   The planner needs the result in memory — a resolver proving a replacement has to read the manifest as the plan
+ *   The planner needs the result in memory. A resolver proving a replacement has to read the manifest as the plan
  *   will leave it rather than as it stands — and the writer needs it on disk. One function serves both, because two
  *   implementations of "splice these strings" would agree on every case anyone tested and differ on the one nobody
  *   did.

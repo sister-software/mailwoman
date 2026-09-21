@@ -9,7 +9,7 @@
  *   breaking int8 quant for Safari WebGPU (the value_info/opset incident — see
  *   project-v4.1.0-release + the pinned block in corpus-python/launch/app.py, which is the source
  *   OF truth this script reads). Run before any local quantize. CI-able (exit 1 on mismatch). A
- *   bumped dep here is never a free upgrade — it must re-prove the Safari int8 graph (opset <= 17,
+ *   bumped dep here is never a free upgrade. It must re-prove the Safari int8 graph (opset <= 17,
  *   value_info strip) end to end.
  *
  *   Plain-node tool-script (no env banner, no zx). Run: node packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts

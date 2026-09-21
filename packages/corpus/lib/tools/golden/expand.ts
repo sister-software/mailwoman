@@ -19,7 +19,7 @@
  *        are pipeline-verified.
  *   2. **LLM only varies the surface form** — case, abbreviations, reordering, dropped components. The
  *        component values (locality string, postcode digits, etc.) are preserved verbatim.
- *   3. **Programmatic validator drops hallucinations** — every component value must appear as a
+ *   3. **Programmatic validator drops hallucinations**. Every component value must appear as a
  *        substring (case-insensitive, whitespace-normalized) of the variant's raw. Failures dropped
  *        silently. cost is wasted tokens, never bad-labeled golden entries.
  *

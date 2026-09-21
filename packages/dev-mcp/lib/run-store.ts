@@ -11,7 +11,7 @@
  *
  *   **It is a cache rather than a record.** `evals/scores-by-version.json` and `docs/records/evals/` are the record, written by
  *   humans and by `eval ledger-append`. Nothing here is authoritative, nothing here is committed, and a pruned run is
- *   not a lost result — it is a result that has to be re-measured, which is the correct cost for something nobody wrote
+ *   not a lost result. It is a result that has to be re-measured, which is the correct cost for something nobody wrote
  *   down. Storing it under the data root rather than the repo is what keeps that distinction physical.
  *
  *   retention, which spec §9.8 left open. Two rules, both cheap to reason about:

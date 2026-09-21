@@ -149,7 +149,7 @@ export async function applyAdminCoherence(roots: readonly AddressNode[], backend
  * Re-pick a (region, locality) pair so the locality descends from the region.
  *
  * `alternatives` on the node are the `ResolvedPlace` runner-ups `decorateNode` attached
- * (typed `unknown[]` in the decoder, which can't import resolver types — the cast is sound).
+ * (typed `unknown[]` in the decoder, which can't import resolver types. The cast is sound).
  * Picks the first same-named locality (already score-ordered) that descends from
  * a same-named region candidate, then swaps both nodes.
  *
@@ -427,10 +427,11 @@ async function reconcileExplicitCountry(
  * this pass owns the mirror case, where the region qualifier is a foreign subdivision
  * the default-country hard filter (`spr.country = ?`) discarded.
  *
- * "Montreal QC" under a US locale: the walk applies `defaultCountry="US"` as a hard candidate
- * filter to every admin lookup, so the region "QC" (a Canadian subdivision) resolves
- * to nothing and is dropped — the one signal that would redirect the country to CA —
- * and the locality "Montreal" is force-matched to the populous US namesake (Montreal, WI).
+ * "Montreal QC" under a US locale: the walk applies `defaultCountry="US"` as a hard candidate filter to
+ * every admin lookup, so the region "QC" (a Canadian subdivision) resolves to nothing and is dropped.
+ * The one signal that would redirect the country to CA — and the locality "Montreal"
+ * is force-matched to the populous US namesake (Montreal, WI).
+ *
  * The greedy order threw away the evidence that could correct it.
  *
  * The fix expands the region token to its country via codex's ISO-3166-2 subdivision table
@@ -500,9 +501,10 @@ export async function applyRegionCountryCoherence(
  * (null for anything that isn't a US state or CA province → no-op); the region's full name
  * then resolves it under that country (expanding the abbreviation the gazetteer FTS index lacks),
  * and the locality is re-scoped to the same country.
- * Leaves both nodes untouched unless every check holds — the subdivision names a
- * different country than the default, the region resolves under it, and a same-named
- * locality exists there — so the domestic path stays byte-identical.
+ * Leaves both nodes untouched unless every check holds.
+ *
+ * The subdivision names a different country than the default, the region resolves under it,
+ * and a same-named locality exists there — so the domestic path stays byte-identical.
  */
 async function reconcileRegionCountry(
 	regionNode: AddressNode,

@@ -27,12 +27,12 @@
  *
  *   The last of those is the resolver-pin pin (#42, added 2026-08-05). The check could swap the model under test but
  *   not the resolver configuration, so a resolver pin proposed for default-on had no way through the D-rule's
- *   standard instrument — it could only be argued from bespoke probes. Run the check unpinned and pinned and diff the
+ *   standard instrument. It could only be argued from bespoke probes. Run the check unpinned and pinned and diff the
  *   verdicts. the layers stamp which configuration they graded, and the regression layer reports how many cases the
  *   pin actually fired on (an unchanged verdict from a mechanism that never ran proves nothing).
  *
  *   The retired `scripts/eval/gauntlet/run.ts` ran each layer in its own child process. the layers are
- *   in-process modules now — a layer that throws is caught, printed, and counted as a failed layer, preserving the
+ *   in-process modules now. A layer that throws is caught, printed, and counted as a failed layer, preserving the
  *   old isolated-failure semantics without the spawn.
  *
  *   Wire into the release flow as a `before:release` check (releasing.md): a non-zero exit blocks the ship.

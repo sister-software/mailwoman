@@ -11,7 +11,7 @@
  *
  *   It is the essential interface surface for the ProductionScorer (#718): the scorer asserts which
  *   channels are fed, this function decides how they are fed. Keeping it a pure function means both
- *   the classifier and any harness build features identically — there is exactly one choreography.
+ *   the classifier and any harness build features identically. There is exactly one choreography.
  *
  *   No `fs`, no Node builtins: the caller hands in the already-parsed lookup/lexicon (mirrors
  *   `anchor-inference.ts` / `gazetteer-inference.ts`, which are themselves pure for the same

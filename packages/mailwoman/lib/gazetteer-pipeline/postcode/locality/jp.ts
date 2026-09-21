@@ -5,7 +5,7 @@
  *
  *   Build a CJK postcode → WOF locality table by authoritative name-match (#292, Direction E).
  *
- *   WOF admin geometry in CJK (JP/KR/TW) is point-based at the municipality/locality level — there
+ *   WOF admin geometry in CJK (JP/KR/TW) is point-based at the municipality/locality level. There
  *   are no municipality polygons — so the European point-in-polygon coordinate-first build
  *   (build-postcode-locality.ts) is structurally inapplicable. This is the CJK substitute:
  *

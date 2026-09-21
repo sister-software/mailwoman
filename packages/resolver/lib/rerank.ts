@@ -23,7 +23,7 @@
  *
  *   So the rule is one bit of evidence rather than a score: **drop hypotheses whose resolution is
  *   implausible. otherwise keep the model's own ranking.** The parse scores already share a partition
- *   function and are comparable within an input — the reranker's job is not to re-score them, it is to
+ *   function and are comparable within an input. The reranker's job is not to re-score them, it is to
  *   veto the ones the world says are wrong.
  *
  *   Adding a second signal here requires the same bar the first one cleared: a measured win on the

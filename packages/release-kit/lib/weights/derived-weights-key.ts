@@ -40,7 +40,7 @@ import { Globerator } from "spliterator/node/fs"
  * With the compiled bytes in the key, a stale compile keys separately from a fresh one,
  * so its output can never be served to a checkout whose compiled tree differs.
  *
- * (Transitive compiled imports are deliberately not hashed — that would invalidate
+ * (Transitive compiled imports are deliberately not hashed, which would invalidate
  * the store on every unrelated commit and delete its reason to exist. The direct
  * builder modules are where both real incidents lived.)
  *

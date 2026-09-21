@@ -314,9 +314,10 @@ export function GeocoderControls({
 	/*
 	 * overscroll is A drag rather than a bounce.
 	 *
-	 * Pull down on a sheet that is already scrolled to its top and the sheet itself
-	 * should come down — that is what the reference sheets do, and it is what makes
-	 * a drawer dismissable without first hunting for the pill.
+	 * Pull down on a sheet that is already scrolled to its top and the sheet itself should come down.
+	 * That is what the reference sheets do, and it is what makes a drawer dismissable
+	 * without first hunting for the pill.
+	 *
 	 * A rubber band in that position says the gesture was heard and refused.
 	 *
 	 * The pull is only armed here. it becomes a drag after 8px of downward travel,
@@ -436,9 +437,10 @@ export function GeocoderControls({
 	 * detent through that gesture is answering a question nobody asked twice.
 	 *
 	 * It shrinks rather than closes: the result is still there, one pull away.
-	 * Only a gesture counts — a programmatic camera move carries no `originalEvent`,
-	 * and the fly-to that answers a query is exactly such a move, so reacting to
-	 * those would put a result away at the moment it arrived.
+	 * Only a gesture counts.
+	 *
+	 * A programmatic camera move carries no `originalEvent`, and the fly-to that answers a query is
+	 * exactly such a move, so reacting to those would put a result away at the moment it arrived.
 	 */
 	useEffect(() => {
 		if (!map) return
@@ -555,9 +557,8 @@ export function GeocoderControls({
 				{/*
 				 * the header stays.
 				 *
-				 * The grab bar and the search field are one sticky block, so scrolling a
-				 * long result never takes the field with it — the thing a visitor reaches
-				 * for next is the thing that scrolled away.
+				 * The grab bar and the search field are one sticky block, so scrolling a long result
+				 * never takes the field with it, which is the thing a visitor reaches for next.
 				 * It is opaque because the panel's own material is glass, and text read through a pinned header.
 				 */}
 				<div className="mw-map-panel__header" onPointerDown={onHeaderPointerDown}>

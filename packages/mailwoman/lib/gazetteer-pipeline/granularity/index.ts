@@ -14,7 +14,7 @@
  *   at" needs an ordering the projection map does not carry.
  *
  *   Two different presence rules, deliberately. Rungs at or above `locality` are measured by node
- *   presence — a country either has region rows or it does not. Rungs below it are measured by
+ *   presence. A country either has region rows or it does not. Rungs below it are measured by
  *   parent-coverage share: the fraction of the country's locality-class nodes carrying at least one
  *   child projecting onto that rung. That statistic is not invented here — the placetype-census
  *   probe measured GB's dependent-locality share at 33.2% of 16,987 locality-class surfaces and

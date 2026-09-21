@@ -5,7 +5,7 @@
  *
  *   The placetype-pair prior's two registered decode-order test classes: (1) a window
  *   the prior biases stays a united BIO span through the `enforceWordConsistency` heal, and (2) a word
- *   the encoder is confident about (a large contrary logit) is not overridden by the prior — the
+ *   the encoder is confident about (a large contrary logit) is not overridden by the prior. The
  *   encoder's veto stays intact at a realistic magnitude. Both exercise `#decode` end-to-end via
  *   `traceParse` + a canned `NeuralRunner` — the same harness `trace-parse.test.ts` uses.
  *

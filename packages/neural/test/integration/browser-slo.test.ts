@@ -98,8 +98,9 @@ const SQLITE_RUNTIME_RAW_BYTES_BUDGET = 8_000_000
  * Raw bytes of the bundled browser runtime JS (onnxruntime-web + the neural
  * runner + the SentencePiece core, minified).
  *
- * The demo's own app JS is larger — it carries React and MapLibre on top of this —
- * so read the budget as a floor moving under the client rather than as the page weight.
+ * The demo's own app JS is larger.
+ * It carries React and MapLibre on top of this — so read the budget as a floor
+ * moving under the client rather than as the page weight.
  */
 const RUNTIME_JS_RAW_BYTES_BUDGET = 4_000_000
 

@@ -29,7 +29,7 @@
  *
  *   A place whose `wof:hierarchy` genuinely stops short is not a candidate and needs no repair: the
  *   source is the authority on what a place should have. American Samoa's localities, for instance,
- *   have `{country_id, locality_id}` and no region in WOF itself — the artifact matching that is
+ *   have `{country_id, locality_id}` and no region in WOF itself. The artifact matching that is
  *   correct rather than truncated.
  *
  *   The authoritative hierarchy is in the source geojson: `wof:hierarchy` is an array of branches,

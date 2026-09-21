@@ -21,7 +21,7 @@
  *   - `regime`    — the same pass under an impossible default (`ZZ`), which forces step 1 to fail and reports what the
  *       alternative countries alone decide. A row whose regime probe returns the panel country was coherent under its
  *       own default and would have taken the cheap exit in the domestic leg. everything else fell through and had every
- *       candidate country actually tried. Without that column a zero false-positive count means nothing — it reads the
+ *       candidate country actually tried. Without that column a zero false-positive count means nothing. It reads the
  *       same whether the mechanism refused to cross a border or never ran.
  *
  *   The regime probe over-counts fall-through: a pair coherent in two countries returns null under `ZZ` (the tie rule)
@@ -36,7 +36,7 @@
  *     backend  fts | candidate
  *
  *   Emits a markdown row per leg on stdout plus the per-case false-positive list, which is the number the D-rule cares
- *   about — every FP is printed with its pair. Therefore, a finding is never a bare count.
+ *   about. Every FP is printed with its pair. Therefore, a finding is never a bare count.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"

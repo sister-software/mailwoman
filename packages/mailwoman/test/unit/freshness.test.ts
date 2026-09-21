@@ -78,8 +78,9 @@ describe("readFreshness — a stamped artifact", () => {
 		expect(entry?.manifest).toBe(ManifestState.Present)
 		expect(entry?.built).toBe("2026-08-17T19:21:17.000Z")
 		expect(entry?.version).toBe("candidate@2026-08-17")
-		// The candidate's source is a chain — it names its ancestor admin build — and the vintage
-		// carries the database counts that make one candidate build different from another.
+		// The candidate's source is a chain.
+		// It names its ancestor admin build — and the vintage carries the database counts
+		// that make one candidate build different from another.
 		// Both, or neither identifies it.
 		expect(entry?.sources).toEqual(["admin-global-priority@2026-08-17", "postcode-databases=24"])
 		expect(entry?.reason).toBeUndefined()

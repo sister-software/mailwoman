@@ -6,7 +6,7 @@
  *   The six outcome comparators, one axis at a time.
  *
  *   Two cases carry the design and the rest are coverage. `resolution_identity` must report `diverges` for two
- *   different places 90 metres apart — an identity law that could see a coordinate would call that pair
+ *   different places 90 metres apart. An identity law that could see a coordinate would call that pair
  *   equivalent, which is the whole failure the closed comparator set exists to prevent. And every comparator
  *   whose axis is absent on both sides must report `undecidable`, never `equivalent`: two runs that resolved
  *   nothing agree about nothing, and a suite that scored that as a pass would report the same total as one

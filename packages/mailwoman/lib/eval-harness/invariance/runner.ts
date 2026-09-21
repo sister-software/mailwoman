@@ -29,10 +29,10 @@
  *   baseline held invariant, the candidate didn't) counts toward the lost / `--max-degraded` thresholds.
  *   Two more regression-mode classes, both reported and non-blocking:
  *
- *   - gained: the candidate holds a pair the baseline violated — a capability that went 0/207 → 205/207
+ *   - gained: the candidate holds a pair the baseline violated. A capability that went 0/207 → 205/207
  *     is a gain rather than a violation (it gets its own report section, never the check).
  *   - gained-capability residual: a violation on a row whose baseline original parse carried no critical
- *     component (street/house_number/postcode) while the candidate's does — the baseline never had the
+ *     component (street/house_number/postcode) while the candidate's does. The baseline never had the
  *     row's core capability, so the pair is "gained but not register-flat" rather than a lost capability.
  */
 

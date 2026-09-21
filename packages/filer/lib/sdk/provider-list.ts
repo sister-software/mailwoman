@@ -19,7 +19,7 @@
  *   there, incidentally) but its `holdingCompany` silently overwrites the previous value, only warning
  *   to the console when the two strings differ. That fold happens at parse time, before anything
  *   downstream ever sees the discarded string. {@linkcode parseProviderList} does none of that: it is a
- *   flat streaming pass with no `Map` keyed by `provider_id`, no dedup, and no last-wins — every row in
+ *   flat streaming pass with no `Map` keyed by `provider_id`, no dedup, and no last-wins. Every row in
  *   the file is yielded exactly once, in file order. A `provider_id` appearing on N rows yields N
  *   {@linkcode ProviderListRow}s, full stop. The crosswalk graph (`filer.db`) is where that cardinality gets
  *   to mean something. collapsing it here would be unrecoverable downstream.

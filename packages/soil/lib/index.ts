@@ -264,9 +264,9 @@ export class SoilCapabilityLookup implements Disposable {
 		const coverage = this.#readCoverage(indexCell)
 
 		// coverage qualifies the reading, and without it there is nothing to report.
-		// Unlike a polygon hit — which is a determination at a location and needs no coverage
-		// row to be true — every answer this layer gives is a per-cell summary, so a summary row
-		// without a coverage row would state a determination outside the authority's footprint.
+		// Unlike a polygon hit — which is a determination at a location and needs no coverage row to be true.
+		// Every answer this layer gives is a per-cell summary, so a summary row without a
+		// coverage row would state a determination outside the authority's footprint.
 		if (!coverage) {
 			return {
 				kind: SoilReadingKind.Unknown,
@@ -347,8 +347,9 @@ export class SoilCapabilityLookup implements Disposable {
 	 * A rectangle rather than the outline, and that is honest about what it is:
 	 * the answer names which published survey the reading came from, and two neighbouring
 	 * counties' rectangles overlap at their corners.
-	 * The reading itself does not depend on it — the cell row is the answer —
-	 * so a corner ambiguity costs a label rather than a determination.
+	 * The reading itself does not depend on it.
+	 *
+	 * The cell row is the answer — so a corner ambiguity costs a label rather than a determination.
 	 *
 	 * A linear scan, which the pilot'S 99 survey areas make free and A national build would not.
 	 * It returns on the first containing rectangle, so the pilot costs a few dozen comparisons per geocode.

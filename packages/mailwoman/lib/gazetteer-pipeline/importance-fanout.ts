@@ -155,7 +155,8 @@ export function emptyFanoutStats(): FanoutStats {
 /**
  * Fold one group's resolution into `stats`.
  *
- * Singletons are not counted — they are not fan-out.
+ * Singletons are not counted.
+ * They are not fan-out.
  */
 export function recordFanout(
 	stats: FanoutStats,

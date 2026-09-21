@@ -30,7 +30,7 @@
  *     ever reached — a criterion 2 built only on that block stays green with the coverage branch deleted
  *     outright. "criterion 2 (extended)" below adds a geoid that has rows but whose `layer_coverage` row is
  *     deliberately deleted post-build (a genuine coverage-check exercise), plus an `h3Cells`-form query
- *     against a cell that was never surveyed at all — that branch is the only path for an `h3Cells`
+ *     against a cell that was never surveyed at all. That branch is the only path for an `h3Cells`
  *     query, which has no "zero rows" shortcut available to it.
  *   - **The SQL `case` and the JS `speedBucketForDownloadSpeed` mirror must not drift.** "speed bucket
  *     boundaries" below is a table test over the exact boundary values plus a dedicated SQL-vs-JS

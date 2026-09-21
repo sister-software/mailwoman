@@ -1114,8 +1114,8 @@ describe("seat preference through findPlace — where the term can and cannot re
 		expect(hits.map((h) => h.placetype).toSorted()).toEqual(["localadmin", "locality"])
 		// …and the seat tiebreak orders the town over its district even though the district
 		// is fetched first (its region id sorts lower in the clustered key).
-		// This ordering is the term's only corridor to an end-to-end answer — the resolver's
-		// downstream sorts are stable on equal keys (toponym-prior.ts house rule 3) —
+		// This ordering is the term's only corridor to an end-to-end answer.
+		// The resolver's downstream sorts are stable on equal keys (toponym-prior.ts house rule 3) —
 		// so it is the mechanism's reach rather than a cosmetic preference.
 		expect(hits[0]!.placetype).toBe("locality")
 		expect(hits[0]!.id).toBe(810)

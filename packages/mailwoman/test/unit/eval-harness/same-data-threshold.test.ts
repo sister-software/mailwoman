@@ -5,7 +5,7 @@
  *
  *   The abstention-threshold curve (#2264) re-grades frozen results rather than re-running a resolver, so the
  *   two properties worth pinning are that it converts a withheld selection into an abstention rather than a
- *   wrong answer, and that it leaves an errored row alone — a harness failure is not a selection, and folding
+ *   wrong answer, and that it leaves an errored row alone. A harness failure is not a selection, and folding
  *   one into abstention is the confusion the benchmark's strata exist to measure.
  *
  *   The curve at threshold 0 must equal the unthresholded metrics exactly. That is what says the sweep and the

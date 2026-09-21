@@ -278,8 +278,10 @@ export interface PurposeFinding extends PurposeEntry {
  *
  * Scoring is term overlap, weighted so a word in the name counts double: a name is chosen
  * to describe the thing, while a sentence also carries the words around it.
- * A single matching term is not enough — one shared word is what every sentence in a
- * domain has in common — so a finding needs two, or one that appears in the name.
+ * A single matching term is not enough.
+ *
+ * One shared word is what every sentence in a domain has in common — so a finding
+ * needs two, or one that appears in the name.
  */
 export function searchPurpose(phrase: string, entries: readonly PurposeEntry[], limit = 10): PurposeFinding[] {
 	const wanted = new Set(terms(phrase))

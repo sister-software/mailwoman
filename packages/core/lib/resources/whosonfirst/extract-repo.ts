@@ -6,7 +6,7 @@
  *   Reading a place out of a cloned Who's On First data repo.
  *
  *   WOF stores each record at a path derived from its own id: the decimal id split into three-character directories,
- *   then `<id>.geojson`. `85977539` lives at `859/775/39/85977539.geojson`. The rule is not written down in the data —
+ *   then `<id>.geojson`. `85977539` lives at `859/775/39/85977539.geojson`. The rule is not written down in the data.
  *   it is layout knowledge every reader has to carry — so it lives here once, next to the {@link WOFFeature} type the
  *   parsed record has.
  */
