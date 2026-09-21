@@ -84,6 +84,23 @@ cards declare, and the filenames no card declares one for are named in the recei
 counted as verified. The Fisher pair (`fisher_artifact.file` + `.sidecar`) is HEAD-probed and never
 fetched — it rides the bucket, the runtime never reads it, npm never ships it.
 
+## Rights audit — what the release publishes about its sources
+
+```bash
+yarn mwops release rights-audit
+```
+
+Reads and changes nothing. It prints the source register's admissions and refusals, each published
+weights package's artifacts, digests, attribution and lineage, and any frozen training manifest, then
+separates what the pass established from what it left open. Read the `Unresolved` section first, and
+read an empty one as "this pass found nothing it could not read" rather than as a clearance finding.
+
+The generated `LICENSE.md` and `PROVENANCE.json` reach a tarball because each workspace's `files`
+array lists them; the audit reports a package whose manifest omits one. `10.0.0` predates both files,
+so no tarball on npm carries one today — measured in
+`docs/engineering/reference/artifact-rights-inventory.mdx`. The next release is the correction, and a
+published tarball is never altered.
+
 ## Admin merges — the one sanctioned bypass
 
 Branch protection requires a green `test` run, and `gh pr merge --admin` bypasses it. Four PRs

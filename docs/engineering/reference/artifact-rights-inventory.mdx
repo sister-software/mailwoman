@@ -419,8 +419,36 @@ prints what it does not cover — reference data downloaded separately, and the 
 recording no attribution is not a package with none.
 
 Verified end to end on this checkout: `npm pack --dry-run` on `neural-weights-en-gb` carries
-`LICENSE.md` at 2.1 kB and `PROVENANCE.json` at 5.6 kB, so the generated records reach a consumer
-rather than stopping at the repository.
+`LICENSE.md` at 2.1 kB and `PROVENANCE.json` at 5.6 kB, so the records the next release publishes
+will reach a consumer rather than stopping at the repository. That is a statement about this
+checkout. What is on npm today is the next section.
+
+## What the tarballs already on npm carry
+
+The generated rights files were written after `10.0.0` was published, so no published weights package
+carries one. Measured 2026-09-21 by unpacking the registry's own tarballs:
+
+| package                                  | `LICENSE.md` | `PROVENANCE.json` |
+| ---------------------------------------- | ------------ | ----------------- |
+| `@mailwoman/neural-weights-en-gb@10.0.0` | absent       | absent            |
+| `@mailwoman/neural-weights-en-us@10.0.0` | absent       | absent            |
+| `@mailwoman/neural-weights-cjk@10.0.0`   | absent       | absent            |
+| `@mailwoman/neural-weights-ja-jp@10.0.0` | absent       | absent            |
+
+`en-gb@10.0.0` ships eleven files: `README.md`, `model-card.json`, `package.json` and eight data
+artifacts. A consumer who installed it holds the model card, which records attribution for `en-us`
+rather than for the artifacts in front of them, and nothing that states the terms or the open
+questions.
+
+`@mailwoman/core@10.0.0` does ship a `THIRD_PARTY_NOTICES.md`, and its text is the one corrected on
+2026-09-21: it attributes the tokenizer, the rule-based classifiers and the solver to Pelias Parser,
+where the classifiers and `ExclusiveCartesianSolver` were removed in v7.0.0 and are in no published
+package, and it links to the MIT license rather than reproducing the notice MIT requires accompany a
+copy.
+
+Both are corrected by the next release rather than retroactively. A published tarball is immutable and
+none of these has been altered. A consumer holding `10.0.0` reads the repository at the tag for the
+record, and the version that carries the files is the one to install for it.
 
 ## What the record leaves open
 
