@@ -19,10 +19,35 @@ The list is split by where each dependency reaches you:
 ### Pelias Parser — MIT
 
 Mailwoman originated as a TypeScript fork of [Pelias Parser](https://github.com/pelias/parser).
-The portion still derived from it — the tokenizer in `@mailwoman/core` (`core/tokenization`) —
-remains under the [MIT license](https://github.com/pelias/parser/blob/master/LICENSE). The
-rule-based classifiers and the `ExclusiveCartesianSolver`, also derived from Pelias, were
-removed in v7.0.0 (the last standalone release is `@mailwoman/classifiers@6.x`).
+The portion still derived from it is three modules in `@mailwoman/core`, which remain under the
+MIT license: `lib/tokenization/Graph.ts` from `tokenization/Graph.js`, `lib/tokenization/Span.ts`
+from `tokenization/Span.js`, and `lib/tokenization/normalizer.ts` from
+`tokenization/normalizer.js`. Each carries the derivation in its file header. The rule-based
+classifiers and the `ExclusiveCartesianSolver`, also derived from Pelias, were removed in v7.0.0
+(the last standalone release is `@mailwoman/classifiers@6.x`).
+
+The MIT license requires that its copyright notice and permission notice accompany copies of the
+software it covers. `@mailwoman/core` ships its own `THIRD_PARTY_NOTICES.md`, which reproduces
+both in full; that is the copy a consumer of the package receives. The same text:
+
+> The MIT License (MIT)
+>
+> Copyright (c) 2019 Pelias Contributors
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+> and associated documentation files (the "Software"), to deal in the Software without
+> restriction, including without limitation the rights to use, copy, modify, merge, publish,
+> distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+> Software is furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all copies or
+> substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+> BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+> NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+> DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## Data bundled in the published packages
 

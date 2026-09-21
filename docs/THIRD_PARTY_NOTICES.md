@@ -20,8 +20,14 @@ The notices below are split by where each dependency reaches you:
 ### Pelias Parser
 
 Mailwoman originated as a TypeScript fork of [Pelias Parser](https://github.com/pelias/parser).
-Portions derived from it (the tokenizer, rule-based classifiers, and the solver) remain under
-the [MIT license](https://github.com/pelias/parser/blob/master/LICENSE).
+Three modules in `@mailwoman/core` derive from it and remain under the
+[MIT license](https://github.com/pelias/parser/blob/master/LICENSE):
+`lib/tokenization/Graph.ts`, `lib/tokenization/Span.ts`, and `lib/tokenization/normalizer.ts`.
+The rule-based classifiers and the `ExclusiveCartesianSolver`, also derived from Pelias, were
+removed in v7.0.0 and are in no published package.
+
+`@mailwoman/core` ships its own `THIRD_PARTY_NOTICES.md` reproducing the MIT copyright notice
+and permission notice in full, which is what the license requires accompany a copy.
 
 ## Data bundled in the published packages
 

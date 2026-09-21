@@ -2,6 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Derived from `tokenization/normalizer.js` in Pelias Parser, MIT, copyright (c) 2019 Pelias
+ *   Contributors. `THIRD_PARTY_NOTICES.md` in this package carries the MIT notice that covers it.
  */
 
 import regenerate from "regenerate"

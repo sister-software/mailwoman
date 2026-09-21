@@ -33,6 +33,7 @@ import { runtimeFlagsCheck } from "#checks/runtime-flags"
 import { stalePathLiteralsCheck } from "#checks/stale-path-literals"
 import { stylesheetCheck } from "#checks/stylesheet-check"
 import { testLayoutCheck } from "#checks/test-layout"
+import { thirdPartyNoticesCheck } from "#checks/third-party-notices"
 import { typecheckTestsCheck } from "#checks/typecheck-tests"
 import { versionSyncCheck } from "#checks/version-sync"
 import { vocabCensusCheck } from "#checks/vocab-census"
@@ -48,6 +49,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	versionSyncCheck,
 	packageLicenseCheck,
 	rightsChainCheck,
+	thirdPartyNoticesCheck,
 	licenseRegisterCheck,
 	localeTablesCheck,
 	localeScopeCheck,
