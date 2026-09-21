@@ -19,12 +19,11 @@
 
 /// <reference types="node" />
 
-import ts from "typescript"
-
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { cliArguments } from "@mailwoman/core/scripting/arguments"
 import { runCLICommand } from "@mailwoman/core/scripting/command"
+import ts from "typescript"
 
 const FINITE =
 	/\b(is|are|was|were|be|been|has|have|had|does|do|did|will|would|can|could|should|must|makes?|leaves?|reads?|names?|holds?|keeps?|gives?|takes?|means?|stays?|comes?|goes?|sits?|carries|carry|returns?|fires?|fails?|needs?|wants?|uses?|writes?|reports?|answers?|drops?|adds?|counts?|costs?|buys?|pays?|prefers?|refuses?|never|only|already|still)\b/i
@@ -205,7 +204,9 @@ function liftTagSentence(body: readonly string[], tags: readonly string[]) {
 	return {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- The same block, re-split after the join above.
 		body: paragraphs.slice(0, -1).join("\n\n").split("\n"),
-		tags: [...tags, `@${name} ${rest ? rest.charAt(0).toLowerCase() + rest.slice(1) : rest}`],
+		// The case stays as the sentence had it. oxfmt capitalises tag descriptions itself, and lowering it here only
+		// gave the two something to disagree about.
+		tags: [...tags, `@${name} ${rest}`],
 	}
 }
 

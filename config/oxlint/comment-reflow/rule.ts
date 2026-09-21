@@ -9,6 +9,7 @@
  */
 
 import type { Comment, CreateRule, ESTree, SourceCode } from "@oxlint/plugins"
+
 import {
 	columns,
 	defaultOptions,
@@ -206,7 +207,7 @@ export const reflowRule: CreateRule = {
 								group.map((item) => item.value),
 								indent,
 								options,
-								eol,
+								eol
 							)
 						} else {
 							const raw = text.slice(...range)
@@ -237,7 +238,7 @@ export const reflowRule: CreateRule = {
 								indent,
 								options,
 								eol,
-								jsxBlock ? width(text.slice(start, lineEnd(text, comment.range[1])).replace(/\r$/, "")) : undefined,
+								jsxBlock ? width(text.slice(start, lineEnd(text, comment.range[1])).replace(/\r$/, "")) : undefined
 							)
 						}
 					} else {
