@@ -93,6 +93,20 @@ describe("the committed address-source register", () => {
 		}
 	})
 
+	it("gives every source its own license decision, so one reading cannot grant many", () => {
+		// The register was built with one shared `unchecked-national-terms` id over 247 of the 389 sources. Electing
+		// terms against that id would have granted all 247 on one reading of one publisher's page. Each source now
+		// points at a decision of its own, which is what makes an election a statement about one publication.
+		const bySource = new Map<string, string[]>()
+
+		for (const source of register.sources) {
+			bySource.set(source.license, [...(bySource.get(source.license) ?? []), source.sourceID])
+		}
+
+		expect(bySource.size).toBe(register.sources.length)
+		expect([...bySource.values()].filter((sources) => sources.length > 1)).toEqual([])
+	})
+
 	it("passes its own audit", () => {
 		expect(auditAddressSourceRegister(register)).toEqual([])
 	})
@@ -569,6 +583,113 @@ describe("permission by operation", () => {
 			expect(auditAddressSourceRegister({ ...registerWith(ingestOnly), sources: [unrecorded] })).toContain(
 				'source "zz-health-1" is assessed for personal data and names no record of the analysis'
 			)
+		})
+	})
+
+	/**
+	 * The grant shapes counsel is reading, written as the per-operation record would hold them.
+	 *
+	 * These are fixtures rather than elections. No decision is recorded for any source, and nothing here elects one. What
+	 * they establish is that the model can express each shape a real national grant takes, and that the shape decides
+	 * which acts it admits rather than a single permissive or restrictive label doing so.
+	 */
+	describe("real grant shapes", () => {
+		const everyIngestAct = {
+			[SourceOperation.Fetch]: permits("the grant permits copying the published file"),
+			[SourceOperation.Extract]: permits("the grant permits copying the published file"),
+			[SourceOperation.Transform]: permits("the grant permits adaptation"),
+			[SourceOperation.Train]: permits("the grant permits adaptation"),
+		}
+
+		it("admits every act under an attribution-only grant that names commercial reuse", () => {
+			// Licence Ouverte 2.0's shape: reuse for commercial or non-commercial purposes, worldwide, with one
+			// condition, and no reciprocal licensing requirement for a derivative work.
+			const attributionOnly: ElectedLicense = {
+				licenseID: "terms-under-review",
+				state: LicenseReviewState.Elected,
+				electedTerms: "Licence Ouverte / Open Licence 2.0",
+				retrievedCopy: "data/licenses/licence-ouverte-2.0.md",
+				electedBecause: "the grant the publisher's dataset page names",
+				operations: {
+					...everyIngestAct,
+					[SourceOperation.RedistributeData]: permits("the grant permits diffuser, redistribuer et publier"),
+					[SourceOperation.RedistributeModel]: permits("the grant permits redistribution of an adapted work"),
+					[SourceOperation.CommercialSublicense]: permits("the grant names exploiter à titre commercial"),
+				},
+			}
+
+			expect(ingestEligibilityProblems(source, registerWith(attributionOnly))).toEqual([])
+			expect(ingestEligibilityProblems(source, registerWith(attributionOnly), MODEL_RELEASE_OPERATIONS)).toEqual([])
+		})
+
+		it("admits a grant whose permission carries a condition, with the condition recorded beside it", () => {
+			// A modification-notice grant permits the act and requires a statement that the work was changed. The
+			// condition lives in `because` rather than becoming a refusal, because the act is permitted.
+			const modificationNotice: ElectedLicense = {
+				licenseID: "terms-under-review",
+				state: LicenseReviewState.Elected,
+				electedTerms: "Norwegian Licence for Open Government Data 2.0",
+				retrievedCopy: "data/licenses/nlod-2.0.md",
+				electedBecause: "the grant the publisher names on the dataset page",
+				operations: {
+					...everyIngestAct,
+					[SourceOperation.RedistributeModel]: permits(
+						"the grant permits redistribution and requires a statement that the data was modified"
+					),
+				},
+			}
+
+			expect(ingestEligibilityProblems(source, registerWith(modificationNotice))).toEqual([])
+
+			expect(permissionFor(modificationNotice, SourceOperation.RedistributeModel).because).toContain(
+				"requires a statement that the data was modified"
+			)
+		})
+
+		it("refuses model redistribution under a share-alike grant while admitting ingest", () => {
+			// The ODbL half of a dual-licensed dataset. Ingest is permitted and publishing a model trained on it is the
+			// act the reciprocal condition reaches, so the two answers differ under one grant.
+			const shareAlike: ElectedLicense = {
+				licenseID: "terms-under-review",
+				state: LicenseReviewState.Elected,
+				electedTerms: "ODbL 1.0",
+				retrievedCopy: "data/licenses/odbl-1.0.md",
+				electedBecause: "the reciprocal half of the publisher's dual grant",
+				operations: {
+					...everyIngestAct,
+					[SourceOperation.RedistributeModel]: {
+						permission: OperationPermission.Refused,
+						because: "§4.4 requires a derived database to be offered under these same terms",
+					},
+				},
+			}
+
+			expect(ingestEligibilityProblems(source, registerWith(shareAlike))).toEqual([])
+
+			expect(ingestEligibilityProblems(source, registerWith(shareAlike), MODEL_RELEASE_OPERATIONS)).toEqual([
+				"the elected terms read refused for redistribute-model: §4.4 requires a derived database to be offered under these same terms",
+				"the elected terms read unreviewed for commercial-sublicense: the elected terms do not state whether commercial-sublicense is permitted",
+			])
+		})
+
+		it("records which half of a dual grant was elected, so the other half's conditions are not inherited", () => {
+			// A dual-licensed publication offers a choice. Electing one half is a decision with a reason, and the
+			// decision's own fields carry which half and why rather than a reader inferring it from the operations.
+			const elected: ElectedLicense = {
+				licenseID: "terms-under-review",
+				state: LicenseReviewState.Elected,
+				electedTerms: "Licence Ouverte / Open Licence 2.0",
+				retrievedCopy: "data/licenses/licence-ouverte-2.0.md",
+				electedBecause: "the attribution-only half of the publisher's Licence Ouverte or ODbL choice",
+				operations: everyIngestAct,
+			}
+
+			expect(electedLicenseLabel(elected)).toBe("Licence Ouverte / Open Licence 2.0")
+			expect(elected.electedBecause).toContain("attribution-only half")
+
+			// Electing the permissive half says nothing about publishing a model, which nobody read these terms
+			// against. It reads unreviewed rather than inheriting either half's answer.
+			expect(permissionFor(elected, SourceOperation.RedistributeModel).permission).toBe(OperationPermission.Unreviewed)
 		})
 	})
 
