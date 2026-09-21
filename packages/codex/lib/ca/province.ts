@@ -78,8 +78,10 @@ export function isCanadianProvinceCode(input: unknown): input is CanadianProvinc
  *
  * Built diacritic-insensitive so both co-official names map regardless of accents:
  * `Québec`, `Quebec`, and an unaccented `Nouvelle-Ecosse` all resolve.
- * The two-name design is the Canadian wrinkle — unlike the German lookup's English exonym,
- * the French form here is a name a real address may legitimately use.
+ * The two-name design is the Canadian wrinkle.
+ *
+ * Unlike the German lookup's English exonym, the French form here is a name a
+ * real address may legitimately use.
  */
 export const CA_PROVINCE_NAME_TO_CODE: ReadonlyMap<string, CanadianProvinceCode> = (() => {
 	const out = new Map<string, CanadianProvinceCode>()
@@ -95,8 +97,9 @@ export const CA_PROVINCE_NAME_TO_CODE: ReadonlyMap<string, CanadianProvinceCode>
 })()
 
 /**
- * Resolve a Canadian province/territory surface form (ISO code, English name,
- * or French name, accents optional) to its ISO code. null if unknown.
+ * Resolve a Canadian province/territory surface form
+ * (ISO code, English name, or French name, accents optional) to its ISO code.
+ * Null if unknown.
  */
 export function lookupCanadianProvince(input: string | null | undefined): CanadianProvinceCode | null {
 	if (!input || typeof input !== "string") return null

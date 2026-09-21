@@ -44,7 +44,8 @@ describe("CA urban LDU", () => {
 	})
 
 	it("does not collide with the systems already in the tier", () => {
-		// A GB unit and an NL PC6 keep matching. a US ZIP, a DE PLZ and a JP code stay out.
+		// A GB unit and an NL PC6 keep matching.
+		// A US ZIP, a DE PLZ and a JP code stay out.
 		expect(shapeAccepts("N7 0BT")).toBe(true)
 		expect(shapeAccepts("1012 LG")).toBe(true)
 

@@ -60,8 +60,9 @@ export function wordNormLower(s: string): string {
  * combining marks stripped — `"Côte"` → `"cote"`, `"Tōkyō"` → `"tokyo"`.
  *
  * The shared core of the per-country token matchers.
- * Unlike {@link foldName} it does not touch punctuation or whitespace — each matcher layers
- * its own character filtering (letters-only, hyphen-keeping, suffix-stripping) on top.
+ * Unlike {@link foldName} it does not touch punctuation or whitespace.
+ *
+ * Each matcher layers its own character filtering (letters-only, hyphen-keeping, suffix-stripping) on top.
  */
 export function foldToken(s: string): string {
 	return s

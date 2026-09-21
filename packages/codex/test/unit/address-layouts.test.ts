@@ -58,7 +58,8 @@ const FIELD: Readonly<Record<string, string>> = {
 /**
  * Countries whose layout departs from the dataset skeleton, and why.
  *
- * An entry here is a decision. a departure without one is a transcription error.
+ * An entry here is a decision.
+ * A departure without one is a transcription error.
  */
 const ACCEPTED_DEPARTURES: Readonly<Record<string, string>> = {
 	// The dataset has no %D for France.
@@ -69,11 +70,12 @@ const ACCEPTED_DEPARTURES: Readonly<Record<string, string>> = {
 	// The dataset has no %D for Great Britain.
 	// Royal Mail's dependent locality is a real line above the post town.
 	GB: "the dependent-locality line above the post town",
-	// Japan's %A is one field below the prefecture. this table splits it into the tags
-	// the CJK model emits, and joins the prefecture to it, because on one line the whole
-	// admin run is unseparated and only the postal code takes a space.
+	// Japan's %A is one field below the prefecture.
+	// This table splits it into the tags the CJK model emits, and joins the prefecture to it,
+	// because on one line the whole admin run is unseparated and only the postal code takes a space.
 	JP: "the sub-prefecture run is split into its own tags, and the prefecture joins it rather than taking a line",
-	// China's %A is the street line only. the admin run above it is already %S%C%D in the dataset.
+	// China's %A is the street line only.
+	// The admin run above it is already %S%C%D in the dataset.
 	CN: "the street line is split into street and house number",
 	// Hong Kong's %S%n%C%n%A%n%O%n%N is the Chinese field order.
 	// This table holds one layout per country and the rest of the codex already describes HK as
@@ -113,8 +115,7 @@ function skeletonOfFormat(fmt: string): string[][] {
 	return (
 		fmt
 			.split("%n")
-			// An unmodeled placeholder is kept in its `%X` spelling rather than dropped: a skeleton that silently loses a
-			// field compares equal to one that never had it.
+			// An unmodeled placeholder is kept in its `%X` spelling rather than dropped: a skeleton that silently loses a field compares equal to one that never had it.
 			.map((line) => [...line.matchAll(/%([A-Z])/g)].map(([, code]) => FIELD[code!] ?? `%${code}`))
 			.filter((line) => line.length)
 	)
@@ -308,7 +309,8 @@ describe("the admin run keeps its tier order in every layout", () => {
 	 * and the one relation it has to get right is which side of the locality it lands on:
 	 * the sub-locality sits between the street and the locality in either direction.
 	 * Four generated skeletons (CR, KI, LV, RO) print the region between the street and the locality.
-	 * that order is transcribed from the dataset rather than authored, and this check does not judge it.
+	 *
+	 * That order is transcribed from the dataset rather than authored, and this check does not judge it.
 	 */
 	const TABLES = {
 		hand: ADDRESS_LAYOUTS,

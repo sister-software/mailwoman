@@ -25,8 +25,8 @@ import type { ComponentTag } from "#component"
 /**
  * The address-identifying components, in canonical key order.
  *
- * Venue / attention are intentionally excluded — those carry organization identity,
- * which the record layer keys separately.
+ * Venue / attention are intentionally excluded.
+ * Those carry organization identity, which the record layer keys separately.
  */
 const KEY_FIELD_ORDER = [
 	"po_box",
@@ -86,6 +86,7 @@ export interface FoldForKeyOptions {
  * The shared fold behind every match key: nfkd-decompose and strip combining marks (so `é` → `e`),
  * lowercase, delete intra-token punctuation, expand or flatten connective punctuation per
  * {@linkcode FoldForKeyOptions}, space every remaining non-alphanumeric, and collapse whitespace.
+ *
  * Deterministic — the same input and options always yield the same output.
  */
 export function foldForKey(input: string, options: FoldForKeyOptions): string {
@@ -122,10 +123,10 @@ export function normalizeAddressToken(input: string): string {
 }
 
 /**
- * Derive the canonical match key from an address component dict: each present,
- * address-identifying field normalized via
- * {@linkcode normalizeAddressToken}, in fixed order, joined by the separator. Empty / whitespace-only fields are
- * skipped.
+ * Derive the canonical match key from an address component dict: each present, address-identifying
+ * field normalized via {@linkcode normalizeAddressToken}, in fixed order, joined by the separator.
+ *
+ * Empty / whitespace-only fields are skipped.
  * Returns an empty string if nothing identifying remains.
  */
 export function canonicalKey(components: ComponentDict, opts: CanonicalKeyOptions = {}): string {

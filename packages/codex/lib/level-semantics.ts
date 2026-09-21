@@ -129,10 +129,11 @@ export interface LevelDesignatorRow {
 /**
  * English (American, British, Canadian, Australian, …) floor/level vocabulary.
  *
- * This is the generic English lexicon for the ordinal-semantics table. it doesn't
- * replace the more detailed per-system lexicons in
- * {@link "./us/floor-designator.ts"} (USPS Pub-28 C2) or {@link "./au/level-designator.ts"} (AS 4590.1 / amas) — those
- * drive span-proposer/synthesis vocabulary for their own address system.
+ * This is the generic English lexicon for the ordinal-semantics table.
+ * It doesn't replace the more detailed per-system lexicons in {@link "./us/floor-designator.ts"}
+ * (USPS Pub-28 C2) or {@link "./au/level-designator.ts"} (AS 4590.1 / amas) —
+ * those drive span-proposer/synthesis vocabulary for their own address system.
+ *
  * This table exists to answer a narrower question for any English-speaking locale:
  * given a designator + number, what ordinal does it name.
  */
@@ -254,8 +255,10 @@ export const DE_LEVEL_DESIGNATORS = [
 ] as const satisfies readonly LevelDesignatorRow[]
 
 /**
- * Spanish floor/level vocabulary. principal and entresuelo offsets vary by city and building age
- * (see the module header) — encoded here as a single convention rather than an empirical universal.
+ * Spanish floor/level vocabulary.
+ *
+ * Principal and entresuelo offsets vary by city and building age (see the module header) —
+ * encoded here as a single convention rather than an empirical universal.
  */
 export const ES_LEVEL_DESIGNATORS = [
 	{ code: "PLANTA", name: "Planta/Piso (Floor)", variants: ["PLANTA", "PISO"], kind: "numbered", requiresNumber: true },
@@ -399,8 +402,10 @@ export const SV_LEVEL_DESIGNATORS = [
 ] as const satisfies readonly LevelDesignatorRow[]
 
 /**
- * Norwegian floor/level vocabulary. gateplan ("street level") is a lower-confidence,
- * regional inclusion for the ground-floor row — see the module header's Nordic-vocabulary caveat.
+ * Norwegian floor/level vocabulary.
+ *
+ * Gateplan ("street level") is a lower-confidence, regional inclusion for the
+ * ground-floor row — see the module header's Nordic-vocabulary caveat.
  */
 export const NO_LEVEL_DESIGNATORS = [
 	{ code: "ETASJE", name: "Etasje (Floor)", variants: ["ETASJE"], kind: "numbered", requiresNumber: true },
@@ -578,7 +583,7 @@ export const LEVEL_ORDINAL_CONVENTIONS: Readonly<Record<string, LevelOrdinalConv
  * locale ("fr" with no country) or a country this table doesn't specifically override.
  *
  * Every entry here follows the continental-European/imdf convention
- * (ground is its own designator. numbered floors start at 1 for the storey above)
+ * (ground is its own designator. Numbered floors start at 1 for the storey above)
  * except Japanese, which follows the US/CA convention.
  * English has no family-wide default — American/Canadian and British buildings disagree,
  * so a bare "en" locale intentionally resolves to `undefined` rather than guessing.

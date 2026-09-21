@@ -53,7 +53,7 @@ export interface AuDeliveryServiceDesignator {
 	 */
 	abbreviation: string
 	/**
-	 * Whether the designator "must have an associated number for a match to occur" (amas rule. exceptions
+	 * Whether the designator "must have an associated number for a match to occur" (amas rule. Exceptions
 	 * are Care of Post Office, Community Mail Agent, Community Postal Agent, and Community Mail Bag).
 	 */
 	requiresNumber: boolean
@@ -62,7 +62,8 @@ export interface AuDeliveryServiceDesignator {
 	 * but absent from every current auspost.com.au addressing/product page (accessed 2026-06-11) —
 	 * the rural and community forms superseded by rural street addressing under AS/NZS 4819.
 	 *
-	 * The parser must still recognize these on old addresses. synthesis should weight them low.
+	 * The parser must still recognize these on old addresses.
+	 * Synthesis should weight them low.
 	 */
 	legacy: boolean
 }
@@ -71,7 +72,7 @@ export interface AuDeliveryServiceDesignator {
  * The verbatim Postal Delivery Type table (see the module header for the per-row provenance).
  *
  * Multiple names can share an abbreviation (roadside mail BAG and roadside mail BOX
- * are both RMB. poste restante is addressed as care PO).
+ * are both RMB. Poste restante is addressed as care PO).
  */
 export const AU_DELIVERY_SERVICE_DESIGNATORS = [
 	{ name: "GENERAL POST OFFICE BOX", abbreviation: "GPO BOX", requiresNumber: true, legacy: false },
@@ -200,9 +201,9 @@ export function isAuDeliveryService(input: unknown): boolean {
 
 /**
  * Normalize a recognized delivery-service phrase to the canonical amas form
- * (`"g.p.o. box 123"` → `"GPO BOX 123"`).
+ * (`"g.p.o. Box 123"` → `"GPO BOX 123"`).
  *
- * Returns the input unchanged if it isn't one.
+ * @returns the input unchanged if it isn't one.
  */
 export function normalizeAuDeliveryService(input: string): string {
 	const m = matchAuDeliveryService(input)

@@ -87,7 +87,8 @@ export function isUkPostcode(input: unknown): input is Postcode {
 /**
  * The outward code — the part before the space (area + district), e.g. `SW1A 1AA` → `SW1A`, `M1 1AE` → `M1`.
  *
- * Normalizes first so an un-spaced input still cleaves correctly. null if invalid.
+ * Normalizes first so an un-spaced input still cleaves correctly.
+ * Null if invalid.
  */
 export function outwardCode(pc: unknown): string | null {
 	const normalized = normalizeUkPostcode(pc)

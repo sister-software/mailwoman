@@ -37,7 +37,8 @@ describe("GB address-system conventions (#1275)", () => {
 	it("declares the codex UK postcode shape — the reference, not a re-declared regex", () => {
 		const gb = conventionsForSystem("gb")
 		expect(gb).not.toBeNull()
-		// Same object as gb/postcode.ts's UK_POSTCODE_PATTERN — the shape family is declared once in the codex.
+		// Same object as gb/postcode.ts's UK_POSTCODE_PATTERN.
+		// The shape family is declared once in the codex.
 		expect(gb!.postcodePattern).toBe(UK_POSTCODE_PATTERN)
 	})
 

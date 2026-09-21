@@ -30,8 +30,9 @@
 /**
  * One USPS Pub 28 C2 floor-class designator row.
  *
- * `requiresNumber` mirrors the Appendix C2 classification: floor and basement must be
- * followed by a secondary number. penthouse and lobby may stand alone.
+ * `requiresNumber` mirrors the Appendix C2 classification: floor and basement
+ * must be followed by a secondary number.
+ * Penthouse and lobby may stand alone.
  */
 export interface USFloorDesignator {
 	/**
@@ -57,7 +58,8 @@ export interface USFloorDesignator {
 /**
  * USPS Pub 28 C2 floor-class secondary unit designators.
  *
- * Verbatim from the publication. see the module header for the per-row provenance.
+ * Verbatim from the publication.
+ * See the module header for the per-row provenance.
  * Ordered with the most-common numbered form first.
  */
 export const US_FLOOR_DESIGNATORS = [
@@ -115,7 +117,7 @@ export const US_FLOOR_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USFloorDesignat
  * Look up a USPS floor-class designator (by canonical name, abbreviation, or any Appendix C2 variant)
  * and return the canonical name + approved abbreviation.
  *
- * Returns null if the token isn't a recognized floor-class designator.
+ * @returns null if the token isn't a recognized floor-class designator.
  */
 export function lookupFloorDesignator(input: string | null | undefined): {
 	designator: USFloorDesignatorName

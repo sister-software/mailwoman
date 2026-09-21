@@ -135,8 +135,8 @@ export function isLargestFirstSystem(countryCode: string | null | undefined, scr
 /**
  * Which order a layout actually prints: `true` when its `region` line precedes its street line.
  *
- * `null` when the layout names no region or no street, which several island
- * and city-state records do — those carry no order to contradict.
+ * `null` when the layout names no region or no street, which several island and city-state records do.
+ * Those carry no order to contradict.
  *
  * A layout and {@link isLargestFirstSystem} can disagree, and when they do the render is wrong
  * in a way neither table shows on its own: the order comes from the layout while `LINE_JOINS`
@@ -157,9 +157,9 @@ export function layoutPrintsLargestFirst(layout: AddressLayout): boolean | null 
 /**
  * Every slot a layout prints, in print order, flattened across lines.
  *
- * Flat rather than per line because the CJK systems put the whole admin run
- * on one line — Japan's prefecture and its sub-prefecture run share a line,
- * so a comparison of line indices reads them as unordered.
+ * Flat rather than per line because the CJK systems put the whole admin run on one line.
+ * Japan's prefecture and its sub-prefecture run share a line, so a comparison
+ * of line indices reads them as unordered.
  */
 function printedTags(layout: AddressLayout): ComponentTag[] {
 	const tags: ComponentTag[] = []
@@ -174,8 +174,8 @@ function printedTags(layout: AddressLayout): ComponentTag[] {
 				}
 			}
 		} else if (isAlternation(atom)) {
-			// The first alternative is the one that renders when both could. an alternation
-			// never reorders region against street, so reading one is enough to locate them.
+			// The first alternative is the one that renders when both could.
+			// An alternation never reorders region against street, so reading one is enough to locate them.
 			for (const inner of atom.alternatives) {
 				visit(inner)
 			}
@@ -214,7 +214,7 @@ ${country}`,
 	// Royal Mail prints the post town and the postcode on separate lines,
 	// which is what the multi-line render must keep.
 	// Written on one line Great Britain puts a space between them: `27 Minories, London EC3N 1DE`. #1366
-	// pinned that form and three tests assert it, and it is the majority register in attested data —
+	// pinned that form and three tests assert it, and it is the majority register in attested data.
 	// `wof-postalcode` carries 10,282,560 GB rows without the comma against 3,265,642 with.
 	// The soft break is how one layout says both.
 	GB: withSoftBreakBefore(
@@ -363,8 +363,9 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
 	// Hong Kong's is the Latin one, so serving it as the local layout leaves that
 	// country's own script unreachable.
 	// The two print orders decide which it is: agreeing means the board-checked
-	// entry is the local order and wins. disagreeing means it is the other script's,
-	// and the skeleton derived from `fmt` is what the local order says.
+	// entry is the local order and wins.
+	// Disagreeing means it is the other script's, and the skeleton derived from
+	// `fmt` is what the local order says.
 	if (script === "local" && hand && local && layoutPrintsLargestFirst(hand) !== layoutPrintsLargestFirst(local)) {
 		return local
 	}
@@ -400,8 +401,9 @@ export function lineJoinForCountry(countryCode: string | null | undefined, scrip
  * script's skeleton, which is Hong Kong: its hand-authored layout is the English register.
  * Therefore, a caller asking for no script gets the Latin ordering and must get the Latin separator with it.
  *
- * Reading the join off the layout that was picked is the whole fix — before, the order came from
- * the layout and the separator from a country flag, so the two could name different systems.
+ * Reading the join off the layout that was picked is the whole fix.
+ * Before, the order came from the layout and the separator from a country flag,
+ * so the two could name different systems.
  */
 export function defaultScriptForCountry(countryCode: string): AddressScript {
 	const code = countryCode.trim().toUpperCase()

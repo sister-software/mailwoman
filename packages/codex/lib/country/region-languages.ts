@@ -17,8 +17,9 @@ import { OFFICIAL_LANGUAGES } from "#country/official-languages"
 import { coOfficialLanguagesForProvince } from "#es/co-official-languages"
 
 /**
- * The length of an ISO 639-3 code, the spelling the Who's On First names table uses. the
- * generated table lists each language under its ISO 639-1 spelling too, which is two letters.
+ * The length of an ISO 639-3 code, the spelling the Who's On First names table uses.
+ *
+ * The generated table lists each language under its ISO 639-1 spelling too, which is two letters.
  */
 const ALPHA3_LENGTH = 3
 

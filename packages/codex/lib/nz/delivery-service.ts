@@ -110,8 +110,9 @@ export type NZDeliveryServiceTypeName = (typeof NZ_DELIVERY_SERVICE_TYPES)[numbe
  *
  * Real NZ mail and the postal arena's gold rows nonetheless carry it as a
  * colloquial synonym for a numbered PO Box.
- * Operator ruling 2026-06-11 authorizes its inclusion here for recognition only,
- * with this citation. corpus synthesis should treat it as a non-prescriptive form.
+ * Operator ruling 2026-06-11 authorizes its inclusion here for recognition only, with this citation.
+ *
+ * Corpus synthesis should treat it as a non-prescriptive form.
  */
 export const NZ_PRIVATE_BOX_ALIAS = {
 	/**
@@ -119,8 +120,9 @@ export const NZ_PRIVATE_BOX_ALIAS = {
 	 */
 	type: "Private Box",
 	/**
-	 * The description of validity status — not a valid ADV358 Delivery Service Type. a
-	 * colloquial NZ synonym for a numbered PO Box (same format as "PO Box <number>").
+	 * The description of validity status — not a valid ADV358 Delivery Service Type.
+	 *
+	 * A colloquial NZ synonym for a numbered PO Box (same format as "PO Box <number>").
 	 */
 	description: "Colloquial NZ synonym for a numbered PO Box — NOT a valid ADV358 Delivery Service Type",
 	/**
@@ -192,8 +194,8 @@ export interface NZDeliveryServiceMatch {
 	 * The canonical Delivery Service Type or recognized alias
 	 * ("PO Box", "Private Bag", "CMB", …, "Private Box").
 	 *
-	 * When `type` is "Private Box", `colloquial` is true and `officiallyInvalid` is true —
-	 * the form is not a valid ADV358 type.
+	 * When `type` is "Private Box", `colloquial` is true and `officiallyInvalid` is true.
+	 * The form is not a valid ADV358 type.
 	 */
 	type: NZDeliveryServiceMatchTypeName
 	/**
@@ -217,7 +219,7 @@ export interface NZDeliveryServiceMatch {
  * Null otherwise — including for "PB 39990" (an error of form per ADV358).
  *
  * When `type` is "Private Box", the result has `colloquial: true` — indicating the colloquial alias
- * (not an ADV358 Delivery Service Type. see {@link NZ_PRIVATE_BOX_ALIAS} and operator ruling 2026-06-11).
+ * (not an ADV358 Delivery Service Type. See {@link NZ_PRIVATE_BOX_ALIAS} and operator ruling 2026-06-11).
  * Callers that want only formally-valid ADV358 types should check `!result.colloquial`.
  */
 export function matchNZDeliveryService(input: unknown): NZDeliveryServiceMatch | null {
@@ -243,9 +245,9 @@ export function isNZDeliveryService(input: unknown): boolean {
 }
 
 /**
- * Normalize a recognized phrase to the ADV358 form (`"p.o. box 24999"` → `"PO Box 24999"`).
+ * Normalize a recognized phrase to the ADV358 form (`"p.o. Box 24999"` → `"PO Box 24999"`).
  *
- * Returns the input unchanged if it isn't a delivery-service phrase.
+ * @returns the input unchanged if it isn't a delivery-service phrase.
  */
 export function normalizeNZDeliveryService(input: string): string {
 	const m = matchNZDeliveryService(input)

@@ -49,11 +49,12 @@ export interface AddressSystemConventions {
  */
 export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSystemConventions>> = {
 	/**
-	 * France (La Poste / afnor NF Z 10-011): the street type is a leading particle of
-	 * the street name ("Rue de Rivoli", "Avenue des Champs-Élysées", "Cours Lafayette")
-	 * and is labeled `street_prefix` — French addresses do carry a street_prefix,
-	 * just never a trailing USPS-style street_suffix (the libpostal French dictionaries have no
-	 * trailing street-suffix class. Pub-28's suffix decomposition has no French counterpart).
+	 * France (La Poste / afnor NF Z 10-011): the street type is a leading particle of the street name
+	 * ("Rue de Rivoli", "Avenue des Champs-Élysées", "Cours Lafayette") and is labeled `street_prefix`.
+	 *
+	 * French addresses do carry a street_prefix, just never a trailing USPS-style
+	 * street_suffix (the libpostal French dictionaries have no trailing street-suffix
+	 * class. Pub-28's suffix decomposition has no French counterpart).
 	 *
 	 * Provenance / why this is not a blanket prefix+suffix forbid (#719, 2026-06-18):
 	 * an earlier model mis-tagged the leading "Rue" as a US-style `street_suffix`
@@ -62,15 +63,15 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	 * That forbid was correct for that model but became a live production bug for the
 	 * current one: the shipped model (v1.5.0) emits the FR `street_prefix` correctly,
 	 * but the conventions mask was a hard −1e9 on every B-/I-street_prefix emission,
-	 * so the detected-FR parse could never keep a prefix — it destroyed `street_prefix`
-	 * wholesale (measured on data/eval/external/ fr-street-prefix-real.jsonl at
-	 * conventions=auto: F1 0.0 with the forbid on → 80.0 with it off. the larger real-FR eval reported the same collapse,
-	 * ~96 → ~0.6).
+	 * so the detected-FR parse could never keep a prefix — it destroyed `street_prefix` wholesale
+	 * (measured on data/eval/external/ fr-street-prefix-real.jsonl at conventions=auto: F1 0.0 with the
+	 * forbid on → 80.0 with it off. The larger real-FR eval reported the same collapse, ~96 → ~0.6).
+	 *
 	 * We keep only `street_suffix` forbidden: the current model with the forbid off shows zero FR
 	 * street_suffix leakage (fp=0 on that same eval set) and FR has no trailing street suffix,
 	 * so the constraint costs nothing while still guarding against any future suffix mis-tag.
 	 *
-	 * Postcode: exactly five digits (NF Z 10-011. see fr/code-postal).
+	 * Postcode: exactly five digits (NF Z 10-011. See fr/code-postal).
 	 */
 	fr: {
 		forbiddenTags: ["street_suffix"],
@@ -88,8 +89,9 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	 * class `postcodePattern` exists to flag.
 	 *
 	 * Provenance (#1275, 2026-07-24): on the GB golden board's 106 postcode rows under the en-gb bundle,
-	 * the clip class (parsed postcode = proper suffix of the truth) was 44/106 with this row
-	 * absent — the repair check never opened because `conventionsForSystem("gb")` returned null.
+	 * the clip class (parsed postcode = proper suffix of the truth) was 44/106 with this row absent.
+	 * The repair check never opened because `conventionsForSystem("gb")` returned null.
+	 *
 	 * With the repair reachable, exact 26 → 83 and the clip class goes to zero.
 	 *
 	 * No `forbiddenTags`: no measured GB-ungrammatical tag class exists

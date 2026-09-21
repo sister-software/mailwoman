@@ -54,8 +54,9 @@ export interface SubdivisionMatch {
  * Folded surface form (ISO code, English name, or — for CA — co-official French name) → subdivision.
  *
  * Built once.
- * US states are inserted first and never overwritten, so on the (currently empty) event of a
- * future code/name collision the US entry wins deterministically. today the two sets are disjoint.
+ * US states are inserted first and never overwritten, so on the (currently empty) event
+ * of a future code/name collision the US entry wins deterministically.
+ * Today the two sets are disjoint.
  */
 const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
 	const out = new Map<string, SubdivisionMatch>()
@@ -101,10 +102,9 @@ export function matchSubdivision(token: string | null | undefined): SubdivisionM
 /**
  * Per-country subdivision lookups for callers that already know the country.
  *
- * Kept separate from
- * {@link SUBDIVISION_LOOKUP} on purpose: the combined map is only unambiguous because the US and CA sets are disjoint,
- * and Australia breaks that property twice — `WA` collides with Washington
- * and `NT` with the Northwest Territories.
+ * Kept separate from {@link SUBDIVISION_LOOKUP} on purpose: the combined map is only unambiguous
+ * because the US and CA sets are disjoint, and Australia breaks that property twice —
+ * `WA` collides with Washington and `NT` with the Northwest Territories.
  * A country-scoped caller (the admin-coherence check reads the winner's resolver-stamped country)
  * dissolves the collision instead of arbitrating it.
  */
@@ -152,8 +152,9 @@ const SCOPED_SUBDIVISION_LOOKUP: ReadonlyMap<string, ReadonlyMap<string, Subdivi
  *
  * Same folding and return shape as {@link matchSubdivision}, but scoped: `WA` under `AU`
  * is Western Australia, under `US` Washington, and under any other country null.
- * Use this whenever the country is already established. the unscoped lookup exists for
- * the address-line case where the subdivision itself is the country evidence.
+ * Use this whenever the country is already established.
+ *
+ * The unscoped lookup exists for the address-line case where the subdivision itself is the country evidence.
  */
 export function matchSubdivisionIn(countryAlpha2: string, token: string | null | undefined): SubdivisionMatch | null {
 	if (!token || typeof token !== "string") return null

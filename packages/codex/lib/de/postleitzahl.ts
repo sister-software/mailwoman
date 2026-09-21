@@ -39,7 +39,7 @@ export const PLZ_PATTERN = /^\d{5}$/
  * Normalize a PLZ surface form to the bare five digits: strip the `D-` / `DE-` country
  * courtesy prefix and surrounding whitespace (`D-68161` → `68161`).
  *
- * Returns null if the result is not a PLZ.
+ * @returns null if the result is not a PLZ.
  */
 export function normalizePLZ(raw: unknown): Postleitzahl | null {
 	if (typeof raw !== "string") return null

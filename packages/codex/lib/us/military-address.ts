@@ -38,8 +38,7 @@
  */
 export const US_MILITARY_POST_OFFICE_CODES = [
 	/**
-	 * Army Post Office — domestic USPS gateway for Army and Air Force overseas mail. also used for some diplomatic
-	 * addresses (DPO is preferred for State Dept posts since 2011).
+	 * Army Post Office — domestic USPS gateway for Army and Air Force overseas mail. Also used for some diplomatic addresses (DPO is preferred for State Dept posts since 2011).
 	 */
 	{ code: "APO", name: "Army Post Office", armedForces: true },
 	/**
@@ -79,7 +78,8 @@ export type USArmedForcesRegionCode = (typeof US_ARMED_FORCES_REGIONS)[number]["
  * - `unit <id> BOX <box>` — numbered unit (battalion/company); unit may stand alone
  *   with just an id and no BOX when the unit has direct mail delivery
  *
- * BOX is required for PSC and CMR. unit may omit BOX.
+ * BOX is required for PSC and CMR.
+ * Unit may omit BOX.
  */
 export const US_MILITARY_UNIT_DESIGNATORS = [
 	{
@@ -127,8 +127,10 @@ export interface USMilitaryUnitMatch {
 }
 
 /**
- * Unit-line regex: PSC/CMR/unit <id> [BOX <box>] Identifiers are numeric. box
- * numbers are alphanumeric. unit may stand without BOX.
+ * Unit-line regex: PSC/CMR/unit <id> [BOX <box>] Identifiers are numeric.
+ *
+ * Box numbers are alphanumeric.
+ * Unit may stand without BOX.
  */
 const UNIT_LINE_RE = /^\s*(psc|cmr|unit)\s+(\d+)(?:\s+box\s+([\dA-Za-z]+))?\s*$/i
 
@@ -138,7 +140,7 @@ const UNIT_LINE_RE = /^\s*(psc|cmr|unit)\s+(\d+)(?:\s+box\s+([\dA-Za-z]+))?\s*$/
  *
  * Null otherwise.
  * Throws on a PSC or CMR line without a BOX component
- * (per Appendix B, BOX is required for PSC/CMR. a bare "PSC 1520" is malformed).
+ * (per Appendix B, BOX is required for PSC/CMR. A bare "PSC 1520" is malformed).
  */
 export function matchMilitaryUnitLine(input: unknown): USMilitaryUnitMatch | null {
 	if (typeof input !== "string") return null
@@ -216,8 +218,10 @@ const CITY_LINE_RE = /^\s*(apo|fpo|dpo)\s+(aa|ae|ap)\s+(\d{5}(?:-\d{4})?)\s*$/i
  * AP (Pacific) → 96xxx.
  *
  * AA (Americas) → 34xxx.
- * Range validation per region is left to the caller. the matcher accepts any 5.
- * or 9-digit ZIP paired with a valid region code.
+ * Range validation per region is left to the caller.
+ *
+ * The matcher accepts any 5.
+ * Or 9-digit ZIP paired with a valid region code.
  */
 export function matchMilitaryCityLine(input: unknown): USMilitaryCityMatch | null {
 	if (typeof input !== "string") return null

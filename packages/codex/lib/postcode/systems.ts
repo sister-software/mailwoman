@@ -68,7 +68,7 @@ export const SYSTEM_CODES: readonly SystemCode[] = SYSTEM_ACCEPTS.map(([system])
 /**
  * Every address system whose own postcode shape accepts `postcode`.
  *
- * Empty when no system recognizes the shape (e.g. a bare `27`, or a 7-digit run).
+ * Empty when no system recognizes the shape (e.g. A bare `27`, or a 7-digit run).
  * O(number of systems) — a handful of cheap regex tests, run only on the few
  * postcode-shaped spans an address contains.
  */
@@ -95,7 +95,8 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  * Two systems are the other way round, and membership here is earned by measurement
  * of the code's granularity, never by "the code has letters in it":
  *
- * - **NL PC6** (`1012 LG`) — ~8 addresses per code. the CBS polygon centroid (#977, the original carve-out).
+ * - **NL PC6** (`1012 LG`) — ~8 addresses per code.
+ *   The CBS polygon centroid (#977, the original carve-out).
  * - **GB unit** (`N7 0BT`) — ~15 addresses per code, 1,751,733 shipped from OS Code-Point Open.
  *   Measured 2026-08-10 against the panel-v2 GB rooftop truth: unit centroid within
  *   1 km on 15/15 rows, median 38 m, max 100 m, while the locality centroid the
@@ -137,18 +138,16 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
 export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 	// NL PC6 — `1012 LG` / `1012LG`.
 	/^\d{4}\s?[A-Z]{2}$/i,
-	// GB unit — outward (1-2 letters + digit + optional alnum) + inward `\d[A-Z]{2}`, the same shape
-	// `@mailwoman/codex/gb`'s UK_POSTCODE_PATTERN anchors, restated here so this module stays
-	// dependency-free within the package (the address-system modules import this, never the reverse).
+	// GB unit — outward (1-2 letters + digit + optional alnum) + inward `\d[A-Z]{2}`, the same shape `@mailwoman/codex/gb`'s UK_POSTCODE_PATTERN anchors, restated here so this module stays dependency-free within the package (the address-system modules import this, never the reverse).
 	/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i,
-	// CA urban LDU — `M1J 1A8`. The `[1-9]` in the second position is the whole tier claim: a `0` there marks a rural
-	// forward sortation area, which measures 2.08 km p50 against the locality's 929 m and does not belong here.
+	// CA urban LDU — `M1J 1A8`. The `[1-9]` in the second position is the whole tier claim: a `0` there marks a rural forward sortation area, which measures 2.08 km p50 against the locality's 929 m and does not belong here.
 	/^[A-Z][1-9][A-Z]\s?\d[A-Z]\d$/i,
 ]
 
 /**
- * Strip everything but letters and digits, upper-cased — the comparison surface for
- * "did the resolver hit the full code or a coarser stem?".
+ * Strip everything but letters and digits, upper-cased.
+ *
+ * The comparison surface for "did the resolver hit the full code or a coarser stem?".
  *
  * `N7 0BT` and `N70BT` are the same code; `N7` is not.
  */
@@ -205,17 +204,21 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * (2.41 km vs 3.63); that is a selection effect, and it is why this table reports 577
  * rows for the US and full panels for the others, which have no such cascade.
  *
- * **The JP row is the JP board through the served path** (`served-board-resolve.run.ts`,
- * 2,000 rows, seed 42): the 586 rows carrying a postcode the candidate table keys,
- * graded on the row's own entrance point — the locality-first answer is the municipality
- * centroid, the postcode answer the code's 町域 centroid from the WOF extract.
+ * **The JP row is the JP board through the served path**
+ * (`served-board-resolve.run.ts`, 2,000 rows, seed 42): the 586 rows carrying a postcode
+ * the candidate table keys, graded on the row's own entrance point.
+ * The locality-first answer is the municipality centroid, the postcode answer
+ * the code's 町域 centroid from the WOF extract.
  *
- * **SG** is the limiting case of the tier: a six-digit Singapore postcode names one building, so the code's point is
- * the address, and the only locality above it is the city-state itself. Measured on a 300-row seeded draw of the
- * Overture-SG register (`postalcode-sg-overture.db` folded, each row geocoded as `<number> <street> Singapore
- * <postcode>` and graded on its own point): the postcode point answers 300 of 300 within 1 km (p99 0.16 km);
- * locality-first answers 185, and the other 115 take the "Singapore" locality centroid (p75 6.30 km, p90 11.43 km, p99
- * 24.18 km). The postcode point is closer on those 115 and equal on the rest. it is never farther.
+ * **SG** is the limiting case of the tier: a six-digit Singapore postcode names one building,
+ * so the code's point is the address, and the only locality above it is the city-state itself.
+ * Measured on a 300-row seeded draw of the Overture-SG register (`postalcode-sg-overture.db` folded,
+ * each row geocoded as `<number> <street> Singapore <postcode>` and graded on its own point):
+ * the postcode point answers 300 of 300 within 1 km (p99 0.16 km); locality-first answers 185,
+ * and the other 115 take the "Singapore" locality centroid (p75 6.30 km, p90 11.43 km, p99 24.18 km).
+ *
+ * The postcode point is closer on those 115 and equal on the rest.
+ * It is never farther.
  */
 export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE", "JP", "SG"])
 

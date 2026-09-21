@@ -45,8 +45,8 @@ export type USStreetSuffix = keyof typeof US_STREET_SUFFIX_VARIANTS
  * Pub-28 canonicals that are also common head nouns in street/place names
  * ("Menlo park Road", "Blue hill Rd") — the ambiguous class behind #1569.
  *
- * Curated (golden v0.1.3 + OA street pool), not part of the USPS publication. see
- * `nameProneCanonicals` in `./street-suffix.json`.
+ * Curated (golden v0.1.3 + OA street pool), not part of the USPS publication.
+ * See `nameProneCanonicals` in `./street-suffix.json`.
  */
 export const NAME_PRONE_US_SUFFIXES: ReadonlySet<USStreetSuffix> = new Set(
 	streetSuffixData.nameProneCanonicals as USStreetSuffix[]
@@ -82,8 +82,7 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() 
  * Preferred USPS abbreviation per canonical (`avenue → "AVE"`, `street → "ST"`).
  */
 export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<USStreetSuffix, string>> = Object.fromEntries(
-	// Every Pub-28 canonical carries >= 1 variant (the preferred abbreviation is first); the JSON
-	// import types values as string[], so assert the head's presence.
+	// Every Pub-28 canonical carries >= 1 variant (the preferred abbreviation is first); the JSON import types values as string[], so assert the head's presence.
 	(Object.keys(US_STREET_SUFFIX_VARIANTS) as USStreetSuffix[]).map((k) => [k, US_STREET_SUFFIX_VARIANTS[k][0]!])
 ) as Readonly<Record<USStreetSuffix, string>>
 
@@ -110,7 +109,7 @@ export function matchCase(target: string, reference: string): string {
  * If the last whitespace-separated word of `street` is a known USPS suffix variant,
  * return the canonical key and the matched word.
  *
- * Returns null if the trailing word isn't a known suffix.
+ * @returns null if the trailing word isn't a known suffix.
  */
 export function matchTrailingSuffix(street: string): { canonical: USStreetSuffix; matched: string } | null {
 	const trimmed = street.trim()

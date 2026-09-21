@@ -66,8 +66,7 @@ export const CA_STREET_TYPES_EN: ReadonlySet<string> = new Set([
  * French Canadian street-type words (Canada Post's recognized set, lowercase, accent-containing).
  *
  * Appear as the leading token of a French street name (`Rue Sainte-Catherine`, `Chemin du Roy`).
- * Folded for matching in
- * {@link isCanadianStreetWord}, so `Côte`/`cote` and `Allée`/`allee` key alike.
+ * Folded for matching in {@link isCanadianStreetWord}, so `Côte`/`cote` and `Allée`/`allee` key alike.
  */
 export const CA_STREET_TYPES_FR: ReadonlySet<string> = new Set([
 	"rue",
@@ -118,8 +117,8 @@ const STREET_WORD_SET: ReadonlySet<string> = (() => {
  * True when a token is a Canadian street-type word in either language
  * (case- and accent-insensitive) — `Street`, `Crescent`, `Rue`, `Chemin`, `Côte`.
  *
- * Position-agnostic, because an English type trails the name and a French type
- * leads it. the matcher cannot lean on a side.
+ * Position-agnostic, because an English type trails the name and a French type leads it.
+ * The matcher cannot lean on a side.
  */
 export function isCanadianStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false
@@ -158,8 +157,8 @@ export const CA_DIRECTIONALS: Record<string, "N" | "S" | "E" | "W"> = {
  * True when a token is a Canadian directional in either language
  * (case- and accent-insensitive) — `N`, `NW`, `Nord`, `Ouest`, `O`.
  *
- * Compound English quadrants (`NW`, `SE`) are accepted by decomposing into their
- * single-letter halves. the lone French `O` resolves to West.
+ * Compound English quadrants (`NW`, `SE`) are accepted by decomposing into their single-letter halves.
+ * The lone French `O` resolves to West.
  */
 export function isCanadianDirectional(token: unknown): boolean {
 	if (typeof token !== "string") return false

@@ -111,8 +111,9 @@ function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly Ad
  * The strongest wins: a connector carrying punctuation is a harder boundary than a space,
  * and printing the space would join two values the layout meant to separate.
  *
- * `Calle Mayor, 12` keeps its comma when the street suffix is absent, and `New York, 10118`
- * keeps its comma when the region is. the space forms of both would read as one value.
+ * `Calle Mayor, 12` keeps its comma when the street suffix is absent,
+ * and `New York, 10118` keeps its comma when the region is.
+ * The space forms of both would read as one value.
  */
 function strongestConnector(run: readonly string[]): string {
 	return run.find((text) => /\S/u.test(text)) ?? run[0]!
@@ -135,7 +136,8 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 			const left = results.slice(0, index)
 			const right = results.slice(index + 1)
 
-			// A connector at an edge binds to the one slot it touches. between slots it needs one on each side.
+			// A connector at an edge binds to the one slot it touches.
+			// Between slots it needs one on each side.
 			const survives = !left.length
 				? rendered(results[index + 1] ?? null)
 				: !right.length

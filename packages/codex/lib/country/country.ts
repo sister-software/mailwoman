@@ -23,7 +23,8 @@ export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "#country/c
  *
  * Curated for the corpus locales + frequent countries (not a full 249-entry variant table —
  * the ISO base below catches the canonical name/code for everything else).
- * Forms are matched case-insensitively. the first entry is the preferred render form.
+ * Forms are matched case-insensitively.
+ * The first entry is the preferred render form.
  */
 export const COUNTRY_SURFACE_FORMS = {
 	US: ["United States", "USA", "US", "U.S.A.", "U.S.", "United States of America", "America"],
@@ -57,9 +58,10 @@ export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
  * Any recognized country surface form / canonical name / alpha-2 / alpha-3 → alpha-2 code.
  *
  * Built once at module load.
- * Each surface contributes its lowercased key and its
- * {@link foldName}-folded key when the fold leaves anything — a non-Latin surface like
- * `日本` survives only as its lowercased self — so accented and punctuated variants resolve.
+ * Each surface contributes its lowercased key and its {@link foldName}-folded key
+ * when the fold leaves anything — a non-Latin surface like `日本` survives only as its
+ * lowercased self — so accented and punctuated variants resolve.
+ *
  * Canonical names + codes from the ISO base, plus the curated surface forms
  * (surface forms win on collision — they're the address-facing spellings).
  */
@@ -143,8 +145,9 @@ export interface CountryMatch {
  * Case-, accent-, and punctuation-insensitive.
  * Returns null if unrecognized.
  *
- * Multi-word names ("United States", "Great Britain") must be passed as the whole phrase —
- * the caller decides the span. this matches it.
+ * Multi-word names ("United States", "Great Britain") must be passed as the
+ * whole phrase — the caller decides the span.
+ * This matches it.
  */
 export function matchCountry(token: string | null | undefined): CountryMatch | null {
 	if (!token || typeof token !== "string") return null
@@ -160,12 +163,11 @@ export function matchCountry(token: string | null | undefined): CountryMatch | n
  * surface a declared country field carries — `ES`, `ESP` or `Spain`.
  *
  * Two resolvers, in this order, because they answer different questions.
- * A two-letter value is taken as the code:
- * {@link matchCountry} deliberately refuses `AR` and `VE` because in address text they are Arkansas and a Spanish
- * preposition far more often than Argentina and Venezuela, and that caution is
- * wrong for a field whose whole job is to name the country.
- * Anything longer goes through
- * {@link matchCountry}, which resolves an alpha-3 and a name alike.
+ * A two-letter value is taken as the code: {@link matchCountry} deliberately refuses `AR` and `VE`
+ * because in address text they are Arkansas and a Spanish preposition far more often than Argentina
+ * and Venezuela, and that caution is wrong for a field whose whole job is to name the country.
+ *
+ * Anything longer goes through {@link matchCountry}, which resolves an alpha-3 and a name alike.
  *
  * Answers undefined for a surface neither resolves, so a caller reports a row it cannot write
  * rather than one it writes in some other country's order.
@@ -184,8 +186,8 @@ export function countryCodeForTable(country: string | null | undefined): string 
 /**
  * Normalize and validate an ISO 3166-1 alpha-2 code.
  *
- * This is for a field or flag that explicitly asks for a country code. address-text
- * recognition belongs to {@link matchCountry} instead.
+ * This is for a field or flag that explicitly asks for a country code.
+ * Address-text recognition belongs to {@link matchCountry} instead.
  */
 export function formatAsCountryISO2(value: string): CountryISO2 {
 	const code = value.trim().toUpperCase()

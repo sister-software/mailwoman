@@ -63,8 +63,9 @@ export type AddressAtom = AddressSlot | AddressConnector | AddressAlternation | 
 /**
  * A layout: lines of atoms, in print order.
  *
- * A line break in the template starts a new line. how lines are joined for single-line
- * output is the caller's choice, and per-system for the systems that join on nothing.
+ * A line break in the template starts a new line.
+ * How lines are joined for single-line output is the caller's choice,
+ * and per-system for the systems that join on nothing.
  */
 export interface AddressLayout {
 	readonly lines: ReadonlyArray<readonly AddressAtom[]>
@@ -72,10 +73,12 @@ export interface AddressLayout {
 	 * Line indices whose preceding break collapses to a space on one line
 	 * rather than taking the system's join.
 	 *
-	 * A system can need two different joins between its own lines. Great Britain prints the post town and the postcode on
-	 * separate lines, which is Royal Mail's form and what the multi-line render must keep, while one line is written `27
-	 * Minories, London EC3N 1DE` — a comma after the street and a space before the postcode. One join per system cannot
-	 * say that, and the single-line render answered `London, EC3N 1DE`.
+	 * A system can need two different joins between its own lines.
+	 * Great Britain prints the post town and the postcode on separate lines, which is Royal
+	 * Mail's form and what the multi-line render must keep, while one line is written
+	 * `27 Minories, London EC3N 1DE` — a comma after the street and a space before the postcode.
+	 *
+	 * One join per system cannot say that, and the single-line render answered `London, EC3N 1DE`.
 	 *
 	 * Keyed by the line a break PRECEDES rather than the one it follows,
 	 * because `evaluateLines` drops a line no component filled.
@@ -123,8 +126,8 @@ export function isLayout(atom: AddressAtom): atom is AddressLayout {
  * Every {@linkcode ComponentTag} as a slot, so a layout names a tag by destructuring
  * rather than by quoting it.
  *
- * A misspelled slot is then an unresolved identifier at compile time, and the spelling
- * stays the tag's own — `dependent_locality`, never a parallel camelCase vocabulary.
+ * A misspelled slot is then an unresolved identifier at compile time, and the spelling stays the tag's own.
+ * `dependent_locality`, never a parallel camelCase vocabulary.
  */
 export const SLOTS: Readonly<Record<ComponentTag, AddressSlot>> = Object.freeze(
 	Object.fromEntries(COMPONENT_TAGS.map((tag) => [tag, Object.freeze({ tag })])) as Record<ComponentTag, AddressSlot>
@@ -148,7 +151,8 @@ export function either(...alternatives: readonly AddressLayout[]): AddressAltern
  * That placement is measured rather than assumed.
  * The engine this table replaces rendered `P.O. Box 5` + `100 Main St` + `Portland, or 97214`
  * as three lines in that order, and the same shape for Germany, Australia and Great Britain.
- * libaddressinput models no box at all, which is why the slot is authored here rather than transcribed.
+ *
+ * Libaddressinput models no box at all, which is why the slot is authored here rather than transcribed.
  */
 const poBoxLine = SLOTS.po_box
 
@@ -189,8 +193,9 @@ ${either(
  * `Calle Mayor, 12`, and Brazil's order.
  *
  * The separator is not cosmetic.
- * Spain's corpus recipe renders both this form and the space form on purpose, because both
- * occur in what a person types. collapsing one into the other would remove half the signal.
+ * Spain's corpus recipe renders both this form and the space form on purpose,
+ * because both occur in what a person types.
+ * Collapsing one into the other would remove half the signal.
  */
 export const numberLastCommaStreet: AddressLayout = addr`${poBoxLine}
 ${either(
@@ -219,8 +224,10 @@ ${either(
 /**
  * Build a layout from a tagged template.
  *
- * A newline in the literal text starts a line. other literal text is a connector.
- * an interpolation is a slot, an alternation, or another layout.
+ * A newline in the literal text starts a line.
+ * Other literal text is a connector.
+ *
+ * An interpolation is a slot, an alternation, or another layout.
  */
 export function addr(strings: TemplateStringsArray, ...values: readonly AddressAtom[]): AddressLayout {
 	const lines: AddressAtom[][] = [[]]

@@ -31,11 +31,14 @@
 /**
  * The kanji suffixes that close an administrative-area name, largest unit to smallest:
  *
- * - 都 (to) — metropolis. only Tokyo.
- * - 道 (dō) — circuit. only Hokkaido.
+ * - 都 (to) — metropolis.
+ *   Only Tokyo.
+ * - 道 (dō) — circuit.
+ *   Only Hokkaido.
  * - 府 (fu) — urban prefecture.
  *   Osaka and Kyoto.
- * - 県 (ken) — prefecture. the other 43.
+ * - 県 (ken) — prefecture.
+ *   The other 43.
  * - 市 (shi) — city.
  * - 区 (ku) — ward (a subdivision of a designated city, e.g. Tokyo's 23 special wards).
  * - 郡 (gun) — district / county (rural grouping of towns and villages).
@@ -50,8 +53,9 @@ export const JP_ADMIN_SUFFIXES = ["都", "道", "府", "県", "市", "区", "郡
 export type JapaneseAdminSuffix = (typeof JP_ADMIN_SUFFIXES)[number]
 
 /**
- * The markers that close the numbered tail of an address — Japan's stand-in for a
- * house number, since there is no named street to hang one on:
+ * The markers that close the numbered tail of an address.
+ *
+ * Japan's stand-in for a house number, since there is no named street to hang one on:
  *
  * - 丁目 (chōme) — a district block within a neighbourhood.
  * - 番地 (banchi) — a lot number.

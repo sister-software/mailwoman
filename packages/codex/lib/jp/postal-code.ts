@@ -28,8 +28,8 @@ import type { Tagged } from "type-fest"
  * A Japanese postcode: three digits, a hyphen, then four digits (`100-0001`),
  * conventionally written after the 〒 mark (`〒100-0001`).
  *
- * Branded so a normalized code is distinct from an arbitrary string — the 7-digit
- * shape alone does not prove a code is real, only well-formed.
+ * Branded so a normalized code is distinct from an arbitrary string.
+ * The 7-digit shape alone does not prove a code is real, only well-formed.
  *
  * @category Postal
  * @type string
@@ -48,7 +48,7 @@ export const JP_POSTAL_CODE_PATTERN = /^\d{3}-?\d{4}$/
  * strip a leading 〒 mark and any whitespace, then re-insert the hyphen if the input gave
  * the bare seven digits (`〒100-0001` → `100-0001`, `1000001` → `100-0001`).
  *
- * Returns null if the result is not seven digits.
+ * @returns null if the result is not seven digits.
  */
 export function normalizeJpPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
@@ -70,11 +70,13 @@ export function isJpPostalCode(input: unknown): input is PostalCode {
 /**
  * First digit of the postcode → a coarse region label.
  *
- * Japan Post's numbering grows roughly outward from Tokyo (`1xx`) and is **approximate**
- * at this granularity — a single leading digit spans large, irregular areas
- * and the boundaries are postal-routing rather than administrative.
- * Use it as a weak prior, never as a hard region assignment. the full code is
- * what actually anchors the address.
+ * Japan Post's numbering grows roughly outward from Tokyo (`1xx`)
+ * and is **approximate** at this granularity.
+ * A single leading digit spans large, irregular areas and the boundaries are
+ * postal-routing rather than administrative.
+ *
+ * Use it as a weak prior, never as a hard region assignment.
+ * The full code is what actually anchors the address.
  *
  * Approximate — the labels below are illustrative routing regions rather than precise prefecture sets.
  */

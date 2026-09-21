@@ -31,7 +31,7 @@ export type ZipCodeDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
  *        90210
  *       / |⎿__(Post Office)
  *      /   \
- *  (State)  \
+ *  (State) \
  *            \
  *           (City)
  * ```
@@ -61,7 +61,7 @@ export type ZipCode = Tagged<string, "ZipCode">
  *                  90210-1234
  *                  \_/\ /\__/
  *                  /   |    \
- *  (State, City)_ /    |     \_ (Delivery Route)
+ *  (State, City)_ / | \_ (Delivery Route)
  *                      |
  *                (Post Office)
  * ```

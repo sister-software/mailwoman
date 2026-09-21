@@ -190,9 +190,12 @@ export function lookupDirectional(input: unknown): DirectionalMatch | null {
  * return the canonical name, its abbreviation, and the matched surface word.
  *
  * Null otherwise.
- * (The leading-end counterpart of
- * {@link matchTrailingSuffix}; mirrors unit-designator's `matchLeadingDesignator`.) Single-word only — the spaced "north
- * east" form is normalized to its one-word variant in real US streets, which this matches via the lookup.
+ * (The leading-end counterpart of {@link matchTrailingSuffix}; mirrors
+ * unit-designator's `matchLeadingDesignator`.)
+ *
+ * Single-word only.
+ * The spaced "north east" form is normalized to its one-word variant in real US streets,
+ * which this matches via the lookup.
  */
 export function matchLeadingDirectional(
 	street: string

@@ -1646,8 +1646,9 @@ ${country}`,
 }
 
 /**
- * Local-script layouts for the same countries — the `fmt` skeleton, emitted even
- * where the country is hand-authored.
+ * Local-script layouts for the same countries.
+ *
+ * The `fmt` skeleton, emitted even where the country is hand-authored.
  *
  * A hand-authored entry states one order, and for Hong Kong that order is the Latin one,
  * so its own script's order has nowhere else to live.

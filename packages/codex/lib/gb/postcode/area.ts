@@ -81,13 +81,16 @@ export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
 }
 
 /**
- * The two postcode areas whose assignment in {@link GB_POSTCODE_AREA_COUNTRY} is a majority call
- * rather than a fact — TD (Galashiels) straddles the Scotland/England border and SY (Shrewsbury)
- * straddles the Wales/England border, and both carry real postcodes on the other side of the line.
+ * The two postcode areas whose assignment in {@link GB_POSTCODE_AREA_COUNTRY}
+ * is a majority call rather than a fact.
  *
- * The header above documents them in prose. this is the same knowledge in a form a build
- * can read, so an artifact that asserts ancestry per postcode district can withhold
- * the constituent country here instead of asserting a coin-flip.
+ * TD (Galashiels) straddles the Scotland/England border and SY (Shrewsbury) straddles the
+ * Wales/England border, and both carry real postcodes on the other side of the line.
+ *
+ * The header above documents them in prose.
+ * This is the same knowledge in a form a build can read, so an artifact that asserts ancestry per
+ * postcode district can withhold the constituent country here instead of asserting a coin-flip.
+ *
  * Consumers that only want the coarse majority answer keep using
  * {@link countryOfPostcodeArea} and ignore this.
  */
@@ -103,11 +106,12 @@ function isAreaShape(area: unknown): area is string {
 /**
  * The constituent country a postcode area belongs to.
  *
- * Returns the explicit country for a known non-England area (e.g. `BT` → `NIR`, `G` → `SCT`, `CF` → `WLS`),
- * and `ENG` as the default for any other validly-shaped area — England is by far the largest,
- * so the default is transparent and the non-England exceptions live in
- * {@link GB_POSTCODE_AREA_COUNTRY}. Returns null for clearly-invalid input (not one-or-two letters), so a malformed
- * token is not silently called England.
+ * @returns the explicit country for a known non-England area (e.g. `BT` → `NIR`, `G` → `SCT`, `CF` → `WLS`),
+ *   and `ENG` as the default for any other validly-shaped area.
+ *   England is by far the largest, so the default is transparent and the non-England
+ *   exceptions live in {@link GB_POSTCODE_AREA_COUNTRY}.
+ *   Returns null for clearly-invalid input (not one-or-two letters),
+ *   so a malformed token is not silently called England.
  */
 export function countryOfPostcodeArea(area: unknown): UkCountryCode | null {
 	if (!isAreaShape(area)) return null

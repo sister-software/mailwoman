@@ -33,7 +33,7 @@ export const CAP_PATTERN = /^\d{5}$/
  * Normalize a CAP surface form to the bare five digits: trim surrounding
  * whitespace (`" 00184 "` → `"00184"`).
  *
- * Returns null when the result is not a five-digit code.
+ * @returns null when the result is not a five-digit code.
  */
 export function normalizeCAP(raw: unknown): CAP | null {
 	if (typeof raw !== "string") return null

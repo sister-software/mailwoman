@@ -41,8 +41,8 @@
  * One amas / AS 4590.1 level-type row.
  *
  * The `type` is the AS 4590.1 LEVEL_TYPE_CODE value (what gnaf and amas use internally);
- * the `abbreviation` is the approved surface form used in formatted mail. the `requiresNumber`
- * flag distinguishes designators that take a floor identifier from standalone ones.
+ * the `abbreviation` is the approved surface form used in formatted mail.
+ * The `requiresNumber` flag distinguishes designators that take a floor identifier from standalone ones.
  */
 export interface AuLevelDesignator {
 	/**
@@ -70,7 +70,9 @@ export interface AuLevelDesignator {
 /**
  * Amas / AS 4590.1-2017 level-type table (Table 3).
  *
- * Verbatim codes. see the module header for provenance.
+ * Verbatim codes.
+ * See the module header for provenance.
+ *
  * Ordered with the most-common forms first for match priority.
  */
 export const AU_LEVEL_DESIGNATORS = [
@@ -91,9 +93,11 @@ export const AU_LEVEL_DESIGNATORS = [
 export type AuLevelCode = (typeof AU_LEVEL_DESIGNATORS)[number]["code"]
 
 /**
- * Recognized surface variants for each amas level code — the canonical code/abbreviation
- * pair plus additional forms found in real AU addresses (Open Addresses export) that the
- * parser must recognize but the synthesis layer should not favor over the canonical form.
+ * Recognized surface variants for each amas level code.
+ *
+ * The canonical code/abbreviation pair plus additional forms found in real AU
+ * addresses (Open Addresses export) that the parser must recognize but the synthesis
+ * layer should not favor over the canonical form.
  *
  * Synthesis uses only the first element (the amas canonical surface).
  * Recognition accepts all.
@@ -232,9 +236,10 @@ export function isAuLevelDesignator(input: unknown): boolean {
  * Normalize a recognized level phrase to the amas canonical form
  * (`"level 3"` → `"L 3"`, `"ground floor"` → `"G"`).
  *
- * Returns the input unchanged if it isn't a level designator phrase.
- * Throws if a row in {@link AU_LEVEL_DESIGNATORS} is malformed (requires-number entry with
- * no abbreviation or empty name) — the builder must surface structural defects loudly.
+ * @returns the input unchanged if it isn't a level designator phrase.
+ *   Throws if a row in {@link AU_LEVEL_DESIGNATORS} is malformed
+ *   (requires-number entry with no abbreviation or empty name).
+ *   The builder must surface structural defects loudly.
  */
 export function normalizeAuLevelDesignator(input: string): string {
 	const m = matchAuLevelDesignator(input)

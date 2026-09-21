@@ -32,7 +32,8 @@ import { FR_REGIONS, type FrenchRegionInfo } from "#fr/region"
 /**
  * A French postcode: five digits (`75008`).
  *
- * Same shape as a US ZIP or a German PLZ — the shape alone does not disambiguate the country.
+ * Same shape as a US ZIP or a German PLZ.
+ * The shape alone does not disambiguate the country.
  *
  * @category Postal
  * @type string
@@ -57,7 +58,7 @@ export const CODE_POSTAL_PATTERN = /^\d{5}$/
  * Normalize a code-postal surface form to the bare five digits: strip an `F-` country
  * courtesy prefix and surrounding whitespace (`F-75008` → `75008`).
  *
- * Returns null if the result is not five digits.
+ * @returns null if the result is not five digits.
  */
 export function normalizeCodePostal(raw: unknown): CodePostal | null {
 	if (typeof raw !== "string") return null
@@ -85,7 +86,7 @@ export function isCodePostal(input: unknown): input is CodePostal {
  * - `970`–`976`xx → an overseas DOM, keyed by the three-digit prefix (`971`–`974`, `976`).
  * - Otherwise the first two digits are the département number.
  *
- * Returns null for a prefix with no département (e.g. `975`/`977`/`98x` collectivities, or a malformed code).
+ * @returns null for a prefix with no département (e.g. `975`/`977`/`98x` collectivities, or a malformed code).
  */
 export function departementOfCodePostal(codePostal: unknown): DepartementCode | null {
 	const cp = normalizeCodePostal(codePostal)

@@ -85,9 +85,11 @@ export const DE_STREET_SUFFIXES = [
 ] as const
 
 /**
- * True when a token reads as (part of) a German street: it ends with one of the place-name-safe
- * {@link DE_STREET_SUFFIXES}. Handles both the fused compound (`Straußstraße` → ends `straße`) and the standalone type
- * word or `Str.` abbreviation (`Platz`, `Str` → end `platz` / `str`).
+ * True when a token reads as (part of) a German street: it ends with one of the
+ * place-name-safe {@link DE_STREET_SUFFIXES}.
+ *
+ * Handles both the fused compound (`Straußstraße` → ends `straße`) and the standalone
+ * type word or `Str.` abbreviation (`Platz`, `Str` → end `platz` / `str`).
  */
 export function isGermanStreetToken(token: unknown): boolean {
 	if (typeof token !== "string") return false

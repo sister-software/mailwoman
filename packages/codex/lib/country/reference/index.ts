@@ -20,7 +20,7 @@ const A_UPPER = "A".charCodeAt(0)
  * The flag emoji for an ISO 3166-1 alpha-2 country code, formed from the two
  * Regional Indicator Symbols (`US` → 🇺🇸).
  *
- * Returns `""` for anything that is not two ascii letters.
+ * @returns `""` for anything that is not two ascii letters.
  */
 export function countryFlag(alpha2: string): string {
 	const code = alpha2.toUpperCase()

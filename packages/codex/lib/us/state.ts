@@ -195,8 +195,8 @@ const US_STATE_NAME_TO_ABBREVIATION: ReadonlyMap<string, USStateAbbreviation> = 
 })()
 
 /**
- * Resolve a US state/territory surface form (USPS abbreviation or full name)
- * to its abbreviation. null if unknown.
+ * Resolve a US state/territory surface form (USPS abbreviation or full name) to its abbreviation.
+ * Null if unknown.
  *
  * The mirror of `lookupCanadianProvince`, and it exists for the same reason:
  * the two-letter code is the surface an address line writes, so a source that

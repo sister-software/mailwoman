@@ -89,8 +89,8 @@ export interface CountryDisplayName {
 /**
  * Two-letter sequences that are not ISO 3166-1 regions.
  *
- * `Intl.DisplayNames.of` echoes its input for an unknown code, so the echo is the
- * miss signal — no separate region list to keep in sync.
+ * `Intl.DisplayNames.of` echoes its input for an unknown code, so the echo is the miss signal.
+ * No separate region list to keep in sync.
  */
 /**
  * The AA–ZZ sweep bounds.
@@ -152,7 +152,8 @@ export function* enumerateCountryDisplayNames(
 /**
  * Every surface ICU knows for one country.
  *
- * Convenience over {@link enumerateCountryDisplayNames} for a single lookup. the generator is the bulk path.
+ * Convenience over {@link enumerateCountryDisplayNames} for a single lookup.
+ * The generator is the bulk path.
  */
 export function countryDisplayNames(iso2: string, locales?: readonly string[]): string[] {
 	const upper = iso2.toUpperCase()

@@ -58,7 +58,9 @@ export const JP_INNER_SHI_TOWN_NAMES: readonly string[] = JP_INNER_SHI_TOWNS.fla
  * The characters a municipality surface must absorb from what follows it to become
  * one of the register's names, or null when no name extends it.
  *
- * `following` is the text after the surface. the answer is a prefix of it.
+ * `following` is the text after the surface.
+ * The answer is a prefix of it.
+ *
  * A surface that already is a register name answers null: nothing to absorb.
  */
 export function jpMunicipalityCompletion(surface: string, following: string): string | null {

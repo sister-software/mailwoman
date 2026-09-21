@@ -41,9 +41,10 @@ export interface FormatAddressOptions {
 	separator?: string
 
 	/**
-	 * Join the lines the way the country does, for the single-line form a query
-	 * or a corpus row takes — `", "` for most, `" "` for Japan and Korea, and nothing at
-	 * all for the Chinese-script systems, whose admin run is unseparated.
+	 * Join the lines the way the country does, for the single-line form a query or a corpus row takes.
+	 *
+	 * `", "` for most, `" "` for Japan and Korea, and nothing at all for the
+	 * Chinese-script systems, whose admin run is unseparated.
 	 *
 	 * It is an option rather than each caller's literal because the literal is wrong
 	 * outside the anglophone systems: joining Japan's lines with a comma gives
@@ -60,8 +61,8 @@ export interface FormatAddressOptions {
 	 * English register and `九龍佐敦佐敦道21號` is the Chinese one, both Hong Kong.
 	 * Rendering either through one country-keyed layout prints one of them in an order nobody writes.
 	 *
-	 * A caller holding a parse tree has the better answer and should pass it —
-	 * every span carries the script it is written in.
+	 * A caller holding a parse tree has the better answer and should pass it.
+	 * Every span carries the script it is written in.
 	 * This option is that hand-off.
 	 */
 	script?: AddressScript
@@ -76,9 +77,10 @@ function separatorFor(country: string, script: AddressScript, opts: FormatAddres
 /**
  * What replaces a break the layout marked soft.
  *
- * Down the page a soft break is an ordinary break: Great Britain prints the post town and the postcode on their own
- * lines and must keep doing so. On one line it is a space, which is the whole reason the mark exists — `London EC3N
- * 1DE` rather than `London, EC3N 1DE`.
+ * Down the page a soft break is an ordinary break: Great Britain prints the post town
+ * and the postcode on their own lines and must keep doing so.
+ * On one line it is a space, which is the whole reason the mark exists —
+ * `London EC3N 1DE` rather than `London, EC3N 1DE`.
  *
  * An explicit `separator` overrides both.
  * A caller naming its own separator is asking for one string between every pair of lines,
@@ -95,8 +97,9 @@ function softSeparatorFor(opts: FormatAddressOptions): string {
  *
  * The street leads because it is the line that distinguishes the two registers while the rest of the
  * address often does not: a Hong Kong dict can carry `Kowloon` under either, and `佐敦道` under only one.
- * The admin tiers follow as the fallback for a dict with no street, and the postcode is
- * never asked — a postal code is digits in both registers and would abstain on every input.
+ * The admin tiers follow as the fallback for a dict with no street, and the postcode is never asked.
+ *
+ * A postal code is digits in both registers and would abstain on every input.
  */
 const SCRIPT_WITNESSES: readonly ComponentTag[] = ["street", "locality", "dependent_locality", "region", "venue"]
 
@@ -121,8 +124,9 @@ function carriesNonLatinLetter(value: string): boolean {
  * the country's own default in force rather than guessing.
  * The meaning-of-zero rule applies: no letters is not evidence of Latin.
  */
-// repo-health-ignore export-name-affix -- core's `scriptOf` takes a codepoint and answers its ISO
-// 15924 script. this takes a dict and answers which of a country's two orders it is written for.
+// repo-health-ignore export-name-affix -- core's `scriptOf` takes a codepoint
+// and answers its ISO 15924 script.
+// This takes a dict and answers which of a country's two orders it is written for.
 // Importing it is also impossible: this package carries no runtime dependency,
 // and core is 11 MB of shipped data.
 export function scriptOfComponents(components: ComponentDict): AddressScript | undefined {
@@ -186,10 +190,11 @@ function scriptIsFreeToDerive(country: string): boolean {
 /**
  * Render a component dict into an idiomatic per-country address string.
  *
- * Returns an empty string when the dict is empty, and when no layout names `country` —
- * 55 of the 252 shipped country records carry no usable skeleton, and answering nothing
- * for one of those reports absence rather than inventing an order.
- * Throws nothing. a partial dict degrades to the parts the layout can print.
+ * @returns an empty string when the dict is empty, and when no layout names `country` —
+ *   55 of the 252 shipped country records carry no usable skeleton, and answering
+ *   nothing for one of those reports absence rather than inventing an order.
+ *   Throws nothing.
+ *   A partial dict degrades to the parts the layout can print.
  */
 export function formatAddress(components: ComponentDict, country: string, opts: FormatAddressOptions = {}): string {
 	return formatAddressRow(components, country, opts)?.raw ?? ""
@@ -216,8 +221,9 @@ export interface AddressRow {
 	 */
 	readonly unplaced: readonly ComponentTag[]
 	/**
-	 * Which of the country's orders this row was rendered in — the caller's `script`,
-	 * else the one read off the components, else the country's own default.
+	 * Which of the country's orders this row was rendered in.
+	 *
+	 * The caller's `script`, else the one read off the components, else the country's own default.
 	 *
 	 * Reported rather than inferred, because on a country with two orders the rendering alone
 	 * does not say: a dict with no street and one admin tier prints the same string either way,
@@ -232,8 +238,9 @@ export interface AddressRow {
  * Returns null when nothing rendered — an empty dict, a country with no layout,
  * or a dict whose every value falls in a slot this country omits.
  * Every corpus adapter asked both questions and paid for two renders to get them,
- * then recovered the alignment by searching the output string for each value. that
- * search cannot tell a component the layout dropped from one whose value happens
+ * then recovered the alignment by searching the output string for each value.
+ *
+ * That search cannot tell a component the layout dropped from one whose value happens
  * to sit inside another — `Paris` inside `Rue de Paris`.
  *
  * The render knows, so the answer is read rather than inferred.
@@ -280,8 +287,8 @@ export function formatAddressRow(
  * This is a question about a string somebody else built — a committed golden fixture, a source's
  * own address line — and it is the weaker of the two reconciliations: a substring test cannot
  * tell a component the renderer dropped from one whose value happens to sit inside another.
- * Anything rendered through a layout should read
- * {@linkcode formatAddressRow}'s `components` instead, which the render knows rather than infers.
+ * Anything rendered through a layout should read {@linkcode formatAddressRow}'s `components`
+ * instead, which the render knows rather than infers.
  */
 export function componentsPresentIn(components: ComponentDict, raw: string): ComponentDict {
 	const haystack = raw.toLowerCase().replaceAll(/\s+/g, " ")

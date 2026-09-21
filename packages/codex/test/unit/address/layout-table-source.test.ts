@@ -59,9 +59,9 @@ const FIELD: Readonly<Record<string, string>> = {
  *   consumers add the destination country themselves.
  * - `dependent_locality`, for the 47 countries measured as printing one; `%D` appears in 14
  *   of the 197 shipped `fmt` strings, and a country that really has the line still needs it.
- *   It takes a line of its own beside the locality, or a place inside the locality's line
- *   where that line also carries the street, so it is dropped wherever it sits rather than
- *   only as a line. where the generator put it is what `address-layouts.test.ts` checks.
+ *   It takes a line of its own beside the locality, or a place inside the locality's line where that
+ *   line also carries the street, so it is dropped wherever it sits rather than only as a line.
+ *   Where the generator put it is what `address-layouts.test.ts` checks.
  */
 const AUTHORED_SLOTS = new Set(["country", "dependent_locality"])
 

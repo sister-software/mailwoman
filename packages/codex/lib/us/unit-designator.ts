@@ -100,12 +100,14 @@ export const US_UNIT_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USUnitDesignator
 ) as Readonly<Record<USUnitDesignator, string>>
 
 /**
- * Canonical designators Appendix C2 marks as "Requires a Secondary Number" — the designator
- * must be followed by an identifier ("Apt 4B", "Rm 12"), never appearing bare.
+ * Canonical designators Appendix C2 marks as "Requires a Secondary Number".
+ *
+ * The designator must be followed by an identifier ("Apt 4B", "Rm 12"), never appearing bare.
  *
  * The remaining designators (basement, front, lobby, lower, office, penthouse, rear, side, upper)
  * may stand alone with no trailing identifier.
- * Verbatim from USPS Pub-28 C2. see the module header for provenance (#1100).
+ * Verbatim from USPS Pub-28 C2.
+ * See the module header for provenance (#1100).
  */
 export const US_UNIT_DESIGNATOR_REQUIRES_RANGE: Readonly<Record<USUnitDesignator, boolean>> = {
 	APARTMENT: true,
@@ -136,8 +138,9 @@ export const US_UNIT_DESIGNATOR_REQUIRES_RANGE: Readonly<Record<USUnitDesignator
 
 /**
  * If the first whitespace-separated word of `unit` is a known USPS designator variant,
- * return the canonical key and the matched word. Returns null if the leading word isn't
- * a known designator (e.g. a bare `"4B"` or `"#210"`).
+ * return the canonical key and the matched word.
+ *
+ * Returns null if the leading word isn't a known designator (e.g. A bare `"4B"` or `"#210"`).
  * Leading-word-only — designators introduce the unit, unlike street suffixes which trail.
  */
 export function matchLeadingDesignator(unit: string): { canonical: USUnitDesignator; matched: string } | null {
@@ -168,14 +171,15 @@ export interface UnitDesignatorRangeMatch {
 	/**
 	 * The secondary range/identifier token immediately following the designator, i.e. "4B" in "Apt 4B".
 	 *
-	 * Undefined when the designator appears standalone (e.g. bare "Basement").
+	 * Undefined when the designator appears standalone (e.g. Bare "Basement").
 	 * This module does not validate the range's own shape — numeric, letter,
 	 * or alphanumeric ranges are all USPS-valid.
 	 */
 	range: string | undefined
 	/**
-	 * Whether USPS Pub-28 Appendix C2 marks this designator as requiring a secondary range (see
-	 * {@link US_UNIT_DESIGNATOR_REQUIRES_RANGE}). Informational only — not enforced by this matcher.
+	 * Whether USPS Pub-28 Appendix C2 marks this designator as requiring a secondary
+	 * range (see {@link US_UNIT_DESIGNATOR_REQUIRES_RANGE}).
+	 * Informational only — not enforced by this matcher.
 	 */
 	requiresRange: boolean
 }

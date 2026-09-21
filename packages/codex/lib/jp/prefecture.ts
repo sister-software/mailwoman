@@ -188,7 +188,7 @@ export const JP_PREFECTURE_NAME_TO_CODE: ReadonlyMap<string, JapanesePrefectureC
  *   type-suffix (`Tōkyō` / `Tokyo` / `tokyo` / `Tokyo-to` → `"13"`),
  * - A kanji name, with or without its 都/道/府/県 suffix (`東京都` / `東京` → `"13"`).
  *
- * Returns null for anything it cannot place.
+ * @returns null for anything it cannot place.
  */
 export function lookupJapanesePrefecture(input: string | null | undefined): JapanesePrefectureCode | null {
 	if (!input || typeof input !== "string") return null

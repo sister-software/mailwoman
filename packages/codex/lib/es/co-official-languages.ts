@@ -55,7 +55,8 @@ export const ES_PROVINCE_CO_OFFICIAL_LANGUAGES: ReadonlyMap<string, readonly str
 ])
 
 /**
- * The co-official languages of a Spanish province, by its Castilian name. empty for a province with none.
+ * The co-official languages of a Spanish province, by its Castilian name.
+ * Empty for a province with none.
  */
 export function coOfficialLanguagesForProvince(castilianName: string): readonly string[] {
 	return ES_PROVINCE_CO_OFFICIAL_LANGUAGES.get(castilianName.trim()) ?? []
