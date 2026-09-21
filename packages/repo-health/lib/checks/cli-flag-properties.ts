@@ -31,7 +31,8 @@ import { trackedSourcePaths } from "#tracked-sources"
  * The flag keys of one `spec.options` block: the object between `options: {`
  * and the `satisfies CommandSpec` that closes the spec.
  *
- * Only kebab keys are read — a single-segment flag derives itself and can never disagree.
+ * Only kebab keys are read.
+ * A single-segment flag derives itself and can never disagree.
  */
 const KEBAB_FLAG = /["']([a-z0-9]+(?:-[a-z0-9]+)+)["']\s*:/gu
 

@@ -158,8 +158,8 @@ describe("localeTablesCheck", () => {
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr"] },
 			extra: {
-				// `FST_LOCALE_BY_COUNTRY` carries `ko-kr` ahead of the Korean package. the ladder
-				// resolves an FST by path and answers nothing when the file is absent.
+				// `FST_LOCALE_BY_COUNTRY` carries `ko-kr` ahead of the Korean package.
+				// The ladder resolves an FST by path and answers nothing when the file is absent.
 				"packages/mailwoman/lib/eval-harness/autocomplete-ladder.ts": objectTable("FST_LOCALE_BY_COUNTRY", [
 					["US", "en-us"],
 					["KR", "ko-kr"],

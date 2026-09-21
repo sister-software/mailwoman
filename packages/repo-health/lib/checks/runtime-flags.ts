@@ -59,8 +59,8 @@ export function registerFlags(markdown: string): string[] {
 /**
  * Flags with no test, each with the reason it is allowed to have none.
  *
- * An entry here is a debt with a name rather than an exemption — the point of the list
- * is that it is short enough to read and every line carries who owes what.
+ * An entry here is a debt with a name rather than an exemption.
+ * The point of the list is that it is short enough to read and every line carries who owes what.
  */
 const UNCOVERED_ALLOWLIST: Record<string, string> = {}
 

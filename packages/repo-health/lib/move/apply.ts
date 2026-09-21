@@ -41,7 +41,8 @@ export interface ModuleMoveResult {
 	/**
 	 * Rewritten specifiers re-resolved to their target against the moved tree.
 	 *
-	 * Equal to `rewrites.length` on success. a shortfall throws rather than returning.
+	 * Equal to `rewrites.length` on success.
+	 * A shortfall throws rather than returning.
 	 */
 	verified: number
 	dryRun: boolean

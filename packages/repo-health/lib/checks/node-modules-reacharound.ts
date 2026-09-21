@@ -36,15 +36,16 @@ const MINIMUM_REASON_LENGTH = 20
  * `path.`- qualified form (the callee name is what's matched, so `path.posix.join(…)` lands on `join`).
  *
  * The check is on the name alone, so a rename-import (`join as pathJoin`) slips past.
- * That is the accepted hole: it has no instances today, and closing it would mean
- * resolving imports — the surface this file deliberately does without.
+ * That is the accepted hole: it has no instances today, and closing it would mean resolving imports.
+ * The surface this file deliberately does without.
  */
 const PATH_BUILDERS = new Set(["join", "resolve", "resolvePath", "resolvePathBuilder"])
 
 /**
  * Every site allowed to spell a `node_modules` path by hand, with the reason it is not a reach-around.
  *
- * Keyed by repo-relative path. add an entry only with a comment that survives review.
+ * Keyed by repo-relative path.
+ * Add an entry only with a comment that survives review.
  */
 const ALLOWED: Record<string, string> = {
 	// The oracle for that layout.
@@ -59,9 +60,9 @@ const ALLOWED: Record<string, string> = {
 		"inspects a scratch project's install layout from outside, by design",
 	"packages/release-kit/lib/release/smoke/get-started.ts":
 		"inspects a scratch project's install layout from outside, by design — the get-started pages' cold trial",
-	// builds a node_modules tree rather than reading one — the symlink farm a
-	// worktree arm needs, because a git worktree has none and symlinking the main
-	// checkout's directory across resolves every workspace back into the main checkout
+	// builds a node_modules tree rather than reading one.
+	// The symlink farm a worktree arm needs, because a git worktree has none and symlinking the
+	// main checkout's directory across resolves every workspace back into the main checkout
 	// (yarn links `@mailwoman/core -> ../../packages/core`, resolved against the symlink's real path).
 	// There is nothing to resolve: the directory does not exist until this code creates it.
 	"packages/dev-mcp/lib/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
@@ -78,9 +79,9 @@ const ALLOWED: Record<string, string> = {
 	// Spelling it out here is what makes the cache rung's test independent of the helper it is exercising.
 	"packages/neural/test/integration/weights/overlay.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
-	// links the checkout's node_modules into the staging tree rather than reading a package's
-	// layout — `yarn pack` needs the project context there, and the link target is the
-	// checkout root's own directory rather than another package's install dir.
+	// links the checkout's node_modules into the staging tree rather than reading a package's layout.
+	// `yarn pack` needs the project context there, and the link target is the checkout
+	// root's own directory rather than another package's install dir.
 	// Same principle as worktree-arm: nothing package-owned is being addressed by hand.
 	"packages/release-kit/lib/release/stage.ts":
 		"symlinks the checkout's node_modules into the staging tree; not a package lookup",
@@ -94,8 +95,8 @@ const ALLOWED: Record<string, string> = {
 }
 
 /**
- * Every tracked source that mentions `node_modules` at all — the AST cost is
- * paid on ~30 files rather than ~2,700.
+ * Every tracked source that mentions `node_modules` at all.
+ * The AST cost is paid on ~30 files rather than ~2,700.
  *
  * "Ours" is the set git tracks: see `tracked-sources.ts` for why enumeration
  * reads the index rather than the disk (scratchpad probes, agent worktrees,
@@ -112,8 +113,7 @@ async function listCandidateSources(context: RepoContext): Promise<string[]> {
 }
 
 /**
- * The `paths containing node_modules string arguments of every path-building call in one source file, each with its
- * line.
+ * The `paths containing node_modules string arguments of every path-building call in one source file, each with its line.
  *
  * Both literal forms count: a plain string and a template literal (`` `node_modules/${scope}/${name}` ``),
  * since the interpolated form is the one a "make it dynamic" refactor reaches for first.
@@ -145,8 +145,9 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 					? node.expression.text
 					: undefined
 
-			// A `PathBuilder` is invoked as a bare function (`dir("node_modules", pkg)`), so a descent
-			// through `node_modules` has no callee name to match — the leading segment is the tell there.
+			// A `PathBuilder` is invoked as a bare function (`dir("node_modules", pkg)`),
+			// so a descent through `node_modules` has no callee name to match.
+			// The leading segment is the tell there.
 			// Property calls are left out: `.includes("node_modules")` is a string test rather than a path.
 			const firstArgument = node.arguments[0]
 
@@ -161,8 +162,9 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 				for (const argument of node.arguments) {
 					const text = argumentText(argument)
 
-					// A `node_modules` path segment rather than the bare word — this must not fire on
-					// an exclude glob like `**/node_modules/**` that happens to sit inside a `join`.
+					// A `node_modules` path segment rather than the bare word.
+					// This must not fire on an exclude glob like `**/node_modules/**` that
+					// happens to sit inside a `join`.
 					if (text && /(^|[/\\])node_modules([/\\]|$)/.test(text) && !text.startsWith("**")) {
 						const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
 

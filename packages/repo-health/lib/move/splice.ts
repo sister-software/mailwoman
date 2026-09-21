@@ -26,9 +26,9 @@ export interface TextEdit {
 	/**
 	 * Whether the offsets bracket a quote pair.
 	 *
-	 * A module specifier and a manifest target are quoted, so the quote character is read
-	 * from the text and written back — a single-quoted specifier stays single-quoted
-	 * and the formatter has nothing to undo.
+	 * A module specifier and a manifest target are quoted, so the quote character
+	 * is read from the text and written back.
+	 * A single-quoted specifier stays single-quoted and the formatter has nothing to undo.
 	 * A path in a shell command or a sentence is not.
 	 */
 	quoted: boolean

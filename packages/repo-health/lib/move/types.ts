@@ -21,15 +21,18 @@ export interface ModuleMove {
 
 export interface SpecifierRewrite {
 	/**
-	 * The file holding the specifier — the move's `to` path when the specifier
-	 * sits in a module that itself moves.
+	 * The file holding the specifier.
+	 *
+	 * The move's `to` path when the specifier sits in a module that itself moves.
 	 */
 	file: string
 	specifier: string
 	replacement: string
 	/**
-	 * The file both spellings name — the one the replacement was proven against,
-	 * and the one a verification pass re-resolves it to once the move is on disk.
+	 * The file both spellings name.
+	 *
+	 * The one the replacement was proven against, and the one a verification pass
+	 * re-resolves it to once the move is on disk.
 	 */
 	target: string
 	/**
@@ -101,8 +104,8 @@ export interface ModuleMovePlan {
 	/**
 	 * Files read to find the rewrites, against the tracked-source total they were drawn from.
 	 *
-	 * The pre-filter in `plan.ts` is what separates the two numbers. a reader
-	 * comparing them can see whether it did any work.
+	 * The pre-filter in `plan.ts` is what separates the two numbers.
+	 * A reader comparing them can see whether it did any work.
 	 */
 	scanned: { read: number; tracked: number }
 }

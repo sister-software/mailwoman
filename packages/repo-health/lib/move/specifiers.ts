@@ -36,7 +36,8 @@ export interface PackageSpecifiers {
 	/**
 	 * `#`-prefixed, from the package's `imports` map.
 	 *
-	 * Package-private. a test file may not write one.
+	 * Package-private.
+	 * A test file may not write one.
 	 */
 	internal: string[]
 	/**

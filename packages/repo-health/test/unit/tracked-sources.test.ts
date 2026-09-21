@@ -64,7 +64,8 @@ describe("trackedSourcePaths", () => {
 			"/repo/.github/workflows/test.yml",
 		])
 
-		// `*` reaches every tracked file. the two under out/ and the declaration are still dropped.
+		// `*` reaches every tracked file.
+		// The two under out/ and the declaration are still dropped.
 		expect(await trackedSourcePaths(context, { globs: ["*"] })).toHaveLength(4)
 	})
 })

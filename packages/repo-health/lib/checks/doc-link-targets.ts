@@ -39,7 +39,8 @@ function isJudgeable(target: string): boolean {
 }
 
 /**
- * Every name the file declares, imports or exports — the vocabulary a link in this repository may name.
+ * Every name the file declares, imports or exports.
+ * The vocabulary a link in this repository may name.
  */
 function declaredNames(text: string, file: string, into: Set<string>): void {
 	const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)

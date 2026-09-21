@@ -30,9 +30,10 @@ const SYSTEM_STYLESHEET = "packages/react/styles.css"
  *
  * The enclosing at-rules are what separate a rule that uses a token from a
  * rule that is a material's fallback.
- * The chip's hover background and a sticky header both paint the fallback
- * colour on purpose. only the rules inside `@supports not (backdrop-filter…)`
- * and `@media (prefers-reduced-transparency: reduce)` are the fallback itself.
+ * The chip's hover background and a sticky header both paint the fallback colour on purpose.
+ *
+ * Only the rules inside `@supports not (backdrop-filter…)` and
+ * `@media (prefers-reduced-transparency: reduce)` are the fallback itself.
  */
 interface StyleRule {
 	selector: string
@@ -56,8 +57,8 @@ function styleRules(css: string): StyleRule[] {
 	const context: string[] = []
 	// The text since the last brace: an at-rule preamble, a selector list, or a run of declarations.
 	let pending = ""
-	// Where the current line is, and where the first NON-blank character of `pending` sat —
-	// the second is the line a diagnostic names, so a selector is reported at its own line
+	// Where the current line is, and where the first NON-blank character of `pending` sat.
+	// The second is the line a diagnostic names, so a selector is reported at its own line
 	// rather than at the blank one after the rule above.
 	let line = 1
 	let selectorLine = 1
@@ -154,9 +155,10 @@ const VENDOR_PAIRS = ["backdrop-filter", "mask-image", "user-select", "text-stro
  * The design system carries a radius scale — `tick`, `tight`, `control`, `panel` / `sheet`,
  * `pill` — and the stylesheets carried six raw pixel values beside it (2, 3, 4, 6, 8, 10)
  * plus `999px` written out four times next to the `--radius-pill` that already said it.
- * Nothing about a raw radius is wrong on its own. the defect is that six of them cannot
- * be told apart from a decision, so two components meant to match never quite do
- * and nobody can say which value was meant.
+ * Nothing about a raw radius is wrong on its own.
+ *
+ * The defect is that six of them cannot be told apart from a decision, so two components
+ * meant to match never quite do and nobody can say which value was meant.
  *
  * `0` and `50%` are exempt because neither is a step on any scale.
  */

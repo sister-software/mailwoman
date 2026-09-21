@@ -23,8 +23,8 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * Write a tree of `path → contents` and return the check's context over it.
  *
- * `trackedFiles` is every planted path, because the check reads git's list rather than the
- * filesystem — an untracked artifact is a local build output and not a committed claim.
+ * `trackedFiles` is every planted path, because the check reads git's list rather than the filesystem.
+ * An untracked artifact is a local build output and not a committed claim.
  */
 async function plant(files: Record<string, string>) {
 	const repoRoot = String(fixtures.use(await temporaryDirectory("data-provenance-")).path)

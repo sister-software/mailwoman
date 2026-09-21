@@ -23,8 +23,9 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * The MIT sentence the shipped copy has to carry, wrapped as the repository formatter wraps
- * a blockquote — so a passing case also establishes that the check reads through a reflow.
+ * The MIT sentence the shipped copy has to carry, wrapped as the repository formatter wraps a blockquote.
+ *
+ * So a passing case also establishes that the check reads through a reflow.
  */
 const PERMISSION_NOTICE = [
 	"> The above copyright notice and this permission notice shall be included in all copies",

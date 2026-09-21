@@ -62,8 +62,8 @@ const DERIVED_SEGMENTS = ["/out/", "/dist/", "/node_modules/", "/build/", "/.yar
 /**
  * A literal that is a repository path by shape.
  *
- * Rejects a glob, an interpolation placeholder, a URL, and anything carrying whitespace —
- * a sentence naming a directory is prose rather than a path.
+ * Rejects a glob, an interpolation placeholder, a URL, and anything carrying whitespace.
+ * A sentence naming a directory is prose rather than a path.
  */
 export function isRepositoryPathLiteral(text: string): boolean {
 	if (!REPOSITORY_ROOTS.some((root) => text.startsWith(root))) return false
@@ -119,8 +119,8 @@ export async function findStalePathLiterals(context: {
 		const lineOf = (position: number) => source.getLineAndCharacterOfPosition(position).line + 1
 
 		const visit = (node: ts.Node): void => {
-			// A no-substitution template literal resolves exactly as a quoted string does. one with
-			// substitutions cannot be resolved and is out of this check's reach by construction.
+			// A no-substitution template literal resolves exactly as a quoted string does.
+			// One with substitutions cannot be resolved and is out of this check's reach by construction.
 			if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
 				const literal = node.text
 

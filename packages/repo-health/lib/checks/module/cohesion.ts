@@ -36,7 +36,7 @@ export const MODULE_COHESION_THRESHOLDS = {
 	/**
 	 * Distinct imported specifiers a community needs before it counts toward a reported pair.
 	 *
-	 * One shared import is what a facade of same-shaped wrappers looks like —
+	 * One shared import is what a facade of same-shaped wrappers looks like.
 	 * `@mailwoman/core/fs/readers` partitions into eleven such groups and is correct as written.
 	 */
 	communitySpecifiers: 2,
@@ -315,8 +315,8 @@ function describe(community: DeclarationCommunity): string {
 /**
  * Advisory partition of a module's declaration graph.
  *
- * A warning names the two groups and the dependencies that separate them. it proposes
- * which declarations move together and does not claim the module is wrong.
+ * A warning names the two groups and the dependencies that separate them.
+ * It proposes which declarations move together and does not claim the module is wrong.
  */
 export const moduleCohesionCheck: RepoCheck = {
 	id: "module-cohesion",

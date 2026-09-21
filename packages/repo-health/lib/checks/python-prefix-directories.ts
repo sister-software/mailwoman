@@ -49,9 +49,10 @@ const SOURCE_FILE = /\.py$/u
 const RESERVED = new Set(["__init__.py", "__main__.py"])
 
 /**
- * Prefixes that are a discovery interface rather than a hierarchy. pytest collects
- * `test_*.py` by default, so every test file in the tree shares the prefix by obligation.
- * grouping them would report every test directory in the repository and propose moving
+ * Prefixes that are a discovery interface rather than a hierarchy.
+ *
+ * Pytest collects `test_*.py` by default, so every test file in the tree shares the prefix by obligation.
+ * Grouping them would report every test directory in the repository and propose moving
  * each into a `test/` subdirectory pytest would then have to be retaught to find.
  */
 const RESERVED_PREFIXES = new Set(["test"])

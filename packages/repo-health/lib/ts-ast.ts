@@ -29,8 +29,9 @@ export interface ModuleSpecifierOptions {
  * is the text-only reading of the same walk, so a guard that counts specifiers
  * and a fixer that edits them can never disagree about which ones exist.
  *
- * String-literal-like specifiers are collected — a no-substitution template literal counts, since `` import(`./x.ts`)
- * `` resolves exactly as the quoted form does.
+ * String-literal-like specifiers are collected.
+ * A no-substitution template literal counts, since `` import(`./x.ts`) ``
+ * resolves exactly as the quoted form does.
  */
 export function moduleSpecifierLiterals(
 	source: ts.SourceFile,

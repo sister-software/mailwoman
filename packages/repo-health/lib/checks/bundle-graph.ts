@@ -50,8 +50,8 @@ export interface BundleRow {
 	/**
 	 * Follow dynamic imports into the bundle instead of leaving them external.
 	 *
-	 * A row that asserts what a lazily imported specifier resolves to under the row's
-	 * conditions needs this. every other row grades the static graph alone.
+	 * A row that asserts what a lazily imported specifier resolves to under the row's conditions needs this.
+	 * Every other row grades the static graph alone.
 	 */
 	followDynamicImports?: boolean
 	allowedDynamicImports?: readonly AllowedDynamicImport[]
@@ -155,7 +155,8 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
  * The bare builtin names a dependency reaches without the `node:` prefix
  * (graceful-fs, spliterator and unzipper do).
  *
- * A `node:`-prefixed path is recognised by prefix. this list only has to cover the unprefixed spellings.
+ * A `node:`-prefixed path is recognised by prefix.
+ * This list only has to cover the unprefixed spellings.
  */
 const BARE_BUILTINS = new Set([
 	"assert",
@@ -244,8 +245,9 @@ async function bundleRow(row: BundleRow, repoRoot: string): Promise<Metafile | D
 
 		return result.metafile
 	} catch (error) {
-		// A static reach past a builtin can fail to resolve under the browser platform before a metafile
-		// exists. each resolution error is the finding, named by the file that made the import.
+		// A static reach past a builtin can fail to resolve under the browser platform
+		// before a metafile exists.
+		// Each resolution error is the finding, named by the file that made the import.
 		const failure = error as BuildFailure
 
 		return (failure.errors ?? [{ text: String(error) }]).map((entry) =>

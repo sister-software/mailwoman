@@ -169,17 +169,19 @@ export function findPrefixGroups(
  * The moves a group needs: the shared prefix becomes the directory,
  * and each member keeps the rest of its name.
  *
- * A directory member expands into one move per tracked file beneath it, because the move
- * operation works in files — that is what lets it repoint the specifiers naming each one.
+ * A directory member expands into one move per tracked file beneath it,
+ * because the move operation works in files.
+ * That is what lets it repoint the specifiers naming each one.
  */
 export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: readonly string[]): ModuleMove[] {
 	const moves: ModuleMove[] = []
 
-	// A directory that is itself moving carries its contents with it, so a group inside one
-	// would claim the same file twice with two destinations — `lib/cli-native/command-router.ts`
-	// is both a `cli-` member through its directory and a `command-` member in its own right.
-	// The outer move wins this pass and the check re-reads afterwards. that is
-	// what the fix's repeated passes are for.
+	// A directory that is itself moving carries its contents with it, so a group inside
+	// one would claim the same file twice with two destinations.
+	// `lib/cli-native/command-router.ts` is both a `cli-` member through its directory
+	// and a `command-` member in its own right.
+	// The outer move wins this pass and the check re-reads afterwards.
+	// That is what the fix's repeated passes are for.
 	const movingDirectories = groups.flatMap((group) =>
 		group.members.filter((member) => member.kind === "directory" && member.name !== group.prefix).map((m) => m.path)
 	)
@@ -192,8 +194,9 @@ export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: re
 		for (const member of group.members) {
 			const stem = member.kind === "file" ? member.name.replace(SOURCE_FILE, "") : member.name
 			// The member named for the prefix heads the family rather than sitting beside it.
-			// A directory already is the destination and stays put. a file becomes the directory's
-			// index, which is the one name that reads as "the family itself" from inside it.
+			// A directory already is the destination and stays put.
+			// A file becomes the directory's index, which is the one name that reads
+			// as "the family itself" from inside it.
 			const head = stem === group.prefix
 
 			if (head && member.kind === "directory") continue

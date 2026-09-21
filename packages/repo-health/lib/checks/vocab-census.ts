@@ -34,8 +34,9 @@ const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'
  * Names that keep their spelling — `agents.md` lists them as interface-tied.
  *
  * A hit naming one of these is a formatting fix rather than a rewrite.
- * Empty: every interface-tied identifier that carried a banned word has been renamed. add a
- * name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
+ * Empty: every interface-tied identifier that carried a banned word has been renamed.
+ *
+ * Add a name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
  */
 const INTERFACE_TOKEN = /(?!)/
 
@@ -121,8 +122,8 @@ const LINE_DRIFT_WINDOW = 3
 /**
  * The line that actually carries `word`, nearest to Vale's reported one.
  *
- * Falls back to the reported line when the word is nowhere in the window, so a hit is
- * never dropped — a missing modifier costs a bucket label, a dropped hit costs a site.
+ * Falls back to the reported line when the word is nowhere in the window, so a hit is never dropped.
+ * A missing modifier costs a bucket label, a dropped hit costs a site.
  */
 function locate(
 	lines: readonly string[],
@@ -172,8 +173,8 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 		const before = index === -1 ? "" : source.slice(0, index)
 		const modifier = (/([A-Za-z0-9_.`§/-]+)[\s-]*$/.exec(before.trimEnd())?.[1] ?? "").toLowerCase()
 
-		// A interface-tied name is decided by the whole line rather than the modifier: `mailwoman eval
-		// gate` and `` `promotion-eval.ts` `` put different words immediately before the hit.
+		// A interface-tied name is decided by the whole line rather than the modifier: `mailwoman eval gate`
+		// and `` `promotion-eval.ts` `` put different words immediately before the hit.
 		const remedy = INTERFACE_TOKEN.test(source)
 			? Remedy.backtick
 			: EMPTY_MODIFIERS.has(modifier)
@@ -229,17 +230,18 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 
 	// The census config rather than the enforcing one: enforcement exempts the Vale fixtures,
 	// and the census needs one of them to trip so its positive control still means something.
-	// `@vvago/vale` is this package's devDependency for exactly this line. knip cannot see
-	// a specifier passed to a resolver, so `knip.json` names the dependency as used.
+	// `@vvago/vale` is this package's devDependency for exactly this line.
+	// Knip cannot see a specifier passed to a resolver, so `knip.json` names the dependency as used.
 	const vale = await valeCommand(import.meta.url)
 	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
 
 	// Run from the repo root, because the paths are repo-relative.
-	// Run it from anywhere else and Vale resolves none of them, reports zero alerts,
-	// and exits 0 — the reading is identical to a clean tree.
+	// Run it from anywhere else and Vale resolves none of them, reports zero alerts, and exits 0.
+	// The reading is identical to a clean tree.
 	// That is why the positive control below is not optional.
 	// Vale exits non-zero when it reports alerts, which is this command's expected outcome.
-	// Only a process error carries the output. a spawn failure has none and must not read as zero hits.
+	// Only a process error carries the output.
+	// A spawn failure has none and must not read as zero hits.
 	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
 		cwd: root,
 		maxBuffer: 1 << 28,
@@ -266,7 +268,8 @@ const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
 /**
  * Paths whose hits do not count, and why each is excluded.
  *
- * The set measured is every tracked source minus these — the denominator the count is reported against.
+ * The set measured is every tracked source minus these.
+ * The denominator the count is reported against.
  *
  * Each states the vocabulary as data rather than using it as prose, so counting them measures
  * the instrument instead of the repository and the target of zero could never be reached.
