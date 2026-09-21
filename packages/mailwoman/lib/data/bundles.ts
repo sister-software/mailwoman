@@ -280,16 +280,24 @@ export const BUNDLES: Record<string, DataBundle> = {
 			"50 states + DC + VI (103 files, ~41.3 GB total). Use --only <slug> to pull a single state.",
 		artifacts: usStreetArtifacts(),
 		rights: {
-			publishers: ["United States Census Bureau, for TIGER/Line", "OpenAddresses, per contributing source"],
+			publishers: [
+				"United States Department of Transportation, for the National Address Database, reaching these rows through the Overture Maps Foundation",
+				"119 county and state bodies, for the rows OpenAddresses collected from them, likewise through Overture",
+				"United States Census Bureau, for the TIGER/Line interpolation databases in this bundle",
+			],
 			terms: [
+				"National Address Database: a work of the federal government carrying no copyright under 17 U.S.C. § 105, and the same page states it is not intended for use as a mailing list and is subject to state statutes prohibiting that use. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/national-address-database.md.",
+				"OpenAddresses: per-source terms that differ, which THIRD_PARTY_NOTICES.md records as commonly requiring attribution and share-alike. Every row names its contributing body.",
 				"TIGER/Line: a work of the United States Government, which carries no copyright under 17 U.S.C. § 105.",
-				"OpenAddresses: per-source terms that differ, and which THIRD_PARTY_NOTICES.md records as commonly requiring attribution and share-alike.",
 			],
 			conditions: [
-				"Read the terms of the contributing OpenAddresses source for the state you pulled. They are not one grant.",
+				"Do not use these rows as a mailing list. That restriction is stated on the National Address Database's own page and arises from state statutes rather than from copyright, so no copyright status discharges it.",
+				"Read the terms of the contributing body for the rows you use. The 119 OpenAddresses publishers are not one grant.",
 			],
 			unresolved: [
-				"Which OpenAddresses source supplied each state's situs rows, and what each of those sources requires. A per-state answer needs the contributing source list rather than the bundle.",
+				"What each of the 119 contributing bodies requires. The rows name who published them and nothing here records what each one asks.",
+				"Which state or local body supplied a given National Address Database row. Those rows read `overture:NAD` and go no further, and the database's own page states it is aggregated from state data which is aggregated from local data.",
+				"Which state statutes the mailing-list restriction refers to, and whether any of them reaches a use other than a mailing list.",
 			],
 		},
 	},
