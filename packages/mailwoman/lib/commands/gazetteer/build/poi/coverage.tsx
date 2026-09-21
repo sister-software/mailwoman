@@ -142,7 +142,8 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 		const rows: POISourceRow[] = []
 
 		for await (const row of extractOSMPOIs(pbf, [tagRuleFromOSMTag(options.category, category.osmTag)])) {
-			// extractOSMPOIs yields `country: ""` — a bare OSM feature carries no country property.
+			// extractOSMPOIs yields `country: ""`.
+			// A bare OSM feature carries no country property.
 			rows.push({ ...row, country })
 		}
 

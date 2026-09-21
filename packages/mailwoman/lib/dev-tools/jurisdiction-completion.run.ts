@@ -126,8 +126,8 @@ const byCountry = new Map(report.countries.map((c) => [c.country, c]))
  * and a system serves several countries.
  *
  * `us` covers US; `gb` covers GB.
- * No system currently spans more than its own code, so the lookup is the lower-cased code —
- * when one does, this is the line that has to learn about it.
+ * No system currently spans more than its own code, so the lookup is the lower-cased code.
+ * When one does, this is the line that has to learn about it.
  */
 const hasConventions = (code: string): boolean =>
 	Object.hasOwn(ADDRESS_SYSTEM_CONVENTIONS, code.toLowerCase() as keyof typeof ADDRESS_SYSTEM_CONVENTIONS)
@@ -166,8 +166,7 @@ const DIMENSIONS: ReadonlyArray<{ name: string; held: (r: JurisdictionRow) => bo
 	{ name: "renders — codex layout", held: (r) => r.layout },
 	{ name: "resolves — gazetteer places > 0", held: (r) => r.gazetteerPlaces > 0 },
 	{ name: "parses — trains on corpus rows", held: (r) => r.trains },
-	// Admission is part of the predicate. Street rows the config does not admit train nothing, and reporting them
-	// as held would put this row above the one it depends on.
+	// Admission is part of the predicate. Street rows the config does not admit train nothing, and reporting them as held would put this row above the one it depends on.
 	{ name: "parses streets — street-labeled rows", held: (r) => r.trains && r.corpusStreetRows > 0 },
 	{ name: "measured — board rows > 0", held: (r) => r.boardRows > 0 },
 	{ name: "rooftop — obtainable outside the repo", held: (r) => r.geocodeTier === "rooftop-published" },

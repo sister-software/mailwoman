@@ -58,10 +58,14 @@ const { values } = parseArguments({
 		/**
 		 * What the even draw is taken across: `region`, `shape` (the locality name's shape), or `region-shape`.
 		 *
-		 * Region answers #2311's interior spread. Shape answers a different question, and one the region draw cannot:
-		 * measured on `candidate.db`, 34.7% of the 86,063 distinct US locality names end in a USPS street suffix (`Orland
-		 * Park`, `Saxtons River`), while the default US panel draws that shape at 12.8% and the corpus recipe teaches it at
-		 * 9.7%. A rate measured on a draw that under-samples the shape it fails on reports the easy population (#2329).
+		 * Region answers #2311's interior spread.
+		 * Shape answers a different question, and one the region draw cannot: measured on
+		 * `candidate.db`, 34.7% of the 86,063 distinct US locality names end in a USPS
+		 * street suffix (`Orland Park`, `Saxtons River`), while the default US panel draws
+		 * that shape at 12.8% and the corpus recipe teaches it at 9.7%.
+		 *
+		 * A rate measured on a draw that under-samples the shape it fails on reports
+		 * the easy population (#2329).
 		 */
 		stratify: { type: "string", default: "region" },
 	},
@@ -179,11 +183,14 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 		short.push(`${stratum} ${bucket.length}`)
 	}
 
-	// Taking the head of the bucket is a sample ordered by the source, which is postcode order within a state. For a
-	// region stratum that is harmless — the stratum already fixes the state. For a shape stratum it is not: the first
-	// 400 suffix-tail names in US.txt are all Alaskan, so a shape draw taken from the head measures one state per
-	// bucket. A seeded shuffle spreads each shape across the country. The region draw keeps its existing order so the
-	// numbers already published against `us-stratified.jsonl` still describe the panel this writes.
+	// Taking the head of the bucket is a sample ordered by the source, which is postcode order within a state.
+	// For a region stratum that is harmless.
+	// The stratum already fixes the state.
+	// For a shape stratum it is not: the first 400 suffix-tail names in US.txt are all Alaskan,
+	// so a shape draw taken from the head measures one state per bucket.
+	// A seeded shuffle spreads each shape across the country.
+	// The region draw keeps its existing order so the numbers already published against
+	// `us-stratified.jsonl` still describe the panel this writes.
 	const drawn = values.stratify === "region" ? bucket : bucket.toSorted(seededOrder(bucket.length)).slice(0, perRegion)
 
 	for (const triple of drawn.slice(0, perRegion)) {

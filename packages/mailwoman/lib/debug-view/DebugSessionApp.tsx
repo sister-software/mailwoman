@@ -61,9 +61,8 @@ type SessionPhase = "loading" | "ready" | "busy" | "fatal"
 /**
  * What the map pane is looking at.
  *
- * Null state means "follow the result" —
- * {@link resultViewport} re-derives it from the geocode, which is what makes a
- * fresh query re-center without the user pressing anything.
+ * Null state means "follow the result" — {@link resultViewport} re-derives it from the geocode,
+ * which is what makes a fresh query re-center without the user pressing anything.
  */
 interface Viewport {
 	centerLon: number
@@ -85,8 +84,9 @@ interface Resources {
 }
 
 /**
- * One geocode, plus the query text that produced it — `result.input` is the geocoder's
- * own echo, but the input row renders what the user typed.
+ * One geocode, plus the query text that produced it.
+ *
+ * `result.input` is the geocoder's own echo, but the input row renders what the user typed.
  */
 interface SessionRun extends GeocodeRun {
 	input: string
@@ -121,8 +121,9 @@ const PAN_STEP_PIXELS = 12
 const MAX_MERCATOR_LATITUDE = 85.05112878
 
 /**
- * The zoom ceiling used when no tile archive is open — the map pane is a note in that state,
- * so the bound only has to keep the stored viewport sane.
+ * The zoom ceiling used when no tile archive is open.
+ *
+ * The map pane is a note in that state, so the bound only has to keep the stored viewport sane.
  */
 const FALLBACK_MAX_ZOOM = 22
 
@@ -152,9 +153,10 @@ function clampViewport(view: Viewport): Viewport {
 }
 
 /**
- * Shift the center by device pixels AT the current zoom, so a keypress moves the
- * same number of cells whatever the scale — the round trip through world pixels is
- * what converts "6 cells right" into the degrees that means here.
+ * Shift the center by device pixels AT the current zoom, so a keypress moves
+ * the same number of cells whatever the scale.
+ *
+ * The round trip through world pixels is what converts "6 cells right" into the degrees that means here.
  */
 function pannedViewport(view: Viewport, dx: number, dy: number): Viewport {
 	const world = lonLatToWorldPx(view.centerLon, view.centerLat, view.zoom)
@@ -187,8 +189,9 @@ function zoomedViewport(view: Viewport, delta: number, source: TileSource | null
  * and the caller turns it into the fatal phase.
  */
 async function openResources(options: GeocodeCommandOptions): Promise<Resources> {
-	// `trace: true` is the debug view's own opt-in — it provides the evidence rows one
-	// extra decode per input, which no other caller of the session should pay for.
+	// `trace: true` is the debug view's own opt-in.
+	// It provides the evidence rows one extra decode per input, which no other
+	// caller of the session should pay for.
 	const session = await createGeocodeSession({ ...options, trace: true })
 	const tilesPath = await resolveTilesPath(options.tiles)
 
@@ -199,8 +202,8 @@ async function openResources(options: GeocodeCommandOptions): Promise<Resources>
 
 		return { session, source, renderer: new MapRenderer(source), mapNote: null }
 	} catch (error) {
-		// A corrupt or unreadable archive costs the map pane rather than the session —
-		// the parse and the resolution are still the answer the user came for.
+		// A corrupt or unreadable archive costs the map pane rather than the session.
+		// The parse and the resolution are still the answer the user came for.
 		return { session, source: null, renderer: null, mapNote: `tiles unavailable: ${messageOf(error)}` }
 	}
 }
@@ -363,9 +366,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		const violation = debugSizeFloorViolation(size.columns, size.rows)
 
 		if (violation) {
-			// A live terminal below the floor is the user's to fix by resizing — `mapPaneCellSize`'s
-			// row math is already non-positive here, and handing that to `MapRenderer` is the
-			// raw `RangeError` the static path's flag check exists to prevent.
+			// A live terminal below the floor is the user's to fix by resizing.
+			// `mapPaneCellSize`'s row math is already non-positive here, and handing that to
+			// `MapRenderer` is the raw `RangeError` the static path's flag check exists to prevent.
 			setFrame(null)
 			setMapNote(`terminal ${violation}`)
 
@@ -412,8 +415,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 	//#region Input + keys
 
-	// Stable across a keystroke so the memoized input field is, too — it is the one element that has to
-	// re-render when the user types, and a fresh handler identity would drag the whole frame with it.
+	// Stable across a keystroke so the memoized input field is, too.
+	// It is the one element that has to re-render when the user types, and a fresh
+	// handler identity would drag the whole frame with it.
 	const submit = useCallback(
 		(value: string): void => {
 			const query = value.trim()
@@ -432,8 +436,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 					if (requestID !== runRequestRef.current) return
 
 					setRun({ input: query, ...reran })
-					// A new result re-centers the map and re-anchors the output pane. a pan the user
-					// made against the previous answer would otherwise leave the marker off screen.
+					// A new result re-centers the map and re-anchors the output pane.
+					// A pan the user made against the previous answer would otherwise leave the marker off screen.
 					setViewport(null)
 					setScrollOffset(0)
 					setPhase("ready")
@@ -441,7 +445,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 				(error: unknown) => {
 					if (requestID !== runRequestRef.current) return
 
-					// The previous result stays on screen — a failed re-run is a message rather than a reset.
+					// The previous result stays on screen.
+					// A failed re-run is a message rather than a reset.
 					setErrorNote(messageOf(error))
 					setPhase("ready")
 				}
@@ -489,9 +494,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		if (!key.downArrow) return
 
 		// Only the down arrow needs the bound, so only it pays for the list.
-		// Clamped against the pane's own lines and window — the same builder and capacity function
-		// `DebugFrame` renders with, so the scroll can never run past what the pane shows,
-		// and the last page stays full instead of scrolling into empty rows.
+		// Clamped against the pane's own lines and window.
+		// The same builder and capacity function `DebugFrame` renders with, so the scroll can never
+		// run past what the pane shows, and the last page stays full instead of scrolling into empty rows.
 		const lineCount = run
 			? outputLines({
 					result: run.result,
@@ -509,8 +514,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 	useInput(
 		(input, key) => {
-			// Esc quits from anywhere, including the input field — `ink-text-input` ignores it,
-			// so there is no keystroke both handlers want.
+			// Esc quits from anywhere, including the input field.
+			// `ink-text-input` ignores it, so there is no keystroke both handlers want.
 			if (key.escape) {
 				exit()
 

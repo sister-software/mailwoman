@@ -60,7 +60,7 @@ const SitusAttributionManifest: CommandComponent<typeof spec> = ({ options }) =>
 		const outDir = options.outDir ?? dataRootPath("address-points")
 
 		// Canonical per-state databases only: address-points-us-<2-letter-slug>.db.
-		// Excludes county-scoped dev artifacts (e.g. address-points-us-il-cook.db) that
+		// Excludes county-scoped dev artifacts (e.g. Address-points-us-il-cook.db) that
 		// overlap a state database and the CLI never selects.
 		const databaseFiles = (await Globerator.files("db", { cwd: outDir, absolute: false, recursive: false }).toArray())
 			.filter((f) => /^address-points-us-[a-z]{2}\.db$/.test(f))

@@ -45,9 +45,10 @@ export interface MailwomanManifest {
 /**
  * The compiled CLI's entry point, taken from the manifest's own `bin` rather than assembled from segments.
  *
- * Nineteen call sites spelled `workspacePath("mailwoman", "out", "cli.js")`, and every
- * one of them named a file that had moved — a path built from pieces matches no sweep
- * and is checked by nothing until the process fails to start.
+ * Nineteen call sites spelled `workspacePath("mailwoman", "out", "cli.js")`,
+ * and every one of them named a file that had moved.
+ * A path built from pieces matches no sweep and is checked by nothing until the process fails to start.
+ *
  * The manifest already states where the binary is, and that statement is what `npm` installs against.
  */
 export async function mailwomanCLIPath(): Promise<string> {

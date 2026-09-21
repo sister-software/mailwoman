@@ -30,7 +30,8 @@ import { routeCountry } from "#eval-harness/gauntlet/routing"
 export interface GradedSeedCase {
 	seed: SeedCase
 	/**
-	 * The grader's findings. empty is a pass.
+	 * The grader's findings.
+	 * Empty is a pass.
 	 */
 	issues: string[]
 }
@@ -99,7 +100,8 @@ export async function writeSeedCaseFile(cases: readonly SeedCase[], path: PathBu
 }
 
 /**
- * How many failing rows a per-group read prints. the file carries every row's status.
+ * How many failing rows a per-group read prints.
+ * The file carries every row's status.
  */
 export const ISSUES_SHOWN_PER_GROUP = 12
 

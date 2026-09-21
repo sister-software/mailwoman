@@ -18,8 +18,9 @@ interface CommandModule {
  * The compiled command tree, whichever tree this module runs from.
  *
  * The commands are TSX, which Node cannot load from source.
- * Therefore, the router reads `out/commands/` even when the package's `#` imports have
- * handed it the source router — the same reach `geocode-stream.ts` makes for its worker.
+ * Therefore, the router reads `out/commands/` even when the package's `#`
+ * imports have handed it the source router.
+ * The same reach `geocode-stream.ts` makes for its worker.
  *
  * Anchored at the package rather than counted in `..` from this file.
  * The count is a statement about this module's depth, which is not something this

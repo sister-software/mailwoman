@@ -100,8 +100,8 @@ const stringArgs = rawStringArgs as {
  * shared scale puts an area-grade code below the whole `PLACETYPE_FILTER_GROUPS.locality` tier.
  *
  * Migrating changes this eval's verdict on any row that resolves a `localadmin`
- * or `borough`, so it needs that count on this eval's own panel first —
- * a promoted convention does not move on an argument.
+ * or `borough`, so it needs that count on this eval's own panel first.
+ * A promoted convention does not move on an argument.
  */
 const PLACETYPE_RANK: Record<string, number> = {
 	locality: 6,
@@ -168,12 +168,7 @@ async function main() {
 		tier: "server",
 	})
 
-	// #936 option 3 eval legs: `--official-name-exact` flips the official-name sub-tier promotion on
-	// Boolean pin flags via node:util parseArgs (strict off — the string args ride the stringArgs block above).
-	// #895/#718 discipline: the tri-state pins keep eval legs reproducible against pre-flip baselines —
-	// the positive flag pins the behavior on, the `--no-*`/inverse flag pins it off
-	// (the historical config), no flag = the current library default.
-	// Pin explicitly in pre-registered legs.
+	// #936 option 3 eval legs: `--official-name-exact` flips the official-name sub-tier promotion on Boolean pin flags via node:util parseArgs (strict off — the string args ride the stringArgs block above). #895/#718 discipline: the tri-state pins keep eval legs reproducible against pre-flip baselines — the positive flag pins the behavior on, the `--no-*`/inverse flag pins it off (the historical config), no flag = the current library default. Pin explicitly in pre-registered legs.
 	const { values: pins } = parseArguments({
 		options: {
 			// #936: official-language names join the name-exact sub-tier (library default on since 2026-07-03).
@@ -187,21 +182,15 @@ async function main() {
 			// #942: postal-compound recovery (library default on since the 2026-07-03 promote).
 			"postal-compound-recovery": { type: "boolean" },
 			"no-postal-compound-recovery": { type: "boolean" },
-			// #965: apply the same production scoping geocode-core does — the coarse-placer anchorPosterior
-			// re-rank + the #743 hard-country filter — on top of the soft `--default-country`.
-			// Without it the harness overstates the wrong-country p90 tail for namesake
-			// locales (fi 270 km vs production ~3).
+			// #965: apply the same production scoping geocode-core does — the coarse-placer anchorPosterior re-rank + the #743 hard-country filter — on top of the soft `--default-country`. Without it the harness overstates the wrong-country p90 tail for namesake locales (fi 270 km vs production ~3).
 			"hard-country": { type: "boolean" },
-			// #985: comma-separated country codes to ADD to the default hard-country safelist for this run
-			// (e.g. `--hard-country-safelist HU`).
-			// Measures a proposed safelist expansion without touching the production const —
-			// the p90 of a cross-border-tail country should collapse if it's added.
+			// #985: comma-separated country codes to ADD to the default hard-country safelist for this run (e.g. `--hard-country-safelist HU`). Measures a proposed safelist expansion without touching the production const. The p90 of a cross-border-tail country should collapse if it's added.
 			"hard-country-safelist": { type: "string" },
 			// Convention epoch 2026-07-04: locality-first is the default (production's ladder).
 			// This flag reproduces the pre-epoch postcode-point convention for continuity against old dumps only.
 			"prefer-postcode-coord": { type: "boolean" },
-			// Pre-epoch spelling — accepted so in-flight scripts don't silently change
-			// convention. it is the default now, so it's a no-op.
+			// Pre-epoch spelling — accepted so in-flight scripts don't silently change convention.
+			// It is the default now, so it's a no-op.
 			"prefer-locality-coord": { type: "boolean" },
 		},
 		strict: false,
@@ -220,8 +209,9 @@ async function main() {
 	const normalizeCasePin = tri("normalize-case", "raw-case")
 	const postcodeConsistencyPin = pins["postcode-consistency"] === true ? true : undefined
 	const postalCompoundPin = tri("postal-compound-recovery", "no-postal-compound-recovery")
-	// `--default-country none` = truly unscoped resolution (no country prior at all) — the #936
-	// namesake legs need it. an empty string would still be a (falsy, ambiguous) country value.
+	// `--default-country none` = truly unscoped resolution (no country prior at all).
+	// The #936 namesake legs need it.
+	// An empty string would still be a (falsy, ambiguous) country value.
 	const defaultCountryArg = stringArgs["default-country"] || "FR"
 
 	const resolveOpts: {
@@ -239,18 +229,13 @@ async function main() {
 		...(postalCompoundPin !== undefined ? { postalCompoundRecovery: postalCompoundPin } : {}),
 	}
 
-	// #965: when `--hard-country` is set, load the bundled coarse placer and apply the same scoping
-	// geocode-core does per row (anchorPosterior + anchorWeight + the #743 hard-country filter).
-	// This makes the harness's absolute p90s production-equivalent for namesake locales.
-	// `hardCountryFor` is a no-op when defaultCountry is set (the caller's country wins),
-	// so the hard filter only bites the unscoped `--default-country none` legs —
-	// exactly matching geocode-core's precedence.
+	// #965: when `--hard-country` is set, load the bundled coarse placer and apply the same scoping geocode-core does per row (anchorPosterior + anchorWeight + the #743 hard-country filter). This makes the harness's absolute p90s production-equivalent for namesake locales. `hardCountryFor` is a no-op when defaultCountry is set (the caller's country wins), so the hard filter only bites the unscoped `--default-country none` legs — exactly matching geocode-core's precedence.
 	const hardCountryPin = pins["hard-country"] === true
 	const placeCountry = hardCountryPin ? await loadDefaultPlaceCountry() : null
 	const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
-	// keep in sync with geocode-core.ts
-	// #985: default safelist + any `--hard-country-safelist` additions (experiment without editing the const).
+	// keep in sync with geocode-core.ts #985: default safelist + any `--hard-country-safelist`
+	// additions (experiment without editing the const).
 	const extraSafelist = (pins["hard-country-safelist"] as string | undefined)
 		?.split(",")
 		.map((c) => c.trim().toUpperCase())
@@ -311,10 +296,7 @@ async function main() {
 			}
 		}
 
-		// #965: mirror geocode-core's per-row scoping when `--hard-country` — coarse placer → anchorPosterior
-		// re-rank (+ hard-country filter on the unscoped legs).
-		// The placer abstains on a bare-locality tree (same isBareLocalityTree guard geocode-core uses),
-		// and hardCountryFor no-ops when defaultCountry set.
+		// #965: mirror geocode-core's per-row scoping when `--hard-country` — coarse placer → anchorPosterior re-rank (+ hard-country filter on the unscoped legs). The placer abstains on a bare-locality tree (same isBareLocalityTree guard geocode-core uses), and hardCountryFor no-ops when defaultCountry set.
 		let rowResolveOpts = resolveOpts
 
 		if (placeCountry && !isBareLocalityTree(tree)) {

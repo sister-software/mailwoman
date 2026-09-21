@@ -134,8 +134,8 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 
 	// The sampler takes the raw state modulo the bound rather than scaling a float,
 	// which is why this reaches for `shuffleBy` and not `shuffleWith`.
-	// Both are the same walk. the published conformal thresholds were selected under
-	// this sampler, so it stays exactly as it is.
+	// Both are the same walk.
+	// The published conformal thresholds were selected under this sampler, so it stays exactly as it is.
 	shuffleBy(out, (bound) => step() % bound)
 
 	return out
@@ -161,9 +161,10 @@ interface StreetHit {
 }
 
 /**
- * Kept local rather than tree-hits' `findAddressPointHit` / `findInterpolatedHit`: those answer
- * only a coordinate, and this walk also needs the stamped `resolution_tier` and the interpolation
- * `uncertainty_m` to price the claimed radius — neither of which the shared readers carry.
+ * Kept local rather than tree-hits' `findAddressPointHit` / `findInterpolatedHit`:
+ * those answer only a coordinate, and this walk also needs the stamped `resolution_tier`
+ * and the interpolation `uncertainty_m` to price the claimed radius.
+ * Neither of which the shared readers carry.
  */
 function findStreetHit(tree: AddressTree): StreetHit | null {
 	for (const n of walkNodes(tree.roots)) {
@@ -211,8 +212,9 @@ interface HoldoutRow {
 /**
  * Build the parse → resolve cascade this calibration measures.
  *
- * Mirrors `oa-resolver-eval.ts`'s construction exactly — the whole point of a conformal threshold is
- * that it was fitted against the same stack that will later apply it, so the two must not drift.
+ * Mirrors `oa-resolver-eval.ts`'s construction exactly.
+ * The whole point of a conformal threshold is that it was fitted against the same
+ * stack that will later apply it, so the two must not drift.
  */
 async function buildCascade(paths: {
 	modelPath: string
@@ -363,16 +365,16 @@ async function main(): Promise<void> {
 		byTier[r.tier].push(r)
 	}
 
-	// Median calibrated radius = median(claimedRadiusM) × Q  per tier on all resolved rows
+	// Median calibrated radius = median(claimedRadiusM) × Q per tier on all resolved rows
 	const tierStats = tiers.map((t) => {
 		const innerRows = byTier[t]
 
 		if (!innerRows.length)
 			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
 
-		// innerRows rather than the outer holdout `rows` — the previous lax scripts tsconfig
-		// let the wrong array through and the per-tier medians silently printed NaN
-		// (the headline Q/coverage were computed on the correct splits. only this breakdown was dead).
+		// innerRows rather than the outer holdout `rows`.
+		// The previous lax scripts tsconfig let the wrong array through and the per-tier medians silently printed
+		// NaN (the headline Q/coverage were computed on the correct splits. Only this breakdown was dead).
 		const claimedMeds = median(innerRows.map((r) => r.claimedRadiusM)) ?? Number.NaN
 		const errMeds = median(innerRows.map((r) => r.errorM)) ?? Number.NaN
 
@@ -482,7 +484,7 @@ async function main(): Promise<void> {
 	console.log(hr)
 
 	// Print the concise three-line calibration summary.
-	// Characterise the dominant tier (address_point here. interp may lack sufficient rows).
+	// Characterise the dominant tier (address_point here. Interp may lack sufficient rows).
 	const situsTC = tierConformal.find((x) => x.tier === "address_point")!
 	const interpTC = tierConformal.find((x) => x.tier === "interpolated")!
 

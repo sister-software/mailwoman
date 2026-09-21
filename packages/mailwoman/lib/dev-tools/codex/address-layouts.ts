@@ -91,7 +91,7 @@ const HAND_AUTHORED = new Set(Object.keys(ADDRESS_LAYOUTS))
  * Read off the skeleton rather than from a country list.
  * The generator runs before the layout it is writing exists, so it cannot consult
  * `@mailwoman/codex`'s `LARGEST_FIRST_SYSTEMS`, which derives from those layouts.
- * the `fmt` in hand carries the same statement.
+ * The `fmt` in hand carries the same statement.
  *
  * A hand-kept list here held JP, CN, TW and KR while the dataset printed largest-first for IR,
  * KP and KZ as well, and those three took a trailing country line.
@@ -107,9 +107,9 @@ function printsLargestFirst(lines: readonly string[]): boolean {
  * Render one `fmt` into the template source a layout is written as, or null
  * when it names no field this project models.
  *
- * Every slot the source names is added to `slots`, so the emitted file destructures
- * exactly what it uses — a destructured slot no layout reaches is an unused binding,
- * which the linter reports against a file nobody edits.
+ * Every slot the source names is added to `slots`, so the emitted file destructures exactly what it uses.
+ * A destructured slot no layout reaches is an unused binding, which the linter
+ * reports against a file nobody edits.
  */
 function layoutSource(
 	fmt: string,
@@ -170,10 +170,10 @@ function layoutSource(
 	//
 	// "Above" is the envelope's sense — nearer the street than the locality is — and
 	// which side of the locality line that is depends on the skeleton's direction.
-	// A smallest-first skeleton prints the street before the locality, so the line goes before
-	// the locality. a largest-first one prints the locality before the street, so the line goes
-	// after it — and after the whole line, since a skeleton like `%S%C` keeps the region and the
-	// locality together, and a district spliced ahead of that line would print above the region.
+	// A smallest-first skeleton prints the street before the locality, so the line goes before the locality.
+	// A largest-first one prints the locality before the street, so the line goes after it —
+	// and after the whole line, since a skeleton like `%S%C` keeps the region and the locality
+	// together, and a district spliced ahead of that line would print above the region.
 	// A skeleton that puts the street and the locality on one line (`%A %C`) takes the
 	// slot inside that line, between the two, for the same reason.
 	if (!NO_SUB_LOCALITY_LINE_COUNTRIES.has(code) && !named.has("dependent_locality")) {
@@ -201,7 +201,8 @@ function layoutSource(
 	// The country line is authored rather than transcribed: libaddressinput leaves `%R` out
 	// of nearly every `fmt` because its consumers add the destination country themselves.
 	// It closes a small-first address and opens a large-first one, and it renders only
-	// when a caller supplies the name — an intra-country row carries none and prints none.
+	// when a caller supplies the name.
+	// An intra-country row carries none and prints none.
 	if (!named.has("country")) {
 		named.add("country")
 

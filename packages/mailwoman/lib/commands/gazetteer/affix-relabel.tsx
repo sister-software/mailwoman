@@ -70,10 +70,7 @@ const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 			source: "@mailwoman/codex us/street-directional + us/street-suffix.json (USPS Pub 28 + name-prone curation)",
 			directionals,
 			suffixes,
-			// Licenses the positional split of a >=2-word name whose final word is merely
-			// name-prone-shaped when a true suffix follows ('Menlo Park | Road') — the #1569
-			// five-whys countermeasure.
-			// Loaders reading a v1 artifact (key absent) keep the old blanket rejection.
+			// Licenses the positional split of a >=2-word name whose final word is merely name-prone-shaped when a true suffix follows ('Menlo Park | Road') — the #1569 five-whys countermeasure. Loaders reading a v1 artifact (key absent) keep the old blanket rejection.
 			name_prone: [...NAME_PRONE_US_SUFFIXES].toSorted(),
 		}
 

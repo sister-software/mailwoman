@@ -35,9 +35,10 @@ export const CLI_PATH = resolvePackagePath("mailwoman", "out", "cli", "index.js"
 /**
  * The user-facing commands a man reader cares about.
  *
- * `dev`, `clients`, and the model-work groups (`corpus`, `eval`, `gazetteer`, `release`,
- * `coverage`, `tiles`) are maintainer surfaces — their help stays available via `--help`;
- * putting every internal group in the manual buries the six commands an installer actually runs.
+ * `dev`, `clients`, and the model-work groups (`corpus`, `eval`, `gazetteer`,
+ * `release`, `coverage`, `tiles`) are maintainer surfaces.
+ * Their help stays available via `--help`; putting every internal group in the
+ * manual buries the six commands an installer actually runs.
  */
 const USER_COMMANDS = ["parse", "geocode", "autocomplete", "doctor", "data", "serve"] as const
 
@@ -48,8 +49,8 @@ async function help(cliPath: string, args: string[]): Promise<string> {
 /**
  * Escape troff-significant characters.
  *
- * Leading dots/quotes control troff. hyphens in option names must be literal `\-`
- * so `man` renders ascii hyphens (grep-able flags).
+ * Leading dots/quotes control troff.
+ * Hyphens in option names must be literal `\-` so `man` renders ascii hyphens (grep-able flags).
  */
 function troffEscape(line: string): string {
 	const escaped = line.replaceAll("\\", "\\\\").replaceAll("-", "\\-")
@@ -58,8 +59,10 @@ function troffEscape(line: string): string {
 }
 
 /**
- * A help screen as preformatted man content — the CLI's own layout is already column-aligned,
- * so the manual preserves it verbatim inside a no-fill block rather than re-flowing it.
+ * A help screen as preformatted man content.
+ *
+ * The CLI's own layout is already column-aligned, so the manual preserves it verbatim
+ * inside a no-fill block rather than re-flowing it.
  */
 function preformatted(text: string): string {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a help screen is a few dozen bounded lines
@@ -74,15 +77,15 @@ function preformatted(text: string): string {
 /**
  * Render the whole page from a CLI binary's help tree.
  *
- * Pure with respect to the filesystem — the write happens only in
- * {@link generateManPage}, so the freshness test can render and compare without touching the tree.
+ * Pure with respect to the filesystem.
+ * The write happens only in {@link generateManPage}, so the freshness test can render
+ * and compare without touching the tree.
  */
 export async function renderManPage(cliPath: string = CLI_PATH): Promise<string> {
 	const version = (await runFile("node", [cliPath, "--version"])).stdout.trim()
 
 	const sections: string[] = [
-		// No date field on purpose: the page regenerates from the help tree, and a wall-clock stamp
-		// would make the freshness test fail on every calendar day rather than on real drift.
+		// No date field on purpose: the page regenerates from the help tree, and a wall-clock stamp would make the freshness test fail on every calendar day rather than on real drift.
 		`.TH MAILWOMAN 1 "" "mailwoman ${version}" "User Commands"`,
 		".SH NAME",
 		"mailwoman \\- calibrated, retrieval\\-augmented postal\\-address parser and geocoder",

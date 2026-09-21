@@ -305,8 +305,8 @@ async function recordedUnder(): Promise<{ benchmarkID: string; withheldGoldRule:
 
 	return {
 		benchmarkID: receipt?.benchmarkID ?? "(no receipt beside these results)",
-		// A fixture recorded before the rule was named carries no field. that is the v1 rule,
-		// and saying so is not the same as saying nothing.
+		// A fixture recorded before the rule was named carries no field.
+		// That is the v1 rule, and saying so is not the same as saying nothing.
 		withheldGoldRule: receipt?.withheldGoldRule ?? "concorded-ids (receipt predates the field)",
 	}
 }
@@ -478,8 +478,7 @@ const KNOB_ARMS: Array<[string, ResolveOpts]> = [
 	["minWinningScore 5", { minWinningScore: 5 }],
 	["spanRescore off", { spanRescore: false }],
 	["minWinningScore 4 + spanRescore off", { minWinningScore: 4, spanRescore: false }],
-	// The narrower refusal beside the blanket one: span rescore still runs, and a sub-span that drops a word of the
-	// name is refused while one that drops a qualifier, a number or a street the parse read is kept.
+	// The narrower refusal beside the blanket one: span rescore still runs, and a sub-span that drops a word of the name is refused while one that drops a qualifier, a number or a street the parse read is kept.
 	["spanRescore context remainder", { spanRescoreRequireContextRemainder: true }],
 ]
 
@@ -506,9 +505,9 @@ async function knobPhase(): Promise<void> {
 
 	// A raised floor changes what the walk asks next, so each arm loses a different
 	// set of rows to replay misses.
-	// Scoring every arm over its own survivors would compare rates whose
-	// denominators moved. this intersection is what makes the columns comparable,
-	// and the count of rows it drops is reported beside them.
+	// Scoring every arm over its own survivors would compare rates whose denominators moved.
+	// This intersection is what makes the columns comparable, and the count of
+	// rows it drops is reported beside them.
 	const errored = new Set(
 		[...byArm.values()].flatMap((results) => results.filter((result) => result.error).map((result) => result.rowID))
 	)

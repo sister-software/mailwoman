@@ -20,9 +20,9 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 // The CLI compiles ~16 MB of source per invocation, and the loader/compiler/GC are ~85% of a `--help` run.
 // V8's on-disk code cache removes most of it: `--help` 1.34 s → 0.99 s, `parse` 2.95 s → 2.63 s.
-// The cache is content-addressed and self-invalidating, so a stale entry is not a
-// failure mode. an unwritable cache directory is, and a CLI that cannot cache its
-// compilation is a slow CLI rather than a broken one.
+// The cache is content-addressed and self-invalidating, so a stale entry is not a failure mode.
+// An unwritable cache directory is, and a CLI that cannot cache its compilation
+// is a slow CLI rather than a broken one.
 try {
 	enableCompileCache()
 } catch {}
@@ -103,8 +103,8 @@ const exitCode = await (rootVersionRequest ? printVersion() : dispatchCommand())
 // The notice is the last thing written, for every command and every exit code,
 // and it never changes the exit code: a failure to build it is reported on stderr
 // and the command's own result is returned.
-// Only the cluster primary prints it — `mailwoman serve` forks workers that run this
-// same file, and one notice per process would be one per CPU.
+// Only the cluster primary prints it.
+// `mailwoman serve` forks workers that run this same file, and one notice per process would be one per CPU.
 // A builtin reached through `process.getBuiltinModule` keeps this file at its one static import.
 if (process.getBuiltinModule("node:cluster").isPrimary) {
 	try {

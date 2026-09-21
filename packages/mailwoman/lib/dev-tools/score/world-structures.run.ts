@@ -8,9 +8,9 @@
  * selected by `source`, through `createRuntimePipeline`.
  * This measures the parse only.
  *
- * The coordinate, tier and place-identity checks those rows also carry are graded by
- * the full gauntlet runner against the ~9 GB database set. nothing here touches them,
- * so a clean score in this report is not a claim that the row resolves.
+ * The coordinate, tier and place-identity checks those rows also carry are graded
+ * by the full gauntlet runner against the ~9 GB database set.
+ * Nothing here touches them, so a clean score in this report is not a claim that the row resolves.
  *
  * Every country in this batch grades through the en-US base model —
  * none of the eleven has a shipped locale overlay.

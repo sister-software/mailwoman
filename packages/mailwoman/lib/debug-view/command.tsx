@@ -44,11 +44,11 @@ import { DebugSessionApp } from "./DebugSessionApp.tsx"
 //#region Static (non-TTY) path
 
 /**
- * Geocode `input` once and render exactly one {@link DebugFrame} to a string —
- * the whole non-TTY `--debug` answer.
+ * Geocode `input` once and render exactly one {@link DebugFrame} to a string.
+ * The whole non-TTY `--debug` answer.
  *
  * The tile archive is opened independently of the geocode session
- * (the session owns the gazetteer/database handles. the archive is a debug-view-only concern)
+ * (the session owns the gazetteer/database handles. The archive is a debug-view-only concern)
  * and both are released in `finally`, so a mid-render throw — a corrupt tiles archive,
  * say — still closes every handle.
  *
@@ -158,9 +158,10 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
  * down the tty per keystroke at 120×36, against 0.33 KB with it on**, all of it truecolor
  * braille that the emulator (and, over SSH, the wire) has to chew through.
  *
- * And Ink has no alternate-screen buffer unless it is asked for one, which is what forced
- * the hand-rolled escapes this component's callee used to carry — a frame exactly as tall
- * as the terminal makes Ink emit `\x1b[3J`, and that wipes the user's scrollback (#1577).
+ * And Ink has no alternate-screen buffer unless it is asked for one, which is what
+ * forced the hand-rolled escapes this component's callee used to carry.
+ * A frame exactly as tall as the terminal makes Ink emit
+ * `\x1b[3J`, and that wipes the user's scrollback (#1577).
  *
  * Ink keeps one renderer per stdout (`ink/render.js`'s `getInstance`) and warns,
  * then reuses the old one, if a second `render()` arrives for the same stream.

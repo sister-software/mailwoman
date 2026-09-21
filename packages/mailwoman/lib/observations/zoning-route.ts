@@ -80,8 +80,9 @@ export interface ZoningDesignationObservation {
 	/**
 	 * Every polygon containing the point.
 	 *
-	 * Usually one. several where a Local Area Plan overlays a Development Plan over
-	 * the same ground, which the publisher issues as two rows.
+	 * Usually one.
+	 * Several where a Local Area Plan overlays a Development Plan over the same ground,
+	 * which the publisher issues as two rows.
 	 */
 	designations: ZoningDesignation[]
 	containment: ZoningContainmentPath
@@ -111,8 +112,8 @@ export interface ZoningDesignationObservation {
 /**
  * Why a coordinate produced no observation.
  *
- * Every one of these is a silence the route owes an account of — an unnamed silence
- * and a silence for the right reason read identically on a receipt.
+ * Every one of these is a silence the route owes an account of.
+ * An unnamed silence and a silence for the right reason read identically on a receipt.
  */
 export const ZONING_REFUSALS = [
 	/**
@@ -120,9 +121,7 @@ export const ZONING_REFUSALS = [
 	 */
 	"no_coordinate",
 	/**
-	 * No adopted plan in this product assigns a zoning designation here. Not an absence claim: the location may be
-	 * outside any plan area, inside one on land the plan does not zone, in a jurisdiction that has never zoned, or in one
-	 * whose records are not published — and the product cannot tell those apart.
+	 * No adopted plan in this product assigns a zoning designation here. Not an absence claim: the location may be outside any plan area, inside one on land the plan does not zone, in a jurisdiction that has never zoned, or in one whose records are not published — and the product cannot tell those apart.
 	 */
 	"no_designation_here",
 ] as const
@@ -143,8 +142,8 @@ export interface ZoningDesignationRoute extends Disposable {
 	 *
 	 * Pure with respect to the pipeline: it reads the layer and returns a record.
 	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` —
-	 * a caller that had to narrow them first would be narrowing on this route's behalf,
+	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon`.
+	 * A caller that had to narrow them first would be narrowing on this route's behalf,
 	 * and a coordinate-less answer is a named refusal here rather than a caller's problem.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => ZoningDecision
@@ -163,9 +162,11 @@ export interface ZoningDesignationRouteOptions {
 /**
  * Build the route against one sealed layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused by the
- * reader's own constructor — a manifest naming a different layer, a coverage table with no rows,
- * an empty jurisdiction table, and above all a coverage row whose basis would support an exclusion.
+ * Everything that would make the route answer a well-formed wrong thing is
+ * refused by the reader's own constructor.
+ * A manifest naming a different layer, a coverage table with no rows, an empty jurisdiction
+ * table, and above all a coverage row whose basis would support an exclusion.
+ *
  * That last one would otherwise present as a route reporting unmapped
  * and unzoned land alike as free of restriction.
  */

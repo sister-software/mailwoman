@@ -132,7 +132,8 @@ interface SampleOptions {
 	 * Municipality-ordered dumps (OA CZ/PL) therefore concentrate every bucket on one city,
 	 * which under-disperses the localities the wrong-city metric needs (#291).
 	 *
-	 * Reservoir mode costs a full pass. selection stays deterministic per seed and input order.
+	 * Reservoir mode costs a full pass.
+	 * Selection stays deterministic per seed and input order.
 	 */
 	reservoir: boolean
 	rng: SeededRandom

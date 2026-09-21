@@ -45,10 +45,9 @@ export type ParsedCommandComponent<Options = Record<string, never>, Args extends
 /**
  * A command component whose options are derived from the command's own `spec`.
  *
- * This is the annotation a command wants: naming `typeof spec` leaves the
- * flags as the one declaration, where
- * {@linkcode ParsedCommandComponent} takes an options type a command had to write beside its spec and keep in agreement
- * with it.
+ * This is the annotation a command wants: naming `typeof spec` leaves the flags as the
+ * one declaration, where {@linkcode ParsedCommandComponent} takes an options type a
+ * command had to write beside its spec and keep in agreement with it.
  * `ParsedCommandComponent` stays for a command that names its options type for another reason.
  */
 export type CommandComponent<Spec extends CommandSpec, Args extends unknown[] = string[]> = ParsedCommandComponent<
@@ -68,9 +67,10 @@ export type CommandTaskState<T> =
 	| { status: "error"; message: string }
 
 /**
- * Run a command's one-shot async task and own the exit-code discipline: rejection
- * renders the error state and exits 1. resolution exits with `exitCode(result)`
- * (default 0) — always after the final frame committed.
+ * Run a command's one-shot async task and own the exit-code discipline:
+ * rejection renders the error state and exits 1.
+ *
+ * Resolution exits with `exitCode(result)` (default 0) — always after the final frame committed.
  *
  * Replaces the copy-pasted useEffect/useState/setImmediate dance in every command.
  */
@@ -101,8 +101,8 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 /**
  * The lifecycle of a {@linkcode lazyComponent}'s import.
  *
- * Deliberately the same three states as
- * {@linkcode CommandTaskState}: a deferred import is a one-shot async task that happens to resolve to a component.
+ * Deliberately the same three states as {@linkcode CommandTaskState}: a deferred import
+ * is a one-shot async task that happens to resolve to a component.
  */
 type LazyComponentState<P extends object> =
 	| { status: "loading" }
@@ -123,14 +123,15 @@ type LazyComponentState<P extends object> =
  *
  * A rejected import is a command failure, and it takes {@linkcode useCommandTask}'s exact interface:
  * the message renders red and the process exits 1 from a `setImmediate`, after the frame has committed.
- * That matters here more than for an ordinary task — the usual reason a deferred
- * import rejects is a missing optional peer dependency, and the alternative is an
- * unhandled rejection: node's default handler prints a react-reconciler stack over
- * whatever the command had drawn and takes the exit code with it.
+ * That matters here more than for an ordinary task.
+ *
+ * The usual reason a deferred import rejects is a missing optional peer dependency,
+ * and the alternative is an unhandled rejection: node's default handler prints a
+ * react-reconciler stack over whatever the command had drawn and takes the exit code with it.
  *
  * `React.lazy`/`Suspense` would express the happy path too, but its fallback lands
- * in the same erase path and Ink has no error boundary — a throw in render escapes
- * `render()` itself, which is the reconciler stack this exists to avoid.
+ * in the same erase path and Ink has no error boundary.
+ * A throw in render escapes `render()` itself, which is the reconciler stack this exists to avoid.
  */
 export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>): React.FC<P> {
 	return function LazyComponent(props: P) {
@@ -185,10 +186,10 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
  * `geocode --format json` on "Toledo Ohio" wrapped `intent_markers[].message` at 80 cols).
  * Machine formats (json/jsonld/xml/tuple, `--json` flags) must never pass through `<Text>`.
  *
- * Returns `null` so the caller can `return writeRawStdout(result)` from the done branch.
- * Safe to call from render:
- * {@linkcode useCommandTask} renders the done frame exactly once before its `process.exit`. Same pattern as
- * `commands/gazetteer/inspect/graph.tsx`.
+ * @returns `null` so the caller can `return writeRawStdout(result)` from the done branch.
+ *   Safe to call from render: {@linkcode useCommandTask} renders the done frame
+ *   exactly once before its `process.exit`.
+ *   Same pattern as `commands/gazetteer/inspect/graph.tsx`.
  */
 export function writeRawStdout(text: string | object): null {
 	const normalized = typeof text === "string" ? text + "\n" : prettyJSON(text)
@@ -237,8 +238,8 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
  * Parse a `--roles a,b,c` flag into validated {@link PlacetypeRole}s, or `undefined`
  * when the flag is absent (which every caller reads as "all roles").
  *
- * Rejects an unknown role with {@link CommandError} rather than silently filtering it —
- * a typo in a role name would otherwise produce an empty, entirely plausible-looking result.
+ * Rejects an unknown role with {@link CommandError} rather than silently filtering it.
+ * A typo in a role name would otherwise produce an empty, entirely plausible-looking result.
  */
 export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 	if (!raw) return undefined
@@ -257,8 +258,9 @@ export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined
 }
 
 /**
- * Write one progress line to stderr — the `report` callback every long-running
- * command threads through its pipeline.
+ * Write one progress line to stderr.
+ *
+ * The `report` callback every long-running command threads through its pipeline.
  *
  * Stderr, so stdout stays machine-readable.
  */
@@ -286,9 +288,12 @@ export interface CommandTaskResultProps<T> {
 }
 
 /**
- * The standard ✓/✗ tail of a one-shot command: red `✗ message` on error, green `✓ …` on completion, and the `running`
- * node (or nothing) in between. A command with a custom done frame guards with `if (state.status !== "done") return
- * <CommandTaskResult state={state} … />` and renders its own done branch below.
+ * The standard ✓/✗ tail of a one-shot command: red `✗ message` on error, green `✓ …`
+ * on completion, and the `running` node (or nothing) in between.
+ *
+ * A command with a custom done frame guards with
+ * `if (state.status !== "done") return <CommandTaskResult state={state} … />`
+ * and renders its own done branch below.
  */
 export function CommandTaskResult<T>({ state, running, done }: CommandTaskResultProps<T>): React.ReactElement | null {
 	if (state.status === "running") {
@@ -340,13 +345,13 @@ export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[
  * military rows and none of its tuple-driven ones; `Number("0") || 1` read it as one
  * and the recipe output came out at 10,558 rows against the 5,279 requested.
  *
- * A typo is refused for the same reason rather than falling back — a count nobody
- * asked for is a row count nobody chose.
+ * A typo is refused for the same reason rather than falling back.
+ * A count nobody asked for is a row count nobody chose.
  */
 export function countOption(raw: string | undefined, fallback: number): number {
 	if (raw == null) return fallback
 
-	// `Number("")` and `Number("  ")` are zero, so a blank flag value would switch the variants off with
+	// `Number("")` and `Number(" ")` are zero, so a blank flag value would switch the variants off with
 	// no one asking — the same defect the falsy-zero idiom caused, arriving from the other side.
 	const parsed = raw.trim() === "" ? Number.NaN : Number(raw)
 
@@ -358,8 +363,7 @@ export function countOption(raw: string | undefined, fallback: number): number {
 }
 
 /**
- * {@linkcode extractDelimited} as numbers — resolution and size flags. Blank entries are dropped before conversion, so a
- * trailing comma is not a NaN.
+ * {@linkcode extractDelimited} as numbers — resolution and size flags. Blank entries are dropped before conversion, so a trailing comma is not a NaN.
  */
 export function splitNumberList(raw: string | undefined): number[] {
 	return extractDelimited(raw).map(Number)
@@ -415,9 +419,11 @@ export interface FormatLayerVerificationOptions<Row> {
 }
 
 /**
- * The two verification summary lines every polygon-layer build prints, plus the per-row
- * disagreement dump to stderr — a disagreement count is not actionable on its own. the rows are,
- * and the first thing anyone does with a non-zero count is ask which points.
+ * The two verification summary lines every polygon-layer build prints,
+ * plus the per-row disagreement dump to stderr.
+ *
+ * A disagreement count is not actionable on its own.
+ * The rows are, and the first thing anyone does with a non-zero count is ask which points.
  */
 export function formatLayerVerification<Row extends { outcome: string; label: string }>(
 	verified: LayerVerificationLike<Row>,
@@ -441,9 +447,10 @@ export function formatLayerVerification<Row extends { outcome: string; label: st
 }
 
 /**
- * Run a child process with inherited stdio — the child's own output is the progress log — and throw
- * {@linkcode CommandError} on a launch failure or nonzero exit. `echo` prints the invocation first; `cwd` runs the child
- * elsewhere.
+ * Run a child process with inherited stdio — the child's own output is the progress log —
+ * and throw {@linkcode CommandError} on a launch failure or nonzero exit.
+ *
+ * `echo` prints the invocation first; `cwd` runs the child elsewhere.
  */
 export function runProcessOrFail(
 	cmd: string,
@@ -477,7 +484,8 @@ export function runProcessOrFail(
  * - Weights present but the encoder failed to load (corrupt / partial bundle, a bad explicit path)
  *   → the underlying error is surfaced rather than swallowed.
  *
- * `onDegrade` receives the warning line. callers send it to stderr so piped stdout parsing is unaffected.
+ * `onDegrade` receives the warning line.
+ * Callers send it to stderr so piped stdout parsing is unaffected.
  */
 export async function loadClassifierTolerant(
 	locale: string,

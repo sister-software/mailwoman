@@ -113,9 +113,10 @@ for (const locale of locales) {
 /**
  * `arm → locale → pipeline`.
  *
- * The FST is chosen per (arm, locale) because `fst-<locale>.bin` is country-scoped. a locale with
- * no binary in an arm's dir gets `false`, which is the same state as the `none` arm for that locale —
- * recorded rather than papered over, since it is why an out-of-reach row cannot discriminate.
+ * The FST is chosen per (arm, locale) because `fst-<locale>.bin` is country-scoped.
+ * A locale with no binary in an arm's dir gets `false`, which is the same
+ * state as the `none` arm for that locale — recorded rather than papered over,
+ * since it is why an out-of-reach row cannot discriminate.
  */
 const pipelines = new Map<string, Map<string, ReturnType<typeof createRuntimePipeline>>>()
 
@@ -198,9 +199,10 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 			: errKm !== null && errKm <= c.expectToleranceM / 1000
 
 	// §6 I2: the gauntlet stores these and never checks them.
-	// Checked here, against any resolved node — the expected place may be an ancestor
-	// of the most-specific answer (a locality row whose tree also resolved a region),
-	// so requiring it at `best` would fail rows that are in fact correct.
+	// Checked here, against any resolved node.
+	// The expected place may be an ancestor of the most-specific answer
+	// (a locality row whose tree also resolved a region), so requiring it at `best`
+	// would fail rows that are in fact correct.
 	let placeOK: boolean | null = null
 
 	if (c.expectPlaceID !== undefined) {

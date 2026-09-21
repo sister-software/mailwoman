@@ -1,8 +1,9 @@
 /**
  * The unit-designator ablation #2298 is decided on, with the private-mailbox arm beside it.
  *
- * One token isolates the defect: `301 College Ave Apt 101, Athens, GA 30601` reaches the rooftop and `301 College Ave
- * #101, Athens, GA 30601` answers a city centroid, because the word designators are attested and the bare `#` is not.
+ * One token isolates the defect: `301 College Ave Apt 101, Athens, GA 30601` reaches
+ * the rooftop and `301 College Ave #101, Athens, GA 30601` answers a city centroid,
+ * because the word designators are attested and the bare `#` is not.
  * The rows below hold everything else constant and vary only the designator.
  *
  * The private-mailbox ARM is not decoration.
@@ -45,8 +46,9 @@ const ROOFTOP_RADIUS_M = 100
  * The six ablation rows, plus the three the issue's prose names as ruling out tokenization.
  *
  * `expectUnit` is what the row's designator should land in.
- * Null means the row carries no unit at all, which is the control — it is the same
- * address without one, and it is what proves the rooftop is reachable.
+ * Null means the row carries no unit at all, which is the control.
+ *
+ * It is the same address without one, and it is what proves the rooftop is reachable.
  */
 const UNIT_ROWS: ReadonlyArray<{ input: string; expectUnit: string | null; note: string }> = [
 	{ input: "301 College Ave, Athens, GA 30601", expectUnit: null, note: "control — no unit" },
@@ -73,9 +75,8 @@ const PMB_ROWS: ReadonlyArray<{ input: string; expectPOBox: string }> = [
 
 const METRES_PER_KM = 1000
 
-// A probe written to price a corpus change has to be able to point at the model
-// that change produced. without this it can only ever grade the installed one,
-// which is the arm the change is measured against.
+// A probe written to price a corpus change has to be able to point at the model that change produced.
+// Without this it can only ever grade the installed one, which is the arm the change is measured against.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const unitReport = []
 const pmbReport = []

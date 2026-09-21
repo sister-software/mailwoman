@@ -74,8 +74,9 @@ using db = new DatabaseClient<WOFDatabase>(String(args.admin ?? dataRootPath("wo
 /**
  * The comparison surface.
  *
- * Diacritic-folded and case-folded, but not emptied for a non-Latin name the way the resolver's `foldName`
- * is — a Han or Cyrillic locality would otherwise fold equal to its parent by both being empty.
+ * Diacritic-folded and case-folded, but not emptied for a non-Latin name the
+ * way the resolver's `foldName` is.
+ * A Han or Cyrillic locality would otherwise fold equal to its parent by both being empty.
  */
 const nameKey = (name: string): string =>
 	name
@@ -96,7 +97,8 @@ interface Row {
 	/**
 	 * Localities of this name in this country.
 	 *
-	 * High means a common village name. a handful means a real settlement and its namesakes.
+	 * High means a common village name.
+	 * A handful means a real settlement and its namesakes.
 	 */
 	nameBearers: number
 }

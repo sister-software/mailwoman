@@ -119,7 +119,8 @@ function segDist(p: Position, a: Position, b: Position): number {
 /**
  * Douglas-Peucker on a ring of [lon,lat].
  *
- * Keeps endpoints. preserves closure.
+ * Keeps endpoints.
+ * Preserves closure.
  */
 function dp(ring: LinearRing, tol: number): LinearRing | null {
 	if (ring.length <= MIN_RING_VERTICES) return ring
@@ -159,9 +160,10 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 }
 
 /**
- * Simplify a Polygon / MultiPolygon geometry. drop rings that collapse.
+ * Simplify a Polygon / MultiPolygon geometry.
+ * Drop rings that collapse.
  *
- * Returns null if nothing left.
+ * @returns null if nothing left.
  */
 function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 	const ringSet = (poly: LinearRing[]): LinearRing[] =>
@@ -221,7 +223,8 @@ const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 
 		// Build to a temp sibling, then atomically swap into place (scripts/agents.md:
 		// a DB is a readonly artifact — never write the live path in case the build dies halfway).
-		// The original .mjs wrote `out` directly. this hardens it without changing the result.
+		// The original .mjs wrote `out` directly.
+		// This hardens it without changing the result.
 		const tmpOut = `${out}.tmp-${process.pid}`
 
 		for (const stale of [tmpOut, `${tmpOut}-wal`, `${tmpOut}-shm`, `${tmpOut}-journal`]) {
@@ -231,7 +234,8 @@ const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const kdb = new DatabaseClient<PolygonDatabase>(tmpOut)
-		// DDL via the Kysely schema-builder. the hot insert loop below stays on the raw `kdb` handle.
+		// DDL via the Kysely schema-builder.
+		// The hot insert loop below stays on the raw `kdb` handle.
 
 		await createPolygonsTable(kdb)
 

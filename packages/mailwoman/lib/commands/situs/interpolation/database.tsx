@@ -209,7 +209,8 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		console.error(`${shapefiles.length} county shapefiles for ${STATE}`)
 
 		await makeDirectories(dirname(finalOut))
-		// Build into a temp path. atomically swap on success (scripts/agents.md).
+		// Build into a temp path.
+		// Atomically swap on success (scripts/agents.md).
 		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
 		for (const sfx of ["", "-wal", "-shm"]) {
@@ -219,10 +220,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		const parityCounts = { odd: 0, even: 0, mixed: 0 }
 		let sides = 0
 		let skippedNonNumeric = 0
-		// #374 doctrine: the conformal radius multiplier is a property of the calibration set, so it ships IN
-		// the artifact — bake the state's factor (or the conservative default for unmeasured states)
-		// into the database's `interp_calibration` metadata table.
-		// `StreetInterpolator` reads it at open time. callers stop carrying the number.
+		// #374 doctrine: the conformal radius multiplier is a property of the calibration set, so it ships IN the artifact — bake the state's factor (or the conservative default for unmeasured states) into the database's `interp_calibration` metadata table. `StreetInterpolator` reads it at open time. Callers stop carrying the number.
 		const measuredMultiplier = INTERP_RADIUS_CALIBRATION.byRegion[STATE]
 
 		const calibration = {
@@ -238,7 +236,8 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			kdb.exec("PRAGMA journal_mode = WAL;")
 			// DDL via the shared street-segment-schema builder (the table the reader + tests use)
 			// so this producer can't drift.
-			// DuckDB below is the raw spatial reader. the hot insert stays on `db`.
+			// DuckDB below is the raw spatial reader.
+			// The hot insert stays on `db`.
 
 			await createStreetSegmentTable(kdb)
 			await writeInterpCalibration(kdb, calibration)
@@ -257,8 +256,9 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			for (const shp of shapefiles) {
 				const countyFips = basename(shp).match(/tl_\d+_(\d{5})_edges/)?.[1] ?? "unknown"
 
-				// Address-carrying road edges only. geometry as GeoJSON text so the JS side stays
-				// shapefile-free (same ST_Read approach as build-intersection-real.ts).
+				// Address-carrying road edges only.
+				// Geometry as GeoJSON text so the JS side stays shapefile-free
+				// (same ST_Read approach as build-intersection-real.ts).
 				const result = await duck.runAndReadAll(`
 							SELECT FULLNAME AS name, LFROMADD, LTOADD, RFROMADD, RTOADD, ZIPL, ZIPR,
 								ST_AsGeoJSON(geom) AS geojson

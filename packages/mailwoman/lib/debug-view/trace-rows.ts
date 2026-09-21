@@ -51,8 +51,9 @@ function fields(parts: Array<string | null>): string {
 /**
  * How many locale-head classes the row names.
  *
- * The head's axis is nine countries wide. the tail is uniformly flat on a confident parse,
- * and three entries is what fits beside the rest of the row on a narrow pane.
+ * The head's axis is nine countries wide.
+ * The tail is uniformly flat on a confident parse, and three entries is what fits
+ * beside the rest of the row on a narrow pane.
  */
 const LOCALE_HEAD_ENTRIES = 3
 
@@ -120,8 +121,10 @@ export function tokensRow(trace: GeocodeTrace | undefined): string {
  * The retrieval channels as fed to the encoder: per channel, how many pieces
  * carried a nonzero clue and which ones.
  *
- * "not fed" and `0/12` are different claims — the first is a channel with no source wired
- * (the demo's band says so too), the second is a wired channel that matched nothing on this input.
+ * "not fed" and `0/12` are different claims.
+ * The first is a channel with no source wired (the demo's band says so too),
+ * the second is a wired channel that matched nothing on this input.
+ *
  * Collapsing them is how "why didn't my gazetteer prior fire" becomes unanswerable.
  */
 export function channelsRow(trace: GeocodeTrace | undefined): string {

@@ -222,9 +222,7 @@ async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promi
 async function runPOI(input: string, options: Options): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
 
-	// #1108: an attempted-but-failed encoder load is never silent — absent weights get an install hint,
-	// a corrupt bundle surfaces its underlying error.
-	// Stderr only. stdout stays the probe output.
+	// #1108: an attempted-but-failed encoder load is never silent — absent weights get an install hint, a corrupt bundle surfaces its underlying error. Stderr only. Stdout stays the probe output.
 	const classifier = await loadClassifierTolerant(options.locale, { onDegrade: reportToStderr })
 	const resolverHandle = await tryLoadResolver(options)
 

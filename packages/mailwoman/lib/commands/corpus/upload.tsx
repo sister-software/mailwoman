@@ -157,9 +157,9 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			setSteps((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)))
 
 		for (const [index, job] of jobs.entries()) {
-			// check the source first. rclone's own error for an absent directory arrives
-			// buried under the config notice, which is exactly how "this version does
-			// not exist here" got read as "R2 is broken".
+			// check the source first.
+			// Rclone's own error for an absent directory arrives buried under the config notice,
+			// which is exactly how "this version does not exist here" got read as "R2 is broken".
 			// Say which path was missing instead.
 			if (!(await pathExists(job.source))) {
 				update(index, { status: "error", detail: `not found locally: ${job.source}` })

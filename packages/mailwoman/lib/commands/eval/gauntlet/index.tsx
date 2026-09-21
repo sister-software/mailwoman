@@ -78,8 +78,8 @@ export const spec = {
 const EvalGauntlet = harnessCommand(
 	spec,
 	async (options) => {
-		// The `*Off` names are CLI-only spellings of the off half of a tri-state. they are
-		// destructured out so neither ever reaches `runGauntlet` as a field of its own.
+		// The `*Off` names are CLI-only spellings of the off half of a tri-state.
+		// They are destructured out so neither ever reaches `runGauntlet` as a field of its own.
 		const {
 			postcodeCountryCoherenceOff,
 			gazetteerPriorOff,
@@ -109,11 +109,9 @@ const EvalGauntlet = harnessCommand(
 					: postcodeCountryCoherenceOff
 						? false
 						: undefined,
-				// #1497: two-sided since the 2026-08-16 default-on promotion. There is a production default to
-				// preserve now, so an unset flag must stay unset rather than pinning the change either way.
+				// #1497: two-sided since the 2026-08-16 default-on promotion. There is a production default to preserve now, so an unset flag must stay unset rather than pinning the change either way.
 				gazetteerPrior: options.gazetteerPrior ? true : gazetteerPriorOff ? false : undefined,
-				// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class) — the off pin
-				// grades the production default explicitly, and no flag stays "grade whatever production does".
+				// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class). The off pin grades the production default explicitly, and no flag stays "grade whatever production does".
 				adminContainmentRerank: options.adminContainmentRerank ? true : adminContainmentRerankOff ? false : undefined,
 				// #2266: two-sided from day one, same as the two above.
 				spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder
@@ -121,8 +119,7 @@ const EvalGauntlet = harnessCommand(
 					: spanRescoreRequireContextRemainderOff
 						? false
 						: undefined,
-				// #2264: three readings rather than two states, so there is no off spelling — an absent flag is the
-				// production default, which is to take a `placeID` at face value and never lift the brake.
+				// #2264: three readings rather than two states, so there is no off spelling. An absent flag is the production default, which is to take a `placeID` at face value and never lift the brake.
 				...(options.spanRescoreWeakResolution ? { spanRescoreWeakResolution: options.spanRescoreWeakResolution } : {}),
 			})
 		).exitCode

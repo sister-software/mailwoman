@@ -46,8 +46,9 @@ export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 }
 
 /**
- * Write the two-line notice to stderr, or nothing when the commercial branch applies. stderr,
- * so stdout stays machine-readable for every `--json` consumer.
+ * Write the two-line notice to stderr, or nothing when the commercial branch applies.
+ *
+ * Stderr, so stdout stays machine-readable for every `--json` consumer.
  */
 export function printLicenseNotice(resolvedStamp: ResolvedEngineStamp): void {
 	const lines = licenseNoticeLines(resolvedStamp.stamp, resolvedStamp.key)

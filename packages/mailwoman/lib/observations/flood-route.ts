@@ -107,8 +107,8 @@ export interface AuthorityDesignationObservation {
 /**
  * Why a coordinate produced no observation.
  *
- * Every one of these is a silence the route owes an account of — an unnamed silence
- * and a silence for the right reason read identically on a receipt.
+ * Every one of these is a silence the route owes an account of.
+ * An unnamed silence and a silence for the right reason read identically on a receipt.
  */
 export const DESIGNATION_REFUSALS = [
 	/**
@@ -116,8 +116,7 @@ export const DESIGNATION_REFUSALS = [
 	 */
 	"no_coordinate",
 	/**
-	 * The layer holds no coverage row for the location. Outside the authority's footprint, which is unknown and never a
-	 * low-hazard reading.
+	 * The layer holds no coverage row for the location. Outside the authority's footprint, which is unknown and never a low-hazard reading.
 	 */
 	"outside_authority_footprint",
 ] as const
@@ -138,8 +137,8 @@ export interface AuthorityDesignationRoute extends Disposable {
 	 *
 	 * Pure with respect to the pipeline: it reads the layer and returns a record.
 	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` —
-	 * a caller that had to narrow them first would be narrowing on this route's behalf,
+	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon`.
+	 * A caller that had to narrow them first would be narrowing on this route's behalf,
 	 * and a coordinate-less answer is a named refusal here rather than a caller's problem.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => DesignationDecision

@@ -60,7 +60,8 @@ export interface FamilyRow {
 }
 
 /**
- * The district is the truth. the parent city's point is the defect's answer.
+ * The district is the truth.
+ * The parent city's point is the defect's answer.
  */
 const DISTRICT_TOLERANCE_M = 2000
 

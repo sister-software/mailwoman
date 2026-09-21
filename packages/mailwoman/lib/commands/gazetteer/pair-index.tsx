@@ -43,7 +43,8 @@ import { join } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce.
+ * The GB source's adjudicated production distinct-pair count.
+ * The cross-check this build must reproduce.
  *
  * It sits below the rung-3 census's raw 19,431 lines (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`)
  * because the production fold merges punctuation-variant duplicates the raw census counts
@@ -52,14 +53,15 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  * production entry (220 × 1 collapsed line = 220) plus 1 group where 3 raw lines collapse to 1
  * entry (1 × 2 collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed. 19,431 − 222 = 19,209.
  *
- * A mismatch against 19,209 on a real rebuild means this build's fold diverged from the
- * adjudicated baseline rather than that 19,209 is wrong. investigate before trusting the artifact.
+ * A mismatch against 19,209 on a real rebuild means this build's fold diverged from
+ * the adjudicated baseline rather than that 19,209 is wrong.
+ * Investigate before trusting the artifact.
  */
 const EXPECTED_GB_PAIR_COUNT = 19_209
 
 /**
  * The raw rung-3 census's pre-fold line count (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) —
- * retained as a named constant for provenance/debugging (e.g. diffing a future source
+ * retained as a named constant for provenance/debugging (e.g. Diffing a future source
  * refresh against this cycle's raw count) rather than the cross-check target.
  *
  * See {@link EXPECTED_GB_PAIR_COUNT}'s doc comment for why the production target is lower.
@@ -70,11 +72,12 @@ const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
  * The US instance's cross-check (hierarchy campaign R5), measured 2026-08-01
  * against the shipped `admin-global-priority.db`.
  *
- * Unlike GB there is no postal register in the mix — every pair is WOF-sourced
- * (borough + neighbourhood children under locality/localadmin/borough parents,
- * see `PAIR_PLACETYPES_BY_COUNTRY`), so this number tracks the WOF snapshot alone.
- * A snapshot refresh legitimately moves it. re-anchor the constant deliberately,
- * after inspecting the diff, rather than relaxing the check.
+ * Unlike GB there is no postal register in the mix.
+ * Every pair is WOF-sourced (borough + neighbourhood children under locality/localadmin/borough
+ * parents, see `PAIR_PLACETYPES_BY_COUNTRY`), so this number tracks the WOF snapshot alone.
+ *
+ * A snapshot refresh legitimately moves it.
+ * Re-anchor the constant deliberately, after inspecting the diff, rather than relaxing the check.
  */
 const EXPECTED_US_PAIR_COUNT = 47_878
 
@@ -99,8 +102,8 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 	],
 	// R5 (hierarchy campaign): the US instance's probes.
 	// Unlike GB/NZ these are not postal-format dependent localities — USPS routes
-	// city/state/ZIP — they are the borough/neighbourhood
-	// class the schema's umbrella term covers, sourced from WOF rather than a postal register.
+	// city/state/ZIP — they are the borough/neighbourhood class the schema's umbrella
+	// term covers, sourced from WOF rather than a postal register.
 	us: [
 		["Astoria", "Queens"],
 		["Park Slope", "Brooklyn"],
@@ -124,8 +127,9 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Trastevere", "Roma"],
 	],
 	// R9: the DE instance.
-	// Ortsteile/Stadtteile under their Gemeinde — the line German addresses carry
-	// when they carry one at all (the Ortsteil sits above "PLZ Stadt", never inside it).
+	// Ortsteile/Stadtteile under their Gemeinde.
+	// The line German addresses carry when they carry one at all
+	// (the Ortsteil sits above "PLZ Stadt", never inside it).
 	de: [
 		["Nippes", "Köln"],
 		["Schwabing", "München"],
@@ -219,8 +223,9 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 		const country = options.country.toLowerCase()
 
-		// The PPD tuples CSV is a GB national register — there is no equivalent for the US
-		// instance (USPS routes city/state/ZIP, so no postal source carries dependent localities).
+		// The PPD tuples CSV is a GB national register.
+		// There is no equivalent for the US instance (USPS routes city/state/ZIP,
+		// so no postal source carries dependent localities).
 		// A country whose pairs come entirely from the WOF/secondary sources below runs
 		// with no CSV rather than being handed an empty one.
 		const sourcePath =
@@ -274,8 +279,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		if (options.boroughDB) {
 			const before = builder.distinctCount
 
-			// `pair.parentTag` is the WOF parent row's placetype projection rather than a per-source constant —
-			// a locality/localadmin parent is `locality`, a borough parent is `dependent_locality`.
+			// `pair.parentTag` is the WOF parent row's placetype projection rather than a per-source constant.
+			// A locality/localadmin parent is `locality`, a borough parent is `dependent_locality`.
 			for (const pair of extractBoroughPairs(options.boroughDB, country.toUpperCase())) {
 				builder.addRow(pair.child, pair.parent, pair.parentTag)
 			}
@@ -304,7 +309,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		// R3: generic secondary pairs (onspd-derived London ward pairs. future NI/IE sources) —
+		// R3: generic secondary pairs (onspd-derived London ward pairs. Future NI/IE sources) —
 		// the same fold/dedupe path, counted into the cross-check delta alongside the boroughs.
 		if (options.pairsJSONL) {
 			for (const path of splitPathList(options.pairsJSONL)) {
@@ -344,9 +349,9 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			options.holdoutSeed
 		)
 
-		// Provenance covers every source that contributed rows, in the order they were
-		// folded in — a US build has no CSV at all, so an unconditional single-element
-		// array would have claimed a source the artifact never read.
+		// Provenance covers every source that contributed rows, in the order they were folded in.
+		// A US build has no CSV at all, so an unconditional single-element array would
+		// have claimed a source the artifact never read.
 		const sourceMD5s = [
 			...(sourcePath ? [await md5File(sourcePath)] : []),
 			...(options.boroughDB ? [await md5File(options.boroughDB)] : []),
@@ -406,15 +411,16 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			),
 		]
 
-		// The rung-3 cross-check assumes a complete build — a nonzero --holdout-fraction
-		// deliberately produces a smaller `entries.length` by design, so the strict count-match
-		// check is meaningless (and would misreport "blocked") under holdout.
+		// The rung-3 cross-check assumes a complete build.
+		// A nonzero --holdout-fraction deliberately produces a smaller `entries.length` by design,
+		// so the strict count-match check is meaningless (and would misreport "blocked") under holdout.
 		// Check against `built.entries.length` (pre-holdout) instead in that case.
 		const preHoldoutCount = built.entries.length
 		// Pre-fold context suffix — the raw rung-3 census line count, for provenance/debugging
-		// (e.g. diffing a future source refresh against this cycle's raw count).
-		// Not the cross-check target. see `EXPECTED_GB_PAIR_COUNT`'s doc comment for the
-		// 221-group collision receipt that separates the two numbers.
+		// (e.g. Diffing a future source refresh against this cycle's raw count).
+		// Not the cross-check target.
+		// See `EXPECTED_GB_PAIR_COUNT`'s doc comment for the 221-group collision
+		// receipt that separates the two numbers.
 		const preFoldSuffix = ` (pre-fold rung-3 census: ${RUNG3_PRE_FOLD_CENSUS_LINE_COUNT.toLocaleString()} lines)`
 
 		const checkLine =

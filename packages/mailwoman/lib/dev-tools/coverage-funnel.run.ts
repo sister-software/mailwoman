@@ -88,10 +88,11 @@ interface EpochMixtureAudit {
  * A country the config never admitted reads `absent`, since it had nothing to draw.
  *
  * Refuses an audit produced from a config other than the one the `admitted` stage reads.
- * Both stages describe one training arm, and reading them from two configs puts two
- * arms in one column: a run of this tool read `admitted` from the shipped Latin config,
- * which admits 25 countries, beside a `sampled` stage from `v5.9.0-locality-shape-60k.yaml`,
- * which admits 135 — so `sampled` reported 38 countries drawn while `admitted` reported 25,
+ * Both stages describe one training arm, and reading them from two configs puts two arms in one column:
+ * a run of this tool read `admitted` from the shipped Latin config, which admits 25 countries,
+ * beside a `sampled` stage from `v5.9.0-locality-shape-60k.yaml`, which admits 135.
+ *
+ * So `sampled` reported 38 countries drawn while `admitted` reported 25,
  * and a country could appear in the second and not the first.
  */
 async function readMixtureAudit(

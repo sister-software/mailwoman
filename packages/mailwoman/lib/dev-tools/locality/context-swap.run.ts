@@ -43,7 +43,8 @@ const { values } = parseArguments({
 		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
 		mode: { type: "string", default: "swap", choices: ["swap", "grid"] },
 		/**
-		 * Regions whose localities are the subjects — the ones whose behaviour is in question.
+		 * Regions whose localities are the subjects.
+		 * The ones whose behaviour is in question.
 		 */
 		home: { type: "string", default: "AR,TN,MO,TX" },
 		/**
@@ -146,7 +147,8 @@ console.log(`| --- | --: | --: |`)
 /**
  * How many recovered rows to print under the table.
  *
- * The list shows what the arms render. the table carries the rate.
+ * The list shows what the arms render.
+ * The table carries the rate.
  */
 const RESCUED_EXAMPLES = 8
 

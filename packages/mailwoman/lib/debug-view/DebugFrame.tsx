@@ -112,7 +112,8 @@ export interface DebugFrameProps {
 	/**
 	 * Map-pane SGR color.
 	 *
-	 * Callers pass `!$public.NO_COLOR` — Ink/chalk honor NO_COLOR on their own, raw SGR does not.
+	 * Callers pass `!$public.NO_COLOR`.
+	 * Ink/chalk honor NO_COLOR on their own, raw SGR does not.
 	 */
 	color: boolean
 }
@@ -134,13 +135,13 @@ const INPUT_ROW_HEIGHT = 9
 const FOOTER_ROW_HEIGHT = 1
 
 /**
- * MapPane's own top+bottom border rows, plus its title line, plus its attribution
- * line — the chrome `mapPaneCellSize` must subtract from the pane row's height
+ * MapPane's own top+bottom border rows, plus its title line, plus its attribution line.
+ *
+ * The chrome `mapPaneCellSize` must subtract from the pane row's height
  * so a requested frame fills the pane exactly.
  *
- * Counted directly off
- * {@link MapPane}'s render tree: `borderStyle="round"` (2), the `paneTitle` `<Text>` (1), the right-aligned attribution
- * `<Box><Text>` when a frame is present (1).
+ * Counted directly off {@link MapPane}'s render tree: `borderStyle="round"` (2), the `paneTitle`
+ * `<Text>` (1), the right-aligned attribution `<Box><Text>` when a frame is present (1).
  */
 const MAP_PANE_CHROME_ROWS = 4
 
@@ -210,10 +211,12 @@ function paneTitle(label: string, pane: DebugPane, focused: DebugPane | null): s
 type Tag = AddressNode["tag"]
 
 /**
- * Per-character tag ownership over `tree.raw`: for every index some node covers, the tag
- * of the deepest node whose span contains it — a child's tag overrides its ancestor's on
- * the range they share, so a leaf's tag wins where one exists, and a parent's own text that
- * no child covers still gets the parent's tag rather than falling through to "no owner".
+ * Per-character tag ownership over `tree.raw`: for every index some node covers,
+ * the tag of the deepest node whose span contains it.
+ *
+ * A child's tag overrides its ancestor's on the range they share, so a leaf's tag wins
+ * where one exists, and a parent's own text that no child covers still gets the
+ * parent's tag rather than falling through to "no owner".
  *
  * Indices no node covers at all stay `undefined` (the `losslessSegments` `unknown` runs).
  */
@@ -252,12 +255,13 @@ export interface RibbonSegment {
 /**
  * Tile `tree.raw` into ribbon segments for the input row.
  *
- * Built on `losslessSegments` (`@mailwoman/core/decoder`, #493) for the
- * covered/`unknown` split — every character of the input belongs to exactly one
- * segment, so the ribbon never silently drops the connector text between spans
- * (the comma-space between a street and a locality, say) the way walking only leaf nodes did.
- * Each `covered` run is further split at
- * {@link tagOwnership} boundaries so every ribbon chip carries exactly one tag's color.
+ * Built on `losslessSegments` (`@mailwoman/core/decoder`, #493) for the covered/`unknown` split.
+ * Every character of the input belongs to exactly one segment, so the ribbon never silently
+ * drops the connector text between spans (the comma-space between a street and a locality, say)
+ * the way walking only leaf nodes did.
+ *
+ * Each `covered` run is further split at {@link tagOwnership} boundaries
+ * so every ribbon chip carries exactly one tag's color.
  * Concatenating every segment's `value`, in order, reproduces `tree.raw` exactly —
  * the same round-trip invariant `losslessSegments` guarantees.
  */
@@ -388,8 +392,10 @@ const InputBar = memo(function InputBar(props: {
 //#region Output pane
 
 /**
- * The label column of a field row, including its trailing space — a component nested three deep
- * (` house_number`) is 18 characters, so a narrower pad would run the label into its value.
+ * The label column of a field row, including its trailing space.
+ *
+ * A component nested three deep (` house_number`) is 18 characters, so a narrower
+ * pad would run the label into its value.
  */
 const OUTPUT_LABEL_WIDTH = 19
 
@@ -398,8 +404,9 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 
 	if (line.kind === "error") {
 		// `@inkjs/ui`'s StatusMessage would be the natural fit and is deliberately not used:
-		// its message `<Text>` carries no wrap mode, so a long resolver error wraps to a second row
-		// and pushes a row out of a fixed-height pane — the silent-drop failure this file's header measures.
+		// its message `<Text>` carries no wrap mode, so a long resolver error wraps to
+		// a second row and pushes a row out of a fixed-height pane.
+		// The silent-drop failure this file's header measures.
 		// Same figure, one row, truncated.
 		return (
 			<Text color="red" wrap="truncate">
@@ -420,9 +427,7 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 		<Text wrap="truncate">
 			<Text color={line.tag ? tagColor(line.tag) : undefined}>{`${line.label} `.padEnd(OUTPUT_LABEL_WIDTH)}</Text>
 			{line.badge ? (
-				// The badge's text is wrapped in a `<Text>` because `Badge` uppercases a plain-string child, and these
-				// two badges carry machine values (`address_point`, `structured_address`) a reader copies into a flag
-				// or a gauntlet row. The chip is the improvement. the shouting is not.
+				// The badge's text is wrapped in a `<Text>` because `Badge` uppercases a plain-string child, and these two badges carry machine values (`address_point`, `structured_address`) a reader copies into a flag or a gauntlet row. The chip is the improvement. The shouting is not.
 				<Badge color={line.badgeColor ?? "cyan"}>
 					<Text>{line.badge}</Text>
 				</Badge>
@@ -499,8 +504,9 @@ const OutputPane = memo(function OutputPane(props: {
 //#region Map pane
 
 /**
- * The expensive pane, and the one that depends on nothing the input row changes —
- * so it takes the fields it reads rather than the shared {@link DebugData} bag,
+ * The expensive pane, and the one that depends on nothing the input row changes.
+ *
+ * So it takes the fields it reads rather than the shared {@link DebugData} bag,
  * which is what lets `memo` see stable props across a keystroke.
  *
  * Know what this provides and what it does not.
@@ -509,8 +515,8 @@ const OutputPane = memo(function OutputPane(props: {
  * production build (measured 2026-08-13, 120×36, six interleaved pairs each).
  *
  * It cannot touch the dominant cost, because Ink's `render-node-to-output` walks the whole
- * yoga tree and re-serializes it every frame no matter which subtrees React skipped — that is
- * what `incrementalRendering` is for, and the two are complementary rather than redundant.
+ * yoga tree and re-serializes it every frame no matter which subtrees React skipped.
+ * That is what `incrementalRendering` is for, and the two are complementary rather than redundant.
  */
 const MapPane = memo(function MapPane(props: {
 	frame: MapFrame | null

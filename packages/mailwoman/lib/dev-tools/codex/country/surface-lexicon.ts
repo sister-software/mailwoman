@@ -129,8 +129,8 @@ function add(surface: string): void {
 	if (!key) return
 	const words = key.split(" ")
 	maxNgram = Math.max(maxNgram, words.length)
-	// Multi-word phrases are unambiguous by construction. single tokens consult
-	// the homograph + common-word rule.
+	// Multi-word phrases are unambiguous by construction.
+	// Single tokens consult the homograph + common-word rule.
 	const ambiguous = words.length === 1 && isAmbiguousName(key)
 	const bits = BIT.country_surface | (ambiguous ? BIT.country_ambiguous : 0)
 	entries.set(key, (entries.get(key) ?? 0) | bits)

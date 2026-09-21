@@ -86,8 +86,9 @@ function pyStr(v: unknown): string {
 }
 
 function pct(num: number, den: number): string {
-	// Local rather than `formatPercent`: this port renders with `pyFixed` (Python's round-half-even),
-	// and `toFixed` rounds half-away — the bytes must match the retired .py report.
+	// Local rather than `formatPercent`: this port renders with `pyFixed`
+	// (Python's round-half-even), and `toFixed` rounds half-away.
+	// The bytes must match the retired .py report.
 	return den ? `${pyFixed((100 * num) / den, 1)}%` : "—"
 }
 

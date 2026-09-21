@@ -67,8 +67,8 @@ const BBOX_FIELD_COUNT = 4
 /**
  * Parse `--bbox "minLon,minLat,maxLon,maxLat"` into a {@link BBox}.
  *
- * Throws with the raw input echoed back on any shape/finiteness mismatch —
- * a silently-mis-parsed bbox would corrupt coverage silently, so fail loud instead.
+ * @throws with the raw input echoed back on any shape/finiteness mismatch.
+ *   A silently-mis-parsed bbox would corrupt coverage silently, so fail loud instead.
  */
 function parseBBoxFlag(raw: string): BBox {
 	const parts = raw.split(",").map((s) => Number(s.trim()))
@@ -116,7 +116,8 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 			// (ODbL counsel sign-off pending — see osm/readme.md), and this dependency belongs
 			// only on the selected build path, so a top-level import breaks the whole published
 			// CLI on a clean install — the smoke test's clean-install leg is what catches it.
-			// The osm source branch is build-local by design. it may only resolve its SDK when actually invoked.
+			// The osm source branch is build-local by design.
+			// It may only resolve its SDK when actually invoked.
 			const { extractOSMPOIs } = await import("@mailwoman/osm/sdk")
 
 			for await (const row of extractOSMPOIs(pbf)) {

@@ -56,9 +56,9 @@ function fail(message: string): never {
  *
  * Exits 1 with the binary's usage line on a bad flavor.
  *
- * Returns the shape `printOpenAPIDocument` takes, so a drop-in's `openapi` command is
- * this call plus building its app around a stub engine — which is what keeps the command
- * pure route-table introspection that never boots a classifier or opens a gazetteer.
+ * @returns the shape `printOpenAPIDocument` takes, so a drop-in's `openapi` command is
+ *   this call plus building its app around a stub engine — which is what keeps the command
+ *   pure route-table introspection that never boots a classifier or opens a gazetteer.
  */
 export function parseOpenAPIFlags(binaryName: string): { flavor?: string; out?: string } {
 	const { values } = parseArguments({
@@ -99,8 +99,9 @@ export function openAPICommand<Engine>(
 /**
  * Load the en-US neural classifier, failing friendly (#1009).
  *
- * `resolveWeights` (`neural/weights.ts`) already names the exact fix command. this guard
- * only keeps that message from being buried under an unhandled-rejection stack trace.
+ * `resolveWeights` (`neural/weights.ts`) already names the exact fix command.
+ * This guard only keeps that message from being buried under an unhandled-rejection stack trace.
+ *
  * Eager, so a missing-weights boot fails at startup rather than on the first request.
  */
 export async function loadClassifierOrExit(): Promise<NeuralAddressClassifier> {
@@ -135,8 +136,8 @@ export interface GazetteerPaths {
  * Locate the gazetteer for a geocoding drop-in, with both of the #1009 friendly failures:
  *
  * - An explicit `--candidate-db` that does not exist errors loudly.
- *   It must never silently fall back to whatever ambient data-root file happens to be present —
- *   a typo'd path would otherwise serve the wrong gazetteer without a word.
+ *   It must never silently fall back to whatever ambient data-root file happens to be present.
+ *   A typo'd path would otherwise serve the wrong gazetteer without a word.
  * - No candidate DB and no databases prints the named-artifact message with the
  *   one command that fixes it, instead of letting the resolver throw its internal
  *   "resolveExtracts: at least one database is required".
@@ -231,8 +232,10 @@ export interface DropInCLI {
 	 */
 	usage: string[]
 	/**
-	 * Boot the listener and resolve once it is bound. the engine stamp is the process's, resolved here
-	 * so every drop-in carries it the same way and the license notice prints after the listening banner.
+	 * Boot the listener and resolve once it is bound.
+	 *
+	 * The engine stamp is the process's, resolved here so every drop-in carries it the same way
+	 * and the license notice prints after the listening banner.
 	 */
 	serve: (engineStamp: ResolvedEngineStamp) => Promise<void>
 	openapi: () => void | Promise<void>
@@ -241,8 +244,11 @@ export interface DropInCLI {
 /**
  * Dispatch a drop-in CLI's subcommand off the first positional.
  *
- * `strict: false` because the per-command parsers own their own flags — this pass only reads the positional.
- * An unknown command exits 1. a bare invocation prints usage and exits 0.
+ * `strict: false` because the per-command parsers own their own flags.
+ * This pass only reads the positional.
+ *
+ * An unknown command exits 1.
+ * A bare invocation prints usage and exits 0.
  */
 export async function runDropInCLI({ binaryName, openapi, serve, usage }: DropInCLI): Promise<void> {
 	const command = parseArguments({ strict: false, allowPositionals: true }).positionals[0]

@@ -75,8 +75,9 @@ import { latLngToCell } from "h3-js"
 import { readCommittedModel } from "#observations/committed-model"
 import { resolvePOISearchCenter } from "#poi/executor"
 /**
- * The relation an affordance is asserted under — the one the frozen vertical defines,
- * and the only one this route reads.
+ * The relation an affordance is asserted under.
+ *
+ * The one the frozen vertical defines, and the only one this route reads.
  *
  * The semantic route reads the same relation for the opposite direction (phrase → category);
  * this one reads it from the category back to the activity it affords.
@@ -131,9 +132,10 @@ export interface AbsenceObservation {
 	 */
 	coverage: {
 		/**
-		 * The 48-bit short-cell integer the layer stores, and the full index it expands
-		 * to at the layer's coverage resolution — the integer is what a reader queries
-		 * the table with, the index is what a reader can draw.
+		 * The 48-bit short-cell integer the layer stores, and the full index it
+		 * expands to at the layer's coverage resolution.
+		 *
+		 * The integer is what a reader queries the table with, the index is what a reader can draw.
 		 */
 		h3Cell: number
 		h3CellIndex: string
@@ -163,7 +165,8 @@ export interface AbsenceObservation {
 		databasePath: string
 	}
 	/**
-	 * The point the search was centred on — the executor's own, never re-derived.
+	 * The point the search was centred on.
+	 * The executor's own, never re-derived.
 	 */
 	searchCenter: { latitude: number; longitude: number }
 	/**
@@ -179,23 +182,21 @@ export interface AbsenceObservation {
 /**
  * Why a query produced no absence observation.
  *
- * Every one of these is a silence the route owes an account of — an unnamed silence
- * and a silence for the right reason read identically on a receipt, and the control
- * rows are graded on exactly which one occurred.
+ * Every one of these is a silence the route owes an account of.
+ * An unnamed silence and a silence for the right reason read identically on a receipt,
+ * and the control rows are graded on exactly which one occurred.
  */
 export const ABSENCE_REFUSALS = [
 	/**
-	 * The coordinator never took the POI branch, or took it and abstained — there is no answer to qualify.
+	 * The coordinator never took the POI branch, or took it and abstained. There is no answer to qualify.
 	 */
 	"no_poi_answer",
 	/**
-	 * The POI branch answered, but the executor never ran (intent-only mode). A search that did not happen returns
-	 * nothing for a reason that has nothing to do with the world.
+	 * The POI branch answered, but the executor never ran (intent-only mode). A search that did not happen returns nothing for a reason that has nothing to do with the world.
 	 */
 	"executor_did_not_run",
 	/**
-	 * The subject was a brand or a free-text name. The artifact maps categories, so a non-category subject reaches no
-	 * assertion.
+	 * The subject was a brand or a free-text name. The artifact maps categories, so a non-category subject reaches no assertion.
 	 */
 	"subject_not_a_category",
 	/**
@@ -211,23 +212,19 @@ export const ABSENCE_REFUSALS = [
 	 */
 	"no_search_center",
 	/**
-	 * The layer carries no coverage row for the cell the search was centred on — unmapped, which is unknown and never
-	 * absence.
+	 * The layer carries no coverage row for the cell the search was centred on — unmapped, which is unknown and never absence.
 	 */
 	"cell_unsurveyed",
 	/**
-	 * The cell has a coverage row whose basis is `source_present`. The source looked and returned rows. that is presence
-	 * evidence and supports no exclusion.
+	 * The cell has a coverage row whose basis is `source_present`. The source looked and returned rows. That is presence evidence and supports no exclusion.
 	 */
 	"basis_supports_no_exclusion",
 	/**
-	 * The layer holds rows in the cell, so the cell is not empty. Whether the search reached them is a retrieval question
-	 * rather than an absence.
+	 * The layer holds rows in the cell, so the cell is not empty. Whether the search reached them is a retrieval question rather than an absence.
 	 */
 	"cell_not_empty",
 	/**
-	 * The layer's coverage row says the cell is empty and the answer returned a row inside it. The two readers disagree,
-	 * and an absence claim asserted over a disagreement is the confident wrong answer this whole route exists to avoid.
+	 * The layer's coverage row says the cell is empty and the answer returned a row inside it. The two readers disagree, and an absence claim asserted over a disagreement is the confident wrong answer this whole route exists to avoid.
 	 */
 	"coverage_contradicted_by_answer",
 ] as const
@@ -257,7 +254,8 @@ export interface AbsenceRouteIdentity {
 	coverageDatabasePath: string
 	coverageLayer: LayerManifest
 	/**
-	 * The class the coverage layer holds — the only category this route may speak about.
+	 * The class the coverage layer holds.
+	 * The only category this route may speak about.
 	 */
 	surveyedCategoryID: string
 	coverageResolution: number
@@ -308,9 +306,9 @@ interface AffordingCategory {
  * Index the artifact by external category id, keeping only categories that both map
  * into `poi-taxonomy` and carry an `affords` assertion.
  *
- * A category reaching more than one affordance is not resolved here — the first in
- * concept code-point order is taken and the count is not hidden, because choosing
- * among affordances would be a preference this program does not author.
+ * A category reaching more than one affordance is not resolved here.
+ * The first in concept code-point order is taken and the count is not hidden,
+ * because choosing among affordances would be a preference this program does not author.
  * The frozen vertical reaches exactly one.
  */
 function indexAffordingCategories(model: CompiledGeographicModel): Map<string, AffordingCategory> {
@@ -348,9 +346,9 @@ function indexAffordingCategories(model: CompiledGeographicModel): Map<string, A
  * It is not a valid digit.
  * Therefore, exactly one resolution expands a given short cell into a valid index.
  *
- * Every stored cell is probed rather than a sample of them, and a table whose cells
- * disagree throws — a mixed-resolution coverage table has no single resolution to probe at,
- * and picking one would silently answer "unsurveyed" for every cell at the other.
+ * Every stored cell is probed rather than a sample of them, and a table whose cells disagree throws.
+ * A mixed-resolution coverage table has no single resolution to probe at, and picking
+ * one would silently answer "unsurveyed" for every cell at the other.
  *
  * The implementation lives IN `@mailwoman/spatial` because a second layer reader needed it
  * and the two failure modes it refuses are silent in a copy.
@@ -417,9 +415,7 @@ export async function createAbsenceObservationRoute(
 		const coverageResolution = recoverCoverageResolution(cellRows.map((row) => row.h3_cell))
 
 		const exclusionGradeEmptyCells = cellRows.filter(
-			// A NULL column is an artifact built before `basis` existed. It was recording source presence, so that is what it
-			// counts as here — never a stronger basis than the builder actually had, which is the resolution
-			// `readLayerCoverage` applies to the same column.
+			// A NULL column is an artifact built before `basis` existed. It was recording source presence, so that is what it counts as here — never a stronger basis than the builder actually had, which is the resolution `readLayerCoverage` applies to the same column.
 			(row) => row.observed_rows === 0 && supportsExclusion({ basis: row.basis ?? CoverageBasis.SourcePresent })
 		).length
 

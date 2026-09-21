@@ -29,7 +29,8 @@ export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 	/**
 	 * The process exit code, read off the task's result.
 	 *
-	 * Absent means 0 on success. an error is 1 either way.
+	 * Absent means 0 on success.
+	 * An error is 1 either way.
 	 */
 	exitCode?: (result: T) => number
 	/**
@@ -37,10 +38,11 @@ export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 	 *
 	 * The options are passed so the condition is named at the call site
 	 * rather than assumed here: a command that prints under `--json` writes
-	 * `(result, options) => (options.json ? result.report : undefined)`, which keeps
+	 * `(result, options) => (options.json ? Result.report : undefined)`, which keeps
 	 * the flag that decides it in the file that declares it.
-	 * A command whose task narrates on stdout omits this entirely — most of the commands
-	 * under `commands/eval/` do, and rendering anything would duplicate their output.
+	 * A command whose task narrates on stdout omits this entirely.
+	 *
+	 * Most of the commands under `commands/eval/` do, and rendering anything would duplicate their output.
 	 */
 	json?: (result: T, options: OptionsOf<Spec>) => unknown
 }
@@ -48,9 +50,10 @@ export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 /**
  * Build the command component for a one-shot harness task.
  *
- * Every command under `commands/eval/` had the same shape: call {@linkcode useCommandTask}, render
- * {@linkcode CommandTaskResult} while it runs, print the result as JSON under a flag, return `null` otherwise. What
- * differs between them is the task and the result type, so those are what a caller supplies.
+ * Every command under `commands/eval/` had the same shape: call {@linkcode useCommandTask},
+ * render {@linkcode CommandTaskResult} while it runs, print the result as JSON
+ * under a flag, return `null` otherwise.
+ * What differs between them is the task and the result type, so those are what a caller supplies.
  *
  * The control flow moves behind a name, which is the cost.
  * It is paid back because the flow was identical in all of them: a reader who wants

@@ -83,7 +83,8 @@ export interface CoastalErosionObservation {
 	/**
 	 * Every polygon of that scenario containing the point.
 	 *
-	 * Usually one. several where the authority's own frontages overlap.
+	 * Usually one.
+	 * Several where the authority's own frontages overlap.
 	 */
 	designations: CoastalDesignation[]
 	containment: CoastalContainmentPath
@@ -113,8 +114,8 @@ export interface CoastalErosionObservation {
 /**
  * Why a coordinate produced no observation.
  *
- * Every one of these is a silence the route owes an account of — an unnamed silence
- * and a silence for the right reason read identically on a receipt.
+ * Every one of these is a silence the route owes an account of.
+ * An unnamed silence and a silence for the right reason read identically on a receipt.
  */
 export const COASTAL_REFUSALS = [
 	/**
@@ -122,9 +123,7 @@ export const COASTAL_REFUSALS = [
 	 */
 	"no_coordinate",
 	/**
-	 * The authority's mapping assigns no erosion zone here under the scenario asked about. Not an absence claim: the
-	 * location may be inland, or on the coast outside the mapped risk area, and ncerm publishes nothing that tells those
-	 * apart.
+	 * The authority's mapping assigns no erosion zone here under the scenario asked about. Not an absence claim: the location may be inland, or on the coast outside the mapped risk area, and ncerm publishes nothing that tells those apart.
 	 */
 	"no_designation_here",
 ] as const
@@ -149,8 +148,8 @@ export interface CoastalErosionRoute extends Disposable {
 	 *
 	 * Pure with respect to the pipeline: it reads the layer and returns a record.
 	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` —
-	 * a caller that had to narrow them first would be narrowing on this route's behalf,
+	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon`.
+	 * A caller that had to narrow them first would be narrowing on this route's behalf,
 	 * and a coordinate-less answer is a named refusal here rather than a caller's problem.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => CoastalDecision
@@ -175,9 +174,11 @@ export interface CoastalErosionRouteOptions {
 /**
  * Build the route against one sealed layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused by the
- * reader's own constructor — a manifest naming a different layer, a coverage table with
- * no rows, and above all a coverage row whose basis would support an exclusion.
+ * Everything that would make the route answer a well-formed wrong thing is
+ * refused by the reader's own constructor.
+ * A manifest naming a different layer, a coverage table with no rows, and above all
+ * a coverage row whose basis would support an exclusion.
+ *
  * That last one would otherwise present as a route reporting the whole of inland
  * England as designated free of coastal erosion.
  */

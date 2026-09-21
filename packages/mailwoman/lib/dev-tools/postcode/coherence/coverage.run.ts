@@ -131,8 +131,8 @@ for (const probe of PROBES) {
 	const exact = localityHits.some((p) => p.exactMatch && (p.lat !== 0 || p.lon !== 0))
 
 	// The verdict the pass itself would reach, via the impossible-default probe
-	// (step 1 always fails, so the alternatives alone decide) — the one number that says
-	// whether this country is reachable evidence.
+	// (step 1 always fails, so the alternatives alone decide).
+	// The one number that says whether this country is reachable evidence.
 	const scope = await findPostcodeCountryScope(
 		[
 			{ tag: "postcode", value: probe.postcode, start: 0, end: probe.postcode.length, confidence: 0.95, children: [] },

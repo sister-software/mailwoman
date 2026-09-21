@@ -26,7 +26,8 @@ import type { HardCaseClass } from "#eval-harness/hard-case-board"
 /**
  * A curated row before its numbers are filled in.
  *
- * `expectID` is a WOF place id. the builder reads the point.
+ * `expectID` is a WOF place id.
+ * The builder reads the point.
  */
 export interface Curated {
 	id: string

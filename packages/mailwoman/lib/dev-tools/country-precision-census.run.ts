@@ -55,8 +55,8 @@ const { values: args } = parseArguments({
 })
 
 /**
- * Country names longest-first, so `United States` matches before `United` could and `Congo` never shadows `Democratic
- * Republic of the Congo`.
+ * Country names longest-first, so `United States` matches before `United` could
+ * and `Congo` never shadows `Democratic Republic of the Congo`.
  */
 const NAMES_BY_LENGTH = [...CountryNames].toSorted((left, right) => right.length - left.length)
 
@@ -82,8 +82,8 @@ function namedCountry(input: string): string | null {
  * Name-to-alpha-2, folded for lookup.
  *
  * The parse answers a surface form (`Canada`, `United Kingdom`, `España`)
- * and the board states a code, so one side has to cross over. crossing the parse's
- * side keeps the board's field untouched as the reference.
+ * and the board states a code, so one side has to cross over.
+ * Crossing the parse's side keeps the board's field untouched as the reference.
  */
 const CODE_BY_FOLDED_NAME = new Map(
 	Object.entries(CountryISO2).map(([name, code]) => [name.trim().toLowerCase(), code])

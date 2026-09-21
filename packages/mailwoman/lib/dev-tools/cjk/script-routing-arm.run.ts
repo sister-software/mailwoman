@@ -4,8 +4,9 @@
  * `scriptFamilyForText` once routed on the folded character class alone, so only an input that
  * was CJK end to end reached the character model and every mixed input went to the Latin one —
  * which is how `逊克二分场四队, heilongjiang, china` came back as a single locality holding the whole Han unit.
- * The question was never whether reading the per-span script helps the Chinese rows. it
- * is what it does to a Latin address that happens to carry a Han venue name.
+ * The question was never whether reading the per-span script helps the Chinese rows.
+ *
+ * It is what it does to a Latin address that happens to carry a Han venue name.
  *
  * Two candidate rules are measured against the same rows, beside what the
  * shipped router does today (`routedToday`):
@@ -58,8 +59,8 @@ function carriesFamilyScript(shape: QueryShape): boolean {
 /**
  * How many of a row's asserted components the parse got, and how many it asserted.
  *
- * Graded through `decodeAsJSON`, which is the projection the board's `expectComponents` is
- * written against — a local tree walk here would be a second answer to the same question
+ * Graded through `decodeAsJSON`, which is the projection the board's `expectComponents` is written against.
+ * A local tree walk here would be a second answer to the same question
  * and would drift from the one the board uses.
  */
 function agreement(tree: AddressTree, want: Record<string, string> | undefined): [number, number] {

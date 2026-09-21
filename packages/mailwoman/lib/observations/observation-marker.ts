@@ -217,13 +217,15 @@ export function absenceObservationMarker(
  *
  * The kind is the verdict'S own TOP kind, and that is the settled answer to the
  * survey's open question rather than an omission.
- * `QueryIntentMarker.kind` is by agreement a kind the verdict carries. a designation is not
- * raised by intent at all — nothing about "10 Downing Street" asks for a flood zone — so there
- * is no kind of its own to name and naming the top kind satisfies the interface literally.
+ * `QueryIntentMarker.kind` is by agreement a kind the verdict carries.
  *
- * `declared_ambiguity` is the precedent for a marker raised at resolve time rather than by the
- * classifier. this one goes one step further and names no kind of its own, which is why the
- * distinction is written down here and in the layer interface instead of being inferred from the code.
+ * A designation is not raised by intent at all — nothing about "10 Downing
+ * Street" asks for a flood zone — so there is no kind of its own to name
+ * and naming the top kind satisfies the interface literally.
+ *
+ * `declared_ambiguity` is the precedent for a marker raised at resolve time rather than by the classifier.
+ * This one goes one step further and names no kind of its own, which is why the distinction
+ * is written down here and in the layer interface instead of being inferred from the code.
  *
  * The message reports what the authority'S MAP assigns, never whether the location will flood.
  * The authority itself declines the second statement, and a wording that blurred them
@@ -273,13 +275,15 @@ export function authorityDesignationMarker(
  *
  * Same code, same family, different rule.
  * It shares `authority_designation` and the `layer` mechanism family with the flood marker,
- * because both report what an authority designates at a resolved coordinate. the rule half names the
- * layer, so a reader meeting two designation markers on one answer can tell which authority spoke.
+ * because both report what an authority designates at a resolved coordinate.
  *
- * The class never travels without the share IT rests on. nrcs's own map-unit
- * aggregation ships its dominant-condition
- * class beside the share that class covers, with an observed minimum of 2%, and this marker reproduces that pairing at
- * cell grain.
+ * The rule half names the layer, so a reader meeting two designation markers on
+ * one answer can tell which authority spoke.
+ *
+ * The class never travels without the share IT rests on.
+ * Nrcs's own map-unit aggregation ships its dominant-condition class beside the share that class
+ * covers, with an observed minimum of 2%, and this marker reproduces that pairing at cell grain.
+ *
  * A message carrying "class 2" alone would manufacture certainty from a plurality.
  *
  * The message reports what the survey assigns TO the MAP unit covering the location,
@@ -329,16 +333,18 @@ export function soilCapabilityMarker(
 /**
  * Turn one coastal-erosion reading into a marker on a geocode verdict.
  *
- * Same code, same family, different rule — the third under the `layer` family,
- * sharing `authority_designation` with the flood and soil markers because all three
- * report what an authority designates at a resolved coordinate.
+ * Same code, same family, different rule.
+ * The third under the `layer` family, sharing `authority_designation` with the flood and soil
+ * markers because all three report what an authority designates at a resolved coordinate.
+ *
  * The rule half names the layer, so a reader meeting several designation markers
  * on one answer can tell which authority spoke.
  *
- * The scenario travels IN the message rather than only IN the evidence. ncerm publishes
- * twelve erosion-zone layers and they answer twelve different questions. a message
- * reading "at erosion risk" without naming which one would let a 2105 projection under a
- * 95th-percentile sea-level-rise allowance be read as a present-day designation.
+ * The scenario travels IN the message rather than only IN the evidence.
+ * Ncerm publishes twelve erosion-zone layers and they answer twelve different questions.
+ *
+ * A message reading "at erosion risk" without naming which one would let a 2105 projection
+ * under a 95th-percentile sea-level-rise allowance be read as a present-day designation.
  * So the scenario key and its plain-language label are in the sentence itself.
  *
  * The message also records the coverage limit, because this layer's silence is not a reassurance.
@@ -394,9 +400,10 @@ export function coastalErosionMarker(
 /**
  * Turn one zoning reading into a marker on a geocode verdict.
  *
- * Same code, same family, different rule — the fourth under the `layer` family,
- * sharing `authority_designation` with the flood, soil and coastal markers
- * because all four report what an authority designates at a resolved coordinate.
+ * Same code, same family, different rule.
+ * The fourth under the `layer` family, sharing `authority_designation` with the flood, soil
+ * and coastal markers because all four report what an authority designates at a resolved coordinate.
+ *
  * The rule half names the layer, so a reader meeting several designation markers
  * on one answer can tell which authority spoke.
  *
@@ -468,9 +475,11 @@ export function zoningDesignationMarker(
  * its field, its docstring and its entry in the marker list — and none at the call site.
  *
  * Every field is optional and presence is the switch.
- * A boolean would make the consumer resolve a data-root path and open a sealed database
- * on the default construction path. what arrives here instead is a route the caller
- * already built, so the consumer never learns where the artifact lives.
+ * A boolean would make the consumer resolve a data-root path and open a sealed
+ * database on the default construction path.
+ *
+ * What arrives here instead is a route the caller already built, so the consumer
+ * never learns where the artifact lives.
  *
  * Absent — the default everywhere — leaves the geocode result byte-identical to a run without the
  * field existing: the layer is never opened, the coordinate is never re-asked, and no marker appears.
@@ -481,9 +490,10 @@ export function zoningDesignationMarker(
  */
 export interface LayerDesignationRoutes {
 	/**
-	 * The EA Flood Map for Planning route (#1989) — the first of these, and the one whose
-	 * absence reading is a designation: inside England a location with no flood polygon
-	 * is Flood Zone 1 by the Planning Practice Guidance's own definition.
+	 * The EA Flood Map for Planning route (#1989).
+	 *
+	 * The first of these, and the one whose absence reading is a designation: inside England a location
+	 * with no flood polygon is Flood Zone 1 by the Planning Practice Guidance's own definition.
 	 */
 	authorityDesignationRoute?: AuthorityDesignationRoute
 	/**
@@ -496,16 +506,19 @@ export interface LayerDesignationRoutes {
 	 */
 	soilCapabilityRoute?: SoilCapabilityRoute
 	/**
-	 * The EA coastal-erosion route (#1993) — a third layer, and the one whose absence reading
-	 * is nothing. ncerm publishes no coverage statement, so this route fires on a designation
+	 * The EA coastal-erosion route (#1993).
+	 *
+	 * A third layer, and the one whose absence reading is nothing.
+	 * Ncerm publishes no coverage statement, so this route fires on a designation
 	 * and stays silent otherwise, which is the opposite of the flood route above.
 	 *
 	 * One field across both would put one rule over two opposite meanings of an empty answer.
 	 */
 	coastalErosionRoute?: CoastalErosionRoute
 	/**
-	 * The Irish zoning route (#1995) — a fourth layer, and the first whose observation
-	 * is a vocabulary rather than a code from a closed domain.
+	 * The Irish zoning route (#1995).
+	 *
+	 * A fourth layer, and the first whose observation is a vocabulary rather than a code from a closed domain.
 	 *
 	 * It carries the authority's own zone code verbatim beside the publisher's own
 	 * generic classification, because 52 of 795 (authority, local code) pairs take more

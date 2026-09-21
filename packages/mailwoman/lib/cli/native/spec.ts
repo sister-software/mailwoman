@@ -85,9 +85,7 @@ export interface ParsedCommand {
 /**
  * Collapse an intersection of mapped types into one object type, preserving each property's optionality.
  *
- * {@linkcode OptionsOf} builds its required and optional halves separately, because a single mapped type cannot vary `?`
- * per key.
- * Without this the editor shows the intersection and an error names one half of it.
+ * {@linkcode OptionsOf} builds its required and optional halves separately, because a single mapped type cannot vary `?` per key. Without this the editor shows the intersection and an error names one half of it.
  */
 type OneObject<Shape> = { [Key in keyof Shape]: Shape[Key] }
 
@@ -125,8 +123,9 @@ type AlwaysPresentFlag<Options> = {
  *
  * The router writes each flag's value to the property `optionPropertyName` derives from it, so a
  * property spelled any other way is never written to and the flag parses, validates, and does nothing.
- * A restated `interface Options` can disagree that way silently. a derived one cannot,
- * because the disagreement becomes a compile error at the read site.
+ * A restated `interface Options` can disagree that way silently.
+ *
+ * A derived one cannot, because the disagreement becomes a compile error at the read site.
  *
  * A flag carrying a `default`, or marked `required`, is always supplied and its property is required.
  * Every other property is optional.
@@ -248,8 +247,8 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			...(option.default !== undefined && option.type !== "number" ? { default: option.default } : {}),
 		}
 
-		// The retired spelling parses, and carries no default — a default here would make
-		// the alias look supplied on every run and shadow the current flag's own.
+		// The retired spelling parses, and carries no default.
+		// A default here would make the alias look supplied on every run and shadow the current flag's own.
 		if (option.deprecatedName) {
 			definitions[option.deprecatedName] = {
 				type: option.type === "boolean" ? "boolean" : "string",

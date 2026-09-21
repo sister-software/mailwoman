@@ -26,8 +26,10 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * `null` renders as `N/A`, never as `0.000` — the withheld run makes no positive call,
- * so its precision and F1 are undefined rather than zero (see `linkage-metrics.ts`).
+ * `null` renders as `N/A`, never as `0.000`.
+ *
+ * The withheld run makes no positive call, so its precision and F1 are undefined
+ * rather than zero (see `linkage-metrics.ts`).
  */
 function formatScoreValue(value: number | null): string {
 	return value === null ? "N/A" : value.toFixed(3)

@@ -55,9 +55,9 @@ interface LocaleSource {
 /**
  * Size past which a `.bin` written into the browser asset dir is worth a word.
  *
- * Not a limit and not enforced — the command's default `--out` is `docs/static/mailwoman`,
- * and a GB unit build lands 20 MB there, so the number exists to make the reader notice
- * rather than to decide for them.
+ * Not a limit and not enforced.
+ * The command's default `--out` is `docs/static/mailwoman`, and a GB unit build lands 20
+ * MB there, so the number exists to make the reader notice rather than to decide for them.
  */
 const BROWSER_BUDGET_BYTES = 4 * 1024 * 1024
 
@@ -162,7 +162,8 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 			// a different distribution than training painted.
 			// But this command's default `--out` is the browser asset dir, where 20 MB is
 			// not a postcode binary, it is the whole page budget.
-			// The size is printed either way. this names the setting rather than deciding for the operator.
+			// The size is printed either way.
+			// This names the setting rather than deciding for the operator.
 			// Which countries carry a browser granularity is the source table's to say.
 			const browserGranularity = browserGranularityFor(country)
 

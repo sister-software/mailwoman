@@ -79,7 +79,8 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		// Fold, merging collisions by summing counts — the serializer throws on duplicates, so a merge bug is loud.
+		// Fold, merging collisions by summing counts.
+		// The serializer throws on duplicates, so a merge bug is loud.
 		const folded = new Map<string, PlacetypeCensusNode>()
 		let collisions = 0
 

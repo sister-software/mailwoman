@@ -99,7 +99,8 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 
 		const kdb = new DatabaseClient<PlaceImportanceDatabase>(dbPath, { open: true })
 
-		// DDL via the Kysely schema-builder. the hot insert loop below stays on the raw `db` handle.
+		// DDL via the Kysely schema-builder.
+		// The hot insert loop below stays on the raw `db` handle.
 
 		// Step 1: Load Wikidata concordances from WOF
 		console.error("Loading Wikidata concordances from WOF...")
@@ -108,10 +109,12 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		const fanout = emptyFanoutStats()
 
 		try {
-			// Joins `spr` for the geometry + population the fan-out guard needs, and restricts to
-			// `is_current = 1` — a deprecated place is not in any consumer's read path, and leaving
-			// it in would let a dead row win a fan-out group. distinct because `concordances`
-			// carries duplicate (id, other_id) rows (Q18125 appears twice for the same place).
+			// Joins `spr` for the geometry + population the fan-out guard needs,
+			// and restricts to `is_current = 1`.
+			// A deprecated place is not in any consumer's read path, and leaving it in
+			// would let a dead row win a fan-out group.
+			// Distinct because `concordances` carries duplicate (id, other_id) rows
+			// (Q18125 appears twice for the same place).
 			const stmt = kdb.prepare(
 				`SELECT DISTINCT c.other_id AS other_id, s.id AS id, s.placetype AS placetype,
 				        s.latitude AS lat, s.longitude AS lon, COALESCE(p.population, 0) AS population
@@ -188,7 +191,8 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 
 		const fileChunks = await createReadStream(gzPath, IMPORTANCE_READ_HIGH_WATER_MARK)
 
-		// crlf: the wikidata id is the last column — a crlf source would leave a stray \r on it.
+		// crlf: the wikidata id is the last column.
+		// A crlf source would leave a stray \r on it.
 		for await (const line of TextSpliterator.fromAsync(gunzipChunks(fileChunks), { crlf: true })) {
 			totalRows++
 
@@ -221,15 +225,15 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		// That made the column a conflation nothing downstream could take apart —
 		// which is how encyclopedic importance became the de-facto ranking signal.
 		// Now each place gets one row carrying both scores in their own columns,
-		// and the legacy `importance` column is written by `blendImportance` — the bounded
-		// blend whose cap keeps an article-floor score from outranking a population-attested
-		// town (see the constant's docstring for the bracketing contests).
+		// and the legacy `importance` column is written by `blendImportance`.
+		// The bounded blend whose cap keeps an article-floor score from outranking a
+		// population-attested town (see the constant's docstring for the bracketing contests).
 		console.error("Building place_importance table (referential + encyclopedic)...")
 
 		await createPlaceImportanceTable(kdb)
 
 		// A single WOF id can concord to multiple wikidata ids
-		// (the current global DB's concordances carry such multiplicities. a naive per-wikidata
+		// (the current global DB's concordances carry such multiplicities. A naive per-wikidata
 		// insert double-inserts the wof id and violates the `id` primary key).
 		// Collapse to the MAX importance per wof id first, then insert once each.
 		const wofEncyclopedic = new Map<number, number>()
@@ -248,8 +252,8 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 			}
 		}
 
-		// Referential is population-anchored and independent of the Wikipedia join —
-		// every place with a population carries one whether or not it has an article.
+		// Referential is population-anchored and independent of the Wikipedia join.
+		// Every place with a population carries one whether or not it has an article.
 		const wofReferential = new Map<number, number>()
 
 		try {
@@ -276,9 +280,9 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		let encyclopedicCount = 0
 		let referentialOnlyCount = 0
 		// One row per place in the union of the two signals.
-		// A place absent from both is absent from the table entirely — the pre-split behavior,
-		// and the correct one: a row of zeros would assert that we measured no salience
-		// rather than that we measured nothing.
+		// A place absent from both is absent from the table entirely.
+		// The pre-split behavior, and the correct one: a row of zeros would assert that
+		// we measured no salience rather than that we measured nothing.
 		const allIDs = new Set<number>([...wofReferential.keys(), ...wofEncyclopedic.keys()])
 
 		kdb.exec("BEGIN TRANSACTION")
@@ -300,8 +304,9 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		kdb.exec("COMMIT")
 
 		// The total is read back, never derived by adding the two counters.
-		// The counters describe what this run tried to do. the table is what it did, and
-		// when those disagreed nobody noticed because the derived number looked plausible.
+		// The counters describe what this run tried to do.
+		// The table is what it did, and when those disagreed nobody noticed
+		// because the derived number looked plausible.
 		// `select count(*)` cannot drift.
 		const total = countRows(kdb, "place_importance")
 

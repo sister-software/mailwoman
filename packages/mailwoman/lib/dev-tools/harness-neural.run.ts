@@ -74,11 +74,11 @@ interface Args {
 	postcodeRepair: boolean
 	unitRepair: boolean
 	/**
-	 * #478: also grade the assembled runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper →
-	 * reconcile → classify), not just the raw neural classifier.
+	 * #478: also grade the assembled runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper → reconcile → classify), not just the raw neural classifier.
 	 *
-	 * This is the #566-lesson eval: a pipeline regression (e.g. a reconcile/arbitration change)
+	 * This is the #566-lesson eval: a pipeline regression (e.g. A reconcile/arbitration change)
 	 * is invisible when the eval grades raw neural.
+	 *
 	 * Off by default → the existing raw-neural report is byte-stable.
 	 */
 	assembled: boolean
@@ -94,7 +94,7 @@ function parseArgs(): Args {
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated —
 	// including the retired `--symmetric-match` (only ever governed the deleted v0 arm's scoring)
-	// and the retired `--arbitrate` (#478 inc 3. the `arbitrate` PipelineOpt no longer exists)).
+	// and the retired `--arbitrate` (#478 inc 3. The `arbitrate` PipelineOpt no longer exists)).
 	const { values } = parseArguments({
 		options: {
 			"admin-fst": { type: "string" },
@@ -213,8 +213,8 @@ function localeFromFilename(file: string): string {
 /**
  * Recursively unwrap a literal object expression like `{ street: ["Main St"] }` into a plain JS object.
  *
- * Returns `null` for anything that isn't a literal-of-literals (we intentionally don't
- * try to evaluate variables or computed properties — none of the test files use those).
+ * @returns `null` for anything that isn't a literal-of-literals (we intentionally don't
+ *   try to evaluate variables or computed properties — none of the test files use those).
  */
 function objectLiteralToRecord(node: ts.ObjectLiteralExpression): ClassificationRecord | null {
 	const out: Record<string, string[]> = {}
@@ -333,9 +333,11 @@ async function discoverAssertions(testsDir: string): Promise<ExtractedAssertion[
 //#region Neural output → the visible ClassificationRecord vocabulary
 
 /**
- * Visible classification labels in the assertion vocabulary — the fixture format inherited from the retired rule-based
- * suite: `country, dependency, house_number, level_designator, level, locality, postcode, region, street,
- * unit_designator, unit, venue`. Anything outside this set is invisible to the comparison and gets folded or dropped.
+ * Visible classification labels in the assertion vocabulary —
+ * the fixture format inherited from the retired rule-based suite:
+ * `country, dependency, house_number, level_designator, level, locality, postcode, region, street, unit_designator, unit, venue`.
+ *
+ * Anything outside this set is invisible to the comparison and gets folded or dropped.
  */
 const VISIBLE_TAGS = new Set([
 	"country",
@@ -359,8 +361,8 @@ const VISIBLE_TAGS = new Set([
  *
  * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → `street`
  *   (concat in document order, preserving inter-token spacing implicitly via concatenation).
- * - `intersection_a` + `intersection_b` → `street` (two separate values, matching the fixtures' `{street: ["Main St",
- *   "Second Ave"]}` shape for intersections).
+ * - `intersection_a` + `intersection_b` → `street` (two separate values, matching the
+ *   fixtures' `{street: ["Main St", "Second Ave"]}` shape for intersections).
  * - `house_number`, `unit`, `venue`, `country`, `region`, `locality`, `postcode` → identity.
  * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`,
  *   JP-specific tags → dropped (no fixture equivalent).
@@ -432,7 +434,7 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
  * (string-equality, case-folded, trimmed) contains the expected value.
  *
  * We accept `actual` being a superset because the neural parser may emit extra components
- * the test doesn't pin down (e.g. it labels a country when the test only asserted street).
+ * the test doesn't pin down (e.g. It labels a country when the test only asserted street).
  */
 function expectedMatchesActual(expected: ClassificationRecord, actual: ClassificationRecord): boolean {
 	for (const [tag, expectedValues] of Object.entries(expected)) {
@@ -448,8 +450,8 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 			if (normLoose(expectedValues[i]!) !== normLoose(actualValues[i]!)) {
 				// Allow substring containment in either direction — the neural parser sometimes over-
 				// or under-spans (e.g. "5th Avenue" vs "Avenue").
-				// The fixture suite is the authority on the expected span. we count a
-				// substring match as a partial pass.
+				// The fixture suite is the authority on the expected span.
+				// We count a substring match as a partial pass.
 				const exp = normLoose(expectedValues[i]!)
 				const act = normLoose(actualValues[i]!)
 
@@ -498,19 +500,15 @@ async function runAssertion(
 ): Promise<AssertionResult> {
 	// neural — one tree, loose semantics: pass if any of the expected solutions
 	// is matched by the top-1 neural output.
-	// This is the natural reading for a single-result parser. the fixtures' multi-solution
-	// structure came from the retired multi-hypothesis rules API.
+	// This is the natural reading for a single-result parser.
+	// The fixtures' multi-solution structure came from the retired multi-hypothesis rules API.
 	const tree = await neuralClassifier.parse(a.input, parseOpts)
 	const flat = decodeAsJSON(tree)
 	const { record: neuralRecord, dropped } = neuralTreeToVisibleRecord(flat)
 	const neuralPass = anyExpectedMatches(a.expected, neuralRecord)
 	const treeValidity = validateTree(tree) // #37 — structural coherence of the neural parse
 
-	// #478 assembled-pipeline arm: grade the full `runPipeline` parse (what production runs) — same
-	// loose top-1 semantics + tree→visible-record conversion as neural.
-	// Off unless `--assembled` wired the pipeline.
-	// This is the #566-lesson measurement: an assembled-pipeline regression is
-	// invisible against raw-neural F1.
+	// #478 assembled-pipeline arm: grade the full `runPipeline` parse (what production runs) — same loose top-1 semantics + tree→visible-record conversion as neural. Off unless `--assembled` wired the pipeline. This is the #566-lesson measurement: an assembled-pipeline regression is invisible against raw-neural F1.
 	let assembledPass: boolean | undefined
 	let assembledRecord: ClassificationRecord | undefined
 
@@ -634,8 +632,7 @@ function printReport(results: AssertionResult[]): void {
 	)
 	console.log("")
 
-	// #478 assembled-pipeline arm (only when --assembled): what the assembled pipeline (grouper +
-	// reconcile + fast-path) gains or loses against raw neural on the same assertions.
+	// #478 assembled-pipeline arm (only when --assembled): what the assembled pipeline (grouper + reconcile + fast-path) gains or loses against raw neural on the same assertions.
 	const hasAssembled = results.some((r) => r.assembled_pass !== undefined)
 
 	if (hasAssembled) {
@@ -731,7 +728,7 @@ async function main(): Promise<void> {
 
 		// Gaz-trained models (v4.2.0+) must be fed the lexicon + the postcode-anchor
 		// lookup with near-postcode suppression — zero-filled clues depress country recall
-		// and fake an affix crash (the ship config. see CONTRIBUTING_MODEL_WORK eval invariants).
+		// and fake an affix crash (the ship config. See CONTRIBUTING_MODEL_WORK eval invariants).
 		let gazetteerLexicon: GazetteerLexicon | undefined
 
 		if (args.gazetteerLexiconPath) {
@@ -795,8 +792,7 @@ async function main(): Promise<void> {
 		unitRepair: args.unitRepair,
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
 
-	// #478: the assembled runtime pipeline (reuses the neural classifier + admin FST). No resolver —
-	// the arena grades component parses (Stage 3 / grouper / reconcile), not coordinates.
+	// #478: the assembled runtime pipeline (reuses the neural classifier + admin FST). No resolver — the arena grades component parses (Stage 3 / grouper / reconcile), not coordinates.
 	const pipeline = args.assembled
 		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST } : {}) })
 		: undefined

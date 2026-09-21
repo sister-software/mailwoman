@@ -50,8 +50,9 @@ export function commandPathCandidates(segment: string): string[][] {
 }
 
 /**
- * Whether `directory` is a prefix directory for a command declaring `name` — the case
- * where the directory is part of the layout rather than part of what the user types.
+ * Whether `directory` is a prefix directory for a command declaring `name`.
+ *
+ * The case where the directory is part of the layout rather than part of what the user types.
  *
  * `gazetteer/inspect/fst.tsx` declares `fst`, so `inspect` is a namespace the user types.
  * `gazetteer/build/postcode/codepoint.tsx` declares `postcode-codepoint`, so `postcode` is layout.

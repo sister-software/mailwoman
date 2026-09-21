@@ -59,9 +59,7 @@ interface Fixture {
 /**
  * Load the corpus.
  *
- * Default = the schema-correct parity corpus (street-family aware, campaign check).
- * `golden:<dir>[:<sampleN>]` = the golden dev set (broad label coverage including country/region,
- * which parity is sparse on) — note its `street` gold is flat-schema (pre-split).
+ * Default = the schema-correct parity corpus (street-family aware, campaign check). `golden:<dir>[:<sampleN>]` = the golden dev set (broad label coverage including country/region, which parity is sparse on) — note its `street` gold is flat-schema (pre-split).
  *
  * Therefore, street reads confounded there. country/region/locality/postcode/house_number
  * are single-tag and valid.
@@ -224,7 +222,7 @@ async function runFailureReport(): Promise<void> {
 	const beyondReach = anyFail.filter((r) => labels.every((l) => r.failsByModel[l]))
 
 	// Per-label failure count per model — the view where a silently-traded class
-	// (e.g. country on the fragment lineage) jumps out: a label whose failure count rises across candidates.
+	// (e.g. Country on the fragment lineage) jumps out: a label whose failure count rises across candidates.
 	const allLabels = [
 		...new Set(
 			all.flatMap((r) =>
@@ -278,8 +276,8 @@ async function runFailureReport(): Promise<void> {
 
 	const cell = (s: string): string => "`" + (s || "∅").replaceAll("`", "ˋ").replaceAll("|", "\\|") + "`"
 	// Not `formatPercent`: this rounds `(n / d) * 100` where core computes `(100 * n) / d`,
-	// and the two can differ in the last bit at a .5 rounding boundary — the report's
-	// zero-decimal cells stay byte-stable under their own arithmetic.
+	// and the two can differ in the last bit at a .5 rounding boundary.
+	// The report's zero-decimal cells stay byte-stable under their own arithmetic.
 	const pct2 = (n: number, d: number): string => (d ? `${((n / d) * 100).toFixed(0)}%` : "—")
 	const mdRow = (cells: (string | number)[]): string => `| ${cells.join(" | ")} |`
 
@@ -425,8 +423,8 @@ ${diffTable}
 	await writeLocalFile(mdx, outPath)
 
 	// The machine-readable twin of the MDX above.
-	// It goes under `$MAILWOMAN_TEMP_ROOT` rather than a repo-relative path, which git ignores —
-	// a file written there exists only on the machine that wrote it.
+	// It goes under `$MAILWOMAN_TEMP_ROOT` rather than a repo-relative path, which git ignores.
+	// A file written there exists only on the machine that wrote it.
 	const jsonPath = tempRootPath("failure-report.json")
 
 	await writeLocalJSONFile({ summary, records: all }, jsonPath)

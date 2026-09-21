@@ -33,8 +33,8 @@ if (!(await pathExists(PYTHON))) {
  * Local quantize needs only the quant subset (onnx, onnxruntime) — export runs on Modal,
  * where the full image pins apply.
  *
- * Export-side packages absent locally are a warning. present-but-mismatched is a
- * failure either way (a wrong version is worse than a missing one).
+ * Export-side packages absent locally are a warning.
+ * Present-but-mismatched is a failure either way (a wrong version is worse than a missing one).
  */
 const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
 

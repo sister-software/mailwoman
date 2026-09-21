@@ -60,9 +60,9 @@ interface Pair {
 /**
  * The panels, keyed by the country whose addresses they hold.
  *
- * `misScope` is the wrong default the rescue leg pins — `US` for the non-US panels
- * (the en-US locale default that causes the bug in the first place) and `FR` for the US panel,
- * so both mis-scope directions are covered rather than only the convenient one.
+ * `misScope` is the wrong default the rescue leg pins.
+ * `US` for the non-US panels (the en-US locale default that causes the bug in the first place) and
+ * `FR` for the US panel, so both mis-scope directions are covered rather than only the convenient one.
  */
 const PANELS: Record<string, { path: string; country: string; misScope: string; read: (row: never) => Pair | null }> = {
 	us: {
@@ -119,9 +119,9 @@ const limit = limitArg ? Number(limitArg) : Infinity
 /**
  * The two roots the pass reads.
  *
- * The real tree carries a street too. it is never consulted here
- * (the pass keys on the postcode string the caller passes plus the first locality node),
- * so the minimal pair is faithful.
+ * The real tree carries a street too.
+ * It is never consulted here (the pass keys on the postcode string the caller passes
+ * plus the first locality node), so the minimal pair is faithful.
  */
 function rootsFor(pair: Pair): AddressNode[] {
 	return [
@@ -141,8 +141,8 @@ async function makeBackend(): Promise<ResolverBackend> {
 		return new WOFCandidateTableLookup({ databasePath: path })
 	}
 
-	// The production database set, exactly as `wofExtractPaths()` orders it — the point
-	// of the FTS leg is to measure what a default-on mechanism would see in production
+	// The production database set, exactly as `wofExtractPaths()` orders it.
+	// The point of the FTS leg is to measure what a default-on mechanism would see in production
 	// rather than what a hand-picked database list can be made to show.
 	const paths = await existingWOFDatabasePaths()
 

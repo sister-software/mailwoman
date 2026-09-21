@@ -123,8 +123,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		await makeDirectories(outDir)
 
 		// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load
-		// it dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault
-		// when the native binding isn't installed.
+		// it dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault when the native binding isn't installed.
 		const { DuckDBInstance } = await import("@duckdb/node-api")
 		const instance = await DuckDBInstance.create()
 		const db = await instance.connect()
@@ -135,7 +134,8 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		await db.run("SET s3_region='us-west-2';")
 		// Modest thread count + a hard memory ceiling: DuckDB's default (all cores) over the
 		// Overture addresses theme OOM-killed this box once (2026-06-19, naive read_parquet).
-		// copy streams to disk, so the caps cost little. they bound scan parallelism + buffers.
+		// Copy streams to disk, so the caps cost little.
+		// They bound scan parallelism + buffers.
 		await db.run("SET threads=4;")
 		await db.run("SET memory_limit='8GB';")
 
@@ -179,10 +179,13 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		}
 
 		/**
-		 * Emit the flattened corpus-input jsonl the `overture` corpus adapter consumes (`{ street, number, unit, postcode,
-		 * locality }`), so `@mailwoman/corpus` stays free of the heavy native DuckDB binding. `street` is kept whole
-		 * (keyword included); the downstream affix-relabel splits `street_prefix`. `locality` flattens the `address_levels`
-		 * municipality (the deepest level) with a `postal_city` fallback.
+		 * Emit the flattened corpus-input jsonl the `overture` corpus adapter consumes
+		 * (`{ street, number, unit, postcode, locality }`), so `@mailwoman/corpus`
+		 * stays free of the heavy native DuckDB binding.
+		 *
+		 * `street` is kept whole (keyword included); the downstream affix-relabel splits `street_prefix`.
+		 * `locality` flattens the `address_levels` municipality (the deepest level)
+		 * with a `postal_city` fallback.
 		 */
 		const emitCorpusJSONL = async (cc: string): Promise<void> => {
 			const src = countryParquet(cc)

@@ -154,7 +154,8 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 			return `dedup-ceiling: ${res.collide} collisions over ${res.pairs} co-located pairs`
 		}
 		case "nppes-benchmark": {
-			// The threaded-geocode surface is injected lazily — the worker pool only loads when requested.
+			// The threaded-geocode surface is injected lazily.
+			// The worker pool only loads when requested.
 			const geocodeStream: EvalGeocodeStream = (records, opts) =>
 				(async function* () {
 					const { geocodeStream: stream } = await import("#geocode/stream")

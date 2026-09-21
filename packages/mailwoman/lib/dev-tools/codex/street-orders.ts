@@ -32,8 +32,10 @@ export type StreetOrder = "number-first" | "number-last"
  *
  * Measured the same way, and on the same rendered output: 183 of the 213 template countries
  * space-join, 22 comma-join, and 8 name only one of the two slots so the question does not arise.
- * The separator is not cosmetic — Spain's corpus recipe renders both forms on purpose,
- * and collapsing the comma is what its `nativeHouseJoin` option does.
+ * The separator is not cosmetic.
+ *
+ * Spain's corpus recipe renders both forms on purpose, and collapsing the comma
+ * is what its `nativeHouseJoin` option does.
  */
 export const COMMA_JOINED_STREET_COUNTRIES: ReadonlySet<string> = new Set([
 	"BJ",

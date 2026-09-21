@@ -15,8 +15,8 @@ import { useCommandTask } from "#cli-kit"
 /**
  * One moved-command shim component printing the replacement and exiting 1.
  *
- * The `spec` stays a literal in each sibling file — the option-collision test inspects
- * specs statically and cannot see through a factory return.
+ * The `spec` stays a literal in each sibling file.
+ * The option-collision test inspects specs statically and cannot see through a factory return.
  */
 export function createWOFShim(name: string, replacement: string): FC {
 	const Shim: FC = () => {

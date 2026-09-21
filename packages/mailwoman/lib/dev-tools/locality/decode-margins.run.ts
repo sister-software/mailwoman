@@ -88,10 +88,11 @@ const { values } = parseArguments({
 		/**
 		 * Write each row's own region as its canonical name rather than its code — `Illinois` for `IL`.
 		 *
-		 * Separates the frame from the name: `Orland Park, IL 60467` answers no locality at all while `Orland Park,
-		 * Illinois` answers the place, so a penalty read under the coded frame may belong to the frame rather than to the
-		 * locality's own shape. A row whose region the codex cannot spell is skipped and counted, never rendered under its
-		 * code as though the arm had applied.
+		 * Separates the frame from the name: `Orland Park, IL 60467` answers no locality at all
+		 * while `Orland Park, Illinois` answers the place, so a penalty read under the coded
+		 * frame may belong to the frame rather than to the locality's own shape.
+		 * A row whose region the codex cannot spell is skipped and counted,
+		 * never rendered under its code as though the arm had applied.
 		 */
 		"spell-region": { type: "boolean" },
 		/**
@@ -194,7 +195,8 @@ function isLocalityLabel(label: string): boolean {
  * The margin of the locality reading at one token: the best locality label's
  * score minus the best score of any label.
  *
- * Zero when a locality label already wins. negative by how far it lost.
+ * Zero when a locality label already wins.
+ * Negative by how far it lost.
  */
 function localityMargin(row: readonly number[], labels: readonly string[]): number {
 	let best = Number.NEGATIVE_INFINITY
@@ -237,8 +239,9 @@ interface GroupMargins {
 	/**
 	 * What won at the first locality piece instead.
 	 *
-	 * A margin says how far the locality came behind. this says what it came behind, which is
-	 * the difference between a model that is unsure and one that has learned another reading.
+	 * A margin says how far the locality came behind.
+	 * This says what it came behind, which is the difference between a model that is unsure
+	 * and one that has learned another reading.
 	 */
 	decodedAs: Map<string, number>
 	unlocated: number
@@ -280,9 +283,9 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 		}
 
 		const input = renderAdmin(place)
-		// `caseCountry`, not `defaultCountry`: the first selects the weights overlay
-		// the classifier loads with, which is what a trace is about. the second is a
-		// resolver prior `diagnoseParse` never reaches.
+		// `caseCountry`, not `defaultCountry`: the first selects the weights overlay the
+		// classifier loads with, which is what a trace is about.
+		// The second is a resolver prior `diagnoseParse` never reaches.
 		const { trace } = await deps.diagnoseParse(input, { caseCountry: place.country })
 		const start = input.indexOf(place.locality)
 
@@ -376,8 +379,8 @@ if (values["swap-postcode"]) {
 const swapped = swaps.join(", ")
 
 // The weights go in the header because leaving them out cost a whole reading:
-// #2308's rates are measured on a candidate, a bare run grades the installed
-// weights instead, and the two sit about 2.5 logits apart on this surface.
+// #2308's rates are measured on a candidate, a bare run grades the installed weights
+// instead, and the two sit about 2.5 logits apart on this surface.
 // A table that does not name its model can be compared against one that was never its arm.
 const weights = values["weights-cache"]
 	? `candidate ${values["weights-cache"]}`

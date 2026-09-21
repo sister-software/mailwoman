@@ -11,10 +11,11 @@ import type { ServerHandle } from "@mailwoman/api-kit"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { availableParallelism } from "@mailwoman/core/utils/system"
-// Default import rather than `* as process` — the ESM namespace object for `node:process`
-// only reflects the process object's own properties (`pid`, `exit`, `env`, …); EventEmitter
-// methods (`on`, `once`, `emit`) live on its prototype chain and are silently absent from
-// `import *`. sigint/sigterm below need `.once`, so this must be the real singleton.
+// Default import rather than `* as process`.
+// The ESM namespace object for `node:process` only reflects the process object's own
+// properties (`pid`, `exit`, `env`, …); EventEmitter methods (`on`, `once`, `emit`)
+// live on its prototype chain and are silently absent from `import *`. sigint/sigterm
+// below need `.once`, so this must be the real singleton.
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 
@@ -42,7 +43,7 @@ export const spec = {
 
 // note(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance
 // to move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup,
-// and ChildThread's effect boots the @mailwoman/api Hono app over a node listener. there is no
+// and ChildThread's effect boots the @mailwoman/api Hono app over a node listener. There is no
 // `setImmediate(process.exit)` here — sigint/sigterm now dispose the server after it drains).
 
 const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus = availableParallelism() } }) => {
@@ -218,7 +219,8 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				// time in the primary, before any worker's async preflight resolves —
 				// so `cluster.worker.id === 1` deterministically picks the first-forked worker,
 				// regardless of which worker's preflight check happens to finish first.
-				// Only that one worker prints. the rest exit silently.
+				// Only that one worker prints.
+				// The rest exit silently.
 				// Chosen over a primary-side pre-fork check (the primary doesn't otherwise
 				// call createServeEngine() at all, and duplicating its import/db-existence
 				// check there just to avoid forking would be the more invasive change)

@@ -94,8 +94,8 @@ import { readCommittedModel } from "#observations/committed-model"
  * The relation the frozen vertical defines, and the only one this route reads.
  *
  * An assertion under any other relation is not an affordance, and the route refuses an
- * artifact that does not define this one rather than answering "no kinds afford it" —
- * an unreadable relation and an unasserted one are different findings.
+ * artifact that does not define this one rather than answering "no kinds afford it".
+ * An unreadable relation and an unasserted one are different findings.
  */
 const AFFORDS_RELATION = "affords"
 
@@ -148,8 +148,8 @@ export interface SemanticObservation {
 	 */
 	declaredLocales: string[] | null
 	/**
-	 * The country the caller's locale named, or `null` when it named none —
-	 * the lens the phrase was read through.
+	 * The country the caller's locale named, or `null` when it named none.
+	 * The lens the phrase was read through.
 	 *
 	 * It is not what the assertion's country scope was tested against: that is the resolved
 	 * anchor's country, which the POI intent stage binds after this observation is recorded
@@ -179,8 +179,9 @@ export interface SemanticObservation {
 	 */
 	categoryID: string
 	/**
-	 * How many mapped entity kinds the activity reached on this firing — the set handed
-	 * to the POI branch before the anchor's country was bound.
+	 * How many mapped entity kinds the activity reached on this firing.
+	 *
+	 * The set handed to the POI branch before the anchor's country was bound.
 	 *
 	 * One observation is recorded per member, each naming its own assertion and mapping,
 	 * and every one of them carries this same count.
@@ -215,7 +216,7 @@ export interface SemanticObservationRoute {
 	/**
 	 * The lexicon rung.
 	 *
-	 * Returns `[]` for every phrase that does not end in a declared activity form the locale admits.
+	 * @returns `[]` for every phrase that does not end in a declared activity form the locale admits.
 	 */
 	lookup: POIPhraseLookup
 	identity: SemanticRouteIdentity
@@ -468,7 +469,8 @@ export async function createSemanticObservationRoute(
 				// The confidence the committed exact-phrase rung reports for the same kind of hit:
 				// `1` for a phrase used everywhere or one the locale names outright, and the halved
 				// value `@mailwoman/variant-aliases` reports when only the language agrees.
-				// It selects a query kind. it orders no candidate, and no number here was chosen to make one win.
+				// It selects a query kind.
+				// It orders no candidate, and no number here was chosen to make one win.
 				// Every member of a set carries the same value, so the set cannot be ranked by it either.
 				confidence: localeMatch.confidence,
 				// These matches are one afforded set rather than a preference list: the POI branch searches their union.

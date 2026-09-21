@@ -19,10 +19,13 @@
  * Nothing says which model graph should read it, and two obvious derivations
  * both fail on rows the board already holds.
  *
- * The country does not supply it. `新加坡` is an SG row written wholly in Han, and `逊克二分场四队, HEILONGJIANG, CHINA` is a CN
- * row whose Han sits in one comma segment. Reading truth off the country would send both to the Latin family, which is
- * the reading `script-router.ts` records as measured wrong: under the whole-input fold `Far East Chinese 口福羊汤, 13
- * Gerrard St, London W1D 5PS` came back `country: "Chi"`, `region: "Far East"`.
+ * The country does not supply it.
+ * `新加坡` is an SG row written wholly in Han, and `逊克二分场四队, HEILONGJIANG, CHINA`
+ * is a CN row whose Han sits in one comma segment.
+ *
+ * Reading truth off the country would send both to the Latin family, which is the
+ * reading `script-router.ts` records as measured wrong: under the whole-input fold
+ * `Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS` came back `country: "Chi"`, `region: "Far East"`.
  *
  * The script share does not supply it either.
  * `逊克二分场四队, HEILONGJIANG, CHINA` carries 29.2% Han and routes to the character model.
@@ -268,8 +271,8 @@ const misroutes: Misroute[] = []
  * than the shipped router sends it to.
  *
  * The reading is tried after the shipped router and only when that router abstained,
- * so this list is the whole difference between the two arms — every row a change
- * would move, and no row it would leave alone.
+ * so this list is the whole difference between the two arms.
+ * Every row a change would move, and no row it would leave alone.
  */
 interface MovedRow {
 	id: string

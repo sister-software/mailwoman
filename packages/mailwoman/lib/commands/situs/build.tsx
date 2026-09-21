@@ -76,7 +76,8 @@ export const spec = {
  *
  * NH + HI carry zero Overture address coverage in this release, so they're absent —
  * interpolation-only states.
- * VI (territory) included for completeness. harmless if the parser's region→slug map skips it.
+ * VI (territory) included for completeness.
+ * Harmless if the parser's region→slug map skips it.
  */
 const STATES_BY_COVERAGE = [
 	"CA",
@@ -175,8 +176,8 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		// loading the command tree (e.g. `mailwoman --help`) doesn't pull it at module-eval.
 		const { parallelMap } = await import("spliterator")
 
-		// A database is complete iff its address_point table has rows and the streetkey index exists —
-		// the index is the last build step, so its presence means insert + index + vacuum all finished.
+		// A database is complete iff its address_point table has rows and the streetkey index exists.
+		// The index is the last build step, so its presence means insert + index + vacuum all finished.
 		const isComplete = async (dbPath: string): Promise<boolean> => {
 			if (!(await pathExists(dbPath))) return false
 

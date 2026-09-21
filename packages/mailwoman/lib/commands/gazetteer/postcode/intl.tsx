@@ -215,7 +215,8 @@ async function buildDatabase(
 	// fully replaces it (and synthetic ids restart cleanly without colliding with stale rows).
 	await kdb.schema.dropTable("spr").ifExists().execute()
 
-	// Schema mirrors postalcode-intl.db's `spr` exactly — a drop-in `--postcodes` input for build-candidate.
+	// Schema mirrors postalcode-intl.db's `spr` exactly.
+	// A drop-in `--postcodes` input for build-candidate.
 	await kdb.schema
 		.createTable("spr")
 		.ifNotExists()

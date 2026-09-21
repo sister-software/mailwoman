@@ -24,9 +24,10 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
-// resolver-wof-sqlite is an optional peer dep of mailwoman. its runtime value `BUILTIN_STRATEGY_NAMES`
-// is imported dynamically inside the command (the gazetteer-pipeline convention) so merely
-// loading the commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent.
+// resolver-wof-sqlite is an optional peer dep of mailwoman.
+// Its runtime value `BUILTIN_STRATEGY_NAMES` is imported dynamically inside the
+// command (the gazetteer-pipeline convention) so merely loading the commands
+// (e.g. `mailwoman --help`) doesn't fault when the peer is absent.
 // `Convention` is type-only.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
 import {
@@ -121,7 +122,8 @@ const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 		validate(rows, KNOWN)
 
 		const kdb = new DatabaseClient<ConventionDatabase>(output)
-		// DDL via the Kysely schema-builder. the row INSERTs below stay on the raw `kdb` handle.
+		// DDL via the Kysely schema-builder.
+		// The row INSERTs below stay on the raw `kdb` handle.
 		await kdb.schema.dropTable("address_convention").ifExists().execute()
 		await kdb.schema.dropTable("meta").ifExists().execute()
 

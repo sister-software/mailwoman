@@ -101,8 +101,9 @@ export function observationCoverageRecord(
 }
 
 /**
- * The coverage sentence a designation's one-line description carries —
- * one wording for every layer, with the completeness term added only where the
+ * The coverage sentence a designation's one-line description carries.
+ *
+ * One wording for every layer, with the completeness term added only where the
  * layer's basis makes a completeness magnitude meaningful.
  */
 export function describeCoverage(

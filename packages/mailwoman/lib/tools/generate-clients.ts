@@ -75,11 +75,11 @@ const FLAVORS = ["3.1", "3.0"] as const
  *
  * Both times a clean, successful compile read as a missing emitter,
  * and the second time it failed inside a release run.
- * `bin` is the manifest's declaration of where the entry point is. the emit
- * layout underneath it is free to move.
+ * `bin` is the manifest's declaration of where the entry point is.
+ * The emit layout underneath it is free to move.
  *
- * Resolved through `workspacePath`, never by treating the workspace name as a
- * repo-root segment — that was the first failure's shape.
+ * Resolved through `workspacePath`, never by treating the workspace name as a repo-root segment.
+ * That was the first failure's shape.
  */
 export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
 	const { bin } = await readPackageJSON<{ bin?: string | Record<string, string> }>(
@@ -170,7 +170,7 @@ function fail(message: string): never {
 
 /**
  * Run a child process with inherited stdio (the `publish-hf.ts` convention — the child's own output is
- * the progress log) and throw on nonzero exit or a launch failure (e.g. the binary isn't installed).
+ * the progress log) and throw on nonzero exit or a launch failure (e.g. The binary isn't installed).
  */
 function run(cmd: string, args: string[], options: { cwd?: string } = {}): void {
 	runProcessOrFail(cmd, args, { ...options, echo: true })

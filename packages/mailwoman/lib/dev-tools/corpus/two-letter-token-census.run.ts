@@ -136,8 +136,8 @@ for (const row of reader.getRowObjects()) {
 /**
  * The share of a token's occurrences held by its commonest tag.
  *
- * A token that teaches one reading is 1.0. one the decode has to disambiguate is lower,
- * and how much lower is the size of the contest.
+ * A token that teaches one reading is 1.0.
+ * One the decode has to disambiguate is lower, and how much lower is the size of the contest.
  */
 function dominance(entry: TokenCensus): number {
 	return entry.total === 0 ? 0 : Math.max(...entry.byTag.values()) / entry.total

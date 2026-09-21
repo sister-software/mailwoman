@@ -91,7 +91,8 @@ type Options = OptionsOf<typeof spec>
  *
  * Multi-column fields are joined (so a CSV that splits the address across columns composes one string).
  * Real datasets with bespoke headers (e.g. NPPES "Provider First Line Business Practice Location Address")
- * pass an explicit --mapping. inferring it from the header is the #603 fast-follow.
+ * pass an explicit --mapping.
+ * Inferring it from the header is the #603 fast-follow.
  */
 export const DEFAULT_MAPPING: ColumnMapping = {
 	id: "id",
@@ -138,9 +139,10 @@ async function resolveWOFPath(options: Options): Promise<string> {
 
 /**
  * Construct the heavy geocoder once (neural parser + WOF resolver + per-state databases)
- * and wire it into the matcher's
- * {@link GeocodeAddress} interface. Returns it plus a disposal hook for the database handles. Shared by the single-CSV
- * and multi-source paths.
+ * and wire it into the matcher's {@link GeocodeAddress} interface.
+ *
+ * Returns it plus a disposal hook for the database handles.
+ * Shared by the single-CSV and multi-source paths.
  */
 async function buildGeocoder(options: Options): Promise<{ geocodeAddress: GeocodeAddress } & Disposable> {
 	const { decodeAsJSON } = await import("@mailwoman/core/decoder")
@@ -176,7 +178,8 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 		throw new CommandError("registry requires `@mailwoman/resolver-wof-sqlite` to be installed.")
 	}
 
-	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend. else FTS over wofPath.
+	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend.
+	// Else FTS over wofPath.
 	const lookup = await createResolverBackend(mod, { wofPaths: wofPath })
 	const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, options.dataRoot)
 	const databases: RegionDatabaseResolver = regionDatabaseProvider.for
@@ -342,8 +345,8 @@ export async function loadSources(option: string): Promise<MultiSourceSpec[]> {
  * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone html map),
  * returning the lines to append to the run summary.
  *
- * Returns `null` when neither is set — the signal to dump GeoJSON to stdout (the original default).
- * Shared by both pipeline paths.
+ * @returns `null` when neither is set — the signal to dump GeoJSON to stdout (the original default).
+ *   Shared by both pipeline paths.
  */
 async function writeOutputs(
 	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
@@ -376,7 +379,8 @@ async function writeOutputs(
  * label into one combined record set, geocode, resolve, and report the entities
  * that span ≥2 sources — the cross-dataset links.
  *
- * No shared key required. geography is the join.
+ * No shared key required.
+ * Geography is the join.
  */
 async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promise<string> {
 	const {
@@ -501,7 +505,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 
 	const rows = await Array.fromAsync(streamRows(csvPath))
 	// --infer-mapping reads the header (the first row's keys) and guesses the mapping.
-	// an explicit --mapping still merges on top of it.
+	// An explicit --mapping still merges on top of it.
 	// Otherwise the base is the built-in default.
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
 	const mapping = await loadMapping(options.mapping, options.source, base)

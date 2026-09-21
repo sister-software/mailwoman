@@ -67,8 +67,10 @@ const { values } = parseArguments({
 		 */
 		"dump-spans": { type: "string" },
 		/**
-		 * Pin `normalizeCase: false` (#690/#829 off) — the register in which the shaped anchor keyer
-		 * was measured dead: 0/120 gb-golden rows yield a shaped span on raw lowercase (#1512).
+		 * Pin `normalizeCase: false` (#690/#829 off).
+		 *
+		 * The register in which the shaped anchor keyer was measured dead: 0/120 gb-golden
+		 * rows yield a shaped span on raw lowercase (#1512).
 		 *
 		 * With normalization on (the default) the lowercase leg is rescued
 		 * before the keyer ever sees it, so this flag is the only way to grade the keyer's
@@ -196,8 +198,8 @@ if (board === "gb") {
 			for (const [tag, gold] of Object.entries(row.expect ?? {})) {
 				if (!gold.length) continue
 
-				// The gold `street` is the whole street name. the model emits it as a
-				// family (prefix/name/particle/suffix).
+				// The gold `street` is the whole street name.
+				// The model emits it as a family (prefix/name/particle/suffix).
 				// `parity-corpus.ts`'s floor compares the assembled family, so a bare tag-vs-tag
 				// read of `street` scores a correct parse as a miss.
 				// Assemble the same family.

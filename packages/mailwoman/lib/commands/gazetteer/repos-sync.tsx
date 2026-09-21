@@ -69,7 +69,8 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 		const audit = await auditReposRoot(root, { readCommits: false })
 		const repos = [...new Set([...audit.repos.map((r) => r.name), ...requested])].toSorted()
 
-		// Existing clones live under `<root>/<owner>/<name>` when nested. prefer wherever the repo already is.
+		// Existing clones live under `<root>/<owner>/<name>` when nested.
+		// Prefer wherever the repo already is.
 		// The existence probes are materialized up front because `planReposSync`'s
 		// `directoryFor` is a synchronous callback.
 		const directories = new Map<string, string>()

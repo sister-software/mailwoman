@@ -67,8 +67,8 @@ const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<s
  * `normalizeInputCase` is what saves it — it restores postcode casing in both
  * the all-caps and all-lower registers.
  *
- * Probing the raw text would report a register asymmetry that production does not
- * have. probing the normalized text is the serving truth.
+ * Probing the raw text would report a register asymmetry that production does not have.
+ * Probing the normalized text is the serving truth.
  */
 const NORMALIZE_CASE = true
 

@@ -42,8 +42,7 @@ export const spec = {
 const CorpusSubVenueExtract: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		// @mailwoman/osm is a devDependency only — it is unpublished (ODbL counsel sign-off pending,
-		// see osm/readme.md), so a static import here breaks every clean install of the published
-		// CLI (the 2026-08-05 smoke failure). Lazy-load it and fail with provenance when absent.
+		// see osm/readme.md), so a static import here breaks every clean install of the published CLI (the 2026-08-05 smoke failure). Lazy-load it and fail with provenance when absent.
 		const { writeSubVenueJSONL } = await import("@mailwoman/osm/sdk").catch(() => {
 			throw new Error(
 				"corpus sub-venue-extract requires @mailwoman/osm, which is not yet published — " +

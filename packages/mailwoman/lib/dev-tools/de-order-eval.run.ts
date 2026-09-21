@@ -15,7 +15,8 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { deOrderEval } from "#eval-harness/de-order-eval"
 
 async function main(): Promise<void> {
-	// strict parseArgs — the original switch errored on unknown args. parity preserved.
+	// strict parseArgs — the original switch errored on unknown args.
+	// Parity preserved.
 	let values: Record<string, string | boolean | undefined>
 
 	try {

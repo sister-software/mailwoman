@@ -63,8 +63,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		await removePathIfPresent(out)
 
 		// @duckdb/node-api is an optional peer dep — import it dynamically so merely loading this
-		// command (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when
-		// the peer isn't installed.
+		// command (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when the peer isn't installed.
 		const { DuckDBInstance } = await import("@duckdb/node-api")
 
 		console.error(`▸ aggregating ${parquet} (min-count ${minCount})`)
@@ -97,9 +96,10 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 
 		await using kdb = new DatabaseClient<PostalCityAliasDatabase>(out)
 		kdb.exec("PRAGMA journal_mode = WAL;")
-		// DDL via the shared createPostalCityAliasTable builder — the exact table the reader +
-		// tests use, so this producer can't drift from postal-city-alias-schema.ts.
-		// DuckDB above is the raw parquet reader. the hot insert below stays on the raw `db` handle.
+		// DDL via the shared createPostalCityAliasTable builder.
+		// The exact table the reader + tests use, so this producer can't drift from postal-city-alias-schema.ts.
+		// DuckDB above is the raw parquet reader.
+		// The hot insert below stays on the raw `db` handle.
 		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal")
 
 		await createPostalCityAliasTable(kdb)
@@ -127,7 +127,8 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		kdb.exec("COMMIT")
-		// Indexes were created by createPostalCityAliasTable above. just checkpoint + compact.
+		// Indexes were created by createPostalCityAliasTable above.
+		// Just checkpoint + compact.
 		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 
 		return [

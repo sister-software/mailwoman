@@ -69,7 +69,7 @@ const WOFTree: CommandComponent<typeof spec, [string, string]> = ({ args, option
 			await writeLocalFile(serialized + "\n", options.out)
 		} else {
 			// Write JSON directly to stdout so Ink's <Text> renderer doesn't word-wrap long
-			// lines (compact mode is one very long line. pretty mode is fine either way).
+			// lines (compact mode is one very long line. Pretty mode is fine either way).
 			process.stdout.write(serialized + "\n")
 		}
 	})
@@ -86,7 +86,8 @@ const WOFTree: CommandComponent<typeof spec, [string, string]> = ({ args, option
 		)
 	}
 
-	// Stdout path: JSON is written above via process.stdout.write. render nothing through Ink.
+	// Stdout path: JSON is written above via process.stdout.write.
+	// Render nothing through Ink.
 	return null
 }
 

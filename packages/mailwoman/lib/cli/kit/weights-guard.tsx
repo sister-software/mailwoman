@@ -81,10 +81,11 @@ export interface DownloadWeightsOpts {
 
 /**
  * Install the weights package into the cache prefix via the user's own npm
- * (spawned as our own child. no pattern kills anywhere near this).
- * Success = npm exits 0 and the post-install probe resolves — a metadata-only
- * tarball (code-only release) installs "successfully" but carries no binaries,
- * and must report as a failure with an actionable message.
+ * (spawned as our own child. No pattern kills anywhere near this).
+ *
+ * Success = npm exits 0 and the post-install probe resolves.
+ * A metadata-only tarball (code-only release) installs "successfully" but carries no
+ * binaries, and must report as a failure with an actionable message.
  */
 export function downloadWeights(
 	opts: DownloadWeightsOpts,
@@ -173,8 +174,8 @@ type GuardPhase =
  * Interactive guard around model-requiring commands.
  *
  * See the module docstring for the outcome interface.
- * The prompt renders only on a raw-mode-capable stdin. everything else settles
- * immediately without painting UI.
+ * The prompt renders only on a raw-mode-capable stdin.
+ * Everything else settles immediately without painting UI.
  */
 export function WeightsGuard({
 	locale,

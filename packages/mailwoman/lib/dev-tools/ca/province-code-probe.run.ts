@@ -13,8 +13,9 @@
  *
  * A probe that rendered only one shape would report one of them as passing.
  *
- * The postal codes are real, read from `postalcode-ca-overture.db`, and each is the one nearest its
- * seat — the distance rides in the output so a reader can see the city and the code name the same town.
+ * The postal codes are real, read from `postalcode-ca-overture.db`, and each is the one nearest its seat.
+ * The distance rides in the output so a reader can see the city and the code name the same town.
+ *
  * Selecting the province's busiest code instead paired `Winnipeg` with `R0C 2Z0`,
  * which is Stonewall, 30 km away.
  *
@@ -69,8 +70,9 @@ const SEATS: Readonly<Record<string, string>> = {
  * The first letter of a Canadian postal code names its province, which is what lets
  * a real code be found per province without a name join.
  *
- * Newfoundland is `A`, Nova Scotia `B`, and so on. the three that share a letter with a neighbour are
- * separated by the second character, which this does not need — any code in the province serves.
+ * Newfoundland is `A`, Nova Scotia `B`, and so on.
+ * The three that share a letter with a neighbour are separated by the second character,
+ * which this does not need — any code in the province serves.
  */
 const POSTAL_PREFIXES: Readonly<Record<string, readonly string[]>> = {
 	AB: ["T"],
@@ -161,9 +163,8 @@ interface PostcodePick {
 	km: number
 }
 
-// A probe written to price a corpus change has to be able to point at the model
-// that change produced. without this it can only ever grade the installed one,
-// which is the arm the change is measured against.
+// A probe written to price a corpus change has to be able to point at the model that change produced.
+// Without this it can only ever grade the installed one, which is the arm the change is measured against.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const report: ProbeRow[] = []
 
@@ -187,8 +188,8 @@ for (const { code, name } of Object.values(CA_PROVINCES)) {
 		const result = withPostcode ? await deps.geocode(input, {}) : seatResult
 
 		// The row is correct when the country is Canada and the region is the code and the locality survived.
-		// A country answered as the province's own code is the contradiction. a locality
-		// answered as the code is the other failure.
+		// A country answered as the province's own code is the contradiction.
+		// A locality answered as the code is the other failure.
 		report.push({
 			code,
 			province: name,

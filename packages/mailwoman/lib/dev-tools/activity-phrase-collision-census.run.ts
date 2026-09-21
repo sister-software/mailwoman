@@ -10,8 +10,7 @@
  * regenerate it whenever the lexicon or the database moves.
  *
  * ```bash
- * node packages/mailwoman/lib/dev-tools/activity-phrase-collision-census.run.ts \
- *   --out packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json
+ * node packages/mailwoman/lib/dev-tools/activity-phrase-collision-census.run.ts \ --out packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json
  * ```
  *
  * Expect roughly eleven minutes on the shipped `poi.db`.
@@ -45,7 +44,8 @@ const shippedRung = createPOINameLookup(lookup)
 
 // A complete key scan rather than a ranked read — see `CensusPOIReader` for the
 // measurement that made the ranked one inadmissible.
-// `like` is a superset filter. the census applies whole-token containment to what comes back.
+// `like` is a superset filter.
+// The census applies whole-token containment to what comes back.
 // One scan for the whole probe set: the predicate is unindexable either way,
 // so the cost is the 13.68M-row pass rather than the number of terms in it.
 function candidates(probes: ReadonlyArray<string>): CensusVenue[] {

@@ -31,11 +31,12 @@ import { createElement, type ReactElement } from "react"
 export interface InputState {
 	value: string
 	/**
-	 * UTF-16 offset the cursor sits before, in `[0, value.length]`, and never inside a
-	 * surrogate pair — every move and every delete in this module steps by whole codepoints,
+	 * UTF-16 offset the cursor sits before, in `[0, value.length]`, and never inside a surrogate pair.
+	 *
+	 * Every move and every delete in this module steps by whole codepoints,
 	 * so `value.slice(cursor)` is always a valid string.
 	 *
-	 * (Ink measures and indexes in UTF-16 too. keeping the offset in the same units as
+	 * (Ink measures and indexes in UTF-16 too. Keeping the offset in the same units as
 	 * the render is what makes the two agree. See {@link stepLeft}.)
 	 */
 	cursor: number
@@ -46,8 +47,9 @@ export interface InputState {
  *
  * `codePointAt(index - 2)` returns a value above the BMP only when `index - 2` genuinely
  * starts a surrogate pair, so this steps 2 across `🏠` and 1 across everything else.
- * Stepping by one unit instead is how a backspace after an emoji leaves a lone surrogate in
- * the query — a string that renders as `�` and that the tokenizer never saw in training.
+ * Stepping by one unit instead is how a backspace after an emoji leaves a lone surrogate in the query.
+ *
+ * A string that renders as `�` and that the tokenizer never saw in training.
  */
 function stepLeft(value: string, index: number): number {
 	if (index <= 0) return 0
@@ -69,16 +71,16 @@ function stepRight(value: string, index: number): number {
 }
 
 /**
- * Bound an offset to the value and out of the middle of a surrogate pair —
- * the only place a caller-supplied cursor can be illegal.
+ * Bound an offset to the value and out of the middle of a surrogate pair.
+ * The only place a caller-supplied cursor can be illegal.
  */
 function clampCursor(value: string, index: number): number {
 	const bounded = Math.max(0, Math.min(index, value.length))
 	const unit = value.charCodeAt(bounded)
 
-	// A low surrogate at the cursor means the offset landed inside a pair. the codepoint
-	// starts one unit back — unless the string opens with an unpaired low surrogate,
-	// where there is no unit back to snap to.
+	// A low surrogate at the cursor means the offset landed inside a pair.
+	// The codepoint starts one unit back — unless the string opens with an unpaired
+	// low surrogate, where there is no unit back to snap to.
 	return unit >= 0xdc_00 && unit <= 0xdf_ff ? Math.max(0, bounded - 1) : bounded
 }
 
@@ -177,8 +179,8 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 		}
 	}
 
-	// An unhandled meta chord (alt+f, alt+b, …) is dropped, and so is anything with no
-	// printable content left — `input` is empty for the keys Ink names (arrows, escape, tab).
+	// An unhandled meta chord (alt+f, alt+b, …) is dropped, and so is anything with no printable content left.
+	// `input` is empty for the keys Ink names (arrows, escape, tab).
 	if (key.meta) return state
 
 	const insert = printableRun(input)
@@ -199,8 +201,9 @@ export interface QueryInputProps {
 	value: string
 	cursor: number
 	/**
-	 * Called with the next state on every edit — the field is fully controlled,
-	 * so the parent owns both halves.
+	 * Called with the next state on every edit.
+	 *
+	 * The field is fully controlled, so the parent owns both halves.
 	 */
 	onChange: (next: InputState) => void
 	onSubmit: (value: string) => void
@@ -226,8 +229,8 @@ export function QueryInput(props: QueryInputProps): ReactElement {
 				return
 			}
 
-			// Tab (focus) and escape (quit) belong to the session's own handler. consuming
-			// them here would make the field a trap the user cannot leave.
+			// Tab (focus) and escape (quit) belong to the session's own handler.
+			// Consuming them here would make the field a trap the user cannot leave.
 			if (key.tab || key.escape) return
 
 			const next = applyKey({ value, cursor }, input, key)

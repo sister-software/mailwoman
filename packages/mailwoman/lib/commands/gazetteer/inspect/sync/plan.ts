@@ -141,8 +141,8 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 
 			// The near miss is a string comparison and cannot recover intent:
 			// `whosonfirst-data-admin-turkey` is nearer to `-tu` than to `-tr` by any metric.
-			// So the country hint is unconditional — a caller who wrote a country name in
-			// a repository slot is the case this refusal exists for.
+			// So the country hint is unconditional.
+			// A caller who wrote a country name in a repository slot is the case this refusal exists for.
 			throw new CommandError(
 				`No repository named \`${name}\` in ${WOF_REPO_OWNER}.` +
 					(suggestion ? ` Did you mean \`${suggestion}\`?` : "") +
@@ -153,7 +153,8 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		wanted.add(name)
 	}
 
-	// A country expands to the repositories it might have. only a country with none at all is an error.
+	// A country expands to the repositories it might have.
+	// Only a country with none at all is an error.
 	// Most countries carry an admin repository and no postalcode one,
 	// so requiring both would refuse the common case.
 	for (const code of extractDelimited(options.countries)) {

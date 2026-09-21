@@ -49,7 +49,8 @@ import {
 	useCommandTask,
 } from "#cli-kit"
 /**
- * A successful response. anything else is an error page or an unfollowed redirect.
+ * A successful response.
+ * Anything else is an error page or an unfollowed redirect.
  */
 
 /**
@@ -63,7 +64,8 @@ import {
 /**
  * Lowest 5xx status.
  *
- * Server-side failures are worth retrying. client errors are not.
+ * Server-side failures are worth retrying.
+ * Client errors are not.
  */
 const HTTP_SERVER_ERROR_MIN = 500
 
@@ -179,8 +181,9 @@ interface CountyRecord {
 }
 
 /**
- * Fetch and parse the Census Population Estimates CSV, then materialise the sorted county
- * list. sumlev=050 rows are county-level. state + county form the 5-digit geoid (zero-padded).
+ * Fetch and parse the Census Population Estimates CSV, then materialise the sorted
+ * county list. sumlev=050 rows are county-level.
+ * State + county form the 5-digit geoid (zero-padded).
  */
 async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 	console.error("Fetching Census Population Estimates CSV (co-est2023-alldata.csv)…")
@@ -224,7 +227,8 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 /**
  * Load (or generate) the ranked county list.
  *
- * On first run this downloads the Census CSV. on subsequent runs it reads the cached JSON file.
+ * On first run this downloads the Census CSV.
+ * On subsequent runs it reads the cached JSON file.
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
 	if (await pathExists(RANKED_FILE)) {
@@ -387,8 +391,8 @@ interface DatabaseBuildResult {
 /**
  * Build one state's interpolation database DB.
  *
- * Returns wall-clock ms + segment count from the script's stdout, or `null`
- * when the database already exists and `--force` was not passed.
+ * @returns wall-clock ms + segment count from the script's stdout, or `null`
+ *   when the database already exists and `--force` was not passed.
  */
 async function buildStateDatabase(
 	stateAbbr: string,
@@ -588,8 +592,8 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 		console.error("")
 
 		// ── Step 4: build databases sequentially ─────────────────────────────────
-		// Sequential (not parallel): each database script uses DuckDB + SQLite. they're
-		// already I/O + DuckDB-parallel internally.
+		// Sequential (not parallel): each database script uses DuckDB + SQLite.
+		// They're already I/O + DuckDB-parallel internally.
 		// Running states concurrently risks memory OOM on the 32K-row state builds
 		// and complicates progress reporting.
 		const wallStart = Date.now()

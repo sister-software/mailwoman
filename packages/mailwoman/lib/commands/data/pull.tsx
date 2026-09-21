@@ -110,17 +110,19 @@ export const spec = {
 /**
  * Head the artifact (and, when it publishes one, GET its `.md5` sidecar) via the paced/retried `APIClient`.
  *
- * Failures degrade to an empty state rather than throwing — a head that 404s
- * or times out just means "can't verify", handled downstream as a warning rather than a
- * hard stop (the GET that follows is the real signal on whether the artifact exists).
+ * Failures degrade to an empty state rather than throwing.
+ * A head that 404s or times out just means "can't verify", handled downstream as a warning
+ * rather than a hard stop (the GET that follows is the real signal on whether the artifact exists).
  *
  * The sidecar GET carries the same `Range: bytes=0-` header `downloadToDisk` needs
- * (see that function's docstring for the measured WAF behavior) — a `.md5` sidecar is a tiny text
- * object on the same bucket, and nothing rules out the WAF's ranged-request rule applying to it too.
- * No bundle publishes one today (`data-bundles.ts`'s docstring), so this path is
- * unexercised against live data. a failure here is loud (`console.error`), not swallowed,
- * so the day a sidecar ships, a wrong guess about which requests need `Range` shows
- * up immediately instead of silently degrading forever.
+ * (see that function's docstring for the measured WAF behavior).
+ * A `.md5` sidecar is a tiny text object on the same bucket, and nothing rules out
+ * the WAF's ranged-request rule applying to it too.
+ *
+ * No bundle publishes one today (`data-bundles.ts`'s docstring), so this path
+ * is unexercised against live data.
+ * A failure here is loud (`console.error`), not swallowed, so the day a sidecar ships, a wrong guess
+ * about which requests need `Range` shows up immediately instead of silently degrading forever.
  */
 async function probeRemote(
 	client: APIClient,
@@ -162,9 +164,11 @@ async function probeRemote(
 }
 
 /**
- * Stream a GET straight to disk — the raw-`fetch` half of the networking split
- * (see the module docstring), through the shared `streamToDisk` (`@mailwoman/core/utils`):
- * `.part` + rename, so an interrupted transfer never presents as a complete artifact.
+ * Stream a GET straight to disk.
+ *
+ * The raw-`fetch` half of the networking split (see the module docstring),
+ * through the shared `streamToDisk` (`@mailwoman/core/utils`): `.part` + rename,
+ * so an interrupted transfer never presents as a complete artifact.
  *
  * The one addition over the shared transfer is the `Range: bytes=0-` header.
  *
@@ -175,8 +179,9 @@ async function probeRemote(
  * and streams the complete object end to end (verified byte-for-byte against the known 20,480-byte size).
  *
  * The bucket's intended consumer (`sql.js-httpvfs` in the browser demo) always byte-ranges,
- * so an unranged GET is exactly the request shape nothing else here ever makes —
- * this is almost certainly a WAF rule scoped to that difference rather than a fluke.
+ * so an unranged GET is exactly the request shape nothing else here ever makes.
+ * This is almost certainly a WAF rule scoped to that difference rather than a fluke.
+ *
  * `bytes=0-` (open-ended from the start) is the fix: satisfies the ranged-request requirement
  * while still asking for, and receiving, the whole file.
  */

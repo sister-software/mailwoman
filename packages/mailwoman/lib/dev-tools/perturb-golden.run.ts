@@ -6,8 +6,9 @@
  * This builds an unbiased arena from ground truth WE own: take golden v0.1.2 (already labeled in our schema)
  * and apply rule- defeating perturbations while keeping the component labels intact.
  *
- * Rule-based parsers lean on delimiters / capitalization / canonical spacing. a
- * contextual neural model should degrade more gracefully.
+ * Rule-based parsers lean on delimiters / capitalization / canonical spacing.
+ * A contextual neural model should degrade more gracefully.
+ *
  * The three-bucket harness then shows whether that's true (the methodology-vindication test).
  *
  * Perturbation classes (each preserves the expected components — only the surface changes,
@@ -17,8 +18,8 @@
  * - Lowercase : drop capitalization cues
  * - Glue : collapse the space between region and postcode ("OR97214")
  *
- * Run: node packages/mailwoman/lib/dev-tools/perturb-golden.run.ts\
- * --golden data/eval/golden/v0.1.2 --out /tmp/perturb-eval/perturbed.jsonl [--per-file 60]
+ * Run: node packages/mailwoman/lib/dev-tools/perturb-golden.run.ts\ --golden
+ * data/eval/golden/v0.1.2 --out /tmp/perturb-eval/perturbed.jsonl [--per-file 60]
  * Then run it through harness-neural (formerly harness-v0-neural with --symmetric-match).
  */
 

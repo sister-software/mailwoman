@@ -60,13 +60,15 @@ const { values } = parseArguments({
 		"weights-cache": { type: "string" },
 		// A declared ablation: replace the kind classifier's top verdict on every row.
 		// `locality_only` is the verdict the postcode-removal arm was observed to produce,
-		// so forcing it here separates "the verdict limits the decode" from "removing the
-		// postcode changes the model's evidence" — the two the removal arm could not tell apart.
+		// so forcing it here separates "the verdict limits the decode" from "removing
+		// the postcode changes the model's evidence".
+		// The two the removal arm could not tell apart.
 		"force-kind": { type: "string" },
 		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
 		// Which codex layout the three well-formed arms are written through.
-		// The default matches the default panel. a different panel needs its own country, because a layout
-		// is what makes the surface idiomatic rather than a template that happens to suit one country.
+		// The default matches the default panel.
+		// A different panel needs its own country, because a layout is what makes the surface
+		// idiomatic rather than a template that happens to suit one country.
 		country: { type: "string", default: "US" },
 		limit: { type: "string" },
 	},
@@ -100,8 +102,8 @@ const { localities, qualifiersStripped } = await readCoordPanel(values.eval!, {
  *
  * The street is optional because only the reverse arm needs it, and a panel drawn
  * from a postcode export has no streets at all.
- * Requiring one dropped every row of such a panel and reported all four arms as `0/0`
- * with a zero exit — an empty read that looks exactly like a measured zero.
+ * Requiring one dropped every row of such a panel and reported all four arms as `0/0` with a zero exit.
+ * An empty read that looks exactly like a measured zero.
  *
  * The three forward arms take every row.
  * `street_only` takes the rows that carry a street and says how many that was.
@@ -157,7 +159,8 @@ const ARMS = [
 /**
  * Misses printed per arm.
  *
- * Enough to read what the wrong answers look like. the rate above them is the measurement.
+ * Enough to read what the wrong answers look like.
+ * The rate above them is the measurement.
  */
 const EXAMPLES_PER_ARM = 5
 
@@ -170,8 +173,8 @@ interface RowOutcome {
 	/**
 	 * The locality the panel names, and the one the run answered.
 	 *
-	 * Both are localities, so neither is `locality` alone — a field named for the tag says
-	 * which tag, never which side of the comparison.
+	 * Both are localities, so neither is `locality` alone.
+	 * A field named for the tag says which tag, never which side of the comparison.
 	 */
 	expected: string
 	answered: string | null
@@ -181,9 +184,8 @@ interface RowOutcome {
 	words: number
 }
 
-// A probe written to price a corpus change has to be able to point at the model
-// that change produced. without this it can only ever grade the installed one,
-// which is the arm the change is measured against.
+// A probe written to price a corpus change has to be able to point at the model that change produced.
+// Without this it can only ever grade the installed one, which is the arm the change is measured against.
 const depsOptions: GauntletDepsOptions = {
 	...(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {}),
 	...(values["force-kind"] ? { forceQueryKind: values["force-kind"] as QueryKind } : {}),
@@ -232,9 +234,9 @@ for (const arm of ARMS) {
 		}
 
 		// What counts as a failure differs by arm, so the examples have to ask the arm.
-		// `street_only` is graded inverted, and listing rows whose answer is not the expected
-		// locality would print its passes under "misses" — every one of them `null`,
-		// which is the answer that arm wants.
+		// `street_only` is graded inverted, and listing rows whose answer is not the
+		// expected locality would print its passes under "misses".
+		// Every one of them `null`, which is the answer that arm wants.
 		const failed = arm.inverted ? locality !== null : locality !== place.locality
 
 		if (failed && examples.length < EXAMPLES_PER_ARM) {
@@ -319,8 +321,8 @@ if (values["out-json"]) {
 	// A rate is only reproducible beside the four things that decide it: which panel bytes,
 	// which model bytes, which checkout, and whether the checkout was clean when the run read it.
 	// Two arms of this probe differ by the model alone, and a staged candidate's
-	// model-card can be a symlink into the shared data root — so the card version cannot
-	// tell the arms apart and the md5 is what the receipt is for.
+	// model-card can be a symlink into the shared data root.
+	// So the card version cannot tell the arms apart and the md5 is what the receipt is for.
 	const repoRoot = repoRootPath()
 
 	const provenance = {

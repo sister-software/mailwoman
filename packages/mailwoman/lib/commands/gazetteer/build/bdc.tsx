@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build bdc` — the FCC BDC availability ingest + sealed `bdc.db` layer build
- *. Thin wiring only: list → download → build lives in `@mailwoman/bdc/sdk`
+ * . Thin wiring only: list → download → build lives in `@mailwoman/bdc/sdk`
  *   (`buildBDCDatabase`, list-files.ts, download.ts), so it stays unit-testable without Ink or
  *   network in the loop. Mirrors `poi.tsx`'s progress (stderr) / summary (stdout) split.
  *

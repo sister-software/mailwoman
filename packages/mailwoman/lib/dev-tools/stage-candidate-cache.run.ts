@@ -64,8 +64,9 @@ const BASE_LOCALE = "en-us"
  * Locales staged by default: the base plus every overlay the gauntlet's board can route to,
  * which is the set whose absence the harness warns about.
  *
- * `routing.ts` is the authority on which countries route where. this list is the package side of it,
- * so an overlay published but unrouted (fr-fr, en-au) can still be staged by naming it.
+ * `routing.ts` is the authority on which countries route where.
+ * This list is the package side of it, so an overlay published but unrouted
+ * (fr-fr, en-au) can still be staged by naming it.
  */
 const DEFAULT_LOCALES = [BASE_LOCALE, "en-gb", "en-nz", "de-de", "en-in", "es-es", "it-it"]
 
@@ -101,7 +102,8 @@ for (const locale of locales) {
 
 	// The manifest's `files` mixes concrete siblings with globs, negations
 	// and the source patterns a published tarball needs.
-	// Only the concrete data siblings belong in a cache. a glob has nothing to link.
+	// Only the concrete data siblings belong in a cache.
+	// A glob has nothing to link.
 	const declared = (manifest.files ?? []).filter(
 		(entry) => !entry.startsWith("!") && !entry.includes("*") && entry !== "README.md"
 	)
