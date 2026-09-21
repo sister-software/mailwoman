@@ -30,9 +30,8 @@ const HIERARCHY_ORDER: readonly ComponentTag[] = [
  * Render an admin-hierarchy variant: the components it carries, in hierarchy order,
  * joined the way the country joins a line.
  *
- * This is a gazetteer query rather than a postal address, which is why it does
- * not go through a layout — a country whose postal layout drops the region would
- * collapse `Paris, Île-de-France` back into `Paris`.
+ * This is a gazetteer query rather than a postal address, which is why it does not go through a layout.
+ * A country whose postal layout drops the region would collapse `Paris, Île-de-France` back into `Paris`.
  */
 function renderHierarchy(
 	components: Partial<Record<ComponentTag, string>>,
@@ -65,7 +64,9 @@ function renderHierarchy(
  *
  * Keying off the canonical form keeps the two in lockstep.
  *
- * Phase 1 US + FR only. extend as new locales come online.
+ * Phase 1 US + FR only.
+ * Extend as new locales come online.
+ *
  * Missing countries fall back to the country row's `wof:name`, accepting the
  * alignment risk for non-canonicalized names.
  */
@@ -90,9 +91,10 @@ export interface WOFVariantSpec {
 	/**
 	 * Render this variant as an admin hierarchy rather than as a postal address.
 	 *
-	 * A hierarchy variant is a query — `Paris`, then `Paris, Île-de-France`, then `Paris, Île-de-France, France` — and
-	 * several of its steps are not addresses at all. France's postal layout carries no region, so rendering `{ locality,
-	 * region }` through it prints `Paris` and the whole variant collapses into the one below it.
+	 * A hierarchy variant is a query — `Paris`, then `Paris, Île-de-France`, then
+	 * `Paris, Île-de-France, France` — and several of its steps are not addresses at all.
+	 * France's postal layout carries no region, so rendering `{ locality, region }` through
+	 * it prints `Paris` and the whole variant collapses into the one below it.
 	 *
 	 * So the hierarchy is joined in its own order: smallest unit first, or largest first
 	 * for the systems that write that way, with the country's own separator.
@@ -104,8 +106,8 @@ export interface NameSlotOptions {
 	/**
 	 * Canonical surface for the record's own `"default"` slot.
 	 *
-	 * Default `rec.name` verbatim. the admin adapter substitutes the OpenCage-canonical
-	 * {@link COUNTRY_DISPLAY_NAME} for country records.
+	 * Default `rec.name` verbatim.
+	 * The admin adapter substitutes the OpenCage-canonical {@link COUNTRY_DISPLAY_NAME} for country records.
 	 */
 	canonicalName?: (rec: WOFRecord) => string
 }

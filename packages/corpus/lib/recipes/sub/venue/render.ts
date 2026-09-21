@@ -16,7 +16,8 @@ import type { LocaleBaseTuple } from "#synthesizers/locale"
 /**
  * One labelled piece of the line.
  *
- * Pieces inside a group are space-joined. groups are joined by the register's separator.
+ * Pieces inside a group are space-joined.
+ * Groups are joined by the register's separator.
  */
 export interface Piece {
 	text: string

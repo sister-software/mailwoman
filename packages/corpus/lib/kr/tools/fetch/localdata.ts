@@ -103,8 +103,9 @@ async function openSession(): Promise<Session> {
 }
 
 /**
- * The portal's own rate check. a 429 carries the pause it asks for in prose,
- * so the caller sleeps and retries.
+ * The portal's own rate check.
+ *
+ * A 429 carries the pause it asks for in prose, so the caller sleeps and retries.
  */
 async function validateDownloadCount(session: Session): Promise<boolean> {
 	const headers: Record<string, string> = { "user-agent": USER_AGENT, cookie: session.cookie, referer: INDEX_URL }

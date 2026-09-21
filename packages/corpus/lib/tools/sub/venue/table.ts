@@ -93,7 +93,8 @@ export interface SubVenueModifier {
 /**
  * One surface form: a phrase, the record it names, and where it was attested.
  *
- * This is the table's `SynonymEntry` — the flat array a phrase index is built over.
+ * This is the table's `SynonymEntry`.
+ * The flat array a phrase index is built over.
  */
 export interface SubVenueSurface {
 	/**
@@ -104,7 +105,8 @@ export interface SubVenueSurface {
 	 * and `toLowerCase` folds it to `i` plus a combining dot above.
 	 * A Turkish surface therefore round-trips through a form its own locale would not write.
 	 *
-	 * Nothing shipped depends on that today. a Turkish designator would.
+	 * Nothing shipped depends on that today.
+	 * A Turkish designator would.
 	 */
 	phrase: string
 	/**
@@ -136,9 +138,9 @@ export interface SubVenueSurface {
 	/**
 	 * Whether a human has approved this surface for parsing use IN its region.
 	 *
-	 * Everything machine-derived starts `false` and is flipped only by a matching
-	 * {@link SubVenuePromotion}. A consumer that gates a parse must filter on this — see
-	 * `sub-venue-lexicon.ts`'s module docstring for what a promotion decides and why it is per-locale.
+	 * Everything machine-derived starts `false` and is flipped only by a matching {@link SubVenuePromotion}.
+	 * A consumer that gates a parse must filter on this — see `sub-venue-lexicon.ts`'s
+	 * module docstring for what a promotion decides and why it is per-locale.
 	 */
 	curated: boolean
 	/**
@@ -148,12 +150,14 @@ export interface SubVenueSurface {
 	 */
 	observations: number
 	/**
-	 * The rule-assigned designator of the features that carried this phrase, with a count each — `platform:3205
-	 * campus:49` for GB's `hall`. Empty for vocabulary sources.
+	 * The rule-assigned designator of the features that carried this phrase,
+	 * with a count each — `platform:3205 campus:49` for GB's `hall`.
+	 * Empty for vocabulary sources.
 	 *
 	 * This is the confound axis.
 	 * A `hall` on a `platform` row is a British bus stop named after a village hall.
-	 * a `hall` on a `terminal` row is a real German departure hall.
+	 *
+	 * A `hall` on a `terminal` row is a real German departure hall.
 	 *
 	 * Without it, a surface's `observations` count is a magnitude with no sign —
 	 * see the repo's "meaning of zero" rule, which applies just as hard to a large number.
@@ -234,8 +238,8 @@ export interface SubVenueLexiconTable {
  * `tier` is added here (the shipped list has no such field): the seven WOF placetypes
  * plus `terminal`/`gate` are all venue-interior, except `campus` and `building`,
  * which name a whole venue as often as a part of one.
- * They are marked `subvenue` anyway, because that is the role the span proposer uses
- * them in — `Building 43, Googleplex` is a unit inside a venue.
+ * They are marked `subvenue` anyway, because that is the role the span proposer uses them in.
+ * `Building 43, Googleplex` is a unit inside a venue.
  */
 export const SHIPPED_DESIGNATOR_SEED: ReadonlyArray<{
 	id: string
@@ -274,15 +278,20 @@ export const SHIPPED_MODIFIER_SEED: readonly string[] = [
 /**
  * Designators the lexicon adds beyond what ships, each with the source that attests it.
  *
- * `platform`, `station` and `airport` come from the OSM extractor's rule table and are the rail/aviation venue-side
- * vocabulary the corpus line needs. `hall` and `satellite` come from Wikidata concepts and from
- * `wof-osm-placetype-map.mdx`'s own "plausible additions" note, which lists `hall` explicitly. `pier` joins them in
- * wave 2 on 282 Overture attestations in the `pier` category plus 162 in the GB extract — the corpus task names `Pier
- * C` as a target shape, so the record has to exist before a recipe can generate it.
+ * `platform`, `station` and `airport` come from the OSM extractor's rule table
+ * and are the rail/aviation venue-side vocabulary the corpus line needs.
+ * `hall` and `satellite` come from Wikidata concepts and from `wof-osm-placetype-map.mdx`'s
+ * own "plausible additions" note, which lists `hall` explicitly.
+ *
+ * `pier` joins them in wave 2 on 282 Overture attestations in the `pier`
+ * category plus 162 in the GB extract.
+ * The corpus task names `Pier C` as a target shape, so the record has to exist
+ * before a recipe can generate it.
  *
  * None is `modifierEligible`: that claim needs a confound board per term and per locale,
  * and `sub-venue-promotions.ts` is where those live.
- * A promotion marks a surface usable. it does not widen the modifier grammar.
+ * A promotion marks a surface usable.
+ * It does not widen the modifier grammar.
  */
 export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 	id: string
@@ -300,8 +309,9 @@ export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 /**
  * `designatorID` → Wikidata QID, mirroring `fetch/wikidata-subvenue.ts`'s `SUBVENUE_CONCEPTS`.
  *
- * Re-declared here so the builder stays a pure function over parsed input rather than
- * reaching into a fetch module for a constant. the test pins the two against each other.
+ * Re-declared here so the builder stays a pure function over parsed input
+ * rather than reaching into a fetch module for a constant.
+ * The test pins the two against each other.
  */
 export const CONCEPT_QIDS: Readonly<Record<string, string>> = {
 	terminal: "Q849706",

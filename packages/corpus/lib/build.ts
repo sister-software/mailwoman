@@ -191,8 +191,9 @@ export type BuildProfile = (typeof BuildProfile)[keyof typeof BuildProfile]
  * Every register source's ingest-eligibility reasons, keyed by the adapter id its rows carry.
  *
  * Read once per build rather than per row.
- * An empty array means eligible, and that is the only value a caller may read as
- * permission — a source the map does not carry is one the register never named,
+ * An empty array means eligible, and that is the only value a caller may read as permission.
+ *
+ * A source the map does not carry is one the register never named,
  * which the caller refuses rather than admits.
  *
  * The join is on the register's `sourceID`, which is what an adapter stamps into a row's `source`.
@@ -253,8 +254,7 @@ export interface BuildCorpusManifest {
 	/**
 	 * Rows dropped because the register does not call their source eligible.
 	 *
-	 * Always zero under
-	 * {@linkcode BuildProfile.Exploratory}, which asks nothing of the register.
+	 * Always zero under {@linkcode BuildProfile.Exploratory}, which asks nothing of the register.
 	 */
 	excluded_by_eligibility: number
 	/**
@@ -276,8 +276,8 @@ export interface BuildCorpusManifest {
  * to bridge the align → parquet hand-off.
  * For Phase 1 fixture-scale runs (≤ 10⁴ rows) this is trivial.
  *
- * For real 5M+ runs, the map fits comfortably in a few hundred MB. the canonical.jsonl
- * and labeled.jsonl payloads stream and never sit in memory.
+ * For real 5M+ runs, the map fits comfortably in a few hundred MB.
+ * The canonical.jsonl and labeled.jsonl payloads stream and never sit in memory.
  */
 export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpusManifest> {
 	const adapters = opts.adapters ?? defaultAdapterRegistry.list()
@@ -305,8 +305,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 		// Opt-in resume (MAILWOMAN_RESUME=1): if a complete per-adapter canonical.jsonl +
 		// manifest.json already exist, reuse them instead of re-emitting.
-		// The manifest is written only after the canonical is fully flushed, so its presence guarantees
-		// completeness. row order is identical, so downstream holdout-split determinism is preserved.
+		// The manifest is written only after the canonical is fully flushed,
+		// so its presence guarantees completeness.
+		// Row order is identical, so downstream holdout-split determinism is preserved.
 		// Recovers an align-phase crash without redoing the (expensive) emit phase.
 		// Default (unset) re-emits, preserving correctness.
 		// (2026-06-12.)
@@ -337,10 +338,12 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		adapterRuns.push(m)
 	}
 
-	// 2 + 3. Synthesis + alignment: stream every canonical.jsonl, optionally augment, align,
-	// and route each labeled row directly to its split-specific jsonl (`labeled-{train,val,test}.
-	// jsonl`). Memory cost is O(1) — the prior in-memory `splitInputs` array + `splitByIDMap`
-	// + `SplitManifest.{train,val,test}` arrays are gone. per-row split is decided inline via
+	// 2 + 3.
+	// Synthesis + alignment: stream every canonical.jsonl, optionally augment, align, and route
+	// each labeled row directly to its split-specific jsonl (`labeled-{train,val,test}. jsonl`).
+	// Memory cost is O(1) — the prior in-memory `splitInputs` array + `splitByIDMap`
+	// + `SplitManifest.{train,val,test}` arrays are gone.
+	//   Per-row split is decided inline via
 	// `splitForRow` (a pure function of source_id + region + holdout policy).
 	const labeledPaths: Record<SplitName, string> = {
 		train: join(intermediateDir, "labeled-train.jsonl"),
@@ -426,8 +429,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			// Positive eligibility, and it runs before augmentation on purpose.
 			// A synthetic row carries its ancestor's `source`, so refusing the ancestor
 			// here refuses every row fanned from it.
-			// Checking after the fan-out would
-			// let an ineligible source re-enter as the base of a synthesized row.
+			// Checking after the fan-out would let an ineligible source re-enter as
+			// the base of a synthesized row.
 			const ineligible = ineligibleBecause(row)
 
 			if (ineligible) {
@@ -459,10 +462,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 				try {
 					result = alignRow(r)
 				} catch (error) {
-					// Last-resort robustness (2026-06-12): no single row may crash a
-					// multi-hour build. alignRow's targeted paths normalize/quarantine
-					// known issues with specific reasons. this catches any unknown throw
-					// (e.g. assertSpanInvariants on an unforeseen span shape) → quarantine + continue.
+					// Last-resort robustness (2026-06-12): no single row may crash a multi-hour build.
+					// alignRow's targeted paths normalize/quarantine known issues with specific reasons.
+					// This catches any unknown throw (e.g. assertSpanInvariants on an unforeseen span shape)
+					// → quarantine + continue.
 					// A spike in `align-threw` reasons is a finding.
 					writeQuarantine(r, `align-threw:${(error as Error).message.slice(0, 160)}`)
 
@@ -494,7 +497,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	quarantineStream.end()
 	await Promise.all([...Object.values(labeledStreams).map((s) => once(s, "close")), once(quarantineStream, "close")])
 
-	// 4. Splits — manifest derived by streaming the per-split labeled files. no in-memory
+	// 4. Splits — manifest derived by streaming the per-split labeled files.
+	//    No in-memory
 	// source-id arrays.
 	// `sort(1)` from coreutils produces the deterministic per-split .txt manifests
 	// with disk spill for splits that exceed in-memory thresholds.

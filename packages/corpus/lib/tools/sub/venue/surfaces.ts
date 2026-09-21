@@ -28,8 +28,10 @@ const CASE_FOLDING_SCRIPT = /^[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Gree
  * Hangul is excluded because Korean does space its words.
  *
  * The Germanic-compound argument that keeps {@link nameContainsSurfaces} token-bounded
- * for Latin script does not transfer here — there is no `-gate`/`-hall` street-name
- * suffix class in Japanese, and `第1ターミナル` is unreachable by any token split.
+ * for Latin script does not transfer here.
+ * There is no `-gate`/`-hall` street-name suffix class in Japanese,
+ * and `第1ターミナル` is unreachable by any token split.
+ *
  * Measured on the Japan extract: see the harvest counts in `corpus/data/provenance.md`.
  */
 const NON_SPACING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
@@ -57,7 +59,7 @@ export type SurfaceIndex = ReadonlyMap<string, { recordID: string; recordKind: "
 /**
  * Index the surfaces accumulated so far by phrase.
  *
- * First writer wins, so a seed record beats a Wikidata alias that happens to collide —
+ * First writer wins, so a seed record beats a Wikidata alias that happens to collide.
  * `terminal` stays the `terminal` designator even though it is also an Italian alias for it.
  */
 export function buildSurfaceIndex(surfaces: readonly SubVenueSurface[]): SurfaceIndex {
@@ -83,8 +85,8 @@ export function buildSurfaceIndex(surfaces: readonly SubVenueSurface[]): Surface
  *
  * For Han/Kana names that rule finds nothing at all, because the script has no word
  * boundaries: `第1ターミナル` splits into one token that matches no surface.
- * There the longest known substring is the correct operator, and the compound objection
- * does not transfer — Japanese has no `-gate` street-name suffix class.
+ * There the longest known substring is the correct operator, and the compound objection does not transfer.
+ * Japanese has no `-gate` street-name suffix class.
  */
 export function nameContainsSurfaces(name: string, index: SurfaceIndex): string[] {
 	const normalized = normalizeSurface(name)

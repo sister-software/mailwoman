@@ -166,8 +166,8 @@ export async function promoteGolden(
 
 	report?.(`reading candidates: ${options.input}`)
 
-	// The candidates file is the required input, so its absence must not read as "zero
-	// candidates" — that promotes the prior version unchanged and reports success.
+	// The candidates file is the required input, so its absence must not read as "zero candidates".
+	// That promotes the prior version unchanged and reports success.
 	// `JSONSpliterator.fromAsync` reports a missing path as a bare `TypeError`
 	// naming its own internals, so name the path here.
 	if (!(await pathExists(options.input))) {

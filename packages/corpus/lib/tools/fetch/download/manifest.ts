@@ -18,7 +18,7 @@ import { HTTPStatusError, type SourceManifest } from "#tools/fetch/download/netw
 export async function readManifest<T>(path: string): Promise<T | null> {
 	if (!(await pathExists(path))) return null
 
-	// A read failure (e.g. the file vanished after the existsSync probe) maps to null like
+	// A read failure (e.g. The file vanished after the existsSync probe) maps to null like
 	// corrupt JSON does. tryParsingJSON returns null for the non-string sentinel.
 	const text = await readLocalTextFile(path).catch(() => null)
 
@@ -50,9 +50,8 @@ export async function writeManifest(path: string, manifest: unknown): Promise<vo
  * The sibling `manifest.json` shape for a source that is a collection of files behind one
  * portal (a monthly register published per region, per industry, or per first letter).
  *
- * It carries what a trained artifact has to be able to cite later: the license the
- * portal labels the data with, the attribution wording it requires, and one
- * {@link SourceManifest} per file.
+ * It carries what a trained artifact has to be able to cite later: the license the portal labels
+ * the data with, the attribution wording it requires, and one {@link SourceManifest} per file.
  */
 export interface SourceCollectionManifest {
 	source: string
@@ -66,9 +65,11 @@ export interface SourceCollectionManifest {
 /**
  * Pipe a response body to `dest` and answer the byte count.
  *
- * The one primitive the portal fetchers share when the request is not a bare GET — a session cookie,
- * a csrf header, or a form post stands between the listing and the file, so {@link streamDownload}'s
- * URL-only interface does not fit and each module builds its own `Response` first.
+ * The one primitive the portal fetchers share when the request is not a bare GET.
+ * A session cookie, a csrf header, or a form post stands between the listing
+ * and the file, so {@link streamDownload}'s URL-only interface does not fit
+ * and each module builds its own `Response` first.
+ *
  * Writes a `.tmp` sibling and renames, so an interrupted transfer never lands
  * at the final path looking complete.
  */

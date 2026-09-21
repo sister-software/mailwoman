@@ -55,7 +55,8 @@ describe("trailing-region postcode placement", () => {
 		const { rows } = await run(repeat({ ...tuple, postcode: "6001", postcodePlacement: "after_locality" }), [])
 
 		expect(rows.some((row) => row.raw === "Barcelona 6001, Anzoátegui, Venezuela")).toBe(true)
-		// The failing board rows are exactly this string. a leading code here would teach the wrong country.
+		// The failing board rows are exactly this string.
+		// A leading code here would teach the wrong country.
 		expect(rows.some((row) => row.raw.startsWith("6001 "))).toBe(false)
 	})
 
@@ -181,8 +182,8 @@ describe("trailing-region source labelling", () => {
 
 	it("keeps the structured and bare rows apart under an overridden name too", async () => {
 		// The split exists because pooling the structured rows with the 88,904 bare
-		// ones makes the new surface unweightable. an override that collapsed the two
-		// would reintroduce that under the renamed source.
+		// ones makes the new surface unweightable.
+		// An override that collapsed the two would reintroduce that under the renamed source.
 		const { rows } = await run(repeat({ ...base }), [], { sourceName: "synth-trailing-region-es-v28" })
 
 		expect(rows.every((row) => row.source === "synth-trailing-region-es-v28-bare")).toBe(true)

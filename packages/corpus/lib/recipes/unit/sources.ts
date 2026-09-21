@@ -26,7 +26,8 @@ export interface UnitSource {
 }
 
 /**
- * OA region is empty for US per-state extracts — the region is implied by the file.
+ * OA region is empty for US per-state extracts.
+ * The region is implied by the file.
  *
  * Every NON-Vermont state cached.
  */

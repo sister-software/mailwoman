@@ -22,7 +22,7 @@
  *   locality, and the head enters the dependent-locality chain last, behind `suburb`, `subdistrict`, `district` and
  *   `place`. `addr:district` is not mapped on its
  *   own: for Vietnam it is the quận below the city, which the country template renders only when no city is present,
- *. Therefore, a mapped district with a city would be a component with no span to align to and the row would quarantine.
+ * . Therefore, a mapped district with a city would be a component with no span to align to and the row would quarantine.
  *
  *   | jsonl field                                | ComponentTag                                              |
  *   | ------------------------------------------ | --------------------------------------------------------- |
@@ -91,8 +91,8 @@ export function housenumberIsDesignator(value: string): boolean {
 }
 
 /**
- * Whether `addr:street` is a street name: no comma, at most {@link MAX_STREET_WORDS} words, and not a direction (`Near
- * Cozy Water Park`, `Opposite Askari Towers`, `Behind …`).
+ * Whether `addr:street` is a street name: no comma, at most {@link MAX_STREET_WORDS} words,
+ * and not a direction (`Near Cozy Water Park`, `Opposite Askari Towers`, `Behind …`).
  */
 export function isStreetName(value: string): boolean {
 	const trimmed = value.trim()
@@ -198,7 +198,8 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.region = province
 	}
 
-	// A street alone is not an address row. the coarse adapters already teach bare names.
+	// A street alone is not an address row.
+	// The coarse adapters already teach bare names.
 	// A number and a street is one: 41,000 of Vietnam's 70,069 rows carry nothing above
 	// the street, and `568 Đường Điện Biên Phủ` is the line a person types.
 	if (Object.keys(components).length === 1) return null
@@ -214,8 +215,8 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 const NAME_PREFIXES = /^(?:thanh pho|tinh|tp\.?|quan|phuong|huyen|thi xa)\s+/u
 
 /**
- * Whether two place names are the same name: case, whitespace, diacritics and a leading admin generic folded (`Bắc
- * Ninh` = `Bac Ninh`; `Hà Nội` = `Thành phố Hà Nội`).
+ * Whether two place names are the same name: case, whitespace, diacritics and a leading
+ * admin generic folded (`Bắc Ninh` = `Bac Ninh`; `Hà Nội` = `Thành phố Hà Nội`).
  */
 export function sameName(a: string, b: string): boolean {
 	const fold = (value: string): string =>

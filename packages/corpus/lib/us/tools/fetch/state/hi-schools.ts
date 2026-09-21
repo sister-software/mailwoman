@@ -35,7 +35,8 @@ export interface FetchStateHISchoolsOptions extends BaseFetchOptions {
 	/**
 	 * Workbook URL.
 	 *
-	 * Defaults to the Hawaii DOE source. overridable for an isolated fetch test.
+	 * Defaults to the Hawaii DOE source.
+	 * Overridable for an isolated fetch test.
 	 */
 	sourceURL?: string
 }

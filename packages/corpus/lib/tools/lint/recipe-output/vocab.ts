@@ -346,7 +346,8 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 		}
 	}
 
-	// 4. compare. flag contradictions (affix-split is expected — surfaced but tagged)
+	// 4. compare.
+	//    Flag contradictions (affix-split is expected — surfaced but tagged)
 	const flagged: VocabRow[] = []
 	const affix: VocabRow[] = []
 

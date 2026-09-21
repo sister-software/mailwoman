@@ -124,7 +124,7 @@ export function parenthetical(row: JusoLabelRow): string {
  * Every full-edition member of one kind, as `[region suffix, archive name]`, sorted by region.
  *
  * The monthly edition also ships 변동 (change-only) files under the same prefixes.
- * those carry a different row set and are excluded by name.
+ * Those carry a different row set and are excluded by name.
  */
 export function regionMembers(names: readonly string[], prefix: string): Array<[string, string]> {
 	return names
@@ -183,7 +183,8 @@ export interface ReadJusoOptions {
 	/**
 	 * Stop after this many rows per 시도.
 	 *
-	 * For a fixture or a smoke run. omit for the whole register.
+	 * For a fixture or a smoke run.
+	 * Omit for the whole register.
 	 */
 	maxRowsPerRegion?: number
 }

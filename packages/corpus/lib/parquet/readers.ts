@@ -24,9 +24,9 @@ import { openParquetRowStream, type ParquetRowStreamOptions } from "#parquet/str
  * Read every row of a parquet file into memory.
  *
  * Raises when the file is absent, and raises when `columns` names one the file does not carry.
- * Use
- * {@linkcode openParquetRowStream} for a file whose rows do not fit in memory — this one is for a recipe output or a
- * fixture, where the count is known to be small.
+ * Use {@linkcode openParquetRowStream} for a file whose rows do not fit in memory.
+ *
+ * This one is for a recipe output or a fixture, where the count is known to be small.
  */
 export async function readParquetRows<T>(path: PathBuilderLike, options: ParquetRowStreamOptions = {}): Promise<T[]> {
 	if (!(await pathExists(path))) {
@@ -40,9 +40,11 @@ export async function readParquetRows<T>(path: PathBuilderLike, options: Parquet
  * Read every row of a parquet file, answering `null` when there is no file at `path`.
  *
  * A missing file is the only thing forgiven.
- * A file that exists and cannot be parsed, and a projection naming a column the
- * file lacks, both still raise — those are a corrupt artifact and a caller error,
- * and neither is the same reading as "nobody has built this yet".
+ * A file that exists and cannot be parsed, and a projection naming a column
+ * the file lacks, both still raise.
+ *
+ * Those are a corrupt artifact and a caller error, and neither is the same
+ * reading as "nobody has built this yet".
  */
 export async function tryReadParquetRows<T>(
 	path: PathBuilderLike,
@@ -84,8 +86,8 @@ export async function countParquetRows(path: PathBuilderLike): Promise<number> {
 /**
  * The column names a parquet file carries, in file order.
  *
- * Read this before a projection when the file's schema is in question — it answers what
- * is there, where a failed projection only says that something asked for is missing.
+ * Read this before a projection when the file's schema is in question.
+ * It answers what is there, where a failed projection only says that something asked for is missing.
  *
  * Asks `describe`, which names the logical columns.
  * `parquet_schema` walks the physical tree instead, where a list column's leaf is its `element` child:

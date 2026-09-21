@@ -104,8 +104,8 @@ export async function buildKryptoniteOverlay(
 
 	// Stamp the new file's source field for audit.ts
 	// (which prefers the descriptor's `source` over first_source_id-prefix inference).
-	// Without this, deepseek-kryptonite IDs would have to match a prefix in
-	// KNOWN_SOURCE_PREFIXES — we add it there too as a belt-and-braces.
+	// Without this, deepseek-kryptonite IDs would have to match a prefix in KNOWN_SOURCE_PREFIXES.
+	// We add it there too as a belt-and-braces.
 	for (const file of newManifest.slices) {
 		file.source = source
 	}

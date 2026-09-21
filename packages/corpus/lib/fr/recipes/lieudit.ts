@@ -47,7 +47,8 @@ import { alignRow } from "#utils"
 const DEFAULT_LICENSE = "Licence Ouverte 2.0"
 
 /**
- * One BAN row surviving the lieu-dit filter — the minimal tuple the pool holds.
+ * One BAN row surviving the lieu-dit filter.
+ * The minimal tuple the pool holds.
  */
 interface LieuDitTuple {
 	numero: string
@@ -220,10 +221,11 @@ export const frLieuditRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Country-append (the fr-admin-split #728 pattern, generalized): ~`countryFraction`
-			// of the time append an explicit "France" surface form onto the trailing
-			// (postcode+commune) line + a `country` component — the model relearns to emit country
-			// when present without over-firing it on the (still-majority) country-less rows.
+			// Country-append (the fr-admin-split #728 pattern, generalized):
+			// ~`countryFraction` of the time append an explicit "France" surface form onto
+			// the trailing (postcode+commune) line + a `country` component.
+			// The model relearns to emit country when present without over-firing it
+			// on the (still-majority) country-less rows.
 			// `countryFraction <= 0` (the default) never draws from `random`,
 			// so the byte-stream is unaffected when the flag is unset.
 			if (countryFraction > 0 && random() < countryFraction) {

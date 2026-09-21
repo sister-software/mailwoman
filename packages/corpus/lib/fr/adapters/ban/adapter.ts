@@ -48,8 +48,8 @@ export const BAN_ADAPTER_ID = "ban"
 /**
  * Subset of BAN CSV columns the adapter consults.
  *
- * Everything else is ignored. declaring the shape explicitly catches column-name
- * drift early if BAN evolves its schema.
+ * Everything else is ignored.
+ * Declaring the shape explicitly catches column-name drift early if BAN evolves its schema.
  */
 interface BanRow {
 	id: string

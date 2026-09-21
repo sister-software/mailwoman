@@ -59,8 +59,8 @@ export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 /**
  * Subset of OpenAddresses Feature properties the adapter inspects.
  *
- * The runtime accepts uppercase or lowercase keys. this interface documents the
- * canonical lowercase form after normalization.
+ * The runtime accepts uppercase or lowercase keys.
+ * This interface documents the canonical lowercase form after normalization.
  */
 interface OaProperties {
 	hash?: string
@@ -94,7 +94,8 @@ function normalizeProperties(raw: unknown): OaProperties {
 }
 
 /**
- * Parse a single ND-GeoJSON line. return null for blanks, comments, or non-Feature shapes.
+ * Parse a single ND-GeoJSON line.
+ * Return null for blanks, comments, or non-Feature shapes.
  */
 function parseFeatureLine(line: string): OaProperties | null {
 	const trimmed = line.trim()
@@ -125,8 +126,8 @@ export interface OpenaddressesAdapterOptions {
 	 * Default **true** (include) as of 2026-06-19: exclusion is a deliberate build-level
 	 * act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`), not a silent
 	 * adapter default (#26 — "purposely exclude, don't opt in to include").
-	 * Set false only for an explicit adapter-scoped drop. the build-level
-	 * `--exclude-share-alike` is the normal path.
+	 * Set false only for an explicit adapter-scoped drop.
+	 * The build-level `--exclude-share-alike` is the normal path.
 	 */
 	allowShareAlike?: boolean
 }
@@ -135,7 +136,7 @@ export interface OpenaddressesAdapterOptions {
  * Build an OpenAddresses adapter.
  *
  * The optional `defaultLicense` lets callers stamp a non-default fallback for dumps
- * known to carry a single license throughout (e.g. a pddl-only state extract).
+ * known to carry a single license throughout (e.g. A pddl-only state extract).
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE

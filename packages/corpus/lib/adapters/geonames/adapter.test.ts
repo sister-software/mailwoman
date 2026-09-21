@@ -26,7 +26,8 @@ beforeEach(async () => {
 })
 
 // Build a 19-column GeoNames main-table row (tab-separated).
-// Only the columns the adapter reads need to be meaningful. the rest are padded.
+// Only the columns the adapter reads need to be meaningful.
+// The rest are padded.
 function gnRow(o: {
 	id: string
 	name: string

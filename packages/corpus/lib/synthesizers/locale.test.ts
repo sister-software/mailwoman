@@ -134,8 +134,7 @@ const DRESDEN: LocaleBaseTuple = {
 
 describe("synthesizeLocaleRow order option (order-robustness)", () => {
 	it("international order renders house-FIRST, postcode-AFTER-city, region IN THE TAIL", () => {
-		// keepAll = 0.5 keeps house# + postcode. international uses the US template + the region tail →
-		// "27 Straußstraße, Berlin, Berlin 12623" (the layout the eval feeds. v0.9.3 / #327).
+		// keepAll = 0.5 keeps house# + postcode. International uses the US template + the region tail → "27 Straußstraße, Berlin, Berlin 12623" (the layout the eval feeds. v0.9.3 / #327).
 		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
 		expect(row).not.toBeNull()
 		expect(row.raw.indexOf("27")).toBeLessThan(row.raw.indexOf("Straußstraße")) // house before street

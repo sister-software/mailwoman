@@ -90,7 +90,8 @@ function joinTwoLineStreet(street1: string, street2: string | undefined): string
 }
 
 /**
- * Combine `name1` + optional `name2` into a single venue surface form. samhsa conventions:
+ * Combine `name1` + optional `name2` into a single venue surface form.
+ * Samhsa conventions:
  *
  * - `name1` is the program / clinic name ("Mountain Plains Counseling Services").
  * - `name2` is the parent organization ("Catholic Charities of Wyoming"), if any.

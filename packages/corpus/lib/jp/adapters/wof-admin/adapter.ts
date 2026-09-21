@@ -159,8 +159,8 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 				}
 			}
 
-			// One read of the JP place table instead of a fresh `prepare` + up to six point
-			// queries per seed. there are tens of thousands of neighbourhood seeds.
+			// One read of the JP place table instead of a fresh `prepare` + up to six point queries per seed.
+			// There are tens of thousands of neighbourhood seeds.
 			const byID = new Map<number, PlaceRow>()
 
 			for (const row of allRows<PlaceRow>(

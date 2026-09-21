@@ -226,9 +226,9 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 	db.exec(createTableSQL)
 
-	// Use the .import approach via a temp table, then insert into ... select to handle NULL
-	// normalization and type coercion. better-sqlite3 doesn't support .import natively,
-	// so we use a different approach: Read the CSV line-by-line and insert in a transaction.
+	// Use the .import approach via a temp table, then insert into ...
+	// Select to handle NULL normalization and type coercion. better-sqlite3 doesn't support .import
+	// natively, so we use a different approach: Read the CSV line-by-line and insert in a transaction.
 	process.stderr.write(`Importing rows...\n`)
 
 	const insertStmt = db.prepare(
@@ -238,7 +238,8 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	let imported = 0
 	let headerSkipped = false
 
-	// node:sqlite has no `db.transaction(fn)` wrapper. use raw begin/commit around the batch.
+	// node:sqlite has no `db.transaction(fn)` wrapper.
+	// Use raw begin/commit around the batch.
 	const doInsert = () => {
 		db.exec("BEGIN")
 
@@ -352,9 +353,9 @@ export interface IngestCSVOptions {
 /**
  * Ingest a CSV into SQLite: infer column types from a sample, create the table, import the rows.
  *
- * Throws when `input` is missing. note(phase1): progress narration still writes stderr
- * directly — this predates the report-callback interface and the write sites are deep in
- * the type-inference helpers. thread a report param if a caller ever needs to capture it.
+ * @throws when `input` is missing. note(phase1): progress narration still writes stderr directly.
+ *   This predates the report-callback interface and the write sites are deep in the type-inference helpers.
+ *   Thread a report param if a caller ever needs to capture it.
  */
 export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	if (!(await pathExists(options.input))) {

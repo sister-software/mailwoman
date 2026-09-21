@@ -61,8 +61,8 @@ describe("no-fragment", () => {
 		for (const r of signal) {
 			const c = r.components!
 
-			// A signal row has a street and may have a house_number, but never a postcode
-			// or locality — that is the whole licence: read the street without its partners.
+			// A signal row has a street and may have a house_number, but never a postcode or locality.
+			// That is the whole licence: read the street without its partners.
 			expect(c.postcode).toBeUndefined()
 			expect(c.locality).toBeUndefined()
 			expect(c.street).toBeTruthy()

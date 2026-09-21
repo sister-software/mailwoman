@@ -117,9 +117,10 @@ describe("the committed address-source register", () => {
 	})
 
 	it("refuses a copy whose publisher name was edited after the build", async () => {
-		// The worked case: a prose sweep rewrote `Contracts Finder / Find a Tender` to `Interfaces Finder / Find a
-		// Tender` on three rows, and the structural audit passed because it checks shape rather than whether a name is
-		// the publisher's (#2352). One character is enough to move the digest.
+		// The worked case: a prose sweep rewrote `Contracts Finder / Find a Tender` to
+		// `Interfaces Finder / Find a Tender` on three rows, and the structural audit passed
+		// because it checks shape rather than whether a name is the publisher's (#2352).
+		// One character is enough to move the digest.
 		await using scratch = await temporaryDirectory("mw-register-edited-")
 		const edited = { ...register, sources: register.sources.map((source) => ({ ...source })) }
 		const path = scratch.resolve("address-source-register.json")

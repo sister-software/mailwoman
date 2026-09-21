@@ -49,8 +49,8 @@ export interface FetchGeonamesDumpOptions extends BaseFetchOptions {
 	/**
 	 * Dump directory to read from.
 	 *
-	 * Defaults to GeoNames' own. exists so the 404 and coverage behaviour can
-	 * be exercised against a local server.
+	 * Defaults to GeoNames' own.
+	 * Exists so the 404 and coverage behaviour can be exercised against a local server.
 	 */
 	baseURL?: string
 	/**
@@ -81,8 +81,9 @@ export interface GeonamesDumpManifest {
 	 */
 	skipped_present: string[]
 	/**
-	 * Countries in the source catalog that the source's dump directory nonetheless 404s —
-	 * a fact about the source, recorded so a later reader does not spend the fetch to rediscover it.
+	 * Countries in the source catalog that the source's dump directory nonetheless 404s.
+	 *
+	 * A fact about the source, recorded so a later reader does not spend the fetch to rediscover it.
 	 */
 	unavailable: string[]
 	/**
@@ -105,8 +106,8 @@ const GAZETTEER_DUMP_COLUMNS = 19
 /**
  * True when the first non-empty line carries the gazetteer dump's 19 tab-separated columns.
  *
- * Accepts a partial head read — the first line is the whole question,
- * so callers need not hand it a resident 350 MB dump.
+ * Accepts a partial head read.
+ * The first line is the whole question, so callers need not hand it a resident 350 MB dump.
  *
  * Walk the string directly rather than constructing a spliterator: the capitals builder already
  * holds whole country dumps as strings, and a byte-oriented spliterator would UTF-8 encode
@@ -138,7 +139,7 @@ export function looksLikeGazetteerDump(text: string): boolean {
 }
 
 /**
- * Parse the ISO codes (column 1) and capital names (column 6) out of `countryInfo.txt` —
+ * Parse the ISO codes (column 1) and capital names (column 6) out of `countryInfo.txt`.
  * `#`-prefixed lines are the file's own commentary.
  */
 export function parseCountryInfo(text: string): Array<{ country: string; capital: string }> {

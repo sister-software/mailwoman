@@ -35,16 +35,17 @@ import type { CanonicalRow, CorpusAdapter } from "#types"
 /**
  * Lookup table for corpus adapters.
  *
- * The CLI's `npx mailwoman corpus run <adapter-id>` resolves `<adapter-id>` against this
- * registry. the same registry is iterated by the `corpus build` pipeline.
- * Adapters do not self-register at module load — they're added explicitly
- * so the dependency graph stays traceable.
+ * The CLI's `npx mailwoman corpus run <adapter-id>` resolves `<adapter-id>` against this registry.
+ * The same registry is iterated by the `corpus build` pipeline.
+ *
+ * Adapters do not self-register at module load.
+ * They're added explicitly so the dependency graph stays traceable.
  */
 export interface AdapterRegistry {
 	/**
 	 * Add an adapter.
 	 *
-	 * Throws if `adapter.id` is already registered.
+	 * @throws if `adapter.id` is already registered.
 	 */
 	register(adapter: CorpusAdapter): void
 
@@ -67,8 +68,9 @@ export interface AdapterRegistry {
 /**
  * Default in-memory registry.
  *
- * The runner constructs one per invocation. the CLI re-uses a shared singleton
- * (`defaultAdapterRegistry`) populated by `./adapters/index.ts` as adapters come online.
+ * The runner constructs one per invocation.
+ * The CLI re-uses a shared singleton (`defaultAdapterRegistry`) populated by
+ * `./adapters/index.ts` as adapters come online.
  */
 export class InMemoryAdapterRegistry implements AdapterRegistry {
 	#byID = new Map<string, CorpusAdapter>()
@@ -97,7 +99,9 @@ export class InMemoryAdapterRegistry implements AdapterRegistry {
 /**
  * Process-wide default registry.
  *
- * Populated by `./adapters/index.ts` as adapters are built. imported by the CLI.
+ * Populated by `./adapters/index.ts` as adapters are built.
+ * Imported by the CLI.
+ *
  * Tests should construct their own `InMemoryAdapterRegistry` to avoid cross-test pollution.
  */
 export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
@@ -119,11 +123,12 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
 }
 
 /**
- * {@link stableSourceID} over arbitrary disambiguator keys — a variant index, a slot number, anything that is not a
- * `ComponentTag`.
+ * {@link stableSourceID} over arbitrary disambiguator keys. A variant index, a slot number, anything that is not a `ComponentTag`.
  *
- * Every key handed in is sorted and hashed either way. only the key vocabulary differs,
- * and the narrow signature above is what stops an adapter hashing a misspelled component name.
+ * Every key handed in is sorted and hashed either way.
+ *
+ * Only the key vocabulary differs, and the narrow signature above is what stops
+ * an adapter hashing a misspelled component name.
  */
 export function stableSourceIDFromParts(
 	adapterID: string,
@@ -150,8 +155,8 @@ export function stableSourceIDFromParts(
  * before failing — quadratic backtracking on attacker-shaped input.
  * Requiring a non-space start removes the overlap.
  *
- * Group 2 is trimmed by the caller either way, so the two forms are indistinguishable
- * on real input. only the failure cost differs.
+ * Group 2 is trimmed by the caller either way, so the two forms are indistinguishable on real input.
+ * Only the failure cost differs.
  */
 export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(\S.*)$/
 
@@ -172,10 +177,12 @@ export interface SplitStreetLine {
  * hyphenated half (`"40-12 Bell Blvd"`, common in NYC and suburban garden-apartment
  * numbering. Hawaii uses it island-wide — `"47-470 Hui Aeko Place"`).
  *
- * Returns `null` for blank input. Anything that does not match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC
- * 1"`) becomes a single `street` value rather than being mangled — the model sees the original surface form and
- * downstream classifiers pick it up. Callers that need those forms recognized as something other than a street (see
- * `usgov-irs-bmf`) test for them before calling this.
+ * @returns `null` for blank input.
+ *   Anything that does not match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC 1"`)
+ *   becomes a single `street` value rather than being mangled — the model sees the
+ *   original surface form and downstream classifiers pick it up.
+ *   Callers that need those forms recognized as something other than a street
+ *   (see `usgov-irs-bmf`) test for them before calling this.
  */
 export function splitStreetLine(line: string): SplitStreetLine | null {
 	const trimmed = line.trim()
@@ -190,8 +197,10 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
 }
 
 /**
- * Load one curated libpostal dictionary (`core/data/libpostal/dictionaries/<language>/<filename>`) as
- * a lower-cased form set. libpostal format: `canonical|abbr|abbr|...` — every form is indexed.
+ * Load one curated libpostal dictionary (`core/data/libpostal/dictionaries/<language>/<filename>`)
+ * as a lower-cased form set.
+ *
+ * Libpostal format: `canonical|abbr|abbr|...` — every form is indexed.
  *
  * `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source
  * and from the packaged `out/` tree.

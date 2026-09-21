@@ -71,8 +71,8 @@ interface OvertureCorpusRow {
  * A name taught as `unit` teaches that a trailing proper name is one, which is the
  * shape of the `#NNN`-unit defect the corpus exists to fix.
  *
- * Such a value is dropped here. a register recipe that wants the building name
- * as a `venue` reads the jsonl itself.
+ * Such a value is dropped here.
+ * A register recipe that wants the building name as a `venue` reads the jsonl itself.
  */
 export function unitFieldIsDesignator(value: string): boolean {
 	const trimmed = value.trim()

@@ -56,9 +56,10 @@ interface IRSBMFRow {
 /**
  * Classify the street line into a `po_box` or a `{house_number?, street}` split.
  *
- * BMF mixes street addresses and PO boxes in one `street` column, so the PO-box shapes have to be
- * claimed before the shared house-number split runs — otherwise `splitStreetLine` would hand back
- * `"PO Box 1234"` as a plain street, which is correct for every other US adapter and wrong here.
+ * BMF mixes street addresses and PO boxes in one `street` column, so the PO-box shapes
+ * have to be claimed before the shared house-number split runs.
+ * Otherwise `splitStreetLine` would hand back `"PO Box 1234"` as a plain street,
+ * which is correct for every other US adapter and wrong here.
  */
 function splitStreetLineOrPOBox(street: string): { po_box: string } | { house_number?: string; street: string } | null {
 	const trimmed = street.trim()

@@ -237,8 +237,8 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			}
 
 			// inputPath is a directory of ndjson files (per fetch-nad.ts featureserver output).
-			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported —
-			// the featureserver per-OID-range file pattern is the primary distribution.
+			// Single-file inputs (e.g. A bulk-extracted CSV) are not currently supported.
+			// The featureserver per-OID-range file pattern is the primary distribution.
 			const files = await Globerator.files("ndjson", {
 				cwd: opts.inputPath,
 				absolute: false,
@@ -248,9 +248,9 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			let emitted = 0
 			outer: for (const file of files) {
 				if (opts.signal?.aborted) break
-				// TextSpliterator streams string lines. the per-line tryParsingJSON below keeps
-				// the reader tolerant of malformed rows (skip silently), so TextSpliterator +
-				// a non-throwing parse — not JSONSpliterator, which would throw.
+				// TextSpliterator streams string lines.
+				// The per-line tryParsingJSON below keeps the reader tolerant of malformed rows (skip silently),
+				// so TextSpliterator + a non-throwing parse — not JSONSpliterator, which would throw.
 				// The path string lets the lib own + dispose each file's handle,
 				// including on the `break outer` early exit.
 				const lines = TextSpliterator.fromAsync(join(opts.inputPath, file))

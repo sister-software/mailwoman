@@ -456,9 +456,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 	})
 
 	it("longest value locates first — a region homonym cannot steal the street's word (pilot2 residual)", () => {
-		// "Alaska" is both the region and the street's first word. locating region first claimed
-		// [0,6) and quarantined the street. Longest-first gives the street its full surface, and
-		// the region then finds its own boundary-aligned occurrence.
+		// "Alaska" is both the region and the street's first word. Locating region first claimed [0,6) and quarantined the street. Longest-first gives the street its full surface, and the region then finds its own boundary-aligned occurrence.
 		const result = alignRow(
 			baseRow({
 				raw: "Alaska Regional Dr, Alaska 99508",
@@ -502,11 +500,12 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 describe("alignRow — combining-mark / non-Latin name variants (#555)", () => {
 	it("aligns a Bengali country variant instead of quarantining (NFC over-run guard)", () => {
 		// দক্ষিণ কোরিয়া (South Korea, name:ben variant — the row that crashed the v0.5.0 build).
-		// The precomposed য় (U+09DF) is a Bengali nukta combination excluded from NFC composition,
-		// so NFC *decomposes* it — the source's 13-code-unit form becomes 14. alignRow
-		// NFC-normalizes `raw` before locating spans (#519) and stores the NFC raw, so the country
-		// span stays in-bounds vs the stored raw and the row aligns rather than quarantining
-		// as `span-out-of-bounds` (the build's tens-of-thousands non-Latin coverage nick).
+		// The precomposed য় (U+09DF) is a Bengali nukta combination excluded from
+		// NFC composition, so NFC *decomposes* it.
+		// The source's 13-code-unit form becomes 14. alignRow NFC-normalizes `raw`
+		// before locating spans (#519) and stores the NFC raw, so the country span stays
+		// in-bounds vs the stored raw and the row aligns rather than quarantining as
+		// `span-out-of-bounds` (the build's tens-of-thousands non-Latin coverage nick).
 		const precomposed = "দক্ষিণ কোরিয়া"
 
 		for (const input of [precomposed, precomposed.normalize("NFC")]) {

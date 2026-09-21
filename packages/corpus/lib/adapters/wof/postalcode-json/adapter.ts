@@ -167,9 +167,9 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			// Pass 1: full walk.
-			// We keep every record whose placetype maps to a ComponentTag — the postcode adapter
-			// needs locality / region / country admin records in the index so it can resolve
-			// postcode ancestry, even though it only emits rows for postcode records.
+			// We keep every record whose placetype maps to a ComponentTag.
+			// The postcode adapter needs locality / region / country admin records in the index
+			// so it can resolve postcode ancestry, even though it only emits rows for postcode records.
 			const byID = new Map<number, WOFRecord>()
 
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {

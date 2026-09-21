@@ -129,8 +129,9 @@ describe("synthesizePoBoxRow", () => {
 	it("refuses a country no layout names, rather than writing it in US order", () => {
 		// The box vocabulary still folds an unknown country to en-US, which is
 		// what `poBoxTemplateLocale` decides.
-		// The order comes from the country's own layout, and 55 of the 252 shipped country records
-		// carry no usable skeleton — so a row for one of those is absent rather than invented.
+		// The order comes from the country's own layout, and 55 of the 252 shipped
+		// country records carry no usable skeleton.
+		// So a row for one of those is absent rather than invented.
 		expect(poBoxTemplateLocale("ZZ")).toBe("en-US")
 
 		const row = synthesizePoBoxRow(
@@ -188,7 +189,8 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 				...row,
 				source: "synth-po-box",
 				source_id: `mil:${seed}`,
-				// CanonicalRow requires a country. the military row carries only the locale it was minted for.
+				// CanonicalRow requires a country.
+				// The military row carries only the locale it was minted for.
 				country: row.locale.split("-")[1] ?? "US",
 				corpus_version: "0.0.0-test",
 				license: "synthetic fixture — not distributed",
@@ -212,7 +214,8 @@ describe("maybeNoisifyBoxNumber", () => {
 	})
 
 	it("applies noise when random <= 0.1", () => {
-		// Force noise application. verify something changes for a non-trivial number
+		// Force noise application.
+		// Verify something changes for a non-trivial number
 		let attempts = 0
 
 		const rng = (() => {
@@ -245,8 +248,9 @@ describe("poBoxTemplateLocale", () => {
 	})
 
 	it("stays template-scoped: a locale without a PO-box template falls back to en-US", () => {
-		// The shared synthesizers/utils map resolves DE to de-DE, but PO_BOX_LOCALE_TEMPLATES carries
-		// no de-DE entry — the wrapper folds it back to en-US so DE tuples keep the en-US box vocabulary.
+		// The shared synthesizers/utils map resolves DE to de-DE, but
+		// PO_BOX_LOCALE_TEMPLATES carries no de-DE entry.
+		// The wrapper folds it back to en-US so DE tuples keep the en-US box vocabulary.
 		expect(supportedLocales()).not.toContain("de-DE")
 		expect(poBoxTemplateLocale("DE")).toBe("en-US")
 		expect(poBoxTemplateLocale("Germany")).toBe("en-US")

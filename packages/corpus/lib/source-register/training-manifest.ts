@@ -202,8 +202,9 @@ export function auditTrainingManifest(manifest: TrainingManifest): string[] {
  *
  * This is what a publication path asks before redistributing a model trained on the corpus.
  * A source whose decision is `null`, whose state is anything but `elected`,
- * or whose elected grant never named the operation, is returned — the three are
- * different situations and each message says which.
+ * or whose elected grant never named the operation, is returned.
+ *
+ * The three are different situations and each message says which.
  */
 export function sourcesNotPermitting(
 	manifest: TrainingManifest,

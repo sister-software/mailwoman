@@ -48,7 +48,8 @@ import {
 } from "#utils/cooccurrence-stats"
 
 /**
- * Occurrences of a forbidden label before it is reported — one or two are noise, five is a pattern.
+ * Occurrences of a forbidden label before it is reported.
+ * One or two are noise, five is a pattern.
  */
 const FORBIDDEN_LABEL_REPORT_THRESHOLD = 5
 
@@ -71,9 +72,10 @@ const BIGRAM_MIN_COUNT = 10
 const ALL_O_RATIO_CEILING = 0.9
 
 /**
- * Default `lint-rules.json` path — the rules ship beside this module in the source
- * tree. tsc does not emit readFileSync'd JSON into `out/`, so the compiled tree falls
- * back to the source-tree copy (corpus/out/src/tools/ → corpus/src/tools/).
+ * Default `lint-rules.json` path — the rules ship beside this module in the source tree.
+ *
+ * Tsc does not emit readFileSync'd JSON into `out/`, so the compiled tree falls back
+ * to the source-tree copy (corpus/out/src/tools/ → corpus/src/tools/).
  *
  * In-repo the `node` exports condition loads this module from source anyway,
  * so the sibling URL is the common path.
@@ -432,7 +434,8 @@ function renderReport(
 }
 
 /**
- * Lint a recipe output against corpus stats + the anti-pattern rules. print the markdown report to stdout.
+ * Lint a recipe output against corpus stats + the anti-pattern rules.
+ * Print the markdown report to stdout.
  */
 export async function lintRecipeOutput(
 	options: LintRecipeOutputOptions,

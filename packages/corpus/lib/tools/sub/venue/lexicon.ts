@@ -74,9 +74,10 @@ export * from "#tools/sub/venue/wikidata"
  * Apply the curation decisions to a surface list, IN place on a copy.
  *
  * A promotion binds `(designatorID, phrase, locale)`.
- * A surface matches when it names the same record with the same phrase and its language
- * is the locale's language or the untagged `und` — the default `name` tag carries no
- * language, and a German extract's untagged `Halle 2` is German.
+ * A surface matches when it names the same record with the same phrase and its
+ * language is the locale's language or the untagged `und`.
+ *
+ * The default `name` tag carries no language, and a German extract's untagged `Halle 2` is German.
  *
  * Region is the subtle half.
  * A surface attested in an extract carries that extract's region and matches only its own locale.
@@ -377,7 +378,8 @@ export interface GenerateSubVenueLexiconOptions {
  * Read the fetch outputs, build the table, and write it.
  *
  * The IO half only — every decision lives in {@link buildSubVenueLexicon}, which is pure.
- * Run `oxfmt` over `outPath` afterwards. repo law is that committed JSON is oxfmt-clean.
+ * Run `oxfmt` over `outPath` afterwards.
+ * Repo law is that committed JSON is oxfmt-clean.
  */
 export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOptions): Promise<SubVenueLexiconTable> {
 	const sources: SubVenueLexiconSource[] = []
@@ -419,16 +421,16 @@ export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOp
 			license: "ODbL (OpenStreetMap)",
 			// The extract's mtime — when the rows were produced.
 			// `corpus/agents.md`'s standing warning that a file's mtime is not its data's
-			// vintage applies to a downloaded archive. this file is a build output of ours,
-			// so its mtime is exactly the right number.
+			// vintage applies to a downloaded archive.
+			// This file is a build output of ours, so its mtime is exactly the right number.
 			retrieved: isoDate((await statPath(extract.path)).mtime),
 			rows: rows.length,
 		})
 	}
 
 	if (options.overtureRows?.length) {
-		// Overture rows carry their own country, so they are harvested per region rather
-		// than in one pass — a `region` on the surface is the axis promotion is decided on
+		// Overture rows carry their own country, so they are harvested per region rather than in one pass.
+		// A `region` on the surface is the axis promotion is decided on
 		// and a mixed-country bucket would make it meaningless.
 		const byCountry = new Map<string, SubVenueHarvestRow[]>()
 

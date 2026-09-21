@@ -68,8 +68,9 @@ const GOLDEN_COUNTIES: readonly County[] = [{ fips: "50023", state: "VT", regime
 
 const EVAL_GOLD_PATH = repoRootPath("data", "eval", "external", "intersection-real.jsonl")
 /**
- * Where `mailwoman situs interpolation` unpacks the per-county tiger edges shapefiles —
- * a Census download, so it sits beside the other Census vintages under `census/`.
+ * Where `mailwoman situs interpolation` unpacks the per-county tiger edges shapefiles.
+ *
+ * A Census download, so it sits beside the other Census vintages under `census/`.
  *
  * `--edges-dir` overrides it.
  */
@@ -92,8 +93,9 @@ interface Crossing {
 /**
  * Junction forms.
  *
- * Weights favor the common connectors. the tight (unpadded) variants and leading phrases
- * get enough mass to register (each ≥5%) — they're the audited gaps the old synth missed.
+ * Weights favor the common connectors.
+ * The tight (unpadded) variants and leading phrases get enough mass to register
+ * (each ≥5%) — they're the audited gaps the old synth missed.
  */
 interface Form {
 	id: string
@@ -148,7 +150,8 @@ const CASES: readonly Casing[] = [
 /**
  * Words a connector may contribute as O tokens.
  *
- * The audit rejects any O token outside this set — an unlabeled street/locality token would surface here.
+ * The audit rejects any O token outside this set.
+ * An unlabeled street/locality token would surface here.
  */
 const CONNECTOR_O_TOKENS = new Set(["and", "at", "of", "corner", "intersection"])
 
@@ -169,7 +172,8 @@ const CONNECTOR_PUNCT_RE = /^[\s,&@/]*$/
 const pairKey = (a: string, b: string): string => [a.toLowerCase(), b.toLowerCase()].toSorted().join("\u001F")
 
 /**
- * One row of the intersection eval gold — the shape this recipe reads to exclude eval crossings.
+ * One row of the intersection eval gold.
+ * The shape this recipe reads to exclude eval crossings.
  */
 interface EvalGoldRow {
 	node: number | string
@@ -339,17 +343,18 @@ function renderRow(
 	const casing = weightedPick(CASES, random, (c) => c.w)
 	raw = casing.apply(raw)
 
-	// Components keep their original case. alignRow matches case-insensitively and labels
-	// the tokens of the (cased) raw — the parquet row carries tokens+labels only.
+	// Components keep their original case. alignRow matches case-insensitively
+	// and labels the tokens of the (cased) raw.
+	// The parquet row carries tokens+labels only.
 	return { raw, components, formID: form.id, tailID: tail.id, caseID: casing.id }
 }
 
 /**
  * Label-correctness audit for one aligned row, on the RAW surface via the #519 span triple.
  *
- * Returns a list of violations (empty = clean).
- * Re-derives the span checks independent of `alignRow`'s own assertion,
- * so a builder bug can't vouch for itself.
+ * @returns a list of violations (empty = clean).
+ *   Re-derives the span checks independent of `alignRow`'s own assertion,
+ *   so a builder bug can't vouch for itself.
  */
 function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, string>>): string[] {
 	const errors: string[] = []
@@ -568,7 +573,7 @@ export const intersectionRecipe: CorpusRecipe = {
 			}
 
 			// Verbatim-only alignment: raw is built from the component values, so a fuzzy fallback
-			// could only ever mislabel (e.g. claim a lookalike window for a near-duplicate street).
+			// could only ever mislabel (e.g. Claim a lookalike window for a near-duplicate street).
 			const aligned = alignRow(canonical, { maxEditDistance: 0 })
 
 			if (aligned.kind !== "labeled" || !aligned.row) {

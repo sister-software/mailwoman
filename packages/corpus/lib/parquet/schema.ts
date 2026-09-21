@@ -118,9 +118,7 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	raw: { type: "UTF8", compression: PARQUET_COMPRESSION },
 	tokens: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
 	labels: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
-	// v0.5.0 char-offset label spans (#519): parallel arrays over `raw` (UTF-16 code units,
-	// [start, end) exclusive-end, sorted, non-overlapping). INT32 — raw is a short address string,
-	// and INT32 round-trips as `number` where parquetjs INT64 would surface bigint.
+	// v0.5.0 char-offset label spans (#519): parallel arrays over `raw` (UTF-16 code units, [start, end) exclusive-end, sorted, non-overlapping). INT32 — raw is a short address string, and INT32 round-trips as `number` where parquetjs INT64 would surface bigint.
 	span_starts: { type: "INT32", repeated: true, compression: PARQUET_COMPRESSION },
 	span_ends: { type: "INT32", repeated: true, compression: PARQUET_COMPRESSION },
 	span_tags: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },

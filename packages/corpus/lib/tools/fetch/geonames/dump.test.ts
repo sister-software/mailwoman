@@ -113,7 +113,8 @@ describe("fetchGeonamesDumps", () => {
 		expect(summary.fetched).toBe(2)
 		expect(summary.failedCodes).toEqual(["XX"])
 
-		// The zip is extracted and removed — the directory holds the txt rather than the archive.
+		// The zip is extracted and removed.
+		// The directory holds the txt rather than the archive.
 		const aa = await readLocalTextFile(join(outRoot, "AA.txt"))
 
 		expect(aa).toContain("Aa City")
@@ -150,7 +151,8 @@ describe("fetchGeonamesDumps", () => {
 		expect(manifest.skipped_present).toEqual(["AA"])
 		expect(manifest.wrong_format_present).toEqual(["BB"])
 
-		// The wrong-format file is reported, never clobbered — this tool does not overwrite data it did not fetch.
+		// The wrong-format file is reported, never clobbered.
+		// This tool does not overwrite data it did not fetch.
 		expect(await readLocalTextFile(join(outRoot, "BB.txt"))).toContain("Be City")
 	})
 })

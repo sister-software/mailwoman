@@ -86,7 +86,8 @@ const HOUSE_NUMBERS = [
 /**
  * FR alphanumeric house-number forms.
  *
- * `bis`/`ter` are separated. a bare letter is suffixed.
+ * `bis`/`ter` are separated.
+ * A bare letter is suffixed.
  */
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
@@ -112,7 +113,8 @@ const norm = (value: string): string =>
  * accent-stripped string is a locality, which is not a fact about French and would
  * not match the fragment board (which reconstructs the same casing).
  *
- * The accents are gone from the source and cannot be recovered here. the casing can.
+ * The accents are gone from the source and cannot be recovered here.
+ * The casing can.
  */
 const FR_LOWER = new Set([
 	"le",
@@ -213,8 +215,8 @@ export const frFragmentRecipe: CorpusRecipe = {
 		const hnProb = opts.hnProb ?? 0.35
 		const bareLocalityProb = opts.bareProb ?? 0.25
 
-		// The locality pool is harvested from the tuples themselves — every BAN row carries
-		// its commune, so the counter-distribution needs no second source.
+		// The locality pool is harvested from the tuples themselves.
+		// Every BAN row carries its commune, so the counter-distribution needs no second source.
 		const localities = new Set<string>()
 
 		let read = 0
@@ -308,8 +310,9 @@ export const frFragmentRecipe: CorpusRecipe = {
 		const wanted = Math.round((emitted / Math.max(1, 1 - bareLocalityProb)) * bareLocalityProb)
 
 		for (let i = 0; i < wanted && pool.length; i++) {
-			// BAN gives `locality_base` normalized. restore the casing the fragment board also
-			// reconstructs, so train and eval show the model the same shape of French.
+			// BAN gives `locality_base` normalized.
+			// Restore the casing the fragment board also reconstructs, so train
+			// and eval show the model the same shape of French.
 			const name = frTitleCase(sample(pool, random))
 			const sourceID = recipeSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
 

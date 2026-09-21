@@ -51,16 +51,16 @@ const GENERIC_ABBREVIATIONS: ReadonlyArray<readonly [full: string, short: string
 /**
  * Estate and area names the register's `unit` field carries beside building names.
  *
- * A name ending in one of these is an estate, which no one writes in front of an address
- * line. a name without one reads as a building and is rendered as a `venue`.
+ * A name ending in one of these is an estate, which no one writes in front of an address line.
+ * A name without one reads as a building and is rendered as a `venue`.
  */
 const ESTATE_TAILS = ["ESTATE", "CONSERVATION AREA", "HILLS", "PARK", "GARDENS", "GARDEN", "HEIGHTS", "GROVE", "VILLE"]
 
 /**
  * Share of rows per register.
  *
- * The block line and the bracketed postcode are the two the Latin model has never seen. the
- * official line keeps the register's own shape in the mix so the block forms train beside it.
+ * The block line and the bracketed postcode are the two the Latin model has never seen.
+ * The official line keeps the register's own shape in the mix so the block forms train beside it.
  */
 const P_BLOCK = 0.4
 const P_BRACKET_POSTCODE = 0.25

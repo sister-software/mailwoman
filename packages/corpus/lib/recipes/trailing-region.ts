@@ -77,8 +77,9 @@ import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, r
  *
  * A subdivision belongs here only when its code is a posted surface.
  * A Canadian province code is (`ca/province.ts` states the contrast with Germany
- * and France in its own header), and so is a US state's. a Bundesland or a région is not,
- * and teaching `BY` for Bayern would attest a form nobody writes.
+ * and France in its own header), and so is a US state's.
+ *
+ * A Bundesland or a région is not, and teaching `BY` for Bayern would attest a form nobody writes.
  *
  * Several Canadian codes collide with ISO alpha-2 country codes — `NL` with the
  * Netherlands, `PE` with Peru — so a code left unattested here is not merely missing:
@@ -87,8 +88,9 @@ import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, r
  * US state codes reach the model in volume through the US sources, but only
  * ever with a street in front of the city.
  * Measured on 604 distinct cities through the production path, `Washington, DC 20003` answers
- * a locality 54.3% of the time against 99.7% for `123 Main St, Washington, DC 20003` (#2303) —
- * so the code is attested and the surface this recipe writes is not.
+ * a locality 54.3% of the time against 99.7% for `123 Main St, Washington, DC 20003` (#2303).
+ *
+ * So the code is attested and the surface this recipe writes is not.
  */
 function regionCodeSurface(cc: string, region: string): string | null {
 	const country = cc.toUpperCase()
@@ -132,8 +134,8 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const withCountry = read % 2 === 0 && country.length > 0
 			const postcode = String(t.postcode ?? "").trim()
 
-			// A tuple carrying a postcode emits the structured tail — the shape the
-			// bare-only recipe output never contained.
+			// A tuple carrying a postcode emits the structured tail.
+			// The shape the bare-only recipe output never contained.
 			// Every fourth such row also carries a house number, which is the second trigger:
 			// the postcode discards the region, the house number then displaces the locality.
 			const withHouseNumber = postcode.length > 0 && read % 4 === 1
@@ -165,7 +167,8 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			}
 
 			const placement = (t.postcodePlacement as PostcodePlacement | undefined) ?? "leading"
-			// Both trailing placements put the code inside the admin tail. they differ in which segment carries it.
+			// Both trailing placements put the code inside the admin tail.
+			// They differ in which segment carries it.
 			const bareLocality = postcode && placement === "after_locality" ? `${locality} ${postcode}` : locality
 
 			const localitySegment =
@@ -187,15 +190,16 @@ export const trailingRegionRecipe: CorpusRecipe = {
 				? `${localitySegment}, ${regionSegment}, ${country}`
 				: `${localitySegment}, ${regionSegment}`
 
-			// A leading postcode joins the head, ahead of the locality. the other two are
-			// already in the tail, so the head carries at most the house number.
+			// A leading postcode joins the head, ahead of the locality.
+			// The other two are already in the tail, so the head carries at most the house number.
 			const leadingPostcode = postcode && placement === "leading" ? `${postcode} ` : ""
 			const head = withHouseNumber ? `${houseNumber}, ${leadingPostcode}` : leadingPostcode
 			const raw = `${head}${tail}`
 			// A distinct source for the structured rows.
-			// The sampler buckets by `source` and weights each bucket, so emitting these under
-			// `synth-trailing-region` would pool them with the 88,904 bare rows and make the new surface
-			// unweightable — its reps per row would silently be whatever the bare source's weight bought.
+			// The sampler buckets by `source` and weights each bucket, so emitting these
+			// under `synth-trailing-region` would pool them with the 88,904 bare rows
+			// and make the new surface unweightable.
+			// Its reps per row would silently be whatever the bare source's weight bought.
 			// `--source-name` overrides both, and for the same reason one rung up: a rebuild of one
 			// country's surfaces (#1673's corrected Spanish names) pooled under the shipped label would
 			// draw exactly the reps per row the rows it was built to outweigh are already drawing.

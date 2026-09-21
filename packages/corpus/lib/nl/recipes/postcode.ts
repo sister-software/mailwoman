@@ -25,7 +25,8 @@ import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#r
 /**
  * "1012LG" → "1012 LG".
  *
- * The tuples carry the unspaced OA form. the spaced form is the failing case.
+ * The tuples carry the unspaced OA form.
+ * The spaced form is the failing case.
  */
 function spacePostcode(pc: string): string {
 	return pc.replace(/^(\d{4})([A-Z]{2})$/, "$1 $2")
@@ -64,13 +65,13 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 			}
 
 			// Spacing rotates so the model sees both the failing spaced form and the unspaced form.
-			// the components.postcode value must match the raw form so alignment tags the right span.
+			// The components.postcode value must match the raw form so alignment tags the right span.
 			const spaced = read % 2 === 0
 			const postcode = spaced ? spacePostcode(rawPostcode) : rawPostcode
 
 			// The three orders Dutch addresses use.
-			// `street number, postcode city` is canonical. the pc-first form is
-			// where the leading digits most strongly mis-read as a house number.
+			// `street number, postcode city` is canonical.
+			// The pc-first form is where the leading digits most strongly mis-read as a house number.
 			const order = read % 3
 			let raw: string
 

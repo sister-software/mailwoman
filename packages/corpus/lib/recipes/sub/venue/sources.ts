@@ -68,9 +68,8 @@ export async function readSubVenueLexicon(path: string = defaultLexiconPath()): 
  * Longest venue name kept for the venue slot.
  *
  * The extracts carry a tail of route descriptions and junction names
- * ("Furnival Gate/Moorhead MH2", "speke hall road/hillfoot AVE") that are not
- * venue names at all. a length cap plus
- * {@link isCleanName} removes the bulk of them without a hand list.
+ * ("Furnival Gate/Moorhead MH2", "speke hall road/hillfoot AVE") that are not venue names at all.
+ * A length cap plus {@link isCleanName} removes the bulk of them without a hand list.
  */
 const MAX_VENUE_NAME_LENGTH = 44
 
@@ -85,8 +84,8 @@ const MIN_NAME_LENGTH = 4
 /**
  * Longest attested sub-venue string, in whitespace tokens.
  *
- * `Terminal 1 Flugsteig B` is four and real. anything longer is a venue's own
- * name that happens to contain a designator.
+ * `Terminal 1 Flugsteig B` is four and real.
+ * Anything longer is a venue's own name that happens to contain a designator.
  */
 const MAX_ATTESTED_TOKENS = 4
 
@@ -94,8 +93,9 @@ const MAX_ATTESTED_TOKENS = 4
  * Reject a name that is a route description, a junction, or a code rather than a name:
  * embedded `/`, `;`, `,`, `:`, parentheses, no letters, or a bare source code.
  *
- * Measured motivation rather than taste — the GB extract's `platform` tier contributes
- * 7,549 `other`-shaped names like `kntgwdgj` and `speke hall road/hillfoot AVE`.
+ * Measured motivation rather than taste.
+ * The GB extract's `platform` tier contributes 7,549 `other`-shaped names like
+ * `kntgwdgj` and `speke hall road/hillfoot AVE`.
  */
 export function isCleanName(name: string): boolean {
 	if (name.length < MIN_NAME_LENGTH || name.length > MAX_VENUE_NAME_LENGTH) return false
@@ -116,9 +116,10 @@ export function isCleanName(name: string): boolean {
  *
  * Two populations, both found by reading the 2026-08-05 smoke output rather than predicted:
  *
- * - **Street types.** A bus stop is routinely named after the street it stands on, so the FR extract offers `Rue de la
- *   Porte Bergault` as a `porte` confound. It is a confound, but it is a street, and putting it in the venue slot would
- *   train `Rue …` as a venue name — trading one mislabel for another.
+ * - **Street types.** A bus stop is routinely named after the street it stands on,
+ *   so the FR extract offers `Rue de la Porte Bergault` as a `porte` confound.
+ *   It is a confound, but it is a street, and putting it in the venue slot would train
+ *   `Rue …` as a venue name — trading one mislabel for another.
  * - **Stop qualifiers.** British stop names carry a position prefix
  *   (`opposite bricklehampton hall`, `ADJ the green`) that names a relationship rather than a place.
  *
@@ -174,11 +175,14 @@ const NON_VENUE_HEAD_WORDS: ReadonlySet<string> = new Set([
 /**
  * Street types that appear at the end of an anglophone street name, checked on the last token.
  *
- * The head-word filter cannot see these — English streets are `<name> <type>`, so `Strawberry Hall Lane` and `Guinea
- * Hall Mews` reached the venue slot in the second smoke and would have trained a street as a venue name. The
- * street-side confound already has its own class (`designator-street`), drawn from real (street, locality, postcode)
- * pairings, so nothing is lost by refusing these here. German is suffix-compounded rather than suffix-worded and is
- * handled by {@link GERMAN_STREET_TAIL} instead.
+ * The head-word filter cannot see these.
+ * English streets are `<name> <type>`, so `Strawberry Hall Lane` and `Guinea Hall Mews`
+ * reached the venue slot in the second smoke and would have trained a street as a venue name.
+ *
+ * The street-side confound already has its own class (`designator-street`), drawn from
+ * real (street, locality, postcode) pairings, so nothing is lost by refusing these here.
+ * German is suffix-compounded rather than suffix-worded and is handled by
+ * {@link GERMAN_STREET_TAIL} instead.
  */
 const STREET_TAIL_WORDS: ReadonlySet<string> = new Set([
 	"street",
@@ -271,8 +275,9 @@ export function containsPhrase(lowerName: string, phrase: string): boolean {
 /**
  * Identifier-shape classes a sub-venue string may sample.
  *
- * `other` is excluded: it is the junk bucket the lexicon's own examples advertise — `C15/C15A+C15B`, `Segelflug Start
- * 06`, `152, 240`, `de.05374048.drabenderhoehezeithstrasse`. Everything else is a real identifier register.
+ * `other` is excluded: it is the junk bucket the lexicon's own examples advertise —
+ * `C15/C15A+C15B`, `Segelflug Start 06`, `152, 240`, `de.05374048.drabenderhoehezeithstrasse`.
+ * Everything else is a real identifier register.
  */
 const USABLE_IDENTIFIER_SHAPES: ReadonlySet<string> = new Set([
 	"digit",
@@ -286,11 +291,14 @@ const USABLE_IDENTIFIER_SHAPES: ReadonlySet<string> = new Set([
  * One atom of a sign identifier: a short number (`5`, `205`), a single letter (`B`),
  * a letter-then-number (`A12`, `B05`), or a number-then-letter (`2F`, `4S`).
  *
- * The **single** leading letter is the required part, and it is what the third smoke found. A letter-digit ref with a
- * multi-letter prefix is not an identifier read off a sign, it is a network code: the lexicon's own examples of that
- * shape are `BS04`, `BS07`, `PWP2`, `WSW3687`, `RQ8` — campus and platform codes — and the GB extract offers `Arundel
- * Gate AG1` … `AG124`, fourteen bus stops on a Sheffield street called Arundel Gate whose stop codes begin with its
- * initials. Admitting two-letter prefixes put all fourteen in the attested pool as `unit`.
+ * The **single** leading letter is the required part, and it is what the third smoke found.
+ * A letter-digit ref with a multi-letter prefix is not an identifier read off a sign,
+ * it is a network code: the lexicon's own examples of that shape are `BS04`, `BS07`,
+ * `PWP2`, `WSW3687`, `RQ8` — campus and platform codes — and the GB extract offers
+ * `Arundel Gate AG1` … `AG124`, fourteen bus stops on a Sheffield street called
+ * Arundel Gate whose stop codes begin with its initials.
+ *
+ * Admitting two-letter prefixes put all fourteen in the attested pool as `unit`.
  */
 const SIGN_IDENTIFIER_ATOM = /^(?:[0-9]{1,3}|[A-Za-z]|[A-Za-z][0-9]{1,3}|[0-9]{1,3}[A-Za-z]{1,2})$/
 
@@ -311,11 +319,14 @@ export function isSignIdentifier(value: string): boolean {
 /**
  * Does a real extract name exercise `promoted` in one of the two shapes this recipe teaches?
  *
- * Only `<phrase> <identifier>` and (English legs) `<modifier> <phrase>` qualify. That is stricter than "contains the
- * phrase", and the 2026-08-05 smoke is why: the loose test put `Glasgow Clyde College - Langside Campus`, `Terminal de
- * Ferry de Bilbao` and — worst — `Halle Wohnstadt Nord` into the attested pool, the last of which is a bare German
- * `Halle` wearing a name where the ledger requires an identifier. A whole venue's name is not a sub-venue string, and
- * an attested string that violates the promotion's own shape constraint is not attestation of it.
+ * Only `<phrase> <identifier>` and (English legs) `<modifier> <phrase>` qualify.
+ * That is stricter than "contains the phrase", and the 2026-08-05 smoke is why:
+ * the loose test put `Glasgow Clyde College - Langside Campus`, `Terminal de Ferry de Bilbao`
+ * and — worst — `Halle Wohnstadt Nord` into the attested pool, the last of which is a
+ * bare German `Halle` wearing a name where the ledger requires an identifier.
+ *
+ * A whole venue's name is not a sub-venue string, and an attested string that violates
+ * the promotion's own shape constraint is not attestation of it.
  *
  * The follower is checked with {@link classifyIdentifier} plus {@link isSignIdentifier}
  * rather than "any following word": `Wohnstadt` is a word, `8` is an identifier,
@@ -420,8 +431,8 @@ export function promotedSurfacesFor(
 			phrase: promotion.phrase,
 			surface: titleCase(promotion.phrase),
 			identifierRequired: promotion.shape === "identifier-required",
-			// A promotion marks a surface usable. it does not widen the modifier
-			// grammar (the ledger's own words).
+			// A promotion marks a surface usable.
+			// It does not widen the modifier grammar (the ledger's own words).
 			// Modifier eligibility stays the designator's, and only English legs read it.
 			modifierEligible: Boolean(designator?.modifierEligible) && promotion.shape !== "identifier-required",
 		})
@@ -514,8 +525,9 @@ export function buildIdentifierModel(lexicon: SubVenueLexiconTable, region: stri
  *
  * Own distribution when it has {@link MIN_OWN_SHAPE_OBSERVATIONS} usable observations,
  * else the region's pooled one.
- * Shapes are weighted by observation count and an example is drawn uniformly inside the
- * chosen shape — the lexicon ships up to eight per shape, which is the resolution available.
+ * Shapes are weighted by observation count and an example is drawn uniformly inside the chosen shape.
+ *
+ * The lexicon ships up to eight per shape, which is the resolution available.
  */
 export function sampleIdentifier(model: IdentifierModel, designatorID: string, random: () => number): string | null {
 	const own = model.byDesignator.get(designatorID) ?? []
@@ -559,10 +571,13 @@ export interface LegPools {
 	 */
 	longerNames: string[]
 	/**
-	 * Real names carrying a promoted phrase in a shape the promotion does not cover — `Halle Rosengarten`, `phoenix
-	 * Halle`, `Halle-Südstadt`. The other half of an `identifier-required` ruling, and the only thing that teaches the
-	 * shape boundary rather than the word: de-DE has no `reject` row at all, so without this class its 168-hit confound
-	 * (97 of them the city Halle) would go untaught while its 32-hit promotion got 11,000 rows.
+	 * Real names carrying a promoted phrase in a shape the promotion does not cover —
+	 * `Halle Rosengarten`, `phoenix Halle`, `Halle-Südstadt`.
+	 *
+	 * The other half of an `identifier-required` ruling, and the only thing that teaches
+	 * the shape boundary rather than the word: de-DE has no `reject` row at all,
+	 * so without this class its 168-hit confound (97 of them the city Halle) would
+	 * go untaught while its 32-hit promotion got 11,000 rows.
 	 */
 	unpromotedShapes: string[]
 }
@@ -601,9 +616,10 @@ export interface PoolQuery {
 }
 
 /**
- * Is this name a designator sitting inside a longer proper name — the "Grand Central
- * Terminal" class the span proposer's second structural guard already knows about,
- * and which the corpus has to agree with?
+ * Is this name a designator sitting inside a longer proper name.
+ *
+ * The "Grand Central Terminal" class the span proposer's second structural guard
+ * already knows about, and which the corpus has to agree with?
  */
 function isLongerProperName(low: string, name: string, designatorPhrases: readonly string[]): boolean {
 	return designatorPhrases.some((phrase) => containsPhrase(low, phrase) && !low.startsWith(phrase) && !/\d/.test(name))

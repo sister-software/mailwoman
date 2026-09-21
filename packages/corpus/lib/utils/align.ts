@@ -65,7 +65,8 @@ export interface AlignOptions {
 	 * Case-insensitive comparison for substring search.
 	 *
 	 * Default `true`.
-	 * The retained span in `raw` is the original case. only matching is case-insensitive.
+	 * The retained span in `raw` is the original case.
+	 * Only matching is case-insensitive.
 	 */
 	caseInsensitive?: boolean
 }
@@ -76,8 +77,7 @@ export interface AlignOptions {
 export type AlignmentResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
 /**
- * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The element type behind
- * the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on `LabeledRow` (#519).
+ * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The element type behind the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on `LabeledRow` (#519).
  */
 export interface ComponentSpan {
 	tag: ComponentTag
@@ -97,10 +97,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		return { kind: "quarantined", row: { row, reason: "raw-empty" } }
 	}
 
-	// #519 NFC handling — relaxed from a hard throw to normalization (2026-06-12, DeepSeek-validated):
-	// one non-NFC row (e.g. a non-Latin name variant like "দক্ষিণ কোরিয়া") must not crash a multi-hour build.
-	// Normalize `raw` and every component value to NFC, compute spans over the NFC raw, and store
-	// the NFC raw — preserving the #519 single-normalization-form principle while keeping the row.
+	// #519 NFC handling — relaxed from a hard throw to normalization (2026-06-12, DeepSeek-validated): one non-NFC row (e.g. A non-Latin name variant like "দক্ষিণ কোরিয়া") must not crash a multi-hour build. Normalize `raw` and every component value to NFC, compute spans over the NFC raw, and store the NFC raw — preserving the #519 single-normalization-form principle while keeping the row.
 	const raw = row.raw.normalize("NFC")
 	const components = { ...row.components }
 
@@ -168,7 +165,8 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		tokens: tokens.map((t) => t.text),
 		labels,
 		// The v0.5.0 char-offset triple (#519): the located spans, emitted verbatim.
-		// The token quantization above is what the rebuild deletes. both ride during the transition.
+		// The token quantization above is what the rebuild deletes.
+		// Both ride during the transition.
 		span_starts: componentSpans.map((s) => s.start),
 		span_ends: componentSpans.map((s) => s.end),
 		span_tags: componentSpans.map((s) => s.tag),
@@ -183,9 +181,9 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
  * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible
  * and the caller sorts, so a violation here is a bug in this file rather than bad source data:
  * throw (naming the row) rather than quarantine, so the corruption can't ride into a corpus.
- * Exported for every other span producer (`composeAdversarialRow`'s offset arithmetic,
- * future synthesis paths) — any code that emits the triple without going through
- * `alignRow` must pass its output through this.
+ * Exported for every other span producer (`composeAdversarialRow`'s offset arithmetic, future synthesis paths).
+ *
+ * Any code that emits the triple without going through `alignRow` must pass its output through this.
  */
 export function assertSpanInvariants(
 	spans: readonly ComponentSpan[],
@@ -227,7 +225,7 @@ export function assertSpanInvariants(
  * Falls back to a fuzzy window scan when verbatim fails and `maxEditDistance > 0`.
  * Already-claimed spans are skipped so two components don't grab overlapping ranges.
  *
- * Returns the span in the original `raw` (not the lower-cased `haystack`).
+ * @returns the span in the original `raw` (not the lower-cased `haystack`).
  */
 function locateSpan(args: {
 	haystack: string
@@ -243,7 +241,7 @@ function locateSpan(args: {
 	// Pass 1: verbatim substring.
 	// Word-boundary-aligned matches are preferred over intra-word ones — leftmost-substring
 	// alone let a short value claim the inside of an earlier word (region "AK" matched inside
-	// "Umak"/"Lake", scrambling every later span. caught by the v0.5.0 pilot build).
+	// "Umak"/"Lake", scrambling every later span. Caught by the v0.5.0 pilot build).
 	// Intra-word matches stay allowed as the fallback because they are essential for affix
 	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned
 	// occurrence — sub-word spans are the point of the char-offset format).
@@ -311,7 +309,8 @@ function overlapsClaimed(start: number, end: number, claimed: Array<[number, num
  *
  * Components must be sorted by start offset.
  * For each token, find the first component span that contains the token's start offset.
- * if the token is the first one inside that span emit `B-<tag>`, else `I-<tag>`.
+ *
+ * If the token is the first one inside that span emit `B-<tag>`, else `I-<tag>`.
  */
 function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan[]): readonly BIOLabel[] {
 	const out: BIOLabel[] = []

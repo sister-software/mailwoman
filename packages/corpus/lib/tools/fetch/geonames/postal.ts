@@ -126,8 +126,8 @@ interface GeonamesPostalManifest {
  * with a sibling `manifest.json` carrying each file's origin URL, sha256 and byte count,
  * plus the countries the source does not publish.
  *
- * A country the source does not carry is counted as failed and named in `failedCodes` —
- * it does not stop the rest.
+ * A country the source does not carry is counted as failed and named in `failedCodes`.
+ * It does not stop the rest.
  */
 export async function fetchGeonamesPostal(
 	options: FetchGeonamesPostalOptions,
@@ -164,8 +164,8 @@ export async function fetchGeonamesPostal(
 			// A 404 here means GeoNames does not publish the country at all, which is a different
 			// finding from a failed transfer and the one a caller planning a recipe output needs to see.
 			// Branch on the typed status: matching message prose classified a 500 as
-			// "unpublished" whenever the URL happened to contain the substring 404 —
-			// an ephemeral test-server port did exactly that in CI.
+			// "unpublished" whenever the URL happened to contain the substring 404.
+			// An ephemeral test-server port did exactly that in CI.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {
 				report?.(`✗ ${country}: GeoNames does not publish a postal export for this country`)
 				unavailable.push(country)

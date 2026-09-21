@@ -58,7 +58,8 @@ export interface RelabelGoldenOptions {
 	/**
 	 * Output golden version dir.
 	 *
-	 * Created. never overwritten in place.
+	 * Created.
+	 * Never overwritten in place.
 	 */
 	output: string
 	/**
@@ -127,8 +128,8 @@ const DECK_WORTHY_UNCHANGED: ReadonlySet<GoldenRelabelClass> = new Set([
  * Relabel every `.jsonl` in a golden version dir, writing a new version dir plus a review deck
  * and a manifest that records the convention, the parent, and the counts.
  *
- * Non-jsonl siblings (readme, split manifests) are copied forward so the new version is
- * self-contained. nested split dirs (`dev/`, `test/`) are relabelled recursively.
+ * Non-jsonl siblings (readme, split manifests) are copied forward so the new version is self-contained.
+ * Nested split dirs (`dev/`, `test/`) are relabelled recursively.
  */
 export async function relabelGoldenDirectory(
 	options: RelabelGoldenOptions,
@@ -155,7 +156,8 @@ export async function relabelGoldenDirectory(
 			}
 
 			if (!name.name.endsWith(".jsonl")) {
-				// manifest is rewritten below. everything else (readme, split-manifest) rides forward.
+				// manifest is rewritten below.
+				// Everything else (readme, split-manifest) rides forward.
 				if (name.name !== "MANIFEST.json") {
 					await writeLocalFile(await readLocalBuffer(from), to)
 				}
@@ -174,8 +176,8 @@ export async function relabelGoldenDirectory(
 				if (!line.trim()) continue
 
 				lineNumber++
-				// A corrupt answer-key line must stop the relabel rather than silently drop a row —
-				// a golden file short by one row is a floor threshold against a different denominator.
+				// A corrupt answer-key line must stop the relabel rather than silently drop a row.
+				// A golden file short by one row is a floor threshold against a different denominator.
 				const row = parseJSONStrict<GoldenStreetRow>(line)
 				const result = relabelGoldenStreetRow(row, { splitPrefix: options.splitPrefix ?? true })
 
@@ -284,7 +286,8 @@ export async function relabelGoldenDirectory(
  * (those are the ones asking for a ruling), then the classes the tool left folded by name,
  * then a sample of the ordinary corrections.
  *
- * The jsonl sibling carries every row. this file is the one a human reads.
+ * The jsonl sibling carries every row.
+ * This file is the one a human reads.
  */
 function renderDeckMarkdown(deck: GoldenRelabelDeckEntry[], parent: string, version: string): string {
 	const span = (components: Record<string, string>): string =>

@@ -79,9 +79,7 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Maple Leaf Cafe",
 	"Riverside Garden Center",
 	"Tech Solutions Inc",
-	// FR-flavored venue names (the run-2 contingency): the failing gauntlet fixtures carry
-	// international/English names at FR addresses, but native forms must appear too — the register
-	// mixes both in real Paris data.
+	// FR-flavored venue names (the run-2 contingency): the failing gauntlet fixtures carry international/English names at FR addresses, but native forms must appear too — the register mixes both in real Paris data.
 	"Café de la Poste",
 	"Boulangerie Saint-Michel",
 	"Le Petit Bistrot",
@@ -191,10 +189,9 @@ function randomHouseNumber(random: () => number): string {
 //#region Synthesis
 
 /**
- * Fraction of GB rows drawing from {@link GB_VENUES} instead of the
- * shared pool. 0.7 mirrors the register mix in real GB listings data
- * (institutional names dominate, international/generic names still appear) — pre-registered in the
- * #1366 memo.
+ * Fraction of GB rows drawing from {@link GB_VENUES} instead of the shared pool. 0.7
+ * mirrors the register mix in real GB listings data (institutional names dominate,
+ * international/generic names still appear) — pre-registered in the #1366 memo.
  */
 const GB_VENUE_POOL_RATE = 0.7
 
@@ -209,16 +206,18 @@ const GB_RANGE_NUMBER_RATE = 0.15
 /**
  * Fraction of rows (every template order) rendered with a trailing country surface, tagged `country`.
  *
- * The 2026-08-01 operator probe set showed that the implementation worked: the FR control
- * row ("…, 75004 Paris, France") fails on a model trained only on country-less venue rows
- * while its country-less twin passes — a trailing country makes the whole template OOD
- * (Addendum 3 of the #1366 pre-registration). 0.3 keeps the country-less register dominant.
+ * The 2026-08-01 operator probe set showed that the implementation worked:
+ * the FR control row ("…, 75004 Paris, France") fails on a model trained only on
+ * country-less venue rows while its country-less twin passes.
+ * A trailing country makes the whole template OOD (Addendum 3 of the #1366 pre-registration).
+ * 0.3 keeps the country-less register dominant.
  */
 const COUNTRY_APPEND_RATE = 0.3
 
 /**
- * Trailing country surfaces by tuple country — the register mixes formal
- * and short forms where both are common.
+ * Trailing country surfaces by tuple country.
+ *
+ * The register mixes formal and short forms where both are common.
  */
 const COUNTRY_SURFACES: Readonly<Record<string, ReadonlyArray<string>>> = {
 	US: ["United States", "USA"],
@@ -253,9 +252,9 @@ export function synthesizeHouseVenueRow(
 	// Every row this synthesizer emits carries a venue, a street and a house number,
 	// so the surface is taught with the alternatives present rather than against them.
 
-	// GB rows draw from the GB pool 70% of the time (institutional/archaic/brand-dash-place
-	// forms, incl. directional-led names — the #1366 target class) and the shared
-	// pool otherwise. real GB registers mix both.
+	// GB rows draw from the GB pool 70% of the time (institutional/archaic/brand-dash-place forms,
+	// incl. Directional-led names — the #1366 target class) and the shared pool otherwise.
+	// Real GB registers mix both.
 	// Other locales keep the shared pool (which already carries the FR flavor).
 	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? sample(GB_VENUES, random) : sample(PLAIN_VENUES, random)
 	const street = base.street ?? sample(FALLBACK_STREETS, random)
@@ -263,7 +262,8 @@ export function synthesizeHouseVenueRow(
 
 	// GB range numbers ("287-293 New N Rd"): real GB venue addresses frequently span buildings. 15% of
 	// GB rows widen the number into a range (same parity, small span — the register's real shape).
-	// Pre-registered in the #1366 memo. the base pool's no-ranges stance stays for other locales.
+	// Pre-registered in the #1366 memo.
+	// The base pool's no-ranges stance stays for other locales.
 	if (gbOrder && random() < GB_RANGE_NUMBER_RATE && /^\d+$/.test(houseNumber)) {
 		const start = Number.parseInt(houseNumber, 10)
 		const span = (1 + Math.floor(random() * 4)) * 2
@@ -271,9 +271,9 @@ export function synthesizeHouseVenueRow(
 		houseNumber = `${start}-${start + span}`
 	}
 
-	// The admin tail is the country's own, from codex's layout table, and the row carries
-	// the components that layout printed — France and Great Britain write no region,
-	// so emitting one would label text that is not in `raw`.
+	// The admin tail is the country's own, from codex's layout table, and the row
+	// carries the components that layout printed.
+	// France and Great Britain write no region, so emitting one would label text that is not in `raw`.
 	const components: CanonicalRow["components"] = {
 		house_number: houseNumber,
 		street,
@@ -284,10 +284,9 @@ export function synthesizeHouseVenueRow(
 	}
 
 	// The four tails are still hand-written, and the reason they were is gone.
-	// GB's layout now marks the break before its postcode soft, so
-	// `formatAddress(…, { singleLine: true })` answers `27 Minories, London EC3N 1DE` — the form
-	// #1366 pinned and three tests assert — while the multi-line render keeps the post town and the postcode on their
-	// own lines.
+	// GB's layout now marks the break before its postcode soft, so `formatAddress(…, { singleLine: true })`
+	// answers `27 Minories, London EC3N 1DE` — the form #1366 pinned and three tests assert —
+	// while the multi-line render keeps the post town and the postcode on their own lines.
 	// Migrating these four to `formatAddress` changes what the recipe emits for every locale it covers,
 	// so it is a measured change of its own rather than a consequence of the layout decision (#2313).
 	let tail = frOrder

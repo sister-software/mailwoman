@@ -105,8 +105,8 @@ export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> 
 	}
 
 	// Prune bigrams below MIN_BIGRAM_COUNT to keep the output file size sane.
-	// Token stats stay complete — they're cheap and we need accuracy at the long
-	// tail for label-vacuum detection.
+	// Token stats stay complete.
+	// They're cheap and we need accuracy at the long tail for label-vacuum detection.
 	let prunedBigrams = 0
 
 	for (const [k, labelMap] of bigramStats) {

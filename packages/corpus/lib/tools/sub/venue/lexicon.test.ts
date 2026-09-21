@@ -55,8 +55,7 @@ const wikidataFixture = {
 				label: { value: "空港ターミナル" },
 				kind: { value: "label" },
 			},
-			// A second Japanese label, which is what makes the shared-substring head derivation possible
-			// at all — a group of one has nothing to share. The real pull carries five.
+			// A second Japanese label, which is what makes the shared-substring head derivation possible at all. A group of one has nothing to share. The real pull carries five.
 			{
 				item: { value: "http://www.wikidata.org/entity/Q849706" },
 				lang: { value: "ja" },
@@ -375,12 +374,14 @@ test("deriveHeadNounSurfaces does not mistake the modifier half for the head", (
 })
 
 test("deriveHeadNounSurfaces holds the cognate floor at five folded characters", () => {
-	// Both sides of the floor, and neither is reachable from the committed table — no surface there
-	// sits on the boundary, so without this a change to the constant moves the artifact in silence.
+	// Both sides of the floor, and neither is reachable from the committed table.
+	// No surface there sits on the boundary, so without this a change to the
+	// constant moves the artifact in silence.
 	// `campo` shares four folded characters with `campus` and means field.
 	expect(deriveHeadNounSurfaces([surface({ phrase: "campo sportivo", recordID: "campus", lang: "it" })])).toEqual([])
 
-	// `satélite` shares five with `satellite` and is the addressed form. a floor of six loses it.
+	// `satélite` shares five with `satellite` and is the addressed form.
+	// A floor of six loses it.
 	expect(
 		deriveHeadNounSurfaces([surface({ phrase: "satélite de embarque", recordID: "satellite", lang: "es" })]).map(
 			(s) => s.phrase
@@ -407,8 +408,8 @@ test("deriveHeadNounSurfaces keeps a spaced non-Latin candidate to whole tokens"
 		surface({ phrase: "공항터미널", recordID: "terminal", lang: "ko" }),
 	])
 
-	// `터미널` and `공항` are both whole tokens of the spaced member. a fragment
-	// straddling the space is never offered.
+	// `터미널` and `공항` are both whole tokens of the spaced member.
+	// A fragment straddling the space is never offered.
 	expect(derived.map((s) => s.phrase).toSorted()).toEqual(["공항", "터미널"])
 })
 
@@ -447,8 +448,9 @@ test("applyPromotions curates only the matching designator, phrase and locale", 
 
 test("applyPromotions refuses a region-free surface when the same language has a rejection", () => {
 	// The `pier` case.
-	// Promoted for en-GB, rejected for en-US. without this guard the en-GB decision curates
-	// the region-free English surface and hands `Pier 1 Imports` what en-US was refused.
+	// Promoted for en-GB, rejected for en-US.
+	// Without this guard the en-GB decision curates the region-free English surface
+	// and hands `Pier 1 Imports` what en-US was refused.
 	const surfaces = [
 		surface({ phrase: "pier", recordID: "pier", lang: "en", region: "", source: "seed" }),
 		surface({ phrase: "pier", recordID: "pier", lang: "und", region: "GB", source: "osm:name" }),

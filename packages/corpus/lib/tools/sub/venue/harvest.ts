@@ -60,7 +60,8 @@ export interface SubVenueHarvestRow {
 	/**
 	 * `venue` (station, airport, campus) or `sub_venue`, when the source's rule assigns one.
 	 *
-	 * The harvest itself does not read it. the sub-venue recipe fills its venue slot from it.
+	 * The harvest itself does not read it.
+	 * The sub-venue recipe fills its venue slot from it.
 	 */
 	tier?: string
 	name?: string | null
@@ -95,7 +96,8 @@ export function classifyIdentifier(ref: string): string {
  * How many real `ref` values each {@link IdentifierShape} keeps.
  *
  * Eight rather than "all" and not one.
- * The field exists so a recipe author can see what a class actually contains —
+ * The field exists so a recipe author can see what a class actually contains.
+ *
  * GB's `other` class turned out to be semicolon multi-values (`1.2.3`, `13.14`),
  * which one example would have hidden and which the class name does not say.
  *
@@ -126,15 +128,17 @@ export interface HarvestOptions {
 /**
  * Harvest attested phrases and identifier shapes out of a source's rows.
  *
- * `index` gates the name harvest — a name contributes only when it contains a phrase already in the table.
+ * `index` gates the name harvest.
+ * A name contributes only when it contains a phrase already in the table.
+ *
  * That filter is the whole reason this function is safe to run over raw OSM:
  * see this file's header for the Berlin measurement that motivated it.
  *
  * The index also decides attribution: a hit is a surface of the record the phrase names,
  * and the row's own designator is recorded as `context`.
  *
- * Returns surfaces with real `observations` counts, so the lexicon can rank
- * `terminal` above a phrase attested once.
+ * @returns surfaces with real `observations` counts, so the lexicon can rank
+ *   `terminal` above a phrase attested once.
  */
 export function extractAttestedPhrases(
 	rows: Iterable<SubVenueHarvestRow>,
@@ -226,15 +230,15 @@ export function extractAttestedPhrases(
 /**
  * Read a jsonl file of {@link SubVenueHarvestRow}s.
  *
- * Blank lines and unparseable rows are skipped rather than fatal — an extract is a
- * build output, and one malformed line should not cost the whole lexicon.
+ * Blank lines and unparseable rows are skipped rather than fatal.
+ * An extract is a build output, and one malformed line should not cost the whole lexicon.
  */
 export async function readSubVenueJSONL(path: string): Promise<SubVenueHarvestRow[]> {
 	const out: SubVenueHarvestRow[] = []
 
-	// `TextSpliterator` rather than `split("\n")` — a whole-country extract runs
-	// to 250,000 lines (52 MB for Great Britain), and materializing every segment
-	// before reading the first is exactly what the repo lint rule exists to prevent.
+	// `TextSpliterator` rather than `split("\n")`.
+	// A whole-country extract runs to 250,000 lines (52 MB for Great Britain), and materializing
+	// every segment before reading the first is exactly what the repo lint rule exists to prevent.
 	for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
 		const trimmed = line.trim()
 

@@ -38,8 +38,8 @@ import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-// v2: the country token is decoupled from the skeleton's locale and drawn from a broad pool —
-// every ISO canonical name + every curated surface form (endonyms/abbrevs).
+// v2: the country token is decoupled from the skeleton's locale and drawn from a broad pool.
+// Every ISO canonical name + every curated surface form (endonyms/abbrevs).
 // Surface forms are over-weighted so endonyms/abbrevs ("Deutschland","USA","NL") get strong signal.
 
 const COUNTRY_FORM_POOL = (() => {
@@ -67,8 +67,10 @@ interface CountrySource {
 }
 
 /**
- * Multi-locale OA sources. region = implied admin where the extract is single-region
- * (US states, DE Saxony); countrywide extracts (FR/IT/NL) read region from the CSV when present.
+ * Multi-locale OA sources.
+ *
+ * Region = implied admin where the extract is single-region (US states, DE Saxony);
+ * countrywide extracts (FR/IT/NL) read region from the CSV when present.
  */
 const SOURCES: readonly CountrySource[] = [
 	{
@@ -107,8 +109,7 @@ const SOURCES: readonly CountrySource[] = [
 		region: "",
 		order: "fr",
 	},
-	// ES uses the Spanish IGN schema rather than the OA standard columns — skipped here (codex still recognizes
-	// "España"/"Spain"). A dedicated IGN adapter is a follow-up.
+	// ES uses the Spanish IGN schema rather than the OA standard columns — skipped here (codex still recognizes "España"/"Spain"). A dedicated IGN adapter is a follow-up.
 	{
 		zip: dataRootPath("oa-cache", "it__countrywide.zip"),
 		csv: "it/countrywide.csv",
@@ -243,8 +244,9 @@ function renderCountry(
 
 // ── Homograph contrast (the model-first addition) ───────────────────────────────────────────────
 // True country-name homographs: the surface form is both a country and a US state/locality.
-// Rendering each both ways (foreign-city → country. US-ZIP → region/locality) is what
-// teaches the contextual distinction. role: how the surface reads in US context.
+// Rendering each both ways (foreign-city → country. US-ZIP → region/locality)
+// is what teaches the contextual distinction.
+// Role: how the surface reads in US context.
 interface Homograph {
 	surface: string
 	iso2: string
@@ -329,7 +331,7 @@ const HOMOGRAPH_WITH_STREET_SHARE = 0.6
  * A homograph contrast row: ~half render the surface as `country` (foreign city),
  * half as the US `region`/`locality` (US ZIP, no country).
  *
- * Returns iso2 for provenance.
+ * @returns iso2 for provenance.
  */
 function renderHomograph(random: () => number): {
 	fmt: string

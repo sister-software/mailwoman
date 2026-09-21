@@ -37,12 +37,15 @@ import { readManifest, streamDownload, writeManifest } from "#tools/fetch/downlo
  * which a "download" is an error page rather than data.
  */
 /**
- * Lowest 2xx status. anything below is informational.
+ * Lowest 2xx status.
+ * Anything below is informational.
  */
 const HTTP_OK = 200
 
 /**
- * Lowest 3xx status. at or above it the response is a redirect or an error rather than a body.
+ * Lowest 3xx status.
+ *
+ * At or above it the response is a redirect or an error rather than a body.
  */
 const HTTP_REDIRECT = 300
 
@@ -153,7 +156,7 @@ export async function fetchTigerFull(
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
 
 	// `responseType: "text"` — an Apache directory index, scraped below.
-	// The per-county archive downloads stay on raw `fetch` (they stream to disk. see `downloadOne`).
+	// The per-county archive downloads stay on raw `fetch` (they stream to disk. See `downloadOne`).
 	const listingRes = await new APIClient({
 		displayName: "tiger-listing",
 		retry: true,

@@ -13,8 +13,8 @@ import {
 } from "@mailwoman/corpus/utils/wof-json"
 import { expect, test } from "vitest"
 
-// `walkFeatures` (filesystem stream) and the private `recordFromFeature` it drives are
-// out of scope here. these are the pure object→value / map→map helpers.
+// `walkFeatures` (filesystem stream) and the private `recordFromFeature` it drives are out of scope here.
+// These are the pure object→value / map→map helpers.
 
 test("isCurrentFeature: 1 and -1 are current, 0 is superseded", () => {
 	// WOF + Pelias semantics: -1 ("unknown, treat as active") must count as current.

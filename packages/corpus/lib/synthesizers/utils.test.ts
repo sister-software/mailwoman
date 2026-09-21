@@ -603,7 +603,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 	const cases: ReadonlyArray<[id: string, row: CanonicalRow, expectedPoBox: string]> = [
 		["case-upper", poBoxRow(), "P.O. BOX 5"],
 		["case-lower", poBoxRow(), "p.o. box 5"],
-		// drop-commas deliberately deletes the commas between spans. the dots inside the span stay.
+		// drop-commas deliberately deletes the commas between spans. The dots inside the span stay.
 		["drop-commas", poBoxRow(), "P.O. Box 5"],
 		["double-space", poBoxRow(), "P.O.  Box  5"],
 		// typo-inject edits the locality ("Portland"); the po_box span (digits → never eligible) survives.
@@ -789,7 +789,8 @@ describe("composeAdversarialRow", () => {
 		// Café (period is a separator, apostrophe joins, accented chars are word chars).
 		expect(result.row.tokens[0]).toBe("P'tit")
 		expect(result.row.tokens[1]).toBe("St")
-		// Every venue token gets the venue label — the embedded "St" is venue rather than street_prefix.
+		// Every venue token gets the venue label.
+		// The embedded "St" is venue rather than street_prefix.
 		const venueTokenCount = 5
 
 		for (let i = 0; i < venueTokenCount; i++) {
@@ -910,8 +911,7 @@ describe("composeAdversarialRow", () => {
 	})
 
 	it("address that fails alignment quarantines with the propagated reason", () => {
-		// region "qqqqqq" can't be located in the raw and is too far from any window to match
-		// under default edit distance — alignment quarantines it.
+		// region "qqqqqq" can't be located in the raw and is too far from any window to match under default edit distance — alignment quarantines it.
 		const address = baseRow({
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "QQQQQQ", postcode: "14201" },

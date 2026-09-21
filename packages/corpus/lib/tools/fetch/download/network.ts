@@ -51,14 +51,16 @@ export interface BaseFetchOptions {
 	 * A test that exercises the failure path pays this delay once per retry in real time —
 	 * measured at 20.1 s for the two failing-transfer cases in `geonames-postal.test.ts`,
 	 * which is the whole cost of that file.
-	 * The retry count is the behaviour under test there. the pause between attempts
-	 * is not, so it is a caller's to shorten.
+	 * The retry count is the behaviour under test there.
+	 *
+	 * The pause between attempts is not, so it is a caller's to shorten.
 	 */
 	retryDelayMs?: number
 }
 
 /**
- * The per-run result every fetch module returns. the command maps `failed > 0` to exit code 1.
+ * The per-run result every fetch module returns.
+ * The command maps `failed > 0` to exit code 1.
  */
 export interface FetchSummary {
 	fetched: number
@@ -87,8 +89,9 @@ export interface SourceManifest {
  * rather than on message prose.
  *
  * The prose route shipped a real flake: a caller classified "not published upstream"
- * with `message.includes("404")`, and the message contains the URL — an ephemeral
- * test-server port such as `:40453` satisfies it while the actual status is 500.
+ * with `message.includes("404")`, and the message contains the URL.
+ * An ephemeral test-server port such as `:40453` satisfies it while the actual status is 500.
+ *
  * Roughly 1–2% of ephemeral ports contain the substring, which is exactly the kind
  * of sometimes-failure that burns a CI run and vanishes locally.
  */
@@ -134,8 +137,8 @@ export interface DownloadOptions {
 /**
  * Download `url` to `dest` with per-attempt timeout and transient-status retry.
  *
- * Throws on a non-transient http status or once retries are exhausted.
- * Returns the byte count written.
+ * @throws on a non-transient http status or once retries are exhausted.
+ *   Returns the byte count written.
  */
 export async function downloadToFile(options: DownloadOptions): Promise<{ bytes: number }> {
 	const {

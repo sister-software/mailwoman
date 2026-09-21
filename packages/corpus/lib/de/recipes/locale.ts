@@ -50,9 +50,10 @@ interface GermanSource {
 /**
  * `region` is the Bundesland the source covers.
  *
- * OA's region column is empty for DE, but the region is implied by the per-state file —
- * the international order needs it for the "City, Region Postcode" tail (v0.9.3 / #327).
- * berlin.csv → Berlin (a city-state, region==locality); sn/statewide → Sachsen.
+ * OA's region column is empty for DE, but the region is implied by the per-state file.
+ * The international order needs it for the "City, Region Postcode" tail (v0.9.3 / #327).
+ *
+ * Berlin.csv → Berlin (a city-state, region==locality); sn/statewide → Sachsen.
  */
 const SOURCES: GermanSource[] = [
 	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
@@ -99,9 +100,10 @@ function sameGermanLabel(left: string, right: string): boolean {
 /**
  * The surface an Ortsteil is written with in an address, from WOF's rows for it.
  *
- * `spr.name` for a DE neighbourhood is the ascii-folded label. the `names` rows in
- * `deu` carry the German spelling beside unrelated labels for co-located features
- * (`Bocklemuend` → `Bocklemünd`, `Jüdischer Friedhof Bocklemünd`, `Menara-Garten`).
+ * `spr.name` for a DE neighbourhood is the ascii-folded label.
+ * The `names` rows in `deu` carry the German spelling beside unrelated labels for co-located
+ * features (`Bocklemuend` → `Bocklemünd`, `Jüdischer Friedhof Bocklemünd`, `Menara-Garten`).
+ *
  * The German name is the one that spells the same label as `spr.name` under either of
  * WOF's ascii folds ({@link foldGerman}); with none, `spr.name` stands.
  *
@@ -121,8 +123,8 @@ export function ortsteilSurface(sprName: string, deuNames: readonly string[], lo
  * Every current DE neighbourhood with a locality ancestor, keyed by the folded
  * locality name → Ortsteil surfaces.
  *
- * Empty when the admin database is not readable. the recipe then emits no Ortsteil rows
- * and says so, rather than failing a build over an optional register.
+ * Empty when the admin database is not readable.
+ * The recipe then emits no Ortsteil rows and says so, rather than failing a build over an optional register.
  */
 async function readOrtsteilPool(adminDB: string): Promise<Map<string, string[]>> {
 	const pool = new Map<string, string[]>()

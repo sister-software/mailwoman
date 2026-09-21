@@ -31,7 +31,8 @@ interface FixtureRow {
 }
 
 /**
- * The deliberately small schema this fixture owns locally. see the file-level boundary note.
+ * The deliberately small schema this fixture owns locally.
+ * See the file-level boundary note.
  */
 interface FixtureDatabase {
 	poi_category_codes: {
@@ -49,7 +50,8 @@ interface FixtureDatabase {
 		rowid_key: number
 		name: string | null
 		/**
-		 * Mirrors the shipped column so a rename fails here. it does not mirror the fold.
+		 * Mirrors the shipped column so a rename fails here.
+		 * It does not mirror the fold.
 		 *
 		 * The real `poi.name_key` is `NameKey`, minted by `normalizeLocalityForKey` —
 		 * which this package cannot reach, and which no assertion here needs.
@@ -223,7 +225,8 @@ test("readOvertureLayerVintage reads the layer-interface manifest", async () => 
 })
 
 test("OVERTURE_SUBVENUE_CATEGORIES maps every category to a designator the lexicon knows", () => {
-	// `pier` is a wave-2 addition to PROPOSED_DESIGNATORS. the rest predate it.
+	// `pier` is a wave-2 addition to PROPOSED_DESIGNATORS.
+	// The rest predate it.
 	// A category mapped to a designator with no record would produce surfaces pointing at nothing.
 	expect(Object.entries(OVERTURE_SUBVENUE_CATEGORIES).toSorted()).toEqual([
 		["airport_lounge", "terminal"],

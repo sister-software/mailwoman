@@ -87,8 +87,10 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
  *
  * `selfName` is the surface form to use for the record's own component
  * (locality / region / country / subregion).
- * Callers pass the canonical `wof:name` for the `"default"` slot and a `name:*` localized value
- * for variant slots. ancestor names always come from the ancestor's canonical `wof:name`.
+ * Callers pass the canonical `wof:name` for the `"default"` slot and a `name:*`
+ * localized value for variant slots.
+ *
+ * Ancestor names always come from the ancestor's canonical `wof:name`.
  *
  * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the
  * OpenCage template produces the canonicalized form (`"United States of America"`),
@@ -197,8 +199,8 @@ export const WOF_ADMIN_ADAPTER_ID = "wof-admin"
 /**
  * Construct the wof-admin JSON-bundle adapter.
  *
- * The adapter is stateless across runs. calling this twice with the
- * same input directory produces byte-identical `canonical.jsonl`
+ * The adapter is stateless across runs.
+ * Calling this twice with the same input directory produces byte-identical `canonical.jsonl`
  * (records are emitted in sorted `wof:id` order to be insensitive to filesystem walk ordering).
  */
 export function createWOFAdminAdapter(): CorpusAdapter {
@@ -214,8 +216,8 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 			// We keep only records whose placetype maps to a ComponentTag — irrelevant
 			// placetypes (campus, county-region hybrids on which Mailwoman has no opinion)
 			// are dropped here so they don't inflate the ancestry index.
-			// Country-filtered runs prune to the matching country code too. the ancestors
-			// of a same-country record live in the same admin repo.
+			// Country-filtered runs prune to the matching country code too.
+			// The ancestors of a same-country record live in the same admin repo.
 			const byID = new Map<number, WOFRecord>()
 
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {

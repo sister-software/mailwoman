@@ -42,7 +42,9 @@ export interface AuditOpts {
 	/**
 	 * Sample at most N parquet files per split when counting sources.
 	 *
-	 * Default 100 for speed. bump to read the full set on a slow run.
+	 * Default 100 for speed.
+	 * Bump to read the full set on a slow run.
+	 *
 	 * The first row of each file determines its source — corpus-v0.2.0+ files are 100%
 	 * source-segregated, so a one-row read is authoritative.
 	 */
@@ -71,8 +73,9 @@ interface ParsedConfig {
 /**
  * Try parsing a training YAML's source_weights as a minimal regex-based extract.
  *
- * We don't pull in a YAML lib for this script — the syntax is so small that a regex
- * over the source_weights block is sufficient + keeps the script dep-free.
+ * We don't pull in a YAML lib for this script.
+ * The syntax is so small that a regex over the source_weights block is
+ * sufficient + keeps the script dep-free.
  */
 async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
 	if (!(await pathExists(configPath))) return null
@@ -94,7 +97,8 @@ async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
 
 		// Skip blank lines and comments.
 		if (/^[\t ]*(#|$)/.test(raw)) continue
-		// Lines indented more than `source_weights:` are entries. lines with ≤ indent end the block.
+		// Lines indented more than `source_weights:` are entries.
+		// Lines with ≤ indent end the block.
 		const indent = raw.match(/^[\t ]*/)![0].length
 
 		if (indent <= blockIndent) {
@@ -170,8 +174,9 @@ function inferSourceFromFilename(filename: string): string {
 /**
  * Known source name prefixes.
  *
- * Corpus-v0.3.0 uses these as `source_id` prefixes. matching against the longest prefix
- * that fits a given `first_source_id` recovers the canonical source name.
+ * Corpus-v0.3.0 uses these as `source_id` prefixes.
+ * Matching against the longest prefix that fits a given `first_source_id`
+ * recovers the canonical source name.
  *
  * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches
  * `usgov-nad` rather than `usgov`.
@@ -220,8 +225,9 @@ function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): strin
  * Falls back to scanParquetFiles when manifest is absent.
  *
  * Note: corpus-v0.3.0 files can mix sources (see `last_source_id` differing from `first_source_id`).
- * The first-row source is an approximation. reading the parquet's full source column
- * would be authoritative but requires a parquet dep.
+ * The first-row source is an approximation.
+ *
+ * Reading the parquet's full source column would be authoritative but requires a parquet dep.
  *
  * For audit purposes the first-row approximation is accurate within ~5% for the
  * corpus-v0.3.0 shape (most files are >95% one source).

@@ -190,8 +190,8 @@ export function alignRoadAddress(text: string, index: KeyIndex): Aligned | null 
 
 	put(spans, text, numberAt, numberAt + number.length, "house_number")
 
-	// What follows the number, with or without a comma, is the building name and
-	// then the floor/unit — the same leading-venue, unit-tail reading the lot form uses.
+	// What follows the number, with or without a comma, is the building name and then the floor/unit.
+	// The same leading-venue, unit-tail reading the lot form uses.
 	const restTokens = [...tokens.slice(numberAtToken + 1), ...detail.split(/\s+/u).filter((token) => token.length)]
 
 	if (restTokens.length) {

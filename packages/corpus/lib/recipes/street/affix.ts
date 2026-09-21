@@ -50,7 +50,8 @@ import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
 // Same OA cache as the unit recipe.
-// Train = every NON-Vermont state. eval = Vermont (the holdout).
+// Train = every NON-Vermont state.
+// Eval = Vermont (the holdout).
 
 interface USSource {
 	zip: PathBuilderLike
@@ -75,7 +76,8 @@ const EVAL_SOURCE: USSource = {
 }
 
 // Multi-locale balance sources (--multilocale-count > 0).
-// These rows carry no affix split — they exist only to keep the postcode-order distribution multi-locale.
+// These rows carry no affix split.
+// They exist only to keep the postcode-order distribution multi-locale.
 // Native-order rendering mirrors the `country-balanced` recipe: FR = number-street, postcode-city.
 // DE/IT/NL = street-number, postcode-city.
 // `order` drives the body.
@@ -230,10 +232,12 @@ export type SuffixBoundaryClass = "terminal-only" | "terminal-contrast"
 const TERMINAL_ONLY_MIN_WORDS = 3
 
 /**
- * Classify a real street surface for #1569. `terminal-only` has an ambiguous suffix-eligible name word immediately
- * before a different terminal type (`Blue Hill Rd`); `terminal-contrast` ends at the ambiguous word itself (`Sutton
- * Hollow`). The contrast check intentionally wins when both final words are name-prone: only the last token is the
- * suffix under the canonical rule.
+ * Classify a real street surface for #1569.
+ *
+ * `terminal-only` has an ambiguous suffix-eligible name word immediately before a different terminal
+ * type (`Blue Hill Rd`); `terminal-contrast` ends at the ambiguous word itself (`Sutton Hollow`).
+ * The contrast check intentionally wins when both final words are name-prone:
+ * only the last token is the suffix under the canonical rule.
  */
 export function classifySuffixBoundaryStreet(street: string): SuffixBoundaryClass | null {
 	const words = street.trim().split(/\s+/)
@@ -355,9 +359,12 @@ async function readVenuePool(csvPath: PathBuilderLike): Promise<string[]> {
 const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
 
 /**
- * Layout-shell options for {@link renderRow}. `cutoffs` are the cumulative random() boundaries for [full, bare,
- * street-only] — the remainder is the venue shell. Defaults reproduce the original street-affix distribution
- * (40/25/20/15) with the six template venues.
+ * Layout-shell options for {@link renderRow}.
+ *
+ * `cutoffs` are the cumulative random() boundaries for [full, bare, street-only].
+ * The remainder is the venue shell.
+ *
+ * Defaults reproduce the original street-affix distribution (40/25/20/15) with the six template venues.
  */
 interface RenderRowOpts {
 	venues?: readonly string[]
@@ -435,7 +442,7 @@ async function readBalanceTuples(source: BalanceSource, limit: number): Promise<
  */
 function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<Record<ComponentTag, string>> } {
 	const { house_number: hn, street, locality: loc, postcode: pc, order } = t
-	// region is intentionally omitted — it isn't rendered in `raw`, so labeling it would fail alignment.
+	// region is intentionally omitted. It isn't rendered in `raw`, so labeling it would fail alignment.
 	const components: Partial<Record<ComponentTag, string>> = { house_number: hn, street, locality: loc, postcode: pc }
 
 	const raw =
@@ -653,13 +660,12 @@ const VENUE_POOL_MIN_SIZE = 500
 const TERMINAL_ONLY_SHARE = 0.8
 
 /**
- * #1569 root-fix recipe. Both classes come from real non-Vermont OA streets and use the affix recipe's existing layout
- * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row
- * train sample only 4→11 while contrast was already 95/100 before training (93/100 after).
+ * #1569 root-fix recipe. Both classes come from real non-Vermont OA streets and use the affix recipe's existing layout diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row train sample only 4→11 while contrast was already 95/100 before training (93/100 after).
  *
  * Post-run audit found that the global affix relabel pass corrupts many
- * already-decomposed target rows into double suffixes. do not retrain this recipe
- * until relabel is idempotent over a decomposed street family.
+ * already-decomposed target rows into double suffixes.
+ *
+ * Do not retrain this recipe until relabel is idempotent over a decomposed street family.
  * The 20% contrast leg remains explicit, additive to the already-strong base
  * distribution, and B2 still checks it unchanged.
  *

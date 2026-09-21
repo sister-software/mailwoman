@@ -197,9 +197,9 @@ describe("readers", () => {
 	})
 
 	it("countParquetRows counts without reading, and raises rather than answering zero for an absent file", async () => {
-		// `0` from a file nobody wrote and `0` from a file holding no rows are
-		// different statements, and a count is a measurement — so absence raises here
-		// rather than returning the number that reads like data.
+		// `0` from a file nobody wrote and `0` from a file holding no rows are different
+		// statements, and a count is a measurement.
+		// So absence raises here rather than returning the number that reads like data.
 		expect(await countParquetRows(await written([labeled({ source_id: "r-4" }), labeled({ source_id: "r-5" })]))).toBe(
 			2
 		)
@@ -431,7 +431,8 @@ describe("writeParquetSplits", () => {
 	})
 
 	it("skips splits not present in PerSplitRows (no empty parquet files written)", async () => {
-		// Only train provided. val + test omitted entirely.
+		// Only train provided.
+		// Val + test omitted entirely.
 		const m = await writeParquetSplits(
 			{ train: asyncFrom([labeled({ source_id: "t-1" })]) },
 			{ outputDir: scratch.path, corpusVersion: "0.1.0" }

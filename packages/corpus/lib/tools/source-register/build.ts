@@ -62,8 +62,8 @@ const DISCOVERY_RAIL_ORIGIN = "global_research_rail"
  * A raw NUL in source is what `repo-health`'s `rawNULBytes` counter exists to keep out,
  * because a sweep that would read the line cannot see it.
  *
- * A solidus is safe instead of merely convenient — an ISO 3166-1 code is two letters
- * and a sector is kebab-case, so neither part can contain one.
+ * A solidus is safe instead of merely convenient.
+ * An ISO 3166-1 code is two letters and a sector is kebab-case, so neither part can contain one.
  */
 const KEY_SEPARATOR = "/"
 
@@ -127,14 +127,15 @@ const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["ass
  * and note a decision derived from it carries.
  *
  * These are label kinds rather than decisions.
- * A decision is scoped to one publisher in one jurisdiction by
- * {@link scopedLicenseID}, so the register carries one per source and an election cannot reach past the grant it was
- * made about.
+ * A decision is scoped to one publisher in one jurisdiction by {@link scopedLicenseID}, so the
+ * register carries one per source and an election cannot reach past the grant it was made about.
  *
  * Every decision is `unchecked`, and that is a finding rather than a placeholder:
  * the pass recorded what a register costs to reach and never opened anybody's terms.
- * `Free` is the clearest case — it says the download is free of charge and licenses nothing,
- * so treating it as permissive would admit a source on a sentence about price.
+ * `Free` is the clearest case.
+ *
+ * It says the download is free of charge and licenses nothing, so treating it as
+ * permissive would admit a source on a sentence about price.
  *
  * The labels are the pass's own, carried through {@link rewriteRetiredVocabulary} so a word
  * this repository has retired does not enter a committed artifact through quoted data.
@@ -409,9 +410,8 @@ function partyKey(value: string): string {
  *
  * It is the party's key, trimmed so one long ministry name does not dominate the id.
  *
- * Trimming is the only step that can bring two genuinely different parties
- * to the same fragment, which is why
- * {@link scopedLicenseID} compares the untrimmed key before accepting a match.
+ * Trimming is the only step that can bring two genuinely different parties to the same fragment,
+ * which is why {@link scopedLicenseID} compares the untrimmed key before accepting a match.
  */
 const ID_FRAGMENT_LENGTH = 48
 
@@ -598,8 +598,9 @@ const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "
  *
  * Reads the column rather than ignoring it.
  * The build ignored these three entirely, which put a populated column in the source CSV
- * and an empty field in the register with nothing recording why — a reader comparing
- * the two would reasonably conclude the build was dropping usable data.
+ * and an empty field in the register with nothing recording why.
+ *
+ * A reader comparing the two would reasonably conclude the build was dropping usable data.
  *
  * Anything outside the placeholder set is returned, so a value somebody fills in later
  * reaches the register or fails the build rather than being lost.

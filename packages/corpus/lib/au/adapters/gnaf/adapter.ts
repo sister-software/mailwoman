@@ -97,8 +97,8 @@ export function createGNAFAdapter(): CorpusAdapter {
 
 			// Input is the assembled component jsonl (one tuple per line).
 			// TextSpliterator auto-disposes on loop completion and on an early `break`
-			// (abort / limit), so the old explicit handle teardown is gone. the parse tolerates
-			// a trailing CR on crlf sources and the `!line.trim()` guard skips blanks.
+			// (abort / limit), so the old explicit handle teardown is gone.
+			// The parse tolerates a trailing CR on crlf sources and the `!line.trim()` guard skips blanks.
 			// The render order rotates (i % 3), matching v1.9.1's rerender.
 			for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 				if (opts.signal?.aborted) break
@@ -126,8 +126,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 					postcode: t.postcode,
 				}
 
-				// region (state) rides only the canonical render (order 0); the postcode-leading layouts
-				// omit it (matching the eval's serialization) so it never breaks verbatim alignment.
+				// region (state) rides only the canonical render (order 0); the postcode-leading layouts omit it (matching the eval's serialization) so it never breaks verbatim alignment.
 				if (order === 0 && t.region) {
 					components.region = t.region
 				}

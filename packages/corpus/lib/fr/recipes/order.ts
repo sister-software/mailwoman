@@ -73,7 +73,7 @@ interface FrTuple {
  * The countrywide extract is GB-scale, so this reads only as far as `limit` distinct
  * tuples — the `break` closes the reader and releases the archive.
  * Only keeps rows with a house_number (the recipe's core signal) and a postcode
- * (required for reversed-order rendering to be meaningful. it is also part of this recipe's dedup key).
+ * (required for reversed-order rendering to be meaningful. It is also part of this recipe's dedup key).
  */
 async function readTuples(limit: number): Promise<FrTuple[]> {
 	return readOATuples(SOURCE, {

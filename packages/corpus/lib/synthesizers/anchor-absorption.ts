@@ -62,8 +62,9 @@ export interface AnchorAbsorptionSynthesisOpts {
 	random?: () => number
 	forceTemplate?: AnchorAbsorptionTemplate
 	/**
-	 * Real US ZIPs (in the anchor lookup) to use as the leading 5-digit house number —
-	 * so the painted anchor fires on it, the case-H/anchor-fp trigger.
+	 * Real US ZIPs (in the anchor lookup) to use as the leading 5-digit house number.
+	 *
+	 * So the painted anchor fires on it, the case-H/anchor-fp trigger.
 	 *
 	 * Builder loads these from pilot-anchor-lookup.json.
 	 */
@@ -90,7 +91,8 @@ function houseNum(random: () => number, realZips: ReadonlyArray<string>): string
 /**
  * Curated, provenance-light reference vocab (real US street/city/state + DE).
  *
- * Surface forms must appear in `raw` for alignRow. these are plain ascii tokens that align cleanly.
+ * Surface forms must appear in `raw` for alignRow.
+ * These are plain ascii tokens that align cleanly.
  */
 const STREET_NAMES = [
 	"Main",
@@ -218,8 +220,7 @@ export function synthesizeAnchorAbsorptionRow(
 
 	if (template === "locale-ambig") {
 		// Minimal context — the local token decides.
-		// Half: "{realZip}
-		// {street}" (street-type → house#); half: "{realZip} {locality}"
+		// Half: "{realZip} {street}" (street-type → house#); half: "{realZip} {locality}"
 		// (no street, leading postcode → postcode).
 		// No trailing, no region.
 		const zip = sample(realZips, random)
@@ -277,12 +278,12 @@ export function synthesizeAnchorAbsorptionRow(
 // Expanded to a flat array so `sample` draws at the target frequencies
 // (matches the boundary-stress ALL_TEMPLATES idiom).
 //
-// A3 (#220, after the per-row diagnostic on the A2 probe): A1/A2 both held case-H
-// (100) + postcode (~98) but cost house_number (95.8->92.8), and the A2 mix-rebalance
-// did not move it — so it was never a case-P-quantity problem.
+// A3 (#220, after the per-row diagnostic on the A2 probe): A1/A2 both held case-H (100) +
+// postcode (~98) but cost house_number (95.8->92.8), and the A2 mix-rebalance did not move it.
+// So it was never a case-P-quantity problem.
 // The row-by-row v192-vs-A2 diff (hn-regression-diff.ts) pinned it: 132/132 house# regressions
-// were house#->postcode on "{house#} {street}, {locality}, {state}" no-trailing rows —
-// the p-us-rural rule ("leading-number + state + no-trailing -> postcode") over-generalized
+// were house#->postcode on "{house#} {street}, {locality}, {state}" no-trailing rows.
+// The p-us-rural rule ("leading-number + state + no-trailing -> postcode") over-generalized
 // because the recipe output had no counter-template for the common locality-containing house# case.
 // A3 adds h-no-trailing-locality (15%) to teach the locality discriminator
 // (present -> house#, absent + 5-digit -> postcode = p-us-rural) and trims p-us-rural 16->13.

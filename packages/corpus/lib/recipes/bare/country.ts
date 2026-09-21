@@ -62,7 +62,8 @@ export const bareCountryRecipe: CorpusRecipe = {
 	description: "The country name as the whole query (#1651 parse half): ISO names + curated endonyms, no codes",
 	mode: "generate",
 	async run(opts, write) {
-		// Seeded for parity with the other recipes. the surfaces themselves drive the content.
+		// Seeded for parity with the other recipes.
+		// The surfaces themselves drive the content.
 		makeMulberry32(opts.seed)
 		let read = 0
 		let emitted = 0

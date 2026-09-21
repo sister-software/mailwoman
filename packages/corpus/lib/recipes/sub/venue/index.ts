@@ -100,8 +100,8 @@ export * from "#recipes/sub/venue/render"
 /**
  * One locale's leg of the recipe.
  *
- * `positiveShare` / `negativeShare` are relative weights, normalized at run time —
- * they do not have to sum to 1.
+ * `positiveShare` / `negativeShare` are relative weights, normalized at run time.
+ * They do not have to sum to 1.
  */
 export interface SubVenueLeg {
 	locale: string
@@ -115,8 +115,7 @@ export interface SubVenueLeg {
 	/**
 	 * Extract filename under `--extracts-dir`.
 	 *
-	 * Absent = no OSM extract for this leg (en-US), which then draws its venue
-	 * and confound pools from `poi.db` instead.
+	 * Absent = no OSM extract for this leg (en-US), which then draws its venue and confound pools from `poi.db` instead.
 	 */
 	extract?: string
 	/**
@@ -141,12 +140,12 @@ export interface SubVenueLeg {
  * The legs, and the numbers behind the shares.
  *
  * En-GB and en-US carry the most because they are where the eval board lives
- * (28 of the 30 confound rows are GB or US addresses) and because the English shipped vocabulary
- * is the only one with a modifier grammar — the target class. fr-FR, de-DE and es-ES exist
- * because the ledger promoted surfaces there (169, 19+32 and 190 real hits respectively)
- * and a recipe that skipped them would leave every non-English promotion untrained.
- * ca-ES is small on purpose: its promotion is 15 hits and its line differs from es-ES
- * only in the Catalan street vocabulary the postal-prefix filter selects for.
+ * (28 of the 30 confound rows are GB or US addresses) and because the English shipped
+ * vocabulary is the only one with a modifier grammar.
+ * The target class. fr-FR, de-DE and es-ES exist because the ledger promoted surfaces there
+ * (169, 19+32 and 190 real hits respectively) and a recipe that skipped them would leave every
+ * non-English promotion untrained. ca-ES is small on purpose: its promotion is 15 hits and its
+ * line differs from es-ES only in the Catalan street vocabulary the postal-prefix filter selects for.
  *
  * The negative shares invert that ordering where the confound mass does. en-US carries
  * the largest negative share because its confound population is the largest measured
@@ -221,7 +220,8 @@ export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
 /**
  * The row count this recipe output is built at, and the arithmetic behind it.
  *
- * `--count` overrides. this is the number to use absent a reason.
+ * `--count` overrides.
+ * This is the number to use absent a reason.
  *
  * The training sampler (`corpus-python/src/mailwoman_train/data_loader.py`, `_raw_row_stream`) draws
  * sources from a multinomial over `source_weights` and yields the next row from that source's iterator.
@@ -281,22 +281,24 @@ const ENGLISH_MODIFIER_FORM_FRACTION = 0.6
 //#region Board reservation
 
 /**
- * Surfaces reserved by `mailwoman/eval-harness/fixtures/venue-structure-confounds.jsonl` —
- * the 30-row board this recipe has to hold.
+ * Surfaces reserved by `mailwoman/eval-harness/fixtures/venue-structure-confounds.jsonl`.
+ * The 30-row board this recipe has to hold.
  *
  * A row containing any of these is dropped and counted in `contaminated`.
  *
  * The `--exclude-surfaces` precedent from `fr-fragment` / `no-fragment`, applied by hand
  * rather than by file because the board lives in `mailwoman/` and `@mailwoman/corpus`
  * cannot reach across that workspace boundary at run time.
- * Keep it in sync when the board grows. a recipe output that trains on its
- * own eval set measures memorization.
+ * Keep it in sync when the board grows.
+ *
+ * A recipe output that trains on its own eval set measures memorization.
  *
  * Note what this costs and why it is still right: reserving `east gate` / `west gate`
  * removes the two GB surfaces the board uses for its `modifier-designator-street` class,
  * so the recipe teaches that class from the other real ones its sources carry
  * (`North Gate`, `South Gate`, `East Hall`, `West Hall`, `Lower Hall`, `East Campus`, …).
- * The class is taught. the board's own strings are not.
+ * The class is taught.
+ * The board's own strings are not.
  */
 export const BOARD_RESERVED_SURFACES: readonly string[] = [
 	// gb-street-gate
@@ -436,8 +438,8 @@ export const NegativeClass = {
 	 */
 	DesignatorStreet: "designator-street",
 	/**
-	 * A real street of the `<modifier> <designator>` shape — the class that would
-	 * otherwise be read as a sub-venue.
+	 * A real street of the `<modifier> <designator>` shape.
+	 * The class that would otherwise be read as a sub-venue.
 	 */
 	ModifierDesignatorStreet: "modifier-designator-street",
 	/**
@@ -447,7 +449,8 @@ export const NegativeClass = {
 	/**
 	 * A promoted phrase outside the shape its promotion covers — `Halle Rosengarten`, `phoenix Halle`.
 	 *
-	 * The other half of an `identifier-required` ruling. see `LegPools.unpromotedShapes`.
+	 * The other half of an `identifier-required` ruling.
+	 * See `LegPools.unpromotedShapes`.
 	 */
 	UnpromotedShape: "unpromoted-shape",
 } as const
@@ -457,8 +460,8 @@ export type NegativeClass = (typeof NegativeClass)[keyof typeof NegativeClass]
 /**
  * Which negative classes this leg's pools can actually produce.
  *
- * A class with no source is absent rather than substituted — the report then says
- * so, and a reader can tell a missing class from an unsampled one.
+ * A class with no source is absent rather than substituted.
+ * The report then says so, and a reader can tell a missing class from an unsampled one.
  */
 function availableNegativeClasses(pools: LegPools, streets: StreetNegatives): NegativeClass[] {
 	const available: NegativeClass[] = []
@@ -643,7 +646,8 @@ function emitPositives(
 const NEGATIVE_WITH_STREET_SHARE = 0.75
 
 /**
- * Emit one leg's negative rows — the confound classes, none of which carries a `unit`.
+ * Emit one leg's negative rows.
+ * The confound classes, none of which carries a `unit`.
  */
 function emitNegatives(
 	context: EmitContext,
@@ -744,7 +748,8 @@ async function buildLegPools(
 		? await readExtractPools(`${paths.extractsDir}/${leg.extract}`, query)
 		: EMPTY_NAME_POOLS
 
-	// poi.db holds four countries. only these two legs are inside it.
+	// poi.db holds four countries.
+	// Only these two legs are inside it.
 	const poiPools =
 		leg.country === "US" || leg.country === "FR" ? readPOIPools(paths.poiDB, leg.country, query) : EMPTY_NAME_POOLS
 

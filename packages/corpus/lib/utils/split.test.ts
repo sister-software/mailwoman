@@ -28,8 +28,9 @@ interface MinRow {
 }
 
 /**
- * A country's holdout as a policy object, with a bare array read as its region list — the same
- * reading `splitForRow` makes, so these assertions hold whichever form `defaultHoldouts` returns.
+ * A country's holdout as a policy object, with a bare array read as its region list.
+ *
+ * The same reading `splitForRow` makes, so these assertions hold whichever form `defaultHoldouts` returns.
  */
 const policyOf = (holdout: CountryHoldout | undefined): HoldoutPolicy =>
 	Array.isArray(holdout) ? { regions: holdout } : ((holdout ?? {}) as HoldoutPolicy)

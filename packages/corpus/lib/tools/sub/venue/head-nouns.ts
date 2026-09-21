@@ -42,7 +42,8 @@ function asciiFold(text: string): string {
  * `terminal`/`terminál`/`terminale`/`terminali`/`terminála`/`terminalo` are all accepted for
  * `terminal` while `campo` and `campws` are both rejected for `campus` (they share four).
  *
- * At six the Spanish `satélite` is lost. at four, Italian `campo` is admitted and it means field.
+ * At six the Spanish `satélite` is lost.
+ * At four, Italian `campo` is admitted and it means field.
  */
 const HEAD_NOUN_PREFIX_FLOOR = 5
 
@@ -106,9 +107,9 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
  *   the harvest to read "Ciudad Universitaria" as sub-venue structure.
  * - **Non-Latin script — the shared-substring test.** The cognate test cannot reach a script
  *   the id is not written in, and for Han and Kana a token split finds nothing at all.
- *   So every substring of length ≥
- *   {@link NON_LATIN_HEAD_MIN_LENGTH} occurring in at least two distinct surfaces of the same record and primary
- *   language becomes a candidate, ranked by how many surfaces carry it.
+ *   So every substring of length ≥ {@link NON_LATIN_HEAD_MIN_LENGTH} occurring in
+ *   at least two distinct surfaces of the same record and primary language becomes
+ *   a candidate, ranked by how many surfaces carry it.
  *   Japanese yields `ターミナル` (in all five `ja` terminal labels) ahead of `ターミナルビル`
  *   (three); Chinese yields `航站`, `航站楼`, `航站樓`.
  *
@@ -116,11 +117,13 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
  *   a whole token, so `공항 터미널` ∩ `공항터미널` gives `터미널` and never a fragment.
  *
  * The non-Latin branch deliberately emits several candidates instead of picking one.
- * Choosing between `航站` and `航站楼` from Wikidata alone is guesswork. the Japan extract
- * answers it by counting, and the promotion ledger records which count won.
+ * Choosing between `航站` and `航站楼` from Wikidata alone is guesswork.
  *
- * Everything derived lands `curated: false` — the derivation is a hypothesis about what
- * the addressed form is, and a locale's own data is what confirms or kills it.
+ * The Japan extract answers it by counting, and the promotion ledger records which count won.
+ *
+ * Everything derived lands `curated: false`.
+ * The derivation is a hypothesis about what the addressed form is, and a locale's
+ * own data is what confirms or kills it.
  */
 export function deriveHeadNounSurfaces(surfaces: readonly SubVenueSurface[]): SubVenueSurface[] {
 	const derived = new Map<string, SubVenueSurface>()
@@ -219,8 +222,7 @@ function commonPrefixLength(a: string, b: string): number {
 
 /**
  * Substrings occurring in at least two distinct members of `pool`, ranked by that count
- * and then by length, capped at
- * {@link NON_LATIN_HEAD_CANDIDATE_CAP}.
+ * and then by length, capped at {@link NON_LATIN_HEAD_CANDIDATE_CAP}.
  *
  * A candidate never spans whitespace, and in a pool whose members contain whitespace
  * a candidate must be a whole token of some member.

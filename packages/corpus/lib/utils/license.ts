@@ -34,8 +34,8 @@ export const SHARE_ALIKE_PATTERN = /^ODbL|^Open Database License|^CC-BY-SA|^CC-S
  * into anchored, case-insensitive prefix patterns.
  *
  * Each entry matches a license string that starts with it, so `CC-BY-SA` catches
- * `CC-BY-SA-3.0`, `CC-BY-SA-4.0`, etc. Regex metacharacters are escaped —
- * the spec is a literal license prefix rather than a user-supplied regex.
+ * `CC-BY-SA-3.0`, `CC-BY-SA-4.0`, etc. Regex metacharacters are escaped.
+ * The spec is a literal license prefix rather than a user-supplied regex.
  */
 export function compileLicenseExcludes(spec: string): RegExp[] {
 	return extractDelimited(spec).map((s) => new RegExp("^" + s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"))

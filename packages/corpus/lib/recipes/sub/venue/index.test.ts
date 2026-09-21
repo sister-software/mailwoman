@@ -110,7 +110,8 @@ describe("matchesPromotedShape", () => {
 
 	it("refuses a German hall whose follower is a WORD, not an identifier", () => {
 		// The 2026-08-05 smoke put `Halle Wohnstadt Nord` in the attested pool under a looser rule.
-		// `Wohnstadt` is a name. the de-DE board turns on an identifier following the phrase.
+		// `Wohnstadt` is a name.
+		// The de-DE board turns on an identifier following the phrase.
 		expect(matchesPromotedShape("halle wohnstadt nord", halle)).toBe(false)
 		expect(matchesPromotedShape("halle rosengarten", halle)).toBe(false)
 		expect(matchesPromotedShape("halle-südstadt", halle)).toBe(false)
@@ -159,7 +160,7 @@ describe("isSignIdentifier", () => {
 			expect([value, isSignIdentifier(value)]).toEqual([value, true])
 		}
 
-		// Multi-letter prefixes are campus / platform / stop codes rather than identifiers —
+		// Multi-letter prefixes are campus / platform / stop codes rather than identifiers.
 		// `AG1` is a Sheffield bus stop on a street called Arundel Gate.
 		for (const value of ["AG1", "AG124", "BS04", "PWP2", "WSW3687", "RQ8", "CHU", "Inn", "de"]) {
 			expect([value, isSignIdentifier(value)]).toEqual([value, false])
@@ -232,7 +233,8 @@ describe("sampleIdentifier", () => {
 	it("falls back to the region's pooled distribution for a designator with no refs of its own", () => {
 		const model = buildIdentifierModel(lexicon, "FR")
 
-		// `concourse` has zero identifierShapes rows in any region. the FR pool still answers.
+		// `concourse` has zero identifierShapes rows in any region.
+		// The FR pool still answers.
 		expect(sampleIdentifier(model, "concourse", makeMulberry32(3))).toBeTruthy()
 	})
 })
@@ -302,8 +304,8 @@ describe("buildPositiveForms", () => {
 			const form = buildSubVenueForm(leg, promoted, model, shippedModifiers, [], random)
 
 			if (form?.form !== "modifier-designator") continue
-			// "East Gate" and "Building Society Place" are streets — `gate` and `building`
-			// are not modifier-eligible, and neither is the newly-promoted `pier`.
+			// "East Gate" and "Building Society Place" are streets.
+			// `gate` and `building` are not modifier-eligible, and neither is the newly-promoted `pier`.
 			expect(form.designatorID).not.toBe("gate")
 			expect(form.designatorID).not.toBe("building")
 			expect(form.designatorID).not.toBe("pier")

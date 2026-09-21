@@ -70,7 +70,8 @@ import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 /**
  * A golden-set row, as stored one-per-line in `us.jsonl` / `fr.jsonl` / `adversarial.jsonl`.
  *
- * Only the fields this tool reads are modeled. every other key rides through untouched.
+ * Only the fields this tool reads are modeled.
+ * Every other key rides through untouched.
  */
 export interface GoldenStreetRow {
 	raw: string
@@ -102,8 +103,8 @@ export type GoldenRelabelClass =
 /**
  * A review trigger on a row the tool did change.
  *
- * A flag is never an adjudication — it marks the row for the operator's deck,
- * and the split is applied either way.
+ * A flag is never an adjudication.
+ * It marks the row for the operator's deck, and the split is applied either way.
  */
 export interface GoldenRelabelFlag {
 	kind: "name-prone-suffix" | "venue-context" | "remainder-is-affix"
@@ -159,7 +160,7 @@ interface TailSplit {
  * Split `s` at its last whitespace run, returning the three pieces verbatim.
  *
  * Null when there is no interior whitespace, when the head would be empty, or
- * when `s` carries leading/trailing whitespace (a golden row is stored trimmed. an
+ * when `s` carries leading/trailing whitespace (a golden row is stored trimmed. An
  * untrimmed one is reported rather than silently normalized).
  */
 function splitLastWord(s: string): TailSplit | null {
@@ -172,8 +173,8 @@ function splitLastWord(s: string): TailSplit | null {
 }
 
 /**
- * Split `s` at its first whitespace run — the leading-directional counterpart of
- * {@link splitLastWord}. `head` is the first word, `tail` the rest, both verbatim.
+ * Split `s` at its first whitespace run — the leading-directional counterpart of {@link splitLastWord}.
+ * `head` is the first word, `tail` the rest, both verbatim.
  */
 function splitFirstWord(s: string): TailSplit | null {
 	if (s !== s.trim() || !s) return null
@@ -227,10 +228,11 @@ export interface RelabelStreetRowOptions {
 	 *
 	 * Default true.
 	 *
-	 * On by default because the fold applies both ways and the answer key has to be corrected on both, or the correction
-	 * is not a correction: 207 of the 1,682 split dev rows (12.3%) still opened with a directional after the suffix move
-	 * — "N Desmet Avenue" would have graded `street: "N Desmet"` against a model that says `street_prefix: "N", street:
-	 * "Desmet"`. Turn it off only to measure what the prefix fold alone costs.
+	 * On by default because the fold applies both ways and the answer key has to be corrected on both,
+	 * or the correction is not a correction: 207 of the 1,682 split dev rows (12.3%) still
+	 * opened with a directional after the suffix move — "N Desmet Avenue" would have graded
+	 * `street: "N Desmet"` against a model that says `street_prefix: "N", street: "Desmet"`.
+	 * Turn it off only to measure what the prefix fold alone costs.
 	 */
 	splitPrefix?: boolean
 }

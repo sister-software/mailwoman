@@ -83,8 +83,9 @@ async function readCommunes(path: string): Promise<CommuneRow[]> {
 		const dep = departementForCodePostal(postcode)
 
 		if (!dep) continue // bad/unmappable postcode — skip (CEDEX, etc.)
-		// Substring invariant: a département whose name isn't a clean token (none are) or a commune
-		// containing the département name would confuse alignment — both are vanishingly rare here.
+		// Substring invariant: a département whose name isn't a clean token (none are)
+		// or a commune containing the département name would confuse alignment.
+		// Both are vanishingly rare here.
 		rows.push({ commune, postcode, departement: dep.name, lon, lat })
 	}
 
@@ -137,10 +138,11 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 		out = { raw: `${loc} ${pc}`, components: { locality: loc, postcode: pc }, order: "commune-pc" }
 	}
 
-	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 recipe output's bare rows carried
-	// no country token, so the model under-emitted country on FR (fr.country −3.5pp). ~20% of rows
-	// now append an explicit "France" + a `country` component — the model relearns to emit country
-	// when the token is present without over-firing it on the (still-majority) country-less rows.
+	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 recipe output's bare rows
+	// carried no country token, so the model under-emitted country on FR (fr.country −3.5pp).
+	// ~20% of rows now append an explicit "France" + a `country` component.
+	// The model relearns to emit country when the token is present without over-firing
+	// it on the (still-majority) country-less rows.
 	// Substring all values satisfy the required relationship.
 	if (random() < APPEND_COUNTRY_SHARE) {
 		out = {

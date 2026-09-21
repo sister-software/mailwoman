@@ -101,9 +101,10 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 		async *rows(options: AdapterOptions): AsyncIterable<CanonicalRow> {
 			const random = makeLcg(opts.seed ?? Date.now())
 
-			// TextSpliterator streams string lines. the per-line tryParsingJSON below keeps this
-			// reader tolerant of malformed rows (skipped++), so TextSpliterator + a non-throwing
-			// parse — not JSONSpliterator, which would throw on the first bad line.
+			// TextSpliterator streams string lines.
+			// The per-line tryParsingJSON below keeps this reader tolerant of malformed rows
+			// (skipped++), so TextSpliterator + a non-throwing parse — not JSONSpliterator,
+			// which would throw on the first bad line.
 			const lines = TextSpliterator.fromAsync(options.inputPath)
 
 			let emitted = 0
@@ -127,9 +128,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					continue
 				}
 
-				// Region is required except for region-less locales (NZ: `Private Bag 12, Auckland 1010`
-				// has no region token, #517). synthesizePoBoxRow handles region absence. the guard just
-				// must not discard those tuples as "missing region".
+				// Region is required except for region-less locales (NZ: `Private Bag 12, Auckland 1010` has no region token, #517). synthesizePoBoxRow handles region absence. The guard just must not discard those tuples as "missing region".
 				const regionOptional = input.country ? REGION_OPTIONAL_LOCALES.has(poBoxTemplateLocale(input.country)) : false
 
 				if (!input.locality || !input.postcode || !input.country || (!input.region && !regionOptional)) {

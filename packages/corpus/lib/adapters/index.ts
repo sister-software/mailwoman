@@ -49,9 +49,10 @@ import { usgovNPPESAdapter } from "#us/adapters/usgov/nppes/adapter"
  * Coarse-first (admin → postcode), then street-level (BAN FR, tiger US, OpenAddresses global),
  * then adversarial-source (FCC BDC US, HRSA fqhc US).
  *
- * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list —
- * the samhsa Open Data Foundry bulk CSV the adapter was written against is no longer
+ * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list.
+ * The samhsa Open Data Foundry bulk CSV the adapter was written against is no longer
  * publicly distributed (see issue #33, 2026-05-17 investigation).
+ *
  * The factory + named export remain available so the adapter can be hand-registered if an
  * operator obtains a compatible CSV (foia, partner channel, upstream restoration).
  *

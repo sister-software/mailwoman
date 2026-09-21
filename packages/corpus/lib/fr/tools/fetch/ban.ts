@@ -225,7 +225,8 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 			continue
 		}
 
-		// Decompress in-place. delete the .gz.
+		// Decompress in-place.
+		// Delete the .gz.
 		try {
 			await writeLocalFile(await gunzip(await readLocalBuffer(gzFile)), csvFile)
 		} catch (error) {

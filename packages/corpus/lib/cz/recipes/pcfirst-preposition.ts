@@ -18,8 +18,9 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 /**
- * The order-cycle slot for the street-less form (`«city» «pc», Česko`) —
- * the exact surface of the `cz-full-praha-100-00` board row, whose absence from the
+ * The order-cycle slot for the street-less form (`«city» «pc», Česko`).
+ *
+ * The exact surface of the `cz-full-praha-100-00` board row, whose absence from the
  * street-containing orders was the v4.5.0 no-promote's measured gap.
  */
 const STREETLESS_ORDER = 3
@@ -56,8 +57,8 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 			// The official Czech rendering spaces the PSČ as `NNN NN` ('512 44'); OpenAddresses
 			// stores it unspaced ('51244'), and a model trained only on the source form reads
 			// the spaced surface as house_number + garbage (the 'Praha 100 00' mangle).
-			// Alternate the two renderings so both orthographies are attested —
-			// the label is the postcode either way.
+			// Alternate the two renderings so both orthographies are attested.
+			// The label is the postcode either way.
 			const spaced = read % 2 === 0 && /^\d{5}$/.test(postcode)
 			const postcodeSurface = spaced ? `${postcode.slice(0, 3)} ${postcode.slice(3)}` : postcode
 			let raw: string
@@ -74,12 +75,7 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 			} else if (order === 2) {
 				raw = `${city}, ${postcodeSurface}, ${street} ${number}`
 			} else {
-				// order === STREETLESS_ORDER: the street-less form — `«city» «pc», Česko` — the exact surface of the
-				// cz-full-praha-100-00 board row.
-				// The v4.5.0 no-promote receipt measured the gap: every prior order was
-				// street-containing, so the model never saw a spaced PSČ beside a bare locality
-				// and mangled 'Praha 100 00, Czechia' into house_number spans.
-				// Street/number stay OUT of the components for this form (they are not in the surface).
+				// order === STREETLESS_ORDER: the street-less form — `«city» «pc», Česko` — the exact surface of the cz-full-praha-100-00 board row. The v4.5.0 no-promote receipt measured the gap: every prior order was street-containing, so the model never saw a spaced PSČ beside a bare locality and mangled 'Praha 100 00, Czechia' into house_number spans. Street/number stay OUT of the components for this form (they are not in the surface).
 				raw = `${city} ${postcodeSurface}, Česko`
 			}
 

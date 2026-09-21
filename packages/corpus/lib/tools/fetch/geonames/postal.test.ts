@@ -76,8 +76,10 @@ beforeAll(async () => {
 afterAll(() => server[Symbol.asyncDispose]())
 
 /**
- * The retry count is what these cases pin. the pause between attempts is not, and paying
- * the shipped 5 s twice per failing transfer cost this file 20.1 s of the fast leg.
+ * The retry count is what these cases pin.
+ *
+ * The pause between attempts is not, and paying the shipped 5 s twice per failing
+ * transfer cost this file 20.1 s of the fast leg.
  */
 const RETRY_DELAY_MS = 1
 

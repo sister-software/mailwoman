@@ -111,8 +111,9 @@ export const noFragmentRecipe: CorpusRecipe = {
 		const longNumberBoost = Math.max(1, Math.floor(opts.longNumberBoost ?? 1))
 		const longNumberMinDigits = opts.longNumberMinDigits ?? 3
 
-		// Harvested from the tuples — every Norwegian row carries its locality and postcode,
-		// so the two counter-classes need no second source.
+		// Harvested from the tuples.
+		// Every Norwegian row carries its locality and postcode, so the two
+		// counter-classes need no second source.
 		const localities = new Set<string>()
 		const postcodes = new Set<string>()
 
@@ -193,8 +194,8 @@ export const noFragmentRecipe: CorpusRecipe = {
 
 			// the signal.
 			// A street with no postcode/locality partner.
-			// Either bare, or street+number — both are the forms board 3 measured as the
-			// headroom (bare-street-hn 0.693, slash-hn 0.650).
+			// Either bare, or street+number.
+			// Both are the forms board 3 measured as the headroom (bare-street-hn 0.693, slash-hn 0.650).
 			if (!number || random() < bareStreetProb) {
 				emit(street, { street }, "bare-street")
 			} else {

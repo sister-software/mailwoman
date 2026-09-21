@@ -19,7 +19,8 @@
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 
 /**
- * What an address is the address OF — the role it plays for the thing the source is describing.
+ * What an address is the address OF.
+ * The role it plays for the thing the source is describing.
  *
  * Two strings with the same components can be different addresses.
  * A company's registered office is the address it files with a registrar, its premise is
@@ -105,8 +106,8 @@ export function addressRoleOf(row: Pick<CanonicalRow, "addressRole">): AddressRo
 /**
  * Provenance + augmentation metadata that travels with every corpus row.
  *
- * `synth` is `undefined` for natural (un-augmented) rows. present only when a row
- * was produced by the synthesis pipeline (see `synthesize.ts`).
+ * `synth` is `undefined` for natural (un-augmented) rows.
+ * Present only when a row was produced by the synthesis pipeline (see `synthesize.ts`).
  */
 export interface SourceProvenance {
 	/**
@@ -117,8 +118,9 @@ export interface SourceProvenance {
 	/**
 	 * Stable id within the adapter's source.
 	 *
-	 * For SQLite-backed adapters this is the row's primary key. for CSV/GeoJSON,
-	 * a hash of the canonical components.
+	 * For SQLite-backed adapters this is the row's primary key.
+	 * For CSV/GeoJSON, a hash of the canonical components.
+	 *
 	 * Must be stable across reruns so that dedup and holdout manifests are reproducible.
 	 */
 	source_id: string
@@ -171,8 +173,9 @@ export interface SynthMarker {
  * Alignment uses this to assign BIO labels.
  *
  * Country is ISO 3166-1 alpha-2 (`"US"`, `"FR"`).
- * Locale is BCP-47 (`"en-US"`, `"fr-FR"`) and is optional. adapters that can't be
- * sure leave it empty and let the runner default by country.
+ * Locale is BCP-47 (`"en-US"`, `"fr-FR"`) and is optional.
+ *
+ * Adapters that can't be sure leave it empty and let the runner default by country.
  */
 export interface CanonicalRow extends SourceProvenance {
 	/**
@@ -204,7 +207,7 @@ export interface CanonicalRow extends SourceProvenance {
 	 * What this address is the address of.
 	 *
 	 * The runner stamps the adapter's `addressRole` on every row that omits it,
-	 * so an adapter sets this per row only when one source carries more than one role —
+	 * so an adapter sets this per row only when one source carries more than one role.
 	 * Taiwan's company register holds the registered address and the tax office's
 	 * business address in separate columns of the same row.
 	 *
@@ -252,7 +255,7 @@ export interface LabeledRow extends CanonicalRow {
 	 * `raw` must be NFC-normalized or the offsets are ambiguous (also enforced by `alignRow`).
 	 *
 	 * Optional during the v0.4.x → v0.5.0 transition only: alignment always emits the triple.
-	 * frozen historical corpora and not-yet-migrated synthesis paths may lack it.
+	 * Frozen historical corpora and not-yet-migrated synthesis paths may lack it.
 	 * Required once v0.5.0 lands and the token path is deleted.
 	 */
 	span_starts?: readonly number[]
@@ -273,9 +276,11 @@ export interface LabeledRow extends CanonicalRow {
  *
  * Lands in `/data/corpus/quarantine/` for human review.
  *
- * The `reason` is human-readable. common values are `"component-not-found:<tag>"`,
- * `"edit-distance-exceeded:<tag>"`, `"raw-empty"`.
- * Re-running alignment after a fix should re-emit the quarantined rows. the runner keys them by `source_id`.
+ * The `reason` is human-readable.
+ * Common values are `"component-not-found:<tag>"`, `"edit-distance-exceeded:<tag>"`, `"raw-empty"`.
+ *
+ * Re-running alignment after a fix should re-emit the quarantined rows.
+ * The runner keys them by `source_id`.
  */
 export interface QuarantinedRow {
 	row: CanonicalRow
@@ -285,15 +290,18 @@ export interface QuarantinedRow {
 /**
  * Per-invocation knobs handed to an adapter by the runner.
  *
- * `inputPath` is interpreted by the adapter — it might be a single file path,
- * a directory of files, or even an https URL.
+ * `inputPath` is interpreted by the adapter.
+ * It might be a single file path, a directory of files, or even an https URL.
+ *
  * Each adapter documents its own expected shape in its readme.
  *
  * `country` filters to a single ISO 3166-1 alpha-2 country _at the adapter level_.
  * Adapters that hold multi-country data (OSM PBF, OpenAddresses) must honor this.
- * single-country adapters (BAN) may ignore it but should reject mismatches.
  *
- * `limit` is a soft cap on rows emitted. useful for fixture-driven tests and smoke runs.
+ * Single-country adapters (BAN) may ignore it but should reject mismatches.
+ *
+ * `limit` is a soft cap on rows emitted.
+ * Useful for fixture-driven tests and smoke runs.
  *
  * `signal` allows the runner to cancel a long-running scan cleanly.
  */

@@ -40,7 +40,8 @@ const ISLAMABAD_SECTOR_COLUMNS = [6, 7, 8, 9, 10, 11] as const
 const ISLAMABAD_SUB_SECTORS = [1, 2, 3, 4] as const
 
 /**
- * Share of rows rendered in the house register. the rest take the plain line.
+ * Share of rows rendered in the house register.
+ * The rest take the plain line.
  */
 const P_HOUSE = 0.55
 
@@ -71,7 +72,7 @@ export function drawIslamabadSector(random: () => number): string {
 /**
  * Render one register line from the adapter's components.
  *
- * Returns null when the row has no house number or no locality: both registers need the two.
+ * @returns null when the row has no house number or no locality: both registers need the two.
  */
 export function renderSouthAsiaRegister(
 	components: CanonicalRow["components"],

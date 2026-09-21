@@ -45,8 +45,8 @@ export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
  * GeoNames postal-dump columns (0-based): country, postcode, place, admin1_name,
  * admin1_code, admin2_name, ….
  *
- * Shared with `tools/postcode-triples.ts`, which additionally reads `admin2Name` —
- * the city for the IN/MX/PT-shaped exports whose `place` column is a street or colonia.
+ * Shared with `tools/postcode-triples.ts`, which additionally reads `admin2Name`.
+ * The city for the IN/MX/PT-shaped exports whose `place` column is a street or colonia.
  *
  * `latitude`/`longitude` are the postcode's coordinate rather than the locality's.
  * A consumer grading distance to a place needs a gazetteer centroid instead.

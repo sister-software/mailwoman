@@ -186,8 +186,9 @@ function unitIdentifier(unit: string): string | undefined {
 // Layouts: 26% full-after, 5% full-comma, 3% full-comma-bare, 18% full-first,
 // 16% bare-after, 16% bare-first, 16% venue.
 //
-// A comma before the unit is its own surface — the delimiter decides whether the span
-// reads as a unit at all, independently of which designator sits in it.
+// A comma before the unit is its own surface.
+// The delimiter decides whether the span reads as a unit at all, independently of
+// which designator sits in it.
 // `full-comma` is carved out of `full-after` alone so every later cutoff keeps the share
 // it had, and `full-comma-bare` out of `full-comma` for the same reason.
 //
@@ -208,7 +209,7 @@ const BARE_FIRST_CUTOFF = 0.84
  * tail dropped on bare rows, a recipient/venue prefixed on the venue format —
  * so the model learns to recognize the designator wherever it sits.
  *
- * Returns {fmt, raw, components}.
+ * @returns {fmt, raw, components} .
  */
 export function renderUnit(
 	random: () => number,

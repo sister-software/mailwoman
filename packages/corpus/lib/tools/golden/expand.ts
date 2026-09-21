@@ -70,8 +70,8 @@ const MAX_CANDIDATE_LENGTH = 500
 /**
  * The stream position the per-source subsample draws from.
  *
- * Fixed rather than supplied, because the point is that two runs over one corpus choose
- * the same seeds. a caller-supplied seed would make that the caller's problem to remember.
+ * Fixed rather than supplied, because the point is that two runs over one corpus choose the same seeds.
+ * A caller-supplied seed would make that the caller's problem to remember.
  */
 const SUBSAMPLE_SEED = 20_260_913
 
@@ -285,7 +285,8 @@ async function loadSeeds(
 	}
 
 	// Round-robin sample.
-	// Each source gives floor(count / nSources) seeds. rounding goes to sources in alphabetical order.
+	// Each source gives floor(count / nSources) seeds.
+	// Rounding goes to sources in alphabetical order.
 	// If a pool is smaller than its target, take all of it.
 	const sources = Array.from(bySource.keys()).toSorted()
 	const perSource = Math.floor(count / sources.length)

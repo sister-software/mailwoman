@@ -86,8 +86,8 @@ describe("readTuples (OA CSV parse)", () => {
 
 	// A tiny OA sample exercising exactly what the CSVSpliterator migration touches:
 	// a crlf terminator (the real OA files are crlf), a quoted field with an embedded comma,
-	// an empty region cell that must fall back to part.region, and a header-driven
-	// column index. rng is unused below RESERVOIR_CAP.
+	// an empty region cell that must fall back to part.region, and a header-driven column index.
+	// Rng is unused below RESERVOIR_CAP.
 	const OA_HEADER = "LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH"
 
 	it("parses quoted fields, CRLF terminators, and the region fallback", async () => {
@@ -96,7 +96,7 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// Quoted street with an embedded comma. populated region.
+				// Quoted street with an embedded comma. Populated region.
 				'22.6,49.3,12,"Main St, West",,Springfield,dist,Bayern,38-710,id1,hash1',
 				// Empty region cell → must fall back to part.region.
 				"22.7,49.2,5,Elm Ave,,Shelbyville,dist,,38-711,id2,hash2",
@@ -174,12 +174,9 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// city and district name the same place (differing only in case) — the ES cnig `poblacion ==
-				// municipio` majority case (the address point sits in the municipio's own main town rather than a
-				// pedanía). Must not surface as dependent_locality === locality.
+				// city and district name the same place (differing only in case). The ES cnig `poblacion == municipio` majority case (the address point sits in the municipio's own main town rather than a pedanía). Must not surface as dependent_locality === locality.
 				"1,2,10,Main St,,AMURRIO,Amurrio,Araba,01450,id,hash",
-				// Genuinely distinct city/district still produces dependent_locality (the districtAsLocality
-				// interface is otherwise unchanged).
+				// Genuinely distinct city/district still produces dependent_locality (the districtAsLocality interface is otherwise unchanged).
 				"1,2,11,Elm Ave,,Baranbio,Amurrio,Araba,01450,id2,hash2",
 			],
 			file
@@ -208,8 +205,7 @@ describe("readTuples (OA CSV parse)", () => {
 				"X,Y,id_porpk,tipo,tipo_vial,nombre_via,numero,extension,id_pob,poblacion,cod_postal,ine_mun,municipio,provincia,comunidad_autonoma,fuente_datos,fecha_modificacion",
 				// poblacion filled + distinct from municipio (real pedanía row, mirrors the verified Amurrio/Baranbio sample).
 				'-2.922,43.0507,"1","PK",CARRETERA,A-2522,35,,"1600005667",Baranbio,01450,01002,Amurrio,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
-				// poblacion empty → falls back to municipio→locality, no dependent_locality (the districtAsLocality
-				// NZ-pattern fallback, exercised here through the cnig column names instead of city/district).
+				// poblacion empty → falls back to municipio→locality, no dependent_locality (the districtAsLocality NZ-pattern fallback, exercised here through the cnig column names instead of city/district).
 				'-2.503,42.836,"2","PK",CARRETERA,A-4136,15,,,,01240,01001,Alegría-Dulantzi,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
 			],
 			file
@@ -329,7 +325,8 @@ describe("applyDistrictAsLocalityOverride (--district-as-locality tri-state)", (
 		const part: LocalePart = { path: "/x.csv" }
 
 		expect(applyDistrictAsLocalityOverride(part, true)).toEqual({ path: "/x.csv", districtAsLocality: true })
-		// original part is untouched — the override never mutates the registered COUNTRY_SOURCES entry.
+		// original part is untouched.
+		// The override never mutates the registered COUNTRY_SOURCES entry.
 		expect(part.districtAsLocality).toBeUndefined()
 	})
 

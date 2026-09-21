@@ -1,7 +1,9 @@
 /**
  * Title-case an all-caps GB place/street string (#690 — all-caps is OOD for the model).
  *
- * PPD ships every field upper-case. the model trains on natural casing.
+ * PPD ships every field upper-case.
+ * The model trains on natural casing.
+ *
  * Particles (upon, super, next, …) stay lowercase mid-name, both between words and between hyphen segments.
  *
  * Each apostrophe-separated segment is capitalized on its own (D'Arcy, James'),

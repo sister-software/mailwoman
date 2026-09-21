@@ -38,8 +38,9 @@ afterAll(() => root[Symbol.asyncDispose]())
  * The real file has twelve columns and the reader takes four of them from non-adjacent
  * positions — place is 2, admin1 is 3, admin2 is 5.
  * Writing them in argument order and padding the gap keeps the fixture readable
- * while still exercising the real offsets. a fixture that packed them adjacently
- * would pass against a reader with the wrong index.
+ * while still exercising the real offsets.
+ *
+ * A fixture that packed them adjacently would pass against a reader with the wrong index.
  */
 async function writeExport(
 	name: string,
@@ -78,7 +79,8 @@ describe("readTriplesFromGeonames", () => {
 		expect(triples).toHaveLength(2)
 		// The punctuated surface is the one people write, so it is the one that survives.
 		expect(triples[0]?.postcode).toBe("3750-000")
-		// admin2 is the locality. column 3 becomes the dependent locality.
+		// admin2 is the locality.
+		// Column 3 becomes the dependent locality.
 		expect(triples[0]?.locality).toBe("Águeda")
 		expect(triples[0]?.dependentLocality).toBe("Borralha")
 	})
@@ -124,10 +126,10 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("reads BR from the default column, where the municipality sits in column 3 and admin2 alike", async () => {
-		// `BR 69945-000 Acrelândia Acre 01 Acrelândia 1200013` — the municipality is
-		// written twice and the state is admin1, so the US `place` override would be
-		// a no-op here and the default is already right.
-		// Placement is attested by two `br_*` board rows carrying locality, region and CEP in that order —
+		// `BR 69945-000 Acrelândia Acre 01 Acrelândia 1200013`.
+		// The municipality is written twice and the state is admin1, so the US `place`
+		// override would be a no-op here and the default is already right.
+		// Placement is attested by two `br_*` board rows carrying locality, region and CEP in that order.
 		// `Caxias do Sul, RS 95090-020, Brazil` and `Brasília - Federal District, 70390-100, Brazil`.
 		const path = await writeExport("br.txt", [["BR", "69945-000", "Acrelândia", "Acre", "Acrelândia"]])
 
@@ -179,8 +181,9 @@ describe("applyLocalityQuota", () => {
 
 	it("bounds a hub locality WITHOUT deleting it", () => {
 		// `Schwedt/Oder` claims 9,222 DE postcodes against a median of 1.
-		// A threshold would drop the city entirely, which removes exactly the places a parser
-		// most needs to have seen. the quota keeps it and bounds the repetition.
+		// A threshold would drop the city entirely, which removes exactly the places
+		// a parser most needs to have seen.
+		// The quota keeps it and bounds the repetition.
 		const triples = Array.from({ length: 100 }, (_, i) => make("Schwedt/Oder", String(i)))
 
 		const kept = applyLocalityQuota(triples, 24)
@@ -190,7 +193,8 @@ describe("applyLocalityQuota", () => {
 	})
 
 	it("counts per COUNTRY as well as per locality", () => {
-		// Two countries can hold the same locality name. pooling them would halve each one's real quota.
+		// Two countries can hold the same locality name.
+		// Pooling them would halve each one's real quota.
 		const triples = [make("Barcelona", "1"), { ...make("Barcelona", "2"), cc: "VE" }]
 
 		expect(applyLocalityQuota(triples, 1)).toHaveLength(2)
@@ -287,7 +291,8 @@ describe("regionWrittenForms", () => {
 		expect(surfaces).toEqual(["Islas Baleares", "Illes Balears", "Balearic Islands"])
 		expect(regionWrittenForms("Zamora", { official: ["Zamora"], coOfficial: [] })).toEqual(["Zamora"])
 
-		// The Catalan preferred name keeps the provincial generic. an envelope does not, so it dedupes with the Castilian.
+		// The Catalan preferred name keeps the provincial generic.
+		// An envelope does not, so it dedupes with the Castilian.
 		const barcelona = { official: ["Barcelona"], coOfficial: ["Província de Barcelona"] }
 		const corunna = { official: ["La Coruña"], coOfficial: ["Província d'A Coruña", "A Coruña"] }
 
@@ -436,7 +441,8 @@ describe("readPairsFromAdmin", () => {
 		])
 
 		expect(pairs.every((p) => p.cc === "CA" && p.locale === "en-CA")).toBe(true)
-		// No postcode field at all — a postcode asserts a fact about a place, and this source does not carry one.
+		// No postcode field at all.
+		// A postcode asserts a fact about a place, and this source does not carry one.
 		expect(pairs.every((p) => !("postcode" in p))).toBe(true)
 	})
 

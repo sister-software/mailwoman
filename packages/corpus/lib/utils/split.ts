@@ -216,7 +216,7 @@ export function splitForRow(
  * Both shapes are accepted — only `source_id`, `country`, `corpus_version`,
  * and `components.region` are consulted.
  *
- * Retained for in-memory callers (tests. small-scale fixture runs).
+ * Retained for in-memory callers (tests. Small-scale fixture runs).
  * Real-data builds via `buildCorpus` use the streaming path
  * (`splitForRow` + `writeSplitManifestsFromLabeledFiles`) to avoid materializing
  * every aligned row's split membership in heap.

@@ -101,9 +101,9 @@ describe("renderUnit", () => {
 
 	it("always returns a unit component that survives verbatim in the raw it rendered", () => {
 		// The recipe drops a row whose unit component is not in its raw, because alignment could not label it.
-		// That guard read the designator form handed IN, so a layout writing anything
-		// else was skipped in silence — every `full-comma-bare` row, 1,160 of 50,000,
-		// until the guard was pointed at the rendered component.
+		// That guard read the designator form handed IN, so a layout writing
+		// anything else was skipped in silence.
+		// Every `full-comma-bare` row, 1,160 of 50,000, until the guard was pointed at the rendered component.
 		for (const unit of ["Apt 101", "#101", "# 101", "Basement", "Ste 4B"]) {
 			const rows = over(500, (random) => renderUnit(random, TUPLE, unit))
 

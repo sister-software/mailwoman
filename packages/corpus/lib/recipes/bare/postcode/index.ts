@@ -99,8 +99,10 @@ const SOURCES: PostcodeSource[] = [
 /**
  * How a country writes its postcode when a person types it alone, and the locale to stamp.
  *
- * `render` receives the source's own spelling with whitespace stripped, and answers every surface
- * that country writes — the spaced form first where one exists, because that is the failing one.
+ * `render` receives the source's own spelling with whitespace stripped,
+ * and answers every surface that country writes.
+ * The spaced form first where one exists, because that is the failing one.
+ *
  * A country whose written form is the source's form answers a single entry.
  *
  * Only countries whose bare postcode collides with a house number are here: an all-digit
@@ -108,8 +110,7 @@ const SOURCES: PostcodeSource[] = [
  * `SW1A 1AA` opens with letters and was never in doubt, so GB is deliberately absent.
  */
 const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: string) => string[] }> = new Map([
-	// `NNN NN`, written with the space. The four countries share the shape, which is why
-	// `detectKnownFormats` answers all four for one string and why the label is the same for each.
+	// `NNN NN`, written with the space. The four countries share the shape, which is why `detectKnownFormats` answers all four for one string and why the label is the same for each.
 	["CZ", { locale: "cs-CZ", render: spacedThree }],
 	["SK", { locale: "sk-SK", render: spacedThree }],
 	["SE", { locale: "sv-SE", render: spacedThree }],
@@ -128,8 +129,8 @@ const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: str
 /**
  * `10000` → `["100 00", "10000"]`.
  *
- * Sweden and Greece write five digits with the space after the third, exactly as Czechia and Slovakia
- * do. the compact form rides along because sources store it that way and a reader types it both ways.
+ * Sweden and Greece write five digits with the space after the third, exactly as Czechia and Slovakia do.
+ * The compact form rides along because sources store it that way and a reader types it both ways.
  */
 function spacedThree(compact: string): string[] {
 	if (!/^\d{5}$/.test(compact)) return []
@@ -140,9 +141,9 @@ function spacedThree(compact: string): string[] {
 /**
  * Choose distinct postcodes without inheriting the publisher's row order.
  *
- * Sorting first makes the result independent of input-file order. the seeded sample
- * then gives a reproducible spread across the complete set instead of taking the first
- * municipality or numeric prefix that happens to fill the cap.
+ * Sorting first makes the result independent of input-file order.
+ * The seeded sample then gives a reproducible spread across the complete set instead of
+ * taking the first municipality or numeric prefix that happens to fill the cap.
  */
 export function selectPostcodes(codes: Iterable<string>, limit: number, seed: number): string[] {
 	const pool = [...new Set(codes)].toSorted()
@@ -237,8 +238,8 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		const codesByCountry = new Map(countries.map((country) => [country, new Set<string>()]))
 
 		// The second held-out register.
-		// `BARE_POSTCODE_EVAL_CASES` reserves the strings this recipe's author knew
-		// about. the gauntlet boards are older and separate, and `cz/bare-postcode.jsonl`
+		// `BARE_POSTCODE_EVAL_CASES` reserves the strings this recipe's author knew about.
+		// The gauntlet boards are older and separate, and `cz/bare-postcode.jsonl`
 		// was authored before this recipe existed.
 		// `100 00` and `110 00` reached the v0.30.0 parquet through that gap, after
 		// which those two board rows measured recall of two strings rather than the capability.

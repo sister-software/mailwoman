@@ -82,7 +82,8 @@ export interface RunAdapterOptions {
 	adapterOptions: AdapterOptions
 
 	/**
-	 * Root output directory. the runner creates `<outputDir>/<adapter.id>/` under it.
+	 * Root output directory.
+	 * The runner creates `<outputDir>/<adapter.id>/` under it.
 	 */
 	outputDir: PathBuilderLike
 
@@ -135,8 +136,8 @@ export interface AdapterRunManifest {
  * Returns the manifest describing the run.
  * Writes `canonical.jsonl` + `manifest.json` under `outputDir/<adapter.id>/`.
  *
- * Throws if the output directory cannot be created, if a row arrives with a missing
- * required field, or if the abort signal fires.
+ * @throws if the output directory cannot be created, if a row arrives with a missing
+ *   required field, or if the abort signal fires.
  */
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
 	const { adapter, adapterOptions, outputDir, corpusVersion } = opts
@@ -257,7 +258,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
  *
  * Stops on the first failure (caller can filter the registry before calling if partial-failure is desired).
  *
- * Returns the manifests in registry insertion order.
+ * @returns the manifests in registry insertion order.
  */
 export async function runAllAdapters(
 	registry: AdapterRegistry,
@@ -283,7 +284,9 @@ export async function runAllAdapters(
 /**
  * Validate an emitted row.
  *
- * Cheap. runs once per row.
+ * Cheap.
+ * Runs once per row.
+ *
  * Catches adapter bugs early so the jsonl doesn't end up half-malformed.
  */
 function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
@@ -312,9 +315,10 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
  * Promise-ify a single event emission.
  *
  * Used to await `drain` / `close` on the write stream.
- * Exported for `build.ts`, whose stage streams await `close` the same way. unlike
- * a bare two-listener race, the loser listener is detached so a long-lived stream
- * does not accumulate one orphan handler per wait.
+ * Exported for `build.ts`, whose stage streams await `close` the same way.
+ *
+ * Unlike a bare two-listener race, the loser listener is detached so a long-lived
+ * stream does not accumulate one orphan handler per wait.
  */
 export function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
 	return new Promise((resolve, reject) => {

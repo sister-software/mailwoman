@@ -57,7 +57,8 @@ import type { SubVenueHarvestRow } from "#tools/sub/venue/lexicon"
  *   which are venues rather than sub-venues.
  * - `town_hall` (5,528) — `City Hall` is a whole building, the `venue` tier rather than interior structure.
  * - `building_supply_store` (4,030) — `building` inside "Allied Building Products".
- * - `jehovahs_witness_place_of_worship` (2,334) — every hit is "Kingdom Hall of Jehovah's Witnesses".
+ * - `jehovahs_witness_place_of_worship` (2,334).
+ *   Every hit is "Kingdom Hall of Jehovah's Witnesses".
  * - `shoe_store` (909, of which 708 `wing`) — Red Wing.
  *   This one is a confound board entry rather than a source.
  * - `college_university` (3,697) — 2,082 `campus`, but the row names the whole institution;
@@ -74,8 +75,8 @@ export const OVERTURE_SUBVENUE_CATEGORIES: Readonly<Record<string, string>> = {
 	airport_terminal: "terminal",
 	// 7,366 rows / 3,382 hits — hall 2,134, building 1,019, campus 209.
 	// US academic halls and numbered campus buildings: "UAA Cuddy Hall", "UAA Science Building".
-	// The row is a building on a campus, so `campus` is its context designator. the phrase found
-	// inside the name decides the record it attests, which for these rows is mostly `hall`.
+	// The row is a building on a campus, so `campus` is its context designator.
+	// The phrase found inside the name decides the record it attests, which for these rows is mostly `hall`.
 	campus_building: "campus",
 	// 443 rows / 301 hits — pier 282, terminal 17.
 	pier: "pier",
@@ -88,8 +89,9 @@ export const OVERTURE_SUBVENUE_CATEGORIES: Readonly<Record<string, string>> = {
  * The `poi` and `poi_category_codes` columns this reader touches, declared locally.
  *
  * `@mailwoman/resolver-wof-sqlite` owns the full `POIDatabase` interface,
- * and `@mailwoman/corpus` does not depend on it — the same dependency-direction call
- * `sub-venue-lexicon.ts` makes for `@mailwoman/osm`'s row type.
+ * and `@mailwoman/corpus` does not depend on it.
+ * The same dependency-direction call `sub-venue-lexicon.ts` makes for `@mailwoman/osm`'s row type.
+ *
  * This is a read-only projection of four columns; `overture-subvenue.test.ts` builds
  * a fixture with exactly this DDL, so a column rename upstream fails a test here
  * rather than throwing at runtime against a 3.9 GB database nobody has in CI.
@@ -114,9 +116,11 @@ interface POIReadDatabase {
  * The layer's `source_vintage` — the Overture release the rows came from
  * (`2026-05-20.0`), for the lexicon's `sources[]`.
  *
- * Read off the database rather than passed in, because a vintage a caller types is a vintage that goes stale silently.
- * The layer-interface tables are part of every layer database by construction — see `docs/engineering/reference/
- * layer-interface.mdx` — so there is no version of poi.db where this is absent.
+ * Read off the database rather than passed in, because a vintage a caller types
+ * is a vintage that goes stale silently.
+ * The layer-interface tables are part of every layer database by construction —
+ * see `docs/engineering/reference/ layer-interface.mdx` — so there is no version
+ * of poi.db where this is absent.
  */
 export async function readOvertureLayerVintage(databasePath: string): Promise<string> {
 	using kdb = new DatabaseClient<POIReadDatabase>(databasePath, { readOnly: true })
@@ -152,9 +156,9 @@ export interface ReadOvertureSubVenuesOptions {
 }
 
 /**
- * One Overture row plus the country it came from — {@link SubVenueHarvestRow} widened by the field the layer has and an
- * OSM extract does not (a Geofabrik extract's country is a property of the invocation, so OSM rows carry `country:
- * ""`).
+ * One Overture row plus the country it came from — {@link SubVenueHarvestRow}
+ * widened by the field the layer has and an OSM extract does not
+ * (a Geofabrik extract's country is a property of the invocation, so OSM rows carry `country: ""`).
  */
 export interface OvertureSubVenueRow extends SubVenueHarvestRow {
 	/**

@@ -45,7 +45,8 @@ export interface WOFFeature {
 /**
  * Lightweight in-memory shape both adapters keep per record.
  *
- * Geometry is intentionally dropped — it's 95% of the file weight and the adapters never consult it.
+ * Geometry is intentionally dropped.
+ * It's 95% of the file weight and the adapters never consult it.
  */
 export interface WOFRecord {
 	id: number
@@ -62,8 +63,10 @@ export interface WOFRecord {
 	/**
 	 * Localized name variants from `name:*` properties.
 	 *
-	 * Keys are the raw `name:eng_x_preferred` form. values are the first non-empty string from
-	 * the underlying array (WOF stores variants as arrays even when only one form is present).
+	 * Keys are the raw `name:eng_x_preferred` form.
+	 * Values are the first non-empty string from the underlying array
+	 * (WOF stores variants as arrays even when only one form is present).
+	 *
 	 * The canonical `wof:name` is not included here — adapters add a synthetic `"default"` slot for it.
 	 */
 	nameVariants: Map<string, string>
@@ -87,9 +90,13 @@ export function isCurrentFeature(props: Record<string, unknown>): boolean {
 }
 
 /**
- * Pull `name:*` localized variants off a WOF feature's properties. WOF stores variants as arrays (`["Saint
- * Petersburg"]`). we lift the first non-empty string. Multiple-value variants (rare. usually historical aliases) are
- * not split into separate rows by this helper — adapters can opt in by iterating the underlying array if they need it.
+ * Pull `name:*` localized variants off a WOF feature's properties.
+ *
+ * WOF stores variants as arrays (`["Saint Petersburg"]`).
+ * We lift the first non-empty string.
+ *
+ * Multiple-value variants (rare. Usually historical aliases) are not split into separate rows
+ * by this helper — adapters can opt in by iterating the underlying array if they need it.
  */
 export function extractNameVariants(props: Record<string, unknown>): Map<string, string> {
 	const out = new Map<string, string>()
@@ -226,8 +233,9 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
  * A cycle guard halts at any re-visit (defensive — WOF data is acyclic by construction
  * but corrupt fixtures shouldn't infinite-loop the adapter).
  *
- * Records whose ancestors aren't in `byID` (e.g. an FR locality whose region wasn't included
- * in the cloned repo set) get a shorter chain. the variant emission gracefully degrades.
+ * Records whose ancestors aren't in `byID` (e.g. An FR locality whose region wasn't
+ * included in the cloned repo set) get a shorter chain.
+ * The variant emission gracefully degrades.
  *
  * `wof-admin-jp`'s `chainOf` walks the same parent-child relation over SQLite `spr`
  * rows with an outside-the-preloaded-set fallback query — a different substrate

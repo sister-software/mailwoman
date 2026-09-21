@@ -25,7 +25,7 @@
  */
 export interface TokenSpan {
 	/**
-	 * The token text, possibly normalized (case unchanged here. tokenizers may differ).
+	 * The token text, possibly normalized (case unchanged here. Tokenizers may differ).
 	 */
 	text: string
 
@@ -58,7 +58,7 @@ export interface Tokenizer {
  * and **not** emitted as a token.
  *
  * The resulting spans cover the original string only on token regions.
- * in-between regions belong to no token.
+ * In-between regions belong to no token.
  *
  * This is intentionally lossy at the edges (alignment can still label every meaningful span).
  * A future SentencePiece tokenizer will preserve all bytes via byte-fallback.
@@ -94,9 +94,10 @@ const HAN = /\p{Script=Han}/u
 /**
  * Whitespace tokenizer for Latin runs, one token PER character for Han runs.
  *
- * The CJK sibling model is character-level (CharCNN), so a per-character token is the
- * unit it labels. the Latin tail of a mixed row (`赵光三分场二十九队, Heilongjiang, China`)
- * keeps the word tokens the Latin aligner has always used.
+ * The CJK sibling model is character-level (CharCNN), so a per-character token is the unit it labels.
+ * The Latin tail of a mixed row (`赵光三分场二十九队, Heilongjiang, China`) keeps the
+ * word tokens the Latin aligner has always used.
+ *
  * Spans still come back as `[start, end)` offsets over the source string,
  * so the aligner's span-overlap rule needs no change.
  */

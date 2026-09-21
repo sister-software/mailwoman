@@ -52,8 +52,9 @@ type ManifestFile = Record<string, unknown> & { path: string; source?: string }
  * for its file list and its size.
  *
  * Every corpus built before that date carries them, here and on the Modal volume,
- * and a built corpus is an immutable artifact — so a reader accepts either spelling
- * and a writer emits only the current one.
+ * and a built corpus is an immutable artifact.
+ * So a reader accepts either spelling and a writer emits only the current one.
+ *
  * Spelled by concatenation because the word is banned in this tree and the ratchet's baseline is zero.
  */
 const PRE_RENAME_FILES_KEY = `sh${"ards"}` as const

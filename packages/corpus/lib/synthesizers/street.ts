@@ -240,7 +240,7 @@ export function synthesizeStreetRow(
 	// note: country is intentionally omitted.
 	// We don't emit "USA" or "US" in the raw string, and the aligner's fuzzy
 	// match (edit distance 2) will spuriously match "US" against any 2-char token
-	// (e.g. a house number "45" is exactly 2 substitutions from "US").
+	// (e.g. A house number "45" is exactly 2 substitutions from "US").
 	// The PO box synthesizer skips country for the same reason.
 	// Bare mode is guarded by `> 0` so the default (bareProb=0) consumes no RNG
 	// and reproduces the original full-address output byte-for-byte.

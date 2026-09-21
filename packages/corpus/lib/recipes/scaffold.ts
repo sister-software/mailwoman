@@ -20,8 +20,7 @@ import { stableSourceIDFromParts } from "#adapters/utils"
 import { alignRow } from "#utils"
 
 /**
- * {@link stableSourceIDFromParts} under the name the recipes use: arbitrary disambiguator keys (e.g. a variant index
- * `v`) that aren't `ComponentTag`s, which is how the legacy builders kept per-variant ids unique.
+ * {@link stableSourceIDFromParts} under the name the recipes use: arbitrary disambiguator keys (e.g. A variant index `v`) that aren't `ComponentTag`s, which is how the legacy builders kept per-variant ids unique.
  */
 export function recipeSourceID(adapterID: string, parts: Record<string, string | undefined>): string {
 	return stableSourceIDFromParts(adapterID, parts)
@@ -30,10 +29,12 @@ export function recipeSourceID(adapterID: string, parts: Record<string, string |
 /**
  * Where a country's convention writes the postcode inside the `«locality», «region»[, «country»]` admin tail.
  *
- * Position changes the tag assigned to the same digits. On the shipped model, `Heladería Frappé Manía, Avenida Country
- * Club, Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number` and loses the locality into the street,
- * while the identical row written `… 6001 Barcelona, Anzoátegui, Venezuela` tags it `postcode` and recovers `locality:
- * Barcelona`. So a recipe emitting one placement teaches one family of countries.
+ * Position changes the tag assigned to the same digits.
+ * On the shipped model, `Heladería Frappé Manía, Avenida Country Club, Barcelona 6001, Anzoátegui, Venezuela`
+ * tags `6001` as `house_number` and loses the locality into the street, while the identical row written
+ * `… 6001 Barcelona, Anzoátegui, Venezuela` tags it `postcode` and recovers `locality: Barcelona`.
+ *
+ * So a recipe emitting one placement teaches one family of countries.
  *
  * Each is attested by a gauntlet board row, which is the bar for adding another:
  *
@@ -100,7 +101,7 @@ export type CSVRecord = Record<string, string | undefined>
  * break — `us/ia/statewide.csv` has 12, all unit designators like `"#2\n#2"` —
  * and every consumer synthesizes one-line address text from these cells with no guard,
  * because until that parse landed no value could carry one.
- * Collapsing keeps the record (the address is fine. the source's line break is not part of it)
+ * Collapsing keeps the record (the address is fine. The source's line break is not part of it)
  * without emitting a training row with a newline inside it.
  *
  * Only `\r` and `\n`, deliberately — not `\s`.
@@ -131,13 +132,16 @@ export function withoutLineBreaks(record: CSVRecord): CSVRecord {
  * Read a CSV as header-keyed records.
  *
  * Returns the spliterator's own {@linkcode AsyncSequence}, so a caller composes
- * `take`/`drop`/`filter` onto it — those ops fuse into one pull loop, and a `take`
- * that is satisfied closes the source's file handle on the way out.
- * Wrapping this in an `async function*` costs an async frame per row and takes those ops away. don't.
+ * `take`/`drop`/`filter` onto it.
+ * Those ops fuse into one pull loop, and a `take` that is satisfied closes the
+ * source's file handle on the way out.
  *
- * A source at or below the spliterator's 128 KiB bulk threshold is read whole
- * and parsed by the synchronous engine, so this is also the right reader for small
- * sources — there is no buffered variant to reach for.
+ * Wrapping this in an `async function*` costs an async frame per row and takes those ops away.
+ * Don't.
+ *
+ * A source at or below the spliterator's 128 KiB bulk threshold is read whole and parsed
+ * by the synchronous engine, so this is also the right reader for small sources.
+ * There is no buffered variant to reach for.
  *
  * @category CSV
  */
@@ -153,8 +157,9 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  * A lab holds the archives for the countries it has built, so a recipe naming ten
  * sources routinely finds three, and the `unzip -p` subprocesses these replaced behaved
  * the same way by accident — a non-zero exit warned and returned no rows.
- * A recipe that ends up with no tuples at all still throws. that is the case
- * where the cache rather than the recipe, is the problem.
+ * A recipe that ends up with no tuples at all still throws.
+ *
+ * That is the case where the cache rather than the recipe, is the problem.
  *
  * @category CSV
  */
@@ -180,14 +185,16 @@ export const SYNTHETIC_TUPLE_LICENSE = "Synthetic — derived from CC-BY / publi
 /**
  * The surface key shared by the Norwegian recipes (`no-fragment`, `no-street-led`).
  *
- * Must match the Norwegian digit board's `norm_surface`: NFC, lowercase, collapse whitespace —
- * and keep diacritics. fr-fragment's norm strips them (NFD + combining-mark removal),
- * which is right for French but would collapse `Tømmerlien` → `tommerlien` here.
+ * Must match the Norwegian digit board's `norm_surface`: NFC, lowercase,
+ * collapse whitespace — and keep diacritics.
+ * Fr-fragment's norm strips them (NFD + combining-mark removal), which is right for French
+ * but would collapse `Tømmerlien` → `tommerlien` here.
+ *
  * Therefore, a recipe's exclusion check would never match the board's reserved `tømmerlien`
  * and the train/eval split would leak silently.
  *
- * Diacritic street heads (…vegen/…veien with ø/å/æ) are the whole point of those
- * recipes' boundary. folding them away is not an option.
+ * Diacritic street heads (…vegen/…veien with ø/å/æ) are the whole point of those recipes' boundary.
+ * Folding them away is not an option.
  */
 export const foldNOSurface = (value: string): string =>
 	value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
@@ -203,8 +210,7 @@ export interface OATupleSource {
 /**
  * The four base fields every OA tuple reader extracts.
  *
- * `postcode` is `""` when the row carries none and
- * {@link ReadOATuplesOptions.requirePostcode} is unset.
+ * `postcode` is `""` when the row carries none and {@link ReadOATuplesOptions.requirePostcode} is unset.
  */
 export interface OATupleFields {
 	house_number: string
@@ -215,8 +221,10 @@ export interface OATupleFields {
 
 export interface ReadOATuplesOptions<T> {
 	/**
-	 * Stop after this many distinct tuples — the `break` closes the reader and releases
-	 * the archive, which is what the GB-scale countrywide extracts need.
+	 * Stop after this many distinct tuples.
+	 *
+	 * The `break` closes the reader and releases the archive, which is what the
+	 * GB-scale countrywide extracts need.
 	 */
 	limit?: number
 	/**
@@ -312,7 +320,9 @@ export interface CanonicalRecipeRow {
 export type WriteRecipeLine = (line: string) => void
 
 /**
- * A sink the recipe writer emits into — `WriteStream` satisfies it, and so does a test's array push.
+ * A sink the recipe writer emits into.
+ *
+ * `WriteStream` satisfies it, and so does a test's array push.
  */
 export interface RecipeLineSink {
 	write(chunk: string): unknown
@@ -336,7 +346,7 @@ export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
  * Run a canonical row through `alignRow` and, on success, write the `LabeledRow`
  * (+ `synth_method` / `synth_base_id`) as one jsonl line.
  *
- * Returns true if emitted, false if alignment quarantined it.
+ * @returns true if emitted, false if alignment quarantined it.
  */
 export function alignAndWrite(
 	write: WriteRecipeLine,
@@ -402,8 +412,9 @@ export interface RecipeOptions {
 	/**
 	 * `locale`: tri-state override of the per-part `districtAsLocality` mapping for this invocation.
 	 *
-	 * `undefined` (flag absent) leaves each `COUNTRY_SOURCES` part's own value untouched —
-	 * every existing locale build stays byte-identical.
+	 * `undefined` (flag absent) leaves each `COUNTRY_SOURCES` part's own value untouched.
+	 * Every existing locale build stays byte-identical.
+	 *
 	 * `true`/`false` forces that value on every part read this run.
 	 *
 	 * ES's pedanía recipe output (`synth-es-pedania`) additionally uses `true` to select
@@ -447,8 +458,7 @@ export interface RecipeOptions {
 	/**
 	 * `sub-venue`: the sub-venue lexicon JSON.
 	 *
-	 * Default = the committed `corpus/data/sub-venue-lexicon.json`, resolved through the
-	 * package manifest so it works from the source tree and from `out/`.
+	 * Default = the committed `corpus/data/sub-venue-lexicon.json`, resolved through the package manifest so it works from the source tree and from `out/`.
 	 */
 	lexicon?: string
 	/**

@@ -90,7 +90,7 @@ export const US_FIPS_STATE: Readonly<Record<string, USStateInfo>> = Object.freez
 /**
  * Lookup helper.
  *
- * Returns null when the FIPS code isn't recognized.
+ * @returns null when the FIPS code isn't recognized.
  */
 export function lookupFipsState(statefp: string | null | undefined): USStateInfo | null {
 	if (!statefp) return null
@@ -112,7 +112,8 @@ export const US_STATE_BY_ABBREVIATION: Readonly<Record<string, USStateInfo>> = O
 /**
  * Lookup helper for adapters carrying 2-char USPS abbreviations (`"CA"`, `"VT"`).
  *
- * Case-folded. null for any value outside the 50 states + DC + the five primary territories.
+ * Case-folded.
+ * Null for any value outside the 50 states + DC + the five primary territories.
  */
 export function lookupStateAbbreviation(abbreviation: string | null | undefined): USStateInfo | null {
 	if (!abbreviation) return null

@@ -64,10 +64,10 @@ export interface LocaleTemplate {
 /**
  * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header).
  *
- * Exported so recipes (the `po-box-cedex` recipe, `recipes/po/box/cedex/recipe.ts`)
- * can reuse this list as the single source of truth for non-US leaders
- * instead of re-deriving it — the US recipe additionally has `@mailwoman/codex/us`
- * `US_PO_BOX_DESIGNATORS`/`isPOBox` as its matcher-side truth.
+ * Exported so recipes (the `po-box-cedex` recipe, `recipes/po/box/cedex/recipe.ts`) can reuse
+ * this list as the single source of truth for non-US leaders instead of re-deriving it.
+ * The US recipe additionally has `@mailwoman/codex/us` `US_PO_BOX_DESIGNATORS`/`isPOBox`
+ * as its matcher-side truth.
  */
 export const PO_BOX_LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 	{
@@ -119,7 +119,7 @@ const LEADERS_BY_LOCALE = new Map<string, LocaleTemplate>(PO_BOX_LOCALE_TEMPLATE
 /**
  * Inject number-format noise into a box number string.
  *
- * Returns the noisy variant or the original (10% probability of noise per the design).
+ * @returns the noisy variant or the original (10% probability of noise per the design).
  */
 export function maybeNoisifyBoxNumber(num: string, random: () => number): string {
 	if (random() > 0.1) return num
@@ -141,8 +141,8 @@ export function maybeNoisifyBoxNumber(num: string, random: () => number): string
 /**
  * Compose a PO box phrase like "PO Box 123" or "PMB 200".
  *
- * Returns both the phrase and the canonical leader+number so the BIO aligner
- * can mark the entire span as `po_box`.
+ * @returns both the phrase and the canonical leader+number so the BIO aligner
+ *   can mark the entire span as `po_box`.
  */
 export function composePoBoxPhrase(leader: string, number: string): string {
 	return `${leader} ${number}`
@@ -175,7 +175,8 @@ export interface PoBoxSynthesisOpts {
 }
 
 function defaultPickNumber(random: () => number): string {
-	// 70% of real PO boxes are 1-5 digits. long ones exist (USPS allows up to ~6 digits).
+	// 70% of real PO boxes are 1-5 digits.
+	// Long ones exist (USPS allows up to ~6 digits).
 	// Bands: 1-99, 100-999, 1000-9999, 10000-99999 (span 90_000 — the street generator's 89_999 is its own).
 	return tieredNumber(random, [
 		{ cutoff: 0.3, base: 1, span: 99 },
@@ -219,9 +220,9 @@ export function synthesizePoBoxRow(
 
 	if (!iso2) return null
 
-	// The country's own layout writes the order and the separators, and reports
-	// which components it printed — France absorbs the region into its postcode line,
-	// so a row that emitted `region` regardless would carry a label whose text is not in `raw`.
+	// The country's own layout writes the order and the separators, and reports which components it printed.
+	// France absorbs the region into its postcode line, so a row that emitted `region`
+	// regardless would carry a label whose text is not in `raw`.
 	const adminTail: ComponentDict = { locality: base.locality, postcode: base.postcode }
 
 	if (base.region?.trim()) {
@@ -346,9 +347,12 @@ export function supportedLocales(): ReadonlyArray<string> {
 }
 
 /**
- * Locales whose standard PO-box delivery line carries no region token — the address reads `<po_box>, <locality>
- * <postcode>` with nothing between locality and postcode (#517). NZ is the canonical case (`Private Bag 12, Auckland
- * 1010`). Consumers (e.g. the synth-po-box adapter) use this to avoid discarding region-less input tuples for these
- * locales as "missing region".
+ * Locales whose standard PO-box delivery line carries no region token.
+ *
+ * The address reads `<po_box>, <locality> <postcode>` with nothing between locality and postcode (#517).
+ * NZ is the canonical case (`Private Bag 12, Auckland 1010`).
+ *
+ * Consumers (e.g. The synth-po-box adapter) use this to avoid discarding region-less
+ * input tuples for these locales as "missing region".
  */
 export const REGION_OPTIONAL_LOCALES: ReadonlySet<string> = new Set(["en-NZ"])

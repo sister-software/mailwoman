@@ -254,7 +254,7 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 		const manifestPath = join(chunkDir, `${chunkName}.manifest.json`)
 
 		// Idempotency: skip a chunk only if it's marked complete (the bash version's bug was
-		// marking complete on partial-failure runs. we now only set complete after a clean fetch).
+		// marking complete on partial-failure runs. We now only set complete after a clean fetch).
 		if (await pathExists(chunkPath)) {
 			const recorded = await readManifest<ChunkManifest>(manifestPath)
 
