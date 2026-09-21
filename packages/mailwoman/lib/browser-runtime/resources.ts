@@ -76,6 +76,11 @@ export const DATA_CREDITS: readonly DataCredit[] = [
 		artifacts: "the POI layer",
 	},
 	{
+		publisher: "United States Department of Transportation",
+		termsURL: "https://www.transportation.gov/gis/national-address-database/national-address-database-nad-disclaimer",
+		artifacts: "the US address-point extracts, whose National Address Database rows are 68.2% of them",
+	},
+	{
 		publisher: "United States Census Bureau",
 		termsURL: "https://www.census.gov/programs-surveys/geography/about/terms-of-use.html",
 		artifacts: "the US interpolation extracts",
@@ -83,7 +88,7 @@ export const DATA_CREDITS: readonly DataCredit[] = [
 	{
 		publisher: "OpenAddresses",
 		termsURL: "https://openaddresses.io/",
-		artifacts: "the US address-point extracts",
+		artifacts: "the US address-point extracts, 31.5% of them from 119 county and state bodies",
 	},
 	{
 		publisher: "DINUM and IGN, for Base Adresse Nationale",
