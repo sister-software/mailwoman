@@ -1,14 +1,14 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "0b450d851c3c9bf8360743bc18015f1155237cbd219613890d718db3ba83bc36",
+	"contentDigest": "2dc7949e8779b80ec865e86d27887fd85bbde5bd6eac113cc56e6beb26a81c7f",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
 		"authoredAt": "2026-09-18",
 		"notes": "Derived from a research pass over all 249 ISO 3166-1 codes plus the operational code XK. The eight global discovery lookups the pass repeated once per jurisdiction are the package README's procedure, not rows here."
 	},
-	"unresolved": ["addressRole", "upstreamLineage", "coverage"],
+	"unresolved": ["addressRole", "upstreamLineage", "coverage", "personalDataReview"],
 	"licenses": [
 		{
 			"licenseID": "unchecked-access-free-au-au-business-legal-1",

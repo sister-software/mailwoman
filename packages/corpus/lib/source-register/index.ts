@@ -29,6 +29,7 @@ export {
 	LicenseReviewState,
 	OperationPermission,
 	PermissionBasis,
+	PersonalDataReading,
 	REGISTER_SECTORS,
 	ResearchPass,
 	SourceGeometry,

@@ -24,6 +24,7 @@ import {
 	JurisdictionResearchState,
 	LicenseReviewState,
 	OperationPermission,
+	PersonalDataReading,
 	REGISTER_SECTORS,
 	SourceGeometry,
 	SourceOperation,
@@ -52,6 +53,7 @@ const BACKBONE_STATES = new Set<string>(Object.values(BackboneState))
 const RESEARCH_STATES = new Set<string>(Object.values(JurisdictionResearchState))
 const SOURCE_STATUSES = new Set<string>(Object.values(SourceStatus))
 const GEOMETRIES = new Set<string>(Object.values(SourceGeometry))
+const PERSONAL_DATA_READINGS = new Set<string>(Object.values(PersonalDataReading))
 
 /**
  * The label the mechanical exclude filter in `@mailwoman/corpus/utils/license` reads for a decision, or `undefined`
@@ -195,7 +197,34 @@ export function ingestEligibilityProblems(
 		problems.push("no coverage has been measured")
 	}
 
+	problems.push(...personalDataProblems(source))
+
 	return problems
+}
+
+/**
+ * What a source's personal-data review leaves in the way of ingest.
+ *
+ * A license grant and a personal-data reading are separate questions, so an elected grant never answers this one. The
+ * absence of a review refuses rather than admits, which is the property the whole register is built on: nobody having
+ * looked is a different answer from somebody having looked and found nothing.
+ */
+function personalDataProblems(source: AddressSourceRecord): string[] {
+	const review = source.personalDataReview
+
+	if (!review) {
+		return ["no personal-data review is recorded, and an unexamined publication is not one found clear"]
+	}
+
+	if (review.reading === PersonalDataReading.Present) {
+		return [`the publication carries records about identifiable people and no analysis is complete: ${review.because}`]
+	}
+
+	if (review.reading === PersonalDataReading.Assessed && !review.record) {
+		return ["the personal-data review reads assessed and names no record, so the analysis cannot be read"]
+	}
+
+	return []
 }
 
 /**
@@ -436,6 +465,22 @@ function auditSources(register: AddressSourceRegister): string[] {
 
 		if (!declared.has(source.license)) {
 			problems.push(`source ${named} points at an undeclared license decision`)
+		}
+
+		const review = source.personalDataReview
+
+		if (review && !PERSONAL_DATA_READINGS.has(review.reading)) {
+			problems.push(`source ${named} carries an unknown personal-data reading`)
+		}
+
+		if (review && !review.because) {
+			problems.push(
+				`source ${named} carries a personal-data review stating no reason, so nothing records what it rests on`
+			)
+		}
+
+		if (review?.reading === PersonalDataReading.Assessed && !review.record) {
+			problems.push(`source ${named} is assessed for personal data and names no record of the analysis`)
 		}
 
 		if (!source.asserts.length) {

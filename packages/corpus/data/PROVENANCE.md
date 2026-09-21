@@ -78,7 +78,8 @@ pass saying it did not determine the field per source.
 
 The build reads the columns and refuses to carry a placeholder, because
 `ingestEligibilityProblems` reports "no address role is resolved" and "no coverage has been
-measured" as two of the three blockers that apply to every source in the register. Writing `varies`
+measured" as two of the four blockers that apply to every source in the register. The other two are
+the unreviewed license decision and the absent personal-data review. Writing `varies`
 into `addressRole` would stop both from firing while resolving nothing. A value outside the declared
 placeholder set is carried through, and an `address_role` that is neither a placeholder nor an
 `AddressRole` fails the build rather than being dropped.

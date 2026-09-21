@@ -18,6 +18,7 @@ import {
 	OperationPermission,
 	PermissionBasis,
 	permissionFor,
+	PersonalDataReading,
 	readAddressSourceRegister,
 	registerContentDigest,
 	ResearchPass,
@@ -124,7 +125,7 @@ describe("auditAddressSourceRegister", () => {
 		// `readAddressSourceRegister` checks it, against a file a build wrote.
 		contentDigest: "",
 		provenance: { source: "test" },
-		unresolved: ["addressRole", "upstreamLineage", "coverage"],
+		unresolved: ["addressRole", "upstreamLineage", "coverage", "personalDataReview"],
 		licenses: [
 			{
 				licenseID: "unchecked-test",
@@ -332,7 +333,7 @@ describe("applyLicenseDecisions", () => {
 			version: "0.0.0",
 			contentDigest: "",
 			provenance: { source: "test" },
-			unresolved: ["addressRole", "upstreamLineage", "coverage"],
+			unresolved: ["addressRole", "upstreamLineage", "coverage", "personalDataReview"],
 			licenses,
 			jurisdictions: [
 				{
@@ -403,6 +404,10 @@ describe("permission by operation", () => {
 		researchPass: ResearchPass.WebResearch,
 		addressRole: AddressRole.Premise,
 		coverage: "measured national, 2026-09",
+		personalDataReview: {
+			reading: PersonalDataReading.Absent,
+			because: "every row names a licensed facility rather than a person",
+		},
 	}
 
 	function registerWith(decision: LicenseDecision): AddressSourceRegister {
@@ -505,6 +510,66 @@ describe("permission by operation", () => {
 		expect(ingestEligibilityProblems(source, registerWith(refusesCommercial), MODEL_RELEASE_OPERATIONS)).toEqual([
 			"the elected terms read refused for commercial-sublicense: §6 restricts reuse to non-commercial purposes",
 		])
+	})
+
+	/**
+	 * A license grant answers whether the publisher permits an act. Whether the records are about identifiable people is
+	 * governed by different law and reached through a different analysis, so an elected grant must not admit a source
+	 * whose personal-data question nobody asked.
+	 */
+	describe("personal data", () => {
+		const { personalDataReview: _reviewed, ...unreviewed } = source
+
+		it("refuses a source nobody reviewed, even on terms that permit every act ingest performs", () => {
+			expect(ingestEligibilityProblems(unreviewed, registerWith(ingestOnly))).toEqual([
+				"no personal-data review is recorded, and an unexamined publication is not one found clear",
+			])
+		})
+
+		it("refuses a publication found to carry records about identifiable people, and quotes the finding", () => {
+			const soleTraders: AddressSourceRecord = {
+				...source,
+				personalDataReview: {
+					reading: PersonalDataReading.Present,
+					because: "the register publishes entrepreneurs individuels, whose business address is a home address",
+				},
+			}
+
+			expect(ingestEligibilityProblems(soleTraders, registerWith(ingestOnly))).toEqual([
+				"the publication carries records about identifiable people and no analysis is complete: the register publishes entrepreneurs individuels, whose business address is a home address",
+			])
+		})
+
+		it("admits a publication whose analysis is complete and recorded", () => {
+			const assessed: AddressSourceRecord = {
+				...source,
+				personalDataReview: {
+					reading: PersonalDataReading.Assessed,
+					because: "sole-trader rows are excluded at extract and the remainder name legal entities",
+					record: "docs/records/privacy/testland-health-2026-09.md",
+				},
+			}
+
+			expect(ingestEligibilityProblems(assessed, registerWith(ingestOnly))).toEqual([])
+		})
+
+		it("refuses an assessment that names no record, so nobody can read the analysis", () => {
+			const unrecorded: AddressSourceRecord = {
+				...source,
+				personalDataReview: {
+					reading: PersonalDataReading.Assessed,
+					because: "somebody looked",
+				},
+			}
+
+			expect(ingestEligibilityProblems(unrecorded, registerWith(ingestOnly))).toEqual([
+				"the personal-data review reads assessed and names no record, so the analysis cannot be read",
+			])
+
+			expect(auditAddressSourceRegister({ ...registerWith(ingestOnly), sources: [unrecorded] })).toContain(
+				'source "zz-health-1" is assessed for personal data and names no record of the analysis'
+			)
+		})
 	})
 
 	it("fails the audit when a permission names no basis", () => {

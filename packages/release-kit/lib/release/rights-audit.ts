@@ -51,6 +51,18 @@ export interface SourceRegisterAudit {
 }
 
 /**
+ * A refusal message with each quoted identifier replaced, so refusals that differ only by which license or source they
+ * name group together.
+ *
+ * Without this the license refusal never appears: every one of the 389 sources points at its own license id, so the
+ * message is 389 distinct strings of one source each and a report showing the largest refusals omits the blocker that
+ * covers every row. `example` carries one message unaltered, so a reader still sees the real wording.
+ */
+function refusalShape(message: string): string {
+	return message.replaceAll(/"[^"]*"/gu, "<id>")
+}
+
+/**
  * One published weights package's state, as the release path needs it.
  */
 export interface PackageRightsAudit {
@@ -156,7 +168,7 @@ const FROZEN_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
  */
 async function auditRegister(): Promise<SourceRegisterAudit> {
 	const register = await readAddressSourceRegister()
-	const refusals = new Map<string, number>()
+	const refusals = new Map<string, { example: string; sources: number }>()
 	let eligible = 0
 
 	for (const source of register.sources) {
@@ -169,15 +181,18 @@ async function auditRegister(): Promise<SourceRegisterAudit> {
 		}
 
 		for (const problem of problems) {
-			refusals.set(problem, (refusals.get(problem) ?? 0) + 1)
+			const shape = refusalShape(problem)
+			const seen = refusals.get(shape)
+
+			refusals.set(shape, { example: seen?.example ?? problem, sources: (seen?.sources ?? 0) + 1 })
 		}
 	}
 
 	return {
 		sources: register.sources.length,
 		eligible,
-		refusals: [...refusals.entries()]
-			.map(([because, sources]) => ({ because, sources }))
+		refusals: [...refusals.values()]
+			.map(({ example, sources }) => ({ because: example, sources }))
 			.toSorted((left, right) => right.sources - left.sources || left.because.localeCompare(right.because)),
 	}
 }

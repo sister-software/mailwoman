@@ -375,6 +375,50 @@ export interface JurisdictionRecord {
 /**
  * One address source, in one sector, in one jurisdiction.
  */
+/**
+ * What a review found about personal data in one publication.
+ *
+ * A license decision answers whether the publisher permits an act. It says nothing about whether the records are about
+ * identifiable people, which is a separate question governed by a different body of law and reached through a different
+ * analysis. Several candidate registers carry both: the French SIRENE enterprise register publishes sole traders, where
+ * the business address is a natural person's address.
+ *
+ * `Present` is the reading that blocks. `Absent` and `Assessed` admit a source, and the three stay apart because a
+ * publication nobody has looked at must not read the same as one somebody read and found clear.
+ */
+export const PersonalDataReading = {
+	/**
+	 * A review found no record about an identified or identifiable natural person.
+	 */
+	Absent: "absent",
+	/**
+	 * A review found such records and no analysis of them is complete.
+	 */
+	Present: "present",
+	/**
+	 * Such records are present and an analysis of them is recorded, which {@link PersonalDataReview.record} names.
+	 */
+	Assessed: "assessed",
+} as const
+
+export type PersonalDataReading = (typeof PersonalDataReading)[keyof typeof PersonalDataReading]
+
+/**
+ * One publication's personal-data review.
+ */
+export interface PersonalDataReview {
+	reading: PersonalDataReading
+	/**
+	 * What the reading rests on, in the reviewer's words. Read by a later reviewer rather than re-derived.
+	 */
+	because: string
+	/**
+	 * Where the completed analysis is recorded. Required when the reading is `assessed`, because an assessment nobody can
+	 * open is a claim with no source.
+	 */
+	record?: string
+}
+
 export interface AddressSourceRecord {
 	/**
 	 * `<iso2 lowercased>-<sector>-<n>`, stable across rebuilds of the register.
@@ -423,6 +467,11 @@ export interface AddressSourceRecord {
 	 * A measured coverage statement. A national portal is not evidence of national coverage.
 	 */
 	coverage?: string
+	/**
+	 * What a review found about personal data in this publication. Absent while nobody has reviewed it, which refuses the
+	 * source for ingest: a publication nobody examined is not a publication found clear.
+	 */
+	personalDataReview?: PersonalDataReview
 }
 
 /**
@@ -432,7 +481,7 @@ export interface AddressSourceRecord {
  * field listed here must be absent from every row, and a field not listed must be present on at least one. That makes
  * the claim checkable instead of a sentence somebody has to keep true by hand.
  */
-export const UNRESOLVED_FIELDS = ["addressRole", "upstreamLineage", "coverage"] as const
+export const UNRESOLVED_FIELDS = ["addressRole", "upstreamLineage", "coverage", "personalDataReview"] as const
 
 export type UnresolvedField = (typeof UNRESOLVED_FIELDS)[number]
 

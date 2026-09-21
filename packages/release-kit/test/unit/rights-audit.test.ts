@@ -74,10 +74,20 @@ describe("auditRights", () => {
 		expect(audit.unresolved.join("\n")).toMatch(/12 of 12 packages have no frozen training manifest/u)
 	})
 
-	it("reports that the register admits no source, with the refusal that covers the most", () => {
+	it("reports that the register admits no source, and names every blocker that covers all of them", () => {
 		expect(audit.register.sources).toBe(389)
 		expect(audit.register.eligible).toBe(0)
-		expect(audit.register.refusals[0]?.sources).toBe(389)
+
+		// Four blockers cover all 389, and the license one reaches the report only because refusals that differ by a
+		// quoted identifier are grouped: each source points at its own license id, so ungrouped it is 389 messages of
+		// one source each and never appears among the largest refusals.
+		const universal = audit.register.refusals.filter((refusal) => refusal.sources === 389)
+
+		expect(universal).toHaveLength(4)
+
+		expect(universal.map((refusal) => refusal.because).join("\n")).toMatch(
+			/is unchecked[\S\s]*address role[\S\s]*coverage[\S\s]*personal-data/u
+		)
 	})
 
 	it("renders a report that ends on what it leaves open", () => {
