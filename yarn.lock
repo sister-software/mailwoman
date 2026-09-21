@@ -6777,6 +6777,7 @@ __metadata:
   dependencies:
     "@duckdb/node-api": "npm:^1.5.5-r.4"
     "@mailwoman/core": "workspace:*"
+    "@oxlint/plugins": "npm:1.83.0"
     "@release-it-plugins/workspaces": "npm:^6.0.0"
     "@sister.software/oxfmt-config": "npm:^13.0.1"
     "@sister.software/oxlint-config": "npm:^13.0.1"
@@ -8288,6 +8289,13 @@ __metadata:
   version: 1.81.0
   resolution: "@oxlint/binding-win32-x64-msvc@npm:1.81.0"
   conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@oxlint/plugins@npm:1.83.0":
+  version: 1.83.0
+  resolution: "@oxlint/plugins@npm:1.83.0"
+  checksum: 10/f86e37b26dda0c57c2cd815d52a47759d11ca010c67c9a6391be4a0abc4ae04d5262d5fa4862f66a0f9db6fa1cb16fd39a870a7a3146b32e3f4309f735f4d4a9
   languageName: node
   linkType: hard
 
