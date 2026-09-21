@@ -129,7 +129,7 @@
 		"path-ts": "^2.4.1",
 		"semver": "^7.8.5",
 		"spliterator": "^7.11.0",
-		"zod": "^4.5.4",
+		"zod": "^4.6.5",
 		"zx": "^8.8.5"
 	},
 	"devDependencies": {

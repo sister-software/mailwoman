@@ -320,16 +320,16 @@
 		"@mailwoman/tiger": "workspace:*",
 		"apache-arrow": "^21.2.0",
 		"fastest-levenshtein": "^1.0.16",
-		"parquet-wasm": "0.7.2",
+		"parquet-wasm": "0.8.0",
 		"path-ts": "^2.4.1",
 		"read-excel-file": "^9.3.10",
 		"spliterator": "^7.11.0",
-		"zod": "^4.5.4"
+		"zod": "^4.6.5"
 	},
 	"devDependencies": {
-		"@types/node": "^26.4.1",
+		"@types/node": "^26.6.1",
 		"adm-zip": "^0.6.1",
-		"kysely": "^0.29.5",
+		"kysely": "^0.29.6",
 		"write-excel-file": "^4.1.1"
 	}
 }

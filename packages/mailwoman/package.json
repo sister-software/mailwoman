@@ -495,12 +495,12 @@
 		"d3-scale-chromatic": "^3.1.0",
 		"h3-js": "^4.5.0",
 		"ink": "^7.1.1",
-		"kysely": "^0.29.5",
+		"kysely": "^0.29.6",
 		"onnxruntime-node": "^1.29.0",
 		"path-ts": "^2.4.1",
-		"react": "^19.2.8",
+		"react": "^19.3.0",
 		"spliterator": "^7.11.0",
-		"zod": "^4.5.4",
+		"zod": "^4.6.5",
 		"zx": "^8.8.5"
 	},
 	"devDependencies": {

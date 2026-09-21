@@ -84,10 +84,10 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"@turf/boolean-contains": "^7.4.0",
-		"kysely": "^0.29.5",
+		"kysely": "^0.29.6",
 		"path-ts": "^2.4.1",
 		"spliterator": "^7.11.0",
-		"type-fest": "^5.9.0"
+		"type-fest": "^5.10.0"
 	},
 	"devDependencies": {
 		"@protomaps/basemaps": "^5.7.2"
