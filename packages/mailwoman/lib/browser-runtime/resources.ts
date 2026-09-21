@@ -18,7 +18,8 @@ import type { FSTMatcherLike, FSTProvenanceLike } from "#browser-runtime/types"
  * R2 + Cloudflare gives a stable clean URL, raw byte ranges (no gzip mangling),
  * configurable cors, low RTT, and free egress — the combination GitHub Pages
  * (force-gzips ranges) and HF (per-request presigned redirect) couldn't.
- * The DBs are range-loaded via sql.js-httpvfs from here. the rest is one-shot full-fetch.
+ * The DBs are range-loaded via sql.js-httpvfs from here.
+ * The rest is one-shot full-fetch.
  *
  * Mirrors the old HF key layout, so this was a base-URL swap.
  */
@@ -216,7 +217,7 @@ export function poiLayerURL(): string {
  * (`address_point`, ≤10 m) or a calibrated interp estimate — not a city centroid.
  *
  * `vi` = US Virgin Islands.
- * (`il` is the whole state incl. Cook. the separate `il-cook` build extract is not hosted.)
+ * (`il` is the whole state incl. Cook. The separate `il-cook` build extract is not hosted.)
  */
 export const HOSTED_STREET_SLUGS = new Set([
 	"ak",
@@ -386,12 +387,13 @@ export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
  * Generation stamp for the published pair-index binaries — the `<version>` segment
  * in `mailwoman/pair-index/<version>/pair-index-<cc>.bin`.
  *
- * The binaries carry the same `public, max-age=604800, immutable` Cache-Control as every
- * other bucket object, so a rebuilt index needs a fresh URL — the discipline
- * {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION} and
- * {@link NATIONAL_STREET_EXTRACT_VERSION} already follow. Bump this the same commit the binaries are rebuild and
- * re-uploaded. the mutable pointer is this constant inside the (revalidated)
- * Pages bundle, never the binaries.
+ * The binaries carry the same `public, max-age=604800, immutable` Cache-Control as
+ * every other bucket object, so a rebuilt index needs a fresh URL.
+ * The discipline {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION}
+ * and {@link NATIONAL_STREET_EXTRACT_VERSION} already follow.
+ *
+ * Bump this the same commit the binaries are rebuild and re-uploaded.
+ * The mutable pointer is this constant inside the (revalidated) Pages bundle, never the binaries.
  *
  * Why a site-side constant rather than a `releases.json` field: the PIX reader
  * that consumes these binaries (`@mailwoman/neural`'s `pair-index-resolver`) is
@@ -455,13 +457,14 @@ export async function loadFSTGazetteer(
  * the #1315 street-context check's signal source, shipped as a weights-package sibling
  * (so it rides the same per-version R2 asset layout as the model).
  *
- * Node runtimes rebuild this matcher from the bundled libpostal dictionaries
- * when the artifact is absent. the browser cannot, which is exactly the node/browser
- * behavior fork the sealed artifact closes.
+ * Node runtimes rebuild this matcher from the bundled libpostal dictionaries when the artifact is absent.
+ * The browser cannot, which is exactly the node/browser behavior fork the sealed artifact closes.
+ *
  * Returns `null` when the release predates the artifact (http 404) — the demo
  * then parses without the check, exactly as before.
  *
- * A present-but-corrupt binary throws. the caller's tolerant catch treats that as absent too.
+ * A present-but-corrupt binary throws.
+ * The caller's tolerant catch treats that as absent too.
  */
 export async function loadStreetMorphologyFST(locale: string, version: string): Promise<FSTMatcherLike | null> {
 	const res = await fetchWithRetry(assetURL(locale, version, "fst-street-morphology.bin"))

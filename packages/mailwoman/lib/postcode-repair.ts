@@ -45,8 +45,8 @@ const MIN_FORMAT_CONFIDENCE = 0.9
 /**
  * The tags the misread produces.
  *
- * A node with any other tag overlapping the format span vetoes the repair —
- * the rung replaces a wrong reading, never a plausible one.
+ * A node with any other tag overlapping the format span vetoes the repair.
+ * The rung replaces a wrong reading, never a plausible one.
  */
 const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street",
@@ -54,8 +54,7 @@ const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street_suffix",
 	"street_prefix",
 	"unit",
-	// "PO33 4DE" — the Portsmouth/Isle of Wight area reads as a PO Box. A real PO Box surface ("PO Box
-	// 123") can never match a letter-digit postcode format span, so the format check keeps this safe.
+	// "PO33 4DE" — the Portsmouth/Isle of Wight area reads as a PO Box. A real PO Box surface ("PO Box 123") can never match a letter-digit postcode format span, so the format check keeps this safe.
 	"po_box",
 ])
 
@@ -71,9 +70,9 @@ function within(node: AddressNode, start: number, end: number): boolean {
  * Repair the tree IN place when a high-confidence letter-digit postcode span carries no
  * postcode node and every node inside it is a street/house-number-family misread.
  *
- * Returns `true` when a repair was applied.
- * Idempotent: a tree that already carries a postcode node over the span never repairs,
- * so the alternate-register retry path cannot double-fire.
+ * @returns `true` when a repair was applied.
+ *   Idempotent: a tree that already carries a postcode node over the span never repairs,
+ *   so the alternate-register retry path cannot double-fire.
  */
 export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape): boolean {
 	let repaired = false

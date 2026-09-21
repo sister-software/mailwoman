@@ -24,9 +24,9 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 /**
  * A transport that puts one local file at `bucket/key`.
  *
- * The default is rclone over the `RCLONE_S3_*` credentials. a caller with another credential
- * (the planetary pipeline uploads through wrangler and the account's API token) injects
- * its own, and the key layout, the size report and the served-at line stay shared.
+ * The default is rclone over the `RCLONE_S3_*` credentials.
+ * A caller with another credential (the planetary pipeline uploads through wrangler and the account's API token)
+ * injects its own, and the key layout, the size report and the served-at line stay shared.
  */
 export type UploadTransport = (target: { file: string; bucket: string; key: string }) => Promise<void>
 

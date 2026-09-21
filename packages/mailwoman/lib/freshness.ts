@@ -38,15 +38,16 @@ export const ManifestState = {
 	 */
 	Present: "present",
 	/**
-	 * The artifact is on disk and carries no manifest — it predates the layer interface,
-	 * and takes its stamp on the next rebuild.
+	 * The artifact is on disk and carries no manifest.
+	 *
+	 * It predates the layer interface, and takes its stamp on the next rebuild.
 	 */
 	Absent: "absent",
 	/**
 	 * The artifact could not be opened, or its manifest could not be dated.
 	 *
-	 * Reported apart from
-	 * {@link ManifestState.Absent} because it is a fault to chase rather than a rebuild to schedule.
+	 * Reported apart from {@link ManifestState.Absent} because it is a fault to chase
+	 * rather than a rebuild to schedule.
 	 */
 	Unreadable: "unreadable",
 } as const
@@ -81,7 +82,9 @@ export interface ArtifactFreshness {
 	 */
 	built?: string
 	/**
-	 * `<layer name>@<layer version>` — the artifact's own identity, which is what a reproduction asks for.
+	 * `<layer name>@<layer version>`.
+	 *
+	 * The artifact's own identity, which is what a reproduction asks for.
 	 */
 	version?: string
 	/**
@@ -103,8 +106,9 @@ export interface FreshnessReport {
 	 *
 	 * Absent when nothing was stamped.
 	 * A `/status` that answered with the boot time, the newest mtime, or an epoch
-	 * zero would be answering a question it cannot answer — the field is optional in
-	 * the Nominatim interface precisely so it can be left out.
+	 * zero would be answering a question it cannot answer.
+	 *
+	 * The field is optional in the Nominatim interface precisely so it can be left out.
 	 */
 	dataUpdated?: string
 	artifacts: ArtifactFreshness[]

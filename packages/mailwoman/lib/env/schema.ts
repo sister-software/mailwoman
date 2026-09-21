@@ -31,16 +31,16 @@ const RuntimeEnvSchema = z.object({
 	// In-process concurrency cannot overlap a geocode: `onnxruntime-node`'s `session.run()` blocks the
 	// JS thread instead of releasing to the libuv pool, and `node:sqlite` reads are synchronous.
 	// Measured 1.00x flat from 1→16 workers on both parse and full geocode.
-	// Don't reintroduce it without re-measuring. worker threads (see `mailwoman/geocode-stream.ts`)
-	// are the only change that moves this in Node.
+	// Don't reintroduce it without re-measuring.
+	// Worker threads (see `mailwoman/geocode-stream.ts`) are the only change that moves this in Node.
 	// Receipts: `docs/engineering/reference/performance.mdx`.
 	MAILWOMAN_BATCH_MAX: blankAsAbsent(z.coerce.number().int().positive().default(1000)).meta({
 		title: "Batch row limit",
 		description: "Maximum rows accepted by `POST /v1/batch` when running `mailwoman serve`.",
 	}),
-	// The informal-standard color kill switch (no-color.org). chalk/Ink honor it
-	// on their own. declared here because the debug view's map pane emits raw SGR
-	// and must consult it itself — the schema strips unlisted vars.
+	// The informal-standard color kill switch (no-color.org). chalk/Ink honor it on their own.
+	// Declared here because the debug view's map pane emits raw SGR and must consult
+	// it itself — the schema strips unlisted vars.
 	NO_COLOR: z.string().optional().meta({
 		title: "Disable color",
 		description: "Disables ANSI color output, following the informal NO_COLOR convention.",
@@ -119,9 +119,11 @@ export const PrivateMailwomanEnvSchema = z.object({
 		description: "S3-compatible secret access key used by rclone when publishing tile and corpus artifacts.",
 	}),
 	/**
-	 * Per-run secret salting the published case identifiers of a controlled premise-linkage evaluation (`mailwoman eval
-	 * premise-linkage`). A secret rather than config: two reports salted alike can be joined row for row into a longer
-	 * record of the same premises, which is the linkage the identifier exists to prevent.
+	 * Per-run secret salting the published case identifiers of a controlled premise-linkage
+	 * evaluation (`mailwoman eval premise-linkage`).
+	 *
+	 * A secret rather than config: two reports salted alike can be joined row for row into a
+	 * longer record of the same premises, which is the linkage the identifier exists to prevent.
 	 */
 	MAILWOMAN_PREMISE_LINKAGE_SALT: z.string().optional().meta({
 		title: "Premise-linkage salt",

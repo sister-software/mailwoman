@@ -54,7 +54,8 @@ async function releaseQuietly(): Promise<void> {
 	try {
 		await removePathIfPresent(LOCK_DIR)
 	} catch {
-		// Another worker is mid-removal or mid-write. its stale check will reclaim.
+		// Another worker is mid-removal or mid-write.
+		// Its stale check will reclaim.
 	}
 }
 
@@ -68,7 +69,8 @@ async function staleHolder(): Promise<boolean> {
 
 		return false
 	} catch {
-		// Unreadable pid file, or a pid that no longer exists — either way the holder is gone.
+		// Unreadable pid file, or a pid that no longer exists.
+		// Either way the holder is gone.
 		return true
 	}
 }

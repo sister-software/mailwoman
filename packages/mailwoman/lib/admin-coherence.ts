@@ -113,13 +113,14 @@ export interface AdminCoherenceWinner {
 }
 
 /**
- * Fold both sides of every name comparison through the shared candidate.db `name_key` normalizer —
- * one function, both sides, so the check can never disagree with the index it's checking against.
+ * Fold both sides of every name comparison through the shared candidate.db `name_key` normalizer.
  *
- * The region-side expansion ({@link regionKeys}) and the region band ({@link REGION_CLASS_PLACETYPES})
- * moved down to `@mailwoman/resolver-wof-sqlite/region-keys` when the #1717 stage-2
- * containment re-rank became their second consumer — the dependency points that way,
- * and the #861 rule wants one function rather than a mirrored copy.
+ * One function, both sides, so the check can never disagree with the index it's checking against.
+ *
+ * The region-side expansion ({@link regionKeys}) and the region band
+ * ({@link REGION_CLASS_PLACETYPES}) moved down to `@mailwoman/resolver-wof-sqlite/region-keys`
+ * when the #1717 stage-2 containment re-rank became their second consumer.
+ * The dependency points that way, and the #861 rule wants one function rather than a mirrored copy.
  */
 function foldKey(name: string): string {
 	return normalizeLocalityForKey(name)
@@ -162,9 +163,9 @@ function intersects(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
  * The winner's country-class evidence keys: the resolver-stamped alpha-2 expanded through the
  * codex tables into every spelling the check can vouch for, plus any country-placetype ancestors.
  *
- * One assembly, two consumers — the country verdict compares against it,
- * and the region verdict's mislabel bridge (below) does too, so the two verdicts can
- * never disagree about what counts as country-class evidence.
+ * One assembly, two consumers.
+ * The country verdict compares against it, and the region verdict's mislabel bridge (below)
+ * does too, so the two verdicts can never disagree about what counts as country-class evidence.
  */
 function winnerCountryKeys(winner: AdminCoherenceWinner): Set<string> {
 	const winnerKeys = new Set<string>()
@@ -200,10 +201,10 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 
 	if (!parsed) return "unstated"
 
-	// The winner is a region resolution — the qualifier is the thing that resolved,
-	// so containment degenerates to identity.
+	// The winner is a region resolution.
+	// The qualifier is the thing that resolved, so containment degenerates to identity.
 	// The resolver's own binding (alias-aware, unlike the fold) is the match evidence here.
-	// re-checking it under fold-equality would misread every alias hit as a contradiction.
+	// Re-checking it under fold-equality would misread every alias hit as a contradiction.
 	if (winner.tag === "region") return "confirmed"
 
 	const regionAncestors = (winner.ancestry ?? []).filter((a) => REGION_CLASS_PLACETYPES.has(a.placetype))
@@ -214,12 +215,13 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 		if (intersects(parsedKeys, regionKeys(ancestor.name, iso))) return "confirmed"
 	}
 
-	// The mislabel bridge: the region slot sometimes holds a country name — "Moscow, Russia" parses
-	// region="Russia", "Batumi, Georgia" parses region="Georgia" (the shape the flag's own first
-	// triage counted at ~4 of 16 contradictions). Containment still holds when the winner's
-	// country-class evidence matches the qualifier, so `contradicted` would be the wrong claim about
-	// the geography. Checked after the region band (a genuine region match never depends on it) and
-	// monotone by construction: it can only move `contradicted`/`unverifiable` → `confirmed`.
+	// The mislabel bridge: the region slot sometimes holds a country name — "Moscow,
+	// Russia" parses region="Russia", "Batumi, Georgia" parses region="Georgia"
+	// (the shape the flag's own first triage counted at ~4 of 16 contradictions).
+	// Containment still holds when the winner's country-class evidence matches the qualifier,
+	// so `contradicted` would be the wrong claim about the geography.
+	// Checked after the region band (a genuine region match never depends on it) and monotone
+	// by construction: it can only move `contradicted`/`unverifiable` → `confirmed`.
 	if (intersects(countryKeys(parsed), winnerCountryKeys(winner))) return "confirmed"
 
 	return regionAncestors.length ? "contradicted" : "unverifiable"
@@ -242,8 +244,9 @@ function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenc
 /**
  * Assess the parsed admin qualifiers against the winning candidate.
  *
- * Pure — no I/O, no lookup, no side effects. call it once at result assembly, only when a
- * winner exists (no winner → no report, absence meaning "nothing resolved to check against").
+ * Pure — no I/O, no lookup, no side effects.
+ * Call it once at result assembly, only when a winner exists
+ * (no winner → no report, absence meaning "nothing resolved to check against").
  */
 export function assessAdminCoherence(
 	parsed: ParsedAdminQualifiers,
@@ -293,8 +296,9 @@ export function adminCoherenceField(
 		{
 			tag: picked.tag,
 			countryCode: (picked.metadata?.["resolver_country"] as string | undefined)?.trim() || undefined,
-			// The resolver's #404 stamp — present when the geocode path opted in and the backend's artifact
-			// carries an ancestors table. its absence is what the verdicts report as `unverifiable`.
+			// The resolver's #404 stamp — present when the geocode path opted in
+			// and the backend's artifact carries an ancestors table.
+			// Its absence is what the verdicts report as `unverifiable`.
 			ancestry: picked.metadata?.["ancestors"] as readonly AdminAncestor[] | undefined,
 		}
 	)

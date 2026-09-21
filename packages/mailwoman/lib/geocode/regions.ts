@@ -25,8 +25,10 @@ export interface RegionDatabases {
 	addressPoints?: AddressPointLookup
 	interpolation?: InterpolationLookup
 	/**
-	 * Derived street-centroid tier (#1042) — a `group BY street` roll-up of a national
-	 * register's rooftop points, keyed for a street-only query (no house number).
+	 * Derived street-centroid tier (#1042).
+	 *
+	 * A `group BY street` roll-up of a national register's rooftop points,
+	 * keyed for a street-only query (no house number).
 	 *
 	 * Supplied today only by `@mailwoman/ban`'s `BANRegionDatabaseProvider` for FR
 	 * (the US per-state {@link RegionDatabaseProvider} never opens one), so the tier
@@ -58,8 +60,8 @@ export const US_STATE_SLUG_BY_NAME: ReadonlyMap<string, string> = new Map(
 /**
  * Lowercase 2-letter state slug from a parsed region value / resolver name, else null.
  *
- * Accepts the abbreviation register ("MI") and the full-name register ("Michigan", "New York") —
- * a user spells the state however they spell it, and a null here silently drops the
+ * Accepts the abbreviation register ("MI") and the full-name register ("Michigan", "New York").
+ * A user spells the state however they spell it, and a null here silently drops the
  * whole per-state street tier (situs + interpolation), which is how "…, Fraser MI"
  * reached the register while "…, Brooklyn New York" never loaded a database.
  */
@@ -174,10 +176,11 @@ export interface RegionDatabaseCacheEntry extends RegionDatabases {
  * Call {@link close} when done to release every cached handle.
  *
  * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per call:
- * {@linkcode warm} awaits the #2029-async manifest read + `resolveDatabasePath` for
- * every US state/territory slug and records what exists; `for` then consults that map.
- * Prefer {@linkcode RegionDatabaseProvider.create}, which constructs and warms
- * before answering — the constructor itself is private because it cannot await those probes.
+ * {@linkcode warm} awaits the #2029-async manifest read + `resolveDatabasePath` for every
+ * US state/territory slug and records what exists; `for` then consults that map.
+ * Prefer {@linkcode RegionDatabaseProvider.create}, which constructs and warms before answering.
+ *
+ * The constructor itself is private because it cannot await those probes.
  */
 export class RegionDatabaseProvider implements Disposable {
 	readonly #factory: RegionDatabaseFactory
@@ -268,9 +271,9 @@ export class RegionDatabaseProvider implements Disposable {
 	 * Re-read the manifest, re-probe the database paths, and atomically swap any
 	 * cached database whose resolved path changed.
 	 *
-	 * New requests see the new version immediately. the old handles are retired
-	 * and closed on the next reload (one-generation grace — safe because find() is synchronous,
-	 * so no in-flight query can still hold a handle once a request yields).
+	 * New requests see the new version immediately.
+	 * The old handles are retired and closed on the next reload (one-generation grace — safe because
+	 * find() is synchronous, so no in-flight query can still hold a handle once a request yields).
 	 * Returns the new version map.
 	 */
 	async reload(): Promise<DataReleaseManifest | null> {

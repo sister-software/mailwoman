@@ -74,8 +74,8 @@ export interface CountryCoverage {
 	 */
 	corpusRows: number
 	/**
-	 * Of those, rows carrying a `street` or `house_number` label — the ones that
-	 * teach an address rather than a name.
+	 * Of those, rows carrying a `street` or `house_number` label.
+	 * The ones that teach an address rather than a name.
 	 */
 	corpusStreetRows: number
 	/**
@@ -133,7 +133,8 @@ export interface CoverageMismatches {
 	 */
 	packageWithoutTraining: string[]
 	/**
-	 * Trained (admitted, with rows) but no board row checks it — a locale nothing would catch regressing.
+	 * Trained (admitted, with rows) but no board row checks it.
+	 * A locale nothing would catch regressing.
 	 */
 	trainedButUnmeasured: string[]
 	/**
@@ -331,10 +332,10 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
  * Whether two corpus-version strings name the same corpus.
  *
  * The two sides are written differently by construction: a manifest's `corpus_version`
- * carries the `v` prefix the directory does (`v0.31.0-region-code-and-unit`), and
- * {@linkcode readConfiguredCorpusVersion} strips it. Comparing the raw strings declares
- * a mismatch on every correct pairing, and a warning that fires when nothing is wrong
- * stops being read — which costs the reading it exists to give.
+ * carries the `v` prefix the directory does (`v0.31.0-region-code-and-unit`),
+ * and {@linkcode readConfiguredCorpusVersion} strips it.
+ * Comparing the raw strings declares a mismatch on every correct pairing, and a warning that
+ * fires when nothing is wrong stops being read — which costs the reading it exists to give.
  */
 export function sameCorpusVersion(a: string, b: string): boolean {
 	const bare = (version: string): string => version.trim().replace(/^v/, "")
@@ -350,10 +351,11 @@ export function sameCorpusVersion(a: string, b: string): boolean {
  * it counted, the config names the corpus it trains on, and nothing made them agree.
  *
  * A census of `0.26.0` answering a question about a `0.27.0` run reports a country's
- * rows as zero when the newer corpus added them — an absence indistinguishable from
- * the real thing, which is the failure this whole file exists to prevent.
+ * rows as zero when the newer corpus added them.
+ * An absence indistinguishable from the real thing, which is the failure this whole file exists to prevent.
  *
- * Returns undefined when the config states no corpus_dir. that is "cannot check", not "they match".
+ * @returns undefined when the config states no corpus_dir.
+ *   That is "cannot check", not "they match".
  */
 export async function readConfiguredCorpusVersion(configPath: string): Promise<string | undefined> {
 	if (!(await pathExists(configPath))) return undefined
@@ -384,9 +386,9 @@ export async function readConfiguredCorpusVersion(configPath: string): Promise<s
  * rather than becoming the boolean `false`.
  * That retyping is the exact bug this file exists partly to surface, so the reader must not reproduce it.
  *
- * Throws when the path names no file.
- * An empty set means the config admits no country, and a caller cannot tell that apart
- * from a config nobody could open once both answer the same value.
+ * @throws when the path names no file.
+ *   An empty set means the config admits no country, and a caller cannot tell that
+ *   apart from a config nobody could open once both answer the same value.
  */
 export async function readAdmittedCountries(configPath: string): Promise<Set<string>> {
 	if (!(await pathExists(configPath))) {
@@ -486,7 +488,8 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 		const tables = allRows<{ name: string }>(db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'"))
 		const names = new Set(tables.map((t) => t.name))
 
-		// The serving DB is the candidate table. the older admin build exposes `spr`.
+		// The serving DB is the candidate table.
+		// The older admin build exposes `spr`.
 		// Support both rather than hard-coding one, because which is live is expressed in a symlink and changes.
 		const sql = names.has("candidate")
 			? "SELECT c.code AS cc, COUNT(*) AS n FROM candidate x JOIN country_codes c ON c.id = x.country_id GROUP BY c.code"
@@ -710,9 +713,10 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	const gazetteerPath = options.gazetteerPath ?? String(dataRootPath("wof", "candidate.db"))
 	const gazetteer = await readGazetteerCoverage(gazetteerPath)
 	// derived from `release.config.json` rather than restated here.
-	// This was a hand-written eleven-entry table, and `repo-health`'s `locale-tables` check exists
-	// because it was a second copy of the config's two lists. the check still holds every other
-	// country→locale table against the config, and this one can no longer disagree with it.
+	// This was a hand-written eleven-entry table, and `repo-health`'s `locale-tables`
+	// check exists because it was a second copy of the config's two lists.
+	// The check still holds every other country→locale table against the config,
+	// and this one can no longer disagree with it.
 	const weightsPackages = weightsPackageByCountry(await readReleaseConfig())
 
 	const all = new Set<string>([

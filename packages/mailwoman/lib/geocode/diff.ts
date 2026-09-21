@@ -42,8 +42,8 @@ export interface SpanResolution {
 	/**
 	 * How many candidates the retrieval considered.
 	 *
-	 * Breadth rather than correctness — a span that won from 40 is less settled than
-	 * one that won from 2, even when both picked the same place.
+	 * Breadth rather than correctness.
+	 * A span that won from 40 is less settled than one that won from 2, even when both picked the same place.
 	 */
 	candidates?: number
 }
@@ -219,7 +219,7 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
  * Metres below which a coordinate move is rendered as "same point".
  *
  * Int8 quantization and float round-tripping move a centroid by centimetres.
- * rendering that as a delta buries the moves that matter.
+ * Rendering that as a delta buries the moves that matter.
  */
 export const SAME_POINT_M = 1
 

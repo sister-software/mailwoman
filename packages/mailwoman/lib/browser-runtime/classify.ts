@@ -10,7 +10,8 @@
 
 // static on purpose: a dynamic-import destructure of this barrel gets tree-shaken by webpack's
 // usedExports analysis, which once shipped the WOF cascade as `TypeError: i is not a function`.
-// Static named imports are fully analyzable. do not re-dynamize.
+// Static named imports are fully analyzable.
+// Do not re-dynamize.
 import { type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
@@ -55,17 +56,19 @@ export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 /**
  * Demo preset addresses.
  *
- * Each carries its `country` (ISO code) — the placetype-pair-prior country pin
- * (#1278 phase 2's `{country}` override): structural routing (locale-check) genuinely
- * can't detect every locale from text shape (NZ's 4-digit postcode isn't distinctive),
- * so a preset pins its country and {@link pairCountryForInput} hands it to
- * `selectPairIndexForText` when the input still equals the preset text.
+ * Each carries its `country` (ISO code).
+ * The placetype-pair-prior country pin (#1278 phase 2's `{country}` override):
+ * structural routing (locale-check) genuinely can't detect every locale from text shape
+ * (NZ's 4-digit postcode isn't distinctive), so a preset pins its country and {@link pairCountryForInput}
+ * hands it to `selectPairIndexForText` when the input still equals the preset text.
+ *
  * Free-typed input (no exact preset match) falls back to structural detection — GB-with-postcode auto-fires.
  *
  * NZ free-text stays unfired (the accepted consequence of structural routing, the #1308-sibling reality).
  *
- * See also `PIPELINE_PRESETS` in `@mailwoman/react` (pipeline/presets.ts) — the package
- * carries its own preset list. reconciling the two lists is tracked outside this file.
+ * See also `PIPELINE_PRESETS` in `@mailwoman/react` (pipeline/presets.ts).
+ * The package carries its own preset list.
+ * Reconciling the two lists is tracked outside this file.
  */
 export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country: string }> = [
 	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500", country: "us" },
@@ -78,20 +81,13 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin", country: "de" },
 	{ label: "Berlin city-state (int'l order)", address: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
 	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris", country: "fr" },
-	// GB dependent_locality (placetype-pair-prior arc) — a verified `gb-golden` board row
-	// (mailwoman/eval-harness/fixtures/gb-golden.jsonl). "Henbury" flips to dependent_locality via the en-gb pair-index
-	// prior. the `country: "gb"` pin selects it even if the user edits away the postcode (and structural detection also
-	// picks gb while the UK postcode is present).
+	// GB dependent_locality (placetype-pair-prior arc) — a verified `gb-golden` board row (mailwoman/eval-harness/fixtures/gb-golden.jsonl). "Henbury" flips to dependent_locality via the en-gb pair-index prior. The `country: "gb"` pin selects it even if the user edits away the postcode (and structural detection also picks gb while the UK postcode is present).
 	{
 		label: "Macclesfield (GB dependent_locality)",
 		address: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD",
 		country: "gb",
 	},
-	// NZ dependent_locality (en-nz pair-prior arc) — Plimmerton is a suburb (dependent_locality) of Porirua. Postcode
-	// deliberately omitted: a trailing "Porirua 5026" puts the postcode in the parent's comma-field, so segment mode
-	// folds "porirua 5026" and misses the index's bare "porirua" key (the shipped GB artifact misses the same way) —
-	// tracked as #1308. The `country: "nz"` pin is required here: locale-check can't structurally detect NZ (4-digit
-	// postcode isn't a distinctive format), so only the preset pin selects the nz index — free-typed NZ stays unfired.
+	// NZ dependent_locality (en-nz pair-prior arc). Plimmerton is a suburb (dependent_locality) of Porirua. Postcode deliberately omitted: a trailing "Porirua 5026" puts the postcode in the parent's comma-field, so segment mode folds "porirua 5026" and misses the index's bare "porirua" key (the shipped GB artifact misses the same way) — tracked as #1308. The `country: "nz"` pin is required here: locale-check can't structurally detect NZ (4-digit postcode isn't a distinctive format), so only the preset pin selects the nz index — free-typed NZ stays unfired.
 	{ label: "Plimmerton (NZ dependent_locality)", address: "35 Steyne Avenue, Plimmerton, Porirua", country: "nz" },
 ]
 
@@ -153,9 +149,7 @@ export interface ClassifyStageResult {
  * The caller owns resolution (`runCascade`, plus the map path's street tier / anchor fallback)
  * and the staged `onStage` progress ticks.
  *
- * #1278: this is the single point the locale-check pre-parse plugs into. A future per-parse country / conventions hint
- * is threaded through {@link ClassifyStageDeps} into the `runPipeline` call here —
- * one insertion point for both paths.
+ * #1278: this is the single point the locale-check pre-parse plugs into. A future per-parse country / conventions hint is threaded through {@link ClassifyStageDeps} into the `runPipeline` call here — one insertion point for both paths.
  */
 /**
  * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278),
@@ -182,16 +176,18 @@ export interface ClassifyStageDeps {
 	 * The optional street-morphology matcher — the #1315 street-context check's signal source.
 	 *
 	 * The check only fires when both this and `fst` are wired (core's `streetContextRequirementFor`),
-	 * matching the node runtime pipeline's default. a `null`/omitted matcher parses
-	 * with the check off, exactly the pre-artifact demo behavior.
+	 * matching the node runtime pipeline's default.
+	 * A `null`/omitted matcher parses with the check off, exactly the pre-artifact demo behavior.
 	 */
 	streetMorphology?: FSTMatcherLike | null
 	/**
-	 * The per-parse placetype-pair prior selector (#1278) — the loaded {@link SelectPairIndex},
-	 * or `null`/omitted when no pair index was staged for this release.
+	 * The per-parse placetype-pair prior selector (#1278).
 	 *
-	 * When present, `runClassifyStage` calls it on the input and passes the result as the pipeline's
-	 * `placetypePair` opt. the GB/NZ dependent_locality prior fires while US/FR inputs stay byte-stable.
+	 * The loaded {@link SelectPairIndex}, or `null`/omitted when no pair index was staged for this release.
+	 *
+	 * When present, `runClassifyStage` calls it on the input and passes the result
+	 * as the pipeline's `placetypePair` opt.
+	 * The GB/NZ dependent_locality prior fires while US/FR inputs stay byte-stable.
 	 */
 	selectPairIndex?: SelectPairIndex | null
 }
@@ -233,9 +229,10 @@ export async function runClassifyStage(
 	// Placetype-pair prior (#1278): pick the per-parse index.
 	// A preset pins its country (pairCountryForInput) — the phase-2 `{country}` override —
 	// so a locale structural routing can't detect from text (NZ: 4-digit postcode isn't distinctive)
-	// still fires while the input equals the preset text. the moment the user edits, the pin drops
-	// and we fall back to structural locale-check detection (GB-with-postcode auto-fires. NZ
-	// free-text stays unfired, the accepted #1308-sibling consequence of structural routing).
+	// still fires while the input equals the preset text.
+	// The moment the user edits, the pin drops and we fall back to structural
+	// locale-check detection (GB-with-postcode auto-fires. NZ free-text stays unfired,
+	// the accepted #1308-sibling consequence of structural routing).
 	// No index / no match → undefined → byte-stable.
 	const pinnedCountry = pairCountryForInput(input)
 	const placetypePair = deps.selectPairIndex?.(input, pinnedCountry ? { country: pinnedCountry } : undefined)
@@ -249,8 +246,7 @@ export async function runClassifyStage(
 			fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
 			streetMorphology: (deps.streetMorphology ?? undefined) as Parameters<typeof runPipeline>[1]["streetMorphology"],
 		},
-		// Decision A endpoint default: the demo search box is a human typing fragments — the
-		// fragmented register, so the evidence-bundle channels feed (once a bundle model ships).
+		// Decision A endpoint default: the demo search box is a human typing fragments — the fragmented register, so the evidence-bundle channels feed (once a bundle model ships).
 		{ inputMode: "fragmented", ...(placetypePair !== undefined ? { placetypePair } : {}) }
 	)
 

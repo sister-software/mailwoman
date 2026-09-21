@@ -17,13 +17,15 @@
 const ATTEMPTS = 3
 
 /**
- * The pause before the second attempt. each later attempt doubles it.
+ * The pause before the second attempt.
+ * Each later attempt doubles it.
  */
 const FIRST_RETRY_DELAY_MS = 500
 
 /**
- * `fetch` rejects with a `TypeError` for a network failure (a reset, a refused connection, a cors refusal)
- * and never for an http status. a body read that loses its connection rejects the same way.
+ * `fetch` rejects with a `TypeError` for a network failure
+ * (a reset, a refused connection, a cors refusal) and never for an http status.
+ * A body read that loses its connection rejects the same way.
  *
  * Anything else (an abort, a bad URL) is not retried.
  */
@@ -152,9 +154,10 @@ export async function fetchWithRetry(
 /**
  * `fetchWithRetry` bound to a progress callback, as a plain `fetch` a loader can take for its `fetchImpl`.
  *
- * A loader is handed one `fetchImpl` and uses it for every artifact, so `shouldReport` decides
- * which request's bytes are worth a bar — the model is 38 MB and the lexicons are kilobytes,
- * and reporting all of them would make the bar jump backwards as each small one starts.
+ * A loader is handed one `fetchImpl` and uses it for every artifact, so `shouldReport`
+ * decides which request's bytes are worth a bar.
+ * The model is 38 MB and the lexicons are kilobytes, and reporting all of them would
+ * make the bar jump backwards as each small one starts.
  */
 export function fetchWithProgress(onBytes: BytesReceived, shouldReport: (url: string) => boolean): typeof fetch {
 	return (input, init) => {

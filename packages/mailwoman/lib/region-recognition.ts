@@ -90,9 +90,10 @@ const STATE_SLUGS = new Set(Object.values(STATE_NAME_TO_SLUG))
 /**
  * Is `value` exactly a US state — its full name (e.g. "Texas") or 2-letter abbreviation (e.g. "TX")?
  *
- * Returns the canonical 2-letter slug, else null.
- * Whitespace/case-insensitive. rejects anything with extra tokens
- * (so a city literally named after a state is only matched when it's the whole value).
+ * @returns the canonical 2-letter slug, else null.
+ *   Whitespace/case-insensitive.
+ *   Rejects anything with extra tokens (so a city literally named after a state
+ *   is only matched when it's the whole value).
  */
 export function usStateSlug(value: string): string | null {
 	const v = value.trim().toLowerCase()
@@ -125,7 +126,7 @@ function makeRegionNode(value: string, start: number, end: number, confidence: n
  * Correct one container (an array of sibling nodes — the tree roots, or a node's children)
  * for the two mis-tag shapes, producing `region → locality` nesting.
  *
- * Returns the rewritten sibling list.
+ * @returns the rewritten sibling list.
  */
 function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 	// First split a merged "City, ST" locality into region(ST) then locality(City).
@@ -136,8 +137,8 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 		afterSplit.push(split ?? node)
 	}
 
-	// Second, turn a locality whose whole value is a state into a region. sibling
-	// city localities nest under it.
+	// Second, turn a locality whose whole value is a state into a region.
+	// Sibling city localities nest under it.
 	// Only fires when there's exactly one state-name locality in the container
 	// (the unambiguous "City, State" shape) — avoids reparenting in a multi-locality list we don't model. ---
 	const stateIdxs = afterSplit
@@ -175,7 +176,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
  * Split a `locality` whose value is `"City, ST"` (state in the last comma segment)
  * into region(ST) → locality(City).
  *
- * Returns null when the tail isn't a US state.
+ * @returns null when the tail isn't a US state.
  */
 function splitMergedCityState(node: AddressNode): AddressNode | null {
 	const comma = node.value.lastIndexOf(",")
@@ -186,7 +187,8 @@ function splitMergedCityState(node: AddressNode): AddressNode | null {
 	const slug = usStateSlug(tail)
 
 	if (!slug || !head) return null
-	// Offsets: the region covers the tail's char span. the locality the head's (relative to node.start).
+	// Offsets: the region covers the tail's char span.
+	// The locality the head's (relative to node.start).
 	const tailStart = node.start + node.value.indexOf(tail, comma)
 	const region = makeRegionNode(tail, tailStart, node.end, node.confidence)
 

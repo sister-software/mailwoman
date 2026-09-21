@@ -91,8 +91,9 @@ export interface CoverageBuildOptions {
 	 */
 	optimisticGamma: number
 	/**
-	 * GeoNames postal file (12-col tab-separated) — the global postcode coverage
-	 * signal that clears the "where do we need data" holes.
+	 * GeoNames postal file (12-col tab-separated).
+	 *
+	 * The global postcode coverage signal that clears the "where do we need data" holes.
 	 *
 	 * Null to skip.
 	 * A postcode is area-scale, so centroids bin at the domain resolution and a domain
@@ -215,9 +216,12 @@ function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number,
 /**
  * True if a GeoJSON polygon's outer ring spans >180° of longitude — the antimeridian-wrap artifact.
  *
- * `h3_cell_to_boundary_wkt` emits unwrapped lon for cells straddling ±180, smearing a polygon across
- * the whole map. a normal hex spans a fraction of a degree, so a >180° span is unambiguously a wrap.
- * Cheaper than round-tripping through the spatial extension. covers AK/RU/FJ/NZ-Chathams.
+ * `h3_cell_to_boundary_wkt` emits unwrapped lon for cells straddling ±180,
+ * smearing a polygon across the whole map.
+ * A normal hex spans a fraction of a degree, so a >180° span is unambiguously a wrap.
+ *
+ * Cheaper than round-tripping through the spatial extension.
+ * Covers AK/RU/FJ/NZ-Chathams.
  */
 function antimeridianWrapped(geojson: string): boolean {
 	let min = Infinity
@@ -286,8 +290,8 @@ export async function buildCoverageTiles(
 		await duck.run(`ATTACH '${opts.wofDB}' AS wof (TYPE sqlite, READ_ONLY)`)
 	}
 
-	// data_pt: res-fine address-point counts. union all the RAW (lat, lon) across states
-	// and bin + count once in the outer query.
+	// data_pt: res-fine address-point counts.
+	// Union all the RAW (lat, lon) across states and bin + count once in the outer query.
 	// Do not pre-aggregate per union arm: DuckDB mis-binds structurally-identical aggregating sqlite
 	// subqueries to the first ATTACHed DB, collapsing every state onto the first one's cells.
 	// Raw-then-aggregate is correct.
@@ -299,7 +303,8 @@ export async function buildCoverageTiles(
 	)
 
 	// data_seg: res-fine street-segment counts.
-	// The geometry is a JSON coordinate array. bin its first vertex (a segment is ~block-length).
+	// The geometry is a JSON coordinate array.
+	// Bin its first vertex (a segment is ~block-length).
 	// Same raw-then-aggregate discipline as data_pt.
 	const segIdx = states.map((s, i) => (s.interp ? i : -1)).filter((i) => i >= 0)
 
@@ -413,8 +418,8 @@ export async function buildCoverageTiles(
 	// Build the global civilization-minus-coverage holes layer.
 	// The map's job worldwide: make it obvious where human civilization is and whether we cover it.
 	// A salient place we don't cover is a gray hole = work to do.
-	// We model it as fog = salience·(1−cov):
-	//   • salience ∈ [0,1] — WOF settlement places weighted by population/importance (a 1-ring halo), so
+	// We model it as fog = salience·(1−cov): • salience ∈ [0,1] — WOF settlement places
+	// weighted by population/importance (a 1-ring halo), so
 	//     a big uncovered city is a dark hole, a hamlet a faint one, the empty steppe nothing.
 	//   • cov ∈ [0,1] — postcode presence (GeoNames) clears the hole (a postcode = we can geocode here).
 	//     US is excluded — the rooftop fine map above already covers it at street level.
@@ -443,11 +448,12 @@ export async function buildCoverageTiles(
 
 		// sal: civilization salience per domain cell — WOF settlement places weighted by importance
 		// (Wikipedia notability via place_importance, with a population fallback baked in by build-importance).
-		// importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it is the salience:
+		// Importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it is the salience:
 		// a big uncovered city → dark hole, a hamlet → faint.
 		// Only places carrying a signal count as "civilization"
 		// (the unknown long tail is dropped rather than flagged as work-to-do).
-		// Each place spreads to a 1-ring halo. a cell's salience is the strongest place touching it.
+		// Each place spreads to a 1-ring halo.
+		// A cell's salience is the strongest place touching it.
 		await duck.run(`
 			CREATE TEMP TABLE sal AS
 			WITH places AS (
@@ -525,7 +531,8 @@ export async function buildCoverageTiles(
 		ndjsonPath,
 	]
 
-	// quiet: tippecanoe's stderr must not leak into the Ink render. we surface it only on failure.
+	// quiet: tippecanoe's stderr must not leak into the Ink render.
+	// We surface it only on failure.
 	const tip = await $({ nothrow: true, quiet: true })`tippecanoe ${tipArgs}`
 
 	if (tip.exitCode !== 0) {

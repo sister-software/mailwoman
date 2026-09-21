@@ -51,7 +51,7 @@ export interface ReleaseAssets {
 	fstProvenance: FSTProvenanceLike | null
 	/**
 	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity
-	 * fix (scope invariant 2: node runtimes wire this by default. the browser previously never could).
+	 * fix (scope invariant 2: node runtimes wire this by default. The browser previously never could).
 	 *
 	 * Loaded with the FST gazetteer because the check needs both
 	 * (core's `streetContextRequirementFor` only fires when the two stages are present).
@@ -66,8 +66,10 @@ export interface ReleaseAssets {
 	 */
 	lookup: MailwomanLookupLike | null
 	/**
-	 * Give this bundle's native memory back — the ONNX session's weights and arenas, which live
-	 * in the wasm heap outside the JavaScript heap and are not reclaimed by dropping this object.
+	 * Give this bundle's native memory back.
+	 *
+	 * The ONNX session's weights and arenas, which live in the wasm heap outside the
+	 * JavaScript heap and are not reclaimed by dropping this object.
 	 *
 	 * A host that loads a second bundle over a page's life (a version switch,
 	 * a backend-force toggle, compare mode) must call this on the one it is replacing.
@@ -157,7 +159,7 @@ export async function loadReleaseAssets(
 		diagnostics,
 		postcodeAnchorLookup,
 		selectPairIndexForText,
-		// `release` is the ReleaseInfo parameter in this scope. the classifier's disposer needs its own name.
+		// `release` is the ReleaseInfo parameter in this scope. The classifier's disposer needs its own name.
 		release: releaseClassifier,
 	} = (await loadNeuralClassifierFromURLs({
 		...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
@@ -165,8 +167,8 @@ export async function loadReleaseAssets(
 			forceWASM: progress.forceWASM,
 		}),
 		fetchImpl: modelFetch,
-		// Every published pair index is loaded. the loader keeps each live
-		// and `selectPairIndexForText` picks per parse.
+		// Every published pair index is loaded.
+		// The loader keeps each live and `selectPairIndexForText` picks per parse.
 		// Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
 		pairIndexURLs: pairIndexURLs(pairIndexBase),
 	})) as {
@@ -215,9 +217,9 @@ export async function loadReleaseAssets(
 			// FST not available for this version.
 		}
 
-		// The street-context check needs both matchers, so the morphology matcher is loaded
-		// only once the gazetteer FST is. a release that predates the artifact answers null
-		// and the parse runs with the check off.
+		// The street-context check needs both matchers, so the morphology matcher
+		// is loaded only once the gazetteer FST is.
+		// A release that predates the artifact answers null and the parse runs with the check off.
 		if (fstMatcher) {
 			try {
 				streetMorphologyMatcher = await loadStreetMorphologyFST(DEFAULT_LOCALE, release.version)

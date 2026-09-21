@@ -62,11 +62,7 @@ export interface POIExecutorOpts {
 	 * injected synchronously because this executor's return type (`POIIntentOutcome`, no Promise)
 	 * is called synchronously from `poi-intent.ts`'s `deps.execute`.
 	 *
-	 * Absent = no reverse geocoder wired (missing admin gazetteer db,
-	 * or `poiQueryKind: true` with no `poiDatabasePath`) — results carry no `ancestry`
-	 * key at all (house meaning-of-zero: absence rather than an empty array).
-	 * `runtime-pipeline.ts` wires a `WOFReverseGeocoder`-backed sync adapter. this module never
-	 * imports `@mailwoman/resolver-wof-sqlite` itself — stays pure/testable with a stub fn.
+	 * Absent = no reverse geocoder wired (missing admin gazetteer db, or `poiQueryKind: true` with no `poiDatabasePath`) — results carry no `ancestry` key at all (house meaning-of-zero: absence rather than an empty array). `runtime-pipeline.ts` wires a `WOFReverseGeocoder`-backed sync adapter. This module never imports `@mailwoman/resolver-wof-sqlite` itself — stays pure/testable with a stub fn.
 	 */
 	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined
 }
@@ -80,7 +76,7 @@ export interface POIExecutorOpts {
  *    Fires with no lookup configured at all (trivially: no db, no local rows possible)
  *    as well as with a lookup present that comes back empty for the category.
  * 2. `anchor_required` — a category/brand subject with a lookup present but no resolvable
- *    center (name subjects don't need one. the FTS path searches un-anchored).
+ *    center (name subjects don't need one. The FTS path searches un-anchored).
  * 3. No lookup + non-build-local subject → the bare intent, unchanged (intent-only mode).
  * 4. Otherwise: run `lookup.search(...)` and attach the mapped results.
  */
@@ -133,7 +129,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 		}
 
 		// Category branch: fan every canonical seed id in the union out over its Overture
-		// leaves (`supermarket` → grocery_store, …) and probe the lot in one search —
+		// leaves (`supermarket` → grocery_store, …) and probe the lot in one search.
 		// `#searchKRing` unions the rows per cell and distance-sorts the pool,
 		// so the answer is decided by the candidate ordering the reader already owns
 		// and no weight, boost or per-category preference is applied here.
@@ -194,14 +190,16 @@ function resolveCanonicalByLeaf(
 }
 
 /**
- * Decorate one result with its read-time ancestry — a no-op (result unchanged) when no
- * `reverseGeocode` fn was wired, when the fn comes back `undefined` for this particular
- * coordinate (e.g. open ocean, outside gazetteer coverage), or when it comes back an empty array.
+ * Decorate one result with its read-time ancestry.
+ *
+ * A no-op (result unchanged) when no `reverseGeocode` fn was wired, when the fn comes back
+ * `undefined` for this particular coordinate (e.g. Open ocean, outside gazetteer coverage),
+ * or when it comes back an empty array.
  *
  * The empty-array case is defense in depth: `runtime-pipeline.ts`'s `buildSyncReverseGeocode`
- * already collapses `hierarchy: []` to `undefined`, but a bare truthy check here would still
- * let a length-0 array from some other `reverseGeocode` implementation (e.g. a test stub) slip through as "present" —
- * `[]` is truthy.
+ * already collapses `hierarchy: []` to `undefined`, but a bare truthy check here
+ * would still let a length-0 array from some other `reverseGeocode` implementation
+ * (e.g. A test stub) slip through as "present" — `[]` is truthy.
  * The `ancestry` key is only ever added, never set to `undefined` or `[]` (house meaning-of-zero style).
  */
 function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["reverseGeocode"]): POIResult {
@@ -215,13 +213,14 @@ function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["re
  * Spatial anchor for the search: the anchor tree's deepest node carrying a resolved
  * centroid (walking roots + one level of children — the resolver decorates `lat`/`lon`
  * on the nodes it wins, Phase 4.3), else the caller-supplied `biasPoint` ("near me"),
- * else undefined (category/brand callers abstain on this. name callers search un-anchored).
+ * else undefined (category/brand callers abstain on this. Name callers search un-anchored).
  *
  * Exported because an observer reading a finished outcome has to name the point the
  * search was centred on, and the outcome does not carry it.
  * A second copy of this walk would answer a neighbouring coordinate whenever the anchor tree carries
- * more than one geo node, and the observer would then attribute the answer to the wrong cell —
- * a wrong reading of a correct search, which is indistinguishable downstream from a correct reading.
+ * more than one geo node, and the observer would then attribute the answer to the wrong cell.
+ *
+ * A wrong reading of a correct search, which is indistinguishable downstream from a correct reading.
  */
 export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; longitude: number } | undefined {
 	const tree = intent.anchor?.tree
@@ -240,8 +239,10 @@ export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; l
  * when the anchor did not resolve to one.
  *
  * Read off the same node {@link resolvePOISearchCenter} reads, so the country
- * and the coordinate name one place. when that node carries no country stamp the roots
- * are consulted, since a resolved root names the country every descendant shares.
+ * and the coordinate name one place.
+ * When that node carries no country stamp the roots are consulted, since a resolved
+ * root names the country every descendant shares.
+ *
  * A `biasPoint` anchor has no resolved place and therefore no country.
  *
  * This is the value an assertion's country scope (`POIPhraseMatch.countryScope`)

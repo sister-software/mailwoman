@@ -68,8 +68,9 @@ export function repairStrandedAffix(tree: AddressTree): boolean {
 		const absorber = all.find((node) => {
 			if (!ABSORBING_TAGS.has(node.tag)) return false
 
-			// Contiguous either way round — `Brixton Hill` (affix trails) and `Mount Pleasant`
-			// (affix leads) are the same defect seen from two sides.
+			// Contiguous either way round.
+			// `Brixton Hill` (affix trails) and `Mount Pleasant` (affix leads) are
+			// the same defect seen from two sides.
 			// Only whitespace may separate them.
 			const between = affix.start >= node.end ? raw.slice(node.end, affix.start) : raw.slice(affix.end, node.start)
 

@@ -36,10 +36,12 @@ export type ResolutionTier = "address_point" | "interpolated" | "street" | "admi
  * One component the parse kept and the answer did not follow.
  *
  * `reason` names the resolver decision rather than describing it, so a consumer can branch.
- * The only value today is `postcode_move_refused`: the postcode resolved to a point more than
- * `postcodeConsistencyMaxMoveKm` from the locality the walk selected, and the answer stayed
- * on the locality — a postcode carries no checksum, so a transposed one is a valid code
- * naming a real place, and disagreement with the other components is the available signal.
+ * The only value today is `postcode_move_refused`: the postcode resolved to a point
+ * more than `postcodeConsistencyMaxMoveKm` from the locality the walk selected,
+ * and the answer stayed on the locality.
+ *
+ * A postcode carries no checksum, so a transposed one is a valid code naming a real place,
+ * and disagreement with the other components is the available signal.
  */
 export interface UnfollowedComponent {
 	tag: ComponentTag
@@ -52,8 +54,9 @@ export interface UnfollowedComponent {
 }
 
 /**
- * The geocode-core result shape — the engine returns this verbatim (passthrough)
- * to `/v1/geocode` and `/v1/batch`.
+ * The geocode-core result shape.
+ *
+ * The engine returns this verbatim (passthrough) to `/v1/geocode` and `/v1/batch`.
  */
 export interface GeocodeResult {
 	input: string
@@ -115,7 +118,8 @@ export interface GeocodeResult {
 	 * produced no coordinate, and exactly one poi.db entity bears the query's exact
 	 * name (see `fork-entity.ts` for the three checks).
 	 *
-	 * Positive evidence only. absent everywhere else.
+	 * Positive evidence only.
+	 * Absent everywhere else.
 	 */
 	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
 	/**
@@ -128,7 +132,8 @@ export interface GeocodeResult {
 	 */
 	rooftop?: { localityNorm?: string; postcode?: string }
 	/**
-	 * Uncertainty radius in meters. null for the admin tier.
+	 * Uncertainty radius in meters.
+	 * Null for the admin tier.
 	 */
 	uncertainty_m: number | null
 	locality: string | null
@@ -176,14 +181,13 @@ export interface GeocodeResult {
 	 * carried it, and `componentOf`'s deliberately-loud unknown-key throw meant the whole
 	 * regression layer died the moment the corpus was rebuilt from its own seed.
 	 * The committed corpus had been ungradeable since the day those cases landed.
-	 * only the staleness of the built artifact hid it.
+	 * Only the staleness of the built artifact hid it.
 	 */
 	unit: string | null
 	/**
-	 * ISO-3166 alpha-2 of the resolved place (the gazetteer/candidate country of
-	 * the deepest resolved node), or null.
-	 * #1014 — lets a forward consumer fill `country`/`countrycode` without a full ancestry walk (the candidate backend
-	 * carries the country code even when it has no `ancestors()` table).
+	 * ISO-3166 alpha-2 of the resolved place (the gazetteer/candidate country of the deepest resolved node),
+	 * or null. #1014 — lets a forward consumer fill `country`/`countrycode` without a full ancestry
+	 * walk (the candidate backend carries the country code even when it has no `ancestors()` table).
 	 */
 	countryCode: string | null
 	/**
@@ -192,8 +196,9 @@ export interface GeocodeResult {
 	 * `name` is the resolved gazetteer name (proper-cased canonical, #1014) —
 	 * distinct from `value`, the raw parsed input span.
 	 *
-	 * Entries are independently resolved parse nodes rather than one containment walk —
-	 * so the chain can compose places no containment holds (#1731).
+	 * Entries are independently resolved parse nodes rather than one containment walk.
+	 * So the chain can compose places no containment holds (#1731).
+	 *
 	 * `in_winner_lineage` states each entry's standing against the winner's stamped
 	 * ancestor chain: `true` = vouched, `false` = resolved outside the winner's lineage
 	 * (the chimera fragment), absent = unverifiable (no sidecar, or no place identity).
@@ -235,8 +240,9 @@ export interface GeocodeResult {
 	postcode_country_scope: string | null
 	/**
 	 * The #1880 capital promotion's firing receipt, in the same posture as
-	 * {@link postcode_country_scope}: the promoted candidate's country,
-	 * present only when the promotion changed some node's leading candidate.
+	 * {@link postcode_country_scope}: the promoted candidate's country, present only
+	 * when the promotion changed some node's leading candidate.
+	 *
 	 * Absent means it never spoke — off, no capital in any race, or the capital already led.
 	 *
 	 * A pinned comparison counts this instead of inferring activity from moved rows.
@@ -246,6 +252,7 @@ export interface GeocodeResult {
 	 * The #1882 variant-alias exemption's firing receipt (#1893), same posture as
 	 * {@link capital_promotion}: present (`true`) only when some node's winning candidate
 	 * reached the top because the exemption spared it the cross-country alias penalty.
+	 *
 	 * Absent means it never spoke — off, no variant row in any race, the variant lost,
 	 * or a backend that never runs the primary-preference ranker.
 	 */
@@ -257,10 +264,11 @@ export interface GeocodeResult {
 	 * from a missing field (the {@link `PipelineResult.faults`} discipline).
 	 *
 	 * Nothing here changed the answer.
-	 * Three of the four markers are raised by the kind classifier from the string
-	 * alone. the fourth (`declared_ambiguity`) is raised after the resolve by reading
-	 * the ranked candidate list's dominance margin and comparing it to the measured
-	 * 0.5-log10 decisive threshold — a read, never a re-rank.
+	 * Three of the four markers are raised by the kind classifier from the string alone.
+	 *
+	 * The fourth (`declared_ambiguity`) is raised after the resolve by reading the ranked candidate
+	 * list's dominance margin and comparing it to the measured 0.5-log10 decisive threshold.
+	 * A read, never a re-rank.
 	 *
 	 * This is the same narrow-channel posture {@link postcode_country_scope} set: an advisory
 	 * receipt inside a resolution interface rather than a second opinion about the result.
@@ -270,16 +278,18 @@ export interface GeocodeResult {
 	 * Admin-coherence verdicts (#1717 stage 1) — did the winning candidate's resolved ancestry
 	 * confirm, contradict, or fail to speak to the parsed `region` / `country` qualifiers?
 	 *
-	 * Flag-only measurement in the same posture as
-	 * {@link intent_markers}: nothing reads these to rank or check, and the field is additive. Present whenever a winner
-	 * resolved (both members always populated — `unstated` is the explicit no-qualifier claim);
-	 * absent when the geocode produced no resolved winner to check against.
+	 * Flag-only measurement in the same posture as {@link intent_markers}:
+	 * nothing reads these to rank or check, and the field is additive.
+	 * Present whenever a winner resolved (both members always populated — `unstated` is the explicit
+	 * no-qualifier claim); absent when the geocode produced no resolved winner to check against.
+	 *
 	 * See `admin-coherence.ts` for the verdict interface and the stated v1 fold-equality bounds.
 	 */
 	admin_coherence?: AdminCoherenceReport
 	/**
-	 * A configured authoritative provider's answer (#1901), carried beside Mailwoman's own —
-	 * nothing above this field changes when it is present, and the field is absent
+	 * A configured authoritative provider's answer (#1901), carried beside Mailwoman's own.
+	 *
+	 * Nothing above this field changes when it is present, and the field is absent
 	 * (never null, never empty) when no provider is configured.
 	 *
 	 * Every value inside is the provider'S assertion, including a `refused` status
@@ -316,15 +326,15 @@ function unfollowedComponents(allNodes: readonly AddressNode[]): UnfollowedCompo
 }
 
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeOutcomeLike {
-	// `includeDropped` is not optional here even though the flag is: a span the projection
-	// deleted is the one thing a caller cannot reconstruct from the result, and #1755 is
-	// what its absence cost — the #1748 trailing region is parsed, mistagged `locality`,
-	// and deleted at this line, which is why no decode pin ever moved that class.
+	// `includeDropped` is not optional here even though the flag is: a span the projection deleted
+	// is the one thing a caller cannot reconstruct from the result, and #1755 is what its absence cost.
+	// The #1748 trailing region is parsed, mistagged `locality`, and deleted at this line,
+	// which is why no decode pin ever moved that class.
 	const projected = decodeAsJSON(tree, { includeDropped: true })
 	const { dropped, ...components } = projected
-	// Grounded spans first, then text order — the order `decodeAsJSON` used for
-	// `components` above, so a named slot and the flat map name the same span
-	// when a tag occurs twice (tree-shape.ts explains the rule).
+	// Grounded spans first, then text order.
+	// The order `decodeAsJSON` used for `components` above, so a named slot and the flat
+	// map name the same span when a tag occurs twice (tree-shape.ts explains the rule).
 	const allNodes = slotNodes(tree.roots)
 	const unfollowed = unfollowedComponents(allNodes)
 
@@ -405,8 +415,8 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		// And a unit-grade hit has to lead it: `29 Brecknock Road, London, N7 0BT` resolves
 		// its unit postcode to 51.5500/-0.1307, 38 m from the rooftop truth, against a London
 		// centroid 5.6 km away — on all 15 GB rooftop rows of the 2026-08-09 panel run.
-		// Nothing was missing from the gazetteer and no lookup failed. the answer was
-		// on the tree and this list did not ask for it.
+		// Nothing was missing from the gazetteer and no lookup failed.
+		// The answer was on the tree and this list did not ask for it.
 		const adminPriority = adminLadderForNodes(allNodes)
 
 		for (const tag of adminPriority) {
@@ -422,12 +432,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		}
 	}
 
-	// #1058: a commune-scoped street-centroid hit is register evidence of the street's locality — the
-	// resolver stamps it as `street_locality` on the street node
-	// (and drops span-rescored locality nodes that contradict it).
-	// Surface it as the result locality so `city` decorates from the register's commune, never
-	// from a token of the street name ("Rue Sainte-Catherine, Bordeaux" → "Bordeaux", not "Rue").
-	// Unset for postcode-scoped hits (no commune evidence) and other tiers.
+	// #1058: a commune-scoped street-centroid hit is register evidence of the street's locality. The resolver stamps it as `street_locality` on the street node (and drops span-rescored locality nodes that contradict it). Surface it as the result locality so `city` decorates from the register's commune, never from a token of the street name ("Rue Sainte-Catherine, Bordeaux" → "Bordeaux", not "Rue"). Unset for postcode-scoped hits (no commune evidence) and other tiers.
 	const streetLocality =
 		tier === "street" ? (streetNode?.metadata?.["street_locality"] as string | undefined)?.trim() || null : null
 
@@ -439,14 +444,11 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	const region = allNodes.find((n) => n.tag === "region")?.value?.trim() || null
 	const postcode = allNodes.find((n) => n.tag === "postcode")?.value?.trim() || null
 
-	// #1041: the parsed house number + full street name, so a house-grade forward consumer (photon `/api`) can decorate a
-	// rooftop / interpolated result with `housenumber`/`street` (matching upstream Photon)
-	// instead of the admin locality.
+	// #1041: the parsed house number + full street name, so a house-grade forward consumer (photon `/api`) can decorate a rooftop / interpolated result with `housenumber`/`street` (matching upstream Photon) instead of the admin locality.
 	const houseNumber = allNodes.find((n) => n.tag === "house_number")?.value?.trim() || null
 	const street = streetNode ? assembleStreetName(streetNode) || null : null
 
-	// #1014: the resolved ISO-3166 alpha-2 country (`resolver_country`, stamped by decorateNode). Same for every
-	// resolved node of one address, so the first that carries it wins.
+	// #1014: the resolved ISO-3166 alpha-2 country (`resolver_country`, stamped by decorateNode). Same for every resolved node of one address, so the first that carries it wins.
 	let countryCode: string | null = null
 
 	for (const n of allNodes) {
@@ -459,19 +461,12 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		}
 	}
 
-	// #1016: ranked candidate places for the winning result — the resolved primary node (self) plus its
-	// `alternatives` (the resolver's same-query runner-ups, already ranked and bias-aware).
-	// Each is a distinct place with its own coordinate, so an ambiguous name
-	// (Springfield MO/MA/IL) returns all its instances for limit>1.
-	// The primary is the resolved node whose coordinate WON
-	// (else the first resolved admin node — a bare-name query).
+	// #1016: ranked candidate places for the winning result. The resolved primary node (self) plus its `alternatives` (the resolver's same-query runner-ups, already ranked and bias-aware). Each is a distinct place with its own coordinate, so an ambiguous name (Springfield MO/MA/IL) returns all its instances for limit>1. The primary is the resolved node whose coordinate WON (else the first resolved admin node — a bare-name query).
 	const primaryNode =
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat === lat && n.lon === lon) ??
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat != null)
 
-	// #1731: lineage-graded against the admin-ladder pick when the admin tier answered, else the deepest
-	// resolved admin node — never the first-in-tree-order one, whose chain cannot contain its
-	// own descendants (the 1600-Pennsylvania false flag the first mwdev_diagnose run caught).
+	// #1731: lineage-graded against the admin-ladder pick when the admin tier answered, else the deepest resolved admin node — never the first-in-tree-order one, whose chain cannot contain its own descendants (the 1600-Pennsylvania false flag the first mwdev_diagnose run caught).
 	const hierarchy = assembleHierarchy(allNodes, streetLocality, adminWinnerNode ?? lineageAnchorNode(allNodes))
 
 	const candidates: GeocodeResult["candidates"] = []
@@ -546,10 +541,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		hierarchy,
 		candidates,
 		...(rooftop ? { rooftop } : {}),
-		// #1717 stage 1: flag-only admin-coherence verdicts for the parsed region/country qualifiers, checked against
-		// the winning candidate — the admin-ladder pick when the admin tier answered, else `primaryNode`
-		// (the first resolved admin node — the resolution context the coordinate was scoped by).
-		// No winner → the field is absent.
+		// #1717 stage 1: flag-only admin-coherence verdicts for the parsed region/country qualifiers, checked against the winning candidate — the admin-ladder pick when the admin tier answered, else `primaryNode` (the first resolved admin node — the resolution context the coordinate was scoped by). No winner → the field is absent.
 		...adminCoherenceField(allNodes, adminWinnerNode, primaryNode),
 		postcode_country_scope: postcodeCountryScopeOf(tree) ?? null,
 		...((): { capital_promotion?: string } => {

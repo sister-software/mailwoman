@@ -34,9 +34,9 @@ import type { AddressTree } from "@mailwoman/core/decoder"
  *    addressing (see the module docstring).
  * 2. The postcode's format implies a country set that excludes the inferred country
  *    (`formatCountries`, from the #1589 implementation).
- *    `A1V 0A9` is structurally Canadian and nothing else, yet the inferred US scope
- *    used to survive it — the format evidence only reached the postalcode probe,
- *    never the walk's own scope, so `Gander` resolved to a US alias ghost.
+ *    `A1V 0A9` is structurally Canadian and nothing else, yet the inferred US scope used to survive it.
+ *    The format evidence only reached the postalcode probe, never the walk's own scope,
+ *    so `Gander` resolved to a US alias ghost.
  *    The format signal only speaks on distinctive shapes: `countriesFromPostcodeFormat("75008")`
  *    is the empty set (a bare 5-digit string is ambiguous many ways), so every such
  *    postcode keeps the scope via the empty-set silence below, and the Dallas ZIP the

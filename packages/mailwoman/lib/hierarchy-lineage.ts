@@ -26,8 +26,10 @@
  */
 
 /**
- * One link of the winner's stamped lineage — the id-containing subset of `@mailwoman/core`'s `Ancestor`
- * (declared locally so this module stays decoder/resolver-import-free, the `admin-coherence.ts` posture).
+ * One link of the winner's stamped lineage.
+ *
+ * The id-containing subset of `@mailwoman/core`'s `Ancestor` (declared locally
+ * so this module stays decoder/resolver-import-free, the `admin-coherence.ts` posture).
  */
 interface LineageAncestor {
 	id: number | string
@@ -60,9 +62,10 @@ export interface HierarchyEntry extends HierarchyLineageEntry {
 /**
  * The admin tags the hierarchy admits, most specific first.
  *
- * The JP tiers (`municipality`, `district`, `prefecture`) sit beside their Latin counterparts
- * in the order the admin ladder uses — `municipality` above `district`, because the anchor
- * below is graded on lineage and an unscoped district can resolve a namesake.
+ * The JP tiers (`municipality`, `district`, `prefecture`) sit beside their Latin
+ * counterparts in the order the admin ladder uses.
+ * `municipality` above `district`, because the anchor below is graded on lineage
+ * and an unscoped district can resolve a namesake.
  */
 const HIERARCHY_TAGS = [
 	"locality",
@@ -79,11 +82,12 @@ const HIERARCHY_TAGS = [
  * The most-specific resolved admin node — the lineage anchor for tiers without
  * an admin-ladder pick (#1731 follow-up).
  *
- * The first live `mwdev_diagnose` run caught the defect this fixes: on an address-point result the fallback anchor was
- * the first resolved admin node in tree order — often the region — and an ancestor chain never contains its own
- * descendants, so `1600 Pennsylvania Ave…` graded its correctly-resolved `Washington` locality `in_winner_lineage:
- * false`. Anchoring at the deepest resolved entry grades ancestors (which its chain does contain) and can never
- * false-flag a descendant.
+ * The first live `mwdev_diagnose` run caught the defect this fixes: on an address-point result
+ * the fallback anchor was the first resolved admin node in tree order — often the region —
+ * and an ancestor chain never contains its own descendants, so `1600 Pennsylvania Ave…`
+ * graded its correctly-resolved `Washington` locality `in_winner_lineage: false`.
+ * Anchoring at the deepest resolved entry grades ancestors (which its chain does contain)
+ * and can never false-flag a descendant.
  */
 export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): HierarchySourceNode | undefined {
 	for (const tag of HIERARCHY_TAGS) {
@@ -141,8 +145,10 @@ export interface HierarchyLineageEntry {
 }
 
 /**
- * The winner node the entries are graded against — the admin-ladder pick, or the primary
- * resolved node on street-backed tiers (the same anchor `adminCoherenceField` uses).
+ * The winner node the entries are graded against.
+ *
+ * The admin-ladder pick, or the primary resolved node on street-backed tiers
+ * (the same anchor `adminCoherenceField` uses).
  */
 export interface LineageAnchor {
 	placeID?: string | undefined
@@ -152,10 +158,11 @@ export interface LineageAnchor {
 /**
  * Annotate `entries` in place with `in_winner_lineage` against `anchor`'s stamped ancestor chain.
  *
- * Grading is by place identity (`wof:<id>`), never by name — a name match across
- * instances is exactly the confusion the field exists to expose.
- * Without a sidecar only the anchor's own entry can be vouched for. every other
- * entry stays ungraded rather than guessed.
+ * Grading is by place identity (`wof:<id>`), never by name.
+ * A name match across instances is exactly the confusion the field exists to expose.
+ *
+ * Without a sidecar only the anchor's own entry can be vouched for.
+ * Every other entry stays ungraded rather than guessed.
  */
 export function annotateHierarchyLineage(
 	entries: readonly HierarchyLineageEntry[],
@@ -177,7 +184,8 @@ export function annotateHierarchyLineage(
 		if (lineage.has(entry.placeID)) {
 			entry.in_winner_lineage = true
 		} else if (ancestors !== undefined) {
-			// Only a present sidecar can testify to absence — without one, "not in the set" is ignorance.
+			// Only a present sidecar can testify to absence.
+			// Without one, "not in the set" is ignorance.
 			entry.in_winner_lineage = false
 		}
 	}

@@ -27,7 +27,9 @@ import type {
 /**
  * One provider match on the wire — the snake_case projection of {@link AuthoritativeMatch}, field for field.
  *
- * Absent fields were absent from the provider's answer. nothing is defaulted in.
+ * Absent fields were absent from the provider's answer.
+ * Nothing is defaulted in.
+ *
  * Unexported: consumers reach it as `AuthoritativeAssertion["matches"]`,
  * and the export-hygiene check limits the surface to actual importers.
  */
@@ -93,8 +95,8 @@ const EVIDENCE_TAGS: ReadonlyArray<[keyof AuthoritativeEvidence, ComponentTag]> 
 /**
  * Build the provider query from the assembled result's components.
  *
- * Spans are deliberately absent here — the flat result no longer carries them,
- * and the interface marks them optional for exactly this assembly.
+ * Spans are deliberately absent here.
+ * The flat result no longer carries them, and the interface marks them optional for exactly this assembly.
  */
 export function authoritativeQueryFrom(
 	rawQuery: string,

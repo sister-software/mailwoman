@@ -165,9 +165,11 @@ export interface DataBundle {
 }
 
 /**
- * Per-state hosted street-tier sizes (bytes), from the 2026-08-03 bucket survey — the source table
- * {@link usStreetArtifacts} expands into `BundleArtifact` entries. `interp` is absent for `vi` (no tiger interpolation
- * database hosted for the territory — a real, confirmed gap rather than a table-entry someone forgot).
+ * Per-state hosted street-tier sizes (bytes), from the 2026-08-03 bucket survey —
+ * the source table {@link usStreetArtifacts} expands into `BundleArtifact` entries.
+ *
+ * `interp` is absent for `vi` (no tiger interpolation database hosted for the territory —
+ * a real, confirmed gap rather than a table-entry someone forgot).
  */
 const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number }> = {
 	ak: { situs: 78_602_240, interp: 26_771_456 },
@@ -415,17 +417,20 @@ export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_B
  * Map a bundle's artifacts against a (possibly `null`) local `releases.json` manifest,
  * resolving each `family`-tagged artifact's {@link BundleArtifact.localPath} to the versioned
  * filename (`resolveDatabasePath`'s naming convention: `<family>/<family>-us-<slug>-<version>.db`)
- * when the manifest pins that family to a version — so a download lands exactly where
- * `resolveDatabasePath` (`data-release.ts`) will find it on the next `mailwoman geocode` run.
+ * when the manifest pins that family to a version.
  *
- * Artifacts with no `family` (candidate/poi/fr — single fixed-path downloads) pass through
- * unchanged. a family artifact with no matching manifest entry also passes through
- * unchanged (the legacy unversioned path, `resolveDatabasePath`'s fallback).
+ * So a download lands exactly where `resolveDatabasePath` (`data-release.ts`)
+ * will find it on the next `mailwoman geocode` run.
+ *
+ * Artifacts with no `family` (candidate/poi/fr — single fixed-path downloads) pass through unchanged.
+ * A family artifact with no matching manifest entry also passes through unchanged
+ * (the legacy unversioned path, `resolveDatabasePath`'s fallback).
  *
  * Pure: no filesystem access.
- * This computes the intended destination path. whether something already exists there
- * (or at a differently-versioned path `resolveDatabasePath` would also accept) is the
- * caller's `existsSync`/ `resolveDatabasePath` check rather than this function's.
+ * This computes the intended destination path.
+ *
+ * Whether something already exists there (or at a differently-versioned path `resolveDatabasePath` would
+ * also accept) is the caller's `existsSync`/ `resolveDatabasePath` check rather than this function's.
  */
 export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataReleaseManifest | null): BundleArtifact[] {
 	return bundle.artifacts.map((artifact) => {
@@ -475,8 +480,8 @@ export interface LocalArtifactState {
 }
 
 /**
- * What the remote object currently reports, gathered by the caller (an http head via `APIClient`, and — when
- * {@link BundleArtifact.md5Sidecar} is true — a fetch of the `.md5` sidecar text).
+ * What the remote object currently reports, gathered by the caller (an http head via `APIClient`,
+ * and — when {@link BundleArtifact.md5Sidecar} is true — a fetch of the `.md5` sidecar text).
  */
 export interface RemoteArtifactState {
 	contentLength?: number

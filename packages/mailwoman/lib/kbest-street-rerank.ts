@@ -172,7 +172,8 @@ function spliceStreetTree(
 
 	const streetSegs = hyp.segments.filter((s) => STREET_SEGMENT_TYPES.has(grammar.segmentTypes[s.typeID] ?? ""))
 
-	// No street in the winning hypothesis → nothing to splice. the argmax tree stands.
+	// No street in the winning hypothesis → nothing to splice.
+	// The argmax tree stands.
 	if (!streetSegs.length) {
 		return buildAddressTree(trace.text, tokens)
 	}
@@ -193,7 +194,7 @@ function spliceStreetTree(
 	}
 
 	// Any argmax street token not covered by the new street span is now stale → drop to O (it was part
-	// of the street the argmax path over-extended. the reranked span is authoritative for the street).
+	// of the street the argmax path over-extended. The reranked span is authoritative for the street).
 	for (const idx of argmaxStreetIdx) {
 		tokens[idx]!.label = "O"
 	}
@@ -204,12 +205,11 @@ function spliceStreetTree(
 /**
  * Parse `text` and rerank the span head's k-best segmentations on street-name evidence.
  *
- * Returns the winning tree + whether evidence moved the pick.
- * Falls back to the plain argmax tree (byte-stable) when the model exports no
- * span scores or the evidence keeps rank-1.
- *
  * @param evidence The injected street-name index (FR = `SQLiteStreetNameLookup` over BAN street-centroids).
  * @param grammar The segment-transition grammar from the weights bundle's `semi-crf-transitions.json`.
+ * @returns the winning tree + whether evidence moved the pick.
+ *   Falls back to the plain argmax tree (byte-stable) when the model exports no
+ *   span scores or the evidence keeps rank-1.
  */
 export async function rerankByStreetEvidence(
 	// Only `traceParse` is called; `Pick` says so, and a test double is then an object rather than an assertion.
@@ -232,8 +232,9 @@ export async function rerankByStreetEvidence(
 		}
 	}
 
-	// anchor condition (2026-07-18, the full-pipeline collateral fix): the rerank arbitrates
-	// a street only on an anchorless fragment — the class it was measured on.
+	// anchor condition (2026-07-18, the full-pipeline collateral fix): the rerank
+	// arbitrates a street only on an anchorless fragment.
+	// The class it was measured on.
 	// When the argmax parse already carries a country or region anchor, the model is on
 	// structured input where it is reliable, and a name-index collision does damage: it steals
 	// a token the model correctly labeled country/region ("France, Creuse, …" → the FR street
@@ -268,7 +269,8 @@ export async function rerankByStreetEvidence(
 
 	// positive-evidence check on the splice: only override the argmax tree's street
 	// with a street the atlas confirms exists.
-	// This is the same principle as the pick itself — the model owns every call the atlas can't confirm wrong.
+	// This is the same principle as the pick itself.
+	// The model owns every call the atlas can't confirm wrong.
 	// Rationale (measured 2026-07-18): always-splicing cost golden fr street −2.7pp
 	// (the span head over/under-extends the street on clean multi-component inputs,
 	// and the full BIO head is better there); filtering on "argmax has no street" was

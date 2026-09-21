@@ -53,8 +53,10 @@ export function layerDatabases(dataRoot: PathBuilderLike): LayerDatabaseRef[] {
 }
 
 /**
- * The `.db` files in a layer's directory that are not the file the session attaches — a build that wrote
- * the artifact under another name (the Iowa soil pilot's `soil-ia.db` beside an expected `soil.db`).
+ * The `.db` files in a layer's directory that are not the file the session attaches.
+ *
+ * A build that wrote the artifact under another name
+ * (the Iowa soil pilot's `soil-ia.db` beside an expected `soil.db`).
  *
  * The session attaches nothing in that case, and the doctor reports the alternates
  * so the absence reads as a name mismatch rather than a coverage fact.

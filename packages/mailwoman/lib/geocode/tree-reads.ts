@@ -29,8 +29,9 @@ export function resolvedCountryOf(tree: AddressTree): string | undefined {
 }
 
 /**
- * The #1880 capital promotion's stamp, read back off the resolved tree — the promoted
- * candidate's country, or `undefined` when no node's race was reordered by it.
+ * The #1880 capital promotion's stamp, read back off the resolved tree.
+ *
+ * The promoted candidate's country, or `undefined` when no node's race was reordered by it.
  */
 export function capitalPromotionOf(tree: AddressTree): string | undefined {
 	for (const n of walkNodes(tree.roots)) {
@@ -45,7 +46,8 @@ export function capitalPromotionOf(tree: AddressTree): string | undefined {
 }
 
 /**
- * The #1882 variant-alias exemption's stamp (#1893), read back off the resolved tree —
+ * The #1882 variant-alias exemption's stamp (#1893), read back off the resolved tree.
+ *
  * `true` when some node's winning candidate reached the top because the exemption
  * spared it the cross-country alias penalty, `undefined` when it never spoke: off,
  * no variant row in any race, the variant lost, or a backend that never runs the ranker.

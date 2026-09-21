@@ -95,8 +95,8 @@ interface RankedPlaceLike {
 /**
  * Turn a resolver place into the shape {@linkcode dominanceMarginLog10} reads.
  *
- * `negRank` is `-prominence` because prominence is `-negRank` on the backend that
- * defines both. the double negation is the whole conversion and it is written out
+ * `negRank` is `-prominence` because prominence is `-negRank` on the backend that defines both.
+ * The double negation is the whole conversion and it is written out
  * rather than folded so the sign is checkable.
  */
 function toAblationPlace(place: RankedPlaceLike, rank: number): AblationPlace | null {
@@ -113,8 +113,8 @@ function toAblationPlace(place: RankedPlaceLike, rank: number): AblationPlace | 
 		country: place.country ?? "",
 		lat: place.lat,
 		lon: place.lon,
-		// absent rather than an extent of zero — this model never reads a bbox for the margin,
-		// and inventing one would be a number nobody measured.
+		// absent rather than an extent of zero.
+		// This model never reads a bbox for the margin, and inventing one would be a number nobody measured.
 		bbox: null,
 		negRank: -prominence,
 		population: null,
@@ -122,9 +122,11 @@ function toAblationPlace(place: RankedPlaceLike, rank: number): AblationPlace | 
 }
 
 /**
- * The node whose resolution the query is about — the deepest resolved node carrying a coordinate
- * and the resolver's name stamp, matching `extractGeocodeResult`'s own `primaryNode` selection
- * so the marker and the returned candidate list describe the same place.
+ * The node whose resolution the query is about.
+ *
+ * The deepest resolved node carrying a coordinate and the resolver's name stamp,
+ * matching `extractGeocodeResult`'s own `primaryNode` selection so the marker
+ * and the returned candidate list describe the same place.
  */
 function primaryResolvedNode(tree: AddressTree, lat: number | null, lon: number | null): AddressNode | null {
 	const all = collectNodes(tree.roots, () => true)
@@ -157,10 +159,10 @@ export interface DeclaredAmbiguityOpts {
  * Raise `declared_ambiguity` when the query named one bare place and the gazetteer's
  * answer for that name is not decisive.
  *
- * Returns `null` — not an empty marker — when the query was not a bare toponym,
- * when nothing resolved, or when the margin cleared the threshold.
- * A magnitude never carries its own absence, and "we checked and it was decisive" is
- * represented by the caller's marker array simply not gaining an entry.
+ * @returns `null` — not an empty marker — when the query was not a bare toponym,
+ *   when nothing resolved, or when the margin cleared the threshold.
+ *   A magnitude never carries its own absence, and "we checked and it was decisive" is
+ *   represented by the caller's marker array simply not gaining an entry.
  */
 export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryIntentMarker | null {
 	if (!opts.kinds.includes("bare_toponym")) return null
@@ -213,8 +215,9 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 			/**
 			 * Named so a consumer knows what the margin is.
 			 *
-			 * `log10_population` on the candidate backend. on FTS the prominence term is capped
-			 * and proximity-contaminated, which the value states rather than hides.
+			 * `log10_population` on the candidate backend.
+			 * On FTS the prominence term is capped and proximity-contaminated,
+			 * which the value states rather than hides.
 			 */
 			marginUnit: "resolver_prominence_delta",
 			coincidentCollapseKm: COINCIDENT_PLACE_KM,
@@ -230,10 +233,12 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
  * The coarsest tier at which each parsed component is still located, ranked by {@linkcode tierRank}.
  *
  * A component sets a floor rather than a target.
- * `house_number` reads `interpolated` and not `address_point` because interpolation is
- * how a house number is placed along a segment — the first version of this table put the
- * floor at `address_point` and fired on `129 E Burr Oak St, Athens, MI`, an interpolated
- * answer at 124 m uncertainty that locates the house as precisely as the tier permits.
+ * `house_number` reads `interpolated` and not `address_point` because interpolation
+ * is how a house number is placed along a segment.
+ *
+ * The first version of this table put the floor at `address_point` and fired on
+ * `129 E Burr Oak St, Athens, MI`, an interpolated answer at 124 m uncertainty that
+ * locates the house as precisely as the tier permits.
  *
  * `postcode` reads `street` for the same reason from the other side: a postcode
  * centroid is a street-grade answer in most address systems, and a finer floor
@@ -267,7 +272,8 @@ export interface CoarserAnswerOpts {
 	/**
 	 * The parsed components, by tag.
 	 *
-	 * Read for presence only. the values never enter the verdict.
+	 * Read for presence only.
+	 * The values never enter the verdict.
 	 */
 	components: Readonly<Record<string, string | null | undefined>>
 	reachedTier: ResolutionTier
@@ -276,13 +282,14 @@ export interface CoarserAnswerOpts {
 /**
  * Raise `declared_coarser_answer` when the query supplied components finer than the tier the answer reached.
  *
- * The counterpart of {@linkcode declaredAmbiguityMarker} and written because its absence was a real silence: `301
- * College Ave #101, Athens, GA 30601` returned the Athens label centroid at `admin`, 1,627 m from the rooftop the same
- * address without `#101` reaches at `address_point`, and the response carried no field distinguishing it from a correct
- * answer to `Athens, GA`.
+ * The counterpart of {@linkcode declaredAmbiguityMarker} and written because its absence was a
+ * real silence: `301 College Ave #101, Athens, GA 30601` returned the Athens label centroid at
+ * `admin`, 1,627 m from the rooftop the same address without `#101` reaches at `address_point`,
+ * and the response carried no field distinguishing it from a correct answer to `Athens, GA`.
  *
- * Returns `null` — never an empty marker — when nothing finer was asked for and when the tier met the ask.
- * "We checked and the answer was as fine as the question" is the caller's marker array not gaining an entry.
+ * @returns `null` — never an empty marker — when nothing finer was asked for and when the tier met the ask.
+ *   "We checked and the answer was as fine as the question" is the caller's
+ *   marker array not gaining an entry.
  */
 export function coarserAnswerMarker(opts: CoarserAnswerOpts): QueryIntentMarker | null {
 	// `venue` and `plus_code` rank as house-grade in `tierRank`, so an entity answer

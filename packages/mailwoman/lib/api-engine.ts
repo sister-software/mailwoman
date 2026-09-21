@@ -90,8 +90,7 @@ async function wofPaths(): Promise<string[]> {
 }
 
 /**
- * #1009-style boot preflight message. Same shape as the drop-ins' (`photon/cli.ts`, `nominatim/cli.ts`) — a stranger's
- * first `mailwoman serve` must say exactly what data is missing and the one command that fixes it.
+ * #1009-style boot preflight message. Same shape as the drop-ins' (`photon/cli.ts`, `nominatim/cli.ts`). A stranger's first `mailwoman serve` must say exactly what data is missing and the one command that fixes it.
  */
 function buildPreflightMessage(): string {
 	return buildNoGazetteerMessage({
@@ -118,8 +117,8 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 		// as a plain file inside the package, and (unlike `node:module`'s `findPackageJSON`)
 		// `import.meta.resolve` realpaths through the workspace symlink — the same
 		// string the CJS `require.resolve` this replaced returned.
-		// It does not throw for a missing file inside a resolvable package, only for an unresolvable
-		// package. the `pathExists` below already checks every candidate, so that is a no-op here.
+		// It does not throw for a missing file inside a resolvable package, only for an unresolvable package.
+		// The `pathExists` below already checks every candidate, so that is a no-op here.
 		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
 		/* package not resolvable from here — fall through */
@@ -253,8 +252,8 @@ export interface ServeEngine {
  * Build the wired `mailwoman serve` engine.
  *
  * Awaited once at boot (unlike express's lazy per-request `getDeps()`), so a misconfigured
- * deployment reports its preflight failure before the process starts listening — the caller
- * (the `serve` command) decides whether to boot degraded (parse+health only) or exit friendly.
+ * deployment reports its preflight failure before the process starts listening.
+ * The caller (the `serve` command) decides whether to boot degraded (parse+health only) or exit friendly.
  */
 export async function createServeEngine(): Promise<ServeEngine> {
 	// `health` reads files best-effort and never throws — wired unconditionally,
@@ -276,8 +275,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		const parseClassifier = classifier
 
 		parse = async (address, opts) => {
-			// Decision A: explicit wire register wins. unset → the kind classifier decides (same derivation
-			// as the runtime pipeline / geocode-core — /v1/parse is the "plain parse" endpoint class).
+			// Decision A: explicit wire register wins.
+			// Unset → the kind classifier decides (same derivation as the runtime pipeline
+			// / geocode-core — /v1/parse is the "plain parse" endpoint class).
 			const shape = computeQueryShape(address)
 
 			const inputMode =
@@ -293,7 +293,8 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			}
 		}
 	} catch {
-		// Weights unresolvable — leave parse undefined. the route answers 501 with its existing guard.
+		// Weights unresolvable — leave parse undefined.
+		// The route answers 501 with its existing guard.
 		console.error("createServeEngine: neural weights not found — /v1/parse disabled (501)")
 	}
 
@@ -321,8 +322,8 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// `createResolverBackend` prefers it over `wofPaths` — so the preflight check below
 	// checks both, mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` condition
 	// rather than `GeocodeRouter`'s WOF-only check.
-	// This check governs geocode/batch/resolveTree/reload only — `parse` is
-	// already wired above and unaffected.
+	// This check governs geocode/batch/resolveTree/reload only.
+	// `parse` is already wired above and unaffected.
 	const candidateDB = await resolveCandidateDBPath()
 
 	if (!paths.length && !candidateDB) {
@@ -339,18 +340,19 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// Route records the whole-call metric already (`@mailwoman/api`'s `routes.ts`) —
 	// the engine records nothing extra here.
 	// Ported from `GeocodeRouter`'s `singleHandler`.
-	// The cast mirrors `@mailwoman/api/routes.ts`'s established "documented wire shape looser
-	// than the domain type" idiom — `GeocodeOutcome` is a deliberately loose passthrough.
+	// The cast mirrors `@mailwoman/api/routes.ts`'s established "documented wire
+	// shape looser than the domain type" idiom.
+	// `GeocodeOutcome` is a deliberately loose passthrough.
 	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts?.inputMode)
 
-	// Sequential loop — results land in input order. a thrown row is isolated
-	// to its own `{ input, error }` slot.
+	// Sequential loop — results land in input order.
+	// A thrown row is isolated to its own `{ input, error }` slot.
 	// Rows are trimmed here (the route passes the raw validated array through).
 	//
 	// This was a bounded-concurrency worker pool (`MAILWOMAN_BATCH_CONCURRENCY`, default 8) until 2026-07-16.
-	// The pool was measured at 1.00x — a geocode cannot overlap another in-process,
-	// because `onnxruntime-node`'s `session.run()` blocks the JS thread rather than
-	// releasing to the libuv pool, and `node:sqlite` reads are synchronous.
+	// The pool was measured at 1.00x.
+	// A geocode cannot overlap another in-process, because `onnxruntime-node`'s `session.run()` blocks
+	// the JS thread rather than releasing to the libuv pool, and `node:sqlite` reads are synchronous.
 	// The pool bought nothing but the appearance of tuning, so it's a plain loop now.
 	// To actually parallelize, cross a thread boundary — see `mailwoman/geocode-stream.ts`.
 	// Receipts: `docs/engineering/reference/performance.mdx`.
@@ -393,10 +395,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 				...incomingOpts,
 				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
 				...(addressPoints ? { addressPoints } : {}),
-				// #374 calibration ladder: explicit incoming factor (instrument override, survives the spread) →
-				// the artifact's own header value (`interpolation.radiusCalibration`, read at database
-				// open — the resolver consumes it directly, nothing passed here) → the in-code
-				// per-region table for databases predating the `interp_calibration` metadata table.
+				// #374 calibration ladder: explicit incoming factor (instrument override, survives the spread) → the artifact's own header value (`interpolation.radiusCalibration`, read at database open — the resolver consumes it directly, nothing passed here) → the in-code per-region table for databases predating the `interp_calibration` metadata table.
 				...(interpolation
 					? {
 							interpolation,

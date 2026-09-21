@@ -66,10 +66,10 @@ interface ReverseGeocoderLike {
  * the async `reverseGeocode` method; `reverseGeocodeSync` is its already-synchronous core).
  *
  * Deepest-first `hierarchy` maps straight onto the compact ancestry triple, AS-is (spec's design point 4).
- * A throw (e.g. an out-of-range coordinate slipping past upstream validation) degrades
- * to `undefined` — one bad point never fails the whole search.
+ * A throw (e.g. An out-of-range coordinate slipping past upstream validation) degrades to `undefined`.
+ * One bad point never fails the whole search.
  *
- * An empty `hierarchy` (e.g. a valid coordinate with no bbox candidates — open ocean)
+ * An empty `hierarchy` (e.g. A valid coordinate with no bbox candidates — open ocean)
  * also degrades to `undefined`, not `[]` — house meaning-of-zero: `decorateAncestry` only
  * adds the `ancestry` key when there's something to add, and an empty array is truthy,
  * so this has to collapse it here rather than let a length-0 array slip through as "present."
@@ -118,10 +118,12 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	fst?: RuntimePipelineStages["fst"] | false
 	/**
-	 * Street-morphology matcher — the signal source for the FST street-context check (#1315),
-	 * always consumed with the morphology emission prior zeroed at the pipeline's classify call sites
-	 * (the emission prior is US-golden-negative. the check alone is golden-flat and fragment-positive).
-	 * default-on alongside the FST auto-load: the sealed `fst-street-morphology.bin` artifact
+	 * Street-morphology matcher.
+	 *
+	 * The signal source for the FST street-context check (#1315), always consumed
+	 * with the morphology emission prior zeroed at the pipeline's classify call sites
+	 * (the emission prior is US-golden-negative. The check alone is golden-flat and fragment-positive).
+	 * Default-on alongside the FST auto-load: the sealed `fst-street-morphology.bin` artifact
 	 * when available (weights-package sibling, else the data-root staging copy), degrading to
 	 * a per-process build from core's bundled libpostal dictionaries; `false` suppresses it.
 	 */
@@ -142,7 +144,7 @@ export interface CreateRuntimePipelineOpts {
 	 * Phrase grouper override (Stage 2.7).
 	 *
 	 * Defaults to the rule-based `@mailwoman/phrase-grouper`. v0.5.0 wires this in as a required stage.
-	 * callers should normally not override unless they have a learned span proposer (planned for v0.5.1).
+	 * Callers should normally not override unless they have a learned span proposer (planned for v0.5.1).
 	 *
 	 * @see RuntimePipelineStages.groupPhrases
 	 */
@@ -154,43 +156,38 @@ export interface CreateRuntimePipelineOpts {
 	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is
 	 *   lazy-loaded on the first pipeline call and applied (no prior if the model can't be resolved).
 	 * - A function → use it (a custom placer / threshold).
-	 * - `false` → disabled (no prior. byte-stable pre-M2 behavior).
+	 * - `false` → disabled (no prior. Byte-stable pre-M2 behavior).
 	 *
 	 * @see RuntimePipelineStages.placeCountry
 	 */
 	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 	/**
-	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ascii input before the
-	 * model (helps on all-caps registry/compliance data. detection-restricted, mixed-case untouched).
+	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ascii input before the model (helps on all-caps registry/compliance data. Detection-restricted, mixed-case untouched).
 	 *
-	 * The classifier is **default-on** since #895 (drift D2 settled), so leaving this
-	 * unset runs it. set `false` here to pin the raw-case parse for every call.
+	 * The classifier is **default-on** since #895 (drift D2 settled), so leaving this unset runs it.
+	 *
+	 * Set `false` here to pin the raw-case parse for every call.
 	 * A per-call `runOpts.normalizeCase` overrides this.
 	 */
 	normalizeCase?: boolean
 	/**
-	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a confident coarse-placer guess from
-	 * the soft prior to a hard country filter (empty→unresolved). **default-on** (#743, 2026-06-22):
-	 * the built-in coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard
-	 * filter to well-covered countries (US/ES/IT/NL/DE/FR), so it's a pure win there
-	 * and a no-op (soft prior) for the low-coverage tail (FI/PL) — no recall regression.
+	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a confident coarse-placer guess from the soft prior to a hard country filter (empty→unresolved). **default-on** (#743, 2026-06-22): the built-in coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard filter to well-covered countries (US/ES/IT/NL/DE/FR), so it's a pure win there and a no-op (soft prior) for the low-coverage tail (FI/PL) — no recall regression.
 	 *
-	 * Pass `false` to opt out entirely. a per-call `runOpts.hardPlaceCountry` overrides this.
+	 * Pass `false` to opt out entirely.
+	 * A per-call `runOpts.hardPlaceCountry` overrides this.
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that checks the hard
-	 * country filter.
+	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that checks the hard country filter.
 	 *
 	 * Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`.
+	 *
 	 * Used by the resolver eval to measure unrestricted hard-resolve-rates
 	 * (the full in-map set) when growing the list.
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
-	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a
-	 * positive-evidence-conditional street-splice into the argmax tree
-	 * (golden-safe: 0.000 golden regression, +16.9pp FR fragment street, measured 2026-07-18).
+	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a positive-evidence-conditional street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR fragment street, measured 2026-07-18).
 	 *
 	 * - `undefined` (default) → **default-on**: when the classifier ships
 	 *   a span grammar (a v3+ span-head bundle), the bundled FR index
@@ -231,30 +228,31 @@ export interface CreateRuntimePipelineOpts {
 	 * it has always been, and every query resolves as before.
 	 *
 	 * It is how a caller reaches a subject the shipped lexicon cannot name: `mailwoman/observations`
-	 * builds one, where an activity phrase reaches a category through the compiled geographic
-	 * model. presence is the switch, and deliberately so — a boolean would make this
-	 * factory construct the artifact reader itself, putting world semantics on the default
-	 * construction path and giving the pipeline knowledge of where the evidence came from.
-	 * What arrives here is a plain
-	 * {@link POIPhraseLookup}, the same interface the committed lexicon satisfies, so a match is served by the existing
-	 * executor exactly as if the category had been typed.
+	 * builds one, where an activity phrase reaches a category through the compiled geographic model.
+	 * Presence is the switch, and deliberately so.
+	 *
+	 * A boolean would make this factory construct the artifact reader itself, putting world semantics on
+	 * the default construction path and giving the pipeline knowledge of where the evidence came from.
+	 * What arrives here is a plain {@link POIPhraseLookup}, the same interface the committed lexicon
+	 * satisfies, so a match is served by the existing executor exactly as if the category had been typed.
+	 *
 	 * It supplies positive evidence only — a miss returns `[]` and changes nothing —
 	 * and it can never displace a committed hit, because it is asked last.
 	 *
-	 * A change that ever made this rung auto-construct must widen the option to `… | false`
-	 * in the same commit, with a test that sets it `false` and asserts byte-stability
-	 * against the composition before the change — the pattern
-	 * {@link fst} and {@link streetMorphology} already carry. A rollback that arrives after the change is not a
-	 * rollback.
+	 * A change that ever made this rung auto-construct must widen the option to
+	 * `… | false` in the same commit, with a test that sets it `false` and asserts
+	 * byte-stability against the composition before the change.
+	 * The pattern {@link fst} and {@link streetMorphology} already carry.
+	 * A rollback that arrives after the change is not a rollback.
 	 */
 	poiSemanticLookup?: POIPhraseLookup
 }
 
 /**
- * #727 phase-4c: wrap the Stage-3 classifier so its `parse` reranks the street on street-name evidence — but only when
- * an evidence index is injected and the classifier ships a span grammar (a v3+ span-head bundle).
+ * #727 phase-4c: wrap the Stage-3 classifier so its `parse` reranks the street on street-name evidence — but only when an evidence index is injected and the classifier ships a span grammar (a v3+ span-head bundle).
  *
  * Otherwise the original classifier passes through untouched (byte-stable).
+ *
  * The wrapper preserves the `AddressClassifier` interface: it returns exactly the reranked tree,
  * which is the argmax tree with the street spliced in on atlas-confirmed evidence, else the plain
  * argmax tree — the pipeline's downstream stages (resolver, etc.) see a normal `AddressTree`.
@@ -284,13 +282,12 @@ function wrapWithStreetEvidence(
 /**
  * Build a runtime pipeline pre-wired with the default normalize + queryShape implementations.
  *
- * Returns a function that takes raw input + per-call opts and runs the full pipeline.
- *
  * @example
  * 	Const pipeline = createRuntimePipeline({ classifier: await
  * 	NeuralAddressClassifier.loadFromWeights({ locale: "en-US" }), resolver:
  * 	createWOFResolver(backend), }) const result = await pipeline("350 5th Ave, New York, NY 10118", {
  * 	locale: "en-US" })
+ * @returns a function that takes raw input + per-call opts and runs the full pipeline.
  */
 /**
  * FST-distribution arc (2026-07-25): deserialize the per-locale FST gazetteer
@@ -374,11 +371,7 @@ export function getMachinePreferences(): MachinePreferences {
 export function createRuntimePipeline(
 	opts: CreateRuntimePipelineOpts = {}
 ): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult> {
-	// #1177: default-on since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo
-	// presets byte-identical).
-	// `undefined` → `true` (intent-only mode); an explicit `false` still disables. the
-	// object form (executes against a real poi.db) passes through unchanged.
-	// Follows the same `?? true` factory-default merge pattern as `hardPlaceCountry` below.
+	// #1177: default-on since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo presets byte-identical). `undefined` → `true` (intent-only mode); an explicit `false` still disables. The object form (executes against a real poi.db) passes through unchanged. Follows the same `?? true` factory-default merge pattern as `hardPlaceCountry` below.
 	const poiQueryKindEffective = opts.poiQueryKind ?? true
 
 	const machinePreferences =
@@ -403,8 +396,8 @@ export function createRuntimePipeline(
 	}
 
 	// The character-path CJK model was trained with the postal mark 〒 in front of every
-	// postcode and misreads the prefecture boundary without it. the SentencePiece
-	// path wants it stripped (`NormalizeOpts.postalMark`).
+	// postcode and misreads the prefecture boundary without it.
+	// The SentencePiece path wants it stripped (`NormalizeOpts.postalMark`).
 	// Decided per input: a script-routed classifier hands a kanji or Hangul line to the character path
 	// whatever the primary's encoder, so the mark is kept exactly when that path will read the text.
 	const classifierShape = opts.classifier as { encoder?: string; forInput?: unknown } | undefined
@@ -419,8 +412,8 @@ export function createRuntimePipeline(
 		// Default kind classifier: rule-based from @mailwoman/kind-classifier.
 		// Caller can override.
 		// POI arc (default-on since 2026-07-20).
-		// The poi-aware classifier only exists when the flag resolves truthy. an
-		// explicit classifyKind override always wins.
+		// The poi-aware classifier only exists when the flag resolves truthy.
+		// An explicit classifyKind override always wins.
 		// The anchor re-parse runs this pipeline minus the poi stage: same stages object,
 		// but runPipeline never takes the poi branch because anchorStages.poiIntent is absent
 		// and anchorStages.classifyKind is the default.
@@ -430,7 +423,7 @@ export function createRuntimePipeline(
 		// Default phrase grouper: rule-based from @mailwoman/phrase-grouper.
 		// Hard dep in v0.5.0 — not an opt-in shim.
 		// The plan doc framed Stage 2.7 as backward-compatible-opt-in for the v0.4.0 pipeline.
-		// we have no current users to migrate, so v0.5.0 ships it as a required stage.
+		// We have no current users to migrate, so v0.5.0 ships it as a required stage.
 		// Override only with a compatible alternative (e.g. v0.5.1's learned span proposer).
 		groupPhrases: opts.groupPhrases ?? defaultGroupPhrases,
 		// The #727 phase-4c rerank wrap is applied lazily on the first call (below):
@@ -443,8 +436,9 @@ export function createRuntimePipeline(
 		streetMorphology: opts.streetMorphology === false ? undefined : opts.streetMorphology,
 		resolver: opts.resolver,
 		// Coarse country router (#244) — default-on (#244 M2).
-		// A function override is wired here. the `undefined` default is lazy-loaded on the
-		// first call (below) so the sync factory stays sync; `false` disables it.
+		// A function override is wired here.
+		// The `undefined` default is lazy-loaded on the first call (below)
+		// so the sync factory stays sync; `false` disables it.
 		// A confident in-map guess feeds the resolver's anchorPosterior re-rank.
 		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : undefined,
 		// Default `@mailwoman/locale-check` stage: rule-based from @mailwoman/locale-hint.
@@ -461,9 +455,10 @@ export function createRuntimePipeline(
 				})),
 	}
 
-	// Build-local abstain (`requires_build_local_layer`) needs no db, so the executor is wired
-	// in both `poiQueryKind` modes — the poi-taxonomy touch (the one lexicon-aware bit) happens
-	// only here in the wiring, never inside `poi-executor.ts` (it stays injectable/pure).
+	// Build-local abstain (`requires_build_local_layer`) needs no db, so the
+	// executor is wired in both `poiQueryKind` modes.
+	// The poi-taxonomy touch (the one lexicon-aware bit) happens only here in the wiring,
+	// never inside `poi-executor.ts` (it stays injectable/pure).
 	const requiresBuildLocal = (categoryID: string): boolean => {
 		const category = getPOICategory(categoryID)
 
@@ -500,10 +495,7 @@ export function createRuntimePipeline(
 	const autoPlaceCountry = opts.placeCountry === undefined
 	let placeCountryResolved = !autoPlaceCountry
 
-	// #727 phase-4c default-on: with no explicit `streetEvidence` (and not `false`), auto-load the bundled FR index once
-	// on the first call — but only if the classifier ships a span grammar (else there is no k-best to rerank).
-	// Resolved lazily for the same reason placeCountry is: keep the factory synchronous.
-	// An explicitly-passed index already wrapped the classifier above.
+	// #727 phase-4c default-on: with no explicit `streetEvidence` (and not `false`), auto-load the bundled FR index once on the first call — but only if the classifier ships a span grammar (else there is no k-best to rerank). Resolved lazily for the same reason placeCountry is: keep the factory synchronous. An explicitly-passed index already wrapped the classifier above.
 	let streetEvidenceResolved = opts.streetEvidence !== undefined
 
 	// FST-distribution arc: auto-load the weights-package gazetteer (and the check's morphology matcher)
@@ -554,7 +546,7 @@ export function createRuntimePipeline(
 				})
 			} catch {
 				// Missing/unreadable poi.db → degrade to the intent-only executor already wired above
-				// (build-local abstain still works. everything else falls back to bare intent).
+				// (build-local abstain still works. Everything else falls back to bare intent).
 			}
 		}
 
@@ -617,9 +609,7 @@ export function createRuntimePipeline(
 
 		const result = await runPipeline(raw, stages, effectiveRunOpts)
 
-		// #2282: stamped on the way out, so every path reaches it — the fast-path tree and the abstaining ones as much as
-		// a classified tree.
-		// The offsets index the normalized text, which is what the classifier labelled.
+		// #2282: stamped on the way out, so every path reaches it — the fast-path tree and the abstaining ones as much as a classified tree. The offsets index the normalized text, which is what the classifier labelled.
 		stampSpanScripts(result.tree, result.normalized.normalized)
 
 		return result

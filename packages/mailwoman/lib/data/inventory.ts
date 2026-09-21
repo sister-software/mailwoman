@@ -146,8 +146,9 @@ export function probeManifest(path: string): { manifest?: LayerManifest; error?:
  *
  * Bounded because the data root holds source trees with millions of files (a WOF checkout is ~1.2 M GeoJSON),
  * and an unbounded walk would spend minutes in directories that contain no databases.
- * Foreign roots are not descended into at all — they are counted and named,
- * which is cheaper and states the same fact.
+ * Foreign roots are not descended into at all.
+ *
+ * They are counted and named, which is cheaper and states the same fact.
  */
 async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ paths: string[]; skippedForeign: number }> {
 	const paths: string[] = []
@@ -161,7 +162,8 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 		try {
 			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch {
-			// An unreadable directory is not a finding about provenance. skip it rather than fail the report.
+			// An unreadable directory is not a finding about provenance.
+			// Skip it rather than fail the report.
 			return
 		}
 
@@ -270,8 +272,9 @@ export function inventorySentence(report: InventoryReport): string {
  * A manifest is only worth as much as its build command, and two ways of being
  * worthless were measured on the shipped artifacts.
  * `osm/address-points-{de,gb,nz}-*.db` record `node osm/out/scripts/build-rooftop-database.js`,
- * a path the workspace regroup moved to `packages/osm/...` — the literal survived
- * the move inside a built database, where no lint can reach it.
+ * a path the workspace regroup moved to `packages/osm/...`
+ *
+ * The literal survived the move inside a built database, where no lint can reach it.
  *
  * And `osm/address-points-au-au.db` records `node scratchpad/build-gnaf-rooftop-database.ts`,
  * which exists on the machine that built it and nowhere else, because `scratchpad/` is gitignored.
