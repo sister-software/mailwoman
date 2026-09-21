@@ -50,10 +50,65 @@ export const VersionSeries = {
 export type VersionSeries = (typeof VersionSeries)[keyof typeof VersionSeries]
 
 /**
+ * What an artifact is, which decides whose lineage it carries.
+ *
+ * A package ships files with unrelated provenance under one `files` array. `model.onnx` carries the corpus a training
+ * run read. `tokenizer.model` carries the text a tokenizer was fitted on, which is a different and usually smaller set.
+ * A pair index and a postcode binary are each built from one named register. A lexicon is curated. Reporting one
+ * attribution list against all of them attributes the corpus to files no corpus touched, and leaves the files that do
+ * have a distinct source unattributed.
+ *
+ * Derived from the filename, because that is what the manifest gives and the naming is consistent across the twelve
+ * published packages. An unrecognized name reads `other` rather than being guessed into a role.
+ */
+export const ArtifactRole = {
+	ModelGraph: "model-graph",
+	Tokenizer: "tokenizer",
+	CharacterVocabulary: "character-vocabulary",
+	Lexicon: "lexicon",
+	PlacetypePairIndex: "placetype-pair-index",
+	PostcodeBinary: "postcode-binary",
+	Gazetteer: "gazetteer-fst",
+	Calibration: "calibration",
+	Other: "other",
+} as const
+
+export type ArtifactRole = (typeof ArtifactRole)[keyof typeof ArtifactRole]
+
+/**
+ * The role a declared filename carries.
+ */
+export function roleForArtifact(path: string): ArtifactRole {
+	const exact: Readonly<Record<string, ArtifactRole>> = {
+		"model.onnx": ArtifactRole.ModelGraph,
+		"tokenizer.model": ArtifactRole.Tokenizer,
+		"char-vocab.json": ArtifactRole.CharacterVocabulary,
+	}
+
+	const byPrefix: ReadonlyArray<readonly [string, ArtifactRole]> = [
+		["pair-index-", ArtifactRole.PlacetypePairIndex],
+		["postcode-", ArtifactRole.PostcodeBinary],
+		["fst-", ArtifactRole.Gazetteer],
+		["calibration", ArtifactRole.Calibration],
+	]
+
+	const named = exact[path]
+
+	if (named) return named
+
+	for (const [prefix, role] of byPrefix) {
+		if (path.startsWith(prefix)) return role
+	}
+
+	return path.includes("-lexicon-v") ? ArtifactRole.Lexicon : ArtifactRole.Other
+}
+
+/**
  * A digest the card records for an artifact, or the reason there is none.
  */
 export interface ArtifactRecord {
 	path: string
+	role: ArtifactRole
 	md5: string | null
 	/**
 	 * `recorded` when the card's `files_md5` names this artifact. `unrecorded` when it does not. An unrecorded digest is
@@ -61,6 +116,55 @@ export interface ArtifactRecord {
 	 * first.
 	 */
 	digest: "recorded" | "unrecorded"
+}
+
+/**
+ * How a source contributed, as its own entry states it.
+ *
+ * A single attribution list runs three different contributions together. Two of `en-us`'s ten entries describe a
+ * coordinate evaluation set and no training rows at all, and reading them as training attribution says the model
+ * learned from data it never saw. Two more describe tokenizer-splice text, which is a different and far smaller set
+ * than the training corpus.
+ *
+ * An entry may carry more than one. `OpenAddresses CZ … tokenizer-splice training text + the oa-cz coord eval sets`
+ * carries two, and flattening it to either one loses a fact the entry states.
+ */
+export const SourceUse = {
+	Training: "training",
+	Tokenizer: "tokenizer",
+	Evaluation: "evaluation",
+	/**
+	 * The entry says nothing about how the source was used. The pointer to `THIRD_PARTY_NOTICES.md` is the case.
+	 */
+	Unstated: "unstated",
+} as const
+
+export type SourceUse = (typeof SourceUse)[keyof typeof SourceUse]
+
+/**
+ * The uses one attribution entry states, read from its own words.
+ *
+ * A reading of prose rather than of a field, so it reports what the entry says and the entry travels verbatim beside
+ * it. `unstated` is returned when nothing matches, never `training`: defaulting to training would turn every entry
+ * whose wording this does not recognize into a claim about what the model learned from.
+ */
+export function usesStatedIn(entry: string): SourceUse[] {
+	const uses: SourceUse[] = []
+	const text = entry.toLowerCase()
+
+	if (/tokenizer[- ](?:splice|training)/u.test(text)) {
+		uses.push(SourceUse.Tokenizer)
+	}
+
+	if (/\beval\b|\beval set|evaluation|validation\b/u.test(text)) {
+		uses.push(SourceUse.Evaluation)
+	}
+
+	if (/training extract|training rows|\btrained on\b|training corpus/u.test(text)) {
+		uses.push(SourceUse.Training)
+	}
+
+	return uses.length ? uses : [SourceUse.Unstated]
 }
 
 /**
@@ -77,6 +181,10 @@ export interface AttributionRecord {
 	 * none, which is a gap rather than a permissive reading.
 	 */
 	licenseNamed: string | null
+	/**
+	 * What the entry says the source was used for. `["unstated"]` when it says nothing, never `["training"]`.
+	 */
+	uses: SourceUse[]
 }
 
 /**
@@ -264,7 +372,7 @@ export async function readWeightsRightsRecord(repoRoot: string, workspace: strin
 		.map((path) => {
 			const md5 = stringOrNull(digests[path])
 
-			return { path, md5, digest: md5 ? "recorded" : "unrecorded" }
+			return { path, role: roleForArtifact(path), md5, digest: md5 ? "recorded" : "unrecorded" }
 		})
 
 	const attribution = attributionEntries(card)
@@ -278,7 +386,11 @@ export async function readWeightsRightsRecord(repoRoot: string, workspace: strin
 		versionSeries: baseWeights ? VersionSeries.Overlay : VersionSeries.Model,
 		baseWeights,
 		artifacts,
-		attribution: attribution.map((text) => ({ text, licenseNamed: licenseNamedIn(text) })),
+		attribution: attribution.map((text) => ({
+			text,
+			licenseNamed: licenseNamedIn(text),
+			uses: usesStatedIn(text),
+		})),
 		foreignAttribution: [],
 		// Both filled by `readWeightsRightsRecords`: each is a question about the set rather than about one package.
 		inherited: null,

@@ -15,7 +15,13 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { renderProvenance } from "@mailwoman/release-kit/weights/rights/files"
-import { licenseNamedIn, readWeightsRightsRecords, VersionSeries } from "@mailwoman/release-kit/weights/rights/record"
+import {
+	licenseNamedIn,
+	readWeightsRightsRecords,
+	roleForArtifact,
+	usesStatedIn,
+	VersionSeries,
+} from "@mailwoman/release-kit/weights/rights/record"
 import { weightsRightsRecords } from "@mailwoman/release-kit/weights/rights/write"
 import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
@@ -55,6 +61,57 @@ describe("licenseNamedIn", () => {
 
 	it("returns null for an entry with no parenthetical at all", () => {
 		expect(licenseNamedIn("See THIRD_PARTY_NOTICES.md for the standing attribution.")).toBeNull()
+	})
+})
+
+describe("usesStatedIn", () => {
+	it("reads an entry describing a training extract as training", () => {
+		expect(usesStatedIn("LINZ-derived OpenAddresses NZ (CC-BY 4.0): the `synth-nz-v2` training extract")).toEqual([
+			"training",
+		])
+	})
+
+	it("reads an entry describing only an evaluation set as evaluation", () => {
+		// `en-us` carries two of these. Reading them as training attribution says the model learned from rows it never
+		// saw, and dropping them loses an attribution the source still requires.
+		expect(
+			usesStatedIn("OpenAddresses SI — GURS (CC-BY per OA source): oa-si coord eval set (free-rider validation)")
+		).toEqual(["evaluation"])
+	})
+
+	it("reads both uses from an entry that states both", () => {
+		expect(
+			usesStatedIn(
+				"OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0): tokenizer-splice training text + the oa-cz coord eval sets"
+			)
+		).toEqual(["tokenizer", "evaluation"])
+	})
+
+	it("reads an entry that states no use as unstated rather than as training", () => {
+		// Defaulting to training would turn every entry whose wording this does not recognize into a claim about what
+		// the model learned from.
+		expect(
+			usesStatedIn("See THIRD_PARTY_NOTICES.md for the standing OpenAddresses / GeoNames / WOF attribution.")
+		).toEqual(["unstated"])
+	})
+})
+
+describe("roleForArtifact", () => {
+	it("gives each shipped filename the lineage class it carries", () => {
+		// One `files` array holds artifacts with unrelated provenance. The model graph carries a training corpus, the
+		// tokenizer carries the text it was fitted on, and a pair index carries one named register.
+		expect(roleForArtifact("model.onnx")).toBe("model-graph")
+		expect(roleForArtifact("tokenizer.model")).toBe("tokenizer")
+		expect(roleForArtifact("char-vocab.json")).toBe("character-vocabulary")
+		expect(roleForArtifact("pair-index-gb.bin")).toBe("placetype-pair-index")
+		expect(roleForArtifact("postcode-us.bin")).toBe("postcode-binary")
+		expect(roleForArtifact("fst-en-gb.bin")).toBe("gazetteer-fst")
+		expect(roleForArtifact("street-type-lexicon-v3.json")).toBe("lexicon")
+		expect(roleForArtifact("calibration-per-locale.json")).toBe("calibration")
+	})
+
+	it("reads an unrecognized filename as other rather than guessing it into a role", () => {
+		expect(roleForArtifact("something-new.bin")).toBe("other")
 	})
 })
 

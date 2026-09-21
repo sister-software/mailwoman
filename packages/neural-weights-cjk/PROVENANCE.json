@@ -11,11 +11,13 @@
 	"artifacts": [
 		{
 			"path": "model.onnx",
+			"role": "model-graph",
 			"md5": "a876d99a1ce90faf1b3be5ab17ada97b",
 			"digest": "recorded"
 		},
 		{
 			"path": "char-vocab.json",
+			"role": "character-vocabulary",
 			"md5": "0fa613bcf93677f129e08f993bdf02c2",
 			"digest": "recorded"
 		}
@@ -25,29 +27,38 @@
 		"entries": [
 			{
 				"text": "Japanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0); administrative names from Who's On First.",
-				"license_named": "CDLA-Permissive-2.0"
+				"license_named": "CDLA-Permissive-2.0",
+				"uses": ["unstated"]
 			},
 			{
 				"text": "Japanese corporate-number register: 国税庁 法人番号公表サイト (National Tax Agency, Corporate Number Publication Site) — the three published fields are free for anyone to use under the site's 利用規約.",
-				"license_named": null
+				"license_named": null,
+				"uses": ["unstated"]
 			},
 			{
 				"text": "Korean road-name address data (주소DB): 행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr), 공공누리 제1유형 (KOGL Type 1) — attribution required; commercial use, derivatives and redistribution permitted.",
-				"license_named": "KOGL Type 1"
+				"license_named": "KOGL Type 1",
+				"uses": ["unstated"]
 			},
 			{
 				"text": "Korean permit registry: 행정안전부 (Ministry of the Interior and Safety), 지방행정인허가데이터 (localdata.go.kr), 이용허락범위 제한 없음 — attribution to the ministry.",
-				"license_named": null
+				"license_named": null,
+				"uses": ["unstated"]
 			},
 			{
 				"text": "Taiwanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0), from OpenAddresses under the 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0), which requires this attribution and voids the grant without it: New Taipei City Government Civil Affairs Bureau; Taichung City Government Civil Affairs Bureau; Kaohsiung City Government Civil Affairs Bureau; Taipei City Government Civil Affairs Bureau; Taoyuan City Government Civil Affairs Bureau; Tainan City Government Civil Affairs Bureau; Changhua County Government Civil Affairs Office; Pingtung County Government; Yunlin County Government; Hsinchu County Civil Affairs Office; Miaoli Civil Affairs Office; Hsinchu City Civil Affairs Office; Keelung City Government Civil Affairs Bureau; Penghu County Government; Kinmen County Civil Affairs Office (Overture release 2026-06-17.0).",
-				"license_named": "CDLA-Permissive-2.0"
+				"license_named": "CDLA-Permissive-2.0",
+				"uses": ["unstated"]
 			},
 			{
 				"text": "Taiwanese company register: 提供機關／經濟部商業發展署 (Ministry of Economic Affairs, Administration for Commerce Development), 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0) — the 顯名聲明 each dataset prescribes.",
-				"license_named": "Open Government Data License, Taiwan, v1.0"
+				"license_named": "Open Government Data License, Taiwan, v1.0",
+				"uses": ["unstated"]
 			}
-		]
+		],
+		"by_use": {
+			"unstated": 6
+		}
 	},
 	"attribution_recorded_in_another_package": [],
 	"corpus_version": null,
@@ -55,6 +66,7 @@
 	"unresolved": [
 		"One attribution entry names no license: Japanese corporate-number register: 国税庁 法人番号公表サイト (National Tax Agency, Corporate Number Publication Site) — the three published fields are free for anyone to use under the site's 利用規約.",
 		"One attribution entry names no license: Korean permit registry: 행정안전부 (Ministry of the Interior and Safety), 지방행정인허가데이터 (localdata.go.kr), 이용허락범위 제한 없음 — attribution to the ministry.",
-		"Which records trained the model this package ships or inherits is unresolved. No frozen per-release training manifest exists, and the corpus named above is the recipe's corpus rather than a record of what reached the model."
+		"6 of 6 attribution entries do not say how the source was used, so whether it trained this model is unrecorded.",
+		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }
