@@ -46,8 +46,8 @@ class StubBackend implements Pick<ResolverBackend, "findPlace"> {
 }
 
 /**
- * Two same-name localities: the backend ranks the populous one first, the fame key
- * must flip them — the Whitby class, and the rank vector must say so.
+ * Two same-name localities: the backend ranks the populous one first, the fame key must flip them.
+ * The Whitby class, and the rank vector must say so.
  */
 const WHITBY_PLACES: ResolvedPlace[] = [
 	{
@@ -89,7 +89,8 @@ describe("resolver-interior trace (#1721)", () => {
 			traceSink: (record) => records.push(record),
 		})
 
-		// Identical resolution either way — the sink observes, never participates.
+		// Identical resolution either way.
+		// The sink observes, never participates.
 		expect(stringifyJSON(plain)).toBe(stringifyJSON(traced))
 		expect(records.length).toBeGreaterThan(0)
 	})
@@ -110,7 +111,8 @@ describe("resolver-interior trace (#1721)", () => {
 		const canada = localityRecord!.candidates.find((c) => c.country === "CA")
 		const yorkshire = localityRecord!.candidates.find((c) => c.country === "GB")
 
-		// The backend's own order put the populous namesake first. the fame key flipped them.
+		// The backend's own order put the populous namesake first.
+		// The fame key flipped them.
 		// The rank vector records both facts, which is the whole point.
 		expect(canada?.ranks["initial"]).toBe(1)
 		expect(yorkshire?.ranks["initial"]).toBe(2)
@@ -127,8 +129,9 @@ describe("resolver-interior trace (#1721)", () => {
 		const backend = new StubBackend(WHITBY_PLACES)
 		const records: ResolveNodeTrace[] = []
 
-		// Confidence under the rescore threshold (0.7) — a confident street read is deliberately
-		// avoided by the span enumeration, and the famous-name class arrives exactly this unconfident.
+		// Confidence under the rescore threshold (0.7).
+		// A confident street read is deliberately avoided by the span enumeration,
+		// and the famous-name class arrives exactly this unconfident.
 		const streetNode = { ...node("street", "Whitby", 0, 6), confidence: 0.4 }
 
 		const resolved = await createWOFResolver(backend as ResolverBackend).resolveTree(tree("Whitby", [streetNode]), {
@@ -162,9 +165,8 @@ describe("resolver-interior trace (#1721)", () => {
 		expect(record).toBeDefined()
 		expect(record!.picked).toBeNull()
 		expect(record!.candidates).toEqual([])
-		// The bare-toponym race ran (single value-containing locality node)
-		// and still found nothing — the check says the mechanism participated,
-		// which is what separates "raced and lost" from "never ran".
+		// The bare-toponym race ran (single value-containing locality node) and still found nothing.
+		// The check says the mechanism participated, which is what separates "raced and lost" from "never ran".
 		expect(record!.checks).toContain("bare_race")
 	})
 })

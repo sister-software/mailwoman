@@ -72,7 +72,8 @@ function stamp<Pick extends { metadata?: Record<string, unknown> }>(
  * or town outside the head is never admissible — including one the backend re-admits
  * through its own region-scope fallback (`regionScopeMiss`).
  *
- * A county head usually has no key. the tail then probes under the parent the walk already holds.
+ * A county head usually has no key.
+ * The tail then probes under the parent the walk already holds.
  * Answers the tail when it hits, else the head, else null.
  *
  * Two probes at most, each drawn from the caller's budget (`hasBudget`).

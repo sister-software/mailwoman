@@ -15,8 +15,9 @@ import type { BackendCapabilityGap, ResolverBackend } from "@mailwoman/core/reso
 /**
  * The optional backend methods whose absence degrades a passing default, paired with what stops working.
  *
- * A method whose absence is inert (or whose option is opt-in and therefore a deliberate caller choice) does
- * not belong here — the list exists to name silent degradation rather than to inventory the interface.
+ * A method whose absence is inert (or whose option is opt-in and therefore a
+ * deliberate caller choice) does not belong here.
+ * The list exists to name silent degradation rather than to inventory the interface.
  */
 const CONSEQUENTIAL_CAPABILITIES: ReadonlyArray<Omit<BackendCapabilityGap, "backend">> = [
 	{
@@ -73,7 +74,8 @@ const reported = new Set<string>()
 /**
  * Report a backend's gaps to stderr the first time this process sees them.
  *
- * The gaps are data on `Resolver.capabilityGaps` regardless. this also reports them to an operator.
+ * The gaps are data on `Resolver.capabilityGaps` regardless.
+ * This also reports them to an operator.
  */
 export function reportCapabilityGaps(gaps: readonly BackendCapabilityGap[]): void {
 	const [first] = gaps

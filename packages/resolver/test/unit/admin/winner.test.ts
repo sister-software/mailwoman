@@ -94,8 +94,8 @@ describe("adminLadderFor", () => {
 		expect(adminLadderFor(DE_PLZ)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 	})
 
-	// The membership table is a measured claim, so a silent addition is the thing to catch —
-	// a new entry has to arrive with its panel, the way DE did.
+	// The membership table is a measured claim, so a silent addition is the thing to catch.
+	// A new entry has to arrive with its panel, the way DE did.
 	it("holds exactly the countries a full-panel measurement has admitted", () => {
 		expect([...AREA_POSTCODE_FINER_THAN_LOCALITY].toSorted()).toEqual(["DE", "JP", "SG"])
 	})

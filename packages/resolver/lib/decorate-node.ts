@@ -79,18 +79,19 @@ export function decorateNode(
 	node.metadata = { ...node.metadata, resolver_score: resolved.score, resolver_name: resolved.name }
 
 	// The winner's prominence, when the backend computed one.
-	// `alternatives` below are full `ResolvedPlace`s and already carry theirs. without
-	// this stamp the winner's is the one value in the ranked list that gets dropped,
+	// `alternatives` below are full `ResolvedPlace`s and already carry theirs.
+	// Without this stamp the winner's is the one value in the ranked list that gets dropped,
 	// which makes a top-1-vs-top-2 margin uncomputable from the tree — and that margin is what
 	// `mailwoman/query-intent.ts` reads to decide whether a bare-toponym answer was a clear win.
-	// Additive metadata only. nothing in the resolve reads it back.
+	// Additive metadata only.
+	// Nothing in the resolve reads it back.
 	if (resolved.prominence !== undefined) {
 		node.metadata["resolver_prominence"] = resolved.prominence
 	}
 
 	// The resolved place's ISO-3166 alpha-2 country (from the gazetteer/candidate row),
-	// when known. #1014: lets a forward consumer fill country/countrycode without an ancestry
-	// walk — the candidate backend carries this even though it has no `ancestors()` table.
+	// when known. #1014: lets a forward consumer fill country/countrycode without an ancestry walk.
+	// The candidate backend carries this even though it has no `ancestors()` table.
 	if (resolved.country) {
 		node.metadata["resolver_country"] = resolved.country
 	}
@@ -122,8 +123,9 @@ export function decorateNode(
 
 	// Fallback-observability (#718): a broader admin tier (macroregion/macrocounty) stood
 	// in for the true region/county because no exact-type candidate existed.
-	// Additive annotation only — the resolved coordinate/identity above is untouched.
-	// this just lets a consumer / QA pass see it.
+	// Additive annotation only.
+	// The resolved coordinate/identity above is untouched.
+	// This just lets a consumer / QA pass see it.
 	if (resolved.resolutionQuality) {
 		node.metadata["resolution_quality"] = resolved.resolutionQuality
 	}

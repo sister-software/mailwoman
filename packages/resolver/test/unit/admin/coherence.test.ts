@@ -143,7 +143,8 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		const out = await resolver.resolveTree(portlandMeTree(), { adminCoherence: false })
 		const loc = localityOf(out)
 
-		// Greedy walk scoped Portland to Messina (parent 10) → nothing → unresolved. no re-pick.
+		// Greedy walk scoped Portland to Messina (parent 10) → nothing → unresolved.
+		// No re-pick.
 		expect(loc?.lat == null || (loc.lat === 0 && loc.lon === 0)).toBe(true)
 		expect(loc?.metadata?.["admin_coherence_repicked"]).toBeUndefined()
 	})
@@ -237,7 +238,8 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		expect(tb?.lat).toBeCloseTo(41.69, 2)
 		expect(tb?.metadata?.["admin_coherence_repicked"]).toBe(true)
 
-		// Atlanta is under the US state → it resolves in the walk. no country fall-through.
+		// Atlanta is under the US state → it resolves in the walk.
+		// No country fall-through.
 		const at = localityOf(await resolver.resolveTree(tree("Atlanta"), { adminCoherence: true }))
 		expect(at?.lat).toBeCloseTo(33.76, 2)
 	})
@@ -245,8 +247,8 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	it("re-picks via matchCountry when the gazetteer has NO country node + the locality is orphaned (#1023 — flattened GE hierarchy)", async () => {
 		// The 2026-07-07 admin rebuild (#1015) flattened Georgia to localities-only:
 		// no `country`-placetype node, and Tbilisi orphaned (parent_id -1).
-		// So both the country-node lookup and the `parentID` descendant test miss it — the exact
-		// shape that regressed "Tbilisi, Georgia" → US Georgia (10,200 km). matchCountry("Georgia")
+		// So both the country-node lookup and the `parentID` descendant test miss it.
+		// The exact shape that regressed "Tbilisi, Georgia" → US Georgia (10,200 km). matchCountry("Georgia")
 		// → GE lets the fall-through scope by the `country` column, which is still set.
 		const usGeorgia = {
 			id: 40,
@@ -292,8 +294,9 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		expect(loc?.lon).toBeCloseTo(44.83, 2)
 		expect(loc?.metadata?.["admin_coherence_repicked"]).toBe(true)
 
-		// The greedy walk had bound the region node to the US-state namesake. the fall-through reverts
-		// that stale decoration so no wrong-country coordinate / `resolver_country` leaks into the result.
+		// The greedy walk had bound the region node to the US-state namesake.
+		// The fall-through reverts that stale decoration so no wrong-country coordinate
+		// / `resolver_country` leaks into the result.
 		const region = regionOf(out)
 		expect(region?.lat).toBeUndefined()
 		expect(region?.placeID).toBeUndefined()
@@ -358,7 +361,8 @@ describe("resolveTree + adminCoherence (#263)", () => {
 })
 
 describe("resolveTree + applyParentFallbackContradiction", () => {
-	// 臺南市 (Tainan City) and 新竹市 (Hsinchu City) are regions. only Hsinchu's 北區 carries a key.
+	// 臺南市 (Tainan City) and 新竹市 (Hsinchu City) are regions.
+	// Only Hsinchu's 北區 carries a key.
 	// The walk scopes 北區 to Tainan, misses, and the parent-fallback retry answers Hsinchu's —
 	// a namesake 214 km away on the real gazetteer.
 	const TAINAN: ResolvedPlace = {
@@ -458,8 +462,9 @@ describe("resolveTree + applyParentFallbackContradiction", () => {
 	})
 
 	it("refuses the same pick when the BACKEND widened the scope and stamped regionScopeMiss (#1731)", async () => {
-		// A backend that keeps the parent scope on the query and re-admits rows from outside it, the way
-		// the candidate table's interior region-scope fallback does — the resolver's own retry never runs.
+		// A backend that keeps the parent scope on the query and re-admits rows from outside it,
+		// the way the candidate table's interior region-scope fallback does.
+		// The resolver's own retry never runs.
 		const widened: ResolverBackend = {
 			async findPlace(query) {
 				const text = query.text.toLowerCase()

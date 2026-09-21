@@ -80,21 +80,23 @@ import { isUSStateAbbreviation } from "@mailwoman/codex/us"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 
 /**
- * The codex address systems a sibling signal can speak for — the universe
- * `candidateSystemsForPostcode` can return, in the upper-case ISO form this module's
- * signals are emitted in (`SystemCode` itself is lower-case).
+ * The codex address systems a sibling signal can speak for.
+ *
+ * The universe `candidateSystemsForPostcode` can return, in the upper-case ISO form
+ * this module's signals are emitted in (`SystemCode` itself is lower-case).
  *
  * Signals from countries with no codex address system are filtered out
  * before the intersection test, so such a country can never manufacture an empty
- * intersection (the false-exclusion trap. see the header).
+ * intersection (the false-exclusion trap. See the header).
  * Derived from codex's own list so a system added there is admitted here in the same change.
  */
 const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(SYSTEM_CODES.map((system) => system.toUpperCase()))
 
 /**
- * The pass's per-tree verdict — the caller (and the B1 board tests) can see exactly
- * which spans were confirmed, excluded, or abstained, and which confirmed span's
- * narrowed systems should bound the country-scope pass.
+ * The pass's per-tree verdict.
+ *
+ * The caller (and the B1 board tests) can see exactly which spans were confirmed, excluded,
+ * or abstained, and which confirmed span's narrowed systems should bound the country-scope pass.
  */
 export interface PostcodeShapeVerdict {
 	/**
@@ -175,8 +177,9 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): PostcodeShapeVerdict {
 	const verdict: PostcodeShapeVerdict = { confirmed: [], excluded: [], abstained: [] }
 
-	// The postcode spans in document order — the same walk `firstPostcodeValue` uses,
-	// so the verdict's "first confirmed" is the node `state.postcode` will read.
+	// The postcode spans in document order.
+	// The same walk `firstPostcodeValue` uses, so the verdict's "first confirmed"
+	// is the node `state.postcode` will read.
 	const postcodes = collectNodes(roots, (n) => n.tag === "postcode" && n.value.trim())
 
 	if (!postcodes.length) return verdict

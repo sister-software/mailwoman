@@ -85,7 +85,7 @@ const PLACES: ResolvedPlace[] = [
 		lon: 140.45,
 		score: 9,
 	},
-	// The town under its prefecture. the county 猿島郡 has no record at all.
+	// The town under its prefecture. The county 猿島郡 has no record at all.
 	{
 		id: GOKA,
 		name: "五霞町",
@@ -148,7 +148,8 @@ describe("compound JP municipality — the scoped pair", () => {
 			answered: "tail",
 		})
 
-		// The tail probe carried the city as its parent. no unscoped probe of the bare ward was made.
+		// The tail probe carried the city as its parent.
+		// No unscoped probe of the bare ward was made.
 		const wardProbes = backend.calls.filter((call) => call.text === "西区")
 
 		expect(wardProbes).toHaveLength(1)

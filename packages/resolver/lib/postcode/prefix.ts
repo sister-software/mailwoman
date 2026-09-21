@@ -62,8 +62,9 @@ import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from 
  * A resolved place that may carry no coordinate.
  *
  * `ResolvedPlace` requires `lat`/`lon` (every gazetteer row has a value, even the 0,0 unlocated sentinel),
- * and the prefix prior's ancestry-only tier must express absence as `undefined` instead —
+ * and the prefix prior's ancestry-only tier must express absence as `undefined` instead.
  * B3-3: inventing a centroid would reproduce the `BT3 9QQ` → Sheffield defect #1480.
+ *
  * `decorateNode` copies `lat`/`lon` onto the node verbatim, so an undefined coordinate
  * stays absent on the node — the meaning-of-zero rule.
  *
@@ -73,8 +74,9 @@ import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from 
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
 /**
- * The minimum compact code length for a GB outward derivation — a shorter code has no
- * 3-character unit to strip ("B3" is a GB area rather than a unit-containing code).
+ * The minimum compact code length for a GB outward derivation.
+ *
+ * A shorter code has no 3-character unit to strip ("B3" is a GB area rather than a unit-containing code).
  */
 const MIN_GB_OUTWARD_CODE_LENGTH = 5
 
@@ -86,7 +88,7 @@ const MIN_US_SECTION_CODE_LENGTH = 3
 /**
  * Derive the prefix the index is keyed by, per the artifact's own country law.
  *
- * Returns null (abstain) for a country with no derivation law, or a code too short to carry a prefix.
+ * @returns null (abstain) for a country with no derivation law, or a code too short to carry a prefix.
  */
 export function derivePostcodePrefix(code: string, country?: string): string | null {
 	if (!code || !country) return null
@@ -94,13 +96,10 @@ export function derivePostcodePrefix(code: string, country?: string): string | n
 	const compact = code.replaceAll(/\s+/g, "")
 
 	switch (country.toUpperCase()) {
-		// The outward-code law: compact minus the trailing 3 unit characters ("SW1A2AA" → "SW1A",
-		// "BT93GS" → "BT9"). Exactly 3 — never a greedy regex, the build-side twin is `outwardOf`.
+		// The outward-code law: compact minus the trailing 3 unit characters ("SW1A2AA" → "SW1A", "BT93GS" → "BT9"). Exactly 3 — never a greedy regex, the build-side twin is `outwardOf`.
 		case "GB":
 			return compact.length >= MIN_GB_OUTWARD_CODE_LENGTH ? compact.slice(0, -3) : null
-		// The 3-digit sectional centre ("94043" → "940"). Deliberately looser than the build side, which
-		// requires a real ZIP shape: a probe for something that is not a code simply misses, and a reader
-		// that re-derived the writer's validation would be a second copy of it.
+		// The 3-digit sectional centre ("94043" → "940"). Deliberately looser than the build side, which requires a real ZIP shape: a probe for something that is not a code simply misses, and a reader that re-derived the writer's validation would be a second copy of it.
 		case "US":
 			return compact.length >= MIN_US_SECTION_CODE_LENGTH ? compact.slice(0, 3) : null
 		default:
@@ -137,7 +136,8 @@ export function probePostcodePrefix(
 	const indexCountry = index.country?.toUpperCase()
 
 	// Country check: the index is evidence FOR its own country only.
-	// A GB index under a US scope stays silent — the walk's country filter is the caller's declared universe.
+	// A GB index under a US scope stays silent.
+	// The walk's country filter is the caller's declared universe.
 	if (queryCountry && indexCountry && queryCountry.toUpperCase() !== indexCountry) return null
 
 	const prefix = derivePostcodePrefix(code, indexCountry)

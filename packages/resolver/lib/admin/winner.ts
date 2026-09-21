@@ -18,8 +18,10 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 
 /**
- * The admin fallback order when the postcode leads — a unit-grade exact hit, or an address system
- * whose area-grade code is still finer than its locality ({@link areaPostcodeLeadsLocality}).
+ * The admin fallback order when the postcode leads.
+ *
+ * A unit-grade exact hit, or an address system whose area-grade code is still finer
+ * than its locality ({@link areaPostcodeLeadsLocality}).
  *
  * The JP rungs (`municipality`, `district`, `prefecture`) sit beside their Latin
  * counterparts, and `municipality` stands above `district` on purpose.
@@ -103,7 +105,8 @@ export function adminLadderFor(postcode: ResolvedPostcodeHit | undefined): Reado
 }
 
 /**
- * The ladder for a flat list of resolved nodes — the shape result assembly holds.
+ * The ladder for a flat list of resolved nodes.
+ * The shape result assembly holds.
  *
  * Which node counts, and which of its fields the decision reads, is part of the ordering
  * rather than the caller's business: `country` is the one the resolver placed the code in,
@@ -137,8 +140,10 @@ export function adminLadderForNodes(nodes: readonly AddressNode[]): ReadonlyArra
  * defect on exactly the rows that motivated the group.
  *
  * Deliberately not an integer.
- * The scale's rungs are placetypes and this is not one — it is the position
- * {@link ADMIN_LADDER_LOCALITY_FIRST} puts a postcode in, expressed on the scale the sorting consumers already use.
+ * The scale's rungs are placetypes and this is not one.
+ *
+ * It is the position {@link ADMIN_LADDER_LOCALITY_FIRST} puts a postcode in,
+ * expressed on the scale the sorting consumers already use.
  */
 export const AREA_GRADE_POSTALCODE_SPECIFICITY = 2.5
 
@@ -167,8 +172,9 @@ export interface ResolvedSpecificityInput {
 }
 
 /**
- * Rank a resolved place for "whose coordinate answers the query" — `PLACETYPE_SPECIFICITY`,
- * except that a `postalcode` is ranked by its hit.
+ * Rank a resolved place for "whose coordinate answers the query".
+ *
+ * `PLACETYPE_SPECIFICITY`, except that a `postalcode` is ranked by its hit.
  *
  * An unranked placetype returns `-Infinity` so it wins only when nothing else resolved.
  */

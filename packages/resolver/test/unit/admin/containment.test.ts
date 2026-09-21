@@ -205,8 +205,8 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 
 	it("MUTATION CHECK: with the containment stamps inverted, the same input flips to the namesake", async () => {
 		// The #1729 fixture discipline: the test must fail under an inverted containment term.
-		// Inverting the stamps here is the walk-level image of inverting `intervalContains`
-		// in the backend — the candidate-lookup suite carries the artifact-level twin.
+		// Inverting the stamps here is the walk-level image of inverting `intervalContains` in the backend.
+		// The candidate-lookup suite carries the artifact-level twin.
 		const { locality } = await resolveWith(
 			[
 				{ id: 1, country: "US", importance: 0.9, contained: true },

@@ -21,9 +21,10 @@ import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"
  *
  * Deliberately the same node the admin-coherence verdicts read (the first `region` node),
  * so the change's firing population and the flag's `contradicted` population are the same rows.
- * A `region` slot can hold a country name the parser mislabeled
- * ("Moscow, Russia" parses region="Russia") — the backend's qualifier probe answers that too,
- * because containment is containment whatever tier the container sits at.
+ * A `region` slot can hold a country name the parser mislabeled ("Moscow, Russia" parses region="Russia").
+ *
+ * The backend's qualifier probe answers that too, because containment is
+ * containment whatever tier the container sits at.
  */
 export function firstRegionQualifier(roots: readonly AddressNode[]): string | undefined {
 	return firstNodeWhere(roots, (n) => n.tag === "region" && n.value.trim())?.value.trim()

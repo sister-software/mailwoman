@@ -20,9 +20,10 @@ const norm = backendNameKey
 
 /**
  * A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments),
- * with an optional alias surface per place — a row admitted by an alias stands
- * in for the gazetteer's names table / alt_names bag, which is what stamps the
- * backend's `exactMatch` on name-or-alias equality.
+ * with an optional alias surface per place.
+ *
+ * A row admitted by an alias stands in for the gazetteer's names table / alt_names bag,
+ * which is what stamps the backend's `exactMatch` on name-or-alias equality.
  */
 type FixturePlace = ResolvedPlace & { aliases?: string[] }
 
@@ -60,9 +61,7 @@ const PLACES: FixturePlace[] = [
 	},
 	// A postcode → point, near Tomaszów Mazowiecki (the check anchor).
 	{ id: 900, name: "97-200", placetype: "postalcode", country: "PL", lat: 51.53, lon: 20.01, score: 1 },
-	// #1537 namesake group: four same-named US localities, rank order as listed. The model reads a bare
-	// "Springfield" as a `street`, so the admin walk never touches it and span-rescore is the only tier
-	// that resolves it — which is why the runner-ups have to survive this path to reach a consumer.
+	// #1537 namesake group: four same-named US localities, rank order as listed. The model reads a bare "Springfield" as a `street`, so the admin walk never touches it and span-rescore is the only tier that resolves it — which is why the runner-ups have to survive this path to reach a consumer.
 	{
 		id: 10,
 		name: "Springfield",
@@ -121,11 +120,7 @@ const PLACES: FixturePlace[] = [
 		score: 9,
 		exactMatch: true,
 	},
-	// #1546: the non-Latin-primary namesake, modeled on the live shipped board. Moscow RU (pop 12.7M,
-	// primary "Москва") is admitted to a "Moscow" query only through its alias surface — the backend
-	// stamps exactMatch via the "Moscow" names row — and it ranks first (population-first). The old
-	// span-rescore filter re-checked the primary name folded to [a-z0-9 ], and norm("Москва") is ""
-	// — so the RU entry was dropped and Moscow, Idaho won by default among the Latin-named bearers.
+	// #1546: the non-Latin-primary namesake, modeled on the live shipped board. Moscow RU (pop 12.7M, primary "Москва") is admitted to a "Moscow" query only through its alias surface — the backend stamps exactMatch via the "Moscow" names row — and it ranks first (population-first). The old span-rescore filter re-checked the primary name folded to [a-z0-9 ], and norm("Москва") is "". So the RU entry was dropped and Moscow, Idaho won by default among the Latin-named bearers.
 	{
 		id: 30,
 		name: "Москва",
@@ -162,9 +157,7 @@ const PLACES: FixturePlace[] = [
 	},
 	// The check anchor for the #1546 group — resolves next to the Idaho bearer (id 31).
 	{ id: 902, name: "83843", placetype: "postalcode", country: "US", lat: 46.73, lon: -116.99, score: 1 },
-	// #1546: the alias surface is the recall for latin scripts too — a query equal to a place's alias
-	// ("New York City") but not its primary name ("New York") was dropped by the same primary-name
-	// re-check, even when the backend had already flagged it exact.
+	// #1546: the alias surface is the recall for latin scripts too. A query equal to a place's alias ("New York City") but not its primary name ("New York") was dropped by the same primary-name re-check, even when the backend had already flagged it exact.
 	{
 		id: 40,
 		name: "New York",
@@ -177,9 +170,7 @@ const PLACES: FixturePlace[] = [
 		prominence: 7,
 		exactMatch: true,
 	},
-	// The "Ave, France" guard's own place, and the name that must survive it: `Prairie` is a street
-	// suffix and the tail of a real locality, so the two cases differ only in whether the probed span
-	// is the affix or merely contains it.
+	// The "Ave, France" guard's own place, and the name that must survive it: `Prairie` is a street suffix and the tail of a real locality, so the two cases differ only in whether the probed span is the affix or merely contains it.
 	{ id: 60, name: "Ave", placetype: "locality", country: "FR", lat: 43.7, lon: 4.6, score: 2, exactMatch: true },
 	{
 		id: 61,
@@ -191,8 +182,7 @@ const PLACES: FixturePlace[] = [
 		score: 5,
 		exactMatch: true,
 	},
-	// #2266: a two-character name that collides with a region code, scoring far above the locality the
-	// query is actually about. Both spans are one token, so only character extent separates them.
+	// #2266: a two-character name that collides with a region code, scoring far above the locality the query is actually about. Both spans are one token, so only character extent separates them.
 	{ id: 50, name: "Wa", placetype: "locality", country: "GH", lat: 10.06, lon: -2.5, score: 20, exactMatch: true },
 	{
 		id: 51,
@@ -204,8 +194,7 @@ const PLACES: FixturePlace[] = [
 		score: 4,
 		exactMatch: true,
 	},
-	// #2266: `Worth` exists, `Fort Worth` does not — the shape of every row the context-remainder rule catches.
-	// Worth, Illinois carries a recorded population, so it wins its own name outright once `Fort` is discarded.
+	// #2266: `Worth` exists, `Fort Worth` does not — the shape of every row the context-remainder rule catches. Worth, Illinois carries a recorded population, so it wins its own name outright once `Fort` is discarded.
 	{
 		id: 60,
 		name: "Worth",
@@ -358,7 +347,8 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("flags a recovery CONDITIONAL when the postcode resolves and the match is within range", async () => {
-		// 97-200 resolves (fixture) near Tomaszów Mazowiecki. the longest match lands within 50km → conditional.
+		// 97-200 resolves (fixture) near Tomaszów Mazowiecki.
+		// The longest match lands within 50km → conditional.
 		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], await makeBackend(), {
 			country: "PL",
 			postcode: "97-200",
@@ -415,7 +405,8 @@ describe("findRescoreCandidate", () => {
 		// The live Moscow board: the backend returns Moscow RU first (exactMatch via the "Moscow" alias row),
 		// but the old filter re-checked only the primary name folded to [a-z0-9 ] — norm("Москва") is ""
 		// and could never equal "moscow", so Moscow, Idaho won by default among the Latin-named bearers.
-		// Population-first ranking was starved rather than violated. recall fixes it with no ranking change.
+		// Population-first ranking was starved rather than violated.
+		// Recall fixes it with no ranking change.
 		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), { thresholdKm: 0 })
 		expect(hit?.place.id).toBe(30)
 		expect(hit?.place.name).toBe("Москва")
@@ -425,7 +416,8 @@ describe("findRescoreCandidate", () => {
 	it("#1546: the postcode check still rejects the non-Latin namesake when it is far from the anchor", async () => {
 		// "Moscow, ID 83843": the postcode anchors next to the Idaho bearer (id 31); Moscow RU
 		// is thousands of km away, so the check excludes it and the Idaho winner is unchanged.
-		// Admission is recall. the check still decides.
+		// Admission is recall.
+		// The check still decides.
 		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), {
 			country: "US",
 			postcode: "83843",
@@ -562,7 +554,8 @@ describe("resolveTree + spanRescore", () => {
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
 		])
 
-		// No `spanRescore` in opts — the default (on) must still recover the locality.
+		// No `spanRescore` in opts.
+		// The default (on) must still recover the locality.
 		const out = await resolver.resolveTree(input, { defaultCountry: "PL" })
 		expect(out.roots.find((n) => n.placeID === "wof:1")?.value).toBe("Grudziądz")
 	})
@@ -655,8 +648,9 @@ describe("multi-token name interiors (#1678 thread 3)", () => {
 	 * `Papua New Guinea` is absent from the gazetteer, so the tree resolves nothing
 	 * and the rescore tier runs.
 	 *
-	 * Before this guard it enumerated raw token spans, matched the interior `New` against a real US
-	 * place, and pinned the address to Kentucky — a confident answer to a question nobody asked.
+	 * Before this guard it enumerated raw token spans, matched the interior `New`
+	 * against a real US place, and pinned the address to Kentucky.
+	 * A confident answer to a question nobody asked.
 	 * The parse was correct throughout.
 	 */
 	it("refuses a sub-span interior to a multi-token country name", async () => {
@@ -678,7 +672,8 @@ describe("multi-token name interiors (#1678 thread 3)", () => {
 
 		await findRescoreCandidate(raw, roots, backend, {})
 
-		// The whole span may be probed. its interior tokens may not.
+		// The whole span may be probed.
+		// Its interior tokens may not.
 		expect(probed).not.toContain("New")
 		expect(probed).not.toContain("Papua")
 		expect(probed).not.toContain("Guinea")

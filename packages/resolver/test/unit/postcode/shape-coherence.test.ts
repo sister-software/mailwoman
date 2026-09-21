@@ -63,8 +63,8 @@ function tagged(roots: readonly AddressNode[], tag: string): AddressNode[] {
 	return out
 }
 
-// A fake backend whose only job is to be a ResolverBackend for the byte-stability leg — every
-// query misses, so nothing resolves and the two walks (flag on/off) are trivially comparable.
+// A fake backend whose only job is to be a ResolverBackend for the byte-stability leg.
+// Every query misses, so nothing resolves and the two walks (flag on/off) are trivially comparable.
 const silentBackend: ResolverBackend = {
 	findPlace: async () => [],
 }
@@ -127,8 +127,8 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 
 		const verdict = applyPostcodeShapeCoherence(roots)
 
-		// PR is a USPS state-or-territory abbreviation, so the Puerto Rico token is a US-system
-		// signal — the true postcode in "Ponce, 00716, Puerto Rico" is confirmed, never excluded.
+		// PR is a USPS state-or-territory abbreviation, so the Puerto Rico token is a US-system signal.
+		// The true postcode in "Ponce, 00716, Puerto Rico" is confirmed, never excluded.
 		expect(verdict.confirmed).toEqual(["00716"])
 		expect(roots[0]!.metadata?.["postcode_shape_systems"]).toEqual(["US"])
 	})
@@ -205,7 +205,8 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 
 		expect(verdict.excluded).toEqual(["SW1A 2AA"])
 		// The compound-split corner (#942 territory): the span is not digit-only,
-		// so it cannot be retagged to house_number — it keeps its tag and is stamped.
+		// so it cannot be retagged to house_number.
+		// It keeps its tag and is stamped.
 		expect(roots[0]!.tag).toBe("postcode")
 		expect(isShapeExcludedPostcode(roots[0]!)).toBe(true)
 	})
@@ -233,7 +234,8 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 	})
 
 	it("abstains on a shape no codex system recognizes", () => {
-		// "1200 02" matches no codex system — an empty candidate set is no evidence either way.
+		// "1200 02" matches no codex system.
+		// An empty candidate set is no evidence either way.
 		const roots = [postcodeNode("1200 02"), node({ tag: "country", value: "United States" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -242,10 +244,10 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 	})
 
 	it("confounds: 'Sydney NSW 2000, Australia' stays CONFIRMED — the default country is never a signal", () => {
-		// B1-3: reached under a US default, 2000 must not be excluded — that would
-		// delete the evidence the country-scope pass needs.
-		// The mechanism has no defaultCountry input at all. the only signals are
-		// the tree's own country/region tokens.
+		// B1-3: reached under a US default, 2000 must not be excluded.
+		// That would delete the evidence the country-scope pass needs.
+		// The mechanism has no defaultCountry input at all.
+		// The only signals are the tree's own country/region tokens.
 		const roots = [postcodeNode("2000"), node({ tag: "country", value: "Australia" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -282,15 +284,16 @@ describe("isShapeExcludedPostcode", () => {
 
 describe("firstPostcodeValue integration — excluded spans never become the address's postcode", () => {
 	it("skips a stamped-excluded span when selecting the tree's postcode", async () => {
-		// Two postcode spans. the letter-containing one is excluded, the US 5-digit one is not.
+		// Two postcode spans.
+		// The letter-containing one is excluded, the US 5-digit one is not.
 		const excluded = postcodeNode("SW1A 2AA")
 		const good = postcodeNode("80503")
 
 		const roots = [excluded, node({ tag: "region", value: "CO" }), good]
 		applyPostcodeShapeCoherence(roots)
 
-		// The resolver walk must use the good span as the address's postcode —
-		// the excluded one is skipped even though it appears first in tree order.
+		// The resolver walk must use the good span as the address's postcode.
+		// The excluded one is skipped even though it appears first in tree order.
 		const resolver = createWOFResolver(silentBackend)
 		const resolved = await resolver.resolveTree(tree(...roots), { postcodeShapeCoherence: true })
 

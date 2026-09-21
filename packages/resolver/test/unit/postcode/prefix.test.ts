@@ -40,7 +40,8 @@ const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): 
 const tree = (...roots: AddressNode[]): AddressTree => ({ raw: roots.map((r) => r.value).join(" "), roots })
 
 /**
- * Every backend query misses — the postalcode lookup must fail for the prior to fire.
+ * Every backend query misses.
+ * The postalcode lookup must fail for the prior to fire.
  */
 const silentBackend: ResolverBackend = {
 	findPlace: async () => [],

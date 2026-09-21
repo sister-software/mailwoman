@@ -9,7 +9,8 @@ import { rerankByResolution } from "@mailwoman/resolver/rerank"
 import { describe, expect, it, vi } from "vitest"
 
 /**
- * A tree whose finest resolved node carries `tag` — `country` is what the guard vetoes.
+ * A tree whose finest resolved node carries `tag`.
+ * `country` is what the guard vetoes.
  */
 function resolvedTree(tag: string, raw = "x"): AddressTree {
 	const node: AddressNode = {
@@ -58,7 +59,8 @@ describe("rerankByResolution", () => {
 		expect(out.best.payload).toBe("a")
 		expect(out.changed).toBe(false)
 		// Rank-1 was plausible, so rank-2 need not have been resolved at all...
-		// but the budget resolves in order. what matters is the answer is unchanged.
+		// But the budget resolves in order.
+		// What matters is the answer is unchanged.
 		expect(out.ranked[0]!.payload).toBe("a")
 	})
 

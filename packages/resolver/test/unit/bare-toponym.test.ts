@@ -110,8 +110,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 5.06,
 		exactMatch: true,
 	},
-	// Weimar / Thüringen: the longest-wins trap. "Thüringen" is a real exact match (an AT locality),
-	// so a 2-token span that happens to contain it must not outrank the 1-token gold.
+	// Weimar / Thüringen: the longest-wins trap. "Thüringen" is a real exact match (an AT locality), so a 2-token span that happens to contain it must not outrank the 1-token gold.
 	{
 		id: 8,
 		name: "Weimar",
@@ -134,7 +133,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 3.3606,
 		exactMatch: true,
 	},
-	// A postcode → point for the not-bare guard. sits on Berlin, Wisconsin (id 5) so the check admits it.
+	// A postcode → point for the not-bare guard. Sits on Berlin, Wisconsin (id 5) so the check admits it.
 	{ id: 900, name: "54923", placetype: "postalcode", country: "US", lat: 43.97, lon: -88.95, score: 1 },
 ]
 
@@ -199,7 +198,8 @@ describe("bare-toponym soft country prior (#17)", () => {
 	})
 
 	it("does NOT fire when a postcode qualifies the query (the hard filter stands)", async () => {
-		// A postcode is knowledge rather than a locale guess — it has already picked the country.
+		// A postcode is knowledge rather than a locale guess.
+		// It has already picked the country.
 		const raw = "Berlin 54923"
 
 		const roots = [
@@ -245,7 +245,8 @@ describe("bare-toponym soft country prior (#17)", () => {
 		const hit = await findRescoreCandidate(raw, roots, await makeBackend(calls), {})
 
 		expect(hit?.place.country).toBe("DE")
-		// One probe per span, exactly as before — no widened re-probe when there is no filter to soften.
+		// One probe per span, exactly as before.
+		// No widened re-probe when there is no filter to soften.
 		expect(calls).toHaveLength(1)
 	})
 
@@ -337,8 +338,8 @@ describe("importance key in the admin walk (#17)", () => {
 	})
 
 	it("stands down when a postcode anchor already pinned the country", async () => {
-		// Fame is the prior of last resort — it answers "which one did you probably mean" only
-		// when nothing in the query answered it.
+		// Fame is the prior of last resort.
+		// It answers "which one did you probably mean" only when nothing in the query answered it.
 		// A #369 anchor posterior is derived from the address's own postcode,
 		// which is evidence, and evidence outranks a prior every time.
 		const withScores = WHITBY.map((c, i) => ({ ...c, importance: i === 0 ? 0.5089 : 0.5496 }))
@@ -347,10 +348,7 @@ describe("importance key in the admin walk (#17)", () => {
 	})
 
 	/**
-	 * #27 — the other half of the #912 change. A bare toponym the model tags `locality` never reaches span-rescore (the
-	 * tree resolves, so the #685 brake holds), so the soft country prior that fixed `Zürich` cannot see it. The CLI's
-	 * answer today is to drop the locale country entirely, which is why `--locale en-GB Whitby` and `--default-country GB
-	 * Whitby` disagree.
+	 * #27 — the other half of the #912 change. A bare toponym the model tags `locality` never reaches span-rescore (the tree resolves, so the #685 brake holds), so the soft country prior that fixed `Zürich` cannot see it. The CLI's answer today is to drop the locale country entirely, which is why `--locale en-GB Whitby` and `--default-country GB Whitby` disagree.
 	 *
 	 * OPT-IN, and the calibration is in `ResolveOpts.localeCountryPrior`: the weight that
 	 * flips these four is disjoint from the weight that holds the en-US board.
@@ -369,8 +367,8 @@ describe("importance key in the admin walk (#17)", () => {
 	it("is additive, never a filter — a dominant foreign bearer still wins", async () => {
 		// Paris FR (6.34) over Paris TX (4.40 + 2 = 6.40)?
 		// No: the bonus does flip this one, which is exactly why the change ships off.
-		// What must hold is that the prior cannot make a place the gazetteer never returned
-		// appear — `weight: 0` is the identity, and the foreign bearer survives.
+		// What must hold is that the prior cannot make a place the gazetteer never returned appear.
+		// `weight: 0` is the identity, and the foreign bearer survives.
 		const out = await walk(WHITBY, { localeCountryPrior: "GB", localeCountryPriorWeight: 0 })
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
 	})
@@ -400,7 +398,8 @@ describe("importance key in the admin walk (#17)", () => {
  * - Even a correct `country` tag failed under the locale-inferred default scope: the hard filter can
  *   only admit the scope country itself, so bare `Germany` under en-US filtered out the DE row
  *   and fell to Camp Dennison, Ohio (an FTS alias — its historical name is "Germany").
- *   Fix: an inferred scope is withheld from `country`-placetype lookups. an explicit scope stays supreme.
+ *   Fix: an inferred scope is withheld from `country`-placetype lookups.
+ *   An explicit scope stays supreme.
  */
 describe("bare-country class", () => {
 	const WORLD: ResolvedPlace[] = [
@@ -505,9 +504,7 @@ describe("bare-country class", () => {
 		expect(out.roots[0]?.metadata?.["bare_country_repick"]).toBe(true)
 	})
 
-	// #1678 thread 2 — the parse half. The race finds the right place. before this the node kept the wrong
-	// TAG, so a bare country answered with a correct coordinate under `{"locality": …}`.
-	// That label misleads the moment the same toponym sits inside a longer address rather than alone.
+	// #1678 thread 2 — the parse half. The race finds the right place. Before this the node kept the wrong TAG, so a bare country answered with a correct coordinate under `{"locality": …}`. That label misleads the moment the same toponym sits inside a longer address rather than alone.
 	it("retags a country repick to `country`", async () => {
 		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Japan"))
 
@@ -576,9 +573,10 @@ describe("bare-country class", () => {
 	})
 
 	it("scopes the country race by the inferred filter's own query country only when explicit", async () => {
-		// Under the inferred posture the caller (the #912 guard) has already withheld the scope for
-		// the bare-locality shape, so the race runs worldwide. nothing here asserts an inferred
-		// locality filter, because that combination does not reach the resolver in production.
+		// Under the inferred posture the caller (the #912 guard) has already withheld the
+		// scope for the bare-locality shape, so the race runs worldwide.
+		// Nothing here asserts an inferred locality filter, because that combination
+		// does not reach the resolver in production.
 		const calls: Array<{ text: string; placetype?: unknown; country?: string }> = []
 
 		await createWOFResolver(backend(calls)).resolveTree(bareTree("locality", "Japan"))

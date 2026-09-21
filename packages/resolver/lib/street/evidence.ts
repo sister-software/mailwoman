@@ -12,20 +12,21 @@ import type { Exclusion } from "@mailwoman/evidence"
 /**
  * A street-name existence probe.
  *
- * Backend-agnostic. the FR instance is BAN street-centroids, a future US instance is tiger,
+ * Backend-agnostic.
+ * The FR instance is BAN street-centroids, a future US instance is tiger,
  * etc. (per the registry-backed-structured-prediction doctrine tiers).
  */
 export interface StreetLocalityEvidence {
 	/**
 	 * True when `streetSurface` exists as a street name — optionally scoped to a locality or postcode
-	 * when the hypothesis carries one (fragments usually don't. unscoped is the measured mode).
+	 * when the hypothesis carries one (fragments usually don't. Unscoped is the measured mode).
 	 *
 	 * The implementation is responsible for folding the surface with {@link foldStreetSurface}
 	 * so the caller passes raw text.
 	 *
-	 * Positive evidence only: return `false` on any doubt — a missing index,
-	 * an unsupported country, a read error — so
-	 * {@link pickByStreetEvidence} fails open to the model's ranking. Absence is never a veto.
+	 * Positive evidence only: return `false` on any doubt — a missing index, an unsupported country,
+	 * a read error — so {@link pickByStreetEvidence} fails open to the model's ranking.
+	 * Absence is never a veto.
 	 */
 	hasStreetName(streetSurface: string, scope?: StreetEvidenceScope): boolean
 	/**
@@ -118,7 +119,7 @@ export function isPureTypeVocabulary(foldedSurface: string): boolean {
  */
 export interface StreetCandidate<T = unknown> {
 	/**
-	 * The candidate's street surface (raw. folded internally).
+	 * The candidate's street surface (raw. Folded internally).
 	 *
 	 * Empty string = no street parsed → never the evidence pick.
 	 */
@@ -146,8 +147,10 @@ export interface PickByStreetEvidenceOpts {
 	 *
 	 * A candidate whose score is more than this far below rank-1 is never promoted by evidence
 	 * (without it, evidence reaches deep down the list and moves off correct rank-1 parses).
-	 * Default 2.5 — the value the v2 board measured (148 fixes / 3 breaks). uncalibrated across models:
-	 * re-fit when the span head retrains, since raw score margins are not comparable across models.
+	 * Default 2.5 — the value the v2 board measured (148 fixes / 3 breaks).
+	 *
+	 * Uncalibrated across models: re-fit when the span head retrains, since raw
+	 * score margins are not comparable across models.
 	 *
 	 * (Plan #1134 pre-registers an isotonic ambiguity check to replace it.)
 	 */
@@ -155,8 +158,9 @@ export interface PickByStreetEvidenceOpts {
 	/**
 	 * One entry per candidate, positionally aligned.
 	 *
-	 * A non-null entry demotes that candidate by one bit — it is considered only
-	 * after every un-excluded sibling.
+	 * A non-null entry demotes that candidate by one bit.
+	 * It is considered only after every un-excluded sibling.
+	 *
 	 * It is never removed: with every candidate excluded the pick is still rank-1,
 	 * because the worst case this policy accepts is the model's own ranking.
 	 *
@@ -195,7 +199,9 @@ export interface StreetEvidencePick<T = unknown> {
  * (2) G1 — not pure type vocabulary, (3) G2 — within `marginCap` of rank-1.
  * If none passes, return rank-1 (fail-open).
  *
- * Positive evidence only. the model's order is preserved among equal-evidence candidates.
+ * Positive evidence only.
+ * The model's order is preserved among equal-evidence candidates.
+ *
  * This is the `resolver/rerank.ts` anti-Pelias discipline applied to the name signal: one bit, no blending.
  *
  * `opts.exclusions` adds one more bit in the same fold: a coverage-licensed absence
@@ -227,7 +233,8 @@ export function pickByStreetEvidence<T>(
 		}
 	}
 
-	// An excluded candidate is considered only after every un-excluded sibling. it is never dropped.
+	// An excluded candidate is considered only after every un-excluded sibling.
+	// It is never dropped.
 	const order = demoted.length ? [...considered, ...demoted] : considered
 
 	for (const i of order) {

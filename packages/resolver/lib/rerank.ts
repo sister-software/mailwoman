@@ -42,7 +42,8 @@ export interface RerankCandidate<T = unknown> {
 	/**
 	 * The parse's own score.
 	 *
-	 * Comparable to its siblings from the same input. not across inputs.
+	 * Comparable to its siblings from the same input.
+	 * Not across inputs.
 	 */
 	score: number
 	/**
@@ -99,9 +100,9 @@ export interface RerankOpts {
 	/**
 	 * Resolve at most this many candidates (default 5).
 	 *
-	 * Each costs a resolver round-trip, so this is the latency knob. oracle@5 (0.723)
-	 * captures nearly all the measured headroom of oracle@10 (0.775), so 5 is the default
-	 * rather than 10 — the last 5 candidates cost 2x the resolves for ~5pp of ceiling.
+	 * Each costs a resolver round-trip, so this is the latency knob. oracle@5 (0.723) captures
+	 * nearly all the measured headroom of oracle@10 (0.775), so 5 is the default rather than 10.
+	 * The last 5 candidates cost 2x the resolves for ~5pp of ceiling.
 	 */
 	maxResolve?: number
 	/**

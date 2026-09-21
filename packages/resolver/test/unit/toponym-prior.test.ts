@@ -52,8 +52,8 @@ const WINDSOR: ResolvedPlace[] = [
 
 describe("rankByImportance", () => {
 	it("prefers the encyclopedically prominent namesake over the more POPULOUS one", () => {
-		// Whitby, North Yorkshire (13,130) over Whitby, Ontario (128,377) — the population
-		// key ranks these backwards, which is the whole #17 failure.
+		// Whitby, North Yorkshire (13,130) over Whitby, Ontario (128,377).
+		// The population key ranks these backwards, which is the whole #17 failure.
 		const ranked = rankByImportance(WHITBY)
 		expect(ranked.map((c) => c.country)).toEqual(["GB", "CA", "TC"])
 	})
@@ -78,8 +78,8 @@ describe("rankByImportance", () => {
 	it("leaves UNSCORED candidates on their population rank and permutes only the scored slots", () => {
 		// The live shape: `Whitby` has 7 candidates in candidate.db and the
 		// importance artifact scores 2 of them.
-		// Abstaining on that throws the only usable signal away. zero-filling would
-		// let a scored hamlet leapfrog an unscored metropolis.
+		// Abstaining on that throws the only usable signal away.
+		// Zero-filling would let a scored hamlet leapfrog an unscored metropolis.
 		// Neither — the unscored rows simply sit still.
 		const live = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, importance: 0.5089 }),
@@ -113,7 +113,8 @@ describe("rankByImportance", () => {
 	})
 
 	it("never crosses the exact/partial boundary", () => {
-		// Tier is the primary key everywhere in this resolver. a soft prior re-orders within a tier only.
+		// Tier is the primary key everywhere in this resolver.
+		// A soft prior re-orders within a tier only.
 		const mixed = [
 			place({ id: 1, name: "Whitby", country: "CA", importance: 0.2, exactMatch: true }),
 			place({ id: 2, name: "Whitby Bay", country: "GB", importance: 0.9, exactMatch: false }),
@@ -124,19 +125,20 @@ describe("rankByImportance", () => {
 	})
 
 	it("preserves incoming order on a same-country pair tied on BOTH importance and size (the seat corridor)", () => {
-		// A seat/district duplicate reaches this ranker as two same-country rows with identical
-		// population (equal prominence) and identical importance — the candidate backend already
-		// ordered them (the seat tiebreak, resolver-wof-sqlite/primary-preference.ts), and house
-		// rule 3 is what carries that order through to the answer: inverting the backend's term
-		// moves bare `Pu-cheng-hsien` 1,100 km end-to-end, which is only possible because this
-		// function does not permute the tied pair (#1729).
+		// A seat/district duplicate reaches this ranker as two same-country rows with
+		// identical population (equal prominence) and identical importance.
+		// The candidate backend already ordered them (the seat tiebreak, resolver-wof-sqlite/primary-preference.ts),
+		// and house rule 3 is what carries that order through to the answer: inverting the
+		// backend's term moves bare `Pu-cheng-hsien` 1,100 km end-to-end, which is only possible
+		// because this function does not permute the tied pair (#1729).
 		const seatFirst = [
 			place({ id: 1, name: "Pucheng", country: "CN", prominence: 4.777, importance: 0.4233 }),
 			place({ id: 2, name: "Pucheng", country: "CN", prominence: 4.777, importance: 0.4233 }),
 		]
 
 		expect(rankByImportance(seatFirst).map((c) => c.id)).toEqual([1, 2])
-		// The reversed input keeps its order too — this ranker carries the backend's decision either way.
+		// The reversed input keeps its order too.
+		// This ranker carries the backend's decision either way.
 		expect(rankByImportance(seatFirst.toReversed()).map((c) => c.id)).toEqual([2, 1])
 	})
 
@@ -228,8 +230,9 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 
 	it("#2272: the partition is SAME-COUNTRY — an uncounted foreign bearer still wins on fame", () => {
 		// Scoped deliberately.
-		// Across borders an article-only score is the only evidence there is, which is why
-		// `blendImportance` leaves that branch uncapped. the cap's own docstring guards it.
+		// Across borders an article-only score is the only evidence there is,
+		// which is why `blendImportance` leaves that branch uncapped.
+		// The cap's own docstring guards it.
 		const crossBorder: ResolvedPlace[] = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, population: 128_377, importance: 0.5089 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -352,7 +355,8 @@ describe("promoteCapitals (#1880 — bounded capital promotion after the fame ke
 	it("never promotes an admin-1 seat — the ratified referential decisions hold (Springfield stays MO)", () => {
 		// Bare `Springfield` is ratified (2026-08-11) to the referential answer: a seat margin of even
 		// 1 log10 unit flipped it to Springfield, Illinois, and sent bare `Hamilton` to the Waikato seat.
-		// Both measured on the shipped candidate.db. level 1 therefore promotes nothing.
+		// Both measured on the shipped candidate.db.
+		// Level 1 therefore promotes nothing.
 		const seat = (p: { lat: number }): number => (p.lat === 39.8 ? 1 : 0)
 
 		const ranked = promoteCapitals(
