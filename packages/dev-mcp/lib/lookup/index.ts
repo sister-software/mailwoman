@@ -30,8 +30,8 @@ import type { PathBuilderLike } from "path-ts"
 /**
  * Sources a lookup can address.
  *
- * Each answers a different "does it know this?" and they are not interchangeable —
- * a surface the FST accepts can still be absent from the candidate table,
+ * Each answers a different "does it know this?" and they are not interchangeable.
+ * A surface the FST accepts can still be absent from the candidate table,
  * which is the shape most resolve failures take.
  */
 export const LookupSource = {
@@ -78,8 +78,8 @@ export const LookupSource = {
 	 */
 	Codex: "codex",
 	/**
-	 * The postcode→anchor artifact in the resolved weights package — the channel
-	 * the model is fed rather than a gazetteer.
+	 * The postcode→anchor artifact in the resolved weights package.
+	 * The channel the model is fed rather than a gazetteer.
 	 */
 	Postcode: "postcode",
 } as const
@@ -97,8 +97,9 @@ export interface LookupRow {
 	/**
 	 * What the source says.
 	 *
-	 * `null` when `hit` is false — the field is absent rather than empty, so a caller
-	 * cannot accidentally iterate a "zero results" list that was really a miss.
+	 * `null` when `hit` is false.
+	 * The field is absent rather than empty, so a caller cannot accidentally iterate
+	 * a "zero results" list that was really a miss.
 	 */
 	entries: unknown[] | null
 	/**
@@ -145,8 +146,9 @@ interface FSTLike {
 /**
  * Probe the gazetteer FST, reporting the collapse the decoder would see rather than the raw entry list.
  *
- * The per-place ranking inside a name is invisible to the emission prior — it takes
- * `max(importance)` per BIO tag, and only four placetypes reach a tag at all.
+ * The per-place ranking inside a name is invisible to the emission prior.
+ * It takes `max(importance)` per BIO tag, and only four placetypes reach a tag at all.
+ *
  * Reporting anything finer would overstate what the gazetteer can do here.
  */
 export function lookupFST(
@@ -196,8 +198,9 @@ export function lookupFST(
 }
 
 /**
- * Probe the street-morphology FST — a single-token question, so a multi-word
- * query is a caller error worth naming.
+ * Probe the street-morphology FST.
+ *
+ * A single-token question, so a multi-word query is a caller error worth naming.
  */
 export function lookupStreetMorphology(fst: FSTLike, queries: string[]): LookupRow[] {
 	return queries.map((query) => {

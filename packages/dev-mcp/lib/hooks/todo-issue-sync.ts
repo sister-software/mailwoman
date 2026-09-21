@@ -160,8 +160,8 @@ export async function workerMain(
 	const lock = join(dir, "lock")
 
 	// A worker that loses the lock must wait for its own turn.
-	// Its payload can arrive after the lock holder's final read. exiting here would
-	// leave that payload unpublished until another TodoWrite happened.
+	// Its payload can arrive after the lock holder's final read.
+	// Exiting here would leave that payload unpublished until another TodoWrite happened.
 	if (!(await acquireLock(lock, wait))) return
 
 	try {

@@ -30,8 +30,10 @@ import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { DISTANCE_THRESHOLDS_KM } from "#geo-grade"
 
 /**
- * The fixed setting space, in the CLI's own vocabulary — the same keys `EngineConfig` uses,
- * so a flip a reader wants to reproduce is a `config` they can paste into any other tool.
+ * The fixed setting space, in the CLI's own vocabulary.
+ *
+ * The same keys `EngineConfig` uses, so a flip a reader wants to reproduce is a
+ * `config` they can paste into any other tool.
  */
 export const COUNTERFACTUAL_SETTINGS = ["locale", "gazetteer_prior", "country_scope", "fork_entity"] as const
 
@@ -43,8 +45,8 @@ export type CounterfactualSetting = (typeof COUNTERFACTUAL_SETTINGS)[number]
  * The finest of the pre-registered distance thresholds, borrowed rather than chosen:
  * a flip that moves the answer less than the tightest threshold anything here grades at
  * cannot change a verdict, so reporting it would fill the result with coordinate jitter.
- * A flip that changes abstention is reported at any distance — there is no
- * distance to measure, which is the point.
+ * A flip that changes abstention is reported at any distance.
+ * There is no distance to measure, which is the point.
  */
 export const COUNTERFACTUAL_MOVED_KM = DISTANCE_THRESHOLDS_KM[0]
 
@@ -78,8 +80,9 @@ let overlayLocaleCache: Map<string, string> | null = null
  *
  * Derived from each overlay's own region subtag, which is what makes this a derivation
  * rather than a second table: `en-gb` scopes GB because that is what the tag says.
- * A country with two overlays would keep the first listed. none exists today,
- * and the manifest is the place that would have to decide.
+ * A country with two overlays would keep the first listed.
+ *
+ * None exists today, and the manifest is the place that would have to decide.
  */
 async function overlayLocaleByCountry(): Promise<Map<string, string>> {
 	if (overlayLocaleCache) return overlayLocaleCache
@@ -232,7 +235,8 @@ export interface CounterfactualAnswer {
 /**
  * A flip that moved the answer.
  *
- * Flips that changed nothing are counted, never listed — the list is the finding.
+ * Flips that changed nothing are counted, never listed.
+ * The list is the finding.
  *
  * `moved_km` is `null` when one side has no coordinate: an abstention has no
  * distance from anything, and turning that into a number (zero, or infinity) is

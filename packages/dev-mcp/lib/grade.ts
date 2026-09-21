@@ -66,8 +66,8 @@ export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {
 /**
  * Whether a case asserts anything a grader could check.
  *
- * A row with no expectations is not a passing row — it is an ungradeable one,
- * and the two must never be added together.
+ * A row with no expectations is not a passing row.
+ * It is an ungradeable one, and the two must never be added together.
  */
 export function caseCarriesTruth(seed: SeedCase): boolean {
 	return Boolean(

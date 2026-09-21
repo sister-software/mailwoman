@@ -59,7 +59,7 @@ interface ConstraintMiss {
 	elsewhere: string[]
 	/**
 	 * Candidates present on a null pick means the rows came back and lost downstream.
-	 * none means the probe itself returned an empty set.
+	 * None means the probe itself returned an empty set.
 	 *
 	 * Calling a scoring filter an empty gazetteer is the misreading this separates.
 	 */
@@ -69,8 +69,9 @@ interface ConstraintMiss {
 /**
  * What the census reader needs of a connection it is handed: one prepared read, and a way to end it.
  *
- * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is injectable —
- * the tests supply a fake that answers fixed rows without opening a file.
+ * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is injectable.
+ * The tests supply a fake that answers fixed rows without opening a file.
+ *
  * `destroy` rather than `close` is what a `DatabaseClient` offers, so the real
  * opener satisfies this without an adapter.
  */
@@ -86,8 +87,9 @@ interface CheckReading {
 	fired: number
 	resolved_nothing: number
 	/**
-	 * Of the misses under this constraint set, how many hold the key in another band — the subset
-	 * a retrieval change could convert, as opposed to the subset that needs data we do not have.
+	 * Of the misses under this constraint set, how many hold the key in another band.
+	 *
+	 * The subset a retrieval change could convert, as opposed to the subset that needs data we do not have.
 	 */
 	reachable_elsewhere: number
 }
@@ -114,8 +116,7 @@ export interface ConstraintCensusResult {
 	/**
 	 * Reachability classes, largest first: which band was probed, and which bands actually hold the key.
 	 *
-	 * The largest
-	 * class is the one a cross-band retry should try first.
+	 * The largest class is the one a cross-band retry should try first.
 	 */
 	by_band: Array<{ probed: string; found_in: string[]; n: number; examples: ConstraintMiss[] }>
 	inert_checks: string[]
@@ -191,8 +192,8 @@ export async function runConstraintCensus(
 ): Promise<ConstraintCensusResult> {
 	const set = await resolveInputSet(args.inputs ?? { kind: "board" })
 	// Tracing is the census's entire input, and the band probe is what separates reachability from coverage.
-	// Both are forced on regardless of what the caller passed — neither can change
-	// an answer, so neither is a change.
+	// Both are forced on regardless of what the caller passed.
+	// Neither can change an answer, so neither is a change.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 	const dataRoot = String(engine.effective.dataRoot ?? "")
 	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(`${dataRoot}/wof/candidate.db`)

@@ -52,7 +52,9 @@ export function wilsonInterval(successes: number, n: number, z = 1.96): { low: n
 /**
  * How tight the upper bound must be before a zero may be read as a real absence.
  *
- * A judgement rather than a measurement — there is no experiment that fixes it.
+ * A judgement rather than a measurement.
+ * There is no experiment that fixes it.
+ *
  * It is set at 1% because that is roughly the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`),
  * i.e. the point where a zero rests on a set larger than any panel anyone has assembled by hand here.
  *
@@ -63,12 +65,13 @@ const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
 /**
  * How an input set was chosen.
  *
- * `hand-picked` is the one that warrants the extra sentence — a full board carries its
- * own denominator, and a declared subset carries the predicate that chose it.
+ * `hand-picked` is the one that warrants the extra sentence.
+ * A full board carries its own denominator, and a declared subset carries the predicate that chose it.
  *
  * `random-draw` is separate from `subset` because the two support opposite claims.
- * A declared subset is chosen by a predicate and generalizes to nothing beyond it. a random draw
- * from a 26-million-row register is the one subset here whose rate estimates the population's.
+ * A declared subset is chosen by a predicate and generalizes to nothing beyond it.
+ *
+ * A random draw from a 26-million-row register is the one subset here whose rate estimates the population's.
  *
  * Collapsing them would print "declared-subset" over the only sample in this file that is not one.
  */
@@ -77,8 +80,9 @@ export type Selection = "full" | "subset" | "hand-picked" | "random-draw"
 /**
  * How each selection reads inside the observed-rate sentence.
  *
- * A full board says nothing — its denominator already is the population — so it contributes
- * an empty string. every other kind names itself where a reader will trip over it.
+ * A full board says nothing — its denominator already is the population —
+ * so it contributes an empty string.
+ * Every other kind names itself where a reader will trip over it.
  */
 const SELECTION_ADJECTIVE: Record<Selection, string> = {
 	full: "",

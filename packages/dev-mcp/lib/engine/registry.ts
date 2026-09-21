@@ -42,8 +42,10 @@ import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from
 /**
  * Every change a caller can set, in the CLI's own vocabulary.
  *
- * `undefined` means the production default, never "off" — the rule `GauntletResolverChanges`
- * states in `harness.ts:69`: "the library defaults are the thing under test".
+ * `undefined` means the production default, never "off".
+ * The rule `GauntletResolverChanges` states in `harness.ts:69`: "the library
+ * defaults are the thing under test".
+ *
  * A tool that coerced undefined to false would grade a configuration nobody ships.
  */
 export interface EngineConfig {
@@ -74,8 +76,9 @@ export interface EngineConfig {
 	postcode_containment_coherence?: boolean
 	admin_containment_rerank?: boolean
 	/**
-	 * The opt-in venue tier (#1684's POI half) — off by default in production. this change
-	 * exists so the promotion battery measures it with the standard tooling.
+	 * The opt-in venue tier (#1684's POI half) — off by default in production.
+	 *
+	 * This change exists so the promotion battery measures it with the standard tooling.
 	 */
 	poi_venue_tier?: boolean
 	/**
@@ -85,8 +88,7 @@ export interface EngineConfig {
 	 */
 	capital_tier?: boolean
 	/**
-	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Effective only against
-	 * an artifact whose `name_role` column carries the stamp.
+	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Effective only against an artifact whose `name_role` column carries the stamp.
 	 *
 	 * Off by default (D-rule).
 	 */
@@ -113,20 +115,23 @@ export interface EngineConfig {
  * The session options a config resolves to, with every default made explicit.
  *
  * Resolving before recording is what makes a confound check possible at all.
- * Two arms whose stated configs differ in one field can differ in three effective
- * ones — `--country-scope auto` means "scope on FTS, no scope on candidate"
+ * Two arms whose stated configs differ in one field can differ in three effective ones.
+ *
+ * `--country-scope auto` means "scope on FTS, no scope on candidate"
  * (`docs/engineering/reference/resolver-backends.mdx`), so switching backend also switches country scoping.
  *
- * A comparison that reads stated configs cannot see that. one that reads effective configs can.
+ * A comparison that reads stated configs cannot see that.
+ * One that reads effective configs can.
  */
 /**
  * Which `GeocodeSessionOptions` key each `EngineConfig` key becomes.
  *
  * The two vocabularies differ by design — a caller writes the CLI's snake_case,
- * a session reads camelCase — and
- * {@link resolveConfig} performs the translation inline, where it is invisible to anyone else who needs it. This map is
- * the same translation, named, because `confound.ts` compares a caller's declared keys
- * against the keys that actually differ between two resolved configs.
+ * a session reads camelCase — and {@link resolveConfig} performs the translation inline,
+ * where it is invisible to anyone else who needs it.
+ * This map is the same translation, named, because `confound.ts` compares a caller's
+ * declared keys against the keys that actually differ between two resolved configs.
+ *
  * Without it, declaring `["place_country"]` and having `placeCountry` move reads as
  * two separate facts — one change declared and unmoved, one moved and undeclared —
  * and every correctly-declared comparison grades itself ambiguous.
@@ -190,7 +195,8 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 	// The hand-copied table this replaces drifted on three values (postcodeShapeCoherence,
 	// postcodeContainmentCoherence, placeCountryThreshold: true/true/0.5 vs the shipped false/false/0.9),
 	// so every unset-change measurement graded a configuration production does not ship.
-	// Comparisons where both arms shared the drift stayed internally valid. absolute numbers did not.
+	// Comparisons where both arms shared the drift stayed internally valid.
+	// Absolute numbers did not.
 	// `resolve-config.test.ts` pins this function against the factory field by field.
 	const production = createGeocodeCommandOptions()
 
@@ -229,8 +235,8 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
  * So the failure mode of a mis-typed or half-staged candidate is not an error: it is a full
  * run of the shipped model, reported under the candidate's label, with every number plausible.
  *
- * `promotion-eval.ts` refuses the same way and for the same reason. this is that guard
- * on the warm path, sharing its check rather than re-deriving the layout.
+ * `promotion-eval.ts` refuses the same way and for the same reason.
+ * This is that guard on the warm path, sharing its check rather than re-deriving the layout.
  *
  * Runs before the session build, so a bad path costs a `stat` rather than the ~1.4 s construction.
  *
@@ -404,8 +410,8 @@ export class EngineRegistry implements EngineRegistryLike {
 		}
 
 		// Refuse against the boot fingerprint rather than merely against whatever is resident.
-		// A resident engine under a different digest is one symptom of a moved tree. an
-		// empty registry under a moved tree is the other, and it is the dangerous one,
+		// A resident engine under a different digest is one symptom of a moved tree.
+		// An empty registry under a moved tree is the other, and it is the dangerous one,
 		// because there is nothing stale left to notice.
 		// Both are the same fact — this process cannot import the new source — so both refuse here.
 		if (current.digest !== this.#bootFingerprint.digest) {

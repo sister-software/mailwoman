@@ -45,8 +45,9 @@ export interface ArmRunner {
  * "Configuration" includes the model: `config.weights_cache` names a candidate
  * weights bundle, so shipped-vs-candidate is an ordinary two-arm comparison here
  * rather than a pair of hand-written scripts.
- * What it cannot vary is source — both arms run whatever this process imported,
- * which is what {@link WorktreeArm} exists for.
+ * What it cannot vary is source.
+ *
+ * Both arms run whatever this process imported, which is what {@link WorktreeArm} exists for.
  */
 interface MailwomanArm {
 	kind: "mailwoman"
@@ -63,8 +64,8 @@ export interface ExternalArm {
 	/**
 	 * What the caller believes is running there.
 	 *
-	 * Required only when the endpoint will not identify itself. see `external-arm.ts`'s
-	 * identity probe for why an unidentified endpoint is refused rather than scored.
+	 * Required only when the endpoint will not identify itself.
+	 * See `external-arm.ts`'s identity probe for why an unidentified endpoint is refused rather than scored.
 	 */
 	version?: string
 }
@@ -97,8 +98,9 @@ export interface RecordedArm {
  *
  * The kind a source change needs and the other four cannot express.
  * A `mailwoman` arm runs whatever this process imported, so two of them can only differ by
- * config — which does cover the model, via `weights_cache`, but never the code that loads
- * it. a `recorded` arm replays a past run but cannot produce a new one at an old ref.
+ * config — which does cover the model, via `weights_cache`, but never the code that loads it.
+ *
+ * A `recorded` arm replays a past run but cannot produce a new one at an old ref.
  *
  * Neither answers "what does my edit do", which is the question most maintainer changes are.
  */
@@ -116,9 +118,9 @@ export type ArmSpec = MailwomanArm | ExternalArm | OracleArm | RecordedArm | Wor
 /**
  * Which side of a stored run a recorded arm replays when the caller does not say.
  *
- * `mailwoman` because the question a recorded arm answers is almost always "did
- * OUR side change since that run" — the external or oracle side is the control,
- * and re-running it is what a recorded arm exists to avoid.
+ * `mailwoman` because the question a recorded arm answers is almost always
+ * "did OUR side change since that run".
+ * The external or oracle side is the control, and re-running it is what a recorded arm exists to avoid.
  */
 const DEFAULT_RECORDED_ARM = "mailwoman"
 

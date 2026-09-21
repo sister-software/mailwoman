@@ -31,8 +31,9 @@ export interface ExpectationReading {
  *
  * A board row carries a `SeedCase` and grades through the board's own `checkCase`.
  * A panel / holdout / golden / parity row carries expectations without a seed,
- * so one is synthesized around what its corpus actually pinned — the same grader
- * then reads both, which is what keeps a second grading path from appearing here.
+ * so one is synthesized around what its corpus actually pinned.
+ *
+ * The same grader then reads both, which is what keeps a second grading path from appearing here.
  */
 export function expectationCase(
 	item: ResolvedInput

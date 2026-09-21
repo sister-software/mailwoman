@@ -75,7 +75,8 @@ describe("evidenceCensus", () => {
 	})
 
 	it("counts firing over features, not confidence", () => {
-		// Features are what the model reads. confidence is derived beside them.
+		// Features are what the model reads.
+		// Confidence is derived beside them.
 		// If they disagree, the features decide.
 		const disagreeing = { features: [[0.5], [0]], confidence: [0, 0] }
 

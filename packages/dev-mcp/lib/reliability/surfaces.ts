@@ -31,8 +31,9 @@ import type { Observation } from "#reliability/index"
  *
  * `exclude` (default) keeps it out of the curve and counts it separately —
  * correct whenever truth is partial, which is every corpus wired here.
- * `wrong` grades it as an error, correct only against complete truth. on a partial
- * corpus it measures the corpus rather than the model.
+ * `wrong` grades it as an error, correct only against complete truth.
+ *
+ * On a partial corpus it measures the corpus rather than the model.
  */
 export const UnassertedPolicy = {
 	Exclude: "exclude",
@@ -72,8 +73,9 @@ export interface ExcludedRows {
  *
  * Reported beside the curve rather than inside it.
  * On a partial-truth corpus these are mostly correct components nobody wrote an
- * assertion for, so folding them in as errors measures the corpus. dropping them
- * silently hides how much of the parse the curve does not cover.
+ * assertion for, so folding them in as errors measures the corpus.
+ *
+ * Dropping them silently hides how much of the parse the curve does not cover.
  *
  * Neither is a number worth quoting, so both facts are returned.
  */
@@ -101,8 +103,8 @@ export interface SurfaceSample {
 /**
  * The subset of a geocode run's fields this file reads.
  *
- * Declared structurally so the surface can be exercised without a warm engine —
- * a full `GeocodeSession` is several gigabytes of prerequisite to test a fold.
+ * Declared structurally so the surface can be exercised without a warm engine.
+ * A full `GeocodeSession` is several gigabytes of prerequisite to test a fold.
  */
 export interface GeocodeRunLike {
 	result: { components?: Record<string, string | undefined> }
@@ -116,11 +118,13 @@ export interface EngineLike {
 /**
  * Reliability of the decode distribution, at the unit a consumer reads.
  *
- * The model emits a per-token softmax. a consumer reads an assembled component.
+ * The model emits a per-token softmax.
+ * A consumer reads an assembled component.
+ *
  * So the confidence is folded across the tokens carrying each tag ({@link ComponentAggregate})
- * and graded against the input set's component labels with the harness's own rule — `componentMatches`,
- * exact case-folded equality, shared rather than re-typed, because a local copy of the
- * correctness rule is how a calibration number quietly stops describing what the board describes.
+ * and graded against the input set's component labels with the harness's own rule.
+ * `componentMatches`, exact case-folded equality, shared rather than re-typed, because a local copy of
+ * the correctness rule is how a calibration number quietly stops describing what the board describes.
  *
  * A produced tag the truth row does not mention is not graded by default.
  * The strict reading — predicting a component that should not exist is exactly the
@@ -175,9 +179,10 @@ export async function decodeReliabilitySample(
 			if (!value) continue
 
 			// Both BIO positions.
-			// A tag appearing in two separate spans folds into one observation, because the
-			// result shape holds one value per tag — so one confidence is what a consumer sees,
-			// and splitting it here would weight a fragmented span more heavily than a clean one.
+			// A tag appearing in two separate spans folds into one observation,
+			// because the result shape holds one value per tag.
+			// So one confidence is what a consumer sees, and splitting it here would weight
+			// a fragmented span more heavily than a clean one.
 			const carrying = tokens.filter((token) => token.label === `B-${tag}` || token.label === `I-${tag}`)
 
 			if (!carrying.length) continue
@@ -254,9 +259,11 @@ export async function decodeReliabilitySample(
  * and a correction fitted to one does nothing for the other.
  *
  * `abstainBelow: 0` so every row yields a confidence.
- * Production sets that to the threshold under test, which would censor exactly the
- * low-confidence rows the curve is about — a curve measured at the production threshold
- * reports only the region where the eval already agreed with itself.
+ * Production sets that to the threshold under test, which would censor exactly
+ * the low-confidence rows the curve is about.
+ *
+ * A curve measured at the production threshold reports only the region
+ * where the eval already agreed with itself.
  *
  * The default corpus is the held-out `test` split, held out from both the training set and the
  * `val` split the temperature was fit on, so the number is not the fit reporting on itself.

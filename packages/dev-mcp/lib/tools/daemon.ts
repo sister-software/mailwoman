@@ -34,9 +34,9 @@ export const daemonTool = (deps: DevToolDeps): DevTool => {
 
 			if (action === "reload") {
 				// The refusal is the whole point.
-				// `reload` used to close the sessions,
-				// return the current digest and a note admitting it could not re-import —
-				// a success shape carrying its own contradiction, which a caller reading `engines_closed`
+				// `reload` used to close the sessions, return the current digest
+				// and a note admitting it could not re-import.
+				// A success shape carrying its own contradiction, which a caller reading `engines_closed`
 				// and a fresh fingerprint reasonably takes for a completed reload.
 				// It then measures new-tree answers out of old-tree code with nothing left to flag it.
 				if (await registry.sourceMoved()) {

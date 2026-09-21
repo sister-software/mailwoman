@@ -31,8 +31,8 @@ import { assertScorableEndpoint } from "#external-arm"
 /**
  * Pacing for rig traffic, ms between dispatches.
  *
- * These are our own containers on our own host, so the interval is not politeness —
- * it is the same discipline the graded arm uses, kept identical so an observation here
+ * These are our own containers on our own host, so the interval is not politeness.
+ * It is the same discipline the graded arm uses, kept identical so an observation here
  * and a measurement there cannot differ by request pattern.
  */
 const RIG_MIN_REQUEST_INTERVAL_MS = 250
@@ -60,8 +60,8 @@ function clientFor(name: EngineRigName): APIClient {
 			baseURL: assertScorableEndpoint(rig.endpoint),
 			timeout: RIG_TIMEOUT_MS,
 			headers: { "User-Agent": "mailwoman-dev-mcp" },
-			// A rig that is still warming answers 4xx/5xx. those are states here,
-			// read from the status field rather than exceptions to throw.
+			// A rig that is still warming answers 4xx/5xx.
+			// Those are states here, read from the status field rather than exceptions to throw.
 			// `rigQuery` reports the code per row.
 			validateStatus: () => true,
 		},
@@ -76,8 +76,8 @@ function clientFor(name: EngineRigName): APIClient {
  * Container runtime the rigs were built with.
  *
  * Podman rather than Docker because that is what the lab host runs and what the
- * rig scripts already created these containers under — a `docker` invocation here
- * would report "no such container" for containers that exist.
+ * rig scripts already created these containers under.
+ * A `docker` invocation here would report "no such container" for containers that exist.
  */
 const CONTAINER_RUNTIME = "podman"
 
@@ -112,8 +112,8 @@ function rigScriptPath(...segments: string[]): string {
 /**
  * The rigs this tool can drive.
  *
- * `containers` is in start order. stop reverses it, because Elasticsearch must
- * outlive the API that queries it.
+ * `containers` is in start order.
+ * Stop reverses it, because Elasticsearch must outlive the API that queries it.
  */
 export const ENGINE_RIGS = {
 	pelias: {
@@ -158,7 +158,8 @@ export interface RigStatus {
 	 */
 	answering: boolean
 	/**
-	 * Absent when every container is absent — the rig has to be built by its script first.
+	 * Absent when every container is absent.
+	 * The rig has to be built by its script first.
 	 */
 	built: boolean
 }
@@ -246,8 +247,9 @@ export async function rigStatus(name: EngineRigName): Promise<RigStatus> {
 }
 
 /**
- * Start a rig and wait for it to answer rather than merely to be running —
- * a container that is up while Elasticsearch is still loading serves 500s,
+ * Start a rig and wait for it to answer rather than merely to be running.
+ *
+ * A container that is up while Elasticsearch is still loading serves 500s,
  * and a caller told "started" would read those as the engine's opinion.
  */
 export async function rigStart(name: EngineRigName): Promise<RigStatus & { waitedMs: number }> {
@@ -279,8 +281,8 @@ export async function rigStart(name: EngineRigName): Promise<RigStatus & { waite
 /**
  * Stop a rig in reverse start order.
  *
- * Never removes a container or its data — the rigs carry frozen indices that cost
- * hours to rebuild, and `podman rm` is not a verb this tool has.
+ * Never removes a container or its data.
+ * The rigs carry frozen indices that cost hours to rebuild, and `podman rm` is not a verb this tool has.
  */
 export async function rigStop(name: EngineRigName): Promise<RigStatus> {
 	const rig = ENGINE_RIGS[name]
@@ -298,8 +300,10 @@ export async function rigStop(name: EngineRigName): Promise<RigStatus> {
  *
  * Both rigs answer GeoJSON, and both put the interesting identity in `properties` under different keys:
  * Pelias carries `gid` + `layer`, Photon carries `osm_type`/`osm_id` + `osm_key`/`osm_value`.
- * Reading the position is the classic hazard — GeoJSON orders it [lon, lat], and reading it the other
- * way lands every result in the wrong hemisphere while still looking plausible near the equator.
+ * Reading the position is the classic hazard.
+ *
+ * GeoJSON orders it [lon, lat], and reading it the other way lands every result in
+ * the wrong hemisphere while still looking plausible near the equator.
  */
 export function normalizeRigResults(engine: EngineRigName, body: unknown): RigResult[] {
 	const features = (body as { features?: unknown[] })?.features
@@ -337,8 +341,8 @@ export function normalizeRigResults(engine: EngineRigName, body: unknown): RigRe
 /**
  * Ask a running rig about a handful of strings.
  *
- * Sequential by construction — these are observations, and a rig sharing a host
- * with a build has no business being flooded.
+ * Sequential by construction.
+ * These are observations, and a rig sharing a host with a build has no business being flooded.
  */
 export async function rigQuery(name: EngineRigName, queries: readonly string[]): Promise<RigQueryRow[]> {
 	const rig = ENGINE_RIGS[name]

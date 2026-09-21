@@ -35,8 +35,8 @@ export function violationKey(violation: TreeViolation): string {
  * Addresses kept per violation class.
  *
  * Enough to see whether a class is one recurring shape or several unrelated ones,
- * which is the distinction that decides whether it is a single defect. the full list
- * is recoverable by re-running against a filtered input set.
+ * which is the distinction that decides whether it is a single defect.
+ * The full list is recoverable by re-running against a filtered input set.
  */
 const EXAMPLES_PER_CLASS = 5
 
@@ -130,8 +130,8 @@ export interface InterfaceRow {
 /**
  * Tally one corpus of already-parsed trees.
  *
- * Takes trees rather than inputs so the walk is pure and testable — the parse is the caller's,
- * and the cost of a warm engine is not this function's concern.
+ * Takes trees rather than inputs so the walk is pure and testable.
+ * The parse is the caller's, and the cost of a warm engine is not this function's concern.
  */
 export function censusTrees(rows: readonly InterfaceRow[]): InterfaceCensus {
 	const classes = new Map<string, ViolationClass>()

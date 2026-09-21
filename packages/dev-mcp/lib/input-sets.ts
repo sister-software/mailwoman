@@ -58,8 +58,9 @@ export type InputSetRef =
 /**
  * Held-out truth sources.
  *
- * `fr` is BAN, `us` is fdic — the two `gauntlet/holdout.ts` defines, named here
- * so a caller gets a closed set rather than a string that fails at read time.
+ * `fr` is BAN, `us` is fdic.
+ * The two `gauntlet/holdout.ts` defines, named here so a caller gets a closed set
+ * rather than a string that fails at read time.
  */
 export const HOLDOUT_SOURCES = ["fr", "us"] as const
 
@@ -85,8 +86,9 @@ type PanelVersion = (typeof PANEL_VERSIONS)[number]
 /**
  * Golden splits.
  *
- * `dev` is the tuning half and the one an iterating change may look at. the top-level files are
- * the held-back half, so reaching for them casually is how a held-out set stops being held out.
+ * `dev` is the tuning half and the one an iterating change may look at.
+ * The top-level files are the held-back half, so reaching for them casually is
+ * how a held-out set stops being held out.
  */
 const GOLDEN_SPLITS = ["dev", "full"] as const
 
@@ -111,7 +113,8 @@ export interface LiteralInputWithTruth {
 
 export interface ResolvedInput {
 	/**
-	 * Case id for a board row. for a literal input, the input's own index.
+	 * Case id for a board row.
+	 * For a literal input, the input's own index.
 	 *
 	 * Carried so a result row can be traced back.
 	 */
@@ -137,12 +140,14 @@ export interface ResolvedInput {
 	/**
 	 * The case's expectations, when it has any.
 	 *
-	 * Present so a caller can grade. absent for literal inputs, which have no truth attached.
+	 * Present so a caller can grade.
+	 * Absent for literal inputs, which have no truth attached.
 	 * Therefore, it cannot be graded — only observed.
 	 */
 	seed?: SeedCase
 	/**
-	 * Truth coordinate, when the row carries one — the only axis a cross-engine comparison has.
+	 * Truth coordinate, when the row carries one.
+	 * The only axis a cross-engine comparison has.
 	 *
 	 * Populated here for every corpus rather than read off `seed` by the caller,
 	 * because only the board has a `SeedCase` and a panel row does not.
@@ -193,8 +198,9 @@ export interface ResolvedInputSet {
 	 */
 	why?: string
 	/**
-	 * Strata present in the population but absent from this set — the answer to "what would
-	 * this panel have been blind to?", available before the run rather than after.
+	 * Strata present in the population but absent from this set.
+	 *
+	 * The answer to "what would this panel have been blind to?", available before the run rather than after.
 	 *
 	 * Empty for a full board.
 	 */
@@ -204,7 +210,8 @@ export interface ResolvedInputSet {
 	 *
 	 * The per-kind counts overlap — a row can pin components and a coordinate
 	 * and a tier — so they must never be summed.
-	 * `any` is the distinct row count and `none` its complement. those two are what add up to `n`.
+	 * `any` is the distinct row count and `none` its complement.
+	 * Those two are what add up to `n`.
 	 *
 	 * An earlier draft summed the three and reported 839 rows carrying truth on a 558-row
 	 * board, which is the shape of every double-counted denominator.
@@ -358,7 +365,8 @@ async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Pro
 }
 
 /**
- * A fresh draw from a held-out truth source — the only set here the model cannot have memorized.
+ * A fresh draw from a held-out truth source.
+ * The only set here the model cannot have memorized.
  *
  * Reproducibility is OPT-IN, and the default is the unseeded draw.
  * A seeded default would be the more convenient choice and it would quietly convert the one
@@ -370,8 +378,9 @@ async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Pro
  *
  * Cost, measured 2026-08-16 on this box, because a reservoir draw reads the entire source:
  * **`us` 113 ms over 77,442 parseable rows; `fr` 45.5 s over 26,721,353 rows** (BAN is a 5.06 GB CSV).
- * The FR draw is therefore a per-call cost on the order of a minute rather than a cached one —
- * there is nowhere to cache it that would not defeat the freshness the set exists for.
+ * The FR draw is therefore a per-call cost on the order of a minute rather than a cached one.
+ *
+ * There is nowhere to cache it that would not defeat the freshness the set exists for.
  */
 async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): Promise<ResolvedInputSet> {
 	const source = ref.source ?? "fr"
@@ -702,7 +711,8 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 /**
  * A golden set.
  *
- * `dev` is the tuning split. the top-level files are the held-back half.
+ * `dev` is the tuning split.
+ * The top-level files are the held-back half.
  */
 async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Promise<ResolvedInputSet> {
 	const version = ref.version ?? "v0.1.3"

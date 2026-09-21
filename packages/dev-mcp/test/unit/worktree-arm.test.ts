@@ -30,8 +30,10 @@ afterAll(() => fixtures.disposeAsync())
  *
  * `mailwoman/geocode` is stubbed as a real package directory so the runner's import
  * resolves without this test needing the monorepo.
- * That is the same resolution path the real arm uses — a stub here proves the farm
- * and the subprocess, and the engine is exercised for real by the tools that call this.
+ * That is the same resolution path the real arm uses.
+ *
+ * A stub here proves the farm and the subprocess, and the engine is exercised
+ * for real by the tools that call this.
  */
 async function fakeRepo(marker: string): Promise<string> {
 	const root = String(fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path)
@@ -60,9 +62,9 @@ async function fakeRepo(marker: string): Promise<string> {
 	)
 
 	// The workspace link yarn would have installed.
-	// Both arms need it and for different reasons: the worktree arm resolves through
-	// it directly, and the ref arm's farm mirrors this directory to build its own —
-	// so an empty node_modules here would test neither path.
+	// Both arms need it and for different reasons: the worktree arm resolves through it
+	// directly, and the ref arm's farm mirrors this directory to build its own.
+	// So an empty node_modules here would test neither path.
 	await makeDirectories(join(root, "node_modules"))
 	await createSymbolicLink(join(root, "packages", "mailwoman"), join(root, "node_modules", "mailwoman"))
 	// Untracked and ignored, so the "does not touch the caller's tree" assertion compares
@@ -85,7 +87,8 @@ describe("runWorktreeArm — a ref arm runs THAT ref's source", () => {
 		const root = await fakeRepo("committed")
 
 		// Edit without committing.
-		// A ref arm must not see this. that is the whole distinction it sells.
+		// A ref arm must not see this.
+		// That is the whole distinction it sells.
 		await writeLocalTextFile(
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
@@ -170,7 +173,8 @@ describe("runWorktreeArm — cleanup", () => {
 
 		expect(runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
 		expect(runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
-		// A stash-based arm would have moved these. a worktree cannot, which is why it is a worktree.
+		// A stash-based arm would have moved these.
+		// A worktree cannot, which is why it is a worktree.
 		expect(await Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false }).toArray()).toContain("packages")
 	})
 })

@@ -40,8 +40,10 @@ import type { ComparedRow } from "#tool-kit"
  *
  * It is derived rather than written here because the written version drifted.
  * `["FR", "GB", "DE"]` stood under a docstring claiming iron rule 6's protection
- * while `scope.mdx` put US and FR in tier 1 — so a candidate regressing US rows raised
- * no D-rule reason at all, which is the one reading the rule exists to force.
+ * while `scope.mdx` put US and FR in tier 1.
+ *
+ * So a candidate regressing US rows raised no D-rule reason at all,
+ * which is the one reading the rule exists to force.
  *
  * Tier-1 membership now comes from the register the table is checked against,
  * and every country guarded beyond it carries its reason.
@@ -103,7 +105,8 @@ export interface ArcResult {
 	/**
 	 * False when a control disqualified the measurement.
 	 *
-	 * The candidate numbers are still reported. they are just not evidence about the candidate.
+	 * The candidate numbers are still reported.
+	 * They are just not evidence about the candidate.
 	 */
 	attributable: boolean
 	dRuleViolations: Array<{ country: string; n: number; reason: string }>
@@ -162,8 +165,9 @@ export interface ArcOptions {
 	/**
 	 * A staged copy of the shipped weights, run through the identical candidate path.
 	 *
-	 * Dereference the symlinks when staging it — a directory that points back at the shipped artifacts
-	 * grades the shipped model under the candidate's name and the control passes for the wrong reason.
+	 * Dereference the symlinks when staging it.
+	 * A directory that points back at the shipped artifacts grades the shipped model
+	 * under the candidate's name and the control passes for the wrong reason.
 	 */
 	control?: string
 	/**

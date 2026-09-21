@@ -56,7 +56,8 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
 /**
  * Build an engine double.
  *
- * Pass the session behaviour the case reads. everything else is filled in.
+ * Pass the session behaviour the case reads.
+ * Everything else is filled in.
  *
  * `session` is asserted rather than completed on purpose, and it is the only assertion here:
  * `GeocodeSession` is the real pipeline's surface, far wider than any test drives,

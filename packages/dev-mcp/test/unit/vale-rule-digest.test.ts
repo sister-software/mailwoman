@@ -84,8 +84,8 @@ describe("the session-start prose-rule listing", () => {
 		const patterns = await tokenPatterns("AmbiguousShorthand")
 
 		// The check is only worth running if the file has tokens to check, and it is
-		// only sound if they are the patterns Vale itself refuses — a compile failure
-		// that emptied this list would pass the loop silently.
+		// only sound if they are the patterns Vale itself refuses.
+		// A compile failure that emptied this list would pass the loop silently.
 		expect(patterns.length).toBeGreaterThan(3)
 
 		for (const pattern of patterns) {

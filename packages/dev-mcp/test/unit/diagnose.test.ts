@@ -181,7 +181,8 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 	})
 
 	it("keeps a trace with no resolver records apart from a walk that performed no lookups", () => {
-		// One is a trace that predates the records. the other is the walk stating it had nothing resolvable.
+		// One is a trace that predates the records.
+		// The other is the walk stating it had nothing resolvable.
 		// Folding them together would let an old trace read as a retrieval failure.
 		expect(collectRetrievalFacts(undefined).lookups).toBeNull()
 		expect(collectRetrievalFacts([]).lookups).toEqual([])
@@ -607,8 +608,10 @@ describe("renderAccount", () => {
 })
 
 /**
- * The evidence reading for a set of channels, through the shared `evidenceCensus` rather than a
- * hand-built object — the starvation predicate must keep meaning whatever that function decides it means.
+ * The evidence reading for a set of channels, through the shared `evidenceCensus`
+ * rather than a hand-built object.
+ *
+ * The starvation predicate must keep meaning whatever that function decides it means.
  */
 function evidenceOf(channels: Partial<NeuralParseTrace>) {
 	return assembleAccount(ITEM, run({ trace: traceOf({ parse: trace(channels) }) }), NO_EXPECTATION).evidence
@@ -616,8 +619,9 @@ function evidenceOf(channels: Partial<NeuralParseTrace>) {
 
 describe("rows_cap", () => {
 	it("caps the emitted rows non-clean-first while the aggregates cover every row", async () => {
-		// Structural: exercise the partition + cap arithmetic without an engine — the pure tail of
-		// runDiagnose is not separable, so this pins the partition helper's interface by construction.
+		// Structural: exercise the partition + cap arithmetic without an engine.
+		// The pure tail of runDiagnose is not separable, so this pins the partition
+		// helper's interface by construction.
 		const rows = [
 			{ id: "a", shapes: ["clean"] },
 			{ id: "b", shapes: ["evidence_starved"] },

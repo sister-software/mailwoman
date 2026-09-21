@@ -11,8 +11,8 @@ import { join } from "path-ts"
 import { afterEach, describe, expect, it } from "vitest"
 
 /**
- * Scratch directories for this file's fixtures, removed after each test —
- * the lock and payload paths are per-test.
+ * Scratch directories for this file's fixtures, removed after each test.
+ * The lock and payload paths are per-test.
  */
 let fixtures = new AsyncDisposableStack()
 

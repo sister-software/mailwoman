@@ -86,10 +86,9 @@ export interface PlaceIDProvenance {
  *
  * The ranges are read from the folds that mint them rather than re-declared,
  * so a fold that moves its base moves this classifier with it.
- * They are contiguous and ascending — WOF below {@link OVERTURE_ID_BASE},
- * then Overture, then the GeoNames alias fold at
- * {@link GEONAMES_ID_BASE}, then the GeoNames postal fold at {@link GEONAMES_POSTAL_ID_BASE} —
- * so a single ladder classifies every id with no gap and no overlap.
+ * They are contiguous and ascending — WOF below {@link OVERTURE_ID_BASE}, then Overture,
+ * then the GeoNames alias fold at {@link GEONAMES_ID_BASE}, then the GeoNames postal fold at
+ * {@link GEONAMES_POSTAL_ID_BASE} — so a single ladder classifies every id with no gap and no overlap.
  */
 export function placeIDProvenance(id: number): PlaceIDProvenance {
 	if (id >= GEONAMES_POSTAL_ID_BASE) {
@@ -106,8 +105,8 @@ export function placeIDProvenance(id: number): PlaceIDProvenance {
 /**
  * The note a result set carries when it holds at least one synthetic id, naming the counts per source.
  *
- * Returns `undefined` when every id is a real WOF id: a note that fires unconditionally
- * is one a reader learns to skip, and the interesting state here is the mixed set.
+ * @returns `undefined` when every id is a real WOF id: a note that fires unconditionally
+ *   is one a reader learns to skip, and the interesting state here is the mixed set.
  */
 export function syntheticIDNote(ids: readonly number[]): string | undefined {
 	const counts = new Map<PlaceIDSource, number>()

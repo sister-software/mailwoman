@@ -84,7 +84,8 @@ function summarize(census: ReturnType<typeof censusTrees>, powerSentence: string
 			`(${((worst.stranding_rate ?? 0) * 100).toFixed(1)}%).`
 		: "No strict dependent was stranded on any row."
 
-	// A table of tags at zero reads as a clean bill of health. for a tag no row ever produced, it is not one.
+	// A table of tags at zero reads as a clean bill of health.
+	// For a tag no row ever produced, it is not one.
 	const blindSentence = census.never_produced.length
 		? ` ${census.never_produced.length} strict dependents never appeared at all (${census.never_produced.join(", ")}), ` +
 			"so their zero stranding counts measure nothing."

@@ -37,7 +37,8 @@ describe("resolveInputSet — board", () => {
 		expect(set.selection).toBe("full")
 		expect(set.n).toBeGreaterThan(500)
 		expect(set.populationN).toBeUndefined()
-		// Recomputed per resolve, never cached — a cached stamp verdict is the 2026-08-06 failure with extra steps.
+		// Recomputed per resolve, never cached.
+		// A cached stamp verdict is the 2026-08-06 failure with extra steps.
 		expect(set.corpusHash).toMatch(/^[0-9a-f]{64}$/)
 	})
 
@@ -121,10 +122,7 @@ describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
 
 describe.skipIf(!havePanel21)("resolveInputSet — panel v2.1", () => {
 	it("resolves the re-sourced v2.1 panel with a coordinate on every row", async () => {
-		// v2.1 = v2 with the 25 city-only rows whose truth was copied from the hard-case board
-		// (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`, scored by
-		// `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`) (circular truth,
-		// #1725) re-sourced to independent Wikidata centroids. Same 420 rows, same order. v2 stays immutable.
+		// v2.1 = v2 with the 25 city-only rows whose truth was copied from the hard-case board (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`, scored by `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`) (circular truth, #1725) re-sourced to independent Wikidata centroids. Same 420 rows, same order. v2 stays immutable.
 		const set = await resolveInputSet({ kind: "panel", version: "v2.1" })
 
 		expect(set.n).toBe(420)

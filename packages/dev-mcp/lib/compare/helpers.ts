@@ -122,8 +122,9 @@ export function assertedStratum(by: string): StratumKey {
 }
 
 /**
- * Whether the two arms answered with different result tiers (`address_point` → `interpolated`, say) —
- * a different claim about the answer even under a stable coordinate, because the
+ * Whether the two arms answered with different result tiers (`address_point` → `interpolated`, say).
+ *
+ * A different claim about the answer even under a stable coordinate, because the
  * tier is what `epistemic_status` reads from.
  *
  * Undefined when either arm did not answer or does not state a tier

@@ -8,9 +8,8 @@ import { runFileSync } from "@mailwoman/core/process"
  */
 
 /**
- * Both patterns anchor to column zero: indentation means a nested scope,
- * and a symbol nobody outside the enclosing
- * function can reach is not a symbol anyone can reuse.
+ * Both patterns anchor to column zero: indentation means a nested scope, and a symbol
+ * nobody outside the enclosing function can reach is not a symbol anyone can reuse.
  */
 const FUNCTION_PATTERN = /^(?:export\s+)?(?:async\s+)?function\s+(\w+)/gm
 
@@ -59,7 +58,9 @@ export interface DeclarationSite {
 	 */
 	exported: boolean
 	/**
-	 * The declaration line itself — the signature is what decides whether the existing one fits.
+	 * The declaration line itself.
+	 *
+	 * The signature is what decides whether the existing one fits.
 	 */
 	text: string
 }
@@ -69,7 +70,8 @@ export interface FindDeclarationsOptions {
 	/**
 	 * The ripgrep executable.
 	 *
-	 * Injectable so the missing-binary path is testable. nothing in production overrides it.
+	 * Injectable so the missing-binary path is testable.
+	 * Nothing in production overrides it.
 	 */
 	binary?: string
 	/**
@@ -121,9 +123,9 @@ function nameComponents(name: string): string[] {
  *
  * One-component runs are the vocabulary of the tree — `read`, `build`, `file`, `parse` —
  * so a floor of one reports nearly every name against nearly every other.
- * Of the 2,950 exported function names under `packages/`, the count that are a
- * longer spelling of another exported name is 417 at a floor of one, 130 at two,
- * and 45 at three. across different files, 348, 67 and 20.
+ * Of the 2,950 exported function names under `packages/`, the count that are a longer
+ * spelling of another exported name is 417 at a floor of one, 130 at two, and 45 at three.
+ * Across different files, 348, 67 and 20.
  *
  * Two keeps the motivating case (`readWorkspaceDirectories` over `workspaceDirectories`)
  * while dropping the vocabulary, and it is why this constant takes an argument:
@@ -215,7 +217,7 @@ export function findDeclarations(
  * The two declaration shapes, with `nameExpression` spliced in as the name to match.
  *
  * Callers supply either an alternation of exact names or a substring expression.
- * both are built from `\w`, which needs no regex escaping.
+ * Both are built from `\w`, which needs no regex escaping.
  */
 function declarationPatterns(nameExpression: string): string[] {
 	return [
@@ -293,8 +295,7 @@ function runRipgrep(
 		"--no-heading",
 		"--color",
 		"never",
-		// Not `--type ts`: ripgrep's `ts` type covers `*.tsx` as well, and a React component is a different reuse
-		// question with a different answer. Inclusion first, exclusions after — a later glob wins.
+		// Not `--type ts`: ripgrep's `ts` type covers `*.tsx` as well, and a React component is a different reuse question with a different answer. Inclusion first, exclusions after — a later glob wins.
 		"--glob",
 		"*.ts",
 		"--glob",

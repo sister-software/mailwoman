@@ -201,8 +201,9 @@ export const INPUT_SET_SCHEMA = z
 /**
  * Every construction- and call-time pin, in the CLI's own vocabulary.
  *
- * Unset means the production default, never "off" — the rule `GauntletResolverPins`
- * states in `harness.ts`: "the library defaults are the thing under test".
+ * Unset means the production default, never "off".
+ * The rule `GauntletResolverPins` states in `harness.ts`: "the library defaults are the thing under test".
+ *
  * A schema that coerced undefined to false would grade a configuration nobody ships.
  */
 export const ENGINE_CONFIG_SCHEMA = z
@@ -327,11 +328,11 @@ function refusalRow(run: GeocodeRun): string[] {
 
 	if (!markers?.length) return []
 
-	// `evidence` is the marker's measurement (`Record<string, unknown>`), so it is serialized
-	// rather than interpolated. a template literal renders it `[object Object]`
-	// and the line then names a refusal it cannot justify.
-	// `mechanism` is the `family:rule` that fired and is what a reader acts on —
-	// the kind alone does not say which rule refused.
+	// `evidence` is the marker's measurement (`Record<string, unknown>`),
+	// so it is serialized rather than interpolated.
+	// A template literal renders it `[object Object]` and the line then names a refusal it cannot justify.
+	// `mechanism` is the `family:rule` that fired and is what a reader acts on.
+	// The kind alone does not say which rule refused.
 	const named = markers
 		.map((marker) => {
 			const evidence = marker.evidence ? ` ${stringifyJSON(marker.evidence)}` : ""
@@ -519,8 +520,9 @@ export type StratumKey = "country" | "address_kind" | "status" | "truth_toleranc
 /**
  * Every legal stratum, for a runtime check the type cannot give a caller that reached the handler directly.
  *
- * An unrecognised key used to bucket every row as `unknown` and report a single stratum —
- * a table that looks like a stratified result and is not one.
+ * An unrecognised key used to bucket every row as `unknown` and report a single stratum.
+ * A table that looks like a stratified result and is not one.
+ *
  * Measured 2026-08-16: `stratify_by: "truth_type"` against a 60-row FR panel returned
  * `{"unknown": {n: 60}}` rather than saying the key did not exist.
  */

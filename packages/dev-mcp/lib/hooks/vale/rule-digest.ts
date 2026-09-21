@@ -126,7 +126,8 @@ function disabledRules(config: string): Set<string> {
  *
  * Read from git rather than from the directory, because `@mailwoman/core/fs` owns every `node:fs`
  * call in the tree and exposes no listing; `trackedFiles` is the enumerator the repo already uses.
- * An untracked rule file is therefore absent from the digest, which is correct — the rule set is committed.
+ * An untracked rule file is therefore absent from the digest, which is correct.
+ * The rule set is committed.
  */
 function ruleFiles(repoRoot: string): Promise<string[]> {
 	// One `*` and not `**`: git's pathspec wildcard crosses `/`, so this reaches `Grammar/` too,

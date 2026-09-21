@@ -120,8 +120,8 @@ describe("decodeReliabilitySample", () => {
 
 	it("EXCLUDES a row with no component truth rather than grading it", async () => {
 		// A literal input carries no truth.
-		// Counting it as wrong would manufacture errors out of rows nobody asserted
-		// anything about. counting it as right would do the opposite.
+		// Counting it as wrong would manufacture errors out of rows nobody asserted anything about.
+		// Counting it as right would do the opposite.
 		// Both are worse than saying so.
 		const run: GeocodeRunLike = {
 			result: { components: { street: "Main St" } },

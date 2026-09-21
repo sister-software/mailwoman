@@ -114,8 +114,9 @@ export interface ProvenanceOptions {
 /**
  * Assemble the provenance report.
  *
- * Every field is read. nothing is derived from a convention that might not hold,
- * which is why an absent file is reported as absent rather than defaulted.
+ * Every field is read.
+ * Nothing is derived from a convention that might not hold, which is why an absent
+ * file is reported as absent rather than defaulted.
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
 	const { dataRootPath, mailwomanDataRoot, repoRootPath } = await import("@mailwoman/core/utils")

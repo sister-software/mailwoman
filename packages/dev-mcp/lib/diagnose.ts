@@ -87,7 +87,8 @@ const KNOWN_FORMAT_CONFIDENCE_FLOOR = 0.9
 /**
  * Row ids listed per shape before the list is capped.
  *
- * The `n` beside it is always the real count. this bounds the payload, never the measurement.
+ * The `n` beside it is always the real count.
+ * This bounds the payload, never the measurement.
  */
 const SHAPE_ID_CAP = 20
 
@@ -126,8 +127,8 @@ export type DiagnoseShape = (typeof DIAGNOSE_SHAPES)[number]
 /**
  * What each shape asserts, as the predicate actually reads it.
  *
- * Emitted with every result so a classification travels with its own definition —
- * a shape name relayed without its predicate is the bare label this design refuses.
+ * Emitted with every result so a classification travels with its own definition.
+ * A shape name relayed without its predicate is the bare label this design refuses.
  */
 export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
 	parse_shape_contradiction:
@@ -161,8 +162,8 @@ export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
 
 /**
  * The format union, pulled off the trace's own type so a format added to
- * `@mailwoman/query-shape` without an entry in
- * {@link COMPONENT_FOR_KNOWN_FORMAT} is a compile error rather than a silently unchecked detector.
+ * `@mailwoman/query-shape` without an entry in {@link COMPONENT_FOR_KNOWN_FORMAT}
+ * is a compile error rather than a silently unchecked detector.
  */
 type KnownFormat = GeocodeTrace["queryShape"]["knownFormats"][number]["format"]
 
@@ -222,8 +223,8 @@ export interface AccountInput {
 /**
  * The decode's own confidence, over the tokens the tree was built from.
  *
- * `n_tokens: 0` with null statistics is a real state (an empty parse), kept apart from a mean of
- * zero — one says nothing was decoded, the other says everything was decoded with no confidence.
+ * `n_tokens: 0` with null statistics is a real state (an empty parse), kept apart from a mean of zero.
+ * One says nothing was decoded, the other says everything was decoded with no confidence.
  */
 interface DecodeReading {
 	path: "viterbi" | "argmax"
@@ -239,8 +240,8 @@ interface KnownFormatReading {
 	/**
 	 * The component tag this format asserts.
 	 *
-	 * `null` means the format maps to no component — the detector saw a shape the
-	 * schema has no slot for, which is not a contradiction.
+	 * `null` means the format maps to no component.
+	 * The detector saw a shape the schema has no slot for, which is not a contradiction.
 	 */
 	expects_component: string | null
 	matched: boolean
@@ -266,8 +267,8 @@ export interface ParseFacts {
 /**
  * One backend lookup, reduced to the facts a shape reads.
  *
- * The candidate table itself is deliberately not carried — `mwdev_trace` renders it,
- * and an account that dumped it would be a trace with extra steps.
+ * The candidate table itself is deliberately not carried.
+ * `mwdev_trace` renders it, and an account that dumped it would be a trace with extra steps.
  */
 interface LookupFact {
 	tag: string
@@ -293,8 +294,8 @@ export interface RetrievalFacts {
 	/**
 	 * `null` when the trace carries no resolver records at all (a trace predating them).
 	 *
-	 * An empty array is the walk stating it performed no lookups — a different claim,
-	 * and one the shapes must not read as retrieval failure.
+	 * An empty array is the walk stating it performed no lookups.
+	 * A different claim, and one the shapes must not read as retrieval failure.
 	 *
 	 * Coverage bound, and it is required for every retrieval shape below: the trace
 	 * records the walk's own `#lookupAndPick` and nothing else.
@@ -314,8 +315,8 @@ export interface OutcomeFacts {
 	tier: string
 	abstained: boolean
 	/**
-	 * `null` when the geocode resolved no winner to check against — the absence
-	 * of a check, never a passing one.
+	 * `null` when the geocode resolved no winner to check against.
+	 * The absence of a check, never a passing one.
 	 */
 	admin_coherence: { region: string; country: string } | null
 	outside_winner_lineage: Array<{ tag: string; name: string; place_id: string | null }>
@@ -334,7 +335,8 @@ export interface RowAccount {
 	country?: string | undefined
 	shapes: DiagnoseShape[]
 	/**
-	 * `null` when the run carried no parse trace — the bundle could not produce one.
+	 * `null` when the run carried no parse trace.
+	 * The bundle could not produce one.
 	 *
 	 * Distinct from a parse whose every channel is absent.
 	 */
@@ -344,8 +346,8 @@ export interface RowAccount {
 	outcome: OutcomeFacts
 	expectation: ExpectationReading
 	/**
-	 * A coordinate arrived and the resolver trace recorded no lookup —
-	 * the account's retrieval facts are blind for this row.
+	 * A coordinate arrived and the resolver trace recorded no lookup.
+	 * The account's retrieval facts are blind for this row.
 	 *
 	 * See {@link RetrievalFacts.lookups} for which passes are outside the trace's coverage.
 	 * Reported so the empty lookup list is not read as "retrieval had nothing to do": the retrieval
@@ -540,11 +542,11 @@ export function matchShapes(facts: {
 	}
 
 	// The rule fires only when the scoped probe missed across the whole cascade
-	// and the unscoped fallback produced rows — so every candidate in that lookup is a
-	// re-admitted one, and a pick under the eval is a re-admitted pick.
+	// and the unscoped fallback produced rows.
+	// So every candidate in that lookup is a re-admitted one, and a pick under the eval is a re-admitted pick.
 	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`,
-	// so lookup granularity is all the trace can support. it suffices here
-	// because the rule's own condition covers the whole row set.
+	// so lookup granularity is all the trace can support.
+	// It suffices here because the rule's own condition covers the whole row set.
 	if (lookups.some((lookup) => lookup.checks.includes("region_scope_miss") && lookup.picked)) {
 		shapes.push("scope_miss_readmission")
 	}
@@ -575,8 +577,9 @@ function channelMark(reading: ChannelReading): string {
 /**
  * One line per row — the tool-kit renderer pattern.
  *
- * The structured account is what a diff reads. this is what a human reads in a transcript
- * without an agent paraphrasing it, which is where detail goes missing.
+ * The structured account is what a diff reads.
+ * This is what a human reads in a transcript without an agent paraphrasing it,
+ * which is where detail goes missing.
  */
 export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	const parts: string[] = [`${account.id} [${account.shapes.join(",")}]`, `tier=${account.outcome.tier}`]
@@ -654,7 +657,8 @@ export interface ShapeAggregate {
 	/**
 	 * Ids not listed because the list hit its cap.
 	 *
-	 * A display bound, never a measurement one — `n` is the whole class.
+	 * A display bound, never a measurement one.
+	 * `n` is the whole class.
 	 */
 	row_ids_omitted: number
 	predicate: string
@@ -663,9 +667,10 @@ export interface ShapeAggregate {
 /**
  * Per-shape counts and the rows in each class.
  *
- * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row matched
- * is omitted rather than reported as zero — a class with no members is not a class
- * anyone can describe, and a table of zeros reads as a measurement of them.
+ * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row
+ * matched is omitted rather than reported as zero.
+ * A class with no members is not a class anyone can describe, and a table of
+ * zeros reads as a measurement of them.
  */
 export function aggregateByShape(
 	accounts: ReadonlyArray<{ id: string; shapes: DiagnoseShape[] }>
@@ -735,10 +740,13 @@ export function aggregateCounterfactuals(
 //#endregion
 
 /**
- * The in-vocabulary mis-tag refinement of `unclassified` (#1722 v2 — the `bd-op2-london-college` class, where `Dhaka
- * 1205` decoded as street + house_number and the expected locality/postcode never existed): an expected component tag
- * the parse never produced, whose expected value occurs verbatim in the input. A tag that exists with a wrong value is
- * a different fact and stays out — that failure has a component to interrogate. this one does not.
+ * The in-vocabulary mis-tag refinement of `unclassified` (#1722 v2 — the `bd-op2-london-college` class,
+ * where `Dhaka 1205` decoded as street + house_number and the expected locality/postcode never existed):
+ * an expected component tag the parse never produced, whose expected value occurs verbatim in the input.
+ *
+ * A tag that exists with a wrong value is a different fact and stays out.
+ * That failure has a component to interrogate.
+ * This one does not.
  */
 function misTaggedInVocabulary(
 	item: ResolvedInput,
@@ -860,7 +868,8 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 
 	const rows: RowAccount[] = accounts.map((account) => ({ ...account, rendered: renderAccount(account) }))
 
-	// Stable partition, non-clean first — only the emitted order. every aggregate reads `rows` whole.
+	// Stable partition, non-clean first — only the emitted order.
+	// Every aggregate reads `rows` whole.
 	const emittedRows = [
 		...rows.filter((row) => !row.shapes.includes("clean")),
 		...rows.filter((row) => row.shapes.includes("clean")),

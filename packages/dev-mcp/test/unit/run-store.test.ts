@@ -162,8 +162,8 @@ describe("pruneRuns — the retention rule", () => {
 
 	it("does NOT prune on a fingerprint mismatch", async () => {
 		// A run from another tree is still evidence about that tree.
-		// `{kind:"recorded"}` refuses the comparison and says which two fingerprints it
-		// saw. deleting it silently would be the worse answer.
+		// `{kind:"recorded"}` refuses the comparison and says which two fingerprints it saw.
+		// Deleting it silently would be the worse answer.
 		const dir = await store()
 
 		await putRun(run("other-tree", { tree_fingerprint: "somethingelse" }), dir)

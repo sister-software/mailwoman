@@ -86,10 +86,7 @@ const ADMITTED = new Set([
 	// Version control and the forge.
 	"gh",
 	"git",
-	// A directory has no content to take from the agent, so the symbol precheck has nothing to check: `mkdir` cannot
-	// write a helper. It cannot overwrite a file either — `mkdir` on an existing path raises eexist and `-p` is a no-op
-	// — and git tracks no empty directory, so nothing reaches a commit through it. Held out of the tree it refused
-	// `git mv` into a new directory, and refused the `mkdir -p .claude/state` the `task-intake` skill documents.
+	// A directory has no content to take from the agent, so the symbol precheck has nothing to check: `mkdir` cannot write a helper. It cannot overwrite a file either — `mkdir` on an existing path raises eexist and `-p` is a no-op — and git tracks no empty directory, so nothing reaches a commit through it. Held out of the tree it refused `git mv` into a new directory, and refused the `mkdir -p .claude/state` the `task-intake` skill documents.
 	"mkdir",
 	// Toolchain and this repository's own commands.
 	"docker",
@@ -111,8 +108,7 @@ const ADMITTED = new Set([
 	"sqlite3",
 	"tar",
 	"tsc",
-	// The python toolchain, the same shape as `yarn` beside it: `uv run` and `uvx` resolve an
-	// environment and run a named tool, deriving the venv they write rather than taking content.
+	// The python toolchain, the same shape as `yarn` beside it: `uv run` and `uvx` resolve an environment and run a named tool, deriving the venv they write rather than taking content.
 	"uv",
 	"uvx",
 	"vale",
@@ -169,9 +165,9 @@ const WRAPPERS = new Set(["command", "env", "nohup", "time", "timeout", "xargs"]
 const WRAPPER_ARGUMENT = /^(?:-|\d)/u
 
 /**
- * What to do instead of launching a Modal run from Bash, carried by the two
- * rules that need it rather than by
- * {@link GUIDANCE}, which talks about the Write and Edit tools and would be the wrong advice here.
+ * What to do instead of launching a Modal run from Bash, carried by the two rules
+ * that need it rather than by {@link GUIDANCE}, which talks about the Write
+ * and Edit tools and would be the wrong advice here.
  */
 const DETACHED_LAUNCH_GUIDANCE =
 	"Launch it through `node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log <file> -- modal run …`, " +
@@ -261,8 +257,7 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	},
 	{ head: "git", pattern: /(?:^|\s)config\s+-f/u, because: "`git config -f` writes an arbitrary file" },
 	{ head: "npm", pattern: /(?:^|\s)pkg\s+set\b/u, because: "`npm pkg set` writes a manifest" },
-	// The subcommand has to be a whole argument. `\b` ends a word at a hyphen too, so the old pattern read `yarn mwops
-	// health node-modules-reacharound` as `yarn node …` and refused a read-only check by its own name.
+	// The subcommand has to be a whole argument. `\b` ends a word at a hyphen too, so the old pattern read `yarn mwops health node-modules-reacharound` as `yarn node …` and refused a read-only check by its own name.
 	{
 		head: "yarn",
 		pattern: /(?:^|\s)(?:dlx|exec|node)(?=\s|$)/u,
@@ -272,9 +267,7 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	{ head: "vitest", pattern: /(?:^|\s)(?:-u\b|--update\b)/u, because: "`vitest -u` rewrites snapshots" },
 	// The same tool arrives through the package manager, where `yarn` is the command word.
 	{ head: "yarn", pattern: /(?:^|\s)vitest\b[^\n]*(?:\s-u\b|--update\b)/u, because: "`vitest -u` rewrites snapshots" },
-	// `oxlint --fix` and `oxfmt --write` are admitted on the same ground as the formatter over its inputs: what they
-	// write they derive from the rule set, and no content the agent supplies passes through them. A snapshot update is
-	// different in kind — `vitest -u` writes whatever the code under test produced, which is the assertion being replaced.
+	// `oxlint --fix` and `oxfmt --write` are admitted on the same ground as the formatter over its inputs: what they write they derive from the rule set, and no content the agent supplies passes through them. A snapshot update is different in kind. `vitest -u` writes whatever the code under test produced, which is the assertion being replaced.
 ]
 
 /**
@@ -303,8 +296,8 @@ const REDIRECT = /(?:&|\d)?>>?\|?\s*(?:&[\d-]|(?<target>[^\s;|&<>]*))/gu
 /**
  * Shell grammar rather than commands.
  *
- * A loop header binds a variable to a word list. the words that open a body are dropped,
- * and whatever follows is judged as a command.
+ * A loop header binds a variable to a word list.
+ * The words that open a body are dropped, and whatever follows is judged as a command.
  */
 const LOOP_HEADER = /^(?:for|select)\s+\w+\s+in\b/u
 const CONTROL_FLOW_WORDS = new Set(["do", "done", "then", "elif", "else", "fi", "esac", "while", "until", "if", "case"])
@@ -319,12 +312,9 @@ function withoutQuotedText(command: string): string {
 	return (
 		command
 			.replaceAll(/<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1[\s\S]*?^\t*\2$/gmu, " HEREDOC ")
-			// The placeholder keeps the quote's word boundaries: glued where the quote was glued, spaced where it stood
-			// alone. Always spacing it would split `path="$PWD/bin" node x.ts` into two words and make the head `quoted`.
-			// `commandSegments` follows the same rule for `${…}`.
+			// The placeholder keeps the quote's word boundaries: glued where the quote was glued, spaced where it stood alone. Always spacing it would split `path="$PWD/bin" node x.ts` into two words and make the head `quoted`. `commandSegments` follows the same rule for `${…}`.
 			//
-			// The prefix must exclude the quote characters. One that can match a quote consumes an opening delimiter, and
-			// every quote after it pairs with the wrong partner for the rest of the command.
+			// The prefix must exclude the quote characters. One that can match a quote consumes an opening delimiter, and every quote after it pairs with the wrong partner for the rest of the command.
 			.replaceAll(/([^\s'"`]?)(?:'[^']*'|"(?:[^"\\]|\\.)*"|`[^`]*`)/gu, (_match, glued: string) =>
 				glued ? `${glued}QUOTED` : " QUOTED "
 			)
@@ -340,28 +330,21 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 	const found: Array<{ head: string; segment: string }> = []
 
 	const expanded = stripped
-		// A braced expansion collapses to a bare variable rather than to a spaced placeholder, so it stays glued to the
-		// word it belongs to: `FOO=${home}/data` is one assignment rather than an assignment beside a command called `VAR`.
+		// A braced expansion collapses to a bare variable rather than to a spaced placeholder, so it stays glued to the word it belongs to: `FOO=${home}/data` is one assignment rather than an assignment beside a command called `VAR`.
 		.replaceAll(/\$\{[^}]*\}/gu, "$VAR")
-		// A redirect is not a command, and its `&` is not a separator: `2>&1` must not split into a segment headed by
-		// `1`. It is removed rather than replaced, so no placeholder becomes a command word. Targets are judged
-		// separately, against the unmasked text.
+		// A redirect is not a command, and its `&` is not a separator: `2>&1` must not split into a segment headed by `1`. It is removed rather than replaced, so no placeholder becomes a command word. Targets are judged separately, against the unmasked text.
 		.replaceAll(REDIRECT, " ")
-		// An opener starts a command of its own. a closer does not end one. Replacing `)` with a separator too would
-		// leave `comm -12 <(sort a) b` with a segment headed by `b`, and a filename is not a command.
+		// An opener starts a command of its own. A closer does not end one. Replacing `)` with a separator too would leave `comm -12 <(sort a) b` with a segment headed by `b`, and a filename is not a command.
 		//
-		// A brace only opens a group when whitespace follows it, and only closes one when whitespace or a separator
-		// precedes it — that is bash's own rule for `{ cmd; }`. Splitting on every brace instead read the ordinary git
-		// spellings `head@{1}`, `stash@{0}` and `@{upstream}` as two segments, the second headed by a digit, and
-		// refused them with "`1` is not on the admitted command list". A brace glued to a word is part of that word:
-		// a reflog selector, a brace expansion, a format string.
+		// A brace only opens a group when whitespace follows it, and only closes one when whitespace or a separator precedes it. That is bash's own rule for `{ cmd; }`. Splitting on every brace instead read the ordinary git spellings `head@{1}`, `stash@{0}` and `@{upstream}` as two segments, the second headed by a digit, and refused them with "`1` is not on the admitted command list". A brace glued to a word is part of that word: a reflog selector, a brace expansion, a format string.
 		.replaceAll(/\$\(|<\(|\(|\{(?=\s|$)|(?<=^|\s)\}/gu, " ; ")
 		.replaceAll(")", " ")
 
 	for (const rawSegment of expanded.split(/(?:&&|\|\||[;|&\n])/u)) {
 		const segment = rawSegment.trim()
 
-		// A loop header binds a name to a word list. the list is data, and the body follows the next separator.
+		// A loop header binds a name to a word list.
+		// The list is data, and the body follows the next separator.
 		if (!segment || LOOP_HEADER.test(segment)) continue
 
 		let words = segment.split(/\s+/u).filter((word) => word.length)

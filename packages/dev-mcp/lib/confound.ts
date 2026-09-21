@@ -32,8 +32,10 @@ import { effectiveKeyFor } from "#engine/registry"
  * differ between the two resolved configs.
  *
  * Read this as a hygiene check on the experiment, never as a causal finding.
- * It compares two config objects. it has no access to why any individual row moved, and a
- * delta is a property of an aggregate while causation happens per row through a mechanism.
+ * It compares two config objects.
+ *
+ * It has no access to why any individual row moved, and a delta is a property of an
+ * aggregate while causation happens per row through a mechanism.
  *
  * A `clean` here licenses the sentence "nothing else in the configuration moved" and nothing stronger.
  * Diagnosis needs the per-row interior, which this file does not have and `mwdev_trace` does.
@@ -114,8 +116,8 @@ export function checkConfounds(
 	const movedSet = new Set(moved)
 
 	const movedButUndeclared = moved.filter((key) => !declaredSet.has(key))
-	// Filtered on the translated key, reported in the caller's own spelling — they typed
-	// `place_country`, and telling them `placeCountry` is unmoved names a key they never wrote.
+	// Filtered on the translated key, reported in the caller's own spelling.
+	// They typed `place_country`, and telling them `placeCountry` is unmoved names a key they never wrote.
 	const declaredButUnmoved = declared.filter((key) => !movedSet.has(effectiveKeyFor(key))).toSorted()
 	const warnings: string[] = []
 
@@ -160,11 +162,7 @@ export function checkConfounds(
 /**
  * The reading for a comparison whose two arms are different geocoders.
  *
- * {@link checkConfounds} is the wrong instrument here and would be actively misleading if pointed at this case. Its
- * question is "did more config keys move than the caller declared", and across engines the answer is a
- * list of keys one arm does not have — every mailwoman change against an endpoint and a version string.
- * A reader would get a paragraph of true, useless warnings, and paragraphs of
- * those train a reader to skip the field.
+ * {@link checkConfounds} is the wrong instrument here and would be actively misleading if pointed at this case. Its question is "did more config keys move than the caller declared", and across engines the answer is a list of keys one arm does not have — every mailwoman change against an endpoint and a version string. A reader would get a paragraph of true, useless warnings, and paragraphs of those train a reader to skip the field.
  *
  * What is actually true is shorter and worse: the arms hold different indexes built from
  * different sources at different vintages, and no record either arm can produce says by how much.
@@ -205,10 +203,7 @@ export interface WorktreeTreeDelta {
 /**
  * The reading for a comparison whose two arms are both worktree arms with clean commits.
  *
- * {@link crossEngineReading}'s "different geocoders over different indexes" is written for Pelias-vs-mailwoman, where
- * nothing in either arm's provenance can bound the difference.
- * A worktree pair is the opposite case: both arms name a commit, so the tool can measure what separates
- * them and say it, instead of disclaiming an attribution the caller set the comparison up to make.
+ * {@link crossEngineReading}'s "different geocoders over different indexes" is written for Pelias-vs-mailwoman, where nothing in either arm's provenance can bound the difference. A worktree pair is the opposite case: both arms name a commit, so the tool can measure what separates them and say it, instead of disclaiming an attribution the caller set the comparison up to make.
  *
  * The isolation verdict stays {@link VariableIsolation.CrossEngine} — the config-key checker
  * still has nothing to check across two processes — but the warning carries the bounded surface:
@@ -246,8 +241,9 @@ export function worktreePairReading(
  * `resolver_score` is bm25-derived on FTS (≈19–41) and population-derived on the candidate
  * table (≈5–7), so a cross-backend comparison of it is a unit error wearing a number.
  * Worse, `resolver-backends.mdx:162-170` measured that within either backend the wrong
- * answers' score range sits inside the correct answers' range with a higher mean —
- * so it cannot be thresholded on either, which is why this is a refusal rather than a warning.
+ * answers' score range sits inside the correct answers' range with a higher mean.
+ *
+ * So it cannot be thresholded on either, which is why this is a refusal rather than a warning.
  */
 const INCOMPARABLE_FIELDS = new Set(["resolver_score", "score", "prominence"])
 

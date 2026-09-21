@@ -46,15 +46,15 @@ interface VocabularyLine {
 	/**
 	 * Pieces per character.
 	 *
-	 * Latin text against this tokenizer runs around 0.4. a figure near or above 1.0
-	 * means the string is being spelled out rather than tokenized.
+	 * Latin text against this tokenizer runs around 0.4.
+	 * A figure near or above 1.0 means the string is being spelled out rather than tokenized.
 	 */
 	piecesPerCharacter: number
 	/**
 	 * The piece sequence, joined by `|`.
 	 *
-	 * Present only when asked for — it is the part that shows where a word shatters,
-	 * and the part that makes a reply long.
+	 * Present only when asked for.
+	 * It is the part that shows where a word shatters, and the part that makes a reply long.
 	 */
 	sequence?: string
 }
@@ -123,8 +123,10 @@ function total(lines: readonly VocabularyLine[]): VocabularyReport["totals"] {
  * Which letters in `texts` the vocabulary can express on their own.
  *
  * Judged one character at a time on purpose.
- * A character that falls back inside a word might merely be an unlucky segmentation. a character that
- * falls back alone is absent from the vocabulary, which is the fact a vocabulary decision needs.
+ * A character that falls back inside a word might merely be an unlucky segmentation.
+ *
+ * A character that falls back alone is absent from the vocabulary,
+ * which is the fact a vocabulary decision needs.
  */
 function characterCoverage(
 	tokenizer: Tokenizer,

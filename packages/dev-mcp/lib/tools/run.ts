@@ -21,8 +21,10 @@ import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, componentsOf, provenanceFor } f
 /**
  * The per-row fields `mwdev_run` can emit, in emission order.
  *
- * A full board's `components` map dominates the payload — an unprojected result can overflow a
- * tool reply and spill to a file, so the caller reads it back through `jq` instead of reading it.
+ * A full board's `components` map dominates the payload.
+ * An unprojected result can overflow a tool reply and spill to a file,
+ * so the caller reads it back through `jq` instead of reading it.
+ *
  * Everything an A/B diff needs is `id` plus `lat`/`lon`/`tier`.
  *
  * The list is ordered so a projected row keeps a stable key order regardless
@@ -34,9 +36,7 @@ const RUN_ROW_FIELDS = [
 	"components",
 	"lat",
 	"lon",
-	// Haversine kilometres from the row's truth point, for the sets that carry one — board, panel, golden,
-	// parity, and a literal set whose caller pinned coordinates. `null` on a row with no truth and on a row
-	// that resolved nothing, which are different facts: read it beside `lat`.
+	// Haversine kilometres from the row's truth point, for the sets that carry one — board, panel, golden, parity, and a literal set whose caller pinned coordinates. `null` on a row with no truth and on a row that resolved nothing, which are different facts: read it beside `lat`.
 	"km",
 	"tier",
 	"admin_coherence",

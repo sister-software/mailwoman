@@ -62,7 +62,8 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 				lon: run.result.lon,
 				tier: run.result.resolution_tier,
 				// The three-state channel reading (#1718): absent / silent / fired, plus the starvation flag.
-				// A human read past three all-zero channel rows in this very output once. a field does not skim.
+				// A human read past three all-zero channel rows in this very output once.
+				// A field does not skim.
 				evidence: run.trace?.parse ? evidenceCensus(run.trace.parse) : null,
 				query_shape: run.trace?.queryShape ?? null,
 				kind: run.trace?.kind ?? null,

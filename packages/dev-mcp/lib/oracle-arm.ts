@@ -76,8 +76,8 @@ export interface OracleConfig {
 /**
  * Conservative default cap when the config enables Google without naming one.
  *
- * Chosen to cover one 420-row panel with margin and nothing like a sweep —
- * a cap that silently permits an unbounded run is not a cap.
+ * Chosen to cover one 420-row panel with margin and nothing like a sweep.
+ * A cap that silently permits an unbounded run is not a cap.
  */
 export const DEFAULT_GOOGLE_CALL_CAP = 500
 
@@ -126,9 +126,8 @@ export class OracleMeter {
 	/**
 	 * Build a meter over the daemon's config file.
 	 *
-	 * The constructor cannot await the config read, so this static factory does
-	 * it. callers that already hold an
-	 * {@linkcode OracleConfig} may keep using the constructor.
+	 * The constructor cannot await the config read, so this static factory does it.
+	 * Callers that already hold an {@linkcode OracleConfig} may keep using the constructor.
 	 */
 	static async create(config?: OracleConfig): Promise<OracleMeter> {
 		return new OracleMeter(config ?? (await readOracleConfig()))
@@ -195,10 +194,11 @@ export class OracleMeter {
 	 * Record spend, one per query this arm issued.
 	 *
 	 * A cache hit still counts.
-	 * `GoogleGeocoderClient` caches under `$MAILWOMAN_DATA_ROOT/geocode-oracle/`
-	 * and answers a repeat for free, but it hands back `OracleGeocodeResult[]` and never says
-	 * which of those cost a request — the `cached` flag lives on the axios response
-	 * inside `APIClient` and does not survive the client's own parsing.
+	 * `GoogleGeocoderClient` caches under `$MAILWOMAN_DATA_ROOT/geocode-oracle/` and answers a repeat
+	 * for free, but it hands back `OracleGeocodeResult[]` and never says which of those cost a request.
+	 *
+	 * The `cached` flag lives on the axios response inside `APIClient`
+	 * and does not survive the client's own parsing.
 	 *
 	 * So the meter counts queries and over-counts a warm run.
 	 * That is the direction to be wrong in: the failure it produces is refusing a run the
@@ -216,8 +216,8 @@ export class OracleMeter {
  * Two reasons, and the second is why there is no carve-out for the sets it does not apply to:
  *
  * 1. The board's `expectLat`/`expectLon` are pinned by hand by whoever fixed the bug,
- *    with these same two geocoders open as a second opinion — that is the stated
- *    purpose of `@mailwoman/geocode-oracle`.
+ *    with these same two geocoders open as a second opinion.
+ *    That is the stated purpose of `@mailwoman/geocode-oracle`.
  *    Scoring an oracle against those points is therefore partly scoring it against itself.
  * 2. The package's own header says nothing there should ever decide whether a build ships.
  *    A rule with a list of sets it applies to becomes a rule about which set to pick.

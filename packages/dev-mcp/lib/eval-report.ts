@@ -27,8 +27,10 @@ export interface FloorReading {
 	/**
 	 * The measured value, or `null` when the battery produced none.
 	 *
-	 * `null` is not zero and not a failure to clear the bar — it is a metric that was never measured,
-	 * and the eval marks it failing precisely so an unmeasured floor cannot pass by default.
+	 * `null` is not zero and not a failure to clear the bar.
+	 * It is a metric that was never measured, and the eval marks it failing precisely
+	 * so an unmeasured floor cannot pass by default.
+	 *
 	 * Reported separately from `pass` so a reader can tell "missed the bar" from "never ran".
 	 */
 	observed: number | null
@@ -70,7 +72,7 @@ export interface EvalReport {
 	 *
 	 * Surfaced, never RUN.
 	 * Appending to the ledger is a repo write and a claim about a shipped version.
-	 * the eval runs on candidates that may never ship.
+	 * The eval runs on candidates that may never ship.
 	 *
 	 * See {@link EvalReport.ledger_note}.
 	 */
@@ -166,7 +168,8 @@ export async function readEvalReport(outDir: string, stdout: string, stderr: str
 
 	for (const [index, line] of lines.entries()) {
 		if (!ledgerCommand && line.includes(LEDGER_MARKER)) {
-			// The command spans a couple of continued lines. take them until one does not end in a backslash.
+			// The command spans a couple of continued lines.
+			// Take them until one does not end in a backslash.
 			const collected = [line.trim()]
 
 			for (let next = index + 1; next < lines.length && collected.at(-1)!.endsWith("\\"); next++) {
@@ -257,8 +260,9 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
  * package directory rather than calling `resolveWeights({cacheRoot})` precisely so a mis-staged
  * candidate dies on an enoent instead of falling through to the installed workspace package —
  * which in this repo always resolves, and would grade the shipped model under the candidate's label.
- * This check runs before the spawn only so the reader learns the expected shape from a sentence
- * rather than from a stack trace. it never substitutes for that guard.
+ * This check runs before the spawn only so the reader learns the expected shape
+ * from a sentence rather than from a stack trace.
+ * It never substitutes for that guard.
  *
  * The layout comes from `weightsCachePackageDir`, the resolver's own function,
  * rather than a re-typed `node_modules/@mailwoman/…` literal — the 2026-08-06
@@ -291,9 +295,9 @@ export async function missingWeightsCacheArtifacts(
 	// A cache that has the three required files but is missing what its own card
 	// declares is the #1516 failure with no signal of its own: the channel resolves off,
 	// the run scores several cases lower, and the operator reads a model regression.
-	// Measured here on 2026-08-16 — a hand-staged three-file cache graded to completion
-	// and reported `us.country_homograph_f1` at 0.0 against a 64.8 floor,
-	// which reads exactly like a collapsed country channel.
+	// Measured here on 2026-08-16.
+	// A hand-staged three-file cache graded to completion and reported `us.country_homograph_f1`
+	// at 0.0 against a 64.8 floor, which reads exactly like a collapsed country channel.
 	const undeclared: string[] = []
 
 	for (const artifact of await declaredArtifacts(packageDir)) {

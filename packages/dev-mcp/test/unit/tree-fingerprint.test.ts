@@ -114,8 +114,8 @@ describe("computeTreeFingerprint — dirty files", () => {
 	it("reports a modified path whole, including the first one", async () => {
 		// `git status --porcelain` writes an unstaged modification as " M path".
 		// Trimming the whole output before splitting eats column one of the first line only,
-		// and a fixed-width read then takes the leading character of the path with it —
-		// so the field reports a file that does not exist, and only ever the first one.
+		// and a fixed-width read then takes the leading character of the path with it.
+		// So the field reports a file that does not exist, and only ever the first one.
 		const root = await fakeCheckout()
 		const relative = join(FINGERPRINTED_WORKSPACES[0]!, "thing.ts")
 

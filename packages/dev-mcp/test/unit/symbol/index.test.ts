@@ -68,7 +68,7 @@ describe("extractDeclaredSymbols", () => {
 
 	it("ignores a constant that is not a function", () => {
 		// A duplicated table or literal is a different problem with a different answer.
-		// reporting them would bury the duplicated logic this exists to surface.
+		// Reporting them would bury the duplicated logic this exists to surface.
 		expect(extractDeclaredSymbols('const MAX_SAMPLES = 1024\nconst NAME = "x"')).toEqual([])
 	})
 })
@@ -221,8 +221,8 @@ describe("selectReportable", () => {
 
 	it("suppresses a name that is declared everywhere and exported nowhere", () => {
 		// `main` had 34 declaration sites at the time this rule was chosen and not one of them is importable.
-		// A stoplist would have to name it. this rule derives it, which is the
-		// difference that keeps the rule from going stale.
+		// A stoplist would have to name it.
+		// This rule derives it, which is the difference that keeps the rule from going stale.
 		const found = new Map([["main", [declarationSite("scripts/a.ts", false), declarationSite("scripts/b.ts", false)]]])
 
 		expect(selectReportable(found, { writingFile: "scripts/c.ts" })).toEqual([])

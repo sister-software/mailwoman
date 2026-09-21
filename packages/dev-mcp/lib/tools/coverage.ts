@@ -155,8 +155,7 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		...(missing.length ? { requested_but_absent_everywhere: missing } : {}),
 		mismatches: report.mismatches,
 		summary:
-			// A mismatch leads. A caller reads the first sentence, and every count after it is about a corpus the run
-			// does not read.
+			// A mismatch leads. A caller reads the first sentence, and every count after it is about a corpus the run does not read.
 			(report.corpusMismatch ? `CORPUS MISMATCH — ${report.corpusMismatch} ` : "") +
 			`${trained.length} countries train (${withStreet.length} with street-level rows); ` +
 			`${report.countries.filter((c) => c.gazetteerPlaces > 0).length} are geocodable to a locality, ` +

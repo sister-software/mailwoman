@@ -24,8 +24,9 @@ import { wilsonInterval } from "#power"
 /**
  * The pre-registered distance thresholds, in kilometres.
  *
- * Fixed by `docs/superpowers/plans/2026-08-06-local-pelias-benchmark-rig.md` §4 and adopted
- * verbatim by spec §2.4 — a threshold chosen after seeing where the arms landed is not a threshold.
+ * Fixed by `docs/superpowers/plans/2026-08-06-local-pelias-benchmark-rig.md` §4
+ * and adopted verbatim by spec §2.4.
+ * A threshold chosen after seeing where the arms landed is not a threshold.
  */
 export const DISTANCE_THRESHOLDS_KM = [1, 5, 25] as const
 
@@ -47,8 +48,10 @@ export const EQUIVALENCE_THRESHOLD_KM = 25
 const EQUIVALENCE_BOUND_PP = 5
 
 /**
- * One-sided critical z at α = 0.05, the standard tost pairing — each of the two one-sided tests
- * is run at 5%, which makes the procedure a 90% confidence interval read against the bound.
+ * One-sided critical z at α = 0.05, the standard tost pairing.
+ *
+ * Each of the two one-sided tests is run at 5%, which makes the procedure a 90%
+ * confidence interval read against the bound.
  */
 const Z_CRITICAL_95_ONE_SIDED = 1.645
 
@@ -187,8 +190,9 @@ function wilsonHalfWidth(successes: number, n: number): number {
  *
  * Failing an equivalence test does not mean the arms differ, and it does not mean nothing
  * was learned — which of those it means depends on where the point estimate fell.
- * A difference already outside the bound is a difference. a small difference with
- * an interval too wide to place is an underpowered run.
+ * A difference already outside the bound is a difference.
+ *
+ * A small difference with an interval too wide to place is an underpowered run.
  *
  * Wording both as "this is not a claim that the arms differ" would flatly contradict
  * the two-proportion z-test printed beside it, which on a lopsided pair of arms
@@ -225,8 +229,8 @@ function equivalence(
  * one input set are positively correlated, so the true paired variance is smaller,
  * so this interval is wider and equivalence is harder to declare.
  *
- * An equivalence claim that survives this test survives the paired one. a claim that
- * fails it may only be underpowered, which the sentence says.
+ * An equivalence claim that survives this test survives the paired one.
+ * A claim that fails it may only be underpowered, which the sentence says.
  */
 export function tostEquivalence(
 	successesA: number,

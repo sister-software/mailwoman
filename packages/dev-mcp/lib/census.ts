@@ -88,8 +88,9 @@ export interface CensusAggregate {
 	decode: Record<string, number>
 	detected_systems: Record<string, number>
 	/**
-	 * Rows where every present channel was silent — the per-row starvation list (#1718),
-	 * complete and never truncated.
+	 * Rows where every present channel was silent.
+	 *
+	 * The per-row starvation list (#1718), complete and never truncated.
 	 */
 	evidence_silent_rows: string[]
 	/**

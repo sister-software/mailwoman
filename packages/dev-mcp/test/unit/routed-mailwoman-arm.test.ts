@@ -5,8 +5,9 @@ import { resolvePathBuilder } from "path-ts"
 import { describe, expect, it, vi } from "vitest"
 
 // `tier` carries a real value because `toGauntletResult` passes `resolution_tier`
-// straight through and that field is non-nullable — a null here modelled a row production
-// cannot produce, which is what the assertion through `unknown` was hiding.
+// straight through and that field is non-nullable.
+// A null here modelled a row production cannot produce, which is what the
+// assertion through `unknown` was hiding.
 // Everything else stays absent: this stands for an arm that answered without resolving anything.
 const EMPTY_RESULT = {
 	components: {},

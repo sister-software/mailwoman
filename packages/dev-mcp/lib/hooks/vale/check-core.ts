@@ -7,7 +7,7 @@
  *   rules and render one verdict. The platform adapters — `vale-response-check.ts` (Claude Code)
  *   and `vale-response-check-codex.ts` (Codex) — own payload parsing, the loop guard, and the
  *   output JSON. the policy (which config, which severities block, how findings read) lives here
- *. Therefore, the two hooks cannot drift apart the way parallel copies do.
+ * . Therefore, the two hooks cannot drift apart the way parallel copies do.
  *
  *   The rule set is `config/vale/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat
  *   additions, fixture-tested by `config/vale/check-rules.ts`. The config path resolves
@@ -44,8 +44,8 @@ export async function lintReply(reply: string): Promise<ValeAlert[]> {
 	const vale = await valeCommand(import.meta.url)
 	const configPath = repoRootPath("config", "vale", ".vale-chat.ini")
 
-	// Vale exits 1 when error-severity alerts exist, so the exit code carries no failure signal —
-	// an unparseable stdout is the failure, and that reads as "no findings" per the silence interface.
+	// Vale exits 1 when error-severity alerts exist, so the exit code carries no failure signal.
+	// An unparseable stdout is the failure, and that reads as "no findings" per the silence interface.
 	const result = spawnProcessSync(vale.file, [...vale.argv, "--config", configPath, "--output=JSON", "--ext=.md"], {
 		input: reply,
 		encoding: "utf8",
@@ -124,8 +124,8 @@ function formatAlerts(alerts: ValeAlert[], opening: string): string {
 		lines.push(`- ${matches}${tail}: ${group.guidance}`)
 	}
 
-	// The rewrite guidance rides only the blocking path — an advisory verdict arrives
-	// after the reply stands, where the per-group lines alone are the useful part.
+	// The rewrite guidance rides only the blocking path.
+	// An advisory verdict arrives after the reply stands, where the per-group lines alone are the useful part.
 	const guidance = hasErrors
 		? [
 				`Return only replacement text for the flagged sentences. Do not repeat, summarize, reorder, expand, or otherwise restate any unflagged part of the reply. Replace each flagged phrase with the concrete claim it hides — do not merely delete it. Structure: define project terms at first use; give every count its comparison arm and denominator; state the arithmetic behind derived figures; write addresses in full. A hit inside a verbatim address, place name, or quoted string can stand.`,

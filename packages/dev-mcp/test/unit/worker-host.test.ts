@@ -67,7 +67,8 @@ describe("WorkerHost restart", () => {
 
 		await host.start()
 
-		// Same list, same fork state — a restart with nothing edited stays quiet.
+		// Same list, same fork state.
+		// A restart with nothing edited stays quiet.
 		const unchanged = await host.restart()
 
 		expect(unchanged.tools_changed).toBe(false)
@@ -92,8 +93,7 @@ describe("WorkerHost restart", () => {
 					elapsed_s: 41,
 					command: "node out/cli/index.js eval promote --check v9.0.0-base",
 				},
-				// A finished job is not a loss and must not be reported as one — a caller relaunching it would re-run
-				// work that already has a verdict on disk.
+				// A finished job is not a loss and must not be reported as one. A caller relaunching it would re-run work that already has a verdict on disk.
 				{ job_id: "job-0", label: "check:earlier", state: "succeeded", elapsed_s: 400, command: "node earlier" },
 			],
 			JOBS_PATH

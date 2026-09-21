@@ -68,8 +68,9 @@ const CandidateRoute = {
 	 */
 	QualifierStrip: "qualifier-strip",
 	/**
-	 * The key with internal whitespace deleted — the fold postcode rows are built under,
-	 * so `624 66` is stored `62466`.
+	 * The key with internal whitespace deleted.
+	 *
+	 * The fold postcode rows are built under, so `624 66` is stored `62466`.
 	 */
 	PostcodeFold: "postcode-fold",
 } as const
@@ -86,11 +87,14 @@ export interface CandidateLookupOptions {
 	country?: string
 	limit?: number
 	/**
-	 * An open `admin-global-priority-importance.db` handle plus the path it came from. When present, every returned entry
-	 * carries `importance_split` — the score source's `referential` / `encyclopedic` columns joined by `spr_id` — so a
-	 * fame-contest diagnosis reads both channels beside the blend instead of scripting the join. The id join is
-	 * same-generation only: a cross-era pair re-keys Overture-minted ids, and the miss surfaces as `importance_split:
-	 * null` on rows whose blended `importance` is measured — which is why the caller's note reports the join rate.
+	 * An open `admin-global-priority-importance.db` handle plus the path it came from.
+	 *
+	 * When present, every returned entry carries `importance_split` — the score source's
+	 * `referential` / `encyclopedic` columns joined by `spr_id` — so a fame-contest
+	 * diagnosis reads both channels beside the blend instead of scripting the join.
+	 * The id join is same-generation only: a cross-era pair re-keys Overture-minted ids,
+	 * and the miss surfaces as `importance_split: null` on rows whose blended `importance`
+	 * is measured — which is why the caller's note reports the join rate.
 	 */
 	importance?: { db: DatabaseClient<PlaceImportanceDatabase>; artifact: string }
 }
@@ -109,13 +113,15 @@ interface CandidateEntry extends PlaceIDProvenance {
 	/**
 	 * The #1730 name-role stamp (`abbr` / `gloss` / `variant`), `null` for an unstamped row.
 	 *
-	 * Absent (not null) when the artifact predates the column — the same tri-state the runtime reader uses.
+	 * Absent (not null) when the artifact predates the column.
+	 * The same tri-state the runtime reader uses.
 	 */
 	name_role?: string | null
 	/**
-	 * The score source's split channels for this place, joined by `spr_id` when
-	 * {@link CandidateLookupOptions.importance} was provided: an object when the source holds a row,
-	 * `null` when it does not.
+	 * The score source's split channels for this place, joined by `spr_id`
+	 * when {@link CandidateLookupOptions.importance} was provided: an object
+	 * when the source holds a row, `null` when it does not.
+	 *
 	 * Absent when no importance DB was given — never conflate the two.
 	 */
 	importance_split?: { referential: number; encyclopedic: number | null } | null
@@ -123,9 +129,9 @@ interface CandidateEntry extends PlaceIDProvenance {
 	 * The place id this row points at, named for WOF's `spr` table (Standard Place Response)
 	 * because that is the schema it came from.
 	 *
-	 * It is a real WOF id only when
-	 * {@link PlaceIDProvenance.wof_id} is non-null — roughly half the gazetteer is Overture-
-	 * or GeoNames-minted and carries an id in a reserved synthetic range that looks identical.
+	 * It is a real WOF id only when {@link PlaceIDProvenance.wof_id} is non-null —
+	 * roughly half the gazetteer is Overture- or GeoNames-minted and carries an id
+	 * in a reserved synthetic range that looks identical.
 	 */
 	spr_id: number
 }
@@ -156,9 +162,10 @@ function candidateSelect(hasNameRole: boolean): string {
  * - `importance: null` is unmeasured — the score source had no row for that place —
  *   while `population: 0` and a `(0, 0)` centroid are the build's own written
  *   values (the latter its unlocated sentinel).
- * - A `country` naming no `country_codes` entry means the artifact carries no rows for that
- *   country at all, so the miss is a coverage gap. a country it does carry, with rows under
- *   the key elsewhere, is a filter miss and reports the third state (`hit`, no entries).
+ * - A `country` naming no `country_codes` entry means the artifact carries no rows
+ *   for that country at all, so the miss is a coverage gap.
+ *   A country it does carry, with rows under the key elsewhere, is a filter miss
+ *   and reports the third state (`hit`, no entries).
  */
 export function lookupCandidate<DB>(
 	db: DatabaseClient<DB>,
@@ -387,8 +394,9 @@ export function lookupCandidate<DB>(
 }
 
 /**
- * The fields {@link diffCandidateRows} compares on a row present in both artifacts —
- * the ranking-relevant columns rather than the identity ones (those are the match key).
+ * The fields {@link diffCandidateRows} compares on a row present in both artifacts.
+ *
+ * The ranking-relevant columns rather than the identity ones (those are the match key).
  */
 const CANDIDATE_DELTA_FIELDS = ["importance", "population", "is_primary", "name_role"] as const
 
@@ -415,8 +423,10 @@ export interface CandidateDelta {
 /**
  * Diff two artifacts' answers to the same queries, row-aligned by query index.
  *
- * Covers the returned rows only — both sides truncate at the caller's limit, so a delta over deep key
- * populations needs the limit raised to cover them. the tool's note says so beside the numbers.
+ * Covers the returned rows only.
+ * Both sides truncate at the caller's limit, so a delta over deep key populations
+ * needs the limit raised to cover them.
+ * The tool's note says so beside the numbers.
  */
 export function diffCandidateRows(rowsA: LookupRow[], rowsB: LookupRow[]): CandidateDelta[] {
 	return rowsA.map((rowA, index) => {
@@ -473,7 +483,8 @@ export function diffCandidateRows(rowsA: LookupRow[], rowsB: LookupRow[]): Candi
  */
 export interface WOFExtract<DB> {
 	/**
-	 * How the extract is named in output — its basename, which is how every runbook refers to it.
+	 * How the extract is named in output.
+	 * Its basename, which is how every runbook refers to it.
 	 */
 	name: string
 	db: DatabaseClient<DB>
@@ -483,9 +494,10 @@ export interface WOFExtract<DB> {
  * Which index reached a WOF record.
  *
  * The two answer different questions and only together cover the extract.
- * `fts` is what the resolver can reach. the FTS5 content is built with
- * `is_current != 0 and is_deprecated = 0` applied, so a deprecated record is not
- * merely filtered at query time — it was never indexed.
+ * `fts` is what the resolver can reach.
+ *
+ * The FTS5 content is built with `is_current != 0 and is_deprecated = 0` applied,
+ * so a deprecated record is not merely filtered at query time — it was never indexed.
  *
  * `names-exact` is the byte-exact probe on the indexed `names` table, which carries
  * deprecated records and is the only cheap way to see them.
@@ -510,8 +522,8 @@ interface WOFEntry extends PlaceIDProvenance {
 	 * The containing place's id, straight off `spr.parent_id`.
 	 *
 	 * Emitted because a same-name pair is only readable as a duplicate — a district
-	 * and its seat — when the parent link is visible. without it the two rows look
-	 * like two unrelated places that happen to tie.
+	 * and its seat — when the parent link is visible.
+	 * Without it the two rows look like two unrelated places that happen to tie.
 	 */
 	parent_id: number
 	/**
@@ -552,9 +564,10 @@ const WOF_NAMES_FROM = `FROM names n JOIN spr ON spr.id = n.id ${SPR_JOINS} WHER
 /**
  * Build the pair of statements for one route: the row select and the count that gives it a denominator.
  *
- * The country filter is appended to both, so a scoped probe reports how many rows the key has
- * in that country rather than how many it has anywhere — the difference between a filter miss
- * and an absence, which is the distinction this whole tool exists to keep.
+ * The country filter is appended to both, so a scoped probe reports how many rows the
+ * key has in that country rather than how many it has anywhere.
+ * The difference between a filter miss and an absence, which is the distinction
+ * this whole tool exists to keep.
  */
 function wofStatements(from: string, order: string, scoped: boolean): { rows: string; count: string } {
 	const where = scoped ? `${from} AND spr.country = ?` : from
@@ -575,14 +588,17 @@ function wofStatements(from: string, order: string, scoped: boolean): { rows: st
  * through the FTS index's `alt_names` column as `مدينة السلطان قابوس` in OM.
  *
  * Two routes, because one index cannot answer both halves.
- * The `place_search` FTS5 content is populated with `is_current != 0 and is_deprecated = 0` applied at
- * build time, so it can never show a deprecated record. the `names` table can, and is indexed.
+ * The `place_search` FTS5 content is populated with `is_current != 0 and is_deprecated = 0`
+ * applied at build time, so it can never show a deprecated record.
+ * The `names` table can, and is indexed.
  *
  * Rows the resolver cannot see are counted and named but kept OUT of `entries`, so a name
  * whose every record is deprecated reports the third state — known to WOF, nothing downstream.
  *
- * The FTS route ANDs tokens over `name` and `alt_names`, so a match is not a claim
- * that the extract stores this exact string. read the returned `name`.
+ * The FTS route ANDs tokens over `name` and `alt_names`, so a match is not a
+ * claim that the extract stores this exact string.
+ * Read the returned `name`.
+ *
  * The `names` route is byte-exact under the index's binary collation, so case and punctuation matter
  * there — which is why a double miss says what was checked rather than "WOF does not have it".
  */
@@ -725,7 +741,9 @@ const POI_SELECT =
 	"WHERE p.name_key = ?"
 
 /**
- * Probe `poi.db` on `name_key` — the same {@link normalizeLocalityForKey} fold the POI build writes.
+ * Probe `poi.db` on `name_key`.
+ *
+ * The same {@link normalizeLocalityForKey} fold the POI build writes.
  *
  * The count is exact and unbounded.
  * Measured on the 13.68 M-row shipped `poi.db`: `mcdonalds` (19,340 rows) counts in 1.3
@@ -881,8 +899,9 @@ export function lookupCodex(queries: string[]): LookupRow[] {
 }
 
 /**
- * The postcode-anchor artifact's read interface — `PostcodeBinaryResolver`'s
- * binary search, narrowed to what this probe uses.
+ * The postcode-anchor artifact's read interface.
+ *
+ * `PostcodeBinaryResolver`'s binary search, narrowed to what this probe uses.
  */
 export interface PostcodeAnchorResolver {
 	lookup(postcode: string): Array<{ country: string; lat: number; lon: number }>
@@ -910,8 +929,8 @@ export interface PostcodeLookupOptions {
  *   the artifact holds no centroid for it, and the channel feeds a country posterior
  *   with a (0, 0) centroid. 414 of `postcode-us.bin`'s 42,317 keys are like this.
  * - Under a card declaring `alnum-run`, a key containing a space-joined pair is
- *   present in the artifact and unreachable at serve — the scan produces `SW1A`
- *   and `2AA` separately and never the joined key.
+ *   present in the artifact and unreachable at serve.
+ *   The scan produces `SW1A` and `2AA` separately and never the joined key.
  *   The row is a hit and the note says the running model is not fed it, because those are different facts.
  */
 export function lookupPostcodeAnchor(

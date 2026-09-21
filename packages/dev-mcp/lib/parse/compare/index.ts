@@ -52,8 +52,9 @@ export interface LabelledSpan {
 /**
  * How the two readings related on one label.
  *
- * `agree` and `value-differs` both mean both parsers produced the label. the `*-only` pair means
- * one did not, which is a different kind of disagreement and never blended with the other.
+ * `agree` and `value-differs` both mean both parsers produced the label.
+ * The `*-only` pair means one did not, which is a different kind of disagreement
+ * and never blended with the other.
  */
 export const SpanVerdict = {
 	Agree: "agree",
@@ -93,8 +94,8 @@ export interface ParseComparisonRow {
 }
 
 /**
- * Which mailwoman tags share each libpostal label — the collapse, read off
- * the shared map rather than restated.
+ * Which mailwoman tags share each libpostal label.
+ * The collapse, read off the shared map rather than restated.
  */
 const TAGS_PER_LABEL: ReadonlyMap<string, string[]> = buildTagsPerLabel()
 
@@ -143,8 +144,8 @@ export function libpostalClient(endpoint: string): APIClient {
 /**
  * Ask an endpoint for its reading.
  *
- * `address` rather than `query`: it is the parameter the reference libpostal rest server takes, and `@mailwoman/
- * libpostal` accepts it as an alias, so one spelling reaches both.
+ * `address` rather than `query`: it is the parameter the reference libpostal rest server takes,
+ * and `@mailwoman/ libpostal` accepts it as an alias, so one spelling reaches both.
  */
 export async function libpostalSpans(client: APIClient, input: string): Promise<LabelledSpan[]> {
 	const response = await client.fetch<unknown>({ url: `/parse?address=${encodeURIComponent(input)}` })

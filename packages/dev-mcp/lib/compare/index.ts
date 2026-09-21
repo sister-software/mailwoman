@@ -378,8 +378,8 @@ async function compareMailwomanArms(
 		power: changeReading,
 		...(options.stratifyBy ? { strata: stratify(rows, options.stratifyBy) } : {}),
 		// Complete, never truncated.
-		// The 837-row FST run produced 24 changed rows. that is the evidence,
-		// and a "first 30" cap would have hidden the tail on a larger one.
+		// The 837-row FST run produced 24 changed rows.
+		// That is the evidence, and a "first 30" cap would have hidden the tail on a larger one.
 		rows_changed: differed,
 		warnings: confounds.warnings,
 	}
@@ -391,8 +391,9 @@ async function compareMailwomanArms(
  * A mailwoman arm projected onto the same answer shape an external one produces:
  * a point, a label, a type, or a stated absence.
  *
- * Everything else the pipeline knows is deliberately dropped here — the other arm cannot answer it,
- * so carrying it into a cross-engine row would invite a comparison that has no other side.
+ * Everything else the pipeline knows is deliberately dropped here.
+ * The other arm cannot answer it, so carrying it into a cross-engine row would
+ * invite a comparison that has no other side.
  */
 async function mailwomanRunner(
 	registry: EngineRegistryLike,
@@ -483,8 +484,9 @@ function oracleRunner(
  *
  * Matched BY input string rather than by row id.
  * A row id is only meaningful inside the corpus that minted it, and a recorded
- * arm exists to compare across time — the board may have gained rows,
- * or the comparison may be against a different set entirely.
+ * arm exists to compare across time.
+ *
+ * The board may have gained rows, or the comparison may be against a different set entirely.
  *
  * The input string is the one key that means the same thing in both runs.
  *
@@ -717,9 +719,9 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth, item.toleranceM ?? null),
 			// Tri-state, and separate from `differed` on purpose: identity comparison runs only
 			// when both arms state a place-identity chain (absent = incomparable, never "same"),
-			// and it does not feed `arms_differed_on` — a battery pinned on the coordinate-level
-			// zero-diff interface keeps its meaning, while a wrong-instance swap under
-			// a stable coordinate becomes visible beside it.
+			// and it does not feed `arms_differed_on`.
+			// A battery pinned on the coordinate-level zero-diff interface keeps its meaning,
+			// while a wrong-instance swap under a stable coordinate becomes visible beside it.
 			...(a.place_ids && b.place_ids ? { identity_differed: a.place_ids.join(">") !== b.place_ids.join(">") } : {}),
 			...(tierDiffered(a, b) === undefined ? {} : { tier_differed: tierDiffered(a, b) }),
 			grade: hasTruth && !hasOracle ? gradeAtThreshold(distanceA, distanceB, options.gradeThresholdKm) : "ungradeable",
@@ -737,7 +739,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 	const graded = rows.filter((row) => row.grade !== "ungradeable")
 	const differed = rows.filter((row) => row.differed)
 	// The emitted change list also carries identity-only and tier-only rows
-	// (differed stays coordinate-level. the row's own identity_differed / tier_differed
+	// (differed stays coordinate-level. The row's own identity_differed / tier_differed
 	// flag says which kind of change a reader is looking at).
 	const changedRows = rows.filter((row) => row.differed || row.identity_differed === true || row.tier_differed === true)
 
@@ -798,8 +800,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 				`${runnerA.label}, ${gradedHits.b} (${formatPercent(gradedHits.b, graded.length)}) for ${runnerB.label}. ` +
 				`${test.sentence} ${equivalence.sentence}`
 			: // The two reasons for withholding a grade are not the same fact and must not share a sentence. "No truth
-				// here" is about the set; "an oracle is present" is a refusal that holds even when the set has truth for
-				// every row, and a reader told the wrong one will go looking for a corpus that already exists.
+				// here" is about the set; "an oracle is present" is a refusal that holds even when the set has truth for every row, and a reader told the wrong one will go looking for a corpus that already exists.
 				hasOracle
 				? `${runnerA.label} vs ${runnerB.label} over ${rows.length} rows. ${ORACLE_VERDICT_NOTE}`
 				: `${runnerA.label} vs ${runnerB.label} over ${rows.length} rows, none of which carries a truth coordinate — ` +

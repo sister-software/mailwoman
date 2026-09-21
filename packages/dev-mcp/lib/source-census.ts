@@ -132,7 +132,8 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 			counts[code] = row.n
 		}
 
-		// Asked for and absent is a reported zero, never a missing key — the caller is deciding whether to acquire data.
+		// Asked for and absent is a reported zero, never a missing key.
+		// The caller is deciding whether to acquire data.
 		if (countries) {
 			for (const code of countries) {
 				counts[code] ??= 0

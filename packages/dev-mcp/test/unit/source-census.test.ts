@@ -20,7 +20,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 let root: TemporaryDirectory
 
 /**
- * A extract with `spr` and the ancestry tables — the shape a corpus builder can extract triples from.
+ * A extract with `spr` and the ancestry tables.
+ * The shape a corpus builder can extract triples from.
  */
 function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): void {
 	using db = new DatabaseClient<WOFDatabase>(path)

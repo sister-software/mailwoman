@@ -68,8 +68,9 @@ export interface ThresholdRow {
 	/**
 	 * Accuracy among the admitted.
 	 *
-	 * `null` when nothing is admitted — an eval that admits nothing has no precision,
-	 * and reporting 0 there reads as an eval that admits only errors.
+	 * `null` when nothing is admitted.
+	 * An eval that admits nothing has no precision, and reporting 0 there reads
+	 * as an eval that admits only errors.
 	 */
 	precision_above: number | null
 	errors_admitted: number
@@ -133,9 +134,11 @@ export function reliabilityCurve(sample: readonly Observation[], binCount: numbe
 /**
  * What a confidence floor at each threshold would actually buy.
  *
- * The curve says whether the number is honest. this says what to do with it, and they are
- * different questions — a well-calibrated surface can still have no threshold worth setting,
- * because the admitted-error count at every useful recall is too high.
+ * The curve says whether the number is honest.
+ * This says what to do with it, and they are different questions.
+ *
+ * A well-calibrated surface can still have no threshold worth setting, because the
+ * admitted-error count at every useful recall is too high.
  * Both columns of the trade are reported: a precision figure alone hides the
  * correct answers the check throws away.
  */
@@ -171,8 +174,8 @@ export interface ErrorClass {
  * the wrong answer, while a rejection only forgoes the narrowing — so the per-class rate above the
  * eval is the number that decides whether the eval is safe, and the overall confusion matrix is not.
  *
- * Requires `expected` and `predicted` strata. a surface without them
- * (the decode path grades a value against a label and has no second class to name)
+ * Requires `expected` and `predicted` strata.
+ * A surface without them (the decode path grades a value against a label and has no second class to name)
  * returns nothing, which is absence and not a clean confusion matrix.
  */
 export function errorClasses(sample: readonly Observation[], threshold: number, limit: number): ErrorClass[] {
@@ -202,9 +205,10 @@ export function errorClasses(sample: readonly Observation[], threshold: number, 
 /**
  * Split a sample by one stratum key and curve each group.
  *
- * A group is keyed by the stratum's value, and observations missing the key are grouped under `(unset)`
- * rather than dropped — a stratum that half the sample does not carry is a fact about the corpus,
- * and dropping those rows moves the denominator of every other group without saying so.
+ * A group is keyed by the stratum's value, and observations missing the key are
+ * grouped under `(unset)` rather than dropped.
+ * A stratum that half the sample does not carry is a fact about the corpus, and dropping
+ * those rows moves the denominator of every other group without saying so.
  */
 export function curveByStratum(
 	sample: readonly Observation[],

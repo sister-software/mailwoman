@@ -144,8 +144,8 @@ describe("mwdev_compare — an oracle arm", () => {
 
 	it('honours `grade: "truth"` by refusing rather than by grading', async () => {
 		// `resolveGradeMode` throws for a request it cannot meet.
-		// The oracle refusal must not turn that into a silent downgrade either —
-		// the caller asked for a verdict and gets a stated reason there is none.
+		// The oracle refusal must not turn that into a silent downgrade either.
+		// The caller asked for a verdict and gets a stated reason there is none.
 		const result = (await runCompare(
 			registryAt(ANDORRA_LA_VELLA),
 			{
@@ -231,8 +231,8 @@ describe("mwdev_compare — a truthless comparison", () => {
 	it("reports arm separation rather than a fabricated zero", async () => {
 		// The failure this closes: without truth both distances are null, so the threshold
 		// rule finds no verdict to cross and every row reads as identical.
-		// `describeObservedRate` then turns "0 of N differed" into "tight enough to read as a real
-		// absence" — a claim of no difference between two arms that never agreed on anything.
+		// `describeObservedRate` then turns "0 of N differed" into "tight enough to read as a real absence".
+		// A claim of no difference between two arms that never agreed on anything.
 		const result = (await runCompare(
 			registryAt(ANDORRA_LA_VELLA),
 			{
@@ -241,7 +241,7 @@ describe("mwdev_compare — a truthless comparison", () => {
 				arm_b: { kind: "oracle", provider: "census" },
 				variable: ["engine"],
 			},
-			// The oracle answers Paris. the mailwoman stub answers Andorra. ~800 km apart.
+			// The oracle answers Paris. The mailwoman stub answers Andorra. ~800 km apart.
 			{ createOracleClient: () => oracleAt({ lat: 48.8566, lon: 2.3522 }), runStoreDir: RUN_STORE.path }
 		)) as Record<string, unknown>
 

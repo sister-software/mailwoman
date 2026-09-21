@@ -53,7 +53,9 @@ export type ExternalEngine = (typeof ExternalEngine)[keyof typeof ExternalEngine
  * The benchmark plan names both as **unpinned sanity checks**: they are shared community instances
  * on unknown data vintages under rate limits nobody here controls, so a number measured against
  * one is not reproducible and its operators did not consent to being a benchmark subject.
- * Refused rather than warned — a warning on the cheapest thing to type is a warning that gets typed.
+ * Refused rather than warned.
+ *
+ * A warning on the cheapest thing to type is a warning that gets typed.
  */
 const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstreetmap.org"])
 
@@ -99,8 +101,9 @@ const REQUEST_TIMEOUT_MS = 20_000
 /**
  * The query the identity probe sends.
  *
- * Never scored, and never mixed with the input set — its only job is to make the search
- * path answer once so the response envelope can be read for a version.
+ * Never scored, and never mixed with the input set.
+ * Its only job is to make the search path answer once so the response envelope can be read for a version.
+ *
  * A short, unambiguous, universally-indexed place name, so an endpoint holding
  * any data at all responds to it.
  */
@@ -130,8 +133,9 @@ export interface ExternalAnswer {
 	/**
 	 * The engine's own label for what it matched, verbatim.
 	 *
-	 * Not compared across engines — it is here so a human reading a changed row can see
-	 * that one arm answered with a country and the other with a rooftop.
+	 * Not compared across engines.
+	 * It is here so a human reading a changed row can see that one arm answered
+	 * with a country and the other with a rooftop.
 	 */
 	label: string | null
 	/**
@@ -210,8 +214,8 @@ interface EngineProtocol {
 /**
  * Index into an unknown JSON body.
  *
- * `isRecordLike` (`@mailwoman/core/objects`) is the shared predicate and does the actual
- * test. this only adapts its `input is object` narrowing into something indexable,
+ * `isRecordLike` (`@mailwoman/core/objects`) is the shared predicate and does the actual test.
+ * This only adapts its `input is object` narrowing into something indexable,
  * and answers `{}` for a non-record so a reader can chain without a guard at every step.
  */
 function fields(value: unknown): Record<string, unknown> {
@@ -228,7 +232,8 @@ function readString(value: unknown): string | null {
  *
  * Two traps, both closed by the validator rather than by a finiteness test.
  * `Number("")` is 0, so an empty string would otherwise become a point in the Gulf of Guinea.
- * and a latitude past ±90 is what a transposed pair looks like, which a finite-number
+ *
+ * And a latitude past ±90 is what a transposed pair looks like, which a finite-number
  * check waves through and a distance metric then reports as an ordinary miss.
  */
 function readCoordinate(value: unknown, isValid: (candidate: number) => boolean): number | null {
@@ -248,7 +253,8 @@ function readCoordinate(value: unknown, isValid: (candidate: number) => boolean)
  * measure an upstream engine, and parsing its answer through our reimplementation's idea
  * of the format would make it blind to exactly the divergences the comparison is for.
  *
- * RFC 7946 is shared ground. a drop-in's schema is a claim under test.
+ * RFC 7946 is shared ground.
+ * A drop-in's schema is a claim under test.
  *
  * A feature whose geometry is not a point is a no-result with a reason rather than a skip to
  * the second feature: the protocol scores position one, and an engine that answered with an
@@ -393,7 +399,8 @@ export function assertScorableEndpoint(endpoint: string): string {
  *
  * Response caching is deliberately off.
  * Every other client in this repo caches because it is re-reading a slow remote index.
- * here the endpoint's answer is the measurement, and a cached one would be scored against
+ *
+ * Here the endpoint's answer is the measurement, and a cached one would be scored against
  * an identity probe taken now — reporting a vintage the number did not come from.
  */
 export class ExternalGeocoderClient extends APIClient {
@@ -442,8 +449,9 @@ export class ExternalGeocoderClient extends APIClient {
 	 * Two requests: the engine's own status path, then one throwaway search.
 	 * Both are needed.
 	 *
-	 * The status path is where Nominatim keeps its data vintage and upstream Photon its
-	 * import date. the search envelope is where Pelias keeps its version.
+	 * The status path is where Nominatim keeps its data vintage and upstream Photon its import date.
+	 * The search envelope is where Pelias keeps its version.
+	 *
 	 * An endpoint that 404s the status path is not thereby broken — a compatible drop-in need not
 	 * implement it — but it is thereby unidentified, which the caller is told rather than left to assume.
 	 */

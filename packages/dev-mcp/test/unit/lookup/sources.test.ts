@@ -62,8 +62,7 @@ function memoryDatabase<DB>(): DatabaseClient<DB> {
  * false absences plus the NL PC6 pair whose stem hides the unit code.
  */
 const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name_key" | "spr_id">> = [
-	// Each key is minted from the surface the build folds, never written folded by hand — for an alias row that
-	// surface is the alias rather than the display `name`, which is why "Balearic Islands" keys under `illes balears`.
+	// Each key is minted from the surface the build folds, never written folded by hand — for an alias row that surface is the alias rather than the display `name`, which is why "Balearic Islands" keys under `illes balears`.
 	{ name_key: nameKey("Porto Petro"), name: "Porto Petro", placetype_id: 1, country_id: 1, spr_id: 1, population: 0 },
 	{
 		name_key: nameKey("Illes Balears"),
@@ -154,7 +153,7 @@ async function candidateFixture(): Promise<DatabaseClient<CandidateDatabase>> {
 			row.name ?? null,
 			row.population ?? 0,
 			row.is_primary ?? 1,
-			// `importance` stays NULL unless the fixture row gives one — the unmeasured case is the point.
+			// `importance` stays NULL unless the fixture row gives one. The unmeasured case is the point.
 			row.importance ?? null
 		)
 	}
@@ -222,8 +221,7 @@ describe("lookupCandidate", () => {
 	})
 
 	it("restricts the qualifier-strip retry to primary rows, as the runtime does", async () => {
-		// #1626: an alias-keyed stripped hit is a scrape. `hart` carries a primary Hart and an alias row for
-		// Hyattsville. only the first may answer a stripped probe.
+		// #1626: an alias-keyed stripped hit is a scrape. `hart` carries a primary Hart and an alias row for Hyattsville. Only the first may answer a stripped probe.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["Hart b.Graz"])
 
@@ -286,8 +284,8 @@ describe("lookupWOF", () => {
 
 	it("reports a deprecated-only name as the THIRD state, not as absence", async () => {
 		// The FTS content is built with `is_current != 0 and is_deprecated = 0` applied,
-		// so the resolver's index cannot hold this record at all — the `names` route
-		// is the only cheap way to see that it exists.
+		// so the resolver's index cannot hold this record at all.
+		// The `names` route is the only cheap way to see that it exists.
 		const db = await wofFixture()
 		const [row] = lookupWOF([{ name: "admin.db", db }], ["Birmingham/Wolverhampton/Walsall/Dudley"])
 

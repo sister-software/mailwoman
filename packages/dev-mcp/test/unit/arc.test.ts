@@ -183,7 +183,8 @@ describe("decideArc", () => {
 	it("renders BOTH halves of the trade, not only the regressions", () => {
 		// The first version recorded regressedInputs and not improvedInputs, so every report
 		// it produced showed the losses as addresses and the wins as a bare count.
-		// A candidate is a trade. a reader cannot price one with a side hidden.
+		// A candidate is a trade.
+		// A reader cannot price one with a side hidden.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			undefined,

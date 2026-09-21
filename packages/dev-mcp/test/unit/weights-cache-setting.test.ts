@@ -35,8 +35,9 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * Lay out a cache root the way `weightsCachePackageDir` expects, staged to the requested depth.
  *
- * `declared` becomes the card's `files_md5`, which is what separates an under-staged cache from a
- * complete one — the card is the only thing that knows which siblings this bundle is supposed to carry.
+ * `declared` becomes the card's `files_md5`, which is what separates an
+ * under-staged cache from a complete one.
+ * The card is the only thing that knows which siblings this bundle is supposed to carry.
  */
 async function stageCache(
 	stage: "wrong-shape" | "under-staged" | "ok",

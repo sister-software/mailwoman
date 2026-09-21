@@ -59,7 +59,8 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 		// input set and tree — a burst of arms rather than several comparisons.
 		// Listed row by row those fill the reply with rows that differ only in `run_id`
 		// and byte count, and push the older, genuinely different runs past the limit.
-		// Group them. the newest of each group is the one a {kind:"recorded"} arm would replay,
+		// Group them.
+		// The newest of each group is the one a {kind:"recorded"} arm would replay,
 		// and the rest are named by count and stay reachable through `get`.
 		const groups = new Map<string, typeof all>()
 

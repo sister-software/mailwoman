@@ -14,7 +14,8 @@ import { runLookup } from "@mailwoman/dev-mcp/lookup/tool"
 import { afterAll, describe, expect, it } from "vitest"
 
 /**
- * The five artifact-backed sources never touch the registry. passing one that would throw proves it.
+ * The five artifact-backed sources never touch the registry.
+ * Passing one that would throw proves it.
  */
 const noRegistry = new Proxy({} as EngineRegistryLike, {
 	get() {

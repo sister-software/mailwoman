@@ -152,7 +152,8 @@ process.on("message", (message: WorkerInbound) => {
 	}
 })
 
-// The shim restarts by sigterm. the same cleanup the old single-process server ran on its signals.
+// The shim restarts by sigterm.
+// The same cleanup the old single-process server ran on its signals.
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
 	process.on(signal, () => {
 		registry.evictAll()

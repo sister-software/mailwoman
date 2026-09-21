@@ -25,8 +25,8 @@ describe("diffSpans", () => {
 	})
 
 	it("joins repeated labels before comparing", () => {
-		// libpostal emits one span per occurrence. mailwoman's collapse can emit a
-		// different number for the same reading.
+		// libpostal emits one span per occurrence.
+		// Mailwoman's collapse can emit a different number for the same reading.
 		// Comparing occurrence-by-occurrence reports a segmentation difference as a parse disagreement.
 		const [diff] = diffSpans(
 			[span("road", "Main St", "intersection_a"), span("road", "5th Ave", "intersection_b")],

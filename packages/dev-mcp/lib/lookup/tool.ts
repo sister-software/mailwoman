@@ -81,7 +81,7 @@ export interface LookupArgs {
 	config?: EngineConfig
 	/**
 	 * `candidate` only — a second candidate.db to run the same queries against, answering both row sets
-	 * plus a per-query delta (rows only one artifact holds. shared rows whose ranking fields moved).
+	 * plus a per-query delta (rows only one artifact holds. Shared rows whose ranking fields moved).
 	 *
 	 * The two-artifact probe every staged gazetteer diagnosis previously scripted by hand.
 	 */
@@ -129,8 +129,8 @@ export async function runLookup(
 		case LookupSource.Candidate: {
 			return await withArtifact(source, await resolveCandidateDB(config, dataRoot), async (db, path) => {
 				// The score source's split channels ride along whenever the conventional
-				// importance DB exists beside the artifacts — the join every fame-contest
-				// diagnosis needs, attached rather than scripted.
+				// importance DB exists beside the artifacts.
+				// The join every fame-contest diagnosis needs, attached rather than scripted.
 				const importancePath = String(resolvePath(dataRoot, "wof", "admin-global-priority-importance.db"))
 
 				const importanceDB = (await pathExists(importancePath))
@@ -311,8 +311,9 @@ const UNAVAILABLE_NOTE =
 /**
  * The WOF extracts, opened as a set.
  *
- * Unavailable only when no extract opens. a partial set is reported in the notes,
- * because "three of six extracts" is a different reading of a miss than "all six".
+ * Unavailable only when no extract opens.
+ * A partial set is reported in the notes, because "three of six extracts" is a
+ * different reading of a miss than "all six".
  */
 async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupResult> {
 	const paths = resolveWOFDatabasePaths(args.config?.resolve_db, dataRoot)
@@ -375,7 +376,8 @@ async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupR
  * The postcode→anchor artifact for one locale's weights package.
  *
  * The span mode comes from the package's own model card.
- * Defaulting it here instead would describe a configuration the loader never runs —
+ * Defaulting it here instead would describe a configuration the loader never runs.
+ *
  * `alnum-run` is the loader's default only when the card declares nothing.
  */
 async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {

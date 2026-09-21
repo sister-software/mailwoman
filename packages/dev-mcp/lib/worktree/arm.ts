@@ -72,9 +72,9 @@ interface WorkspaceLink {
 /**
  * Read the root `workspaces` globs and resolve each to a `name -> directory` pair.
  *
- * Reads the worktree's own manifests rather than the main checkout's, because a
- * ref that predates a workspace must not have that workspace linked into it —
- * an import that should fail at the older ref has to actually fail.
+ * Reads the worktree's own manifests rather than the main checkout's, because a ref
+ * that predates a workspace must not have that workspace linked into it.
+ * An import that should fail at the older ref has to actually fail.
  */
 async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
 	const links: WorkspaceLink[] = []
@@ -250,15 +250,15 @@ export async function runWorktreeArm(args: {
 	if (!live) {
 		runFileSync("git", ["worktree", "add", "--detach", worktree, ref], { cwd: repoRoot, stdio: "pipe" })
 
-		// `git worktree remove` refuses on a dirty checkout, and this one always is —
-		// the runner script and the node_modules farm are both untracked.
+		// `git worktree remove` refuses on a dirty checkout, and this one always is.
+		// The runner script and the node_modules farm are both untracked.
 		// `--force` is the normal path here rather than an override.
 		resources.defer(() => {
 			try {
 				runFileSync("git", ["worktree", "remove", "--force", worktree], { cwd: repoRoot, stdio: "pipe" })
 			} catch {
-				// A failed removal must not mask the arm's own error. removing the parent directory
-				// and pruning afterwards clean up regardless.
+				// A failed removal must not mask the arm's own error.
+				// Removing the parent directory and pruning afterwards clean up regardless.
 			}
 		})
 	}
@@ -289,8 +289,8 @@ export async function runWorktreeArm(args: {
 			cwd: worktree,
 			input: stringifyJSON({ inputs, options }),
 			encoding: "utf8",
-			// A full board through a cold engine is minutes, and the payload is megabytes. both
-			// defaults are far too small and both failures look like a crash rather than a limit.
+			// A full board through a cold engine is minutes, and the payload is megabytes.
+			// Both defaults are far too small and both failures look like a crash rather than a limit.
 			timeout: args.timeoutMs ?? 30 * 60 * 1000,
 			maxBuffer: 512 * 1024 * 1024,
 		})

@@ -123,8 +123,8 @@ export async function runParseCompare(registry: EngineRegistryLike, args: Record
 }
 
 /**
- * Which labels the two parsers disagree on, most often first — the question a
- * per-row list cannot answer at board scale.
+ * Which labels the two parsers disagree on, most often first.
+ * The question a per-row list cannot answer at board scale.
  */
 function tallyByLabel(rows: readonly ParseComparisonRow[]): Array<{ label: string; verdicts: Record<string, number> }> {
 	const tally = new Map<string, Record<string, number>>()
