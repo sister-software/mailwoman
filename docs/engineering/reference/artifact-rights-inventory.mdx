@@ -378,24 +378,34 @@ same directories sit under `packages/core/data/`.
 `packages/core/data/coarse-placer/` is `weights.bin` and `meta.json`: a multinomial logistic-regression classifier
 over 29 country classes on a 65,536-dimension hashed feature space, trained by
 `mailwoman placer train`. It is first-party work, so no third-party license attaches to the artifact.
-What it was trained on is recorded nowhere. Three places would carry it and each is silent: the
-notices files describe the third-party data beside it, no model card exists for it, and
-`packages/core/data/` holds no `PROVENANCE.md`. It is the same gap the twelve weights packages
-carry, in the one package every consumer of Mailwoman installs.
+When this was first measured, what it was trained on was recorded nowhere: the notices files described
+the third-party data beside it, no model card existed for it, and `packages/core/data/` held no
+`PROVENANCE.md`.
 
-Two scope limits in `data-provenance` put it out of reach, and only the first is stated in the
-check's own header.
+`packages/core/data/PROVENANCE.md` now records all four directories and ships in the tarball, at
+2,208 files. It names the builder, `mailwoman placer build-dataset`, and its three inputs: the
+`v0.5.0` corpus train extracts sampled per country, a `v0.9.2-multilocale-au` extract for Australian
+rows, and the Overture release pinned as `2026-06-17.0`. Read on this machine, the dataset is
+1,165,072 training rows, 145,629 each for validation and test, and 11,209 off-map test rows, none of
+it committed, and each row is `{raw, country}` with no source field.
+
+What stays open is the same thing the twelve weights packages leave open: which records trained the
+committed `weights.bin`. The builder names a corpus version and the shipped artifact carries no
+manifest, so the two cannot be joined. A rebuild closes it by freezing a manifest the way
+`buildCorpus` now writes `TRAINING_SOURCES.json`.
+
+### Two scope limits kept `data-provenance` from finding it, and one is unstated
 
 The check reads every `data/` directory **that already carries a `PROVENANCE.md`** and reports each
-artifact the file omits. `packages/core/data/` has no such file, so the directory is outside the check
-by construction. Four packages carry one: `activity-lexicon`, `corpus`, `geographic-model` and
-`poi-taxonomy`.
+artifact the file omits. `packages/core/data/` had no such file until now, so the directory was
+outside the check by construction — which the check's own header states. Four other packages carry
+one: `activity-lexicon`, `corpus`, `geographic-model` and `poi-taxonomy`.
 
-The check is also **non-recursive**: it collects files whose directory equals the `data/` directory
-itself. Every artifact in `packages/core/data/` is a level down, in `libpostal/`, `chromium-i18n/`,
-`internal/` or `coarse-placer/`. So adding a `PROVENANCE.md` there would bring the directory into
-scope and the check would find zero artifacts to name and pass. Writing that record is worth doing
-because the record is what a reader opens, and it would not be enforced by this check as written.
+The check is also **non-recursive**, which its header does not say: it collects files whose directory
+equals the `data/` directory itself. Every artifact in `packages/core/data/` is a level down, in
+`libpostal/`, `chromium-i18n/`, `internal/` or `coarse-placer/`. So the new record brings the
+directory into scope and the check finds zero artifacts to name and passes. The record is what a
+reader opens and it says so itself; making the check recursive is a change to the check.
 
 The Who's On First path was also wrong. Both notice copies sent a reader to a `whosonfirst`
 directory directly under `data/`, which holds **0 files** in the tarball. The dictionaries are three
