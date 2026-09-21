@@ -108,8 +108,9 @@ export async function sealDatabase(path: PathBuilderLike): Promise<void> {
  * Belongs beside {@link sealDatabase} for the same reason `swapDatabaseIntoPlace` does: the check
  * is part of the built-artifact lifecycle, and every builder was running it from its own copy.
  * `integrity_check` answers with the single row `{ integrity_check: "ok" }` on a healthy file
- * and one row per problem otherwise, so only the first matters — a builder that reads
- * the column and compares it to `"ok"` has done the whole check.
+ * and one row per problem otherwise, so only the first matters.
+ *
+ * A builder that reads the column and compares it to `"ok"` has done the whole check.
  *
  * @throws When the database reports anything other than `ok`, naming the artifact and what SQLite said.
  */
@@ -126,10 +127,12 @@ export function assertDatabaseIntegrity(db: IntegrityProbe, artifact: PathBuilde
  * Refuse a write-mode open of a sealed artifact, naming the rebuild command
  * instead of letting SQLite answer `SQLITE_READONLY`.
  *
- * The open itself lives in `@mailwoman/sqlite/sealed` — `openBuiltClient`, which every caller uses.
+ * The open itself lives in `@mailwoman/sqlite/sealed`.
+ * `openBuiltClient`, which every caller uses.
+ *
  * This half stays here because it is a filesystem predicate, and because this
- * module reaches `node:sqlite` through
- * {@link process.getBuiltinModule} to keep the `@mailwoman/core/utils` barrel free of it.
+ * module reaches `node:sqlite` through {@link process.getBuiltinModule} to keep
+ * the `@mailwoman/core/utils` barrel free of it.
  *
  * @throws {SealedArtifactError} When `path` is sealed.
  */
@@ -141,9 +144,10 @@ export async function assertUnsealedForWrite(path: PathBuilderLike): Promise<voi
  * Atomically move a freshly-built database into its published location.
  *
  * The build writes to a temp path, so a mid-build crash never leaves a half-written DB at `finalPath`.
- * This moves any prior version aside, slots the new one in, then drops the old — the previous
- * file stays intact until the replacement is committed, and the `-wal`/`-shm` siblings of
- * both paths are cleared so a stale journal can never be paired with a new main file.
+ * This moves any prior version aside, slots the new one in, then drops the old.
+ *
+ * The previous file stays intact until the replacement is committed, and the `-wal`/`-shm`
+ * siblings of both paths are cleared so a stale journal can never be paired with a new main file.
  *
  * Sealing (`sealDatabase`) happens on the temp file before the swap: a sealed artifact
  * is what gets published, and 0444 does not prevent a rename.
@@ -164,8 +168,9 @@ export async function swapDatabaseIntoPlace(tmpPath: PathBuilderLike, finalPath:
 	try {
 		await movePath(tmpPathString, finalPathString)
 	} catch (error) {
-		// The prior version is already aside at this point — a failed forward rename must
-		// not leave the slot empty while a restorable artifact sits one rename away.
+		// The prior version is already aside at this point.
+		// A failed forward rename must not leave the slot empty while a restorable
+		// artifact sits one rename away.
 		if ((await pathExists(aside)) && !(await pathExists(finalPathString))) {
 			await movePath(aside, finalPathString)
 		}

@@ -124,8 +124,9 @@ export async function scorerCrossStateEval(
 	report?.("[C] geocoding both states…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up features can
-	// read the authorized official. the FS arm ignores them (no discriminators configured).
+	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up
+	// features can read the authorized official.
+	// The FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -175,8 +176,7 @@ export async function scorerCrossStateEval(
 
 	const fs = armOver(
 		Array.from({ length: 26 }, (_, i) => i),
-		// learnedScorer:false — the FS baseline is the baseline (the learned scorer is now default-on, so
-		// without this the "FS arm" would silently be the GBT).
+		// learnedScorer:false — the FS baseline is the baseline (the learned scorer is now default-on, so without this the "FS arm" would silently be the GBT).
 		(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 	)
 
@@ -196,8 +196,8 @@ export async function scorerCrossStateEval(
 
 	// The shipped model (the default-on candidate): the bundled DEDUP_GBT_MODEL
 	// rather than a fresh per-run TX fit.
-	// This is the arm that justifies flipping `learnedScorer` default-on — the actual
-	// artifact every caller would get, evaluated on a state it never trained on.
+	// This is the arm that justifies flipping `learnedScorer` default-on.
+	// The actual artifact every caller would get, evaluated on a state it never trained on.
 	const bundledScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
 	const bundledArm = armOver(quantileThresholds(evalPairs.map(([a, b]) => bundledScorer(a, b))), (t) => ({

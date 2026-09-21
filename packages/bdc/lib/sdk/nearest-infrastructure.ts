@@ -56,7 +56,7 @@ export const NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS = 32
  * One k-nearest telecom-infrastructure hit, paired with the res-6 coverage cell it falls in.
  *
  * `coverage: undefined` means `schemadb`'s layer has never surveyed that area
- * (the meaning-of-zero rule. see `@mailwoman/core/layers`) — never conflate
+ * (the meaning-of-zero rule. See `@mailwoman/core/layers`) — never conflate
  * it with a covered-but-empty cell.
  */
 export interface InfrastructureHit {
@@ -64,7 +64,8 @@ export interface InfrastructureHit {
 	name: string | null
 	distanceM: number
 	/**
-	 * Res-9 short H3 cell of the hit itself — not the (coarser) coverage cell. see `coverage.h3Cell` for that.
+	 * Res-9 short H3 cell of the hit itself — not the (coarser) coverage cell.
+	 * See `coverage.h3Cell` for that.
 	 */
 	h3Cell: number
 	coverage: CoverageCell | undefined
@@ -115,9 +116,9 @@ export async function nearestInfrastructure(
 
 	for (const hit of hits) {
 		if (hit.categoryID === null) {
-			// `categoryIDs` above always constrains the k-ring probe to real (non-zero) category
-			// ids (see POILookup#searchKRing), so a hit here always carries the category it
-			// was found under — this can't happen without a corrupted poi.db.
+			// `categoryIDs` above always constrains the k-ring probe to real (non-zero) category ids
+			// (see POILookup#searchKRing), so a hit here always carries the category it was found under.
+			// This can't happen without a corrupted poi.db.
 			// Guard rather than silently coerce to "".
 			throw new Error(`nearestInfrastructure: hit ${stringifyJSON(hit.name)} has no categoryID`)
 		}

@@ -97,7 +97,8 @@ export async function prepareReleaseVersion(
 
 	const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolvePath(repoRoot, ws, "package.json"))]
 
-	// Validate the whole set before writing anything — a half-bumped tree is worse than a failed run.
+	// Validate the whole set before writing anything.
+	// A half-bumped tree is worse than a failed run.
 	const parsed: Array<{ path: string; manifest: Record<string, unknown> }> = []
 
 	for (const path of manifestPaths) {
@@ -122,8 +123,8 @@ export async function prepareReleaseVersion(
 	// `release.config.json#version` carries the same unified release number
 	// (releasing.md, its own $comment) and lagged two releases running
 	// (#1024, then v9.2.0 shipping while it read 9.1.0) because nothing bumped it.
-	// It is validated with the sync set but written by a one-line textual replacement —
-	// the file is oxfmt-formatted, and the stringify write path used for the manifests
+	// It is validated with the sync set but written by a one-line textual replacement.
+	// The file is oxfmt-formatted, and the stringify write path used for the manifests
 	// would reformat it wholesale, moving the `weights` block a code-only release must
 	// never touch (release-config-bump.test.ts pins the exact-one-line interface).
 	const releaseConfigPath = resolvePath(repoRoot, "release.config.json")

@@ -66,7 +66,8 @@ export const SoilReadingKind = {
 	 */
 	Designated: "designated",
 	/**
-	 * The survey mapped this location and rated nothing here — every share is an absence share.
+	 * The survey mapped this location and rated nothing here.
+	 * Every share is an absence share.
 	 */
 	DesignatedNoRating: "designated_no_rating",
 	/**
@@ -88,7 +89,8 @@ export interface SoilCapabilityDistribution {
 	 */
 	classShares: Record<string, number>
 	/**
-	 * Mapped soil components carrying a NULL rating — the survey did not rate them.
+	 * Mapped soil components carrying a NULL rating.
+	 * The survey did not rate them.
 	 */
 	unratedShare: number
 	/**
@@ -155,7 +157,8 @@ export interface SoilCapabilityReading {
 	/**
 	 * The cell's distribution.
 	 *
-	 * Present on both designated readings. absent on `unknown`.
+	 * Present on both designated readings.
+	 * Absent on `unknown`.
 	 */
 	distribution?: SoilCapabilityDistribution
 	/**
@@ -351,7 +354,7 @@ export class SoilCapabilityLookup implements Disposable {
 	 * It returns on the first containing rectangle, so the pilot costs a few dozen comparisons per geocode.
 	 *
 	 * At the 3,380 survey areas the country holds this wants a bounding-box index.
-	 * it is left as a scan because a structure sized for a set this build does not
+	 * It is left as a scan because a structure sized for a set this build does not
 	 * hold would be untested at the size it was built for.
 	 */
 	#surveyAreaAt(latitude: number, longitude: number): SoilSurveyAreaRecord | undefined {

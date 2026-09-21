@@ -110,8 +110,8 @@ export type BuildZoningInput =
 			/**
 			 * A feature source consumed IN this process.
 			 *
-			 * Correct for a fixture and for anything small. it is what the batched form
-			 * falls back to per chunk, so the two share one implementation.
+			 * Correct for a fixture and for anything small.
+			 * It is what the batched form falls back to per chunk, so the two share one implementation.
 			 */
 			source: ZoningFeatureSource
 	  }
@@ -167,8 +167,8 @@ export type BuildZoningOptions = BuildZoningInput & {
 	 */
 	coverageResolution: number
 	/**
-	 * The publisher's own area figure for the whole product, in square metres —
-	 * its `Shape__Area` sum, read from the live service.
+	 * The publisher's own area figure for the whole product, in square metres.
+	 * Its `Shape__Area` sum, read from the live service.
 	 *
 	 * Supplied, the build asserts the rings it encoded agree with it.
 	 */
@@ -182,8 +182,7 @@ export type BuildZoningOptions = BuildZoningInput & {
 	/**
 	 * The tier to stamp.
 	 *
-	 * `build-local` unless the licence contradiction is resolved — see
-	 * {@link assertTierMatchesLicense}.
+	 * `build-local` unless the licence contradiction is resolved — see {@link assertTierMatchesLicense}.
 	 */
 	tier?: LayerTier
 	onProgress?: (message: string) => void
@@ -199,8 +198,9 @@ export interface BuildZoningResult {
 	wholeCellRows: number
 	partialCellRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored rows —
-	 * the whole side is compacted per feature, so this is not the same number the
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored rows.
+	 *
+	 * The whole side is compacted per feature, so this is not the same number the
 	 * resolution was chosen on and is reported separately.
 	 */
 	storedPartialShare: number
@@ -235,8 +235,9 @@ export interface BuildZoningResult {
 		/**
 		 * Features whose exterior was chosen by magnitude because no ring read as one by orientation.
 		 *
-		 * Measured at one of 85,330 — a three-vertex sliver enclosing 3.0 × 10⁻⁷ m², where a
-		 * ring's winding is floating-point noise rather than something the publisher stated.
+		 * Measured at one of 85,330.
+		 * A three-vertex sliver enclosing 3.0 × 10⁻⁷ m², where a ring's winding is
+		 * floating-point noise rather than something the publisher stated.
 		 * Reported rather than implied to be zero.
 		 */
 		exteriorByMagnitude: number
@@ -257,8 +258,8 @@ export interface BuildZoningResult {
 	 */
 	vocabulary: Array<{ scheme: string; codes: number; undeclared: number; undeclaredCodes: string[] }>
 	/**
-	 * (authority, local code) pairs, and how many of them take more than one generic type —
-	 * the measurement that keeps `zoning_crosswalk_edge` empty.
+	 * (authority, local code) pairs, and how many of them take more than one generic type.
+	 * The measurement that keeps `zoning_crosswalk_edge` empty.
 	 */
 	crosswalk: {
 		pairs: number
@@ -372,8 +373,8 @@ async function buildZoningResult(
 	const area = assertAreaAgreement(ingested, options.expectedSourceAreaM2)
 
 	// the crosswalk is not A table, and the build checks IT rather than assuming IT.
-	// Writing no edges while the mapping happens not to be a function would be an
-	// accident. refusing to write them while it is not is a statement.
+	// Writing no edges while the mapping happens not to be a function would be an accident.
+	// Refusing to write them while it is not is a statement.
 	const nonFunctional = nonFunctionalPairs(ingested.crosswalkPairs)
 
 	assertCrosswalkIsNotATable(ingested.crosswalkPairs, 0)
@@ -470,8 +471,9 @@ interface StreamResult {
 		/**
 		 * Features whose exterior was chosen by magnitude because no ring read as one by orientation.
 		 *
-		 * Measured at one of 85,330 — a three-vertex sliver enclosing 3.0 × 10⁻⁷ m², where a
-		 * ring's winding is floating-point noise rather than something the publisher stated.
+		 * Measured at one of 85,330.
+		 * A three-vertex sliver enclosing 3.0 × 10⁻⁷ m², where a ring's winding is
+		 * floating-point noise rather than something the publisher stated.
 		 * Reported rather than implied to be zero.
 		 */
 		exteriorByMagnitude: number
@@ -485,10 +487,11 @@ interface StreamResult {
 /**
  * Add up what the chunks reported.
  *
- * Exported for its own test: the coverage-cell arithmetic and the crosswalk-pair merge are
- * the parts of the batched path a fixture build cannot reach, and getting either wrong
- * produces a well-formed artifact — one that under-reports how many polygons a cell holds,
- * or one that reports a mapping as a function because no single chunk saw it break.
+ * Exported for its own test: the coverage-cell arithmetic and the crosswalk-pair
+ * merge are the parts of the batched path a fixture build cannot reach,
+ * and getting either wrong produces a well-formed artifact.
+ * One that under-reports how many polygons a cell holds, or one that reports a
+ * mapping as a function because no single chunk saw it break.
  */
 export function aggregateChunks(chunks: ReadonlyArray<ZoningChunkResult>): StreamResult {
 	const observedByCoverageCell = new Map<number, number>()
@@ -660,8 +663,9 @@ function assertAreaAgreement(
  *
  * The parent holds no handle while the chunks run — its caller closed one
  * before this and opens another after.
- * Each child opens the same file and appends. chunks run one at a time, so there is
- * exactly one writer at every instant and no locking to reason about.
+ * Each child opens the same file and appends.
+ *
+ * Chunks run one at a time, so there is exactly one writer at every instant and no locking to reason about.
  *
  * @throws {Error} When a chunk exits non-zero, or prints no result line —
  *   a chunk that died mid-range has written a partial set of rows, and continuing
@@ -676,8 +680,9 @@ async function runBatchedIngest(
 	const script = resolveModulePath("@mailwoman/zoning/scripts/ingest-chunk")
 	const chunks: ZoningChunkResult[] = []
 
-	// The upper bound is deliberately open — the source reports a count rather than a maximum id,
-	// and a range that stopped at the count would drop every feature past a gap in the numbering.
+	// The upper bound is deliberately open.
+	// The source reports a count rather than a maximum id, and a range that stopped at
+	// the count would drop every feature past a gap in the numbering.
 	let from = 1
 
 	for (;;) {
@@ -710,9 +715,11 @@ async function runBatchedIngest(
  * Refuse a coverage row that would license a negative claim.
  *
  * This is the check the meaning-OF-zero rule turns on, and it is a condition rather than a convention.
- * The Department publishes its coverage detail only inside a map viewer, so no row of this
- * layer may support an exclusion — a `designated` or `surveyed` basis here would let an absent
- * zoning polygon be read as a statement that no restriction applies, over most of the map.
+ * The Department publishes its coverage detail only inside a map viewer,
+ * so no row of this layer may support an exclusion.
+ *
+ * A `designated` or `surveyed` basis here would let an absent zoning polygon be read
+ * as a statement that no restriction applies, over most of the map.
  *
  * The reader checks the same thing at open time, so an artifact built by some
  * other path cannot get past it either.
@@ -759,9 +766,10 @@ function writePlanRows(database: DatabaseClient<ZoningDatabase>, plans: ZoningCh
  * Insert the vocabulary: every code the publisher declares, plus every code the data uses,
  * with the difference recorded rather than folded away.
  *
- * A declared code the data never uses is kept at `observed_rows = 0`, because the
- * domain is the publisher's statement of what a value may be rather than a census
- * of what it is — Ireland's `SDZ` plan level is exactly that.
+ * A declared code the data never uses is kept at `observed_rows = 0`, because the domain
+ * is the publisher's statement of what a value may be rather than a census of what it is.
+ * Ireland's `SDZ` plan level is exactly that.
+ *
  * A used code the publisher never declared is kept at `declared = 0`, because inventing a declaration
  * would make a source-schema change indistinguishable from the publisher's own vocabulary.
  */
@@ -821,8 +829,8 @@ function writeVocabularyRows(
 	)) {
 		// NULL rather than a plausible URL.
 		// Every one of the 85,330 rows links its generic type's definition to `viewer.myplan.ie`,
-		// which has no DNS record, and three candidate replacements on the live host answer
-		// http 404 — so the definitions behind the code-to-label pairs were not retrievable
+		// which has no DNS record, and three candidate replacements on the live host answer http 404.
+		// So the definitions behind the code-to-label pairs were not retrievable
 		// and this column says so by being empty.
 		insert.run(row.scheme, row.code, row.label, null, null, row.declared, row.observedRows)
 

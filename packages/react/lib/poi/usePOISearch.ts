@@ -114,8 +114,9 @@ export function usePOISearch({
 	 * The classify result keyed BY the query that produced it.
 	 *
 	 * The visible result is derived during render (`storedResult.query === trimmedText ? … : null`),
-	 * so a new query invalidates the old answer by derivation — the effect never writes state
-	 * synchronously to "reset", which is the react(set-state-in-effect) shape the lint bump rightly flags.
+	 * so a new query invalidates the old answer by derivation.
+	 * The effect never writes state synchronously to "reset", which is the
+	 * react(set-state-in-effect) shape the lint bump rightly flags.
 	 */
 	const [storedResult, setStoredResult] = useState<{ query: string; value: POIExplorerResult } | null>(null)
 	/**
@@ -129,8 +130,8 @@ export function usePOISearch({
 	// The load fires exactly once on mount regardless of whether
 	// the caller passes a fresh `loadRuntime` closure each render
 	// (an inline `async () => …` would otherwise retrigger the effect → reload → re-render loop).
-	// `useEffectEvent` reads the latest closure without joining the dependency list —
-	// the runtime is a load-once resource.
+	// `useEffectEvent` reads the latest closure without joining the dependency list.
+	// The runtime is a load-once resource.
 	const loadRuntimeEvent = useEffectEvent(() => loadRuntime())
 
 	useEffect(() => {
@@ -261,7 +262,8 @@ export function usePOISearch({
 						}
 					: {
 							categoryID: subject.category.id,
-							// Fan the canonical seed id out over its Overture leaves — the same translation the Node reader uses.
+							// Fan the canonical seed id out over its Overture leaves.
+							// The same translation the Node reader uses.
 							overtureCategoryIDs: runtime.lookup.resolveOvertureCategories(subject.category.id),
 							anchor: subject.remainder,
 						}

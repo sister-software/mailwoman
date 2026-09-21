@@ -50,10 +50,11 @@ export interface AppIdentityProps {
 	 */
 	buildInfoURL?: string
 	/**
-	 * Build the href for a commit. injected rather than written here: the repository's
-	 * URL belongs to the deployment, and `@mailwoman/react` publishes to npm
-	 * while `@mailwoman/site-kit` — which owns `commitURL` beside the record that
-	 * carries the sha — is private, so this package cannot import it.
+	 * Build the href for a commit.
+	 *
+	 * Injected rather than written here: the repository's URL belongs to the deployment,
+	 * and `@mailwoman/react` publishes to npm while `@mailwoman/site-kit` — which owns `commitURL`
+	 * beside the record that carries the sha — is private, so this package cannot import it.
 	 *
 	 * `commitURL` takes the sha for this reason: every caller passes it directly,
 	 * so no app writes an adapter and the URL keeps a single home.

@@ -25,7 +25,8 @@ import { SqliteDialect } from "#dialect/index"
  * plus the two raw statements Kysely cannot express.
  *
  * The client opens the file.
- * A caller says which file and which schema. it never builds the connection itself.
+ * A caller says which file and which schema.
+ * It never builds the connection itself.
  *
  * ```ts
  * using kdb = new DatabaseClient<MySchema>("db.sqlite", { readOnly: true })
@@ -119,8 +120,9 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	 * A prepared statement on this client's connection, for the bulk-write path.
 	 *
 	 * Kysely compiles per call, which a positional insert loop over millions of rows cannot afford.
-	 * Reach for this only there and in the other cases `agents.md` lists as deliberately
-	 * raw. everything cold goes through the query builder, where the schema is checked.
+	 * Reach for this only there and in the other cases `agents.md` lists as deliberately raw.
+	 *
+	 * Everything cold goes through the query builder, where the schema is checked.
 	 */
 	prepare(sql: string): StatementSync {
 		return this.#database.prepare(sql)
@@ -151,10 +153,10 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	/**
 	 * End the connection at scope exit, synchronously.
 	 *
-	 * `destroy()` is Kysely's teardown and returns a promise, which `Symbol.dispose`
-	 * cannot await — calling it here would
-	 * return with the file still open, and the next thing to touch that path (a `sealDatabase`, a reader expecting a
-	 * finalized statement) would see a connection that should have been gone.
+	 * `destroy()` is Kysely's teardown and returns a promise, which `Symbol.dispose` cannot
+	 * await — calling it here would return with the file still open, and the next thing
+	 * to touch that path (a `sealDatabase`, a reader expecting a finalized statement)
+	 * would see a connection that should have been gone.
 	 * `node:sqlite`'s `close()` is synchronous, so `using` closes the file before the scope ends.
 	 *
 	 * Kysely's own driver state is not unwound here.

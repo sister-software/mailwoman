@@ -53,8 +53,8 @@ export async function releaseGeneratedSurfaces(
 		)
 	}
 
-	// Each generator is `node <entry> [args]` with the entry resolved against the
-	// repo root. two surfaces sharing a generator run it once.
+	// Each generator is `node <entry> [args]` with the entry resolved against the repo root.
+	// Two surfaces sharing a generator run it once.
 	const generators = new Map(GENERATED_SURFACES.map((surface) => [surface.generator.join(" "), surface.generator]))
 
 	for (const [entry, ...args] of generators.values()) {

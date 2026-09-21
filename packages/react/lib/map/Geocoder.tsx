@@ -73,13 +73,13 @@ export interface GeocoderProps {
 	/**
 	 * Fired with the query each time one is submitted.
 	 *
-	 * The host writes it into its own URL — this package never touches `location`,
-	 * because which parameter carries a query is the app's decision.
+	 * The host writes it into its own URL.
+	 * This package never touches `location`, because which parameter carries a query is the app's decision.
 	 */
 	onSubmitQuery?: (query: string) => void
 	/**
-	 * Only hint the viewport bias once the visitor has zoomed past the global view —
-	 * a whole-globe center is noise.
+	 * Only hint the viewport bias once the visitor has zoomed past the global view.
+	 * A whole-globe center is noise.
 	 *
 	 * Matches the `map.getZoom() >= 4` threshold. @default 4
 	 */
@@ -88,8 +88,8 @@ export interface GeocoderProps {
 	 * Fly/fit the map to the resolved place on each result (via {@link ResolvedPlaceLayers}). @default true.
 	 *
 	 * Set false for a host that drives the camera itself (a controlled `<MapCanvas viewState>`),
-	 * or to keep a headless test deterministic — the marker + outline still render,
-	 * only the animated camera move is skipped.
+	 * or to keep a headless test deterministic.
+	 * The marker + outline still render, only the animated camera move is skipped.
 	 */
 	applyResultCamera?: boolean
 }
@@ -120,13 +120,14 @@ function GeocoderInner({
 	// so the same poll that publishes the test handle also puts it in state — one poll, two consumers.
 	const [map, setMap] = useState<ReturnType<MapRef["getMap"]> | null>(null)
 
-	// The map announces itself. nothing polls for it.
+	// The map announces itself.
+	// Nothing polls for it.
 	// `onLoad` carries the instance, so the compass and the layer control render on the
 	// frame the map is ready rather than up to an interval later.
 	//
 	// Test injection point: the e2e viewport-bias suite drives the real map
-	// (pan + zoom past the bias threshold) before submitting, and a browser test cannot reach
-	// a React ref — so the same handle is republished on `globalThis.__mailwomanMapCanvas`,
+	// (pan + zoom past the bias threshold) before submitting, and a browser test cannot reach a React ref.
+	// So the same handle is republished on `globalThis.__mailwomanMapCanvas`,
 	// and cleared on unmount so a torn-down geocoder leaves no stale handle.
 	// The id of the lowest basemap layer that draws data — where the graticule is inserted,
 	// so the grid sits under the map rather than over it.
@@ -201,8 +202,7 @@ function GeocoderInner({
 						zoom: runtime.initialZoom ?? 3,
 					}}
 					style={{ width: "100%", height: "100%" }}
-					// One compact attribution pill (the map's own default is a wide, always-open "MapLibre | © …" bar), no
-					// maplibre wordmark logo.
+					// One compact attribution pill (the map's own default is a wide, always-open "MapLibre | © …" bar), no maplibre wordmark logo.
 					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
 				>
 					<GraticuleLayer beforeID={baseLayerID} />

@@ -49,16 +49,19 @@ export interface FilingLandscapeQuery {
 }
 
 /**
- * One provider/technology/speed-bucket group's block count within the query — `block_count` is
- * the number of distinct queried blocks carrying this exact combination, never a raw row count.
+ * One provider/technology/speed-bucket group's block count within the query.
+ *
+ * `block_count` is the number of distinct queried blocks carrying this exact
+ * combination, never a raw row count.
  *
  * A block can carry multiple `bdc_availability` rows for the same
  * (provider_id, technology_code) pair even in the default (non-`includeLocationIDs`)
  * build mode: `build-bdc.ts`'s materialize-time collapse merges to one row per distinct
  * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code) tuple
- * rather than one row per (geoid, provider_id, technology_code) triple — so Broadband
- * Serviceable Locations at the same triple with differing speeds/flags survive as separate rows
- * and can land in different `speed_bucket`s here (see that file's docstring).
+ * rather than one row per (geoid, provider_id, technology_code) triple.
+ * So Broadband Serviceable Locations at the same triple with differing speeds/flags survive as
+ * separate rows and can land in different `speed_bucket`s here (see that file's docstring).
+ *
  * This `block_count`'s distinct is exactly what keeps that from double-counting
  * the block itself when it does.
  */
@@ -71,8 +74,9 @@ export interface ProviderFilingSummary {
 
 /**
  * The queried landscape: always vintage-stamped (from `layer_manifest.sourceVintage`)
- * and always reports its unknown blocks — `unknown_block_count` is reported,
- * never zeroed, and never evidence of "no providers file here."
+ * and always reports its unknown blocks.
+ *
+ * `unknown_block_count` is reported, never zeroed, and never evidence of "no providers file here."
  */
 export interface FilingLandscape {
 	vintage: string
@@ -98,8 +102,8 @@ export const BDC_SPEED_BUCKET_25_100 = "25-100"
 export const BDC_SPEED_BUCKET_100_1000 = "100-1000"
 
 /**
- * `speed_bucket` label for a block whose `max_advertised_download_speed` is at or above
- * {@link BDC_SPEED_BUCKET_THRESHOLD_GIGABIT_MBPS} Mbps.
+ * `speed_bucket` label for a block whose `max_advertised_download_speed` is at
+ * or above {@link BDC_SPEED_BUCKET_THRESHOLD_GIGABIT_MBPS} Mbps.
  */
 export const BDC_SPEED_BUCKET_GIGABIT = "gigabit"
 
@@ -160,8 +164,10 @@ export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
  * Read the provider/technology/speed-bucket filing census over a set of queried
  * blocks (by `geoid` or by `h3Cell`, never both).
  *
- * Always vintage-stamped. always throws on a broken manifest rather than answering
- * unstamped. a queried block with no coverage evidence is reported in `unknown_block_count`
+ * Always vintage-stamped.
+ * Always throws on a broken manifest rather than answering unstamped.
+ *
+ * A queried block with no coverage evidence is reported in `unknown_block_count`
  * and never folded into a zero-filing claim.
  */
 export async function filingLandscape(
@@ -174,8 +180,8 @@ export async function filingLandscape(
 		throw new Error("filingLandscape: exactly one of `geoids` or `h3Cells` is required")
 	}
 
-	// `[]` is truthy, so it passes the XOR check above undetected — without this
-	// guard an empty array sails straight through to a vacuous all-zero landscape
+	// `[]` is truthy, so it passes the XOR check above undetected.
+	// Without this guard an empty array sails straight through to a vacuous all-zero landscape
 	// (surveyed_block_count: 0, unknown_block_count: 0, no filings), which reads exactly like
 	// a real "nothing queried" answer instead of the malformed-query error it should be.
 	// Checked before the manifest read so a bad query fails fast without even opening the db further.
@@ -183,8 +189,9 @@ export async function filingLandscape(
 		throw new Error("filingLandscape: `geoids`/`h3Cells` must not be an empty array")
 	}
 
-	// Read (and validate) the manifest first — a broken/missing manifest must throw
-	// before any block is classified, never fall through to an "unstamped" answer (criterion 4).
+	// Read (and validate) the manifest first.
+	// A broken/missing manifest must throw before any block is classified,
+	// never fall through to an "unstamped" answer (criterion 4).
 	const manifest = await readLayerManifest(db)
 
 	const requestedUnits: ReadonlyArray<string | number> = query.geoids ?? query.h3Cells!
@@ -192,8 +199,8 @@ export async function filingLandscape(
 
 	// Candidate res-9 cell per requested unit.
 	// `h3Cells` queries already carry the cell directly; `geoids` queries can only
-	// derive one from the block's own rows — a geoid with none has no candidate at all
-	// (never guessed), so it falls straight to unknown below.
+	// derive one from the block's own rows.
+	// A geoid with none has no candidate at all (never guessed), so it falls straight to unknown below.
 	const candidateCellByUnit = new Map<string | number, number>()
 
 	if (query.geoids) {

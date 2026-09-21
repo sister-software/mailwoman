@@ -32,7 +32,8 @@ export interface DeployTarget {
 	 */
 	build: string
 	/**
-	 * `PLANETARY_BODY` for the two planetary builds. empty for every other target.
+	 * `PLANETARY_BODY` for the two planetary builds.
+	 * Empty for every other target.
 	 */
 	body: string
 	/**
@@ -40,7 +41,8 @@ export interface DeployTarget {
 	 */
 	deployArgs: string
 	/**
-	 * Fetched after the deploy. a non-2xx answer fails the job.
+	 * Fetched after the deploy.
+	 * A non-2xx answer fails the job.
 	 */
 	receipt: string
 }

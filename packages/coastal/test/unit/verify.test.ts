@@ -136,9 +136,9 @@ describe("the positive half", () => {
 	})
 
 	it("tolerates a point a few centimetres outside the service's own edge", async () => {
-		// About 5 cm north of the band's northern edge — inside the artifact's rendering
-		// is false and the service's is false too, so this specific point agrees. the
-		// case that matters is the distance being carried, which is what separates a
+		// About 5 cm north of the band's northern edge — inside the artifact's rendering is false
+		// and the service's is false too, so this specific point agrees.
+		// The case that matters is the distance being carried, which is what separates a
 		// rendering difference from a conversion defect on a receipt.
 		const nearEdge = {
 			label: "just outside band A's north edge",

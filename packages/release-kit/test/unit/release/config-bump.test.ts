@@ -51,8 +51,8 @@ describe("release.config.json under the prepare bump", () => {
 		const root = await readPackageJSON(rootManifestPath)
 
 		// The v9.2.0 incident: the root moved and this file did not.
-		// The prepare bump now writes both, and its pre-write sync check refuses drift —
-		// this assertion is the standing regression check.
+		// The prepare bump now writes both, and its pre-write sync check refuses drift.
+		// This assertion is the standing regression check.
 		expect(currentVersion).toBe(root.version)
 	})
 })

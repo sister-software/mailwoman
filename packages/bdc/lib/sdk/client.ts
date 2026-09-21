@@ -58,18 +58,20 @@ export const BDC_API_BASE_URL = "https://broadbandmap.fcc.gov/api/public"
  *
  * Sourcing, stated precisely because it could not be verified from here: this figure
  * comes from the operator's reading of the FCC's own API documentation.
- * It was not confirmed against a fetchable source — the API spec is a Box-hosted PDF,
- * and `broadbandmap.fcc.gov/api-documentation` does not resolve.
+ * It was not confirmed against a fetchable source.
+ *
+ * The API spec is a Box-hosted PDF, and `broadbandmap.fcc.gov/api-documentation` does not resolve.
  *
  * Treat it as the published limit as reported rather than as something this repo checked.
  *
  * This is the default rather than a clamp.
  * `createSECClient` clamps because SEC's limit is verifiable, actively policed,
- * and published in fetchable html. none of that holds here, so pinning an
- * unverified number as law would be false precision.
- * {@linkcode CreateBDCClientOptions.requestsPerMinute} tunes it in either direction,
- * and the throttle meter (see {@linkcode BDCClient.throttleStats}) is how a real
- * run reports what the setting actually cost.
+ * and published in fetchable html.
+ *
+ * None of that holds here, so pinning an unverified number as law would be false
+ * precision. {@linkcode CreateBDCClientOptions.requestsPerMinute} tunes it in either
+ * direction, and the throttle meter (see {@linkcode BDCClient.throttleStats}) is
+ * how a real run reports what the setting actually cost.
  *
  * If FCC ever answers with a 429, drop this to 9 before anything else:
  * pacing exactly AT a published rate leaves no headroom for event-loop jitter,
@@ -125,8 +127,9 @@ const DEFAULT_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 const DEFAULT_DOWNLOAD_TIMEOUT_MS = 300_000
 
 /**
- * The status {@linkcode toArrayBuffer} reports a non-binary body under — a client
- * misconfiguration rather than an upstream failure, and mapped as a `payload` kind
+ * The status {@linkcode toArrayBuffer} reports a non-binary body under.
+ *
+ * A client misconfiguration rather than an upstream failure, and mapped as a `payload` kind
  * so `isTransientResourceError` reads it as terminal.
  */
 const HTTP_INTERNAL_SERVER_ERROR = 500
@@ -167,9 +170,10 @@ export interface CreateBDCClientOptions {
 	 * Time source powering the throttle, the cooldown timer, and the retry backoff.
 	 *
 	 * Defaults to the system clock.
-	 * Tests inject a fake clock so throttle and retry behavior are deterministic
-	 * and instant — no wall-clock sleeps in the suite, which matters more here than
-	 * anywhere else in the repo: one real grant costs six seconds.
+	 * Tests inject a fake clock so throttle and retry behavior are deterministic and instant.
+	 *
+	 * No wall-clock sleeps in the suite, which matters more here than anywhere else
+	 * in the repo: one real grant costs six seconds.
 	 */
 	clock?: ClockLike
 	/**
@@ -206,14 +210,14 @@ export interface CreateBDCClientOptions {
 	/**
 	 * Per-attempt socket-inactivity timeout for a zip download, in milliseconds.
 	 *
-	 * See
-	 * {@linkcode DEFAULT_DOWNLOAD_TIMEOUT_MS}.
+	 * See {@linkcode DEFAULT_DOWNLOAD_TIMEOUT_MS}.
 	 */
 	downloadTimeoutMs?: number
 	/**
-	 * Axios overrides, merged over this client's own defaults. the test injection point,
-	 * replacing the old `fetchImpl` option: every test passes an `adapter` here,
-	 * so no test in this workspace ever performs a live network call.
+	 * Axios overrides, merged over this client's own defaults.
+	 *
+	 * The test injection point, replacing the old `fetchImpl` option: every test passes an
+	 * `adapter` here, so no test in this workspace ever performs a live network call.
 	 *
 	 * Overriding `headers` wholesale would drop the credential pair, so don't.
 	 */
@@ -232,7 +236,8 @@ export type BDCQueryParams = Record<string, string | number | undefined>
  */
 export interface BDCGetOptions {
 	/**
-	 * Bypass the response cache for this call — both the read and the write.
+	 * Bypass the response cache for this call.
+	 * Both the read and the write.
 	 *
 	 * The request still clears the throttle, so a caller cannot use this to dodge
 	 * the rate budget, only the staleness.
@@ -251,9 +256,11 @@ export interface BDCThrottleStats {
 	/**
 	 * Milliseconds this client spent asleep.
 	 *
-	 * Almost entirely throttle waits. a retry backoff after a 429/5xx also lands here,
-	 * which is deliberate — both are time the upstream's limits cost the run,
-	 * and separating them would need a hook `APIClient` does not expose.
+	 * Almost entirely throttle waits.
+	 * A retry backoff after a 429/5xx also lands here, which is deliberate.
+	 *
+	 * Both are time the upstream's limits cost the run, and separating them would
+	 * need a hook `APIClient` does not expose.
 	 */
 	waitingMs: number
 	/**
@@ -283,8 +290,8 @@ export interface BDCClientConfig extends APIClientConfig {
 	/**
 	 * The username half of the credential pair.
 	 *
-	 * Named in the 401/403 explanation so a maintainer can see which account was
-	 * actually used. the key half is never echoed.
+	 * Named in the 401/403 explanation so a maintainer can see which account was actually used.
+	 * The key half is never echoed.
 	 */
 	username: string
 	/**
@@ -301,9 +308,11 @@ export interface BDCClientConfig extends APIClientConfig {
 }
 
 /**
- * The request-config shape {@linkcode APIClient.fetch} accepts, reached through `APIClient`
- * rather than by importing `axios` — `bdc` depends on neither `axios` nor `axios-cache-interceptor`,
- * reaching both only through `@mailwoman/core`, exactly as `filer` does.
+ * The request-config shape {@linkcode APIClient.fetch} accepts, reached through
+ * `APIClient` rather than by importing `axios`.
+ *
+ * `bdc` depends on neither `axios` nor `axios-cache-interceptor`, reaching both
+ * only through `@mailwoman/core`, exactly as `filer` does.
  */
 type BDCRequestConfig = Parameters<APIClient["fetch"]>[0]
 
@@ -327,9 +336,10 @@ type UncachedBDCRequestConfig = BDCRequestConfig & {
 /**
  * Build the absolute request URL for `path`, with `params` as its query string.
  *
- * `path` is appended to {@linkcode BDC_API_BASE_URL}, never resolved against it. That distinction is required: `new
- * URL("https://elsewhere.example/x", BDC_API_BASE_URL)` would resolve to `elsewhere.example` and carry the credential
- * header pair there, while string concatenation can only ever produce a path under the BDC origin.
+ * `path` is appended to {@linkcode BDC_API_BASE_URL}, never resolved against it.
+ * That distinction is required: `new URL("https://elsewhere.example/x", BDC_API_BASE_URL)`
+ * would resolve to `elsewhere.example` and carry the credential header pair there,
+ * while string concatenation can only ever produce a path under the BDC origin.
  */
 function buildBDCURL(path: string, params: BDCQueryParams = {}): URL {
 	const url = new URL(`${BDC_API_BASE_URL}${path}`)
@@ -348,8 +358,9 @@ function buildBDCURL(path: string, params: BDCQueryParams = {}): URL {
  *
  * A bare "401 Unauthorized" from an FCC endpoint reads as "the resource is missing" or "we're blocked",
  * and this project has already lost a debugging cycle to exactly that on a generic FCC 403.
- * The status and URN are reconstructed identically, so a caller's `status === 401` branch
- * is unaffected. anything that is not a credential rejection is rethrown untouched.
+ * The status and URN are reconstructed identically, so a caller's `status === 401` branch is unaffected.
+ *
+ * Anything that is not a credential rejection is rethrown untouched.
  */
 function explainCredentialFailure(error: unknown, url: URL, username: string): unknown {
 	if (!(error instanceof ResourceError)) return error
@@ -378,8 +389,9 @@ function explainCredentialFailure(error: unknown, url: URL, username: string): u
  *
  * Axios's Node adapter hands back a `Buffer` for `responseType: "arraybuffer"`
  * (it only stringifies for every other response type), while its fetch adapter
- * hands back a real `ArrayBuffer` — so both shapes have to be accepted,
- * and the `Buffer` one is what production actually sees.
+ * hands back a real `ArrayBuffer`.
+ * So both shapes have to be accepted, and the `Buffer` one is what production actually sees.
+ *
  * The zero-copy branch matters: these bodies are hundreds of megabytes, and `Buffer.concat`
  * allocates a dedicated, exactly-sized backing store for anything past Node's small-buffer
  * pool, so the view spans its whole `ArrayBuffer` and can be handed over as-is.
@@ -417,12 +429,13 @@ export class BDCClient extends APIClient<BDCClientConfig> {
 	 * subject to the on-disk cache, the request throttle, and bounded retry.
 	 *
 	 * `path` is appended to {@linkcode BDC_API_BASE_URL} as-is (a leading slash, e.g. `/map/listAsOfDates`).
-	 * `params` become the request's query string. the response body is returned UN-unwrapped —
-	 * every BDC endpoint nests its payload under a `data` key (`{ data: [...] }`),
-	 * so callers pluck `.data` themselves at the call site.
+	 * `params` become the request's query string.
 	 *
-	 * Concurrent calls for the same URL that both miss the cache share a single in-flight request —
-	 * the cache interceptor's own stampede guard, which the raw-`fetch` client had no equivalent of.
+	 * The response body is returned UN-unwrapped — every BDC endpoint nests its payload under
+	 * a `data` key (`{ data: [...] }`), so callers pluck `.data` themselves at the call site.
+	 *
+	 * Concurrent calls for the same URL that both miss the cache share a single in-flight request.
+	 * The cache interceptor's own stampede guard, which the raw-`fetch` client had no equivalent of.
 	 */
 	public async get<T>(path: string, params?: BDCQueryParams, options: BDCGetOptions = {}): Promise<T> {
 		const url = buildBDCURL(path, params)
@@ -436,8 +449,9 @@ export class BDCClient extends APIClient<BDCClientConfig> {
 
 	/**
 	 * Issue an authenticated `GET` and return the raw response body as an `ArrayBuffer` —
-	 * the binary counterpart to
-	 * {@linkcode BDCClient.get}. Used for the zip-wrapped availability downloads (`downloadBDCFile` in `./download.ts`),
+	 * the binary counterpart to {@linkcode BDCClient.get}.
+	 *
+	 * Used for the zip-wrapped availability downloads (`downloadBDCFile` in `./download.ts`),
 	 * where the response is a `.zip` archive rather than a JSON envelope.
 	 *
 	 * Caching is off FOR this path, deliberately, and it is not a tunable.
@@ -468,9 +482,9 @@ export class BDCClient extends APIClient<BDCClientConfig> {
 	/**
 	 * What this client has spent waiting on the throttle so far.
 	 *
-	 * At six seconds a grant, a bulk ingest is throttle-bound by construction,
-	 * and this is the measurement to assess a rate change against — see
-	 * {@linkcode formatBDCThrottleStats} for the one-line rendering `gazetteer build bdc` prints.
+	 * At six seconds a grant, a bulk ingest is throttle-bound by construction, and this is the
+	 * measurement to assess a rate change against — see {@linkcode formatBDCThrottleStats}
+	 * for the one-line rendering `gazetteer build bdc` prints.
 	 */
 	public throttleStats(): BDCThrottleStats {
 		return this.config.readThrottleStats()
@@ -550,7 +564,7 @@ function createMeteredClock(base: ClockLike): {
 		clock: {
 			now: () => base.now(),
 			sleep: async (ms: number) => {
-				// A zero-length sleep is a scheduling yield rather than a wait —
+				// A zero-length sleep is a scheduling yield rather than a wait.
 				// `setCooldown` issues one on every budget rollover, and counting those would
 				// report a wait per ten requests that never happened.
 				if (ms <= 0) return base.sleep(ms)
@@ -587,8 +601,8 @@ function createMeteredClock(base: ClockLike): {
  *
  * See the file header for the full rationale.
  *
- * Throws immediately, before any request is made, when constructed without explicit credentials
- * and without the `FCC_MAP_USERNAME`/`FCC_MAP_API_KEY` environment values.
+ * @throws immediately, before any request is made, when constructed without explicit credentials
+ *   and without the `FCC_MAP_USERNAME`/`FCC_MAP_API_KEY` environment values.
  */
 export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient {
 	const username = options.username ?? $private.FCC_MAP_USERNAME
@@ -628,10 +642,11 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		// The two limits compose (both must clear), so the budget's cooldown still fires, and it
 		// is a real wait: `APIClient` measures that cooldown to the end of the minute the window
 		// opened in, while the interval limit has by then spent only `(N-1) * 60000/N` ms of it.
-		// With both limits on 10/minute, arrivals run `0, 6, …, 54 s`; the 10th dispatch opens
-		// a `60000 - 54000 = 6000 ms` cooldown. the pacer's grant for #11 is discarded across
-		// that wait (`acquireDispatchSlot` re-acquires rather than holding a stale grant,
-		// under-issuing by one — the safe direction), so #11 lands at 66 s and the pattern repeats.
+		// With both limits on 10/minute, arrivals run `0, 6, …, 54 s`; the 10th dispatch
+		// opens a `60000 - 54000 = 6000 ms` cooldown.
+		// The pacer's grant for #11 is discarded across that wait (`acquireDispatchSlot` re-acquires
+		// rather than holding a stale grant, under-issuing by one — the safe direction),
+		// so #11 lands at 66 s and the pattern repeats.
 		// Steady state is 10 requests per 66 s, ~9.1/minute — below the published 10/minute,
 		// which is the conservative direction and the reason this composition is left as is.
 		//
@@ -673,7 +688,8 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		},
 		axios: {
 			headers: {
-				// Not bearer rather than basic — the BDC API takes the credential pair as two plain headers.
+				// Not bearer rather than basic.
+				// The BDC API takes the credential pair as two plain headers.
 				username,
 				hash_value: apiKey,
 			},
@@ -682,7 +698,8 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 			// `silentJSONParsing` defaults to true, which makes Axios hand back the RAW string
 			// when a body fails to parse instead of raising.
 			// An upstream serving an html error page under a 200 would then be returned as `T`
-			// and destructured into `undefined` at the call site. parse failures must be errors.
+			// and destructured into `undefined` at the call site.
+			// Parse failures must be errors.
 			transitional: { silentJSONParsing: false },
 			...options.axios,
 		},

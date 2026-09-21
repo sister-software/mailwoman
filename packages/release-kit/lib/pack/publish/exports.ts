@@ -24,9 +24,11 @@ function isTypeScriptSource(path: string): boolean {
  * which strips that segment from the emit — `./lib/utils/index.ts` compiles to
  * `./out/utils/index.js`, not `./out/lib/utils/index.js`.
  *
- * A map that keeps the segment points every consumer at a path the tarball does not contain,
- * and {@link assertNoSourceTargets} does not catch it, because the target it produced is
- * no longer TypeScript — it is well-formed JavaScript at an address that does not exist.
+ * A map that keeps the segment points every consumer at a path the tarball
+ * does not contain, and {@link assertNoSourceTargets} does not catch it,
+ * because the target it produced is no longer TypeScript.
+ * It is well-formed JavaScript at an address that does not exist.
+ *
  * That is the same failure shape as the hand-maintained duplication this module replaced,
  * which shipped a fully-broken v7.2.0.
  */
@@ -48,9 +50,9 @@ function emittedTargetFor(target: string): string {
  *
  * The conditions themselves are kept: a Node target and a browser target may be different files.
  *
- * The rewrite is keyed on the target being TypeScript source rather than on the
- * condition name — a condition-name rule only covers the conditions someone thought
- * of. {@link assertNoSourceTargets} refuses whatever this misses.
+ * The rewrite is keyed on the target being TypeScript source rather than on the condition name.
+ * A condition-name rule only covers the conditions someone thought of.
+ * {@link assertNoSourceTargets} refuses whatever this misses.
  */
 export function transformExportsForPublish(exports: unknown): unknown {
 	if (typeof exports !== "object" || exports === null) return exports
@@ -140,7 +142,8 @@ export function assertNoSourceTargets(label: string, transformed: unknown): void
 }
 
 /**
- * Walk a transformed exports map. return every concrete (non-pattern) file target.
+ * Walk a transformed exports map.
+ * Return every concrete (non-pattern) file target.
  */
 export function collectExportTargets(exports: unknown): string[] {
 	const targets: string[] = []

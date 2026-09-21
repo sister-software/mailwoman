@@ -27,7 +27,8 @@ const PROBE_HALF_WIDTH_DEGREES = 0.0001
 const SERVICE_FEATURE_LIMIT = 200
 
 /**
- * One feature as the service publishes it — the only shape the comparison reads.
+ * One feature as the service publishes it.
+ * The only shape the comparison reads.
  */
 export interface ServiceFeature {
 	properties?: Record<string, unknown>
@@ -39,9 +40,10 @@ export interface ServiceFeature {
  * near a point, in one scenario's collection.
  *
  * A function rather than the client, and that is what makes the check's own logic testable.
- * The comparison's value is that it decides which of three outcomes a point gets. expressed
- * against an http client it could only ever be watched on a live run, and a scripted reader
- * lets those decisions be pinned. {@link createEAServiceReader} builds the real one.
+ * The comparison's value is that it decides which of three outcomes a point gets.
+ *
+ * Expressed against an http client it could only ever be watched on a live run, and a scripted
+ * reader lets those decisions be pinned. {@link createEAServiceReader} builds the real one.
  */
 export type ServiceFeatureReader = (
 	latitude: number,

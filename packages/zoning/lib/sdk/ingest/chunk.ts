@@ -237,9 +237,7 @@ export async function ingestZoningChunk(
 				feature.crosswalkCode === null ? null : GZT_CROSSWALK_SCHEME,
 				feature.crosswalkDescription,
 				feature.crosswalkRollup,
-				// one grade PER claim. Every row of this artifact is `authoritative` — a government department republishing
-				// local authorities' adopted plans — and an observed land-use layer is a different database with a different
-				// `layer_manifest.name`, never a row with a second grade in this table.
+				// one grade PER claim. Every row of this artifact is `authoritative` — a government department republishing local authorities' adopted plans — and an observed land-use layer is a different database with a different `layer_manifest.name`, never a row with a second grade in this table.
 				GZT_PROVENANCE_GRADE,
 				bbox.minLat,
 				bbox.minLon,
@@ -272,9 +270,9 @@ export async function ingestZoningChunk(
 			}
 
 			// coverage is derived from the uncompacted classification rather than from the stored rows.
-			// A compacted parent spans several coverage cells and `addCoverageCells`
-			// handles that, but the fringe is where this product's cells almost all are —
-			// so counting off the stored rows and counting off the classification agree here,
+			// A compacted parent spans several coverage cells and `addCoverageCells` handles that,
+			// but the fringe is where this product's cells almost all are.
+			// So counting off the stored rows and counting off the classification agree here,
 			// and the classification is the one that cannot be changed by a compaction decision.
 			const coverageCells = new Set<number>()
 

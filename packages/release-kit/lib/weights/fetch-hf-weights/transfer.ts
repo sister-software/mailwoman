@@ -36,8 +36,9 @@ import type { WeightsArtifactPlan } from "#weights/fetch-hf-weights/plan"
  * transfers, where a buffered body is untenable and response caching is nonsense.
  * These objects sit on the API side of that line: the largest is `model.onnx` at 39,419,629 bytes
  * and the whole set is under ~70 MB (measured 2026-08-25 against the v9.1.0 directory),
- * each one is md5-checked after arrival, and each is fetched exactly once per run —
- * so a buffered body costs one artifact's worth of memory and a stream would add nothing.
+ * each one is md5-checked after arrival, and each is fetched exactly once per run.
+ *
+ * So a buffered body costs one artifact's worth of memory and a stream would add nothing.
  *
  * What `APIClient` does provide is the reason the YAML this replaces passed
  * `--retry 6 --retry-all-errors` to every curl: Hugging Face throttles the public
@@ -45,18 +46,20 @@ import type { WeightsArtifactPlan } from "#weights/fetch-hf-weights/plan"
  * have a release believe its weights were never staged.
  *
  * No pacer, deliberately.
- * One run is a score of concurrent HEADs and then sequential whole-object GETs against a public
- * CDN the browser demo already reads at higher concurrency. retry is the only rate control this
- * path has ever needed, and an invented interval would be a number no measurement supports.
+ * One run is a score of concurrent HEADs and then sequential whole-object GETs against
+ * a public CDN the browser demo already reads at higher concurrency.
+ *
+ * Retry is the only rate control this path has ever needed, and an invented
+ * interval would be a number no measurement supports.
  */
 const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: true })
 
 /**
  * Head-probe one bucket object.
  *
- * Returns the failure's message rather than a bare boolean: a throttled or unroutable probe
- * is indistinguishable from an unstaged artifact at the call site, and "missing" is the
- * answer that would send an operator to re-run a staging step that already succeeded.
+ * @returns the failure's message rather than a bare boolean: a throttled or unroutable probe
+ *   is indistinguishable from an unstaged artifact at the call site, and "missing" is the
+ *   answer that would send an operator to re-run a staging step that already succeeded.
  */
 export async function probeRemote(url: string): Promise<string | null> {
 	try {

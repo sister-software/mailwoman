@@ -63,10 +63,10 @@ export function delimiterFor(path: string): Delimiter {
 /**
  * Stream a delimited file's rows lazily as header-keyed objects.
  *
- * Returns the spliterator's own {@linkcode AsyncSequence}: nothing is opened until something
- * iterates, a `take` that is satisfied (or a `break` out of `for await`) closes the file
- * handle, and any `map`/`filter` a caller composes fuses into the same pull loop.
- * Wrapping this in an `async function*` would cost an async frame per row and take those operators away.
+ * @returns the spliterator's own {@linkcode AsyncSequence}: nothing is opened until something
+ *   iterates, a `take` that is satisfied (or a `break` out of `for await`) closes the file
+ *   handle, and any `map`/`filter` a caller composes fuses into the same pull loop.
+ *   Wrapping this in an `async function*` would cost an async frame per row and take those operators away.
  */
 export function streamRows(
 	source: string,
@@ -191,13 +191,20 @@ export interface IngestOptions {
 	 */
 	geocodeAddress?: GeocodeAddress
 	/**
-	 * Separator for joining a multi-column address mapping (name/org always join with a space). Default `" "`. Pass `",
-	 * "` to give the parser delimited input (`"214 Main St, Austin, TX 78701"`) instead of a concatenated run (`"214 Main
-	 * St Austin TX 78701"`) — the latter strips the parser's segmentation boundaries and is partly OOD (it also breaks
-	 * all-caps case-normalization; #694). **Default `", "` (#694 flip, validated).** Comma-join is the correct shape for
-	 * an address built from separate columns, and #700 measured it at +15% cross-dataset rooftop (579→667) with no
-	 * comma-less crater. The dedup GBT was trained on the old space-joined coords, so this flip is paired with a GBT
-	 * re-validation (#694). Pass `" "` to restore the legacy space-join for a byte-stable A/B.
+	 * Separator for joining a multi-column address mapping (name/org always join with a space).
+	 *
+	 * Default `" "`.
+	 * Pass `", "` to give the parser delimited input (`"214 Main St, Austin, TX 78701"`)
+	 * instead of a concatenated run (`"214 Main St Austin TX 78701"`).
+	 *
+	 * The latter strips the parser's segmentation boundaries and is partly OOD
+	 * (it also breaks all-caps case-normalization; #694). **Default `", "` (#694 flip, validated).**
+	 * Comma-join is the correct shape for an address built from separate columns,
+	 * and #700 measured it at +15% cross-dataset rooftop (579→667) with no comma-less crater.
+	 * The dedup GBT was trained on the old space-joined coords, so this flip is
+	 * paired with a GBT re-validation (#694).
+	 *
+	 * Pass `" "` to restore the legacy space-join for a byte-stable A/B.
 	 */
 	addressSeparator?: string
 }
@@ -291,7 +298,7 @@ export async function ingestRows(
  * This is the single-threaded, "fast enough" ergonomic core: column mapping, name parsing,
  * and org canonicalization for a multi-GB file, line by line.
  * Geocode separately by piping the output through `geocodeStream` (the only heavy step worth threading);
- * for a light file (e.g. one that already carries geo cells) just consume this and stop.
+ * for a light file (e.g. One that already carries geo cells) just consume this and stop.
  *
  * Records come out in file order: the sequence's `map` settles each row before pulling the next,
  * and its counter is the row's index — the id a row without a mapped `id` column falls back to.
@@ -334,9 +341,10 @@ export interface GeocodeDepsBase {
 }
 
 /**
- * Two independent calls: parse the address, then geocode it. mailwoman's
- * `geocodeAddress` re-parses internally, so this shape parses the address twice —
- * fine when the two callbacks don't share a parser.
+ * Two independent calls: parse the address, then geocode it.
+ *
+ * Mailwoman's `geocodeAddress` re-parses internally, so this shape parses the address
+ * twice — fine when the two callbacks don't share a parser.
  */
 export interface TwoStepGeocodeDeps extends GeocodeDepsBase {
 	parse: (raw: string) => Promise<GeocodeComponents> | GeocodeComponents
@@ -347,7 +355,7 @@ export interface TwoStepGeocodeDeps extends GeocodeDepsBase {
  * Parse the address once and answer both the components and the geocode.
  *
  * Use this when the parse is the expensive step you'd rather not pay for twice
- * (e.g. share `parseForGeocode`'s tree between the PostalAddress and `geocodeAddress`'s `parsedTree`).
+ * (e.g. Share `parseForGeocode`'s tree between the PostalAddress and `geocodeAddress`'s `parsedTree`).
  * ~1.3× over the two-call shape on a real geocode pipeline.
  */
 export interface OneStepGeocodeDeps extends GeocodeDepsBase {

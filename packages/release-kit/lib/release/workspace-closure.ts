@@ -20,7 +20,8 @@ const DEPENDENCY_FIELDS = ["dependencies", "optionalDependencies", "peerDependen
  * Every workspace the root `workspaces` field names, expanded, keyed by package name,
  * with its repo-relative directory.
  */
-// repo-health-ignore export-name-affix -- keys the shared reader's answer by package name. it adds the manifest read.
+// repo-health-ignore export-name-affix -- keys the shared reader's answer by package name.
+// It adds the manifest read.
 export async function workspaceDirectories(repoRoot: string): Promise<Map<string, string>> {
 	const byName = new Map<string, string>()
 
@@ -34,12 +35,14 @@ export async function workspaceDirectories(repoRoot: string): Promise<Map<string
 }
 
 /**
- * The seeds plus every workspace they reach through a `workspace:` dependency, optional or peer
- * dependency, transitively — the set a consumer's `npm install` of the seeds pulls from the registry,
- * computed so a package added to a seed's graph is picked up without anyone editing a list.
+ * The seeds plus every workspace they reach through a `workspace:` dependency,
+ * optional or peer dependency, transitively.
  *
- * Throws when a seed or a reached dependency names no workspace: a `workspace:`
- * specifier that resolves nowhere is a broken manifest rather than an absence.
+ * The set a consumer's `npm install` of the seeds pulls from the registry, computed
+ * so a package added to a seed's graph is picked up without anyone editing a list.
+ *
+ * @throws when a seed or a reached dependency names no workspace: a `workspace:`
+ *   specifier that resolves nowhere is a broken manifest rather than an absence.
  */
 export async function walkWorkspaceClosure(repoRoot: string, seeds: readonly string[]): Promise<Map<string, string>> {
 	const byName = await workspaceDirectories(repoRoot)
@@ -73,8 +76,9 @@ export async function walkWorkspaceClosure(repoRoot: string, seeds: readonly str
 
 /**
  * Pack each workspace into `tarDir` with the derived publish map and answer the
- * `dependencies` block a throwaway consumer project installs from — every entry a `file:`
- * tarball, so nothing is resolved from the registry.
+ * `dependencies` block a throwaway consumer project installs from.
+ *
+ * Every entry a `file:` tarball, so nothing is resolved from the registry.
  *
  * Sequential on purpose: each pack rewrites its own manifest while yarn reads its siblings.
  */

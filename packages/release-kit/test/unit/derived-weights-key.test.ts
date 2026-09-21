@@ -36,7 +36,9 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Name an absolute path by its basename — the shape production uses (repo-relative name, absolute read path).
+ * Name an absolute path by its basename.
+ *
+ * The shape production uses (repo-relative name, absolute read path).
  */
 function at(path: string, name?: string): DerivedWeightsInput {
 	return { name: name ?? path.slice(path.lastIndexOf("/") + 1), path }
@@ -75,7 +77,8 @@ describe("derivedWeightsKeyFrom", () => {
 		await writeLocalTextFile("export const delta = 1", generator)
 		const before = await derivedWeightsKeyFrom([at(config), at(generator)])
 
-		// The config is untouched. only the code that produces the binaries changed.
+		// The config is untouched.
+		// Only the code that produces the binaries changed.
 		await writeLocalTextFile("export const delta = 2", generator)
 
 		expect(await derivedWeightsKeyFrom([at(config), at(generator)])).not.toBe(before)

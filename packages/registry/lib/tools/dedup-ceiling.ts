@@ -148,13 +148,14 @@ export async function dedupCeiling(
 		}
 	}
 
-	// Derive the precision ceiling from co-located distinct-NPI records. pairs,
-	// either merge (wrong) or hold them apart using name/org.
+	// Derive the precision ceiling from co-located distinct-NPI records.
+	// Pairs, either merge (wrong) or hold them apart using name/org.
 	// It can separate the `separable` (and most `mid`) pairs but not the `collide` ones.
-	// So the irreducible false-merge rate among co-located distinct pairs is collide/pairs. an oracle's
-	// precision on the co-located decision is bounded by how many merges it makes that are correct.
+	// So the irreducible false-merge rate among co-located distinct pairs is collide/pairs.
+	// An oracle's precision on the co-located decision is bounded by how many
+	// merges it makes that are correct.
 	// We report the collision rate directly and a precision-ceiling band
-	// (optimistic: only `collide` over-merge. conservative: `collide` + half of `mid`).
+	// (optimistic: only `collide` over-merge. Conservative: `collide` + half of `mid`).
 	// Recall is not the binding constraint here (NPPES same-NPI records almost always share
 	// either address or org), so the F1 ceiling tracks the precision ceiling. ---
 	const pct = formatPercent

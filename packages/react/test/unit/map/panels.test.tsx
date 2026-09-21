@@ -78,7 +78,8 @@ test("CompareToggle reveals the compare select (primary excluded) when turned on
 
 	const select = container.querySelector("#mw-demo-compare-version") as HTMLSelectElement
 	expect(select).not.toBeNull()
-	// The primary version is filtered out. the "Select version…" placeholder + the two others remain.
+	// The primary version is filtered out.
+	// The "Select version…" placeholder + the two others remain.
 	const values = Array.from(select.querySelectorAll("option")).map((o) => (o as HTMLOptionElement).value)
 	expect(values).not.toContain("v7.2.0")
 	expect(values).toContain("v7.1.0")
@@ -199,7 +200,8 @@ test("usePlaceAutocomplete stays closed for numeric input (postcode)", async () 
 	const input = container.querySelector('[data-testid="ac-input"]') as HTMLInputElement
 	await userEvent.type(input, "90210")
 
-	// A short wait past the debounce — a digit-leading query never fires the fetcher.
+	// A short wait past the debounce.
+	// A digit-leading query never fires the fetcher.
 	// Held in act() so the debounce's own state update + the abstaining effect
 	// (which do run) settle in-scope rather than unwrapped.
 	await actDelay(60)

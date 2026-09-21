@@ -74,8 +74,9 @@ export interface SoilCellIndexMeasurement {
 	 */
 	partialCells: number
 	/**
-	 * `partialCells / touchedCells` — the share of in-layer probes that cannot
-	 * be answered from the index alone.
+	 * `partialCells / touchedCells`.
+	 *
+	 * The share of in-layer probes that cannot be answered from the index alone.
 	 */
 	partialShare: number
 	/**
@@ -90,8 +91,10 @@ export interface SoilCellIndexMeasurement {
 	 */
 	cellDelineationPairs: number
 	/**
-	 * The mean number of delineations reaching a cell — the direct measure of how mixed a cell is
-	 * before any rating is read, and the number that rises as the resolution coarsens.
+	 * The mean number of delineations reaching a cell.
+	 *
+	 * The direct measure of how mixed a cell is before any rating is read,
+	 * and the number that rises as the resolution coarsens.
 	 */
 	meanDelineationsPerCell: number
 	/**
@@ -164,8 +167,9 @@ export class SoilCellIndex {
 	/**
 	 * Compact the whole-cell set and report the measurement.
 	 *
-	 * Compaction is applied to the whole set only — a partial cell's parent is not partial in
-	 * any useful sense, and compacting it would claim the fringe covers ground it does not.
+	 * Compaction is applied to the whole set only.
+	 * A partial cell's parent is not partial in any useful sense, and compacting it
+	 * would claim the fringe covers ground it does not.
 	 */
 	finish(): SoilCellIndexMeasurement {
 		const compacted = compactAcrossResolutions(this.#whole)

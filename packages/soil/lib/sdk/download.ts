@@ -111,8 +111,9 @@ export interface SurveyAreaArchive {
 /**
  * Download and unzip one survey area, returning where its pieces landed.
  *
- * Downloads to a `.part` file and renames only on a clean finish, so an interrupted transfer never
- * presents as a complete archive — the same discipline the database build uses, for the same reason.
+ * Downloads to a `.part` file and renames only on a clean finish, so an interrupted
+ * transfer never presents as a complete archive.
+ * The same discipline the database build uses, for the same reason.
  *
  * @throws {Error} When the host answers anything but 200, or when the extracted tree
  *   does not hold the two directories every survey area publishes.

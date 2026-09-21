@@ -30,7 +30,7 @@ export interface VersionPickerProps {
 	 */
 	onSelect: (version: string) => void
 	/**
-	 * Disable the control (e.g. while a parse is running).
+	 * Disable the control (e.g. While a parse is running).
 	 */
 	disabled?: boolean
 	/**
@@ -64,7 +64,8 @@ export function VersionPicker({
 				value={selected ?? ""}
 				onChange={(e) => onSelect(e.target.value)}
 				disabled={disabled}
-				// The field clips a long release label. this is where the whole of it stays reachable.
+				// The field clips a long release label.
+				// This is where the whole of it stays reachable.
 				title={versions.find((v) => v.version === selected)?.label ?? selected ?? undefined}
 			>
 				{versions.map((v) => (

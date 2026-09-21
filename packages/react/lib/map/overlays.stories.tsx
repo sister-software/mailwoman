@@ -28,7 +28,8 @@ const STUB_STYLE: MapCanvasStyle = {
 }
 
 /**
- * Base place. each story overrides only the fields its branch needs.
+ * Base place.
+ * Each story overrides only the fields its branch needs.
  */
 function place(overrides: Partial<ResolvedMapPlace>): ResolvedMapPlace {
 	return { id: 1, name: "Demo Place", placetype: "locality", lat: 40.7128, lon: -74.006, score: 1, ...overrides }

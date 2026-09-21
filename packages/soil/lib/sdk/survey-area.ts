@@ -231,8 +231,9 @@ export async function readSurveyAreaAttributes(
  * own has a gap: the symbol (`notcom`, `notpub`), the name (`Area not surveyed, access denied`),
  * and the structural case of a map unit carrying no components at all.
  * A map unit with no components has nothing to rate whatever it is called, and reading
- * it as "rated nothing" rather than "no mapping" would put it in `unrated_share` —
- * a claim that the survey looked and declined, when it did not look.
+ * it as "rated nothing" rather than "no mapping" would put it in `unrated_share`.
+ *
+ * A claim that the survey looked and declined, when it did not look.
  */
 function isNoMapping(musym: string, muname: string, componentCount: number): boolean {
 	if (SSURGO_NO_MAPPING_SYMBOLS.has(musym.toUpperCase())) return true
@@ -245,9 +246,9 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
 /**
  * Refuse a value outside the authority's own declared domain.
  *
- * An unknown code is a source-schema change, which is the event a reader most
- * needs to hear about. coercing it to a nearest neighbour or to NULL converts
- * "the source changed" into "there is nothing here".
+ * An unknown code is a source-schema change, which is the event a reader most needs to hear about.
+ * Coercing it to a nearest neighbour or to NULL converts "the source changed" into "there is nothing here".
+ *
  * A blank is not a violation: NULL is a real state in every one of these columns and means something
  * specific — for `nirrcapcl` it means the survey did not rate the component, which is not class 8.
  */
@@ -327,8 +328,9 @@ export interface FGDCMetadata {
  * which is what makes the throw reachable.
  *
  * Every value this reader cannot find is reported as `null` except the publication date
- * and the licence sentence, which throw — those two decide the artifact's vintage and
- * whether it may be shipped at all, and neither has a safe default.
+ * and the licence sentence, which throw.
+ * Those two decide the artifact's vintage and whether it may be shipped at all,
+ * and neither has a safe default.
  *
  * @throws {Error} When the metadata carries no publication date, or its use constraints
  *   no longer carry the public-information sentence.
@@ -369,8 +371,8 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 
 	for (const body of elementBlocks(xml, "srcinfo")) {
 		// `caldate` for a single date, `begdate` for a range.
-		// A range's END is when the source stopped being collected. its beginning is
-		// when the ground was first looked at, which is the fact this layer is carrying.
+		// A range's END is when the source stopped being collected.
+		// Its beginning is when the ground was first looked at, which is the fact this layer is carrying.
 		const date = elementText(body, "caldate") ?? elementText(body, "begdate")
 
 		if (!date) continue
@@ -390,11 +392,14 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 /**
  * The text of the first `<name>` element, whitespace left alone.
  *
- * Index scans rather than A regex, and that is A correctness choice rather than A speed one. The obvious form — ``new
- * RegExp(`<${name}>([\\s\\S]*?)</${name}>`)`` — backtracks polynomially on a document whose opening tag has no closing
- * partner: the lazy run re-scans to the end from every candidate start. The input here is a 43,251-character document
- * that arrived over the network inside a downloaded archive, so "a malformed one cannot happen" is not a claim this
- * reader gets to make. Two `indexOf` calls answer the same question in one pass.
+ * Index scans rather than A regex, and that is A correctness choice rather than A speed one.
+ * The obvious form — ``new RegExp(`<${name}>([\\s\\S]*?)</${name}>`)`` —
+ * backtracks polynomially on a document whose opening tag has no closing partner:
+ * the lazy run re-scans to the end from every candidate start.
+ *
+ * The input here is a 43,251-character document that arrived over the network inside a downloaded
+ * archive, so "a malformed one cannot happen" is not a claim this reader gets to make.
+ * Two `indexOf` calls answer the same question in one pass.
  */
 function elementText(xml: string, name: string): string | undefined {
 	const open = `<${name}>`
@@ -405,8 +410,9 @@ function elementText(xml: string, name: string): string | undefined {
 	const from = start + open.length
 	const end = xml.indexOf(`</${name}>`, from)
 
-	// An element with no closing tag is unreadable rather than empty — the same answer an absent
-	// element gets, because both mean the value could not be read rather than that it is blank.
+	// An element with no closing tag is unreadable rather than empty.
+	// The same answer an absent element gets, because both mean the value could
+	// not be read rather than that it is blank.
 	return end === -1 ? undefined : xml.slice(from, end)
 }
 
@@ -440,8 +446,9 @@ function elementBlocks(xml: string, name: string): string[] {
 /**
  * Fgdc dates arrive as `yyyy` or `yyyymmdd`.
  *
- * Both are kept as they are meant — a bare year is a bare year, and padding it to
- * January 1 would invent a precision the citation does not claim.
+ * Both are kept as they are meant.
+ * A bare year is a bare year, and padding it to January 1 would invent a
+ * precision the citation does not claim.
  */
 function normalizeFGDCDate(value: string): string {
 	const trimmed = value.trim()

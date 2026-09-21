@@ -30,7 +30,7 @@ export interface ResolvedPlaceLayersProps {
 	 * Apply the computed camera target via {@link ResultCamera}. @default true.
 	 *
 	 * Set false when the consumer drives the camera itself
-	 * (e.g. a controlled `<MapCanvas viewState>` fed by {@link cameraToViewState}).
+	 * (e.g. A controlled `<MapCanvas viewState>` fed by {@link cameraToViewState}).
 	 */
 	applyCamera?: boolean
 	/**

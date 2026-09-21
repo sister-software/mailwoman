@@ -59,8 +59,9 @@ export const WEIGHT_LATTICE_DEPTH = 2
  * One percent, which sits below the lattice's own 2.04% granularity, so nothing a single child
  * cell produces is truncated — what lands here is the long tail that component percentages
  * create inside a child (a 1%-weight component inside one child cell contributes 0.02%).
- * Truncating a long tail is legitimate. doing it silently is not, which is why the
- * remainder is stored explicitly and the shares still sum to 1.
+ * Truncating a long tail is legitimate.
+ *
+ * Doing it silently is not, which is why the remainder is stored explicitly and the shares still sum to 1.
  */
 export const CLASS_SHARE_FLOOR = 0.01
 
@@ -120,9 +121,9 @@ export function mapUnitProfile(
 
 	// A map unit whose components carry no weight at all publishes no readable proportion,
 	// so nothing can be apportioned from it.
-	// It is marked `no_mapping` upstream for exactly this reason. reaching here with a zero
-	// total means the upstream check and this one disagree, and answering with an empty
-	// distribution would silently drop the delineation's area out of every share.
+	// It is marked `no_mapping` upstream for exactly this reason.
+	// Reaching here with a zero total means the upstream check and this one disagree, and answering
+	// with an empty distribution would silently drop the delineation's area out of every share.
 	if (total <= 0) {
 		return { classShares: new Map(), unrated: 0, notRateable: 0, noData: 1 }
 	}
@@ -145,8 +146,9 @@ export function mapUnitProfile(
 
 		// A NULL rating means the survey did not rate this component, and why it did
 		// not is what separates the two buckets.
-		// A miscellaneous area is a non-soil area — rock outcrop, water — that the capability rating
-		// does not apply to. a named soil with no rating is one the survey chose not to rate.
+		// A miscellaneous area is a non-soil area — rock outcrop, water —
+		// that the capability rating does not apply to.
+		// A named soil with no rating is one the survey chose not to rate.
 		// Read as one number they would both say "not arable", which neither of them says.
 		if (component.compkind === "Miscellaneous area") {
 			notRateable += weight
@@ -164,8 +166,9 @@ export function mapUnitProfile(
 export interface ReducedCell {
 	row: SoilCapabilityCellTable
 	/**
-	 * True when the top class covers less than half the cell — the §4.7 number, counted here
-	 * so it comes off the artifact rather than out of a separate harness.
+	 * True when the top class covers less than half the cell.
+	 *
+	 * The §4.7 number, counted here so it comes off the artifact rather than out of a separate harness.
 	 */
 	topClassUnderHalf: boolean
 	/**
@@ -218,9 +221,9 @@ export function reduceCell(
 			// Every child centre fell outside every delineation reaching the cell.
 			// The cell is touched — the index says so — but no lattice point landed inside,
 			// which happens when a sliver clips a corner.
-			// Reporting shares over nothing would divide by zero. reporting a mapped
-			// share of zero is the truthful answer, and the row is dropped by the caller
-			// rather than stored as an all-zero distribution.
+			// Reporting shares over nothing would divide by zero.
+			// Reporting a mapped share of zero is the truthful answer, and the row is dropped
+			// by the caller rather than stored as an all-zero distribution.
 			return {
 				row: emptyRow(h3Cell, candidates.length),
 				topClassUnderHalf: false,

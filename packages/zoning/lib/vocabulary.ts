@@ -69,8 +69,10 @@ export const GZT_MAP_VIEWER_URL = "https://www.myplan.ie/zoning-map-viewer/"
  * The attribution the item's `accessInformation` field carries, plus the licensor its `licenseInfo` names.
  *
  * Both halves ride, because the second is the half that holds this layer at `build-local`.
- * The Department's own credit line is the first. the all-rights-reserved clause naming Tailte Éireann
- * as an upstream licensor is the second, and a re-user who saw only the first would not know it exists.
+ * The Department's own credit line is the first.
+ *
+ * The all-rights-reserved clause naming Tailte Éireann as an upstream licensor is the second,
+ * and a re-user who saw only the first would not know it exists.
  */
 export const GZT_ATTRIBUTION =
 	"Department of Housing, Local Government, and Heritage (Generalised Zoning Types, MyPlan.ie). " +
@@ -84,12 +86,12 @@ export const GZT_ATTRIBUTION =
  * and the manifest column is a string a consumer reads as the terms it may rely on.
  *
  * Writing `CC-BY-4.0` there while an all-rights-reserved clause names a licensor
- * would be this program asserting a grant nobody made. leaving the column empty
- * would read as a layer whose licence nobody looked at.
+ * would be this program asserting a grant nobody made.
+ * Leaving the column empty would read as a layer whose licence nobody looked at.
+ *
  * `noassertion` is spdx's own token for a determination that has not been made, which is exactly the state.
  *
- * {@linkcode assertTierMatchesLicense} refuses a `shipped` build while this holds, so moving the tier takes a
- * deliberate edit at a guard that names the reason rather than a manifest field nobody notices.
+ * {@linkcode assertTierMatchesLicense} refuses a `shipped` build while this holds, so moving the tier takes a deliberate edit at a guard that names the reason rather than a manifest field nobody notices.
  */
 export const GZT_LICENSE = "NOASSERTION"
 
@@ -173,8 +175,9 @@ export interface ZoningTermDefinition {
  *
  * Fifty-four declared against fifty-five used.
  * `N/A` appears on 4 of 85,330 rows and in no domain, so the ingest records it as
- * observed-but-undeclared rather than adding it here — a declaration this package
- * wrote would be indistinguishable from one the Department made.
+ * observed-but-undeclared rather than adding it here.
+ *
+ * A declaration this package wrote would be indistinguishable from one the Department made.
  */
 export const GZT_DECLARED_CODES: ReadonlyArray<ZoningTermDefinition> = [
 	{ code: "P1", label: "Agriculture" },
@@ -241,8 +244,9 @@ export const GZT_DECLARED_CODE_SET: ReadonlySet<string> = new Set(GZT_DECLARED_C
 /**
  * The `PLAN_LEVEL` domain, verbatim.
  *
- * `SDZ` is declared and used on no row of the current edition. it is carried anyway, because the
- * domain is the Department's statement of what a plan may be rather than a census of what it is.
+ * `SDZ` is declared and used on no row of the current edition.
+ * It is carried anyway, because the domain is the Department's statement of what
+ * a plan may be rather than a census of what it is.
  */
 export const GZT_PLAN_LEVELS: ReadonlyArray<ZoningTermDefinition> = [
 	{ code: "DP", label: "Development Plan" },
@@ -268,13 +272,16 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
  * A zoning row has exactly one provenance grade: `authoritative` or `inferred`.
  * The two grades never merge.
  *
- * `authoritative` is a planning or legislative authority for the land,
- * or a government body republishing that authority's own adopted records —
- * the Department republishing 30 local authorities' plans is one.
+ * `authoritative` is a planning or legislative authority for the land, or a government
+ * body republishing that authority's own adopted records.
+ * The Department republishing 30 local authorities' plans is one.
+ *
  * `inferred` is an observation, a community mapping project or a research assembly: OpenStreetMap
  * `landuse` is inferred, and so is Overture's `base/land_use`, because it is the same data.
  *
- * Neither grade is better. they answer different questions.
+ * Neither grade is better.
+ * They answer different questions.
+ *
  * The rule is that a query answered from an `inferred` row may never be presented
  * as the authority's designation.
  *

@@ -111,8 +111,10 @@ const DEFAULT_WAIT_INTERVAL = 50
  * React inside act() between tries.
  *
  * Each iteration awaits a full `act()` (draining that round's microtasks + a timer tick),
- * so effect chains flush a step at a time. the callback then runs synchronously outside act — the
- * only out-of-act code, and being sync it offers no point for a stray update to escape the act scope.
+ * so effect chains flush a step at a time.
+ * The callback then runs synchronously outside act.
+ *
+ * The only out-of-act code, and being sync it offers no point for a stray update to escape the act scope.
  *
  * Drop-in for `vi.waitFor` over this suite's usage (synchronous assertion callbacks).
  * An async callback is still awaited, but none of the tests here pass one.
@@ -181,11 +183,14 @@ function wrapWaitFor(): void {
 }
 
 /**
- * Advance `ms` of real time inside act(). For the rare "wait, then assert nothing happened" case a negative assertion
- * can't route through `vi.waitFor` (which waits for a condition to become true): the digit-leading autocomplete test
- * waits past the debounce to prove the fetcher never fired, and the debounce's own `setDebouncedValue` + the abstaining
- * effect still run during that wait — so the wait itself must hold an act scope. Use this instead of a bare `await new
- * Promise(setTimeout)`.
+ * Advance `ms` of real time inside act().
+ *
+ * For the rare "wait, then assert nothing happened" case a negative assertion can't route
+ * through `vi.waitFor` (which waits for a condition to become true): the digit-leading
+ * autocomplete test waits past the debounce to prove the fetcher never fired, and the
+ * debounce's own `setDebouncedValue` + the abstaining effect still run during that wait.
+ * So the wait itself must hold an act scope.
+ * Use this instead of a bare `await new Promise(setTimeout)`.
  */
 export async function actDelay(ms = 0): Promise<void> {
 	await act(async () => {

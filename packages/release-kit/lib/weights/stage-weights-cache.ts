@@ -73,9 +73,9 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 	if (!options.out) throw new Error("--out <dir> is required")
 
 	const cacheRoot = resolvePath(repoRoot, options.out)
-	// The layout comes from the resolver's own `weightsCachePackageDir` rather than a
-	// re-typed literal — this operation's whole interface is "lay out the directory
-	// `resolveWeights`' cache rung finds", so the two must not be able to drift.
+	// The layout comes from the resolver's own `weightsCachePackageDir` rather than a re-typed literal.
+	// This operation's whole interface is "lay out the directory `resolveWeights`'
+	// cache rung finds", so the two must not be able to drift.
 	const packageDir = weightsCachePackageDir(cacheRoot, options.locale)
 
 	if (options.clean && (await pathExists(cacheRoot))) {
@@ -88,8 +88,8 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 	/**
 	 * Staged name → source path.
 	 *
-	 * Seeded from `from`, then overridden. last writer wins, which is what makes
-	 * `file` a divergence rather than a conflict.
+	 * Seeded from `from`, then overridden.
+	 * Last writer wins, which is what makes `file` a divergence rather than a conflict.
 	 */
 	const staged = new Map<string, string>()
 

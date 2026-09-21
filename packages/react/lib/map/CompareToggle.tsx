@@ -41,11 +41,11 @@ export interface CompareToggleProps {
 	 */
 	onCompareVersionChange: (version: string | null) => void
 	/**
-	 * Disable the compare-version select (e.g. while a parse or compare load runs).
+	 * Disable the compare-version select (e.g. While a parse or compare load runs).
 	 */
 	disabled?: boolean
 	/**
-	 * A status line rendered under the select (e.g. the compare backend, or a "Loading…" line).
+	 * A status line rendered under the select (e.g. The compare backend, or a "Loading…" line).
 	 */
 	status?: ReactNode
 }

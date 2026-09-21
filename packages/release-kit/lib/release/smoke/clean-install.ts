@@ -55,13 +55,13 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/poi-taxonomy": "packages/poi-taxonomy",
 	// `mailwoman`'s activity-phrase vocabulary — a hard dependency, so the closure guard requires it here.
 	"@mailwoman/activity-lexicon": "packages/activity-lexicon",
-	// The compiled world model `mailwoman/observations` reads — a hard dependency, and one whose version
-	// must track `mailwoman`'s exactly, which is the skew a registry resolution here would hide.
+	// The compiled world model `mailwoman/observations` reads.
+	// A hard dependency, and one whose version must track `mailwoman`'s exactly,
+	// which is the skew a registry resolution here would hide.
 	"@mailwoman/geographic-model": "packages/geographic-model",
 	"@mailwoman/kind-classifier": "packages/kind-classifier",
 	// @mailwoman/react — bare root import must be node-safe (no CSS/DOM eagerly imported); its deps
-	// (kind-classifier, poi-taxonomy, query-shape) are all in this closure, and the React peer is
-	// auto-installed from the registry.
+	// (kind-classifier, poi-taxonomy, query-shape) are all in this closure, and the React peer is auto-installed from the registry.
 	"@mailwoman/react": "packages/react",
 	"@mailwoman/locale-hint": "packages/locale-hint",
 	"@mailwoman/normalize": "packages/normalize",
@@ -73,10 +73,11 @@ const WORKSPACES: Record<string, string> = {
 	// The weights bundles — data-only, but real deps of photon/nominatim/fastify
 	// (all in this closure), so on a version-bumped release branch npm would otherwise chase
 	// the not-yet-published registry version (the v7.6.0 etarget chicken-and-egg).
-	// Packing them also makes the smoke test the actual weight packaging instead of
-	// the registry's previous release — the postcode-de.bin
-	// class (a soft-feed sibling silently missing from a shipped tarball) is only visible this way.
-	// prereq: the binaries must be materialized first (test.yml's weights-cache/copy-weights step) —
+	// Packing them also makes the smoke test the actual weight packaging
+	// instead of the registry's previous release.
+	// The postcode-de.bin class (a soft-feed sibling silently missing from a shipped tarball)
+	// is only visible this way.
+	// Prereq: the binaries must be materialized first (test.yml's weights-cache/copy-weights step) —
 	// `yarn pack` quietly packs whatever subset of the `files` globs exists.
 	"@mailwoman/neural-weights-en-us": "packages/neural-weights-en-us",
 	"@mailwoman/neural-weights-fr-fr": "packages/neural-weights-fr-fr",
@@ -173,8 +174,8 @@ const IMPORT_CHECK = [
 ]
 
 /**
- * Leaves whose tarball must import without the umbrella (no unrelated hoisting) —
- * the undeclared-dep guard the closure phase can't provide.
+ * Leaves whose tarball must import without the umbrella (no unrelated hoisting).
+ * The undeclared-dep guard the closure phase can't provide.
  *
  * Each leaf installs with its declared first-party closure supplied as local tarballs,
  * derived from the manifests by {@link firstPartyClosure} rather than typed here:
@@ -219,8 +220,9 @@ async function firstPartyClosure(repoRoot: string, leaf: string): Promise<string
 /**
  * The tools `@mailwoman/mcp` registers (`mcp/tools.ts` + the bdc/filer additions, 2026-07-31).
  *
- * The bin-exec leg asserts exactly this set — a name list rather than a count,
- * so drift names the missing or unexpected tool instead of printing "expected N, got M".
+ * The bin-exec leg asserts exactly this set.
+ * A name list rather than a count, so drift names the missing or unexpected tool
+ * instead of printing "expected N, got M".
  */
 const MCP_EXPECTED_TOOLS = [
 	"mailwoman_parse",
@@ -259,12 +261,13 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 		stderr += d.toString()
 	})
 
-	// A never-started child (enoent — the bin wasn't shipped) or a dead one produces
-	// epipe on write. swallow it so the real failure surfaces via the `error`/`exit`
-	// events below rather than an uncaught stream error.
+	// A never-started child (enoent — the bin wasn't shipped) or a dead one produces epipe on write.
+	// Swallow it so the real failure surfaces via the `error`/`exit` events below
+	// rather than an uncaught stream error.
 	child.stdin.on("error", () => {})
 
-	// Parse newline-delimited JSON-RPC frames off stdout. resolve a waiter when its id's response lands.
+	// Parse newline-delimited JSON-RPC frames off stdout.
+	// Resolve a waiter when its id's response lands.
 	let buffer = ""
 	const responses = new Map<number, { id: number; result?: { tools?: unknown[] }; error?: unknown }>()
 	const waiters = new Map<number, (msg: { result?: { tools?: unknown[] }; error?: unknown }) => void>()
@@ -371,7 +374,8 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 			)
 		}
 
-		// Clean shutdown: closing stdin ends the stdio transport. the process (lazy deps, nothing loaded) must exit 0.
+		// Clean shutdown: closing stdin ends the stdio transport.
+		// The process (lazy deps, nothing loaded) must exit 0.
 		child.stdin.end()
 		let shutdownTimer: NodeJS.Timeout | undefined
 
@@ -403,7 +407,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 /**
  * Run a command with stdin ignored and both output streams captured, answering stdout.
  *
- * Throws the builtin's error (which carries stdout and stderr) on a non-zero exit.
+ * @throws the builtin's error (which carries stdout and stderr) on a non-zero exit.
  */
 function run(cmd: string, args: string[], cwd: string): string {
 	return runFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
@@ -456,7 +460,7 @@ export interface SmokeCleanInstallReport {
 /**
  * Pack the closure, install it into a throwaway project, and run the CLI plus every import probe.
  *
- * Throws on the first failure with the failing command's stdout and stderr attached to the message.
+ * @throws on the first failure with the failing command's stdout and stderr attached to the message.
  */
 export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOptions): Promise<SmokeCleanInstallReport> {
 	await using tmp = await temporaryDirectory("mw-smoke-")
@@ -524,8 +528,8 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 
 		// Standalone-leaf guard (#core-zx, 2026-07-18).
 		// The phase above installs the whole `mailwoman` closure into one project,
-		// so a hoisted-but-undeclared dep is always present in node_modules — it cannot
-		// catch a leaf package whose own manifest is missing a runtime dep.
+		// so a hoisted-but-undeclared dep is always present in node_modules.
+		// It cannot catch a leaf package whose own manifest is missing a runtime dep.
 		// Install each dependency-clean leaf with only its declared first-party closure and import it.
 		// An undeclared import (the v7.0.0 `zx` bug, which the closure phase hid
 		// because `mailwoman` declares `zx`) crashes here and nowhere else.

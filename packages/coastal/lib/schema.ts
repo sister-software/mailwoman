@@ -50,7 +50,8 @@ export const CoastalCellContainment = {
 	/**
 	 * The zone boundary crosses the cell.
 	 *
-	 * The index has narrowed the candidate polygons. the point test decides.
+	 * The index has narrowed the candidate polygons.
+	 * The point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -144,8 +145,9 @@ export interface CoastalZoneAreaTable {
 /**
  * Per (cell, polygon): does the polygon cover the whole cell, or only part of it?
  *
- * Keyed on the polygon rather than on a class, because an erosion answer is the polygon —
- * its distance, its policy and its defence are per feature.
+ * Keyed on the polygon rather than on a class, because an erosion answer is the polygon.
+ * Its distance, its policy and its defence are per feature.
+ *
  * `scenario_key` is a column so a scenario-scoped probe reads one cell's rows
  * and keeps the scenario it asked for, without ever seeing another scenario's answer.
  */
@@ -172,8 +174,9 @@ export interface CoastalZoneCellTable {
 }
 
 /**
- * Ncerm's two ground-instability layers — a different hazard, kept apart so a reader
- * cannot answer an erosion question from a landslide polygon.
+ * Ncerm's two ground-instability layers.
+ *
+ * A different hazard, kept apart so a reader cannot answer an erosion question from a landslide polygon.
  *
  * 160 rows in total (80 per layer, sharing feature ids and attributes and differing in geometry),
  * which is why they carry no cell index: a bounding-box scan over 160 rows costs
@@ -211,7 +214,9 @@ export interface CoastalGroundInstabilityTable {
 }
 
 /**
- * The authority's mapped footprint — one row per statement, never derived from the hazard polygons.
+ * The authority's mapped footprint.
+ *
+ * One row per statement, never derived from the hazard polygons.
  *
  * Empty IN this edition, and its emptiness is the claim.
  * The Environment Agency publishes no coverage statement for ncerm, so there is no
@@ -280,7 +285,8 @@ export type CoastalSchemaHandle = Pick<Kysely<CoastalDatabase>, "schema">
 /**
  * Create `coastal_zone_area`.
  *
- * A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid` penalizes.
+ * A plain rowid table on purpose.
+ * The `rings` blob is exactly the payload `without rowid` penalizes.
  */
 export async function createCoastalZoneAreaTable(db: CoastalSchemaHandle): Promise<void> {
 	const table = db.schema
@@ -316,7 +322,7 @@ export async function createCoastalZoneCellTable(db: CoastalSchemaHandle): Promi
 
 	await addCellIndexColumns(table, ["scenario_key", "area_id"])
 		.addPrimaryKeyConstraint("coastal_zone_cell_pk", ["h3_cell", "area_id"])
-		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

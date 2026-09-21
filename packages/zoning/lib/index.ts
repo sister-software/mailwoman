@@ -104,11 +104,14 @@ export type ZoningReadingKind = (typeof ZoningReadingKind)[keyof typeof ZoningRe
  */
 export const ZoningContainmentPath = {
 	/**
-	 * The cell lies wholly inside the zone. no geometry was read.
+	 * The cell lies wholly inside the zone.
+	 * No geometry was read.
 	 */
 	WholeCell: "whole_cell",
 	/**
-	 * The cell is crossed by a boundary. the point was ray-cast against the polygons named for that cell.
+	 * The cell is crossed by a boundary.
+	 *
+	 * The point was ray-cast against the polygons named for that cell.
 	 */
 	RayCast: "ray_cast",
 	/**
@@ -200,8 +203,8 @@ export interface ZoningDesignation {
 	/**
 	 * The authority states unzoned land positively on a handful of rows.
 	 *
-	 * `true` here is the authority saying so. an absent designation says nothing at all,
-	 * which is the distinction this layer exists to keep.
+	 * `true` here is the authority saying so.
+	 * An absent designation says nothing at all, which is the distinction this layer exists to keep.
 	 */
 	unzoned: boolean
 	containment: ZoningContainmentPath
@@ -215,16 +218,17 @@ export interface ZoningReading {
 	/**
 	 * Every polygon containing the point, ordered by `area_id`.
 	 *
-	 * Usually one. several where a Local Area Plan overlays a Development Plan over
-	 * the same ground, which the source publishes as two rows.
+	 * Usually one.
+	 * Several where a Local Area Plan overlays a Development Plan over the same ground,
+	 * which the source publishes as two rows.
 	 */
 	designations: ZoningDesignation[]
 	containment: ZoningContainmentPath
 	/**
 	 * The coverage row for the location, when the product has data in that cell.
 	 *
-	 * Its basis is always `source_present`, so it licenses presence and nothing else —
-	 * an absent coverage row and a present one are both compatible with "no zoning
+	 * Its basis is always `source_present`, so it licenses presence and nothing else.
+	 * An absent coverage row and a present one are both compatible with "no zoning
 	 * polygon here", and neither says the location is unrestricted.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
@@ -275,7 +279,8 @@ export interface ZoningLayerIdentity {
 	/**
 	 * The coverage basis every row carries.
 	 *
-	 * Always `source_present` while `mappedExtents` is empty. checked at open time rather than assumed.
+	 * Always `source_present` while `mappedExtents` is empty.
+	 * Checked at open time rather than assumed.
 	 */
 	coverageBasis: CoverageBasis
 	databasePath: string
@@ -558,8 +563,8 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 	// of this layer may license a claim that a location is unrestricted.
 	// A stronger basis reaching a caller would let an absent polygon be read as a
 	// designation of freedom to build over most of the map.
-	// The check itself is the interface's rather than this product's. the sentence
-	// saying why is this product's.
+	// The check itself is the interface's rather than this product's.
+	// The sentence saying why is this product's.
 	assertCoverageLicensesNoExclusion(
 		(database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{ basis: string | null }>).map(
 			(coverageRow) => coverageRow.basis

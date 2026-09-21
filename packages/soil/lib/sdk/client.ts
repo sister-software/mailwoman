@@ -110,8 +110,9 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 
 		const parsed = parseJSONStrict<{ Table?: unknown }>(data)
 
-		// An answer with no rows is `{}` rather than `{"Table":[]}`, so an absent `Table` is a real
-		// empty result and not a read failure — the exception check above has already separated the two.
+		// An answer with no rows is `{}` rather than `{"Table":[]}`, so an absent
+		// `Table` is a real empty result and not a read failure.
+		// The exception check above has already separated the two.
 		if (parsed.Table === undefined) return []
 
 		if (!Array.isArray(parsed.Table)) {

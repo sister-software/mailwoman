@@ -84,8 +84,9 @@ export interface GeocoderControlsProps {
 	/**
 	 * Fired with the query whenever one is submitted, before the parse starts.
 	 *
-	 * The host writes it into the URL. this package never touches `location`,
-	 * because the address bar is the app's state rather than a control's.
+	 * The host writes it into the URL.
+	 * This package never touches `location`, because the address bar is the app's state
+	 * rather than a control's.
 	 */
 	onSubmitQuery?: (query: string) => void
 	/**
@@ -144,7 +145,8 @@ const OVERSCROLL_PROMOTE_PX = 8
 /**
  * The chrome.
  *
- * Everything positioned here floats over the map. nothing occupies a column of the page.
+ * Everything positioned here floats over the map.
+ * Nothing occupies a column of the page.
  */
 export function GeocoderControls({
 	runtime,
@@ -170,8 +172,9 @@ export function GeocoderControls({
 	// Two open at once stack on the same edge, and on a phone each is the full panel.
 	const [openSheet, setOpenSheet] = useState<SheetName>(developer ? "developer" : null)
 
-	// The result sheet covers the bottom half of the map and had no way out: no close,
-	// no Escape, no backdrop — the only way to clear it was to run another query.
+	// The result sheet covers the bottom half of the map and had no way out:
+	// no close, no Escape, no backdrop.
+	// The only way to clear it was to run another query.
 	// `MapSheet` states the rule for the other four sheets ("the close button is not optional");
 	// this one is hand-rolled and never got it.
 	// Reset on every new query, below.
@@ -391,7 +394,8 @@ export function GeocoderControls({
 	)
 
 	// A permalink answers on arrival.
-	// `runtime.ready` holds it back — the parse pipeline drops a submit made before the model is loaded.
+	// `runtime.ready` holds it back.
+	// The parse pipeline drops a submit made before the model is loaded.
 	// It is exactly the window a cold permalink lands in — and the ref makes it once-only.
 	// Therefore, a later re-render (or the visitor clearing the field) cannot
 	// re-run the URL's query over their own work.
@@ -512,8 +516,9 @@ export function GeocoderControls({
 	const bundleLoading = Boolean(loading && !runtime.ready)
 	const steps = loading?.stepLabels.length ?? 0
 
-	// The model downloads before the first step is entered, so the step fraction holds at 1/steps
-	// for the whole of a 38 MB transfer — the part of the wait a visitor actually sits through.
+	// The model downloads before the first step is entered, so the step fraction
+	// holds at 1/steps for the whole of a 38 MB transfer.
+	// The part of the wait a visitor actually sits through.
 	// While bytes are arriving the bar follows them, scaled into the first step's share
 	// so it never runs backwards when the steps take over.
 	const stepFraction = steps ? ((loading?.stepIndex ?? 0) + 1) / steps : null

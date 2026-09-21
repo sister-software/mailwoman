@@ -115,7 +115,7 @@ export function emitOpenAPIDocuments(app: OpenAPIHono, info: OpenAPIDocInfo): { 
 /**
  * The shared body of every surface's `openapi` CLI subcommand
  * (the three drop-ins + `mailwoman openapi`): pick the flavor `emitOpenAPIDocuments` produces
- * (`--flavor 3.0` → the 3.0.3 diet client generators like progenitor want. default 3.1.0),
+ * (`--flavor 3.0` → the 3.0.3 diet client generators like progenitor want. Default 3.1.0),
  * then either print it to stdout or write it to `out`.
  *
  * Always compact (single-line) JSON — never pretty-printed — so the stdout form is a stable
@@ -145,9 +145,10 @@ export async function printOpenAPIDocument(
 /**
  * An OpenAPI error-response descriptor: a description plus a JSON body of `schema`.
  *
- * Takes the schema rather than owning one, because each drop-in's error envelope reproduces
- * the wire shape of the project it replaces — Nominatim's differs from libpostal's,
- * and both are recorded decisions rather than drift.
+ * Takes the schema rather than owning one, because each drop-in's error envelope
+ * reproduces the wire shape of the project it replaces.
+ * Nominatim's differs from libpostal's, and both are recorded decisions rather than drift.
+ *
  * What repeats between them is this four-line descriptor rather than the shape it wraps.
  */
 export function errorContent<S>(description: string, schema: S) {

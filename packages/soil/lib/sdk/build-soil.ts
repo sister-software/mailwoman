@@ -100,10 +100,11 @@ const M2_PER_ACRE = 4046.8564224
  * acreage that fails the build.
  *
  * Two percent.
- * The comparison is a spherical ring area against a figure nrcs itself warns "may differ from
- * that measured using GIS software due to different measuring techniques and rounding practices,
- * or due to the fact that the value has been adjusted so that the sum total of all map units
- * in the legend equals that listed for soil survey area" — so an exact test would be brittle.
+ * The comparison is a spherical ring area against a figure nrcs itself warns "may
+ * differ from that measured using GIS software due to different measuring techniques
+ * and rounding practices, or due to the fact that the value has been adjusted so that the
+ * sum total of all map units in the legend equals that listed for soil survey area".
+ * So an exact test would be brittle.
  *
  * Two percent sits far above the 0.03% `IA153` measures and far below the error a hole-blind
  * read produces, which the zoning survey measured at 4.1% over a whole national layer.
@@ -126,8 +127,8 @@ export interface SurveyAreaInput {
 	/**
 	 * An in-process feature source.
 	 *
-	 * Correct for a fixture and for anything small. the batched path builds one of
-	 * these per chunk, so the two share one implementation.
+	 * Correct for a fixture and for anything small.
+	 * The batched path builds one of these per chunk, so the two share one implementation.
 	 */
 	source?: SoilFeatureSource
 	/**
@@ -321,8 +322,8 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 
 			// the spine KEY names the table A consumer joins on, table-qualified, per the layer interface.
 			// For this layer that is the reduction rather than the containment index: `soil_capability_cell`
-			// holds one row per cell at one resolution, which `soil_map_unit_cell` does not —
-			// it is keyed `(cell, delineation)` and is mixed-resolution by construction.
+			// holds one row per cell at one resolution, which `soil_map_unit_cell` does not.
+			// It is keyed `(cell, delineation)` and is mixed-resolution by construction.
 			// Therefore, it is a tier the reader walks rather than a key a consumer joins.
 			await writeLayerManifest(
 				kdb,
@@ -444,8 +445,9 @@ function assertDelineationCounts(areas: ReadonlyArray<SurveyAreaInput>, streamed
  *
  * The message carries the hole-blind total beside the nested one, because the gap between them
  * is the diagnosis: a hole read as an exterior ring answers "inside" for every point in it.
- * A build over survey areas that publish no acreage has no witness — the reading's
- * own type says so, and the `known` count is what a receipt names.
+ * A build over survey areas that publish no acreage has no witness.
+ *
+ * The reading's own type says so, and the `known` count is what a receipt names.
  */
 function assertAreaAgreement(areas: ReadonlyArray<SurveyAreaInput>, streamed: StreamResult): AreaAgreementReading {
 	let publishedAcres = 0
@@ -654,8 +656,9 @@ async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Pro
  * truthful answer for ground the built set may or may not reach.
  *
  * `observed_rows` counts the delineations reaching the cell, which is what the interface's column means.
- * A cell reached only by `notcom` and access-denied polygons gets no row —
- * the polygon exists, the soil mapping behind it does not, and the survey's §3.2
+ * A cell reached only by `notcom` and access-denied polygons gets no row.
+ *
+ * The polygon exists, the soil mapping behind it does not, and the survey's §3.2
  * puts that case with the absences rather than with the coverage.
  */
 function buildCoverageCells(
@@ -696,8 +699,8 @@ function buildCoverageCells(
 
 		// Attributed by the cell's centre, so each row is counted for exactly one
 		// survey area even where the cell straddles two.
-		// The count is a per-area receipt rather than part of the coverage claim —
-		// the claim is the row set itself.
+		// The count is a per-area receipt rather than part of the coverage claim.
+		// The claim is the row set itself.
 		const [latitude, longitude] = cellToLatLng(cell)
 		const owner = options.areas.find((input) => geometryContains(input.outline, longitude, latitude))
 

@@ -43,14 +43,17 @@ export interface LinkableArtifact {
 }
 
 /**
- * An artifact the recipe names that must be built rather than copied — the source entry is a build input.
+ * An artifact the recipe names that must be built rather than copied.
+ * The source entry is a build input.
  *
- * Kept in a separate type on purpose. `softFeed.postcodeDBByCountry[cc]` names a WOF postcode extract
- * (`postalcode-gb.db`) from which `mailwoman gazetteer postcode-binary` produces `postcode-gb.bin`;
- * `pairIndexByCountry[cc]` names a tuples CSV behind `pair-index-<cc>.bin`. A consumer that treated either as linkable
- * would place a database where the resolver expects a binary — and since every sibling degrades `existsSync →
- * undefined`, the resolver would then report the artifact as missing rather than wrong, which is the harder failure to
- * see.
+ * Kept in a separate type on purpose.
+ * `softFeed.postcodeDBByCountry[cc]` names a WOF postcode extract (`postalcode-gb.db`)
+ * from which `mailwoman gazetteer postcode-binary` produces `postcode-gb.bin`;
+ * `pairIndexByCountry[cc]` names a tuples CSV behind `pair-index-<cc>.bin`.
+ *
+ * A consumer that treated either as linkable would place a database where the resolver expects
+ * a binary — and since every sibling degrades `existsSync → undefined`, the resolver would
+ * then report the artifact as missing rather than wrong, which is the harder failure to see.
  */
 export interface BuildableArtifact {
 	shippedName: string
@@ -77,8 +80,8 @@ export interface WeightsRecipe {
 	/**
 	 * Files this recipe names for a locale.
 	 *
-	 * Absent entries are simply omitted — a release that ships without a channel is
-	 * a supported lean install rather than an error.
+	 * Absent entries are simply omitted.
+	 * A release that ships without a channel is a supported lean install rather than an error.
 	 */
 	linkableFor: (locale: string) => LinkableArtifact[]
 	/**
@@ -108,8 +111,8 @@ export async function readWeightsRecipe(
 	const model = overrides.model ?? resolvePath(dataRoot, config.weights.model)
 	const tokenizer = overrides.tokenizer ?? resolvePath(dataRoot, config.weights.tokenizer)
 
-	// `copy-weights.ts` lets an absolute config entry pass through. matching that here
-	// keeps the two readers from disagreeing about what a leading slash means.
+	// `copy-weights.ts` lets an absolute config entry pass through.
+	// Matching that here keeps the two readers from disagreeing about what a leading slash means.
 	const underDataRoot = (rel: string, ...segments: string[]): string =>
 		rel.startsWith("/") ? rel : resolvePath(dataRoot, ...segments, rel)
 
@@ -136,8 +139,9 @@ export async function readWeightsRecipe(
 
 		// The FSTs are DEV-only: `release.config.json` does not name them and `copy-weights.ts` does not
 		// ship them, so they exist in a weights directory only because a dev linker put them there.
-		// Their absence is therefore not a lean install — it silently resolves the gazetteer
-		// and street-context priors off, which is a scoring change with no error.
+		// Their absence is therefore not a lean install.
+		// It silently resolves the gazetteer and street-context priors off,
+		// which is a scoring change with no error.
 		// Named here so one reader knows the whole dev set.
 		out.push(
 			{

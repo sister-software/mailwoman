@@ -88,7 +88,8 @@ interface MatrixRow {
 export interface VerifyReleaseMetadataOptions {
 	repoRoot: string
 	/**
-	 * Repo-relative (or absolute) overrides for each surface. the defaults are the real repo files.
+	 * Repo-relative (or absolute) overrides for each surface.
+	 * The defaults are the real repo files.
 	 */
 	card?: string
 	ledger?: string
@@ -114,9 +115,9 @@ const PUBLISHED_STATUS_PAGE = `${PUBLISHED_DOCS_ROOT}developers/status.mdx`
  *
  * This check verifies that A file cites the shipped version, and for four releases it
  * verified the archived August copy while the live page said 8.6.0 and model 7.0.0 (#2259).
- * A target that can move out from under a check while still resolving reports
- * success from the wrong place, and absence of failure was read as propagation —
- * so the path is constrained rather than merely defaulted.
+ * A target that can move out from under a check while still resolving reports success
+ * from the wrong place, and absence of failure was read as propagation.
+ * So the path is constrained rather than merely defaulted.
  */
 function assertPublishedStatusPage(statusPath: string): void {
 	if (statusPath.startsWith(PUBLISHED_DOCS_ROOT)) return
@@ -188,8 +189,9 @@ async function checkLedger(version: string, ledgerPath: string): Promise<Surface
 /**
  * Parse the releases.mdx version matrix into ordered data rows.
  *
- * A data row is a `|`-delimited table line whose first cell carries a version-like
- * token. the header and `---` separator rows are skipped.
+ * A data row is a `|`-delimited table line whose first cell carries a version-like token.
+ * The header and `---` separator rows are skipped.
+ *
  * The "## The matrix" table is the only one whose rows look like this, so a global scan is safe.
  */
 function parseMatrixRows(markdown: string): MatrixRow[] {
@@ -211,7 +213,8 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 		const versionCell = cells[0]!.replaceAll("**", "")
 		const lineageCell = cells[2]!
 
-		// Skip header ("npm") and separator ("---") rows — they carry no version token.
+		// Skip header ("npm") and separator ("---") rows.
+		// They carry no version token.
 		if (!/\d/.test(versionCell)) continue
 
 		rows.push({ versionCell, lineageCell })
@@ -272,9 +275,10 @@ async function checkReleases(version: string, releasesPath: string): Promise<Sur
 
 	const { versionCell } = rows[currentIndex]!
 
-	// Rows are newest-first. current above V (smaller index) is fine only if every row
-	// strictly newer than V is a code-only "model unchanged" bump — then V is still the
-	// live model and the marker rightly sits on the newest npm row.
+	// Rows are newest-first.
+	// Current above V (smaller index) is fine only if every row strictly newer than
+	// V is a code-only "model unchanged" bump — then V is still the live model
+	// and the marker rightly sits on the newest npm row.
 	if (currentIndex < vIndex) {
 		const newerRows = rows.slice(currentIndex, vIndex)
 		const nonCodeOnly = newerRows.filter((row) => !/unchanged/i.test(row.lineageCell))
@@ -297,7 +301,8 @@ async function checkReleases(version: string, releasesPath: string): Promise<Sur
 		}
 	}
 
-	// current below V (larger index) — the marker is stuck on an older release than the shipped model.
+	// current below V (larger index).
+	// The marker is stuck on an older release than the shipped model.
 	return {
 		surface,
 		ok: false,
@@ -350,8 +355,8 @@ export interface VerifyReleaseMetadataReport {
 /**
  * Check every surface for the shipped model version.
  *
- * Throws when any surface is stale, with each remediation already reported through `log`,
- * so a caller's exit code follows the verdict.
+ * @throws when any surface is stale, with each remediation already reported through `log`,
+ *   so a caller's exit code follows the verdict.
  */
 export async function verifyReleaseMetadata(
 	options: VerifyReleaseMetadataOptions

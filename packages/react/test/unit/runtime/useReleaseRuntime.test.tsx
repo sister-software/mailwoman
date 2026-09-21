@@ -138,7 +138,8 @@ test("a null manifest leaves nothing selected and never readies", async () => {
 	const nullManifest = async () => null
 	const { container } = renderComponent(<Harness manifestLoader={nullManifest} />)
 
-	// Give the mount effect a tick. the version stays unselected and the bundle never loads.
+	// Give the mount effect a tick.
+	// The version stays unselected and the bundle never loads.
 	await vi.waitFor(() => expect(text(container, ".version")).toBe("none"), { timeout: 2000 })
 	expect(text(container, ".ready")).toBe("no")
 })

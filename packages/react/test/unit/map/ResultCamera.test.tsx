@@ -72,8 +72,8 @@ test("an animated fitBounds omits the duration KEY — passing it as undefined i
 	const animated = fitBoundsOptionsFor(40, true)
 
 	// `duration: undefined` would satisfy maplibre's `'duration' in options` test and coerce to NaN.
-	// The key must be absent rather than merely undefined — `toBeUndefined()` on
-	// the value would pass against the bug.
+	// The key must be absent rather than merely undefined.
+	// `toBeUndefined()` on the value would pass against the bug.
 	expect(Object.hasOwn(animated, "duration")).toBe(false)
 	expect(animated.padding).toBe(40)
 
@@ -109,8 +109,8 @@ test("a bounds target drives the live map to the box without a NaN ease frame", 
 	const getMap = () => mapRef?.getMap()
 
 	// The map must actually arrive.
-	// Under the bug the flight throws on frame 1 and the camera never leaves (0, 51.5) — so a moved
-	// center is the assertion, and the thrown RAF frame surfaces as an unhandled error besides.
+	// Under the bug the flight throws on frame 1 and the camera never leaves (0, 51.5).
+	// So a moved center is the assertion, and the thrown RAF frame surfaces as an unhandled error besides.
 	const arrived = await settle(() => {
 		const center = getMap()?.getCenter()
 

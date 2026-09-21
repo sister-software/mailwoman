@@ -37,7 +37,7 @@ export const ThreeOptions: Story = {
 }
 
 /**
- * Disabled (e.g. while a parse runs).
+ * Disabled (e.g. While a parse runs).
  */
 export const Disabled: Story = {
 	args: { versions: VERSIONS, selected: "v7.1.0", onSelect: () => {}, disabled: true },

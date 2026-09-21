@@ -126,7 +126,7 @@ function assertNeedles(output: string, needles: readonly string[], page: string)
 /**
  * Pack the seeds' closure, install it into a throwaway project, and run the two pages' transcripts.
  *
- * Throws on the first claim that no longer holds, naming the page.
+ * @throws on the first claim that no longer holds, naming the page.
  */
 export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<SmokeGetStartedReport> {
 	const { repoRoot, log } = options
@@ -168,7 +168,8 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	try {
 		doctor = run("node", [cli, "doctor"], project, { MAILWOMAN_DATA_ROOT: doctorRoot })
 	} catch (error) {
-		// doctor exits non-zero when a check fails, which is the cold state the page shows. the transcript is what counts.
+		// doctor exits non-zero when a check fails, which is the cold state the page shows.
+		// The transcript is what counts.
 		doctor = error instanceof Error && "stdout" in error ? String((error as { stdout: unknown }).stdout) : String(error)
 	}
 

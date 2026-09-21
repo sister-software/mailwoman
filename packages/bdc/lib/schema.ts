@@ -44,8 +44,8 @@ import type { Kysely } from "kysely"
  *
  * In the default build mode this is one row per distinct
  * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code)
- * tuple — not one row per (block, provider, technology) triple. a triple whose BSLs carry
- * differing speed tiers keeps multiple rows here (see `build-bdc.ts`'s docstring).
+ * tuple — not one row per (block, provider, technology) triple.
+ * A triple whose BSLs carry differing speed tiers keeps multiple rows here (see `build-bdc.ts`'s docstring).
  */
 export interface BDCAvailabilityTable {
 	/**
@@ -78,13 +78,15 @@ export interface BDCAvailabilityTable {
  * Populated by the registry join (2a decision 8) behind the optional
  * `BuildBDCOptions.providers` (`bdc/sdk/build-bdc.ts`'s `populateBDCProviderTable`);
  * when that option is omitted (the default), this table stays empty.
- * No FK constraint against `bdc_availability.provider_id` — SQLite doesn't enforce FKs
- * without `pragma foreign_keys`, and the join happens at read time rather than write time.
+ * No FK constraint against `bdc_availability.provider_id`.
+ *
+ * SQLite doesn't enforce FKs without `pragma foreign_keys`, and the join happens
+ * at read time rather than write time.
  *
  * **Decision 6 — this table is an explicitly lossy denormalization rather than the source of
  * truth.** `provider_id` is the PK (one row per provider), but the FCC's BDC provider list lets
  * one `provider_id` carry multiple `frn` values — and conflicting `holding_company` strings —
- * across its rows (`parseProviderList` preserves every one of them. see `filer/sdk/provider-list.ts`).
+ * across its rows (`parseProviderList` preserves every one of them. See `filer/sdk/provider-list.ts`).
  * A single-row-per-provider table cannot express that cardinality.
  *
  * `filer.db` (`@mailwoman/filer`) is the source of truth: it retains every `provider_id`↔`frn`
@@ -99,13 +101,13 @@ export interface BDCAvailabilityTable {
  *   fully recoverable from `filer.db`.
  * - `holding_company` gets the same single-distinct-value shortcut `frn` gets:
  *   when a `provider_id`'s rows carry exactly one distinct non-null `holding_company` string,
- *   there is no conflict to resolve, so it's populated directly — no rule needed,
- *   same as a single-FRN provider needs no `filerDB` query.
+ *   there is no conflict to resolve, so it's populated directly.
+ *   No rule needed, same as a single-FRN provider needs no `filerDB` query.
  *   When they carry more than one distinct value, that ambiguity is
  *   the real conflict decision 6 refuses to paper over with last-wins
  *   (`holding_company` has no most-recent-filing-date rule the way `frn` does), so it stays NULL
- *   and every discarded value remains recoverable from `filer.db`'s `holding_company_name`
- *   edges — the identical discipline `frn`'s primary pick already applies.
+ *   and every discarded value remains recoverable from `filer.db`'s `holding_company_name` edges.
+ *   The identical discipline `frn`'s primary pick already applies.
  * - `brand_name` stays NULL unconditionally: the provider list carries no brand-name
  *   column at all, primary or otherwise, so there is nothing to populate it from.
  */
@@ -160,8 +162,11 @@ export async function createBDCAvailabilityTable(db: Kysely<BDCDatabase>): Promi
 }
 
 /**
- * Create `bdc_provider`. A single-column integer primary KEY is already the SQLite rowid alias, so there's no `without
- * rowid` win here — that modifier only pays off clustering a composite or non-integer PK.
+ * Create `bdc_provider`.
+ *
+ * A single-column integer primary KEY is already the SQLite rowid alias,
+ * so there's no `without rowid` win here.
+ * That modifier only pays off clustering a composite or non-integer PK.
  */
 export async function createBDCProviderTable(db: Kysely<BDCDatabase>): Promise<void> {
 	await db.schema

@@ -55,7 +55,8 @@ export interface NPPESReportInput {
 	geocoded: number
 	trainEM: boolean
 	/**
-	 * The corpus-wide table the progression was fed. only its `total`/`distinct` are reported.
+	 * The corpus-wide table the progression was fed.
+	 * Only its `total`/`distinct` are reported.
 	 */
 	addressFrequency: TermFrequencyTable
 	/**
@@ -95,7 +96,8 @@ export interface NPPESReportInput {
 	candidate: { label: string; npi: Score; entity: Score } | null
 	h3Res: number
 	/**
-	 * Sampled NPIs whose primary practice address placed — the population the coordinate grain can act on.
+	 * Sampled NPIs whose primary practice address placed.
+	 * The population the coordinate grain can act on.
 	 */
 	geocodedNpis: number
 }

@@ -67,8 +67,9 @@ export const GZT_MIN_REQUEST_INTERVAL_MS = 500
  * How long a cached metadata response stays fresh.
  *
  * Six hours, chosen against the product's own cadence rather than a wall-clock intuition.
- * The Department publishes no maintenance-frequency statement at all. what is
- * observable is that the item's `modified` date and the data's latest `UPLOAD_DATE`
+ * The Department publishes no maintenance-frequency statement at all.
+ *
+ * What is observable is that the item's `modified` date and the data's latest `UPLOAD_DATE`
  * move a handful of times a year, so a shorter TTL adds nothing.
  */
 const GZT_CACHE_TTL_MS = 6 * 60 * 60 * 1000
@@ -314,8 +315,9 @@ export class GZTClient extends APIClient<APIClientConfig> {
  * Refuse an attribution the published item no longer matches.
  *
  * Read AT build time rather than trusted from the constant.
- * The constant is what the artifact is stamped with offline. this is the live value
- * it is reconciled with when the network is available.
+ * The constant is what the artifact is stamped with offline.
+ *
+ * This is the live value it is reconciled with when the network is available.
  *
  * The check is on the department'S credit line and on the Tailte Éireann clause separately,
  * because they are two different statements and the second is the one that holds this layer

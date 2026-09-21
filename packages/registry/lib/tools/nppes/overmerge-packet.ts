@@ -38,8 +38,9 @@ export interface OvermergePacketInput {
 /**
  * Write the packet and return the number of over-merged clusters it holds.
  *
- * A cluster qualifies when its members carry more than one org-name label —
- * the matcher fused records the org-name truth says belong to different entities.
+ * A cluster qualifies when its members carry more than one org-name label.
+ * The matcher fused records the org-name truth says belong to different entities.
+ *
  * Per-pair human adjudication is the only instrument that separates model error from
  * yardstick error once the residual is near the measured irreducible ceiling.
  */

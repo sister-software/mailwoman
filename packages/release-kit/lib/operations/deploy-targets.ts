@@ -41,8 +41,8 @@ function toMatrix(selections: DeploySelection[]): z.infer<typeof matrixEntry>[] 
 /**
  * The deploy workflow's first job: which Workers a push reaches.
  *
- * `--targets` names them outright (`all`, or a comma-separated list of ids) for a
- * hand deploy. otherwise `--base` and `--head` bound the diff.
+ * `--targets` names them outright (`all`, or a comma-separated list of ids) for a hand deploy.
+ * Otherwise `--base` and `--head` bound the diff.
  */
 export const deployTargets = defineOperation({
 	id: "release.deploy-targets",

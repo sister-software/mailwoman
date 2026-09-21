@@ -23,8 +23,8 @@ export const BROADBAND_SERVICABLE_LOCATION_INPUT_PATTERN = /^\d{10}$/
  * - While IDs persist across Fabric versions does not mean that the latitude and longitude are unchanged.
  * - An ID will remain consistent across versions when a different building is selected on a single parcel.
  *
- * Typed as a `string`, not a `number` — the FCC's own IDs are 10-digit zero-padded strings,
- * and leading zeros make integer storage lossy.
+ * Typed as a `string`, not a `number`.
+ * The FCC's own IDs are 10-digit zero-padded strings, and leading zeros make integer storage lossy.
  *
  * @type string
  * @title Broadband Servicable Location ID

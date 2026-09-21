@@ -55,7 +55,8 @@ export interface BlessPackageOptions {
 	env?: string
 	provider: string
 	/**
-	 * Publish only. configure trust separately.
+	 * Publish only.
+	 * Configure trust separately.
 	 */
 	noTrust: boolean
 	dryRun: boolean
@@ -68,10 +69,11 @@ export interface BlessPackageReport {
 
 /**
  * Write ops borrow this terminal so the npm CLI can run its own auth handshake — printing the
- * approval URL, or prompting for a code — without this operation standing in the middle of it. stdin
- * and stdout stay inherited (npm keeps a real TTY for any prompt); only stderr is piped,
- * because that is where npm writes the approval URL and we want to read it on the way
- * past. zx forwards piped output to the terminal itself, so nothing here re-emits it.
+ * approval URL, or prompting for a code — without this operation standing in the middle of it.
+ *
+ * Stdin and stdout stay inherited (npm keeps a real TTY for any prompt); only stderr is piped,
+ * because that is where npm writes the approval URL and we want to read it on the way past.
+ * Zx forwards piped output to the terminal itself, so nothing here re-emits it.
  */
 const npmWrite = $({ stdio: ["inherit", "inherit", "pipe"] })
 
@@ -86,8 +88,8 @@ const npmWrite = $({ stdio: ["inherit", "inherit", "pipe"] })
  * The default, `external`, sets the clipboard from tmux's own copy-mode but silently
  * discards sequences that applications emit — the copy appears to work and nothing arrives.
  *
- * Returns whether the sequence was written. the terminal on the other end may
- * still ignore it, which is not detectable from here.
+ * @returns whether the sequence was written.
+ *   The terminal on the other end may still ignore it, which is not detectable from here.
  */
 function copyToTerminalClipboard(text: string): boolean {
 	if (!process.stdout.isTTY) return false
@@ -223,8 +225,9 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 		return false
 	}
 
-	// `--no-browser` stops npm handing the approval URL to an xdg-open that has nowhere to go
-	// on a headless host — it prints the URL to this terminal instead, where we can catch it.
+	// `--no-browser` stops npm handing the approval URL to an xdg-open that has
+	// nowhere to go on a headless host.
+	// It prints the URL to this terminal instead, where we can catch it.
 	await runNPMWrite(npmWrite`npm publish ${tgz} --access public --no-browser`, log)
 
 	return true
@@ -265,8 +268,8 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	// the same second factor as the write, and reading it under `.quiet()` would swallow npm's
 	// approval URL — which it prints to stderr — leaving the operator staring at a silent process.
 	// So attempt the write unconditionally and let npm arbitrate.
-	// Failure never blocks the publishes. npm has already printed the reason to this
-	// terminal, so only the retry command needs restating.
+	// Failure never blocks the publishes.
+	// Npm has already printed the reason to this terminal, so only the retry command needs restating.
 	try {
 		await runNPMWrite(npmWrite`npm ${args}`, log)
 

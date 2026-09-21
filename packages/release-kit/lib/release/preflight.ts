@@ -68,8 +68,9 @@ export interface ReleasePreflightReport {
 /**
  * Stage, materialize, pack and audit every release workspace.
  *
- * Answers the report. the verdict is `fail` when any release workspace does not pack to a tarball
- * honoring its manifest, or when the release list's named-absence identity does not hold.
+ * Answers the report.
+ * The verdict is `fail` when any release workspace does not pack to a tarball honoring
+ * its manifest, or when the release list's named-absence identity does not hold.
  */
 export async function releasePreflight(options: ReleasePreflightOptions): Promise<ReleasePreflightReport> {
 	const { repoRoot, source, log } = options
@@ -97,7 +98,8 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 		stagingRoot = String(scratch.path)
 	}
 
-	// 1. The named-absence identity — every workspace outside the release list must be sanctioned by name.
+	// 1. The named-absence identity.
+	//    Every workspace outside the release list must be sanctioned by name.
 	const identity = await checkReleaseListIdentity(repoRoot)
 
 	const releaseListProblems = [

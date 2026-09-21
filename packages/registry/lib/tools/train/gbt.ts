@@ -41,7 +41,8 @@ import { scoreEntities } from "#tools/nppes/scoring"
 import { stateOption, uniqueQuantiles } from "#tools/shared"
 
 /**
- * Share of entities assigned to fit. the rest are held out.
+ * Share of entities assigned to fit.
+ * The rest are held out.
  */
 const FIT_SPLIT_FRACTION = 0.8
 
@@ -116,15 +117,16 @@ export async function trainDedupGBT(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// Build the variation-rich sample and corpus-wide address-frequency table. sample builder —
-	// the same records the dedup benchmark and the learned-scorer evals see). ---
+	// Build the variation-rich sample and corpus-wide address-frequency table.
+	// Sample builder — the same records the dedup benchmark and the learned-scorer evals see). ---
 	const { rows, keptNpis, addressFrequency } = await buildNPPESSample(
 		{ registryPath: REGISTRY, otherNamesPath: OTHER_NAMES, state: STATE, maxNpis: NPIS },
 		report
 	)
 
-	// Geocode and ingest records, carrying the NPI in record.id as the label. injected
-	// (see ./eval-geocoder.ts) — the registry package never imports the runtime. ---
+	// Geocode and ingest records, carrying the NPI in record.id as the label.
+	// Injected (see ./eval-geocoder.ts).
+	// The registry package never imports the runtime. ---
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
@@ -160,8 +162,9 @@ export async function trainDedupGBT(
 		report?.(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
 	}
 
-	// Calibrate the default link threshold. the GBT logit is not in FS-weight units.
-	// trained with class-balanced weights, so logit 0 (the balanced boundary)
+	// Calibrate the default link threshold.
+	// The GBT logit is not in FS-weight units.
+	// Trained with class-balanced weights, so logit 0 (the balanced boundary)
 	// ignores the ~1% match base rate and over-merges.
 	// Split the NPIs 80/20, fit a calibration GBT on the 80%, and sweep the clustering
 	// threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
@@ -216,8 +219,8 @@ export async function trainDedupGBT(
 	const model = trainGBT(X, Y, W, hyperparams)
 	report?.(`    ${pairs.length} pairs (${(100 * posRate).toFixed(1)}% positive), ${model.trees.length} trees`)
 
-	// Emit the model as a committed TypeScript module with a prettier-stable literal. retrain
-	// produces a clean one-line diff rather than a thousand reformatted lines. ---
+	// Emit the model as a committed TypeScript module with a prettier-stable literal.
+	// Retrain produces a clean one-line diff rather than a thousand reformatted lines. ---
 	const meta = {
 		version: "1.0.0",
 		locale: LOCALE,

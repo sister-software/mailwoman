@@ -163,7 +163,8 @@ async function runOperation(
 /**
  * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings.
  *
- * `debt` is the only counter set with a baseline. the target is named so a second one has a place to go.
+ * `debt` is the only counter set with a baseline.
+ * The target is named so a second one has a place to go.
  */
 async function runBaseline(
 	targets: readonly string[],
@@ -199,8 +200,10 @@ async function runBaseline(
  *
  * Not a check: it answers a report about the tree rather than a verdict on it,
  * and its leads are for a human reviewer to confirm.
- * It sits under `health` for the same reason `baseline` does — it reads the same tracked-file context
- * every check gets, and CI runs a registered entry point rather than a path into a package's `lib/`.
+ * It sits under `health` for the same reason `baseline` does.
+ *
+ * It reads the same tracked-file context every check gets, and CI runs a registered
+ * entry point rather than a path into a package's `lib/`.
  */
 async function runComments(
 	targets: readonly string[],
@@ -367,7 +370,8 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 /**
  * Route one invocation.
  *
- * Returns the exit code. never touches `process`.
+ * @returns the exit code.
+ *   Never touches `process`.
  */
 export async function dispatch(args: readonly string[], io: DispatchIO): Promise<number> {
 	const [verb, ...rest] = args

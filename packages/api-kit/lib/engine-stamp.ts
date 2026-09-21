@@ -35,10 +35,11 @@ export const EngineStampSchema = z
  * what the engine produces (the schema drift pin in `mailwoman` depends on that) and the
  * OpenAPI document references the outcome component through `allOf` instead of cloning it.
  *
- * `name` registers the stamped shape as its own component, and it is required rather than optional
- * because an unnamed intersection is inlined at every use: a generator then has no name to
- * give the type and invents one from the position it appears in — `PhotonResponse::Variant0`,
- * or a flattened per-operation clone of an outcome that already has a name.
+ * `name` registers the stamped shape as its own component, and it is required
+ * rather than optional because an unnamed intersection is inlined at every use: a generator
+ * then has no name to give the type and invents one from the position it appears in.
+ * `PhotonResponse::Variant0`, or a flattened per-operation clone of an outcome that already has a name.
+ *
  * Naming it keeps one `$ref` per stamped shape, which is what makes a generated
  * client's type names follow the document's.
  */

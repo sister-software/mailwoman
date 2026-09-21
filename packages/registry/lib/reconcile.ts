@@ -70,9 +70,9 @@ export interface ReconciliationResult {
 /**
  * Bucket an entity from the source labels its records span.
  *
- * Returns `null` when the entity carries no eligibility- or funding-tagged source
- * (it is outside this reconciliation — e.g. a source the caller didn't assign a role)
- * so callers can exclude it rather than silently miscount it.
+ * @returns `null` when the entity carries no eligibility- or funding-tagged source
+ *   (it is outside this reconciliation — e.g. a source the caller didn't assign a role)
+ *   so callers can exclude it rather than silently miscount it.
  */
 export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): ReconciliationBucket | null {
 	const elig = new Set(config.eligibilitySources)
@@ -128,8 +128,9 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 }
 
 /**
- * A display name for a reconciled entity's representative record — the organization's
- * canonical form, else the person name, else the record id.
+ * A display name for a reconciled entity's representative record.
+ *
+ * The organization's canonical form, else the person name, else the record id.
  */
 export function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
@@ -139,8 +140,9 @@ export function repName(entity: ResolvedEntity): string {
 }
 
 /**
- * GeoJSON of every located reconciled entity, each feature tagged with its `bucket` + `sources` — the shape
- * {@link toMapHTML} colors categorically by bucket. Entities without a coordinate are skipped.
+ * GeoJSON of every located reconciled entity, each feature tagged with its `bucket` +
+ * `sources` — the shape {@link toMapHTML} colors categorically by bucket.
+ * Entities without a coordinate are skipped.
  */
 export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureCollection<PointLiteral, EntityGeoData> {
 	return {
@@ -163,7 +165,7 @@ export interface ReconciliationReportOptions {
 	 */
 	scopeNote?: string
 	/**
-	 * A paragraph about the scorer choice (e.g. why the FS baseline rather than the dedup GBT).
+	 * A paragraph about the scorer choice (e.g. Why the FS baseline rather than the dedup GBT).
 	 */
 	scorerNote?: string
 	/**

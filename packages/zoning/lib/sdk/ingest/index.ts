@@ -99,7 +99,10 @@ export interface ZoningIngestOptions {
 	 */
 	exportPath: string
 	/**
-	 * Stop after this many features — the fixtures and smoke rungs use it. a full build does not set it.
+	 * Stop after this many features.
+	 *
+	 * The fixtures and smoke rungs use it.
+	 * A full build does not set it.
 	 */
 	limit?: number
 	/**
@@ -119,8 +122,9 @@ export interface ZoningIngestOptions {
 	 *
 	 * This is what makes a bounded build possible: h3's wasm heap cannot be reset from JavaScript,
 	 * so the classification runs one child process per range of the authority's own ids.
-	 * Ranges rather than an offset because `objectid` is the source's stable key —
-	 * a range names the same features on every run, which an offset into a result set does not.
+	 * Ranges rather than an offset because `objectid` is the source's stable key.
+	 *
+	 * A range names the same features on every run, which an offset into a result set does not.
 	 *
 	 * A narrower range costs A whole pass.
 	 * The source is one GeoJSON document rather than an indexed store,
@@ -164,8 +168,8 @@ const COORDINATE_PRECISION = 9
 /**
  * How far outside the declared extent a vertex may fall before the ingest refuses.
  *
- * A declared extent is itself a rounded published value, so an exact test would be
- * brittle. this margin is small enough that an unprojected or axis-swapped read —
+ * A declared extent is itself a rounded published value, so an exact test would be brittle.
+ * This margin is small enough that an unprojected or axis-swapped read —
  * which lands degrees or whole hemispheres away — still fails.
  */
 const BBOX_MARGIN_DEGREES = 0.01

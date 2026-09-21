@@ -32,7 +32,8 @@ export interface DebugInfoProps {
 	 */
 	forceWASM?: boolean
 	/**
-	 * The model version the runtime loaded — the training series, which is not the npm version.
+	 * The model version the runtime loaded.
+	 * The training series, which is not the npm version.
 	 */
 	selectedVersion?: string | null
 	/**
@@ -56,8 +57,9 @@ function Row({ label, value }: { label: string; value: string }): ReactNode {
 export function DebugInfo({ activeBackend, forceWASM, selectedVersion, ready }: DebugInfoProps): ReactNode {
 	const build = useBuildInfo()
 
-	// Memoized on the primitives it reads, so the log below fires when a value changes rather than on
-	// every render — a record rebuilt each render would be a new object each time and log continuously.
+	// Memoized on the primitives it reads, so the log below fires when a value changes
+	// rather than on every render.
+	// A record rebuilt each render would be a new object each time and log continuously.
 	const record = useMemo(
 		() => ({
 			app: build?.app ?? "—",

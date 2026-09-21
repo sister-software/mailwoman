@@ -65,10 +65,10 @@ function writeStderr(line: string): void {
 /**
  * Materialize every planned artifact under `destRoot`.
  *
- * Fetches each distinct bucket object once and writes it to every workspace that declares it —
- * the `cp` fan-out the YAML spelled out by hand. head-probes the whole remote set first
- * so an unstaged version fails in one pass with every missing object named,
- * rather than after the first 39 MB download dies on a 404.
+ * Fetches each distinct bucket object once and writes it to every workspace that
+ * declares it — the `cp` fan-out the YAML spelled out by hand.
+ * Head-probes the whole remote set first so an unstaged version fails in one pass with
+ * every missing object named, rather than after the first 39 MB download dies on a 404.
  */
 export async function fetchHFWeights(
 	destRoot: string,

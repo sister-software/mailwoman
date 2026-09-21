@@ -18,8 +18,9 @@
  *   behaviour rather than hoping a county contains one.
  */
 
-// The exterior and hole ring builders live in `@mailwoman/spatial` — a winding convention rather than
-// this product's geometry, and a second copy of it is a second place for a hole to stop being one.
+// The exterior and hole ring builders live in `@mailwoman/spatial`.
+// A winding convention rather than this product's geometry, and a second copy of
+// it is a second place for a hole to stop being one.
 import { rectangleRing } from "@mailwoman/spatial"
 
 import type { SoilComponentTable, SoilMapUnitTable } from "#schema"

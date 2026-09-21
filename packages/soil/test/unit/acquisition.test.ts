@@ -93,7 +93,8 @@ describe("readFGDCMetadata", () => {
 	it("takes the OLDEST source citation, which is the field survey the polygons rest on", () => {
 		const metadata = readFGDCMetadata(FGDC, "IA153")
 
-		// The refresh is 2025. the ground was walked in 1960.
+		// The refresh is 2025.
+		// The ground was walked in 1960.
 		// A consumer reading the refresh as survey currency reads it wrong by sixty-five years,
 		// so both travel and the older one names its source.
 		expect(metadata.publicationDate).toBe("2025-09-09")

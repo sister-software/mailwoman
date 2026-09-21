@@ -28,8 +28,8 @@ export const APIErrorSchema = z
  * `status` is generic (not the flat `ContentfulStatusCode` union) so the returned
  * `TypedResponse`'s status stays the caller'S literal (e.g. `503`), not the whole
  * union — required for use inside an `app.openapi(route, handler)` handler body
- * (`@mailwoman/api/routes.ts`), where the framework checks the handler's
- * return type against that specific route's declared per-status `responses` map.
+ * (`@mailwoman/api/routes.ts`), where the framework checks the handler's return type
+ * against that specific route's declared per-status `responses` map.
  * A flat-typed `status` param would widen every branch to "any content-carrying status",
  * which no single declared response branch matches.
  */
@@ -49,7 +49,8 @@ const GEOCODER_UNAVAILABLE_DETAIL =
  * docs told them to — and `/v1/resolve` answers `resolver`, not `geocoder`,
  * because the method it found missing is `engine.resolveTree`.
  *
- * Rename this function freely. never the string it emits.
+ * Rename this function freely.
+ * Never the string it emits.
  */
 export function geocoderUnavailableError(c: Context, subject: "geocoder" | "resolver" = "geocoder") {
 	return errorResponse(c, 503, `${subject} not available`, GEOCODER_UNAVAILABLE_DETAIL)

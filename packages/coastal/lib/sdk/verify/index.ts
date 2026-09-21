@@ -82,7 +82,8 @@ export interface OutsideRow {
 	kind: string
 	designations: number
 	/**
-	 * True when the artifact answered `unknown` with no designation — the only acceptable reading here.
+	 * True when the artifact answered `unknown` with no designation.
+	 * The only acceptable reading here.
 	 */
 	passed: boolean
 }
@@ -103,8 +104,9 @@ export interface VerifyCoastalResult {
  * cannot name is a coordinate nobody can check.
  *
  * Two populations, and both are required.
- * The inland English points are the case this layer's coverage posture exists for —
- * a builder that generalized the flood rule would answer them confidently.
+ * The inland English points are the case this layer's coverage posture exists for.
+ *
+ * A builder that generalized the flood rule would answer them confidently.
  *
  * The Welsh and Scottish coastal points are the case the flood layer's negative half
  * exists for, and they are on the coast here rather than inland, so they also confirm
@@ -134,8 +136,9 @@ export interface VerifyCoastalOptions {
 	/**
 	 * The scenario the negative half is asked under.
 	 *
-	 * Every scenario must answer `unknown` at these points. one is checked because the
-	 * negative half is about the artifact's extent rather than about a scenario's semantics.
+	 * Every scenario must answer `unknown` at these points.
+	 * One is checked because the negative half is about the artifact's extent
+	 * rather than about a scenario's semantics.
 	 */
 	outsideScenarioKey: string
 	onProgress?: (message: string) => void
@@ -202,8 +205,9 @@ export async function verifyCoastalDatabase(options: VerifyCoastalOptions): Prom
 }
 
 /**
- * Whether the service's own geometry contains the point, decided here with the same even-odd
- * rule the artifact's reader uses — so what is compared is a verdict against a verdict.
+ * Whether the service's own geometry contains the point, decided here with the
+ * same even-odd rule the artifact's reader uses.
+ * So what is compared is a verdict against a verdict.
  */
 async function readServiceContainment(
 	readServiceFeatures: ServiceFeatureReader,

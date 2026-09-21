@@ -83,7 +83,8 @@ export interface SoilOutsideRow {
 	longitude: number
 	kind: SoilReadingKind
 	/**
-	 * True when the artifact answered `unknown` — the only acceptable reading outside the built survey areas.
+	 * True when the artifact answered `unknown`.
+	 * The only acceptable reading outside the built survey areas.
 	 */
 	passed: boolean
 }
@@ -125,10 +126,12 @@ export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: numb
  * differing rendering rather than to the conversion.
  *
  * One metre.
- * The published shapefile carries nine decimals through this package's ingest and Soil Data
- * Access renders its own geometry independently. nrcs's own positional-accuracy statement says
- * the difference between a boundary's field location and its digitized location "is unknown",
- * so this tolerance is about the two renderings agreeing rather than about ground truth.
+ * The published shapefile carries nine decimals through this package's ingest
+ * and Soil Data Access renders its own geometry independently.
+ *
+ * Nrcs's own positional-accuracy statement says the difference between a boundary's
+ * field location and its digitized location "is unknown", so this tolerance is about
+ * the two renderings agreeing rather than about ground truth.
  *
  * One metre is far below the median delineation, which is 24,863 m² — about 158 m across.
  */
@@ -213,13 +216,16 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
  * A bounding-box `where` over `soil_map_unit_area` reads as a prefilter and is a
  * full table scan: none of those columns is indexed, the rows carry the ring blobs,
  * and at the pilot's scale that is 2.7 million rows and several gigabytes read per point.
- * The cell index exists to make exactly this question cheap — `soil_map_unit_cell` is `without rowid`
- * keyed `(h3_cell, area_id)`, so naming the point's cell is a primary-key range scan.
+ * The cell index exists to make exactly this question cheap.
+ *
+ * `soil_map_unit_cell` is `without rowid` keyed `(h3_cell, area_id)`,
+ * so naming the point's cell is a primary-key range scan.
  *
  * Every stored resolution is probed rather than just the index one.
- * The whole tier is compacted parent-ward, so a delineation that fills a run of cells is
- * stored at a coarser resolution and a probe at the index resolution alone would read it as
- * an absence — the same ancestor walk the reader does, and the same false negative it avoids.
+ * The whole tier is compacted parent-ward, so a delineation that fills a run of cells is stored
+ * at a coarser resolution and a probe at the index resolution alone would read it as an absence.
+ *
+ * The same ancestor walk the reader does, and the same false negative it avoids.
  */
 function candidateDelineations(
 	database: DatabaseClient<SoilDatabase>,
@@ -246,11 +252,11 @@ function candidateDelineations(
 			rings: Uint8Array
 		}>) {
 			// dedupe on the delineation, never on its MAP unit.
-			// A delineation reached through two resolutions is one delineation
-			// and must be tested once. two different delineations of the same map unit are
-			// two shapes covering different ground and must both be tested.
-			// Keying on the map unit drops the second, and it drops it silently — the point test
-			// simply finds nothing and the row reads as a disagreement with the authority.
+			// A delineation reached through two resolutions is one delineation and must be tested once.
+			// Two different delineations of the same map unit are two shapes covering
+			// different ground and must both be tested.
+			// Keying on the map unit drops the second, and it drops it silently.
+			// The point test simply finds nothing and the row reads as a disagreement with the authority.
 			// Measured at Iowa scale: one point in 60, where the artifact's own geometry does contain
 			// the point and the index-driven read could not reach the delineation that holds it.
 			if (seen.has(row.area_id)) continue
@@ -267,7 +273,9 @@ function candidateDelineations(
  * Which map unit the artifact's own geometry puts at a point, and how far the
  * point is from that delineation's nearest edge.
  *
- * The cell index narrows. the ray cast decides.
+ * The cell index narrows.
+ * The ray cast decides.
+ *
  * The edge distance is measured against every candidate, so a near-miss is reported
  * with a distance rather than with nothing.
  */
@@ -335,9 +343,12 @@ function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number
  * The draw is a deterministic stride over the primary key rather than a random one, so a
  * re-run compares the same points and a disagreement can be looked at rather than re-rolled.
  *
- * One row is read PER sample point and no more. A `where rowid % stride = 0` scan looks like the same thing and is not:
- * it walks the table itself, which means reading every ring blob to keep a few dozen. `order BY area_id limit 1 offset
- * n` walks the primary-key index to the offset and fetches exactly the row it lands on.
+ * One row is read PER sample point and no more.
+ * A `where rowid % stride = 0` scan looks like the same thing and is not: it walks the
+ * table itself, which means reading every ring blob to keep a few dozen.
+ *
+ * `order BY area_id limit 1 offset n` walks the primary-key index to the offset
+ * and fetches exactly the row it lands on.
  */
 export function sampleAgreementPoints(
 	databasePath: string,

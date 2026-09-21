@@ -149,8 +149,9 @@ describe("collectExportTargets", () => {
 
 	it("exposes a source leak for assertNoSourceTargets to reject", () => {
 		// The v7.2.0 failure shape: a dev map shipped verbatim.
-		// The transform repairs every condition whose target is source, so a leak can only reach here
-		// through a shape it does not walk — a pattern target, or a nested condition it did not visit.
+		// The transform repairs every condition whose target is source, so a leak can
+		// only reach here through a shape it does not walk.
+		// A pattern target, or a nested condition it did not visit.
 		// Collecting it is what lets the refusal see it.
 		const leaked = collectExportTargets({ ".": { default: "./index.ts" } })
 		expect(leaked).toContain("./index.ts")

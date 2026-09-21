@@ -74,8 +74,8 @@ const SPRINGFIELD_RES9_SHORT = shortCellToInt(SPRINGFIELD_RES9_FULL)
 const SPRINGFIELD_RES6_PARENT_FULL = cellToParent(SPRINGFIELD_RES9_FULL, 6) as H3Cell
 const SPRINGFIELD_RES6_PARENT_SHORT = res9ShortCellToRes6Parent(SPRINGFIELD_RES9_SHORT)
 
-// A sibling res-9 cell sharing springfield's res-6 parent but carrying no bdc_availability rows
-// of its own — the "covered res-6 parent, zero filings in this exact cell" positive-absence case
+// A sibling res-9 cell sharing springfield's res-6 parent but carrying no bdc_availability rows of its own.
+// The "covered res-6 parent, zero filings in this exact cell" positive-absence case
 // (filing-landscape.ts's own docstring: the h3Cells query path is the only way to exercise this,
 // since geoid-mode's "no rows ⇒ no candidate cell" shortcut can never produce it).
 // Derived from h3-js, never hardcoded.
@@ -419,7 +419,8 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 		})
 
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
-		// Distinct from the layer-missing case above — the layer is wired, only this cell lacks coverage.
+		// Distinct from the layer-missing case above.
+		// The layer is wired, only this cell lacks coverage.
 		expect(bundle.coverage_detail.filing).toBe("cell_unsurveyed")
 	})
 })
@@ -546,7 +547,8 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 		)
 
 		expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(false)
-		// not_applicable rather than layer_missing — DSL has no physical falsifier regardless of poi's presence.
+		// not_applicable rather than layer_missing.
+		// DSL has no physical falsifier regardless of poi's presence.
 		expect(bundle.coverage_detail.physical).toBe("not_applicable")
 	})
 
@@ -694,8 +696,8 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 
 	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with poi wired ALONE (no bdcDB)", async () => {
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		// Same mismatch as above, but with bdcDB never wired at all — the case an assertion
-		// checking both layers being present would skip entirely.
+		// Same mismatch as above, but with bdcDB never wired at all.
+		// The case an assertion checking both layers being present would skip entirely.
 		// `pointCell` (below) is still derived from BDC_H3_RESOLUTION regardless,
 		// so poi's own resolution must be checked here too.
 		using poischemadb = await openpoischemadb(6)
@@ -750,8 +752,10 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
  * The §7-2b acceptance criteria — one describe per criterion, mapped 1:1 to the four bullets
  * in `docs/superpowers/plans/2026-07-30-bdc-2b-plan.md`'s "The §7-2b checks" section.
  *
- * Several criteria' behavioral claims are already proven by the suites above — `plausibility.ts`'s own
- * module docstring says as much ("this module is designed for them but doesn't assert them itself").
+ * Several criteria' behavioral claims are already proven by the suites above.
+ * `plausibility.ts`'s own module docstring says as much
+ * ("this module is designed for them but doesn't assert them itself").
+ *
  * Where that's true, the test below asserts the criterion's specific claim against a
  * real bundle (reusing the established fixtures, including the hoisted `openBoth()`)
  * and cross-references the fuller proof by comment, rather than re-deriving the whole scenario.
@@ -768,8 +772,8 @@ describe("§7-2b criteria", () => {
 			// bdc_availability rows of its own — filing-landscape.ts's meaning-of-zero positive case
 			// (see the "positive absence" test in the "filing evidence + corroboration" suite above).
 			// Cover that same res-6 parent on the poi side too, so the physical axis is
-			// genuinely surveyed as well rather than merely absent — the well-covered half of
-			// this criterion’s contrast (the sparse-cell half is the next test).
+			// genuinely surveyed as well rather than merely absent.
+			// The well-covered half of this criterion’s contrast (the sparse-cell half is the next test).
 			await writeLayerCoverage(poischemadb, [
 				{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 0 },
 			])
@@ -835,13 +839,14 @@ describe("§7-2b criteria", () => {
 		 * That's the "mutation-style" assertion criterion 1 asks for: the pins are what
 		 * keep the property true rather than a reviewer's memory.
 		 *
-		 * Only `tsc` checks the `satisfies` clauses (`yarn typecheck:tests`, which auto-discovers
-		 * `bdc/tsconfig.test.json`) — `yarn vitest run` alone (esbuild, types stripped) runs only the
-		 * `it()` below, which still confirms none of the current values reads as a negative verdict.
+		 * Only `tsc` checks the `satisfies` clauses (`yarn typecheck:tests`,
+		 * which auto-discovers `bdc/tsconfig.test.json`).
+		 * `yarn vitest run` alone (esbuild, types stripped) runs only the `it()` below,
+		 * which still confirms none of the current values reads as a negative verdict.
 		 *
 		 * The five union pins close every closed union, but none of them has a claim over
 		 * the bundle's own KEY SET — a wholly new field appended to `PlausibilityBundle`
-		 * (e.g. a hypothetical `verdict: "plausible" | "implausible"`) would compile
+		 * (e.g. A hypothetical `verdict: "plausible" | "implausible"`) would compile
 		 * and ship green, since no union pin even looks at it.
 		 * `PLAUSIBILITY_BUNDLE_KEYS` below closes that gap the same way:
 		 * `satisfies Record<keyof PlausibilityBundle, true>` fails to compile if a key is added to
@@ -903,7 +908,7 @@ describe("§7-2b criteria", () => {
 			]
 
 			// Exhaustive means non-empty — a refactor that hollowed out one of the objects
-			// above (e.g. via a bad merge) must not silently pass a loop over nothing.
+			// above (e.g. Via a bad merge) must not silently pass a loop over nothing.
 			expect(allValues).toHaveLength(16)
 
 			for (const value of allValues) {
@@ -915,8 +920,9 @@ describe("§7-2b criteria", () => {
 			// The pin's real teeth are the `satisfies` clause itself, which is compile-time only —
 			// to check it by hand, temporarily add a field to `PlausibilityBundle`,
 			// rebuild `bdc/out`, confirm `tsc` fails here, then revert.
-			// This runtime assertion is only the same non-empty backstop the union pins' own
-			// `toHaveLength(16)` above provides — it can't observe a missing key the way `tsc` does.
+			// This runtime assertion is only the same non-empty backstop the union pins'
+			// own `toHaveLength(16)` above provides.
+			// It can't observe a missing key the way `tsc` does.
 			expect(Object.keys(PLAUSIBILITY_BUNDLE_KEYS)).toHaveLength(6)
 		})
 	})

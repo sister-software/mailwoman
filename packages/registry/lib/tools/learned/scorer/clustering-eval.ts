@@ -128,7 +128,8 @@ export async function scorerClusteringEval(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// Build the NPI-keyed benchmark sample and pairwise probe. sample builder). ---
+	// Build the NPI-keyed benchmark sample and pairwise probe.
+	// Sample builder). ---
 	const {
 		rows,
 		keptNpis: kept,
@@ -141,8 +142,9 @@ export async function scorerClusteringEval(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up features can
-	// read the authorized official. the FS arm ignores them (no discriminators configured).
+	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up
+	// features can read the authorized official.
+	// The FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -158,10 +160,10 @@ export async function scorerClusteringEval(
 
 	geocoder[Symbol.dispose]()
 
-	// Use address frequency and the collapsed-spatial model as the baseline feature
-	// basis. pattern is EM-independent, so the same featurize() is consistent at train
-	// and inference time. --- The featurizer is the shared production one
-	// (createMatchFeaturizer) — train ≡ eval ≡ inference, one definition.
+	// Use address frequency and the collapsed-spatial model as the baseline feature basis.
+	// Pattern is EM-independent, so the same featurize() is consistent at train and inference
+	// time. --- The featurizer is the shared production one (createMatchFeaturizer) —
+	// train ≡ eval ≡ inference, one definition.
 	// Feed the collapsed-spatial + address-frequency comparison set (the benchmark baseline).
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
@@ -182,8 +184,8 @@ export async function scorerClusteringEval(
 	 * three ways (FS baseline, GBT scorer, LR scorer) through the same `resolveEntities`
 	 * pipeline, sweeping the link threshold finely for each and taking best F1.
 	 *
-	 * The geocode is shared across seeds. only the split, the trained scorers,
-	 * and the eval subset move with the seed.
+	 * The geocode is shared across seeds.
+	 * Only the split, the trained scorers, and the eval subset move with the seed.
 	 */
 	function runSeed(seed: number): SeedResult {
 		const rnd = makeLcg(seed || 1)
@@ -224,8 +226,7 @@ export async function scorerClusteringEval(
 
 		const fs = armOver(
 			Array.from({ length: 26 }, (_, i) => i),
-			// learnedScorer:false — the FS baseline is the baseline this A/B measures against (the learned scorer
-			// is now default-on, so without this the "FS arm" would silently be the GBT).
+			// learnedScorer:false — the FS baseline is the baseline this A/B measures against (the learned scorer is now default-on, so without this the "FS arm" would silently be the GBT).
 			(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 		)
 

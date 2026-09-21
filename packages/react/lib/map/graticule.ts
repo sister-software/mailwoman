@@ -19,8 +19,8 @@ const DEFAULT_STEP_DEGREES = 15
 /**
  * Degrees between vertices along each line.
  *
- * A meridian drawn as two points is a straight chord through the sphere under a globe
- * projection. it has to be densified to curve. 2° keeps the longest line under 100 vertices.
+ * A meridian drawn as two points is a straight chord through the sphere under a globe projection.
+ * It has to be densified to curve. 2° keeps the longest line under 100 vertices.
  */
 /**
  * The antimeridian, in degrees.
@@ -61,7 +61,8 @@ export function buildGraticule(stepDegrees: number = DEFAULT_STEP_DEGREES): Feat
 	}
 
 	// Parallels: constant latitude, walking longitude all the way round.
-	// The equator is included. the poles are not.
+	// The equator is included.
+	// The poles are not.
 	for (let lat = -MAX_LATITUDE + stepDegrees; lat < MAX_LATITUDE; lat += stepDegrees) {
 		const line: number[][] = []
 

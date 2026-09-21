@@ -228,8 +228,8 @@ const controlBorder = variable("control-border", ref(neutral300))
 /**
  * Every state colour carries a paired tint for the ground behind it.
  *
- * The eight names that were undefined in production were all of this shape —
- * a foreground whose background partner was missing.
+ * The eight names that were undefined in production were all of this shape.
+ * A foreground whose background partner was missing.
  */
 const stateSuccess = variable("color-state-success", ref(successBase))
 const stateSuccessBackground = variable("color-state-success-background", "oklch(62% 0.15 150 / 0.14)")
@@ -245,10 +245,11 @@ const accentBackground = variable("color-accent-background", "oklch(65% 0.29 340
 /**
  * The three confidence tiers, said once.
  *
- * They were two palettes for one idea: the bars and the About legend painted
- * `#22c55e / #f59e0b / #ef4444` while the span ribbon and the containment tree painted
- * `#1aa84d / #e6a800 / #d8504a` — so the legend in the About sheet explained colours
- * the results table does not use, under a comment claiming the two matched.
+ * They were two palettes for one idea: the bars and the About legend painted `#22c55e / #f59e0b / #ef4444`
+ * while the span ribbon and the containment tree painted `#1aa84d / #e6a800 / #d8504a`.
+ * So the legend in the About sheet explained colours the results table does not use,
+ * under a comment claiming the two matched.
+ *
  * Raw hex also meant one set of colours for both themes, on a surface that flips from white to near-black.
  *
  * They are the state palette because that is what they are: high is success,
@@ -264,8 +265,9 @@ const confidenceLowTint = variable("color-confidence-low-tint", ref(stateDangerB
 /**
  * The pipeline's stage hues, for the timing bar.
  *
- * Deliberately not the confidence palette — a stage is not a verdict, and a reader who
- * has learned that green means confident should not meet green again meaning "shape".
+ * Deliberately not the confidence palette.
+ * A stage is not a verdict, and a reader who has learned that green means confident
+ * should not meet green again meaning "shape".
  */
 const stageShape = variable("color-stage-shape", "#3578e5")
 const stageClassify = variable("color-stage-classify", "#8b5cf6")
@@ -338,7 +340,8 @@ theme("dark", ({ variable: themeVariable }) => {
 
 //#endregion
 
-// Referenced by name from `styles.css` and the app stylesheets. listed here so the compiler keeps them.
+// Referenced by name from `styles.css` and the app stylesheets.
+// Listed here so the compiler keeps them.
 void [
 	brandBlue,
 	brandNavy,

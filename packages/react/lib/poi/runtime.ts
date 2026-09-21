@@ -25,8 +25,8 @@ import type { POIRuntime } from "#poi/types"
  * precedence: a phrase that matches a taxonomy category wins (the curated set);
  * only on a category miss does the chain-brand table fire, returning a `kind: "brand"`
  * match carrying the brand's canonical name + Wikidata QID.
- * (The Node path also chains `@mailwoman/variant-aliases` regional slang. the
- * browser tester leaves that out — one fewer package + data table for a demo,
+ * (The Node path also chains `@mailwoman/variant-aliases` regional slang. The
+ * browser tester leaves that out. One fewer package + data table for a demo,
  * and the QID-keyed brand table already covers the headline brands.)
  */
 export async function loadPOIRuntime(): Promise<POIRuntime> {
@@ -76,7 +76,8 @@ export const POI_PRESETS = [
 ] as const
 
 /**
- * Query the POI explorer opens on — the first preset, so the two stay in step.
+ * Query the POI explorer opens on.
+ * The first preset, so the two stay in step.
  */
 export const POI_DEFAULT_TEXT = POI_PRESETS[0].value
 

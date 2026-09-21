@@ -61,8 +61,8 @@ export function addRingGeometryColumns<TB extends string, C extends string>(
  * table cannot be probed without it), the key columns the row names — one, or several in
  * the order given, for a layer whose rows are keyed per scenario — and its containment.
  *
- * Small fixed-width rows probed by their exact primary key are the `without rowid` shape —
- * the caller adds its own primary-key constraint and the raw `without rowid` modifier,
+ * Small fixed-width rows probed by their exact primary key are the `without rowid` shape.
+ * The caller adds its own primary-key constraint and the raw `without rowid` modifier,
  * because the key differs per layer.
  */
 export function addCellIndexColumns<TB extends string, C extends string, K extends string>(

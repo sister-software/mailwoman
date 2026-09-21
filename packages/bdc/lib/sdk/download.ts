@@ -22,7 +22,8 @@ import { BDCFilingDataType, type BDCFile } from "#sdk/common"
  * Otherwise it downloads the zip via `client`, extracts the CSV, writes it to
  * `destinationDir`, and returns the written path.
  *
- * Only the extracted CSV is ever cached — the intermediate `.zip` is never written to disk.
+ * Only the extracted CSV is ever cached.
+ * The intermediate `.zip` is never written to disk.
  *
  * This file owns the cache FOR the download path, which is why `BDCClient.getArrayBuffer`
  * switches the client's own response cache off: the `existsSync`-equivalent check above is

@@ -136,8 +136,9 @@ describe("the sealed artifact", () => {
 			frontage_id: number
 		}>
 
-		// Every fixture feature carries frontage 1000 — the real product repeats a frontage id
-		// within one layer, and a build keyed on it would have collapsed five rows into one.
+		// Every fixture feature carries frontage 1000.
+		// The real product repeats a frontage id within one layer, and a build keyed
+		// on it would have collapsed five rows into one.
 		expect(new Set(rows.map((row) => row.frontage_id))).toEqual(new Set([1000]))
 		expect(rows).toHaveLength(5)
 		expect(new Set(rows.map((row) => row.area_id)).size).toBe(5)
@@ -152,8 +153,8 @@ describe("the sealed artifact", () => {
 			.get(`${NFI}:4`) as { n: number }
 
 		// A polyfill keyed on cell centres returns nothing for a 5 m square,
-		// and a feature indexed to nothing reads downstream as an absence — the failure
-		// the per-part zero-cell guard exists to make impossible.
+		// and a feature indexed to nothing reads downstream as an absence.
+		// The failure the per-part zero-cell guard exists to make impossible.
 		expect(sliver.n).toBeGreaterThan(0)
 	})
 })
@@ -353,8 +354,8 @@ describe("the declared domains", () => {
 			published_year: number
 		}
 
-		// A single space rather than an empty string — a reader testing `=== ""`
-		// finds nothing and reports these as ordinary.
+		// A single space rather than an empty string.
+		// A reader testing `=== ""` finds nothing and reports these as ordinary.
 		expect(row.mt_policy).toBe(" ")
 		expect(row.published_year).toBe(0)
 	})
@@ -376,7 +377,7 @@ describe("the area cross-check", () => {
 			9,
 			FIXTURE_SCENARIOS.noIntervention,
 			[[rectangleRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)]],
-			// Twice the area the rings actually cover — the shape a hole read as an exterior ring produces.
+			// Twice the area the rings actually cover. The shape a hole read as an exterior ring produces.
 			{ sourceAreaM2: 2 * 1_200_000 }
 		)
 

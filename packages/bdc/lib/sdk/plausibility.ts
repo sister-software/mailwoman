@@ -139,9 +139,9 @@ import {
 
 /**
  * The three fixed-wireless codes (unlicensed/licensed/licensed-by-rule), read off
- * {@link BroadbandTechnologyCategoryToCodeSet} (decision 8: reuse, never re-derive) rather than hand-enumerated here a
- * second time — an FCC code addition to the `FixedWireless` category in
- * `technologies.ts` now flows straight through to
+ * {@link BroadbandTechnologyCategoryToCodeSet} (decision 8: reuse, never re-derive)
+ * rather than hand-enumerated here a second time — an FCC code addition to the
+ * `FixedWireless` category in `technologies.ts` now flows straight through to
  * {@link PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES} instead of silently missing this table.
  */
 const FIXED_WIRELESS_CODES = BroadbandTechnologyCategoryToCodeSet[BroadbandTechnologyCategory.FixedWireless]
@@ -203,30 +203,25 @@ export type PlausibilitySharedEvidence =
  * vs. a real poi survey gap vs. a geoid-only claim with no coordinate to search from);
  * this axis state is what tells them apart.
  * `"not_applicable"` and `"no_coordinate"` are only ever produced for the physical axis.
- * the filing axis only ever reaches `"covered"`, `"layer_missing"`, or `"cell_unsurveyed"`.
+ *
+ * The filing axis only ever reaches `"covered"`, `"layer_missing"`, or `"cell_unsurveyed"`.
  */
 export type PlausibilityCoverageAxisState =
 	| "covered"
 	/**
-	 * The required dependency (`deps.bdcDB` for filing, `deps.poi` for physical) was never wired at all — the
-	 * `requires_bdc_layer` / `requires_build_local_layer` abstain precedent.
+	 * The required dependency (`deps.bdcDB` for filing, `deps.poi` for physical) was never wired at all — the `requires_bdc_layer` / `requires_build_local_layer` abstain precedent.
 	 */
 	| "layer_missing"
 	/**
-	 * The dependency is wired, but the specific queried block/cell carries no survey coverage of its own — the
-	 * `insufficient_survey_data` abstain precedent (filing), or an absent `readLayerCoverage` read (physical).
+	 * The dependency is wired, but the specific queried block/cell carries no survey coverage of its own. The `insufficient_survey_data` abstain precedent (filing), or an absent `readLayerCoverage` read (physical).
 	 */
 	| "cell_unsurveyed"
 	/**
-	 * Physical axis only: the claim resolved no coordinate (a geoid-only claim — see the module docstring's
-	 * claim-resolution note), so no physical-evidence search point exists. A genuine capability gap rather than a missing
-	 * layer — distinct from `"layer_missing"` even though both degrade `coverage_confidence` the same way.
+	 * Physical axis only: the claim resolved no coordinate (a geoid-only claim — see the module docstring's claim-resolution note), so no physical-evidence search point exists. A genuine capability gap rather than a missing layer — distinct from `"layer_missing"` even though both degrade `coverage_confidence` the same way.
 	 */
 	| "no_coordinate"
 	/**
-	 * Physical axis only: the claimed technology maps to no physical-plant category at all (see
-	 * {@link PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES}) — there is no applicable second channel for this tech, ever,
-	 * regardless of layer availability. Distinct from every other state: this claim can never warrant `"high"`.
+	 * Physical axis only: the claimed technology maps to no physical-plant category at all (see {@link PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES}). There is no applicable second channel for this tech, ever, regardless of layer availability. Distinct from every other state: this claim can never warrant `"high"`.
 	 */
 	| "not_applicable"
 
@@ -268,13 +263,14 @@ export interface PlausibilityBundle {
 }
 
 /**
- * Structural mirror of `mailwoman/geocode-core.ts`'s `GeocodeResult` —
+ * Structural mirror of `mailwoman/geocode-core.ts`'s `GeocodeResult`.
+ *
  * `@mailwoman/bdc` must not import from the `mailwoman` workspace
  * (`mailwoman/package.json` already depends on `@mailwoman/bdc`; the reverse edge would be circular).
  *
- * Only the two fields this scorer actually consumes are typed here. a real `GeocodeResult` is
- * structurally assignable to this type without any adapter, so a caller wiring `deps.geocode`
- * at the CLI/MCP layer can pass a thin wrapper over `geocodeAddress` directly.
+ * Only the two fields this scorer actually consumes are typed here.
+ * A real `GeocodeResult` is structurally assignable to this type without any adapter, so a caller
+ * wiring `deps.geocode` at the CLI/MCP layer can pass a thin wrapper over `geocodeAddress` directly.
  */
 export interface GeocodeLike {
 	lat: number | null
@@ -304,9 +300,11 @@ export interface PlausibilityDeps {
 /**
  * Tech → physical-plant category mapping.
  *
- * Fiber implies the three infrastructure-extension categories a fiber network plausibly
- * touches. the three fixed-wireless codes imply a comms tower. every other code maps to `[]` —
- * no physical falsifier is claimed for it (see {@link physicalCategoriesForTechnology}).
+ * Fiber implies the three infrastructure-extension categories a fiber network plausibly touches.
+ * The three fixed-wireless codes imply a comms tower.
+ *
+ * Every other code maps to `[]`.
+ * No physical falsifier is claimed for it (see {@link physicalCategoriesForTechnology}).
  */
 export const PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES: Readonly<Record<number, readonly string[]>> = {
 	[BroadbandTechnologyCode.OpticalCarrierFiber]: ["telecom_exchange", "telecom_cabinet", "data_center"],
@@ -398,10 +396,10 @@ function combineCoverage(
 /**
  * See the module docstring's coverage-resolution note.
  *
- * Throws when a wired layer's manifest disagrees with `BDC_H3_RESOLUTION` — the single
- * constant `plausibilityCheck` actually uses at runtime to derive both the filing-lookup
- * cell (bdc side, via `pointCell`) and the coverage-cell join key `readLayerCoverage`
- * is read against (poi side, via `res9ShortCellToRes6Parent(pointCell)`).
+ * Throws when a wired layer's manifest disagrees with `BDC_H3_RESOLUTION`.
+ * The single constant `plausibilityCheck` actually uses at runtime to derive both
+ * the filing-lookup cell (bdc side, via `pointCell`) and the coverage-cell join key
+ * `readLayerCoverage` is read against (poi side, via `res9ShortCellToRes6Parent(pointCell)`).
  *
  * Checked independently per layer, whenever that layer is wired — not only
  * when `bdcDB` and `poi` are wired together.
@@ -490,11 +488,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 	if (!deps.bdcDB) {
 		evidence.push({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
 	} else {
-		// blockResolution === "geoid" iff claim.geoid is set (see above), so exactly one of these two branches ever
-		// runs, and the `pointCell!` assertion below is safe: blockResolution ===
-		// "h3_cell_approximation" only when claim.geoid is absent.
-		// It (per the throw above) means `point`.
-		// Therefore, `pointCell` — is defined.
+		// blockResolution === "geoid" iff claim.geoid is set (see above), so exactly one of these two branches ever runs, and the `pointCell!` assertion below is safe: blockResolution === "h3_cell_approximation" only when claim.geoid is absent. It (per the throw above) means `point`. Therefore, `pointCell` — is defined.
 		const landscape =
 			blockResolution === "geoid"
 				? await filingLandscape(deps.bdcDB, { geoids: [claim.geoid!] })

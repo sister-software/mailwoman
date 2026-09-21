@@ -74,8 +74,8 @@ export interface MetricsSnapshot {
 		/**
 		 * Per-tier counts.
 		 *
-		 * Keys are created lazily on the first `recordTimed` call for that tier —
-		 * a tier never recorded is absent rather than zero.
+		 * Keys are created lazily on the first `recordTimed` call for that tier.
+		 * A tier never recorded is absent rather than zero.
 		 */
 		tiers: Record<string, number>
 		latency_ms: { p50: number; p90: number; p99: number; max: number } | null

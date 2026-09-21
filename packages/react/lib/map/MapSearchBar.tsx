@@ -27,9 +27,10 @@ import { cx } from "#common/cx"
  * The magnifier for a search pill's leading slot.
  *
  * It is drawn rather than typed.
- * `⌕` (U+2315) is the only magnifier in the glyph face, it is drawn at the weight of
- * a punctuation mark, and sizing it up to read at all left it sitting off the field's
- * baseline — a mark that reads as a typo beside the address it introduces.
+ * `⌕` (U+2315) is the only magnifier in the glyph face, it is drawn at the weight of a
+ * punctuation mark, and sizing it up to read at all left it sitting off the field's baseline.
+ *
+ * A mark that reads as a typo beside the address it introduces.
  *
  * A path is the same size at every scale and lands where it is put.
  */

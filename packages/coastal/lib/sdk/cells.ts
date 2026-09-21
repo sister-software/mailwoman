@@ -38,7 +38,8 @@ interface ScenarioAccumulator {
 }
 
 /**
- * What one scenario came out as at one resolution — the numbers the resolution choice is made from.
+ * What one scenario came out as at one resolution.
+ * The numbers the resolution choice is made from.
  */
 export interface ScenarioCellMeasurement {
 	scenarioKey: string
@@ -93,7 +94,8 @@ export interface CellIndexMeasurement {
 	/**
 	 * `partialCells / touchedCells` pooled.
 	 *
-	 * Reported for the size question only. the resolution is chosen on the per-scenario shares above.
+	 * Reported for the size question only.
+	 * The resolution is chosen on the per-scenario shares above.
 	 */
 	pooledPartialShare: number
 }

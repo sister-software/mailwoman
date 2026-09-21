@@ -33,7 +33,7 @@ export interface GeocodeFirstSurfaceOptions {
 }
 
 // ── Real Bayes-factor weights, transcribed from source (values kept in sync by comment rather than import,
-//    so this generator is self-contained / independent of the match package's build state). ───────────
+// so this generator is self-contained / independent of the match package's build state). ───────────
 
 interface Level {
 	label: string
@@ -108,8 +108,8 @@ export async function geocodeFirstSurface(
 
 	// ── Grid.
 	// X = string similarity 0→1.
-	// Y = geographic distance, sampled denser near 0 (log-ish) so
-	//    the meaningful same-building / same-block transitions aren't a single pixel. ────────────────
+	// Y = geographic distance, sampled denser near 0 (log-ish) so the meaningful same-building
+	// / same-block transitions aren't a single pixel. ────────────────
 
 	const NX = 60
 	const NY = 60
@@ -150,8 +150,8 @@ export async function geocodeFirstSurface(
 			km: 15, // plotted on the far plateau (real distance ~1500 km. clamped into view)
 		},
 		{
-			// "St" → "Street" canonicalizes to a high (not exact) name agreement. the
-			// trailing "Apt 2" keeps it off 1.0.
+			// "St" → "Street" canonicalizes to a high (not exact) name agreement.
+			// The trailing "Apt 2" keeps it off 1.0.
 			// Lands in the 0.88 "high" tier — same place, drifted-but-recognizable string.
 			label: "123 Main St vs 123 Main Street Apt 2",
 			detail: "same building, drifted string",

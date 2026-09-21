@@ -121,10 +121,10 @@ export type POILiveSearchResult =
  * (`categoryID`/`overtureCategoryIDs` are then the brand name / empty and unused).
  * The category path is byte-identical to before.
  *
- * A probe that can't serve brands simply leaves brand live search unwired at the call
- * site (see `usePOISearch`'s `brandLiveSearch` option) — the docs' httpvfs probe
- * does exactly that, brand-wide row hydration being pathological over byte-range
- * (measured. the brand path is server-side only).
+ * A probe that can't serve brands simply leaves brand live search unwired at the
+ * call site (see `usePOISearch`'s `brandLiveSearch` option).
+ * The docs' httpvfs probe does exactly that, brand-wide row hydration being pathological
+ * over byte-range (measured. The brand path is server-side only).
  */
 export type POILiveSearch = (params: {
 	categoryID: string

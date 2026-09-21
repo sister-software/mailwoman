@@ -17,7 +17,8 @@ import { cleanup } from "./render.tsx"
 
 const actGlobal = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 
-// React's act() checks this flag. browser mode doesn't set it for us.
+// React's act() checks this flag.
+// Browser mode doesn't set it for us.
 actGlobal.IS_REACT_ACT_ENVIRONMENT = true
 
 // Make `userEvent.*` and `vi.waitFor` act-aware for every test, in one place — no per-test wrapping.

@@ -46,9 +46,11 @@ const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HP
  * which sends cors for localhost + the docs domains).
  *
  * Glyphs + sprite come from the upstream Protomaps assets (GitHub Pages, `acao: *`),
- * not the house mirror at `public.mailwoman.ai` — that bucket sends no cors headers, so the
- * mirror can't be fetched cross-origin (`cartographer/base/composition.ts` flags the same:
- * "Currently upstream URLs. we mirror these … but no public route fronts that bucket yet").
+ * not the house mirror at `public.mailwoman.ai`.
+ * That bucket sends no cors headers, so the mirror can't be fetched cross-origin
+ * (`cartographer/base/composition.ts` flags the same: "Currently upstream URLs. We
+ * mirror these … but no public route fronts that bucket yet").
+ *
  * The upstream assets target the v4 schema, matching the `basemap-v4` tiles.
  *
  * Swap to the house mirror once it has a cors-enabled route.
@@ -88,7 +90,7 @@ export interface MapHTMLOptions {
 }
 
 /**
- * Categorical palette (reused for buckets. cycles if there are more buckets than entries).
+ * Categorical palette (reused for buckets. Cycles if there are more buckets than entries).
  */
 const PALETTE = ["#2f9e44", "#f08c00", "#1971c2", "#e8590c", "#9c36b5", "#0c8599", "#e03131", "#5c940d"]
 /**
@@ -103,8 +105,10 @@ const CROSS_COLOR = "#e8590c"
 /**
  * Escape a value for safe inlining inside a `<script>` as JSON.
  *
- * `JSON.stringify` alone isn't enough — a record value containing `</script>` would close the
- * block early. escaping `<`/`>`/`&` to `\uXXXX` keeps the JSON valid and makes a breakout impossible.
+ * `JSON.stringify` alone isn't enough.
+ * A record value containing `</script>` would close the block early.
+ *
+ * Escaping `<`/`>`/`&` to `\uXXXX` keeps the JSON valid and makes a breakout impossible.
  */
 function safeJSONForScript(value: unknown): string {
 	return stringifyJSON(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026")
@@ -118,8 +122,8 @@ function sourceCount(props: MapFeatureData): number {
  * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as
  * a complete, standalone html document.
  *
- * Entities without a coordinate are already absent from those collections. an empty
- * collection renders a friendly empty state rather than a broken map.
+ * Entities without a coordinate are already absent from those collections.
+ * An empty collection renders a friendly empty state rather than a broken map.
  */
 export function toMapHTML(
 	geojson: GeoFeatureCollection<PointLiteral, MapFeatureData>,

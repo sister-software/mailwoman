@@ -296,7 +296,8 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("moves an existing artifact aside before the new build takes its place", async () => {
-		// Build once more against the same `out` — the file already exists from the outer `beforeEach`.
+		// Build once more against the same `out`.
+		// The file already exists from the outer `beforeEach`.
 		const second = await buildBDCDatabase({
 			rows: fixtureRows(),
 			out,
@@ -320,9 +321,9 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 	 * business_residential_code) triple — only `location_id` differs, exactly the shape a real FCC
 	 * per-provider CSV produces for a block carrying multiple Broadband Serviceable Locations.
 	 *
-	 * The staging pass's natural key includes `location_id`, so all 3 survive staging
-	 * as distinct rows (this is not the exact-duplicate case `fixtureRows` covers) —
-	 * the materialize step must then collapse them to exactly 1 row in the default mode,
+	 * The staging pass's natural key includes `location_id`, so all 3 survive staging as
+	 * distinct rows (this is not the exact-duplicate case `fixtureRows` covers).
+	 * The materialize step must then collapse them to exactly 1 row in the default mode,
 	 * never inflating `result.rows`/ `layer_coverage.observed_rows` by the BSL count,
 	 * while keeping all 3 distinct when `includeLocationIDs: true`.
 	 */
@@ -409,12 +410,13 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	 *
 	 * FRN_LATE's own most recent form-499 filing (2026-05-20) postdates FRN_EARLY's
 	 * (2026-01-15), so FRN_LATE must win the primary-FRN pick.
-	 * `provider_id` 700002 carries exactly one FRN (FRN_SOLO) — no filer.db query
-	 * is needed to resolve its primary FRN.
+	 * `provider_id` 700002 carries exactly one FRN (FRN_SOLO).
+	 * No filer.db query is needed to resolve its primary FRN.
 	 *
-	 * Also seeds `provider_id` 700001's two conflicting `holding_company_name` edges — the same
-	 * cardinality problem `frn` has, proving both discarded values stay recoverable from filer.db even
-	 * though `bdc_provider.holding_company` can only hold one (here: neither, since they conflict).
+	 * Also seeds `provider_id` 700001's two conflicting `holding_company_name` edges.
+	 * The same cardinality problem `frn` has, proving both discarded values stay
+	 * recoverable from filer.db even though `bdc_provider.holding_company` can only
+	 * hold one (here: neither, since they conflict).
 	 */
 	async function seedTwoFRNFixture(db: DatabaseClient<FilerDatabase>): Promise<void> {
 		await createFilerNodeTable(db)
@@ -497,8 +499,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 					match_score: null,
 					evidence: null,
 				},
-				// and two conflicting holding_company_name edges — the identical cardinality problem, unresolved by
-				// decision 6, so bdc_provider.holding_company stays NULL and both stay recoverable here.
+				// and two conflicting holding_company_name edges. The identical cardinality problem, unresolved by decision 6, so bdc_provider.holding_company stays NULL and both stay recoverable here.
 				{
 					from_node_id: PROVIDER_NODE,
 					to_node_id: HC_ALPHA_NODE,
@@ -523,7 +524,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 					match_score: null,
 					evidence: null,
 				},
-				// Each FRN's own most recent form-499 filing — FRN_LATE's is the later filing date.
+				// Each FRN's own most recent form-499 filing. FRN_LATE's is the later filing date.
 				{
 					from_node_id: FRN_EARLY_NODE,
 					to_node_id: FORM_EARLY,
@@ -557,8 +558,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			{ providerID: 700_001, frn: FRN_EARLY, holdingCompany: "Alpha Holdco" },
 			{ providerID: 700_001, frn: FRN_LATE, holdingCompany: "Alpha Holdco Renamed" },
 			{ providerID: 700_002, frn: FRN_SOLO, holdingCompany: "Solo Broadband" },
-			// Two rows, same frn and same holding_company — proves the single-distinct-value shortcut looks at the
-			// distinct set across every row rather than just "there happened to be one row" (700002's trivial case above).
+			// Two rows, same frn and same holding_company — proves the single-distinct-value shortcut looks at the distinct set across every row rather than just "there happened to be one row" (700002's trivial case above).
 			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 		]
@@ -591,8 +591,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.executeTakeFirstOrThrow()
 
 		// The lossy pick: bdc_provider can only hold one FRN, and decision 6 says the later-filed one wins.
-		// Its two holding_company values genuinely conflict ("Alpha Holdco" vs "Alpha Holdco Renamed") —
-		// no rule resolves that , so it stays NULL, same as brand_name.
+		// Its two holding_company values genuinely conflict ("Alpha Holdco" vs "Alpha Holdco Renamed").
+		// No rule resolves that , so it stays NULL, same as brand_name.
 		expect(multiFRNProvider.frn).toBe(FRN_LATE)
 		expect(multiFRNProvider.brand_name).toBeNull()
 		expect(multiFRNProvider.holding_company).toBeNull()
@@ -603,9 +603,9 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_002)
 			.executeTakeFirstOrThrow()
 
-		// No filer.db query was needed for this one — its lone FRN is primary by
-		// construction, and its single unambiguous holding_company populates directly
-		// (the "no conflict ⇒ no rule needed" shortcut).
+		// No filer.db query was needed for this one.
+		// Its lone FRN is primary by construction, and its single unambiguous holding_company
+		// populates directly (the "no conflict ⇒ no rule needed" shortcut).
 		expect(singleFRNProvider.frn).toBe(FRN_SOLO)
 		expect(singleFRNProvider.brand_name).toBeNull()
 		expect(singleFRNProvider.holding_company).toBe("Solo Broadband")
@@ -636,8 +636,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		expect(frnValues).toEqual([FRN_EARLY, FRN_LATE].toSorted())
 		expect(crosswalk.primary_frn?.frn).toBe(FRN_LATE)
 
-		// filerLookup's `identifiers` is relationship: same_entity only now —
-		// a HoldingCompanyName edge never surfaces there regardless of retention, so "not lost"
+		// filerLookup's `identifiers` is relationship: same_entity only now.
+		// A HoldingCompanyName edge never surfaces there regardless of retention, so "not lost"
 		// is proven directly against filer_edge instead (this fixture predates filer_family
 		// and never populates it, so `families` isn't the right recovery channel here either).
 		const holdingCompanyValues = (
@@ -681,7 +681,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		await createFilerClusterTable(filerDB)
 		await createFilerFamilyTable(filerDB)
 		await createFilerManifestTable(filerDB)
-		// No filer_edge rows at all — neither FRN has a form-499 filing edge to rank by.
+		// No filer_edge rows at all.
+		// Neither FRN has a form-499 filing edge to rank by.
 
 		const providerOut = scratch.resolve("bdc-providers-no-candidates.db")
 
@@ -748,10 +749,10 @@ describe("peekProviderID", () => {
 
 describe("buildBDCDatabase — malformed provider_id via csvPaths (the production ingest path)", () => {
 	// `peekProviderID` needs a finiteness guard rather than a bare `Number.parseInt(...) as ProviderID`.
-	// A non-numeric provider_id field parses to NaN, which binds to
-	// `bdc_stage.provider_id` (integer not NULL) as SQLite NULL — `insert or ignore`
-	// then silently drops every row of the file, miscounted as ordinary `deduped` rows
-	// rather than surfaced as the malformed-file error it actually is.
+	// A non-numeric provider_id field parses to NaN, which binds to `bdc_stage.provider_id`
+	// (integer not NULL) as SQLite NULL.
+	// `insert or ignore` then silently drops every row of the file, miscounted as ordinary
+	// `deduped` rows rather than surfaced as the malformed-file error it actually is.
 	// This test goes through `csvPaths` (the real filesystem-reading production path
 	// `readAvailabilityRowsFromCSVPaths` uses), not the `rows:` test injection point,
 	// so the test checks that malformed CSV input is rejected from disk onward.

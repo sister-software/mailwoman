@@ -20,7 +20,8 @@ export interface PipelineLoadingState {
 	stepLabels: string[]
 	stepIndex: number
 	/**
-	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1] —
+	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1].
+	 *
 	 * `null` while nothing is downloading or when the response declares no length.
 	 *
 	 * The step index alone cannot report this download.
@@ -37,7 +38,8 @@ export interface PipelineLoadingState {
  * The injected parse runtime.
  *
  * The host implements `runParse` (compute shape → classify → resolve) and reports load progress + errors.
- * This package never imports the model or gazetteer — it only calls this interface.
+ * This package never imports the model or gazetteer.
+ * It only calls this interface.
  */
 export interface PipelineRuntime {
 	/**
@@ -72,11 +74,11 @@ export interface PipelineRuntime {
  */
 export interface PipelinePanels {
 	/**
-	 * Rendered above the form (e.g. the docs "About this demo").
+	 * Rendered above the form (e.g. The docs "About this demo").
 	 */
 	header?: ReactNode
 	/**
-	 * Rendered below everything (e.g. a guided tour).
+	 * Rendered below everything (e.g. A guided tour).
 	 */
 	footer?: ReactNode
 	/**

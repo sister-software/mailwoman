@@ -50,11 +50,12 @@ const MODEL_FILENAME = "model.onnx"
 /**
  * Where one declared artifact comes from.
  *
- * `hf` names a bucket object by basename under `base`, the versioned bucket directory it is read from: `mailwoman
- * release hf` uploads with a single `--locale`, flat, so an overlay's `pair-index-de.bin` lives under the base locale's
- * version directory rather than its own, and a character-path family (`cjk`) lives under its own directory, because its
- * `model.onnx` shares a basename with the Latin base's and is not the same bytes. `repo` names a committed file the
- * checkout already carries (see `repoCommittedSoftFeedSources`).
+ * `hf` names a bucket object by basename under `base`, the versioned bucket directory
+ * it is read from: `mailwoman release hf` uploads with a single `--locale`, flat,
+ * so an overlay's `pair-index-de.bin` lives under the base locale's version directory
+ * rather than its own, and a character-path family (`cjk`) lives under its own directory,
+ * because its `model.onnx` shares a basename with the Latin base's and is not the same bytes.
+ * `repo` names a committed file the checkout already carries (see `repoCommittedSoftFeedSources`).
  */
 export type ArtifactOrigin = { kind: "hf"; remoteName: string; base: string } | { kind: "repo"; sourcePath: string }
 
@@ -149,8 +150,9 @@ async function trackedWorkspaceFiles(repoRoot: string, workspaces: readonly stri
  * Merged across every release weights card rather than read from the base alone: the base's
  * card covers the artifacts every overlay copies (`model.onnx`, the two bundle lexicons),
  * and an overlay is free to declare its own.
- * Two cards declaring different md5s for one filename is refused outright —
- * one bucket object cannot satisfy both, and a fetch has no basis to choose.
+ * Two cards declaring different md5s for one filename is refused outright.
+ *
+ * One bucket object cannot satisfy both, and a fetch has no basis to choose.
  */
 async function declaredChecksums(repoRoot: string, workspaces: readonly string[]): Promise<Map<string, string>> {
 	const declared = new Map<string, string>()
@@ -183,8 +185,8 @@ async function declaredChecksums(repoRoot: string, workspaces: readonly string[]
 }
 
 /**
- * The locale whose package ships the model itself — the base, and the directory
- * every artifact is staged under.
+ * The locale whose package ships the model itself.
+ * The base, and the directory every artifact is staged under.
  */
 export async function resolveBaseLocale(repoRoot: string, locales: readonly string[]): Promise<string> {
 	const carriers: string[] = []
@@ -229,10 +231,12 @@ export async function readBaseModelVersion(repoRoot: string): Promise<string> {
  * Artifacts the base model card declares that ride the bucket but are never fetched into a tarball —
  * today the #1354 Fisher consolidation pair (`fisher_artifact.file` + its `.sidecar`).
  *
- * The bundle interface says a weights release ships its Fisher, so every fine-tune off
- * that base can apply the EWC brake. the runtime never reads it and npm never carries it,
- * which is exactly why nothing else would notice its absence. head-probed with the rest
- * so a half-staged release is refused before it publishes.
+ * The bundle interface says a weights release ships its Fisher, so every fine-tune
+ * off that base can apply the EWC brake.
+ * The runtime never reads it and npm never carries it, which is exactly why
+ * nothing else would notice its absence.
+ *
+ * Head-probed with the rest so a half-staged release is refused before it publishes.
  * Both halves are probed: the YAML this replaces checked only `file`,
  * and a declared sidecar that never uploaded would have passed.
  */
@@ -250,10 +254,11 @@ export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: 
  * The versioned bucket directory for `version`.
  *
  * `$private.HF_BUCKET_RESOLVE_URL` replaces the `<host>/<bucket>/resolve` prefix
- * wholesale, for a mirror or a local fixture server. unset, the prefix is built
- * from `release.config.json`'s `assets.hfBucket`.
- * Nothing about either path needs a token — the bucket is public, and a credential
- * here would only hide the day it stops being public.
+ * wholesale, for a mirror or a local fixture server.
+ * Unset, the prefix is built from `release.config.json`'s `assets.hfBucket`.
+ *
+ * Nothing about either path needs a token.
+ * The bucket is public, and a credential here would only hide the day it stops being public.
  */
 export async function hfVersionBase(repoRoot: string, version: string): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
@@ -389,7 +394,8 @@ function untrackedDeclaredArtifacts(
  * The plans of one character-path family: its untracked `files` entries, read from
  * `<root>/<family>/v<card version>` and checked against the family's own `files_md5`.
  *
- * The Latin cards are not consulted — a family's `model.onnx` is a different graph under the same name.
+ * The Latin cards are not consulted.
+ * A family's `model.onnx` is a different graph under the same name.
  */
 export async function planCharFamilyArtifacts(
 	repoRoot: string,

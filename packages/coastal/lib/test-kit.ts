@@ -25,8 +25,9 @@
  *   production.
  */
 
-// The exterior and hole ring builders live in `@mailwoman/spatial` — a winding convention rather than
-// this product's geometry, and a second copy of it is a second place for a hole to stop being one.
+// The exterior and hole ring builders live in `@mailwoman/spatial`.
+// A winding convention rather than this product's geometry, and a second copy of
+// it is a second place for a hole to stop being one.
 import { rectangleRing, reversedRing as holeRing, ringAreaReadings, type MultiPolygonRings } from "@mailwoman/spatial"
 
 import type { CoastalFeatureSource, CoastalInstabilityFeature, CoastalSourceFeature } from "#sdk/ingest/index"
@@ -84,8 +85,9 @@ export function fixtureFeature(
 		defenceType: "Vertical Wall - Concrete",
 		publishedYear: 2024,
 		maxOverlap: 0,
-		// The real source's figure comes from gdal. a fixture's comes from the same ring maths the
-		// build checks against, so the fixture exercises the comparison rather than the tolerance.
+		// The real source's figure comes from gdal.
+		// A fixture's comes from the same ring maths the build checks against,
+		// so the fixture exercises the comparison rather than the tolerance.
 		sourceAreaM2: ringAreaReadings(polygons).nested,
 		polygons,
 		...overrides,

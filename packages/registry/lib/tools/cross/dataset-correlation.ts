@@ -68,8 +68,8 @@ export interface CrossDatasetCorrelationOptions {
 	 */
 	state?: string
 	/**
-	 * The inverse-address-frequency change is a corpus statistic — it can't be
-	 * synthesized from the geocoded sample.
+	 * The inverse-address-frequency change is a corpus statistic.
+	 * It can't be synthesized from the geocoded sample.
 	 *
 	 * By default we scan the full files (cheap, parse-free) for an in-state corpus-wide frequency table
 	 * and feed it to the matcher, so the proven #617 change actually bites on a sub-sampled run.
@@ -168,9 +168,9 @@ export async function crossDatasetCorrelation(
 
 	// Stream each source, filter Texas rows, and retain the first capped rows for geocoding.
 	// (when --corpus-frequency, the default) count every in-state address into a corpus-wide table.
-	// The sample is the matched set. the frequency table reflects the full TX population,
-	// so the proven inverse-frequency change down-weights a genuinely-crowded shared
-	// campus even when it appears once in the geocoded sample. ---
+	// The sample is the matched set.
+	// The frequency table reflects the full TX population, so the proven inverse-frequency change
+	// down-weights a genuinely-crowded shared campus even when it appears once in the geocoded sample. ---
 	const rawBySource = new Map<string, Record<string, string>[]>()
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
@@ -268,15 +268,15 @@ export async function crossDatasetCorrelation(
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	// Resolve records to canonical entities using the default-on proven changes.
-	// spatial (A1) + inverse-address-frequency.
-	// We feed the corpus-wide table when we built one. otherwise resolveEntities
-	// auto-computes the input-scoped default. ---
+	// Spatial (A1) + inverse-address-frequency.
+	// We feed the corpus-wide table when we built one.
+	// Otherwise resolveEntities auto-computes the input-scoped default. ---
 	report?.("[D] resolving across sources…")
 
-	// learnedScorer:false — the GBT default is calibrated for same-dataset dedup, where "same
-	// address + different name" means distinct co-located providers (reject). cross-dataset
-	// linkage is the opposite objective: "same address + different name" is the prototypical
-	// signal of the same facility under a different operational name across sources.
+	// learnedScorer:false — the GBT default is calibrated for same-dataset dedup,
+	// where "same address + different name" means distinct co-located providers (reject).
+	// Cross-dataset linkage is the opposite objective: "same address + different name" is the
+	// prototypical signal of the same facility under a different operational name across sources.
 	// The dedup GBT rejects exactly those true cross-source links (measured: cross-source 219→166,
 	// triple-source 10→1), so this flow uses the recall-appropriate FS baseline.
 	// (A cross-objective GBT threshold is the documented follow-up — #655.)
@@ -421,9 +421,11 @@ export async function crossDatasetCorrelation(
 		report?.(`\n[written] ${OUT_MD}`)
 	}
 
-	// Emit a GeoJSON FeatureCollection for every resolved entity. carries `sources` + `sourceIDs`
-	// (so an analyst filters the cross-dataset links by `sources` length ≥ 2) and the geocode tier.
-	// QGIS-ready. this is the operator-verifiable output of the matcher. ---
+	// Emit a GeoJSON FeatureCollection for every resolved entity.
+	// Carries `sources` + `sourceIDs` (so an analyst filters the cross-dataset links
+	// by `sources` length ≥ 2) and the geocode tier.
+	// QGIS-ready.
+	// This is the operator-verifiable output of the matcher. ---
 	if (OUT_GEOJSON) {
 		const fc = toGeoJSON(entities)
 		await writeLocalJSONFile(fc, OUT_GEOJSON)

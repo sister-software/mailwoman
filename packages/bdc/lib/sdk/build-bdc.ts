@@ -121,9 +121,9 @@ export interface BuildBDCOptions {
 	 * Ignored when `rows` is given.
 	 * Required unless `rows` is given.
 	 *
-	 * Each file's constant `provider_id` column is peeked off its first data row (see
-	 * {@linkcode peekProviderID}) rather than threaded through as a parallel array — the FCC's per-provider files already
-	 * carry it once per file, redundantly, in column 1.
+	 * Each file's constant `provider_id` column is peeked off its first data row
+	 * (see {@linkcode peekProviderID}) rather than threaded through as a parallel array.
+	 * The FCC's per-provider files already carry it once per file, redundantly, in column 1.
 	 */
 	csvPaths?: string[]
 	/**
@@ -133,7 +133,7 @@ export interface BuildBDCOptions {
 	 */
 	out: string
 	/**
-	 * The FCC filing's `as_of_date` (e.g. from `resolveLatestVintage`) — becomes the
+	 * The FCC filing's `as_of_date` (e.g. From `resolveLatestVintage`) — becomes the
 	 * manifest's `sourceVintage` and `version` (BDC has no independent layer versioning
 	 * yet, same deferral `build-poi.ts` makes for `release`).
 	 */
@@ -152,23 +152,27 @@ export interface BuildBDCOptions {
 	/**
 	 * Resolve a 15-char census block geoid to its centroid.
 	 *
-	 * Injected so tests supply a small fixture `Map` lookup instead of touching a real
-	 * tiger database. the real (CLI-wired) implementation is
-	 * {@linkcode createTIGERBlockCentroidLookup}, which reads `tabblock20.geoid` (uppercase — `TIGERBlockTable`) block
-	 * geometry.
-	 * Returning `undefined` for an unknown geoid is required: the materialize pass counts
-	 * it in `unknownGeoids` and skips the row — it must never guess a cell.
+	 * Injected so tests supply a small fixture `Map` lookup instead of touching a real tiger database.
+	 * The real (CLI-wired) implementation is {@linkcode createTIGERBlockCentroidLookup},
+	 * which reads `tabblock20.geoid` (uppercase — `TIGERBlockTable`) block geometry.
+	 *
+	 * Returning `undefined` for an unknown geoid is required: the materialize pass
+	 * counts it in `unknownGeoids` and skips the row.
+	 * It must never guess a cell.
 	 */
 	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
 	onProgress?: (message: string) => void
 	/**
-	 * Provider-list rows ({@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI injection
-	 * point for populating `bdc_provider` (2a decision 8 / 3a decision 6). When absent (the default), `bdc_provider`
-	 * stays empty and the rest of the build is untouched: every code path this option touches is conditioned behind `if
-	 * (options.providers)`, so omitting it changes nothing. When present, `buildBDCDatabase` groups rows by `providerID`
-	 * and inserts one `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB} for how the primary
-	 * FRN is picked when a provider carries more than one, and `schema.ts`'s `BDCProviderTable` docstring for the full
-	 * lossy-denormalization rationale (decision 6).
+	 * Provider-list rows ({@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) —
+	 * the test/CLI injection point for populating `bdc_provider` (2a decision 8 / 3a decision 6).
+	 *
+	 * When absent (the default), `bdc_provider` stays empty and the rest of the
+	 * build is untouched: every code path this option touches is conditioned behind
+	 * `if (options.providers)`, so omitting it changes nothing.
+	 * When present, `buildBDCDatabase` groups rows by `providerID` and inserts one
+	 * `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB} for how
+	 * the primary FRN is picked when a provider carries more than one, and `schema.ts`'s
+	 * `BDCProviderTable` docstring for the full lossy-denormalization rationale (decision 6).
 	 */
 	providers?: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
 	/**
@@ -178,8 +182,9 @@ export interface BuildBDCOptions {
 	 * of the half-open `valid_from`/`valid_to` predicate and a second implementation
 	 * here would be a second place to drop the `valid_to` half.
 	 *
-	 * Only actually queried for a `provider_id` whose rows carry more than one distinct `frn` —
-	 * a single-FRN provider needs no lookup, since its lone FRN is already primary by construction.
+	 * Only actually queried for a `provider_id` whose rows carry more than one distinct `frn`.
+	 * A single-FRN provider needs no lookup, since its lone FRN is already primary by construction.
+	 *
 	 * Required whenever `providers` is given and at least one `provider_id` turns out to
 	 * be multi-FRN; `buildBDCDatabase` throws a descriptive error naming the offending
 	 * `provider_id` if it's needed but missing, rather than silently picking an arbitrary FRN.
@@ -279,8 +284,10 @@ interface BDCStageRow {
  * Peek the constant `provider_id` column (index 1) off an FCC BDC availability CSV's first data row.
  *
  * Production per-provider files carry the same `provider_id` in every row
- * (the FCC partitions availability files per provider) — `parsing.ts`'s `takeAvailabilityLine`
- * already assumes this, taking `providerID` as a parameter rather than re-slicing column 1 per row.
+ * (the FCC partitions availability files per provider).
+ * `parsing.ts`'s `takeAvailabilityLine` already assumes this, taking `providerID`
+ * as a parameter rather than re-slicing column 1 per row.
+ *
  * This reads it once, directly off the raw bytes, rather than threading a parallel
  * `providerID` array alongside `csvPaths` through the public options shape.
  *
@@ -333,18 +340,18 @@ export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID 
  *
  * Only the header row plus the first data row are needed and an FCC availability row
  * is ~110 bytes, so this is three orders of magnitude of slack.
- * A file shorter than this simply reads short —
- * {@linkcode peekProviderID} already reports a header-only or empty file by message.
+ * A file shorter than this simply reads short — {@linkcode peekProviderID} already
+ * reports a header-only or empty file by message.
  *
- * `provider_id` is a constant per file, so establishing it needs the first data row and nothing else. a
- * whole-file read was resident-loading 920 MB (one state × technology) to read one column of one row.
+ * `provider_id` is a constant per file, so establishing it needs the first data row and nothing else.
+ * A whole-file read was resident-loading 920 MB (one state × technology) to read one column of one row.
  */
 const PROVIDER_ID_PEEK_BYTES = 64 * 1024
 
 /**
- * Peeks each file's `provider_id` off its head ({@linkcode peekProviderID},
- * passing the path through so a malformed file's error names it), then streams every
- * row via `readAvailabilityRows` — the file is never resident.
+ * Peeks each file's `provider_id` off its head ({@linkcode peekProviderID}, passing the path through
+ * so a malformed file's error names it), then streams every row via `readAvailabilityRows`.
+ * The file is never resident.
  *
  * This is the production counterpart to the test injection point's injected `rows` —
  * exercised by `build-bdc.test.ts` only for the malformed-provider-id rejection path,
@@ -362,20 +369,18 @@ async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): A
  * Rows per `insert` batch when populating `bdc_provider`.
  *
  * Far smaller than {@link STAGE_BATCH_SIZE}: that constant tunes `bdc_availability`'s
- * multi-million-row raw-prepared-statement path, whereas `bdc_provider` is a small
- * per-provider dictionary (thousands of rows rather than millions) inserted through
- * Kysely's typed `insertInto` — this batches only to stay comfortably under SQLite's
- * bound-parameter ceiling rather than for throughput.
+ * multi-million-row raw-prepared-statement path, whereas `bdc_provider` is a small per-provider
+ * dictionary (thousands of rows rather than millions) inserted through Kysely's typed `insertInto`.
+ * This batches only to stay comfortably under SQLite's bound-parameter ceiling rather than for throughput.
  */
 const PROVIDER_INSERT_BATCH_SIZE = 500
 
 /**
  * Groups `providers` by `providerID`.
  *
- * `parseProviderList` yields one
- * {@link ProviderListRow} PER line of the source CSV, preserving cardinality
- * (never folded, never last-wins — see that module's docstring) — so a `provider_id` appearing
- * on N rows arrives here as N separate rows, exactly as decision 6 requires downstream.
+ * `parseProviderList` yields one {@link ProviderListRow} PER line of the source CSV, preserving
+ * cardinality (never folded, never last-wins — see that module's docstring) — so a `provider_id`
+ * appearing on N rows arrives here as N separate rows, exactly as decision 6 requires downstream.
  */
 async function groupProviderListRows(
 	providers: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
@@ -402,7 +407,7 @@ async function groupProviderListRows(
  * For each distinct `provider_id`:
  *
  * - Exactly one `frn` among its rows → that FRN is primary by construction.
- *   no `filerDB` query needed at all.
+ *   No `filerDB` query needed at all.
  * - More than one distinct `frn` → `readFRNFilingCandidates`
  *   (`@mailwoman/filer/sdk`, lazily imported — see below) reads each FRN's own most
  *   recent IN-force `form-499` filing edge from `filerDB`, `asOf` the given date,
@@ -410,29 +415,37 @@ async function groupProviderListRows(
  *   A `provider_id` whose FRNs carry no 499 filing to rank by inserts `frn: NULL` rather than
  *   guessing — `pickPrimaryFRN` throws on empty input, so this checks `candidates.length` first,
  *   mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
- * - `filerDB` is required the instant a multi-FRN `provider_id` is encountered. its absence throws
- *   immediately, naming the offending `provider_id`, rather than silently picking an arbitrary FRN.
+ * - `filerDB` is required the instant a multi-FRN `provider_id` is encountered.
+ *   Its absence throws immediately, naming the offending `provider_id`,
+ *   rather than silently picking an arbitrary FRN.
  * - `holding_company` gets the identical single-distinct-value shortcut `frn` gets:
  *   exactly one distinct non-null `holdingCompany` across a provider's rows means there's
  *   no conflict to resolve, so it's populated directly, no rule needed.
- *   Two or more distinct values is the real conflict decision 6 refuses to paper over with
- *   last-wins — that case inserts NULL, and every value stays recoverable from `filer.db`.
+ *   Two or more distinct values is the real conflict decision 6 refuses to paper over with last-wins.
+ *   That case inserts NULL, and every value stays recoverable from `filer.db`.
  *   A `null` `holdingCompany` on some rows doesn't count as a competing
  *   value (a row simply not stating it isn't a conflicting assertion) —
  *   only distinct NON-NULL strings are compared.
  *
- * `brand_name` is always inserted NULL — the provider list carries no brand-name column at all,
- * so there is nothing to populate it from, primary or otherwise (see the schema docstring).
+ * `brand_name` is always inserted NULL.
+ * The provider list carries no brand-name column at all, so there is nothing to
+ * populate it from, primary or otherwise (see the schema docstring).
  *
- * **Lazy `@mailwoman/filer/filer-lookup` import.** `readFRNFilingCandidates`/`pickPrimaryFRN` are loaded via `await
- * import("@mailwoman/filer/filer-lookup")`, memoized in `filerSDK` below, rather than a top-level static import. The
- * cost this avoids is smaller than it was: the specifier used to be the `@mailwoman/filer/sdk` barrel, which `export
- * *`s `cluster-filers.ts` and so pulls `@mailwoman/match`/`record`/`registry` in behind it — a top-level import of that
- * barrel regressed `@mailwoman/bdc`'s import time ~32% for every consumer, including ones that never populate
- * providers. `filer-lookup.ts` alone imports only `@mailwoman/sqlite/client`, `#schema` and `#frn` (measured
- * 2026-09-01), so the heavy graph is no longer on this path at all. The laziness is kept because it also defers opening
- * the filer database, and a static import here is now a viable simplification if someone wants to measure it — but it
- * is no longer required for import time.
+ * **Lazy `@mailwoman/filer/filer-lookup` import.** `readFRNFilingCandidates`/`pickPrimaryFRN`
+ * are loaded via `await import("@mailwoman/filer/filer-lookup")`, memoized in
+ * `filerSDK` below, rather than a top-level static import.
+ * The cost this avoids is smaller than it was: the specifier used to be the
+ * `@mailwoman/filer/sdk` barrel, which `export *`s `cluster-filers.ts` and
+ * so pulls `@mailwoman/match`/`record`/`registry` in behind it.
+ *
+ * A top-level import of that barrel regressed `@mailwoman/bdc`'s import time ~32% for
+ * every consumer, including ones that never populate providers.
+ * `filer-lookup.ts` alone imports only `@mailwoman/sqlite/client`, `#schema`
+ * and `#frn` (measured 2026-09-01), so the heavy graph is no longer on this path at all.
+ *
+ * The laziness is kept because it also defers opening the filer database, and a
+ * static import here is now a viable simplification if someone wants to measure it —
+ * but it is no longer required for import time.
  */
 async function populateBDCProviderTable(
 	db: DatabaseClient<BDCDatabase>,
@@ -533,7 +546,8 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	// Build-tuning pragmas — identical to build-poi.ts's discipline.
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
-	// Assigned at the end of the try — the tallies live inside its scope. the seal + swap do not.
+	// Assigned at the end of the try — the tallies live inside its scope.
+	// The seal + swap do not.
 	let result: BuildBDCResult
 
 	try {
@@ -610,16 +624,16 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		// `location_id`, so those BSL rows all survive the staging dedup as distinct staged rows.
 		// In `includeLocationIDs` mode that's correct: every BSL is a real,
 		// distinct row the caller asked to keep.
-		// In the default (NULL `location_id`) mode, when those BSLs also share identical speeds/flags,
-		// they'd otherwise materialize as byte-identical rows, inflating `result.rows`
-		// and `layer_coverage.observed_rows` by the BSL count (~100x at real scale) —
-		// `select distinct` over every column except `location_id` collapses those byte-identical
-		// BSL duplicates down to one row. important — this is not a guarantee of one row per
-		// (geoid, provider_id, technology_code) triple: BSLs at the same triple with differing
-		// speeds/flags are not the same tuple, so `select distinct` does not merge them —
-		// they survive as multiple NULL-`location_id` rows at that one triple.
-		// Accepted rather than a bug. see the module docstring and `filing-landscape.ts`'s
-		// docstring for the read-side consequence.
+		// In the default (NULL `location_id`) mode, when those BSLs also share
+		// identical speeds/flags, they'd otherwise materialize as byte-identical rows,
+		// inflating `result.rows` and `layer_coverage.observed_rows` by the BSL count
+		// (~100x at real scale) — `select distinct` over every column except `location_id`
+		// collapses those byte-identical BSL duplicates down to one row.
+		// Important — this is not a guarantee of one row per (geoid, provider_id, technology_code) triple:
+		// BSLs at the same triple with differing speeds/flags are not the same tuple, so `select distinct`
+		// does not merge them — they survive as multiple NULL-`location_id` rows at that one triple.
+		// Accepted rather than a bug.
+		// See the module docstring and `filing-landscape.ts`'s docstring for the read-side consequence.
 		const stageStmt = options.includeLocationIDs
 			? db.prepare(
 					`SELECT geoid, provider_id, technology_code, location_id,
@@ -678,8 +692,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			insAvailability.run(
 				resolved.h3Cell,
 				row.geoid,
-				// wof_id stays NULL here — WOF point-in-polygon resolution against the block centroid is a later
-				// registry-join task, the same decision-8 scoping schema.ts documents for `bdc_provider`.
+				// wof_id stays NULL here — WOF point-in-polygon resolution against the block centroid is a later registry-join task, the same decision-8 scoping schema.ts documents for `bdc_provider`.
 				null,
 				row.provider_id,
 				row.technology_code,

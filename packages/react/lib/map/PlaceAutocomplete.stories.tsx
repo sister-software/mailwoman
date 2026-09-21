@@ -20,7 +20,8 @@ export default meta
 type Story = StoryObj<typeof PlaceAutocomplete>
 
 /**
- * Three fake suggestions. the first is highlighted, hover to move it.
+ * Three fake suggestions.
+ * The first is highlighted, hover to move it.
  */
 export const WithSuggestions: Story = {
 	render: () => {

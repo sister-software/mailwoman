@@ -51,8 +51,8 @@ import type { ResolvedEntity, SourceRecord } from "#types"
  *
  * Used to count how many distinct entities share an address across the whole corpus
  * (computable over millions of rows without geocoding) and to look that frequency up at match time.
- * It's the inverse-frequency signal: a crowded clinic/billing address is weak
- * evidence of identity. a lonely address is strong.
+ * It's the inverse-frequency signal: a crowded clinic/billing address is weak evidence of identity.
+ * A lonely address is strong.
  *
  * (See docs/articles/evals/matcher-dedup/2026-06-15-nppes-dedup-benchmark.md.)
  */
@@ -128,8 +128,7 @@ export function normalizePhone(raw: string | null | undefined): string | null {
 }
 
 /**
- * {@link normalizePhone} under the probes' stricter interface: only a full line counts — the last 10 digits when the
- * input carries at least 10, `""` otherwise (never a partial digit string).
+ * {@link normalizePhone} under the probes' stricter interface: only a full line counts. The last 10 digits when the input carries at least 10, `""` otherwise (never a partial digit string).
  *
  * Callers guard on truthiness, so `""` reads as "no comparable phone" rather than a weaker key.
  */
@@ -142,9 +141,10 @@ export function normalizePhoneStrict(raw: string | null | undefined): string {
 /**
  * The identity-corroborating comparisons (person name, organization, phone).
  *
- * A2 (#625,
- * {@link ResolveConfig.requireCorroboration}) requires at least one of these to _positively_ agree before a pair may
- * link — a shared address alone is not identity.
+ * A2 (#625, {@link ResolveConfig.requireCorroboration}) requires at least one of
+ * these to _positively_ agree before a pair may link.
+ * A shared address alone is not identity.
+ *
  * Phone (A3) is the secondary identifier that rescues a true same-entity link across name drift.
  */
 const CORROBORATING_FIELDS = new Set(["given", "family", "organization", "phone"])
@@ -164,24 +164,27 @@ export interface DefaultModelOptions {
 	 */
 	addressFrequency?: TermFrequencyTable
 	/**
-	 * **A1 (#625):** collapse the redundant address-key + great-circle-distance comparisons into one
-	 * {@link spatialComparison spatial-agreement} signal — an exact-key tier (where `addressFrequency`, if set, rides)
-	 * over distance buckets.
+	 * **A1 (#625):** collapse the redundant address-key + great-circle-distance comparisons
+	 * into one {@link spatialComparison spatial-agreement} signal — an exact-key tier
+	 * (where `addressFrequency`, if set, rides) over distance buckets.
+	 *
 	 * Removes the double-count that over-merges co-located providers
 	 * (an exact key match already implies distance ≈ 0).
 	 */
 	collapseSpatial?: boolean
 	/**
-	 * **A3 (#625):** add a normalized-phone exact-match comparison — a shared line is strong evidence
-	 * and the secondary corroborator that lets a true same-entity link survive name drift under A2.
+	 * **A3 (#625):** add a normalized-phone exact-match comparison.
+	 *
+	 * A shared line is strong evidence and the secondary corroborator that lets a
+	 * true same-entity link survive name drift under A2.
 	 */
 	usePhone?: boolean
 	/**
 	 * Extra secondary-identifier comparisons drawn from {@link SourceRecord.attributes}
 	 * (e.g. `["authorizedOfficial"]`).
 	 *
-	 * Each becomes an `attr:<key>` comparison and counts toward A2 corroboration —
-	 * a more reliable discriminator than phone where the data has one (#625).
+	 * Each becomes an `attr:<key>` comparison and counts toward A2 corroboration.
+	 * A more reliable discriminator than phone where the data has one (#625).
 	 */
 	discriminators?: string[]
 	/**
@@ -203,8 +206,8 @@ export interface DefaultModelOptions {
  *
  * The spatial signal is either two comparisons (address-key similarity + great-circle
  * distance — the legacy default, which double-counts) or, with
- * {@link DefaultModelOptions.collapseSpatial}, one collapsed {@link spatialComparison}. `addressFrequency` down-weights
- * agreement on a crowded address either way.
+ * {@link DefaultModelOptions.collapseSpatial}, one collapsed {@link spatialComparison}.
+ * `addressFrequency` down-weights agreement on a crowded address either way.
  */
 export function buildDefaultModel(opts: DefaultModelOptions = {}): FellegiSunterModel<SourceRecord> {
 	const identity = [
@@ -343,14 +346,15 @@ export interface ResolveConfig {
 	 * (#625):** when omitted, `resolveEntities` auto-computes the table over the input records' addresses
 	 * (the right scope for a single dataset — a crowded address within the data is down-weighted).
 	 *
-	 * Pass your own {@link TermFrequencyTable} (e.g. a corpus-wide one) to override,
+	 * Pass your own {@link TermFrequencyTable} (e.g. A corpus-wide one) to override,
 	 * or `false` to disable (the legacy bare baseline).
 	 * Ignored if `model` is supplied.
 	 */
 	addressFrequency?: TermFrequencyTable | false
 	/**
-	 * A1 (#625): collapse the redundant address-key + distance pair into one
-	 * {@link spatialComparison}. **Default-on (true)** — the cleaner, less-over-merging spatial model.
+	 * A1 (#625): collapse the redundant address-key + distance pair into one {@link spatialComparison}.
+	 * **Default-on (true)** — the cleaner, less-over-merging spatial model.
+	 *
 	 * Set `false` for the legacy two-signal baseline.
 	 * Ignored if `model` is supplied.
 	 */
@@ -402,30 +406,35 @@ export interface ResolveConfig {
 	 * The blocking + clustering are unchanged, so a trained scorer can be A/B'd
 	 * against the FS baseline on the identical pipeline.
 	 * The function is responsible for its own feature computation
-	 * (e.g. the agreement pattern, which is EM-independent, plus any corpus statistics it captured).
+	 * (e.g. The agreement pattern, which is EM-independent, plus any corpus statistics it captured).
 	 *
-	 * Interaction with {@link requireCorroboration}: the two are independent
-	 * and compose, but the corroboration check is still evaluated on the Fellegi-Sunter
-	 * `contributions` (not the learned score) — so a learned-high pair with no
-	 * positive FS name/org/phone agreement is still held out.
+	 * Interaction with {@link requireCorroboration}: the two are independent and compose, but the
+	 * corroboration check is still evaluated on the Fellegi-Sunter `contributions` (not the learned score).
+	 * So a learned-high pair with no positive FS name/org/phone agreement is still held out.
+	 *
 	 * A learned scorer is normally trained to subsume corroboration, so use one or the other.
-	 * combining them lets the FS check veto the learned score, which is rarely what you want.
+	 * Combining them lets the FS check veto the learned score, which is rarely what you want.
 	 */
 	scorer?: (a: SourceRecord, b: SourceRecord) => number
 	/**
-	 * **#603: the learned gradient-boosted-tree scorer — default-on.** Omitted or `true` uses the bundled
-	 * {@link DEDUP_GBT_MODEL} (trained on the NPPES NPI-truth set. beats the Fellegi-Sunter baseline ~+5pp dedup F1
-	 * held-out within a state and ~+22pp on states it never trained on, reducing the co-located over-merge).
-	 * `false` opts out to the pure FS baseline. pass your own
-	 * {@link GBT} for a custom model. The scorer is built over the same collapsed-spatial +
-	 * address-frequency feature model as training (via the resolved {@link addressFrequency}),
-	 * independent of this call's comparison config.
+	 * **#603: the learned gradient-boosted-tree scorer — default-on.** Omitted
+	 * or `true` uses the bundled {@link DEDUP_GBT_MODEL} (trained on the NPPES NPI-truth
+	 * set. Beats the Fellegi-Sunter baseline ~+5pp dedup F1 held-out within a state
+	 * and ~+22pp on states it never trained on, reducing the co-located over-merge).
+	 *
+	 * `false` opts out to the pure FS baseline.
+	 * Pass your own {@link GBT} for a custom model.
+	 *
+	 * The scorer is built over the same collapsed-spatial + address-frequency feature model as training
+	 * (via the resolved {@link addressFrequency}), independent of this call's comparison config.
 	 * An explicit {@link scorer} takes precedence.
 	 *
-	 * When the bundled model is active and you don't set {@link threshold},
-	 * its calibrated link threshold ({@link DEDUP_GBT_META}.recommendedThreshold) is used —
-	 * the GBT logit isn't in FS-weight units, so 0 would over-merge.
-	 * The model is NPPES/US-trained. for a very different domain, A/B it or pass `false`.
+	 * When the bundled model is active and you don't set {@link threshold}, its calibrated
+	 * link threshold ({@link DEDUP_GBT_META}.recommendedThreshold) is used.
+	 * The GBT logit isn't in FS-weight units, so 0 would over-merge.
+	 *
+	 * The model is NPPES/US-trained.
+	 * For a very different domain, A/B it or pass `false`.
 	 */
 	learnedScorer?: boolean | GBT
 }
@@ -454,7 +463,8 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 	// The proven changes are default-on (#625): the address-frequency down-weight
 	// (auto-computed over the input records when not supplied; `false` disables) +
 	// the collapsed spatial signal (A1).
-	// A new caller gets the strong config out of the box. pass explicit values to override.
+	// A new caller gets the strong config out of the box.
+	// Pass explicit values to override.
 	const addressFrequency =
 		config.addressFrequency === false
 			? undefined
@@ -478,12 +488,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	const blockingKeys = config.blockingKeys ?? defaultBlockingKeys()
 
-	// #603: the learned scorer is default-on. An explicit `scorer` overrides everything. otherwise
-	// `learnedScorer === false` opts out to the FS baseline, a GBT supplies a custom model,
-	// and `true`/omitted uses the bundled DEDUP_GBT_MODEL.
-	// The scorer is built over the fixed collapsed-spatial + address-frequency feature
-	// model (matching training, independent of this call's comparison config),
-	// using the resolved address-frequency table.
+	// #603: the learned scorer is default-on. An explicit `scorer` overrides everything. Otherwise `learnedScorer === false` opts out to the FS baseline, a GBT supplies a custom model, and `true`/omitted uses the bundled DEDUP_GBT_MODEL. The scorer is built over the fixed collapsed-spatial + address-frequency feature model (matching training, independent of this call's comparison config), using the resolved address-frequency table.
 	let scorer = config.scorer
 	let usingBundledModel = false
 
@@ -500,9 +505,9 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 		})
 	}
 
-	// Threshold: an explicit value wins. else the bundled model's calibrated threshold
-	// when it's active (its logit isn't in FS-weight units, so 0 would over-merge);
-	// else 0 (FS baseline or a custom model).
+	// Threshold: an explicit value wins.
+	// Else the bundled model's calibrated threshold when it's active
+	// (its logit isn't in FS-weight units, so 0 would over-merge); else 0 (FS baseline or a custom model).
 	const threshold = config.threshold ?? (usingBundledModel ? DEDUP_GBT_META.recommendedThreshold : 0)
 
 	const { pairs, droppedBlocks } = block(records, blockingKeys, { maxBlockSize: config.maxBlockSize })
@@ -516,12 +521,11 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	const links: ScoredLink<SourceRecord>[] = pairs.map(([a, b]) => {
 		const score = scorePair(scoringModel, a, b)
-		// #603: a learned scorer (explicit `scorer` or the opt-in `learnedScorer`) replaces the FS weight
-		// (same clustering + threshold semantics).
+		// #603: a learned scorer (explicit `scorer` or the opt-in `learnedScorer`) replaces the FS weight (same clustering + threshold semantics).
 		let weight = scorer ? scorer(a, b) : score.weight
 
-		// A2 (#625): a link must carry positive name or org corroboration —
-		// a shared (even down-weighted) address alone is not identity.
+		// A2 (#625): a link must carry positive name or org corroboration.
+		// A shared (even down-weighted) address alone is not identity.
 		// Spatial-only pairs are suppressed below any threshold.
 		if (config.requireCorroboration) {
 			const corroborated = score.contributions.some(
@@ -538,9 +542,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	const clusters = cluster(records, links, { threshold, linkage: config.linkage })
 
-	// Cohesion = the weakest within-cluster link weight (how tightly an entity holds together). Compute it
-	// in one pass over links via a record→cluster index rather than by filtering every link for
-	// every cluster — the latter is O(clusters × links) and dominates the resolve at scale.
+	// Cohesion = the weakest within-cluster link weight (how tightly an entity holds together). Compute it in one pass over links via a record→cluster index rather than by filtering every link for every cluster. The latter is O(clusters × links) and dominates the resolve at scale.
 	const clusterOf = new Map<SourceRecord, number>()
 
 	clusters.forEach((group, i) => {

@@ -115,7 +115,9 @@ export const std = (xs: readonly number[]): number => {
 export const pct = (x: number): string => (100 * x).toFixed(1)
 
 /**
- * Sign prefix for a signed delta — `"+"` for a non-negative value (a negative one carries its own sign).
+ * Sign prefix for a signed delta.
+ *
+ * `"+"` for a non-negative value (a negative one carries its own sign).
  */
 export const sgn = (x: number): string => (x >= 0 ? "+" : "")
 
@@ -175,7 +177,7 @@ export const NPPES_COLUMNS = {
 	isSubpart: "Is Organization Subpart",
 	parentLBN: "Parent Organization LBN",
 	parentTIN: "Parent Organization TIN",
-	// #625 taxonomy discriminator: the 15 taxonomy slots. collected as a set (any shared code = agreement).
+	// #625 taxonomy discriminator: the 15 taxonomy slots. Collected as a set (any shared code = agreement).
 	taxonomy: Array.from({ length: 15 }, (_, i) => `Healthcare Provider Taxonomy Code_${i + 1}`),
 }
 
@@ -365,7 +367,8 @@ export interface ColocatedProvider {
 	taxonomy: string
 	subpart: boolean
 	/**
-	 * `parentLBN|parentTIN`, lowercased — `"|"` when both are blank.
+	 * `parentLBN|parentTIN`, lowercased.
+	 * `"|"` when both are blank.
 	 */
 	parent: string
 }
@@ -548,7 +551,8 @@ export interface GBTHyperparameters {
 const CROSS_SOURCE_HYPERPARAMS: GBTHyperparameters = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 
 /**
- * Share of join keys assigned to fit during calibration. the rest are held out.
+ * Share of join keys assigned to fit during calibration.
+ * The rest are held out.
  */
 const FIT_SPLIT_FRACTION = 0.8
 
@@ -588,7 +592,8 @@ export interface TrainCrossSourceModelOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * The assembled two-source rows — the caller's source-loading phases stay with the caller.
+	 * The assembled two-source rows.
+	 * The caller's source-loading phases stay with the caller.
 	 */
 	rows: readonly CrossSourceRow[]
 	/**
@@ -637,8 +642,8 @@ export async function trainCrossSourceModel(
 ): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
 	const { rows, joined, addressFrequency, sources, precisionBar, out, report } = options
 
-	// Geocode and ingest records, carrying the join-key label in record.id and source on
-	// the record. heavy geocoder is injected (see ./eval-geocoder.ts). ---
+	// Geocode and ingest records, carrying the join-key label in record.id and source on the record.
+	// Heavy geocoder is injected (see ./eval-geocoder.ts). ---
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 

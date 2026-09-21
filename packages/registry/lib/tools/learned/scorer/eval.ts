@@ -66,7 +66,8 @@ const CLEAR_WIN_F1_DELTA = 0.02
 const STRONG_EVIDENCE_Z = 3
 
 /**
- * Share of NPIs assigned to train. the rest are held out for test.
+ * Share of NPIs assigned to train.
+ * The rest are held out for test.
  */
 const TRAIN_SPLIT_FRACTION = 0.67
 
@@ -141,8 +142,9 @@ export async function scorerPairwiseEval(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up features can
-	// read the authorized official. the FS arm ignores them (no discriminators configured).
+	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up
+	// features can read the authorized official.
+	// The FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -158,7 +160,8 @@ export async function scorerPairwiseEval(
 
 	geocoder[Symbol.dispose]()
 
-	// Block records and extract the collapsed-spatial and address-frequency features. comparisons.
+	// Block records and extract the collapsed-spatial and address-frequency features.
+	// Comparisons.
 	// EM-fit it for the FS baseline. ---
 	report?.("[D] blocking + features…")
 	const model = buildDefaultModel({ collapseSpatial: true, addressFrequency })
@@ -226,8 +229,7 @@ export async function scorerPairwiseEval(
 		const posWeight = train.filter((s) => s.y === 1).length / Math.max(1, train.length)
 		const sampleWeights = train.map((s) => (s.y === 1 ? 1 - posWeight : posWeight))
 
-		// L2-regularized logistic regression (batch gradient descent), rare class
-		// up-weighted — the shared trainer.
+		// L2-regularized logistic regression (batch gradient descent), rare class up-weighted — the shared trainer.
 		const lrScore = trainLogisticRegression(
 			train.map((s) => s.x),
 			train.map((s) => s.y),

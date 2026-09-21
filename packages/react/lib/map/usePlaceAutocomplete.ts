@@ -99,8 +99,10 @@ export interface UsePlaceAutocomplete {
 const LISTBOX_ID = "mw-demo-suggest-list"
 
 /**
- * Stable empty list for the derived no-suggestions state — a fresh `[]` per render would
- * churn the identity every consumer and every useCallback dependency list sees.
+ * Stable empty list for the derived no-suggestions state.
+ *
+ * A fresh `[]` per render would churn the identity every consumer and every
+ * useCallback dependency list sees.
  */
 const NO_SUGGESTIONS: Suggestion[] = []
 const optionID = (index: number) => `mw-demo-suggest-${index}`
@@ -129,10 +131,9 @@ export function usePlaceAutocomplete({
 	/**
 	 * The last completed fetch, keyed by the query that produced it.
 	 *
-	 * Visibility is derived from this during render rather than pushed through
-	 * sync setStates in the effect — the effect's only job is the async fetch,
-	 * so every state write in it happens after an await and the react(set-state-in-effect)
-	 * rule is satisfied by structure rather than by exception.
+	 * Visibility is derived from this during render rather than pushed through sync setStates in the effect.
+	 * The effect's only job is the async fetch, so every state write in it happens after an await
+	 * and the react(set-state-in-effect) rule is satisfied by structure rather than by exception.
 	 */
 	const [fetched, setFetched] = useState<{ query: string; suggestions: Suggestion[] } | null>(null)
 	/**
@@ -185,7 +186,8 @@ export function usePlaceAutocomplete({
 			const next = replaceSegment(text, value)
 
 			setText(next)
-			// Suppress the fetch the rewritten text would trigger — the segment being typed is the picked name.
+			// Suppress the fetch the rewritten text would trigger.
+			// The segment being typed is the picked name.
 			setDismissed(localitySegment(next))
 			setFetched(null)
 			setActiveIndex(-1)

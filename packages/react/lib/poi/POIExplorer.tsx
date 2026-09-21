@@ -78,7 +78,7 @@ function POIExplorerInner({
 
 	// The live block appears whenever the subject could be live-searched with an anchor —
 	// i.e. capable minus the anchor-present requirement (`canSearchLive` also requires an anchor.
-	// the block itself renders the "add an anchor" hint, so it must show one step earlier).
+	// The block itself renders the "add an anchor" hint, so it must show one step earlier).
 	// Category: not build-local.
 	// Brand: brand-capable probe + a QID.
 	const showLiveBlock = Boolean(

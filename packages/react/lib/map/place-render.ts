@@ -36,12 +36,13 @@ export type LngLat = [number, number]
 export type PlaceTier = "address_point" | "interpolated"
 
 /**
- * The resolved-place shape the map render consumes — the pipeline {@link ResolvedPlaceView}
- * plus the map-only extras the demo's `ResolvedHit` carries (bbox, street tier + uncertainty),
- * and an optional PRE-fetched crisp polygon.
+ * The resolved-place shape the map render consumes.
  *
- * Extending `ResolvedPlaceView` keeps the map render aligned with the shared
- * parse result. the extras are additive.
+ * The pipeline {@link ResolvedPlaceView} plus the map-only extras the demo's `ResolvedHit`
+ * carries (bbox, street tier + uncertainty), and an optional PRE-fetched crisp polygon.
+ *
+ * Extending `ResolvedPlaceView` keeps the map render aligned with the shared parse result.
+ * The extras are additive.
  */
 export interface ResolvedMapPlace extends ResolvedPlaceView {
 	/**
@@ -55,14 +56,14 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 	 */
 	tier?: PlaceTier
 	/**
-	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor. calibrated interp).
+	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor. Calibrated interp).
 	 */
 	uncertaintyM?: number
 	/**
 	 * The crisp admin polygon, when the host has already fetched it from the sibling polygon DB.
 	 *
-	 * Its presence drives the polygon path. the async fetch itself stays out of this
-	 * pure function (a runtime concern in a later phase).
+	 * Its presence drives the polygon path.
+	 * The async fetch itself stays out of this pure function (a runtime concern in a later phase).
 	 */
 	geometry?: PlaceGeometry
 }
@@ -70,10 +71,11 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 /**
  * The camera target the render computes.
  *
- * `center` (fly to a point at a zoom) has a declarative equivalent — a consumer can
- * feed it to a controlled `viewState` (see {@link cameraToViewState}).
- * `bounds` (fit a box with pixel padding) does not — `fitBounds` needs the map's pixel
- * dimensions, so it is applied imperatively by `<ResultCamera>`.
+ * `center` (fly to a point at a zoom) has a declarative equivalent.
+ * A consumer can feed it to a controlled `viewState` (see {@link cameraToViewState}).
+ *
+ * `bounds` (fit a box with pixel padding) does not.
+ * `fitBounds` needs the map's pixel dimensions, so it is applied imperatively by `<ResultCamera>`.
  */
 export type MapCameraTarget =
 	| { kind: "center"; center: LngLat; zoom: number }
@@ -86,7 +88,8 @@ export interface MapPlaceRenderSpec {
 	/**
 	 * Marker position(s) as `[lon, lat]`.
 	 *
-	 * Single-element today. an array leaves room for multi-marker later.
+	 * Single-element today.
+	 * An array leaves room for multi-marker later.
 	 */
 	markers: LngLat[]
 	/**

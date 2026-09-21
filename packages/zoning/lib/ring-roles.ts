@@ -37,9 +37,11 @@ import { pointInRing, ringSignedAreaM2, type MultiPolygonRings } from "@mailwoma
  * How many of a hole's vertices are tested against a candidate exterior.
  *
  * One vertex is not enough, and that was measured.
- * Holes in this product routinely share vertices with the exterior they sit in, and a ray cast
- * at a point exactly on an edge is implementation-defined — so a first-vertex test leaves 26
- * of the 3,516 holes unplaced, while a majority vote over nine of their own vertices leaves 9.
+ * Holes in this product routinely share vertices with the exterior they sit in,
+ * and a ray cast at a point exactly on an edge is implementation-defined.
+ *
+ * So a first-vertex test leaves 26 of the 3,516 holes unplaced, while a majority
+ * vote over nine of their own vertices leaves 9.
  *
  * Every one of those 9 is a degenerate sliver of between 0.0008 m² and 1.7 m²,
  * and the publisher's own area accounting subtracts all of them.
@@ -51,7 +53,8 @@ const HOLE_VERTEX_SAMPLES = 9
  */
 export interface ResolvedRingRoles {
 	/**
-	 * `[exterior, ...holes]` per polygon — the shape the ring blob stores and the point test reads.
+	 * `[exterior, ...holes]` per polygon.
+	 * The shape the ring blob stores and the point test reads.
 	 */
 	polygons: MultiPolygonRings
 	exteriorCount: number
@@ -80,7 +83,8 @@ export interface ResolvedRingRoles {
 	 * At that magnitude a ring's winding is floating-point noise rather than something
 	 * the publisher stated: the same ring reads clockwise in the source's own Irish
 	 * Transverse Mercator metres and counter-clockwise after reprojection.
-	 * Refusing it would fail the build on the publisher's own data. dropping it would invent an absence.
+	 * Refusing it would fail the build on the publisher's own data.
+	 * Dropping it would invent an absence.
 	 *
 	 * So the largest ring by magnitude becomes the exterior, which is also the correct
 	 * reading for a feature published wholly inverted, and the count rides on the receipt

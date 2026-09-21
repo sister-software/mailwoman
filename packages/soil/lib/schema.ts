@@ -49,7 +49,8 @@ export const SoilCellContainment = {
 	/**
 	 * The delineation's boundary crosses the cell.
 	 *
-	 * The index has narrowed the candidates. the point test decides.
+	 * The index has narrowed the candidates.
+	 * The point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -57,15 +58,17 @@ export const SoilCellContainment = {
 export type SoilCellContainment = (typeof SoilCellContainment)[keyof typeof SoilCellContainment]
 
 /**
- * One map-unit delineation, verbatim. A plain rowid table: it holds a geometry blob, which is the one shape `without
- * rowid` hurts.
+ * One map-unit delineation, verbatim.
+ *
+ * A plain rowid table: it holds a geometry blob, which is the one shape `without rowid` hurts.
  */
 export interface SoilMapUnitAreaTable {
 	/**
-	 * `<areasymbol>:<ordinal>` — the survey area plus this delineation's position in
-	 * the authority's own shapefile order. ssurgo publishes no per-delineation key of
-	 * its own (`mukey` names the MAP unit, and one map unit has many delineations),
-	 * so the ordinal is what makes a row nameable at all.
+	 * `<areasymbol>:<ordinal>` — the survey area plus this delineation's position
+	 * in the authority's own shapefile order.
+	 *
+	 * Ssurgo publishes no per-delineation key of its own (`mukey` names the MAP unit,
+	 * and one map unit has many delineations), so the ordinal is what makes a row nameable at all.
 	 *
 	 * Text, so a source that starts publishing a non-numeric id needs no schema change.
 	 */
@@ -129,8 +132,9 @@ export interface SoilMapUnitTable {
 	 * `Consociation` | `Complex` | `Association` | `Undifferentiated group`,
 	 * from the authority's declared domain.
 	 *
-	 * A complex is nrcs's statement that two or more soils are intermingled and cannot be separated
-	 * at the mapping scale — the mixture is the survey's finding rather than this layer's loss.
+	 * A complex is nrcs's statement that two or more soils are intermingled
+	 * and cannot be separated at the mapping scale.
+	 * The mixture is the survey's finding rather than this layer's loss.
 	 */
 	mukind: string | null
 	mustatus: string | null
@@ -199,9 +203,10 @@ export interface SoilComponentTable {
 	/**
 	 * The irrigated rating.
 	 *
-	 * NULL on 85.1% of national components, because it is populated only where irrigation
-	 * is a considered use — so its absence is a statement about the rating's applicability
-	 * rather than about the land, and it is carried but never reduced.
+	 * NULL on 85.1% of national components, because it is populated only
+	 * where irrigation is a considered use.
+	 * So its absence is a statement about the rating's applicability rather than
+	 * about the land, and it is carried but never reduced.
 	 */
 	irrcapcl: string | null
 	irrcapscl: string | null
@@ -223,19 +228,22 @@ export interface SoilComponentTable {
  */
 export interface SoilCapabilityCellTable {
 	/**
-	 * 48-bit short H3 cell at the declared index resolution. single-resolution,
-	 * unlike {@link SoilMapUnitCellTable}: this is the table a consumer joins on,
-	 * and a mixed-resolution join key is not one.
+	 * 48-bit short H3 cell at the declared index resolution.
+	 *
+	 * Single-resolution, unlike {@link SoilMapUnitCellTable}: this is the table a
+	 * consumer joins on, and a mixed-resolution join key is not one.
 	 */
 	h3_cell: number
 	/**
 	 * JSON: the authority's class codes mapped to their area-weighted share, sorted by descending share.
 	 *
-	 * Shares above the declared truncation floor only. the remainder is in `other_share`.
+	 * Shares above the declared truncation floor only.
+	 * The remainder is in `other_share`.
 	 */
 	class_shares: string
 	/**
-	 * Mapped soil components carrying a NULL rating — the survey did not rate them.
+	 * Mapped soil components carrying a NULL rating.
+	 * The survey did not rate them.
 	 */
 	unrated_share: number
 	/**
@@ -258,10 +266,11 @@ export interface SoilCapabilityCellTable {
 	 * The fraction of the cell covered by any map-unit delineation at all.
 	 *
 	 * The five shares above are normalized over this, so they sum to 1 exactly.
-	 * A cell at the edge of a survey area is partly outside every delineation,
-	 * and without this column that unmapped remainder would silently deflate every
-	 * class share — an absence represented as a small number, which is the one thing this schema exists to prevent. A
-	 * cell wholly inside the mapped area reads 1.
+	 * A cell at the edge of a survey area is partly outside every delineation, and without
+	 * this column that unmapped remainder would silently deflate every class share.
+	 *
+	 * An absence represented as a small number, which is the one thing this schema exists to prevent.
+	 * A cell wholly inside the mapped area reads 1.
 	 */
 	mapped_share: number
 	/**
@@ -399,7 +408,8 @@ export type SoilSchemaHandle = Pick<Kysely<SoilDatabase>, "schema">
 /**
  * Create `soil_map_unit_area`.
  *
- * A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid` penalizes.
+ * A plain rowid table on purpose.
+ * The `rings` blob is exactly the payload `without rowid` penalizes.
  */
 export async function createSoilMapUnitAreaTable(db: SoilSchemaHandle): Promise<void> {
 	const table = db.schema
@@ -421,7 +431,7 @@ export async function createSoilMapUnitCellTable(db: SoilSchemaHandle): Promise<
 
 	await addCellIndexColumns(table, "area_id")
 		.addPrimaryKeyConstraint("soil_map_unit_cell_pk", ["h3_cell", "area_id"])
-		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }
@@ -466,7 +476,8 @@ export async function createSoilComponentTable(db: SoilSchemaHandle): Promise<vo
 }
 
 /**
- * Create `soil_capability_cell` — the reduction both consumers read.
+ * Create `soil_capability_cell`.
+ * The reduction both consumers read.
  */
 export async function createSoilCapabilityCellTable(db: SoilSchemaHandle): Promise<void> {
 	await db.schema

@@ -40,8 +40,9 @@ export interface UseParsePipeline {
 	 *
 	 * Safe to bind to a form's `onSubmit`.
 	 *
-	 * Pass `query` to submit a value the field has not re-rendered with yet — a preset press sets
-	 * the text and submits in one handler, and that state update is not visible to this call.
+	 * Pass `query` to submit a value the field has not re-rendered with yet.
+	 * A preset press sets the text and submits in one handler, and that state
+	 * update is not visible to this call.
 	 */
 	submit: (query?: string) => Promise<void>
 	/**
@@ -61,7 +62,8 @@ export function useParsePipeline({ runtime, defaultText }: UseParsePipelineOptio
 	// `query` exists because `setText` does not reach this closure before the call after it runs.
 	// A preset that called `setText(value)` then `submit()` parsed the previous text —
 	// the field showed the preset and the map answered the address before it.
-	// A caller that already knows the query passes it. the field's own submit passes nothing.
+	// A caller that already knows the query passes it.
+	// The field's own submit passes nothing.
 	const submit = useCallback(
 		async (query?: string) => {
 			if (!runtime.ready || busy) return

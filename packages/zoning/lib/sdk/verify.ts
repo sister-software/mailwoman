@@ -95,7 +95,8 @@ export interface OutsideRow {
 	kind: string
 	designations: number
 	/**
-	 * True when the artifact answered `unknown` with no designation — the only acceptable reading here.
+	 * True when the artifact answered `unknown` with no designation.
+	 * The only acceptable reading here.
 	 */
 	passed: boolean
 }
@@ -120,8 +121,9 @@ export interface VerifyZoningResult {
  * cannot name is a coordinate nobody can check.
  *
  * Two populations, and both are required.
- * The Donegal points are the case this layer's coverage posture exists for —
- * the Department has not published that authority's zoning, and a builder that read
+ * The Donegal points are the case this layer's coverage posture exists for.
+ *
+ * The Department has not published that authority's zoning, and a builder that read
  * absence as "unrestricted" would answer them confidently.
  *
  * The Northern Irish points confirm the artifact is clipped to the Republic rather than to the
@@ -150,13 +152,15 @@ const PROBE_HALF_WIDTH_DEGREES = 0.0001
  *
  * Half a metre.
  * The two channels render the same edge from the same source coordinates through different
- * rounding, so a point between the two renderings lands on opposite sides. half a metre
- * is far below any real zoning boundary and far above the rounding difference.
+ * rounding, so a point between the two renderings lands on opposite sides.
+ *
+ * Half a metre is far below any real zoning boundary and far above the rounding difference.
  */
 const BOUNDARY_TOLERANCE_METRES = 0.5
 
 /**
- * One feature as the service publishes it — the only shape the comparison reads.
+ * One feature as the service publishes it.
+ * The only shape the comparison reads.
  */
 export interface ServiceFeature {
 	properties?: Record<string, unknown>
@@ -167,9 +171,10 @@ export interface ServiceFeature {
  * The one call the verification makes against the service: the features it publishes near a point.
  *
  * A function rather than the client, and that is what makes the check's own logic testable.
- * The comparison's value is that it decides which of three outcomes a point gets. expressed
- * against an http client it could only ever be watched on a live run, and a scripted reader
- * lets those decisions be pinned. {@link createServiceReader} builds the real one.
+ * The comparison's value is that it decides which of three outcomes a point gets.
+ *
+ * Expressed against an http client it could only ever be watched on a live run, and a scripted
+ * reader lets those decisions be pinned. {@link createServiceReader} builds the real one.
  */
 export type ServiceFeatureReader = (latitude: number, longitude: number) => Promise<ServiceFeature[]>
 
@@ -264,8 +269,8 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 
 /**
  * Whether the service's own geometry contains the point, decided here with the same
- * ring-role resolution and the same even-odd rule the artifact's reader uses —
- * so what is compared is a verdict against a verdict.
+ * ring-role resolution and the same even-odd rule the artifact's reader uses.
+ * So what is compared is a verdict against a verdict.
  */
 async function readServiceContainment(
 	readServiceFeatures: ServiceFeatureReader,

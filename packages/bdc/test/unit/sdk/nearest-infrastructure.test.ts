@@ -148,8 +148,8 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 	// `createPOIStagingTables` also creates `poi_stage` (unused here) — the category-codes
 	// dictionary lives alongside it and there's no standalone builder for just that table.
 	await createPOIStagingTables(kdb)
-	// POILookup's constructor unconditionally prepares a statement against `poi_search` —
-	// the FTS5 table must exist even though these tests never search by name.
+	// POILookup's constructor unconditionally prepares a statement against `poi_search`.
+	// The FTS5 table must exist even though these tests never search by name.
 	createPOISearchFTS(kdb)
 
 	for (const [category, id] of Object.entries(CATEGORY_IDS)) {

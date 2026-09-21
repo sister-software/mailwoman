@@ -79,17 +79,17 @@ describe("resolveEntities", () => {
 		expect(none.entities).toHaveLength(records.length)
 		expect(none.entities.every((e) => e.records.length === 1)).toBe(true)
 
-		// A scorer that accepts every blocked pair → the blocked duplicates (1,2)
-		// merge on the learned weight rather than the FS weight. the far-away record
-		// (3) is never blocked with them, so it stays apart.
+		// A scorer that accepts every blocked pair → the blocked duplicates (1,2) merge
+		// on the learned weight rather than the FS weight.
+		// The far-away record (3) is never blocked with them, so it stays apart.
 		const merged = resolveEntities(records, { scorer: () => 100, threshold: 1 })
 		const big = merged.entities.find((e) => e.records.length > 1)
 		expect(big?.records.map((r) => r.id).toSorted()).toEqual(["1", "2"])
 	})
 
 	it("learnedScorer: true loads the bundled GBT model and resolves end-to-end (#603)", () => {
-		// The opt-in bundled model loads + scores every blocked pair without throwing. the
-		// result is a sane entity set (between fully-merged and fully-split).
+		// The opt-in bundled model loads + scores every blocked pair without throwing.
+		// The result is a sane entity set (between fully-merged and fully-split).
 		// Behaviour on these synthetic records is the model's call — this guards the
 		// wiring (load → featurize → gbtScore → cluster), not a number.
 		const { entities } = resolveEntities(records, { learnedScorer: true })
@@ -176,7 +176,8 @@ describe("phone corroboration rescues name drift (A3, #625)", () => {
 	it("merges a shared-address, name-drifted pair when they share a phone line", () => {
 		const a: SourceRecord = { ...coLocated("1", "Acme", "Health"), phone: "512-555-0100" }
 		const b: SourceRecord = { ...coLocated("2", "Saint", "Marys"), phone: "(512) 555-0100" } // same line, drifted name
-		// The name/org-only check (A2) would block this. phone (A3) is the secondary identifier that rescues it.
+		// The name/org-only check (A2) would block this.
+		// Phone (A3) is the secondary identifier that rescues it.
 		const res = resolveEntities([a, b], { threshold: -100, requireCorroboration: true, usePhone: true })
 		expect(res.entities).toHaveLength(1)
 	})
@@ -232,8 +233,9 @@ describe("exactDiscriminators — code-SET overlap (#625 A5)", () => {
 		const c: SourceRecord = { ...coLocated("3", "Acme", "Health"), attributes: { taxonomy: "207Q00000X" } } // disjoint
 		const shared = resolveEntities([a, b], { threshold: -100, exactDiscriminators: ["taxonomy"] })
 		expect(shared.entities).toHaveLength(1)
-		// The disjoint pair still merges here (same name+address dominate) — the assertion is the model
-		// builds and the comparator runs. the weight-level separation is the benchmark's to measure.
+		// The disjoint pair still merges here (same name+address dominate).
+		// The assertion is the model builds and the comparator runs.
+		// The weight-level separation is the benchmark's to measure.
 		const disjoint = resolveEntities([a, c], { threshold: -100, exactDiscriminators: ["taxonomy"] })
 		expect(disjoint.entities.length).toBeGreaterThanOrEqual(1)
 	})

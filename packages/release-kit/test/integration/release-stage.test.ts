@@ -51,7 +51,8 @@ describe("checkReleaseListIdentity", () => {
 			join(root, "package.json")
 		)
 
-		// A workspace the field names must carry a manifest. the reader refuses a literal that does not.
+		// A workspace the field names must carry a manifest.
+		// The reader refuses a literal that does not.
 		for (const workspace of ["packages/a", "packages/b", "packages/frozen-one"]) {
 			await makeDirectories(join(root, workspace))
 			await writeLocalJSONFile({ name: workspace }, join(root, workspace, "package.json"))
@@ -200,11 +201,9 @@ describe("the Hugging Face materialization plan", () => {
 	})
 
 	it("accounts for every declared artifact a checkout cannot supply — the en-au class", async () => {
-		// What this proves: no literal `files` entry of a release weights package is both untracked and unplanned.
-		// That is precisely the state `verify-tarball.ts` refuses at publish time, and precisely what
+		// What this proves: no literal `files` entry of a release weights package is both untracked and unplanned. That is precisely the state `verify-tarball.ts` refuses at publish time, and precisely what
 		// @mailwoman/neural-weights-en-au was in when the audit stopped v9.2.0 after 49 of 51 packages had
-		// published. The manifests and the git listing are read here independently of the recipe, so a planner
-		// rewritten around a hand-kept list fails this the first time a manifest gains an entry.
+		// published. The manifests and the git listing are read here independently of the recipe, so a planner rewritten around a hand-kept list fails this the first time a manifest gains an entry.
 		const tracked = trackedPaths()
 
 		const planned = new Set(
@@ -246,8 +245,9 @@ describe("the pair-index parity selector", () => {
 	it("still matches a test file — the empty-selection class", async () => {
 		// The v9.2.0 release's second dispatch died because publish.yml named the parity
 		// test's pre-regroup path and Vitest matched zero files.
-		// The workflow now calls a package script whose filter is the test's name, and this asserts
-		// the filter is not empty-handed — the same answer a dispatch would return several minutes in.
+		// The workflow now calls a package script whose filter is the test's name,
+		// and this asserts the filter is not empty-handed.
+		// The same answer a dispatch would return several minutes in.
 		const repoRoot = String(repoRootPath())
 
 		const manifest = await readPackageJSON(join(repoRoot, "package.json"))

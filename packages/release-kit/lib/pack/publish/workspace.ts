@@ -85,9 +85,8 @@ export function releaseItWorkspaceEnvironment(): {
 export async function publishWorkspace(options: PublishWorkspaceOptions): Promise<PublishWorkspaceReport> {
 	const { repoRoot, workspacePath, log } = options
 
-	// Before anything is packed, and before the weights skip, so a held-out
-	// workspace is refused on every path into this
-	// function rather than on the ones that reach the npm call.
+	// Before anything is packed, and before the weights skip, so a held-out workspace is
+	// refused on every path into this function rather than on the ones that reach the npm call.
 	assertWorkspacePublishable(workspacePath)
 
 	const skipWeights = !!$public.MAILWOMAN_SKIP_WEIGHTS
@@ -139,7 +138,8 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 	// npm can only mint a provenance attestation from a CI provider it supports, so this
 	// is conditioned on GitHub Actions rather than on CI generally: a local `yarn release`
 	// passing --provenance fails outright, with no OIDC token to sign against.
-	// Trusted Publishing works either way — the attestation is the part that needs the CI identity.
+	// Trusted Publishing works either way.
+	// The attestation is the part that needs the CI identity.
 	//
 	// MAILWOMAN_NPM_PROVENANCE=0 turns it off, so a release blocked by a sigstore or registry outage can still ship.
 	if ($public.GITHUB_ACTIONS && $public.MAILWOMAN_NPM_PROVENANCE !== "0") {
@@ -172,7 +172,7 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 	return { workspace: workspacePath, outcome: "published", tarballAudit }
 }
 
-// The tarball audit lives in verify-tarball.ts so both publish paths inherit it —
+// The tarball audit lives in verify-tarball.ts so both publish paths inherit it.
 // `bless-package` packs the first publish of a package and had no guard at all,
 // which is how neural-weights-en-in@8.6.0 shipped without the one binary it exists to carry.
 

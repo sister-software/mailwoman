@@ -136,6 +136,7 @@ export const Interactive: Story = { args: { delayMs: 0 } }
 export const SlowLoad: Story = { args: { delayMs: 600 } }
 
 /**
- * The asset-load failure branch — `errorMessage` set, `ready` stays false.
+ * The asset-load failure branch.
+ * `errorMessage` set, `ready` stays false.
  */
 export const AssetError: Story = { args: { delayMs: 200, fail: true } }

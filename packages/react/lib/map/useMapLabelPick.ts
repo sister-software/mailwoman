@@ -33,17 +33,18 @@ const LABEL_LAYER = /_label|^places_/
 /**
  * Properties a label carries its text under, in the order they are trusted.
  *
- * `name` is protomaps' own. the localized variants appear on styles built for a specific script.
+ * `name` is protomaps' own.
+ * The localized variants appear on styles built for a specific script.
  */
 const NAME_KEYS = ["name", "name:en", "name_en"] as const
 
 /**
  * The style's label layers, by id.
  *
- * A style with none answers an empty array, and the caller must treat that as "no labels to pick"
- * rather than passing it to `queryRenderedFeatures` — an empty `layers` option is not
- * the same as an absent one there, and the difference between "this style has no labels"
- * and "query everything" is the 64 ms this hook exists to avoid.
+ * A style with none answers an empty array, and the caller must treat that as "no
+ * labels to pick" rather than passing it to `queryRenderedFeatures`.
+ * An empty `layers` option is not the same as an absent one there, and the difference between
+ * "this style has no labels" and "query everything" is the 64 ms this hook exists to avoid.
  */
 function labelLayerIDs(map: MapInstance): string[] {
 	const layers = map.getStyle()?.layers ?? []
@@ -105,7 +106,8 @@ export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) 
 
 				const canvas = map.getCanvas()
 
-				// The drag cursor belongs to the pan gesture. overriding it mid-drag would fight the map for the pointer.
+				// The drag cursor belongs to the pan gesture.
+				// Overriding it mid-drag would fight the map for the pointer.
 				if (canvas.style.cursor === "grabbing") return
 
 				canvas.style.cursor = labelNameAt(map, event.point, layers) ? "pointer" : ""

@@ -27,9 +27,8 @@ import { join, relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * Repo-relative files the derived binaries are a function of, beyond the
- * `data/gazetteer` payload enumerated by
- * {@link derivedWeightsInputs}.
+ * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer`
+ * payload enumerated by {@link derivedWeightsInputs}.
  *
  * The first entry mirrors the retired workflow cache key.
  * The rest are what that key missed: the modules that generate the binaries — each source
@@ -42,11 +41,12 @@ import { Globerator } from "spliterator/node/fs"
  * so its output can never be served to a checkout whose compiled tree differs.
  *
  * (Transitive compiled imports are deliberately not hashed — that would invalidate
- * the store on every unrelated commit and delete its reason to exist. the direct
+ * the store on every unrelated commit and delete its reason to exist. The direct
  * builder modules are where both real incidents lived.)
  *
- * Add here whenever a new input starts feeding the build — a key that omits an input
- * serves stale artifacts silently, which is the failure this list exists to prevent.
+ * Add here whenever a new input starts feeding the build.
+ * A key that omits an input serves stale artifacts silently, which is the
+ * failure this list exists to prevent.
  */
 export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"release.config.json",
@@ -63,9 +63,8 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 /**
  * The `data/gazetteer` payload, matched the way the retired workflow key matched it (`*.json` + `*.jsonl`).
  *
- * Enumerated rather than hardcoded so a new extract is picked up without a
- * code change — the opposite trade from
- * {@link DERIVED_WEIGHTS_INPUTS}, where an explicit list is the point.
+ * Enumerated rather than hardcoded so a new extract is picked up without a code change.
+ * The opposite trade from {@link DERIVED_WEIGHTS_INPUTS}, where an explicit list is the point.
  */
 async function gazetteerDataPaths(): Promise<string[]> {
 	const dir = resolvePath(repoRootPath(), "data", "gazetteer")
@@ -141,7 +140,8 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
 /**
  * Hash an explicit input list.
  *
- * Exported for testing. production callers want {@link derivedWeightsKey}.
+ * Exported for testing.
+ * Production callers want {@link derivedWeightsKey}.
  *
  * Sorted by name, so the caller's ordering cannot change the key.
  * Each entry contributes its name and its bytes.
@@ -180,8 +180,8 @@ export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput
 /**
  * The key for this checkout's derived weights.
  *
- * Identical across checkouts with identical input content, wherever they live on disk —
- * that invariance is the whole point of the store.
+ * Identical across checkouts with identical input content, wherever they live on disk.
+ * That invariance is the whole point of the store.
  */
 export async function derivedWeightsKey(): Promise<string> {
 	return derivedWeightsKeyFrom(await derivedWeightsInputs())
@@ -203,14 +203,17 @@ export function derivedWeightsDir(key: string): string {
  * below the lowest calibrated floor for that country — for GB that is the outward floor, so a
  * legitimate outward-granularity bin is never false-refused while the empty/collapsed class always is.
  *
- * The calibrated per-granularity check remains the builder's. this one only has the header to read.
+ * The calibrated per-granularity check remains the builder's.
+ * This one only has the header to read.
  *
  * Non-postcode entries (pair indexes) pass — their reader validates a typed header
  * on load, and no measured floor exists for them yet.
  */
 /**
- * Magic (4) + u32 recordCount (4) + u8 countryCount (1) — the PCB1 prefix the serve
- * check reads. anything shorter cannot carry a record count at all.
+ * Magic (4) + u32 recordCount (4) + u8 countryCount (1).
+ *
+ * The PCB1 prefix the serve check reads.
+ * Anything shorter cannot carry a record count at all.
  */
 const PCB1_HEADER_BYTES = 9
 

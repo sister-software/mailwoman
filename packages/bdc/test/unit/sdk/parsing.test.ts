@@ -113,8 +113,9 @@ test("readAvailabilityRows: provider_id always comes from the function parameter
 
 test("readAvailabilityRows: a quoted brand_name with an embedded comma doesn't desync column alignment", () => {
 	const rows = parseFixture()
-	// Row 3 (index 2) has `"Frontera, Inc."` as its quoted brand_name — the comma inside must
-	// not be mistaken for a field delimiter, or every subsequent column on that row would shift.
+	// Row 3 (index 2) has `"Frontera, Inc."` as its quoted brand_name.
+	// The comma inside must not be mistaken for a field delimiter, or every
+	// subsequent column on that row would shift.
 	const quotedRow = rows[2]!
 
 	expect(quotedRow.location_id).toBe("1000000003")
@@ -139,8 +140,8 @@ test("readAvailabilityRows: streaming from a path yields exactly what the sync b
 })
 
 test("readAvailabilityRows: a quoted field containing a NEWLINE stays in its own row", async () => {
-	// No row in the measured 920 MB TX fiber file needs this — its 12/13/14-field line
-	// counts sum exactly to `wc -l`, so no record is split across lines.
+	// No row in the measured 920 MB TX fiber file needs this.
+	// Its 12/13/14-field line counts sum exactly to `wc -l`, so no record is split across lines.
 	// The byte scanner this replaced would have desynced every subsequent row here regardless,
 	// because it quote-guarded the comma branch and not the newline branch.
 	// The guarantee is the point: correctness on a file nobody has measured yet.

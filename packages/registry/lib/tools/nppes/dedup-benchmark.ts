@@ -99,10 +99,10 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	trainEm?: boolean
 	/**
-	 * #694 A/B: reproduce the pre-flip ingest (space-joined address columns + `normalizeCase` off). Default off (the
-	 * validated flip: comma-join + #690 all-caps normalization).
+	 * #694 A/B: reproduce the pre-flip ingest (space-joined address columns + `normalizeCase` off). Default off (the validated flip: comma-join + #690 all-caps normalization).
 	 *
-	 * Same data + GBT, only the flip toggled — so a delta here is attributable to the flip.
+	 * Same data + GBT, only the flip toggled.
+	 * So a delta here is attributable to the flip.
 	 */
 	legacyJoin?: boolean
 	/**
@@ -124,8 +124,8 @@ export interface NPPESDedupBenchmarkOptions {
 	 * Geocode the sample across a worker pool ({@linkcode geocodeStream})
 	 * instead of the serial in-process path.
 	 *
-	 * Heavy per-row work (ONNX parse + WOF SQLite) → threading pays. measured
-	 * ~1.5× at 2 workers, coordinates identical.
+	 * Heavy per-row work (ONNX parse + WOF SQLite) → threading pays.
+	 * Measured ~1.5× at 2 workers, coordinates identical.
 	 */
 	parallelGeocode?: boolean
 	/**
@@ -170,10 +170,10 @@ export async function nppesDedupBenchmark(
 		report
 	)
 
-	// Geocode and ingest records, carrying the held-out NPI in record.id. geocoder is injected
-	// (see ./eval-geocoder.ts); model-swap for a multi-version curve rides the command's
-	// factory config (--model/--tokenizer/--model-card. modelCardPath is mandatory when
-	// modelPath is set — without it a STAGE3 model silently mis-decodes into empty parses). ---
+	// Geocode and ingest records, carrying the held-out NPI in record.id.
+	// Geocoder is injected (see ./eval-geocoder.ts); model-swap for a multi-version curve rides
+	// the command's factory config (--model/--tokenizer/--model-card. modelCardPath is mandatory
+	// when modelPath is set — without it a STAGE3 model silently mis-decodes into empty parses). ---
 	report?.("[C] building the geocoder + geocoding records…")
 
 	const mapping: ColumnMapping = {
@@ -211,7 +211,8 @@ export async function nppesDedupBenchmark(
 			}
 		}
 
-		// geocodeStream yields in completion order. restore input order so downstream cluster tie-breaks are byte-stable.
+		// geocodeStream yields in completion order.
+		// Restore input order so downstream cluster tie-breaks are byte-stable.
 		geocoded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
 		records = geocoded
 	} else {
@@ -259,15 +260,15 @@ export async function nppesDedupBenchmark(
 	const H3_RES = options.h3Res ?? 11 // res 11 ≈ 25 m edge. res 10 ≈ 65 m (block scale)
 	const orgNameH3Label = buildOrgNameH3Grain(npiPrimary, npiCoord, H3_RES)
 
-	// Progressively enable comparison-model settings at the default threshold. threshold
-	// to isolate its marginal effect, then sweep the link threshold on the best config
-	// (geocode once, resolve many — config is cheap). ---
+	// Progressively enable comparison-model settings at the default threshold.
+	// Threshold to isolate its marginal effect, then sweep the link threshold on the
+	// best config (geocode once, resolve many — config is cheap). ---
 	report?.(`[D] resolving the setting progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
 
 	// learnedScorer:false throughout — this benchmark studies the FS comparison-model settings (#617/#625).
 	// The learned scorer is now default-on, so it must be pinned off here
-	// or every row would silently be the GBT. the learned scorer is measured separately
-	// (learned-scorer-clustering-eval / -crossstate-eval).
+	// or every row would silently be the GBT.
+	// The learned scorer is measured separately (learned-scorer-clustering-eval / -crossstate-eval).
 	const progression = buildSettings(addressFrequency).map((l) => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0, ...l.config })
 
@@ -281,8 +282,9 @@ export async function nppesDedupBenchmark(
 	// On this deliberately-sub-sampled corpus the auto table is sparse (few repeats), so the
 	// inverse-frequency signal is near-inert and F1 collapses to ≈baseline — not a regression,
 	// just the honest truth that IDF is a corpus statistic you can't synthesize from a sample.
-	// On a full-dataset dedup the input is the corpus and this default reaches the baseline. the CLI
-	// passes a corpus-wide table built from the full source files so even a geocoded sub-sample benefits.
+	// On a full-dataset dedup the input is the corpus and this default reaches the baseline.
+	// The CLI passes a corpus-wide table built from the full source files
+	// so even a geocoded sub-sample benefits.
 	const defaultRes = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
 	const defaultOutOfBox = score(defaultRes.entities, npiLabel)
 
@@ -317,7 +319,7 @@ export async function nppesDedupBenchmark(
 	)
 
 	// Score the same clusters against NPI-level and entity-level truth.
-	// reveal how much of the apparent over-merge is NPI over-segmentation
+	// Reveal how much of the apparent over-merge is NPI over-segmentation
 	// (one org / many subpart-NPIs, where merging is correct) rather than model error.
 	// Two production configs: the FS full setting stack and the shipped default
 	// (GBT, default-on) — each fed the corpus-wide address-frequency table. ---
@@ -340,7 +342,7 @@ export async function nppesDedupBenchmark(
 
 	// The adjudication packet grades the shipped (GBT) clusters, because the residual
 	// over-merge is small and approaching the measured ~1.6% irreducible ceiling —
-	// per-pair human adjudication (same entity? distinct co-located?) is the only
+	// per-pair human adjudication (same entity? Distinct co-located?) is the only
 	// instrument left that can separate model error from yardstick error.
 	const DUMP_OVERMERGES = options.dumpOvermerges || ""
 
@@ -358,7 +360,7 @@ export async function nppesDedupBenchmark(
 	}
 
 	// Optional candidate A/B (--candidate): score a trained GBT module at both levels, at its own
-	// recommendedThreshold, alongside the shipped GBT — grades a new model (e.g. corroboration features).
+	// recommendedThreshold, alongside the shipped GBT — grades a new model (e.g. Corroboration features).
 	let cand: { label: string; npi: Score; entity: Score } | null = null
 
 	if (CANDIDATE) {

@@ -13,7 +13,8 @@ import { cameraToViewState, computeMapPlaceRenderSpec, type ResolvedMapPlace } f
 import { expect, test } from "vitest"
 
 /**
- * A minimal resolved place. spread over with the fields a given branch needs.
+ * A minimal resolved place.
+ * Spread over with the fields a given branch needs.
  */
 function place(overrides: Partial<ResolvedMapPlace>): ResolvedMapPlace {
 	return { id: 1, name: "Somewhere", placetype: "locality", lat: 40, lon: -74, score: 1, ...overrides }
@@ -61,7 +62,8 @@ test("a pre-fetched crisp polygon → draw it and fit its bounds (padding 40)", 
 test("street tier takes precedence over a pre-fetched polygon", () => {
 	const geometry = { type: "Polygon" as const, coordinates: [[[0, 0]]] }
 	const spec = computeMapPlaceRenderSpec(place({ tier: "address_point", uncertaintyM: 10, geometry }))
-	// The street path returns a center camera. the polygon path would have returned bounds.
+	// The street path returns a center camera.
+	// The polygon path would have returned bounds.
 	expect(spec.camera.kind).toBe("center")
 	expect(spec.outline).not.toBe(geometry)
 })

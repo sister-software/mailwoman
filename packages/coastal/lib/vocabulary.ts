@@ -82,15 +82,9 @@ export const NCERM_SERVICE_SLUG = "ncern-national-2024"
 /**
  * The attribution string the record's structured licence field carries, trimmed of its trailing space.
  *
- * OGL v3.0 requires a re-user to "acknowledge the source of the Information in your product or application by including
- * or linking to any attribution statement specified by the Information Provider(s)", so this string is the licence
- * condition rather than decoration, and it rides in `layer_manifest.attribution`.
+ * OGL v3.0 requires a re-user to "acknowledge the source of the Information in your product or application by including or linking to any attribution statement specified by the Information Provider(s)", so this string is the licence condition rather than decoration, and it rides in `layer_manifest.attribution`.
  *
- * Taken from the structured field, never from the abstract. The abstract ends with a doubled and malformed pair — "…©
- * Environment Agency copyright and/or database right Attribution statement: © Environment Agency copyright and/or
- * database right 2025. All rights reserved. " — whose first copy is inherited from the superseded 2018–2021 record and
- * carries no year. The ISO record has no `gmd:credit` element at all. `parseAttributionStatement` in `sdk/client.ts` is
- * the reader that refuses the yearless copy.
+ * Taken from the structured field, never from the abstract. The abstract ends with a doubled and malformed pair — "…© Environment Agency copyright and/or database right Attribution statement: © Environment Agency copyright and/or database right 2025. All rights reserved. " — whose first copy is inherited from the superseded 2018–2021 record and carries no year. The ISO record has no `gmd:credit` element at all. `parseAttributionStatement` in `sdk/client.ts` is the reader that refuses the yearless copy.
  */
 export const NCERM_ATTRIBUTION = "© Environment Agency copyright and/or database right 2025. All rights reserved."
 
@@ -190,8 +184,9 @@ export interface CoastalScenario {
  *
  * The NFI layers omit them, and the reason is stated rather than worked around:
  * under a no-future-intervention scenario there is no policy to record.
- * A builder that read `mt_smp` from an NFI layer gets a SQL error. one that defaulted
- * it to a blank would invent a policy the authority declines to state.
+ * A builder that read `mt_smp` from an NFI layer gets a SQL error.
+ *
+ * One that defaulted it to a blank would invent a policy the authority declines to state.
  */
 export function scenarioCarriesPolicy(scenario: CoastalScenario): boolean {
 	return scenario.management === CoastalManagementScenario.ShorelineManagementPlan
@@ -248,8 +243,9 @@ export const NCERM_SCENARIOS_BY_KEY: ReadonlyMap<string, CoastalScenario> = new 
 /**
  * The scenario a reading answers under when a caller names none.
  *
- * Not an arbitrary pick, and never A hidden one — every reading names the scenario
- * it answered under, so a caller can see which of the twelve spoke.
+ * Not an arbitrary pick, and never A hidden one.
+ * Every reading names the scenario it answered under, so a caller can see which of the twelve spoke.
+ *
  * Among them this is the least projected: `NFI` assumes no future works are delivered
  * rather than assuming a plan's delivery, `0CC` is the present-day allowance
  * rather than a sea-level-rise projection, and `2055` is the nearer of the two horizons.
@@ -305,7 +301,8 @@ export const NCERM_BLANK = " "
  * The Shoreline Management Plan policy domain — `mt_smp` and `lt_smp` pooled.
  *
  * Nine spellings for eight policies, because the two fields disagree on the spacing around one slash.
- * Both are members. neither is normalized.
+ * Both are members.
+ * Neither is normalized.
  */
 export const NCERM_POLICY_VALUES: ReadonlySet<string> = new Set([
 	"Hold The Line",
@@ -365,9 +362,9 @@ export const NCERM_POLICY_INTERPRETATION_VALUES: ReadonlySet<string> = new Set(
 /**
  * The defence-type domain, case-folded — twelve distinct defences behind fourteen published spellings.
  *
- * Membership is tested on the fold, because `Sheet piles` and `Sheet Piles` are one
- * defence. the stored value is the source's own string, because normalizing it would put
- * this package's spelling into an artifact that claims to repeat the authority's.
+ * Membership is tested on the fold, because `Sheet piles` and `Sheet Piles` are one defence.
+ * The stored value is the source's own string, because normalizing it would put this
+ * package's spelling into an artifact that claims to repeat the authority's.
  */
 export const NCERM_DEFENCE_TYPES_FOLDED: ReadonlySet<string> = new Set(
 	[
@@ -426,10 +423,11 @@ export const NCERM_PRODUCT_LIMITS: ReadonlyArray<string> = [
  * Why this layer's coverage licenses no negative claim, in one sentence a receipt can carry.
  *
  * The inversion OF the flood rule, and the whole reason this layer exists AS A second one.
- * For flood zones the authority states England-wide coverage and defines Zone 1
- * as the absence, so a location with no polygon is a designation. ncerm publishes
- * no coverage statement at all, and a location in England with no erosion polygon
- * is one of two entirely different things — not on the coast, or on the coast
+ * For flood zones the authority states England-wide coverage and defines Zone 1 as
+ * the absence, so a location with no polygon is a designation.
+ *
+ * Ncerm publishes no coverage statement at all, and a location in England with no erosion
+ * polygon is one of two entirely different things — not on the coast, or on the coast
  * and outside the mapped risk area — which the published layers cannot tell apart.
  *
  * A builder that copied the flood rule would write "no erosion risk" over the whole country.

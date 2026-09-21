@@ -52,8 +52,8 @@ export function resolveCells(
 
 	// One group per (delineation, resolution): `compactCells` takes a single resolution,
 	// and an adaptively-indexed layer has several.
-	// Pooling them throws. compacting only the target-resolution group would silently
-	// drop every coarsened delineation's interior.
+	// Pooling them throws.
+	// Compacting only the target-resolution group would silently drop every coarsened delineation's interior.
 	database.exec("BEGIN")
 
 	for (const { area_id: areaID, resolution } of groups) {

@@ -16,8 +16,7 @@ import type { SourceRecord } from "#types"
  * geocode it via `geocode`, and attach the result.
  *
  * Records with no mapped address pass through untouched (no geocode call).
- * The default separator matches
- * {@link ingestRow}'s `addressSeparator`.
+ * The default separator matches {@link ingestRow}'s `addressSeparator`.
  */
 export function makeGeocodeHandler(
 	geocode: GeocodeAddress,

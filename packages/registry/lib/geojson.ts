@@ -25,8 +25,9 @@ function displayName(record: SourceRecord): string | null {
 /**
  * One entity → one GeoJSON Point feature.
  *
- * `extra` merges over (and may override) the standard properties — the reconciliation flow
- * adds its `bucket` and swaps the display name for the representative's org-or-person form.
+ * `extra` merges over (and may override) the standard properties.
+ * The reconciliation flow adds its `bucket` and swaps the display name for the
+ * representative's org-or-person form.
  */
 export function toFeature(
 	entity: ResolvedEntity,
@@ -46,7 +47,8 @@ export function toFeature(
 			recordCount: entity.records.length,
 			cohesion: entity.cohesion,
 			sourceIDs: entity.records.map((r) => r.id),
-			// Distinct provenance labels the entity's records span — an entity with ≥2 is a cross-dataset link.
+			// Distinct provenance labels the entity's records span.
+			// An entity with ≥2 is a cross-dataset link.
 			sources: [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].toSorted(),
 			name: displayName(rep),
 			organization: rep.organization?.canonical ?? null,

@@ -57,7 +57,8 @@ export interface CopyWeightsOptions {
 	 * Where the weights workspaces are written — the source checkout (the release path),
 	 * or a #1894 preflight's staging tree.
 	 *
-	 * Sources always resolve against this checkout's data root and release.config.json. only destinations move.
+	 * Sources always resolve against this checkout's data root and release.config.json.
+	 * Only destinations move.
 	 */
 	destRoot?: string
 	log: (line: string) => void
@@ -92,9 +93,10 @@ interface MaterializationContext {
 	repoCommittedSources: Map<string, string>
 	sourceLocalitySurface: string | null
 	/**
-	 * Per-country pair-index build inputs, keyed by country code — the fully-typed
-	 * `PairIndexInputs` shape from `weights-recipe.ts`, whose docstring records why
-	 * a silently-dropped flag is a shipping defect.
+	 * Per-country pair-index build inputs, keyed by country code.
+	 *
+	 * The fully-typed `PairIndexInputs` shape from `weights-recipe.ts`, whose docstring
+	 * records why a silently-dropped flag is a shipping defect.
 	 */
 	pairIndexByCountry: Record<string, PairIndexInputs>
 	log: (line: string) => void
@@ -104,7 +106,8 @@ interface MaterializationContext {
  * Serve `filename` into `dir` from the derived store, if this checkout's key already has it.
  *
  * Returns true when the file was placed, which tells the caller to skip its CLI spawn.
- * A miss returns false. the caller builds and then calls {@link stashDerived}.
+ * A miss returns false.
+ * The caller builds and then calls {@link stashDerived}.
  *
  * Replaces the actions/cache round-trip that carried 76.3 MB at ~1.6 MB/s (48–54s per leg)
  * to a runner that already holds the source model locally.
@@ -132,7 +135,8 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
 	// Unlink first.
 	// `fs.copyFile` follows a symlink at the destination and writes through it, leaving the
 	// symlink in place — and the registry refuses a tarball containing one (http 415, YN0035).
-	// Same discipline as the rest of this module. see agents.md "symlinks in the publish tarball".
+	// Same discipline as the rest of this module.
+	// See agents.md "symlinks in the publish tarball".
 	await removePathIfPresent(dest)
 
 	await copyFileTo(cached, dest)
@@ -145,14 +149,16 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
  * Deposit a freshly-built `filename` into the derived store under this checkout's key.
  *
  * Best-effort by design: a store write that fails must never fail a release.
- * The build already succeeded and the workspace already has the artifact — the store is an optimization
- * rather than a source of truth, so a failure here costs the next run five minutes and nothing else.
+ * The build already succeeded and the workspace already has the artifact.
+ *
+ * The store is an optimization rather than a source of truth, so a failure here
+ * costs the next run five minutes and nothing else.
  */
 async function stashDerived(context: MaterializationContext, dir: string, filename: string): Promise<void> {
 	// Never poison the store: a below-floor build must not become the artifact
 	// every future run receives as a HIT.
-	// The build-time floors are the primary check. this holds when they are bypassed
-	// (a stale-compiled builder predating them was #1528's exact shape).
+	// The build-time floors are the primary check.
+	// This holds when they are bypassed (a stale-compiled builder predating them was #1528's exact shape).
 	const violation = await derivedStoreServeViolation(filename, resolvePath(dir, filename))
 
 	if (violation) {
@@ -180,8 +186,9 @@ export async function copyWeights({
 }: CopyWeightsOptions): Promise<CopyWeightsReport> {
 	// CI release workflow sets MAILWOMAN_SKIP_WEIGHTS_COPY=1 when release_weights
 	// input is false (the default).
-	// Weights binaries live on the operator's host and aren't fetchable from CI. the workflow excludes
-	// the weights workspaces from the publish set in that mode, so skipping the copy is correct.
+	// Weights binaries live on the operator's host and aren't fetchable from CI.
+	// The workflow excludes the weights workspaces from the publish set in that mode,
+	// so skipping the copy is correct.
 	if ($public.MAILWOMAN_SKIP_WEIGHTS_COPY) {
 		log("copy-weights: MAILWOMAN_SKIP_WEIGHTS_COPY set — skipping.")
 
@@ -311,12 +318,16 @@ async function materializeFST(context: MaterializationContext, workspace: string
 }
 
 /**
- * Materialize the locale-general street-morphology FST (`fst-street-morphology.bin`, the #1315 street-context check's
- * signal source) into a weights workspace — a verbatim copy of the sealed artifact staged by `mailwoman gazetteer build
- * street-morphology` at $MAILWOMAN_DATA_ROOT/wof/. Shipping it as a weights sibling is what carries it to the
- * per-version R2 asset layout the browser demo fetches — the node runtimes can rebuild from the bundled libpostal
- * dictionaries, the browser cannot. A missing source is skipped with a warning (byte-stable: node consumers fall back
- * to the per-process dictionary build. the demo parses without the street-context check, exactly as before).
+ * Materialize the locale-general street-morphology FST (`fst-street-morphology.bin`, the #1315
+ * street-context check's signal source) into a weights workspace — a verbatim copy of the sealed
+ * artifact staged by `mailwoman gazetteer build street-morphology` at $MAILWOMAN_DATA_ROOT/wof/.
+ *
+ * Shipping it as a weights sibling is what carries it to the per-version R2
+ * asset layout the browser demo fetches.
+ * The node runtimes can rebuild from the bundled libpostal dictionaries, the browser cannot.
+ *
+ * A missing source is skipped with a warning (byte-stable: node consumers fall back to the
+ * per-process dictionary build. The demo parses without the street-context check, exactly as before).
  */
 async function materializeStreetMorphology(context: MaterializationContext, workspace: string, dir: string) {
 	const src = resolvePath(context.dataRoot, "wof", "fst-street-morphology.bin")
@@ -373,8 +384,9 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 		context.log(`copied soft-feed → ${workspace}/locality-surface-lexicon-v7.json`)
 	}
 
-	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode extract. The locale's
-	// region subtag (`en-us` → `us`) names both the binary and the postcodeDBByCountry source entry.
+	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode extract.
+	// The locale's region subtag (`en-us` → `us`) names both the binary
+	// and the postcodeDBByCountry source entry.
 	const country = workspace.replace(/^packages\/neural-weights-[a-z]+-/, "")
 	const dbRel = context.softFeed.postcodeDBByCountry?.[country]
 
@@ -418,11 +430,12 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 }
 
 /**
- * Materialize the placetype-pair-prior arc's PIX1 index (`pair-index-<cc>.bin`)
- * into a weights workspace — mirrors
- * {@link materializeSoftFeed}'s postcode-binary block exactly, but keyed off `softFeed.pairIndexByCountry` (a CSV
- * source + a required calibrated `--delta`, not a WOF DB) instead of `postcodeDBByCountry`. country-specific
- * BY design, same as the runtime resolver (`neural/weights.ts`'s `resolvePairIndexSibling`):
+ * Materialize the placetype-pair-prior arc's PIX1 index (`pair-index-<cc>.bin`) into a weights
+ * workspace — mirrors {@link materializeSoftFeed}'s postcode-binary block exactly, but keyed off
+ * `softFeed.pairIndexByCountry` (a CSV source + a required calibrated `--delta`, not a WOF DB)
+ * instead of `postcodeDBByCountry`.
+ *
+ * Country-specific BY design, same as the runtime resolver (`neural/weights.ts`'s `resolvePairIndexSibling`):
  * a workspace whose country has no `pairIndexByCountry` entry ships no pair-index sibling
  * and is skipped silently (not every locale gets one).
  */

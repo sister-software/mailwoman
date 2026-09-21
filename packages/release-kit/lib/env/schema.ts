@@ -31,8 +31,8 @@ export const PublicReleaseEnvSchema = z.object({
 	/**
 	 * Set to `0` to publish without a sigstore provenance attestation.
 	 *
-	 * Provenance is otherwise on by default under GitHub Actions — this exists
-	 * so a release blocked by a sigstore or registry outage can still ship.
+	 * Provenance is otherwise on by default under GitHub Actions.
+	 * This exists so a release blocked by a sigstore or registry outage can still ship.
 	 */
 	MAILWOMAN_NPM_PROVENANCE: z.string().optional().meta({
 		title: "npm provenance",
@@ -40,8 +40,10 @@ export const PublicReleaseEnvSchema = z.object({
 			"Set to `0` to publish without a Sigstore provenance attestation; otherwise provenance is enabled in GitHub Actions.",
 	}),
 	/**
-	 * Set by GitHub Actions itself. npm can only mint a provenance attestation from a CI provider
-	 * it supports, so this is the predicate for `--provenance` rather than the generic `CI` flag.
+	 * Set by GitHub Actions itself.
+	 *
+	 * Npm can only mint a provenance attestation from a CI provider it supports,
+	 * so this is the predicate for `--provenance` rather than the generic `CI` flag.
 	 */
 	GITHUB_ACTIONS: z.coerce.boolean().default(false).meta({
 		title: "GitHub Actions",

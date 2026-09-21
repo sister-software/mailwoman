@@ -157,8 +157,8 @@ describe("the sealed artifact", () => {
 		}
 
 		// A polyfill keyed on cell centres returns nothing for a 5 m square,
-		// and a feature indexed to nothing reads downstream as an absence — the failure
-		// the per-part zero-cell guard exists to make impossible.
+		// and a feature indexed to nothing reads downstream as an absence.
+		// The failure the per-part zero-cell guard exists to make impossible.
 		// At resolution 9, that would be 86.8% of the real product's polygons.
 		expect(sliver.n).toBeGreaterThan(0)
 	})
@@ -448,8 +448,9 @@ describe("the provenance grade", () => {
 			/CHECK constraint failed/u
 		)
 
-		// And the one grade this artifact does not hold is still a legal value — the constraint is about
-		// the vocabulary, and keeping the grades apart is the artifact's job rather than the column's.
+		// And the one grade this artifact does not hold is still a legal value.
+		// The constraint is about the vocabulary, and keeping the grades apart is
+		// the artifact's job rather than the column's.
 		expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = 'inferred' WHERE area_id = '1'")).not.toThrow()
 	})
 
@@ -487,7 +488,8 @@ describe("the area cross-check", () => {
 
 		const one = fixtureFeature(9, [[exteriorRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)]])
 
-		// Twice the area the rings actually cover — the shape a hole read as an exterior ring produces.
+		// Twice the area the rings actually cover.
+		// The shape a hole read as an exterior ring produces.
 		const doubled = 2 * one.rings.signedAreaM2
 
 		await expect(

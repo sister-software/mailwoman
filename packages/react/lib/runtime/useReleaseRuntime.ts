@@ -30,7 +30,8 @@ export interface ReleaseBase {
 	 */
 	version: string
 	/**
-	 * Optional display label a version picker shows. falls back to `version`.
+	 * Optional display label a version picker shows.
+	 * Falls back to `version`.
 	 */
 	label?: string
 }
@@ -109,8 +110,9 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 	 */
 	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
 	/**
-	 * Load the full asset bundle for one release — the classifier, FST, WOF lookup,
-	 * calibrator, whatever the host needs.
+	 * Load the full asset bundle for one release.
+	 *
+	 * The classifier, FST, WOF lookup, calibrator, whatever the host needs.
 	 *
 	 * Runs on every version or `forceWASM` change.
 	 * Report progress via `ctx`; return the bundle.
@@ -207,8 +209,10 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 /**
  * Drive the shared version → asset-bundle load state machine over a host-injected loader.
  *
- * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection. each version
- * (or `forceWASM`) change reloads the bundle via `loadAssets`, the previous load aborted first.
+ * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection.
+ * Each version (or `forceWASM`) change reloads the bundle via `loadAssets`,
+ * the previous load aborted first.
+ *
  * The assets are revealed atomically when `loadAssets` resolves
  * (so `ready` flips exactly once per load), and consumers wait on `ready`.
  */
@@ -291,8 +295,9 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 
 		void (async () => {
 			try {
-				// Release the outgoing bundle before building its replacement, so the two models are
-				// never resident at once — the peak is what kills a tab rather than the steady state.
+				// Release the outgoing bundle before building its replacement,
+				// so the two models are never resident at once.
+				// The peak is what kills a tab rather than the steady state.
 				const outgoing = liveAssetsRef.current
 
 				liveAssetsRef.current = null

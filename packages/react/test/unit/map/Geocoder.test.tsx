@@ -20,7 +20,8 @@ import { userEvent } from "vitest/browser"
 import { renderComponent } from "../../render.tsx"
 
 /**
- * Poll `get` inside act() until truthy or timeout. never throws (returns null on timeout).
+ * Poll `get` inside act() until truthy or timeout.
+ * Never throws (returns null on timeout).
  */
 async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
@@ -42,9 +43,7 @@ async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null>
 }
 
 test("submit drives the result panel + a map marker over the fake runtime", async () => {
-	// applyResultCamera=false keeps this deterministic: the marker + outline still render, but the animated fly/fit is
-	// skipped, exactly as the overlays test uses applyCamera=false.
-	// The camera has its own guard with a live map: see `ResultCamera.test.tsx`.
+	// applyResultCamera=false keeps this deterministic: the marker + outline still render, but the animated fly/fit is skipped, exactly as the overlays test uses applyCamera=false. The camera has its own guard with a live map: see `ResultCamera.test.tsx`.
 	const { container } = renderComponent(
 		<Geocoder
 			runtime={makeFakeGeocoderRuntime()}
@@ -53,7 +52,8 @@ test("submit drives the result panel + a map marker over the fake runtime", asyn
 		/>
 	)
 
-	// ClientOnly mounts asynchronously. wait for the reused QueryForm input.
+	// ClientOnly mounts asynchronously.
+	// Wait for the reused QueryForm input.
 	await vi.waitFor(() => expect(container.querySelector("#mw-pipeline-input")).toBeTruthy())
 
 	// The pill carries no submit button, the way the reference map apps carry none: a search

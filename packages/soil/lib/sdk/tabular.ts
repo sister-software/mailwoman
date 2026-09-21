@@ -231,9 +231,10 @@ export interface DomainMember {
 /**
  * Column positions in `msdomdet.txt`.
  *
- * Declared in `mstabcol.txt` under table `msdomdet`, so unlike the two bootstrap files
- * above these could be looked up — they are named here because the domain read runs
- * before any dictionary-driven read and the file is five columns wide by its own declaration.
+ * Declared in `mstabcol.txt` under table `msdomdet`, so unlike the two bootstrap
+ * files above these could be looked up.
+ * They are named here because the domain read runs before any dictionary-driven read
+ * and the file is five columns wide by its own declaration.
  */
 const MSDOMDET_WIDTH = 5
 

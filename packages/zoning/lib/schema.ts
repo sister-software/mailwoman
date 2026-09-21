@@ -50,7 +50,8 @@ export const ZoningCellContainment = {
 	/**
 	 * The zone boundary crosses the cell.
 	 *
-	 * The index has narrowed the candidate polygons. the point test decides.
+	 * The index has narrowed the candidate polygons.
+	 * The point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -90,7 +91,8 @@ export interface ZoningAreaTable {
 	 * `ZONE_ORIG` — the authority'S own zone code, verbatim, in its own spelling
 	 * including case and trailing space.
 	 *
-	 * Compared case-insensitively where it must be compared. never stored normalized.
+	 * Compared case-insensitively where it must be compared.
+	 * Never stored normalized.
 	 */
 	local_code: string
 	/**
@@ -171,9 +173,12 @@ export interface ZoningPlanTable {
 	/**
 	 * `CURRENT_PLAN`, carried as published.
 	 *
-	 * IT does not mean "IN force today". Every row of the Current layer carries `1`, which the domain defines as `Current
-	 * plan` against `Expired and not replaced` and `Expired and replaced` . Therefore, it means "not superseded". Whether
-	 * the plan's own window has closed is `valid_to`, and it is a separate fact.
+	 * IT does not mean "IN force today".
+	 * Every row of the Current layer carries `1`, which the domain defines as `Current plan`
+	 * against `Expired and not replaced` and `Expired and replaced` .
+	 *
+	 * Therefore, it means "not superseded".
+	 * Whether the plan's own window has closed is `valid_to`, and it is a separate fact.
 	 */
 	current_plan: number
 }
@@ -243,13 +248,13 @@ export interface ZoningVocabularyTable {
  * A publisher's own mapping between two schemes, where it publishes one as a table.
  *
  * Empty FOR ireland, and the emptiness is A measurement.
- * The Department's generic type is assigned PER polygon rather than per code:
- * 52 of the 795 (authority, local code) pairs take more than one generic type
- * inside a single authority — Cork County Council's `Special Policy Area` takes 14
- * and its `Green Infrastructure` 12 — so the mapping is not a
- * function of the pair and no edge table can carry it without inventing one. The mapping lives on `zoning_area`, per
- * row, where the Department put it. {@linkcode assertCrosswalkIsNotATable} refuses
- * a build that would write edges while such a pair exists.
+ * The Department's generic type is assigned PER polygon rather than per code: 52 of the 795
+ * (authority, local code) pairs take more than one generic type inside a single authority —
+ * Cork County Council's `Special Policy Area` takes 14 and its `Green Infrastructure` 12 —
+ * so the mapping is not a function of the pair and no edge table can carry it without inventing one.
+ *
+ * The mapping lives on `zoning_area`, per row, where the Department put it.
+ * {@linkcode assertCrosswalkIsNotATable} refuses a build that would write edges while such a pair exists.
  */
 export interface ZoningCrosswalkEdgeTable {
 	from_scheme: string
@@ -267,8 +272,8 @@ export interface ZoningCrosswalkEdgeTable {
 /**
  * Per (cell, polygon): does the polygon cover the whole cell, or only part of it?
  *
- * Keyed on the polygon rather than on a code, because a zoning answer is the polygon —
- * its local code, its plan and its authority are per feature, and two authorities'
+ * Keyed on the polygon rather than on a code, because a zoning answer is the polygon.
+ * Its local code, its plan and its authority are per feature, and two authorities'
  * plans can name the same code for different things.
  */
 export interface ZoningCellTable {
@@ -293,8 +298,9 @@ export interface ZoningCellTable {
 }
 
 /**
- * The authority's own statement of what it mapped — one row per statement,
- * never derived from the zoning polygons.
+ * The authority's own statement of what it mapped.
+ *
+ * One row per statement, never derived from the zoning polygons.
  *
  * Empty IN this edition, and its emptiness is the claim.
  * The Department states "Awaiting data for some Local Authorities
@@ -346,7 +352,8 @@ export type ZoningSchemaHandle = Pick<Kysely<ZoningDatabase>, "schema">
 /**
  * Create `zoning_area`.
  *
- * A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid` penalizes.
+ * A plain rowid table on purpose.
+ * The `rings` blob is exactly the payload `without rowid` penalizes.
  */
 export async function createZoningAreaTable(db: ZoningSchemaHandle): Promise<void> {
 	const table = db.schema
@@ -368,15 +375,12 @@ export async function createZoningAreaTable(db: ZoningSchemaHandle): Promise<voi
 		.addColumn("signed_area_m2", "real", (c) => c.notNull())
 
 	await addRingsColumn(bounded)
-		// one grade PER claim, and A blank is not one. `not NULL` alone accepts `''`, which matches neither half of every
-		// read that splits on grade . Therefore, the value set and the blank are refused separately, and the second half is the one
-		// a schema without it loses.
+		// one grade PER claim, and A blank is not one. `not NULL` alone accepts `''`, which matches neither half of every read that splits on grade . Therefore, the value set and the blank are refused separately, and the second half is the one a schema without it loses.
 		.addCheckConstraint(
 			"zoning_area_provenance_grade_declared",
 			sql`provenance_grade in ('authoritative', 'inferred') and trim(provenance_grade) != ''`
 		)
-		// The local code is what this layer exists to repeat, so an empty one is refused at the storage layer rather than
-		// only at the ingest: a blank would read as a zone the authority named nothing.
+		// The local code is what this layer exists to repeat, so an empty one is refused at the storage layer rather than only at the ingest: a blank would read as a zone the authority named nothing.
 		.addCheckConstraint("zoning_area_local_code_not_blank", sql`trim(local_code) != ''`)
 		.execute()
 }
@@ -454,7 +458,7 @@ export async function createZoningCellTable(db: ZoningSchemaHandle): Promise<voi
 
 	await addCellIndexColumns(table, "area_id")
 		.addPrimaryKeyConstraint("zoning_cell_pk", ["h3_cell", "area_id"])
-		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

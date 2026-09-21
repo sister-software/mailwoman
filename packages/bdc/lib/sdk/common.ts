@@ -177,22 +177,21 @@ export interface RawBDCFile {
 	 * Tighten it against `@mailwoman/tiger` if a downstream dictionary ever needs the literal union.
 	 *
 	 * Nullable in live data for rows not scoped to a specific state (e.g. Provider-category rows).
-	 * Guarded in
-	 * {@linkcode parseRawBDCFile} — a null value parses to an empty `stateCode` string.
+	 * Guarded in {@linkcode parseRawBDCFile} — a null value parses to an empty `stateCode` string.
 	 */
 	state_fips: string | null
 	/**
 	 * State or territory name.
 	 *
-	 * Loosely typed as `string` — the Nexus original was `StateName` (via `@isp.nexus/tiger`).
+	 * Loosely typed as `string`.
+	 * The Nexus original was `StateName` (via `@isp.nexus/tiger`).
 	 * Same deferral as `state_fips` above.
 	 */
 	state_name: string
 	/**
 	 * Nullable in live data for rows not scoped to a specific provider (e.g. State/Summary-category rows).
 	 *
-	 * Guarded in
-	 * {@linkcode parseRawBDCFile} — a null value parses to a `providerID` of `0`.
+	 * Guarded in {@linkcode parseRawBDCFile} — a null value parses to a `providerID` of `0`.
 	 */
 	provider_id: string | null
 	/**
@@ -250,8 +249,7 @@ export interface BDCFile {
 	/**
 	 * The provider ID associated with the file.
 	 *
-	 * `0` when the raw `provider_id` was `null` (no specific provider — see
-	 * {@linkcode RawBDCFile}).
+	 * `0` when the raw `provider_id` was `null` (no specific provider — see {@linkcode RawBDCFile}).
 	 */
 	providerID: ProviderID
 	/**

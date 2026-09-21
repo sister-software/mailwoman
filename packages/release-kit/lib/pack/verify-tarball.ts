@@ -68,8 +68,9 @@ function normalizeEntry(entry: string): string {
 }
 
 /**
- * True when `entry` names something present in the tarball —
- * either the exact path, or a directory with at least one member beneath it
+ * True when `entry` names something present in the tarball.
+ *
+ * Either the exact path, or a directory with at least one member beneath it
  * (`out/` is satisfied by `./out/index.js`; tar may or may not list the directory itself).
  */
 function isShipped(entry: string, shipped: Set<string>): boolean {
@@ -85,8 +86,9 @@ function isShipped(entry: string, shipped: Set<string>): boolean {
 }
 
 /**
- * A manifest's literal `files` entries — the ones whose author is stating a file exists,
- * with the globs and the `!`-negations dropped.
+ * A manifest's literal `files` entries.
+ *
+ * The ones whose author is stating a file exists, with the globs and the `!`-negations dropped.
  *
  * Shared with `fetch-hf-weights.ts`, which materializes exactly the entries
  * this audit later refuses a publish over.
@@ -157,8 +159,8 @@ export function collectMissingBinTargets(bin: unknown, shipped: Set<string>): st
 /**
  * Read a packed tarball's member list and its `package.json`.
  *
- * Throws with the tar exit status rather than a parse error on a truncated
- * or non-tarball input, so a pack failure upstream reads as a pack failure here.
+ * @throws with the tar exit status rather than a parse error on a truncated
+ *   or non-tarball input, so a pack failure upstream reads as a pack failure here.
  */
 function readTarball(tarballPath: string): TarballContents {
 	const listing = spawnProcessSync("tar", ["-tzf", tarballPath], { encoding: "utf8" })
@@ -203,7 +205,9 @@ export interface TarballAudit {
 }
 
 /**
- * Audit a packed tarball. throw with every violation listed if it does not contain what it promises.
+ * Audit a packed tarball.
+ *
+ * Throw with every violation listed if it does not contain what it promises.
  *
  * Callers publish only when this returns.
  * It is deliberately a throw rather than a boolean: there is no partial pass,
@@ -248,7 +252,8 @@ export function verifyTarball(tarballPath: string): TarballAudit {
 }
 
 /**
- * The audit receipt line every publish path prints — one spelling, so the three receipts read alike.
+ * The audit receipt line every publish path prints.
+ * One spelling, so the three receipts read alike.
  */
 export function formatTarballAudit(audit: Pick<TarballAudit, "literalFiles" | "exportTargets" | "binTargets">): string {
 	return `${audit.literalFiles} literal files, ${audit.exportTargets} export targets, ${audit.binTargets} bin targets`

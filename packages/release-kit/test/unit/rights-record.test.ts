@@ -212,8 +212,8 @@ describe("readWeightsRightsRecords", () => {
 			const overlay = records[1]!
 
 			// The overlay ships no graph and contributed none of those rows.
-			// Its own attribution stays empty, and the base's travels under a field that says whose it is —
-			// the distinction that keeps a record from claiming the overlay's locale trained the encoder.
+			// Its own attribution stays empty, and the base's travels under a field that says whose it is.
+			// The distinction that keeps a record from claiming the overlay's locale trained the encoder.
 			expect(overlay.attribution).toEqual([])
 			expect(overlay.inherited?.package).toBe("@mailwoman/neural-weights-graph")
 			expect(overlay.inherited?.packageVersion).toBe("10.0.0")

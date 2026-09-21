@@ -54,7 +54,8 @@ export function polyfillFindsNothing(polygons: MultiPolygonRings, resolution: nu
 }
 
 /**
- * What one resolution came out as over the whole set — the numbers the resolution choice is made from.
+ * What one resolution came out as over the whole set.
+ * The numbers the resolution choice is made from.
  */
 export interface CellIndexMeasurement {
 	resolution: number
@@ -109,8 +110,10 @@ export interface CellIndexMeasurement {
 	 */
 	coarsenedFeatures: number
 	/**
-	 * Features this index returned no cell for. zero BY construction: `classifyFeatureCells` throws
-	 * rather than returning an empty set, so a non-zero value here means the guard was bypassed.
+	 * Features this index returned no cell for.
+	 *
+	 * Zero BY construction: `classifyFeatureCells` throws rather than returning an empty set,
+	 * so a non-zero value here means the guard was bypassed.
 	 */
 	zeroCellFeatures: number
 }

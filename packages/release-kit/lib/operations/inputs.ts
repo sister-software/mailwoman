@@ -28,7 +28,9 @@ export const flagDefaultOn = z
 	.transform((value) => value === undefined || value === true || value === "true" || value === "1")
 
 /**
- * An optional string. a bare `--key` with no value is refused rather than read as the string "true".
+ * An optional string.
+ *
+ * A bare `--key` with no value is refused rather than read as the string "true".
  */
 export const text = z.string().optional()
 

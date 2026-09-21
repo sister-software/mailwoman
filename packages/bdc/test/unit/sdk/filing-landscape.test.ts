@@ -226,21 +226,21 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 		const withUnknown = await filingLandscape(db, { geoids: [GEOID_SF, GEOID_NY, GEOID_UNKNOWN] })
 
 		expect(withUnknown.unknown_block_count).toBe(1)
-		// surveyed_block_count is unchanged by the unknown geoid's presence in the query —
-		// it's never folded in as a (zero-filing) survey result.
+		// surveyed_block_count is unchanged by the unknown geoid's presence in the query.
+		// It's never folded in as a (zero-filing) survey result.
 		expect(withUnknown.surveyed_block_count).toBe(knownOnly.surveyed_block_count)
 		expect(withUnknown.surveyed_block_count).toBe(2)
 
-		// The unknown geoid must not silently appear as a zero-count entry anywhere in filings either —
-		// it simply contributes nothing (filings for the two known blocks are identical either way).
+		// The unknown geoid must not silently appear as a zero-count entry anywhere in filings either.
+		// It simply contributes nothing (filings for the two known blocks are identical either way).
 		expect(withUnknown.filings).toEqual(knownOnly.filings)
 	})
 })
 
 describe("filingLandscape — Check 2 (extended): coverage-check is required, not a rows-shortcut proxy", () => {
-	// criterion 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows,
-	// so it's classified unknown by the "no candidate cell" shortcut alone, and the
-	// coverage-check branch can be deleted outright without turning it red.
+	// criterion 2 above never reaches `readLayerCoverage`.
+	// GEOID_UNKNOWN has zero rows, so it's classified unknown by the "no candidate cell" shortcut
+	// alone, and the coverage-check branch can be deleted outright without turning it red.
 	// These two tests target that branch directly: (a) a geoid with rows whose coverage
 	// row is deliberately deleted, and (b) an `h3Cells` query — which has no rows-based
 	// shortcut available at all — against a cell that was never surveyed.
@@ -294,9 +294,9 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 	it("(b) an h3Cells query against a never-surveyed cell is unknown, never a zero-filing claim", async () => {
 		using db = openFixture()
 
-		// h3Cells mode has no "zero rows" shortcut — the cell is supplied directly,
-		// so this is the only code path that can classify it, proving the coverage-check
-		// branch itself (not a rows-existence proxy) is what runs.
+		// h3Cells mode has no "zero rows" shortcut.
+		// The cell is supplied directly, so this is the only code path that can classify it,
+		// proving the coverage-check branch itself (not a rows-existence proxy) is what runs.
 		const neverSurveyedRes9Cell = shortCellToInt(
 			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 9) as H3Cell
 		)
@@ -323,7 +323,7 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 		// Prove this is a genuinely divergent point before trusting the rest of the test:
 		// the independent derivation — `latLngToCell(centroid, 6)`, taken without reference to the stored
 		// res-9 cell — disagrees with the reader's hierarchy-parent derivation for this exact point.
-		// If this assertion ever stops holding (e.g. an h3-js upgrade changes cell boundaries),
+		// If this assertion ever stops holding (e.g. An h3-js upgrade changes cell boundaries),
 		// the point needs re-selecting via a fresh brute-force search.
 		const oldBuggyDerivation = shortCellToInt(latLngToCell(CENTROID_DIVERGENT.lat, CENTROID_DIVERGENT.lon, 6) as H3Cell)
 		const unifiedDerivation = res9ShortCellToRes6Parent(row.h3_cell)
@@ -333,9 +333,9 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 		expect(await readLayerCoverage(schemadb, unifiedDerivation)).toBeDefined()
 		expect(await readLayerCoverage(schemadb, oldBuggyDerivation)).toBeUndefined()
 
-		// End-to-end: this block must read back as surveyed, with its own filing intact — the exact
-		// self-contradiction (unknown_block_count claiming "never surveyed" while filings shows a real
-		// entry for it) the review reproduced against the pre-fix code is what this proves absent.
+		// End-to-end: this block must read back as surveyed, with its own filing intact.
+		// The exact self-contradiction (unknown_block_count claiming "never surveyed" while filings shows
+		// a real entry for it) the review reproduced against the pre-fix code is what this proves absent.
 		const result = await filingLandscape(db, { geoids: [GEOID_DIVERGENT] })
 		expect(result.surveyed_block_count).toBe(1)
 		expect(result.unknown_block_count).toBe(0)
@@ -384,11 +384,11 @@ describe("filingLandscape — Check 3: hand-verified census", () => {
 	})
 
 	it("rejects an empty geoids/h3Cells array rather than silently answering a vacuous all-zero landscape", async () => {
-		// `[]` is truthy in JS, so it passes the "exactly one of geoids/h3Cells" XOR check undetected — without an
-		// explicit length guard this would otherwise return `{ surveyed_block_count: 0, unknown_block_count: 0,
-		// filings: [] }`, indistinguishable from a real (if uninteresting) result instead of the malformed-query
-		// error an empty query actually is. Reachable from the MCP tool layer (`mcp/tools.ts`), which is why both
-		// layers carry this guard.
+		// `[]` is truthy in JS, so it passes the "exactly one of geoids/h3Cells" XOR check undetected.
+		// Without an explicit length guard this would otherwise return
+		// `{ surveyed_block_count: 0, unknown_block_count: 0, filings: [] }`, indistinguishable from a
+		// real (if uninteresting) result instead of the malformed-query error an empty query actually is.
+		// Reachable from the MCP tool layer (`mcp/tools.ts`), which is why both layers carry this guard.
 		using db = openFixture()
 
 		await expect(filingLandscape(db, { geoids: [] })).rejects.toThrow(/empty/)
@@ -479,8 +479,9 @@ describe("speed bucket boundaries", () => {
 			expect(result.unknown_block_count).toBe(0)
 
 			// Hand-grouped via the JS mirror itself: {0,24} -> under-25 (2), {25,99} -> 25-100 (2),
-			// {100,999} -> 100-1000 (2), {1000} -> gigabit (1) — checking the SQL case's exclusive `<` comparisons
-			// land exactly where speedBucketForDownloadSpeed says they should, for every boundary value at once.
+			// {100,999} -> 100-1000 (2), {1000} -> gigabit (1) — checking the SQL case's
+			// exclusive `<` comparisons land exactly where speedBucketForDownloadSpeed
+			// says they should, for every boundary value at once.
 			const expectedGroups = new Map<string, number>()
 
 			for (const speed of BOUNDARY_SPEEDS) {

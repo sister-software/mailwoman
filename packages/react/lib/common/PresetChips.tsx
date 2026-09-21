@@ -33,7 +33,7 @@ export interface PresetChipsProps {
 	caption?: string
 	/**
 	 * Optional trailing content rendered inside the chip row after the presets
-	 * (e.g. an inline permalink button).
+	 * (e.g. An inline permalink button).
 	 */
 	trailing?: ReactNode
 }

@@ -117,7 +117,7 @@ export async function acquireRegion(options: AcquireRegionOptions): Promise<Acqu
 	// The latest refresh among the areas built, because that is the date after
 	// which nothing in this artifact changed.
 	// Taking the earliest would claim a currency the newest area does not have.
-	// taking today's date would claim one no area has.
+	// Taking today's date would claim one no area has.
 	const sourceVintage = selected
 		.map((entry) => entry.saverest)
 		.toSorted()

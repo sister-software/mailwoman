@@ -50,7 +50,8 @@ export interface MapBias {
  * A host-supplied overlay: one map `<Source>` plus one or more `<Layer>`s laid
  * over the basemap (coverage "fog of war", race-dots, …).
  *
- * The host composes the specs. the package renders them declaratively in a later phase.
+ * The host composes the specs.
+ * The package renders them declaratively in a later phase.
  */
 export interface OverlaySpec {
 	/**
@@ -98,11 +99,12 @@ export interface Suggestion {
  */
 export interface VersionOption {
 	/**
-	 * The version tag (e.g. a git tag or model-card version).
+	 * The version tag (e.g. A git tag or model-card version).
 	 */
 	version: string
 	/**
-	 * Display label. falls back to `version`.
+	 * Display label.
+	 * Falls back to `version`.
 	 */
 	label?: string
 }
@@ -145,8 +147,9 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	/**
 	 * A bias-aware parse.
 	 *
-	 * The geocoder feeds the current viewport center as a soft prior. when absent the
-	 * host falls back to the base {@link PipelineRuntime.runParse}.
+	 * The geocoder feeds the current viewport center as a soft prior.
+	 * When absent the host falls back to the base {@link PipelineRuntime.runParse}.
+	 *
 	 * Kept separate so the shared `runParse` interface is unchanged.
 	 */
 	runParseWithBias?: (
@@ -168,7 +171,9 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	 * the fields that live on the host's `ResolvedHit` but not on the shared {@link ResolvedPlaceView}.
 	 *
 	 * The host owns this because those extras (and the async polygon fetch in the real runtime)
-	 * are host/gazetteer concerns. the package keeps {@link ParseResult} unpolluted.
+	 * are host/gazetteer concerns.
+	 * The package keeps {@link ParseResult} unpolluted.
+	 *
 	 * Absent → the candidate renders as a bare point (marker + a mid-zoom fly-to).
 	 *
 	 * Returning `null` also renders nothing.
@@ -224,9 +229,10 @@ export interface CompareContext {
 /**
  * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its own
  * result block (a `<ResultPanel>` with its span-highlight / timing / hierarchy / precision detail)
- * in place of the package's default
- * {@link ResultPanel}. Everything the default panel needs is passed through. the candidate-selection state stays owned
- * by the package (`useGeocode`).
+ * in place of the package's default {@link ResultPanel}.
+ *
+ * Everything the default panel needs is passed through.
+ * The candidate-selection state stays owned by the package (`useGeocode`).
  */
 export interface ResultContext {
 	/**
@@ -258,7 +264,7 @@ export interface ResultContext {
  */
 export interface GeocoderPanels {
 	/**
-	 * Rendered at the top of the control panel (e.g. the host's "About this geocoder").
+	 * Rendered at the top of the control panel (e.g. The host's "About this geocoder").
 	 */
 	header?: ReactNode
 	/**
@@ -266,7 +272,7 @@ export interface GeocoderPanels {
 	 */
 	releaseInfo?: ReactNode
 	/**
-	 * Rendered at the bottom of the control panel (e.g. a guided tour).
+	 * Rendered at the bottom of the control panel (e.g. A guided tour).
 	 */
 	footer?: ReactNode
 	/**
@@ -305,8 +311,7 @@ export interface GeocoderPanels {
 	/**
 	 * Rendered in place of the resolved-place panel when nothing resolved (host's FailureDiagnostic).
 	 *
-	 * Ignored when
-	 * {@link result} is set.
+	 * Ignored when {@link result} is set.
 	 */
 	failure?: (result: ParseResult) => ReactNode
 	/**
@@ -317,8 +322,8 @@ export interface GeocoderPanels {
 	 * The model-visualizer / debug drawer, mounted beside the map (host's ModelVisualizer).
 	 *
 	 * A render-prop so the host can trace the current result (its input) —
-	 * the package passes the live parse result. the host decides on its own dev-mode state
-	 * and returns `null` when the drawer is closed.
+	 * the package passes the live parse result.
+	 * The host decides on its own dev-mode state and returns `null` when the drawer is closed.
 	 */
 	debugDrawer?: (context: { result: ParseResult | null }) => ReactNode
 	/**
@@ -329,8 +334,10 @@ export interface GeocoderPanels {
 	 * A layer control, rendered in the chrome's top column under the example chips
 	 * rather than in a MapLibre corner.
 	 *
-	 * A render-prop taking the live map handle, because a layer control reads `getStyle().layers`
-	 * and writes `setLayoutProperty` — it cannot be a static node.
+	 * A render-prop taking the live map handle, because a layer control reads
+	 * `getStyle().layers` and writes `setLayoutProperty`.
+	 * It cannot be a static node.
+	 *
 	 * The handle is `null` until the map instantiates, so the host returns `null` for
 	 * that first frame rather than rendering an empty control.
 	 */

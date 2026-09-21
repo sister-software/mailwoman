@@ -127,9 +127,11 @@ export function fixtureFeature(
 }
 
 /**
- * The fixture set: two adjacent zones, one of them holed the way this service encodes
- * holes. a second plan over the same ground as the first. a zone smaller than a cell.
- * and a zone the authority states as unzoned.
+ * The fixture set: two adjacent zones, one of them holed the way this service encodes holes.
+ *
+ * A second plan over the same ground as the first.
+ * A zone smaller than a cell.
+ * And a zone the authority states as unzoned.
  *
  * The overlap between plans is the point.
  * A point inside the first zone must answer with both rows, each naming its own plan —
@@ -193,8 +195,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 			crosswalkDescription: null,
 			crosswalkRollup: "N/A",
 		}),
-		// The same ground as zone A under a second plan, and the same local code mapped to a different generic type — which
-		// is the shape that makes the crosswalk non-functional over an (authority, code) pair.
+		// The same ground as zone A under a second plan, and the same local code mapped to a different generic type — which is the shape that makes the crosswalk non-functional over an (authority, code) pair.
 		fixtureFeature(6, [[zoneA]], {
 			planID: localAreaPlan.id,
 			planName: localAreaPlan.name,

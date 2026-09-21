@@ -63,7 +63,7 @@ export function mapUnitShapefile(spatialDirectory: string, areaSymbol: string): 
 /**
  * The shapefile holding a survey area's own outline.
  *
- * The footprint comes from here and never from the union of the rated polygons —
+ * The footprint comes from here and never from the union of the rated polygons.
  * `notcom` and access-denied map units are inside the footprint and carry no rating,
  * so a footprint derived from the rated set would report them as unmapped
  * when the authority has declared exactly what they are.
@@ -119,7 +119,8 @@ export interface SoilIngestOptions {
 	/**
 	 * Stop after this many features.
 	 *
-	 * The fixture and smoke rungs use it. a full build does not set it.
+	 * The fixture and smoke rungs use it.
+	 * A full build does not set it.
 	 */
 	limit?: number
 }
@@ -190,8 +191,7 @@ export async function* readSoilDelineations(
 		"-f",
 		"GeoJSONSeq",
 		"/vsistdout/",
-		// The output projection. `expectEPSG` is the assertion `readSoilSourceIdentity` makes about the source and is not
-		// the same thing: the consumer reads WGS84, whatever the shapefile declares.
+		// The output projection. `expectEPSG` is the assertion `readSoilSourceIdentity` makes about the source and is not the same thing: the consumer reads WGS84, whatever the shapefile declares.
 		"-t_srs",
 		"EPSG:4326",
 		"-lco",

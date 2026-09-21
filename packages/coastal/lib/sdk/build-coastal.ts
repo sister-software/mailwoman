@@ -84,10 +84,10 @@ export const COASTAL_SCHEMA_VERSION = 1
 /**
  * Feature ids per chunk process.
  *
- * Sized against the measured ceiling on the sibling product rather than guessed:
- * single-process runs over that layer died after roughly 510,000 and 798,000
- * features as h3's wasm heap fragmented. ncerm's largest layer holds 7,501 features,
- * so this default puts one whole layer in one process.
+ * Sized against the measured ceiling on the sibling product rather than guessed: single-process runs
+ * over that layer died after roughly 510,000 and 798,000 features as h3's wasm heap fragmented.
+ * Ncerm's largest layer holds 7,501 features, so this default puts one whole layer in one process.
+ *
  * That ceiling makes the build reproducible rather than the fact that this
  * product happens to sit far below it.
  */
@@ -101,8 +101,8 @@ export type BuildCoastalInput =
 			/**
 			 * A feature source consumed IN this process.
 			 *
-			 * Correct for a fixture and for anything small. it is what the batched form
-			 * falls back to per chunk, so the two share one implementation.
+			 * Correct for a fixture and for anything small.
+			 * It is what the batched form falls back to per chunk, so the two share one implementation.
 			 */
 			source: CoastalFeatureSource
 	  }
@@ -182,8 +182,9 @@ export interface BuildCoastalResult {
 	wholeCellRows: number
 	partialCellRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored rows —
-	 * the whole side is compacted per feature, so this is not the same number the
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored rows.
+	 *
+	 * The whole side is compacted per feature, so this is not the same number the
 	 * resolution was chosen on and is reported separately.
 	 */
 	storedPartialShare: number
@@ -314,10 +315,10 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 			).map((row) => row.resolution)
 
 			// no secondary indexes, and that is A decision rather than an omission.
-			// Both probes this artifact serves are already primary-key probes: the cell
-			// table's `(h3_cell, area_id)` key answers `where h3_cell = ?` as a range scan
-			// of a handful of rows, and a scenario filter over those few rows costs nothing.
-			// the geometry table is probed by `area_id`, its own key.
+			// Both probes this artifact serves are already primary-key probes: the cell table's
+			// `(h3_cell, area_id)` key answers `where h3_cell = ?` as a range scan of a handful
+			// of rows, and a scenario filter over those few rows costs nothing.
+			// The geometry table is probed by `area_id`, its own key.
 			// A `(scenario_key, h3_cell)` index over a `without rowid` table carries the
 			// primary key in every entry, so it would roughly double the cell tier to serve
 			// a scan that is already short — size for a reader that does not exist.
@@ -447,9 +448,11 @@ function assertScenarioCounts(
 /**
  * Refuse a coverage row that would license a negative claim.
  *
- * This is the check the meaning-OF-zero inversion turns on. ncerm publishes no coverage statement,
- * so no row of this layer may support an exclusion — a `designated` or `surveyed` basis here would
- * let an absent polygon be read as a designation of safety over the whole of inland England.
+ * This is the check the meaning-OF-zero inversion turns on.
+ * Ncerm publishes no coverage statement, so no row of this layer may support an exclusion.
+ *
+ * A `designated` or `surveyed` basis here would let an absent polygon be read as a
+ * designation of safety over the whole of inland England.
  * The reader checks the same thing at open time, so an artifact built by some
  * other path cannot get past it either.
  */
@@ -483,8 +486,9 @@ async function runBatchedIngest(
 		}
 
 		// Each layer numbers its own `objectid` from 1, so the range is per layer.
-		// The upper bound is deliberately open — `ogrinfo` reports a count rather than a maximum id,
-		// and a range that stopped at the count would drop every feature past a gap in the numbering.
+		// The upper bound is deliberately open.
+		// `ogrinfo` reports a count rather than a maximum id, and a range that stopped at
+		// the count would drop every feature past a gap in the numbering.
 		let from = 1
 
 		for (;;) {

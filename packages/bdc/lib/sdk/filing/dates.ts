@@ -38,7 +38,8 @@ interface ListAsOfDatesResponseBody {
 
 export interface RetrieveFilingDatesParams {
 	/**
-	 * Which filing type's dates to return — the full cached/fetched set is filtered down to this type.
+	 * Which filing type's dates to return.
+	 * The full cached/fetched set is filtered down to this type.
 	 */
 	filingType: BDCFilingDataType
 	/**
@@ -69,9 +70,9 @@ export async function retrieveFilingDates(
 /**
  * Pick the latest (most recent) `as_of_date` among `entries` for the given `dataType`.
  *
- * Comparison is by parsed `Date` value rather than string ordering — the FCC's
- * `as_of_date` values are `date`-formatted (`yyyy-MM-DD`), which happens to sort
- * correctly as strings too, but comparing as dates is the honest interface.
+ * Comparison is by parsed `Date` value rather than string ordering.
+ * The FCC's `as_of_date` values are `date`-formatted (`yyyy-MM-DD`), which happens to
+ * sort correctly as strings too, but comparing as dates is the honest interface.
  */
 export function resolveLatestVintage(entries: readonly FCCAsOfDateEntry[], dataType: BDCFilingDataType): string {
 	const matching = entries.filter((entry) => entry.data_type === dataType)

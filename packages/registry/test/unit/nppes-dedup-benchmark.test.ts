@@ -146,7 +146,8 @@ describe("truth grains", () => {
 
 		expect(label(record("1"))).toBe(label(record("2")))
 		expect(label(record("3"))).not.toBe(label(record("1")))
-		// Same org name, different address key — the string grain cannot see the two are one org.
+		// Same org name, different address key.
+		// The string grain cannot see the two are one org.
 		expect(label(record("4"))).not.toBe(label(record("1")))
 	})
 

@@ -34,10 +34,11 @@ import { literalFilesEntries } from "#pack/verify-tarball"
 /**
  * What a package's `version` field in `model-card.json` denotes.
  *
- * A graph package's card version names the trained model: `en-us` at 9.1.0 is the suffix-boundary model, and `mwops
- * release verify-metadata` keys the ledger and documentation checks off it rather than off the npm version. An
- * overlay's card version names that overlay's own artifacts, and the graph its rows decode through is whatever
- * `mailwoman.baseWeights` resolves to.
+ * A graph package's card version names the trained model: `en-us` at 9.1.0 is
+ * the suffix-boundary model, and `mwops release verify-metadata` keys the ledger
+ * and documentation checks off it rather than off the npm version.
+ * An overlay's card version names that overlay's own artifacts, and the graph its rows
+ * decode through is whatever `mailwoman.baseWeights` resolves to.
  *
  * Neither number is the npm version, which moves in lockstep across every workspace on every release.
  * The two series are described in `docs/records/site-2026-08/releases.mdx`.
@@ -332,8 +333,10 @@ function attributionEntries(card: ModelCard | null): string[] {
 }
 
 /**
- * The license a card's attribution entry names, from the parenthetical the entries use — `LINZ-derived OpenAddresses NZ
- * (CC-BY 4.0): …` yields `CC-BY 4.0`. `null` when no parenthetical in the entry holds one, which includes the OA PL
+ * The license a card's attribution entry names, from the parenthetical the entries use —
+ * `LINZ-derived OpenAddresses NZ (CC-BY 4.0): …` yields `CC-BY 4.0`.
+ *
+ * `null` when no parenthetical in the entry holds one, which includes the OA PL
  * entry whose parenthetical reads `public, BDOT-derived`.
  *
  * A `null` here reports what this reader found rather than what the entry grants.
@@ -343,9 +346,10 @@ function attributionEntries(card: ModelCard | null): string[] {
  * The entry text travels verbatim beside this field for that reason.
  */
 export function licenseNamedIn(entry: string): string | null {
-	// Every parenthetical rather than the first. An entry commonly opens with the dataset's own name — `Korean
-	// road-name address data (주소DB): 행정안전부 …, 공공누리 제1유형 (KOGL Type 1)` — and reading only the first reports an entry
-	// that names KOGL Type 1 as naming no license at all.
+	// Every parenthetical rather than the first.
+	// An entry commonly opens with the dataset's own name —
+	// `Korean road-name address data (주소DB): 행정안전부 …, 공공누리 제1유형 (KOGL Type 1)` — and reading
+	// only the first reports an entry that names KOGL Type 1 as naming no license at all.
 	for (const match of entry.matchAll(/\(([^()]{1,120})\)/gu)) {
 		const inner = match[1]!.trim()
 
@@ -385,8 +389,8 @@ function stringOrNull(value: unknown): string | null {
 /**
  * Read one weights workspace's record.
  *
- * Throws when the manifest is unreadable rather than returning an empty record: a rights
- * record nobody can read must not resolve to a package that ships nothing and owes nothing.
+ * @throws when the manifest is unreadable rather than returning an empty record: a rights
+ *   record nobody can read must not resolve to a package that ships nothing and owes nothing.
  */
 export async function readWeightsRightsRecord(repoRoot: string, workspace: string): Promise<WeightsRightsRecord> {
 	const manifest = await readPackageJSON(String(resolvePath(repoRoot, workspace, "package.json")))

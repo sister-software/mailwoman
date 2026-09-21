@@ -19,7 +19,8 @@ test("parses on submit and renders components + resolved place", async () => {
 		<PipelineExplorer runtime={makePipelineRuntime()} defaultAddress="350 5th Ave" />
 	)
 
-	// ClientOnly mounts asynchronously. wait for the form.
+	// ClientOnly mounts asynchronously.
+	// Wait for the form.
 	await vi.waitFor(() => expect(container.querySelector("#mw-pipeline-input")).toBeTruthy())
 
 	await userEvent.click(container.querySelector('button[type="submit"]') as HTMLButtonElement)
@@ -39,7 +40,8 @@ test("selecting an alternate candidate updates the resolved panel", async () => 
 	await userEvent.click(container.querySelector('button[type="submit"]') as HTMLButtonElement)
 	await vi.waitFor(() => expect(container.querySelectorAll(".mw-candidates__btn")).toHaveLength(2))
 
-	// Pick the second candidate (the region) — the resolved panel should now show "region".
+	// Pick the second candidate (the region).
+	// The resolved panel should now show "region".
 	await userEvent.click(container.querySelectorAll(".mw-candidates__btn")[1] as HTMLElement)
 	await vi.waitFor(() => expect(container.querySelector(".mw-resolved")?.textContent).toContain("region"))
 })

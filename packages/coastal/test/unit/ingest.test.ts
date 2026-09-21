@@ -101,9 +101,9 @@ describe("the per-layer SELECT", () => {
 
 	it("tolerates the one layer that publishes no smp_name, rather than refusing it", async () => {
 		// `NCERM_SMP_2105_0CC` is the real case.
-		// The `select` substitutes `NULL AS smp_name` and the ingest proceeds. the failure
-		// that reaches the caller here is ogr2ogr failing to open a path that does not exist,
-		// which is the proof that the query itself was built.
+		// The `select` substitutes `NULL AS smp_name` and the ingest proceeds.
+		// The failure that reaches the caller here is ogr2ogr failing to open a path that
+		// does not exist, which is the proof that the query itself was built.
 		const fields = FULL_SMP_FIELDS.filter((field) => field !== "smp_name").map((field) =>
 			field === "smp2105_95" ? "smp2105_0" : field
 		)
