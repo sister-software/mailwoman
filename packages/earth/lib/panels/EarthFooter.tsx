@@ -14,6 +14,7 @@
 import { AppIdentity } from "@mailwoman/react/map/AppIdentity"
 import { MapFooter } from "@mailwoman/react/map/MapFooter"
 import { commitURL } from "@mailwoman/site-kit/build-info"
+import { DATA_CREDITS } from "mailwoman/browser-runtime/resources"
 import type { ReactNode } from "react"
 
 /**
@@ -22,7 +23,10 @@ import type { ReactNode } from "react"
  * back, and "© OpenStreetMap" with nowhere to go does not give them that. The OSM entry also names contributors, which
  * is who the copyright belongs to.
  */
-const ATTRIBUTION = [
+/**
+ * The basemap's own credits, which belong to whoever renders the tiles.
+ */
+const BASEMAP_ATTRIBUTION = [
 	<a key="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
 		© OpenStreetMap contributors
 	</a>,
@@ -32,6 +36,23 @@ const ATTRIBUTION = [
 	<a key="maplibre" href="https://maplibre.org" target="_blank" rel="noreferrer">
 		MapLibre
 	</a>,
+]
+
+/**
+ * The basemap's credits, then one per publisher behind the rows a result is resolved against.
+ *
+ * The footer credited the tiles alone. A result shown here is resolved against the admin gazetteer, the POI layer and
+ * the street extracts, whose publishers attach attribution conditions to exactly this display, and none of them was
+ * named. `DATA_CREDITS` is read from the runtime that fetches those objects, so a surface that stops loading one stops
+ * crediting it without anybody editing this file.
+ */
+const ATTRIBUTION = [
+	...BASEMAP_ATTRIBUTION,
+	...DATA_CREDITS.map((credit) => (
+		<a key={credit.publisher} href={credit.termsURL} target="_blank" rel="noreferrer">
+			{credit.publisher}
+		</a>
+	)),
 ]
 
 export interface EarthFooterProps {

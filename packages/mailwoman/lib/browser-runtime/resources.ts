@@ -26,6 +26,73 @@ export function assetURL(locale: string, version: string, filename: string): str
 }
 
 /**
+ * One publisher a page running this runtime owes a credit to, with where its terms are stated.
+ *
+ * A page that shows a result derived from these rows is the display the attribution conditions are about. GeoNames is
+ * CC-BY. Who's On First's own LICENSE.md makes the link to it a requirement rather than a courtesy. Base Adresse
+ * Nationale's Licence Ouverte asks for the source by name, and Overture's CDLA asks for its contributors. The basemap's
+ * own credits are separate and belong to whoever renders the tiles.
+ *
+ * It sits beside the URLs rather than in a surface's component, because the obligation follows from which objects this
+ * file fetches. A surface that stops loading one drops the entry with it, and a surface that adds a loader adds one
+ * here.
+ */
+export interface DataCredit {
+	/**
+	 * The publisher as it names itself.
+	 */
+	publisher: string
+	/**
+	 * Where the terms are stated, for the link a credit carries.
+	 */
+	termsURL: string
+	/**
+	 * Which artifacts this runtime fetches from that publisher.
+	 */
+	artifacts: string
+}
+
+/**
+ * The publishers behind every object this runtime fetches from the public origin, other than the basemap.
+ *
+ * `@mailwoman/mailwoman`'s `data/bundles` records the same four families for the operator who downloads them with
+ * `mailwoman data pull`, with the full conditions and the open questions. This is the shorter form a page displays, and
+ * the two describe the same artifacts: the candidate gazetteer, the POI layer, and the street extracts.
+ */
+export const DATA_CREDITS: readonly DataCredit[] = [
+	{
+		publisher: "Who's On First",
+		termsURL: "https://whosonfirst.org/docs/licenses/",
+		artifacts: "the admin gazetteer",
+	},
+	{
+		publisher: "GeoNames",
+		termsURL: "https://creativecommons.org/licenses/by/4.0/",
+		artifacts: "the admin gazetteer",
+	},
+	{
+		publisher: "Overture Maps Foundation",
+		termsURL: "https://docs.overturemaps.org/attribution/",
+		artifacts: "the POI layer",
+	},
+	{
+		publisher: "United States Census Bureau",
+		termsURL: "https://www.census.gov/programs-surveys/geography/about/terms-of-use.html",
+		artifacts: "the US interpolation extracts",
+	},
+	{
+		publisher: "OpenAddresses",
+		termsURL: "https://openaddresses.io/",
+		artifacts: "the US address-point extracts",
+	},
+	{
+		publisher: "DINUM and IGN, for Base Adresse Nationale",
+		termsURL: "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+		artifacts: "the French address-point extract",
+	},
+]
+
+/**
  * The per-locale releases manifest (`releases.json`) — the version pointer beside the versioned asset directories.
  */
 export function releasesManifestURL(locale: string): string {
