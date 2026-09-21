@@ -148,6 +148,14 @@ def _source_iter(
     are also shuffled (see ``_file_row_iter``). One row-group's worth of rows is held
     in memory at a time per source, so total RAM is bounded by the number of distinct
     sources rather than by any file-pool parameter.
+
+    A bounded draw reads one row-group, and that is the whole of #2347. Measured on
+    `corpus-v0.5.0`: a row-group holds 50,000 rows, a source's epoch draw was 17,269, and rows are
+    ordered by country within a source — `wof-admin/part-0000.parquet` row-group 0 is JP/CN/FR/US
+    while row-groups 10 and 19 are 100% US. So a draw sees between 1 and 11 countries whatever order
+    the files are visited in, and shuffling file order alone moves which row-group that is rather
+    than widening it. `docs/engineering/reference/corpus-draw-coverage.mdx` records the measurement
+    and the two candidate repairs with their costs.
     """
     order = list(paths)
     rng.shuffle(order)

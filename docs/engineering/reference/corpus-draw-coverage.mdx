@@ -1,0 +1,99 @@
+---
+title: A source's epoch draw reads one row-group, and a row-group is country-clustered
+role: reference
+audience: maintainer
+owner: operations
+---
+
+# What a source's epoch draw reads
+
+A training run draws a bounded number of rows from each source per epoch. Which rows those are is
+decided by `_source_iter` in `corpus-python/src/mailwoman_train/data/loader/parquet.py`, and the
+answer is narrower than the recipe implies: a draw reads one row-group, and a row-group is not a
+sample of its source.
+
+This page records the measurement, why the obvious repair does not work, and what the candidates
+cost. It exists because a repair was proposed, written and reverted on the strength of what is here.
+
+## The three numbers
+
+Measured 2026-09-21 on `corpus-v0.5.0` in this machine's data root.
+
+| quantity            | value  |
+| ------------------- | ------ |
+| Rows per row-group  | 50,000 |
+| Files in the corpus | 685    |
+| Row-groups per file | 20     |
+
+A source's epoch draw was **17,269 rows**, recorded by the epoch-mixture audit in
+`corpus-python/src/mailwoman_train/audits/epoch_mixture/passes.py`. That reading was taken against a
+corpus carrying an `overture` source, which is not in this machine's data root — 715 of 718 train
+files for it live on the Modal volume. It is carried here as the audit recorded it rather than
+re-measured.
+
+17,269 is 35% of one row-group. Whatever the file order, a draw that size never leaves the first
+row-group it enters.
+
+## Rows are ordered by country within a source
+
+This is the part that makes the ceiling bite. Censused over every row-group of `wof-admin` in
+`corpus-v0.5.0` — 40 files, 800 row-groups, 40,000,000 rows:
+
+| reading                                | value                   |
+| -------------------------------------- | ----------------------- |
+| Distinct countries in the source       | 13                      |
+| Distinct countries per row-group       | min 1, median 6, max 11 |
+| Row-groups holding exactly one country | 204 of 800 (25.5%)      |
+
+`wof-admin/part-0000.parquet` is the worked case: row-group 0 is JP 24,162 / CN 13,606 / FR 5,741 /
+US 1,299, row-group 1 is ES 18,290 / DE 10,787 / KR 6,625 / TW 4,720, and row-groups 10 and 19 are
+50,000 US rows each.
+
+So a draw inside one row-group sees a median of 6 of that source's 13 countries, and one time in four
+it sees exactly one. A source admitting 135 countries under `country_weights` is in the same position
+with a worse ratio.
+
+## Why shuffling file order does not repair it
+
+The repair proposed on 2026-09-19 was to interleave a source's files rather than drain them. It was
+written on 2026-09-21 as a shuffle of `(file, row-group)` pairs across the whole source, and reverted
+after this measurement.
+
+It moves which row-group a draw lands in, from the first file the seed happens to order first, to one
+drawn uniformly across the source. It does not widen the draw, because 17,269 rows still fit inside
+one 50,000-row row-group. Belgium, the case the audit named, still draws nothing in most runs.
+
+It is also not free. `tests/mailwoman_train/data/test_loader_split_parity.py` pins the exact row
+sequence a seeded run produces, and the change moved it — 124 encoded examples against a committed 127. That test exists so a change that reshuffles what every run trains on is a deliberate act. A
+change that reshuffles the stream has to buy the repair, and this one did not.
+
+## What the candidates cost
+
+Three ways to make a bounded draw a sample of its source. Each is stated with what it spends.
+
+**Shuffle rows within a source at corpus build time.** Any row-group then is a representative sample,
+every reader gets a uniform draw with no loader change, and the cost is paid once by the writer.
+Memory and read cost at training time are unchanged. It needs a corpus rebuild, which is what makes
+it the operator's decision rather than an implementation choice.
+
+**Hold several row-groups open and round-robin between them.** A draw then spreads across one
+row-group per open slot. Costs one row-group of memory per open slot per source, so eight slots across
+the seventeen sources in `corpus-v0.5.0` is eight times the current bound. The loader's docstring
+states that bound as one row-group per source, so this trades a stated invariant for the repair.
+
+**Take a stride from each row-group and revisit.** Keeps memory at one row-group and spends I/O
+instead: covering 17,269 draws across 64 row-groups means reading 3,200,000 rows to emit 17,269. It
+also changes what a pass emits, which `test_source_sampler_stationarity.py` pins: today a pass emits
+every row of a source once, the epoch ends when every source has finished one, and the largest source
+is seen exactly once. Under a stride, a pass emits a fraction of the rows and the epoch shortens by
+the same fraction.
+
+The first is the only one that costs nothing at read time, and it is the only one that needs
+something this repository cannot do by itself.
+
+## What the sampler does today
+
+Unchanged, and now documented at the call site. `_source_iter` shuffles the file list, then drains
+each file in shuffled row-group order. A draw smaller than 50,000 rows reads part of one row-group of
+one file. `audit_epoch_mixture`'s `countries_by_source` is the reading that exposes it: it separates a
+country the sampler declined from a country whose rows sit in a row-group the sampler never opened.
