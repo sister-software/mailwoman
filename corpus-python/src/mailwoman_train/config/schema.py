@@ -27,6 +27,30 @@ class CorpusReceiptConfig:
 
 
 @dataclass
+class ValidationCoverageConfig:
+    """Rows one country must hold in a held-out split for a run's metrics to say anything about it.
+
+    A corpus receipt asserts what the train split serves a draw. This asserts what a held-out split
+    contains, and the two are separate declarations because they are separate questions.
+
+    ``evaluate()`` reports ``val_loss``, ``val_rows`` and ``macro_f1`` over the whole split. A
+    country holding no row changes none of those numbers. So a run cannot tell a locale it validates
+    well from a locale it does not validate at all.
+
+    ``min_street_rows`` is separate from ``min_rows`` because the two absences are different
+    findings. A country absent from a split is invisible to every metric the split produces. A
+    country present with rows that carry no ``street`` or ``house_number`` tag is visible to the
+    admin metrics and invisible to the street ones, which is the state FR and DE were measured in
+    (#2353).
+    """
+
+    country: str = ""
+    split: str = "val"
+    min_rows: int = 1
+    min_street_rows: int = 0
+
+
+@dataclass
 class DataConfig:
     corpus_dir: str = "/data/corpus/versioned/v0.1.0/corpus-v0.1.0"
     tokenizer_dir: str = "/data/models/tokenizer/v0.1.0"
@@ -45,6 +69,10 @@ class DataConfig:
     # hypothesis-containing corpus receipts enforced by ``audit_epoch_mixture``. Empty keeps
     # historical configs unchanged. A run must not start until its audit passes.
     required_corpus_receipts: list[CorpusReceiptConfig] = field(default_factory=list)
+    # Held-out coverage enforced by ``audit_validation_coverage``. Empty keeps historical configs
+    # unchanged. Checked on the CPU preflight for the same reason the receipts are: a split that
+    # cannot measure a locale is worth knowing before the GPU spend rather than after (#2353).
+    required_validation_coverage: list[ValidationCoverageConfig] = field(default_factory=list)
     # Hard cap on how many rows the streaming loader yields per epoch (None = unlimited).
     train_rows_per_epoch: int | None = None
     val_rows: int | None = 4096

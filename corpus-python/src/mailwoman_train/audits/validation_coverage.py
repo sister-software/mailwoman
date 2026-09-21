@@ -33,7 +33,7 @@ from typing import Any
 
 import pyarrow.dataset as ds
 
-from ..config import load_config
+from ..config import ValidationCoverageConfig, load_config
 from ..data.loader import _parquet_paths
 
 #: Tags whose presence makes a row street-level. A validation row carrying neither measures the
@@ -118,13 +118,76 @@ def blind_countries(report: dict[str, Any], wanted: tuple[str, ...]) -> dict[str
     return findings
 
 
+class ValidationCoverageError(ValueError):
+    """A held-out split that cannot measure a locale the config asked it to, with the report attached."""
+
+    def __init__(self, message: str, report: dict[str, Any]):
+        super().__init__(message)
+        self.report = report
+
+
+def failing_requirements(
+    report: dict[str, Any],
+    required: list[ValidationCoverageConfig],
+) -> list[dict[str, Any]]:
+    """Each declared coverage floor the measured splits do not meet, with both numbers beside it.
+
+    A country absent from a split is reported as observing zero rather than skipped. Skipping it
+    would make the strongest failure — a locale the split holds nothing for — the one case the
+    check says nothing about.
+    """
+    failures: list[dict[str, Any]] = []
+
+    for entry in required:
+        measured = report["splits"].get(entry.split)
+
+        if measured is None:
+            failures.append(
+                {
+                    "country": entry.country,
+                    "split": entry.split,
+                    "because": f"the report carries no {entry.split} split",
+                }
+            )
+            continue
+
+        observed = measured["by_country"].get(entry.country, {"rows": 0, "street_rows": 0})
+        shortfalls: list[str] = []
+
+        if observed["rows"] < entry.min_rows:
+            shortfalls.append(f"{observed['rows']:,} rows against a floor of {entry.min_rows:,}")
+
+        if observed["street_rows"] < entry.min_street_rows:
+            shortfalls.append(f"{observed['street_rows']:,} street rows against a floor of {entry.min_street_rows:,}")
+
+        if shortfalls:
+            failures.append(
+                {
+                    "country": entry.country,
+                    "split": entry.split,
+                    "rows": observed["rows"],
+                    "street_rows": observed["street_rows"],
+                    "min_rows": entry.min_rows,
+                    "min_street_rows": entry.min_street_rows,
+                    "because": "; ".join(shortfalls),
+                }
+            )
+
+    return failures
+
+
 def run(
     config_path: Path,
     *,
     json_path: Path | None = None,
     countries: tuple[str, ...] = ("US", "FR", "DE", "GB"),
 ) -> dict[str, Any]:
-    """Print the per-country table for each split, then the countries with no street-level signal."""
+    """Print the per-country table for each split, then the countries with no street-level signal.
+
+    Raises {@link ValidationCoverageError} when the config declares ``data.required_validation_coverage``
+    and a split falls short of it. The report is written and printed first either way, because a
+    reader needs the numbers that failed rather than the fact that something did.
+    """
     cfg = load_config(config_path)
     report = audit(Path(cfg.data.corpus_dir))
 
@@ -152,10 +215,46 @@ def run(
     else:
         print(f"  every one of {', '.join(countries)} holds street rows in every split.")
 
+    required = cfg.data.required_validation_coverage
+    failures = failing_requirements(report, required) if required else []
+    report["required_validation_coverage"] = {
+        "declared": [
+            {
+                "country": entry.country,
+                "split": entry.split,
+                "min_rows": entry.min_rows,
+                "min_street_rows": entry.min_street_rows,
+            }
+            for entry in required
+        ],
+        "failures": failures,
+    }
+
+    if required:
+        print(f"\n  declared coverage floors ({len(required)}):")
+        for entry in required:
+            observed = (
+                report["splits"]
+                .get(entry.split, {"by_country": {}})["by_country"]
+                .get(entry.country, {"rows": 0, "street_rows": 0})
+            )
+            print(
+                f"    {entry.country} / {entry.split}: {observed['rows']:,} rows "
+                f"(floor {entry.min_rows:,}), {observed['street_rows']:,} street rows "
+                f"(floor {entry.min_street_rows:,})"
+            )
+
     if json_path is not None:
         json_path.parent.mkdir(parents=True, exist_ok=True)
         json_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print(f"\nwrote {json_path}")
+
+    if failures:
+        lines = "\n".join(f"  {f['country']} / {f['split']}: {f['because']}" for f in failures)
+        raise ValidationCoverageError(
+            f"{len(failures)} of {len(required)} declared validation-coverage floors are not met:\n{lines}",
+            report,
+        )
 
     return report
 

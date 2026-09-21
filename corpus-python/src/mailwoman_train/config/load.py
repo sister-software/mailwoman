@@ -11,7 +11,7 @@ from typing import Any
 
 import yaml
 
-from .schema import Config, CorpusReceiptConfig, DataConfig
+from .schema import Config, CorpusReceiptConfig, DataConfig, ValidationCoverageConfig
 
 
 def merge_into(
@@ -117,6 +117,41 @@ def _coerce(
                     f"receipt {receipt.name!r} component_sequence must contain bare component tags, got {invalid!r}"
                 )
         return receipts
+    if isinstance(dst, DataConfig) and key == "required_validation_coverage":
+        if not isinstance(value, list):
+            raise TypeError("data.required_validation_coverage must be a list")
+        wanted: list[ValidationCoverageConfig] = []
+        for index, item in enumerate(value):
+            if not isinstance(item, dict):
+                raise TypeError(f"data.required_validation_coverage[{index}] must be a mapping")
+            entry = ValidationCoverageConfig()
+            merge_into(entry, item, strict=strict, _path=f"{path}[{index}]", _source=source)
+            wanted.append(entry)
+        for entry in wanted:
+            if not isinstance(entry.country, str) or not entry.country.strip():
+                raise ValueError("every data.required_validation_coverage entry needs a country")
+            if entry.split not in ("val", "test"):
+                raise ValueError(
+                    f"validation coverage for {entry.country!r} names split {entry.split!r}; "
+                    "only 'val' and 'test' are held out"
+                )
+            if type(entry.min_rows) is not int or type(entry.min_street_rows) is not int:
+                raise TypeError(f"validation coverage for {entry.country!r} needs integer minimums")
+            if entry.min_rows <= 0:
+                raise ValueError(f"validation coverage for {entry.country!r} min_rows must be positive")
+            if entry.min_street_rows < 0:
+                raise ValueError(f"validation coverage for {entry.country!r} min_street_rows cannot be negative")
+            # A street row is a row, so a floor asking for more street rows than rows can never pass. Refusing it
+            # here names the typo. Leaving it would fail the audit against a corpus that is not at fault.
+            if entry.min_street_rows > entry.min_rows:
+                raise ValueError(
+                    f"validation coverage for {entry.country!r} asks for {entry.min_street_rows} street rows "
+                    f"within {entry.min_rows} rows, which no split can satisfy"
+                )
+        keys = [(entry.country, entry.split) for entry in wanted]
+        if len(keys) != len(set(keys)):
+            raise ValueError("data.required_validation_coverage entries must be unique per country and split")
+        return wanted
     declared = fields[key].type
     if not isinstance(value, str):
         return value

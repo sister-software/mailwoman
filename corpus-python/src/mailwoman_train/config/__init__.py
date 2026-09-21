@@ -8,6 +8,7 @@ from .schema import (
     EvalConfig,
     ModelConfig,
     TrainConfig,
+    ValidationCoverageConfig,
 )
 
 __all__ = [
@@ -17,6 +18,7 @@ __all__ = [
     "EvalConfig",
     "ModelConfig",
     "TrainConfig",
+    "ValidationCoverageConfig",
     "csv_log_path",
     "load_config",
     "merge_into",

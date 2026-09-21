@@ -131,6 +131,67 @@ def test_lenient_mode_preserves_the_silent_skip(tmp_path):
     assert not hasattr(cfg.train, "not_a_setting")
 
 
+def test_validation_coverage_floors_load_as_typed_configs(tmp_path):
+    path = _write(
+        tmp_path,
+        "data:\n"
+        "  required_validation_coverage:\n"
+        "    - country: GB\n"
+        "      split: val\n"
+        "      min_rows: 5000\n"
+        "      min_street_rows: 1000\n",
+    )
+
+    entry = load_config(path).data.required_validation_coverage[0]
+
+    assert entry.country == "GB"
+    assert entry.split == "val"
+    assert entry.min_rows == 5000
+    assert entry.min_street_rows == 1000
+
+
+def test_validation_coverage_defaults_to_the_val_split_and_no_street_floor(tmp_path):
+    path = _write(tmp_path, "data:\n  required_validation_coverage:\n    - {country: DE, min_rows: 10}\n")
+
+    entry = load_config(path).data.required_validation_coverage[0]
+
+    assert entry.split == "val"
+    assert entry.min_street_rows == 0
+
+
+def test_validation_coverage_rejects_a_split_that_is_not_held_out(tmp_path):
+    # `train` is not a holdout, so a floor over it would pass by measuring the rows the run trains on.
+    path = _write(tmp_path, "data:\n  required_validation_coverage:\n    - {country: GB, split: train, min_rows: 1}\n")
+
+    with pytest.raises(ValueError, match="only 'val' and 'test' are held out"):
+        load_config(path)
+
+
+def test_validation_coverage_rejects_more_street_rows_than_rows(tmp_path):
+    # A street row is a row. This floor can never pass, and failing here names the typo rather than
+    # blaming a corpus.
+    path = _write(
+        tmp_path,
+        "data:\n  required_validation_coverage:\n    - {country: FR, min_rows: 100, min_street_rows: 500}\n",
+    )
+
+    with pytest.raises(ValueError, match="which no split can satisfy"):
+        load_config(path)
+
+
+def test_validation_coverage_rejects_a_repeated_country_and_split(tmp_path):
+    path = _write(
+        tmp_path,
+        "data:\n"
+        "  required_validation_coverage:\n"
+        "    - {country: GB, split: val, min_rows: 10}\n"
+        "    - {country: GB, split: val, min_rows: 20}\n",
+    )
+
+    with pytest.raises(ValueError, match="unique per country and split"):
+        load_config(path)
+
+
 def test_lenient_merge_skips_unknown_keys():
     cfg = Config()
     merge_into(cfg, {"model": {"future_knob": True, "hidden_size": 512}}, strict=False)
