@@ -69,7 +69,8 @@ export const spec = {
 type NormalizeKey = (value: string) => string
 
 /**
- * Synthetic id base — above WOF's ~907M ceiling, so these GeoNames-sourced records never collide with a WOF id.
+ * Synthetic id base — above WOF's ~907M ceiling, so these GeoNames-sourced
+ * records never collide with a WOF id.
  */
 const SYNTH_ID_BASE = 8_000_000_000
 
@@ -96,9 +97,10 @@ async function readGeonames(file: PathBuilderLike, want: Set<string>): Promise<M
 
 	const acc = new Map<string, PostcodeAcc>()
 
-	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy. The GeoNames allCountries
-	// postal dump is headerless (header: false) and LF-only upstream, so field indices map straight through —
-	// and empty admin columns are preserved (v3 no longer drops them), keeping the offsets aligned.
+	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy.
+	// The GeoNames allCountries postal dump is headerless (header: false) and LF-only upstream,
+	// so field indices map straight through — and empty admin columns are preserved
+	// (v3 no longer drops them), keeping the offsets aligned.
 	for await (const fields of TSVSpliterator.fromAsync(file, { header: false, mode: "array" })) {
 		const countryCode = fields[0]
 
@@ -209,8 +211,8 @@ async function buildDatabase(
 	}
 
 	await using kdb = new DatabaseClient<WOFDatabase>(outPath)
-	// Regenerated artifact — drop any prior table so a re-run with a different country set fully
-	// replaces it (and synthetic ids restart cleanly without colliding with stale rows).
+	// Regenerated artifact — drop any prior table so a re-run with a different country set
+	// fully replaces it (and synthetic ids restart cleanly without colliding with stale rows).
 	await kdb.schema.dropTable("spr").ifExists().execute()
 
 	// Schema mirrors postalcode-intl.db's `spr` exactly — a drop-in `--postcodes` input for build-candidate.
@@ -262,9 +264,10 @@ async function buildDatabase(
 }
 
 /**
- * Fold the freshly-built database into a copy of an existing candidate gazetteer, mirroring `build-candidate` pass-4's
- * row construction (placetype_id=9, region_id=0, neg_rank=0, is_primary=1, bbox falls back to the centroid). The fast
- * path to a demo-ready DB without a full rebuild.
+ * Fold the freshly-built database into a copy of an existing candidate
+ * gazetteer, mirroring `build-candidate` pass-4's row construction
+ * (placetype_id=9, region_id=0, neg_rank=0, is_primary=1, bbox falls back to the centroid).
+ * The fast path to a demo-ready DB without a full rebuild.
  */
 async function foldIntoCandidate(
 	databasePath: PathBuilderLike,
@@ -374,9 +377,9 @@ const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 			throw new CommandError(`Missing GeoNames file: ${geonames}`)
 		}
 
-		// street-normalize lives in the optional `@mailwoman/resolver-wof-sqlite` peer — load it
-		// dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault when
-		// the peer isn't installed.
+		// street-normalize lives in the optional `@mailwoman/resolver-wof-sqlite` peer —
+		// load it dynamically so merely importing this command (e.g. `mailwoman --help`)
+		// doesn't fault when the peer isn't installed.
 		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street")
 
 		console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)

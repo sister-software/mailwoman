@@ -136,8 +136,8 @@ describe("edge cases", () => {
 	})
 
 	it("reads its artifact through a non-zero byteOffset view", () => {
-		// A reader handed a subarray of a larger buffer (a file mmap, a network frame) must not
-		// assume byteOffset 0.
+		// A reader handed a subarray of a larger buffer (a file mmap, a network frame)
+		// must not assume byteOffset 0.
 		const bytes = sealFixture()
 		const shifted = new Uint8Array(bytes.length + 6)
 		shifted.set(bytes, 6)

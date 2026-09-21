@@ -64,8 +64,8 @@ export const OPEN_ARM_NAME = "open"
 export const AUTHORITATIVE_ARM_NAME = "authoritative"
 
 /**
- * What the open arm records in the provider slot. Not an empty string: an empty name reads as a provider whose name was
- * lost, and this arm consulted none.
+ * What the open arm records in the provider slot. Not an empty string: an empty name
+ * reads as a provider whose name was lost, and this arm consulted none.
  */
 const OPEN_PROVIDER_NAME = "none"
 
@@ -81,9 +81,10 @@ const DEFAULT_COORDINATE_THRESHOLDS_M: readonly number[] = [5, 25, 100]
 /**
  * The ladder improvement and regression are measured on.
  *
- * A confidently wrong identifier is the worst thing an arm can do — worse than declining, because a consumer acts on
- * it. An abstention is worse than candidates, which at least narrow the answer. A committed correct identifier is best.
- * Ungradable rows have no rank: they are excluded from the comparison rather than assigned one.
+ * A confidently wrong identifier is the worst thing an arm can do — worse than declining,
+ * because a consumer acts on it. An abstention is worse than candidates, which at least narrow
+ * the answer. A committed correct identifier is best. Ungradable rows have no rank:
+ * they are excluded from the comparison rather than assigned one.
  */
 const OUTCOME_RANK: Readonly<Record<string, number>> = {
 	[PremiseLinkageOutcome.Wrong]: 0,
@@ -101,8 +102,9 @@ export interface PremiseLinkageGrade {
 }
 
 /**
- * Map one arm's authoritative block onto the outcome vocabulary. Pure, and the only place an outcome is decided — both
- * arms are graded through it, so neither can acquire a private definition of `exact`.
+ * Map one arm's authoritative block onto the outcome vocabulary.
+ * Pure, and the only place an outcome is decided — both arms are graded through it,
+ * so neither can acquire a private definition of `exact`.
  */
 export function outcomeFor(
 	assertion: AuthoritativeAssertion | undefined,
@@ -157,9 +159,10 @@ export function outcomeFor(
 /**
  * The coordinate this arm is graded on.
  *
- * The #1901 interface includes the provider's coordinate beside Mailwoman's own and leaves the choice to the consumer.
- * This harness is that consumer, and the choice is stated here rather than implied: when the provider committed to a
- * premise, its coordinate is the one the authoritative arm asserted. everywhere else the arm's answer is Mailwoman's.
+ * The #1901 interface includes the provider's coordinate beside Mailwoman's own and leaves
+ * the choice to the consumer. This harness is that consumer, and the choice is stated here
+ * rather than implied: when the provider committed to a premise, its coordinate is the
+ * one the authoritative arm asserted. everywhere else the arm's answer is Mailwoman's.
  */
 function gradedCoordinate(
 	result: GeocodeResult,
@@ -181,8 +184,9 @@ function coordinateErrorFor(
 	result: GeocodeResult,
 	assertion: AuthoritativeAssertion | undefined
 ): number | undefined {
-	// Three independent absences, none of them a zero: terms that forbid publication, a row with no truth
-	// coordinate, and an arm that produced none. Each keeps the row out of the coordinate table entirely.
+	// Three independent absences, none of them a zero: terms that forbid publication,
+	// a row with no truth coordinate, and an arm that produced none.
+	// Each keeps the row out of the coordinate table entirely.
 	if (!row.coordinatePublishable) return undefined
 
 	if (row.expectedLat === undefined || row.expectedLon === undefined) return undefined
@@ -244,9 +248,9 @@ function isErrored(row: PremiseLinkageResultRow): boolean {
 /**
  * The rows an arm could have answered exactly.
  *
- * Ungradable rows always leave. Refusals leave only under `abstain_ok`, because an arm that was permitted to abstain
- * was not asked to be right on those rows. under `unique_required` they stay in the denominator and count against the
- * exact rate — while remaining `refused` in the row itself.
+ * Ungradable rows always leave. Refusals leave only under `abstain_ok`, because an arm that was
+ * permitted to abstain was not asked to be right on those rows. under `unique_required` they stay in
+ * the denominator and count against the exact rate — while remaining `refused` in the row itself.
  */
 function eligibleRows(
 	rows: readonly PremiseLinkageResultRow[],
@@ -341,8 +345,8 @@ function compareArms(
 	for (const before of baseline) {
 		const after = candidateByCase.get(before.caseID)
 
-		// A row ungradable in either arm contributes to no numerator and stays in the denominator: "we could
-		// not compare this" is not "this did not move".
+		// A row ungradable in either arm contributes to no numerator and stays in the denominator:
+		// "we could not compare this" is not "this did not move".
 		if (!after || isErrored(before) || isErrored(after)) continue
 
 		if (before.outcome === after.outcome) continue
@@ -369,14 +373,14 @@ function compareArms(
 }
 
 /**
- * The pieces a controlled run supplies. A private config module exports these. the synthetic self-check builds them
- * from the shipped fixture.
+ * The pieces a controlled run supplies. A private config module exports these. the
+ * synthetic self-check builds them from the shipped fixture.
  */
 export interface PremiseLinkageRunConfig {
 	adapter: PremiseLinkageAdapter
 	/**
-	 * The deps the open arm runs on — the production pipeline and artifacts. The authoritative arm receives these plus
-	 * the provider and nothing else.
+	 * The deps the open arm runs on — the production pipeline and artifacts.
+	 * The authoritative arm receives these plus the provider and nothing else.
 	 */
 	deps: GeocodeDeps
 	authoritativeProvider: AuthoritativeProvider
@@ -395,14 +399,15 @@ export interface PremiseLinkageRunOptions extends PremiseLinkageRunConfig {
 }
 
 /**
- * A run's output. The report is publishable after the writer's preflight; `rows` and `inputs` are not, and exist so the
- * writer can check what the report was computed from.
+ * A run's output. The report is publishable after the writer's preflight; `rows`
+ * and `inputs` are not, and exist so the writer can check what the report was computed from.
  */
 export interface PremiseLinkageRunResult {
 	report: PremiseLinkageReport
 	rows: PremiseLinkageResultRow[]
 	/**
-	 * Every raw input the run read, held so the report writer can refuse a report containing one. Discarded with the run.
+	 * Every raw input the run read, held so the report writer can refuse a report
+	 * containing one. Discarded with the run.
 	 */
 	inputs: string[]
 }
@@ -455,8 +460,9 @@ function hasRunConfigShape(value: unknown): value is PremiseLinkageRunConfig {
 /**
  * Validate what a private config module exported, before a licensed file is opened.
  *
- * The module may export the configuration directly or a factory that builds it — a real one needs the factory, because
- * opening a gazetteer and a provider connection at import time makes `--help` do both.
+ * The module may export the configuration directly or a factory that builds it —
+ * a real one needs the factory, because opening a gazetteer and a provider
+ * connection at import time makes `--help` do both.
  */
 export async function resolvePremiseLinkageConfig(
 	exported: unknown,

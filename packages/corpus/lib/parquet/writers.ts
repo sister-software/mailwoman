@@ -133,15 +133,17 @@ export async function writeParquetFile(rows: readonly ParquetRow[], path: PathBu
 		.setMaxRowGroupSize(ROW_GROUP_SIZE)
 		.build()
 
-	// parquet-wasm serializes key-value metadata through a hash map, whose order is not stable between writes.
-	// File identity and provenance live in manifest.json, so omitting file metadata preserves deterministic bytes.
+	// parquet-wasm serializes key-value metadata through a hash map, whose order is
+	// not stable between writes. File identity and provenance live in manifest.json,
+	// so omitting file metadata preserves deterministic bytes.
 	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
 }
 
 /**
- * Per-file metadata captured in `manifest.json`, one entry per `.parquet` file of a split. The `slices` key it sits
- * under is the wire interface the Python loader reads (`manifest_files` in `corpus_files.py`, with its pre-rename
- * fallback); every corpus on disk carries it, so the key name is not the writer's to change.
+ * Per-file metadata captured in `manifest.json`, one entry per `.parquet` file of a split.
+ * The `slices` key it sits under is the wire interface the Python loader reads
+ * (`manifest_files` in `corpus_files.py`, with its pre-rename fallback); every corpus
+ * on disk carries it, so the key name is not the writer's to change.
  */
 export interface ParquetFileDescriptor {
 	split: SplitName
@@ -154,8 +156,9 @@ export interface ParquetFileDescriptor {
 	first_source_id: string
 	last_source_id: string
 	/**
-	 * The file's corpus source slug, when the writer knows it. `audit.ts` prefers this over inferring the source from
-	 * `first_source_id`'s prefix; {@linkcode writeParquetSplits} itself writes multi-source files and leaves it unset.
+	 * The file's corpus source slug, when the writer knows it.
+	 * `audit.ts` prefers this over inferring the source from `first_source_id`'s prefix;
+	 * {@linkcode writeParquetSplits} itself writes multi-source files and leaves it unset.
 	 */
 	source?: string
 }
@@ -188,11 +191,12 @@ export interface WriteParquetSplitsOptions {
 }
 
 /**
- * Pre-partitioned labeled-row streams, one per split. Callers (`buildCorpus`) decide each row's split inline at align
- * time via `splitForRow` and route rows to the matching stream, eliminating the prior `Map<source_id, SplitName>` O(n)
- * lookup table.
+ * Pre-partitioned labeled-row streams, one per split. Callers (`buildCorpus`) decide each
+ * row's split inline at align time via `splitForRow` and route rows to the matching stream,
+ * eliminating the prior `Map<source_id, SplitName>` O(n) lookup table.
  *
- * Splits with no rows can be omitted (or passed as an empty iterable); {@linkcode writeParquetSplits} skips them.
+ * Splits with no rows can be omitted (or passed as an empty iterable);
+ * {@linkcode writeParquetSplits} skips them.
  */
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
@@ -225,10 +229,12 @@ async function writeStagedRow(stage: WriteStream, row: ParquetRow): Promise<void
 }
 
 /**
- * Stream labeled rows into `.parquet` files, one set of files per split, and write the manifest describing them.
+ * Stream labeled rows into `.parquet` files, one set of files per split,
+ * and write the manifest describing them.
  *
- * Splits are processed sequentially so only one file is open at a time. Rows are staged to newline-delimited JSON with
- * backpressure, then DuckDB writes the Parquet file from disk.
+ * Splits are processed sequentially so only one file is open at a time.
+ * Rows are staged to newline-delimited JSON with backpressure, then DuckDB
+ * writes the Parquet file from disk.
  */
 export async function writeParquetSplits(
 	perSplit: PerSplitRows,

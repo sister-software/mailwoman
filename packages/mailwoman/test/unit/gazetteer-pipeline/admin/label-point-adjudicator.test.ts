@@ -19,8 +19,8 @@ import {
 } from "mailwoman/gazetteer-pipeline/admin/label-point-adjudicator"
 import { afterAll, describe, expect, it } from "vitest"
 
-// The real Washington DC record (wof:85931779): geom: downtown, lbl: the district's southern tip,
-// GeoNames anchor at the city.
+// The real Washington DC record (wof:85931779): geom: downtown, lbl:
+// the district's southern tip, GeoNames anchor at the city.
 const WASHINGTON_GEOM = { latitude: 38.904831, longitude: -77.016216 }
 const WASHINGTON_LBL = { latitude: 38.82652, longitude: -77.01712 }
 const WASHINGTON_ANCHOR = { latitude: 38.89511, longitude: -77.03637 }

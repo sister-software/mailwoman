@@ -65,9 +65,10 @@ const THRESHOLDS_KM = [1, 5, 25] as const
 const PQ_NO_COORDINATE = 90
 
 /**
- * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle for the typo leg. A mutated
- * final letter frequently lands on a real neighbouring unit ("AB55 4BD" → "AB55 4BE"), and resolving those is correct
- * behavior. only a mutant absent from the register demands abstention. Reasoning "the mutant almost never exists" was
+ * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle
+ * for the typo leg. A mutated final letter frequently lands on a real neighbouring unit
+ * ("AB55 4BD" → "AB55 4BE"), and resolving those is correct behavior. only a mutant absent
+ * from the register demands abstention. Reasoning "the mutant almost never exists" was
  * measured wrong on the first run (346/600 resolved), which is why this set exists.
  */
 async function allPostcodes(csvDir: string): Promise<Set<string>> {
@@ -98,8 +99,8 @@ async function samplePostcodes(csvDir: string, perArea: number, seed: number): P
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
 		for (const line of (await readLocalTextFile(join(csvDir, file))).split("\n")) {
 			if (!line) continue
-			// Columns: PC,PQ,EA,no,… — quoted postcode, then numerics. Code-Point carries no embedded
-			// commas inside quotes, so a plain split is faithful to this source.
+			// Columns: PC,PQ,EA,no,… — quoted postcode, then numerics.
+			// Code-Point carries no embedded commas inside quotes, so a plain split is faithful to this source.
 			const cols = line.split(",")
 			const pq = Number(cols[1])
 
@@ -139,9 +140,10 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 }
 
 /**
- * Deterministically swap the final letter for its alphabet successor (Z→A), skipping letters GB unit postcodes never
- * use in final position (C, I, K, M, O, V are excluded from the alphabet there — stepping into one guarantees the
- * mutant is invalid, which is fine. the pass condition is abstention either way).
+ * Deterministically swap the final letter for its alphabet successor (Z→A),
+ * skipping letters GB unit postcodes never use in final position
+ * (C, I, K, M, O, V are excluded from the alphabet there — stepping into one guarantees
+ * the mutant is invalid, which is fine. the pass condition is abstention either way).
  */
 function mutateFinalLetter(postcode: string): string {
 	const last = postcode.at(-1)!

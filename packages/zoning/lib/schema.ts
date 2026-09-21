@@ -46,7 +46,8 @@ export const ZoningCellContainment = {
 	 */
 	Whole: "whole",
 	/**
-	 * The zone boundary crosses the cell. The index has narrowed the candidate polygons. the point test decides.
+	 * The zone boundary crosses the cell. The index has narrowed the candidate
+	 * polygons. the point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -54,14 +55,14 @@ export const ZoningCellContainment = {
 export type ZoningCellContainment = (typeof ZoningCellContainment)[keyof typeof ZoningCellContainment]
 
 /**
- * One authority zoning polygon, verbatim. A plain rowid table: it holds a geometry blob, which is the one shape
- * `without rowid` hurts.
+ * One authority zoning polygon, verbatim. A plain rowid table: it holds a geometry blob,
+ * which is the one shape `without rowid` hurts.
  */
 export interface ZoningAreaTable {
 	/**
-	 * The authority's own feature id, as published. Unique across the product — measured, `objectid` runs 1 to 85,330
-	 * with no repeat — so it needs no scoping prefix, and a prefix would put this package's key into a column that claims
-	 * to be the publisher's.
+	 * The authority's own feature id, as published. Unique across the product — measured,
+	 * `objectid` runs 1 to 85,330 with no repeat — so it needs no scoping prefix, and a
+	 * prefix would put this package's key into a column that claims to be the publisher's.
 	 */
 	area_id: string
 	/**
@@ -69,14 +70,15 @@ export interface ZoningAreaTable {
 	 */
 	jurisdiction_id: string
 	/**
-	 * The plan this zone belongs to. FK to `zoning_plan`. A zone without a plan is not a claim: it exists inside a named
-	 * Development Plan or Local Area Plan with a stated validity window, and a layer that dropped the plan and kept the
-	 * zone would be answering a question no authority asked.
+	 * The plan this zone belongs to. FK to `zoning_plan`.
+	 * A zone without a plan is not a claim: it exists inside a named Development Plan
+	 * or Local Area Plan with a stated validity window, and a layer that dropped the plan
+	 * and kept the zone would be answering a question no authority asked.
 	 */
 	plan_id: string
 	/**
-	 * `ZONE_ORIG` — the authority'S own zone code, verbatim, in its own spelling including case and trailing space.
-	 * Compared case-insensitively where it must be compared. never stored normalized.
+	 * `ZONE_ORIG` — the authority'S own zone code, verbatim, in its own spelling including case
+	 * and trailing space. Compared case-insensitively where it must be compared. never stored normalized.
 	 */
 	local_code: string
 	/**
@@ -84,12 +86,13 @@ export interface ZoningAreaTable {
 	 */
 	local_description: string | null
 	/**
-	 * `ZONE_LINK` — the authority's own link to the plan text. A live host, unlike the crosswalk's.
+	 * `ZONE_LINK` — the authority's own link to the plan text.
+	 * A live host, unlike the crosswalk's.
 	 */
 	local_code_url: string | null
 	/**
-	 * `ZONE_GZT` — the Department's national generic type, beside the local code and never instead of it. NULL where a
-	 * publisher ships no crosswalk.
+	 * `ZONE_GZT` — the Department's national generic type, beside the local code and never
+	 * instead of it. NULL where a publisher ships no crosswalk.
 	 */
 	crosswalk_code: string | null
 	/**
@@ -113,8 +116,8 @@ export interface ZoningAreaTable {
 	max_lat: number
 	max_lon: number
 	/**
-	 * How many rings the source published for this feature — with `signed_area_m2`, the ingest's own receipt that the
-	 * orientation was read rather than assumed.
+	 * How many rings the source published for this feature — with `signed_area_m2`,
+	 * the ingest's own receipt that the orientation was read rather than assumed.
 	 */
 	ring_count: number
 	/**
@@ -122,8 +125,8 @@ export interface ZoningAreaTable {
 	 */
 	signed_area_m2: number
 	/**
-	 * The authority's ring coordinates, unsimplified, with hole roles resolved — see `ring-roles.ts` for the resolution
-	 * and `rings.ts` for the layout and the point test.
+	 * The authority's ring coordinates, unsimplified, with hole roles resolved —
+	 * see `ring-roles.ts` for the resolution and `rings.ts` for the layout and the point test.
 	 */
 	rings: Uint8Array
 }
@@ -164,15 +167,16 @@ export interface ZoningJurisdictionTable {
 	jurisdiction_id: string
 	name: string
 	/**
-	 * The publisher's own code, verbatim. `Fl` for Fingal against `CL`, `CO`, `DU` for the rest — do not repair.
+	 * The publisher's own code, verbatim. `Fl` for Fingal against `CL`, `CO`,
+	 * `DU` for the rest — do not repair.
 	 */
 	source_code: string
 	country: string
 }
 
 /**
- * A publisher's declared vocabulary, as shipped, per scheme — plus the values the data uses that the publisher never
- * declared.
+ * A publisher's declared vocabulary, as shipped, per scheme — plus the values
+ * the data uses that the publisher never declared.
  */
 export interface ZoningVocabularyTable {
 	/**
@@ -181,8 +185,9 @@ export interface ZoningVocabularyTable {
 	scheme: string
 	code: string
 	/**
-	 * The publisher's own words. For an observed-but-undeclared code this is the description the data carries on its
-	 * rows, or the code itself where the data carries none — never a label this package wrote.
+	 * The publisher's own words. For an observed-but-undeclared code this is the
+	 * description the data carries on its rows, or the code itself where the data
+	 * carries none — never a label this package wrote.
 	 */
 	label: string
 	/**
@@ -190,22 +195,23 @@ export interface ZoningVocabularyTable {
 	 */
 	definition: string | null
 	/**
-	 * NULL for the Irish generic types. Every one of the 85,330 rows links its definition to `viewer.myplan.ie`, which
-	 * has no A or aaaa record, and three candidate replacements on the live host answer http 404 . Therefore, the
-	 * definitions behind the 54 code-to-label pairs were not retrievable and this column is not filled in with a
-	 * plausible one.
+	 * NULL for the Irish generic types. Every one of the 85,330 rows links its definition to
+	 * `viewer.myplan.ie`, which has no A or aaaa record, and three candidate replacements on
+	 * the live host answer http 404 . Therefore, the definitions behind the 54 code-to-label
+	 * pairs were not retrievable and this column is not filled in with a plausible one.
 	 */
 	definition_url: string | null
 	/**
-	 * `1` where the publisher declares this code in its own domain, `0` where the code appears only in the data.
+	 * `1` where the publisher declares this code in its own domain, `0`
+	 * where the code appears only in the data.
 	 *
-	 * Folding the two would either hide A source-schema change or invent A declaration. Ireland declares 54 generic types
-	 * and its data uses 55: `N/A` appears on 4 rows and in no domain.
+	 * Folding the two would either hide A source-schema change or invent A declaration.
+	 * Ireland declares 54 generic types and its data uses 55: `N/A` appears on 4 rows and in no domain.
 	 */
 	declared: number
 	/**
-	 * How many rows of this artifact carry the code. A census a reader checks a closed domain against, rather than a
-	 * claim about the world.
+	 * How many rows of this artifact carry the code. A census a reader checks a closed
+	 * domain against, rather than a claim about the world.
 	 */
 	observed_rows: number
 }
@@ -213,12 +219,14 @@ export interface ZoningVocabularyTable {
 /**
  * A publisher's own mapping between two schemes, where it publishes one as a table.
  *
- * Empty FOR ireland, and the emptiness is A measurement. The Department's generic type is assigned PER polygon rather
- * than per code: 52 of the 795 (authority, local code) pairs take more than one generic type inside a single authority
- * — Cork County Council's `Special Policy Area` takes 14 and its `Green Infrastructure` 12 — so the mapping is not a
+ * Empty FOR ireland, and the emptiness is A measurement.
+ * The Department's generic type is assigned PER polygon rather than per code:
+ * 52 of the 795 (authority, local code) pairs take more than one generic type
+ * inside a single authority — Cork County Council's `Special Policy Area` takes 14
+ * and its `Green Infrastructure` 12 — so the mapping is not a
  * function of the pair and no edge table can carry it without inventing one. The mapping lives on `zoning_area`, per
- * row, where the Department put it. {@linkcode assertCrosswalkIsNotATable} refuses a build that would write edges while
- * such a pair exists.
+ * row, where the Department put it. {@linkcode assertCrosswalkIsNotATable} refuses
+ * a build that would write edges while such a pair exists.
  */
 export interface ZoningCrosswalkEdgeTable {
 	from_scheme: string
@@ -234,18 +242,19 @@ export interface ZoningCrosswalkEdgeTable {
 /**
  * Per (cell, polygon): does the polygon cover the whole cell, or only part of it?
  *
- * Keyed on the polygon rather than on a code, because a zoning answer is the polygon — its local code, its plan and its
- * authority are per feature, and two authorities' plans can name the same code for different things.
+ * Keyed on the polygon rather than on a code, because a zoning answer is the polygon —
+ * its local code, its plan and its authority are per feature, and two authorities'
+ * plans can name the same code for different things.
  */
 export interface ZoningCellTable {
 	/**
-	 * 48-bit short H3 cell. Mixed-resolution: `whole` rows are compacted parent-ward, `partial` rows stay at the
-	 * resolution the feature was indexed at.
+	 * 48-bit short H3 cell. Mixed-resolution: `whole` rows are compacted parent-ward,
+	 * `partial` rows stay at the resolution the feature was indexed at.
 	 */
 	h3_cell: number
 	/**
-	 * The resolution this row's cell was captured at. A short cell does not name its own resolution, and a table that
-	 * mixes them cannot be probed without it.
+	 * The resolution this row's cell was captured at. A short cell does not name its own
+	 * resolution, and a table that mixes them cannot be probed without it.
 	 */
 	resolution: number
 	area_id: string
@@ -297,14 +306,15 @@ export interface ZoningDatabase extends layerschemadatabase {
 }
 
 /**
- * The subset of a Kysely handle the DDL touches. Same reasoning as `layerschemahandle`: Kysely is invariant in its
- * schema parameter, so naming only the members these functions call lets a caller pass its own wider handle.
+ * The subset of a Kysely handle the DDL touches. Same reasoning as `layerschemahandle`:
+ * Kysely is invariant in its schema parameter, so naming only the members these
+ * functions call lets a caller pass its own wider handle.
  */
 export type ZoningSchemaHandle = Pick<Kysely<ZoningDatabase>, "schema">
 
 /**
- * Create `zoning_area`. A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid`
- * penalizes.
+ * Create `zoning_area`. A plain rowid table on purpose — the `rings` blob is
+ * exactly the payload `without rowid` penalizes.
  */
 export async function createZoningAreaTable(db: ZoningSchemaHandle): Promise<void> {
 	const table = db.schema
@@ -401,8 +411,8 @@ export async function createZoningCrosswalkEdgeTable(db: ZoningSchemaHandle): Pr
 }
 
 /**
- * Create `zoning_cell` — the summary tier. Small fixed-width rows probed by their exact primary key, which is the
- * `without rowid` shape.
+ * Create `zoning_cell` — the summary tier. Small fixed-width rows probed by their
+ * exact primary key, which is the `without rowid` shape.
  */
 export async function createZoningCellTable(db: ZoningSchemaHandle): Promise<void> {
 	const table = db.schema.createTable("zoning_cell")

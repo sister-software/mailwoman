@@ -69,8 +69,8 @@ const COUNTRY_NAME_TO_CODE: ReadonlyMap<string, UkCountryCode> = (() => {
 })()
 
 /**
- * Resolve a UK constituent-country surface form (ISO code or English name) to its ISO code. null if unknown. Accepts
- * `ENG`, `England`, `Northern Ireland`, `scotland`, etc.
+ * Resolve a UK constituent-country surface form (ISO code or English name) to its ISO
+ * code. null if unknown. Accepts `ENG`, `England`, `Northern Ireland`, `scotland`, etc.
  */
 export function lookupUkCountry(input: string | null | undefined): UkCountryCode | null {
 	if (!input || typeof input !== "string") return null

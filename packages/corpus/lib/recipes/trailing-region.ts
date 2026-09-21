@@ -75,17 +75,19 @@ import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, r
 /**
  * The code an address line in this country writes the region as, or null where the name is written out.
  *
- * A subdivision belongs here only when its code is a posted surface. A Canadian province code is (`ca/province.ts`
- * states the contrast with Germany and France in its own header), and so is a US state's. a Bundesland or a région is
- * not, and teaching `BY` for Bayern would attest a form nobody writes.
+ * A subdivision belongs here only when its code is a posted surface.
+ * A Canadian province code is (`ca/province.ts` states the contrast with Germany
+ * and France in its own header), and so is a US state's. a Bundesland or a région is not,
+ * and teaching `BY` for Bayern would attest a form nobody writes.
  *
- * Several Canadian codes collide with ISO alpha-2 country codes — `NL` with the Netherlands, `PE` with Peru — so a code
- * left unattested here is not merely missing: the model reads it as the country it does know.
+ * Several Canadian codes collide with ISO alpha-2 country codes — `NL` with the
+ * Netherlands, `PE` with Peru — so a code left unattested here is not merely missing:
+ * the model reads it as the country it does know.
  *
- * US state codes reach the model in volume through the US sources, but only ever with a street in front of the city.
- * Measured on 604 distinct cities through the production path, `Washington, DC 20003` answers a locality 54.3% of the
- * time against 99.7% for `123 Main St, Washington, DC 20003` (#2303) — so the code is attested and the surface this
- * recipe writes is not.
+ * US state codes reach the model in volume through the US sources, but only ever with a street in front
+ * of the city. Measured on 604 distinct cities through the production path, `Washington, DC 20003`
+ * answers a locality 54.3% of the time against 99.7% for `123 Main St, Washington, DC 20003`
+ * (#2303) — so the code is attested and the surface this recipe writes is not.
  */
 function regionCodeSurface(cc: string, region: string): string | null {
 	const country = cc.toUpperCase()
@@ -96,8 +98,8 @@ function regionCodeSurface(cc: string, region: string): string | null {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const trailingRegionRecipe: CorpusRecipe = {
 	name: "trailing-region",
@@ -118,8 +120,8 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const country = String(t.country ?? "").trim()
 			const dependentLocality = String(t.dependentLocality ?? "").trim()
 
-			// A pair whose region equals its locality (Santa Cruz de Tenerife inside Santa Cruz de
-			// Tenerife) teaches nothing about the boundary this recipe exists for.
+			// A pair whose region equals its locality (Santa Cruz de Tenerife inside Santa Cruz de Tenerife)
+			// teaches nothing about the boundary this recipe exists for.
 			if (!locality || !region || locality === region) {
 				skipped++
 
@@ -129,19 +131,21 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const withCountry = read % 2 === 0 && country.length > 0
 			const postcode = String(t.postcode ?? "").trim()
 
-			// A tuple carrying a postcode emits the structured tail — the shape the bare-only recipe output never
-			// contained. Every fourth such row also carries a house number, which is the second trigger:
-			// the postcode discards the region, the house number then displaces the locality.
+			// A tuple carrying a postcode emits the structured tail — the shape the
+			// bare-only recipe output never contained. Every fourth such row also carries a
+			// house number, which is the second trigger: the postcode discards the region,
+			// the house number then displaces the locality.
 			const withHouseNumber = postcode.length > 0 && read % 4 === 1
 			const houseNumber = withHouseNumber ? String((read % 97) + 1) : ""
 
 			const components: Record<string, string> = { locality, region }
 
-			// left context. Without it every row begins with the locality, and the recipe teaches that the first named
-			// segment is the locality — measured on the v4.8.0 candidate: `Ye Three Lords, 27 Minories, London EC3N 1DE`
-			// came back `locality: "Ye Three Lords"` with the venue and street gone, and 11 of its 25 regressions were
-			// venue-led rows across seven countries. The house-number prefix does not supply it, because a number before
-			// the locality does not teach that a name can precede one.
+			// left context. Without it every row begins with the locality, and the recipe teaches
+			// that the first named segment is the locality — measured on the v4.8.0 candidate:
+			// `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye Three Lords"`
+			// with the venue and street gone, and 11 of its 25 regressions were venue-led rows
+			// across seven countries. The house-number prefix does not supply it, because a number
+			// before the locality does not teach that a name can precede one.
 			if (dependentLocality && dependentLocality !== locality) {
 				components["dependent_locality"] = dependentLocality
 			}
@@ -165,8 +169,8 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const localitySegment =
 				components["dependent_locality"] === undefined ? bareLocality : `${dependentLocality}, ${bareLocality}`
 
-			// A minority of eligible rows write the code. Both forms are posted and the name is what the resolver
-			// matches on, so the code alternates with it rather than replacing it.
+			// A minority of eligible rows write the code. Both forms are posted and the name is what
+			// the resolver matches on, so the code alternates with it rather than replacing it.
 			const regionCode = read % 3 === 2 ? regionCodeSurface(String(t.cc ?? ""), region) : null
 			const regionSurface = regionCode ?? region
 
@@ -180,17 +184,18 @@ export const trailingRegionRecipe: CorpusRecipe = {
 				? `${localitySegment}, ${regionSegment}, ${country}`
 				: `${localitySegment}, ${regionSegment}`
 
-			// A leading postcode joins the head, ahead of the locality. the other two are already in the tail, so the
-			// head carries at most the house number.
+			// A leading postcode joins the head, ahead of the locality. the other two are
+			// already in the tail, so the head carries at most the house number.
 			const leadingPostcode = postcode && placement === "leading" ? `${postcode} ` : ""
 			const head = withHouseNumber ? `${houseNumber}, ${leadingPostcode}` : leadingPostcode
 			const raw = `${head}${tail}`
-			// A distinct source for the structured rows. The sampler buckets by `source` and weights each bucket,
-			// so emitting these under `synth-trailing-region` would pool them with the 88,904 bare rows and make
-			// the new surface unweightable — its reps per row would silently be whatever the bare source's weight
-			// bought. `--source-name` overrides both, and for the same reason one rung up: a rebuild of one country's
-			// surfaces (#1673's corrected Spanish names) pooled under the shipped label would draw exactly the reps
-			// per row the rows it was built to outweigh are already drawing.
+			// A distinct source for the structured rows. The sampler buckets by `source`
+			// and weights each bucket, so emitting these under `synth-trailing-region` would
+			// pool them with the 88,904 bare rows and make the new surface unweightable —
+			// its reps per row would silently be whatever the bare source's weight bought.
+			// `--source-name` overrides both, and for the same reason one rung up: a rebuild of one
+			// country's surfaces (#1673's corrected Spanish names) pooled under the shipped label would
+			// draw exactly the reps per row the rows it was built to outweigh are already drawing.
 			const sourceLabel = postcode ? structuredSource : bareSource
 			const source_id = recipeSourceID(sourceLabel, { ...components, v: String(read) })
 

@@ -72,8 +72,8 @@ export function repairRegisterBoundaryLabels(
 			const absorbed = tokenIndicesOverlapping(tokens, end, end + remainder.length)
 			const last = absorbed.at(-1)
 
-			// Every absorbed token must sit inside the remainder: a token straddling its end would carry characters the
-			// register did not name into the span.
+			// Every absorbed token must sit inside the remainder: a token straddling its end
+			// would carry characters the register did not name into the span.
 			if (last !== undefined && tokens[last]!.end === end + remainder.length) {
 				for (const k of absorbed) {
 					setLabel(k, inside)

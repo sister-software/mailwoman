@@ -29,8 +29,8 @@ import { spawnProcess } from "#process"
 
 export interface RunChunkProcessOptions {
 	/**
-	 * The script the child runs, as a filesystem path — resolve it with `import.meta.resolve` against the owning
-	 * workspace's `scripts` subpath rather than assembling it.
+	 * The script the child runs, as a filesystem path — resolve it with `import.meta.resolve`
+	 * against the owning workspace's `scripts` subpath rather than assembling it.
 	 */
 	script: string
 	args: readonly string[]
@@ -39,20 +39,22 @@ export interface RunChunkProcessOptions {
 	 */
 	context: string
 	/**
-	 * Names the range in the no-result refusal, e.g. `"chunk objectid 1–1000"`. A build whose ranges are identifiable
-	 * should pass one: it is the difference between knowing which rows are unaccounted for and knowing only that some
-	 * are. Defaults to `"a chunk"` for a build whose chunks have no natural name.
+	 * Names the range in the no-result refusal, e.g. `"chunk objectid 1–1000"`.
+	 * A build whose ranges are identifiable should pass one: it is the difference
+	 * between knowing which rows are unaccounted for and knowing only that some are.
+	 * Defaults to `"a chunk"` for a build whose chunks have no natural name.
 	 */
 	subject?: string
 }
 
 /**
- * The argv every layer ingest-chunk process shares: the temp artifact the parent created, the caller's own flags, then
- * the two resolutions.
+ * The argv every layer ingest-chunk process shares: the temp artifact the parent created,
+ * the caller's own flags, then the two resolutions.
  *
- * The parent holds no handle while the chunks run — its caller closed one before the batched ingest and opens another
- * after. Each child opens the same file and appends. chunks run one at a time, so there is exactly one writer at every
- * instant and no locking to reason about. A chunk that exits non-zero, or prints no result line, throws in
+ * The parent holds no handle while the chunks run — its caller closed one before the batched
+ * ingest and opens another after. Each child opens the same file and appends. chunks run one
+ * at a time, so there is exactly one writer at every instant and no locking to reason about.
+ * A chunk that exits non-zero, or prints no result line, throws in
  * {@link runChunkProcess}: a chunk that died mid-range has written a partial set of rows, and continuing would seal an
  * artifact missing features nobody could name.
  */

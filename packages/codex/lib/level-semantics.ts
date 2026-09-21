@@ -66,21 +66,22 @@
  */
 
 /**
- * How a level designator's ordinal is derived. See the module header for the rationale behind each non-obvious kind.
+ * How a level designator's ordinal is derived. See the module header for the
+ * rationale behind each non-obvious kind.
  *
  * - `"ground"` — always ordinal 0 (RDC, EG, planta baja, …).
- * - `"basement"` — ordinal is the negation of the trailing number, defaulting to 1 when the designator appears bare
- *   ("Basement" alone → -1, same as "B1").
- * - `"numbered"` — ordinal depends on the locale's {@link LevelOrdinalConvention} (US/CA/JP-style vs
- *   continental-European/imdf-style); requires a number.
- * - `"fractionalAboveGround"` — conceptually between ground and the first numbered level (mezzanine, entresol/entresuelo,
- *   upper ground, German Zwischengeschoss); floors to ordinal 0.
- * - `"fractionalBelowGround"` — conceptually between the first basement level and ground (UK lower ground, Italian
- *   seminterrato); floors to ordinal -1.
- * - `"special"` — named by relationship to a specific building's top (penthouse, roof, attic); no locale-independent
- *   ordinal exists. {@link levelToOrdinal} returns `undefined`.
- * - `"fixedOrdinal"` — a specific named floor with its own fixed ordinal, independent of any number the caller supplies
- *   (Spanish principal is always ordinal 1).
+ * - `"basement"` — ordinal is the negation of the trailing number, defaulting to 1
+ *   when the designator appears bare ("Basement" alone → -1, same as "B1").
+ * - `"numbered"` — ordinal depends on the locale's {@link LevelOrdinalConvention}
+ *   (US/CA/JP-style vs continental-European/imdf-style); requires a number.
+ * - `"fractionalAboveGround"` — conceptually between ground and the first numbered level
+ *   (mezzanine, entresol/entresuelo, upper ground, German Zwischengeschoss); floors to ordinal 0.
+ * - `"fractionalBelowGround"` — conceptually between the first basement level
+ *   and ground (UK lower ground, Italian seminterrato); floors to ordinal -1.
+ * - `"special"` — named by relationship to a specific building's top (penthouse, roof, attic);
+ *   no locale-independent ordinal exists. {@link levelToOrdinal} returns `undefined`.
+ * - `"fixedOrdinal"` — a specific named floor with its own fixed ordinal, independent
+ *   of any number the caller supplies (Spanish principal is always ordinal 1).
  */
 export type LevelDesignatorKind =
 	| "ground"
@@ -104,7 +105,8 @@ export interface LevelDesignatorRow {
 	 */
 	name: string
 	/**
-	 * Recognized surface variants, including the canonical code itself and common ascii-folded / abbreviated spellings.
+	 * Recognized surface variants, including the canonical code itself
+	 * and common ascii-folded / abbreviated spellings.
 	 */
 	variants: readonly string[]
 	/**
@@ -112,22 +114,25 @@ export interface LevelDesignatorRow {
 	 */
 	kind: LevelDesignatorKind
 	/**
-	 * True when a secondary number typically follows ("FL 3", "B 2"); false for standalone designators ("EG", "RDC").
+	 * True when a secondary number typically follows ("FL 3", "B 2");
+	 * false for standalone designators ("EG", "RDC").
 	 */
 	requiresNumber: boolean
 	/**
-	 * Only present when `kind` is `"fixedOrdinal"` — the designator's own fixed ordinal, independent of any passed
-	 * number.
+	 * Only present when `kind` is `"fixedOrdinal"` — the designator's own fixed ordinal,
+	 * independent of any passed number.
 	 */
 	fixedOrdinal?: number
 }
 
 /**
- * English (American, British, Canadian, Australian, …) floor/level vocabulary. This is the generic English lexicon for
- * the ordinal-semantics table. it doesn't replace the more detailed per-system lexicons in
+ * English (American, British, Canadian, Australian, …) floor/level vocabulary.
+ * This is the generic English lexicon for the ordinal-semantics table. it doesn't
+ * replace the more detailed per-system lexicons in
  * {@link "./us/floor-designator.ts"} (USPS Pub-28 C2) or {@link "./au/level-designator.ts"} (AS 4590.1 / amas) — those
- * drive span-proposer/synthesis vocabulary for their own address system. This table exists to answer a narrower
- * question for any English-speaking locale: given a designator + number, what ordinal does it name.
+ * drive span-proposer/synthesis vocabulary for their own address system.
+ * This table exists to answer a narrower question for any English-speaking locale:
+ * given a designator + number, what ordinal does it name.
  */
 export const EN_LEVEL_DESIGNATORS = [
 	{
@@ -171,8 +176,8 @@ export const EN_LEVEL_DESIGNATORS = [
 ] as const satisfies readonly LevelDesignatorRow[]
 
 /**
- * French (France, and — for the vocabulary rather than the numbering convention — Francophone Canada) floor/level
- * vocabulary.
+ * French (France, and — for the vocabulary rather than the numbering convention —
+ * Francophone Canada) floor/level vocabulary.
  */
 export const FR_LEVEL_DESIGNATORS = [
 	{
@@ -247,8 +252,8 @@ export const DE_LEVEL_DESIGNATORS = [
 ] as const satisfies readonly LevelDesignatorRow[]
 
 /**
- * Spanish floor/level vocabulary. principal and entresuelo offsets vary by city and building age (see the module
- * header) — encoded here as a single convention rather than an empirical universal.
+ * Spanish floor/level vocabulary. principal and entresuelo offsets vary by city and building age
+ * (see the module header) — encoded here as a single convention rather than an empirical universal.
  */
 export const ES_LEVEL_DESIGNATORS = [
 	{ code: "PLANTA", name: "Planta/Piso (Floor)", variants: ["PLANTA", "PISO"], kind: "numbered", requiresNumber: true },
@@ -355,11 +360,13 @@ export const NL_LEVEL_DESIGNATORS = [
 ] as const satisfies readonly LevelDesignatorRow[]
 
 /**
- * Japanese (and generic CJK numeral+letter) floor/level vocabulary. Japanese addresses write the numbered floor as a
- * trailing "F" suffix on the number ("2F", "地下1F"/"B1F") or the kanji "階" ("2階"); there is no distinct bare word for
- * "ground floor" the way RDC/EG/planta baja exist in Europe — "1F"/"1階" already is ground (handled by the `"numbered"`
- * kind + the ja-JP `firstNumberedIsGround: true` convention rather than a separate `"ground"` row). "B" (and "地下",
- * literally "underground") name the basement count the same way English "B1" does.
+ * Japanese (and generic CJK numeral+letter) floor/level vocabulary.
+ * Japanese addresses write the numbered floor as a trailing "F" suffix on the number
+ * ("2F", "地下1F"/"B1F") or the kanji "階" ("2階"); there is no distinct bare word for
+ * "ground floor" the way RDC/EG/planta baja exist in Europe — "1F"/"1階" already is ground
+ * (handled by the `"numbered"` kind + the ja-JP `firstNumberedIsGround: true` convention
+ * rather than a separate `"ground"` row). "B" (and "地下", literally "underground")
+ * name the basement count the same way English "B1" does.
  */
 export const JA_LEVEL_DESIGNATORS = [
 	{ code: "F", name: "階 (Floor)", variants: ["F", "階"], kind: "numbered", requiresNumber: true },
@@ -389,8 +396,8 @@ export const SV_LEVEL_DESIGNATORS = [
 ] as const satisfies readonly LevelDesignatorRow[]
 
 /**
- * Norwegian floor/level vocabulary. gateplan ("street level") is a lower-confidence, regional inclusion for the
- * ground-floor row — see the module header's Nordic-vocabulary caveat.
+ * Norwegian floor/level vocabulary. gateplan ("street level") is a lower-confidence,
+ * regional inclusion for the ground-floor row — see the module header's Nordic-vocabulary caveat.
  */
 export const NO_LEVEL_DESIGNATORS = [
 	{ code: "ETASJE", name: "Etasje (Floor)", variants: ["ETASJE"], kind: "numbered", requiresNumber: true },
@@ -405,7 +412,8 @@ export const NO_LEVEL_DESIGNATORS = [
 ] as const satisfies readonly LevelDesignatorRow[]
 
 /**
- * Danish floor/level vocabulary. stuen/stueetage ("st.") is the standard ground-floor term seen on Danish addresses.
+ * Danish floor/level vocabulary. stuen/stueetage ("st.") is the standard
+ * ground-floor term seen on Danish addresses.
  */
 export const DA_LEVEL_DESIGNATORS = [
 	{ code: "ETAGE", name: "Etage (Floor)", variants: ["ETAGE"], kind: "numbered", requiresNumber: true },
@@ -448,11 +456,12 @@ export const LEVEL_DESIGNATORS_BY_FAMILY: Readonly<Record<LevelLocaleFamily, rea
 }
 
 /**
- * Per-family inverse lookup (lowercase variant → its designator row), built once at module load. Structural integrity
- * check runs here: every row must carry at least one non-blank variant, and no variant may repeat within a family
- * (case-insensitive) — a malformed table throws loudly at import time rather than silently producing an ambiguous
- * lexicon. Collisions across families are expected and fine (that's the entire point of this module: "UG" is Upper
- * Ground in English but Untergeschoss in German — same token, different family, different meaning).
+ * Per-family inverse lookup (lowercase variant → its designator row), built once at module load.
+ * Structural integrity check runs here: every row must carry at least one non-blank variant, and no
+ * variant may repeat within a family (case-insensitive) — a malformed table throws loudly at import time
+ * rather than silently producing an ambiguous lexicon. Collisions across families are expected
+ * and fine (that's the entire point of this module: "UG" is Upper Ground in English
+ * but Untergeschoss in German — same token, different family, different meaning).
  */
 const LEVEL_DESIGNATOR_LOOKUP_BY_FAMILY: ReadonlyMap<
 	LevelLocaleFamily,
@@ -500,13 +509,14 @@ const LEVEL_LOCALE_FAMILIES: ReadonlySet<LevelLocaleFamily> = new Set(
 )
 
 /**
- * BCP-47-ish language tags that fold into the Norwegian family (Bokmål, Nynorsk, and the deprecated macrolanguage tag).
+ * BCP-47-ish language tags that fold into the Norwegian family
+ * (Bokmål, Nynorsk, and the deprecated macrolanguage tag).
  */
 const NORWEGIAN_LANGUAGE_TAGS: ReadonlySet<string> = new Set(["no", "nb", "nn"])
 
 /**
- * Split `locale` into `{ language, region }`, lowercasing the language and uppercasing the region. Tolerant of a bare
- * language tag (no region).
+ * Split `locale` into `{ language, region }`, lowercasing the language and uppercasing
+ * the region. Tolerant of a bare language tag (no region).
  */
 function splitLocaleTag(locale: string): { language: string; region: string | undefined } {
 	const [language, region] = locale.split("-")
@@ -515,7 +525,8 @@ function splitLocaleTag(locale: string): { language: string; region: string | un
 }
 
 /**
- * Resolve a BCP-47-ish locale tag to its {@link LevelLocaleFamily}, or `undefined` if this module has no lexicon for it.
+ * Resolve a BCP-47-ish locale tag to its {@link LevelLocaleFamily},
+ * or `undefined` if this module has no lexicon for it.
  */
 function localeFamily(locale: string): LevelLocaleFamily | undefined {
 	const { language } = splitLocaleTag(locale)
@@ -525,24 +536,26 @@ function localeFamily(locale: string): LevelLocaleFamily | undefined {
 }
 
 /**
- * The locale's level-numbering convention: does the first numbered level ("1st floor", "1F", "étage 1", …) coincide
- * with ground (ordinal 0), or sit one storey above it?
+ * The locale's level-numbering convention: does the first numbered level
+ * ("1st floor", "1F", "étage 1", …) coincide with ground (ordinal 0), or sit one storey above it?
  */
 export interface LevelOrdinalConvention {
 	/**
-	 * True for the US/Canada/Japan-style convention, where the first numbered level is ground ("1st floor" = ground floor
-	 * = ordinal 0, so ordinal = number - 1). False for the continental-European / imdf-style convention, where ground has
-	 * its own designator (RDC, EG, planta baja, …) and the first numbered level sits one storey above it (ordinal =
-	 * number) — also the convention in the UK.
+	 * True for the US/Canada/Japan-style convention, where the first numbered level
+	 * is ground ("1st floor" = ground floor = ordinal 0, so ordinal = number - 1).
+	 * False for the continental-European / imdf-style convention, where ground has its
+	 * own designator (RDC, EG, planta baja, …) and the first numbered level sits one
+	 * storey above it (ordinal = number) — also the convention in the UK.
 	 */
 	readonly firstNumberedIsGround: boolean
 }
 
 /**
- * Per-full-locale ordinal convention overrides. Keyed by full locale (not bare language family) because English splits
- * by country even though the vocabulary doesn't: American and Canadian buildings number the ground floor "1"; British
- * buildings do not. "CA" (English or French) buckets with the US/Japan convention per real-world North American
- * building-code practice, though individual Quebec buildings can and do vary.
+ * Per-full-locale ordinal convention overrides. Keyed by full locale (not bare language family)
+ * because English splits by country even though the vocabulary doesn't: American
+ * and Canadian buildings number the ground floor "1"; British buildings do not.
+ * "CA" (English or French) buckets with the US/Japan convention per real-world North
+ * American building-code practice, though individual Quebec buildings can and do vary.
  */
 export const LEVEL_ORDINAL_CONVENTIONS: Readonly<Record<string, LevelOrdinalConvention>> = {
 	"en-US": { firstNumberedIsGround: true },
@@ -553,11 +566,13 @@ export const LEVEL_ORDINAL_CONVENTIONS: Readonly<Record<string, LevelOrdinalConv
 }
 
 /**
- * Default convention per language family, used when {@link levelToOrdinal} is given a bare-language locale ("fr" with no
- * country) or a country this table doesn't specifically override. Every entry here follows the
- * continental-European/imdf convention (ground is its own designator. numbered floors start at 1 for the storey above)
- * except Japanese, which follows the US/CA convention. English has no family-wide default — American/Canadian and
- * British buildings disagree, so a bare "en" locale intentionally resolves to `undefined` rather than guessing.
+ * Default convention per language family, used when {@link levelToOrdinal} is given
+ * a bare-language locale ("fr" with no country) or a country this table doesn't
+ * specifically override. Every entry here follows the continental-European/imdf convention
+ * (ground is its own designator. numbered floors start at 1 for the storey above) except
+ * Japanese, which follows the US/CA convention. English has no family-wide default —
+ * American/Canadian and British buildings disagree, so a bare "en" locale intentionally
+ * resolves to `undefined` rather than guessing.
  */
 const FAMILY_DEFAULT_ORDINAL_CONVENTION: Partial<Record<LevelLocaleFamily, LevelOrdinalConvention>> = {
 	fr: { firstNumberedIsGround: false },
@@ -573,8 +588,8 @@ const FAMILY_DEFAULT_ORDINAL_CONVENTION: Partial<Record<LevelLocaleFamily, Level
 }
 
 /**
- * Resolve the ordinal convention for `locale`: an exact full-locale override, else the language family's default, else
- * `undefined`.
+ * Resolve the ordinal convention for `locale`: an exact full-locale override,
+ * else the language family's default, else `undefined`.
  */
 function resolveOrdinalConvention(locale: string): LevelOrdinalConvention | undefined {
 	const { language, region } = splitLocaleTag(locale)
@@ -590,9 +605,9 @@ function resolveOrdinalConvention(locale: string): LevelOrdinalConvention | unde
 }
 
 /**
- * Look up a level designator (by canonical code, abbreviation, or any recognized variant) within a locale's language
- * family. Case-insensitive. Returns `undefined` when the locale's family is unknown to this module, or the token isn't
- * a recognized designator in that family.
+ * Look up a level designator (by canonical code, abbreviation, or any recognized variant)
+ * within a locale's language family. Case-insensitive. Returns `undefined` when the locale's
+ * family is unknown to this module, or the token isn't a recognized designator in that family.
  */
 export function lookupLevelDesignator(designator: string, locale: string): LevelDesignatorRow | undefined {
 	if (!designator || typeof designator !== "string") return undefined
@@ -611,14 +626,14 @@ export function isLevelDesignatorToken(input: unknown, locale: string): boolean 
 }
 
 /**
- * Map a (designator, number) pair to an imdf-style signed integer ordinal, given the semantics of `locale`. Ground is
- * always 0. Returns `undefined` when:
+ * Map a (designator, number) pair to an imdf-style signed integer ordinal, given the
+ * semantics of `locale`. Ground is always 0. Returns `undefined` when:
  *
  * - `locale`'s language family has no lexicon in this module,
  * - `designator` isn't a recognized token in that family,
  * - The designator is `"special"` (penthouse/roof/attic — no locale-independent ordinal exists), or
- * - The designator is `"numbered"` but either `number` is missing or the locale has no resolvable ordinal convention (a
- *   bare "en" locale, for example).
+ * - The designator is `"numbered"` but either `number` is missing or the locale has
+ *   no resolvable ordinal convention (a bare "en" locale, for example).
  *
  * @example
  * 	levelToOrdinal("FL", 1, "en-US") // → 0 (US: 1st floor is ground)

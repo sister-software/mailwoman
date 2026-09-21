@@ -43,8 +43,8 @@ function creditLines(manifest: PlanetaryBuildManifest, config: PlanetaryMapConfi
 export function Attribution({ config }: AttributionProps) {
 	const state = useBuildManifest(config.artifacts.manifestURL)
 
-	// Before the manifest answers, the credit still names both sources: it is a licence obligation that cannot wait
-	// on a fetch, and the manifest only ever refines the snapshot date it carries.
+	// Before the manifest answers, the credit still names both sources: it is a licence obligation
+	// that cannot wait on a fetch, and the manifest only ever refines the snapshot date it carries.
 	const lines =
 		state.status === "ready"
 			? creditLines(state.manifest, config)

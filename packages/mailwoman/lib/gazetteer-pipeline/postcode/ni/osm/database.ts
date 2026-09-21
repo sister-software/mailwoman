@@ -82,9 +82,10 @@ import {
 } from "#gazetteer-pipeline/postcode/ni/osm/index"
 
 /**
- * ISO-3166-1 alpha-2 stamped on every row. Northern Ireland is part of the United Kingdom, so `spr.country` is `GB` —
- * the same value the Code-Point Open database writes. The NI-vs-GB distinction lives in the postcode area itself
- * (`BT`), not in the country column, and the database routing (`pickExtractForPlacetype`) keys on country, so writing
+ * ISO-3166-1 alpha-2 stamped on every row. Northern Ireland is part of the United Kingdom,
+ * so `spr.country` is `GB` — the same value the Code-Point Open database writes.
+ * The NI-vs-GB distinction lives in the postcode area itself (`BT`), not in the country column,
+ * and the database routing (`pickExtractForPlacetype`) keys on country, so writing
  * anything else here would take this database out of GB postcode routing entirely.
  */
 const COUNTRY = "GB"
@@ -96,38 +97,39 @@ const COUNTRY = "GB"
 export const NI_LIVE_POSTCODES = 50_032
 
 /**
- * Total NI postcode sectors — an outward code plus one inward digit (`BT3 9`). The coarser denominator: a database can
- * cover a sector without covering many of its units, so this number and {@link NI_LIVE_POSTCODES} answer different
- * questions and both are reported.
+ * Total NI postcode sectors — an outward code plus one inward digit (`BT3 9`).
+ * The coarser denominator: a database can cover a sector without covering many of its units,
+ * so this number and {@link NI_LIVE_POSTCODES} answer different questions and both are reported.
  */
 export const NI_TOTAL_SECTORS = 886
 
 /**
- * Total NI postcode districts — the outward code alone (`BT3`), i.e. `BT1`–`BT94` with the gaps removed. The coarsest
- * denominator, and the one the OSM database saturates: 80 of 80.
+ * Total NI postcode districts — the outward code alone (`BT3`), i.e. `BT1`–`BT94` with the
+ * gaps removed. The coarsest denominator, and the one the OSM database saturates: 80 of 80.
  */
 export const NI_TOTAL_DISTRICTS = 80
 
 export interface BuildPostcodeNIOSMOptions {
 	/**
-	 * Acquisition directory holding (or to hold) `response.json` + `acquisition.json`. Default
-	 * `<data-root>/osm-ni-postcodes/<yyyy-MM-DD>` — a new dated directory per acquisition.
+	 * Acquisition directory holding (or to hold) `response.json` + `acquisition.json`.
+	 * Default `<data-root>/osm-ni-postcodes/<yyyy-MM-DD>` — a new dated directory per acquisition.
 	 */
 	sourceDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-ni-osm-<yyyy-MM-DD>.db` — a new dated path every build.
-	 * Copying it to the canonical `postalcode-ni-osm.db` is a deliberate, separate step.
+	 * Output artifact. Default `<data-root>/wof/postalcode-ni-osm-<yyyy-MM-DD>.db` — a new dated path
+	 * every build. Copying it to the canonical `postalcode-ni-osm.db` is a deliberate, separate step.
 	 */
 	out?: PathBuilderLike
 	/**
-	 * Skip the network entirely and use whatever is already in `sourceDir`. Fails if `response.json` is not there. This
-	 * is the normal mode for a rebuild: the saved response is the reproducibility artifact, and re-querying a volunteer
+	 * Skip the network entirely and use whatever is already in `sourceDir`.
+	 * Fails if `response.json` is not there. This is the normal mode for a rebuild:
+	 * the saved response is the reproducibility artifact, and re-querying a volunteer
 	 * endpoint to rebuild the same database is what the dated directory exists to avoid.
 	 */
 	offline?: boolean
 	/**
-	 * Build clock — stamped into `meta.built_at` and the default paths. Passed in so the module never reads the clock
-	 * implicitly (the `defaultGazetteerVersion` convention).
+	 * Build clock — stamped into `meta.built_at` and the default paths.
+	 * Passed in so the module never reads the clock implicitly (the `defaultGazetteerVersion` convention).
 	 */
 	now?: Date
 	onPhase?: (phase: string, detail?: string) => void
@@ -155,13 +157,13 @@ export interface BuildPostcodeNIOSMResult {
 	 */
 	queryMD5: string
 	/**
-	 * The OSM data extract the response reflects (`osm3s.timestamp_osm_base`) — the real provenance date, as against the
-	 * wall-clock retrieval time.
+	 * The OSM data extract the response reflects (`osm3s.timestamp_osm_base`) —
+	 * the real provenance date, as against the wall-clock retrieval time.
 	 */
 	osmTimestamp: string
 	/**
-	 * Anything that failed to reconcile: a drop the counters cannot account for, or a district/sector count above the
-	 * national total (which would mean the validator is admitting non-NI codes).
+	 * Anything that failed to reconcile: a drop the counters cannot account for, or a district/sector
+	 * count above the national total (which would mean the validator is admitting non-NI codes).
 	 */
 	reconciliationFailures: string[]
 	ancestorRows: number
@@ -196,9 +198,10 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const responseMD5 = await md5File(responsePath)
 	const sidecar = await readAcquisitionSidecar<NIAcquisitionSidecar>(sourceDir)
 
-	// The saved query is authoritative over the module constant: the database must record the query that
-	// produced its bytes rather than the query the code would issue today. They diverge the moment the constant
-	// is edited, and the whole point of the sidecar is to survive that edit.
+	// The saved query is authoritative over the module constant: the database must record
+	// the query that produced its bytes rather than the query the code would issue today.
+	// They diverge the moment the constant is edited, and the whole point of the
+	// sidecar is to survive that edit.
 	const queryText = sidecar?.query ?? NI_POSTCODE_OVERPASS_QUERY
 	const queryMD5 = sidecar?.queryMD5 ?? niPostcodeQueryMD5()
 	const retrievedAt = sidecar?.retrievedAt ?? UNKNOWN_PROVENANCE
@@ -288,10 +291,10 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 
 		db.exec("COMMIT")
 
-		// Every row's parent_id is -1 (OSM address points carry no WOF hierarchy), so this writes the self row
-		// per place and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with
-		// `spr.id IN (select id from ancestors where ancestor_id = ?)`, and a place absent from `ancestors` can
-		// never satisfy it.
+		// Every row's parent_id is -1 (OSM address points carry no WOF hierarchy), so this writes
+		// the self row per place and nothing else. Not decorative: the resolver's parent-constraint
+		// scopes a lookup with `spr.id IN (select id from ancestors where ancestor_id = ?)`,
+		// and a place absent from `ancestors` can never satisfy it.
 		phase("ancestors")
 		ancestorRows = populateAncestors(db)
 
@@ -352,16 +355,20 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 /**
  * Check the identities that no single counter implies.
  *
- * There is no upstream manifest here — OSM does not publish "this many BT-tagged elements exist" — so unlike the
- * Code-Point Open build there is no external oracle to condition on. What can be checked is internal consistency plus
- * two bounds that a broken validator would blow through, and those are worth more than they look: the
- * `codepoint-database.ts` check learned the hard way that a tolerance derived from the failure it is meant to catch
- * catches nothing, so every check here is against a fixed number.
+ * There is no upstream manifest here — OSM does not publish "this many BT-tagged elements
+ * exist" — so unlike the Code-Point Open build there is no external oracle to condition on.
+ * What can be checked is internal consistency plus two bounds that a broken validator
+ * would blow through, and those are worth more than they look: the `codepoint-database.ts`
+ * check learned the hard way that a tolerance derived from the failure it is meant to
+ * catch catches nothing, so every check here is against a fixed number.
  *
- * 1. Every tagged element is either a point or an accounted drop. A parser that silently skips a shape fails here.
- * 2. Districts ≤ 80 and sectors ≤ 886, the national totals. Exceeding either means the validator is admitting codes that
- *    are not NI — the failure mode of loosening {@link NI_UNIT_POSTCODE} to make more rows pass.
- * 3. Every record has at least one attestation, so a zero can only mean "not in OSM", never "in OSM with no evidence".
+ * 1. Every tagged element is either a point or an accounted drop.
+ *    A parser that silently skips a shape fails here.
+ * 2. Districts ≤ 80 and sectors ≤ 886, the national totals.
+ *    Exceeding either means the validator is admitting codes that are not NI —
+ *    the failure mode of loosening {@link NI_UNIT_POSTCODE} to make more rows pass.
+ * 3. Every record has at least one attestation, so a zero can only mean "not in OSM",
+ *    never "in OSM with no evidence".
  */
 function reconcile(
 	stats: NIOSMParseStats,

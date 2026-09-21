@@ -29,9 +29,9 @@ import { currentMatrixVersion } from "#release/verify-metadata"
 
 const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
 /**
- * The browser runtime's own fetch path (`mailwoman/browser-runtime/manifest`, mounted by
- * docs/src/contexts/RuntimeEmbed.tsx and the Earth app) — check what the runtime actually reads rather than what the
- * publisher believes it wrote.
+ * The browser runtime's own fetch path (`mailwoman/browser-runtime/manifest`,
+ * mounted by docs/src/contexts/RuntimeEmbed.tsx and the Earth app) — check what the
+ * runtime actually reads rather than what the publisher believes it wrote.
  */
 const DEMO_MANIFEST_URL = "https://public.mailwoman.ai/mailwoman/en-us/releases.json"
 
@@ -65,9 +65,10 @@ function normalizeVersion(version: string): string {
 /**
  * The parity checker's http client.
  *
- * Retry is on because every host this talks to rate-limits: the npm registry, the demo manifest bucket, and Hugging
- * Face. A release check that fails because a registry throttled it reads exactly like a release check that failed
- * because a surface trails, and the second one is the only kind anybody should act on.
+ * Retry is on because every host this talks to rate-limits: the npm registry,
+ * the demo manifest bucket, and Hugging Face. A release check that fails because a registry
+ * throttled it reads exactly like a release check that failed because a surface trails,
+ * and the second one is the only kind anybody should act on.
  */
 function createParityClient(): APIClient {
 	return new APIClient({
@@ -125,12 +126,12 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 	const npmLatest = await readNPMLatest()
 	const checks: ParityCheck[] = []
 
-	// Two version series (see releases.mdx's "Two version series" intro): the demo serves models, so its
-	// `defaultVersion` carries the model-card lineage number rather than the npm package number — comparing it
-	// against npm latest went permanently red the moment a code-only release shipped. The demo leg
-	// compares against the shipped model identity: `packages/neural-weights-en-us/model-card.json#version`
-	// (the same source verify-metadata keys off). The docs matrix row stays vs npm latest — that surface
-	// documents package releases.
+	// Two version series (see releases.mdx's "Two version series" intro): the demo serves models,
+	// so its `defaultVersion` carries the model-card lineage number rather than the npm
+	// package number — comparing it against npm latest went permanently red the moment a
+	// code-only release shipped. The demo leg compares against the shipped model identity:
+	// `packages/neural-weights-en-us/model-card.json#version` (the same source verify-metadata keys off).
+	// The docs matrix row stays vs npm latest — that surface documents package releases.
 	const localCard = await readLocalJSONFile<{
 		version: string
 		files_md5?: Record<string, string>
@@ -140,12 +141,14 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 
 	const demoDefault = await readDemoDefaultVersion()
 
-	// The demo's parity interface is model bytes rather than the bundle number. Bundle revisions that change only
-	// decode-side artifacts move the card version with zero model.onnx change — the demo serving the
-	// previous bundle serves the identical model, and can't even use the new artifacts until the web loader
-	// grows pair-prior wiring (#1278). So a trailing defaultVersion passes IFF the trailing version's
-	// shipped card records the same `files_md5["model.onnx"]` as the current card (fetched from the HF
-	// bucket — the same store the demo loads from). Different bytes = real drift = fail.
+	// The demo's parity interface is model bytes rather than the bundle number.
+	// Bundle revisions that change only decode-side artifacts move the card version
+	// with zero model.onnx change — the demo serving the previous bundle serves the
+	// identical model, and can't even use the new artifacts until the web loader
+	// grows pair-prior wiring (#1278). So a trailing defaultVersion passes IFF the
+	// trailing version's shipped card records the same `files_md5["model.onnx"]` as the
+	// current card (fetched from the HF bucket — the same store the demo loads from).
+	// Different bytes = real drift = fail.
 	let demoOK = demoDefault === cardModelVersion
 	let demoNote = `${cardModelVersion} (model-card version)`
 

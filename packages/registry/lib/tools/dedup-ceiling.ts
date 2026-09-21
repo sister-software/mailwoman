@@ -95,8 +95,8 @@ export async function dedupCeiling(
 	let mid = 0 // τ > sim ≥ 0.3 — partially separable
 	let separable = 0 // sim < 0.3 — clearly different names
 	let collideSharePhone = 0 // of collisions, also share a phone (phone can't separate either)
-	// Of the collisions, split NPI-over-segmentation (one org, many NPIs — merge is correct) from
-	// genuinely-distinct co-located providers (the true irreducible over-merge):
+	// Of the collisions, split NPI-over-segmentation (one org, many NPIs — merge is correct)
+	// from genuinely-distinct co-located providers (the true irreducible over-merge):
 	let collideSameAuth = 0 // share an authorized official ⇒ one org, multiple NPIs ⇒ correct to merge
 	let collideDistinct = 0 // different official and different specialty ⇒ genuinely different providers
 	const PAIR_BUDGET = 5_000_000
@@ -140,13 +140,14 @@ export async function dedupCeiling(
 		}
 	}
 
-	// Derive the precision ceiling from co-located distinct-NPI records.
-	// pairs, either merge (wrong) or hold them apart using name/org. It can separate the `separable`
-	// (and most `mid`) pairs but not the `collide` ones. So the irreducible false-merge rate among
-	// co-located distinct pairs is collide/pairs. an oracle's precision on the co-located decision is
-	// bounded by how many merges it makes that are correct. We report the collision rate directly and
-	// a precision-ceiling band (optimistic: only `collide` over-merge. conservative: `collide` + half
-	// of `mid`). Recall is not the binding constraint here (NPPES same-NPI records almost always share
+	// Derive the precision ceiling from co-located distinct-NPI records. pairs, either
+	// merge (wrong) or hold them apart using name/org. It can separate the `separable`
+	// (and most `mid`) pairs but not the `collide` ones. So the irreducible false-merge
+	// rate among co-located distinct pairs is collide/pairs. an oracle's precision on
+	// the co-located decision is bounded by how many merges it makes that are correct.
+	// We report the collision rate directly and a precision-ceiling band
+	// (optimistic: only `collide` over-merge. conservative: `collide` + half of `mid`).
+	// Recall is not the binding constraint here (NPPES same-NPI records almost always share
 	// either address or org), so the F1 ceiling tracks the precision ceiling. ---
 	const pct = formatPercent
 

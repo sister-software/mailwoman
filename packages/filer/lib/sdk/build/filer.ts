@@ -222,64 +222,71 @@ import { classifyFiler, parseForm499, type Form499Row } from "#sdk/form499/index
 import { assertISODate } from "#sdk/guards"
 import { parseProviderList, type ProviderListRow } from "#sdk/provider-list"
 
-// `@mailwoman/filer/sdk/build-filer` is EdgarSubsidiaryRow's published home — `edgar-ingest.ts` and every consumer
-// building rows for the `edgarRows` injection point import it from here, so it stays exported from this module even though its
-// declaration sits with the writer that validates it.
+// `@mailwoman/filer/sdk/build-filer` is EdgarSubsidiaryRow's published home — `edgar-ingest.ts`
+// and every consumer building rows for the `edgarRows` injection point import it from here, so it
+// stays exported from this module even though its declaration sits with the writer that validates it.
 export type { EdgarSubsidiaryRow } from "#sdk/build/edgar/rows"
 
 /**
- * Rows committed per `begin`/`commit` batch — matches `build-bdc.ts`'s `STAGE_BATCH_SIZE` discipline. Counted per
- * source row processed (a single 499 row can trigger several node/edge/attribute-stage inserts), not per individual
- * `.run()` call.
+ * Rows committed per `begin`/`commit` batch — matches `build-bdc.ts`'s `STAGE_BATCH_SIZE`
+ * discipline. Counted per source row processed (a single 499 row can trigger several
+ * node/edge/attribute-stage inserts), not per individual `.run()` call.
  */
 const STAGE_BATCH_SIZE = 10_000
 
 export interface BuildFilerOptions {
 	/**
-	 * Injected Form 499 row source — the test injection point. When given, `form499Path` is ignored and no filesystem
-	 * read happens for this source.
+	 * Injected Form 499 row source — the test injection point.
+	 * When given, `form499Path` is ignored and no filesystem read happens for this source.
 	 */
 	form499Rows?: AsyncIterable<Form499Row> | Iterable<Form499Row>
 	/**
-	 * Injected provider-list row source — the test injection point. When given, `providerListPath` is ignored and no
-	 * filesystem read happens for this source.
+	 * Injected provider-list row source — the test injection point.
+	 * When given, `providerListPath` is ignored and no filesystem read happens for this source.
 	 */
 	providerRows?: AsyncIterable<ProviderListRow> | Iterable<ProviderListRow>
 	/**
-	 * Injected edgar Exhibit 21 subsidiary-disclosure source — see the module docstring's "edgar Exhibit 21 ingest"
-	 * section. Subsidiary-name→FRN corroboration is matched against this same call's `form499Rows` (their
-	 * `legalNameOfCarrier`) — an `edgarRows` source with no accompanying `form499Rows` still writes every disclosure
-	 * edge, just with no corroborating FRN link possible.
+	 * Injected edgar Exhibit 21 subsidiary-disclosure source — see the module
+	 * docstring's "edgar Exhibit 21 ingest" section. Subsidiary-name→FRN corroboration
+	 * is matched against this same call's `form499Rows` (their `legalNameOfCarrier`) —
+	 * an `edgarRows` source with no accompanying `form499Rows` still writes every
+	 * disclosure edge, just with no corroborating FRN link possible.
 	 */
 	edgarRows?: AsyncIterable<EdgarSubsidiaryRow> | Iterable<EdgarSubsidiaryRow>
 	/**
-	 * Form 499 filer TSV path — read via {@linkcode parseForm499}. Ignored when `form499Rows` is given.
+	 * Form 499 filer TSV path — read via {@linkcode parseForm499}.
+	 * Ignored when `form499Rows` is given.
 	 */
 	form499Path?: string
 	/**
-	 * BDC provider-list CSV path — read via {@linkcode parseProviderList}. Ignored when `providerRows` is given.
+	 * BDC provider-list CSV path — read via {@linkcode parseProviderList}.
+	 * Ignored when `providerRows` is given.
 	 */
 	providerListPath?: string
 	/**
-	 * Output `filer.db` path. Built at `${out}.building` and moved into place last — see the module docstring.
+	 * Output `filer.db` path. Built at `${out}.building` and moved into place last —
+	 * see the module docstring.
 	 */
 	out: string
 	/**
-	 * The build's overall vintage — becomes the manifest's `version` and `source_vintage` (filer.db has no independent
-	 * versioning yet, same deferral `build-bdc.ts` makes for `bdc.db`'s `release`), and the `source_vintage` (only — see
+	 * The build's overall vintage — becomes the manifest's `version` and `source_vintage`
+	 * (filer.db has no independent versioning yet, same deferral `build-bdc.ts` makes
+	 * for `bdc.db`'s `release`), and the `source_vintage` (only — see
 	 * {@link BuildFilerOptions.validFrom} for `valid_from`) for every provider-list-derived edge (decision 7 — the
-	 * provider list carries no per-row date of its own). A free-text human vintage label (`"2026-Q2"`) is fine here —
-	 * this field is never written into a temporal (`valid_from`/`valid_to`) column, so it carries no ISO-shape
-	 * requirement of its own.
+	 * provider list carries no per-row date of its own). A free-text human vintage
+	 * label (`"2026-Q2"`) is fine here — this field is never written into a temporal
+	 * (`valid_from`/`valid_to`) column, so it carries no ISO-shape requirement of its own.
 	 *
-	 * Snapshot semantics (see the module docstring's minor-B note): calling {@linkcode buildFilerDatabase} again against
-	 * the same `out` with a different `sourceVintage` replaces the artifact — it does not accumulate the earlier
-	 * vintage's rows alongside the new ones. There is no options-level way to build a multi-vintage archive in one
-	 * artifact. that would require rows spanning multiple vintages passed into a single call.
+	 * Snapshot semantics (see the module docstring's minor-B note): calling {@linkcode buildFilerDatabase}
+	 * again against the same `out` with a different `sourceVintage` replaces the artifact —
+	 * it does not accumulate the earlier vintage's rows alongside the new ones.
+	 * There is no options-level way to build a multi-vintage archive in one artifact. that
+	 * would require rows spanning multiple vintages passed into a single call.
 	 */
 	sourceVintage: string
 	/**
-	 * ISO `yyyy-MM-DD` date for `valid_from` on every provider-list-derived edge — deliberately a separate field from
+	 * ISO `yyyy-MM-DD` date for `valid_from` on every provider-list-derived edge —
+	 * deliberately a separate field from
 	 * {@link BuildFilerOptions.sourceVintage}, never derived from it. The provider list carries no per-row date, which
 	 * makes the whole-file `sourceVintage` the tempting single source for both `source_vintage` and `valid_from` — but
 	 * `sourceVintage` is a free-text human vintage label (e.g. `"2026-Q2"`), not guaranteed ISO-sortable, while
@@ -308,8 +315,8 @@ export interface BuildFilerResult {
 	 */
 	nodes: number
 	/**
-	 * Distinct `filer_edge` rows after the build (PK-deduped on `(from_node_id, to_node_id, source, valid_from)` — the
-	 * same assertion re-inserted, e.g. by a repeated source row, counts once).
+	 * Distinct `filer_edge` rows after the build (PK-deduped on `(from_node_id, to_node_id, source, valid_from)` —
+	 * the same assertion re-inserted, e.g. by a repeated source row, counts once).
 	 */
 	edges: number
 	/**
@@ -326,24 +333,27 @@ export interface BuildFilerResult {
 	 */
 	families: number
 	/**
-	 * Count of edge opportunities declined because a legitimately-optional source field was empty/null — not an error
-	 * condition, and not deduped (every occurrence counts, even if two rows independently miss the same field): a 499 row
-	 * with `frn: null` (+1 — none of that row's three FRN-anchored edges can be minted), a 499 row with `frn` present but
-	 * an empty `holdingCompany` (+1) or `managementCompany` (+1), and a provider-list row with `holdingCompany: null`
-	 * (+1).
+	 * Count of edge opportunities declined because a legitimately-optional
+	 * source field was empty/null — not an error condition, and not deduped
+	 * (every occurrence counts, even if two rows independently miss the same field): a 499
+	 * row with `frn: null` (+1 — none of that row's three FRN-anchored edges can be minted),
+	 * a 499 row with `frn` present but an empty `holdingCompany` (+1) or `managementCompany`
+	 * (+1), and a provider-list row with `holdingCompany: null` (+1).
 	 */
 	skipped: number
 	/**
-	 * `filer_edge` rows whose `valid_to` was closed from a Form 499 cessation note — see `closeableCessationDate`
-	 * (`build/form499-rows.ts`) for which ones qualify.
+	 * `filer_edge` rows whose `valid_to` was closed from a Form 499 cessation note —
+	 * see `closeableCessationDate` (`build/form499-rows.ts`) for which ones qualify.
 	 */
 	closedByCessation: number
 	/**
-	 * Cessation dates that could not close a window because doing so would produce an inverted or empty one, i.e.
-	 * `ceasedAt <= lastFiledAt` — 1,440 of the 3,261 ceased filers naming a holding or management company in the
-	 * 2025-12-07 vintage. The date is still recorded as a `ceased_at` attribute. only the temporal window abstains.
+	 * Cessation dates that could not close a window because doing so would produce
+	 * an inverted or empty one, i.e. `ceasedAt <= lastFiledAt` — 1,440 of the 3,261
+	 * ceased filers naming a holding or management company in the 2025-12-07 vintage.
+	 * The date is still recorded as a `ceased_at` attribute. only the temporal window abstains.
 	 *
-	 * Not an error. See `closeableCessationDate` (`build/form499-rows.ts`) for why these two dates disagree so often.
+	 * Not an error. See `closeableCessationDate` (`build/form499-rows.ts`) for
+	 * why these two dates disagree so often.
 	 */
 	cessationWindowAbstained: number
 	/**
@@ -353,9 +363,10 @@ export interface BuildFilerResult {
 }
 
 /**
- * Build `filer.db`: create tables → stage+materialize `filer_attribute` (dedup) → direct PK-deduped `insert or ignore`
- * into `filer_node`/`filer_edge` → index-after-load → manifest → seal → atomic move-into-place. See the module
- * docstring for the full flow rationale and the edges/attributes emitted.
+ * Build `filer.db`: create tables → stage+materialize `filer_attribute` (dedup) → direct
+ * PK-deduped `insert or ignore` into `filer_node`/`filer_edge` → index-after-load
+ * → manifest → seal → atomic move-into-place. See the module docstring for the
+ * full flow rationale and the edges/attributes emitted.
  */
 export async function buildFilerDatabase(options: BuildFilerOptions): Promise<BuildFilerResult> {
 	const progress = options.onProgress ?? (() => {})
@@ -370,9 +381,9 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		)
 	}
 
-	// Options-level guard, fails fast (before any file/DB I/O) — see assertProviderValidFrom's docstring. `null` when
-	// no provider-list source was supplied: the provider-row loop below never runs in that case, so validFrom is never
-	// read.
+	// Options-level guard, fails fast (before any file/DB I/O) — see assertProviderValidFrom's
+	// docstring. `null` when no provider-list source was supplied: the provider-row
+	// loop below never runs in that case, so validFrom is never read.
 	const providerValidFrom = hasProviderSource ? assertProviderValidFrom(options.validFrom) : null
 
 	const buildingPath = `${options.out}.building`
@@ -411,20 +422,21 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			`INSERT OR IGNORE INTO filer_node (node_id, identifier_type, identifier_value) VALUES (?, ?, ?)`
 		)
 
-		// relationship: FRN<->form499ID and bdcProviderID<->FRN assert identity (SameEntity); the
-		// holding-/management-company edges below assert HoldingCompany/ManagementCompany — see the module docstring's
-		// "relationship is fully typed" section.
+		// relationship: FRN<->form499ID and bdcProviderID<->FRN assert identity (SameEntity);
+		// the holding-/management-company edges below assert HoldingCompany/ManagementCompany —
+		// see the module docstring's "relationship is fully typed" section.
 		const insEdge = kdb.prepare(
 			`INSERT OR IGNORE INTO filer_edge (
 				from_node_id, to_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score, evidence
 			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 
-		// filer_family — same "no staging table needed" discipline as filer_node/filer_edge above (module
-		// docstring): the composite PK (node_id, family_id, naming_node_id, source, valid_from) already provides the
-		// uniqueness a staging table would otherwise exist to give. naming_node_id belongs in that key —
-		// see createFilerFamilyTable's docstring for why leaving it out would make this statement's or ignore drop a
-		// second, differently-spelled report of the same family.
+		// filer_family — same "no staging table needed" discipline as filer_node/filer_edge above
+		// (module docstring): the composite PK (node_id, family_id, naming_node_id, source, valid_from)
+		// already provides the uniqueness a staging table would otherwise exist to give.
+		// naming_node_id belongs in that key — see createFilerFamilyTable's docstring
+		// for why leaving it out would make this statement's or ignore drop a second,
+		// differently-spelled report of the same family.
 		const insFamily = kdb.prepare(
 			`INSERT OR IGNORE INTO filer_family (
 				node_id, family_id, naming_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score
@@ -456,11 +468,12 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		progress("staging nodes/edges/attributes — raw prepared INSERT OR IGNORE")
 		kdb.exec("BEGIN")
 
-		// edgar corroboration input — keyed by FRN, keeping the latest lastFiledAt's legal name per FRN, the
-		// same "latest wins" convention cluster-filers.ts's readLatestLegalNames uses for the identical reason (a
-		// re-filing under a new legal name is real). Built here (in-memory, from the same form499Source this call
-		// already iterates) rather than by re-querying the DB, since the edgar loop runs later in this same function —
-		// see the module docstring's "edgar Exhibit 21 ingest" section.
+		// edgar corroboration input — keyed by FRN, keeping the latest lastFiledAt's legal name
+		// per FRN, the same "latest wins" convention cluster-filers.ts's readLatestLegalNames
+		// uses for the identical reason (a re-filing under a new legal name is real).
+		// Built here (in-memory, from the same form499Source this call already iterates)
+		// rather than by re-querying the DB, since the edgar loop runs later in this same
+		// function — see the module docstring's "edgar Exhibit 21 ingest" section.
 		const legalNameByFRN = new Map<string, { name: string; filedAt: string }>()
 
 		let form499RowIndex = 0
@@ -471,17 +484,18 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			const form499NodeID = mintForm499NodeID(row.form499ID, form499RowIndex)
 			insNode.run(form499NodeID, FilerIdentifierType.Form499ID, row.form499ID)
 
-			// Guarded once per row, before anything below writes it into source_vintage/valid_from — see the
-			// docstring above assertLastFiledAt. ISO-validated too: this same value becomes valid_from on every
-			// edge this row emits, and valid_from must always be ISO-sortable — see assertISODate's docstring.
+			// Guarded once per row, before anything below writes it into
+			// source_vintage/valid_from — see the docstring above assertLastFiledAt.
+			// ISO-validated too: this same value becomes valid_from on every edge this row emits,
+			// and valid_from must always be ISO-sortable — see assertISODate's docstring.
 			const lastFiledAt = assertISODate(
 				assertLastFiledAt(row.lastFiledAt, row.form499ID, form499RowIndex),
 				`form499 row #${form499RowIndex} (form499ID=${stringifyJSON(row.form499ID)}) lastFiledAt`
 			)
 
-			// Attributes attach to the form499ID node — the only identifier guaranteed present on every row
-			// (frn can legitimately be null). See the module docstring's DC-agent doctrine: dcAgent* fields land
-			// here as plain attributes only, never as edges.
+			// Attributes attach to the form499ID node — the only identifier guaranteed present on
+			// every row (frn can legitimately be null). See the module docstring's DC-agent doctrine:
+			// dcAgent* fields land here as plain attributes only, never as edges.
 			stageAttribute(form499NodeID, "legal_name", row.legalNameOfCarrier, "form-499", lastFiledAt)
 			stageAttribute(form499NodeID, "dba", row.doingBusinessAs, "form-499", lastFiledAt)
 
@@ -509,8 +523,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			stageAttribute(form499NodeID, "dc_agent_email_address", row.dcAgentEmailAddress, "form-499", lastFiledAt)
 			stageAttribute(form499NodeID, "dc_agent_address", row.dcAgentAddress, "form-499", lastFiledAt)
 
-			// The FCC's own lifecycle notes, when the source carried them (workbook only — the 17-column TSV has
-			// no note columns, so `lifecycle` is undefined there and this is a no-op).
+			// The FCC's own lifecycle notes, when the source carried them (workbook only — the 17-column
+			// TSV has no note columns, so `lifecycle` is undefined there and this is a no-op).
 			const relationshipValidTo = processForm499Lifecycle(insNode, insEdge, stageAttribute, lifecycleTotals, {
 				lifecycle: row.lifecycle,
 				form499NodeID,
@@ -527,8 +541,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 					relationshipValidTo,
 				})
 			} else {
-				// No FRN on this row at all — legitimate (decision 3: not yet registered in cores), not malformed.
-				// None of the three FRN-anchored edges above can be minted for this row.
+				// No FRN on this row at all — legitimate (decision 3: not yet registered in cores),
+				// not malformed. None of the three FRN-anchored edges above can be minted for this row.
 				skipped++
 			}
 
@@ -546,10 +560,10 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			const frnNodeID = mintFRNNodeID(row.frn, `provider-list row #${providerRowIndex} (providerID=${row.providerID})`)
 			insNode.run(frnNodeID, FilerIdentifierType.FRN, row.frn)
 
-			// source_vintage stays the (possibly non-ISO) human vintage label. valid_from is the separate, always-ISO
-			// providerValidFrom — see BuildFilerOptions.validFrom's docstring. Non-null
-			// here by construction: this loop only runs when hasProviderSource is true, the same condition that made
-			// providerValidFrom non-null above.
+			// source_vintage stays the (possibly non-ISO) human vintage label. valid_from is the
+			// separate, always-ISO providerValidFrom — see BuildFilerOptions.validFrom's docstring.
+			// Non-null here by construction: this loop only runs when hasProviderSource is true,
+			// the same condition that made providerValidFrom non-null above.
 			insEdge.run(
 				providerNodeID,
 				frnNodeID,
@@ -599,9 +613,10 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			commitBatch()
 		}
 
-		// edgar Exhibit 21 ingest — see the module docstring's own section for the full rationale, and
-		// processEdgarSubsidiaryRow's docstring (build/edgar-rows.ts) for the per-row edge/family logic. The
-		// bucket map is built from this call's own form499 rows, so it must be grouped after that loop has run.
+		// edgar Exhibit 21 ingest — see the module docstring's own section for the full rationale,
+		// and processEdgarSubsidiaryRow's docstring (build/edgar-rows.ts) for the per-row
+		// edge/family logic. The bucket map is built from this call's own form499 rows,
+		// so it must be grouped after that loop has run.
 		const frnsByCanonicalLegalName = groupFRNsByCanonicalLegalName(legalNameByFRN)
 
 		let edgarRowIndex = 0
@@ -657,14 +672,14 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				name: "filer",
 				// filer.db has no independent versioning yet — same deferral build-bdc.ts makes for bdc.db's `release`.
 				version: options.sourceVintage,
-				// The current schema version from filer/schema.ts — bumped to 3 when SupersededBy and
-				// valid_to semantics landed. Every reader that needs temporal awareness should condition on this.
+				// The current schema version from filer/schema.ts — bumped to 3 when SupersededBy and valid_to
+				// semantics landed. Every reader that needs temporal awareness should condition on this.
 				schema_version: FILER_SCHEMA_VERSION,
 				source: sourcesUsed.join(","),
 				source_vintage: options.sourceVintage,
-				// No `mailwoman filer build` CLI exists (filer.db has no CLI wiring in 3a — see the module docstring's
-				// decision-2 note) — name the actual API entrypoint that produced this artifact instead of a command
-				// that isn't there.
+				// No `mailwoman filer build` CLI exists (filer.db has no CLI wiring in 3a —
+				// see the module docstring's decision-2 note) — name the actual API entrypoint
+				// that produced this artifact instead of a command that isn't there.
 				build_cmd: "buildFilerDatabase (@mailwoman/filer/sdk)",
 				build_sha: options.buildSHA,
 				created_at: new Date().toISOString(),
@@ -687,9 +702,9 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 		progress("finalize: ANALYZE + VACUUM")
 		kdb.exec("ANALYZE")
-		// page_size must be set right before vacuum — node:sqlite initializes the file at the 4096 default on
-		// `new DatabaseSync`, so the earlier pragma is a no-op until a vacuum rebuilds at the new size (matches
-		// build-bdc.ts's same discipline).
+		// page_size must be set right before vacuum — node:sqlite initializes the file
+		// at the 4096 default on `new DatabaseSync`, so the earlier pragma is a no-op
+		// until a vacuum rebuilds at the new size (matches build-bdc.ts's same discipline).
 		kdb.exec("PRAGMA page_size=8192")
 		kdb.exec("VACUUM")
 	}
@@ -697,8 +712,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	progress("seal")
 	await sealDatabase(buildingPath)
 
-	// Atomic move-into-place — the previous version is moved aside first, per the agents.md database house
-	// rule and build-bdc.ts's identical `${out}.prev` swap.
+	// Atomic move-into-place — the previous version is moved aside first, per the agents.md
+	// database house rule and build-bdc.ts's identical `${out}.prev` swap.
 	if (await pathExists(options.out)) {
 		await movePath(options.out, `${options.out}.prev`)
 	}

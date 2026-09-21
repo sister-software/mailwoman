@@ -12,7 +12,8 @@ import { z } from "zod"
 
 const RuntimeEnvSchema = z.object({
 	/**
-	 * Operator locale override used when a request supplies no locale. Safe to expose in diagnostics.
+	 * Operator locale override used when a request supplies no locale.
+	 * Safe to expose in diagnostics.
 	 */
 	MW_LOCALE: z
 		.string()
@@ -25,17 +26,20 @@ const RuntimeEnvSchema = z.object({
 		}),
 	// Geocode server batch row cap (`post /v1/batch`).
 	//
-	// `MAILWOMAN_BATCH_CONCURRENCY` was removed — it was inert. In-process concurrency cannot overlap a geocode:
-	// `onnxruntime-node`'s `session.run()` blocks the JS thread instead of releasing to the libuv pool, and
-	// `node:sqlite` reads are synchronous. Measured 1.00x flat from 1→16 workers on both parse and full geocode. Don't
-	// reintroduce it without re-measuring. worker threads (see `mailwoman/geocode-stream.ts`) are the only change that
-	// moves this in Node. Receipts: `docs/engineering/reference/performance.mdx`.
+	// `MAILWOMAN_BATCH_CONCURRENCY` was removed — it was inert.
+	// In-process concurrency cannot overlap a geocode: `onnxruntime-node`'s `session.run()`
+	// blocks the JS thread instead of releasing to the libuv pool, and `node:sqlite`
+	// reads are synchronous. Measured 1.00x flat from 1→16 workers on both parse
+	// and full geocode. Don't reintroduce it without re-measuring. worker threads
+	// (see `mailwoman/geocode-stream.ts`) are the only change that moves this in Node.
+	// Receipts: `docs/engineering/reference/performance.mdx`.
 	MAILWOMAN_BATCH_MAX: blankAsAbsent(z.coerce.number().int().positive().default(1000)).meta({
 		title: "Batch row limit",
 		description: "Maximum rows accepted by `POST /v1/batch` when running `mailwoman serve`.",
 	}),
-	// The informal-standard color kill switch (no-color.org). chalk/Ink honor it on their own. declared here because the
-	// debug view's map pane emits raw SGR and must consult it itself — the schema strips unlisted vars.
+	// The informal-standard color kill switch (no-color.org). chalk/Ink honor it
+	// on their own. declared here because the debug view's map pane emits raw SGR
+	// and must consult it itself — the schema strips unlisted vars.
 	NO_COLOR: z.string().optional().meta({
 		title: "Disable color",
 		description: "Disables ANSI color output, following the informal NO_COLOR convention.",
@@ -95,7 +99,8 @@ export const PublicMailwomanEnvSchema = z.object({
 })
 
 /**
- * Secrets the CLI's publishing and evaluation commands send. Never log their values.
+ * Secrets the CLI's publishing and evaluation commands
+ * send. Never log their values.
  */
 export const PrivateMailwomanEnvSchema = z.object({
 	// R2/S3 upload credentials for `tiles publish` and `corpus upload` (rclone `:s3:` remote).

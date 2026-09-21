@@ -83,9 +83,10 @@ export function resolveHierarchyRunInputs(values: { countries?: string; db?: str
 }
 
 /**
- * The (locality, region) edge spec per country — ComponentTag space on the artifact side, WOF placetype space on the
- * extraction side. FR's `region` ComponentTag covers both WOF `region` (départements: "Ille-et-Vilaine") and WOF
- * `macroregion` (régions: "Bretagne") — either surface is a region-tagged parent in a French address.
+ * The (locality, region) edge spec per country — ComponentTag space on the artifact side,
+ * WOF placetype space on the extraction side. FR's `region` ComponentTag covers both WOF
+ * `region` (départements: "Ille-et-Vilaine") and WOF `macroregion` (régions: "Bretagne") —
+ * either surface is a region-tagged parent in a French address.
  */
 export const EDGE_SPEC_BY_COUNTRY: Readonly<
 	Record<string, { childWOFPlacetypes: string[]; parentWOFPlacetypes: string[] }>
@@ -95,9 +96,9 @@ export const EDGE_SPEC_BY_COUNTRY: Readonly<
 }
 
 /**
- * Post-write self-check probes, PER country (the pair-index.tsx lesson: probing another country's names against a fresh
- * index prints reassuring `probe miss` lines that verify nothing). Raw surfaces — folded through `normalizeFSTToken` at
- * probe time, exactly like a decode-time caller would.
+ * Post-write self-check probes, PER country (the pair-index.tsx lesson: probing another country's
+ * names against a fresh index prints reassuring `probe miss` lines that verify nothing).
+ * Raw surfaces — folded through `normalizeFSTToken` at probe time, exactly like a decode-time caller would.
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [child: string, parent: string]>>> = {
 	us: [
@@ -225,8 +226,8 @@ async function main(): Promise<void> {
 		const childPlaceholder = spec.childWOFPlacetypes.map(() => "?").join(",")
 		const parentPlaceholder = spec.parentWOFPlacetypes.map(() => "?").join(",")
 
-		// Phase 1: id-level edges — child place under parent place, self-edges excluded, both endpoints
-		// current + non-deprecated.
+		// Phase 1: id-level edges — child place under parent place, self-edges excluded,
+		// both endpoints current + non-deprecated.
 		const edgeRows = allRows<EdgeRow>(
 			db.prepare(
 				`SELECT DISTINCT s.id AS child_id, a.ancestor_id AS parent_id
@@ -246,11 +247,12 @@ async function main(): Promise<void> {
 		const childSurfaces = collectSurfaces(db, wofCountry, spec.childWOFPlacetypes)
 		const parentSurfaces = collectSurfaces(db, wofCountry, spec.parentWOFPlacetypes)
 
-		// Phase 3: fold + dedupe into PIX1 entries. Tag = the child's ComponentTag — what a decode hit
-		// resolves the child span to. `parentTag` (PIX2 / schema 3) = the parent's, which this builder knows
-		// from its own edge declaration rather than from the row: `edge.parent` below is `region`, and both
-		// WOF parent placetypes this spec selects (`region`, FR's `macroregion`) project onto that one
-		// ComponentTag — a département and a région are alike region-tagged surfaces in a French address,
+		// Phase 3: fold + dedupe into PIX1 entries. Tag = the child's ComponentTag — what a
+		// decode hit resolves the child span to. `parentTag` (PIX2 / schema 3) = the parent's,
+		// which this builder knows from its own edge declaration rather than from the row:
+		// `edge.parent` below is `region`, and both WOF parent placetypes this spec
+		// selects (`region`, FR's `macroregion`) project onto that one ComponentTag —
+		// a département and a région are alike region-tagged surfaces in a French address,
 		// which is exactly why the spec pairs them.
 		const seen = new Map<string, PairIndexEntry>()
 		let surfacePairs = 0
@@ -275,8 +277,8 @@ async function main(): Promise<void> {
 						continue
 					}
 
-					// Length-prefixed key (mirrors pair-index-resolver.ts's pairKey): folded names can
-					// contain spaces, so a plain delimiter could collide two distinct splits.
+					// Length-prefixed key (mirrors pair-index-resolver.ts's pairKey): folded names
+					// can contain spaces, so a plain delimiter could collide two distinct splits.
 					const key = `${child.length}:${child}:${parent}`
 
 					if (!seen.has(key)) {
@@ -290,8 +292,8 @@ async function main(): Promise<void> {
 
 		const header: HierarchyPairIndexHeader = {
 			country,
-			// Uncalibrated probe — zero on purpose: even an accidentally-wired probe artifact biases
-			// nothing. The calibration task owns any real value (the pair-index.tsx `--delta` discipline).
+			// Uncalibrated probe — zero on purpose: even an accidentally-wired probe artifact biases nothing.
+			// The calibration task owns any real value (the pair-index.tsx `--delta` discipline).
 			delta: 0,
 			foldVersion: 1,
 			sourceMD5s: [sourceMD5],
@@ -312,8 +314,8 @@ async function main(): Promise<void> {
 		const outPath = join(outDir, outName)
 		const tmpPath = join(outDir, `.tmp-${outName}`)
 
-		// Temp-write + rename: the artifact is never observable half-written (agents.md sealed-artifact
-		// discipline, applied to a flat binary).
+		// Temp-write + rename: the artifact is never observable half-written
+		// (agents.md sealed-artifact discipline, applied to a flat binary).
 		await writeLocalFile(bytes, tmpPath)
 		await movePath(tmpPath, outPath)
 

@@ -24,8 +24,9 @@ function shapeOf(text: string): { input: NormalizedInputLite; shape: QueryShapeL
 }
 
 /**
- * Every kind present in a verdict — top plus alternatives. The two ranked-below-incumbent intent kinds live in
- * `alternatives` by design, so a test that only reads `.kind` cannot see them.
+ * Every kind present in a verdict — top plus alternatives.
+ * The two ranked-below-incumbent intent kinds live in `alternatives` by design,
+ * so a test that only reads `.kind` cannot see them.
  */
 function kindsOf(text: string): Set<QueryKind> {
 	const { input, shape } = shapeOf(text)
@@ -42,9 +43,10 @@ function registers(text: string): string[] {
 }
 
 describe("bare_toponym — one place-name, no address grammar", () => {
-	// The hard-case board's `bare_namesake` class (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`,
-	// scored by `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`), which is the population ROAD_TO_V9 §3
-	// assembled for exactly this register.
+	// The hard-case board's `bare_namesake` class
+	// (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`,
+	// scored by `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`),
+	// which is the population ROAD_TO_V9 §3 assembled for exactly this register.
 	const POSITIVE = [
 		"Fulda",
 		"Jena",

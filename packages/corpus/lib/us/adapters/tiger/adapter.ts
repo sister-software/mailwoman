@@ -43,19 +43,20 @@ import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 import { lookupFipsState } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const TIGER_ADAPTER_ID = "tiger"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const TIGER_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * The country surface form used in `formatAddress` for US. Matches the canonical OpenCage US template output so
- * reconciliation doesn't strip it when the row carries `country` explicitly.
+ * The country surface form used in `formatAddress` for US.
+ * Matches the canonical OpenCage US template output so reconciliation doesn't strip it
+ * when the row carries `country` explicitly.
  */
 const US_COUNTRY_DISPLAY = "United States of America"
 

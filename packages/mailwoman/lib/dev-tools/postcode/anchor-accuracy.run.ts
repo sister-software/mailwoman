@@ -69,9 +69,9 @@ function parseArgs(): Args {
 }
 
 /**
- * One eval row as this probe reads it. The three postcode spellings and the top-level coordinates are all optional
- * because the eval files it runs against were written by different generations of the harness. the loop skips a row
- * that carries none of them.
+ * One eval row as this probe reads it. The three postcode spellings and the top-level
+ * coordinates are all optional because the eval files it runs against were written by
+ * different generations of the harness. the loop skips a row that carries none of them.
  */
 interface EvalRow {
 	expected?: { postcode?: string; lat?: number; lon?: number }

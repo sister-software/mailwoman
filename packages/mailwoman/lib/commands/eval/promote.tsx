@@ -36,8 +36,8 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-// `promotion-eval.ts` narrates its own verdict lines, so no `json` — rendering anything here would pollute the
-// captured report.
+// `promotion-eval.ts` narrates its own verdict lines, so no `json` — rendering
+// anything here would pollute the captured report.
 const EvalPromote = harnessCommand(
 	spec,
 	async (options) => {

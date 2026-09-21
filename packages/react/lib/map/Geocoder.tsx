@@ -50,11 +50,13 @@ export interface GeocoderProps {
 	 */
 	defaultAddress?: string
 	/**
-	 * A query that arrived with the page — a permalink's `?q=`, say — to run once as soon as the runtime is ready.
+	 * A query that arrived with the page — a permalink's `?q=`, say —
+	 * to run once as soon as the runtime is ready.
 	 *
-	 * Distinct from {@link GeocoderProps.defaultAddress}, and deliberately so: a cold visit pre-fills the demo address but
-	 * must not spend a visitor's first seconds resolving an address they did not ask for, while a link someone was sent
-	 * has to answer on arrival. Without this, a permalink pre-filled the field and then sat on a world view with the
+	 * Distinct from {@link GeocoderProps.defaultAddress}, and deliberately so: a cold visit
+	 * pre-fills the demo address but must not spend a visitor's first seconds resolving an
+	 * address they did not ask for, while a link someone was sent has to answer on arrival.
+	 * Without this, a permalink pre-filled the field and then sat on a world view with the
 	 * address never run, which made "Copy link" produce a link that did not reproduce the result.
 	 */
 	initialQuery?: string | null
@@ -63,24 +65,25 @@ export interface GeocoderProps {
 	 */
 	presets?: ReadonlyArray<Preset>
 	/**
-	 * Open the developer disclosure on mount — the model version, the backend readout and compare. Collapsed by default
-	 * so the address field is the first thing a visitor meets. @default false
+	 * Open the developer disclosure on mount — the model version, the backend readout and compare.
+	 * Collapsed by default so the address field is the first thing a visitor meets. @default false
 	 */
 	developer?: boolean
 	/**
-	 * Fired with the query each time one is submitted. The host writes it into its own URL — this package never touches
-	 * `location`, because which parameter carries a query is the app's decision.
+	 * Fired with the query each time one is submitted. The host writes it into its own URL — this
+	 * package never touches `location`, because which parameter carries a query is the app's decision.
 	 */
 	onSubmitQuery?: (query: string) => void
 	/**
-	 * Only hint the viewport bias once the visitor has zoomed past the global view — a whole-globe center is noise.
-	 * Matches the `map.getZoom() >= 4` threshold. @default 4
+	 * Only hint the viewport bias once the visitor has zoomed past the global view —
+	 * a whole-globe center is noise. Matches the `map.getZoom() >= 4` threshold. @default 4
 	 */
 	minBiasZoom?: number
 	/**
-	 * Fly/fit the map to the resolved place on each result (via {@link ResolvedPlaceLayers}). @default true. Set false
-	 * for a host that drives the camera itself (a controlled `<MapCanvas viewState>`), or to keep a headless test
-	 * deterministic — the marker + outline still render, only the animated camera move is skipped.
+	 * Fly/fit the map to the resolved place on each result (via {@link ResolvedPlaceLayers}). @default true.
+	 * Set false for a host that drives the camera itself (a controlled `<MapCanvas viewState>`),
+	 * or to keep a headless test deterministic — the marker + outline still render,
+	 * only the animated camera move is skipped.
 	 */
 	applyResultCamera?: boolean
 }
@@ -106,21 +109,23 @@ function GeocoderInner({
 	onSubmitQuery,
 }: GeocoderInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
-	// The chrome sits outside `<MapCanvas>`, so it cannot take the handle from `useMap()`. A ref alone does not
-	// re-render the compass or the layer control when the map arrives, so the same poll that publishes the test
-	// handle also puts it in state — one poll, two consumers.
+	// The chrome sits outside `<MapCanvas>`, so it cannot take the handle from `useMap()`.
+	// A ref alone does not re-render the compass or the layer control when the map arrives,
+	// so the same poll that publishes the test handle also puts it in state — one poll, two consumers.
 	const [map, setMap] = useState<ReturnType<MapRef["getMap"]> | null>(null)
 
-	// The map announces itself. nothing polls for it. `onLoad` carries the instance, so the compass and the layer
-	// control render on the frame the map is ready rather than up to an interval later.
+	// The map announces itself. nothing polls for it. `onLoad` carries the instance, so the compass
+	// and the layer control render on the frame the map is ready rather than up to an interval later.
 	//
-	// Test injection point: the e2e viewport-bias suite drives the real map (pan + zoom past the bias threshold)
-	// before submitting, and a browser test cannot reach a React ref — so the same handle is republished on
-	// `globalThis.__mailwomanMapCanvas`, and cleared on unmount so a torn-down geocoder leaves no stale handle.
-	// The id of the lowest basemap layer that draws data — where the graticule is inserted, so the grid sits under the
-	// map rather than over it. Read from the loaded style rather than hardcoded: the basemap is a published artifact
-	// and its first layer is its business rather than ours. `background` is skipped because inserting before it would put the
-	// grid behind an opaque fill and show nothing at all.
+	// Test injection point: the e2e viewport-bias suite drives the real map
+	// (pan + zoom past the bias threshold) before submitting, and a browser test cannot reach
+	// a React ref — so the same handle is republished on `globalThis.__mailwomanMapCanvas`,
+	// and cleared on unmount so a torn-down geocoder leaves no stale handle.
+	// The id of the lowest basemap layer that draws data — where the graticule is inserted, so
+	// the grid sits under the map rather than over it. Read from the loaded style
+	// rather than hardcoded: the basemap is a published artifact and its first layer
+	// is its business rather than ours. `background` is skipped because inserting
+	// before it would put the grid behind an opaque fill and show nothing at all.
 	const [baseLayerID, setBaseLayerID] = useState<string | undefined>(undefined)
 
 	const onMapLoad = useCallback((event: { target: ReturnType<MapRef["getMap"]> }) => {
@@ -140,8 +145,9 @@ function GeocoderInner({
 		[]
 	)
 
-	// Read the viewport bias at submit time — through the map handle, never a threaded state value, so granting/zooming
-	// mid-session doesn't re-create the parse callback. Below the min-bias zoom, a whole-globe center is noise → null.
+	// Read the viewport bias at submit time — through the map handle, never a threaded
+	// state value, so granting/zooming mid-session doesn't re-create the parse callback.
+	// Below the min-bias zoom, a whole-globe center is noise → null.
 	const getBias = useCallback((): MapBias | null => {
 		const live = mapRef.current?.getMap()
 

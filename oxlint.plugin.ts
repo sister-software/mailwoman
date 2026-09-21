@@ -78,7 +78,8 @@ const DELIMITER_HINTS = new Map<string, { rendered: string; hints: string[] }>([
 ])
 
 /**
- * The delimiter string when the argument is a plain string literal or an expressionless template literal, else null.
+ * The delimiter string when the argument is a plain string literal
+ * or an expressionless template literal, else null.
  */
 function literalDelimiter(argument: AstNode | undefined): string | null {
 	if (!argument) return null
@@ -302,9 +303,9 @@ const requireDisableReasonRule: Rule = {
 }
 
 /**
- * Each synchronous `node:fs` name, mapped to the asynchronous helper that replaces it. The three removal helpers and
- * the two stat helpers differ in what they treat as an error, so the suggestion names the builtin's own interface
- * rather than the nearest-looking helper.
+ * Each synchronous `node:fs` name, mapped to the asynchronous helper that replaces it.
+ * The three removal helpers and the two stat helpers differ in what they treat as an error,
+ * so the suggestion names the builtin's own interface rather than the nearest-looking helper.
  */
 const GLOBERATOR_DIRECTORY_HINT =
 	'`Globerator.from("*", { cwd: path, absolute: false })`, adding `withFileTypes: true, onlyFiles: false` when entry types are needed (spliterator/node/fs)'
@@ -349,8 +350,8 @@ const FUNCTION_NODE_TYPES = new Set([
 ])
 
 /**
- * Node types that end an `async` scope without being a function: whatever they contain runs synchronously however the
- * surrounding function was declared.
+ * Node types that end an `async` scope without being a function: whatever they contain
+ * runs synchronously however the surrounding function was declared.
  */
 const SYNC_SCOPE_NODE_TYPES = new Set(["ClassStaticBlock", "StaticBlock", "MethodDefinition", "PropertyDefinition"])
 
@@ -364,8 +365,8 @@ const noSyncFSInAsyncRule: Rule = {
 	},
 	create(context: RuleContext) {
 		/**
-		 * Walked here rather than tracked with `:exit` visitors, so the rule owns the traversal and the enclosing-function
-		 * state cannot desynchronize from it.
+		 * Walked here rather than tracked with `:exit` visitors, so the rule owns the traversal
+		 * and the enclosing-function state cannot desynchronize from it.
 		 */
 		function walk(node: AstNode, insideAsync: boolean): void {
 			let asyncHere = insideAsync
@@ -413,10 +414,11 @@ const noSyncFSInAsyncRule: Rule = {
 }
 
 /**
- * A dynamic `import("./x.ts")` names a file by where the importer sits, so it breaks the moment either side moves and
- * says nothing about which package boundary it crosses. The package's `imports` map (`#eval-harness/promotion-eval`)
- * names the module once, resolves `.ts` under `node` and `out/*.js` everywhere else, and is what a static import of the
- * same module already uses.
+ * A dynamic `import("./x.ts")` names a file by where the importer sits, so it breaks the
+ * moment either side moves and says nothing about which package boundary it crosses.
+ * The package's `imports` map (`#eval-harness/promotion-eval`) names the module once,
+ * resolves `.ts` under `node` and `out/*.js` everywhere else, and is what a
+ * static import of the same module already uses.
  */
 const noRelativeDynamicImportRule: Rule = {
 	meta: {
@@ -444,10 +446,11 @@ const noRelativeDynamicImportRule: Rule = {
 }
 
 /**
- * A test file reaches the package under test the way a consumer does — through its public `exports`
- * (`@mailwoman/<pkg>/<subpath>`, `mailwoman/<subpath>`) — and a test helper or an unexported module by relative path,
- * which makes the private dependency visible at the import. `#` specifiers are the package's own `imports` map: legal
- * in `lib/`, where the module names its siblings, and a bypass of the public surface everywhere a test uses one.
+ * A test file reaches the package under test the way a consumer does — through its public
+ * `exports` (`@mailwoman/<pkg>/<subpath>`, `mailwoman/<subpath>`) — and a test helper or an
+ * unexported module by relative path, which makes the private dependency visible at the import.
+ * `#` specifiers are the package's own `imports` map: legal in `lib/`, where the module
+ * names its siblings, and a bypass of the public surface everywhere a test uses one.
  */
 const noPrivateImportInTestRule: Rule = {
 	meta: {
@@ -509,9 +512,10 @@ const noPrivateImportInTestRule: Rule = {
 }
 
 /**
- * `fileURLToPath(import.meta.resolve(…))` is string plumbing around a question with a typed answer.
- * `@mailwoman/core/module/resolvers` owns it: `resolveModulePath` for a file a specifier names,
- * `resolvePackageDirectory` for a package's root. a module's own neighbours are `resolvePath(import.meta.dirname, …)`.
+ * `fileURLToPath(import.meta.resolve(…))` is string plumbing around a question with
+ * a typed answer. `@mailwoman/core/module/resolvers` owns it: `resolveModulePath`
+ * for a file a specifier names, `resolvePackageDirectory` for a package's root. a
+ * module's own neighbours are `resolvePath(import.meta.dirname, …)`.
  */
 const noImportMetaResolveRule: Rule = {
 	meta: {
@@ -547,10 +551,11 @@ const noImportMetaResolveRule: Rule = {
 }
 
 /**
- * `resolvePath(import.meta.dirname, "../../x")` names a file by counting directories up from wherever this module sits
- * — a count that changes when the module moves and differs between the source tree and `out/`. A package's own file is
- * `resolvePackagePath("<package>", …)`; a repository file is `repoRootPath(…)`. Descending from the module's own
- * directory (`"fixtures/x.json"`) is not the problem and stays.
+ * `resolvePath(import.meta.dirname, "../../x")` names a file by counting directories
+ * up from wherever this module sits — a count that changes when the module moves
+ * and differs between the source tree and `out/`. A package's own file is
+ * `resolvePackagePath("<package>", …)`; a repository file is `repoRootPath(…)`.
+ * Descending from the module's own directory (`"fixtures/x.json"`) is not the problem and stays.
  */
 const noImportMetaDirnameWalkRule: Rule = {
 	meta: {
@@ -584,8 +589,8 @@ const noImportMetaDirnameWalkRule: Rule = {
 }
 
 /**
- * The method names a call stands on, innermost first: `a.b().c().d()` is `["b", "c", "d"]`. A non-call object (an
- * identifier, a `new` expression, a member read) ends the chain.
+ * The method names a call stands on, innermost first: `a.b().c().d()` is `["b", "c", "d"]`.
+ * A non-call object (an identifier, a `new` expression, a member read) ends the chain.
  */
 function methodChain(node: AstNode): string[] {
 	const names: string[] = []
@@ -609,8 +614,8 @@ function numericLiteralValue(node: AstNode): number | null {
 }
 
 /**
- * The base object's name in a computed index read or write — `rows` in `rows[i]`. Null for anything else, including a
- * dotted property (`a.b`), which is not an index.
+ * The base object's name in a computed index read or write — `rows` in `rows[i]`.
+ * Null for anything else, including a dotted property (`a.b`), which is not an index.
  */
 function indexedBaseName(node: AstNode | undefined): string | null {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return null
@@ -621,9 +626,10 @@ function indexedBaseName(node: AstNode | undefined): string | null {
 /**
  * Whether a computed index is a variable rather than a constant — `xs[i]`, not `xs[0]`.
  *
- * Heapsort's extraction phase counts down from the last index, stops at 1, and swaps two computed indices of one array,
- * so it satisfies every other clause of the shuffle shape. What separates it is that one of its indices is the literal
- * 0: a shuffle swaps the loop variable with a drawn index, and neither is a constant.
+ * Heapsort's extraction phase counts down from the last index, stops at 1, and swaps two
+ * computed indices of one array, so it satisfies every other clause of the shuffle shape.
+ * What separates it is that one of its indices is the literal 0: a shuffle swaps the
+ * loop variable with a drawn index, and neither is a constant.
  */
 function isVariableIndex(node: AstNode | undefined): boolean {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return false
@@ -632,15 +638,16 @@ function isVariableIndex(node: AstNode | undefined): boolean {
 }
 
 /**
- * Whether a `for` header counts down from a length to 1: `for (let i = xs.length - 1. i > 0. i--)`, or the same written
- * `i >= 1`.
+ * Whether a `for` header counts down from a length to 1: `for (let i = xs.length - 1. i > 0. i--)`,
+ * or the same written `i >= 1`.
  *
- * All three clauses are required, and they are not sufficient on their own — heapsort's extraction phase satisfies
- * every one of them. What the body check adds is that both swapped indices are variables. see {@link isVariableIndex}.
+ * All three clauses are required, and they are not sufficient on their own — heapsort's
+ * extraction phase satisfies every one of them. What the body check adds is that both
+ * swapped indices are variables. see {@link isVariableIndex}.
  *
- * Known miss: a loop whose bound is hoisted (`const n = xs.length. for (let i = n - 1. …)`) reads as a plain descent
- * and is not reported. Widening the init clause to any identifier would report every backwards loop in the repository,
- * which is a worse trade for a suggestion rule.
+ * Known miss: a loop whose bound is hoisted (`const n = xs.length. for (let i = n - 1. …)`)
+ * reads as a plain descent and is not reported. Widening the init clause to any identifier would
+ * report every backwards loop in the repository, which is a worse trade for a suggestion rule.
  */
 function isDescendingFromLength(node: AstNode): boolean {
 	const declaration = node.init?.declarations?.[0]?.init
@@ -701,8 +708,9 @@ function swapsTwoIndices(body: AstNode): boolean {
 }
 
 /**
- * The name a template expression interpolates: the property for `place.locality` and `row["locality"]`, the identifier
- * for a bare `locality`. Anything else answers null. It cannot match a row. Therefore, it cannot report one.
+ * The name a template expression interpolates: the property for `place.locality`
+ * and `row["locality"]`, the identifier for a bare `locality`.
+ * Anything else answers null. It cannot match a row. Therefore, it cannot report one.
  */
 function interpolatedName(node: AstNode): string | null {
 	if (node.type === "Identifier") return node.name ?? null
@@ -715,9 +723,9 @@ function interpolatedName(node: AstNode): string | null {
 }
 
 /**
- * Whether `names` carries every entry of `wanted` in that order, other entries allowed between them. A template that
- * writes a house number before the locality is the same order with an extra component, and the order is what the row
- * names.
+ * Whether `names` carries every entry of `wanted` in that order, other entries allowed
+ * between them. A template that writes a house number before the locality is the same
+ * order with an extra component, and the order is what the row names.
  */
 function containsInOrder(names: readonly (string | null)[], wanted: readonly string[]): boolean {
 	let next = 0

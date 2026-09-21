@@ -26,8 +26,8 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * A minimal always-resolves engine: one locality node with a coordinate, so the open result is a stable admin answer
- * the provider block can be compared against.
+ * A minimal always-resolves engine: one locality node with a coordinate, so the open
+ * result is a stable admin answer the provider block can be compared against.
  */
 function testDeps(): GeocodeDeps {
 	const classifier: GeocodeClassifier = {

@@ -29,8 +29,8 @@ export interface ResolvedEngineStamp {
 let resolved: Promise<ResolvedEngineStamp> | undefined
 
 /**
- * Resolve the stamp for this process. Memoized: the manifest and the configured key do not change while a process runs,
- * and every stamped output must agree.
+ * Resolve the stamp for this process. Memoized: the manifest and the configured key do
+ * not change while a process runs, and every stamped output must agree.
  */
 export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 	resolved ??= (async () => {
@@ -44,8 +44,8 @@ export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 }
 
 /**
- * Write the two-line notice to stderr, or nothing when the commercial branch applies. stderr, so stdout stays
- * machine-readable for every `--json` consumer.
+ * Write the two-line notice to stderr, or nothing when the commercial branch applies. stderr,
+ * so stdout stays machine-readable for every `--json` consumer.
  */
 export function printLicenseNotice(resolvedStamp: ResolvedEngineStamp): void {
 	const lines = licenseNoticeLines(resolvedStamp.stamp, resolvedStamp.key)

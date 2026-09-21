@@ -49,14 +49,17 @@ export interface FilingLandscapeQuery {
 }
 
 /**
- * One provider/technology/speed-bucket group's block count within the query — `block_count` is the number of distinct
- * queried blocks carrying this exact combination, never a raw row count. A block can carry multiple `bdc_availability`
- * rows for the same (provider_id, technology_code) pair even in the default (non-`includeLocationIDs`) build mode:
- * `build-bdc.ts`'s materialize-time collapse merges to one row per distinct (geoid, provider_id, technology_code,
- * speeds, low_latency, business_residential_code) tuple rather than one row per (geoid, provider_id, technology_code)
- * triple — so Broadband Serviceable Locations at the same triple with differing speeds/flags survive as separate rows
- * and can land in different `speed_bucket`s here (see that file's docstring). This `block_count`'s distinct is exactly
- * what keeps that from double-counting the block itself when it does.
+ * One provider/technology/speed-bucket group's block count within the query —
+ * `block_count` is the number of distinct queried blocks carrying this exact combination,
+ * never a raw row count. A block can carry multiple `bdc_availability` rows for the same
+ * (provider_id, technology_code) pair even in the default (non-`includeLocationIDs`)
+ * build mode: `build-bdc.ts`'s materialize-time collapse merges to one row per distinct
+ * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code) tuple
+ * rather than one row per (geoid, provider_id, technology_code) triple — so Broadband
+ * Serviceable Locations at the same triple with differing speeds/flags survive as separate
+ * rows and can land in different `speed_bucket`s here (see that file's docstring).
+ * This `block_count`'s distinct is exactly what keeps that from double-counting
+ * the block itself when it does.
  */
 export interface ProviderFilingSummary {
 	provider_id: number
@@ -66,8 +69,9 @@ export interface ProviderFilingSummary {
 }
 
 /**
- * The queried landscape: always vintage-stamped (from `layer_manifest.sourceVintage`) and always reports its unknown
- * blocks — `unknown_block_count` is reported, never zeroed, and never evidence of "no providers file here."
+ * The queried landscape: always vintage-stamped (from `layer_manifest.sourceVintage`)
+ * and always reports its unknown blocks — `unknown_block_count` is reported,
+ * never zeroed, and never evidence of "no providers file here."
  */
 export interface FilingLandscape {
 	vintage: string
@@ -99,12 +103,14 @@ export const BDC_SPEED_BUCKET_100_1000 = "100-1000"
 export const BDC_SPEED_BUCKET_GIGABIT = "gigabit"
 
 /**
- * Upper-exclusive Mbps boundary between {@link BDC_SPEED_BUCKET_UNDER_25} and {@link BDC_SPEED_BUCKET_25_100}.
+ * Upper-exclusive Mbps boundary between {@link BDC_SPEED_BUCKET_UNDER_25}
+ * and {@link BDC_SPEED_BUCKET_25_100}.
  */
 export const BDC_SPEED_BUCKET_THRESHOLD_25_MBPS = 25
 
 /**
- * Upper-exclusive Mbps boundary between {@link BDC_SPEED_BUCKET_25_100} and {@link BDC_SPEED_BUCKET_100_1000}.
+ * Upper-exclusive Mbps boundary between {@link BDC_SPEED_BUCKET_25_100}
+ * and {@link BDC_SPEED_BUCKET_100_1000}.
  */
 export const BDC_SPEED_BUCKET_THRESHOLD_100_MBPS = 100
 
@@ -114,8 +120,8 @@ export const BDC_SPEED_BUCKET_THRESHOLD_100_MBPS = 100
 export const BDC_SPEED_BUCKET_THRESHOLD_GIGABIT_MBPS = 1000
 
 /**
- * Pure mirror of the SQL `case` expression below ({@link speedBucketCaseSQL}) — same thresholds, same labels, exported
- * so the boundary logic can be asserted directly without a database round trip.
+ * Pure mirror of the SQL `case` expression below ({@link speedBucketCaseSQL}) — same thresholds,
+ * same labels, exported so the boundary logic can be asserted directly without a database round trip.
  */
 export function speedBucketForDownloadSpeed(maxAdvertisedDownloadSpeed: number): string {
 	if (maxAdvertisedDownloadSpeed < BDC_SPEED_BUCKET_THRESHOLD_25_MBPS) return BDC_SPEED_BUCKET_UNDER_25
@@ -128,8 +134,8 @@ export function speedBucketForDownloadSpeed(maxAdvertisedDownloadSpeed: number):
 }
 
 /**
- * The same bucketing as {@link speedBucketForDownloadSpeed}, expressed as a `case` over `max_advertised_download_speed`
- * so the group BY below can group directly on the bucket.
+ * The same bucketing as {@link speedBucketForDownloadSpeed}, expressed as a `case` over
+ * `max_advertised_download_speed` so the group BY below can group directly on the bucket.
  */
 const speedBucketCaseSQL = sql<string>`CASE
 	WHEN max_advertised_download_speed < ${BDC_SPEED_BUCKET_THRESHOLD_25_MBPS} THEN ${BDC_SPEED_BUCKET_UNDER_25}
@@ -162,24 +168,25 @@ export async function filingLandscape(
 		throw new Error("filingLandscape: exactly one of `geoids` or `h3Cells` is required")
 	}
 
-	// `[]` is truthy, so it passes the XOR check above undetected — without this guard an empty array sails
-	// straight through to a vacuous all-zero landscape (surveyed_block_count: 0, unknown_block_count: 0, no
-	// filings), which reads exactly like a real "nothing queried" answer instead of the malformed-query error
-	// it should be. Checked before the manifest read so a bad query fails fast without even opening the db further.
+	// `[]` is truthy, so it passes the XOR check above undetected — without this
+	// guard an empty array sails straight through to a vacuous all-zero landscape
+	// (surveyed_block_count: 0, unknown_block_count: 0, no filings), which reads exactly like
+	// a real "nothing queried" answer instead of the malformed-query error it should be.
+	// Checked before the manifest read so a bad query fails fast without even opening the db further.
 	if (!(query.geoids ?? query.h3Cells)!.length) {
 		throw new Error("filingLandscape: `geoids`/`h3Cells` must not be an empty array")
 	}
 
-	// Read (and validate) the manifest first — a broken/missing manifest must throw before any block is
-	// classified, never fall through to an "unstamped" answer (criterion 4).
+	// Read (and validate) the manifest first — a broken/missing manifest must throw
+	// before any block is classified, never fall through to an "unstamped" answer (criterion 4).
 	const manifest = await readLayerManifest(db)
 
 	const requestedUnits: ReadonlyArray<string | number> = query.geoids ?? query.h3Cells!
 	const unitColumn = query.geoids ? ("geoid" as const) : ("h3_cell" as const)
 
 	// Candidate res-9 cell per requested unit. `h3Cells` queries already carry the cell directly;
-	// `geoids` queries can only derive one from the block's own rows — a geoid with none has no
-	// candidate at all (never guessed), so it falls straight to unknown below.
+	// `geoids` queries can only derive one from the block's own rows — a geoid with none
+	// has no candidate at all (never guessed), so it falls straight to unknown below.
 	const candidateCellByUnit = new Map<string | number, number>()
 
 	if (query.geoids) {

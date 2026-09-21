@@ -40,9 +40,9 @@ describe("emitOverpassQL", () => {
 		expect(ql).toContain('nwr["amenity"="hospital"](area.anchor)')
 	})
 
-	// A subject reaching several categories asks Overpass for the same set the POI branch searched. The union block is
-	// the language's own way of saying it, and the members sit inside it in the subject's order with no preference
-	// between them.
+	// A subject reaching several categories asks Overpass for the same set the POI branch searched.
+	// The union block is the language's own way of saying it, and the members sit inside
+	// it in the subject's order with no preference between them.
 	it("emits a union block for a category subject reaching several categories", () => {
 		const ql = emitOverpassQL(
 			{ subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" } },

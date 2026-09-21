@@ -116,8 +116,8 @@ describe("pruneRuns — the retention rule", () => {
 	})
 
 	it("treats an unparseable timestamp as old", async () => {
-		// A run that cannot say when it happened cannot be trusted to describe a current tree, and keeping it forever is
-		// the worse failure.
+		// A run that cannot say when it happened cannot be trusted to describe a current tree,
+		// and keeping it forever is the worse failure.
 		const dir = await store()
 
 		await putRun(run("undated", { created_at: "whenever" }), dir)
@@ -161,8 +161,9 @@ describe("pruneRuns — the retention rule", () => {
 	})
 
 	it("does NOT prune on a fingerprint mismatch", async () => {
-		// A run from another tree is still evidence about that tree. `{kind:"recorded"}` refuses the comparison and says
-		// which two fingerprints it saw. deleting it silently would be the worse answer.
+		// A run from another tree is still evidence about that tree.
+		// `{kind:"recorded"}` refuses the comparison and says which two fingerprints it
+		// saw. deleting it silently would be the worse answer.
 		const dir = await store()
 
 		await putRun(run("other-tree", { tree_fingerprint: "somethingelse" }), dir)

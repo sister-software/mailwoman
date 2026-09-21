@@ -19,8 +19,9 @@ export interface BuildInfo {
 	 */
 	revision: string
 	/**
-	 * The same revision, full length. Kept beside `revision` rather than replacing it: a production smoke already reads
-	 * `revision` and compares it against a short form, and a commit URL wants the whole thing.
+	 * The same revision, full length. Kept beside `revision` rather than replacing it:
+	 * a production smoke already reads `revision` and compares it against a short form,
+	 * and a commit URL wants the whole thing.
 	 */
 	commit: string
 	/**
@@ -32,9 +33,10 @@ export interface BuildInfo {
 /**
  * `https://github.com/sister-software/mailwoman/commit/<sha>` for a build's own revision.
  *
- * Takes the sha rather than the record so it is the `commitHref` shape `@mailwoman/react`'s `<AppIdentity>` asks for —
- * that prop is injected because `@mailwoman/react` publishes to npm and this package is private, and when the argument
- * was the record instead, both apps wrapped this function in the same one-line adapter.
+ * Takes the sha rather than the record so it is the `commitHref` shape `@mailwoman/react`'s
+ * `<AppIdentity>` asks for — that prop is injected because `@mailwoman/react` publishes
+ * to npm and this package is private, and when the argument was the record instead,
+ * both apps wrapped this function in the same one-line adapter.
  */
 export function commitURL(commit: BuildInfo["commit"]): string {
 	return `https://github.com/sister-software/mailwoman/commit/${commit}`

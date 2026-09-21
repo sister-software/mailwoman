@@ -45,8 +45,8 @@ export default defineConfig({
 		],
 	},
 	test: {
-		// isolate: true (default) — required because @mailwoman/core/resources/libpostal has a
-		// top-level await that Vite's loader treats as a cycle under shared module graphs,
+		// isolate: true (default) — required because @mailwoman/core/resources/libpostal has
+		// a top-level await that Vite's loader treats as a cycle under shared module graphs,
 		// breaking downstream `class extends ...` evaluations.
 		isolate: true,
 		exclude: ["**/node_modules/**", "**/out/**", "**/dist/**"],

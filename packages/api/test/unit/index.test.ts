@@ -16,7 +16,8 @@ beforeEach(() => {
 })
 
 /**
- * The `detail` text every "engine method absent" 503 carries — see `routes.ts`'s `GEOCODER_UNAVAILABLE_DETAIL`.
+ * The `detail` text every "engine method absent" 503 carries —
+ * see `routes.ts`'s `GEOCODER_UNAVAILABLE_DETAIL`.
  */
 const GEOCODER_UNAVAILABLE_DETAIL =
 	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
@@ -597,8 +598,8 @@ test(`POST /v1/parse: an address exactly at ${MAX_ADDRESS_LENGTH} chars is accep
 })
 
 test("POST /v1/batch: the length bound applies PER ROW, not just to the request", async () => {
-	// The row cap bounds how many addresses arrive. without a per-element bound one request is still
-	// `batchMax` unbounded bodies.
+	// The row cap bounds how many addresses arrive. without a per-element bound one
+	// request is still `batchMax` unbounded bodies.
 	const app = createMailwomanAPI(fullEngine)
 
 	const res = await app.request("/v1/batch", {

@@ -33,8 +33,9 @@ import {
 } from "#eval-harness/gauntlet/schema"
 
 /**
- * Where to read the corpus from and where to write the DB. Both default to the real ones. a test overrides them to
- * build a fixture-scale artifact without going near `$MAILWOMAN_DATA_ROOT`.
+ * Where to read the corpus from and where to write the DB.
+ * Both default to the real ones. a test overrides them to build a fixture-scale
+ * artifact without going near `$MAILWOMAN_DATA_ROOT`.
  */
 export interface BuildRegressionDBOptions {
 	casesDir?: PathBuilderLike
@@ -44,8 +45,9 @@ export interface BuildRegressionDBOptions {
 /**
  * Build the curated regression DB from the committed seed and swap it into place.
  *
- * @throws When the loader resolves zero cases — see {@linkcode assertCorpusIsNonEmpty}. A build that prints "built"
- *   over an empty corpus is the 2026-08-06 failure, and it exits 0 today unless something refuses.
+ * @throws When the loader resolves zero cases — see {@linkcode assertCorpusIsNonEmpty}.
+ *   A build that prints "built" over an empty corpus is the 2026-08-06 failure,
+ *   and it exits 0 today unless something refuses.
  */
 export async function buildRegressionDB(options: BuildRegressionDBOptions = {}): Promise<void> {
 	const casesDir = options.casesDir ?? CASES_DIR
@@ -76,8 +78,8 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 			insert.run(...GAUNTLET_CASE_COLUMNS.map((column) => row[column]))
 		}
 
-		// The stamp goes in last and inside the same handle: an artifact that reached the swap without one would be
-		// exactly the unattributable DB this guard exists to abolish.
+		// The stamp goes in last and inside the same handle: an artifact that reached the swap
+		// without one would be exactly the unattributable DB this guard exists to abolish.
 		await writeCorpusStamp(kdb, cases)
 	}
 

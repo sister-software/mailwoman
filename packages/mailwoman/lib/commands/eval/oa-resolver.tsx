@@ -91,8 +91,9 @@ const EvalOAResolver = harnessCommand(spec, async (options) => {
 		// CLI kebab derivation forces the lowercase-acronym prop above. the harness option keeps
 		// the house spelling, so the rename happens here rather than in the eval's own interface.
 		...(adminFst ? { adminFST: adminFst } : {}),
-		// Same derivation, and the same rename — `--postcode-max-move-km` names #2301's cap, whose option spells the
-		// pass it caps. Spreading the derived name instead reaches no field, so the cap is accepted and never applied.
+		// Same derivation, and the same rename — `--postcode-max-move-km` names #2301's cap,
+		// whose option spells the pass it caps. Spreading the derived name instead reaches
+		// no field, so the cap is accepted and never applied.
 		...(postcodeMaxMoveKM === undefined ? {} : { postcodeConsistencyMaxMoveKm: postcodeMaxMoveKM }),
 	})
 })

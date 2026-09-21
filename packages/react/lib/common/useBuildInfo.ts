@@ -51,14 +51,15 @@ export function useBuildInfo(url = "/build.json"): BuildInfoRecord | null {
 
 				const record = (await response.json()) as BuildInfoRecord
 
-				// A record without a revision is not a build record. rendering half of one would put an empty
-				// link in the footer rather than saying nothing.
+				// A record without a revision is not a build record. rendering half of one
+				// would put an empty link in the footer rather than saying nothing.
 				if (!controller.signal.aborted && record?.revision) {
 					setInfo(record)
 				}
 			} catch {
-				// A dev server with no build.json, an offline first paint, or an aborted unmount. The footer
-				// shows its identity without a commit, which is the same thing it showed before this existed.
+				// A dev server with no build.json, an offline first paint, or an aborted unmount.
+				// The footer shows its identity without a commit, which is the same
+				// thing it showed before this existed.
 			}
 		})()
 

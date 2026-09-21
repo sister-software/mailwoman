@@ -24,15 +24,15 @@ import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 
 /**
- * How many subpaths a workspace contributes before the rest are counted instead. A handful names the concerns. the full
- * list of a large package is what `mwdev_symbol` is for, and the listing has to stay small enough to survive at the top
- * of a session.
+ * How many subpaths a workspace contributes before the rest are counted instead.
+ * A handful names the concerns. the full list of a large package is what `mwdev_symbol` is for,
+ * and the listing has to stay small enough to survive at the top of a session.
  */
 const SUBPATH_LIMIT = 12
 
 /**
- * The subpaths a manifest's `exports` map declares, without the `./package.json` entry every workspace carries and
- * without the wildcard patterns, which name a shape rather than a concern.
+ * The subpaths a manifest's `exports` map declares, without the `./package.json` entry every
+ * workspace carries and without the wildcard patterns, which name a shape rather than a concern.
  */
 function exportedSubpaths(exports: unknown): string[] {
 	if (typeof exports !== "object" || exports === null) return []

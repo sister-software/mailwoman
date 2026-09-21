@@ -23,8 +23,9 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * A code line that builds a path into the root drawer: a `repoRootPath("scripts", …)` call or a string literal that
- * starts with `scripts/`. Comment lines are skipped, because history is allowed to name the directory that was.
+ * A code line that builds a path into the root drawer: a `repoRootPath("scripts", …)` call
+ * or a string literal that starts with `scripts/`. Comment lines are skipped,
+ * because history is allowed to name the directory that was.
  */
 const ROOT_SCRIPTS_PATH = /repoRootPath(?:Builder)?\(\s*["']scripts["']|["'`]scripts\//u
 
@@ -37,15 +38,15 @@ const BARE_LIB_RUN = /(?:^|[\s"'`(])(?:node|tsx|yarn node)\s+\S*\/lib\/\S*\.tsx?
 const COMMENT_LINE = /^\s*(?:\/\/|\*|\/\*)/u
 
 /**
- * This module's own repo-relative path, excluded from the code walk: the patterns above have to spell `scripts/` to
- * match it, and a check that reports itself would fail on every tree.
+ * This module's own repo-relative path, excluded from the code walk: the patterns above have
+ * to spell `scripts/` to match it, and a check that reports itself would fail on every tree.
  */
 const SELF = "packages/repo-health/lib/checks/no-root-scripts.ts"
 
 /**
- * The one library path a target may run: the `mwops` adapter is the registry's command-line view, and the private CLI
- * has no compiled bin, so `package.json`'s `mwops` target names its source. Every other executable reaches CI through
- * it.
+ * The one library path a target may run: the `mwops` adapter is the registry's command-line
+ * view, and the private CLI has no compiled bin, so `package.json`'s `mwops` target
+ * names its source. Every other executable reaches CI through it.
  */
 const REGISTERED_ADAPTERS = new Set(["packages/ops-cli/lib/cli.ts"])
 
@@ -58,7 +59,8 @@ function isTestFile(path: string): boolean {
 }
 
 /**
- * The check the `scripts/` migration ends on: the directory is gone and every executable reaches CI through a registry.
+ * The check the `scripts/` migration ends on: the directory is gone and every
+ * executable reaches CI through a registry.
  */
 export const noRootScriptsCheck: RepoCheck = {
 	id: "no-root-scripts",

@@ -23,9 +23,9 @@ import {
 } from "#schema"
 
 /**
- * A friendly html landing page for `GET /` (#1022). libpostal's own rest server has no root page, so there's no wire
- * interface to match — pure courtesy for browser visitors. Relative example URLs so they resolve against whatever
- * host/port serves this.
+ * A friendly html landing page for `GET /` (#1022). libpostal's own rest server has no
+ * root page, so there's no wire interface to match — pure courtesy for browser visitors.
+ * Relative example URLs so they resolve against whatever host/port serves this.
  */
 const ROOT_HTML = `<!doctype html>
 <html lang="en">
@@ -148,8 +148,9 @@ const expandPostRoute = createRoute({
 /**
  * Read the JSON body if present and parseable. a missing/malformed body is `{}` (legacy tolerance).
  *
- * The try/catch here re-guards what `canonicalizeJSONBody` already guarantees (well-formed JSON, string-only interface
- * fields) — deliberate defense in depth. Don't drop this side's tolerance just because the middleware upstream makes it
+ * The try/catch here re-guards what `canonicalizeJSONBody` already guarantees
+ * (well-formed JSON, string-only interface fields) — deliberate defense in depth.
+ * Don't drop this side's tolerance just because the middleware upstream makes it
  * look redundant. the two are meant to fail safe independently.
  */
 async function readBody(c: Context): Promise<Record<string, unknown>> {
@@ -163,20 +164,22 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
 }
 
 /**
- * Coalesce candidate params by raw presence rather than truthiness — an empty-but-present string must survive
- * coalescing so it wins precedence over a lower-priority param (legacy wire parity: the old handler trimmed after
- * coalescing).
+ * Coalesce candidate params by raw presence rather than truthiness — an empty-but-present
+ * string must survive coalescing so it wins precedence over a lower-priority param
+ * (legacy wire parity: the old handler trimmed after coalescing).
  *
- * The `typeof value === "string"` check re-guards what `canonicalizeJSONBody` already guarantees (only string-typed
- * interface fields survive) — deliberate defense in depth rather than a redundancy to simplify away.
+ * The `typeof value === "string"` check re-guards what `canonicalizeJSONBody` already
+ * guarantees (only string-typed interface fields survive) — deliberate defense in depth
+ * rather than a redundancy to simplify away.
  */
 const rawParam = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined)
 
 /**
- * The zod-openapi auto body validator runs before the handlers and would reject or throw on request shapes the legacy
- * endpoint tolerated (malformed JSON, non-JSON content types, non-string fields, bodyless POSTs). Canonicalize every
- * post body into well-formed JSON carrying only the string-typed interface fields, so validation can never fail and
- * every wire decision stays in the handlers.
+ * The zod-openapi auto body validator runs before the handlers
+ * and would reject or throw on request shapes the legacy endpoint tolerated
+ * (malformed JSON, non-JSON content types, non-string fields, bodyless POSTs).
+ * Canonicalize every post body into well-formed JSON carrying only the string-typed interface
+ * fields, so validation can never fail and every wire decision stays in the handlers.
  */
 const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
 	if (c.req.method === "POST") {
@@ -215,9 +218,9 @@ const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
 }
 
 /**
- * The zod-openapi auto query validator rejects array-valued repeated params (`?query=a&query=b`) with its own error
- * shape before the handlers run. Keep only the first value of each interface param — the value `c.req.query()` reads
- * anyway — so query validation can never fail either.
+ * The zod-openapi auto query validator rejects array-valued repeated params (`?query=a&query=b`)
+ * with its own error shape before the handlers run. Keep only the first value of each interface
+ * param — the value `c.req.query()` reads anyway — so query validation can never fail either.
  */
 const canonicalizeQueryParams: MiddlewareHandler = async (c, next) => {
 	if (c.req.method === "GET") {

@@ -28,9 +28,9 @@ import {
 import { provenanceFor } from "#tool-kit"
 
 /**
- * The confidence surfaces this tool can grade. Each is a distinct head over distinct features — they share a
- * reliability diagram and nothing else — so adding one means adding a sample function rather than widening an existing
- * one.
+ * The confidence surfaces this tool can grade. Each is a distinct head over distinct
+ * features — they share a reliability diagram and nothing else — so adding one means
+ * adding a sample function rather than widening an existing one.
  */
 export const ReliabilitySurface = {
 	Decode: "decode",
@@ -42,23 +42,24 @@ export type ReliabilitySurface = (typeof ReliabilitySurface)[keyof typeof Reliab
 /**
  * Where the coarse placer's held-out split lives, relative to the repo root.
  *
- * Not tracked in git — the surface reports its absence rather than substituting another split, because `val` and
- * `train` load identically and produce a curve that is the temperature fit reporting on itself.
+ * Not tracked in git — the surface reports its absence rather than substituting
+ * another split, because `val` and `train` load identically and produce a curve
+ * that is the temperature fit reporting on itself.
  */
 const PLACER_TEST_SPLIT = ["data", "coarse-placer", "test.jsonl"] as const
 
 /**
- * The eval positions the placer work actually argued over, so a reader comparing against that record does not have to
- * re-derive the rows. A caller may pass their own. these are a starting table rather than a claim about where the eval
- * belongs.
+ * The eval positions the placer work actually argued over, so a reader comparing against
+ * that record does not have to re-derive the rows. A caller may pass their own. these
+ * are a starting table rather than a claim about where the eval belongs.
  */
 const DEFAULT_THRESHOLDS = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.99] as const
 
 const DEFAULT_BIN_COUNT = 10
 
 /**
- * Which strata each surface can split by. Fixed per surface rather than free-form: a caller asking to stratify a decode
- * curve by `expected` would get one group called `(unset)` and read it as a finding.
+ * Which strata each surface can split by. Fixed per surface rather than free-form: a caller asking to
+ * stratify a decode curve by `expected` would get one group called `(unset)` and read it as a finding.
  */
 const STRATA_FOR: Record<ReliabilitySurface, readonly string[]> = {
 	[ReliabilitySurface.Decode]: ["tag", "country", "address_kind"],
@@ -88,8 +89,9 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 	const overall = reliabilityCurve(sample.observations, binCount)
 	const check = thresholdTable(sample.observations, thresholds)
 
-	// Read at the lowest threshold that admits anything, so the classes describe an eval someone could actually set. A
-	// threshold admitting nothing has no admitted errors to rank, which reads as a clean confusion matrix.
+	// Read at the lowest threshold that admits anything, so the classes describe an
+	// eval someone could actually set. A threshold admitting nothing has no admitted
+	// errors to rank, which reads as a clean confusion matrix.
 	const thresholdForClasses = check.find((row) => row.admitted > 0)?.threshold ?? thresholds[0] ?? 0
 
 	const reading = describeObservedRate({
@@ -141,8 +143,8 @@ async function decodeRun(registry: EngineRegistryLike, args: Record<string, unkn
 		sample,
 		provenance: provenanceFor(engine, set),
 		nRequested: selected.length,
-		// A `limit` makes a full board a subset, and reporting the set's own selection would let a 20-row probe carry a
-		// full board's confidence wording.
+		// A `limit` makes a full board a subset, and reporting the set's own selection
+		// would let a 20-row probe carry a full board's confidence wording.
 		selection: limit && limit < set.inputs.length ? "subset" : set.selection,
 		eventLabel: "incorrect component",
 	}
@@ -154,17 +156,17 @@ async function placerRun(registry: EngineRegistryLike, args: Record<string, unkn
 
 	return {
 		sample,
-		// No engine and no input set: the placer is loaded from its own bundle and graded against a corpus on disk, so
-		// the standard provenance block would be a shape with every field empty. The two facts that do identify this
-		// measurement are the corpus and the tree.
+		// No engine and no input set: the placer is loaded from its own bundle and graded against a
+		// corpus on disk, so the standard provenance block would be a shape with every field empty.
+		// The two facts that do identify this measurement are the corpus and the tree.
 		provenance: {
 			corpus,
 			tree_fingerprint: (await registry.fingerprint()).digest,
 			note: "coarse-placer surface: no geocode engine is involved, so no engine_id or input_set applies",
 		},
 		nRequested: sample.observations.length + sample.excluded.reduce((total, entry) => total + entry.n, 0),
-		// The whole held-out split is the population this surface has, so it is `full` — not a claim that it represents
-		// every address, which the split's own construction already bounds.
+		// The whole held-out split is the population this surface has, so it is `full` — not a claim
+		// that it represents every address, which the split's own construction already bounds.
 		selection: "full",
 		eventLabel: "misplaced country",
 	}
@@ -181,8 +183,9 @@ function summarize(
 		return `No gradeable observations on the ${surface} surface, so nothing was measured. ${powerSentence}`
 	}
 
-	// The most useful single row: the highest threshold that still admits a majority of what it could. Named rather
-	// than left to the reader, because a table's rows are all equally prominent and its point is not.
+	// The most useful single row: the highest threshold that still admits a majority
+	// of what it could. Named rather than left to the reader, because a table's rows
+	// are all equally prominent and its point is not.
 	const workable = check.toReversed().find((row) => row.admitted_share >= 0.5)
 
 	const thresholdSentence = workable
@@ -194,8 +197,9 @@ function summarize(
 	const excludedTotal = sample.excluded.reduce((total, entry) => total + entry.n, 0)
 	const excludedSentence = excludedTotal ? ` ${excludedTotal} rows were excluded and are itemized.` : ""
 
-	// Named in the sentence rather than just in a field: the curve covers only the components truth asserted, and a reader
-	// who does not know how much output sat outside it will read the ECE as covering the parse.
+	// Named in the sentence rather than just in a field: the curve covers only the
+	// components truth asserted, and a reader who does not know how much output sat
+	// outside it will read the ECE as covering the parse.
 	const unassertedSentence = sample.unasserted?.n
 		? ` A further ${sample.unasserted.n} produced components were not asserted by any truth row (mean confidence ` +
 			`${sample.unasserted.mean_confidence?.toFixed(3)}) and are counted, not curved.`

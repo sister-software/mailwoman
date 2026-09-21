@@ -17,8 +17,8 @@ import { OFFICIAL_LANGUAGES } from "#country/official-languages"
 import { coOfficialLanguagesForProvince } from "#es/co-official-languages"
 
 /**
- * The length of an ISO 639-3 code, the spelling the Who's On First names table uses. the generated table lists each
- * language under its ISO 639-1 spelling too, which is two letters.
+ * The length of an ISO 639-3 code, the spelling the Who's On First names table uses. the
+ * generated table lists each language under its ISO 639-1 spelling too, which is two letters.
  */
 const ALPHA3_LENGTH = 3
 
@@ -34,9 +34,9 @@ export function officialLanguagesAlpha3(country: string): readonly string[] {
 }
 
 /**
- * The languages a region's addresses are written in: the country's official languages first, then the region's
- * co-official ones. `regionOfficialName` is the region's name in the country's first official language, the key the
- * per-country tables use.
+ * The languages a region's addresses are written in: the country's official languages first,
+ * then the region's co-official ones. `regionOfficialName` is the region's name in the
+ * country's first official language, the key the per-country tables use.
  */
 export function regionLanguagesAlpha3(country: string, regionOfficialName: string): readonly string[] {
 	const official = officialLanguagesAlpha3(country)

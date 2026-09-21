@@ -33,10 +33,11 @@ export const daemonTool = (deps: DevToolDeps): DevTool => {
 			const fingerprint = await registry.fingerprint()
 
 			if (action === "reload") {
-				// The refusal is the whole point. `reload` used to close the sessions, return the current digest and a
-				// note admitting it could not re-import — a success shape carrying its own contradiction, which a
-				// caller reading `engines_closed` and a fresh fingerprint reasonably takes for a completed reload. It
-				// then measures new-tree answers out of old-tree code with nothing left to flag it.
+				// The refusal is the whole point. `reload` used to close the sessions,
+				// return the current digest and a note admitting it could not re-import —
+				// a success shape carrying its own contradiction, which a caller reading
+				// `engines_closed` and a fresh fingerprint reasonably takes for a completed reload.
+				// It then measures new-tree answers out of old-tree code with nothing left to flag it.
 				if (await registry.sourceMoved()) {
 					throw new Error(staleEngineMessage(registry.bootFingerprint, fingerprint))
 				}
@@ -68,8 +69,8 @@ export const daemonTool = (deps: DevToolDeps): DevTool => {
 				uptime_s: Math.round((Date.now() - deps.startedAt) / 1000),
 				repo_root: registry.repoRoot,
 				tree_fingerprint: fingerprint.digest,
-				// The pair, always, so "can this process still answer for the source on disk" is readable without
-				// comparing a digest against one remembered from an earlier call.
+				// The pair, always, so "can this process still answer for the source on disk" is
+				// readable without comparing a digest against one remembered from an earlier call.
 				boot_tree_fingerprint: registry.bootFingerprint.digest,
 				source_moved_since_boot: await registry.sourceMoved(),
 				git_head: fingerprint.gitHead,

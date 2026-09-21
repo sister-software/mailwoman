@@ -23,8 +23,9 @@ describe("checkCLIAllowlist", () => {
 	})
 
 	it("refuses the ledger write even though `eval` is allowed", () => {
-		// The one that matters: it is nested under an allowed verb and it writes the score ledger. mwdev_promotion_eval reports
-		// this command pre-filled precisely so an operator runs it. the passthrough must not be the back door.
+		// The one that matters: it is nested under an allowed verb and it writes the
+		// score ledger. mwdev_promotion_eval reports this command pre-filled precisely
+		// so an operator runs it. the passthrough must not be the back door.
 		const verdict = checkCLIAllowlist(["eval", "ledger-append", "--out-dir", "/tmp/x"])
 
 		expect(verdict.allowed).toBe(false)
@@ -45,8 +46,8 @@ describe("checkCLIAllowlist", () => {
 	})
 
 	it("refuses an unknown verb rather than permitting it", () => {
-		// Allowlist rather than denylist: a verb nobody has vetted is refused. The day someone adds `gazetteer nuke`, this is
-		// what keeps it out.
+		// Allowlist rather than denylist: a verb nobody has vetted is refused.
+		// The day someone adds `gazetteer nuke`, this is what keeps it out.
 		const verdict = checkCLIAllowlist(["nuke", "--everything"])
 
 		expect(verdict.allowed).toBe(false)

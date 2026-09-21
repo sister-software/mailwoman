@@ -51,8 +51,9 @@ describe("postcodeVariantsFor (pure)", () => {
 			"with-locality-region-country",
 		])
 
-		// The region carries its postal surface form. WOF names the state in full. a US address writes the USPS code,
-		// and the adapter chooses that here so the printed span and the label are the same string.
+		// The region carries its postal surface form. WOF names the state in full.
+		// a US address writes the USPS code, and the adapter chooses that here
+		// so the printed span and the label are the same string.
 		expect(v[3]!.components).toEqual({
 			postcode: "97214",
 			locality: "Portland",
@@ -108,19 +109,20 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		const rows = await loadRows()
 		const portlandUS = rows.find((r) => /Portland,\s+OR\s+97214/.test(r.raw))
 		expect(portlandUS).toBeDefined()
-		// The region is printed and labeled. It used to be neither: the engine this replaced substituted its own
-		// `state_code` for the value it was handed, so `raw` said `or` while the component said `Oregon`, and the
-		// alignment check then dropped the component for not occurring in the string it had just rendered.
+		// The region is printed and labeled. It used to be neither: the engine this replaced
+		// substituted its own `state_code` for the value it was handed, so `raw` said `or`
+		// while the component said `Oregon`, and the alignment check then dropped the
+		// component for not occurring in the string it had just rendered.
 		expect(portlandUS!.components.region).toBe("OR")
 		expect(portlandUS!.components.postcode).toBe("97214")
 		expect(portlandUS!.components.locality).toBe("Portland")
 	})
 
 	it("locality ancestry handles a parent with name:* variants without leaking them into postcode emission", async () => {
-		// Saint Petersburg (1021) has name:eng_x_colloquial=["St. Petersburg"]; one postcode (5003)
-		// points at it. The postcode adapter currently uses canonical wof:name for ancestors
-		// (cross-product with ancestor name variants is a future synthesis concern). Verify the
-		// canonical-name behavior so a future change to localize ancestors is a deliberate decision.
+		// Saint Petersburg (1021) has name:eng_x_colloquial=["St. Petersburg"]; one postcode
+		// (5003) points at it. The postcode adapter currently uses canonical wof:name for
+		// ancestors (cross-product with ancestor name variants is a future synthesis concern).
+		// Verify the canonical-name behavior so a future change to localize ancestors is a deliberate decision.
 		await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },

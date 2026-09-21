@@ -54,9 +54,9 @@ export interface ManifestMove {
 /**
  * Rewrites for one package's manifest, given every move landing inside that package.
  *
- * The manifest is edited as text rather than reserialized: a `package.json` carries key order and formatting the
- * repository's own tooling compares, and a round-trip through `JSON.parse` rewrites the whole file to change one
- * string.
+ * The manifest is edited as text rather than reserialized: a `package.json` carries key order
+ * and formatting the repository's own tooling compares, and a round-trip through
+ * `JSON.parse` rewrites the whole file to change one string.
  */
 export function manifestRewritesIn(file: string, text: string, moves: readonly ManifestMove[]): ManifestRewrite[] {
 	const rewrites: ManifestRewrite[] = []
@@ -90,8 +90,8 @@ export function manifestRewritesIn(file: string, text: string, moves: readonly M
 /**
  * Every manifest target the moves invalidate, across each package that owns one of them.
  *
- * `packageDirectories` is the set a caller already knows — every tracked `package.json`'s directory — so this reads
- * only the manifests a move actually lands in.
+ * `packageDirectories` is the set a caller already knows — every tracked `package.json`'s
+ * directory — so this reads only the manifests a move actually lands in.
  */
 export async function planManifestRewrites(
 	repoRoot: string,

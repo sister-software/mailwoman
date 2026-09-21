@@ -89,14 +89,16 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { AdminLocator } from "#gazetteer-pipeline/admin/locator"
 
 /**
- * Prefix granularity a build extracts. `"outward"` is the GB/NI outward code (area + district); the digit levels are
- * for the fixed-width numeric systems (US 3-digit sectional centre). The value is written to the header's `levels`.
+ * Prefix granularity a build extracts. `"outward"` is the GB/NI outward code (area + district);
+ * the digit levels are for the fixed-width numeric systems (US 3-digit sectional centre).
+ * The value is written to the header's `levels`.
  */
 export type PostcodePrefixLevel = "outward" | "3"
 
 /**
- * Coordinate tier of a build. `"centroid"` ships a centroid plus its measured `radiusP95Km`; `"ancestry-only"` ships
- * neither, and that absence is the artifact's honest statement that the source cannot place the prefix.
+ * Coordinate tier of a build. `"centroid"` ships a centroid plus its measured
+ * `radiusP95Km`; `"ancestry-only"` ships neither, and that absence is the artifact's
+ * honest statement that the source cannot place the prefix.
  */
 export type PostcodePrefixCoordinateTier = "centroid" | "ancestry-only"
 
@@ -115,8 +117,9 @@ export interface BuildPostcodePrefixOptions {
 	country: string
 	level: PostcodePrefixLevel
 	/**
-	 * WOF polygon DB the US arm tests region containment against. Required for `country: "us"`, unused elsewhere — GB
-	 * ancestry comes from a documented area table rather than from geometry.
+	 * WOF polygon DB the US arm tests region containment against.
+	 * Required for `country: "us"`, unused elsewhere — GB ancestry comes from a
+	 * documented area table rather than from geometry.
 	 */
 	polygonPath?: string
 }
@@ -133,7 +136,8 @@ export interface BuildPostcodePrefixResult {
 	 */
 	unitRows: number
 	/**
-	 * Rows whose `name` was too short to cleave a prefix from. Reported rather than silently dropped.
+	 * Rows whose `name` was too short to cleave a prefix from.
+	 * Reported rather than silently dropped.
 	 */
 	skippedShort: number
 	coordinateTier: PostcodePrefixCoordinateTier
@@ -146,24 +150,28 @@ export interface BuildPostcodePrefixResult {
 	 */
 	partialSource: boolean
 	/**
-	 * Prefixes whose constituent-country ancestry was withheld because their postcode area straddles a national border.
+	 * Prefixes whose constituent-country ancestry was withheld because their
+	 * postcode area straddles a national border.
 	 */
 	borderStraddlingPrefixes: string[]
 	/**
-	 * Per-prefix `radiusP95Km`, in node order — the round-trip check medians this and compares it against M-2.
+	 * Per-prefix `radiusP95Km`, in node order — the round-trip check medians this
+	 * and compares it against M-2.
 	 */
 	radiiP95Km: number[]
 	/**
-	 * Units the US arm dropped because their coordinate is not a location, by reason. Empty on the GB arm, which drops
-	 * none. Reported rather than folded into {@link BuildPostcodePrefixResult.skippedShort}: "the name was too short to
-	 * cleave" and "the name was a place rather than a postcode" are different source defects and a build log that
-	 * conflated them would hide one behind the other.
+	 * Units the US arm dropped because their coordinate is not a location, by reason.
+	 * Empty on the GB arm, which drops none. Reported rather than folded into
+	 * {@link BuildPostcodePrefixResult.skippedShort}: "the name was too short to cleave"
+	 * and "the name was a place rather than a postcode" are different source defects
+	 * and a build log that conflated them would hide one behind the other.
 	 */
 	excludedUnits: Readonly<Record<string, number>>
 	/**
-	 * Units that reached a node's `unitCount`. Reported rather than left for the caller to derive: which exclusions
-	 * happen before a group exists and which after is an internal detail of each arm, and a round-trip check that
-	 * re-derived it from `unitRows` minus a subset of the reasons would break the next time an arm adds one.
+	 * Units that reached a node's `unitCount`. Reported rather than left for the caller to
+	 * derive: which exclusions happen before a group exists and which after is an internal
+	 * detail of each arm, and a round-trip check that re-derived it from `unitRows` minus
+	 * a subset of the reasons would break the next time an arm adds one.
 	 */
 	indexedUnits: number
 }
@@ -174,14 +182,15 @@ interface AdminSurfaceRow {
 }
 
 /**
- * Shortest compact UK postcode, `M11AE` — the same floor `codex/gb/postcode.ts`'s `MIN_POSTCODE_LENGTH` enforces.
- * Anything shorter has no three-character inward code to cleave off, so it yields no outward at all.
+ * Shortest compact UK postcode, `M11AE` — the same floor `codex/gb/postcode.ts`'s
+ * `MIN_POSTCODE_LENGTH` enforces. Anything shorter has no three-character inward
+ * code to cleave off, so it yields no outward at all.
  */
 const MIN_COMPACT_POSTCODE_LENGTH = 5
 
 /**
- * The outward code of a compact unit postcode: everything but the last three characters. See the module docstring for
- * why this is not a regex.
+ * The outward code of a compact unit postcode: everything but the last three characters.
+ * See the module docstring for why this is not a regex.
  */
 export function outwardOf(compact: string): string | null {
 	if (compact.length < MIN_COMPACT_POSTCODE_LENGTH) return null
@@ -198,8 +207,9 @@ function prefixOf(compact: string, level: PostcodePrefixLevel): string | null {
 }
 
 /**
- * WOF names of the four UK constituent countries, keyed by the codex's `UkCountryCode`. They are `macroregion`s in WOF
- * rather than `region`s — the `region` tier under GB is the ~200 unitary authorities and council areas.
+ * WOF names of the four UK constituent countries, keyed by the codex's `UkCountryCode`.
+ * They are `macroregion`s in WOF rather than `region`s — the `region` tier under
+ * GB is the ~200 unitary authorities and council areas.
  */
 const UK_COUNTRY_WOF_NAME: Record<UkCountryCode, string> = {
 	ENG: "England",
@@ -209,9 +219,10 @@ const UK_COUNTRY_WOF_NAME: Record<UkCountryCode, string> = {
 }
 
 /**
- * Resolve the GB admin surfaces a postcode-area assertion needs: the United Kingdom itself plus the four constituent
- * countries. Throws when one is missing — a build that silently dropped an ancestor would ship nodes asserting less
- * than the source supports, and nothing downstream could tell that from a prefix that genuinely asserts nothing.
+ * Resolve the GB admin surfaces a postcode-area assertion needs: the United Kingdom
+ * itself plus the four constituent countries. Throws when one is missing — a build that
+ * silently dropped an ancestor would ship nodes asserting less than the source supports,
+ * and nothing downstream could tell that from a prefix that genuinely asserts nothing.
  */
 function resolveGBAncestry(adminPath: string): {
 	country: PostcodePrefixAncestor
@@ -393,9 +404,10 @@ export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): B
 }
 
 /**
- * Centroid of a prefix's clean unit coordinates, with the p95 great-circle distance from it — the pair PFX1 requires
- * together. Mean-of-points rather than a bounding-box centre: a prefix is a set of delivery points, and the mean is
- * where they are, while a bbox centre is a corner artefact of the two extremes.
+ * Centroid of a prefix's clean unit coordinates, with the p95 great-circle distance from it —
+ * the pair PFX1 requires together. Mean-of-points rather than a bounding-box centre:
+ * a prefix is a set of delivery points, and the mean is where they are,
+ * while a bbox centre is a corner artefact of the two extremes.
  */
 function centroidWithRadius(members: ReadonlyArray<readonly [number, number]>): {
 	lat: number
@@ -425,8 +437,9 @@ function centroidWithRadius(members: ReadonlyArray<readonly [number, number]>): 
 
 interface USPrefixGroup {
 	/**
-	 * Every unit under the prefix, including the ones excluded from the coordinate — `unitCount` states what the source
-	 * enumerates, which is a claim about the postal system rather than about our coordinate hygiene.
+	 * Every unit under the prefix, including the ones excluded from the coordinate —
+	 * `unitCount` states what the source enumerates, which is a claim about the postal system
+	 * rather than about our coordinate hygiene.
 	 */
 	units: number
 	clean: Array<readonly [number, number]>
@@ -434,8 +447,8 @@ interface USPrefixGroup {
 }
 
 /**
- * The US 3-digit (sectional centre) arm. See the module docstring for why its exclusions and its ancestry rule differ
- * from GB's.
+ * The US 3-digit (sectional centre) arm. See the module docstring for why its exclusions
+ * and its ancestry rule differ from GB's.
  */
 function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildPostcodePrefixResult {
 	const { sourcePath, adminPath, level } = options
@@ -469,14 +482,16 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 		db.destroy()
 	}
 
-	// A coordinate carrying units from different prefixes is a placeholder the source reached for when it had no
-	// location — never a real one, since two sectional centres do not share a point. Units of the same prefix sharing a
-	// point are ordinary (a city's PO-box codes all sit downtown), so the test is deliberately cross-prefix only.
+	// A coordinate carrying units from different prefixes is a placeholder the source
+	// reached for when it had no location — never a real one, since two sectional centres
+	// do not share a point. Units of the same prefix sharing a point are ordinary
+	// (a city's PO-box codes all sit downtown), so the test is deliberately cross-prefix only.
 	const byCoordinate = new Map<string, Set<string>>()
 
 	for (const row of rows) {
-		// A row that is not a postcode has no prefix to contribute, and letting one vote would mark a real unit sharing
-		// its coordinate as a placeholder — the shape guard below has to run first here too.
+		// A row that is not a postcode has no prefix to contribute, and letting one
+		// vote would mark a real unit sharing its coordinate as a placeholder —
+		// the shape guard below has to run first here too.
 		if (!isZipCode(row.name)) continue
 
 		if (row.latitude === 0 && row.longitude === 0) continue
@@ -497,8 +512,9 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 	let skippedShort = 0
 
 	for (const row of rows) {
-		// The shape guard rather than a length check: six rows in the shipped database are place names that reached a postcode
-		// table, and one of them ("Lea County-Zip Franklin Memorial Airport") carries a real coordinate.
+		// The shape guard rather than a length check: six rows in the shipped
+		// database are place names that reached a postcode table, and one of them
+		// ("Lea County-Zip Franklin Memorial Airport") carries a real coordinate.
 		if (!isZipCode(row.name)) {
 			excluded.notAPostcode++
 
@@ -598,9 +614,10 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 }
 
 /**
- * The WOF `country` row a US prefix asserts. Every code here is USPS-issued, so the country holds even for the
- * territories WOF models as countries of their own — the assertion is about postal jurisdiction, and nothing finer is
- * claimed for them because their units land in no US region polygon.
+ * The WOF `country` row a US prefix asserts. Every code here is USPS-issued,
+ * so the country holds even for the territories WOF models as countries of their own —
+ * the assertion is about postal jurisdiction, and nothing finer is claimed for them
+ * because their units land in no US region polygon.
  */
 function resolveUSCountry(adminPath: string): PostcodePrefixAncestor {
 	using db = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })

@@ -21,8 +21,8 @@ import type { ResolutionTier } from "#eval-harness/gauntlet/schema"
 /**
  * The component classes this runner deletes — every tag the curated corpus actually asserts, and every one
  * {@linkcode componentOf} can read back off the assembled result (the slot a substitution would land in). A tag with no
- * result field could be deleted but not scored for substitution, which is half a measurement. adding one means adding
- * the field to `GauntletResult` first.
+ * result field could be deleted but not scored for substitution, which is half a
+ * measurement. adding one means adding the field to `GauntletResult` first.
  */
 export const ABLATABLE_COMPONENTS = [
 	"postcode",
@@ -39,37 +39,41 @@ export const ABLATABLE_COMPONENTS = [
 export type AblatableComponent = (typeof ABLATABLE_COMPONENTS)[number]
 
 /**
- * Fallback displacement band, in km, for a row that asserts no `expect_tolerance_m`. Rows that do assert one are graded
- * against theirs — a row pinned to an 80 m rooftop and a row pinned to a 500 km "in NY not France" guard are not asking
- * the same question, and one band for both would answer neither. The per-row value used is recorded on every row of the
- * JSON artifact.
+ * Fallback displacement band, in km, for a row that asserts no `expect_tolerance_m`.
+ * Rows that do assert one are graded against theirs — a row pinned to an 80 m rooftop and a row
+ * pinned to a 500 km "in NY not France" guard are not asking the same question, and one band for
+ * both would answer neither. The per-row value used is recorded on every row of the JSON artifact.
  */
 export const DEFAULT_ABLATION_TOLERANCE_KM = 5
 
 /**
- * One cell of the deletion-ablation map: what deleting `component` costs in `locale`, on a named board. The suggestion
- * layer reads this as a per-(component, locale) prior on nudge value; §C.5 of its design doc specifies the first eleven
- * fields and this runner owes them exactly. The last three are additive and marked as such — each exists because a
- * specced field is not interpretable without it.
+ * One cell of the deletion-ablation map: what deleting `component` costs in `locale`,
+ * on a named board. The suggestion layer reads this as a per-(component, locale)
+ * prior on nudge value; §C.5 of its design doc specifies the first eleven fields
+ * and this runner owes them exactly. The last three are additive and marked as such —
+ * each exists because a specced field is not interpretable without it.
  */
 export interface AblationCell {
 	component: AblatableComponent
 	/**
-	 * ISO-3166 alpha-2, matching the board's own `country` column — stated by the corpus row, never inferred from the
-	 * input. (The design doc allows BCP-47 "matching whatever the board keys by"; this board keys by country.)
+	 * ISO-3166 alpha-2, matching the board's own `country` column —
+	 * stated by the corpus row, never inferred from the input.
+	 * (The design doc allows BCP-47 "matching whatever the board keys by"; this board keys by country.)
 	 */
 	locale: string
 	/**
-	 * Board rows that carry this component in this locale — the denominator behind every rate below. A cell with
-	 * `support: 0` means not measured here, and a consumer must represent that as absence rather than as a zero score
-	 * (the meaning-of-zero rule). This runner never emits a zero-support cell: a (component, locale) pair with no rows is
-	 * absent from the array, and {@linkcode formatAblationCell} renders a missing lookup and a zero-support one
-	 * identically.
+	 * Board rows that carry this component in this locale — the denominator behind every
+	 * rate below. A cell with `support: 0` means not measured here, and a consumer must
+	 * represent that as absence rather than as a zero score (the meaning-of-zero rule).
+	 * This runner never emits a zero-support cell: a (component, locale) pair with
+	 * no rows is absent from the array, and {@linkcode formatAblationCell} renders
+	 * a missing lookup and a zero-support one identically.
 	 */
 	support: number
 	/**
-	 * Rows whose assembled coordinate moved further than the row's tolerance once the component was deleted. A row whose
-	 * ablated arm produced no coordinate counts as broken too — losing the answer is not a small displacement.
+	 * Rows whose assembled coordinate moved further than the row's tolerance once the
+	 * component was deleted. A row whose ablated arm produced no coordinate counts as
+	 * broken too — losing the answer is not a small displacement.
 	 */
 	brokenCount: number
 	displacementKmP50: number
@@ -83,14 +87,16 @@ export interface AblationCell {
 	 */
 	unresolvedCount: number
 	/**
-	 * Rows where the deleted component's slot was refilled by a different span — S-2's finding 3 (a house number emitted
-	 * as the postcode). Distinct from `brokenCount`: a refill can leave the coordinate intact and still make a completion
-	 * nudge unsafe, because the slot the nudge wanted to fill reads as already filled.
+	 * Rows where the deleted component's slot was refilled by a different span — S-2's finding
+	 * 3 (a house number emitted as the postcode). Distinct from `brokenCount`:
+	 * a refill can leave the coordinate intact and still make a completion nudge unsafe,
+	 * because the slot the nudge wanted to fill reads as already filled.
 	 */
 	substitutedCount: number
 	/**
-	 * The fallback band ({@linkcode DEFAULT_ABLATION_TOLERANCE_KM}); a row asserting its own `expect_tolerance_m` was
-	 * graded against that instead. Per-row values are in the artifact's `rows`.
+	 * The fallback band ({@linkcode DEFAULT_ABLATION_TOLERANCE_KM});
+	 * a row asserting its own `expect_tolerance_m` was graded against that instead.
+	 * Per-row values are in the artifact's `rows`.
 	 */
 	toleranceKm: number
 	/**
@@ -99,14 +105,16 @@ export interface AblationCell {
 	boardID: string
 	measuredAt: string
 	/**
-	 * Additive (not in §C.5): rows where the ablated arm re-emitted the same value the deletion removed — the resolver
-	 * recovered it from the gazetteer. Without this, `substitutedCount` would have to mean "refilled by anything" and a
-	 * recovery would read as a hazard. 0 of 139 on S-2's postcode column, which is itself the finding.
+	 * Additive (not in §C.5): rows where the ablated arm re-emitted the same
+	 * value the deletion removed — the resolver recovered it from the gazetteer.
+	 * Without this, `substitutedCount` would have to mean "refilled by anything" and a recovery
+	 * would read as a hazard. 0 of 139 on S-2's postcode column, which is itself the finding.
 	 */
 	recoveredCount: number
 	/**
-	 * Additive: rows excluded from the displacement percentiles because the row's own anchor never resolved. Not a
-	 * failure of the deletion — there was nothing to measure against. Named so `gradedCount < support` is attributable.
+	 * Additive: rows excluded from the displacement percentiles because the row's own anchor
+	 * never resolved. Not a failure of the deletion — there was nothing to measure against.
+	 * Named so `gradedCount < support` is attributable.
 	 */
 	anchorUnresolvedCount: number
 	/**
@@ -114,46 +122,51 @@ export interface AblationCell {
 	 */
 	gradedCount: number
 	/**
-	 * Additive (the 2026-08-05 expectation model): rows this cell could grade against a degradation ladder — the
-	 * denominator of every `grades` count below. `0` means the expectation model never spoke here (no gazetteer, or the
-	 * anchor resolved no gazetteer place), and a consumer must render that as absence exactly as it does `support: 0` —
+	 * Additive (the 2026-08-05 expectation model): rows this cell could grade against a degradation ladder —
+	 * the denominator of every `grades` count below. `0` means the expectation model
+	 * never spoke here (no gazetteer, or the anchor resolved no gazetteer place),
+	 * and a consumer must render that as absence exactly as it does `support: 0` —
 	 * {@linkcode formatAblationLadderCell} is the enforcement.
 	 */
 	ladderGradedCount: number
 	/**
-	 * Additive: the full verdict histogram, keyed by {@linkcode AblationGrade}. Every key is present so a reader never has
-	 * to tell "no rows in this class" from "this runner does not emit that class" — within a cell that already has
+	 * Additive: the full verdict histogram, keyed by {@linkcode AblationGrade}.
+	 * Every key is present so a reader never has to tell "no rows in this class"
+	 * from "this runner does not emit that class" — within a cell that already has
 	 * `ladderGradedCount > 0`, a zero is a measurement.
 	 */
 	grades: Record<AblationGrade, number>
 	/**
-	 * Additive: the headline three. `trueFailCount` is everything {@linkcode PASSING_GRADES} does not cover — the number
-	 * that replaces `brokenCount` as the operator's "what is actually wrong here".
+	 * Additive: the headline three. `trueFailCount` is everything {@linkcode PASSING_GRADES} does not
+	 * cover — the number that replaces `brokenCount` as the operator's "what is actually wrong here".
 	 */
 	trueFailCount: number
 	correctlyDegradedCount: number
 	/**
-	 * Additive: the honest half of the old `unresolvedCount`. Its complement is `grades.lost`.
+	 * Additive: the honest half of the old `unresolvedCount`.
+	 * Its complement is `grades.lost`.
 	 */
 	correctlyAbstainedCount: number
 	/**
-	 * Additive: how far down the ladder the passing rows landed (0 = held at the base). `null` when no row in this cell
-	 * was graded against a ladder — never 0, which would read as "nothing degraded".
+	 * Additive: how far down the ladder the passing rows landed (0 = held at the base).
+	 * `null` when no row in this cell was graded against a ladder — never 0,
+	 * which would read as "nothing degraded".
 	 */
 	degradedRungsP50: number | null
 	degradedRungsMax: number | null
 	/**
-	 * Additive: rows where the model declined to constrain the answer because a venue or street survived the deletion and
-	 * it has no index for either ({@linkcode UNCONSTRAINED_RUNG}). Those rows still fail on leaving the ladder, but their
-	 * passes are weaker evidence than the rest of the cell's — a cell whose `ladderGradedCount` is mostly this is a cell
-	 * to read with suspicion, and the only way to know that is for the count to be here.
+	 * Additive: rows where the model declined to constrain the answer because a venue or street
+	 * survived the deletion and it has no index for either ({@linkcode UNCONSTRAINED_RUNG}).
+	 * Those rows still fail on leaving the ladder, but their passes are weaker evidence than
+	 * the rest of the cell's — a cell whose `ladderGradedCount` is mostly this is a cell to
+	 * read with suspicion, and the only way to know that is for the count to be here.
 	 */
 	unconstrainedCount: number
 }
 
 /**
- * One row × one deleted component: the per-case record behind a cell. Written to the artifact so any cell number can be
- * traced back to the inputs that produced it.
+ * One row × one deleted component: the per-case record behind a cell.
+ * Written to the artifact so any cell number can be traced back to the inputs that produced it.
  */
 export interface AblationRowOutcome {
 	caseID: string
@@ -161,7 +174,8 @@ export interface AblationRowOutcome {
 	locale: string
 	status: string
 	/**
-	 * The exact substring removed, as it appeared in the input (not as asserted — the search is case-insensitive).
+	 * The exact substring removed, as it appeared in the input
+	 * (not as asserted — the search is case-insensitive).
 	 */
 	deleted: string
 	anchorInput: string
@@ -186,42 +200,46 @@ export interface AblationRowOutcome {
 	 */
 	emitted: string | null
 	/**
-	 * Additive (the expectation model). `expectedRung` is `abstain`, `base`, or the WOF placetype of the rung the
-	 * surviving components still pin; `expectedWhy` is the derivation in one sentence, so any verdict can be argued with
-	 * from the artifact alone.
+	 * Additive (the expectation model). `expectedRung` is `abstain`, `base`, or the WOF
+	 * placetype of the rung the surviving components still pin; `expectedWhy` is the
+	 * derivation in one sentence, so any verdict can be argued with from the artifact alone.
 	 */
 	expectedRung: string
 	expectedRungDepth: number | null
 	expectedWhy: string
 	/**
-	 * Where the expectation came from: the derived ladder, a per-case `ablation_expect` pin, or nothing (no ladder).
+	 * Where the expectation came from: the derived ladder, a per-case `ablation_expect`
+	 * pin, or nothing (no ladder).
 	 */
 	expectedSource: "derived" | "override" | "no-ladder"
 	/**
-	 * What rung 0 of the ladder is: the corpus's asserted coordinate, or (weaker) the pipeline's undeleted answer for a
-	 * row that asserts none. `null` when there is no ladder. A verdict read without this can't tell a claim graded
+	 * What rung 0 of the ladder is: the corpus's asserted coordinate,
+	 * or (weaker) the pipeline's undeleted answer for a row that asserts none.
+	 * `null` when there is no ladder. A verdict read without this can't tell a claim graded
 	 * against the corpus from one graded against the parser's own opinion.
 	 */
 	ladderAnchor: "corpus-expected" | "pipeline-anchor" | null
 	/**
-	 * The rung the undeleted answer reached — the floor this variant was judged from. `null` = the anchor is off its own
-	 * ladder, which makes the row `ungraded`.
+	 * The rung the undeleted answer reached — the floor this variant was judged from.
+	 * `null` = the anchor is off its own ladder, which makes the row `ungraded`.
 	 */
 	anchorRungDepth: number | null
 	/**
-	 * The deepest rung the ablated answer actually landed in, and its depth — `null` when it abstained, or when it landed
-	 * outside every rung (which is `grade: "wrong"`, not depth 0).
+	 * The deepest rung the ablated answer actually landed in, and its depth — `null` when it
+	 * abstained, or when it landed outside every rung (which is `grade: "wrong"`, not depth 0).
 	 */
 	achievedRung: string | null
 	achievedRungDepth: number | null
 	/**
-	 * How many rungs the answer fell (0 = held at the base). The rung-depth delta, as data.
+	 * How many rungs the answer fell (0 = held at the base).
+	 * The rung-depth delta, as data.
 	 */
 	degradedRungs: number | null
 	grade: AblationGrade
 	/**
-	 * The ladder this row was graded against, one entry per rung (`locality Las Vegas ±6.0km`), plus the rungs the
-	 * ancestry could not support. Written per row because a verdict without its ladder is not re-checkable.
+	 * The ladder this row was graded against, one entry per rung (`locality Las Vegas ±6.0km`),
+	 * plus the rungs the ancestry could not support. Written per row because a
+	 * verdict without its ladder is not re-checkable.
 	 */
 	ladder: string[]
 	ladderGaps: string[]
@@ -233,9 +251,9 @@ export interface AblationRowOutcome {
 export type SlotOutcome = "absent" | "recovered" | "substituted"
 
 /**
- * A component the row asserts but this runner refused to delete, and why. Reported per reason so a thin cell is
- * attributable to the corpus rather than to the pipeline — "we could not measure it" and "it did not matter" must never
- * look the same.
+ * A component the row asserts but this runner refused to delete, and why.
+ * Reported per reason so a thin cell is attributable to the corpus rather than to the pipeline —
+ * "we could not measure it" and "it did not matter" must never look the same.
  */
 export interface AblationSkip {
 	component: AblatableComponent
@@ -253,11 +271,12 @@ export interface AblationVariant {
 }
 
 /**
- * One component's roll-up across every locale — the shared source for the console summary and the markdown report,
- * which had drifted apart by re-deriving these sums independently.
+ * One component's roll-up across every locale — the shared source for the console summary
+ * and the markdown report, which had drifted apart by re-deriving these sums independently.
  *
- * Sums come from the cells. the displacement percentiles come from the pooled rows, because percentiles do not
- * aggregate — a global p90 has to be taken over the pooled displacements, never over the per-cell p90s.
+ * Sums come from the cells. the displacement percentiles come from the pooled rows,
+ * because percentiles do not aggregate — a global p90 has to be taken over the
+ * pooled displacements, never over the per-cell p90s.
  */
 export interface AblationComponentAggregate {
 	component: AblatableComponent
@@ -275,8 +294,8 @@ export interface AblationComponentAggregate {
 }
 
 /**
- * Aggregate the deletion map per component, in {@linkcode ABLATABLE_COMPONENTS} order, omitting components with no cell
- * — a component nobody measured must never render as a row of zeros.
+ * Aggregate the deletion map per component, in {@linkcode ABLATABLE_COMPONENTS} order, omitting
+ * components with no cell — a component nobody measured must never render as a row of zeros.
  */
 export function aggregateAblationComponents(
 	cells: readonly AblationCell[],

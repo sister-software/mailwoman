@@ -36,9 +36,9 @@ import { describeObservedRate } from "#power"
 import { inputSetProvenance, provenanceFor } from "#tool-kit"
 
 /**
- * Mechanisms whose L1 zero is expected, each with the reason a reader can check. The census reports them as
- * `allowlisted`, never as inert — and an allowlisted mechanism that unexpectedly fires is reported loudly, because the
- * reason on file is then stale.
+ * Mechanisms whose L1 zero is expected, each with the reason a reader can check.
+ * The census reports them as `allowlisted`, never as inert — and an allowlisted mechanism
+ * that unexpectedly fires is reported loudly, because the reason on file is then stale.
  */
 export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 	placetypeCensus:
@@ -52,8 +52,8 @@ export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 }
 
 /**
- * One row's entry in the census — kept so a reader can go from an inert mechanism to the rows that should have fired
- * it, and from a starvation count to the exact inputs.
+ * One row's entry in the census — kept so a reader can go from an inert mechanism to the
+ * rows that should have fired it, and from a starvation count to the exact inputs.
  */
 export interface CensusRow {
 	id: string
@@ -77,7 +77,8 @@ export interface CensusAggregate {
 	n: number
 	channels: Record<"anchor" | "gazetteer" | "country", ChannelTally>
 	/**
-	 * Per prior kind: rows where the prior record was present (L0) and rows where its own `applied` check passed (L1).
+	 * Per prior kind: rows where the prior record was present (L0) and rows
+	 * where its own `applied` check passed (L1).
 	 */
 	priors: Record<TracePriorKind, { l0_present: number; l1_applied: number }>
 	emissions_moved_rows: number
@@ -86,7 +87,8 @@ export interface CensusAggregate {
 	decode: Record<string, number>
 	detected_systems: Record<string, number>
 	/**
-	 * Rows where every present channel was silent — the per-row starvation list (#1718), complete and never truncated.
+	 * Rows where every present channel was silent — the per-row starvation list (#1718),
+	 * complete and never truncated.
 	 */
 	evidence_silent_rows: string[]
 	/**
@@ -237,8 +239,8 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 		if (run.trace?.parse) {
 			traced.push({ id: item.id, input: item.input, parse: run.trace.parse })
 		} else {
-			// A row with no trace contributes nothing to any tally — counting it as "nothing fired" would manufacture
-			// inertness out of a bundle that cannot trace.
+			// A row with no trace contributes nothing to any tally — counting it as "nothing
+			// fired" would manufacture inertness out of a bundle that cannot trace.
 			untraced.push(item.id)
 		}
 	}

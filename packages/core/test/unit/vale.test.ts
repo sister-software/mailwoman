@@ -19,8 +19,8 @@ import { describe, expect, it } from "vitest"
 /**
  * A fixture `@vvago/vale` installation, and a module URL inside it to resolve from.
  *
- * The launcher shape is what ships today: `bin.vale` names a `.cjs` file and the binary lives beside it under
- * `native/`. `withBinary: false` reproduces an install whose postinstall download failed.
+ * The launcher shape is what ships today: `bin.vale` names a `.cjs` file and the binary lives beside
+ * it under `native/`. `withBinary: false` reproduces an install whose postinstall download failed.
  */
 async function fixtureInstall(
 	root: string,
@@ -62,8 +62,8 @@ describe("valeCommand", () => {
 		await using scratch = await temporaryDirectory("mw-vale-missing-")
 		const { base } = await fixtureInstall(String(scratch.path), { withBinary: false })
 
-		// The launcher would exit 1 with a message on stderr, which a caller reading the exit status alone reports as a
-		// prose failure. The error names the download instead.
+		// The launcher would exit 1 with a message on stderr, which a caller reading the exit
+		// status alone reports as a prose failure. The error names the download instead.
 		await expect(valeCommand(base)).rejects.toThrow(/does not exist, so no prose check ran/)
 	})
 })

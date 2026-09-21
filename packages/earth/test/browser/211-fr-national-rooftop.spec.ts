@@ -1,10 +1,10 @@
-// FR national rooftop (#1012 + the 2026-07-10 chevaleret closure): with the BAN situs extract hosted
-// (street/fr/national/situs.db) and the demo's national street-tier fallback wired, a postcode-less
-// FR street address must resolve to its BAN rooftop point rather than the Paris admin centroid (~5 km off).
-// The truth coord is the extract's row (arrondissement communes fold to the base city on both sides,
-// so the bare "Paris" locality probe hits directly). Guards: the national fallback slug dispatch,
-// the fr street-key locale, the commune fold, and the hosted artifact — any one missing falls back
-// to the admin centroid and fails the tolerance.
+// FR national rooftop (#1012 + the 2026-07-10 chevaleret closure): with the BAN situs extract
+// hosted (street/fr/national/situs.db) and the demo's national street-tier fallback wired,
+// a postcode-less FR street address must resolve to its BAN rooftop point rather than the Paris
+// admin centroid (~5 km off). The truth coord is the extract's row (arrondissement communes
+// fold to the base city on both sides, so the bare "Paris" locality probe hits directly).
+// Guards: the national fallback slug dispatch, the fr street-key locale, the commune fold,
+// and the hosted artifact — any one missing falls back to the admin centroid and fails the tolerance.
 import { expect, test } from "../e2e/index.ts"
 
 const TOL = 0.006

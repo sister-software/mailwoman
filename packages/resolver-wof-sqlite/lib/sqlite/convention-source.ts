@@ -30,8 +30,8 @@ export class SqliteConventionSource<DB> implements ConventionSource {
 
 	/**
 	 * @param db An open handle to a DB that has the convention asset attached (or is it).
-	 * @param schema The schema name the `address_convention` table lives under (`main` or an ATTACHed extract name —
-	 *   `WOFSQLitePlaceLookup` auto-detects which extract carries the table).
+	 * @param schema The schema name the `address_convention` table lives under (`main` or an ATTACHed
+	 *   extract name — `WOFSQLitePlaceLookup` auto-detects which extract carries the table).
 	 */
 	constructor(db: DatabaseClient<DB>, schema: string) {
 		this.#db = db
@@ -53,8 +53,8 @@ export class SqliteConventionSource<DB> implements ConventionSource {
 				value = tryParsingJSON<Convention>(row.convention)
 			}
 		} catch {
-			// A missing table → treat as no override (the chain falls back to WORLD_DEFAULT); malformed
-			// JSON already nulls out above. The build script validates structure, so this is purely defensive.
+			// A missing table → treat as no override (the chain falls back to WORLD_DEFAULT); malformed JSON
+			// already nulls out above. The build script validates structure, so this is purely defensive.
 			value = null
 		}
 

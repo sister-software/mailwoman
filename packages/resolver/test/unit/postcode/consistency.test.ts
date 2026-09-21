@@ -97,8 +97,8 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 
 	it("falls the coordinate back to the postcode when no same-named instance reconciles", async () => {
 		// Only the FAR Saint-Pierre exists — no alternative within the radius → demote to the postcode point.
-		// SP_FAR sits ~577 km from PC, past the 300 km default, so the unbounded configuration is named here. the
-		// default's refusal on this same pair is the next case but one.
+		// SP_FAR sits ~577 km from PC, past the 300 km default, so the unbounded configuration
+		// is named here. the default's refusal on this same pair is the next case but one.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
@@ -115,9 +115,9 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 	})
 
 	it("refuses the fallback past postcodeConsistencyMaxMoveKm and keeps the selected locality", async () => {
-		// SP_FAR sits ~577 km from PC, so the unbounded pass relocates it onto the postcode. Under a 200 km cap the
-		// postcode is the likelier error and the answer stays on the locality the walk selected — still flagged,
-		// because the two components did disagree.
+		// SP_FAR sits ~577 km from PC, so the unbounded pass relocates it onto the postcode.
+		// Under a 200 km cap the postcode is the likelier error and the answer stays on the
+		// locality the walk selected — still flagged, because the two components did disagree.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
@@ -136,9 +136,9 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 	})
 
 	it("DEFAULTS the cap to 300 km, so an unset option refuses this 577 km move", async () => {
-		// The default changed from unbounded on 2026-09-15. Measured on 5,300 real addresses the pass's wins are all
-		// step-2 re-picks, so no arm from a cap of zero upward differs from unbounded by a row
-		// (docs/records/evals/2026-09-15-postcode-move-cap.md).
+		// The default changed from unbounded on 2026-09-15. Measured on 5,300 real addresses
+		// the pass's wins are all step-2 re-picks, so no arm from a cap of zero upward differs
+		// from unbounded by a row (docs/records/evals/2026-09-15-postcode-move-cap.md).
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
@@ -171,8 +171,8 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 	})
 
 	it("a cap never blocks the re-pick, which moves to a same-named instance rather than the postcode", async () => {
-		// Step 2 chooses among the locality's own alternatives. Therefore, it cannot produce an id/coordinate disagreement
-		// and the cap has no business refusing it.
+		// Step 2 chooses among the locality's own alternatives.
+		// Therefore, it cannot produce an id/coordinate disagreement and the cap has no business refusing it.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR, SP_NEAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {

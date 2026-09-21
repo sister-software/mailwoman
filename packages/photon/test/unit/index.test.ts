@@ -35,8 +35,8 @@ const reverseEngine: PhotonEngine = {
 }
 
 // #1014 — forward /api must decorate properties from the resolved gazetteer place (proper-cased
-// names + ancestry + country), not the parsed input span, and carry osm_key/osm_value/type so
-// Photon client libs (leaflet-control-geocoder, @openrunner/photon-geocoder) don't TypeError.
+// names + ancestry + country), not the parsed input span, and carry osm_key/osm_value/type
+// so Photon client libs (leaflet-control-geocoder, @openrunner/photon-geocoder) don't TypeError.
 
 test("forward: name/city from the RESOLVED gazetteer name, not the parsed span casing", () => {
 	// The parse span was lowercase "paris"; the resolver's canonical name is "Paris".
@@ -107,9 +107,9 @@ test("forward: a street-primary result names the street and types as street", ()
 })
 
 // #1041 — a rooftop / interpolated result must render house-grade. Upstream komoot/photon labels a bare
-// residential address point `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}` with no
-// `name` (verified against photon.komoot.io). Without this a rooftop inherits the admin ancestry's `type:city`
-// and a client zooms to city scale on a doorstep match.
+// residential address point `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}`
+// with no `name` (verified against photon.komoot.io). Without this a rooftop inherits the
+// admin ancestry's `type:city` and a client zooms to city scale on a doorstep match.
 
 test("forward: a house-grade (rooftop) result decorates type:house + housenumber/street (#1041)", () => {
 	const props = photonForwardProperties({
@@ -128,8 +128,8 @@ test("forward: a house-grade (rooftop) result decorates type:house + housenumber
 	expect(props.osm_value).toBe("house")
 	expect(props.housenumber).toBe("8")
 	expect(props.street).toBe("Boulevard du Palais")
-	// name is dropped (upstream has none for a bare address point. keeping the city here would double it in the
-	// QGIS FLF label "Paris 8 Boulevard du Palais Paris 75001").
+	// name is dropped (upstream has none for a bare address point. keeping the city here
+	// would double it in the QGIS FLF label "Paris 8 Boulevard du Palais Paris 75001").
 	expect(props.name).toBeUndefined()
 	// The admin fields the ancestry filled are retained — a house result still carries city/postcode/country.
 	expect(props.city).toBe("Paris")
@@ -210,18 +210,20 @@ test("photonForwardFeature: a house-grade input renders a type:house Point Featu
 
 test("photonOSMTags: maps place tiers to the Photon osm schema, with a safe fallback", () => {
 	expect(photonOSMTags("locality")).toEqual({ osm_key: "place", osm_value: "city", type: "city" })
-	expect(photonOSMTags("localadmin")).toEqual({ osm_key: "place", osm_value: "city", type: "city" }) // reverse placetype
+	// reverse placetype
+	expect(photonOSMTags("localadmin")).toEqual({ osm_key: "place", osm_value: "city", type: "city" })
 	expect(photonOSMTags("region")).toEqual({ osm_key: "place", osm_value: "state", type: "state" })
 	expect(photonOSMTags("country")).toEqual({ osm_key: "place", osm_value: "country", type: "country" })
 	expect(photonOSMTags("whatever")).toEqual({ osm_key: "place", osm_value: "yes", type: "other" }) // unknown → fallback
 })
 
 test("photonOSMTags: every /reverse descent tier has a projection (#1041 close-out)", () => {
-	// The reverse path's deepest placetype comes from resolver-wof-sqlite's DESCENT_TIERS ladder
-	// (county → localadmin → locality → borough → neighbourhood → microhood — keep this list in sync with
-	// resolver-wof-sqlite/reverse.ts). A reverse result can never be address-grade: the ladder caps at
-	// microhood, so the issue's "/reverse parity for address points" checkbox is structurally moot — but
-	// every tier the ladder can return must decorate with real tags, never the `place/yes/other` default.
+	// The reverse path's deepest placetype comes from resolver-wof-sqlite's
+	// DESCENT_TIERS ladder (county → localadmin → locality → borough → neighbourhood
+	// → microhood — keep this list in sync with resolver-wof-sqlite/reverse.ts).
+	// A reverse result can never be address-grade: the ladder caps at microhood, so the issue's
+	// "/reverse parity for address points" checkbox is structurally moot — but every tier the
+	// ladder can return must decorate with real tags, never the `place/yes/other` default.
 	const descentTiers = ["county", "localadmin", "locality", "borough", "neighbourhood", "microhood"]
 
 	for (const tier of descentTiers) {
@@ -232,8 +234,8 @@ test("photonOSMTags: every /reverse descent tier has a projection (#1041 close-o
 })
 
 test("interface: /api and /reverse derive the same osm tags for a place (#1014 checkbox 4)", () => {
-	// The forward projection (primary=locality) and the /reverse path (deepest.placetype=locality) both go through
-	// photonOSMTags, so they can't drift.
+	// The forward projection (primary=locality) and the /reverse path (deepest.placetype=locality)
+	// both go through photonOSMTags, so they can't drift.
 	const fwd = photonForwardProperties({ lat: 0, lon: 0, places: [{ tag: "locality", name: "X" }] })
 	expect({ osm_key: fwd.osm_key, osm_value: fwd.osm_value, type: fwd.type }).toEqual(photonOSMTags("locality"))
 })

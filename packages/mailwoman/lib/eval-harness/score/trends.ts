@@ -23,8 +23,8 @@ import { pyRound } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 
 /**
- * Tags in report order. Anything the ledger carries that is absent here still appears, sorted, after the listed ones —
- * a new tag shows up on its own rather than waiting for this list to grow.
+ * Tags in report order. Anything the ledger carries that is absent here still appears, sorted,
+ * after the listed ones — a new tag shows up on its own rather than waiting for this list to grow.
  */
 const TAG_ORDER = [
 	"micro",
@@ -44,8 +44,8 @@ const TAG_ORDER = [
 ]
 
 /**
- * Locales with a trend table, in report order. Also the discriminator for the v4.4.0-era ledger shape, which put the
- * locale dict straight at the top of `metrics`.
+ * Locales with a trend table, in report order. Also the discriminator for the v4.4.0-era
+ * ledger shape, which put the locale dict straight at the top of `metrics`.
  */
 const LOCALES = ["us", "fr", "de"]
 
@@ -55,8 +55,8 @@ const LOCALES = ["us", "fr", "de"]
 const G_PRECISION = 6
 
 /**
- * `%g`'s lower crossover exponent. C switches to scientific notation below 1e-4 and at or above `10 ** G_PRECISION`;
- * both bounds come from the format rather than from anything about eval scores.
+ * `%g`'s lower crossover exponent. C switches to scientific notation below 1e-4 and at or above
+ * `10 ** G_PRECISION`; both bounds come from the format rather than from anything about eval scores.
  */
 const G_MIN_FIXED_EXPONENT = -4
 
@@ -101,9 +101,9 @@ function pyG(v: number): string {
 type LocaleScores = Record<string, Record<string, number>>
 
 /**
- * One ledger run → `{locale: {tag: score}}` on the percent scale, across every era the ledger has carried: a
- * `per_component*` container, a bare locale dict (the v4.4.0 era), or the pre-locale flat `tag → {f1}` map on the 0–1
- * scale.
+ * One ledger run → `{locale: {tag: score}}` on the percent scale, across every era the
+ * ledger has carried: a `per_component*` container, a bare locale dict (the v4.4.0 era),
+ * or the pre-locale flat `tag → {f1}` map on the 0–1 scale.
  */
 function normalize(run: Record<string, unknown>): LocaleScores {
 	const metrics = (run.metrics as Record<string, unknown>) || {}
@@ -173,8 +173,8 @@ export interface ScoreTrendsOptions {
 export interface ScoreTrendsResult {
 	outPath: string
 	/**
-	 * Versions that reached the table — ledger rows carrying no recognizable per-tag metrics are skipped, so this sits
-	 * below `runs` whenever the ledger holds a shape this cannot read.
+	 * Versions that reached the table — ledger rows carrying no recognizable per-tag metrics are
+	 * skipped, so this sits below `runs` whenever the ledger holds a shape this cannot read.
 	 */
 	versions: number
 	/**

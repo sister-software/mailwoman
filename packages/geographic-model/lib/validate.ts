@@ -96,8 +96,8 @@ const DERIVED_FACT_FIELDS = [
 const DERIVATION_INPUT_FIELDS = ["kind", "id"] as const
 
 /**
- * ISO 3166-1 alpha-2, upper case. A lower-case or three-letter value is an authoring mistake that would otherwise scope
- * a claim to a country nothing else in the system names.
+ * ISO 3166-1 alpha-2, upper case. A lower-case or three-letter value is an authoring mistake
+ * that would otherwise scope a claim to a country nothing else in the system names.
  */
 const COUNTRY_PATTERN = /^[A-Z]{2}$/
 
@@ -450,16 +450,18 @@ function collectIssues(input: unknown): ValidationIssue[] {
 /**
  * Validate an authored geographic-model document.
  *
- * Returns the document whole, or every reason it is not one. Issues arrive in traversal order — shape issues per record
- * in table order, then whole-table reference issues — so two runs over the same input produce the same list.
+ * Returns the document whole, or every reason it is not one.
+ * Issues arrive in traversal order — shape issues per record in table order,
+ * then whole-table reference issues — so two runs over the same input produce the same list.
  */
 export function validateGeographicModelDocument(input: unknown): ValidationResult {
 	const issues = collectIssues(input)
 
 	if (issues.length) return { ok: false, issues }
 
-	// A clean input is the document — the validator reads, it never rewrites. Keeping the assertion in this function,
-	// where `input` is still `unknown`, is what makes it a single step rather than a cast through `unknown`.
+	// A clean input is the document — the validator reads, it never rewrites.
+	// Keeping the assertion in this function, where `input` is still `unknown`,
+	// is what makes it a single step rather than a cast through `unknown`.
 	return { ok: true, document: input as GeographicModelDocument }
 }
 
@@ -471,8 +473,9 @@ export function formatValidationIssues(issues: readonly ValidationIssue[]): stri
 }
 
 /**
- * Thrown by {@link parseGeographicModelDocument}. Carries the whole issue list, and states the whole issue list in its
- * message, so a caller that only ever prints `error.message` still sees every violation.
+ * Thrown by {@link parseGeographicModelDocument}. Carries the whole issue list,
+ * and states the whole issue list in its message, so a caller that only ever
+ * prints `error.message` still sees every violation.
  */
 export class GeographicModelValidationError extends Error {
 	readonly issues: readonly ValidationIssue[]
@@ -486,9 +489,9 @@ export class GeographicModelValidationError extends Error {
 }
 
 /**
- * Validate and return an authored document, throwing {@link GeographicModelValidationError} with every violation if it
- * does not validate. The throwing form is for callers with no partial-result behavior to offer — a compiler, a build
- * step, a test.
+ * Validate and return an authored document, throwing {@link GeographicModelValidationError}
+ * with every violation if it does not validate. The throwing form is for callers with
+ * no partial-result behavior to offer — a compiler, a build step, a test.
  */
 export function parseGeographicModelDocument(input: unknown): GeographicModelDocument {
 	const result = validateGeographicModelDocument(input)

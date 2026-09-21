@@ -15,7 +15,8 @@ import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
- * A separate sampler bucket so a receipt measures these reviewed after-locality rows and no other postcode placement.
+ * A separate sampler bucket so a receipt measures these reviewed after-locality rows
+ * and no other postcode placement.
  */
 export const REVIEWED_POSTCODE_TAIL_SOURCE = "synth-reviewed-postcode-tail"
 
@@ -151,7 +152,8 @@ export function reviewedPostcodeTailVariants(tuple: ReviewedPostcodeTuple): Vari
 }
 
 /**
- * Emit bounded surface variants of the committed reviewed facts without constructing another geographic join.
+ * Emit bounded surface variants of the committed reviewed facts without
+ * constructing another geographic join.
  */
 export const reviewedPostcodeTailRecipe: CorpusRecipe = {
 	name: "reviewed-postcode-tail",

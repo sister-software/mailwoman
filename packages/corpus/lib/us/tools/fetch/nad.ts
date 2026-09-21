@@ -95,9 +95,9 @@ interface ChunkManifest {
 }
 
 /**
- * ArcGIS paged reads. Retry is on: the loop walks objectid ranges to completion, so one throttled page previously ended
- * a multi-hour national download. No rate budget — pages are requested one at a time and each assembles thousands of
- * records server-side.
+ * ArcGIS paged reads. Retry is on: the loop walks objectid ranges to completion, so one throttled page
+ * previously ended a multi-hour national download. No rate budget — pages are requested
+ * one at a time and each assembles thousands of records server-side.
  */
 const nadClient = new APIClient({
 	displayName: "nad",
@@ -140,10 +140,12 @@ async function discoverTotalCount(): Promise<number> {
 }
 
 /**
- * Fetch a single chunk by paging through its OID range with bounded concurrency. Returns the count of records written
- * and the count of pages that errored. The caller decides whether to mark the chunk complete based on errors === 0.
+ * Fetch a single chunk by paging through its OID range with bounded concurrency.
+ * Returns the count of records written and the count of pages that errored.
+ * The caller decides whether to mark the chunk complete based on errors === 0.
  *
- * Note(phase1): this is a JSON API pager rather than a file download — the shared `downloadToFile` doesn't apply here.
+ * Note(phase1): this is a JSON API pager rather than a file download —
+ * the shared `downloadToFile` doesn't apply here.
  */
 async function fetchChunk(
 	chunkPath: string,

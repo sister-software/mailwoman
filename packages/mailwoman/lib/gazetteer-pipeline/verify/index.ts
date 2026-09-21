@@ -57,15 +57,16 @@ export function loadDefaultBaseline(): VerifyBaseline {
 const EXTENT_SPOT_COUNTRIES = ["BE", "AT", "CH", "LU"] as const
 
 /**
- * Run the structural checks against an (open) admin DB. Pure SQL — no network, no model.
+ * Run the structural checks against an (open) admin DB.
+ * Pure SQL — no network, no model.
  */
 export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline): VerifyResult {
 	const checks: VerifyCheckResult[] = []
 
 	// 1. node-census (#1026): every required (country, placetype) node exists.
 	{
-		// One grouped read rather than one probe per (country, placetype): the baseline names ~200 countries,
-		// most with two placetypes.
+		// One grouped read rather than one probe per (country, placetype): the baseline
+		// names ~200 countries, most with two placetypes.
 		const present = new Set<string>()
 
 		for (const row of db
@@ -180,8 +181,9 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 }
 
 /**
- * `[label, lat, lon, expectedISO2]` — EU capitals (no regression) + border cities (the adversarial class) + the
- * reported #1015 Belgian failures. Absorbed from `scripts/reverse-eu-panel.ts`.
+ * `[label, lat, lon, expectedISO2]` — EU capitals (no regression) + border
+ * cities (the adversarial class) + the reported #1015 Belgian failures.
+ * Absorbed from `scripts/reverse-eu-panel.ts`.
  */
 export const REVERSE_PANEL_CASES: ReadonlyArray<readonly [string, number, number, string]> = [
 	["Brussels", 50.8503, 4.3517, "BE"],
@@ -202,8 +204,8 @@ export const REVERSE_PANEL_CASES: ReadonlyArray<readonly [string, number, number
 ]
 
 /**
- * The end-to-end reverse leg: every panel case must land in the expected country. Opens the DB read-only. lazy-imports
- * the resolver (an optional peer).
+ * The end-to-end reverse leg: every panel case must land in the expected country.
+ * Opens the DB read-only. lazy-imports the resolver (an optional peer).
  */
 export async function verifyReversePanel(adminDBPath: string): Promise<VerifyResult> {
 	const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
@@ -226,8 +228,9 @@ export async function verifyReversePanel(adminDBPath: string): Promise<VerifyRes
 }
 
 /**
- * Generate a baseline from an existing DB — the deliberate-update path (review the diff of `verify-baseline.ts` like
- * code). Requires `country` for every country that has one. adds `region` where regions exist.
+ * Generate a baseline from an existing DB — the deliberate-update path
+ * (review the diff of `verify-baseline.ts` like code). Requires `country` for every
+ * country that has one. adds `region` where regions exist.
  */
 export function generateBaseline<DB>(db: DatabaseClient<DB>): VerifyBaseline {
 	const requiredNodes: Record<string, Array<"country" | "region">> = {}

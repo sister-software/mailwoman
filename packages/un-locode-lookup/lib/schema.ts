@@ -8,8 +8,8 @@
  */
 
 /**
- * One UN/locode entry: the country and location codes that form its key, the place name in raw and folded form, and the
- * coordinate pair when the source carries one.
+ * One UN/locode entry: the country and location codes that form its key, the place name in raw
+ * and folded form, and the coordinate pair when the source carries one.
  */
 export interface UNLocodeTable {
 	country: string

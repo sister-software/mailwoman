@@ -21,7 +21,8 @@ import type { RepoContext } from "#check"
 
 export interface TrackedSourceOptions {
 	/**
-	 * Pathspecs in `git ls-files` form (default: every `.ts` / `.tsx`). See {@link pathspecPattern} for the matching rule.
+	 * Pathspecs in `git ls-files` form (default: every `.ts` / `.tsx`).
+	 * See {@link pathspecPattern} for the matching rule.
 	 */
 	globs?: readonly string[]
 	/**
@@ -37,8 +38,8 @@ export interface TrackedSourceOptions {
 	 */
 	includeDeclarations?: boolean
 	/**
-	 * Drop tracked paths absent from the working tree (a deletion staged but not committed), so a sweep never fails on a
-	 * file the next commit removes anyway.
+	 * Drop tracked paths absent from the working tree (a deletion staged but not committed),
+	 * so a sweep never fails on a file the next commit removes anyway.
 	 */
 	existingOnly?: boolean
 }
@@ -46,13 +47,14 @@ export interface TrackedSourceOptions {
 const PATTERN_SPECIALS = /[.+^${}()|[\]\\]/g
 
 /**
- * The regular expression a `git ls-files` pathspec matches, reproduced so a filter over the index answers exactly what
- * the spawned command answered.
+ * The regular expression a `git ls-files` pathspec matches, reproduced so a filter
+ * over the index answers exactly what the spawned command answered.
  *
- * Git matches a wildcard pathspec with fnmatch and without the pathname flag, so `*` crosses `/` and `**` is two stars
- * rather than a directory glob: `scripts/**` followed by `/*.ts` requires a literal `/` after `scripts/`, so it matches
- * `scripts/eval/x.ts` and not `scripts/x.ts`. Measured on this repository: the pathspec listed 31 files, 0 of them at
- * the top of `scripts/`. A pathspec with no wildcard is a leading-path match, as git treats it.
+ * Git matches a wildcard pathspec with fnmatch and without the pathname flag, so `*` crosses `/`
+ * and `**` is two stars rather than a directory glob: `scripts/**` followed by `/*.ts` requires
+ * a literal `/` after `scripts/`, so it matches `scripts/eval/x.ts` and not `scripts/x.ts`.
+ * Measured on this repository: the pathspec listed 31 files, 0 of them at the top of `scripts/`.
+ * A pathspec with no wildcard is a leading-path match, as git treats it.
  */
 export function pathspecPattern(pathspec: string): RegExp {
 	if (!/[*?]/.test(pathspec)) {
@@ -70,8 +72,8 @@ export function pathspecPattern(pathspec: string): RegExp {
 /**
  * The tracked sources of `context`, as absolute paths in `git ls-files` order.
  *
- * `out/` and `node_modules/` path segments are always dropped: the index can carry a stray build artifact, and no check
- * means to read one.
+ * `out/` and `node_modules/` path segments are always dropped: the index can carry
+ * a stray build artifact, and no check means to read one.
  */
 export async function trackedSourcePaths(context: RepoContext, options: TrackedSourceOptions = {}): Promise<string[]> {
 	const { prefix, excludePrefixes } = options

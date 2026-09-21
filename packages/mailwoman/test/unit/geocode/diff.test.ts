@@ -51,8 +51,8 @@ const INPUT = "27 Minories, London EC3N 1DE"
 
 describe("diffGeocode", () => {
 	it("attributes a move to the PARSE when the parse changed", () => {
-		// The resolver was asked a different question. Retrieval is not the suspect and a distance delta alone would
-		// have pointed at it.
+		// The resolver was asked a different question. Retrieval is not the suspect
+		// and a distance delta alone would have pointed at it.
 		const before: GeocodeArm = {
 			tree: tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5, -0.12, 3]),
 			lat: 51.5,
@@ -98,8 +98,9 @@ describe("diffGeocode", () => {
 	})
 
 	it("attributes a move to the TIER when parse and places both held", () => {
-		// The same components fell through to a coarser rung because a rooftop lookup missed. No model change touches
-		// this, and reporting it as a regression against the model wastes a training run.
+		// The same components fell through to a coarser rung because a rooftop lookup missed.
+		// No model change touches this, and reporting it as a regression against
+		// the model wastes a training run.
 		const node = tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5074, -0.1278, 2])
 		const before: GeocodeArm = { tree: node, lat: 51.5074, lon: -0.1278, tier: "address_point", uncertaintyM: 5 }
 		const after: GeocodeArm = { tree: node, lat: 51.5074, lon: -0.1278, tier: "admin", uncertaintyM: 4000 }
@@ -126,8 +127,8 @@ describe("diffGeocode", () => {
 	})
 
 	it("reports retrieval BREADTH even when the span kept its place", () => {
-		// Same answer from 40 candidates instead of 2 is one gazetteer edit from moving. An answer that has not changed
-		// yet is not the same as an answer that is stable.
+		// Same answer from 40 candidates instead of 2 is one gazetteer edit from moving.
+		// An answer that has not changed yet is not the same as an answer that is stable.
 		const before: GeocodeArm = {
 			tree: tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5, -0.12, 2]),
 			lat: 51.5,

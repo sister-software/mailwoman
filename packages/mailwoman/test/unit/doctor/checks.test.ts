@@ -147,10 +147,11 @@ describe("gazetteerCheck (optional)", () => {
 	})
 
 	it("ok on a convention-path candidate.db with no env set", () => {
-		// A fresh consumer runs `data pull candidate` and never exports anything. That used to be the
-		// documented trap — the file on disk, every tool ignoring it — and the fix was an export line.
-		// resolveCandidateDBPath reaches the convention path now, so the same observation is healthy,
-		// and telling the reader to export something would be advice that changes nothing.
+		// A fresh consumer runs `data pull candidate` and never exports anything.
+		// That used to be the documented trap — the file on disk, every tool ignoring it —
+		// and the fix was an export line. resolveCandidateDBPath reaches the convention
+		// path now, so the same observation is healthy, and telling the reader to export
+		// something would be advice that changes nothing.
 		const c = gazetteerCheck({
 			conventionCandidate: "/data/wof/candidate.db",
 			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
@@ -279,10 +280,10 @@ describe("computeExitCode + assembleReport (meaning-of-zero)", () => {
 })
 
 describe("every failing check states its consequence (#1577)", () => {
-	// The point of `consequence` is that a reader can decide whether a red line is worth acting on
-	// today. A check that fails without one has silently opted out of that interface, and nothing else
-	// in the tree would notice — so enumerate the failing branch of every check here rather than
-	// spot-checking one.
+	// The point of `consequence` is that a reader can decide whether a red line is worth
+	// acting on today. A check that fails without one has silently opted out of that
+	// interface, and nothing else in the tree would notice — so enumerate the failing
+	// branch of every check here rather than spot-checking one.
 	const failing: Array<[string, DoctorCheck]> = [
 		["weights absent", weightsCheck({ error: "Could not resolve @mailwoman/neural-weights-en-us" })],
 		[

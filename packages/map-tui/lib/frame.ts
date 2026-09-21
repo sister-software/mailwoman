@@ -7,11 +7,13 @@
 /**
  * Braille frame value + conversion for map-tui's debug view.
  *
- * `rasterizeToFrame` turns an `RGBAGrid` (drawn by ./raster.ts) into a `MapFrame`: one codepoint and one packed color
- * per cell. The braille dither/luminance work is asciify's — `FrameRasterizer` subclasses `AsciifyTerminal` with a
- * no-op sink purely to reach its guarded `_computeBrailleCells`, `_cellChars`, `_cellColors`, so this module never
- * re-implements the dot math. `frameToANSILines` and `overlayText` then work on the plain `MapFrame` value, with no
- * further asciify dependency; `blitFrame` is the path back the other way, for callers driving a live terminal.
+ * `rasterizeToFrame` turns an `RGBAGrid` (drawn by ./raster.ts) into a `MapFrame`:
+ * one codepoint and one packed color per cell. The braille dither/luminance work
+ * is asciify's — `FrameRasterizer` subclasses `AsciifyTerminal` with a no-op sink
+ * purely to reach its guarded `_computeBrailleCells`, `_cellChars`, `_cellColors`,
+ * so this module never re-implements the dot math. `frameToANSILines` and `overlayText`
+ * then work on the plain `MapFrame` value, with no further asciify dependency;
+ * `blitFrame` is the path back the other way, for callers driving a live terminal.
  */
 
 import { AsciifyTerminal, SGR_RESET } from "@sister.software/asciify/tui"
@@ -37,9 +39,10 @@ export interface MapFrame {
 }
 
 /**
- * Reaches asciify's guarded braille conversion from the outside. Constructed fresh per {@link rasterizeToFrame} call —
- * cheap, since the state is just two typed arrays sized to the cell grid. The `write` sink is never invoked: this class
- * only ever calls `_computeBrailleCells` directly, never `rasterize`/`flush`.
+ * Reaches asciify's guarded braille conversion from the outside.
+ * Constructed fresh per {@link rasterizeToFrame} call — cheap, since the state is
+ * just two typed arrays sized to the cell grid. The `write` sink is never invoked:
+ * this class only ever calls `_computeBrailleCells` directly, never `rasterize`/`flush`.
  */
 class FrameRasterizer extends AsciifyTerminal {
 	constructor(columns: number, rows: number) {
@@ -55,10 +58,11 @@ class FrameRasterizer extends AsciifyTerminal {
 }
 
 /**
- * Converts a 2×4-subpixel rgba grid into braille cells. Grid must be `columns * 2` x `rows * 4`.
+ * Converts a 2×4-subpixel rgba grid into braille cells.
+ * Grid must be `columns * 2` x `rows * 4`.
  *
- * @throws If the grid's dimensions don't match `columns * 2` x `rows * 4` — a caller sizing bug rather than something
- *   to silently clip.
+ * @throws If the grid's dimensions don't match `columns * 2` x `rows * 4` —
+ *   a caller sizing bug rather than something to silently clip.
  */
 export function rasterizeToFrame(grid: RGBAGrid, columns: number, rows: number, attribution: string): MapFrame {
 	if (grid.width !== columns * 2 || grid.height !== rows * 4) {
@@ -76,9 +80,10 @@ export function rasterizeToFrame(grid: RGBAGrid, columns: number, rows: number, 
 /**
  * One SGR-styled string per row. `color: false` strips styling (NO_COLOR consumers).
  *
- * Inkless cells (packed color 0) never emit a color escape, matching asciify's own damage emitter — a cell going from
- * inked to inkless shouldn't touch color state. Each styled line ends with the SGR reset so a truncated terminal write
- * never bleeds color into whatever follows.
+ * Inkless cells (packed color 0) never emit a color escape, matching asciify's own
+ * damage emitter — a cell going from inked to inkless shouldn't touch color state.
+ * Each styled line ends with the SGR reset so a truncated terminal write never
+ * bleeds color into whatever follows.
  */
 export function frameToANSILines(frame: MapFrame, options?: { color?: boolean }): string[] {
 	const colorEnabled = options?.color ?? true
@@ -111,9 +116,10 @@ export function frameToANSILines(frame: MapFrame, options?: { color?: boolean })
 /**
  * Writes text into cells (clipped); occupied is the label-collision bitmap, updated in place.
  *
- * When `occupied` is given, every target cell plus one cell of padding on each side is checked before anything is
- * written — a single colliding cell rejects the whole label rather than partially overlaying it. Without `occupied`,
- * writes proceed unconditionally (still clipped to the frame's bounds) and always report success.
+ * When `occupied` is given, every target cell plus one cell of padding on each side is
+ * checked before anything is written — a single colliding cell rejects the whole label
+ * rather than partially overlaying it. Without `occupied`, writes proceed unconditionally
+ * (still clipped to the frame's bounds) and always report success.
  */
 export function overlayText(
 	frame: MapFrame,
@@ -160,25 +166,28 @@ export function overlayText(
 }
 
 /**
- * Packs RGB channels into the frame's 0xRRGGBB color representation. Shared with Task 8's marker colors so both sides
- * of the frame boundary agree on the packing.
+ * Packs RGB channels into the frame's 0xRRGGBB color representation.
+ * Shared with Task 8's marker colors so both sides of the frame boundary agree on the packing.
  */
 export function rgbToPacked(color: RGB): number {
 	return (color[0] << 16) | (color[1] << 8) | color[2]
 }
 
 /**
- * Codepoint written for a cell the frame left empty. `MapFrame` stores 0 there; `AsciifyTerminal` expects a real
- * character, and normalizes a space to the inkless color itself.
+ * Codepoint written for a cell the frame left empty. `MapFrame` stores 0 there;
+ * `AsciifyTerminal` expects a real character, and normalizes a space to the inkless color itself.
  */
 const SPACE_CODEPOINT = 0x20
 
 /**
- * Writes a frame's cells into an `AsciifyTerminal`'s current frame. Call `flush()` afterwards to emit the damage.
+ * Writes a frame's cells into an `AsciifyTerminal`'s current frame.
+ * Call `flush()` afterwards to emit the damage.
  *
- * The frame's packed color is the exact representation asciify canonicalizes truecolor to, so this is a copy and not a
- * conversion — the channels are unpacked here only because {@linkcode AsciifyTerminal.setCell} takes them apart. Cells
- * beyond the terminal's own grid are dropped by `setCell`, so a frame larger than the pane clips rather than throws.
+ * The frame's packed color is the exact representation asciify canonicalizes
+ * truecolor to, so this is a copy and not a conversion — the channels are unpacked
+ * here only because {@linkcode AsciifyTerminal.setCell} takes them apart.
+ * Cells beyond the terminal's own grid are dropped by `setCell`, so a frame
+ * larger than the pane clips rather than throws.
  */
 export function blitFrame(terminal: AsciifyTerminal, frame: MapFrame): void {
 	for (let row = 0; row < frame.rows; row++) {

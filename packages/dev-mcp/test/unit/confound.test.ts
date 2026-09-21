@@ -26,8 +26,9 @@ describe("checkConfounds", () => {
 	})
 
 	it("catches the documented backend/country-scope confound", () => {
-		// resolver-backends.mdx: under --country-scope auto, switching backend also switches country scoping, and its
-		// own table shows the same Paris address landing in Texas or France depending which variable actually moved.
+		// resolver-backends.mdx: under --country-scope auto, switching backend also switches
+		// country scoping, and its own table shows the same Paris address landing in Texas
+		// or France depending which variable actually moved.
 		const reading = checkConfounds(
 			{ backend: "fts", countryScope: "locale" },
 			{ backend: "candidate", countryScope: "none" },
@@ -66,8 +67,8 @@ describe("checkConfounds", () => {
 
 describe("assertComparableField", () => {
 	it("refuses the cross-backend score fields", () => {
-		// Refusal rather than a warning: within either backend the wrong answers' range sits inside the correct answers' range
-		// with a higher mean, so no threshold on it means anything.
+		// Refusal rather than a warning: within either backend the wrong answers' range sits inside
+		// the correct answers' range with a higher mean, so no threshold on it means anything.
 		expect(() => assertComparableField("resolver_score")).toThrow(/not comparable/)
 		expect(() => assertComparableField("prominence")).toThrow(/not comparable/)
 	})
@@ -79,10 +80,11 @@ describe("assertComparableField", () => {
 
 describe("the declared vocabulary", () => {
 	it("grades a correctly-declared single change CLEAN, not ambiguous", () => {
-		// The defect this closes, found 2026-08-16 by running a real A/B: `variable: ["place_country"]` is the spelling
-		// the tool schema documents, and the effective configs differ at `placeCountry`. Compared raw, the same change was
-		// counted twice under two spellings — once as declared-but-unmoved, once as moved-but-undeclared — so every
-		// honest single-change comparison reported attribution ambiguous.
+		// The defect this closes, found 2026-08-16 by running a real A/B:
+		// `variable: ["place_country"]` is the spelling the tool schema documents, and the
+		// effective configs differ at `placeCountry`. Compared raw, the same change was counted
+		// twice under two spellings — once as declared-but-unmoved, once as moved-but-undeclared —
+		// so every honest single-change comparison reported attribution ambiguous.
 		const reading = checkConfounds({ placeCountry: true }, { placeCountry: false }, ["place_country"])
 
 		expect(reading.variable_isolation).toBe("clean")
@@ -91,8 +93,8 @@ describe("the declared vocabulary", () => {
 	})
 
 	it("still reports the caller's own spelling back to them", () => {
-		// Filtered on the translated key, reported in the spelling they typed — naming a key they never wrote is its own
-		// small confusion.
+		// Filtered on the translated key, reported in the spelling they typed —
+		// naming a key they never wrote is its own small confusion.
 		const reading = checkConfounds({ placeCountry: true }, { placeCountry: true }, ["place_country"])
 
 		expect(reading.declared_but_unmoved).toEqual(["place_country"])

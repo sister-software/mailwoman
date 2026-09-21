@@ -18,12 +18,13 @@ import type { SystemCode } from "@mailwoman/codex"
 import { LOCALE_COUNTRIES } from "#labels"
 import { softmax } from "#viterbi"
 
-// The pinned array lives in labels.ts beside the label vocabulary it mirrors. this module keeps its
-// historical export name.
+// The pinned array lives in labels.ts beside the label vocabulary it mirrors.
+// this module keeps its historical export name.
 export { LOCALE_COUNTRIES } from "#labels"
 
 /**
- * The locale head's confident argmax over {@link LOCALE_COUNTRIES}, or null below the threshold — the shared core of
+ * The locale head's confident argmax over {@link LOCALE_COUNTRIES},
+ * or null below the threshold — the shared core of
  * {@link detectAddressSystem} and {@link confidentLocaleCountry}.
  */
 function localeVerdict(
@@ -68,8 +69,8 @@ export interface DetectedSystem {
  * Read the locale head's posterior into a confident `SystemCode`, or null.
  *
  * @param localeLogits The raw `locale_logits` output (LOCALE_COUNTRIES order).
- * @param threshold Minimum softmax probability to act on (default 0.8 — the head's held-out accuracy is ~0.98, so 0.8
- *   trades a little recall for never masking on a coin flip).
+ * @param threshold Minimum softmax probability to act on (default 0.8 — the head's held-out
+ *   accuracy is ~0.98, so 0.8 trades a little recall for never masking on a coin flip).
  */
 export function detectAddressSystem(
 	localeLogits: readonly number[] | undefined,
@@ -86,11 +87,12 @@ export function detectAddressSystem(
 }
 
 /**
- * The locale head's confident country verdict, or null — {@link detectAddressSystem} minus the system mapping, so the
- * three head countries without a `SystemCode` (ES/IT/NL) still yield a verdict. Same threshold posture: below it the
- * head abstains rather than acting on a coin flip. The head is a 9-way classifier — its verdict is evidence that the
- * text is shaped like that country's addressing, never a resolved country (a Chinese address may read GB: right about
- * "not the locale's country", wrong about which).
+ * The locale head's confident country verdict, or null — {@link detectAddressSystem}
+ * minus the system mapping, so the three head countries without a `SystemCode`
+ * (ES/IT/NL) still yield a verdict. Same threshold posture: below it the head abstains
+ * rather than acting on a coin flip. The head is a 9-way classifier — its verdict is
+ * evidence that the text is shaped like that country's addressing, never a resolved country
+ * (a Chinese address may read GB: right about "not the locale's country", wrong about which).
  */
 export function confidentLocaleCountry(
 	localeLogits: readonly number[] | undefined,
@@ -100,9 +102,10 @@ export function confidentLocaleCountry(
 }
 
 /**
- * Resolve which addressing system's conventions apply for one parse (#511 Tier A): a caller-pinned `SystemCode` wins;
- * `"auto"` reads the locale head under {@link detectAddressSystem}'s confidence bar; `undefined` = conventions off —
- * null system, no constraints, and the parse stays byte-identical to the pre-conventions path.
+ * Resolve which addressing system's conventions apply for one parse (#511 Tier A):
+ * a caller-pinned `SystemCode` wins; `"auto"` reads the locale head under
+ * {@link detectAddressSystem}'s confidence bar; `undefined` = conventions off — null system,
+ * no constraints, and the parse stays byte-identical to the pre-conventions path.
  */
 export function resolveSystemVerdict(
 	conventionsOpt: SystemCode | "auto" | undefined,

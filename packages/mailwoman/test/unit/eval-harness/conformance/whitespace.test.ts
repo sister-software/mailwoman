@@ -40,8 +40,9 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * Committed board inputs, verbatim. Quoted here rather than loaded so a test failure shows the exact text under
- * discussion; `whitespace-suite.test.ts` is what proves the suite's own rows still match the corpus.
+ * Committed board inputs, verbatim. Quoted here rather than loaded so a test
+ * failure shows the exact text under discussion; `whitespace-suite.test.ts` is what
+ * proves the suite's own rows still match the corpus.
  */
 const GB_DOWNING = "10 Downing Street, London SW1A 2AA"
 const GB_BARE_POSTCODE = "N7 0BT"
@@ -94,8 +95,9 @@ describe("whitespace transformations", () => {
 	})
 
 	it("leaves the postcode's own space alone on both run transformations", () => {
-		// The two renderings above already show it. asserted here as the claim rather than as a side effect of a longer
-		// string, because it is the whole reason the run transformations are not a plain `replaceAll`.
+		// The two renderings above already show it. asserted here as the claim
+		// rather than as a side effect of a longer string, because it is the whole reason
+		// the run transformations are not a plain `replaceAll`.
 		expect(WHITESPACE_TRANSFORMATION_BY_NAME.repeated(GB_DOWNING)).toContain("SW1A 2AA")
 		expect(WHITESPACE_TRANSFORMATION_BY_NAME.tabbed(GB_DOWNING)).toContain("SW1A 2AA")
 		expect(WHITESPACE_TRANSFORMATION_BY_NAME.repeated(GB_BARE_POSTCODE)).toBe(GB_BARE_POSTCODE)
@@ -276,8 +278,9 @@ describe("auditWhitespaceSuite", () => {
 
 describe("a seeded whitespace regression", () => {
 	/**
-	 * The pipeline stand-in that fails only on the tabbed arm — the shape the live finding takes. Seeding the regression
-	 * rather than waiting for one is what proves the failure line carries enough to diagnose from.
+	 * The pipeline stand-in that fails only on the tabbed arm — the shape the live finding takes.
+	 * Seeding the regression rather than waiting for one is what proves the failure
+	 * line carries enough to diagnose from.
 	 */
 	const observe: ConformanceObserver = async (query) => {
 		const tabbed = query.includes("\t")

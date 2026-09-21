@@ -45,8 +45,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 		for (const record of records) {
 			const file = `${record.workspace}/package.json`
 
-			// A base this repository does not publish cannot be resolved by a consumer either, and the overlay's
-			// inherited lineage reads unresolved rather than empty.
+			// A base this repository does not publish cannot be resolved by a consumer either,
+			// and the overlay's inherited lineage reads unresolved rather than empty.
 			if (record.baseWeights && !versionByPackage.has(record.baseWeights)) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
@@ -63,8 +63,9 @@ export const weightsReconciliationCheck: RepoCheck = {
 				})
 			}
 
-			// Every workspace releases in lockstep, so an overlay pinned to a base at another version means the release
-			// did not land whole and a tarball would freeze `workspace:*` against the wrong sibling.
+			// Every workspace releases in lockstep, so an overlay pinned to a base at
+			// another version means the release did not land whole and a tarball would
+			// freeze `workspace:*` against the wrong sibling.
 			if (record.baseWeights) {
 				const baseVersion = versionByPackage.get(record.baseWeights)
 
@@ -88,11 +89,12 @@ export const weightsReconciliationCheck: RepoCheck = {
 				continue
 			}
 
-			// A digest against an artifact the manifest no longer declares describes a tarball this package stopped
-			// shipping, and a reader checking it would find nothing to check.
+			// A digest against an artifact the manifest no longer declares describes a tarball
+			// this package stopped shipping, and a reader checking it would find nothing to check.
 			//
-			// A `$`-prefixed key is the annotation convention these cards use throughout — `$comment`, `$comment_661` —
-			// and names no file. Reading one as a filename would report a defect in every card that documents itself.
+			// A `$`-prefixed key is the annotation convention these cards use throughout —
+			// `$comment`, `$comment_661` — and names no file. Reading one as a filename
+			// would report a defect in every card that documents itself.
 			for (const digested of Object.keys(card.files_md5 ?? {})) {
 				if (digested.startsWith("$")) continue
 
@@ -107,8 +109,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 
 			const manifest = await readPackageJSON(String(resolvePath(context.repoRoot, record.workspace, "package.json")))
 
-			// A package declaring a base and shipping its own graph is two claims about where its rows are decoded, and
-			// `resolveWeights` reads one of them.
+			// A package declaring a base and shipping its own graph is two claims about
+			// where its rows are decoded, and `resolveWeights` reads one of them.
 			if (record.baseWeights && Array.isArray(manifest.files) && manifest.files.includes("model.onnx")) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,

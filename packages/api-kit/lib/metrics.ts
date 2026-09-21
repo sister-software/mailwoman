@@ -31,8 +31,8 @@ let errors = 0
 const startedAt = Date.now()
 
 /**
- * Record one completed timed operation: its wall-clock latency and which tier produced it (or `"error"`). Tier keys are
- * created on first use; "error" is reserved and counts toward errors instead of a tier.
+ * Record one completed timed operation: its wall-clock latency and which tier produced it (or `"error"`).
+ * Tier keys are created on first use; "error" is reserved and counts toward errors instead of a tier.
  */
 export function recordTimed(latencyMs: number, tier: string): void {
 	total++
@@ -52,8 +52,9 @@ export function recordTimed(latencyMs: number, tier: string): void {
 }
 
 /**
- * A latency percentile as milliseconds on a wire format: two decimals. The caller sorts once per snapshot and
- * guarantees a non-empty sample, so `percentileSorted`'s `null` is a caller error here, never a reading.
+ * A latency percentile as milliseconds on a wire format: two decimals.
+ * The caller sorts once per snapshot and guarantees a non-empty sample,
+ * so `percentileSorted`'s `null` is a caller error here, never a reading.
  */
 function latencyPercentile(sorted: readonly number[], p: number): number {
 	const value = percentileSorted(sorted, p)
@@ -69,8 +70,8 @@ export interface MetricsSnapshot {
 		total: number
 		errors: number
 		/**
-		 * Per-tier counts. Keys are created lazily on the first `recordTimed` call for that tier — a tier never recorded is
-		 * absent rather than zero.
+		 * Per-tier counts. Keys are created lazily on the first `recordTimed` call for
+		 * that tier — a tier never recorded is absent rather than zero.
 		 */
 		tiers: Record<string, number>
 		latency_ms: { p50: number; p90: number; p99: number; max: number } | null

@@ -25,8 +25,8 @@ const COORD_TRIPLE_LENGTH = 3
 /**
  * An ordered pair of coordinates in the form of [longitude, latitude].
  *
- * Note that unlike the typical order, GeoJSON coordinates are in the order of [longitude, latitude] to match the order
- * of [x, y] in Cartesian coordinates.
+ * Note that unlike the typical order, GeoJSON coordinates are in the order of
+ * [longitude, latitude] to match the order of [x, y] in Cartesian coordinates.
  *
  * @category Position
  * @category GeoJSON

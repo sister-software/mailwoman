@@ -44,33 +44,37 @@ import type { Kysely } from "kysely"
 export interface PlaceImportanceTable {
 	id: number
 	/**
-	 * Population-anchored referential likelihood in [0, 1] — see {@link referentialFromPopulation}. not NULL because it is
-	 * always derivable: a place with no population row scores 0, which here genuinely means "no population evidence", the
-	 * same state the ranking has always treated as "no boost, never a penalty".
+	 * Population-anchored referential likelihood in [0, 1] — see {@link referentialFromPopulation}.
+	 * not NULL because it is always derivable: a place with no population row scores 0,
+	 * which here genuinely means "no population evidence", the same state the ranking
+	 * has always treated as "no boost, never a penalty".
 	 */
 	referential: number
 	/**
-	 * Fan-out-guarded Wikipedia importance in [0, 1], or NULL when this place has no surviving concordance. NULL is
-	 * absence — never coalesce it to 0 in a consumer, and never rank on it at all.
+	 * Fan-out-guarded Wikipedia importance in [0, 1], or NULL when this place has no surviving concordance.
+	 * NULL is absence — never coalesce it to 0 in a consumer, and never rank on it at all.
 	 */
 	encyclopedic: number | null
 	/**
-	 * Deprecated — the pre-split conflation, written by {@link blendImportance} so the bare-toponym fame consumer (#28)
-	 * keeps one cross-bearer scale. New code reads {@link PlaceImportanceTable.referential} (to rank) or
+	 * Deprecated — the pre-split conflation, written by {@link blendImportance}
+	 * so the bare-toponym fame consumer (#28) keeps one cross-bearer scale.
+	 * New code reads {@link PlaceImportanceTable.referential} (to rank) or
 	 * {@link PlaceImportanceTable.encyclopedic} (to display).
 	 */
 	importance: number
 }
 
 /**
- * The `place_importance` table of a WOF admin database, for `new DatabaseClient<PlaceImportanceDatabase>(...)`.
+ * The `place_importance` table of a WOF admin database,
+ * for `new DatabaseClient<PlaceImportanceDatabase>(...)`.
  */
 export interface PlaceImportanceDatabase {
 	place_importance: PlaceImportanceTable
 }
 
 /**
- * The columns in declaration order. The builder's insert derives its column list from this, so a field added to
+ * The columns in declaration order. The builder's insert derives its column
+ * list from this, so a field added to
  * {@link PlaceImportanceTable} without a matching DDL column is a compile error at the insert site.
  */
 export const PLACE_IMPORTANCE_COLUMNS = [
@@ -81,8 +85,8 @@ export const PLACE_IMPORTANCE_COLUMNS = [
 ] as const satisfies readonly (keyof PlaceImportanceTable)[]
 
 /**
- * Create `place_importance` at the split schema. Drops any existing table first — this is a rebuild-in-place step of
- * `mailwoman gazetteer importance`, never a migration.
+ * Create `place_importance` at the split schema. Drops any existing table first —
+ * this is a rebuild-in-place step of `mailwoman gazetteer importance`, never a migration.
  */
 export async function createPlaceImportanceTable(db: Kysely<PlaceImportanceDatabase>): Promise<void> {
 	await db.schema.dropTable("place_importance").ifExists().execute()
@@ -101,9 +105,10 @@ export async function createPlaceImportanceTable(db: Kysely<PlaceImportanceDatab
 //#region The referential derivation
 
 /**
- * Re-exported from `@mailwoman/core/resolver`. It is where the derivation lives. Therefore, that `@mailwoman/resolver`
- * (backend-agnostic — it cannot import this package) reads the same number. Re-exported here so the schema module stays
- * the one-stop read for the table: the column and the function that fills it are one hop apart.
+ * Re-exported from `@mailwoman/core/resolver`. It is where the derivation lives.
+ * Therefore, that `@mailwoman/resolver` (backend-agnostic — it cannot import this package)
+ * reads the same number. Re-exported here so the schema module stays the one-stop read
+ * for the table: the column and the function that fills it are one hop apart.
  */
 
 //#endregion
@@ -111,41 +116,45 @@ export async function createPlaceImportanceTable(db: Kysely<PlaceImportanceDatab
 //#region The legacy blend
 
 /**
- * The most the encyclopedic channel may raise a place's blended importance above its population-anchored referential
- * score.
+ * The most the encyclopedic channel may raise a place's blended importance above
+ * its population-anchored referential score.
  *
- * In referential units 0.25 is 3.5 population doublings (the referential curve divides log2 by 14), so an article can
- * promote a place as if it were up to ~11x its recorded population — never more. The bound exists because the two
- * channels' scales cross at the article floor: merely having a Wikipedia article scores ~0.25–0.35, which exceeds the
- * referential score of a mid-size town. Therefore, an unbounded blend ranks a 136-person village with an article above
- * a 16,026-person town without one.
+ * In referential units 0.25 is 3.5 population doublings (the referential curve divides log2 by 14),
+ * so an article can promote a place as if it were up to ~11x its recorded population —
+ * never more. The bound exists because the two channels' scales cross at the article floor:
+ * merely having a Wikipedia article scores ~0.25–0.35, which exceeds the referential
+ * score of a mid-size town. Therefore, an unbounded blend ranks a 136-person village
+ * with an article above a 16,026-person town without one.
  *
  * The value is bracketed by two decided contests, measured on the 2026-08-24 staging build:
  *
- * - `> 0.2282`, or bare `Whitby` stops answering Whitby GB (pop 13,130, referential 0.2729, encyclopedic 0.5496) over
- *   Whitby CA (pop 128,377, referential 0.5011) — the #28 design case the fame prior exists to serve.
- * - `< 0.2790`, or bare `Tó`/`To` answers Tó PT (pop 136, referential 0.0131, encyclopedic 0.3375) over Tô BF (pop
- *   16,026, no article) — the `bf-gloss-to-*` board pair.
+ * - `> 0.2282`, or bare `Whitby` stops answering Whitby GB
+ *   (pop 13,130, referential 0.2729, encyclopedic 0.5496) over Whitby CA
+ *   (pop 128,377, referential 0.5011) — the #28 design case the fame prior exists to serve.
+ * - `< 0.2790`, or bare `Tó`/`To` answers Tó PT (pop 136, referential 0.0131, encyclopedic 0.3375)
+ *   over Tô BF (pop 16,026, no article) — the `bf-gloss-to-*` board pair.
  *
  * 0.25 sits mid-interval with ~0.02 margin to each bound.
  */
 export const ENCYCLOPEDIC_BOOST_CAP = 0.25
 
 /**
- * The legacy `importance` blend — one cross-bearer fame scale for the #28 consumer, derived from the two split
- * channels:
+ * The legacy `importance` blend — one cross-bearer fame scale for the #28 consumer,
+ * derived from the two split channels:
  *
  * - No article → the referential score.
- * - No population evidence (`referential` 0) → the encyclopedic score stands alone: there is nothing to bound the
- *   article's claim against, and a constant cap would demote every famous place WOF records no population for
- *   (meaning-of-zero: referential 0 is "unmeasured", not "tiny").
- * - Both present → the encyclopedic value clamped to at most {@link ENCYCLOPEDIC_BOOST_CAP} above the referential score,
- *   and never below it. The floor half repairs the downward inversion (the Seine-Saint-Denis suburb's weak article
- *   scored 0.1173 and replaced its referential 0.4716 under the old `coalesce`, so a 418-person Aude hamlet outranked
- *   it 4.8x); the cap half repairs the upward one (`Tó`, above).
+ * - No population evidence (`referential` 0) → the encyclopedic score stands alone: there is nothing
+ *   to bound the article's claim against, and a constant cap would demote every famous place
+ *   WOF records no population for (meaning-of-zero: referential 0 is "unmeasured", not "tiny").
+ * - Both present → the encyclopedic value clamped to at most {@link ENCYCLOPEDIC_BOOST_CAP}
+ *   above the referential score, and never below it. The floor half repairs the downward
+ *   inversion (the Seine-Saint-Denis suburb's weak article scored 0.1173 and replaced its
+ *   referential 0.4716 under the old `coalesce`, so a 418-person Aude hamlet outranked it 4.8x);
+ *   the cap half repairs the upward one (`Tó`, above).
  *
- * Scale of the clamp on the 2026-08-24 staging build: of 628,202 article-containing rows, 209,738 sit above the cap and
- * 13,888 sit below their referential floor. the 305,168 article-without-population rows pass through unchanged.
+ * Scale of the clamp on the 2026-08-24 staging build: of 628,202 article-containing rows,
+ * 209,738 sit above the cap and 13,888 sit below their referential floor. the 305,168
+ * article-without-population rows pass through unchanged.
  */
 export function blendImportance(referential: number, encyclopedic: number | null | undefined): number {
 	if (encyclopedic === null || encyclopedic === undefined) return referential
@@ -160,8 +169,8 @@ export function blendImportance(referential: number, encyclopedic: number | null
 //#region Reading a database that may or may not carry the split
 
 /**
- * Where a reader's two scores came from. Recorded into the FST stamp so an artifact says, in its own provenance,
- * whether its encyclopedic channel is real, reconstructed, or absent.
+ * Where a reader's two scores came from. Recorded into the FST stamp so an artifact says,
+ * in its own provenance, whether its encyclopedic channel is real, reconstructed, or absent.
  */
 export const IMPORTANCE_SPLIT_SOURCES = {
 	/**
@@ -169,12 +178,13 @@ export const IMPORTANCE_SPLIT_SOURCES = {
 	 */
 	splitColumns: "split-columns",
 	/**
-	 * `place_importance` carries only the conflated `importance`; the split was reconstructed against `place_population`
-	 * (see {@link splitLegacyImportance}).
+	 * `place_importance` carries only the conflated `importance`; the split was reconstructed
+	 * against `place_population` (see {@link splitLegacyImportance}).
 	 */
 	legacyReconstructed: "legacy-reconstructed",
 	/**
-	 * No `place_importance` at all — referential from `place_population`, encyclopedic absent for every place.
+	 * No `place_importance` at all — referential from `place_population`,
+	 * encyclopedic absent for every place.
 	 */
 	populationOnly: "population-only",
 	/**
@@ -186,18 +196,20 @@ export const IMPORTANCE_SPLIT_SOURCES = {
 export type ImportanceSplitSource = (typeof IMPORTANCE_SPLIT_SOURCES)[keyof typeof IMPORTANCE_SPLIT_SOURCES]
 
 /**
- * The `select` term and `left join` a name lookup needs in order to carry `encyclopedic` onto its results, probed
- * against `schemaName`'s `place_importance`.
+ * The `select` term and `left join` a name lookup needs in order to carry `encyclopedic`
+ * onto its results, probed against `schemaName`'s `place_importance`.
  *
- * The probe is A column rather than A table, and that is the whole reason this lives here rather than beside a caller's
- * other table probes. The pre-split table exists and holds a single conflated `importance` column whose value is a
- * Wikipedia score on some rows and a population proxy on others, with nothing in the row to say which — reading that as
- * encyclopedic would surface the exact confusion ROAD_TO_V9 §2 exists to end.
+ * The probe is A column rather than A table, and that is the whole reason this lives here
+ * rather than beside a caller's other table probes. The pre-split table exists and holds
+ * a single conflated `importance` column whose value is a Wikipedia score on some rows
+ * and a population proxy on others, with nothing in the row to say which — reading that
+ * as encyclopedic would surface the exact confusion ROAD_TO_V9 §2 exists to end.
  *
- * There is deliberately no order BY counterpart, and there should never be one: §2's policy is that this score is
- * carried and never ranked on. Without the column the select degrades to a literal `NULL` and the join is the empty
- * string, so a pre-split extract's query plan is byte-identical to what it was before the split. No shipped gazetteer
- * carries the column yet, so today that degraded form is the only one anything builds.
+ * There is deliberately no order BY counterpart, and there should never be one: §2's policy
+ * is that this score is carried and never ranked on. Without the column the select degrades
+ * to a literal `NULL` and the join is the empty string, so a pre-split extract's query plan
+ * is byte-identical to what it was before the split. No shipped gazetteer carries the column
+ * yet, so today that degraded form is the only one anything builds.
  *
  * Call it once per extract and cache the result — it runs a `pragma`, and the callers are per-keystroke hot.
  */
@@ -230,30 +242,35 @@ export const LEGACY_FALLBACK_EPSILON = 8 * Number.EPSILON
 /**
  * Split one row of a legacy (pre-split) `place_importance` table back into its two components.
  *
- * Why this is recoverable AT all. The legacy builder ran in two passes: Wikipedia scores first, then `insert or ignore`
- * of `min(1, log2(1+pop/1000)/14)` for every place with a population that Wikipedia had missed. So a legacy value is a
- * fallback row IFF it reproduces {@link referentialFromPopulation} of that place's population — the two passes wrote
- * different arithmetic, and a score from Nominatim's four-decimal TSV landing on the log2 curve is a measure-zero
- * event.
+ * Why this is recoverable AT all. The legacy builder ran in two passes: Wikipedia
+ * scores first, then `insert or ignore` of `min(1, log2(1+pop/1000)/14)` for every
+ * place with a population that Wikipedia had missed. So a legacy value is a fallback
+ * row IFF it reproduces {@link referentialFromPopulation} of that place's population —
+ * the two passes wrote different arithmetic, and a score from Nominatim's four-decimal
+ * TSV landing on the log2 curve is a measure-zero event.
  *
- * The comparison is ULP-tolerant, and that is not defensive padding. The first version compared for exact bit equality,
- * which is correct — in the runtime that wrote the values. Cross-checking the same rule in CPython returned 166,638
- * encyclopedic rows against Node's 133,096: `math.log2` and V8's `Math.log2` disagree by one ULP on 33,542 of the 1.5 M
- * inputs (worked example: wof 85803233, population 21,299 — stored 0.31992193633838988953, CPython
- * 0.31992193633838994504, delta 5.55e-17). Bit equality would therefore invent 33,542 encyclopedic scores for anyone
- * who ported this rule to another runtime, and invented data is the failure mode this whole module exists to end. The
- * tolerance is a few ULP of the score's own magnitude. a genuine Wikipedia value that close to the population curve is
- * not distinguishable from it by any consequence.
+ * The comparison is ULP-tolerant, and that is not defensive padding.
+ * The first version compared for exact bit equality, which is correct — in the runtime
+ * that wrote the values. Cross-checking the same rule in CPython returned 166,638
+ * encyclopedic rows against Node's 133,096: `math.log2` and V8's `Math.log2` disagree by
+ * one ULP on 33,542 of the 1.5 M inputs (worked example: wof 85803233, population 21,299 —
+ * stored 0.31992193633838988953, CPython 0.31992193633838994504, delta 5.55e-17).
+ * Bit equality would therefore invent 33,542 encyclopedic scores for anyone who ported this rule
+ * to another runtime, and invented data is the failure mode this whole module exists to end.
+ * The tolerance is a few ULP of the score's own magnitude. a genuine Wikipedia value that
+ * close to the population curve is not distinguishable from it by any consequence.
  *
  * Measured rather than reasoned (2026-08-06, `wof/fst-staging-2026-08-05/admin-global-priority-importance.db`):
- * 1,543,753 rows split **1,410,657 fallback / 133,096 encyclopedic**, and the arithmetic closes on itself — 1,410,657 +
- * 108,861 (encyclopedic rows that also have a population) = 1,519,518, which is exactly the count of `place_population`
- * rows with `population > 0`, i.e. every row the fallback pass could have written. The remaining 24,235 encyclopedic
- * rows have no population row at all. Under the exact-equality rule, Node found zero mismatches within one ULP, so the
- * tolerance changes no classification on this database — it only makes the answer runtime-independent.
+ * 1,543,753 rows split **1,410,657 fallback / 133,096 encyclopedic**, and the arithmetic
+ * closes on itself — 1,410,657 + 108,861 (encyclopedic rows that also have a population) =
+ * 1,519,518, which is exactly the count of `place_population` rows with `population > 0`,
+ * i.e. every row the fallback pass could have written. The remaining 24,235
+ * encyclopedic rows have no population row at all. Under the exact-equality rule,
+ * Node found zero mismatches within one ULP, so the tolerance changes no classification
+ * on this database — it only makes the answer runtime-independent.
  *
- * Referential is not read out of the legacy column under any branch — it is always re-derived from population, because
- * a legacy Wikipedia row overwrote whatever population would have said.
+ * Referential is not read out of the legacy column under any branch — it is always re-derived
+ * from population, because a legacy Wikipedia row overwrote whatever population would have said.
  */
 export function splitLegacyImportance(
 	legacy: number | undefined,
@@ -304,9 +321,10 @@ function tableColumns<DB>(db: DatabaseClient<DB>, table: string): Set<string> {
 /**
  * Load both scores from a WOF admin database, whatever schema generation it is at.
  *
- * Handles all four states in {@link IMPORTANCE_SPLIT_SOURCES} so callers never branch on schema themselves — the FST
- * builder in particular must read the shipped population-only databases, the read-only 2026-08-05 staging database
- * (legacy conflated column), and post-split builds with one code path.
+ * Handles all four states in {@link IMPORTANCE_SPLIT_SOURCES} so callers never branch on
+ * schema themselves — the FST builder in particular must read the shipped population-only
+ * databases, the read-only 2026-08-05 staging database (legacy conflated column),
+ * and post-split builds with one code path.
  */
 export function loadImportanceSplit<DB>(db: DatabaseClient<DB>): ImportanceSplit {
 	const referential = new Map<number, number>()
@@ -334,9 +352,9 @@ export function loadImportanceSplit<DB>(db: DatabaseClient<DB>): ImportanceSplit
 	const importanceColumns = tableColumns(db, "place_importance")
 
 	if (importanceColumns.has("referential")) {
-		// Post-split build: the columns are the interface. Referential is read verbatim rather than
-		// re-derived, so a build that scored referential differently stays visible instead of being
-		// silently overwritten by this reader's own formula.
+		// Post-split build: the columns are the interface. Referential is read verbatim
+		// rather than re-derived, so a build that scored referential differently stays visible
+		// instead of being silently overwritten by this reader's own formula.
 		const rows = allRows<{
 			id: number
 			referential: number

@@ -136,9 +136,10 @@ describe("the positive half", () => {
 	})
 
 	it("tolerates a point a few centimetres outside the service's own edge", async () => {
-		// About 5 cm north of the band's northern edge — inside the artifact's rendering is false and the service's is
-		// false too, so this specific point agrees. the case that matters is the distance being carried, which is what
-		// separates a rendering difference from a conversion defect on a receipt.
+		// About 5 cm north of the band's northern edge — inside the artifact's rendering
+		// is false and the service's is false too, so this specific point agrees. the
+		// case that matters is the distance being carried, which is what separates a
+		// rendering difference from a conversion defect on a receipt.
 		const nearEdge = {
 			label: "just outside band A's north edge",
 			latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE + 0.0000005,
@@ -155,8 +156,9 @@ describe("the positive half", () => {
 
 		const row = result.agreement[0]!
 
-		// The distance rides on every row rather than only the tolerated ones — measured to the edge, which for a point beside a
-		// long edge is orders of magnitude smaller than the distance to the nearest vertex.
+		// The distance rides on every row rather than only the tolerated ones —
+		// measured to the edge, which for a point beside a long edge is orders of
+		// magnitude smaller than the distance to the nearest vertex.
 		expect(row.nearestEdgeMetres).toBeDefined()
 		expect(row.nearestEdgeMetres!).toBeLessThan(BOUNDARY_TOLERANCE_METRES)
 		expect(row.outcome).not.toBe("disagree")

@@ -46,19 +46,21 @@ import { SOIL_SHARE_WEIGHTING } from "#vocabulary"
 /**
  * How many resolution levels finer than the index the weighting lattice runs.
  *
- * Two, giving 49 children per cell and a 2.04% share granularity. That is deliberately matched to the finest share the
- * authority itself publishes — `muaggatt.niccdcdpct`'s observed minimum is 2% — because a lattice finer than the
- * source's own reporting grain provides precision this layer cannot source, at 7× the cost per level.
+ * Two, giving 49 children per cell and a 2.04% share granularity.
+ * That is deliberately matched to the finest share the authority itself publishes —
+ * `muaggatt.niccdcdpct`'s observed minimum is 2% — because a lattice finer than the source's
+ * own reporting grain provides precision this layer cannot source, at 7× the cost per level.
  */
 export const WEIGHT_LATTICE_DEPTH = 2
 
 /**
  * Class shares below this are folded into `other_share` rather than stored.
  *
- * One percent, which sits below the lattice's own 2.04% granularity, so nothing a single child cell produces is
- * truncated — what lands here is the long tail that component percentages create inside a child (a 1%-weight component
- * inside one child cell contributes 0.02%). Truncating a long tail is legitimate. doing it silently is not, which is
- * why the remainder is stored explicitly and the shares still sum to 1.
+ * One percent, which sits below the lattice's own 2.04% granularity, so nothing a single child
+ * cell produces is truncated — what lands here is the long tail that component percentages
+ * create inside a child (a 1%-weight component inside one child cell contributes 0.02%).
+ * Truncating a long tail is legitimate. doing it silently is not, which is why the
+ * remainder is stored explicitly and the shares still sum to 1.
  */
 export const CLASS_SHARE_FLOOR = 0.01
 
@@ -77,7 +79,8 @@ export interface CellCandidate {
 }
 
 /**
- * What a map unit contributes per unit of area — computed once per map unit and reused for every cell it reaches.
+ * What a map unit contributes per unit of area — computed once per map unit
+ * and reused for every cell it reaches.
  */
 export interface MapUnitProfile {
 	/**
@@ -92,13 +95,14 @@ export interface MapUnitProfile {
 /**
  * Turn one map unit and its components into the per-unit-area profile the reduction folds in.
  *
- * A `no_mapping` map unit contributes wholly to `nodata` and never to a class: it is a polygon the authority drew with
- * no soil mapping behind it, and reading it as a low class would be the reassuring wrong number §3.2 of the survey is
- * about.
+ * A `no_mapping` map unit contributes wholly to `nodata` and never to a class:
+ * it is a polygon the authority drew with no soil mapping behind it, and reading it as
+ * a low class would be the reassuring wrong number §3.2 of the survey is about.
  *
- * The split across components is by `comppct_r`, the component's representative percentage of its map unit, normalized
- * by the total actually present rather than assumed to be 100 — measured on `IA153` all 152 map units sum to exactly
- * 100, and a national build must not depend on that holding everywhere.
+ * The split across components is by `comppct_r`, the component's representative
+ * percentage of its map unit, normalized by the total actually present rather than
+ * assumed to be 100 — measured on `IA153` all 152 map units sum to exactly 100,
+ * and a national build must not depend on that holding everywhere.
  */
 export function mapUnitProfile(
 	mapUnit: Pick<SoilMapUnitTable, "no_mapping">,
@@ -114,10 +118,11 @@ export function mapUnitProfile(
 		total += component.comppct_r
 	}
 
-	// A map unit whose components carry no weight at all publishes no readable proportion, so nothing can be apportioned
-	// from it. It is marked `no_mapping` upstream for exactly this reason. reaching here with a zero total means the
-	// upstream check and this one disagree, and answering with an empty distribution would silently drop the delineation's
-	// area out of every share.
+	// A map unit whose components carry no weight at all publishes no readable proportion,
+	// so nothing can be apportioned from it. It is marked `no_mapping` upstream for
+	// exactly this reason. reaching here with a zero total means the upstream check
+	// and this one disagree, and answering with an empty distribution would silently
+	// drop the delineation's area out of every share.
 	if (total <= 0) {
 		return { classShares: new Map(), unrated: 0, notRateable: 0, noData: 1 }
 	}
@@ -138,10 +143,11 @@ export function mapUnitProfile(
 			continue
 		}
 
-		// A NULL rating means the survey did not rate this component, and why it did not is what separates the two buckets.
-		// A miscellaneous area is a non-soil area — rock outcrop, water — that the capability rating does not apply to. a
-		// named soil with no rating is one the survey chose not to rate. Read as one number they would both say "not
-		// arable", which neither of them says.
+		// A NULL rating means the survey did not rate this component, and why it did not
+		// is what separates the two buckets. A miscellaneous area is a non-soil area —
+		// rock outcrop, water — that the capability rating does not apply to.
+		// a named soil with no rating is one the survey chose not to rate.
+		// Read as one number they would both say "not arable", which neither of them says.
 		if (component.compkind === "Miscellaneous area") {
 			notRateable += weight
 		} else {
@@ -158,8 +164,8 @@ export function mapUnitProfile(
 export interface ReducedCell {
 	row: SoilCapabilityCellTable
 	/**
-	 * True when the top class covers less than half the cell — the §4.7 number, counted here so it comes off the artifact
-	 * rather than out of a separate harness.
+	 * True when the top class covers less than half the cell — the §4.7 number, counted here
+	 * so it comes off the artifact rather than out of a separate harness.
 	 */
 	topClassUnderHalf: boolean
 	/**
@@ -171,9 +177,9 @@ export interface ReducedCell {
 /**
  * Reduce one cell.
  *
- * @throws {Error} When a candidate names a map unit the profile map does not hold. A missing profile means the
- *   attribute join is short, and answering with the remaining candidates would report a well-formed distribution over
- *   part of the cell.
+ * @throws {Error} When a candidate names a map unit the profile map does not hold.
+ *   A missing profile means the attribute join is short, and answering with the remaining
+ *   candidates would report a well-formed distribution over part of the cell.
  */
 export function reduceCell(
 	cell: H3Cell,
@@ -189,8 +195,8 @@ export function reduceCell(
 	const whole = candidates.length === 1 ? candidates.find((candidate) => candidate.containment === "whole") : undefined
 
 	if (whole) {
-		// Exactly one delineation, and it covers the cell entirely. Nothing else can reach it, so the lattice would return
-		// the same answer at 49 times the cost.
+		// Exactly one delineation, and it covers the cell entirely.
+		// Nothing else can reach it, so the lattice would return the same answer at 49 times the cost.
 		weights.set(whole.mukey, 1)
 	} else {
 		sampled = true
@@ -209,10 +215,11 @@ export function reduceCell(
 		}
 
 		if (!covered) {
-			// Every child centre fell outside every delineation reaching the cell. The cell is touched — the index says so —
-			// but no lattice point landed inside, which happens when a sliver clips a corner. Reporting shares over nothing
-			// would divide by zero. reporting a mapped share of zero is the truthful answer, and the row is dropped by the
-			// caller rather than stored as an all-zero distribution.
+			// Every child centre fell outside every delineation reaching the cell.
+			// The cell is touched — the index says so — but no lattice point landed inside,
+			// which happens when a sliver clips a corner. Reporting shares over nothing
+			// would divide by zero. reporting a mapped share of zero is the truthful answer,
+			// and the row is dropped by the caller rather than stored as an all-zero distribution.
 			return {
 				row: emptyRow(h3Cell, candidates.length),
 				topClassUnderHalf: false,
@@ -233,8 +240,8 @@ export function reduceCell(
 /**
  * The delineation covering a point, or `undefined` where none does.
  *
- * The bounding box is the prefilter the geometry table stores precisely so the ray cast runs on the few delineations
- * that could contain the point rather than on every delineation reaching the cell.
+ * The bounding box is the prefilter the geometry table stores precisely so the ray cast runs on the few
+ * delineations that could contain the point rather than on every delineation reaching the cell.
  */
 function candidateAt(
 	candidates: ReadonlyArray<CellCandidate>,
@@ -292,8 +299,9 @@ function assembleRow(
 		noData += profile.noData * weight
 	}
 
-	// The floor truncates the long tail component percentages create inside a lattice child. The remainder is stored
-	// rather than dropped, so the five shares sum to 1 and a reader can see how much was folded away.
+	// The floor truncates the long tail component percentages create inside a lattice child.
+	// The remainder is stored rather than dropped, so the five shares sum to 1
+	// and a reader can see how much was folded away.
 	let other = 0
 	const kept: Array<[string, number]> = []
 
@@ -329,8 +337,8 @@ function assembleRow(
 }
 
 /**
- * A cell no lattice point landed inside. `mapped_share` zero says exactly that, and the caller drops it rather than
- * storing an all-zero distribution that would read as a surveyed cell holding nothing.
+ * A cell no lattice point landed inside. `mapped_share` zero says exactly that, and the caller drops it
+ * rather than storing an all-zero distribution that would read as a surveyed cell holding nothing.
  */
 function emptyRow(h3Cell: number, delineations: number): SoilCapabilityCellTable {
 	return {
@@ -349,8 +357,8 @@ function emptyRow(h3Cell: number, delineations: number): SoilCapabilityCellTable
 }
 
 /**
- * Six decimals — a millionth of a cell, far below the lattice's own 2% granularity, and enough that the stored shares
- * still sum to 1 within a rounding error a reader can see is rounding.
+ * Six decimals — a millionth of a cell, far below the lattice's own 2% granularity, and enough
+ * that the stored shares still sum to 1 within a rounding error a reader can see is rounding.
  */
 const SHARE_DECIMALS = 6
 
@@ -359,8 +367,9 @@ function round(value: number): number {
 }
 
 /**
- * The sum of a stored row's five shares. Exported because the invariant it checks — that they sum to 1 — is what makes
- * `other_share` required rather than decorative, and a test that could not state the sum could not pin it.
+ * The sum of a stored row's five shares. Exported because the invariant it checks —
+ * that they sum to 1 — is what makes `other_share` required rather than decorative,
+ * and a test that could not state the sum could not pin it.
  */
 export function shareTotal(row: SoilCapabilityCellTable): number {
 	const classes = parseJSONStrict<Record<string, number>>(row.class_shares)

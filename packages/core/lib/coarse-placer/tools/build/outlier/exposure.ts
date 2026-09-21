@@ -122,10 +122,11 @@ function isOffMapScript(s: string): boolean {
 	return total > 0 && off / total > OFFMAP_DOMINANCE
 }
 
-// Mimic a real off-map address: a pure-script place name isn't what we see at inference (those carry
-// Latin digits + structure, e.g. "ул. Тверская, д. 1"). For each name we also emit an address-shaped
-// variant — name + a house number, deterministically — so the model learns "off-map script + digits =
-// still other" and doesn't get pulled to a country by the numeric/punctuation n-grams.
+// Mimic a real off-map address: a pure-script place name isn't what we see at
+// inference (those carry Latin digits + structure, e.g. "ул. Тверская, д. 1").
+// For each name we also emit an address-shaped variant — name + a house number,
+// deterministically — so the model learns "off-map script + digits = still other"
+// and doesn't get pulled to a country by the numeric/punctuation n-grams.
 function addressVariant(name: string, h: number): string {
 	const n = (h % 4) + 1 // 1–4 digit house number
 	const num = String(h % Math.pow(10, n) || 7)
@@ -146,8 +147,9 @@ function addressVariant(name: string, h: number): string {
 /**
  * The one column this tool reads out of `wof.db`.
  *
- * Not `WOFDatabase` from `@mailwoman/resolver-wof-sqlite`: that package depends on this one, so importing its schema
- * here would invert the layering. A tool in `@mailwoman/core` reaching a resolver artifact at all is the odd part. this
+ * Not `WOFDatabase` from `@mailwoman/resolver-wof-sqlite`: that package
+ * depends on this one, so importing its schema here would invert the layering.
+ * A tool in `@mailwoman/core` reaching a resolver artifact at all is the odd part. this
  * names the narrowest read it needs rather than pretending the dependency is fine.
  */
 interface WOFNameRead {

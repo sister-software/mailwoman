@@ -59,8 +59,8 @@ describe("projectCoverage", () => {
 	})
 
 	it("puts the mismatch FIRST in the summary, ahead of every count it invalidates", () => {
-		// A caller reads the first sentence. Burying this after "33 countries train" means the counts are read as
-		// answers before the reader learns they are about a corpus the run never opens.
+		// A caller reads the first sentence. Burying this after "33 countries train" means the counts
+		// are read as answers before the reader learns they are about a corpus the run never opens.
 		const out = projectCoverage(
 			report({
 				configuredCorpusVersion: "0.27.0-house-venue-intl",
@@ -79,8 +79,8 @@ describe("projectCoverage", () => {
 	})
 
 	it("reports a requested country that exists nowhere, rather than returning an empty row set", () => {
-		// An empty `rows` for a country nobody has heard of is indistinguishable from a country with no data. Naming it
-		// separately is the difference between "absent" and "I could not find it".
+		// An empty `rows` for a country nobody has heard of is indistinguishable from a country with no data.
+		// Naming it separately is the difference between "absent" and "I could not find it".
 		const out = projectCoverage(report(), ["ZZ"])
 
 		expect(out["requested_but_absent_everywhere"]).toEqual(["ZZ"])

@@ -32,23 +32,26 @@ import {
 import { describe, expect, test } from "vitest"
 
 /**
- * Every token is capitalized place-name content and nothing terminates the run — the worst case for a forward walk, and
- * the shape a pasted document produces.
+ * Every token is capitalized place-name content and nothing terminates the run —
+ * the worst case for a forward walk, and the shape a pasted document produces.
  */
 const CAPS_RUN_UNIT = "Aa "
 
 /**
- * A doubled input doubles a linear read count and quadruples a quadratic one. The bound sits well below the midpoint:
- * the only departure from 2.0 a linear rule shows is the run's tail, where the last few start indices find fewer tokens
- * to read, and that shortfall shrinks as the input grows.
+ * A doubled input doubles a linear read count and quadruples a quadratic one.
+ * The bound sits well below the midpoint: the only departure from 2.0 a linear rule
+ * shows is the run's tail, where the last few start indices find fewer tokens to read,
+ * and that shortfall shrinks as the input grows.
  */
 const MAX_LINEAR_GROWTH = 2.2
 
 /**
- * Token reads the locality walk may spend per start index. The head is read three times before the walk, the walk looks
- * ahead at most `MAX_LOCALITY_PHRASE_TOKENS - 1` tokens, and each of the `MAX_LOCALITY_PHRASE_TOKENS` proposal lengths
- * reads its two endpoints — 3 + 5 + 12 = 20 at the shipped cap. Four reads per cap token leaves room for the shape of
- * those reads to change without letting the walk range past the cap.
+ * Token reads the locality walk may spend per start index.
+ * The head is read three times before the walk, the walk looks ahead at most
+ * `MAX_LOCALITY_PHRASE_TOKENS - 1` tokens, and each of the `MAX_LOCALITY_PHRASE_TOKENS`
+ * proposal lengths reads its two endpoints — 3 + 5 + 12 = 20 at the shipped cap.
+ * Four reads per cap token leaves room for the shape of those reads to change
+ * without letting the walk range past the cap.
  */
 const MAX_LOCALITY_READS_PER_TOKEN = 4 * MAX_LOCALITY_PHRASE_TOKENS
 
@@ -58,8 +61,8 @@ interface CountingTokens {
 }
 
 /**
- * The token array behind a `Proxy` that counts every indexed read. A rule that walks further reads more, so the count
- * is the walk's length in the unit the walk is paid in.
+ * The token array behind a `Proxy` that counts every indexed read.
+ * A rule that walks further reads more, so the count is the walk's length in the unit the walk is paid in.
  */
 function countingTokens(tokens: ReadonlyArray<SegmentToken>): CountingTokens {
 	let reads = 0

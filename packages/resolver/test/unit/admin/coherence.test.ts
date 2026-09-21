@@ -158,8 +158,8 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	})
 
 	it("ignores fuzzy (non-exact) region candidates — a Portland under Missouri must NOT match the token 'ME'", async () => {
-		// Place a Portland under Missouri (the fuzzy runner-up). Since missouri.exactMatch is false, the
-		// pass must not consider it, so no re-pick to Missouri.
+		// Place a Portland under Missouri (the fuzzy runner-up).
+		// Since missouri.exactMatch is false, the pass must not consider it, so no re-pick to Missouri.
 		const PORTLAND_MO: ResolvedPlace = { ...PORTLAND_ME, id: 31, parent_id: 30, lat: 37, lon: -93 }
 		const resolver = createWOFResolver(await makeBackend([MESSINA, MISSOURI, PORTLAND_MO]))
 		const out = await resolver.resolveTree(portlandMeTree(), { adminCoherence: true })
@@ -242,10 +242,11 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	})
 
 	it("re-picks via matchCountry when the gazetteer has NO country node + the locality is orphaned (#1023 — flattened GE hierarchy)", async () => {
-		// The 2026-07-07 admin rebuild (#1015) flattened Georgia to localities-only: no `country`-placetype
-		// node, and Tbilisi orphaned (parent_id -1). So both the country-node lookup and the `parentID`
-		// descendant test miss it — the exact shape that regressed "Tbilisi, Georgia" → US Georgia (10,200 km).
-		// matchCountry("Georgia") → GE lets the fall-through scope by the `country` column, which is still set.
+		// The 2026-07-07 admin rebuild (#1015) flattened Georgia to localities-only:
+		// no `country`-placetype node, and Tbilisi orphaned (parent_id -1).
+		// So both the country-node lookup and the `parentID` descendant test miss it — the exact
+		// shape that regressed "Tbilisi, Georgia" → US Georgia (10,200 km). matchCountry("Georgia")
+		// → GE lets the fall-through scope by the `country` column, which is still set.
 		const usGeorgia = {
 			id: 40,
 			name: "Georgia",
@@ -290,8 +291,8 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		expect(loc?.lon).toBeCloseTo(44.83, 2)
 		expect(loc?.metadata?.["admin_coherence_repicked"]).toBe(true)
 
-		// The greedy walk had bound the region node to the US-state namesake. the fall-through reverts that
-		// stale decoration so no wrong-country coordinate / `resolver_country` leaks into the result.
+		// The greedy walk had bound the region node to the US-state namesake. the fall-through reverts
+		// that stale decoration so no wrong-country coordinate / `resolver_country` leaks into the result.
 		const region = regionOf(out)
 		expect(region?.lat).toBeUndefined()
 		expect(region?.placeID).toBeUndefined()
@@ -300,10 +301,11 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	})
 
 	it("stays inert for a domestic (region, locality) pair — matchCountry returns null for a US state name", async () => {
-		// "Georgia" names both a country and a US state, but the fall-through must never fire when the pair
-		// is genuinely domestic. Atlanta resolves under the US state in the walk, so reconcileAdminPair's
-		// unresolved-locality branch never runs — and even if it did, a Springfield-style US token
-		// ("Illinois"/"ME") returns null from matchCountry. Guards byte-stability on the domestic path.
+		// "Georgia" names both a country and a US state, but the fall-through must never fire
+		// when the pair is genuinely domestic. Atlanta resolves under the US state in the walk,
+		// so reconcileAdminPair's unresolved-locality branch never runs — and even if it did,
+		// a Springfield-style US token ("Illinois"/"ME") returns null from matchCountry.
+		// Guards byte-stability on the domestic path.
 		const usGeorgia = {
 			id: 40,
 			name: "Georgia",
@@ -354,8 +356,9 @@ describe("resolveTree + adminCoherence (#263)", () => {
 })
 
 describe("resolveTree + applyParentFallbackContradiction", () => {
-	// 臺南市 (Tainan City) and 新竹市 (Hsinchu City) are regions. only Hsinchu's 北區 carries a key. The walk scopes 北區 to
-	// Tainan, misses, and the parent-fallback retry answers Hsinchu's — a namesake 214 km away on the real gazetteer.
+	// 臺南市 (Tainan City) and 新竹市 (Hsinchu City) are regions. only Hsinchu's 北區 carries a key.
+	// The walk scopes 北區 to Tainan, misses, and the parent-fallback retry answers Hsinchu's —
+	// a namesake 214 km away on the real gazetteer.
 	const TAINAN: ResolvedPlace = {
 		id: 100,
 		name: "Tainan City",
@@ -453,8 +456,8 @@ describe("resolveTree + applyParentFallbackContradiction", () => {
 	})
 
 	it("refuses the same pick when the BACKEND widened the scope and stamped regionScopeMiss (#1731)", async () => {
-		// A backend that keeps the parent scope on the query and re-admits rows from outside it, the way the candidate
-		// table's interior region-scope fallback does — the resolver's own retry never runs.
+		// A backend that keeps the parent scope on the query and re-admits rows from outside it, the way
+		// the candidate table's interior region-scope fallback does — the resolver's own retry never runs.
 		const widened: ResolverBackend = {
 			async findPlace(query) {
 				const text = query.text.toLowerCase()

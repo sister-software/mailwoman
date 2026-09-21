@@ -47,8 +47,8 @@ export function listTables<DB>(db: DatabaseClient<DB>): string[] {
 }
 
 /**
- * Whether `table` has a column named `column`. The table name is spliced into a pragma, so it must come from the
- * schema, never from input.
+ * Whether `table` has a column named `column`. The table name is spliced into a pragma,
+ * so it must come from the schema, never from input.
  */
 export function hasColumn<DB>(db: DatabaseClient<DB>, table: string, column: string): boolean {
 	const rows = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>

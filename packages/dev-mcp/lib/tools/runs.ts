@@ -55,11 +55,12 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 		const limit = (args["limit"] as number | undefined) ?? 25
 		const sameTree = all.filter((run) => run.fingerprint_matches_now).length
 
-		// One measurement often writes several runs in the same second against the same tool, input set and
-		// tree — a burst of arms rather than several comparisons. Listed row by row those fill the reply with rows
-		// that differ only in `run_id` and byte count, and push the older, genuinely different runs past the
-		// limit. Group them. the newest of each group is the one a {kind:"recorded"} arm would replay, and the
-		// rest are named by count and stay reachable through `get`.
+		// One measurement often writes several runs in the same second against the same tool,
+		// input set and tree — a burst of arms rather than several comparisons.
+		// Listed row by row those fill the reply with rows that differ only in `run_id`
+		// and byte count, and push the older, genuinely different runs past the limit.
+		// Group them. the newest of each group is the one a {kind:"recorded"} arm would replay,
+		// and the rest are named by count and stay reachable through `get`.
 		const groups = new Map<string, typeof all>()
 
 		for (const run of all) {
@@ -85,8 +86,8 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 		const hidden = collapsed.slice(limit).length
 
 		return {
-			// Named rather than left as a bare truncation: a listing that silently showed the newest 25 of 200 reads
-			// as a store holding 25.
+			// Named rather than left as a bare truncation: a listing that silently showed
+			// the newest 25 of 200 reads as a store holding 25.
 			summary:
 				`${all.length} stored run${all.length === 1 ? "" : "s"} in ${collapsed.length} group${collapsed.length === 1 ? "" : "s"} ` +
 				`(same tool + input set + tree + engine), ${sameTree} against the current tree ` +

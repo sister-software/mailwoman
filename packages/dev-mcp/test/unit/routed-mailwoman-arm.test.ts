@@ -4,9 +4,10 @@ import type { GauntletDeps, GauntletResult } from "mailwoman/eval-harness/gauntl
 import { resolvePathBuilder } from "path-ts"
 import { describe, expect, it, vi } from "vitest"
 
-// `tier` carries a real value because `toGauntletResult` passes `resolution_tier` straight through and that field is
-// non-nullable — a null here modelled a row production cannot produce, which is what the assertion through `unknown`
-// was hiding. Everything else stays absent: this stands for an arm that answered without resolving anything.
+// `tier` carries a real value because `toGauntletResult` passes `resolution_tier`
+// straight through and that field is non-nullable — a null here modelled a row
+// production cannot produce, which is what the assertion through `unknown` was hiding.
+// Everything else stays absent: this stands for an arm that answered without resolving anything.
 const EMPTY_RESULT = {
 	components: {},
 	lat: null,
@@ -55,8 +56,9 @@ function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwo
 		geocodeTraced: vi.fn(async () => {
 			throw new Error("routed-arm tests drive runOne, never deps.geocodeTraced")
 		}),
-		// Every overlay loaded, which is what a stub with no weights cache should claim: the arm under test makes no
-		// promote suggestion. Therefore, a truthful `false` keeps the stub from implying a degraded instrument.
+		// Every overlay loaded, which is what a stub with no weights cache should claim:
+		// the arm under test makes no promote suggestion. Therefore, a truthful `false`
+		// keeps the stub from implying a degraded instrument.
 		gradedBaseOnly: vi.fn(() => false),
 		diagnoseParse: vi.fn(async () => {
 			throw new Error("routed-arm tests drive runOne, never deps.diagnoseParse")
@@ -118,9 +120,9 @@ describe("buildRoutedMailwomanArm", () => {
 	})
 
 	it("forwards every SUPPORTED config key into buildDeps — a key accepted but dropped grades the wrong configuration silently", async () => {
-		// The #1882 incident this pins: `candidate_db` joined the supported list without joining this
-		// spread, so both arms of a staged-artifact comparison ran the live artifact and reported
-		// 0 of 649 rows differed — a zero indistinguishable from a real no-effect.
+		// The #1882 incident this pins: `candidate_db` joined the supported list without joining
+		// this spread, so both arms of a staged-artifact comparison ran the live artifact
+		// and reported 0 of 649 rows differed — a zero indistinguishable from a real no-effect.
 		const deps = fakeDeps()
 
 		await buildRoutedMailwomanArm(

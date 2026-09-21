@@ -23,10 +23,11 @@ import {
 } from "#schema"
 
 /**
- * Create the build-only `filer_attribute_stage` table — see `build-filer.ts`'s module docstring for why `value` is part
- * of the composite PK. Deliberately not part of the public {@link FilerDatabase} interface, mirroring `build-bdc.ts`'s
- * `bdc_stage` (dropped before the artifact seals). All reads/writes against it go through raw `.prepare()` on the
- * shared `DatabaseSync`, per the "hot bulk write" carve-out.
+ * Create the build-only `filer_attribute_stage` table — see `build-filer.ts`'s module docstring
+ * for why `value` is part of the composite PK. Deliberately not part of the
+ * public {@link FilerDatabase} interface, mirroring `build-bdc.ts`'s `bdc_stage`
+ * (dropped before the artifact seals). All reads/writes against it go through raw
+ * `.prepare()` on the shared `DatabaseSync`, per the "hot bulk write" carve-out.
  */
 async function createFilerAttributeStageTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema
@@ -41,8 +42,9 @@ async function createFilerAttributeStageTable(db: Kysely<FilerDatabase>): Promis
 }
 
 /**
- * Create every table this builder writes to, in one place. Separate from `buildFilerDatabase` so that function stays
- * under the linter's `max-statements` ceiling — inlining these calls at its single call site would behave identically.
+ * Create every table this builder writes to, in one place.
+ * Separate from `buildFilerDatabase` so that function stays under the linter's `max-statements`
+ * ceiling — inlining these calls at its single call site would behave identically.
  */
 export async function createFilerBuildTables(kdb: Kysely<FilerDatabase>): Promise<void> {
 	await createFilerManifestTable(kdb)

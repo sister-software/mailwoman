@@ -527,11 +527,12 @@ describe("registry + defaults", () => {
 
 // Raw-surface punctuation survival.
 //
-// Every augmentation transforms `raw` by direct string splicing (replace/case-map on the raw
-// itself — never a rebuild from a token list), and the build pipeline re-runs `alignRow` on each
-// augmented copy, deriving the char-offset span triple from the augmented raw. These probes pin
-// the property v0.5.0 makes essential: intra-span punctuation (the dotted `P.O. Box` is the
-// canonical case) survives onto the augmented copy, and every span addresses the new raw exactly.
+// Every augmentation transforms `raw` by direct string splicing
+// (replace/case-map on the raw itself — never a rebuild from a token list),
+// and the build pipeline re-runs `alignRow` on each augmented copy, deriving the
+// char-offset span triple from the augmented raw. These probes pin the property v0.5.0
+// makes essential: intra-span punctuation (the dotted `P.O. Box` is the canonical case)
+// survives onto the augmented copy, and every span addresses the new raw exactly.
 // A future refactor that rebuilds raw from tokens would fail these.
 
 describe("augmented copies keep intra-span punctuation (#519)", () => {
@@ -766,8 +767,9 @@ describe("composeAdversarialRow", () => {
 	})
 
 	it("particle-honorific ambiguity: apostrophe + St. tokens land under venue", () => {
-		// Kryptonite case #3: apostrophe + St./Saint ambiguity. "P'tit" and "St." are inside
-		// the venue surface form rather than a street_prefix or honorific in the address.
+		// Kryptonite case #3: apostrophe + St./Saint ambiguity.
+		// "P'tit" and "St." are inside the venue surface form rather than a street_prefix
+		// or honorific in the address.
 		const address = baseRow({
 			raw: "Montreal, QC H2X 1Y4",
 			country: "CA",
@@ -783,12 +785,11 @@ describe("composeAdversarialRow", () => {
 
 		if (result.kind !== "labeled") return
 
-		// The venue tokens via the whitespace tokenizer: P'tit, St, Denis, Street, Café
-		// (period is a separator, apostrophe joins, accented chars are word chars).
+		// The venue tokens via the whitespace tokenizer: P'tit, St, Denis, Street,
+		// Café (period is a separator, apostrophe joins, accented chars are word chars).
 		expect(result.row.tokens[0]).toBe("P'tit")
 		expect(result.row.tokens[1]).toBe("St")
-		// Every venue token gets the venue label — the embedded "St" is venue rather than
-		// street_prefix.
+		// Every venue token gets the venue label — the embedded "St" is venue rather than street_prefix.
 		const venueTokenCount = 5
 
 		for (let i = 0; i < venueTokenCount; i++) {

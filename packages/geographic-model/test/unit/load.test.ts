@@ -185,8 +185,9 @@ describe("a failure names the file", () => {
 			(issue) => issue.code === ValidationIssueCode.DuplicateID
 		)
 
-		// The concept, the assertion nested inside it, and the mapping the same file carries — each at its own address,
-		// each naming the file that claimed the identifier and the file that claimed it first.
+		// The concept, the assertion nested inside it, and the mapping the same file carries —
+		// each at its own address, each naming the file that claimed the identifier
+		// and the file that claimed it first.
 		expect(duplicates.map((issue) => [issue.path, issue.file, issue.otherFile])).toEqual([
 			["$.concepts[2].id", "concepts/establishments.json", "concepts/duplicate.json"],
 			["$.concepts[2].assertions[0].id", "concepts/establishments.json", "concepts/duplicate.json"],

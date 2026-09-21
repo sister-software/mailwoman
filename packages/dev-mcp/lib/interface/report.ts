@@ -36,8 +36,8 @@ export async function runInterfaceCensus(
 
 			rows.push({ id: item.id, input: item.input, tree: run.tree })
 		} catch {
-			// A row the engine cannot parse contributes nothing to any tally: counting it as valid would manufacture
-			// interface compliance out of a crash.
+			// A row the engine cannot parse contributes nothing to any tally: counting it
+			// as valid would manufacture interface compliance out of a crash.
 			errored.push(item.id)
 		}
 	}

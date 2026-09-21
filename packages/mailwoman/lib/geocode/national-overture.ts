@@ -22,9 +22,10 @@ import { join } from "path-ts"
 import type { RegionDatabases } from "#geocode/regions"
 
 /**
- * Country → the street locale its national Overture extract is built and probed with. Membership is a per-register
- * decision: a country joins when its parquet has been read (which fields scope a point, how the number is written) and
- * a locale branch keys those surfaces on both sides.
+ * Country → the street locale its national Overture extract is built and probed with.
+ * Membership is a per-register decision: a country joins when its parquet has been read
+ * (which fields scope a point, how the number is written) and a locale branch
+ * keys those surfaces on both sides.
  */
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	// The Taiwanese civil-affairs registers: 縣市 + 鄉鎮市區 scope the point, no postcode, full-width digits and a
@@ -42,9 +43,9 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
 }
 
 /**
- * The spdx expression a country's national database records in its layer manifest: Overture's theme license and the
- * source registers' own. The per-agency attribution is computed by the build from the rows it kept and stamped beside
- * it.
+ * The spdx expression a country's national database records in its layer manifest: Overture's
+ * theme license and the source registers' own. The per-agency attribution is computed
+ * by the build from the rows it kept and stamped beside it.
  */
 const COUNTRY_TO_LICENSE = new Map<string, string>([
 	// The fifteen civil-affairs bureaus publish under the Open Government Data License, Taiwan, v1.0.
@@ -68,17 +69,17 @@ export function supportedOvertureCountries(): string[] {
 }
 
 /**
- * Where a country's national address-point database lives: beside the US per-state databases, since both are Overture
- * addresses keyed by the shared schema.
+ * Where a country's national address-point database lives: beside the US per-state databases,
+ * since both are Overture addresses keyed by the shared schema.
  */
 export function nationalAddressPointsPath(dataRoot: string, countryCode: string): string {
 	return join(dataRoot, "address-points", `address-points-${countryCode.toLowerCase()}.db`)
 }
 
 /**
- * Opens and caches the national Overture rooftop lookups by country. `warm` probes the disk once for every registered
- * country so `for` never touches the filesystem. prefer {@link OvertureNationalDatabaseProvider.create}, which warms
- * before answering.
+ * Opens and caches the national Overture rooftop lookups by country.
+ * `warm` probes the disk once for every registered country so `for` never touches the filesystem.
+ * prefer {@link OvertureNationalDatabaseProvider.create}, which warms before answering.
  */
 export class OvertureNationalDatabaseProvider implements Disposable {
 	readonly #dataRoot: string
@@ -111,8 +112,8 @@ export class OvertureNationalDatabaseProvider implements Disposable {
 	}
 
 	/**
-	 * The rooftop lookup for an ISO-3166 alpha-2 country, or `{}` when the country has no registered locale or no
-	 * database on disk.
+	 * The rooftop lookup for an ISO-3166 alpha-2 country, or `{}` when the country
+	 * has no registered locale or no database on disk.
 	 */
 	readonly for = (country: string): RegionDatabases => {
 		const cc = country.toLowerCase()

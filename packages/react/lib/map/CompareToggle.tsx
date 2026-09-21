@@ -51,7 +51,8 @@ export interface CompareToggleProps {
 }
 
 /**
- * The compare toggle + (when on) the compare-version selector. Renders `null` with fewer than two versions.
+ * The compare toggle + (when on) the compare-version selector.
+ * Renders `null` with fewer than two versions.
  */
 export function CompareToggle({
 	versions,

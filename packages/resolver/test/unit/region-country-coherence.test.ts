@@ -19,8 +19,9 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
 
-// A test region carries an `abbrev` so the fake backend can model the 2-letter address-line code (the gazetteer
-// resolves "IL" via an alt-name. here abbrev-match stands in). `country` checks it under the hard default-country filter.
+// A test region carries an `abbrev` so the fake backend can model the 2-letter address-line
+// code (the gazetteer resolves "IL" via an alt-name. here abbrev-match stands in).
+// `country` checks it under the hard default-country filter.
 interface RegionPlace extends ResolvedPlace {
 	abbrev: string
 }
@@ -149,8 +150,9 @@ const PORTLAND_ME: ResolvedPlace = {
 }
 
 /**
- * Backend filtered by name equality (regions also match their two-letter `abbrev`), placetype, country, and `parentID`
- * (descendant scope). Models the hard `spr.country` filter: a query with `country` set never returns a foreign row.
+ * Backend filtered by name equality (regions also match their two-letter `abbrev`), placetype,
+ * country, and `parentID` (descendant scope). Models the hard `spr.country` filter:
+ * a query with `country` set never returns a foreign row.
  */
 async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {
 	return {

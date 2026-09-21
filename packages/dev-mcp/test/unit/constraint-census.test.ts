@@ -27,8 +27,8 @@ interface FakeLookup {
 /**
  * `name_key` → the placetypes holding it, standing in for candidate.db.
  *
- * `nowhereville` is deliberately present with an empty list: a key the table never heard of and a key it holds in no
- * other band must both read as coverage, and only one of those is a missing row.
+ * `nowhereville` is deliberately present with an empty list: a key the table never heard of and a key
+ * it holds in no other band must both read as coverage, and only one of those is a missing row.
  */
 const HOLDINGS: Record<string, string[]> = {
 	"illes balears": ["region", "macroregion"],

@@ -28,8 +28,8 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  * - A bare string (path-only, for adapters that need no extra options): `"wof-admin": "/data/wof.db"`
  * - A full AdapterOptions object: `"openaddresses": { "inputPath": "/data/oa.geojsonl", "country": "US" }`
  *
- * The object form is required by adapters that need a country filter (OpenAddresses), or for fixture runs that want a
- * `limit`.
+ * The object form is required by adapters that need a country filter (OpenAddresses),
+ * or for fixture runs that want a `limit`.
  */
 export const spec = {
 	name: "build",

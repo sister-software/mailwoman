@@ -59,18 +59,22 @@ export const PUNCTUATION_LAW = "punctuation-invariance"
 /**
  * The five punctuation transformations this law states, and the only five a committed row may use.
  *
- * - `comma-removed` — every separating comma deleted (`Portland, or` → `Portland or`). The headline register: a user who
- *   types an address as a phrase rather than as fields. The comma goes and the spacing stays, so the tokens keep their
- *   text and their order and only the field separator is gone.
- * - `period-removed` — every separating point deleted (`Neusser Str. 12` → `Neusser Str 12`). The abbreviation register,
- *   where one source writes `Str.` / `Jr.` / `Co.` and the next writes it bare.
- * - `terminal-period` — one full stop appended (`Portland, or` → `Portland, or.`). The sentence register, and the
- *   executable statement that Stage 1's trailing trim still takes the sentence punctuation a user appends.
- * - `apostrophe-typographic` — every `'` replaced by `’`: what a word processor does to a straight apostrophe.
+ * - `comma-removed` — every separating comma deleted (`Portland, or` → `Portland or`).
+ *   The headline register: a user who types an address as a phrase rather than as fields.
+ *   The comma goes and the spacing stays, so the tokens keep their text and their order
+ *   and only the field separator is gone.
+ * - `period-removed` — every separating point deleted (`Neusser Str. 12` → `Neusser Str 12`).
+ *   The abbreviation register, where one source writes `Str.` / `Jr.` / `Co.` and the next writes it bare.
+ * - `terminal-period` — one full stop appended (`Portland, or` → `Portland, or.`).
+ *   The sentence register, and the executable statement that Stage 1's trailing
+ *   trim still takes the sentence punctuation a user appends.
+ * - `apostrophe-typographic` — every `'` replaced by `’`: what a word processor
+ *   does to a straight apostrophe.
  * - `apostrophe-ascii` — every `’` replaced by `'`: what a plain keyboard and a CSV export produce instead.
  *
- * The apostrophe pair is two names rather than one because the two are different registers reaching the pipeline from
- * different tools, and a lexicon holding one form and not the other regresses in one direction while the other holds.
+ * The apostrophe pair is two names rather than one because the two are different
+ * registers reaching the pipeline from different tools, and a lexicon holding one form
+ * and not the other regresses in one direction while the other holds.
  */
 export const PUNCTUATION_TRANSFORMATIONS = [
 	"comma-removed",
@@ -83,15 +87,16 @@ export const PUNCTUATION_TRANSFORMATIONS = [
 export type PunctuationTransformationName = (typeof PUNCTUATION_TRANSFORMATIONS)[number]
 
 /**
- * What a transformation does to the marks it finds. It decides the reason an absent arm carries: a `removal` arm that
- * moved nothing may have found no mark at all or only marks inside tokens, a `replacement` one found no mark of its
- * source form, and a `boundary` one always moves something unless the text already ends in a full stop.
+ * What a transformation does to the marks it finds. It decides the reason an absent
+ * arm carries: a `removal` arm that moved nothing may have found no mark at all
+ * or only marks inside tokens, a `replacement` one found no mark of its source form,
+ * and a `boundary` one always moves something unless the text already ends in a full stop.
  */
 export type PunctuationScope = "boundary" | "removal" | "replacement"
 
 /**
- * Each transformation's scope, stated once so the applicability reading and the docstring cannot disagree about which
- * absence a missing arm reports.
+ * Each transformation's scope, stated once so the applicability reading and the
+ * docstring cannot disagree about which absence a missing arm reports.
  */
 export const PUNCTUATION_TRANSFORMATION_SCOPE: Record<PunctuationTransformationName, PunctuationScope> = {
 	"comma-removed": "removal",
@@ -102,8 +107,8 @@ export const PUNCTUATION_TRANSFORMATION_SCOPE: Record<PunctuationTransformationN
 }
 
 /**
- * The mark each removal transformation takes. Absent for the other scopes, which act on a form rather than on a
- * removable separator.
+ * The mark each removal transformation takes. Absent for the other scopes,
+ * which act on a form rather than on a removable separator.
  */
 const REMOVED_MARK: Partial<Record<PunctuationTransformationName, string>> = {
 	"comma-removed": ",",
@@ -113,30 +118,34 @@ const REMOVED_MARK: Partial<Record<PunctuationTransformationName, string>> = {
 /**
  * The comparators that read the query's own text back out of the result.
  *
- * `parse_whole_strict` and `component_map` both grade component values, and a component value is the span the parser
- * quoted from the query — so a transformation that rewrites a token rewrites the value with it, and the comparator
- * reports the transformation rather than anything the pipeline decided. `resolution_identity` reads namespaced place
- * ids and `assembled_coordinate` reads a coordinate. neither can carry a mark.
+ * `parse_whole_strict` and `component_map` both grade component values, and a component
+ * value is the span the parser quoted from the query — so a transformation that rewrites
+ * a token rewrites the value with it, and the comparator reports the transformation
+ * rather than anything the pipeline decided. `resolution_identity` reads namespaced place ids
+ * and `assembled_coordinate` reads a coordinate. neither can carry a mark.
  */
 const TEXT_ECHOING_COMPARATORS = new Set<OutcomeComparatorName>(["parse_whole_strict", "component_map"])
 
 /**
  * The removal transformations whose mark belongs to a token rather than to the space between two.
  *
- * A point followed by whitespace terminates the word in front of it — there is no address convention in which a lone
- * point separates two fields — so the parser's own span carries it: 18 of the corpus's 1,502 expected component values
- * hold a point, `Neusser Str.` and `Co. Kerry` among them. A comma is the opposite: it separates fields and the
- * tokenizer drops it, so a removed comma leaves every span's text untouched. Four committed venue values do carry an
- * embedded comma, which is why {@linkcode punctuationApplicability} takes the row's own spans as well as this list.
+ * A point followed by whitespace terminates the word in front of it — there is no
+ * address convention in which a lone point separates two fields — so the parser's own
+ * span carries it: 18 of the corpus's 1,502 expected component values hold a point,
+ * `Neusser Str.` and `Co. Kerry` among them. A comma is the opposite: it separates fields
+ * and the tokenizer drops it, so a removed comma leaves every span's text untouched.
+ * Four committed venue values do carry an embedded comma, which is why
+ * {@linkcode punctuationApplicability} takes the row's own spans as well as this list.
  */
 const TOKEN_TEXT_REMOVALS = new Set<PunctuationTransformationName>(["period-removed"])
 
 /**
  * Delete every separating run of `mark` and leave the intra-token ones byte-identical.
  *
- * A run is separating when whitespace or the end of the query follows it, which is the decidable form of "this mark
- * sits at a token's edge". `parís.méxico` keeps its point, `and more...,` keeps its ellipsis, and `Str. 12` loses one.
- * Whitespace is never touched, so the pair stays inside this law rather than drifting into the spacing one.
+ * A run is separating when whitespace or the end of the query follows it, which is the decidable
+ * form of "this mark sits at a token's edge". `parís.méxico` keeps its point, `and more...,`
+ * keeps its ellipsis, and `Str. 12` loses one. Whitespace is never touched,
+ * so the pair stays inside this law rather than drifting into the spacing one.
  */
 function removeSeparatingRuns(text: string, mark: string): string {
 	let out = ""
@@ -169,10 +178,12 @@ function removeSeparatingRuns(text: string, mark: string): string {
 }
 
 /**
- * The transformation each name applies. Pure, total, and the source the suite's variants are re-derived from.
+ * The transformation each name applies. Pure, total, and the source the suite's
+ * variants are re-derived from.
  *
- * `terminal-period` is a no-op on a query that already ends in a full stop, which is what keeps a doubled `..` out of
- * the suite: the pair then states the identity law and the applicability reading refuses it by name.
+ * `terminal-period` is a no-op on a query that already ends in a full stop, which is
+ * what keeps a doubled `..` out of the suite: the pair then states the identity law
+ * and the applicability reading refuses it by name.
  */
 export const PUNCTUATION_TRANSFORMATION_BY_NAME: Record<PunctuationTransformationName, (text: string) => string> = {
 	"comma-removed": (text) => removeSeparatingRuns(text, ","),
@@ -183,13 +194,16 @@ export const PUNCTUATION_TRANSFORMATION_BY_NAME: Record<PunctuationTransformatio
 }
 
 /**
- * The punctuation-blind identity of a string — equal keys mean the two differ by punctuation and by nothing else.
+ * The punctuation-blind identity of a string — equal keys mean the two differ
+ * by punctuation and by nothing else.
  *
- * Every letter, digit, combining mark and whitespace character survives in its original order, so this is the strongest
- * available statement of the scope rule: a punctuation transformation preserves token order, spacing and every
- * non-punctuation codepoint. `\p{P}` rather than the four marks the transformations act on, for the same reason the
- * spacing law's key takes all of `\s`: the key is a comparison surface rather than a transformation, and a pair that
- * swapped a hyphen for a dash must still come out equal here so {@linkcode classifyPunctuationTransformation} can
+ * Every letter, digit, combining mark and whitespace character survives in its original
+ * order, so this is the strongest available statement of the scope rule: a punctuation
+ * transformation preserves token order, spacing and every non-punctuation codepoint.
+ * `\p{P}` rather than the four marks the transformations act on, for the same
+ * reason the spacing law's key takes all of `\s`: the key is a comparison surface
+ * rather than a transformation, and a pair that swapped a hyphen for a dash must
+ * still come out equal here so {@linkcode classifyPunctuationTransformation} can
  * refuse it BY name rather than by looking like a different law.
  */
 export function punctuationBlindKey(text: string): string {
@@ -199,8 +213,8 @@ export function punctuationBlindKey(text: string): string {
 /**
  * Which named transformation turns `base` into `variant`, or `null` when none does.
  *
- * Derived from the pair rather than stored on the fixture: a stored transformation name is a second copy of something
- * the two strings already say, and the copy is what goes stale.
+ * Derived from the pair rather than stored on the fixture: a stored transformation name is
+ * a second copy of something the two strings already say, and the copy is what goes stale.
  */
 export function classifyPunctuationTransformation(base: string, variant: string): PunctuationTransformationName | null {
 	if (base === variant || punctuationBlindKey(base) !== punctuationBlindKey(variant)) return null
@@ -215,16 +229,19 @@ export function classifyPunctuationTransformation(base: string, variant: string)
 /**
  * The declared reasons a punctuation transformation is not stateable over a given row.
  *
- * - `identity-transformation` — the transformation returns the text unchanged because the query holds nothing of the kind
- *   it acts on: no comma to drop, no straight apostrophe to curl, a query that already ends in a full stop. Such a row
- *   is the identity law wearing a punctuation label — it would hold whatever the pipeline does with punctuation.
- * - `mark-inside-token` — the query does carry the mark, and every occurrence sits inside a token (`comer parís.méxico`,
- *   `and more...,`). Removing it would rewrite the token's text and change what the query names, which is the opt-out
- *   this law's narrowness exists for. Reported apart from the identity reading because "this query has no point" and
- *   "this query's point is part of a name" are different absences.
- * - `text-echoing-comparator` — the removal takes a mark that the parser quotes back inside a component value, and the
- *   row is graded on a comparator that reads those values. The comparator would then report the transformation itself,
- *   which reads as a pipeline defect and is nothing of the kind.
+ * - `identity-transformation` — the transformation returns the text unchanged because the query
+ *   holds nothing of the kind it acts on: no comma to drop, no straight apostrophe to curl,
+ *   a query that already ends in a full stop. Such a row is the identity law wearing a
+ *   punctuation label — it would hold whatever the pipeline does with punctuation.
+ * - `mark-inside-token` — the query does carry the mark, and every occurrence sits inside a
+ *   token (`comer parís.méxico`, `and more...,`). Removing it would rewrite the token's text
+ *   and change what the query names, which is the opt-out this law's narrowness exists for.
+ *   Reported apart from the identity reading because "this query has no point"
+ *   and "this query's point is part of a name" are different absences.
+ * - `text-echoing-comparator` — the removal takes a mark that the parser quotes back inside
+ *   a component value, and the row is graded on a comparator that reads those values.
+ *   The comparator would then report the transformation itself, which reads as
+ *   a pipeline defect and is nothing of the kind.
  */
 export const PUNCTUATION_APPLICABILITY_RULES = [
 	"identity-transformation",
@@ -237,8 +254,8 @@ export type PunctuationApplicabilityRule = (typeof PUNCTUATION_APPLICABILITY_RUL
 /**
  * One applicability reading: whether the transformation may be stated as a law for this row, and why.
  *
- * The reason is populated on both verdicts, for the same reason the two shipped laws populate it on both — a row
- * silently dropped from a law suite is the absence this layer exists to refuse.
+ * The reason is populated on both verdicts, for the same reason the two shipped laws populate it
+ * on both — a row silently dropped from a law suite is the absence this layer exists to refuse.
  */
 export interface PunctuationApplicability {
 	applicable: boolean
@@ -255,13 +272,15 @@ export interface PunctuationApplicability {
 export interface PunctuationApplicabilityContext {
 	/**
 	 * The row's own `outcomeComparator`. Absent skips the {@linkcode PUNCTUATION_APPLICABILITY_RULES}
-	 * `text-echoing-comparator` reading, which is what the suite audit does: the audit knows the comparator but not the
-	 * spans. Therefore, it applies the declared half of the rule and the suite test applies the corpus-grounded half.
+	 * `text-echoing-comparator` reading, which is what the suite audit does: the audit knows
+	 * the comparator but not the spans. Therefore, it applies the declared half of the rule
+	 * and the suite test applies the corpus-grounded half.
 	 */
 	comparator?: OutcomeComparatorName
 	/**
-	 * The component values the committed row asserts, e.g. `["Gate 12, Terminal 2"]`. A removal whose mark appears in one
-	 * of them rewrites that value on the variant side whatever the transformation's declared scope says.
+	 * The component values the committed row asserts, e.g. `["Gate 12, Terminal 2"]`.
+	 * A removal whose mark appears in one of them rewrites that value on the variant
+	 * side whatever the transformation's declared scope says.
 	 */
 	echoedSpans?: readonly string[]
 }
@@ -269,9 +288,9 @@ export interface PunctuationApplicabilityContext {
 /**
  * May `transformation` be stated as a punctuation law over `text`?
  *
- * The identity and inside-token rules are read first, and a row several rules bear on reports the earliest: a
- * transformation that moves nothing could never have tested anything, and that reading is more useful than a statement
- * about the comparator it would have been graded on.
+ * The identity and inside-token rules are read first, and a row several rules bear on reports
+ * the earliest: a transformation that moves nothing could never have tested anything, and that
+ * reading is more useful than a statement about the comparator it would have been graded on.
  */
 export function punctuationApplicability(
 	text: string,
@@ -327,8 +346,8 @@ export function punctuationApplicability(
 /**
  * The committed suite.
  *
- * Anchored at the package root: `tsc` emits no `.jsonl` into `out/`, so the file is named from where the package starts
- * rather than from where this module runs.
+ * Anchored at the package root: `tsc` emits no `.jsonl` into `out/`, so the file is named from
+ * where the package starts rather than from where this module runs.
  */
 export const PUNCTUATION_SUITE_PATH: string = resolvePackagePath(
 	"mailwoman",
@@ -341,16 +360,18 @@ export const PUNCTUATION_SUITE_PATH: string = resolvePackagePath(
 /**
  * Everything that must be true of a punctuation row, checked without running anything.
  *
- * Returns one message per problem, each naming the fixture. Empty means the suite states this law and only this law.
+ * Returns one message per problem, each naming the fixture.
+ * Empty means the suite states this law and only this law.
  *
- * The `caseCountry` requirement is not bookkeeping: a row graded with no country routes through the base en-US weights
- * package rather than its own overlay, so a punctuation violation would be reported for an instrument that was never
- * pointed at the row's locale.
+ * The `caseCountry` requirement is not bookkeeping: a row graded with no country routes
+ * through the base en-US weights package rather than its own overlay, so a punctuation
+ * violation would be reported for an instrument that was never pointed at the row's locale.
  *
- * Applicability is re-checked here, unlike the spacing law's audit, because two of this law's three rules can refuse a
- * pair that classifies perfectly well: a `period-removed` arm on a component comparator moves real text and is still
- * unstateable. Only the declared half runs — the audit reads a fixture rather than the corpus — and the suite test
- * supplies the row's asserted spans for the other half.
+ * Applicability is re-checked here, unlike the spacing law's audit, because two
+ * of this law's three rules can refuse a pair that classifies perfectly well:
+ * a `period-removed` arm on a component comparator moves real text and is still unstateable.
+ * Only the declared half runs — the audit reads a fixture rather than the corpus —
+ * and the suite test supplies the row's asserted spans for the other half.
  */
 export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, PUNCTUATION_LAW, (fixture, label, problems) => {
@@ -392,8 +413,9 @@ export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): 
 }
 
 /**
- * The transformation label a report line carries, e.g. `comma-removed`. `?` when the pair does not classify — which the
- * audit refuses, so it can only appear on a hand-built fixture that skipped the loader.
+ * The transformation label a report line carries, e.g. `comma-removed`.
+ * `?` when the pair does not classify — which the audit refuses, so it can only
+ * appear on a hand-built fixture that skipped the loader.
  */
 export function describePunctuationTransformation(fixture: ConformanceFixture): string {
 	return classifyPunctuationTransformation(fixture.base, fixture.variant) ?? "?"

@@ -24,8 +24,8 @@ import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { resolvePath } from "path-ts"
 
 /**
- * The `PROVENANCE.json` fields this reads. Written by `mwops release write-rights-files` and shipped in every published
- * weights package.
+ * The `PROVENANCE.json` fields this reads. Written by `mwops release write-rights-files`
+ * and shipped in every published weights package.
  */
 interface PackageProvenance {
 	package: string
@@ -59,7 +59,8 @@ export interface InstalledPackageReport {
 	 */
 	own: Array<{ text: string; licenseNamed: string | null }>
 	/**
-	 * Attribution entries belonging to the package whose graph this one decodes through, labeled as that package's.
+	 * Attribution entries belonging to the package whose graph this one decodes through,
+	 * labeled as that package's.
 	 */
 	inherited: { package: string; version: string; entries: Array<{ text: string; licenseNamed: string | null }> } | null
 	unresolved: string[]
@@ -84,8 +85,8 @@ export interface AttributionReport {
 /**
  * The published weights packages this repository knows how to look for.
  *
- * A fixed list rather than a scan of `node_modules`, so a package absent from an installation is reported as absent by
- * name. A scan would report a shorter list and say nothing about what was missing.
+ * A fixed list rather than a scan of `node_modules`, so a package absent from an installation is
+ * reported as absent by name. A scan would report a shorter list and say nothing about what was missing.
  */
 export const KNOWN_WEIGHTS_PACKAGES: readonly string[] = [
 	"@mailwoman/neural-weights-cjk",
@@ -105,9 +106,9 @@ export const KNOWN_WEIGHTS_PACKAGES: readonly string[] = [
 /**
  * Read one installed package's provenance record, or `null` when the package is not installed.
  *
- * A package that resolves but carries no `PROVENANCE.json` is reported as not installed for this purpose rather than as
- * installed with nothing to declare. The second reading would present a package published before these records existed
- * as one with no obligations.
+ * A package that resolves but carries no `PROVENANCE.json` is reported as not installed for this purpose
+ * rather than as installed with nothing to declare. The second reading would present a
+ * package published before these records existed as one with no obligations.
  */
 async function readInstalled(packageName: string): Promise<PackageProvenance | null> {
 	let directory: string

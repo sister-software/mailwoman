@@ -28,8 +28,9 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * A minimal git repo whose "pipeline" is one file, plus a `node_modules` the farm can mirror.
  *
- * `mailwoman/geocode` is stubbed as a real package directory so the runner's import resolves without this test needing
- * the monorepo. That is the same resolution path the real arm uses — a stub here proves the farm and the subprocess,
+ * `mailwoman/geocode` is stubbed as a real package directory so the runner's import
+ * resolves without this test needing the monorepo. That is the same resolution
+ * path the real arm uses — a stub here proves the farm and the subprocess,
  * and the engine is exercised for real by the tools that call this.
  */
 async function fakeRepo(marker: string): Promise<string> {
@@ -58,13 +59,13 @@ async function fakeRepo(marker: string): Promise<string> {
 		join(root, "packages", "mailwoman", "geocode", "index.ts")
 	)
 
-	// The workspace link yarn would have installed. Both arms need it and for different reasons: the worktree arm
-	// resolves through it directly, and the ref arm's farm mirrors this directory to build its own — so an empty
-	// node_modules here would test neither path.
+	// The workspace link yarn would have installed. Both arms need it and for different reasons:
+	// the worktree arm resolves through it directly, and the ref arm's farm mirrors this
+	// directory to build its own — so an empty node_modules here would test neither path.
 	await makeDirectories(join(root, "node_modules"))
 	await createSymbolicLink(join(root, "packages", "mailwoman"), join(root, "node_modules", "mailwoman"))
-	// Untracked and ignored, so the "does not touch the caller's tree" assertion compares a clean status to a clean
-	// status rather than to one this helper dirtied.
+	// Untracked and ignored, so the "does not touch the caller's tree" assertion compares
+	// a clean status to a clean status rather than to one this helper dirtied.
 	await writeLocalTextFile("node_modules\n", join(root, ".gitignore"))
 
 	runFileSync("git", ["init", "-q", "-b", "main"], { cwd: root })

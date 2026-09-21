@@ -15,8 +15,8 @@
  */
 
 /**
- * The five claims the evidence can license about a value, ordered from the strongest authority to none. Each result
- * carries exactly one. the constants are the wire values.
+ * The five claims the evidence can license about a value, ordered from the strongest
+ * authority to none. Each result carries exactly one. the constants are the wire values.
  */
 export const EpistemicStatus = {
 	/**
@@ -32,7 +32,8 @@ export const EpistemicStatus = {
 	 */
 	Derived: "derived",
 	/**
-	 * No row matched. the value is the intersection of stated constraints. Never presentable as retrieved.
+	 * No row matched. the value is the intersection of stated constraints.
+	 * Never presentable as retrieved.
 	 */
 	Inferred: "inferred",
 	/**
@@ -46,9 +47,9 @@ export type EpistemicStatus = (typeof EpistemicStatus)[keyof typeof EpistemicSta
 /**
  * Whether a relationship is stated by a source or concluded by us.
  *
- * `filer.db` enforces the companion rule in SQL — `filer_family_match_score_inferred_only` — because a match score on
- * an authoritative link means the link was never authoritative. `relation()` in `./evidence.ts` enforces the same rule
- * for callers who build one outside a database.
+ * `filer.db` enforces the companion rule in SQL — `filer_family_match_score_inferred_only` —
+ * because a match score on an authoritative link means the link was never authoritative.
+ * `relation()` in `./evidence.ts` enforces the same rule for callers who build one outside a database.
  */
 export const Assertion = {
 	Authoritative: "authoritative",
@@ -58,34 +59,37 @@ export const Assertion = {
 export type Assertion = (typeof Assertion)[keyof typeof Assertion]
 
 /**
- * Which proposition a source asserts about a record. A third axis, orthogonal to both of the above: `EpistemicStatus`
- * answers what may be claimed about a value, `Assertion` answers whether a relationship is stated or concluded, and
- * this answers what the publisher is talking about at all.
+ * Which proposition a source asserts about a record. A third axis, orthogonal to both of the above:
+ * `EpistemicStatus` answers what may be claimed about a value, `Assertion` answers whether a
+ * relationship is stated or concluded, and this answers what the publisher is talking about at all.
  *
- * It is recorded per field, never per source. A company register is an authority on the identifier it issues, while the
- * registered-office string on the same row is an address somebody filed with it. One verdict for the whole source
- * cannot record both, and the compressed form reads as "trust nothing here" — which discards the identity the register
- * does assign.
+ * It is recorded per field, never per source. A company register is an authority on the identifier it
+ * issues, while the registered-office string on the same row is an address somebody filed with it.
+ * One verdict for the whole source cannot record both, and the compressed form reads as
+ * "trust nothing here" — which discards the identity the register does assign.
  *
  * The constants are the wire values.
  */
 export const AssertedProposition = {
 	/**
-	 * An entity or object exists under an identifier the publisher issues or regulates. A uprn, an NPI, an LEI, a company
-	 * number, a siret.
+	 * An entity or object exists under an identifier the publisher issues or regulates.
+	 * A uprn, an NPI, an LEI, a company number, a siret.
 	 */
 	Identity: "identity",
 	/**
-	 * Address components or designators are assigned to an addressable object. A national address register.
+	 * Address components or designators are assigned to an addressable object.
+	 * A national address register.
 	 */
 	Address: "address",
 	/**
-	 * A coordinate or footprint belongs to an identified object. An address point, a building centroid, a parcel.
+	 * A coordinate or footprint belongs to an identified object.
+	 * An address point, a building centroid, a parcel.
 	 */
 	Geometry: "geometry",
 	/**
-	 * An address string was supplied or used in an operational context — a filing, a registration, a permit, a payment.
-	 * The publisher attests only that it received this string. Whether the string is correct is a separate question.
+	 * An address string was supplied or used in an operational context — a filing, a registration,
+	 * a permit, a payment. The publisher attests only that it received this string.
+	 * Whether the string is correct is a separate question.
 	 */
 	Observation: "observation",
 	/**

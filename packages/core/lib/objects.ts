@@ -9,9 +9,10 @@
 import type { JsonObject } from "type-fest"
 
 /**
- * True when `value` carries `Symbol.iterator`: arrays, sets, maps, strings, generators. `null` and `undefined` answer
- * false. The same predicate exists in `spliterator`, whose barrel also carries that library's Node fs, worker-thread
- * and xlsx readers. this module is on the browser client's static import path, so it must not reach that barrel.
+ * True when `value` carries `Symbol.iterator`: arrays, sets, maps, strings, generators.
+ * `null` and `undefined` answer false. The same predicate exists in `spliterator`,
+ * whose barrel also carries that library's Node fs, worker-thread and xlsx readers. this
+ * module is on the browser client's static import path, so it must not reach that barrel.
  */
 export function isIterable(value: unknown): value is Iterable<unknown> {
 	return Symbol.iterator in new Object(value)
@@ -32,8 +33,8 @@ export type StringKeyOf<O> = Extract<keyof O, string>
 
 /**
  * @param input Source object.
- * @param scalarEnum Unconstrained scalar enum whose values present in `input` will be used as keys, such as an
- *   enum-like object.
+ * @param scalarEnum Unconstrained scalar enum whose values present in `input` will
+ *   be used as keys, such as an enum-like object.
  *
  * @returns A subset of the source object with only properties present in `scalarEnum`.
  */
@@ -144,8 +145,9 @@ export function isRecordLike(input: unknown): input is object {
 type Falsy = false | 0 | 0n | "" | null | undefined
 
 /**
- * Typed counterpart to `Boolean` for collection filters. The runtime semantics are intentionally identical: all falsy
- * values are removed, while the overload narrows them out of the resulting element type.
+ * Typed counterpart to `Boolean` for collection filters.
+ * The runtime semantics are intentionally identical: all falsy values are removed,
+ * while the overload narrows them out of the resulting element type.
  */
 export function isPresent<T>(input: T): input is Exclude<T, Falsy>
 

@@ -25,8 +25,8 @@ export interface SearchHit {
 	 */
 	featureTypeCode?: string
 	/**
-	 * What the camera needs to choose a zoom. Absent for a feature the gazetteer gives no diameter, which a caller must
-	 * read as unknown rather than as zero.
+	 * What the camera needs to choose a zoom. Absent for a feature the gazetteer gives
+	 * no diameter, which a caller must read as unknown rather than as zero.
 	 */
 	diameterKm?: number
 	centerLon: number
@@ -34,15 +34,15 @@ export interface SearchHit {
 }
 
 /**
- * The payload the build wrote beside every entry. Read through the schema rather than cast, so an artifact from a build
- * with a different payload fails at load rather than as `undefined` in the panel.
+ * The payload the build wrote beside every entry. Read through the schema rather than cast, so an
+ * artifact from a build with a different payload fails at load rather than as `undefined` in the panel.
  */
 const SearchPayloadSchema = z.object({
 	id: z.string().min(1),
 	name: z.string().min(1),
 	featureType: z.string().min(1),
-	// Optional because the gazetteer leaves them unset for some features. an artifact built before they were written
-	// still loads, and the camera reads a missing diameter as unknown.
+	// Optional because the gazetteer leaves them unset for some features. an artifact built
+	// before they were written still loads, and the camera reads a missing diameter as unknown.
 	featureTypeCode: z.string().min(1).optional(),
 	diameterKm: z.number().optional(),
 	centerLon: z.number(),
@@ -52,8 +52,8 @@ const SearchPayloadSchema = z.object({
 const DEFAULT_LIMIT = 8
 
 /**
- * The BFS collects more than it answers so the rank-descending sort has real choices. a name and its alias both match a
- * shared prefix and collapse to one hit, which is why the surplus is needed.
+ * The BFS collects more than it answers so the rank-descending sort has real choices. a name
+ * and its alias both match a shared prefix and collapse to one hit, which is why the surplus is needed.
  */
 const CANDIDATE_MULTIPLIER = 3
 
@@ -71,8 +71,8 @@ export class PlanetarySearch {
 	}
 
 	/**
-	 * Prefix search: the largest feature first at a shared prefix, one hit per feature however many of its surfaces
-	 * match.
+	 * Prefix search: the largest feature first at a shared prefix, one hit per
+	 * feature however many of its surfaces match.
 	 */
 	query(text: string, limit = DEFAULT_LIMIT): SearchHit[] {
 		const tokens = nomenclatureTokens(text)
@@ -123,8 +123,8 @@ export interface LoadSearchIndexOptions {
 }
 
 /**
- * Fetch the artifact and open it. Throws on a failed fetch or bytes that are not a sealed ancestrie, so a wrong version
- * pin fails at startup rather than answering nothing to every query.
+ * Fetch the artifact and open it. Throws on a failed fetch or bytes that are not a sealed ancestrie,
+ * so a wrong version pin fails at startup rather than answering nothing to every query.
  */
 export async function loadSearchIndex(url: string, options: LoadSearchIndexOptions = {}): Promise<PlanetarySearch> {
 	let bytes: Uint8Array

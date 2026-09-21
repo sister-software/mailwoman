@@ -34,10 +34,11 @@ import { existingWOFDatabasePaths } from "#resolver-backend"
 let cached: Promise<WOFReverseGeocoderType | null> | null = null
 
 /**
- * Lazy-load + cache the default `WOFReverseGeocoder`. `null` when no admin database with a `place_bbox` R*Tree is on
- * disk, or `@mailwoman/resolver-wof-sqlite` can't be resolved (stripped install) — the pipeline then wires no
- * `reverseGeocode` fn at all, so POI results degrade to no `ancestry` (byte-stable pre-feature behavior). Cached for
- * the process lifetime (one handle, reused).
+ * Lazy-load + cache the default `WOFReverseGeocoder`. `null` when no admin database
+ * with a `place_bbox` R*Tree is on disk, or `@mailwoman/resolver-wof-sqlite` can't be
+ * resolved (stripped install) — the pipeline then wires no `reverseGeocode` fn at all,
+ * so POI results degrade to no `ancestry` (byte-stable pre-feature behavior).
+ * Cached for the process lifetime (one handle, reused).
  */
 export function loadDefaultReverseGeocoder(): Promise<WOFReverseGeocoderType | null> {
 	if (!cached) {

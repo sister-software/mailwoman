@@ -15,7 +15,8 @@ import { errorClasses, reliabilityCurve, thresholdTable, type Observation } from
 import { describe, expect, it } from "vitest"
 
 /**
- * `n` observations at one confidence, of which `correct` are right. Strata are irrelevant to the math and left empty.
+ * `n` observations at one confidence, of which `correct` are right.
+ * Strata are irrelevant to the math and left empty.
  */
 function at(confidence: number, n: number, correct: number): Observation[] {
 	return Array.from({ length: n }, (_, index) => ({ confidence, correct: index < correct, strata: {} }))
@@ -33,8 +34,9 @@ describe("reliabilityCurve", () => {
 	})
 
 	it("signs the gap so overconfidence is negative", () => {
-		// The direction is the finding rather than the magnitude: a confidence above the accuracy it warrants is the failure that
-		// lets a caller trust a wrong answer, and an unsigned gap cannot tell it from the harmless direction.
+		// The direction is the finding rather than the magnitude: a confidence above the
+		// accuracy it warrants is the failure that lets a caller trust a wrong answer,
+		// and an unsigned gap cannot tell it from the harmless direction.
 		const overconfident = reliabilityCurve(at(0.9, 100, 50), 10)
 		const underconfident = reliabilityCurve(at(0.5, 100, 90), 10)
 
@@ -43,8 +45,9 @@ describe("reliabilityCurve", () => {
 	})
 
 	it("weights ECE by bin population and takes MCE as the worst single bin", () => {
-		// 90 observations off by 0.1 and 10 off by 0.55. The two diverge on purpose: a rare, badly calibrated bin barely
-		// moves ECE and dominates MCE, so quoting one where the other was meant reverses the reading.
+		// 90 observations off by 0.1 and 10 off by 0.55. The two diverge on purpose:
+		// a rare, badly calibrated bin barely moves ECE and dominates MCE, so quoting one
+		// where the other was meant reverses the reading.
 		const curve = reliabilityCurve([...at(0.9, 90, 72), ...at(0.55, 10, 0)], 10)
 
 		expect(curve.ece).toBeCloseTo(0.9 * 0.1 + 0.1 * 0.55, 10)
@@ -52,9 +55,9 @@ describe("reliabilityCurve", () => {
 	})
 
 	it("KEEPS empty bins", () => {
-		// A model whose confidences never enter the low bins is itself the finding. Dropping the empty rows turns "this
-		// model is never unsure" into a table that simply starts at 0.8, which reads as a narrower measurement rather
-		// than a wider result.
+		// A model whose confidences never enter the low bins is itself the finding.
+		// Dropping the empty rows turns "this model is never unsure" into a table that simply
+		// starts at 0.8, which reads as a narrower measurement rather than a wider result.
 		const curve = reliabilityCurve(at(0.95, 10, 9), 10)
 
 		expect(curve.bins).toHaveLength(10)

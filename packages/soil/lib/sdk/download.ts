@@ -37,16 +37,16 @@ import { streamToDisk } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
 /**
- * The download service's survey-area cache. Documented at `https://websoilsurvey.sc.egov.usda.gov/DSD/Download/help`,
- * which lists `GET /{CacheName}/{FileName}`.
+ * The download service's survey-area cache. Documented at
+ * `https://websoilsurvey.sc.egov.usda.gov/DSD/Download/help`, which lists `GET /{CacheName}/{FileName}`.
  */
 export const WSS_SSA_CACHE_URL = "https://websoilsurvey.sc.egov.usda.gov/DSD/Download/Cache/SSA"
 
 /**
  * The archive URL for one survey area at one version date.
  *
- * The brackets are percent-encoded rather than sent raw: they are not valid in a URL path, and a client that sends them
- * literally depends on the fetcher tolerating them.
+ * The brackets are percent-encoded rather than sent raw: they are not valid in a URL path,
+ * and a client that sends them literally depends on the fetcher tolerating them.
  */
 export function surveyAreaArchiveURL(areaSymbol: string, versionDate: string): string {
 	return `${WSS_SSA_CACHE_URL}/wss_SSA_${areaSymbol}_%5B${versionDate}%5D.zip`
@@ -59,22 +59,23 @@ export interface DownloadSurveyAreaOptions {
 	 */
 	versionDate: string
 	/**
-	 * Where vintages are kept. Each version date gets its own directory, so a new refresh never overwrites the old one in
-	 * place and a re-run against the same vintage never re-transfers.
+	 * Where vintages are kept. Each version date gets its own directory, so a new refresh never
+	 * overwrites the old one in place and a re-run against the same vintage never re-transfers.
 	 */
 	cacheRoot: string
 	onProgress?: (message: string) => void
 }
 
 /**
- * Bytes between progress reports. Smaller than the shared default because these archives are 13–41 MB, and the default
- * stride would leave the smallest of them reporting once.
+ * Bytes between progress reports. Smaller than the shared default because these archives
+ * are 13–41 MB, and the default stride would leave the smallest of them reporting once.
  */
 const PROGRESS_STRIDE_BYTES = 8 * 1024 * 1024
 
 /**
- * What this host answers for a version date it does not hold. Not a 404: it reads as a malformed request rather than a
- * missing file. The message below reports that status. The date comes from the catalogue rather than a guess.
+ * What this host answers for a version date it does not hold.
+ * Not a 404: it reads as a malformed request rather than a missing file.
+ * The message below reports that status. The date comes from the catalogue rather than a guess.
  */
 const UNKNOWN_VERSION_STATUS = 400
 
@@ -99,11 +100,11 @@ export interface SurveyAreaArchive {
 /**
  * Download and unzip one survey area, returning where its pieces landed.
  *
- * Downloads to a `.part` file and renames only on a clean finish, so an interrupted transfer never presents as a
- * complete archive — the same discipline the database build uses, for the same reason.
+ * Downloads to a `.part` file and renames only on a clean finish, so an interrupted transfer never
+ * presents as a complete archive — the same discipline the database build uses, for the same reason.
  *
- * @throws {Error} When the host answers anything but 200, or when the extracted tree does not hold the two directories
- *   every survey area publishes.
+ * @throws {Error} When the host answers anything but 200, or when the extracted tree
+ *   does not hold the two directories every survey area publishes.
  */
 export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Promise<SurveyAreaArchive> {
 	const vintageDirectory = join(options.cacheRoot, options.versionDate)
@@ -132,8 +133,8 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 			})
 		}
 
-		// The archive holds its files under an `<areasymbol>/` root already, so it unzips into the vintage directory
-		// rather than into a directory named for itself.
+		// The archive holds its files under an `<areasymbol>/` root already, so it unzips
+		// into the vintage directory rather than into a directory named for itself.
 		await runFile("unzip", ["-o", "-q", archivePath, "-d", vintageDirectory])
 	} else {
 		options.onProgress?.(`${options.areaSymbol}: already extracted for ${options.versionDate}`)

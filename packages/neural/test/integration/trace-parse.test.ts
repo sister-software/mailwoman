@@ -120,10 +120,10 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		expect(queryShapePrior).toEqual({ kind: "queryShape", applied: false })
 
-		// The span proposer is default-on. whether it fires depends on the text. The interface is
-		// every kind, in application order — asserted against the exported constant, so a new prior
-		// added to #decode without its participation record fails here instead of silently vanishing
-		// from traces.
+		// The span proposer is default-on. whether it fires depends on the text.
+		// The interface is every kind, in application order — asserted against the exported
+		// constant, so a new prior added to #decode without its participation record fails here
+		// instead of silently vanishing from traces.
 		expect(bare.priors.map((p) => p.kind)).toEqual([...TRACE_PRIOR_KINDS])
 	})
 
@@ -228,9 +228,9 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 	it("records repair passes as before/after label sequences", async () => {
 		const tokenizer = await loadTokenizer()
-		// A GB alphanumeric postcode: the repair pass's ADD path creates a span over all-O labels
-		// (numeric shapes like a bare ZIP are snap-only and never fire from all-O — see
-		// postcode-repair.ts precision guards).
+		// A GB alphanumeric postcode: the repair pass's ADD path creates a span over all-O
+		// labels (numeric shapes like a bare ZIP are snap-only and never fire from all-O —
+		// see postcode-repair.ts precision guards).
 		const text = "London SW1A 1AA"
 		const { pieces } = tokenizer.encode(text)
 
@@ -257,22 +257,22 @@ describe("NeuralAddressClassifier.traceParse", () => {
 	})
 
 	it("GB conventions pin (#1275): a clipped GB postcode is snap-repaired with NO explicit postcodeRepair opt", async () => {
-		// Characterizes the #1275 clip class: the en-gb overlay mis-tags the first piece of the outward
-		// code as region ("SK11 9PD" → region "S" + postcode "K11 9PD"). The en-gb model-card pins
-		// `requires.conventions.mode` to "gb", which loadFromWeights forwards as the classifier's
-		// `addressSystemConventions` config — reproduced here directly. The codex gb row's
-		// `postcodePattern` must open the repair check so the snap path reunites the span.
+		// Characterizes the #1275 clip class: the en-gb overlay mis-tags the first piece
+		// of the outward code as region ("SK11 9PD" → region "S" + postcode "K11 9PD").
+		// The en-gb model-card pins `requires.conventions.mode` to "gb", which loadFromWeights
+		// forwards as the classifier's `addressSystemConventions` config — reproduced here directly.
+		// The codex gb row's `postcodePattern` must open the repair check so the snap path reunites the span.
 		const tokenizer = await loadTokenizer()
 		const text = "Macclesfield SK11 9PD"
 		const { pieces } = tokenizer.encode(text)
 		const postcodeStart = text.indexOf("SK11")
-		// First piece carrying actual postcode characters (the fixture tokenizer emits a zero-width "▁"
-		// piece at a word boundary — a zero-width span can never overlap the repair's raw-text match).
+		// First piece carrying actual postcode characters (the fixture tokenizer emits a zero-width
+		// "▁" piece at a word boundary — a zero-width span can never overlap the repair's raw-text match).
 		const firstPostcodePiece = pieces.findIndex((p) => p.start >= postcodeStart && p.end > p.start)
 		expect(firstPostcodePiece).toBeGreaterThan(0)
 
-		// The diagnosed mislabel shape: locality run, then B-region on the outward code's first piece,
-		// then the postcode labels on the remainder (the clip).
+		// The diagnosed mislabel shape: locality run, then B-region on the outward code's
+		// first piece, then the postcode labels on the remainder (the clip).
 		const logits = pieces.map((_, i) => {
 			const row = Array.from<number>({ length: STAGE2_BIO_LABELS.length }).fill(0)
 
@@ -295,18 +295,19 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// Without the pin (pre-#1275 en-gb reality): the eval never opens, the clip stands.
 		const unpinned = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 		const clippedTrace = await unpinned.traceParse(text, { spanProposer: false })
-		// The subject here is the postcode check: unpinned, the codex gb row is never consulted, so the snap
-		// path never runs and the clip stands. Assert that specifically rather than `repairs === []` — the
-		// blanket form silently also pinned "word-consistency never fires", which was true only while that
-		// repair was default-off on the classifier, and broke the moment the default matched the pipeline's.
+		// The subject here is the postcode check: unpinned, the codex gb row is never consulted,
+		// so the snap path never runs and the clip stands. Assert that specifically
+		// rather than `repairs === []` — the blanket form silently also pinned "word-consistency
+		// never fires", which was true only while that repair was default-off on the classifier,
+		// and broke the moment the default matched the pipeline's.
 		expect(clippedTrace.repairs.filter((r) => r.pass === "postcodeRepair")).toEqual([])
 		const clipped = (await unpinned.parseJSON(text)) as { postcode?: string }
 		expect(clipped.postcode).toBeDefined()
 		expect(clipped.postcode).not.toBe("SK11 9PD")
 		expect("SK11 9PD".endsWith(clipped.postcode!)).toBe(true)
 
-		// With the pin (what the en-gb card now declares): pinned system → codex gb row → repair check
-		// opens → the snap path relabels the whole raw-text match as one postcode span.
+		// With the pin (what the en-gb card now declares): pinned system → codex gb row → repair
+		// check opens → the snap path relabels the whole raw-text match as one postcode span.
 		const pinned = new NeuralAddressClassifier({
 			tokenizer,
 			runner: new FakeRunner(logits),
@@ -367,10 +368,11 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 	it("spanBridge repair stays piece-aligned even though the bridge MERGES tokens", async () => {
 		const tokenizer = await loadTokenizer()
-		// "P.O. Box" fragments: label the alphanumeric pieces street (a STAGE2 tag — the fake
-		// classifier runs the 21-label set, and the bridge is tag-agnostic), leave the dot pieces O.
-		// The bridge merges the fragments across the unlabeled intra-token punctuation, dropping
-		// tokens. the trace interface still promises per-piece before/after (char-offset projection).
+		// "P.O. Box" fragments: label the alphanumeric pieces street
+		// (a STAGE2 tag — the fake classifier runs the 21-label set, and the bridge is tag-agnostic),
+		// leave the dot pieces O. The bridge merges the fragments across the unlabeled
+		// intra-token punctuation, dropping tokens. the trace interface still promises
+		// per-piece before/after (char-offset projection).
 		const text = "P.O. Box 123"
 		const { pieces } = tokenizer.encode(text)
 		const oIdx = STAGE2_BIO_LABELS.indexOf("O")
@@ -395,8 +397,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const trace = await classifier.traceParse(text, { bridgePunctuationGaps: true, spanProposer: false })
 		const bridge = trace.repairs.find((r) => r.pass === "spanBridge")
 
-		// The bridge must have merged (fewer final tokens than pieces) — otherwise this test's
-		// premise is dead and it should fail loudly rather than assert nothing.
+		// The bridge must have merged (fewer final tokens than pieces) — otherwise this
+		// test's premise is dead and it should fail loudly rather than assert nothing.
 		expect(trace.tokens.length).toBeLessThan(pieces.length)
 		expect(bridge).toBeDefined()
 		expect(bridge!.before).toHaveLength(pieces.length)
@@ -442,8 +444,9 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const trace = await classifier.traceParse(text, { addressSystemConventions: "auto", spanProposer: false })
 
-		// `false`: the committed fixture ends at the closing brace, and this test exists so that drift is a conscious
-		// decision. Letting the printer's default newline move the pin would make a lint migration into that decision.
+		// `false`: the committed fixture ends at the closing brace, and this test exists
+		// so that drift is a conscious decision. Letting the printer's default newline
+		// move the pin would make a lint migration into that decision.
 		await expect(prettyJSON(trace, false)).toMatchFileSnapshot("../fixtures/trace-schema.snap.json")
 	})
 })

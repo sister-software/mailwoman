@@ -23,8 +23,9 @@ import type { ComponentDict } from "#address/format"
 import type { ComponentTag } from "#component"
 
 /**
- * The address-identifying components, in canonical key order. Venue / attention are intentionally excluded — those
- * carry organization identity, which the record layer keys separately.
+ * The address-identifying components, in canonical key order.
+ * Venue / attention are intentionally excluded — those carry organization identity,
+ * which the record layer keys separately.
  */
 const KEY_FIELD_ORDER = [
 	"po_box",
@@ -55,29 +56,30 @@ export interface CanonicalKeyOptions {
 }
 
 /**
- * Options for {@linkcode foldForKey} — the two points where the formatter's address-token fold and the record package's
- * fragment fold legitimately differ.
+ * Options for {@linkcode foldForKey} — the two points where the formatter's address-token fold
+ * and the record package's fragment fold legitimately differ.
  */
 export interface FoldForKeyOptions {
 	/**
-	 * How connective punctuation folds. `"space"` turns `&`, `+`, and `/` into word boundaries (`"A&B"` → `"a b"`);
-	 * `"and"` spells `&` and `+` out as the word `and` (`"AT&T"` → `"at and t"`), leaving `/` to the punctuation
-	 * catch-all (still a word boundary).
+	 * How connective punctuation folds. `"space"` turns `&`, `+`, and `/` into word
+	 * boundaries (`"A&B"` → `"a b"`); `"and"` spells `&` and `+` out as the word `and`
+	 * (`"AT&T"` → `"at and t"`), leaving `/` to the punctuation catch-all (still a word boundary).
 	 */
 	ampersand: "space" | "and"
 	/**
-	 * Intra-token deletion set. When true, periods join the apostrophes as intra-token noise and are deleted (`"S.A."` →
-	 * `"sa"`), while a backtick falls to the punctuation catch-all. When false or omitted, backticks are deleted
-	 * alongside the apostrophes and periods become word boundaries (`"S.A."` → `"s a"`).
+	 * Intra-token deletion set. When true, periods join the apostrophes as intra-token noise
+	 * and are deleted (`"S.A."` → `"sa"`), while a backtick falls to the punctuation catch-all.
+	 * When false or omitted, backticks are deleted alongside the apostrophes
+	 * and periods become word boundaries (`"S.A."` → `"s a"`).
 	 */
 	dropPeriods?: boolean
 }
 
 /**
- * The shared fold behind every match key: nfkd-decompose and strip combining marks (so `é` → `e`), lowercase, delete
- * intra-token punctuation, expand or flatten connective punctuation per {@linkcode FoldForKeyOptions}, space every
- * remaining non-alphanumeric, and collapse whitespace. Deterministic — the same input and options always yield the same
- * output.
+ * The shared fold behind every match key: nfkd-decompose and strip combining marks (so `é` → `e`),
+ * lowercase, delete intra-token punctuation, expand or flatten connective punctuation per
+ * {@linkcode FoldForKeyOptions}, space every remaining non-alphanumeric, and collapse whitespace.
+ * Deterministic — the same input and options always yield the same output.
  */
 export function foldForKey(input: string, options: FoldForKeyOptions): string {
 	const folded = input
@@ -103,15 +105,17 @@ export function foldForKey(input: string, options: FoldForKeyOptions): string {
 }
 
 /**
- * Normalize a single token for matching: {@linkcode foldForKey} with connective punctuation flattened to spaces (so
- * `"A&B"` → `"a b"`, not `"ab"`). Deterministic and reversible-free — the same input always yields the same output.
+ * Normalize a single token for matching: {@linkcode foldForKey} with connective
+ * punctuation flattened to spaces (so `"A&B"` → `"a b"`, not `"ab"`).
+ * Deterministic and reversible-free — the same input always yields the same output.
  */
 export function normalizeAddressToken(input: string): string {
 	return foldForKey(input, { ampersand: "space" })
 }
 
 /**
- * Derive the canonical match key from an address component dict: each present, address-identifying field normalized via
+ * Derive the canonical match key from an address component dict: each present,
+ * address-identifying field normalized via
  * {@linkcode normalizeAddressToken}, in fixed order, joined by the separator. Empty / whitespace-only fields are
  * skipped. Returns an empty string if nothing identifying remains.
  */

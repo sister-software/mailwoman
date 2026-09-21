@@ -37,8 +37,8 @@ type Row = Record<string, string | number | null>
 let dir: TemporaryDirectory
 
 /**
- * One GeoNames dump row: 19 tab-separated columns (id, name, ascii, alt, lat, lon, fclass, fcode, country, cc2, admin1,
- * admin2, admin3, admin4, pop, elev, dem, tz, mod).
+ * One GeoNames dump row: 19 tab-separated columns (id, name, ascii, alt, lat, lon, fclass,
+ * fcode, country, cc2, admin1, admin2, admin3, admin4, pop, elev, dem, tz, mod).
  */
 function row(over: Record<number, string>): string {
 	const f = new Array(19).fill("")
@@ -125,8 +125,8 @@ test("a re-fold rewrites the range wholesale — no row survives from the previo
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
 	await ingestGeonamesAliases(db, ["AT"], dir.path, () => {})
 
-	// Fold B declared AT only. Nothing from BW may remain — not an spr row rather than a name rather than a
-	// population. A surviving row is a row no run is accountable for.
+	// Fold B declared AT only. Nothing from BW may remain — not an spr row rather than a name
+	// rather than a population. A surviving row is a row no run is accountable for.
 	const leftovers = db
 		.prepare(
 			`SELECT (SELECT COUNT(*) FROM spr WHERE id >= ? AND country = 'BW') AS spr,
@@ -142,9 +142,9 @@ test("a re-fold rewrites the range wholesale — no row survives from the previo
 })
 
 test("a stale population cannot outlive the place it belonged to", async () => {
-	// The `pop > 0` guard on the population write is what made this the worst of the three tables:
-	// an unpopulated place inheriting a metropolis's population is not a name error, it is a ranking
-	// error, and it moves the wrong row to the top of every candidate list.
+	// The `pop > 0` guard on the population write is what made this the worst of the three
+	// tables: an unpopulated place inheriting a metropolis's population is not a name error,
+	// it is a ranking error, and it moves the wrong row to the top of every candidate list.
 	await using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
@@ -177,9 +177,9 @@ test("re-folding the SAME list twice is a no-op, not a doubling", async () => {
 
 test("every folded locality gets its self-ancestor row, admin fold or not", async () => {
 	// The purge clears `ancestors` in the range too, and the fold-on-copy path never runs the freeze
-	// phase's `populateAncestors` closure — so the fold owes the closure's output for its own rows. The
-	// self row is the part that used to be conditioned on the #267 admin fold and so went missing for every
-	// country that already had WOF/Overture admin.
+	// phase's `populateAncestors` closure — so the fold owes the closure's output for its own rows.
+	// The self row is the part that used to be conditioned on the #267 admin fold and
+	// so went missing for every country that already had WOF/Overture admin.
 	await using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})

@@ -44,7 +44,8 @@ const healthRoute = createRoute({
 })
 
 /**
- * How long a failed email may stand before the report says so: past the mint's own attempt, short of the next resend.
+ * How long a failed email may stand before the report says so: past the mint's
+ * own attempt, short of the next resend.
  */
 const EMAIL_FAILURE_GRACE_MS = 60 * 60 * 1000
 

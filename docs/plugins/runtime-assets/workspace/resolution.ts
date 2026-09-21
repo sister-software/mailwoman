@@ -52,8 +52,9 @@ export async function resolvePackageDirectoryEntry(packageName: string, subpath:
 }
 
 /**
- * An alias that points at a missing file breaks the client bundle at the first import, while a skipped alias falls
- * through to the package's own exports map, which is the correct answer for a subpath the alias list has outgrown.
+ * An alias that points at a missing file breaks the client bundle at the first import,
+ * while a skipped alias falls through to the package's own exports map, which is the
+ * correct answer for a subpath the alias list has outgrown.
  */
 async function existingCompiledFile(target: string): Promise<string | null> {
 	if (await pathExists(target)) return target

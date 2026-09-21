@@ -134,8 +134,8 @@ test("a null spec renders no marker and no result layers", async () => {
 
 	if (!mapEl) return
 
-	// Read the ref lazily: it is assigned in a callback TypeScript cannot see, so reading it directly
-	// here narrows it to `never`.
+	// Read the ref lazily: it is assigned in a callback TypeScript cannot see,
+	// so reading it directly here narrows it to `never`.
 	const getMap = () => mapRef?.getMap()
 
 	// Give the style a beat to settle, then confirm nothing was drawn.

@@ -28,9 +28,10 @@ const BUCKET_URL = "https://overturemaps-us-west-2.s3.amazonaws.com"
  * Releases currently in the bucket, oldest first.
  */
 /**
- * What this function needs from an http client: one `fetch`. Narrower than {@link APIClient} on purpose — a parameter
- * shaped like the whole client makes a test double an assertion rather than an object, and the assertion then survives
- * a signature change that the double does not.
+ * What this function needs from an http client: one `fetch`.
+ * Narrower than {@link APIClient} on purpose — a parameter shaped like the whole
+ * client makes a test double an assertion rather than an object, and the assertion
+ * then survives a signature change that the double does not.
  */
 export interface OvertureListingClient {
 	fetch(request: {
@@ -41,9 +42,10 @@ export interface OvertureListingClient {
 }
 
 /**
- * S3 returns at most 1,000 keys per `ListObjectsV2` response and reports the truncation in `IsTruncated`. A reader that
- * only matches `<Prefix>` cannot see that field, so a truncated first page reads as the whole bucket — and every
- * release past the truncation reads as pruned, which is the one answer this module exists to give correctly.
+ * S3 returns at most 1,000 keys per `ListObjectsV2` response and reports the truncation
+ * in `IsTruncated`. A reader that only matches `<Prefix>` cannot see that field,
+ * so a truncated first page reads as the whole bucket — and every release past the truncation
+ * reads as pruned, which is the one answer this module exists to give correctly.
  */
 const LISTING_PAGE_LIMIT = 100
 
@@ -105,8 +107,8 @@ export interface ReleaseCheck {
 	present: boolean
 	available: string[]
 	/**
-	 * `undefined` when the listing itself failed. An unreachable bucket is not evidence that a release was pruned, and a
-	 * build must not refuse to start because the network blinked.
+	 * `undefined` when the listing itself failed. An unreachable bucket is not evidence that
+	 * a release was pruned, and a build must not refuse to start because the network blinked.
 	 */
 	reachable: boolean
 	message: string
@@ -115,9 +117,9 @@ export interface ReleaseCheck {
 /**
  * Check one pin against the bucket.
  *
- * A failed listing reports `reachable: false` and `present: true` — deliberately permissive. This is a pre-flight whose
- * only job is to turn a 30-minute failure into an immediate one. letting it block a build on its own network trouble
- * would trade a slow failure for a spurious one.
+ * A failed listing reports `reachable: false` and `present: true` — deliberately permissive.
+ * This is a pre-flight whose only job is to turn a 30-minute failure into an immediate one.
+ * letting it block a build on its own network trouble would trade a slow failure for a spurious one.
  */
 export async function checkOvertureRelease(release: string, client?: OvertureListingClient): Promise<ReleaseCheck> {
 	let available: string[]
@@ -134,9 +136,10 @@ export async function checkOvertureRelease(release: string, client?: OvertureLis
 		}
 	}
 
-	// An empty listing is not an empty bucket. Overture has never held zero releases, so nothing-found means the query
-	// was wrong or the response was not the listing — and the first version of this file proved the point by dropping
-	// its own query parameters and then reporting a live pin as pruned. Zero is treated as no answer, never as absence.
+	// An empty listing is not an empty bucket. Overture has never held zero releases,
+	// so nothing-found means the query was wrong or the response was not the listing —
+	// and the first version of this file proved the point by dropping its own query parameters
+	// and then reporting a live pin as pruned. Zero is treated as no answer, never as absence.
 	if (!available.length) {
 		return {
 			release,

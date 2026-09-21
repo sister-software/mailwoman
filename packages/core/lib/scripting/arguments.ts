@@ -62,8 +62,8 @@ export function extractDelimited(value?: unknown, delimiter = ","): string[] {
 /**
  * A flag's value, or a thrown error naming the flag and the command that needs it.
  *
- * `parseArgs` has no required-option concept: an absent `--name` is `undefined`, and a script that forwards that into a
- * path or a URL fails far from the flag that caused it.
+ * `parseArgs` has no required-option concept: an absent `--name` is `undefined`,
+ * and a script that forwards that into a path or a URL fails far from the flag that caused it.
  */
 export function requiredArgument(scope: string, name: string, value: string | undefined): string {
 	if (value === undefined) {
@@ -76,9 +76,9 @@ export function requiredArgument(scope: string, name: string, value: string | un
 /**
  * Kebab segments whose property spelling capitalizes the whole acronym, per the house casing convention.
  *
- * A segment missing here derives a property the command's own `Options` does not declare. The flag still parses and
- * still passes validation. it reaches the component under a name nothing reads, so it does nothing and reports no
- * error. Add the segment here when a flag carries an acronym.
+ * A segment missing here derives a property the command's own `Options` does not declare.
+ * The flag still parses and still passes validation. it reaches the component under a name nothing reads,
+ * so it does nothing and reports no error. Add the segment here when a flag carries an acronym.
  */
 export const OPTION_INITIALISMS = {
 	csv: "CSV",
@@ -93,8 +93,8 @@ export const OPTION_INITIALISMS = {
 } as const
 
 /**
- * One kebab segment's property spelling. Shared by {@linkcode optionPropertyName} and {@linkcode OptionPropertyName} so
- * the value and the type can never capitalize a segment differently.
+ * One kebab segment's property spelling. Shared by {@linkcode optionPropertyName} and
+ * {@linkcode OptionPropertyName} so the value and the type can never capitalize a segment differently.
  */
 type InitialismOf<Segment extends string> = Segment extends keyof typeof OPTION_INITIALISMS
 	? (typeof OPTION_INITIALISMS)[Segment]
@@ -108,9 +108,9 @@ type TailPropertyName<Value extends string> = Value extends `${infer Head}-${inf
  * {@linkcode optionPropertyName} at the type level, so a command's option properties are derived from its flags rather
  * than restated beside them.
  *
- * The two must agree for a flag to bind, and matched tables would not hold that: the type and the value diverge at the
- * points a constant cannot express. They share {@linkcode OPTION_INITIALISMS} itself — one declaration, read by
- * `typeof` here and by `Object.hasOwn` there.
+ * The two must agree for a flag to bind, and matched tables would not hold that: the type and the value
+ * diverge at the points a constant cannot express. They share {@linkcode OPTION_INITIALISMS}
+ * itself — one declaration, read by `typeof` here and by `Object.hasOwn` there.
  */
 export type OptionPropertyName<Value extends string> = Value extends `${infer Head}-${infer Tail}`
 	? `${Head}${TailPropertyName<Tail>}`
@@ -119,8 +119,9 @@ export type OptionPropertyName<Value extends string> = Value extends `${infer He
 /**
  * Convert a kebab-case option name to its TypeScript property name.
  *
- * `@mailwoman/repo-health`'s `cli-flag-properties` check derives every command's property names with this function, so
- * a flag whose property nothing declares fails a check rather than doing nothing at runtime.
+ * `@mailwoman/repo-health`'s `cli-flag-properties` check derives every command's
+ * property names with this function, so a flag whose property nothing declares
+ * fails a check rather than doing nothing at runtime.
  */
 export function optionPropertyName(value: string): string {
 	const [head = "", ...tail] = value.split("-")
@@ -138,13 +139,14 @@ export function optionPropertyName(value: string): string {
 }
 
 /**
- * Parse CLI arguments against a `node:util` `parseArgs` config — the same `options`, `allowPositionals`, `strict` and
- * `tokens` fields. `args` defaults to {@linkcode cliArguments}, so a script never reads `process.argv` itself. a caller
- * that has already taken a command name off the front passes the remainder as `args` and it is used as given. The
- * result is typed from the config exactly as the builtin types it.
+ * Parse CLI arguments against a `node:util` `parseArgs` config — the same `options`,
+ * `allowPositionals`, `strict` and `tokens` fields. `args` defaults to {@linkcode cliArguments},
+ * so a script never reads `process.argv` itself. a caller that has already taken a
+ * command name off the front passes the remainder as `args` and it is used as given.
+ * The result is typed from the config exactly as the builtin types it.
  */
 export function parseArguments<T extends ParseArgsConfig>(config: T): ReturnType<typeof parseArgs<T>> {
-	// The builtin types its result from the whole config object, so supplying `args` moves the type. the parsed shape
-	// depends on `options`/`allowPositionals` alone, which `T` carries.
+	// The builtin types its result from the whole config object, so supplying `args` moves the
+	// type. the parsed shape depends on `options`/`allowPositionals` alone, which `T` carries.
 	return parseArgs({ args: [...cliArguments()], ...config }) as ReturnType<typeof parseArgs<T>>
 }

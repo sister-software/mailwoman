@@ -101,8 +101,9 @@ describe("createPOITaxonomyLookup", () => {
 	})
 
 	it("agrees with the node entry on a shared phrase from the real taxonomy table", async () => {
-		// Load the same JSON the node entry loads, via the core reader (this test file itself runs under node, so
-		// this doesn't exercise bundler-safety — it just proves the two entries agree over the real table).
+		// Load the same JSON the node entry loads, via the core reader
+		// (this test file itself runs under node, so this doesn't exercise bundler-safety —
+		// it just proves the two entries agree over the real table).
 
 		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
 		const table = (await readLocalJSONFile(

@@ -75,18 +75,19 @@ import {
 } from "#vocabulary"
 
 /**
- * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
- * ignore.
+ * Schema version of the domain tables. Bumped when a column changes meaning,
+ * never for an added column a reader can ignore.
  */
 export const COASTAL_SCHEMA_VERSION = 1
 
 /**
  * Feature ids per chunk process.
  *
- * Sized against the measured ceiling on the sibling product rather than guessed: single-process runs over that layer
- * died after roughly 510,000 and 798,000 features as h3's wasm heap fragmented. ncerm's largest layer holds 7,501
- * features, so this default puts one whole layer in one process. That ceiling makes the build reproducible rather than
- * the fact that this product happens to sit far below it.
+ * Sized against the measured ceiling on the sibling product rather than guessed:
+ * single-process runs over that layer died after roughly 510,000 and 798,000 features
+ * as h3's wasm heap fragmented. ncerm's largest layer holds 7,501 features, so this
+ * default puts one whole layer in one process. That ceiling makes the build reproducible
+ * rather than the fact that this product happens to sit far below it.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
 
@@ -96,15 +97,15 @@ export const DEFAULT_CHUNK_SIZE = 100_000
 export type BuildCoastalInput =
 	| {
 			/**
-			 * A feature source consumed IN this process. Correct for a fixture and for anything small. it is what the batched
-			 * form falls back to per chunk, so the two share one implementation.
+			 * A feature source consumed IN this process. Correct for a fixture and for anything small.
+			 * it is what the batched form falls back to per chunk, so the two share one implementation.
 			 */
 			source: CoastalFeatureSource
 	  }
 	| {
 			/**
-			 * The published geodatabase, ingested in bounded chunks — one child process per scenario layer, plus one for the
-			 * two ground-instability layers.
+			 * The published geodatabase, ingested in bounded chunks — one child process per
+			 * scenario layer, plus one for the two ground-instability layers.
 			 */
 			batched: {
 				geodatabasePath: string
@@ -135,8 +136,8 @@ export type BuildCoastalOptions = BuildCoastalInput & {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the interface says so, and a library-generated timestamp
-	 * makes two builds of the same inputs differ.
+	 * ISO-8601, supplied by the caller. Never generated here: the interface says so,
+	 * and a library-generated timestamp makes two builds of the same inputs differ.
 	 */
 	createdAt: string
 	/**
@@ -148,9 +149,9 @@ export type BuildCoastalOptions = BuildCoastalInput & {
 	 */
 	coverageResolution: number
 	/**
-	 * The feature counts a second distribution channel reports, per layer — the live WFS. Supplied, each is asserted
-	 * against what the build streamed for that layer, which is the cheapest two-path check available and catches a stale
-	 * or truncated archive.
+	 * The feature counts a second distribution channel reports, per layer — the live WFS.
+	 * Supplied, each is asserted against what the build streamed for that layer,
+	 * which is the cheapest two-path check available and catches a stale or truncated archive.
 	 */
 	expectedFeatureCounts?: Readonly<Record<string, number>>
 	onProgress?: (message: string) => void
@@ -166,14 +167,16 @@ export interface BuildCoastalResult {
 	wholeCellRows: number
 	partialCellRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored rows — the whole side is compacted per
-	 * feature, so this is not the same number the resolution was chosen on and is reported separately.
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored rows —
+	 * the whole side is compacted per feature, so this is not the same number the
+	 * resolution was chosen on and is reported separately.
 	 */
 	storedPartialShare: number
 	/**
-	 * Features whose bounding box forced a resolution coarser than `indexResolution`, and the resolutions the stored cell
-	 * rows are actually at. Both are reported rather than smoothed over: a reader that assumed one resolution would probe
-	 * at the wrong one and read every coarsened feature as an absence.
+	 * Features whose bounding box forced a resolution coarser than `indexResolution`, and the
+	 * resolutions the stored cell rows are actually at. Both are reported rather than
+	 * smoothed over: a reader that assumed one resolution would probe at the wrong one
+	 * and read every coarsened feature as an absence.
 	 */
 	coarsenedFeatures: number
 	storedResolutions: number[]
@@ -187,8 +190,8 @@ export interface BuildCoastalResult {
 	 */
 	defenceTypeCounts: Array<[string, number]>
 	/**
-	 * The area totals in square kilometres — what the source says, what the encoded rings say read with their holes, and
-	 * what they would say read without — with the witness stated.
+	 * The area totals in square kilometres — what the source says, what the encoded rings say
+	 * read with their holes, and what they would say read without — with the witness stated.
 	 */
 	area: AreaAgreementReading
 	sizeBytes: number
@@ -197,10 +200,11 @@ export interface BuildCoastalResult {
 /**
  * The relative gap between the two area readings that fails the build.
  *
- * The comparison is a spherical ring area against gdal's planar area in the source's own projection, so the two never
- * agree exactly: British National Grid's scale factor runs 0.9996 at its central meridian to about 1.0004 at the edges
- * of its usable zone, contributing roughly a tenth of a percent, and the spherical approximation contributes a similar
- * amount against the ellipsoid. One percent leaves both far inside the tolerance while sitting well below the error a
+ * The comparison is a spherical ring area against gdal's planar area in the source's own projection,
+ * so the two never agree exactly: British National Grid's scale factor runs 0.9996 at its central
+ * meridian to about 1.0004 at the edges of its usable zone, contributing roughly a tenth of a
+ * percent, and the spherical approximation contributes a similar amount against the ellipsoid.
+ * One percent leaves both far inside the tolerance while sitting well below the error a
  * hole-blind read produces — the zoning survey measured that at 4.1% over a whole national layer.
  */
 const AREA_TOLERANCE = 0.01
@@ -291,12 +295,13 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 				}>
 			).map((row) => row.resolution)
 
-			// no secondary indexes, and that is A decision rather than an omission. Both probes this artifact serves are
-			// already primary-key probes: the cell table's `(h3_cell, area_id)` key answers `where h3_cell = ?` as a range
-			// scan of a handful of rows, and a scenario filter over those few rows costs nothing. the geometry table is
-			// probed by `area_id`, its own key. A `(scenario_key, h3_cell)` index over a `without rowid` table carries the
-			// primary key in every entry, so it would roughly double the cell tier to serve a scan that is already short —
-			// size for a reader that does not exist.
+			// no secondary indexes, and that is A decision rather than an omission.
+			// Both probes this artifact serves are already primary-key probes: the cell table's
+			// `(h3_cell, area_id)` key answers `where h3_cell = ?` as a range scan of a handful of rows,
+			// and a scenario filter over those few rows costs nothing. the geometry table is probed
+			// by `area_id`, its own key. A `(scenario_key, h3_cell)` index over a `without rowid`
+			// table carries the primary key in every entry, so it would roughly double the cell
+			// tier to serve a scan that is already short — size for a reader that does not exist.
 			const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
 
 			return {
@@ -395,8 +400,8 @@ export function aggregateChunks(chunks: ReadonlyArray<CoastalChunkResult>): Stre
 /**
  * Refuse a scenario whose streamed count disagrees with the live service's.
  *
- * PER scenario rather than pooled, because a pooled total can agree while two layers are transposed — twelve layers of
- * nearly identical size is exactly the population where that goes unnoticed.
+ * PER scenario rather than pooled, because a pooled total can agree while two layers are transposed —
+ * twelve layers of nearly identical size is exactly the population where that goes unnoticed.
  */
 function assertScenarioCounts(
 	streamed: Readonly<Record<string, number>>,
@@ -431,9 +436,10 @@ export function assertNoNegativeClaim(cells: ReadonlyArray<CoverageCell>): void 
 }
 
 /**
- * Run the ingest as a sequence of bounded child processes — one per scenario layer, then one for the two
- * ground-instability layers. The shared chunk interface — the parent's no-handle rule, and the fail-loud handling of a
- * chunk that dies or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
+ * Run the ingest as a sequence of bounded child processes — one per scenario layer,
+ * then one for the two ground-instability layers. The shared chunk interface —
+ * the parent's no-handle rule, and the fail-loud handling of a chunk that dies
+ * or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(
 	tmpPath: string,
@@ -453,9 +459,9 @@ async function runBatchedIngest(
 			throw new Error(`coastal build: ${stringifyJSON(scenarioKey)} is not one of the twelve published scenarios`)
 		}
 
-		// Each layer numbers its own `objectid` from 1, so the range is per layer. The upper bound is deliberately open —
-		// `ogrinfo` reports a count rather than a maximum id, and a range that stopped at the count would drop every feature past
-		// a gap in the numbering.
+		// Each layer numbers its own `objectid` from 1, so the range is per layer.
+		// The upper bound is deliberately open — `ogrinfo` reports a count rather than a maximum id,
+		// and a range that stopped at the count would drop every feature past a gap in the numbering.
 		let from = 1
 
 		for (;;) {

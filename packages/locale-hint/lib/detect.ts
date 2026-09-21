@@ -19,7 +19,8 @@ import { scoreByPostcode, scoreByScript, scoreFallback, type LocaleCandidate } f
 import type { DetectLocaleOpts } from "#types"
 
 /**
- * The rule-based read of a query shape: script class, then known postcode formats, then the caller's precedence ladder.
+ * The rule-based read of a query shape: script class, then known postcode formats,
+ * then the caller's precedence ladder.
  */
 export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpts = {}): LocaleHint {
 	const scored: LocaleCandidate[] = []
@@ -29,9 +30,10 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 		scored.push(script)
 	}
 
-	// The writing system is a property of the input, so it is the same whichever rung of the precedence ladder decides
-	// `locale`. A caller passing `--locale en-GB` for a Han-containing address gets their tag and the fact that the
-	// address carries Han. those are different claims and the hint now makes both.
+	// The writing system is a property of the input, so it is the same whichever rung
+	// of the precedence ladder decides `locale`. A caller passing `--locale en-GB` for
+	// a Han-containing address gets their tag and the fact that the address carries
+	// Han. those are different claims and the hint now makes both.
 	const scripts: LocaleHint["script"] = (shape.scripts ?? []).map((entry) => ({
 		script: entry.script,
 		confidence: entry.share,
@@ -48,8 +50,8 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 	// Sort descending by confidence. preserve scorer order on ties (stable sort).
 	scored.sort((a, b) => b.confidence - a.confidence)
 
-	// Deduplicate by locale — if two scorers picked en-US, the higher-confidence wins. the other
-	// contributes nothing useful as an alternative.
+	// Deduplicate by locale — if two scorers picked en-US, the higher-confidence wins.
+	// the other contributes nothing useful as an alternative.
 	const seen = new Set<string>()
 
 	const deduped = scored.filter((c) => {
@@ -84,8 +86,9 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 	const top = deduped[0]!
 	const machineLocale = opts.machinePreferences?.locale
 
-	// The 0.3 candidate is the explicit no-input-evidence fallback. Machine locale may replace only that candidate.
-	// scripts and postal formats continue to win. Timezone is reported independently and never converted to language.
+	// The 0.3 candidate is the explicit no-input-evidence fallback.
+	// Machine locale may replace only that candidate. scripts and postal formats continue to win.
+	// Timezone is reported independently and never converted to language.
 	if (top.reason === "fallback" && machineLocale) {
 		return {
 			locale: machineLocale,

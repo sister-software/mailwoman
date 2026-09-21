@@ -58,9 +58,10 @@ test.describe("Demo — street tier (#377)", () => {
 		page.on("response", (res) => {
 			if (!res.url().includes("/street/us/dc/situs.db")) return
 
-			// Only GET responses transfer a body. A head (sql.js-httpvfs's length probe on open) carries
-			// the full file size in `content-length` but transfers zero bytes — counting it would falsely
-			// read as a whole-extract download (the #638 measurement trap). The 206 page reads are the lookup.
+			// Only GET responses transfer a body. A head (sql.js-httpvfs's length probe on open)
+			// carries the full file size in `content-length` but transfers zero bytes —
+			// counting it would falsely read as a whole-extract download (the #638 measurement trap).
+			// The 206 page reads are the lookup.
 			if (res.request().method() !== "GET") return
 
 			if (res.status() === 206) {

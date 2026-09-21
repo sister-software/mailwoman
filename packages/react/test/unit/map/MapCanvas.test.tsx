@@ -27,13 +27,14 @@ const STUB_STYLE: MapCanvasStyle = {
 }
 
 /**
- * Poll `get` until it returns a truthy value or `timeout` ms elapse. Never throws — returns null on timeout.
+ * Poll `get` until it returns a truthy value or `timeout` ms elapse.
+ * Never throws — returns null on timeout.
  */
 async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
 
-	// Flush react-map-gl's async map creation (dynamic import + effects) inside act() so React state
-	// updates don't warn and the DOM is current when we query.
+	// Flush react-map-gl's async map creation (dynamic import + effects) inside act()
+	// so React state updates don't warn and the DOM is current when we query.
 	let found: T | null = null
 
 	await act(async () => {
@@ -66,8 +67,8 @@ test("MapCanvas mounts a map container over an offline stub style", async () => 
 	// react-map-gl always renders its container <div> as the wrapper's only child.
 	expect(wrapper?.firstElementChild).not.toBeNull()
 
-	// GL surface — best-effort (SwiftShader normally provides it). Its absence means no software WebGL in
-	// this Chromium rather than a component fault.
+	// GL surface — best-effort (SwiftShader normally provides it).
+	// Its absence means no software WebGL in this Chromium rather than a component fault.
 	const mapEl = await settle(() => container.querySelector(".maplibregl-map"))
 
 	if (mapEl) {

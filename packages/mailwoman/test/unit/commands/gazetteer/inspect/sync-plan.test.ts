@@ -23,8 +23,9 @@ const DISCOVERED: readonly DiscoveredRepo[] = [
 
 describe("assertDestinationNotARepoName", () => {
 	it("refuses a repository name in the destination slot", () => {
-		// The trap that cost 65 GB: the name lands on the positional. It is the destination directory. Therefore, no
-		// `--repos` filter is applied and the whole org syncs into a directory named after one repo.
+		// The trap that cost 65 GB: the name lands on the positional.
+		// It is the destination directory. Therefore, no `--repos` filter is applied
+		// and the whole org syncs into a directory named after one repo.
 		expect(() => assertDestinationNotARepoName("whosonfirst-data-admin-tr")).toThrow(/--repos/)
 	})
 
@@ -47,8 +48,8 @@ describe("countryRepoNames", () => {
 	})
 
 	it("accepts a comma list in either case, trimming blanks", () => {
-		// `--countries` is the house spelling for a comma list (build candidate, release, postcode-intl); singular
-		// `--country` means exactly one code elsewhere in the CLI.
+		// `--countries` is the house spelling for a comma list (build candidate, release, postcode-intl);
+		// singular `--country` means exactly one code elsewhere in the CLI.
 		expect(countryRepoNames(" TR , fr ,")).toEqual([
 			"whosonfirst-data-admin-tr",
 			"whosonfirst-data-postalcode-tr",
@@ -77,8 +78,8 @@ describe("selectRepos", () => {
 	})
 
 	it("points a country name at the country flag, which a near miss cannot", () => {
-		// `-turkey` is nearer to a real `-tu` repository than to `-tr` by string distance. Therefore, the hint has to be stated
-		// rather than inferred.
+		// `-turkey` is nearer to a real `-tu` repository than to `-tr` by string distance.
+		// Therefore, the hint has to be stated rather than inferred.
 		expect(() => selectRepos(DISCOVERED, { repos: "whosonfirst-data-admin-turkey" })).toThrow(/--countries/)
 	})
 

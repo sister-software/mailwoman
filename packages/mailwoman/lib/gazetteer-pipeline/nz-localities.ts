@@ -41,16 +41,16 @@ import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 /**
- * Minimum address points a (city, district) group needs before it warrants a database row. Below this the "centroid" is
- * a handful of rural delivery points and the name is as likely a farm check as a locality. 5 keeps 3,000-odd real
- * localities and drops the tail of one-off strings.
+ * Minimum address points a (city, district) group needs before it warrants a database row.
+ * Below this the "centroid" is a handful of rural delivery points and the name is as likely a farm
+ * check as a locality. 5 keeps 3,000-odd real localities and drops the tail of one-off strings.
  */
 const MIN_GROUP_POINTS = 5
 
 /**
- * NZ geographic sanity envelope, WGS-84 — generous around the mainland plus the Chathams (~-44, -176.5) and the
- * subantarctic islands (Campbell Island ~-52.5). A point outside it is source noise (a wrong-hemisphere or null-island
- * row), not a New Zealand address.
+ * NZ geographic sanity envelope, WGS-84 — generous around the mainland plus the
+ * Chathams (~-44, -176.5) and the subantarctic islands (Campbell Island ~-52.5).
+ * A point outside it is source noise (a wrong-hemisphere or null-island row), not a New Zealand address.
  */
 const NZ_LAT_MIN = -53
 const NZ_LAT_MAX = -29
@@ -59,8 +59,8 @@ const NZ_LON_MAX = 180
 
 export interface BuildNZLocalitiesOptions {
 	/**
-	 * The linz-derived OpenAddresses NZ countrywide CSV. Default
-	 * `<data-root>/openaddresses/extracted/nz/countrywide.csv`.
+	 * The linz-derived OpenAddresses NZ countrywide CSV.
+	 * Default `<data-root>/openaddresses/extracted/nz/countrywide.csv`.
 	 */
 	csvPath?: PathBuilderLike
 	/**
@@ -70,8 +70,8 @@ export interface BuildNZLocalitiesOptions {
 }
 
 /**
- * Title-case comparison surface for the CSV's already-title-cased city values — the database stores the display form
- * verbatim and lets `normalizeLocalityForKey` (at candidate-build time) own the key.
+ * Title-case comparison surface for the CSV's already-title-cased city values — the database stores
+ * the display form verbatim and lets `normalizeLocalityForKey` (at candidate-build time) own the key.
  */
 function cleanName(raw: string | undefined): string {
 	return (raw ?? "").trim().replaceAll(/\s+/g, " ")
@@ -80,12 +80,13 @@ function cleanName(raw: string | undefined): string {
 /**
  * The p-th percentile of a sorted numeric array (nearest-rank, p in [0, 100]).
  *
- * Deliberately not `@mailwoman/core/utils`'s `percentileSorted`: this copy uses the ceil-based nearest rank
- * (`ceil(p/100 · n) − 1`) the shipped NZ label points were computed with, where core floors (`floor(p/100 · n)`) —
- * swapping conventions moves a percentile by up to one member row and with it every derived label point.
+ * Deliberately not `@mailwoman/core/utils`'s `percentileSorted`: this copy uses the ceil-based
+ * nearest rank (`ceil(p/100 · n) − 1`) the shipped NZ label points were computed with,
+ * where core floors (`floor(p/100 · n)`) — swapping conventions moves a percentile
+ * by up to one member row and with it every derived label point.
  *
- * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank the shipped NZ label points were
- * computed with. core floors
+ * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank the
+ * shipped NZ label points were computed with. core floors
  */
 function percentileSorted(sorted: readonly number[], p: number): number {
 	const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1))
@@ -94,8 +95,8 @@ function percentileSorted(sorted: readonly number[], p: number): number {
 }
 
 /**
- * Build the sealed NZ locality database. Not re-exported from a barrel — the command lazy-imports it (optional-peer
- * discipline, same as the NL PC6 builder).
+ * Build the sealed NZ locality database. Not re-exported from a barrel — the command
+ * lazy-imports it (optional-peer discipline, same as the NL PC6 builder).
  */
 export async function buildNZLocalitiesDatabase(
 	opts: BuildNZLocalitiesOptions = {}
@@ -106,8 +107,8 @@ export async function buildNZLocalitiesDatabase(
 	const outPath = (opts.out ?? dataRootPath("wof", "localities-nz-linz.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 
-	// Provenance check: the md5 sidecar must exist and match. A database whose source cannot be named is
-	// exactly the artifact the provenance discipline forbids.
+	// Provenance check: the md5 sidecar must exist and match.
+	// A database whose source cannot be named is exactly the artifact the provenance discipline forbids.
 	const sourceMD5 = md5Hex(await readLocalBuffer(csvPath))
 
 	const sidecar = (await readLocalTextFile(`${csvPath}.md5`)).trim().split(/\s+/)[0]

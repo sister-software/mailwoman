@@ -37,9 +37,9 @@ export const spec = {
 const MERGE_METHODS = ["merge", "squash", "rebase"] as const
 
 /**
- * The paths whose change makes the board-pin guard mandatory: the corpus rows themselves, the loader/fingerprint
- * implementation, the pins API, and the pin test. The same three filters `.github/workflows/board-pins.yml` triggers
- * on.
+ * The paths whose change makes the board-pin guard mandatory: the corpus rows themselves,
+ * the loader/fingerprint implementation, the pins API, and the pin test.
+ * The same three filters `.github/workflows/board-pins.yml` triggers on.
  */
 const BOARD_PIN_PATHS = [
 	/^packages\/mailwoman\/lib\/eval-harness\/gauntlet\/cases\//,

@@ -26,8 +26,8 @@ function tree(raw: string, roots: AddressNode[]): AddressTree {
 /**
  * `country › locality "Portopetro" › postcode`, plus a second `locality` sibling.
  *
- * That sibling is the #1748 trailing region as the shipped model actually parses it — the span exists, carries the
- * right text, and wears the wrong tag.
+ * That sibling is the #1748 trailing region as the shipped model actually parses it —
+ * the span exists, carries the right text, and wears the wrong tag.
  */
 const TWO_LOCALITIES = tree("07691 Portopetro, Illes Balears, Spain", [
 	node("country", "Spain", [

@@ -56,8 +56,8 @@ interface PlacetypeStat {
 	 */
 	ancestors: Array<{ placetype: string; fraction: number }>
 	/**
-	 * True iff this WOF placetype maps to a trained `ComponentTag` (via core/types/mapping) — the ones the model must
-	 * emit.
+	 * True iff this WOF placetype maps to a trained `ComponentTag` (via core/types/mapping) —
+	 * the ones the model must emit.
 	 */
 	trained: boolean
 }

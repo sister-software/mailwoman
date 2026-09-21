@@ -36,7 +36,8 @@ function retypedWalk<T>(array: T[], random: () => number): void {
 }
 
 /**
- * The sizes the collapsed call sites run at, including 10,932 — the frozen same-data panel's own eligible-pool size.
+ * The sizes the collapsed call sites run at, including 10,932 — the frozen
+ * same-data panel's own eligible-pool size.
  */
 const SIZES = [2, 24, 1000, 10_932]
 const SEEDS = [1, 7, 20_260_913, 4_294_967_295]
@@ -79,8 +80,8 @@ describe("shuffleWith", () => {
 
 		shuffleWith(array, random)
 
-		// fr-lieudit shuffles its pool and then draws from the same generator for the country fraction. The next value
-		// must be the 50th-1 draw rather than a fresh stream's first.
+		// fr-lieudit shuffles its pool and then draws from the same generator for the country fraction.
+		// The next value must be the 50th-1 draw rather than a fresh stream's first.
 		const expected = mulberry32(20_260_913)
 
 		for (let step = 0; step < array.length - 1; step++) {
@@ -121,18 +122,20 @@ describe("shuffleWith", () => {
 			fromFloat64.push(float64())
 		}
 
-		// Same multiplier and increment, and the first step agrees: 1234567 × 1103515245 is about 1.4e15, still under
-		// 2^53 where a double is exact. The state then grows past it, `*` starts rounding where `Math.imul` wraps at 32
-		// bits, and the sequences part company on the second step. So neither file's stream can be served by the other's
-		// generator, and a reader comparing only the first value would conclude the opposite.
+		// Same multiplier and increment, and the first step agrees: 1234567 × 1103515245 is about
+		// 1.4e15, still under 2^53 where a double is exact. The state then grows past it,
+		// `*` starts rounding where `Math.imul` wraps at 32 bits, and the sequences part company
+		// on the second step. So neither file's stream can be served by the other's generator,
+		// and a reader comparing only the first value would conclude the opposite.
 		expect(fromInt32[0]).toBe(fromFloat64[0])
 		expect(fromInt32[1]).not.toBe(fromFloat64[1])
 		expect(fromInt32).not.toStrictEqual(fromFloat64)
 	})
 
 	it("reproduces the modulo-indexed walk through shuffleBy, and not through shuffleWith", () => {
-		// `conformal-calibrate.run.ts` derives its index as `state % (i + 1)` over a raw glibc LCG state. That is the same
-		// walk with a different sampler, so `shuffleBy` reproduces it — which is why that call site no longer keeps a loop.
+		// `conformal-calibrate.run.ts` derives its index as `state % (i + 1)` over a raw glibc LCG state.
+		// That is the same walk with a different sampler, so `shuffleBy` reproduces it —
+		// which is why that call site no longer keeps a loop.
 		for (const size of [2, 17, 64, 500]) {
 			for (const seed of SEEDS) {
 				const mixed = (seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff
@@ -158,8 +161,9 @@ describe("shuffleWith", () => {
 			}
 		}
 
-		// And the sampler is why: handing the same generator to `shuffleWith`, which scales a float instead, does not
-		// reproduce it. Routing this call site through the float sampler would have silently moved the split.
+		// And the sampler is why: handing the same generator to `shuffleWith`, which
+		// scales a float instead, does not reproduce it. Routing this call site through
+		// the float sampler would have silently moved the split.
 		const mixed = (20_260_913 * 2_654_435_761 + 1) & 0xff_ff_ff_ff
 		const scaled = makeGlibcLcgFloat64(mixed)
 		const viaFloat = Array.from({ length: 64 }, (_, index) => index)

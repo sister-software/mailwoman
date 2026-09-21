@@ -58,14 +58,15 @@ const OBTAIN_MEDICATION = toConceptID("obtain_medication")
 const AFFORDS = toRelationID("affords")
 
 /**
- * The external category the record set maps into. The mapping names it as a string. this is the same string, resolved
- * through the package that owns the vocabulary.
+ * The external category the record set maps into. The mapping names it as a string. this
+ * is the same string, resolved through the package that owns the vocabulary.
  */
 const POI_CATEGORY = toPOICategoryID("pharmacy")
 
 /**
- * The external category wave 1's second mapping names. Read back through the vocabulary's owner below, because a
- * mapping onto an identifier the taxonomy stopped carrying looks exactly like a working one from inside this package.
+ * The external category wave 1's second mapping names. Read back through the vocabulary's
+ * owner below, because a mapping onto an identifier the taxonomy stopped carrying
+ * looks exactly like a working one from inside this package.
  */
 const DRUGSTORE_CATEGORY = toPOICategoryID("drugstore")
 
@@ -90,10 +91,11 @@ describe("the authored pharmacy records", () => {
 		])
 	})
 
-	// `defeasible` is the wave-1 vocabulary correction, and it is a statement about the relation: whether `affords`
-	// assertions admit exceptions at all. Under `hard` semantics an exception is a defect in the record set, which is a
-	// claim only `necessary` and `prohibited` make . Therefore, a `strongly_expected` assertion had no defined reading beside a
-	// `necessary` one until this moved.
+	// `defeasible` is the wave-1 vocabulary correction, and it is a statement
+	// about the relation: whether `affords` assertions admit exceptions at all.
+	// Under `hard` semantics an exception is a defect in the record set, which is a claim
+	// only `necessary` and `prohibited` make . Therefore, a `strongly_expected` assertion
+	// had no defined reading beside a `necessary` one until this moved.
 	it("declares `affords` as a defeasible establishment→activity relation", async () => {
 		const relation = (await compileAuthoredGeographicModel()).relations.find((entry) => entry.id === AFFORDS)
 
@@ -111,8 +113,9 @@ describe("the authored pharmacy records", () => {
 		expect(mapping?.vocabulary).toBe(ExternalVocabulary.POITaxonomy)
 		expect(mapping?.externalID).toBe(POI_CATEGORY)
 
-		// Read the id back through the vocabulary's owner. A mapping onto an identifier the taxonomy does not
-		// carry would be a translation into nothing, and it would look exactly like a working one from here.
+		// Read the id back through the vocabulary's owner. A mapping onto an
+		// identifier the taxonomy does not carry would be a translation into nothing,
+		// and it would look exactly like a working one from here.
 		const category = getPOICategory(String(POI_CATEGORY))
 
 		expect(category?.id).toBe(POI_CATEGORY)
@@ -125,8 +128,8 @@ describe("the authored pharmacy records", () => {
 
 		expect(activity).toBeDefined()
 
-		// The reversed edge: the activity asserting the establishment class, which is the one direction the
-		// relation's declared kinds forbid on both sides at once.
+		// The reversed edge: the activity asserting the establishment class, which is the
+		// one direction the relation's declared kinds forbid on both sides at once.
 		activity?.assertions.push({
 			id: toRuleID("obtain-medication-affords-pharmacy"),
 			relation: AFFORDS,
@@ -177,20 +180,21 @@ describe("the committed artifact", () => {
 		expect(closure.get(String(PHARMACY))).toEqual(["establishment", "healthcare_facility", "place"])
 		expect(closure.get(String(OBTAIN_MEDICATION))).toEqual(["activity"])
 
-		// `drugstore` is a kind of `establishment` directly. The external hierarchy puts it under `retail`, disjoint
-		// from `health_and_medical`, and `healthcare_facility` is premises that exist to provide healthcare — which
-		// retail premises with a dispensing counter do not. Placing it there would give every later healthcare class
-		// a retail ancestor.
+		// `drugstore` is a kind of `establishment` directly.
+		// The external hierarchy puts it under `retail`, disjoint from `health_and_medical`,
+		// and `healthcare_facility` is premises that exist to provide healthcare — which
+		// retail premises with a dispensing counter do not. Placing it there would give
+		// every later healthcare class a retail ancestor.
 		expect(closure.get(String(DRUGSTORE))).toEqual(["establishment", "place"])
 		expect(closure.get(String(DRUGSTORE))).not.toContain("healthcare_facility")
 	})
 
 	it("derives nothing, because no ancestor asserts anything", async () => {
-		// Both affordances are authored on leaves — `pharmacy` and `drugstore` have no descendants — and the only
-		// ancestor either of them has that could assert (`establishment`) asserts nothing, deliberately: a claim
-		// authored there would be inherited by every later establishment class. So `isA` inheritance has nothing to
-		// materialize. An empty table here is the truthful answer rather than an unread one — `compile.test.ts` exercises
-		// the derivation itself.
+		// Both affordances are authored on leaves — `pharmacy` and `drugstore` have no descendants —
+		// and the only ancestor either of them has that could assert (`establishment`) asserts nothing,
+		// deliberately: a claim authored there would be inherited by every later establishment class.
+		// So `isA` inheritance has nothing to materialize. An empty table here is the truthful answer
+		// rather than an unread one — `compile.test.ts` exercises the derivation itself.
 		const model = await readCompiledGeographicModel()
 		const everyAncestor = new Set(model.inheritanceClosure.flatMap((entry) => entry.ancestors.map(String)))
 
@@ -225,12 +229,12 @@ describe("the wave-1 records", () => {
 		expect(assertion?.id).toBe("drugstore-affords-obtain-medication")
 		expect(assertion?.target).toBe(OBTAIN_MEDICATION)
 
-		// Not `necessary`: the attested material says a US drugstore characteristically dispenses, and neither a
-		// locale-scoped synonym nor a row count is a census of dispensing.
+		// Not `necessary`: the attested material says a US drugstore characteristically dispenses,
+		// and neither a locale-scoped synonym nor a row count is a census of dispensing.
 		expect(assertion?.modality).toBe(Modality.StronglyExpected)
 
-		// The one country a committed record scopes the class to. FR is a measured zero on the shipped layer, so a
-		// claim reaching there would range over nothing.
+		// The one country a committed record scopes the class to.
+		// FR is a measured zero on the shipped layer, so a claim reaching there would range over nothing.
 		expect(assertion?.countries).toEqual(["US"])
 		expect(assertion?.countries).not.toContain("FR")
 		expect(assertion?.provenance.sourceRecord).toContain("curated-overlay.json")
@@ -248,8 +252,9 @@ describe("the wave-1 records", () => {
 		expect(mapping?.provenance.source).toBe("mailwoman-curated")
 		expect(mapping?.provenance.sourceRecord).toContain("taxonomy.json")
 
-		// The category the mapping names, read back through the vocabulary's owner. An identifier that stopped
-		// resolving would leave the mapping translating into nothing, and nothing else would notice.
+		// The category the mapping names, read back through the vocabulary's owner.
+		// An identifier that stopped resolving would leave the mapping translating
+		// into nothing, and nothing else would notice.
 		const category = getPOICategory(String(DRUGSTORE_CATEGORY))
 
 		expect(category?.id).toBe(DRUGSTORE_CATEGORY)
@@ -287,16 +292,17 @@ describe("reading the record set through the runtime lookups", () => {
 	it("distinguishes a concept it carries from one it has never heard of", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
-		// The model carries `pharmacy` and has derived nothing about it. it does not carry `chemist` at all, which
-		// is a different answer and stays a different answer.
+		// The model carries `pharmacy` and has derived nothing about it. it does not carry
+		// `chemist` at all, which is a different answer and stays a different answer.
 		expect(index.derivedFactsAbout(PHARMACY)).toEqual([])
 		expect(index.derivedFactsAbout(toConceptID("chemist"))).toBeUndefined()
 	})
 
-	// The empty answer and the two non-empty ones asserted together, because `derivedFactsAbout` returning `[]` reads
-	// like the external lookup returning `[]` and a reader meeting one alone would take it for the other. The model
-	// carries the concept and states what it affords, its external identifier does translate into it since W1-3
-	// landed, and nothing has been derived about it — which is an empty derivation rather than an unmapped class.
+	// The empty answer and the two non-empty ones asserted together, because `derivedFactsAbout`
+	// returning `[]` reads like the external lookup returning `[]` and a reader meeting one alone
+	// would take it for the other. The model carries the concept and states what it affords,
+	// its external identifier does translate into it since W1-3 landed, and nothing has been
+	// derived about it — which is an empty derivation rather than an unmapped class.
 	it("carries `drugstore`, translates its external identifier, and has derived nothing about it", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
@@ -306,9 +312,10 @@ describe("reading the record set through the runtime lookups", () => {
 		expect(index.derivedFactsAbout(DRUGSTORE)).toEqual([])
 	})
 
-	// The two kinds `obtain_medication` reaches, read off the committed artifact rather than off the route. Each
-	// external identifier translates into its own concept and not into the other: the mapping table states which id
-	// names which class, and nothing in it states a preference between the two.
+	// The two kinds `obtain_medication` reaches, read off the committed artifact
+	// rather than off the route. Each external identifier translates into its own concept
+	// and not into the other: the mapping table states which id names which class,
+	// and nothing in it states a preference between the two.
 	it("reaches two mapped kinds for one activity, each from its own external identifier", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 

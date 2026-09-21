@@ -138,8 +138,8 @@ describe("matchInventories", () => {
 
 describe("completenessAcrossProtocols", () => {
 	/**
-	 * Two inventories that agree on the first `overlap` rows and diverge after, spaced far enough apart that no
-	 * unintended pair falls inside any band.
+	 * Two inventories that agree on the first `overlap` rows and diverge after,
+	 * spaced far enough apart that no unintended pair falls inside any band.
 	 */
 	function inventories(firstSize: number, secondSize: number, overlap: number) {
 		const shared = Array.from({ length: overlap }, (_, i) => at(48.5 + i * 0.01, 2, `Pharmacie ${i}`))

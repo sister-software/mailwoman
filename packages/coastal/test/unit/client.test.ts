@@ -21,8 +21,8 @@ import { describe, expect, it } from "vitest"
 const ATTRIBUTION_MARKER = "Attribution statement:"
 
 /**
- * The tail of the published abstract, verbatim — doubled, with the first copy carrying no year and the whole thing
- * ending in a trailing space.
+ * The tail of the published abstract, verbatim — doubled, with the first copy carrying
+ * no year and the whole thing ending in a trailing space.
  */
 const PUBLISHED_ABSTRACT_TAIL =
 	"…risk may change over time. Attribution statement: © Environment Agency copyright and/or database right  " +
@@ -50,10 +50,11 @@ describe("parseAttributionStatement", () => {
 	})
 
 	it("stays linear on a pathological input, because the record arrives over the network", () => {
-		// The regex this parse replaced backtracked polynomially: its `\s*` and its lazy run overlapped on whitespace, and
-		// its lookahead's `$` alternative made every position a candidate end. A long whitespace run after the marker is
-		// exactly the shape that triggers it. Two `indexOf` calls per copy answer the same question in one pass, and a
-		// ceiling far above any real parse time is what turns "it is linear" into something a test can fail on.
+		// The regex this parse replaced backtracked polynomially: its `\s*` and its lazy run overlapped
+		// on whitespace, and its lookahead's `$` alternative made every position a candidate end.
+		// A long whitespace run after the marker is exactly the shape that triggers it.
+		// Two `indexOf` calls per copy answer the same question in one pass, and a ceiling far
+		// above any real parse time is what turns "it is linear" into something a test can fail on.
 		const pathological = `${ATTRIBUTION_MARKER}${" ".repeat(200_000)}`
 
 		const started = performance.now()
@@ -72,8 +73,9 @@ describe("parseAttributionStatement", () => {
 	})
 
 	it("stops at the closing tag when it is handed the ISO record rather than a bare abstract", () => {
-		// The live reader runs over the whole CSW response, so an unbounded lazy capture would run from the last copy to the
-		// end of the document and return kilobytes of XML that happens to contain a year.
+		// The live reader runs over the whole CSW response, so an unbounded lazy
+		// capture would run from the last copy to the end of the document and return
+		// kilobytes of XML that happens to contain a year.
 		const record =
 			"<gmd:abstract><gco:CharacterString>" +
 			PUBLISHED_ABSTRACT_TAIL +
@@ -97,8 +99,9 @@ describe("assertAttributionUnchanged", () => {
 
 describe("the service slug", () => {
 	it("is the authority's misspelling of its own product", () => {
-		// The correct spelling answers http 404 and the misspelling answers http 200. A build that "corrected" this would
-		// lose the service half of the two-path verification while reporting a clean run.
+		// The correct spelling answers http 404 and the misspelling answers http 200.
+		// A build that "corrected" this would lose the service half of the two-path
+		// verification while reporting a clean run.
 		expect(NCERM_SERVICE_SLUG).toBe("ncern-national-2024")
 		expect(NCERM_SERVICE_SLUG).not.toContain("ncerm")
 	})

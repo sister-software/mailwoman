@@ -29,8 +29,9 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountr
 import { suffixTail } from "#dev-tools/coord-panel"
 
 /**
- * The three buckets `--stratify-shape` spends the budget across, from the same {@link suffixTail} the probes over this
- * recipe's output report by — so a share measured in the tuples and a rate measured on a panel speak about one split.
+ * The three buckets `--stratify-shape` spends the budget across, from the same
+ * {@link suffixTail} the probes over this recipe's output report by — so a share measured
+ * in the tuples and a rate measured on a panel speak about one split.
  */
 function localityShape(triple: { locality: string }): string {
 	if (suffixTail(triple.locality)) return "suffix-tail"

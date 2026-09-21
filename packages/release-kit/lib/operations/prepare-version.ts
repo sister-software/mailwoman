@@ -11,8 +11,8 @@ import { flag } from "#operations/inputs"
 import { prepareReleaseVersion } from "#release/prepare-version"
 
 /**
- * `release.prepare-version` — writes inside the checkout or the data root. Listed in `registry.ts`; the description on
- * the operation is what `mwops` prints.
+ * `release.prepare-version` — writes inside the checkout or the data root.
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const prepareVersion = defineOperation({
 	id: "release.prepare-version",

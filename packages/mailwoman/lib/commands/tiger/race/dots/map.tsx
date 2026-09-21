@@ -73,8 +73,8 @@ const TIGERRaceDotsMap: CommandComponent<typeof spec> = ({ options }) => {
 			await tools.serveWithRangeSupport({ dir, port: options.port }, reportToStderr)
 			setServing({ dir, port: options.port })
 
-			// Long-running: mirror `mailwoman serve` — keep the task pending so useCommandTask never
-			// exits. Ctrl-C stops the server.
+			// Long-running: mirror `mailwoman serve` — keep the task pending
+			// so useCommandTask never exits. Ctrl-C stops the server.
 			await new Promise<never>(() => {})
 		}
 

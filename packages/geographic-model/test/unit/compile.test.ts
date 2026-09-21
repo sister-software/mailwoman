@@ -135,8 +135,8 @@ const lateNightPharmacy = establishment("late_night_pharmacy", ["pharmacy", "ret
 const cornerShop = establishment("corner_shop", ["retailer", "general_store"])
 
 /**
- * A descendant that states the inherited proposition itself, under a weaker modality. The authored record is the more
- * specific one, so nothing is derived for that pair.
+ * A descendant that states the inherited proposition itself, under a weaker modality.
+ * The authored record is the more specific one, so nothing is derived for that pair.
  */
 const veterinaryPharmacy = establishment(
 	"veterinary_pharmacy",
@@ -183,8 +183,9 @@ function fixture(): GeographicModelDocument {
 }
 
 /**
- * Rebuild a value with every object's keys in the opposite order, at every depth. Arrays keep their order — the caller
- * reverses the tables it wants reversed, and an assertion list is authored order the compiler is supposed to preserve.
+ * Rebuild a value with every object's keys in the opposite order, at every depth.
+ * Arrays keep their order — the caller reverses the tables it wants reversed,
+ * and an assertion list is authored order the compiler is supposed to preserve.
  */
 function withReversedKeys(value: unknown): unknown {
 	if (Array.isArray(value)) return value.map(withReversedKeys)

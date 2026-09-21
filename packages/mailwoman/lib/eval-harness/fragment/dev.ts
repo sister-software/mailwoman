@@ -65,8 +65,8 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 		const gold = row.span_tags.map((tag, i) => [tag, row.raw.slice(row.span_starts[i], row.span_ends[i])] as const)
 		const byTag = groupTuplesByTag(await classifier.parse(row.raw, { postcodeRepair: true }))
 
-		// Span-exact: every gold span present under its tag with the exact folded value, and no
-		// extra values under the gold tags.
+		// Span-exact: every gold span present under its tag with the exact folded value,
+		// and no extra values under the gold tags.
 		let exact = true
 
 		for (const [tag, value] of gold) {

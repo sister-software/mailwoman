@@ -54,23 +54,25 @@ export interface AgreementRow {
 	 */
 	local: FloodZoneReading
 	/**
-	 * The zone the service's own geometry assigns, or `null` where no service polygon contains the point. A polygon that
-	 * contains the point but carries no zone label is not `null`: it is reported as `service_unlabelled`, because a
-	 * service polygon with no label is a defect in the service's answer and reading it as absence would let it agree with
-	 * an artifact that answers Zone 1 by absence.
+	 * The zone the service's own geometry assigns, or `null` where no service polygon contains
+	 * the point. A polygon that contains the point but carries no zone label is not `null`:
+	 * it is reported as `service_unlabelled`, because a service polygon with no label
+	 * is a defect in the service's answer and reading it as absence would
+	 * let it agree with an artifact that answers Zone 1 by absence.
 	 */
 	service: string | null
 	outcome: "agree" | "disagree" | "boundary_tolerance" | "service_unlabelled"
 	/**
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
-	 * To the edge rather than to the nearest vertex: a polygon's edges are long compared to this product's slivers, so a
-	 * point can sit a centimetre from an edge and metres from every vertex of it. Measuring vertices makes the boundary
-	 * tolerance far stricter than it reads, which is how a rendering difference gets reported as a conversion defect.
+	 * To the edge rather than to the nearest vertex: a polygon's edges are long compared to this
+	 * product's slivers, so a point can sit a centimetre from an edge and metres from every
+	 * vertex of it. Measuring vertices makes the boundary tolerance far stricter than it reads,
+	 * which is how a rendering difference gets reported as a conversion defect.
 	 *
-	 * Carried on every row rather than only the tolerated ones, because it is what separates a real defect from the two
-	 * channels rendering the same edge differently — and a receipt that omits it forces a re-run. `undefined` means the
-	 * service returned no polygon at all near the point.
+	 * Carried on every row rather than only the tolerated ones, because it is what separates a real
+	 * defect from the two channels rendering the same edge differently — and a receipt that omits
+	 * it forces a re-run. `undefined` means the service returned no polygon at all near the point.
 	 */
 	nearestEdgeMetres?: number
 }
@@ -95,8 +97,9 @@ export interface VerifyFloodResult {
 	disagreed: number
 	boundaryTolerance: number
 	/**
-	 * Points the service's geometry contains without labelling. Neither agreement nor disagreement: the service's answer
-	 * is unreadable there, and the row is carried so the count is visible rather than folded into either side.
+	 * Points the service's geometry contains without labelling.
+	 * Neither agreement nor disagreement: the service's answer is unreadable there,
+	 * and the row is carried so the count is visible rather than folded into either side.
 	 */
 	serviceUnlabelled: number
 	outside: OutsideRow[]
@@ -104,12 +107,13 @@ export interface VerifyFloodResult {
 }
 
 /**
- * Points outside England, named. Each is a place rather than a bare pair of numbers: a coordinate a reader cannot name
- * is a coordinate nobody can check.
+ * Points outside England, named. Each is a place rather than a bare pair of numbers:
+ * a coordinate a reader cannot name is a coordinate nobody can check.
  *
- * Wales and Scotland are the cases that matter, because both border England and both publish flood maps of their own
- * under schemes that are not interchangeable with the EA's. Northern Ireland and the Republic are included because a
- * footprint accidentally clipped to "the British Isles" would pass a Wales-and-Scotland-only check.
+ * Wales and Scotland are the cases that matter, because both border England and both
+ * publish flood maps of their own under schemes that are not interchangeable with the EA's.
+ * Northern Ireland and the Republic are included because a footprint accidentally
+ * clipped to "the British Isles" would pass a Wales-and-Scotland-only check.
  */
 export const OUTSIDE_ENGLAND_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
 	{ label: "Cardiff, Wales", latitude: 51.4816, longitude: -3.1791 },
@@ -126,7 +130,8 @@ export interface VerifyFloodOptions {
 	databasePath: string
 	readServiceFeatures: ServiceFeatureReader
 	/**
-	 * Points to re-ask the service about. A caller samples them from the artifact — see {@link sampleAgreementPoints}.
+	 * Points to re-ask the service about. A caller samples them from the artifact —
+	 * see {@link sampleAgreementPoints}.
 	 */
 	points: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
 	outsidePoints?: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
@@ -150,8 +155,9 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 			const nearEdge = service.nearestEdgeMetres !== undefined && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
-			// The distance rides on every row rather than only the tolerated ones: it is the first thing anyone wants when a
-			// disagreement appears, and carrying it only where it was already acted on means re-running the check to see it.
+			// The distance rides on every row rather than only the tolerated ones:
+			// it is the first thing anyone wants when a disagreement appears, and carrying it only
+			// where it was already acted on means re-running the check to see it.
 			agreement.push({
 				...point,
 				local,
@@ -192,10 +198,10 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 }
 
 /**
- * What zone the service's own geometry assigns at a point, decided here with the same even-odd rule the artifact's
- * reader uses — so what is compared is a verdict against a verdict. `zone` is `null` only when no returned polygon
- * contains the point. a containing polygon with no `flood_zone` sets `insideUnlabelled` instead, so the two readings
- * never share a value.
+ * What zone the service's own geometry assigns at a point, decided here with the same even-odd
+ * rule the artifact's reader uses — so what is compared is a verdict against a verdict.
+ * `zone` is `null` only when no returned polygon contains the point. a containing polygon with
+ * no `flood_zone` sets `insideUnlabelled` instead, so the two readings never share a value.
  */
 async function readServiceZone(
 	readServiceFeatures: ServiceFeatureReader,

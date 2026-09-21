@@ -34,8 +34,9 @@ interface GauntletLayerReport {
 
 export interface GauntletReport {
 	/**
-	 * `pass` / `fail` as the run printed it, or `null` when no verdict line appeared — a crash, or a run killed before it
-	 * finished. Never defaulted to `fail`: "did not finish" and "finished and failed" are different facts.
+	 * `pass` / `fail` as the run printed it, or `null` when no verdict line appeared —
+	 * a crash, or a run killed before it finished. Never defaulted to `fail`:
+	 * "did not finish" and "finished and failed" are different facts.
 	 */
 	verdict: string | null
 	layers: GauntletLayerReport[]
@@ -44,10 +45,12 @@ export interface GauntletReport {
 	 */
 	pins: string | null
 	/**
-	 * `{ n, of }` for the postcode-country coherence pass specifically, or `null` when the log carried no firing line.
+	 * `{ n, of }` for the postcode-country coherence pass specifically, or `null`
+	 * when the log carried no firing line.
 	 *
-	 * Named for the mechanism it measures rather than for "the pin under test", because those are usually not the same
-	 * thing: pin `gazetteerPrior` and this still reports coherence, which is the only pass that prints a firing count.
+	 * Named for the mechanism it measures rather than for "the pin under test",
+	 * because those are usually not the same thing: pin `gazetteerPrior` and this
+	 * still reports coherence, which is the only pass that prints a firing count.
 	 * Reading it as the pinned pin's firing rate would be a fabricated number.
 	 */
 	postcode_country_coherence_fired_on: { n: number; of: number } | null
@@ -60,7 +63,8 @@ export interface GauntletReport {
 	 */
 	now_passing: string[]
 	/**
-	 * What could not be extracted, and from which pattern. Read this before trusting an absent field.
+	 * What could not be extracted, and from which pattern.
+	 * Read this before trusting an absent field.
 	 */
 	unparsed: string[]
 }
@@ -68,11 +72,13 @@ export interface GauntletReport {
 /**
  * Only patterns whose quantifiers cannot overlap live here.
  *
- * The lines this file recognises by shape rather than by regex — the pins line, the promote line — are matched with
- * `startsWith` / `indexOf` instead. Both wanted an ambiguous quantifier to express (`(.*pins.*|.*=.*)$` and
- * `(.*?)\s+now passes`), which backtracks quadratically on a long non-matching line and which CodeQL flags as
- * polynomial ReDoS. A gauntlet log is our own output rather than hostile input, so the practical exposure was small —
- * but the string version is both shorter and unconditionally linear, so there was nothing to trade away.
+ * The lines this file recognises by shape rather than by regex — the pins line,
+ * the promote line — are matched with `startsWith` / `indexOf` instead.
+ * Both wanted an ambiguous quantifier to express (`(.*pins.*|.*=.*)$` and `(.*?)\s+now passes`),
+ * which backtracks quadratically on a long non-matching line and which CodeQL flags
+ * as polynomial ReDoS. A gauntlet log is our own output rather than hostile input,
+ * so the practical exposure was small — but the string version is both shorter
+ * and unconditionally linear, so there was nothing to trade away.
  */
 const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) counted cases pass(?:, (\d+) tracked)?\)/
 const VERDICT = /^verdict: (PASS|FAIL)/
@@ -86,8 +92,9 @@ const NOW_PASSING_PREFIX = "+"
 /**
  * Parse a gauntlet run's combined output.
  *
- * Takes stdout and stderr together because the pieces are split across them — the report goes to stdout, the pins line
- * to stderr — and a reader wanting "what did this run grade" should not have to know which stream carried which.
+ * Takes stdout and stderr together because the pieces are split across them —
+ * the report goes to stdout, the pins line to stderr — and a reader wanting "what did
+ * this run grade" should not have to know which stream carried which.
  */
 export function parseGauntletReport(stdout: string, stderr: string): GauntletReport {
 	const report: GauntletReport = {
@@ -141,9 +148,10 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 			continue
 		}
 
-		// A line of `+ <id>`, then `NOW_PASSING_MARK`, then `— promote to status=pass`. Located by index rather than
-		// matched by pattern: the id can contain anything, and expressing "everything up to the marker" as a regex
-		// needs a lazy quantifier followed by `\s+`, which is the quadratic shape.
+		// A line of `+ <id>`, then `NOW_PASSING_MARK`, then `— promote to status=pass`.
+		// Located by index rather than matched by pattern: the id can contain anything,
+		// and expressing "everything up to the marker" as a regex needs a lazy quantifier
+		// followed by `\s+`, which is the quadratic shape.
 		if (trimmed.startsWith(NOW_PASSING_PREFIX)) {
 			const marker = trimmed.indexOf(NOW_PASSING_MARK)
 
@@ -195,8 +203,8 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 /**
  * A one-line reading of the report, for the `summary` an agent relays.
  *
- * Leads with the admitted fraction rather than the verdict word: the fraction is the thing a reader can compare against
- * a baseline, and the line that got skipped the day this rule was written.
+ * Leads with the admitted fraction rather than the verdict word: the fraction is the thing a reader
+ * can compare against a baseline, and the line that got skipped the day this rule was written.
  */
 export function summarizeGauntletReport(report: GauntletReport): string {
 	if (!report.layers.length) {

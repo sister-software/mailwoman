@@ -119,9 +119,10 @@ export async function trainCoarsePlacer(
 	const W = new Float32Array(C * D)
 	const b = new Float32Array(C)
 
-	// Deterministic, so a rerun splits the same way. The stream is the INT32 glibc LCG and not mulberry32, because every
-	// shipped model was trained on the order it produces; `makeGlibcLcgFloat64` shares its constants and is a different
-	// sequence, so the two are not interchangeable. Swapping either for mulberry32 is a retrain rather than a refactor.
+	// Deterministic, so a rerun splits the same way. The stream is the INT32 glibc LCG
+	// and not mulberry32, because every shipped model was trained on the order it produces;
+	// `makeGlibcLcgFloat64` shares its constants and is a different sequence, so the two are
+	// not interchangeable. Swapping either for mulberry32 is a retrain rather than a refactor.
 	const step = makeGlibcLcgInt32(1_234_567)
 	const rand = (): number => step() / 0x7f_ff_ff_ff
 	const shuffle = (arr: Sample[]): void => shuffleWith(arr, rand)

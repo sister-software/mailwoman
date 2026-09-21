@@ -27,7 +27,8 @@ import {
 } from "#position"
 
 /**
- * A JSON-serializeable single point geometry, such as a specific location, address, or longitude, latitude pair.
+ * A JSON-serializeable single point geometry, such as a specific location,
+ * address, or longitude, latitude pair.
  *
  * ```js
  * {
@@ -79,8 +80,8 @@ export interface GeolocationCoordinatesLike {
 }
 
 /**
- * Type-predicate to determine if the given input appears to be a {@linkcode GeolocationCoordinatesLike} object — the
- * shape the browser's `GeolocationCoordinates` presents, without depending on the DOM type.
+ * Type-predicate to determine if the given input appears to be a {@linkcode GeolocationCoordinatesLike}
+ * object — the shape the browser's `GeolocationCoordinates` presents, without depending on the DOM type.
  */
 export function isGeolocationCoordinatesLike(input: unknown): input is GeolocationCoordinatesLike {
 	if (!input || typeof input !== "object") return false
@@ -148,9 +149,9 @@ export class GeoPoint implements PointLiteral {
 	}
 
 	/**
-	 * Assigns the pair as GeoJSON [longitude, latitude(, altitude)] — the axis order is the interface, never inferred
-	 * from the magnitudes — and rejects a coordinate that is not on the globe. See {@link GeoPoint.from} for why both
-	 * halves of that sentence are required.
+	 * Assigns the pair as GeoJSON [longitude, latitude(, altitude)] — the axis order is the interface,
+	 * never inferred from the magnitudes — and rejects a coordinate that is not on the globe.
+	 * See {@link GeoPoint.from} for why both halves of that sentence are required.
 	 *
 	 * @throws {RangeError} When longitude is outside [-180, 180] or latitude is outside [-90, 90].
 	 */
@@ -241,7 +242,8 @@ export class GeoPoint implements PointLiteral {
 	constructor(geoLocationCoordinates: GeolocationCoordinatesLike, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 
 	/**
-	 * Creates a new GeoPoint instance from a Google Maps API {@linkcode google.LatLngLiteral | LatLngLiteral} object.
+	 * Creates a new GeoPoint instance from a Google Maps API
+	 * {@linkcode google.LatLngLiteral | LatLngLiteral} object.
 	 */
 	constructor(latLngLiteral: google.LatLngLiteral, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 
@@ -287,22 +289,25 @@ export class GeoPoint implements PointLiteral {
 	}
 
 	/**
-	 * Attempts to create a new GeoPoint instance from the given input, returning `null` rather than throwing when the
-	 * input is not a coordinate this class will stand behind.
+	 * Attempts to create a new GeoPoint instance from the given input, returning `null`
+	 * rather than throwing when the input is not a coordinate this class will stand behind.
 	 *
-	 * Two rules, both of which this constructor got wrong until 2026-08-05 (the defect was recorded in `e9bfd139` and
-	 * routed around rather than fixed):
+	 * Two rules, both of which this constructor got wrong until 2026-08-05
+	 * (the defect was recorded in `e9bfd139` and routed around rather than fixed):
 	 *
-	 * 1. **A 2-tuple is GeoJSON [longitude, latitude]. The axis order is never inferred.** The old path ran the pair through
-	 *    `inferGeoJSONCoordOrder`, whose only signal is the [-90, 90] latitude range, so it transposed a pair exactly
-	 *    when |the second magnitude| > 90. A caller handing it `[latitude, longitude]` therefore got the pair repaired in
-	 *    Dallas and left corrupted in Berlin — behaviour selected by the data, from one code path. This change is a no-op
-	 *    for every well-formed input: a valid `[longitude, latitude]` pair can never have an out-of-range second element,
-	 *    so the heuristic never fired on one.
-	 * 2. **An out-of-range magnitude is rejected rather than repaired.** `[999, 999]` used to produce a GeoPoint reporting
-	 *    latitude 999. It now returns `null` here and throws a `RangeError` from the constructor. Note the deliberate
-	 *    asymmetry with the scalar `longitude` / `latitude` setters, which still wrap and clamp: mutating a point is a
-	 *    pan gesture, where 190°. This means -170° is right. parsing one is a claim about the world, where an impossible
+	 * 1. **A 2-tuple is GeoJSON [longitude, latitude]. The axis order is never inferred.** The old
+	 *    path ran the pair through `inferGeoJSONCoordOrder`, whose only signal is the [-90, 90]
+	 *    latitude range, so it transposed a pair exactly when |the second magnitude| > 90.
+	 *    A caller handing it `[latitude, longitude]` therefore got the pair repaired in Dallas
+	 *    and left corrupted in Berlin — behaviour selected by the data, from one code path.
+	 *    This change is a no-op for every well-formed input: a valid `[longitude, latitude]` pair
+	 *    can never have an out-of-range second element, so the heuristic never fired on one.
+	 * 2. **An out-of-range magnitude is rejected rather than repaired.**
+	 *    `[999, 999]` used to produce a GeoPoint reporting latitude 999.
+	 *    It now returns `null` here and throws a `RangeError` from the constructor.
+	 *    Note the deliberate asymmetry with the scalar `longitude` / `latitude` setters,
+	 *    which still wrap and clamp: mutating a point is a pan gesture, where 190°.
+	 *    This means -170° is right. parsing one is a claim about the world, where an impossible
 	 *    magnitude means the input was malformed and any repair invents a location.
 	 *
 	 * A 0/0 result is treated as the "missing coordinate" sentinel (Null Island) and also returns `null`.

@@ -193,9 +193,10 @@ async function runFailureReport(): Promise<void> {
 			const byTag = await parseTags(cls, f.input)
 			const fails: { label: string; expected: string; got: string }[] = []
 
-			// Grade every gold label (not just the floors) so country/region/locality/venue failures — the
-			// classes a candidate silently trades — are captured. Floor labels compare their tag family
-			// (street = prefix/street/suffix/particle); all others compare by direct tag name.
+			// Grade every gold label (not just the floors) so country/region/locality/venue
+			// failures — the classes a candidate silently trades — are captured.
+			// Floor labels compare their tag family (street = prefix/street/suffix/particle);
+			// all others compare by direct tag name.
 			for (const [goldLabel, gold] of Object.entries(f.expect)) {
 				if (!gold?.length) continue
 				const tags = floorTags.get(goldLabel) ?? [goldLabel]
@@ -218,8 +219,8 @@ async function runFailureReport(): Promise<void> {
 	// "Beyond reach": failed on every graded model.
 	const beyondReach = anyFail.filter((r) => labels.every((l) => r.failsByModel[l]))
 
-	// Per-label failure count per model — the view where a silently-traded class (e.g. country on the
-	// fragment lineage) jumps out: a label whose failure count rises across candidates.
+	// Per-label failure count per model — the view where a silently-traded class
+	// (e.g. country on the fragment lineage) jumps out: a label whose failure count rises across candidates.
 	const allLabels = [
 		...new Set(
 			all.flatMap((r) =>
@@ -263,16 +264,17 @@ async function runFailureReport(): Promise<void> {
 	}
 
 	// Render the MDX report that Docusaurus includes in the evaluation tree.
-	// MDX-safe: every dynamic cell is backtick-wrapped (angle brackets / braces stay literal in a code
-	// span) with pipes + backticks escaped, so an address like "U12/345 <x>" can't break the table or trip
-	// the MDX angle-lint. Trades are marked in markdown (**N (+Δ)**), not color.
+	// MDX-safe: every dynamic cell is backtick-wrapped (angle brackets / braces stay literal in a code span)
+	// with pipes + backticks escaped, so an address like "U12/345 <x>" can't break the table
+	// or trip the MDX angle-lint. Trades are marked in markdown (**N (+Δ)**), not color.
 
 	const outPath = flags.out || "docs/articles/evals/competitive-parity/failure-report.mdx"
 	const stamp = flags.date || isoDate()
 
 	const cell = (s: string): string => "`" + (s || "∅").replaceAll("`", "ˋ").replaceAll("|", "\\|") + "`"
-	// Not `formatPercent`: this rounds `(n / d) * 100` where core computes `(100 * n) / d`, and the two can differ in the
-	// last bit at a .5 rounding boundary — the report's zero-decimal cells stay byte-stable under their own arithmetic.
+	// Not `formatPercent`: this rounds `(n / d) * 100` where core computes `(100 * n) / d`,
+	// and the two can differ in the last bit at a .5 rounding boundary — the report's
+	// zero-decimal cells stay byte-stable under their own arithmetic.
 	const pct2 = (n: number, d: number): string => (d ? `${((n / d) * 100).toFixed(0)}%` : "—")
 	const mdRow = (cells: (string | number)[]): string => `| ${cells.join(" | ")} |`
 
@@ -417,8 +419,9 @@ ${diffTable}
 
 	await writeLocalFile(mdx, outPath)
 
-	// The machine-readable twin of the MDX above. It goes under `$MAILWOMAN_TEMP_ROOT` rather than a repo-relative
-	// path, which git ignores — a file written there exists only on the machine that wrote it.
+	// The machine-readable twin of the MDX above. It goes under `$MAILWOMAN_TEMP_ROOT`
+	// rather than a repo-relative path, which git ignores — a file written there
+	// exists only on the machine that wrote it.
 	const jsonPath = tempRootPath("failure-report.json")
 
 	await writeLocalJSONFile({ summary, records: all }, jsonPath)

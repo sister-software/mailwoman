@@ -25,8 +25,8 @@ beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-geonames-")).path
 })
 
-// Build a 19-column GeoNames main-table row (tab-separated). Only the columns the adapter reads
-// need to be meaningful. the rest are padded.
+// Build a 19-column GeoNames main-table row (tab-separated).
+// Only the columns the adapter reads need to be meaningful. the rest are padded.
 function gnRow(o: {
 	id: string
 	name: string

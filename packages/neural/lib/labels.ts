@@ -42,8 +42,8 @@ export const STAGE1_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
 ])
 
 /**
- * Fine-grained tags added in Phase 2 Stage 2 (v0.3.0). venue covers organization/POI/landmark names. street +
- * house_number break out the street-address components that Stage 1 collapsed to `O`.
+ * Fine-grained tags added in Phase 2 Stage 2 (v0.3.0). venue covers organization/POI/landmark names.
+ * street + house_number break out the street-address components that Stage 1 collapsed to `O`.
  */
 export const STAGE2_FINE_TAGS = ["venue", "street", "house_number"] as const
 
@@ -90,10 +90,11 @@ export const STAGE3_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
 ])
 
 /**
- * Locale-head class order — must mirror `corpus-python/src/mailwoman_train/labels.py` `LOCALE_COUNTRIES` exactly (same
- * never-reorder/append-only discipline. a drift here silently mislabels every detection). The postcode-anchor feature
- * layout indexes the same array (`anchor-inference.ts` re-exports it as `LOCALE_ORDER`): the posterior occupies indices
- * `[0, LOCALE_COUNTRIES.length)`; the normalized centroid the last two. (Pinned by `anchor-inference.test.ts`; do not
- * reorder.)
+ * Locale-head class order — must mirror `corpus-python/src/mailwoman_train/labels.py`
+ * `LOCALE_COUNTRIES` exactly (same never-reorder/append-only discipline. a drift here
+ * silently mislabels every detection). The postcode-anchor feature layout indexes the
+ * same array (`anchor-inference.ts` re-exports it as `LOCALE_ORDER`): the posterior
+ * occupies indices `[0, LOCALE_COUNTRIES.length)`; the normalized centroid the last two.
+ * (Pinned by `anchor-inference.test.ts`; do not reorder.)
  */
 export const LOCALE_COUNTRIES = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const

@@ -50,8 +50,8 @@ describe("RequestPacer", () => {
 	})
 
 	it("does not accumulate a burst backlog after an idle period", async () => {
-		// Mutation-proves the `Math.max(#nextGrantAt, now)` recency clamp in `acquire()`: without it, a
-		// long-stale `#nextGrantAt` would let every call after an idle period through immediately, forever.
+		// Mutation-proves the `Math.max(#nextGrantAt, now)` recency clamp in `acquire()`: without it,
+		// a long-stale `#nextGrantAt` would let every call after an idle period through immediately, forever.
 		const clock = createFakeClock()
 		const pacer = new RequestPacer(100, clock)
 
@@ -69,9 +69,10 @@ describe("RequestPacer", () => {
 		expect(grantTimes).toEqual([10_000, 10_100, 10_200, 10_300, 10_400])
 	})
 
-	// The pacing guarantee itself. `VirtualClock` (not the simpler `createFakeClock`) is required here:
-	// the property under test is specifically how concurrent waiters interleave when woken, and a clock
-	// that resolves every same-deadline sleeper at once cannot tell a fixed pacer from a broken one.
+	// The pacing guarantee itself. `VirtualClock` (not the simpler `createFakeClock`)
+	// is required here: the property under test is specifically how concurrent waiters
+	// interleave when woken, and a clock that resolves every same-deadline sleeper
+	// at once cannot tell a fixed pacer from a broken one.
 	it("paces N concurrent acquire() calls strictly one interval apart — no cohort ever shares an instant", async () => {
 		const INTERVAL_MS = 100
 		const TOTAL_CALLS = 40
@@ -82,8 +83,8 @@ describe("RequestPacer", () => {
 		const grantTimes: number[] = []
 		const recordedAcquire = makeRecordedAcquire(pacer, clock, grantTimes)
 
-		// `Array.from`'s mapper runs synchronously for every index — this genuinely fans out 40
-		// concurrent `acquire()` calls with no intervening async I/O.
+		// `Array.from`'s mapper runs synchronously for every index — this genuinely fans
+		// out 40 concurrent `acquire()` calls with no intervening async I/O.
 		const pending = Array.from({ length: TOTAL_CALLS }, () => recordedAcquire())
 
 		// The first call resolves without sleeping, but awaiting an already-resolved promise still defers
@@ -116,8 +117,8 @@ describe("RequestPacer", () => {
 		const recordedAcquire = makeRecordedAcquire(pacer, clock, grantTimes)
 
 		// `VirtualClock.advance` mutates `now()` before its first internal await flushes the microtask
-		// queue, so an already-resolved `acquire()` whose continuation is still queued would record the
-		// post-advance time. Flush to quiescence first, at every point where that could happen.
+		// queue, so an already-resolved `acquire()` whose continuation is still queued would record
+		// the post-advance time. Flush to quiescence first, at every point where that could happen.
 		for (let i = 0; i < SERIAL_CALLS; i++) {
 			const pending = recordedAcquire()
 

@@ -54,8 +54,8 @@ interface ListAvailabilityDataResponseBody {
 }
 
 /**
- * List the BDC availability files for a given `as_of_date`/category/subcategory, parsed into {@linkcode BDCFile}
- * records and sorted ascending by revision date ({@linkcode compareRevisionAsc}).
+ * List the BDC availability files for a given `as_of_date`/category/subcategory, parsed into
+ * {@linkcode BDCFile} records and sorted ascending by revision date ({@linkcode compareRevisionAsc}).
  */
 export async function retrieveAvailabilityFiles(
 	client: BDCClient,

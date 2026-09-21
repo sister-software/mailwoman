@@ -23,15 +23,16 @@ export const STRIPE_API_VERSION = "2026-08-26.dahlia"
 const STRIPE_NOT_FOUND = 404
 
 /**
- * Stripe answered 404 for the id asked about: the one error a route turns into its own 404 rather than a 500.
+ * Stripe answered 404 for the id asked about: the one error a route turns
+ * into its own 404 rather than a 500.
  */
 export function isStripeNotFound(error: unknown): boolean {
 	return error instanceof Stripe.errors.StripeError && error.statusCode === STRIPE_NOT_FOUND
 }
 
 /**
- * @param fetchImplementation The fetch the SDK calls. a test passes a stub that answers by method and path, so no
- *   request leaves the process and an unexpected retrieval fails loudly.
+ * @param fetchImplementation The fetch the SDK calls. a test passes a stub that answers by method
+ *   and path, so no request leaves the process and an unexpected retrieval fails loudly.
  */
 export function stripeClient(env: LicenseWorkerEnv, fetchImplementation: typeof fetch = fetch): Stripe {
 	return new Stripe(env.STRIPE_SECRET_KEY, {

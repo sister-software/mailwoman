@@ -26,8 +26,8 @@ import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 import { alignRow } from "#utils"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const streetBareRecipe: CorpusRecipe = {
 	name: "street-bare",
@@ -82,9 +82,9 @@ export const streetBareRecipe: CorpusRecipe = {
 				license: "Synthetic — US street templates, public-domain street/city pools",
 			}
 
-			// Strict labeled-only check (matches the legacy builder): alignRow always returns a `row`
-			// (labeled or quarantined), so the scaffold's `alignAndWrite` would write quarantined rows
-			// too — call alignRow directly and skip anything not "labeled".
+			// Strict labeled-only check (matches the legacy builder): alignRow always returns
+			// a `row` (labeled or quarantined), so the scaffold's `alignAndWrite` would write
+			// quarantined rows too — call alignRow directly and skip anything not "labeled".
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled" || !aligned.row) {

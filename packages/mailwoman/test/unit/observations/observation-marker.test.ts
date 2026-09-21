@@ -35,8 +35,8 @@ const route = await createSemanticObservationRoute()
 const POI_VERDICT: QueryKindResult = { kind: "poi_query", confidence: 0.9, alternatives: [] }
 
 /**
- * A verdict that named the POI reading below its structural incumbent. The marker still has a kind to name, and it is
- * the one in `alternatives`.
+ * A verdict that named the POI reading below its structural incumbent.
+ * The marker still has a kind to name, and it is the one in `alternatives`.
  */
 const ALTERNATIVE_VERDICT: QueryKindResult = {
 	kind: "structured_address",
@@ -124,8 +124,8 @@ describe("a semantic observation as a marker", () => {
 		expect(marker!.message).toContain("obtain_medication")
 	})
 
-	// The `pharmacy` member of the set, picked by its concept rather than by position: en-US admits both wave-1 kinds,
-	// and a marker read off `[0]` would be asserting whichever concept sorts first.
+	// The `pharmacy` member of the set, picked by its concept rather than by position: en-US admits
+	// both wave-1 kinds, and a marker read off `[0]` would be asserting whichever concept sorts first.
 	it("carries the whole authority, so the marker can be checked rather than taken", () => {
 		const markers = semanticMarkers(POI_VERDICT)
 		const marker = markers.find(({ evidence }) => evidence?.["concept"] === "pharmacy")
@@ -149,8 +149,9 @@ describe("a semantic observation as a marker", () => {
 		expect(evidence["modelVersion"]).toBeTruthy()
 	})
 
-	// One marker per member, each naming its own concept and its own assertion. Folding the set into one marker would
-	// lose which authority put which class in it, which is the one thing this carrier exists to keep.
+	// One marker per member, each naming its own concept and its own assertion.
+	// Folding the set into one marker would lose which authority put which class in it,
+	// which is the one thing this carrier exists to keep.
 	it("emits one marker per member of a plural set, each with its own authority", () => {
 		const markers = semanticMarkers(POI_VERDICT)
 

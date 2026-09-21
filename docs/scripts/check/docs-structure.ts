@@ -62,10 +62,11 @@ const strict = flags.strict
 //#region Policy vocabulary
 
 /**
- * The page-role vocabulary and each role's required frontmatter fields — the content-model table from the cleanup plan,
- * reproduced on the policy page (`docs/articles/contributing-docs.mdx`). `landing` is the site-specific addition for
- * pure navigation surfaces. `reference` and `decision` carry conditional requirements handled below (`generated-from`
- * or `owner`; `superseded-by` once closed).
+ * The page-role vocabulary and each role's required frontmatter fields — the content-model table
+ * from the cleanup plan, reproduced on the policy page (`docs/articles/contributing-docs.mdx`).
+ * `landing` is the site-specific addition for pure navigation surfaces.
+ * `reference` and `decision` carry conditional requirements handled below
+ * (`generated-from` or `owner`; `superseded-by` once closed).
  */
 const ROLE_REQUIRED_FIELDS: Record<string, string[]> = {
 	guide: ["audience", "prerequisites", "verified-with"],
@@ -83,8 +84,9 @@ const ROLE_REQUIRED_FIELDS: Record<string, string[]> = {
 const STATUS_VOCABULARY = new Set(["active-decision", "superseded"])
 
 /**
- * Pages that must declare `role:` (relative to `docs/articles`): the front door, the entry pages, the four canonical
- * concept pages, the docs policy itself — plus every recipe, matched by directory below.
+ * Pages that must declare `role:` (relative to `docs/articles`): the front door,
+ * the entry pages, the four canonical concept pages, the docs policy itself —
+ * plus every recipe, matched by directory below.
  */
 const ROLE_REQUIRED_PAGES = [
 	"index.mdx",
@@ -104,8 +106,9 @@ const ROLE_REQUIRED_DIRECTORIES = ["recipes/"]
 //#region Check 1 — frontmatter validity
 
 /**
- * Legacy frontmatter check — the original policy, unchanged. Used when `--strict` is absent so CI keeps passing against
- * the current tree until a later task deletes it and flips the flag.
+ * Legacy frontmatter check — the original policy, unchanged.
+ * Used when `--strict` is absent so CI keeps passing against the current tree
+ * until a later task deletes it and flips the flag.
  */
 function checkFrontmatterLegacy(pages: DocPage[]): string[] {
 	const failures: string[] = []
@@ -169,10 +172,11 @@ function checkFrontmatterLegacy(pages: DocPage[]): string[] {
 }
 
 /**
- * Flattens a `DocPage`'s parsed frontmatter into the plain `Record<string, unknown>` shape `validatePage` expects.
- * Declared keys with a scalar value carry that value. a declared key whose value is nested/non-scalar (an array, a
- * block scalar — `docs-frontmatter.ts`'s parser records the key but not the value) carries `true`, which is enough for
- * a presence check but nothing a role rule here reads for content.
+ * Flattens a `DocPage`'s parsed frontmatter into the plain `Record<string, unknown>`
+ * shape `validatePage` expects. Declared keys with a scalar value carry that value.
+ * a declared key whose value is nested/non-scalar (an array, a block scalar —
+ * `docs-frontmatter.ts`'s parser records the key but not the value) carries `true`,
+ * which is enough for a presence check but nothing a role rule here reads for content.
  */
 function toFrontmatterRecord(page: DocPage): Record<string, unknown> {
 	const record: Record<string, unknown> = {}
@@ -185,12 +189,13 @@ function toFrontmatterRecord(page: DocPage): Record<string, unknown> {
 }
 
 /**
- * Strict frontmatter check — the six-role interface, enforced on every published page (minus the delegated
- * evals/retrospectives workstream, same boundary as the legacy check). This is what CI runs and what the corpus
- * satisfies: 79 of 79 published pages pass.
+ * Strict frontmatter check — the six-role interface, enforced on every published page
+ * (minus the delegated evals/retrospectives workstream, same boundary as the legacy check).
+ * This is what CI runs and what the corpus satisfies: 79 of 79 published pages pass.
  *
- * It carries no `status:` check, which the legacy mode does. That is the one thing lost by deleting the legacy path,
- * and the reason a deletion is not simply a subtraction.
+ * It carries no `status:` check, which the legacy mode does.
+ * That is the one thing lost by deleting the legacy path, and the reason a
+ * deletion is not simply a subtraction.
  */
 function checkFrontmatterStrict(pages: DocPage[]): string[] {
 	const failures: string[] = []
@@ -298,9 +303,10 @@ function checkOrphans(pages: DocPage[]): string[] {
 //#region Check 4 — relative links resolve
 
 /**
- * Unlike the three checks above, this one reads the whole docs tree rather than the published pages: 62 of the 109
- * broken links this check was written for sit under `docs/engineering`, which `collectDocPages` never walks and
- * Docusaurus never builds. Therefore, nothing had ever resolved a path there.
+ * Unlike the three checks above, this one reads the whole docs tree rather than the
+ * published pages: 62 of the 109 broken links this check was written for sit under
+ * `docs/engineering`, which `collectDocPages` never walks and Docusaurus never builds.
+ * Therefore, nothing had ever resolved a path there.
  */
 async function checkRelativeLinks(): Promise<string[]> {
 	const broken = await findBrokenLinks(await collectMarkdownFiles())
@@ -315,9 +321,9 @@ async function checkRelativeLinks(): Promise<string[]> {
 /**
  * The same tree as check 4, over the other spelling a document uses to name a file.
  *
- * Scope stops at living documents: a point-in-time record states what was true when it was written, so a path it names
- * is evidence rather than a claim about the current tree. `../docs/path-citations.ts` holds that rule and the classes
- * of text it refuses before resolution.
+ * Scope stops at living documents: a point-in-time record states what was true when it
+ * was written, so a path it names is evidence rather than a claim about the current tree.
+ * `../docs/path-citations.ts` holds that rule and the classes of text it refuses before resolution.
  */
 async function checkPathCitations(): Promise<string[]> {
 	const { broken } = await censusPathCitations(await collectMarkdownFiles())

@@ -118,8 +118,8 @@ describe("extractPostcodeAnchors", () => {
 })
 
 describe("extractPostcodeAnchors — position-aware confidence (house-number disambiguation)", () => {
-	// A gazetteer where 12345 and 90210 are both real US codes, so membership alone cannot tell a
-	// code-shaped house number from a real postcode — only position can.
+	// A gazetteer where 12345 and 90210 are both real US codes, so membership alone cannot
+	// tell a code-shaped house number from a real postcode — only position can.
 	const R = new FakeResolver({
 		"12345": [{ country: "US", lat: 42.1, lon: -72.6 }],
 		"90210": [{ country: "US", lat: 34.1, lon: -118.4 }],
@@ -163,8 +163,8 @@ describe("extractPostcodeAnchors — position-aware confidence (house-number dis
 
 	it("CHECKS OUT a non-member system's vocabulary: a US-only code is not penalized by a German street word", () => {
 		// 12345 resolves US-only, so the German vocab is never consulted — Straußstraße does not fire.
-		// (This is the cross-locale-collision fix: an unrelated system's words can't down-weight a code
-		// that doesn't belong to that system.)
+		// (This is the cross-locale-collision fix: an unrelated system's words can't
+		// down-weight a code that doesn't belong to that system.)
 		const [a] = extractPostcodeAnchors("Straußstraße 12345, Berlin", R)
 		expect(a!.positionFactor).toBe(1)
 	})

@@ -87,8 +87,8 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 				const hn = tagText(nodes, "house_number")
 				const pc = tagText(nodes, "postcode")
 
-				// The negative class scores two things at once, because either failure is the same mistake:
-				// the postcode must survive and no house_number may be invented from it.
+				// The negative class scores two things at once, because either failure is the same
+				// mistake: the postcode must survive and no house_number may be invented from it.
 				const ok = fixture.expect_no_house_number
 					? foldCaseWhitespace(hn) === "" &&
 						foldCaseWhitespace(pc) === foldCaseWhitespace((fixture.expect.postcode ?? []).join(" "))

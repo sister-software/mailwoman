@@ -35,7 +35,8 @@ async function settle<T>(work: Promise<T>): Promise<T> {
 }
 
 /**
- * A response whose body loses its connection partway through, which is how a mid-download reset reaches a reader.
+ * A response whose body loses its connection partway through, which is how a
+ * mid-download reset reaches a reader.
  */
 function resetMidBody(): Response {
 	const body = new ReadableStream<Uint8Array>({

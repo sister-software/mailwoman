@@ -74,8 +74,8 @@ describe("ring areas", () => {
 		const { nested, allExterior } = ringAreaReadings(polygons)
 
 		expect(allExterior).toBeGreaterThan(nested)
-		// The hole is a fifth of the square's side each way, so a hole-blind read over-reports by twice its area: it adds
-		// the hole where the nested reading subtracts it.
+		// The hole is a fifth of the square's side each way, so a hole-blind read over-reports
+		// by twice its area: it adds the hole where the nested reading subtracts it.
 		expect(allExterior - nested).toBeCloseTo(2 * Math.abs(ringSignedAreaM2(holeRing(0.004, 0.004, 0.006, 0.006))), 3)
 	})
 

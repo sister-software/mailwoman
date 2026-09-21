@@ -16,10 +16,11 @@
 import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"
 
 /**
- * Find the first non-empty region-tagged span anywhere in a tree — the qualifier the walk threads onto locality
- * lookups. Deliberately the same node the admin-coherence verdicts read (the first `region` node), so the change's
- * firing population and the flag's `contradicted` population are the same rows. A `region` slot can hold a country name
- * the parser mislabeled ("Moscow, Russia" parses region="Russia") — the backend's qualifier probe answers that too,
+ * Find the first non-empty region-tagged span anywhere in a tree — the qualifier the walk
+ * threads onto locality lookups. Deliberately the same node the admin-coherence verdicts read
+ * (the first `region` node), so the change's firing population and the flag's `contradicted`
+ * population are the same rows. A `region` slot can hold a country name the parser mislabeled
+ * ("Moscow, Russia" parses region="Russia") — the backend's qualifier probe answers that too,
  * because containment is containment whatever tier the container sits at.
  */
 export function firstRegionQualifier(roots: readonly AddressNode[]): string | undefined {
@@ -27,17 +28,19 @@ export function firstRegionQualifier(roots: readonly AddressNode[]): string | un
 }
 
 /**
- * Stable, tier-safe partition: within each match tier, candidates the containment source vouched for (`isContained`)
- * move ahead of the rest, and both groups keep their incoming relative order — the same house rules every soft ranking
- * key here obeys (`toponym-prior.ts`): tier-safe (a contained partial match never outranks an exact one — `isExact`
- * splits the population exactly as `rankWithinTier`'s tri-state rule does, only a stated exact tier warrants the
- * front), positive-evidence-only (only a stated `true` moves a row; `false` and "never evaluated" both hold their
- * incoming rank, so an incapable backend is a no-op by construction), and stable (the backend's own ordering survives
- * within each (tier, containment) cell).
+ * Stable, tier-safe partition: within each match tier, candidates the containment source vouched for
+ * (`isContained`) move ahead of the rest, and both groups keep their incoming relative order —
+ * the same house rules every soft ranking key here obeys (`toponym-prior.ts`): tier-safe
+ * (a contained partial match never outranks an exact one — `isExact` splits the population exactly
+ * as `rankWithinTier`'s tri-state rule does, only a stated exact tier warrants the front),
+ * positive-evidence-only (only a stated `true` moves a row; `false` and "never evaluated"
+ * both hold their incoming rank, so an incapable backend is a no-op by construction),
+ * and stable (the backend's own ordering survives within each (tier, containment) cell).
  *
- * Implemented with the slot idiom (`reorderMeasured`'s mechanics): each tier's members permute only among the positions
- * that tier already occupies, so a tier-interleaved list — the walk's no-importance path never regrouped tiers — cannot
- * have a rest-tier row promoted across an exact-tier boundary by this partition.
+ * Implemented with the slot idiom (`reorderMeasured`'s mechanics): each tier's members
+ * permute only among the positions that tier already occupies, so a tier-interleaved list —
+ * the walk's no-importance path never regrouped tiers — cannot have a rest-tier row
+ * promoted across an exact-tier boundary by this partition.
  */
 export function partitionByContainment<T>(
 	rows: readonly T[],
@@ -69,11 +72,12 @@ export function partitionByContainment<T>(
 }
 
 /**
- * The trace verdict for one locality pick under the change — stamped as `metadata.admin_containment` so an inert
- * mechanism is visible in the result rather than silently dead (#1719's rule). Derived from the candidates'
- * `containedByQualifier` stamps: any `true` → `"contained"`; stamps present but none true → `"no_contained_candidate"`;
- * no stamps at all → `"unavailable"` (the backend or artifact cannot answer — a pre-sidecar candidate.db, the FTS or
- * browser backend, or a qualifier the probe never ran for).
+ * The trace verdict for one locality pick under the change — stamped as `metadata.admin_containment`
+ * so an inert mechanism is visible in the result rather than silently dead (#1719's rule).
+ * Derived from the candidates' `containedByQualifier` stamps: any `true` → `"contained"`;
+ * stamps present but none true → `"no_contained_candidate"`; no stamps at all →
+ * `"unavailable"` (the backend or artifact cannot answer — a pre-sidecar candidate.db,
+ * the FTS or browser backend, or a qualifier the probe never ran for).
  */
 export function adminContainmentVerdict(
 	candidates: ReadonlyArray<{ containedByQualifier?: boolean | undefined }>

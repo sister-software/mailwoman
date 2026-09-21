@@ -8,8 +8,8 @@ import { US_STATE_NAMES } from "@mailwoman/codex/us/state"
 import { Span } from "@mailwoman/core/tokenization"
 
 /**
- * One token within a segment — absolute offsets into the normalized input. Built by `tokenizeSegment` from a
- * (segment-text, segment-start) pair.
+ * One token within a segment — absolute offsets into the normalized input.
+ * Built by `tokenizeSegment` from a (segment-text, segment-start) pair.
  */
 export interface SegmentToken {
 	body: string
@@ -20,32 +20,35 @@ export interface SegmentToken {
 const WHITESPACE = /\s+/
 
 /**
- * Neutral baseline confidence for phrase proposals when no structural cue (position, length, known
- * suffix/prefix/marker, format-hit) lifts or penalizes the score. Each rule adds bonuses on top of this base (e.g.
- * +0.15 for 2-token locality runs, +0.1 for tail-of-last-segment) and subtracts penalties (e.g. −0.2 for a known US
- * region name that isn't at segment-tail).
+ * Neutral baseline confidence for phrase proposals when no structural
+ * cue (position, length, known suffix/prefix/marker, format-hit) lifts
+ * or penalizes the score. Each rule adds bonuses on top of this base
+ * (e.g. +0.15 for 2-token locality runs, +0.1 for tail-of-last-segment) and subtracts
+ * penalties (e.g. −0.2 for a known US region name that isn't at segment-tail).
  */
 export const NEUTRAL_PROPOSAL_CONFIDENCE = 0.55
 
 /**
- * Single-token US state/territory names, derived from the codex roster. single-token scope on purpose: the non-tail
- * region-name penalty below reads one token at a time, and a multi-word name ("New York", "North Carolina") can never
- * match a single token — deriving only the single-token names keeps the set equal to what the check can ever see.
+ * Single-token US state/territory names, derived from the codex roster. single-token
+ * scope on purpose: the non-tail region-name penalty below reads one token at a time,
+ * and a multi-word name ("New York", "North Carolina") can never match a single token —
+ * deriving only the single-token names keeps the set equal to what the check can ever see.
  */
 export const US_REGION_NAMES: ReadonlySet<string> = new Set(
 	US_STATE_NAMES.filter((name) => !name.includes(" ")).map((name) => name.toLowerCase())
 )
 
 /**
- * Split a segment body into whitespace-separated tokens. Offsets are absolute into the original input (caller supplies
- * the segment's `start` offset). Deliberately not `@mailwoman/query-shape`'s tokenizer: that one yields code-point
+ * Split a segment body into whitespace-separated tokens.
+ * Offsets are absolute into the original input (caller supplies the segment's `start` offset).
+ * Deliberately not `@mailwoman/query-shape`'s tokenizer: that one yields code-point
  * class runs for the whole input, while this one carries segment-relative → absolute span math for the proposal spans —
  * the two disagree on what a token boundary is.
  */
 /**
- * Digit count above which a pure-numeric token stops being unambiguously a house number. 1-4 digits are clearly
- * numeric. 5 and up collide with postcodes, so the proposal is emitted at neutral confidence and the reconciler
- * decides.
+ * Digit count above which a pure-numeric token stops being unambiguously a house
+ * number. 1-4 digits are clearly numeric. 5 and up collide with postcodes,
+ * so the proposal is emitted at neutral confidence and the reconciler decides.
  */
 export const MAX_UNAMBIGUOUS_HOUSE_NUMBER_DIGITS = 4
 
@@ -65,8 +68,9 @@ export const VENUE_RUN_MIN_TOKENS = 3
 export const SHORT_VENUE_RUN_CONFIDENCE = 0.5
 
 /**
- * Confidence added to a place-name run by its token count. Longer runs are less likely to be a coincidental adjacency,
- * so they warrant more — the curve flattens past four tokens.
+ * Confidence added to a place-name run by its token count.
+ * Longer runs are less likely to be a coincidental adjacency, so they warrant more —
+ * the curve flattens past four tokens.
  */
 export const PLACE_RUN_LENGTH_BONUS: ReadonlyMap<number, number> = new Map([
 	[2, 0.15],

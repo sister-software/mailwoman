@@ -129,8 +129,8 @@ async function main() {
 	console.error(`US held-out set (${US_HELD_REGIONS.join("/")}): ${US_N} rows`)
 
 	/**
-	 * Run_locale <name> <held-out.jsonl> <default-country> <out-tag> Returns a TSV row: name n regionMatch localityMatch
-	 * coordP50 coordP90 pipAll pipPoly polyCov
+	 * Run_locale <name> <held-out.jsonl> <default-country> <out-tag> Returns a TSV row:
+	 * name n regionMatch localityMatch coordP50 coordP90 pipAll pipPoly polyCov
 	 */
 	const runLocale = async (name: string, heldOut: string, cc: string, tag: string): Promise<string> => {
 		const n = ((await pathExists(heldOut)) ? (await readLocalTextFile(heldOut)).match(/\n/g) || [] : []).length

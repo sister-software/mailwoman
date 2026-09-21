@@ -142,8 +142,8 @@ describe("buildSlimWOFDatabase", () => {
 		expect(popIDs).not.toContain(400)
 		expect(popIDs).not.toContain(202)
 
-		// The slim DB never carries a geojson table — production source has none, and the builder
-		// reads population from place_population rather than geojson.
+		// The slim DB never carries a geojson table — production source has none,
+		// and the builder reads population from place_population rather than geojson.
 		const geojsonExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'geojson'`).get()
 		expect(geojsonExists).toBeUndefined()
 	})
@@ -170,8 +170,8 @@ describe("buildSlimWOFDatabase", () => {
 		const postcodeSource = scratch.resolve("postcode.db")
 		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(adminSource)
-		// Postcode extract: same schema, only contributes postcodes (here, re-use the admin fixture's
-		// postcode rows to verify insert or ignore actually de-dupes on id).
+		// Postcode extract: same schema, only contributes postcodes (here, re-use the admin
+		// fixture's postcode rows to verify insert or ignore actually de-dupes on id).
 		buildFixtureWOF(postcodeSource)
 
 		const result = await buildSlimWOFDatabase({
@@ -233,7 +233,8 @@ describe("buildSlimWOFDatabase", () => {
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000)`)
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 202, 'capital-seat', 'region', 6.0, 8000)`)
 
-		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 }) // keeps Springfield, drops Mascoutah
+		// keeps Springfield, drops Mascoutah
+		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 })
 
 		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
@@ -256,8 +257,8 @@ describe("buildSlimWOFDatabase", () => {
 		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		const rows = slim.prepare(`SELECT id, abbr FROM place_abbr ORDER BY abbr`).all()
-		// Illinois keeps its abbr. the trimmed locality's is gone (names was pre-filtered to surviving
-		// ids). And place_abbr persists even though dropNames removed the source `names` table.
+		// Illinois keeps its abbr. the trimmed locality's is gone (names was pre-filtered to surviving ids).
+		// And place_abbr persists even though dropNames removed the source `names` table.
 		expect(rows).toEqual([{ id: 101, abbr: "IL" }])
 		expect(slim.prepare(`SELECT 1 FROM sqlite_master WHERE name='names'`).get()).toBeUndefined()
 	})

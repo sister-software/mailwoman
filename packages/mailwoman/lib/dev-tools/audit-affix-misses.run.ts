@@ -46,8 +46,8 @@ if (!args.model) throw new Error("--model required")
 const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(args.file!).toArray()
 
 // Mirror score-affix's ship-config construction exactly — loadFromWeights ignores a modelPath
-// and grades the default symlink with no anchor channel (the zero-fill crash signature this
-// audit's first run produced — caught by the misses-vs-scorer discrepancy).
+// and grades the default symlink with no anchor channel (the zero-fill crash signature
+// this audit's first run produced — caught by the misses-vs-scorer discrepancy).
 const card = await import("@mailwoman/neural-weights-en-us/model-card.json", { with: { type: "json" } }).then(
 	(m) => m.default
 )

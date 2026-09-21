@@ -22,17 +22,17 @@ const ATTEMPTS = 3
 const FIRST_RETRY_DELAY_MS = 500
 
 /**
- * `fetch` rejects with a `TypeError` for a network failure (a reset, a refused connection, a cors refusal) and never
- * for an http status. a body read that loses its connection rejects the same way. Anything else (an abort, a bad URL)
- * is not retried.
+ * `fetch` rejects with a `TypeError` for a network failure (a reset, a refused connection, a cors refusal)
+ * and never for an http status. a body read that loses its connection rejects the same way.
+ * Anything else (an abort, a bad URL) is not retried.
  */
 function isNetworkFailure(error: unknown): boolean {
 	return error instanceof TypeError
 }
 
 /**
- * One attempt: the request, and for a successful status the whole body, so a connection lost mid-download is this
- * attempt's failure and not the caller's.
+ * One attempt: the request, and for a successful status the whole body, so a connection
+ * lost mid-download is this attempt's failure and not the caller's.
  */
 async function fetchComplete(
 	input: Parameters<typeof fetch>[0],
@@ -53,22 +53,24 @@ async function fetchComplete(
 }
 
 /**
- * How much of a body has arrived. `total` is what the response declares, or `null` when it declares nothing.
+ * How much of a body has arrived. `total` is what the response declares,
+ * or `null` when it declares nothing.
  *
- * A retry restarts the count at zero, which is the truth: the bytes from the lost attempt are gone and the transfer
- * begins again.
+ * A retry restarts the count at zero, which is the truth: the bytes from the lost
+ * attempt are gone and the transfer begins again.
  */
 export type BytesReceived = (received: number, total: number | null) => void
 
 /**
  * Read a body chunk by chunk, reporting progress, and answer the bytes.
  *
- * This is what the plain `arrayBuffer()` path cannot do: it resolves once, at the end, so a 38 MB transfer produces no
- * signal until it is over. Buffering still happens — the retry above needs a complete body — but the caller learns how
- * far along it is while it happens.
+ * This is what the plain `arrayBuffer()` path cannot do: it resolves once, at the end, so a
+ * 38 MB transfer produces no signal until it is over. Buffering still happens — the retry
+ * above needs a complete body — but the caller learns how far along it is while it happens.
  *
- * `content-length` describes the bytes on the wire while the reader yields decoded ones, so a content-encoded response
- * can report a fraction above 1. The consumer clamps rather than this lying about the total it was given.
+ * `content-length` describes the bytes on the wire while the reader yields
+ * decoded ones, so a content-encoded response can report a fraction above 1.
+ * The consumer clamps rather than this lying about the total it was given.
  */
 async function drainWithProgress(response: Response, onBytes: BytesReceived): Promise<Uint8Array> {
 	const declared = Number(response.headers.get("content-length"))
@@ -119,8 +121,9 @@ function pause(ms: number, signal: AbortSignal | null | undefined): Promise<void
 }
 
 /**
- * `fetch` with the body already read, retried on a network failure. Same signature, so a loader takes it as its
- * `fetchImpl`; the response it answers with can be read as bytes, text or JSON exactly as a live one.
+ * `fetch` with the body already read, retried on a network failure.
+ * Same signature, so a loader takes it as its `fetchImpl`; the response it answers
+ * with can be read as bytes, text or JSON exactly as a live one.
  */
 export async function fetchWithRetry(
 	input: Parameters<typeof fetch>[0],
@@ -145,9 +148,9 @@ export async function fetchWithRetry(
 /**
  * `fetchWithRetry` bound to a progress callback, as a plain `fetch` a loader can take for its `fetchImpl`.
  *
- * A loader is handed one `fetchImpl` and uses it for every artifact, so `shouldReport` decides which request's bytes
- * are worth a bar — the model is 38 MB and the lexicons are kilobytes, and reporting all of them would make the bar
- * jump backwards as each small one starts.
+ * A loader is handed one `fetchImpl` and uses it for every artifact, so `shouldReport` decides
+ * which request's bytes are worth a bar — the model is 38 MB and the lexicons are kilobytes,
+ * and reporting all of them would make the bar jump backwards as each small one starts.
  */
 export function fetchWithProgress(onBytes: BytesReceived, shouldReport: (url: string) => boolean): typeof fetch {
 	return (input, init) => {

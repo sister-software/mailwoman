@@ -167,9 +167,9 @@ const J2000 = 2_451_545
 const unixEpochJulian = 2_440_587.5
 
 /**
- * Sunrise / solar-noon / sunset for a coordinate on a date, as UTC epoch seconds, via the standard sunrise equation.
- * `rise` and `set` are absent during polar day or polar night (the sun never crosses the horizon); `noon` (solar
- * transit) is always present.
+ * Sunrise / solar-noon / sunset for a coordinate on a date, as UTC epoch seconds,
+ * via the standard sunrise equation. `rise` and `set` are absent during polar day or polar
+ * night (the sun never crosses the horizon); `noon` (solar transit) is always present.
  */
 export function sunTimes(
 	lat: number,
@@ -249,7 +249,8 @@ const MGRS_COL_SETS = ["ABCDEFGH", "JKLMNPQR", "STUVWXYZ"]
 const MGRS_ROW_LETTERS = "ABCDEFGHJKLMNPQRSTUV"
 
 /**
- * Military Grid Reference System for a coordinate (`"18SUJ2340806479"`); `""` outside mgrs bands (±80°/84°).
+ * Military Grid Reference System for a coordinate (`"18SUJ2340806479"`);
+ * `""` outside mgrs bands (±80°/84°).
  */
 export function toMGRS(lat: number, lon: number): string {
 	if (lat < MGRS_LAT_MIN || lat > MGRS_LAT_MAX) return ""

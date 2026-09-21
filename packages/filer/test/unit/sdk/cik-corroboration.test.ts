@@ -82,8 +82,8 @@ describe("corroborateCIK — pins", () => {
 
 describe("corroborateCIK — abstention is not denial", () => {
 	it("reports a missing SIC as its own basis, distinct from a rejecting one", () => {
-		// edgar published nothing to corroborate against. That is a gap in the source rather than a judgment
-		// about the company, and a caller reporting a run must be able to tell the two apart.
+		// edgar published nothing to corroborate against. That is a gap in the source rather than a
+		// judgment about the company, and a caller reporting a run must be able to tell the two apart.
 		for (const absent of [null, undefined, "", "   "]) {
 			expect(corroborateCIK(cik("0000018926"), absent)).toEqual({
 				corroborated: false,
@@ -112,8 +112,8 @@ describe("the allowlist itself", () => {
 	})
 
 	it("excludes the software classifications, because including them readmits WidePoint", () => {
-		// 7372 (Bandwidth) and 7374 (Ooma) sit beside 7373 (WidePoint, a false match). There is no
-		// range that admits the first two and excludes the third — which is why pins exist.
+		// 7372 (Bandwidth) and 7374 (Ooma) sit beside 7373 (WidePoint, a false match).
+		// There is no range that admits the first two and excludes the third — which is why pins exist.
 		for (const sic of ["7372", "7373", "7374"]) {
 			expect(TELECOM_SIC_CODES.has(sic)).toBe(false)
 		}

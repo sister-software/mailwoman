@@ -36,9 +36,9 @@ import type {
 } from "#browser-runtime/types"
 
 /**
- * What one release loads to: every field a host may read. A host that resolves admin-only ignores `anchorLookup`, and
- * loading it is free because the anchor binaries are already fetched by the classifier load for an anchor-trained
- * bundle.
+ * What one release loads to: every field a host may read.
+ * A host that resolves admin-only ignores `anchorLookup`, and loading it is free because the
+ * anchor binaries are already fetched by the classifier load for an anchor-trained bundle.
  */
 export interface ReleaseAssets {
 	classifier: MailwomanClassifierLike
@@ -49,45 +49,50 @@ export interface ReleaseAssets {
 	fstMatcher: FSTMatcherLike | null
 	fstProvenance: FSTProvenanceLike | null
 	/**
-	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity fix (scope
-	 * invariant 2: node runtimes wire this by default. the browser previously never could). Loaded with the FST gazetteer
-	 * because the check needs both (core's `streetContextRequirementFor` only fires when the two stages are present).
-	 * `null` when the release ships no `fst-street-morphology.bin` (pre-artifact bundles) — the demo then parses without
-	 * the check, byte-identical to before.
+	 * The street-morphology matcher — the #1315 street-context check's signal source,
+	 * the node/browser parity fix (scope invariant 2: node runtimes wire this by default. the
+	 * browser previously never could). Loaded with the FST gazetteer because the check needs
+	 * both (core's `streetContextRequirementFor` only fires when the two stages are present).
+	 * `null` when the release ships no `fst-street-morphology.bin` (pre-artifact bundles) —
+	 * the demo then parses without the check, byte-identical to before.
 	 */
 	streetMorphologyMatcher: FSTMatcherLike | null
 	/**
-	 * The byte-range gazetteer lookup. `null` when the release ships no gazetteer, when the host asked for none, or when
-	 * the load failed.
+	 * The byte-range gazetteer lookup. `null` when the release ships no gazetteer,
+	 * when the host asked for none, or when the load failed.
 	 */
 	lookup: MailwomanLookupLike | null
 	/**
-	 * Give this bundle's native memory back — the ONNX session's weights and arenas, which live in the wasm heap outside
-	 * the JavaScript heap and are not reclaimed by dropping this object. A host that loads a second bundle over a page's
-	 * life (a version switch, a backend-force toggle, compare mode) must call this on the one it is replacing.
+	 * Give this bundle's native memory back — the ONNX session's weights and arenas,
+	 * which live in the wasm heap outside the JavaScript heap and are not reclaimed
+	 * by dropping this object. A host that loads a second bundle over a page's life
+	 * (a version switch, a backend-force toggle, compare mode) must call this on the one it is replacing.
 	 */
 	release: () => Promise<void>
 	calibrator: Calibrator | null
 	/**
-	 * Per-parse placetype-pair prior selection (placetype-pair-prior arc, #1278). Runs locale-check over the input text
-	 * and returns the loaded index whose header country matches (or `undefined` → byte-stable no-prior). Both demo parse
-	 * paths thread this into `runClassifyStage` so a GB/NZ input gets its dependent_locality-resurrecting prior. `null`
-	 * when no pair index was staged/loaded for this release (older bundles) — the loader then behaves exactly as before.
+	 * Per-parse placetype-pair prior selection (placetype-pair-prior arc, #1278).
+	 * Runs locale-check over the input text and returns the loaded index whose header country
+	 * matches (or `undefined` → byte-stable no-prior). Both demo parse paths thread this into
+	 * `runClassifyStage` so a GB/NZ input gets its dependent_locality-resurrecting prior.
+	 * `null` when no pair index was staged/loaded for this release (older bundles) —
+	 * the loader then behaves exactly as before.
 	 */
 	selectPairIndex: SelectPairIndex | null
 }
 
 export interface LoadReleaseAssetsOptions {
 	/**
-	 * Load the byte-range gazetteer lookup, given the same-origin base for the sql.js-httpvfs worker and wasm (for
-	 * example `/mailwoman/sqljs`). Omit it and `lookup` is `null` without a gazetteer step.
+	 * Load the byte-range gazetteer lookup, given the same-origin base for the sql.js-httpvfs worker
+	 * and wasm (for example `/mailwoman/sqljs`). Omit it and `lookup` is `null` without a gazetteer step.
 	 */
 	gazetteer?: { sqljsBaseURL: string }
 }
 
 /**
- * Load the classifier, calibration, FST and gazetteer bundle for one release. Reports staged progress through
- * `progress`; the host owns the terminal ready/error state and reveals the returned bundle atomically.
+ * Load the classifier, calibration, FST and gazetteer bundle for one release.
+ * Reports staged progress through `progress`; the host owns the terminal ready/error state
+ * and reveals the returned bundle atomically.
  *
  * @param release The selected release descriptor (drives which optional assets are fetched).
  * @param progress The host's progress and abort surface.
@@ -115,17 +120,19 @@ export async function loadReleaseAssets(
 
 	progress.setStepLabels(steps)
 
-	// The pair indexes live on the public bucket beside every other model asset, under a dated generation: the objects
-	// ship an immutable Cache-Control, so a rebuilt index is readable only from a fresh path.
+	// The pair indexes live on the public bucket beside every other model asset,
+	// under a dated generation: the objects ship an immutable Cache-Control,
+	// so a rebuilt index is readable only from a fresh path.
 	const pairIndexBase = pairIndexBaseURL(PAIR_INDEX_VERSION)
 
-	// Dynamic so the onnxruntime-web chunk loads only when a release does. The result is narrowed to the structural
-	// classifier interface this module exposes, so the neural package's own classifier type never enters a host bundle.
+	// Dynamic so the onnxruntime-web chunk loads only when a release does.
+	// The result is narrowed to the structural classifier interface this module exposes,
+	// so the neural package's own classifier type never enters a host bundle.
 	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
-	// The model is the only artifact here whose transfer a visitor waits on — tens of megabytes against kilobytes for
-	// every lexicon beside it — so it is the only one whose bytes reach the bar. Reporting the small ones too would
-	// send the bar backwards each time one started.
+	// The model is the only artifact here whose transfer a visitor waits on — tens of megabytes
+	// against kilobytes for every lexicon beside it — so it is the only one whose bytes reach the bar.
+	// Reporting the small ones too would send the bar backwards each time one started.
 	const reportBytes = progress.setByteFraction
 
 	const modelFetch = reportBytes
@@ -148,8 +155,9 @@ export async function loadReleaseAssets(
 			forceWASM: progress.forceWASM,
 		}),
 		fetchImpl: modelFetch,
-		// Every published pair index is loaded. the loader keeps each live and `selectPairIndexForText` picks per
-		// parse. Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
+		// Every published pair index is loaded. the loader keeps each live
+		// and `selectPairIndexForText` picks per parse. Fetched tolerantly: a 404 is skipped,
+		// so a missing binary means no prior, never a failed load.
 		pairIndexURLs: pairIndexURLs(pairIndexBase),
 	})) as {
 		classifier: MailwomanClassifierLike
@@ -163,13 +171,14 @@ export async function loadReleaseAssets(
 		diagnostics ? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)` : "unknown"
 	)
 
-	// The model is in. What follows is the lexicons and the optional gazetteer. It the step index reports. Therefore, the
-	// byte channel goes quiet rather than holding its last value at 100%.
+	// The model is in. What follows is the lexicons and the optional gazetteer.
+	// It the step index reports. Therefore, the byte channel goes quiet
+	// rather than holding its last value at 100%.
 	progress.setByteFraction?.(null)
 	progress.setStepIndex(0)
 
-	// The calibration table is the model's own held-out reliability, so it must match the loaded version. A release
-	// without one leaves `calibrator` null and the host shows raw softmax scores.
+	// The calibration table is the model's own held-out reliability, so it must match the loaded version.
+	// A release without one leaves `calibrator` null and the host shows raw softmax scores.
 	let calibrator: Calibrator | null = null
 
 	try {
@@ -195,8 +204,9 @@ export async function loadReleaseAssets(
 			// FST not available for this version.
 		}
 
-		// The street-context check needs both matchers, so the morphology matcher is loaded only once the gazetteer FST
-		// is. a release that predates the artifact answers null and the parse runs with the check off.
+		// The street-context check needs both matchers, so the morphology matcher is loaded
+		// only once the gazetteer FST is. a release that predates the artifact answers null
+		// and the parse runs with the check off.
 		if (fstMatcher) {
 			try {
 				streetMorphologyMatcher = await loadStreetMorphologyFST(DEFAULT_LOCALE, release.version)
@@ -219,9 +229,9 @@ export async function loadReleaseAssets(
 
 			if (!progress.signal.aborted) {
 				const wofLookup = new WOFCandidateTableLookup(worker)
-				// Fire-and-forget: pull the schema/FTS/dual-role pages through the VFS now so the first interactive query
-				// starts warm. The worker serializes execs, so a user query issued mid-warm-up simply queues behind pages
-				// it was going to need anyway.
+				// Fire-and-forget: pull the schema/FTS/dual-role pages through the VFS now
+				// so the first interactive query starts warm. The worker serializes execs, so a user
+				// query issued mid-warm-up simply queues behind pages it was going to need anyway.
 				void wofLookup.warmUp().catch(() => {})
 				lookup = wofLookup
 			}

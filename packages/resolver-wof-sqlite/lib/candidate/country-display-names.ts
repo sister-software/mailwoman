@@ -13,21 +13,23 @@ import { normalizeLocalityForKey } from "#street/normalize"
 /**
  * Fold every country surface ICU knows onto that country's candidate row (#1678 thread 1).
  *
- * A bare `格鲁吉亚` (Georgia the country) resolved to nothing while `佐治亚州` (Georgia the US state) resolved correctly, and
- * the model gave both the same wrong `locality` tag — so the tag was never the variable. 140 of 237 country rows are
- * synthetic and carry a canonical English name and nothing else, and WOF holds no Chinese country names at all. The
- * GeoNames alias fold now admits every script, but it reaches only the fold's own country set and names a place from
- * its dump row, so it supplies a country surface for no country outside that set.
+ * A bare `格鲁吉亚` (Georgia the country) resolved to nothing while `佐治亚州` (Georgia the US state)
+ * resolved correctly, and the model gave both the same wrong `locality` tag —
+ * so the tag was never the variable. 140 of 237 country rows are synthetic and carry a
+ * canonical English name and nothing else, and WOF holds no Chinese country names at all.
+ * The GeoNames alias fold now admits every script, but it reaches only the fold's own country set
+ * and names a place from its dump row, so it supplies a country surface for no country outside that set.
  *
- * `Intl.DisplayNames` already knows every one — ~280 regions, ~5,244 surfaces, from the same ICU the runtime uses for
- * every other locale-sensitive operation. No download, no vendored corpus, no snapshot to drift.
+ * `Intl.DisplayNames` already knows every one — ~280 regions, ~5,244 surfaces,
+ * from the same ICU the runtime uses for every other locale-sensitive operation.
+ * No download, no vendored corpus, no snapshot to drift.
  *
- * `is_primary = 0`: these are names the world uses rather than the country's canonical name. The display `name` stays
- * whatever the gazetteer already had, so resolving `格鲁吉亚` answers with the Georgia country row rather than renaming
- * it.
+ * `is_primary = 0`: these are names the world uses rather than the country's canonical name.
+ * The display `name` stays whatever the gazetteer already had, so resolving `格鲁吉亚`
+ * answers with the Georgia country row rather than renaming it.
  *
- * Returns the row count so the caller can report it — a zero means ICU supplied nothing, which is a different fact from
- * the pass not having run.
+ * Returns the row count so the caller can report it — a zero means ICU supplied nothing,
+ * which is a different fact from the pass not having run.
  */
 export function stageCountryDisplayNames(ctx: {
 	attrs: Map<number, PlaceAttrs>
@@ -36,8 +38,8 @@ export function stageCountryDisplayNames(ctx: {
 	stageRow: StageRow
 	tx: { exec(sql: string): void }
 }): number {
-	// One country row per ISO2. Where a code has several (historic rows surviving the is_current filter), the most
-	// populous wins — the same tiebreak the ranking uses everywhere else.
+	// One country row per ISO2. Where a code has several (historic rows surviving the is_current filter),
+	// the most populous wins — the same tiebreak the ranking uses everywhere else.
 	const countryByISO2 = new Map<string, { sid: number; a: PlaceAttrs }>()
 
 	for (const [sid, a] of ctx.attrs) {
@@ -49,8 +51,8 @@ export function stageCountryDisplayNames(ctx: {
 
 		const held = countryByISO2.get(iso2)
 
-		// An unmeasured population loses to any measured one and ties with another unmeasured, which is what a zero
-		// stand-in did here before the column carried null.
+		// An unmeasured population loses to any measured one and ties with another unmeasured,
+		// which is what a zero stand-in did here before the column carried null.
 		if (!held || (a.pop ?? 0) > (held.a.pop ?? 0)) {
 			countryByISO2.set(iso2, { sid, a })
 		}
@@ -67,8 +69,8 @@ export function stageCountryDisplayNames(ctx: {
 
 		const k = normalizeLocalityForKey(name)
 
-		// The country's own key is already staged as its primary. insert or ignore at materialization dedupes the
-		// rest, so this only skips the obvious self-alias.
+		// The country's own key is already staged as its primary. insert or ignore at
+		// materialization dedupes the rest, so this only skips the obvious self-alias.
 		if (!k || k === target.a.pkey) continue
 
 		ctx.stageRow(k, target.a, target.sid, 0)

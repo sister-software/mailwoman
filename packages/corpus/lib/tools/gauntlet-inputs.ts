@@ -34,8 +34,9 @@ export const GAUNTLET_CASES_DIR: PathBuilderLike = repoRootPath(
 /**
  * The comparison surface: case-folded, every run of whitespace removed.
  *
- * Whitespace-insensitive because a postcode's board spelling and its corpus spelling differ by exactly that — `100 00`
- * against `10000` — and a check that missed the pair would report a clean build over a leaked row.
+ * Whitespace-insensitive because a postcode's board spelling and its corpus spelling
+ * differ by exactly that — `100 00` against `10000` — and a check that missed the
+ * pair would report a clean build over a leaked row.
  */
 export function normalizeGauntletSurface(surface: string): string {
 	return surface.trim().toUpperCase().replaceAll(/\s+/gu, "")
@@ -44,15 +45,16 @@ export function normalizeGauntletSurface(surface: string): string {
 /**
  * Every board row's `input`, normalized.
  *
- * Reads the whole corpus once. callers retain the output. A row that does not parse is skipped rather than thrown on:
- * the gauntlet loader is what validates the corpus, and a recipe that refused to build over a malformed board row would
- * turn one bad line into a stopped build for a check that is advisory to it.
+ * Reads the whole corpus once. callers retain the output.
+ * A row that does not parse is skipped rather than thrown on: the gauntlet loader is what
+ * validates the corpus, and a recipe that refused to build over a malformed board row
+ * would turn one bad line into a stopped build for a check that is advisory to it.
  */
 export async function readGauntletInputs(dir: PathBuilderLike = GAUNTLET_CASES_DIR): Promise<ReadonlySet<string>> {
 	const inputs = new Set<string>()
 
-	// Each immediate subdirectory is read independently so `generalization/` parked passes remain board inputs a
-	// recipe must not train on.
+	// Each immediate subdirectory is read independently so `generalization/` parked
+	// passes remain board inputs a recipe must not train on.
 	const entries = await Globerator.from("*", { cwd: String(dir), withFileTypes: true, onlyFiles: false }).toArray()
 	const directories = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name)
 
@@ -71,9 +73,9 @@ export async function readGauntletInputs(dir: PathBuilderLike = GAUNTLET_CASES_D
 					}
 				}
 			} catch {
-				// A file this cannot read or parse is skipped. The gauntlet loader is what validates the board corpus
-				// and reports the file and line. a recipe stopping its build over one malformed row would turn an
-				// advisory check into a blocked build.
+				// A file this cannot read or parse is skipped. The gauntlet loader is what validates
+				// the board corpus and reports the file and line. a recipe stopping its build
+				// over one malformed row would turn an advisory check into a blocked build.
 				continue
 			}
 		}

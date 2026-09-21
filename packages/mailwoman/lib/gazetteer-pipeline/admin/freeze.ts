@@ -19,8 +19,9 @@ import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed-db"
 
 export interface FreezeAdminOptions {
 	/**
-	 * Repos root for the `wof:hierarchy` −4 backfill (#440/#832 — NYC/London-class multi-parent orphans). Omit only in
-	 * fixture tests. a real build without it leaves those metros unreachable by the region-descendant filter.
+	 * Repos root for the `wof:hierarchy` −4 backfill (#440/#832 — NYC/London-class multi-parent orphans).
+	 * Omit only in fixture tests. a real build without it leaves those metros
+	 * unreachable by the region-descendant filter.
 	 */
 	dataDir?: string
 	onPhase?: (phase: string, detail?: string) => void
@@ -39,8 +40,8 @@ export async function freezeAdmin(
 	db: DatabaseClient<WOFDatabase>,
 	opts: FreezeAdminOptions = {}
 ): Promise<FreezeAdminResult> {
-	// resolver-wof-sqlite is an optional peer of mailwoman — import it lazily (the gazetteer-pipeline
-	// convention) so importing this module never faults without it.
+	// resolver-wof-sqlite is an optional peer of mailwoman — import it lazily
+	// (the gazetteer-pipeline convention) so importing this module never faults without it.
 	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
 		await import("@mailwoman/resolver-wof-sqlite/ancestry")
 
@@ -70,9 +71,10 @@ export async function freezeAdmin(
 	phase("ancestors", "parent_id closure")
 	const ancestorRows = populateAncestors(db)
 
-	// Index `ancestors(id)` now — before the −4 backfill probes it. `createUnifiedIndexes` (below) builds this same
-	// index, but it runs after the backfill. without it here the backfill's per-candidate lookups full-scan the
-	// closure table each time (#1015). `if not exists` keeps the later createUnifiedIndexes a no-op.
+	// Index `ancestors(id)` now — before the −4 backfill probes it.
+	// `createUnifiedIndexes` (below) builds this same index, but it runs after the backfill.
+	// without it here the backfill's per-candidate lookups full-scan the closure table each
+	// time (#1015). `if not exists` keeps the later createUnifiedIndexes a no-op.
 	phase("ancestors-index")
 	db.exec("CREATE INDEX IF NOT EXISTS ancestors_by_id ON ancestors(id)")
 

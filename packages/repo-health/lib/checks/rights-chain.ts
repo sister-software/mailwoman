@@ -31,8 +31,8 @@ const LICENSOR = "Sister Software"
 /**
  * The documents that grant, receive or describe first-party rights, each with what it is for.
  *
- * A generated per-package `LICENSE.md` is checked by `weights-rights` against its generator instead, so it is absent
- * here — one document, one owning check.
+ * A generated per-package `LICENSE.md` is checked by `weights-rights` against its generator
+ * instead, so it is absent here — one document, one owning check.
  */
 const RIGHTS_DOCUMENTS: ReadonlyArray<readonly [path: string, role: string]> = [
 	["LICENSE.md", "the open-source grant"],

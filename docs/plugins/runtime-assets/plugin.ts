@@ -19,8 +19,8 @@ export default async function runtimeAssetsPlugin(context: LoadContext): Promise
 	const docsDir = context.siteDir
 	const staticDir = resolvePath(docsDir, "static", "mailwoman")
 
-	// Both arms are resolved here, where awaiting is legal, because `configureWebpack` below is called synchronously and
-	// only learns which one it needs at that moment.
+	// Both arms are resolved here, where awaiting is legal, because `configureWebpack`
+	// below is called synchronously and only learns which one it needs at that moment.
 	const aliases = {
 		client: await bundleAliases(false),
 		server: await bundleAliases(true),

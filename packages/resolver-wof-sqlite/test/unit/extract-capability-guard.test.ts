@@ -56,14 +56,16 @@ const writeSprOnly = (path: string): void => {
 }
 
 /**
- * A extract with nothing in it, under a name that routes. A truncated or zero-byte file reads exactly like this.
+ * A extract with nothing in it, under a name that routes.
+ * A truncated or zero-byte file reads exactly like this.
  */
 const writeEmpty = (path: string): void => {
 	new DatabaseClient<WOFDatabase>(path).destroy()
 }
 
 /**
- * A relation-table extract, which never claims to be a place extract and is part of the documented default set.
+ * A relation-table extract, which never claims to be a place extract
+ * and is part of the documented default set.
  */
 const writeRelationOnly = (path: string): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -127,8 +129,8 @@ describe("extract capability guard", () => {
 	})
 
 	it("EXEMPTS a relation-table extract, which is in the documented default set", () => {
-		// `postcode-locality-<cc>.db` has no `spr`, so it never claims to be a place extract. Guarding on the filename
-		// rather than on the table would have broken the shipped default.
+		// `postcode-locality-<cc>.db` has no `spr`, so it never claims to be a place extract.
+		// Guarding on the filename rather than on the table would have broken the shipped default.
 		expect(
 			() =>
 				new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db"), dir.resolve("postcode-locality-intl.db")] })

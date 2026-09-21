@@ -61,8 +61,9 @@ async function validateWorkbook(path: string): Promise<void> {
 			throw new Error(`sheet ${sheet} must contain a header and at least one school row`)
 		}
 
-		// Exact casing is part of the adapter interface: object mode preserves the workbook's header names, so accepting
-		// `Code` here while the reader asks for `record.code` would validate a workbook whose every row is later skipped.
+		// Exact casing is part of the adapter interface: object mode preserves the workbook's
+		// header names, so accepting `Code` here while the reader asks for `record.code`
+		// would validate a workbook whose every row is later skipped.
 		const columns = new Set(header.map((cell) => String(cell ?? "").trim()))
 
 		const missing = STATE_HI_SCHOOL_REQUIRED_COLUMNS.filter((column) => !columns.has(column))

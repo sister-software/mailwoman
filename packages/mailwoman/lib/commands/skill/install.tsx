@@ -64,8 +64,9 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The packaged skill's source directory, resolved relative to this package's root. See the module docstring for why two
- * candidate distances are tried — exactly one exists on disk in any given tree.
+ * The packaged skill's source directory, resolved relative to this package's root.
+ * See the module docstring for why two candidate distances are tried —
+ * exactly one exists on disk in any given tree.
  */
 async function resolveSkillSourceDir(): Promise<string> {
 	const dir = resolvePackagePath("mailwoman", "skills", "mailwoman")

@@ -32,7 +32,8 @@ import {
 import type { ThresholdDecision, ThresholdPoint } from "#eval-harness/same-data/threshold"
 
 /**
- * A rate as a percentage with the two counts that produced it, or the word that says nobody could measure it.
+ * A rate as a percentage with the two counts that produced it, or the word
+ * that says nobody could measure it.
  */
 export function renderRatio({ numerator, denominator, value }: Ratio): string {
 	if (value === null) return "unmeasured"
@@ -103,8 +104,8 @@ export function renderMetricsTable(
 }
 
 /**
- * The abstention metrics, which only the withheld-gold stratum can carry. Reported apart so an absent-candidate failure
- * mode is never pooled away.
+ * The abstention metrics, which only the withheld-gold stratum can carry.
+ * Reported apart so an absent-candidate failure mode is never pooled away.
  */
 export function renderAbstentionTable(
 	panel: readonly SameDataPanelRow[],
@@ -192,8 +193,8 @@ export function renderDecisionTable(verdict: BenchmarkVerdict): string[] {
 }
 
 /**
- * One arm's abstention-threshold curve, with both sides of the trade in the same row: what withholding provides on the
- * withheld-gold rows and what it costs on the rows that hold a gold.
+ * One arm's abstention-threshold curve, with both sides of the trade in the same row: what
+ * withholding provides on the withheld-gold rows and what it costs on the rows that hold a gold.
  */
 export function renderThresholdCurve(arm: string, curve: readonly ThresholdPoint[]): string[] {
 	const rows = curve.map((point) => [
@@ -236,8 +237,9 @@ export function renderThresholdDecisions(decisions: readonly ThresholdDecision[]
 /**
  * The rows the baseline got right and Mailwoman did not, with the query in view.
  *
- * A record that prints only aggregates cannot be audited, and these are the rows worth reading: a deterministic
- * resolver with no fame term beating the production one names a mechanism rather than a rounding difference.
+ * A record that prints only aggregates cannot be audited, and these are the rows
+ * worth reading: a deterministic resolver with no fame term beating the production
+ * one names a mechanism rather than a rounding difference.
  */
 export function renderLosses(
 	panel: readonly SameDataPanelRow[],

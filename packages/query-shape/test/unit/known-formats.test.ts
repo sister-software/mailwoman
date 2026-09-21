@@ -20,8 +20,9 @@ describe("isPostcodeFormat", () => {
 	})
 
 	it("holds for every format the table can emit", () => {
-		// The convention is what `@mailwoman/core`'s runtime pipeline reads in place of a copied list, so a format
-		// named outside it would be a postcode here and not there. Every pattern is exercised through detection.
+		// The convention is what `@mailwoman/core`'s runtime pipeline reads in place of a
+		// copied list, so a format named outside it would be a postcode here and not there.
+		// Every pattern is exercised through detection.
 		const probes = [
 			"10001",
 			"10001-1234",
@@ -87,16 +88,17 @@ describe("detectKnownFormats — postcodes", () => {
 	})
 
 	it("detects a JP postcode written with its postal mark, which is how Japan writes one", () => {
-		// `〒150-0001 Tokyo, Shibuya` read as carrying no known format while `Tokyo 150-0001` scored 0.95, so the more
-		// explicitly Japanese spelling was the one the detector could not see. The mark is U+3012 and the tokenizer
-		// keeps it attached to the digits.
+		// `〒150-0001 Tokyo, Shibuya` read as carrying no known format while `Tokyo 150-0001` scored
+		// 0.95, so the more explicitly Japanese spelling was the one the detector could not see.
+		// The mark is U+3012 and the tokenizer keeps it attached to the digits.
 		expect(formatsOf("〒150-0001")).toContain("jp_postcode")
 		expect(formatsOf("Japan, 〒150-0001 Tokyo, Shibuya")).toContain("jp_postcode")
 	})
 
 	it("does not admit a postal mark in front of another country's postcode shape", () => {
-		// The optional mark belongs to the JP pattern alone. A five-digit group behind it is not a Japanese postcode,
-		// and admitting one would route a US or FR address on a character the input merely happens to carry.
+		// The optional mark belongs to the JP pattern alone.
+		// A five-digit group behind it is not a Japanese postcode, and admitting one would
+		// route a US or FR address on a character the input merely happens to carry.
 		expect(formatsOf("〒10118")).not.toContain("jp_postcode")
 		expect(formatsOf("〒SW1A 1AA")).not.toContain("uk_postcode")
 	})

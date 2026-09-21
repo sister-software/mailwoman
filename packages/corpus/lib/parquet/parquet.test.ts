@@ -179,8 +179,9 @@ describe("readers", () => {
 	})
 
 	it("readParquetRows raises on a file nobody wrote, where tryReadParquetRows answers null", async () => {
-		// The whole reason the two names exist. A caller that wants "no corpus yet" to read as an empty list must ASK
-		// for that, because `?? []` over the raising one produces the silent zero this package exists to prevent.
+		// The whole reason the two names exist. A caller that wants "no corpus
+		// yet" to read as an empty list must ASK for that, because `?? []` over the raising
+		// one produces the silent zero this package exists to prevent.
 		const absent = scratch.resolve("nothing-here.parquet")
 
 		await expect(readParquetRows(absent)).rejects.toThrow(/No parquet file at/)
@@ -196,8 +197,9 @@ describe("readers", () => {
 	})
 
 	it("countParquetRows counts without reading, and raises rather than answering zero for an absent file", async () => {
-		// `0` from a file nobody wrote and `0` from a file holding no rows are different statements, and a count is a
-		// measurement — so absence raises here rather than returning the number that reads like data.
+		// `0` from a file nobody wrote and `0` from a file holding no rows are
+		// different statements, and a count is a measurement — so absence raises here
+		// rather than returning the number that reads like data.
 		expect(await countParquetRows(await written([labeled({ source_id: "r-4" }), labeled({ source_id: "r-5" })]))).toBe(
 			2
 		)

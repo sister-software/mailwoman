@@ -100,9 +100,10 @@ export function assertCoverageNotEmpty(rowCount: number, context: string, indist
 /**
  * Refuse a layer whose stored cells are finer than its manifest's declared index resolution.
  *
- * A stored cell finer than the declared index resolution has no ancestor chain from a probe's own cell, so
- * `cellToParent` would throw mid-query on some coordinates and not others. Refused at open time instead: it means the
- * manifest and the rows disagree about what the layer is, which is a build defect rather than a runtime condition.
+ * A stored cell finer than the declared index resolution has no ancestor chain from a probe's
+ * own cell, so `cellToParent` would throw mid-query on some coordinates and not others.
+ * Refused at open time instead: it means the manifest and the rows disagree about what
+ * the layer is, which is a build defect rather than a runtime condition.
  */
 export function assertNoCellsFinerThanIndex(
 	cellResolutions: readonly number[],
@@ -119,8 +120,9 @@ export function assertNoCellsFinerThanIndex(
 }
 
 /**
- * The measurement knobs every layer's resolution instrument shares. The driver loops stay per product: what a stream
- * yields, how scenarios partition it, and what each report carries genuinely differ.
+ * The measurement knobs every layer's resolution instrument shares.
+ * The driver loops stay per product: what a stream yields, how scenarios partition it,
+ * and what each report carries genuinely differ.
  */
 export interface ResolutionMeasurementOptions {
 	/**
@@ -170,9 +172,10 @@ export interface StreamedAreaTotals {
 const M2_PER_KM2 = 1_000_000
 
 /**
- * An {@link AreaAgreement} whose witness is stated: either the source published a figure and the gap is against it, or
- * it published none and there is nothing TO agree with. The no-witness case is a type rather than a zero, because a
- * `relativeGap` of 0 is indistinguishable from a pass, and a check that never ran must not read as one.
+ * An {@link AreaAgreement} whose witness is stated: either the source published a figure
+ * and the gap is against it, or it published none and there is nothing TO agree with.
+ * The no-witness case is a type rather than a zero, because a `relativeGap` of 0 is
+ * indistinguishable from a pass, and a check that never ran must not read as one.
  */
 export type AreaAgreementReading =
 	| (AreaAgreement & { witness: "source" })
@@ -183,7 +186,8 @@ export type AreaAgreementReading =
 	  }
 
 /**
- * Both readings of a build's streamed ring areas against the source's own figure — or the stated absence of one.
+ * Both readings of a build's streamed ring areas against the source's own figure —
+ * or the stated absence of one.
  */
 export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number | undefined): AreaAgreementReading {
 	const nestedKM2 = streamed.nestedM2 / M2_PER_KM2
@@ -203,11 +207,12 @@ export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number
 }
 
 /**
- * Refuse an artifact whose rings do not add up to the area the source itself reports. A reading with no witness has
- * nothing to disagree with and passes through — its type is what keeps that from reading as a pass.
+ * Refuse an artifact whose rings do not add up to the area the source itself reports.
+ * A reading with no witness has nothing to disagree with and passes through —
+ * its type is what keeps that from reading as a pass.
  *
- * The message carries the hole-blind total beside the nested one, because the gap between them is the diagnosis: a hole
- * read as an exterior ring answers "inside" for every point in it.
+ * The message carries the hole-blind total beside the nested one, because the gap between them
+ * is the diagnosis: a hole read as an exterior ring answers "inside" for every point in it.
  *
  * @param scope Names the builder in the error, e.g. `coastal build`.
  */

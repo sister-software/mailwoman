@@ -10,21 +10,24 @@
 import type { Exclusion } from "@mailwoman/evidence"
 
 /**
- * A street-name existence probe. Backend-agnostic. the FR instance is BAN street-centroids, a future US instance is
- * tiger, etc. (per the registry-backed-structured-prediction doctrine tiers).
+ * A street-name existence probe. Backend-agnostic. the FR instance is BAN street-centroids,
+ * a future US instance is tiger, etc. (per the registry-backed-structured-prediction doctrine tiers).
  */
 export interface StreetLocalityEvidence {
 	/**
-	 * True when `streetSurface` exists as a street name — optionally scoped to a locality or postcode when the hypothesis
-	 * carries one (fragments usually don't. unscoped is the measured mode). The implementation is responsible for folding
-	 * the surface with {@link foldStreetSurface} so the caller passes raw text.
+	 * True when `streetSurface` exists as a street name — optionally scoped to a locality or postcode
+	 * when the hypothesis carries one (fragments usually don't. unscoped is the measured mode).
+	 * The implementation is responsible for folding the surface with {@link foldStreetSurface}
+	 * so the caller passes raw text.
 	 *
-	 * Positive evidence only: return `false` on any doubt — a missing index, an unsupported country, a read error — so
+	 * Positive evidence only: return `false` on any doubt — a missing index,
+	 * an unsupported country, a read error — so
 	 * {@link pickByStreetEvidence} fails open to the model's ranking. Absence is never a veto.
 	 */
 	hasStreetName(streetSurface: string, scope?: StreetEvidenceScope): boolean
 	/**
-	 * ISO-2 (upper-case) countries this instance can answer for. Anything else → no evidence, never a veto.
+	 * ISO-2 (upper-case) countries this instance can answer for.
+	 * Anything else → no evidence, never a veto.
 	 */
 	readonly countries: ReadonlySet<string>
 }
@@ -35,7 +38,8 @@ export interface StreetEvidenceScope {
 }
 
 /**
- * Shared index-build and lookup fold: strip diacritics, lowercase, replace hyphens and apostrophes, and collapse space.
+ * Shared index-build and lookup fold: strip diacritics, lowercase, replace hyphens
+ * and apostrophes, and collapse space.
  */
 export function foldStreetSurface(surface: string): string {
 	return surface
@@ -48,10 +52,10 @@ export function foldStreetSurface(surface: string): string {
 }
 
 /**
- * FR street-type + particle vocabulary — the G1 guard. A street surface made only of these words carries no name (bare
- * `rue`/`chemin` is a truncation, and it is in the index), so it warrants no evidence credit. Folded forms (particles
- * are pre-folded: `l'` → `l`). Kept small and lexical — it is a dictionary fact rather than a tuned weight (the
- * anti-Pelias line).
+ * FR street-type + particle vocabulary — the G1 guard. A street surface made only of these
+ * words carries no name (bare `rue`/`chemin` is a truncation, and it is in the index),
+ * so it warrants no evidence credit. Folded forms (particles are pre-folded: `l'` → `l`).
+ * Kept small and lexical — it is a dictionary fact rather than a tuned weight (the anti-Pelias line).
  */
 const FR_STREET_TYPE_WORDS: ReadonlySet<string> = new Set([
 	"rue",
@@ -90,7 +94,8 @@ const FR_STREET_TYPE_WORDS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * True when the folded surface contains no token outside {@link FR_STREET_TYPE_WORDS} — i.e. it is pure type/particle.
+ * True when the folded surface contains no token outside {@link FR_STREET_TYPE_WORDS} —
+ * i.e. it is pure type/particle.
  */
 export function isPureTypeVocabulary(foldedSurface: string): boolean {
 	const tokens = foldedSurface.split(" ").filter((value) => value.length)
@@ -101,15 +106,18 @@ export function isPureTypeVocabulary(foldedSurface: string): boolean {
 }
 
 /**
- * One candidate parse for the street-evidence rerank — its street surface + its (within-input comparable) score.
+ * One candidate parse for the street-evidence rerank — its street surface +
+ * its (within-input comparable) score.
  */
 export interface StreetCandidate<T = unknown> {
 	/**
-	 * The candidate's street surface (raw. folded internally). Empty string = no street parsed → never the evidence pick.
+	 * The candidate's street surface (raw. folded internally).
+	 * Empty string = no street parsed → never the evidence pick.
 	 */
 	streetSurface: string
 	/**
-	 * The parse score, comparable to its siblings from the same input. Higher is better.
+	 * The parse score, comparable to its siblings from the same
+	 * input. Higher is better.
 	 */
 	score: number
 	/**
@@ -120,21 +128,23 @@ export interface StreetCandidate<T = unknown> {
 
 export interface PickByStreetEvidenceOpts {
 	/**
-	 * Locality/postcode scope forwarded to {@link StreetLocalityEvidence.hasStreetName} (fragments usually carry none).
+	 * Locality/postcode scope forwarded to {@link StreetLocalityEvidence.hasStreetName}
+	 * (fragments usually carry none).
 	 */
 	scope?: StreetEvidenceScope
 	/**
-	 * G2 — the margin cap. A candidate whose score is more than this far below rank-1 is never promoted by evidence
-	 * (without it, evidence reaches deep down the list and moves off correct rank-1 parses). Default 2.5 — the value the
-	 * v2 board measured (148 fixes / 3 breaks). uncalibrated across models: re-fit when the span head retrains, since raw
-	 * score margins are not comparable across models. (Plan #1134 pre-registers an isotonic ambiguity check to replace
-	 * it.)
+	 * G2 — the margin cap. A candidate whose score is more than this far below rank-1 is never promoted
+	 * by evidence (without it, evidence reaches deep down the list and moves off correct rank-1 parses).
+	 * Default 2.5 — the value the v2 board measured (148 fixes / 3 breaks). uncalibrated across models:
+	 * re-fit when the span head retrains, since raw score margins are not comparable across models.
+	 * (Plan #1134 pre-registers an isotonic ambiguity check to replace it.)
 	 */
 	marginCap?: number
 	/**
-	 * One entry per candidate, positionally aligned. A non-null entry demotes that candidate by one bit — it is
-	 * considered only after every un-excluded sibling. It is never removed: with every candidate excluded the pick is
-	 * still rank-1, because the worst case this policy accepts is the model's own ranking.
+	 * One entry per candidate, positionally aligned. A non-null entry demotes that
+	 * candidate by one bit — it is considered only after every un-excluded sibling.
+	 * It is never removed: with every candidate excluded the pick is still rank-1,
+	 * because the worst case this policy accepts is the model's own ranking.
 	 *
 	 * Omitted or all-null reproduces the measured v2 policy exactly.
 	 */
@@ -214,8 +224,8 @@ export function pickByStreetEvidence<T>(
 		}
 	}
 
-	// Fail-open: the first un-excluded candidate, which is rank-1 unless an exclusion demoted it, and rank-1 again when
-	// every candidate is excluded.
+	// Fail-open: the first un-excluded candidate, which is rank-1 unless an exclusion
+	// demoted it, and rank-1 again when every candidate is excluded.
 	const fallback = order[0] ?? 0
 
 	return { candidate: candidates[fallback]!, index: fallback, moved: fallback > 0, demoted }

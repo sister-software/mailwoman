@@ -8,23 +8,24 @@
 import { ResourceError } from "#errors/schema"
 
 /**
- * A trailing dot makes a hostname fully qualified — `www.sec.gov.` and `www.sec.gov` reach the same server, but only
- * the latter is in an allowlist, and the whatwg parser preserves the dot. Stripped before the lookup so the fqdn form
- * is admitted rather than rejected as an unknown host.
+ * A trailing dot makes a hostname fully qualified — `www.sec.gov.` and `www.sec.gov` reach the
+ * same server, but only the latter is in an allowlist, and the whatwg parser preserves the dot.
+ * Stripped before the lookup so the fqdn form is admitted rather than rejected as an unknown host.
  */
 export function canonicalHostname(url: URL): string {
 	return url.hostname.endsWith(".") ? url.hostname.slice(0, -1) : url.hostname
 }
 
 /**
- * The status a refused request reports — the request itself is malformed for this client rather than the upstream.
+ * The status a refused request reports — the request itself is malformed for
+ * this client rather than the upstream.
  */
 const HTTP_BAD_REQUEST = 400
 
 export interface AssertAllowedHostOptions {
 	/**
-	 * Exact hostnames this client may reach. Matching is a `Set` lookup, never a suffix check — `host.attacker.example`
-	 * must not match, and an `.endsWith(...)`-style test would admit it.
+	 * Exact hostnames this client may reach. Matching is a `Set` lookup, never a suffix check —
+	 * `host.attacker.example` must not match, and an `.endsWith(...)`-style test would admit it.
 	 */
 	allowed: ReadonlySet<string>
 	/**
@@ -46,10 +47,11 @@ export interface AssertAllowedHostOptions {
 }
 
 /**
- * Reject a URL a designated client must not send its identifying headers to: https only, allowlisted hosts only.
+ * Reject a URL a designated client must not send its identifying headers to:
+ * https only, allowlisted hosts only.
  *
- * @throws {ResourceError} With URN kind `request` — never transient, because re-issuing the identical URL can only fail
- *   identically.
+ * @throws {ResourceError} With URN kind `request` — never transient, because
+ *   re-issuing the identical URL can only fail identically.
  */
 export function assertAllowedHost(url: URL, options: AssertAllowedHostOptions): void {
 	if (url.protocol !== "https:") {

@@ -30,9 +30,10 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 
 /**
- * Resolution granularity, coarse → fine. A resolved node's {@link AddressNode.tag} places it on this ladder. the
- * geocode a caller serves comes from the finest resolved node. Tags absent here (unit, po_box, intersection halves, …)
- * are treated as street-tier specificity when resolved.
+ * Resolution granularity, coarse → fine. A resolved node's {@link AddressNode.tag} places
+ * it on this ladder. the geocode a caller serves comes from the finest resolved node.
+ * Tags absent here (unit, po_box, intersection halves, …) are treated as
+ * street-tier specificity when resolved.
  */
 const RESOLUTION_TIER: Partial<Record<ComponentTag, number>> = {
 	country: 0,
@@ -62,8 +63,9 @@ export interface ResolvedCoordinate {
 }
 
 /**
- * Walk a resolved {@link AddressTree} and return the finest resolved place — the node carrying a resolver-supplied
- * coordinate at the deepest granularity tier. Returns `null` when nothing resolved (no node carries a `lat`/`lon`).
+ * Walk a resolved {@link AddressTree} and return the finest resolved place —
+ * the node carrying a resolver-supplied coordinate at the deepest granularity tier.
+ * Returns `null` when nothing resolved (no node carries a `lat`/`lon`).
  * Ties break toward the first node in document order.
  */
 export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate | null {
@@ -138,11 +140,13 @@ export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, num
 }
 
 /**
- * True when the coordinate lies outside `countryCode`'s coarse bbox. Unknown country codes are fail-open (false).
+ * True when the coordinate lies outside `countryCode`'s coarse bbox.
+ * Unknown country codes are fail-open (false).
  *
- * When `bboxes` (artifact-declared boxes, {@link GazetteerArtifactCoverage.countryBBoxes}) is supplied it replaces the
- * built-in {@link COUNTRY_BBOX} table wholesale — absence from the artifact's table fails open, same semantic as an
- * absent constant key. Omitted → the constant, byte-identical to the pre-manifest behavior.
+ * When `bboxes` (artifact-declared boxes, {@link GazetteerArtifactCoverage.countryBBoxes})
+ * is supplied it replaces the built-in {@link COUNTRY_BBOX} table wholesale —
+ * absence from the artifact's table fails open, same semantic as an absent constant key.
+ * Omitted → the constant, byte-identical to the pre-manifest behavior.
  */
 export function outsideExpectedCountry(
 	countryCode: string,
@@ -173,8 +177,9 @@ export function outsideExpectedCountry(
 export interface PlausibilityVerdict {
 	implausible: boolean
 	/**
-	 * Set when `implausible` is true. `country-centroid` = resolved no finer than a country (guard A);
-	 * `outside-expected-country` = the served coordinate lies outside the expected country's bbox (guard B).
+	 * Set when `implausible` is true. `country-centroid` = resolved no finer than
+	 * a country (guard A); `outside-expected-country` = the served coordinate lies
+	 * outside the expected country's bbox (guard B).
 	 */
 	reason?: "country-centroid" | "outside-expected-country"
 	/**
@@ -185,27 +190,30 @@ export interface PlausibilityVerdict {
 
 export interface PlausibilityOpts {
 	/**
-	 * ISO-2 country the resolution is expected to land in, when the caller knows it (a locale hint, a parsed country, a
-	 * fixture's gold country). Enables guard B: a coordinate outside this country's coarse bbox is implausible — the
-	 * cross-country-jump class guard A structurally cannot catch (`1210a IA 10 W IA` → a coordinate ~10,000 km from the
-	 * US was country-centroid-free and sailed through until guard B landed here, 2026-07-17. previously the check lived
-	 * only in the receipt harness, so the shipped residual read 5/321 while the receipt said 3/321).
+	 * ISO-2 country the resolution is expected to land in, when the caller
+	 * knows it (a locale hint, a parsed country, a fixture's gold country).
+	 * Enables guard B: a coordinate outside this country's coarse bbox is
+	 * implausible — the cross-country-jump class guard A structurally cannot catch
+	 * (`1210a IA 10 W IA` → a coordinate ~10,000 km from the US was country-centroid-free
+	 * and sailed through until guard B landed here, 2026-07-17. previously the check lived only
+	 * in the receipt harness, so the shipped residual read 5/321 while the receipt said 3/321).
 	 */
 	expectedCountry?: string
 	/**
-	 * Artifact-declared guard-B boxes (the loaded gazetteer's `country_bbox` manifest, via
-	 * `resolver.artifactCoverage?.countryBBoxes`). When supplied they replace the built-in {@link COUNTRY_BBOX} table
-	 * wholesale. omitted → the constant (byte-identical fallback for artifacts predating the manifest).
+	 * Artifact-declared guard-B boxes (the loaded gazetteer's `country_bbox` manifest,
+	 * via `resolver.artifactCoverage?.countryBBoxes`). When supplied they replace
+	 * the built-in {@link COUNTRY_BBOX} table wholesale. omitted → the constant
+	 * (byte-identical fallback for artifacts predating the manifest).
 	 */
 	countryBBoxes?: ReadonlyMap<string, CountryBBoxFact>
 }
 
 /**
- * Decide whether a resolved tree's geocode is implausible for a structured address — the cheap guard the v7 hybrid
- * check runs after routing an input to the neural parser (#38). Trips when the finest resolved place is a bare
- * `country` centroid (guard A), or — when the caller supplies `expectedCountry` — when the served coordinate falls
- * outside that country's coarse bbox (guard B). An unresolved tree (nothing to serve) is plausible: there is no garbage
- * to serve.
+ * Decide whether a resolved tree's geocode is implausible for a structured address —
+ * the cheap guard the v7 hybrid check runs after routing an input to the neural parser (#38).
+ * Trips when the finest resolved place is a bare `country` centroid (guard A), or — when the caller
+ * supplies `expectedCountry` — when the served coordinate falls outside that country's coarse bbox
+ * (guard B). An unresolved tree (nothing to serve) is plausible: there is no garbage to serve.
  */
 export function isImplausibleResolution(tree: AddressTree, opts: PlausibilityOpts = {}): PlausibilityVerdict {
 	const coordinate = finestResolvedCoordinate(tree)

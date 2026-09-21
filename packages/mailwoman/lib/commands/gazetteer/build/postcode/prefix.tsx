@@ -38,14 +38,15 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import type { PostcodePrefixLevel } from "#gazetteer-pipeline/postcode/prefix"
 
 /**
- * Read-only mode bits for the finished artifact — the same seal `sealDatabase` puts on a built database. A prefix index
- * is a build output rather than a file anything edits in place.
+ * Read-only mode bits for the finished artifact — the same seal `sealDatabase` puts on a built
+ * database. A prefix index is a build output rather than a file anything edits in place.
  */
 const SEALED_MODE = 0o444
 
 /**
- * How many example prefixes a summary line names before eliding. Cosmetic — it keeps the withheld-ancestry line inside
- * one terminal row when the count runs to dozens (Code-Point Open: 41).
+ * How many example prefixes a summary line names before eliding.
+ * Cosmetic — it keeps the withheld-ancestry line inside one terminal row
+ * when the count runs to dozens (Code-Point Open: 41).
  */
 const EXAMPLES_PER_LINE = 6
 
@@ -61,14 +62,14 @@ interface DatabaseRecipe {
 	scope: string
 	level: PostcodePrefixLevel
 	/**
-	 * WOF polygon database under `<data-root>/wof/`, for a recipe whose ancestry is point-in-polygon rather than a
-	 * documented area table. Absent means the recipe does not use geometry.
+	 * WOF polygon database under `<data-root>/wof/`, for a recipe whose ancestry is point-in-polygon
+	 * rather than a documented area table. Absent means the recipe does not use geometry.
 	 */
 	polygonFile?: string
 	/**
-	 * Prefixes probed after write. Per database, never shared: probing Code-Point prefixes against a freshly built NI
-	 * index prints reassuring-looking misses that verify nothing (the lesson the pair-index command's en-nz first build
-	 * taught).
+	 * Prefixes probed after write. Per database, never shared: probing Code-Point prefixes
+	 * against a freshly built NI index prints reassuring-looking misses that verify
+	 * nothing (the lesson the pair-index command's en-nz first build taught).
 	 */
 	probePrefixes: readonly string[]
 }
@@ -94,9 +95,10 @@ const DATABASE_RECIPES = {
 		scope: "us",
 		level: "3",
 		polygonFile: "wof-polygons-us-full.db",
-		// One prefix per behaviour the arm can produce, so a probe line that goes quiet identifies the failed rule. `605` and
-		// `946` assert a state; `205` is the DC/MD/VA straddle that asserts the country alone; `995` is Alaska, whose
-		// honest radiusP95Km runs to hundreds of km and is the reason a coordinate may never ship without one.
+		// One prefix per behaviour the arm can produce, so a probe line that goes quiet
+		// identifies the failed rule. `605` and `946` assert a state; `205` is the DC/MD/VA
+		// straddle that asserts the country alone; `995` is Alaska, whose honest radiusP95Km
+		// runs to hundreds of km and is the reason a coordinate may never ship without one.
 		probePrefixes: ["605", "946", "205", "995"],
 	},
 } as const satisfies Record<string, DatabaseRecipe>
@@ -161,8 +163,8 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 
 		const outPath = options.out ?? String(dataRootPath("postcode-prefix", `postcode-prefix-${recipe.scope}-${day}.bin`))
 
-		// The database's own meta is the authority on where it came from and what it does not cover — re-deriving that prose
-		// here would let the two drift, and the database is the one that knows.
+		// The database's own meta is the authority on where it came from and what it does not cover —
+		// re-deriving that prose here would let the two drift, and the database is the one that knows.
 		const source = built.meta.source ?? "(unrecorded — the database's meta carries no `source`)"
 		const attribution = built.meta.attribution ?? "(unrecorded — the database's meta carries no `attribution`)"
 		const tier: PostcodePrefixTier = built.meta.tier === "build-local" ? "build-local" : "shipped"
@@ -208,9 +210,9 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		await movePath(tmpPath, outPath)
 		await changeMode(outPath, SEALED_MODE)
 
-		// ── Self-verifying readback: B3-1's bar, graded by re-reading the file rather than the buffer still in
-		// memory. Reading the buffer would verify the serializer against itself and prove nothing about
-		// what landed on disk — the whole point of a round-trip bar.
+		// ── Self-verifying readback: B3-1's bar, graded by re-reading the file rather than the
+		// buffer still in memory. Reading the buffer would verify the serializer against itself
+		// and prove nothing about what landed on disk — the whole point of a round-trip bar.
 		const resolver = new PostcodePrefixIndexResolver(await readLocalBuffer(outPath))
 		const readNodes = [...resolver.nodes()]
 		const readUnits = readNodes.reduce((sum, node) => sum + node.unitCount, 0)

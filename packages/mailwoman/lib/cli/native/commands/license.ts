@@ -237,8 +237,8 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 }
 
 /**
- * Why a token may not be written: this build cannot verify it, so writing it would configure a key the runtime reads as
- * unknown on every invocation. `undefined` for a token that verifies.
+ * Why a token may not be written: this build cannot verify it, so writing it would configure a key
+ * the runtime reads as unknown on every invocation. `undefined` for a token that verifies.
  */
 function refusalFor(verification: LicenseKeyVerification): string | undefined {
 	switch (verification.status) {
@@ -254,9 +254,10 @@ function refusalFor(verification: LicenseKeyVerification): string | undefined {
 }
 
 /**
- * The lid a token carries, when the self-service worker issued it. For a token this build cannot verify the payload is
- * read as written: the license's public status is the one thing worth asking about such a token, since it says whether
- * the action is an upgrade or a purchase.
+ * The lid a token carries, when the self-service worker issued it.
+ * For a token this build cannot verify the payload is read as written:
+ * the license's public status is the one thing worth asking about such a token,
+ * since it says whether the action is an upgrade or a purchase.
  */
 function licenseIDOf(verification: LicenseKeyVerification, token: string): string | undefined {
 	const payload = "payload" in verification ? verification.payload : decodeLicenseKeyPayload(token)
@@ -428,8 +429,9 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 /**
  * `license attribution` — what this installation owes upstream, read off the packages it has.
  *
- * An action on `license` rather than a command of its own, because it answers a question about the same subject and a
- * new top-level name would need a design nobody has asked for. It reads no key and changes no verification path.
+ * An action on `license` rather than a command of its own, because it answers a question
+ * about the same subject and a new top-level name would need a design nobody has asked for.
+ * It reads no key and changes no verification path.
  */
 async function attributionCommand(parsed: ParsedCommand): Promise<number> {
 	const report = await attributionReport((await readMailwomanManifest()).license)

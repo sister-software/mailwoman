@@ -24,7 +24,8 @@ export function localeToCountry(locale: string | undefined): string | undefined 
 }
 
 /**
- * The resolver country for an invocation. An explicit country outranks locale policy; `none` disables the scope.
+ * The resolver country for an invocation. An explicit country outranks locale policy;
+ * `none` disables the scope.
  */
 export function resolverDefaultCountry(
 	options: {

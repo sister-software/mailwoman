@@ -40,8 +40,9 @@ const records: SourceRecord[] = [
 
 describe("resolveEntities", () => {
 	it("merges the same-place duplicates and keeps the distinct record separate", () => {
-		// learnedScorer:false — this asserts the FS-baseline merge behaviour. The NPPES-trained GBT (now the
-		// default) is validated on real data + the #603 tests below rather than on these 3 synthetic records.
+		// learnedScorer:false — this asserts the FS-baseline merge behaviour.
+		// The NPPES-trained GBT (now the default) is validated on real data + the #603
+		// tests below rather than on these 3 synthetic records.
 		const { entities, candidatePairs } = resolveEntities(records, { learnedScorer: false })
 
 		expect(candidatePairs).toBeGreaterThanOrEqual(1)
@@ -78,17 +79,19 @@ describe("resolveEntities", () => {
 		expect(none.entities).toHaveLength(records.length)
 		expect(none.entities.every((e) => e.records.length === 1)).toBe(true)
 
-		// A scorer that accepts every blocked pair → the blocked duplicates (1,2) merge on the learned
-		// weight rather than the FS weight. the far-away record (3) is never blocked with them, so it stays apart.
+		// A scorer that accepts every blocked pair → the blocked duplicates (1,2)
+		// merge on the learned weight rather than the FS weight. the far-away record
+		// (3) is never blocked with them, so it stays apart.
 		const merged = resolveEntities(records, { scorer: () => 100, threshold: 1 })
 		const big = merged.entities.find((e) => e.records.length > 1)
 		expect(big?.records.map((r) => r.id).toSorted()).toEqual(["1", "2"])
 	})
 
 	it("learnedScorer: true loads the bundled GBT model and resolves end-to-end (#603)", () => {
-		// The opt-in bundled model loads + scores every blocked pair without throwing. the result is a
-		// sane entity set (between fully-merged and fully-split). Behaviour on these synthetic records is
-		// the model's call — this guards the wiring (load → featurize → gbtScore → cluster), not a number.
+		// The opt-in bundled model loads + scores every blocked pair without throwing.
+		// the result is a sane entity set (between fully-merged and fully-split).
+		// Behaviour on these synthetic records is the model's call — this guards the
+		// wiring (load → featurize → gbtScore → cluster), not a number.
 		const { entities } = resolveEntities(records, { learnedScorer: true })
 		expect(entities.length).toBeGreaterThanOrEqual(1)
 		expect(entities.length).toBeLessThanOrEqual(records.length)
@@ -99,8 +102,8 @@ describe("resolveEntities", () => {
 	})
 
 	it("an explicit scorer takes precedence over learnedScorer (#603)", () => {
-		// Both set → the explicit scorer wins. It rejects every pair, so nothing merges even though the
-		// bundled learned model is also requested.
+		// Both set → the explicit scorer wins. It rejects every pair, so nothing merges even
+		// though the bundled learned model is also requested.
 		const { entities } = resolveEntities(records, {
 			learnedScorer: true,
 			scorer: () => Number.NEGATIVE_INFINITY,
@@ -224,7 +227,8 @@ describe("exactDiscriminators — code-SET overlap (#625 A5)", () => {
 			attributes: { taxonomy: "207R00000X 208D00000X" },
 		}
 
-		const b: SourceRecord = { ...coLocated("2", "Acme", "Health"), attributes: { taxonomy: "208D00000X" } } // shared 208D
+		// shared 208D
+		const b: SourceRecord = { ...coLocated("2", "Acme", "Health"), attributes: { taxonomy: "208D00000X" } }
 		const c: SourceRecord = { ...coLocated("3", "Acme", "Health"), attributes: { taxonomy: "207Q00000X" } } // disjoint
 		const shared = resolveEntities([a, b], { threshold: -100, exactDiscriminators: ["taxonomy"] })
 		expect(shared.entities).toHaveLength(1)

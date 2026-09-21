@@ -64,15 +64,15 @@ export interface WOFCandidateTableLookupOpts {
 	database?: DatabaseClient<CandidateDatabase>
 	/**
 	 * #1882 opt-in: exempt `name_role = 'variant'` aliases — the holder's own primary name in another orthography,
-	 * stamped by the build's own-name detector — from the cross-country primary-preference penalty. No-ops on an artifact
-	 * without the role column. Off by default (D-rule).
+	 * stamped by the build's own-name detector — from the cross-country primary-preference penalty.
+	 * No-ops on an artifact without the role column. Off by default (D-rule).
 	 */
 	variantAliasExemption?: boolean
 }
 
 /**
- * The candidate columns this lookup probes — a typed projection of the shared {@link CandidateTable}, so a column rename
- * in `build-candidate` (the writer) is a compile error here (the reader).
+ * The candidate columns this lookup probes — a typed projection of the shared {@link CandidateTable},
+ * so a column rename in `build-candidate` (the writer) is a compile error here (the reader).
  */
 type CandidateRow = Pick<
 	CandidateTable,
@@ -98,20 +98,22 @@ type CandidateRow = Pick<
 	Partial<Pick<CandidateTable, "importance">>
 
 /**
- * FTS5-trigram over-fetch before the word-level re-rank. The trigram index stays the candidate generator (it is what
- * the artifact carries); the scoring moved off trigram-Jaccard on 2026-08-12 (#1614), which the aucklnad receipts
- * falsified as a typo measure: it scored the true transposition correction 'auckland' at 0.333 — below its own 0.34 bar
- * — while 'auckley' scored 0.375 and the 'gore bay' scrape 0.455, because shared generic suffixes count as trigram
- * evidence and transpositions count against it.
+ * FTS5-trigram over-fetch before the word-level re-rank.
+ * The trigram index stays the candidate generator (it is what the artifact carries);
+ * the scoring moved off trigram-Jaccard on 2026-08-12 (#1614), which the aucklnad receipts
+ * falsified as a typo measure: it scored the true transposition correction 'auckland' at 0.333 —
+ * below its own 0.34 bar — while 'auckley' scored 0.375 and the 'gore bay' scrape 0.455,
+ * because shared generic suffixes count as trigram evidence and transpositions count against it.
  */
 const FUZZY_FETCH = 40
 
 /**
- * Minimum word-level similarity (max of Jaro-Winkler and normalized edit similarity — the `match/comparators`
- * primitives, deliberately without `nameSimilarity`'s token-subset floor, which is a person-name rule that would hand
- * 'stanmore bay' to a place named 'Bay') for a fuzzy correction to count. Measured on the #1614 receipts:
- * 'aucklnad'→'auckland' 0.975 (in), →'auckley' 0.868 (in, but outranked), 'stanmore bay'→'gore bay' ~0.70 (out),
- * 'sacremento'→'sacramento' ~0.97 (in).
+ * Minimum word-level similarity (max of Jaro-Winkler and normalized edit similarity —
+ * the `match/comparators` primitives, deliberately without `nameSimilarity`'s token-subset
+ * floor, which is a person-name rule that would hand 'stanmore bay' to a place named 'Bay')
+ * for a fuzzy correction to count. Measured on the #1614 receipts: 'aucklnad'→'auckland'
+ * 0.975 (in), →'auckley' 0.868 (in, but outranked), 'stanmore bay'→'gore bay'
+ * ~0.70 (out), 'sacremento'→'sacramento' ~0.97 (in).
  */
 const WORD_FUZZY_MIN = 0.85
 
@@ -123,17 +125,17 @@ function wordFuzzySimilarity(a: string, b: string): number {
 }
 
 /**
- * Postcode-containment re-rank check radius (km) — the same value the resolver's country pass measures at
- * (`POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM`, resolver/postcode-country-coherence.ts): a locality within this distance
- * of the postcode's own centroid counts as "containing" it. One number, two passes — a divergence here would make the
- * two mechanisms disagree about what is proximal.
+ * Postcode-containment re-rank check radius (km) — the same value the resolver's country pass
+ * measures at (`POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM`, resolver/postcode-country-coherence.ts):
+ * a locality within this distance of the postcode's own centroid counts as "containing" it.
+ * One number, two passes — a divergence here would make the two mechanisms disagree about what is proximal.
  */
 const POSTCODE_CONTAINMENT_THRESHOLD_KM = 25
 
 /**
- * Unpadded character-trigrams of `s`, or'd into an FTS5 trigram `match` query (each quoted so FTS treats it as a
- * literal term). Returns "" when `s` is shorter than a trigram or yields no clean grams — the caller then skips the
- * fuzzy probe.
+ * Unpadded character-trigrams of `s`, or'd into an FTS5 trigram `match` query
+ * (each quoted so FTS treats it as a literal term). Returns "" when `s` is shorter than
+ * a trigram or yields no clean grams — the caller then skips the fuzzy probe.
  */
 function ftsTrigramQuery(s: string): string {
 	const grams = new Set<string>()
@@ -150,14 +152,14 @@ function ftsTrigramQuery(s: string): string {
 }
 
 /**
- * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WOFSQLitePlaceLookup} in `createWOFResolver(backend)`
- * — same `findPlace` interface, population-first ranking.
+ * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WOFSQLitePlaceLookup}
+ * in `createWOFResolver(backend)` — same `findPlace` interface, population-first ranking.
  */
 export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	#db: DatabaseClient<CandidateDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
+	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 	readonly #countryToID = new Map<string, number>()
@@ -170,16 +172,18 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 */
 	readonly #postalCityProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
-	 * Prepared FTS5-trigram `match` probe for the typo-tolerant fallback — `undefined` when the `candidate_fts` index
-	 * isn't present, so a candidate.db built without it is byte-stable (the fuzzy path is skipped, exactly like today).
+	 * Prepared FTS5-trigram `match` probe for the typo-tolerant fallback — `undefined`
+	 * when the `candidate_fts` index isn't present, so a candidate.db built without it
+	 * is byte-stable (the fuzzy path is skipped, exactly like today).
 	 */
 	readonly #ftsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
-	 * Prepared unfiltered existence probe (`name_key` present anywhere, ignoring country/placetype/bbox). Checks the
-	 * fuzzy fallback: fuzzy is a typo corrector, so it engages only when the name doesn't exist in the gazetteer at all.
-	 * A name that does exist but missed under the active filter is a filter miss (e.g. a placer misroute "Vienna,
-	 * Austria"→IT) rather than a spelling miss — fuzzing it would scrape an unrelated same-country place and defeat the
-	 * cascade's country-agnostic retry. Prepared only alongside `#ftsProbe`.
+	 * Prepared unfiltered existence probe (`name_key` present anywhere, ignoring country/placetype/bbox).
+	 * Checks the fuzzy fallback: fuzzy is a typo corrector, so it engages only when the
+	 * name doesn't exist in the gazetteer at all. A name that does exist but missed under
+	 * the active filter is a filter miss (e.g. a placer misroute "Vienna, Austria"→IT)
+	 * rather than a spelling miss — fuzzing it would scrape an unrelated same-country place
+	 * and defeat the cascade's country-agnostic retry. Prepared only alongside `#ftsProbe`.
 	 */
 	readonly #nameKeyExistsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
@@ -189,21 +193,22 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 */
 	readonly artifactCoverage: GazetteerArtifactCoverage | undefined
 	/**
-	 * `", importance"` when this artifact carries the #28 fame column, `""` when it does not — spliced into the probe's
-	 * select list. Existence-restricted exactly like `#ftsProbe` and `#postalCityProbe` above, and for the same reason: a
-	 * candidate.db built before the column is a valid artifact, and naming a column it lacks would turn a stale gazetteer
-	 * into `no such column` on the first keystroke rather than into "no fame signal", which is what it is.
+	 * `", importance"` when this artifact carries the #28 fame column, `""` when it does not —
+	 * spliced into the probe's select list. Existence-restricted exactly like `#ftsProbe`
+	 * and `#postalCityProbe` above, and for the same reason: a candidate.db built before the
+	 * column is a valid artifact, and naming a column it lacks would turn a stale gazetteer into
+	 * `no such column` on the first keystroke rather than into "no fame signal", which is what it is.
 	 */
 	readonly #importanceSelect: string
 	/**
-	 * Whether the artifact carries the #1730 `name_role` column — absent on pre-role builds, where the `excludeNameRoles`
-	 * filter degrades to a no-op rather than erroring on a missing column.
+	 * Whether the artifact carries the #1730 `name_role` column — absent on pre-role builds,
+	 * where the `excludeNameRoles` filter degrades to a no-op rather than erroring on a missing column.
 	 */
 	readonly #hasNameRole: boolean
 	readonly #variantAliasExemption: boolean
 	/**
-	 * `", name_role"` when the artifact carries the column — the probe select rides it so the #1882 exemption can read
-	 * the stamp off the row. empty on a pre-role build.
+	 * `", name_role"` when the artifact carries the column — the probe select rides it
+	 * so the #1882 exemption can read the stamp off the row. empty on a pre-role build.
 	 */
 	readonly #roleSelect: string
 	/**
@@ -212,29 +217,33 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	readonly #ancestorsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	readonly #ancestorsCache = new Map<number, Ancestor[]>()
 	/**
-	 * Prepared interval-label probe over `candidate_interval` — `undefined` when the artifact predates the sidecar, which
-	 * is what makes the admin-containment re-rank (#1717 stage 2) capability-restricted: without it,
-	 * `FindPlaceQuery.regionQualifier` is ignored, no candidate carries a `containedByQualifier` stamp, and the resolver
+	 * Prepared interval-label probe over `candidate_interval` — `undefined` when the
+	 * artifact predates the sidecar, which is what makes the admin-containment re-rank
+	 * (#1717 stage 2) capability-restricted: without it, `FindPlaceQuery.regionQualifier`
+	 * is ignored, no candidate carries a `containedByQualifier` stamp, and the resolver
 	 * walk reports the change `unavailable` instead of silently dead.
 	 */
 	readonly #intervalProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	readonly #intervalCache = new Map<number, IntervalLabel | null>()
 	/**
-	 * Prepared qualifier probe: the region-band rows (plus `country` — the region slot can hold a mislabeled country
-	 * name, "Moscow, Russia" parses region="Russia") for one folded qualifier key. `undefined` when the artifact lacks
-	 * the sidecar or the placetype dictionary lacks the band entirely.
+	 * Prepared qualifier probe: the region-band rows (plus `country` — the region slot
+	 * can hold a mislabeled country name, "Moscow, Russia" parses region="Russia")
+	 * for one folded qualifier key. `undefined` when the artifact lacks the sidecar
+	 * or the placetype dictionary lacks the band entirely.
 	 */
 	readonly #qualifierProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
-	 * The ancestor lineage of a resolved place — nearest-first (locality-tier → county → region → … → country), the same
-	 * order the FTS backend's `ancestorLineage` serves, read from the `candidate_ancestor` sidecar in one clustered
-	 * probe. Backs `ResolveOpts.includeAncestors` (#404) on this backend, which is what puts region-class ancestry in
-	 * front of the admin-coherence check (#1717).
+	 * The ancestor lineage of a resolved place — nearest-first
+	 * (locality-tier → county → region → … → country), the same order the FTS backend's
+	 * `ancestorLineage` serves, read from the `candidate_ancestor` sidecar in one clustered probe.
+	 * Backs `ResolveOpts.includeAncestors` (#404) on this backend, which is what puts
+	 * region-class ancestry in front of the admin-coherence check (#1717).
 	 *
-	 * A property rather than a method, and assigned only when the artifact carries the sidecar: capability probes
-	 * (`typeof backend.ancestors === "function"` — the resolver's gap report) then read the artifact truthfully. A
-	 * candidate.db built before the sidecar reports the capability absent instead of presenting a method that answers
-	 * `[]` for every place, which would be an absence dressed as a negative answer.
+	 * A property rather than a method, and assigned only when the artifact carries the sidecar:
+	 * capability probes (`typeof backend.ancestors === "function"` — the resolver's gap report)
+	 * then read the artifact truthfully. A candidate.db built before the sidecar reports the
+	 * capability absent instead of presenting a method that answers `[]` for every place,
+	 * which would be an absence dressed as a negative answer.
 	 */
 	readonly ancestors: ((id: number | string) => Ancestor[]) | undefined
 
@@ -247,8 +256,8 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			throw new Error("WOFCandidateTableLookup needs `databasePath` or `database`")
 		}
 
-		// The code tables are tiny (country/placetype dictionaries) — load them once at construction so
-		// `findPlace` is a single B-tree probe with no dictionary round-trip.
+		// The code tables are tiny (country/placetype dictionaries) — load them once at construction
+		// so `findPlace` is a single B-tree probe with no dictionary round-trip.
 		for (const r of allRows<CountryCodeTable>(this.#db.prepare("SELECT id, code FROM country_codes"))) {
 			const code = String(r.code).toUpperCase()
 			this.#countryToID.set(code, Number(r.id))
@@ -284,9 +293,9 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		this.#variantAliasExemption = opts.variantAliasExemption === true
 		this.#roleSelect = this.#hasNameRole ? ", name_role" : ""
 
-		// Ancestors sidecar (#1717): existence-restricted like the probes above, and the capability checks with
-		// it — see the `ancestors` property doc for why an older artifact must read as "no ancestors()"
-		// rather than as a method that answers [] everywhere.
+		// Ancestors sidecar (#1717): existence-restricted like the probes above, and the
+		// capability checks with it — see the `ancestors` property doc for why an older artifact
+		// must read as "no ancestors()" rather than as a method that answers [] everywhere.
 		if (hasTable(this.#db, CANDIDATE_ANCESTOR_TABLE)) {
 			this.#ancestorsProbe = this.#db.prepare(
 				`SELECT parent_spr_id, parent_placetype_id, parent_name FROM ${CANDIDATE_ANCESTOR_TABLE}` +
@@ -296,9 +305,9 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			this.ancestors = (id) => this.#ancestorLineage(id)
 		}
 
-		// Admin-containment re-rank (#1717 stage 2): conditioned on the interval half of the sidecar (built in
-		// the same pass as the closure rows. probed separately so a hand-degraded artifact degrades
-		// truthfully) and on the placetype dictionary carrying the qualifier band at all.
+		// Admin-containment re-rank (#1717 stage 2): conditioned on the interval half of the sidecar
+		// (built in the same pass as the closure rows. probed separately so a hand-degraded artifact
+		// degrades truthfully) and on the placetype dictionary carrying the qualifier band at all.
 		if (this.#ancestorsProbe && hasTable(this.#db, CANDIDATE_INTERVAL_TABLE)) {
 			this.#intervalProbe = this.#db.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`)
 
@@ -320,9 +329,10 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	}
 
 	/**
-	 * The memoized chain read behind {@link ancestors}. Sync raw `.prepare()` on purpose — the backend interface's
-	 * `ancestors()` is synchronous (the sync-by-interface resolver-reader rule), and the sidecar row already carries the
-	 * parent's name and placetype, so this is one clustered probe with no join.
+	 * The memoized chain read behind {@link ancestors}. Sync raw `.prepare()` on purpose —
+	 * the backend interface's `ancestors()` is synchronous (the sync-by-interface resolver-reader rule),
+	 * and the sidecar row already carries the parent's name and placetype,
+	 * so this is one clustered probe with no join.
 	 */
 	#ancestorLineage(id: number | string): Ancestor[] {
 		const pid = typeof id === "number" ? id : Number(id)
@@ -350,8 +360,8 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	}
 
 	/**
-	 * The interval label for one place, memoized. `null` is a real answer — the place has no recorded ancestry in the
-	 * source (absence semantics: unverifiable, never a containment verdict) — and is cached as such.
+	 * The interval label for one place, memoized. `null` is a real answer — the place has no recorded ancestry
+	 * in the source (absence semantics: unverifiable, never a containment verdict) — and is cached as such.
 	 */
 	#intervalLabel(sprID: number): IntervalLabel | null {
 		if (!this.#intervalProbe) return null
@@ -369,11 +379,13 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	}
 
 	/**
-	 * The qualifier's own rows in the candidate table: every region-band (+ country) place whose `name_key` matches one
-	 * of the qualifier's {@link regionQualifierProbeKeys} expansions. Alias keys participate — `Thüringen` finds the row
-	 * stored as `Thuringia` through the artifact's own alias keying, which is precisely the variant-form bridge the
-	 * admin-coherence verdicts' fold-equality bound cannot offer (its stated v1 bound). Empty = the qualifier names
-	 * nothing the artifact knows. the caller then stamps `false` everywhere and reorders nothing.
+	 * The qualifier's own rows in the candidate table: every region-band (+ country) place whose
+	 * `name_key` matches one of the qualifier's {@link regionQualifierProbeKeys} expansions.
+	 * Alias keys participate — `Thüringen` finds the row stored as `Thuringia` through
+	 * the artifact's own alias keying, which is precisely the variant-form bridge the
+	 * admin-coherence verdicts' fold-equality bound cannot offer (its stated v1 bound).
+	 * Empty = the qualifier names nothing the artifact knows. the caller
+	 * then stamps `false` everywhere and reorders nothing.
 	 */
 	#qualifierRegionIDs(qualifier: string, country: string | undefined): Set<number> {
 		const ids = new Set<number>()
@@ -392,10 +404,12 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	}
 
 	/**
-	 * Is `sprID` contained by any of the qualifier's rows? Interval first — {@link intervalContains}, O(1), reflexive —
-	 * then the closure rows where intervals abstain: the interval forest encodes only the canonical parent per place, so
-	 * a `false` there means "not contained along the canonical hierarchy", and the chain probe (one clustered read of
-	 * ≤{@link MAX_ANCESTOR_DEPTH} rows) is the complete record that determines the result.
+	 * Is `sprID` contained by any of the qualifier's rows?
+	 * Interval first — {@link intervalContains}, O(1), reflexive — then the closure rows
+	 * where intervals abstain: the interval forest encodes only the canonical parent per
+	 * place, so a `false` there means "not contained along the canonical hierarchy",
+	 * and the chain probe (one clustered read of ≤{@link MAX_ANCESTOR_DEPTH} rows)
+	 * is the complete record that determines the result.
 	 */
 	#containedByQualifier(sprID: number, qualifierIDs: ReadonlySet<number>, qualifierLabels: IntervalLabel[]): boolean {
 		if (qualifierIDs.has(sprID)) return true
@@ -408,23 +422,28 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	}
 
 	/**
-	 * The #1717 stage-2 re-rank over one lookup's final row set. Three steps, each additive:
+	 * The #1717 stage-2 re-rank over one lookup's final row set.
+	 * Three steps, each additive:
 	 *
-	 * 1. Resolve the qualifier to its region-band rows ({@link #qualifierRegionIDs}) and stamp every existing row's
-	 *    `containedByQualifier` — the stamp is the trace surface, written even when nothing reorders.
-	 * 2. Inject contained same-key candidates the country scope hid: the deciding-site measurement (2026-08-18, the #1729
-	 *    lesson re-confirmed) showed `Weimar, Thüringen` under the en-US locale probes `country_id = US`, so the DE row
-	 *    is not IN the list and no reorder of the list can reach it. The injection probe runs the same exact fold (and,
-	 *    on a contained-miss, the qualifier-strip variant restricted to primary keys — the #1626 alias-scrape guard)
-	 *    under the shape conds only, appends contained rows not already present, and never removes anything — recall can
-	 *    only widen. The typo-fuzzy tier is deliberately not probed: a qualifier cannot vouch for a name the gazetteer
-	 *    does not carry.
-	 * 3. Partition contained-first — the shared {@link partitionByContainment} (tier-safe, stable. the resolver walk runs
-	 *    the same function after its fame re-rank, one function at both deciding sites per the #861 rule) — then
-	 *    re-window to `limit`.
+	 * 1. Resolve the qualifier to its region-band rows ({@link #qualifierRegionIDs})
+	 *    and stamp every existing row's `containedByQualifier` — the stamp is the
+	 *    trace surface, written even when nothing reorders.
+	 * 2. Inject contained same-key candidates the country scope hid: the deciding-site
+	 *    measurement (2026-08-18, the #1729 lesson re-confirmed) showed `Weimar, Thüringen`
+	 *    under the en-US locale probes `country_id = US`, so the DE row is not IN the list
+	 *    and no reorder of the list can reach it. The injection probe runs the same exact fold
+	 *    (and, on a contained-miss, the qualifier-strip variant restricted to primary keys —
+	 *    the #1626 alias-scrape guard) under the shape conds only, appends contained
+	 *    rows not already present, and never removes anything — recall can only widen.
+	 *    The typo-fuzzy tier is deliberately not probed: a qualifier cannot vouch
+	 *    for a name the gazetteer does not carry.
+	 * 3. Partition contained-first — the shared {@link partitionByContainment}
+	 *    (tier-safe, stable. the resolver walk runs the same function after its fame re-rank,
+	 *    one function at both deciding sites per the #861 rule) — then re-window to `limit`.
 	 *
-	 * A qualifier that matches nothing stamps `false` everywhere and reorders nothing — byte-identical answers, and the
-	 * walk's verdict reads `no_contained_candidate` rather than `unavailable` (the question was asked).
+	 * A qualifier that matches nothing stamps `false` everywhere and reorders nothing —
+	 * byte-identical answers, and the walk's verdict reads `no_contained_candidate`
+	 * rather than `unavailable` (the question was asked).
 	 */
 	#applyAdminContainment(
 		rows: Array<RankedRow<CandidateRow>>,
@@ -487,15 +506,16 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		injectFrom(opts.nameKey, false)
 
 		// #1731: the dependent-locality band. A locality query's filter group (locality/borough/localadmin)
-		// cannot reach a neighbourhood-tier namesake, so a contained one is structurally invisible no matter
-		// how the list reorders — the Astoria class: Queens' Astoria is a WOF neighbourhood, and the walk
-		// answered the Oregon locality under `qualifier="NY"` because nothing in the pool sat under NY. The
-		// widening is injection-only and triple-conditioned: the band is explicit (neighbourhood/macrohood/microhood
-		// — never region or country tiers), admission still requires the sidecar's containment proof, and only
-		// primary-keyed rows enter (an alias-keyed neighbourhood is the #1626 scrape class). Recall can only
-		// widen, and only toward rows the qualifier vouches for. `opts.shapeFilters`' bbox clause is
-		// deliberately not carried: containment is the stronger constraint, and the two co-occurring is not a
-		// measured shape.
+		// cannot reach a neighbourhood-tier namesake, so a contained one is structurally invisible no
+		// matter how the list reorders — the Astoria class: Queens' Astoria is a WOF neighbourhood,
+		// and the walk answered the Oregon locality under `qualifier="NY"` because nothing
+		// in the pool sat under NY. The widening is injection-only and triple-conditioned:
+		// the band is explicit (neighbourhood/macrohood/microhood — never region or country tiers),
+		// admission still requires the sidecar's containment proof, and only primary-keyed
+		// rows enter (an alias-keyed neighbourhood is the #1626 scrape class).
+		// Recall can only widen, and only toward rows the qualifier vouches for.
+		// `opts.shapeFilters`' bbox clause is deliberately not carried: containment is the
+		// stronger constraint, and the two co-occurring is not a measured shape.
 		const bandIDs = ["neighbourhood", "macrohood", "microhood"]
 			.map((placetype) => this.#placetypeToID.get(placetype))
 			.filter((id): id is number => id !== undefined)
@@ -518,8 +538,8 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			}
 		}
 
-		// The strip variant mirrors the cascade's discipline: tried only when the exact fold vouched for
-		// nothing, and primary-keyed only (a stripped surface never named an alias — #1626).
+		// The strip variant mirrors the cascade's discipline: tried only when the exact fold vouched
+		// for nothing, and primary-keyed only (a stripped surface never named an alias — #1626).
 		if (
 			!injected.length &&
 			!rows.some((row) => row.containedByQualifier) &&
@@ -549,11 +569,12 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	}
 
 	/**
-	 * The postcode-containment anchor: the postcode's own centroid row in the candidate table, keyed whitespace-stripped
-	 * (#920 — the same fold the build applies to postcode rows), country-scoped when the query is, first
-	 * coordinate-containing row wins. null when the candidate table carries no such postcode — the re-rank then abstains,
-	 * because a recall gap is not evidence for the name match. Meaning-of-zero: a 0,0 row is the build's unlocated
-	 * sentinel, never a real centroid.
+	 * The postcode-containment anchor: the postcode's own centroid row in the candidate table,
+	 * keyed whitespace-stripped (#920 — the same fold the build applies to postcode rows),
+	 * country-scoped when the query is, first coordinate-containing row wins. null
+	 * when the candidate table carries no such postcode — the re-rank
+	 * then abstains, because a recall gap is not evidence for the name match.
+	 * Meaning-of-zero: a 0,0 row is the build's unlocated sentinel, never a real centroid.
 	 */
 	#postcodeAnchor(postcode: string, country?: string): { lat: number; lon: number } | null {
 		const placetypeID = this.#placetypeToID.get("postalcode")
@@ -599,11 +620,12 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		if (!nameKey) return []
 
 		// #741: postcode-keyed postal-city alias. An exact `(name_key, postcode)` hit resolves a
-		// user-typed postal city ("Antioch", 37013) to the geographic locality the postcode sits in
-		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Conditioned on
-		// the side-index being present, a postcode in the query, and a locality-tier request — so the
-		// common (no-postcode / non-locality) path is untouched. A hit short-circuits: the postcode is
-		// an exact, high-confidence disambiguator, so we return the single geographic locality.
+		// user-typed postal city ("Antioch", 37013) to the geographic locality the postcode sits
+		// in ("Nashville"), bypassing the population/region ranking that can't see the postcode.
+		// Conditioned on the side-index being present, a postcode in the query, and a
+		// locality-tier request — so the common (no-postcode / non-locality) path is untouched.
+		// A hit short-circuits: the postcode is an exact, high-confidence disambiguator,
+		// so we return the single geographic locality.
 		if (query.postcode && this.#postalCityProbe && this.#wantsLocality(query.placetype)) {
 			const hit = this.#postalCityProbe.get(nameKey, query.postcode.trim()) as
 				| Pick<PostalCityCandidateTable, "spr_id" | "name" | "latitude" | "longitude">
@@ -627,8 +649,8 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 
 		const limit = Math.max(1, query.limit ?? 10)
 
-		// Filter conds shared by the exact-key + strip-fallback probes (everything but name_key). The
-		// shape subset (placetype/bbox/primary — everything but the country scope) is kept separately
+		// Filter conds shared by the exact-key + strip-fallback probes (everything but name_key).
+		// The shape subset (placetype/bbox/primary — everything but the country scope) is kept separately
 		// because the admin-containment injection probe (#1717 stage 2) runs under the shape conds
 		// without the country: bypassing a locale-inferred country scope for a qualifier-vouched
 		// candidate is the change's whole point and the one filter injection may cross.
@@ -646,8 +668,8 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		}
 
 		if (query.placetype) {
-			// Shared placetype-equivalence expansion (a `locality` query must also reach borough /
-			// localadmin). `postalcode` maps to no admin placetype here → empty → no rows.
+			// Shared placetype-equivalence expansion (a `locality` query must also reach borough / localadmin).
+			// `postalcode` maps to no admin placetype here → empty → no rows.
 			const want = Array.isArray(query.placetype) ? query.placetype : [query.placetype]
 
 			const ids = expandPlacetypeFilter(want as readonly string[])
@@ -665,18 +687,19 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			shapeParams.push(b.minLat, b.maxLat, b.minLon, b.maxLon)
 		}
 
-		// The re-reading guard (#1632, the #1626 rationale generalized to the caller): a probe whose surface
-		// is a token taken out of a longer classified span never named an alias, so alias-keyed rows must not
-		// answer it — 'Savile Row''s token 'Row' resolved Rhu, Scotland (585 km) through the village's
-		// historical-name alias key. Whole-input bare probes never set this, keeping the exonym recall the
+		// The re-reading guard (#1632, the #1626 rationale generalized to the caller):
+		// a probe whose surface is a token taken out of a longer classified span never named
+		// an alias, so alias-keyed rows must not answer it — 'Savile Row''s token 'Row'
+		// resolved Rhu, Scotland (585 km) through the village's historical-name alias key.
+		// Whole-input bare probes never set this, keeping the exonym recall the
 		// #1546 note guards (Москва's alias rows answer 'Moscow').
 		if (query.primaryOnly) {
 			shapeFilters.push("is_primary = 1")
 		}
 
-		// The role guard (#1730): a probe may refuse abbreviation/gloss alias rows while keeping the
-		// role-NULL exonym tier open — the distinction `primaryOnly` cannot express. Degrades to a no-op
-		// on an artifact without the column.
+		// The role guard (#1730): a probe may refuse abbreviation/gloss alias rows while keeping
+		// the role-NULL exonym tier open — the distinction `primaryOnly` cannot express.
+		// Degrades to a no-op on an artifact without the column.
 		if (query.excludeNameRoles?.length && this.#hasNameRole) {
 			shapeFilters.push(`(name_role IS NULL OR name_role NOT IN (${query.excludeNameRoles.map(() => "?").join(",")}))`)
 			shapeParams.push(...query.excludeNameRoles)
@@ -711,18 +734,20 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 				params.push(countryID)
 			}
 
-			// Fetch population-ordered (the clustered-key order — a cheap ordered scan), over-fetching to
-			// RERANK_FETCH so the bounded cross-country primary-preference re-rank (below) can promote the
-			// intended primary even when a cluster of more-populous foreign aliases sits ahead of it. `is_primary`
+			// Fetch population-ordered (the clustered-key order — a cheap ordered scan),
+			// over-fetching to RERANK_FETCH so the bounded cross-country primary-preference
+			// re-rank (below) can promote the intended primary even when a cluster of
+			// more-populous foreign aliases sits ahead of it. `is_primary`
 			// + `country_id` feed that re-rank. A single-country probe (a country filter, or all rows same
 			// country) re-ranks to the identical population order, so the common path is untouched.
-			// `population` rides along for the referential score on the result (ROAD_TO_V9 §2) — one more
-			// column off a clustered row the probe already reads, and it is not what the probe orders by:
-			// `neg_rank` remains the sort key, so this changes no ordering, only what the result reports.
-			// `importance` (#28) rides along on the same terms, and there is deliberately no `order BY` on it:
-			// the fame prior is applied by the resolver (`resolver/toponym-prior.ts`), which alone knows
-			// whether the query was bare enough to deserve it. A backend that pre-sorted by fame would apply
-			// it to every lookup, including the qualified addresses the D-rule guard exists to guard.
+			// `population` rides along for the referential score on the result (ROAD_TO_V9 §2) —
+			// one more column off a clustered row the probe already reads, and it is not what
+			// the probe orders by: `neg_rank` remains the sort key, so this changes no ordering,
+			// only what the result reports. `importance` (#28) rides along on the same terms,
+			// and there is deliberately no `order BY` on it: the fame prior is applied by the
+			// resolver (`resolver/toponym-prior.ts`), which alone knows whether the query was bare
+			// enough to deserve it. A backend that pre-sorted by fame would apply it to every lookup,
+			// including the qualified addresses the D-rule guard exists to guard.
 			const sql =
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
 				`${this.#importanceSelect}${this.#roleSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
@@ -732,46 +757,50 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype, this.#variantAliasExemption)
 		}
 
-		// The exact → qualifier-strip → typo-fuzzy probe cascade, run at a fixed region scope. Region scoping
-		// only tightens an already-population-first pick, so a region miss re-runs the whole cascade unscoped
-		// (below) rather than dropping a place that has no in-region row.
+		// The exact → qualifier-strip → typo-fuzzy probe cascade, run at a fixed region scope.
+		// Region scoping only tightens an already-population-first pick, so a region miss re-runs
+		// the whole cascade unscoped (below) rather than dropping a place that has no in-region row.
 		const cascade = (regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
 			let rows = probe(nameKey, regionID)
 
 			if (!rows.length) {
-				// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
-				// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD"). Tried only on an exact
-				// miss. the cascade's region bbox disambiguates any base-name ambiguity.
+				// Query-side qualifier-strip fallback: an OA locality with a qualifier the
+				// gazetteer's canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD").
+				// Tried only on an exact miss. the cascade's region bbox disambiguates any base-name ambiguity.
 				const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
 				if (strippedKey && strippedKey !== nameKey) {
 					// #1626: a stripped probe may answer only through a NON-primary alias key, which is a
-					// scrape rather than a qualifier match — 'Savile Row' stripped to 'row' resolved Rhu, Scotland
-					// (585 km) through the village's historical-name alias. The legitimate qualifier class
-					// matches the place's own primary key ('Lenk im Simmental' → the Lenk row keyed 'lenk',
+					// scrape rather than a qualifier match — 'Savile Row' stripped to 'row'
+					// resolved Rhu, Scotland (585 km) through the village's historical-name alias.
+					// The legitimate qualifier class matches the place's own primary key
+					// ('Lenk im Simmental' → the Lenk row keyed 'lenk',
 					// is_primary=1), so refusing alias-keyed rows keeps every intended case and kills the
-					// scrape. The alias tier remains fully available to exact queries — only the stripped
-					// retry loses it, because the query's own surface never named the alias.
+					// scrape. The alias tier remains fully available to exact queries — only the
+					// stripped retry loses it, because the query's own surface never named the alias.
 					rows = probe(strippedKey, regionID).filter((r) => r.is_primary === 1)
 				}
 			}
 
-			// Typo-tolerant fallback (the unified gazetteer's fuzzy mode): an exact + strip miss may be a
-			// misspelling the normalized key can't reach. FTS5-trigram fetches a loose set. we re-rank by
-			// trigram-Jaccard (the admin backend's measure) and probe the best name_keys, so a typo resolves
-			// the same on either backend. The country/placetype/bbox/region filters still apply via `probe`.
+			// Typo-tolerant fallback (the unified gazetteer's fuzzy mode): an exact + strip miss may
+			// be a misspelling the normalized key can't reach. FTS5-trigram fetches a
+			// loose set. we re-rank by trigram-Jaccard (the admin backend's measure)
+			// and probe the best name_keys, so a typo resolves the same on either backend.
+			// The country/placetype/bbox/region filters still apply via `probe`.
 			// Skipped when the index is absent (byte-stable for an older candidate.db).
 			//
-			// Condition: only when the name doesn't exist in the gazetteer AT all (unfiltered). A name that exists
-			// but missed under the active country/placetype/bbox filter is a filter miss rather than a spelling miss
-			// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
-			// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
-			// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
+			// Condition: only when the name doesn't exist in the gazetteer AT all (unfiltered).
+			// A name that exists but missed under the active country/placetype/bbox filter is a
+			// filter miss rather than a spelling miss — fuzzing it scrapes an unrelated same-filter
+			// place ("Vienna, Austria" misrouted to IT would pull a tiny Italian name_key near Siena)
+			// and masks the cascade's country-agnostic retry that correctly lands population-first
+			// Vienna AT. The exact/strip probes already covered the real name.
 			//
-			// Never for postcodes: fuzzy is a typo corrector for place names, and a "corrected" postcode is a
-			// different postcode. The 2026-08-05 Code-Point swap exposed the trap at scale: Northern Ireland's
-			// `BT3 9QQ` (absent — no permissive NI source) trigram-matched Sheffield's `S3 9QQ` (Jaccard 0.4
-			// on {39q, 9qq}) and resolved 200+ km wrong with full confidence. An unknown postcode must abstain.
+			// Never for postcodes: fuzzy is a typo corrector for place names, and a "corrected"
+			// postcode is a different postcode. The 2026-08-05 Code-Point swap exposed the
+			// trap at scale: Northern Ireland's `BT3 9QQ` (absent — no permissive NI source)
+			// trigram-matched Sheffield's `S3 9QQ` (Jaccard 0.4 on {39q, 9qq}) and resolved
+			// 200+ km wrong with full confidence. An unknown postcode must abstain.
 			// #1585: a locale hint scopes the typo tier to its country. Only when no hard `country`
 			// filter is active (that is already narrower); a scope naming a country the table doesn't
 			// carry is a scoped-empty — the fuzzy tier abstains rather than falling through worldwide.
@@ -820,8 +849,9 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 
 		let rows = cascade(regionParentID)
 		// #1731: whether the rows the caller receives came from the unscoped fallback below — the backend's
-		// interior check the resolver-side trace (#1721) cannot otherwise see. Stamped onto every returned
-		// place, because the re-admission path is exactly where a wrong-instance namesake enters.
+		// interior check the resolver-side trace (#1721) cannot otherwise see.
+		// Stamped onto every returned place, because the re-admission path is exactly
+		// where a wrong-instance namesake enters.
 		let regionScopeMiss = false
 
 		// Region-scope fallback: if scoping to the parent region found nothing across the whole cascade, retry
@@ -832,14 +862,15 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			regionScopeMiss = rows.length > 0
 		}
 
-		// Postcode-containment coherence (#31, Mechanism 2): re-rank the rows by proximity to the postcode's
-		// own centroid, so the locality that contains the postcode wins the name-match tie (the "Paris" that
-		// holds 75001 rather than the one that holds a 75001-free namesake). The resolver sends this flag on locality
-		// lookups when `ResolveOpts.postcodeContainmentCoherence` is on. Strictly beneath the #741 postal-city
-		// short-circuit above — an exact (name, postcode) hit is the answer and outranks any re-rank — and after
-		// the region-scope fallback, so it sees the final row set. Rows within the radius sort by distance first.
-		// the out-of-radius tail keeps its original population-first order. No in-radius row, or no postcode row in
-		// the candidate table → unchanged (byte-identical to the flag-off path).
+		// Postcode-containment coherence (#31, Mechanism 2): re-rank the rows by proximity to the
+		// postcode's own centroid, so the locality that contains the postcode wins the name-match
+		// tie (the "Paris" that holds 75001 rather than the one that holds a 75001-free namesake).
+		// The resolver sends this flag on locality lookups when `ResolveOpts.postcodeContainmentCoherence`
+		// is on. Strictly beneath the #741 postal-city short-circuit above — an exact (name, postcode)
+		// hit is the answer and outranks any re-rank — and after the region-scope fallback, so it
+		// sees the final row set. Rows within the radius sort by distance first. the out-of-radius
+		// tail keeps its original population-first order. No in-radius row, or no postcode
+		// row in the candidate table → unchanged (byte-identical to the flag-off path).
 		if (
 			query.postcode &&
 			query.postcodeContainmentCoherence === true &&
@@ -870,11 +901,12 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			}
 		}
 
-		// Admin-containment re-rank (#1717 stage 2): last, on the final row set — the qualifier is the
-		// address's outermost explicit statement, so its partition outranks the postcode-proximity order
-		// above (contained rows keep that order among themselves). Capability-conditioned on the sidecar
-		// (`#qualifierProbe`); when the artifact predates it, `regionQualifier` is ignored, no stamp is
-		// written, and the resolver walk reports the change `unavailable`.
+		// Admin-containment re-rank (#1717 stage 2): last, on the final row set —
+		// the qualifier is the address's outermost explicit statement, so its partition outranks
+		// the postcode-proximity order above (contained rows keep that order among themselves).
+		// Capability-conditioned on the sidecar (`#qualifierProbe`); when the
+		// artifact predates it, `regionQualifier` is ignored, no stamp is written,
+		// and the resolver walk reports the change `unavailable`.
 		if (query.regionQualifier?.trim() && this.#qualifierProbe && this.#wantsLocality(query.placetype)) {
 			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country, {
 				nameKey,
@@ -893,63 +925,71 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 				id: Number(row.spr_id),
 				name: String(row.name ?? ""),
 				placetype: (this.#idToPlacetype.get(Number(row.placetype_id)) ?? "") as WOFPlacetype,
-				// Surfaced so the cascade can country-restrict a postcode by the resolved locality (an ambiguous
-				// international postcode like 10115 = Berlin DE and New York US must not out-resolve the city).
+				// Surfaced so the cascade can country-restrict a postcode by the resolved
+				// locality (an ambiguous international postcode like 10115 = Berlin DE
+				// and New York US must not out-resolve the city).
 				country: this.#idToCountry.get(Number(row.country_id)) ?? "",
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),
-				// The depth-1 ancestor, when the artifact carries the sidecar. Absence is the artifact's, never a
-				// claim that the place is a root. This is what makes a same-settlement pair legible in one answer:
-				// 264,523 of the 285,478 populated localities sharing a folded name with a `localadmin` within 5 km
-				// name that twin here, so a consumer can see the two ids are one place at two tiers without
-				// re-deriving anything. Costs one memoized clustered probe per row — 10.7 µs, 0.053 ms for a
-				// five-candidate lookup against a resolve that runs in milliseconds.
+				// The depth-1 ancestor, when the artifact carries the sidecar.
+				// Absence is the artifact's, never a claim that the place is a root.
+				// This is what makes a same-settlement pair legible in one answer: 264,523 of the
+				// 285,478 populated localities sharing a folded name with a `localadmin` within 5 km
+				// name that twin here, so a consumer can see the two ids are one place at two tiers
+				// without re-deriving anything. Costs one memoized clustered probe per row — 10.7 µs,
+				// 0.053 ms for a five-candidate lookup against a resolve that runs in milliseconds.
 				...(parent ? { parent_id: Number(parent.id) } : {}),
-				// `score` stays the RAW population rank (`-neg_rank`) — it feeds the resolver walk's absolute
-				// `minWinningScore` floor (`resolve.ts`), which must see real prominence, never a penalized value.
+				// `score` stays the RAW population rank (`-neg_rank`) — it feeds the
+				// resolver walk's absolute `minWinningScore` floor (`resolve.ts`),
+				// which must see real prominence, never a penalized value.
 				score: -Number(row.neg_rank),
-				// `prominence` carries the bounded cross-country primary preference (the effective, penalty-adjusted
-				// rank). The walk orders candidates by `prominence ?? score` (`resolve.ts`), so this is what makes the
-				// re-rank actually stick through resolution — without it the walk re-sorts by raw `score` and a
-				// more-populous foreign alias (Changchun for "Cancun") wins back the node. Equals `score` for every
-				// un-penalized row (primaries + same-country aliases), so the common ordering is unchanged.
+				// `prominence` carries the bounded cross-country primary preference
+				// (the effective, penalty-adjusted rank). The walk orders candidates by
+				// `prominence ?? score` (`resolve.ts`), so this is what makes the re-rank
+				// actually stick through resolution — without it the walk re-sorts by raw `score`
+				// and a more-populous foreign alias (Changchun for "Cancun") wins back the node.
+				// Equals `score` for every un-penalized row (primaries + same-country aliases),
+				// so the common ordering is unchanged.
 				prominence: -Number(row.effectiveNegRank),
-				// Every candidate row is an exact normalized-name (or alias/abbrev) match — the cascade's exact tier
-				// accepts alias-exact hits ("New York City" → New York) the same as canonical — except a cross-country
-				// alias that lost the bounded contest to a same-key primary (`demoted`): it drops to the partial tier so
-				// the walk's country posterior can't cross back over the primary (see `RankedRow.demoted`) — and
-				// except a row the typo-corrector produced (`fuzzy`), which by definition answers a name the
-				// gazetteer does not carry (see `RankedRow.fuzzy`).
+				// Every candidate row is an exact normalized-name (or alias/abbrev) match —
+				// the cascade's exact tier accepts alias-exact hits ("New York City" → New York) the
+				// same as canonical — except a cross-country alias that lost the bounded contest
+				// to a same-key primary (`demoted`): it drops to the partial tier so the walk's
+				// country posterior can't cross back over the primary (see `RankedRow.demoted`) —
+				// and except a row the typo-corrector produced (`fuzzy`), which by definition
+				// answers a name the gazetteer does not carry (see `RankedRow.fuzzy`).
 				exactMatch: !row.demoted && !row.fuzzy,
 				// #1731: emitted only when a region scope was applied, missed, and the unscoped fallback
 				// produced this row — the re-admission path. Absence means the question never arose.
 				...(regionScopeMiss ? { regionScopeMiss: true } : {}),
 				// #1717 stage 2 — the containment stamp, tri-state: emitted only when the question was
-				// asked (a `regionQualifier` query over a with-sidecar artifact); its absence is what
-				// the resolver walk reports as `unavailable` (meaning-of-zero).
+				// asked (a `regionQualifier` query over a with-sidecar artifact); its absence
+				// is what the resolver walk reports as `unavailable` (meaning-of-zero).
 				...(row.containedByQualifier === undefined ? {} : { containedByQualifier: row.containedByQualifier }),
 				// #1893 — the exemption's firing mark, carried only when the ranker actually spared this row
 				// the cross-country penalty (see RankedRow.variantExempted).
 				...(row.variantExempted ? { variantAliasExempted: true as const } : {}),
-				// The two-score split's carry (ROAD_TO_V9 §2). `referential` names the prominence this
-				// backend has always ordered by — `neg_rank` is `-log10(population + 1)`, so the score and
-				// the sort key are two readings of the same number.
+				// The two-score split's carry (ROAD_TO_V9 §2). `referential` names the prominence
+				// this backend has always ordered by — `neg_rank` is `-log10(population + 1)`,
+				// so the score and the sort key are two readings of the same number.
 				...(row.population === null || row.population <= 0
 					? {}
 					: { population: row.population, referential: referentialFromPopulation(row.population) }),
 				// #28: the fame prior, from the `importance` column the candidate build joins in. Emitted only
-				// when the artifact measured this place — an absent field is what `rankByImportance` reads as
-				// "does not participate", and a 0 would be a claim nobody made (meaning-of-zero).
+				// when the artifact measured this place — an absent field is what `rankByImportance` reads
+				// as "does not participate", and a 0 would be a claim nobody made (meaning-of-zero).
 				//
-				// The field name matches the column because they hold the same thing: the score source's
-				// blended prior — the concordance's encyclopedia-derived channel where a concordance matched, a
-				// population-derived proxy everywhere else. It is not the strict `encyclopedic` channel
-				// `place-importance-schema.ts` defines, and it deliberately does not land in that field: the
-				// strict channel was measured on 2026-08-10 and covers eleven countries, none of them CA/AU/RU,
-				// which makes it inert on three of the four homonym contests the prior exists to settle.
-				// `PlaceCandidate.encyclopedic` stays reserved for a strict-channel source (the FTS backend's
-				// clauses are strict and today emit NULL for everything — no shipped admin DB has the split
-				// table at all). See `candidate-schema.ts` → {@link CandidateTable.importance}.
+				// The field name matches the column because they hold the same thing:
+				// the score source's blended prior — the concordance's encyclopedia-derived channel
+				// where a concordance matched, a population-derived proxy everywhere else.
+				// It is not the strict `encyclopedic` channel `place-importance-schema.ts` defines,
+				// and it deliberately does not land in that field: the strict channel was
+				// measured on 2026-08-10 and covers eleven countries, none of them CA/AU/RU,
+				// which makes it inert on three of the four homonym contests the prior
+				// exists to settle. `PlaceCandidate.encyclopedic` stays reserved for a
+				// strict-channel source (the FTS backend's clauses are strict and today emit
+				// NULL for everything — no shipped admin DB has the split table at all).
+				// See `candidate-schema.ts` → {@link CandidateTable.importance}.
 				...(typeof row.importance === "number" && Number.isFinite(row.importance)
 					? { importance: row.importance }
 					: {}),
@@ -966,8 +1006,9 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			}
 		})
 
-		// Proximity re-rank (#938) — the shared implementation, so the browser byte-range twin runs the same
-		// code rather than the same constants. See proximity-rerank.ts for why that distinction mattered.
+		// Proximity re-rank (#938) — the shared implementation, so the browser
+		// byte-range twin runs the same code rather than the same constants.
+		// See proximity-rerank.ts for why that distinction mattered.
 		if (query.bias && query.bias.length) {
 			applyProximityRerank(candidates, query.bias)
 		}

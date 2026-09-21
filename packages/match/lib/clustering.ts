@@ -40,25 +40,29 @@ export interface ClusterOptions {
 	/**
 	 * How the above-threshold link graph resolves into clusters:
 	 *
-	 * - `"single"` (default) — connected components (union-find). Fast. any above-threshold link fuses two groups, so a
-	 *   single weak link can over-merge unrelated records through a transitive chain.
-	 * - `"average"` — agglomerative average-linkage refinement within each connected component: two sub-clusters merge only
-	 *   when the average weight of the links between them clears the threshold, so a lone weak bridge no longer fuses two
-	 *   otherwise-dense groups. The documented over-merge fix (Dedupe). Falls back to single-linkage for any component
-	 *   larger than {@link maxAverageLinkageComponent}.
+	 * - `"single"` (default) — connected components (union-find).
+	 *   Fast. any above-threshold link fuses two groups, so a single weak link can
+	 *   over-merge unrelated records through a transitive chain.
+	 * - `"average"` — agglomerative average-linkage refinement within each connected component:
+	 *   two sub-clusters merge only when the average weight of the links between them clears
+	 *   the threshold, so a lone weak bridge no longer fuses two otherwise-dense groups.
+	 *   The documented over-merge fix (Dedupe). Falls back to single-linkage for any
+	 *   component larger than {@link maxAverageLinkageComponent}.
 	 */
 	linkage?: "single" | "average"
 	/**
-	 * Components larger than this skip the O(k³) average-linkage refine and keep single-linkage. Default 64.
+	 * Components larger than this skip the O(k³) average-linkage refine
+	 * and keep single-linkage. Default 64.
 	 */
 	maxAverageLinkageComponent?: number
 }
 
 /**
- * Refine one connected component by agglomerative average-linkage. Starts with every member a singleton and repeatedly
- * merges the cluster pair with the highest _average_ inter-cluster link weight while that average is at or above
- * `threshold`; clusters with no link between them never merge. O(k³) in the component size, so callers boundate it on a
- * size cap.
+ * Refine one connected component by agglomerative average-linkage.
+ * Starts with every member a singleton and repeatedly merges the cluster pair
+ * with the highest _average_ inter-cluster link weight while that average is at
+ * or above `threshold`; clusters with no link between them never merge.
+ * O(k³) in the component size, so callers boundate it on a size cap.
  */
 function averageLinkageRefine<R>(members: R[], edges: Array<[number, number, number]>, threshold: number): R[][] {
 	const clusters = members.map((_, i) => [i])
@@ -105,15 +109,17 @@ function averageLinkageRefine<R>(members: R[], edges: Array<[number, number, num
 }
 
 /**
- * Cluster records into canonical entities by connected components of the above-threshold link graph. Every input record
- * lands in exactly one cluster — a record with no qualifying link is a singleton. Links referencing a record not in
- * `records` are ignored. Reference identity is used, so pass the same record objects to both arguments.
+ * Cluster records into canonical entities by connected components of the above-threshold
+ * link graph. Every input record lands in exactly one cluster — a record with no
+ * qualifying link is a singleton. Links referencing a record not in `records` are ignored.
+ * Reference identity is used, so pass the same record objects to both arguments.
  */
 export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>, opts: ClusterOptions): R[][] {
 	const index = new Map<R, number>()
 	records.forEach((record, i) => index.set(record, i))
 
-	// Local by design: the shared union-find is `@mailwoman/core/utils/union-find`; match takes no core dependency (~11 MB).
+	// Local by design: the shared union-find is `@mailwoman/core/utils/union-find`;
+	// match takes no core dependency (~11 MB).
 	const parent = records.map((_, i) => i)
 	const rank = new Array<number>(records.length).fill(0)
 
@@ -152,8 +158,8 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	}
 
 	// Collect all valid links (not just above-threshold): connected components form from the
-	// above-threshold ones, but the average-linkage refinement needs the full sub-graph — a weak or
-	// disagreeing below-threshold edge between two sub-clusters is exactly what should pull them apart.
+	// above-threshold ones, but the average-linkage refinement needs the full sub-graph — a weak
+	// or disagreeing below-threshold edge between two sub-clusters is exactly what should pull them apart.
 	const allLinks: ScoredLink<R>[] = []
 
 	for (const link of links) {
@@ -222,9 +228,10 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 }
 
 /**
- * Pick a cluster's most complete record as its canonical representative — the one with the fewest empty fields (`null`
- * / `undefined` / `""`). Ties keep the earliest. A basic, generic canonicalizer. field-level merging across the cluster
- * is the application's job (it knows which source to trust).
+ * Pick a cluster's most complete record as its canonical representative — the one with the
+ * fewest empty fields (`null` / `undefined` / `""`). Ties keep the earliest.
+ * A basic, generic canonicalizer. field-level merging across the cluster is the
+ * application's job (it knows which source to trust).
  */
 export function representative<R extends object>(group: readonly R[]): R | undefined {
 	let best: R | undefined

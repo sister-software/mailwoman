@@ -36,7 +36,8 @@ import {
 import { beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Pull one command's rendered section out of the whole page, so a snapshot pins that command rather than the page.
+ * Pull one command's rendered section out of the whole page, so a snapshot
+ * pins that command rather than the page.
  */
 function sectionFor(page: string, commandPath: string): string {
 	const heading = `### \`mailwoman ${commandPath}\``
@@ -112,8 +113,8 @@ describe("generate-cli-reference", () => {
 	it("renders deterministically and leaks no host path or timestamp", () => {
 		expect(renderCLIReference(surface)).toBe(page)
 
-		// A default that resolves from the environment is suppressed rather than printed, so the
-		// generating machine's data root can never reach a published page.
+		// A default that resolves from the environment is suppressed rather than printed,
+		// so the generating machine's data root can never reach a published page.
 		expect(page).not.toContain("/mnt/")
 		expect(page).not.toContain("/home/")
 		expect(page).toContain("environment-dependent")

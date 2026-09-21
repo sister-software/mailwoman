@@ -11,8 +11,9 @@
 import type { ZodType } from "zod"
 
 /**
- * What an operation does to the world, declared rather than inferred. `external-write` names the operations that
- * publish (npm, Hugging Face, R2) and are therefore reachable only through the plan → execute interface.
+ * What an operation does to the world, declared rather than inferred.
+ * `external-write` names the operations that publish (npm, Hugging Face, R2)
+ * and are therefore reachable only through the plan → execute interface.
  */
 export const OperationEffect = {
 	/**
@@ -24,8 +25,8 @@ export const OperationEffect = {
 	 */
 	LocalWrite: "local-write",
 	/**
-	 * Writes to a system outside this machine. Irreversible, credentialed, and reachable only through the plan → execute
-	 * interface.
+	 * Writes to a system outside this machine. Irreversible, credentialed,
+	 * and reachable only through the plan → execute interface.
 	 */
 	ExternalWrite: "external-write",
 } as const
@@ -45,7 +46,8 @@ export interface ReleaseContext {
 	 */
 	dryRun: boolean
 	/**
-	 * Where an operation's progress lines go. An adapter that owns stdout (a `--json` command) passes a silent one.
+	 * Where an operation's progress lines go. An adapter that owns stdout
+	 * (a `--json` command) passes a silent one.
 	 */
 	log: (line: string) => void
 }
@@ -61,7 +63,8 @@ export interface ReleaseOperation<In = unknown, Out = unknown> {
 	outputSchema: ZodType<Out>
 	run(input: In, context: ReleaseContext): Promise<Out>
 	/**
-	 * Optional one-line rendering for an interactive CLI. Structured adapters continue to use the operation's output.
+	 * Optional one-line rendering for an interactive CLI.
+	 * Structured adapters continue to use the operation's output.
 	 */
 	formatOutput?: (output: Out) => string
 }

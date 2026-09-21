@@ -2,9 +2,10 @@ import { expect, test } from "../../e2e/index.ts"
 
 test.describe("Demo — place autocomplete typeahead (#587)", () => {
 	test("a partial last token surfaces a char-level FST suggestion that fills the box", async ({ demo }) => {
-		// "New Yor" is a partial last token — the night-15 char-level FST completion (continuation-edge
-		// prefix filtering) must suggest "New York" (not Denver / New London), dedup'd. The useEffect
-		// re-runs when the FST finishes loading, so the suggestion appears even if typed during cold-load.
+		// "New Yor" is a partial last token — the night-15 char-level FST completion
+		// (continuation-edge prefix filtering) must suggest "New York" (not Denver / New London),
+		// dedup'd. The useEffect re-runs when the FST finishes loading, so the
+		// suggestion appears even if typed during cold-load.
 		await demo.goto()
 		const suggestions = await demo.readSuggestions("New Yor")
 		expect(suggestions.join(" | "), `suggestions for "New Yor": ${suggestions.join(", ")}`).toContain("New York")

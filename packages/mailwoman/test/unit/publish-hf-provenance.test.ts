@@ -40,8 +40,8 @@ describe("verifyTrainingProvenance", () => {
 	})
 
 	it("refuses a card whose training section records an empty attribution list", async () => {
-		// The distinction this pins: a card can carry a full training section — corpus, recipe, hardware — and still
-		// state nothing about where the rows came from.
+		// The distinction this pins: a card can carry a full training section — corpus,
+		// recipe, hardware — and still state nothing about where the rows came from.
 		const card = await cardWith({
 			training: { corpus_version: "v0.32.0-locality-shape", data_attribution: [] },
 		})
@@ -54,9 +54,10 @@ describe("verifyTrainingProvenance", () => {
 	})
 
 	it("reads the top-level attribution key, which the character-path card uses", async () => {
-		// Reading `training.data_attribution` alone reported `neural-weights-cjk` as recording nothing, when its card
-		// carries six entries under `attribution`. A control that answers a false absence refuses a release nobody
-		// needed to block, and the absence it reports is indistinguishable from a real one.
+		// Reading `training.data_attribution` alone reported `neural-weights-cjk` as
+		// recording nothing, when its card carries six entries under `attribution`.
+		// A control that answers a false absence refuses a release nobody needed to block,
+		// and the absence it reports is indistinguishable from a real one.
 		const card = await cardWith({
 			attribution: [
 				"Korean road-name address data (주소DB): 행정안전부, 공공누리 제1유형 (KOGL Type 1) — attribution required.",

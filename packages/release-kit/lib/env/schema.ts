@@ -22,14 +22,16 @@ export const PublicReleaseEnvSchema = z.object({
 		title: "Skip weights copy",
 		description: "Compatibility toggle that skips copying neural weights during development or release preparation.",
 	}),
-	// Release-it publish flow (`packages/release-kit/lib/pack/publish/workspace.ts`). The OTP is a secret — see `$private`.
+	// Release-it publish flow (`packages/release-kit/lib/pack/publish/workspace.ts`).
+	// The OTP is a secret — see `$private`.
 	MAILWOMAN_SKIP_WEIGHTS: z.string().optional().meta({
 		title: "Skip release weights",
 		description: "Release-flow toggle that omits neural weights from package publication.",
 	}),
 	/**
-	 * Set to `0` to publish without a sigstore provenance attestation. Provenance is otherwise on by default under GitHub
-	 * Actions — this exists so a release blocked by a sigstore or registry outage can still ship.
+	 * Set to `0` to publish without a sigstore provenance attestation.
+	 * Provenance is otherwise on by default under GitHub Actions — this exists
+	 * so a release blocked by a sigstore or registry outage can still ship.
 	 */
 	MAILWOMAN_NPM_PROVENANCE: z.string().optional().meta({
 		title: "npm provenance",
@@ -37,8 +39,8 @@ export const PublicReleaseEnvSchema = z.object({
 			"Set to `0` to publish without a Sigstore provenance attestation; otherwise provenance is enabled in GitHub Actions.",
 	}),
 	/**
-	 * Set by GitHub Actions itself. npm can only mint a provenance attestation from a CI provider it supports, so this is
-	 * the predicate for `--provenance` rather than the generic `CI` flag.
+	 * Set by GitHub Actions itself. npm can only mint a provenance attestation from a CI provider
+	 * it supports, so this is the predicate for `--provenance` rather than the generic `CI` flag.
 	 */
 	GITHUB_ACTIONS: z.coerce.boolean().default(false).meta({
 		title: "GitHub Actions",
@@ -63,7 +65,8 @@ export const PublicReleaseEnvSchema = z.object({
 })
 
 /**
- * Credentials used by package publication and weights staging. Never log their values.
+ * Credentials used by package publication and weights
+ * staging. Never log their values.
  */
 export const PrivateReleaseEnvSchema = z.object({
 	RELEASE_IT_WORKSPACES_OTP: z.string().optional().meta({

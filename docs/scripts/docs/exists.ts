@@ -19,8 +19,8 @@ import { stat } from "node:fs/promises"
 /**
  * Whether anything is at `target` — a file or a directory alike.
  *
- * A directory counts, because both callers treat one as a valid target: a markdown link to a folder reaches its index
- * page, and a citation naming a directory names something that exists.
+ * A directory counts, because both callers treat one as a valid target: a markdown link to a
+ * folder reaches its index page, and a citation naming a directory names something that exists.
  */
 export async function pathExists(target: string): Promise<boolean> {
 	try {

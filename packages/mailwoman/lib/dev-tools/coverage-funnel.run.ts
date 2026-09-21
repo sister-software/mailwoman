@@ -60,8 +60,9 @@ const { values } = parseArguments({
 /**
  * What `mailwoman_train.audits.epoch_mixture --json` writes, down to the two fields this reads.
  *
- * The emitted level is the one that answers the stage. Draw level counts what the sampler pulled, and emitted level
- * counts what survived augmentation to fill the trainer's row budget — the rows a run actually trains on.
+ * The emitted level is the one that answers the stage. Draw level counts what the
+ * sampler pulled, and emitted level counts what survived augmentation to fill the
+ * trainer's row budget — the rows a run actually trains on.
  */
 interface EpochMixtureAudit {
 	emitted_level?: { by_country?: Record<string, number> }
@@ -71,17 +72,19 @@ interface EpochMixtureAudit {
 /**
  * Rows sampled per country in one audited epoch, and the epoch's total.
  *
- * A country absent from `by_country` stays absent from the map rather than being written in as zero, and the funnel
- * decides what that absence means. `by_country` enumerates every country the audit drew, so a country the audit never
- * mentions drew zero of the audit's own denominator. An admitted country therefore reads `blocked` with that
- * denominator beside it, which is a measured zero rather than an unknown. A country the config never admitted reads
- * `absent`, since it had nothing to draw.
+ * A country absent from `by_country` stays absent from the map rather than
+ * being written in as zero, and the funnel decides what that absence means.
+ * `by_country` enumerates every country the audit drew, so a country the audit never
+ * mentions drew zero of the audit's own denominator. An admitted country therefore reads
+ * `blocked` with that denominator beside it, which is a measured zero rather than an unknown.
+ * A country the config never admitted reads `absent`, since it had nothing to draw.
  *
- * Refuses an audit produced from a config other than the one the `admitted` stage reads. Both stages describe one
- * training arm, and reading them from two configs puts two arms in one column: a run of this tool read `admitted` from
- * the shipped Latin config, which admits 25 countries, beside a `sampled` stage from `v5.9.0-locality-shape-60k.yaml`,
- * which admits 135 — so `sampled` reported 38 countries drawn while `admitted` reported 25, and a country could appear
- * in the second and not the first.
+ * Refuses an audit produced from a config other than the one the `admitted` stage reads.
+ * Both stages describe one training arm, and reading them from two configs puts two
+ * arms in one column: a run of this tool read `admitted` from the shipped Latin config,
+ * which admits 25 countries, beside a `sampled` stage from `v5.9.0-locality-shape-60k.yaml`,
+ * which admits 135 — so `sampled` reported 38 countries drawn while `admitted` reported 25,
+ * and a country could appear in the second and not the first.
  */
 async function readMixtureAudit(
 	path: string,
@@ -148,8 +151,9 @@ console.log(
 		`${config.family ? `, weights family ${config.family}` : ""}).`
 )
 
-// The `admitted` stage reads one config, and one config answers for one graph. Printing the shipped union beside it
-// keeps a reader from taking an in-flight config's admissions for the countries a released model trains.
+// The `admitted` stage reads one config, and one config answers for one graph.
+// Printing the shipped union beside it keeps a reader from taking an in-flight
+// config's admissions for the countries a released model trains.
 const shippedAdmitted = await admittedByShippedGraphs(scope)
 const shippedByFamily = new Map<string, number>()
 
@@ -193,8 +197,9 @@ for (const stage of FUNNEL_STAGES) {
 /**
  * How many country codes a group's cell prints before it counts the rest.
  *
- * Presentation only. The shallow groups hold over a hundred codes each, and a cell carrying all of them wraps past the
- * width a terminal table stays readable at. `--out-json` writes every code.
+ * Presentation only. The shallow groups hold over a hundred codes each, and a cell
+ * carrying all of them wraps past the width a terminal table stays readable at.
+ * `--out-json` writes every code.
  */
 const CODES_PER_GROUP_CELL = 18
 
@@ -252,9 +257,10 @@ console.log(
 				`\`country_weights\` entry as well as corpus rows.`
 )
 
-// The funnel counts jurisdictions, and a jurisdiction is not always the parser unit. A regime reported here is one
-// whose addresses the funnel's row for its parent country says nothing about: SH's row describes one place where
-// three postal systems live, and a BFPO address is counted under GB while nothing parses it as GB.
+// The funnel counts jurisdictions, and a jurisdiction is not always the parser unit.
+// A regime reported here is one whose addresses the funnel's row for its parent country
+// says nothing about: SH's row describes one place where three postal systems live,
+// and a BFPO address is counted under GB while nothing parses it as GB.
 console.log(`\n## Postal regimes — where the parser unit is not the ISO country code\n`)
 console.log(`| regime | kind | ISO | coverage | parent jurisdictions' stages reached |`)
 console.log(`| --- | --- | --- | --- | --- |`)
@@ -297,8 +303,8 @@ if (values["out-json"]) {
 				configProvenance: config.provenance,
 				shippedAdmittedCountries: [...shippedAdmitted.keys()].toSorted(),
 				manifestPath,
-				// No flag names the manifest, so it was chosen by modification time rather than given. The config beside it
-				// carries its own provenance for the same reason (#2349).
+				// No flag names the manifest, so it was chosen by modification time rather than given.
+				// The config beside it carries its own provenance for the same reason (#2349).
 				manifestProvenance: "newest modification time under the data root",
 				...funnel.provenance,
 			},

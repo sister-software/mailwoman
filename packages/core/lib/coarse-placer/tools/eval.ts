@@ -75,7 +75,8 @@ export interface EvalCoarsePlacerResult {
 }
 
 /**
- * Coarse-placer in-distribution eval — see the module doc. Emits the report to stdout.
+ * Coarse-placer in-distribution eval — see the module doc.
+ * Emits the report to stdout.
  */
 export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): Promise<EvalCoarsePlacerResult> {
 	const modelDir = resolvePathBuilder(options.model || defaultModelDir())

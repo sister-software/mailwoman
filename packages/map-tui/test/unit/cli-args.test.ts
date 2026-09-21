@@ -42,8 +42,8 @@ describe("parseCLIArgs", () => {
 		expect(args.zoom).toBe(12)
 	})
 
-	// Half the planet has a negative longitude, and `node:util` refuses a space-separated value that starts with a
-	// dash. Both spellings have to reach the same viewport.
+	// Half the planet has a negative longitude, and `node:util` refuses a space-separated
+	// value that starts with a dash. Both spellings have to reach the same viewport.
 	it("accepts a negative coordinate in either spelling", () => {
 		const spaced = browse(["--tiles", "p.pmtiles", "--lon", "-122.6023", "--lat", "-33.87"])
 		const joined = browse(["--tiles", "p.pmtiles", "--lon=-122.6023", "--lat=-33.87"])

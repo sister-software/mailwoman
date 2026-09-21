@@ -23,13 +23,14 @@
  * substring a re-typed shell-out cannot avoid: the git subcommand it runs, in a plain string, a template literal, or a
  * `$\`…`` command.
  *
- * A `descending-swap-loop` names a control shape rather than a token, for the helpers whose re-typed copy carries no
- * distinctive literal at all. The three token kinds above can only report a re-typed generator, never a re-typed
- * shuffle: the loop writes no constant of its own and calls whatever generator it was handed.
+ * A `descending-swap-loop` names a control shape rather than a token,
+ * for the helpers whose re-typed copy carries no distinctive literal at all.
+ * The three token kinds above can only report a re-typed generator, never a re-typed shuffle:
+ * the loop writes no constant of its own and calls whatever generator it was handed.
  *
- * A `template-properties` names the components a template literal interpolates, in order. A hand-written address order
- * carries no literal worth matching — its quasis are a comma and a space — and what identifies it is which components
- * it puts in which sequence.
+ * A `template-properties` names the components a template literal interpolates, in order.
+ * A hand-written address order carries no literal worth matching — its quasis are a comma
+ * and a space — and what identifies it is which components it puts in which sequence.
  */
 export interface HelperHome {
 	readonly id: string
@@ -45,8 +46,8 @@ export interface HelperHome {
 }
 
 /**
- * Every helper shape the `prefer-home` rule knows. Each row was added by a review that found the same helper typed
- * twice. the rule then reports the third copy at commit time.
+ * Every helper shape the `prefer-home` rule knows. Each row was added by a review that
+ * found the same helper typed twice. the rule then reports the third copy at commit time.
  */
 export const HELPER_HOMES: readonly HelperHome[] = [
 	{

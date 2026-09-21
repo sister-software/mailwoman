@@ -68,11 +68,11 @@ export const spec = {
 type Options = OptionsOf<typeof spec>
 
 /**
- * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an anchor remainder
- * resolves to lat/lon and `--db` category/brand queries can compute a search center. Lazy + optional: an absent
- * gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite` peer degrades to no resolver (today's pre-wiring behavior)
- * rather than failing the probe — a stderr note explains what's missing. Caller owns closing the returned handle's
- * backend lookup.
+ * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an
+ * anchor remainder resolves to lat/lon and `--db` category/brand queries can compute a search center.
+ * Lazy + optional: an absent gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite` peer
+ * degrades to no resolver (today's pre-wiring behavior) rather than failing the probe —
+ * a stderr note explains what's missing. Caller owns closing the returned handle's backend lookup.
  */
 async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
 	const { resolvePOIResolverPaths } = await import("#resolver-backend")
@@ -130,8 +130,9 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 	if (intent.subject.kind === "category") {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")
 		const { categoryIDs } = intent.subject
-		// Every member needs a tag rather than just one: a union emitted from the subset that happens to carry `osmTag` is a
-		// narrower query than the one the POI branch ran, and the difference would be invisible in the printed result.
+		// Every member needs a tag rather than just one: a union emitted from the subset that
+		// happens to carry `osmTag` is a narrower query than the one the POI branch ran,
+		// and the difference would be invisible in the printed result.
 		const untagged = categoryIDs.filter((id) => !getPOICategory(id)?.osmTag)
 
 		if (untagged.length) {
@@ -145,10 +146,11 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 }
 
 /**
- * Compact ancestry suffix, e.g. "· Springfield, IL, US" — locality/region/country entries, coarsest-last (the
- * hierarchy's own deepest-first order reversed), skipping other placetypes (county, neighbourhood, …) to keep the table
- * narrow. Empty string when `ancestry` is absent (no reverse geocoder wired) or carries none of those three tiers (e.g.
- * open-ocean/approximate misses).
+ * Compact ancestry suffix, e.g. "· Springfield, IL, US" — locality/region/country
+ * entries, coarsest-last (the hierarchy's own deepest-first order reversed),
+ * skipping other placetypes (county, neighbourhood, …) to keep the table narrow.
+ * Empty string when `ancestry` is absent (no reverse geocoder wired) or carries none
+ * of those three tiers (e.g. open-ocean/approximate misses).
  */
 function formatAncestrySuffix(ancestry: POIResult["ancestry"]): string {
 	if (!ancestry || !ancestry.length) return ""
@@ -261,8 +263,8 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 		return <CommandTaskResult state={state} running={<Spinner />} />
 	}
 
-	// --json dumps raw JSON — bypass Ink's word-wrapping <Text> renderer, which corrupts long
-	// lines at 80 cols when piped (see writeRawStdout).
+	// --json dumps raw JSON — bypass Ink's word-wrapping <Text> renderer, which corrupts
+	// long lines at 80 cols when piped (see writeRawStdout).
 	if (options.json) {
 		return writeRawStdout(state.result)
 	}

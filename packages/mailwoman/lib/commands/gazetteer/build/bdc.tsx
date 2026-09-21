@@ -79,10 +79,10 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { parseProviderList } = await import("@mailwoman/filer/sdk")
 
-		// Fail-fast guards — checked before any network/download work
-		// starts. `populateBDCProviderTable` only runs after the availability ingest and writeLayerManifest, so
-		// without this, a typo'd --provider-list-path would surface only at the very end of a full national
-		// build, discarding hours of work for a check that costs microseconds up front.
+		// Fail-fast guards — checked before any network/download work starts.
+		// `populateBDCProviderTable` only runs after the availability ingest and writeLayerManifest,
+		// so without this, a typo'd --provider-list-path would surface only at the very end of a full
+		// national build, discarding hours of work for a check that costs microseconds up front.
 		if (options.filerDBPath && !options.providerListPath) {
 			throw new Error(
 				"gazetteer build bdc: --filer-db-path was given without --provider-list-path — filer.db is only read " +
@@ -137,10 +137,11 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 			csvPaths.push(await downloadBDCFile(client, file, cacheDir))
 		}
 
-		// The FCC caps this API at ten requests per minute — six seconds a call — so a national run is
-		// throttle-bound by construction and the interesting number is how much of the wall clock went to
-		// waiting rather than transferring. Printed once the network phase is over, on stderr with the rest
-		// of the progress stream, so a rate change can be assessed against a measurement.
+		// The FCC caps this API at ten requests per minute — six seconds a call —
+		// so a national run is throttle-bound by construction and the interesting number
+		// is how much of the wall clock went to waiting rather than transferring.
+		// Printed once the network phase is over, on stderr with the rest of the progress stream,
+		// so a rate change can be assessed against a measurement.
 		console.error(`▸ ${formatBDCThrottleStats(client.throttleStats())}`)
 
 		const out = resolvePath(options.out ?? dataRootPath("bdc", "bdc.db"))
@@ -149,9 +150,9 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ build: ${out}`)
 
-		// --provider-list-path (decision 6) opts into populating bdc_provider — omitted, `providers`/
-		// `filerDB` stay undefined and buildBDCDatabase runs its default path. Both paths were already
-		// existsSync-validated above, so this can't enoent.
+		// --provider-list-path (decision 6) opts into populating bdc_provider — omitted,
+		// `providers`/ `filerDB` stay undefined and buildBDCDatabase runs its default path.
+		// Both paths were already existsSync-validated above, so this can't enoent.
 		let filerDB: DatabaseClientHandle<FilerDatabase> | undefined
 
 		if (filerDBPath) {

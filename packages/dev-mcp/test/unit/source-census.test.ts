@@ -41,7 +41,8 @@ function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): voi
 }
 
 /**
- * `spr` only, and every `parent_id` is the -1 sentinel — countable rather than joinable rather than walkable.
+ * `spr` only, and every `parent_id` is the -1 sentinel — countable
+ * rather than joinable rather than walkable.
  */
 function writeCountOnly(path: string, country: string, n: number): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -81,8 +82,9 @@ describe("censusArtifact", () => {
 	})
 
 	it("separates COUNTABLE from JOINABLE — the distinction a row count hides", async () => {
-		// 395,544 PT postcodes in a extract with no ancestry table is not 395,544 usable triples. This is the exact
-		// shape that made a real config declare PT unbuildable while the rows were sitting there.
+		// 395,544 PT postcodes in a extract with no ancestry table is not 395,544 usable triples.
+		// This is the exact shape that made a real config declare PT unbuildable
+		// while the rows were sitting there.
 		const row = await censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db"))
 
 		expect(row.readable).toBe(true)
@@ -95,8 +97,8 @@ describe("censusArtifact", () => {
 	})
 
 	it("reports a country asked for and ABSENT as a zero, not a missing key", async () => {
-		// A missing key reads as "not measured". The caller is deciding whether to go and acquire data, and those are
-		// opposite conclusions.
+		// A missing key reads as "not measured". The caller is deciding whether to go
+		// and acquire data, and those are opposite conclusions.
 		const row = await censusArtifact(root.resolve("wof", "postalcode-intl.db"), ["FR", "VE"])
 
 		expect(row.countries).toEqual({ FR: 3, VE: 0 })

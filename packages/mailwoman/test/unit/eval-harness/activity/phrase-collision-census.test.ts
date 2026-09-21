@@ -34,8 +34,8 @@ const committedCensusPath = resolvePath(String(repoRootPath()), COMMITTED_CENSUS
 const committed = await readLocalJSONFile<PhraseCollisionCensus>(committedCensusPath)
 
 /**
- * A repository root carrying one committed query, so the carrier-prefix family is exercised without reading the real
- * 17k-input corpus on every run.
+ * A repository root carrying one committed query, so the carrier-prefix family is
+ * exercised without reading the real 17k-input corpus on every run.
  */
 const scratchRoot = await temporaryDirectory("collision-census-")
 

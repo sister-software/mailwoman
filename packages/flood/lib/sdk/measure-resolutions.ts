@@ -39,8 +39,9 @@ const DEFAULT_PROGRESS_EVERY = 50_000
 /**
  * Measure every candidate resolution over the real source.
  *
- * @throws {Error} When the streamed feature count does not match the count the source declares. A short read produces a
- *   well-formed table describing a smaller England, which is the partial result that must throw.
+ * @throws {Error} When the streamed feature count does not match the count the source declares.
+ *   A short read produces a well-formed table describing a smaller England,
+ *   which is the partial result that must throw.
  */
 export async function measureFloodCellResolutions(
 	options: MeasureResolutionsOptions
@@ -83,8 +84,8 @@ export async function measureFloodCellResolutions(
 }
 
 /**
- * The measurement as markdown table rows — what a build receipt carries, one line per element so a caller printing them
- * never has to split a joined string back apart.
+ * The measurement as markdown table rows — what a build receipt carries, one line per element
+ * so a caller printing them never has to split a joined string back apart.
  */
 export function formatResolutionMeasurementRows(measurements: readonly CellIndexMeasurement[]): string[] {
 	return [

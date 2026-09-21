@@ -85,12 +85,13 @@ export {
 /**
  * Parse gdal's `other_tags` hstore rendering into a plain dict.
  *
- * The format is `"key"=>"value","key2"=>"value2"`, with `\"` and `\\` escaped inside either half. A regex split on `,`
- * is wrong — comma is ordinary text inside a value, and OSM names contain them (`"name"=>"Terminal 1, Departures"`) —
- * so this is a character scanner that only leaves a quoted string on an unescaped quote.
+ * The format is `"key"=>"value","key2"=>"value2"`, with `\"` and `\\` escaped inside
+ * either half. A regex split on `,` is wrong — comma is ordinary text inside a value,
+ * and OSM names contain them (`"name"=>"Terminal 1, Departures"`) — so this is a
+ * character scanner that only leaves a quoted string on an unescaped quote.
  *
- * Returns an empty dict for `null`/empty input rather than throwing: `other_tags` is absent whenever every tag on a
- * feature was promoted, which is an ordinary outcome rather than a fault.
+ * Returns an empty dict for `null`/empty input rather than throwing: `other_tags` is absent
+ * whenever every tag on a feature was promoted, which is an ordinary outcome rather than a fault.
  */
 export function parseOSMHstore(text: string | null | undefined): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -100,7 +101,8 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 	let i = 0
 
 	/**
-	 * Read one `"…"` literal starting at the next quote, honoring backslash escapes. Returns `null` at end of input.
+	 * Read one `"…"` literal starting at the next quote, honoring backslash escapes.
+	 * Returns `null` at end of input.
 	 */
 	const readQuoted = (): string | null => {
 		while (i < text.length && text[i] !== '"') {
@@ -117,8 +119,8 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 			const ch = text[i]!
 
 			if (ch === "\\") {
-				// A backslash escapes the next character verbatim — the only two gdal emits are `\"` and `\\`,
-				// but passing anything else through unchanged is the lossless choice.
+				// A backslash escapes the next character verbatim — the only two gdal emits are `\"`
+				// and `\\`, but passing anything else through unchanged is the lossless choice.
 				if (i + 1 < text.length) {
 					value += text[i + 1]
 				}
@@ -159,10 +161,12 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 }
 
 /**
- * Language codes harvested off `name:<lang>` keys. Deliberately permissive — OSM carries BCP-47-ish subtags (`zh-Hant`,
- * `pt-BR`) alongside bare ISO 639 codes, and the lexicon build downstream is the right place to decide which it trusts.
- * What this rejects is the `name:*` keys that are not languages: `name:left`, `name:right`, `name:prefix`,
- * `name:signed`, `name:etymology` and friends, which are documented OSM semantics with nothing linguistic about them.
+ * Language codes harvested off `name:<lang>` keys. Deliberately permissive —
+ * OSM carries BCP-47-ish subtags (`zh-Hant`, `pt-BR`) alongside bare ISO 639 codes,
+ * and the lexicon build downstream is the right place to decide which it trusts.
+ * What this rejects is the `name:*` keys that are not languages: `name:left`,
+ * `name:right`, `name:prefix`, `name:signed`, `name:etymology` and friends,
+ * which are documented OSM semantics with nothing linguistic about them.
  */
 const NON_LANGUAGE_NAME_SUFFIXES = new Set([
 	"left",
@@ -203,17 +207,19 @@ export function harvestLocalizedNames(tags: Readonly<Record<string, string | und
  */
 export interface SubVenueSourceRow {
 	/**
-	 * The designator the matched rule attests — `terminal`, `gate`, `platform`, `station`, `airport`, `campus`.
+	 * The designator the matched rule attests — `terminal`, `gate`, `platform`,
+	 * `station`, `airport`, `campus`.
 	 */
 	designatorID: string
 	tier: SubVenueTier
 	/**
-	 * The feature's default `name` tag, `null` when unnamed. A gate is very often unnamed and carries only `ref`.
+	 * The feature's default `name` tag, `null` when unnamed.
+	 * A gate is very often unnamed and carries only `ref`.
 	 */
 	name: string | null
 	/**
-	 * The feature's `ref` tag — the identifier half of `Gate A12` / `Terminal 2F`, which OSM keeps out of `name` far more
-	 * consistently than it keeps it in.
+	 * The feature's `ref` tag — the identifier half of `Gate A12` / `Terminal 2F`,
+	 * which OSM keeps out of `name` far more consistently than it keeps it in.
 	 */
 	ref: string | null
 	/**
@@ -233,15 +239,17 @@ export interface SubVenueSourceRow {
 }
 
 /**
- * Decode one ogr2ogr GeoJSONSeq feature into a {@link SubVenueSourceRow}, or `null` when it satisfies no rule, carries
- * no usable geometry, or has no name of any kind (no `name`, no `ref`, no `name:<lang>`).
+ * Decode one ogr2ogr GeoJSONSeq feature into a {@link SubVenueSourceRow}, or `null`
+ * when it satisfies no rule, carries no usable geometry, or has no name of any
+ * kind (no `name`, no `ref`, no `name:<lang>`).
  *
- * The last condition is the yield filter that matters: unnamed geometry is the majority of `railway=platform` and
- * `aeroway=gate` in OSM, and a lexicon built from names has nothing to learn from a row that has none.
+ * The last condition is the yield filter that matters: unnamed geometry is the
+ * majority of `railway=platform` and `aeroway=gate` in OSM, and a lexicon built
+ * from names has nothing to learn from a row that has none.
  *
- * `promotedProps` are the feature's own GeoJSON properties (aliased tag columns plus `name`/`ref`); everything else
- * comes out of the parsed `other_tags` hstore. The two are merged before matching because a key's side of that split is
- * a property of the layer rather than of the rule.
+ * `promotedProps` are the feature's own GeoJSON properties (aliased tag columns plus `name`/`ref`); everything
+ * else comes out of the parsed `other_tags` hstore. The two are merged before matching
+ * because a key's side of that split is a property of the layer rather than of the rule.
  */
 export function toSubVenueSourceRow(
 	feature: { properties?: Record<string, unknown>; geometry?: { type?: string; coordinates?: unknown } },
@@ -294,8 +302,8 @@ export function toSubVenueSourceRow(
 }
 
 /**
- * Run ogr2ogr against one layer, yielding matched {@link SubVenueSourceRow}s from its GeoJSONSeq stdout. Mirrors
- * `extract-poi.ts`'s `runPOILayer` process-spawn / stderr-capture / exit-code idiom exactly.
+ * Run ogr2ogr against one layer, yielding matched {@link SubVenueSourceRow}s from its GeoJSONSeq stdout.
+ * Mirrors `extract-poi.ts`'s `runPOILayer` process-spawn / stderr-capture / exit-code idiom exactly.
  */
 async function* runSubVenueLayer(
 	pbfPath: string,
@@ -319,12 +327,12 @@ async function* runSubVenueLayer(
 }
 
 /**
- * Stream every named transport structure matching `rules` (default {@link SUBVENUE_TAG_RULES}) out of a `.osm.pbf`
- * extract's `points` + `multipolygons` layers.
+ * Stream every named transport structure matching `rules` (default {@link SUBVENUE_TAG_RULES})
+ * out of a `.osm.pbf` extract's `points` + `multipolygons` layers.
  *
- * A feature mapped as both a node and an area (common for large terminals) yields twice, once per layer, with different
- * coordinates. De-duplication is the consumer's call — the lexicon build counts distinct surfaces and does not care,
- * while a corpus extract would.
+ * A feature mapped as both a node and an area (common for large terminals) yields twice,
+ * once per layer, with different coordinates. De-duplication is the consumer's call —
+ * the lexicon build counts distinct surfaces and does not care, while a corpus extract would.
  */
 export async function* extractOSMSubVenues(
 	pbfPath: string,
@@ -339,8 +347,8 @@ export interface WriteSubVenueJSONLOptions {
 	pbfPath: string
 	outPath: string
 	/**
-	 * ISO 3166-1 alpha-2 stamped onto every row. A Geofabrik extract's country is a property of the invocation — see the
-	 * module docstring — so it arrives here rather than out of a feature.
+	 * ISO 3166-1 alpha-2 stamped onto every row. A Geofabrik extract's country is a property of
+	 * the invocation — see the module docstring — so it arrives here rather than out of a feature.
 	 */
 	country?: string
 	rules?: SubVenueTagRule[]
@@ -349,10 +357,12 @@ export interface WriteSubVenueJSONLOptions {
 /**
  * Run the extractor over one `.osm.pbf` and write the rows as jsonl, one object per line.
  *
- * The step between a Geofabrik download and `mailwoman corpus sub-venue-lexicon`, factored out of the ad-hoc script
- * wave 1 used because wave 2 runs it five times. Backpressure is honoured (`drain`) — the Japan extract is 184,000 rows
- * and 40 MB, and an unawaited `write` loop buffers all of it. Measured on this box: 340 MB of Hessen produced 27,234
- * rows in 44 s, 2.5 GB of Japan produced 183,999 in 371 s, both dominated by ogr2ogr rather than by this loop.
+ * The step between a Geofabrik download and `mailwoman corpus sub-venue-lexicon`,
+ * factored out of the ad-hoc script wave 1 used because wave 2 runs it five times.
+ * Backpressure is honoured (`drain`) — the Japan extract is 184,000 rows and 40 MB,
+ * and an unawaited `write` loop buffers all of it. Measured on this box: 340 MB of
+ * Hessen produced 27,234 rows in 44 s, 2.5 GB of Japan produced 183,999 in 371 s,
+ * both dominated by ogr2ogr rather than by this loop.
  *
  * Returns the row count.
  */

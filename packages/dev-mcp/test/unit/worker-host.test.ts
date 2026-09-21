@@ -20,10 +20,11 @@ const TOOLS_PATH = STUB_DIR.resolve("tools.json")
 const JOBS_PATH = STUB_DIR.resolve("jobs.json")
 
 /**
- * A minimal worker speaking the IPC protocol: ready on handshake with the sidecar's tool metas, echo on call.
+ * A minimal worker speaking the IPC protocol: ready on handshake with the
+ * sidecar's tool metas, echo on call.
  *
- * `mwdev_job` is answered from a sidecar file rather than echoed, because the restart asks the worker for its running
- * jobs before killing it and the test has to be able to say what the worker holds.
+ * `mwdev_job` is answered from a sidecar file rather than echoed, because the restart asks the worker
+ * for its running jobs before killing it and the test has to be able to say what the worker holds.
  */
 await writeLocalTextFile(
 	`const { promises: fs } = process.getBuiltinModule("node:fs")
@@ -119,8 +120,8 @@ describe("WorkerHost restart", () => {
 	it("says the job list could not be read rather than reporting no jobs", async () => {
 		await writeTools({ type: "object", properties: {} })
 
-		// The sidecar is absent, so the stub refuses the call the way a worker with no registry would. An empty list here
-		// would tell the caller a relaunch is unnecessary, which is the one wrong answer.
+		// The sidecar is absent, so the stub refuses the call the way a worker with no registry would.
+		// An empty list here would tell the caller a relaunch is unnecessary, which is the one wrong answer.
 		await using host = new WorkerHost({
 			workerPath: STUB_PATH,
 			workerArgs: [TOOLS_PATH, STUB_DIR.resolve("absent.json").toString()],

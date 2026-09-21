@@ -31,8 +31,8 @@ import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
- * Open a bdc.db, or return `undefined` when `databasePath` is unset or the file is missing — never a raw sqlite throw.
- * See the module header.
+ * Open a bdc.db, or return `undefined` when `databasePath` is unset or the file is
+ * missing — never a raw sqlite throw. See the module header.
  */
 export async function openBDCDatabaseIfPresent(
 	databasePath: string | undefined
@@ -43,13 +43,15 @@ export async function openBDCDatabaseIfPresent(
 }
 
 /**
- * Same graceful discipline as {@link openBDCDatabaseIfPresent}, for the poi.db side of `plausibilityCheck`'s deps —
- * `undefined` here becomes the `{type:"abstain", reason:"requires_build_local_layer"}` entry `plausibilityCheck`
- * already produces when a claimed technology's physical-plant categories can't be searched. `POILookup` is dynamically
- * imported (matching `cli.ts`'s existing `resolver-wof-sqlite` laziness) since it's only ever needed when a caller
- * actually wires a poi.db. `lookup` and `schemadb` share one `DatabaseSync` handle (the agents.md "one connection,
- * shared" convention) — a real poi.db's rows and its `layer_manifest`/`layer_coverage` tables live in the same file in
- * production, so disposing `schemadb` (which closes the shared handle) is enough; `POILookup` never owns it
+ * Same graceful discipline as {@link openBDCDatabaseIfPresent}, for the poi.db side of `plausibilityCheck`'s
+ * deps — `undefined` here becomes the `{type:"abstain", reason:"requires_build_local_layer"}`
+ * entry `plausibilityCheck` already produces when a claimed technology's
+ * physical-plant categories can't be searched. `POILookup` is dynamically imported
+ * (matching `cli.ts`'s existing `resolver-wof-sqlite` laziness) since it's only ever needed
+ * when a caller actually wires a poi.db. `lookup` and `schemadb` share one `DatabaseSync`
+ * handle (the agents.md "one connection, shared" convention) — a real poi.db's rows
+ * and its `layer_manifest`/`layer_coverage` tables live in the same file in production,
+ * so disposing `schemadb` (which closes the shared handle) is enough; `POILookup` never owns it
  * (constructed with `{database}`, not `{databasePath}` — see `poi-lookup.ts`), so it never double-closes.
  */
 export async function openPlausibilityPOIDeps(databasePath: string | undefined): Promise<PlausibilityDeps["poi"]> {
@@ -65,9 +67,10 @@ export async function openPlausibilityPOIDeps(databasePath: string | undefined):
 }
 
 /**
- * Throws a friendly Error naming the layer when `databasePath` doesn't exist — `mailwoman_bdc_filing_landscape`'s guard
- * (decision 6b). `toolName` is threaded through so the message matches whichever tool calls this (today: only
- * `mailwoman_bdc_filing_landscape`).
+ * Throws a friendly Error naming the layer when `databasePath` doesn't
+ * exist — `mailwoman_bdc_filing_landscape`'s guard (decision 6b).
+ * `toolName` is threaded through so the message matches whichever tool calls this
+ * (today: only `mailwoman_bdc_filing_landscape`).
  */
 export async function assertBDCDatabaseExists(toolName: string, databasePath: string): Promise<void> {
 	if (!(await pathExists(databasePath))) {
@@ -76,8 +79,9 @@ export async function assertBDCDatabaseExists(toolName: string, databasePath: st
 }
 
 /**
- * Open a filer.db, or return `undefined` when `databasePath` is unset or the file is missing — never a raw sqlite throw
- * (mirroring {@link openBDCDatabaseIfPresent}). Used by `cli.ts`'s `mailwoman_filer_lookup` handler after
+ * Open a filer.db, or return `undefined` when `databasePath` is unset or the file is
+ * missing — never a raw sqlite throw (mirroring {@link openBDCDatabaseIfPresent}).
+ * Used by `cli.ts`'s `mailwoman_filer_lookup` handler after
  * {@link assertFilerDatabaseExists} has already confirmed the file is present.
  */
 export async function openFilerDatabaseIfPresent(
@@ -89,10 +93,10 @@ export async function openFilerDatabaseIfPresent(
 }
 
 /**
- * Throws a friendly Error naming the layer when `databasePath` doesn't exist — `mailwoman_filer_lookup`'s guard
- * (mirroring {@link assertBDCDatabaseExists}). `filerLookup` itself has no optional-dep abstain shape (criterion 4
- * makes it throw rather than answer unstamped), so filer.db is required unconditionally, same as bdc.db is for
- * `mailwoman_bdc_filing_landscape`.
+ * Throws a friendly Error naming the layer when `databasePath` doesn't exist — `mailwoman_filer_lookup`'s
+ * guard (mirroring {@link assertBDCDatabaseExists}). `filerLookup` itself has no optional-dep
+ * abstain shape (criterion 4 makes it throw rather than answer unstamped), so filer.db is
+ * required unconditionally, same as bdc.db is for `mailwoman_bdc_filing_landscape`.
  */
 export async function assertFilerDatabaseExists(toolName: string, databasePath: string): Promise<void> {
 	if (!(await pathExists(databasePath))) {

@@ -40,10 +40,11 @@ export interface GeocoderPanelsOptions {
 }
 
 /**
- * What the loader is fetching, as one line for the footer: the named step, then the loader's own progress text.
+ * What the loader is fetching, as one line for the footer: the named step,
+ * then the loader's own progress text.
  *
- * Each part is tested for on its own rather than filtered out of a list — an absent step and an absent progress line
- * are different readings, and a filter would report the same string for both.
+ * Each part is tested for on its own rather than filtered out of a list — an absent step and an
+ * absent progress line are different readings, and a filter would report the same string for both.
  */
 function describeLoad(loading: NonNullable<GeocoderRuntimeHandle["runtime"]["loading"]>): string {
 	const step = loading.stepLabels[loading.stepIndex]
@@ -67,8 +68,9 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 	const selectedVersion = runtime.selectedVersion ?? null
 	const selectedRelease: ReleaseInfo | undefined = releases.find((r) => r.version === selectedVersion)
 
-	// The named step first, then the loader's own line — "Gazetteer · 12.4 MB". Null once the runtime is ready, which
-	// is what removes the status from the footer rather than leaving a stale label there.
+	// The named step first, then the loader's own line — "Gazetteer · 12.4 MB".
+	// Null once the runtime is ready, which is what removes the status from the footer
+	// rather than leaving a stale label there.
 	const loading = runtime.loading
 	const loadStatus = runtime.ready || !loading ? null : describeLoad(loading)
 
@@ -85,8 +87,9 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			) : undefined,
 			bias: <GeoBiasRow active={geoBias.active} error={geoBias.error} onToggle={geoBias.toggle} />,
 			permalink: (text) => <PermalinkButton text={text} />,
-			// The two display toggles read on the model rather than on an address, so they live behind the Developer capsule
-			// rather than above every result — at the top of the result sheet they were the first thing a visitor met,
+			// The two display toggles read on the model rather than on an address,
+			// so they live behind the Developer capsule rather than above every result —
+			// at the top of the result sheet they were the first thing a visitor met,
 			// and on a phone they pushed the answer below the fold.
 			developerExtras: (
 				<>
@@ -95,8 +98,9 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 				</>
 			),
 			result: ({ result, selectedCandidateIndex, onSelectCandidate }) => {
-				// Display-only calibrated view: map each span's raw confidence through the calibrator when the toggle is on.
-				// A fresh copy, never a mutation of the runtime's result (the resolver and the compare read the raw nodes).
+				// Display-only calibrated view: map each span's raw confidence through the calibrator
+				// when the toggle is on. A fresh copy, never a mutation of the runtime's
+				// result (the resolver and the compare read the raw nodes).
 				const displayResult: ParseResult =
 					calibrateConfidence && calibrator
 						? {
@@ -125,15 +129,17 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			debugDrawer: ({ result }) => (
 				<DebugDrawer result={result} devMode={devMode} traceParse={traceParse} onClose={() => setDevMode(false)} />
 			),
-			// The feature inspector and its longitude/latitude/zoom readout are developer tooling, and were mounted for
-			// every visitor. They sit in MapLibre's bottom-right corner, directly above the footer strip, so on a narrow
-			// window the readout ran along the same edge as the Sources button — two unrelated things sharing one line,
-			// one of which nobody outside this repository has a use for. Shown under the same condition as the
-			// decode-path drawer.
+			// The feature inspector and its longitude/latitude/zoom readout are developer tooling,
+			// and were mounted for every visitor. They sit in MapLibre's bottom-right corner,
+			// directly above the footer strip, so on a narrow window the readout ran
+			// along the same edge as the Sources button — two unrelated things sharing
+			// one line, one of which nobody outside this repository has a use for.
+			// Shown under the same condition as the decode-path drawer.
 			mapControls: devMode ? <MapControls /> : null,
 			layers: ({ map }) => <LayerToggleControl map={map} />,
-			// The identity, the docs link, the commit and the credits live in `EarthFooter` so this footer and the canned
-			// runtime's cannot differ. `status` is the one thing only this path has: what is being fetched right now.
+			// The identity, the docs link, the commit and the credits live in
+			// `EarthFooter` so this footer and the canned runtime's cannot differ.
+			// `status` is the one thing only this path has: what is being fetched right now.
 			footer: <EarthFooter status={loadStatus} />,
 			compare: (ctx) => (
 				<Compare

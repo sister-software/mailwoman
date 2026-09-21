@@ -8,8 +8,9 @@
 import type { WeakResolutionReading } from "@mailwoman/core/resolver"
 
 /**
- * Options for {@linkcode oaResolverEval}. Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default
- * off, tri-states are the paired on/off flags the eval legs pin (`adminCoherence`/`noAdminCoherence`).
+ * Options for {@linkcode oaResolverEval}. Keys mirror the command's kebab flags
+ * (`--out-md` → `outMd`); booleans default off, tri-states are the paired on/off
+ * flags the eval legs pin (`adminCoherence`/`noAdminCoherence`).
  */
 export interface OAResolverEvalOptions {
 	/**
@@ -39,11 +40,13 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Per-locale FST gazetteer (`fst-<locale>.bin`) for the assembled arms (#1497).
 	 *
-	 * Only the assembled arms can use it — the FST is a decode-time prior applied by `createRuntimePipeline`, and the
-	 * bare `neural` arm calls `classifier.parse` directly. Omit for the byte-stable no-FST default.
+	 * Only the assembled arms can use it — the FST is a decode-time prior applied by
+	 * `createRuntimePipeline`, and the bare `neural` arm calls `classifier.parse` directly.
+	 * Omit for the byte-stable no-FST default.
 	 *
-	 * This is the tree's only FST-sensitive eval. `eval gauntlet` grades through `parseForGeocode`, which takes no FST at
-	 * all. Therefore, an FST change is invisible to it — see the note on `assembledPipeline` below.
+	 * This is the tree's only FST-sensitive eval. `eval gauntlet` grades through
+	 * `parseForGeocode`, which takes no FST at all. Therefore, an FST change is
+	 * invisible to it — see the note on `assembledPipeline` below.
 	 */
 	adminFST?: string
 	/**
@@ -104,16 +107,18 @@ export interface OAResolverEvalOptions {
 	noAdminCoherence?: boolean
 	/**
 	 * #42 tri-state pin: force postcodeCountryCoherence off — the pre-2026-08-05 configuration. This is the leg that
-	 * measures whether letting a coherent (postcode, locality) pair override `defaultCountry` is byte-flat on a US panel,
-	 * which is the one number the default-on promotion needed and could not get from a confound board.
+	 * measures whether letting a coherent (postcode, locality) pair override `defaultCountry`
+	 * is byte-flat on a US panel, which is the one number the default-on promotion needed
+	 * and could not get from a confound board.
 	 */
 	noPostcodeCountryCoherence?: boolean
 	/**
 	 * #370 tri-state pin: force postcodeConsistency off — the configuration before the pass was promoted.
 	 *
-	 * Paired with {@link postcodeConsistencyMaxMoveKm} this prices #2301's cap without a sweep: the rows whose answer
-	 * differs between this arm and the shipped one are exactly the rows the pass touched, and the distance between the
-	 * two coordinates is how far its fallback moved each one. A cap at K removes the moves above K, so one pair of runs
+	 * Paired with {@link postcodeConsistencyMaxMoveKm} this prices #2301's cap without a sweep:
+	 * the rows whose answer differs between this arm and the shipped one are exactly the
+	 * rows the pass touched, and the distance between the two coordinates is how far its
+	 * fallback moved each one. A cap at K removes the moves above K, so one pair of runs
 	 * prices every K, and the truth coordinate says which of them were wins.
 	 */
 	noPostcodeConsistency?: boolean
@@ -138,7 +143,8 @@ export interface OAResolverEvalOptions {
 	normalizeCase?: boolean
 	/**
 	 * #42 tri-state pin: force postcodeCountryCoherence on. The library default has been on since 2026-08-05, so this pin
-	 * is now a no-op restatement. it stays because a check leg that says what it graded is the point of a tri-state.
+	 * is now a no-op restatement. it stays because a check leg that says what it
+	 * graded is the point of a tri-state.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -184,19 +190,21 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Answer a repeated `findPlace` query from a per-run memo instead of querying the gazetteer again.
 	 *
-	 * The databases a run reads are sealed and read-only, so a query is a pure function of its arguments and the memo
-	 * cannot go stale. It does hand two callers the same hit list: the memo returns a fresh array each time so an
-	 * in-place sort stays local, but the hit objects themselves are shared.
+	 * The databases a run reads are sealed and read-only, so a query is a pure function of
+	 * its arguments and the memo cannot go stale. It does hand two callers the same hit list:
+	 * the memo returns a fresh array each time so an in-place sort stays local,
+	 * but the hit objects themselves are shared.
 	 *
 	 * On 2,000 US rows the run makes 22,109 calls over 6,872 distinct queries, at 2.2 ms per call.
 	 */
 	lookupMemo?: boolean
 	/**
-	 * Write a wall-time attribution JSON here: rig setup, and the per-row `neural.parse` / `resolver.resolveTree` split.
+	 * Write a wall-time attribution JSON here: rig setup, and the per-row
+	 * `neural.parse` / `resolver.resolveTree` split.
 	 *
-	 * Profiling only. The promotion comparator reads every file under the output directory byte-for-byte, so this path
-	 * must name somewhere outside it. Omitted (the default) the harness writes nothing and costs two `performance.now()`
-	 * calls per row.
+	 * Profiling only. The promotion comparator reads every file under the output
+	 * directory byte-for-byte, so this path must name somewhere outside it.
+	 * Omitted (the default) the harness writes nothing and costs two `performance.now()` calls per row.
 	 */
 	profileJSON?: string
 	/**

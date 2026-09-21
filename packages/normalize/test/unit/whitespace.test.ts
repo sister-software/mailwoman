@@ -103,8 +103,7 @@ describe("collapseWhitespace", () => {
 	})
 
 	it("offsetMap points to first whitespace in collapsed run", () => {
-		// raw:  "350  5th Ave"     (positions 0-11, double space at 3,4)
-		// out:  "350 5th Ave"      (positions 0-10)
+		// raw: "350 5th Ave" (positions 0-11, double space at 3,4) out: "350 5th Ave" (positions 0-10)
 		const r = collapseWhitespace("350  5th Ave")
 		expect(r.text).toBe("350 5th Ave")
 		expect(r.map[0]).toBe(0) // '3' → 0

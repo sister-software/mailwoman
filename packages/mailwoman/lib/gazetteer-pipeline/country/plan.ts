@@ -23,8 +23,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { AdminSource } from "#gazetteer-pipeline/country/sources"
 
 /**
- * Synthetic-id band boundaries, duplicated from the folds that mint them only as SQL literals — a query cannot import a
- * constant. `country-sources.test.ts` pins them against the exporting modules so the two cannot drift silently.
+ * Synthetic-id band boundaries, duplicated from the folds that mint them only as SQL
+ * literals — a query cannot import a constant. `country-sources.test.ts` pins them
+ * against the exporting modules so the two cannot drift silently.
  */
 const OVERTURE_BAND_START = 8_000_000_000_000
 const GEONAMES_BAND_START = 9_000_000_000_000
@@ -42,8 +43,9 @@ export interface SourceCensus {
 /**
  * Read the per-source row counts for one country out of an admin gazetteer.
  *
- * The band arithmetic is the measurement: nothing in `spr` records which fold wrote a row, so the id range is the only
- * evidence — which is also how the #1015 recipe had to be reconstructed after the manifest lagged.
+ * The band arithmetic is the measurement: nothing in `spr` records which fold wrote a row,
+ * so the id range is the only evidence — which is also how the #1015 recipe had
+ * to be reconstructed after the manifest lagged.
  */
 export function censusForCountry(adminDBPath: string, country: string): SourceCensus {
 	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
@@ -74,8 +76,9 @@ export function censusForCountry(adminDBPath: string, country: string): SourceCe
 /**
  * The source serving a country today, or `undefined` when it has no rows at all.
  *
- * Returns the largest contributor when several are present, because that is the one a move is actually moving away from
- * — and names the rest, so a two-source country reads as two-source rather than as its winner.
+ * Returns the largest contributor when several are present, because that is the
+ * one a move is actually moving away from — and names the rest, so a two-source
+ * country reads as two-source rather than as its winner.
  */
 export function servingSources(census: SourceCensus): AdminSource[] {
 	return (
@@ -93,18 +96,20 @@ export function servingSources(census: SourceCensus): AdminSource[] {
 /**
  * GitHub reports packed size. a WOF repo unpacks to millions of small GeoJSON files.
  *
- * Measured on a `--countries tr` sync: three repositories reported as 83.4 MB occupied 633 MB once cloned. The ratio is
- * stated here rather than at each call site because the number a caller is about to show an operator is the checkout
- * cost, and quoting the packed figure is how 65 GB arrived unannounced.
+ * Measured on a `--countries tr` sync: three repositories reported as 83.4 MB
+ * occupied 633 MB once cloned. The ratio is stated here rather than at each call site
+ * because the number a caller is about to show an operator is the checkout cost,
+ * and quoting the packed figure is how 65 GB arrived unannounced.
  */
 export const CHECKOUT_SIZE_RATIO = 7
 
 /**
  * One edit a move requires, as a reviewable statement rather than an applied patch.
  *
- * `defaults.ts` is reviewed like code and its entries carry measurements — the `IN` entry is six lines recording
- * 189,026 sub-locality nodes at 98.6% conversion. A tool that rewrote that file silently would drop the prose at the
- * one moment a reader most needs it, so the plan prints the edit and leaves the commit to a person.
+ * `defaults.ts` is reviewed like code and its entries carry measurements —
+ * the `IN` entry is six lines recording 189,026 sub-locality nodes at 98.6% conversion.
+ * A tool that rewrote that file silently would drop the prose at the one moment a reader
+ * most needs it, so the plan prints the edit and leaves the commit to a person.
  */
 export interface RecipeEdit {
 	list: string
@@ -132,8 +137,8 @@ export interface CountryPlan {
 /**
  * Compute the plan for moving `country` to `target`.
  *
- * Pure: every input is passed in, so the plan is testable without a gazetteer, a network, or a GitHub token — which is
- * also what lets `--plan` run in CI.
+ * Pure: every input is passed in, so the plan is testable without a gazetteer, a network,
+ * or a GitHub token — which is also what lets `--plan` run in CI.
  */
 export function planCountryMove(options: {
 	country: string
@@ -156,9 +161,10 @@ export function planCountryMove(options: {
 			)
 		}
 
-		// Only when the target is not already serving. A country whose rows already come from WOF needs no
-		// addition, and printing one would have a reader edit a list the country is on — the plan would then
-		// be describing work that is done, which is the failure mode a plan is supposed to remove.
+		// Only when the target is not already serving. A country whose rows already
+		// come from WOF needs no addition, and printing one would have a reader edit a
+		// list the country is on — the plan would then be describing work that is done,
+		// which is the failure mode a plan is supposed to remove.
 		if (!current.includes(AdminSource.WOF)) {
 			edits.push({
 				list: "DEFAULT_WOF_PRIORITY_COUNTRIES",
@@ -169,9 +175,9 @@ export function planCountryMove(options: {
 		}
 	}
 
-	// The half that nothing enforced. A country served by two sources folds both into one database, and
-	// `verifyAdmin` tests floors — rows >= minRows, countries >= minCountries — so duplication moves every check
-	// number in the passing direction and the build ships.
+	// The half that nothing enforced. A country served by two sources folds both into one
+	// database, and `verifyAdmin` tests floors — rows >= minRows, countries >= minCountries —
+	// so duplication moves every check number in the passing direction and the build ships.
 	for (const source of current) {
 		if (source === options.target) continue
 

@@ -28,7 +28,8 @@ const EXAMPLES = [
 ]
 
 /**
- * A stand-in for a map: a ground with enough tonal range that a translucent panel has something to be translucent over.
+ * A stand-in for a map: a ground with enough tonal range that a translucent
+ * panel has something to be translucent over.
  */
 function MapGround({ children }: { children: React.ReactNode }) {
 	return (

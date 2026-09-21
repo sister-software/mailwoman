@@ -49,8 +49,8 @@ export async function readReleaseManifest(dataRoot: string): Promise<DataRelease
 }
 
 /**
- * Resolve a database's on-disk path: the manifest-pinned `<family>-us-<slug>-<version>.db` when present, else the
- * legacy unversioned `<family>-us-<slug>.db`, else null if neither exists.
+ * Resolve a database's on-disk path: the manifest-pinned `<family>-us-<slug>-<version>.db`
+ * when present, else the legacy unversioned `<family>-us-<slug>.db`, else null if neither exists.
  */
 export async function resolveDatabasePath(
 	dataRoot: string,
@@ -72,9 +72,10 @@ export async function resolveDatabasePath(
 }
 
 /**
- * The path a `us`-family artifact already occupies on disk (versioned or legacy, via {@link resolveDatabasePath}), or
- * the artifact's own resolved path for a non-family artifact — `null` when nothing is there yet. Shared by `data pull`
- * and `data status`, so "already present" means the same thing to both.
+ * The path a `us`-family artifact already occupies on disk
+ * (versioned or legacy, via {@link resolveDatabasePath}), or the artifact's own
+ * resolved path for a non-family artifact — `null` when nothing is there yet.
+ * Shared by `data pull` and `data status`, so "already present" means the same thing to both.
  */
 export async function existingLocalPath(
 	dataRoot: string,

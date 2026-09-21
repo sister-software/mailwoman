@@ -24,7 +24,8 @@ export const LockedSourceSchema = z.object({
 })
 
 /**
- * `sources.lock.json`: the locked sources keyed by source id. Written only by the fetch. read by every build.
+ * `sources.lock.json`: the locked sources keyed by source id.
+ * Written only by the fetch. read by every build.
  */
 export const SourcesLockSchema = z.record(z.string(), LockedSourceSchema)
 
@@ -66,7 +67,8 @@ export const OutputManifest = z.object({
 })
 
 /**
- * `manifest.json` beside a body's artifacts: what was read, what was written, and the transformations between.
+ * `manifest.json` beside a body's artifacts: what was read, what was written,
+ * and the transformations between.
  */
 export const PlanetaryBuildManifestSchema = z.object({
 	schemaVersion: z.literal(1),

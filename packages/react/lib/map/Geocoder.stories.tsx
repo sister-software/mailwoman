@@ -73,7 +73,8 @@ type Story = StoryObj<typeof StatefulGeocoder>
 export const FullGeocoder: Story = {}
 
 /**
- * The same geocoder with host-injected panels wired into the DI bag (about / release / compare / debug / permalink).
+ * The same geocoder with host-injected panels wired into the DI bag
+ * (about / release / compare / debug / permalink).
  */
 export const WithPanels: Story = {
 	args: {

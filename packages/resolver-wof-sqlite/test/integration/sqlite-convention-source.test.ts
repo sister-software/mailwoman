@@ -17,8 +17,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 /**
- * A minimal WOF fixture (DE country #90 + Plauen) with an attached `address_convention` table in the same schema, so
- * the lookup auto-detects it.
+ * A minimal WOF fixture (DE country #90 + Plauen) with an attached `address_convention`
+ * table in the same schema, so the lookup auto-detects it.
  */
 function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
@@ -86,9 +86,10 @@ describe("convention-asset auto-detect → dispatch", () => {
 	})
 
 	it("an attached convention asset that drops postcode_area_resolution reroutes dispatch", async () => {
-		// The convention asset lives in the same (main) schema. the lookup auto-detects address_convention
-		// and queries it by the DE country WOF id (90). Dropping postcode_area_resolution means the typo
-		// no longer recovers Plauen — proof the asset drives findPlace with no opts.conventions injection.
+		// The convention asset lives in the same (main) schema. the lookup auto-detects
+		// address_convention and queries it by the DE country WOF id (90).
+		// Dropping postcode_area_resolution means the typo no longer recovers Plauen —
+		// proof the asset drives findPlace with no opts.conventions injection.
 		using lookup = new WOFSQLitePlaceLookup({
 			database: buildDB([{ wof_id: 90, convention: { candidateStrategies: ["fallback_fuzzy_name_match"] } }]),
 			buildFTS: true,

@@ -35,8 +35,9 @@ interface POINameSearch {
 }
 
 /**
- * Adapt a POI FTS reader into positive, exact-name evidence for the kind classifier. FTS supplies candidates. the
- * normalized equality check is the check, so a fuzzy/token-overlap result can never reroute an address.
+ * Adapt a POI FTS reader into positive, exact-name evidence for the kind classifier.
+ * FTS supplies candidates. the normalized equality check is the check,
+ * so a fuzzy/token-overlap result can never reroute an address.
  */
 export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 	return (phrase) => {
@@ -55,21 +56,23 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 }
 
 /**
- * The union phrase → subject lookup (part 2 of the brand-lexicon work): `@mailwoman/poi-taxonomy` categories first
- * (existing behavior, unchanged), then the taxonomy's own brand table (`lookupPOIBrand`, exact-phrase, no locale
- * filtering), then `@mailwoman/variant-aliases`' brand-kind regional slang (locale-restricted, e.g. "mcdo" →
- * fr-FR/fr-CA/fr-be) chained through `resolveBrandName` to recover the QID.
+ * The union phrase → subject lookup (part 2 of the brand-lexicon work): `@mailwoman/poi-taxonomy`
+ * categories first (existing behavior, unchanged), then the taxonomy's own brand table
+ * (`lookupPOIBrand`, exact-phrase, no locale filtering), then `@mailwoman/variant-aliases`'
+ * brand-kind regional slang (locale-restricted, e.g. "mcdo" → fr-FR/fr-CA/fr-be)
+ * chained through `resolveBrandName` to recover the QID.
  *
- * Precedence on a phrase that matches both a category and a brand: the category wins. Deterministic, and intentional —
- * `@mailwoman/poi-taxonomy`'s categories are the curated set. a brand phrase collision (none observed in the shipped
- * table as of the 2026-07-20 build) would be a data quality bug in the brand table rather than a case to special-case
- * here.
+ * Precedence on a phrase that matches both a category and a brand: the category wins.
+ * Deterministic, and intentional — `@mailwoman/poi-taxonomy`'s categories are the curated set.
+ * a brand phrase collision (none observed in the shipped table as of the 2026-07-20 build)
+ * would be a data quality bug in the brand table rather than a case to special-case here.
  */
 export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	let categoryHits = lookupPOICategory(phrase, locale)
 
-	// The taxonomy stays exact-phrase. this adapter supplies a deliberately small English morphology layer for query
-	// heads. Positive evidence is still required: the singularized phrase must itself hit the taxonomy.
+	// The taxonomy stays exact-phrase. this adapter supplies a deliberately small
+	// English morphology layer for query heads. Positive evidence is still required:
+	// the singularized phrase must itself hit the taxonomy.
 	if (!categoryHits.length && (!locale || locale.toLowerCase().startsWith("en"))) {
 		const words = phrase.trim().split(/\s+/)
 		const tail = words.at(-1)
@@ -163,8 +166,8 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 export interface POIIntentStageDeps {
 	lookup: POIPhraseLookup
 	/**
-	 * Parses the anchor remainder ("Springfield IL") through the address pipeline. Callers must hand in a pipeline
-	 * without the poi stage (recursion guard) — `createRuntimePipeline` does.
+	 * Parses the anchor remainder ("Springfield IL") through the address pipeline.
+	 * Callers must hand in a pipeline without the poi stage (recursion guard) — `createRuntimePipeline` does.
 	 */
 	parseAnchor: (text: string, opts?: PipelineOpts) => Promise<PipelineResult>
 	/**
@@ -199,8 +202,9 @@ export function createPOIIntentStage(
 							}
 						: {
 								kind: "category",
-								// Every category the subject reached, deduplicated and left in the lookup's own enumeration order —
-								// the executor searches their union, so a repeated id would probe the same leaves twice.
+								// Every category the subject reached, deduplicated and left in the
+								// lookup's own enumeration order — the executor searches their union,
+								// so a repeated id would probe the same leaves twice.
 								categoryIDs: [...new Set(matched.matches.map((hit) => hit.categoryID))],
 								matched: matched.match.matchedPhrase,
 							},
@@ -215,10 +219,11 @@ export function createPOIIntentStage(
 			intent.anchor = { text: matched.remainder, tree: anchor.tree }
 		}
 
-		// The place binding (#1999). A hit's `countryScope` is a claim about establishments, so it is judged against the
-		// country the anchor resolved to — which exists only now, after the anchor parse — and never against the caller's
-		// locale. Recorded on the intent whether or not it removed anything, so a receipt can say which country the set
-		// was bound to and what fell out.
+		// The place binding (#1999). A hit's `countryScope` is a claim about establishments,
+		// so it is judged against the country the anchor resolved to — which exists
+		// only now, after the anchor parse — and never against the caller's locale.
+		// Recorded on the intent whether or not it removed anything, so a receipt can say
+		// which country the set was bound to and what fell out.
 		if (intent.subject.kind === "category") {
 			const binding = bindCountryScope(matched.matches, resolvePOIAnchorCountry(intent))
 
@@ -243,13 +248,15 @@ export function createPOIIntentStage(
 /**
  * What the anchor's country does to a reached set: which categories stay searchable and which fall out.
  *
- * A category stays when any hit reaching it holds where the anchor is — an unscoped hit holds everywhere, a scoped one
- * holds when its list names the anchor's country. A `null` anchor country admits no scoped hit: a claim the curator
- * scoped to a place cannot be checked without knowing the place, and searching as though it held would answer with a
- * category the data there may not carry. Order is the lookup's own enumeration, and it still states no preference.
+ * A category stays when any hit reaching it holds where the anchor is — an unscoped
+ * hit holds everywhere, a scoped one holds when its list names the anchor's country.
+ * A `null` anchor country admits no scoped hit: a claim the curator scoped
+ * to a place cannot be checked without knowing the place, and searching as
+ * though it held would answer with a category the data there may not carry.
+ * Order is the lookup's own enumeration, and it still states no preference.
  *
- * `null` when no hit carries a scope at all — there was nothing to bind, and a receipt should not record a binding that
- * decided nothing.
+ * `null` when no hit carries a scope at all — there was nothing to bind,
+ * and a receipt should not record a binding that decided nothing.
  */
 export function bindCountryScope(
 	matches: ReadonlyArray<POIPhraseMatch>,

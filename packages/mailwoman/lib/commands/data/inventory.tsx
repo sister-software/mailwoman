@@ -105,10 +105,10 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 			...rollup(report.entries),
 		]
 
-		// A manifest whose build command cannot be run documents nothing, and both ways of failing that were
-		// found on the shipped artifacts: a path the workspace regroup moved, and a path under gitignored
-		// `scratchpad/` that exists only on the machine that built it. Reported separately from the count,
-		// because these artifacts pass every "has a manifest" check.
+		// A manifest whose build command cannot be run documents nothing, and both ways of
+		// failing that were found on the shipped artifacts: a path the workspace regroup moved,
+		// and a path under gitignored `scratchpad/` that exists only on the machine that built it.
+		// Reported separately from the count, because these artifacts pass every "has a manifest" check.
 		const repoRoot = String(repoRootPath())
 
 		const manifested = report.entries.filter((e) => e.provenance === Provenance.Manifested)

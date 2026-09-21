@@ -35,19 +35,21 @@ export const BIAS_BOOST = 4
 export const POP_BOOST = 4
 
 /**
- * `log10(population + 1)` at which the population term saturates — 6 means a population of one million warrants the
- * whole {@link POP_BOOST}, and larger populations warrant no more.
+ * `log10(population + 1)` at which the population term saturates — 6 means a population of
+ * one million warrants the whole {@link POP_BOOST}, and larger populations warrant no more.
  */
 export const POP_SCALE_LOG10 = 6
 
 /**
  * Distance at which the nearness term halves.
  *
- * Sharper than the FTS reader's 100 km on purpose: the candidate backend's score is log-population alone, with no bm25
- * document term, so the population signal is weaker relative to the bias and a gentle 100 km decay let a 230 km-distant
- * alias-exact township ("Paris Township", OH) edge out a global city ("Paris", FR) from a nearby view. At ~30 km the
- * boost reaches only candidates the user is actually looking at: an in-view namesake still wins (Dublin, OH from an
- * Ohio view), a distant one no longer does (Paris stays FR from a Michigan view).
+ * Sharper than the FTS reader's 100 km on purpose: the candidate backend's score is
+ * log-population alone, with no bm25 document term, so the population signal is weaker
+ * relative to the bias and a gentle 100 km decay let a 230 km-distant alias-exact township
+ * ("Paris Township", OH) edge out a global city ("Paris", FR) from a nearby view.
+ * At ~30 km the boost reaches only candidates the user is actually looking at:
+ * an in-view namesake still wins (Dublin, OH from an Ohio view), a distant one no
+ * longer does (Paris stays FR from a Michigan view).
  */
 export const PROX_SCALE_KM = 30
 
@@ -61,8 +63,9 @@ export interface ProximityBias {
 }
 
 /**
- * The candidate fields the re-rank reads and writes. Structural rather than a concrete candidate type, so the Node
- * reader's `PlaceCandidate` and the browser twin's row shape both satisfy it without an adapter.
+ * The candidate fields the re-rank reads and writes. Structural rather than a
+ * concrete candidate type, so the Node reader's `PlaceCandidate` and the browser
+ * twin's row shape both satisfy it without an adapter.
  */
 export interface ProximityRerankable {
 	lat: number
@@ -72,16 +75,16 @@ export interface ProximityRerankable {
 }
 
 /**
- * Population plus nearness on one additive scale. Exported for tests and for a caller that wants the value without the
- * sort. ordinary callers want {@link applyProximityRerank}.
+ * Population plus nearness on one additive scale. Exported for tests and for a caller that
+ * wants the value without the sort. ordinary callers want {@link applyProximityRerank}.
  */
 export function combinedProminence(candidate: ProximityRerankable, bias: readonly ProximityBias[]): number {
 	const popBase = candidate.prominence ?? candidate.score
 	const popTerm = POP_BOOST * Math.min(1, Math.max(0, popBase) / POP_SCALE_LOG10)
 	let proxTerm = 0
 
-	// A candidate at the null island has no coordinate rather than a coordinate at 0,0 — it warrants no nearness term rather
-	// than an enormous one.
+	// A candidate at the null island has no coordinate rather than a coordinate at 0,0 —
+	// it warrants no nearness term rather than an enormous one.
 	if (!(candidate.lat === 0 && candidate.lon === 0)) {
 		for (const b of bias) {
 			const d = haversineKm(b.lat, b.lon, candidate.lat, candidate.lon)
@@ -97,9 +100,10 @@ export function combinedProminence(candidate: ProximityRerankable, bias: readonl
 }
 
 /**
- * Re-order `candidates` in place by {@link combinedProminence}, persisting each combined value into `prominence` so the
- * resolver walk's own `prominence ?? score` sort carries the bias order rather than undoing it. Stable within equal
- * prominence, preserving the population order the index already gave. A caller with no bias hints must not call this —
+ * Re-order `candidates` in place by {@link combinedProminence}, persisting each combined
+ * value into `prominence` so the resolver walk's own `prominence ?? score` sort carries
+ * the bias order rather than undoing it. Stable within equal prominence, preserving the
+ * population order the index already gave. A caller with no bias hints must not call this —
  * the no-bias path is plain population order by construction.
  */
 export function applyProximityRerank<T extends ProximityRerankable>(

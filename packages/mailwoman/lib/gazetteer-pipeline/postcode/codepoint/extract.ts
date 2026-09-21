@@ -50,8 +50,8 @@ const CSV_ENTRY_PREFIX = "Data/CSV/"
 const DOC_ENTRY_PREFIX = "Doc/"
 
 /**
- * The header block of `Doc/metadata.txt`, parsed off the leading lines. Everything after these is the per-area count
- * table.
+ * The header block of `Doc/metadata.txt`, parsed off the leading lines.
+ * Everything after these is the per-area count table.
  */
 export interface CodePointMetadata {
 	/**
@@ -59,8 +59,8 @@ export interface CodePointMetadata {
 	 */
 	product: string
 	/**
-	 * `2026.2.0` — the internal dataset version. Distinct from the Downloads API's `2026-05` release label. both are
-	 * recorded in the database's provenance because they move independently.
+	 * `2026.2.0` — the internal dataset version. Distinct from the Downloads API's `2026-05` release
+	 * label. both are recorded in the database's provenance because they move independently.
 	 */
 	datasetVersion: string
 	/**
@@ -84,10 +84,11 @@ export interface CodePointMetadata {
 /**
  * Parse `Doc/metadata.txt`.
  *
- * The format is positional and undocumented, so this is defensive: the four header fields are located by their `KEY:`
- * label rather than by line number, and the count table is every remaining line that looks like `<area> <integer>`. A
- * line that does not is skipped rather than fatal — OS has added header fields before (the `RM update date` row is
- * newer than the product), and a new one must not break the build.
+ * The format is positional and undocumented, so this is defensive: the four
+ * header fields are located by their `KEY:` label rather than by line number,
+ * and the count table is every remaining line that looks like `<area> <integer>`.
+ * A line that does not is skipped rather than fatal — OS has added header fields before
+ * (the `RM update date` row is newer than the product), and a new one must not break the build.
  */
 export function parseCodePointMetadata(text: string): CodePointMetadata {
 	const field = (label: string): string => {
@@ -122,8 +123,8 @@ export interface ExtractCodePointOptions {
 	 */
 	archivePath: string
 	/**
-	 * Directory the `Data/CSV` and `Doc` trees are written under — normally the same dated acquisition directory the
-	 * archive sits in.
+	 * Directory the `Data/CSV` and `Doc` trees are written under — normally the same
+	 * dated acquisition directory the archive sits in.
 	 */
 	destDir: string
 	onPhase?: (phase: string, detail?: string) => void

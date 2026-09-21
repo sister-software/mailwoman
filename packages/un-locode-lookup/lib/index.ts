@@ -47,8 +47,8 @@ export function parseUNLocodeCoords(raw: string): { lat: number; lon: number } |
 export class UNLocodeLookup implements Disposable {
 	#db: DatabaseClient<UNLocodeDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
+	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 	#byName: ReturnType<DatabaseClient["prepare"]>
@@ -113,8 +113,9 @@ export class UNLocodeLookup implements Disposable {
 }
 
 /**
- * Build an `Annotator` filling `AnnotationSet.unLocode`. Prefers a country + place-name match (when the resolver
- * supplies them via `countryCode` / `placeName`), and falls back to the nearest coordinate.
+ * Build an `Annotator` filling `AnnotationSet.unLocode`.
+ * Prefers a country + place-name match (when the resolver supplies them via `countryCode` / `placeName`),
+ * and falls back to the nearest coordinate.
  */
 export function makeUNLocodeAnnotator(lookup: UNLocodeLookup, opts: { maxKm?: number } = {}): Annotator {
 	return ({ lat, lon, countryCode, placeName }): Partial<AnnotationSet> => {

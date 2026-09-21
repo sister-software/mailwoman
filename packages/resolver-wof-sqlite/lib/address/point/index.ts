@@ -33,14 +33,14 @@ import {
 } from "#street/normalize"
 
 /**
- * The columns this lookup projects — a typed projection of the shared {@link AddressPointTable}, so a column rename in
- * `mailwoman situs address-points` (the writer) is a compile error here (the reader).
+ * The columns this lookup projects — a typed projection of the shared {@link AddressPointTable}, so a
+ * column rename in `mailwoman situs address-points` (the writer) is a compile error here (the reader).
  */
 type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "release" | "locality_norm" | "postcode">
 
 /**
- * The 4 columns the reader SELECTs, in the schema's order — referenced by the prepared SELECTs so the projected
- * `AddressPointRow` stays in lockstep with the shared schema.
+ * The 4 columns the reader SELECTs, in the schema's order — referenced by the prepared SELECTs
+ * so the projected `AddressPointRow` stays in lockstep with the shared schema.
  */
 const SELECT_COLS = "lat, lon, source, release, locality_norm, postcode"
 
@@ -56,8 +56,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		| undefined
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey, number: string], AddressPointRow> | undefined
 	/**
-	 * The scope key matched by its tail — a `zh` query that names the 鄉鎮市區 without its 縣市. Narrowed by the (street,
-	 * number) index first, so the like walks the handful of rows that share the pair.
+	 * The scope key matched by its tail — a `zh` query that names the 鄉鎮市區 without its 縣市.
+	 * Narrowed by the (street, number) index first, so the like walks the handful of rows that share the pair.
 	 */
 	readonly #byLocalityTail:
 		| PreparedGet<[street: StreetKey, number: string, tailPattern: string], AddressPointRow>
@@ -71,22 +71,24 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 
 	/**
 	 * @param dbPath Extract path.
-	 * @param opts.streetLocale The street-normalization locale this extract was built with — must match, or every key
-	 *   misses. Defaults to `"us"` (the situs tier), so existing callers are unchanged.
-	 * @param opts.localityKeys Whether the extract's `locality_norm` is a full place name a query can be held to. The BAN
-	 *   and OSM extracts write the commune or `addr:city` in full. the US situs extract writes the NAD city field, which
-	 *   several counties abbreviate (`addi` for Addison on 5,174 Texas rows, 327,264 Texas rows at four characters or
-	 *   fewer) or give as the parent town (`easton` for North Easton). A key like that can steer which row answers but
-	 *   cannot refuse one, so it never contradicts. Defaults from the street locale: `"us"` is abbreviated, the rest
-	 *   full.
+	 * @param opts.streetLocale The street-normalization locale this extract was built with — must match,
+	 *   or every key misses. Defaults to `"us"` (the situs tier), so existing callers are unchanged.
+	 * @param opts.localityKeys Whether the extract's `locality_norm` is a full place name a
+	 *   query can be held to. The BAN and OSM extracts write the commune or `addr:city` in
+	 *   full. the US situs extract writes the NAD city field, which several counties abbreviate
+	 *   (`addi` for Addison on 5,174 Texas rows, 327,264 Texas rows at four characters or fewer)
+	 *   or give as the parent town (`easton` for North Easton).
+	 *   A key like that can steer which row answers but cannot refuse one, so it never contradicts.
+	 *   Defaults from the street locale: `"us"` is abbreviated, the rest full.
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale; localityKeys?: "full" | "abbreviated" } = {}) {
 		this.#db = new DatabaseClient<DB>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "us"
 		this.#localityKeys = opts.localityKeys ?? (this.#locale === "us" ? "abbreviated" : "full")
 
-		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
-		// `address_point` table this lookup is a no-op miss rather than a crash that loses the whole state (#568).
+		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file):
+		// with no `address_point` table this lookup is a no-op miss rather than a
+		// crash that loses the whole state (#568).
 		if (hasTable(this.#db, "address_point")) {
 			this.#byPostcode = prepareGet(
 				this.#db,
@@ -134,10 +136,11 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 
 		if (!number) return null
 
-		// A `zh` extract scopes a point by 縣市 + 鄉鎮市區, the pair the parse tags `region` + `subregion`; the Taiwanese
-		// register carries no postcode and the parse no `locality`. The pair becomes the locality key here, on the
-		// reader that was built with the same fold, and a Latin extract never sees the two fields. A line that names
-		// only the 鄉鎮市區 (`中和區中興街281號`, 14.7% of the TW board) matches the stored pair by its tail instead.
+		// A `zh` extract scopes a point by 縣市 + 鄉鎮市區, the pair the parse tags `region` +
+		// `subregion`; the Taiwanese register carries no postcode and the parse no `locality`.
+		// The pair becomes the locality key here, on the reader that was built with the same fold,
+		// and a Latin extract never sees the two fields. A line that names only the 鄉鎮市區
+		// (`中和區中興街281號`, 14.7% of the TW board) matches the stored pair by its tail instead.
 		const scoped =
 			this.#locale === "zh" && !query.locality && query.subregion
 				? query.region
@@ -146,8 +149,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 				: query
 
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
-		// collapse and the saint↔st register swap — each variant runs the full number ladder below, and
-		// the first variant to answer wins, so an attested literal key is never second-guessed.
+		// collapse and the saint↔st register swap — each variant runs the full number ladder below,
+		// and the first variant to answer wins, so an attested literal key is never second-guessed.
 		let row: AddressPointRow | undefined
 
 		for (const streetNorm of streetKeyVariants(query.street, streetLocaleForSurface(query.street, this.#locale))) {
@@ -169,8 +172,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	}
 
 	/**
-	 * The full number ladder for one normalized street key: exact, then the range low-end, then letter-suffix spacing
-	 * with the base-number fall — see each rung's note in place.
+	 * The full number ladder for one normalized street key: exact, then the range low-end,
+	 * then letter-suffix spacing with the base-number fall — see each rung's note in place.
 	 */
 	#findForKey(
 		streetNorm: StreetKey,
@@ -187,9 +190,9 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		let row = this.#probe(streetNorm, number, query)
 
 		// Range-surface fallback: every register this reader serves stores one number per point
-		// (G-NAF `NUMBER_FIRST`, BAN, OA, OSM `addr:housenumber`), but the attested surface is often
-		// a range — "385-387 Esplanade" keys `385`. Null-only: an exact range key that matched above
-		// (some OSM points do carry "385-387" verbatim) is never second-guessed.
+		// (G-NAF `NUMBER_FIRST`, BAN, OA, OSM `addr:housenumber`), but the attested surface is
+		// often a range — "385-387 Esplanade" keys `385`. Null-only: an exact range key that
+		// matched above (some OSM points do carry "385-387" verbatim) is never second-guessed.
 		if (!row) {
 			const low = /^(\d+[a-z]?)-\d+[a-z]?$/.exec(number)?.[1]
 
@@ -232,8 +235,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	}
 
 	/**
-	 * The scope ladder for one (street, number) key: postcode, then locality, then the bbox fall-through — each rung only
-	 * when the prior missed.
+	 * The scope ladder for one (street, number) key: postcode, then locality,
+	 * then the bbox fall-through — each rung only when the prior missed.
 	 */
 	#probe(
 		streetNorm: StreetKey,
@@ -251,11 +254,13 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			const postcode = query.postcode.trim()
 			const localityKey = query.locality ? this.#localityKey(query.locality) : undefined
 
-			// A postcode can span several places — DE 04509 covers Schönwölkau and Werlitzsch, both with a Teichstraße 3 —
-			// so when the query names a locality the row whose own locality agrees is asked for first. Only when no such
-			// row exists does the postcode-only row answer, and then only if its locality does not name a different place
-			// (see `#scopeContradicts` for what "different" tolerates): a query naming a third village under the postcode
-			// falls through to the locality rung rather than answering the wrong rooftop.
+			// A postcode can span several places — DE 04509 covers Schönwölkau and Werlitzsch,
+			// both with a Teichstraße 3 — so when the query names a locality the row whose
+			// own locality agrees is asked for first. Only when no such row exists does
+			// the postcode-only row answer, and then only if its locality does not name a
+			// different place (see `#scopeContradicts` for what "different" tolerates):
+			// a query naming a third village under the postcode falls through to the
+			// locality rung rather than answering the wrong rooftop.
 			const agreeing = localityKey ? this.#byPostcodeLocality!(postcode, localityKey, streetNorm, number) : undefined
 			const candidate = agreeing ?? this.#byPostcode!(postcode, streetNorm, number)
 
@@ -263,9 +268,10 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		}
 
 		if (!row && query.locality) {
-			// FR extracts key arrondissement communes at the base city (both-sides fold, see the BAN
-			// builder + stripArrondissement) — fold the probe too so "Paris 13e Arrondissement" and
-			// "Paris" both hit. No-op for "us" extracts and every non-arrondissement commune.
+			// FR extracts key arrondissement communes at the base city
+			// (both-sides fold, see the BAN builder + stripArrondissement) —
+			// fold the probe too so "Paris 13e Arrondissement" and "Paris" both hit.
+			// No-op for "us" extracts and every non-arrondissement commune.
 			row = this.#byLocality!(this.#localityKey(query.locality), streetNorm, number)
 		}
 
@@ -274,16 +280,19 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			row = this.#byLocalityTail(streetNorm, number, `%${query.localityTail}`)
 		}
 
-		// Bbox fall-through (#247): the point carries no postcode/locality of its own, but its coordinate falls
-		// inside the resolved locality's box. Only reached when the scoped probes missed and a bbox was supplied.
+		// Bbox fall-through (#247): the point carries no postcode/locality of its own,
+		// but its coordinate falls inside the resolved locality's box.
+		// Only reached when the scoped probes missed and a bbox was supplied.
 		if (!row && query.bbox) {
 			const b = query.bbox
 			const candidate = this.#byBbox!(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon)
 
-			// A register row that carries its own scope and was not found by the scoped rungs is a different address that
-			// happens to share the street and number inside the box: `10 rue de la République, 75008 Paris` reached
-			// Servon's `10 rue de la République` (postcode 77170) 26 km away this way, at rooftop tier and 1 m uncertainty.
-			// The rung exists for points with no scope of their own. a point whose scope disagrees with the query is a miss.
+			// A register row that carries its own scope and was not found by the scoped rungs is
+			// a different address that happens to share the street and number inside the box:
+			// `10 rue de la République, 75008 Paris` reached Servon's `10 rue de la République`
+			// (postcode 77170) 26 km away this way, at rooftop tier and 1 m uncertainty.
+			// The rung exists for points with no scope of their own. a point whose
+			// scope disagrees with the query is a miss.
 			row = candidate && !this.#scopeContradicts(candidate, query) ? candidate : undefined
 		}
 
@@ -291,9 +300,10 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	}
 
 	/**
-	 * The query's locality folded the way the extract's builder folded its `locality_norm`. FR extracts key
-	 * arrondissement communes at the base city (both-sides fold, see the BAN builder + stripArrondissement), so "Paris
-	 * 13e Arrondissement" and "Paris" both hit. a no-op for every other locale.
+	 * The query's locality folded the way the extract's builder folded its
+	 * `locality_norm`. FR extracts key arrondissement communes at the base city
+	 * (both-sides fold, see the BAN builder + stripArrondissement), so "Paris 13e
+	 * Arrondissement" and "Paris" both hit. a no-op for every other locale.
 	 */
 	#localityKey(locality: string): NameKey {
 		if (this.#locale === "fr") return stripArrondissement(normalizeLocalityForKey(locality))
@@ -302,9 +312,10 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	}
 
 	/**
-	 * Whether a row's own postcode or locality names a different place than the query did. Absent scope on the row is not
-	 * a contradiction — it is the case the bbox rung was built for — and a rung that matched on a field cannot contradict
-	 * it, so at the postcode rung only the locality can disagree and at the bbox rung either can.
+	 * Whether a row's own postcode or locality names a different place than the query did.
+	 * Absent scope on the row is not a contradiction — it is the case the bbox rung was
+	 * built for — and a rung that matched on a field cannot contradict it, so at the
+	 * postcode rung only the locality can disagree and at the bbox rung either can.
 	 *
 	 * The locality is consulted only on an extract whose keys are full names (the constructor's `localityKeys`). Under
 	 * exact comparison against the US extract's abbreviated keys, the postcode rung refused `4900 Airport Pkwy, Addison

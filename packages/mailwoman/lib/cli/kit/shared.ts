@@ -12,8 +12,8 @@
 
 import { formatAsCountryISO2, type CountryISO2 } from "@mailwoman/codex/country"
 import { formatAsUSStateAbbreviation, type USStateAbbreviation } from "@mailwoman/codex/us"
-// Never the `@mailwoman/core` barrel: this is shared by every interactive command, and the barrel needlessly widens
-// each selected command's import graph.
+// Never the `@mailwoman/core` barrel: this is shared by every interactive command,
+// and the barrel needlessly widens each selected command's import graph.
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { spawnProcessSync } from "@mailwoman/core/process"
@@ -45,7 +45,8 @@ export type ParsedCommandComponent<Options = Record<string, never>, Args extends
 /**
  * A command component whose options are derived from the command's own `spec`.
  *
- * This is the annotation a command wants: naming `typeof spec` leaves the flags as the one declaration, where
+ * This is the annotation a command wants: naming `typeof spec` leaves the
+ * flags as the one declaration, where
  * {@linkcode ParsedCommandComponent} takes an options type a command had to write beside its spec and keep in agreement
  * with it. `ParsedCommandComponent` stays for a command that names its options type for another reason.
  */
@@ -66,9 +67,10 @@ export type CommandTaskState<T> =
 	| { status: "error"; message: string }
 
 /**
- * Run a command's one-shot async task and own the exit-code discipline: rejection renders the error state and exits 1.
- * resolution exits with `exitCode(result)` (default 0) — always after the final frame committed. Replaces the
- * copy-pasted useEffect/useState/setImmediate dance in every command.
+ * Run a command's one-shot async task and own the exit-code discipline:
+ * rejection renders the error state and exits 1. resolution exits with
+ * `exitCode(result)` (default 0) — always after the final frame committed.
+ * Replaces the copy-pasted useEffect/useState/setImmediate dance in every command.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- One-shot by design: the task/exitCode closures
 	 capture their options at mount. tracking them (fresh closure per render) would re-run the task
@@ -95,7 +97,8 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 /* oxlint-enable react-hooks/exhaustive-deps */
 
 /**
- * The lifecycle of a {@linkcode lazyComponent}'s import. Deliberately the same three states as
+ * The lifecycle of a {@linkcode lazyComponent}'s import.
+ * Deliberately the same three states as
  * {@linkcode CommandTaskState}: a deferred import is a one-shot async task that happens to resolve to a component.
  */
 type LazyComponentState<P extends object> =
@@ -106,22 +109,25 @@ type LazyComponentState<P extends object> =
 /**
  * Wrap a heavy child component so its module loads on first render rather than at import.
  *
- * A component reached from JSX normally needs a top-level import, so one `import { DebugView } from "…"` in a branch
- * nobody took still widens the selected command's graph. `load` runs in an effect instead, and the wrapper renders
- * nothing until it resolves.
+ * A component reached from JSX normally needs a top-level import, so one
+ * `import { DebugView } from "…"` in a branch nobody took still widens the selected command's graph.
+ * `load` runs in an effect instead, and the wrapper renders nothing until it resolves.
  *
- * Nothing on screen for one frame is the right fallback here and not a placeholder: Ink erases the previous frame when
- * it draws, so a "loading…" line taller than zero is a line the real first frame has to scrub. Commands that want a
- * spinner own one inside the loaded component, where it can outlive the load.
+ * Nothing on screen for one frame is the right fallback here and not a placeholder:
+ * Ink erases the previous frame when it draws, so a "loading…" line taller than zero
+ * is a line the real first frame has to scrub. Commands that want a spinner own one
+ * inside the loaded component, where it can outlive the load.
  *
- * A rejected import is a command failure, and it takes {@linkcode useCommandTask}'s exact interface: the message renders
- * red and the process exits 1 from a `setImmediate`, after the frame has committed. That matters here more than for an
- * ordinary task — the usual reason a deferred import rejects is a missing optional peer dependency, and the alternative
- * is an unhandled rejection: node's default handler prints a react-reconciler stack over whatever the command had drawn
- * and takes the exit code with it.
+ * A rejected import is a command failure, and it takes {@linkcode useCommandTask}'s exact
+ * interface: the message renders red and the process exits 1 from a `setImmediate`,
+ * after the frame has committed. That matters here more than for an ordinary task —
+ * the usual reason a deferred import rejects is a missing optional peer dependency,
+ * and the alternative is an unhandled rejection: node's default handler prints a
+ * react-reconciler stack over whatever the command had drawn and takes the exit code with it.
  *
- * `React.lazy`/`Suspense` would express the happy path too, but its fallback lands in the same erase path and Ink has
- * no error boundary — a throw in render escapes `render()` itself, which is the reconciler stack this exists to avoid.
+ * `React.lazy`/`Suspense` would express the happy path too, but its fallback lands
+ * in the same erase path and Ink has no error boundary — a throw in render escapes
+ * `render()` itself, which is the reconciler stack this exists to avoid.
  */
 export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>): React.FC<P> {
 	return function LazyComponent(props: P) {
@@ -170,12 +176,14 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
 /**
  * Emit a command's final output as raw bytes, bypassing Ink's `<Text>` renderer.
  *
- * Ink word-wraps rendered text at the terminal width — and at 80 columns when stdout is piped — which corrupts
- * machine-readable output: a JSON string value longer than the width gets real newlines inserted mid-string, breaking
- * the document (observed 2026-08-07: `geocode --format json` on "Toledo Ohio" wrapped `intent_markers[].message` at 80
- * cols). Machine formats (json/jsonld/xml/tuple, `--json` flags) must never pass through `<Text>`.
+ * Ink word-wraps rendered text at the terminal width — and at 80 columns when stdout is piped —
+ * which corrupts machine-readable output: a JSON string value longer than the width
+ * gets real newlines inserted mid-string, breaking the document (observed 2026-08-07:
+ * `geocode --format json` on "Toledo Ohio" wrapped `intent_markers[].message` at 80 cols).
+ * Machine formats (json/jsonld/xml/tuple, `--json` flags) must never pass through `<Text>`.
  *
- * Returns `null` so the caller can `return writeRawStdout(result)` from the done branch. Safe to call from render:
+ * Returns `null` so the caller can `return writeRawStdout(result)` from the done branch.
+ * Safe to call from render:
  * {@linkcode useCommandTask} renders the done frame exactly once before its `process.exit`. Same pattern as
  * `commands/gazetteer/inspect/graph.tsx`.
  */
@@ -197,8 +205,8 @@ export interface Check {
 }
 
 /**
- * The ✓/✗ check-list + pass/fail renderer (extracted from `gazetteer verify`). Pass `verdict` to append the summary
- * line.
+ * The ✓/✗ check-list + pass/fail renderer (extracted from `gazetteer verify`).
+ * Pass `verdict` to append the summary line.
  */
 export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdict?: boolean }): React.ReactElement {
 	const lines = checks.map((c, i) =>
@@ -222,11 +230,11 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 }
 
 /**
- * Parse a `--roles a,b,c` flag into validated {@link PlacetypeRole}s, or `undefined` when the flag is absent (which
- * every caller reads as "all roles").
+ * Parse a `--roles a,b,c` flag into validated {@link PlacetypeRole}s, or `undefined`
+ * when the flag is absent (which every caller reads as "all roles").
  *
- * Rejects an unknown role with {@link CommandError} rather than silently filtering it — a typo in a role name would
- * otherwise produce an empty, entirely plausible-looking result.
+ * Rejects an unknown role with {@link CommandError} rather than silently filtering it —
+ * a typo in a role name would otherwise produce an empty, entirely plausible-looking result.
  */
 export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 	if (!raw) return undefined
@@ -245,8 +253,8 @@ export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined
 }
 
 /**
- * Write one progress line to stderr — the `report` callback every long-running command threads through its pipeline.
- * Stderr, so stdout stays machine-readable.
+ * Write one progress line to stderr — the `report` callback every long-running command
+ * threads through its pipeline. Stderr, so stdout stays machine-readable.
  */
 export function reportToStderr(line: string): void {
 	console.error(line)
@@ -262,7 +270,8 @@ export interface CommandTaskResultProps<T> {
 	 */
 	running?: React.ReactNode
 	/**
-	 * The done line's body, rendered after the `✓ `. Defaults to `String(result)` — the plain-string result shape.
+	 * The done line's body, rendered after the `✓ `. Defaults to `String(result)` —
+	 * the plain-string result shape.
 	 */
 	done?: (result: T) => React.ReactNode
 }
@@ -312,19 +321,21 @@ export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[
 }
 
 /**
- * A count flag: a non-negative integer, or `fallback` when the flag is absent. Throws on anything else.
+ * A count flag: a non-negative integer, or `fallback` when the flag is absent.
+ * Throws on anything else.
  *
- * The reason this is a function and not `Number(raw) || fallback`: zero is falsy, so that idiom silently answers the
- * fallback for a flag whose whole purpose is to switch something off. `corpus slice --variants 0` asks the po-box
- * recipe to emit its self-contained military rows and none of its tuple-driven ones; `Number("0") || 1` read it as one
- * and the recipe output came out at 10,558 rows against the 5,279 requested. A typo is refused for the same reason
+ * The reason this is a function and not `Number(raw) || fallback`: zero is falsy, so that idiom
+ * silently answers the fallback for a flag whose whole purpose is to switch something off.
+ * `corpus slice --variants 0` asks the po-box recipe to emit its self-contained military rows
+ * and none of its tuple-driven ones; `Number("0") || 1` read it as one and the recipe output
+ * came out at 10,558 rows against the 5,279 requested. A typo is refused for the same reason
  * rather than falling back — a count nobody asked for is a row count nobody chose.
  */
 export function countOption(raw: string | undefined, fallback: number): number {
 	if (raw == null) return fallback
 
-	// `Number("")` and `Number("  ")` are zero, so a blank flag value would switch the variants off with no one asking —
-	// the same defect the falsy-zero idiom caused, arriving from the other side.
+	// `Number("")` and `Number("  ")` are zero, so a blank flag value would switch the variants off with
+	// no one asking — the same defect the falsy-zero idiom caused, arriving from the other side.
 	const parsed = raw.trim() === "" ? Number.NaN : Number(raw)
 
 	if (!Number.isInteger(parsed) || parsed < 0) {
@@ -352,7 +363,8 @@ export function stripAnsi(value: string): string {
 }
 
 /**
- * The shape every polygon-layer verification result shares — see `@mailwoman/flood`, `soil`, `coastal`, `zoning`.
+ * The shape every polygon-layer verification result shares — see `@mailwoman/flood`,
+ * `soil`, `coastal`, `zoning`.
  */
 export interface LayerVerificationLike<Row extends { outcome: string; label: string }> {
 	agreement: readonly Row[]
@@ -390,9 +402,9 @@ export interface FormatLayerVerificationOptions<Row> {
 }
 
 /**
- * The two verification summary lines every polygon-layer build prints, plus the per-row disagreement dump to stderr — a
- * disagreement count is not actionable on its own. the rows are, and the first thing anyone does with a non-zero count
- * is ask which points.
+ * The two verification summary lines every polygon-layer build prints, plus the per-row
+ * disagreement dump to stderr — a disagreement count is not actionable on its own. the rows are,
+ * and the first thing anyone does with a non-zero count is ask which points.
  */
 export function formatLayerVerification<Row extends { outcome: string; label: string }>(
 	verified: LayerVerificationLike<Row>,
@@ -443,12 +455,13 @@ export function runProcessOrFail(
 }
 
 /**
- * Load the neural classifier, degrading to `undefined` with a precise warning (#1108) so a consumer can't attribute
- * silently-degraded output to the neural parser. Two failure modes are distinguished:
+ * Load the neural classifier, degrading to `undefined` with a precise warning (#1108)
+ * so a consumer can't attribute silently-degraded output to the neural parser.
+ * Two failure modes are distinguished:
  *
  * - Weights absent (package not installed / carries no binaries) → an install hint, no scary error text.
- * - Weights present but the encoder failed to load (corrupt / partial bundle, a bad explicit path) → the underlying error
- *   is surfaced rather than swallowed.
+ * - Weights present but the encoder failed to load (corrupt / partial bundle, a bad explicit path)
+ *   → the underlying error is surfaced rather than swallowed.
  *
  * `onDegrade` receives the warning line. callers send it to stderr so piped stdout parsing is unaffected.
  */
@@ -471,10 +484,11 @@ export async function loadClassifierTolerant(
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
-		// "Absent" = the weights package simply isn't installed (the resolver's not-found signal). Every other
-		// failure means the weights did resolve but the encoder couldn't load them — a partial/metadata-only
-		// bundle ("missing model files"), a bad explicit --model/--tokenizer path, or a corrupt artifact — so we
-		// surface the underlying error verbatim rather than mislabel it "not installed" and swallow the cause.
+		// "Absent" = the weights package simply isn't installed (the resolver's not-found signal).
+		// Every other failure means the weights did resolve but the encoder couldn't load them —
+		// a partial/metadata-only bundle ("missing model files"), a bad explicit --model/--tokenizer
+		// path, or a corrupt artifact — so we surface the underlying error verbatim
+		// rather than mislabel it "not installed" and swallow the cause.
 		const absent = /Could not resolve/iu.test(message)
 		const { weightsPackageName } = await import("@mailwoman/neural/weights")
 

@@ -44,8 +44,8 @@ export interface CountryCoverageTable {
 	 */
 	country: string
 	/**
-	 * 0/1 — the promotion-eval verdict (a verdict column rather than re-derived from the rate. see the fact type's
-	 * docstring).
+	 * 0/1 — the promotion-eval verdict (a verdict column rather than re-derived
+	 * from the rate. see the fact type's docstring).
 	 */
 	hard_filter_safe: number
 	/**
@@ -93,7 +93,8 @@ export interface GazetteerCoverageDatabase {
 }
 
 /**
- * Table names the lookup probes (existence-restricted, so a candidate.db built before the manifest is byte-stable).
+ * Table names the lookup probes (existence-restricted, so a candidate.db built
+ * before the manifest is byte-stable).
  */
 export const COUNTRY_COVERAGE_TABLE = "country_coverage"
 /**

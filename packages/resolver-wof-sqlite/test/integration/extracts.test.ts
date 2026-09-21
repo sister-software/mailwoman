@@ -69,8 +69,8 @@ describe("resolveExtracts", () => {
 	})
 
 	test("rejects extract name collisions on non-main extracts", () => {
-		// The first extract is always "main" regardless of its derived name. collisions only matter
-		// across the non-first entries. Two postcode extracts in a row collide.
+		// The first extract is always "main" regardless of its derived name. collisions only
+		// matter across the non-first entries. Two postcode extracts in a row collide.
 		expect(() =>
 			resolveExtracts([
 				"/tmp/whosonfirst-data-admin-us-latest.db",
@@ -132,9 +132,9 @@ describe("pickExtractForPlacetype", () => {
 	})
 
 	// #920 — country-aware routing across multiple placetype-matching extracts: first-match starved
-	// the second postcode extract (a FI postcode could never reach postalcode-geonames-tail behind
-	// postalcode-us). With the query country + probed country sets, the claiming extract wins. the
-	// original first-match order stays the tiebreak when no extract claims the country.
+	// the second postcode extract (a FI postcode could never reach postalcode-geonames-tail behind postalcode-us).
+	// With the query country + probed country sets, the claiming extract wins. the original
+	// first-match order stays the tiebreak when no extract claims the country.
 	test("country routes across two postcode extracts (#920)", () => {
 		const two = resolveExtracts([
 			"/tmp/whosonfirst-data-admin-us-latest.db",

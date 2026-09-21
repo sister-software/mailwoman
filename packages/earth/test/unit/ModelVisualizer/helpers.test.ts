@@ -19,8 +19,8 @@ import { describe, expect, it } from "vitest"
 
 import fixture from "./white-house.trace.json" with { type: "json" }
 
-// Compile-time tie (type-only, erased at build): the docs mirror must accept every real trace. A
-// NeuralParseTrace field rename/retype now fails here at typecheck instead of at runtime on /trace.
+// Compile-time tie (type-only, erased at build): the docs mirror must accept every real trace.
+// A NeuralParseTrace field rename/retype now fails here at typecheck instead of at runtime on /trace.
 const _traceMirrorAccepts: ParseTraceLike = {} as NeuralParseTrace
 
 void _traceMirrorAccepts
@@ -62,8 +62,9 @@ describe("ModelVisualizer helpers", () => {
 		expect(trace.path).toHaveLength(trace.pieces.length)
 		expect(trace.tokens).toHaveLength(trace.pieces.length)
 
-		// The label vocabulary may prefix-extend the model's emission width (Stage-prefix rule —
-		// see neural/labels.ts + assertEmissionWidth): rows are uniform and never wider than labels.
+		// The label vocabulary may prefix-extend the model's emission width
+		// (Stage-prefix rule — see neural/labels.ts + assertEmissionWidth):
+		// rows are uniform and never wider than labels.
 		const width = trace.logits[0]?.length ?? 0
 
 		expect(width).toBeGreaterThan(0)
@@ -83,8 +84,8 @@ describe("ModelVisualizer helpers", () => {
 		}
 
 		if (trace.localeLogits) {
-			// Self-describing axis: the trace carries the country order its logits mean — the gauge (and
-			// this test) key off it rather than a hardcoded class count.
+			// Self-describing axis: the trace carries the country order its logits mean —
+			// the gauge (and this test) key off it rather than a hardcoded class count.
 			expect(trace.localeCountries).toBeDefined()
 			expect(trace.localeLogits).toHaveLength(trace.localeCountries!.length)
 		}

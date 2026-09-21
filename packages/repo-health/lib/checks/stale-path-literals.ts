@@ -41,8 +41,8 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * First segments that make a literal a repository path rather than a package specifier or a bare filename.
- * `mailwoman/gazetteer-pipeline` is a subpath export and belongs to none of them.
+ * First segments that make a literal a repository path rather than a package specifier or a bare
+ * filename. `mailwoman/gazetteer-pipeline` is a subpath export and belongs to none of them.
  */
 const REPOSITORY_ROOTS = ["packages/", "docs/", "data/", "evals/", "corpus-python/", "docker/", "hf-publish/"]
 
@@ -52,14 +52,14 @@ const REPOSITORY_ROOTS = ["packages/", "docs/", "data/", "evals/", "corpus-pytho
 const SKIPPED_PREFIXES = ["docs/records/"]
 
 /**
- * Segments marking derived output — absent on a clean checkout, present after a build. A literal naming one is
- * answering a question about the build rather than about a tracked file.
+ * Segments marking derived output — absent on a clean checkout, present after a build.
+ * A literal naming one is answering a question about the build rather than about a tracked file.
  */
 const DERIVED_SEGMENTS = ["/out/", "/dist/", "/node_modules/", "/build/", "/.yarn/", "/coverage/"]
 
 /**
- * A literal that is a repository path by shape. Rejects a glob, an interpolation placeholder, a URL, and anything
- * carrying whitespace — a sentence naming a directory is prose rather than a path.
+ * A literal that is a repository path by shape. Rejects a glob, an interpolation placeholder, a URL,
+ * and anything carrying whitespace — a sentence naming a directory is prose rather than a path.
  */
 export function isRepositoryPathLiteral(text: string): boolean {
 	if (!REPOSITORY_ROOTS.some((root) => text.startsWith(root))) return false
@@ -84,8 +84,8 @@ export interface StalePathLiteral {
 }
 
 /**
- * Every quoted repository path in the tracked non-test TypeScript sources that names a path the tree once had and no
- * longer does.
+ * Every quoted repository path in the tracked non-test TypeScript sources that
+ * names a path the tree once had and no longer does.
  */
 export async function findStalePathLiterals(context: {
 	repoRoot: string
@@ -93,10 +93,11 @@ export async function findStalePathLiterals(context: {
 }): Promise<StalePathLiteral[]> {
 	const tracked = new Set(context.trackedFiles)
 
-	// `existingOnly`: the index can name a file the working tree no longer has — a rename staged and not committed is
-	// enough — and this walk opens every path it is given, so the absent one throws enoent and the check fails for a
-	// reason that has nothing to do with path literals. `tracked` above keeps the full index, because a literal naming a
-	// staged-for-deletion file is still a literal naming a tracked file.
+	// `existingOnly`: the index can name a file the working tree no longer has —
+	// a rename staged and not committed is enough — and this walk opens every path it is given,
+	// so the absent one throws enoent and the check fails for a reason that has nothing
+	// to do with path literals. `tracked` above keeps the full index, because a literal
+	// naming a staged-for-deletion file is still a literal naming a tracked file.
 	const sources = (await trackedSourcePaths(context, { existingOnly: true }))
 		.map((path) => relative(context.repoRoot, path))
 		.filter((file) => !/\/test\/|\.test\.tsx?$/u.test(file))
@@ -114,8 +115,8 @@ export async function findStalePathLiterals(context: {
 		const lineOf = (position: number) => source.getLineAndCharacterOfPosition(position).line + 1
 
 		const visit = (node: ts.Node): void => {
-			// A no-substitution template literal resolves exactly as a quoted string does. one with substitutions
-			// cannot be resolved and is out of this check's reach by construction.
+			// A no-substitution template literal resolves exactly as a quoted string does. one with
+			// substitutions cannot be resolved and is out of this check's reach by construction.
 			if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
 				const literal = node.text
 

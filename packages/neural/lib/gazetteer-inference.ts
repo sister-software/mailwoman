@@ -18,14 +18,15 @@
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
- * The candidate-tag-set feature width: country/region/po_box/cedex/homograph (the lexicon's slot count). Used for the
- * ONNX zero-fallback when a gazetteer-trained model is run with no clue data. Must match the lexicon JSON's
- * `feature_dim` and the trained model's `gazetteer_feature_dim`.
+ * The candidate-tag-set feature width: country/region/po_box/cedex/homograph (the lexicon's slot count).
+ * Used for the ONNX zero-fallback when a gazetteer-trained model is run with no clue data.
+ * Must match the lexicon JSON's `feature_dim` and the trained model's `gazetteer_feature_dim`.
  */
 export const GAZETTEER_FEATURE_DIM = 5
 
 /**
- * Street-type evidence channel width (Option-A bundle) — the runner zero-fallback + lexicon feature_dim interface.
+ * Street-type evidence channel width (Option-A bundle) — the runner zero-fallback +
+ * lexicon feature_dim interface.
  */
 export const STREET_TYPE_FEATURE_DIM = 1
 
@@ -51,8 +52,9 @@ export interface GazetteerLexicon {
 	 */
 	codeEntries: Map<string, number>
 	/**
-	 * V3.23 digit guard (`rules.digit_guard`): a matched span paints nothing when any span word or the nearest non-empty
-	 * neighbor word carries a decimal digit — evidence painted beside a house number swallowed the digit into the span.
+	 * V3.23 digit guard (`rules.digit_guard`): a matched span paints nothing
+	 * when any span word or the nearest non-empty neighbor word carries a decimal digit —
+	 * evidence painted beside a house number swallowed the digit into the span.
 	 * Rides the lexicon so train/inference stay symmetric by construction. false on pre-v3.23 artifacts.
 	 */
 	digitGuard: boolean
@@ -233,8 +235,8 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 		}
 
 		if (matchedN) {
-			// Digit guard: a guarded match consumes its span (no sub-ngram re-matching — mirrors the
-			// Python painter exactly) but paints nothing.
+			// Digit guard: a guarded match consumes its span
+			// (no sub-ngram re-matching — mirrors the Python painter exactly) but paints nothing.
 			if (lexicon.digitGuard && digitAdjacent(words, i, matchedN)) {
 				i += matchedN
 
@@ -258,13 +260,15 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 }
 
 /**
- * Channel choreography (#464, v0.9.13 postcode fix. DeepSeek 2026-06-10): zero the gazetteer clue on pieces within
- * `window` of a postcode-anchor hit. The clue fires on the region token (`CA`/`GA`) immediately before a US postcode.
- * its additive vector strengthens `B-region`, which makes the `B-region → B-postcode` CRF transition less competitive
- * and drops the postcode (~3pp, US-only — FR postcode precedes the locality, no region neighbor). Suppressing the clue
- * adjacent to the postcode removes the interference while leaving every other clue intact. Returns a new
- * features/confidence pair (does not mutate). `anchorConfidence[i] > 0` marks postcode-span pieces. pairs with the
- * train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`) — enable both or neither.
+ * Channel choreography (#464, v0.9.13 postcode fix. DeepSeek 2026-06-10): zero the gazetteer clue
+ * on pieces within `window` of a postcode-anchor hit. The clue fires on the region token
+ * (`CA`/`GA`) immediately before a US postcode. its additive vector strengthens `B-region`,
+ * which makes the `B-region → B-postcode` CRF transition less competitive and drops the
+ * postcode (~3pp, US-only — FR postcode precedes the locality, no region neighbor).
+ * Suppressing the clue adjacent to the postcode removes the interference while leaving
+ * every other clue intact. Returns a new features/confidence pair (does not mutate).
+ * `anchorConfidence[i] > 0` marks postcode-span pieces. pairs with the train-time half
+ * (`gazetteer_anchor.suppress_gazetteer_near_postcode`) — enable both or neither.
  */
 export function suppressGazetteerNearPostcode(
 	gazetteer: { features: number[][]; confidence: number[] },
@@ -295,8 +299,9 @@ export function suppressGazetteerNearPostcode(
 }
 
 /**
- * Project a per-char bitmask paint onto SP pieces by the same char→piece rule the labels use: a piece takes the bits of
- * the first non-whitespace char it covers, `0` when it covers none. Shared by every channel built on
+ * Project a per-char bitmask paint onto SP pieces by the same char→piece rule the
+ * labels use: a piece takes the bits of the first non-whitespace char it covers,
+ * `0` when it covers none. Shared by every channel built on
  * {@link gazetteerCharPaint} so the projection cannot drift between them.
  */
 export function projectCharBitsToPieces(
@@ -316,9 +321,9 @@ export function projectCharBitsToPieces(
 }
 
 /**
- * Per-piece gazetteer features + confidence for `text`, projected onto its SP `pieces` by the same char→piece rule the
- * labels use (a piece takes the bits of the first non-whitespace char it covers). Returns `(pieces × featureDim)`
- * features + `(pieces,)` confidence (1.0 wherever any bit fires).
+ * Per-piece gazetteer features + confidence for `text`, projected onto its SP `pieces` by the same
+ * char→piece rule the labels use (a piece takes the bits of the first non-whitespace char it covers).
+ * Returns `(pieces × featureDim)` features + `(pieces,)` confidence (1.0 wherever any bit fires).
  */
 export function buildGazetteerFeatures(
 	text: string,

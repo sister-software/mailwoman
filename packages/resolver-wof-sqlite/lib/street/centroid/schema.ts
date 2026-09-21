@@ -93,8 +93,8 @@ export interface StreetCentroidDatabase {
 }
 
 /**
- * The `street_centroid` columns in insert order. The builder's positional prepared statement derives its placeholder
- * list from this, so the positional order can't drift from the DDL / the reader.
+ * The `street_centroid` columns in insert order. The builder's positional prepared statement derives
+ * its placeholder list from this, so the positional order can't drift from the DDL / the reader.
  */
 export const STREET_CENTROID_COLUMNS = [
 	"street_norm",
@@ -137,9 +137,9 @@ export async function createStreetCentroidTable(db: Kysely<StreetCentroidDatabas
 }
 
 /**
- * Create the probe indexes: the two geocoding-scope indexes (postcode, locality-base) the resolver reader relies on,
- * plus `idx_sc_name` — the #727 phase-4c name-existence key for a direct `name_key = ?` seek (the unscoped fragment
- * lookup. without it that query skip-scans `idx_sc_postcode` at ~5 ms/probe).
+ * Create the probe indexes: the two geocoding-scope indexes (postcode, locality-base) the resolver reader
+ * relies on, plus `idx_sc_name` — the #727 phase-4c name-existence key for a direct `name_key = ?` seek
+ * (the unscoped fragment lookup. without it that query skip-scans `idx_sc_postcode` at ~5 ms/probe).
  */
 export async function createStreetCentroidIndexes(db: Kysely<StreetCentroidDatabase>): Promise<void> {
 	await db.schema.createIndex("idx_sc_postcode").on("street_centroid").columns(["postcode", "street_norm"]).execute()

@@ -37,8 +37,8 @@ export function makePOIRuntime(): POIRuntime {
 }
 
 /**
- * A fake taxonomy-runtime that classifies everything as a POI query and matches "chevron" as a brand (QID Q319642). No
- * category record — brands carry a name + QID rather than a taxonomy id.
+ * A fake taxonomy-runtime that classifies everything as a POI query and matches "chevron" as a
+ * brand (QID Q319642). No category record — brands carry a name + QID rather than a taxonomy id.
  */
 export function makeBrandPOIRuntime(): POIRuntime {
 	const lookup = {
@@ -74,8 +74,8 @@ export const mockLiveSearchSuccess: POILiveSearch = async () => ({
 })
 
 /**
- * A live-search probe that echoes the brand QID it received back through the hits, so tests can assert the brand path
- * threaded `brandWikidata` (a category probe never sets it).
+ * A live-search probe that echoes the brand QID it received back through the hits,
+ * so tests can assert the brand path threaded `brandWikidata` (a category probe never sets it).
  */
 export const mockBrandLiveSearchSuccess: POILiveSearch = async ({ brandWikidata }) => ({
 	status: "success",

@@ -59,17 +59,19 @@
 import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from "@mailwoman/core/resolver"
 
 /**
- * A resolved place that may carry no coordinate. `ResolvedPlace` requires `lat`/`lon` (every gazetteer row has a value,
- * even the 0,0 unlocated sentinel), and the prefix prior's ancestry-only tier must express absence as `undefined`
- * instead — B3-3: inventing a centroid would reproduce the `BT3 9QQ` → Sheffield defect #1480. `decorateNode` copies
- * `lat`/`lon` onto the node verbatim, so an undefined coordinate stays absent on the node — the meaning-of-zero rule.
- * Widened only at this boundary: gazetteer places (always coordinate-containing) remain plain `ResolvedPlace`.
+ * A resolved place that may carry no coordinate. `ResolvedPlace` requires
+ * `lat`/`lon` (every gazetteer row has a value, even the 0,0 unlocated sentinel),
+ * and the prefix prior's ancestry-only tier must express absence as `undefined` instead —
+ * B3-3: inventing a centroid would reproduce the `BT3 9QQ` → Sheffield defect #1480.
+ * `decorateNode` copies `lat`/`lon` onto the node verbatim, so an undefined coordinate
+ * stays absent on the node — the meaning-of-zero rule. Widened only at this boundary:
+ * gazetteer places (always coordinate-containing) remain plain `ResolvedPlace`.
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
 /**
- * The minimum compact code length for a GB outward derivation — a shorter code has no 3-character unit to strip ("B3"
- * is a GB area rather than a unit-containing code).
+ * The minimum compact code length for a GB outward derivation — a shorter code has no
+ * 3-character unit to strip ("B3" is a GB area rather than a unit-containing code).
  */
 const MIN_GB_OUTWARD_CODE_LENGTH = 5
 
@@ -79,8 +81,8 @@ const MIN_GB_OUTWARD_CODE_LENGTH = 5
 const MIN_US_SECTION_CODE_LENGTH = 3
 
 /**
- * Derive the prefix the index is keyed by, per the artifact's own country law. Returns null (abstain) for a country
- * with no derivation law, or a code too short to carry a prefix.
+ * Derive the prefix the index is keyed by, per the artifact's own country law.
+ * Returns null (abstain) for a country with no derivation law, or a code too short to carry a prefix.
  */
 export function derivePostcodePrefix(code: string, country?: string): string | null {
 	if (!code || !country) return null
@@ -117,9 +119,9 @@ export interface PostcodePrefixProbeResult {
 }
 
 /**
- * Probe the index for `code`'s prefix. Two abstention checks, in order: the index's country must match the query's
- * country scope (or the scope is absent), and the derivation law must yield a prefix the index carries. Returns null to
- * abstain — never throws, never guesses.
+ * Probe the index for `code`'s prefix. Two abstention checks, in order: the index's country
+ * must match the query's country scope (or the scope is absent), and the derivation law must
+ * yield a prefix the index carries. Returns null to abstain — never throws, never guesses.
  */
 export function probePostcodePrefix(
 	code: string,
@@ -128,8 +130,8 @@ export function probePostcodePrefix(
 ): PostcodePrefixProbeResult | null {
 	const indexCountry = index.country?.toUpperCase()
 
-	// Country check: the index is evidence FOR its own country only. A GB index under a US scope stays
-	// silent — the walk's country filter is the caller's declared universe.
+	// Country check: the index is evidence FOR its own country only.
+	// A GB index under a US scope stays silent — the walk's country filter is the caller's declared universe.
 	if (queryCountry && indexCountry && queryCountry.toUpperCase() !== indexCountry) return null
 
 	const prefix = derivePostcodePrefix(code, indexCountry)
@@ -142,10 +144,10 @@ export function probePostcodePrefix(
 }
 
 /**
- * Build the synthetic `ResolvedPlace` a prefix hit resolves a `postalcode` node to. `id: 0` — it is not a gazetteer row
- * (the same sentinel `applyPostcodeConsistency` uses for its displaced place, resolve.ts) — and the coordinate is
- * present only when the node carries one, so an ancestry-only hit stays coordinate-free by construction (B3-3's 0%
- * half).
+ * Build the synthetic `ResolvedPlace` a prefix hit resolves a `postalcode` node to.
+ * `id: 0` — it is not a gazetteer row (the same sentinel `applyPostcodeConsistency` uses for its
+ * displaced place, resolve.ts) — and the coordinate is present only when the node carries one,
+ * so an ancestry-only hit stays coordinate-free by construction (B3-3's 0% half).
  */
 export function postcodePrefixResolvedPlace(
 	prefix: string,
@@ -156,8 +158,8 @@ export function postcodePrefixResolvedPlace(
 		id: 0,
 		name: prefix,
 		placetype: "postalcode",
-		// `""` = country unknown — the same empty-string convention the candidate backend uses for a row
-		// whose country_id resolves to nothing.
+		// `""` = country unknown — the same empty-string convention the candidate backend
+		// uses for a row whose country_id resolves to nothing.
 		country: index.country?.toUpperCase() ?? "",
 		...(node.lat !== undefined && node.lon !== undefined ? { lat: node.lat, lon: node.lon } : {}),
 		score: 0,

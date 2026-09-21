@@ -66,8 +66,8 @@ describe("checkReleaseListIdentity", () => {
 
 		const identity = await checkReleaseListIdentity(root)
 
-		// The en-au class: a workspace outside the release list with no stated reason is frozen, and the
-		// failure must carry its name rather than "expected 3, found 2".
+		// The en-au class: a workspace outside the release list with no stated reason is frozen,
+		// and the failure must carry its name rather than "expected 3, found 2".
 		expect(identity.unexpectedAbsences).toEqual(["packages/frozen-one"])
 		expect(identity.publishCount).toBe(2)
 	})
@@ -80,8 +80,8 @@ describe("assertWorkspacePublishable", () => {
 
 	it("refuses the release-it workspace path shape, which carries a leading ./", () => {
 		// `@release-it-plugins/workspaces` passes `./<workspace>` through
-		// RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE. Matching the record's keys literally would admit that spelling while
-		// refusing the bare one.
+		// RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE. Matching the record's keys literally
+		// would admit that spelling while refusing the bare one.
 		expect(() => assertWorkspacePublishable("./packages/osm")).toThrow(/ODbL counsel sign-off pending/)
 		expect(() => assertWorkspacePublishable("./packages/osm/")).toThrow(/ODbL counsel sign-off pending/)
 	})
@@ -98,8 +98,9 @@ describe("assertWorkspacePublishable", () => {
 
 describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", () => {
 	/**
-	 * A hand-built tarball: `package/package.json` plus whichever payload files the case ships. No yarn project needed —
-	 * the audit reads the archive, and these fixtures pin its refusals without packing a real workspace.
+	 * A hand-built tarball: `package/package.json` plus whichever payload files the case ships.
+	 * No yarn project needed — the audit reads the archive, and these fixtures pin
+	 * its refusals without packing a real workspace.
 	 */
 	async function tarballWith(manifest: object, payloadFiles: string[]): Promise<string> {
 		const dir = fixtures.use(await temporaryDirectory("mw-tarball-fixture-")).path
@@ -188,8 +189,9 @@ describe("the Hugging Face materialization plan", () => {
 	}
 
 	it("puts every destination under packages/ — the lost-prefix class", async () => {
-		// The v9.2.0 release's first dispatch died on `cp … "$ws/street-type-lexicon-v3.json"` after every workspace
-		// moved under `packages/`. Destinations are now derived from one prefix in one function, and this pins it.
+		// The v9.2.0 release's first dispatch died on `cp … "$ws/street-type-lexicon-v3.json"`
+		// after every workspace moved under `packages/`. Destinations are now derived
+		// from one prefix in one function, and this pins it.
 		const plans = await planWeightsMaterialization(repoRoot)
 
 		expect(plans.length).toBeGreaterThan(0)
@@ -226,8 +228,9 @@ describe("the Hugging Face materialization plan", () => {
 	})
 
 	it("never plans over a file git already tracks", async () => {
-		// The other direction: a recipe that materialized `model-card.json` or `calibration.json` would overwrite
-		// committed content in the checkout on the publish path, where the destination root is the checkout.
+		// The other direction: a recipe that materialized `model-card.json`
+		// or `calibration.json` would overwrite committed content in the checkout on the
+		// publish path, where the destination root is the checkout.
 		const tracked = trackedPaths()
 
 		const clobbered = (await planWeightsMaterialization(repoRoot))

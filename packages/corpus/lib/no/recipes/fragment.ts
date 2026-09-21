@@ -50,8 +50,8 @@ const titleNO = (value: string): string =>
 		.join(" ")
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const noFragmentRecipe: CorpusRecipe = {
 	name: "no-fragment",
@@ -111,8 +111,8 @@ export const noFragmentRecipe: CorpusRecipe = {
 		const longNumberBoost = Math.max(1, Math.floor(opts.longNumberBoost ?? 1))
 		const longNumberMinDigits = opts.longNumberMinDigits ?? 3
 
-		// Harvested from the tuples — every Norwegian row carries its locality and postcode, so the two
-		// counter-classes need no second source.
+		// Harvested from the tuples — every Norwegian row carries its locality and postcode,
+		// so the two counter-classes need no second source.
 		const localities = new Set<string>()
 		const postcodes = new Set<string>()
 
@@ -173,9 +173,9 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// counter-distribution — drawn from the harvested pools rather than this row's street. Half bare
-			// localities (so "bare -> street" is not free), half bare postcodes (so the model does not
-			// stop emitting postcode to win the digit — board 3's bare-pc must hold).
+			// counter-distribution — drawn from the harvested pools rather than this row's street.
+			// Half bare localities (so "bare -> street" is not free), half bare postcodes
+			// (so the model does not stop emitting postcode to win the digit — board 3's bare-pc must hold).
 			if (random() < counterProb) {
 				if (random() < 0.5 && localities.size) {
 					const loc = [...localities][Math.floor(random() * localities.size)]!
@@ -190,15 +190,17 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// the signal. A street with no postcode/locality partner. Either bare, or street+number —
-			// both are the forms board 3 measured as the headroom (bare-street-hn 0.693, slash-hn 0.650).
+			// the signal. A street with no postcode/locality partner.
+			// Either bare, or street+number — both are the forms board 3 measured as the
+			// headroom (bare-street-hn 0.693, slash-hn 0.650).
 			if (!number || random() < bareStreetProb) {
 				emit(street, { street }, "bare-street")
 			} else {
 				const klass = number.includes("/") ? "slash-hn" : "street-hn"
-				// knob 3: the failing class is street + long number (Leppdalsvegen 1285 -> postcode). The
-				// digit count rather than the slash, is what tips the length prior toward postcode. Oversample
-				// those rows to fight the prior with volume and teach the street/number boundary directly.
+				// knob 3: the failing class is street + long number (Leppdalsvegen 1285 -> postcode).
+				// The digit count rather than the slash, is what tips the length prior
+				// toward postcode. Oversample those rows to fight the prior with volume
+				// and teach the street/number boundary directly.
 				const digits = (number.match(/\d/g) ?? []).length
 				const copies = digits >= longNumberMinDigits ? longNumberBoost : 1
 

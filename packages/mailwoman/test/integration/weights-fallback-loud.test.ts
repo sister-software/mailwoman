@@ -38,10 +38,11 @@ const cliBin = await mailwomanCLIPath()
 /**
  * A locale with no `@mailwoman/neural-weights-*` workspace package — resolution can never succeed.
  *
- * Was `de-DE` until 2026-08-02, when campaign R9 shipped `@mailwoman/neural-weights-de-de` and made the "absent" locale
- * resolvable. Every assertion here inverted at once: the CLI stopped warning because it found real weights, and
- * `expected '' to contain 'neural weights not found'` is what that looks like. `pt-BR` has no carrier package today. if
- * one ever ships, this breaks the same way and wants the same one-line move.
+ * Was `de-DE` until 2026-08-02, when campaign R9 shipped `@mailwoman/neural-weights-de-de`
+ * and made the "absent" locale resolvable. Every assertion here inverted at once: the CLI stopped
+ * warning because it found real weights, and `expected '' to contain 'neural weights not found'`
+ * is what that looks like. `pt-BR` has no carrier package today. if one ever ships,
+ * this breaks the same way and wants the same one-line move.
  */
 const ABSENT_LOCALE = "pt-BR"
 const ABSENT_PACKAGE = "@mailwoman/neural-weights-pt-br"
@@ -58,8 +59,9 @@ let stubDir: TemporaryDirectory
 beforeAll(async () => {
 	homeStub = await temporaryDirectory("mailwoman-nohome-")
 	stubDir = await temporaryDirectory("mailwoman-stub-weights-")
-	// A present-but-not-a-model file so `resolveWeights`'s existsSync(modelPath) passes and the failure
-	// lands on the (deliberately absent) tokenizer path — a deterministic load error, no onnx runtime needed.
+	// A present-but-not-a-model file so `resolveWeights`'s existsSync(modelPath) passes
+	// and the failure lands on the (deliberately absent) tokenizer path —
+	// a deterministic load error, no onnx runtime needed.
 	await writeLocalTextFile("not a real onnx graph", stubDir.resolve("model.onnx"))
 })
 
@@ -136,8 +138,9 @@ describe("#1108 loud weights fallback — weights ABSENT (non-interactive / pipe
 	}, 30_000)
 
 	test("--resolve (no WOF DB): the previously-SILENT path emits the weights warning to stderr", async () => {
-		// Without a resolver DB the command exits non-zero on the DB requirement, but the fix is proven by
-		// the weights warning being present at all on the --resolve path (it was fully silent before #1108).
+		// Without a resolver DB the command exits non-zero on the DB requirement,
+		// but the fix is proven by the weights warning being present at all on the
+		// --resolve path (it was fully silent before #1108).
 		const { stderr } = await runCLI(
 			["parse", "--locale", ABSENT_LOCALE, "--resolve", ADDRESS],
 			absentEnv({ MAILWOMAN_WOF_DB: "" })
@@ -194,9 +197,10 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 	}, 30_000)
 })
 
-// End-to-end --resolve degraded path (exit 0 with a real resolver) — conditioned on a WOF SQLite distribution,
-// mirroring resolve-flag.test.ts. Runs only where a WOF DB is on disk. proves the warning + degraded
-// output + exit 0 combination the audit's test (1) calls for on the full --resolve path.
+// End-to-end --resolve degraded path (exit 0 with a real resolver) —
+// conditioned on a WOF SQLite distribution, mirroring resolve-flag.test.ts.
+// Runs only where a WOF DB is on disk. proves the warning + degraded output + exit 0
+// combination the audit's test (1) calls for on the full --resolve path.
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)

@@ -36,17 +36,19 @@ import { basename, join } from "path-ts"
 import { SSURGO_SOURCE_EPSG } from "#vocabulary"
 
 /**
- * Coordinate decimals ogr2ogr writes into the stream. Nine is well past the source's own precision — the metadata
- * states compilation to base maps meeting National Map Accuracy Standards at 1 inch = 1,000 feet — and is chosen so the
- * round trip contributes nothing measurable to the area cross-check.
+ * Coordinate decimals ogr2ogr writes into the stream. Nine is well past the source's
+ * own precision — the metadata states compilation to base maps meeting National
+ * Map Accuracy Standards at 1 inch = 1,000 feet — and is chosen so the round trip
+ * contributes nothing measurable to the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 
 /**
  * How far outside the layer's declared extent a vertex may fall before the ingest refuses.
  *
- * A tenth of a degree is about 11 km — small enough that an unprojected or axis-swapped read, which lands whole
- * hemispheres away, still fails, and loose enough that a rounded declared extent is not brittle.
+ * A tenth of a degree is about 11 km — small enough that an unprojected
+ * or axis-swapped read, which lands whole hemispheres away, still fails,
+ * and loose enough that a rounded declared extent is not brittle.
  */
 const BBOX_MARGIN_DEGREES = 0.1
 
@@ -58,9 +60,10 @@ export function mapUnitShapefile(spatialDirectory: string, areaSymbol: string): 
 }
 
 /**
- * The shapefile holding a survey area's own outline. The footprint comes from here and never from the union of the
- * rated polygons — `notcom` and access-denied map units are inside the footprint and carry no rating, so a footprint
- * derived from the rated set would report them as unmapped when the authority has declared exactly what they are.
+ * The shapefile holding a survey area's own outline. The footprint comes from here
+ * and never from the union of the rated polygons — `notcom` and access-denied map units
+ * are inside the footprint and carry no rating, so a footprint derived from the rated set
+ * would report them as unmapped when the authority has declared exactly what they are.
  */
 export function surveyAreaShapefile(spatialDirectory: string, areaSymbol: string): string {
 	return join(spatialDirectory, `soilsa_a_${areaSymbol.toLowerCase()}.shp`)
@@ -103,7 +106,8 @@ export interface SoilIngestOptions {
 	 */
 	expectEPSG?: number
 	/**
-	 * Read only the shapefile's own FIDs in `[fidFrom, fidTo]`, inclusive — what makes a bounded chunk possible.
+	 * Read only the shapefile's own FIDs in `[fidFrom, fidTo]`, inclusive —
+	 * what makes a bounded chunk possible.
 	 */
 	fidFrom?: number
 	fidTo?: number
@@ -116,8 +120,8 @@ export interface SoilIngestOptions {
 /**
  * Read what the shapefile declares about itself, and refuse a projection this ingest was not written for.
  *
- * @throws {Error} When the layer is missing, declares no epsg authority code, declares one other than `expectEPSG`, or
- *   reports no feature count.
+ * @throws {Error} When the layer is missing, declares no epsg authority code,
+ *   declares one other than `expectEPSG`, or reports no feature count.
  */
 export async function readSoilSourceIdentity(options: SoilIngestOptions): Promise<SoilSourceIdentity> {
 	const identity = await readOGRLayerIdentity({
@@ -162,11 +166,12 @@ interface RawFeature {
 /**
  * Stream the map-unit delineations as WGS84 features.
  *
- * Every feature is checked against the declared extent as it passes. A swapped coordinate order survives a projection
- * check — both axes are still numbers in a plausible range — and shows up here immediately.
+ * Every feature is checked against the declared extent as it passes.
+ * A swapped coordinate order survives a projection check — both axes are still
+ * numbers in a plausible range — and shows up here immediately.
  *
- * @throws {Error} When ogr2ogr fails, when a feature carries no geometry or no `mukey`, or when a vertex falls outside
- *   the declared extent.
+ * @throws {Error} When ogr2ogr fails, when a feature carries no geometry or no `mukey`,
+ *   or when a vertex falls outside the declared extent.
  */
 export async function* readSoilDelineations(
 	options: SoilIngestOptions & { bbox: readonly [number, number, number, number] }
@@ -240,8 +245,8 @@ function toDelineation(
 export interface SoilFeatureSource {
 	areaSymbol: string
 	/**
-	 * What the source says it holds. The build compares its own streamed total against this, so a short read throws
-	 * instead of building a smaller county.
+	 * What the source says it holds. The build compares its own streamed total against this,
+	 * so a short read throws instead of building a smaller county.
 	 */
 	declaredFeatureCount: number
 	layer: string
@@ -254,7 +259,8 @@ export interface SoilFeatureSource {
 }
 
 /**
- * One survey area's map-unit shapefile as a feature source — identity read up front, features streamed on demand.
+ * One survey area's map-unit shapefile as a feature source — identity read up front,
+ * features streamed on demand.
  */
 export async function createShapefileFeatureSource(
 	options: SoilIngestOptions & { areaSymbol: string; declaredFeatureCount?: number }
@@ -263,8 +269,9 @@ export async function createShapefileFeatureSource(
 
 	return {
 		areaSymbol: options.areaSymbol,
-		// A range's own count is supplied by the caller, because `ogrinfo` reports the layer's total and nothing narrower.
-		// The whole-file total is still checked: the builder sums what its chunks streamed and compares that.
+		// A range's own count is supplied by the caller, because `ogrinfo` reports the
+		// layer's total and nothing narrower. The whole-file total is still checked:
+		// the builder sums what its chunks streamed and compares that.
 		declaredFeatureCount: declaredFeatureCount({
 			declared: options.declaredFeatureCount,
 			limit: options.limit,

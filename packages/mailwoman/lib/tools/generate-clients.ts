@@ -51,31 +51,32 @@ import { readMailwomanVersion } from "#cli/kit/metadata"
 import { runProcessOrFail } from "#cli/kit/shared"
 
 /**
- * The four surfaces every emitter + generated client covers. Order matches the salvaged readme's table, mailwoman last
- * (the new fourth module).
+ * The four surfaces every emitter + generated client covers.
+ * Order matches the salvaged readme's table, mailwoman last (the new fourth module).
  */
 export const CLIENT_SURFACES = ["photon", "nominatim", "libpostal", "mailwoman"] as const
 
 type ClientSurface = (typeof CLIENT_SURFACES)[number]
 
 /**
- * OpenAPI flavors the emitters print. 3.1 is the published document. 3.0 is progenitor's diet (openapiv3 only
- * understands 3.0.x).
+ * OpenAPI flavors the emitters print. 3.1 is the published document. 3.0 is
+ * progenitor's diet (openapiv3 only understands 3.0.x).
  */
 const FLAVORS = ["3.1", "3.0"] as const
 
 /**
  * Every surface's compiled CLI entry point — the emitters this pipeline shells out to.
  *
- * Read from the workspace's own `bin` rather than assembled from a literal emit path. The literal was `out/cli.js` and
- * went stale twice: once when the 2026-08-14 regroup moved the workspaces, and again when the prefix-directory pass
- * moved `mailwoman`'s `lib/cli.ts` to `lib/cli/index.ts`, so its emit became `out/cli/index.js` while the other three
- * kept the flat name. Both times a clean, successful compile read as a missing emitter, and the second time it failed
- * inside a release run. `bin` is the manifest's declaration of where the entry point is. the emit layout underneath it
- * is free to move.
+ * Read from the workspace's own `bin` rather than assembled from a literal emit path.
+ * The literal was `out/cli.js` and went stale twice: once when the 2026-08-14 regroup moved
+ * the workspaces, and again when the prefix-directory pass moved `mailwoman`'s `lib/cli.ts`
+ * to `lib/cli/index.ts`, so its emit became `out/cli/index.js` while the other three
+ * kept the flat name. Both times a clean, successful compile read as a missing emitter,
+ * and the second time it failed inside a release run. `bin` is the manifest's declaration of
+ * where the entry point is. the emit layout underneath it is free to move.
  *
- * Resolved through `workspacePath`, never by treating the workspace name as a repo-root segment — that was the first
- * failure's shape.
+ * Resolved through `workspacePath`, never by treating the workspace name as a
+ * repo-root segment — that was the first failure's shape.
  */
 export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
 	const { bin } = await readPackageJSON<{ bin?: string | Record<string, string> }>(
@@ -92,16 +93,18 @@ export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
 }
 
 /**
- * The two repo-root license files (verified present: `LICENSE.md` — AGPL-3.0-only + a Commercial-License pointer — and
- * `commercial-LICENSE.md` — the full commercial agreement text) that every generated package's spdx expression
- * (`AGPL-3.0-only or LicenseRef-Commercial`) references. Both artifacts must carry both files verbatim: an agpl
- * conveyance requires the license text to travel with the source, and `LicenseRef-Commercial` is meaningless without
- * the referenced text alongside it.
+ * The two repo-root license files (verified present: `LICENSE.md` — AGPL-3.0-only + a
+ * Commercial-License pointer — and `commercial-LICENSE.md` — the full commercial agreement text)
+ * that every generated package's spdx expression (`AGPL-3.0-only or LicenseRef-Commercial`)
+ * references. Both artifacts must carry both files verbatim: an agpl conveyance
+ * requires the license text to travel with the source, and `LicenseRef-Commercial`
+ * is meaningless without the referenced text alongside it.
  */
 const LICENSE_FILENAMES = ["LICENSE.md", "COMMERCIAL-LICENSE.md"] as const
 
 /**
- * Copy the repo-root license files into `destDir` (a package/crate root) — shared by the Python + Rust assembly steps.
+ * Copy the repo-root license files into `destDir` (a package/crate root) —
+ * shared by the Python + Rust assembly steps.
  */
 async function copyLicenseFiles(destDir: string): Promise<void> {
 	for (const filename of LICENSE_FILENAMES) {
@@ -138,8 +141,8 @@ export interface GenerateClientsOptions {
 	 */
 	outDir?: string
 	/**
-	 * Skip `uv build`/import-check + `cargo check --examples` (dev only — an unverified pipeline must never be trusted as
-	 * a release proof).
+	 * Skip `uv build`/import-check + `cargo check --examples`
+	 * (dev only — an unverified pipeline must never be trusted as a release proof).
 	 */
 	skipVerify?: boolean
 	onPhase?: (phase: string, detail?: string) => void
@@ -152,24 +155,24 @@ export interface GenerateClientsResult {
 }
 
 /**
- * A guidance-grade failure — caught by the per-step try/catch below, so only its `message` (not the stack) surfaces in
- * the check list.
+ * A guidance-grade failure — caught by the per-step try/catch below, so only its
+ * `message` (not the stack) surfaces in the check list.
  */
 function fail(message: string): never {
 	throw new Error(message)
 }
 
 /**
- * Run a child process with inherited stdio (the `publish-hf.ts` convention — the child's own output is the progress
- * log) and throw on nonzero exit or a launch failure (e.g. the binary isn't installed).
+ * Run a child process with inherited stdio (the `publish-hf.ts` convention — the child's own output is
+ * the progress log) and throw on nonzero exit or a launch failure (e.g. the binary isn't installed).
  */
 function run(cmd: string, args: string[], options: { cwd?: string } = {}): void {
 	runProcessOrFail(cmd, args, { ...options, echo: true })
 }
 
 /**
- * Verify each emitter's compiled CLI exists — the emitters run compiled (route-table introspection over a stub engine)
- * rather than from source.
+ * Verify each emitter's compiled CLI exists — the emitters run compiled
+ * (route-table introspection over a stub engine) rather than from source.
  */
 async function checkCompiled(): Promise<void> {
 	const missing: string[] = []
@@ -213,9 +216,9 @@ async function emitSpecs(specsDir: string, phase: (p: string, d?: string) => voi
 }
 
 /**
- * Run `openapi-python-client generate` once per surface, into `mailwoman_client/<surface>/` — the sibling-subpackage
- * layout the salvaged readme documented (fully relative imports, so the four compose under one distributable with no
- * post-processing).
+ * Run `openapi-python-client generate` once per surface, into `mailwoman_client/<surface>/` —
+ * the sibling-subpackage layout the salvaged readme documented
+ * (fully relative imports, so the four compose under one distributable with no post-processing).
  */
 async function generatePythonModules(
 	specPaths: SpecPaths,
@@ -509,11 +512,12 @@ function pythonReadme(): string {
 }
 
 /**
- * Write the pyproject.toml + readme.md + `mailwoman_client/__init__.py` + `py.typed` + license texts — the salvaged
- * layout, adapted for the fourth `mailwoman` module. No `examples/` dir: the salvaged `search_berlin.py` example wasn't
- * wired into either `[tool.setuptools.packages.find]` (wheel) or a manifest.in (sdist), so it was silently dropped from
- * both built artifacts. The readme's own "Usage" section already carries the same snippet inline, so it isn't lost —
- * just not duplicated as a file that never shipped.
+ * Write the pyproject.toml + readme.md + `mailwoman_client/__init__.py` + `py.typed` +
+ * license texts — the salvaged layout, adapted for the fourth `mailwoman` module.
+ * No `examples/` dir: the salvaged `search_berlin.py` example wasn't wired into either
+ * `[tool.setuptools.packages.find]` (wheel) or a manifest.in (sdist), so it was silently
+ * dropped from both built artifacts. The readme's own "Usage" section already carries the
+ * same snippet inline, so it isn't lost — just not duplicated as a file that never shipped.
  */
 async function assemblePythonPackage(
 	pythonDir: string,
@@ -525,13 +529,15 @@ async function assemblePythonPackage(
 	await writeLocalFile(pythonReadme(), join(pythonDir, "README.md"))
 	await writeLocalFile(pythonInitPy(), join(pythonDir, "mailwoman_client", "__init__.py"))
 	await writeLocalTextFile("", join(pythonDir, "mailwoman_client", "py.typed"))
-	// agpl conveyance + the LicenseRef-Commercial target (see license-files above): copied into the package root rather than the mailwoman_client/ subpackage, matching where setuptools looks relative to pyproject.toml.
+	// agpl conveyance + the LicenseRef-Commercial target (see license-files above):
+	// copied into the package root rather than the mailwoman_client/ subpackage,
+	// matching where setuptools looks relative to pyproject.toml.
 	await copyLicenseFiles(pythonDir)
 }
 
 /**
- * `uv build` the assembled package, then import-check the built wheel in an ephemeral env (`--no-project` so `uv run`
- * doesn't treat `pythonDir` itself as the active project).
+ * `uv build` the assembled package, then import-check the built wheel in an ephemeral env
+ * (`--no-project` so `uv run` doesn't treat `pythonDir` itself as the active project).
  */
 async function verifyPython(
 	pythonDir: string,
@@ -802,8 +808,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /**
- * Vendor the 3.0 specs + write Cargo.toml/src/lib.rs/readme.md/examples/basic.rs + the license texts — the salvaged
- * crate pattern, adapted for the fourth `mailwoman` module.
+ * Vendor the 3.0 specs + write Cargo.toml/src/lib.rs/readme.md/examples/basic.rs + the
+ * license texts — the salvaged crate pattern, adapted for the fourth `mailwoman` module.
  */
 async function assembleRustCrate(
 	specPaths: SpecPaths,
@@ -830,9 +836,9 @@ async function assembleRustCrate(
 }
 
 /**
- * `cargo check --examples` — stronger than a bare `cargo check` (which skips example targets by default) so
- * `examples/basic.rs` is verified against the current vendored spec on every run. See the module docstring for why this
- * matters: the salvaged example had already drifted once.
+ * `cargo check --examples` — stronger than a bare `cargo check` (which skips example targets by default)
+ * so `examples/basic.rs` is verified against the current vendored spec on every run.
+ * See the module docstring for why this matters: the salvaged example had already drifted once.
  */
 function verifyRust(rustDir: string, phase: (p: string, d?: string) => void): void {
 	phase("cargo-check", rustDir)

@@ -78,8 +78,8 @@ describe("buildCapitalsReference", () => {
 			join(dir, "countryInfo.txt")
 		)
 
-		// AA: a real dump whose pplc name disagrees with the catalog. BB: a postal export on the dump filename.
-		// CC: no file at all.
+		// AA: a real dump whose pplc name disagrees with the catalog.
+		// BB: a postal export on the dump filename. CC: no file at all.
 		await writeLocalFile(dumpRow(1, "Other Name", "P", "PPLC", "AA"), join(dir, "AA.txt"))
 
 		await writeLocalTextFile(

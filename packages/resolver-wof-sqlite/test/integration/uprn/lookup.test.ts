@@ -39,8 +39,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Westminster pair ~160 m apart, plus an Edinburgh outlier — enough to exercise nearest-of-several, the radius bound,
- * and a cross-cell reach.
+ * Westminster pair ~160 m apart, plus an Edinburgh outlier — enough to exercise
+ * nearest-of-several, the radius bound, and a cross-cell reach.
  */
 const POINT_A = { uprn: 100_023_336_956, lat: 51.501364, lon: -0.14189 }
 const POINT_B = { uprn: 10_008_905_923, lat: 51.50264, lon: -0.14089 }

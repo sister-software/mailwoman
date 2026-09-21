@@ -84,7 +84,8 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 
 	expect(tile.stdout.length).toBeGreaterThan(0)
 
-	// The search artifact: five names plus the one alias whose clean name differs (Provides-Ballot H → Provides Ballot H).
+	// The search artifact: five names plus the one alias whose clean name differs
+	// (Provides-Ballot H → Provides Ballot H).
 	const index = resolvePath(scratch.path, "moon-search.ancestrie")
 
 	expect(await buildSearchIndex(features, String(index))).toBe(6)
@@ -127,8 +128,9 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 })
 
 /**
- * `runFile` decodes a tool's output as UTF-8, so the PNG signature's first byte (0x89) reads as the replacement
- * character and the seven bytes after it survive verbatim. that is enough to tell a PNG from anything else.
+ * `runFile` decodes a tool's output as UTF-8, so the PNG signature's first byte
+ * (0x89) reads as the replacement character and the seven bytes after it survive
+ * verbatim. that is enough to tell a PNG from anything else.
  */
 const PNG_SIGNATURE_AS_UTF8 = "�PNG\r\n\n"
 
@@ -143,9 +145,9 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 		maxZoom: 2,
 	})
 
-	// Resample the elevations, encode terrarium one band at a time, stack, tile, decimate the pyramid, convert. There
-	// is no `gdaldem` any more: the archive carries height rather than a shaded picture, so the shading happens at
-	// draw time and each body can be tinted from its style.
+	// Resample the elevations, encode terrarium one band at a time, stack, tile, decimate the pyramid,
+	// convert. There is no `gdaldem` any more: the archive carries height rather than a shaded
+	// picture, so the shading happens at draw time and each body can be tinted from its style.
 	expect(commands.map((command) => command[0])).toEqual([
 		"gdal_translate",
 		"gdal_calc.py",

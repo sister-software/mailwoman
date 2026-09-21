@@ -74,9 +74,10 @@ export const WDQS_ENDPOINT = "https://query.wikidata.org/sparql"
 /**
  * The `User-Agent` every request carries.
  *
- * Not decoration. The Wikimedia user-agent policy blocks requests whose agent is absent, generic, or a library default,
- * and wdqs enforces it — an unidentified client gets a 403 that no amount of retrying fixes. The policy asks for a tool
- * name, a URL, and a contact address, all three of which are here.
+ * Not decoration. The Wikimedia user-agent policy blocks requests whose agent is absent,
+ * generic, or a library default, and wdqs enforces it — an unidentified client gets
+ * a 403 that no amount of retrying fixes. The policy asks for a tool name, a URL,
+ * and a contact address, all three of which are here.
  */
 export const WIKIDATA_USER_AGENT =
 	"mailwoman/1.0 (https://github.com/sister-software/mailwoman; teffen@sister.software) corpus-subvenue-fetch"
@@ -84,20 +85,22 @@ export const WIKIDATA_USER_AGENT =
 /**
  * Minimum spacing between dispatches, in milliseconds.
  *
- * Wdqs's published limit is expressed as processing-time budget rather than a request rate, and this run issues fewer
- * than a dozen queries total, so the number is chosen for politeness rather than to sit against a ceiling: one query
- * per second is far inside anything wdqs objects to, and at this volume the whole fetch still completes in seconds.
+ * Wdqs's published limit is expressed as processing-time budget rather than a request rate,
+ * and this run issues fewer than a dozen queries total, so the number is chosen for politeness
+ * rather than to sit against a ceiling: one query per second is far inside anything wdqs
+ * objects to, and at this volume the whole fetch still completes in seconds.
  *
- * Set as `minRequestIntervalMs` rather than `requestsPerMinute` deliberately — `agents.md` records that
- * `requestsPerMinute` is a budget model whose cooldown lets N requests go out back to back, so it does not deliver N
- * per minute and is not the check that holds a rate. The interval is.
+ * Set as `minRequestIntervalMs` rather than `requestsPerMinute` deliberately —
+ * `agents.md` records that `requestsPerMinute` is a budget model whose cooldown
+ * lets N requests go out back to back, so it does not deliver N per minute
+ * and is not the check that holds a rate. The interval is.
  */
 const WDQS_MIN_REQUEST_INTERVAL_MS = 1000
 
 /**
- * Per-attempt socket-inactivity timeout. wdqs's own query timeout is 60 seconds and it answers with a 500 when a query
- * exceeds it, so a client timeout below that would turn a server-side timeout into a client-side one and lose the error
- * body that says which query was too expensive.
+ * Per-attempt socket-inactivity timeout. wdqs's own query timeout is 60 seconds and it answers
+ * with a 500 when a query exceeds it, so a client timeout below that would turn a server-side
+ * timeout into a client-side one and lose the error body that says which query was too expensive.
  */
 const WDQS_REQUEST_TIMEOUT_MS = 90_000
 
@@ -107,32 +110,34 @@ const WDQS_REQUEST_TIMEOUT_MS = 90_000
 const WDQS_MAX_ATTEMPTS = 3
 
 /**
- * How long a cached sparql response stays fresh. A week: the class labels this pulls change on the timescale at which
- * someone edits a Wikidata concept's German alias, which is to say rarely, and a re-run inside a working session should
- * not re-ask.
+ * How long a cached sparql response stays fresh. A week: the class labels this pulls
+ * change on the timescale at which someone edits a Wikidata concept's German alias,
+ * which is to say rarely, and a re-run inside a working session should not re-ask.
  */
 const WDQS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 /**
  * One Wikidata concept whose labels are a designator's multilingual surface set.
  *
- * `designatorID` is the mailwoman-side vocabulary term, matching `neural/venue-structure.ts`'s
- * `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap. `qid` was resolved by `wbsearchentities` and hand-checked
- * against the entity's English description (recorded below) on 2026-08-04 — a QID picked by search alone is how you end
- * up pulling the labels of a Bronx neighbourhood called Concourse.
+ * `designatorID` is the mailwoman-side vocabulary term, matching
+ * `neural/venue-structure.ts`'s `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap.
+ * `qid` was resolved by `wbsearchentities` and hand-checked against the entity's English
+ * description (recorded below) on 2026-08-04 — a QID picked by search alone is how you
+ * end up pulling the labels of a Bronx neighbourhood called Concourse.
  *
- * `wing` is absent and that is a finding rather than an oversight: Wikidata has no clean concept for "wing of a
- * building". `wbsearchentities` for "wing" returns a surname, two English villages, a rugby position and a drone
- * company. Since `wing` is the single most valuable designator in the arc — `West Wing` is the one modifier case that
- * already parses, and `East Wing` is the one that does not — its localized surfaces have to come from somewhere else.
- * See the wave-1 report.
+ * `wing` is absent and that is a finding rather than an oversight: Wikidata
+ * has no clean concept for "wing of a building". `wbsearchentities` for "wing"
+ * returns a surname, two English villages, a rugby position and a drone company.
+ * Since `wing` is the single most valuable designator in the arc — `West Wing` is the
+ * one modifier case that already parses, and `East Wing` is the one that does not — its
+ * localized surfaces have to come from somewhere else. See the wave-1 report.
  */
 export interface SubVenueConcept {
 	designatorID: string
 	qid: string
 	/**
-	 * The entity's English description, recorded so a future reader can tell at a glance whether the QID still names what
-	 * we think it names.
+	 * The entity's English description, recorded so a future reader can tell at a glance
+	 * whether the QID still names what we think it names.
 	 */
 	gloss: string
 }
@@ -157,11 +162,11 @@ export const SUBVENUE_CONCEPTS: readonly SubVenueConcept[] = [
 const TERMINAL_CLASS_QID = "Q849706"
 
 /**
- * Build the class-label query: `rdfs:label` and `skos:altLabel` for every concept, in every language, tagged with which
- * of the two it came from so the lexicon can rank a label above an alias.
+ * Build the class-label query: `rdfs:label` and `skos:altLabel` for every concept, in every language,
+ * tagged with which of the two it came from so the lexicon can rank a label above an alias.
  *
- * `values` rather than a property path over the whole class tree — the concept list is closed and hand-verified, and a
- * `wdt:P279*` walk from `building` would drag in every structure type on earth.
+ * `values` rather than a property path over the whole class tree — the concept list is closed
+ * and hand-verified, and a `wdt:P279*` walk from `building` would drag in every structure type on earth.
  */
 export function buildDesignatorLabelQuery(concepts: readonly SubVenueConcept[] = SUBVENUE_CONCEPTS): string {
 	const values = concepts.map((c) => `wd:${c.qid}`).join(" ")
@@ -176,13 +181,13 @@ export function buildDesignatorLabelQuery(concepts: readonly SubVenueConcept[] =
 }
 
 /**
- * Build the instance-label query — every item that is an `instance of` (through any `subclass of` chain) an airport
- * terminal, with all of its labels. Measured at 246 items / 775 labels on 2026-08-04, well inside wdqs's 60-second
- * budget.
+ * Build the instance-label query — every item that is an `instance of`
+ * (through any `subclass of` chain) an airport terminal, with all of its labels.
+ * Measured at 246 items / 775 labels on 2026-08-04, well inside wdqs's 60-second budget.
  *
- * A caveat worth knowing before trusting a row: Wikidata's P31 on these is not clean. `Q1322696` (Kigali International
- * Airport) is typed as an airport terminal, so the result set mixes airports in with terminals. The consumer filters.
- * this module fetches what the query returns.
+ * A caveat worth knowing before trusting a row: Wikidata's P31 on these is not clean.
+ * `Q1322696` (Kigali International Airport) is typed as an airport terminal, so the result set mixes
+ * airports in with terminals. The consumer filters. this module fetches what the query returns.
  */
 export function buildTerminalInstanceQuery(classQID: string = TERMINAL_CLASS_QID): string {
 	return `SELECT ?item ?lang ?label WHERE {
@@ -202,8 +207,8 @@ export interface SPARQLResults {
 }
 
 /**
- * Whether a decoded body is a sparql results envelope. Used as the cache's write validator so an html error page served
- * under a 200 is never persisted for the next run to destructure into `undefined`.
+ * Whether a decoded body is a sparql results envelope. Used as the cache's write validator so an html
+ * error page served under a 200 is never persisted for the next run to destructure into `undefined`.
  */
 export function isSPARQLResults(value: unknown): value is SPARQLResults {
 	return typeof value === "object" && value !== null && Array.isArray((value as SPARQLResults).results?.bindings)
@@ -215,13 +220,14 @@ export interface CreateWikidataClientOptions {
 	 */
 	cacheDir: string
 	/**
-	 * Time source powering the pacer and the retry backoff. Defaults to the system clock. tests inject a fake so no suite
-	 * ever sleeps a real second.
+	 * Time source powering the pacer and the retry backoff.
+	 * Defaults to the system clock. tests inject a fake so no suite ever sleeps a real second.
 	 */
 	clock?: ClockLike
 	/**
-	 * Axios overrides, merged over this client's defaults. the test injection point — pass an `adapter` and no live call
-	 * is made. Overriding `headers` wholesale would drop the required `User-Agent`, so don't.
+	 * Axios overrides, merged over this client's defaults. the test injection point —
+	 * pass an `adapter` and no live call is made. Overriding `headers` wholesale
+	 * would drop the required `User-Agent`, so don't.
 	 */
 	axios?: ConstructorParameters<typeof APIClient>[0]["axios"]
 }
@@ -255,10 +261,10 @@ export function createWikidataClient(options: CreateWikidataClientOptions): Wiki
 		caching: {
 			storage: buildDiskStorage({
 				directory: options.cacheDir,
-				// `value.data` is the cached response; `value.data.data` is its body. Passing the response here
-				// instead of the body is a silent-failure trap — the predicate returns false for every entry and
-				// every run re-fetches while logging "rejected by the configured validate() predicate". Caught
-				// on the first live run, 2026-08-04.
+				// `value.data` is the cached response; `value.data.data` is its body.
+				// Passing the response here instead of the body is a silent-failure trap — the predicate
+				// returns false for every entry and every run re-fetches while logging "rejected by
+				// the configured validate() predicate". Caught on the first live run, 2026-08-04.
 				validate: (value) => isSPARQLResults(value.data?.data),
 			}),
 			ttl: WDQS_CACHE_TTL_MS,
@@ -273,9 +279,9 @@ export function createWikidataClient(options: CreateWikidataClientOptions): Wiki
 			},
 			timeout: WDQS_REQUEST_TIMEOUT_MS,
 			responseType: "json",
-			// Axios hands back the RAW string when a body fails to parse unless this is off. wdqs serves an
-			// html error page under some failures, and returning that as `SPARQLResults` would surface as an
-			// `undefined` destructure far from the cause.
+			// Axios hands back the RAW string when a body fails to parse unless this is off.
+			// wdqs serves an html error page under some failures, and returning that as
+			// `SPARQLResults` would surface as an `undefined` destructure far from the cause.
 			transitional: { silentJSONParsing: false },
 			...options.axios,
 		},
@@ -325,12 +331,12 @@ async function writePayload(
 }
 
 /**
- * Run both queries and write their raw sparql JSON into `<outRoot>/wikidata-subvenue/`, with a `manifest.json` carrying
- * the endpoint, the exact queries, the concept table, row counts and sha256s.
+ * Run both queries and write their raw sparql JSON into `<outRoot>/wikidata-subvenue/`, with a
+ * `manifest.json` carrying the endpoint, the exact queries, the concept table, row counts and sha256s.
  *
- * The RAW envelope is written rather than a reshaped one on purpose: the lexicon build is a separate, pure step
- * (`sub-venue-lexicon.ts`) and keeping the fetch output byte-faithful to what wdqs served means a lexicon regeneration
- * never needs the network.
+ * The RAW envelope is written rather than a reshaped one on purpose: the lexicon build is a
+ * separate, pure step (`sub-venue-lexicon.ts`) and keeping the fetch output byte-faithful
+ * to what wdqs served means a lexicon regeneration never needs the network.
  */
 export async function fetchWikidataSubVenue(
 	options: FetchWikidataSubVenueOptions,

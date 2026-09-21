@@ -25,9 +25,10 @@ import type {
 } from "@mailwoman/core/resolver"
 
 /**
- * One provider match on the wire — the snake_case projection of {@link AuthoritativeMatch}, field for field. Absent
- * fields were absent from the provider's answer. nothing is defaulted in. Unexported: consumers reach it as
- * `AuthoritativeAssertion["matches"]`, and the export-hygiene check limits the surface to actual importers.
+ * One provider match on the wire — the snake_case projection of {@link AuthoritativeMatch},
+ * field for field. Absent fields were absent from the provider's answer. nothing is
+ * defaulted in. Unexported: consumers reach it as `AuthoritativeAssertion["matches"]`,
+ * and the export-hygiene check limits the surface to actual importers.
  */
 interface AuthoritativeAssertionMatch {
 	provider_place_id: string
@@ -41,8 +42,9 @@ interface AuthoritativeAssertionMatch {
 }
 
 /**
- * The result-level block. `status` is the response status plus `transport_error`; `matches` is present exactly when the
- * provider returned candidates (one for `matched`, all of them in the provider's order for `ambiguous`).
+ * The result-level block. `status` is the response status plus `transport_error`;
+ * `matches` is present exactly when the provider returned candidates
+ * (one for `matched`, all of them in the provider's order for `ambiguous`).
  */
 export interface AuthoritativeAssertion {
 	provider: string
@@ -59,8 +61,8 @@ export interface AuthoritativeAssertion {
 }
 
 /**
- * The subset of a geocode result this module reads to build the provider's query. Structural, so the helper never
- * imports the result type and the dependency stays one-way.
+ * The subset of a geocode result this module reads to build the provider's query.
+ * Structural, so the helper never imports the result type and the dependency stays one-way.
  */
 export interface AuthoritativeEvidence {
 	locality: string | null
@@ -86,8 +88,9 @@ const EVIDENCE_TAGS: ReadonlyArray<[keyof AuthoritativeEvidence, ComponentTag]> 
 ]
 
 /**
- * Build the provider query from the assembled result's components. Spans are deliberately absent here — the flat result
- * no longer carries them, and the interface marks them optional for exactly this assembly.
+ * Build the provider query from the assembled result's components.
+ * Spans are deliberately absent here — the flat result no longer carries them,
+ * and the interface marks them optional for exactly this assembly.
  */
 export function authoritativeQueryFrom(
 	rawQuery: string,
@@ -128,8 +131,9 @@ function projectMatch(match: AuthoritativeMatch): AuthoritativeAssertionMatch {
 }
 
 /**
- * Consult the provider and project its answer to the wire block. Never throws: a thrown lookup comes back as the
- * `transport_error` block so the last geocode answer remains available after a provider outage.
+ * Consult the provider and project its answer to the wire block.
+ * Never throws: a thrown lookup comes back as the `transport_error` block
+ * so the last geocode answer remains available after a provider outage.
  */
 export async function consultAuthoritativeProvider(
 	provider: AuthoritativeProvider,

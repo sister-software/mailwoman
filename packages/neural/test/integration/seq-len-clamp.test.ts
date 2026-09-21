@@ -54,9 +54,9 @@ describe.skipIf(!haveModel)("sequence-length clamp", () => {
 	})
 
 	test("the same input parses on the RAW classifier path too (the throw was not heal-specific)", async () => {
-		// The two paths failed with different messages — `emissions[pi] is not iterable` with the repair
-		// on, `Cannot read properties of undefined` with it off — which made the crash look like a
-		// word-consistency bug. It was upstream of both.
+		// The two paths failed with different messages — `emissions[pi] is not iterable`
+		// with the repair on, `Cannot read properties of undefined` with it off — which made
+		// the crash look like a word-consistency bug. It was upstream of both.
 		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		const long = PREFIX.repeat(6) + TAIL
 

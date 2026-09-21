@@ -59,7 +59,8 @@ const HTTP_NOT_FOUND = 404
 const STATUS_WORDS: ReadonlySet<string> = new Set<LicenseStatusAnswer>(["active", "lapsed", "revoked", "unknown"])
 
 /**
- * A post with the interceptor's per-request cache switch off: neither route's answer may be served from a cache.
+ * A post with the interceptor's per-request cache switch off: neither route's
+ * answer may be served from a cache.
  */
 function uncachedPost(url: string, data: unknown): CacheRequestConfig {
 	return { url, method: "POST", data, cache: false }
@@ -84,8 +85,8 @@ function isStatusWord(word: string): word is Exclude<LicenseStatusAnswer, "unrea
 }
 
 /**
- * Ask the worker for one license's public status. Any answer outside the four words, and any failure to answer, is
- * reported as what it is rather than as a verdict.
+ * Ask the worker for one license's public status. Any answer outside the four words,
+ * and any failure to answer, is reported as what it is rather than as a verdict.
  */
 export async function checkLicenseStatus(
 	lid: string,
@@ -104,8 +105,9 @@ export async function checkLicenseStatus(
 }
 
 /**
- * Trade a lid and its secret for the current token. The worker answers the same 404 for an unknown lid and a wrong
- * secret, which is `not_found` here. the caller verifies the token offline before writing it anywhere.
+ * Trade a lid and its secret for the current token. The worker answers the same
+ * 404 for an unknown lid and a wrong secret, which is `not_found` here. the caller
+ * verifies the token offline before writing it anywhere.
  */
 export async function refreshLicenseKey(
 	credentials: { lid: string; secret: string },

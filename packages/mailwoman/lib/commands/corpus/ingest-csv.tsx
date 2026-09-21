@@ -44,8 +44,8 @@ export const spec = {
 const CorpusIngestCSV: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { ingestCSV } = await import("@mailwoman/corpus/tools")
-		// `out` is the CLI's spelling; `ingestCSV`'s own option is `output`, and spreading `rest` would hand it a key it
-		// does not read, which is a silently missing destination rather than an error.
+		// `out` is the CLI's spelling; `ingestCSV`'s own option is `output`, and spreading `rest` would
+		// hand it a key it does not read, which is a silently missing destination rather than an error.
 		const { header, out, ...rest } = options
 
 		return ingestCSV({ ...rest, output: out, noHeader: !header })

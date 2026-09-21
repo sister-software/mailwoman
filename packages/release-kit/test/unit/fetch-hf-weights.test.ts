@@ -21,8 +21,8 @@ const repoRoot = String(repoRootPath())
 const CJK = "packages/neural-weights-cjk"
 
 /**
- * The family's card version names its bucket directory (`cjk/v<version>/`), so the pins below follow the card rather
- * than a literal a base swap would leave behind.
+ * The family's card version names its bucket directory (`cjk/v<version>/`), so the pins
+ * below follow the card rather than a literal a base swap would leave behind.
  */
 async function cjkCardVersion(): Promise<string> {
 	const card = await readLocalJSONFile<{ version: string }>(resolvePath(repoRoot, CJK, "model-card.json"))

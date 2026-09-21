@@ -16,8 +16,9 @@ import type { LicenseWorkerEnv } from "#env"
 import { stripeClient } from "#stripe/client"
 
 /**
- * The event types the destination is subscribed to and this worker acts on. A closed dispute is not here: the
- * reconciliation pass reads Stripe's current dispute state for a disputed license instead.
+ * The event types the destination is subscribed to and this worker acts on.
+ * A closed dispute is not here: the reconciliation pass reads Stripe's current
+ * dispute state for a disputed license instead.
  */
 export const ACCEPTED_EVENT_TYPES = [
 	"checkout.session.completed",

@@ -35,13 +35,13 @@ import {
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const SYNTH_PO_BOX_ADAPTER_ID = "synth-po-box"
 /**
- * License for the synthetic PO-box rows. The output is generated, but it inherits the terms of the real tuples it is
- * derived from, so the attribution travels with it.
+ * License for the synthetic PO-box rows. The output is generated, but it inherits the
+ * terms of the real tuples it is derived from, so the attribution travels with it.
  */
 export const SYNTH_PO_BOX_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
@@ -52,13 +52,13 @@ export interface PoBoxInputRow extends PoBoxBaseTuple {
 
 export interface SynthPoBoxAdapterOptions {
 	/**
-	 * How many PO box variants to emit per input tuple. Each variant picks a different leader (and possibly a different
-	 * number / noise level). Default 1.
+	 * How many PO box variants to emit per input tuple. Each variant picks a different leader
+	 * (and possibly a different number / noise level). Default 1.
 	 */
 	variantsPerInput?: number
 	/**
-	 * Probability (0..1) of emitting a PMB-with-street variant when both the input has a street and the locale supports
-	 * PMB. Default 0.15.
+	 * Probability (0..1) of emitting a PMB-with-street variant when both the input
+	 * has a street and the locale supports PMB. Default 0.15.
 	 */
 	pmbRatio?: number
 	/**
@@ -66,11 +66,12 @@ export interface SynthPoBoxAdapterOptions {
 	 */
 	seed?: number
 	/**
-	 * Probability (0..1), evaluated per input tuple, of also emitting one US military/diplomatic PO-box row
-	 * (`PSC/CMR/Unit <id> Box <box>, APO/FPO/DPO AA/AE/AP <zip>`, #517). These rows are self-contained — they draw no
-	 * field from the input tuple, so military volume scales with the input stream size. Default 0 (off) — the adapter's
-	 * interface is "one row per input"; the corpus build recipe opts in to seed the rare-but-real military class without
-	 * changing the default.
+	 * Probability (0..1), evaluated per input tuple, of also emitting one US military/diplomatic
+	 * PO-box row (`PSC/CMR/Unit <id> Box <box>, APO/FPO/DPO AA/AE/AP <zip>`, #517).
+	 * These rows are self-contained — they draw no field from the input tuple, so
+	 * military volume scales with the input stream size. Default 0 (off) —
+	 * the adapter's interface is "one row per input"; the corpus build recipe opts in to
+	 * seed the rare-but-real military class without changing the default.
 	 */
 	militaryRatio?: number
 }
@@ -90,9 +91,9 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 		async *rows(options: AdapterOptions): AsyncIterable<CanonicalRow> {
 			const random = makeLcg(opts.seed ?? Date.now())
 
-			// TextSpliterator streams string lines. the per-line tryParsingJSON below keeps this reader
-			// tolerant of malformed rows (skipped++), so TextSpliterator + a non-throwing parse — not
-			// JSONSpliterator, which would throw on the first bad line.
+			// TextSpliterator streams string lines. the per-line tryParsingJSON below keeps this
+			// reader tolerant of malformed rows (skipped++), so TextSpliterator + a non-throwing
+			// parse — not JSONSpliterator, which would throw on the first bad line.
 			const lines = TextSpliterator.fromAsync(options.inputPath)
 
 			let emitted = 0
@@ -159,11 +160,11 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					if (options.limit !== undefined && emitted >= options.limit) break
 				}
 
-				// US military/diplomatic PO-box rows (#517): self-contained — draw nothing from the input
-				// tuple — emitted per input line with probability `militaryRatio` (off by default, so the
-				// default random stream and output are byte-identical). Military volume scales with the
-				// stream rather than the US-tuple count. US-only: suppressed under a non-US country filter
-				// and counted against `limit` like any other row.
+				// US military/diplomatic PO-box rows (#517): self-contained — draw nothing from
+				// the input tuple — emitted per input line with probability `militaryRatio`
+				// (off by default, so the default random stream and output are byte-identical).
+				// Military volume scales with the stream rather than the US-tuple count.
+				// US-only: suppressed under a non-US country filter and counted against `limit` like any other row.
 				const militaryAllowed = !options.country || options.country === "US"
 
 				if (

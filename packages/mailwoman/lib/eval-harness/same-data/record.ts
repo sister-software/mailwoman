@@ -40,9 +40,9 @@ import {
 /**
  * Drop the query-verdict fields a fixture may never carry.
  *
- * Destructured rather than filtered by key, so the compiler checks the result: the return type is derived from
- * `WITHHELD_CANDIDATE_FIELDS`, so a field added to that tuple and not named here is a type error rather than a verdict
- * that quietly reaches the fixture.
+ * Destructured rather than filtered by key, so the compiler checks the result:
+ * the return type is derived from `WITHHELD_CANDIDATE_FIELDS`, so a field added to that tuple
+ * and not named here is a type error rather than a verdict that quietly reaches the fixture.
  */
 function stripWithheld(place: ResolvedPlace): SameDataCandidate {
 	const { containedByQualifier, mismatch, regionScopeMiss, resolutionQuality, variantAliasExempted, ...candidate } =
@@ -54,9 +54,9 @@ function stripWithheld(place: ResolvedPlace): SameDataCandidate {
 /**
  * A backend that answers from the real one and records every question and answer.
  *
- * The recorded answer is the stripped form, so what the fixture holds is what the arms will later read — recording the
- * full answer and stripping at write time would leave the recording and the replay disagreeing about what the walk
- * saw.
+ * The recorded answer is the stripped form, so what the fixture holds is what the arms
+ * will later read — recording the full answer and stripping at write time would leave
+ * the recording and the replay disagreeing about what the walk saw.
  */
 function recordingBackend(
 	backend: ResolverBackend,
@@ -77,14 +77,15 @@ function recordingBackend(
 			const key = canonicalQueryKey(query)
 
 			if (!into.has(key)) {
-				// The stored query is parsed back from the key rather than kept by reference. The walk reuses and mutates
-				// its query object after the call returns — it adds `parentID` once a parent resolves — so a stored
-				// reference ends up describing a question that was never asked, and the fixture's key and query disagree.
+				// The stored query is parsed back from the key rather than kept by reference.
+				// The walk reuses and mutates its query object after the call returns — it adds
+				// `parentID` once a parent resolves — so a stored reference ends up describing
+				// a question that was never asked, and the fixture's key and query disagree.
 				// Round-tripping through the key also makes the two agree by construction.
 				into.set(key, {
 					key,
-					// A throw is the interface: the key is this process's own canonical JSON, so a parse failure means the
-					// encoder is broken and every recorded row after it would be wrong.
+					// A throw is the interface: the key is this process's own canonical JSON, so a parse
+					// failure means the encoder is broken and every recorded row after it would be wrong.
 					query: parseJSONStrict<SameDataQuery>(key),
 					candidates: answer.map((place) => stripWithheld(place)),
 				})
@@ -103,13 +104,15 @@ export interface RecordCensus {
 	lookups: number
 	candidates: number
 	/**
-	 * Candidate answers the gold filter withheld during recording, counted across every question asked. Zero everywhere
-	 * except the withheld-gold stratum. a non-zero value on a `goldPresent` row would be a defect.
+	 * Candidate answers the gold filter withheld during recording, counted across
+	 * every question asked. Zero everywhere except the withheld-gold stratum. a
+	 * non-zero value on a `goldPresent` row would be a defect.
 	 */
 	removedGold: number
 	/**
-	 * Set when an arm's walk raised while recording. The row is still written — a walk that failed under one option set
-	 * may have recorded useful keys under another — and the run receipt carries the count.
+	 * Set when an arm's walk raised while recording. The row is still written —
+	 * a walk that failed under one option set may have recorded useful keys under another —
+	 * and the run receipt carries the count.
 	 */
 	error?: string
 }
@@ -122,24 +125,28 @@ export interface RecordInputs {
 	 */
 	parse: (query: string) => Promise<AddressTree>
 	/**
-	 * Every arm's `ResolveOpts`, so the recording covers each arm's questions. The production arm's empty option bag must
-	 * be included explicitly — an omitted default is a missing key at replay.
+	 * Every arm's `ResolveOpts`, so the recording covers each arm's questions.
+	 * The production arm's empty option bag must be included explicitly —
+	 * an omitted default is a missing key at replay.
 	 */
 	armOptions: ReadonlyArray<ResolveOpts>
 	/**
-	 * Withhold every row denoting the gold place rather than only the ids the concordance linked. Off by default, and the
-	 * default is what keeps `same-data-resolver-v1` and `prominence-floor-v1` byte-stable on a re-record.
+	 * Withhold every row denoting the gold place rather than only the ids the concordance linked.
+	 * Off by default, and the default is what keeps `same-data-resolver-v1`
+	 * and `prominence-floor-v1` byte-stable on a re-record.
 	 *
-	 * Why it exists: the gold identity set is built from the `gn:id` concordance, and the gazetteer carries **285,478 of
-	 * its 2,689,326 populated localities twice** — 10.6% share a folded name with a `localadmin` within 5 km, and 264,523
-	 * of those name that twin as their depth-1 ancestor. Removing the concorded id leaves the twin answerable, so an arm
-	 * returning it is graded as selecting where no correct candidate exists. It named the right place. Measured on
-	 * `same-data-resolver-v1`: 10 of 100 withheld-gold rows, and three of the five rows published as exemplars of
-	 * confident failure — `Langfang` 2.8 km, `Matsusaka` 1.3 km, `Troyes` 0.6 km.
+	 * Why it exists: the gold identity set is built from the `gn:id` concordance,
+	 * and the gazetteer carries **285,478 of its 2,689,326 populated localities twice** —
+	 * 10.6% share a folded name with a `localadmin` within 5 km, and 264,523 of those name that
+	 * twin as their depth-1 ancestor. Removing the concorded id leaves the twin answerable,
+	 * so an arm returning it is graded as selecting where no correct candidate exists.
+	 * It named the right place. Measured on `same-data-resolver-v1`: 10 of 100 withheld-gold
+	 * rows, and three of the five rows published as exemplars of confident failure —
+	 * `Langfang` 2.8 km, `Matsusaka` 1.3 km, `Troyes` 0.6 km.
 	 *
-	 * Turning it on changes what the stratum means, so it belongs to a successor definition rather than a version bump of
-	 * a benchmark whose arms have run. `benchmark-freeze.json` states the reason: a rule editable after a result is
-	 * visible asserts nothing.
+	 * Turning it on changes what the stratum means, so it belongs to a successor definition rather than
+	 * a version bump of a benchmark whose arms have run. `benchmark-freeze.json` states
+	 * the reason: a rule editable after a result is visible asserts nothing.
 	 */
 	withholdEveryDenotingRow?: boolean
 }
@@ -150,15 +157,17 @@ export interface RecordResult {
 }
 
 /**
- * How far apart two rows with the same folded name may sit and still denote one settlement. 5 km is the radius the
- * `same-data-resolver-v1` correction re-graded at, where it credited 10 of 100 withheld-gold rows. at 25 km it credits
- * 15, so the figure moves with the radius and the radius is stated wherever the figure is.
+ * How far apart two rows with the same folded name may sit and still denote one
+ * settlement. 5 km is the radius the `same-data-resolver-v1` correction re-graded at,
+ * where it credited 10 of 100 withheld-gold rows. at 25 km it credits 15, so the figure
+ * moves with the radius and the radius is stated wherever the figure is.
  */
 const SAME_SETTLEMENT_KM = 5
 
 /**
- * The diacritic-folded comparison surface. Deliberately not the resolver's `foldName`: that one empties a non-Latin
- * name, so `東京` and `Москва` would fold equal to each other and to every other non-Latin row.
+ * The diacritic-folded comparison surface. Deliberately not the resolver's `foldName`:
+ * that one empties a non-Latin name, so `東京` and `Москва` would fold equal to each other
+ * and to every other non-Latin row.
  */
 function settlementKey(name: string): string {
 	return name
@@ -193,8 +202,8 @@ function withholdPredicate(
 
 		if (!place.name || settlementKey(place.name) !== goldKey) return false
 
-		// Both halves are required. `Batāla` (IN) and `Batala` (IN) fold equal and sit 1,421 km apart — a real namesake,
-		// and withholding it would remove a candidate the stratum is entitled to offer.
+		// Both halves are required. `Batāla` (IN) and `Batala` (IN) fold equal and sit 1,421 km apart —
+		// a real namesake, and withholding it would remove a candidate the stratum is entitled to offer.
 		return haversineKm(place.lat, place.lon, row.gold.lat, row.gold.lon) <= SAME_SETTLEMENT_KM
 	}
 }
@@ -210,15 +219,17 @@ export async function recordFixture(inputs: RecordInputs): Promise<RecordResult>
 	for (const row of panel) {
 		const tree = await parse(row.query)
 		const lookups = new Map<string, SameDataLookup>()
-		// Not `error`: the catch binding below takes that name, and a same-named outer variable is shadowed — the
-		// assignment would write to the parameter and the receipt would report a clean run over a failed one.
+		// Not `error`: the catch binding below takes that name, and a same-named
+		// outer variable is shadowed — the assignment would write to the parameter
+		// and the receipt would report a clean run over a failed one.
 		let recordingError: string | undefined
 
 		let removedGold = 0
 		const withheld = withholdPredicate(row, inputs.withholdEveryDenotingRow === true)
 
-		// One recording backend for the row, shared across the arm option sets: the lookup map and the withheld count are
-		// per row, and building the closure inside the loop would capture the counter afresh each pass.
+		// One recording backend for the row, shared across the arm option sets:
+		// the lookup map and the withheld count are per row, and building the closure
+		// inside the loop would capture the counter afresh each pass.
 		const recorder = createWOFResolver(
 			recordingBackend(backend, lookups, withheld, (count) => {
 				removedGold += count

@@ -142,8 +142,8 @@ describe("profiles", () => {
 		// stand-in (0.449) — two harnesses compared through one id, refusing on a healthy run.
 		// Caught by running it rather than by reading it. This test reads it.
 		//
-		// The token@1 row is the one legitimate crossover: every JS harness computes the same BIO
-		// argmax, so `js-ship-config` is shared. Anything else must be single-harness.
+		// The token@1 row is the one legitimate crossover: every JS harness computes the same
+		// BIO argmax, so `js-ship-config` is shared. Anything else must be single-harness.
 		for (const name of await listProfiles()) {
 			const profile = await resolveProfile(name)
 
@@ -160,8 +160,8 @@ describe("profiles", () => {
 	})
 
 	it("keeps the summed-BIO stand-in and the learned span decode on separate ids", async () => {
-		// They are different numbers on the same weights — 0.449 vs 0.5768 on v301. If a future edit
-		// collapses them, every span-head claim becomes uninterpretable.
+		// They are different numbers on the same weights — 0.449 vs 0.5768 on v301.
+		// If a future edit collapses them, every span-head claim becomes uninterpretable.
 		const standIn = (await findBaseline("parity.street.seg_at_1@v301-summed-bio"))!
 		const learned = (await findBaseline("parity.street.seg_at_1@v301-span"))!
 

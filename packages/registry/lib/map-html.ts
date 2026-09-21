@@ -40,14 +40,15 @@ const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOx
 const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
 
 /**
- * The house Protomaps basemap: `basemap-v4` PMTiles (tile-worker → R2 at `tiles.mailwoman.ai`, which sends cors for
- * localhost + the docs domains).
+ * The house Protomaps basemap: `basemap-v4` PMTiles (tile-worker → R2 at `tiles.mailwoman.ai`,
+ * which sends cors for localhost + the docs domains).
  *
- * Glyphs + sprite come from the upstream Protomaps assets (GitHub Pages, `acao: *`), not the house mirror at
- * `public.mailwoman.ai` — that bucket sends no cors headers, so the mirror can't be fetched cross-origin
- * (`cartographer/base/composition.ts` flags the same: "Currently upstream URLs. we mirror these … but no public route
- * fronts that bucket yet"). The upstream assets target the v4 schema, matching the `basemap-v4` tiles. Swap to the
- * house mirror once it has a cors-enabled route.
+ * Glyphs + sprite come from the upstream Protomaps assets (GitHub Pages, `acao: *`),
+ * not the house mirror at `public.mailwoman.ai` — that bucket sends no cors headers, so the
+ * mirror can't be fetched cross-origin (`cartographer/base/composition.ts` flags the same:
+ * "Currently upstream URLs. we mirror these … but no public route fronts that bucket yet").
+ * The upstream assets target the v4 schema, matching the `basemap-v4` tiles.
+ * Swap to the house mirror once it has a cors-enabled route.
  */
 const BASEMAP_SOURCE_ID = "basemap-v4"
 const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
@@ -71,8 +72,8 @@ export interface MapHTMLOptions {
 	/**
 	 * How to color the markers:
 	 *
-	 * - `"auto"` (default) — by `bucket` if any feature carries one (reconciliation output), else by cross-dataset-link
-	 *   status.
+	 * - `"auto"` (default) — by `bucket` if any feature carries one (reconciliation output),
+	 *   else by cross-dataset-link status.
 	 * - `"sources"` — always by cross-dataset-link status (≥2 sources stand out).
 	 * - `"bucket"` — always by the `bucket` property.
 	 */
@@ -93,9 +94,9 @@ const SINGLE_COLOR = "#3388ff"
 const CROSS_COLOR = "#e8590c"
 
 /**
- * Escape a value for safe inlining inside a `<script>` as JSON. `JSON.stringify` alone isn't enough — a record value
- * containing `</script>` would close the block early. escaping `<`/`>`/`&` to `\uXXXX` keeps the JSON valid and makes a
- * breakout impossible.
+ * Escape a value for safe inlining inside a `<script>` as JSON.
+ * `JSON.stringify` alone isn't enough — a record value containing `</script>` would close the
+ * block early. escaping `<`/`>`/`&` to `\uXXXX` keeps the JSON valid and makes a breakout impossible.
  */
 function safeJSONForScript(value: unknown): string {
 	return stringifyJSON(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026")
@@ -106,9 +107,9 @@ function sourceCount(props: MapFeatureData): number {
 }
 
 /**
- * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as a complete, standalone html document.
- * Entities without a coordinate are already absent from those collections. an empty collection renders a friendly empty
- * state rather than a broken map.
+ * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as a complete,
+ * standalone html document. Entities without a coordinate are already absent from those
+ * collections. an empty collection renders a friendly empty state rather than a broken map.
  */
 export function toMapHTML(
 	geojson: GeoFeatureCollection<PointLiteral, MapFeatureData>,

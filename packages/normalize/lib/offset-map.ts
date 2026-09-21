@@ -20,7 +20,8 @@ export function identityMap(n: number): number[] {
 }
 
 /**
- * Compose `inputMap` (input → raw) with `transformMap` (output → input) to produce `outputMap` (output → raw).
+ * Compose `inputMap` (input → raw) with `transformMap` (output → input) to
+ * produce `outputMap` (output → raw).
  *
  * @example
  * 	// raw = "350 5th" (chars 0..7, double space at 3-4) // input = "350 5th" (identity from

@@ -19,7 +19,8 @@ const DEFAULT_TEXT = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 export interface LiveModelVisualizerProps {
 	/**
-	 * Trace an input through the decode path. Resolves null when the classifier is not ready or the trace fails.
+	 * Trace an input through the decode path. Resolves null when the classifier
+	 * is not ready or the trace fails.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	/**
@@ -59,8 +60,8 @@ export function LiveModelVisualizer({
 		try {
 			setTrace(await traceParse(text))
 		} catch (caught) {
-			// ORT's wasm backend can throw non-Errors (abort codes as numbers or strings); String() keeps the failure
-			// visible instead of storing undefined and rendering nothing.
+			// ORT's wasm backend can throw non-Errors (abort codes as numbers or strings);
+			// String() keeps the failure visible instead of storing undefined and rendering nothing.
 			setError(caught instanceof Error ? caught.message : String(caught))
 		} finally {
 			setPending(false)

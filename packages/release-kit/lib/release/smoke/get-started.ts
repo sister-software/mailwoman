@@ -29,7 +29,8 @@ import { join } from "path-ts"
 import { packWorkspaces, walkWorkspaceClosure } from "#release/workspace-closure"
 
 /**
- * The packages the get-started pages tell a reader to install. Their closure is computed, never listed.
+ * The packages the get-started pages tell a reader to install.
+ * Their closure is computed, never listed.
  */
 export const GET_STARTED_SEEDS = ["mailwoman", "@mailwoman/neural", "@mailwoman/neural-weights-en-us"] as const
 
@@ -87,7 +88,8 @@ export interface SmokeGetStartedOptions {
 	 */
 	full?: boolean
 	/**
-	 * A persistent data root for the heavy leg, so the ~1.65 GB pull is not repeated. Default: a scratch directory.
+	 * A persistent data root for the heavy leg, so the ~1.65 GB pull is not repeated.
+	 * Default: a scratch directory.
 	 */
 	dataRoot?: string
 }
@@ -118,8 +120,8 @@ function assertNeedles(output: string, needles: readonly string[], page: string)
 }
 
 /**
- * Pack the seeds' closure, install it into a throwaway project, and run the two pages' transcripts. Throws on the first
- * claim that no longer holds, naming the page.
+ * Pack the seeds' closure, install it into a throwaway project, and run the two pages' transcripts.
+ * Throws on the first claim that no longer holds, naming the page.
  */
 export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<SmokeGetStartedReport> {
 	const { repoRoot, log } = options

@@ -181,8 +181,8 @@ async function main(): Promise<void> {
 				recovered++
 			}
 
-			// Per-surface locale routing (the Québec finishing move): a French-lead surface folds under the fr
-			// rules whatever the country default. the probe side routes with the same shared function.
+			// Per-surface locale routing (the Québec finishing move): a French-lead surface folds under the
+			// fr rules whatever the country default. the probe side routes with the same shared function.
 			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
 			const number = rec.housenumber.trim().toLowerCase()
 
@@ -242,10 +242,11 @@ async function main(): Promise<void> {
 			attribution: "© OpenStreetMap contributors",
 			source,
 			sourceVintage: args.release,
-			// The path this recorded — `osm/out/scripts/build-rooftop-extract.js` — moved under `packages/` in the
-			// workspace regroup, and the literal survived inside every extract built before then, where no lint can
-			// reach it. `mailwoman data inventory` is what surfaced it, on three shipped artifacts that pass every
-			// "has a manifest" check and cannot be rebuilt from what they say.
+			// The path this recorded — `osm/out/scripts/build-rooftop-extract.js` —
+			// moved under `packages/` in the workspace regroup, and the literal survived
+			// inside every extract built before then, where no lint can reach it.
+			// `mailwoman data inventory` is what surfaced it, on three shipped artifacts that
+			// pass every "has a manifest" check and cannot be rebuilt from what they say.
 			buildCmd: "node packages/osm/out/scripts/build-rooftop-extract.js",
 			buildSHA: args.buildSHA,
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,

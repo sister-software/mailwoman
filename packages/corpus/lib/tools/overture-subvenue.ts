@@ -45,47 +45,53 @@ import type { SubVenueHarvestRow } from "#tools/sub/venue/lexicon"
 /**
  * Overture Places category → the designator its rows attest.
  *
- * Each entry carries the 2026-08-05 full-scan measurement in a comment: `rows` is the category's total, `hits` is how
- * many of its named rows contain any designator token, and the token list is the top of that distribution.
+ * Each entry carries the 2026-08-05 full-scan measurement in a comment: `rows` is the
+ * category's total, `hits` is how many of its named rows contain any designator token,
+ * and the token list is the top of that distribution.
  *
  * Rejected, with the number that rejected them — do not re-add without a fresh census:
  *
- * - `gas_station` (12,996 hits) — all `station` inside a brand name (Holiday Station, Chevron Station Seward).
- * - `fire_station` (10,377) — same, plus 330 `hall` from fire halls, which are venues rather than sub-venues.
+ * - `gas_station` (12,996 hits) — all `station` inside a brand name
+ *   (Holiday Station, Chevron Station Seward).
+ * - `fire_station` (10,377) — same, plus 330 `hall` from fire halls,
+ *   which are venues rather than sub-venues.
  * - `town_hall` (5,528) — `City Hall` is a whole building, the `venue` tier rather than interior structure.
  * - `building_supply_store` (4,030) — `building` inside "Allied Building Products".
  * - `jehovahs_witness_place_of_worship` (2,334) — every hit is "Kingdom Hall of Jehovah's Witnesses".
- * - `shoe_store` (909, of which 708 `wing`) — Red Wing. This one is a confound board entry rather than a source.
- * - `college_university` (3,697) — 2,082 `campus`, but the row names the whole institution; `campus_building` is the
- *   interior subset and is kept instead.
- * - `airport` (6,000 rows, 4,302 hits) — 4,071 of them are the token `airport` in the aerodrome's own name. Venue tier,
- *   already covered by OurAirports, and it drowns the interior signal.
+ * - `shoe_store` (909, of which 708 `wing`) — Red Wing.
+ *   This one is a confound board entry rather than a source.
+ * - `college_university` (3,697) — 2,082 `campus`, but the row names the whole institution;
+ *   `campus_building` is the interior subset and is kept instead.
+ * - `airport` (6,000 rows, 4,302 hits) — 4,071 of them are the token `airport` in the aerodrome's
+ *   own name. Venue tier, already covered by OurAirports, and it drowns the interior signal.
  * - `transport_interchange` (1 row), `rail_facility_or_service` (81 rows, 2 hits) — too small to matter.
- * - `public_transit_facility_or_service` (2,274 rows, 185 hits) — 161 are `station` naming the station itself.
+ * - `public_transit_facility_or_service` (2,274 rows, 185 hits) — 161 are
+ *   `station` naming the station itself.
  */
 export const OVERTURE_SUBVENUE_CATEGORIES: Readonly<Record<string, string>> = {
-	// 1,022 rows / 669 hits — terminal 266, concourse 19, gate 13, hall 4. The densest interior naming
-	// in the layer and the reason this reader exists.
+	// 1,022 rows / 669 hits — terminal 266, concourse 19, gate 13, hall 4.
+	// The densest interior naming in the layer and the reason this reader exists.
 	airport_terminal: "terminal",
-	// 7,366 rows / 3,382 hits — hall 2,134, building 1,019, campus 209. US academic halls and numbered
-	// campus buildings: "UAA Cuddy Hall", "UAA Science Building". The row is a building on a campus, so
-	// `campus` is its context designator. the phrase found inside the name decides the record it
-	// attests, which for these rows is mostly `hall`.
+	// 7,366 rows / 3,382 hits — hall 2,134, building 1,019, campus 209.
+	// US academic halls and numbered campus buildings: "UAA Cuddy Hall", "UAA Science Building".
+	// The row is a building on a campus, so `campus` is its context designator. the phrase found
+	// inside the name decides the record it attests, which for these rows is mostly `hall`.
 	campus_building: "campus",
 	// 443 rows / 301 hits — pier 282, terminal 17.
 	pier: "pier",
-	// 388 rows / 66 hits — airport 36, terminal 20, concourse 5, gate 3. Small, but the hits are almost
-	// all genuine ("Delta Sky Club Concourse B").
+	// 388 rows / 66 hits — airport 36, terminal 20, concourse 5, gate 3.
+	// Small, but the hits are almost all genuine ("Delta Sky Club Concourse B").
 	airport_lounge: "terminal",
 }
 
 /**
  * The `poi` and `poi_category_codes` columns this reader touches, declared locally.
  *
- * `@mailwoman/resolver-wof-sqlite` owns the full `POIDatabase` interface, and `@mailwoman/corpus` does not depend on it
- * — the same dependency-direction call `sub-venue-lexicon.ts` makes for `@mailwoman/osm`'s row type. This is a
- * read-only projection of four columns; `overture-subvenue.test.ts` builds a fixture with exactly this DDL, so a column
- * rename upstream fails a test here rather than throwing at runtime against a 3.9 GB database nobody has in CI.
+ * `@mailwoman/resolver-wof-sqlite` owns the full `POIDatabase` interface, and `@mailwoman/corpus`
+ * does not depend on it — the same dependency-direction call `sub-venue-lexicon.ts`
+ * makes for `@mailwoman/osm`'s row type. This is a read-only projection of four columns;
+ * `overture-subvenue.test.ts` builds a fixture with exactly this DDL, so a column rename upstream
+ * fails a test here rather than throwing at runtime against a 3.9 GB database nobody has in CI.
  */
 interface POIReadDatabase {
 	poi: {
@@ -104,8 +110,8 @@ interface POIReadDatabase {
 }
 
 /**
- * The layer's `source_vintage` — the Overture release the rows came from (`2026-05-20.0`), for the lexicon's
- * `sources[]`.
+ * The layer's `source_vintage` — the Overture release the rows came from
+ * (`2026-05-20.0`), for the lexicon's `sources[]`.
  *
  * Read off the database rather than passed in, because a vintage a caller types is a vintage that goes stale silently.
  * The layer-interface tables are part of every layer database by construction — see `docs/engineering/reference/
@@ -159,10 +165,11 @@ export interface OvertureSubVenueRow extends SubVenueHarvestRow {
  *
  * Cold path, already async, no interface constraint — so Kysely, per the repo's inline-SQL rule.
  *
- * `category_id` is the second component of poi.db's clustered `(h3_cell, category_id, …)` primary key, which reads like
- * a full 13.7M-row scan and is not one: SQLite skip-scans the leading `h3_cell` and the whole four-category read
- * returned 9,219 rows in **1.4 s** on the shipped layer (2026-08-05). A JS-side scan of every row to survey the same
- * question took 52 s, which is the number to remember if you are tempted to filter in JS instead.
+ * `category_id` is the second component of poi.db's clustered `(h3_cell, category_id, …)`
+ * primary key, which reads like a full 13.7M-row scan and is not one: SQLite skip-scans the
+ * leading `h3_cell` and the whole four-category read returned 9,219 rows in **1.4 s** on
+ * the shipped layer (2026-08-05). A JS-side scan of every row to survey the same question
+ * took 52 s, which is the number to remember if you are tempted to filter in JS instead.
  */
 export async function readOvertureSubVenues(options: ReadOvertureSubVenuesOptions): Promise<OvertureSubVenueRow[]> {
 	const categories = options.categories ?? OVERTURE_SUBVENUE_CATEGORIES

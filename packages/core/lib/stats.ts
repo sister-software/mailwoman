@@ -7,7 +7,8 @@
  */
 
 /**
- * Nearest-rank percentile over an unsorted sample; `null` on an empty sample. `p` in [0, 100].
+ * Nearest-rank percentile over an unsorted sample; `null` on an empty
+ * sample. `p` in [0, 100].
  */
 export function percentile(xs: readonly number[], p: number): number | null {
 	if (!xs.length) return null
@@ -24,9 +25,9 @@ export function median(xs: readonly number[]): number | null {
 }
 
 /**
- * Format `numerator / denominator` as a fixed-digit percentage (`"12.5%"`). A zero denominator renders the absence
- * marker `"—"` by default; `zero: "clamp"` divides by 1 instead, for reports where an empty bucket should read `"0%"`
- * rather than as an absence.
+ * Format `numerator / denominator` as a fixed-digit percentage (`"12.5%"`).
+ * A zero denominator renders the absence marker `"—"` by default; `zero: "clamp"` divides by 1
+ * instead, for reports where an empty bucket should read `"0%"` rather than as an absence.
  */
 export function formatPercent(
 	numerator: number,

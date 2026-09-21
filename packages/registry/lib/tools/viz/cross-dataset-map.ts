@@ -24,8 +24,8 @@ const MIN_DISTINCT_AGENCIES = 3
  */
 export interface CrossDatasetMapOptions {
 	/**
-	 * The `cross-dataset-links` GeoJSON. Default
-	 * `$MAILWOMAN_DATA_ROOT/record-matcher/2026-06-16-cross-dataset-links.geojson`.
+	 * The `cross-dataset-links` GeoJSON.
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/2026-06-16-cross-dataset-links.geojson`.
 	 */
 	in?: string
 	/**
@@ -48,10 +48,10 @@ const SOURCE_LABELS: Record<string, string> = {
 const label = (s: string) => SOURCE_LABELS[s] ?? s
 
 /**
- * Which agency each source belongs to. The two FCC datasets (RHC posted-services + commitments) are one agency — so an
- * NPPES↔FCC or FCC↔TX link is cross-agency, but an RHC↔commitments link is not. `--cross-agency-only` keeps just the
- * entities whose sources span >1 agency: the harder, more striking "no shared key across agencies" subset (most of the
- * raw links are FCC-internal).
+ * Which agency each source belongs to. The two FCC datasets (RHC posted-services + commitments)
+ * are one agency — so an NPPES↔FCC or FCC↔TX link is cross-agency, but an RHC↔commitments link is not.
+ * `--cross-agency-only` keeps just the entities whose sources span >1 agency: the harder,
+ * more striking "no shared key across agencies" subset (most of the raw links are FCC-internal).
  */
 const SOURCE_AGENCY: Record<string, string> = {
 	nppes: "CMS",

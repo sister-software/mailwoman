@@ -25,9 +25,9 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Minimal npm-`files`-glob matcher (`**` crosses directories, `*` stays in one), segment-based so no dynamic RegExp is
- * ever constructed. The package.json globs use no character classes or braces, so this covers the whole array — a
- * fuller matcher would be a dependency for nothing.
+ * Minimal npm-`files`-glob matcher (`**` crosses directories, `*` stays in one), segment-based
+ * so no dynamic RegExp is ever constructed. The package.json globs use no character classes
+ * or braces, so this covers the whole array — a fuller matcher would be a dependency for nothing.
  */
 function filesGlobMatches(pattern: string, path: string): boolean {
 	const segments = pattern.split("/")
@@ -82,7 +82,8 @@ function segmentMatches(glob: string, segment: string): boolean {
 }
 
 /**
- * Whether `path` (package-root-relative) ships in the tarball per package.json `files` (negations applied in order).
+ * Whether `path` (package-root-relative) ships in the tarball per package.json
+ * `files` (negations applied in order).
  */
 function shipsInPackage(files: string[], path: string): boolean {
 	let included = false
@@ -140,24 +141,24 @@ describe("resolveThresholdSpecPath", () => {
 	})
 
 	it("throws a USEFUL error naming the known specs, not a bare ENOENT", async () => {
-		// The old behaviour returned the string and let readFileSync throw, which told the operator
-		// nothing about what they could have typed instead.
+		// The old behaviour returned the string and let readFileSync throw, which told
+		// the operator nothing about what they could have typed instead.
 		await expect(resolveThresholdSpecPath("v9.9.9-nope")).rejects.toThrow(
 			/Check spec not found.*Known specs.*v5\.3\.0-family/s
 		)
 	})
 
 	it("SHIPS every resolvable spec in the npm tarball — an installed CLI resolves the shorthand too (#1056)", async () => {
-		// The source-tree fix alone left the packaged CLI broken: `files` covered only `**/*.ts` + `out/**`,
-		// and tsc does not emit readFileSync'd JSON, so the tarball carried zero eval specs and the
-		// installed `mailwoman eval promote --spec <name>` found an empty checks dir.
+		// The source-tree fix alone left the packaged CLI broken: `files` covered only `**/*.ts` +
+		// `out/**`, and tsc does not emit readFileSync'd JSON, so the tarball carried zero eval specs
+		// and the installed `mailwoman eval promote --spec <name>` found an empty checks dir.
 		const pkg = await readPackageJSON(import.meta.url, "mailwoman")
 		const { files } = pkg
 
 		expect(files, "mailwoman/package.json declares no files array").toBeDefined()
 
-		// Package-relative, so it names the path inside the tarball: source lives under `lib/`, and these
-		// JSON files ride along with it rather than being emitted into `out/`.
+		// Package-relative, so it names the path inside the tarball: source lives under `lib/`,
+		// and these JSON files ride along with it rather than being emitted into `out/`.
 		for (const spec of await listEvalSpecs()) {
 			const rel = `lib/eval-harness/specs/${spec}`
 			expect(shipsInPackage(files!, rel), `${rel} must be covered by package.json files`).toBe(true)
@@ -170,11 +171,12 @@ describe("resolveThresholdSpecPath", () => {
 
 describe("paired weights-caches (#47)", () => {
 	/**
-	 * Lay out a fake package-shaped weights cache with a model.onnx whose bytes do (int8) or don't (fp32) carry the
-	 * DynamicQuantizeLinear needle the provenance guard scans for, plus the tokenizer + card the pre-battery reads touch.
-	 * The package dir comes from `weightsCachePackageDir` — the resolver's own layout function, so the fixture cannot
-	 * drift from what the check resolves. Every guard under test returns exit 2 before any battery, so no real ONNX is
-	 * ever loaded.
+	 * Lay out a fake package-shaped weights cache with a model.onnx whose bytes do (int8)
+	 * or don't (fp32) carry the DynamicQuantizeLinear needle the provenance
+	 * guard scans for, plus the tokenizer + card the pre-battery reads touch.
+	 * The package dir comes from `weightsCachePackageDir` — the resolver's own
+	 * layout function, so the fixture cannot drift from what the check resolves.
+	 * Every guard under test returns exit 2 before any battery, so no real ONNX is ever loaded.
 	 */
 	async function stageFakeCache(kind: "fp32" | "int8", salt: string): Promise<string> {
 		const root = fixtures.use(await temporaryDirectory(`check-pair-${kind}-`)).path

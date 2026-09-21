@@ -98,12 +98,13 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 }
 
 /**
- * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from the 3×3 block around a query
- * coordinate, filtered by great-circle radius, and answered nearest-first under a caller-owned tie-break.
+ * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from
+ * the 3×3 block around a query coordinate, filtered by great-circle radius,
+ * and answered nearest-first under a caller-owned tie-break.
  *
- * The cell keying is part OF each builder'S output interface — `pyRound` vs `Math.round`, ×10 (0.1°) vs ×2 (0.5°) — so
- * it is a constructor parameter rather than a convention, and a builder's keying must not be "fixed" to match a
- * sibling's.
+ * The cell keying is part OF each builder'S output interface — `pyRound` vs `Math.round`,
+ * ×10 (0.1°) vs ×2 (0.5°) — so it is a constructor parameter rather than a convention,
+ * and a builder's keying must not be "fixed" to match a sibling's.
  */
 export class ProximityGrid<Entry> {
 	readonly #cells = new Map<string, Entry[]>()
@@ -180,9 +181,10 @@ export interface PostcodeLocalityBaseOptions {
 }
 
 /**
- * Freeze the accumulated table into a self-contained, read-only, distributable sqlite asset (the same shape as our
- * other WOF tables): a provenance/license `meta` table, query-planner stats, an integrity check, a rollback (non-WAL)
- * journal mode so there's no sidecar, and a vacuum to compact.
+ * Freeze the accumulated table into a self-contained, read-only, distributable sqlite
+ * asset (the same shape as our other WOF tables): a provenance/license `meta` table,
+ * query-planner stats, an integrity check, a rollback (non-WAL) journal mode
+ * so there's no sidecar, and a vacuum to compact.
  */
 export async function finalizePostcodeLocality(output: string): Promise<void> {
 	using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
@@ -200,8 +202,8 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		summary.set(c.country, { rows: Number(c.n), containing: Number(c.con || 0) })
 	}
 
-	// `countries` meta value: Python `json.dumps(summary, sort_keys=True)` → sorted keys, inner keys
-	// alphabetical (containing < rows), separators ", " / ": ".
+	// `countries` meta value: Python `json.dumps(summary, sort_keys=True)` → sorted keys,
+	// inner keys alphabetical (containing < rows), separators ", " / ": ".
 	const countriesJson =
 		"{" +
 		[...summary.keys()]
@@ -314,11 +316,11 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	console.log(`  ${locs.length} localities`)
 
-	// Two 0.1°-cell (~11km) grid indexes. `grid` (by centroid) drives the radius candidate set; `bgrid`
-	// (by bbox-spanned cells — a locality is registered in every cell its bounding box overlaps) drives
-	// the containing-PIP, so it checks only the localities whose bbox could cover the point instead of a
-	// linear scan over all of them. At GB scale (2.7M postcodes × 11.7K localities) that's the
-	// difference between minutes and ~an hour.
+	// Two 0.1°-cell (~11km) grid indexes. `grid` (by centroid) drives the radius candidate set;
+	// `bgrid` (by bbox-spanned cells — a locality is registered in every cell its bounding box overlaps)
+	// drives the containing-PIP, so it checks only the localities whose bbox could cover the point
+	// instead of a linear scan over all of them. At GB scale (2.7M postcodes × 11.7K localities)
+	// that's the difference between minutes and ~an hour.
 	const grid = new ProximityGrid<number>({
 		cellOf: (lon, lat) => [pyRound(lon * 10), pyRound(lat * 10)],
 		positionOf: (idx) => [locs[idx]!.clat, locs[idx]!.clon],
@@ -352,9 +354,10 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	{
 		using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
-		// Accumulate per country into one shared DB (the resolver attaches a single postcode_locality database
-		// and country-filters at query time). create-if-not-exists + delete-this-country makes each --country
-		// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
+		// Accumulate per country into one shared DB (the resolver attaches a
+		// single postcode_locality database and country-filters at query time).
+		// create-if-not-exists + delete-this-country makes each --country run idempotent,
+		// so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
 
 		await createPostcodeLocalityTable(db, { ifNotExists: true })
 

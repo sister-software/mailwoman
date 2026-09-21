@@ -16,8 +16,9 @@ import type { Resolved } from "#eval-harness/oa/resolver/tree-hits"
 import { mostSpecific } from "#eval-harness/oa/resolver/tree-hits"
 
 /**
- * One row's outcome, plus the raw resolved names the `--errors-json` dump needs to bucket a miss offline: a
- * present-but-wrong `resolvedLoc` is a resolver ranking/disambiguation miss, an absent one a coverage/parse miss.
+ * One row's outcome, plus the raw resolved names the `--errors-json` dump needs
+ * to bucket a miss offline: a present-but-wrong `resolvedLoc` is a resolver
+ * ranking/disambiguation miss, an absent one a coverage/parse miss.
  */
 export interface RowScore extends ArmOutcome {
 	resolvedLoc?: string
@@ -28,14 +29,16 @@ export interface RowScore extends ArmOutcome {
 /**
  * Score one resolved tree's places against the row's ground truth.
  *
- * Admin-match is by name (OA carries no WOF id): a row matches if OA's expected locality equals the resolved place's
- * canonical name or any of its WOF altnames (see {@linkcode LocalityMatcher}); region is name-or-abbrev tolerant.
+ * Admin-match is by name (OA carries no WOF id): a row matches if OA's expected
+ * locality equals the resolved place's canonical name or any of its WOF altnames
+ * (see {@linkcode LocalityMatcher}); region is name-or-abbrev tolerant.
  *
- * The locality node is looked up over the placetypes the resolver's own `locality` tag expands to — locality, borough
- * and localadmin — because New England civil "towns" are `localadmin` in WOF rather than `locality`. Mirroring the
- * resolver's `PLACETYPE_FILTER_GROUPS.locality` is what makes this metric count exactly what the resolver treats as a
- * locality. the bare `=== "locality"` filter it replaced silently discarded correct localadmin hits and under-reported
- * rural US locality-match by tens of points (#375 oracle-locality diagnostic).
+ * The locality node is looked up over the placetypes the resolver's own `locality` tag expands to —
+ * locality, borough and localadmin — because New England civil "towns" are `localadmin` in WOF
+ * rather than `locality`. Mirroring the resolver's `PLACETYPE_FILTER_GROUPS.locality`
+ * is what makes this metric count exactly what the resolver treats as a locality. the
+ * bare `=== "locality"` filter it replaced silently discarded correct localadmin hits
+ * and under-reported rural US locality-match by tens of points (#375 oracle-locality diagnostic).
  */
 export function scoreResolvedRow(row: OARow, resolved: Resolved[], localityMatches: LocalityMatcher): RowScore {
 	const best = mostSpecific(resolved)

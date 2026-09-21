@@ -18,8 +18,8 @@
  *   behaviour rather than hoping a county contains one.
  */
 
-// The exterior and hole ring builders live in `@mailwoman/spatial` — a winding convention rather than this
-// product's geometry, and a second copy of it is a second place for a hole to stop being one.
+// The exterior and hole ring builders live in `@mailwoman/spatial` — a winding convention rather than
+// this product's geometry, and a second copy of it is a second place for a hole to stop being one.
 import { rectangleRing } from "@mailwoman/spatial"
 
 import type { SoilComponentTable, SoilMapUnitTable } from "#schema"
@@ -31,13 +31,14 @@ import type { SurveyAreaAttributes } from "#sdk/survey-area"
  */
 
 /**
- * Where the fixture geometry sits — central Iowa, so the cells it produces are the ones a real build would use.
+ * Where the fixture geometry sits — central Iowa, so the cells it produces
+ * are the ones a real build would use.
  */
 export const FIXTURE_ORIGIN = { lat: 41.6, lon: -93.6 }
 
 /**
- * Degrees per fixture square side. About 1.6 km at this latitude — several resolution-9 cells across, so a fixture
- * square has both an interior and a fringe.
+ * Degrees per fixture square side. About 1.6 km at this latitude — several resolution-9
+ * cells across, so a fixture square has both an interior and a fringe.
  */
 export const FIXTURE_SIDE = 0.015
 
@@ -115,8 +116,8 @@ export function fixtureMapUnits(areaSymbol = "XX001"): SoilMapUnitTable[] {
 }
 
 /**
- * The fixture components. `mu-mixed` is 45/35/20 across three classes, which is the case a winner-class schema would
- * report as "class 2" and this one reports as a mixture.
+ * The fixture components. `mu-mixed` is 45/35/20 across three classes, which is the case
+ * a winner-class schema would report as "class 2" and this one reports as a mixture.
  */
 export function fixtureComponents(): SoilComponentTable[] {
 	return [
@@ -178,8 +179,8 @@ export function fixtureDomains(): SurveyAreaAttributes["domains"] {
 }
 
 /**
- * The fixture delineations: a mixed square, a class-8 square, a water square, an unrated square, and a `notcom` square,
- * laid out left to right so each occupies its own ground.
+ * The fixture delineations: a mixed square, a class-8 square, a water square, an unrated square,
+ * and a `notcom` square, laid out left to right so each occupies its own ground.
  */
 export function fixtureDelineations(areaSymbol = "XX001"): SoilDelineation[] {
 	const { lat, lon } = FIXTURE_ORIGIN
@@ -233,8 +234,9 @@ export function fixtureSource(delineations: SoilDelineation[], areaSymbol = "XX0
 /**
  * One fixture survey area's attributes.
  *
- * `areaAcres` is left NULL on purpose: the area cross-check compares against what the authority publishes, and a
- * fixture that invented an acreage would be checking this package's arithmetic against itself.
+ * `areaAcres` is left NULL on purpose: the area cross-check compares against
+ * what the authority publishes, and a fixture that invented an acreage would be
+ * checking this package's arithmetic against itself.
  */
 export function fixtureAttributes(areaSymbol = "XX001"): SurveyAreaAttributes {
 	return {

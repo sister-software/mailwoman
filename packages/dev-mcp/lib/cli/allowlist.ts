@@ -15,8 +15,8 @@
  */
 
 /**
- * Verb paths that only read. Matched against the leading arguments, so `eval` covers `eval gauntlet`, `eval promote`
- * and the rest — with the one exception carved out below.
+ * Verb paths that only read. Matched against the leading arguments, so `eval` covers
+ * `eval gauntlet`, `eval promote` and the rest — with the one exception carved out below.
  */
 const ALLOWED_PREFIXES: readonly string[][] = [
 	["parse"],
@@ -31,9 +31,10 @@ const ALLOWED_PREFIXES: readonly string[][] = [
 /**
  * Denied even though a prefix above would otherwise admit them.
  *
- * `eval ledger-append` is the one that matters and the reason this list exists at all: it is nested under an allowed
- * verb and it writes `evals/scores-by-version.json`, the score ledger. `mwdev_promotion_eval` deliberately reports that
- * command rather than running it, and this stops the passthrough from becoming the back door around that decision.
+ * `eval ledger-append` is the one that matters and the reason this list exists at all: it is
+ * nested under an allowed verb and it writes `evals/scores-by-version.json`, the score ledger.
+ * `mwdev_promotion_eval` deliberately reports that command rather than running it,
+ * and this stops the passthrough from becoming the back door around that decision.
  */
 const DENIED_PREFIXES: readonly string[][] = [
 	["eval", "ledger-append"],
@@ -67,8 +68,8 @@ function matchesPrefix(args: readonly string[], prefix: readonly string[]): bool
 export interface AllowlistVerdict {
 	allowed: boolean
 	/**
-	 * Why, in the words a caller needs. Populated on a refusal and on an allow, so a log of calls records the boundary
-	 * that was applied rather than only the ones that tripped it.
+	 * Why, in the words a caller needs. Populated on a refusal and on an allow, so a log of
+	 * calls records the boundary that was applied rather than only the ones that tripped it.
 	 */
 	reason: string
 }
@@ -76,8 +77,8 @@ export interface AllowlistVerdict {
 /**
  * Decide whether an argument vector may run.
  *
- * Flags are ignored for matching: only the leading non-flag words identify a verb, so `--help` anywhere is allowed and
- * a denied verb cannot be smuggled past by putting a flag in front of it.
+ * Flags are ignored for matching: only the leading non-flag words identify a verb, so `--help`
+ * anywhere is allowed and a denied verb cannot be smuggled past by putting a flag in front of it.
  */
 export function checkCLIAllowlist(args: readonly string[]): AllowlistVerdict {
 	const verbs = args.filter((argument) => !argument.startsWith("-"))

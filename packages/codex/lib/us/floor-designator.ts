@@ -30,8 +30,8 @@
 /**
  * One USPS Pub 28 C2 floor-class designator row.
  *
- * `requiresNumber` mirrors the Appendix C2 classification: floor and basement must be followed by a secondary number.
- * penthouse and lobby may stand alone.
+ * `requiresNumber` mirrors the Appendix C2 classification: floor and basement must be
+ * followed by a secondary number. penthouse and lobby may stand alone.
  */
 export interface USFloorDesignator {
 	/**
@@ -47,15 +47,16 @@ export interface USFloorDesignator {
 	 */
 	variants: readonly string[]
 	/**
-	 * True when Appendix C2 marks this designator as "Requires a Secondary Number" (floor, basement). False for
-	 * standalone types (penthouse, lobby) that name a specific floor-analog without an identifier.
+	 * True when Appendix C2 marks this designator as "Requires a Secondary Number" (floor, basement).
+	 * False for standalone types (penthouse, lobby) that name a specific floor-analog without an identifier.
 	 */
 	requiresNumber: boolean
 }
 
 /**
- * USPS Pub 28 C2 floor-class secondary unit designators. Verbatim from the publication. see the module header for the
- * per-row provenance. Ordered with the most-common numbered form first.
+ * USPS Pub 28 C2 floor-class secondary unit designators.
+ * Verbatim from the publication. see the module header for the per-row provenance.
+ * Ordered with the most-common numbered form first.
  */
 export const US_FLOOR_DESIGNATORS = [
 	{ name: "FLOOR", abbreviation: "FL", variants: ["FLR"], requiresNumber: true },
@@ -70,9 +71,9 @@ export const US_FLOOR_DESIGNATORS = [
 export type USFloorDesignatorName = (typeof US_FLOOR_DESIGNATORS)[number]["name"]
 
 /**
- * Inverse lookup: every surface form (canonical name, approved abbreviation, or Appendix C2 variant) → its canonical
- * designator name. Lowercase-keyed for case-insensitive matching: `"fl"` → `"floor"`, `"bsmt"` → `"basement"`, `"ph"` →
- * `"penthouse"`.
+ * Inverse lookup: every surface form (canonical name, approved abbreviation, or Appendix C2 variant)
+ * → its canonical designator name. Lowercase-keyed for case-insensitive matching:
+ * `"fl"` → `"floor"`, `"bsmt"` → `"basement"`, `"ph"` → `"penthouse"`.
  */
 export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, USFloorDesignatorName> = (() => {
 	const out = new Map<string, USFloorDesignatorName>()
@@ -92,9 +93,9 @@ export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, USFloorDesignatorNa
 })()
 
 /**
- * All lowercase surface tokens for the floor-class designators — the set the span proposer populates `levelDesignators`
- * with when wiring the US codex address system. Includes canonical names, approved abbreviations, and Appendix C2
- * variants.
+ * All lowercase surface tokens for the floor-class designators — the set the span
+ * proposer populates `levelDesignators` with when wiring the US codex address system.
+ * Includes canonical names, approved abbreviations, and Appendix C2 variants.
  */
 export const US_FLOOR_DESIGNATOR_TOKENS: ReadonlySet<string> = new Set(US_FLOOR_DESIGNATOR_LOOKUP.keys())
 
@@ -106,8 +107,9 @@ export const US_FLOOR_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USFloorDesignat
 ) as Readonly<Record<USFloorDesignatorName, string>>
 
 /**
- * Look up a USPS floor-class designator (by canonical name, abbreviation, or any Appendix C2 variant) and return the
- * canonical name + approved abbreviation. Returns null if the token isn't a recognized floor-class designator.
+ * Look up a USPS floor-class designator (by canonical name, abbreviation, or any Appendix C2 variant)
+ * and return the canonical name + approved abbreviation.
+ * Returns null if the token isn't a recognized floor-class designator.
  */
 export function lookupFloorDesignator(input: string | null | undefined): {
 	designator: USFloorDesignatorName
@@ -122,8 +124,8 @@ export function lookupFloorDesignator(input: string | null | undefined): {
 }
 
 /**
- * True when a token is a recognized USPS floor-class secondary unit designator (case-insensitive) — `"Floor"`, `"FL"`,
- * `"flr"`, `"bsmt"`, `"ph"`, `"lbby"`.
+ * True when a token is a recognized USPS floor-class secondary unit designator
+ * (case-insensitive) — `"Floor"`, `"FL"`, `"flr"`, `"bsmt"`, `"ph"`, `"lbby"`.
  */
 export function isFloorDesignatorToken(input: unknown): boolean {
 	return typeof input === "string" && US_FLOOR_DESIGNATOR_LOOKUP.has(input.trim().toLowerCase())

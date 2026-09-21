@@ -98,7 +98,8 @@ export interface ScorerClusteringEvalOptions {
 }
 
 /**
- * Learned-scorer clustering A/B (#603 Tier 2) — see the module doc. Emits the markdown report to stdout.
+ * Learned-scorer clustering A/B (#603 Tier 2) — see the module doc.
+ * Emits the markdown report to stdout.
  */
 export async function scorerClusteringEval(
 	options: ScorerClusteringEvalOptions,
@@ -114,8 +115,7 @@ export async function scorerClusteringEval(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// Build the NPI-keyed benchmark sample and pairwise probe.
-	// sample builder). ---
+	// Build the NPI-keyed benchmark sample and pairwise probe. sample builder). ---
 	const {
 		rows,
 		keptNpis: kept,
@@ -128,8 +128,8 @@ export async function scorerClusteringEval(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up features can read the
-	// authorized official. the FS arm ignores them (no discriminators configured).
+	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up features can
+	// read the authorized official. the FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -145,10 +145,11 @@ export async function scorerClusteringEval(
 
 	geocoder[Symbol.dispose]()
 
-	// Use address frequency and the collapsed-spatial model as the baseline feature basis.
-	// pattern is EM-independent, so the same featurize() is consistent at train and inference time. ---
-	// The featurizer is the shared production one (createMatchFeaturizer) — train ≡ eval ≡ inference, one
-	// definition. Feed the collapsed-spatial + address-frequency comparison set (the benchmark baseline).
+	// Use address frequency and the collapsed-spatial model as the baseline feature
+	// basis. pattern is EM-independent, so the same featurize() is consistent at train
+	// and inference time. --- The featurizer is the shared production one
+	// (createMatchFeaturizer) — train ≡ eval ≡ inference, one definition.
+	// Feed the collapsed-spatial + address-frequency comparison set (the benchmark baseline).
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 
@@ -164,10 +165,11 @@ export async function scorerClusteringEval(
 	}
 
 	/**
-	 * One held-out-NPI split: train the GBT + LR on train pairs, then cluster the eval records three ways (FS baseline,
-	 * GBT scorer, LR scorer) through the same `resolveEntities` pipeline, sweeping the link threshold finely for each and
-	 * taking best F1. The geocode is shared across seeds. only the split, the trained scorers, and the eval subset move
-	 * with the seed.
+	 * One held-out-NPI split: train the GBT + LR on train pairs, then cluster the eval records
+	 * three ways (FS baseline, GBT scorer, LR scorer) through the same `resolveEntities`
+	 * pipeline, sweeping the link threshold finely for each and taking best F1.
+	 * The geocode is shared across seeds. only the split, the trained scorers,
+	 * and the eval subset move with the seed.
 	 */
 	function runSeed(seed: number): SeedResult {
 		const rnd = makeLcg(seed || 1)
@@ -201,8 +203,9 @@ export async function scorerClusteringEval(
 		): ArmScore =>
 			bestOver(thresholds, (t) => toArmScore(scoreEntities(resolveEntities(evalRecords, cfg(t)).entities, npiLabel, N)))
 
-		// FS baseline: EM-fit weights in bits, fine grid [0..25]. Learned scorers: a fine sweep from each
-		// scorer's own eval-pair score distribution, so a coarse grid can't understate them.
+		// FS baseline: EM-fit weights in bits, fine grid [0..25].
+		// Learned scorers: a fine sweep from each scorer's own eval-pair score distribution,
+		// so a coarse grid can't understate them.
 		const { pairs: evalPairs } = block(evalRecords, defaultBlockingKeys())
 
 		const fs = armOver(

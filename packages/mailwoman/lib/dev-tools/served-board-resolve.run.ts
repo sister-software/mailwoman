@@ -101,9 +101,10 @@ async function main(): Promise<void> {
 		.map((entry) => entry.row)
 
 	const locale = values.locale
-	// The country the board's rows are in, which scopes the resolve. It defaults from the locale's region subtag
-	// rather than a table: `zh-TW` is a Taiwanese board by construction, and a lookup keyed on locale would be one
-	// more per-country list to keep in step with the boards themselves.
+	// The country the board's rows are in, which scopes the resolve.
+	// It defaults from the locale's region subtag rather than a table: `zh-TW` is a
+	// Taiwanese board by construction, and a lookup keyed on locale would be one more
+	// per-country list to keep in step with the boards themselves.
 	const country = (values.country ?? locale.split("-").at(-1) ?? "").toUpperCase()
 
 	if (country.length !== 2) {

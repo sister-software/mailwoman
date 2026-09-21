@@ -30,9 +30,9 @@ const LOCK_DIR = tempRootPath("mailwoman-cli-spawn.lock")
 const PID_FILE = join(LOCK_DIR, "pid")
 
 /**
- * How long to wait for the lock before giving up and running anyway. Deliberately generous relative to a spawn (~6 s)
- * and deliberately not infinite: a wedged lock must degrade to the old contended behaviour, never to a hang that reads
- * as a mysterious suite timeout.
+ * How long to wait for the lock before giving up and running anyway.
+ * Deliberately generous relative to a spawn (~6 s) and deliberately not infinite: a wedged lock must
+ * degrade to the old contended behaviour, never to a hang that reads as a mysterious suite timeout.
  */
 const ACQUIRE_TIMEOUT_MS = 120_000
 const POLL_MS = 50
@@ -40,10 +40,12 @@ const POLL_MS = 50
 /**
  * Remove the lock directory, tolerating every failure.
  *
- * Two workers can race here — one reclaiming a stale lock while its holder releases, or two reclaiming at once — and
- * the removal throws enotempty when the pid file is rewritten between its scan and the rmdir. A lock whose bookkeeping
- * can throw is worse than no lock: it turns contention into a test failure in whichever suite happened to be holding
- * it. A failed removal degrades to the next acquirer reclaiming it as stale, which is already the recovery path.
+ * Two workers can race here — one reclaiming a stale lock while its holder releases,
+ * or two reclaiming at once — and the removal throws enotempty when the pid file is rewritten
+ * between its scan and the rmdir. A lock whose bookkeeping can throw is worse than no lock:
+ * it turns contention into a test failure in whichever suite happened to be holding it.
+ * A failed removal degrades to the next acquirer reclaiming it as stale,
+ * which is already the recovery path.
  */
 async function releaseQuietly(): Promise<void> {
 	try {
@@ -71,8 +73,8 @@ async function staleHolder(): Promise<boolean> {
 /**
  * Run `fn` with the CLI-spawn lock held. Always releases, including when `fn` throws.
  *
- * Async because every caller now awaits its spawn: acquisition sleeps between probes rather than blocking a thread, and
- * the release is awaited in `finally`.
+ * Async because every caller now awaits its spawn: acquisition sleeps between probes
+ * rather than blocking a thread, and the release is awaited in `finally`.
  */
 export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T> {
 	const deadline = Date.now() + ACQUIRE_TIMEOUT_MS

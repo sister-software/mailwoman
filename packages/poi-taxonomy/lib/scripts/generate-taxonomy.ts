@@ -92,12 +92,13 @@ export interface CuratedOverlay {
 }
 
 /**
- * Parse the Overture categories CSV. Accepts its leading BOM, skips the header row, and splits each `code; [a,b,c]`
- * line. A handful of Overture rows (4 as of the v1.17.0 snapshot — `aircraft_repair`, `ev_charging_station`,
- * `custom_t_shirt_store`, `community_services_non_profits`) carry a display path whose leaf label differs from the
- * category code the db actually stores. for those the code is appended as the true leaf so the invariant `lookup.ts`'s
- * integrity test relies on (`hierarchy.at(-1) === id`) holds while the display ancestry is preserved. Throws only on a
- * structurally broken row (no code / empty path) or a repeated code.
+ * Parse the Overture categories CSV. Accepts its leading BOM, skips the header row, and splits
+ * each `code; [a,b,c]` line. A handful of Overture rows (4 as of the v1.17.0 snapshot —
+ * `aircraft_repair`, `ev_charging_station`, `custom_t_shirt_store`, `community_services_non_profits`)
+ * carry a display path whose leaf label differs from the category code the db actually stores.
+ * for those the code is appended as the true leaf so the invariant `lookup.ts`'s integrity
+ * test relies on (`hierarchy.at(-1) === id`) holds while the display ancestry is preserved.
+ * Throws only on a structurally broken row (no code / empty path) or a repeated code.
  */
 export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 	const rows: OvertureSnapshotRow[] = []
@@ -142,9 +143,9 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 }
 
 /**
- * Merge the Overture snapshot with the curated overlay into a {@link POITaxonomyTable}. Pure — no I/O — so the
- * determinism test can serialize it twice and the merge is unit-testable against fixtures. See the module header for
- * the merge rules.
+ * Merge the Overture snapshot with the curated overlay into a {@link POITaxonomyTable}.
+ * Pure — no I/O — so the determinism test can serialize it twice and the merge is
+ * unit-testable against fixtures. See the module header for the merge rules.
  */
 export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: CuratedOverlay): POITaxonomyTable {
 	const curatedIDs = new Set<string>(overlay.categories.map((c) => c.id))
@@ -173,11 +174,12 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
 }
 
 /**
- * Committed input/output paths, resolved off this module's own directory. This is a DEV generator — run from source
- * (`node poi-taxonomy/scripts/generate-taxonomy.ts`) and imported from source by the tests — so `import.meta.dirname`
- * is always `poi-taxonomy/scripts/` and `../data` is the package's data directory. It is never run from `out/`, so the
- * source-vs-compiled path skew `build-brands.ts` guards against with `repoRootPath` doesn't apply here (and pulling in
- * `@mailwoman/core` would add an undeclared dependency to this zero-runtime-dep package).
+ * Committed input/output paths, resolved off this module's own directory.
+ * This is a DEV generator — run from source (`node poi-taxonomy/scripts/generate-taxonomy.ts`)
+ * and imported from source by the tests — so `import.meta.dirname` is always `poi-taxonomy/scripts/`
+ * and `../data` is the package's data directory. It is never run from `out/`, so the
+ * source-vs-compiled path skew `build-brands.ts` guards against with `repoRootPath` doesn't apply here
+ * (and pulling in `@mailwoman/core` would add an undeclared dependency to this zero-runtime-dep package).
  */
 export function taxonomyPaths() {
 	const dataDir = resolvePackagePath("@mailwoman/poi-taxonomy", "data")

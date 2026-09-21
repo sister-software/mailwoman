@@ -12,8 +12,8 @@ import { text } from "#operations/inputs"
 import { copyWeights } from "#weights/copy-weights"
 
 /**
- * `release.copy-weights` — writes inside the checkout or the data root. Listed in `registry.ts`; the description on the
- * operation is what `mwops` prints.
+ * `release.copy-weights` — writes inside the checkout or the data root.
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const copyWeightsOperation = defineOperation({
 	id: "release.copy-weights",

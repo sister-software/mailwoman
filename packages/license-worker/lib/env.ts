@@ -51,8 +51,8 @@ export interface LicenseWorkerEnv extends LicenseWorkerBindings {
 }
 
 /**
- * Validate the vars and derive the two booleans. Throws on a placeholder, which the Worker's `fetch` turns into a 503:
- * a deploy with an unfilled var must refuse, never mint.
+ * Validate the vars and derive the two booleans. Throws on a placeholder, which the Worker's
+ * `fetch` turns into a 503: a deploy with an unfilled var must refuse, never mint.
  */
 export function readEnv(bindings: LicenseWorkerBindings): LicenseWorkerEnv {
 	const vars = VarsSchema.parse(bindings)

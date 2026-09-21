@@ -66,8 +66,8 @@ export interface ProcessOutput {
 }
 
 /**
- * The rejection {@linkcode runFile} answers for a command that started but did not exit 0: the builtin's error, which
- * carries the streams and the exit code (or the signal that ended it).
+ * The rejection {@linkcode runFile} answers for a command that started but did not exit 0:
+ * the builtin's error, which carries the streams and the exit code (or the signal that ended it).
  */
 export interface ProcessError extends Error, ProcessOutput {
 	code?: number | string
@@ -75,23 +75,25 @@ export interface ProcessError extends Error, ProcessOutput {
 }
 
 /**
- * Whether an error is a {@linkcode ProcessError} — a command that ran and failed, as opposed to one that never started.
+ * Whether an error is a {@linkcode ProcessError} — a command that ran and failed,
+ * as opposed to one that never started.
  */
 export function isProcessError(error: unknown): error is ProcessError {
 	return error instanceof Error && "stdout" in error && "stderr" in error
 }
 
 /**
- * Options for {@linkcode runFile}: the builtin's. Output is always decoded as UTF-8. an `encoding` here is accepted for
- * the callers that spell it and changes nothing.
+ * Options for {@linkcode runFile}: the builtin's. Output is always decoded as UTF-8. an
+ * `encoding` here is accepted for the callers that spell it and changes nothing.
  */
 export type RunFileOptions = ExecFileOptions & { cwd?: PathBuilderLike }
 
 /**
  * Run a command to completion and answer what it wrote.
  *
- * Rejects with a {@linkcode ProcessError} on a non-zero exit — the shape every caller of `promisify(execFile)` already
- * handled — and with the plain spawn error when the command could not start (enoent, eacces).
+ * Rejects with a {@linkcode ProcessError} on a non-zero exit — the shape every
+ * caller of `promisify(execFile)` already handled — and with the plain spawn error
+ * when the command could not start (enoent, eacces).
  */
 export async function runFile(
 	file: PathBuilderLike,
@@ -117,7 +119,8 @@ export interface RunFileSyncOptions extends Omit<ExecFileSyncOptions, "cwd"> {
 /**
  * {@linkcode runFile} for a synchronous slot. Answers stdout. throws on a non-zero exit, with the builtin's error.
  *
- * When `stdio` inherits the parent's streams there is nothing to capture and the answer is the empty string.
+ * When `stdio` inherits the parent's streams there is nothing to capture
+ * and the answer is the empty string.
  */
 export function runFileSync(
 	file: PathBuilderLike,
@@ -134,8 +137,9 @@ export function runFileSync(
 }
 
 /**
- * Run a shell command line synchronously and answer stdout. Reach for {@linkcode runFileSync} unless the command needs
- * the shell — an argument list does not get re-parsed, quoted or expanded.
+ * Run a shell command line synchronously and answer stdout.
+ * Reach for {@linkcode runFileSync} unless the command needs the shell —
+ * an argument list does not get re-parsed, quoted or expanded.
  */
 export function runShellSync(command: string, options: ExecSyncOptions & { cwd?: PathBuilderLike } = {}): string {
 	return execSync(command, { ...options, cwd: options.cwd?.toString(), encoding: "utf8" }) ?? ""
@@ -147,11 +151,12 @@ export function runShellSync(command: string, options: ExecSyncOptions & { cwd?:
 export type SpawnProcessOptions = SpawnOptions & { cwd?: PathBuilderLike }
 
 /**
- * Start a command and hand its {@linkcode ChildProcess} to the caller, who owns the streams, the exit event and the
- * kill. For a command whose output is the whole result, {@linkcode runFile} is the shorter path.
+ * Start a command and hand its {@linkcode ChildProcess} to the caller, who owns the streams,
+ * the exit event and the kill. For a command whose output is the whole result,
+ * {@linkcode runFile} is the shorter path.
  *
- * Without a `stdio` option every stream is a pipe, and the answer says so in its type — the same narrowing the builtin
- * makes.
+ * Without a `stdio` option every stream is a pipe, and the answer says so in its type —
+ * the same narrowing the builtin makes.
  */
 export function spawnProcess(
 	file: PathBuilderLike,
@@ -188,13 +193,15 @@ export function spawnProcess(
 }
 
 /**
- * Options for {@linkcode spawnProcessSync}: the builtin's. Streams are always decoded as UTF-8.
+ * Options for {@linkcode spawnProcessSync}: the builtin's.
+ * Streams are always decoded as UTF-8.
  */
 export type SpawnProcessSyncOptions = SpawnSyncOptions & { cwd?: PathBuilderLike }
 
 /**
  * {@linkcode spawnProcess} run to completion in a synchronous slot. Unlike {@linkcode runFileSync} a non-zero exit does
- * not throw — the status, the signal and both streams come back in the result, for a caller that reads them.
+ * not throw — the status, the signal and both streams come back in the result,
+ * for a caller that reads them.
  */
 export function spawnProcessSync(
 	file: PathBuilderLike,

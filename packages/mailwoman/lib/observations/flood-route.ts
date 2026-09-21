@@ -66,8 +66,8 @@ export interface AuthorityDesignationObservation {
 	 */
 	reading: FloodReadingKind
 	/**
-	 * The authority's code, verbatim. Absent on a designated absence, which the authority represents by publishing
-	 * nothing.
+	 * The authority's code, verbatim. Absent on a designated absence, which the
+	 * authority represents by publishing nothing.
 	 */
 	code?: string
 	/**
@@ -101,8 +101,8 @@ export interface AuthorityDesignationObservation {
 }
 
 /**
- * Why a coordinate produced no observation. Every one of these is a silence the route owes an account of — an unnamed
- * silence and a silence for the right reason read identically on a receipt.
+ * Why a coordinate produced no observation. Every one of these is a silence the route owes an
+ * account of — an unnamed silence and a silence for the right reason read identically on a receipt.
  */
 export const DESIGNATION_REFUSALS = [
 	/**
@@ -128,19 +128,20 @@ export type DesignationDecision =
 export interface AuthorityDesignationRoute extends Disposable {
 	identity: FloodLayerIdentity
 	/**
-	 * Decide one resolved coordinate. Pure with respect to the pipeline: it reads the layer and returns a record.
+	 * Decide one resolved coordinate. Pure with respect to the pipeline:
+	 * it reads the layer and returns a record.
 	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` — a caller that had to
-	 * narrow them first would be narrowing on this route's behalf, and a coordinate-less answer is a named refusal here
-	 * rather than a caller's problem.
+	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` —
+	 * a caller that had to narrow them first would be narrowing on this route's behalf,
+	 * and a coordinate-less answer is a named refusal here rather than a caller's problem.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => DesignationDecision
 }
 
 export interface AuthorityDesignationRouteOptions {
 	/**
-	 * The sealed layer to read. Required: there is no default layer, and a route that guessed one would report a
-	 * designation from an authority nobody asked about.
+	 * The sealed layer to read. Required: there is no default layer, and a route that
+	 * guessed one would report a designation from an authority nobody asked about.
 	 */
 	databasePath: string
 }
@@ -197,7 +198,8 @@ function toObservation(
 }
 
 /**
- * What the authority's map assigns, in one wording — shared by the one-line description and the marker message.
+ * What the authority's map assigns, in one wording — shared by the one-line
+ * description and the marker message.
  */
 export function floodZoneAssignmentClause(observation: AuthorityDesignationObservation): string {
 	return observation.code

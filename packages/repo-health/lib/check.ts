@@ -37,7 +37,8 @@ export interface Diagnostic {
 export interface RepoContext {
 	repoRoot: string
 	/**
-	 * Tracked files, as `git ls-files` lists them, so no check re-walks the tree or reads an untracked scratch file.
+	 * Tracked files, as `git ls-files` lists them, so no check re-walks the tree
+	 * or reads an untracked scratch file.
 	 */
 	trackedFiles: readonly string[]
 }

@@ -12,12 +12,13 @@ import { PrivateMailwomanEnvSchema, PublicMailwomanEnvSchema } from "./schema.ts
 export { PrivateMailwomanEnvSchema, PublicMailwomanEnvSchema } from "./schema.ts"
 
 /**
- * Live settings for the CLI and runtime pipeline over the resolver's and core's, sharing their getters and cached
- * values.
+ * Live settings for the CLI and runtime pipeline over the resolver's and core's,
+ * sharing their getters and cached values.
  */
 export const $public = liveEnv(PublicMailwomanEnvSchema, resolverPublic)
 
 /**
- * Live secrets for the CLI's publishing and evaluation commands over core's. Never log their values.
+ * Live secrets for the CLI's publishing and evaluation commands over
+ * core's. Never log their values.
  */
 export const $private = liveEnv(PrivateMailwomanEnvSchema, corePrivate)

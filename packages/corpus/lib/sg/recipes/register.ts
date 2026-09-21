@@ -49,15 +49,16 @@ const GENERIC_ABBREVIATIONS: ReadonlyArray<readonly [full: string, short: string
 ]
 
 /**
- * Estate and area names the register's `unit` field carries beside building names. A name ending in one of these is an
- * estate, which no one writes in front of an address line. a name without one reads as a building and is rendered as a
- * `venue`.
+ * Estate and area names the register's `unit` field carries beside building names.
+ * A name ending in one of these is an estate, which no one writes in front of an address
+ * line. a name without one reads as a building and is rendered as a `venue`.
  */
 const ESTATE_TAILS = ["ESTATE", "CONSERVATION AREA", "HILLS", "PARK", "GARDENS", "GARDEN", "HEIGHTS", "GROVE", "VILLE"]
 
 /**
- * Share of rows per register. The block line and the bracketed postcode are the two the Latin model has never seen. the
- * official line keeps the register's own shape in the mix so the block forms train beside it.
+ * Share of rows per register. The block line and the bracketed postcode are the
+ * two the Latin model has never seen. the official line keeps the register's own
+ * shape in the mix so the block forms train beside it.
  */
 const P_BLOCK = 0.4
 const P_BRACKET_POSTCODE = 0.25
@@ -79,8 +80,9 @@ const REGISTER_DRAW: Record<SGRegister, number> = {
 }
 
 /**
- * `old choa CHU kang road` → `Old Choa Chu Kang Road`; an already-mixed value is returned as it is. The register writes
- * every street and building name upper-case, the same convention as G-NAF, so the G-NAF title-caser serves both.
+ * `old choa CHU kang road` → `Old Choa Chu Kang Road`; an already-mixed value is
+ * returned as it is. The register writes every street and building name upper-case,
+ * the same convention as G-NAF, so the G-NAF title-caser serves both.
  */
 export function titleCaseSGName(name: string): string {
 	return name === name.toUpperCase() ? titlecase(name) : name
@@ -100,8 +102,9 @@ export function abbreviateSGStreet(street: string): string {
 }
 
 /**
- * Whether the register's `unit` value names a building rather than an estate — the building-led register's lead. A name
- * carrying a digit, a parenthesized abbreviation (`diabetes & metabolism centre (DMC)`) or one word only is not one.
+ * Whether the register's `unit` value names a building rather than an estate —
+ * the building-led register's lead. A name carrying a digit, a parenthesized abbreviation
+ * (`diabetes & metabolism centre (DMC)`) or one word only is not one.
  */
 export function isBuildingName(unit: string): boolean {
 	const value = unit.trim().toUpperCase()
@@ -133,9 +136,9 @@ export interface SGRegisterRendering {
 }
 
 /**
- * Render one register form for one register row. Pure: every random draw comes through `random`. A `register` names the
- * form to render instead of drawing one, for a board that wants a balanced spread; `building_led` still needs a
- * building-shaped `unit` and falls back to `official` without one.
+ * Render one register form for one register row. Pure: every random draw comes through `random`.
+ * A `register` names the form to render instead of drawing one, for a board that wants a balanced spread;
+ * `building_led` still needs a building-shaped `unit` and falls back to `official` without one.
  */
 export function renderSGRegister(row: SGRow, random: () => number, register?: SGRegister): SGRegisterRendering {
 	const street0 = titleCaseSGName(row.street)

@@ -51,11 +51,12 @@ const { values: args } = parseArguments({
 const N = Number(args.n)
 
 /**
- * The pre-registered eval (v1.6.0-boundary-stress.yaml). Per shape: the stress tag it teaches, the re-baselined
- * "before" number, and the target the retrain must clear. plus the shared street-span floor (≥65 on all four shapes) —
- * the street is the common casualty across every shape. Partial: this v1.6.0-era eval has pre-registered baselines only
- * for the original 4 templates. The 2 added 2026-06-18 ("bare-locality", "house-number-before-street") have no measured
- * baseline here.
+ * The pre-registered eval (v1.6.0-boundary-stress.yaml).
+ * Per shape: the stress tag it teaches, the re-baselined "before" number,
+ * and the target the retrain must clear. plus the shared street-span floor
+ * (≥65 on all four shapes) — the street is the common casualty across every shape.
+ * Partial: this v1.6.0-era eval has pre-registered baselines only for the original 4 templates.
+ * The 2 added 2026-06-18 ("bare-locality", "house-number-before-street") have no measured baseline here.
  */
 const TARGETS: Partial<Record<BoundaryStressTemplate, { tag: string; baseline: number; target: number }>> = {
 	"street-eats-affix": { tag: "street_suffix", baseline: 41.7, target: 55 },
@@ -66,19 +67,19 @@ const TARGETS: Partial<Record<BoundaryStressTemplate, { tag: string; baseline: n
 
 const STREET_SPAN_FLOOR = 65
 
-// Route through the canonical ProductionScorer (#718): feed the model the full ship-config it was
-// trained against (anchor + gazetteer + conventions, per the model-card's `requires` block). The
-// prior loadFromWeights construction fed no anchor/gazetteer/conventions, so this anchor-trained
-// STAGE3 model was scored anchor-off — out-of-distribution on exactly the admin-adjacent boundary
-// shapes this eval measures (the #566/#685 trap). createScorer in `strict` mode fails closed if a
-// declared channel can't actually be fed, so a silent OOD re-grade can't recur.
+// Route through the canonical ProductionScorer (#718): feed the model the full ship-config it
+// was trained against (anchor + gazetteer + conventions, per the model-card's `requires` block).
+// The prior loadFromWeights construction fed no anchor/gazetteer/conventions, so this anchor-trained
+// STAGE3 model was scored anchor-off — out-of-distribution on exactly the admin-adjacent
+// boundary shapes this eval measures (the #566/#685 trap). createScorer in `strict` mode fails
+// closed if a declared channel can't actually be fed, so a silent OOD re-grade can't recur.
 if (args.model && !args.tokenizer) throw new Error("--tokenizer is required when --model is passed")
 
 if (args.model && !args["model-card"])
 	throw new Error("--model-card is required when --model is passed (createScorer reads its `requires` SHIP-CONFIG)")
 
-// Dev-weights default (no --model): resolve the en-us package paths so the scorer gets concrete
-// model/tokenizer/model-card paths instead of the symlink auto-resolve.
+// Dev-weights default (no --model): resolve the en-us package paths so the scorer gets
+// concrete model/tokenizer/model-card paths instead of the symlink auto-resolve.
 const resolved = args.model
 	? { modelPath: args.model, tokenizerPath: args.tokenizer!, modelCardPath: args["model-card"]! }
 	: await resolveWeights({ locale: "en-us" })

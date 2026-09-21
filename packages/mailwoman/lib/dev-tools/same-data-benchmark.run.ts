@@ -99,23 +99,26 @@ const { values, positionals } = parseArguments({
 
 const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
- * The FTS gazetteer, read for its `concordances` + `spr` tables — the identity join. The candidate backend below
- * carries no concordance table, which is why the two are separate flags rather than one.
+ * The FTS gazetteer, read for its `concordances` + `spr` tables — the identity join.
+ * The candidate backend below carries no concordance table, which is why the
+ * two are separate flags rather than one.
  */
 const GAZETTEER = values.gazetteer || dataRootPath("wof", "admin-global-priority.db")
 /**
- * The backend the recording drives. Defaults to the promoted candidate table, which is what the shipped geocoder reads.
+ * The backend the recording drives. Defaults to the promoted candidate table,
+ * which is what the shipped geocoder reads.
  */
 const BACKEND = values.backend || dataRootPath("wof", "candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
 
 /**
- * The panel, named separately from `--out` so a successor construction can read the frozen panel while writing its own
- * fixture elsewhere.
+ * The panel, named separately from `--out` so a successor construction can read the
+ * frozen panel while writing its own fixture elsewhere.
  *
- * One path for both would force a successor to overwrite the frozen artifacts to change the withheld-gold rule, which
- * is the one thing `benchmark-freeze.json` exists to refuse. Comparability runs the other way too: a successor that
- * re-executed the selection rules would be measuring a different panel and a different rule at once.
+ * One path for both would force a successor to overwrite the frozen artifacts to change
+ * the withheld-gold rule, which is the one thing `benchmark-freeze.json` exists to refuse.
+ * Comparability runs the other way too: a successor that re-executed the selection
+ * rules would be measuring a different panel and a different rule at once.
  */
 const PANEL_PATH = values.panel || `${OUT}/same-data-panel.jsonl`
 const FIXTURE_PATH = `${OUT}/same-data-candidates.jsonl`
@@ -174,8 +177,8 @@ async function recordPhase(): Promise<void> {
 
 	const parse = (query: string): Promise<AddressTree> => scorer.parse(query, { postcodeRepair: true })
 
-	// The withheld-gold stratum under a rule `same-data-resolver-v1` was not frozen under, so a fixture recorded this
-	// way belongs to a successor benchmark id rather than to v1.
+	// The withheld-gold stratum under a rule `same-data-resolver-v1` was not frozen under,
+	// so a fixture recorded this way belongs to a successor benchmark id rather than to v1.
 	const withholdEveryDenotingRow = values["withhold-every-denoting-row"] === true
 
 	if (withholdEveryDenotingRow) {
@@ -210,8 +213,8 @@ async function recordPhase(): Promise<void> {
 		{
 			benchmarkID: withholdEveryDenotingRow ? `${definition.benchmarkID}-denoting` : definition.benchmarkID,
 			definitionVersion: definition.version,
-			// Which withheld-gold rule produced this fixture. The two rules define different strata, so the benchmark id
-			// alone does not identify a run.
+			// Which withheld-gold rule produced this fixture. The two rules define different
+			// strata, so the benchmark id alone does not identify a run.
 			withheldGoldRule: withholdEveryDenotingRow ? "every-denoting-row" : "concorded-ids",
 			recordedAt: isoSeconds(),
 			gitHead: await gitHead(repoRootPath()),
@@ -234,8 +237,9 @@ async function recordPhase(): Promise<void> {
 }
 
 /**
- * Every arm's `ResolveOpts`, production first. The production arm's empty bag is listed explicitly: an omitted default
- * is a missing replay key, and `replayBackend` would then raise on the arm the benchmark is about.
+ * Every arm's `ResolveOpts`, production first. The production arm's empty bag is listed
+ * explicitly: an omitted default is a missing replay key, and `replayBackend` would
+ * then raise on the arm the benchmark is about.
  */
 function armOptionSets(): ResolveOpts[] {
 	return [{}, ABLATION_RESOLVE_OPTS]
@@ -287,18 +291,18 @@ const REQUIRED_MARGIN_POINTS = 8
 /**
  * What the receipt says about the fixture these results came from, or a stated absence.
  *
- * Read rather than assumed, because the two withheld-gold rules define different strata and their abstention rates are
- * not comparable. The definition alone names neither, so a report headed by the definition would label a successor's
- * numbers with the frozen benchmark's id — two constructions, one heading, and a reader with no way to tell them
- * apart.
+ * Read rather than assumed, because the two withheld-gold rules define different strata
+ * and their abstention rates are not comparable. The definition alone names neither,
+ * so a report headed by the definition would label a successor's numbers with the frozen
+ * benchmark's id — two constructions, one heading, and a reader with no way to tell them apart.
  */
 async function recordedUnder(): Promise<{ benchmarkID: string; withheldGoldRule: string }> {
 	const receipt = await tryReadLocalJSONFile<{ benchmarkID?: string; withheldGoldRule?: string }>(RECEIPT_PATH)
 
 	return {
 		benchmarkID: receipt?.benchmarkID ?? "(no receipt beside these results)",
-		// A fixture recorded before the rule was named carries no field. that is the v1 rule, and saying so is not the
-		// same as saying nothing.
+		// A fixture recorded before the rule was named carries no field. that is the v1 rule,
+		// and saying so is not the same as saying nothing.
 		withheldGoldRule: receipt?.withheldGoldRule ?? "concorded-ids (receipt predates the field)",
 	}
 }
@@ -366,8 +370,8 @@ async function scorePhase(): Promise<void> {
 		...renderLosses(panel, results, 25),
 	]
 
-	// `lines` must not end with an empty element: `oxfmt` strips a trailing blank line, so a generated file carrying
-	// one fails `yarn lint` as soon as it is committed.
+	// `lines` must not end with an empty element: `oxfmt` strips a trailing blank line,
+	// so a generated file carrying one fails `yarn lint` as soon as it is committed.
 	await writeLocalTextFile(lines, SCORE_PATH)
 
 	console.log(lines.join("\n"))
@@ -454,11 +458,12 @@ async function sweepPhase(): Promise<void> {
 /**
  * The option sets the knob replay walks.
  *
- * The candidate backend's score is a log-population rank, measured over this fixture's pools at min 0, median 2.55 and
- * max 9.14, so the floors walk the populated half of that range. The `spanRescore` arms are here because a floor on its
- * own barely moves the false-selection rate and the pair moves it a long way: `applySpanRescore` returns early only
- * when the tree already holds a resolved place (`resolve/passes.ts`), so a floor's refusal leaves exactly the state
- * that invites the recovery pass to answer instead.
+ * The candidate backend's score is a log-population rank, measured over this fixture's pools
+ * at min 0, median 2.55 and max 9.14, so the floors walk the populated half of that range.
+ * The `spanRescore` arms are here because a floor on its own barely moves the false-selection
+ * rate and the pair moves it a long way: `applySpanRescore` returns early only
+ * when the tree already holds a resolved place (`resolve/passes.ts`), so a floor's refusal
+ * leaves exactly the state that invites the recovery pass to answer instead.
  */
 const KNOB_ARMS: Array<[string, ResolveOpts]> = [
 	["default", {}],
@@ -495,9 +500,10 @@ async function knobPhase(): Promise<void> {
 		byArm.set(label, results)
 	}
 
-	// A raised floor changes what the walk asks next, so each arm loses a different set of rows to replay misses.
-	// Scoring every arm over its own survivors would compare rates whose denominators moved. this intersection is what
-	// makes the columns comparable, and the count of rows it drops is reported beside them.
+	// A raised floor changes what the walk asks next, so each arm loses a different set of
+	// rows to replay misses. Scoring every arm over its own survivors would compare rates
+	// whose denominators moved. this intersection is what makes the columns comparable,
+	// and the count of rows it drops is reported beside them.
 	const errored = new Set(
 		[...byArm.values()].flatMap((results) => results.filter((result) => result.error).map((result) => result.rowID))
 	)

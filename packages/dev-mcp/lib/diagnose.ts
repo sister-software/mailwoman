@@ -77,33 +77,36 @@ export { expectationCase, type ExpectationReading } from "#diagnose/expectation"
 /**
  * The confidence at which a known-format hit is treated as a structural assertion worth contradicting.
  *
- * `KnownFormatHit.confidence` is deliberately damped where postcode shapes overlap (`fr_postcode` / `de_postcode`
- * against `us_zip` is the documented case), so a hit below this floor is the detector saying it cannot tell the shapes
- * apart — disagreeing with the parse there would report that ambiguity as a defect.
+ * `KnownFormatHit.confidence` is deliberately damped where postcode shapes overlap
+ * (`fr_postcode` / `de_postcode` against `us_zip` is the documented case),
+ * so a hit below this floor is the detector saying it cannot tell the shapes apart —
+ * disagreeing with the parse there would report that ambiguity as a defect.
  */
 const KNOWN_FORMAT_CONFIDENCE_FLOOR = 0.9
 
 /**
- * Row ids listed per shape before the list is capped. The `n` beside it is always the real count. this bounds the
- * payload, never the measurement.
+ * Row ids listed per shape before the list is capped. The `n` beside it is always
+ * the real count. this bounds the payload, never the measurement.
  */
 const SHAPE_ID_CAP = 20
 
 /**
  * Above this many rows, counterfactuals run only on rows that matched a non-`clean` shape.
  *
- * A flip is one geocode per row per setting and the setting space is five wide, so a full board would be thousands of
- * extra resolves plus an engine build per distinct patch. Every result that applies the narrowing says so, and says
- * that a clean row's settings are then unmeasured rather than measured and found inert.
+ * A flip is one geocode per row per setting and the setting space is five wide, so a full
+ * board would be thousands of extra resolves plus an engine build per distinct patch.
+ * Every result that applies the narrowing says so, and says that a clean row's settings are
+ * then unmeasured rather than measured and found inert.
  */
 export const COUNTERFACTUAL_FULL_RUN_MAX_ROWS = 20
 
 /**
  * The v1 shape vocabulary, in pipeline execution order — parse, evidence, retrieval, ranking, outcome.
  *
- * A row can match several, and the order is what makes a multi-match readable: the earliest pipeline stage comes first,
- * so `[retrieval_empty, wrong_instance_detected]` reads as one story rather than two verdicts. The two terminal states
- * are mutually exclusive with everything, including each other.
+ * A row can match several, and the order is what makes a multi-match readable:
+ * the earliest pipeline stage comes first, so `[retrieval_empty, wrong_instance_detected]`
+ * reads as one story rather than two verdicts. The two terminal states are mutually
+ * exclusive with everything, including each other.
  */
 export const DIAGNOSE_SHAPES = [
 	"parse_shape_contradiction",
@@ -120,8 +123,9 @@ export const DIAGNOSE_SHAPES = [
 export type DiagnoseShape = (typeof DIAGNOSE_SHAPES)[number]
 
 /**
- * What each shape asserts, as the predicate actually reads it. Emitted with every result so a classification travels
- * with its own definition — a shape name relayed without its predicate is the bare label this design refuses.
+ * What each shape asserts, as the predicate actually reads it.
+ * Emitted with every result so a classification travels with its own definition —
+ * a shape name relayed without its predicate is the bare label this design refuses.
  */
 export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
 	parse_shape_contradiction:
@@ -154,7 +158,8 @@ export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
 }
 
 /**
- * The format union, pulled off the trace's own type so a format added to `@mailwoman/query-shape` without an entry in
+ * The format union, pulled off the trace's own type so a format added to
+ * `@mailwoman/query-shape` without an entry in
  * {@link COMPONENT_FOR_KNOWN_FORMAT} is a compile error rather than a silently unchecked detector.
  */
 type KnownFormat = GeocodeTrace["queryShape"]["knownFormats"][number]["format"]
@@ -181,8 +186,9 @@ const COMPONENT_FOR_KNOWN_FORMAT = {
 /**
  * The subset of a {@link GeocodeRun}'s fields an account reads, declared structurally.
  *
- * A `GeocodeRun` satisfies this by shape, so `runDiagnose` passes one straight through — and the assembly stays
- * testable without constructing a whole `GeocodeResult`, which is twenty-five fields of which six matter here.
+ * A `GeocodeRun` satisfies this by shape, so `runDiagnose` passes one straight through —
+ * and the assembly stays testable without constructing a whole `GeocodeResult`,
+ * which is twenty-five fields of which six matter here.
  */
 export interface AccountInput {
 	result: {
@@ -214,8 +220,8 @@ export interface AccountInput {
 /**
  * The decode's own confidence, over the tokens the tree was built from.
  *
- * `n_tokens: 0` with null statistics is a real state (an empty parse), kept apart from a mean of zero — one says
- * nothing was decoded, the other says everything was decoded with no confidence.
+ * `n_tokens: 0` with null statistics is a real state (an empty parse), kept apart from a mean of
+ * zero — one says nothing was decoded, the other says everything was decoded with no confidence.
  */
 interface DecodeReading {
 	path: "viterbi" | "argmax"
@@ -229,8 +235,8 @@ interface KnownFormatReading {
 	confidence: number
 	text: string
 	/**
-	 * The component tag this format asserts. `null` means the format maps to no component — the detector saw a shape the
-	 * schema has no slot for, which is not a contradiction.
+	 * The component tag this format asserts. `null` means the format maps to no component —
+	 * the detector saw a shape the schema has no slot for, which is not a contradiction.
 	 */
 	expects_component: string | null
 	matched: boolean
@@ -239,8 +245,8 @@ interface KnownFormatReading {
 export interface ParseFacts {
 	kind: { verdict: string; confidence: number } | null
 	/**
-	 * Why {@link ParseFacts.kind} is null, when it is. The classifier is skipped when a caller pinned the register, which
-	 * is a fact about the call — not a zero-confidence verdict.
+	 * Why {@link ParseFacts.kind} is null, when it is. The classifier is skipped when a caller
+	 * pinned the register, which is a fact about the call — not a zero-confidence verdict.
 	 */
 	kind_absent_reason?: string
 	input_mode: string
@@ -252,8 +258,9 @@ export interface ParseFacts {
 }
 
 /**
- * One backend lookup, reduced to the facts a shape reads. The candidate table itself is deliberately not carried —
- * `mwdev_trace` renders it, and an account that dumped it would be a trace with extra steps.
+ * One backend lookup, reduced to the facts a shape reads.
+ * The candidate table itself is deliberately not carried — `mwdev_trace` renders it,
+ * and an account that dumped it would be a trace with extra steps.
  */
 interface LookupFact {
 	tag: string
@@ -265,8 +272,8 @@ interface LookupFact {
 	checks: string[]
 	picked: { name: string; source: string } | null
 	/**
-	 * The picked candidate's rank in the first recorded stage (the backend's own order), or `null` when nothing was
-	 * picked or the pick came from a path that never ranked.
+	 * The picked candidate's rank in the first recorded stage (the backend's own order),
+	 * or `null` when nothing was picked or the pick came from a path that never ranked.
 	 */
 	picked_initial_rank: number | null
 	/**
@@ -295,14 +302,15 @@ export interface OutcomeFacts {
 	tier: string
 	abstained: boolean
 	/**
-	 * `null` when the geocode resolved no winner to check against — the absence of a check, never a passing one.
+	 * `null` when the geocode resolved no winner to check against — the absence
+	 * of a check, never a passing one.
 	 */
 	admin_coherence: { region: string; country: string } | null
 	outside_winner_lineage: Array<{ tag: string; name: string; place_id: string | null }>
 	lineage_vouched: number
 	/**
-	 * Hierarchy entries whose lineage standing could not be established (no sidecar, or no place identity). Counted apart
-	 * from `outside_winner_lineage`: unverifiable is not contradicted.
+	 * Hierarchy entries whose lineage standing could not be established (no sidecar, or no place identity).
+	 * Counted apart from `outside_winner_lineage`: unverifiable is not contradicted.
 	 */
 	lineage_unverifiable: number
 }
@@ -313,8 +321,8 @@ export interface RowAccount {
 	country?: string | undefined
 	shapes: DiagnoseShape[]
 	/**
-	 * `null` when the run carried no parse trace — the bundle could not produce one. Distinct from a parse whose every
-	 * channel is absent.
+	 * `null` when the run carried no parse trace — the bundle could not produce one.
+	 * Distinct from a parse whose every channel is absent.
 	 */
 	parse: ParseFacts | null
 	evidence: EvidenceCensus | null
@@ -352,9 +360,10 @@ function decodeReading(parse: NeuralParseTrace): DecodeReading {
 /**
  * Fold a detector span and a component value to the same comparable form.
  *
- * Known-format spans are offsets into the normalized input while component values are taken from the RAW one, so the
- * two frames cannot be compared by offset. Folding away case and every non-alphanumeric character compares what both
- * frames do agree on — the characters — which is what the contradiction is about.
+ * Known-format spans are offsets into the normalized input while component values
+ * are taken from the RAW one, so the two frames cannot be compared by offset.
+ * Folding away case and every non-alphanumeric character compares what both frames do
+ * agree on — the characters — which is what the contradiction is about.
  */
 function foldForSpanMatch(value: string): string {
 	return value.toLowerCase().replaceAll(/[^\da-z]/g, "")
@@ -404,8 +413,9 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 	const lookups = records.map((record): LookupFact => {
 		const picked = record.picked
 		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : undefined
-		// The rank vector's key order is the resolver's stage execution order — the recorder writes one entry per stage
-		// as it runs — so the first key is the backend's own order and the last is the order the pick came from.
+		// The rank vector's key order is the resolver's stage execution order —
+		// the recorder writes one entry per stage as it runs — so the first key is the
+		// backend's own order and the last is the order the pick came from.
 		const stages = pickedRow ? Object.keys(pickedRow.ranks) : []
 		const firstStage = stages[0]
 		const initialRank = pickedRow && firstStage ? (pickedRow.ranks[firstStage] ?? null) : null
@@ -474,8 +484,9 @@ export function collectOutcomeFacts(result: AccountInput["result"]): OutcomeFact
 /**
  * Match the mechanism-state predicates.
  *
- * The terminal states are not decided here: `clean` vs `unclassified` needs the row's expectation, and keeping that out
- * of this function is what stops an expectation from ever influencing a mechanism claim (commitment 1).
+ * The terminal states are not decided here: `clean` vs `unclassified` needs the row's
+ * expectation, and keeping that out of this function is what stops an expectation
+ * from ever influencing a mechanism claim (commitment 1).
  */
 export function matchShapes(facts: {
 	parse: ParseFacts | null
@@ -498,9 +509,9 @@ export function matchShapes(facts: {
 		shapes.push("evidence_starved")
 	}
 
-	// A span is only empty AT the deciding site when nothing resolved it: a `postcode_format_probe` and an
-	// `empty_admin_pick` both answer off an empty candidate table, and reading those as retrieval failure would report
-	// a working fallback as a defect.
+	// A span is only empty AT the deciding site when nothing resolved it: a `postcode_format_probe`
+	// and an `empty_admin_pick` both answer off an empty candidate table, and reading
+	// those as retrieval failure would report a working fallback as a defect.
 	const emptyDeciding = lookups.some(
 		(lookup) =>
 			lookup.n_candidates === 0 &&
@@ -512,10 +523,11 @@ export function matchShapes(facts: {
 		shapes.push("retrieval_empty")
 	}
 
-	// The rule fires only when the scoped probe missed across the whole cascade and the unscoped fallback produced
-	// rows — so every candidate in that lookup is a re-admitted one, and a pick under the eval is a re-admitted pick.
-	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`, so lookup granularity is all
-	// the trace can support. it suffices here because the rule's own condition covers the whole row set.
+	// The rule fires only when the scoped probe missed across the whole cascade and the
+	// unscoped fallback produced rows — so every candidate in that lookup is a re-admitted one,
+	// and a pick under the eval is a re-admitted pick. The per-candidate `regionScopeMiss`
+	// stamp does not reach `ResolveCandidateTrace`, so lookup granularity is all the trace can
+	// support. it suffices here because the rule's own condition covers the whole row set.
 	if (lookups.some((lookup) => lookup.checks.includes("region_scope_miss") && lookup.picked)) {
 		shapes.push("scope_miss_readmission")
 	}
@@ -544,8 +556,9 @@ function channelMark(reading: ChannelReading): string {
 }
 
 /**
- * One line per row — the tool-kit renderer pattern. The structured account is what a diff reads. this is what a human
- * reads in a transcript without an agent paraphrasing it, which is where detail goes missing.
+ * One line per row — the tool-kit renderer pattern. The structured account is
+ * what a diff reads. this is what a human reads in a transcript without an agent
+ * paraphrasing it, which is where detail goes missing.
  */
 export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	const parts: string[] = [`${account.id} [${account.shapes.join(",")}]`, `tier=${account.outcome.tier}`]
@@ -621,7 +634,8 @@ export interface ShapeAggregate {
 	n: number
 	row_ids: string[]
 	/**
-	 * Ids not listed because the list hit its cap. A display bound, never a measurement one — `n` is the whole class.
+	 * Ids not listed because the list hit its cap. A display bound, never a
+	 * measurement one — `n` is the whole class.
 	 */
 	row_ids_omitted: number
 	predicate: string
@@ -630,9 +644,9 @@ export interface ShapeAggregate {
 /**
  * Per-shape counts and the rows in each class.
  *
- * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row matched is omitted rather than
- * reported as zero — a class with no members is not a class anyone can describe, and a table of zeros reads as a
- * measurement of them.
+ * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row matched
+ * is omitted rather than reported as zero — a class with no members is not a class
+ * anyone can describe, and a table of zeros reads as a measurement of them.
  */
 export function aggregateByShape(
 	accounts: ReadonlyArray<{ id: string; shapes: DiagnoseShape[] }>
@@ -662,11 +676,11 @@ export interface SettingTally {
 }
 
 /**
- * Per-setting counterfactual counts: how many rows the setting was tried on, how many it moved, how many it could not
- * apply to.
+ * Per-setting counterfactual counts: how many rows the setting was tried on,
+ * how many it moved, how many it could not apply to.
  *
- * All three, always. A setting that moved nothing on forty rows and a setting that was never applicable are the same
- * zero in a moved-only table, and they are not the same fact.
+ * All three, always. A setting that moved nothing on forty rows and a setting that was
+ * never applicable are the same zero in a moved-only table, and they are not the same fact.
  */
 export function aggregateCounterfactuals(
 	accounts: ReadonlyArray<{ counterfactuals?: RowCounterfactuals | undefined }>
@@ -766,7 +780,8 @@ export function assembleAccount(
 }
 
 /**
- * Run the diagnosis: one traced geocode per row, an account per row, the counterfactual sweep, aggregated by shape.
+ * Run the diagnosis: one traced geocode per row, an account per row,
+ * the counterfactual sweep, aggregated by shape.
  */
 export async function runDiagnose(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }
@@ -898,8 +913,8 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		counterfactuals_narrowed: narrowed,
 		counterfactual_errors: counterfactualErrors,
 		elapsed_ms: Date.now() - startedAt,
-		// Under a cap the emitted rows lead with the non-clean ones — the ones every aggregate above points
-		// at — and says what it left out. The aggregates are computed over every row regardless.
+		// Under a cap the emitted rows lead with the non-clean ones — the ones every aggregate above
+		// points at — and says what it left out. The aggregates are computed over every row regardless.
 		rows: rowsCap === undefined ? emittedRows : emittedRows.slice(0, rowsCap),
 		rows_omitted: rowsCap === undefined ? 0 : Math.max(0, emittedRows.length - rowsCap),
 	}

@@ -83,8 +83,8 @@ describe("weightsReconciliationCheck", () => {
 	})
 
 	it("refuses an overlay pinned to a base at another version", async () => {
-		// Every workspace releases in lockstep, so this means a release did not land whole — and `yarn pack` freezes
-		// `workspace:*` against whichever version the sibling reads at pack time.
+		// Every workspace releases in lockstep, so this means a release did not land whole —
+		// and `yarn pack` freezes `workspace:*` against whichever version the sibling reads at pack time.
 		const tree = await treeWith([
 			{ locale: "en-us", version: "10.0.0", files: ["model.onnx", "model-card.json"] },
 			{ locale: "en-au", version: "9.4.0", baseWeights: "@mailwoman/neural-weights-en-us" },
@@ -120,8 +120,8 @@ describe("weightsReconciliationCheck", () => {
 	})
 
 	it("reads a $-prefixed key in files_md5 as an annotation rather than a filename", async () => {
-		// The cards annotate themselves throughout with `$comment` and `$comment_661`. Reading one as a file would
-		// report a defect in every card that documents what its digests cover.
+		// The cards annotate themselves throughout with `$comment` and `$comment_661`.
+		// Reading one as a file would report a defect in every card that documents what its digests cover.
 		const tree = await treeWith([
 			{
 				locale: "en-us",

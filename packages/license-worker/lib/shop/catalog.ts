@@ -12,20 +12,21 @@
 import type { CommercialPlan } from "#plans"
 
 /**
- * The agreement version the Payment Links carry as metadata and the worker records on every license. Bumping it is a
- * new terms page, new Payment Links, and a new value in each environment's `AGREEMENT_VERSION`.
+ * The agreement version the Payment Links carry as metadata and the worker
+ * records on every license. Bumping it is a new terms page, new Payment Links,
+ * and a new value in each environment's `AGREEMENT_VERSION`.
  */
 export const AGREEMENT_VERSION = "commercial-2026-10"
 
 /**
- * The Payment Link custom field that collects the licensee's legal name. the worker reads the session field by this
- * key.
+ * The Payment Link custom field that collects the licensee's legal name. the
+ * worker reads the session field by this key.
  */
 export const LICENSEE_FIELD_KEY = "licensee_legal_name"
 
 /**
- * The Payment Link metadata key Stripe copies onto each Checkout Session. the worker reads the agreement version from
- * it.
+ * The Payment Link metadata key Stripe copies onto each Checkout Session. the
+ * worker reads the agreement version from it.
  */
 export const AGREEMENT_METADATA_KEY = "agreement_version"
 
@@ -40,9 +41,10 @@ export const SHOP_METADATA_KEY = "mailwoman_shop"
 export const SHOP_MARK = "commercial-license"
 
 /**
- * What Checkout collects from a buyer beyond the payment, spread into a Payment Link and into a Checkout Session built
- * for a rehearsal alike: the licensee's legal name, a billing address, consent to the terms, and the metadata the
- * worker reads a session by. One function, so the two cannot drift.
+ * What Checkout collects from a buyer beyond the payment, spread into a Payment Link
+ * and into a Checkout Session built for a rehearsal alike: the licensee's legal name,
+ * a billing address, consent to the terms, and the metadata the worker reads a session by.
+ * One function, so the two cannot drift.
  */
 export interface CheckoutCollection {
 	custom_fields: Array<{ key: string; label: { type: "custom"; custom: string }; type: "text" }>
@@ -53,16 +55,16 @@ export interface CheckoutCollection {
 	 */
 	allow_promotion_codes: true
 	/**
-	 * No card when nothing is due: a 100%-off first invoice collects none, and Stripe asks for one at the first invoice
-	 * that charges.
+	 * No card when nothing is due: a 100%-off first invoice collects none,
+	 * and Stripe asks for one at the first invoice that charges.
 	 */
 	payment_method_collection: "if_required"
 	metadata: Record<string, string>
 }
 
 /**
- * The fields of the collection a Payment Link can change after creation. the provisioner holds an existing link to
- * these, and a change to any other field is a new link.
+ * The fields of the collection a Payment Link can change after creation. the provisioner
+ * holds an existing link to these, and a change to any other field is a new link.
  */
 export const RECONCILED_LINK_FIELDS = {
 	allow_promotion_codes: true,

@@ -52,14 +52,16 @@ export interface DebugSessionAppProps {
 }
 
 /**
- * `loading` covers session open + the first geocode; `busy` is a re-run with a result already on screen (the panes stay
- * live, the output title gains an ellipsis); `fatal` is terminal and reachable only from `loading` (see the header).
+ * `loading` covers session open + the first geocode; `busy` is a re-run with a result
+ * already on screen (the panes stay live, the output title gains an ellipsis);
+ * `fatal` is terminal and reachable only from `loading` (see the header).
  */
 type SessionPhase = "loading" | "ready" | "busy" | "fatal"
 
 /**
- * What the map pane is looking at. Null state means "follow the result" — {@link resultViewport} re-derives it from the
- * geocode, which is what makes a fresh query re-center without the user pressing anything.
+ * What the map pane is looking at. Null state means "follow the result" —
+ * {@link resultViewport} re-derives it from the geocode, which is what makes a
+ * fresh query re-center without the user pressing anything.
  */
 interface Viewport {
 	centerLon: number
@@ -68,8 +70,8 @@ interface Viewport {
 }
 
 /**
- * The session's long-lived handles. `renderer` is null when there is no usable tile archive; `mapNote` says why, and is
- * what the map pane shows in its place.
+ * The session's long-lived handles. `renderer` is null when there is no usable tile archive;
+ * `mapNote` says why, and is what the map pane shows in its place.
  */
 interface Resources {
 	session: GeocodeSession
@@ -79,8 +81,8 @@ interface Resources {
 }
 
 /**
- * One geocode, plus the query text that produced it — `result.input` is the geocoder's own echo, but the input row
- * renders what the user typed.
+ * One geocode, plus the query text that produced it — `result.input` is the geocoder's
+ * own echo, but the input row renders what the user typed.
  */
 interface SessionRun extends GeocodeRun {
 	input: string
@@ -96,22 +98,24 @@ const NO_TILES_NOTE = "no tiles: set $MAILWOMAN_TILES or --tiles"
 const UNRESOLVED_NOTE = "unresolved: no coordinate"
 
 /**
- * One arrow keypress, in map-tui device pixels. The renderer's grid is 2 device pixels per braille cell across and 4
- * down, so a single step of 12 moves the view 6 cells horizontally and 3 cells vertically — visibly a nudge on both
- * axes rather than a screenful, and the same physical distance either way.
+ * One arrow keypress, in map-tui device pixels. The renderer's grid is 2 device
+ * pixels per braille cell across and 4 down, so a single step of 12 moves the
+ * view 6 cells horizontally and 3 cells vertically — visibly a nudge on both axes
+ * rather than a screenful, and the same physical distance either way.
  */
 const PAN_STEP_PIXELS = 12
 
 /**
- * Web-Mercator's latitude cutoff. Panning past it is not a clipped view, it is a division by zero:
- * `lonLatToWorldPx(±90)` takes `log((1 + sin φ) / (1 - sin φ))` and returns a non-finite world pixel, which the next
- * viewport carries into the renderer. Clamping the center is what keeps a held arrow key from walking off the map.
+ * Web-Mercator's latitude cutoff. Panning past it is not a clipped view, it is a
+ * division by zero: `lonLatToWorldPx(±90)` takes `log((1 + sin φ) / (1 - sin φ))`
+ * and returns a non-finite world pixel, which the next viewport carries into the renderer.
+ * Clamping the center is what keeps a held arrow key from walking off the map.
  */
 const MAX_MERCATOR_LATITUDE = 85.05112878
 
 /**
- * The zoom ceiling used when no tile archive is open — the map pane is a note in that state, so the bound only has to
- * keep the stored viewport sane.
+ * The zoom ceiling used when no tile archive is open — the map pane is a note in that state,
+ * so the bound only has to keep the stored viewport sane.
  */
 const FALLBACK_MAX_ZOOM = 22
 
@@ -141,8 +145,9 @@ function clampViewport(view: Viewport): Viewport {
 }
 
 /**
- * Shift the center by device pixels AT the current zoom, so a keypress moves the same number of cells whatever the
- * scale — the round trip through world pixels is what converts "6 cells right" into the degrees that means here.
+ * Shift the center by device pixels AT the current zoom, so a keypress moves the
+ * same number of cells whatever the scale — the round trip through world pixels is
+ * what converts "6 cells right" into the degrees that means here.
  */
 function pannedViewport(view: Viewport, dx: number, dy: number): Viewport {
 	const world = lonLatToWorldPx(view.centerLon, view.centerLat, view.zoom)
@@ -152,8 +157,9 @@ function pannedViewport(view: Viewport, dx: number, dy: number): Viewport {
 }
 
 /**
- * Zoom by whole steps, clamped to the archive's own range. Whole steps keep the stored zoom equal to the one
- * `MapRenderer` renders at (it rounds and clamps internally), so the pan math above and the pixels on screen agree.
+ * Zoom by whole steps, clamped to the archive's own range.
+ * Whole steps keep the stored zoom equal to the one `MapRenderer` renders at
+ * (it rounds and clamps internally), so the pan math above and the pixels on screen agree.
  */
 function zoomedViewport(view: Viewport, delta: number, source: TileSource | null): Viewport {
 	return {
@@ -167,12 +173,13 @@ function zoomedViewport(view: Viewport, delta: number, source: TileSource | null
 //#region Session
 
 /**
- * Open the session, the tile archive, and geocode the starting query. Tile trouble degrades (the pane becomes a note);
- * anything else throws, and the caller turns it into the fatal phase.
+ * Open the session, the tile archive, and geocode the starting query.
+ * Tile trouble degrades (the pane becomes a note); anything else throws,
+ * and the caller turns it into the fatal phase.
  */
 async function openResources(options: GeocodeCommandOptions): Promise<Resources> {
-	// `trace: true` is the debug view's own opt-in — it provides the evidence rows one extra decode per input, which
-	// no other caller of the session should pay for.
+	// `trace: true` is the debug view's own opt-in — it provides the evidence rows one
+	// extra decode per input, which no other caller of the session should pay for.
 	const session = await createGeocodeSession({ ...options, trace: true })
 	const tilesPath = await resolveTilesPath(options.tiles)
 
@@ -183,8 +190,8 @@ async function openResources(options: GeocodeCommandOptions): Promise<Resources>
 
 		return { session, source, renderer: new MapRenderer(source), mapNote: null }
 	} catch (error) {
-		// A corrupt or unreadable archive costs the map pane rather than the session — the parse and the resolution are
-		// still the answer the user came for.
+		// A corrupt or unreadable archive costs the map pane rather than the session —
+		// the parse and the resolution are still the answer the user came for.
 		return { session, source: null, renderer: null, mapNote: `tiles unavailable: ${messageOf(error)}` }
 	}
 }
@@ -195,9 +202,9 @@ function closeResources(resources: Resources | null): void {
 	resources.session[Symbol.dispose]()
 
 	void resources.source?.[Symbol.asyncDispose]().catch(() => {
-		// Teardown is best-effort. This runs after the terminal has already been restored and while the process is
-		// on its way out, so a rejected close has nobody left to tell — and an unhandled rejection would take the
-		// exit code with it.
+		// Teardown is best-effort. This runs after the terminal has already been restored and
+		// while the process is on its way out, so a rejected close has nobody left to tell —
+		// and an unhandled rejection would take the exit code with it.
 	})
 }
 
@@ -225,9 +232,10 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	const [viewport, setViewport] = useState<Viewport | null>(null)
 	const [scrollOffset, setScrollOffset] = useState(0)
 
-	// Monotonic request IDs. Every async completion below compares its own ID against the ref before touching
-	// state, so a slow frame or a slow geocode that lands after a newer one was started is discarded rather than
-	// overwriting it — the classic out-of-order-render artifact when a held arrow key outruns tile IO.
+	// Monotonic request IDs. Every async completion below compares its own ID against
+	// the ref before touching state, so a slow frame or a slow geocode that lands
+	// after a newer one was started is discarded rather than overwriting it —
+	// the classic out-of-order-render artifact when a held arrow key outruns tile IO.
 	const frameRequestRef = useRef(0)
 	const runRequestRef = useRef(0)
 
@@ -281,8 +289,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		return () => {
 			disposed = true
 
-			// Symmetric with the frame effect's cleanup: an in-flight geocode that settles after teardown finds a
-			// counter it can no longer match and drops its result instead of setting state on a closed session.
+			// Symmetric with the frame effect's cleanup: an in-flight geocode that settles
+			// after teardown finds a counter it can no longer match and drops its result
+			// instead of setting state on a closed session.
 			runRequestRef.current++
 
 			closeResources(opened)
@@ -295,8 +304,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 				const columns = stdout.columns || prior.columns
 				const rows = stdout.rows || prior.rows
 
-				// Same dimensions ⇒ same object, so a resize event that changed nothing costs no re-render and no
-				// re-rendered map frame.
+				// Same dimensions ⇒ same object, so a resize event that changed nothing
+				// costs no re-render and no re-rendered map frame.
 				return columns === prior.columns && rows === prior.rows ? prior : { columns, rows }
 			})
 		}
@@ -308,8 +317,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		}
 	}, [stdout])
 
-	// Exiting with the error rather than rendering it — see the header. Ink unmounts, restores the primary buffer,
-	// and rejects `waitUntilExit()`, which is where `command.tsx` prints the message.
+	// Exiting with the error rather than rendering it — see the header.
+	// Ink unmounts, restores the primary buffer, and rejects `waitUntilExit()`,
+	// which is where `command.tsx` prints the message.
 	useEffect(() => {
 		if (phase !== "fatal") return
 
@@ -342,9 +352,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		const violation = debugSizeFloorViolation(size.columns, size.rows)
 
 		if (violation) {
-			// A live terminal below the floor is the user's to fix by resizing — `mapPaneCellSize`'s row math is
-			// already non-positive here, and handing that to `MapRenderer` is the raw `RangeError` the static path's
-			// flag check exists to prevent.
+			// A live terminal below the floor is the user's to fix by resizing — `mapPaneCellSize`'s
+			// row math is already non-positive here, and handing that to `MapRenderer` is the
+			// raw `RangeError` the static path's flag check exists to prevent.
 			setFrame(null)
 			setMapNote(`terminal ${violation}`)
 
@@ -391,8 +401,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 	//#region Input + keys
 
-	// Stable across a keystroke so the memoized input field is, too — it is the one element that has to re-render
-	// when the user types, and a fresh handler identity would drag the whole frame with it.
+	// Stable across a keystroke so the memoized input field is, too — it is the one element that has to
+	// re-render when the user types, and a fresh handler identity would drag the whole frame with it.
 	const submit = useCallback(
 		(value: string): void => {
 			const query = value.trim()
@@ -400,8 +410,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			if (!resources || phase === "busy" || !query) return
 
 			setPhase("busy")
-			// The previous attempt's failure is stale the moment a new one starts — leaving it up through the busy
-			// window reads as if this query had already failed.
+			// The previous attempt's failure is stale the moment a new one starts —
+			// leaving it up through the busy window reads as if this query had already failed.
 			setErrorNote(null)
 
 			const requestID = ++runRequestRef.current
@@ -411,8 +421,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 					if (requestID !== runRequestRef.current) return
 
 					setRun({ input: query, ...reran })
-					// A new result re-centers the map and re-anchors the output pane. a pan the user made against the
-					// previous answer would otherwise leave the marker off screen.
+					// A new result re-centers the map and re-anchors the output pane. a pan the user
+					// made against the previous answer would otherwise leave the marker off screen.
 					setViewport(null)
 					setScrollOffset(0)
 					setPhase("ready")
@@ -467,9 +477,10 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 		if (!key.downArrow) return
 
-		// Only the down arrow needs the bound, so only it pays for the list. Clamped against the pane's own lines
-		// and window — the same builder and capacity function `DebugFrame` renders with, so the scroll can never run
-		// past what the pane shows, and the last page stays full instead of scrolling into empty rows.
+		// Only the down arrow needs the bound, so only it pays for the list.
+		// Clamped against the pane's own lines and window — the same builder and capacity function
+		// `DebugFrame` renders with, so the scroll can never run past what the pane shows,
+		// and the last page stays full instead of scrolling into empty rows.
 		const lineCount = run
 			? outputLines({
 					result: run.result,
@@ -487,8 +498,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 	useInput(
 		(input, key) => {
-			// Esc quits from anywhere, including the input field — `ink-text-input` ignores it, so there is no
-			// keystroke both handlers want.
+			// Esc quits from anywhere, including the input field — `ink-text-input` ignores it,
+			// so there is no keystroke both handlers want.
 			if (key.escape) {
 				exit()
 
@@ -521,13 +532,15 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 	//#region Render
 
-	// Memoized because `DebugFrame`'s panes are memoized: a fresh object literal per render would defeat every one of
-	// them, and the map pane is the expensive one — 28 rows of truecolor braille whose longest line is ~1 kB of SGR,
-	// re-measured by `string-width` and re-tokenized by `ansi-tokenize` on any prop identity change. Typing in the
-	// input row changes none of these values.
+	// Memoized because `DebugFrame`'s panes are memoized: a fresh object literal per
+	// render would defeat every one of them, and the map pane is the expensive one —
+	// 28 rows of truecolor braille whose longest line is ~1 kB of SGR, re-measured by
+	// `string-width` and re-tokenized by `ansi-tokenize` on any prop identity change.
+	// Typing in the input row changes none of these values.
 	//
-	// The scroll offset is deliberately not in here: it rides its own prop into the output pane, so scrolling leaves
-	// `data` identical and the map frame effect (which depends on `run`) never re-runs on an arrow key.
+	// The scroll offset is deliberately not in here: it rides its own prop into the
+	// output pane, so scrolling leaves `data` identical and the map frame effect
+	// (which depends on `run`) never re-runs on an arrow key.
 	const data = useMemo<DebugData | null>(
 		() =>
 			run

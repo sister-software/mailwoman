@@ -38,8 +38,8 @@ function requiredFlag(name: string, value: string | undefined): string {
 }
 
 /**
- * The probes' shared argument block: `--baseline` / `--candidate` / `--tokenizer` (required), `--model-card`,
- * `--golden`, and `--n` (whose default is per probe).
+ * The probes' shared argument block: `--baseline` / `--candidate` / `--tokenizer` (required),
+ * `--model-card`, `--golden`, and `--n` (whose default is per probe).
  */
 export function parseTwoModelArgs(nDefault: string): TwoModelArgs {
 	const { values: args } = parseArguments({

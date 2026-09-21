@@ -42,10 +42,11 @@ beforeAll(async () => {
 			res.writeHead(200)
 			res.end("payload")
 		} else if (req.url === "/range") {
-			// A host that answers `Range` with 206 and closes after a few bytes, the shape the Korean address portal
-			// has: the client must keep what landed and ask for the remainder. The body ends cleanly rather than by
-			// `destroy()`, because a reset can discard bytes the socket already carried and the connection count
-			// then depends on timing. the client's path (bytes on disk, next range from there) is the same either way.
+			// A host that answers `Range` with 206 and closes after a few bytes, the shape the
+			// Korean address portal has: the client must keep what landed and ask for the remainder.
+			// The body ends cleanly rather than by `destroy()`, because a reset can discard
+			// bytes the socket already carried and the connection count then depends on timing.
+			// the client's path (bytes on disk, next range from there) is the same either way.
 			rangeConnections++
 			const start = Number(/bytes=(\d+)-/.exec(req.headers.range ?? "")?.[1] ?? 0)
 

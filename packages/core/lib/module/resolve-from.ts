@@ -48,8 +48,9 @@ export function resolvePackagePathFrom(base: string, packageName: string, ...seg
 }
 
 /**
- * The `mailwoman` block this repository's own manifests may carry. A data-only weights overlay names the base package
- * it shares `model.onnx` and `tokenizer.model` with, which is the field `@mailwoman/neural` follows to find them.
+ * The `mailwoman` block this repository's own manifests may carry.
+ * A data-only weights overlay names the base package it shares `model.onnx`
+ * and `tokenizer.model` with, which is the field `@mailwoman/neural` follows to find them.
  */
 export interface MailwomanManifestFields {
 	mailwoman?: {
@@ -84,8 +85,8 @@ export async function readPackageJSON<D extends object = MailwomanManifestFields
 }
 
 /**
- * A package subpath as a filesystem path, resolved through the package's `exports` map, so a caller can read or spawn a
- * file the package publishes.
+ * A package subpath as a filesystem path, resolved through the package's `exports` map,
+ * so a caller can read or spawn a file the package publishes.
  *
  * @param base The caller's `import.meta.url`.
  * @throws `ERR_MODULE_NOT_FOUND` when the specifier does not resolve.

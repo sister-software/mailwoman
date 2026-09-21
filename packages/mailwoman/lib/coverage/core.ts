@@ -40,8 +40,8 @@ import { Globerator } from "spliterator/node/fs"
 import { stringifyJSON } from "@mailwoman/core/json";
 
 /**
- * Longitude span above which a ring is assumed to cross the antimeridian rather than genuinely wrap more than half the
- * globe — the standard heuristic for splitting a bbox at ±180.
+ * Longitude span above which a ring is assumed to cross the antimeridian rather than genuinely
+ * wrap more than half the globe — the standard heuristic for splitting a bbox at ±180.
  */
 const ANTIMERIDIAN_SPAN_DEGREES = 180
 
@@ -97,10 +97,11 @@ export interface CoverageBuildOptions {
 	 */
 	geonamesPostalFile: string | null
 	/**
-	 * WOF SQLite DB (the admin gazetteer) holding `spr` (place coords + placetype) + `place_population` /
-	 * `place_importance` — the civilization/salience backdrop. Settlement places, weighted by salience, mark "where
-	 * civilization is": a salient place we DON'T cover is a gray hole = work to do. Null to skip the global holes layer
-	 * (US rooftop fine map is independent of it).
+	 * WOF SQLite DB (the admin gazetteer) holding `spr` (place coords + placetype) +
+	 * `place_population` / `place_importance` — the civilization/salience backdrop.
+	 * Settlement places, weighted by salience, mark "where civilization is": a salient
+	 * place we DON'T cover is a gray hole = work to do. Null to skip the global holes
+	 * layer (US rooftop fine map is independent of it).
 	 */
 	wofDB: string | null
 	/**
@@ -207,15 +208,15 @@ function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number,
 
 /**
  * True if a GeoJSON polygon's outer ring spans >180° of longitude — the antimeridian-wrap artifact.
- * `h3_cell_to_boundary_wkt` emits unwrapped lon for cells straddling ±180, smearing a polygon across the whole map. a
- * normal hex spans a fraction of a degree, so a >180° span is unambiguously a wrap. Cheaper than round-tripping through
- * the spatial extension. covers AK/RU/FJ/NZ-Chathams.
+ * `h3_cell_to_boundary_wkt` emits unwrapped lon for cells straddling ±180, smearing a polygon across
+ * the whole map. a normal hex spans a fraction of a degree, so a >180° span is unambiguously a wrap.
+ * Cheaper than round-tripping through the spatial extension. covers AK/RU/FJ/NZ-Chathams.
  */
 function antimeridianWrapped(geojson: string): boolean {
 	let min = Infinity
 	let max = -Infinity
-	// Each coordinate pair is `[lon,lat]`; capture the lon (first number after a `[`). `[[[` won't
-	// match (no digit follows the inner `[`), so only real vertices are scanned.
+	// Each coordinate pair is `[lon,lat]`; capture the lon (first number after a `[`). `[[[`
+	// won't match (no digit follows the inner `[`), so only real vertices are scanned.
 	const re = /\[\s*(-?\d+(?:\.\d+)?)\s*,/g
 
 	for (let m = re.exec(geojson); m; m = re.exec(geojson)) {
@@ -278,10 +279,10 @@ export async function buildCoverageTiles(
 		await duck.run(`ATTACH '${opts.wofDB}' AS wof (TYPE sqlite, READ_ONLY)`)
 	}
 
-	// data_pt: res-fine address-point counts. union all the RAW (lat, lon) across states and bin + count
-	// once in the outer query. Do not pre-aggregate per union arm: DuckDB mis-binds structurally-identical
-	// aggregating sqlite subqueries to the first ATTACHed DB, collapsing every state onto the first one's
-	// cells. Raw-then-aggregate is correct.
+	// data_pt: res-fine address-point counts. union all the RAW (lat, lon) across states
+	// and bin + count once in the outer query. Do not pre-aggregate per union arm: DuckDB
+	// mis-binds structurally-identical aggregating sqlite subqueries to the first ATTACHed DB,
+	// collapsing every state onto the first one's cells. Raw-then-aggregate is correct.
 	onProgress("aggregate", "address points → fine cells…")
 	const ptAgg = states.map((_, i) => `SELECT lat, lon FROM st${i}.address_point`).join("\nUNION ALL\n")
 
@@ -289,8 +290,8 @@ export async function buildCoverageTiles(
 		`CREATE TEMP TABLE data_pt AS SELECT h3_latlng_to_cell(lat, lon, ${opts.fineRes}) AS cell, count(*)::BIGINT AS cnt FROM (${ptAgg}) GROUP BY 1`
 	)
 
-	// data_seg: res-fine street-segment counts. The geometry is a JSON coordinate array. bin its first
-	// vertex (a segment is ~block-length). Same raw-then-aggregate discipline as data_pt.
+	// data_seg: res-fine street-segment counts. The geometry is a JSON coordinate array. bin its
+	// first vertex (a segment is ~block-length). Same raw-then-aggregate discipline as data_pt.
 	const segIdx = states.map((s, i) => (s.interp ? i : -1)).filter((i) => i >= 0)
 
 	if (segIdx.length) {
@@ -429,11 +430,11 @@ export async function buildCoverageTiles(
 		`)
 
 		// sal: civilization salience per domain cell — WOF settlement places weighted by importance
-		// (Wikipedia notability via place_importance, with a population fallback baked in by
-		// build-importance). importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it is the
-		// salience: a big uncovered city → dark hole, a hamlet → faint. Only places carrying a signal
-		// count as "civilization" (the unknown long tail is dropped rather than flagged as work-to-do). Each
-		// place spreads to a 1-ring halo. a cell's salience is the strongest place touching it.
+		// (Wikipedia notability via place_importance, with a population fallback baked in by build-importance).
+		// importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it is the salience: a
+		// big uncovered city → dark hole, a hamlet → faint. Only places carrying a signal count
+		// as "civilization" (the unknown long tail is dropped rather than flagged as work-to-do).
+		// Each place spreads to a 1-ring halo. a cell's salience is the strongest place touching it.
 		await duck.run(`
 			CREATE TEMP TABLE sal AS
 			WITH places AS (
@@ -450,8 +451,8 @@ export async function buildCoverageTiles(
 			SELECT cell, max(sal) AS salience FROM spread GROUP BY cell
 		`)
 
-		// holes: fog = salience·(1−cov). Keep only residual fog > 0.05 (the actual holes); covered +
-		// empty cells are dropped → clear basemap.
+		// holes: fog = salience·(1−cov). Keep only residual fog > 0.05 (the actual holes);
+		// covered + empty cells are dropped → clear basemap.
 		await duck.run(`
 			CREATE TEMP TABLE pc_cells AS
 			SELECT s.cell AS cell, 0::BIGINT AS pc,

@@ -110,8 +110,8 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 			}
 		}
 
-		// Sanity: we expect the vast majority of corpus rows to be in the supported subset (Latin-
-		// script and Latin-with-diacritics dominate).
+		// Sanity: we expect the vast majority of corpus rows to be in the supported
+		// subset (Latin- script and Latin-with-diacritics dominate).
 		expect(supported).toBeGreaterThan(fixture.length * 0.95)
 
 		// Allow up to 0.1% slack for Unicode normalization edge cases — SentencePiece nfkc-

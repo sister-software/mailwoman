@@ -35,8 +35,8 @@ import { Globerator } from "spliterator/node/fs"
 /**
  * What a extract can be joined through, which decides what a corpus builder can extract from it.
  *
- * `ancestry` does not promise the chain reaches a locality — only that the table exists. The header records why that
- * distinction cost a measurement.
+ * `ancestry` does not promise the chain reaches a locality — only that the table exists.
+ * The header records why that distinction cost a measurement.
  */
 export type JoinCapability = "ancestry" | "names" | "search" | "population"
 
@@ -55,14 +55,14 @@ export interface SourceCensusRow {
 	bytes: number
 	tables: number
 	/**
-	 * Present only when the artifact carries an `spr` table — the shape every gazetteer extract shares. A file without
-	 * one is reported with `readable: false` and a reason rather than a zero.
+	 * Present only when the artifact carries an `spr` table — the shape every gazetteer extract shares.
+	 * A file without one is reported with `readable: false` and a reason rather than a zero.
 	 */
 	countries?: Record<string, number>
 	join: JoinCapability[]
 	/**
-	 * Whether any row carries a usable `parent_id`. A extract whose every row reads `-1` cannot be walked upward, and
-	 * that is invisible from a row count.
+	 * Whether any row carries a usable `parent_id`. A extract whose every row reads `-1`
+	 * cannot be walked upward, and that is invisible from a row count.
 	 */
 	parentLinked?: boolean
 	readable: boolean
@@ -156,10 +156,11 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 }
 
 /**
- * Every gazetteer-shaped artifact under the data root's `wof/` directory, plus the admin gazetteer beside it.
+ * Every gazetteer-shaped artifact under the data root's `wof/` directory,
+ * plus the admin gazetteer beside it.
  *
- * `.prev`, `.bak` and journal siblings are excluded: they are on disk on purpose and censusing them reports the same
- * country twice under names nobody can act on.
+ * `.prev`, `.bak` and journal siblings are excluded: they are on disk on purpose
+ * and censusing them reports the same country twice under names nobody can act on.
  */
 export async function gazetteerArtifacts(dataRoot?: PathBuilderLike): Promise<string[]> {
 	const wof = join(dataRoot ?? mailwomanDataRoot(), "wof")

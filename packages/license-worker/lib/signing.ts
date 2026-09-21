@@ -31,7 +31,8 @@ export interface SigningSelfTest {
 }
 
 /**
- * A key id as `licenseKeyID` mints it: the major version it belongs to, then eight hex digits of the key's digest.
+ * A key id as `licenseKeyID` mints it: the major version it belongs to,
+ * then eight hex digits of the key's digest.
  */
 const KEY_ID_SHAPE = /^v(?<major>\d+)-[0-9a-f]{8}$/u
 

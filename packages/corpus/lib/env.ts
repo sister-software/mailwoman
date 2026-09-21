@@ -20,7 +20,8 @@ export const PublicCorpusEnvSchema = z.object({
 })
 
 /**
- * Credentials the corpus acquisition and golden-expansion tooling send. Never log their values.
+ * Credentials the corpus acquisition and golden-expansion tooling
+ * send. Never log their values.
  */
 export const PrivateCorpusEnvSchema = z.object({
 	// OpenAddresses batch-download API token (`corpus/lib/tools/fetch/openaddresses.ts`).

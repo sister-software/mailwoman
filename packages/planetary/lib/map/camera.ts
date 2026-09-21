@@ -23,18 +23,19 @@ const SELECTION_ZOOM_STEPS: ReadonlyArray<readonly [minDiameterKm: number, zoom:
 const SMALL_FEATURE_ZOOM = 9
 
 /**
- * How far past the terrain archive's deepest zoom the camera may go. One level of over-zoom is a sharp enough upsample
- * to read as terrain. three, which is where an unclamped small-feature framing landed against a zoom-6 archive, is a
- * grey blur with the tile boundaries showing.
+ * How far past the terrain archive's deepest zoom the camera may go.
+ * One level of over-zoom is a sharp enough upsample to read as terrain. three,
+ * which is where an unclamped small-feature framing landed against a zoom-6 archive,
+ * is a grey blur with the tile boundaries showing.
  */
 const OVERZOOM_ALLOWANCE = 1
 
 /**
  * The zoom a selected feature is framed at, from its diameter in kilometres.
  *
- * `maxTerrainZoom` is the deepest zoom the body's terrain archive carries, read from the live source rather than pinned
- * here: the two bodies do not publish the same depth, and a constant would drift the first time either is rebuilt. Omit
- * it and the framing is unclamped.
+ * `maxTerrainZoom` is the deepest zoom the body's terrain archive carries, read from the live source
+ * rather than pinned here: the two bodies do not publish the same depth, and a constant
+ * would drift the first time either is rebuilt. Omit it and the framing is unclamped.
  */
 export function framingZoom(diameterKm: number | undefined, maxTerrainZoom?: number): number {
 	const unclamped = framingZoomForDiameter(diameterKm)
@@ -55,8 +56,9 @@ function framingZoomForDiameter(diameterKm: number | undefined): number {
 }
 
 /**
- * Whether the viewer asked for reduced motion. a camera move then jumps instead of flying. Answers false where
- * `matchMedia` does not exist, so a test environment without a window gets the animated default.
+ * Whether the viewer asked for reduced motion. a camera move then jumps instead of flying.
+ * Answers false where `matchMedia` does not exist, so a test environment without
+ * a window gets the animated default.
  */
 export function prefersReducedMotion(): boolean {
 	return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches

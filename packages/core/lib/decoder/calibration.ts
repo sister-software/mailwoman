@@ -51,9 +51,10 @@ export interface CalibrationTable {
 export type Calibrator = (rawConfidence: number) => number
 
 /**
- * Build a calibrator from an isotonic lookup table. The mapping is piecewise-linear between bin centers and clamped to
- * the table's range outside it (the table is monotone non-decreasing by construction, so the interpolation is monotone
- * too). Accepts either the full `CalibrationTable` or a bare `CalibrationBin[]`.
+ * Build a calibrator from an isotonic lookup table. The mapping is
+ * piecewise-linear between bin centers and clamped to the table's range outside it
+ * (the table is monotone non-decreasing by construction, so the interpolation is monotone too).
+ * Accepts either the full `CalibrationTable` or a bare `CalibrationBin[]`.
  */
 export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Calibrator {
 	const bins = Array.isArray(table) ? table : table.table
@@ -102,9 +103,9 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 /**
  * Clamp a confidence into `[0, 1]`, mapping NaN to 0.
  *
- * Distinct from `clampFraction` (`@mailwoman/spatial`), which lets NaN through on purpose: a confidence that cannot be
- * computed is no confidence, while an interpolation fraction that cannot be computed must stay detectable rather than
- * silently snapping to a segment's start.
+ * Distinct from `clampFraction` (`@mailwoman/spatial`), which lets NaN through on purpose:
+ * a confidence that cannot be computed is no confidence, while an interpolation fraction that
+ * cannot be computed must stay detectable rather than silently snapping to a segment's start.
  */
 export function clampConfidence(v: number): number {
 	if (Number.isNaN(v)) return 0

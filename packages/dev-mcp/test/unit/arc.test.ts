@@ -16,8 +16,9 @@ import { describe, expect, it } from "vitest"
 /**
  * The protections these cases decide against, declared here rather than inherited from `scope.config.json`.
  *
- * A verdict test that reads the shipped register measures the register and the arithmetic at once, and when the two
- * disagree it cannot say which one moved. The register gets its own case at the bottom of this file.
+ * A verdict test that reads the shipped register measures the register
+ * and the arithmetic at once, and when the two disagree it cannot say which one moved.
+ * The register gets its own case at the bottom of this file.
  */
 const PROTECTIONS = [
 	{ country: "FR", reason: "tier 1 — iron rule 6 protects it unconditionally" },
@@ -43,9 +44,9 @@ function leg(label: string, improved: number, regressed: number, extra: Partial<
 
 describe("decideArc", () => {
 	it("subtracts the NULL, because the fine-tune tax is not the change's fault", () => {
-		// The arc's actual numbers: v4.11.0 read -13 against shipped while the null read -5. Eight of those thirteen
-		// were the cost of touching the base, and reporting thirteen sent two more runs chasing a extract that was
-		// responsible for five.
+		// The arc's actual numbers: v4.11.0 read -13 against shipped while the null read -5.
+		// Eight of those thirteen were the cost of touching the base, and reporting thirteen
+		// sent two more runs chasing a extract that was responsible for five.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			leg("null", 5, 10),
@@ -58,8 +59,9 @@ describe("decideArc", () => {
 	})
 
 	it("REFUSES to attribute when the self-control is dirty", () => {
-		// A rig that disagrees with itself cannot be asked about a candidate. The candidate numbers are still reported —
-		// withholding them would just get them re-measured — but the verdict says they are not evidence.
+		// A rig that disagrees with itself cannot be asked about a candidate.
+		// The candidate numbers are still reported — withholding them would just get them
+		// re-measured — but the verdict says they are not evidence.
 		const arc = decideArc(
 			leg("control", 0, 3, { differed: 3 }),
 			leg("null", 5, 10),
@@ -99,8 +101,8 @@ describe("decideArc", () => {
 	})
 
 	it("carries the REASON a country is protected into the block", () => {
-		// "D-rule: regressions on GB (1)" leaves a reader no way to audit why GB is on the list, which is how a
-		// hand-written list survives four months of drift unread.
+		// "D-rule: regressions on GB (1)" leaves a reader no way to audit why GB is on the list,
+		// which is how a hand-written list survives four months of drift unread.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			leg("null", 0, 0),
@@ -126,8 +128,9 @@ describe("decideArc", () => {
 	})
 
 	it("holds a candidate that beats shipped but not the null", () => {
-		// The trap the arc walked into from the other side: -3 looks like a small regression and is actually an
-		// improvement over a -5 null. This one is the reverse — positive against shipped, negative against the placebo.
+		// The trap the arc walked into from the other side: -3 looks like a small regression
+		// and is actually an improvement over a -5 null. This one is the reverse —
+		// positive against shipped, negative against the placebo.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			leg("null", 12, 2),
@@ -141,9 +144,9 @@ describe("decideArc", () => {
 	})
 
 	it("does not charge a FROM-SCRATCH run a fine-tune tax it never paid", () => {
-		// A missing null and an inapplicable null are different facts. v5.0.0 is from-scratch: it inherits no base, so
-		// discounting its number as "an upper bound carrying the cost of touching the base" would understate a run that
-		// touched no base.
+		// A missing null and an inapplicable null are different facts. v5.0.0 is from-scratch:
+		// it inherits no base, so discounting its number as "an upper bound carrying the
+		// cost of touching the base" would understate a run that touched no base.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			undefined,
@@ -160,8 +163,9 @@ describe("decideArc", () => {
 	})
 
 	it("does not contradict its own reasons in the one-line summary", () => {
-		// The first live run said "no null leg to attribute it against - treat as an upper bound" in the summary while
-		// the reasons beside it correctly called the null inapplicable. Two copies of a rule agree until one is fixed.
+		// The first live run said "no null leg to attribute it against - treat as an upper bound"
+		// in the summary while the reasons beside it correctly called the null inapplicable.
+		// Two copies of a rule agree until one is fixed.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			undefined,
@@ -175,9 +179,9 @@ describe("decideArc", () => {
 	})
 
 	it("renders BOTH halves of the trade, not only the regressions", () => {
-		// The first version recorded regressedInputs and not improvedInputs, so every report it produced showed the
-		// losses as addresses and the wins as a bare count. A candidate is a trade. a reader cannot price one with a
-		// side hidden.
+		// The first version recorded regressedInputs and not improvedInputs, so every
+		// report it produced showed the losses as addresses and the wins as a bare count.
+		// A candidate is a trade. a reader cannot price one with a side hidden.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			undefined,
@@ -216,8 +220,8 @@ describe("decideArc", () => {
 
 describe("protectedCountries", () => {
 	it("protects both tier-1 locales, which the list it replaced did not", async () => {
-		// The defect in one assertion: `["FR", "GB", "DE"]` stood under a docstring reading "locales that iron rule 6
-		// guards unconditionally" while scope's tier 1 read US and FR.
+		// The defect in one assertion: `["FR", "GB", "DE"]` stood under a docstring reading
+		// "locales that iron rule 6 guards unconditionally" while scope's tier 1 read US and FR.
 		const countries = (await protectedCountries()).map((entry) => entry.country)
 
 		expect(countries).toContain("US")
@@ -235,8 +239,8 @@ describe("protectedCountries", () => {
 	})
 
 	it("reads tier 1 from the register rather than from a second copy of it", async () => {
-		// The derivation is the whole change: a tier-1 country added to `scope.config.json` is guarded without an
-		// edit here, which is the property the hand-written list could not have.
+		// The derivation is the whole change: a tier-1 country added to `scope.config.json` is
+		// guarded without an edit here, which is the property the hand-written list could not have.
 		const scope = await readScopeConfig()
 		const widened = { ...scope, tiers: { ...scope.tiers, "1": [...(scope.tiers["1"] ?? []), "ZZ"] } }
 

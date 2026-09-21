@@ -12,10 +12,11 @@ import {
 import { expect, test } from "vitest"
 
 test("the canonical coverage recipe holds its reconstructed shape (see #1015/#1021)", () => {
-	// 12/85 as of 2026-08-02: IN moved from the Overture backfill set into the WOF priority set after the granularity
-	// probe measured 189,026 sub-locality nodes in `whosonfirst-data-admin-in` (186,469 usable pairs) against
-	// Overture-IN's 74,920. The counts are a deliberate-drift guard — update them with the recipe, never to make a
-	// failing test pass.
+	// 12/85 as of 2026-08-02: IN moved from the Overture backfill set into the WOF
+	// priority set after the granularity probe measured 189,026 sub-locality nodes in
+	// `whosonfirst-data-admin-in` (186,469 usable pairs) against Overture-IN's 74,920.
+	// The counts are a deliberate-drift guard — update them with the recipe,
+	// never to make a failing test pass.
 	expect(DEFAULT_WOF_PRIORITY_COUNTRIES).toHaveLength(12)
 	expect(DEFAULT_OVERTURE_COUNTRIES).toHaveLength(85)
 	expect(DEFAULT_GEONAMES_COUNTRIES).toHaveLength(161)

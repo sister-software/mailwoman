@@ -15,13 +15,16 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * The extract's own region-tier ancestry, when it carries any: extract id → the admin region's id. A locality extract
- * derived from a national register (the Taiwanese 鄉鎮市區 from the civil-affairs address points) knows which 縣市 each row
- * belongs to, and writes that as an `ancestors` row against the admin region's WOF id. Without it a folded row has no
- * region scope, so a `parentID`-scoped probe misses it and the cascade widens to whatever namesake carries the key.
+ * The extract's own region-tier ancestry, when it carries any: extract id →
+ * the admin region's id. A locality extract derived from a national register
+ * (the Taiwanese 鄉鎮市區 from the civil-affairs address points) knows which 縣市 each row
+ * belongs to, and writes that as an `ancestors` row against the admin region's WOF id.
+ * Without it a folded row has no region scope, so a `parentID`-scoped probe misses it
+ * and the cascade widens to whatever namesake carries the key.
  *
- * Only a region the admin build staged (`attrs`) counts: an id the admin does not know cannot be denormalized into a
- * closure row, and a scope nothing can match would be a silent zero rather than an absence.
+ * Only a region the admin build staged (`attrs`) counts: an id the admin does not
+ * know cannot be denormalized into a closure row, and a scope nothing can match
+ * would be a silent zero rather than an absence.
  */
 function extractRegionAncestry(pc: DatabaseClient<WOFDatabase>, attrs: Map<number, PlaceAttrs>): Map<number, number> {
 	const regionOf = new Map<number, number>()
@@ -46,12 +49,13 @@ function extractRegionAncestry(pc: DatabaseClient<WOFDatabase>, attrs: Map<numbe
 }
 
 /**
- * Fold one extract (`spr` rows at `extractPlacetype` carrying real coordinates) in, then pass 4b: the alias names
- * hanging off that same extract's `names` table.
+ * Fold one extract (`spr` rows at `extractPlacetype` carrying real coordinates) in,
+ * then pass 4b: the alias names hanging off that same extract's `names` table.
  *
- * Self-contained by construction — it shares only the staging statement and the code dictionaries with the admin passes
- * above it, and nothing downstream reads anything it produces except the counters it returns. The one thing it writes
- * beyond the staging table is a depth-1 closure row for a row whose extract names its region (see
+ * Self-contained by construction — it shares only the staging statement and the code
+ * dictionaries with the admin passes above it, and nothing downstream reads anything it
+ * produces except the counters it returns. The one thing it writes beyond the staging
+ * table is a depth-1 closure row for a row whose extract names its region (see
  * {@link extractRegionAncestry}), so the pick's stamped ancestors agree with the scope it was found under.
  */
 export function foldExtract(ctx: {
@@ -65,8 +69,8 @@ export function foldExtract(ctx: {
 	ptID: (pt: string | null) => number
 	stageRow: StageRow
 	/**
-	 * The admin places pass 1 staged — what an extract's region ancestry is resolved against. Absent, no extract row
-	 * takes a region scope (the postcode extracts, which carry none).
+	 * The admin places pass 1 staged — what an extract's region ancestry is resolved against.
+	 * Absent, no extract row takes a region scope (the postcode extracts, which carry none).
 	 */
 	attrs?: Map<number, PlaceAttrs>
 	progress: (phase: string, message: string) => void
@@ -77,8 +81,8 @@ export function foldExtract(ctx: {
 
 	using pc = new DatabaseClient<WOFDatabase>(extractPath, { readOnly: true })
 	const pcPtid = ptID(extractPlacetype)
-	// Per-extract rather than the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
-	// below has nothing to join against unless this primary loop records what it staged.
+	// Per-extract rather than the admin `attrs` map: pass 1 only ever sees the admin DB, so the
+	// alias pass below has nothing to join against unless this primary loop records what it staged.
 	const pcAttrs = new Map<number, PlaceAttrs>()
 	const regionOf = ctx.attrs ? extractRegionAncestry(pc, ctx.attrs) : new Map<number, number>()
 
@@ -118,9 +122,9 @@ export function foldExtract(ctx: {
 		const id = Number(r.id)
 		const rid = regionOf.get(id) ?? 0
 
-		// region_id from the extract's own ancestry when it names one, else 0 (a postcode is unique by
-		// name+country — no same-name disambiguation); neg_rank 0 (no population). bbox = the row's own
-		// min/max (falls back to the centroid point).
+		// region_id from the extract's own ancestry when it names one, else 0
+		// (a postcode is unique by name+country — no same-name disambiguation); neg_rank 0
+		// (no population). bbox = the row's own min/max (falls back to the centroid point).
 		const a: PlaceAttrs = {
 			cid: ccID(r.country as string | null),
 			rid,
@@ -135,9 +139,10 @@ export function foldExtract(ctx: {
 			pop: 0,
 			neg: 0,
 			pkey: key,
-			// A postcode has no toponym fame — nobody writes an encyclopedia article about SW1A 2AA — and
-			// the score source carries no `postalcode` rows to join against anyway. NULL is the truthful
-			// value: unmeasured, so the ranking key leaves postcode rows exactly where they were.
+			// A postcode has no toponym fame — nobody writes an encyclopedia article about SW1A
+			// 2AA — and the score source carries no `postalcode` rows to join against anyway.
+			// NULL is the truthful value: unmeasured, so the ranking key leaves
+			// postcode rows exactly where they were.
 			imp: null,
 		}
 
@@ -174,18 +179,18 @@ export function foldExtract(ctx: {
 
 	// Fold postcode aliases into the staged candidate names.
 	//
-	// The delivery-city names GeoNames supplies for a ZIP ("Brooklyn" for 11201) are written into
-	// the extract's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`. Everything
-	// downstream of `names` picked them up except this build: `fts.ts` unions `spr.name` with every
-	// `names` row into `place_search.alt_names`, so the FTS backend resolved "Brooklyn" → 11201
-	// while the candidate backend — whose every row is an exact-tier row — had no key for it at
-	// all. Pass 2 does the equivalent fold for admin places, but reads the admin `place_search`,
+	// The delivery-city names GeoNames supplies for a ZIP ("Brooklyn" for 11201) are written
+	// into the extract's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`.
+	// Everything downstream of `names` picked them up except this build: `fts.ts` unions `spr.name` with
+	// every `names` row into `place_search.alt_names`, so the FTS backend resolved "Brooklyn" → 11201
+	// while the candidate backend — whose every row is an exact-tier row — had no key for it at all.
+	// Pass 2 does the equivalent fold for admin places, but reads the admin `place_search`,
 	// and `attrs` holds admin ids only, so a postcode extract could never reach it.
 	//
-	// Same discipline as pass 2: `is_primary = 0` (so `rankByPrimaryPreference` treats it as an
-	// alias rather than a canonical postcode name), the row stays denormalized onto the postcode's own
-	// spr_id/coords/bbox, and the display `name` stays the postcode — resolving "brooklyn" answers
-	// with place 11201, it does not rename the place to its delivery city.
+	// Same discipline as pass 2: `is_primary = 0` (so `rankByPrimaryPreference` treats it as
+	// an alias rather than a canonical postcode name), the row stays denormalized onto the
+	// postcode's own spr_id/coords/bbox, and the display `name` stays the postcode — resolving
+	// "brooklyn" answers with place 11201, it does not rename the place to its delivery city.
 	const hasNames = tableExists(pc, "names")
 
 	if (hasNames) {
@@ -209,9 +214,9 @@ export function foldExtract(ctx: {
 
 		out.exec("COMMIT")
 	} else {
-		// Never a silent zero: real extracts come from `createUnifiedSchema`, which always creates
-		// `names`. A extract without it has no alias surface to lose, but say so rather than reporting
-		// "0 aliases" from a table that was never read.
+		// Never a silent zero: real extracts come from `createUnifiedSchema`, which always
+		// creates `names`. A extract without it has no alias surface to lose, but say so
+		// rather than reporting "0 aliases" from a table that was never read.
 		progress("postcode-aliases", `${extractPath} has no \`names\` table — no delivery-city aliases to fold`)
 	}
 

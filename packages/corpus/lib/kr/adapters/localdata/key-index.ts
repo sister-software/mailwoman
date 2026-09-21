@@ -19,18 +19,20 @@
 import { type JusoLabelRow, REGION_ALIASES } from "#kr/adapters/juso/label-rows"
 
 /**
- * The separator between the parts of a composite key, written as an escape so no NUL byte enters the source.
+ * The separator between the parts of a composite key, written as an escape
+ * so no NUL byte enters the source.
  *
- * A space cannot serve. A 시군구 is written with one (`수원시 장안구`), so `unitKey("A", "B C")` and `unitKey("A B", "C")` would
- * produce one key for two different places. No place name contains NUL.
+ * A space cannot serve. A 시군구 is written with one (`수원시 장안구`), so `unitKey("A", "B C")`
+ * and `unitKey("A B", "C")` would produce one key for two different places.
+ * No place name contains NUL.
  */
 const UNIT_SEPARATOR = "\0"
 
 /**
  * The key sets, keyed as the register nests them.
  *
- * A composite string key where the register's own key is a tuple, because a nested map costs a second lookup on the hot
- * path and every permit row does several.
+ * A composite string key where the register's own key is a tuple, because a nested map
+ * costs a second lookup on the hot path and every permit row does several.
  */
 export interface KeyIndex {
 	regions: Set<string>
@@ -82,8 +84,8 @@ function add(map: Map<string, Set<string>>, key: string, value: string): void {
 /**
  * Add one label row's names to the key sets.
  *
- * The 읍/면 joins the road set's unit as a road-form token too, since the road address writes it between the 시군구 and the
- * road.
+ * The 읍/면 joins the road set's unit as a road-form token too, since the road
+ * address writes it between the 시군구 and the road.
  */
 export function indexLabelRow(index: KeyIndex, row: JusoLabelRow): void {
 	index.regions.add(row.region)
@@ -109,8 +111,8 @@ export function indexLabelRow(index: KeyIndex, row: JusoLabelRow): void {
 /**
  * Admit the pre-merger region names as aliases of the register's current one, sharing its key sets.
  *
- * The sets are shared by reference rather than copied: an alias is the same place under an older name, and a later
- * `indexLabelRow` under either name must reach the same set.
+ * The sets are shared by reference rather than copied: an alias is the same place under
+ * an older name, and a later `indexLabelRow` under either name must reach the same set.
  */
 export function aliasKeyIndex(index: KeyIndex): void {
 	for (const [legacy, current] of Object.entries(REGION_ALIASES)) {

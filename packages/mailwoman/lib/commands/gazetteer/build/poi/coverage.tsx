@@ -42,8 +42,8 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * The pilot class. Named in the taxonomy with an `osmTag` of `amenity=pharmacy`, so both inventories are selected by
- * the same declaration rather than by two hand-written predicates.
+ * The pilot class. Named in the taxonomy with an `osmTag` of `amenity=pharmacy`, so both
+ * inventories are selected by the same declaration rather than by two hand-written predicates.
  */
 const DEFAULT_CATEGORY = "pharmacy"
 
@@ -122,8 +122,8 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 		const buildSHA = resolveBuildSHA(String(repoRootPath()))
 
 		// dynamic import, required: @mailwoman/osm is unpublished (ODbL counsel sign-off pending —
-		// see osm/readme.md), so a top-level import breaks the published CLI on a clean install. Same
-		// reasoning as the `--source osm` branch of `gazetteer build poi`.
+		// see osm/readme.md), so a top-level import breaks the published CLI on a clean install.
+		// Same reasoning as the `--source osm` branch of `gazetteer build poi`.
 		const { extractOSMBoundary, extractOSMPOIs, tagRuleFromOSMTag } = await import("@mailwoman/osm/sdk")
 
 		console.error(`▸ boundary: ${region} (admin_level=${options.adminLevel}) from ${pbf}`)

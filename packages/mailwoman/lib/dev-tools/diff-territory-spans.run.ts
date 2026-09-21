@@ -37,10 +37,10 @@ const { values } = parseArguments({
 		locale: { type: "string", default: "en-US" },
 		registers: { type: "string", default: "asis,lower,upper,comma-drop" },
 		/**
-		 * Parse through the RAW classifier (`classifier.parse`) instead of `createRuntimePipeline`. This is what
-		 * `mailwoman/eval-harness/invariance/runner.ts`'s `buildParseFn` does, and the two instruments do not agree: the
-		 * raw path skips `@mailwoman/normalize` entirely, so #690 case normalization never runs and the register legs see
-		 * genuinely different text.
+		 * Parse through the RAW classifier (`classifier.parse`) instead of `createRuntimePipeline`.
+		 * This is what `mailwoman/eval-harness/invariance/runner.ts`'s `buildParseFn` does,
+		 * and the two instruments do not agree: the raw path skips `@mailwoman/normalize` entirely,
+		 * so #690 case normalization never runs and the register legs see genuinely different text.
 		 */
 		raw: { type: "boolean", default: false },
 	},

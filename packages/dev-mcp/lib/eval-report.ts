@@ -27,9 +27,9 @@ export interface FloorReading {
 	/**
 	 * The measured value, or `null` when the battery produced none.
 	 *
-	 * `null` is not zero and not a failure to clear the bar — it is a metric that was never measured, and the eval marks
-	 * it failing precisely so an unmeasured floor cannot pass by default. Reported separately from `pass` so a reader can
-	 * tell "missed the bar" from "never ran".
+	 * `null` is not zero and not a failure to clear the bar — it is a metric that was never measured,
+	 * and the eval marks it failing precisely so an unmeasured floor cannot pass by default.
+	 * Reported separately from `pass` so a reader can tell "missed the bar" from "never ran".
 	 */
 	observed: number | null
 	/**
@@ -42,17 +42,18 @@ export interface FloorReading {
 
 export interface EvalReport {
 	/**
-	 * `pass` / `fail` from `verdict.json`, or `null` when the file is absent — a run that crashed before assembling one.
+	 * `pass` / `fail` from `verdict.json`, or `null` when the file is absent —
+	 * a run that crashed before assembling one.
 	 */
 	verdict: string | null
 	label: string | null
 	/**
 	 * Which artifact the floors were read from, verbatim from the verdict.
 	 *
-	 * Surfaced at the top rather than buried because it is a documented confound: a package-shaped cache's `model.onnx`
-	 * is whatever the package ships — int8, in every shipped weights package — and the verdict said `fp32` for a
-	 * verifiably int8 cache on 2026-07-16. Two verdicts diffed without reading this field attribute a quantization delta
-	 * to the model.
+	 * Surfaced at the top rather than buried because it is a documented confound:
+	 * a package-shaped cache's `model.onnx` is whatever the package ships — int8, in every shipped
+	 * weights package — and the verdict said `fp32` for a verifiably int8 cache on 2026-07-16.
+	 * Two verdicts diffed without reading this field attribute a quantization delta to the model.
 	 */
 	graded_artifact: string | null
 	floors: FloorReading[]
@@ -65,14 +66,15 @@ export interface EvalReport {
 	/**
 	 * The pre-filled `eval ledger-append` command the eval prints on a pass, or `null`.
 	 *
-	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version. the eval runs on
-	 * candidates that may never ship. See {@link EvalReport.ledger_note}.
+	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version.
+	 * the eval runs on candidates that may never ship. See {@link EvalReport.ledger_note}.
 	 */
 	ledger_command: string | null
 	ledger_note: string
 	/**
-	 * The recompile-before-eval refusal, verbatim, when the eval's own lore guard fired. Passed through rather than
-	 * worked around: that guard is correct, and a tool that swallowed it would grade a stale tree.
+	 * The recompile-before-eval refusal, verbatim, when the eval's own lore guard fired.
+	 * Passed through rather than worked around: that guard is correct, and a tool
+	 * that swallowed it would grade a stale tree.
 	 */
 	lore_guard_refusal: string | null
 	notes: string[]
@@ -95,8 +97,8 @@ const LORE_GUARD_MARKER = "recompile"
 /**
  * Why the ledger command is reported rather than run.
  *
- * Carried on every check result so the boundary travels with the command: a reader who sees a filled-in command and no
- * note has every reason to assume it already ran.
+ * Carried on every check result so the boundary travels with the command: a reader who
+ * sees a filled-in command and no note has every reason to assume it already ran.
  */
 export const LEDGER_NOTE =
 	"This command is REPORTED, never run. Appending to evals/scores-by-version.json is a repo write and a claim about " +
@@ -195,9 +197,9 @@ export async function readEvalReport(outDir: string, stdout: string, stderr: str
 /**
  * One line for the `summary` an agent relays.
  *
- * Names `graded_artifact` before the verdict. An eval verdict without it invites the exact confound the field's own
- * docstring records — someone diffs two verdicts, sees a delta, and attributes to the model what was a precision
- * difference.
+ * Names `graded_artifact` before the verdict. An eval verdict without it invites the
+ * exact confound the field's own docstring records — someone diffs two verdicts,
+ * sees a delta, and attributes to the model what was a precision difference.
  */
 export function summarizeEvalReport(report: EvalReport): string {
 	if (!report.verdict) {
@@ -223,8 +225,9 @@ export function summarizeEvalReport(report: EvalReport): string {
 /**
  * Artifacts the card itself declares, beyond the three the layout check covers.
  *
- * Read from `files_md5` rather than from a list here, so a card that starts declaring a new sibling is checked without
- * anyone remembering to update this file. `$comment` is a documentation key rather than an artifact.
+ * Read from `files_md5` rather than from a list here, so a card that starts
+ * declaring a new sibling is checked without anyone remembering to update this file.
+ * `$comment` is a documentation key rather than an artifact.
  */
 async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]> {
 	const cardPath = resolvePath(packageDir, "model-card.json")
@@ -241,19 +244,23 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
 }
 
 /**
- * Check that a `--weights-cache` root has the layout the eval expects, and say what is missing when it does not.
+ * Check that a `--weights-cache` root has the layout the eval expects,
+ * and say what is missing when it does not.
  *
- * The eval's own failure here is deliberate and stays in place: `promotion-eval.ts` names the package directory rather
- * than calling `resolveWeights({cacheRoot})` precisely so a mis-staged candidate dies on an enoent instead of falling
- * through to the installed workspace package — which in this repo always resolves, and would grade the shipped model
- * under the candidate's label. This check runs before the spawn only so the reader learns the expected shape from a
- * sentence rather than from a stack trace. it never substitutes for that guard.
+ * The eval's own failure here is deliberate and stays in place: `promotion-eval.ts` names the
+ * package directory rather than calling `resolveWeights({cacheRoot})` precisely so a mis-staged
+ * candidate dies on an enoent instead of falling through to the installed workspace package —
+ * which in this repo always resolves, and would grade the shipped model under the candidate's label.
+ * This check runs before the spawn only so the reader learns the expected shape from a sentence
+ * rather than from a stack trace. it never substitutes for that guard.
  *
- * The layout comes from `weightsCachePackageDir`, the resolver's own function, rather than a re-typed
- * `node_modules/@mailwoman/…` literal — the 2026-08-06 triage lesson recorded at the eval's own call site.
+ * The layout comes from `weightsCachePackageDir`, the resolver's own function,
+ * rather than a re-typed `node_modules/@mailwoman/…` literal — the 2026-08-06
+ * triage lesson recorded at the eval's own call site.
  *
- * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that is under-staged. the two need
- *   different fixes and one message for both sends the reader to the wrong place. `paths` is empty when well-formed.
+ * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that
+ *   is under-staged. the two need different fixes and one message for both sends the
+ *   reader to the wrong place. `paths` is empty when well-formed.
  */
 export async function missingWeightsCacheArtifacts(
 	cacheRoot: PathBuilderLike,
@@ -275,10 +282,12 @@ export async function missingWeightsCacheArtifacts(
 	// Without a card there is nothing to check the rest against, and the caller already has a fatal answer.
 	if (missingRequired.length) return { kind: "wrong-shape", paths: missingRequired }
 
-	// A cache that has the three required files but is missing what its own card declares is the #1516 failure with no
-	// signal of its own: the channel resolves off, the run scores several cases lower, and the operator reads a model
-	// regression. Measured here on 2026-08-16 — a hand-staged three-file cache graded to completion and reported
-	// `us.country_homograph_f1` at 0.0 against a 64.8 floor, which reads exactly like a collapsed country channel.
+	// A cache that has the three required files but is missing what its own card
+	// declares is the #1516 failure with no signal of its own: the channel resolves off,
+	// the run scores several cases lower, and the operator reads a model regression.
+	// Measured here on 2026-08-16 — a hand-staged three-file cache graded to completion
+	// and reported `us.country_homograph_f1` at 0.0 against a 64.8 floor,
+	// which reads exactly like a collapsed country channel.
 	const undeclared: string[] = []
 
 	for (const artifact of await declaredArtifacts(packageDir)) {

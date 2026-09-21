@@ -78,8 +78,9 @@ describe("renderUnit", () => {
 	})
 
 	it("writes the identifier with NO designator, in the comma layout only", () => {
-		// The one unit surface carrying no token that decides its reading. A bare id anywhere but between commas is
-		// indistinguishable from a house number, so it is confined to this layout.
+		// The one unit surface carrying no token that decides its reading.
+		// A bare id anywhere but between commas is indistinguishable from a house number,
+		// so it is confined to this layout.
 		const rows = over(2000, (random) => renderUnit(random, TUPLE, "Apt 101"))
 		const bare = rows.filter((row) => row.fmt === "full-comma-bare")
 
@@ -90,8 +91,8 @@ describe("renderUnit", () => {
 	})
 
 	it("keeps the designator when the unit has no identifier to write bare", () => {
-		// A standalone designator has nothing to strip to, so the layout keeps the designator form rather than
-		// emitting a row with no unit at all.
+		// A standalone designator has nothing to strip to, so the layout keeps the
+		// designator form rather than emitting a row with no unit at all.
 		const rows = over(2000, (random) => renderUnit(random, TUPLE, "Basement"))
 
 		expect(rows.every((row) => row.fmt !== "full-comma-bare")).toBe(true)
@@ -99,9 +100,10 @@ describe("renderUnit", () => {
 	})
 
 	it("always returns a unit component that survives verbatim in the raw it rendered", () => {
-		// The recipe drops a row whose unit component is not in its raw, because alignment could not label it. That
-		// guard read the designator form handed IN, so a layout writing anything else was skipped in silence — every
-		// `full-comma-bare` row, 1,160 of 50,000, until the guard was pointed at the rendered component.
+		// The recipe drops a row whose unit component is not in its raw, because alignment
+		// could not label it. That guard read the designator form handed IN, so a layout
+		// writing anything else was skipped in silence — every `full-comma-bare` row,
+		// 1,160 of 50,000, until the guard was pointed at the rendered component.
 		for (const unit of ["Apt 101", "#101", "# 101", "Basement", "Ste 4B"]) {
 			const rows = over(500, (random) => renderUnit(random, TUPLE, unit))
 
@@ -110,8 +112,9 @@ describe("renderUnit", () => {
 	})
 
 	it("writes the postcode on its own comma segment on a minority of tails", () => {
-		// The counter-reading of the bare unit. Nothing else in the corpus writes a bare number alone in a later comma
-		// segment, so without this the unit reading would be the only evidence for a segment users write a postcode into.
+		// The counter-reading of the bare unit. Nothing else in the corpus writes a bare
+		// number alone in a later comma segment, so without this the unit reading would
+		// be the only evidence for a segment users write a postcode into.
 		const raws = over(2000, (random) => renderUnit(random, TUPLE, "Apt 101").raw)
 		const commaPostcode = raws.filter((raw) => raw.includes("Athens, GA, 30601"))
 

@@ -50,16 +50,17 @@ import {
 } from "#eval-harness/preregistration"
 
 /**
- * The closed set of outcome shapes this probe reads, derived from `PipelineResult["path"]` and
- * `POIIntentOutcome["type"]`.
+ * The closed set of outcome shapes this probe reads, derived from `PipelineResult["path"]`
+ * and `POIIntentOutcome["type"]`.
  *
- * - `no_poi_branch` — the coordinator never took the POI branch, so there is no POI outcome at all. This is the measured
- *   baseline shape for every target row: an activity phrase scores `0` against the phrase lexicon, so the input is
- *   answered as an address parse of a sentence.
+ * - `no_poi_branch` — the coordinator never took the POI branch, so there is no POI outcome at all.
+ *   This is the measured baseline shape for every target row: an activity phrase scores `0`
+ *   against the phrase lexicon, so the input is answered as an address parse of a sentence.
  * - `poi_abstain` — the branch was taken and declined. the reason travels beside the shape.
- * - `poi_intent_no_results` — the branch was taken, an intent was formed, and the executor returned nothing.
- * - `poi_intent_results` — the branch was taken and at least one row came back. The only shape the primary metric can
- *   grade, since the comparator reads the top result.
+ * - `poi_intent_no_results` — the branch was taken, an intent was formed,
+ *   and the executor returned nothing.
+ * - `poi_intent_results` — the branch was taken and at least one row came back.
+ *   The only shape the primary metric can grade, since the comparator reads the top result.
  */
 export const POI_OUTCOME_SHAPES = [
 	"no_poi_branch",
@@ -71,8 +72,9 @@ export const POI_OUTCOME_SHAPES = [
 export type POIOutcomeShape = (typeof POI_OUTCOME_SHAPES)[number]
 
 /**
- * Read the outcome shape off the projection of one pipeline result. Total over the vocabulary above — every reachable
- * combination of `path` and `poiIntent` names exactly one shape, so a caller never has to represent "could not tell".
+ * Read the outcome shape off the projection of one pipeline result.
+ * Total over the vocabulary above — every reachable combination of `path` and `poiIntent`
+ * names exactly one shape, so a caller never has to represent "could not tell".
  */
 export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 	if (outcome.path !== "poi" || !outcome.poiIntent) return "no_poi_branch"
@@ -83,16 +85,17 @@ export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 }
 
 /**
- * The closed set of comparators this probe may register. One entry today. adding one is a reviewed instrument, never an
- * inline callback in the definition file.
+ * The closed set of comparators this probe may register.
+ * One entry today. adding one is a reviewed instrument, never an inline callback in the definition file.
  */
 export const PROBE_COMPARATORS = ["poi_board_assembled_answer"] as const
 
 export type ProbeComparatorName = (typeof PROBE_COMPARATORS)[number]
 
 /**
- * Grade one row with a registered comparator. Refuses an unregistered name with the name in the message — a comparator
- * silently defaulted to another instrument would report a number nobody could trace to a interface.
+ * Grade one row with a registered comparator. Refuses an unregistered name with
+ * the name in the message — a comparator silently defaulted to another instrument
+ * would report a number nobody could trace to a interface.
  */
 export function gradeWithComparator(
 	comparator: ProbeComparatorName,
@@ -114,13 +117,13 @@ export const PROBE_DECISIONS = ["GO", "DIAGNOSTIC-ONLY", "STOP-REDESIGN"] as con
 export type ProbeDecision = (typeof PROBE_DECISIONS)[number]
 
 /**
- * One frozen target row: a POI-board fixture plus the record of where its query form and its anchor came from, and what
- * the baseline cannot distinguish about it.
+ * One frozen target row: a POI-board fixture plus the record of where its query form
+ * and its anchor came from, and what the baseline cannot distinguish about it.
  */
 export interface ProbeTargetRow extends POIBoardFixture {
 	/**
-	 * Where the query form is attested. Route (a) commits these rows before the semantic arm exists, so the record has to
-	 * say what the form is not: invented to pass.
+	 * Where the query form is attested. Route (a) commits these rows before the semantic
+	 * arm exists, so the record has to say what the form is not: invented to pass.
 	 */
 	attestedIn: string
 	/**
@@ -149,8 +152,8 @@ export const PROBE_CONTROL_GROUPS = ["same_category", "adjacent"] as const
 export type ProbeControlGroup = (typeof PROBE_CONTROL_GROUPS)[number]
 
 /**
- * One frozen control row, referenced BY ID into a committed fixture file and carried here with its committed contents
- * so {@linkcode resolveControlRows} can refuse a reference that has drifted.
+ * One frozen control row, referenced BY ID into a committed fixture file and carried here with its
+ * committed contents so {@linkcode resolveControlRows} can refuse a reference that has drifted.
  */
 export interface ProbeControlRow {
 	id: string
@@ -163,8 +166,8 @@ export interface ProbeControlRow {
 	locale?: string
 	expect: POIBoardExpect
 	/**
-	 * The grade the row holds at baseline, and the grade it must still hold. `controlRegressionTolerance` is the number
-	 * of rows allowed to move off this.
+	 * The grade the row holds at baseline, and the grade it must still hold.
+	 * `controlRegressionTolerance` is the number of rows allowed to move off this.
 	 */
 	expectedGrade: "pass"
 	/**
@@ -184,7 +187,8 @@ export interface ProbeMetric {
 }
 
 /**
- * The frozen decision thresholds. Numbers rather than adjectives, and all of them `>=` bars over stated denominators.
+ * The frozen decision thresholds. Numbers rather than adjectives, and all of
+ * them `>=` bars over stated denominators.
  */
 export interface ProbeThresholds {
 	/**
@@ -192,12 +196,14 @@ export interface ProbeThresholds {
 	 */
 	minimumPrimaryNumerator: number
 	/**
-	 * GO — and it must gain at least this many rows over the frozen baseline. Stated as well as the absolute bar because
-	 * a baseline that is not zero would make the absolute bar reachable without the observation moving anything.
+	 * GO — and it must gain at least this many rows over the frozen baseline.
+	 * Stated as well as the absolute bar because a baseline that is not zero would make
+	 * the absolute bar reachable without the observation moving anything.
 	 */
 	minimumPrimaryDelta: number
 	/**
-	 * Diagnostic-only — the routing numerator must reach this absolute count out of the diagnostic denominator.
+	 * Diagnostic-only — the routing numerator must reach this absolute count
+	 * out of the diagnostic denominator.
 	 */
 	minimumDiagnosticNumerator: number
 	/**
@@ -205,14 +211,15 @@ export interface ProbeThresholds {
 	 */
 	minimumDiagnosticDelta: number
 	/**
-	 * How many control rows may move off `expectedGrade`. Zero: a control regression is a stop under both decisions.
+	 * How many control rows may move off `expectedGrade`.
+	 * Zero: a control regression is a stop under both decisions.
 	 */
 	controlRegressionTolerance: number
 }
 
 /**
- * The frozen baseline, measured against the pipeline before any semantic observation existed. #1930 compares the
- * post-injection run against exactly these numbers.
+ * The frozen baseline, measured against the pipeline before any semantic observation
+ * existed. #1930 compares the post-injection run against exactly these numbers.
  */
 export interface ProbeBaseline {
 	measuredAt: string
@@ -222,8 +229,8 @@ export interface ProbeBaseline {
 	controlHoldNumerator: number
 	receipt: string
 	/**
-	 * What the numbers were measured against, in words — the tree state and anything about the run a bare sha does not
-	 * carry.
+	 * What the numbers were measured against, in words — the tree state
+	 * and anything about the run a bare sha does not carry.
 	 */
 	note: string
 }
@@ -293,8 +300,9 @@ export function probeDefinitionHash(definition: SemanticProbeDefinition): string
 }
 
 /**
- * Everything that must be true of a definition, checked without running anything. One message per problem, each naming
- * the field or row id. Empty means the definition is executable.
+ * Everything that must be true of a definition, checked without running anything.
+ * One message per problem, each naming the field or row id.
+ * Empty means the definition is executable.
  */
 export function auditProbeDefinition(definition: SemanticProbeDefinition): string[] {
 	const problems: string[] = []
@@ -419,8 +427,9 @@ function auditThresholds(definition: SemanticProbeDefinition): string[] {
 /**
  * Load the frozen pre-registration, refusing anything that would let the ruler move.
  *
- * Three refusals, in order: the freeze record must name this definition and version, the definition's content hash must
- * equal the frozen hash, and the audit must be clean. A caller never receives a definition it may only partly trust.
+ * Three refusals, in order: the freeze record must name this definition and version,
+ * the definition's content hash must equal the frozen hash, and the audit must be clean.
+ * A caller never receives a definition it may only partly trust.
  */
 export async function loadProbeDefinition(
 	definitionPath: string = PROBE_DEFINITION_PATH,
@@ -436,11 +445,11 @@ export async function loadProbeDefinition(
 }
 
 /**
- * Refuse a control reference that does not resolve against its committed fixture file, or that resolves to a row whose
- * contents have moved.
+ * Refuse a control reference that does not resolve against its committed fixture file,
+ * or that resolves to a row whose contents have moved.
  *
- * A drifted control is worse than a missing one: it still grades, still produces a number, and the number is about a
- * different row than the one the pre-registration named.
+ * A drifted control is worse than a missing one: it still grades, still produces a number,
+ * and the number is about a different row than the one the pre-registration named.
  */
 export function resolveControlRows(
 	definition: SemanticProbeDefinition,
@@ -505,9 +514,9 @@ export interface ProbeCounts {
 /**
  * Count one run.
  *
- * A target row that produced no outcome at all still counts against the denominator — the denominators are the
- * registered row counts, never the rows that happened to answer, so a probe that stops being able to read a row reports
- * a lower rate rather than a smaller board.
+ * A target row that produced no outcome at all still counts against the denominator —
+ * the denominators are the registered row counts, never the rows that happened to answer,
+ * so a probe that stops being able to read a row reports a lower rate rather than a smaller board.
  */
 export function computeProbeCounts(
 	definition: SemanticProbeDefinition,
@@ -541,10 +550,11 @@ export interface ProbeVerdict {
 /**
  * Map measured counts onto exactly one decision, against the frozen thresholds and the frozen baseline.
  *
- * Order is required. A control regression is checked first and stops under both decisions: a target delta bought by
- * breaking the venue-noun form of the same query is not a result the program can act on. GO is checked before
- * diagnostic-only because a row that passes the comparator necessarily reached the POI branch, so the diagnostic
- * condition holds whenever the primary one does.
+ * Order is required. A control regression is checked first and stops under both decisions:
+ * a target delta bought by breaking the venue-noun form of the same query is
+ * not a result the program can act on. GO is checked before diagnostic-only
+ * because a row that passes the comparator necessarily reached the POI branch,
+ * so the diagnostic condition holds whenever the primary one does.
  */
 export function decideProbe(definition: SemanticProbeDefinition, counts: ProbeCounts): ProbeVerdict {
 	const thresholds = definition.thresholds

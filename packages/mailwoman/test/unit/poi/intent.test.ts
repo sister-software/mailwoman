@@ -64,8 +64,8 @@ describe("poiTaxonomyLookup adapter", () => {
 	})
 
 	it("chains through variant-aliases for locale-restricted brand slang, resolving a QID", () => {
-		// "mcdo" isn't in the brand table's own aliases (verified empty for McDonald's) — this only resolves via the
-		// variant-aliases -> resolveBrandName chain.
+		// "mcdo" isn't in the brand table's own aliases (verified empty for McDonald's) —
+		// this only resolves via the variant-aliases -> resolveBrandName chain.
 		const hits = poiTaxonomyLookup("mcdo", "fr-FR")
 		expect(hits[0]).toMatchObject({ kind: "brand", categoryID: "McDonald's", wikidata: "Q38076" })
 	})
@@ -106,8 +106,9 @@ describe("poiTaxonomyLookup adapter", () => {
 	})
 
 	it("prefers a category match over a brand match when both could apply (precedence, structural)", () => {
-		// No real phrase collides in the shipped tables (verified separately) — this exercises the early-return
-		// precedence structurally: a category hit short-circuits before the brand table is even consulted.
+		// No real phrase collides in the shipped tables (verified separately) —
+		// this exercises the early-return precedence structurally: a category hit
+		// short-circuits before the brand table is even consulted.
 		const hits = poiTaxonomyLookup("hospital", "en-US")
 		expect(hits[0]?.kind).toBe("category")
 	})
@@ -212,8 +213,8 @@ describe("createPOIIntentStage", () => {
 
 		if (outcome?.type !== "intent") throw new Error("unreachable")
 
-		// lookupPOIBrand's matchedPhrase carries the brand's own canonical casing ("Chevron"), not the user's typed
-		// casing — existing part-1 behavior of the brand lookup core, unchanged here.
+		// lookupPOIBrand's matchedPhrase carries the brand's own canonical casing ("Chevron"),
+		// not the user's typed casing — existing part-1 behavior of the brand lookup core, unchanged here.
 		expect(outcome.intent.subject).toEqual({
 			kind: "brand",
 			name: "Chevron",
@@ -246,8 +247,8 @@ describe("createPOIIntentStage", () => {
 })
 
 /**
- * An anchor parse whose one locality node the resolver won, stamped with the resolved place's country the way
- * `decorateNode` stamps it. `undefined` leaves the node located but country-less.
+ * An anchor parse whose one locality node the resolver won, stamped with the resolved place's
+ * country the way `decorateNode` stamps it. `undefined` leaves the node located but country-less.
  */
 const resolvedAnchor = (raw: string, country: string | undefined): PipelineResult => ({
 	...anchorResult(raw),
@@ -270,7 +271,8 @@ const resolvedAnchor = (raw: string, country: string | undefined): PipelineResul
 })
 
 /**
- * The wave-1 plural shape as the semantic route returns it: a US-scoped drugstore beside an unscoped pharmacy.
+ * The wave-1 plural shape as the semantic route returns it: a US-scoped
+ * drugstore beside an unscoped pharmacy.
  */
 const PRESCRIPTION_SET: POIPhraseMatch[] = [
 	{
@@ -288,8 +290,9 @@ const prescriptionLookup = (phrase: string): ReadonlyArray<POIPhraseMatch> =>
 	phrase === "prescription" ? PRESCRIPTION_SET : []
 
 describe("the place binding of a country-scoped claim (#1999)", () => {
-	// The US-scoped drugstore claim is about US establishments. a French anchor is where the search looks, so the claim
-	// falls out there and the receipt says so. The caller's locale is en-US throughout — it is the lens rather than the place.
+	// The US-scoped drugstore claim is about US establishments. a French anchor is
+	// where the search looks, so the claim falls out there and the receipt says so.
+	// The caller's locale is en-US throughout — it is the lens rather than the place.
 	it("drops a scoped category at an anchor outside its scope, and records what fell out", async () => {
 		const stage = createPOIIntentStage({
 			lookup: prescriptionLookup,
@@ -332,8 +335,9 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 		})
 	})
 
-	// A claim scoped to a place cannot be checked without knowing the place. A located anchor with no country stamp and
-	// a bare subject with no anchor at all are the same reading: `null`, which admits no scoped claim.
+	// A claim scoped to a place cannot be checked without knowing the place.
+	// A located anchor with no country stamp and a bare subject with no anchor at all
+	// are the same reading: `null`, which admits no scoped claim.
 	it("admits no scoped claim when the anchor resolved to no country, or when there is no anchor", async () => {
 		const countryless = createPOIIntentStage({
 			lookup: prescriptionLookup,
@@ -360,8 +364,9 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 		}
 	})
 
-	// The set empties: nothing the phrase reaches holds where the anchor is. Falling back to some other phrase would
-	// answer a question the user did not ask, so the stage abstains with a reason a receipt can read.
+	// The set empties: nothing the phrase reaches holds where the anchor is.
+	// Falling back to some other phrase would answer a question the user did not ask,
+	// so the stage abstains with a reason a receipt can read.
 	it("abstains as country_scope_excluded when every reached category falls out", async () => {
 		const stage = createPOIIntentStage({
 			lookup: (phrase) => (phrase === "prescription" ? [PRESCRIPTION_SET[0]!] : []),
@@ -389,7 +394,8 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 		expect(outcome.intent.subject).not.toHaveProperty("countryBinding")
 	})
 
-	// A category two authorities reach stays when either holds at the anchor. the scope is on the claim rather than the id.
+	// A category two authorities reach stays when either holds at the anchor. the
+	// scope is on the claim rather than the id.
 	it("bindCountryScope keeps a category that an unscoped hit also reaches", () => {
 		const scoped: POIPhraseMatch = { ...PRESCRIPTION_SET[1]!, countryScope: ["US"] }
 
@@ -414,17 +420,18 @@ const HERMETIC = { placeCountry: false as const, streetEvidence: false as const 
 
 describe("createRuntimePipeline poiQueryKind flag", () => {
 	// #1177: default-on since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo presets
-	// byte-identical — docs/articles/evals/2026-07-20-poi-promotion-battery.md). `undefined` behaves like
-	// `true` (intent-only mode) without the caller opting in.
+	// byte-identical — docs/articles/evals/2026-07-20-poi-promotion-battery.md).
+	// `undefined` behaves like `true` (intent-only mode) without the caller opting in.
 	it("ON by default: a category phrase takes the poi path without opting in", async () => {
 		const pipeline = createRuntimePipeline({ ...HERMETIC })
 		const result = await pipeline("hospital")
 
 		expect(result.path).toBe("poi")
 		expect(result.poiIntent?.type).toBe("intent")
-		// ROAD_TO_V9 §4.4 renamed this population: a bare category with no anchor is `poi_category`, and `poi_query`
-		// stays underneath it as the alternative. The two assertions above are the ones this test was written for and
-		// they are unchanged — the branch, and the intent it produced. The marker is what the split bought.
+		// ROAD_TO_V9 §4.4 renamed this population: a bare category with no anchor is
+		// `poi_category`, and `poi_query` stays underneath it as the alternative.
+		// The two assertions above are the ones this test was written for and they are unchanged —
+		// the branch, and the intent it produced. The marker is what the split bought.
 		expect(result.kind.kind).toBe("poi_category")
 		expect(result.kind.alternatives.map((a) => a.kind)).toContain("poi_query")
 		expect(result.intentMarkers.map((m) => m.code)).toEqual(["poi_category"])
@@ -439,10 +446,11 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.kind.kind).not.toBe("poi_query")
 	})
 
-	// `hospital` is deliberately `overture`-sourced rather than a build-local (`mailwoman-infra`-sourced)
-	// category like `drinking_water`: the executor runs for every `poiQueryKind` mode, so an anchor with no
-	// resolvable center is orthogonal to the build-local abstain check (see the "bare build-local-only
-	// category" test below). What this test is for: intent-only passthrough, end-to-end, with a parsed anchor.
+	// `hospital` is deliberately `overture`-sourced rather than a build-local
+	// (`mailwoman-infra`-sourced) category like `drinking_water`: the executor runs for
+	// every `poiQueryKind` mode, so an anchor with no resolvable center is orthogonal to
+	// the build-local abstain check (see the "bare build-local-only category" test below).
+	// What this test is for: intent-only passthrough, end-to-end, with a parsed anchor.
 	it("ON: a category phrase takes the poi path end-to-end", async () => {
 		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
 		const result = await pipeline("hospital near Springfield")
@@ -615,8 +623,8 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	// A bare-infra category with no local layer wired abstains, even in intent-only mode
-	// (`poiQueryKind: true`, no db) — the executor runs for every `poiQueryKind` mode, and the
-	// build-local check needs no lookup to reach its verdict.
+	// (`poiQueryKind: true`, no db) — the executor runs for every `poiQueryKind` mode,
+	// and the build-local check needs no lookup to reach its verdict.
 	it("ON: a bare build-local-only category (no local layer, no db) abstains", async () => {
 		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
 		const result = await pipeline("fire hydrant")
@@ -625,10 +633,10 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.poiIntent).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
 
-	// Placed before the "poi db missing" test below on purpose: `loadDefaultReverseGeocoder` caches its
-	// result for the process/module lifetime (see default-reverse-geocoder.ts), so this test needs to be
-	// the first thing in this file to touch it — otherwise a later call could observe an already-resolved
-	// promise from an earlier call made under the ambient (non-stubbed) env.
+	// Placed before the "poi db missing" test below on purpose: `loadDefaultReverseGeocoder` caches
+	// its result for the process/module lifetime (see default-reverse-geocoder.ts), so this test
+	// needs to be the first thing in this file to touch it — otherwise a later call could observe
+	// an already-resolved promise from an earlier call made under the ambient (non-stubbed) env.
 	it("object form: reverse-geocoder degrade is hermetic — no throw, intent outcome, results (if any) carry no ancestry", async () => {
 		// Pin an empty data directory so the reverse-geocoder probe takes its missing-data branch.
 		vi.stubEnv("MAILWOMAN_DATA_ROOT", "/nonexistent/never/mailwoman-data-root")

@@ -49,27 +49,29 @@ export const EA_DATASET_BASE_URL = "https://environment.data.gov.uk/dataset"
 /**
  * Minimum spacing between EA requests, in milliseconds.
  *
- * The EA publishes no rate limit for these services and its WFS `GetCapabilities` reports `<ows:Fees>none`, so this is
- * courtesy pacing rather than a published ceiling — stated as such rather than dressed up as a measured limit. Two
- * requests a second is far below anything a public OGC endpoint is provisioned for and costs a build nothing: the
- * acquisition path makes single-digit numbers of calls.
+ * The EA publishes no rate limit for these services and its WFS `GetCapabilities`
+ * reports `<ows:Fees>none`, so this is courtesy pacing rather than a published
+ * ceiling — stated as such rather than dressed up as a measured limit.
+ * Two requests a second is far below anything a public OGC endpoint is provisioned for
+ * and costs a build nothing: the acquisition path makes single-digit numbers of calls.
  */
 export const EA_MIN_REQUEST_INTERVAL_MS = 500
 
 /**
  * How long a cached EA metadata response stays fresh.
  *
- * Six hours, chosen against the product's cadence rather than a wall-clock intuition. The ISO
- * `MD_MaintenanceFrequencyCode` is `asNeeded` and the product description states an intent to publish quarterly, so the
- * revision date moves at most a handful of times a year. A shorter TTL adds nothing.
+ * Six hours, chosen against the product's cadence rather than a wall-clock intuition.
+ * The ISO `MD_MaintenanceFrequencyCode` is `asNeeded` and the product description
+ * states an intent to publish quarterly, so the revision date moves at most a
+ * handful of times a year. A shorter TTL adds nothing.
  */
 const EA_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
 export type CreateFloodClientOptions = CreatePacedCachedClientOptions
 
 /**
- * The data.gov.uk catalogue entry for the product — the readable primary source for its ISO reference dates, its
- * licence field, and the direct file URLs.
+ * The data.gov.uk catalogue entry for the product — the readable primary source for
+ * its ISO reference dates, its licence field, and the direct file URLs.
  */
 export const EA_CATALOGUE_PACKAGE_ID = "104434b0-5263-4c90-9b1e-e43b1d57c750"
 
@@ -78,8 +80,8 @@ export const EA_CATALOGUE_PACKAGE_ID = "104434b0-5263-4c90-9b1e-e43b1d57c750"
  */
 
 /**
- * The licence value the catalogue entry must carry. A different value is a licence change, and a build that absorbed
- * one would ship an artifact under terms nobody checked.
+ * The licence value the catalogue entry must carry. A different value is a licence change,
+ * and a build that absorbed one would ship an artifact under terms nobody checked.
  */
 export const EA_EXPECTED_CATALOGUE_LICENCE = "Open Government Licence"
 
@@ -95,12 +97,12 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	/**
 	 * The catalogue entry: reference dates, licence, and the direct file URLs.
 	 *
-	 * The download URL is read from here rather than assembled, because the EA's file service keys on an opaque
-	 * `fileDataSetId` that has no relationship to the dataset id — a hard-coded URL survives a republish by pointing at a
-	 * file that is no longer the product.
+	 * The download URL is read from here rather than assembled, because the EA's file
+	 * service keys on an opaque `fileDataSetId` that has no relationship to the dataset id —
+	 * a hard-coded URL survives a republish by pointing at a file that is no longer the product.
 	 *
-	 * @throws {Error} When the entry names a different dataset, carries no `revision` reference date, or names a licence
-	 *   other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
+	 * @throws {Error} When the entry names a different dataset, carries no `revision`
+	 *   reference date, or names a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<FloodCatalogueRecord> {
 		return readCKANPackageRecord(this, {
@@ -112,12 +114,12 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The feature count the WFS reports for the flood-zone layer — `resultType=hits`, which returns the count without a
-	 * single geometry.
+	 * The feature count the WFS reports for the flood-zone layer — `resultType=hits`,
+	 * which returns the count without a single geometry.
 	 *
-	 * This is the second path in the build's two-path agreement check: the same authority, a different distribution
-	 * channel. A geodatabase whose feature count disagrees with the live service is not a file this build should be
-	 * writing into a sealed artifact.
+	 * This is the second path in the build's two-path agreement check: the same authority,
+	 * a different distribution channel. A geodatabase whose feature count disagrees with
+	 * the live service is not a file this build should be writing into a sealed artifact.
 	 */
 	public async readFeatureCount(): Promise<number> {
 		return readWFSFeatureCount(this, {
@@ -130,8 +132,9 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	/**
 	 * The extent the OGC API Features collection declares for the layer, in CRS84 order.
 	 *
-	 * Read at build time rather than trusted from the constant in `vocabulary.ts`: the constant is what the ingest
-	 * asserts against offline, and this is the live value it is reconciled with when the network is available.
+	 * Read at build time rather than trusted from the constant in `vocabulary.ts`:
+	 * the constant is what the ingest asserts against offline, and this is the live
+	 * value it is reconciled with when the network is available.
 	 */
 	public async readDeclaredBBox(): Promise<[number, number, number, number]> {
 		return readOGCCollectionBBox(this, {
@@ -196,8 +199,9 @@ export class ONSBoundaryClient extends APIClient<APIClientConfig> {
 	/**
 	 * One country's outline as a GeoJSON geometry, in WGS84.
 	 *
-	 * @throws {Error} When the service returns no feature for `countryName`, or more than one. A country matched twice is
-	 *   a product whose name column changed meaning, and picking the first would silently choose an outline.
+	 * @throws {Error} When the service returns no feature for `countryName`, or more than one.
+	 *   A country matched twice is a product whose name column changed meaning,
+	 *   and picking the first would silently choose an outline.
 	 */
 	public async readCountryGeometry(countryName: string): Promise<{
 		geometry: { type: string; coordinates: unknown }
@@ -241,8 +245,8 @@ export class ONSBoundaryClient extends APIClient<APIClientConfig> {
 }
 
 /**
- * Build an {@link ONSBoundaryClient}. Cached for a year: a December-2025 boundary product does not change, and a new
- * vintage is a new service name rather than new content at this one.
+ * Build an {@link ONSBoundaryClient}. Cached for a year: a December-2025 boundary product does
+ * not change, and a new vintage is a new service name rather than new content at this one.
  */
 export function createONSBoundaryClient(options: CreateFloodClientOptions = {}): ONSBoundaryClient {
 	return createPacedCachedClient(

@@ -20,9 +20,9 @@ import {
 import type { KnownFormat, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 /**
- * Build the `SegmentToken[]` for a single segment string the same way `tokenizeSegment` does, but keep it explicit in
- * tests so each token's offsets are visible. `tokenizeSegment` is itself tested directly below. the other rule tests
- * reuse it as the trusted tokenizer.
+ * Build the `SegmentToken[]` for a single segment string the same way `tokenizeSegment`
+ * does, but keep it explicit in tests so each token's offsets are visible.
+ * `tokenizeSegment` is itself tested directly below. the other rule tests reuse it as the trusted tokenizer.
  */
 const tokens = (segmentBody: string, segmentStart = 0): SegmentToken[] => tokenizeSegment(segmentBody, segmentStart)
 
@@ -46,8 +46,8 @@ const summarize = (p: PhraseProposal) => ({
 })
 
 /**
- * Span/kind shape without the confidence (which accumulates ieee-754 rounding from the additive bonus chain — assert it
- * separately with `toBeCloseTo`).
+ * Span/kind shape without the confidence (which accumulates ieee-754 rounding from
+ * the additive bonus chain — assert it separately with `toBeCloseTo`).
  */
 const spanShape = (p: PhraseProposal) => ({
 	body: p.span.body,
@@ -145,15 +145,16 @@ test("scoreRegionAbbreviation: tail-of-segment region code scores highest", () =
 
 test("scoreRegionAbbreviation: non-tail region in a non-last segment gets the neutral baseline", () => {
 	const text = "TX 75001"
-	// "TX" followed by an all-digit token (not place-name content) → not suppressed. not at tail. not
-	// last segment → NEUTRAL_PROPOSAL_CONFIDENCE (0.55).
+	// "TX" followed by an all-digit token (not place-name content) → not suppressed. not
+	// at tail. not last segment → NEUTRAL_PROPOSAL_CONFIDENCE (0.55).
 	const out = scoreRegionAbbreviation(tokens(text), text, false)
 	expect(out.map(summarize)).toEqual([{ body: "TX", start: 0, end: 2, kind: "REGION_ABBREVIATION", confidence: 0.55 }])
 })
 
 test("scoreRegionAbbreviation: a region-shaped HEAD of a multi-word place name is suppressed", () => {
-	// "SAN nazario" — "SAN" is region-shaped but is followed by capitalized place-name content that is
-	// neither a region abbreviation nor a street suffix → it is the head of a place name rather than a region.
+	// "SAN nazario" — "SAN" is region-shaped but is followed by capitalized place-name
+	// content that is neither a region abbreviation nor a street suffix → it is
+	// the head of a place name rather than a region.
 	const text = "SAN Nazario"
 	const out = scoreRegionAbbreviation(tokens(text), text, true)
 	// "SAN" suppressed. "Nazario" is not 2-3 uppercase letters → never region-shaped. → no proposals.
@@ -240,8 +241,8 @@ test("scoreStreetPhrase: a bare Romance prefix still emits a low-confidence mark
 })
 
 test("scoreStreetPhrase: a Romance prefix does not end on a trailing connective particle", () => {
-	// "Calle de Mayor" — walk gathers "de" (particle) then "Mayor" (content); end backs off any
-	// trailing particle but here ends on "Mayor". Span covers prefix..Mayor.
+	// "Calle de Mayor" — walk gathers "de" (particle) then "Mayor" (content); end backs off
+	// any trailing particle but here ends on "Mayor". Span covers prefix..Mayor.
 	const text = "Calle de Mayor"
 	const out = scoreStreetPhrase(tokens(text), text)
 
@@ -257,8 +258,8 @@ test("scoreLocalityPhrase: a two-token place name proposes every prefix length",
 	const out = scoreLocalityPhrase(tokens(text), text, true)
 
 	// From i=0: len1 "Saint" (not at tail), len2 "Saint Petersburg" (at tail, last segment).
-	// From i=1: len1 "Petersburg" (at tail, last segment).
-	// base 0.55. len2 bonus +0.15. atTail +0.05. atTail&&last +0.1.
+	// From i=1: len1 "Petersburg" (at tail, last segment). base 0.55. len2 bonus
+	// +0.15. atTail +0.05. atTail&&last +0.1.
 	expect(out.map(spanShape)).toEqual([
 		{ body: "Saint", start: 0, end: 5, kind: "LOCALITY_PHRASE" },
 		{ body: "Saint Petersburg", start: 0, end: 16, kind: "LOCALITY_PHRASE" },
@@ -280,9 +281,10 @@ test("scoreLocalityPhrase: a leading Romance street prefix is left to scoreStree
 })
 
 test("scoreLocalityPhrase: a known US region name not at segment-tail is penalized −0.2", () => {
-	// "Texas Tower" — "Texas" is a US region name; "Tower" is plain place-name content (not a street
-	// prefix/suffix/particle). From i=0: len1 "Texas" (not at tail) → 0.55 − 0.2 = 0.35. len2 "Texas
-	// Tower" (at tail, last) → 0.55 + 0.15 + 0.05 + 0.1 = 0.85. From i=1: len1 "Tower" (at tail, last).
+	// "Texas Tower" — "Texas" is a US region name; "Tower" is plain place-name content
+	// (not a street prefix/suffix/particle). From i=0: len1 "Texas" (not at tail) → 0.55
+	// − 0.2 = 0.35. len2 "Texas Tower" (at tail, last) → 0.55 + 0.15 + 0.05 + 0.1 = 0.85.
+	// From i=1: len1 "Tower" (at tail, last).
 	const text = "Texas Tower"
 	const out = scoreLocalityPhrase(tokens(text), text, true)
 
@@ -337,9 +339,9 @@ test("scoreLocalityPhrase: a stray digit or street suffix stops the run", () => 
 })
 
 test("scoreLocalityPhrase: confidence is capped at 0.95", () => {
-	// A two-token tail-of-last run hits 0.85. engineer a longer run that would otherwise exceed 0.95?
-	// len2 gives the max single-step bonus (0.15). 0.55 + 0.15 + 0.05 + 0.1 = 0.85 < 0.95, so the cap
-	// is defensive. Confirm no proposal ever exceeds 0.95 for a normal multi-word place name.
+	// A two-token tail-of-last run hits 0.85. engineer a longer run that would otherwise exceed
+	// 0.95? len2 gives the max single-step bonus (0.15). 0.55 + 0.15 + 0.05 + 0.1 = 0.85 < 0.95,
+	// so the cap is defensive. Confirm no proposal ever exceeds 0.95 for a normal multi-word place name.
 	const text = "Las Palmas de Gran Canaria"
 	const out = scoreLocalityPhrase(tokens(text), text, true)
 
@@ -366,12 +368,12 @@ test("scoreVenuePhrase: a venue-marker noun lifts the whole capitalized run to i
 })
 
 test("scoreVenuePhrase: a hyphenated compound inside a 2+ capitalized run fires at 0.65", () => {
-	// "NY-NY Steakhouse" actually has a venue marker (steakhouse=0.9) which dominates. Use a run with a
-	// hyphen compound but no marker to isolate the 0.65 branch.
+	// "NY-NY Steakhouse" actually has a venue marker (steakhouse=0.9) which dominates.
+	// Use a run with a hyphen compound but no marker to isolate the 0.65 branch.
 	const text = "Coca-Cola Tower"
 	const out = scoreVenuePhrase(tokens(text), text, false)
-	// "tower" is a venue marker (0.65). So marker weight 0.65 wins — both branches happen to agree here.
-	// Use a cleaner hyphen-only case with no marker word:
+	// "tower" is a venue marker (0.65). So marker weight 0.65 wins — both branches happen
+	// to agree here. Use a cleaner hyphen-only case with no marker word:
 	const text2 = "Mont-Blanc Estates"
 	const out2 = scoreVenuePhrase(tokens(text2), text2, false)
 
@@ -385,8 +387,8 @@ test("scoreVenuePhrase: a hyphenated compound inside a 2+ capitalized run fires 
 
 test("scoreVenuePhrase: venue-by-exclusion fires only in the first segment for a plain capitalized run", () => {
 	const text = "Acme Corp"
-	// First segment, ≥2 capitalized tokens, no street suffix, no leading number, no unit marker → weak
-	// VENUE_PHRASE. 2 tokens → 0.5.
+	// First segment, ≥2 capitalized tokens, no street suffix, no leading number,
+	// no unit marker → weak VENUE_PHRASE. 2 tokens → 0.5.
 	const first = scoreVenuePhrase(tokens(text), text, true)
 	expect(first.map(summarize)).toEqual([{ body: "Acme Corp", start: 0, end: 9, kind: "VENUE_PHRASE", confidence: 0.5 }])
 	// Same run not in the first segment → no venue-by-exclusion proposal.
@@ -405,9 +407,9 @@ test("scoreVenuePhrase: venue-by-exclusion gives a 3+ token run the neutral base
 test("scoreVenuePhrase: venue-by-exclusion is blocked by a street suffix, house number, or unit marker", () => {
 	// Street suffix present.
 	expect(scoreVenuePhrase(tokens("Hill Street"), "Hill Street", true)).toEqual([])
-	// Leading house number — note: a leading digit is not capitalized, so the run starts at the first
-	// capitalized token. Use a run where the capitalized run itself begins with a number-shaped token.
-	// "Suite 200" has a unit marker → blocked.
+	// Leading house number — note: a leading digit is not capitalized, so the run starts
+	// at the first capitalized token. Use a run where the capitalized run itself begins
+	// with a number-shaped token. "Suite 200" has a unit marker → blocked.
 	expect(scoreVenuePhrase(tokens("Suite Two"), "Suite Two", true)).toEqual([])
 })
 

@@ -21,10 +21,11 @@ import type { Kysely } from "kysely"
 /**
  * One postcode → locality candidate.
  *
- * `is_containing=1` marks the authoritative tier — the locality whose polygon contains the postcode centroid (the
- * polygon builds) or the name-confirmed municipality (the CJK builds). `is_containing=0` rows are the proximity
- * candidates the resolver soft-scores against. `distance_km` is 0 for a containment hit and the haversine distance
- * otherwise. `aliases` is a `|`-joined alt-name list, nullable because the DDL never constrained it.
+ * `is_containing=1` marks the authoritative tier — the locality whose polygon contains the
+ * postcode centroid (the polygon builds) or the name-confirmed municipality (the CJK builds).
+ * `is_containing=0` rows are the proximity candidates the resolver soft-scores against.
+ * `distance_km` is 0 for a containment hit and the haversine distance otherwise.
+ * `aliases` is a `|`-joined alt-name list, nullable because the DDL never constrained it.
  */
 export interface PostcodeLocalityTable {
 	postcode: string
@@ -37,8 +38,8 @@ export interface PostcodeLocalityTable {
 }
 
 /**
- * Provenance / license / build-statistics key-value pairs. Every database carries one, and its contents are
- * per-builder.
+ * Provenance / license / build-statistics key-value pairs.
+ * Every database carries one, and its contents are per-builder.
  */
 export interface PostcodeLocalityMetaTable {
 	key: string
@@ -61,18 +62,20 @@ export type PostcodeLocalitySchemaHandle = Pick<Kysely<PostcodeLocalityDatabase>
 /**
  * Whether the statement carries `if not exists`.
  *
- * Required rather than defaulted: the databases divide into accumulative builds, where one shared database is filled
- * country by country in successive runs and the second run must find the table already there, and single-country
- * rebuilds, which drop and recreate. Silently defaulting either way turns a mismatched call site into a wrong artifact
- * instead of a compile error.
+ * Required rather than defaulted: the databases divide into accumulative builds,
+ * where one shared database is filled country by country in successive runs
+ * and the second run must find the table already there, and single-country rebuilds,
+ * which drop and recreate. Silently defaulting either way turns a mismatched call
+ * site into a wrong artifact instead of a compile error.
  */
 export interface PostcodeLocalityDDLOptions {
 	ifNotExists: boolean
 }
 
 /**
- * The `postcode_locality` columns in insert order. {@link POSTCODE_LOCALITY_INSERT_SQL} derives its column list and
- * placeholders from this, so a column reordered in the DDL cannot leave the positional insert behind.
+ * The `postcode_locality` columns in insert order. {@link POSTCODE_LOCALITY_INSERT_SQL}
+ * derives its column list and placeholders from this, so a column reordered in
+ * the DDL cannot leave the positional insert behind.
  */
 export const POSTCODE_LOCALITY_COLUMNS = [
 	"postcode",
@@ -129,8 +132,8 @@ export async function createPostcodeLocalityTable(
 }
 
 /**
- * Create the `(postcode, country)` probe index — the resolver attaches a single database and country-filters at query
- * time, so both columns lead.
+ * Create the `(postcode, country)` probe index — the resolver attaches a single database
+ * and country-filters at query time, so both columns lead.
  */
 export async function createPostcodeLocalityIndex(
 	db: PostcodeLocalitySchemaHandle,

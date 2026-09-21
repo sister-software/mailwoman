@@ -16,9 +16,9 @@ import type { RepoContext } from "#check"
 /**
  * A `RepoContext` for the checkout at `repoRoot` (default: the repository this module sits in).
  *
- * The file listing is `trackedFiles` from `@mailwoman/core/git` directly. A `listTrackedFiles` wrapper stood here and
- * returned that call unchanged, which is a second public name for one function and exactly what `export-name-affix`
- * reports.
+ * The file listing is `trackedFiles` from `@mailwoman/core/git` directly.
+ * A `listTrackedFiles` wrapper stood here and returned that call unchanged, which is a
+ * second public name for one function and exactly what `export-name-affix` reports.
  */
 export async function collectRepoContext(repoRoot: PathBuilderLike = repoRootPath()): Promise<RepoContext> {
 	return { repoRoot: repoRoot.toString(), trackedFiles: await trackedFiles(repoRoot) }

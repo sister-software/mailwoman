@@ -70,8 +70,8 @@ const FILES: Record<string, string> = {
 
 async function fixture() {
 	const directory = await temporaryDirectory("move-plan-")
-	// The temp root itself can be a symlink, and TypeScript answers a resolved module by its real path — so the
-	// context's root must be the real one or nothing it resolves looks like a tracked file.
+	// The temp root itself can be a symlink, and TypeScript answers a resolved module by its real path —
+	// so the context's root must be the real one or nothing it resolves looks like a tracked file.
 	const repoRoot = await realPath(directory.path)
 
 	for (const [file, content] of Object.entries(FILES)) {
@@ -82,8 +82,8 @@ async function fixture() {
 	await runFile("git", ["init", "--quiet"], { cwd: repoRoot, encoding: "utf8" })
 	await runFile("git", ["add", "-A", "--", "packages", "package.json"], { cwd: repoRoot, encoding: "utf8" })
 
-	// A rename is detected against a commit rather than against an empty index: with no head, `git mv` still moves the file
-	// but `git status` reports an addition.
+	// A rename is detected against a commit rather than against an empty index: with no head,
+	// `git mv` still moves the file but `git status` reports an addition.
 	await runFile(
 		"git",
 		["-c", "user.email=fixture@example.invalid", "-c", "user.name=fixture", "commit", "--quiet", "-m", "fixture"],
@@ -161,8 +161,8 @@ describe("applyModuleMoves", () => {
 			encoding: "utf8",
 		})
 
-		// `RM`, not `R `: the index carries the rename and the worktree carries the specifier rewrite inside the file
-		// that moved.
+		// `RM`, not `R `: the index carries the rename and the worktree carries the
+		// specifier rewrite inside the file that moved.
 		expect(stdout).toMatch(
 			/^RM packages\/recipes\/lib\/recipes\/fr-order\.ts -> packages\/recipes\/lib\/recipes\/fr\/order\.ts$/m
 		)

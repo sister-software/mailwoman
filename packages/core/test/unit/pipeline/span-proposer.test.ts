@@ -24,9 +24,9 @@ const LEXICON: SpanProposerLexicon = {
 	unitDesignators: new Set(["apt", "apartment", "suite", "ste", "unit", "rm", "room", "bldg", "building"]),
 	levelDesignators: new Set(["fl", "floor", "bsmt", "basement"]),
 	weakDesignators: new Set(["bldg", "building"]),
-	// Empty here on purpose: this fixture models the postal vocabulary, and the venue-structure split is exercised in
-	// its own describe below. A fixture that quietly carried both would make every assertion above ambiguous about
-	// which provenance produced the proposal.
+	// Empty here on purpose: this fixture models the postal vocabulary, and the venue-structure
+	// split is exercised in its own describe below. A fixture that quietly carried both would
+	// make every assertion above ambiguous about which provenance produced the proposal.
 	venueStructureDesignators: new Set<string>(),
 	venueStructureModifiers: new Set<string>(),
 	modifierEligibleStructureDesignators: new Set<string>(),
@@ -203,10 +203,10 @@ describe("degenerate inputs", () => {
 
 describe("venue-structure provenance", () => {
 	/**
-	 * The venue-interior subset shares `unitDesignators` with the postal tables — the proposer needs it in both sets to
-	 * fire at all — so the only thing distinguishing the two provenances downstream is the `source` string. If that tag
-	 * stops being emitted, the consuming prior silently falls back to the postal scale and the sub-venue fix reverts with
-	 * nothing failing.
+	 * The venue-interior subset shares `unitDesignators` with the postal tables — the proposer
+	 * needs it in both sets to fire at all — so the only thing distinguishing the two provenances
+	 * downstream is the `source` string. If that tag stops being emitted, the consuming prior
+	 * silently falls back to the postal scale and the sub-venue fix reverts with nothing failing.
 	 */
 	const withVenueStructure: SpanProposerLexicon = {
 		...LEXICON,
@@ -260,8 +260,8 @@ describe("modifier + venue-interior designator", () => {
 	})
 
 	it("scores BELOW the designator+identifier form", () => {
-		// A qualifier before a designator is a shape ordinary street names also take. an identifier after one
-		// is nearly unambiguous. The weaker evidence must lose to a confident encoder more readily.
+		// A qualifier before a designator is a shape ordinary street names also take. an identifier
+		// after one is nearly unambiguous. The weaker evidence must lose to a confident encoder more readily.
 		const [modifierSpan] = proposeSpans("West Wing, St Thomas' Hospital, London", withModifiers)
 		const [identifierSpan] = proposeSpans("Wing B, St Thomas' Hospital, London", withModifiers)
 
@@ -277,8 +277,8 @@ describe("modifier + venue-interior designator", () => {
 	})
 
 	it("does not fire mid-name, where the pair belongs to a longer proper noun", () => {
-		// "Grand Central Terminal" contains "Central Terminal"; carving that out invents a sub-venue from the
-		// venue's own name.
+		// "Grand Central Terminal" contains "Central Terminal"; carving that out
+		// invents a sub-venue from the venue's own name.
 		const spans = proposeSpans("Grand Central Terminal, New York, NY 10017", withModifiers)
 
 		expect(spans.filter((s) => s.source === "designator:venue-structure-modifier")).toEqual([])

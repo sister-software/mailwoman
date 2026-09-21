@@ -50,9 +50,9 @@ interface StampSpec {
 }
 
 /**
- * A backend whose locality candidates carry containment stamps only when the query asked (`regionQualifier` present) —
- * the capable-backend interface. Region lookups miss (the fixture region resolves nothing, like Thüringen under a US
- * scope).
+ * A backend whose locality candidates carry containment stamps only
+ * when the query asked (`regionQualifier` present) — the capable-backend interface.
+ * Region lookups miss (the fixture region resolves nothing, like Thüringen under a US scope).
  */
 async function makeBackend(
 	specs: StampSpec[],
@@ -95,8 +95,8 @@ describe("partitionByContainment — the shared ordering function", () => {
 	})
 
 	it("is TIER-SAFE: a contained partial match never crosses an exact uncontained one", () => {
-		// Interleaved tiers — the walk's no-importance path never regroups them, so the partition must
-		// permute each tier only among its own slots.
+		// Interleaved tiers — the walk's no-importance path never regroups them,
+		// so the partition must permute each tier only among its own slots.
 		const rows = [row(1, false, true), row(2, true, false), row(3, false, true), row(4, false, false)]
 
 		expect(partitionByContainment(rows, isContained, isExact).map((r) => r.id)).toEqual([1, 2, 3, 4])
@@ -184,9 +184,10 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 	})
 
 	it("the contained candidate wins even when fame disagrees — the partition outranks rankByImportance", async () => {
-		// The uncontained namesake is more important (Richmond VA vs Richmond, North Yorkshire): fame
-		// alone re-orders it to the front, so a setting that only trusted the backend's incoming order
-		// would lose here. This is the reach proof: the walk's own partition must run after the fame key.
+		// The uncontained namesake is more important (Richmond VA vs Richmond, North Yorkshire):
+		// fame alone re-orders it to the front, so a setting that only trusted
+		// the backend's incoming order would lose here. This is the reach proof:
+		// the walk's own partition must run after the fame key.
 		const { locality } = await resolveWith(
 			[
 				{ id: 1, country: "US", importance: 0.9, contained: false },
@@ -202,9 +203,9 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 	})
 
 	it("MUTATION CHECK: with the containment stamps inverted, the same input flips to the namesake", async () => {
-		// The #1729 fixture discipline: the test must fail under an inverted containment term. Inverting
-		// the stamps here is the walk-level image of inverting `intervalContains` in the backend — the
-		// candidate-lookup suite carries the artifact-level twin.
+		// The #1729 fixture discipline: the test must fail under an inverted containment term.
+		// Inverting the stamps here is the walk-level image of inverting `intervalContains`
+		// in the backend — the candidate-lookup suite carries the artifact-level twin.
 		const { locality } = await resolveWith(
 			[
 				{ id: 1, country: "US", importance: 0.9, contained: true },

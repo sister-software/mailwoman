@@ -48,8 +48,8 @@ interface FixturePlace {
 }
 
 /**
- * The two real Saint-Denis bearers plus the Yonne commune that sits between them on both scales — enough to prove the
- * ordering is a ranking and not a two-way coin flip.
+ * The two real Saint-Denis bearers plus the Yonne commune that sits between them on both
+ * scales — enough to prove the ordering is a ranking and not a two-way coin flip.
  */
 const SAINT_DENIS: FixturePlace[] = [
 	{
@@ -82,9 +82,9 @@ const SAINT_DENIS: FixturePlace[] = [
 ]
 
 /**
- * Build the fixture gazetteer. `withEncyclopedic` decides whether `place_importance` carries the two-score split's
- * columns at all — the pre-split state (no table) and the post-split state (both columns), which is the pair the
- * zero-delta measurement compares.
+ * Build the fixture gazetteer. `withEncyclopedic` decides whether `place_importance`
+ * carries the two-score split's columns at all — the pre-split state (no table) and the
+ * post-split state (both columns), which is the pair the zero-delta measurement compares.
  */
 function buildFixtureDB(
 	places: readonly FixturePlace[],
@@ -153,8 +153,8 @@ afterEach(() => {
 
 describe("Saint-Denis — ranking is referential", () => {
 	it("the encyclopedic column really does invert the truth (the premise this test rests on)", () => {
-		// Stated as an assertion rather than a comment: if the fixture's numbers ever stop disagreeing,
-		// every test below passes vacuously and nobody would notice.
+		// Stated as an assertion rather than a comment: if the fixture's numbers ever stop
+		// disagreeing, every test below passes vacuously and nobody would notice.
 		const suburb = SAINT_DENIS[0]!
 		const hamlet = SAINT_DENIS[1]!
 
@@ -176,8 +176,9 @@ describe("Saint-Denis — ranking is referential", () => {
 		const results = await lookup.findPlace({ text: "Saint-Denis" })
 		const suburb = results.find((r) => r.id === 101_751_155)!
 
-		// The winner is the one with the lower encyclopedic score. Both facts on one object is the whole
-		// policy: the score is visible to consumers and inert to the ranking.
+		// The winner is the one with the lower encyclopedic score.
+		// Both facts on one object is the whole policy: the score is visible to consumers
+		// and inert to the ranking.
 		expect(suburb.encyclopedic).toBeCloseTo(0.1173, 4)
 		expect(suburb.referential).toBeCloseTo(referentialFromPopulation(96_128), 6)
 
@@ -187,17 +188,18 @@ describe("Saint-Denis — ranking is referential", () => {
 	})
 
 	it("a FOURTH bearer the policy text does not name — Réunion — wins on the same rule, and that is correct", async () => {
-		// found while measuring (2026-08-06), and recorded rather than smoothed over. §2 names two
-		// bearers, but the live gazetteer's referentially dominant "Saint-Denis" is neither: it is the
-		// capital of Réunion (wof 9000000590797, pop 154,765 — a French overseas department, so
-		// `country = FR` too). Ranked referentially, an unscoped bare "Saint-Denis" answers Réunion.
+		// found while measuring (2026-08-06), and recorded rather than smoothed over. §2 names two bearers,
+		// but the live gazetteer's referentially dominant "Saint-Denis" is neither: it is the capital of
+		// Réunion (wof 9000000590797, pop 154,765 — a French overseas department, so `country = FR` too).
+		// Ranked referentially, an unscoped bare "Saint-Denis" answers Réunion.
 		//
-		// That is the policy behaving exactly as specified rather than failing. What it exposes is an
-		// assumption in the ROAD_TO_V9 §3 board row `fr-wpc-saint-denis-suburb`, which pins the
-		// Seine-Saint-Denis suburb as truth: that row encodes "Metropolitan France", which is a
-		// different claim from "referentially dominant". The row fails identically under all four FST
-		// arms including no-FST, so it is a board-authoring question for §3 rather than a regression here —
-		// but a test that quietly omitted Réunion would be asserting a world that does not exist.
+		// That is the policy behaving exactly as specified rather than failing.
+		// What it exposes is an assumption in the ROAD_TO_V9 §3 board row `fr-wpc-saint-denis-suburb`,
+		// which pins the Seine-Saint-Denis suburb as truth: that row encodes "Metropolitan
+		// France", which is a different claim from "referentially dominant".
+		// The row fails identically under all four FST arms including no-FST, so it is a
+		// board-authoring question for §3 rather than a regression here — but a test that
+		// quietly omitted Réunion would be asserting a world that does not exist.
 		const withReunion: FixturePlace[] = [
 			...SAINT_DENIS,
 			{ id: 9_000_000_590_797, name: "Saint-Denis", country: "FR", lat: -20.8823, lon: 55.4504, population: 154_765 },
@@ -235,9 +237,10 @@ describe("Saint-Denis — ranking is referential", () => {
 
 describe("D-rule — carrying the encyclopedic score moves no rank", () => {
 	/**
-	 * §2 R1 predicts a resolver delta of zero: the split is schema + plumbing + a carry, and the ranking key it names
-	 * (population) is the one the resolver already used. Predicted is not measured, so this measures it — every query
-	 * runs against a pre-split gazetteer and a post-split one, and the returned id order must be identical.
+	 * §2 R1 predicts a resolver delta of zero: the split is schema + plumbing + a carry,
+	 * and the ranking key it names (population) is the one the resolver already used.
+	 * Predicted is not measured, so this measures it — every query runs against a pre-split
+	 * gazetteer and a post-split one, and the returned id order must be identical.
 	 */
 	const QUERIES: ReadonlyArray<{ label: string; text: string }> = [
 		{ label: "bare namesake", text: "Saint-Denis" },
@@ -264,8 +267,8 @@ describe("D-rule — carrying the encyclopedic score moves no rank", () => {
 	}
 
 	it("holds when the encyclopedic order is the exact reverse of the referential one", async () => {
-		// The adversarial shape: encyclopedic scores assigned in strict inverse-population order. If the
-		// carry leaked into ranking anywhere, this fixture inverts the result.
+		// The adversarial shape: encyclopedic scores assigned in strict inverse-population order.
+		// If the carry leaked into ranking anywhere, this fixture inverts the result.
 		const inverted: FixturePlace[] = [
 			{ ...SAINT_DENIS[0]!, encyclopedic: 0.01 },
 			{ ...SAINT_DENIS[1]!, encyclopedic: 0.99 },

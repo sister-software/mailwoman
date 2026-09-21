@@ -11,8 +11,8 @@
 import { z } from "zod"
 
 /**
- * The block, validated on write and on read. `mailwoman:coordinate_longitude` is fixed: every artifact is east-positive
- * in −180..180, whatever the source carried.
+ * The block, validated on write and on read. `mailwoman:coordinate_longitude` is fixed:
+ * every artifact is east-positive in −180..180, whatever the source carried.
  */
 export const PMTilesMetadataSchema = z.object({
 	"mailwoman:kind": z.enum(["planetary-basemap", "planetary-hillshade", "planetary-dem"]),

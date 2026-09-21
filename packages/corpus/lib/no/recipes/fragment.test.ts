@@ -50,8 +50,8 @@ describe("no-fragment", () => {
 	})
 
 	it("emits the SIGNAL — a street with NO postcode/locality partner", async () => {
-		// counterProb 0 so every non-reserved row is a street fragment. bareStreetProb 0 so it carries
-		// its number. The point of the recipe: the street stands alone.
+		// counterProb 0 so every non-reserved row is a street fragment. bareStreetProb 0
+		// so it carries its number. The point of the recipe: the street stands alone.
 		const { rows } = await run(TUPLES, ["nonexistent-surface"], { counterProb: 0, bareProb: 0 })
 		const signal = rows.filter((r) => r.components!.street)
 
@@ -60,8 +60,8 @@ describe("no-fragment", () => {
 		for (const r of signal) {
 			const c = r.components!
 
-			// A signal row has a street and may have a house_number, but never a postcode or locality —
-			// that is the whole licence: read the street without its partners.
+			// A signal row has a street and may have a house_number, but never a postcode
+			// or locality — that is the whole licence: read the street without its partners.
 			expect(c.postcode).toBeUndefined()
 			expect(c.locality).toBeUndefined()
 			expect(c.street).toBeTruthy()

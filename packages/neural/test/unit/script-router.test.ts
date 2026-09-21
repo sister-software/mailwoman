@@ -54,9 +54,10 @@ describe("scriptFamilyForText", () => {
 	})
 
 	it("keeps a Latin line carrying a foreign-script venue name on the primary", () => {
-		// These four are what make the segment reading narrower than "any family script in the input": the name shares
-		// its segment with the Latin words around it, and the character model reads those by codepoint —
-		// `Far East Chinese 口福羊汤` came back as `country: "Chi"`, `region: "Far East"`.
+		// These four are what make the segment reading narrower than "any family script
+		// in the input": the name shares its segment with the Latin words around it,
+		// and the character model reads those by codepoint — `Far East Chinese 口福羊汤`
+		// came back as `country: "Chi"`, `region: "Far East"`.
 		expect(scriptFamilyForText("Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS")).toBeUndefined()
 
 		expect(
@@ -70,8 +71,8 @@ describe("scriptFamilyForText", () => {
 	})
 
 	it("does not reach a Han line separated from its Latin province by whitespace alone", () => {
-		// The stated cost of reading commas: this row has no segment of its own. A whitespace reading would reach it and
-		// would also re-admit the venue names above.
+		// The stated cost of reading commas: this row has no segment of its own.
+		// A whitespace reading would reach it and would also re-admit the venue names above.
 		expect(scriptFamilyForText("六分场七队 Hunan")).toBeUndefined()
 		expect(scriptFamilyForText("一分场一队 Hunan China")).toBeUndefined()
 	})
@@ -79,8 +80,9 @@ describe("scriptFamilyForText", () => {
 
 describe("routeFamilyWithLeadingRun", () => {
 	/**
-	 * The four CN board rows the shipped router leaves on the Latin graph. Each writes its Han unit and its Latin
-	 * province in one whitespace-separated run, so no comma segment is wholly Han and `carriesFamilySegment` abstains.
+	 * The four CN board rows the shipped router leaves on the Latin graph.
+	 * Each writes its Han unit and its Latin province in one whitespace-separated run,
+	 * so no comma segment is wholly Han and `carriesFamilySegment` abstains.
 	 */
 	const HAN_LED = [
 		"六分场七队 Hunan",
@@ -90,9 +92,9 @@ describe("routeFamilyWithLeadingRun", () => {
 	]
 
 	/**
-	 * The four board rows that pass today with Han or Hangul inside a Latin line. A reading that moves one of these
-	 * changes the graph serving a checking row, and two of them are GB, which `scope.config.json` names in
-	 * `dRuleProtected`.
+	 * The four board rows that pass today with Han or Hangul inside a Latin line.
+	 * A reading that moves one of these changes the graph serving a checking row,
+	 * and two of them are GB, which `scope.config.json` names in `dRuleProtected`.
 	 */
 	const LATIN_LED = [
 		"JJAN! 짠 Châtelet, 14 Rue du Pont Neuf, 75001 Paris",
@@ -111,8 +113,9 @@ describe("routeFamilyWithLeadingRun", () => {
 	})
 
 	it("keeps the shipped router's answer wherever that router names a family", () => {
-		// Tried last and only on an abstention, which is what makes the difference between the two arms exactly the
-		// rows the reading adds. A reading that could also change an existing answer would need its own comparison.
+		// Tried last and only on an abstention, which is what makes the difference between
+		// the two arms exactly the rows the reading adds. A reading that could also
+		// change an existing answer would need its own comparison.
 		for (const input of ["富山県中新川郡上市町大岩148-7", "逊克二分场四队, HEILONGJIANG, CHINA", "新加坡"]) {
 			expect(routeFamilyWithLeadingRun(input).family).toBe(scriptFamilyForText(input))
 		}
@@ -128,8 +131,9 @@ describe("routeFamilyWithLeadingRun", () => {
 	})
 
 	it("skips a leading token carrying no script rather than letting it decide", () => {
-		// `Zyyy` is the class for a house number or a postal mark. Answering on the first token regardless would make
-		// `〒150-0001` decide a route, and the postal mark belongs to no family's script set.
+		// `Zyyy` is the class for a house number or a postal mark.
+		// Answering on the first token regardless would make `〒150-0001` decide a route,
+		// and the postal mark belongs to no family's script set.
 		expect(routeFamilyWithLeadingRun("〒150-0001 東京都渋谷区").family).toBe("cjk")
 	})
 })

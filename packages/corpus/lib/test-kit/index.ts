@@ -25,7 +25,8 @@ import { afterEach, beforeEach } from "vitest"
 import type { CanonicalRow } from "#types"
 
 /**
- * A per-test scratch directory. `path` is only meaningful inside a test body — it is `""` until the `beforeEach` runs.
+ * A per-test scratch directory. `path` is only meaningful inside a test body —
+ * it is `""` until the `beforeEach` runs.
  */
 export interface ScratchDir {
 	readonly path: string
@@ -34,9 +35,10 @@ export interface ScratchDir {
 /**
  * Register a fresh scratch directory for each test in the current suite, removed afterwards.
  *
- * `slug` names the directory (`mailwoman-<slug>-xxxxxx` under the OS temp dir) and exists only to make a stray leftover
- * traceable to the suite that made it. Teardown swallows its own errors: a test that already removed the directory, or
- * a platform that holds a handle open, must not turn a passing assertion into a failing suite.
+ * `slug` names the directory (`mailwoman-<slug>-xxxxxx` under the OS temp dir)
+ * and exists only to make a stray leftover traceable to the suite that made it.
+ * Teardown swallows its own errors: a test that already removed the directory, or a platform
+ * that holds a handle open, must not turn a passing assertion into a failing suite.
  */
 export function useScratchDir(slug: string): ScratchDir {
 	const dir = { path: "" }
@@ -47,13 +49,14 @@ export function useScratchDir(slug: string): ScratchDir {
 		dir.path = resolvePath(owned.path)
 	})
 
-	// The directory is owned by the test, never by a module-scoped stack. Under `isolate: false` this module is shared
-	// across every corpus adapter suite in a fork, so a stack disposed by the first file's `afterAll` left every later
-	// file calling `use()` on a disposed stack — which is what "Cannot call AsyncDisposableStack.prototype.use on an
+	// The directory is owned by the test, never by a module-scoped stack.
+	// Under `isolate: false` this module is shared across every corpus adapter suite in a fork,
+	// so a stack disposed by the first file's `afterAll` left every later file calling `use()`
+	// on a disposed stack — which is what "Cannot call AsyncDisposableStack.prototype.use on an
 	// already-disposed DisposableStack" was, across a different set of adapter suites on each run.
 	//
-	// Teardown swallows its own errors: a test that already removed the directory, or a platform that holds a handle
-	// open, must not turn a passing assertion into a failing suite.
+	// Teardown swallows its own errors: a test that already removed the directory, or a platform
+	// that holds a handle open, must not turn a passing assertion into a failing suite.
 	afterEach(async () => {
 		try {
 			await owned?.[Symbol.asyncDispose]()
@@ -68,8 +71,8 @@ export function useScratchDir(slug: string): ScratchDir {
 }
 
 /**
- * Read back the canonical rows a `runAdapter` call wrote — `<outputDir>/<adapterID>/canonical.jsonl`, streamed through
- * `JSONSpliterator` and collected.
+ * Read back the canonical rows a `runAdapter` call wrote — `<outputDir>/<adapterID>/canonical.jsonl`,
+ * streamed through `JSONSpliterator` and collected.
  */
 export function readCanonicalRows(outputDir: string, adapterID: string): Promise<CanonicalRow[]> {
 	return Array.fromAsync(JSONSpliterator.fromAsync<CanonicalRow>(join(outputDir, adapterID, "canonical.jsonl")))
@@ -78,10 +81,11 @@ export function readCanonicalRows(outputDir: string, adapterID: string): Promise
 /**
  * Write a delimited fixture — a header line plus the given rows — and answer its path.
  *
- * Three adapter suites carried a hand-rolled copy of this, and the copies disagreed about the one thing a reader cannot
- * see: two joined the rows without a trailing newline and the third appended one. `createNewlineWriter` terminates
- * every line it writes, so the file round-trips through `CSVSpliterator` the same way whichever suite produced it, and
- * a caller passes content without a delimiter.
+ * Three adapter suites carried a hand-rolled copy of this, and the copies disagreed about
+ * the one thing a reader cannot see: two joined the rows without a trailing newline
+ * and the third appended one. `createNewlineWriter` terminates every line it writes,
+ * so the file round-trips through `CSVSpliterator` the same way whichever suite produced it,
+ * and a caller passes content without a delimiter.
  */
 export async function writeDelimitedFixture(
 	filePath: string,

@@ -26,9 +26,9 @@ export interface DiscoveredRepo {
 	name: string
 	url: string
 	/**
-	 * GitHub's reported size. It under-states the checkout by roughly 7×: GitHub reports the packed size, and these repos
-	 * unpack to millions of small GeoJSON files. Measured on a `--countries tr` sync: three repositories reported as 83.4
-	 * MB occupied 633 MB once cloned.
+	 * GitHub's reported size. It under-states the checkout by roughly 7×: GitHub reports
+	 * the packed size, and these repos unpack to millions of small GeoJSON files.
+	 * Measured on a `--countries tr` sync: three repositories reported as 83.4 MB occupied 633 MB once cloned.
 	 */
 	diskUsageKB?: number
 }
@@ -36,15 +36,17 @@ export interface DiscoveredRepo {
 /**
  * A repository name, as opposed to a path that happens to contain one.
  *
- * `whosonfirst-data` alone is excluded: that is the owner directory this command writes into rather than a repository.
+ * `whosonfirst-data` alone is excluded: that is the owner directory this command
+ * writes into rather than a repository.
  */
 const REPO_NAME_PATTERN = /^whosonfirst(?:-data)?-[a-z0-9-]+$/
 
 /**
  * Refuse a destination that is really a repository name.
  *
- * The destination is a directory, so a repository name in that slot is accepted by every check the filesystem can make:
- * the directory is created, no `--repos` filter is applied, and the whole organization syncs into it.
+ * The destination is a directory, so a repository name in that slot is accepted by
+ * every check the filesystem can make: the directory is created, no `--repos` filter
+ * is applied, and the whole organization syncs into it.
  */
 export function assertDestinationNotARepoName(destination: string): void {
 	const basename = destination.trim().replace(/\/+$/, "").split("/").pop() ?? ""
@@ -61,8 +63,8 @@ export function assertDestinationNotARepoName(destination: string): void {
 /**
  * Expand ISO-2 country codes to the repositories a country build reads.
  *
- * Venue repositories are deliberately absent: no country in the data root has one cloned, and including them would
- * roughly double the transfer for data no build on the parse path consumes.
+ * Venue repositories are deliberately absent: no country in the data root has one cloned,
+ * and including them would roughly double the transfer for data no build on the parse path consumes.
  */
 export function countryRepoNames(raw: string | undefined): string[] {
 	return extractDelimited(raw).flatMap((code) => [wofRepoName("admin", code), wofRepoName("postalcode", code)])
@@ -91,10 +93,10 @@ export interface RepoSelection {
 /**
  * The closest discovered name, by shared prefix.
  *
- * A prefix comparison is enough because these names are structured — `whosonfirst-data-<theme>-<cc>` — so a typo
- * diverges at a known position and the correct name is the one that agrees for longest. An edit-distance comparator
- * exists in `@mailwoman/match`, but this is the only caller in the package and would be its only reason to depend on
- * it.
+ * A prefix comparison is enough because these names are structured — `whosonfirst-data-<theme>-<cc>` —
+ * so a typo diverges at a known position and the correct name is the one that agrees for longest.
+ * An edit-distance comparator exists in `@mailwoman/match`, but this is the only
+ * caller in the package and would be its only reason to depend on it.
  */
 function nearestName(candidate: string, discovered: readonly DiscoveredRepo[]): string | null {
 	let best: string | null = null
@@ -128,15 +130,17 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 	const byName = new Map(discovered.map((entry) => [entry.name, entry]))
 	const wanted = new Set<string>()
 
-	// An explicitly named repository must exist. Before this check an unmatched name filtered the list to nothing and
-	// the command reported a successful sync of the placetypes repo alone, so a typo read as a completed job.
+	// An explicitly named repository must exist. Before this check an unmatched name
+	// filtered the list to nothing and the command reported a successful sync of the
+	// placetypes repo alone, so a typo read as a completed job.
 	for (const name of extractDelimited(options.repos)) {
 		if (!byName.has(name)) {
 			const suggestion = nearestName(name, discovered)
 
-			// The near miss is a string comparison and cannot recover intent: `whosonfirst-data-admin-turkey` is nearer
-			// to `-tu` than to `-tr` by any metric. So the country hint is unconditional — a caller who wrote a country
-			// name in a repository slot is the case this refusal exists for.
+			// The near miss is a string comparison and cannot recover intent:
+			// `whosonfirst-data-admin-turkey` is nearer to `-tu` than to `-tr` by any metric.
+			// So the country hint is unconditional — a caller who wrote a country name in
+			// a repository slot is the case this refusal exists for.
 			throw new CommandError(
 				`No repository named \`${name}\` in ${WOF_REPO_OWNER}.` +
 					(suggestion ? ` Did you mean \`${suggestion}\`?` : "") +
@@ -147,8 +151,9 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		wanted.add(name)
 	}
 
-	// A country expands to the repositories it might have. only a country with none at all is an error. Most countries
-	// carry an admin repository and no postalcode one, so requiring both would refuse the common case.
+	// A country expands to the repositories it might have. only a country with none at
+	// all is an error. Most countries carry an admin repository and no postalcode one,
+	// so requiring both would refuse the common case.
 	for (const code of extractDelimited(options.countries)) {
 		const candidates = countryRepoNames(code).filter((name) => byName.has(name))
 

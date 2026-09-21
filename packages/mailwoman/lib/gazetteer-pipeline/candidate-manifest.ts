@@ -32,8 +32,8 @@ import { probeManifest } from "#data/inventory"
 /**
  * The ancestor's identity as this manifest records it.
  *
- * `unknown` is a measured state — the admin build had no manifest — and is deliberately distinguishable from an admin
- * build whose manifest says its version is literally unknown.
+ * `unknown` is a measured state — the admin build had no manifest — and is deliberately
+ * distinguishable from an admin build whose manifest says its version is literally unknown.
  */
 export async function ancestorIdentity(adminDBPath: string): Promise<string> {
 	if (!(await pathExists(adminDBPath))) return "unknown (admin gazetteer not found)"
@@ -62,13 +62,14 @@ export interface CandidateManifestInput {
 	 */
 	adminDBPath: string
 	/**
-	 * How many postcode and locality databases contributed. Recorded because a candidate built with no databases is a
-	 * different artifact from one built with twenty-four, and nothing else in the file says which it is.
+	 * How many postcode and locality databases contributed.
+	 * Recorded because a candidate built with no databases is a different artifact from
+	 * one built with twenty-four, and nothing else in the file says which it is.
 	 */
 	databaseCounts: { postcodes: number; localities: number }
 	/**
-	 * Whether an importance database was folded in. A candidate without it ranks differently, and the difference is
-	 * invisible from the schema.
+	 * Whether an importance database was folded in. A candidate without it ranks differently,
+	 * and the difference is invisible from the schema.
 	 */
 	importance: boolean
 	buildSHA: string
@@ -86,8 +87,9 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		name: "candidate",
 		version: input.version,
 		schemaVersion: 1,
-		// Inherited from the ancestor's terms rather than re-derived: the candidate carries the admin gazetteer's rows,
-		// so it carries the admin gazetteer's obligations. ODbL is share-alike either way.
+		// Inherited from the ancestor's terms rather than re-derived: the candidate carries
+		// the admin gazetteer's rows, so it carries the admin gazetteer's obligations.
+		// ODbL is share-alike either way.
 		tier: LayerTier.BuildLocal,
 		license: "ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0",
 		attribution: "derived from the mailwoman admin gazetteer; see that layer's manifest for source terms",
@@ -98,8 +100,8 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		buildCmd: "mailwoman gazetteer build candidate",
 		buildSHA: input.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
-		// `spr_id` is the join back to the admin gazetteer, and the reason a chained manifest is worth having:
-		// the id only means something against a known ancestor.
+		// `spr_id` is the join back to the admin gazetteer, and the reason a chained manifest
+		// is worth having: the id only means something against a known ancestor.
 		spineKeys: { wofID: "spr_id" },
 		createdAt: input.createdAt,
 	}

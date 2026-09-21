@@ -36,7 +36,8 @@ const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501, country: "US" as c
 const PARIS = { latitude: 48.8566, longitude: 2.3522, country: "FR" as const }
 const CATEGORIES = ["cafe", "restaurant", "museum"] as const
 /**
- * ~3m lat steps — well under a res-9 hex's ~174m edge, so a (country, category) group clusters into one cell.
+ * ~3m lat steps — well under a res-9 hex's ~174m edge, so a (country, category)
+ * group clusters into one cell.
  */
 const JITTER_DEG = 0.00003
 
@@ -116,8 +117,8 @@ describe("buildPOIDatabase", () => {
 		// The completed artifact has no write bits.
 		expect((await statPath(out)).mode & 0o222).toBe(0)
 
-		// `kdb`'s dispose closes the underlying connection — don't also `using` `raw`, or both dispose
-		// paths race to close() the same DatabaseSync and one throws "database is not open".
+		// `kdb`'s dispose closes the underlying connection — don't also `using` `raw`, or both
+		// dispose paths race to close() the same DatabaseSync and one throws "database is not open".
 		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
 		// Category codes round-trip by first sight. zero remains uncategorized.
@@ -126,8 +127,8 @@ describe("buildPOIDatabase", () => {
 		expect(codes.every((c) => c.id > 0)).toBe(true)
 		const cafeID = codes.find((c) => c.category === "cafe")!.id
 
-		// Clustered disk order makes the first (h3_cell, category_id) row authoritative. no
-		// order BY — relying on the without rowid clustered-key order) is the best-confidence one. ---
+		// Clustered disk order makes the first (h3_cell, category_id) row authoritative. no order BY —
+		// relying on the without rowid clustered-key order) is the best-confidence one. ---
 		const group = await kdb
 			.selectFrom("poi")
 			.select(["h3_cell", "confidence"])
@@ -385,9 +386,9 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 	const bbox: BBox = { minLon: -79.9, minLat: 37, maxLon: -79.5, maxLat: 37.3 }
 
 	it("keys a row's observed count off cellToParent(res9Cell, 6), never a direct latLngToCell(row, 6)", () => {
-		// Prove this point is genuinely divergent before trusting the rest of the test — if this assertion ever
-		// stops holding (e.g. an h3-js upgrade changes cell boundaries), the point needs re-selecting via a fresh
-		// brute-force search, exactly as noted in filing-landscape.test.ts.
+		// Prove this point is genuinely divergent before trusting the rest of the test — if this
+		// assertion ever stops holding (e.g. an h3-js upgrade changes cell boundaries), the point needs
+		// re-selecting via a fresh brute-force search, exactly as noted in filing-landscape.test.ts.
 		const oldBuggyCell = shortCellToInt(latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 6) as H3Cell)
 		const res9Cell = latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 9) as H3Cell
 		const unifiedCell = shortCellToInt(cellToParent(res9Cell, 6) as H3Cell)
@@ -400,8 +401,8 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 		// The row must land on the unified (res-9-parent) cell...
 		expect(observedByCell.get(unifiedCell)).toBe(1)
 
-		// ...never on the old direct-latLngToCell(_, 6) cell, if that (different) cell even appears in this
-		// bbox's polyfill at all.
+		// ...never on the old direct-latLngToCell(_, 6) cell, if that (different) cell
+		// even appears in this bbox's polyfill at all.
 		if (observedByCell.has(oldBuggyCell)) {
 			expect(observedByCell.get(oldBuggyCell)).toBe(0)
 		}

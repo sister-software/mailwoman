@@ -14,8 +14,8 @@ import type { EngineStamp } from "@mailwoman/core/license"
 import type { MiddlewareHandler } from "hono"
 
 /**
- * Strict on purpose: the stamp carries no licensee and no key id, and a strict object makes a field that leaks one a
- * schema failure rather than a documented extension.
+ * Strict on purpose: the stamp carries no licensee and no key id, and a strict object
+ * makes a field that leaks one a schema failure rather than a documented extension.
  */
 export const EngineStampSchema = z
 	.strictObject({
@@ -28,25 +28,28 @@ export const EngineStampSchema = z
 	.openapi("EngineStamp") satisfies z.ZodType<EngineStamp>
 
 /**
- * A route's response schema once the route attaches the stamp: the body schema intersected with the optional `engine`
- * field. Applied at the route, never on an outcome schema, so an outcome schema keeps describing what the engine
- * produces (the schema drift pin in `mailwoman` depends on that) and the OpenAPI document references the outcome
- * component through `allOf` instead of cloning it.
+ * A route's response schema once the route attaches the stamp: the body schema
+ * intersected with the optional `engine` field. Applied at the route, never on an
+ * outcome schema, so an outcome schema keeps describing what the engine produces
+ * (the schema drift pin in `mailwoman` depends on that) and the OpenAPI document
+ * references the outcome component through `allOf` instead of cloning it.
  *
- * `name` registers the stamped shape as its own component, and it is required rather than optional because an unnamed
- * intersection is inlined at every use: a generator then has no name to give the type and invents one from the position
- * it appears in — `PhotonResponse::Variant0`, or a flattened per-operation clone of an outcome that already has a name.
- * Naming it keeps one `$ref` per stamped shape, which is what makes a generated client's type names follow the
- * document's.
+ * `name` registers the stamped shape as its own component, and it is required
+ * rather than optional because an unnamed intersection is inlined at every use:
+ * a generator then has no name to give the type and invents one from the position
+ * it appears in — `PhotonResponse::Variant0`, or a flattened per-operation clone of
+ * an outcome that already has a name. Naming it keeps one `$ref` per stamped shape,
+ * which is what makes a generated client's type names follow the document's.
  */
 export function stampedResponseSchema<S extends z.ZodTypeAny>(schema: S, name: string) {
 	return z.intersection(schema, z.object({ engine: EngineStampSchema.optional() })).openapi(name)
 }
 
 /**
- * `Server` names the engine and its license branch; `Link: rel="license"` is the registered relation (RFC 8288) that
- * lets a proxy, a browser, or `curl -I` find the terms without a body change. Set before the handler runs, so the
- * headers are on the context when any `c.json` — the route's or the error net's — builds its response.
+ * `Server` names the engine and its license branch; `Link: rel="license"` is the
+ * registered relation (RFC 8288) that lets a proxy, a browser, or `curl -I` find the terms
+ * without a body change. Set before the handler runs, so the headers are on the context
+ * when any `c.json` — the route's or the error net's — builds its response.
  */
 export function engineHeaders(stamp: EngineStamp): MiddlewareHandler {
 	const server = `mailwoman/${stamp.version} (${stamp.license})`
@@ -61,8 +64,8 @@ export function engineHeaders(stamp: EngineStamp): MiddlewareHandler {
 }
 
 /**
- * Attach the `engine` field when a stamp is configured. The field goes last, so a body that already spells a key of the
- * same name keeps the stamp's value.
+ * Attach the `engine` field when a stamp is configured.
+ * The field goes last, so a body that already spells a key of the same name keeps the stamp's value.
  */
 export function withEngineStamp<T extends object>(
 	body: T,

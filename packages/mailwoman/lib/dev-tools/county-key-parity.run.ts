@@ -38,7 +38,8 @@ interface StateParity {
 const EXTRACT_NAME = /^interpolation-us-([a-z]{2})\.db$/u
 
 /**
- * WOF county counts per state, from the candidate register's ancestry: a `county` whose `region` ancestor is the state.
+ * WOF county counts per state, from the candidate register's ancestry:
+ * a `county` whose `region` ancestor is the state.
  */
 function wofCountiesByState(candidatePath: string): Map<string, number> {
 	using cand = new DatabaseClient<never>(candidatePath, { readOnly: true })

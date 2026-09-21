@@ -28,7 +28,8 @@ import type { NeuralParseTrace } from "@mailwoman/neural"
 import { describe, expect, it } from "vitest"
 
 /**
- * A minimal parse trace — the same skeleton `census.test.ts` uses, so the two files agree on what a trace is.
+ * A minimal parse trace — the same skeleton `census.test.ts` uses,
+ * so the two files agree on what a trace is.
  */
 function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 	return {
@@ -117,8 +118,9 @@ const ITEM: ResolvedInput = { id: "row-1", input: "Weimar, Thüringen", country:
 
 describe("collectParseFacts — known formats against the parse", () => {
 	it("matches a postcode hit against the postcode component under a different offset frame", () => {
-		// The detector's spans are offsets into the normalized input, component values are taken from the RAW one, so
-		// the comparison folds both to characters. "SW1A 1AA" vs "sw1a1aa" is the same assertion.
+		// The detector's spans are offsets into the normalized input, component values
+		// are taken from the RAW one, so the comparison folds both to characters.
+		// "SW1A 1AA" vs "sw1a1aa" is the same assertion.
 		const facts = collectParseFacts(
 			traceOf({ queryShape: { knownFormats: [{ format: "uk_postcode", confidence: 1, span: { body: "SW1A 1AA" } }] } }),
 			{ postcode: "sw1a1aa" }
@@ -179,8 +181,8 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 	})
 
 	it("keeps a trace with no resolver records apart from a walk that performed no lookups", () => {
-		// One is a trace that predates the records. the other is the walk stating it had nothing resolvable. Folding
-		// them together would let an old trace read as a retrieval failure.
+		// One is a trace that predates the records. the other is the walk stating it had nothing
+		// resolvable. Folding them together would let an old trace read as a retrieval failure.
 		expect(collectRetrievalFacts(undefined).lookups).toBeNull()
 		expect(collectRetrievalFacts([]).lookups).toEqual([])
 	})
@@ -256,8 +258,8 @@ describe("matchShapes", () => {
 	it("calls a lookup empty only when nothing recovered the span", () => {
 		const unresolved = { ...EMPTY, retrieval: collectRetrievalFacts([lookup()]) }
 
-		// A format probe answers off an empty candidate table. Reading that as retrieval failure would report a
-		// working fallback as a defect.
+		// A format probe answers off an empty candidate table.
+		// Reading that as retrieval failure would report a working fallback as a defect.
 		const fallbackAnswered = {
 			...EMPTY,
 			retrieval: collectRetrievalFacts([
@@ -371,8 +373,9 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("refines unclassified to mis_tag_in_vocabulary when an expected component's value sits verbatim in the input", () => {
-		// The bd-op2-london-college class: the expectation names locality "Dhaka" and postcode "1205", the input
-		// carries both surfaces, and the parse produced neither tag — the decode assigned in-vocabulary text elsewhere.
+		// The bd-op2-london-college class: the expectation names locality "Dhaka"
+		// and postcode "1205", the input carries both surfaces, and the parse produced
+		// neither tag — the decode assigned in-vocabulary text elsewhere.
 		const item: ResolvedInput = {
 			id: "row-bd",
 			input: "58 Kalabagan 1st Ln, Dhaka 1205, Bangladesh",
@@ -428,8 +431,8 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("never lets a failed expectation add to a MECHANISM claim", () => {
-		// Commitment 1: expectations pin outcomes, never mechanisms. A row that matched a mechanism shape keeps exactly
-		// that shape whether it passed or failed.
+		// Commitment 1: expectations pin outcomes, never mechanisms.
+		// A row that matched a mechanism shape keeps exactly that shape whether it passed or failed.
 		const starved = run({ trace: traceOf({ parse: trace({ gazetteer: SILENT_CHANNEL }) }) })
 
 		expect(assembleAccount(ITEM, starved, FAILED_EXPECTATION).shapes).toEqual(["evidence_starved"])
@@ -437,10 +440,11 @@ describe("assembleAccount — the terminal states", () => {
 	})
 
 	it("flags a coordinate when the resolver trace records no lookup", () => {
-		// The resolver trace records the walk's own lookups. A famous name the model tagged `street` is never
-		// queried by the walk (`street` is not in the placetype map) and is answered by the post-walk span-rescore,
-		// which resolves through the backend directly and emits no record. Measured on "Frankfurt": a resolved
-		// locality with a placeID beside `resolver: []`.
+		// The resolver trace records the walk's own lookups.
+		// A famous name the model tagged `street` is never queried by the walk
+		// (`street` is not in the placetype map) and is answered by the post-walk
+		// span-rescore, which resolves through the backend directly and emits no record.
+		// Measured on "Frankfurt": a resolved locality with a placeID beside `resolver: []`.
 		const resolved = assembleAccount(ITEM, run({ trace: traceOf() }), NO_EXPECTATION)
 
 		const abstained = assembleAccount(
@@ -603,8 +607,8 @@ describe("renderAccount", () => {
 })
 
 /**
- * The evidence reading for a set of channels, through the shared `evidenceCensus` rather than a hand-built object — the
- * starvation predicate must keep meaning whatever that function decides it means.
+ * The evidence reading for a set of channels, through the shared `evidenceCensus` rather than a
+ * hand-built object — the starvation predicate must keep meaning whatever that function decides it means.
  */
 function evidenceOf(channels: Partial<NeuralParseTrace>) {
 	return assembleAccount(ITEM, run({ trace: traceOf({ parse: trace(channels) }) }), NO_EXPECTATION).evidence

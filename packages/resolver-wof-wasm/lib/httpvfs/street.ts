@@ -50,12 +50,14 @@ export interface StreetPointHit {
 }
 
 /**
- * Exact situs point — async twin of `AddressPointSqliteLookup`. Postcode scope first, locality fallback.
+ * Exact situs point — async twin of `AddressPointSqliteLookup`.
+ * Postcode scope first, locality fallback.
  */
 export class HTTPVFSAddressPointLookup {
 	#worker: HTTPVFSDB
 	/**
-	 * One memoized round trip to confirm the extract carries `address_point` (graceful on a tableless extract, #568).
+	 * One memoized round trip to confirm the extract carries `address_point`
+	 * (graceful on a tableless extract, #568).
 	 */
 	readonly #hasTable: () => Promise<boolean>
 	#locale: StreetLocale
@@ -99,8 +101,8 @@ export class HTTPVFSAddressPointLookup {
 		}
 
 		if (!rows.length && query.locality) {
-			// FR extracts fold arrondissement communes to the base city on both sides (the node class +
-			// BAN builder discipline) — mirror it here so the twins stay in lockstep.
+			// FR extracts fold arrondissement communes to the base city on both sides
+			// (the node class + BAN builder discipline) — mirror it here so the twins stay in lockstep.
 			const localityKey =
 				this.#locale === "fr"
 					? stripArrondissement(normalizeLocalityForKey(query.locality))
@@ -131,7 +133,8 @@ export interface StreetInterpHit {
 }
 
 /**
- * Tiger-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped. abstains on cross-ZIP ambiguity.
+ * Tiger-range interpolation — async twin of `StreetInterpolator`.
+ * Postcode-scoped. abstains on cross-ZIP ambiguity.
  */
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB

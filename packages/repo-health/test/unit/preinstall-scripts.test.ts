@@ -29,8 +29,9 @@ import { describe, expect, test } from "vitest"
 const REPO_ROOT = repoRootPath()
 
 /**
- * Every script a workflow runs before (or without) `yarn install`, keyed by repo-relative path and carrying the step
- * that runs it. The graph reachable from each by relative import inherits the same constraint.
+ * Every script a workflow runs before (or without) `yarn install`, keyed by repo-relative
+ * path and carrying the step that runs it. The graph reachable from each by
+ * relative import inherits the same constraint.
  */
 const PRE_INSTALL_ENTRY_POINTS: Record<string, string> = {
 	"docs/scripts/check/docs-structure.ts":
@@ -40,8 +41,9 @@ const PRE_INSTALL_ENTRY_POINTS: Record<string, string> = {
 }
 
 /**
- * Walk the relative-import closure of one entry point, collecting every non-relative specifier it reaches along the
- * way. A specifier is reported with the file that spells it, so a failure names the edit to make.
+ * Walk the relative-import closure of one entry point, collecting every non-relative
+ * specifier it reaches along the way. A specifier is reported with the file that
+ * spells it, so a failure names the edit to make.
  */
 async function collectReachableExternals(entryPoint: string): Promise<Array<{ file: string; specifier: string }>> {
 	const externals: Array<{ file: string; specifier: string }> = []
@@ -56,8 +58,9 @@ async function collectReachableExternals(entryPoint: string): Promise<Array<{ fi
 
 		const source = await readLocalTextFile(filePath)
 
-		// Runtime specifiers only: type-only imports are erased by Node's type stripping (see ts-ast.ts).
-		// The shared walk reads string-literal-like specifiers, so a no-substitution template literal counts too.
+		// Runtime specifiers only: type-only imports are erased by Node's type stripping
+		// (see ts-ast.ts). The shared walk reads string-literal-like specifiers,
+		// so a no-substitution template literal counts too.
 		for (const specifier of moduleSpecifiers(ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true))) {
 			if (!specifier.startsWith(".")) {
 				externals.push({ file: relative(REPO_ROOT, filePath), specifier })

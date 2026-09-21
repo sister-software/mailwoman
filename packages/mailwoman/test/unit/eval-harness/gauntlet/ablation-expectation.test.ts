@@ -91,8 +91,8 @@ const LADDER: AblationLadder = ablationLadderFromChain(
 )
 
 /**
- * A gazetteer that answers from fixtures. `named` honours the country filter only — the bbox filter is the reader's job
- * and is covered where it matters (`ablation-gazetteer.ts`).
+ * A gazetteer that answers from fixtures. `named` honours the country filter only —
+ * the bbox filter is the reader's job and is covered where it matters (`ablation-gazetteer.ts`).
  */
 function fakeGazetteer(over: Partial<AblationGazetteerProbe> = {}): AblationGazetteerProbe {
 	const byName: Record<string, AblationPlace[]> = {
@@ -174,8 +174,8 @@ describe("ablationLadderFromChain", () => {
 		expect(LADDER.rungs.map((r) => r.kind)).toEqual(["base", "locality", "county", "region", "country"])
 	})
 
-	// A gazetteer bbox that makes an ancestor tighter than its child would pass the child and fail the parent for the
-	// same point, which is not a ladder.
+	// A gazetteer bbox that makes an ancestor tighter than its child would pass the child
+	// and fail the parent for the same point, which is not a ladder.
 	it("keeps radii non-decreasing going up", () => {
 		const radii = LADDER.rungs.map((r) => r.radiusKM)
 
@@ -222,8 +222,8 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
 		expect(expected).toMatchObject({ kind: "rung", depth: 0 })
 	})
 
-	// The operator's own example: dropping the country from an address the region still pins must not be graded as a
-	// break — the surviving evidence keeps the deep rung.
+	// The operator's own example: dropping the country from an address the region still
+	// pins must not be graded as a break — the surviving evidence keeps the deep rung.
 	it("keeps the deep rung when only the country goes", () => {
 		const expected = deriveExpectedRung(
 			{ locality: "Springfield", region: "Illinois", street: "Evergreen Terrace", house_number: "742" },
@@ -274,9 +274,10 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
 /**
  * The circularity guard.
  *
- * An expectation derived from the variant's own output would grade the pipeline against itself and pass everything.
- * `deriveExpectedRung` takes no result argument, so the direct version cannot compile. these pin the property so a
- * later "just peek at the answer" refactor fails loudly instead of quietly making the layer useless.
+ * An expectation derived from the variant's own output would grade the pipeline
+ * against itself and pass everything. `deriveExpectedRung` takes no result argument,
+ * so the direct version cannot compile. these pin the property so a later "just peek at
+ * the answer" refactor fails loudly instead of quietly making the layer useless.
  */
 describe("the expectation is INVARIANT to the variant's output", () => {
 	const gz = fakeGazetteer()
@@ -331,8 +332,9 @@ describe("residualWords — the corpus types less than the input carries", () =>
 		expect(residualWords("742 A B, IL", { region: "IL" })).toEqual([])
 	})
 
-	// `fr-chevaleret-rooftop` asserts only its postcode. Deleting it leaves the model an empty component set, and an
-	// empty set used to read as "nothing names a place" → abstain → the correct rooftop graded overconfident.
+	// `fr-chevaleret-rooftop` asserts only its postcode. Deleting it leaves the model
+	// an empty component set, and an empty set used to read as "nothing names a place"
+	// → abstain → the correct rooftop graded overconfident.
 	it("turns an otherwise-ABSTAIN expectation into an unconstrained one", () => {
 		const gz = fakeGazetteer()
 
@@ -340,8 +342,8 @@ describe("residualWords — the corpus types less than the input carries", () =>
 		expect(deriveExpectedRung({}, LADDER, gz, ["chevaleret", "paris"]).kind).toBe(UNCONSTRAINED_RUNG)
 	})
 
-	// …but untyped words can only stop an abstention, never deepen a rung expectation: they are evidence of unknown
-	// strength, and treating them as strong would be the same guess in the other direction.
+	// …but untyped words can only stop an abstention, never deepen a rung expectation: they are evidence
+	// of unknown strength, and treating them as strong would be the same guess in the other direction.
 	it("does not deepen a rung expectation", () => {
 		const withResidual = deriveExpectedRung({ region: "Illinois" }, LADDER, fakeGazetteer(), ["evergreen", "terrace"])
 
@@ -359,8 +361,8 @@ describe("gradeAgainstLadder", () => {
 		expect(graded).toMatchObject({ grade: "held", achievedRungDepth: 0, degradedRungs: 0 })
 	})
 
-	// The whole point of the layer: a coarser answer the surviving evidence justifies passes, and the rung-depth delta
-	// is recorded as data.
+	// The whole point of the layer: a coarser answer the surviving evidence justifies passes,
+	// and the rung-depth delta is recorded as data.
 	it("passes a coarsening the surviving evidence justifies, and records how far it fell", () => {
 		const graded = gradeAgainstLadder({ ...base, expected: rung(3), lat: 39.76, lon: -89.66 })
 
@@ -518,8 +520,9 @@ describe("buildCaseLadder", () => {
 		expect((built as { anchorSource: string }).anchorSource).toBe("pipeline-anchor")
 	})
 
-	// The Bermuda class: the reverse walk starts from `place_bbox`, so a country whose bbox is degenerate is invisible
-	// and its points are attributed to a large neighbour. The corpus's own country column is the check.
+	// The Bermuda class: the reverse walk starts from `place_bbox`, so a country whose
+	// bbox is degenerate is invisible and its points are attributed to a large neighbour.
+	// The corpus's own country column is the check.
 	it("refuses a ladder whose containment country contradicts the corpus", () => {
 		const built = buildCaseLadder({ lat: 32.3, lon: -64.87 }, 1, gz, { lat: 32.3, lon: -64.87 }, "BM")
 

@@ -62,9 +62,10 @@ export interface LocaleTemplate {
 }
 
 /**
- * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header). Exported so recipes (the
- * `po-box-cedex` recipe, `recipes/po/box/cedex/recipe.ts`) can reuse this list as the single source of truth for non-US
- * leaders instead of re-deriving it — the US recipe additionally has `@mailwoman/codex/us`
+ * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header).
+ * Exported so recipes (the `po-box-cedex` recipe, `recipes/po/box/cedex/recipe.ts`)
+ * can reuse this list as the single source of truth for non-US leaders
+ * instead of re-deriving it — the US recipe additionally has `@mailwoman/codex/us`
  * `US_PO_BOX_DESIGNATORS`/`isPOBox` as its matcher-side truth.
  */
 export const PO_BOX_LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
@@ -115,8 +116,8 @@ export const PO_BOX_LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 const LEADERS_BY_LOCALE = new Map<string, LocaleTemplate>(PO_BOX_LOCALE_TEMPLATES.map((t) => [t.locale, t]))
 
 /**
- * Inject number-format noise into a box number string. Returns the noisy variant or the original (10% probability of
- * noise per the design).
+ * Inject number-format noise into a box number string. Returns the noisy variant
+ * or the original (10% probability of noise per the design).
  */
 export function maybeNoisifyBoxNumber(num: string, random: () => number): string {
 	if (random() > 0.1) return num
@@ -138,7 +139,8 @@ export function maybeNoisifyBoxNumber(num: string, random: () => number): string
 /**
  * Compose a PO box phrase like "PO Box 123" or "PMB 200".
  *
- * Returns both the phrase and the canonical leader+number so the BIO aligner can mark the entire span as `po_box`.
+ * Returns both the phrase and the canonical leader+number so the BIO aligner
+ * can mark the entire span as `po_box`.
  */
 export function composePoBoxPhrase(leader: string, number: string): string {
 	return `${leader} ${number}`
@@ -178,8 +180,9 @@ function defaultPickNumber(random: () => number): string {
 }
 
 /**
- * Generate one PO box row for a base (locality, region, postcode, country) tuple. Picks a locale-appropriate leader and
- * number. Optionally generates a PMB variant when the base tuple includes a street.
+ * Generate one PO box row for a base (locality, region, postcode, country) tuple.
+ * Picks a locale-appropriate leader and number. Optionally generates a PMB variant
+ * when the base tuple includes a street.
  */
 export function synthesizePoBoxRow(
 	base: PoBoxBaseTuple & { street?: string; houseNumber?: string },
@@ -201,16 +204,16 @@ export function synthesizePoBoxRow(
 	// PMB variant: requires both a street and a PMB-supporting locale.
 	const wantPmb = base.street && tpl.pmb && random() < pmbRatio
 
-	// A tuple's `country` is whatever its source wrote — `ES`, `ESP` or `Spain` — and a layout is keyed by the alpha-2
-	// code. Resolving here rather than requiring the code of every caller keeps the same breadth `poBoxTemplateLocale`
-	// already accepts for the box vocabulary.
+	// A tuple's `country` is whatever its source wrote — `ES`, `ESP` or `Spain` — and a layout is
+	// keyed by the alpha-2 code. Resolving here rather than requiring the code of every caller
+	// keeps the same breadth `poBoxTemplateLocale` already accepts for the box vocabulary.
 	const iso2 = countryCodeForTable(base.country)
 
 	if (!iso2) return null
 
-	// The country's own layout writes the order and the separators, and reports which components it printed — France
-	// absorbs the region into its postcode line, so a row that emitted `region` regardless would carry a label whose
-	// text is not in `raw`.
+	// The country's own layout writes the order and the separators, and reports
+	// which components it printed — France absorbs the region into its postcode line,
+	// so a row that emitted `region` regardless would carry a label whose text is not in `raw`.
 	const adminTail: ComponentDict = { locality: base.locality, postcode: base.postcode }
 
 	if (base.region?.trim()) {
@@ -252,11 +255,12 @@ export function synthesizePoBoxRow(
 }
 
 /**
- * The US military/diplomatic PO-box class (#517). A distinct shape the leader-based locale templates can't express: a
- * unit line (`PSC <id> Box <box>`, `CMR <id> Box <box>`, `Unit <id> [Box <box>]`) tagged `po_box`, then the post-office
- * code (APO/FPO/DPO) as the locality and the armed-forces region (AA/AE/AP) as the region, with a theatre-specific ZIP.
- * Authoritative reference + citations: `@mailwoman/codex` `codex/us/military-address.ts`; the small constants are
- * inlined here so the generator is self-contained.
+ * The US military/diplomatic PO-box class (#517). A distinct shape the leader-based locale templates
+ * can't express: a unit line (`PSC <id> Box <box>`, `CMR <id> Box <box>`, `Unit <id> [Box <box>]`)
+ * tagged `po_box`, then the post-office code (APO/FPO/DPO) as the locality
+ * and the armed-forces region (AA/AE/AP) as the region, with a theatre-specific ZIP.
+ * Authoritative reference + citations: `@mailwoman/codex` `codex/us/military-address.ts`;
+ * the small constants are inlined here so the generator is self-contained.
  */
 const MIL_UNITS: ReadonlyArray<{ code: string; boxRequired: boolean }> = [
 	{ code: "PSC", boxRequired: true },
@@ -276,7 +280,8 @@ const MIL_REGION_ZIP: ReadonlyArray<{ region: string; zip: (r: () => number) => 
 ]
 
 /**
- * Generate one US military/diplomatic PO-box row (#517). Self-contained — draws no base tuple.
+ * Generate one US military/diplomatic PO-box row (#517).
+ * Self-contained — draws no base tuple.
  */
 export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): SynthesizedPoBoxRow {
 	const random = opts.random ?? Math.random
@@ -306,12 +311,13 @@ export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): Synth
 const PO_BOX_TEMPLATE_LOCALES: ReadonlySet<string> = new Set(PO_BOX_LOCALE_TEMPLATES.map((t) => t.locale))
 
 /**
- * The locale whose PO-BOX vocabulary a country's rows are written in — which is a narrower question than
- * `countryToLocale`'s, and the reason this carries its own name rather than shadowing it.
+ * The locale whose PO-BOX vocabulary a country's rows are written in — which is a narrower question
+ * than `countryToLocale`'s, and the reason this carries its own name rather than shadowing it.
  *
- * A locale the shared map resolves but {@link PO_BOX_LOCALE_TEMPLATES} does not carry falls back to `en-US`, so `DE`
- * (shared: `de-DE`, no PO-box template) renders the en-US box vocabulary. The order is a separate axis and comes from
- * the country's own codex layout, so such a row is German-ordered with American box words.
+ * A locale the shared map resolves but {@link PO_BOX_LOCALE_TEMPLATES} does not carry falls back
+ * to `en-US`, so `DE` (shared: `de-DE`, no PO-box template) renders the en-US box vocabulary.
+ * The order is a separate axis and comes from the country's own codex layout,
+ * so such a row is German-ordered with American box words.
  */
 export function poBoxTemplateLocale(country: string): string {
 	const locale = baseCountryToLocale(country)

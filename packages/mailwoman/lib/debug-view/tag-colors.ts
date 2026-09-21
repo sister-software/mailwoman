@@ -48,8 +48,8 @@ const TAG_COLORS: Partial<Record<ComponentTag, string>> = {
 }
 
 /**
- * Neutral dark gray for any tag not in the table above — a future `ComponentTag` addition, or a stray string. The
- * ribbon degrades to an unstyled segment, never a crash or a lookup throw.
+ * Neutral dark gray for any tag not in the table above — a future `ComponentTag` addition,
+ * or a stray string. The ribbon degrades to an unstyled segment, never a crash or a lookup throw.
  */
 const DEFAULT_TAG_COLOR = "#3d444d"
 

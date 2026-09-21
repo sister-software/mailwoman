@@ -12,8 +12,8 @@ import { applyKey, wordStart, type InputState } from "mailwoman/debug-view/Query
 import { describe, expect, it } from "vitest"
 
 /**
- * A `Key` with every flag off but the named ones — Ink hands the handler a fully-populated object, so a partial one
- * would let a branch pass here that a real keypress never reaches.
+ * A `Key` with every flag off but the named ones — Ink hands the handler a fully-populated
+ * object, so a partial one would let a branch pass here that a real keypress never reaches.
  */
 function key(pressed: Partial<Key> = {}): Key {
 	return {
@@ -88,8 +88,8 @@ describe("applyKey", () => {
 	})
 
 	it("deletes the word before the cursor on ctrl+W, which Ink delivers as the letter w", () => {
-		// the BUG: Ink resolves ctrl+letter to `input: "w"` with `key.ctrl`. A handler that only guards ctrl+C
-		// falls through to its insert branch and types the letter.
+		// the BUG: Ink resolves ctrl+letter to `input: "w"` with `key.ctrl`.
+		// A handler that only guards ctrl+C falls through to its insert branch and types the letter.
 		expect(applyKey(AT_END("hello world"), "w", key({ ctrl: true }))).toEqual({ value: "hello ", cursor: 6 })
 	})
 
@@ -131,8 +131,9 @@ describe("applyKey", () => {
 	})
 
 	it("steps and deletes by whole codepoints, not UTF-16 units", () => {
-		// "St 🏠" is 6 UTF-16 units: the house is a surrogate pair. Stepping by one unit leaves a lone surrogate —
-		// a string that renders as `�` and that the tokenizer never saw in training.
+		// "St 🏠" is 6 UTF-16 units: the house is a surrogate pair.
+		// Stepping by one unit leaves a lone surrogate — a string that renders as `�`
+		// and that the tokenizer never saw in training.
 		const HOUSE = "St 🏠"
 
 		expect(HOUSE).toHaveLength(5)
@@ -145,8 +146,9 @@ describe("applyKey", () => {
 		// Forward Delete takes the whole codepoint too.
 		expect(applyKey({ value: HOUSE, cursor: 3 }, "", key({ delete: true }))).toEqual({ value: "St ", cursor: 3 })
 
-		// A cursor handed in mid-pair snaps to the pair's start (offset 4 → 3, the way a browser refuses to put a
-		// caret inside a grapheme) and the edit applies from there — the space goes, the house survives intact.
+		// A cursor handed in mid-pair snaps to the pair's start
+		// (offset 4 → 3, the way a browser refuses to put a caret inside a grapheme)
+		// and the edit applies from there — the space goes, the house survives intact.
 		expect(applyKey({ value: HOUSE, cursor: 4 }, "", key({ backspace: true }))).toEqual({
 			value: "St🏠",
 			cursor: 2,
@@ -154,8 +156,8 @@ describe("applyKey", () => {
 	})
 
 	it("keeps a pasted multi-line address instead of dropping the whole paste", () => {
-		// A paste arrives as one `input`. Rejecting it because it contains a newline dropped the address on the
-		// floor with no feedback — the field simply didn't respond.
+		// A paste arrives as one `input`. Rejecting it because it contains a newline dropped
+		// the address on the floor with no feedback — the field simply didn't respond.
 		expect(applyKey({ value: "", cursor: 0 }, "12 Rue de Rivoli\n75001 Paris", key())).toEqual({
 			value: "12 Rue de Rivoli 75001 Paris",
 			cursor: 28,

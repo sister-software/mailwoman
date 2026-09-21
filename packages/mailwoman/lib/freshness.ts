@@ -28,8 +28,9 @@ import { probeManifest } from "#data/inventory"
 /**
  * Whether an artifact could state its own provenance.
  *
- * Three states rather than two, for the reason `data-inventory.ts` keeps four: "we could not open it" is not "it has no
- * manifest", and collapsing them would report a locked or truncated database as a plain provenance gap.
+ * Three states rather than two, for the reason `data-inventory.ts` keeps four:
+ * "we could not open it" is not "it has no manifest", and collapsing them would
+ * report a locked or truncated database as a plain provenance gap.
  */
 export const ManifestState = {
 	/**
@@ -37,12 +38,13 @@ export const ManifestState = {
 	 */
 	Present: "present",
 	/**
-	 * The artifact is on disk and carries no manifest — it predates the layer interface, and takes its stamp on the next
-	 * rebuild.
+	 * The artifact is on disk and carries no manifest — it predates the layer interface,
+	 * and takes its stamp on the next rebuild.
 	 */
 	Absent: "absent",
 	/**
-	 * The artifact could not be opened, or its manifest could not be dated. Reported apart from
+	 * The artifact could not be opened, or its manifest could not be
+	 * dated. Reported apart from
 	 * {@link ManifestState.Absent} because it is a fault to chase rather than a rebuild to schedule.
 	 */
 	Unreadable: "unreadable",
@@ -55,9 +57,9 @@ export type ManifestState = (typeof ManifestState)[keyof typeof ManifestState]
  */
 export interface ArtifactFreshness {
 	/**
-	 * The role this artifact plays for the running process (`gazetteer`, `reverse-admin`) — not its filename, which the
-	 * caller can read off `path`. A reader wants to know which of the databases in front of them is stale, and the role
-	 * is how they know which one to rebuild.
+	 * The role this artifact plays for the running process (`gazetteer`, `reverse-admin`) — not its
+	 * filename, which the caller can read off `path`. A reader wants to know which of the
+	 * databases in front of them is stale, and the role is how they know which one to rebuild.
 	 */
 	name: string
 	/**
@@ -78,9 +80,10 @@ export interface ArtifactFreshness {
 	 */
 	version?: string
 	/**
-	 * What it was built from: the manifest's `source` then its `source_vintage`. Two entries rather than one string
-	 * because the candidate gazetteer's source is a chain (it names its ancestor admin build) and the vintage carries the
-	 * database counts that make one candidate build different from another.
+	 * What it was built from: the manifest's `source` then its `source_vintage`.
+	 * Two entries rather than one string because the candidate gazetteer's source is a
+	 * chain (it names its ancestor admin build) and the vintage carries the database
+	 * counts that make one candidate build different from another.
 	 */
 	sources?: string[]
 }
@@ -92,9 +95,9 @@ export interface FreshnessReport {
 	/**
 	 * The newest `built` epoch across the artifacts that carried one, verbatim.
 	 *
-	 * Absent when nothing was stamped. A `/status` that answered with the boot time, the newest mtime, or an epoch zero
-	 * would be answering a question it cannot answer — the field is optional in the Nominatim interface precisely so it
-	 * can be left out.
+	 * Absent when nothing was stamped. A `/status` that answered with the boot time,
+	 * the newest mtime, or an epoch zero would be answering a question it cannot answer —
+	 * the field is optional in the Nominatim interface precisely so it can be left out.
 	 */
 	dataUpdated?: string
 	artifacts: ArtifactFreshness[]
@@ -111,12 +114,13 @@ export interface FreshnessArtifact {
 /**
  * Read one artifact's `layer_manifest`.
  *
- * Reuses `data-inventory`'s {@link probeManifest} — the package's one home for "read this database's manifest, or say
- * why not" — rather than opening a second reader over the same table. It deliberately does not run the interface's
- * `readLayerManifest` validator: that eval enforces the spine-key and tier invariants, which govern how a layer is
- * joined, and a layer whose spine declaration is wrong still has a build date this surface can report. Rejecting the
- * date over an unrelated field would report absence where a fact exists, which is the failure this whole reader is
- * built against.
+ * Reuses `data-inventory`'s {@link probeManifest} — the package's one home for "read this
+ * database's manifest, or say why not" — rather than opening a second reader over the same table.
+ * It deliberately does not run the interface's `readLayerManifest` validator:
+ * that eval enforces the spine-key and tier invariants, which govern how a layer is joined,
+ * and a layer whose spine declaration is wrong still has a build date this surface can report.
+ * Rejecting the date over an unrelated field would report absence where a fact exists,
+ * which is the failure this whole reader is built against.
  */
 async function readArtifact({ name, path }: FreshnessArtifact): Promise<ArtifactFreshness> {
 	if (!(await pathExists(path))) {
@@ -162,9 +166,9 @@ async function readArtifact({ name, path }: FreshnessArtifact): Promise<Artifact
 /**
  * Report the provenance of the artifacts a session opened.
  *
- * Call this once, at boot, with the paths the process actually resolved — not with everything in the data root. A
- * server holds its database handles open for its whole life, so the artifact it is serving from is the one it opened at
- * start, whatever a later symlink swap points at.
+ * Call this once, at boot, with the paths the process actually resolved — not with everything in
+ * the data root. A server holds its database handles open for its whole life, so the artifact
+ * it is serving from is the one it opened at start, whatever a later symlink swap points at.
  */
 export async function readFreshness(artifacts: readonly FreshnessArtifact[]): Promise<FreshnessReport> {
 	const read: ArtifactFreshness[] = []

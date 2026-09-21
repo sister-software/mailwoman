@@ -15,14 +15,15 @@
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
- * The subsidiary-name→FRN score when the two RAW names are byte-identical — the strongest this match can ever be, and
- * the ceiling for {@linkcode scoreEdgarSubsidiaryMatch}.
+ * The subsidiary-name→FRN score when the two RAW names are byte-identical — the strongest
+ * this match can ever be, and the ceiling for {@linkcode scoreEdgarSubsidiaryMatch}.
  *
- * **It is not 1, and it is bounded by what canonical-name matching can know, which is less than identity.** Two
- * disjoint companies can file under the same legal name; `edgar-filings.ts`'s `resolveCIKCandidates` docstring pins
- * that case verbatim (`"American Broadband LLC"` and `"American Broadband, Inc."`, disjoint CIKs) and says in terms
- * that "a score of `1` is not itself a license to pick". A name is evidence about identity, never a proof of it, so no
- * value on this ladder may read as certainty.
+ * **It is not 1, and it is bounded by what canonical-name matching can know,
+ * which is less than identity.** Two disjoint companies can file under the same legal name;
+ * `edgar-filings.ts`'s `resolveCIKCandidates` docstring pins that case verbatim
+ * (`"American Broadband LLC"` and `"American Broadband, Inc."`, disjoint CIKs) and says in terms that
+ * "a score of `1` is not itself a license to pick". A name is evidence about identity,
+ * never a proof of it, so no value on this ladder may read as certainty.
  */
 export const EDGAR_MATCH_SCORE_IDENTICAL_RAW_NAME = 0.9
 
@@ -39,22 +40,23 @@ export const EDGAR_MATCH_SCORE_NORMALIZATION_ONLY = 0.75
  * Broadband, Inc."` (Exhibit 21). Weak on purpose: canonicalization is what erased the only part of the string that
  * distinguished them, so the match is resting on a token it deliberately threw away. The abstention in
  * {@linkcode processEdgarSubsidiaryRow} (`matchedFRNs.length !== 1`) does not cover this — it only fires on a collision
- * within the 499 file, so when 499 carries only the LLC and Exhibit 21 discloses the Inc., exactly one FRN matches and
- * the edge is written. That edge may well be the wrong company. this number says so.
+ * within the 499 file, so when 499 carries only the LLC and Exhibit 21 discloses the Inc., exactly one
+ * FRN matches and the edge is written. That edge may well be the wrong company. this number says so.
  */
 export const EDGAR_MATCH_SCORE_DESIGNATION_DIFFERS = 0.5
 
 /**
- * The sorted legal designations {@linkcode canonicalizeOrganizationName} stripped from a name, as a comparable key.
- * Sorted (not encounter-ordered) because `"Acme Co Inc"` and `"Acme Inc Co"` deleted the same tokens.
+ * The sorted legal designations {@linkcode canonicalizeOrganizationName} stripped from
+ * a name, as a comparable key. Sorted (not encounter-ordered) because `"Acme Co Inc"`
+ * and `"Acme Inc Co"` deleted the same tokens.
  */
 export function strippedDesignationKey(name: string): string {
 	return (canonicalizeOrganizationName(name)?.designations ?? []).toSorted().join(" ")
 }
 
 /**
- * The `match_score` for one subsidiary-name→FRN inference — graded per match, never one flat constant across every such
- * link regardless of how much the match actually knows.
+ * The `match_score` for one subsidiary-name→FRN inference — graded per match, never one
+ * flat constant across every such link regardless of how much the match actually knows.
  *
  * Both names reaching this function already share a canonical form. that is the match. The question this answers is how
  * much of the original string that shared form threw away, because `canonicalizeOrganizationName` maps `"American
@@ -62,16 +64,19 @@ export function strippedDesignationKey(name: string): string {
  * (verified). A match that provably cannot tell three companies apart must not report the same confidence as one on
  * identical raw names.
  *
- * **`@mailwoman/match`'s comparators were checked first and are the wrong instrument here — measured rather than
- * assumed.** `nameSimilarity` on the RAW pair scores `"American Broadband LLC"` vs `"American Broadband, Inc."` at
- * **0.9485** and vs `"American Broadband Corp"` at **0.9557** — higher than a flat 0.92 would be, because
- * Jaro-Winkler's prefix boost rewards exactly the long shared head these pairs have. String distance measures how alike
- * two spellings look. the signal that separates a real match from a designation collision is which tokens
- * canonicalization deleted, which is a set comparison. So this uses `canonicalizeOrganizationName`'s own `designations`
- * output — already computed on this path, no new dependency — rather than a comparator that would score the ambiguous
- * case highest of all.
+ * **`@mailwoman/match`'s comparators were checked first and are the wrong instrument
+ * here — measured rather than assumed.** `nameSimilarity` on the RAW pair scores
+ * `"American Broadband LLC"` vs `"American Broadband, Inc."` at **0.9485**
+ * and vs `"American Broadband Corp"` at **0.9557** — higher than a flat 0.92 would be,
+ * because Jaro-Winkler's prefix boost rewards exactly the long shared head these pairs have.
+ * String distance measures how alike two spellings look. the signal that separates a
+ * real match from a designation collision is which tokens canonicalization deleted,
+ * which is a set comparison. So this uses `canonicalizeOrganizationName`'s own
+ * `designations` output — already computed on this path, no new dependency —
+ * rather than a comparator that would score the ambiguous case highest of all.
  *
- * Three outcomes, no interpolation: a similarity curve here would imply a resolution this evidence does not have.
+ * Three outcomes, no interpolation: a similarity curve here would imply a
+ * resolution this evidence does not have.
  */
 export function scoreEdgarSubsidiaryMatch(subsidiaryName: string, legalName: string): number {
 	if (subsidiaryName === legalName) return EDGAR_MATCH_SCORE_IDENTICAL_RAW_NAME
@@ -82,9 +87,10 @@ export function scoreEdgarSubsidiaryMatch(subsidiaryName: string, legalName: str
 }
 
 /**
- * One FRN in a canonical-name bucket, carrying the RAW `legalNameOfCarrier` spelling that landed it there. The raw name
- * is what {@linkcode scoreEdgarSubsidiaryMatch} needs: the canonical form is by definition identical across every member
- * of a bucket, so it holds none of the signal that separates a real match from a designation collision.
+ * One FRN in a canonical-name bucket, carrying the RAW `legalNameOfCarrier` spelling that
+ * landed it there. The raw name is what {@linkcode scoreEdgarSubsidiaryMatch} needs:
+ * the canonical form is by definition identical across every member of a bucket,
+ * so it holds none of the signal that separates a real match from a designation collision.
  */
 export interface CanonicalNameCandidate {
 	frn: string
@@ -92,12 +98,13 @@ export interface CanonicalNameCandidate {
 }
 
 /**
- * Groups `legalNameByFRN` (the in-memory map {@linkcode buildFilerDatabase}'s form499 loop builds) by canonical name —
- * "which FRNs share this exact canonical legal name" — the input {@linkcode processEdgarSubsidiaryRow}'s corroboration
- * match reads. A canonical name shared by two or more distinct FRNs is a genuine collision (the same
- * false-identity-link hazard `edgar-filings.ts`'s `resolveCIKCandidates` documents), so the caller must see the full
- * bucket rather than just "the first match" — abstaining on a multi-member bucket is `processEdgarSubsidiaryRow`'s job
- * rather than this function's.
+ * Groups `legalNameByFRN` (the in-memory map {@linkcode buildFilerDatabase}'s form499 loop builds)
+ * by canonical name — "which FRNs share this exact canonical legal name" —
+ * the input {@linkcode processEdgarSubsidiaryRow}'s corroboration match reads.
+ * A canonical name shared by two or more distinct FRNs is a genuine collision
+ * (the same false-identity-link hazard `edgar-filings.ts`'s `resolveCIKCandidates` documents),
+ * so the caller must see the full bucket rather than just "the first match" — abstaining on
+ * a multi-member bucket is `processEdgarSubsidiaryRow`'s job rather than this function's.
  */
 export function groupFRNsByCanonicalLegalName(
 	legalNameByFRN: ReadonlyMap<string, { name: string; filedAt: string }>

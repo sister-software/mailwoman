@@ -9,8 +9,8 @@ import { describe, expect, it } from "vitest"
 
 describe("stats", () => {
 	it("percentile matches the check scripts' nearest-rank shape", () => {
-		// The exact copy migrated from oa-resolver-eval/resolver-eval — check parity depends on this
-		// semantics: sort ascending, index = floor(p/100 * n), clamped.
+		// The exact copy migrated from oa-resolver-eval/resolver-eval — check parity depends
+		// on this semantics: sort ascending, index = floor(p/100 * n), clamped.
 		const xs = [10, 1, 5, 3, 8]
 		expect(percentile(xs, 50)).toBe(5)
 		expect(percentile(xs, 90)).toBe(10)

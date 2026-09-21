@@ -38,8 +38,8 @@ const overlay = await readLocalJSONFile<CuratedOverlay>(
 )
 
 /**
- * Split a `<file>#<record>` reference. Both halves are required: the file is what a reader greps, the record is what a
- * test resolves.
+ * Split a `<file>#<record>` reference. Both halves are required: the file is what
+ * a reader greps, the record is what a test resolves.
  */
 function splitReference(reference: string): { file: string; record: string } {
 	const index = reference.lastIndexOf("#")

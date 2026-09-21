@@ -7,8 +7,8 @@
 /**
  * Mapbox Vector Tile (MVT) decoding for map-tui.
  *
- * Wraps @mapbox/vector-tile + pbf behind a plain-data shape (DecodedLayer / DecodedFeature) so the rest of map-tui
- * never touches the upstream library's lazy-geometry classes.
+ * Wraps @mapbox/vector-tile + pbf behind a plain-data shape (DecodedLayer / DecodedFeature)
+ * so the rest of map-tui never touches the upstream library's lazy-geometry classes.
  */
 
 import { VectorTile } from "@mapbox/vector-tile"

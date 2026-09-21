@@ -22,8 +22,8 @@ import { LicenseState } from "#ledger/schema"
 export type PublicLicenseStatus = "active" | "lapsed" | "revoked"
 
 /**
- * The word the public routes answer for a state. `review` reads `active`: the customer paid, and the question is the
- * operator's.
+ * The word the public routes answer for a state. `review` reads `active`:
+ * the customer paid, and the question is the operator's.
  */
 export function publicLicenseStatus(state: LicenseState): PublicLicenseStatus {
 	return state === LicenseState.Review ? LicenseState.Active : state
@@ -65,8 +65,8 @@ export function licenseStateAfterSubscription(
 }
 
 /**
- * What a refund says: a full refund revokes. a partial one is the operator's to review, and the license reads active
- * meanwhile.
+ * What a refund says: a full refund revokes. a partial one is the operator's to review,
+ * and the license reads active meanwhile.
  */
 export function licenseStateAfterRefund(charge: Pick<Stripe.Charge, "amount" | "amount_refunded">): LicenseState {
 	return charge.amount_refunded < charge.amount ? LicenseState.Review : LicenseState.Revoked

@@ -19,8 +19,9 @@ import { buildPostcodePrefixIndex } from "mailwoman/gazetteer-pipeline/postcode/
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * WOF ids for the fixture. Arbitrary, but distinct and above 2^32 on one of them — a US region id in the real gazetteer
- * is 8 digits, while the NI synthetic postcode ids run to 9.8e12, and the format carries them all as `f64`.
+ * WOF ids for the fixture. Arbitrary, but distinct and above 2^32 on one of them —
+ * a US region id in the real gazetteer is 8 digits, while the NI synthetic postcode
+ * ids run to 9.8e12, and the format carries them all as `f64`.
  */
 const US_COUNTRY_ID = 85_633_793
 const ALPHA_ID = 85_688_001
@@ -55,8 +56,8 @@ beforeAll(async () => {
 
 	using source = new DatabaseClient<WOFDatabase>(sourcePath)
 
-	// Deliberately no `meta` table — the real database has none, and the coordinate-tier rule must not read a declaration
-	// out of its absence.
+	// Deliberately no `meta` table — the real database has none, and the coordinate-tier
+	// rule must not read a declaration out of its absence.
 	source.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, latitude REAL, longitude REAL
@@ -127,8 +128,8 @@ describe("the US arm's exclusions", () => {
 
 	it("excludes null island without losing the unit from the count", () => {
 		expect(built.excludedUnits["nullIsland"]).toBe(1)
-		// The prefix still says the source enumerates two codes — `unitCount` is a claim about the postal system rather than
-		// about how many coordinates survived our hygiene.
+		// The prefix still says the source enumerates two codes — `unitCount` is a claim about
+		// the postal system rather than about how many coordinates survived our hygiene.
 		expect(nodeFor("300")?.unitCount).toBe(2)
 		expect(nodeFor("300")?.lat).toBeCloseTo(1.5, 6)
 	})
@@ -160,8 +161,8 @@ describe("the US arm's ancestry", () => {
 		expect(built.borderStraddlingPrefixes).not.toContain("400")
 	})
 
-	// `PostcodePrefixAncestor.wofID` is an `f64` because a WOF id exceeds 2^32 — the NI synthetic postcode ids start at
-	// 9.8e12. A `u32` here would silently truncate rather than fail.
+	// `PostcodePrefixAncestor.wofID` is an `f64` because a WOF id exceeds 2^32 — the NI synthetic
+	// postcode ids start at 9.8e12. A `u32` here would silently truncate rather than fail.
 	it("carries a region id past 2^32 intact", () => {
 		expect(BETA_ID).toBeGreaterThan(2 ** 32)
 		expect(nodeFor("600")?.ancestors.map((a) => a.wofID)).toEqual([US_COUNTRY_ID, BETA_ID])

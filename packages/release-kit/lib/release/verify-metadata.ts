@@ -98,8 +98,8 @@ export interface VerifyReleaseMetadataOptions {
 }
 
 /**
- * The directory `docs/docusaurus.config.ts` publishes (`path: "articles"`). A status page outside it is not the page a
- * reader opens, so citing the shipped model there proves nothing.
+ * The directory `docs/docusaurus.config.ts` publishes (`path: "articles"`).
+ * A status page outside it is not the page a reader opens, so citing the shipped model there proves nothing.
  */
 const PUBLISHED_DOCS_ROOT = "docs/articles/"
 
@@ -111,10 +111,11 @@ const PUBLISHED_STATUS_PAGE = `${PUBLISHED_DOCS_ROOT}developers/status.mdx`
 /**
  * Refuse a status path outside the published tree.
  *
- * This check verifies that A file cites the shipped version, and for four releases it verified the archived August copy
- * while the live page said 8.6.0 and model 7.0.0 (#2259). A target that can move out from under a check while still
- * resolving reports success from the wrong place, and absence of failure was read as propagation — so the path is
- * constrained rather than merely defaulted.
+ * This check verifies that A file cites the shipped version, and for four releases it
+ * verified the archived August copy while the live page said 8.6.0 and model 7.0.0 (#2259).
+ * A target that can move out from under a check while still resolving reports
+ * success from the wrong place, and absence of failure was read as propagation —
+ * so the path is constrained rather than merely defaulted.
  */
 function assertPublishedStatusPage(statusPath: string): void {
 	if (statusPath.startsWith(PUBLISHED_DOCS_ROOT)) return
@@ -136,9 +137,9 @@ export interface SurfaceResult {
 }
 
 /**
- * Read the shipped model version — the `version` field of the weights bundle's model card. This is the anchor for every
- * check: not npm / package.json, so a code-only release (which bumps npm but leaves the card untouched) is judged
- * against the model it actually ships.
+ * Read the shipped model version — the `version` field of the weights bundle's model card.
+ * This is the anchor for every check: not npm / package.json, so a code-only release
+ * (which bumps npm but leaves the card untouched) is judged against the model it actually ships.
  */
 async function readModelVersion(cardPath: string): Promise<string> {
 	const card = await readLocalJSONFile<{ version?: string }>(cardPath)
@@ -181,8 +182,9 @@ async function checkLedger(version: string, ledgerPath: string): Promise<Surface
 }
 
 /**
- * Parse the releases.mdx version matrix into ordered data rows. A data row is a `|`-delimited table line whose first
- * cell carries a version-like token. the header and `---` separator rows are skipped. The "## The matrix" table is the
+ * Parse the releases.mdx version matrix into ordered data rows.
+ * A data row is a `|`-delimited table line whose first cell carries a version-like token.
+ * the header and `---` separator rows are skipped. The "## The matrix" table is the
  * only one whose rows look like this, so a global scan is safe.
  */
 function parseMatrixRows(markdown: string): MatrixRow[] {
@@ -214,8 +216,8 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 }
 
 /**
- * The version on the matrix row carrying the `(current)` marker, or null when no row does. Shared with
- * `check-release-parity.ts`, which compares this surface against npm latest.
+ * The version on the matrix row carrying the `(current)` marker, or null when no row does.
+ * Shared with `check-release-parity.ts`, which compares this surface against npm latest.
  */
 export function currentMatrixVersion(markdown: string): string | null {
 	const row = parseMatrixRows(markdown).find((candidate) => candidate.versionCell.includes("(current)"))
@@ -224,8 +226,8 @@ export function currentMatrixVersion(markdown: string): string | null {
 }
 
 /**
- * Check 2 — releases.mdx has a matrix row for V, and the `(current)` marker is on V's row (or on a newer row when every
- * release above V is a documented "model unchanged" code-only bump).
+ * Check 2 — releases.mdx has a matrix row for V, and the `(current)` marker is on V's row
+ * (or on a newer row when every release above V is a documented "model unchanged" code-only bump).
  */
 async function checkReleases(version: string, releasesPath: string): Promise<SurfaceResult> {
 	const surface = "releases-matrix"
@@ -264,9 +266,9 @@ async function checkReleases(version: string, releasesPath: string): Promise<Sur
 
 	const { versionCell } = rows[currentIndex]!
 
-	// Rows are newest-first. current above V (smaller index) is fine only if every row strictly newer
-	// than V is a code-only "model unchanged" bump — then V is still the live model and the marker
-	// rightly sits on the newest npm row.
+	// Rows are newest-first. current above V (smaller index) is fine only if every row
+	// strictly newer than V is a code-only "model unchanged" bump — then V is still the
+	// live model and the marker rightly sits on the newest npm row.
 	if (currentIndex < vIndex) {
 		const newerRows = rows.slice(currentIndex, vIndex)
 		const nonCodeOnly = newerRows.filter((row) => !/unchanged/i.test(row.lineageCell))
@@ -340,8 +342,8 @@ export interface VerifyReleaseMetadataReport {
 }
 
 /**
- * Check every surface for the shipped model version. Throws when any surface is stale, with each remediation already
- * reported through `log`, so a caller's exit code follows the verdict.
+ * Check every surface for the shipped model version. Throws when any surface is stale, with
+ * each remediation already reported through `log`, so a caller's exit code follows the verdict.
  */
 export async function verifyReleaseMetadata(
 	options: VerifyReleaseMetadataOptions
@@ -355,9 +357,10 @@ export async function verifyReleaseMetadata(
 	const paths = {
 		cardPath: resolvePath(repoRoot, options.card ?? "packages/neural-weights-en-us/model-card.json"),
 		ledgerPath: resolvePath(repoRoot, options.ledger ?? "evals/scores-by-version.json"),
-		// Not an archive, despite the directory. `docs/records/site-2026-08/releases.mdx` is the maintained release
-		// matrix — agents.md names it as where a version with no ledger row carries its headline, and it took 10.0.0
-		// in `76c08d950`. It is deliberately unpublished, so there is no live page to move this to.
+		// Not an archive, despite the directory. `docs/records/site-2026-08/releases.mdx`
+		// is the maintained release matrix — agents.md names it as where a version
+		// with no ledger row carries its headline, and it took 10.0.0 in `76c08d950`.
+		// It is deliberately unpublished, so there is no live page to move this to.
 		releasesPath: resolvePath(repoRoot, options.releases ?? "docs/records/site-2026-08/releases.mdx"),
 		statusPath: resolvePath(repoRoot, statusRelative),
 	}

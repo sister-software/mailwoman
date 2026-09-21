@@ -129,8 +129,8 @@ describe("aggregateBrands — dominance floor", () => {
 			{ wikidata: "Q1", name: "Everything Else", n: 50 },
 		]
 
-		// Two variants tied at 50/50 — the modal share is exactly 0.5 regardless of which name the alphabetical
-		// tie-break picks. what matters here is the QID survives the floor at the boundary.
+		// Two variants tied at 50/50 — the modal share is exactly 0.5 regardless of which name the
+		// alphabetical tie-break picks. what matters here is the QID survives the floor at the boundary.
 		const brands = aggregateBrands(rows, 1)
 		expect(brands.map((b) => b.wikidata)).toEqual(["Q1"])
 	})
@@ -163,8 +163,8 @@ describe("aggregateBrands — dominance floor", () => {
 			{ wikidata: "Q1", name: "Also Minority", n: 60 },
 		]
 
-		// Clears a generous minRows (100 total >= 1) but modal share 60/100 = 0.6 ... raise the bar to prove the
-		// floor bites independently: use a custom dominance above the modal share.
+		// Clears a generous minRows (100 total >= 1) but modal share 60/100 = 0.6 ... raise the bar
+		// to prove the floor bites independently: use a custom dominance above the modal share.
 		expect(aggregateBrands(rows, 1, 0.7).map((b) => b.wikidata)).toEqual([])
 		expect(aggregateBrands(rows, 1, 0.5).map((b) => b.wikidata)).toEqual(["Q1"])
 	})

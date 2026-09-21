@@ -123,9 +123,9 @@ describe("convention engine — live dispatch", () => {
 	})
 
 	it("an injected country convention that drops postcode_area_resolution reroutes dispatch", async () => {
-		// Key the convention by the DE country WOF id (90). Removing postcode_area_resolution from the
-		// strategy list means the typo no longer recovers Plauen — proof the merged convention controls
-		// findPlace dispatch through the live country → WOF-id → convention path.
+		// Key the convention by the DE country WOF id (90). Removing postcode_area_resolution from
+		// the strategy list means the typo no longer recovers Plauen — proof the merged convention
+		// controls findPlace dispatch through the live country → WOF-id → convention path.
 		using lookup = new WOFSQLitePlaceLookup({
 			database: db,
 			buildFTS: true,

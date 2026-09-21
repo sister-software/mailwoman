@@ -74,12 +74,12 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 
 		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
-		// The resolved tier line — street-level when the database is present, admin centroid otherwise. either is a
-		// legitimate resolve for this environment, so the assertion accepts both.
+		// The resolved tier line — street-level when the database is present, admin centroid otherwise.
+		// either is a legitimate resolve for this environment, so the assertion accepts both.
 		expect(text).toMatch(/address_point|admin/)
 
-		// The map pane inked something: a rendered braille cell (U+2800..U+28FF) from the tile geometry, or at
-		// minimum the marker glyph at the resolved coordinate.
+		// The map pane inked something: a rendered braille cell (U+2800..U+28FF) from the
+		// tile geometry, or at minimum the marker glyph at the resolved coordinate.
 		expect(/[⠀-⣿]/u.test(text) || text.includes("●")).toBe(true)
 
 		// The raw query echoed back in the input row.
@@ -91,8 +91,9 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 
 		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
-		// The evidence rows, each with a value only the live classifier can produce: the conventions system and how
-		// it was chosen, the locale head's own axis, the SentencePiece stream, the channels as fed, the decode.
+		// The evidence rows, each with a value only the live classifier can produce:
+		// the conventions system and how it was chosen, the locale head's own axis,
+		// the SentencePiece stream, the channels as fed, the decode.
 		expect(text).toMatch(/system\s+us \((auto|pinned)\)/u)
 		expect(text).toContain("mode ")
 		expect(text).toMatch(/locale-head\s+[A-Z]{2} \d\.\d\d/u)
@@ -119,18 +120,19 @@ describe("runStaticDebug --debug-size floor", () => {
 	test("a --debug-size below 60x20 rejects with the minimum-size guidance, not a map-tui RangeError", async () => {
 		const options = createGeocodeCommandOptions({ debugSize: "100x5" })
 
-		// Regression for the raw `RangeError: Invalid typed array length: -4608` `new RGBAGrid` threw at this size
-		// (mapPaneCellSize's row math goes negative before map-tui's allocation does) — assertDebugSizeFloor now
-		// catches it before any DB/weights work, so this rejects even without a resolvable session.
+		// Regression for the raw `RangeError: Invalid typed array length: -4608` `new RGBAGrid` threw
+		// at this size (mapPaneCellSize's row math goes negative before map-tui's allocation does) —
+		// assertDebugSizeFloor now catches it before any DB/weights work,
+		// so this rejects even without a resolvable session.
 		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
 			/--debug-size below the 60x20 minimum: 100x5/
 		)
 	})
 
 	test("the floor is exactly the frame's fixed chrome plus a 6-row map pane", async () => {
-		// The floor is arithmetic rather than taste: 19 rows leaves the map pane 5 content rows, 20 leaves it 6. Asserting
-		// the pair is what keeps the constant and `mapPaneCellSize` from drifting apart the next time a row is added
-		// to the input area.
+		// The floor is arithmetic rather than taste: 19 rows leaves the map pane 5 content rows,
+		// 20 leaves it 6. Asserting the pair is what keeps the constant and `mapPaneCellSize`
+		// from drifting apart the next time a row is added to the input area.
 		expect(mapPaneCellSize(60, 20).rows).toBe(6)
 		expect(mapPaneCellSize(60, 19).rows).toBe(5)
 
@@ -144,9 +146,9 @@ describe("runStaticDebug --debug-size floor", () => {
 
 describe("runStaticDebug empty input", () => {
 	test("an empty input rejects with the one-shot path's missing-argument message, not a junk frame", async () => {
-		// `runStaticDebug`'s empty-input guard runs before assertDebugFormatSanity/assertDebugSizeFloor and before
-		// createGeocodeSession, so this rejects even without a resolvable session — same unconditional posture as
-		// the --debug-size floor test above.
+		// `runStaticDebug`'s empty-input guard runs before assertDebugFormatSanity/assertDebugSizeFloor
+		// and before createGeocodeSession, so this rejects even without a resolvable session —
+		// same unconditional posture as the --debug-size floor test above.
 		await expect(runStaticDebug("", createGeocodeCommandOptions())).rejects.toThrow(
 			'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
 		)

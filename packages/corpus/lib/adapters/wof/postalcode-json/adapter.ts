@@ -54,8 +54,9 @@ import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
 /**
  * US state name → USPS alpha-2, the surface form a US postal address carries.
  *
- * WOF names the region in full (`Oregon`); the layout renders whatever it is given, because a layout is an order and
- * not a vocabulary. Choosing the surface form is therefore this adapter's decision, and the postal one is the code.
+ * WOF names the region in full (`Oregon`); the layout renders whatever it is given,
+ * because a layout is an order and not a vocabulary. Choosing the surface form is
+ * therefore this adapter's decision, and the postal one is the code.
  */
 const US_STATE_ABBREVIATION_BY_NAME: ReadonlyMap<string, string> = new Map(
 	Object.values(US_STATE_BY_ABBREVIATION).map((state) => [state.name.toLowerCase(), state.abbreviation])
@@ -73,9 +74,9 @@ function regionSurface(country: string, name: string): string {
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
  *
- * Per-adapter deliberately (the admin adapter carries its own): each table is a record filter for its adapter's
- * emission set — this one keeps `postalcode` plus the ancestry placetypes its variants render — not a shared
- * vocabulary.
+ * Per-adapter deliberately (the admin adapter carries its own): each table is a
+ * record filter for its adapter's emission set — this one keeps `postalcode` plus the
+ * ancestry placetypes its variants render — not a shared vocabulary.
  */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {
@@ -95,8 +96,8 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 }
 
 /**
- * Compute hierarchy variants for a postcode record. `selfName` is the postcode surface form (canonical `wof:name` for
- * the `default` slot, a `name:*` localized variant otherwise).
+ * Compute hierarchy variants for a postcode record. `selfName` is the postcode surface form
+ * (canonical `wof:name` for the `default` slot, a `name:*` localized variant otherwise).
  */
 export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): WOFVariantSpec[] {
 	if (placetypeToTag(row.placetype) !== "postcode") return []
@@ -138,16 +139,16 @@ export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfN
 }
 
 /**
- * Build the per-record name-slot list. The `default` slot uses `wof:name` verbatim (postcode digits); subsequent slots
- * come from `name:*` variants dedup'd against the default.
+ * Build the per-record name-slot list. The `default` slot uses `wof:name` verbatim
+ * (postcode digits); subsequent slots come from `name:*` variants dedup'd against the default.
  */
 export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string }> {
 	return wofNameSlotsFor(rec)
 }
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const WOF_POSTALCODE_ADAPTER_ID = "wof-postalcode"
 
@@ -160,9 +161,9 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 			"Who's On First postalcode GeoJSON bundles (postcode → locality/region pairs). Ancestor names from sibling admin repos.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			// Pass 1: full walk. We keep every record whose placetype maps to a ComponentTag — the
-			// postcode adapter needs locality / region / country admin records in the index so it
-			// can resolve postcode ancestry, even though it only emits rows for postcode records.
+			// Pass 1: full walk. We keep every record whose placetype maps to a ComponentTag —
+			// the postcode adapter needs locality / region / country admin records in the index
+			// so it can resolve postcode ancestry, even though it only emits rows for postcode records.
 			const byID = new Map<number, WOFRecord>()
 
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {

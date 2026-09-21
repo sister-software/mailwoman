@@ -159,21 +159,22 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		const concurrency = Math.max(1, options.concurrency || 4)
 		const cores = availableParallelism()
 		const threads = Math.max(1, options.threads || Math.floor(cores / concurrency))
-		// The per-state address-point builder is now the sibling `situs address-points` command (the
-		// old `scripts/build-address-point-database.ts` was migrated into the CLI). Re-invoke the same CLI
-		// entry this process was started from, so dev + published installs both resolve correctly.
+		// The per-state address-point builder is now the sibling `situs address-points` command
+		// (the old `scripts/build-address-point-database.ts` was migrated into the CLI).
+		// Re-invoke the same CLI entry this process was started from, so dev +
+		// published installs both resolve correctly.
 		const cliEntry = scriptEntryPath()
 
 		console.error(
 			`national situs build — ${states.length} states, concurrency=${concurrency}, ${threads} DuckDB threads/state (of ${cores} cores)`
 		)
 
-		// spliterator is a heavy bounded-concurrency primitive — imported lazily so merely loading the
-		// command tree (e.g. `mailwoman --help`) doesn't pull it at module-eval.
+		// spliterator is a heavy bounded-concurrency primitive — imported lazily so merely
+		// loading the command tree (e.g. `mailwoman --help`) doesn't pull it at module-eval.
 		const { parallelMap } = await import("spliterator")
 
-		// A database is complete iff its address_point table has rows and the streetkey index exists — the
-		// index is the last build step, so its presence means insert + index + vacuum all finished.
+		// A database is complete iff its address_point table has rows and the streetkey index exists —
+		// the index is the last build step, so its presence means insert + index + vacuum all finished.
 		const isComplete = async (dbPath: string): Promise<boolean> => {
 			if (!(await pathExists(dbPath))) return false
 
@@ -248,9 +249,8 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 
 		const attributionPath = join(outDir, "ATTRIBUTION.json")
 
-		// parallelMap yields results AS they complete (out of order), capped at `concurrency` in
-		// flight. Each result includes its own state, so out-of-order is fine for the state-keyed
-		// manifest.
+		// parallelMap yields results AS they complete (out of order), capped at `concurrency` in flight.
+		// Each result includes its own state, so out-of-order is fine for the state-keyed manifest.
 		for await (const r of parallelMap(states, buildOneState, { concurrency })) {
 			if (r.skipped) {
 				console.error(`[skip] ${r.state} — complete (use --force to rebuild)`)
@@ -270,9 +270,9 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 				continue
 			}
 
-			// The child's parse-relevant facts span its Ink summary (stdout) + plain progress (stderr) —
-			// combine + strip ansi, then match without line anchors so the summary's "✓ "/"  " render
-			// prefixes don't defeat the regex.
+			// The child's parse-relevant facts span its Ink summary (stdout) + plain
+			// progress (stderr) — combine + strip ansi, then match without line anchors
+			// so the summary's "✓ "/" " render prefixes don't defeat the regex.
 			const text = stripAnsi(`${r.out ?? ""}\n${r.err ?? ""}`)
 			const pts = Number(text.match(/(\d+) points →/)?.[1] ?? 0)
 			const datasets: Record<string, number> = {}

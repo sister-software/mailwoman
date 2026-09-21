@@ -7,8 +7,8 @@
 import type { Segment, SegmentSeparator } from "#types"
 
 /**
- * Comma / newline / tab separate segments. Locale-aware grammar reserved for future (JP whitespace, KR honorifics).
- * Default rules apply when no locale-specific override exists.
+ * Comma / newline / tab separate segments. Locale-aware grammar reserved for future
+ * (JP whitespace, KR honorifics). Default rules apply when no locale-specific override exists.
  */
 export function segment(text: string, _locale?: string): Segment[] {
 	const segments: Segment[] = []

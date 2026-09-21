@@ -14,10 +14,11 @@ export { DefaultMailwomanPaths } from "#env/paths"
 /**
  * The `.env` layer, folded into `process.env` when this module is evaluated — process-startup semantics.
  *
- * `process.loadEnvFile` is the runtime's own reader: synchronous, so the views below can expose synchronous getters
- * without a top-level `await` (which the Docusaurus config loader cannot evaluate), and not a filesystem call made by
- * repository code. A variable already in `process.env` wins over the file, which is the precedence the views always
- * had. An absent `.env` is the common case and is not an error.
+ * `process.loadEnvFile` is the runtime's own reader: synchronous,
+ * so the views below can expose synchronous getters without a top-level `await`
+ * (which the Docusaurus config loader cannot evaluate), and not a filesystem call made by
+ * repository code. A variable already in `process.env` wins over the file, which is the
+ * precedence the views always had. An absent `.env` is the common case and is not an error.
  */
 try {
 	// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
@@ -27,12 +28,14 @@ try {
 }
 
 /**
- * Create a live environment view, optionally extending another view without evaluating its getters. Each field caches
- * its last validation result until its raw environment value changes, including changes to absence. Inherited getters
- * share the base view's cache. Duplicate keys are rejected.
+ * Create a live environment view, optionally extending another view without evaluating its getters.
+ * Each field caches its last validation result until its raw environment value changes,
+ * including changes to absence. Inherited getters share the base view's cache.
+ * Duplicate keys are rejected.
  *
- * Fields must validate independently: object-level refinements are rejected by Zod's `pick`. Defaults and transforms
- * run only when the raw value changes, so they must not depend on other mutable state.
+ * Fields must validate independently: object-level refinements are rejected by
+ * Zod's `pick`. Defaults and transforms run only when the raw value changes,
+ * so they must not depend on other mutable state.
  */
 export function liveEnv<Shape extends z.ZodRawShape, Base extends object = Record<never, never>>(
 	schema: z.ZodObject<Shape>,
@@ -72,8 +75,9 @@ export function liveEnv<Shape extends z.ZodRawShape, Base extends object = Recor
 }
 
 /**
- * Publicly accessible environment — the non-secret operational config core reads (data roots, the license key). Safe to
- * log. A live, typed view over `process.env` layered on an optional `.env`; only keys in {@link PublicEnvSchema} appear.
+ * Publicly accessible environment — the non-secret operational config core reads
+ * (data roots, the license key). Safe to log. A live, typed view over `process.env`
+ * layered on an optional `.env`; only keys in {@link PublicEnvSchema} appear.
  * A package's own view extends this one: `liveEnv(PackageSchema, $public)`.
  *
  * @see {@link $private} for secrets.
@@ -81,9 +85,10 @@ export function liveEnv<Shape extends z.ZodRawShape, Base extends object = Recor
 export const $public = liveEnv(PublicEnvSchema)
 
 /**
- * Privately accessible environment — secrets and credentials. Do not log. Core reads none itself, so this view is
- * empty. it is the base a package's private view extends (`liveEnv(PackageSecrets, $private)`), which keeps every
- * credential declared beside the code that sends it.
+ * Privately accessible environment — secrets and credentials.
+ * Do not log. Core reads none itself, so this view is empty. it is the base
+ * a package's private view extends (`liveEnv(PackageSecrets, $private)`),
+ * which keeps every credential declared beside the code that sends it.
  *
  * @see {@link $public} for non-secret operational config.
  */

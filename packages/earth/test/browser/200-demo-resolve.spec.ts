@@ -19,18 +19,20 @@ test.describe("Demo — resolution cascade", () => {
 		await demo.submit()
 
 		const { resolved, markerCount } = await demo.readResult()
-		// 90210 is the example. should land somewhere in CA. The cascade may resolve via postcode
-		// or fall back to locality if the postcode has placeholder coords. Either way: a marker.
+		// 90210 is the example. should land somewhere in CA.
+		// The cascade may resolve via postcode or fall back to locality if the postcode
+		// has placeholder coords. Either way: a marker.
 		expect(markerCount).toBeGreaterThan(0)
 		expect(resolved["coords"]).toBeTruthy()
 		demo.console.assertNoFailEvents()
 	})
 
 	test("German address — postcode 10115 country-restricts into Berlin rather than New York", async ({ demo }) => {
-		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode and a New York US
-		// ZIP, and the gazetteer now carries US + DE/FR/EU postcodes. The locality must resolve first
-		// (Berlin → DE by population) and country-restrict the postcode, so it resolves to the DE 10115 point —
-		// IN Berlin — never the NYC ZIP. Grade the coordinate (postcode-precise now): Berlin ≈ 52.5, 13.4 rather than Manhattan ≈ 40.8, -74.0.
+		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode
+		// and a New York US ZIP, and the gazetteer now carries US + DE/FR/EU postcodes.
+		// The locality must resolve first (Berlin → DE by population) and country-restrict
+		// the postcode, so it resolves to the DE 10115 point — IN Berlin — never the NYC ZIP.
+		// Grade the coordinate (postcode-precise now): Berlin ≈ 52.5, 13.4 rather than Manhattan ≈ 40.8, -74.0.
 		await demo.goto("5 Hauptstraße, Berlin, Berlin 10115")
 		await demo.submit()
 
@@ -41,10 +43,11 @@ test.describe("Demo — resolution cascade", () => {
 	})
 
 	test("Canadian address — postcode M5H 2N2 resolves into Toronto (the -20f CA coverage)", async ({ demo }) => {
-		// -20f folds Canada's Overture divisions into the admin gazetteer (Toronto, Montréal, … — absent
-		// before) plus 843k CA postcode centroids. So "Toronto" resolves to Ontario (top by population),
-		// the cascade country-restricts to CA, and the CA postcode is reachable. Grade the coordinate:
-		// downtown Toronto ≈ 43.6, -79.4 — not Toronto, Ohio (40.46), where it landed pre-CA-admin.
+		// -20f folds Canada's Overture divisions into the admin gazetteer
+		// (Toronto, Montréal, … — absent before) plus 843k CA postcode centroids.
+		// So "Toronto" resolves to Ontario (top by population), the cascade country-restricts to CA,
+		// and the CA postcode is reachable. Grade the coordinate: downtown Toronto ≈ 43.6,
+		// -79.4 — not Toronto, Ohio (40.46), where it landed pre-CA-admin.
 		await demo.goto("100 Queen Street West, Toronto, ON M5H 2N2")
 		await demo.submit()
 
@@ -57,9 +60,9 @@ test.describe("Demo — resolution cascade", () => {
 	test("Russian address — Moscow resolves to Russia rather than Moscow, Idaho (-20g world coverage)", async ({
 		demo,
 	}) => {
-		// -20g folds ~70 countries' Overture divisions + GeoNames population + multilingual aliases. So
-		// the English "Moscow" (an alias of Москва) resolves, and the 10.4M-pop RU city outranks the
-		// 26k-pop US homonym. Grade the coordinate: Moscow ≈ 55.7, 37.6 — not Idaho (46.7, -117).
+		// -20g folds ~70 countries' Overture divisions + GeoNames population + multilingual aliases.
+		// So the English "Moscow" (an alias of Москва) resolves, and the 10.4M-pop RU city outranks
+		// the 26k-pop US homonym. Grade the coordinate: Moscow ≈ 55.7, 37.6 — not Idaho (46.7, -117).
 		await demo.goto("Moscow, Russia")
 		await demo.submit()
 		const { markerCount } = await demo.readResult()
@@ -88,9 +91,10 @@ test.describe("Demo — resolution cascade", () => {
 	})
 
 	// -20j (2026-06-24a) adds postcodes for PT/PL/CZ/AU — absent from the prior -20h build, so these
-	// countries had no postcode tier on the demo at all. Each case feeds locality + postcode + country
-	// and grades the resolved coordinate against the city bbox: the cascade country-restricts and the new
-	// postcode (or its locality) is reachable. Pairs with the v4.14.0 AU model (postcode-first format).
+	// countries had no postcode tier on the demo at all. Each case feeds locality +
+	// postcode + country and grades the resolved coordinate against the city bbox:
+	// the cascade country-restricts and the new postcode (or its locality) is reachable.
+	// Pairs with the v4.14.0 AU model (postcode-first format).
 	const newPostcodeCases: {
 		name: string
 		query: string
@@ -144,9 +148,9 @@ test.describe("Demo — resolution cascade", () => {
 	}
 
 	test("White House default — surfaces no fail-pattern errors even when resolver returns nothing", async ({ demo }) => {
-		// Postcode 20500 has lat=0/lon=0 in WOF. cascade filters it. raw text + locality may also
-		// miss. The test isn't asserting the resolution succeeds — it's asserting that the
-		// "Style is not done loading" race + bbox-on-empty-result paths stay clean.
+		// Postcode 20500 has lat=0/lon=0 in WOF. cascade filters it. raw text + locality may also miss.
+		// The test isn't asserting the resolution succeeds — it's asserting that the "Style
+		// is not done loading" race + bbox-on-empty-result paths stay clean.
 		await demo.goto()
 		await demo.submit()
 		demo.console.assertNoFailEvents()

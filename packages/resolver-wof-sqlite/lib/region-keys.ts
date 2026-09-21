@@ -21,26 +21,28 @@ import { matchSubdivision, matchSubdivisionIn } from "@mailwoman/codex/country"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * The ancestry placetypes that answer for a parsed `region` qualifier — WOF's admin band between country and locality.
- * Deliberately the whole band: a qualifier stated at any grain ("Lancashire", a ceremonial county; "Thüringen", a Land)
- * may confirm against whichever level the backend stored, and `contradicted` requires the entire band to miss, so
- * widening the band only ever makes the check more conservative.
+ * The ancestry placetypes that answer for a parsed `region` qualifier — WOF's admin band
+ * between country and locality. Deliberately the whole band: a qualifier stated at any
+ * grain ("Lancashire", a ceremonial county; "Thüringen", a Land) may confirm against
+ * whichever level the backend stored, and `contradicted` requires the entire band to miss,
+ * so widening the band only ever makes the check more conservative.
  */
 export const REGION_CLASS_PLACETYPES: ReadonlySet<string> = new Set(["region", "macroregion", "county", "macrocounty"])
 
 /**
- * County-style qualifier prefixes stripped to produce a comparison variant. Ireland writes `Co. Westmeath` where WOF
- * stores `Westmeath`, so the prefix defeats the fold and every Irish county qualifier read `contradicted` on the first
- * board census (2026-08-17, five rows). The stripped form is added to the key set, never substituted — `County Durham`
- * is a real name whose stripped variant simply also matches, and a set union can only widen confirmation, so the
- * closure is monotone: `contradicted → confirmed` is the only movement it can cause.
+ * County-style qualifier prefixes stripped to produce a comparison variant.
+ * Ireland writes `Co. Westmeath` where WOF stores `Westmeath`, so the prefix defeats the fold and
+ * every Irish county qualifier read `contradicted` on the first board census (2026-08-17, five rows).
+ * The stripped form is added to the key set, never substituted — `County Durham` is a real name
+ * whose stripped variant simply also matches, and a set union can only widen confirmation,
+ * so the closure is monotone: `contradicted → confirmed` is the only movement it can cause.
  */
 const COUNTY_QUALIFIER_PREFIXES = ["county", "co.", "co"] as const
 
 /**
- * Trailing admin-qualifier words, the suffix sibling of the prefix above: `San José Province` (CR board row) folds
- * against stored `San José` only with the word removed. Same monotone rule — the stripped form joins the set, never
- * replaces the original.
+ * Trailing admin-qualifier words, the suffix sibling of the prefix above: `San José Province`
+ * (CR board row) folds against stored `San José` only with the word removed.
+ * Same monotone rule — the stripped form joins the set, never replaces the original.
  */
 const ADMIN_QUALIFIER_SUFFIXES = ["province", "prov.", "prov"] as const
 
@@ -83,12 +85,14 @@ function withoutSuffix(value: string, suffixes: readonly string[]): string {
 }
 
 /**
- * The comparable keys a region string expands to: its own fold (the shared candidate.db `name_key` normalizer,
+ * The comparable keys a region string expands to: its own fold
+ * (the shared candidate.db `name_key` normalizer,
  * {@link normalizeLocalityForKey} — build side and check side agree by construction). a county-prefix-stripped variant.
- * the codex subdivision expansions — the disjoint US+CA table always, plus the country-scoped table when the caller
- * knows a country (`WA` under AU is Western Australia. under US, Washington — the collision that keeps AU out of the
- * unscoped table). Every expansion lands the canonical name and code folds in the set, so `IL`/`Illinois` and
- * `WA`/`Western Australia` meet from either side.
+ * the codex subdivision expansions — the disjoint US+CA table always, plus the
+ * country-scoped table when the caller knows a country (`WA` under AU is Western Australia.
+ * under US, Washington — the collision that keeps AU out of the unscoped table).
+ * Every expansion lands the canonical name and code folds in the set, so `IL`/`Illinois`
+ * and `WA`/`Western Australia` meet from either side.
  */
 export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
 	const keys = new Set([normalizeLocalityForKey(value)])
@@ -112,22 +116,25 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
 	}
 
 	// The empty fold stays IN the set on purpose — the admin-coherence verdicts have always compared
-	// the empty key (two empty-folding strings intersect → `confirmed`), and this move must not shift
-	// a verdict. A consumer probing a table by key filters the empty string out itself.
+	// the empty key (two empty-folding strings intersect → `confirmed`), and this move must not
+	// shift a verdict. A consumer probing a table by key filters the empty string out itself.
 	return keys
 }
 
 /**
- * The probe-side expansion for a region qualifier — {@link regionKeys} plus the county-prefixed variant of every key.
+ * The probe-side expansion for a region qualifier — {@link regionKeys} plus the
+ * county-prefixed variant of every key.
  *
- * The verdict implementation intersects two {@link regionKeys} sets, so `Co. Donegal` meets stored `County Donegal` at
- * the shared stripped key `donegal`. A table probe is one-sided: it matches the stored fold verbatim, and WOF stores
- * Irish counties under `county donegal` with no bare `donegal` key (measured on the shipped candidate.db — the
- * qualifier probe missed every Irish county until this variant landed). Adding `county <key>` restores the
- * two-sidedness for the one stored-form family with an evidenced case. the union is monotone (a wider qualifier set can
- * only find more bearers, each of which must still genuinely contain a candidate before anything moves). The suffix
- * sibling (`<key> province`) is deliberately absent — no stored-form case has been evidenced, and a change without a
- * board does not get built.
+ * The verdict implementation intersects two {@link regionKeys} sets,
+ * so `Co. Donegal` meets stored `County Donegal` at the shared stripped key `donegal`.
+ * A table probe is one-sided: it matches the stored fold verbatim, and WOF stores Irish
+ * counties under `county donegal` with no bare `donegal` key (measured on the shipped
+ * candidate.db — the qualifier probe missed every Irish county until this variant landed).
+ * Adding `county <key>` restores the two-sidedness for the one stored-form family with an
+ * evidenced case. the union is monotone (a wider qualifier set can only find more bearers,
+ * each of which must still genuinely contain a candidate before anything moves).
+ * The suffix sibling (`<key> province`) is deliberately absent — no stored-form case
+ * has been evidenced, and a change without a board does not get built.
  */
 export function regionQualifierProbeKeys(value: string, countryAlpha2?: string): Set<string> {
 	const keys = regionKeys(value, countryAlpha2)

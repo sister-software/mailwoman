@@ -61,8 +61,9 @@ export interface PlacetypeCensusNode {
 	 */
 	parent: string
 	/**
-	 * Child counts by projected tag — the placetype→`ComponentTag` projection is the builder's job (see
-	 * `gazetteer-pipeline/placetype-census.ts`), so this artifact never carries a placetype vocabulary of its own.
+	 * Child counts by projected tag — the placetype→`ComponentTag` projection is the
+	 * builder's job (see `gazetteer-pipeline/placetype-census.ts`), so this artifact
+	 * never carries a placetype vocabulary of its own.
 	 */
 	counts: Partial<Record<ComponentTag, number>>
 	/**
@@ -78,8 +79,8 @@ export interface PlacetypeCensusHeader {
 	country: string
 	schemaVersion: 1
 	/**
-	 * Which fold the parent surfaces were built against — matches `PairIndexHeader.foldVersion`, so a consumer folds once
-	 * and probes both artifacts.
+	 * Which fold the parent surfaces were built against — matches `PairIndexHeader.foldVersion`,
+	 * so a consumer folds once and probes both artifacts.
 	 */
 	foldVersion: 1
 	/**
@@ -91,17 +92,20 @@ export interface PlacetypeCensusHeader {
 	 */
 	buildDate: string
 	/**
-	 * Global share of each projected tag across every counted child in the country — the denominator a consumer needs to
-	 * turn a node's share into a lift (`nodeShare / baseRate`). Shipped in the header rather than recomputed by the
-	 * consumer because the base rate is a property of the build (which placetypes were counted, over which source), and a
-	 * consumer re-deriving it from the node table would silently get a different number: the node table only carries
-	 * parents that cleared the build's inclusion rule, so its totals are not the country's totals.
+	 * Global share of each projected tag across every counted child in the country — the
+	 * denominator a consumer needs to turn a node's share into a lift (`nodeShare / baseRate`).
+	 * Shipped in the header rather than recomputed by the consumer because the base rate
+	 * is a property of the build (which placetypes were counted, over which source),
+	 * and a consumer re-deriving it from the node table would silently get a different number:
+	 * the node table only carries parents that cleared the build's inclusion rule,
+	 * so its totals are not the country's totals.
 	 */
 	baseRates: Partial<Record<ComponentTag, number>>
 	/**
-	 * Optional soft-prior bias magnitude a census hit contributes at decode time. Absent until a calibration task
-	 * measures one — the census ships as a probeable artifact first (R4c is data + loader + offline probe, no decode
-	 * wiring), and a defaulted number here would let an uncalibrated bias reach the decoder unnoticed.
+	 * Optional soft-prior bias magnitude a census hit contributes at decode time.
+	 * Absent until a calibration task measures one — the census ships as a probeable artifact
+	 * first (R4c is data + loader + offline probe, no decode wiring), and a defaulted
+	 * number here would let an uncalibrated bias reach the decoder unnoticed.
 	 */
 	delta?: number
 }
@@ -109,8 +113,9 @@ export interface PlacetypeCensusHeader {
 /**
  * Serialize a placetype census to PCN1 bytes.
  *
- * Asserts its input is deduplicated by `parent` and throws otherwise — collapsing duplicate parents here would hide a
- * build bug (two extractions merged without summing their counts) behind a silently plausible artifact.
+ * Asserts its input is deduplicated by `parent` and throws otherwise — collapsing duplicate
+ * parents here would hide a build bug (two extractions merged without summing their counts)
+ * behind a silently plausible artifact.
  */
 export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: readonly PlacetypeCensusNode[]): Buffer {
 	if (COMPONENT_TAGS.length > MAX_TAGS_PER_BYTE) {
@@ -190,22 +195,23 @@ export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: r
 }
 
 /**
- * Minimal subset of {@link PlacetypeCensusResolver} a consumer module reads — structural typing so callers depend on
- * the shape rather than the class (the same `…Like` convention as `PairIndexLike` / `QueryShapeLike`). The
- * observability rung (`placetype-pair-prior.ts`'s census probe) needs exactly these two: presence (`probe`) and
- * magnitude (`lift`).
+ * Minimal subset of {@link PlacetypeCensusResolver} a consumer module reads —
+ * structural typing so callers depend on the shape rather than the class
+ * (the same `…Like` convention as `PairIndexLike` / `QueryShapeLike`).
+ * The observability rung (`placetype-pair-prior.ts`'s census probe) needs exactly
+ * these two: presence (`probe`) and magnitude (`lift`).
  *
- * `share` is deliberately not on this interface. Within-parent share was measured at ~100% for the dominant class
- * everywhere, so a share-proportional consumer reads a constant — `lift` (share ÷ the country base rate) is the only
- * one of the two that varies with the parent, and naming just it keeps a future consumer from reaching for the flat
- * one.
+ * `share` is deliberately not on this interface. Within-parent share was measured at ~100%
+ * for the dominant class everywhere, so a share-proportional consumer reads a constant —
+ * `lift` (share ÷ the country base rate) is the only one of the two that varies with the
+ * parent, and naming just it keeps a future consumer from reaching for the flat one.
  */
 export interface PlacetypeCensusLike {
 	probe(parent: string): PlacetypeCensusNode | null
 	lift(parent: string, tag: ComponentTag): number
 	/**
-	 * The census header's ISO country code, when the implementation carries a header. Optional for the same reason
-	 * `PairIndexLike.country` is: a hand-built test double may omit it.
+	 * The census header's ISO country code, when the implementation carries a header.
+	 * Optional for the same reason `PairIndexLike.country` is: a hand-built test double may omit it.
 	 */
 	readonly country?: string
 }
@@ -268,26 +274,28 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * Exposes the header's ISO country code so the resolver conforms to {@link PlacetypeCensusLike} — the country
-	 * restriction at the load site reads it to refuse a census built for a different country than the locale being
-	 * parsed.
+	 * Exposes the header's ISO country code so the resolver conforms to
+	 * {@link PlacetypeCensusLike} — the country restriction at the load site reads it to
+	 * refuse a census built for a different country than the locale being parsed.
 	 */
 	get country(): string {
 		return this.header.country
 	}
 
 	/**
-	 * Look up one folded parent surface. Returns `null` when the parent has no census node — absence is not evidence (the
-	 * meaning-of-zero rule): a missing node means the gazetteer has no counted children there, which is usually coverage,
-	 * . Therefore, a consumer must treat `null` as neutral and never as a prohibition.
+	 * Look up one folded parent surface. Returns `null` when the parent has no census node —
+	 * absence is not evidence (the meaning-of-zero rule): a missing node means
+	 * the gazetteer has no counted children there, which is usually coverage, .
+	 * Therefore, a consumer must treat `null` as neutral and never as a prohibition.
 	 */
 	probe(parent: string): PlacetypeCensusNode | null {
 		return this.#nodes.get(parent) ?? null
 	}
 
 	/**
-	 * The share of `parent`'s counted children projecting onto `tag` — `0` when the parent is unknown or the tag is
-	 * unseen there. Positive evidence only: read a `0` as "no support from this artifact", never as "this tag is wrong".
+	 * The share of `parent`'s counted children projecting onto `tag` — `0` when
+	 * the parent is unknown or the tag is unseen there. Positive evidence only:
+	 * read a `0` as "no support from this artifact", never as "this tag is wrong".
 	 */
 	share(parent: string, tag: ComponentTag): number {
 		const node = this.#nodes.get(parent)
@@ -298,10 +306,11 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * `share(parent, tag)` divided by the country's global base rate for `tag` — how much more likely this tag is under
-	 * this parent than under a parent drawn at random. `1` means "no different from the country at large", `0` means no
-	 * support. Returns `0` (not `Infinity`) when the base rate is absent, so a missing denominator can never manufacture
-	 * unbounded evidence.
+	 * `share(parent, tag)` divided by the country's global base rate for `tag` —
+	 * how much more likely this tag is under this parent than under a parent drawn at random.
+	 * `1` means "no different from the country at large", `0` means no support.
+	 * Returns `0` (not `Infinity`) when the base rate is absent, so a missing
+	 * denominator can never manufacture unbounded evidence.
 	 */
 	lift(parent: string, tag: ComponentTag): number {
 		const baseRate = this.header.baseRates[tag]

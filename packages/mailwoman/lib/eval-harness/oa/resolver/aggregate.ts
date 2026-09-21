@@ -8,9 +8,9 @@
 import { percentile } from "@mailwoman/core/stats"
 
 /**
- * What one arm reports for a single row: the admin-match flags plus the coordinate error the arm's own tier produced.
- * Every `neural+<tier>` arm reuses the neural arm's flags and substitutes only `err`, so an arm-to-arm delta isolates
- * exactly what the tier sharpens.
+ * What one arm reports for a single row: the admin-match flags plus the coordinate error
+ * the arm's own tier produced. Every `neural+<tier>` arm reuses the neural arm's flags
+ * and substitutes only `err`, so an arm-to-arm delta isolates exactly what the tier sharpens.
  */
 export interface ArmOutcome {
 	locMatch: boolean
@@ -20,8 +20,8 @@ export interface ArmOutcome {
 }
 
 /**
- * One arm's counters. `errs` is the raw per-row coordinate error list (km) the percentiles are taken over — kept whole
- * rather than streamed, because the report needs p50/p90/p99 from the same sample.
+ * One arm's counters. `errs` is the raw per-row coordinate error list (km) the percentiles are taken
+ * over — kept whole rather than streamed, because the report needs p50/p90/p99 from the same sample.
  */
 export interface Agg {
 	n: number
@@ -32,8 +32,8 @@ export interface Agg {
 }
 
 /**
- * An arm's headline plus its per-state breakdown. Per-state aggregation keeps a single dense state (Cook County /
- * Chicago) from dominating the headline.
+ * An arm's headline plus its per-state breakdown. Per-state aggregation keeps a single
+ * dense state (Cook County / Chicago) from dominating the headline.
  */
 export interface AggPair {
 	overall: Agg
@@ -73,17 +73,19 @@ export function bump(a: Agg, locMatch: boolean, regMatch: boolean, resolved: boo
 /**
  * The per-state bucket label a row is tallied under.
  *
- * Shared rather than repeated because the two views of one row must agree on it: an empty state is as unknown as a
- * missing one, so `||` is the operator rather than `??`. The error dump read `?? "??"` and therefore filed an
- * empty-state row under `""` while every aggregate filed the same row under `"??"`.
+ * Shared rather than repeated because the two views of one row must agree on it:
+ * an empty state is as unknown as a missing one, so `||` is the operator rather than `??`.
+ * The error dump read `?? "??"` and therefore filed an empty-state row under `""`
+ * while every aggregate filed the same row under `"??"`.
  */
 export function stateBucket(state: string | undefined): string {
 	return state || "??"
 }
 
 /**
- * Fold one row's outcome into an arm's per-state bucket and into its headline. A row with no state lands in `??` rather
- * than being dropped, so the per-state buckets always sum to the headline.
+ * Fold one row's outcome into an arm's per-state bucket and into its headline.
+ * A row with no state lands in `??` rather than being dropped, so the per-state
+ * buckets always sum to the headline.
  */
 export function recordInto(pair: AggPair, state: string | undefined, outcome: ArmOutcome): void {
 	const st = stateBucket(state)
@@ -97,8 +99,8 @@ export function recordInto(pair: AggPair, state: string | undefined, outcome: Ar
 }
 
 /**
- * The `--out-json` shape for one arm. `errs` is replaced by its length: the raw list is the eval's working set rather
- * than a figure anyone reads, and a full run's would dwarf the rest of the dump.
+ * The `--out-json` shape for one arm. `errs` is replaced by its length: the raw list is the eval's
+ * working set rather than a figure anyone reads, and a full run's would dwarf the rest of the dump.
  */
 export function dumpAggPair(g: AggPair): Record<string, unknown> {
 	return {

@@ -27,20 +27,20 @@ import { rowsFromExec } from "#httpvfs/rows"
 export { resolveAnchorCenter, type AnchorCenter } from "#httpvfs/poi/anchor"
 
 /**
- * Resolution the published `poi.db`'s `h3_cell` column is keyed at — must match the builder (poi-lookup.ts's
- * `POI_H3_RESOLUTION`).
+ * Resolution the published `poi.db`'s `h3_cell` column is keyed at — must match
+ * the builder (poi-lookup.ts's `POI_H3_RESOLUTION`).
  */
 const POI_H3_RESOLUTION = 9
 
 /**
- * The worker handle `loadHTTPVFSDatabase` resolves to — named here since `resolver.ts` doesn't export its
- * `HTTPVFSWorker` interface.
+ * The worker handle `loadHTTPVFSDatabase` resolves to — named here since `resolver.ts`
+ * doesn't export its `HTTPVFSWorker` interface.
  */
 export type POIHTTPVFSWorker = Awaited<ReturnType<typeof loadHTTPVFSDatabase>>
 
 /**
- * Open a worker over the published POI layer. Independent of the admin-gazetteer worker — a fresh `createDbWorker`
- * call, same staged UMD.
+ * Open a worker over the published POI layer. Independent of the admin-gazetteer worker —
+ * a fresh `createDbWorker` call, same staged UMD.
  */
 export async function loadPOIWorker(poiDatabaseURL: string, sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
 	return loadHTTPVFSDatabase(poiDatabaseURL, sqljsBaseURL)
@@ -49,8 +49,8 @@ export async function loadPOIWorker(poiDatabaseURL: string, sqljsBaseURL: string
 const categoryCodesCache = new WeakMap<POIHTTPVFSWorker, Promise<Map<string, number>>>()
 
 /**
- * `category → poi_category_codes.id`, loaded once per worker and cached (mirrors the Node reader's constructor-time
- * load).
+ * `category → poi_category_codes.id`, loaded once per worker and cached
+ * (mirrors the Node reader's constructor-time load).
  */
 export function loadPOICategoryCodes(worker: POIHTTPVFSWorker): Promise<Map<string, number>> {
 	let cached = categoryCodesCache.get(worker)
@@ -75,18 +75,20 @@ export function loadPOICategoryCodes(worker: POIHTTPVFSWorker): Promise<Map<stri
 export interface POISearchOpts {
 	categoryID: string
 	/**
-	 * Fan-out leaves — the Overture `taxonomy.primary` ids this canonical category rolls up into (`supermarket` →
-	 * `grocery_store`, …), from `@mailwoman/poi-taxonomy`'s `resolveOvertureCategories`. When set, every resolvable leaf
-	 * is probed per cell and the rows are unioned. unknown leaves are skipped. Absent ⇒ probe `categoryID` alone
-	 * (identity) — matching the Node reader's back-compat.
+	 * Fan-out leaves — the Overture `taxonomy.primary` ids this canonical category rolls
+	 * up into (`supermarket` → `grocery_store`, …), from `@mailwoman/poi-taxonomy`'s
+	 * `resolveOvertureCategories`. When set, every resolvable leaf is probed per cell and
+	 * the rows are unioned. unknown leaves are skipped. Absent ⇒ probe `categoryID`
+	 * alone (identity) — matching the Node reader's back-compat.
 	 */
 	categoryIDs?: string[]
 	center: { lat: number; lon: number }
 	/**
-	 * Ring budget (default 6, k reaches 5 — empirically ~1 km against the sealed layer: a live cross-check against a real
-	 * Springfield-IL cafe cluster found its nearest hit only at k=3, so a smaller default returned zero results for a
-	 * perfectly ordinary query). Still well under the Node reader's 12-ring/~4 km default — the tester issues one
-	 * explicit-click search rather than a per-keystroke probe, so the request count stays bounded either way.
+	 * Ring budget (default 6, k reaches 5 — empirically ~1 km against the sealed layer:
+	 * a live cross-check against a real Springfield-IL cafe cluster found its nearest hit only
+	 * at k=3, so a smaller default returned zero results for a perfectly ordinary query).
+	 * Still well under the Node reader's 12-ring/~4 km default — the tester issues one explicit-click
+	 * search rather than a per-keystroke probe, so the request count stays bounded either way.
 	 */
 	maxRings?: number
 	limit?: number
@@ -105,16 +107,18 @@ const DEFAULT_MAX_RINGS = 6
 const DEFAULT_LIMIT = 10
 
 /**
- * Category-only k-ring search. Probes `opts.center`'s res-9 cell, expanding ring-by-ring (deduping cells already
- * probed) until `limit` rows are on hand after a completed ring or `maxRings` is exhausted, then haversine-sorts the
- * pool. Returns `[]` for a category the DB's dictionary doesn't carry — a clean miss rather than a throw.
+ * Category-only k-ring search. Probes `opts.center`'s res-9 cell, expanding
+ * ring-by-ring (deduping cells already probed) until `limit` rows are on hand
+ * after a completed ring or `maxRings` is exhausted, then haversine-sorts the pool.
+ * Returns `[]` for a category the DB's dictionary doesn't carry — a clean miss rather than a throw.
  */
 export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearchOpts): Promise<POISearchHit[]> {
 	const limit = Math.max(1, opts.limit ?? DEFAULT_LIMIT)
 	const maxRings = Math.max(1, opts.maxRings ?? DEFAULT_MAX_RINGS)
 	const codes = await loadPOICategoryCodes(worker)
-	// Fan the canonical seed id out over its Overture leaves (`supermarket` → grocery_store, …), resolving each through
-	// the db's dictionary and dropping the ones it doesn't carry. Absent list ⇒ the seed id itself (identity).
+	// Fan the canonical seed id out over its Overture leaves (`supermarket` → grocery_store, …),
+	// resolving each through the db's dictionary and dropping the ones it doesn't carry.
+	// Absent list ⇒ the seed id itself (identity).
 	const seedIDs = opts.categoryIDs?.length ? opts.categoryIDs : [opts.categoryID]
 	const categoryIDs = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
 
@@ -132,15 +136,15 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 
 		for (const cell of newCells) {
 			seenCells.add(cell)
-			// The same packing as poi-lookup.ts: the shared @mailwoman/spatial `shortCellToInt` 48-bit
-			// packer — `poi.h3_cell` is the shortened cell.
+			// The same packing as poi-lookup.ts: the shared @mailwoman/spatial `shortCellToInt`
+			// 48-bit packer — `poi.h3_cell` is the shortened cell.
 			const shortCell = shortCellToInt(cell as H3Cell)
 
-			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL) so the
-			// tester's results list can show it — same where/order/limit + packing, one extra column.
-			// `category_id IN (…)` unions the fan-out leaves in one probe per cell (the ids are dictionary ints, never
-			// user input — no injection surface). limit still caps the per-cell pull. the outer ring loop + final sort
-			// trim to the nearest `limit`.
+			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL)
+			// so the tester's results list can show it — same where/order/limit + packing,
+			// one extra column. `category_id IN (…)` unions the fan-out leaves in one probe per cell
+			// (the ids are dictionary ints, never user input — no injection surface). limit still
+			// caps the per-cell pull. the outer ring loop + final sort trim to the nearest `limit`.
 			const sql =
 				`SELECT name, latitude, longitude, confidence, country FROM poi ` +
 				`WHERE h3_cell = ${shortCell} AND category_id IN (${categoryIDList}) ORDER BY neg_rank ASC LIMIT ${limit}`

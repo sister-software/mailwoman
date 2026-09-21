@@ -156,7 +156,8 @@ function inverse(M: Float64Array[]): number[][] {
 }
 
 /**
- * Coarse-placer post-hoc open-set score comparison — see the module doc. Emits the markdown report to stdout.
+ * Coarse-placer post-hoc open-set score comparison — see the module doc.
+ * Emits the markdown report to stdout.
  */
 export async function evalOpenSet(
 	options: EvalOpenSetOptions = {},
@@ -208,8 +209,8 @@ export async function evalOpenSet(
 		return JSONSpliterator.fromAsync<DataRow>(resolvePath(dataDir, file))
 	}
 
-	// Fit the Mahalanobis params on IN-MAP train logits (no test leak): per-class
-	// mean in the nIn-dim in-map-logit space + a tied (shared) covariance.
+	// Fit the Mahalanobis params on IN-MAP train logits (no test leak): per-class mean
+	// in the nIn-dim in-map-logit space + a tied (shared) covariance.
 	report?.("fitting Mahalanobis on in-map train logits…")
 	const trainRows = load("train.jsonl")
 	const byClass = new Map<string, string[]>(COARSE_CLASSES.map((c): [string, string[]] => [c, []]))
@@ -371,9 +372,10 @@ export async function evalOpenSet(
 
 	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))
 
-	// Honest threshold protocol: split each probe 50/50 (deterministic by index parity) into DEV + test.
-	// The operating threshold is picked on DEV (maximizing balanced min); the reported point is frozen on
-	// test — so the number is a generalization estimate rather than a threshold fit to the set it's scored on.
+	// Honest threshold protocol: split each probe 50/50 (deterministic by index parity)
+	// into DEV + test. The operating threshold is picked on DEV (maximizing balanced min);
+	// the reported point is frozen on test — so the number is a generalization estimate
+	// rather than a threshold fit to the set it's scored on.
 	const inDev = inmapScored.filter((_, i) => i % 2 === 0)
 	const inTest = inmapScored.filter((_, i) => i % 2 === 1)
 	const heldDev = heldoutScored.filter((_, i) => i % 2 === 0)
@@ -415,7 +417,9 @@ export async function evalOpenSet(
 		const pts: ParetoPoint[] = uniq.map((t) => pointAt(scoreKey, t, inmapScored, heldoutScored))
 
 		// Summaries.
-		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null } // max of min(inMapAcc, heldCaught) on the full probe
+		//
+		// max of min(inMapAcc, heldCaught) on the full probe
+		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null }
 		let atHeld90: ParetoPoint | null = null // highest inMapAcc with heldCaught >= 90
 		let atIn90: ParetoPoint | null = null
 

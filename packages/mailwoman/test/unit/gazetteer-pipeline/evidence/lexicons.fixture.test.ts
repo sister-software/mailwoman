@@ -39,8 +39,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 let scratch: TemporaryDirectory
 
 /**
- * A minimal admin WOF carrying the four tables `buildLocalitySurfaceLexicon` reads: `spr` (primaries), `names`
- * (aliases), `place_population` (the law-2/3 importance input), and `ancestors` (the v4 parent-prominence proxy).
+ * A minimal admin WOF carrying the four tables `buildLocalitySurfaceLexicon` reads:
+ * `spr` (primaries), `names` (aliases), `place_population` (the law-2/3 importance input),
+ * and `ancestors` (the v4 parent-prominence proxy).
  */
 function buildFixtureAdmin(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -152,8 +153,8 @@ async function buildAgainstFixture(
 	countries: string[],
 	placetypes: string[]
 ): Promise<{ built: BuiltLexicon; surfaces: Record<string, number> }> {
-	// A fresh DB per call. Two tests build twice — the sub-phrase one covers both country sets, and
-	// the invariance one runs the same build twice on purpose — and `create table` is not idempotent.
+	// A fresh DB per call. Two tests build twice — the sub-phrase one covers both country sets,
+	// and the invariance one runs the same build twice on purpose — and `create table` is not idempotent.
 	const seq = buildSeq++
 	const dbPath = scratch.resolve(`admin-${seq}.db`)
 	const output = scratch.resolve(`lexicon-${seq}.json`)
@@ -199,10 +200,10 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		const { built, surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
 		expect(surfaces.smallville).toBeUndefined()
-		// exact, which the full build cannot assert. Two surfaces fail the post-scan prominence pass
-		// and only two: `smallville` (0.166, under the 0.25 one-token floor) and `joseph` (0.383 —
-		// over that floor, under the 0.45 person-name tier). If a third ever appears here, a law
-		// changed scope.
+		// exact, which the full build cannot assert. Two surfaces fail the post-scan
+		// prominence pass and only two: `smallville` (0.166, under the 0.25 one-token floor)
+		// and `joseph` (0.383 — over that floor, under the 0.45 person-name tier).
+		// If a third ever appears here, a law changed scope.
 		expect(built.skippedProminence).toBe(2)
 	})
 
@@ -229,8 +230,8 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 
 		// A directional inside a multi-token surface survives.
 		expect(surfaces["east nashville"]).toBeDefined()
-		// …and nothing in the US set is refused on prominence, unlike the FR set. The asymmetry is
-		// the point: these rows are seeded at their real magnitudes.
+		// …and nothing in the US set is refused on prominence, unlike the FR set.
+		// The asymmetry is the point: these rows are seeded at their real magnitudes.
 		expect(built.skippedProminence).toBe(0)
 	})
 

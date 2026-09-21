@@ -48,20 +48,21 @@ export interface GeographicModelIndex {
 	 */
 	relation(id: RelationID): RelationRecord | undefined
 	/**
-	 * Every concept this one is a kind of, transitively, in code-point order. Empty for a concept that is a kind of
-	 * nothing; `undefined` for a concept the artifact does not carry.
+	 * Every concept this one is a kind of, transitively, in code-point order.
+	 * Empty for a concept that is a kind of nothing; `undefined` for a concept the artifact does not carry.
 	 */
 	ancestorsOf(id: ConceptID): readonly ConceptID[] | undefined
 	/**
-	 * Every derived fact whose subject is this concept, in artifact order. Empty for a concept nothing was derived about;
-	 * `undefined` for a concept the artifact does not carry.
+	 * Every derived fact whose subject is this concept, in artifact order.
+	 * Empty for a concept nothing was derived about; `undefined` for a concept the artifact does not carry.
 	 */
 	derivedFactsAbout(id: ConceptID): readonly DerivedFactRecord[] | undefined
 	/**
 	 * The concepts a mapping translates this external identifier into, in code-point order.
 	 *
-	 * An empty list is a true negative rather than an unread answer: the artifact carries every mapping the document
-	 * authored, so nothing having declared this identifier is the whole of what there is to know about it.
+	 * An empty list is a true negative rather than an unread answer: the artifact
+	 * carries every mapping the document authored, so nothing having declared this
+	 * identifier is the whole of what there is to know about it.
 	 */
 	conceptsForExternalID(vocabulary: ExternalVocabulary, externalID: POICategoryID): readonly ConceptID[]
 }
@@ -73,8 +74,8 @@ function externalKey(vocabulary: ExternalVocabulary, externalID: string): string
 /**
  * Index a compiled artifact for reading.
  *
- * Every table is walked once here so that no table is ever walked again. Nothing is copied — the records handed back
- * are the artifact's own.
+ * Every table is walked once here so that no table is ever walked again.
+ * Nothing is copied — the records handed back are the artifact's own.
  */
 export function createGeographicModelIndex(model: CompiledGeographicModel): GeographicModelIndex {
 	const concepts = new Map<string, ConceptRecord>(model.concepts.map((concept) => [String(concept.id), concept]))

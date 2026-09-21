@@ -258,8 +258,9 @@ describe("resolveOptsFrom", () => {
 	})
 
 	it("carries a ZERO cap, which is the arm that separates the re-pick from the coordinate fallback", () => {
-		// `0` is falsy and the surrounding pins are presence-tested. a truthiness check here would drop the one arm that
-		// refuses every fall, and the run would report the shipped numbers under the arm's name.
+		// `0` is falsy and the surrounding pins are presence-tested. a truthiness
+		// check here would drop the one arm that refuses every fall, and the run would
+		// report the shipped numbers under the arm's name.
 		expect(resolveOptsFrom({ postcodeConsistencyMaxMoveKm: 0 }, "none")).toEqual({ postcodeConsistencyMaxMoveKm: 0 })
 
 		expect(resolveOptsFrom({ postcodeConsistencyMaxMoveKm: 300 }, "none")).toEqual({
@@ -276,8 +277,8 @@ describe("resolveOptsFrom", () => {
 			spanRescoreRequireContextRemainder: true,
 		})
 
-		// Default-off in the library: forwarding `false` would PIN the shipped behaviour rather than leaving it, which is
-		// the one-sided-forwarding class the gauntlet's tri-states exist for.
+		// Default-off in the library: forwarding `false` would PIN the shipped behaviour rather than
+		// leaving it, which is the one-sided-forwarding class the gauntlet's tri-states exist for.
 		expect(resolveOptsFrom({ spanRescoreRequireContextRemainder: false }, "none")).toEqual({})
 	})
 

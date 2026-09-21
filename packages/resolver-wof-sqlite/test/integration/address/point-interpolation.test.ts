@@ -29,9 +29,9 @@ interface SeedPoint {
 }
 
 async function seedPoints(db: DatabaseClient<AddressPointDatabase>, points: SeedPoint[]): Promise<void> {
-	// Shared table builder (the same `mailwoman situs address-points` uses) so this fixture can't
-	// drift from the production shape. `kdb` wraps `db` for the DDL. the test owns `db`'s lifecycle
-	// (closed in afterAll), so we don't destroy `kdb`.
+	// Shared table builder (the same `mailwoman situs address-points` uses) so this fixture
+	// can't drift from the production shape. `kdb` wraps `db` for the DDL. the test owns
+	// `db`'s lifecycle (closed in afterAll), so we don't destroy `kdb`.
 	const kdb = db
 	await createAddressPointTable(kdb)
 
@@ -45,8 +45,8 @@ async function seedPoints(db: DatabaseClient<AddressPointDatabase>, points: Seed
 	}
 }
 
-// All fixtures live on straight east-west streets near the equator so longitude is a direct
-// proxy for position (0.001 deg ≈ 111 m).
+// All fixtures live on straight east-west streets near the equator so longitude
+// is a direct proxy for position (0.001 deg ≈ 111 m).
 let db: DatabaseClient<AddressPointDatabase>
 let interpolator: AddressPointInterpolator
 
@@ -102,8 +102,9 @@ describe("AddressPointInterpolator", () => {
 	})
 
 	it("never answers from a point at the queried number itself (non-circular by construction)", () => {
-		// A row for 150 exists (off the street line at lat 0.5). The answer must come from the
-		// 100/200 bracket instead — in production the exact tier owns on-file numbers.
+		// A row for 150 exists (off the street line at lat 0.5).
+		// The answer must come from the 100/200 bracket instead — in production
+		// the exact tier owns on-file numbers.
 		const hit = interpolator.find({ street: "Elm St", number: "150", postcode: "05601" })
 		expect(hit!.bracket).toBe("both")
 		expect(hit!.lat).toBeCloseTo(0, 9)

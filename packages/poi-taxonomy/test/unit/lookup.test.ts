@@ -82,9 +82,9 @@ describe("taxonomy integrity", () => {
 
 	it("every osmTag present is well-formed, and every mailwoman-infra category carries one", () => {
 		for (const category of getAllCategories()) {
-			// The full Overture snapshot ships ~2k categories with no osmTag (the CSV has no OSM mapping); osmTag is a
-			// curated field. Assert it's well-formed when present, and required on the infra classes the Overpass
-			// emitter must be able to render.
+			// The full Overture snapshot ships ~2k categories with no osmTag (the CSV has no OSM mapping);
+			// osmTag is a curated field. Assert it's well-formed when present, and required
+			// on the infra classes the Overpass emitter must be able to render.
 			if (category.osmTag !== undefined) {
 				expect(category.osmTag, `malformed osmTag on ${category.id}`).toMatch(/^[a-z_]+=[a-z_]+$/)
 			}
@@ -174,8 +174,9 @@ describe("full Overture snapshot + curated overlay", () => {
 		expect(getPOICategory("supermarket")?.overtureCategories).toContain("grocery_store")
 		expect(resolveOvertureCategories("cafe")).toEqual(["cafe", "coffee_shop"])
 
-		// The Overture leaves those curated records absorb (`coffee_shop`, `grocery_store`, `hiking_trail`) are not
-		// emitted as standalone categories — otherwise their id-phrase would shadow the curated synonym in the index.
+		// The Overture leaves those curated records absorb (`coffee_shop`, `grocery_store`, `hiking_trail`)
+		// are not emitted as standalone categories — otherwise their id-phrase would
+		// shadow the curated synonym in the index.
 		expect(getPOICategory("coffee_shop")).toBeUndefined()
 		expect(getPOICategory("grocery_store")).toBeUndefined()
 		expect(getPOICategory("hiking_trail")).toBeUndefined()
@@ -188,9 +189,9 @@ describe("full Overture snapshot + curated overlay", () => {
 	})
 
 	it("recovers absorbed-leaf phrases via curated synonyms (#1209 review)", () => {
-		// The curated overlay absorbs these Overture leaves (`high_school`, `bank_credit_union`, `mountain_bike_trail`,
-		// `greengrocer`), so their leaf id-phrases are no longer emitted standalone. Curated synonyms keep the direct
-		// phrases resolving to the canonical curated id.
+		// The curated overlay absorbs these Overture leaves (`high_school`, `bank_credit_union`,
+		// `mountain_bike_trail`, `greengrocer`), so their leaf id-phrases are no longer emitted standalone.
+		// Curated synonyms keep the direct phrases resolving to the canonical curated id.
 		expect(lookupPOICategory("high school").map((m) => m.category.id)).toEqual(["school"])
 		expect(lookupPOICategory("middle school").map((m) => m.category.id)).toEqual(["school"])
 		expect(lookupPOICategory("elementary school").map((m) => m.category.id)).toEqual(["school"])
@@ -198,16 +199,17 @@ describe("full Overture snapshot + curated overlay", () => {
 		expect(lookupPOICategory("mountain bike trail").map((m) => m.category.id)).toEqual(["trail"])
 		expect(lookupPOICategory("greengrocer").map((m) => m.category.id)).toEqual(["supermarket"])
 
-		// `credit union` is special: Overture keeps a standalone `credit_union` category (its own id-phrase), and the
-		// curated `bank` record absorbs the separate `bank_credit_union` leaf. The added synonym maps the phrase onto
-		// bank too, so it yields both — the curated redirect first (#1933 precedence), then the standalone category.
+		// `credit union` is special: Overture keeps a standalone `credit_union` category
+		// (its own id-phrase), and the curated `bank` record absorbs the separate `bank_credit_union`
+		// leaf. The added synonym maps the phrase onto bank too, so it yields both —
+		// the curated redirect first (#1933 precedence), then the standalone category.
 		expect(lookupPOICategory("credit union").map((m) => m.category.id)).toEqual(["bank", "credit_union"])
 	})
 
-	// Eight of the 55 curated synonyms spell a phrase that is also some category's id or label. Four of those redirect
-	// somewhere else, and before the tie-break none of the four could reach a caller: the identity phrase was inserted
-	// first, the sort was stable, and `matchPOISubject` reads `hits[0]`. The other four collide with their own label and
-	// are unaffected either way.
+	// Eight of the 55 curated synonyms spell a phrase that is also some category's id or label.
+	// Four of those redirect somewhere else, and before the tie-break none of the four could reach
+	// a caller: the identity phrase was inserted first, the sort was stable, and `matchPOISubject`
+	// reads `hits[0]`. The other four collide with their own label and are unaffected either way.
 	it("lets a curated synonym outrank a category whose id spells the same phrase (#1933)", () => {
 		expect(lookupPOICategory("drugstore", "en-US").map((m) => [m.category.id, m.phraseSource])).toEqual([
 			["pharmacy", "synonym"],

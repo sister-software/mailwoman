@@ -46,8 +46,8 @@ import { resolvePath } from "path-ts"
 import { DEFAULT_ADMIN_DB, wofDir } from "#gazetteer-pipeline"
 
 /**
- * The license expression the artifact carries — Overture's theme license and the register's own, the pair the rooftop
- * tier stamps for the same input.
+ * The license expression the artifact carries — Overture's theme license and the
+ * register's own, the pair the rooftop tier stamps for the same input.
  */
 export const TW_DISTRICTS_LICENSE = "CDLA-Permissive-2.0 AND OGDL-Taiwan-1.0"
 
@@ -58,8 +58,8 @@ export interface TaiwanRegionName {
 	id: number
 	name: string
 	/**
-	 * The `names.official` bit — 1 on the region's own official `zho` name, 0 on every other Han spelling it carries (a
-	 * county listed under a city's name, a pre-upgrade name, a script variant).
+	 * The `names.official` bit — 1 on the region's own official `zho` name, 0 on every other Han
+	 * spelling it carries (a county listed under a city's name, a pre-upgrade name, a script variant).
 	 */
 	official: boolean
 }
@@ -69,11 +69,12 @@ export interface TaiwanRegionName {
  *
  * 1. The official `zho` name (`新竹市` → Hsinchu City, never Hsinchu County, which also lists `新竹市` as a variant);
  * 2. Any Han name, when only one region carries it.
- * 3. The name minus its 縣/市 suffix against rung 1 and 2 (`桃園市` → `桃園`, the only name WOF gives the region that became a
- *    special municipality after the record was written).
+ * 3. The name minus its 縣/市 suffix against rung 1 and 2 (`桃園市` → `桃園`, the only name WOF
+ *    gives the region that became a special municipality after the record was written).
  *
- * Every comparison runs through the `zh` locality fold, so 臺 and 台 spellings meet. `undefined` is a real absence — a 縣市
- * the admin artifact does not know — and the caller reports it rather than guessing.
+ * Every comparison runs through the `zh` locality fold, so 臺 and 台 spellings meet.
+ * `undefined` is a real absence — a 縣市 the admin artifact does not know —
+ * and the caller reports it rather than guessing.
  */
 export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRegionName[]): number | undefined {
 	const fold = (name: string): string => normalizeLocalityForKeyLocale(name, "zh")
@@ -99,8 +100,8 @@ export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRe
 }
 
 /**
- * The register's spelling plus its 臺/台 twin, the two forms a person types. A name carrying neither character has no
- * twin and yields itself alone.
+ * The register's spelling plus its 臺/台 twin, the two forms a person types.
+ * A name carrying neither character has no twin and yields itself alone.
  */
 export function districtNameVariants(name: string): string[] {
 	const twin = name.includes("臺")
@@ -129,7 +130,8 @@ export interface TaiwanDistrictGroup {
 
 export interface BuildTWDistrictsOptions {
 	/**
-	 * The Overture release directory under `<data-root>/overture/`. Default {@link OVERTURE_ADDRESSES_RELEASE}.
+	 * The Overture release directory under `<data-root>/overture/`.
+	 * Default {@link OVERTURE_ADDRESSES_RELEASE}.
 	 */
 	release?: string
 	/**
@@ -137,7 +139,8 @@ export interface BuildTWDistrictsOptions {
 	 */
 	parquetPath?: string
 	/**
-	 * The admin WOF database the 縣市 names are matched against. Default `<data-root>/wof/admin-global-priority.db`.
+	 * The admin WOF database the 縣市 names are matched against.
+	 * Default `<data-root>/wof/admin-global-priority.db`.
 	 */
 	adminPath?: string
 	/**
@@ -189,8 +192,8 @@ function readTaiwanRegions(admin: DatabaseClient<WOFDatabase>): TaiwanRegionName
 }
 
 /**
- * Aggregate the parquet into one group per (縣市, 鄉鎮市區). DuckDB's `quantile_cont` gives the median and the p5/p95
- * envelope in one scan. BigInt counts are narrowed at the boundary.
+ * Aggregate the parquet into one group per (縣市, 鄉鎮市區). DuckDB's `quantile_cont` gives the median
+ * and the p5/p95 envelope in one scan. BigInt counts are narrowed at the boundary.
  */
 async function readDistrictGroups(parquetPath: string, threads: number | undefined): Promise<TaiwanDistrictGroup[]> {
 	let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
@@ -237,8 +240,8 @@ async function readDistrictGroups(parquetPath: string, threads: number | undefin
 }
 
 /**
- * Build the sealed Taiwan districts database. Not re-exported from a barrel — the command lazy-imports it
- * (optional-peer discipline, same as the NZ and CZ builders).
+ * Build the sealed Taiwan districts database. Not re-exported from a barrel —
+ * the command lazy-imports it (optional-peer discipline, same as the NZ and CZ builders).
  */
 export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {}): Promise<BuildTWDistrictsResult> {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")

@@ -30,8 +30,9 @@ export interface PlanetaryMapProps {
 	selected: SelectedFeature | null
 	onSelect: (feature: SelectedFeature) => void
 	/**
-	 * The live map, once react-map-gl has instantiated it, and `null` again on unmount. The chrome sits outside this
-	 * component and cannot reach the handle through `useMap()`; the compass reads its direction from here.
+	 * The live map, once react-map-gl has instantiated it, and `null` again on unmount.
+	 * The chrome sits outside this component and cannot reach the handle through `useMap()`;
+	 * the compass reads its direction from here.
 	 */
 	onMapReady?: (map: ReturnType<MapRef["getMap"]> | null) => void
 }
@@ -39,8 +40,9 @@ export interface PlanetaryMapProps {
 export function PlanetaryMap({ config, selected, onSelect, onMapReady }: PlanetaryMapProps) {
 	const mapRef = useRef<MapRef>(null)
 
-	// The map announces itself through `onLoad`; nothing polls for it. The chrome sits outside this component, so a
-	// ref assignment would not re-render it — the handle goes up to the parent as state instead.
+	// The map announces itself through `onLoad`; nothing polls for it.
+	// The chrome sits outside this component, so a ref assignment would not re-render it —
+	// the handle goes up to the parent as state instead.
 	const publishMap = useCallback(
 		(event: { target: ReturnType<MapRef["getMap"]> }) => onMapReady?.(event.target),
 		[onMapReady]
@@ -61,9 +63,9 @@ export function PlanetaryMap({ config, selected, onSelect, onMapReady }: Planeta
 	// Read once: a viewport in the URL wins over the body's opening view for the first render only.
 	const initial = useMemo(() => viewportFromSearch(location.search) ?? config.initialView, [config])
 
-	// The deepest zoom the body's terrain archive carries, read from the live source once it resolves its TileJSON.
-	// The two bodies do not publish the same depth, so a framing clamp that used a constant would over-zoom one of
-	// them the first time either was rebuilt.
+	// The deepest zoom the body's terrain archive carries, read from the live source once it
+	// resolves its TileJSON. The two bodies do not publish the same depth, so a framing clamp
+	// that used a constant would over-zoom one of them the first time either was rebuilt.
 	const [maxTerrainZoom, setMaxTerrainZoom] = useState<number | undefined>(undefined)
 
 	useEffect(() => {

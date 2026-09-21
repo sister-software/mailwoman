@@ -54,7 +54,8 @@ import {
 import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFDatabasePaths } from "#resolver-backend"
 
 /**
- * The resolved-weights shape the runner needs — a structural subset of `@mailwoman/neural`'s `ResolvedWeights`.
+ * The resolved-weights shape the runner needs — a structural subset of
+ * `@mailwoman/neural`'s `ResolvedWeights`.
  */
 interface ResolvedWeightsLike {
 	source: string
@@ -63,7 +64,8 @@ interface ResolvedWeightsLike {
 }
 
 /**
- * Every environment dependency `runDoctor` touches. Injected in tests; {@link defaultDoctorDeps} wires the real ones.
+ * Every environment dependency `runDoctor` touches. Injected in tests;
+ * {@link defaultDoctorDeps} wires the real ones.
  */
 export interface DoctorDeps {
 	/**
@@ -91,12 +93,14 @@ export interface DoctorDeps {
 	 */
 	dataRoot(): { path: string; fromEnv: boolean }
 	/**
-	 * The candidate.db the tools would actually use — `resolveCandidateDBPath` (explicit ?? `$MAILWOMAN_CANDIDATE_DB`),
-	 * on disk. No convention-path fallback: that's exactly what geocode/serve do.
+	 * The candidate.db the tools would actually use — `resolveCandidateDBPath`
+	 * (explicit ?? `$MAILWOMAN_CANDIDATE_DB`), on disk. No convention-path fallback:
+	 * that's exactly what geocode/serve do.
 	 */
 	envCandidatePath(): Promise<string | undefined>
 	/**
-	 * The `<data-root>/wof/candidate.db` convention path if it exists on disk — used to detect the env-unset trap.
+	 * The `<data-root>/wof/candidate.db` convention path if it exists on disk —
+	 * used to detect the env-unset trap.
 	 */
 	conventionCandidatePath(): Promise<string | undefined>
 	/**
@@ -111,17 +115,18 @@ export interface DoctorDeps {
 	 * Read + validate a POI layer manifest (throws on a missing/invalid manifest).
 	 */
 	/**
-	 * Read the identity fields of a layer manifest (throws on a missing/invalid manifest). Serves the POI presence check
-	 * and every layer's license line.
+	 * Read the identity fields of a layer manifest (throws on a missing/invalid manifest).
+	 * Serves the POI presence check and every layer's license line.
 	 */
 	readLayerIdentity(path: string): Promise<LayerIdentity>
 	/**
-	 * Every layer database the geocode session would attach, present or not. the doctor reports the license of each one
-	 * that is on disk.
+	 * Every layer database the geocode session would attach, present or not. the
+	 * doctor reports the license of each one that is on disk.
 	 */
 	layerDatabases(): LayerDatabaseRef[]
 	/**
-	 * `.db` files in a layer's directory other than the one the session attaches — a build under another name.
+	 * `.db` files in a layer's directory other than the one the session attaches —
+	 * a build under another name.
 	 */
 	layerAlternates(id: LayerID): Promise<string[]>
 	/**
@@ -129,18 +134,19 @@ export interface DoctorDeps {
 	 */
 	runtimeLicense(): Promise<string>
 	/**
-	 * The configured license key, verified offline against the trusted keys this build ships; `undefined` when none is
-	 * configured.
+	 * The configured license key, verified offline against the trusted keys this
+	 * build ships; `undefined` when none is configured.
 	 */
 	licenseKey(): Promise<LicenseKeyVerification | undefined>
 	/**
-	 * Ask mailwoman.ai's well-known register whether a key id is still listed. Called only when a key is configured.
-	 * answers `unreachable` rather than throwing when there is no route.
+	 * Ask mailwoman.ai's well-known register whether a key id is still listed.
+	 * Called only when a key is configured. answers `unreachable` rather than throwing when there is no route.
 	 */
 	confirmLicenseKeyPublished(kid: string): Promise<LicenseKeyPublication>
 	/**
-	 * Ask the license worker whether a self-service license still stands. Called only when the configured key names one.
-	 * answers `unreachable` rather than throwing when there is no route.
+	 * Ask the license worker whether a self-service license still stands.
+	 * Called only when the configured key names one. answers `unreachable`
+	 * rather than throwing when there is no route.
 	 */
 	checkLicenseStatus(lid: string): Promise<LicenseStatusAnswer>
 	/**
@@ -180,7 +186,8 @@ async function readEnginesFloor(): Promise<string> {
 }
 
 /**
- * The `<data-root>/wof/candidate.db` convention path if it exists on disk — the file a fresh consumer downloads.
+ * The `<data-root>/wof/candidate.db` convention path if it exists on disk —
+ * the file a fresh consumer downloads.
  */
 async function defaultConventionCandidatePath(dataRoot: string): Promise<string | undefined> {
 	if ($public.MAILWOMAN_CANDIDATE_DB === "none") return undefined
@@ -194,7 +201,8 @@ async function defaultConventionCandidatePath(dataRoot: string): Promise<string 
  * Open a POI db read-only, read its layer manifest, and narrow it to the identity fields doctor prints.
  */
 /**
- * Open a layer db read-only and read the identity fields of its manifest — what the layer is and what it asks.
+ * Open a layer db read-only and read the identity fields of its manifest —
+ * what the layer is and what it asks.
  */
 async function readLayerIdentity(path: string): Promise<LayerIdentity> {
 	using kdb = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
@@ -210,8 +218,9 @@ async function readLayerIdentity(path: string): Promise<LayerIdentity> {
 }
 
 /**
- * Mailwoman's own license expression, read from the package manifest located by self-reference (the same lookup
- * `readEnginesFloor` uses), so the doctor reports the license that ships rather than a string in this file.
+ * Mailwoman's own license expression, read from the package manifest located by
+ * self-reference (the same lookup `readEnginesFloor` uses), so the doctor reports
+ * the license that ships rather than a string in this file.
  */
 async function readRuntimeLicense(): Promise<string> {
 	return (await readMailwomanManifest()).license
@@ -274,9 +283,10 @@ async function gatherWeights(deps: DoctorDeps): Promise<WeightsObservation> {
 }
 
 async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> {
-	// Same precedence the tools apply: explicit/env candidate.db → convention-path candidate.db → WOF FTS databases.
-	// The convention probe must come before the databases, or a machine holding both reports the FTS database while every
-	// tool on it uses the candidate table — doctor's one job is to name the backend actually in use.
+	// Same precedence the tools apply: explicit/env candidate.db → convention-path
+	// candidate.db → WOF FTS databases. The convention probe must come before the databases,
+	// or a machine holding both reports the FTS database while every tool on it uses the
+	// candidate table — doctor's one job is to name the backend actually in use.
 	const envCandidate = await deps.envCandidatePath()
 
 	if (envCandidate) {
@@ -324,8 +334,9 @@ async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
 }
 
 /**
- * The license observation for one layer database, or `undefined` when the database is absent — an absent layer is not
- * in play and gets no license line, which keeps "not installed" distinct from "installed under an unknown license".
+ * The license observation for one layer database, or `undefined` when the database is
+ * absent — an absent layer is not in play and gets no license line, which keeps "not
+ * installed" distinct from "installed under an unknown license".
  */
 async function gatherLayerLicense(
 	deps: DoctorDeps,
@@ -357,14 +368,15 @@ async function gatherOverlay(deps: DoctorDeps, locale: string): Promise<DoctorCh
 }
 
 /**
- * Run every diagnostic and assemble the report. The check order is the render order, and it is runtime first (#1577):
- * node version, then the ONNX binding, then the model weights, then the optional data layers, then the informational
- * locale overlays.
+ * Run every diagnostic and assemble the report. The check order is the render order,
+ * and it is runtime first (#1577): node version, then the ONNX binding, then the model weights,
+ * then the optional data layers, then the informational locale overlays.
  *
- * The order is a reading order rather than an importance ranking. A stale node or an unloadable native binding explains
- * every other symptom in the report — a reader who sees "weights ok" first and stops has learned nothing, because ok
- * weights on a runtime that cannot run them still parse nothing. Pure verdict logic lives in {@link ./checks.ts}; this
- * only gathers the facts through the injected {@link DoctorDeps}.
+ * The order is a reading order rather than an importance ranking.
+ * A stale node or an unloadable native binding explains every other symptom in the report —
+ * a reader who sees "weights ok" first and stops has learned nothing, because ok weights on
+ * a runtime that cannot run them still parse nothing. Pure verdict logic lives in
+ * {@link ./checks.ts}; this only gathers the facts through the injected {@link DoctorDeps}.
  */
 export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<DoctorReport> {
 	const deps: DoctorDeps = { ...(await defaultDoctorDeps()), ...overrides }
@@ -442,9 +454,9 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 export interface EnvironmentEntry {
 	key: string
 	/**
-	 * The resolved value, or `undefined` when the variable is unset / the path unresolvable. `undefined` is rendered as
-	 * `(unset)` rather than omitted — the whole point of the dump is to distinguish "set to something surprising" from
-	 * "never set", and a missing row answers neither.
+	 * The resolved value, or `undefined` when the variable is unset / the path unresolvable.
+	 * `undefined` is rendered as `(unset)` rather than omitted — the whole point of the dump is to
+	 * distinguish "set to something surprising" from "never set", and a missing row answers neither.
 	 */
 	value: string | undefined
 	/**
@@ -456,9 +468,9 @@ export interface EnvironmentEntry {
 /**
  * Every path and variable the checks above resolved, for `mailwoman doctor --verbose` (#1577).
  *
- * Reads through the same {@link DoctorDeps} the checks do, so the dump can never disagree with the verdicts printed
- * above it — that disagreement is exactly the bug a verbose mode exists to catch (a reader who exported
- * `$MAILWOMAN_DATA_ROOT` in one shell and ran the CLI in another).
+ * Reads through the same {@link DoctorDeps} the checks do, so the dump can never disagree with
+ * the verdicts printed above it — that disagreement is exactly the bug a verbose mode exists to
+ * catch (a reader who exported `$MAILWOMAN_DATA_ROOT` in one shell and ran the CLI in another).
  */
 export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Promise<EnvironmentEntry[]> {
 	const deps: DoctorDeps = { ...(await defaultDoctorDeps()), ...overrides }

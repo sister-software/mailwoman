@@ -40,15 +40,15 @@ describe("gradedBaseOnly (#2223)", () => {
 	})
 
 	it("clears a country that declares no overlay, because the base package IS its production path", () => {
-		// FR routes through en-US by design. Calling that base-only would withhold a promote suggestion the run is
-		// entitled to make, which is the opposite of this predicate's purpose.
+		// FR routes through en-US by design. Calling that base-only would withhold a promote
+		// suggestion the run is entitled to make, which is the opposite of this predicate's purpose.
 		expect(gradedBaseOnly("FR", new Set(["en-GB", "es-ES"]))).toBe(false)
 		expect(gradedBaseOnly(undefined, new Set(["en-GB"]))).toBe(false)
 	})
 
 	it("reports EVERY country routing to a failed overlay, not only the first one graded", () => {
-		// The harness memoizes its fallback per locale, so a second country sharing an overlay never re-enters the
-		// failure path. Keyed by country, that country would silently read as production-true.
+		// The harness memoizes its fallback per locale, so a second country sharing an overlay never
+		// re-enters the failure path. Keyed by country, that country would silently read as production-true.
 		const shared = Object.entries(OVERLAY_LOCALE_BY_COUNTRY)
 			.filter(([, locale]) => locale === "en-GB")
 			.map(([country]) => country)

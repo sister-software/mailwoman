@@ -37,8 +37,9 @@ import { TextSpliterator } from "spliterator"
 /**
  * The publisher's encoding, for both the member names and their contents.
  *
- * `cp949`, not `euc-kr`: the register uses the UHC extension, and Node's whatwg `euc-kr` reads none of it. One row in
- * 48,000 carries such a sequence and decodes to a different string with no error raised — see `decodeByteStream`.
+ * `cp949`, not `euc-kr`: the register uses the UHC extension, and Node's whatwg
+ * `euc-kr` reads none of it. One row in 48,000 carries such a sequence and decodes to
+ * a different string with no error raised — see `decodeByteStream`.
  */
 const ENCODING = "cp949"
 
@@ -65,8 +66,8 @@ const SUP = { id: 0, postcode: 3, buildingRegister: 6, buildingLocal: 7, apartme
 /**
  * Joins 도로명코드 to 읍면동일련번호, written as an escape so no NUL byte enters the source.
  *
- * Neither part has a fixed width, so a printable separator that could occur in either would let two different pairs
- * produce one key. No code contains NUL.
+ * Neither part has a fixed width, so a printable separator that could occur in either
+ * would let two different pairs produce one key. No code contains NUL.
  */
 const CODE_SEPARATOR = "\0"
 
@@ -78,8 +79,9 @@ function roadCodeKey(code: string, serial: string): string {
 }
 
 /**
- * The 2026 edition writes the merged 전남광주통합특별시 where every older source — the permit registry, Who's On First — still
- * writes 전라남도 and 광주광역시. A typed string in either form aligns against the register through this map.
+ * The 2026 edition writes the merged 전남광주통합특별시 where every older source —
+ * the permit registry, Who's On First — still writes 전라남도 and 광주광역시.
+ * A typed string in either form aligns against the register through this map.
  */
 export const REGION_ALIASES: Readonly<Record<string, string>> = {
 	전라남도: "전남광주통합특별시",
@@ -95,8 +97,8 @@ export interface JusoLabelRow {
 	region: string
 	sigungu: string
 	/**
-	 * The 읍/면 the road address itself carries between the 시군구 and the road (읍면동구분 `0`), else empty: a 동 is never written
-	 * in the road form, it goes in the parenthetical.
+	 * The 읍/면 the road address itself carries between the 시군구 and the road (읍면동구분 `0`),
+	 * else empty: a 동 is never written in the road form, it goes in the parenthetical.
 	 */
 	eupmyeon: string
 	dong: string
@@ -119,8 +121,8 @@ export function parenthetical(row: JusoLabelRow): string {
 /**
  * Every full-edition member of one kind, as `[region suffix, archive name]`, sorted by region.
  *
- * The monthly edition also ships 변동 (change-only) files under the same prefixes. those carry a different row set and
- * are excluded by name.
+ * The monthly edition also ships 변동 (change-only) files under the same prefixes.
+ * those carry a different row set and are excluded by name.
  */
 export function regionMembers(names: readonly string[], prefix: string): Array<[string, string]> {
 	return names
@@ -143,8 +145,9 @@ async function* fields(archivePath: PathBuilderLike, member: string): AsyncGener
 /**
  * The road-code table, keyed by {@link roadCodeKey}: the admin ladder, the road name and the 읍면동구분.
  *
- * Held whole because every region's addresses join against it. A composite string key rather than a nested map: the
- * pair is read once per address row and a single lookup is what that path can afford.
+ * Held whole because every region's addresses join against it.
+ * A composite string key rather than a nested map: the pair is read once per address row
+ * and a single lookup is what that path can afford.
  */
 async function loadRoadCodes(archivePath: PathBuilderLike, member: string): Promise<Map<string, string[]>> {
 	const codes = new Map<string, string[]>()
@@ -184,8 +187,8 @@ export interface ReadJusoOptions {
 /**
  * Stream every label row, region by region.
  *
- * The lot and supplement files of one 시도 are held while its address file streams, so the join never holds the country
- * at once — the largest region's two side files rather than 6.4 million addresses.
+ * The lot and supplement files of one 시도 are held while its address file streams, so the join never
+ * holds the country at once — the largest region's two side files rather than 6.4 million addresses.
  */
 export async function* readJusoLabelRows(
 	archivePath: PathBuilderLike,

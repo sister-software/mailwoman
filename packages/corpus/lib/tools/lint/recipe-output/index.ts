@@ -58,8 +58,8 @@ const FORBIDDEN_LABEL_REPORT_THRESHOLD = 5
 const MAX_LISTED_EXAMPLES = 20
 
 /**
- * Calibrated thresholds (DeepSeek turn 9). These can be tuned over time if new failure modes surface that the current
- * numbers miss.
+ * Calibrated thresholds (DeepSeek turn 9). These can be tuned over time if new
+ * failure modes surface that the current numbers miss.
  */
 const CORPUS_CONFIDENCE_FLOOR = 0.66
 const OUTPUT_MIN_COUNT = 50
@@ -70,10 +70,10 @@ const BIGRAM_MIN_COUNT = 10
 const ALL_O_RATIO_CEILING = 0.9
 
 /**
- * Default `lint-rules.json` path — the rules ship beside this module in the source tree. tsc does not emit
- * readFileSync'd JSON into `out/`, so the compiled tree falls back to the source-tree copy (corpus/out/src/tools/ →
- * corpus/src/tools/). In-repo the `node` exports condition loads this module from source anyway, so the sibling URL is
- * the common path.
+ * Default `lint-rules.json` path — the rules ship beside this module in the source tree. tsc does
+ * not emit readFileSync'd JSON into `out/`, so the compiled tree falls back to the source-tree
+ * copy (corpus/out/src/tools/ → corpus/src/tools/). In-repo the `node` exports condition
+ * loads this module from source anyway, so the sibling URL is the common path.
  */
 function defaultRulesPath(): string {
 	return resolvePackagePath("@mailwoman/corpus", "lib", "tools", "lint-rules.json")

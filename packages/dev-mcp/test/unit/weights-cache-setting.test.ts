@@ -35,8 +35,8 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * Lay out a cache root the way `weightsCachePackageDir` expects, staged to the requested depth.
  *
- * `declared` becomes the card's `files_md5`, which is what separates an under-staged cache from a complete one — the
- * card is the only thing that knows which siblings this bundle is supposed to carry.
+ * `declared` becomes the card's `files_md5`, which is what separates an under-staged cache from a
+ * complete one — the card is the only thing that knows which siblings this bundle is supposed to carry.
  */
 async function stageCache(
 	stage: "wrong-shape" | "under-staged" | "ok",
@@ -77,8 +77,9 @@ describe("weights_cache — the setting", () => {
 	})
 
 	it("is ABSENT from the effective config when unset", () => {
-		// Not `undefined`, absent. The effective config is hashed into the engine id and reported as provenance, and an
-		// explicit `weightsCacheRoot: undefined` would claim the caller made a choice about the model when they did not.
+		// Not `undefined`, absent. The effective config is hashed into the engine id
+		// and reported as provenance, and an explicit `weightsCacheRoot: undefined` would
+		// claim the caller made a choice about the model when they did not.
 		expect(resolveConfig({})).not.toHaveProperty("weightsCacheRoot")
 	})
 
@@ -87,9 +88,9 @@ describe("weights_cache — the setting", () => {
 	})
 
 	it("makes two candidates two engines", async () => {
-		// The whole point of the setting: shipped-vs-candidate must not share a warm session. `engineID` hashes the
-		// effective config, so this holds automatically — and this test is what notices if the key ever stops being
-		// part of that config.
+		// The whole point of the setting: shipped-vs-candidate must not share a warm session.
+		// `engineID` hashes the effective config, so this holds automatically —
+		// and this test is what notices if the key ever stops being part of that config.
 		const fingerprint = await computeTreeFingerprint(process.cwd())
 		const shipped = engineID(resolveConfig({}), fingerprint)
 		const candidate = engineID(resolveConfig({ weights_cache: "/tmp/v440-cache" }), fingerprint)
@@ -114,9 +115,9 @@ describe("weights_cache — the guard", () => {
 	})
 
 	it("separates under-staged from wrong-shape", async () => {
-		// The two need different fixes — restage the bundle vs copy the siblings the card declares — and the #1516
-		// failure they prevent looks like a model regression rather than a missing file. One message for both sends the
-		// reader to the wrong place.
+		// The two need different fixes — restage the bundle vs copy the siblings the card
+		// declares — and the #1516 failure they prevent looks like a model regression
+		// rather than a missing file. One message for both sends the reader to the wrong place.
 		const root = await stageCache("under-staged", ["fst-en-us.bin", "postcode-en-us.bin"])
 
 		await expect(assertWeightsCacheStaged(root)).rejects.toThrow(/declares/)
@@ -124,8 +125,8 @@ describe("weights_cache — the guard", () => {
 	})
 
 	it("checks the locale the engine will actually load", async () => {
-		// A cache staged for en-us is not a cache for fr-fr, and the resolver would silently fall through to the
-		// installed fr-fr package rather than report that.
+		// A cache staged for en-us is not a cache for fr-fr, and the resolver would silently
+		// fall through to the installed fr-fr package rather than report that.
 		const root = await stageCache("ok")
 
 		await expect(assertWeightsCacheStaged(root, "fr-fr")).rejects.toThrow(/fr-fr/)
@@ -136,8 +137,9 @@ describe("weights_cache — the guard", () => {
 
 		await expect(registry.acquire({ weights_cache: "/nonexistent/v999-cache" })).rejects.toThrow(/v999-cache/)
 
-		// The measurable half: a refusal that happened after a 1.4 s build would still be correct and would still cost
-		// the build. Nothing resident means it refused on the path rather than on the artifacts.
+		// The measurable half: a refusal that happened after a 1.4 s build would still be correct
+		// and would still cost the build. Nothing resident means it refused on the path
+		// rather than on the artifacts.
 		expect(registry.size).toBe(0)
 	})
 })

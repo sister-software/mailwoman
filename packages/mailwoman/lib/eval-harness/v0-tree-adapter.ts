@@ -61,13 +61,13 @@ function locate(raw: string, value: string, from: number): [number, number] | nu
 }
 
 /**
- * Convert a v0 flat `ClassificationRecord` into an `AddressTree` by synthesizing char-aligned `B-<tag>` tokens and
- * running the canonical tree builder. Values are placed left-to-right with a cursor so repeated values ("New York, New
- * York") don't collide on the same span.
+ * Convert a v0 flat `ClassificationRecord` into an `AddressTree` by synthesizing char-aligned `B-<tag>`
+ * tokens and running the canonical tree builder. Values are placed left-to-right with a cursor
+ * so repeated values ("New York, New York") don't collide on the same span.
  */
 export function v0RecordToTree(raw: string, record: ClassificationRecord): AdaptResult {
-	// Collect (tag, value) pairs, then place them in order of first appearance so the cursor walk
-	// assigns leftmost-first (matches how the string reads).
+	// Collect (tag, value) pairs, then place them in order of first appearance
+	// so the cursor walk assigns leftmost-first (matches how the string reads).
 	const pairs: Array<{ tag: string; value: string }> = []
 
 	for (const [tag, values] of Object.entries(record)) {

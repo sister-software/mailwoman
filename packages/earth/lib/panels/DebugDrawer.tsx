@@ -28,7 +28,8 @@ export interface DebugDrawerProps {
 	 */
 	devMode: boolean
 	/**
-	 * Trace an input through the decode path (host's classifier). Resolves `null` when unavailable.
+	 * Trace an input through the decode path (host's classifier).
+	 * Resolves `null` when unavailable.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	/**

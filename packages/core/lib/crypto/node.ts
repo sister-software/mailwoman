@@ -11,7 +11,8 @@ import { isPresent } from "#objects"
 /**
  * A value that can be used as input to {@link simpleSHA3}.
  *
- * Values are converted to strings via {@link String}, trimmed, and empty values are discarded before hashing.
+ * Values are converted to strings via {@link String}, trimmed, and empty
+ * values are discarded before hashing.
  *
  * @internal
  */
@@ -20,7 +21,8 @@ export type SHA3Seed = string | number | boolean | null | Date | undefined
 /**
  * Input accepted by {@link simpleSHA3}.
  *
- * Arrays preserve insertion order. Object inputs are hashed using the order returned by {@link Object.values}.
+ * Arrays preserve insertion order. Object inputs are hashed using the order
+ * returned by {@link Object.values}.
  *
  * @internal
  */
@@ -53,7 +55,8 @@ export function normalizeSHASeeds(input: SHA3Input): string[] {
  * Each normalized seed is fed into the hash sequentially.
  *
  * @param seeds - Values to hash.
- * @param outputLength - Length of the digest in **bytes**. Defaults to `32` (256-bit output).
+ * @param outputLength - Length of the digest in **bytes**.
+ *   Defaults to `32` (256-bit output).
  *
  * @returns Uppercase hexadecimal digest.
  */

@@ -32,9 +32,9 @@ import type { GauntletDatabase } from "#eval-harness/gauntlet/schema"
 /**
  * Candidate-model selection shared by the regression + metamorphic layers.
  *
- * `tokenizer`/`card`: a tokenizer-splice candidate (#444/#884/#912) needs its new vocab paired with the model, or the
- * new embedding rows stay dormant (shipped tokenizer emits no ids for them) and the splice is invisible to the layer.
- * Model-only bumps omit them.
+ * `tokenizer`/`card`: a tokenizer-splice candidate (#444/#884/#912) needs its new vocab paired
+ * with the model, or the new embedding rows stay dormant (shipped tokenizer emits no ids for them)
+ * and the splice is invisible to the layer. Model-only bumps omit them.
  */
 export interface GauntletLayerOptions {
 	/**
@@ -44,9 +44,9 @@ export interface GauntletLayerOptions {
 	/**
 	 * Override the card's near-postcode gazetteer choreography.
 	 *
-	 * A declared ablation. The choreography pairs with the train-time half, so a board run under `false` measures what
-	 * the channel is worth on every tag at once — which is the only way to price the locality it recovers against the
-	 * postcode it was added to guard.
+	 * A declared ablation. The choreography pairs with the train-time half, so a board run
+	 * under `false` measures what the channel is worth on every tag at once — which is the
+	 * only way to price the locality it recovers against the postcode it was added to guard.
 	 */
 	suppressGazetteerNearPostcode?: boolean
 	/**
@@ -58,24 +58,26 @@ export interface GauntletLayerOptions {
 	 */
 	card?: string
 	/**
-	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`). The #718-safe path
-	 * for a splice/multisplice candidate — resolves model + tokenizer + card + soft-feed siblings package-shaped, exactly
-	 * like `eval parity --weights-cache`. Takes precedence over `model`/`tokenizer`/`card`.
+	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`).
+	 * The #718-safe path for a splice/multisplice candidate — resolves model + tokenizer +
+	 * card + soft-feed siblings package-shaped, exactly like `eval parity --weights-cache`.
+	 * Takes precedence over `model`/`tokenizer`/`card`.
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * Resolver-side pin pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart to the model swaps
-	 * above, so a resolver pin can be graded by the standard eval instead of by a bespoke probe. Omitted → production
-	 * defaults.
+	 * Resolver-side pin pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart
+	 * to the model swaps above, so a resolver pin can be graded by the standard eval
+	 * instead of by a bespoke probe. Omitted → production defaults.
 	 */
 	pins?: GauntletResolverPins
 }
 
 /**
- * The {@linkcode buildGauntletDeps} argument a layer's options describe — the model-selection ladder (weights-cache →
- * model[+tokenizer/card] → shipped default) with the resolver pin pins carried alongside. Shared by every layer so a
- * new pin cannot reach one layer and silently miss another: the metamorphic layer had an independently-maintained copy
- * of the ladder, which is exactly the shape that drifts.
+ * The {@linkcode buildGauntletDeps} argument a layer's options describe — the model-selection
+ * ladder (weights-cache → model[+tokenizer/card] → shipped default) with the resolver
+ * pin pins carried alongside. Shared by every layer so a new pin cannot reach one layer
+ * and silently miss another: the metamorphic layer had an independently-maintained
+ * copy of the ladder, which is exactly the shape that drifts.
  */
 export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOptions {
 	const pins = {
@@ -104,8 +106,8 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
  */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	using kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	// Before a single address is graded: does this DB hold the corpus that is committed right now? A check
-	// reading a stale artifact reports a verdict about a corpus nobody has — see corpus-stamp.ts.
+	// Before a single address is graded: does this DB hold the corpus that is committed right now?
+	// A check reading a stale artifact reports a verdict about a corpus nobody has — see corpus-stamp.ts.
 	await assertCorpusStampFresh(kdb)
 	const cases = await kdb.selectFrom("gauntlet_case").selectAll().execute()
 
@@ -114,8 +116,9 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	const fails: string[] = [] // status=pass that failed → BLOCK
 	const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking
 	const newlyPassing: string[] = [] // tracked case that now passes → promote it (anti-rot)
-	// Tracked cases that now pass in a locale this run graded base-only. Held back from `newlyPassing` and printed
-	// separately, because the pass is not attributable to the production path (#2223).
+	// Tracked cases that now pass in a locale this run graded base-only.
+	// Held back from `newlyPassing` and printed separately, because the pass is not
+	// attributable to the production path (#2223).
 	const withheld: string[] = []
 	let counted = 0
 	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row.
@@ -158,10 +161,10 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 			tracked.push(`  ~ ${c.id} [${c.status}${ref}]: ${issues.join("; ")}`)
 		} else if (deps.gradedBaseOnly(overlayCountry)) {
 			// #2223: the overlay this row routes to did not load, so the row graded without its pair index and
-			// dependent-locality prior. That is not the production path, and a pass on it is not evidence the
-			// production path passes — promoting it would write a base-only result into the board as a regression
-			// guard. Reported rather than dropped: an invisible withholding is indistinguishable from a row that
-			// simply kept failing.
+			// dependent-locality prior. That is not the production path, and a pass on it is
+			// not evidence the production path passes — promoting it would write a base-only
+			// result into the board as a regression guard. Reported rather than dropped:
+			// an invisible withholding is indistinguishable from a row that simply kept failing.
 			withheld.push(`  · ${c.id} [${c.status}${ref}] passes, but ${overlayCountry} graded BASE-ONLY — not promotable`)
 		} else {
 			newlyPassing.push(`  + ${c.id} [${c.status}${ref}] now PASSES — promote to status=pass`)
@@ -186,9 +189,10 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		}
 	}
 
-	// Printed whenever the pass could have fired — i.e. unless it is explicitly pinned off. Keying this on the
-	// enabled pin was right while the library default was off and wrong the moment it flipped (2026-08-05): the
-	// standard unpinned run now has the pass enabled, and that is the run whose firing count a reader needs.
+	// Printed whenever the pass could have fired — i.e. unless it is explicitly pinned off.
+	// Keying this on the enabled pin was right while the library default was off
+	// and wrong the moment it flipped (2026-08-05): the standard unpinned run now has the
+	// pass enabled, and that is the run whose firing count a reader needs.
 	if (options.pins?.postcodeCountryCoherence !== false) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
 

@@ -19,12 +19,14 @@ function isTypeScriptSource(path: string): boolean {
 /**
  * Map a dev-map TypeScript target to the JavaScript `tsc` actually emits for it.
  *
- * The `lib/` segment is dropped, and that is the whole subtlety. Source lives under `lib/` and every workspace sets
- * `"rootDir": "./lib"`, which strips that segment from the emit — `./lib/utils/index.ts` compiles to
- * `./out/utils/index.js`, not `./out/lib/utils/index.js`. A map that keeps the segment points every consumer at a path
- * the tarball does not contain, and {@link assertNoSourceTargets} does not catch it, because the target it produced is
- * no longer TypeScript — it is well-formed JavaScript at an address that does not exist. That is the same failure shape
- * as the hand-maintained duplication this module replaced, which shipped a fully-broken v7.2.0.
+ * The `lib/` segment is dropped, and that is the whole subtlety.
+ * Source lives under `lib/` and every workspace sets `"rootDir": "./lib"`, which strips
+ * that segment from the emit — `./lib/utils/index.ts` compiles to `./out/utils/index.js`,
+ * not `./out/lib/utils/index.js`. A map that keeps the segment points every consumer at a
+ * path the tarball does not contain, and {@link assertNoSourceTargets} does not catch it,
+ * because the target it produced is no longer TypeScript — it is well-formed JavaScript at
+ * an address that does not exist. That is the same failure shape as the hand-maintained
+ * duplication this module replaced, which shipped a fully-broken v7.2.0.
  */
 function emittedTargetFor(target: string): string {
 	return `./out/${target
@@ -36,14 +38,15 @@ function emittedTargetFor(target: string): string {
 /**
  * Rewrite the packed manifest's `exports` for consumers, in place inside the tarball.
  *
- * The dev map points at `.ts` source wherever the repo runs source directly (`node` everywhere, and any `browser` or
- * `worker` condition that names a source file); published packages ship only `out/`. This rewrites every such condition
- * to its emitted JavaScript counterpart, reorders each entry `types`-first, and strips any legacy
- * `publishConfig.exports`. The conditions themselves are kept: a Node target and a browser target may be different
- * files.
+ * The dev map points at `.ts` source wherever the repo runs source directly
+ * (`node` everywhere, and any `browser` or `worker` condition that names a source file);
+ * published packages ship only `out/`. This rewrites every such condition to its emitted JavaScript
+ * counterpart, reorders each entry `types`-first, and strips any legacy `publishConfig.exports`.
+ * The conditions themselves are kept: a Node target and a browser target may be different files.
  *
- * The rewrite is keyed on the target being TypeScript source rather than on the condition name — a condition-name rule
- * only covers the conditions someone thought of. {@link assertNoSourceTargets} refuses whatever this misses.
+ * The rewrite is keyed on the target being TypeScript source rather than on the
+ * condition name — a condition-name rule only covers the conditions someone thought
+ * of. {@link assertNoSourceTargets} refuses whatever this misses.
  */
 export function transformExportsForPublish(exports: unknown): unknown {
 	if (typeof exports !== "object" || exports === null) return exports
@@ -81,9 +84,10 @@ export function transformExportsForPublish(exports: unknown): unknown {
 /**
  * Rewrite package-private `imports` aliases for the packed consumer manifest.
  *
- * These use the same development shape as exports: `node` points at source TypeScript so Node's native type stripping
- * can run the checkout directly, while `default` points at emitted JavaScript. A package installed under `node_modules`
- * cannot type-strip that source, so the packed map rewrites every `node → .ts` condition to emitted JavaScript.
+ * These use the same development shape as exports: `node` points at source TypeScript
+ * so Node's native type stripping can run the checkout directly, while `default` points at
+ * emitted JavaScript. A package installed under `node_modules` cannot type-strip that source,
+ * so the packed map rewrites every `node → .ts` condition to emitted JavaScript.
  */
 export function transformImportsForPublish(imports: unknown): unknown {
 	if (typeof imports !== "object" || imports === null) return imports
@@ -113,9 +117,10 @@ export function transformImportsForPublish(imports: unknown): unknown {
 /**
  * Refuse a transformed map that still resolves to TypeScript source.
  *
- * Node will not type-strip under `node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`), and consumer bundlers
- * do not compile dependencies. A `.ts` target therefore breaks the package, and the tarball audit will not say so: it
- * checks that each target is present, and a shipped `.ts` file is present.
+ * Node will not type-strip under `node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`),
+ * and consumer bundlers do not compile dependencies. A `.ts` target therefore
+ * breaks the package, and the tarball audit will not say so: it checks that each
+ * target is present, and a shipped `.ts` file is present.
  *
  * `label` names the workspace, so a failure says which manifest to edit.
  */

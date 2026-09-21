@@ -38,7 +38,8 @@ import { CSVSpliterator } from "spliterator"
 import { normalizePostcodeDisplay } from "#gazetteer-pipeline/postcode/display-form"
 
 /**
- * Positional quality indicator meaning "no coordinate available". Such rows carry eastings/northings of zero.
+ * Positional quality indicator meaning "no coordinate available".
+ * Such rows carry eastings/northings of zero.
  */
 export const PQI_NO_COORDINATE = 90
 
@@ -64,8 +65,9 @@ export type CodePointCountry = (typeof CODEPOINT_COUNTRY_CODES)[keyof typeof COD
  */
 export interface CodePointRecord {
 	/**
-	 * The postcode in OS's own spacing — outward code, one space, inward code (`SW1A 1AA`). This is the display form. the
-	 * normalized lookup form is derived by the database builder via the #920 name law.
+	 * The postcode in OS's own spacing — outward code, one space, inward code (`SW1A 1AA`).
+	 * This is the display form. the normalized lookup form is derived by the
+	 * database builder via the #920 name law.
 	 */
 	postcode: string
 	/**
@@ -81,7 +83,8 @@ export interface CodePointRecord {
 	 */
 	northing: number
 	/**
-	 * WGS84 latitude, converted from the grid reference. Accurate to ~2 m (see `@mailwoman/spatial`'s `osgb36.ts`).
+	 * WGS84 latitude, converted from the grid reference. Accurate to ~2 m
+	 * (see `@mailwoman/spatial`'s `osgb36.ts`).
 	 */
 	latitude: number
 	/**
@@ -99,8 +102,8 @@ export interface CodePointRecord {
 }
 
 /**
- * What a parse run skipped, and why. Kept as counters rather than a boolean so the builder's provenance can state the
- * meaning of each zero — "measured, none" is a different claim from "never looked".
+ * What a parse run skipped, and why. Kept as counters rather than a boolean so the builder's provenance
+ * can state the meaning of each zero — "measured, none" is a different claim from "never looked".
  */
 export interface CodePointParseStats {
 	/**
@@ -120,32 +123,35 @@ export interface CodePointParseStats {
 	 */
 	skippedMalformed: number
 	/**
-	 * Per-postcode-area yielded counts, keyed by uppercase outward area (`AB`, `B`, `ZE`) — the figures compared against
-	 * the archive's own `Doc/metadata.txt` manifest.
+	 * Per-postcode-area yielded counts, keyed by uppercase outward area (`AB`, `B`, `ZE`) —
+	 * the figures compared against the archive's own `Doc/metadata.txt` manifest.
 	 */
 	yieldedByArea: Record<string, number>
 }
 
 /**
- * A GB unit postcode: 1-2 letters, then the rest of the outward code, a space, then digit + two letters. Deliberately
- * loose about the outward code's shape (`W1A`, `EC1A`, `B1`, `DN55` are all legal and differ structurally) and strict
- * about the inward code, which is invariant.
+ * A GB unit postcode: 1-2 letters, then the rest of the outward code, a space,
+ * then digit + two letters. Deliberately loose about the outward code's
+ * shape (`W1A`, `EC1A`, `B1`, `DN55` are all legal and differ structurally)
+ * and strict about the inward code, which is invariant.
  */
 const UNIT_POSTCODE = /^[A-Z]{1,2}[0-9][A-Z0-9]?\s[0-9][A-Z]{2}$/
 
 /**
- * Extract the postcode area — the leading one or two letters (`SW1A 1AA` → `SW`, `B33 8TH` → `B`). This is the key
- * `Doc/metadata.txt` counts by.
+ * Extract the postcode area — the leading one or two letters (`SW1A 1AA` → `SW`, `B33 8TH` → `B`).
+ * This is the key `Doc/metadata.txt` counts by.
  */
 export function postcodeArea(postcode: string): string {
 	return /^[A-Z]{1,2}/.exec(postcode)?.[0] ?? ""
 }
 
 /**
- * Split one CSV line into fields, honouring RFC-4180 double quoting: quotes wrap a field, a doubled `""` inside a
- * quoted field is a literal quote, and a comma inside quotes is data rather than a separator.
+ * Split one CSV line into fields, honouring RFC-4180 double quoting:
+ * quotes wrap a field, a doubled `""` inside a quoted field is a literal quote,
+ * and a comma inside quotes is data rather than a separator.
  *
- * Retained as a compatibility helper for callers parsing one resident record. Streaming callers should use
+ * Retained as a compatibility helper for callers parsing one resident record.
+ * Streaming callers should use
  * {@linkcode readCodePointCSV}, which preserves quoted newlines across read boundaries.
  *
  * @deprecated Use `CSVSpliterator` directly.
@@ -157,12 +163,12 @@ export function splitCSVLine(line: string): string[] {
 /**
  * Stream every usable record from one extracted area CSV, mutating `stats` as it goes.
  *
- * Yields rather than collecting: the whole of GB is 1.75 M rows, and the database builder inserts as it reads rather
- * than materializing an array it would only iterate once.
+ * Yields rather than collecting: the whole of GB is 1.75 M rows, and the database builder
+ * inserts as it reads rather than materializing an array it would only iterate once.
  */
 export async function* readCodePointCSV(csvPath: string, stats: CodePointParseStats): AsyncGenerator<CodePointRecord> {
-	// These files have no header row. the column names ship separately in
-	// `Doc/Code-Point_Open_Column_Headers.csv`.
+	// These files have no header row. the column names ship separately
+	// in `Doc/Code-Point_Open_Column_Headers.csv`.
 	for await (const row of CSVSpliterator.fromAsync<string[]>(csvPath, {
 		header: false,
 	})) {
@@ -214,11 +220,12 @@ export async function* readCodePointCSV(csvPath: string, stats: CodePointParseSt
 /**
  * Normalize Code-Point's postcode spacing to the single-space display form.
  *
- * The product is specified as a fixed 7-character field — the outward code left-justified, the inward code
- * right-justified, so a short postcode like `B1 1AA` is padded to `B1 1AA` with two spaces. The 2026-05 CSVs happen to
- * ship the single-spaced form already, but the specification is what a future extract will follow, and a double space
- * would otherwise sail through as a distinct postcode from its single-spaced twin. Collapsing runs of whitespace costs
- * one regex and closes that.
+ * The product is specified as a fixed 7-character field — the outward code left-justified,
+ * the inward code right-justified, so a short postcode like `B1 1AA` is padded to `B1 1AA`
+ * with two spaces. The 2026-05 CSVs happen to ship the single-spaced form already,
+ * but the specification is what a future extract will follow, and a double space
+ * would otherwise sail through as a distinct postcode from its single-spaced twin.
+ * Collapsing runs of whitespace costs one regex and closes that.
  */
 export function normalizeCodePointSpacing(raw: string): string {
 	return normalizePostcodeDisplay(raw)

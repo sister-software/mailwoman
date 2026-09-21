@@ -33,9 +33,10 @@ import {
  */
 export interface ScoreCountryHomographOptions {
 	/**
-	 * ONNX artifact to grade. Empty/omitted is legal alongside {@linkcode ScoreCountryHomographOptions.weightsCache}; the
-	 * value also feeds the report header verbatim (its last path segment), so an empty string renders the same empty slot
-	 * the child process did.
+	 * ONNX artifact to grade. Empty/omitted is legal alongside
+	 * {@linkcode ScoreCountryHomographOptions.weightsCache}; the value also feeds
+	 * the report header verbatim (its last path segment), so an empty string renders
+	 * the same empty slot the child process did.
 	 */
 	model?: string
 	/**
@@ -43,9 +44,10 @@ export interface ScoreCountryHomographOptions {
 	 */
 	file?: string
 	/**
-	 * Gazetteer-anchor lexicon (#464): fed when the path exists so a gazetteer-trained model (v0.9.12+) gets its
-	 * candidate-tag clues. harmless for older models (the runner skips inputs the ONNX doesn't declare). Unlike
-	 * `score-affix`, this probe defaults the path to `data/gazetteer/anchor-lexicon-v1.json` rather than off.
+	 * Gazetteer-anchor lexicon (#464): fed when the path exists so a gazetteer-trained
+	 * model (v0.9.12+) gets its candidate-tag clues. harmless for older models (the runner
+	 * skips inputs the ONNX doesn't declare). Unlike `score-affix`, this probe defaults
+	 * the path to `data/gazetteer/anchor-lexicon-v1.json` rather than off.
 	 */
 	gazetteerLexicon?: string
 	/**
@@ -61,14 +63,15 @@ export interface ScoreCountryHomographOptions {
 	 */
 	bridgeGaps?: boolean
 	/**
-	 * Suppress gazetteer clues adjacent to a postcode. The check always passes this for the country probe — zero-filled
-	 * clues near a postcode depress country recall.
+	 * Suppress gazetteer clues adjacent to a postcode. The check always passes this for
+	 * the country probe — zero-filled clues near a postcode depress country recall.
 	 */
 	suppressGazNearPostcode?: boolean
 	/**
-	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft channels (anchor + gazetteer +
-	 * country) from the package via `loadFromWeights` — the only in-distribution grade for a country-channel model
-	 * (v6.2.0+), which is exactly what this country probe must feed. Precedence over
+	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft
+	 * channels (anchor + gazetteer + country) from the package via `loadFromWeights` —
+	 * the only in-distribution grade for a country-channel model (v6.2.0+), which is
+	 * exactly what this country probe must feed. Precedence over
 	 * {@linkcode ScoreCountryHomographOptions.model}.
 	 */
 	weightsCache?: string
@@ -106,8 +109,8 @@ export interface ScoreCountryHomographResult {
 const TAGS = ["country", "region", "locality"] as const
 
 /**
- * Score the country-homograph battery. Every narration line goes through `report`, one call per line, so the check's
- * captured markdown matches the child-process stdout it replaced byte-for-byte.
+ * Score the country-homograph battery. Every narration line goes through `report`, one call per line,
+ * so the check's captured markdown matches the child-process stdout it replaced byte-for-byte.
  */
 export async function scoreCountryHomograph(
 	options: ScoreCountryHomographOptions = {},

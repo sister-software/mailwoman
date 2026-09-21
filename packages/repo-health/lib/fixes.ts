@@ -14,7 +14,8 @@ import { prefixDirectoriesFix } from "#checks/prefix-directories"
 import type { RepoFix } from "#fix"
 
 /**
- * Every check that can plan its own repair. `mwops health fix <check>` looks a fix up here by the check's id.
+ * Every check that can plan its own repair. `mwops health fix <check>` looks
+ * a fix up here by the check's id.
  */
 export const fixes: ReadonlyArray<RepoFix> = [prefixDirectoriesFix]
 

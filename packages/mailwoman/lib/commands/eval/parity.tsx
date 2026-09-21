@@ -33,9 +33,9 @@ export const spec = {
 		fixtures: { type: "string", description: "Fixture JSONL override" },
 		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
 		"street-morphology": { type: "boolean", default: false, description: "Enable street-morphology emission bias" },
-		// The runner reads `gazetteerPrior !== false`, so the prior is on unless a caller forces it off and `false`
-		// is the only value this flag can usefully carry. Naming it for the thing it does keeps the flag and the
-		// property it binds to in agreement.
+		// The runner reads `gazetteerPrior !== false`, so the prior is on unless a caller
+		// forces it off and `false` is the only value this flag can usefully carry.
+		// Naming it for the thing it does keeps the flag and the property it binds to in agreement.
 		"gazetteer-prior-off": {
 			type: "boolean",
 			default: false,

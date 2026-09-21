@@ -21,8 +21,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * A fake checkout carrying one source file in the first fingerprinted workspace — enough to exercise the walk without
- * touching the real tree.
+ * A fake checkout carrying one source file in the first fingerprinted workspace —
+ * enough to exercise the walk without touching the real tree.
  */
 async function fakeCheckout(): Promise<string> {
 	const root = String(fixtures.use(await temporaryDirectory("mwdev-fingerprint-")).path)
@@ -67,8 +67,9 @@ describe("computeTreeFingerprint", () => {
 	})
 
 	it("throws rather than fingerprinting nothing", async () => {
-		// A walk that finds no files produces a digest that matches every other empty walk, which would disable the
-		// staleness guard silently. `corpus-stamp.ts` names the same shape: an empty loader on both sides agrees.
+		// A walk that finds no files produces a digest that matches every other empty walk,
+		// which would disable the staleness guard silently. `corpus-stamp.ts` names the
+		// same shape: an empty loader on both sides agrees.
 		await using emptyDirectory = await temporaryDirectory("mwdev-empty-")
 		const empty = emptyDirectory.path
 
@@ -99,10 +100,11 @@ describe("staleEngineMessage", () => {
 		expect(message).toContain(after.digest)
 		expect(message.toLowerCase()).toContain("restart")
 		expect(message).toContain("cannot evict an imported module")
-		// The assertion this test's name always claimed and never made. The message used to end
-		// `Restart the MCP server (or call mwdev_daemon with action "reload")`, so it prescribed both — and the
-		// reload half is the one that rebuilds sessions around the same module graph and reports a clean
-		// fingerprint over stale code. A "not a reload" guard has to check for the absence.
+		// The assertion this test's name always claimed and never made.
+		// The message used to end `Restart the MCP server (or call mwdev_daemon with action "reload")`,
+		// so it prescribed both — and the reload half is the one that rebuilds sessions
+		// around the same module graph and reports a clean fingerprint over stale code.
+		// A "not a reload" guard has to check for the absence.
 		expect(message).not.toMatch(/action "reload"|call mwdev_daemon/)
 		expect(message.toLowerCase()).toContain("separate process")
 	})
@@ -110,9 +112,10 @@ describe("staleEngineMessage", () => {
 
 describe("computeTreeFingerprint — dirty files", () => {
 	it("reports a modified path whole, including the first one", async () => {
-		// `git status --porcelain` writes an unstaged modification as " M path". Trimming the whole output before
-		// splitting eats column one of the first line only, and a fixed-width read then takes the leading character of
-		// the path with it — so the field reports a file that does not exist, and only ever the first one.
+		// `git status --porcelain` writes an unstaged modification as " M path".
+		// Trimming the whole output before splitting eats column one of the first line only,
+		// and a fixed-width read then takes the leading character of the path with it —
+		// so the field reports a file that does not exist, and only ever the first one.
 		const root = await fakeCheckout()
 		const relative = join(FINGERPRINTED_WORKSPACES[0]!, "thing.ts")
 

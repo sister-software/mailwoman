@@ -7,17 +7,19 @@
 /**
  * Rgba pixel rasterizer for map-tui's debug view.
  *
- * Rasterizes vector geometry (polylines, filled polygons, circles) onto a plain rgba byte grid — the shape asciify's
- * rasterize step consumes. Every draw call clips through {@link RGBAGrid.setPixel}, so callers never need to
- * bounds-check geometry themselves. The polyline and circle primitives floor their coordinates to integers on entry;
+ * Rasterizes vector geometry (polylines, filled polygons, circles) onto a plain rgba byte
+ * grid — the shape asciify's rasterize step consumes. Every draw call clips through
+ * {@link RGBAGrid.setPixel}, so callers never need to bounds-check geometry themselves.
+ * The polyline and circle primitives floor their coordinates to integers on entry;
  * {@link fillPolygon} does not — its scanline edge math keeps ring vertices as given, see its own docstring.
  */
 
 import type { RGB } from "#style"
 
 /**
- * A row-major rgba pixel buffer. Alpha starts at 0 (unlit/transparent) everywhere. drawing a pixel sets it to 255,
- * which is how callers (including this module's own tests) distinguish "lit" from "background".
+ * A row-major rgba pixel buffer. Alpha starts at 0 (unlit/transparent) everywhere. drawing
+ * a pixel sets it to 255, which is how callers (including this module's own tests)
+ * distinguish "lit" from "background".
  */
 export class RGBAGrid {
 	readonly width: number
@@ -34,9 +36,10 @@ export class RGBAGrid {
 	}
 
 	/**
-	 * Writes a pixel's RGB channels and sets alpha to fully opaque (255). Coordinates outside the grid are silently
-	 * ignored — this is the one clipping boundary every drawing primitive in this module routes through, so geometry that
-	 * runs off the grid (or arrives with negative/oversized coordinates) never needs special-casing upstream.
+	 * Writes a pixel's RGB channels and sets alpha to fully opaque (255).
+	 * Coordinates outside the grid are silently ignored — this is the one clipping boundary
+	 * every drawing primitive in this module routes through, so geometry that runs off the grid
+	 * (or arrives with negative/oversized coordinates) never needs special-casing upstream.
 	 */
 	setPixel(x: number, y: number, color: RGB): void {
 		const px = Math.floor(x)
@@ -54,8 +57,8 @@ export class RGBAGrid {
 }
 
 /**
- * Stamps a `width`-sized square centered on (x, y) — used by {@link drawPolyline} for `width > 1`. `width === 1` callers
- * should use `grid.setPixel` directly rather than pay the square-stamp loop.
+ * Stamps a `width`-sized square centered on (x, y) — used by {@link drawPolyline} for `width > 1`.
+ * `width === 1` callers should use `grid.setPixel` directly rather than pay the square-stamp loop.
  */
 function stampSquare(grid: RGBAGrid, x: number, y: number, color: RGB, width: number): void {
 	const half = Math.floor(width / 2)
@@ -68,8 +71,9 @@ function stampSquare(grid: RGBAGrid, x: number, y: number, color: RGB, width: nu
 }
 
 /**
- * Draws a single line segment with the integer Bresenham algorithm. Coordinates are floored on entry. every plotted
- * point routes through `grid.setPixel`, so segments that run partly or fully off-grid clip for free.
+ * Draws a single line segment with the integer Bresenham algorithm.
+ * Coordinates are floored on entry. every plotted point routes through `grid.setPixel`,
+ * so segments that run partly or fully off-grid clip for free.
  */
 function drawSegment(grid: RGBAGrid, x0: number, y0: number, x1: number, y1: number, color: RGB, width: number): void {
 	let x = Math.floor(x0)
@@ -107,9 +111,9 @@ function drawSegment(grid: RGBAGrid, x0: number, y0: number, x1: number, y1: num
 }
 
 /**
- * Draws a connected polyline through `points`, one Bresenham segment per consecutive pair. `width > 1` stamps a
- * `width`-sized square at every plotted step instead of a single pixel, thickening the line. Segments that run outside
- * the grid clip through `setPixel` rather than throwing.
+ * Draws a connected polyline through `points`, one Bresenham segment per consecutive pair.
+ * `width > 1` stamps a `width`-sized square at every plotted step instead of a single pixel,
+ * thickening the line. Segments that run outside the grid clip through `setPixel` rather than throwing.
  */
 export function drawPolyline(
 	grid: RGBAGrid,
@@ -126,12 +130,14 @@ export function drawPolyline(
 }
 
 /**
- * Fills one or more polygon rings with the even-odd rule: a pixel is interior when a ray from it crosses an odd number
- * of ring edges. Rings after the first behave as holes wherever they overlap the first ring, and holes nested inside
- * holes fill again, purely as a consequence of the parity count — no explicit hole/outer distinction is tracked.
- * Scanlines sample row centers (`y + 0.5`) rather than integer row coordinates, which is what keeps horizontal edges
- * and grid-aligned polygon boundaries from producing degenerate (zero-width or doubled) intersections. Coordinates are
- * floored to the grid via `setPixel`; edge math itself uses the ring vertices as given.
+ * Fills one or more polygon rings with the even-odd rule: a pixel is interior when a
+ * ray from it crosses an odd number of ring edges. Rings after the first behave as
+ * holes wherever they overlap the first ring, and holes nested inside holes fill again,
+ * purely as a consequence of the parity count — no explicit hole/outer distinction is tracked.
+ * Scanlines sample row centers (`y + 0.5`) rather than integer row coordinates,
+ * which is what keeps horizontal edges and grid-aligned polygon boundaries from producing
+ * degenerate (zero-width or doubled) intersections. Coordinates are floored to the
+ * grid via `setPixel`; edge math itself uses the ring vertices as given.
  */
 export function fillPolygon(
 	grid: RGBAGrid,
@@ -174,9 +180,10 @@ export function fillPolygon(
 }
 
 /**
- * Draws a circle's outline (ring rather than a filled disc) with the midpoint circle algorithm, plotting all eight
- * symmetric octant points per step. `centerX`/`centerY`/`radius` are floored on entry. every plotted point routes
- * through `setPixel`, so a circle that runs off the grid clips rather than throwing.
+ * Draws a circle's outline (ring rather than a filled disc) with the midpoint
+ * circle algorithm, plotting all eight symmetric octant points per step.
+ * `centerX`/`centerY`/`radius` are floored on entry. every plotted point routes through
+ * `setPixel`, so a circle that runs off the grid clips rather than throwing.
  */
 export function drawCircle(grid: RGBAGrid, centerX: number, centerY: number, radius: number, color: RGB): void {
 	const cx = Math.floor(centerX)

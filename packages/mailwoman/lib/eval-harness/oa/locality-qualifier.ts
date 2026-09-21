@@ -25,16 +25,17 @@
 /**
  * A trailing qualifier in parentheses at the end of a name.
  *
- * Anchored at the end, so a parenthesis anywhere else is left alone: the convention this removes is a suffix, and a
- * name carrying parentheses mid-string is not it.
+ * Anchored at the end, so a parenthesis anywhere else is left alone: the convention this
+ * removes is a suffix, and a name carrying parentheses mid-string is not it.
  */
 const TRAILING_PARENTHETICAL = /\s*\([^)]*\)\s*$/
 
 /**
  * `name` with a trailing parenthetical qualifier removed, or `name` unchanged when it carries none.
  *
- * A name that is nothing but a parenthetical comes back unchanged rather than emptied: an empty locality is a row the
- * caller drops silently, and a surface this function cannot read is one it should hand back intact.
+ * A name that is nothing but a parenthetical comes back unchanged rather than emptied:
+ * an empty locality is a row the caller drops silently, and a surface this function
+ * cannot read is one it should hand back intact.
  */
 export function stripParentheticalQualifier(name: string): string {
 	const stripped = name.replace(TRAILING_PARENTHETICAL, "").trim()
@@ -45,8 +46,9 @@ export function stripParentheticalQualifier(name: string): string {
 /**
  * Whether {@linkcode stripParentheticalQualifier} would change `name`.
  *
- * Separate from the strip so a caller can count what it changed without comparing strings at the call site — the panel
- * reader reports that count, because a normalizer whose size nobody can see is one nobody can audit.
+ * Separate from the strip so a caller can count what it changed without comparing
+ * strings at the call site — the panel reader reports that count, because a normalizer
+ * whose size nobody can see is one nobody can audit.
  */
 export function hasParentheticalQualifier(name: string): boolean {
 	return stripParentheticalQualifier(name) !== name

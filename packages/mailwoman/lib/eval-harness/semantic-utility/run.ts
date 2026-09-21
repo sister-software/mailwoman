@@ -59,7 +59,8 @@ import {
 } from "#observations/index"
 
 /**
- * Which arm produced a receipt. `baseline` is the pre-injection run this pre-registration commits; #1929 names its own.
+ * Which arm produced a receipt. `baseline` is the pre-injection run this
+ * pre-registration commits; #1929 names its own.
  */
 export type ProbeArm = string
 
@@ -73,12 +74,13 @@ export interface ProbeRowObservation extends SemanticObservation {
 }
 
 /**
- * What the run did about the injected semantic route — read from the route that was built, never from the arm label.
+ * What the run did about the injected semantic route — read from the route that
+ * was built, never from the arm label.
  */
 export interface ProbeSemanticRouteRecord extends Partial<SemanticRouteIdentity> {
 	/**
-	 * Whether a route was constructed and injected at all. `false` is the un-injected pipeline, whatever the arm is
-	 * called.
+	 * Whether a route was constructed and injected at all.
+	 * `false` is the un-injected pipeline, whatever the arm is called.
 	 */
 	enabled: boolean
 }
@@ -92,8 +94,8 @@ export interface ProbeReceipt {
 	gitCommit: string
 	artifact: ProbeArtifactIdentity
 	/**
-	 * The injected route as built. Present on every receipt, including a run with no route: an omitted field would make
-	 * "no route was asked for" and "this receipt predates the field" the same reading.
+	 * The injected route as built. Present on every receipt, including a run with no route: an omitted
+	 * field would make "no route was asked for" and "this receipt predates the field" the same reading.
 	 */
 	semanticRoute: ProbeSemanticRouteRecord
 	rows: ProbeRowOutcome[]
@@ -111,8 +113,8 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 */
 	arm?: ProbeArm
 	/**
-	 * Override the frozen pre-registration — for a test that wants a synthetic definition. A run with no override reads
-	 * the committed one.
+	 * Override the frozen pre-registration — for a test that wants a synthetic definition.
+	 * A run with no override reads the committed one.
 	 */
 	definitionPath?: string
 	freezePath?: string
@@ -125,8 +127,9 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 */
 	gitCommit?: string
 	/**
-	 * Build the one semantic observation route (#1929) and inject it into the pipeline this run constructs. Absent or
-	 * `false` — the default — runs the un-injected pipeline, which is what the frozen baseline was measured against.
+	 * Build the one semantic observation route (#1929) and inject it into the pipeline this
+	 * run constructs. Absent or `false` — the default — runs the un-injected pipeline,
+	 * which is what the frozen baseline was measured against.
 	 */
 	semanticObservation?: boolean
 }
@@ -134,8 +137,9 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 /**
  * Run one arm of the probe.
  *
- * The control rows are read from the committed board file and matched against the pre-registration's frozen copies, so
- * a control that has been edited on the board stops the run instead of quietly grading a different row.
+ * The control rows are read from the committed board file and matched against the
+ * pre-registration's frozen copies, so a control that has been edited on the board
+ * stops the run instead of quietly grading a different row.
  */
 export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}): Promise<ProbeReceipt> {
 	const definition = await loadProbeDefinition(options.definitionPath, options.freezePath)
@@ -192,7 +196,8 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 }
 
 /**
- * Take everything the route recorded while one row ran, addressed to that row. Empty when no route was injected.
+ * Take everything the route recorded while one row ran, addressed to that row.
+ * Empty when no route was injected.
  */
 function drainObservations(route: SemanticObservationRoute | undefined, rowID: string): ProbeRowObservation[] {
 	if (!route) return []
@@ -222,8 +227,8 @@ async function gradeRow(
 }
 
 /**
- * The human-readable report. Prints the frozen bars beside every measurement, so a reader never has to open the
- * definition to know what the number was compared against.
+ * The human-readable report. Prints the frozen bars beside every measurement, so a reader
+ * never has to open the definition to know what the number was compared against.
  */
 export function printProbeReceipt(receipt: ProbeReceipt): void {
 	console.log(`\nsemantic-utility probe ${receipt.probeID} v${receipt.definitionVersion} — arm: ${receipt.arm}`)

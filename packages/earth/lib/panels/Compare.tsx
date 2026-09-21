@@ -137,8 +137,8 @@ export const Compare: React.FC<CompareProps> = ({
 
 		void (async () => {
 			try {
-				// The shared classify front-half — the compare arm loads only a classifier, so the FST /
-				// street-morphology / pair-index deps stay unset and the stage parses as a bare load.
+				// The shared classify front-half — the compare arm loads only a classifier, so the FST
+				// / street-morphology / pair-index deps stay unset and the stage parses as a bare load.
 				const { tree, nodes, kindResult, timing } = await runClassifyStage(primaryInput, { classifier: cls })
 
 				if (cancelled) return

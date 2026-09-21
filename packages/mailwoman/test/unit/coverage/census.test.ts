@@ -61,8 +61,9 @@ describe("normalizeArrowListColumn", () => {
 
 describe("readAdmittedCountries", () => {
 	it("keeps a bare NO as the string it is", async () => {
-		// YAML 1.1 resolves bare `no` to boolean false. A YAML parser here would report Norway as un-admitted while the
-		// config lists it — reproducing, inside the tool meant to surface that bug, the bug itself.
+		// YAML 1.1 resolves bare `no` to boolean false. A YAML parser here would
+		// report Norway as un-admitted while the config lists it — reproducing,
+		// inside the tool meant to surface that bug, the bug itself.
 		const path = join(root, "norway.yaml")
 
 		await writeLocalTextFile(
@@ -107,14 +108,15 @@ describe("readAdmittedCountries", () => {
 			path
 		)
 
-		// `gb` and `fr` are source weights that happen to be two letters. Reading past the block would report them as
-		// admitted countries.
+		// `gb` and `fr` are source weights that happen to be two letters.
+		// Reading past the block would report them as admitted countries.
 		expect([...(await readAdmittedCountries(path))]).toEqual(["US"])
 	})
 
 	it("throws on a missing config rather than answering with an empty admitted set", async () => {
-		// An empty set is a real answer — a config can admit nothing. Returning it for a file nobody could open gives
-		// the caller one value for two different facts, and the caller reports whichever it assumes.
+		// An empty set is a real answer — a config can admit nothing.
+		// Returning it for a file nobody could open gives the caller one value for two
+		// different facts, and the caller reports whichever it assumes.
 		await expect(readAdmittedCountries(join(root, "nope.yaml"))).rejects.toThrow(/no training config at/)
 	})
 })
@@ -183,15 +185,16 @@ const CORPUS = String(
 
 describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real database", () => {
 	it("counts street rows on a database whose PROJECTION drops the labels column", async () => {
-		// `getCursor(["country", "labels"])` returns `{country}` alone on the v0.17.0-era writer's databases — silently,
-		// with no error — while the v0.5.0 base returns both. A dropped label column reads as "this country has no
-		// street rows", which is indistinguishable from the truth. Before the fallback this database reported 0. it
-		// carries 825,083 street rows out of 831,800.
+		// `getCursor(["country", "labels"])` returns `{country}` alone on the v0.17.0-era
+		// writer's databases — silently, with no error — while the v0.5.0 base returns both.
+		// A dropped label column reads as "this country has no street rows",
+		// which is indistinguishable from the truth. Before the fallback this database
+		// reported 0. it carries 825,083 street rows out of 831,800.
 		const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
 
-		// The stored key is part of the artifact and both spellings are live on disk, so the reader accepts either and
-		// this test reads the same way. A test that knew only one spelling would skip on 33 of the 41 corpora built so
-		// far and report that as "not measurable here".
+		// The stored key is part of the artifact and both spellings are live on disk, so the reader
+		// accepts either and this test reads the same way. A test that knew only one spelling would
+		// skip on 33 of the 41 corpora built so far and report that as "not measurable here".
 		const entries = (manifest["slices"] ?? manifest["sh" + "ards"]) as
 			| Array<{ split?: string; path: string }>
 			| undefined
@@ -205,8 +208,8 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 		await using directory = await temporaryDirectory("mw-census-real-")
 		const scratch = directory.resolve("MANIFEST.json")
 
-		// Only the one file, under the current key: spreading the manifest would leave its full list in place and the
-		// census would read all of it.
+		// Only the one file, under the current key: spreading the manifest would leave
+		// its full list in place and the census would read all of it.
 		await writeLocalJSONFile({ corpus_version: manifest["corpus_version"], slices: one }, scratch)
 
 		const census = await buildCorpusCensus(scratch)
@@ -218,9 +221,10 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 
 describe("buildCorpusCensus refuses an empty count", () => {
 	it("throws rather than reporting zero rows for a manifest that lists train files", async () => {
-		// The #2322 shape, and the part of it that cost the most: a refresh writes its result, so a census that read
-		// nothing replaced a cache holding 681,901,687 rows with every country at zero. A manifest naming train files
-		// and a total of zero cannot both be true, so the zero is the instrument failing rather than a measurement.
+		// The #2322 shape, and the part of it that cost the most: a refresh writes its result,
+		// so a census that read nothing replaced a cache holding 681,901,687 rows with every
+		// country at zero. A manifest naming train files and a total of zero cannot both be true,
+		// so the zero is the instrument failing rather than a measurement.
 		await using directory = await temporaryDirectory("mw-census-empty-")
 		const scratch = directory.resolve("MANIFEST.json")
 
@@ -236,8 +240,9 @@ describe("buildCorpusCensus refuses an empty count", () => {
 	})
 
 	it("refuses to pick between two manifests sharing the newest modification time", async () => {
-		// An mtime tie is what a fresh checkout or a bulk copy produces. The sibling `newestConfig` broke this way over
-		// 225 configs and reported one arm's numbers under another arm's name (#2349), so this returns neither.
+		// An mtime tie is what a fresh checkout or a bulk copy produces.
+		// The sibling `newestConfig` broke this way over 225 configs and reported one arm's
+		// numbers under another arm's name (#2349), so this returns neither.
 		await using directory = await temporaryDirectory("mw-census-tie-")
 		const versionedRoot = directory.resolve("corpus", "versioned")
 		const paths: string[] = []
@@ -265,8 +270,8 @@ describe("buildCorpusCensus refuses an empty count", () => {
 	})
 
 	it("answers zero for a manifest that lists no train files at all", async () => {
-		// The counterpart reading, and it is a real one: a corpus whose manifest names no train file holds no train
-		// rows, so zero is the measurement rather than a failure to read.
+		// The counterpart reading, and it is a real one: a corpus whose manifest names no train
+		// file holds no train rows, so zero is the measurement rather than a failure to read.
 		await using directory = await temporaryDirectory("mw-census-none-")
 		const scratch = directory.resolve("MANIFEST.json")
 
@@ -282,8 +287,9 @@ describe("buildCorpusCensus refuses an empty count", () => {
 
 describe("sameCorpusVersion", () => {
 	it("reads the prefixed and unprefixed spellings of one corpus as the same corpus", () => {
-		// A manifest writes `v0.31.0-region-code-and-unit` and `readConfiguredCorpusVersion` strips the prefix, so a raw
-		// comparison declared a mismatch on every correct pairing and the warning stopped carrying information.
+		// A manifest writes `v0.31.0-region-code-and-unit` and `readConfiguredCorpusVersion`
+		// strips the prefix, so a raw comparison declared a mismatch on every correct pairing
+		// and the warning stopped carrying information.
 		expect(sameCorpusVersion("0.31.0-region-code-and-unit", "v0.31.0-region-code-and-unit")).toBe(true)
 		expect(sameCorpusVersion("v0.31.0-region-code-and-unit", "0.31.0-region-code-and-unit")).toBe(true)
 		expect(sameCorpusVersion("v8-cjk-2026-09-05", "v8-cjk-2026-09-05")).toBe(true)
@@ -297,7 +303,8 @@ describe("sameCorpusVersion", () => {
 
 describe("readConfiguredCorpusVersion", () => {
 	/**
-	 * A config file the caller owns: the reader below opens it by path, so the directory has to outlive this helper.
+	 * A config file the caller owns: the reader below opens it by path,
+	 * so the directory has to outlive this helper.
 	 */
 	async function config(body: string): Promise<TemporaryDirectory & { configPath: string }> {
 		const scratch = await temporaryDirectory("mw-cfg-")
@@ -309,8 +316,8 @@ describe("readConfiguredCorpusVersion", () => {
 	}
 
 	it("reads the version out of a versioned corpus_dir", async () => {
-		// The real shape. This is the half the census never checked: the config names 0.27.0 while a cached census
-		// counted 0.26.0, and every row count silently answers about the corpus that was counted.
+		// The real shape. This is the half the census never checked: the config names 0.27.0 while a cached
+		// census counted 0.26.0, and every row count silently answers about the corpus that was counted.
 		await using scratch = await config(
 			"data:\n  corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl\n"
 		)
@@ -335,9 +342,9 @@ describe("readConfiguredCorpusVersion", () => {
 
 describe("readAdmittedCountries — the Norway shape", () => {
 	it("keeps a QUOTED NO as the string it is, and counts it", async () => {
-		// A YAML parser turns a bare `no` key into boolean false, which is the bug this reader exists to avoid
-		// reproducing. A quoted "no" must still be counted — a regex requiring a bare key silently drops Norway and
-		// reports it as never admitted.
+		// A YAML parser turns a bare `no` key into boolean false, which is the bug this
+		// reader exists to avoid reproducing. A quoted "no" must still be counted —
+		// a regex requiring a bare key silently drops Norway and reports it as never admitted.
 		await using scratch = await temporaryDirectory("mw-cfg-no-")
 		const path = scratch.resolve("c.yaml")
 
@@ -361,7 +368,8 @@ describe("readAdmittedCountries — the Norway shape", () => {
 
 describe("resolveTrainingConfig", () => {
 	/**
-	 * A register holding one family, enough to exercise every branch without reading the repository's own file.
+	 * A register holding one family, enough to exercise every branch without
+	 * reading the repository's own file.
 	 */
 	const scope = {
 		tiers: {},
@@ -402,8 +410,8 @@ describe("resolveTrainingConfig", () => {
 	})
 
 	it("throws for a family the register does not name, rather than answering with another family's config", () => {
-		// Answering with the Latin config would report 25 Latin admissions under a third family's name, and nothing
-		// downstream would disagree with it.
+		// Answering with the Latin config would report 25 Latin admissions under a third
+		// family's name, and nothing downstream would disagree with it.
 		expect(() => resolveTrainingConfig(scope, { family: "deva" })).toThrow(/names no training config/)
 	})
 })

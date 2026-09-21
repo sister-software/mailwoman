@@ -74,15 +74,18 @@ const SUFFIX_WORDS = new Map<string, string>([
 
 export interface GNAFRooftopOptions {
 	/**
-	 * The extracted `Standard/` PSV directory. Default: `<data-root>/gnaf/may26/extracted/G-NAF/G-NAF may 2026/Standard`.
+	 * The extracted `Standard/` PSV directory.
+	 * Default: `<data-root>/gnaf/may26/extracted/G-NAF/G-NAF may 2026/Standard`.
 	 */
 	standardDir?: string
 	/**
-	 * Output database path. Default: `<data-root>/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
+	 * Output database path. Default: `<data-root>/osm/address-points-au-au.db`
+	 * (the `OSMRegionDatabaseProvider` home).
 	 */
 	out?: string
 	/**
-	 * Restrict to these state prefixes (e.g. `["ACT"]`) — the smoke rung. Default: every state present.
+	 * Restrict to these state prefixes (e.g. `["ACT"]`) — the smoke rung.
+	 * Default: every state present.
 	 */
 	states?: string[]
 	/**

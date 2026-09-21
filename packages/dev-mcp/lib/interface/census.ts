@@ -32,9 +32,9 @@ export function violationKey(violation: TreeViolation): string {
 }
 
 /**
- * Addresses kept per violation class. Enough to see whether a class is one recurring shape or several unrelated ones,
- * which is the distinction that decides whether it is a single defect. the full list is recoverable by re-running
- * against a filtered input set.
+ * Addresses kept per violation class. Enough to see whether a class is one recurring shape
+ * or several unrelated ones, which is the distinction that decides whether it is a single
+ * defect. the full list is recoverable by re-running against a filtered input set.
  */
 const EXAMPLES_PER_CLASS = 5
 
@@ -43,8 +43,8 @@ export interface ViolationClass {
 	tag: string
 	n: number
 	/**
-	 * Rows that produced it, with the offending value, so a count leads back to an address rather than stopping at a
-	 * number.
+	 * Rows that produced it, with the offending value, so a count leads back to an address
+	 * rather than stopping at a number.
 	 */
 	examples: { id: string; input: string; value: string; detail: string }[]
 }
@@ -52,13 +52,14 @@ export interface ViolationClass {
 export interface StrandingReading {
 	tag: string
 	/**
-	 * Rows whose parse produced this tag AT all. The denominator that makes the stranding count readable: 0 stranded out
-	 * of 0 produced is not a measurement of the model's stranding behaviour.
+	 * Rows whose parse produced this tag AT all. The denominator that makes the stranding count readable:
+	 * 0 stranded out of 0 produced is not a measurement of the model's stranding behaviour.
 	 */
 	produced_on_rows: number
 	stranded: number
 	/**
-	 * `null` when the tag never appeared — a rate over an empty denominator, stated as absent rather than as 0.
+	 * `null` when the tag never appeared — a rate over an empty denominator,
+	 * stated as absent rather than as 0.
 	 */
 	stranding_rate: number | null
 }
@@ -72,8 +73,8 @@ export interface InterfaceCensus {
 	 */
 	stranding: StrandingReading[]
 	/**
-	 * Tags that never appeared in any parse, so their stranding count carries no information. Named because the
-	 * alternative is a table of zeros a reader will read as a clean bill of health.
+	 * Tags that never appeared in any parse, so their stranding count carries no information.
+	 * Named because the alternative is a table of zeros a reader will read as a clean bill of health.
 	 */
 	never_produced: string[]
 	illegal_edges: {
@@ -122,8 +123,8 @@ export interface InterfaceRow {
 /**
  * Tally one corpus of already-parsed trees.
  *
- * Takes trees rather than inputs so the walk is pure and testable — the parse is the caller's, and the cost of a warm
- * engine is not this function's concern.
+ * Takes trees rather than inputs so the walk is pure and testable — the parse is the caller's,
+ * and the cost of a warm engine is not this function's concern.
  */
 export function censusTrees(rows: readonly InterfaceRow[]): InterfaceCensus {
 	const classes = new Map<string, ViolationClass>()
@@ -250,8 +251,9 @@ interface TaggedNode {
 }
 
 /**
- * Classify every repeated tag by the relationships among its nodes. A row may enter more than one topology for one tag:
- * three nodes can contain a nested pair while the third sits on a separate branch. Counts stay row-based within each
+ * Classify every repeated tag by the relationships among its nodes.
+ * A row may enter more than one topology for one tag: three nodes can contain a nested pair
+ * while the third sits on a separate branch. Counts stay row-based within each
  * `(tag, topology)` class, so pair multiplication cannot inflate the result.
  */
 function duplicateTagTopologies(tree: AddressTree): Map<ComponentTag, Map<DuplicateTagTopology, string[]>> {
@@ -314,7 +316,7 @@ function tagsPresent(tree: AddressTree): ComponentTag[] {
 
 	walk(tree.roots)
 
-	// Distinct per row: a parse with two stranded `unit` nodes still produced `unit` on one row, and counting it twice
-	// would let a single pathological row look like broad coverage.
+	// Distinct per row: a parse with two stranded `unit` nodes still produced `unit` on one row,
+	// and counting it twice would let a single pathological row look like broad coverage.
 	return [...new Set(tags)]
 }

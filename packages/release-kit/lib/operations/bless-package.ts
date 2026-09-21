@@ -14,8 +14,8 @@ import { assertPlanHolds } from "#release/plan"
 const blessedPackage = z.object({ name: z.string(), published: z.boolean(), trusted: z.boolean() })
 
 /**
- * `release.bless-package` — writes to an external system and is reachable only through the plan → execute interface.
- * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
+ * `release.bless-package` — writes to an external system and is reachable only through the plan →
+ * execute interface. Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const blessPackage = defineOperation({
 	id: "release.bless-package",

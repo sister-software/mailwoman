@@ -111,9 +111,10 @@ for (const locale of locales) {
 }
 
 /**
- * `arm → locale → pipeline`. The FST is chosen per (arm, locale) because `fst-<locale>.bin` is country-scoped. a locale
- * with no binary in an arm's dir gets `false`, which is the same state as the `none` arm for that locale — recorded
- * rather than papered over, since it is why an out-of-reach row cannot discriminate.
+ * `arm → locale → pipeline`. The FST is chosen per (arm, locale) because `fst-<locale>.bin`
+ * is country-scoped. a locale with no binary in an arm's dir gets `false`, which is the
+ * same state as the `none` arm for that locale — recorded rather than papered over,
+ * since it is why an out-of-reach row cannot discriminate.
  */
 const pipelines = new Map<string, Map<string, ReturnType<typeof createRuntimePipeline>>>()
 
@@ -162,13 +163,14 @@ interface Outcome {
 	resolvedID: number | null
 	resolvedName: string | null
 	/**
-	 * The row's verdict — `coordOK` when asserted, else `placeOK`. Used for the flip inventory.
+	 * The row's verdict — `coordOK` when asserted, else `placeOK`.
+	 * Used for the flip inventory.
 	 */
 	pass: boolean
 }
 
-// nfkd + mark-strip on purpose — not `@mailwoman/normalize`'s `stripCombiningMarks` (NFD, no case fold):
-// this fold also folds compatibility forms, matching the board's frozen grading.
+// nfkd + mark-strip on purpose — not `@mailwoman/normalize`'s `stripCombiningMarks`
+// (NFD, no case fold): this fold also folds compatibility forms, matching the board's frozen grading.
 const norm = (s: string): string =>
 	s
 		.toLowerCase()
@@ -189,9 +191,10 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 			? null
 			: errKm !== null && errKm <= c.expectToleranceM / 1000
 
-	// §6 I2: the gauntlet stores these and never checks them. Checked here, against any resolved node —
-	// the expected place may be an ancestor of the most-specific answer (a locality row whose tree also
-	// resolved a region), so requiring it at `best` would fail rows that are in fact correct.
+	// §6 I2: the gauntlet stores these and never checks them.
+	// Checked here, against any resolved node — the expected place may be an ancestor
+	// of the most-specific answer (a locality row whose tree also resolved a region),
+	// so requiring it at `best` would fail rows that are in fact correct.
 	let placeOK: boolean | null = null
 
 	if (c.expectPlaceID !== undefined) {

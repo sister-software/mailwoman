@@ -25,41 +25,44 @@ import { mintCIKNodeID, mintFRNNodeID, mintSubsidiaryNameNodeID } from "#sdk/bui
 import { assertISODate } from "#sdk/guards"
 
 /**
- * One edgar Exhibit 21 subsidiary disclosure — the shape upstream CIK resolution + `parseExhibit21` produce somewhere
- * outside this file. See `build-filer.ts`'s module docstring, "edgar Exhibit 21 ingest" section, for exactly what
+ * One edgar Exhibit 21 subsidiary disclosure — the shape upstream CIK resolution + `parseExhibit21`
+ * produce somewhere outside this file. See `build-filer.ts`'s module docstring,
+ * "edgar Exhibit 21 ingest" section, for exactly what
  * {@linkcode buildFilerDatabase} does with one of these.
  */
 export interface EdgarSubsidiaryRow {
 	/**
-	 * Zero-padded 10-digit CIK of the filer whose Exhibit 21 disclosed this subsidiary — the parent. Validated the same
-	 * zero-padded 10-digit shape `edgar-filings.ts`'s `CIK` branded type requires. a malformed value throws (decision 8's
-	 * "malformed input is loud" discipline).
+	 * Zero-padded 10-digit CIK of the filer whose Exhibit 21 disclosed this subsidiary — the parent.
+	 * Validated the same zero-padded 10-digit shape `edgar-filings.ts`'s `CIK` branded type
+	 * requires. a malformed value throws (decision 8's "malformed input is loud" discipline).
 	 */
 	cik: string
 	/**
-	 * The subsidiary's name exactly as Exhibit 21 spelled it — never normalized before minting its node (mirrors
-	 * `mintHoldingCompanyNodeID`'s identical "raw string" precedent).
+	 * The subsidiary's name exactly as Exhibit 21 spelled it — never normalized before minting
+	 * its node (mirrors `mintHoldingCompanyNodeID`'s identical "raw string" precedent).
 	 */
 	subsidiaryName: string
 	/**
-	 * Jurisdiction of incorporation, when Exhibit 21 gave one ({@linkcode parseExhibit21}'s own `unparseable` abstention
-	 * already dropped any row this couldn't confidently extract — this field is carried through for provenance/audit
-	 * only. nothing in this builder currently writes it to a column).
+	 * Jurisdiction of incorporation, when Exhibit 21 gave one ({@linkcode parseExhibit21}'s own
+	 * `unparseable` abstention already dropped any row this couldn't confidently extract — this field is
+	 * carried through for provenance/audit only. nothing in this builder currently writes it to a column).
 	 */
 	jurisdiction?: string
 	/**
-	 * ISO `yyyy-MM-DD` filing date of the 10-K this Exhibit 21 came from — becomes both `source_vintage` and `valid_from`
-	 * on every edge/family row this row produces (decision 7 — a single per-row date, the same shape
-	 * `Form499Row.lastFiledAt` uses). Validated via {@linkcode assertISODate}.
+	 * ISO `yyyy-MM-DD` filing date of the 10-K this Exhibit 21 came from — becomes both
+	 * `source_vintage` and `valid_from` on every edge/family row this row produces
+	 * (decision 7 — a single per-row date, the same shape `Form499Row.lastFiledAt` uses).
+	 * Validated via {@linkcode assertISODate}.
 	 */
 	filingDate: string
 }
 
 /**
- * One edgar subsidiary row's full write: the disclosure edge (always, authoritative) plus — only when the subsidiary
- * name canonically matches exactly one FRN's legal name — the corroboration edge and its accompanying `filer_family`
- * row (inference, never authority. see `build-filer.ts`'s module docstring, "edgar Exhibit 21 ingest" section, for the
- * full rationale and the family-visibility precondition this is written to satisfy).
+ * One edgar subsidiary row's full write: the disclosure edge (always, authoritative)
+ * plus — only when the subsidiary name canonically matches exactly one FRN's
+ * legal name — the corroboration edge and its accompanying `filer_family` row
+ * (inference, never authority. see `build-filer.ts`'s module docstring, "edgar Exhibit 21 ingest"
+ * section, for the full rationale and the family-visibility precondition this is written to satisfy).
  */
 export function processEdgarSubsidiaryRow(
 	insNode: StatementSync,
@@ -101,20 +104,21 @@ export function processEdgarSubsidiaryRow(
 	const canonicalSubsidiaryName = canonicalizeOrganizationName(row.subsidiaryName)?.canonical
 	const matchedFRNs = canonicalSubsidiaryName ? (frnsByCanonicalLegalName.get(canonicalSubsidiaryName) ?? []) : []
 
-	// Corroboration — inference rather than authority, and only when unambiguous (exactly one match). Zero matches: nothing
-	// more to write, the disclosure edge above is the whole fact. Two or more: a genuine name collision across
-	// distinct FRNs — abstain rather than guess which one, same as resolveCIKCandidates never silently narrowing a
-	// tie. Grading the survivors is not a substitute for abstaining on a
-	// tie, and the two answer different questions (whether to write an edge vs how far to trust the one written).
+	// Corroboration — inference rather than authority, and only when unambiguous (exactly one match).
+	// Zero matches: nothing more to write, the disclosure edge above is the whole fact.
+	// Two or more: a genuine name collision across distinct FRNs — abstain rather than guess
+	// which one, same as resolveCIKCandidates never silently narrowing a tie.
+	// Grading the survivors is not a substitute for abstaining on a tie, and the two answer
+	// different questions (whether to write an edge vs how far to trust the one written).
 	if (matchedFRNs.length !== 1) return
 
 	const matched = matchedFRNs[0]!
 	const matchedFRNNodeID = mintFRNNodeID(matched.frn, context)
 	insNode.run(matchedFRNNodeID, FilerIdentifierType.FRN, matched.frn)
 
-	// the score reflects what this match actually knows rather than a flat 0.92 on every link — see
-	// scoreEdgarSubsidiaryMatch. `evidence` carries both raw spellings now, so a reader can see for itself what the
-	// score is grading rather than having to take the number on faith.
+	// the score reflects what this match actually knows rather than a flat 0.92 on every link —
+	// see scoreEdgarSubsidiaryMatch. `evidence` carries both raw spellings now, so a reader can
+	// see for itself what the score is grading rather than having to take the number on faith.
 	const matchScore = scoreEdgarSubsidiaryMatch(row.subsidiaryName, matched.legalName)
 
 	insEdge.run(
@@ -130,13 +134,14 @@ export function processEdgarSubsidiaryRow(
 		stringifyJSON({ subsidiaryName: row.subsidiaryName, legalNameOfCarrier: matched.legalName, cik: row.cik })
 	)
 
-	// The family-visibility precondition: a filer_edge row alone is invisible to familyRollup/filerLookup.families — both
-	// answer membership from filer_family alone. family_id/naming_node_id are the CIK's own node id: a CIK needs no
-	// mintFamilyID canonicalization to be a stable family key, unlike a free-text holding-/management-company name.
+	// The family-visibility precondition: a filer_edge row alone is invisible to
+	// familyRollup/filerLookup.families — both answer membership from filer_family alone.
+	// family_id/naming_node_id are the CIK's own node id: a CIK needs no mintFamilyID canonicalization
+	// to be a stable family key, unlike a free-text holding-/management-company name.
 	//
-	// assertion/match_score carry the same values as the edge above, for the same reason the row exists
-	// at all: a reader answering a family question from this table alone must be able to tell this name-match
-	// inference from a holding-company membership the filer itself filed.
+	// assertion/match_score carry the same values as the edge above, for the same reason the row
+	// exists at all: a reader answering a family question from this table alone must be able to
+	// tell this name-match inference from a holding-company membership the filer itself filed.
 	insFamily.run(
 		matchedFRNNodeID,
 		cikNodeID,

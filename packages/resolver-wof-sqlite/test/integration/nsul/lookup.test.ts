@@ -38,8 +38,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Two Wokingham UPRNs sharing `RG40 4HR` and one Bognor Regis uprn on `PO21 1HR` — enough to exercise the one-to-many
- * probe, its ordering, and the compact/spaced key equivalence.
+ * Two Wokingham UPRNs sharing `RG40 4HR` and one Bognor Regis uprn on `PO21 1HR` — enough
+ * to exercise the one-to-many probe, its ordering, and the compact/spaced key equivalence.
  */
 const ROWS = [
 	{ uprn: 14_000_005, pcds: "RG40 4HR", lat: 51.37416, lon: -0.86823 },

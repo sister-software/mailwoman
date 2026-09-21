@@ -53,15 +53,15 @@ const mockEvidence = (existing: string[]): StreetLocalityEvidence => {
 }
 
 /**
- * SpanScores[token][length-1][type]. Tuned so the top-2 k-best are: H1 (rank-1, score 10): street "Rue" (0,1) +
- * locality "Corsier" (1,1) H2 (rank-2, score 8): street "Rue Corsier" (0,2) margin 2 ≤ 2.5 (G2 ok). Everything else
- * deeply negative.
+ * SpanScores[token][length-1][type]. Tuned so the top-2 k-best are: H1 (rank-1, score 10):
+ * street "Rue" (0,1) + locality "Corsier" (1,1) H2 (rank-2, score 8): street "Rue
+ * Corsier" (0,2) margin 2 ≤ 2.5 (G2 ok). Everything else deeply negative.
  */
 const NEG = -100
 
 function tunedSpanScores(): number[][][] {
-	// token 0: [len1: [O,street,loc]], [len2: [O,street,loc]]
-	// token 1: [len1: [O,street,loc]], [len2 unused (would overflow)]
+	// token 0: [len1: [O,street,loc]], [len2: [O,street,loc]] token 1:
+	// [len1: [O,street,loc]], [len2 unused (would overflow)]
 	const s: number[][][] = [
 		[
 			[NEG, 5, NEG], // token0 len1: street=5
@@ -104,8 +104,9 @@ describe("rerankByStreetEvidence", () => {
 	})
 
 	test("anchor check: an argmax region anchor makes the rerank stand down even with a confirmed move", async () => {
-		// Same tuned k-best that would move (see the G1-skip test), but the argmax now carries a region token. The input
-		// is structured. the rerank must not steal the region-labeled token. It returns the argmax tree rather than moved.
+		// Same tuned k-best that would move (see the G1-skip test), but the argmax now
+		// carries a region token. The input is structured. the rerank must not steal the
+		// region-labeled token. It returns the argmax tree rather than moved.
 		const t = trace(tunedSpanScores())
 		t.tokens[1] = { ...t.tokens[1]!, label: "B-region" }
 		const res = await rerankByStreetEvidence(mockClassifier(t), "Rue Corsier", mockEvidence(["Rue Corsier"]), grammar())

@@ -96,8 +96,8 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
-	// New York City: the multi-parent locality, already repaired by an earlier pass — it has a full
-	// ancestor set, so it is not a candidate this time.
+	// New York City: the multi-parent locality, already repaired by an earlier pass —
+	// it has a full ancestor set, so it is not a candidate this time.
 	const nycID = 85_977_539
 	const brooklynID = 421_205_765
 	const nyStateID = 85_688_543
@@ -147,8 +147,8 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 
 	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
 
-	// continent + country + county + region = 4 new rows. Self is excluded, and the locality row
-	// (NYC) is already present, so neither is re-inserted.
+	// continent + country + county + region = 4 new rows.
+	// Self is excluded, and the locality row (NYC) is already present, so neither is re-inserted.
 	expect(result.placesFixed).toBe(1)
 	expect(result.rowsAdded).toBe(4)
 
@@ -194,8 +194,9 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 	// Empty roots: every geojson probe misses without touching the filesystem 33,000 times.
 	const result = await backfillAncestorsFromHierarchy(db, [])
 
-	// No geojson exists for any of them — every candidate is skipped, none fixed. The assertion that
-	// matters is that the pass completes at all instead of throwing "too many SQL variables".
+	// No geojson exists for any of them — every candidate is skipped, none fixed.
+	// The assertion that matters is that the pass completes at all instead of
+	// throwing "too many SQL variables".
 	expect(result.placesFixed).toBe(0)
 	expect(result.rowsAdded).toBe(0)
 	expect(result.noGeojson).toBe(33_000)
@@ -206,9 +207,9 @@ test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stop
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
-	// Fatumafuti, American Samoa: WOF itself gives it {country_id, locality_id} and no region. The
-	// artifact matching that is correct rather than truncated — and because it has a country ancestor it is
-	// not a candidate at all, so no geojson probe happens for it.
+	// Fatumafuti, American Samoa: WOF itself gives it {country_id, locality_id} and no region.
+	// The artifact matching that is correct rather than truncated — and because it has a
+	// country ancestor it is not a candidate at all, so no geojson probe happens for it.
 	const id = 101_734_391
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(id)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(id, id)

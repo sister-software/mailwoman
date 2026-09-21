@@ -31,8 +31,9 @@ describe("mapUnitProfile", () => {
 	})
 
 	it("normalizes by the weight actually present rather than assuming the percentages sum to 100", () => {
-		// Measured on IA153 all 152 map units sum to exactly 100. A national build must not depend on that holding
-		// everywhere, and a profile that divided by a hard-coded 100 would silently under-report every share.
+		// Measured on IA153 all 152 map units sum to exactly 100.
+		// A national build must not depend on that holding everywhere, and a profile that
+		// divided by a hard-coded 100 would silently under-report every share.
 		const profile = mapUnitProfile({ no_mapping: 0 }, [component(30, "Series", "2"), component(30, "Series", "3")])
 
 		expect(profile.classShares.get("2")).toBeCloseTo(0.5, 6)
@@ -45,8 +46,9 @@ describe("mapUnitProfile", () => {
 			component(40, "Series", null),
 		])
 
-		// Read as one number both would say "not arable", which neither of them says: a water body is ground the rating
-		// does not apply to, and an unrated series is ground the survey chose not to rate.
+		// Read as one number both would say "not arable", which neither of them says:
+		// a water body is ground the rating does not apply to, and an unrated series
+		// is ground the survey chose not to rate.
 		expect(profile.notRateable).toBeCloseTo(0.6, 6)
 		expect(profile.unrated).toBeCloseTo(0.4, 6)
 		expect(profile.classShares.size).toBe(0)
@@ -55,8 +57,9 @@ describe("mapUnitProfile", () => {
 	it("puts a rated class 8 in the class shares, never in an absence share", () => {
 		const profile = mapUnitProfile({ no_mapping: 0 }, [component(100, "Series", "8")])
 
-		// Class 8 is a determination — the survey looked and rated the land as precluding commercial plant production —
-		// and 67,547 national components carry it. Folding it in with the absences is the reassuring wrong number.
+		// Class 8 is a determination — the survey looked and rated the land as precluding
+		// commercial plant production — and 67,547 national components carry it.
+		// Folding it in with the absences is the reassuring wrong number.
 		expect(profile.classShares.get("8")).toBe(1)
 		expect(profile.unrated).toBe(0)
 		expect(profile.notRateable).toBe(0)
@@ -73,8 +76,9 @@ describe("mapUnitProfile", () => {
 	it("treats a map unit whose components carry no weight at all as no mapping rather than as a rating", () => {
 		const profile = mapUnitProfile({ no_mapping: 0 }, [component(0, "Series", "2"), component(0, "Series", "3")])
 
-		// Nothing can be apportioned from an unweighted mixture. Answering with an empty distribution would drop the
-		// delineation's area out of every share and violate the sum-to-one relationship silently.
+		// Nothing can be apportioned from an unweighted mixture.
+		// Answering with an empty distribution would drop the delineation's area out of
+		// every share and violate the sum-to-one relationship silently.
 		expect(profile.noData).toBe(1)
 		expect(profile.classShares.size).toBe(0)
 	})

@@ -78,9 +78,9 @@ export interface RerankResult<T = unknown> {
 	 */
 	best: RerankedCandidate<T>
 	/**
-	 * True when the winner is not the model's rank-1 — i.e. resolution evidence actually changed the answer. This is the
-	 * metric the arc is judged on (`rank-2-beats-rank-1 rate`); log it, because a rerank that never fires is a rerank
-	 * that is not earning its resolver calls.
+	 * True when the winner is not the model's rank-1 — i.e. resolution evidence actually changed
+	 * the answer. This is the metric the arc is judged on (`rank-2-beats-rank-1 rate`); log it,
+	 * because a rerank that never fires is a rerank that is not earning its resolver calls.
 	 */
 	changed: boolean
 }
@@ -92,24 +92,28 @@ export type ResolveTree = (tree: AddressTree) => Promise<AddressTree>
 
 export interface RerankOpts {
 	/**
-	 * Resolve at most this many candidates (default 5). Each costs a resolver round-trip, so this is the latency knob.
-	 * oracle@5 (0.723) captures nearly all the measured headroom of oracle@10 (0.775), so 5 is the default rather than 10
-	 * — the last 5 candidates cost 2x the resolves for ~5pp of ceiling.
+	 * Resolve at most this many candidates (default 5). Each costs a resolver round-trip,
+	 * so this is the latency knob. oracle@5 (0.723) captures nearly all the
+	 * measured headroom of oracle@10 (0.775), so 5 is the default rather than 10 —
+	 * the last 5 candidates cost 2x the resolves for ~5pp of ceiling.
 	 */
 	maxResolve?: number
 	/**
-	 * ISO-2 country the resolutions are expected to land in — the parse's own country node, the `--locale` scope, or a
-	 * caller hint. Threaded to {@link isImplausibleResolution} as guard B: a coordinate outside that country's coarse box
-	 * is vetoed, which is the cross-country-jump class guard A structurally cannot see.
+	 * ISO-2 country the resolutions are expected to land in — the parse's own country node,
+	 * the `--locale` scope, or a caller hint. Threaded to {@link isImplausibleResolution}
+	 * as guard B: a coordinate outside that country's coarse box is vetoed,
+	 * which is the cross-country-jump class guard A structurally cannot see.
 	 *
-	 * Omitted → guard B does not run, and only the bare-country-centroid guard applies. That is the shipped default and
-	 * it changes nothing on the served path, because nothing on the served path calls this function: the runtime pipeline
-	 * reranks with `rerankByStreetEvidence`, and this one has no in-repo caller outside its own test.
+	 * Omitted → guard B does not run, and only the bare-country-centroid guard applies.
+	 * That is the shipped default and it changes nothing on the served path, because
+	 * nothing on the served path calls this function: the runtime pipeline reranks with
+	 * `rerankByStreetEvidence`, and this one has no in-repo caller outside its own test.
 	 */
 	expectedCountry?: string
 	/**
-	 * The loaded artifact's own guard-B boxes (`resolver.artifactCoverage?.countryBBoxes`). Replaces the built-in table
-	 * wholesale when supplied, so a consumer's artifact and its guard cannot disagree.
+	 * The loaded artifact's own guard-B boxes (`resolver.artifactCoverage?.countryBBoxes`).
+	 * Replaces the built-in table wholesale when supplied, so a consumer's artifact
+	 * and its guard cannot disagree.
 	 */
 	countryBBoxes?: ReadonlyMap<string, CountryBBoxFact>
 }
@@ -117,13 +121,13 @@ export interface RerankOpts {
 /**
  * Rerank a k-best parse list on resolution evidence.
  *
- * Resolves up to `maxResolve` candidates IN model order and returns the first whose resolution is plausible. Candidates
- * beyond `maxResolve` are never resolved (and never vetoed — they simply keep their model rank behind the resolved
- * ones).
+ * Resolves up to `maxResolve` candidates IN model order and returns the first
+ * whose resolution is plausible. Candidates beyond `maxResolve` are never resolved
+ * (and never vetoed — they simply keep their model rank behind the resolved ones).
  *
- * **When every resolved candidate is implausible, the model's rank-1 wins.** A reranker that returns nothing is worse
- * than one that defers: "all my evidence says these are all bad" is not grounds to invent a different answer, only
- * grounds to flag low confidence (the Phase-4b ambiguity check).
+ * **When every resolved candidate is implausible, the model's rank-1 wins.** A reranker that returns
+ * nothing is worse than one that defers: "all my evidence says these are all bad" is not grounds to
+ * invent a different answer, only grounds to flag low confidence (the Phase-4b ambiguity check).
  */
 export async function rerankByResolution<T>(
 	candidates: ReadonlyArray<RerankCandidate<T>>,

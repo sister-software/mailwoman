@@ -34,8 +34,8 @@
 import type { MultiPolygonRings } from "#geometries/polygon"
 
 /**
- * Format version stamped into every blob. A reader that meets a different number throws rather than reinterpreting
- * bytes it does not know the shape of.
+ * Format version stamped into every blob. A reader that meets a different number throws
+ * rather than reinterpreting bytes it does not know the shape of.
  */
 export const RING_BLOB_VERSION = 1
 
@@ -50,13 +50,15 @@ const HEADER_BYTES = 8
 const RING_ENTRY_BYTES = 8
 
 /**
- * Positions a linear ring needs to bound an area: three distinct vertices plus the repeat that closes it (RFC 7946
- * §3.1.6). Fewer is a degenerate ring, and encoding one would store a polygon no point can be inside.
+ * Positions a linear ring needs to bound an area: three distinct vertices plus
+ * the repeat that closes it (RFC 7946 §3.1.6). Fewer is a degenerate ring,
+ * and encoding one would store a polygon no point can be inside.
  */
 const MINIMUM_RING_POSITIONS = 4
 
 /**
- * One decoded feature: `[exteriorRing, ...holes]` per polygon, each ring a flat `[lon, lat, lon, lat, …]` run.
+ * One decoded feature: `[exteriorRing, ...holes]` per polygon, each ring a
+ * flat `[lon, lat, lon, lat, …]` run.
  */
 export interface DecodedRings {
 	/**
@@ -68,8 +70,8 @@ export interface DecodedRings {
 /**
  * Pack a GeoJSON `MultiPolygon`/`Polygon` coordinate tree into the stored blob.
  *
- * @throws {RangeError} When the geometry carries no ring, or a ring carries fewer than four positions (a linear ring is
- *   closed, so three is the minimum distinct-vertex count plus the repeat).
+ * @throws {RangeError} When the geometry carries no ring, or a ring carries fewer than four positions
+ *   (a linear ring is closed, so three is the minimum distinct-vertex count plus the repeat).
  */
 export function encodeRings(polygons: MultiPolygonRings): Uint8Array {
 	const entries: Array<{ pointCount: number; polygonIndex: number }> = []
@@ -122,9 +124,10 @@ export function encodeRings(polygons: MultiPolygonRings): Uint8Array {
 /**
  * The ring table plus a `Float64Array` over the coordinates — what both the point test and the decoder walk.
  *
- * @throws {Error} When the blob's version is not {@linkcode RING_BLOB_VERSION}, or its declared ring table does not
- *   account for the bytes present. A blob that is silently mis-read answers a containment question wrongly, and a wrong
- *   containment answer is indistinguishable from a real one.
+ * @throws {Error} When the blob's version is not {@linkcode RING_BLOB_VERSION},
+ *   or its declared ring table does not account for the bytes present.
+ *   A blob that is silently mis-read answers a containment question wrongly,
+ *   and a wrong containment answer is indistinguishable from a real one.
  */
 function openRings(blob: Uint8Array): {
 	ringCount: number
@@ -160,8 +163,9 @@ function openRings(blob: Uint8Array): {
 		throw new Error(`ring blob: blob declares ${expected} bytes of geometry, holds ${blob.byteLength}`)
 	}
 
-	// The header is a multiple of eight by construction, so the coordinate run is 8-byte aligned and this view is legal
-	// on a shared buffer whose own offset is aligned. A misaligned source buffer is copied rather than rejected.
+	// The header is a multiple of eight by construction, so the coordinate run is 8-byte
+	// aligned and this view is legal on a shared buffer whose own offset is aligned.
+	// A misaligned source buffer is copied rather than rejected.
 	const absoluteOffset = blob.byteOffset + headerBytes
 
 	const coordinates =
@@ -177,8 +181,8 @@ function openRings(blob: Uint8Array): {
  *
  * Even-odd within each polygon's own ring list, inside-any-polygon across them — the orientation-free rule
  * {@linkcode pointInPolygon} states, applied without allocating the ring arrays. Reading a hole as an exterior ring is
- * what this rule leaves unchanged: a point inside a hole crosses two rings and comes out even, whichever way either
- * ring winds.
+ * what this rule leaves unchanged: a point inside a hole crosses two rings
+ * and comes out even, whichever way either ring winds.
  */
 export function pointInEncodedRings(blob: Uint8Array, lon: number, lat: number): boolean {
 	const { ringCount, pointCounts, polygonIndices, coordinates } = openRings(blob)
@@ -210,8 +214,9 @@ export function pointInEncodedRings(blob: Uint8Array, lon: number, lat: number):
 }
 
 /**
- * The even-odd crossing count over one ring held in a flat coordinate run. Mirrors {@linkcode pointInRing} exactly —
- * same predicate, same tie behavior — so a decoded ring and an encoded one never disagree.
+ * The even-odd crossing count over one ring held in a flat coordinate run.
+ * Mirrors {@linkcode pointInRing} exactly — same predicate, same tie behavior —
+ * so a decoded ring and an encoded one never disagree.
  */
 function crossesOdd(coordinates: Float64Array, offset: number, pointCount: number, lon: number, lat: number): boolean {
 	let inside = false
@@ -231,8 +236,8 @@ function crossesOdd(coordinates: Float64Array, offset: number, pointCount: numbe
 }
 
 /**
- * Unpack the blob back into per-polygon flat coordinate runs — for tests, for a debug render, and for the round-trip
- * check a build's fixtures assert.
+ * Unpack the blob back into per-polygon flat coordinate runs — for tests, for a debug render,
+ * and for the round-trip check a build's fixtures assert.
  */
 export function decodeRings(blob: Uint8Array): DecodedRings {
 	const { ringCount, pointCounts, polygonIndices, coordinates } = openRings(blob)
@@ -257,11 +262,13 @@ export function decodeRings(blob: Uint8Array): DecodedRings {
 const EARTH_RADIUS_M = 6_371_008.8
 
 /**
- * Signed spherical area of one linear ring, in square metres. **clockwise is positive**, counter-clockwise negative.
+ * Signed spherical area of one linear ring, in square metres. **clockwise is
+ * positive**, counter-clockwise negative.
  *
- * The sign is the whole point: an orientation-respecting sum over a polygon's rings subtracts its holes, while a sum of
- * absolute values adds them. Comparing the two against the source's own area figure is what tells a builder whether it
- * has read the holes at all — the failure mode is silent, because a hole read as an exterior ring produces a perfectly
+ * The sign is the whole point: an orientation-respecting sum over a polygon's rings subtracts
+ * its holes, while a sum of absolute values adds them. Comparing the two against the
+ * source's own area figure is what tells a builder whether it has read the holes at all —
+ * the failure mode is silent, because a hole read as an exterior ring produces a perfectly
  * well-formed polygon that simply covers more ground than the authority mapped.
  *
  * Which winding is positive is A interface rather than A detail, because a builder whose source encodes hole roles by
@@ -285,11 +292,11 @@ export function ringSignedAreaM2(ring: ReadonlyArray<readonly number[]>): number
 }
 
 /**
- * Both readings of one feature's area, in square metres: `nested` respects ring orientation (holes subtract) and
- * `allExterior` does not (holes add).
+ * Both readings of one feature's area, in square metres: `nested` respects ring
+ * orientation (holes subtract) and `allExterior` does not (holes add).
  *
- * A source whose holes are correctly nested makes `nested` match the authority's own figure and `allExterior` exceed
- * it. The gap between them is the area a hole-blind reader would answer "inside" for.
+ * A source whose holes are correctly nested makes `nested` match the authority's own figure and
+ * `allExterior` exceed it. The gap between them is the area a hole-blind reader would answer "inside" for.
  */
 export function ringAreaReadings(polygons: MultiPolygonRings): {
 	nested: number
@@ -299,8 +306,8 @@ export function ringAreaReadings(polygons: MultiPolygonRings): {
 	let allExterior = 0
 
 	for (const rings of polygons) {
-		// Per polygon rather than pooled: two disjoint polygons of one feature can wind opposite ways without either being a
-		// hole, and a pooled sum would silently cancel them against each other.
+		// Per polygon rather than pooled: two disjoint polygons of one feature can wind opposite ways
+		// without either being a hole, and a pooled sum would silently cancel them against each other.
 		let signedTotal = 0
 
 		for (const ring of rings) {
@@ -329,14 +336,15 @@ export interface DegreeExtent {
 /**
  * Refuse a feature whose reprojected vertices fall outside the publisher's own declared extent.
  *
- * The check A projection check cannot make. A swapped coordinate order survives an authority-code comparison — both
- * axes are still numbers in a plausible range — and a source read in its own metres as if they were degrees produces
- * perfectly well-formed coordinates in the wrong ocean. Both show up here on the first feature, before a whole layer is
- * written to the wrong side of the planet.
+ * The check A projection check cannot make. A swapped coordinate order survives an
+ * authority-code comparison — both axes are still numbers in a plausible range —
+ * and a source read in its own metres as if they were degrees produces perfectly
+ * well-formed coordinates in the wrong ocean. Both show up here on the first feature,
+ * before a whole layer is written to the wrong side of the planet.
  *
- * Shared BY every polygon ingest, because it is rectangle arithmetic over the ring types and knows nothing about any
- * product. `marginDegrees` is the caller's, because a declared extent is itself a rounded published value and how
- * tightly a source hugs its own is a fact about that source.
+ * Shared BY every polygon ingest, because it is rectangle arithmetic over the ring types
+ * and knows nothing about any product. `marginDegrees` is the caller's, because a declared extent is
+ * itself a rounded published value and how tightly a source hugs its own is a fact about that source.
  *
  * @param context Names the calling ingest in the refusal, so a build log says which layer stopped.
  * @throws {RangeError} On the first vertex outside the extent.
@@ -384,18 +392,20 @@ export interface EncodedArea {
 /**
  * A point inside one stored polygon, for a verification sampler.
  *
- * The bounding-box centre is tried first. where it is not inside — a crescent, a band hugging a river, a polygon with a
- * hole through its middle — a small deterministic grid over the box is scanned. A polygon no grid point lands inside is
- * refused (`undefined`) rather than approximated, because a sample point that is not actually inside the polygon turns
- * an agreement check into a check on the sampler.
+ * The bounding-box centre is tried first. where it is not inside — a crescent, a band
+ * hugging a river, a polygon with a hole through its middle — a small deterministic grid
+ * over the box is scanned. A polygon no grid point lands inside is refused (`undefined`)
+ * rather than approximated, because a sample point that is not actually inside the
+ * polygon turns an agreement check into a check on the sampler.
  *
- * Shared BY every polygon layer'S verify, because it is bounding-box arithmetic over the ring blob and knows nothing
- * about any product. `gridSteps` is the one thing that differs between them: a layer whose polygons are narrow strips
- * needs a finer grid than one whose polygons are compact, and the value is part of a layer's sampling receipt — two
- * runs of the same layer must draw the same points, so it is a caller's choice rather than a shared default nobody
- * owns.
+ * Shared BY every polygon layer'S verify, because it is bounding-box arithmetic over the ring blob
+ * and knows nothing about any product. `gridSteps` is the one thing that differs between them:
+ * a layer whose polygons are narrow strips needs a finer grid than one whose polygons are compact,
+ * and the value is part of a layer's sampling receipt — two runs of the same layer must draw
+ * the same points, so it is a caller's choice rather than a shared default nobody owns.
  *
- * @param gridSteps Grid divisions per axis. Only `steps − 1` interior lines are tested, so 7 gives a 6 × 6 grid.
+ * @param gridSteps Grid divisions per axis. Only `steps − 1` interior lines
+ *   are tested, so 7 gives a 6 × 6 grid.
  */
 export function interiorPointOfEncodedRings(
 	area: EncodedArea,
@@ -421,8 +431,8 @@ export function interiorPointOfEncodedRings(
 }
 
 /**
- * Whether a stored polygon's precomputed bounding box contains the point — the ray cast's prefilter, so the blob is
- * only pulled off disk for a polygon that could contain the point.
+ * Whether a stored polygon's precomputed bounding box contains the point — the ray cast's
+ * prefilter, so the blob is only pulled off disk for a polygon that could contain the point.
  */
 export function bboxContains(
 	bounds: Pick<EncodedArea, "min_lat" | "min_lon" | "max_lat" | "max_lon">,
@@ -438,15 +448,17 @@ export function bboxContains(
 }
 
 /**
- * A reproducible sample of interior points drawn by a deterministic stride over a key list — the shape every polygon
- * layer's verification sampler shares.
+ * A reproducible sample of interior points drawn by a deterministic stride over a key list —
+ * the shape every polygon layer's verification sampler shares.
  *
- * The keys are chosen before any geometry is read: selecting them alone is an index-only walk over the primary key, and
- * the rows they name are then fetched by key. The draw is deterministic rather than random, so a re-run compares the
- * same points and a disagreement can be looked at rather than re-rolled.
+ * The keys are chosen before any geometry is read: selecting them alone is an
+ * index-only walk over the primary key, and the rows they name are then fetched by key.
+ * The draw is deterministic rather than random, so a re-run compares the same points
+ * and a disagreement can be looked at rather than re-rolled.
  *
- * @param options.gridSteps The interior-point search depth, per {@link interiorPointOfEncodedRings} — part of a layer's
- *   sampling receipt, so it is a caller's choice rather than a shared default nobody owns.
+ * @param options.gridSteps The interior-point search depth, per
+ *   {@link interiorPointOfEncodedRings} — part of a layer's sampling receipt,
+ *   so it is a caller's choice rather than a shared default nobody owns.
  */
 export function strideSampleInteriorPoints<Area extends EncodedArea, Point>(
 	keys: readonly string[],

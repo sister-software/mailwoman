@@ -56,9 +56,9 @@ describe("runResolverPins — CLI options → pin set", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: true })).toEqual({ postcodeCountryCoherence: true })
 	})
 
-	// The pin that carries evidence since the 2026-08-05 default-on flip: the pin that turns it on now restates
-	// production, so a run that means to grade the pre-promotion configuration has to be able to turn it off and
-	// be believed.
+	// The pin that carries evidence since the 2026-08-05 default-on flip: the pin that
+	// turns it on now restates production, so a run that means to grade the pre-promotion
+	// configuration has to be able to turn it off and be believed.
 	it("carries an OFF pin", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: false })).toEqual({ postcodeCountryCoherence: false })
 	})
@@ -147,8 +147,9 @@ describe("end-to-end plumbing: a CLI flag becomes a geocode dep", () => {
 })
 
 describe("gazetteerPrior pin (#1497)", () => {
-	// The pin carries an artifact, so `resolverPinDeps` — which is pure — cannot see it. That is exactly how a pinned
-	// run printed as "production defaults" on its first outing while quietly changing the board by one case.
+	// The pin carries an artifact, so `resolverPinDeps` — which is pure — cannot see it.
+	// That is exactly how a pinned run printed as "production defaults" on its first outing
+	// while quietly changing the board by one case.
 	it("is announced even though resolverPinDeps cannot carry it", () => {
 		expect(describeResolverPins({ gazetteerPrior: true })).toContain("gazetteerPrior=ON")
 	})
@@ -175,11 +176,12 @@ describe("gazetteerPrior pin (#1497)", () => {
 })
 
 describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
-	// The bug this pins: while the prior was opt-in, the builder forwarded only the truthy half
-	// (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`). After the default-on flip that silently
-	// discarded `--gazetteer-prior-off`, so the off arm graded the default configuration while its log said
-	// `gazetteerPrior=off` — the exact "two pin logs that differ only in a flag someone typed" failure the pins
-	// line exists to prevent. Caught by running the off arm and reading the board rather than by a test.
+	// The bug this pins: while the prior was opt-in, the builder forwarded only the
+	// truthy half (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`).
+	// After the default-on flip that silently discarded `--gazetteer-prior-off`, so the off arm
+	// graded the default configuration while its log said `gazetteerPrior=off` — the exact "two
+	// pin logs that differ only in a flag someone typed" failure the pins line exists to prevent.
+	// Caught by running the off arm and reading the board rather than by a test.
 	it("keeps an explicit false", () => {
 		expect(runResolverPins({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })
 	})
@@ -194,8 +196,8 @@ describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 })
 
 describe("adminContainmentRerank pin (#1717 stage 2)", () => {
-	// Two-sided from day one — the #1706 class: a one-sided forwarding compiles, passes every other test, and
-	// produces an off-labelled log that graded the default arm.
+	// Two-sided from day one — the #1706 class: a one-sided forwarding compiles,
+	// passes every other test, and produces an off-labelled log that graded the default arm.
 	it("maps the ON pin onto the geocode dep of the same name", () => {
 		expect(resolverPinDeps({ adminContainmentRerank: true })).toEqual({ adminContainmentRerank: true })
 	})
@@ -273,8 +275,9 @@ describe("spanRescoreWeakResolution — #2264's pin", () => {
 	})
 
 	it("names the READING in the run banner, not an ON", () => {
-		// Three readings that grade different configurations. Collapsing them to a single on reading is how two arms
-		// produce identical pin logs, which is the one thing the banner exists to prevent.
+		// Three readings that grade different configurations.
+		// Collapsing them to a single on reading is how two arms produce identical pin logs,
+		// which is the one thing the banner exists to prevent.
 		expect(describeResolverPins({ spanRescoreWeakResolution: "score" })).toContain("spanRescoreWeakResolution=score")
 
 		expect(describeResolverPins({ spanRescoreWeakResolution: "containment" })).toContain(

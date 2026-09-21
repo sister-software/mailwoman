@@ -43,8 +43,9 @@ async function weightsPresent(): Promise<boolean> {
 /**
  * Rows whose tree is structurally invalid today, each with the issue that owns it.
  *
- * An entry is a debt with a name. Removing one because it started passing is the good outcome. adding one needs the
- * defect written down first, because a row added here silently is a defect converted into a permanent exemption.
+ * An entry is a debt with a name. Removing one because it started passing is the
+ * good outcome. adding one needs the defect written down first, because a row added
+ * here silently is a defect converted into a permanent exemption.
  */
 const SG_GENERIC_FIRST_STREET =
 	"The Malay generic-first street (`Jalan Sukachita`, `Lengkong Empat`) reads as locality, so the house number has no street anchor. The shipped Latin model has no Singapore register; the `sg-register` corpus recipe (#1931) targets it, and the board row is `improvement_target`."
@@ -88,8 +89,8 @@ async function boardRows(): Promise<Row[]> {
 		let files: string[]
 
 		try {
-			// A country directory carries more than `regression.jsonl` — street-name-boundaries, gloss-keys, others.
-			// Reading only the first name silently measured 326 of 854 rows.
+			// A country directory carries more than `regression.jsonl` — street-name-boundaries,
+			// gloss-keys, others. Reading only the first name silently measured 326 of 854 rows.
 			files = await Globerator.files("jsonl", { cwd: join(root, entry), absolute: false, recursive: false }).toArray()
 		} catch {
 			continue

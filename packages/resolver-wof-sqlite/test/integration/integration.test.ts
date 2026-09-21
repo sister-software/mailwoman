@@ -46,8 +46,8 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 
 	describe("lookup smoke tests", () => {
 		test("`Paris` with locality filter returns >0 candidates, all containing Paris in US", async () => {
-			// FTS5 token-match — `Saint Paris` is a legitimate hit, so the assertion is on substring
-			// match rather than exact equality.
+			// FTS5 token-match — `Saint Paris` is a legitimate hit, so the assertion is
+			// on substring match rather than exact equality.
 			const candidates = await lookup.findPlace({ text: "Paris", placetype: "locality", limit: 20 })
 			expect(candidates.length).toBeGreaterThan(0)
 
@@ -127,8 +127,8 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 			const parentID = springfields[0]!.parent_id
 			expect(parentID).toBeDefined()
 
-			// Now query for that Springfield by name, scoped to its parent. Should include itself plus
-			// possibly other places under the same parent.
+			// Now query for that Springfield by name, scoped to its parent.
+			// Should include itself plus possibly other places under the same parent.
 			const constrained = await lookup.findPlace({
 				text: "Springfield",
 				placetype: "locality",

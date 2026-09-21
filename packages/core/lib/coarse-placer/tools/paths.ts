@@ -14,14 +14,15 @@ import { pathExists } from "#fs/readers"
 import { corePackagePathBuilder, dataRootPath, repoRootPathBuilder } from "#utils"
 
 /**
- * The Latin off-map test sets, one per outlier builder. Each builder writes its own file so neither replaces the
- * other's rows. readers take the union through {@linkcode readLatinOffmapRows}.
+ * The Latin off-map test sets, one per outlier builder.
+ * Each builder writes its own file so neither replaces the other's rows. readers
+ * take the union through {@linkcode readLatinOffmapRows}.
  */
 const LATIN_OFFMAP_TEST_FILES = ["test-latin-offmap-overture.jsonl", "test-latin-offmap-oa.jsonl"] as const
 
 /**
- * Read every Latin off-map test set present in `dataDir`, tagging each row with the file it came from. Refuses an empty
- * union: a missing test set would otherwise read as a perfect off-map score.
+ * Read every Latin off-map test set present in `dataDir`, tagging each row with the file it came from.
+ * Refuses an empty union: a missing test set would otherwise read as a perfect off-map score.
  */
 export async function readLatinOffmapRows<T>(dataDir: PathBuilderLike): Promise<Array<T & { sourceFile: string }>> {
 	const rows: Array<T & { sourceFile: string }> = []
@@ -70,8 +71,8 @@ export function defaultInt8Dir(): PathBuilder {
 }
 
 /**
- * The deployed placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), not the `$MAILWOMAN_DATA_ROOT` training
- * output — for probes that must match the runtime.
+ * The deployed placer bundled in `@mailwoman/core` (`core/data/coarse-placer`),
+ * not the `$MAILWOMAN_DATA_ROOT` training output — for probes that must match the runtime.
  */
 export function shippedModelDir(): PathBuilder {
 	return corePackagePathBuilder("data", "coarse-placer")

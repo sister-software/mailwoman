@@ -18,20 +18,23 @@
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
- * Derive a stable `filer_family.family_id` from a holding-/management-company name's canonical form — never the raw
- * string — so `"Acme Holdings Inc"` and `"acme holdings, INC."` (same underlying entity, different casing/
- * punctuation/legal suffix) collapse onto the same family, the identical reduction `cluster-filers.ts`'s inferred pass
- * already relies on (`canonicalizeOrganizationName`, `@mailwoman/record`). Namespaced by `identifierType`
- * (`holding_company_name` vs `management_company_name`) so a holding company and a different management company that
- * happen to canonicalize to the same string never collapse into one family (spec §3.1 finding 1 — ownership and
- * operational control are different assertions, and that separation should hold for family membership too rather than
- * just for the edge kind).
+ * Derive a stable `filer_family.family_id` from a holding-/management-company name's canonical
+ * form — never the raw string — so `"Acme Holdings Inc"` and `"acme holdings, INC."`
+ * (same underlying entity, different casing/ punctuation/legal suffix) collapse
+ * onto the same family, the identical reduction `cluster-filers.ts`'s inferred
+ * pass already relies on (`canonicalizeOrganizationName`, `@mailwoman/record`).
+ * Namespaced by `identifierType` (`holding_company_name` vs `management_company_name`)
+ * so a holding company and a different management company that happen
+ * to canonicalize to the same string never collapse into one family
+ * (spec §3.1 finding 1 — ownership and operational control are different assertions,
+ * and that separation should hold for family membership too rather than just for the edge kind).
  *
- * Returns `null` when the name canonicalizes to an empty string (rare — e.g. a bare legal-designation token with
- * nothing else surviving) — the same defensive check `cluster-filers.ts`'s `buildInferredRecords` makes before using a
- * canonical name as a blocking key: an empty canonical string can never usefully identify a family, so the caller skips
- * emitting a family row for it (`build/family-membership.ts`'s `insertFamilyMembership`) or skips attributing a display
- * name to it (`filer-lookup.ts`'s `readFamilyDisplayNames`).
+ * Returns `null` when the name canonicalizes to an empty string
+ * (rare — e.g. a bare legal-designation token with nothing else surviving) — the same defensive
+ * check `cluster-filers.ts`'s `buildInferredRecords` makes before using a canonical name as a
+ * blocking key: an empty canonical string can never usefully identify a family, so the caller
+ * skips emitting a family row for it (`build/family-membership.ts`'s `insertFamilyMembership`)
+ * or skips attributing a display name to it (`filer-lookup.ts`'s `readFamilyDisplayNames`).
  */
 export function mintFamilyID(identifierType: string, name: string): string | null {
 	const organization = canonicalizeOrganizationName(name)

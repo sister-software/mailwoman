@@ -67,8 +67,9 @@ const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 }
 
 /**
- * A real address fits comfortably. anything longer is malformed input (and would exceed the model's input window). Cap
- * defensively so a giant query returns no results instead of faulting.
+ * A real address fits comfortably. anything longer is malformed input
+ * (and would exceed the model's input window). Cap defensively so a giant query
+ * returns no results instead of faulting.
  */
 const MAX_QUERY_LEN = 512
 
@@ -84,8 +85,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			port: { type: "string", default: "8080" },
 			host: { type: "string", default: "0.0.0.0" },
 			"candidate-db": { type: "string" },
-			// Permissive cors is on by default (browser geocoder clients need it). `--no-cors` turns it off for
-			// deployments where a reverse proxy already sets the headers.
+			// Permissive cors is on by default (browser geocoder clients need it).
+			// `--no-cors` turns it off for deployments where a reverse proxy already sets the headers.
 			cors: { type: "boolean", default: true },
 		},
 		allowNegative: true,
@@ -103,17 +104,18 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
 	const extracts = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
-	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
-	// when the extract isn't on disk (conditioned on existsSync inside the provider), so the endpoint degrades cleanly.
+	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse.
+	// A no-op when the extract isn't on disk (conditioned on existsSync inside the provider),
+	// so the endpoint degrades cleanly.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
 	const banExtracts = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 	// Not a geocode country constraint. The default-on #244 placer already routes the query's country
 	// (Berlin→DE, Boston→US) and `defaultCountry` is a hard override that beats it (geocode-core.ts:102),
-	// so forcing "US" resolved every non-US query to its US namesake (Berlin→Berlin NH). We let the
-	// placer decide instead. This is the fallback used only to annotate the flag/currency/calling-code
-	// when the resolved hierarchy omits the country tag — which on US-centric data (no candidate DB)
-	// happens for US results, where "US" is the right guess. Non-US results carry the country tag, so
-	// the fallback never mislabels them.
+	// so forcing "US" resolved every non-US query to its US namesake (Berlin→Berlin NH).
+	// We let the placer decide instead. This is the fallback used only to annotate the
+	// flag/currency/calling-code when the resolved hierarchy omits the country tag — which on
+	// US-centric data (no candidate DB) happens for US results, where "US" is the right guess.
+	// Non-US results carry the country tag, so the fallback never mislabels them.
 	const annotationCountryFallback = candidateDB ? undefined : "US"
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
@@ -137,9 +139,10 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const annotate = composeAnnotators(annotators)
 
-	// Read once, at boot, from the artifacts themselves (#997). The handles above are held for the life of
-	// the process, so this describes what the endpoint is serving from for as long as it serves — and every
-	// artifact appears, including one carrying no manifest. It says so rather than being left out.
+	// Read once, at boot, from the artifacts themselves (#997).
+	// The handles above are held for the life of the process, so this describes what the
+	// endpoint is serving from for as long as it serves — and every artifact appears,
+	// including one carrying no manifest. It says so rather than being left out.
 	const status = nominatimStatus(await gazetteerFreshness(gazetteer))
 
 	const engine: NominatimEngine = {
@@ -150,10 +153,10 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 			// Empty/whitespace → no query. absurdly long → not an address (and would blow the model's input).
 			if (!query || query.length > MAX_QUERY_LEN) return []
-			// A caller-supplied `countrycodes` is an explicit hard restriction (Nominatim semantics): honor
-			// it as the country constraint, even to the point of no result. It doubles as the manual override
-			// for the #822 placer frontier — `countrycodes=au` lands Sydney in Australia. One country is the
-			// common (geopy) case. for a list we apply the first.
+			// A caller-supplied `countrycodes` is an explicit hard restriction (Nominatim semantics):
+			// honor it as the country constraint, even to the point of no result.
+			// It doubles as the manual override for the #822 placer frontier — `countrycodes=au` lands
+			// Sydney in Australia. One country is the common (geopy) case. for a list we apply the first.
 			const userCountry = params.countrycodes?.[0]?.toUpperCase()
 
 			const result = await geocodeAddress(query, {
@@ -168,9 +171,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			const resolved = forwardToResolved(result)
 
 			// #1041: a rooftop (`address_point`) / house-number-estimate (`interpolated`) tier is house-grade — tag the
-			// result `class: place` / `type: house` (upstream Nominatim's own class/type for a house), so a client that
-			// keys on `class`/`type`/`addresstype` treats it as a building rather than an untyped admin hit. The admin tier
-			// (a locality centroid) carries no class/type here, as before.
+			// result `class: place` / `type: house` (upstream Nominatim's own class/type for a house),
+			// so a client that keys on `class`/`type`/`addresstype` treats it as a building rather than an
+			// untyped admin hit. The admin tier (a locality centroid) carries no class/type here, as before.
 			if (
 				result.resolution_tier === "address_point" ||
 				result.resolution_tier === "interpolated" ||
@@ -189,8 +192,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				resolved.address.road = result.street
 			}
 
-			// The country tag isn't always in the hierarchy (US admin results omit it); backfill from the
-			// US-centric-data default so the address, display_name, and flag/currency/calling-code agree.
+			// The country tag isn't always in the hierarchy (US admin results omit it);
+			// backfill from the US-centric-data default so the address, display_name,
+			// and flag/currency/calling-code agree.
 			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback
 			const country = matchCountry(countryName)
 

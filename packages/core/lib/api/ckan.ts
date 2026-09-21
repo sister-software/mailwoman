@@ -54,8 +54,8 @@ export interface ReadCKANPackageRecordOptions {
 	 */
 	expectDatasetID: string
 	/**
-	 * The licence value the entry must carry. A different value is a licence change, and a build that absorbed one would
-	 * ship an artifact under terms nobody checked.
+	 * The licence value the entry must carry. A different value is a licence change,
+	 * and a build that absorbed one would ship an artifact under terms nobody checked.
 	 */
 	expectLicence: string
 	/**
@@ -71,8 +71,8 @@ export interface ReadCKANPackageRecordOptions {
 /**
  * Read one product's catalogue entry: reference dates, licence, and the direct file URLs.
  *
- * @throws {Error} When the entry is missing, names a different dataset, carries no `revision` reference date, or names
- *   a licence other than the expected one.
+ * @throws {Error} When the entry is missing, names a different dataset, carries no
+ *   `revision` reference date, or names a licence other than the expected one.
  */
 export async function readCKANPackageRecord(
 	client: Pick<APIClient, "fetch">,

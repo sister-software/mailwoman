@@ -29,8 +29,9 @@ import { arealPolygons, geometryContains, type ParsedGeometry, type PolygonRings
 import { shortCellToInt, type H3Cell } from "#h3/cell"
 
 /**
- * The rings a polyfill walks: every polygon's outer ring. Holes are deliberately not subtracted here — a hole would
- * only ever remove cells, and the interior test below re-checks every returned cell's vertices against the full
+ * The rings a polyfill walks: every polygon's outer ring.
+ * Holes are deliberately not subtracted here — a hole would only ever remove cells,
+ * and the interior test below re-checks every returned cell's vertices against the full
  * geometry (holes included), so a hole cannot survive into the result.
  */
 function outerRings(geometry: ParsedGeometry): PolygonRings {
@@ -46,7 +47,8 @@ function outerRings(geometry: ParsedGeometry): PolygonRings {
 /**
  * The outline's bounding rectangle, for pre-clipping a reference inventory that can only be probed by range.
  *
- * A coarse filter and nothing more — it contains the outline and is never the outline. The exact clip is
+ * A coarse filter and nothing more — it contains the outline and is never
+ * the outline. The exact clip is
  * {@link interiorCoverageCellSet}; using this rectangle as the region would claim survey over every corner the outline
  * does not reach.
  */
@@ -89,8 +91,8 @@ export function geometryBBox(geometry: ParsedGeometry): {
 }
 
 /**
- * Every cell whose centre falls inside `geometry`, at `resolution`. The raw polyfill — {@link interiorCoverageCells}
- * narrows it.
+ * Every cell whose centre falls inside `geometry`, at `resolution`.
+ * The raw polyfill — {@link interiorCoverageCells} narrows it.
  */
 export function regionCoverageCells(geometry: ParsedGeometry, resolution: number): H3Cell[] {
 	const cells = new Set<string>()
@@ -108,8 +110,8 @@ export function regionCoverageCells(geometry: ParsedGeometry, resolution: number
 }
 
 /**
- * The cells of {@link regionCoverageCells} that lie wholly inside `geometry` — see the module docstring for why both
- * tests are applied.
+ * The cells of {@link regionCoverageCells} that lie wholly inside `geometry` —
+ * see the module docstring for why both tests are applied.
  */
 export function interiorCoverageCells(geometry: ParsedGeometry, resolution: number): H3Cell[] {
 	const polyfilled = new Set<string>(regionCoverageCells(geometry, resolution))

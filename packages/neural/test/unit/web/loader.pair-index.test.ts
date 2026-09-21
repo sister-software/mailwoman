@@ -75,8 +75,8 @@ vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import after the mock declarations + reset. `pair-index-resolver.ts` is not mocked, so the
-// binaries built here decode through the real reader.
+// Import after the mock declarations + reset. `pair-index-resolver.ts` is not mocked,
+// so the binaries built here decode through the real reader.
 const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
 const { loadNeuralClassifierFromURLs, resolvePairIndexCountry } = await import("@mailwoman/neural/web-loader")
 
@@ -126,7 +126,8 @@ function nzIndexBytes(): Uint8Array {
 }
 
 /**
- * A fake `fetch` whose per-URL response is decided by `respond`. Model/tokenizer URLs get dummy bytes (the ORT session
+ * A fake `fetch` whose per-URL response is decided by `respond`.
+ * Model/tokenizer URLs get dummy bytes (the ORT session
  *
  * - Tokenizer are mocked, so the content is irrelevant).
  */
@@ -215,11 +216,12 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [GB_INDEX]))
 
 		expect(result.classifier).toBeDefined()
-		// No `country` load-option → no config-default posture pin. The per-parse selection is the only path
-		// (byte-stable when nothing selected — asserted end-to-end in loader.pair-prior-decode.test.ts).
+		// No `country` load-option → no config-default posture pin.
+		// The per-parse selection is the only path (byte-stable when nothing selected —
+		// asserted end-to-end in loader.pair-prior-decode.test.ts).
 		expect(capturedConfig?.placetypePair).toBeUndefined()
-		// But the index is live and retained (phase 2: load all, don't check) — the same instance the per-parse
-		// selection can return.
+		// But the index is live and retained (phase 2: load all, don't check) —
+		// the same instance the per-parse selection can return.
 		const [gb] = result.pairIndexes
 		expect(result.pairIndexes).toHaveLength(1)
 		expect(gb!.url).toBe(GB_INDEX)
@@ -239,8 +241,8 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 		const wired = capturedConfig?.placetypePair?.index
 		expect(wired).toBeInstanceOf(PairIndexResolver)
-		// The node-construction mirror: `{ index }` alone — delta/transitionBeta ride the header via the
-		// resolver's getters, probeMode is left to the builder's "auto" default.
+		// The node-construction mirror: `{ index }` alone — delta/transitionBeta ride the
+		// header via the resolver's getters, probeMode is left to the builder's "auto" default.
 		expect(capturedConfig?.placetypePair).toEqual({ index: wired })
 		expect(wired!.probe("shoreditch", "london")?.tag).toBe("dependent_locality")
 		expect(wired!.delta).toBe(5)

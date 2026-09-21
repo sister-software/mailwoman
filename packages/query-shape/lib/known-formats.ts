@@ -7,9 +7,9 @@
 import type { KnownFormat, KnownFormatHit, TokenClass } from "#types"
 
 /**
- * Universal postcode + PO-box patterns. Each entry is a regex that matches a token (or a small sequence of tokens
- * joined by a single space) and the format it represents. Keep these patterns structural. place-name dictionaries
- * belong elsewhere.
+ * Universal postcode + PO-box patterns. Each entry is a regex that matches a token
+ * (or a small sequence of tokens joined by a single space) and the format it represents.
+ * Keep these patterns structural. place-name dictionaries belong elsewhere.
  */
 interface FormatPattern {
 	format: KnownFormat
@@ -61,10 +61,11 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 const PO_BOX_LEADERS = new Set(["po", "p.o.", "p.o", "box", "bp", "b.p.", "b.p", "casilla", "apartado"])
 
 /**
- * Whether a known-format name names a postcode shape. Every entry in {@link patterns} is one, and the names follow one
- * convention — `us_zip`, `us_zip4`, or `<cc>_postcode` — which is what this reads, so a format added to the table is a
- * postcode to every consumer the moment it is named that way. The convention rather than a set, because
- * `@mailwoman/core`'s runtime pipeline cannot depend on this package and reads the same names. the test over
+ * Whether a known-format name names a postcode shape. Every entry in {@link patterns} is one,
+ * and the names follow one convention — `us_zip`, `us_zip4`, or `<cc>_postcode` —
+ * which is what this reads, so a format added to the table is a postcode to every consumer the
+ * moment it is named that way. The convention rather than a set, because `@mailwoman/core`'s
+ * runtime pipeline cannot depend on this package and reads the same names. the test over
  * {@link patterns} pins every table entry to it. `us_zip4` is the trap a naive `endsWith("_zip")` would miss.
  */
 export function isPostcodeFormat(format: string): boolean {
@@ -74,8 +75,8 @@ export function isPostcodeFormat(format: string): boolean {
 /**
  * Detect known-format hits among the tokenized input.
  *
- * Strategy: for each token (or adjacent pair), try every pattern. Multiple format hits on the same span are allowed
- * (US/FR/DE 5-digit ambiguity surfaces all three).
+ * Strategy: for each token (or adjacent pair), try every pattern.
+ * Multiple format hits on the same span are allowed (US/FR/DE 5-digit ambiguity surfaces all three).
  */
 export function detectKnownFormats(text: string, tokens: ReadonlyArray<TokenClass>): KnownFormatHit[] {
 	const hits: KnownFormatHit[] = []
@@ -112,8 +113,8 @@ export function detectKnownFormats(text: string, tokens: ReadonlyArray<TokenClas
 		}
 	}
 
-	// PO Box detection — handled separately because the leader can be 1-3 tokens and the number
-	// can be alphanumeric.
+	// PO Box detection — handled separately because the leader can be 1-3 tokens
+	// and the number can be alphanumeric.
 	const poHit = detectPoBox(text, tokens)
 
 	if (poHit) {

@@ -65,7 +65,8 @@ export const FloodReadingKind = {
 	 */
 	Designated: "designated",
 	/**
-	 * The authority determined here and assigns no zone — a designated absence, which for this product is Zone 1.
+	 * The authority determined here and assigns no zone — a designated absence,
+	 * which for this product is Zone 1.
 	 */
 	DesignatedAbsence: "designated_absence",
 	/**
@@ -106,12 +107,13 @@ export interface FloodZoneReading {
 	 */
 	zoneCode?: string
 	/**
-	 * The definition the authority publishes for the answered zone — {@link FLOOD_ZONE_1} on a designated absence, since
-	 * this product represents Zone 1 by absence and ships no polygon for it.
+	 * The definition the authority publishes for the answered zone — {@link FLOOD_ZONE_1} on a
+	 * designated absence, since this product represents Zone 1 by absence and ships no polygon for it.
 	 */
 	definition?: FloodZoneDefinition
 	/**
-	 * The polygon the ray cast matched, on a `ray_cast` reading. Named so a reader can fetch and draw it.
+	 * The polygon the ray cast matched, on a `ray_cast` reading.
+	 * Named so a reader can fetch and draw it.
 	 */
 	areaID?: string
 	/**
@@ -127,9 +129,9 @@ export interface FloodZoneReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * What the product does not cover, in the authority's own words. Carried on every reading, because a Zone 1 answer is
-	 * silent about surface water, groundwater and defended-area residual risk, and a caller cannot see that from the zone
-	 * code.
+	 * What the product does not cover, in the authority's own words.
+	 * Carried on every reading, because a Zone 1 answer is silent about surface water, groundwater
+	 * and defended-area residual risk, and a caller cannot see that from the zone code.
 	 */
 	limits: ReadonlyArray<string>
 }
@@ -144,9 +146,9 @@ export interface FloodLayerIdentity {
 	/**
 	 * Every resolution `flood_zone_cell` stores a row at, coarsest first — the ancestor chain a probe walks.
 	 *
-	 * Several, and necessarily so: the whole tier is compacted parent-ward, and a polygon too large for h3's allocator at
-	 * the index resolution was indexed coarser. A reader that probed one resolution would read every row at the others as
-	 * an absence.
+	 * Several, and necessarily so: the whole tier is compacted parent-ward, and a
+	 * polygon too large for h3's allocator at the index resolution was indexed coarser.
+	 * A reader that probed one resolution would read every row at the others as an absence.
 	 */
 	cellResolutions: number[]
 	/**
@@ -212,9 +214,10 @@ export class FloodZoneLookup implements Disposable {
 			"SELECT area_id FROM flood_zone_cell_area WHERE h3_cell = ? ORDER BY area_id"
 		)
 
-		// two statements, and the split is the point. The bbox is the prefilter, so it is read without the blob: the
-		// largest features in this product carry hundreds of thousands of vertices, and pulling one off disk only to
-		// reject it on a rectangle would make the prefilter cost more than the test it replaces.
+		// two statements, and the split is the point. The bbox is the prefilter,
+		// so it is read without the blob: the largest features in this product carry
+		// hundreds of thousands of vertices, and pulling one off disk only to reject it on
+		// a rectangle would make the prefilter cost more than the test it replaces.
 		this.#selectAreaBounds = this.#database.prepare(
 			"SELECT zone_code, min_lat, min_lon, max_lat, max_lon FROM flood_zone_area WHERE area_id = ?"
 		)
@@ -290,8 +293,9 @@ export class FloodZoneLookup implements Disposable {
 		latitude: number,
 		longitude: number
 	): { zoneCode?: string; areaID?: string; containment: FloodContainmentPath } {
-		// Coarsest first: a whole hit high in the ancestor chain is the cheapest answer and cannot be contradicted lower
-		// down, because compaction only ever replaces a full set of children with their parent.
+		// Coarsest first: a whole hit high in the ancestor chain is the cheapest answer
+		// and cannot be contradicted lower down, because compaction only ever replaces
+		// a full set of children with their parent.
 		const partialCells: number[] = []
 
 		for (const cell of ancestorChainCells(indexCell, this.identity.indexResolution, this.identity.cellResolutions)) {
@@ -320,8 +324,8 @@ export class FloodZoneLookup implements Disposable {
 
 			if (!area) continue
 
-			// The bbox is the prefilter the geometry table stores precisely so the ray cast runs on the few polygons that
-			// could contain the point rather than on every polygon reaching the cell.
+			// The bbox is the prefilter the geometry table stores precisely so the ray cast runs on the
+			// few polygons that could contain the point rather than on every polygon reaching the cell.
 			if (!bboxContains(area, longitude, latitude)) {
 				continue
 			}

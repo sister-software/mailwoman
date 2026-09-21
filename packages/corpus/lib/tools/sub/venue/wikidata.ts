@@ -35,9 +35,9 @@ interface SPARQLEnvelope {
 /**
  * Turn the Wikidata designator-label payload into surfaces.
  *
- * A row is dropped when its language tag is empty (an untagged literal, which Wikidata occasionally carries), when the
- * QID maps to no designator in {@link CONCEPT_QIDS}, or when the normalized phrase is empty. Everything that survives
- * lands `curated: false` — see the module docstring.
+ * A row is dropped when its language tag is empty (an untagged literal, which Wikidata occasionally carries),
+ * when the QID maps to no designator in {@link CONCEPT_QIDS}, or when the normalized phrase is empty.
+ * Everything that survives lands `curated: false` — see the module docstring.
  */
 export function surfacesFromWikidata(
 	payload: unknown,

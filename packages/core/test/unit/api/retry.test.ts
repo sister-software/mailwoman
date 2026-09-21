@@ -37,8 +37,8 @@ describe("parseRetryAfterMs", () => {
 	})
 
 	it("parses the HTTP-date form, not just delay-seconds", () => {
-		// m2: a numeric-only parse fell back to the short exponential default on an http-date — the other
-		// form RFC 9110 allows — so a 429 asking for 45 seconds retried in half a second.
+		// m2: a numeric-only parse fell back to the short exponential default on an http-date —
+		// the other form RFC 9110 allows — so a 429 asking for 45 seconds retried in half a second.
 		const retryAt = new Date(Date.now() + 45_000)
 		const parsed = parseRetryAfterMs(retryAt.toUTCString())
 
@@ -56,11 +56,11 @@ describe("parseRetryAfterMs", () => {
 		expect(parseRetryAfterMs("Tue, 99 Xyz 2026 99:99:99 GMT")).toBe(MAX_RETRY_AFTER_MS)
 	})
 
-	// RFC 9110's `delay-seconds` is `1*digit` only — no hex, no sign, no decimal point. `Number()` is
-	// laxer than the grammar (`Number("0x10") === 16`, `Number("1.5") === 1.5`), so a naive `Number()`
-	// parse would silently honor either as a plausible-looking wait instead of falling back long.
-	// `Date.parse("1.5")` also returns a valid timestamp (~Jan 2001), which is why the http-date branch
-	// requires a literal `GMT` suffix before it trusts `Date.parse`.
+	// RFC 9110's `delay-seconds` is `1*digit` only — no hex, no sign, no decimal point.
+	// `Number()` is laxer than the grammar (`Number("0x10") === 16`, `Number("1.5") === 1.5`),
+	// so a naive `Number()` parse would silently honor either as a plausible-looking wait
+	// instead of falling back long. `Date.parse("1.5")` also returns a valid timestamp (~Jan 2001),
+	// which is why the http-date branch requires a literal `GMT` suffix before it trusts `Date.parse`.
 	it.each([["0x10"], ["1.5"], ["-30"], ["+30"], ["1e3"]])(
 		"rejects %s as delay-seconds, falling back to the long ceiling",
 		(value) => {
@@ -79,8 +79,8 @@ describe("isRetryableStatus", () => {
 	})
 
 	it("NEVER treats a 403 as retryable", () => {
-		// A 403 means the request failed to identify itself. Retrying it cannot succeed and burns the
-		// rate budget doing so.
+		// A 403 means the request failed to identify itself.
+		// Retrying it cannot succeed and burns the rate budget doing so.
 		expect(isRetryableStatus(403)).toBe(false)
 	})
 })

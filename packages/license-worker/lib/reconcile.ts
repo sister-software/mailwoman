@@ -37,8 +37,8 @@ import { licenseStateAfterSubscription } from "#policy"
 export type ReconcileStage = "mint" | "email" | "state"
 
 /**
- * One item the pass could not finish, with the id the next operator action needs: the invoice for a mint, the invoice
- * and the license for a delivery, the license for a state correction.
+ * One item the pass could not finish, with the id the next operator action needs: the invoice
+ * for a mint, the invoice and the license for a delivery, the license for a state correction.
  */
 export type ReconcileFailure =
 	| { stage: "mint"; invoiceID: string; reason: string }
@@ -62,8 +62,9 @@ export interface ReconcileReport {
 
 export interface ReconcileOptions {
 	/**
-	 * How far back to list paid invoices, by the invoice's creation time: the bound on recovering a subscription the
-	 * ledger has never seen. Wider than the cron interval, so one failed pass costs nothing.
+	 * How far back to list paid invoices, by the invoice's creation time:
+	 * the bound on recovering a subscription the ledger has never seen.
+	 * Wider than the cron interval, so one failed pass costs nothing.
 	 */
 	sinceSeconds: number
 }
@@ -76,8 +77,8 @@ const LONG_OPAQUE_VALUE = /[A-Za-z0-9_-]{40,}/gu
 const REASON_LENGTH = 200
 
 /**
- * An error as the report carries it: the message, with anything shaped like an address or a token or secret struck,
- * since the report is logged.
+ * An error as the report carries it: the message, with anything shaped like an address
+ * or a token or secret struck, since the report is logged.
  */
 export function failureReason(error: unknown): string {
 	const text = error instanceof Error ? error.message : String(error)
@@ -218,8 +219,9 @@ async function paymentIntentOf(stripe: Stripe, invoiceID: string): Promise<strin
 }
 
 /**
- * Whether the charge behind an invoice has been refunded in full. Stripe's `refunded` is false for a partial refund,
- * which is the line the `charge.refunded` handler draws too.
+ * Whether the charge behind an invoice has been refunded in full.
+ * Stripe's `refunded` is false for a partial refund, which is the line the
+ * `charge.refunded` handler draws too.
  */
 async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean> {
 	const paymentIntent = await paymentIntentOf(stripe, invoiceID)
@@ -232,11 +234,12 @@ async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean
 }
 
 /**
- * The state Stripe's current records say a license should hold, or `undefined` when Stripe has nothing to add. A full
- * refund is final, and it is read from the charge rather than the subscription, which a refund leaves `active`: a
- * license minted by the missed-invoice sweep, or one whose `charge.refunded` event never arrived, is revoked here at
- * the cost of two Stripe reads per active license per pass. A dispute that Stripe has ruled `won` hands the license
- * back to its subscription's state. any other dispute outcome leaves it revoked.
+ * The state Stripe's current records say a license should hold, or `undefined` when Stripe
+ * has nothing to add. A full refund is final, and it is read from the charge rather than the
+ * subscription, which a refund leaves `active`: a license minted by the missed-invoice sweep,
+ * or one whose `charge.refunded` event never arrived, is revoked here at the cost of two
+ * Stripe reads per active license per pass. A dispute that Stripe has ruled `won` hands the
+ * license back to its subscription's state. any other dispute outcome leaves it revoked.
  */
 async function stateStripeSays(
 	stripe: Stripe,

@@ -27,28 +27,29 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 const SOURCE = "https://download.geonames.org/export/dump/countryInfo.txt"
 
 /**
- * The committed output path, anchored at the `@mailwoman/codex` package root rather than at this module, so it names
- * the same file from the source tree, `out/`, and a published tarball.
+ * The committed output path, anchored at the `@mailwoman/codex` package root rather than at
+ * this module, so it names the same file from the source tree, `out/`, and a published tarball.
  */
 const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "population.ts")
 
 /**
- * Tab positions this tool reads from `countryInfo.txt`'s 19-column rows. Named so the parse states which columns it
- * believes in. a GeoNames format change fails the count guard below rather than silently reading the wrong column.
+ * Tab positions this tool reads from `countryInfo.txt`'s 19-column rows.
+ * Named so the parse states which columns it believes in. a GeoNames format change fails
+ * the count guard below rather than silently reading the wrong column.
  */
 const COLUMN_ISO2 = 0
 const COLUMN_POPULATION = 7
 const MINIMUM_COLUMNS = 8
 
 /**
- * GeoNames publishes ~250 countries/territories. a parse recovering fewer than this read the wrong column or a
- * truncated body, and the guard fails loudly instead of committing a hollow table.
+ * GeoNames publishes ~250 countries/territories. a parse recovering fewer than this read the wrong
+ * column or a truncated body, and the guard fails loudly instead of committing a hollow table.
  */
 const MINIMUM_PLAUSIBLE_COUNTRIES = 200
 
 /**
- * Numbers below five digits are emitted bare — the house numeric-separator style groups by three and only from five
- * digits up (`8450`, not `8_450`).
+ * Numbers below five digits are emitted bare — the house numeric-separator style
+ * groups by three and only from five digits up (`8450`, not `8_450`).
  */
 const SEPARATOR_MINIMUM = 10_000
 

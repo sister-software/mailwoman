@@ -60,10 +60,11 @@ const SPAN_COLUMNS = ["span_starts", "span_ends", "span_tags"] as const
 /**
  * The v0.5.0 DuckDB type for each column, in {@link REQUIRED_COLUMNS} order.
  *
- * Mirrors the PyArrow schema the Python original declared: `pa.string()` → `varchar`, `pa.list_(pa.string())` →
- * `varchar[]`, `pa.list_(pa.int32())` → `integer[]`. The span offsets are INT32 (#519): parallel arrays over `raw`
- * (UTF-16 code units, `[start, end)` exclusive-end, sorted, non-overlapping); `raw` is a short address string, so INT32
- * round-trips as a plain integer where INT64 would surface as bigint.
+ * Mirrors the PyArrow schema the Python original declared: `pa.string()` → `varchar`,
+ * `pa.list_(pa.string())` → `varchar[]`, `pa.list_(pa.int32())` → `integer[]`.
+ * The span offsets are INT32 (#519): parallel arrays over `raw`
+ * (UTF-16 code units, `[start, end)` exclusive-end, sorted, non-overlapping); `raw` is a short
+ * address string, so INT32 round-trips as a plain integer where INT64 would surface as bigint.
  */
 const COLUMN_TYPES: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
 	raw: "VARCHAR",
@@ -150,10 +151,10 @@ export async function jsonlToParquet(
 		throw new Error(`rowGroupSize must be a positive integer (got ${stringifyJSON(rowGroupSize)})`)
 	}
 
-	// Stage the validated rows to a temp ndjson, then let DuckDB type + write them. Streaming keeps
-	// memory O(1) on the Node side (the Python original buffered every column into memory first). The
-	// staging directory owns the write stream, so it is closed before the directory is removed — and a
-	// mid-stream span-triple failure leaves no orphan.
+	// Stage the validated rows to a temp ndjson, then let DuckDB type + write them.
+	// Streaming keeps memory O(1) on the Node side (the Python original buffered every column
+	// into memory first). The staging directory owns the write stream, so it is closed
+	// before the directory is removed — and a mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
 	const stagePath = join(staging.path, "rows.ndjson")
 	const stage = staging.use(openWriteStream(stagePath, { encoding: "utf8" }))
@@ -161,10 +162,10 @@ export async function jsonlToParquet(
 	let rows = 0
 	let lineNo = 0
 
-	// TextSpliterator rather than JSONSpliterator: the staging write below streams the RAW line bytes to
-	// DuckDB verbatim (the parse here only validates), so a re-serialized JSONSpliterator row would
-	// defeat the point. crlf is handled by the existing `rawLine.trim()` (strips a trailing \r),
-	// same as readline's crlfDelay:Infinity did.
+	// TextSpliterator rather than JSONSpliterator: the staging write below streams the RAW
+	// line bytes to DuckDB verbatim (the parse here only validates), so a re-serialized
+	// JSONSpliterator row would defeat the point. crlf is handled by the existing
+	// `rawLine.trim()` (strips a trailing \r), same as readline's crlfDelay:Infinity did.
 	for await (const rawLine of TextSpliterator.fromAsync(options.input)) {
 		lineNo++
 		const line = rawLine.trim()
@@ -189,8 +190,8 @@ export async function jsonlToParquet(
 	const selectList = REQUIRED_COLUMNS.join(", ")
 
 	const db = await connectDuckDB()
-	// Row order is required: the overlay-manifest assembler records first/last source_id from
-	// file order. `preserve_insertion_order` (DuckDB default) keeps output order = input order.
+	// Row order is required: the overlay-manifest assembler records first/last source_id from file order.
+	// `preserve_insertion_order` (DuckDB default) keeps output order = input order.
 	await db.run("SET preserve_insertion_order=true")
 
 	await db.run(

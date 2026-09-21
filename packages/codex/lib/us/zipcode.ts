@@ -19,11 +19,12 @@ import { isUSStateAbbreviation, type USStateAbbreviation } from "#us/state"
 export type ZipCodeDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
 /**
- * A ZIP (Zone Improvement Plan) Code is a five-digit code assigned by the USPS to a section of a street, a collection
- * of streets, an establishment, structure, or group of post office boxes, for the delivery of mail.
+ * A ZIP (Zone Improvement Plan) Code is a five-digit code assigned by the USPS to
+ * a section of a street, a collection of streets, an establishment, structure,
+ * or group of post office boxes, for the delivery of mail.
  *
- * - The first 3 digits of the ZIP code represent a specific central mail processing facility, which can be used to
- *   identify the locality and region of the address, i.e. the city and state.
+ * - The first 3 digits of the ZIP code represent a specific central mail processing facility,
+ *   which can be used to identify the locality and region of the address, i.e. the city and state.
  * - The last 2 digits of the ZIP code represent a specific post office or delivery area.
  *
  * ```txt
@@ -35,7 +36,8 @@ export type ZipCodeDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
  *           (City)
  * ```
  *
- * Note that ZIP codes are not areas, but rather a group of deliverable addresses, which can and do change over time.
+ * Note that ZIP codes are not areas, but rather a group of deliverable addresses,
+ * which can and do change over time.
  *
  * @category Delivery
  * @category Postal
@@ -46,8 +48,8 @@ export type ZipCodeDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 export type ZipCode = Tagged<string, "ZipCode">
 
 /**
- * The extended ZIP code format includes the five-digit ZIP code followed by a hyphen and four additional digits. This
- * extended format is used to provide more precise location information.
+ * The extended ZIP code format includes the five-digit ZIP code followed by a hyphen and four
+ * additional digits. This extended format is used to provide more precise location information.
  *
  * - The first 3 digits of the ZIP code represent a specific central mail processing facility,
  * - The last 2 digits of the ZIP code represent a specific post office or delivery area.
@@ -62,7 +64,8 @@ export type ZipCode = Tagged<string, "ZipCode">
  *                (Post Office)
  * ```
  *
- * Note that ZIP codes are not areas, but rather a group of deliverable addresses, which can and do change over time.
+ * Note that ZIP codes are not areas, but rather a group of deliverable addresses,
+ * which can and do change over time.
  *
  * @category Delivery
  * @category Postal
@@ -82,9 +85,9 @@ export type ExtractStateFromZipCode<Zip extends ZipCode | ZipCodePlusFour> =
 	Zip extends `${infer StateCode}${infer _Rest}` ? StateCode : never
 
 /**
- * Record of US state abbreviations to their corresponding ZIP code prefix (the leading digit). A cheap geographic
- * prior: a 5-digit code's first digit narrows it to a band of states, which the parser can weigh against the
- * surrounding city/state tokens.
+ * Record of US state abbreviations to their corresponding ZIP code prefix (the leading digit).
+ * A cheap geographic prior: a 5-digit code's first digit narrows it to a band of states,
+ * which the parser can weigh against the surrounding city/state tokens.
  *
  * @internal
  * @see {@linkcode ZipCodePrefixAbbreviationMap} for the reverse mapping.
@@ -191,8 +194,8 @@ export interface PluckedStateZIPCodeResult {
 }
 
 /**
- * Given an address string like `"NY"`, `"CA 94016"`, attempts to match the state abbreviation and postcode, if
- * applicable.
+ * Given an address string like `"NY"`, `"CA 94016"`, attempts to match the state
+ * abbreviation and postcode, if applicable.
  *
  * @see {@linkcode isUSStateAbbreviation} to validate the state abbreviation.
  */

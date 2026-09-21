@@ -44,8 +44,8 @@ export function useMapBearing(map: MapInstance | null): UseMapBearing {
 		[map]
 	)
 
-	// The server snapshot is the same reading: there is no map during a server render, and north is what a compass
-	// shows when it has nothing to report.
+	// The server snapshot is the same reading: there is no map during a server render,
+	// and north is what a compass shows when it has nothing to report.
 	const readBearing = useCallback(() => map?.getBearing() ?? 0, [map])
 
 	const bearing = useSyncExternalStore(subscribe, readBearing, () => 0)

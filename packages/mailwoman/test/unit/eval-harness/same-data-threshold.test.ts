@@ -137,8 +137,9 @@ describe("same-data abstention threshold (#2264)", () => {
 
 		const curve = thresholdCurve("mailwoman", results, PANEL, [0, 0.5])
 
-		// Threshold 0 wins accuracy and loses false selection. 0.5 does the inverse. Neither dominates a
-		// reference sitting between them, which is what stops either endpoint from being reported as a win.
+		// Threshold 0 wins accuracy and loses false selection. 0.5 does the inverse.
+		// Neither dominates a reference sitting between them, which is what stops
+		// either endpoint from being reported as a win.
 		expect(dominatingPoints(curve, { selectionAccuracy: 0.5, falseSelectionRate: 0.5 })).toStrictEqual([])
 	})
 })

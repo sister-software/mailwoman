@@ -30,24 +30,25 @@ import { stableSourceID } from "#adapters/utils"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const GEONAMES_POSTAL_ADAPTER_ID = "geonames-postal"
 /**
- * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (CC-BY-4.0), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * GeoNames postal-dump columns (0-based): country, postcode, place, admin1_name, admin1_code, admin2_name, ….
+ * GeoNames postal-dump columns (0-based): country, postcode, place, admin1_name,
+ * admin1_code, admin2_name, ….
  *
- * Shared with `tools/postcode-triples.ts`, which additionally reads `admin2Name` — the city for the IN/MX/PT-shaped
- * exports whose `place` column is a street or colonia.
+ * Shared with `tools/postcode-triples.ts`, which additionally reads `admin2Name` —
+ * the city for the IN/MX/PT-shaped exports whose `place` column is a street or colonia.
  *
- * `latitude`/`longitude` are the postcode's coordinate rather than the locality's. A consumer grading distance to a
- * place needs a gazetteer centroid instead.
+ * `latitude`/`longitude` are the postcode's coordinate rather than the locality's.
+ * A consumer grading distance to a place needs a gazetteer centroid instead.
  */
 export const GEONAMES_POSTAL_COLUMNS = {
 	country: 0,
@@ -68,8 +69,8 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 			"GeoNames postcodes (CC-BY-4.0) — multi-locale postcode→locality→region, names inline; international postcode-first order.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			// `header: false` — the GeoNames postal dump is headerless, and the spliterator would
-			// otherwise consume row 1 as column names and lose its first postcode.
+			// `header: false` — the GeoNames postal dump is headerless, and the spliterator
+			// would otherwise consume row 1 as column names and lose its first postcode.
 			const rows = readUnquotedTSV(opts.inputPath)
 
 			let emitted = 0

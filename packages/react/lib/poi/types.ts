@@ -51,9 +51,9 @@ export interface POICategorySubject extends POISubjectBase {
 }
 
 /**
- * A resolved POI subject that names a chain brand (`chevron`, `applebee's`). Brands carry a Wikidata QID and are
- * searched by that QID rather than by category k-ring — see `@mailwoman/poi-taxonomy`'s brand table + the layer's
- * `brand_wikidata` index.
+ * A resolved POI subject that names a chain brand (`chevron`, `applebee's`).
+ * Brands carry a Wikidata QID and are searched by that QID rather than by category k-ring —
+ * see `@mailwoman/poi-taxonomy`'s brand table + the layer's `brand_wikidata` index.
  */
 export interface POIBrandSubject extends POISubjectBase {
 	kind: "brand"
@@ -62,7 +62,8 @@ export interface POIBrandSubject extends POISubjectBase {
 	 */
 	name: string
 	/**
-	 * Wikidata QID, when the lexicon carried one (`Q319642` = Chevron). Absent ⇒ matched by name alone.
+	 * Wikidata QID, when the lexicon carried one (`Q319642` = Chevron).
+	 * Absent ⇒ matched by name alone.
 	 */
 	wikidata?: string
 }
@@ -73,7 +74,8 @@ export interface POIBrandSubject extends POISubjectBase {
 export type POISubject = POICategorySubject | POIBrandSubject
 
 /**
- * The intent-only result: the kind verdict plus (when a subject was detected) its OverpassQL export (category only).
+ * The intent-only result: the kind verdict plus (when a subject was detected)
+ * its OverpassQL export (category only).
  */
 export interface POIExplorerResult {
 	kindResult: QueryKindResult
@@ -95,8 +97,8 @@ export interface POISearchHit {
 }
 
 /**
- * Result of an injected live search. Preserves the original tester's two failure modes — the anchor not resolving vs
- * the published layer being unreachable — so the UI can word them differently.
+ * Result of an injected live search. Preserves the original tester's two failure modes — the anchor
+ * not resolving vs the published layer being unreachable — so the UI can word them differently.
  */
 export type POILiveSearchResult =
 	| { status: "success"; hits: POISearchHit[]; centerName: string }
@@ -104,22 +106,25 @@ export type POILiveSearchResult =
 	| { status: "unavailable" }
 
 /**
- * The injected live-search function. Given the resolved category (+ its Overture leaf fan-out) and the anchor text, it
- * probes the published poi.db and returns hits. Absent ⇒ the explorer runs intent-only (no "Search live" button).
+ * The injected live-search function. Given the resolved category (+ its Overture leaf fan-out)
+ * and the anchor text, it probes the published poi.db and returns hits.
+ * Absent ⇒ the explorer runs intent-only (no "Search live" button).
  *
- * Brand support is additive: when the resolved subject is a chain brand, `brandWikidata` carries its QID and the probe
- * fetches by that QID instead of a category k-ring (`categoryID`/`overtureCategoryIDs` are then the brand name / empty
- * and unused). The category path is byte-identical to before. A probe that can't serve brands simply leaves brand live
- * search unwired at the call site (see `usePOISearch`'s `brandLiveSearch` option) — the docs' httpvfs probe does
- * exactly that, brand-wide row hydration being pathological over byte-range (measured. the brand path is server-side
- * only).
+ * Brand support is additive: when the resolved subject is a chain brand, `brandWikidata`
+ * carries its QID and the probe fetches by that QID instead of a category k-ring
+ * (`categoryID`/`overtureCategoryIDs` are then the brand name / empty and unused).
+ * The category path is byte-identical to before. A probe that can't serve brands simply leaves
+ * brand live search unwired at the call site (see `usePOISearch`'s `brandLiveSearch` option) —
+ * the docs' httpvfs probe does exactly that, brand-wide row hydration being pathological
+ * over byte-range (measured. the brand path is server-side only).
  */
 export type POILiveSearch = (params: {
 	categoryID: string
 	overtureCategoryIDs: string[]
 	anchor: string
 	/**
-	 * Present when the subject is a chain brand — the probe fetches by this QID rather than a category k-ring.
+	 * Present when the subject is a chain brand — the probe fetches by this QID
+	 * rather than a category k-ring.
 	 */
 	brandWikidata?: string
 }) => Promise<POILiveSearchResult>

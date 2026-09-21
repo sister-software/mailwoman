@@ -19,8 +19,8 @@ import { join, type PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**
- * Build a minimal but real FST binary (one locality entry, "testville") via the actual builder + serializer — no
- * hand-rolled bytes. Returns the written file path.
+ * Build a minimal but real FST binary (one locality entry, "testville") via the actual
+ * builder + serializer — no hand-rolled bytes. Returns the written file path.
  */
 async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
 	const dbPath = join(dir, "tiny-wof.db")
@@ -76,8 +76,8 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		await pipeline("1 Testville Road")
 		expect(calls.length).toBeGreaterThan(0)
 		expect(calls[0]!.fst).toBeDefined()
-		// The check's morphology matcher is wired with the emission prior zeroed (the measured-sweet
-		// F config — the emission prior stays off on production paths).
+		// The check's morphology matcher is wired with the emission prior zeroed
+		// (the measured-sweet F config — the emission prior stays off on production paths).
 		expect(calls[0]!.fstStreetMorphology).toBeDefined()
 		expect(calls[0]!.fstStreetMorphologyOpts).toEqual({ biasScale: 0, dependentLocalityPenalty: 0 })
 	})

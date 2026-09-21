@@ -30,7 +30,8 @@
  */
 export interface SemiCRFTransitions {
 	/**
-	 * Segment-type axis, index-aligned with the `span_scores` inner dim. Index 0 is always `O`.
+	 * Segment-type axis, index-aligned with the `span_scores` inner
+	 * dim. Index 0 is always `O`.
 	 */
 	segmentTypes: string[]
 	/**
@@ -69,9 +70,9 @@ export interface SegmentationHypothesis {
 }
 
 /**
- * Finite sentinel rather than -Infinity: an all-masked row would otherwise produce -inf - (-inf) = NaN. Mirrors
- * `_NEG_INF` in `corpus-python/src/mailwoman_train/span_scorer.py` (the v0.5.0 bf16 CRF NaN scar — do not hand this
- * arithmetic an opportunity).
+ * Finite sentinel rather than -Infinity: an all-masked row would otherwise produce -inf -
+ * (-inf) = NaN. Mirrors `_NEG_INF` in `corpus-python/src/mailwoman_train/span_scorer.py`
+ * (the v0.5.0 bf16 CRF NaN scar — do not hand this arithmetic an opportunity).
  */
 const NEG_INF = -1e4
 
@@ -81,8 +82,8 @@ const NEG_INF = -1e4
 const O_TYPE_ID = 0
 
 /**
- * Parse the `semi-crf-transitions.json` sidecar. Throws on a shape mismatch rather than decoding with a half-valid
- * grammar — a silently-wrong transition table trains nothing but corrupts every decode.
+ * Parse the `semi-crf-transitions.json` sidecar. Throws on a shape mismatch rather than decoding with
+ * a half-valid grammar — a silently-wrong transition table trains nothing but corrupts every decode.
  */
 export function parseSemiCRFTransitions(raw: unknown): SemiCRFTransitions {
 	const o = raw as Record<string, unknown>
@@ -120,12 +121,14 @@ export function parseSemiCRFTransitions(raw: unknown): SemiCRFTransitions {
 /**
  * K-best semi-Markov decode over `spanScores`.
  *
- * `spanScores[i][l][t]` scores the segment starting at token `i`, of length `l + 1`, typed `t` — the exact layout of
- * the `span_scores` ONNX output. `O` segments are length 1 by construction (every non-entity token is its own `O`),
+ * `spanScores[i][l][t]` scores the segment starting at token `i`, of length
+ * `l + 1`, typed `t` — the exact layout of the `span_scores` ONNX output.
+ * `O` segments are length 1 by construction (every non-entity token is its own `O`),
  * which keeps the state space small and matches the training-side DP that produced the scores.
  *
  * State = (token index, last non-O segment type); the top-`k` paths are kept per state. Returns up to `k` complete
- * segmentations, best first. Every returned segmentation covers `[0, seqLen)` exactly — no gaps, no overlaps.
+ * segmentations, best first. Every returned segmentation covers `[0, seqLen)`
+ * exactly — no gaps, no overlaps.
  */
 export function decodeSegmentationsKBest(
 	spanScores: number[][][],

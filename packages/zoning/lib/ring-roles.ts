@@ -36,11 +36,12 @@ import { pointInRing, ringSignedAreaM2, type MultiPolygonRings } from "@mailwoma
 /**
  * How many of a hole's vertices are tested against a candidate exterior.
  *
- * One vertex is not enough, and that was measured. Holes in this product routinely share vertices with the exterior
- * they sit in, and a ray cast at a point exactly on an edge is implementation-defined — so a first-vertex test leaves
- * 26 of the 3,516 holes unplaced, while a majority vote over nine of their own vertices leaves 9. Every one of those 9
- * is a degenerate sliver of between 0.0008 m² and 1.7 m², and the publisher's own area accounting subtracts all of
- * them.
+ * One vertex is not enough, and that was measured. Holes in this product routinely
+ * share vertices with the exterior they sit in, and a ray cast at a point exactly on
+ * an edge is implementation-defined — so a first-vertex test leaves 26 of the 3,516
+ * holes unplaced, while a majority vote over nine of their own vertices leaves 9.
+ * Every one of those 9 is a degenerate sliver of between 0.0008 m² and 1.7 m²,
+ * and the publisher's own area accounting subtracts all of them.
  */
 const HOLE_VERTEX_SAMPLES = 9
 
@@ -59,32 +60,38 @@ export interface ResolvedRingRoles {
 	 */
 	nestedHoles: number
 	/**
-	 * Holes no exterior contains a majority of, placed under the smallest exterior of the same feature and counted here.
+	 * Holes no exterior contains a majority of, placed under the smallest exterior
+	 * of the same feature and counted here.
 	 *
-	 * Measured at 9 of 3,516 nationally, every one a sliver under 1.7 m² sitting on its parent's boundary. They are
-	 * carried rather than dropped: the publisher's own area accounting subtracts them, so dropping one would add ground
-	 * the plan carved out, and a feature with exactly one exterior — 8 of the 9 — has no ambiguity at all.
+	 * Measured at 9 of 3,516 nationally, every one a sliver under 1.7 m² sitting on its
+	 * parent's boundary. They are carried rather than dropped: the publisher's own area
+	 * accounting subtracts them, so dropping one would add ground the plan carved out,
+	 * and a feature with exactly one exterior — 8 of the 9 — has no ambiguity at all.
 	 */
 	adjacentHoles: number
 	/**
 	 * `1` where the feature's exterior was chosen by magnitude because no ring read as one by orientation.
 	 *
-	 * Measured AT one feature OF 85,330, and its size is the reason the fallback exists rather than a refusal. `objectid`
-	 * 74040 — Galway County Council, `Agriculture` — is a single three-vertex ring enclosing 3.0 × 10⁻⁷ m², a third of a
-	 * square micrometre. At that magnitude a ring's winding is floating-point noise rather than something the publisher
-	 * stated: the same ring reads clockwise in the source's own Irish Transverse Mercator metres and counter-clockwise
-	 * after reprojection. Refusing it would fail the build on the publisher's own data. dropping it would invent an
-	 * absence. So the largest ring by magnitude becomes the exterior, which is also the correct reading for a feature
-	 * published wholly inverted, and the count rides on the receipt rather than being implied to be zero.
+	 * Measured AT one feature OF 85,330, and its size is the reason the fallback exists
+	 * rather than a refusal. `objectid` 74040 — Galway County Council, `Agriculture` —
+	 * is a single three-vertex ring enclosing 3.0 × 10⁻⁷ m², a third of a square micrometre.
+	 * At that magnitude a ring's winding is floating-point noise rather than
+	 * something the publisher stated: the same ring reads clockwise in the source's
+	 * own Irish Transverse Mercator metres and counter-clockwise after reprojection.
+	 * Refusing it would fail the build on the publisher's own data. dropping it would
+	 * invent an absence. So the largest ring by magnitude becomes the exterior,
+	 * which is also the correct reading for a feature published wholly inverted,
+	 * and the count rides on the receipt rather than being implied to be zero.
 	 */
 	exteriorByMagnitude: number
 	/**
-	 * The signed ring sum over the source's rings AS published, in square metres — positive under this service's
-	 * clockwise-exterior convention.
+	 * The signed ring sum over the source's rings AS published, in square metres —
+	 * positive under this service's clockwise-exterior convention.
 	 *
-	 * The ingest's own receipt, stored on the row. It is what the build compares against the Department's `Shape__Area`
-	 * sum, and its sign is the record that the orientation was read: a source that started publishing counter-clockwise
-	 * exteriors would flip it, which is a fact about the source rather than a rounding difference.
+	 * The ingest's own receipt, stored on the row. It is what the build compares against the
+	 * Department's `Shape__Area` sum, and its sign is the record that the orientation was read:
+	 * a source that started publishing counter-clockwise exteriors would flip it,
+	 * which is a fact about the source rather than a rounding difference.
 	 */
 	signedAreaM2: number
 	ringCount: number
@@ -93,9 +100,10 @@ export interface ResolvedRingRoles {
 /**
  * Flatten a feature's rings, whichever way the source nested them.
  *
- * Deliberately discards the arriving nesting. Both encodings reach here — a properly nested polygon and a pile of
- * single-ring parts — and the orientation is the only signal that means the same thing in both. Keeping the nesting for
- * the features that have it and inferring it for the ones that do not would put two rules over one artifact.
+ * Deliberately discards the arriving nesting. Both encodings reach here — a properly
+ * nested polygon and a pile of single-ring parts — and the orientation is the only signal
+ * that means the same thing in both. Keeping the nesting for the features that have it
+ * and inferring it for the ones that do not would put two rules over one artifact.
  */
 function flattenRings(polygons: MultiPolygonRings): ReadonlyArray<ReadonlyArray<readonly number[]>> {
 	const rings: Array<ReadonlyArray<readonly number[]>> = []
@@ -132,10 +140,13 @@ function containsMajority(ring: ReadonlyArray<readonly number[]>, outer: Readonl
 /**
  * Resolve one feature's hole roles from ring orientation.
  *
- * @param featureID Named in every refusal, so a build log says which feature rather than only that one failed.
- * @throws {Error} When the feature carries no ring at all. That is the one case with no reading: a feature reduced to
- *   nothing reads downstream as an absence of zoning, which is the one answer this layer must never invent. A feature
- *   whose rings all read as holes does have a reading — see {@link ResolvedRingRoles.exteriorByMagnitude}.
+ * @param featureID Named in every refusal, so a build log says which feature
+ *   rather than only that one failed.
+ * @throws {Error} When the feature carries no ring at all.
+ *   That is the one case with no reading: a feature reduced to nothing reads downstream
+ *   as an absence of zoning, which is the one answer this layer must never invent.
+ *   A feature whose rings all read as holes does have a reading —
+ *   see {@link ResolvedRingRoles.exteriorByMagnitude}.
  */
 export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string): ResolvedRingRoles {
 	const rings = flattenRings(polygons)
@@ -159,8 +170,9 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 
 		signedAreaM2 += signed
 
-		// clockwise is exterior under this service, and `ringSignedAreaM2` signs clockwise positive — see its docstring.
-		// A zero-area ring is degenerate rather than either role, and is carried as a hole so it can never enclose anything.
+		// clockwise is exterior under this service, and `ringSignedAreaM2` signs clockwise
+		// positive — see its docstring. A zero-area ring is degenerate rather than either role,
+		// and is carried as a hole so it can never enclose anything.
 		if (signed > 0) {
 			exteriors.push({ ring, area: signed, holes: [] })
 		} else {
@@ -170,10 +182,11 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 
 	let exteriorByMagnitude = 0
 
-	// no ring read AS an exterior, SO magnitude decides — measured at exactly one feature of 85,330. The largest ring is
-	// the one that encloses the area, which is the correct reading both for a degenerate sliver whose winding is
-	// floating-point noise and for a feature published wholly inverted. Refusing here would fail the build on the
-	// publisher's own data, and skipping the feature would invent an absence.
+	// no ring read AS an exterior, SO magnitude decides — measured at exactly one feature
+	// of 85,330. The largest ring is the one that encloses the area, which is the
+	// correct reading both for a degenerate sliver whose winding is floating-point noise
+	// and for a feature published wholly inverted. Refusing here would fail the build on
+	// the publisher's own data, and skipping the feature would invent an absence.
 	if (!exteriors.length) {
 		let largestIndex = 0
 		let largestArea = Math.abs(ringSignedAreaM2(holes[0]!))
@@ -194,8 +207,9 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 		exteriorByMagnitude = 1
 	}
 
-	// smallest containing exterior, so a hole inside an island inside a hole lands on the island rather than on the outer
-	// ring. Sorting once is cheaper than choosing per hole, and it makes the choice deterministic on a tie.
+	// smallest containing exterior, so a hole inside an island inside a hole lands on the island
+	// rather than on the outer ring. Sorting once is cheaper than choosing per hole,
+	// and it makes the choice deterministic on a tie.
 	const bySize = [...exteriors].toSorted((left, right) => left.area - right.area)
 
 	let nestedHoles = 0
@@ -212,9 +226,10 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 			continue
 		}
 
-		// A hole no exterior contains a majority of sits on its parent's boundary — measured at 9 of 3,516 nationally, all
-		// under 1.7 m². It goes to the smallest exterior of the same feature, which is the only exterior at all on 8 of the
-		// 9, and is counted. Therefore, a receipt can carry the number rather than imply it is zero.
+		// A hole no exterior contains a majority of sits on its parent's boundary — measured
+		// at 9 of 3,516 nationally, all under 1.7 m². It goes to the smallest exterior of
+		// the same feature, which is the only exterior at all on 8 of the 9, and is counted.
+		// Therefore, a receipt can carry the number rather than imply it is zero.
 		bySize[0]!.holes.push(hole)
 
 		adjacentHoles++

@@ -19,9 +19,10 @@ import { backendNameKey } from "../helpers/backend-name-key.ts"
 const norm = backendNameKey
 
 /**
- * A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments), with an optional
- * alias surface per place — a row admitted by an alias stands in for the gazetteer's names table / alt_names bag, which
- * is what stamps the backend's `exactMatch` on name-or-alias equality.
+ * A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments),
+ * with an optional alias surface per place — a row admitted by an alias stands
+ * in for the gazetteer's names table / alt_names bag, which is what stamps the
+ * backend's `exactMatch` on name-or-alias equality.
  */
 type FixturePlace = ResolvedPlace & { aliases?: string[] }
 
@@ -264,17 +265,18 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#2266: orders equal-token spans by CHARACTER extent, so a region code cannot outrun the locality", async () => {
-		// Both sub-spans are one token, so token-count ordering ties them and position decides — probing
-		// "WA" first and returning Ghana without ever reaching "Sammamish".
+		// Both sub-spans are one token, so token-count ordering ties them and position decides —
+		// probing "WA" first and returning Ghana without ever reaching "Sammamish".
 		const hit = await findRescoreCandidate("WA Sammamish", [], await makeBackend(), { thresholdKm: 0 })
 		expect(hit?.text).toBe("Sammamish")
 		expect(hit?.place.id).toBe(51)
 	})
 
 	it("#2266: a sub-span dropping a NAME word is refused under spanRescoreRequireContextRemainder", async () => {
-		// `Fort Worth` is absent from this fixture, as it was from the withheld-gold stratum. Shipped, the probe
-		// falls through to `Worth` and answers Worth, Illinois. The remainder `Fort` is a word of the name rather than a
-		// subdivision code, so the rule refuses the truncation and the recovery abstains.
+		// `Fort Worth` is absent from this fixture, as it was from the withheld-gold stratum.
+		// Shipped, the probe falls through to `Worth` and answers Worth, Illinois.
+		// The remainder `Fort` is a word of the name rather than a subdivision code,
+		// so the rule refuses the truncation and the recovery abstains.
 		const backend = await makeBackend()
 
 		const shipped = await findRescoreCandidate("Fort Worth", [], backend, { thresholdKm: 0 })
@@ -309,9 +311,10 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#2266: keeps a sub-span whose remainder the PARSE read as a street", async () => {
-		// `Daliowa 4` is neither a subdivision code nor a number, and a bare-text reading of the remainder refuses the
-		// truncation and loses the locality. The parse says what it is: a `street` node of its own, disjoint from the
-		// span under test, which is context the same way a subdivision code is.
+		// `Daliowa 4` is neither a subdivision code nor a number, and a bare-text
+		// reading of the remainder refuses the truncation and loses the locality.
+		// The parse says what it is: a `street` node of its own, disjoint from the span
+		// under test, which is context the same way a subdivision code is.
 		const raw = "86-300 Grudziądz, Daliowa 4"
 
 		const roots: AddressNode[] = [
@@ -335,8 +338,9 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#2266: a street node OVERLAPPING the span is not context — the `Fort Worth` shape", async () => {
-		// The model reads a bare famous name as a street, so the dropped word and the surviving fragment sit in one
-		// street node. Admitting that remainder would readmit the corruption the rule exists to refuse.
+		// The model reads a bare famous name as a street, so the dropped word and the
+		// surviving fragment sit in one street node. Admitting that remainder would
+		// readmit the corruption the rule exists to refuse.
 		const raw = "86-300 Grudziądz, Daliowa 4"
 
 		const roots: AddressNode[] = [
@@ -365,8 +369,8 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("postcode check rejects a match far from where the postcode resolves", async () => {
-		// "Tomaszów" alone exact-matches the FAR Tomaszów (id 2); the 97-200 postcode anchors near the
-		// Mazowiecki one (~240 km away), so the check rejects it → no recovery.
+		// "Tomaszów" alone exact-matches the FAR Tomaszów (id 2); the 97-200 postcode anchors
+		// near the Mazowiecki one (~240 km away), so the check rejects it → no recovery.
 		const hit = await findRescoreCandidate("Tomaszów", [], await makeBackend(), {
 			country: "PL",
 			postcode: "97-200",
@@ -385,9 +389,9 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#1537: the postcode check filters the runner-ups on the same rule as the winner", async () => {
-		// 62701 anchors next to id 11 (IL). MO (id 10) and MA (id 12) are >50 km out, so the check drops them
-		// from both roles: id 11 wins, and only the ~5 km id 13 survives as an alternative. A candidate the
-		// postcode already excluded is not a namesake worth offering.
+		// 62701 anchors next to id 11 (IL). MO (id 10) and MA (id 12) are >50 km out, so the check
+		// drops them from both roles: id 11 wins, and only the ~5 km id 13 survives as an alternative.
+		// A candidate the postcode already excluded is not a namesake worth offering.
 		const hit = await findRescoreCandidate("Springfield", [], await makeBackend(), {
 			country: "US",
 			postcode: "62701",
@@ -406,11 +410,11 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#1546: admits a non-Latin-primary namesake via its alias surface — population-first then picks it", async () => {
-		// The live Moscow board: the backend returns Moscow RU first (exactMatch via the "Moscow" alias
-		// row), but the old filter re-checked only the primary name folded to [a-z0-9 ] — norm("Москва")
-		// is "" and could never equal "moscow", so Moscow, Idaho won by default among the Latin-named
-		// bearers. Population-first ranking was starved rather than violated. recall fixes it with no ranking
-		// change.
+		// The live Moscow board: the backend returns Moscow RU first (exactMatch via the "Moscow" alias row),
+		// but the old filter re-checked only the primary name folded to [a-z0-9 ] —
+		// norm("Москва") is "" and could never equal "moscow", so Moscow, Idaho won by
+		// default among the Latin-named bearers. Population-first ranking was starved
+		// rather than violated. recall fixes it with no ranking change.
 		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), { thresholdKm: 0 })
 		expect(hit?.place.id).toBe(30)
 		expect(hit?.place.name).toBe("Москва")
@@ -418,9 +422,9 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#1546: the postcode check still rejects the non-Latin namesake when it is far from the anchor", async () => {
-		// "Moscow, ID 83843": the postcode anchors next to the Idaho bearer (id 31); Moscow RU is
-		// thousands of km away, so the check excludes it and the Idaho winner is unchanged. Admission is
-		// recall. the check still decides.
+		// "Moscow, ID 83843": the postcode anchors next to the Idaho bearer (id 31); Moscow RU
+		// is thousands of km away, so the check excludes it and the Idaho winner is unchanged.
+		// Admission is recall. the check still decides.
 		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), {
 			country: "US",
 			postcode: "83843",
@@ -432,17 +436,18 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#1546: the alias surface is the recall for Latin scripts too (query equals an ALIAS, not the primary)", async () => {
-		// "New York City" matches New York only through its alias row. The old primary-name re-check
-		// (norm("New York") !== norm("New York City")) dropped the exact match the backend had already
-		// flagged — the same recall defect, without any non-Latin script.
+		// "New York City" matches New York only through its alias row.
+		// The old primary-name re-check (norm("New York") !== norm("New York City")) dropped the exact
+		// match the backend had already flagged — the same recall defect, without any non-Latin script.
 		const hit = await findRescoreCandidate("New York City", [], await makeBackend(), { thresholdKm: 0 })
 		expect(hit?.place.id).toBe(40)
 		expect(hit?.alternatives).toEqual([])
 	})
 
 	it("a span EQUAL to a confident street suffix is refused — the Ave, France guard", async () => {
-		// "Ave" is a street suffix here and a commune in France. Probing it as a locality pins the address
-		// to Provence, which is the failure `confidentRanges` exists to prevent.
+		// "Ave" is a street suffix here and a commune in France.
+		// Probing it as a locality pins the address to Provence, which is the failure
+		// `confidentRanges` exists to prevent.
 		const raw = "350 5th Ave"
 
 		const roots: AddressNode[] = [
@@ -455,8 +460,8 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#2266: a span CONTAINING a confident street suffix is probed — the suffix is one token of a longer name", async () => {
-		// `Prairie` carries a confident street_suffix tag while `MN Eden` is a street at 0.61, under the
-		// bar. Refusing every span that touches `Prairie` makes `Eden Prairie` unreachable.
+		// `Prairie` carries a confident street_suffix tag while `MN Eden` is a street at 0.61,
+		// under the bar. Refusing every span that touches `Prairie` makes `Eden Prairie` unreachable.
 		const raw = "MN Eden Prairie"
 
 		const roots: AddressNode[] = [
@@ -511,8 +516,8 @@ describe("hasResolvedPlace", () => {
 	})
 
 	it("#2264: a backend that could not answer containment is not a weak resolution", () => {
-		// `unavailable` says the probe did not run. Reading it as "nothing sat inside the qualifier" would lift the
-		// brake on every row a backend without the ancestors sidecar touches.
+		// `unavailable` says the probe did not run. Reading it as "nothing sat inside the qualifier"
+		// would lift the brake on every row a backend without the ancestors sidecar touches.
 		expect(hasResolvedPlace([resolvedNode({ admin_containment: "unavailable" })], "either")).toBe(true)
 	})
 
@@ -577,9 +582,9 @@ describe("resolveTree + spanRescore", () => {
 		const resolver = createWOFResolver(await makeBackend())
 
 		// The live shape: the model tags a bare famous namesake as a `street`, so the admin walk resolves
-		// nothing and span-rescore is what recovers it. Before #1537 this node was decorated with an empty
-		// alternatives list, so the geocode path's candidate array held one entry and the dominance margin
-		// `declared_ambiguity` reads could not be computed at all.
+		// nothing and span-rescore is what recovers it. Before #1537 this node was decorated
+		// with an empty alternatives list, so the geocode path's candidate array held one entry
+		// and the dominance margin `declared_ambiguity` reads could not be computed at all.
 		const out = await resolver.resolveTree(
 			tree("Springfield", [node({ tag: "street", value: "Springfield", start: 0, end: 11, confidence: 0.4 })]),
 			{
@@ -610,9 +615,10 @@ describe("resolveTree + spanRescore", () => {
 	it("#1546: the injected node for a bare Moscow is Москва RU — the winner flips only for the starved class", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 
-		// The live shape: a bare famous namesake reads as a `street` (no country prior — the #912 change
-		// abstains on a bare-locality tree), the walk resolves nothing, span-rescore recovers it. Before
-		// the fix the recovered place was Moscow, Idaho: Moscow RU never entered the candidate list.
+		// The live shape: a bare famous namesake reads as a `street`
+		// (no country prior — the #912 change abstains on a bare-locality tree), the walk
+		// resolves nothing, span-rescore recovers it. Before the fix the recovered place
+		// was Moscow, Idaho: Moscow RU never entered the candidate list.
 		const out = await resolver.resolveTree(
 			tree("Moscow", [node({ tag: "street", value: "Moscow", start: 0, end: 7, confidence: 0.4 })]),
 			{}
@@ -643,9 +649,10 @@ describe("resolveTree + spanRescore", () => {
 
 describe("multi-token name interiors (#1678 thread 3)", () => {
 	/**
-	 * `Papua New Guinea` is absent from the gazetteer, so the tree resolves nothing and the rescore tier runs. Before
-	 * this guard it enumerated raw token spans, matched the interior `New` against a real US place, and pinned the
-	 * address to Kentucky — a confident answer to a question nobody asked. The parse was correct throughout.
+	 * `Papua New Guinea` is absent from the gazetteer, so the tree resolves nothing
+	 * and the rescore tier runs. Before this guard it enumerated raw token spans,
+	 * matched the interior `New` against a real US place, and pinned the address to Kentucky —
+	 * a confident answer to a question nobody asked. The parse was correct throughout.
 	 */
 	it("refuses a sub-span interior to a multi-token country name", async () => {
 		const raw = "Papua New Guinea"

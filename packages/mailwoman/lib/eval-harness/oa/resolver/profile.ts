@@ -20,8 +20,8 @@ export interface LookupCensus {
 }
 
 /**
- * The accumulators one run fills: setup is the rig build, and the two per-row totals separate the model call from the
- * gazetteer work, which no thread or concurrency setting can trade against the other.
+ * The accumulators one run fills: setup is the rig build, and the two per-row totals separate the model
+ * call from the gazetteer work, which no thread or concurrency setting can trade against the other.
  */
 export interface RunTiming {
 	setupMs: number
@@ -47,8 +47,8 @@ function round(ms: number): number {
 /**
  * Write one run's attribution, or nothing when `path` is empty.
  *
- * A row that throws inside `neural.parse` contributes to neither per-row total, so `parse_ms + resolve_ms` is a floor
- * on the loop rather than its total.
+ * A row that throws inside `neural.parse` contributes to neither per-row total,
+ * so `parse_ms + resolve_ms` is a floor on the loop rather than its total.
  */
 export async function writeRunProfile(path: string, facts: RunProfileFacts): Promise<void> {
 	if (!path) return

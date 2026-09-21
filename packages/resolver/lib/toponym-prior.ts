@@ -50,12 +50,14 @@
 import type { ResolvedPlace } from "@mailwoman/core/resolver"
 
 /**
- * Weight of the locale-country bonus, in the same log10-population units the candidate backend's `prominence` uses
- * (`-neg_rank` = log10(population + 1)). 2 == "the in-country place may be up to 100x smaller and still win".
+ * Weight of the locale-country bonus, in the same log10-population units the candidate
+ * backend's `prominence` uses (`-neg_rank` = log10(population + 1)). 2 == "the
+ * in-country place may be up to 100x smaller and still win".
  *
- * The value is the resolver's existing `anchorWeight` default (`resolve.ts`), reused deliberately: that knob is the
- * postcode-anchor country pin, and this is the same quantity from a weaker source, so the two should not disagree about
- * what a country signal is worth. Calibrated against the live board (2026-08-10, shipped `candidate.db`), it moves
+ * The value is the resolver's existing `anchorWeight` default (`resolve.ts`), reused
+ * deliberately: that knob is the postcode-anchor country pin, and this is the same quantity
+ * from a weaker source, so the two should not disagree about what a country signal is worth.
+ * Calibrated against the live board (2026-08-10, shipped `candidate.db`), it moves
  * exactly the queries where the locale is implausible and leaves the rest alone:
  *
  * - `Zürich` en-US — Zurich KS 1.91 + 2 = 3.91 loses to Zürich CH 5.65. **Flips** (was 8,043 km off).
@@ -68,46 +70,50 @@ import type { ResolvedPlace } from "@mailwoman/core/resolver"
 export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
 
 /**
- * Importance margin below which two same-country bearers are a tie, and the tie falls back to referential (size) order.
- * Ratified 2026-08-11 (the five bare-query flip decisions): bare `Springfield` must stay on the referential answer —
- * the live chain is IL 0.612605 → MA 0.611142 → MO 0.596195 (adjacent gaps 0.0015 and 0.0149, full span 0.0164), so the
+ * Importance margin below which two same-country bearers are a tie, and the tie falls back
+ * to referential (size) order. Ratified 2026-08-11 (the five bare-query flip decisions):
+ * bare `Springfield` must stay on the referential answer — the live chain is IL 0.612605
+ * → MA 0.611142 → MO 0.596195 (adjacent gaps 0.0015 and 0.0149, full span 0.0164), so the
  * band must cover at least the 0.0149 adjacent gap for the trio to chain into one cluster.
  *
- * The band never compares across countries, and that scope is forced by decided rows rather than preference: Windsor's
- * accepted flip (GB 0.564842 over CA 0.560687) sits at a 0.0042 gap — inside any band that covers Springfield. The two
- * decisions are only co-satisfiable if the band binds same-country pairs alone. That is also what the §2 referential
- * policy (ROAD_TO_V9) says: within a country the geocoder ranks referentially. the blended prior's job is the
- * cross-country question — which country's bearer a bare query meant.
+ * The band never compares across countries, and that scope is forced by decided rows rather than
+ * preference: Windsor's accepted flip (GB 0.564842 over CA 0.560687) sits at a 0.0042 gap —
+ * inside any band that covers Springfield. The two decisions are only co-satisfiable if
+ * the band binds same-country pairs alone. That is also what the §2 referential policy
+ * (ROAD_TO_V9) says: within a country the geocoder ranks referentially. the blended prior's
+ * job is the cross-country question — which country's bearer a bare query meant.
  *
- * A band enforces the referential policy up to a fixed gap only, so every same-country pair whose importance and
- * population disagree by more than 0.02 is decided against that policy. Censused over the shipped artifact: 31,975 of
- * 220,370 contested pools disagree past the band, 151 of them in the shape below.
+ * A band enforces the referential policy up to a fixed gap only, so every same-country pair
+ * whose importance and population disagree by more than 0.02 is decided against that policy.
+ * Censused over the shipped artifact: 31,975 of 220,370 contested pools disagree
+ * past the band, 151 of them in the shape below.
  *
- * Two ends of that class, and why neither widening the band nor scoping importance to cross-country pairs was taken:
+ * Two ends of that class, and why neither widening the band nor scoping importance
+ * to cross-country pairs was taken:
  *
- * - `Irvington` — NJ (population 61,323, importance 0.4258) against NY (6,417, 0.4565), a 0.0307 gap. The policy wants
- *   the town of 61,323 and the band is 0.011 too narrow to reach it.
- * - `Aurangabad` — regresses under a per-country arm that would satisfy Irvington, while 15 of the 16 ratified bare rows
- *   hold.
+ * - `Irvington` — NJ (population 61,323, importance 0.4258) against NY (6,417, 0.4565), a 0.0307 gap.
+ *   The policy wants the town of 61,323 and the band is 0.011 too narrow to reach it.
+ * - `Aurangabad` — regresses under a per-country arm that would satisfy Irvington,
+ *   while 15 of the 16 ratified bare rows hold.
  *
- * No measured feature separates them: widening to cover Irvington breaks Aurangabad, and so does the scoped arm. Moving
- * 0.02 requires such a feature. A threshold refitted over the rows that are wrong today would measure their shared
- * cause instead.
+ * No measured feature separates them: widening to cover Irvington breaks Aurangabad, and so does
+ * the scoped arm. Moving 0.02 requires such a feature. A threshold refitted over the
+ * rows that are wrong today would measure their shared cause instead.
  */
 const SAME_COUNTRY_IMPORTANCE_TIE_BAND = 0.02
 
 /**
- * The fields a ranking key reads. Structural rather than `ResolvedPlace` so the backend's own `PlaceCandidate` (a
- * structural twin) can be ranked without a cast.
+ * The fields a ranking key reads. Structural rather than `ResolvedPlace` so the backend's
+ * own `PlaceCandidate` (a structural twin) can be ranked without a cast.
  */
 type Rankable = Pick<ResolvedPlace, "score"> &
 	Partial<Pick<ResolvedPlace, "country" | "exactMatch" | "importance" | "population" | "prominence">>
 
 /**
- * Partition into (exact, rest), sort each half with `key` desc, and re-join. The partition is what keeps a soft prior
- * soft: it can only ever re-order candidates the backend already considers equally good matches. Backends that don't
- * stamp `exactMatch` land every row in one tier, which is the correct degradation — the key then applies to the whole
- * list.
+ * Partition into (exact, rest), sort each half with `key` desc, and re-join.
+ * The partition is what keeps a soft prior soft: it can only ever re-order candidates the backend
+ * already considers equally good matches. Backends that don't stamp `exactMatch` land every
+ * row in one tier, which is the correct degradation — the key then applies to the whole list.
  */
 function rankWithinTier<T extends Rankable>(candidates: readonly T[], compare: (a: T, b: T) => number): T[] {
 	const exact: T[] = []
@@ -115,8 +121,8 @@ function rankWithinTier<T extends Rankable>(candidates: readonly T[], compare: (
 
 	for (const c of candidates) {
 		// `exactMatch` is TRI-state: true / false / undefined (a backend path that stamps no flag —
-		// e.g. WOFSQLitePlaceLookup's postcode-area neighbours from #fetchLocalitiesByID). Only a
-		// stated true warrants the exact tier. undefined must not outrank a real fuzzy name match
+		// e.g. WOFSQLitePlaceLookup's postcode-area neighbours from #fetchLocalitiesByID).
+		// Only a stated true warrants the exact tier. undefined must not outrank a real fuzzy name match
 		// (the 2026-08-10 de.native_locality incident: 75 Saxon towns lost to nameless neighbours).
 		;(c.exactMatch === true ? exact : rest).push(c)
 	}
@@ -126,14 +132,15 @@ function rankWithinTier<T extends Rankable>(candidates: readonly T[], compare: (
 }
 
 /**
- * Size, in the backend's own units — the candidate backend's `prominence` is log10(population + 1); a backend that
- * computes no prominence falls back to its raw `score`.
+ * Size, in the backend's own units — the candidate backend's `prominence` is log10(population + 1);
+ * a backend that computes no prominence falls back to its raw `score`.
  */
 const size = (c: Rankable): number => c.prominence ?? c.score
 
 /**
- * A candidate the gazetteer actually scored. An absent value means "the score source never measured this place" or
- * "this artifact predates the column" or "the join refused the row" — three different things, none of them zero.
+ * A candidate the gazetteer actually scored. An absent value means "the score source
+ * never measured this place" or "this artifact predates the column" or "the join
+ * refused the row" — three different things, none of them zero.
  */
 const measured = (c: Rankable): boolean => typeof c.importance === "number" && Number.isFinite(c.importance)
 
@@ -171,23 +178,24 @@ function reorderMeasured<T extends Rankable>(tier: readonly T[], order: (measure
 }
 
 /**
- * A bearer the gazetteer actually counted. Absence is unmeasured — the backend emits `population` only for a row
- * carrying one, so there is no zero to confuse this with.
+ * A bearer the gazetteer actually counted. Absence is unmeasured — the backend emits
+ * `population` only for a row carrying one, so there is no zero to confuse this with.
  */
 const counted = (c: Rankable): boolean => typeof c.population === "number" && c.population > 0
 
 /**
- * Within one country, a counted bearer orders ahead of an uncounted one, both groups keeping their incoming order.
- * Cross-country order is untouched: the partition only ever permutes rows that already share a country, among the
- * positions those rows already hold.
+ * Within one country, a counted bearer orders ahead of an uncounted one, both groups
+ * keeping their incoming order. Cross-country order is untouched: the partition only ever
+ * permutes rows that already share a country, among the positions those rows already hold.
  *
- * This is the meaning-of-zero rule applied to ranking. `blendImportance` bounds the encyclopedic channel against the
- * referential one — except at `referential <= 0`, where it returns the article score uncapped, because a constant cap
- * would demote every famous place WOF records no population for. That exemption is right across borders and wrong
- * inside one: it lets a row the gazetteer never counted outrank every bearer it did.
+ * This is the meaning-of-zero rule applied to ranking. `blendImportance` bounds the
+ * encyclopedic channel against the referential one — except at `referential <= 0`,
+ * where it returns the article score uncapped, because a constant cap would demote every
+ * famous place WOF records no population for. That exemption is right across borders
+ * and wrong inside one: it lets a row the gazetteer never counted outrank every bearer it did.
  *
- * The census that sets the bar, over `candidate-global-2026-09-09-sg.db` — primary-name locality pools of up to 5 in
- * the backend's population order, through the shipped ranking:
+ * The census that sets the bar, over `candidate-global-2026-09-09-sg.db` — primary-name
+ * locality pools of up to 5 in the backend's population order, through the shipped ranking:
  *
  *     220,370   same-country pools where importance can reorder at all
  *      31,975   pools whose head moves off the population winner
@@ -197,11 +205,12 @@ const counted = (c: Rankable): boolean => typeof c.population === "number" && c.
  *          72   a distinct place displacing a bearer of at least 10,000
  *           0   a distinct place displacing a bearer of at least 50,000
  *
- * The 3,008 twin moves are why a board re-run reports placeID and coordinate separately: a twin swap changes the id and
- * not the answer, and reading it as a regression would refuse a correct change.
+ * The 3,008 twin moves are why a board re-run reports placeID and coordinate separately: a twin swap
+ * changes the id and not the answer, and reading it as a regression would refuse a correct change.
  *
- * Deliberately not a cap in `blendImportance`: that is a gazetteer rebuild, and it would reach the cross-country pools
- * the cap's own docstring guards, where an article-only score is the only evidence there is.
+ * Deliberately not a cap in `blendImportance`: that is a gazetteer rebuild,
+ * and it would reach the cross-country pools the cap's own docstring guards,
+ * where an article-only score is the only evidence there is.
  */
 function countedFirstWithinCountry<T extends Rankable>(rows: readonly T[]): T[] {
 	const out = [...rows]
@@ -236,18 +245,19 @@ function countedFirstWithinCountry<T extends Rankable>(rows: readonly T[]): T[] 
 /**
  * The importance ordering over measured rows, with the {@link SAME_COUNTRY_IMPORTANCE_TIE_BAND} applied.
  *
- * Same-country bearers whose adjacent importance gaps sit inside the band chain into one cluster (transitive on purpose
- * — otherwise the boundary would depend on comparison order), and a cluster orders its members referentially (size
- * desc). Clusters — including every cross-country row, which is always its own cluster — rank by their most important
- * member, then head size, then input order. A cluster therefore moves as a unit: a same-country near-tie cannot be
- * split by a foreign row falling between its members' scores.
+ * Same-country bearers whose adjacent importance gaps sit inside the band chain into one cluster
+ * (transitive on purpose — otherwise the boundary would depend on comparison order), and a cluster
+ * orders its members referentially (size desc). Clusters — including every cross-country row,
+ * which is always its own cluster — rank by their most important member, then head size,
+ * then input order. A cluster therefore moves as a unit: a same-country near-tie cannot
+ * be split by a foreign row falling between its members' scores.
  *
  * {@link countedFirstWithinCountry} runs last, so a row the gazetteer never counted holds its cluster's slot rather
  * than its country's head.
  */
 function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] {
-	// Group by country in first-appearance order. a row without a country can never substantiate a
-	// same-country tie, so it stays a singleton.
+	// Group by country in first-appearance order. a row without a country can never
+	// substantiate a same-country tie, so it stays a singleton.
 	const groups = new Map<string, { firstIndex: number; members: T[] }>()
 	const clusters: Array<{ firstIndex: number; members: T[] }> = []
 
@@ -301,29 +311,32 @@ function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] 
 /**
  * Importance-first ordering — the #28 fame prior, consumed.
  *
- * Ranks by `importance` desc within the exact tier, with `prominence`/`score` as the tiebreak (two places of equal fame
- * separate on size). Candidates the gazetteer never scored do not participate — they hold the rank population gave them
- * while the scored rows permute among their own slots (see {@link reorderMeasured}). Returns the input untouched when
- * fewer than two candidates are scored.
+ * Ranks by `importance` desc within the exact tier, with `prominence`/`score` as the tiebreak
+ * (two places of equal fame separate on size). Candidates the gazetteer
+ * never scored do not participate — they hold the rank population gave them
+ * while the scored rows permute among their own slots (see {@link reorderMeasured}).
+ * Returns the input untouched when fewer than two candidates are scored.
  *
- * The producer is the candidate build's `importance` column (#28) — the blended prior (the concordance's
- * encyclopedia-derived channel clamped around a population-derived base — `place-importance-schema.ts`'s
- * `blendImportance`; see `candidate-schema.ts` → `CandidateTable.importance` for why the strict channel is deliberately
- * not what lands there). On an artifact predating the column, `importance` is `undefined` on every candidate the
- * backend produces and the abstention below keeps the ranking byte-stable.
+ * The producer is the candidate build's `importance` column (#28) — the blended prior
+ * (the concordance's encyclopedia-derived channel clamped around a population-derived base —
+ * `place-importance-schema.ts`'s `blendImportance`; see `candidate-schema.ts` →
+ * `CandidateTable.importance` for why the strict channel is deliberately not what lands there).
+ * On an artifact predating the column, `importance` is `undefined` on every candidate
+ * the backend produces and the abstention below keeps the ranking byte-stable.
  *
- * Flip decisions, ratified 2026-08-11: bare `Moscow`→Москва, `Manchester`→GB, `Fulda`→DE, `Cambridge`→GB are accepted
- * behavior — all cross-country contests, where this prior answers the question population cannot. Bare `Springfield`
- * abstains to the referential answer via {@link SAME_COUNTRY_IMPORTANCE_TIE_BAND}; no candidate is dropped, so the
- * runner-up survives as a declared alternative downstream.
+ * Flip decisions, ratified 2026-08-11: bare `Moscow`→Москва, `Manchester`→GB, `Fulda`→DE,
+ * `Cambridge`→GB are accepted behavior — all cross-country contests, where this prior
+ * answers the question population cannot. Bare `Springfield` abstains to the referential
+ * answer via {@link SAME_COUNTRY_IMPORTANCE_TIE_BAND}; no candidate is dropped,
+ * so the runner-up survives as a declared alternative downstream.
  */
 export function rankByImportance<T extends Rankable>(candidates: readonly T[]): T[] {
 	if (candidates.length < 2) return [...candidates]
 
-	// Abstain entirely until at least one candidate carries a measured score — the tier split
-	// below is only meaningful as a tiebreak among scored rows. Without this, wiring the consumer
-	// before the #28 producer reordered candidates on the exactMatch flag alone (meaning-of-zero:
-	// an absent score must not act as evidence).
+	// Abstain entirely until at least one candidate carries a measured score —
+	// the tier split below is only meaningful as a tiebreak among scored rows.
+	// Without this, wiring the consumer before the #28 producer reordered candidates on the
+	// exactMatch flag alone (meaning-of-zero: an absent score must not act as evidence).
 	if (!candidates.some(measured)) return [...candidates]
 
 	const exact: T[] = []
@@ -340,13 +353,13 @@ export function rankByImportance<T extends Rankable>(candidates: readonly T[]): 
 /**
  * Soft locale-country prior: `(prominence ?? score) + weight` for a candidate in `country`.
  *
- * Additive, never a filter — a far more prominent foreign namesake still wins (Zürich CH over Zurich KS) while a close
- * contest goes to the locale (Manchester NH over Manchester GB). No-op without a `country`, so the un-scoped path stays
- * byte-identical.
+ * Additive, never a filter — a far more prominent foreign namesake still wins (Zürich CH over Zurich KS)
+ * while a close contest goes to the locale (Manchester NH over Manchester GB).
+ * No-op without a `country`, so the un-scoped path stays byte-identical.
  *
- * The units matter: `prominence` on the candidate backend is log10(population + 1), so `weight` is read as "orders of
- * magnitude of population the in-country place is allowed to give away". Pass a large weight to make the country
- * effectively hard, `0` to disable.
+ * The units matter: `prominence` on the candidate backend is log10(population + 1), so `weight`
+ * is read as "orders of magnitude of population the in-country place is allowed to give away".
+ * Pass a large weight to make the country effectively hard, `0` to disable.
  */
 export function rankByCountryPrior<T extends Rankable>(
 	candidates: readonly T[],
@@ -362,49 +375,53 @@ export function rankByCountryPrior<T extends Rankable>(
 }
 
 /**
- * Capital status of a resolved candidate, answered by the caller's reference (#1880 —
- * `@mailwoman/resolver-wof-sqlite/capitals` is the shipped implementation): 2 for a national capital, 1 for an admin-1
- * seat, 0 for neither. The resolver stays backend-agnostic — it never loads the reference, it only consumes the
- * verdict.
+ * Capital status of a resolved candidate, answered by the caller's reference
+ * (#1880 — `@mailwoman/resolver-wof-sqlite/capitals` is the shipped implementation): 2 for a national
+ * capital, 1 for an admin-1 seat, 0 for neither. The resolver stays backend-agnostic —
+ * it never loads the reference, it only consumes the verdict.
  */
 export type CapitalLevelFn = (place: Pick<ResolvedPlace, "name" | "country" | "lat" | "lon">) => number
 
 /**
- * The level a candidate must hold to be promoted: national capitals only. Admin-1 seats stay un-promoted, and that
- * scope is forced by decided rows rather than caution — a seat margin of even 1 log10 unit flips bare `Springfield` to
- * Springfield, Illinois against the ratified 2026-08-11 referential decision
- * ({@link SAME_COUNTRY_IMPORTANCE_TIE_BAND}), and sends bare `Hamilton` to the Waikato seat (Hamilton NZ, 2.8x smaller
- * than Hamilton, Ontario), both measured on the shipped `candidate.db`. The reference still records seats. no consumer
- * promotes on them.
+ * The level a candidate must hold to be promoted: national capitals only.
+ * Admin-1 seats stay un-promoted, and that scope is forced by decided rows
+ * rather than caution — a seat margin of even 1 log10 unit flips bare `Springfield`
+ * to Springfield, Illinois against the ratified 2026-08-11 referential decision
+ * ({@link SAME_COUNTRY_IMPORTANCE_TIE_BAND}), and sends bare `Hamilton` to the Waikato seat
+ * (Hamilton NZ, 2.8x smaller than Hamilton, Ontario), both measured on the shipped `candidate.db`.
+ * The reference still records seats. no consumer promotes on them.
  */
 const PROMOTABLE_CAPITAL_LEVEL = 2
 
 /**
- * Margin a national capital may give away, in log10-population units: a namesake must be more than 10^2 = 100x more
- * populous to hold the lead. Bare "San José" reaches the Costa Rican capital (342,188) over San Jose, California
- * (969,655 — 2.8x); bare "Hamilton" stays on Hamilton, Ontario (519,949) over Bermuda's 902-person capital (576x).
+ * Margin a national capital may give away, in log10-population units: a namesake must be more
+ * than 10^2 = 100x more populous to hold the lead. Bare "San José" reaches the Costa
+ * Rican capital (342,188) over San Jose, California (969,655 — 2.8x); bare "Hamilton"
+ * stays on Hamilton, Ontario (519,949) over Bermuda's 902-person capital (576x).
  */
 export const NATIONAL_CAPITAL_MARGIN_LOG10 = 2
 
 /**
  * Bounded capital promotion (#1880) — the third soft key for the bare-toponym class, applied after
  * {@link rankByImportance} because the fame prior is what decides this class and a capital signal parked below the
- * deciding stage measurably never reaches an answer (the iteration-1 board run: the candidate-order bonus reordered
- * `findPlace` on every target row and moved 0 of the 12).
+ * deciding stage measurably never reaches an answer (the iteration-1 board run:
+ * the candidate-order bonus reordered `findPlace` on every target row and moved 0 of the 12).
  *
- * The rule: within the exact tier, take the first national-capital row and walk it upward past each row it is within
+ * The rule: within the exact tier, take the first national-capital row
+ * and walk it upward past each row it is within
  * {@link NATIONAL_CAPITAL_MARGIN_LOG10} of, stopping at the first row over the margin or at another national capital.
  * Same three house rules as the other keys — tier-safe (never crosses the exact/partial boundary.
  *
- * A capital that only partially matched the query — Saint George's, Grenada for the abbreviated "St. George's" — stays
- * behind every exact match, because crossing that line is how iteration 1 answered bare "Djibouti" with the capital
- * city instead of the country), positive evidence only (no capital in the list → identity, and the margin reads the
- * same `prominence ?? score` size every other key does), and stable (non-promoted rows keep their order).
+ * A capital that only partially matched the query — Saint George's, Grenada for the abbreviated "St.
+ * George's" — stays behind every exact match, because crossing that line is how iteration 1
+ * answered bare "Djibouti" with the capital city instead of the country), positive evidence
+ * only (no capital in the list → identity, and the margin reads the same `prominence ?? score`
+ * size every other key does), and stable (non-promoted rows keep their order).
  *
- * The margin deliberately re-uses log10-population units rather than the importance scale: the ratified importance flip
- * decisions (Whitby/Windsor/Springfield) sit on gaps of 0.004–0.02, while the capital contests this key exists for sit
- * on gaps of 0.21–0.24 — an importance-scale bonus big enough to win them would dwarf every ratified decision on the
- * same scale.
+ * The margin deliberately re-uses log10-population units rather than the importance scale:
+ * the ratified importance flip decisions (Whitby/Windsor/Springfield) sit on gaps of 0.004–0.02,
+ * while the capital contests this key exists for sit on gaps of 0.21–0.24 — an importance-scale
+ * bonus big enough to win them would dwarf every ratified decision on the same scale.
  */
 export function promoteCapitals<T extends Rankable & Pick<ResolvedPlace, "name" | "country" | "lat" | "lon">>(
 	candidates: readonly T[],

@@ -38,9 +38,9 @@ import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-// v2: the country token is decoupled from the skeleton's locale and drawn from a broad pool — every
-// ISO canonical name + every curated surface form (endonyms/abbrevs). Surface forms are over-weighted
-// so endonyms/abbrevs ("Deutschland","USA","NL") get strong signal.
+// v2: the country token is decoupled from the skeleton's locale and drawn from a broad
+// pool — every ISO canonical name + every curated surface form (endonyms/abbrevs).
+// Surface forms are over-weighted so endonyms/abbrevs ("Deutschland","USA","NL") get strong signal.
 
 const COUNTRY_FORM_POOL = (() => {
 	const surface = Object.values(COUNTRY_SURFACE_FORMS).flat() // endonyms + abbrevs + canonical (curated)
@@ -67,8 +67,8 @@ interface CountrySource {
 }
 
 /**
- * Multi-locale OA sources. region = implied admin where the extract is single-region (US states, DE Saxony);
- * countrywide extracts (FR/IT/NL) read region from the CSV when present.
+ * Multi-locale OA sources. region = implied admin where the extract is single-region
+ * (US states, DE Saxony); countrywide extracts (FR/IT/NL) read region from the CSV when present.
  */
 const SOURCES: readonly CountrySource[] = [
 	{
@@ -153,8 +153,8 @@ interface CountryTuple {
 }
 
 /**
- * The countrywide extracts (FR/IT/NL) are GB-scale, so this reads only as far as `limit` distinct tuples: the `break`
- * closes the reader, which releases the archive without inflating the rest of the member.
+ * The countrywide extracts (FR/IT/NL) are GB-scale, so this reads only as far as `limit` distinct tuples:
+ * the `break` closes the reader, which releases the archive without inflating the rest of the member.
  */
 async function readTuples(source: CountrySource, limit: number): Promise<CountryTuple[]> {
 	return readOATuples(source, {
@@ -219,8 +219,8 @@ function renderCountry(
 	}
 
 	if (!country) {
-		// Negative: a normal address, no country token/component. Teaches that a trailing region/city/
-		// postcode is not a country (counters the v1 golden over-firing).
+		// Negative: a normal address, no country token/component.
+		// Teaches that a trailing region/city/ postcode is not a country (counters the v1 golden over-firing).
 		return { fmt: "negative", raw: body, components }
 	}
 
@@ -240,9 +240,9 @@ function renderCountry(
 }
 
 // ── Homograph contrast (the model-first addition) ───────────────────────────────────────────────
-// True country-name homographs: the surface form is both a country and a US state/locality. Rendering
-// each both ways (foreign-city → country. US-ZIP → region/locality) is what teaches the contextual
-// distinction. role: how the surface reads in US context.
+// True country-name homographs: the surface form is both a country and a US state/locality.
+// Rendering each both ways (foreign-city → country. US-ZIP → region/locality) is what
+// teaches the contextual distinction. role: how the surface reads in US context.
 interface Homograph {
 	surface: string
 	iso2: string
@@ -324,8 +324,8 @@ const houseNo = (random: () => number): string => String(1 + Math.floor(random()
 const HOMOGRAPH_WITH_STREET_SHARE = 0.6
 
 /**
- * A homograph contrast row: ~half render the surface as `country` (foreign city), half as the US `region`/`locality`
- * (US ZIP, no country). Returns iso2 for provenance.
+ * A homograph contrast row: ~half render the surface as `country` (foreign city), half
+ * as the US `region`/`locality` (US ZIP, no country). Returns iso2 for provenance.
  */
 function renderHomograph(random: () => number): {
 	fmt: string
@@ -405,8 +405,8 @@ const HOMOGRAPH_FRAC = 0.22
 const ABBREV_FRAC = 0.08
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const countryBalancedRecipe: CorpusRecipe = {
 	name: "country-balanced",
@@ -416,7 +416,8 @@ export const countryBalancedRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		if (opts.count == null) throw new Error("country-balanced recipe requires --count <N>")
 		const count = opts.count
-		// The root build script this recipe replaced seeded mulberry32 with the raw seed: `const random = mulberry32(opts.seed)`.
+		// The root build script this recipe replaced seeded mulberry32 with the raw
+		// seed: `const random = mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-country"
 		const sources = opts.golden ? EVAL_SOURCES : SOURCES
@@ -444,8 +445,8 @@ export const countryBalancedRecipe: CorpusRecipe = {
 		const N = pool.length
 
 		while (emitted < count && guard++ < count * 8) {
-			// Mix three row types: homograph contrast (the distinction), code-as-region negatives, and the
-			// breadth/recall main path (random ISO form on an OA skeleton, ~30% country-absent).
+			// Mix three row types: homograph contrast (the distinction), code-as-region negatives,
+			// and the breadth/recall main path (random ISO form on an OA skeleton, ~30% country-absent).
 			const roll = random()
 			let rendered: { fmt: string; raw: string; components: Partial<Record<ComponentTag, string>> }
 			let rowISO2: string

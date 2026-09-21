@@ -76,9 +76,9 @@ test("Composer: partial light/sky options merge over the defaults", () => {
 	expect(composer.sky["sky-color"]).toBe("#abcdef")
 })
 
-// Terrain + DEM-source tests parked (mobile performance): the `terrain` getter and the terrain DEM
-// source are commented out in `composition.ts`. Re-enable the code and these tests together when DEM
-// is reconsidered. (The hillshade DEM source is still injected.)
+// Terrain + DEM-source tests parked (mobile performance): the `terrain` getter and the terrain
+// DEM source are commented out in `composition.ts`. Re-enable the code and these tests together
+// when DEM is reconsidered. (The hillshade DEM source is still injected.)
 /* oxlint-disable vitest/no-commented-out-tests -- parked deliberately. see the note above */
 /*
 test("Composer: terrain source defaults to the terrain tileset id", () => {
@@ -206,8 +206,8 @@ test("Composer: a composition can bring its own base layers, no hillshade source
 })
 
 test("Composer: two instances from the shared BaseLayers have independent layer lists", () => {
-	// Regression for the shared-mutable-link bug: LayerSpecificationList now copies its input, so
-	// constructing a second composer no longer rewrites the first's kNext/kPrev links in place.
+	// Regression for the shared-mutable-link bug: LayerSpecificationList now copies its input,
+	// so constructing a second composer no longer rewrites the first's kNext/kPrev links in place.
 	const a = new StyleSpecificationComposer({ sources: {} })
 	const baseCount = a.layers.length
 	const b = new StyleSpecificationComposer({ sources: {} })

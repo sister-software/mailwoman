@@ -13,7 +13,8 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 export interface BuildFTSOptions {
 	/**
-	 * Drop + rebuild existing FTS/bbox tables (a staging DB from a prior partial run). Default false.
+	 * Drop + rebuild existing FTS/bbox tables
+	 * (a staging DB from a prior partial run). Default false.
 	 */
 	drop?: boolean
 	onProgress?: (phase: string, detail?: string) => void

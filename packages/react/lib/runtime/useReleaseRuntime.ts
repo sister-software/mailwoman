@@ -20,7 +20,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**
- * The minimal interface a release-manifest entry must satisfy. Hosts extend this with their own fields.
+ * The minimal interface a release-manifest entry must satisfy.
+ * Hosts extend this with their own fields.
  */
 export interface ReleaseBase {
 	/**
@@ -48,9 +49,10 @@ export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 }
 
 /**
- * The progress channel handed to the host's `loadAssets`. The host reports load progress + the resolved backend + the
- * staged step labels/index through these setters (all no-op once the load is superseded/aborted), while the hook owns
- * the terminal state (revealing the assets + clearing progress on success, surfacing the error on failure).
+ * The progress channel handed to the host's `loadAssets`.
+ * The host reports load progress + the resolved backend + the staged step labels/index through
+ * these setters (all no-op once the load is superseded/aborted), while the hook owns the terminal
+ * state (revealing the assets + clearing progress on success, surfacing the error on failure).
  */
 export interface AssetsLoadContext {
 	/**
@@ -78,11 +80,12 @@ export interface AssetsLoadContext {
 	 */
 	setBackend: (backend: string) => void
 	/**
-	 * Report bytes received over bytes expected for the asset downloading right now, in [0, 1]. Pass `null` when nothing
-	 * is in flight or the response declares no length.
+	 * Report bytes received over bytes expected for the asset downloading right now, in [0, 1].
+	 * Pass `null` when nothing is in flight or the response declares no length.
 	 *
-	 * The staged step index cannot carry this: the model is fetched before the first step is entered, so a step-derived
-	 * bar holds one value for the whole transfer. This is what moves during it.
+	 * The staged step index cannot carry this: the model is fetched before the first
+	 * step is entered, so a step-derived bar holds one value for the whole transfer.
+	 * This is what moves during it.
 	 */
 	setByteFraction: (fraction: number | null) => void
 }
@@ -92,24 +95,27 @@ export interface AssetsLoadContext {
  */
 export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * Fetch + normalize the releases manifest. Returns `null` when no manifest is available (the surface then shows
-	 * nothing selectable). Rejecting surfaces `errorMessage`. Runs once on mount.
+	 * Fetch + normalize the releases manifest. Returns `null` when no
+	 * manifest is available (the surface then shows nothing selectable).
+	 * Rejecting surfaces `errorMessage`. Runs once on mount.
 	 */
 	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
 	/**
-	 * Load the full asset bundle for one release — the classifier, FST, WOF lookup, calibrator, whatever the host needs.
-	 * Runs on every version or `forceWASM` change. Report progress via `ctx`; return the bundle. Rejecting surfaces
-	 * `errorMessage`. Bail early when `ctx.signal.aborted` — the hook discards a superseded result regardless.
+	 * Load the full asset bundle for one release — the classifier, FST, WOF lookup,
+	 * calibrator, whatever the host needs. Runs on every version or `forceWASM` change.
+	 * Report progress via `ctx`; return the bundle. Rejecting surfaces `errorMessage`.
+	 * Bail early when `ctx.signal.aborted` — the hook discards a superseded result regardless.
 	 */
 	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
 	/**
-	 * Give a superseded bundle's resources back, when the bundle holds any the garbage collector does not own — an ONNX
-	 * session's wasm heap, a SQLite worker, a GPU buffer.
+	 * Give a superseded bundle's resources back, when the bundle holds any the garbage
+	 * collector does not own — an ONNX session's wasm heap, a SQLite worker, a GPU buffer.
 	 *
-	 * Called for the bundle being replaced when the version or the backend force changes, for a bundle whose load was
-	 * aborted after it had already resolved, and on unmount. Without it each reload left a whole model resident: dropping
-	 * the last JavaScript reference to a session frees the wrapper and nothing else, and Safari answers a page that
-	 * accumulates those by reloading the tab.
+	 * Called for the bundle being replaced when the version or the backend force changes,
+	 * for a bundle whose load was aborted after it had already resolved, and on unmount.
+	 * Without it each reload left a whole model resident: dropping the last JavaScript
+	 * reference to a session frees the wrapper and nothing else, and Safari answers
+	 * a page that accumulates those by reloading the tab.
 	 */
 	disposeAssets?: (assets: TAssets) => void | Promise<void>
 	/**
@@ -121,9 +127,10 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 /**
  * The state `useReleaseRuntime` produces — the load-orchestration state a surface renders + re-projects.
  *
- * This is the loader state, deliberately distinct from {@link GeocoderRuntime} (the injected runtime interface
- * `<Geocoder>` consumes). A host builds a {@link GeocoderRuntime} by pairing this loader state (assets + backend +
- * version) with the map surface (style, overlays, bias, parse) — see the map subpath's `GeocoderRuntime`.
+ * This is the loader state, deliberately distinct from {@link GeocoderRuntime}
+ * (the injected runtime interface `<Geocoder>` consumes).
+ * A host builds a {@link GeocoderRuntime} by pairing this loader state (assets + backend + version)
+ * with the map surface (style, overlays, bias, parse) — see the map subpath's `GeocoderRuntime`.
  */
 export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
@@ -159,8 +166,8 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	 */
 	loadingStepLabels: string[]
 	/**
-	 * Bytes received over bytes expected for the asset downloading right now, in [0, 1]; `null` when nothing is in flight
-	 * or the response declares no length.
+	 * Bytes received over bytes expected for the asset downloading right now, in [0, 1];
+	 * `null` when nothing is in flight or the response declares no length.
 	 */
 	loadingByteFraction: number | null
 	/**
@@ -188,9 +195,10 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 /**
  * Drive the shared version → asset-bundle load state machine over a host-injected loader.
  *
- * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection. each version (or `forceWASM`)
- * change reloads the bundle via `loadAssets`, the previous load aborted first. The assets are revealed atomically when
- * `loadAssets` resolves (so `ready` flips exactly once per load), and consumers wait on `ready`.
+ * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection.
+ * each version (or `forceWASM`) change reloads the bundle via `loadAssets`, the previous
+ * load aborted first. The assets are revealed atomically when `loadAssets` resolves
+ * (so `ready` flips exactly once per load), and consumers wait on `ready`.
  */
 export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = ReleaseBase>(
 	config: ReleaseRuntimeConfig<TAssets, TRelease>
@@ -208,17 +216,18 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	const [loadingByteFraction, setLoadingByteFraction] = useState<number | null>(null)
 	const [forceWASM, setForceWASMState] = useState(false)
 
-	// Latest-ref the injected loaders: a host that re-creates them each render (an inline arrow) must not retrigger the
-	// load effects, which key only on version/backend. The effects read `.current` at run time.
+	// Latest-ref the injected loaders: a host that re-creates them each render
+	// (an inline arrow) must not retrigger the load effects, which key only on version/backend.
+	// The effects read `.current` at run time.
 	const loadManifestRef = useRef(config.loadManifest)
 	const loadAssetsRef = useRef(config.loadAssets)
 	const disposeAssetsRef = useRef(config.disposeAssets)
 	// The bundle currently owning resources, held in a ref because the cleanup that must dispose it cannot see state.
 	const liveAssetsRef = useRef<TAssets | null>(null)
 
-	// Latest manifest for the version-load effect, so it can resolve the release without depending on `manifest`
-	// identity — which would double-fire the load the instant the manifest first arrives (the selection transition
-	// null → defaultVersion already fires it once).
+	// Latest manifest for the version-load effect, so it can resolve the release without depending
+	// on `manifest` identity — which would double-fire the load the instant the manifest
+	// first arrives (the selection transition null → defaultVersion already fires it once).
 	const manifestRef = useRef<ReleaseManifest<TRelease> | null>(null)
 
 	useEffect(() => {
@@ -270,8 +279,8 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 
 		void (async () => {
 			try {
-				// Release the outgoing bundle before building its replacement, so the two models are never resident at
-				// once — the peak is what kills a tab rather than the steady state.
+				// Release the outgoing bundle before building its replacement, so the two models are
+				// never resident at once — the peak is what kills a tab rather than the steady state.
 				const outgoing = liveAssetsRef.current
 
 				liveAssetsRef.current = null
@@ -299,8 +308,8 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 				const loaded = await loadAssetsRef.current(release, ctx)
 
 				if (signal.aborted) {
-					// It resolved anyway, so it allocated anyway. Dropping it here is what leaked a model on every
-					// rapid version switch.
+					// It resolved anyway, so it allocated anyway. Dropping it here is what
+					// leaked a model on every rapid version switch.
 					await disposeAssetsRef.current?.(loaded)
 
 					return

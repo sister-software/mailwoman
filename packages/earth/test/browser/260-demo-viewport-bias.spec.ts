@@ -19,8 +19,8 @@ test.describe("Demo — viewport bias (#938)", () => {
 			w.__mailwomanMapCanvas?.jumpTo({ center: [-83.11, 40.1], zoom: 8 })
 		})
 
-		// The map loads independently of the classifier — wait until the jump has actually taken (zoom
-		// past the global-view threshold) so the viewport bias is live before we submit.
+		// The map loads independently of the classifier — wait until the jump has actually taken
+		// (zoom past the global-view threshold) so the viewport bias is live before we submit.
 		await page.waitForFunction(
 			() => {
 				const m = (globalThis as { __mailwomanMapCanvas?: { getZoom: () => number } }).__mailwomanMapCanvas

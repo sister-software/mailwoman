@@ -21,8 +21,8 @@ export type { EdgarIngestReport, EdgarSkipReason } from "#sdk/edgar/ingest"
 
 export interface FilerEdgarIngestOptions {
 	/**
-	 * Company names to resolve — one per line in a file, or passed as an array. Every name is tried. a blank line is
-	 * skipped rather than producing an outcome.
+	 * Company names to resolve — one per line in a file, or passed as an array.
+	 * Every name is tried. a blank line is skipped rather than producing an outcome.
 	 */
 	queries: string[]
 	/**
@@ -52,8 +52,8 @@ export interface FilerEdgarIngestResult {
 /**
  * Run the edgar ingest chain against a live SEC client and write the subsidiary rows to `outDir` as jsonl.
  *
- * The ticker index is read from `cikLookupPath` when given. it is parsed to `CompanyTickerEntry[]` once and reused
- * across every query.
+ * The ticker index is read from `cikLookupPath` when given. it is parsed to
+ * `CompanyTickerEntry[]` once and reused across every query.
  */
 export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promise<FilerEdgarIngestResult> {
 	const client = createSECClient()

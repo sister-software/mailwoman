@@ -26,7 +26,8 @@ export interface UnitSource {
 }
 
 /**
- * OA region is empty for US per-state extracts — the region is implied by the file. Every NON-Vermont state cached.
+ * OA region is empty for US per-state extracts — the region is implied by the file.
+ * Every NON-Vermont state cached.
  */
 export const TRAIN_SOURCES: readonly UnitSource[] = [
 	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
@@ -39,8 +40,8 @@ export const TRAIN_SOURCES: readonly UnitSource[] = [
 ]
 
 /**
- * Vermont, the corpus holdout. `--golden` reads this and nothing else, so the eval measures designator recognition on
- * addresses no training row came from.
+ * Vermont, the corpus holdout. `--golden` reads this and nothing else, so the eval
+ * measures designator recognition on addresses no training row came from.
  */
 export const EVAL_SOURCE: UnitSource = {
 	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),

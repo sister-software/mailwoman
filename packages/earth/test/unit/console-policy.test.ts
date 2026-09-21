@@ -19,8 +19,9 @@ describe("the 404 pattern", () => {
 	})
 
 	it("passes a commit SHA that begins with those digits", () => {
-		// The demo's debug banner prints the build's commit. One hex SHA in every 4,096 begins `404`, so a pattern
-		// anchored only at the start matches a build that loaded every asset it asked for.
+		// The demo's debug banner prints the build's commit.
+		// One hex SHA in every 4,096 begins `404`, so a pattern anchored only at the
+		// start matches a build that loaded every asset it asked for.
 		expect(
 			classify(
 				"[mailwoman] debug info {app: mailwoman-earth, commit: 404f39845b06e7f6055cbe2b7f9e9a93340b025e, model: v9.1.0}"

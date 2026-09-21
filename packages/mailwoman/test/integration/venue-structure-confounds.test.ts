@@ -40,8 +40,9 @@ interface ConfoundRow {
 	class: string
 	must_not: string
 	/**
-	 * Set when a row is known to fail, carrying the reason. Tracked rather than hidden: the row keeps running, and if it
-	 * ever starts passing the test fails and says to remove the marker — the gauntlet's xfail discipline, which exists.
+	 * Set when a row is known to fail, carrying the reason.
+	 * Tracked rather than hidden: the row keeps running, and if it ever starts passing the test
+	 * fails and says to remove the marker — the gauntlet's xfail discipline, which exists.
 	 * Therefore, a fix can never land silently and leave a stale exemption behind.
 	 */
 	xfail?: string
@@ -56,8 +57,8 @@ let classifier: NeuralAddressClassifier | undefined
 try {
 	classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 } catch {
-	// Lean checkout with no materialized weights — the suite skips rather than fails, matching the
-	// other model-conditional suites in this leg.
+	// Lean checkout with no materialized weights — the suite skips rather than fails,
+	// matching the other model-conditional suites in this leg.
 	classifier = undefined
 }
 
@@ -82,8 +83,8 @@ describe.skipIf(!classifier)("venue-structure confound board", () => {
 		})
 	}
 
-	// `test.fails` inverts the assertion, so a row listed here that starts passing turns the suite red — which is the
-	// point. An xfail nobody is forced to revisit is just a deleted test with extra steps.
+	// `test.fails` inverts the assertion, so a row listed here that starts passing turns the suite red —
+	// which is the point. An xfail nobody is forced to revisit is just a deleted test with extra steps.
 	for (const row of rows.filter((r) => r.xfail)) {
 		test.fails(`[${row.class}] XFAIL (${row.xfail}): ${row.raw}`, async () => {
 			expect(await emitted(row)).toBeUndefined()

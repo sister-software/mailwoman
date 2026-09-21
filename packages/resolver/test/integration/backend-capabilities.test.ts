@@ -13,8 +13,9 @@ import { describeCapabilityGaps, formatCapabilityGaps } from "@mailwoman/resolve
 import { describe, expect, it } from "vitest"
 
 /**
- * The minimum a backend must implement. A backend shaped like this is valid — every method the gap report names is
- * optional on the interface — which is exactly why the absence needs reporting rather than rejecting.
+ * The minimum a backend must implement. A backend shaped like this is valid —
+ * every method the gap report names is optional on the interface — which is exactly
+ * why the absence needs reporting rather than rejecting.
  */
 class MinimalBackend implements ResolverBackend {
 	async findPlace() {

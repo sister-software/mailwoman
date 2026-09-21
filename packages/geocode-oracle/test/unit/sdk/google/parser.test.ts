@@ -54,8 +54,8 @@ describe("buildGoogleComponents", () => {
 
 		expect(components).toEqual({
 			house_number: "1600",
-			// `route` takes the long name — the abbreviation is Google's display convenience rather than the
-			// form a parser sees in input.
+			// `route` takes the long name — the abbreviation is Google's display convenience
+			// rather than the form a parser sees in input.
 			street: "Amphitheatre Parkway",
 			locality: "Mountain View",
 			subregion: "Santa Clara County",
@@ -93,8 +93,8 @@ describe("buildGoogleComponents", () => {
 	})
 
 	it("does not write one locality component into two tags", () => {
-		// The consume-once rule. Without it the trailing `locality → dependent_locality` fall-through
-		// would duplicate the value into both tags for every non-GB address on earth.
+		// The consume-once rule. Without it the trailing `locality → dependent_locality`
+		// fall-through would duplicate the value into both tags for every non-GB address on earth.
 		const components = buildGoogleComponents(
 			result([component("Paris", "Paris", "locality", "political"), component("France", "FR", "country", "political")])
 		)
@@ -126,8 +126,8 @@ describe("buildGoogleComponents", () => {
 	})
 
 	it("preserves diacritics and case rather than uppercasing", () => {
-		// The isp-nexus original ended both accessors in `.toUpperCase()`. This is the assertion that
-		// stops that coming back.
+		// The isp-nexus original ended both accessors in `.toUpperCase()`.
+		// This is the assertion that stops that coming back.
 		const components = buildGoogleComponents(
 			result([
 				component("Köln", "Köln", "locality", "political"),
@@ -237,9 +237,9 @@ describe("parseGoogleGeocodeResult", () => {
 	})
 
 	it("mints an address ID that its own parser can read back", () => {
-		// The guard on the `state` prefix: `Île-de-France` is not a two-letter code, so it must not be
-		// interpolated into the key. Without the guard this ID is `île-de-france.<cell>.<hash>` and
-		// `isPostalAddressID` rejects it.
+		// The guard on the `state` prefix: `Île-de-France` is not a two-letter code,
+		// so it must not be interpolated into the key. Without the guard this ID is
+		// `île-de-france.<cell>.<hash>` and `isPostalAddressID` rejects it.
 		expect(parseGoogleGeocodeResult(paris).addressID).toMatch(/^[a-z]{2}\.[0-9a-f]+\.[0-9a-f]{16}$/)
 	})
 

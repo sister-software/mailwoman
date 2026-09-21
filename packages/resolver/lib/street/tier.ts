@@ -36,9 +36,10 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
 	const parts = collectNodes([streetNode], (n) => STREET_NAME_TAGS.has(n.tag) && n.value.trim().length)
 
 	// #718 admin-tail: a directional quadrant the model mis-tagged `unit` ("1532 Taylor Street NE" →
-	// [unit] "NE") folds back into the street key by span order, so the situs/interp lookup matches the
-	// extract's "taylor street northeast" (the lookup normalizer expands the abbreviation). Lookup-key
-	// only — the parse output and admin resolution are untouched. Byte-stable when absent (undefined).
+	// [unit] "NE") folds back into the street key by span order, so the situs/interp lookup matches
+	// the extract's "taylor street northeast" (the lookup normalizer expands the abbreviation).
+	// Lookup-key only — the parse output and admin resolution are untouched.
+	// Byte-stable when absent (undefined).
 	if (directionalUnit && directionalUnit.value.trim()) {
 		parts.push(directionalUnit)
 	}
@@ -49,8 +50,9 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
 }
 
 /**
- * Directional quadrant values the model sometimes emits as a `unit` node instead of inside the street subtree (#718
- * admin-tail diagnostic: ~19% of the admin-fallback tail, 83% of DC). Folded into the street lookup key by
+ * Directional quadrant values the model sometimes emits as a `unit` node instead of inside the
+ * street subtree (#718 admin-tail diagnostic: ~19% of the admin-fallback tail, 83% of DC).
+ * Folded into the street lookup key by
  * {@link assembleStreetValue}; the situs/interp lookup normalizer expands the abbreviation ("ne" → "northeast") so the
  * extract's full street name matches.
  */
@@ -58,9 +60,9 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
 const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(value.replaceAll(".", ""))
 
 /**
- * Address-point tier (#476): find `street` + `house_number` in the tree (first occurrence, depth-first), scope by the
- * tree's postcode/locality values, and on an exact hit stamp the point onto the street node's metadata. Additive only —
- * admin resolution is never altered.
+ * Address-point tier (#476): find `street` + `house_number` in the tree (first occurrence, depth-first),
+ * scope by the tree's postcode/locality values, and on an exact hit stamp the point onto
+ * the street node's metadata. Additive only — admin resolution is never altered.
  */
 /**
  * Half-width in degrees of the locality-centroid bbox used for an exact street-and-number fallback.
@@ -96,8 +98,9 @@ export function streetNumberPairs(
 }
 
 /**
- * Characters between a house number and its street. a number after the street costs one extra so the tie goes to the
- * number written before it, the order every Latin-script address system this resolver serves writes.
+ * Characters between a house number and its street. a number after the street
+ * costs one extra so the tie goes to the number written before it, the order every
+ * Latin-script address system this resolver serves writes.
  */
 function pairGap(pair: { street: AddressNode; houseNumber: AddressNode }): number {
 	const { street, houseNumber } = pair
@@ -124,8 +127,8 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 	const localityNode = firstOfTag(roots, "locality")
 	const locality = localityNode?.value.trim()
 	const postcode = firstOfTag(roots, "postcode")?.value.trim()
-	// The admin pair a register with no postcode and no locality tier scopes by (the Taiwanese 縣市 + 鄉鎮市區). Carried
-	// beside `locality`, never in its place: a Latin reader ignores both.
+	// The admin pair a register with no postcode and no locality tier scopes by (the Taiwanese 縣市 + 鄉鎮市區).
+	// Carried beside `locality`, never in its place: a Latin reader ignores both.
 	const region = firstOfTag(roots, "region")?.value.trim()
 	const subregion = firstOfTag(roots, "subregion")?.value.trim()
 
@@ -134,8 +137,9 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 	if (pairs.some((pair) => pair.street.metadata?.["resolution_tier"] === "address_point")) return
 
 	// #247 OSM bbox fall-through: when enabled (an OSM extract is wired) and the locality resolved to a
-	// coordinate, scope a final `(street, number)` probe by the locality's box — recovering OSM points that
-	// carry no postcode/locality tag of their own. US situs never enables it, so its probes are byte-identical.
+	// coordinate, scope a final `(street, number)` probe by the locality's box —
+	// recovering OSM points that carry no postcode/locality tag of their own.
+	// US situs never enables it, so its probes are byte-identical.
 	let bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
 
 	if (bboxFallback && localityNode?.lat != null && localityNode.lon != null) {
@@ -182,8 +186,8 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 			lon: hit.lon,
 			source: hit.source,
 			release: hit.release,
-			// The register row's own scope tags, when carried — a rooftop consumer can decorate the
-			// commune/postcode the register attests even when the query never named them.
+			// The register row's own scope tags, when carried — a rooftop consumer can decorate
+			// the commune/postcode the register attests even when the query never named them.
 			...(hit.localityNorm ? { locality_norm: hit.localityNorm } : {}),
 			...(hit.postcode ? { postcode: hit.postcode } : {}),
 		},
@@ -192,11 +196,13 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 }
 
 /**
- * House-number interpolation tier (#483): the third rung, consulted only when the exact address-point tier
- * ({@link applyAddressPoint}) did not already stamp the street node (`resolution_tier === "address_point"`). That check
- * is the "after the exact-point fall-through" — an estimate never overwrites a real situs point. Postcode-scoped (no
- * locality — the interpolators abstain statewide without a postcode). Stamps a distinct metadata key
- * (`interpolated_point`, never `address_point`). Additive only — admin resolution is untouched.
+ * House-number interpolation tier (#483): the third rung, consulted only when the
+ * exact address-point tier ({@link applyAddressPoint}) did not already stamp the
+ * street node (`resolution_tier === "address_point"`). That check is the "after
+ * the exact-point fall-through" — an estimate never overwrites a real situs point.
+ * Postcode-scoped (no locality — the interpolators abstain statewide without a postcode).
+ * Stamps a distinct metadata key (`interpolated_point`, never `address_point`).
+ * Additive only — admin resolution is untouched.
  */
 export function applyInterpolation(
 	roots: AddressNode[],
@@ -206,9 +212,9 @@ export function applyInterpolation(
 	const pairs = streetNumberPairs(roots)
 	const directionalUnit = [...walkNodes(roots)].find((n) => n.tag === "unit" && isDirectionalUnit(n.value))
 	const postcode = firstOfTag(roots, "postcode")?.value.trim()
-	// The resolved locality's coordinate — the `near` tie-breaker the interpolator may consult when the query carries
-	// no postcode and the covering ranges span several ZIPs (the borough-namesake class). Only a resolved locality
-	// qualifies. an unresolved one contributes nothing.
+	// The resolved locality's coordinate — the `near` tie-breaker the interpolator may consult when the
+	// query carries no postcode and the covering ranges span several ZIPs (the borough-namesake class).
+	// Only a resolved locality qualifies. an unresolved one contributes nothing.
 	const resolvedLocality = [...walkNodes(roots)].find((n) => n.tag === "locality" && n.lat != null && n.lon != null)
 
 	const localityCoord = resolvedLocality ? { lat: resolvedLocality.lat!, lon: resolvedLocality.lon! } : undefined
@@ -267,11 +273,12 @@ export function applyInterpolation(
 /**
  * Tokens this recognizer admits beyond `@mailwoman/codex`'s French voie types.
  *
- * The canonical types and their abbreviations live in the codex, and {@linkcode isVoieShaped} asks it first. What stays
- * here is the deliberate generosity: this tier recognizes a thoroughfare the model mis-parsed as a `locality` (the FR
- * no-street class, #901), and a false positive simply misses the exact street-centroid lookup and no-ops — the lookup
- * is the real check. A token admitted for that reason is not a claim that it is a voie type, so it does not belong in
- * the postal reference.
+ * The canonical types and their abbreviations live in the codex, and {@linkcode isVoieShaped}
+ * asks it first. What stays here is the deliberate generosity: this tier recognizes a
+ * thoroughfare the model mis-parsed as a `locality` (the FR no-street class, #901),
+ * and a false positive simply misses the exact street-centroid lookup and no-ops —
+ * the lookup is the real check. A token admitted for that reason is not a claim that
+ * it is a voie type, so it does not belong in the postal reference.
  */
 const FR_GENEROUS_VOIE_TOKENS: ReadonlySet<string> = new Set([
 	// Not a voie type: an address quarter, admitted because a span reading `Quartier …` is a thoroughfare often
@@ -283,9 +290,9 @@ const FR_GENEROUS_VOIE_TOKENS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Fold to lower-case, diacritic-stripped, punctuation-free tokens — a deliberate local copy of
- * `@mailwoman/resolver-wof-sqlite/street-normalize`'s `fold`: `@mailwoman/resolver` does not depend on that package, so
- * the two are kept in step by hand.
+ * Fold to lower-case, diacritic-stripped, punctuation-free tokens — a deliberate local copy
+ * of `@mailwoman/resolver-wof-sqlite/street-normalize`'s `fold`: `@mailwoman/resolver`
+ * does not depend on that package, so the two are kept in step by hand.
  */
 function foldVoieTokens(s: string): string[] {
 	return s
@@ -321,8 +328,8 @@ function pushCandidate(list: string[], v: string | undefined, cap: number): void
 }
 
 /**
- * Add a street centroid for street-only queries when no rooftop or street coordinate exists. Candidate pairs prefer
- * parsed values and fall back to comma-separated raw input. a lookup miss is ignored.
+ * Add a street centroid for street-only queries when no rooftop or street coordinate exists.
+ * Candidate pairs prefer parsed values and fall back to comma-separated raw input. a lookup miss is ignored.
  */
 export function applyStreetCentroid(
 	roots: AddressNode[],
@@ -369,8 +376,9 @@ export function applyStreetCentroid(
 
 	if (houseNumber) return // street-only tier — a numbered address is the rooftop tiers' job
 
-	// Candidate countries: pre-resolution hints (defaultCountry + unrestricted placer) then the resolved countries. BAN is
-	// FR-only, so a non-FR candidate simply yields no lookup. the exact (street, base-commune) match is the real filter.
+	// Candidate countries: pre-resolution hints (defaultCountry + unrestricted placer)
+	// then the resolved countries. BAN is FR-only, so a non-FR candidate simply yields
+	// no lookup. the exact (street, base-commune) match is the real filter.
 	const countries: string[] = []
 
 	for (const c of [...hints, ...resolvedCountries]) {
@@ -392,8 +400,9 @@ export function applyStreetCentroid(
 
 	const CAP = 5
 
-	// Thoroughfare candidates (parsed-first, then raw): the assembled street node, any voie-shaped parsed value, any
-	// voie-shaped raw comma-segment. The parse often truncates these (Champs-Élysées → "Avenue des Champs"), so the raw
+	// Thoroughfare candidates (parsed-first, then raw): the assembled street node,
+	// any voie-shaped parsed value, any voie-shaped raw comma-segment.
+	// The parse often truncates these (Champs-Élysées → "Avenue des Champs"), so the raw
 	// segment is the recovery — a candidate that misses just advances to the next.
 	const thoroughfares: string[] = []
 
@@ -415,8 +424,9 @@ export function applyStreetCentroid(
 
 	if (!thoroughfares.length) return
 
-	// Commune candidates: non-voie parsed admin values, then non-voie raw segments (a truncated/garbled parse loses the
-	// commune — "Rue de la République, Marseille" parses `locality="e"` — so the raw "Marseille" is the recovery).
+	// Commune candidates: non-voie parsed admin values, then non-voie raw segments
+	// (a truncated/garbled parse loses the commune — "Rue de la République, Marseille"
+	// parses `locality="e"` — so the raw "Marseille" is the recovery).
 	const communes: string[] = []
 
 	for (const v of adminValues) {
@@ -471,11 +481,11 @@ export function applyStreetCentroid(
 			}
 
 			// #1058: a commune-scoped hit is register evidence of the street's locality — record it for
-			// the geocode layer's locality/city decoration, and drop any span-rescored locality that
-			// contradicts it. Span-rescore injects speculatively (a low-confidence street prefix like
-			// "Rue" exact-matches the commune Rue in Somme); the register's exact (street, commune)
-			// match is strictly stronger, so the injected token-of-the-street must not survive as the
-			// result's city.
+			// the geocode layer's locality/city decoration, and drop any span-rescored
+			// locality that contradicts it. Span-rescore injects speculatively
+			// (a low-confidence street prefix like "Rue" exact-matches the commune Rue in Somme);
+			// the register's exact (street, commune) match is strictly stronger,
+			// so the injected token-of-the-street must not survive as the result's city.
 			if (matchedCommune) {
 				target.metadata = { ...target.metadata, street_locality: matchedCommune }
 

@@ -49,8 +49,9 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Live `Content-Length` for one artifact, or `undefined` on any failure (404, timeout, network) — the caller falls back
- * to the recorded {@link BundleArtifact.approxBytes} rather than treating a probe failure as a verdict.
+ * Live `Content-Length` for one artifact, or `undefined` on any failure (404, timeout, network) —
+ * the caller falls back to the recorded {@link BundleArtifact.approxBytes}
+ * rather than treating a probe failure as a verdict.
  */
 async function headContentLength(client: APIClient, artifact: BundleArtifact): Promise<number | undefined> {
 	try {

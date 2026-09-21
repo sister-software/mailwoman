@@ -16,8 +16,8 @@
 import type { VerifyBaseline } from "#gazetteer-pipeline/verify/index"
 
 /**
- * Row and index counts a freshly-built gazetteer is expected to clear. A build under these is reported as suspect
- * rather than published.
+ * Row and index counts a freshly-built gazetteer is expected to clear.
+ * A build under these is reported as suspect rather than published.
  */
 export const DEFAULT_VERIFY_BASELINE: VerifyBaseline = {
 	requiredNodes: {

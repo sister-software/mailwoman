@@ -48,8 +48,9 @@ export function forwardToResolved(r: GeocodeResult): ResolvedAddress {
 		address.postcode = r.postcode
 	}
 
-	// The resolved ancestry fills what the slots did not: a JP result includes `municipality` and `prefecture` in
-	// `hierarchy` and nothing in `locality` / `region`. Most specific first, so the first name per key wins.
+	// The resolved ancestry fills what the slots did not: a JP result includes `municipality`
+	// and `prefecture` in `hierarchy` and nothing in `locality` / `region`.
+	// Most specific first, so the first name per key wins.
 	for (const h of r.hierarchy) {
 		const key = TAG_TO_KEY[h.tag]
 

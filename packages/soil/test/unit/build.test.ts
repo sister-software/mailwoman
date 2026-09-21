@@ -90,8 +90,8 @@ describe("the fixture build", () => {
 	it("declares the spine key on the table a consumer joins, table-qualified", () => {
 		const spineKeys = lookup.identity.manifest.spineKeys
 
-		// The layer interface settles this: the key names what a consumer joins on, and for this layer that is the
-		// single-resolution reduction rather than the mixed-resolution containment index.
+		// The layer interface settles this: the key names what a consumer joins on, and for this layer
+		// that is the single-resolution reduction rather than the mixed-resolution containment index.
 		expect(spineKeys.h3?.column).toBe("soil_capability_cell.h3_cell")
 		expect(spineKeys.h3?.resolution).toBe(INDEX_RESOLUTION)
 	})
@@ -123,8 +123,8 @@ describe("what each reading says", () => {
 
 		const distribution = reading.distribution!
 
-		// 45/35/20 across three classes. The top class is class 2 and it holds well under half, which is exactly the case
-		// a winner-class schema would report as "class 2" full stop.
+		// 45/35/20 across three classes. The top class is class 2 and it holds well under half,
+		// which is exactly the case a winner-class schema would report as "class 2" full stop.
 		expect(distribution.topClass).toBe("2")
 		expect(distribution.topClassShare).toBeLessThan(0.5)
 		expect(Object.keys(distribution.classShares).length).toBeGreaterThan(1)
@@ -191,8 +191,9 @@ describe("the invariants that make the shares readable", () => {
 		expect(rows.length).toBeGreaterThan(0)
 
 		for (const row of rows) {
-			// Read column by column rather than cast whole: the five fields the invariant turns on are named here, so a
-			// column that stopped being written fails as a missing name rather than as a share that reads zero.
+			// Read column by column rather than cast whole: the five fields the invariant
+			// turns on are named here, so a column that stopped being written fails as a
+			// missing name rather than as a share that reads zero.
 			const total = shareTotal({
 				h3_cell: 0,
 				class_shares: String(row.class_shares),
@@ -237,8 +238,8 @@ describe("the invariants that make the shares readable", () => {
 			rings: Uint8Array
 		}
 
-		// Five positions per fixture ring: the four corners and the repeat that closes it, ten ordinates flat. A
-		// simplifying writer would drop vertices and change the covered-area weights silently.
+		// Five positions per fixture ring: the four corners and the repeat that closes it, ten ordinates flat.
+		// A simplifying writer would drop vertices and change the covered-area weights silently.
 		const { polygons } = decodeRings(row.rings)
 
 		expect(polygons[0]![0]!).toHaveLength(10)

@@ -12,9 +12,10 @@ import {
 } from "@mailwoman/release-kit/pack/publish-exports"
 import { describe, expect, it } from "vitest"
 
-// Source lives under `lib/`, so a real dev map's `node` condition names `./lib/…` while its `default`/`types`
-// name `./out/…` without that segment — `rootDir: "./lib"` strips it from the emit. The expectations below are
-// therefore also the assertion that the segment is dropped rather than carried through.
+// Source lives under `lib/`, so a real dev map's `node` condition names `./lib/…`
+// while its `default`/`types` name `./out/…` without that segment — `rootDir: "./lib"`
+// strips it from the emit. The expectations below are therefore also the assertion
+// that the segment is dropped rather than carried through.
 const DEV_MAP = {
 	"./package.json": "./package.json",
 	".": {
@@ -57,8 +58,9 @@ describe("transformExportsForPublish", () => {
 	})
 
 	it("drops the lib/ segment, because rootDir strips it from the emit", () => {
-		// A map that carried the segment through would name ./out/lib/deep/thing.js — well-formed JavaScript at an
-		// address no tarball contains, which assertNoSourceTargets cannot catch because it is no longer TypeScript.
+		// A map that carried the segment through would name ./out/lib/deep/thing.js —
+		// well-formed JavaScript at an address no tarball contains, which assertNoSourceTargets
+		// cannot catch because it is no longer TypeScript.
 		const result = transformExportsForPublish({
 			"./deep": { node: "./lib/deep/thing.ts", default: "./out/deep/thing.js" },
 		}) as Record<string, Record<string, string>>
@@ -92,8 +94,8 @@ describe("transformExportsForPublish", () => {
 	})
 
 	it("rewrites every source-targeting condition, not only node", () => {
-		// A map whose Node target and browser target are different files, both source in the dev map. Rewriting only
-		// `node` shipped browser and worker bundlers a raw `.ts`.
+		// A map whose Node target and browser target are different files, both source in the dev map.
+		// Rewriting only `node` shipped browser and worker bundlers a raw `.ts`.
 		const result = transformExportsForPublish({
 			"./fs": {
 				node: "./node/fs.ts",
@@ -146,8 +148,9 @@ describe("collectExportTargets", () => {
 	})
 
 	it("exposes a source leak for assertNoSourceTargets to reject", () => {
-		// The v7.2.0 failure shape: a dev map shipped verbatim. The transform repairs every condition whose target is
-		// source, so a leak can only reach here through a shape it does not walk — a pattern target, or a nested
+		// The v7.2.0 failure shape: a dev map shipped verbatim.
+		// The transform repairs every condition whose target is source, so a leak can only
+		// reach here through a shape it does not walk — a pattern target, or a nested
 		// condition it did not visit. Collecting it is what lets the refusal see it.
 		const leaked = collectExportTargets({ ".": { default: "./index.ts" } })
 		expect(leaked).toContain("./index.ts")

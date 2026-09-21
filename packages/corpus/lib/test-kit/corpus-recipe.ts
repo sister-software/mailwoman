@@ -20,9 +20,9 @@ import type { RecipeOptions } from "#recipes/scaffold"
 /**
  * The fields a recipe assertion reads off an emitted row.
  *
- * `parseJSONStrict` without a type argument hands back `unknown`; naming the shape is what lets the assertions be
- * checked at all. The previous `Record<string, never>` typed every property as `never`, so nothing could be read
- * without a cast and nothing was ever verified.
+ * `parseJSONStrict` without a type argument hands back `unknown`; naming the shape is what
+ * lets the assertions be checked at all. The previous `Record<string, never>` typed every
+ * property as `never`, so nothing could be read without a cast and nothing was ever verified.
  */
 export interface RecipeRow {
 	raw: string
@@ -44,8 +44,8 @@ export interface CorpusRecipe<TStats> {
 /**
  * The two input paths a recipe reads, plus the directory holding them.
  *
- * The caller owns it: a recipe opens both files by path well after this function returns, so the directory has to
- * outlive the call. Bind it with `using` and it goes when the test does.
+ * The caller owns it: a recipe opens both files by path well after this function returns,
+ * so the directory has to outlive the call. Bind it with `using` and it goes when the test does.
  */
 export type RecipeInputs = TemporaryDirectory & { input: string; exclude: string }
 
@@ -64,8 +64,8 @@ export async function scratch(prefix: string, tuples: object[], surfaces: string
 }
 
 /**
- * Bind a recipe and its seed to a runner the tests call with just the tuples and reserved surfaces. The seed is
- * per-recipe and required — these suites assert on generated distributions.
+ * Bind a recipe and its seed to a runner the tests call with just the tuples and reserved surfaces.
+ * The seed is per-recipe and required — these suites assert on generated distributions.
  */
 export function recipeRunner<TStats>(prefix: string, recipe: CorpusRecipe<TStats>, seed: number) {
 	return async function run(

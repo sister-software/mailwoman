@@ -13,11 +13,12 @@ import { fetchWithRetry } from "#browser-runtime/fetch"
 import type { FSTMatcherLike, FSTProvenanceLike } from "#browser-runtime/types"
 
 /**
- * All demo assets are served from our Cloudflare R2 bucket (nexus-public) on a custom domain. R2 + Cloudflare gives a
- * stable clean URL, raw byte ranges (no gzip mangling), configurable cors, low RTT, and free egress — the combination
- * GitHub Pages (force-gzips ranges) and HF (per-request presigned redirect) couldn't. The DBs are range-loaded via
- * sql.js-httpvfs from here. the rest is one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL
- * swap.
+ * All demo assets are served from our Cloudflare R2 bucket (nexus-public) on a custom domain.
+ * R2 + Cloudflare gives a stable clean URL, raw byte ranges (no gzip mangling),
+ * configurable cors, low RTT, and free egress — the combination GitHub Pages
+ * (force-gzips ranges) and HF (per-request presigned redirect) couldn't.
+ * The DBs are range-loaded via sql.js-httpvfs from here. the rest is one-shot full-fetch.
+ * Mirrors the old HF key layout, so this was a base-URL swap.
  */
 const ASSET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
 
@@ -28,14 +29,15 @@ export function assetURL(locale: string, version: string, filename: string): str
 /**
  * One publisher a page running this runtime owes a credit to, with where its terms are stated.
  *
- * A page that shows a result derived from these rows is the display the attribution conditions are about. GeoNames is
- * CC-BY. Who's On First's own LICENSE.md makes the link to it a requirement rather than a courtesy. Base Adresse
- * Nationale's Licence Ouverte asks for the source by name, and Overture's CDLA asks for its contributors. The basemap's
- * own credits are separate and belong to whoever renders the tiles.
+ * A page that shows a result derived from these rows is the display the attribution
+ * conditions are about. GeoNames is CC-BY. Who's On First's own LICENSE.md makes the
+ * link to it a requirement rather than a courtesy. Base Adresse Nationale's Licence
+ * Ouverte asks for the source by name, and Overture's CDLA asks for its contributors.
+ * The basemap's own credits are separate and belong to whoever renders the tiles.
  *
- * It sits beside the URLs rather than in a surface's component, because the obligation follows from which objects this
- * file fetches. A surface that stops loading one drops the entry with it, and a surface that adds a loader adds one
- * here.
+ * It sits beside the URLs rather than in a surface's component, because the obligation
+ * follows from which objects this file fetches. A surface that stops loading one drops
+ * the entry with it, and a surface that adds a loader adds one here.
  */
 export interface DataCredit {
 	/**
@@ -55,9 +57,10 @@ export interface DataCredit {
 /**
  * The publishers behind every object this runtime fetches from the public origin, other than the basemap.
  *
- * `@mailwoman/mailwoman`'s `data/bundles` records the same four families for the operator who downloads them with
- * `mailwoman data pull`, with the full conditions and the open questions. This is the shorter form a page displays, and
- * the two describe the same artifacts: the candidate gazetteer, the POI layer, and the street extracts.
+ * `@mailwoman/mailwoman`'s `data/bundles` records the same four families for the operator who
+ * downloads them with `mailwoman data pull`, with the full conditions and the open questions.
+ * This is the shorter form a page displays, and the two describe the same artifacts:
+ * the candidate gazetteer, the POI layer, and the street extracts.
  */
 export const DATA_CREDITS: readonly DataCredit[] = [
 	{
@@ -98,29 +101,32 @@ export const DATA_CREDITS: readonly DataCredit[] = [
 ]
 
 /**
- * The per-locale releases manifest (`releases.json`) — the version pointer beside the versioned asset directories.
+ * The per-locale releases manifest (`releases.json`) — the version pointer
+ * beside the versioned asset directories.
  */
 export function releasesManifestURL(locale: string): string {
 	return `${ASSET_BASE_URL}${locale}/releases.json`
 }
 
 /**
- * Same-origin base for the staged sql.js-httpvfs runtime assets (UMD + worker + wasm), under the site's base URL.
+ * Same-origin base for the staged sql.js-httpvfs runtime assets (UMD + worker + wasm),
+ * under the site's base URL.
  */
 export function sqljsBaseURL(siteBaseURL: string): string {
 	return `${siteBaseURL}mailwoman/sqljs`
 }
 
 /**
- * Per-state street extract URL (#377). The situs (exact address points) + interp (tiger ranges) DBs are hosted
- * byte-range at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a multi-GB extract, so they're loaded
- * lazily by parsed region rather than bundled. Independent of the locale/version WOF asset layout (street extracts are
- * per-state rather than per-model-version).
+ * Per-state street extract URL (#377). The situs (exact address points) + interp
+ * (tiger ranges) DBs are hosted byte-range at `mailwoman/street/us/<slug>/<kind>.db` —
+ * a lookup touches ~KB of a multi-GB extract, so they're loaded lazily by parsed region
+ * rather than bundled. Independent of the locale/version WOF asset layout
+ * (street extracts are per-state rather than per-model-version).
  */
 export function streetExtractURL(slug: string, kind: "situs" | "interp"): string {
-	// National (non-US) extracts live under their country at a dated path (immutable Cache-Control means
-	// a rebuilt extract needs a fresh URL — the admin-gazetteer discipline); US extracts keep the
-	// per-state layout. Bump the version when the BAN artifact is rebuilt + re-uploaded.
+	// National (non-US) extracts live under their country at a dated path (immutable Cache-Control
+	// means a rebuilt extract needs a fresh URL — the admin-gazetteer discipline); US extracts
+	// keep the per-state layout. Bump the version when the BAN artifact is rebuilt + re-uploaded.
 	if (NATIONAL_STREET_SLUGS.has(slug)) {
 		return `${ASSET_BASE_URL}street/${slug}/${NATIONAL_STREET_EXTRACT_VERSION}/${kind}.db`
 	}
@@ -129,10 +135,10 @@ export function streetExtractURL(slug: string, kind: "situs" | "interp"): string
 }
 
 /**
- * Country-level national street extracts (#1012 BAN-FR): one situs DB per country, no interpolation extract. The demo's
- * street tier tries these when the US per-state path doesn't claim the query — safe because the keyed (street, number,
- * postcode/locality) probes are self-validating against the register (a wrong-country probe is a cheap ~KB miss, never
- * a false hit).
+ * Country-level national street extracts (#1012 BAN-FR): one situs DB per country, no interpolation
+ * extract. The demo's street tier tries these when the US per-state path doesn't claim the query —
+ * safe because the keyed (street, number, postcode/locality) probes are self-validating
+ * against the register (a wrong-country probe is a cheap ~KB miss, never a false hit).
  */
 export const NATIONAL_STREET_SLUGS = new Set(["fr"])
 
@@ -169,11 +175,12 @@ export function adminGazetteerURL(): string {
 }
 
 /**
- * Byte-ranged POI layer (`poi.db`, ~3.7 GB — 13.68M Overture-places rows across US/CA/MX/FR, spec §3.4) — the clustered
- * `(h3_cell, category_id, neg_rank, rowid_key)` `without rowid` B-tree the docs POI tester (`POIExplorer` /
- * `try-it.mdx`) range-loads for live category search. Model-independent (like the admin gazetteer), so it lives on its
- * own dated path rather than under `<locale>/<model-version>/`. Bump this when the layer is rebuilt + re-uploaded (the
- * immutable Cache-Control means a fresh DB needs a fresh URL).
+ * Byte-ranged POI layer (`poi.db`, ~3.7 GB — 13.68M Overture-places rows across US/CA/MX/FR, spec §3.4) —
+ * the clustered `(h3_cell, category_id, neg_rank, rowid_key)` `without rowid` B-tree the
+ * docs POI tester (`POIExplorer` / `try-it.mdx`) range-loads for live category search.
+ * Model-independent (like the admin gazetteer), so it lives on its own dated path
+ * rather than under `<locale>/<model-version>/`. Bump this when the layer is rebuilt +
+ * re-uploaded (the immutable Cache-Control means a fresh DB needs a fresh URL).
  */
 export const POI_LAYER_VERSION = "2026-07-20a"
 
@@ -182,11 +189,12 @@ export function poiLayerURL(): string {
 }
 
 /**
- * Slugs we host street extracts for (byte-range on R2). A state not in this set falls through to the WOF admin
- * centroid. National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) + tiger
- * interp extracts are hosted, so any US address resolves to its building (`address_point`, ≤10 m) or a calibrated
- * interp estimate — not a city centroid. `vi` = US Virgin Islands. (`il` is the whole state incl. Cook. the separate
- * `il-cook` build extract is not hosted.)
+ * Slugs we host street extracts for (byte-range on R2).
+ * A state not in this set falls through to the WOF admin centroid.
+ * National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) + tiger
+ * interp extracts are hosted, so any US address resolves to its building (`address_point`, ≤10 m) or
+ * a calibrated interp estimate — not a city centroid. `vi` = US Virgin Islands.
+ * (`il` is the whole state incl. Cook. the separate `il-cook` build extract is not hosted.)
  */
 export const HOSTED_STREET_SLUGS = new Set([
 	"ak",
@@ -311,9 +319,10 @@ export function regionToStateSlug(region: string | undefined): string | null {
 }
 
 /**
- * Build the URL bag handed to `loadNeuralClassifierFromURLs` for a release. Shared by the demo's primary and compare
- * classifier loaders so the per-file asset layout (model / tokenizer / card / gazetteer lexicon, plus the optional
- * US/DE/FR postcode-anchor binaries) is defined exactly once.
+ * Build the URL bag handed to `loadNeuralClassifierFromURLs` for a release.
+ * Shared by the demo's primary and compare classifier loaders so the per-file asset layout
+ * (model / tokenizer / card / gazetteer lexicon, plus the optional US/DE/FR postcode-anchor binaries)
+ * is defined exactly once.
  */
 export function neuralClassifierLoadURLs(
 	locale: string,
@@ -324,12 +333,12 @@ export function neuralClassifierLoadURLs(
 		modelURL: assetURL(locale, version, "model.onnx"),
 		tokenizerURL: assetURL(locale, version, "tokenizer.model"),
 		modelCardURL: assetURL(locale, version, "model-card.json"),
-		// Gazetteer-anchor lexicon (#464): required by gazetteer-trained bundles (v4.2.0+). The loader
-		// tolerates a 404 for older bundles (logging loudly when the model needed it).
+		// Gazetteer-anchor lexicon (#464): required by gazetteer-trained bundles (v4.2.0+).
+		// The loader tolerates a 404 for older bundles (logging loudly when the model needed it).
 		gazetteerLexiconURL: assetURL(locale, version, "anchor-lexicon-v1.json"),
 		runner: { useWebGPU: !opts.forceWASM },
-		// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode anchor
-		// — US + DE + FR cover the demo's example set (native-order Berlin, French ZIPs).
+		// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode
+		// anchor — US + DE + FR cover the demo's example set (native-order Berlin, French ZIPs).
 		...(opts.hasAnchor
 			? {
 					postcodeBinaryURLs: [
@@ -343,29 +352,33 @@ export function neuralClassifierLoadURLs(
 }
 
 /**
- * Countries whose placetype-pair index the demo loads (placetype-pair-prior arc, #1278). The loader fetches each
- * tolerantly (a 404 is skipped, never fatal), so this list is byte-stable for a country whose binary isn't published.
+ * Countries whose placetype-pair index the demo loads (placetype-pair-prior arc, #1278).
+ * The loader fetches each tolerantly (a 404 is skipped, never fatal), so this list
+ * is byte-stable for a country whose binary isn't published.
  */
 export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
 
 /**
- * Generation stamp for the published pair-index binaries — the `<version>` segment in
- * `mailwoman/pair-index/<version>/pair-index-<cc>.bin`.
+ * Generation stamp for the published pair-index binaries — the `<version>` segment
+ * in `mailwoman/pair-index/<version>/pair-index-<cc>.bin`.
  *
- * The binaries carry the same `public, max-age=604800, immutable` Cache-Control as every other bucket object, so a
- * rebuilt index needs a fresh URL — the discipline {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION} and
+ * The binaries carry the same `public, max-age=604800, immutable` Cache-Control as every
+ * other bucket object, so a rebuilt index needs a fresh URL — the discipline
+ * {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION} and
  * {@link NATIONAL_STREET_EXTRACT_VERSION} already follow. Bump this the same commit the binaries are rebuild and
- * re-uploaded. the mutable pointer is this constant inside the (revalidated) Pages bundle, never the binaries.
+ * re-uploaded. the mutable pointer is this constant inside the (revalidated)
+ * Pages bundle, never the binaries.
  *
- * Why a site-side constant rather than a `releases.json` field: the PIX reader that consumes these binaries
- * (`@mailwoman/neural`'s `pair-index-resolver`) is bundled into the site rather than fetched per model release, and it
- * throws on a `schemaVersion` older than its own (`KNOWN_SCHEMA_VERSION`). So the generation a page may safely request
- * is a property of the deployed site rather than of the release the visitor selected — pinning it per release entry
- * would let a schema-3 reader ask for a schema-1 generation.
+ * Why a site-side constant rather than a `releases.json` field: the PIX reader that consumes
+ * these binaries (`@mailwoman/neural`'s `pair-index-resolver`) is bundled into the site
+ * rather than fetched per model release, and it throws on a `schemaVersion` older than
+ * its own (`KNOWN_SCHEMA_VERSION`). So the generation a page may safely request is
+ * a property of the deployed site rather than of the release the visitor selected —
+ * pinning it per release entry would let a schema-3 reader ask for a schema-1 generation.
  *
- * 2026-08-05: the PIX schema-3 (typed parent record) rebuild. It was overwritten IN place at the un-versioned path, and
- * the CDN kept serving the schema-1 bytes under the immutable header until a manual purge — the wound this scheme
- * closes.
+ * 2026-08-05: the PIX schema-3 (typed parent record) rebuild.
+ * It was overwritten IN place at the un-versioned path, and the CDN kept serving the schema-1
+ * bytes under the immutable header until a manual purge — the wound this scheme closes.
  */
 export const PAIR_INDEX_VERSION = "2026-08-05"
 
@@ -413,12 +426,14 @@ export async function loadFSTGazetteer(
 }
 
 /**
- * Load the locale-general street-morphology FST (`fst-street-morphology.bin`) for a release — the #1315 street-context
- * check's signal source, shipped as a weights-package sibling (so it rides the same per-version R2 asset layout as the
- * model). Node runtimes rebuild this matcher from the bundled libpostal dictionaries when the artifact is absent. the
- * browser cannot, which is exactly the node/browser behavior fork the sealed artifact closes. Returns `null` when the
- * release predates the artifact (http 404) — the demo then parses without the check, exactly as before. A
- * present-but-corrupt binary throws. the caller's tolerant catch treats that as absent too.
+ * Load the locale-general street-morphology FST (`fst-street-morphology.bin`) for a release —
+ * the #1315 street-context check's signal source, shipped as a weights-package
+ * sibling (so it rides the same per-version R2 asset layout as the model).
+ * Node runtimes rebuild this matcher from the bundled libpostal dictionaries
+ * when the artifact is absent. the browser cannot, which is exactly the node/browser
+ * behavior fork the sealed artifact closes. Returns `null` when the release predates
+ * the artifact (http 404) — the demo then parses without the check, exactly as before.
+ * A present-but-corrupt binary throws. the caller's tolerant catch treats that as absent too.
  */
 export async function loadStreetMorphologyFST(locale: string, version: string): Promise<FSTMatcherLike | null> {
 	const res = await fetchWithRetry(assetURL(locale, version, "fst-street-morphology.bin"))

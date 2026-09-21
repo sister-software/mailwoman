@@ -33,8 +33,9 @@ import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 /**
  * How far the resolved point must move before the rung is called a divergence, in kilometres.
  *
- * Borrowed from the counterfactual threshold for the same reason it was chosen there: below the tightest distance
- * anything here grades at, a move cannot change a verdict, so reporting it fills the table with coordinate jitter.
+ * Borrowed from the counterfactual threshold for the same reason it was chosen there:
+ * below the tightest distance anything here grades at, a move cannot change a verdict,
+ * so reporting it fills the table with coordinate jitter.
  */
 const MOVED_KM = 1
 
@@ -76,8 +77,8 @@ interface RungReading {
 	 */
 	refused?: string
 	/**
-	 * What changed against the previous rung. Null on step 0, where there is no previous rung — which is a different fact
-	 * from a delta whose every list is empty, and the rendering keeps them apart.
+	 * What changed against the previous rung. Null on step 0, where there is no previous rung — which is
+	 * a different fact from a delta whose every list is empty, and the rendering keeps them apart.
 	 */
 	delta: RungDelta | null
 	error?: string
@@ -87,8 +88,8 @@ interface LadderReading {
 	label: string
 	rungs: RungReading[]
 	/**
-	 * The first rung whose components or coordinate differ from the rung below it. `null` means the whole ladder answered
-	 * identically with reportable result.
+	 * The first rung whose components or coordinate differ from the rung below it.
+	 * `null` means the whole ladder answered identically with reportable result.
 	 */
 	first_divergence: { step: number; input: string; tags: string[]; moved_km: number | null } | null
 	rendered: string
@@ -148,8 +149,8 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 /**
  * The ladder as a table, with the input beside its own result on every line.
  *
- * The rendering is the deliverable rather than a convenience: a reader deciding whether a defect is real needs the
- * addresses in view, and a JSON blob of component maps does not put them there.
+ * The rendering is the deliverable rather than a convenience: a reader deciding whether a defect
+ * is real needs the addresses in view, and a JSON blob of component maps does not put them there.
  */
 function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 	const tags = [...new Set(reading.rungs.flatMap((rung) => Object.keys(rung.components)))].toSorted()
@@ -173,8 +174,8 @@ function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 
 		const cells = tags.map((tag, i) => (rung.components[tag] ?? ABSENT).padEnd(widths[i]!))
 		const mark = reading.first_divergence?.step === rung.step ? " ←" : ""
-		// A refusal is stated on the row itself. Its cells are all `absent`, which without this reads as a parse that
-		// found nothing rather than a completed parse that was thrown away.
+		// A refusal is stated on the row itself. Its cells are all `absent`, which without this
+		// reads as a parse that found nothing rather than a completed parse that was thrown away.
 		const refusal = rung.refused ? `  REFUSED as ${rung.refused} — parse discarded, not failed` : ""
 
 		lines.push(`  ${rung.input.padEnd(inputWidth)}  ${cells.join("  ")}  ${rung.tier}${mark}${refusal}`)
@@ -209,8 +210,8 @@ export interface MinimalPairsResult {
 /**
  * Walk each ladder through one engine and report where its answer first moves.
  *
- * One engine for the whole call, deliberately: a ladder measured across two engines cannot attribute a change to the
- * input, which is the only thing this measures.
+ * One engine for the whole call, deliberately: a ladder measured across two engines
+ * cannot attribute a change to the input, which is the only thing this measures.
  */
 export async function runMinimalPairs(
 	registry: EngineRegistryLike,

@@ -89,12 +89,13 @@ function pathspecsFor(value: Surface): string[] {
  *
  * We intersect here instead of passing the caller paths to git with the exclude pathspecs.
  *
- * Why: git pathspec rules can produce false negatives when literals and recursive excludes are combined. In practice, a
- * literal path plus the recursive `test-fixtures` exclude in `DOC_EXCLUDES` can return zero matches even when the
- * literal file is unrelated to that exclude (for example `packages/core/lib/module/compiled-freshness.ts`).
+ * Why: git pathspec rules can produce false negatives when literals and recursive excludes
+ * are combined. In practice, a literal path plus the recursive `test-fixtures` exclude
+ * in `DOC_EXCLUDES` can return zero matches even when the literal file is unrelated to
+ * that exclude (for example `packages/core/lib/module/compiled-freshness.ts`).
  *
- * If we trusted that result, a narrowed run could report clean for a file Vale never read. String-set intersection
- * avoids that pathspec behavior and keeps narrowing deterministic.
+ * If we trusted that result, a narrowed run could report clean for a file Vale never read.
+ * String-set intersection avoids that pathspec behavior and keeps narrowing deterministic.
  */
 function narrowTo(files: readonly string[], narrowing: readonly string[]): string[] {
 	if (!narrowing.length) return [...files]
@@ -118,12 +119,14 @@ function configFor(value: Surface): string {
 /**
  * Each named path that reached no file, with the reason it did.
  *
- * Three causes produce one empty set and want three different repairs. A path absent from the working tree is a typo or
- * a stale reference. A path an ignore rule covers is a build output, and linting one would report findings its author
- * cannot act on. A path present and carried by git is one this surface excludes by design, which is the only case where
- * silence was ever the right answer.
+ * Three causes produce one empty set and want three different repairs.
+ * A path absent from the working tree is a typo or a stale reference.
+ * A path an ignore rule covers is a build output, and linting one would report findings
+ * its author cannot act on. A path present and carried by git is one this surface excludes
+ * by design, which is the only case where silence was ever the right answer.
  *
- * The second `git ls-files` runs only when something failed to match, so an ordinary invocation pays for one.
+ * The second `git ls-files` runs only when something failed to match,
+ * so an ordinary invocation pays for one.
  */
 async function describeUnmatched(
 	narrowing: readonly string[],
@@ -154,25 +157,28 @@ async function describeUnmatched(
 
 async function main(args: readonly string[]): Promise<number> {
 	const selectedSurface = surface(args[0])
-	// Narrowing paths, for a caller that has just edited a file and wants the same verdict CI would give it. They are
-	// intersected with the surface's pathspecs rather than linted directly, so an excluded path stays excluded and the
-	// caller never has to carry a second copy of the exclusion list.
+	// Narrowing paths, for a caller that has just edited a file and wants the same
+	// verdict CI would give it. They are intersected with the surface's pathspecs
+	// rather than linted directly, so an excluded path stays excluded and the caller
+	// never has to carry a second copy of the exclusion list.
 	const narrowing = args.slice(1)
-	// The working tree rather than the index. A file written a minute ago carries prose nobody has read, and reading
-	// the committed list reported it clean without opening it. `--exclude-standard` keeps build outputs out.
+	// The working tree rather than the index. A file written a minute ago carries prose
+	// nobody has read, and reading the committed list reported it clean without opening it.
+	// `--exclude-standard` keeps build outputs out.
 	const surfaceFiles = await workingTreeFiles(REPO_ROOT, pathspecsFor(selectedSurface))
 
 	if (!surfaceFiles.length) throw new Error(`No files in the working tree matched the ${selectedSurface} Vale surface`)
 
 	const files = narrowTo(surfaceFiles, narrowing)
 
-	// A named path that reaches no file is reported rather than passed over. Returning 0 here answered "no findings"
-	// to a question Vale was never asked: the surface list comes from `git ls-files`, so naming an untracked file
-	// produced an empty set, printed nothing and exited clean. A new file's prose is exactly what a caller wants read,
-	// and this reported it as read and clean instead.
+	// A named path that reaches no file is reported rather than passed over.
+	// Returning 0 here answered "no findings" to a question Vale was never asked:
+	// the surface list comes from `git ls-files`, so naming an untracked file produced
+	// an empty set, printed nothing and exited clean. A new file's prose is exactly what
+	// a caller wants read, and this reported it as read and clean instead.
 	//
-	// Each unmatched path carries the reason it matched nothing, because the three cases need different repairs and a
-	// bare count distinguishes none of them.
+	// Each unmatched path carries the reason it matched nothing, because the three cases
+	// need different repairs and a bare count distinguishes none of them.
 	if (narrowing.length) {
 		const unmatched = await describeUnmatched(narrowing, files, selectedSurface)
 

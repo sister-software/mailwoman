@@ -1,11 +1,12 @@
 /**
- * Operator interesting-address board (2026-08-09): a focused projection of the permanent gauntlet cases rather than a
- * second answer key. Exact component-span recall for venue-heavy GB addresses and a bilingual JP pair. reviewed Google
- * normalization lives on each gauntlet row's source/coordinate/note and is not treated as parser gold.
+ * Operator interesting-address board (2026-08-09): a focused projection of the permanent
+ * gauntlet cases rather than a second answer key. Exact component-span recall for
+ * venue-heavy GB addresses and a bilingual JP pair. reviewed Google normalization lives
+ * on each gauntlet row's source/coordinate/note and is not treated as parser gold.
  *
- * Usage: node packages/mailwoman/lib/dev-tools/score/interesting-addresses.run.ts --country GB --label shipped node
- * packages/mailwoman/lib/dev-tools/score/interesting-addresses.run.ts --country GB --cache-root <candidate> --label
- * candidate
+ * Usage: node packages/mailwoman/lib/dev-tools/score/interesting-addresses.run.ts --country
+ * GB --label shipped node packages/mailwoman/lib/dev-tools/score/interesting-addresses.run.ts
+ * --country GB --cache-root <candidate> --label candidate
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -37,8 +38,9 @@ const perTag = new Map<ComponentTag, { hit: number; total: number }>()
 let caseHit = 0
 const failures: string[] = []
 
-// Mirrors gauntlet/harness.ts today: GB has a shipped overlay. JP still grades through the base model until its
-// package-shaped sibling model is wired into the gauntlet. Keeping that limitation visible is part of this board.
+// Mirrors gauntlet/harness.ts today: GB has a shipped overlay.
+// JP still grades through the base model until its package-shaped sibling model is wired
+// into the gauntlet. Keeping that limitation visible is part of this board.
 const localeForCountry = (country: string): string => (country === "GB" ? "en-GB" : "en-US")
 
 for (const locale of new Set(fixtures.map((row) => localeForCountry(row.country)))) {

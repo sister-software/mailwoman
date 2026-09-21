@@ -39,9 +39,9 @@ interface Shape extends LocatedAdmin {
 }
 
 /**
- * Grid cell size in degrees. 0.25° is small enough that a US state's bbox spans a few hundred cells and a dense metro
- * cell holds a handful of candidates — the tradeoff is index build time against candidates per probe, and both stay
- * negligible at admin scale.
+ * Grid cell size in degrees. 0.25° is small enough that a US state's bbox spans a few
+ * hundred cells and a dense metro cell holds a handful of candidates — the tradeoff is
+ * index build time against candidates per probe, and both stay negligible at admin scale.
  */
 const CELL_DEGREES = 0.25
 
@@ -51,8 +51,8 @@ export interface AdminLocatorOptions {
 	 */
 	adminPath: string
 	/**
-	 * WOF polygon DB — supplies the geometry. A place present in the admin DB with no row here cannot be located, and the
-	 * locator counts that rather than treating it as a miss at probe time.
+	 * WOF polygon DB — supplies the geometry. A place present in the admin DB with no row here cannot
+	 * be located, and the locator counts that rather than treating it as a miss at probe time.
 	 */
 	polygonPath: string
 	placetype: string
@@ -160,8 +160,9 @@ export class AdminLocator {
 	}
 
 	/**
-	 * The place containing this point, or `null` when no loaded polygon does. Ties go to the first shape loaded —
-	 * overlapping admin polygons of one placetype are a source defect rather than something to arbitrate here.
+	 * The place containing this point, or `null` when no loaded polygon does.
+	 * Ties go to the first shape loaded — overlapping admin polygons of one placetype
+	 * are a source defect rather than something to arbitrate here.
 	 */
 	locate(lon: number, lat: number): LocatedAdmin | null {
 		const candidates = this.#grid.get(`${Math.floor(lon / CELL_DEGREES)}:${Math.floor(lat / CELL_DEGREES)}`)

@@ -55,8 +55,8 @@ describe("hard-case board schema", () => {
 	})
 
 	it("refuses an unknown key rather than ignoring it", () => {
-		// A typo'd `expectLon` that parsed as "coordinate not asserted" is the input-tail defect the
-		// strict schema exists to make loud.
+		// A typo'd `expectLon` that parsed as "coordinate not asserted" is the input-tail
+		// defect the strict schema exists to make loud.
 		expect(HardCaseSchema.safeParse({ ...VALID, expectLng: -116.999 }).success).toBe(false)
 	})
 })

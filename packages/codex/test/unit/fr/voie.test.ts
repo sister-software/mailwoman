@@ -25,9 +25,9 @@ describe("isFrenchStreetWord", () => {
 	})
 
 	it("matches the boulevard, passage and sentier variants a writer actually uses", () => {
-		// `@mailwoman/resolver`'s street-centroid tier recognized these while this table did not, which is the
-		// asymmetry that put the two lists out of step. They are abbreviations of a canonical type, so they belong
-		// here rather than in the recognizer.
+		// `@mailwoman/resolver`'s street-centroid tier recognized these while this
+		// table did not, which is the asymmetry that put the two lists out of step.
+		// They are abbreviations of a canonical type, so they belong here rather than in the recognizer.
 		expect(isFrenchStreetWord("bld")).toBe(true)
 		expect(isFrenchStreetWord("bvd")).toBe(true)
 		expect(isFrenchStreetWord("pas")).toBe(true)
@@ -35,8 +35,8 @@ describe("isFrenchStreetWord", () => {
 	})
 
 	it("matches the whole token, so a non-voie word is not caught", () => {
-		// French types lead the name and are matched as whole tokens rather than suffixes — so neither a
-		// surname nor a commune that happens to contain a voie substring is flagged.
+		// French types lead the name and are matched as whole tokens rather than suffixes —
+		// so neither a surname nor a commune that happens to contain a voie substring is flagged.
 		expect(isFrenchStreetWord("Paris")).toBe(false)
 		expect(isFrenchStreetWord("Bordeaux")).toBe(false)
 		expect(isFrenchStreetWord("Larue")).toBe(false) // contains "rue" but isn't it

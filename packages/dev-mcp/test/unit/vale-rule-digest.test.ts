@@ -26,9 +26,10 @@ const named = new Set(rules.map((rule) => rule.name))
 /**
  * A rule file's tokens, compiled.
  *
- * Returned as patterns rather than as words on purpose: writing the words into this test would put them in a tracked
- * file, which is the thing the withholding exists to prevent and which `repo-health`'s `bannedVocabulary` counter holds
- * at zero. Compiling the rule's own token and running it over the listing asks the same question and writes nothing.
+ * Returned as patterns rather than as words on purpose: writing the words into this
+ * test would put them in a tracked file, which is the thing the withholding exists
+ * to prevent and which `repo-health`'s `bannedVocabulary` counter holds at zero.
+ * Compiling the rule's own token and running it over the listing asks the same question and writes nothing.
  */
 async function tokenPatterns(rule: string): Promise<RegExp[]> {
 	const source = await readLocalTextFile(repoRootPath("config", "vale", "styles", `${rule}.yml`))
@@ -55,8 +56,8 @@ async function tokenPatterns(rule: string): Promise<RegExp[]> {
 
 describe("the session-start prose-rule listing", () => {
 	it("carries the rules the output style never names", () => {
-		// The gap this closes: the output style names four rules, and these arrived later. A session learned them
-		// only when one blocked a reply.
+		// The gap this closes: the output style names four rules, and these arrived later.
+		// A session learned them only when one blocked a reply.
 		expect(named).toContain("Negation")
 		expect(named).toContain("MedicalMetaphor")
 		expect(named).toContain("Grammar.SloganAssertions")
@@ -67,8 +68,8 @@ describe("the session-start prose-rule listing", () => {
 	})
 
 	it("leaves out the source-comment variant that duplicates a reply rule", () => {
-		// `.vale-chat.ini` loads the whole style directory, so the comment-surface copy is live and reports the same
-		// site twice. Listing both would read as two separate rules.
+		// `.vale-chat.ini` loads the whole style directory, so the comment-surface copy is live
+		// and reports the same site twice. Listing both would read as two separate rules.
 		expect(named).not.toContain("AmbiguousShorthandCode")
 		expect(named).toContain("AmbiguousShorthand")
 	})
@@ -81,8 +82,9 @@ describe("the session-start prose-rule listing", () => {
 
 		const patterns = await tokenPatterns("AmbiguousShorthand")
 
-		// The check is only worth running if the file has tokens to check, and it is only sound if they are the
-		// patterns Vale itself refuses — a compile failure that emptied this list would pass the loop silently.
+		// The check is only worth running if the file has tokens to check, and it is
+		// only sound if they are the patterns Vale itself refuses — a compile failure
+		// that emptied this list would pass the loop silently.
 		expect(patterns.length).toBeGreaterThan(3)
 
 		for (const pattern of patterns) {
@@ -96,8 +98,9 @@ describe("the session-start prose-rule listing", () => {
 	})
 
 	it("reads a swap key that contains a colon as one pair", () => {
-		// `Terms` carries `'(?:^|[^-\w])text search': forward geocoding`. Splitting on the first colon would take
-		// half the key and the listing would print a broken pattern beside the wrong replacement.
+		// `Terms` carries `'(?:^|[^-\w])text search': forward geocoding`.
+		// Splitting on the first colon would take half the key and the listing would
+		// print a broken pattern beside the wrong replacement.
 		const terms = rules.find((rule) => rule.name === "Terms")
 		const entry = terms?.swap.find(([from]) => from.includes("text search"))
 
@@ -105,11 +108,12 @@ describe("the session-start prose-rule listing", () => {
 	})
 
 	it("states every rule in the register the rules themselves enforce", async () => {
-		// A message is read twice: once in this listing at session start, and once when the rule fires. Both times it
-		// is prose on a surface the style governs, so a message that breaks another rule both teaches the wrong form
-		// and plants the word. Seven did when this test was written — four used a verb `AmbiguousShorthand` refuses,
-		// three were framed as the negation `Negation` refuses. The style directory is outside the prose lint's
-		// pathspecs, so this assertion is the only thing that holds the line.
+		// A message is read twice: once in this listing at session start, and once
+		// when the rule fires. Both times it is prose on a surface the style governs,
+		// so a message that breaks another rule both teaches the wrong form and plants the word.
+		// Seven did when this test was written — four used a verb `AmbiguousShorthand` refuses, three
+		// were framed as the negation `Negation` refuses. The style directory is outside the
+		// prose lint's pathspecs, so this assertion is the only thing that holds the line.
 		const offenders: string[] = []
 
 		for (const rule of rules) {

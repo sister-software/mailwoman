@@ -37,9 +37,10 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 		const inputs = args["inputs"] as string[]
 		const config = (args["config"] as EngineConfig | undefined) ?? {}
 		const fullParseTrace = args["full_parse_trace"] === true
-		// Tracing is the answer here, so it is forced on regardless of what the caller passed. The band probe rides with
-		// it for the same reason: this surface exists to explain one row, and "resolved nothing" is not an explanation.
-		// Neither can change the answer, so neither is a change the caller should have to ask for.
+		// Tracing is the answer here, so it is forced on regardless of what the caller passed.
+		// The band probe rides with it for the same reason: this surface exists to explain one row,
+		// and "resolved nothing" is not an explanation. Neither can change the answer,
+		// so neither is a change the caller should have to ask for.
 		const engine = await registry.acquire({ ...config, trace: true, diagnose_unreachable: true })
 
 		const set = await resolveInputSet({
@@ -60,8 +61,8 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 				lat: run.result.lat,
 				lon: run.result.lon,
 				tier: run.result.resolution_tier,
-				// The three-state channel reading (#1718): absent / silent / fired, plus the starvation flag. A
-				// human read past three all-zero channel rows in this very output once. a field does not skim.
+				// The three-state channel reading (#1718): absent / silent / fired, plus the starvation flag.
+				// A human read past three all-zero channel rows in this very output once. a field does not skim.
 				evidence: run.trace?.parse ? evidenceCensus(run.trace.parse) : null,
 				query_shape: run.trace?.queryShape ?? null,
 				kind: run.trace?.kind ?? null,

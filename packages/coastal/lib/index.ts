@@ -90,7 +90,8 @@ export const CoastalReadingKind = {
 	 */
 	Designated: "designated",
 	/**
-	 * No erosion polygon of that scenario contains the point. Never an absence reading — see this file's header.
+	 * No erosion polygon of that scenario contains the point.
+	 * Never an absence reading — see this file's header.
 	 */
 	Unknown: "unknown",
 } as const
@@ -129,8 +130,8 @@ export interface CoastalDesignation {
 	distanceM: number
 	shorelineManagementPlan?: { number: number; name: string; policyUnit: string }
 	/**
-	 * The medium- and long-term policy and its interpretation, where the scenario carries one. Absent on the NFI
-	 * scenarios, where the source publishes none because no intervention is assumed.
+	 * The medium- and long-term policy and its interpretation, where the scenario carries one.
+	 * Absent on the NFI scenarios, where the source publishes none because no intervention is assumed.
 	 */
 	policy?: {
 		mediumTerm: string | null
@@ -140,8 +141,8 @@ export interface CoastalDesignation {
 	}
 	defenceType?: string
 	/**
-	 * 2024, or 0 on the 87 rows the authority publishes with blank policy and defence fields and documents no meaning
-	 * for. Carried rather than coerced.
+	 * 2024, or 0 on the 87 rows the authority publishes with blank policy and defence fields
+	 * and documents no meaning for. Carried rather than coerced.
 	 */
 	publishedYear?: number
 	/**
@@ -156,14 +157,14 @@ export interface CoastalDesignation {
 export interface CoastalErosionReading {
 	kind: CoastalReadingKind
 	/**
-	 * The scenario this reading answered under. Present on every reading, including `unknown`: an answer whose scenario a
-	 * reader cannot see is an answer to an unknown question.
+	 * The scenario this reading answered under. Present on every reading, including `unknown`:
+	 * an answer whose scenario a reader cannot see is an answer to an unknown question.
 	 */
 	scenario: CoastalScenario
 	/**
-	 * Every polygon of that scenario containing the point, ordered by `area_id`. Usually one. several where the
-	 * authority's own frontages overlap, which its `maxoverlap` column records on about half the rows of a measured
-	 * layer. Empty on `unknown`.
+	 * Every polygon of that scenario containing the point, ordered by `area_id`.
+	 * Usually one. several where the authority's own frontages overlap, which its `maxoverlap` column records
+	 * on about half the rows of a measured layer. Empty on `unknown`.
 	 */
 	designations: CoastalDesignation[]
 	/**
@@ -210,11 +211,12 @@ export interface CoastalLayerIdentity {
 	indexResolution: number
 	coverageResolution: number
 	/**
-	 * Every resolution `coastal_zone_cell` stores a row at, coarsest first — the ancestor chain a probe walks.
+	 * Every resolution `coastal_zone_cell` stores a row at, coarsest first —
+	 * the ancestor chain a probe walks.
 	 *
-	 * Several, and necessarily so: each feature's whole tier is compacted parent-ward, and a polygon too large for h3's
-	 * allocator at the index resolution was indexed coarser. A reader that probed one resolution would read every row at
-	 * the others as an absence.
+	 * Several, and necessarily so: each feature's whole tier is compacted parent-ward,
+	 * and a polygon too large for h3's allocator at the index resolution was indexed coarser.
+	 * A reader that probed one resolution would read every row at the others as an absence.
 	 */
 	cellResolutions: number[]
 	/**
@@ -292,10 +294,10 @@ export class CoastalErosionLookup implements Disposable {
 			"SELECT area_id, containment FROM coastal_zone_cell WHERE h3_cell = ? AND scenario_key = ?"
 		)
 
-		// two statements, and the split is the point. The attributes and the bbox are read without the blob, because the
-		// bbox is the ray cast's prefilter: pulling hundreds of thousands of vertices off disk only to reject the polygon
-		// on a rectangle would make the prefilter cost more than the test it replaces. A `whole` cell never reads the blob
-		// at all.
+		// two statements, and the split is the point. The attributes and the bbox are read without
+		// the blob, because the bbox is the ray cast's prefilter: pulling hundreds of thousands
+		// of vertices off disk only to reject the polygon on a rectangle would make the prefilter
+		// cost more than the test it replaces. A `whole` cell never reads the blob at all.
 		this.#selectArea = this.#database.prepare(
 			"SELECT area_id, frontage_id, distance_m, smp_no, smp_name, smp_pu, mt_policy, mt_policy_interp, lt_policy, " +
 				"lt_policy_interp, defence_type, published_year, min_lat, min_lon, max_lat, max_lon " +
@@ -308,8 +310,8 @@ export class CoastalErosionLookup implements Disposable {
 			"SELECT h3_cell, completeness, basis, observed_rows FROM layer_coverage WHERE h3_cell = ?"
 		)
 
-		// 160 rows, so the bounding-box prefilter is a table scan and that is the cheapest correct thing. The blob is read
-		// separately for the same reason as above.
+		// 160 rows, so the bounding-box prefilter is a table scan and that is the cheapest
+		// correct thing. The blob is read separately for the same reason as above.
 		this.#selectInstability = this.#database.prepare(
 			"SELECT area_id, kind, location, local_authority, smp_no, smp_name, smp_policy_units, rear_scarp_probability " +
 				"FROM coastal_ground_instability WHERE ? BETWEEN min_lon AND max_lon AND ? BETWEEN min_lat AND max_lat " +
@@ -324,8 +326,9 @@ export class CoastalErosionLookup implements Disposable {
 	/**
 	 * What the authority's map assigns at this coordinate, under one named scenario.
 	 *
-	 * @throws {Error} When `scenarioKey` names no scenario this layer holds. Returning an empty reading instead would
-	 *   make a typo indistinguishable from a coast the authority has not mapped.
+	 * @throws {Error} When `scenarioKey` names no scenario this layer holds.
+	 *   Returning an empty reading instead would make a typo indistinguishable
+	 *   from a coast the authority has not mapped.
 	 */
 	public lookup(latitude: number, longitude: number, scenarioKey: string): CoastalErosionReading {
 		const scenario = NCERM_SCENARIOS_BY_KEY.get(scenarioKey)
@@ -354,11 +357,12 @@ export class CoastalErosionLookup implements Disposable {
 	}
 
 	/**
-	 * The ground-instability polygons containing this coordinate — a different hazard from erosion, and never an answer
-	 * to an erosion question.
+	 * The ground-instability polygons containing this coordinate — a different hazard
+	 * from erosion, and never an answer to an erosion question.
 	 *
-	 * Its own method rather than a field on the erosion reading, because the two are different hazards with different
-	 * schemas and different authorities' meaning behind them. A caller that wants both asks for both.
+	 * Its own method rather than a field on the erosion reading, because the two are different
+	 * hazards with different schemas and different authorities' meaning behind them.
+	 * A caller that wants both asks for both.
 	 */
 	public groundInstabilityAt(latitude: number, longitude: number): CoastalGroundInstabilityReading[] {
 		const candidates = this.#selectInstability.all(longitude, latitude) as Array<{
@@ -460,8 +464,8 @@ export class CoastalErosionLookup implements Disposable {
 
 			rayCastRan = true
 
-			// The bbox is the prefilter the geometry table stores precisely so the ray cast runs on the few polygons that
-			// could contain the point rather than on every polygon reaching the cell.
+			// The bbox is the prefilter the geometry table stores precisely so the ray cast runs on the
+			// few polygons that could contain the point rather than on every polygon reaching the cell.
 			if (!bboxContains(area, longitude, latitude)) {
 				continue
 			}
@@ -504,8 +508,9 @@ function toDesignation(area: AreaRow, containment: CoastalContainmentPath): Coas
 			: {
 					shorelineManagementPlan: { number: area.smp_no, name: area.smp_name, policyUnit: area.smp_pu ?? "" },
 				}),
-		// The four policy fields travel together or not at all: an NFI row has no policy because the scenario assumes no
-		// intervention, and a half-populated policy object would read as a policy the authority declined to state.
+		// The four policy fields travel together or not at all: an NFI row has no policy
+		// because the scenario assumes no intervention, and a half-populated policy object
+		// would read as a policy the authority declined to state.
 		...(area.mt_policy === null && area.lt_policy === null
 			? {}
 			: {

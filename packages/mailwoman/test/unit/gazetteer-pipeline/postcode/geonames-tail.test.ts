@@ -25,7 +25,8 @@ let root: TemporaryDirectory
 let postalDir: string
 
 /**
- * A GeoNames postal row: country, postcode, place, admin1, code1, admin2, code2, admin3, code3, lat, lon, accuracy.
+ * A GeoNames postal row: country, postcode, place, admin1, code1, admin2, code2,
+ * admin3, code3, lat, lon, accuracy.
  */
 function row(cc: string, postcode: string, place: string, lat: number, lon: number): string {
 	return [cc, postcode, place, "R", "R1", "", "", "", "", String(lat), String(lon), "6"].join("\t")
@@ -70,8 +71,8 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	expect(result.missing).toEqual(["ZZ"])
 	expect(result.sources.map((s) => s.country)).toEqual(["CZ", "PL"])
 	expect(result.sources.every((s) => /^[0-9a-f]{32}$/.test(s.md5))).toBe(true)
-	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits rather than accessSync:
-	// root.path ignores the permission and would pass a W_OK probe on a sealed file).
+	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits rather than
+	// accessSync: root.path ignores the permission and would pass a W_OK probe on a sealed file).
 	expect((await statPath(out)).mode & 0o222).toBe(0)
 
 	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
@@ -86,9 +87,9 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	const spaced = db.prepare("SELECT COUNT(*) AS n FROM spr WHERE name = '110 00'").get() as { n: number }
 	expect(spaced.n).toBe(0)
 
-	// Medoid law: the centroid is one of the three member points — here 50.2/14.2, the one nearest the
-	// (50.2333, 14.2333) mean, which is itself not a member. A mean-of-members build would store the
-	// mean and put the postcode on no settlement at all.
+	// Medoid law: the centroid is one of the three member points — here 50.2/14.2,
+	// the one nearest the (50.2333, 14.2333) mean, which is itself not a member.
+	// A mean-of-members build would store the mean and put the postcode on no settlement at all.
 	const cz = db.prepare("SELECT latitude, longitude FROM spr WHERE country='CZ' AND name='11000'").get() as {
 		latitude: number
 		longitude: number
@@ -141,8 +142,8 @@ test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten lead, in its in
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: every entry is a distinct upper-case ISO-3166 alpha-2", () => {
-	// A duplicate would ingest a country twice under two id ranges, and a lower-case entry would miss its
-	// `<CC>.txt` and be reported missing — both silent, since neither stops the build.
+	// A duplicate would ingest a country twice under two id ranges, and a lower-case entry would
+	// miss its `<CC>.txt` and be reported missing — both silent, since neither stops the build.
 	const list = [...DEFAULT_GEONAMES_TAIL_COUNTRIES]
 
 	expect(list.filter((cc) => !/^[A-Z]{2}$/.test(cc))).toEqual([])
@@ -150,8 +151,8 @@ test("DEFAULT_GEONAMES_TAIL_COUNTRIES: every entry is a distinct upper-case ISO-
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the UAE is absent — Makani codes are not postcodes", () => {
-	// GeoNames publishes AE's 10-digit Makani building geocodes in the postal dump. They are a building
-	// reference rather than a postal code, and folding them stored 178,171 rows under a placetype that means
-	// something else.
+	// GeoNames publishes AE's 10-digit Makani building geocodes in the postal dump.
+	// They are a building reference rather than a postal code, and folding them stored
+	// 178,171 rows under a placetype that means something else.
 	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).not.toContain("AE")
 })

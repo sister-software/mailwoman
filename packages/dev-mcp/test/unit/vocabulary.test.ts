@@ -17,8 +17,8 @@ import { describe, expect, it } from "vitest"
 const { characterCoverage, measureLine, total } = __testing
 
 /**
- * Encodes each character as itself, except those in `absent`, which become one `<0xNN>` piece per UTF-8 byte — the
- * shape SentencePiece produces for a codepoint outside the vocabulary.
+ * Encodes each character as itself, except those in `absent`, which become one `<0xNN>` piece
+ * per UTF-8 byte — the shape SentencePiece produces for a codepoint outside the vocabulary.
  */
 const stub = (absent: string) => ({
 	encode: (text: string) => ({

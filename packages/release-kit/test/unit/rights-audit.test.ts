@@ -36,8 +36,8 @@ describe("auditRights", () => {
 		expect(enUS?.entriesNotTraining).toBe(4)
 		expect(enUS?.entriesStatingNoUse).toBe(1)
 
-		// Every one of cjk's entries states its terms and none states a use, so reading them as evaluation text would
-		// claim its model learned from none of them.
+		// Every one of cjk's entries states its terms and none states a use, so reading them
+		// as evaluation text would claim its model learned from none of them.
 		const cjk = audit.packages.find((entry) => entry.package === "@mailwoman/neural-weights-cjk")
 
 		expect(cjk?.entriesNotTraining).toBe(0)
@@ -78,9 +78,9 @@ describe("auditRights", () => {
 		expect(audit.register.sources).toBe(389)
 		expect(audit.register.eligible).toBe(0)
 
-		// Four blockers cover all 389, and the license one reaches the report only because refusals that differ by a
-		// quoted identifier are grouped: each source points at its own license id, so ungrouped it is 389 messages of
-		// one source each and never appears among the largest refusals.
+		// Four blockers cover all 389, and the license one reaches the report only because refusals
+		// that differ by a quoted identifier are grouped: each source points at its own license id,
+		// so ungrouped it is 389 messages of one source each and never appears among the largest refusals.
 		const universal = audit.register.refusals.filter((refusal) => refusal.sources === 389)
 
 		expect(universal).toHaveLength(4)

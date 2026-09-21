@@ -23,14 +23,14 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext }
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * The comment marker that keeps a deliberate copy out of the census. It must be followed by the reason, on the line
- * above the function.
+ * The comment marker that keeps a deliberate copy out of the census.
+ * It must be followed by the reason, on the line above the function.
  */
 export const SHADOW_IGNORE_MARKER = "repo-health-ignore private-name-shadows-export --"
 
 /**
- * Names too generic to mean the same thing twice: a private `normalize` beside an exported `normalize` is two different
- * normalizations rather than a copy.
+ * Names too generic to mean the same thing twice: a private `normalize` beside an
+ * exported `normalize` is two different normalizations rather than a copy.
  */
 const GENERIC_NAMES: ReadonlySet<string> = new Set([
 	"normalize",
@@ -95,8 +95,9 @@ function functionSites(file: string, text: string): FunctionSite[] {
 		const line = source.getLineAndCharacterOfPosition(start).line
 		const leading = ts.getLeadingCommentRanges(text, statement.getFullStart()) ?? []
 
-		// A formatter re-wraps a long JSDoc line and capitalizes a paragraph's first word, so the marker is matched with
-		// the comment's line breaks and leading asterisks collapsed to single spaces and the case folded.
+		// A formatter re-wraps a long JSDoc line and capitalizes a paragraph's first word,
+		// so the marker is matched with the comment's line breaks and leading asterisks
+		// collapsed to single spaces and the case folded.
 		const ignored = leading.some((range) =>
 			text
 				.slice(range.pos, range.end)
@@ -112,13 +113,13 @@ function functionSites(file: string, text: string): FunctionSite[] {
 }
 
 /**
- * Every module-private top-level function in `packages/*\/lib` whose name another module exports, minus the generic
- * names, the short ones, and the copies that carry the ignore marker with a reason.
+ * Every module-private top-level function in `packages/*\/lib` whose name another module exports,
+ * minus the generic names, the short ones, and the copies that carry the ignore marker with a reason.
  */
 export async function findPrivateNameShadows(context: RepoContext): Promise<PrivateNameShadow[]> {
 	const paths = await trackedSourcePaths(context, {
-		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` alone skips a file directly under `lib/`
-		// (`lib/index.ts`), the same quirk `tracked-sources.ts` documents.
+		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` alone skips a file
+		// directly under `lib/` (`lib/index.ts`), the same quirk `tracked-sources.ts` documents.
 		globs: ["packages/*/lib/*.ts", "packages/*/lib/*.tsx", "packages/*/lib/**/*.ts", "packages/*/lib/**/*.tsx"],
 		existingOnly: true,
 	})
@@ -156,8 +157,8 @@ export async function findPrivateNameShadows(context: RepoContext): Promise<Priv
 }
 
 /**
- * The check the 2026-09-04 name-shadow census asked for: each site as a warning, so a reviewer sees the copy and the
- * home it may already have.
+ * The check the 2026-09-04 name-shadow census asked for: each site as a warning,
+ * so a reviewer sees the copy and the home it may already have.
  */
 export const privateNameShadowsCheck: RepoCheck = {
 	id: "private-name-shadows-export",

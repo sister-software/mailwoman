@@ -46,8 +46,8 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the measurement — see the workspace readme for the table and the reasoning.
- * `--measure-resolutions` re-derives it.
+ * Index resolution, chosen from the measurement — see the workspace readme for the table
+ * and the reasoning. `--measure-resolutions` re-derives it.
  */
 const DEFAULT_INDEX_RESOLUTION = "9"
 
@@ -78,8 +78,8 @@ export const spec = {
 /**
  * Both halves of the check, as the summary lines they produce.
  *
- * A function rather than an inline block because two modes reach it: the tail of a build, and `--verify-only` against
- * an artifact some earlier run sealed.
+ * A function rather than an inline block because two modes reach it: the tail of a build,
+ * and `--verify-only` against an artifact some earlier run sealed.
  */
 async function runVerification(
 	databasePath: string,
@@ -132,9 +132,10 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const region = options.area ? options.area.toLowerCase() : prefix.toLowerCase()
 		const client = createSoilDataAccessClient()
 
-		// `--verify-only` checks an artifact that already exists and acquires nothing. A full-region build takes hours and
-		// seals its artifact before the check runs, so a check that could only run as the build's last step would cost a
-		// rebuild every time the check itself was worth re-running.
+		// `--verify-only` checks an artifact that already exists and acquires nothing.
+		// A full-region build takes hours and seals its artifact before the check runs,
+		// so a check that could only run as the build's last step would cost a rebuild
+		// every time the check itself was worth re-running.
 		if (options.verifyOnly) {
 			return runVerification(
 				options.out ?? String(dataRootPath("soil", "soil.db")),

@@ -68,9 +68,9 @@ export const GZT_MAP_VIEWER_URL = "https://www.myplan.ie/zoning-map-viewer/"
 /**
  * The attribution the item's `accessInformation` field carries, plus the licensor its `licenseInfo` names.
  *
- * Both halves ride, because the second is the half that holds this layer at `build-local`. The Department's own credit
- * line is the first. the all-rights-reserved clause naming Tailte Éireann as an upstream licensor is the second, and a
- * re-user who saw only the first would not know it exists.
+ * Both halves ride, because the second is the half that holds this layer at `build-local`.
+ * The Department's own credit line is the first. the all-rights-reserved clause naming Tailte Éireann
+ * as an upstream licensor is the second, and a re-user who saw only the first would not know it exists.
  */
 export const GZT_ATTRIBUTION =
 	"Department of Housing, Local Government, and Heritage (Generalised Zoning Types, MyPlan.ie). " +
@@ -79,11 +79,13 @@ export const GZT_ATTRIBUTION =
 /**
  * The licence expression written into `layer_manifest.license`.
  *
- * `noassertion` is the honest value and IT is not A placeholder. Three published statements disagree about the grant —
- * see {@link GZT_LICENSE_CONTRADICTION} — and the manifest column is a string a consumer reads as the terms it may rely
- * on. Writing `CC-BY-4.0` there while an all-rights-reserved clause names a licensor would be this program asserting a
- * grant nobody made. leaving the column empty would read as a layer whose licence nobody looked at. `noassertion` is
- * spdx's own token for a determination that has not been made, which is exactly the state.
+ * `noassertion` is the honest value and IT is not A placeholder.
+ * Three published statements disagree about the grant — see {@link GZT_LICENSE_CONTRADICTION} —
+ * and the manifest column is a string a consumer reads as the terms it may rely on.
+ * Writing `CC-BY-4.0` there while an all-rights-reserved clause names a licensor would
+ * be this program asserting a grant nobody made. leaving the column empty would read
+ * as a layer whose licence nobody looked at. `noassertion` is spdx's own token for a
+ * determination that has not been made, which is exactly the state.
  *
  * {@linkcode assertTierMatchesLicense} refuses a `shipped` build while this holds, so moving the tier takes a
  * deliberate edit at a guard that names the reason rather than a manifest field nobody notices.
@@ -102,19 +104,20 @@ export const GZT_LICENSE_CONTRADICTION =
 	"A shipped layer needs one grant it can quote, so this one is built locally and never redistributed."
 
 /**
- * The projected CRS the service and its bulk export both declare. The source is not in WGS84 — it is IRENET95 / Irish
- * Transverse Mercator, in metres — so the ingest reprojects and refuses a source declaring anything else.
+ * The projected CRS the service and its bulk export both declare.
+ * The source is not in WGS84 — it is IRENET95 / Irish Transverse Mercator, in metres —
+ * so the ingest reprojects and refuses a source declaring anything else.
  */
 export const GZT_SOURCE_EPSG = 2157
 
 /**
- * The extent the Department declares for the item, in CRS84 order `[minLon, minLat, maxLon, maxLat]` — the Republic of
- * Ireland, excluding Northern Ireland.
+ * The extent the Department declares for the item, in CRS84 order `[minLon, minLat, maxLon, maxLat]` —
+ * the Republic of Ireland, excluding Northern Ireland.
  *
- * The ingest asserts every reprojected vertex lands inside this. That is the check a projection check cannot make: the
- * bulk export carries Irish Transverse Mercator metres under a legacy `crs` member, so a reader that took the numbers
- * as degrees would place Ireland's zoning at latitude 735,435 — a well-formed set of coordinates in the Southern
- * Ocean.
+ * The ingest asserts every reprojected vertex lands inside this.
+ * That is the check a projection check cannot make: the bulk export carries Irish Transverse Mercator
+ * metres under a legacy `crs` member, so a reader that took the numbers as degrees would place
+ * Ireland's zoning at latitude 735,435 — a well-formed set of coordinates in the Southern Ocean.
  */
 export const GZT_DECLARED_BBOX: readonly [number, number, number, number] = [
 	-10.54553193079905, 51.452765583177616, -5.947766999109422, 54.47387941831219,
@@ -133,17 +136,19 @@ export const GZT_CROSSWALK_SCHEME = "IE-GZT"
 /**
  * The Department's second, coarser national code (`SZO`, Standardised Zoning Objective).
  *
- * Carried as published rather than derived. Measured over the whole national set it is a strict coarsening of the
- * generic type — no generic type maps to more than one `SZO` — but the roll-up is the Department's to change, so
- * re-deriving it here would replace a published fact with this package's arithmetic.
+ * Carried as published rather than derived. Measured over the whole national set it is a
+ * strict coarsening of the generic type — no generic type maps to more than one `SZO` —
+ * but the roll-up is the Department's to change, so re-deriving it here would
+ * replace a published fact with this package's arithmetic.
  */
 export const GZT_ROLLUP_SCHEME = "IE-SZO"
 
 /**
  * The vocabulary scheme one local authority's own zone codes belong to.
  *
- * PER authority rather than one pooled local scheme, because the codes collide: `Residential` means one thing in Cork
- * County Council's plan and another in Westmeath's, and pooling them would assert an equivalence no authority stated.
+ * PER authority rather than one pooled local scheme, because the codes collide:
+ * `Residential` means one thing in Cork County Council's plan and another in Westmeath's,
+ * and pooling them would assert an equivalence no authority stated.
  */
 export function localSchemeFor(authorityCode: string): string {
 	return `IE-LOCAL:${authorityCode}`
@@ -161,11 +166,12 @@ export interface ZoningTermDefinition {
 }
 
 /**
- * The Department's declared generic-type domain, verbatim from the service's own `GZT Code` coded-value domain.
+ * The Department's declared generic-type domain, verbatim from the service's
+ * own `GZT Code` coded-value domain.
  *
- * Fifty-four declared against fifty-five used. `N/A` appears on 4 of 85,330 rows and in no domain, so the ingest
- * records it as observed-but-undeclared rather than adding it here — a declaration this package wrote would be
- * indistinguishable from one the Department made.
+ * Fifty-four declared against fifty-five used. `N/A` appears on 4 of 85,330 rows and in no
+ * domain, so the ingest records it as observed-but-undeclared rather than adding it here —
+ * a declaration this package wrote would be indistinguishable from one the Department made.
  */
 export const GZT_DECLARED_CODES: ReadonlyArray<ZoningTermDefinition> = [
 	{ code: "P1", label: "Agriculture" },
@@ -230,8 +236,9 @@ export const GZT_DECLARED_CODES: ReadonlyArray<ZoningTermDefinition> = [
 export const GZT_DECLARED_CODE_SET: ReadonlySet<string> = new Set(GZT_DECLARED_CODES.map((term) => term.code))
 
 /**
- * The `PLAN_LEVEL` domain, verbatim. `SDZ` is declared and used on no row of the current edition. it is carried anyway,
- * because the domain is the Department's statement of what a plan may be rather than a census of what it is.
+ * The `PLAN_LEVEL` domain, verbatim. `SDZ` is declared and used on no row of the
+ * current edition. it is carried anyway, because the domain is the Department's
+ * statement of what a plan may be rather than a census of what it is.
  */
 export const GZT_PLAN_LEVELS: ReadonlyArray<ZoningTermDefinition> = [
 	{ code: "DP", label: "Development Plan" },
@@ -280,16 +287,18 @@ export const ProvenanceGrade = {
 export type ProvenanceGrade = (typeof ProvenanceGrade)[keyof typeof ProvenanceGrade]
 
 /**
- * The grade every row of this artifact carries. A government department republishing local authorities' adopted plans.
+ * The grade every row of this artifact carries. A government department
+ * republishing local authorities' adopted plans.
  */
 export const GZT_PROVENANCE_GRADE: ProvenanceGrade = ProvenanceGrade.Authoritative
 
 /**
  * What the product does not state, in the Department's own words.
  *
- * Carried onto every reading, because a caller holding a zone code cannot see from it that the answer is a generalised
- * republication rather than the plan itself. The first of these is the sharpest constraint the Department states, and
- * it is why this layer reports what a plan assigns at a location and never what may be built there.
+ * Carried onto every reading, because a caller holding a zone code cannot see from
+ * it that the answer is a generalised republication rather than the plan itself.
+ * The first of these is the sharpest constraint the Department states, and it is why this
+ * layer reports what a plan assigns at a location and never what may be built there.
  */
 export const GZT_PRODUCT_LIMITS: ReadonlyArray<string> = [
 	"Myplan.ie data are not published here as legal definitions of the current actuality with regard to Local Authority zoning or their geographic extents.",

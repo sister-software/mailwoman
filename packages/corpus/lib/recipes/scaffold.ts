@@ -39,10 +39,10 @@ export function recipeSourceID(adapterID: string, parts: Record<string, string |
  *
  * - `leading` — `«postcode» «locality», «region»`. `Rua da Praia, 15, 8600-315 Lagos, Algarve, Portugal`
  *   (`pt_structured`). The default, and what every tuple written before this field existed means.
- * - `after_locality` — `«locality» «postcode», «region»`. `…, Barcelona 6001, Anzoátegui, Venezuela`
- *   (`ve_city_postcode_trailing_state`).
- * - `after_region` — `«locality», «region» «postcode»`. `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`
- *   (`in_structured`).
+ * - `after_locality` — `«locality» «postcode», «region»`.
+ *   `…, Barcelona 6001, Anzoátegui, Venezuela` (`ve_city_postcode_trailing_state`).
+ * - `after_region` — `«locality», «region» «postcode»`.
+ *   `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India` (`in_structured`).
  */
 export type PostcodePlacement = "leading" | "after_locality" | "after_region"
 
@@ -52,56 +52,61 @@ export type PostcodePlacement = "leading" | "after_locality" | "after_region"
 export interface RecipeTuple {
 	locality?: string
 	/**
-	 * The segment before the locality, when the source has one. A recipe output whose every row begins with the locality
-	 * teaches that the first named segment is the locality, which flips the model's default — measured on the v4.8.0
-	 * candidate, where `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye Three Lords"`.
+	 * The segment before the locality, when the source has one.
+	 * A recipe output whose every row begins with the locality teaches that the first named
+	 * segment is the locality, which flips the model's default — measured on the v4.8.0 candidate,
+	 * where `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye Three Lords"`.
 	 */
 	dependentLocality?: string
 	region?: string
 	postcode?: string
 	country?: string
 	/**
-	 * Defaults to `leading` when absent. It is what every tuple file written before this field existed means. Therefore,
-	 * an old tuples file produces byte-identical rows.
+	 * Defaults to `leading` when absent. It is what every tuple file written before this
+	 * field existed means. Therefore, an old tuples file produces byte-identical rows.
 	 */
 	postcodePlacement?: PostcodePlacement
 	[k: string]: unknown
 }
 
 /**
- * The two seeded generators the legacy build scripts used, re-exported from their home in `@mailwoman/core/utils` so a
- * recipe keeps importing everything it needs from this one scaffold module.
+ * The two seeded generators the legacy build scripts used, re-exported from their home in
+ * `@mailwoman/core/utils` so a recipe keeps importing everything it needs from this one scaffold module.
  *
  * - `makeLcg` (`s = s*1664525 + 1013904223 mod 2^32`) — what the street/po-box/anchor builders seeded.
- * - `makeMulberry32` — what the majority of them used (german, locale, boundary-stress, unit, fr-order, country-balanced,
- *   intersection, fr-admin-split, street-affix, street-bare, po-box-cedex).
+ * - `makeMulberry32` — what the majority of them used (german, locale, boundary-stress, unit, fr-order,
+ *   country-balanced, intersection, fr-admin-split, street-affix, street-bare, po-box-cedex).
  *
- * A recipe must seed the same one its `.mjs` did, the same way it did (usually `seed`, but some derive a per-stream
- * seed), or `--seed N` stops being byte-reproducible.
+ * A recipe must seed the same one its `.mjs` did, the same way it did
+ * (usually `seed`, but some derive a per-stream seed), or `--seed N` stops being byte-reproducible.
  */
 
 /**
- * One CSV record, keyed by its lower-cased header name, every value trimmed. A column the header does not declare reads
- * as `undefined`; a column the header declares but this record does not reach reads as `""`.
+ * One CSV record, keyed by its lower-cased header name, every value trimmed.
+ * A column the header does not declare reads as `undefined`; a column the header declares
+ * but this record does not reach reads as `""`.
  */
 export type CSVRecord = Record<string, string | undefined>
 
 /**
  * Line breaks inside a value become single spaces, and every value is trimmed.
  *
- * A quote-aware parse is the first thing able to return a value containing a line break — `us/ia/statewide.csv` has 12,
- * all unit designators like `"#2\n#2"` — and every consumer synthesizes one-line address text from these cells with no
- * guard, because until that parse landed no value could carry one. Collapsing keeps the record (the address is fine.
- * the source's line break is not part of it) without emitting a training row with a newline inside it.
+ * A quote-aware parse is the first thing able to return a value containing a line break —
+ * `us/ia/statewide.csv` has 12, all unit designators like `"#2\n#2"` — and every
+ * consumer synthesizes one-line address text from these cells with no guard, because
+ * until that parse landed no value could carry one. Collapsing keeps the record
+ * (the address is fine. the source's line break is not part of it) without
+ * emitting a training row with a newline inside it.
  *
- * Only `\r` and `\n`, deliberately — not `\s`. Runs of spaces and tabs pass through exactly as the source wrote them
- * (OA's IA extract writes `north`, three spaces, `main street`), because those could always appear and every recipe
- * output built to date contains them. Widening this to `\s+` silently rewrites values on rows with no line break at
- * all. `scaffold.test.ts` pins both halves.
+ * Only `\r` and `\n`, deliberately — not `\s`. Runs of spaces and tabs pass through exactly
+ * as the source wrote them (OA's IA extract writes `north`, three spaces, `main street`),
+ * because those could always appear and every recipe output built to date contains them.
+ * Widening this to `\s+` silently rewrites values on rows with no line break at all.
+ * `scaffold.test.ts` pins both halves.
  *
- * This is what a CSV reader here still owns. Quote handling, object rows, and lower-case keys are `CSVSpliterator`'s
- * defaults, so a recipe reads a source with `CSVSpliterator.fromAsync(source).map(withoutLineBreaks)` and needs nothing
- * else.
+ * This is what a CSV reader here still owns. Quote handling, object rows,
+ * and lower-case keys are `CSVSpliterator`'s defaults, so a recipe reads a source with
+ * `CSVSpliterator.fromAsync(source).map(withoutLineBreaks)` and needs nothing else.
  *
  * @category CSV
  */
@@ -118,12 +123,14 @@ export function withoutLineBreaks(record: CSVRecord): CSVRecord {
 /**
  * Read a CSV as header-keyed records.
  *
- * Returns the spliterator's own {@linkcode AsyncSequence}, so a caller composes `take`/`drop`/`filter` onto it — those
- * ops fuse into one pull loop, and a `take` that is satisfied closes the source's file handle on the way out. Wrapping
- * this in an `async function*` costs an async frame per row and takes those ops away. don't.
+ * Returns the spliterator's own {@linkcode AsyncSequence}, so a caller
+ * composes `take`/`drop`/`filter` onto it — those ops fuse into one pull loop,
+ * and a `take` that is satisfied closes the source's file handle on the way out.
+ * Wrapping this in an `async function*` costs an async frame per row and takes those ops away. don't.
  *
- * A source at or below the spliterator's 128 KiB bulk threshold is read whole and parsed by the synchronous engine, so
- * this is also the right reader for small sources — there is no buffered variant to reach for.
+ * A source at or below the spliterator's 128 KiB bulk threshold is read whole
+ * and parsed by the synchronous engine, so this is also the right reader for small
+ * sources — there is no buffered variant to reach for.
  *
  * @category CSV
  */
@@ -134,9 +141,10 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
 /**
  * {@link readCSVRecords} over one member of a zip archive — what every recipe reading a cached OA source wants.
  *
- * A source a checkout has not cached yields nothing, after saying so. A lab holds the archives for the countries it has
- * built, so a recipe naming ten sources routinely finds three, and the `unzip -p` subprocesses these replaced behaved
- * the same way by accident — a non-zero exit warned and returned no rows. A recipe that ends up with no tuples at all
+ * A source a checkout has not cached yields nothing, after saying so.
+ * A lab holds the archives for the countries it has built, so a recipe naming ten sources routinely
+ * finds three, and the `unzip -p` subprocesses these replaced behaved the same way by accident —
+ * a non-zero exit warned and returned no rows. A recipe that ends up with no tuples at all
  * still throws. that is the case where the cache rather than the recipe, is the problem.
  *
  * @category CSV
@@ -154,19 +162,21 @@ export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: st
 }
 
 /**
- * License stamped on the synthetic tuple-derived recipe outputs (`po-box`, `no-street`, `house-venue`): the output is
- * generated, but it inherits the terms of the real tuples it is derived from, so the attribution travels with it.
+ * License stamped on the synthetic tuple-derived recipe outputs
+ * (`po-box`, `no-street`, `house-venue`): the output is generated, but it inherits the
+ * terms of the real tuples it is derived from, so the attribution travels with it.
  */
 export const SYNTHETIC_TUPLE_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
 /**
  * The surface key shared by the Norwegian recipes (`no-fragment`, `no-street-led`).
  *
- * Must match the Norwegian digit board's `norm_surface`: NFC, lowercase, collapse whitespace — and keep diacritics.
- * fr-fragment's norm strips them (NFD + combining-mark removal), which is right for French but would collapse
- * `Tømmerlien` → `tommerlien` here. Therefore, a recipe's exclusion check would never match the board's reserved
- * `tømmerlien` and the train/eval split would leak silently. Diacritic street heads (…vegen/…veien with ø/å/æ) are the
- * whole point of those recipes' boundary. folding them away is not an option.
+ * Must match the Norwegian digit board's `norm_surface`: NFC, lowercase, collapse whitespace —
+ * and keep diacritics. fr-fragment's norm strips them (NFD + combining-mark removal),
+ * which is right for French but would collapse `Tømmerlien` → `tommerlien` here.
+ * Therefore, a recipe's exclusion check would never match the board's reserved `tømmerlien`
+ * and the train/eval split would leak silently. Diacritic street heads (…vegen/…veien with ø/å/æ)
+ * are the whole point of those recipes' boundary. folding them away is not an option.
  */
 export const foldNOSurface = (value: string): string =>
 	value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
@@ -192,8 +202,8 @@ export interface OATupleFields {
 
 export interface ReadOATuplesOptions<T> {
 	/**
-	 * Stop after this many distinct tuples — the `break` closes the reader and releases the archive, which is what the
-	 * GB-scale countrywide extracts need.
+	 * Stop after this many distinct tuples — the `break` closes the reader and releases
+	 * the archive, which is what the GB-scale countrywide extracts need.
 	 */
 	limit?: number
 	/**
@@ -201,8 +211,8 @@ export interface ReadOATuplesOptions<T> {
 	 */
 	requirePostcode?: boolean
 	/**
-	 * Fold the postcode into the dedup key (`fr-order`'s key). The default key is
-	 * `${house_number}|${street}|${locality}`, lower-cased.
+	 * Fold the postcode into the dedup key (`fr-order`'s key).
+	 * The default key is `${house_number}|${street}|${locality}`, lower-cased.
 	 */
 	dedupIncludesPostcode?: boolean
 	/**
@@ -212,8 +222,9 @@ export interface ReadOATuplesOptions<T> {
 }
 
 /**
- * Stream distinct tuples out of a cached OA zip — the reader the OA-skeleton recipes (`street-affix`, `unit`,
- * `country-balanced`, `fr-order`) share. Field reads, filters, dedup keys and row order are exactly what each recipe's
+ * Stream distinct tuples out of a cached OA zip — the reader the OA-skeleton
+ * recipes (`street-affix`, `unit`, `country-balanced`, `fr-order`) share.
+ * Field reads, filters, dedup keys and row order are exactly what each recipe's
  * local copy did, so a recipe's output stays byte-identical.
  *
  * @category CSV
@@ -253,9 +264,9 @@ export async function readOATuples<T>(source: OATupleSource, options: ReadOATupl
  * Stream-parse a tuples jsonl file, yielding each parsed object (blank/invalid lines skipped).
  */
 export function readTuples(input: PathBuilderLike): AsyncSequence<RecipeTuple> {
-	// TextSpliterator (not JSONSpliterator) keeps the reader's established tolerance: malformed lines are skipped rather
-	// than rejecting the sequence. These operators fuse into the source's pull loop instead of adding an async-generator
-	// frame per tuple.
+	// TextSpliterator (not JSONSpliterator) keeps the reader's established tolerance: malformed lines
+	// are skipped rather than rejecting the sequence. These operators fuse into the
+	// source's pull loop instead of adding an async-generator frame per tuple.
 	return TextSpliterator.fromAsync(input)
 		.map((line) => line.trim())
 		.filter((line) => Boolean(line))
@@ -295,8 +306,9 @@ export interface RecipeLineSink {
 /**
  * Bind {@linkcode WriteRecipeLine} to a sink, supplying the delimiter.
  *
- * The content and the delimiter are separate writes. Stream writes are ordered, so the newline always follows its line,
- * and concatenating the two would stringify a non-string chunk through `toString()` and corrupt its bytes.
+ * The content and the delimiter are separate writes. Stream writes are ordered,
+ * so the newline always follows its line, and concatenating the two would stringify
+ * a non-string chunk through `toString()` and corrupt its bytes.
  */
 export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
 	return (line) => {
@@ -306,8 +318,9 @@ export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
 }
 
 /**
- * Run a canonical row through `alignRow` and, on success, write the `LabeledRow` (+ `synth_method` / `synth_base_id`)
- * as one jsonl line. Returns true if emitted, false if alignment quarantined it.
+ * Run a canonical row through `alignRow` and, on success, write the
+ * `LabeledRow` (+ `synth_method` / `synth_base_id`) as one jsonl line.
+ * Returns true if emitted, false if alignment quarantined it.
  */
 export function alignAndWrite(
 	write: WriteRecipeLine,
@@ -343,30 +356,33 @@ export interface RecipeOptions {
 	country?: string
 	intlFraction?: number
 	/**
-	 * `german`: fraction of native-order rows rendered with no commas at all (`Neusser Str. 12 Nippes 50733 Köln`), the
-	 * single-line register #1946 found the model loses the district on. Default 0.3.
+	 * `german`: fraction of native-order rows rendered with no commas at all
+	 * (`Neusser Str. 12 Nippes 50733 Köln`), the single-line register #1946 found
+	 * the model loses the district on. Default 0.3.
 	 */
 	commaFreeFraction?: number
 	/**
-	 * `german`: fraction of rows that carry a WOF Ortsteil of the tuple's locality as `dependent_locality`. Default 0.3.
-	 * 0 when no admin database is readable.
+	 * `german`: fraction of rows that carry a WOF Ortsteil of the tuple's locality as
+	 * `dependent_locality`. Default 0.3. 0 when no admin database is readable.
 	 */
 	ortsteilFraction?: number
 	/**
-	 * `german`: the WOF admin database the Ortsteil pool is read from. Default
-	 * `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db`.
+	 * `german`: the WOF admin database the Ortsteil pool is read from.
+	 * Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db`.
 	 */
 	adminDB?: string
 	/**
-	 * `locale`: fraction of rows that append an explicit country surface form + a `country` component. Default 0.
+	 * `locale`: fraction of rows that append an explicit country surface form +
+	 * a `country` component. Default 0.
 	 */
 	countryFraction?: number
 	/**
-	 * `locale`: tri-state override of the per-part `districtAsLocality` mapping for this invocation. `undefined` (flag
-	 * absent) leaves each `COUNTRY_SOURCES` part's own value untouched — every existing locale build stays
-	 * byte-identical. `true`/`false` forces that value on every part read this run. ES's pedanía recipe output
-	 * (`synth-es-pedania`) additionally uses `true` to select {@link LocaleCountrySource.pedaniaParts} instead of the
-	 * default `parts` — see `locale.ts`.
+	 * `locale`: tri-state override of the per-part `districtAsLocality` mapping for this invocation.
+	 * `undefined` (flag absent) leaves each `COUNTRY_SOURCES` part's own value untouched —
+	 * every existing locale build stays byte-identical. `true`/`false` forces that value
+	 * on every part read this run. ES's pedanía recipe output (`synth-es-pedania`)
+	 * additionally uses `true` to select {@link LocaleCountrySource.pedaniaParts}
+	 * instead of the default `parts` — see `locale.ts`.
 	 */
 	districtAsLocality?: boolean
 	bareProb?: number
@@ -378,8 +394,9 @@ export interface RecipeOptions {
 	banDir?: string
 	multilocaleCount?: number
 	/**
-	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list. Required for those
-	 * recipes — a recipe output that trains on its own eval set measures memorization. See their docstrings.
+	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved
+	 * street-surface list. Required for those recipes — a recipe output that trains on
+	 * its own eval set measures memorization. See their docstrings.
 	 */
 	excludeSurfaces?: string
 	/**
@@ -387,32 +404,35 @@ export interface RecipeOptions {
 	 */
 	counterProb?: number
 	/**
-	 * `no-fragment` knob 3: emit N copies of each street+number row whose number has >= longNumberMinDigits digits
-	 * (oversample the failing long-number class). Default 1 = no boost.
+	 * `no-fragment` knob 3: emit N copies of each street+number row whose number has >= longNumberMinDigits
+	 * digits (oversample the failing long-number class). Default 1 = no boost.
 	 */
 	longNumberBoost?: number
 	/**
-	 * `no-fragment` knob 3: minimum digit count for a number to count as "long" and be boosted. Default 3.
+	 * `no-fragment` knob 3: minimum digit count for a number to count as "long"
+	 * and be boosted. Default 3.
 	 */
 	longNumberMinDigits?: number
 	/**
-	 * `sub-venue`: the sub-venue lexicon JSON. Default = the committed `corpus/data/sub-venue-lexicon.json`, resolved
-	 * through the package manifest so it works from the source tree and from `out/`.
+	 * `sub-venue`: the sub-venue lexicon JSON. Default = the committed `corpus/data/sub-venue-lexicon.json`,
+	 * resolved through the package manifest so it works from the source tree and from `out/`.
 	 */
 	lexicon?: string
 	/**
-	 * `sub-venue`: directory of `sub-venue-extract` JSONLs, one per region. Default
-	 * `$MAILWOMAN_DATA_ROOT/sub-venue/extracts`.
+	 * `sub-venue`: directory of `sub-venue-extract` JSONLs, one per region.
+	 * Default `$MAILWOMAN_DATA_ROOT/sub-venue/extracts`.
 	 */
 	extractsDir?: string
 	/**
-	 * `sub-venue`: the `poi.db` spatial layer, read for the en-US and fr-FR venue + confound pools (the two of poi.db's
-	 * four countries this recipe has legs for). Default `$MAILWOMAN_DATA_ROOT/poi/poi.db`.
+	 * `sub-venue`: the `poi.db` spatial layer, read for the en-US and fr-FR venue +
+	 * confound pools (the two of poi.db's four countries this recipe has legs for).
+	 * Default `$MAILWOMAN_DATA_ROOT/poi/poi.db`.
 	 */
 	poiDB?: string
 	/**
-	 * `sub-venue`: GB/US/FR address-context tuples jsonl. Default the house-venue v3 tuples
-	 * (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v3.jsonl`); DE and ES read OpenAddresses directly.
+	 * `sub-venue`: GB/US/FR address-context tuples jsonl.
+	 * Default the house-venue v3 tuples (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v3.jsonl`);
+	 * DE and ES read OpenAddresses directly.
 	 */
 	subVenueTuples?: string
 	/**
@@ -429,9 +449,9 @@ export interface RecipeStats {
 	emitted: number
 	skipped: number
 	/**
-	 * Rows dropped because their street surface is reserved by an eval board (`--exclude-surfaces`). Separate from
-	 * `skipped` on purpose: a nonzero value is the audit trail that the train/eval split actually fired. Zero when a
-	 * recipe has no board split.
+	 * Rows dropped because their street surface is reserved by an eval board (`--exclude-surfaces`).
+	 * Separate from `skipped` on purpose: a nonzero value is the audit trail that the
+	 * train/eval split actually fired. Zero when a recipe has no board split.
 	 */
 	contaminated?: number
 }
@@ -465,8 +485,8 @@ export interface CorpusRecipe {
 	 */
 	options?: RecipeOption[]
 	/**
-	 * Do the build: create the recipe's prng from `opts.seed` (its legacy generator — `makeLcg` or `makeMulberry32` — for
-	 * byte-reproducibility), synthesize, and emit each row via `write`.
+	 * Do the build: create the recipe's prng from `opts.seed` (its legacy generator — `makeLcg`
+	 * or `makeMulberry32` — for byte-reproducibility), synthesize, and emit each row via `write`.
 	 */
 	run(opts: RecipeOptions, write: WriteRecipeLine): Promise<RecipeStats>
 }

@@ -127,8 +127,8 @@ describe("findPlace — population boost", () => {
 		const candidates = await dbg.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
 		const springfields = candidates.filter((c) => c.name === "Springfield")
 		expect(springfields).toHaveLength(4)
-		// With boost=0, the four Springfields tie on BM25 + everything else. Ordering is
-		// implementation-defined but all should have identical scores.
+		// With boost=0, the four Springfields tie on BM25 + everything else.
+		// Ordering is implementation-defined but all should have identical scores.
 		const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
 		expect(scores.size).toBe(1)
 	})

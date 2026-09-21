@@ -33,15 +33,16 @@ type StreamingArchive = Awaited<ReturnType<typeof openArchive>>
 type EntryStream = Awaited<ReturnType<Entry["openReadStream"]>>
 
 /**
- * The one place this package touches yauzl's own lifecycle. Every reader below ends an archive by leaving scope, so
- * `close()` is called here and nowhere else.
+ * The one place this package touches yauzl's own lifecycle.
+ * Every reader below ends an archive by leaving scope, so `close()` is called here and nowhere else.
  */
 async function openStreamingArchive(
 	archivePath: PathBuilderLike,
 	options?: ZipNameOptions
 ): Promise<StreamingArchive & AsyncDisposable> {
-	// `decodeStrings: false` hands back the central directory's raw name bytes, which is the only way to read a name the
-	// archive never said the encoding of. See {@link ZipNameOptions}.
+	// `decodeStrings: false` hands back the central directory's raw name bytes,
+	// which is the only way to read a name the archive never said the encoding of.
+	// See {@link ZipNameOptions}.
 	const archive = await openArchive(String(archivePath), options?.filenameEncoding ? { decodeStrings: false } : {})
 
 	return Object.assign(archive, { [Symbol.asyncDispose]: () => archive.close() })
@@ -50,19 +51,22 @@ async function openStreamingArchive(
 /**
  * How to read member names that the archive does not declare an encoding for.
  *
- * A zip flags UTF-8 names with bit 11, and yauzl decodes those correctly. Without the flag the format says CP437, so a
- * publisher writing CP949, Shift_JIS or GBK names produces bytes that decode to mojibake and match no selector —
+ * A zip flags UTF-8 names with bit 11, and yauzl decodes those correctly.
+ * Without the flag the format says CP437, so a publisher writing CP949, Shift_JIS
+ * or GBK names produces bytes that decode to mojibake and match no selector —
  * Korea's address portal writes `주소_서울특별시.txt` and the reader sees `┴╓╝╥_╝¡┐ïÆ╣▌╗π.txt`.
  *
- * Naming an encoding decodes the RAW bytes instead, which is not the same as recoding the mojibake back through CP437:
- * that round trip needs a 256-entry table and silently mangles any byte CP437 maps to a character it cannot invert.
+ * Naming an encoding decodes the RAW bytes instead, which is not the same as
+ * recoding the mojibake back through CP437: that round trip needs a 256-entry table
+ * and silently mangles any byte CP437 maps to a character it cannot invert.
  *
  * @category Files
  */
 export interface ZipNameOptions {
 	/**
-	 * An `iconv-lite` label — `cp949`, `shift_jis`, `gbk`. Omit when the archive's names are ascii or properly flagged
-	 * UTF-8, which is every other archive this repository reads.
+	 * An `iconv-lite` label — `cp949`, `shift_jis`, `gbk`.
+	 * Omit when the archive's names are ascii or properly flagged UTF-8,
+	 * which is every other archive this repository reads.
 	 */
 	filenameEncoding?: string
 }
@@ -70,9 +74,9 @@ export interface ZipNameOptions {
 /**
  * A member's name, decoded as {@link ZipNameOptions} asks.
  *
- * `iconv-lite` rather than `TextDecoder` for the reason `decodeByteStream` gives: Node's whatwg `euc-kr` is EUC-KR
- * proper and reads 8,824 of CP949's 17,048 two-byte sequences differently, so a member whose name uses the UHC
- * extension would be looked for under a name that does not exist.
+ * `iconv-lite` rather than `TextDecoder` for the reason `decodeByteStream` gives: Node's whatwg
+ * `euc-kr` is EUC-KR proper and reads 8,824 of CP949's 17,048 two-byte sequences differently,
+ * so a member whose name uses the UHC extension would be looked for under a name that does not exist.
  */
 function entryName(entry: Entry, options?: ZipNameOptions): string {
 	const raw = entry.filename as unknown
@@ -85,28 +89,32 @@ function entryName(entry: Entry, options?: ZipNameOptions): string {
 /**
  * One member's decompressed byte stream, ended when the owning scope exits.
  *
- * Node's own `Readable[Symbol.asyncDispose]` cannot serve here. A consumer that stops early has already destroyed the
- * stream with an `AbortError`, and that disposer waits on the stream's end event and re-raises it — turning a
- * deliberate `break` into a throw. Destroying without a reason ends the stream on every path and reports none of them.
+ * Node's own `Readable[Symbol.asyncDispose]` cannot serve here.
+ * A consumer that stops early has already destroyed the stream with an `AbortError`, and that disposer
+ * waits on the stream's end event and re-raises it — turning a deliberate `break` into a throw.
+ * Destroying without a reason ends the stream on every path and reports none of them.
  */
 async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<EntryStream & AsyncDisposable> {
 	const contents = await entry.openReadStream(options)
 
 	return Object.assign(contents, {
 		[Symbol.asyncDispose]: async () => {
-			// A member read to its end has already released yauzl's read, and its `close` has already been delivered — so
-			// waiting for that event here would wait forever. `readableEnded` is the test that separates the two paths:
-			// true after a full read, false after a `take` or a `break`. `closed` is not the test, because Node sets it when
-			// the close event is queued rather than delivered, so a guard on it skips the wait on the path that needs it.
+			// A member read to its end has already released yauzl's read, and its `close` has
+			// already been delivered — so waiting for that event here would wait forever.
+			// `readableEnded` is the test that separates the two paths: true after a
+			// full read, false after a `take` or a `break`. `closed` is not the test,
+			// because Node sets it when the close event is queued rather than delivered,
+			// so a guard on it skips the wait on the path that needs it.
 			if (contents.readableEnded) return
 
 			const closed = once(contents, "close").catch(() => undefined)
 
 			contents.destroy()
 
-			// Wait for the teardown to finish rather than merely to start. `destroy()` returns before yauzl has released its read,
-			// and the archive's own disposer runs next: it then raises `Cannot close while reading in progress` on the
-			// early-exit path this reader documents as supported.
+			// Wait for the teardown to finish rather than merely to start.
+			// `destroy()` returns before yauzl has released its read, and the archive's own
+			// disposer runs next: it then raises `Cannot close while reading in progress`
+			// on the early-exit path this reader documents as supported.
 			await closed
 		},
 	})
@@ -172,7 +180,8 @@ export type ZipEntrySelector = string | RegExp
  */
 export interface ZipEntryInfo {
 	/**
-	 * The archive-internal path, e.g. `it/countrywide.csv`. Directory entries keep their trailing slash.
+	 * The archive-internal path, e.g. `it/countrywide.csv`.
+	 * Directory entries keep their trailing slash.
 	 */
 	name: string
 	compressedSize: number
@@ -206,9 +215,9 @@ export async function listZipEntries(archivePath: PathBuilderLike, options?: Zip
 /**
  * Stream one member's decompressed bytes out of an archive on disk.
  *
- * Nothing beyond the central directory and the inflate window is held in memory, so this is bounded by the consumer
- * rather than by the member's size. A consumer that stops early — a `take`, a `break` — destroys the member stream and
- * closes the archive on the way out.
+ * Nothing beyond the central directory and the inflate window is held in memory, so this is bounded
+ * by the consumer rather than by the member's size. A consumer that stops early — a `take`,
+ * a `break` — destroys the member stream and closes the archive on the way out.
  *
  * @category Files
  * @throws If no member matches `selector`.
@@ -265,10 +274,11 @@ export interface ExtractZipEntriesOptions {
 	 */
 	selector?: ZipEntrySelector
 	/**
-	 * Write each member under its basename rather than its archive-internal path, flattening the tree — `unzip -j`.
+	 * Write each member under its basename rather than its archive-internal path,
+	 * flattening the tree — `unzip -j`.
 	 *
-	 * The shapefile archives this exists for carry their siblings in one directory, and the readers downstream expect
-	 * them flat.
+	 * The shapefile archives this exists for carry their siblings in one directory,
+	 * and the readers downstream expect them flat.
 	 */
 	flatten?: boolean
 	/**
@@ -280,8 +290,8 @@ export interface ExtractZipEntriesOptions {
 /**
  * Extract members of an archive into `destinationDirectory`.
  *
- * Directory entries are skipped. a nested path is created as needed unless `flatten` is set. Members stream one at a
- * time, so this is bounded by the largest member rather than by the archive.
+ * Directory entries are skipped. a nested path is created as needed unless `flatten` is set.
+ * Members stream one at a time, so this is bounded by the largest member rather than by the archive.
  *
  * @category Files
  *
@@ -320,10 +330,12 @@ export async function extractZipEntries(
 }
 
 /**
- * Verify every member's CRC-32 against the value its central-directory header claims — what `unzip -t` is for.
+ * Verify every member's CRC-32 against the value its central-directory header
+ * claims — what `unzip -t` is for.
  *
- * This is a corruption check on a download, so it decompresses everything and keeps nothing. the archive is read one
- * member at a time and the checksum is folded chunk by chunk, so memory is bounded by the inflate window.
+ * This is a corruption check on a download, so it decompresses everything
+ * and keeps nothing. the archive is read one member at a time and the checksum is
+ * folded chunk by chunk, so memory is bounded by the inflate window.
  *
  * The CRC is computed here rather than delegated to yauzl's `validateCrc32`, which asserts `Cannot validate CRC32 for
  * uncompressed data` on a stored member — and a corrupt stored member is precisely what this is meant to catch. Folding
@@ -331,8 +343,8 @@ export async function extractZipEntries(
  *
  * @category Files
  *
- * @returns The number of members checked. @throws If the archive is unreadable, or any member's checksum or length
- * disagrees with its header.
+ * @returns The number of members checked. @throws If the archive is unreadable,
+ *   or any member's checksum or length disagrees with its header.
  */
 export async function verifyZipIntegrity(archivePath: PathBuilderLike): Promise<number> {
 	await using archive = await openStreamingArchive(archivePath)

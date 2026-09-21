@@ -54,8 +54,8 @@ describe("variantsFor (pure)", () => {
 	})
 
 	it("country uses the OpenCage-canonical name for the default slot value", () => {
-		// Caller is expected to pass COUNTRY_DISPLAY_NAME's value for the default slot. we just
-		// verify the variant uses whatever selfName was passed.
+		// Caller is expected to pass COUNTRY_DISPLAY_NAME's value for the default slot.
+		// we just verify the variant uses whatever selfName was passed.
 		const v = variantsFor(rec({ name: "United States", placetype: "country" }), [], "United States of America")
 		expect(v).toHaveLength(1)
 		expect(v[0]!.components).toEqual({ country: "United States of America" })
@@ -156,12 +156,13 @@ describe("wof-admin-json adapter against fixture", () => {
 
 		const rows = await loadRows()
 		const portland = rows.filter((r) => r.source_id.startsWith("wof-admin-1012-default-"))
-		// Self variant is the bare "Portland". Surface form for the with-region / with-region-country
-		// variants depends on the US OpenCage template's pruning rules (state abbreviation, dropped
-		// counties); they may render differently or fold via reconcileComponents. We assert only
-		// that the self variant exists, the canonical-only path produced exactly one name slot's
-		// worth of rows (no spurious slot from name:eng_x_preferred = "Portland" since it matches
-		// the canonical), and that at least one variant carries an ancestor component.
+		// Self variant is the bare "Portland". Surface form for the with-region /
+		// with-region-country variants depends on the US OpenCage template's pruning
+		// rules (state abbreviation, dropped counties); they may render differently
+		// or fold via reconcileComponents. We assert only that the self variant exists,
+		// the canonical-only path produced exactly one name slot's worth of rows
+		// (no spurious slot from name:eng_x_preferred = "Portland" since it matches the canonical),
+		// and that at least one variant carries an ancestor component.
 		expect(portland.map((r) => r.raw)).toContain("Portland")
 
 		const withAncestor = portland.find(
@@ -214,8 +215,8 @@ describe("wof-admin-json adapter against fixture", () => {
 		})
 
 		const rows = await loadRows()
-		// The alt-geometry file for Portland carries a deliberately-different name. If the adapter
-		// had walked it, we'd see "(alt-geometry, should be ignored)" leaking into a row.
+		// The alt-geometry file for Portland carries a deliberately-different name.
+		// If the adapter had walked it, we'd see "(alt-geometry, should be ignored)" leaking into a row.
 		expect(rows.some((r) => r.raw.includes("alt-geometry"))).toBe(false)
 	})
 

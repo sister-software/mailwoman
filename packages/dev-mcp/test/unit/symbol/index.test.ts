@@ -67,8 +67,8 @@ describe("extractDeclaredSymbols", () => {
 	})
 
 	it("ignores a constant that is not a function", () => {
-		// A duplicated table or literal is a different problem with a different answer. reporting them would bury the
-		// duplicated logic this exists to surface.
+		// A duplicated table or literal is a different problem with a different answer.
+		// reporting them would bury the duplicated logic this exists to surface.
 		expect(extractDeclaredSymbols('const MAX_SAMPLES = 1024\nconst NAME = "x"')).toEqual([])
 	})
 })
@@ -135,8 +135,8 @@ describe("readWriteIntent", () => {
 	})
 
 	it("reads only the replacement text from an Edit", () => {
-		// The surrounding file is not the author's current intent, and scanning it would report every declaration the
-		// file already has against itself.
+		// The surrounding file is not the author's current intent, and scanning it would
+		// report every declaration the file already has against itself.
 		const intent = readWriteIntent({
 			tool_name: "Edit",
 			tool_input: { file_path: "/repo/a.ts", old_string: "x", new_string: "function percentile() {}" },
@@ -186,8 +186,8 @@ describe("formatFindings", () => {
 	})
 
 	it("says the existing implementation may be the wrong one to reuse", () => {
-		// api-kit's `percentile` takes a fraction where core's takes [0, 100]. A hint phrased as an instruction would
-		// have an author collapse those two and silently change a unit.
+		// api-kit's `percentile` takes a fraction where core's takes [0, 100].
+		// A hint phrased as an instruction would have an author collapse those two and silently change a unit.
 		const text = formatFindings([
 			{ name: "percentile", sites: [declarationSite("packages/core/utils/stats.ts", true, 12)] },
 		])
@@ -219,8 +219,9 @@ describe("selectReportable", () => {
 	})
 
 	it("suppresses a name that is declared everywhere and exported nowhere", () => {
-		// `main` had 34 declaration sites at the time this rule was chosen and not one of them is importable. A stoplist
-		// would have to name it. this rule derives it, which is the difference that keeps the rule from going stale.
+		// `main` had 34 declaration sites at the time this rule was chosen and not one
+		// of them is importable. A stoplist would have to name it. this rule derives it,
+		// which is the difference that keeps the rule from going stale.
 		const found = new Map([["main", [declarationSite("scripts/a.ts", false), declarationSite("scripts/b.ts", false)]]])
 
 		expect(selectReportable(found, { writingFile: "scripts/c.ts" })).toEqual([])
@@ -248,8 +249,9 @@ describe("selectReportable", () => {
 
 describe("a missing ripgrep", () => {
 	it("says the search could not run rather than answering zero", () => {
-		// Meaning-of-zero: an empty result must mean "searched and found nothing". If the searcher never ran, the
-		// caller has to hear that, because a silent zero here reads as "this symbol has no home".
+		// Meaning-of-zero: an empty result must mean "searched and found nothing".
+		// If the searcher never ran, the caller has to hear that, because a silent
+		// zero here reads as "this symbol has no home".
 		expect(() => findDeclarations(["percentile"], { cwd: FIXTURE_ROOT, binary: "rg-does-not-exist" })).toThrow(
 			/ripgrep/i
 		)

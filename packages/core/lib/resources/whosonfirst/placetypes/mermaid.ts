@@ -11,10 +11,11 @@ import { type PlacetypeRole, PlacetypeRoles } from "#resources/whosonfirst/place
 import type { Placetype } from "#resources/whosonfirst/placetypes/Placetype"
 
 /**
- * Mermaid's `classDef` parser uses commas to separate style properties, so an `rgb(r, g, b)` value (which
- * d3-scale-chromatic emits for several interpolators, e.g. `interpolateRainbow`, `interpolateTurbo`,
- * `interpolateSinebow`) breaks the parse. Convert any d3-color-recognised input to hex before embedding. `d3-color`
- * already handles hex/rgb/rgba/hsl/named inputs.
+ * Mermaid's `classDef` parser uses commas to separate style properties,
+ * so an `rgb(r, g, b)` value (which d3-scale-chromatic emits for several interpolators,
+ * e.g. `interpolateRainbow`, `interpolateTurbo`, `interpolateSinebow`) breaks the parse.
+ * Convert any d3-color-recognised input to hex before embedding.
+ * `d3-color` already handles hex/rgb/rgba/hsl/named inputs.
  */
 function toMermaidColor(input: string): string {
 	const parsed = rgb(input)
@@ -46,8 +47,8 @@ const PlacetypeRoleText = {
 } as const satisfies Record<PlacetypeRole, string>
 
 /**
- * A color interpolator — compatible with d3-scale-chromatic's `interpolate*` functions (e.g. `interpolateViridis`,
- * `interpolateTurbo`). Receives `t ∈ [0, 1]` and returns a CSS color string.
+ * A color interpolator — compatible with d3-scale-chromatic's `interpolate*` functions
+ * (e.g. `interpolateViridis`, `interpolateTurbo`). Receives `t ∈ [0, 1]` and returns a CSS color string.
  */
 export type InterpolateColorCallback = (t: number) => string
 
@@ -61,9 +62,10 @@ export interface GenerateMermaidMarkupOptions {
 	 * (maxDepth - 1)`. This traces a smooth gradient along any lineage path (e.g. `planet → continent → country → …`) and
 	 * gives a visual cue for how deep an edge sits in the tree.
 	 *
-	 * Defaults to d3-scale-chromatic's `interpolateViridis` — perceptually uniform and colorblind-friendly. Node
-	 * fills/strokes are _not_ affected. they always use the hand-tuned {@linkcode PlacetypeRoleColor} palette, which
-	 * carries more semantic weight than a sampled gradient for only three categorical role values.
+	 * Defaults to d3-scale-chromatic's `interpolateViridis` — perceptually uniform
+	 * and colorblind-friendly. Node fills/strokes are _not_ affected. they always use
+	 * the hand-tuned {@linkcode PlacetypeRoleColor} palette, which carries more semantic
+	 * weight than a sampled gradient for only three categorical role values.
 	 */
 	edgeInterpolator?: InterpolateColorCallback
 }
@@ -82,8 +84,9 @@ const HAND_TUNED_PALETTE: Record<PlacetypeRole, RolePalette> = Object.fromEntrie
 ) as Record<PlacetypeRole, RolePalette>
 
 /**
- * Walk the (filtered) subtree once to determine the deepest reachable descendant. Mirrors the structure of the
- * emit-walk in {@linkcode generateMermaidMarkup} so the depths it computes line up with the edges that will be emitted.
+ * Walk the (filtered) subtree once to determine the deepest reachable descendant.
+ * Mirrors the structure of the emit-walk in {@linkcode generateMermaidMarkup}
+ * so the depths it computes line up with the edges that will be emitted.
  * Cycles in the DAG are guarded by the `visited` set.
  */
 function measureMaxDepth(root: Placetype, roles: Iterable<PlacetypeRole> | undefined): number {
@@ -112,13 +115,14 @@ function measureMaxDepth(root: Placetype, roles: Iterable<PlacetypeRole> | undef
 /**
  * Generate a Mermaid flowchart markup for a placetype and its descendants.
  *
- * The walk is a recursive `findChildren` traversal — every emitted edge is a real direct-parent → direct-child
- * relationship. WOF placetypes form a DAG (e.g. `borough` has both `country` and `macroregion` as parents), so a child
- * can legitimately appear on multiple edges. the `visited` set prevents the subtree below it from being re-emitted.
+ * The walk is a recursive `findChildren` traversal — every emitted edge is a
+ * real direct-parent → direct-child relationship. WOF placetypes form a DAG
+ * (e.g. `borough` has both `country` and `macroregion` as parents), so a child can legitimately
+ * appear on multiple edges. the `visited` set prevents the subtree below it from being re-emitted.
  *
- * Edges are colored by depth from the root via {@linkcode GenerateMermaidMarkupOptions.edgeInterpolator} (default:
- * viridis), so any lineage path traces a smooth gradient down the chart. Node fills always use the hand-tuned role
- * palette.
+ * Edges are colored by depth from the root via {@linkcode GenerateMermaidMarkupOptions.edgeInterpolator}
+ * (default: viridis), so any lineage path traces a smooth gradient down the chart.
+ * Node fills always use the hand-tuned role palette.
  */
 export function generateMermaidMarkup(placetype: Placetype, options: GenerateMermaidMarkupOptions = {}): string {
 	const { roles, edgeInterpolator = interpolateViridis } = options

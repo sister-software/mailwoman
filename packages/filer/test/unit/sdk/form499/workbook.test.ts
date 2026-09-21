@@ -95,8 +95,8 @@ describe("parseForm499Workbook — lifecycle and footprint", () => {
 	it("distinguishes 'the FCC said nothing' from 'this source cannot say'", async () => {
 		const [otelco] = await readFixture()
 
-		// A workbook row with blank notes yields an empty lifecycle, never undefined. Undefined is
-		// reserved for the TSV path, which has no note columns at all.
+		// A workbook row with blank notes yields an empty lifecycle, never undefined.
+		// Undefined is reserved for the TSV path, which has no note columns at all.
 		expect(otelco?.lifecycle).toEqual({ notes: [], reasons: [], unrecognized: 0 })
 		expect(otelco?.lifecycle).toBeDefined()
 	})

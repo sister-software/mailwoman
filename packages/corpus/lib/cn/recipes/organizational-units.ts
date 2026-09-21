@@ -31,13 +31,15 @@ import { alignRow } from "#utils/align"
 import { cjkAwareTokenizer } from "#utils/tokenize"
 
 /**
- * The leading run of Han characters (plus the digits an ordinal may be written with): the Chinese half of a row.
+ * The leading run of Han characters (plus the digits an ordinal may be written with):
+ * the Chinese half of a row.
  */
 const LEADING_HAN = /^[\p{Script=Han}〇\d]+/u
 
 /**
- * Admin prefixes a CJK address writes in front of the settlement, coarsest first. Each is matched at the start of what
- * remains, so `云南省临沧市孟定农场三分场二队` peels `云南省` (province), `临沧市` (city), and hands `孟定农场三分场二队` to the unit reader.
+ * Admin prefixes a CJK address writes in front of the settlement, coarsest first.
+ * Each is matched at the start of what remains, so `云南省临沧市孟定农场三分场二队` peels `云南省` (province),
+ * `临沧市` (city), and hands `孟定农场三分场二队` to the unit reader.
  */
 const ADMIN_PREFIXES: ReadonlyArray<readonly [pattern: RegExp, tag: "region" | "locality" | "subregion"]> = [
 	[/^(.+?(?:省|自治区))/u, "region"],
@@ -46,8 +48,8 @@ const ADMIN_PREFIXES: ReadonlyArray<readonly [pattern: RegExp, tag: "region" | "
 ]
 
 /**
- * The components a row's string supports, every value a verbatim substring of `raw`, or `null` when the string carries
- * no organizational chain and so teaches nothing this recipe exists for.
+ * The components a row's string supports, every value a verbatim substring of `raw`, or `null`
+ * when the string carries no organizational chain and so teaches nothing this recipe exists for.
  */
 export function labelCNOrganizationalRow(raw: string): Record<string, string> | null {
 	const han = LEADING_HAN.exec(raw)?.[0]
@@ -80,8 +82,8 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
 	const tail = raw.slice(han.length).trim()
 
 	if (tail) {
-		// `, Heilongjiang, China` or `Hunan China` or `Inner Mongolia`: comma segments when there are commas, else the last
-		// word is the country when it says so and the rest is the admin1 name.
+		// `, Heilongjiang, China` or `Hunan China` or `Inner Mongolia`: comma segments when there are
+		// commas, else the last word is the country when it says so and the rest is the admin1 name.
 		const segments = tail.includes(",")
 			? tail
 					.split(",")
@@ -102,8 +104,8 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
 }
 
 /**
- * A space-separated tail: `Hunan China` → [`Hunan`, `China`]; `Inner Mongolia` → [`Inner Mongolia`]; `Xinjiang Uyghur`
- * → [`Xinjiang Uyghur`].
+ * A space-separated tail: `Hunan China` → [`Hunan`, `China`]; `Inner Mongolia` →
+ * [`Inner Mongolia`]; `Xinjiang Uyghur` → [`Xinjiang Uyghur`].
  */
 function tailWithoutCommas(tail: string): string[] {
 	const words = tail.split(/\s+/u).filter((word) => word.length)
@@ -119,8 +121,8 @@ function tailWithoutCommas(tail: string): string[] {
 const SOURCE = "coarse-placer-cn-units"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the rows it labels and why every label is a
- * reading of a generic rather than a guess.
+ * Recipe registered with the corpus builder — see the file header for the rows it labels
+ * and why every label is a reading of a generic rather than a guess.
  */
 export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 	name: "cn-organizational-units",
@@ -176,8 +178,8 @@ export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 					"CC-BY-4.0 — GeoNames populated places, INFERRED from the `<name>, <admin1>, <country>` row shape; data/coarse-placer carries no per-row source",
 			}
 
-			// Verbatim only: every value above is a substring of `raw`, so an edit-distance match would mean this file
-			// has a bug rather than that the source spells something differently.
+			// Verbatim only: every value above is a substring of `raw`, so an edit-distance match
+			// would mean this file has a bug rather than that the source spells something differently.
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0], { tokenizer, maxEditDistance: 0 })
 
 			if (aligned.kind !== "labeled" || !aligned.row) {

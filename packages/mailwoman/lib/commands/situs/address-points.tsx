@@ -134,8 +134,9 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const { licenseForOvertureCountry, nationalAddressPointsPath, streetLocaleForOvertureCountry } =
 			await import("#geocode/national-overture")
 
-		// A national build keys with the locale the provider will read it with — the one-function discipline across the
-		// build/probe boundary. an unregistered country throws here rather than keying with the wrong rules.
+		// A national build keys with the locale the provider will read it with —
+		// the one-function discipline across the build/probe boundary. an unregistered
+		// country throws here rather than keying with the wrong rules.
 		const nationalLocale = COUNTRY ? streetLocaleForOvertureCountry(COUNTRY) : undefined
 
 		const finalOut = resolvePath(
@@ -146,8 +147,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		)
 
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
-		// and the DuckDB parquet/CSV reader (@duckdb/node-api, a dev dep). Both dynamic + guarded so the
-		// published CLI doesn't force them on every consumer.
+		// and the DuckDB parquet/CSV reader (@duckdb/node-api, a dev dep).
+		// Both dynamic + guarded so the published CLI doesn't force them on every consumer.
 		let pointSchema: typeof import("@mailwoman/resolver-wof-sqlite/address")
 		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
 
@@ -213,16 +214,17 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 							ST_Point(lon, lat))`
 		}
 
-		// License filter: pushed into DuckDB so the parquet scan drops ineligible rows before transfer.
-		// lower() matches case-insensitively against our normalised allow-list.
+		// License filter: pushed into DuckDB so the parquet scan drops ineligible rows
+		// before transfer. lower() matches case-insensitively against our normalised allow-list.
 		const datasetFilter = allowedDatasets.size
 			? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
 			: ""
 
 		const kdb = new DatabaseClient<AddressPointDatabase>(tmpOut)
-		// DDL + column order come from the shared schema (address-point-schema) so the writer can't drift
-		// from AddressPointSqliteLookup (the reader). The insert stays a positional prepared statement —
-		// tens of millions of rows per state — but its column list is derived from ADDRESS_POINT_COLUMNS.
+		// DDL + column order come from the shared schema (address-point-schema)
+		// so the writer can't drift from AddressPointSqliteLookup (the reader).
+		// The insert stays a positional prepared statement — tens of millions of rows per state —
+		// but its column list is derived from ADDRESS_POINT_COLUMNS.
 		kdb.exec("PRAGMA journal_mode = WAL;")
 
 		await createAddressPointTable(kdb)
@@ -233,8 +235,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		)
 
 		// Provenance accounting: per-dataset counts across all rows returned by DuckDB (pre-JS drop).
-		// When --license-filter is active DuckDB already dropped the ineligible rows, so this reflects the
-		// kept set. `totalReturned` feeds the kept-vs-dropped summary below.
+		// When --license-filter is active DuckDB already dropped the ineligible rows,
+		// so this reflects the kept set. `totalReturned` feeds the kept-vs-dropped summary below.
 		const datasetCounts = new Map<string, number>()
 		let kept = 0
 		let totalReturned = 0
@@ -374,8 +376,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		if (allowedDatasets.size) {
 			// The DuckDB query already excluded non-allowed rows, so totalReturned is the kept count.
-			// Run a secondary count (cheap: parquet predicate pushdown on a single column) for the
-			// total-minus-kept so the operator can see how much the filter dropped.
+			// Run a secondary count (cheap: parquet predicate pushdown on a single column) for
+			// the total-minus-kept so the operator can see how much the filter dropped.
 			const totalResult = await duck.runAndReadAll(`
 						SELECT count(*) AS n
 						FROM read_parquet('${PARQUET}')
@@ -397,8 +399,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		await kdb.destroy() // closes the underlying `db` handle
 
-		// Stamped on the temp file, before the swap, for the same reason the interpolation database is: the swap
-		// is the moment the artifact becomes live.
+		// Stamped on the temp file, before the swap, for the same reason the interpolation
+		// database is: the swap is the moment the artifact becomes live.
 		const { buildSHA, stampLayerManifest } = await import("#gazetteer-pipeline/stamp-manifest")
 		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
 		const { repoRootPath } = await import("@mailwoman/core/utils")
@@ -408,10 +410,10 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			version: options.release,
 			schemaVersion: 1,
 			tier: LayerTier.BuildLocal,
-			// The manifest admits only an spdx expression the obligations table knows. The US build records Overture's
-			// theme license. which source datasets it kept is the attribution beside it, since a database built with a
-			// different allow-list carries different per-dataset terms. A national build records the theme license and
-			// the register's own.
+			// The manifest admits only an spdx expression the obligations table knows.
+			// The US build records Overture's theme license. which source datasets it kept is the
+			// attribution beside it, since a database built with a different allow-list carries different
+			// per-dataset terms. A national build records the theme license and the register's own.
 			license: COUNTRY ? licenseForOvertureCountry(COUNTRY) : "CDLA-Permissive-2.0",
 			attribution: `Overture addresses (${(allowedDatasets.size ? [...allowedDatasets] : sortedDatasets.map(([dataset]) => dataset)).toSorted().join(", ")})`,
 			source: "overture-addresses",

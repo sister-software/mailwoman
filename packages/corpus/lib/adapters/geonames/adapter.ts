@@ -37,22 +37,22 @@ import { stableSourceID } from "#adapters/utils"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const GEONAMES_ADAPTER_ID = "geonames"
 /**
- * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (CC-BY-4.0), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
  * GeoNames main-table column indices (0-based. see the export readme).
  *
- * Exported because the register's layout is one fact with more than one reader — `@mailwoman/mailwoman`'s same-data
- * benchmark panel reads `cities15000.txt`, which is the same table filtered by population. A second hand-typed copy
- * would drift the day GeoNames adds a column.
+ * Exported because the register's layout is one fact with more than one reader —
+ * `@mailwoman/mailwoman`'s same-data benchmark panel reads `cities15000.txt`, which is the same
+ * table filtered by population. A second hand-typed copy would drift the day GeoNames adds a column.
  */
 export const GEONAMES_MAIN_COLUMNS = {
 	geonameid: 0,
@@ -95,7 +95,8 @@ async function loadAdmin1(dir: string): Promise<Map<string, string>> {
 }
 
 /**
- * Load `countryInfo.txt` → Map(ISO → country name). Empty map if absent. The file is `#`-commented.
+ * Load `countryInfo.txt` → Map(ISO → country name). Empty map if absent.
+ * The file is `#`-commented.
  */
 async function loadCountries(dir: string): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
@@ -103,8 +104,8 @@ async function loadCountries(dir: string): Promise<Map<string, string>> {
 
 	if (!(await pathExists(fp))) return map
 
-	// `header: false` — the file's header is a `#` comment, so it falls out with the other comments
-	// rather than being consumed as column names.
+	// `header: false` — the file's header is a `#` comment, so it falls out with the
+	// other comments rather than being consumed as column names.
 	for await (const cols of readUnquotedTSV(fp)) {
 		if (cols[0]?.startsWith("#")) continue
 
@@ -157,8 +158,8 @@ export function createGeonamesAdapter(): CorpusAdapter {
 				const region = admin1.get(`${cc}.${(rec[COL.admin1] ?? "").trim()}`)
 				const country = countries.get(cc)
 
-				// Two hierarchy variants (domestic + international order) — but only emit the
-				// distinct ones the available names support.
+				// Two hierarchy variants (domestic + international order) — but only emit
+				// the distinct ones the available names support.
 				const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = []
 
 				if (region) {

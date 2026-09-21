@@ -32,8 +32,8 @@ const VENEZUELA = 8_040_579_053_981
 const ZULIA_LOCALITY_CO = 8_084_693_553_936
 
 /**
- * The controlled contest, and the whole point of it: `Zulia` exists as a region in Venezuela and as a locality in
- * Colombia, so a walk that trusts the mis-tag can satisfy it only by moving country.
+ * The controlled contest, and the whole point of it: `Zulia` exists as a region in Venezuela and as a
+ * locality in Colombia, so a walk that trusts the mis-tag can satisfy it only by moving country.
  */
 const PLACES: ResolvedPlace[] = [
 	{ id: VENEZUELA, name: "Venezuela", placetype: "country", country: "VE", lat: 8, lon: -66, score: 7.4 },
@@ -76,8 +76,9 @@ const node = (
 ): AddressNode => ({ tag, value, start, end, confidence: 0.9, children })
 
 /**
- * The malformed parse, nested the way the decoder nests — country at the root, admin depth downward, which is the shape
- * `Maracaibo, Zulia, Venezuela` produces today (`country > region > locality`). Here `Zulia` occupies the locality slot
+ * The malformed parse, nested the way the decoder nests — country at the root,
+ * admin depth downward, which is the shape `Maracaibo, Zulia, Venezuela` produces
+ * today (`country > region > locality`). Here `Zulia` occupies the locality slot
  * and `Maracaibo` sits outside the winner's lineage, which is what the report's trace shows.
  */
 const MALFORMED_PARSE: AddressTree = {

@@ -45,8 +45,9 @@ afterAll(() => fixtures.disposeAsync())
 const LABELS = STAGE2_BIO_LABELS
 
 /**
- * Comma-preserving piece builder — `placetype-pair-prior.test.ts`'s `makePiecesWithCommas`, copied rather than
- * exported: it is a fixture shape, and a shared export would tie two test files' input assumptions together.
+ * Comma-preserving piece builder — `placetype-pair-prior.test.ts`'s `makePiecesWithCommas`,
+ * copied rather than exported: it is a fixture shape, and a shared export would
+ * tie two test files' input assumptions together.
  */
 function makePiecesWithCommas(text: string): Array<{ piece: string; start: number; end: number }> {
 	const tokens = text.match(/[^\s,]+|,/g) ?? []
@@ -73,8 +74,8 @@ function mockPairIndex(entries: Record<string, PairEdge>, delta = 5): PairIndexL
 }
 
 /**
- * Build a real PCN1 artifact and read it back — writer and reader both, so the fold and the base-rate denominator are
- * the shipped ones.
+ * Build a real PCN1 artifact and read it back — writer and reader both, so the fold
+ * and the base-rate denominator are the shipped ones.
  */
 function makeCensus(
 	nodes: Array<{ parent: string; counts: Partial<Record<ComponentTag, number>> }>,
@@ -206,17 +207,18 @@ describe("census observability — what lands on the trace", () => {
 	})
 })
 
-// End-to-end on the real en-us bundle: the mechanism-level assertions above prove the prior's own
-// output is unchanged, but only a full decode proves nothing downstream (the transition conversion,
-// the repair passes, the tree build) reads the census. Conditioned on the dev weights being linked —
-// `link-dev-weights.ts` puts both the model and `pair-index-us.bin` in place, and the pair index is
-// required here: without it the prior never runs and there is no parent candidate to probe
-// alongside. The census artifact is built into a temp dir rather than resolved from the data root,
+// End-to-end on the real en-us bundle: the mechanism-level assertions above prove the
+// prior's own output is unchanged, but only a full decode proves nothing downstream
+// (the transition conversion, the repair passes, the tree build) reads the census.
+// Conditioned on the dev weights being linked — `link-dev-weights.ts` puts both
+// the model and `pair-index-us.bin` in place, and the pair index is required here:
+// without it the prior never runs and there is no parent candidate to probe alongside.
+// The census artifact is built into a temp dir rather than resolved from the data root,
 // which is read-only on the lab host. a fixture census is enough to prove the wiring.
-// Resolved rather than probed in the workspace: the binaries are not in git, so where they live is the
-// resolver's answer (package, data-root overlay, or user cache) and not a directory this file can name. A
-// skip-guard keyed on the wrong directory does not fail — it skips, and the suite reports success while
-// testing nothing.
+// Resolved rather than probed in the workspace: the binaries are not in git, so
+// where they live is the resolver's answer (package, data-root overlay, or user cache)
+// and not a directory this file can name. A skip-guard keyed on the wrong directory does
+// not fail — it skips, and the suite reports success while testing nothing.
 const resolved = await (async () => {
 	try {
 		return await resolveWeights({ locale: "en-us" })

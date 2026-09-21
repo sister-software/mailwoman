@@ -15,8 +15,8 @@ import { resolvePath } from "path-ts"
 import { pathExists } from "#fs/readers"
 
 /**
- * Absolute path to `data/<filename>`, probed from `moduleDir` — the source-tree candidate first, then the compiled
- * `out/` sibling.
+ * Absolute path to `data/<filename>`, probed from `moduleDir` — the source-tree
+ * candidate first, then the compiled `out/` sibling.
  *
  * @throws When neither candidate exists, naming both probed paths.
  */

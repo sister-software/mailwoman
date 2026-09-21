@@ -20,8 +20,9 @@
  */
 
 /**
- * Population divisor in {@link referentialFromPopulation}. A 1,000-person place scores `log2(2)/14` — the curve starts
- * counting at the scale where WOF actually records population.
+ * Population divisor in {@link referentialFromPopulation}.
+ * A 1,000-person place scores `log2(2)/14` — the curve starts counting at the scale
+ * where WOF actually records population.
  */
 export const REFERENTIAL_POPULATION_DIVISOR = 1000
 
@@ -31,26 +32,29 @@ export const REFERENTIAL_POPULATION_DIVISOR = 1000
 export const REFERENTIAL_LOG2_SCALE = 14
 
 /**
- * The population at which {@link referentialFromPopulation} saturates at exactly 1.0: `(2^14 − 1) · 1000` = 16,383,000.
+ * The population at which {@link referentialFromPopulation} saturates at exactly 1.0:
+ * `(2^14 − 1) · 1000` = 16,383,000.
  *
- * Required rather than trivia. Above this the score clamps, so two megacities that population would order (Tokyo ~37 M
- * vs Delhi ~33 M) tie at 1.0. Any ranking keyed on referential alone must break that tie on raw population to stay
- * ordering-identical to the population-first path — which is exactly what {@link compareReferential} does, and why it
- * exists rather than a bare subtraction at each call site.
+ * Required rather than trivia. Above this the score clamps, so two megacities that population
+ * would order (Tokyo ~37 M vs Delhi ~33 M) tie at 1.0. Any ranking keyed on referential
+ * alone must break that tie on raw population to stay ordering-identical to the
+ * population-first path — which is exactly what {@link compareReferential} does,
+ * and why it exists rather than a bare subtraction at each call site.
  */
 export const REFERENTIAL_SATURATION_POPULATION = (2 ** REFERENTIAL_LOG2_SCALE - 1) * REFERENTIAL_POPULATION_DIVISOR
 
 /**
  * Population → referential likelihood in [0, 1].
  *
- * `min(1, log2(1 + pop/1000) / 14)` — the formula the FST builder has used for its population fallback since the FST
- * shipped, and the one `gazetteer importance` used for its fallback rows. It is defined once here so the decode-bias
- * artifact's values, the gazetteer's `referential` column, and the resolver's ranking key are the same number by
- * construction rather than by three matching copies.
+ * `min(1, log2(1 + pop/1000) / 14)` — the formula the FST builder has used for its
+ * population fallback since the FST shipped, and the one `gazetteer importance` used
+ * for its fallback rows. It is defined once here so the decode-bias artifact's values,
+ * the gazetteer's `referential` column, and the resolver's ranking key are the same
+ * number by construction rather than by three matching copies.
  *
- * Meaning OF zero: an absent population row and a recorded population of 0 both return 0, and 0 means "no population
- * evidence" — the ranking treats it as no boost, never a penalty. WOF carries population for roughly 15% of localities,
- * so absence is the common case and must stay cheap.
+ * Meaning OF zero: an absent population row and a recorded population of 0 both return 0,
+ * and 0 means "no population evidence" — the ranking treats it as no boost, never a penalty.
+ * WOF carries population for roughly 15% of localities, so absence is the common case and must stay cheap.
  */
 export function referentialFromPopulation(population: number | null | undefined): number {
 	if (population === null || population === undefined || population <= 0) return 0
@@ -59,8 +63,8 @@ export function referentialFromPopulation(population: number | null | undefined)
 }
 
 /**
- * A thing that can be ranked referentially. Both fields optional — a candidate with neither sorts last, which is the
- * same place a candidate with no population has always sorted.
+ * A thing that can be ranked referentially. Both fields optional — a candidate with neither
+ * sorts last, which is the same place a candidate with no population has always sorted.
  */
 export interface ReferentiallyRankable {
 	referential?: number
@@ -68,16 +72,18 @@ export interface ReferentiallyRankable {
 }
 
 /**
- * The ranking comparator: referential desc, raw population desc as the tiebreak. Negative when `a` outranks `b`, so it
- * drops straight into `Array#sort`.
+ * The ranking comparator: referential desc, raw population desc as the tiebreak.
+ * Negative when `a` outranks `b`, so it drops straight into `Array#sort`.
  *
- * The population tiebreak is not a hedge — it is what makes "rank by referential" and "rank by population" the same
- * order on every input, because {@link referentialFromPopulation} is strictly increasing below
+ * The population tiebreak is not a hedge — it is what makes "rank by referential"
+ * and "rank by population" the same order on every input, because
+ * {@link referentialFromPopulation} is strictly increasing below
  * {@link REFERENTIAL_SATURATION_POPULATION} and constant above it. Without the tiebreak this comparator would silently
  * re-order the world's largest cities: a real behavior change, and the one the D-rule would catch.
  *
- * Encyclopedic importance is deliberately not a parameter. Ranking by it is the thing §2 forbids, and a comparator that
- * cannot express it is a stronger guarantee than a comment asking nobody to.
+ * Encyclopedic importance is deliberately not a parameter.
+ * Ranking by it is the thing §2 forbids, and a comparator that cannot express it
+ * is a stronger guarantee than a comment asking nobody to.
  */
 export function compareReferential(a: ReferentiallyRankable, b: ReferentiallyRankable): number {
 	return (b.referential ?? 0) - (a.referential ?? 0) || (b.population ?? 0) - (a.population ?? 0)

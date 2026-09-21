@@ -26,9 +26,9 @@ import { readLabelsFromModelCard } from "@mailwoman/neural/weights-channels"
 import { describe, expect, test } from "vitest"
 
 // CI doesn't ship the v0.2.0 model files — they're operator-supplied via
-// `scripts/link-dev-weights.ts` after a training run. Skip the real-model tests when the weights
-// package's `model.onnx` isn't on disk. the runner's structural behavior still gets exercised by
-// `web-onnx-runner.unit.test.ts`, which mocks the runtime and needs no model.
+// `scripts/link-dev-weights.ts` after a training run. Skip the real-model tests when the
+// weights package's `model.onnx` isn't on disk. the runner's structural behavior still gets
+// exercised by `web-onnx-runner.unit.test.ts`, which mocks the runtime and needs no model.
 async function probeWeights(): Promise<{ modelPath: string; tokenizerPath: string; modelCardPath?: string } | null> {
 	try {
 		const r = await resolveWeights({})
@@ -71,18 +71,18 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 			WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false }),
 		])
 
-		// Thread the trained label vocabulary from the model card, same as loadFromWeights — the
-		// dev-linked weights are a Stage 3 bundle whose emission width exceeds the compile-time
-		// STAGE2_BIO_LABELS default.
+		// Thread the trained label vocabulary from the model card, same as loadFromWeights —
+		// the dev-linked weights are a Stage 3 bundle whose emission width exceeds
+		// the compile-time STAGE2_BIO_LABELS default.
 		const labels = await readLabelsFromModelCard(weights!.modelCardPath)
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels })
 
 		const tree = await classifier.parse("123 Main St, Springfield, IL 62704")
 		expect(tree.raw).toBe("123 Main St, Springfield, IL 62704")
 		expect(tree.roots.length).toBeGreaterThan(0)
-		// Spot-check that at least one node carries one of the expected component tags. The actual
-		// labels depend on the model's quality — this test exercises the wiring rather than the model's
-		// recall. A future PR can add accuracy checks against the golden set.
+		// Spot-check that at least one node carries one of the expected component tags.
+		// The actual labels depend on the model's quality — this test exercises the wiring
+		// rather than the model's recall. A future PR can add accuracy checks against the golden set.
 		const allTags = collectTags(tree.roots)
 		expect(allTags.size).toBeGreaterThan(0)
 	})

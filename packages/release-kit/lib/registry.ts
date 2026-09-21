@@ -32,8 +32,8 @@ import { verifyMetadata } from "#operations/verify-metadata"
 import { writeRightsFiles } from "#operations/write-rights-files"
 
 /**
- * Every release operation, in the order an adapter lists them: the plan first, then the read-only checks, the local
- * writes in release order, and the two external writes last.
+ * Every release operation, in the order an adapter lists them: the plan first, then the
+ * read-only checks, the local writes in release order, and the two external writes last.
  */
 export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	plan,

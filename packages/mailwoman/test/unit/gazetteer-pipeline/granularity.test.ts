@@ -51,13 +51,14 @@ describe("SUB_LOCALITY_RUNGS", () => {
 })
 
 /**
- * A fixture DB with the `spr`/`ancestors` shape the ladder reads. `node:sqlite` cannot share an `:memory:` DB across
- * connections and the builder opens its own read-only handle, so this writes a temp file — the same approach
- * `placetype-census.test.ts` uses.
+ * A fixture DB with the `spr`/`ancestors` shape the ladder reads.
+ * `node:sqlite` cannot share an `:memory:` DB across connections and the builder opens its own
+ * read-only handle, so this writes a temp file — the same approach `placetype-census.test.ts` uses.
  *
- * Shape: GB has two locality parents (London, Quiet Town). London carries a borough and a neighbourhood child, which
- * must count as one covered parent for dependent_locality rather than two. IE has one locality parent and no children
- * at all — a country that bottoms out at locality. One Overture-backfilled locality proves the source split.
+ * Shape: GB has two locality parents (London, Quiet Town).
+ * London carries a borough and a neighbourhood child, which must count as one covered parent
+ * for dependent_locality rather than two. IE has one locality parent and no children at all —
+ * a country that bottoms out at locality. One Overture-backfilled locality proves the source split.
  */
 function ladderFixtureDB(): string {
 	const path = `/tmp/granularity-fixture-${process.pid}-${Math.random().toString(36).slice(2)}.db`

@@ -22,8 +22,8 @@ export interface CommercialPlan {
 	scope: "all"
 	terms: "LicenseRef-Commercial"
 	/**
-	 * Days past the paid period's end the token stays valid, so a renewal that lands late does not lapse a working
-	 * install.
+	 * Days past the paid period's end the token stays valid, so a renewal that
+	 * lands late does not lapse a working install.
 	 */
 	graceDays: typeof GRACE_DAYS
 }

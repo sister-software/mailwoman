@@ -30,9 +30,10 @@ export interface TableCell {
 	tag: "td" | "th"
 	text: string
 	/**
-	 * The cell's text split where the source broke IT — one entry per block-level boundary (`</p>`, `</div>`, `<br>`,
-	 * `</li>`), blanks dropped. {@linkcode TableCell.text} is these joined by a space, and a caller that must tell one
-	 * long value from several stacked ones reads this instead of re-parsing the cell's markup.
+	 * The cell's text split where the source broke IT — one entry per block-level boundary
+	 * (`</p>`, `</div>`, `<br>`, `</li>`), blanks dropped. {@linkcode TableCell.text} is
+	 * these joined by a space, and a caller that must tell one long value from several
+	 * stacked ones reads this instead of re-parsing the cell's markup.
 	 */
 	blocks: string[]
 }
@@ -43,10 +44,12 @@ export interface TableCell {
 export const BLANK_CELL: TableCell = { tag: "td", text: "", blocks: [] }
 
 /**
- * The nearest ancestor of `node` with one of `names`, or `null`. This is the whole basis of the grid: a table is
- * top-level when its nearest `table` ancestor is `null`, a row belongs to the table that is its nearest `table`
- * ancestor, and a cell belongs to the row that is its nearest `tr` ancestor. One rule, applied three times, and a
- * nested layout table stays with the cell it sits in rather than becoming a table, a row, or a cell of its own.
+ * The nearest ancestor of `node` with one of `names`, or `null`.
+ * This is the whole basis of the grid: a table is top-level when its nearest `table`
+ * ancestor is `null`, a row belongs to the table that is its nearest `table`
+ * ancestor, and a cell belongs to the row that is its nearest `tr` ancestor.
+ * One rule, applied three times, and a nested layout table stays with the cell it sits in
+ * rather than becoming a table, a row, or a cell of its own.
  */
 function nearestAncestor(node: AnyNode, names: ReadonlySet<string>): Element | null {
 	for (let current = node.parentNode; current; current = current.parentNode) {
@@ -62,8 +65,9 @@ const ROW_ANCESTOR = new Set(["tr"])
 function readCell(cell: Element): TableCell {
 	const content = htmlToLayoutText(render(cell.children), BLOCK_ELEMENTS)
 
-	// Each block is collapsed and a block with no text is dropped: a `<td>` padded with `&#160;` states one
-	// block rather than two, and a caller comparing a header label against a fixed set needs single spaces.
+	// Each block is collapsed and a block with no text is dropped: a `<td>` padded
+	// with `&#160;` states one block rather than two, and a caller comparing a header
+	// label against a fixed set needs single spaces.
 	const blocks = TextSpliterator.from(content, { skipEmpty: true })
 		.toArray()
 		.map(normalizeWhitespace)
@@ -73,12 +77,12 @@ function readCell(cell: Element): TableCell {
 }
 
 /**
- * Reads every TOP-level table in `html` as rows of cells, in document order, or `null` when the document states no
- * table at all (the caller decides what to do with a document that is not tabular). A row with no `<td>`/`<th>` at all
- * — formatting cruft, an empty `<tr></tr>` — reads as `[]`, never `null`.
+ * Reads every TOP-level table in `html` as rows of cells, in document order, or `null` when the
+ * document states no table at all (the caller decides what to do with a document that is not tabular).
+ * A row with no `<td>`/`<th>` at all — formatting cruft, an empty `<tr></tr>` — reads as `[]`, never `null`.
  *
- * Every top-level table is returned rather than just the first: a source that splits one logical table across sibling
- * page-break tables is common, and only the first such table carries a header row.
+ * Every top-level table is returned rather than just the first: a source that splits one logical table
+ * across sibling page-break tables is common, and only the first such table carries a header row.
  */
 export function extractTableRows(html: string): TableCell[][][] | null {
 	const document = parseDocument(html, { decodeEntities: true })
@@ -89,8 +93,9 @@ export function extractTableRows(html: string): TableCell[][][] | null {
 
 	if (!tables.length) return null
 
-	// Assigned by one pass each rather than a nested scan: a filing that states 33 sibling tables over a
-	// thousand rows makes "for each table, filter every row" quadratic, and the ancestor walk is the inner term.
+	// Assigned by one pass each rather than a nested scan: a filing that states 33 sibling
+	// tables over a thousand rows makes "for each table, filter every row" quadratic,
+	// and the ancestor walk is the inner term.
 	const cellsByRow = new Map<Element, TableCell[]>()
 	const rowsByTable = new Map<Element, TableCell[][]>(tables.map((table) => [table, []]))
 
@@ -109,8 +114,9 @@ export function extractTableRows(html: string): TableCell[][][] | null {
 	}
 
 	for (const row of findAll((element) => element.name === "tr", document)) {
-		// A row inside a nested table has that table as its nearest ancestor. It is not a key here. Therefore, the
-		// row stays with the cell it decorates instead of leaking into the top-level grid.
+		// A row inside a nested table has that table as its nearest ancestor.
+		// It is not a key here. Therefore, the row stays with the cell it decorates
+		// instead of leaking into the top-level grid.
 		const table = nearestAncestor(row, TABLE_ANCESTOR)
 
 		if (table) {
@@ -135,10 +141,11 @@ export function widestRow(rows: readonly TableCell[][]): number {
 }
 
 /**
- * Right-pads every row to the table's widest row, then drops each column index that is blank in every row. Per table,
- * and column-wise — never per row. A row-by-row "filter out the blanks" loses the fact that a row's leading cell was
- * blank, which is often the difference between a top-level row and an indented child row, and no single row carries
- * enough evidence to tell those apart.
+ * Right-pads every row to the table's widest row, then drops each column index
+ * that is blank in every row. Per table, and column-wise — never per row.
+ * A row-by-row "filter out the blanks" loses the fact that a row's leading cell was blank,
+ * which is often the difference between a top-level row and an indented child row,
+ * and no single row carries enough evidence to tell those apart.
  */
 export function padAndDropBlankColumns(rows: readonly TableCell[][]): TableCell[][] {
 	const width = widestRow(rows)

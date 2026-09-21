@@ -51,8 +51,8 @@ describe("synthesizeNoStreetRow", () => {
 		expect(row!.components.venue).toBeDefined()
 		expect(hasAnyStreetSideTag(row!.components)).toBe(false)
 
-		// The whole point: adversarial venues contain street-typing tokens that the model
-		// must learn to not classify as street-side tags.
+		// The whole point: adversarial venues contain street-typing tokens that the
+		// model must learn to not classify as street-side tags.
 		const v = row!.components.venue!.toLowerCase()
 
 		const hasStreetWord = [

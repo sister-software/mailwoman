@@ -171,8 +171,8 @@ export async function trainCrossSourceGBT(
 
 	report?.(`    ${joined.size} NPI-joined pairs → ${rows.length} records`)
 
-	// Run the shared cross-source trainer: geocode, form pairs, calibrate, and train.
-	// → shipped model → committed module). ---
+	// Run the shared cross-source trainer: geocode, form pairs, calibrate,
+	// and train. → shipped model → committed module). ---
 	return trainCrossSourceModel({
 		createGeocoder: options.createGeocoder,
 		rows,

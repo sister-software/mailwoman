@@ -60,9 +60,9 @@ export interface OracleKOptions {
 	 */
 	k?: number
 	/**
-	 * Registered baseline profile to check this run's street readings against (`v264`, `v301`). When set, the harness
-	 * refuses to print a report if any reading deviates from its row — the Tier-0 instrument check. Omit for an
-	 * unregistered candidate.
+	 * Registered baseline profile to check this run's street readings against (`v264`, `v301`).
+	 * When set, the harness refuses to print a report if any reading deviates from its row —
+	 * the Tier-0 instrument check. Omit for an unregistered candidate.
 	 */
 	assertBaseline?: string
 }
@@ -141,10 +141,11 @@ interface SegmentDecodeResult {
 }
 
 /**
- * K-best segment-level semi-Markov Viterbi over a trace's post-prior emissions. Word-aligned spans (a `▁`-delimited
- * word never splits); pure-punctuation pieces are unit `O` words that no typed segment may cross; `O` words are unit
- * length. State = (word index, last non-O segment type); scores share one normalization per input, so the k hypotheses'
- * scores are directly comparable.
+ * K-best segment-level semi-Markov Viterbi over a trace's post-prior emissions.
+ * Word-aligned spans (a `▁`-delimited word never splits); pure-punctuation pieces are
+ * unit `O` words that no typed segment may cross; `O` words are unit length.
+ * State = (word index, last non-O segment type); scores share one normalization per input,
+ * so the k hypotheses' scores are directly comparable.
  */
 export function segmentDecodeKBest(
 	trace: {
@@ -326,7 +327,8 @@ function extractSurface(
 }
 
 /**
- * Run the oracle-recall@k eval. narrates the per-floor table on stdout. Informational — always exits 0.
+ * Run the oracle-recall@k eval. narrates the per-floor table on stdout.
+ * Informational — always exits 0.
  */
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
 	const k = options.k ?? 10
@@ -349,9 +351,10 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 	).filter((candidate) => !candidate.dropped && candidate.expect)) {
 		fixtureCount++
 		// Production config parity (#1146): every path production parses on feeds the query-shape
-		// emission prior — `safeClassify` in the runtime pipeline, and `geocode-core` since #981 (which
-		// fixed this same divergence for the drop-in servers). This harness was the last surface still
-		// grading a starved parse. A no-op on inputs carrying no known format and no region abbrev.
+		// emission prior — `safeClassify` in the runtime pipeline, and `geocode-core`
+		// since #981 (which fixed this same divergence for the drop-in servers).
+		// This harness was the last surface still grading a starved parse.
+		// A no-op on inputs carrying no known format and no region abbrev.
 		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))
 
 		const baseByTag = new Map<string, string[]>()
@@ -360,9 +363,9 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			baseByTag.set(node.tag, [...(baseByTag.get(node.tag) ?? []), node.value])
 		}
 
-		// The trace must carry the same priors as the parse above: the segment decode scores spans out
-		// of `trace.emissions`, so a bare trace would grade seg@1 on unprimed emissions while token@1
-		// saw primed ones — comparing two different models and calling it a decode delta.
+		// The trace must carry the same priors as the parse above: the segment decode scores
+		// spans out of `trace.emissions`, so a bare trace would grade seg@1 on unprimed emissions
+		// while token@1 saw primed ones — comparing two different models and calling it a decode delta.
 		const trace = await classifier.traceParse(fixture.input, productionParseOptions(fixture.input))
 
 		const { hypotheses, words } = segmentDecodeKBest(trace, k, logTransition)

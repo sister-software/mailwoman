@@ -25,9 +25,9 @@ export type NormalizationTransform =
 /**
  * Result of running `normalize()` on a raw input string.
  *
- * `offsetMap[i]` is the index in `raw` from which `normalized[i]` came. For multi-character source sequences (NFC
- * composition, whitespace collapse, abbreviation expansion), each output char points to the first source char by
- * convention.
+ * `offsetMap[i]` is the index in `raw` from which `normalized[i]` came.
+ * For multi-character source sequences (NFC composition, whitespace collapse, abbreviation expansion),
+ * each output char points to the first source char by convention.
  */
 export interface NormalizedInput {
 	/**
@@ -77,10 +77,11 @@ export interface NormalizeOpts {
 	 */
 	skipNFC?: boolean
 	/**
-	 * What the CJK pass does with the postal mark 〒 (U+3012). `strip` (the default) drops it: it is byte-fallback OOV for
-	 * the SentencePiece tokenizer and fragments the digits after it. `keep` leaves it in place for a classifier whose
-	 * vocabulary carries it — the character-path CJK model was trained with the mark in front of every postcode, and
-	 * without it misreads the prefecture boundary (`885-0061 宮崎県都城市…` → prefecture `崎県都`).
+	 * What the CJK pass does with the postal mark 〒 (U+3012).
+	 * `strip` (the default) drops it: it is byte-fallback OOV for the SentencePiece tokenizer
+	 * and fragments the digits after it. `keep` leaves it in place for a classifier whose vocabulary
+	 * carries it — the character-path CJK model was trained with the mark in front of every postcode,
+	 * and without it misreads the prefecture boundary (`885-0061 宮崎県都城市…` → prefecture `崎県都`).
 	 */
 	postalMark?: "strip" | "keep"
 }

@@ -69,8 +69,9 @@ export interface TrainOrgCrossSourceGBTOptions {
 }
 
 /**
- * Train + emit the org-level cross-source link GBT — see the module doc. The CCN is the cross-system facility key. it
- * rides {@link CrossSourceRow.npi} → `record.id` as the held-out label.
+ * Train + emit the org-level cross-source link GBT — see the module doc.
+ * The CCN is the cross-system facility key. it rides {@link CrossSourceRow.npi}
+ * → `record.id` as the held-out label.
  */
 export async function trainOrgCrossSourceGBT(
 	options: TrainOrgCrossSourceGBTOptions,
@@ -142,8 +143,8 @@ export async function trainOrgCrossSourceGBT(
 
 	report?.(`    ${joined.size} CCN-joined facilities → ${rows.length} records`)
 
-	// Run the shared cross-source trainer: geocode, form pairs, calibrate, and train.
-	// → shipped model → committed module). ---
+	// Run the shared cross-source trainer: geocode, form pairs, calibrate,
+	// and train. → shipped model → committed module). ---
 	return trainCrossSourceModel({
 		createGeocoder: options.createGeocoder,
 		rows,

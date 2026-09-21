@@ -26,14 +26,14 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext }
 const CONCURRENCY = Math.max(2, Math.min(8, cpuCount() - 2))
 
 /**
- * A tracked `tsconfig.test.json` one directory below the root or below `packages/`, which is where every workspace and
- * the `scripts/` project sit.
+ * A tracked `tsconfig.test.json` one directory below the root or below `packages/`,
+ * which is where every workspace and the `scripts/` project sit.
  */
 const TEST_PROJECT = /^(?:packages\/)?[^/]+\/tsconfig\.test\.json$/
 
 /**
- * Run `tsc` against one workspace's test project. A non-zero exit carries the diagnostics on stdout, so a rejected
- * promise is the normal path for a workspace with errors.
+ * Run `tsc` against one workspace's test project. A non-zero exit carries the diagnostics
+ * on stdout, so a rejected promise is the normal path for a workspace with errors.
  */
 async function typecheck(workspace: string, repoRoot: string): Promise<Diagnostic[]> {
 	const config = join(workspace, "tsconfig.test.json")

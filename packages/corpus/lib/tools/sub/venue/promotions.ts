@@ -50,18 +50,21 @@ export interface SubVenuePromotion {
 	 */
 	phrase: string
 	/**
-	 * BCP-47-ish `<lang>-<region>`. The region half is matched against a surface's `region` and the language half against
-	 * its `lang`, so `de-DE` reaches both a German Wikidata label (region-free) and a German extract's untagged name.
+	 * BCP-47-ish `<lang>-<region>`. The region half is matched against a surface's `region`
+	 * and the language half against its `lang`, so `de-DE` reaches both a German Wikidata
+	 * label (region-free) and a German extract's untagged name.
 	 */
 	locale: string
 	decision: "promote" | "reject"
 	/**
-	 * Set when the board's verdict is valid only under a syntactic shape — the machine-readable half of a shape-separable
-	 * confound. `identifier-required` means the phrase is promoted solely in `<phrase> <identifier>` position (Halle 8);
-	 * bare occurrences stay unpromoted. A consumer that reads promotions must honour this field: the de-DE `halle` board
-	 * (2026-08-05 five-whys review) is the founding case — its 168-hit confound includes the city Halle (Saale), and the
-	 * 32/32-real enumeration that justified promotion was an enumeration of the identifier-containing shape rather than
-	 * of the phrase. Absent = the promotion holds in any shape.
+	 * Set when the board's verdict is valid only under a syntactic shape — the machine-readable
+	 * half of a shape-separable confound. `identifier-required` means the phrase is promoted
+	 * solely in `<phrase> <identifier>` position (Halle 8); bare occurrences stay unpromoted.
+	 * A consumer that reads promotions must honour this field: the de-DE `halle` board
+	 * (2026-08-05 five-whys review) is the founding case — its 168-hit confound includes
+	 * the city Halle (Saale), and the 32/32-real enumeration that justified promotion was
+	 * an enumeration of the identifier-containing shape rather than of the phrase.
+	 * Absent = the promotion holds in any shape.
 	 */
 	shape?: "identifier-required"
 	/**
@@ -83,14 +86,16 @@ export interface SubVenuePromotion {
 }
 
 /**
- * The ledger. Sorted by designator, then locale, then phrase in the emitted artifact. source order here is grouped by
- * designator for reading.
+ * The ledger. Sorted by designator, then locale, then phrase in the emitted artifact.
+ * source order here is grouped by designator for reading.
  *
  * ── A rejection of a shipped designator is advisory ──────────────────────────────────────────────
- * `neural/venue-structure.ts` ships `wing`, `terminal`, `concourse` and six more as a flat English vocabulary with no
- * locale gate. Nothing in this table can un-ship them: the `wing` / en-US rejection below tells a recipe author which
- * locale to exclude from a generated line, and does not stop the span proposer from firing on "Red Wing". Giving the
- * shipped vocabulary a per-locale gate is the largest thing the recipe will want that does not exist yet.
+ * `neural/venue-structure.ts` ships `wing`, `terminal`, `concourse` and six more as a
+ * flat English vocabulary with no locale gate. Nothing in this table can un-ship them:
+ * the `wing` / en-US rejection below tells a recipe author which locale to exclude from
+ * a generated line, and does not stop the span proposer from firing on "Red Wing".
+ * Giving the shipped vocabulary a per-locale gate is the largest thing the
+ * recipe will want that does not exist yet.
  */
 export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 	// ── wing ────────────────────────────────────────────────────────────────────────────────────────

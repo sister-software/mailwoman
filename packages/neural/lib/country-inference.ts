@@ -48,9 +48,9 @@ import {
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
- * The country feature width. The emitted per-piece row is `[country_surface, country_ambiguous]`. Used for the ONNX
- * zero-fallback when a country-trained model is run with no lexicon supplied. Must match the lexicon JSON's
- * `feature_dim` and the trained model's `country_feature_dim`.
+ * The country feature width. The emitted per-piece row is `[country_surface, country_ambiguous]`.
+ * Used for the ONNX zero-fallback when a country-trained model is run with no lexicon supplied.
+ * Must match the lexicon JSON's `feature_dim` and the trained model's `country_feature_dim`.
  */
 export const COUNTRY_FEATURE_DIM = 2
 
@@ -64,9 +64,10 @@ export const COUNTRY_SURFACE_BIT = 1
 export const COUNTRY_AMBIGUOUS_BIT = 2
 
 /**
- * The loaded country lexicon. Structurally identical to a {@linkcode GazetteerLexicon} (the same n-gram phrase-scan
- * shape) — the type is reused deliberately so the two channels share one matcher. The `bits`/`slots` describe the
- * lexicon's internal bit layout (`country_surface` / `country_ambiguous`), not a multi-hot emitted vector.
+ * The loaded country lexicon. Structurally identical to a {@linkcode GazetteerLexicon}
+ * (the same n-gram phrase-scan shape) — the type is reused deliberately so the two
+ * channels share one matcher. The `bits`/`slots` describe the lexicon's internal bit
+ * layout (`country_surface` / `country_ambiguous`), not a multi-hot emitted vector.
  */
 export type CountryLexicon = GazetteerLexicon
 
@@ -90,8 +91,8 @@ export function parseCountryLexicon(raw: {
  * country phrase's sub-tokens. Returns `(pieces × COUNTRY_FEATURE_DIM)` features (`[country_surface,
  * country_ambiguous]`) + `(pieces,)` confidence (1.0 wherever a country surface fires).
  *
- * Reuses `gazetteerCharPaint` — the country lexicon is the same phrase-scan structure, so the matcher is shared and the
- * two channels cannot drift on how a phrase is matched.
+ * Reuses `gazetteerCharPaint` — the country lexicon is the same phrase-scan structure,
+ * so the matcher is shared and the two channels cannot drift on how a phrase is matched.
  */
 export function buildCountryFeatures(
 	text: string,

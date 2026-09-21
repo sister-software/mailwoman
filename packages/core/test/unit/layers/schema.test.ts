@@ -104,8 +104,8 @@ describe("layer interface DDL", () => {
 		})
 
 		it("permits an exclusion only on a designated or surveyed basis", () => {
-			// The whole point of the column: completeness 1.0 is identical across all three, and only
-			// two of them license "the thing you asked for is not here".
+			// The whole point of the column: completeness 1.0 is identical across all three,
+			// and only two of them license "the thing you asked for is not here".
 			expect(supportsExclusion({ basis: CoverageBasis.Designated })).toBe(true)
 			expect(supportsExclusion({ basis: CoverageBasis.Surveyed })).toBe(true)
 			expect(supportsExclusion({ basis: CoverageBasis.SourcePresent })).toBe(false)

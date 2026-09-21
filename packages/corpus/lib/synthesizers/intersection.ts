@@ -91,13 +91,14 @@ const ORDINALS = [
 
 const SUFFIXES = ["St", "Ave", "Blvd", "Rd", "Dr", "Ln", "Way", "Pl", "Ct", "Pkwy", "Ter", "Cir"] as const
 
-// Vocabulary compile-checked against the codex. the order stays this literal's. `Object.values(DirectionalAbbreviation)`
-// runs N,E,S,W,… — deriving the array from it would re-map every sample() draw and change shipped recipe-output bytes.
+// Vocabulary compile-checked against the codex. the order stays this literal's.
+// `Object.values(DirectionalAbbreviation)` runs N,E,S,W,… — deriving the array from it
+// would re-map every sample() draw and change shipped recipe-output bytes.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
- * Connectors between the two streets. Whitespace-padded forms keep tokens clean for alignment. `@` added in v0.7.2 —
- * the harness uses it ("Main St @ Second Ave") and v0.7.1 had never seen it.
+ * Connectors between the two streets. Whitespace-padded forms keep tokens clean for alignment.
+ * `@` added in v0.7.2 — the harness uses it ("Main St @ Second Ave") and v0.7.1 had never seen it.
  */
 const CONNECTORS = [" & ", " and ", " at ", " / ", " @ "] as const
 
@@ -141,8 +142,8 @@ function buildStreetName(random: () => number): string {
 }
 
 /**
- * Synthesize one US intersection row. Returns null on the rare degenerate case where the two streets collide (so
- * alignment never has two identical surface forms to disambiguate).
+ * Synthesize one US intersection row. Returns null on the rare degenerate case where the
+ * two streets collide (so alignment never has two identical surface forms to disambiguate).
  */
 export function synthesizeIntersectionRow(
 	base: IntersectionBaseTuple,

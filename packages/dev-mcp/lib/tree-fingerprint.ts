@@ -23,11 +23,12 @@ import { join, resolvePath, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * Workspaces whose source an engine's module graph reaches. Editing anything here can change a parse or a resolve, so
- * an edit invalidates every resident engine.
+ * Workspaces whose source an engine's module graph reaches.
+ * Editing anything here can change a parse or a resolve, so an edit invalidates every resident engine.
  *
- * Deliberately a list rather than "every workspace": a docs or a `bdc` edit cannot change a geocode, and treating it as
- * though it could would evict engines on every unrelated commit — which trains the operator to ignore the signal.
+ * Deliberately a list rather than "every workspace": a docs or a `bdc` edit cannot
+ * change a geocode, and treating it as though it could would evict engines on every
+ * unrelated commit — which trains the operator to ignore the signal.
  */
 export const FINGERPRINTED_WORKSPACES = [
 	"packages/mailwoman",
@@ -44,8 +45,9 @@ export const FINGERPRINTED_WORKSPACES = [
 ] as const
 
 /**
- * Directory names that never affect behaviour but change constantly. `out/` is excluded on purpose and is the important
- * one: the daemon imports source, so a recompile must not read as a source edit.
+ * Directory names that never affect behaviour but change constantly.
+ * `out/` is excluded on purpose and is the important one: the daemon imports source,
+ * so a recompile must not read as a source edit.
  */
 const SKIP_DIRECTORIES = new Set(["node_modules", "out", ".git", "test", "__pycache__"])
 
@@ -58,19 +60,21 @@ export interface TreeFingerprint {
 	digest: string
 	gitHead: string
 	/**
-	 * Paths with uncommitted changes, as `git status --porcelain` reports them. A dirty tree is normal during development
-	 * — this is carried so a result can say which files were uncommitted when it was produced rather than to refuse.
+	 * Paths with uncommitted changes, as `git status --porcelain` reports them.
+	 * A dirty tree is normal during development — this is carried so a result can say
+	 * which files were uncommitted when it was produced rather than to refuse.
 	 */
 	dirtyFiles: string[]
 	/**
-	 * Newest source mtime found, in epoch milliseconds. Reported so a human can tell "I edited something" from "I
-	 * switched branches" when a fingerprint moves.
+	 * Newest source mtime found, in epoch milliseconds. Reported so a human can tell "I
+	 * edited something" from "I switched branches" when a fingerprint moves.
 	 */
 	newestMtimeMs: number
 	newestPath: string | null
 	/**
-	 * Source files walked. A zero here would mean the walk found nothing and every fingerprint would agree with every
-	 * other — the emptiness failure `corpus-stamp.ts` names ("an empty loader on both sides agrees with itself"), so
+	 * Source files walked. A zero here would mean the walk found nothing and every
+	 * fingerprint would agree with every other — the emptiness failure `corpus-stamp.ts`
+	 * names ("an empty loader on both sides agrees with itself"), so
 	 * {@link computeTreeFingerprint} throws rather than returning it.
 	 */
 	filesWalked: number
@@ -89,8 +93,8 @@ async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path:
 		try {
 			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch {
-			// A workspace that does not exist in this checkout contributes nothing rather than throwing — the caller's
-			// emptiness check is what catches a list that is wrong in total.
+			// A workspace that does not exist in this checkout contributes nothing rather than
+			// throwing — the caller's emptiness check is what catches a list that is wrong in total.
 			continue
 		}
 
@@ -123,10 +127,10 @@ async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path:
 /**
  * Run git and return its stdout with only the trailing newline removed.
  *
- * Leading whitespace is required for `--porcelain`, whose first two columns are the index and worktree status: an
- * unstaged modification is `" M path"`, and a full trim eats column one of the first line only — after which a
- * fixed-width `slice(3)` takes the first character of the path with it. Callers that want a bare token trim their own
- * result.
+ * Leading whitespace is required for `--porcelain`, whose first two columns are the index
+ * and worktree status: an unstaged modification is `" M path"`, and a full trim eats
+ * column one of the first line only — after which a fixed-width `slice(3)` takes the first
+ * character of the path with it. Callers that want a bare token trim their own result.
  */
 function git(repoRoot: PathBuilderLike, args: string[]): string {
 	try {
@@ -180,13 +184,15 @@ export async function computeTreeFingerprint(repoRoot: PathBuilderLike): Promise
 /**
  * The message a tool returns when the process's imported modules predate the current source.
  *
- * Restarting the process is the only permitted response, and this message must not offer another. It once ended by
- * suggesting `mwdev_daemon` action `reload`, which drops sessions and rebuilds them around the same module graph: the
- * rebuilt engine then reported the new fingerprint over the old code — a clean-looking success that is the exact
- * failure this guard exists to prevent, and worse than the staleness because it is now invisible. Node cannot drop a
- * module from its ESM cache, so any claim of an in-process reload is false.
+ * Restarting the process is the only permitted response, and this message must not offer another.
+ * It once ended by suggesting `mwdev_daemon` action `reload`, which drops sessions
+ * and rebuilds them around the same module graph: the rebuilt engine then reported the
+ * new fingerprint over the old code — a clean-looking success that is the exact failure
+ * this guard exists to prevent, and worse than the staleness because it is now invisible.
+ * Node cannot drop a module from its ESM cache, so any claim of an in-process reload is false.
  *
- * To A/B a source change, run each arm in its own process. One process cannot hold two versions of a module.
+ * To A/B a source change, run each arm in its own process.
+ * One process cannot hold two versions of a module.
  */
 export function staleEngineMessage(engineFingerprint: TreeFingerprint, current: TreeFingerprint): string {
 	const changed = current.newestPath ? ` Newest source: ${current.newestPath}.` : ""

@@ -34,8 +34,9 @@ const place = (over: Partial<ResolvedPlace> & Pick<ResolvedPlace, "id" | "name" 
 })
 
 /**
- * The live rows behind the panel failures, measured off the shipped artifacts on 2026-08-10: `prominence` from
- * `candidate.db` (`-neg_rank`, i.e. log10(population + 1)), `importance` from `admin-global-priority-importance.db`.
+ * The live rows behind the panel failures, measured off the shipped artifacts on 2026-08-10:
+ * `prominence` from `candidate.db` (`-neg_rank`, i.e. log10(population + 1)),
+ * `importance` from `admin-global-priority-importance.db`.
  */
 const WHITBY: ResolvedPlace[] = [
 	place({ id: 8_143_502_164_401, name: "Whitby", country: "CA", prominence: 5.1085, importance: 0.5089 }),
@@ -51,8 +52,8 @@ const WINDSOR: ResolvedPlace[] = [
 
 describe("rankByImportance", () => {
 	it("prefers the encyclopedically prominent namesake over the more POPULOUS one", () => {
-		// Whitby, North Yorkshire (13,130) over Whitby, Ontario (128,377) — the population key ranks
-		// these backwards, which is the whole #17 failure.
+		// Whitby, North Yorkshire (13,130) over Whitby, Ontario (128,377) — the population
+		// key ranks these backwards, which is the whole #17 failure.
 		const ranked = rankByImportance(WHITBY)
 		expect(ranked.map((c) => c.country)).toEqual(["GB", "CA", "TC"])
 	})
@@ -62,10 +63,9 @@ describe("rankByImportance", () => {
 	})
 
 	it("ABSTAINS when only ONE candidate carries a measured score (positive evidence only)", () => {
-		// A missing importance means "the score source never measured this place" or "pre-split
-		// gazetteer" or "the id didn't join" — never 0. The meaning-of-zero rule: a magnitude never
-		// carries its own absence, so a lone measured 0.55 must not be read as beating an unmeasured
-		// megacity.
+		// A missing importance means "the score source never measured this place" or "pre-split gazetteer"
+		// or "the id didn't join" — never 0. The meaning-of-zero rule: a magnitude never carries its
+		// own absence, so a lone measured 0.55 must not be read as beating an unmeasured megacity.
 		const partial = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -75,9 +75,10 @@ describe("rankByImportance", () => {
 	})
 
 	it("leaves UNSCORED candidates on their population rank and permutes only the scored slots", () => {
-		// The live shape: `Whitby` has 7 candidates in candidate.db and the importance artifact scores 2
-		// of them. Abstaining on that throws the only usable signal away. zero-filling would let a scored
-		// hamlet leapfrog an unscored metropolis. Neither — the unscored rows simply sit still.
+		// The live shape: `Whitby` has 7 candidates in candidate.db and the importance
+		// artifact scores 2 of them. Abstaining on that throws the only usable signal
+		// away. zero-filling would let a scored hamlet leapfrog an unscored metropolis.
+		// Neither — the unscored rows simply sit still.
 		const live = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, importance: 0.5089 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -89,8 +90,8 @@ describe("rankByImportance", () => {
 	})
 
 	it("never lets a scored small place jump an UNSCORED larger one", () => {
-		// The failure mode the abstention exists to prevent, stated as a test: the unscored leader holds
-		// slot 0 no matter what the scored rows below it measure.
+		// The failure mode the abstention exists to prevent, stated as a test: the unscored
+		// leader holds slot 0 no matter what the scored rows below it measure.
 		const rows = [
 			place({ id: 1, name: "X", country: "A", prominence: 7 }),
 			place({ id: 2, name: "X", country: "B", prominence: 3, importance: 0.1 }),
@@ -149,9 +150,9 @@ describe("rankByImportance", () => {
 
 describe("rankByImportance same-country tie band (Springfield decision, 2026-08-11)", () => {
 	// The decided calibration row, live values off the treatment candidate.db: three US Springfields
-	// whose importance order inverts their population order on margins inside the band. The ratified
-	// §2 policy pins the bare query to the referential answer (MO), so the chained trio must fall back
-	// to size order — MO (171,589), MA (153,672), IL (112,544).
+	// whose importance order inverts their population order on margins inside the band.
+	// The ratified §2 policy pins the bare query to the referential answer (MO), so the
+	// chained trio must fall back to size order — MO (171,589), MA (153,672), IL (112,544).
 	const SPRINGFIELD: ResolvedPlace[] = [
 		place({ id: 85_940_429, name: "Springfield", country: "US", prominence: 5.0513, importance: 0.612605 }),
 		place({ id: 85_950_393, name: "Springfield", country: "US", prominence: 5.1866, importance: 0.611142 }),
@@ -163,9 +164,9 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("does NOT band cross-country pairs — Windsor's 0.0042 gap still flips to GB", () => {
-		// The decided-flip guard: any band wide enough to cover Springfield (0.0164) also covers
-		// Windsor's gap. The band must therefore never compare across countries, or the four accepted
-		// flips regress.
+		// The decided-flip guard: any band wide enough to cover Springfield (0.0164) also
+		// covers Windsor's gap. The band must therefore never compare across countries,
+		// or the four accepted flips regress.
 		expect(rankByImportance(WINDSOR).map((c) => c.country)).toEqual(["GB", "CA", "US"])
 	})
 
@@ -179,8 +180,9 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("chains adjacent gaps transitively — a run of near-ties is ONE cluster", () => {
-		// A–B and B–C each sit inside the band while A–C does not. Chaining is deliberate: without it
-		// the cluster boundary would depend on which pair the sort compared first.
+		// A–B and B–C each sit inside the band while A–C does not.
+		// Chaining is deliberate: without it the cluster boundary would depend on
+		// which pair the sort compared first.
 		const run = [
 			place({ id: 1, name: "X", country: "US", prominence: 3, importance: 0.6 }),
 			place({ id: 2, name: "X", country: "US", prominence: 4, importance: 0.585 }),
@@ -211,9 +213,9 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("#2272: a bearer with NO recorded population never heads its country over one the gazetteer counted", () => {
-		// The live Brussels shape. `blendImportance` returns the encyclopedic score uncapped when
-		// `referential <= 0` (`place-importance-schema.ts:153`), so an article-only row outscored a
-		// municipality of 160,553 — absence of evidence read as the strongest evidence there is.
+		// The live Brussels shape. `blendImportance` returns the encyclopedic score uncapped
+		// when `referential <= 0` (`place-importance-schema.ts:153`), so an article-only row outscored
+		// a municipality of 160,553 — absence of evidence read as the strongest evidence there is.
 		const anderlecht: ResolvedPlace[] = [
 			place({ id: 1, name: "Anderlecht", country: "BE", prominence: 5.2, population: 160_553, importance: 0.524 }),
 			place({ id: 2, name: "Anderlecht", country: "BE", prominence: 0, importance: 0.5665 }),
@@ -223,8 +225,8 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("#2272: the partition is SAME-COUNTRY — an uncounted foreign bearer still wins on fame", () => {
-		// Scoped deliberately. Across borders an article-only score is the only evidence there is, which
-		// is why `blendImportance` leaves that branch uncapped. the cap's own docstring guards it.
+		// Scoped deliberately. Across borders an article-only score is the only evidence there is,
+		// which is why `blendImportance` leaves that branch uncapped. the cap's own docstring guards it.
 		const crossBorder: ResolvedPlace[] = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, population: 128_377, importance: 0.5089 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -234,8 +236,8 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("#2272: two uncounted same-country bearers still separate on importance", () => {
-		// The prior's own job. 7,317 of the 19,622 remaining same-country flips are this shape, and the
-		// partition must not touch them: neither row was measured, so importance is all there is.
+		// The prior's own job. 7,317 of the 19,622 remaining same-country flips are this shape,
+		// and the partition must not touch them: neither row was measured, so importance is all there is.
 		const neitherCounted: ResolvedPlace[] = [
 			place({ id: 1, name: "Bonito", country: "BR", prominence: 0, importance: 0.31 }),
 			place({ id: 2, name: "Bonito", country: "BR", prominence: 0, importance: 0.44 }),
@@ -266,8 +268,8 @@ describe("rankByCountryPrior", () => {
 	})
 
 	it("keeps the in-country answer when the contest is close (Manchester under en-US)", () => {
-		// Manchester NH 5.06 + 2 = 7.06 beats Manchester GB 5.74. A soft prior rather than a global coin-flip:
-		// the locale still decides everything it plausibly can.
+		// Manchester NH 5.06 + 2 = 7.06 beats Manchester GB 5.74.
+		// A soft prior rather than a global coin-flip: the locale still decides everything it plausibly can.
 		const manchester = [
 			place({ id: 1, name: "Manchester", country: "GB", prominence: 5.74 }),
 			place({ id: 2, name: "Manchester", country: "US", prominence: 5.06 }),
@@ -309,8 +311,8 @@ describe("rankByCountryPrior", () => {
 })
 
 describe("promoteCapitals (#1880 — bounded capital promotion after the fame key)", () => {
-	// Board populations, as prominence (log10(population + 1)): the promotion reads the same size the
-	// other keys do, so the margins mean the same thing everywhere.
+	// Board populations, as prominence (log10(population + 1)): the promotion reads the
+	// same size the other keys do, so the margins mean the same thing everywhere.
 	const prom = (population: number): number => Math.log10(population + 1)
 
 	const capitalOf =
@@ -345,8 +347,8 @@ describe("promoteCapitals (#1880 — bounded capital promotion after the fame ke
 	})
 
 	it("never promotes an admin-1 seat — the ratified referential decisions hold (Springfield stays MO)", () => {
-		// Bare `Springfield` is ratified (2026-08-11) to the referential answer: a seat margin of even 1
-		// log10 unit flipped it to Springfield, Illinois, and sent bare `Hamilton` to the Waikato seat.
+		// Bare `Springfield` is ratified (2026-08-11) to the referential answer: a seat margin of even
+		// 1 log10 unit flipped it to Springfield, Illinois, and sent bare `Hamilton` to the Waikato seat.
 		// Both measured on the shipped candidate.db. level 1 therefore promotes nothing.
 		const seat = (p: { lat: number }): number => (p.lat === 39.8 ? 1 : 0)
 

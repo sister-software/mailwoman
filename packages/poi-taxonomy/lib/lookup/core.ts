@@ -55,15 +55,16 @@ interface PhraseEntry {
 const MIN_TYPO_LENGTH = 5
 
 /**
- * Builds the matching core over an in-memory {@link POITaxonomyTable}. Throws at construction when a synonym's
- * `categoryID` points at an unknown category — the same integrity check regardless of how the table was loaded.
+ * Builds the matching core over an in-memory {@link POITaxonomyTable}.
+ * Throws at construction when a synonym's `categoryID` points at an unknown category —
+ * the same integrity check regardless of how the table was loaded.
  */
 export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	const byID: ReadonlyMap<string, CategoryRecord> = new Map(table.categories.map((c) => [c.id, c]))
 
 	/**
-	 * Lowercased phrase index. Sources, in insertion order: each category's id (underscores as spaces), its label, then
-	 * the synonym table. Multiple entries may share a phrase.
+	 * Lowercased phrase index. Sources, in insertion order: each category's id (underscores as spaces),
+	 * its label, then the synonym table. Multiple entries may share a phrase.
 	 */
 	const byPhrase: ReadonlyMap<string, ReadonlyArray<PhraseEntry>> = createPhraseIndex<PhraseEntry>((add) => {
 		for (const category of table.categories) {
@@ -95,14 +96,16 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	})
 
 	/**
-	 * Exact-phrase category lookup. `locale` selects locale-restricted synonyms with the variant-aliases semantics
-	 * (`@mailwoman/variant-aliases`' `resolveLocaleScope` owns that rule. the copies here stay local to keep this package
-	 * dependency-free): exact locale 1.0, language-only 0.5, otherwise no match. unrestricted phrases always match at
-	 * 1.0. Deduplicated by category (best confidence wins), sorted by confidence descending, and at equal confidence a
-	 * curated synonym before an identity phrase ({@link CategoryMatch.phraseSource}). Without that tie-break a synonym
-	 * whose phrase is also some category's id could never reach a caller: the index inserts identity phrases first, the
-	 * sort is stable, and `matchPOISubject` reads `hits[0]` — so `drugstore → pharmacy` sat behind the `drugstore`
-	 * category for every en-US caller (#1933).
+	 * Exact-phrase category lookup. `locale` selects locale-restricted synonyms with the
+	 * variant-aliases semantics (`@mailwoman/variant-aliases`' `resolveLocaleScope` owns that
+	 * rule. the copies here stay local to keep this package dependency-free): exact locale 1.0,
+	 * language-only 0.5, otherwise no match. unrestricted phrases always match at 1.0.
+	 * Deduplicated by category (best confidence wins), sorted by confidence descending, and at equal
+	 * confidence a curated synonym before an identity phrase ({@link CategoryMatch.phraseSource}).
+	 * Without that tie-break a synonym whose phrase is also some category's id could
+	 * never reach a caller: the index inserts identity phrases first, the sort is stable,
+	 * and `matchPOISubject` reads `hits[0]` — so `drugstore → pharmacy` sat behind
+	 * the `drugstore` category for every en-US caller (#1933).
 	 */
 	function lookupPOICategory(text: string, locale?: string): CategoryMatch[] {
 		const norm = text.trim().toLowerCase()
@@ -148,8 +151,9 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	}
 
 	/**
-	 * Diacritic-insensitive matching is deliberately limited to locale-restricted synonyms. This lets `hopital` recover
-	 * the French `hôpital` without turning every English taxonomy label into a globally fuzzy alias.
+	 * Diacritic-insensitive matching is deliberately limited to locale-restricted synonyms.
+	 * This lets `hopital` recover the French `hôpital` without turning every English
+	 * taxonomy label into a globally fuzzy alias.
 	 */
 	function lookupPOICategoryLocaleNormalized(text: string, locale?: string): CategoryMatch[] {
 		if (!locale) return []
@@ -189,9 +193,9 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	}
 
 	/**
-	 * One-edit recovery over the same locale-restricted phrase index. Returns a result only when the best edit distance
-	 * maps to exactly one category. ambiguity is an abstention. Short inputs are excluded because one edit is too
-	 * permissive.
+	 * One-edit recovery over the same locale-restricted phrase index.
+	 * Returns a result only when the best edit distance maps to exactly one category. ambiguity
+	 * is an abstention. Short inputs are excluded because one edit is too permissive.
 	 */
 	function lookupPOICategoryTypo(text: string, locale?: string): CategoryMatch[] {
 		const norm = text.trim().toLowerCase()
@@ -258,10 +262,11 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	}
 
 	/**
-	 * Resolve a canonical seed category id to the Overture `taxonomy.primary` leaf ids a built `poi.db` stores for it
-	 * (the missing translation layer). Returns the category's `overtureCategories` when it declares a non-empty list,
-	 * else `[seedID]` (identity — the default for the 21 seeds whose id already equals its Overture leaf). An unknown
-	 * seed id resolves to `[]` — a clean miss, mirroring `getPOICategory`'s undefined.
+	 * Resolve a canonical seed category id to the Overture `taxonomy.primary`
+	 * leaf ids a built `poi.db` stores for it (the missing translation layer).
+	 * Returns the category's `overtureCategories` when it declares a non-empty list, else `[seedID]`
+	 * (identity — the default for the 21 seeds whose id already equals its Overture leaf).
+	 * An unknown seed id resolves to `[]` — a clean miss, mirroring `getPOICategory`'s undefined.
 	 */
 	function resolveOvertureCategories(seedID: string): string[] {
 		const category = byID.get(seedID)

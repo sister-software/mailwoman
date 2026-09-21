@@ -304,8 +304,9 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 })
 
 /**
- * Round the synthetic trie through the real serializer so parity is measured on entries as the bytes deliver them (f32
- * referential, flag-restricted encyclopedic and ambiguity reads) — not on the hand-built object graph.
+ * Round the synthetic trie through the real serializer so parity is measured on entries as the
+ * bytes deliver them (f32 referential, flag-restricted encyclopedic and ambiguity reads) —
+ * not on the hand-built object graph.
  */
 function deserializeThroughBytes(nodes: ConstructorParameters<typeof FSTMatcher>[0]): FSTMatcher {
 	return deserializeFST(serializeFST(new FSTMatcher(nodes)))
@@ -314,8 +315,8 @@ function deserializeThroughBytes(nodes: ConstructorParameters<typeof FSTMatcher>
 // MARK: Shipped-artifact leg — skips when the data root lacks them
 
 /**
- * Locale surfaces worth pinning by name, beyond the derived battery: high-traffic capitals, the multi-token and partial
- * shapes, and (es) the Portopetro pair from the promotion battery.
+ * Locale surfaces worth pinning by name, beyond the derived battery: high-traffic capitals,
+ * the multi-token and partial shapes, and (es) the Portopetro pair from the promotion battery.
  */
 const CURATED_QUERIES: Record<string, readonly string[]> = {
 	"en-gb": ["london", "birming", "st margarets hope", "manchester", "newcastle upon", "isle of"],
@@ -337,8 +338,8 @@ for (const locale of ["en-gb", "es-es", "it-it"]) {
 
 			const matcher = deserializeFST(await readLocalBuffer(artifactPath))
 
-			// Deterministic derived battery: the artifact's first dozen root tokens (sorted), each as a
-			// bare query, a two-token walk through its own first continuation, and a partial prefix.
+			// Deterministic derived battery: the artifact's first dozen root tokens (sorted), each as
+			// a bare query, a two-token walk through its own first continuation, and a partial prefix.
 			const rootTokens = matcher
 				.continuations(0)
 				.map((c) => c.token)

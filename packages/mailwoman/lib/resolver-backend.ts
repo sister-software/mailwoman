@@ -39,20 +39,21 @@ import { join, resolvePath, type PathBuilderLike } from "path-ts"
 import { $public } from "#env"
 
 /**
- * The candidate gazetteer's conventional home — where `mailwoman data pull candidate` writes it, and where every caller
- * looks when nothing points somewhere else.
+ * The candidate gazetteer's conventional home — where `mailwoman data pull candidate`
+ * writes it, and where every caller looks when nothing points somewhere else.
  */
 export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanDataRoot()): string {
 	return resolvePath(dataRoot, "wof", "candidate.db")
 }
 
 /**
- * Resolve the candidate-db path: an explicit option, then `$MAILWOMAN_CANDIDATE_DB`, then the convention path. Each is
- * used only if it exists on disk. `none` at either the explicit or the env position pins the FTS backend instead.
+ * Resolve the candidate-db path: an explicit option, then `$MAILWOMAN_CANDIDATE_DB`,
+ * then the convention path. Each is used only if it exists on disk.
+ * `none` at either the explicit or the env position pins the FTS backend instead.
  *
- * The convention fallback is what makes the candidate table the default backend. See
- * docs/engineering/reference/resolver-backends.mdx for the tier-1 measurement behind that default, the named residuals,
- * and the 2×2 any comparison between the two backends has to run.
+ * The convention fallback is what makes the candidate table the default backend.
+ * See docs/engineering/reference/resolver-backends.mdx for the tier-1 measurement behind that
+ * default, the named residuals, and the 2×2 any comparison between the two backends has to run.
  */
 export async function resolveCandidateDBPath(
 	explicit?: string,
@@ -70,13 +71,15 @@ export async function resolveCandidateDBPath(
 }
 
 /**
- * The WOF admin database set a caller should probe: an explicit comma-separated list, then `$MAILWOMAN_WOF_DB` (the
- * HealthRouter multi-database convention), else {@link wofExtractPaths}'s default set.
+ * The WOF admin database set a caller should probe: an explicit comma-separated list,
+ * then `$MAILWOMAN_WOF_DB` (the HealthRouter multi-database convention),
+ * else {@link wofExtractPaths}'s default set.
  *
- * Returned unfiltered — whether a missing path is a degradation or an error is the caller's interface rather than this
- * function's. `createGeocodeSession` filters with `pathExists` and throws when nothing survives; `mailwoman doctor`
- * reports each absence. a probe wants to say which database it could not open. Sharing the selection is the point: a
- * caller that reads only `wofExtractPaths` silently probes different databases than the runtime on any box where the
+ * Returned unfiltered — whether a missing path is a degradation or an error is the caller's interface
+ * rather than this function's. `createGeocodeSession` filters with `pathExists` and throws
+ * when nothing survives; `mailwoman doctor` reports each absence. a probe wants to say
+ * which database it could not open. Sharing the selection is the point: a caller that reads only
+ * `wofExtractPaths` silently probes different databases than the runtime on any box where the
  * env is set, which is the exact class of wrong answer a data-source probe exists to rule out.
  */
 export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
@@ -90,9 +93,9 @@ export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilder
 }
 
 /**
- * Resolve the postal-city-alias-db path from an explicit option then `$MAILWOMAN_POSTAL_CITY_ALIAS_DB` (#475);
- * undefined if unset or missing. Only consulted on the FTS backend (the candidate backend folds aliases at build time
- * rather than at query time).
+ * Resolve the postal-city-alias-db path from an explicit option then `$MAILWOMAN_POSTAL_CITY_ALIAS_DB`
+ * (#475); undefined if unset or missing. Only consulted on the FTS backend
+ * (the candidate backend folds aliases at build time rather than at query time).
  */
 export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<string | undefined> {
 	const p = explicit ?? $public.MAILWOMAN_POSTAL_CITY_ALIAS_DB
@@ -108,8 +111,8 @@ export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<s
  * broken for every stranger who copy-pasted it. `mailwoman data pull candidate` (Task 6) is the fix: it carries the
  * `Range: bytes=0-` header the WAF requires, verifies the download, and atomically seals it into place.
  *
- * A bare `data pull candidate` is the whole fix everywhere: {@link resolveCandidateDBPath} reaches the convention path
- * this message names, so no export follows the download.
+ * A bare `data pull candidate` is the whole fix everywhere: {@link resolveCandidateDBPath}
+ * reaches the convention path this message names, so no export follows the download.
  */
 export function buildNoGazetteerMessage(opts: { dataRoot: string; docsPath: string }): string {
 	const conventionCandidate = join(opts.dataRoot, "wof", "candidate.db")
@@ -142,10 +145,10 @@ interface ResolverLookupModule {
 }
 
 /**
- * Build the resolver backend. `candidateDB` (explicit or env) → candidate-table lookup (demo-parity); otherwise the FTS
- * lookup over `wofPaths` (single path or admin+postcode database list). On the FTS path, a configured postal-city-alias
- * db (#475) is attached so a postal city resolves to its geographic locality — opt-in, default-off (unset env →
- * byte-identical FTS path).
+ * Build the resolver backend. `candidateDB` (explicit or env) → candidate-table lookup (demo-parity);
+ * otherwise the FTS lookup over `wofPaths` (single path or admin+postcode database list).
+ * On the FTS path, a configured postal-city-alias db (#475) is attached so a postal city resolves
+ * to its geographic locality — opt-in, default-off (unset env → byte-identical FTS path).
  */
 export async function createResolverBackend(
 	mod: ResolverLookupModule,
@@ -156,8 +159,9 @@ export async function createResolverBackend(
 		postalCityAliasDB?: string
 		/**
 		 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Candidate backend
-		 * only (the penalty lives there). Default on. pass `false` to disable. On an artifact without the `name_role`
-		 * column the exemption matches no row and resolution is byte-identical, so the default is old-artifact-safe.
+		 * only (the penalty lives there). Default on. pass `false` to disable.
+		 * On an artifact without the `name_role` column the exemption matches no row
+		 * and resolution is byte-identical, so the default is old-artifact-safe.
 		 */
 		variantAliasExemption?: boolean
 	}
@@ -188,9 +192,10 @@ export async function createResolverBackend(
 }
 
 /**
- * Where the committed capital-status reference lives (`mailwoman gazetteer capitals` writes it). Repo-relative because
- * the file ships with the source tree rather than the data root: it is small, committed, and versioned with the ranking
- * code that interprets it. Baking it into `candidate.db` at the next gazetteer rebuild is the follow-up recorded on
+ * Where the committed capital-status reference lives (`mailwoman gazetteer capitals` writes it).
+ * Repo-relative because the file ships with the source tree rather than the data root:
+ * it is small, committed, and versioned with the ranking code that interprets it.
+ * Baking it into `candidate.db` at the next gazetteer rebuild is the follow-up recorded on
  * #1880.
  */
 export function conventionCapitalsPath(): string {
@@ -198,15 +203,17 @@ export function conventionCapitalsPath(): string {
 }
 
 /**
- * Load the capital-status reference into the ranking index, preferring the artifact copy: a `candidate.db` that carries
- * the `capital` table (#1880's distribution home) serves npm consumers who never have the repo file. the repo's
- * `data/gazetteer/capitals-v1.json` is the dev fallback.
+ * Load the capital-status reference into the ranking index, preferring the artifact copy:
+ * a `candidate.db` that carries the `capital` table (#1880's distribution home) serves npm consumers
+ * who never have the repo file. the repo's `data/gazetteer/capitals-v1.json` is the dev fallback.
  *
- * When neither source exists, `missing` decides. `"throw"` (the default) is for an explicit `capital_tier: true` — a
- * config key the caller asked for that silently no-ops grades as "inert" when it never ran. `"degrade"` returns
- * `undefined` with one stderr line and is for the default-on path: a consumer running an older artifact keeps working
- * with no capital promotion rather than failing at session construction (positive evidence only). A reference that
- * exists but is malformed throws under both modes — a corrupt file is a defect, never an absence.
+ * When neither source exists, `missing` decides. `"throw"` (the default) is for an explicit
+ * `capital_tier: true` — a config key the caller asked for that silently no-ops grades
+ * as "inert" when it never ran. `"degrade"` returns `undefined` with one stderr line
+ * and is for the default-on path: a consumer running an older artifact keeps working with no
+ * capital promotion rather than failing at session construction (positive evidence only).
+ * A reference that exists but is malformed throws under both modes —
+ * a corrupt file is a defect, never an absence.
  */
 export async function loadCapitalIndex(opts: {
 	candidateDB?: string
@@ -218,8 +225,8 @@ export async function loadCapitalIndex(opts: {
 
 		const points = readCapitalPoints(db)
 
-		// `null` = the artifact predates the table (fall through to the repo file); an empty table is a
-		// built fact and is served as such.
+		// `null` = the artifact predates the table (fall through to the repo file);
+		// an empty table is a built fact and is served as such.
 		if (points) {
 			console.error(`[resolver] capital reference: ${points.length} rows from the candidate artifact`)
 
@@ -260,8 +267,9 @@ export async function loadCapitalIndex(opts: {
 }
 
 /**
- * The WOF database paths that exist on disk — `explicit` when given, else the data-root convention set. The empty
- * answer is the caller's to interpret: a drop-in exits with the named-artifact message, a probe degrades.
+ * The WOF database paths that exist on disk — `explicit` when given,
+ * else the data-root convention set. The empty answer is the caller's to interpret:
+ * a drop-in exits with the named-artifact message, a probe degrades.
  */
 export async function existingWOFDatabasePaths(explicit?: readonly string[]): Promise<string[]> {
 	const candidates = explicit ?? wofExtractPaths()
@@ -277,10 +285,10 @@ export async function existingWOFDatabasePaths(explicit?: readonly string[]): Pr
 }
 
 /**
- * Resolver artifact selection for the POI probe path: the candidate gazetteer when one resolves (worldwide, no WOF
- * database needed), else the WOF database set that exists on disk — an explicit comma-separated `--resolve-db` list
- * first, then the convention set. The empty answer is the caller's to interpret: `mailwoman poi` degrades with a stderr
- * note.
+ * Resolver artifact selection for the POI probe path: the candidate gazetteer when one
+ * resolves (worldwide, no WOF database needed), else the WOF database set that exists on
+ * disk — an explicit comma-separated `--resolve-db` list first, then the convention set.
+ * The empty answer is the caller's to interpret: `mailwoman poi` degrades with a stderr note.
  */
 export async function resolvePOIResolverPaths(options: {
 	candidateDB?: string
@@ -296,8 +304,8 @@ export async function resolvePOIResolverPaths(options: {
 }
 
 /**
- * The admin FTS database path a command requires: the explicit flag, else `$MAILWOMAN_WOF_DB`. Throws naming the build
- * command when neither is set.
+ * The admin FTS database path a command requires: the explicit flag, else `$MAILWOMAN_WOF_DB`.
+ * Throws naming the build command when neither is set.
  */
 export async function requireWOFPath(explicit?: string): Promise<string> {
 	const resolved = explicit ?? $public.MAILWOMAN_WOF_DB

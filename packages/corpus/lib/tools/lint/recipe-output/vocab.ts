@@ -63,9 +63,9 @@ function stripBIO(label: string): string {
 }
 
 /**
- * Python `str.isdigit()`: non-empty and every character a Unicode digit. Pure-numeric tokens (house_number / postcode)
- * are context-determined rather than lexical vocab, so they're excluded. `\p{Nd}` covers the decimal digits these
- * address corpora actually contain.
+ * Python `str.isdigit()`: non-empty and every character a Unicode digit.
+ * Pure-numeric tokens (house_number / postcode) are context-determined rather than lexical vocab,
+ * so they're excluded. `\p{Nd}` covers the decimal digits these address corpora actually contain.
  */
 function isDigit(token: string): boolean {
 	return token.length > 0 && /^\p{Nd}+$/u.test(token)
@@ -79,9 +79,9 @@ function pct(frac: number): string {
 }
 
 /**
- * Format a float the way a Python f-string renders it: integer-valued floats keep one decimal (1.0 -> "1.0"),
- * everything else is its shortest decimal (0.5 -> "0.5"). Used for the `fraction` echo so the banner matches the Python
- * print.
+ * Format a float the way a Python f-string renders it: integer-valued floats keep one
+ * decimal (1.0 -> "1.0"), everything else is its shortest decimal (0.5 -> "0.5").
+ * Used for the `fraction` echo so the banner matches the Python print.
  */
 function formatPyFloat(n: number): string {
 	return Number.isInteger(n) ? n.toFixed(1) : String(n)
@@ -95,8 +95,9 @@ function pad(value: string, width: number): string {
 }
 
 /**
- * The dominant tag of a counter: (tag, total, fraction). Empty counter -> ("", 0, 0.0). Ties go to the first-inserted
- * tag, mirroring `Counter.most_common(1)` (stable on equal counts).
+ * The dominant tag of a counter: (tag, total, fraction).
+ * Empty counter -> ("", 0, 0.0). Ties go to the first-inserted tag, mirroring
+ * `Counter.most_common(1)` (stable on equal counts).
  */
 function dominant(counter: Map<string, number>): [string, number, number] {
 	let total = 0
@@ -132,9 +133,9 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 }
 
 /**
- * Read a corpus parquet into rows, projecting only tokens/labels/country. The list columns ride out as JSON text
- * (DuckDB `to_json`) — the same trick the gazetteer builders use for nested columns — and parse back to string arrays
- * here.
+ * Read a corpus parquet into rows, projecting only tokens/labels/country.
+ * The list columns ride out as JSON text (DuckDB `to_json`) — the same trick the gazetteer
+ * builders use for nested columns — and parse back to string arrays here.
  */
 async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[]> {
 	const result = await con.runAndReadAll(

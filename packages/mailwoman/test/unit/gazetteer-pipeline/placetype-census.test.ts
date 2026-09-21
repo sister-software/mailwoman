@@ -19,9 +19,9 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * Build an in-memory DB with the `spr`/`ancestors` shape the census reads, then hand its path-less handle to the
- * builder via a temp file — `node:sqlite` cannot share an `:memory:` DB across connections, and the builder opens its
- * own read-only handle by design.
+ * Build an in-memory DB with the `spr`/`ancestors` shape the census reads, then hand its
+ * path-less handle to the builder via a temp file — `node:sqlite` cannot share an `:memory:`
+ * DB across connections, and the builder opens its own read-only handle by design.
  */
 async function fixtureDB(): Promise<string> {
 	const path = `/tmp/census-fixture-${process.pid}-${Math.random().toString(36).slice(2)}.db`

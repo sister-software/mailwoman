@@ -36,8 +36,8 @@ export const GeometryType = {
 /**
  * The base GeoJSON object.
  *
- * The GeoJSON specification also allows foreign members (https://tools.ietf.org/html/rfc7946#section-6.1) to be
- * included in the object.
+ * The GeoJSON specification also allows foreign members
+ * (https://tools.ietf.org/html/rfc7946#section-6.1) to be included in the object.
  *
  * @title Geo Object
  * @public
@@ -57,8 +57,8 @@ export interface GeoObjectLiteral {
 	/**
 	 * A bounding box of the coordinate range of the object's Geometries, Features, or Feature Collections.
 	 *
-	 * This is useful when defining the extent of a GeoJSON object, i.e. the minimum and maximum coordinates of the
-	 * object's Geometries, Features, or Feature Collections.
+	 * This is useful when defining the extent of a GeoJSON object, i.e. the minimum
+	 * and maximum coordinates of the object's Geometries, Features, or Feature Collections.
 	 *
 	 * @see {@link https://tools.ietf.org/html/rfc7946#section-5 GeoJSON Bounding Boxes}
 	 */

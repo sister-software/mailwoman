@@ -16,7 +16,8 @@ export type SearchIndexState =
 const LOADING: SearchIndexState = { status: "loading", index: null, error: null }
 
 /**
- * The search artifact, loaded once per URL. A failure is a state the app renders rather than a silent empty search.
+ * The search artifact, loaded once per URL. A failure is a state the app renders
+ * rather than a silent empty search.
  */
 export function useSearchIndex(url: string): SearchIndexState {
 	const [state, setState] = useState<SearchIndexState>(LOADING)

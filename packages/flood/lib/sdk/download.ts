@@ -29,13 +29,13 @@ export const EA_GEODATABASE_DIRECTORY = "Flood_Map_for_Planning_Flood_Zones.gdb"
 
 export interface DownloadGeodatabaseOptions {
 	/**
-	 * The direct file URL, read from the catalogue entry rather than assembled — the EA's file service keys on an opaque
-	 * id with no relationship to the dataset id.
+	 * The direct file URL, read from the catalogue entry rather than assembled —
+	 * the EA's file service keys on an opaque id with no relationship to the dataset id.
 	 */
 	url: string
 	/**
-	 * The product's ISO revision date. The cache is keyed on it, so a re-run against the same vintage never re-transfers
-	 * and a new vintage never overwrites the old one in place.
+	 * The product's ISO revision date. The cache is keyed on it, so a re-run against the same
+	 * vintage never re-transfers and a new vintage never overwrites the old one in place.
 	 */
 	revisionDate: string
 	/**

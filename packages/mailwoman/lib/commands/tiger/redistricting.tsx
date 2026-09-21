@@ -42,8 +42,9 @@ const TIGERRedistricting: CommandComponent<typeof spec> = ({ options }) => {
 	const [status, setStatus] = useState("Starting…")
 
 	const state = useCommandTask(async () => {
-		// Optional `@mailwoman/tiger` (operator street-tier tooling) — lazy-imported so the geocoding
-		// CLI never loads it at startup and a missing optional dep degrades gracefully. See fetch.tsx.
+		// Optional `@mailwoman/tiger` (operator street-tier tooling) — lazy-imported
+		// so the geocoding CLI never loads it at startup and a missing optional dep
+		// degrades gracefully. See fetch.tsx.
 		let fetchRedistricting: typeof import("@mailwoman/tiger/sdk").fetchRedistricting
 
 		try {

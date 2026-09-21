@@ -120,8 +120,8 @@ export async function raceDots(
 	// Heavy dep, lazy-imported so loading the tools barrel stays cheap.
 	const { default: booleanContains } = await import("@turf/boolean-contains")
 
-	// A block geometry is one or more polygons. Pick a sub-polygon weighted by bbox area, then
-	// rejection-sample inside it with a turf containment test (handles holes + winding correctly).
+	// A block geometry is one or more polygons. Pick a sub-polygon weighted by bbox area,
+	// then rejection-sample inside it with a turf containment test (handles holes + winding correctly).
 	function randomPointIn(polys: PolygonCoords[], areas: number[], totalArea: number): [number, number] | null {
 		let r = Math.random() * totalArea
 		let pick = 0

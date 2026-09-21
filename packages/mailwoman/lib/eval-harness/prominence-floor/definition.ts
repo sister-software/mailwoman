@@ -28,8 +28,8 @@ import {
 import { WITHHELD_CANDIDATE_FIELDS } from "#eval-harness/same-data/fixture"
 
 /**
- * The two registered strata, in fill order. They draw from disjoint geonameid pools, so the withheld-gold rows are
- * never the rows whose gold was also graded present.
+ * The two registered strata, in fill order. They draw from disjoint geonameid pools,
+ * so the withheld-gold rows are never the rows whose gold was also graded present.
  */
 export const PROMINENCE_STRATA = ["unambiguous", "gold_absent"] as const
 
@@ -46,8 +46,8 @@ export interface ProminenceBand {
 	id: string
 	min: number
 	/**
-	 * Zero means unbounded. A band is `min <= population <= max`, and a row with no recorded population is in no band —
-	 * absence of a count is not a count of zero.
+	 * Zero means unbounded. A band is `min <= population <= max`, and a row with no recorded
+	 * population is in no band — absence of a count is not a count of zero.
 	 */
 	max: number
 }
@@ -65,8 +65,8 @@ export interface ProminenceArmDefinition {
 	id: ProminenceArm
 	description: string
 	/**
-	 * The `ResolveOpts` the arm pins. Absent on the default arm, where an empty object and "the defaults" would be
-	 * indistinguishable in the record.
+	 * The `ResolveOpts` the arm pins. Absent on the default arm, where an empty object
+	 * and "the defaults" would be indistinguishable in the record.
 	 */
 	resolveOpts?: { minWinningScore: number }
 }
@@ -124,19 +124,21 @@ export interface ProminenceFloorDefinition {
 }
 
 /**
- * The committed ruler: the population bands, the two selection rules, the arm floors, the sampling seed and the
- * decision rule. Named from the package root because `tsc` emits no `.json` into `out/`.
+ * The committed ruler: the population bands, the two selection rules, the arm floors, the sampling seed
+ * and the decision rule. Named from the package root because `tsc` emits no `.json` into `out/`.
  */
 export const PROMINENCE_DEFINITION_PATH = preregistrationPath("prominence-floor", "benchmark-definition.json")
 
 /**
- * The freeze record pinning that ruler's content hash. A definition change bumps both the version and this hash.
+ * The freeze record pinning that ruler's content hash. A definition change
+ * bumps both the version and this hash.
  */
 export const PROMINENCE_FREEZE_PATH = preregistrationPath("prominence-floor", "benchmark-freeze.json")
 
 /**
- * The population band a count falls in, or null when it falls in none. A row with no recorded population reaches here
- * as `undefined` and is refused rather than bucketed at zero.
+ * The population band a count falls in, or null when it falls in none.
+ * A row with no recorded population reaches here as `undefined` and is refused
+ * rather than bucketed at zero.
  */
 export function bandFor(bands: readonly ProminenceBand[], population: number | undefined): ProminenceBand | null {
 	if (population === undefined || !Number.isFinite(population)) return null
@@ -145,8 +147,8 @@ export function bandFor(bands: readonly ProminenceBand[], population: number | u
 }
 
 /**
- * Whether the benchmark is executable as written. Each problem names what a runner could not do with the definition, so
- * a refusal reads as an instruction rather than a verdict.
+ * Whether the benchmark is executable as written. Each problem names what a runner could
+ * not do with the definition, so a refusal reads as an instruction rather than a verdict.
  */
 export function auditProminenceDefinition(definition: ProminenceFloorDefinition): string[] {
 	const problems: string[] = [
@@ -193,14 +195,15 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 		)
 	}
 
-	// The bands must partition rather than overlap: a row in two bands would be counted twice under a claim stated per
-	// band, and the disjoint-pool rule could not hold.
+	// The bands must partition rather than overlap: a row in two bands would be counted
+	// twice under a claim stated per band, and the disjoint-pool rule could not hold.
 	const ordered = [...definition.populationBands].toSorted((left, right) => left.min - right.min)
 
 	for (const [index, band] of ordered.entries()) {
-		// `bandRule` registers that a row with no recorded population is in no band. `bandFor` enforces that by refusing
-		// `undefined`, but a band starting at 0 would admit a row the register counted as zero, which is the same
-		// absence wearing a number — and the reader `readCities` supplies turns an empty column into exactly that.
+		// `bandRule` registers that a row with no recorded population is in no band.
+		// `bandFor` enforces that by refusing `undefined`, but a band starting at 0 would admit
+		// a row the register counted as zero, which is the same absence wearing a number —
+		// and the reader `readCities` supplies turns an empty column into exactly that.
 		if (band.min < 1) {
 			problems.push(
 				`band ${band.id} starts at ${band.min} — a band must start at 1 or above, or an uncounted population enters it as a zero`
@@ -217,8 +220,8 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 			problems.push(`bands ${band.id} and ${next.id} overlap at ${next.min} — a row would be counted in both`)
 		}
 
-		// A gap is as wrong as an overlap and is harder to see: the rows falling in it are filtered out before a stratum
-		// counts its eligible pool, so the census reports nothing missing.
+		// A gap is as wrong as an overlap and is harder to see: the rows falling in it are filtered out
+		// before a stratum counts its eligible pool, so the census reports nothing missing.
 		if (next && band.max !== 0 && next.min > band.max + 1) {
 			problems.push(
 				`bands ${band.id} and ${next.id} leave ${band.max + 1} to ${next.min - 1} in no band — those rows would vanish before the census could report them`
@@ -238,8 +241,9 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 }
 
 /**
- * Load the frozen benchmark definition, refusing anything that would let the ruler move: the freeze record must name
- * this benchmark and version, the content hash must equal the frozen hash, and the audit must be clean.
+ * Load the frozen benchmark definition, refusing anything that would let the ruler move:
+ * the freeze record must name this benchmark and version, the content hash must
+ * equal the frozen hash, and the audit must be clean.
  */
 export async function loadProminenceDefinition(): Promise<ProminenceFloorDefinition> {
 	return loadFrozenDefinition<ProminenceFloorDefinition>({

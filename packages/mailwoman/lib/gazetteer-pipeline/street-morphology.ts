@@ -44,7 +44,8 @@ export interface BuildStreetMorphologyArtifactOpts {
 	 */
 	locales?: string[]
 	/**
-	 * Minimum post-normalization variant length (default: the builder's 3 — the state-abbreviation collision guard).
+	 * Minimum post-normalization variant length (default: the builder's 3 —
+	 * the state-abbreviation collision guard).
 	 */
 	minVariantLength?: number
 	/**

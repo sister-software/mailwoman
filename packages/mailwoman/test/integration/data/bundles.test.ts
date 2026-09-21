@@ -96,9 +96,9 @@ describe("artifactURL", () => {
 })
 
 describe("every bundle states its terms before it is pulled", () => {
-	// A bundle is downloaded rather than installed with the package, so its terms reach an operator through nothing the
-	// npm tarball carries. These are printed by `data pull` before the transfer, which is the moment an operator can
-	// still decline.
+	// A bundle is downloaded rather than installed with the package, so its terms reach an
+	// operator through nothing the npm tarball carries. These are printed by `data pull`
+	// before the transfer, which is the moment an operator can still decline.
 	it.each(Object.values(BUNDLES))("$name names publishers, terms and conditions", (bundle) => {
 		expect(bundle.rights.publishers.length).toBeGreaterThan(0)
 		expect(bundle.rights.terms.length).toBeGreaterThan(0)
@@ -106,8 +106,8 @@ describe("every bundle states its terms before it is pulled", () => {
 	})
 
 	it("prints what stays unresolved beside what is required", () => {
-		// A bundle whose conditions are listed and whose gaps are not reads as fully established. Every bundle here
-		// draws on sources whose per-row terms nobody has traced, and the lines say so.
+		// A bundle whose conditions are listed and whose gaps are not reads as fully established.
+		// Every bundle here draws on sources whose per-row terms nobody has traced, and the lines say so.
 		const lines = describeBundleRights(BUNDLES["candidate"]!)
 
 		expect(lines.some((line) => line.startsWith("published by"))).toBe(true)
@@ -116,9 +116,9 @@ describe("every bundle states its terms before it is pulled", () => {
 	})
 
 	it("says where each bundle's rows name their publisher, or that they do not", () => {
-		// `mailwoman data sources` checks the record above against the bytes, and it can only do that where the
-		// artifacts carry a publisher column. A bundle declaring none says so rather than being censused to an empty
-		// result, which would read as a clean check.
+		// `mailwoman data sources` checks the record above against the bytes, and it can only do that
+		// where the artifacts carry a publisher column. A bundle declaring none says so
+		// rather than being censused to an empty result, which would read as a clean check.
 		expect(BUNDLES["us"]?.sourceCensus).toStrictEqual({
 			table: "address_point",
 			column: "source",
@@ -126,8 +126,8 @@ describe("every bundle states its terms before it is pulled", () => {
 			family: "address-points",
 		})
 
-		// The `us` bundle's interpolation databases are a different artifact family with no such column. Naming the
-		// family is what keeps 51 of them out of the census rather than reported as unreadable.
+		// The `us` bundle's interpolation databases are a different artifact family with no such column.
+		// Naming the family is what keeps 51 of them out of the census rather than reported as unreadable.
 		expect(BUNDLES["us"]?.artifacts.some((artifact) => artifact.family === "interpolation")).toBe(true)
 
 		expect(BUNDLES["poi"]?.sourceCensus?.shape).toBe("manifest")
@@ -137,8 +137,9 @@ describe("every bundle states its terms before it is pulled", () => {
 
 describe("resolveBundleArtifacts — maps versioned names", () => {
 	/**
-	 * A bundle must declare its terms to compile, so these fixtures carry an empty declaration. Empty is a fixture that
-	 * states nothing rather than a bundle with no obligations, and `describeBundleRights` has its own tests.
+	 * A bundle must declare its terms to compile, so these fixtures carry an empty declaration.
+	 * Empty is a fixture that states nothing rather than a bundle with no obligations,
+	 * and `describeBundleRights` has its own tests.
 	 */
 	const noRights = { publishers: [], terms: [], conditions: [], unresolved: [] }
 

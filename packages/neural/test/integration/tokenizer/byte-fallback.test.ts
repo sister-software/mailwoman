@@ -22,7 +22,8 @@ import { describe, expect, test } from "vitest"
 const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
 /**
- * Assert every piece after the first byte-fallback run still recovers its literal text via `raw.slice(start, end)`.
+ * Assert every piece after the first byte-fallback run still recovers its
+ * literal text via `raw.slice(start, end)`.
  */
 async function assertDownstreamOffsetsSurvive(raw: string): Promise<void> {
 	const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
@@ -30,9 +31,10 @@ async function assertDownstreamOffsetsSurvive(raw: string): Promise<void> {
 
 	expect(pieces.length).toBeGreaterThan(0)
 
-	// Offsets must never regress (non-decreasing across the whole stream) — the fundamental guarantee
-	// `tokenizer-large-parity.test.ts` checks for the "supported" subset. Its exclusion filter drops
-	// byte-fallback pieces, so this suite is the only place the guarantee is asserted with them present.
+	// Offsets must never regress (non-decreasing across the whole stream) — the fundamental
+	// guarantee `tokenizer-large-parity.test.ts` checks for the "supported" subset.
+	// Its exclusion filter drops byte-fallback pieces, so this suite is the only
+	// place the guarantee is asserted with them present.
 	for (let i = 1; i < pieces.length; i++) {
 		expect(pieces[i]!.start).toBeGreaterThanOrEqual(pieces[i - 1]!.end)
 	}
@@ -50,9 +52,9 @@ async function assertDownstreamOffsetsSurvive(raw: string): Promise<void> {
 		expect(raw.slice(p.start, p.end)).toBe(literal)
 	}
 
-	// The final byte-fallback offset must equal `raw.length` when the run reaches the end of input, and every
-	// downstream normal piece's start must be >= the run's decoded end — i.e. the cursor is never left ahead of
-	// where the real characters actually are.
+	// The final byte-fallback offset must equal `raw.length` when the run reaches the end of
+	// input, and every downstream normal piece's start must be >= the run's decoded end —
+	// i.e. the cursor is never left ahead of where the real characters actually are.
 	expect(pieces.at(-1)!.end).toBeLessThanOrEqual(raw.length)
 }
 
@@ -64,12 +66,13 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode(raw)
 		const byteFallbackPiece = pieces.find((p) => p.piece === "<0x7B>")!
-		// The single byte 0x7B is the complete UTF-8 encoding of "{" (1 byte, 1 char) — the run's one piece
-		// recovers exactly "{", not a 6-char placeholder-length span.
+		// The single byte 0x7B is the complete UTF-8 encoding of "{" (1 byte, 1 char) —
+		// the run's one piece recovers exactly "{", not a 6-char placeholder-length span.
 		expect(raw.slice(byteFallbackPiece.start, byteFallbackPiece.end)).toBe("{")
 
-		// "Leeds" is split fine-grained on this small-vocab fixture tokenizer ("▁Le", "e", "d", "s") — reassembling
-		// every piece after the brace run must still spell "Leeds" cleanly rather than a garbled offset-shifted string.
+		// "Leeds" is split fine-grained on this small-vocab fixture tokenizer ("▁Le", "e", "d", "s") —
+		// reassembling every piece after the brace run must still spell "Leeds" cleanly
+		// rather than a garbled offset-shifted string.
 		const afterComma = pieces.filter((p) => p.start >= pieces.find((q) => q.piece === ",")!.end)
 
 		const reassembled = afterComma
@@ -89,25 +92,26 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode(raw)
 
-		// "“" and "”" (U+201C/U+201D) are each 3 UTF-8 bytes on this vocab (no direct token) — two runs of three
-		// consecutive <0xHH> pieces, split by the real "A" piece between them.
+		// "“" and "”" (U+201C/U+201D) are each 3 UTF-8 bytes on this vocab (no direct token) —
+		// two runs of three consecutive <0xHH> pieces, split by the real "A" piece between them.
 		const runPieces = pieces.filter((p) => /^<0x[0-9A-Fa-f]{2}>$/.test(p.piece))
 		expect(runPieces).toHaveLength(6)
 
 		const openRun = runPieces.slice(0, 3)
 		const closeRun = runPieces.slice(3, 6)
 
-		// Only the last piece of each run carries the real (non-zero-width) span. earlier pieces are zero-width
-		// placeholders at the run's start — mirrors groupPiecesIntoWords's "own placeholder, zero contribution"
-		// idiom for a bare ▁.
+		// Only the last piece of each run carries the real (non-zero-width) span. earlier pieces
+		// are zero-width placeholders at the run's start — mirrors groupPiecesIntoWords's
+		// "own placeholder, zero contribution" idiom for a bare ▁.
 		expect(openRun[0]!.start).toBe(openRun[0]!.end)
 		expect(openRun[1]!.start).toBe(openRun[1]!.end)
 		expect(raw.slice(openRun[2]!.start, openRun[2]!.end)).toBe("“")
 		expect(raw.slice(closeRun[2]!.start, closeRun[2]!.end)).toBe("”")
 
-		// The piece between the two runs ("A") and everything after the second run must land on the correct
-		// offsets. A placeholder-length walk over-advances by 5 chars per 3-piece run (18 placeholder chars for
-		// 1 real char), landing deep past the end of this 15-char string and garbling every downstream span.
+		// The piece between the two runs ("A") and everything after the second run must
+		// land on the correct offsets. A placeholder-length walk over-advances by 5 chars
+		// per 3-piece run (18 placeholder chars for 1 real char), landing deep past the
+		// end of this 15-char string and garbling every downstream span.
 		const aPiece = pieces.find((p) => p.piece === "A")!
 		expect(raw.slice(aPiece.start, aPiece.end)).toBe("A")
 

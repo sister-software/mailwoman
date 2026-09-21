@@ -7,9 +7,9 @@
 import { metricsSnapshot, recordTimed, resetMetricsForTest } from "@mailwoman/api-kit/metrics"
 import { expect, test } from "vitest"
 
-// `percentile` is module-private, so we exercise it through the public `metricsSnapshot`
-// surface. The estimator is nearest-rank by index: idx = min(n-1, floor(p·n)), so for the
-// sorted reservoir [1..10] (n=10) p50 → a[5]=6, p90 → a[9]=10, p99 → a[9]=10.
+// `percentile` is module-private, so we exercise it through the public `metricsSnapshot` surface.
+// The estimator is nearest-rank by index: idx = min(n-1, floor(p·n)), so for the sorted
+// reservoir [1..10] (n=10) p50 → a[5]=6, p90 → a[9]=10, p99 → a[9]=10.
 
 test("metricsSnapshot: percentiles over a known reservoir [1..10]", () => {
 	resetMetricsForTest()

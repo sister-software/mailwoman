@@ -65,7 +65,8 @@ export interface EvalQuantCompareResult {
 }
 
 /**
- * Coarse-placer int8-vs-fp32 comparison — see the module doc. Emits the report to stdout.
+ * Coarse-placer int8-vs-fp32 comparison — see the module doc.
+ * Emits the report to stdout.
  */
 export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): Promise<EvalQuantCompareResult> {
 	const fp32Dir = resolvePathBuilder(options.fp32 || defaultModelDir())

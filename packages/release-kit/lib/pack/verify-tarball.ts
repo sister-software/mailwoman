@@ -35,8 +35,8 @@ import { TextSpliterator } from "spliterator"
 import { collectExportTargets } from "#pack/publish/exports"
 
 /**
- * Glob metacharacters. An entry carrying any of these is a pattern, and a pattern matching nothing is legal — only
- * literal paths are promises we can hold the author to.
+ * Glob metacharacters. An entry carrying any of these is a pattern, and a pattern matching
+ * nothing is legal — only literal paths are promises we can hold the author to.
  */
 const GLOB_PATTERN = /[*?[\]{}]/
 
@@ -66,8 +66,9 @@ function normalizeEntry(entry: string): string {
 }
 
 /**
- * True when `entry` names something present in the tarball — either the exact path, or a directory with at least one
- * member beneath it (`out/` is satisfied by `./out/index.js`; tar may or may not list the directory itself).
+ * True when `entry` names something present in the tarball —
+ * either the exact path, or a directory with at least one member beneath it
+ * (`out/` is satisfied by `./out/index.js`; tar may or may not list the directory itself).
  */
 function isShipped(entry: string, shipped: Set<string>): boolean {
 	if (shipped.has(entry)) return true
@@ -82,13 +83,14 @@ function isShipped(entry: string, shipped: Set<string>): boolean {
 }
 
 /**
- * A manifest's literal `files` entries — the ones whose author is stating a file exists, with the globs and the
- * `!`-negations dropped.
+ * A manifest's literal `files` entries — the ones whose author is stating a file exists,
+ * with the globs and the `!`-negations dropped.
  *
- * Shared with `fetch-hf-weights.ts`, which materializes exactly the entries this audit later refuses a publish over.
- * Sharing the predicate rather than restating it is what keeps the two from disagreeing about what counts as a promise:
- * a materializer with a looser rule stages files nothing checks, and one with a stricter rule leaves a declared
- * artifact for the audit to find at publish time.
+ * Shared with `fetch-hf-weights.ts`, which materializes exactly the entries this
+ * audit later refuses a publish over. Sharing the predicate rather than restating
+ * it is what keeps the two from disagreeing about what counts as a promise:
+ * a materializer with a looser rule stages files nothing checks, and one with a stricter
+ * rule leaves a declared artifact for the audit to find at publish time.
  */
 export function literalFilesEntries(files: unknown): string[] {
 	if (!Array.isArray(files)) return []
@@ -106,7 +108,8 @@ export function collectMissingFileEntries(files: unknown, shipped: Set<string>):
 }
 
 /**
- * Which concrete `exports` targets the tarball does not contain. Exported for tests.
+ * Which concrete `exports` targets the tarball does not
+ * contain. Exported for tests.
  */
 export function collectMissingExportTargets(exports: unknown, shipped: Set<string>): string[] {
 	return collectExportTargets(exports ?? {}).filter((target) => !isShipped(normalizeEntry(target), shipped))
@@ -120,7 +123,8 @@ export function collectMissingImportTargets(imports: unknown, shipped: Set<strin
 }
 
 /**
- * Every path a `bin` field promises — npm accepts both the string form (`"bin": "./out/cli.js"`) and the map form.
+ * Every path a `bin` field promises — npm accepts both the string form
+ * (`"bin": "./out/cli.js"`) and the map form.
  */
 function collectBinTargets(bin: unknown): string[] {
 	if (typeof bin === "string") return [bin]
@@ -133,18 +137,19 @@ function collectBinTargets(bin: unknown): string[] {
 /**
  * Which `bin` targets the tarball does not contain. Exported for tests.
  *
- * The same promise an `exports` target makes, and the same silent failure when it is broken: `files` globs decide what
- * is packed, `bin` decides what npm symlinks onto the user's path, and nothing reconciles the two. A workspace whose
- * `out/` was never built packs fine, publishes fine, and then `npx <pkg>` dies with enoent on a path the manifest
- * itself named.
+ * The same promise an `exports` target makes, and the same silent failure when it is broken:
+ * `files` globs decide what is packed, `bin` decides what npm symlinks onto the user's path,
+ * and nothing reconciles the two. A workspace whose `out/` was never built packs fine,
+ * publishes fine, and then `npx <pkg>` dies with enoent on a path the manifest itself named.
  */
 export function collectMissingBinTargets(bin: unknown, shipped: Set<string>): string[] {
 	return collectBinTargets(bin).filter((target) => !isShipped(normalizeEntry(target), shipped))
 }
 
 /**
- * Read a packed tarball's member list and its `package.json`. Throws with the tar exit status rather than a parse error
- * on a truncated or non-tarball input, so a pack failure upstream reads as a pack failure here.
+ * Read a packed tarball's member list and its `package.json`.
+ * Throws with the tar exit status rather than a parse error on a truncated
+ * or non-tarball input, so a pack failure upstream reads as a pack failure here.
  */
 function readTarball(tarballPath: string): TarballContents {
 	const listing = spawnProcessSync("tar", ["-tzf", tarballPath], { encoding: "utf8" })
@@ -191,8 +196,8 @@ export interface TarballAudit {
 /**
  * Audit a packed tarball. throw with every violation listed if it does not contain what it promises.
  *
- * Callers publish only when this returns. It is deliberately a throw rather than a boolean: there is no partial pass,
- * and a published version cannot be taken back.
+ * Callers publish only when this returns. It is deliberately a throw rather than a boolean:
+ * there is no partial pass, and a published version cannot be taken back.
  */
 export function verifyTarball(tarballPath: string): TarballAudit {
 	const { manifest, shipped } = readTarball(tarballPath)

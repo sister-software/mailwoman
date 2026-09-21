@@ -63,8 +63,8 @@ export { FST_FORMAT_VERSION } from "#fst/format"
 const MAGIC = Buffer.from(FST_MAGIC_BYTES)
 
 /**
- * Longest ancestry chain stored per place. Deeper hierarchies are truncated at the leaf end, since the specific end of
- * the chain is what disambiguates and the country end is recoverable anyway.
+ * Longest ancestry chain stored per place. Deeper hierarchies are truncated at the leaf end,
+ * since the specific end of the chain is what disambiguates and the country end is recoverable anyway.
  */
 const MAX_CHAIN_LEN = 8
 
@@ -127,10 +127,10 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	const buf = Buffer.alloc(totalSize)
 	let pos = 0
 
-	// Read the versioned binary header.
-	// flags bit0 (survey #4, 2026-07-27): place rows carry surface-ambiguity data in the former _pad
-	// byte (pp+6 = crossCountryBranches u8, pp+7 reserved). Presence-signaled here so version stays
-	// put: pre-ambiguity artifacts read flags=0 → readers expose `undefined`, never a fake 0.
+	// Read the versioned binary header. flags bit0 (survey #4, 2026-07-27): place rows carry
+	// surface-ambiguity data in the former _pad byte (pp+6 = crossCountryBranches u8, pp+7 reserved).
+	// Presence-signaled here so version stays put: pre-ambiguity artifacts read
+	// flags=0 → readers expose `undefined`, never a fake 0.
 	const hasAmbiguity = nodes.some((n) => n.places.some((p) => p.crossCountryBranches !== undefined))
 	MAGIC.copy(buf, pos)
 	pos += 4
@@ -205,8 +205,9 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			buf.writeUInt8(chainLen, pp + 5)
 			// Former _pad: byte 0 = crossCountryBranches (header flags bit0 enables the read), byte 1 = v5 placeFlags.
 			buf.writeUInt8(hasAmbiguity ? Math.min(place.crossCountryBranches ?? 0, 255) : 0, pp + 6)
-			// An absent encyclopedic score writes flag 0 and a 0.0 float. The float is unread in that
-			// state, so absence can never surface as a score — the meaning-of-zero rule, in bytes.
+			// An absent encyclopedic score writes flag 0 and a 0.0 float.
+			// The float is unread in that state, so absence can never surface as a score —
+			// the meaning-of-zero rule, in bytes.
 			const hasEncyclopedic = place.encyclopedic !== undefined
 			buf.writeUInt8(hasEncyclopedic ? PLACE_FLAG_HAS_ENCYCLOPEDIC : 0, pp + 7)
 			buf.writeUInt32LE(intern(place.name), pp + 8)
@@ -317,16 +318,16 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
 			}
 
-			// v1 stored a raw population u32 here. v2–v4 the conflated `importance` float. v5 the
-			// referential score. A v1 file's population is mapped through the same curve
+			// v1 stored a raw population u32 here. v2–v4 the conflated `importance` float. v5
+			// the referential score. A v1 file's population is mapped through the same curve
 			// `referentialFromPopulation` uses, so its value is genuinely referential — the only
 			// generation of this format for which that can be said without reading the source database.
 			const referential = isV2
 				? buf.readFloatLE(pp + 12)
 				: Math.min(1, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
 
-			// Per-place presence bit (v5+). A v4-and-below file has no encyclopedic channel at all, so
-			// the field stays undefined rather than reading the reserved byte as a flag.
+			// Per-place presence bit (v5+). A v4-and-below file has no encyclopedic channel at all,
+			// so the field stays undefined rather than reading the reserved byte as a flag.
 			const hasEncyclopedic =
 				isSplit && (buf.readUInt8(pp + 7) & PLACE_FLAG_HAS_ENCYCLOPEDIC) === PLACE_FLAG_HAS_ENCYCLOPEDIC
 

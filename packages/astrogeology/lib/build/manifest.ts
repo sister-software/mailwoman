@@ -41,7 +41,8 @@ export function formatTransformation(command: readonly PathBuilderLike[]): strin
 }
 
 /**
- * Compute each output's checksum and size, validate, and write `manifest.json` at `outPath`. Answers the manifest.
+ * Compute each output's checksum and size, validate, and write `manifest.json`
+ * at `outPath`. Answers the manifest.
  */
 export async function emitManifest(options: EmitManifestOptions, outPath: string): Promise<PlanetaryBuildManifest> {
 	const outputs = await Promise.all(

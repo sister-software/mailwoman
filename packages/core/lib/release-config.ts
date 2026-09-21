@@ -17,9 +17,9 @@ import { readLocalJSONFile } from "#fs/readers"
 import { repoRootPathBuilder } from "#paths"
 
 /**
- * One country's placetype-pair index inputs, as `softFeed.pairIndexByCountry[<cc>]` writes them. Entries are
- * heterogeneous — `gb` names a `source` CSV, `us` only a `boroughDB` — so every field is optional and unknown keys
- * pass.
+ * One country's placetype-pair index inputs, as `softFeed.pairIndexByCountry[<cc>]` writes them.
+ * Entries are heterogeneous — `gb` names a `source` CSV, `us` only a `boroughDB` —
+ * so every field is optional and unknown keys pass.
  */
 export interface PairIndexInputs {
 	source?: string
@@ -34,8 +34,8 @@ export interface PairIndexInputs {
 }
 
 /**
- * The soft-feed block: the committed lexicons (repo-relative), the built locality-surface lexicon (data-root-relative),
- * and the per-country postcode extracts and pair-index inputs.
+ * The soft-feed block: the committed lexicons (repo-relative), the built locality-surface
+ * lexicon (data-root-relative), and the per-country postcode extracts and pair-index inputs.
  */
 export interface SoftFeedRecipe {
 	gazetteerLexicon?: string
@@ -48,16 +48,18 @@ export interface SoftFeedRecipe {
 }
 
 /**
- * A char-path base package's binaries (#2164), keyed by script family (`cjk`). Paths are data-root relative, like
- * `weights.model`. The vocabulary is committed in the package too. the recipe's copy keeps it in step with the graph.
+ * A char-path base package's binaries (#2164), keyed by script family (`cjk`).
+ * Paths are data-root relative, like `weights.model`. The vocabulary is committed in
+ * the package too. the recipe's copy keeps it in step with the graph.
  */
 export interface CharWeightsRecipe {
 	model: string
 	charVocab: string
 	lineage?: string
 	/**
-	 * The data-only overlays that inherit this family's graph through `mailwoman.baseWeights` (`ja-jp`, `zh-cn`): each
-	 * ships its locale FST and nothing of the model, and is staged and fetched under the family's bucket directory.
+	 * The data-only overlays that inherit this family's graph through `mailwoman.baseWeights`
+	 * (`ja-jp`, `zh-cn`): each ships its locale FST and nothing of the model,
+	 * and is staged and fetched under the family's bucket directory.
 	 */
 	overlays?: string[]
 }
@@ -80,12 +82,12 @@ export async function readReleaseConfig(repoRoot: PathBuilderLike = repoRootPath
 /**
  * Every locale package the config ships, Latin and character-path alike.
  *
- * `locales` and `charWeights[].overlays` are two halves of one list: an overlay under `charWeights` ships beside the
- * Latin ones and is invisible to a reader that consults only the first. A census that reads one half reports a country
- * with a shipping overlay as having none.
+ * `locales` and `charWeights[].overlays` are two halves of one list: an overlay under `charWeights`
+ * ships beside the Latin ones and is invisible to a reader that consults only the first.
+ * A census that reads one half reports a country with a shipping overlay as having none.
  *
- * Lives here rather than beside a consumer because a reader that lives outside this package is unreachable from one,
- * which is how a package comes to hardcode what the config names.
+ * Lives here rather than beside a consumer because a reader that lives outside this package
+ * is unreachable from one, which is how a package comes to hardcode what the config names.
  */
 export function shippingLocales(config: Pick<ReleaseConfig, "locales" | "charWeights">): Set<string> {
 	const locales = new Set(config.locales)
@@ -102,12 +104,14 @@ export function shippingLocales(config: Pick<ReleaseConfig, "locales" | "charWei
 /**
  * Country → the locale package that scopes it, derived from {@link shippingLocales} rather than restated.
  *
- * The region subtag of a locale package is the country it scopes — `en-au` scopes AU, `zh-cn` scopes CN — so a
- * hand-written table is a second copy of `release.config.json`'s two lists, and the copy is what goes stale when a
- * locale ships. `repo-health`'s `locale-tables` check exists because that copy existed.
+ * The region subtag of a locale package is the country it scopes — `en-au`
+ * scopes AU, `zh-cn` scopes CN — so a hand-written table is a second copy of
+ * `release.config.json`'s two lists, and the copy is what goes stale when a locale ships.
+ * `repo-health`'s `locale-tables` check exists because that copy existed.
  *
- * Existence is not training: a country here has a package that scopes it, which says nothing about whether the corpus
- * carries rows for it. A tag with no region subtag contributes nothing rather than a blank key.
+ * Existence is not training: a country here has a package that scopes it,
+ * which says nothing about whether the corpus carries rows for it.
+ * A tag with no region subtag contributes nothing rather than a blank key.
  */
 export function weightsPackageByCountry(config: Pick<ReleaseConfig, "locales" | "charWeights">): Map<string, string> {
 	const out = new Map<string, string>()
@@ -124,8 +128,9 @@ export function weightsPackageByCountry(config: Pick<ReleaseConfig, "locales" | 
 }
 
 /**
- * The lexicons that are committed to the repository, by the name they take in a weights package and the `softFeed` key
- * that names their repo-relative source. The locality-surface lexicon is not here: it is built, lives in the data root,
+ * The lexicons that are committed to the repository, by the name they take in a
+ * weights package and the `softFeed` key that names their repo-relative source.
+ * The locality-surface lexicon is not here: it is built, lives in the data root,
  * and is resolved by `softFeed.localitySurfaceLexicon` against that root instead.
  */
 export const REPO_COMMITTED_SOFT_FEED_CHANNELS = [

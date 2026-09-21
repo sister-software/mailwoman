@@ -9,9 +9,9 @@
  */
 
 /**
- * One encode result. `begins`/`ends` are UTF-8 byte offsets into the encoded input with the upstream invariant
- * `utf8(text).slice(begins[i], ends[i])` = the piece's surface, and contiguity between consecutive pieces. The TS
- * tokenizer layer owns byte→UTF-16 conversion.
+ * One encode result. `begins`/`ends` are UTF-8 byte offsets into the encoded input with
+ * the upstream invariant `utf8(text).slice(begins[i], ends[i])` = the piece's surface,
+ * and contiguity between consecutive pieces. The TS tokenizer layer owns byte→UTF-16 conversion.
  */
 export interface EncodeWithOffsetsResult {
 	pieces: string[]
@@ -30,22 +30,24 @@ export interface EncodeWithOffsetsResult {
 export declare class SentencePieceProcessor {
 	constructor()
 	/**
-	 * Load a `tokenizer.model` from its serialized-proto bytes. Takes a `Uint8Array` — the binding deliberately does not
-	 * accept a string (embind marshals JS strings to `std::string` as UTF-8, which corrupts arbitrary binary). Returns
-	 * `""` on success, the sentencepiece status message on failure.
+	 * Load a `tokenizer.model` from its serialized-proto bytes.
+	 * Takes a `Uint8Array` — the binding deliberately does not accept a string
+	 * (embind marshals JS strings to `std::string` as UTF-8, which corrupts arbitrary binary).
+	 * Returns `""` on success, the sentencepiece status message on failure.
 	 */
 	loadFromSerializedProto(serialized: Uint8Array): string
 	encodeWithOffsets(text: string): EncodeWithOffsetsResult
 	decodeIDs(ids: IntVector): string
 	/**
-	 * Embind object lifetime: the processor owns wasm-heap memory — call when done (long-lived singletons in practice
-	 * never do).
+	 * Embind object lifetime: the processor owns wasm-heap memory — call
+	 * when done (long-lived singletons in practice never do).
 	 */
 	delete(): void
 }
 
 /**
- * Embind-registered `std::vector<int>` — build with `module.IntVector`, `push_back` ids, and `delete()` after use.
+ * Embind-registered `std::vector<int>` — build with `module.IntVector`,
+ * `push_back` ids, and `delete()` after use.
  */
 export declare class IntVector {
 	constructor()

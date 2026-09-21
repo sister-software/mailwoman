@@ -23,23 +23,25 @@ import { useEffect, useEffectEvent } from "react"
 import type { MapInstance, MapLayerMouseEvent } from "react-map-gl/maplibre"
 
 /**
- * The layers whose features carry a place name. Protomaps names its label layers `<theme>_label` and its settlement
- * layers `places_*`; anything else in the style is geometry rather than a label a visitor can read and point at.
+ * The layers whose features carry a place name. Protomaps names its label layers
+ * `<theme>_label` and its settlement layers `places_*`; anything else in the style
+ * is geometry rather than a label a visitor can read and point at.
  */
 const LABEL_LAYER = /_label|^places_/
 
 /**
- * Properties a label carries its text under, in the order they are trusted. `name` is protomaps' own. the localized
- * variants appear on styles built for a specific script.
+ * Properties a label carries its text under, in the order they are trusted.
+ * `name` is protomaps' own. the localized variants appear on styles built for a specific script.
  */
 const NAME_KEYS = ["name", "name:en", "name_en"] as const
 
 /**
  * The style's label layers, by id.
  *
- * A style with none answers an empty array, and the caller must treat that as "no labels to pick" rather than passing
- * it to `queryRenderedFeatures` — an empty `layers` option is not the same as an absent one there, and the difference
- * between "this style has no labels" and "query everything" is the 64 ms this hook exists to avoid.
+ * A style with none answers an empty array, and the caller must treat that as "no labels to pick"
+ * rather than passing it to `queryRenderedFeatures` — an empty `layers` option is not
+ * the same as an absent one there, and the difference between "this style has no labels"
+ * and "query everything" is the 64 ms this hook exists to avoid.
  */
 function labelLayerIDs(map: MapInstance): string[] {
 	const layers = map.getStyle()?.layers ?? []
@@ -50,8 +52,8 @@ function labelLayerIDs(map: MapInstance): string[] {
 function labelNameAt(map: MapInstance, point: MapLayerMouseEvent["point"], layers: string[]): string | null {
 	if (!layers.length) return null
 
-	// `queryRenderedFeatures` answers in paint order with the topmost first, which is the label drawn over the others
-	// and. Therefore, the one a click landed on.
+	// `queryRenderedFeatures` answers in paint order with the topmost first, which is the
+	// label drawn over the others and. Therefore, the one a click landed on.
 	for (const feature of map.queryRenderedFeatures(point, { layers })) {
 		for (const key of NAME_KEYS) {
 			const value = feature.properties?.[key]
@@ -64,10 +66,11 @@ function labelNameAt(map: MapInstance, point: MapLayerMouseEvent["point"], layer
 }
 
 export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) => void): void {
-	// The subscription depends on the MAP alone. `useGeocode` returns a fresh object every render, so a callback built
-	// from it is new every render too — with `onPick` in the dependency list these map listeners were torn down and
-	// re-added on every keystroke in the search field. `useEffectEvent` is the shape for exactly this: an event
-	// handler that always sees the latest props without being a reactive dependency.
+	// The subscription depends on the MAP alone. `useGeocode` returns a fresh object every render,
+	// so a callback built from it is new every render too — with `onPick` in the dependency list
+	// these map listeners were torn down and re-added on every keystroke in the search field.
+	// `useEffectEvent` is the shape for exactly this: an event handler that always
+	// sees the latest props without being a reactive dependency.
 	const pick = useEffectEvent((name: string) => onPick(name))
 
 	useEffect(() => {

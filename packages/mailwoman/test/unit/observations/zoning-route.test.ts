@@ -34,14 +34,14 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * The kind the mock classifier reports. A designation marker must name it — the verdict's own top kind — because a
- * designation is not raised by intent and has no kind of its own.
+ * The kind the mock classifier reports. A designation marker must name it — the verdict's
+ * own top kind — because a designation is not raised by intent and has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
 /**
- * A minimal always-resolves engine that answers at `latitude`/`longitude`, so the coordinate the route is handed is the
- * one this test chose.
+ * A minimal always-resolves engine that answers at `latitude`/`longitude`,
+ * so the coordinate the route is handed is the one this test chose.
  */
 function testDeps(latitude: number, longitude: number): GeocodeDeps {
 	const classifier: GeocodeClassifier = {
@@ -157,8 +157,9 @@ describe("#1995: the zoning route on the geocode path", () => {
 			expect(marker.mechanism).toBe("layer:zoning")
 			expect(marker.kind).toBe(TEST_VERDICT_KIND)
 
-			// The local code leads and the generic type follows. A message that led with the generic type would report the
-			// national summary as the designation, and the local half is the one that cannot be reconstructed from it.
+			// The local code leads and the generic type follows.
+			// A message that led with the generic type would report the national summary as the
+			// designation, and the local half is the one that cannot be reconstructed from it.
 			expect(marker.message).toMatch(/"R2 - Existing Residential"/u)
 			expect(marker.message).toMatch(/IE-GZT R2/u)
 			expect(marker.message.indexOf("R2 - Existing Residential")).toBeLessThan(marker.message.indexOf("IE-GZT R2"))
@@ -195,8 +196,8 @@ describe("#1995: the zoning route on the geocode path", () => {
 				expect(designation.provenanceGrade).toBe("authoritative")
 			}
 
-			// The one-line description carries the authority, the code and the plan, so a receipt cannot lose which of them
-			// spoke.
+			// The one-line description carries the authority, the code and the plan,
+			// so a receipt cannot lose which of them spoke.
 			expect(describeZoningDesignation(decision.observation)).toMatch(/Fixture County Council/u)
 			expect(describeZoningDesignation(decision.observation)).toMatch(/R2 - Existing Residential/u)
 			expect(describeZoningDesignation(decision.observation)).toMatch(/build-local/u)
@@ -235,8 +236,9 @@ describe("#1995: the zoning route on the geocode path", () => {
 				zoningDesignationRoute: route,
 			})
 
-			// An advisory here would be a determination nobody made: the location may be outside any plan area, unzoned land
-			// inside one, in a jurisdiction that has never zoned, or in one nobody has published. The refusal is named instead.
+			// An advisory here would be a determination nobody made: the location may be outside
+			// any plan area, unzoned land inside one, in a jurisdiction that has never zoned,
+			// or in one nobody has published. The refusal is named instead.
 			expect(result.intent_markers).toEqual([])
 
 			const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)

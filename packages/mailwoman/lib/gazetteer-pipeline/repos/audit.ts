@@ -49,17 +49,18 @@ export interface ClonedRepo {
 	name: string
 	layouts: CloneLayout[]
 	/**
-	 * True when the layouts resolve to the same directory — a symlink rather than a second checkout. The ingest does not
-	 * follow the alias, and one directory can never diverge from itself.
+	 * True when the layouts resolve to the same directory — a symlink rather than a second checkout.
+	 * The ingest does not follow the alias, and one directory can never diverge from itself.
 	 */
 	aliased: boolean
 	/**
-	 * `head` per layout, so a duplicate can be reported as same-commit or diverged rather than merely as duplicated.
-	 * Absent for a directory that is not a git checkout.
+	 * `head` per layout, so a duplicate can be reported as same-commit or diverged
+	 * rather than merely as duplicated. Absent for a directory that is not a git checkout.
 	 */
 	commits: Partial<Record<CloneLayout, string>>
 	/**
-	 * The ISO-2 country the repo name encodes, or `undefined` for a repo that names none (`whosonfirst-placetypes`).
+	 * The ISO-2 country the repo name encodes, or `undefined` for a repo that
+	 * names none (`whosonfirst-placetypes`).
 	 */
 	country?: string
 	theme?: string
@@ -69,17 +70,19 @@ export interface ReposAudit {
 	root: PathBuilderLike
 	repos: ClonedRepo[]
 	/**
-	 * Repos present in both layouts as independent checkouts. Named separately because the count is the finding.
+	 * Repos present in both layouts as independent checkouts.
+	 * Named separately because the count is the finding.
 	 */
 	duplicated: ClonedRepo[]
 	/**
-	 * Repos reachable through both layouts via a symlink — one physical copy. The ingest skips the symlinked layout, and
-	 * the directory cannot diverge in the way {@link ReposAudit.duplicated} can.
+	 * Repos reachable through both layouts via a symlink — one physical copy.
+	 * The ingest skips the symlinked layout, and the directory cannot diverge in
+	 * the way {@link ReposAudit.duplicated} can.
 	 */
 	aliased: ClonedRepo[]
 	/**
-	 * Duplicated repos whose two copies are at different commits — the state where the ingest's result depends on
-	 * enumeration order. Empty is the good case and is reported as such.
+	 * Duplicated repos whose two copies are at different commits — the state where the ingest's
+	 * result depends on enumeration order. Empty is the good case and is reported as such.
 	 */
 	diverged: ClonedRepo[]
 }
@@ -100,8 +103,8 @@ export function parseRepoName(name: string): { theme?: string; country?: string 
 /**
  * `head` for a checkout, or `undefined` when the directory is not one.
  *
- * A clone with no git metadata is not an error here — it is a directory someone extracted from an archive, and
- * reporting the vintage as absent is more useful than refusing to audit the root.
+ * A clone with no git metadata is not an error here — it is a directory someone extracted from an
+ * archive, and reporting the vintage as absent is more useful than refusing to audit the root.
  */
 function headOf(dir: string): string | undefined {
 	try {
@@ -114,8 +117,8 @@ function headOf(dir: string): string | undefined {
 /**
  * Walk the repos root and report every clone, its layout(s) and its vintage.
  *
- * Only two levels are examined, because only two layouts exist: a repo directly under the root, and a repo under an
- * owner directory. Anything deeper is a repo's own contents.
+ * Only two levels are examined, because only two layouts exist: a repo directly under the root,
+ * and a repo under an owner directory. Anything deeper is a repo's own contents.
  */
 export async function auditReposRoot(
 	root: PathBuilderLike,
@@ -130,8 +133,8 @@ export async function auditReposRoot(
 
 		existing.layouts.push(layout)
 
-		// `realpath` is what separates a second checkout from a second path to the first. Comparing directory
-		// listings cannot: both shapes look identical from `ls`.
+		// `realpath` is what separates a second checkout from a second path to the first.
+		// Comparing directory listings cannot: both shapes look identical from `ls`.
 		try {
 			realPaths.set(name, [...(realPaths.get(name) ?? []), await realPath(dir)])
 		} catch {

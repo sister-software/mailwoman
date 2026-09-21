@@ -33,13 +33,15 @@ export interface LatLon {
 }
 
 /**
- * A spatial-cell block key: a configurable lat/lon grid. `precisionDegrees` sets the cell size (default 0.05° ≈ 5.5 km
- * of latitude — deliberately generous, per the literature, so same-place records reliably co-block). With `neighbors`
- * (default `true`) a record also keys its 8 adjacent cells, so a pair straddling a cell boundary still meets.
+ * A spatial-cell block key: a configurable lat/lon grid.
+ * `precisionDegrees` sets the cell size (default 0.05° ≈ 5.5 km of latitude —
+ * deliberately generous, per the literature, so same-place records reliably co-block).
+ * With `neighbors` (default `true`) a record also keys its 8 adjacent cells,
+ * so a pair straddling a cell boundary still meets.
  *
- * Note: an equal-_degree_ grid (longitude cells shrink toward the poles) and neighbour expansion inflates block sizes
- * ~9×; an equal-area H3/geohash index with a single-cell + neighbour-query is the refinement. Behaviour — proximity
- * co-blocking — is the same.
+ * Note: an equal-_degree_ grid (longitude cells shrink toward the poles) and neighbour
+ * expansion inflates block sizes ~9×; an equal-area H3/geohash index with a single-cell +
+ * neighbour-query is the refinement. Behaviour — proximity co-blocking — is the same.
  */
 export function geoCellKey<R>(
 	extract: (record: R) => LatLon | null | undefined,
@@ -71,9 +73,9 @@ export function geoCellKey<R>(
 }
 
 /**
- * An exact-value block key (the canonical address key, a postcode, an email domain…), normalized and optionally
- * truncated to a leading `prefix` of characters (a cheaper, higher-recall rule). A missing or empty value produces no
- * key.
+ * An exact-value block key (the canonical address key, a postcode, an email domain…),
+ * normalized and optionally truncated to a leading `prefix` of characters
+ * (a cheaper, higher-recall rule). A missing or empty value produces no key.
  */
 export function exactKey<R>(
 	extract: (record: R) => string | null | undefined,
@@ -94,8 +96,9 @@ export function exactKey<R>(
 }
 
 /**
- * A conjunctive block key — the cross-product of its sub-keys, joined (Geo-ER's "name and distance"). A record is keyed
- * by every combination of one sub-key from each input, so two records co-block only when they agree on _all_ inputs.
+ * A conjunctive block key — the cross-product of its sub-keys, joined
+ * (Geo-ER's "name and distance"). A record is keyed by every combination of one sub-key
+ * from each input, so two records co-block only when they agree on _all_ inputs.
  * Tighter blocks, lower recall — use when a single rule is too loose.
  */
 export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {

@@ -9,7 +9,8 @@
  */
 
 /**
- * The remainder of the first register name that begins with `surface` and continues into `following`, or null.
+ * The remainder of the first register name that begins with `surface`
+ * and continues into `following`, or null.
  */
 export function completeFromRegister(names: readonly string[], surface: string, following: string): string | null {
 	for (const name of names) {

@@ -37,40 +37,43 @@ import { type PremiseLinkageInputRow, PremiseLinkageInputShapeClass } from "#eva
 import type { GeocodeClassifier, GeocodeDeps } from "#geocode/core"
 
 /**
- * Where a run's rows come from. One method, asynchronous, licensed-data-neutral: the controlled implementation reads a
- * provider's file, this file's implementation reads a constant, and the runner cannot tell them apart.
+ * Where a run's rows come from. One method, asynchronous, licensed-data-neutral:
+ * the controlled implementation reads a provider's file, this file's implementation
+ * reads a constant, and the runner cannot tell them apart.
  */
 export interface PremiseLinkageAdapter {
 	/**
-	 * Stable adapter name for the run's provenance. Never a file path — a path to a controlled file is itself a
-	 * disclosure.
+	 * Stable adapter name for the run's provenance. Never a file path —
+	 * a path to a controlled file is itself a disclosure.
 	 */
 	readonly name: string
 	rows(): AsyncIterable<PremiseLinkageInputRow>
 }
 
 /**
- * The scheme every synthetic row grades against. Real UK premise linkage grades against UPRNs. the fixture uses the
- * same scheme name with invented identifiers so the grading path is the one a controlled run takes.
+ * The scheme every synthetic row grades against. Real UK premise linkage grades
+ * against UPRNs. the fixture uses the same scheme name with invented identifiers
+ * so the grading path is the one a controlled run takes.
  */
 const SYNTHETIC_SCHEME = "uprn"
 
 /**
- * The one coordinate the synthetic resolver answers with, for every row — a town centroid standing in for the admin
- * tier the open arm reaches when it cannot place a premise.
+ * The one coordinate the synthetic resolver answers with, for every row — a town centroid
+ * standing in for the admin tier the open arm reaches when it cannot place a premise.
  */
 const SYNTHETIC_ADMIN_LAT = 51.5
 const SYNTHETIC_ADMIN_LON = -0.1
 
 /**
- * One synthetic case: the row the adapter yields, and the answer the synthetic provider gives for it. Both halves live
- * here so an edit to one is an edit to the other.
+ * One synthetic case: the row the adapter yields, and the answer the synthetic provider
+ * gives for it. Both halves live here so an edit to one is an edit to the other.
  */
 interface SyntheticCase {
 	row: PremiseLinkageInputRow
 	/**
-	 * Substring of the normalized query the provider keys on. Unique per case — the fixture answers with the first rule
-	 * that hits, so an overlapping key silently reassigns another case's answer.
+	 * Substring of the normalized query the provider keys on.
+	 * Unique per case — the fixture answers with the first rule that hits,
+	 * so an overlapping key silently reassigns another case's answer.
 	 */
 	matchOn: string
 	/**
@@ -78,8 +81,9 @@ interface SyntheticCase {
 	 */
 	response?: AuthoritativeResponse
 	/**
-	 * Throw instead of answering — the transport-failure case. A thrown provider is not a refusal, and the harness has to
-	 * be able to tell them apart on real data, so the fixture set carries one.
+	 * Throw instead of answering — the transport-failure case.
+	 * A thrown provider is not a refusal, and the harness has to be able to tell them
+	 * apart on real data, so the fixture set carries one.
 	 */
 	transportError?: boolean
 }
@@ -140,8 +144,8 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			expectedObjectID: { scheme: SYNTHETIC_SCHEME, id: syntheticIdentifier(3) },
 			expectedLat: 51.503,
 			expectedLon: -0.103,
-			// Carries truth coordinates the terms do not permit publishing: the row still grades on identity, and any
-			// coordinate error computed for it is a defect the report writer must refuse.
+			// Carries truth coordinates the terms do not permit publishing: the row still grades on identity,
+			// and any coordinate error computed for it is a defect the report writer must refuse.
 			coordinatePublishable: false,
 			inputShapeClass: PremiseLinkageInputShapeClass.Misspelled,
 			hasUnit: false,
@@ -272,7 +276,8 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 ]
 
 /**
- * The synthetic fixture set — every outcome the harness can record, at least once, across the five shape classes.
+ * The synthetic fixture set — every outcome the harness can record, at least once,
+ * across the five shape classes.
  */
 export function syntheticFixtureAdapter(): PremiseLinkageAdapter {
 	return {
@@ -286,11 +291,13 @@ export function syntheticFixtureAdapter(): PremiseLinkageAdapter {
 }
 
 /**
- * The provider that answers {@link syntheticFixtureAdapter}'s rows, built on `@mailwoman/core/resolver`'s #1901 fixture
- * so the arm under test consumes the shipped reference implementation rather than a local mock.
+ * The provider that answers {@link syntheticFixtureAdapter}'s rows, built on
+ * `@mailwoman/core/resolver`'s #1901 fixture so the arm under test consumes the
+ * shipped reference implementation rather than a local mock.
  *
- * The one thing layered on top is the throwing case: `createFixtureAuthoritativeProvider` always answers, and a harness
- * that has never seen a transport failure cannot claim it keeps failures apart from refusals.
+ * The one thing layered on top is the throwing case: `createFixtureAuthoritativeProvider`
+ * always answers, and a harness that has never seen a transport failure cannot
+ * claim it keeps failures apart from refusals.
  */
 export function syntheticFixtureProvider(options: { log?: AuthoritativeQuery[] } = {}): AuthoritativeProvider {
 	const rules = SYNTHETIC_CASES.filter((entry) => entry.response !== undefined).map((entry) => ({
@@ -308,8 +315,9 @@ export function syntheticFixtureProvider(options: { log?: AuthoritativeQuery[] }
 			const haystack = query.normalizedQuery.toLowerCase()
 
 			if (throwingKeys.some((key) => haystack.includes(key))) {
-				// Logged before the throw so the record is every query the provider received rather than only the ones
-				// it answered — a consult that failed is still a consult, and a log that omits it under-counts.
+				// Logged before the throw so the record is every query the provider received
+				// rather than only the ones it answered — a consult that failed is still a consult,
+				// and a log that omits it under-counts.
 				options.log?.push(query)
 
 				throw new Error("synthetic transport failure")
@@ -325,13 +333,13 @@ function syntheticNode(partial: Partial<AddressNode> & Pick<AddressNode, "tag" |
 }
 
 /**
- * A pipeline that always resolves to one admin coordinate — the shape of the open arm's answer when it can name a town
- * and not a premise.
+ * A pipeline that always resolves to one admin coordinate — the shape of the open
+ * arm's answer when it can name a town and not a premise.
  *
- * Fixture-only, and deliberately so: a controlled run supplies real {@link GeocodeDeps} built from the shipped model and
- * gazetteer, and this exists so the synthetic self-check runs on a machine with neither. It is exported for the same
- * reason the #1901 fixture provider is — one reference stub the command and the tests share, rather than two that
- * drift.
+ * Fixture-only, and deliberately so: a controlled run supplies real {@link GeocodeDeps} built
+ * from the shipped model and gazetteer, and this exists so the synthetic self-check runs on
+ * a machine with neither. It is exported for the same reason the #1901 fixture provider is —
+ * one reference stub the command and the tests share, rather than two that drift.
  */
 export function syntheticFixtureDeps(): GeocodeDeps {
 	const classifier: GeocodeClassifier = {

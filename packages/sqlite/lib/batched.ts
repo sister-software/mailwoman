@@ -12,8 +12,9 @@
  */
 export interface BatchedTransaction {
 	/**
-	 * Record one written row. Every `rowsPerCommit` rows the open transaction is committed and a new one opened. answers
-	 * `true` on the call that committed, so a caller can hang a progress report off the boundary.
+	 * Record one written row. Every `rowsPerCommit` rows the open transaction is
+	 * committed and a new one opened. answers `true` on the call that committed,
+	 * so a caller can hang a progress report off the boundary.
 	 */
 	rowWritten(): boolean
 	/**
@@ -21,9 +22,9 @@ export interface BatchedTransaction {
 	 */
 	commit(): void
 	/**
-	 * Best-effort `rollback`, and it must never replace the real error: a build runs with the journal off (nothing is
-	 * ever published without the swap), so SQLite may refuse to unwind. What matters is that the caller sees why the
-	 * ingest stopped rather than that a scratch file was tidied.
+	 * Best-effort `rollback`, and it must never replace the real error: a build runs with the
+	 * journal off (nothing is ever published without the swap), so SQLite may refuse to unwind.
+	 * What matters is that the caller sees why the ingest stopped rather than that a scratch file was tidied.
 	 */
 	rollbackQuietly(): void
 }
@@ -31,8 +32,9 @@ export interface BatchedTransaction {
 /**
  * Open a transaction that commits and reopens itself every `rowsPerCommit` written rows.
  *
- * The batch size is the caller's: a geometry table whose rows carry a blob wants a smaller transaction than a
- * fixed-width staging table, because a larger one grows the write-ahead file without improving throughput.
+ * The batch size is the caller's: a geometry table whose rows carry a blob wants a
+ * smaller transaction than a fixed-width staging table, because a larger one grows
+ * the write-ahead file without improving throughput.
  */
 export function beginBatched(
 	database: { exec(sql: string): void },

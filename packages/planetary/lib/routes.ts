@@ -13,8 +13,8 @@ import { withoutTrailingSlashes } from "@mailwoman/core/strings/format"
 import type { PlanetaryView } from "#bodies/config"
 
 /**
- * The two views: the globe at `/`, and the globe with one named feature selected at `/feature/<id>`, where the id is
- * the pipeline's stable feature id.
+ * The two views: the globe at `/`, and the globe with one named feature selected at
+ * `/feature/<id>`, where the id is the pipeline's stable feature id.
  */
 export type PlanetaryRoute = { kind: "map" } | { kind: "feature"; id: string }
 
@@ -43,8 +43,8 @@ export function pathForRoute(route: PlanetaryRoute): string {
 }
 
 /**
- * A viewport carried in the query as `?lon=&lat=&z=`, or null when any of the three is absent or not a finite number.
- * All three or none: a partial viewport is not a viewport.
+ * A viewport carried in the query as `?lon=&lat=&z=`, or null when any of the three is absent
+ * or not a finite number. All three or none: a partial viewport is not a viewport.
  */
 export function viewportFromSearch(search: string): PlanetaryView | null {
 	const params = new URLSearchParams(search)

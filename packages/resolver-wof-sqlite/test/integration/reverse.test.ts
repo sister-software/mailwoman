@@ -68,9 +68,10 @@ describe("point-in-polygon primitives", () => {
 /**
  * Fixture gazetteer — a miniature Vermont-like geography around (44.0, -72.0):
  *
- * Country US (1) ⊃ region (2) ⊃ county A (3, polygon) + county B (6, bbox overlaps A but polygon rejects — the
- * bbox-false-positive case) ⊃ localadmin town (4, point geometry, centroid near the query point) ⊃ locality village (5,
- * point geometry, degenerate bbox — reachable only via the ancestors-table descent, never via the R*Tree).
+ * Country US (1) ⊃ region (2) ⊃ county A (3, polygon) + county B
+ * (6, bbox overlaps A but polygon rejects — the bbox-false-positive case) ⊃ localadmin town
+ * (4, point geometry, centroid near the query point) ⊃ locality village (5, point geometry,
+ * degenerate bbox — reachable only via the ancestors-table descent, never via the R*Tree).
  */
 function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: DatabaseClient<WOFDatabase> } {
 	const admin = DatabaseClient.temp<WOFDatabase>()
@@ -199,8 +200,8 @@ const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	"against the production gazetteer (MAILWOMAN_WOF_ADMIN_DB + MAILWOMAN_WOF_POLYGONS_DB)",
 	() => {
-		// Construct in beforeAll rather than the describe body — the body runs at collection time even when
-		// the suite is skipped, and would try to open the (absent) DBs.
+		// Construct in beforeAll rather than the describe body — the body runs at collection
+		// time even when the suite is skipped, and would try to open the (absent) DBs.
 		let rg: WOFReverseGeocoder
 
 		beforeAll(() => {
@@ -215,8 +216,8 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 			expect(names).toContain("Chicago")
 			expect(names).toContain("Illinois")
 			expect(names).toContain("United States")
-			// The deepest node is a point-geometry neighbourhood (Hyde Park) → approximate by honest
-			// convention, even though the Chicago locality above it is polygon-confirmed.
+			// The deepest node is a point-geometry neighbourhood (Hyde Park) → approximate by
+			// honest convention, even though the Chicago locality above it is polygon-confirmed.
 			expect(result.hierarchy[0]?.placetype).toBe("neighbourhood")
 			expect(result.containment).toBe("approximate")
 		})

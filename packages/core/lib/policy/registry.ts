@@ -23,15 +23,16 @@ function policyKey(component: ComponentTag, locale: string | undefined): string 
 }
 
 /**
- * Concrete registry implementation. Construct empty with `new InMemoryPolicyRegistry()` and load entries via `set()`,
- * or pre-load defaults via `InMemoryPolicyRegistry.withDefaults()`.
+ * Concrete registry implementation. Construct empty with `new InMemoryPolicyRegistry()`
+ * and load entries via `set()`, or pre-load defaults via `InMemoryPolicyRegistry.withDefaults()`.
  */
 export class InMemoryPolicyRegistry implements PolicyRegistry {
 	#entries = new Map<string, ClassifierPolicy>()
 
 	/**
-	 * Build a registry pre-loaded with `mode` for every component (default `rule_only`). The input-shape router (#478)
-	 * passes a shape-derived default so the whole table starts from the routed prior.
+	 * Build a registry pre-loaded with `mode` for every component (default `rule_only`).
+	 * The input-shape router (#478) passes a shape-derived default so the whole
+	 * table starts from the routed prior.
 	 */
 	static withDefaults(mode: PolicyMode = "rule_only"): InMemoryPolicyRegistry {
 		const registry = new InMemoryPolicyRegistry()
@@ -113,8 +114,8 @@ function matchesMode(proposal: ClassificationProposal, mode: PolicyMode): boolea
 }
 
 /**
- * Second pass for `rule_preferred` / `neural_preferred`: within each component, drop the dispreferred source when the
- * preferred source has at least one survivor.
+ * Second pass for `rule_preferred` / `neural_preferred`: within each component,
+ * drop the dispreferred source when the preferred source has at least one survivor.
  */
 function applyPreferenceFilters(
 	proposals: readonly ClassificationProposal[],

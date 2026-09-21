@@ -51,8 +51,8 @@ describe("readEvalReport", () => {
 	})
 
 	it("distinguishes an unmeasured floor from one that missed the bar", async () => {
-		// The eval marks an unmeasured floor failing so it cannot pass by default. Reading that as "missed the bar"
-		// sends someone tuning a metric that never ran.
+		// The eval marks an unmeasured floor failing so it cannot pass by default.
+		// Reading that as "missed the bar" sends someone tuning a metric that never ran.
 		const report = await readEvalReport(
 			await outDir({
 				...PASSING,
@@ -113,8 +113,8 @@ describe("readEvalReport", () => {
 
 describe("summarizeEvalReport", () => {
 	it("names the graded artifact before the verdict", async () => {
-		// A verdict diffed without this field attributes a quantization delta to the model — it said "fp32" for a
-		// verifiably int8 cache on 2026-07-16.
+		// A verdict diffed without this field attributes a quantization delta to the model —
+		// it said "fp32" for a verifiably int8 cache on 2026-07-16.
 		const summary = summarizeEvalReport(await readEvalReport(await outDir(PASSING), "", ""))
 
 		expect(summary).toContain("graded the weights-cache artifact")
@@ -164,9 +164,10 @@ describe("missingWeightsCacheArtifacts", () => {
 	})
 
 	it("catches a cache missing what its OWN card declares", async () => {
-		// The #1516 failure has no signal of its own: the channel resolves off, the run scores lower, and the operator
-		// reads a model regression. Measured 2026-08-16 — a hand-staged three-file cache graded to completion and
-		// reported us.country_homograph_f1 at 0.0 against a 64.8 floor.
+		// The #1516 failure has no signal of its own: the channel resolves off,
+		// the run scores lower, and the operator reads a model regression.
+		// Measured 2026-08-16 — a hand-staged three-file cache graded to completion
+		// and reported us.country_homograph_f1 at 0.0 against a 64.8 floor.
 		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
 		const root = rootDirectory.path
 

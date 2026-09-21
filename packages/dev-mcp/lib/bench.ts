@@ -21,8 +21,9 @@ import { percentile } from "@mailwoman/core/stats"
 export interface LatencyReading {
 	n: number
 	/**
-	 * Nearest-rank percentiles. `percentile` takes `p` in **[0, 100]**, not a fraction — agents.md flags the unit because
-	 * local copies elsewhere took a fraction, and a careless swap silently changes the number by orders of magnitude.
+	 * Nearest-rank percentiles. `percentile` takes `p` in **[0, 100]**, not a fraction —
+	 * agents.md flags the unit because local copies elsewhere took a fraction,
+	 * and a careless swap silently changes the number by orders of magnitude.
 	 */
 	p50_ms: number | null
 	p90_ms: number | null
@@ -30,8 +31,8 @@ export interface LatencyReading {
 	max_ms: number | null
 	mean_ms: number | null
 	/**
-	 * Derived from the mean rather than from the wall clock, so a run whose samples were interleaved with anything else
-	 * reports the per-call rate rather than a figure the surrounding work inflated.
+	 * Derived from the mean rather than from the wall clock, so a run whose samples were interleaved
+	 * with anything else reports the per-call rate rather than a figure the surrounding work inflated.
 	 */
 	throughput_per_s: number | null
 }
@@ -56,8 +57,8 @@ export function summarizeLatency(samplesMs: number[]): LatencyReading {
 
 export interface BenchReading {
 	/**
-	 * The one-time construction cost, or `null` when the caller did not ask for it. Never zero — a cold start that was
-	 * not measured is not a cold start that was free.
+	 * The one-time construction cost, or `null` when the caller did not ask for it.
+	 * Never zero — a cold start that was not measured is not a cold start that was free.
 	 */
 	cold: { engine_build_ms: number; first_query_ms: number; total_ms: number } | null
 	warm: LatencyReading
@@ -69,9 +70,9 @@ export interface BenchReading {
 /**
  * Why every benchmark here is single-threaded, carried on the result rather than left to a reader to know.
  *
- * Two measurements rather than a preference: `session.run()` in `onnxruntime-node` blocks its calling thread, and
- * `geocode-stream.ts` recorded throughput on a shared multi-GB WOF SQLite peaking at 2 workers (~1.4x) and degrading
- * beyond it.
+ * Two measurements rather than a preference: `session.run()` in `onnxruntime-node`
+ * blocks its calling thread, and `geocode-stream.ts` recorded throughput on a shared
+ * multi-GB WOF SQLite peaking at 2 workers (~1.4x) and degrading beyond it.
  */
 export const CONCURRENCY_NOTE =
 	"Single-threaded, and deliberately: session.run() in onnxruntime-node blocks the calling thread, and " +
@@ -81,8 +82,8 @@ export const CONCURRENCY_NOTE =
 /**
  * Assemble the reading, with the sentence a caller will relay.
  *
- * The summary states the cold cost first when it was measured, because that is the number a user experiences and the
- * one a warm benchmark is most likely to leave out.
+ * The summary states the cold cost first when it was measured, because that is the number
+ * a user experiences and the one a warm benchmark is most likely to leave out.
  */
 export function assembleBench(cold: BenchReading["cold"], warm: LatencyReading): BenchReading {
 	const warmPart =

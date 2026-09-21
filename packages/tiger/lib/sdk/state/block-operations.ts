@@ -52,7 +52,8 @@ export function parseTIGERBlockFromRow({ serializedGeometry, ...properties }: TI
 }
 
 /**
- * Given a collection of rows from the tiger tabulated block table, parses them into a GeoJSON feature collection.
+ * Given a collection of rows from the tiger tabulated block table,
+ * parses them into a GeoJSON feature collection.
  *
  * @internal
  */

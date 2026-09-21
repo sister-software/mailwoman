@@ -146,9 +146,10 @@ describe("the place-identity check (#1507)", () => {
 	})
 
 	it("grades place identity off the RESOLVED place, not the echoed query span", () => {
-		// The Gaborone class, verbatim: the parse is perfect and `locality` echoes it, while the resolver
-		// returned an Austrian hamlet. `expect_components.locality` is green on this result. only the place
-		// check can see the failure — which is what makes reading `hierarchy[0].name` required.
+		// The Gaborone class, verbatim: the parse is perfect and `locality` echoes it,
+		// while the resolver returned an Austrian hamlet. `expect_components.locality`
+		// is green on this result. only the place check can see the failure —
+		// which is what makes reading `hierarchy[0].name` required.
 		const c = storedCase({
 			expect_components: stringifyJSON({ locality: "Gaborone" }),
 			expect_place_name: "Gaborone",
@@ -203,12 +204,12 @@ describe("the place-identity check (#1507)", () => {
 })
 
 describe("the component check is exact — multi-script truth is a per-row opt-in (#34)", () => {
-	// The 2026-08-10 global relaxation (any dual-script got satisfied a truth freezing one rendering) let a
-	// cross-tag bleed grade as a pass, so review converted it into the `expect_component_renderings` opt-in.
-	// The first two tests pin the reversal. the rest pin the opt-in interface itself.
+	// The 2026-08-10 global relaxation (any dual-script got satisfied a truth freezing one rendering) let
+	// a cross-tag bleed grade as a pass, so review converted it into the `expect_component_renderings`
+	// opt-in. The first two tests pin the reversal. the rest pin the opt-in interface itself.
 	it("fails a cross-script bleed against a plain expect_components truth — the Manchester case", () => {
-		// The exposure the global relaxation disclosed: a locality that swallowed the CJK venue next door
-		// graded as a pass. With no rendering interface on the row, this must fail again.
+		// The exposure the global relaxation disclosed: a locality that swallowed the CJK venue
+		// next door graded as a pass. With no rendering interface on the row, this must fail again.
 		const c = storedCase({ expect_components: stringifyJSON({ locality: "Manchester" }) })
 
 		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([
@@ -267,9 +268,10 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("lets a interface key supersede the same key in expect_components", () => {
-		// expect_components freezes the Latin half. the interface requires both. The dual span passes (the
-		// superseded exact comparison would have failed it), the frozen half alone fails (the interface owns
-		// the key), and an unrelated exact key on the same row still grades through expect_components.
+		// expect_components freezes the Latin half. the interface requires both.
+		// The dual span passes (the superseded exact comparison would have failed it),
+		// the frozen half alone fails (the interface owns the key), and an unrelated exact
+		// key on the same row still grades through expect_components.
 		const c = storedCase({
 			expect_components: stringifyJSON({ venue: "Gandantegchinlen Monastery", postcode: "16040" }),
 			expect_component_renderings: stringifyJSON({
@@ -308,9 +310,9 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("leaves a SAME-script concatenation failing — the plus-code row's error must stay visible", () => {
-		// mn-ws-national-university-pluscode-sbd-6-khoroo: a model that types the Open Location Code as
-		// `postcode` emits two postcode spans next to the real 14200. No interface lists them, so the exact
-		// comparison keeps failing (that visibility is the row's point).
+		// mn-ws-national-university-pluscode-sbd-6-khoroo: a model that types the Open
+		// Location Code as `postcode` emits two postcode spans next to the real 14200.
+		// No interface lists them, so the exact comparison keeps failing (that visibility is the row's point).
 		const c = storedCase({ expect_components: stringifyJSON({ postcode: "14200" }) })
 
 		expect(checkCase(c, result({ postcode: "WWF9+6H6 14200" }))).toEqual([`postcode "WWF9+6H6 14200" ≠ "14200"`])

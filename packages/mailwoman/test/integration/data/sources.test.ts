@@ -27,8 +27,8 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * A bundle declaring one artifact per given local path, with a census over `address_point.source`.
  *
- * The rights declaration is required to compile, and an empty one states nothing rather than describing a bundle with
- * no obligations — the same fixture convention `bundles.test.ts` uses.
+ * The rights declaration is required to compile, and an empty one states nothing rather than
+ * describing a bundle with no obligations — the same fixture convention `bundles.test.ts` uses.
  */
 function bundleOver(localPaths: readonly string[], census: DataBundle["sourceCensus"]): DataBundle {
 	return {
@@ -118,8 +118,9 @@ describe("censusBundleSources", () => {
 
 		const rendered = renderSourceCensus(result, ["A Publisher"]).join("\n")
 
-		// A percentage over part of a bundle describes the part. Printing `100.0%` here would say the bundle carries
-		// one publisher, which a partial copy cannot establish.
+		// A percentage over part of a bundle describes the part.
+		// Printing `100.0%` here would say the bundle carries one publisher,
+		// which a partial copy cannot establish.
 		expect(rendered).toContain("the shares below are withheld")
 		expect(rendered).not.toContain("%")
 	})
@@ -150,8 +151,8 @@ describe("censusBundleSources", () => {
 
 		const result = await censusBundleSources(bundle, dataRoot)
 
-		// The interpolation artifact is a different shape rather than a missing or broken one, so it is neither absent
-		// nor a problem, and the shares stay printable.
+		// The interpolation artifact is a different shape rather than a missing or broken one,
+		// so it is neither absent nor a problem, and the shares stay printable.
 		expect(result.artifactsOutOfScope).toBe(1)
 		expect(result.artifactsAbsent).toBe(0)
 		expect(result.problems).toEqual([])

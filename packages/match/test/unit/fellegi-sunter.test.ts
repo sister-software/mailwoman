@@ -16,8 +16,8 @@ import {
 } from "@mailwoman/match/fellegi-sunter"
 import { describe, expect, it } from "vitest"
 
-// The StatCan/ONS first-name levels (the recipe the research pass surfaced). m/u are project-specific
-// — re-estimated by EM in practice — but they anchor the weight math here.
+// The StatCan/ONS first-name levels (the recipe the research pass surfaced). m/u are
+// project-specific — re-estimated by EM in practice — but they anchor the weight math here.
 const NAME_LEVELS: ComparisonLevel[] = [
 	{ label: "exact", minSimilarity: 1, m: 0.7798, u: 0.00149 },
 	{ label: "high", minSimilarity: 0.88, m: 0.15, u: 0.01 },

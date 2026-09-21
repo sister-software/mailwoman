@@ -38,22 +38,25 @@ const DECLARATION = "docs/engineering/SCOPE.mdx"
 const REGISTER = "scope.config.json"
 
 /**
- * A tier row opens with the tier number in bold, `| **1 — first-class, floor-enforced** | US, FR | …`. The em dash and
- * the label are the doc's prose and are deliberately not matched: a row renamed is not a row moved.
+ * A tier row opens with the tier number in bold, `| **1 — first-class, floor-enforced** | US, FR | …`.
+ * The em dash and the label are the doc's prose and are deliberately not matched:
+ * a row renamed is not a row moved.
  */
 const TIER_ROW = /^\|\s*\*\*(\d)\s/
 
 /**
- * A country code as the table spells one. The locales cell is a comma-separated list and nothing else, so anything that
- * is not two uppercase letters in that cell is a parse failure rather than a country to skip quietly.
+ * A country code as the table spells one. The locales cell is a comma-separated list
+ * and nothing else, so anything that is not two uppercase letters in that cell is
+ * a parse failure rather than a country to skip quietly.
  */
 const COUNTRY_CODE = /^[A-Z]{2}$/
 
 /**
  * Tier number → the countries `scope.mdx` places in it.
  *
- * Membership is multi-valued by design — CZ and PL hold a tier-2 and a tier-4 entry at once, because tiers 4 and 5 name
- * a delivery mechanism rather than a stronger claim — so this answers per tier and never inverts to country → tier.
+ * Membership is multi-valued by design — CZ and PL hold a tier-2 and a tier-4 entry at once,
+ * because tiers 4 and 5 name a delivery mechanism rather than a stronger claim —
+ * so this answers per tier and never inverts to country → tier.
  */
 export function declaredTiers(markdown: string): Map<string, string[]> {
 	const tiers = new Map<string, string[]>()
@@ -85,8 +88,8 @@ function difference(left: readonly string[], right: readonly string[]): string[]
 }
 
 /**
- * The `locale-scope` check: one error per country the declaration and the register disagree about, one per shipping
- * locale placed in neither, and one per stale entry in either list of stated reasons.
+ * The `locale-scope` check: one error per country the declaration and the register disagree about,
+ * one per shipping locale placed in neither, and one per stale entry in either list of stated reasons.
  */
 export const localeScopeCheck: RepoCheck = {
 	id: "locale-scope",

@@ -73,8 +73,8 @@ describe("thresholdTable", () => {
 
 describe("tostEquivalence", () => {
 	it("declines to claim parity from an underpowered run, and says that is what happened", () => {
-		// Identical rates on 20 rows. The point estimate is exactly 0pp — the reading a naive eyeball calls parity —
-		// and the interval is far too wide to place inside ±5pp.
+		// Identical rates on 20 rows. The point estimate is exactly 0pp — the reading a naive
+		// eyeball calls parity — and the interval is far too wide to place inside ±5pp.
 		const reading = tostEquivalence(16, 16, 20)
 
 		expect(reading.delta_pp).toBe(0)
@@ -90,8 +90,9 @@ describe("tostEquivalence", () => {
 	})
 
 	it("reports a real gap as not equivalent, WITHOUT denying that the arms differ", () => {
-		// The companion z-test reports a significant gap on the same rows. A boilerplate "this is not a claim that the
-		// arms differ" would contradict it in the same paragraph, so the wording turns on where the estimate fell.
+		// The companion z-test reports a significant gap on the same rows.
+		// A boilerplate "this is not a claim that the arms differ" would contradict it in
+		// the same paragraph, so the wording turns on where the estimate fell.
 		const reading = tostEquivalence(250, 150, 400)
 
 		expect(reading.equivalent).toBe(false)

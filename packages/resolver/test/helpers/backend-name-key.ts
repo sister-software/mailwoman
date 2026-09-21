@@ -18,9 +18,9 @@
 /**
  * Fold diacritics away (`Zürich` → `zurich`), the way `normalizeLocalityForKey` does.
  *
- * Dropping the combining mark rather than replacing it with a space is the whole point: replace, and `Zürich` keys as
- * `zu rich` and matches nothing it should. Measured on the shipped extract, 0 of 32,539 distinct `locality_base` keys
- * carry a mark.
+ * Dropping the combining mark rather than replacing it with a space is the whole point:
+ * replace, and `Zürich` keys as `zu rich` and matches nothing it should.
+ * Measured on the shipped extract, 0 of 32,539 distinct `locality_base` keys carry a mark.
  */
 export function backendNameKey(s: string): string {
 	return s

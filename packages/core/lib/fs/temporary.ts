@@ -17,7 +17,8 @@ import { tempRootPath } from "#data-root"
 import { makeDirectories } from "#fs/writers"
 
 /**
- * A temporary directory that removes itself when the owning scope ends, together with everything registered on it.
+ * A temporary directory that removes itself when the owning scope ends,
+ * together with everything registered on it.
  *
  * ```ts
  * await using scratch = await temporaryDirectory("filer-build-")
@@ -39,13 +40,13 @@ export interface TemporaryDirectory extends AsyncDisposable {
 	 */
 	resolve(...segments: string[]): string
 	/**
-	 * Take ownership of a resource. It is released before the directory is removed, so a database opened on a file in
-	 * here is closed while the file still exists.
+	 * Take ownership of a resource. It is released before the directory is removed,
+	 * so a database opened on a file in here is closed while the file still exists.
 	 */
 	use<T extends AsyncDisposable | Disposable | null | undefined>(resource: T): T
 	/**
-	 * Hand the directory and everything registered on it to a scope that outlives this one. This binding disposes nothing
-	 * afterwards.
+	 * Hand the directory and everything registered on it to a scope that outlives this one.
+	 * This binding disposes nothing afterwards.
 	 */
 	move(): TemporaryDirectory
 	/**
@@ -71,8 +72,8 @@ function asTemporaryDirectory(_path: PathBuilderLike, resources: AsyncDisposable
 /**
  * Create a new temporary directory under `$MAILWOMAN_TEMP_ROOT`, removed when the owning scope ends.
  *
- * The root is created if it does not exist: `mkdtemp` fails on a missing parent, and a configured root that nothing has
- * written to yet is the normal state on a fresh machine.
+ * The root is created if it does not exist: `mkdtemp` fails on a missing parent, and a
+ * configured root that nothing has written to yet is the normal state on a fresh machine.
  */
 export async function temporaryDirectory(prefix = "mailwoman-"): Promise<TemporaryDirectory> {
 	const root = tempRootPath()

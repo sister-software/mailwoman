@@ -28,8 +28,8 @@ interface MinRow {
 }
 
 /**
- * A country's holdout as a policy object, with a bare array read as its region list — the same reading `splitForRow`
- * makes, so these assertions hold whichever form `defaultHoldouts` returns.
+ * A country's holdout as a policy object, with a bare array read as its region list — the same
+ * reading `splitForRow` makes, so these assertions hold whichever form `defaultHoldouts` returns.
  */
 const policyOf = (holdout: CountryHoldout | undefined): HoldoutPolicy =>
 	Array.isArray(holdout) ? { regions: holdout } : ((holdout ?? {}) as HoldoutPolicy)
@@ -177,8 +177,8 @@ describe("defaultHoldouts", () => {
 	})
 
 	it("names GB by postcode area, since 93.6% of its street rows carry no region", () => {
-		// Measured on `v0.17.0-batch`: 825,083 GB street rows, 771,987 of them with no `region`
-		// component. GB carried no entry at all before this, so both its splits held zero rows.
+		// Measured on `v0.17.0-batch`: 825,083 GB street rows, 771,987 of them with no `region` component.
+		// GB carried no entry at all before this, so both its splits held zero rows.
 		const gb = policyOf(defaultHoldouts().GB)
 
 		expect(gb.postcodePrefixes).toEqual(["TR", "LL", "HX"])
@@ -186,8 +186,8 @@ describe("defaultHoldouts", () => {
 	})
 
 	it("gives every GB prefix two letters, so one area cannot swallow another", () => {
-		// `L` is Liverpool and `LL` is Llandudno. A one-letter prefix matches by `startsWith`, so it
-		// would hold out both, and the holdout would be larger than the one anybody reviewed.
+		// `L` is Liverpool and `LL` is Llandudno. A one-letter prefix matches by `startsWith`,
+		// so it would hold out both, and the holdout would be larger than the one anybody reviewed.
 		const prefixes = policyOf(defaultHoldouts().GB).postcodePrefixes ?? []
 
 		for (const prefix of prefixes) {
@@ -202,8 +202,9 @@ describe("defaultHoldouts", () => {
 
 describe("the holdout predicate reaches a row whose source emits no region (#2353)", () => {
 	/**
-	 * BAN's shape: a street row carrying a postcode and a locality, and no region at all. 96.9% of FR train rows are
-	 * this, and a region-only predicate holds out none of them however many departments it names.
+	 * BAN's shape: a street row carrying a postcode and a locality, and no region at
+	 * all. 96.9% of FR train rows are this, and a region-only predicate holds out
+	 * none of them however many departments it names.
 	 */
 	const banRow = (id: string, postcode: string): MinRow => ({
 		source_id: id,

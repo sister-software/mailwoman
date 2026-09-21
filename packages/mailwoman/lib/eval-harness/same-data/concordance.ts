@@ -40,28 +40,31 @@ import type { PathBuilderLike } from "path-ts"
 const GEONAMES_SOURCE = "gn:id"
 
 /**
- * WOF placetypes that carry the tier a `cities15000.txt` row denotes. `localadmin` is admitted beside `locality`
- * because WOF splits the city tier across both, the same equivalence the resolver's own placetype groups use.
+ * WOF placetypes that carry the tier a `cities15000.txt` row denotes.
+ * `localadmin` is admitted beside `locality` because WOF splits the city tier across both,
+ * the same equivalence the resolver's own placetype groups use.
  */
 const CITY_TIER = new Set(["locality", "localadmin"])
 
 /**
- * How far a concorded WOF row may sit from the register's coordinate and still be the same place. Set at the wrong-area
- * threshold the benchmark already registers, so one distance means one thing throughout.
+ * How far a concorded WOF row may sit from the register's coordinate and still be
+ * the same place. Set at the wrong-area threshold the benchmark already registers,
+ * so one distance means one thing throughout.
  */
 export const GOLD_COHERENCE_KM = 25
 
 /**
- * Identifiers per `IN` clause. SQLite's default host-parameter ceiling is 999, and staying under it keeps the filter in
- * SQL — the alternative, scanning the table's 2,057,196 `gn:id` rows into JavaScript and filtering there, materializes
- * two million objects on a host that also runs this repository's CI runners.
+ * Identifiers per `IN` clause. SQLite's default host-parameter ceiling is 999,
+ * and staying under it keeps the filter in SQL — the alternative, scanning the table's
+ * 2,057,196 `gn:id` rows into JavaScript and filtering there, materializes two million
+ * objects on a host that also runs this repository's CI runners.
  */
 const IDENTIFIERS_PER_QUERY = 900
 
 /**
- * The two tables this reader touches in the WOF admin gazetteer, as the read interface only — the artifact is built
- * elsewhere (`@mailwoman/resolver-wof-sqlite`'s unified schema owns its DDL), and a second builder here would be a
- * second definition of a shipped table.
+ * The two tables this reader touches in the WOF admin gazetteer, as the read interface only —
+ * the artifact is built elsewhere (`@mailwoman/resolver-wof-sqlite`'s unified schema owns its DDL),
+ * and a second builder here would be a second definition of a shipped table.
  */
 interface WOFGazetteerDatabase {
 	concordances: {
@@ -92,8 +95,8 @@ interface ConcordanceRow {
 }
 
 /**
- * The register row a gold set is checked against — the fields the guard reads, so a caller need not pass a whole
- * `GeoNamesCity` and this module need not depend on the panel builder.
+ * The register row a gold set is checked against — the fields the guard reads, so a caller
+ * need not pass a whole `GeoNamesCity` and this module need not depend on the panel builder.
  */
 export interface GoldSubject {
 	geonameid: string
@@ -105,7 +108,8 @@ export interface GoldSubject {
 }
 
 /**
- * Why a geonameid produced no gold. Each count names a different hole, and they are never summed into one number.
+ * Why a geonameid produced no gold. Each count names a different hole,
+ * and they are never summed into one number.
  */
 export interface GoldCensus {
 	subjects: number
@@ -128,8 +132,9 @@ export interface GoldSets {
 /**
  * Read the coherent gold set for each subject.
  *
- * The concordance is queried in chunks and joined to `spr` so the guard can read the other side's placetype, name,
- * country and coordinate — a join that returned ids alone could not tell a locality from the region above it.
+ * The concordance is queried in chunks and joined to `spr` so the guard can read the
+ * other side's placetype, name, country and coordinate — a join that returned ids
+ * alone could not tell a locality from the region above it.
  */
 export async function readGoldSets(databasePath: PathBuilderLike, subjects: readonly GoldSubject[]): Promise<GoldSets> {
 	using db = new DatabaseClient<WOFGazetteerDatabase>(databasePath, { readOnly: true })
@@ -181,8 +186,8 @@ export async function readGoldSets(databasePath: PathBuilderLike, subjects: read
 			continue
 		}
 
-		// The register writes two names for a place — its own and an ascii transliteration — and either may be the one
-		// the gazetteer carries.
+		// The register writes two names for a place — its own and an ascii transliteration —
+		// and either may be the one the gazetteer carries.
 		const accepted = new Set([normalizeLocalityForKey(subject.name), normalizeLocalityForKey(subject.asciiname)])
 
 		if (!tier.every((row) => accepted.has(normalizeLocalityForKey(row.name)))) {
@@ -205,8 +210,9 @@ export async function readGoldSets(databasePath: PathBuilderLike, subjects: read
 
 		census.coherent++
 
-		// Deduplicated: the shipped table holds 2,057,196 `gn:id` rows over 1,775,438 distinct (id, other_id) pairs, so
-		// the same link is written more than once and a naive map would put one WOF id in the gold set twice.
+		// Deduplicated: the shipped table holds 2,057,196 `gn:id` rows over 1,775,438
+		// distinct (id, other_id) pairs, so the same link is written more than once
+		// and a naive map would put one WOF id in the gold set twice.
 		byGeonameID.set(
 			subject.geonameid,
 			[...new Set(tier.map((row) => row.id))].toSorted((left, right) => left - right)

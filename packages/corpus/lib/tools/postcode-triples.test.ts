@@ -35,9 +35,10 @@ afterAll(() => root[Symbol.asyncDispose]())
 /**
  * Write a GeoNames-shaped export as `[country, postcode, place, admin1, admin2]`.
  *
- * The real file has twelve columns and the reader takes four of them from non-adjacent positions — place is 2, admin1
- * is 3, admin2 is 5. Writing them in argument order and padding the gap keeps the fixture readable while still
- * exercising the real offsets. a fixture that packed them adjacently would pass against a reader with the wrong index.
+ * The real file has twelve columns and the reader takes four of them from non-adjacent
+ * positions — place is 2, admin1 is 3, admin2 is 5. Writing them in argument order
+ * and padding the gap keeps the fixture readable while still exercising the real offsets.
+ * a fixture that packed them adjacently would pass against a reader with the wrong index.
  */
 async function writeExport(
 	name: string,
@@ -63,8 +64,8 @@ const acceptAll = { isKnownLocality: () => true }
 
 describe("readTriplesFromGeonames", () => {
 	it("keeps ONE row for a code published both hyphenated and bare", async () => {
-		// PT and PL publish every code twice — exactly 2.00× on both. Keeping both doubles the country's weight in the
-		// recipe output while adding no fact.
+		// PT and PL publish every code twice — exactly 2.00× on both.
+		// Keeping both doubles the country's weight in the recipe output while adding no fact.
 		const path = await writeExport("pt.txt", [
 			["PT", "3750-000", "Borralha", "Aveiro", "Águeda"],
 			["PT", "3750000", "Borralha", "Aveiro", "Águeda"],
@@ -92,8 +93,8 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("drops a place the gazetteer does not know as a locality", async () => {
-		// `Zona Centro` is a colonia and now correctly lands in `dependentLocality`; the check applies to admin2, the
-		// locality, so a row whose city the gazetteer does not know is the one that drops.
+		// `Zona Centro` is a colonia and now correctly lands in `dependentLocality`; the check applies to
+		// admin2, the locality, so a row whose city the gazetteer does not know is the one that drops.
 		const path = await writeExport("mx.txt", [
 			["MX", "20000", "Zona Centro", "Aguascalientes", "Unknownville"],
 			["MX", "20010", "Colonia Norte", "Aguascalientes", "Aguascalientes"],
@@ -112,8 +113,8 @@ describe("readTriplesFromGeonames", () => {
 
 		const [row] = await readTriplesFromGeonames("IN", path, "India", acceptAll)
 
-		// `…, Bengaluru, Karnataka 560038, India` — the `in_structured` board row. Column 3 is `Mahatma Gandhi Road`, a
-		// street, which is exactly why it must not be read as the locality.
+		// `…, Bengaluru, Karnataka 560038, India` — the `in_structured` board row.
+		// Column 3 is `Mahatma Gandhi Road`, a street, which is exactly why it must not be read as the locality.
 		expect(row?.locality).toBe("Bengaluru")
 		expect(row?.dependentLocality).toBe("Mahatma Gandhi Road")
 		expect(row?.postcodePlacement).toBe("after_region")
@@ -121,10 +122,11 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("reads BR from the default column, where the municipality sits in column 3 and admin2 alike", async () => {
-		// `BR 69945-000 Acrelândia Acre 01 Acrelândia 1200013` — the municipality is written twice and the state is
-		// admin1, so the US `place` override would be a no-op here and the default is already right. Placement is
-		// attested by two `br_*` board rows carrying locality, region and CEP in that order —
-		// `Caxias do Sul, RS 95090-020, Brazil` and `Brasília - Federal District, 70390-100, Brazil`.
+		// `BR 69945-000 Acrelândia Acre 01 Acrelândia 1200013` — the municipality is written
+		// twice and the state is admin1, so the US `place` override would be a no-op here
+		// and the default is already right. Placement is attested by two `br_*` board rows
+		// carrying locality, region and CEP in that order — `Caxias do Sul, RS 95090-020, Brazil`
+		// and `Brasília - Federal District, 70390-100, Brazil`.
 		const path = await writeExport("br.txt", [["BR", "69945-000", "Acrelândia", "Acre", "Acrelândia"]])
 
 		const [row] = await readTriplesFromGeonames("BR", path, "Brazil", acceptAll)
@@ -136,9 +138,10 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("takes the CITY from the column that country's export puts it in, which is inverted for the US", async () => {
-		// `US 94901 San Rafael California CA Marin` — column 3 is the city and admin2 is the county, the inverse of
-		// PT/MX/IN. The default mapping would emit `Marin` as the locality and train a county as a city, which is the
-		// `Mahatma Gandhi Road` defect this reader's header records, from the other direction.
+		// `US 94901 San Rafael California CA Marin` — column 3 is the city and admin2 is the county,
+		// the inverse of PT/MX/IN. The default mapping would emit `Marin` as the locality
+		// and train a county as a city, which is the `Mahatma Gandhi Road` defect this
+		// reader's header records, from the other direction.
 		const path = await writeExport("us.txt", [
 			["US", "94901", "San Rafael", "California", "Marin"],
 			["US", "60639", "Chicago", "Illinois", "Cook"],
@@ -147,8 +150,8 @@ describe("readTriplesFromGeonames", () => {
 		const triples = await readTriplesFromGeonames("US", path, "United States", acceptAll)
 
 		expect(triples.map((t) => t.locality)).toEqual(["San Rafael", "Chicago"])
-		// A US county is not a segment the address line writes, so it is dropped rather than carried as a dependent
-		// locality the way a colonia is.
+		// A US county is not a segment the address line writes, so it is dropped
+		// rather than carried as a dependent locality the way a colonia is.
 		expect(triples.every((t) => t.dependentLocality === undefined)).toBe(true)
 		expect(triples.every((t) => t.postcodePlacement === "after_region" && t.locale === "en-US")).toBe(true)
 	})
@@ -173,8 +176,9 @@ describe("applyLocalityQuota", () => {
 	})
 
 	it("bounds a hub locality WITHOUT deleting it", () => {
-		// `Schwedt/Oder` claims 9,222 DE postcodes against a median of 1. A threshold would drop the city entirely, which
-		// removes exactly the places a parser most needs to have seen. the quota keeps it and bounds the repetition.
+		// `Schwedt/Oder` claims 9,222 DE postcodes against a median of 1.
+		// A threshold would drop the city entirely, which removes exactly the places a parser
+		// most needs to have seen. the quota keeps it and bounds the repetition.
 		const triples = Array.from({ length: 100 }, (_, i) => make("Schwedt/Oder", String(i)))
 
 		const kept = applyLocalityQuota(triples, 24)
@@ -209,8 +213,9 @@ describe("applyCountryBudget", () => {
 	})
 
 	it("bounds a country a per-locality quota cannot", () => {
-		// IN has 128,152 distinct localities, so even a quota of one leaves it contributing 63,533 rows against 39,790
-		// from the other seven combined. Without this the recipe teaches the trailing surface as an Indian fact.
+		// IN has 128,152 distinct localities, so even a quota of one leaves it
+		// contributing 63,533 rows against 39,790 from the other seven combined.
+		// Without this the recipe teaches the trailing surface as an Indian fact.
 		const triples = [
 			...Array.from({ length: 50 }, (_, i) => make("IN", `village-${i}`, String(i))),
 			...Array.from({ length: 5 }, (_, i) => make("FR", `commune-${i}`, String(i))),
@@ -242,8 +247,9 @@ describe("applyCountryBudget", () => {
 	})
 
 	it("spends the budget ACROSS regions, because source order is postcode order and a postcode sorts geographically", () => {
-		// The defect this replaced, measured on the tuples the tool had already produced: the US took its 16,000 from 23
-		// of 56 states, Mexico 7 regions, Portugal 5, India 24 of 36 — one corner of each country.
+		// The defect this replaced, measured on the tuples the tool had already produced:
+		// the US took its 16,000 from 23 of 56 states, Mexico 7 regions, Portugal 5,
+		// India 24 of 36 — one corner of each country.
 		const row = (region: string, n: number) => ({ ...make("US", `city-${region}-${n}`, String(n)), region })
 
 		const triples = [
@@ -311,10 +317,11 @@ describe("localityWrittenForm", () => {
 })
 
 /**
- * A fixture pair of gazetteers on the unified schema: a Balearic and a Zamoran postcode whose parents resolve, plus a
- * postcode whose parent has no region. Names carry the WOF shape #1673 measured: `spr.name` is the English exonym or
- * the stripped Castilian, the `spa` preferred form is accented, and the `cat` preferred form of a Castilian province
- * names the whole community.
+ * A fixture pair of gazetteers on the unified schema: a Balearic and a Zamoran
+ * postcode whose parents resolve, plus a postcode whose parent has no region.
+ * Names carry the WOF shape #1673 measured: `spr.name` is the English exonym
+ * or the stripped Castilian, the `spa` preferred form is accented, and the `cat`
+ * preferred form of a Castilian province names the whole community.
  */
 async function writeFixtureGazetteers(): Promise<{ adminDB: string; postcodeDB: string }> {
 	const adminDB = String(root.resolve("admin.db"))
@@ -438,8 +445,8 @@ describe("readPairsFromAdmin", () => {
 
 describe("POSTCODE_CONVENTIONS", () => {
 	it("keeps the two trailing conventions APART", () => {
-		// VE writes the code on the locality segment and IN on the region segment. Flattening them into one "trailing"
-		// surface would teach each country the other's shape.
+		// VE writes the code on the locality segment and IN on the region segment.
+		// Flattening them into one "trailing" surface would teach each country the other's shape.
 		expect(POSTCODE_CONVENTIONS.get("VE")?.placement).toBe("after_locality")
 		expect(POSTCODE_CONVENTIONS.get("IN")?.placement).toBe("after_region")
 	})

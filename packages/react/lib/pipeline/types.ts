@@ -20,19 +20,21 @@ export interface PipelineLoadingState {
 	stepLabels: string[]
 	stepIndex: number
 	/**
-	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1] — `null` while nothing is
-	 * downloading or when the response declares no length.
+	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1] —
+	 * `null` while nothing is downloading or when the response declares no length.
 	 *
-	 * The step index alone cannot report this download. The model is fetched before the first step is entered, so a
-	 * step-derived bar sits at one-third for the whole of a 38 MB transfer and then jumps — which reads as a hung page
-	 * rather than a loading one. This is the only channel that moves during the wait that actually takes the time.
+	 * The step index alone cannot report this download. The model is fetched before the
+	 * first step is entered, so a step-derived bar sits at one-third for the whole of a 38
+	 * MB transfer and then jumps — which reads as a hung page rather than a loading one.
+	 * This is the only channel that moves during the wait that actually takes the time.
 	 */
 	byteFraction?: number | null
 }
 
 /**
- * The injected parse runtime. The host implements `runParse` (compute shape → classify → resolve) and reports load
- * progress + errors. This package never imports the model or gazetteer — it only calls this interface.
+ * The injected parse runtime. The host implements `runParse` (compute shape → classify → resolve)
+ * and reports load progress + errors. This package never imports the model
+ * or gazetteer — it only calls this interface.
  */
 export interface PipelineRuntime {
 	/**
@@ -40,7 +42,8 @@ export interface PipelineRuntime {
 	 */
 	ready: boolean
 	/**
-	 * Execute a full parse+resolve, reporting stage progress via `onStage` (0-based index into `parseStageLabels`).
+	 * Execute a full parse+resolve, reporting stage progress via `onStage`
+	 * (0-based index into `parseStageLabels`).
 	 */
 	runParse: (input: string, hooks: { onStage: (stage: number) => void }) => Promise<ParseResult>
 	/**
@@ -58,9 +61,9 @@ export interface PipelineRuntime {
 }
 
 /**
- * Optional host-injected panels. Each is a function of the current parse result returning already-rendered content (the
- * docs site's SpanHighlight, TreeView, TimingPanel, …). Kept as `ReactNode` thunks so this package needs neither those
- * components nor their heavy data types.
+ * Optional host-injected panels. Each is a function of the current parse result returning
+ * already-rendered content (the docs site's SpanHighlight, TreeView, TimingPanel, …).
+ * Kept as `ReactNode` thunks so this package needs neither those components nor their heavy data types.
  */
 export interface PipelinePanels {
 	/**

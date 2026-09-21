@@ -20,8 +20,9 @@
 import { foldToken } from "#normalize"
 
 /**
- * Canonical French voie type → common written abbreviations. The leading word of a French street name. The first entry
- * of each list is the most common abbreviation where one exists.
+ * Canonical French voie type → common written abbreviations.
+ * The leading word of a French street name. The first entry of each list is the
+ * most common abbreviation where one exists.
  */
 export const FR_VOIE_TYPES = {
 	rue: ["r"],
@@ -63,8 +64,8 @@ export const FR_VOIE_TYPES = {
 export type FrenchVoieType = keyof typeof FR_VOIE_TYPES
 
 /**
- * Set of every French voie token — each canonical type plus each abbreviation — folded to lowercase/diacritic-free for
- * matching. `Allée`/`allee`/`all` all resolve here.
+ * Set of every French voie token — each canonical type plus each abbreviation —
+ * folded to lowercase/diacritic-free for matching. `Allée`/`allee`/`all` all resolve here.
  */
 const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
 	const out = new Set<string>()
@@ -81,9 +82,10 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
 })()
 
 /**
- * True when a token is a French voie type word or abbreviation (case- and accent-insensitive) — `Rue`, `BD`, `Allée`,
- * `impasse`. Matches the whole token (French types lead the street name, they are not fused suffixes), so a city or
- * surname is not caught the way a suffix test might.
+ * True when a token is a French voie type word or abbreviation
+ * (case- and accent-insensitive) — `Rue`, `BD`, `Allée`, `impasse`.
+ * Matches the whole token (French types lead the street name, they are not fused suffixes),
+ * so a city or surname is not caught the way a suffix test might.
  */
 export function isFrenchStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false

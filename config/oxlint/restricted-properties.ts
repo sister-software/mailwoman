@@ -20,8 +20,8 @@ export interface RestrictedProperty {
 }
 
 /**
- * `JSON.parse` throws on corrupt input and returns `any`, so every direct call site either wraps it in its own
- * try/catch or lets the exception escape untyped.
+ * `JSON.parse` throws on corrupt input and returns `any`, so every direct call site
+ * either wraps it in its own try/catch or lets the exception escape untyped.
  */
 export const JSON_PARSE: RestrictedProperty = {
 	object: "JSON",
@@ -32,8 +32,8 @@ export const JSON_PARSE: RestrictedProperty = {
 }
 
 /**
- * `JSON.stringify` returns a bare `string`, so a caller cannot tell a serialized payload from any other text, and the
- * two call shapes get re-typed at every site that needs one.
+ * `JSON.stringify` returns a bare `string`, so a caller cannot tell a serialized payload
+ * from any other text, and the two call shapes get re-typed at every site that needs one.
  */
 export const JSON_STRINGIFY: RestrictedProperty = {
 	object: "JSON",
@@ -53,8 +53,9 @@ const RESTRICTED_PROPERTIES: readonly RestrictedProperty[] = [JSON_PARSE, JSON_S
 /**
  * The rule with `lifted` removed — the form an override uses.
  *
- * Subtraction rather than a hand-written list: an override written as "these two still apply" silently stops applying
- * the third the day one is added, and the file it governs is the last place anyone looks.
+ * Subtraction rather than a hand-written list: an override written as "these
+ * two still apply" silently stops applying the third the day one is added,
+ * and the file it governs is the last place anyone looks.
  */
 export function restrictedPropertiesExcept(...lifted: readonly RestrictedProperty[]) {
 	return ["error", ...RESTRICTED_PROPERTIES.filter((entry) => !lifted.includes(entry))] as const

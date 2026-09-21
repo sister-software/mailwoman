@@ -109,8 +109,8 @@ describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", (
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],
 			languages: ["eng", ""],
-			// The shipped-index victims: "la" = the case-folded Los Angeles alias colliding with the
-			// French article; "boulevard" = Boulevard, CA colliding with the street-type word.
+			// The shipped-index victims: "la" = the case-folded Los Angeles alias colliding with
+			// the French article; "boulevard" = Boulevard, CA colliding with the street-type word.
 			excludeSurfaces: new Set(["la", "boulevard"]),
 			excludeAllTokensOf: new Set(["de", "la", "du", "des"]),
 			exclusionPolicy: "test-policy",

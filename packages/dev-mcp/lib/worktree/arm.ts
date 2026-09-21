@@ -47,15 +47,16 @@ import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
 /**
  * The `ref` that means "the working tree as it stands", uncommitted edits included.
  *
- * Spelled as a reserved word rather than accepted implicitly, because git resolves almost anything: without this, a
- * caller wanting their edits measured would pass `head`, get a clean checkout of the last commit, and read a verdict
- * about code they had already changed.
+ * Spelled as a reserved word rather than accepted implicitly, because git resolves almost
+ * anything: without this, a caller wanting their edits measured would pass `head`, get a
+ * clean checkout of the last commit, and read a verdict about code they had already changed.
  */
 export const WORKING_TREE_REF = "WORKTREE"
 
 /**
- * Written into whichever checkout the arm runs in — including, for {@link WORKING_TREE_REF}, the operator's own. Named
- * with a leading dot and removed in a `finally` so a crashed child cannot leave it in a tracked tree.
+ * Written into whichever checkout the arm runs in — including, for {@link WORKING_TREE_REF},
+ * the operator's own. Named with a leading dot and removed in a `finally`
+ * so a crashed child cannot leave it in a tracked tree.
  */
 const RUNNER_FILENAME = ".mwdev-arm-runner.ts"
 
@@ -70,8 +71,9 @@ interface WorkspaceLink {
 /**
  * Read the root `workspaces` globs and resolve each to a `name -> directory` pair.
  *
- * Reads the worktree's own manifests rather than the main checkout's, because a ref that predates a workspace must not
- * have that workspace linked into it — an import that should fail at the older ref has to actually fail.
+ * Reads the worktree's own manifests rather than the main checkout's, because a
+ * ref that predates a workspace must not have that workspace linked into it —
+ * an import that should fail at the older ref has to actually fail.
  */
 async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
 	const links: WorkspaceLink[] = []
@@ -89,10 +91,12 @@ async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
 }
 
 /**
- * Build `<worktree>/node_modules` as a symlink farm over the main checkout's, with every workspace re-pointed inward.
+ * Build `<worktree>/node_modules` as a symlink farm over the main checkout's,
+ * with every workspace re-pointed inward.
  *
- * Scoped directories are handled one level down when the scope contains a workspace, and whole otherwise: `@types` is
- * thousands of identical packages and is linked as one entry, while `@mailwoman` is rebuilt member by member.
+ * Scoped directories are handled one level down when the scope contains a workspace,
+ * and whole otherwise: `@types` is thousands of identical packages and is linked as
+ * one entry, while `@mailwoman` is rebuilt member by member.
  */
 async function linkNodeModules(mainRoot: string, worktree: string): Promise<void> {
 	const source = join(mainRoot, "node_modules")
@@ -140,12 +144,13 @@ async function linkNodeModules(mainRoot: string, worktree: string): Promise<void
 /**
  * The script the child runs, written into the worktree rather than committed.
  *
- * Written rather than committed on purpose: a committed runner would only exist at refs that already have it, so the
- * arm could not reach backwards past its own introduction — which is most of the refs anyone wants to compare against.
+ * Written rather than committed on purpose: a committed runner would only exist
+ * at refs that already have it, so the arm could not reach backwards past its
+ * own introduction — which is most of the refs anyone wants to compare against.
  * Its imports resolve inside the worktree, so it is the ref's pipeline that answers.
  *
- * It reads one JSON request on stdin and writes one `WorktreeAnswer` on stdout, so nothing is passed by argv and an
- * input containing a quote or a newline cannot become a shell problem.
+ * It reads one JSON request on stdin and writes one `WorktreeAnswer` on stdout, so nothing is
+ * passed by argv and an input containing a quote or a newline cannot become a shell problem.
  */
 const RUNNER_SOURCE = `
 import { createGeocodeSession } from "mailwoman/geocode"
@@ -181,13 +186,14 @@ interface WorktreeAnswer {
 
 export interface WorktreeArmResult {
 	/**
-	 * The commit the worktree was checked out at, resolved to a full sha so the result names a fixed tree rather than a
-	 * moving ref.
+	 * The commit the worktree was checked out at, resolved to a full sha
+	 * so the result names a fixed tree rather than a moving ref.
 	 */
 	commit: string
 	answers: WorktreeAnswer[]
 	/**
-	 * Wall-clock for worktree creation plus the symlink farm, kept separate from the run so a slow arm is attributable.
+	 * Wall-clock for worktree creation plus the symlink farm, kept separate from the run
+	 * so a slow arm is attributable.
 	 */
 	setupMs: number
 	runMs: number
@@ -196,13 +202,14 @@ export interface WorktreeArmResult {
 /**
  * Run one input set through `ref`'s source, in a child process, and return its answers.
  *
- * `options` is the resolved {@linkcode GeocodeSessionOptions} the caller's own registry produced — passed through rather
- * than re-derived here, so both arms are configured by one function and a change added to `resolveConfig` reaches this
- * arm without being copied into it.
+ * `options` is the resolved {@linkcode GeocodeSessionOptions} the caller's own registry produced —
+ * passed through rather than re-derived here, so both arms are configured by one function
+ * and a change added to `resolveConfig` reaches this arm without being copied into it.
  *
- * The worktree is removed in `finally`, including on a child crash. `git worktree add --detach` never moves the
- * caller's head and never touches the working tree, so a comparison cannot disturb uncommitted work — which is the
- * property that makes this safe to run mid-edit, and the reason it is a worktree rather than a stash.
+ * The worktree is removed in `finally`, including on a child crash.
+ * `git worktree add --detach` never moves the caller's head and never touches the working tree,
+ * so a comparison cannot disturb uncommitted work — which is the property that makes
+ * this safe to run mid-edit, and the reason it is a worktree rather than a stash.
  */
 export async function runWorktreeArm(args: {
 	repoRoot: string
@@ -214,19 +221,21 @@ export async function runWorktreeArm(args: {
 	const { repoRoot, ref, inputs, options } = args
 	const setupStartedAt = Date.now()
 
-	// The uncommitted working tree, which no git ref can name and which is the arm a maintainer reaches for most:
-	// "what I have edited" against "what is committed". It needs no worktree and no farm — the main checkout
-	// already has both — only its own process, which is the entire point. Spawning it through the same runner as a
-	// ref arm is what keeps the comparison honest: one script, one config path, so a difference between the arms
-	// is a difference in source rather than in how each side was invoked.
+	// The uncommitted working tree, which no git ref can name and which is the arm a
+	// maintainer reaches for most: "what I have edited" against "what is committed".
+	// It needs no worktree and no farm — the main checkout already has both — only its own
+	// process, which is the entire point. Spawning it through the same runner as a ref arm
+	// is what keeps the comparison honest: one script, one config path, so a difference
+	// between the arms is a difference in source rather than in how each side was invoked.
 	const live = ref === WORKING_TREE_REF
 
 	await using resources = new AsyncDisposableStack()
 
-	// The working-tree arm owns nothing: it runs in the main checkout. A ref arm owns a scratch parent, and its
-	// teardown is ordered: git releases the worktree, then the directory under it goes, then the prune clears the
-	// admin entry for a directory that is now gone. The stack unwinds last-in, first-out, so registering in the
-	// reverse of that order is what states it — prune first, so prune runs last.
+	// The working-tree arm owns nothing: it runs in the main checkout.
+	// A ref arm owns a scratch parent, and its teardown is ordered: git releases the worktree,
+	// then the directory under it goes, then the prune clears the admin entry for a
+	// directory that is now gone. The stack unwinds last-in, first-out, so registering in
+	// the reverse of that order is what states it — prune first, so prune runs last.
 	if (!live) {
 		resources.defer(() => {
 			runFileSync("git", ["worktree", "prune"], { cwd: repoRoot, stdio: "pipe" })
@@ -239,14 +248,15 @@ export async function runWorktreeArm(args: {
 	if (!live) {
 		runFileSync("git", ["worktree", "add", "--detach", worktree, ref], { cwd: repoRoot, stdio: "pipe" })
 
-		// `git worktree remove` refuses on a dirty checkout, and this one always is — the runner script and the
-		// node_modules farm are both untracked. `--force` is the normal path here rather than an override.
+		// `git worktree remove` refuses on a dirty checkout, and this one always is —
+		// the runner script and the node_modules farm are both untracked.
+		// `--force` is the normal path here rather than an override.
 		resources.defer(() => {
 			try {
 				runFileSync("git", ["worktree", "remove", "--force", worktree], { cwd: repoRoot, stdio: "pipe" })
 			} catch {
-				// A failed removal must not mask the arm's own error. removing the parent directory and pruning
-				// afterwards clean up regardless.
+				// A failed removal must not mask the arm's own error. removing the parent directory
+				// and pruning afterwards clean up regardless.
 			}
 		})
 	}
@@ -257,8 +267,8 @@ export async function runWorktreeArm(args: {
 		? runFileSync("git", ["status", "--porcelain"], { cwd: repoRoot, encoding: "utf8" }).trim().length > 0
 		: false
 
-	// A dirty working tree is not its head, and reporting the sha alone would let a comparison claim it ran
-	// that commit when it ran that commit plus uncommitted edits.
+	// A dirty working tree is not its head, and reporting the sha alone would let a comparison
+	// claim it ran that commit when it ran that commit plus uncommitted edits.
 	const commit = dirty ? `${head}+dirty` : head
 
 	if (!live) {
@@ -277,8 +287,8 @@ export async function runWorktreeArm(args: {
 			cwd: worktree,
 			input: stringifyJSON({ inputs, options }),
 			encoding: "utf8",
-			// A full board through a cold engine is minutes, and the payload is megabytes. both defaults are far
-			// too small and both failures look like a crash rather than a limit.
+			// A full board through a cold engine is minutes, and the payload is megabytes. both
+			// defaults are far too small and both failures look like a crash rather than a limit.
 			timeout: args.timeoutMs ?? 30 * 60 * 1000,
 			maxBuffer: 512 * 1024 * 1024,
 		})
@@ -287,8 +297,8 @@ export async function runWorktreeArm(args: {
 
 		return { commit, answers: parsed.answers, setupMs, runMs: Date.now() - runStartedAt }
 	} finally {
-		// The live arm runs IN the operator's checkout, so its runner is the one piece of litter a comparison
-		// could leave in a tracked tree. Remove it on every path, including a child crash.
+		// The live arm runs IN the operator's checkout, so its runner is the one piece of litter a
+		// comparison could leave in a tracked tree. Remove it on every path, including a child crash.
 		if (live) {
 			await removePathIfPresent(runnerPath)
 		}

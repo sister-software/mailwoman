@@ -103,12 +103,13 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 const BBOX_SOURCE = "2026-07-15 coordinate-parity receipt harness (scratchpad/coord-parity.mjs) — deliberately coarse"
 
 /**
- * The reviewed guard-B bounding-box record — the structured form of `COUNTRY_BBOX` (`resolver/plausibility.ts`),
- * derived from that constant rather than declared beside it.
+ * The reviewed guard-B bounding-box record — the structured form of `COUNTRY_BBOX`
+ * (`resolver/plausibility.ts`), derived from that constant rather than declared beside it.
  *
- * The two were separate literals with a test asserting them equal. That test compared the numbers and not the
- * membership, and both tables were missing the same four shipping locales. Membership is checked in
- * `plausibility.test.ts` against `release.config.json` instead.
+ * The two were separate literals with a test asserting them equal.
+ * That test compared the numbers and not the membership, and both tables were missing
+ * the same four shipping locales. Membership is checked in `plausibility.test.ts`
+ * against `release.config.json` instead.
  *
  * `source` is stamped here: provenance belongs to the artifact record rather than to the fallback constant.
  */

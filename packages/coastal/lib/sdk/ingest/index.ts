@@ -49,8 +49,9 @@ import {
 } from "#vocabulary"
 
 /**
- * The ring types and the proj guard, both re-exported from `@mailwoman/spatial`: neither is coastal-specific, and a
- * second copy of the `projinfo` parse would be a second place for the ballpark check to stop refusing.
+ * The ring types and the proj guard, both re-exported from `@mailwoman/spatial`:
+ * neither is coastal-specific, and a second copy of the `projinfo` parse would be
+ * a second place for the ballpark check to stop refusing.
  */
 
 /**
@@ -82,7 +83,8 @@ export interface CoastalSourceFeature {
 }
 
 /**
- * One ground-instability feature, reprojected to WGS84. A different hazard with a different schema.
+ * One ground-instability feature, reprojected to WGS84.
+ * A different hazard with a different schema.
  */
 export interface CoastalInstabilityFeature {
 	areaID: string
@@ -106,25 +108,28 @@ export interface CoastalIngestOptions {
 	 */
 	geodatabasePath: string
 	/**
-	 * Stop after this many features per layer — the fixtures and smoke rungs use it. a full build does not set it.
+	 * Stop after this many features per layer — the fixtures and smoke rungs use
+	 * it. a full build does not set it.
 	 */
 	limit?: number
 	/**
-	 * The epsg code the source must declare. A source declaring anything else is a product change rather than a variation
-	 * to absorb.
+	 * The epsg code the source must declare. A source declaring anything else is a
+	 * product change rather than a variation to absorb.
 	 */
 	expectEPSG?: number
 	/**
-	 * The extent every reprojected vertex must land inside. Defaults to the erosion collections' own declaration, which
-	 * contains the two ground-instability collections' tighter boxes.
+	 * The extent every reprojected vertex must land inside.
+	 * Defaults to the erosion collections' own declaration, which contains the two
+	 * ground-instability collections' tighter boxes.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
 	/**
 	 * Read only the authority's feature ids in `[objectIDFrom, objectIDTo]`, inclusive.
 	 *
-	 * This is what makes a bounded build possible: h3's wasm heap cannot be reset from JavaScript, so the classification
-	 * runs one child process per range of the authority's own ids. Ranges rather than an offset because `objectid` is the
-	 * source's stable key — a range names the same features on every run, which an offset into a result set does not.
+	 * This is what makes a bounded build possible: h3's wasm heap cannot be reset from JavaScript,
+	 * so the classification runs one child process per range of the authority's own ids.
+	 * Ranges rather than an offset because `objectid` is the source's stable key —
+	 * a range names the same features on every run, which an offset into a result set does not.
 	 * Each layer numbers its own `objectid` from 1, so a range is per layer.
 	 */
 	objectIDFrom?: number
@@ -132,36 +137,40 @@ export interface CoastalIngestOptions {
 }
 
 /**
- * What one layer declares about itself — including the attribute fields IT actually has, because the fourteen published
- * layers do not share one schema.
+ * What one layer declares about itself — including the attribute fields IT actually has,
+ * because the fourteen published layers do not share one schema.
  */
 export interface CoastalLayerIdentity {
 	epsg: number
 	featureCount: number
 	layer: string
 	/**
-	 * The layer's own attribute field names. A `select` naming a column this set does not hold is refused by ogr2ogr
-	 * outright, so the query is built from the set rather than from a schema read off a sibling layer.
+	 * The layer's own attribute field names. A `select` naming a column this set does
+	 * not hold is refused by ogr2ogr outright, so the query is built from the set
+	 * rather than from a schema read off a sibling layer.
 	 */
 	fields: ReadonlySet<string>
 }
 
 /**
- * Coordinate decimals ogr2ogr writes into the stream. Nine is ~0.1 mm at this latitude — far past the source's own
- * precision, and chosen so the reprojection contributes nothing measurable to the area cross-check.
+ * Coordinate decimals ogr2ogr writes into the stream. Nine is ~0.1 mm at this latitude —
+ * far past the source's own precision, and chosen so the reprojection contributes
+ * nothing measurable to the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 
 /**
  * How far outside the declared extent a vertex may fall before the ingest refuses.
  *
- * A declared extent is itself a rounded published value, so an exact test would be brittle. this margin is small enough
- * that an unprojected or axis-swapped read — which lands degrees or whole hemispheres away — still fails.
+ * A declared extent is itself a rounded published value, so an exact test would be
+ * brittle. this margin is small enough that an unprojected or axis-swapped read —
+ * which lands degrees or whole hemispheres away — still fails.
  */
 const BBOX_MARGIN_DEGREES = 0.01
 
 /**
- * What one layer declares about itself: its authority code and its feature count, read before any feature is.
+ * What one layer declares about itself: its authority code and its feature count,
+ * read before any feature is.
  *
  * @throws {Error} When the layer is missing, or its declared epsg is not `expectEPSG`.
  */
@@ -203,17 +212,20 @@ function idBounds(options: CoastalIngestOptions): string {
 }
 
 /**
- * The attribute columns an erosion-zone layer is read for where it has them, and as literal `NULL` where it does not.
+ * The attribute columns an erosion-zone layer is read for where it has them,
+ * and as literal `NULL` where it does not.
  *
- * The fourteen layers do not share one schema, and the exception is A single column on A single layer.
- * `NCERM_SMP_2105_0CC` carries no `smp_name`; the other eleven scenario layers and both ground-instability layers do. A
- * builder that read the schema from one layer — the survey read `NCERM_SMP_2105_95CC` — and generalized it fails on the
- * twelfth layer with `error 1: Unrecognized field name smp_name`, 66,000 features into a run. Loud, and only because
- * ogr2ogr refuses an unknown column: a source that answered NULL instead would have shipped.
+ * The fourteen layers do not share one schema, and the exception is A single column on A
+ * single layer. `NCERM_SMP_2105_0CC` carries no `smp_name`; the other eleven scenario layers
+ * and both ground-instability layers do. A builder that read the schema from one layer —
+ * the survey read `NCERM_SMP_2105_95CC` — and generalized it fails on the twelfth
+ * layer with `error 1: Unrecognized field name smp_name`, 66,000 features into a run.
+ * Loud, and only because ogr2ogr refuses an unknown column: a source that answered NULL
+ * instead would have shipped.
  *
- * The four policy columns are the same shape for a different reason: the six NFI layers omit them because under a
- * no-intervention scenario there is no policy to record, which is a documented property of the product rather than an
- * irregularity in it.
+ * The four policy columns are the same shape for a different reason: the six NFI layers
+ * omit them because under a no-intervention scenario there is no policy to record,
+ * which is a documented property of the product rather than an irregularity in it.
  *
  * The distance column is not in this set. Its absence is a product change and throws.
  */
@@ -238,9 +250,10 @@ function scenarioSelectSQL(
 	identity: CoastalLayerIdentity,
 	options: CoastalIngestOptions
 ): string {
-	// The policy asymmetry is regular across the product — the six NFI layers omit all four columns and the six SMP
-	// layers carry all four — so a layer that disagrees with its own scenario is a source-schema change rather than the
-	// `smp_name` kind of irregularity, and it is worth hearing about rather than absorbing into a NULL.
+	// The policy asymmetry is regular across the product — the six NFI layers omit all four
+	// columns and the six SMP layers carry all four — so a layer that disagrees with its own
+	// scenario is a source-schema change rather than the `smp_name` kind of irregularity,
+	// and it is worth hearing about rather than absorbing into a NULL.
 	const carriesPolicy = identity.fields.has("mt_smp")
 
 	if (carriesPolicy !== scenarioCarriesPolicy(scenario)) {
@@ -309,11 +322,12 @@ interface RawFeature {
 /**
  * Stream one layer through ogr2ogr as GeoJSON, checking every vertex against the declared extent.
  *
- * A swapped coordinate order survives a projection check — both axes are still numbers in a plausible range — and shows
- * up here immediately, before 89,371 polygons are written to the wrong side of the planet.
+ * A swapped coordinate order survives a projection check — both axes are still
+ * numbers in a plausible range — and shows up here immediately, before 89,371
+ * polygons are written to the wrong side of the planet.
  *
- * @throws {Error} When ogr2ogr fails, when a feature carries no geometry, or when a reprojected vertex falls outside
- *   the declared extent.
+ * @throws {Error} When ogr2ogr fails, when a feature carries no geometry, or
+ *   when a reprojected vertex falls outside the declared extent.
  */
 async function* streamLayer(
 	sql: string,
@@ -376,9 +390,9 @@ export async function* readCoastalScenarioFeatures(
 	options: CoastalIngestOptions,
 	identity?: CoastalLayerIdentity
 ): AsyncGenerator<CoastalSourceFeature> {
-	// The layer's own field list decides the `select`, because the fourteen layers do not share one schema — see
-	// `OPTIONAL_SCENARIO_FIELDS`. Read here when the caller has not already read it, which costs one `ogrinfo -so` per
-	// layer against a build that streams thousands of features from it.
+	// The layer's own field list decides the `select`, because the fourteen layers do not share one
+	// schema — see `OPTIONAL_SCENARIO_FIELDS`. Read here when the caller has not already read it,
+	// which costs one `ogrinfo -so` per layer against a build that streams thousands of features from it.
 	const layerIdentity = identity ?? (await readCoastalSourceIdentity(scenario.layer, options))
 	const sql = scenarioSelectSQL(scenario, layerIdentity, options)
 
@@ -389,8 +403,8 @@ export async function* readCoastalScenarioFeatures(
 			areaID: `${scenario.key}:${String(properties.object_id)}`,
 			scenario,
 			frontageID: Number(properties.frontageid),
-			// A missing distance is refused rather than defaulted: measured, neither of the two layers sampled carries a
-			// null, and a zero written in place of one reads as "no erosion projected here".
+			// A missing distance is refused rather than defaulted: measured, neither of the two layers sampled
+			// carries a null, and a zero written in place of one reads as "no erosion projected here".
 			distanceM: assertFiniteDistance(properties.distance_m, scenario, String(properties.object_id)),
 			smpNo: numberOf(properties.smp_no),
 			smpName: verbatimText(properties.smp_name),
@@ -471,8 +485,9 @@ export async function* readCoastalInstabilityFeatures(
  */
 export interface CoastalFeatureSource {
 	/**
-	 * What the source says it holds, across every layer this source covers. The build compares its own streamed total
-	 * against this, so a short read throws instead of building a shorter coastline.
+	 * What the source says it holds, across every layer this source covers.
+	 * The build compares its own streamed total against this, so a short read throws
+	 * instead of building a shorter coastline.
 	 */
 	declaredFeatureCount: number
 	epsg: number
@@ -501,7 +516,8 @@ export interface GeodatabaseSourceOptions extends CoastalIngestOptions {
 }
 
 /**
- * The published geodatabase as a feature source — identity read up front per layer, features streamed on demand.
+ * The published geodatabase as a feature source — identity read up front per layer,
+ * features streamed on demand.
  */
 export async function createGeodatabaseFeatureSource(options: GeodatabaseSourceOptions): Promise<CoastalFeatureSource> {
 	const scenarios = (options.scenarioKeys ?? [...NCERM_SCENARIOS_BY_KEY.keys()]).map((key) => {
@@ -526,10 +542,10 @@ export async function createGeodatabaseFeatureSource(options: GeodatabaseSourceO
 	let declared = 0
 	let epsg = NCERM_SOURCE_EPSG
 
-	// Every layer's identity is read up front and kept, because the fourteen layers do not share one schema and the
-	// `select` for each is built from its own field list. Re-reading it per stream would work and would cost a second
-	// `ogrinfo` per layer. keeping it makes the identity the source declared and the identity the query was built from
-	// the same object.
+	// Every layer's identity is read up front and kept, because the fourteen layers do
+	// not share one schema and the `select` for each is built from its own field list.
+	// Re-reading it per stream would work and would cost a second `ogrinfo` per layer. keeping it makes
+	// the identity the source declared and the identity the query was built from the same object.
 	const identities = new Map<string, CoastalLayerIdentity>()
 
 	for (const layer of [...scenarios.map((scenario) => scenario.layer), ...instability.map((entry) => entry.layer)]) {

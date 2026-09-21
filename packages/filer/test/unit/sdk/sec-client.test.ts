@@ -21,23 +21,25 @@
 
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
-// `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type (`as ResourceErrorShape`). The value arrives
-// via the post-reset dynamic import below. a `const` carries no type side, so the type position needs its own static
-// import. Type-only, so it never evaluates the mocked module chain.
+// `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type
+// (`as ResourceErrorShape`). The value arrives via the post-reset dynamic import below.
+// a `const` carries no type side, so the type position needs its own static import.
+// Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// note: `./sec-client.ts` is imported dynamically below, after `vi.resetModules()` — see the
-// shared-graph guard under the env mock. A static import here would bind the module before the reset
-// and reintroduce the flake this file used to carry.
+// note: `./sec-client.ts` is imported dynamically below, after `vi.resetModules()` —
+// see the shared-graph guard under the env mock. A static import here would bind the module
+// before the reset and reintroduce the flake this file used to carry.
 
-// `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }` — the repo's
-// real `.env` already sets `SEC_EDGAR_USER_AGENT`, so `vi.stubEnv` alone can't hide it (see
-// `bdc/sdk/client.test.ts`'s identical finding against `FCC_MAP_*`). Mock the module directly so the
-// no-UA fail-fast test below is isolated from whatever the ambient `.env` actually contains. Every
-// other test in this file passes an explicit `userAgent` option and never reads `$private`.
+// `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }` —
+// the repo's real `.env` already sets `SEC_EDGAR_USER_AGENT`, so `vi.stubEnv` alone
+// can't hide it (see `bdc/sdk/client.test.ts`'s identical finding against `FCC_MAP_*`).
+// Mock the module directly so the no-UA fail-fast test below is isolated from whatever
+// the ambient `.env` actually contains. Every other test in this file passes an
+// explicit `userAgent` option and never reads `$private`.
 vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@mailwoman/filer/env")>()
 
@@ -269,8 +271,8 @@ describe("createSECClient: on-disk cache", () => {
 	})
 
 	it("expires a MUTABLE (non-archive) URL's cache entry after cacheTTLMs, triggering a re-fetch", async () => {
-		// `axios-cache-interceptor` stamps `createdAt`/expiry off `Date.now()`, not off the injected
-		// `ClockLike`, so cache AGE is driven by faking `Date` specifically.
+		// `axios-cache-interceptor` stamps `createdAt`/expiry off `Date.now()`, not off the
+		// injected `ClockLike`, so cache AGE is driven by faking `Date` specifically.
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 
@@ -316,10 +318,11 @@ describe("createSECClient: on-disk cache", () => {
 	})
 
 	it("ignores SEC's own Cache-Control, so the archive-forever rule survives a short max-age", async () => {
-		// M-N: deleting `interpretHeader: false` from the client caused 0 test failures and is reachable
-		// IN production — sec.gov serves `Cache-Control` on these endpoints, and with header
-		// interpretation on, the interceptor derives the TTL from the header and silently overrides the
-		// immutable-archive rule. Every other cache test's stub omitted the header, so nothing noticed.
+		// M-N: deleting `interpretHeader: false` from the client caused 0 test failures
+		// and is reachable IN production — sec.gov serves `Cache-Control` on these
+		// endpoints, and with header interpretation on, the interceptor derives the
+		// TTL from the header and silently overrides the immutable-archive rule.
+		// Every other cache test's stub omitted the header, so nothing noticed.
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 
@@ -338,8 +341,8 @@ describe("createSECClient: on-disk cache", () => {
 		expect(await client.get(archiveURL)).toEqual({ v: 1 })
 		expect(transport.calls).toHaveLength(1)
 
-		// Well past the header's 1s max-age. The path is an archive document, so it must still be served
-		// from cache.
+		// Well past the header's 1s max-age. The path is an archive document,
+		// so it must still be served from cache.
 		vi.setSystemTime(new Date("2026-01-01T00:00:30Z"))
 
 		expect(await client.get(archiveURL)).toEqual({ v: 1 })
@@ -347,8 +350,8 @@ describe("createSECClient: on-disk cache", () => {
 	})
 
 	it("treats URLs differing only by query string as DISTINCT cache entries", async () => {
-		// browse-edgar's entire identity is its query string — collapsing `origin + pathname` into the
-		// cache key would silently merge every distinct CIK lookup into one entry.
+		// browse-edgar's entire identity is its query string — collapsing `origin + pathname`
+		// into the cache key would silently merge every distinct CIK lookup into one entry.
 		const transport = stubTransport([{ body: { cik: "0000320193" } }, { body: { cik: "0000789019" } }])
 
 		const client = createSECClient({
@@ -581,14 +584,15 @@ describe("createSECClient: rate limiting", () => {
 
 	it("holds the DEFAULT rate, one under the published ceiling, across a 40-call concurrent fan-out", async () => {
 		const FAN_OUT = 40
-		// The default is SEC_DEFAULT_REQUESTS_PER_SECOND (9), not the ceiling. Pacing exactly at 10/s put 11 requests
-		// inside a sliding second on 3 of 3 real-timer runs — the grants were spaced right, but the continuation that
-		// issues each request lands 0-2ms late and tips one across the boundary. Asserting the ceiling here would pin
-		// the schedule that measured as a violation.
+		// The default is SEC_DEFAULT_REQUESTS_PER_SECOND (9), not the ceiling.
+		// Pacing exactly at 10/s put 11 requests inside a sliding second on 3 of 3
+		// real-timer runs — the grants were spaced right, but the continuation that
+		// issues each request lands 0-2ms late and tips one across the boundary.
+		// Asserting the ceiling here would pin the schedule that measured as a violation.
 		//
-		// The interval is ceiled, matching `createSECClient`: `1000/9` is `111.111…`, which places the 10th grant at
-		// exactly 1000.0ms after the first, so any jitter admits a 10th arrival (measured 5/5 runs). 112ms moves it to
-		// 1008ms.
+		// The interval is ceiled, matching `createSECClient`: `1000/9` is `111.111…`,
+		// which places the 10th grant at exactly 1000.0ms after the first, so any jitter
+		// admits a 10th arrival (measured 5/5 runs). 112ms moves it to 1008ms.
 		const INTERVAL_MS = Math.ceil(1000 / SEC_DEFAULT_REQUESTS_PER_SECOND)
 
 		expect(SEC_DEFAULT_REQUESTS_PER_SECOND).toBeLessThan(SEC_MAX_REQUESTS_PER_SECOND)
@@ -598,11 +602,11 @@ describe("createSECClient: rate limiting", () => {
 
 		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir: cacheDir.path, clock, ...transport })
 
-		// arrivals, timestamped inside the adapter — not `clock.sleepCalls`. The grant schedule is not what a
-		// rate limiter sees, and asserting it hid exactly this bug: the sleeps were 111ms apart and passed,
-		// while 10 requests still landed inside one second. `runUntilSettled` is required because the pacing
-		// check now sits downstream of the on-disk cache lookup, so each request spends real event-loop turns
-		// in `readFile` before it registers its sleep.
+		// arrivals, timestamped inside the adapter — not `clock.sleepCalls`.
+		// The grant schedule is not what a rate limiter sees, and asserting it hid exactly this bug:
+		// the sleeps were 111ms apart and passed, while 10 requests still landed inside one second.
+		// `runUntilSettled` is required because the pacing check now sits downstream of the on-disk cache
+		// lookup, so each request spends real event-loop turns in `readFile` before it registers its sleep.
 		await clock.runUntilSettled(
 			Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`https://data.sec.gov/fanout/${i}.json`)))
 		)
@@ -612,8 +616,8 @@ describe("createSECClient: rate limiting", () => {
 		expect(arrivals).toHaveLength(FAN_OUT)
 		expect(transport.calls).toHaveLength(FAN_OUT)
 
-		// The properties the pacer exists to guarantee: strictly increasing, never closer together than the
-		// interval, and never more than the configured rate inside any sliding second.
+		// The properties the pacer exists to guarantee: strictly increasing, never closer together
+		// than the interval, and never more than the configured rate inside any sliding second.
 		for (let i = 1; i < arrivals.length; i++) {
 			expect(arrivals[i]! - arrivals[i - 1]!).toBeGreaterThanOrEqual(INTERVAL_MS)
 		}
@@ -837,8 +841,8 @@ describe("createSECClient: the caller's failure taxonomy, decided without readin
 	})
 
 	it("exhausted timeout → requeue", async () => {
-		// Axios reports its own `timeout` config as econnaborted, which must read as network-class rather
-		// than as a caller-initiated cancel.
+		// Axios reports its own `timeout` config as econnaborted, which must read as
+		// network-class rather than as a caller-initiated cancel.
 		const error = await failureFor([{ throws: { message: "timeout of 30000ms exceeded", code: "ECONNABORTED" } }])
 
 		expect(error).toBeInstanceOf(ResourceError)

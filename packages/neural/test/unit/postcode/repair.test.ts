@@ -136,9 +136,9 @@ describe("repairPostcodeLabels", () => {
 	})
 
 	it("keeps a BR CEP whole: NNNNN-NNN is a shape, not a 5-digit postcode with a stray tail (#35)", () => {
-		// The model emits the full CEP (verified against the shipped model on both BR world-structures
-		// rows). Without a BR shape the generic 5-digit pattern matched only "95090", snapped the span to
-		// it, and the trailing-smear clip discarded "-020" — the repair pass truncated a correct parse.
+		// The model emits the full CEP (verified against the shipped model on both BR world-structures rows).
+		// Without a BR shape the generic 5-digit pattern matched only "95090", snapped the span to it,
+		// and the trailing-smear clip discarded "-020" — the repair pass truncated a correct parse.
 		const text = "Caxias do Sul, RS 95090-020, Brazil"
 
 		const tokens = [
@@ -177,8 +177,8 @@ describe("repairPostcodeLabels", () => {
 	})
 
 	it("does not let the BR shape steal the tail of a US ZIP+4", () => {
-		// `\d{5}-\d{3}` could bite the first nine chars of "94610-2737"; the trailing \b forbids it, and
-		// longest-match-wins settles anything left over.
+		// `\d{5}-\d{3}` could bite the first nine chars of "94610-2737"; the trailing \b
+		// forbids it, and longest-match-wins settles anything left over.
 		const text = "Oakland 94610-2737"
 		const tokens = [tok("Oakland", 0, 7, "B-locality"), tok("94610-2737", 8, 18, "B-postcode")]
 		const { tokens: out } = repairPostcodeLabels(text, tokens)
@@ -263,7 +263,8 @@ describe("repairPostcodeLabels", () => {
 })
 
 /**
- * One token per code point, labelled from `[[surface, tag], …]` in text order — the character path's token shape.
+ * One token per code point, labelled from `[[surface, tag], …]` in text order —
+ * the character path's token shape.
  */
 function charTokens(spans: readonly (readonly [string, string | null])[]): { text: string; tokens: DecoderToken[] } {
 	const tokens: DecoderToken[] = []

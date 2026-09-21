@@ -46,8 +46,8 @@ import { vocabTool } from "#tools/vocab"
 export type { DevTool, DevToolDeps, Provenance } from "#tool-kit"
 
 /**
- * Every tool, in the order an agent should meet them: what is running, what can be measured, the measurements
- * themselves, then the surfaces that explain a result.
+ * Every tool, in the order an agent should meet them: what is running, what can be measured,
+ * the measurements themselves, then the surfaces that explain a result.
  */
 const FACTORIES = [
 	daemonTool,

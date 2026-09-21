@@ -38,8 +38,8 @@ function node(id: number, postcode: string, lat: number, lon: number): Record<st
 }
 
 /**
- * A way element under `out center` — carries its coordinate as `center`, which is the shape a reader that only handles
- * nodes silently drops.
+ * A way element under `out center` — carries its coordinate as `center`,
+ * which is the shape a reader that only handles nodes silently drops.
  */
 function way(id: number, postcode: string, lat: number, lon: number): Record<string, unknown> {
 	return { type: "way", id, center: { lat, lon }, tags: { "addr:postcode": postcode, building: "yes" } }
@@ -91,15 +91,17 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 		now: new Date("2026-08-05T00:00:00.000Z"),
 	})
 
-	// Two postcodes survive: BT3 9QQ (3 attestations) and BT1 5GS (2). The malformed value and the
-	// coordinate-less relation are dropped, and the untagged node never counts as tagged at all.
+	// Two postcodes survive: BT3 9QQ (3 attestations) and BT1 5GS (2).
+	// The malformed value and the coordinate-less relation are dropped,
+	// and the untagged node never counts as tagged at all.
 	expect(result.inserted).toBe(2)
 	expect(result.stats.elements).toBe(8)
 	expect(result.stats.tagged).toBe(7)
 	expect(result.stats.points).toBe(5)
 	expect(result.stats.skippedMalformed).toBe(1)
 	expect(result.stats.skippedNoCoordinate).toBe(1)
-	// A drop counter says something broke. the named value says which value it was. `"BT36 4RU,"` is a typo rather than a bug.
+	// A drop counter says something broke. the named value says which value it was.
+	// `"BT36 4RU,"` is a typo rather than a bug.
 	expect(result.stats.malformedValues).toEqual({ "BT36 4RU,": 1 })
 	// Ways and relations are not a footnote — 2 of the 5 surviving points come from `center`.
 	expect(result.stats.pointsByType).toEqual({ node: 3, way: 2 })
@@ -109,8 +111,8 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.reconciliationFailures).toEqual([])
 	// The data extract rather than the wall clock — the date that actually describes the rows.
 	expect(result.osmTimestamp).toBe("2026-08-05T13:14:01Z")
-	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits rather than accessSync: root.path
-	// ignores the permission and would pass a W_OK probe on a sealed file).
+	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits rather than
+	// accessSync: root.path ignores the permission and would pass a W_OK probe on a sealed file).
 	expect((await statPath(out)).mode & 0o222).toBe(0)
 
 	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
@@ -118,8 +120,8 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	// Name law: `spr.name` is the sanitized-query token shape. the display form is an alt `names` row.
 	const names = db.prepare("SELECT id, name FROM spr ORDER BY name").all() as Array<{ id: number; name: string }>
 	expect(names.map((n) => n.name)).toEqual(["BT15GS", "BT39QQ"])
-	// Ids come from this database's own range, and sorting by name makes them a function of the postcode set
-	// rather than of the response's element order.
+	// Ids come from this database's own range, and sorting by name makes them a function
+	// of the postcode set rather than of the response's element order.
 	expect(names.map((n) => n.id)).toEqual([NI_OSM_ID_BASE, NI_OSM_ID_BASE + 1])
 
 	const alt = db.prepare("SELECT COUNT(*) AS n FROM names WHERE name = 'BT3 9QQ'").get() as { n: number }
@@ -138,8 +140,9 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	const typo = db.prepare("SELECT COUNT(*) AS n FROM names WHERE name LIKE 'BT36%'").get() as { n: number }
 	expect(typo.n).toBe(0)
 
-	// Medoid law: the centroid is one of the three member points — here 54.61/-5.89, the member nearest the
-	// (54.6100, -5.8900) mean. A mean-of-members build would store a coordinate on no mapped address.
+	// Medoid law: the centroid is one of the three member points — here 54.61/-5.89,
+	// the member nearest the (54.6100, -5.8900) mean. A mean-of-members build would
+	// store a coordinate on no mapped address.
 	const bt3 = db.prepare("SELECT latitude, longitude FROM spr WHERE name='BT39QQ'").get() as {
 		latitude: number
 		longitude: number

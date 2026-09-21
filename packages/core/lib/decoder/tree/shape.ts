@@ -23,10 +23,10 @@ import { walkNodes } from "#decoder/tree/walk"
 import type { AddressNode, AddressTree } from "#decoder/types"
 
 /**
- * True when every node in the tree either carries `tag` or bears no value — i.e. the only evidence in the parse is
- * `tag`-shaped. A tag-matching node counts even when its value is empty (the guard asks "did the parser emit this
- * shape", not "is the span non-blank"); any other tag with a non-empty value disqualifies. False for a tree with no
- * `tag` node at all.
+ * True when every node in the tree either carries `tag` or bears no value — i.e. the only
+ * evidence in the parse is `tag`-shaped. A tag-matching node counts even when its value is
+ * empty (the guard asks "did the parser emit this shape", not "is the span non-blank");
+ * any other tag with a non-empty value disqualifies. False for a tree with no `tag` node at all.
  */
 export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 	let sawTag = false
@@ -41,8 +41,9 @@ export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 }
 
 /**
- * The tree's single value-containing node, or null when the tree holds none or more than one. Callers check on the
- * returned node's `tag` — the quantifier ("this is the whole query") is what this walk answers.
+ * The tree's single value-containing node, or null when the tree holds none
+ * or more than one. Callers check on the returned node's `tag` — the quantifier
+ * ("this is the whole query") is what this walk answers.
  */
 export function loneValueNode(tree: AddressTree): AddressNode | null {
 	let lone: AddressNode | null = null
@@ -72,18 +73,20 @@ export interface FlatTreeNode {
 	/**
 	 * Where the assertion came from — `rule`, `neural`, `resolver`.
 	 *
-	 * Carried because a span that keeps its tag, its text and its confidence while its source moves from `resolver` to
-	 * `neural` has lost its gazetteer backing, and a projection that drops this reports that span as unchanged.
+	 * Carried because a span that keeps its tag, its text and its confidence
+	 * while its source moves from `resolver` to `neural` has lost its gazetteer backing,
+	 * and a projection that drops this reports that span as unchanged.
 	 */
 	source?: string
 	sourceID?: string
 	/**
 	 * The resolver's answer for this span, when one won.
 	 *
-	 * Carried for the same reason `source` is: a projection that keeps only the text and the tag cannot tell a span that
-	 * resolved to a different place from one that did not move at all, and those are a ranking problem and a non-event
-	 * respectively. `alternatives` is reduced to its length — the retrieval breadth is what a consumer reads, and handing
-	 * over the candidate objects invites a walk this projection exists to have already done.
+	 * Carried for the same reason `source` is: a projection that keeps only the text
+	 * and the tag cannot tell a span that resolved to a different place from one that
+	 * did not move at all, and those are a ranking problem and a non-event respectively.
+	 * `alternatives` is reduced to its length — the retrieval breadth is what a consumer reads,
+	 * and handing over the candidate objects invites a walk this projection exists to have already done.
 	 */
 	placeID?: string
 	lat?: number
@@ -92,18 +95,20 @@ export interface FlatTreeNode {
 }
 
 /**
- * Flatten a tree to its nodes in source order — sorted by `start`, the same order `decodeAsTuples` means by it.
+ * Flatten a tree to its nodes in source order — sorted by `start`,
+ * the same order `decodeAsTuples` means by it.
  *
- * A traversal-order walk (depth-first onto a stack, then reversed) is the obvious implementation and is wrong here: it
- * coincides with source order only while every parent's span precedes its children's, and the decoder does not promise
- * it — measured, the two orders disagree on **7 of 10** ordinary addresses, always with a child ahead of its parent:
+ * A traversal-order walk (depth-first onto a stack, then reversed) is the obvious implementation
+ * and is wrong here: it coincides with source order only while every parent's span precedes
+ * its children's, and the decoder does not promise it — measured, the two orders disagree
+ * on **7 of 10** ordinary addresses, always with a child ahead of its parent:
  *
  *     Queen Street, Bristol              street_suffix@6 before street@0
  *     Via Roma, 5, 50123 Firenze, …      house_number@10 before street@0
  *     30 St Mary Axe …, London EC3A 8BF  postcode@37     before locality@30
  *
- * Sorting is what the tuple projection already does, so this makes a rendered span list and `decodeAsTuples` agree by
- * construction rather than by luck.
+ * Sorting is what the tuple projection already does, so this makes a rendered span list
+ * and `decodeAsTuples` agree by construction rather than by luck.
  */
 export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 	if (!tree) return []

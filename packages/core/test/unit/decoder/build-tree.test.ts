@@ -91,11 +91,11 @@ describe("buildAddressTree", () => {
 	})
 })
 
-// Boundary-trim regression coverage. Samples sourced from v0.4.0's post-hoc regression
-// diagnostic (.playpen/control/drafts/v0_4_0-regression-diagnostic.md). The shipped v0.4.0 model
-// occasionally emits BIO spans with leading/trailing punctuation. the decoder now trims the span
-// boundary past non-word characters. start/end tighten in sync so consumers slicing raw[start:end]
-// get the same string as node.value.
+// Boundary-trim regression coverage. Samples sourced from v0.4.0's post-hoc
+// regression diagnostic (.playpen/control/drafts/v0_4_0-regression-diagnostic.md).
+// The shipped v0.4.0 model occasionally emits BIO spans with leading/trailing punctuation.
+// the decoder now trims the span boundary past non-word characters. start/end tighten in sync
+// so consumers slicing raw[start:end] get the same string as node.value.
 describe("buildAddressTree — boundary trim", () => {
 	test("strips leading comma+space from postcode span", () => {
 		// Simulates ", 7647" pred for the gold "76470" — the slip from the diagnostic.
@@ -205,11 +205,12 @@ describe("buildAddressTree — boundary trim", () => {
 })
 
 // Paired-punctuation span-edge trimming (paired-punctuation audit, .superpowers/sdd/task-9-audit-report.md).
-// `trimBoundary` is generic — it strips any leading/trailing non-word character, one at a time, with no notion of
-// "pairing" at all. That's what makes it inherently safe for unbalanced paired punctuation too: it never looks for a
-// matching partner, so a lone leading quote with no closer, or a lone trailing paren with no opener, trims exactly
-// the same way a single stray comma does. These cases characterize that the existing mechanism (built for the
-// v0.4.0 comma-slip class) generalizes to quotes/brackets/braces/guillemets without any dedicated code.
+// `trimBoundary` is generic — it strips any leading/trailing non-word character, one at a time,
+// with no notion of "pairing" at all. That's what makes it inherently safe for unbalanced paired
+// punctuation too: it never looks for a matching partner, so a lone leading quote with no closer,
+// or a lone trailing paren with no opener, trims exactly the same way a single stray comma does.
+// These cases characterize that the existing mechanism (built for the v0.4.0 comma-slip class)
+// generalizes to quotes/brackets/braces/guillemets without any dedicated code.
 describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 	test('strips a wrapping straight-quote pair from a venue-shaped span ("The Grange")', () => {
 		const raw = '"The Grange", Fishburn'
@@ -303,10 +304,11 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 	})
 })
 
-// Spurious-boundary repair. The neural model fragments some multi-word locality values into two
-// B-locality spans ("Saint Paul" → B-locality "Saint" + B-locality "Paul") — a real, decode-
-// agnostic emission bug (argmax == viterbi. see scripts/diag-saintalbans.ts). A `B-X` token that is
-// whitespace-adjacent to an open `X` span is folded in. a comma/separator keeps spans distinct.
+// Spurious-boundary repair. The neural model fragments some multi-word locality values into
+// two B-locality spans ("Saint Paul" → B-locality "Saint" + B-locality "Paul") — a real,
+// decode- agnostic emission bug (argmax == viterbi. see scripts/diag-saintalbans.ts).
+// A `B-X` token that is whitespace-adjacent to an open `X` span is folded in.
+// a comma/separator keeps spans distinct.
 describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", () => {
 	function localitySpans(nodes: AddressNode[]): AddressNode[] {
 		const out: AddressNode[] = []
@@ -417,10 +419,10 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 	})
 })
 
-// Diagnostic for the en-GB locale arc (docs/superpowers/specs/2026-07-22-en-gb-locale-arc-design.md,
-// Phase 3): the spec assumed the word-consistency heal lumps "suburb, city" into one locality span.
-// These characterize `emitSpans` directly to settle whether the decode pipeline itself preserves the
-// dependent_locality/locality distinction across a comma.
+// Diagnostic for the en-GB locale arc (docs/superpowers/specs/2026-07-22-en-gb-locale-arc-design.md, Phase 3):
+// the spec assumed the word-consistency heal lumps "suburb, city" into one locality span.
+// These characterize `emitSpans` directly to settle whether the decode pipeline itself
+// preserves the dependent_locality/locality distinction across a comma.
 describe("buildAddressTree — dependent_locality/locality comma separation (spec Phase-3 diagnostic)", () => {
 	function tagsOf(nodes: AddressNode[]): string[] {
 		const out: string[] = []
@@ -462,8 +464,8 @@ describe("buildAddressTree — dependent_locality/locality comma separation (spe
 
 	test("GUARD: same-tag spans across a comma stay two spans (Springfield, Chicago)", () => {
 		// Documents the comma guard already asserted in emitSpans: same-tag same-address spans
-		// separated by a comma never merge, so a locality/locality "suburb, city" pair the model
-		// emits as two distinct B-locality spans is not lumped by the decoder.
+		// separated by a comma never merge, so a locality/locality "suburb, city" pair the
+		// model emits as two distinct B-locality spans is not lumped by the decoder.
 		const raw = "Springfield, Chicago"
 
 		const tokens: DecoderToken[] = [

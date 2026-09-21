@@ -80,8 +80,7 @@ export const BuildingLayers: LayerSpecification[] = [
 			"fill-extrusion-vertical-gradient": false,
 			"fill-extrusion-translate-anchor": "map",
 			"fill-extrusion-opacity": 1,
-			// top of the band = full building height
-			// "fill-extrusion-height": popHeight(buildingHeight()),
+			// top of the band = full building height "fill-extrusion-height": popHeight(buildingHeight()),
 			// // base of the band = full height minus the cap thickness (clamped ≥ 0)
 			// "fill-extrusion-base": popHeight([ "max", [ "-", buildingHeight(), ROOF_CAP ], 0 ]),
 			"fill-extrusion-height": popHeight(["+", buildingHeight(), ROOF_GAP, ROOF_CAP]),

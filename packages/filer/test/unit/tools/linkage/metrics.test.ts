@@ -90,8 +90,9 @@ describe("scorePairwiseGrouping", () => {
 	})
 
 	it("reports F1 as null (not 0) for a PERFECT prediction over an all-singleton truth — I2's worked example", () => {
-		// Nothing to merge, nothing merged: the prediction agreed with the truth on all 3 pairs. Reporting `0` here
-		// (the pre-fix behaviour) made a flawless run arithmetically indistinguishable from a total failure.
+		// Nothing to merge, nothing merged: the prediction agreed with the truth on all 3 pairs.
+		// Reporting `0` here (the pre-fix behaviour) made a flawless run arithmetically
+		// indistinguishable from a total failure.
 		const truth = new Map([
 			["a", "singleton:a"],
 			["b", "singleton:b"],

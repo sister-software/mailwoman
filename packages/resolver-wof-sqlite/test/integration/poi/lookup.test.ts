@@ -56,11 +56,13 @@ interface FixtureRow {
 
 const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3, supermarket: 4, trail: 5 }
 
-// A sparse-category instance placed at exactly gridDistance 13 from the Springfield origin cell — the nm-04 boundary. A
-// res-9 disk of radius r covers gridDistance ≤ r, and the reader's loop over `maxRings` rings covers gridDistance ≤
-// `maxRings - 1`; so this cell first appears at maxRings 14 and is missed by the old 12-ring default (covers ≤ 11). The
-// coordinate is derived from h3-js (a real ring-13 cell's center), never hardcoded — same discipline as `cellFor`. This
-// mirrors "hiking trail near Marseille", whose nearest `trail` sits at gridDistance 13 (~3.9 km) in the real poi.db.
+// A sparse-category instance placed at exactly gridDistance 13 from the Springfield
+// origin cell — the nm-04 boundary. A res-9 disk of radius r covers gridDistance ≤ r,
+// and the reader's loop over `maxRings` rings covers gridDistance ≤ `maxRings - 1`; so this
+// cell first appears at maxRings 14 and is missed by the old 12-ring default (covers ≤ 11).
+// The coordinate is derived from h3-js (a real ring-13 cell's center), never hardcoded —
+// same discipline as `cellFor`. This mirrors "hiking trail near Marseille",
+// whose nearest `trail` sits at gridDistance 13 (~3.9 km) in the real poi.db.
 const TRAIL_GRID_DISTANCE = 13
 const SPRINGFIELD_ORIGIN = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, POI_H3_RESOLUTION) as H3Cell
 const [TRAIL_LAT, TRAIL_LNG] = cellToLatLng(gridRingUnsafe(SPRINGFIELD_ORIGIN, TRAIL_GRID_DISTANCE)[0]!)
@@ -108,8 +110,9 @@ const MCDONALDS: FixtureRow = {
 	longitude: -89.651,
 }
 
-// A second McDonald's (same Q38076) ~280 km away in Chicago — far outside the default ~4 km ring budget. The brand
-// path is a brand-wide fetch (no k-ring), so both must surface, distance-sorted (Springfield one first).
+// A second McDonald's (same Q38076) ~280 km away in Chicago — far outside the
+// default ~4 km ring budget. The brand path is a brand-wide fetch (no k-ring),
+// so both must surface, distance-sorted (Springfield one first).
 const MCDONALDS_CHICAGO: FixtureRow = {
 	name: "McDonald's (Loop)",
 	category: "fast_food",
@@ -118,8 +121,9 @@ const MCDONALDS_CHICAGO: FixtureRow = {
 	longitude: -87.6299,
 }
 
-// Costco (Q715583): one near Springfield, one ~2,800 km away in San Francisco. The SF one is past the 500 km sanity
-// radius, so a Costco brand search from Springfield returns only the near one.
+// Costco (Q715583): one near Springfield, one ~2,800 km away in San Francisco.
+// The SF one is past the 500 km sanity radius, so a Costco brand search from
+// Springfield returns only the near one.
 const COSTCO_NEAR: FixtureRow = {
 	name: "Costco Springfield",
 	category: "supermarket",
@@ -174,8 +178,8 @@ async function buildFixture(path: string): Promise<void> {
 	using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
-	// `createPOIStagingTables` also creates `poi_stage` — unused here, but the category-codes dictionary
-	// lives alongside it and there's no standalone builder for just that table.
+	// `createPOIStagingTables` also creates `poi_stage` — unused here, but the category-codes
+	// dictionary lives alongside it and there's no standalone builder for just that table.
 	await createPOIStagingTables(kdb)
 	createPOISearchFTS(kdb)
 
@@ -253,8 +257,9 @@ describe("POILookup", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
 		const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
-		// Both Q38076 rows surface: the near Springfield one and the ~280 km Chicago one — the brand path is a
-		// brand-wide fetch rather than a k-ring walk, so the Chicago row (far outside the ~4 km ring budget) is reached.
+		// Both Q38076 rows surface: the near Springfield one and the ~280 km Chicago one —
+		// the brand path is a brand-wide fetch rather than a k-ring walk, so the Chicago
+		// row (far outside the ~4 km ring budget) is reached.
 		expect(hits.map((h) => h.name)).toEqual(["McDonald's", "McDonald's (Loop)"])
 		expect(hits.every((h) => h.brandWikidata === "Q38076")).toBe(true)
 		expect(hits[0]!.categoryID).toBe("fast_food")

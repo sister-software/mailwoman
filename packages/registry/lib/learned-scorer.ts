@@ -35,9 +35,9 @@ import {
 import type { SourceRecord } from "#types"
 
 /**
- * Similarity at which two official names count as the same organisation. Set high because the feature is a near-exact
- * agreement signal rather than a fuzzy one — the fuzzy comparison is a separate feature and this one exists to
- * distinguish it.
+ * Similarity at which two official names count as the same organisation.
+ * Set high because the feature is a near-exact agreement signal rather than a fuzzy one —
+ * the fuzzy comparison is a separate feature and this one exists to distinguish it.
  */
 const OFFICIAL_NAME_AGREEMENT = 0.93
 
@@ -59,10 +59,11 @@ export interface LearnedFeatureConfig {
 }
 
 /**
- * Build the per-pair feature extractor. The vector is: one-hot of each comparison's agreement level, then the two
- * over-merge interaction terms (spatial-exact × name-disagree, spatial-exact × org-disagree — the "same place,
- * different names" signature that drives co-located over-merges), then address crowdedness scaled into [0, 1].
- * Deterministic and EM-independent, so it is identical across train / eval / inference.
+ * Build the per-pair feature extractor. The vector is: one-hot of each comparison's agreement level,
+ * then the two over-merge interaction terms (spatial-exact × name-disagree, spatial-exact ×
+ * org-disagree — the "same place, different names" signature that drives co-located over-merges),
+ * then address crowdedness scaled into [0, 1]. Deterministic and EM-independent,
+ * so it is identical across train / eval / inference.
  */
 export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceRecord, b: SourceRecord) => number[] {
 	const { comparisons, addressFrequency } = config
@@ -104,13 +105,14 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		const freq = a.address?.raw ? addressFrequency.frequency(a.address.raw) : 0
 		f.push(Math.min(1, freq * 1000))
 		// #625 roll-up signature (2026-07-06 adjudication): every genuine over-merge in the adjudicated
-		// packet was a management-company roll-up — differently-branded operating entities at a shared
-		// corporate/billing address where the authorized official also agrees (the operator signs
-		// everything). The official is not in the comparison set (discriminators are excluded from the
-		// learned feature model), so the GBT could never see — let alone learn — that officialAgree in
-		// the presence of orgDisagree is anti-identity evidence. These three appended features express
-		// it directly from `attributes.authorizedOfficial`; appended at the END so models trained
-		// without them (the cross-source GBT) keep scoring unchanged (trailing features are ignored).
+		// packet was a management-company roll-up — differently-branded operating entities
+		// at a shared corporate/billing address where the authorized official also agrees
+		// (the operator signs everything). The official is not in the comparison set
+		// (discriminators are excluded from the learned feature model), so the GBT could
+		// never see — let alone learn — that officialAgree in the presence of orgDisagree
+		// is anti-identity evidence. These three appended features express it directly from
+		// `attributes.authorizedOfficial`; appended at the END so models trained without them
+		// (the cross-source GBT) keep scoring unchanged (trailing features are ignored).
 		const offA = a.attributes?.["authorizedOfficial"]?.trim()
 		const offB = b.attributes?.["authorizedOfficial"]?.trim()
 		const officialAgree = offA && offB && nameSimilarity(offA, offB) >= OFFICIAL_NAME_AGREEMENT ? 1 : 0
@@ -126,9 +128,9 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 }
 
 /**
- * Wrap a trained {@link GBT} into the `(a, b) => number` link scorer for {@link ResolveConfig.scorer}. The returned
- * weight is the model's logit — same threshold-comparable units as the Fellegi-Sunter weight it replaces, so the
- * pipeline's clustering + threshold semantics are unchanged.
+ * Wrap a trained {@link GBT} into the `(a, b) => number` link scorer for {@link ResolveConfig.scorer}.
+ * The returned weight is the model's logit — same threshold-comparable units as the Fellegi-Sunter
+ * weight it replaces, so the pipeline's clustering + threshold semantics are unchanged.
  */
 export function createGBTScorer(
 	config: LearnedFeatureConfig & { model: GBT }

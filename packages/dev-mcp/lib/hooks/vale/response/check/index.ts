@@ -27,9 +27,9 @@ import { TextSpliterator } from "spliterator"
 import { lintReply, renderVerdict } from "#hooks/vale/check-core"
 
 /**
- * The reply text, preferring the payload's `last_assistant_message` and falling back to the transcript. The fallback
- * exists because a silently absent field would read as "the reply was clean" — a false negative indistinguishable from
- * a real absence.
+ * The reply text, preferring the payload's `last_assistant_message` and falling back to
+ * the transcript. The fallback exists because a silently absent field would read as "the
+ * reply was clean" — a false negative indistinguishable from a real absence.
  */
 async function readReply(payload: Record<string, unknown> | null): Promise<string> {
 	const direct = payload?.last_assistant_message
@@ -40,8 +40,8 @@ async function readReply(payload: Record<string, unknown> | null): Promise<strin
 
 	if (typeof transcriptPath !== "string") return ""
 
-	// The wanted entry is the last assistant line. the substring pre-filter keeps only candidate
-	// lines resident while the transcript streams forward.
+	// The wanted entry is the last assistant line. the substring pre-filter keeps only
+	// candidate lines resident while the transcript streams forward.
 	const candidates = TextSpliterator.from(await readLocalTextFile(transcriptPath))
 		.filter((line) => line.includes('"assistant"'))
 		.toArray()
@@ -67,8 +67,8 @@ async function readReply(payload: Record<string, unknown> | null): Promise<strin
 async function main(): Promise<void> {
 	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
 
-	// One revision pass per stop: when the turn is already continuing because of a Stop hook, the
-	// revised reply passes unchecked rather than looping.
+	// One revision pass per stop: when the turn is already continuing because of a Stop hook,
+	// the revised reply passes unchecked rather than looping.
 	if (payload?.stop_hook_active === true) return
 
 	const reply = await readReply(payload)

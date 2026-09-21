@@ -15,17 +15,17 @@ import {
 import { getBaseCellNumber, latLngToCell } from "h3-js"
 import { expect, test } from "vitest"
 
-// A real resolution-9 cell (White House, 38.8977, -77.0365) from h3-js itself rather than a synthetic
-// hex string — this exercises the actual encoding shortCellToInt is packing.
+// A real resolution-9 cell (White House, 38.8977, -77.0365) from h3-js itself rather than
+// a synthetic hex string — this exercises the actual encoding shortCellToInt is packing.
 const CELL = latLngToCell(38.8977, -77.0365, 9) as H3Cell
 
-// Every resolution H3 defines, so the round-trip is asserted across the whole range rather than at
-// the resolutions this repo happens to use today.
+// Every resolution H3 defines, so the round-trip is asserted across the whole range
+// rather than at the resolutions this repo happens to use today.
 const RESOLUTIONS = Array.from({ length: 16 }, (_, resolution) => resolution)
 
 test("shortCellToInt: packs a real res-9 cell to the 48-bit short-cell integer", () => {
-	// Computed here via the existing shortenH3Cell rather than a hand-copied literal, so this can't drift
-	// from shortenH3Cell's own encoding.
+	// Computed here via the existing shortenH3Cell rather than a hand-copied literal,
+	// so this can't drift from shortenH3Cell's own encoding.
 	const expected = Number(BigInt(`0x${shortenH3Cell(CELL)}`))
 
 	expect(shortCellToInt(CELL)).toBe(expected)
@@ -39,8 +39,8 @@ test.for(RESOLUTIONS)("expandH3Cell: round-trips a cell captured at resolution %
 	expect(expandH3Cell(shortenH3Cell(cell), resolution)).toBe(cell)
 })
 
-// Base cells 0-7 leave the top nibble of the short form zero, so the hex string only survives the
-// round-trip if both halves agree on a fixed 13-character width.
+// Base cells 0-7 leave the top nibble of the short form zero, so the hex string only
+// survives the round-trip if both halves agree on a fixed 13-character width.
 test("expandH3Cell: round-trips a cell whose base cell zeroes the leading nibble", () => {
 	const cell = latLngToCell(64.3025, 135.29175, 15) as H3Cell
 
@@ -49,8 +49,8 @@ test("expandH3Cell: round-trips a cell whose base cell zeroes the leading nibble
 	expect(expandH3Cell(shortenH3Cell(cell), 15)).toBe(cell)
 })
 
-// A short cell derived from an integer key has lost its leading zeros. expansion has to restore them
-// rather than shift the digit path.
+// A short cell derived from an integer key has lost its leading zeros. expansion
+// has to restore them rather than shift the digit path.
 test("expandH3Cell: accepts an unpadded short cell recovered from its integer form", () => {
 	const cell = latLngToCell(64.3025, 135.29175, 15) as H3Cell
 	const unpadded = shortCellToInt(cell).toString(16) as H3CellShort
@@ -78,8 +78,9 @@ test("expandH3Cell: rejects a short cell wider than the encoding holds", () => {
 })
 
 test("isH3Cell rejects well-shaped strings that are not cells", () => {
-	// Fifteen lowercase hex characters each, so a shape check passes all four. Only the third is a
-	// real cell — the guard has to know the difference, because its return type claims it does.
+	// Fifteen lowercase hex characters each, so a shape check passes all four.
+	// Only the third is a real cell — the guard has to know the difference,
+	// because its return type claims it does.
 	expect(isH3Cell("000000000000000")).toBe(false)
 	expect(isH3Cell("fffffffffffffff")).toBe(false)
 	expect(isH3Cell("123456789abcdef")).toBe(false)

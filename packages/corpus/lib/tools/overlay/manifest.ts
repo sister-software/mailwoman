@@ -48,10 +48,11 @@ interface ParquetFileDescriptor {
 type ManifestFile = Record<string, unknown> & { path: string; source?: string }
 
 /**
- * The two keys a manifest written before the 2026-09-01 vocabulary rename uses for its file list and its size. Every
- * corpus built before that date carries them, here and on the Modal volume, and a built corpus is an immutable artifact
- * — so a reader accepts either spelling and a writer emits only the current one. Spelled by concatenation because the
- * word is banned in this tree and the ratchet's baseline is zero.
+ * The two keys a manifest written before the 2026-09-01 vocabulary rename uses for its file list
+ * and its size. Every corpus built before that date carries them, here and on the Modal volume,
+ * and a built corpus is an immutable artifact — so a reader accepts either spelling
+ * and a writer emits only the current one. Spelled by concatenation because the word
+ * is banned in this tree and the ratchet's baseline is zero.
  */
 const PRE_RENAME_FILES_KEY = `sh${"ards"}` as const
 const PRE_RENAME_ROWS_PER_FILE_KEY = `rows_per_sh${"ard"}` as const
@@ -72,12 +73,13 @@ interface BaseManifest {
 }
 
 /**
- * A base manifest's file list under either key. `slices` is the current wire key, the one the Python loader's
- * `manifest_files` reads first.
+ * A base manifest's file list under either key. `slices` is the current wire key,
+ * the one the Python loader's `manifest_files` reads first.
  *
- * The rename moved this reader and the trainer's to the new key without migrating the manifests, and the trainer
- * measured the cost on 2026-09-09: `v0.28.0-reviewed-postcode-tail` declares 706 train files under the old key and the
- * loader resolved one. An overlay assembled from a base read as empty would carry no base files at all.
+ * The rename moved this reader and the trainer's to the new key without migrating the manifests,
+ * and the trainer measured the cost on 2026-09-09: `v0.28.0-reviewed-postcode-tail`
+ * declares 706 train files under the old key and the loader resolved one.
+ * An overlay assembled from a base read as empty would carry no base files at all.
  */
 export function baseManifestFiles(base: BaseManifest): ManifestFile[] {
 	const files = base.slices?.length ? base.slices : base[PRE_RENAME_FILES_KEY]

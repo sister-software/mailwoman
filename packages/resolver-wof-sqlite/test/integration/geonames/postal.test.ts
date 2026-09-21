@@ -59,8 +59,7 @@ describe("ingestGeonamesPostal", () => {
 		const dir = dirDirectory.path
 
 		// Three members of "110 00": two clustered at ~50.08, one outlier pulling the mean north.
-		// The medoid must be one of the real points (the cluster member nearest the mean), never
-		// the mean itself.
+		// The medoid must be one of the real points (the cluster member nearest the mean), never the mean itself.
 		await writeLocalTextFile(
 			[
 				"CZ\t110 00\tPraha 1\tPraha\t10\t\t\t\t\t50.08\t14.42\t4",
@@ -103,8 +102,9 @@ describe("ingestGeonamesPostal", () => {
 		await using dirDirectory = await temporaryDirectory("gn-postal-degenerate-")
 		const dir = dirDirectory.path
 
-		// TH 10230 verbatim: two Bangkok districts published at one coordinate ~90 km from either. The medoid has
-		// nothing to choose between, and the result must say so rather than presenting two rows as agreement.
+		// TH 10230 verbatim: two Bangkok districts published at one coordinate ~90 km from either.
+		// The medoid has nothing to choose between, and the result must say so
+		// rather than presenting two rows as agreement.
 		await writeLocalTextFile(
 			[
 				"TH\t10230\tLat Phrao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",

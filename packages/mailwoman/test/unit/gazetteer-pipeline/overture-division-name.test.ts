@@ -19,8 +19,8 @@ const isLatin = (s: string): boolean => /^[\p{Script=Latin}\p{N}\p{P}\s]+$/u.tes
 
 describe("admitting an Overture division name", () => {
 	it("admits a name in the script its country writes", () => {
-		// Singapore, Sri Lanka and Malaysia: the three whose Overture primary is already Latin, so `common` is
-		// the only place their own script appears.
+		// Singapore, Sri Lanka and Malaysia: the three whose Overture primary is already Latin,
+		// so `common` is the only place their own script appears.
 		expect(isDivisionName("新加坡")).toBe(true)
 		expect(isDivisionName("சிங்கப்பூர்")).toBe(true)
 		expect(isDivisionName("ශ්‍රී ලංකාව")).toBe(true)
@@ -45,9 +45,10 @@ describe("admitting an Overture division name", () => {
 	})
 
 	/**
-	 * The defect, pinned as the behaviour this predicate must not have. The old rule admits Volapük and Lojban because
-	 * constructed languages are written in Latin, and refuses Chinese because it is not — which is how Singapore came to
-	 * carry 228 names, none of them in Han.
+	 * The defect, pinned as the behaviour this predicate must not have.
+	 * The old rule admits Volapük and Lojban because constructed languages are written
+	 * in Latin, and refuses Chinese because it is not — which is how Singapore
+	 * came to carry 228 names, none of them in Han.
 	 */
 	it("differs from the old rule exactly where the old rule tested script", () => {
 		expect(isLatin("Vulapük")).toBe(true)
@@ -65,9 +66,10 @@ describe("admitting an Overture division name", () => {
 	})
 
 	/**
-	 * The old rule's character class ended in `\p{P}` — all punctuation — so it admitted every bracket, pipe and
-	 * separator it was documented to refuse, and a bare numeric code besides. It filtered script and nothing else. The
-	 * replacement is therefore stricter on noise as well as looser on script, and the two changes are independent.
+	 * The old rule's character class ended in `\p{P}` — all punctuation — so it admitted every
+	 * bracket, pipe and separator it was documented to refuse, and a bare numeric code besides.
+	 * It filtered script and nothing else. The replacement is therefore stricter on noise
+	 * as well as looser on script, and the two changes are independent.
 	 */
 	it("refuses noise the old rule admitted, which is the half its docstring claimed", () => {
 		for (const value of ["(( Karis Landskommun ))", "Noise Town [old]", "name/other", "x_y"]) {

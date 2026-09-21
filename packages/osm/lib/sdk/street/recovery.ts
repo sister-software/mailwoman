@@ -82,8 +82,8 @@ export class StreetRecoveryIndex {
 }
 
 /**
- * Densify a LineString: yield its vertices plus interpolated points every ~DENSIFY_KM so a mid-segment address still
- * finds the street.
+ * Densify a LineString: yield its vertices plus interpolated points every ~DENSIFY_KM
+ * so a mid-segment address still finds the street.
  */
 function* densify(coords: number[][]): Generator<[number, number]> {
 	for (let i = 0; i < coords.length; i++) {

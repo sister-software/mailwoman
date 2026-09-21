@@ -38,8 +38,8 @@ export async function readMailwomanMetadata(archivePath: string): Promise<PMTile
 }
 
 /**
- * Merge the validated block over the archive's current metadata and write it back, then read it back and refuse unless
- * every key round-tripped.
+ * Merge the validated block over the archive's current metadata and write it back,
+ * then read it back and refuse unless every key round-tripped.
  */
 export async function applyPMTilesMetadata(archivePath: string, block: PMTilesMetadata): Promise<void> {
 	const validated = PMTilesMetadataSchema.parse(block)

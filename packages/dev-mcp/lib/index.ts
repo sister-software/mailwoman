@@ -11,8 +11,9 @@ export { assembleBench, summarizeLatency, CONCURRENCY_NOTE, type BenchReading, t
 
 export { checkCLIAllowlist, type AllowlistVerdict } from "#cli/allowlist"
 
-// `CompiledFreshness` is declared by `@mailwoman/core/module/compiled-freshness` and a consumer imports it from there:
-// one public home per declaration, so a reader can tell from the specifier which package owns the type.
+// `CompiledFreshness` is declared by `@mailwoman/core/module/compiled-freshness`
+// and a consumer imports it from there: one public home per declaration,
+// so a reader can tell from the specifier which package owns the type.
 export { assertCompiledFresh, checkSpawnedTreeFreshness } from "#compiled-tree"
 
 export {

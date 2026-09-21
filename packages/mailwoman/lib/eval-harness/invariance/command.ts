@@ -16,13 +16,14 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
 	 */
 	suite?: string
 	/**
-	 * Fail the check if the new-violation degraded count exceeds this. Default 0.
+	 * Fail the check if the new-violation degraded count
+	 * exceeds this. Default 0.
 	 */
 	maxDegraded?: number
 	/**
-	 * `--baseline` regression mode (probe-grading shape, e.g. v385): a baseline candidate ONNX graded on the same suite.
-	 * Requires `baselineTokenizer` + `baselineModelCard`, or pass `baselineWeightsCache` instead for a package-shaped
-	 * dir.
+	 * `--baseline` regression mode (probe-grading shape, e.g. v385): a baseline candidate
+	 * ONNX graded on the same suite. Requires `baselineTokenizer` + `baselineModelCard`,
+	 * or pass `baselineWeightsCache` instead for a package-shaped dir.
 	 */
 	baseline?: string
 	baselineTokenizer?: string
@@ -34,7 +35,8 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
 }
 
 /**
- * Run the invariance mini-suite from CLI-shaped options. Returns the process exit code (0 = pass).
+ * Run the invariance mini-suite from CLI-shaped options.
+ * Returns the process exit code (0 = pass).
  */
 export async function runInvarianceCommand(options: InvarianceCommandOptions): Promise<number> {
 	const rows = await loadSuite(options.suite)

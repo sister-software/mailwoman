@@ -52,8 +52,8 @@ export interface ReleasePlan {
 		filename: string
 		origin: ArtifactOrigin["kind"]
 		/**
-		 * The bucket directory a `hf` artifact is read from when it is not `destinations.hfBase` — a character-path
-		 * family's own directory.
+		 * The bucket directory a `hf` artifact is read from when it is not `destinations.hfBase` —
+		 * a character-path family's own directory.
 		 */
 		base?: string
 		expectedMD5?: string
@@ -102,8 +102,8 @@ export async function computeReleasePlan(repoRoot: string): Promise<ReleasePlan>
 }
 
 /**
- * Read a plan file and refuse unless the checkout still matches it. Answers the recomputed plan so the caller publishes
- * from what it verified.
+ * Read a plan file and refuse unless the checkout still matches it.
+ * Answers the recomputed plan so the caller publishes from what it verified.
  */
 export async function assertPlanHolds(repoRoot: string, planPath: string): Promise<ReleasePlan> {
 	const planned = await readLocalJSONFile<ReleasePlan>(resolvePath(repoRoot, planPath))

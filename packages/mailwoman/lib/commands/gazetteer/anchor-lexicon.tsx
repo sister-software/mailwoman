@@ -60,10 +60,11 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in
- * `rules.word_norm` below): per whitespace-word, strip leading/trailing characters that are not Unicode letters or
- * digits (keep internal ones: "timor-leste", "u.s.a"), then rejoin single-spaced. Entry keys and scanned tokens both
- * pass through it, so "U.S.A." ≡ "u.s.a".
+ * The shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py
+ * and the TS matcher — documented in `rules.word_norm` below): per whitespace-word,
+ * strip leading/trailing characters that are not Unicode letters or digits
+ * (keep internal ones: "timor-leste", "u.s.a"), then rejoin single-spaced.
+ * Entry keys and scanned tokens both pass through it, so "U.S.A." ≡ "u.s.a".
  */
 /**
  * Normalize a surface for the case-insensitive map.

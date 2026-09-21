@@ -49,9 +49,10 @@ interface FixtureDatabase {
 		rowid_key: number
 		name: string | null
 		/**
-		 * Mirrors the shipped column so a rename fails here. it does not mirror the fold. The real `poi.name_key` is
-		 * `NameKey`, minted by `normalizeLocalityForKey` — which this package cannot reach, and which no assertion here
-		 * needs. Do not copy the value expression below as if it were the fold.
+		 * Mirrors the shipped column so a rename fails here. it does not mirror the fold.
+		 * The real `poi.name_key` is `NameKey`, minted by `normalizeLocalityForKey` —
+		 * which this package cannot reach, and which no assertion here needs.
+		 * Do not copy the value expression below as if it were the fold.
 		 */
 		name_key: string | null
 		brand_wikidata: string | null
@@ -68,9 +69,9 @@ const CATEGORY_IDS: Record<string, number> = {
 	campus_building: 733,
 	pier: 952,
 	airport_lounge: 956,
-	// Deliberately present and not in the sub-venue set: the reader must not read it. `gas_station`
-	// is the single largest designator-token producer in the whole layer (12,996 hits of `station`,
-	// all inside brand names), so it is the right negative to pin.
+	// Deliberately present and not in the sub-venue set: the reader must not read it.
+	// `gas_station` is the single largest designator-token producer in the whole layer
+	// (12,996 hits of `station`, all inside brand names), so it is the right negative to pin.
 	gas_station: 250,
 }
 
@@ -172,8 +173,8 @@ test("readOvertureSubVenues reads only the sub-venue categories, and only named 
 		"Terminal 1",
 	])
 
-	// The negative that matters: `gas_station` is the layer's biggest source of the token `station`
-	// and it must never reach the lexicon.
+	// The negative that matters: `gas_station` is the layer's biggest source of the
+	// token `station` and it must never reach the lexicon.
 	expect(rows.some((row) => row.name === "Holiday Station")).toBe(false)
 })
 
@@ -181,8 +182,8 @@ test("readOvertureSubVenues stamps the CONTEXT designator from the category, not
 	const rows = await readOvertureSubVenues({ databasePath })
 	const byName = new Map(rows.map((row) => [row.name, row]))
 
-	// A campus building named "Cuddy Hall" is context `campus` — the row's category — even though the
-	// phrase inside the name names `hall`. Attribution by phrase is the lexicon builder's job.
+	// A campus building named "Cuddy Hall" is context `campus` — the row's category — even though
+	// the phrase inside the name names `hall`. Attribution by phrase is the lexicon builder's job.
 	expect(byName.get("Cuddy Hall")?.designatorID).toBe("campus")
 	expect(byName.get("North Terminal")?.designatorID).toBe("terminal")
 	expect(byName.get("Pier 39")?.designatorID).toBe("pier")
@@ -203,8 +204,9 @@ test("readOvertureSubVenues filters by country when asked", async () => {
 })
 
 test("a row from the reader satisfies SubVenueHarvestRow with no adaptation", async () => {
-	// The wave-2 claim under test: the harvest row shape is source-neutral. `designatorID` and `name`
-	// are all the builder needs; `ref` and `localizedNames` are optional and Overture has neither.
+	// The wave-2 claim under test: the harvest row shape is source-neutral.
+	// `designatorID` and `name` are all the builder needs; `ref` and `localizedNames`
+	// are optional and Overture has neither.
 	const [row] = await readOvertureSubVenues({ databasePath, countries: ["CA"] })
 
 	expect(row).toBeDefined()
@@ -219,8 +221,8 @@ test("readOvertureLayerVintage reads the layer-interface manifest", async () => 
 })
 
 test("OVERTURE_SUBVENUE_CATEGORIES maps every category to a designator the lexicon knows", () => {
-	// `pier` is a wave-2 addition to PROPOSED_DESIGNATORS. the rest predate it. A category mapped to a
-	// designator with no record would produce surfaces pointing at nothing.
+	// `pier` is a wave-2 addition to PROPOSED_DESIGNATORS. the rest predate it.
+	// A category mapped to a designator with no record would produce surfaces pointing at nothing.
 	expect(Object.entries(OVERTURE_SUBVENUE_CATEGORIES).toSorted()).toEqual([
 		["airport_lounge", "terminal"],
 		["airport_terminal", "terminal"],

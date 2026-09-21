@@ -47,36 +47,41 @@ export interface SerializeXMLOpts {
 	 */
 	includeOffsets?: boolean
 	/**
-	 * Include `src` provenance attribute when the node carries source info. Default true.
+	 * Include `src` provenance attribute when the node carries
+	 * source info. Default true.
 	 */
 	includeSrc?: boolean
 	/**
-	 * Include `lat` + `lon` resolver-supplied centroid attrs when set on the node. Default true.
+	 * Include `lat` + `lon` resolver-supplied centroid attrs when set
+	 * on the node. Default true.
 	 */
 	includeGeo?: boolean
 	/**
-	 * Include `place` resolver-supplied normalized place URI when set. Default true.
+	 * Include `place` resolver-supplied normalized place
+	 * URI when set. Default true.
 	 */
 	includePlace?: boolean
 	/**
-	 * Include `<alternative>` child elements for each runner-up resolver candidate on the node. When set +
-	 * node.alternatives is populated, each runner-up is emitted as a self-closing element with `place`, `name`, `lat`,
-	 * `lon`, `score` attributes. Default false — keeps output libpostal-compat when not explicitly requested
+	 * Include `<alternative>` child elements for each runner-up resolver candidate on the node.
+	 * When set + node.alternatives is populated, each runner-up is emitted as a
+	 * self-closing element with `place`, `name`, `lat`, `lon`, `score` attributes.
+	 * Default false — keeps output libpostal-compat when not explicitly requested
 	 * (Springfield-class disambiguation surfaces only when the caller asks).
 	 */
 	includeAlternatives?: boolean
 	/**
-	 * Emit `<unknown start end>…</unknown>` elements for the all-O runs no node covers — the input the model left
-	 * unclassified (#493 lossless decomposition). Interleaved with the root components in source order, so the
-	 * `<address>` children tile the raw input exactly. Default false — keeps output libpostal-compat / the existing shape
+	 * Emit `<unknown start end>…</unknown>` elements for the all-O runs no node covers —
+	 * the input the model left unclassified (#493 lossless decomposition).
+	 * Interleaved with the root components in source order, so the `<address>` children tile
+	 * the raw input exactly. Default false — keeps output libpostal-compat / the existing shape
 	 * when not explicitly requested (same posture as {@link includeAlternatives}).
 	 */
 	includeUnknown?: boolean
 }
 
 /**
- * Deliberately not `escapeHTML` (`#strings/escape`): every attribute this serializer emits is double-quoted, so `'`
- * needs no escape, and adding `&#39;` would change shipped serialization bytes.
+ * Deliberately not `escapeHTML` (`#strings/escape`): every attribute this serializer emits is
+ * double-quoted, so `'` needs no escape, and adding `&#39;` would change shipped serialization bytes.
  */
 function escapeXml(s: string): string {
 	return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")
@@ -93,8 +98,8 @@ function srcAttrValue(node: AddressNode): string | null {
 }
 
 /**
- * Centroid precision for resolver-supplied lat/lon. 6 decimal places is ~11 cm at the equator — more than enough for
- * any postal-address resolver and short enough to stay readable.
+ * Centroid precision for resolver-supplied lat/lon. 6 decimal places is ~11 cm at the equator —
+ * more than enough for any postal-address resolver and short enough to stay readable.
  */
 const GEO_PRECISION = 6
 
@@ -117,8 +122,8 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 		}
 	}
 
-	// Emit lat + lon together — a centroid is meaningless with only one coordinate. Resolvers that
-	// can produce one but not the other shouldn't decorate the node at all.
+	// Emit lat + lon together — a centroid is meaningless with only one coordinate.
+	// Resolvers that can produce one but not the other shouldn't decorate the node at all.
 	if (opts.includeGeo && node.lat !== undefined && node.lon !== undefined) {
 		parts.push(`lat="${node.lat.toFixed(GEO_PRECISION)}"`, `lon="${node.lon.toFixed(GEO_PRECISION)}"`)
 	}
@@ -127,8 +132,9 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 		parts.push(`place="${escapeXml(node.placeID)}"`)
 	}
 
-	// Multi-role node (#413): a city-state span tagged `region` that also plays `locality` lists every
-	// role it holds, primary first — `roles="region locality"`. Emitted only when extra roles exist.
+	// Multi-role node (#413): a city-state span tagged `region` that also plays
+	// `locality` lists every role it holds, primary first — `roles="region locality"`.
+	// Emitted only when extra roles exist.
 	if (node.interpretations && node.interpretations.length) {
 		const roles = [node.tag, ...node.interpretations.map((i) => i.tag)]
 		parts.push(`roles="${escapeXml(roles.join(" "))}"`)
@@ -207,8 +213,8 @@ export function decodeAsXML(tree: AddressTree, opts: SerializeXMLOpts = {}): str
 	const nl = full.pretty ? "\n" : ""
 	const indent = full.pretty ? "\t" : ""
 
-	// Source-ordered XML for the root components. When includeUnknown is set, interleave the all-O gaps as
-	// `<unknown>` elements by start offset so the children tile the raw input losslessly.
+	// Source-ordered XML for the root components. When includeUnknown is set, interleave the all-O
+	// gaps as `<unknown>` elements by start offset so the children tile the raw input losslessly.
 	const entries: Array<{ start: number; xml: string }> = tree.roots.map((r) => ({
 		start: r.start,
 		xml: serializeNode(r, indent, full),

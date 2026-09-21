@@ -23,9 +23,10 @@ import { describe, expect, it, test } from "vitest"
 
 const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-// Production tokenizer, conditional (mirrors weights.test.ts's `haveModel` skipIf idiom) — the bare-▁-orphan splits below
-// only occur in its vocab rather than the small fixture's. Not present in stripped-down CI, so this whole block skips
-// there. it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
+// Production tokenizer, conditional (mirrors weights.test.ts's `haveModel` skipIf idiom) —
+// the bare-▁-orphan splits below only occur in its vocab rather than the small fixture's.
+// Not present in stripped-down CI, so this whole block skips there. it runs on the
+// lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveProductionTokenizer = await pathExists(PRODUCTION_TOKENIZER_PATH)
 
@@ -171,11 +172,12 @@ describe("buildFSTEmissionPriors", () => {
 	})
 
 	it("folds trailing punctuation into the preceding word's bias, not into a separate placeholder", () => {
-		// The word boundary is ▁ only: a punctuation-only piece with no leading ▁ is unconditionally interior
-		// to whatever word is still active. There is deliberately no look-ahead distinguishing "mid-word
-		// hyphen" from "trailing comma before a new ▁ word" — the grouper cannot see the next piece, and the
-		// splits that matter ("Stockton-on-Tees" etc.) don't need it. So the comma below joins the
-		// "Washington" group and carries its bias rather than getting an all-zero placeholder row of its own.
+		// The word boundary is ▁ only: a punctuation-only piece with no leading
+		// ▁ is unconditionally interior to whatever word is still active.
+		// There is deliberately no look-ahead distinguishing "mid-word hyphen" from "trailing comma
+		// before a new ▁ word" — the grouper cannot see the next piece, and the splits that matter
+		// ("Stockton-on-Tees" etc.) don't need it. So the comma below joins the "Washington" group
+		// and carries its bias rather than getting an all-zero placeholder row of its own.
 		// Nothing is lost by the coarser rule: "▁DC" opens its own group regardless.
 		const fst = mockFST(new Map([["washington", [{ wofID: 7, placetype: "locality", referential: 0.85 }]]]))
 
@@ -187,17 +189,18 @@ describe("buildFSTEmissionPriors", () => {
 
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.85 * 3, 2)
-		// The comma (piece 1) is now part of the "Washington" word group — it gets the same bias as an
-		// I-locality continuation piece rather than a zero row.
+		// The comma (piece 1) is now part of the "Washington" word group — it gets the same
+		// bias as an I-locality continuation piece rather than a zero row.
 		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.85 * 3, 2)
 		// "DC" never matches this mock FST ("washington" is the only indexed path) — untouched.
 		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
 	})
 
 	it("length-scales street suppression for a single-token match (default `suppression` mode), positive bias intact (#1142)", () => {
-		// A lone place-name token ("Sweeney") is weak street-head evidence. The default `suppression` mode
-		// scales the street/house-number suppression by match length (1-token ×0.25) so the model's own
-		// "Ranch Road → street" reading can win, while the positive locality bias is left at full strength.
+		// A lone place-name token ("Sweeney") is weak street-head evidence.
+		// The default `suppression` mode scales the street/house-number suppression by match
+		// length (1-token ×0.25) so the model's own "Ranch Road → street" reading can win,
+		// while the positive locality bias is left at full strength.
 		const fst = mockFST(new Map([["sweeney", [{ wofID: 9, placetype: "locality", referential: 0.5 }]]]))
 		const pieces = makePieces("Sweeney")
 		const supp = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS) // default: suppression
@@ -332,9 +335,10 @@ describe("normalizeFSTToken", () => {
 	})
 
 	it("leaves spaces intact (Zs, not punctuation) — hyphen/space equivalence comes from the caller's split-then-join", () => {
-		// Spaces (U+0020) are Unicode category Zs (separator), not P or S, so normalizeFSTToken leaves them intact.
-		// Each word is normalized separately via groupPiecesIntoWords, then words are joined with no separator —
-		// that's where "Stockton on Tees" becomes "stocktonontees" (same as "Stockton-on-Tees" after hyphen strip).
+		// Spaces (U+0020) are Unicode category Zs (separator), not P or S, so normalizeFSTToken
+		// leaves them intact. Each word is normalized separately via groupPiecesIntoWords,
+		// then words are joined with no separator — that's where "Stockton on Tees" becomes
+		// "stocktonontees" (same as "Stockton-on-Tees" after hyphen strip).
 		const stockton = normalizeFSTToken("Stockton")
 		const on = normalizeFSTToken("on")
 		const tees = normalizeFSTToken("Tees")
@@ -386,16 +390,16 @@ describe("groupPiecesIntoWords with normalizeFSTToken", () => {
 })
 
 describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)", () => {
-	// Interior punctuation (a hyphen/apostrophe with no leading ▁) must continue the current word, never reset
-	// it. A punctuation-only piece that sets `current = null` silently drops every subsequent piece up to the
-	// next ▁ — these five real-tokenizer splits are where that happens. See the module docstring's "word
-	// boundary is ▁ only" section.
+	// Interior punctuation (a hyphen/apostrophe with no leading ▁) must continue the current
+	// word, never reset it. A punctuation-only piece that sets `current = null` silently
+	// drops every subsequent piece up to the next ▁ — these five real-tokenizer splits are
+	// where that happens. See the module docstring's "word boundary is ▁ only" section.
 
 	it('groups "Stockton-on-Tees" into a single word ("stocktonontees"), not a truncated fragment', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton-on-Tees")
-		// Real split: ["▁Stock","ton","-","on","-","T","e","es"] — "on"/"Tees" have no leading ▁ and would
-		// have been dropped by the pre-fix code the instant it hit the first bare "-".
+		// Real split: ["▁Stock","ton","-","on","-","T","e","es"] — "on"/"Tees" have no leading ▁
+		// and would have been dropped by the pre-fix code the instant it hit the first bare "-".
 		const groups = groupPiecesIntoWords(pieces)
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stocktonontees"])
@@ -420,8 +424,8 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 	it('groups "Bishop\'s Stortford" into two words ("bishops", "stortford") — the apostrophe is absorbed, the space is not', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Bishop's Stortford")
-		// Real split: ["▁Bis","hop","'","s","▁St","ort","ford"] — the apostrophe (no leading ▁) continues
-		// "Bishop", the following ▁St closes it and opens a genuinely new word.
+		// Real split: ["▁Bis","hop","'","s","▁St","ort","ford"] — the apostrophe (no leading ▁)
+		// continues "Bishop", the following ▁St closes it and opens a genuinely new word.
 		const groups = groupPiecesIntoWords(pieces)
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["bishops", "stortford"])
@@ -436,12 +440,14 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 	})
 
 	it('recovers "on" in "Stockton on the Forest" via pending-word-start', async () => {
-		// A bare "▁" piece is a word boundary carrying no content of its own (real split here:
-		// ["▁Stock","ton","▁","on","▁the","▁Forest"]). It closes "Stockton" and leaves `current === null`
-		// pending, so the next piece ("on", with no leading ▁ of its own) opens a fresh word instead of being
-		// dropped. This is not a fixture-vocab curiosity: the pattern is live and widespread in the production
-		// tokenizer (v0.9.0-multisplice) — "Newcastle upon Tyne", "Weston super Mare", "Kingston upon Hull" and
-		// a trailing "IL" all split this way. see the skipIf-conditional production-tokenizer block below.
+		// A bare "▁" piece is a word boundary carrying no content of its own
+		// (real split here: ["▁Stock","ton","▁","on","▁the","▁Forest"]).
+		// It closes "Stockton" and leaves `current === null` pending, so the next piece
+		// ("on", with no leading ▁ of its own) opens a fresh word instead of being dropped.
+		// This is not a fixture-vocab curiosity: the pattern is live and widespread
+		// in the production tokenizer (v0.9.0-multisplice) — "Newcastle upon Tyne",
+		// "Weston super Mare", "Kingston upon Hull" and a trailing "IL" all split this
+		// way. see the skipIf-conditional production-tokenizer block below.
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton on the Forest")
 		const groups = groupPiecesIntoWords(pieces)
@@ -452,10 +458,11 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 	it('still yields ["stockton", "", "lancashire"]-shaped groups for "Stockton , Lancashire" (comma stands alone, no fusion)', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton , Lancashire")
-		// Real split: ["▁Stock","ton","▁",",","▁Lan","ca","shire"] — the space before the comma tokenizes as
-		// its own bare "▁" piece, and the comma itself (no leading ▁, no active word) stands alone too. Two
-		// raw empty groups land between "Stockton" and "Lancashire" rather than one, but the property that
-		// matters — the two real words never fuse into a single group/window — holds either way.
+		// Real split: ["▁Stock","ton","▁",",","▁Lan","ca","shire"] — the space
+		// before the comma tokenizes as its own bare "▁" piece, and the comma itself
+		// (no leading ▁, no active word) stands alone too. Two raw empty groups land between
+		// "Stockton" and "Lancashire" rather than one, but the property that matters —
+		// the two real words never fuse into a single group/window — holds either way.
 		const groups = groupPiecesIntoWords(pieces)
 		expect(groups.filter((g) => g.fstToken === "")).toHaveLength(2)
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
@@ -464,11 +471,12 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 })
 
 describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fstToken (paired-punctuation audit)", () => {
-	// The small fixture tokenizer's deliberately tiny vocab hits SentencePiece byte-fallback (`<0xHH>` pieces) on
-	// curly quotes, guillemets, and even ascii braces/brackets — not just non-Latin scripts. `hasAlnum` must
-	// never read the placeholder text ("<0x7B>" — hex digits and letters) as real alnum content: it would
-	// inject garbage into fstToken ("0x7bblock" instead of "block"), corrupting every FST/pair-index probe key
-	// for a place name written with one of these characters. See `.superpowers/sdd/task-9-audit-report.md`.
+	// The small fixture tokenizer's deliberately tiny vocab hits SentencePiece byte-fallback
+	// (`<0xHH>` pieces) on curly quotes, guillemets, and even ascii braces/brackets —
+	// not just non-Latin scripts. `hasAlnum` must never read the placeholder text
+	// ("<0x7B>" — hex digits and letters) as real alnum content: it would inject garbage into fstToken
+	// ("0x7bblock" instead of "block"), corrupting every FST/pair-index probe key for a place
+	// name written with one of these characters. See `.superpowers/sdd/task-9-audit-report.md`.
 
 	it('folds "{Block C}, Leeds" to clean words, no "0x7b"/"0x7d" garbage', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
@@ -498,9 +506,10 @@ describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fs
 describe.skipIf(!haveProductionTokenizer)(
 	"groupPiecesIntoWords — bare-▁-orphan recovery, PRODUCTION tokenizer vocabulary",
 	() => {
-		// The bare-▁ split is more common in the production tokenizer (v0.9.0-multisplice) than in the small
-		// test fixture: it hits short common words ("on", "upon", "super") and a trailing single-letter
-		// abbreviation ("IL"). Each case below asserts full group recovery rather than merely a non-empty result.
+		// The bare-▁ split is more common in the production tokenizer (v0.9.0-multisplice)
+		// than in the small test fixture: it hits short common words ("on", "upon", "super")
+		// and a trailing single-letter abbreviation ("IL"). Each case below asserts full
+		// group recovery rather than merely a non-empty result.
 		const cases: Array<{ raw: string; expected: string[] }> = [
 			{ raw: "Stockton on the Forest", expected: ["stockton", "on", "the", "forest"] },
 			{ raw: "Newcastle upon Tyne", expected: ["newcastle", "upon", "tyne"] },

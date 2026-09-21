@@ -12,8 +12,8 @@ import { flag, text } from "#operations/inputs"
 import { releasePreflight, WEIGHTS_SOURCES, type WeightsSource } from "#release/preflight"
 
 /**
- * `release.preflight` — writes inside the checkout or the data root. Listed in `registry.ts`; the description on the
- * operation is what `mwops` prints.
+ * `release.preflight` — writes inside the checkout or the data root.
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const preflight = defineOperation({
 	id: "release.preflight",
@@ -45,8 +45,8 @@ export const preflight = defineOperation({
 			repoRoot: context.repoRoot,
 			source,
 			...(input.version ? { version: input.version } : {}),
-			// Absolute, because the pack runs with each staged workspace as its cwd and would otherwise write the
-			// tarball relative to that directory while the audit looks relative to this one.
+			// Absolute, because the pack runs with each staged workspace as its cwd and would otherwise
+			// write the tarball relative to that directory while the audit looks relative to this one.
 			...(input.staging ? { staging: String(resolvePath(context.repoRoot, input.staging)) } : {}),
 			keep: input.keep,
 			log: context.log,

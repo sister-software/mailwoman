@@ -152,9 +152,10 @@ describe("createPOIExecutor", () => {
 		expect(outcome.results![0]!.categoryID).toBe("hospital")
 	})
 
-	// The union: every category the subject reached goes into one search, so the reader's own k-ring walk unions the
-	// rows and distance-sorts the pool. Two searches taken in turn would need something here to decide which set of
-	// results wins, and that decision is the candidate ordering this path does not author.
+	// The union: every category the subject reached goes into one search,
+	// so the reader's own k-ring walk unions the rows and distance-sorts the pool.
+	// Two searches taken in turn would need something here to decide which set of results wins,
+	// and that decision is the candidate ordering this path does not author.
 	it("union: probes every category the subject reached in a single search", () => {
 		const seenQueries: POISearchQuery[] = []
 
@@ -181,8 +182,8 @@ describe("createPOIExecutor", () => {
 		])
 	})
 
-	// Each hit keeps the identity of the category it came from, so a caller reading `results[0].categoryID` is told
-	// which class answered rather than which class was asked for first.
+	// Each hit keeps the identity of the category it came from, so a caller reading
+	// `results[0].categoryID` is told which class answered rather than which class was asked for first.
 	it("union: re-tags each hit to the canonical seed whose fan-out reached it", () => {
 		const drugstoreHit: POISearchHit = { ...HOSPITAL_HIT, name: "Rite Aid", categoryID: "drugstore", distanceM: 770 }
 		const pharmacyHit: POISearchHit = { ...HOSPITAL_HIT, name: "Walgreens Rx", categoryID: "rx", distanceM: 1710 }
@@ -206,8 +207,8 @@ describe("createPOIExecutor", () => {
 		])
 	})
 
-	// The order the reader returned, kept exactly. The executor sorts nothing and applies no per-category weight, so
-	// the nearest row leads whichever category it came from.
+	// The order the reader returned, kept exactly. The executor sorts nothing and applies
+	// no per-category weight, so the nearest row leads whichever category it came from.
 	it("union: leaves the reader's ordering alone", () => {
 		const far: POISearchHit = { ...HOSPITAL_HIT, name: "far pharmacy", categoryID: "pharmacy", distanceM: 4000 }
 		const near: POISearchHit = { ...HOSPITAL_HIT, name: "near drugstore", categoryID: "drugstore", distanceM: 770 }
@@ -227,8 +228,8 @@ describe("createPOIExecutor", () => {
 		expect(outcome.results!.map((result) => result.name)).toEqual(["near drugstore", "far pharmacy"])
 	})
 
-	// Two seeds rolling up into a shared leaf probe it once — a repeated leaf would return the same rows twice and read
-	// as two premises at one coordinate.
+	// Two seeds rolling up into a shared leaf probe it once — a repeated leaf would
+	// return the same rows twice and read as two premises at one coordinate.
 	it("union: probes a leaf two seeds share exactly once", () => {
 		const seenQueries: POISearchQuery[] = []
 
@@ -250,8 +251,9 @@ describe("createPOIExecutor", () => {
 		expect(seenQueries[0]!.categoryIDs).toEqual(["drugstore", "rx"])
 	})
 
-	// The abstain is about what the shipped layer can answer, so it needs every member to be build-local. One member
-	// the layer carries makes the search answerable, and abstaining would report a gap the search does not have.
+	// The abstain is about what the shipped layer can answer, so it needs every member
+	// to be build-local. One member the layer carries makes the search answerable,
+	// and abstaining would report a gap the search does not have.
 	it("union: does not abstain when one member of the set is not build-local", () => {
 		const executor = createPOIExecutor({
 			lookup: stubLookup(() => []),

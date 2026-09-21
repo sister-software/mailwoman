@@ -1,22 +1,23 @@
 /**
  * Perturb-golden.ts — corpus-perturbation neutral-arena generator (Direction A).
  *
- * Our 376-assertion suite is a Pelias/addressit port (v0's lineage), so it can't reveal where neural beats rules. This
- * builds an unbiased arena from ground truth WE own: take golden v0.1.2 (already labeled in our schema) and apply rule-
- * defeating perturbations while keeping the component labels intact. Rule-based parsers lean on delimiters /
- * capitalization / canonical spacing. a contextual neural model should degrade more gracefully. The three-bucket
- * harness then shows whether that's true (the methodology-vindication test).
+ * Our 376-assertion suite is a Pelias/addressit port (v0's lineage), so it can't reveal
+ * where neural beats rules. This builds an unbiased arena from ground truth WE own:
+ * take golden v0.1.2 (already labeled in our schema) and apply rule- defeating perturbations
+ * while keeping the component labels intact. Rule-based parsers lean on delimiters /
+ * capitalization / canonical spacing. a contextual neural model should degrade more gracefully.
+ * The three-bucket harness then shows whether that's true (the methodology-vindication test).
  *
- * Perturbation classes (each preserves the expected components — only the surface changes, and the harness matcher
- * normalizes case + allows substring):
+ * Perturbation classes (each preserves the expected components — only the surface changes,
+ * and the harness matcher normalizes case + allows substring):
  *
  * - Delimiter-strip : remove commas (rules depend on them)
  * - Lowercase : drop capitalization cues
  * - Glue : collapse the space between region and postcode ("OR97214")
  *
  * Run: node packages/mailwoman/lib/dev-tools/perturb-golden.run.ts\
- * --golden data/eval/golden/v0.1.2 --out /tmp/perturb-eval/perturbed.jsonl [--per-file 60] Then run
- * it through harness-neural (formerly harness-v0-neural with --symmetric-match).
+ * --golden data/eval/golden/v0.1.2 --out /tmp/perturb-eval/perturbed.jsonl [--per-file 60]
+ * Then run it through harness-neural (formerly harness-v0-neural with --symmetric-match).
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -50,13 +51,14 @@ interface GoldenRow {
 }
 
 /**
- * Collapse the whitespace between the region and the postcode where the row writes them adjacently — `or 97214` →
- * `OR97214`, `Auvergne-Rhône-Alpes 69001` → `Auvergne-Rhône-Alpes69001`.
+ * Collapse the whitespace between the region and the postcode where the row writes them adjacently —
+ * `or 97214` → `OR97214`, `Auvergne-Rhône-Alpes 69001` → `Auvergne-Rhône-Alpes69001`.
  *
- * Driven by the row's own components rather than by a shape. `\b([A-Z]{2})\s+(\d{5})\b` matches a US region code and a
- * five-digit ZIP and nothing else, so it read every non-US row as unperturbable — and this tool runs over the whole
- * golden directory, `fr.jsonl` included. A country whose layout writes the postcode first, or writes no region, still
- * produces no change here, and the caller counts that rather than emitting the row unperturbed.
+ * Driven by the row's own components rather than by a shape.
+ * `\b([A-Z]{2})\s+(\d{5})\b` matches a US region code and a five-digit ZIP and nothing else,
+ * so it read every non-US row as unperturbable — and this tool runs over the whole golden directory,
+ * `fr.jsonl` included. A country whose layout writes the postcode first, or writes no region,
+ * still produces no change here, and the caller counts that rather than emitting the row unperturbed.
  */
 function glue(raw: string, components: Record<string, string>): string {
 	const region = components.region?.trim()
@@ -78,8 +80,9 @@ async function main(): Promise<void> {
 	const out: string[] = []
 
 	/**
-	 * Per class: cases written, and rows the class could not change. A class that covers one country reports a large
-	 * unperturbed count here rather than looking like a class that simply produced fewer cases.
+	 * Per class: cases written, and rows the class could not change.
+	 * A class that covers one country reports a large unperturbed count here
+	 * rather than looking like a class that simply produced fewer cases.
 	 */
 	const emitted = new Map<string, number>()
 	const unperturbed = new Map<string, number>()
@@ -112,8 +115,9 @@ async function main(): Promise<void> {
 			for (const p of PERTURBATIONS) {
 				const input = p.apply(row.raw, row.components)
 
-				// A perturbation that changed nothing is not a case. `lowercase` is the exception: a row already lowercase
-				// is still a lowercase case, and the register leg exists to be graded on every row.
+				// A perturbation that changed nothing is not a case.
+				// `lowercase` is the exception: a row already lowercase is still a lowercase case,
+				// and the register leg exists to be graded on every row.
 				if (input === row.raw && p.name !== "lowercase") {
 					unperturbed.set(p.name, (unperturbed.get(p.name) ?? 0) + 1)
 

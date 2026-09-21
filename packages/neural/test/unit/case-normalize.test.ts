@@ -50,8 +50,9 @@ test("titleCaseInput: title-cases ≥3-letter runs, PRESERVES ≤2-letter runs, 
 })
 
 test("titleCaseInput: #252 — a 2-letter region/directional is preserved, not corrupted to a non-region form", () => {
-	// The Gauntlet casing-invariance catch: blind title-casing made NY→Ny / DC→Dc / NW→Nw, which the model
-	// then parsed as a locality, dropping the state. Preserving them lands upper on the correct mixed-case form.
+	// The Gauntlet casing-invariance catch: blind title-casing made NY→Ny / DC→Dc
+	// / NW→Nw, which the model then parsed as a locality, dropping the state.
+	// Preserving them lands upper on the correct mixed-case form.
 	expect(titleCaseInput("WASHINGTON DC")).toBe("Washington DC")
 	expect(titleCaseInput("NEW YORK NY")).toBe("New York NY")
 	expect(titleCaseInput("1600 PENNSYLVANIA AVE NW")).toBe("1600 Pennsylvania Ave NW")
@@ -69,8 +70,9 @@ test("normalizeInputCase: the #690 hook — title-case iff all-caps, else unchan
 })
 
 test("titleCaseInput: a run whose lowercase form changes length is kept as typed (offsets never move)", () => {
-	// U+0130 lowercases to two code units. In `caddesİ` it sits inside the lowered tail, so that run stays shouting
-	// rather than shifting every later offset. in `İstanbul` it is the untouched first letter, so the run title-cases.
+	// U+0130 lowercases to two code units. In `caddesİ` it sits inside the lowered tail,
+	// so that run stays shouting rather than shifting every later offset. in `İstanbul`
+	// it is the untouched first letter, so the run title-cases.
 	const input = "İSTANBUL CADDESİ"
 	const out = titleCaseInput(input)
 

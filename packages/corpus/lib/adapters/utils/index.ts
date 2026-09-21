@@ -35,9 +35,10 @@ import type { CanonicalRow, CorpusAdapter } from "#types"
 /**
  * Lookup table for corpus adapters.
  *
- * The CLI's `npx mailwoman corpus run <adapter-id>` resolves `<adapter-id>` against this registry. the same registry is
- * iterated by the `corpus build` pipeline. Adapters do not self-register at module load — they're added explicitly so
- * the dependency graph stays traceable.
+ * The CLI's `npx mailwoman corpus run <adapter-id>` resolves `<adapter-id>` against
+ * this registry. the same registry is iterated by the `corpus build` pipeline.
+ * Adapters do not self-register at module load — they're added explicitly
+ * so the dependency graph stays traceable.
  */
 export interface AdapterRegistry {
 	/**
@@ -62,8 +63,8 @@ export interface AdapterRegistry {
 }
 
 /**
- * Default in-memory registry. The runner constructs one per invocation. the CLI re-uses a shared singleton
- * (`defaultAdapterRegistry`) populated by `./adapters/index.ts` as adapters come online.
+ * Default in-memory registry. The runner constructs one per invocation. the CLI re-uses a shared
+ * singleton (`defaultAdapterRegistry`) populated by `./adapters/index.ts` as adapters come online.
  */
 export class InMemoryAdapterRegistry implements AdapterRegistry {
 	#byID = new Map<string, CorpusAdapter>()
@@ -90,21 +91,22 @@ export class InMemoryAdapterRegistry implements AdapterRegistry {
 }
 
 /**
- * Process-wide default registry. Populated by `./adapters/index.ts` as adapters are built. imported by the CLI. Tests
- * should construct their own `InMemoryAdapterRegistry` to avoid cross-test pollution.
+ * Process-wide default registry. Populated by `./adapters/index.ts` as adapters are built. imported by
+ * the CLI. Tests should construct their own `InMemoryAdapterRegistry` to avoid cross-test pollution.
  */
 export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
 
 /**
  * Deterministic content-addressed source id.
  *
- * For adapters whose upstream source has no native primary key (CSV rows, GeoJSON features), the runner expects a
- * stable id so dedup, holdout manifests, and resumability work across reruns. This helper produces one by hashing the
- * adapter id and a canonical serialization of the components dict (keys sorted, values verbatim).
+ * For adapters whose upstream source has no native primary key (CSV rows, GeoJSON features),
+ * the runner expects a stable id so dedup, holdout manifests, and resumability work
+ * across reruns. This helper produces one by hashing the adapter id and a canonical
+ * serialization of the components dict (keys sorted, values verbatim).
  *
- * Output format: `<adapterID>-<first-12-hex-chars-of-sha256>`. 48 bits of entropy is enough for ~17M rows per adapter
- * before the expected collision count exceeds 1 (birthday paradox); adapters with more rows should extend the prefix
- * length.
+ * Output format: `<adapterID>-<first-12-hex-chars-of-sha256>`. 48 bits of entropy
+ * is enough for ~17M rows per adapter before the expected collision count exceeds 1
+ * (birthday paradox); adapters with more rows should extend the prefix length.
  */
 export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string>>): string {
 	return stableSourceIDFromParts(adapterID, components)
@@ -112,8 +114,8 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
 
 /**
  * {@link stableSourceID} over arbitrary disambiguator keys — a variant index, a slot number, anything that is not a
- * `ComponentTag`. Every key handed in is sorted and hashed either way. only the key vocabulary differs, and the narrow
- * signature above is what stops an adapter hashing a misspelled component name.
+ * `ComponentTag`. Every key handed in is sorted and hashed either way. only the key vocabulary differs,
+ * and the narrow signature above is what stops an adapter hashing a misspelled component name.
  */
 export function stableSourceIDFromParts(
 	adapterID: string,
@@ -121,23 +123,24 @@ export function stableSourceIDFromParts(
 ): string {
 	const sortedKeys = Object.keys(parts).toSorted()
 	const payload = sortedKeys.map((k) => `${k}=${parts[k] ?? ""}`).join("\u001F")
-	// One `update` over the joined string rather than three chained ones — identical byte stream either way,
-	// but the separator has to stay inline or every id in every built corpus changes.
+	// One `update` over the joined string rather than three chained ones — identical byte stream
+	// either way, but the separator has to stay inline or every id in every built corpus changes.
 	const digest = sha256Hex(`${adapterID}\u001E${payload}`)
 
 	return `${adapterID}-${digest.slice(0, 12)}`
 }
 
 /**
- * Leading house number on a US-style street line: digits, an optional hyphenated range (Queens `40-12`), an optional
- * single alpha suffix (`101A`), then whitespace, then the rest.
+ * Leading house number on a US-style street line: digits, an optional hyphenated range
+ * (Queens `40-12`), an optional single alpha suffix (`101A`), then whitespace, then the rest.
  *
- * This decides where the house number ends and the street begins for every US CSV adapter, so an edge case fixed here
- * is fixed for all of them.
+ * This decides where the house number ends and the street begins for every US CSV adapter,
+ * so an edge case fixed here is fixed for all of them.
  *
- * The remainder must stay `(\S.*)` and must not become `(.+)`: `\s+` and `.` both match a tab, so `\s+(.+)$` lets the
- * engine split a run of tabs between the two groups every possible way before failing — quadratic backtracking on
- * attacker-shaped input. Requiring a non-space start removes the overlap. Group 2 is trimmed by the caller either way,
+ * The remainder must stay `(\S.*)` and must not become `(.+)`: `\s+` and `.` both match
+ * a tab, so `\s+(.+)$` lets the engine split a run of tabs between the two groups
+ * every possible way before failing — quadratic backtracking on attacker-shaped input.
+ * Requiring a non-space start removes the overlap. Group 2 is trimmed by the caller either way,
  * so the two forms are indistinguishable on real input. only the failure cost differs.
  */
 export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(\S.*)$/
@@ -153,10 +156,11 @@ export interface SplitStreetLine {
 /**
  * Split a US-style street line on {@link HOUSE_NUMBER_PREFIX}.
  *
- * The US CSV sources follow USPS Publication 28 conventions with hand-entry drift. The leading digit run is the house
- * number (`"123 Main St"`, `"6450 W Indian School Rd"`), and the regex tolerates one trailing letter (`"123A Main St"`)
- * plus an optional hyphenated half (`"40-12 Bell Blvd"`, common in NYC and suburban garden-apartment numbering. Hawaii
- * uses it island-wide — `"47-470 Hui Aeko Place"`).
+ * The US CSV sources follow USPS Publication 28 conventions with hand-entry drift.
+ * The leading digit run is the house number (`"123 Main St"`, `"6450 W Indian School Rd"`),
+ * and the regex tolerates one trailing letter (`"123A Main St"`) plus an optional
+ * hyphenated half (`"40-12 Bell Blvd"`, common in NYC and suburban garden-apartment
+ * numbering. Hawaii uses it island-wide — `"47-470 Hui Aeko Place"`).
  *
  * Returns `null` for blank input. Anything that does not match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC
  * 1"`) becomes a single `street` value rather than being mangled — the model sees the original surface form and
@@ -176,12 +180,13 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
 }
 
 /**
- * Load one curated libpostal dictionary (`core/data/libpostal/dictionaries/<language>/<filename>`) as a lower-cased
- * form set. libpostal format: `canonical|abbr|abbr|...` — every form is indexed.
+ * Load one curated libpostal dictionary (`core/data/libpostal/dictionaries/<language>/<filename>`) as
+ * a lower-cased form set. libpostal format: `canonical|abbr|abbr|...` — every form is indexed.
  *
- * `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source and from the packaged `out/`
- * tree. The candidate list this replaced named it twice and then guessed a third path off `process.cwd()`, and
- * swallowed every error while probing, so a corrupt dictionary reported as a missing one.
+ * `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source
+ * and from the packaged `out/` tree. The candidate list this replaced named it twice
+ * and then guessed a third path off `process.cwd()`, and swallowed every error
+ * while probing, so a corrupt dictionary reported as a missing one.
  *
  * The largest libpostal dictionary is 8.4 KB, and each caller runs this once per process at module load.
  */
@@ -209,12 +214,13 @@ export async function loadLibpostalDictionary(language: string, filename: string
 /**
  * Canonical dedup key for a row.
  *
- * Two rows that share this key are treated as duplicates and only the first wins. The key is built from `country`, the
- * sorted `components` dict, and a normalized `raw` (lower-cased, whitespace collapsed). License and provenance fields
- * are intentionally excluded so the same address from multiple adapters is recognized as a duplicate.
+ * Two rows that share this key are treated as duplicates and only the first wins.
+ * The key is built from `country`, the sorted `components` dict, and a normalized `raw`
+ * (lower-cased, whitespace collapsed). License and provenance fields are intentionally excluded
+ * so the same address from multiple adapters is recognized as a duplicate.
  *
- * Synthetic rows are never deduplicated against natural rows: `synth.method` is folded into the key when present,
- * ensuring each augmentation variant survives.
+ * Synthetic rows are never deduplicated against natural rows: `synth.method` is folded
+ * into the key when present, ensuring each augmentation variant survives.
  */
 export function canonicalDedupKey(row: CanonicalRow): string {
 	const sortedKeys = Object.keys(row.components).toSorted() as ComponentTag[]
@@ -228,8 +234,9 @@ export function canonicalDedupKey(row: CanonicalRow): string {
 /**
  * Streaming SHA-256 hasher.
  *
- * The runner feeds every jsonl line into one of these so the per-adapter checksum can be recorded in `manifest.json`
- * without a second pass over the jsonl. Implementation is a one-line wrapper, but giving it a name keeps the runner's
+ * The runner feeds every jsonl line into one of these so the per-adapter checksum
+ * can be recorded in `manifest.json` without a second pass over the jsonl.
+ * Implementation is a one-line wrapper, but giving it a name keeps the runner's
  * hash-tracking intent obvious.
  */
 export interface StreamingHasher {

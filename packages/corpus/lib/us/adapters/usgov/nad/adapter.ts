@@ -40,13 +40,13 @@ import { Globerator } from "spliterator/node/fs"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const USGOV_NAD_ADAPTER_ID = "usgov-nad"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"
 
@@ -236,8 +236,8 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			}
 
 			// inputPath is a directory of ndjson files (per fetch-nad.ts featureserver output).
-			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported — the
-			// featureserver per-OID-range file pattern is the primary distribution.
+			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported —
+			// the featureserver per-OID-range file pattern is the primary distribution.
 			const files = await Globerator.files("ndjson", {
 				cwd: opts.inputPath,
 				absolute: false,
@@ -247,10 +247,10 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			let emitted = 0
 			outer: for (const file of files) {
 				if (opts.signal?.aborted) break
-				// TextSpliterator streams string lines. the per-line tryParsingJSON below keeps the reader
-				// tolerant of malformed rows (skip silently), so TextSpliterator + a non-throwing parse —
-				// not JSONSpliterator, which would throw. The path string lets the lib own + dispose each
-				// file's handle, including on the `break outer` early exit.
+				// TextSpliterator streams string lines. the per-line tryParsingJSON below keeps the
+				// reader tolerant of malformed rows (skip silently), so TextSpliterator + a non-throwing
+				// parse — not JSONSpliterator, which would throw. The path string lets the lib
+				// own + dispose each file's handle, including on the `break outer` early exit.
 				const lines = TextSpliterator.fromAsync(join(opts.inputPath, file))
 
 				for await (const line of lines) {

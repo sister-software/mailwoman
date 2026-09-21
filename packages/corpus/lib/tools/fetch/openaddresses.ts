@@ -68,8 +68,8 @@ import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index
 import { streamDownload, writeManifest } from "#tools/fetch/download/index"
 
 /**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
- * than data.
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below
+ * which a "download" is an error page rather than data.
  */
 /**
  * A successful fetch. anything else is an error page or a redirect we did not follow.
@@ -84,8 +84,9 @@ const MIN_PLAUSIBLE_ARCHIVE_BYTES = 10_240
 const OA_BASE = "https://batch.openaddresses.io"
 
 /**
- * Collection IDs known as of 2026-05-18 (discovered via `GET /api/collections`). OA assigns stable integer IDs to each
- * country collection. re-check `GET /api/collections` if a new country is needed and the ID is unknown.
+ * Collection IDs known as of 2026-05-18 (discovered via `GET /api/collections`).
+ * OA assigns stable integer IDs to each country collection. re-check `GET /api/collections`
+ * if a new country is needed and the ID is unknown.
  *
  * TODO: Move this to a config file or the OA adapter
  */
@@ -180,8 +181,9 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	if (collectionID === undefined) {
 		report?.(`Unknown country code '${country}'. Fetching collection list to find ID...`)
 
-		// The collections API only. The collection archives stay on raw `fetch` — they stream multi-gigabyte
-		// bodies straight to disk, where response caching is nonsense and axios would buffer them in memory.
+		// The collections API only. The collection archives stay on raw `fetch` —
+		// they stream multi-gigabyte bodies straight to disk, where response caching
+		// is nonsense and axios would buffer them in memory.
 		const res = await new APIClient({
 			displayName: "openaddresses-api",
 			retry: true,

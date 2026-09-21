@@ -31,29 +31,33 @@
 import type { PostcodeBinaryEntry } from "@mailwoman/neural/postcode"
 
 /**
- * A GB unit postcode in the space-stripped key form the train painter writes (`SW1A2AA`) — outward glued to inward.
- * Verbatim from `anchor-lookup.ts`; keep the three copies (here, `anchor-lookup.ts`, `neural/anchor-inference.ts`) in
- * lockstep, they are the same interface read from three sides.
+ * A GB unit postcode in the space-stripped key form the train painter writes (`SW1A2AA`) —
+ * outward glued to inward. Verbatim from `anchor-lookup.ts`; keep the three
+ * copies (here, `anchor-lookup.ts`, `neural/anchor-inference.ts`) in lockstep,
+ * they are the same interface read from three sides.
  */
 const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
- * A GB unit's inward code is always the last three characters (`\d[A-Z]{2}`); the outward district is everything before
- * it. Structural rather than a guess — and unlike a space split it holds on a database that stores the glued form.
+ * A GB unit's inward code is always the last three characters (`\d[A-Z]{2}`);
+ * the outward district is everything before it. Structural rather than a guess —
+ * and unlike a space split it holds on a database that stores the glued form.
  */
 const GB_INWARD_LENGTH = 3
 
 /**
- * GB key granularity. `unit` is the train-faithful set the anchor-v2 lookup carries (1,746,976 units + 2,863 outward
+ * GB key granularity. `unit` is the train-faithful set the anchor-v2 lookup
+ * carries (1,746,976 units + 2,863 outward
  * districts = 1,749,839 keys, 20.0 MB) — the unit centroid is what painted the training spans, so a model trained
- * against `pilot-anchor-lookup-v2` needs it. `outward` is the districts alone (2,863 keys, 0.03 MB), which is the only
- * thing that fits a browser bundle. it was the command's original behaviour and stays available for that reason.
+ * against `pilot-anchor-lookup-v2` needs it. `outward` is the districts alone
+ * (2,863 keys, 0.03 MB), which is the only thing that fits a browser bundle. it was
+ * the command's original behaviour and stays available for that reason.
  */
 export type GBGranularity = "unit" | "outward"
 
 /**
- * One country's PCB1 source: the WOF postcode database its rows are read from, and the coarsest key set a browser
- * bundle can carry when the train-faithful set cannot.
+ * One country's PCB1 source: the WOF postcode database its rows are read from,
+ * and the coarsest key set a browser bundle can carry when the train-faithful set cannot.
  */
 export interface PostcodeBinarySource {
 	/**
@@ -65,21 +69,22 @@ export interface PostcodeBinarySource {
 	 */
 	database: string
 	/**
-	 * The granularity a browser asset dir should hold, when the train-faithful build is too large for one. Absent for a
-	 * country whose full key set already fits — the size note the command prints is keyed on this rather than on the
-	 * country.
+	 * The granularity a browser asset dir should hold, when the train-faithful build
+	 * is too large for one. Absent for a country whose full key set already fits —
+	 * the size note the command prints is keyed on this rather than on the country.
 	 */
 	browserGranularity?: GBGranularity
 }
 
 /**
- * The per-country sources `mailwoman gazetteer postcode-binary` builds by default, in emission order. Shared with the
- * `--locale <CC>:<db>` override path only through {@linkcode PostcodeBinarySource.browserGranularity}: an override
- * replaces the database, never the country's browser rule.
+ * The per-country sources `mailwoman gazetteer postcode-binary` builds by default,
+ * in emission order. Shared with the `--locale <CC>:<db>` override path only
+ * through {@linkcode PostcodeBinarySource.browserGranularity}: an override replaces
+ * the database, never the country's browser rule.
  *
- * Every database here is a member of `DEFAULT_POSTCODE_DATABASES` (`gazetteer-pipeline/index.ts`), and the key floors
- * in {@linkcode POSTCODE_BINARY_KEY_FLOORS} were measured against these same files — a country added to one table
- * without a row in the other floors at 1 and refuses only a zero-key build.
+ * Every database here is a member of `DEFAULT_POSTCODE_DATABASES` (`gazetteer-pipeline/index.ts`),
+ * and the key floors in {@linkcode POSTCODE_BINARY_KEY_FLOORS} were measured against these same files —
+ * a country added to one table without a row in the other floors at 1 and refuses only a zero-key build.
  */
 export const POSTCODE_BINARY_SOURCES: readonly PostcodeBinarySource[] = [
 	{ country: "US", database: "postalcode-us.db" },
@@ -110,7 +115,8 @@ export interface PostcodeDatabaseRow {
 
 export interface BuildPostcodeBinaryOptions {
 	/**
-	 * GB key granularity. Default `unit` — see {@linkcode GBGranularity}. Ignored for every other country.
+	 * GB key granularity. Default `unit` — see {@linkcode GBGranularity}.
+	 * Ignored for every other country.
 	 */
 	gbGranularity?: GBGranularity
 }
@@ -118,8 +124,8 @@ export interface BuildPostcodeBinaryOptions {
 export interface BuildPostcodeBinaryResult {
 	entries: PostcodeBinaryEntry[]
 	/**
-	 * Rows dropped because they do not carry a key of the country's shape (GB only today — a non-unit-shaped `name` would
-	 * key a span the inference-side shape detector could never produce).
+	 * Rows dropped because they do not carry a key of the country's shape (GB only today —
+	 * a non-unit-shaped `name` would key a span the inference-side shape detector could never produce).
 	 */
 	skipped: number
 	/**
@@ -129,8 +135,9 @@ export interface BuildPostcodeBinaryResult {
 }
 
 /**
- * The key a database `name` enters the binary under. GB is space-stripped to the train painter's form. every other
- * system stores `name` already normalized (DE/FR `68161`, NL `1012LM`, US `94105`), so it serializes verbatim.
+ * The key a database `name` enters the binary under. GB is space-stripped to
+ * the train painter's form. every other system stores `name` already normalized
+ * (DE/FR `68161`, NL `1012LM`, US `94105`), so it serializes verbatim.
  */
 export function postcodeBinaryKey(country: string, name: string): string {
 	const upper = (name || "").trim().toUpperCase()
@@ -152,16 +159,17 @@ export function gbOutwardFromKey(name: string): string | null {
 }
 
 /**
- * True when a centroid is a real placement rather than the `(0, 0)` placeholder the WOF ingest writes for an unplaced
- * record. Outward means are taken over placed units only, mirroring `addGBOutwardKeys`.
+ * True when a centroid is a real placement rather than the `(0, 0)` placeholder the WOF ingest writes
+ * for an unplaced record. Outward means are taken over placed units only, mirroring `addGBOutwardKeys`.
  */
 function isPlaced(lat: number, lon: number): boolean {
 	return lat !== 0 || lon !== 0
 }
 
 /**
- * Derive one country's PCB1 entry set from its database rows. GB gets the unit/outward treatment described in the
- * module docstring. every other country serializes verbatim.
+ * Derive one country's PCB1 entry set from its database rows.
+ * GB gets the unit/outward treatment described in the module docstring. every
+ * other country serializes verbatim.
  */
 export function buildPostcodeBinaryEntries(
 	country: string,
@@ -236,17 +244,19 @@ export function buildPostcodeBinaryEntries(
  *     ES 11,331 (postalcode-intl.db)        IT   4,936 (postalcode-intl.db)
  *     GB 1,746,976 units (postalcode-gb-codepoint.db) → 1,749,839 keys with the 2,863 outward districts
  *
- * Each floor is half the measured count, rounded down to a round number. Half, because these floors exist to catch a
- * collapse (a derivation that stopped matching the database's storage form, a country filter that stopped selecting) —
- * not to pin a count that legitimately moves with every upstream refresh. A build that comes back at 51% of what the
- * database holds is still wrong, but it is wrong in a way a human reads in the roll-up. a build at 0% is the one that
- * ships silently.
+ * Each floor is half the measured count, rounded down to a round number.
+ * Half, because these floors exist to catch a collapse (a derivation that stopped
+ * matching the database's storage form, a country filter that stopped selecting) —
+ * not to pin a count that legitimately moves with every upstream refresh.
+ * A build that comes back at 51% of what the database holds is still wrong, but it is wrong
+ * in a way a human reads in the roll-up. a build at 0% is the one that ships silently.
  *
- * The `GB:outward` row is keyed by granularity because the two GB modes differ by three orders of magnitude — a `unit`
- * build that comes back at outward scale is exactly the regression this table has to name.
+ * The `GB:outward` row is keyed by granularity because the two GB modes differ
+ * by three orders of magnitude — a `unit` build that comes back at outward scale
+ * is exactly the regression this table has to name.
  *
- * A country absent from this table floors at 1 (see {@linkcode keyFloorFor}): no measurement to reason from, but zero
- * is always a refusal.
+ * A country absent from this table floors at 1 (see {@linkcode keyFloorFor}):
+ * no measurement to reason from, but zero is always a refusal.
  */
 export const POSTCODE_BINARY_KEY_FLOORS: Readonly<Record<string, number>> = {
 	US: 20_000,
@@ -260,8 +270,9 @@ export const POSTCODE_BINARY_KEY_FLOORS: Readonly<Record<string, number>> = {
 }
 
 /**
- * The floor a `(country, granularity)` build must clear. Unmeasured countries floor at 1 — the meaning-of-zero rule
- * applies to every locale, the calibrated floor only to the ones with a measurement behind it.
+ * The floor a `(country, granularity)` build must clear.
+ * Unmeasured countries floor at 1 — the meaning-of-zero rule applies to every locale,
+ * the calibrated floor only to the ones with a measurement behind it.
  */
 export function keyFloorFor(country: string, granularity: GBGranularity): number {
 	const cc = country.toUpperCase()
@@ -271,8 +282,9 @@ export function keyFloorFor(country: string, granularity: GBGranularity): number
 }
 
 /**
- * The reason a build must be refused, or `null` when it clears its floor. Callers exit nonzero on a non-null return —
- * writing the artifact anyway is the #1467 defect class (a fed channel with nothing in it).
+ * The reason a build must be refused, or `null` when it clears its floor.
+ * Callers exit nonzero on a non-null return — writing the artifact anyway is the
+ * #1467 defect class (a fed channel with nothing in it).
  */
 export function keyFloorViolation(country: string, keys: number, granularity: GBGranularity): string | null {
 	const floor = keyFloorFor(country, granularity)

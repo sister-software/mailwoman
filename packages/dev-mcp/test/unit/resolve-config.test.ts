@@ -35,9 +35,9 @@ describe("resolveConfig — production lockstep (#1732)", () => {
 	})
 
 	it("names the three drifted values so the incident stays legible", () => {
-		// These are assertions about production, mirrored here on purpose: if the shipped defaults change, this test
-		// fails and the person changing them is told the board's baselines need re-anchoring — which is the actual
-		// consequence of moving a default, and the thing the silent drift skipped.
+		// These are assertions about production, mirrored here on purpose: if the shipped defaults change,
+		// this test fails and the person changing them is told the board's baselines need re-anchoring —
+		// which is the actual consequence of moving a default, and the thing the silent drift skipped.
 		const resolved = resolveConfig({})
 
 		expect(resolved.postcodeShapeCoherence).toBe(false)

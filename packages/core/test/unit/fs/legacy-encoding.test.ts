@@ -24,8 +24,8 @@ import { describe, expect, it } from "vitest"
 const THE_SHARP = Uint8Array.from([0xb4, 0xf5, 0x98, 0xde, 0xbf, 0xc0, 0xc7, 0xc7, 0xbd, 0xba, 0xc5, 0xda])
 
 /**
- * `서울특별시`, wholly inside KS X 1001 — the subset that misled the first check into reporting that Node could read CP949,
- * from one string that happened to avoid the extension.
+ * `서울특별시`, wholly inside KS X 1001 — the subset that misled the first check into reporting
+ * that Node could read CP949, from one string that happened to avoid the extension.
  */
 const SEOUL = Uint8Array.from([0xbc, 0xad, 0xbf, 0xef, 0xc6, 0xaf, 0xba, 0xb0, 0xbd, 0xc3])
 
@@ -46,8 +46,9 @@ describe("decodeBytes", () => {
 
 describe("decodeByteStream", () => {
 	it("holds a character split across two chunks", async () => {
-		// The split lands between `98` and `de` — the two bytes of `샾`. A per-chunk decode emits a replacement character
-		// here and corrupts the row. the stream decoder holds the lead until its trail arrives.
+		// The split lands between `98` and `de` — the two bytes of `샾`.
+		// A per-chunk decode emits a replacement character here and corrupts the row.
+		// the stream decoder holds the lead until its trail arrives.
 		async function* halves(): AsyncGenerator<Uint8Array> {
 			yield THE_SHARP.slice(0, 3)
 			yield THE_SHARP.slice(3)

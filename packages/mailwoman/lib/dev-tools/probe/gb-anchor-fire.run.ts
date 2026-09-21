@@ -21,11 +21,11 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/gb-anchor-fire.run.ts --bin <postcode-gb.bin>
  */
 
-// `@mailwoman/neural` exports neither `./postcode-repair` nor `./case-normalize` as a subpath, and both
-// are required here: `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode
-// reads, and `normalizeInputCase` is what the text has been through by the time the anchor sees it
-// (#690, default-on in `parse`). Re-implementing either is the one thing that must not drift, so this
-// repo-local diagnostic imports the modules directly.
+// `@mailwoman/neural` exports neither `./postcode-repair` nor `./case-normalize` as a subpath,
+// and both are required here: `collectMatches` is the exact span source `buildAnchorFeatures`'s
+// shaped mode reads, and `normalizeInputCase` is what the text has been through by the time
+// the anchor sees it (#690, default-on in `parse`). Re-implementing either is the one
+// thing that must not drift, so this repo-local diagnostic imports the modules directly.
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -58,11 +58,13 @@ const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<s
 ).toArray()
 
 /**
- * `parse` builds the anchor from the case-normalized text rather than the raw input. That matters more here than
- * anywhere else: the alphanumeric shape patterns require uppercase letters by design, so on the raw text a lowercased
- * GB unit yields no shaped span at all and the channel is silently dead. `normalizeInputCase` is what saves it — it
- * restores postcode casing in both the all-caps and all-lower registers. Probing the raw text would report a register
- * asymmetry that production does not have. probing the normalized text is the serving truth.
+ * `parse` builds the anchor from the case-normalized text rather than the raw input.
+ * That matters more here than anywhere else: the alphanumeric shape patterns require
+ * uppercase letters by design, so on the raw text a lowercased GB unit yields no shaped
+ * span at all and the channel is silently dead. `normalizeInputCase` is what saves it —
+ * it restores postcode casing in both the all-caps and all-lower registers.
+ * Probing the raw text would report a register asymmetry that production does not
+ * have. probing the normalized text is the serving truth.
  */
 const NORMALIZE_CASE = true
 

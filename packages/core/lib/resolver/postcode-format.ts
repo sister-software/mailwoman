@@ -13,11 +13,11 @@
 
 /**
  * #928: distinctive postcode formats that unambiguously indicate a country — a stronger country signal than the
- * language-based coarse placer, which conflates GB/US (both carry English street patterns) and mis-routes GB addresses
- * to US namesakes (`London E4 9AZ` → London, Ohio) at 0.94–0.96 confidence. The format is unforgeable across these
- * countries: the GB pattern (letters-first) never matches a US ZIP or an NL `\d{4} [A-Z]{2}` code. Extend only with
- * formats validated as non-overlapping. Feeds the `postcodeCountryPrior` change (conditional, default-off pending its
- * check).
+ * language-based coarse placer, which conflates GB/US (both carry English street patterns)
+ * and mis-routes GB addresses to US namesakes (`London E4 9AZ` → London, Ohio) at 0.94–0.96 confidence.
+ * The format is unforgeable across these countries: the GB pattern (letters-first) never matches
+ * a US ZIP or an NL `\d{4} [A-Z]{2}` code. Extend only with formats validated as non-overlapping.
+ * Feeds the `postcodeCountryPrior` change (conditional, default-off pending its check).
  */
 export const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly country: string }> = [
 	// GB `E4 9AZ` — letters-first, ends `\d[A-Z]{2}`. Never matches a US ZIP / NL / FR / CA code.
@@ -37,7 +37,8 @@ export const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; reado
 ]
 
 /**
- * The country a parsed postcode's format implies, or null. See {@link POSTCODE_FORMAT_COUNTRY}.
+ * The country a parsed postcode's format implies, or null.
+ * See {@link POSTCODE_FORMAT_COUNTRY}.
  */
 export function countryFromPostcodeFormat(postcode: string | undefined): string | null {
 	const p = postcode?.trim()
@@ -50,28 +51,31 @@ export function countryFromPostcodeFormat(postcode: string | undefined): string 
 }
 
 /**
- * Spaced `NNN NN` — the CZ/SK/SE/GR shared postcode space (#1589's `100 00`). Unlike the
+ * Spaced `NNN NN` — the CZ/SK/SE/GR shared postcode space
+ * (#1589's `100 00`). Unlike the
  * {@link POSTCODE_FORMAT_COUNTRY} singles, this shape implies a SET: no single country owns it, so it can check a
  * locale-inferred scope but never name one country outright.
  */
 const SHARED_NNN_NN = /^\d{3} \d{2}$/
 
 /**
- * NL PC6 (`1012 LG`) — digits-first then exactly two letters. NL-unique as a postcode shape (GB/CA/IE are
- * letters-first. the digit-only families carry no letters), but too forgeable for {@link POSTCODE_FORMAT_COUNTRY}: a US
- * house-number + directional fragment (`1234 NE`) matches it, so it must never feed recognizeBarePostcode. It belongs
- * only here, where every consumer checks on a tree that is a bare postcode.
+ * NL PC6 (`1012 LG`) — digits-first then exactly two letters.
+ * NL-unique as a postcode shape (GB/CA/IE are letters-first. the digit-only families carry no letters),
+ * but too forgeable for {@link POSTCODE_FORMAT_COUNTRY}: a US house-number + directional
+ * fragment (`1234 NE`) matches it, so it must never feed recognizeBarePostcode.
+ * It belongs only here, where every consumer checks on a tree that is a bare postcode.
  */
 const NL_PC6 = /^\d{4}\s?[A-Z]{2}$/i
 
 /**
- * Every country a parsed postcode's format is consistent with — the singles table, the NL PC6 shape, and the shared
- * `NNN NN` family. Empty when the shape implies nothing (a bare 5-digit reads US/FR/DE and more. that family stays with
- * the locale prior on purpose — the `75008` interface).
+ * Every country a parsed postcode's format is consistent with — the singles table, the NL PC6 shape,
+ * and the shared `NNN NN` family. Empty when the shape implies nothing (a bare 5-digit reads US/FR/DE
+ * and more. that family stays with the locale prior on purpose — the `75008` interface).
  *
- * Unlike {@link countryFromPostcodeFormat}, this is not an unforgeable-in-any-context claim: consumers (the resolver's
- * implied-set probe, the CLI's withheld-scope guard) apply it only to a tree that is a bare postcode, where the
- * street-fragment collision the singles table must exclude cannot arise.
+ * Unlike {@link countryFromPostcodeFormat}, this is not an unforgeable-in-any-context claim:
+ * consumers (the resolver's implied-set probe, the CLI's withheld-scope guard)
+ * apply it only to a tree that is a bare postcode, where the street-fragment
+ * collision the singles table must exclude cannot arise.
  */
 export function countriesFromPostcodeFormat(postcode: string | undefined): readonly string[] {
 	const p = postcode?.trim()

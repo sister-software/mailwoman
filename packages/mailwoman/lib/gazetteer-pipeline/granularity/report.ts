@@ -24,16 +24,19 @@ import { LADDER, type CountryGranularity, bottomsOutAt } from "#gazetteer-pipeli
 /**
  * Which build path supplied a country's rows — the single most important column in this report.
  *
- * A country whose rows are Overture- or GeoNames-sourced had no WOF GeoJSON repo ingested, so its empty sub-locality
- * rung says nothing whatsoever about WOF's depth there. Only a dozen of the 260 admin repos WOF publishes are in the
- * recipe. the rest of the world arrives via Overture divisions (5 subtypes, none hood-level) or the GeoNames alias
- * fold. Without this column a reader would take "233 countries bottom out at locality" as a finding about WOF rather
- * than about the recipe.
+ * A country whose rows are Overture- or GeoNames-sourced had no WOF GeoJSON repo ingested,
+ * so its empty sub-locality rung says nothing whatsoever about WOF's depth there.
+ * Only a dozen of the 260 admin repos WOF publishes are in the recipe. the rest of the world
+ * arrives via Overture divisions (5 subtypes, none hood-level) or the GeoNames alias fold.
+ * Without this column a reader would take "233 countries bottom out at locality"
+ * as a finding about WOF rather than about the recipe.
  *
- * Derived from the artifact (synthetic id ranges on the locality rung), not from the recipe constants. A recipe-derived
- * column silently goes wrong the moment a country is added to `DEFAULT_WOF_PRIORITY_COUNTRIES` and the gazetteer has
- * not been rebuilt yet — it would claim `wof-repo` over rows that are still 100% Overture. Instead the recipe is used
- * only as a cross-check: a mismatch renders as `rebuild pending`, which is the honest description of that window.
+ * Derived from the artifact (synthetic id ranges on the locality rung), not from the
+ * recipe constants. A recipe-derived column silently goes wrong the moment a country
+ * is added to `DEFAULT_WOF_PRIORITY_COUNTRIES` and the gazetteer has not been rebuilt
+ * yet — it would claim `wof-repo` over rows that are still 100% Overture.
+ * Instead the recipe is used only as a cross-check: a mismatch renders as `rebuild pending`,
+ * which is the honest description of that window.
  */
 function sourceClass(country: CountryGranularity): string {
 	const locality = country.rungs.locality
@@ -54,7 +57,8 @@ function sourceClass(country: CountryGranularity): string {
 
 export interface GranularityReportMeta {
 	/**
-	 * Display path of the measured DB. Use the `$MAILWOMAN_DATA_ROOT`-relative form, never the resolved lab path.
+	 * Display path of the measured DB. Use the `$MAILWOMAN_DATA_ROOT`-relative form,
+	 * never the resolved lab path.
 	 */
 	sourcePath: string
 	sourceMD5: string
@@ -80,8 +84,9 @@ function rungCell(country: CountryGranularity, rung: ComponentTag): string {
 
 	if (!synthetic) return measurement.nodes.toLocaleString()
 
-	// Label by whichever synthetic source dominates. A single `id >= OVERTURE_ID_BASE` test would call GeoNames rows
-	// Overture, which mislabelled every GeoNames-only country in the first run of this report.
+	// Label by whichever synthetic source dominates. A single `id >= OVERTURE_ID_BASE`
+	// test would call GeoNames rows Overture, which mislabelled every GeoNames-only
+	// country in the first run of this report.
 	const label = measurement.geonamesBackfilled > measurement.overtureBackfilled ? "gn" : "ovt"
 
 	return `${measurement.nodes.toLocaleString()} (${formatPercent(synthetic / measurement.nodes, 1)} ${label})`

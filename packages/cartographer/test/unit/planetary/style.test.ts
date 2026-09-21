@@ -36,8 +36,8 @@ test.each(["moon", "mars"] as const)(
 		const labels = style.layers.find((layer) => layer.id === "planetary/nomenclature-labels")
 		expect(labels?.type).toBe("symbol")
 
-		// The archive carries terrarium-encoded elevation, so the relief is shaded at draw time and every body-specific
-		// colour lives here. A greyscale image could not be tinted at all.
+		// The archive carries terrarium-encoded elevation, so the relief is shaded at draw time
+		// and every body-specific colour lives here. A greyscale image could not be tinted at all.
 		expect(style.sources["hillshade"]).toMatchObject({ type: "raster-dem", encoding: "terrarium" })
 
 		const relief = style.layers.find((layer) => layer.id === "planetary/hillshade")
@@ -50,8 +50,8 @@ test.each(["moon", "mars"] as const)(
 			},
 		})
 
-		// Under globe projection a background layer paints the sphere, so this is the body's surface tone rather than
-		// the field around it. the app's stylesheet paints that behind a transparent canvas.
+		// Under globe projection a background layer paints the sphere, so this is the body's surface tone
+		// rather than the field around it. the app's stylesheet paints that behind a transparent canvas.
 		const surface = style.layers.find((layer) => layer.id === "planetary/space")
 		expect(surface).toMatchObject({ type: "background", paint: { "background-color": PALETTES[body].space } })
 

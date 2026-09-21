@@ -7,12 +7,14 @@
 /**
  * End-to-end smoke of the `map-tui` bin, driven through a real pty.
  *
- * A pty is not a nicety here: the app only takes over the screen when stdin can be put in raw mode, so a piped-stdio
- * child would render nothing and exit on EOF. `script` supplies one — `-e` returns the child's exit code, and `stty`
- * inside the command sets a window size, since a pty created without a controlling terminal reports 0x0.
+ * A pty is not a nicety here: the app only takes over the screen when stdin can be
+ * put in raw mode, so a piped-stdio child would render nothing and exit on EOF.
+ * `script` supplies one — `-e` returns the child's exit code, and `stty` inside the command
+ * sets a window size, since a pty created without a controlling terminal reports 0x0.
  *
- * The bin is run from source rather than `out/cli.js` so the suite carries no dependency on a prior `yarn compile`;
- * Node runs the `.ts` entry directly, which is the same thing the repo's other source-first tooling relies on.
+ * The bin is run from source rather than `out/cli.js` so the suite carries no
+ * dependency on a prior `yarn compile`; Node runs the `.ts` entry directly,
+ * which is the same thing the repo's other source-first tooling relies on.
  */
 
 import { isExecutable } from "@mailwoman/core/fs/readers"
@@ -31,8 +33,8 @@ const MOUSE_SGR_DISABLE = `${ESC}[?1006l`
 const BRAILLE_PATTERN = /[⠀-⣿]/u
 
 /**
- * The status bar's coordinate/zoom field, which doubles as the ready signal — its first appearance means a frame has
- * been rendered and raw mode is on. Therefore, keystrokes will land.
+ * The status bar's coordinate/zoom field, which doubles as the ready signal — its first appearance
+ * means a frame has been rendered and raw mode is on. Therefore, keystrokes will land.
  */
 const STATUS_PATTERN = /-?\d+\.\d{4},-?\d+\.\d{4} z\d+/g
 
@@ -47,8 +49,9 @@ const KEYSTROKE_GAP_MS = 250
 const TEST_TIMEOUT_MS = 40_000
 
 /**
- * `script` is util-linux's, and this test's `-e` / `-c` spelling is too. macOS ships a BSD `script` with different
- * flags. rather than maintain two invocations for a smoke test, the suite runs where CI runs.
+ * `script` is util-linux's, and this test's `-e` / `-c` spelling is too. macOS
+ * ships a BSD `script` with different flags. rather than maintain two invocations
+ * for a smoke test, the suite runs where CI runs.
  */
 async function hasLinuxScript(): Promise<boolean> {
 	if (process.platform !== "linux") return false
@@ -70,7 +73,8 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * Runs the bin against the fixture and feeds it `keys`, one keystroke at a time, once the first frame is on screen.
+ * Runs the bin against the fixture and feeds it `keys`, one keystroke at a time,
+ * once the first frame is on screen.
  */
 async function driveMap(keys: string[]): Promise<PTYRun> {
 	const command = [
@@ -127,7 +131,8 @@ function centerOf(sample: string): { lat: number; lon: number } {
 }
 
 /**
- * An SGR mouse report, in the form mode 1006 sends: 1-based coordinates, `M` to press or move, `m` to release.
+ * An SGR mouse report, in the form mode 1006 sends: 1-based coordinates,
+ * `M` to press or move, `m` to release.
  */
 function mouseReport(button: number, column: number, row: number, final: "M" | "m"): string {
 	return `${ESC}[<${button};${column};${row}${final}`

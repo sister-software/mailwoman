@@ -34,8 +34,8 @@ function buildDB(): DatabaseClient<WOFDatabase> {
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,-1,0)`
 	)
 
-	// Berlin (unambiguous city, large pop), its Ortsteil "Koepenick" (borough-as-locality), and the
-	// small Saxon town "Plauen".
+	// Berlin (unambiguous city, large pop), its Ortsteil "Koepenick" (borough-as-locality),
+	// and the small Saxon town "Plauen".
 	spr.run(1, 0, "Berlin", "locality", "DE", 52.52, 13.4, 52.3, 52.7, 13, 13.8)
 	spr.run(2, 1, "Koepenick", "locality", "DE", 52.44, 13.58, 52.4, 52.5, 13.5, 13.7)
 	spr.run(3, 0, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12, 12.3)
@@ -76,15 +76,15 @@ describe("coordinate-first locality resolution", () => {
 	})
 
 	it("exact-name tiering keeps the unambiguous city over the postcode's Ortsteil", async () => {
-		// 10115's containing locality is the Ortsteil "Koepenick", but the parsed name "Berlin" is an
-		// exact match — exact-name tiering keeps Berlin ahead of the coordinate-only borough.
+		// 10115's containing locality is the Ortsteil "Koepenick", but the parsed name "Berlin" is
+		// an exact match — exact-name tiering keeps Berlin ahead of the coordinate-only borough.
 		const r = await lookup.findPlace({ text: "Berlin", placetype: "locality", postcode: "10115", country: "DE" })
 		expect(r[0]?.name).toBe("Berlin")
 	})
 
 	it("flags a postcode/city conflict (wrong-for-the-city postcode) but still returns the named city", async () => {
-		// "10115" is a Berlin postcode, but the parsed city is München (~500 km away) — a transposed or
-		// wrong postcode. The name wins (München), but the mismatch flag fires.
+		// "10115" is a Berlin postcode, but the parsed city is München (~500 km away) —
+		// a transposed or wrong postcode. The name wins (München), but the mismatch flag fires.
 		const r = await lookup.findPlace({ text: "Muenchen", placetype: "locality", postcode: "10115", country: "DE" })
 		expect(r[0]?.name).toBe("Muenchen")
 		expect(r[0]?.mismatch).toBe(true)
@@ -97,9 +97,9 @@ describe("coordinate-first locality resolution", () => {
 	})
 
 	it("preserves the actual placetype from spr when injecting a postcode-locality candidate (#523)", async () => {
-		// Brooklyn is a borough. When the postcode injection fetches it by id, the placetype must
-		// come from the spr row ("borough"), not a hard-coded "locality". The placetype filter
-		// expands locality→borough so the candidate passes. the assertion guards the label.
+		// Brooklyn is a borough. When the postcode injection fetches it by id,
+		// the placetype must come from the spr row ("borough"), not a hard-coded "locality".
+		// The placetype filter expands locality→borough so the candidate passes. the assertion guards the label.
 		const r = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", postcode: "11201", country: "US" })
 		expect(r.length).toBeGreaterThan(0)
 		expect(r[0]?.placetype).toBe("borough")

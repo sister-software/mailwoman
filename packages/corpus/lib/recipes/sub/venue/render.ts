@@ -14,8 +14,8 @@ import { isPresent } from "@mailwoman/core/objects"
 import type { LocaleBaseTuple } from "#synthesizers/locale"
 
 /**
- * One labelled piece of the line. Pieces inside a group are space-joined. groups are joined by the register's
- * separator.
+ * One labelled piece of the line. Pieces inside a group are space-joined. groups
+ * are joined by the register's separator.
  */
 export interface Piece {
 	text: string
@@ -25,8 +25,8 @@ export interface Piece {
 export type Group = Piece[]
 
 /**
- * Surface register. Every eval in this repo gets a lowercase leg because lowercase is the register users type — Google
- * Maps taught them — so every recipe output has to carry one.
+ * Surface register. Every eval in this repo gets a lowercase leg because lowercase is the
+ * register users type — Google Maps taught them — so every recipe output has to carry one.
  */
 export const Register = {
 	Canonical: "canonical",
@@ -90,21 +90,22 @@ export function renderGroups(
 }
 
 /**
- * A layout connector that ends a comma segment. {@link renderGroups} joins pieces inside a group with a space and groups
- * with `", "`, which is the same division a layout draws with these two connectors.
+ * A layout connector that ends a comma segment. {@link renderGroups} joins pieces inside a group with
+ * a space and groups with `", "`, which is the same division a layout draws with these two connectors.
  */
 const GROUP_BREAK = new Set([", ", "\n"])
 
 /**
  * The street + tail groups for a country, in that country's own order, taken from that country's layout.
  *
- * The orders were restated here once — US and GB anglophone, everything else postcode-then-locality — and the `else`
- * caught Japan, Korea and Taiwan along with France. `@mailwoman/codex` holds the order per country as data and
- * `renderAddress` evaluates it, returning a tagged piece per component with the connectors between them, so the groups
+ * The orders were restated here once — US and GB anglophone, everything else
+ * postcode-then-locality — and the `else` caught Japan, Korea and Taiwan along with France.
+ * `@mailwoman/codex` holds the order per country as data and `renderAddress` evaluates it,
+ * returning a tagged piece per component with the connectors between them, so the groups
  * this recipe needs are that piece list cut at its comma and line breaks.
  *
- * Answers an empty list when no layout names the country: 55 of the 252 shipped records carry no usable skeleton, and a
- * row for one of those is absent rather than written in an order nobody uses.
+ * Answers an empty list when no layout names the country: 55 of the 252 shipped records carry no
+ * usable skeleton, and a row for one of those is absent rather than written in an order nobody uses.
  */
 export function addressGroups(country: string, tuple: LocaleBaseTuple, withStreet: boolean): Group[] {
 	const components: ComponentDict = {}

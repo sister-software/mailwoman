@@ -28,8 +28,8 @@ let baseURL: string
 let outRoot: PathBuilderLike
 
 /**
- * The manifest as written. `parseJSONStrict` rather than a tolerant parse: a corrupt manifest here is a test failure
- * rather than a fallback.
+ * The manifest as written. `parseJSONStrict` rather than a tolerant parse:
+ * a corrupt manifest here is a test failure rather than a fallback.
  */
 async function readManifest(): Promise<{
 	unavailable: string[]
@@ -49,9 +49,10 @@ beforeAll(async () => {
 			res.writeHead(404)
 			res.end("not found")
 		} else if (req.url === "/v404/ZZ.zip") {
-			// The regression route: a 500 whose URL contains the substring "404". CI drew an ephemeral server
-			// port containing "404" and the prose-matching classifier filed a transfer failure as "GeoNames
-			// does not publish this country". The path plants the same substring deterministically.
+			// The regression route: a 500 whose URL contains the substring "404".
+			// CI drew an ephemeral server port containing "404" and the prose-matching
+			// classifier filed a transfer failure as "GeoNames does not publish this country".
+			// The path plants the same substring deterministically.
 			res.writeHead(500)
 			res.end("boom")
 		} else {
@@ -71,8 +72,8 @@ beforeAll(async () => {
 afterAll(() => server[Symbol.asyncDispose]())
 
 /**
- * The retry count is what these cases pin. the pause between attempts is not, and paying the shipped 5 s twice per
- * failing transfer cost this file 20.1 s of the fast leg.
+ * The retry count is what these cases pin. the pause between attempts is not, and paying
+ * the shipped 5 s twice per failing transfer cost this file 20.1 s of the fast leg.
  */
 const RETRY_DELAY_MS = 1
 
@@ -111,8 +112,8 @@ describe("fetchGeonamesPostal", () => {
 	})
 
 	it("classifies by STATUS rather than by message prose — a 500 from a URL containing '404' stays a transfer failure", async () => {
-		// ~1-2% of ephemeral ports contain the substring "404"; this pins the failure mode with the substring in
-		// the path instead, where it is deterministic.
+		// ~1-2% of ephemeral ports contain the substring "404"; this pins the failure mode
+		// with the substring in the path instead, where it is deterministic.
 		const summary = await fetchGeonamesPostal({
 			retryDelayMs: RETRY_DELAY_MS,
 			outRoot,

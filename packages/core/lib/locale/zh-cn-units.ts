@@ -18,8 +18,9 @@ import { stringifyJSON } from "#json"
  */
 
 /**
- * The rungs a generic can name, coarsest first. `headquarters` is not a rung: `场部` names the central settlement of the
- * unit it follows, a point inside the unit rather than a further level, and stays inside the span.
+ * The rungs a generic can name, coarsest first. `headquarters` is not a rung:
+ * `场部` names the central settlement of the unit it follows, a point inside the unit
+ * rather than a further level, and stays inside the span.
  */
 export const CN_UNIT_RUNGS = [
 	"farm",
@@ -35,9 +36,10 @@ export const CN_UNIT_RUNGS = [
 export type CNUnitRung = (typeof CN_UNIT_RUNGS)[number]
 
 /**
- * Generic suffix → rung. Longer generics are listed first so `生产队` is read before `队` and `大队` before `队`. Every entry
- * here is a suffix the census of the coarse-placer CN rows found at least once as the tail of an ordinal unit. a
- * generic that only ever follows a name (`林场`, `牧场`, `垦殖场`) belongs to the named head and is deliberately absent.
+ * Generic suffix → rung. Longer generics are listed first so `生产队` is read before `队`
+ * and `大队` before `队`. Every entry here is a suffix the census of the coarse-placer CN rows
+ * found at least once as the tail of an ordinal unit. a generic that only ever follows a
+ * name (`林场`, `牧场`, `垦殖场`) belongs to the named head and is deliberately absent.
  */
 export const CN_UNIT_GENERICS: ReadonlyArray<readonly [generic: string, rung: CNUnitRung]> = [
 	["生产大队", "brigade"],
@@ -54,8 +56,8 @@ export const CN_UNIT_GENERICS: ReadonlyArray<readonly [generic: string, rung: CN
 ]
 
 /**
- * The ordinals an organizational unit is numbered with: Chinese numerals (`三`, `二十九`, `一零三`, `十五`) or Arabic digits.
- * `〇`/`零` occur inside xpcc regiment numbers (`一零三团`).
+ * The ordinals an organizational unit is numbered with: Chinese numerals (`三`, `二十九`, `一零三`, `十五`)
+ * or Arabic digits. `〇`/`零` occur inside xpcc regiment numbers (`一零三团`).
  */
 const ORDINAL = "[〇零一二三四五六七八九十百千\\d]+"
 
@@ -72,8 +74,9 @@ const UNIT = `(?:${ORDINAL}(?:${GENERIC_ALTERNATION})|场部)`
 const CHAIN = new RegExp(`^(?:${UNIT})+$`, "u")
 
 /**
- * A chain at the END of a longer CJK run, so the labeler can find where the named head stops. Anchored on the right and
- * greedy on the left, so `八场八队` reads as two units with an empty head rather than as the head `八场`.
+ * A chain at the END of a longer CJK run, so the labeler can find where the named head stops.
+ * Anchored on the right and greedy on the left, so `八场八队` reads as two units with
+ * an empty head rather than as the head `八场`.
  */
 const TRAILING_CHAIN = new RegExp(`((?:${UNIT})+)$`, "u")
 
@@ -99,15 +102,17 @@ export interface CNUnit {
 }
 
 /**
- * Whether a string is a well-formed `locality_unit` span — nothing but ordinal units and an optional headquarters.
+ * Whether a string is a well-formed `locality_unit` span — nothing but ordinal units
+ * and an optional headquarters.
  */
 export function isCNUnitChain(span: string): boolean {
 	return CHAIN.test(span)
 }
 
 /**
- * Read a `locality_unit` span into its rungs, outermost first. Throws on a span that is not a chain: a consumer that
- * reached this with anything else has a labeling defect, and reading part of it would report a hierarchy nobody wrote.
+ * Read a `locality_unit` span into its rungs, outermost first.
+ * Throws on a span that is not a chain: a consumer that reached this with anything else
+ * has a labeling defect, and reading part of it would report a hierarchy nobody wrote.
  */
 export function readCNUnits(span: string): CNUnit[] {
 	if (!isCNUnitChain(span)) {
@@ -135,9 +140,10 @@ export function readCNUnits(span: string): CNUnit[] {
 /**
  * Split a CJK run into the named head and the trailing organizational chain, for the corpus labeler.
  *
- * `孟定农场三分场二队` → head `孟定农场`, chain `三分场二队`; `八场八队` → head empty, chain `八场八队`. A generic with no ordinal in front of it
- * is part of a name rather than a rung: `红卫大队` is a brigade-era toponym that survives as a village name, so it carries
- * no chain and the whole run stays the head. `null` when the run carries no chain at all.
+ * `孟定农场三分场二队` → head `孟定农场`, chain `三分场二队`; `八场八队` → head empty, chain `八场八队`.
+ * A generic with no ordinal in front of it is part of a name rather than a rung:
+ * `红卫大队` is a brigade-era toponym that survives as a village name, so it carries no chain
+ * and the whole run stays the head. `null` when the run carries no chain at all.
  */
 export function splitCNUnitChain(run: string): { head: string; chain: string } | null {
 	const match = TRAILING_CHAIN.exec(run)

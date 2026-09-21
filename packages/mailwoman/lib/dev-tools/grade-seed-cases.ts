@@ -36,8 +36,9 @@ export interface GradedSeedCase {
 }
 
 /**
- * Grade every case in place: `status` becomes `pass` or `improvement_target`, and the issues come back beside each row.
- * `deps` defaults to the production ladder (shipped model, production resolver pins) and is disposed when built here.
+ * Grade every case in place: `status` becomes `pass` or `improvement_target`,
+ * and the issues come back beside each row. `deps` defaults to the production ladder
+ * (shipped model, production resolver pins) and is disposed when built here.
  */
 export async function gradeSeedCases(cases: SeedCase[], deps?: GauntletDeps): Promise<GradedSeedCase[]> {
 	const owned = deps ?? (await buildGauntletDeps())
@@ -68,8 +69,9 @@ export async function gradeSeedCases(cases: SeedCase[], deps?: GauntletDeps): Pr
 }
 
 /**
- * Write seed cases as a committed case file: sorted by id (the loader's order, so a text diff means something), each
- * row re-keyed through the canonical key order. A duplicate id is an authoring error and refuses.
+ * Write seed cases as a committed case file: sorted by id
+ * (the loader's order, so a text diff means something), each row re-keyed through the
+ * canonical key order. A duplicate id is an authoring error and refuses.
  */
 export async function writeSeedCaseFile(cases: readonly SeedCase[], path: PathBuilderLike): Promise<void> {
 	const seen = new Set<string>()
@@ -99,7 +101,8 @@ export async function writeSeedCaseFile(cases: readonly SeedCase[], path: PathBu
 export const ISSUES_SHOWN_PER_GROUP = 12
 
 /**
- * Print a per-group read: `<group>: <pass>/<total> pass`, then the first failing rows with the grader's findings.
+ * Print a per-group read: `<group>: <pass>/<total> pass`, then the first failing
+ * rows with the grader's findings.
  */
 export function reportGradedGroups(graded: readonly GradedSeedCase[], groupOf: (seed: SeedCase) => string): void {
 	const groups = new Map<string, { pass: number; total: number; issues: string[] }>()

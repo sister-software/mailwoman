@@ -49,9 +49,10 @@ const LOUISIANA = 301
 const AMBIVILLE = 300
 
 /**
- * The Weimar fixture: two same-named localities under different regions (the DE one beneath a county for a 3-link
- * chain), a sibling locality, a two-region DAG place, plus the noise the build must exclude — a self row, a continent
- * row, and an edge to a place with no current spr row.
+ * The Weimar fixture: two same-named localities under different regions
+ * (the DE one beneath a county for a 3-link chain), a sibling locality,
+ * a two-region DAG place, plus the noise the build must exclude — a self row,
+ * a continent row, and an edge to a place with no current spr row.
  */
 function buildFixtureAdmin(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -153,13 +154,13 @@ describe("the candidate ancestors sidecar", () => {
 			WEIMAR_DE
 		)
 
-		// Nearest-first: county → region → country. The self row, the continent row and the edge to
-		// the absent place 999 contributed nothing.
+		// Nearest-first: county → region → country. The self row, the continent row
+		// and the edge to the absent place 999 contributed nothing.
 		expect(rows.map((r) => r.parent_spr_id)).toEqual([WEIMARER_LAND, THURINGEN, GERMANY])
 		expect(rows.map((r) => r.placetype)).toEqual(["county", "region", "country"])
 		expect(rows.map((r) => r.depth)).toEqual([1, 2, 3])
-		// Denormalized display name + the shared normalizeLocalityForKey fold — the same fold the
-		// candidate keys and the coherence check use, agreeing by construction.
+		// Denormalized display name + the shared normalizeLocalityForKey fold — the same fold
+		// the candidate keys and the coherence check use, agreeing by construction.
 		expect(rows[1]!.parent_name).toBe("Thüringen")
 		expect(rows[1]!.parent_name_key).toBe(normalizeLocalityForKey("Thüringen"))
 	})
@@ -191,8 +192,8 @@ describe("the candidate ancestors sidecar", () => {
 		const hits = await lk.findPlace({ text: "Weimar", placetype: ["locality", "localadmin"], limit: 5 })
 		const byID = new Map(hits.map((hit) => [hit.id, hit]))
 
-		// Each bearer names its own nearest ancestor — the DE one a county, the US one a region — which is
-		// what lets a consumer holding both rows tell two ids apart from two tiers of one place.
+		// Each bearer names its own nearest ancestor — the DE one a county, the US one a region —
+		// which is what lets a consumer holding both rows tell two ids apart from two tiers of one place.
 		expect(byID.get(WEIMAR_DE)?.parent_id).toBe(WEIMARER_LAND)
 		expect(byID.get(WEIMAR_US)?.parent_id).toBe(TEXAS)
 	})
@@ -273,8 +274,8 @@ describe("the candidate ancestors sidecar", () => {
 		const regionKeyOf = (sprID: number): string | undefined =>
 			rows.find((r) => r.spr_id === sprID && r.parent_placetype === "region")?.parent_name_key ?? undefined
 
-		// Both bearers of the key are present — the outranked DE original included — and each is
-		// discriminated by its region-class containment, from one probe over one artifact.
+		// Both bearers of the key are present — the outranked DE original included — and each
+		// is discriminated by its region-class containment, from one probe over one artifact.
 		expect(new Set(rows.map((r) => r.spr_id))).toEqual(new Set([WEIMAR_DE, WEIMAR_US]))
 		expect(regionKeyOf(WEIMAR_DE)).toBe(normalizeLocalityForKey("Thüringen"))
 		expect(regionKeyOf(WEIMAR_US)).toBe(normalizeLocalityForKey("Texas"))
@@ -288,18 +289,18 @@ describe("the candidate ancestors sidecar", () => {
 			AMBIVILLE
 		)
 
-		// The complete containment record: both regions, then the country. Texas (lower id at the
-		// same tier) sorts first, which makes it the canonical depth-1 parent.
+		// The complete containment record: both regions, then the country.
+		// Texas (lower id at the same tier) sorts first, which makes it the canonical depth-1 parent.
 		expect(parents.map((p) => p.parent_spr_id)).toEqual([TEXAS, LOUISIANA, USA])
 
 		const ambiville = intervalOf(db, AMBIVILLE)!
 		const texas = intervalOf(db, TEXAS)!
 		const louisiana = intervalOf(db, LOUISIANA)!
 
-		// The interval verdict is "contained along the canonical hierarchy": true under Texas, false
-		// under Louisiana even though the closure rows attest the Louisiana edge. A consumer needing
-		// the non-canonical hierarchy consults the closure rows — that is the recorded division of
-		// labor rather than a defect.
+		// The interval verdict is "contained along the canonical hierarchy": true under Texas,
+		// false under Louisiana even though the closure rows attest the Louisiana edge.
+		// A consumer needing the non-canonical hierarchy consults the closure rows —
+		// that is the recorded division of labor rather than a defect.
 		expect(intervalContains(texas, ambiville)).toBe(true)
 		expect(intervalContains(louisiana, ambiville)).toBe(false)
 
@@ -313,8 +314,8 @@ describe("the candidate ancestors sidecar", () => {
 	})
 
 	test("an artifact without the sidecar reports the capability ABSENT — never [] dressed as an answer", () => {
-		// The tests may patch the built (unsealed) fixture directly — the same shape as an older
-		// candidate.db that predates the sidecar.
+		// The tests may patch the built (unsealed) fixture directly — the same shape
+		// as an older candidate.db that predates the sidecar.
 		using db = new DatabaseClient<WOFDatabase>(candidatePath)
 		db.exec(`DROP TABLE ${CANDIDATE_ANCESTOR_TABLE}; DROP TABLE ${CANDIDATE_INTERVAL_TABLE};`)
 
@@ -328,8 +329,8 @@ describe("the candidate ancestors sidecar", () => {
 		const output = scratch.resolve("cycle-candidate.db")
 		using db = new DatabaseClient<WOFDatabase>(input)
 
-		// Two localities each naming the other as an ancestor (corrupt source ancestry), beside one
-		// healthy chain that must still label.
+		// Two localities each naming the other as an ancestor (corrupt source ancestry),
+		// beside one healthy chain that must still label.
 		db.exec(`
 			CREATE TABLE spr (
 				id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -354,8 +355,8 @@ describe("the candidate ancestors sidecar", () => {
 
 		const result = await buildCandidateTable({ input, output })
 
-		// The cycle members keep their closure rows (the record is real) but receive no labels. the
-		// healthy chain labels normally (Healthy + Sane State = 2 forest nodes).
+		// The cycle members keep their closure rows (the record is real) but receive no labels.
+		// the healthy chain labels normally (Healthy + Sane State = 2 forest nodes).
 		expect(result.ancestorPlaces).toBe(3)
 		expect(result.intervalPlaces).toBe(2)
 

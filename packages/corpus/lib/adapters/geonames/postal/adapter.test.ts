@@ -25,7 +25,8 @@ beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-gnpostal-")).path
 })
 
-// 12-column GeoNames postal row: country, postcode, place, admin1_name, admin1_code, admin2_*, admin3_*, lat, lon, accuracy.
+// 12-column GeoNames postal row: country, postcode, place, admin1_name, admin1_code,
+// admin2_*, admin3_*, lat, lon, accuracy.
 function row(country: string, postcode: string, place: string, admin1: string): string {
 	const cols = Array.from({ length: 12 }).fill("")
 	cols[0] = country

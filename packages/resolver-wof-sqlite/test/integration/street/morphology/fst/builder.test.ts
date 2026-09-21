@@ -35,9 +35,9 @@ describe("buildStreetMorphologyFST", () => {
 		expect(avenue.accepting[0]!.placetype).toBe("street_affix")
 		expect(avenue.accepting[0]!.name).toBe("avenue")
 
-		// Variants 'ave' and 'aven' should resolve to the same canonical's wofID. (The 2-char
-		// abbreviation 'av' is filtered out by the default `minVariantLength: 3` to avoid
-		// state-abbreviation collisions — see the builder's docstring.)
+		// Variants 'ave' and 'aven' should resolve to the same canonical's wofID.
+		// (The 2-char abbreviation 'av' is filtered out by the default `minVariantLength: 3`
+		// to avoid state-abbreviation collisions — see the builder's docstring.)
 		const ave = matcher.query("ave")
 		const aven = matcher.query("aven")
 		expect(ave.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)

@@ -89,8 +89,8 @@ export interface AbsenceProbeReceipt {
 
 export interface AbsenceProbeOptions extends POIBoardOptions {
 	/**
-	 * Override the frozen pre-registration — for a test that wants a synthetic definition. A run with no override reads
-	 * the committed one.
+	 * Override the frozen pre-registration — for a test that wants a synthetic definition.
+	 * A run with no override reads the committed one.
 	 */
 	definitionPath?: string
 	freezePath?: string
@@ -123,8 +123,9 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 
 	using pipelineHandle = await createPOIBoardPipeline({
 		...options,
-		// After the spread, never before: `...options` carries an explicit `db: undefined` when the caller passed
-		// none, which would overwrite the default and send the executor to the data root's general poi.db.
+		// After the spread, never before: `...options` carries an explicit `db: undefined`
+		// when the caller passed none, which would overwrite the default and send the
+		// executor to the data root's general poi.db.
 		db: options.db ?? coverageDatabasePath,
 		...(semanticRoute ? { poiSemanticLookup: semanticRoute.lookup } : {}),
 	})
@@ -173,9 +174,9 @@ async function gradeRow(
 	const runOpts: PipelineOpts = row.locale ? { locale: row.locale } : {}
 	const result = await pipeline(row.query, runOpts)
 
-	// The semantic route records a firing per probe of its lexicon rung. draining keeps one row's firings from being
-	// attributed to the next. This probe does not report them — #1928's receipt owns that — but leaving them to
-	// accumulate would grow unbounded across a run.
+	// The semantic route records a firing per probe of its lexicon rung. draining keeps one
+	// row's firings from being attributed to the next. This probe does not report them —
+	// #1928's receipt owns that — but leaving them to accumulate would grow unbounded across a run.
 	semanticRoute?.takeObservations()
 
 	const decision = await absenceRoute.observe(result.poiIntent)
@@ -183,8 +184,9 @@ async function gradeRow(
 
 	const poiOutcome = !result.poiIntent ? "none" : result.poiIntent.type === "abstain" ? "abstain" : "intent"
 
-	// The set the branch searched, after the anchor's country bound it (#1999). Compared as sets: the lookup's
-	// enumeration order states no preference, so the registration is code-point ordered and so is this.
+	// The set the branch searched, after the anchor's country bound it (#1999).
+	// Compared as sets: the lookup's enumeration order states no preference,
+	// so the registration is code-point ordered and so is this.
 	const searchedCategories =
 		result.poiIntent?.type === "intent" && result.poiIntent.intent.subject.kind === "category"
 			? [...result.poiIntent.intent.subject.categoryIDs].toSorted(compareByCodePoint)
@@ -227,8 +229,8 @@ async function gradeRow(
 }
 
 /**
- * The human-readable report. Prints each row's registered outcome beside the observed one, so a reader never has to
- * open the definition to know what the row was asserting.
+ * The human-readable report. Prints each row's registered outcome beside the observed one,
+ * so a reader never has to open the definition to know what the row was asserting.
  */
 export function printAbsenceProbeReceipt(receipt: AbsenceProbeReceipt): void {
 	const route = receipt.absenceRoute

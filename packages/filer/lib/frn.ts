@@ -18,26 +18,28 @@
 import type { Tagged } from "type-fest"
 
 /**
- * Also known as a cores ID: a unique identifier for an entity in the FCC's cores system. Always a zero-padded 10-digit
- * string — e.g. `"0001753557"`, never the bare number `1753557`.
+ * Also known as a cores ID: a unique identifier for an entity in the FCC's cores system.
+ * Always a zero-padded 10-digit string — e.g. `"0001753557"`, never the bare number `1753557`.
  */
 export type FRN = Tagged<string, "FRN">
 
 const FRN_PATTERN = /^\d{10}$/
 
 /**
- * Predicate for a valid FRN: exactly 10 ascii digits, zero-padded. Deliberately stricter than the Nexus original
- * (`isp-nexus/universe/fcc/entity/frn.ts`), which only checked `parseInt`-ability, non-negativity, and finiteness.
+ * Predicate for a valid FRN: exactly 10 ascii digits, zero-padded.
+ * Deliberately stricter than the Nexus original (`isp-nexus/universe/fcc/entity/frn.ts`),
+ * which only checked `parseInt`-ability, non-negativity, and finiteness.
  */
 export function isFRN(value: unknown): value is FRN {
 	return typeof value === "string" && FRN_PATTERN.test(value)
 }
 
 /**
- * Zero-pads a numeric or string FRN candidate to the canonical 10-digit form and validates it. Returns `null` (never
- * throws) for anything that isn't a non-negative integer fitting in 10 digits — an FRN missing or malformed on an
- * otherwise well-formed Form 499 row is common and unremarkable (see `form499.ts`'s {@linkcode Form499Row.frn}), not the
- * "malformed row" error decision 8 guards against.
+ * Zero-pads a numeric or string FRN candidate to the canonical 10-digit form and validates it.
+ * Returns `null` (never throws) for anything that isn't a non-negative integer fitting
+ * in 10 digits — an FRN missing or malformed on an otherwise well-formed Form 499
+ * row is common and unremarkable (see `form499.ts`'s {@linkcode Form499Row.frn}),
+ * not the "malformed row" error decision 8 guards against.
  */
 export function toFRN(value: string | number): FRN | null {
 	const raw = typeof value === "number" ? String(value) : value.trim()

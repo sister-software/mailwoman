@@ -68,8 +68,8 @@ export interface CharSpan {
 }
 
 /**
- * Per-word index of the most specific (shortest) span covering it, or `-1` when no span overlaps the word. A word is
- * covered when any part of it falls within the span.
+ * Per-word index of the most specific (shortest) span covering it, or `-1` when no span
+ * overlaps the word. A word is covered when any part of it falls within the span.
  */
 export function shortestSpanOwners(words: readonly CharSpan[], spans: readonly CharSpan[]): number[] {
 	return words.map((word) => {

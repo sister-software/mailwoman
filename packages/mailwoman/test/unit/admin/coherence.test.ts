@@ -15,8 +15,8 @@ import type { GeocodeResult } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 /**
- * The #1717 shape: a locality winner from the candidate tier — carries a `resolver_country` stamp but no ancestor chain
- * (candidate.db has no ancestors table).
+ * The #1717 shape: a locality winner from the candidate tier — carries a `resolver_country`
+ * stamp but no ancestor chain (candidate.db has no ancestors table).
  */
 const weimarTexas: AdminCoherenceWinner = { tag: "locality", countryCode: "US" }
 
@@ -27,8 +27,8 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("unverifiable when the winner carries no region-class ancestry (the candidate-tier finding)", () => {
-		// `Weimar, Thüringen` → Weimar TX: the qualifier was parsed, the winner has no ancestry of
-		// that class to check it against. This must not read as confirmed or contradicted.
+		// `Weimar, Thüringen` → Weimar TX: the qualifier was parsed, the winner has no ancestry
+		// of that class to check it against. This must not read as confirmed or contradicted.
 		expect(assessAdminCoherence({ region: "Thüringen" }, weimarTexas).region).toBe("unverifiable")
 	})
 
@@ -55,9 +55,9 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("contradicted on a cross-language variant form — the stated v1 bound", () => {
-		// "Thüringen" folds to "thuringen", the stored exonym "Thuringia" to "thuringia": fold
-		// equality cannot bridge the variant, and v1 deliberately does not consult the gazetteer's
-		// alias table. Documented in the module docstring. this test pins the bound.
+		// "Thüringen" folds to "thuringen", the stored exonym "Thuringia" to "thuringia":
+		// fold equality cannot bridge the variant, and v1 deliberately does not consult the
+		// gazetteer's alias table. Documented in the module docstring. this test pins the bound.
 		const winner: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "DE",
@@ -95,18 +95,19 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("self-confirmation: a region-tagged winner IS the region qualifier's resolution", () => {
-		// The resolver's own (alias-aware) binding is the evidence — re-checking "Thüringen" against
-		// the resolved name "Thuringia" under fold-equality would misread every alias hit.
+		// The resolver's own (alias-aware) binding is the evidence — re-checking "Thüringen"
+		// against the resolved name "Thuringia" under fold-equality would misread every alias hit.
 		const winner: AdminCoherenceWinner = { tag: "region", countryCode: "DE" }
 
 		expect(assessAdminCoherence({ region: "Thüringen" }, winner).region).toBe("confirmed")
 	})
 
 	it("the mislabel bridge: a COUNTRY name in the region slot confirms against country-class evidence", () => {
-		// "Batumi, Georgia" parses region="Georgia" and resolves Batumi GE — the region band (Adjara)
-		// cannot match, but the winner's country-class evidence can, and `contradicted` would be the
-		// wrong claim about the geography. The bridge runs through the same winnerCountryKeys the
-		// country verdict reads, so the two verdicts can never disagree about country evidence.
+		// "Batumi, Georgia" parses region="Georgia" and resolves Batumi GE —
+		// the region band (Adjara) cannot match, but the winner's country-class evidence
+		// can, and `contradicted` would be the wrong claim about the geography.
+		// The bridge runs through the same winnerCountryKeys the country verdict reads,
+		// so the two verdicts can never disagree about country evidence.
 		const batumi: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "GE",
@@ -118,10 +119,10 @@ describe("assessAdminCoherence — region verdicts", () => {
 
 		expect(assessAdminCoherence({ region: "Georgia" }, batumi).region).toBe("confirmed")
 
-		// The bridge inherits the module's pure-codex bound: "Moscow, Russia" resolves Москва RU, but
-		// codex's table holds only "Russian Federation" for RU (matchCountry("Russia") is null), so the
-		// bridge cannot vouch and the verdict stays contradicted rather than over-claiming — exactly
-		// the posture the country verdict itself takes on the same pair.
+		// The bridge inherits the module's pure-codex bound: "Moscow, Russia" resolves Москва RU,
+		// but codex's table holds only "Russian Federation" for RU (matchCountry("Russia") is null),
+		// so the bridge cannot vouch and the verdict stays contradicted rather than over-claiming —
+		// exactly the posture the country verdict itself takes on the same pair.
 		const moskva: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "RU",
@@ -196,8 +197,8 @@ describe("assessAdminCoherence — country verdicts", () => {
 	})
 
 	it("contradicted on an uncurated endonym — the stated v1 bound for the country side", () => {
-		// "Alemania" is not in the codex surface forms for DE, so neither the ISO channel nor the
-		// fold can vouch for it against a DE winner. The module never silently over-claims.
+		// "Alemania" is not in the codex surface forms for DE, so neither the ISO channel nor
+		// the fold can vouch for it against a DE winner. The module never silently over-claims.
 		const germany: AdminCoherenceWinner = { tag: "locality", countryCode: "DE" }
 
 		expect(assessAdminCoherence({ country: "Alemania" }, germany).country).toBe("contradicted")
@@ -247,8 +248,8 @@ describe("toGauntletResult threading (additive optional field)", () => {
 
 describe("regionVerdict — the fold-bound closures (2026-08-18)", () => {
 	it("confirms an Irish county qualifier through the Co. prefix", () => {
-		// Five Irish board rows read contradicted on the first census because `Co. Westmeath` folds with the prefix
-		// intact while WOF stores `Westmeath`.
+		// Five Irish board rows read contradicted on the first census because `Co. Westmeath`
+		// folds with the prefix intact while WOF stores `Westmeath`.
 		const report = assessAdminCoherence(
 			{ region: "Co. Westmeath" },
 			{ tag: "locality", countryCode: "IE", ancestry: [{ placetype: "region", name: "Westmeath" }] }
@@ -281,8 +282,8 @@ describe("regionVerdict — the fold-bound closures (2026-08-18)", () => {
 			{ tag: "locality", countryCode: "US", ancestry: [{ placetype: "region", name: "Western Australia" }] }
 		)
 
-		// A US winner whose ancestry claims Western Australia is genuinely incoherent. the scoped table must not
-		// bridge it.
+		// A US winner whose ancestry claims Western Australia is genuinely incoherent.
+		// the scoped table must not bridge it.
 		expect(report.region).toBe("contradicted")
 	})
 

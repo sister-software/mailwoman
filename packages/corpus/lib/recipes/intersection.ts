@@ -68,8 +68,9 @@ const GOLDEN_COUNTIES: readonly County[] = [{ fips: "50023", state: "VT", regime
 
 const EVAL_GOLD_PATH = repoRootPath("data", "eval", "external", "intersection-real.jsonl")
 /**
- * Where `mailwoman situs interpolation` unpacks the per-county tiger edges shapefiles — a Census download, so it sits
- * beside the other Census vintages under `census/`. `--edges-dir` overrides it.
+ * Where `mailwoman situs interpolation` unpacks the per-county tiger edges shapefiles —
+ * a Census download, so it sits beside the other Census vintages under `census/`.
+ * `--edges-dir` overrides it.
  */
 const DEFAULT_EDGES_DIR = dataRootPath("census", "tiger2023-edges")
 
@@ -88,8 +89,8 @@ interface Crossing {
 }
 
 /**
- * Junction forms. Weights favor the common connectors. the tight (unpadded) variants and leading phrases get enough
- * mass to register (each ≥5%) — they're the audited gaps the old synth missed.
+ * Junction forms. Weights favor the common connectors. the tight (unpadded) variants and leading
+ * phrases get enough mass to register (each ≥5%) — they're the audited gaps the old synth missed.
  */
 interface Form {
 	id: string
@@ -110,9 +111,10 @@ const FORMS: readonly Form[] = [
 ]
 
 /**
- * Tail forms. ~55% bare (the v0.7.2 lesson: an always-present tail taught the model to read post-intersection text as a
- * locality and fumble bare "X & Y"). City tails require a ZIP→city hit (Cook only); ZIP tails require the edge to carry
- * a zipl. Misses downgrade to the region tail.
+ * Tail forms. ~55% bare (the v0.7.2 lesson: an always-present tail taught the
+ * model to read post-intersection text as a locality and fumble bare "X & Y").
+ * City tails require a ZIP→city hit (Cook only); ZIP tails require the edge to carry a zipl.
+ * Misses downgrade to the region tail.
  */
 interface Tail {
 	id: string
@@ -140,14 +142,14 @@ const CASES: readonly Casing[] = [
 ]
 
 /**
- * Words a connector may contribute as O tokens. The audit rejects any O token outside this set — an unlabeled
- * street/locality token would surface here.
+ * Words a connector may contribute as O tokens. The audit rejects any O token outside
+ * this set — an unlabeled street/locality token would surface here.
  */
 const CONNECTOR_O_TOKENS = new Set(["and", "at", "of", "corner", "intersection"])
 
 /**
- * Street names that would make the connector ambiguous or break verbatim alignment: embedded connector punctuation, or
- * a standalone "and"/"at" word.
+ * Street names that would make the connector ambiguous or break verbatim alignment:
+ * embedded connector punctuation, or a standalone "and"/"at" word.
  */
 const BAD_NAME = /[,&@/]|\b(and|at)\b/i
 
@@ -191,9 +193,10 @@ async function readEvalExclusions(): Promise<{ nodes: Set<number>; pairs: Set<st
 }
 
 /**
- * Extract real crossings from one county's tiger edges shapefile. Same query shape as the eval builder (2 incident
- * distinct S1* FULLNAMEs at a node, both names >=6 chars), plus the edge zipl so tails can carry the crossing's own
- * ZIP. Hash-ordered for seed-stable determinism.
+ * Extract real crossings from one county's tiger edges shapefile.
+ * Same query shape as the eval builder (2 incident distinct S1* FULLNAMEs at a node,
+ * both names >=6 chars), plus the edge zipl so tails can carry the crossing's own ZIP.
+ * Hash-ordered for seed-stable determinism.
  */
 async function extractCrossings(
 	db: DuckDBConnection,
@@ -281,8 +284,9 @@ async function buildZipCityMap(): Promise<Map<string, string>> {
 }
 
 /**
- * Render one crossing → { raw, components, formID, tailID, caseID }. Components are inserted in claim order (streets
- * first) so alignment can't grab a region/postcode lookalike inside a street.
+ * Render one crossing → { raw, components, formID, tailID, caseID }.
+ * Components are inserted in claim order (streets first) so alignment can't grab
+ * a region/postcode lookalike inside a street.
  */
 function renderRow(
 	random: () => number,
@@ -328,15 +332,15 @@ function renderRow(
 	const casing = weightedPick(CASES, random, (c) => c.w)
 	raw = casing.apply(raw)
 
-	// Components keep their original case. alignRow matches case-insensitively and labels the
-	// tokens of the (cased) raw — the parquet row carries tokens+labels only.
+	// Components keep their original case. alignRow matches case-insensitively and labels
+	// the tokens of the (cased) raw — the parquet row carries tokens+labels only.
 	return { raw, components, formID: form.id, tailID: tail.id, caseID: casing.id }
 }
 
 /**
- * Label-correctness audit for one aligned row, on the RAW surface via the #519 span triple. Returns a list of
- * violations (empty = clean). Re-derives the span checks independent of `alignRow`'s own assertion, so a builder bug
- * can't vouch for itself.
+ * Label-correctness audit for one aligned row, on the RAW surface via the #519 span triple.
+ * Returns a list of violations (empty = clean). Re-derives the span checks independent
+ * of `alignRow`'s own assertion, so a builder bug can't vouch for itself.
  */
 function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, string>>): string[] {
 	const errors: string[] = []
@@ -431,8 +435,8 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const intersectionRecipe: CorpusRecipe = {
 	name: "intersection",
@@ -554,8 +558,8 @@ export const intersectionRecipe: CorpusRecipe = {
 				license: "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; OA Cook IL zip-to-city tails",
 			}
 
-			// Verbatim-only alignment: raw is built from the component values, so a fuzzy fallback could
-			// only ever mislabel (e.g. claim a lookalike window for a near-duplicate street).
+			// Verbatim-only alignment: raw is built from the component values, so a fuzzy fallback
+			// could only ever mislabel (e.g. claim a lookalike window for a near-duplicate street).
 			const aligned = alignRow(canonical, { maxEditDistance: 0 })
 
 			if (aligned.kind !== "labeled" || !aligned.row) {

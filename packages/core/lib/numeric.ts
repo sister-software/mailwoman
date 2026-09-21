@@ -27,8 +27,9 @@ export function clamp(value: number, min: number, max: number): number {
  */
 
 /**
- * Digit at which a fractional remainder is exactly half. Above it the value rounds up. at it the tie is broken toward
- * even, which is what keeps repeated centroid rounding unbiased.
+ * Digit at which a fractional remainder is exactly half.
+ * Above it the value rounds up. at it the tie is broken toward even, which is
+ * what keeps repeated centroid rounding unbiased.
  */
 const ROUND_HALF_DIGIT = 5
 
@@ -57,10 +58,11 @@ export function incDecimalString(s: string): string {
 }
 
 /**
- * Python `round()` — correctly-rounded, round-half-to-even. Works off the double's exact (terminating) decimal
- * expansion via `toFixed(80)`, so it matches Python both on ordinary values (where a naïve `x * 10**nd` would diverge
- * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-up and would
- * diverge). `nd === 0` keeps a fast half-even path on the double.
+ * Python `round()` — correctly-rounded, round-half-to-even.
+ * Works off the double's exact (terminating) decimal expansion via `toFixed(80)`, so it matches
+ * Python both on ordinary values (where a naïve `x * 10**nd` would diverge by a ULP) and on exact
+ * half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-up and would diverge).
+ * `nd === 0` keeps a fast half-even path on the double.
  */
 export function pyRound(x: number, nd = 0): number {
 	if (!Number.isFinite(x)) return x

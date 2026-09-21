@@ -13,8 +13,8 @@ import type { ParquetManifest } from "@mailwoman/corpus/parquet/writers"
 import { join } from "path-ts"
 
 /**
- * The manifest records the path the builder wrote under, which is the Modal volume mount rather than this checkout's
- * data root. Both spell the same tree below their first segment.
+ * The manifest records the path the builder wrote under, which is the Modal volume mount
+ * rather than this checkout's data root. Both spell the same tree below their first segment.
  */
 const MANIFEST_ROOT = "/data/"
 
@@ -46,8 +46,8 @@ export interface MixtureFiles {
 /**
  * Resolve a corpus split's parquet files, raising when the manifest names a file this host does not hold.
  *
- * A missing file read as an empty result would report a composition for a corpus that is only partly materialized, and
- * nothing downstream can tell that from a real absence.
+ * A missing file read as an empty result would report a composition for a corpus that is
+ * only partly materialized, and nothing downstream can tell that from a real absence.
  */
 export async function readMixtureFiles(corpusDirectory: string, split: string, limit?: number): Promise<MixtureFiles> {
 	const manifest = await readLocalJSONFile<ParquetManifest>(join(corpusDirectory, "MANIFEST.json"))
@@ -82,8 +82,8 @@ export async function readMixtureFiles(corpusDirectory: string, split: string, l
 }
 
 /**
- * A DuckDB connection bounded to the memory and threads a caller is willing to spend, plus the file list spelled for
- * `read_parquet`.
+ * A DuckDB connection bounded to the memory and threads a caller is willing to spend,
+ * plus the file list spelled for `read_parquet`.
  */
 export async function openMixture(
 	files: readonly string[],

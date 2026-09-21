@@ -142,7 +142,8 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 		const parsedHeader = parseJSONStrict<PostcodePrefixHeader>(decoder.decode(bytes.subarray(8, 8 + headerLen)))
 
 		expect(parsedHeader.schemaVersion).toBe(1)
-		// The meaning-of-zero statement is mandatory: a miss against a partial register is unattested rather than absent, and a reader cannot tell the two apart without it.
+		// The meaning-of-zero statement is mandatory: a miss against a partial register is
+		// unattested rather than absent, and a reader cannot tell the two apart without it.
 		expect(parsedHeader.coverageNote.length).toBeGreaterThan(0)
 
 		// ancestor_count: u4le, then the interned dictionary
@@ -150,9 +151,9 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 		const ancestorCount = view.getUint32(o, true)
 		o += 4
 
-		// Three distinct surfaces (UK, England, Northern Ireland) across four nodes that make seven
-		// references — the dictionary is the anti-repetition device, so it must be shorter than the
-		// reference count, which the assertion at the end of the walk states directly.
+		// Three distinct surfaces (UK, England, Northern Ireland) across four nodes that make
+		// seven references — the dictionary is the anti-repetition device, so it must be shorter
+		// than the reference count, which the assertion at the end of the walk states directly.
 		expect(ancestorCount).toBe(3)
 
 		for (let i = 0; i < ancestorCount; i++) {
@@ -235,8 +236,8 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 	})
 
 	it("the ancestry-only tier survives as ABSENCE, never as a 0,0 sentinel", () => {
-		// A magnitude never carries its own absence: BT9's coordinate-less record must be shorter than
-		// a coordinate-containing one by exactly the 4 + 4 bytes the two optional fields occupy.
+		// A magnitude never carries its own absence: BT9's coordinate-less record must be shorter
+		// than a coordinate-containing one by exactly the 4 + 4 bytes the two optional fields occupy.
 		const withCoordinate = serializePostcodePrefixIndex(header, [
 			{ prefix: "AA1", ancestors: [uk], lat: 51, lon: 0, radiusP95Km: 1, unitCount: 1 },
 		])

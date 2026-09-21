@@ -237,8 +237,8 @@ describe("formatAddressRow", () => {
 	})
 
 	it("reads the alignment rather than inferring it from the string", () => {
-		// A substring test answers `street` here because `Paris` sits inside `Rue de Paris`. The render knows the
-		// layout placed both, so it does not have to guess.
+		// A substring test answers `street` here because `Paris` sits inside `Rue de Paris`.
+		// The render knows the layout placed both, so it does not have to guess.
 		const components: ComponentDict = {
 			house_number: "5",
 			street: "Rue de Paris",
@@ -260,8 +260,8 @@ describe("formatAddressRow", () => {
 
 describe("the script a row renders in", () => {
 	/**
-	 * The same Hong Kong address in both registers. Rendering either through one country-keyed layout prints one of them
-	 * in an order nobody writes, which is the whole reason the selection exists.
+	 * The same Hong Kong address in both registers. Rendering either through one country-keyed layout
+	 * prints one of them in an order nobody writes, which is the whole reason the selection exists.
 	 */
 	const HK_LATIN: ComponentDict = {
 		street: "Jordan Road",
@@ -287,14 +287,14 @@ describe("the script a row renders in", () => {
 	})
 
 	it("prints the Chinese register area-first: the area, then the district, then the street", () => {
-		// A largest-first system prints 九龍 (Kowloon, the area) above 佐敦 (Jordan, the district). The inverse reads
-		// as a district that contains its own area.
+		// A largest-first system prints 九龍 (Kowloon, the area) above 佐敦 (Jordan, the district).
+		// The inverse reads as a district that contains its own area.
 		expect(formatAddress(HK_LOCAL, "HK", { singleLine: true })).toBe("九龍佐敦佐敦道21號")
 	})
 
 	it("carries the separator the chosen order takes, not the country's", () => {
-		// The defect this closes: the order came from the layout and the separator from a country flag, so a Latin
-		// Hong Kong address could print in Latin order with the unseparated Chinese join.
+		// The defect this closes: the order came from the layout and the separator from a country flag,
+		// so a Latin Hong Kong address could print in Latin order with the unseparated Chinese join.
 		expect(formatAddress(HK_LATIN, "HK", { singleLine: true })).toContain(", ")
 		expect(formatAddress(HK_LOCAL, "HK", { singleLine: true })).not.toContain(", ")
 	})
@@ -331,8 +331,9 @@ describe("the script a row renders in", () => {
 			postcode: "100-0005",
 		}
 
-		// Seven of the eight two-order countries place slot for slot. Japan's Latin skeleton has no slot below the
-		// prefecture, so deriving there would trade an order nobody writes for `locality` and `dependent_locality`.
+		// Seven of the eight two-order countries place slot for slot.
+		// Japan's Latin skeleton has no slot below the prefecture, so deriving there would
+		// trade an order nobody writes for `locality` and `dependent_locality`.
 		const derived = formatAddressRow(romanized, "JP", { singleLine: true })
 
 		expect(derived?.script).toBe("local")

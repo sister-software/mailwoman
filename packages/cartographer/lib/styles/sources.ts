@@ -18,8 +18,9 @@ export type TileSetSourceID<T extends string = string> = Tagged<string, "TileSet
  * Declares a tileset identifier.
  */
 export function TileSetSourceID<T extends string>(value: T): TileSetSourceID<T> {
-	// Widen to `string` before the tag: a generic `T` defers the comparability check and the assertion is refused,
-	// while `string` to the tagged type is the ordinary mint this function exists to be the only site of.
+	// Widen to `string` before the tag: a generic `T` defers the comparability check
+	// and the assertion is refused, while `string` to the tagged type is the ordinary
+	// mint this function exists to be the only site of.
 	const raw: string = value
 
 	return raw as TileSetSourceID<T>

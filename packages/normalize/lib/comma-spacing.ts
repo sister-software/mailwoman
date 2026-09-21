@@ -40,8 +40,8 @@ function isNumericSeparator(input: string, commaIndex: number): boolean {
 }
 
 /**
- * Insert one space after every comma that is directly followed by a letter or digit, unless the comma is a numeric
- * separator. Offset-map-correct: the inserted space maps to the comma.
+ * Insert one space after every comma that is directly followed by a letter or digit, unless
+ * the comma is a numeric separator. Offset-map-correct: the inserted space maps to the comma.
  */
 export function spaceAfterComma(input: string): CommaSpacingResult {
 	let inserted = 0

@@ -54,7 +54,8 @@ export interface BuildAdminOptions {
 	 */
 	dataDir?: string
 	/**
-	 * Output artifact path. Default `<data-root>/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
+	 * Output artifact path. Default `<data-root>/wof/admin-global-priority.rebuild.db`
+	 * (staging — swap deliberately).
 	 */
 	out?: string
 	overtureCountries?: readonly string[]
@@ -70,7 +71,8 @@ export interface BuildAdminOptions {
 	concurrency?: number
 	batchCommitSize?: number
 	/**
-	 * Build-log path. Default `<repo>/data/gazetteer/wof-build-manifest.json`; absent file → the append is skipped.
+	 * Build-log path. Default `<repo>/data/gazetteer/wof-build-manifest.json`;
+	 * absent file → the append is skipped.
 	 */
 	buildLogPath?: string
 	onPhase?: (phase: string, detail?: string) => void
@@ -108,8 +110,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		await removePath(ingestPath)
 	}
 
-	// Before the WOF ingest rather than at `fold-overture` where the release is first read: a pruned pin is a one-request
-	// question, and discovering it after 2.9M records reads as a network fault rather than an expired pin.
+	// Before the WOF ingest rather than at `fold-overture` where the release is first read:
+	// a pruned pin is a one-request question, and discovering it after 2.9M records
+	// reads as a network fault rather than an expired pin.
 	const releaseCheck = await checkOvertureRelease(overtureRelease)
 
 	phase("preflight", releaseCheck.message)
@@ -236,8 +239,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	await stampLayerManifest(
 		out,
 		adminLayerManifest({
-			// The counts the build actually produced rather than the lists it was given. A fold that ingested
-			// nothing must not appear as a source — see manifest.ts.
+			// The counts the build actually produced rather than the lists it was given.
+			// A fold that ingested nothing must not appear as a source — see manifest.ts.
 			counts: { wof: ingest.placesIngested, overture: overtureIngested, geonames: folded.placesIngested },
 			buildSHA: sha,
 			vintages: { overture: overtureRelease },
@@ -251,8 +254,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	phase("seal")
 	await sealDatabase(out)
 
-	// Build log — an auto-appended record (what ran, when, fingerprint), so the manifest can't lag the
-	// artifact again (#1015's reconstruct-from-artifact). The recipe itself lives in defaults.ts.
+	// Build log — an auto-appended record (what ran, when, fingerprint),
+	// so the manifest can't lag the artifact again (#1015's reconstruct-from-artifact).
+	// The recipe itself lives in defaults.ts.
 	const buildLogPath = opts.buildLogPath ?? repoRootPath("data", "gazetteer", "wof-build-manifest.json")
 
 	if (await pathExists(buildLogPath)) {

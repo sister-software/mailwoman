@@ -85,15 +85,17 @@ const { values } = parseArguments({
 })
 
 /**
- * `--poi-db` wires `mailwoman_poi_search` (and, via the same pipeline, `mailwoman_parse`'s `poi: true` path) to a real
- * `poi.db`. Absent → intent-only (parses the query, extracts the subject/anchor, never executes a lookup).
+ * `--poi-db` wires `mailwoman_poi_search`
+ * (and, via the same pipeline, `mailwoman_parse`'s `poi: true` path) to a real `poi.db`.
+ * Absent → intent-only (parses the query, extracts the subject/anchor, never executes a lookup).
  */
 const poiDatabasePath = values["poi-db"]
 
 /**
- * The shared classifier + resolver, built exactly once on the first call that needs them (see the module header).
- * `NeuralAddressClassifier.loadFromWeights` auto-resolves the bundled `en-US` weights. the resolver backend prefers a
- * configured candidate gazetteer (`$MAILWOMAN_CANDIDATE_DB`) and otherwise falls back to the admin-only WOF extracts
+ * The shared classifier + resolver, built exactly once on the first call that needs them
+ * (see the module header). `NeuralAddressClassifier.loadFromWeights` auto-resolves the
+ * bundled `en-US` weights. the resolver backend prefers a configured candidate gazetteer
+ * (`$MAILWOMAN_CANDIDATE_DB`) and otherwise falls back to the admin-only WOF extracts
  * already on the data root — same selection `nominatim`/`photon`'s CLIs make.
  */
 let corePromise:
@@ -105,9 +107,11 @@ let corePromise:
 	| undefined
 
 /**
- * The four tools that need {@link loadCore} — every path through `getPlainPipeline`/`getPoiPipeline`/`resolveGeocode`.
- * `mailwoman_layer_manifest`, `mailwoman_bdc_filing_landscape`, `mailwoman_filer_lookup` and `mailwoman_filer_family`
- * never call it, so they keep working when this fails; `mailwoman_plausibility_check` only reaches it when it geocodes.
+ * The four tools that need {@link loadCore} — every path
+ * through `getPlainPipeline`/`getPoiPipeline`/`resolveGeocode`.
+ * `mailwoman_layer_manifest`, `mailwoman_bdc_filing_landscape`, `mailwoman_filer_lookup`
+ * and `mailwoman_filer_family` never call it, so they keep working when this
+ * fails; `mailwoman_plausibility_check` only reaches it when it geocodes.
  * Named in both guard messages below because an agent that just got one needs to know what it can still do.
  */
 const CORE_BACKED_TOOLS = "mailwoman_parse, mailwoman_geocode, mailwoman_poi_search, mailwoman_overpass_export"
@@ -133,13 +137,14 @@ function loadCore(): Promise<{
 		const candidateDB = await resolveCandidateDBPath()
 
 		// #1009 friendly-failure discipline, the MCP shape of it. `server.ts` turns a thrown Error into an
-		// `isError` tool result carrying `error.message`, so the message an agent reads is whatever is thrown
-		// here — which made the raw internal `resolveExtracts: at least one extract is required` the first thing a
-		// stranger saw from `mailwoman_parse` on a fresh install (measured 2026-08-03 against a standalone
-		// `npm install @mailwoman/mcp`). Same preflight as `photon`/`nominatim`/`mailwoman serve`, and the same
-		// discovery: #1444 moved the `<data-root>/wof/candidate.db` convention fallback into
-		// `resolveCandidateDBPath`, so this bare call picks a pulled gazetteer up with nothing exported. The
-		// `MAILWOMAN_DATA_ROOT` in the client's `env` block is enough on its own.
+		// `isError` tool result carrying `error.message`, so the message an agent reads is whatever
+		// is thrown here — which made the raw internal `resolveExtracts: at least one extract is required`
+		// the first thing a stranger saw from `mailwoman_parse` on a fresh install
+		// (measured 2026-08-03 against a standalone `npm install @mailwoman/mcp`).
+		// Same preflight as `photon`/`nominatim`/`mailwoman serve`, and the same discovery:
+		// #1444 moved the `<data-root>/wof/candidate.db` convention fallback into
+		// `resolveCandidateDBPath`, so this bare call picks a pulled gazetteer up with nothing exported.
+		// The `MAILWOMAN_DATA_ROOT` in the client's `env` block is enough on its own.
 		if (!candidateDB && !wofPaths.length) {
 			throw new Error(
 				`${buildNoGazetteerMessage({
@@ -152,11 +157,11 @@ function loadCore(): Promise<{
 		const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 		const resolver = createWOFResolver(backend)
 
-		// Same discipline for the model weights. `@mailwoman/neural-weights-en-us` is a declared dependency of
-		// this package as of 2026-08-03 — before that a standalone `npm install @mailwoman/mcp` resolved
-		// nothing and every core-backed tool answered with `resolveWeights`' raw not-found text. The guard keeps
-		// that text (it already names the exact fix command) and adds what an agent mid-conversation needs next:
-		// which tools are down and which are not.
+		// Same discipline for the model weights. `@mailwoman/neural-weights-en-us` is a declared dependency
+		// of this package as of 2026-08-03 — before that a standalone `npm install @mailwoman/mcp`
+		// resolved nothing and every core-backed tool answered with `resolveWeights`' raw not-found text.
+		// The guard keeps that text (it already names the exact fix command) and adds what
+		// an agent mid-conversation needs next: which tools are down and which are not.
 		let classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
 
 		try {
@@ -180,9 +185,9 @@ type Pipeline = (raw: string) => Promise<PipelineResult>
 
 let plainPipeline: Pipeline | undefined
 /**
- * Keyed by the poi.db path used to build it (`""` = intent-only, no db) — `mailwoman_poi_search` can be called with a
- * `poiDatabasePath` that differs from the server's `--poi-db`, in which case a fresh one-off pipeline is built and
- * cached under that path instead of reusing the default.
+ * Keyed by the poi.db path used to build it (`""` = intent-only, no db) — `mailwoman_poi_search`
+ * can be called with a `poiDatabasePath` that differs from the server's `--poi-db`, in which case
+ * a fresh one-off pipeline is built and cached under that path instead of reusing the default.
  */
 const poiPipelines = new Map<string, Pipeline>()
 
@@ -215,9 +220,10 @@ async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
 }
 
 /**
- * `plausibilityCheck`'s geocode dep — reuses the same shared classifier+resolver `deps.geocode` builds from (see the
- * module header's laziness note). `deriveGeocodeRegister`/the formatted register is the geocode dep's concern, so it is
- * wired at this CLI/MCP layer rather than inside `plausibility.ts`. The real return type (`GeocodeResult`) is
+ * `plausibilityCheck`'s geocode dep — reuses the same shared classifier+resolver `deps.geocode`
+ * builds from (see the module header's laziness note). `deriveGeocodeRegister`/the
+ * formatted register is the geocode dep's concern, so it is wired at this CLI/MCP layer
+ * rather than inside `plausibility.ts`. The real return type (`GeocodeResult`) is
  * structurally assignable to `plausibility.ts`'s minimal `GeocodeLike` — no adapter needed.
  */
 async function resolveGeocode(address: string) {
@@ -245,9 +251,10 @@ const deps: MCPToolDeps = {
 	},
 
 	async overpassExport(query) {
-		// Intent-only is enough here — the export just needs the parsed subject/anchor, never executed results
-		// ("we print the query. we never run it", poi-overpass.ts). Reuses the server's wired poi pipeline (a
-		// real poi.db doesn't change the emitted OverpassQL) instead of forcing a second one-off pipeline.
+		// Intent-only is enough here — the export just needs the parsed subject/anchor,
+		// never executed results ("we print the query. we never run it", poi-overpass.ts).
+		// Reuses the server's wired poi pipeline (a real poi.db doesn't change the emitted OverpassQL)
+		// instead of forcing a second one-off pipeline.
 		const pipeline = await getPoiPipeline(poiDatabasePath)
 		const result = await pipeline(query)
 		const outcome = result.poiIntent
@@ -262,8 +269,8 @@ const deps: MCPToolDeps = {
 
 		const { subject } = outcome.intent
 
-		// One tag per category the subject reaches, and only when every member carries one: a union emitted from the
-		// subset that happens to have an `osmTag` is a narrower query than the POI branch ran.
+		// One tag per category the subject reaches, and only when every member carries one: a union emitted
+		// from the subset that happens to have an `osmTag` is a narrower query than the POI branch ran.
 		const osmTags =
 			subject.kind === "category"
 				? subject.categoryIDs.map((id) => getPOICategory(id)?.osmTag).filter((tag) => tag !== undefined)
@@ -293,9 +300,9 @@ const deps: MCPToolDeps = {
 	},
 
 	async bdcFilingLandscape(q) {
-		// Decision 6: `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
-		// abstain shape exists for this tool), so a missing file becomes a friendly thrown Error naming the layer —
-		// never the raw `node:sqlite` "unable to open database file" message.
+		// Decision 6: `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally
+		// (no optional-dep abstain shape exists for this tool), so a missing file becomes a friendly thrown
+		// Error naming the layer — never the raw `node:sqlite` "unable to open database file" message.
 		await assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", q.databasePath)
 
 		using db = new DatabaseClient<BDCDatabase>(q.databasePath, { readOnly: true })
@@ -325,9 +332,9 @@ const deps: MCPToolDeps = {
 	},
 
 	async filerLookup(q) {
-		// Decision 6 / criterion 4: filerLookup has no optional-dep abstain shape — it throws rather than
-		// answer unstamped — so filer.db is required unconditionally, same discipline as bdc.db is for
-		// mailwoman_bdc_filing_landscape.
+		// Decision 6 / criterion 4: filerLookup has no optional-dep abstain shape —
+		// it throws rather than answer unstamped — so filer.db is required unconditionally,
+		// same discipline as bdc.db is for mailwoman_bdc_filing_landscape.
 		await assertFilerDatabaseExists("mailwoman_filer_lookup", q.databasePath)
 
 		using db = (await openFilerDatabaseIfPresent(q.databasePath))!

@@ -28,8 +28,8 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { describe, expect, test } from "vitest"
 
-// The dev tokenizer, same source link-dev-weights pins (v0.9.0-multisplice) — resolved via the
-// data root. skip cleanly on hosts without it.
+// The dev tokenizer, same source link-dev-weights pins (v0.9.0-multisplice) —
+// resolved via the data root. skip cleanly on hosts without it.
 const TOKENIZER_PATH = String(dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model"))
 const haveTokenizer = await pathExists(TOKENIZER_PATH)
 
@@ -44,8 +44,8 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 		expect(un).toBeDefined()
 		expect(text.slice(un!.start, un!.end)).toBe("𝔘n")
 
-		// …and the rest of the input does not desync (the old reconstruction drifted by one code
-		// unit per preceding non-BMP char).
+		// …and the rest of the input does not desync (the old reconstruction drifted
+		// by one code unit per preceding non-BMP char).
 		const st = pieces.at(-1)!
 		expect(st.piece).toBe("▁St")
 		expect(text.slice(st.start, st.end)).toBe("St")
@@ -73,10 +73,10 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 			const text = "CALLE MAYOR 4"
 			const { pieces } = tokenizer.encode(text)
 
-			// EncodeAsImmutableProto attributes "CAL" to the second piece on this input (verified
-			// against Python sentencepiece on the same model bytes) — the spans BIO gold was built
-			// from. Pinning it here keeps runtime and trainer on one convention. do not "fix" this
-			// back to per-char intuition without re-deriving training gold.
+			// EncodeAsImmutableProto attributes "CAL" to the second piece on this input
+			// (verified against Python sentencepiece on the same model bytes) — the spans BIO
+			// gold was built from. Pinning it here keeps runtime and trainer on one convention.
+			// do not "fix" this back to per-char intuition without re-deriving training gold.
 			expect(pieces[0]!.piece).toBe("▁C")
 			expect(pieces[0]!.start).toBe(pieces[0]!.end)
 			expect(pieces[1]!.piece).toBe("AL")

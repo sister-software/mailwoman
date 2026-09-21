@@ -41,8 +41,8 @@ const { values: args } = parseArguments({
 })
 
 /**
- * Checking rows a country is expected to hold. Not a threshold this census enforces — it prints which countries sit
- * under it so a floor can be argued from the list rather than asserted at one.
+ * Checking rows a country is expected to hold. Not a threshold this census enforces — it prints
+ * which countries sit under it so a floor can be argued from the list rather than asserted at one.
  */
 const FLOOR = Number(args.floor ?? 6)
 
@@ -79,9 +79,9 @@ for (const c of cases) {
 }
 
 /**
- * `spr` rows per country, or null everywhere when no gazetteer is readable. A missing artifact leaves the column
- * unmeasured rather than zero — a zero would read as "this country has no places", which is a finding and not what a
- * missing file says.
+ * `spr` rows per country, or null everywhere when no gazetteer is readable.
+ * A missing artifact leaves the column unmeasured rather than zero — a zero would read as
+ * "this country has no places", which is a finding and not what a missing file says.
  */
 const gazetteerPath = String(args.gazetteer ?? dataRootPath("wof", "admin-global-priority.db"))
 

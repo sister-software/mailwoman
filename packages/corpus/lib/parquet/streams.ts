@@ -13,8 +13,9 @@ import type { PathBuilderLike } from "path-ts"
 import { connectDuckDB, escapeSQLIdentifier, escapeSQLString } from "#parquet/duckdb"
 
 /**
- * DuckDB hands a list column back as `{ items: [...] }`. Unwrap it so a row reads the way the schema declares it,
- * recursively, because a nested list arrives nested the same way.
+ * DuckDB hands a list column back as `{ items: [...] }`.
+ * Unwrap it so a row reads the way the schema declares it, recursively,
+ * because a nested list arrives nested the same way.
  */
 function normalizeDuckDBValue(value: unknown): unknown {
 	if (value && typeof value === "object" && "items" in value && Array.isArray(value.items)) {
@@ -27,8 +28,8 @@ function normalizeDuckDBValue(value: unknown): unknown {
 }
 
 /**
- * A row limit has to be a non-negative safe integer before it reaches a `limit` clause, because it is interpolated
- * rather than bound.
+ * A row limit has to be a non-negative safe integer before it reaches a `limit` clause,
+ * because it is interpolated rather than bound.
  */
 export function validateRowLimit(value: number): number {
 	if (!Number.isSafeInteger(value) || value < 0)
@@ -41,9 +42,9 @@ export interface ParquetRowStreamOptions {
 	/**
 	 * Columns to project. Every column when omitted.
 	 *
-	 * A column the file does not carry raises rather than coming back absent: a projection that silently drops a field
-	 * hands the consumer a well-formed row with the field missing, which reads as "this row has no value there" rather
-	 * than "this file has no such column".
+	 * A column the file does not carry raises rather than coming back absent: a projection
+	 * that silently drops a field hands the consumer a well-formed row with the field missing,
+	 * which reads as "this row has no value there" rather than "this file has no such column".
 	 */
 	columns?: readonly string[]
 	/**
@@ -55,8 +56,9 @@ export interface ParquetRowStreamOptions {
 /**
  * Open a row stream over a local parquet file, yielding rows in DuckDB-managed chunks.
  *
- * DuckDB opens the path itself and exposes its DataChunks through `fetchChunk()`. Rows are converted and yielded one
- * chunk at a time, so neither the complete Parquet file nor the complete result set is copied into JavaScript memory.
+ * DuckDB opens the path itself and exposes its DataChunks through `fetchChunk()`.
+ * Rows are converted and yielded one chunk at a time, so neither the complete Parquet file
+ * nor the complete result set is copied into JavaScript memory.
  */
 export async function* openParquetRowStream<T>(
 	path: PathBuilderLike,

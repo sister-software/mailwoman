@@ -13,8 +13,9 @@
 import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
 
 /**
- * Confidence at or above which a known-format hit counts as unambiguous. Ambiguous hits — a bare 5-digit run, which
- * reads as US, FR and DE alike — arrive at 0.6, so this cleanly separates them.
+ * Confidence at or above which a known-format hit counts as unambiguous.
+ * Ambiguous hits — a bare 5-digit run, which reads as US, FR and DE alike —
+ * arrive at 0.6, so this cleanly separates them.
  */
 const UNAMBIGUOUS_FORMAT_CONFIDENCE = 0.9
 
@@ -27,11 +28,12 @@ export interface LocaleCandidate {
 /**
  * Script-class scorer: maps the dominant character class to a default locale per script.
  *
- * - Cjk → ja-JP. The character class cannot tell Japanese from Chinese or Korean Han text, and the CJK weights are one
- *   family (`@mailwoman/neural-weights-cjk`, with `ja-jp` and `zh-cn` data-only overlays): the char encoder collapses
- *   `ja`/`zh`/`ko` to that family, so the model loaded is the same whichever tag stands here. What this tag does decide
- *   is the label a consumer reads off the hint — a Chinese-script address reports `ja-JP` — and that is a known limit
- *   of the hint's interface rather than a routing choice.
+ * - Cjk → ja-JP. The character class cannot tell Japanese from Chinese or Korean Han text, and the CJK
+ *   weights are one family (`@mailwoman/neural-weights-cjk`, with `ja-jp` and `zh-cn` data-only overlays):
+ *   the char encoder collapses `ja`/`zh`/`ko` to that family, so the model loaded
+ *   is the same whichever tag stands here. What this tag does decide is the label
+ *   a consumer reads off the hint — a Chinese-script address reports `ja-JP` —
+ *   and that is a known limit of the hint's interface rather than a routing choice.
  * - Cyrillic → ru-RU (not currently shipped. signal is still useful)
  * - Arabic → ar (similar)
  * - Alpha / alphanumeric / numeric → no script-based commit (other scorers decide)
@@ -57,8 +59,8 @@ export function scoreByScript(shape: QueryShapeFormatsView): LocaleCandidate | n
  * fr-FR`/`--locale de-DE` when the disambiguating context isn't in the string.
  */
 export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate | null {
-	// Prefer unambiguous (confidence ≥ 0.9) hits over ambiguous (0.6) — among them, pick the one
-	// with the highest confidence + most-specific country mapping.
+	// Prefer unambiguous (confidence ≥ 0.9) hits over ambiguous (0.6) — among them,
+	// pick the one with the highest confidence + most-specific country mapping.
 	const unambiguous = shape.knownFormats.filter((f) => f.confidence >= UNAMBIGUOUS_FORMAT_CONFIDENCE)
 
 	if (unambiguous.length) {
@@ -82,8 +84,9 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 	const fivedigit = shape.knownFormats.find((f) => f.format === "us_zip" || f.format === "fr_postcode")
 
 	if (fivedigit) {
-		// Low confidence — US is the global plurality interpretation. Returns en-US so a downstream
-		// consumer without a stronger signal still gets a sensible default. alternatives surface FR/DE.
+		// Low confidence — US is the global plurality interpretation.
+		// Returns en-US so a downstream consumer without a stronger signal still gets
+		// a sensible default. alternatives surface FR/DE.
 		return { locale: "en-US", confidence: 0.5, reason: "ambiguous-5digit-postcode" }
 	}
 
@@ -91,8 +94,8 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 }
 
 /**
- * Whole-input fallback: when nothing else fires, return en-US at low confidence. Keeps this stage always-decisive (no
- * `null` to the caller, ever).
+ * Whole-input fallback: when nothing else fires, return en-US at low confidence.
+ * Keeps this stage always-decisive (no `null` to the caller, ever).
  */
 export function scoreFallback(_shape: QueryShapeFormatsView): LocaleCandidate {
 	return { locale: "en-US", confidence: 0.3, reason: "fallback" }

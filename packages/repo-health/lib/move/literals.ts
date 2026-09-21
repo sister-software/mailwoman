@@ -23,7 +23,8 @@ import { resolvePath } from "path-ts"
 import type { ModuleMove, PathLiteralRewrite } from "#move/types"
 
 /**
- * Point-in-time records, where a path is part of what the document reports rather than a reference to be kept true.
+ * Point-in-time records, where a path is part of what the document reports
+ * rather than a reference to be kept true.
  */
 export const DATED_RECORDS: readonly string[] = [
 	"docs/superpowers/plans/",
@@ -35,8 +36,9 @@ export const DATED_RECORDS: readonly string[] = [
 /**
  * The directory renames a set of file moves implies.
  *
- * A config names a directory far more often than it names a file — `lib/tools/sub-venue/*.ts` is a glob, and no file
- * path is a substring of it. Trimming the segments the two ends share leaves exactly the part that moved.
+ * A config names a directory far more often than it names a file —
+ * `lib/tools/sub-venue/*.ts` is a glob, and no file path is a substring of it.
+ * Trimming the segments the two ends share leaves exactly the part that moved.
  */
 export function directoryMoves(moves: readonly ModuleMove[]): ModuleMove[] {
 	const pairs = new Map<string, string>()
@@ -70,9 +72,10 @@ const SOURCE_EXTENSION = /\.tsx?$/u
 /**
  * The emitted paths a set of source moves implies, as a move of its own.
  *
- * A test spawns `packages/mailwoman/out/cli/index.js`, a workflow runs one, a docstring names one. None of those is the
- * source path, so a sweep over source paths alone leaves them naming an output `tsc` no longer produces — and `tsc -b`
- * does not delete the file it used to produce, so the stale one answers instead of failing.
+ * A test spawns `packages/mailwoman/out/cli/index.js`, a workflow runs one, a docstring names one.
+ * None of those is the source path, so a sweep over source paths alone leaves them
+ * naming an output `tsc` no longer produces — and `tsc -b` does not delete the file
+ * it used to produce, so the stale one answers instead of failing.
  */
 export function emittedMoves(moves: readonly ModuleMove[]): ModuleMove[] {
 	const emitted: ModuleMove[] = []
@@ -96,8 +99,8 @@ export function emittedMoves(moves: readonly ModuleMove[]): ModuleMove[] {
 /**
  * Every occurrence of a moved path in one file's text.
  *
- * Longest path first, so a file naming both a moved directory and a moved file inside it does not have the shorter
- * match consume the longer one.
+ * Longest path first, so a file naming both a moved directory and a moved file inside
+ * it does not have the shorter match consume the longer one.
  */
 export function pathLiteralsIn(file: string, text: string, moves: readonly ModuleMove[]): PathLiteralRewrite[] {
 	const rewrites: PathLiteralRewrite[] = []
@@ -119,11 +122,11 @@ export function pathLiteralsIn(file: string, text: string, moves: readonly Modul
 }
 
 /**
- * Every stale path literal the moves leave in the tracked tree, outside the moved files' own content and the dated
- * records.
+ * Every stale path literal the moves leave in the tracked tree, outside the moved
+ * files' own content and the dated records.
  *
- * The moved files themselves are scanned: a `Usage:` line naming the script it sits in is the single most common
- * instance of this, and it goes stale the moment the file moves.
+ * The moved files themselves are scanned: a `Usage:` line naming the script it sits in is
+ * the single most common instance of this, and it goes stale the moment the file moves.
  */
 export async function planPathLiteralRewrites(
 	repoRoot: string,

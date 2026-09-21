@@ -19,14 +19,14 @@ import { stringifyJSON } from "@mailwoman/core/json"
  */
 
 /**
- * The bucket for rows where the dotted path does not exist. A leading tilde keeps it lexically apart from real values
- * and unmistakable in output.
+ * The bucket for rows where the dotted path does not exist.
+ * A leading tilde keeps it lexically apart from real values and unmistakable in output.
  */
 export const ABSENT_KEY = "~absent"
 
 /**
- * Read a dotted path off a nested record. Arrays are not traversed — a tally over array members is a different
- * operation with a different denominator, and pretending otherwise double-counts rows.
+ * Read a dotted path off a nested record. Arrays are not traversed — a tally over array members
+ * is a different operation with a different denominator, and pretending otherwise double-counts rows.
  */
 export function readPath(value: unknown, path: string): { present: boolean; value: unknown } {
 	let current: unknown = value
@@ -47,8 +47,9 @@ export function readPath(value: unknown, path: string): { present: boolean; valu
 }
 
 /**
- * Count distinct values at one dotted path across rows. Non-scalar values (objects) tally under their JSON form so a
- * structured field can still be tallied without a silent drop. scalars tally under `String(value)`.
+ * Count distinct values at one dotted path across rows.
+ * Non-scalar values (objects) tally under their JSON form so a structured field can
+ * still be tallied without a silent drop. scalars tally under `String(value)`.
  */
 export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<string, number> {
 	const counts: Record<string, number> = {}
@@ -69,8 +70,9 @@ export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<st
 }
 
 /**
- * Tally several paths at once. Every tally's counts sum to `rows.length` by construction — the invariant that makes
- * these readable as distributions rather than samples, and the reason absence is a bucket instead of a skip.
+ * Tally several paths at once. Every tally's counts sum to `rows.length` by construction —
+ * the invariant that makes these readable as distributions rather than samples,
+ * and the reason absence is a bucket instead of a skip.
  */
 export function tallyPaths(
 	rows: ReadonlyArray<unknown>,

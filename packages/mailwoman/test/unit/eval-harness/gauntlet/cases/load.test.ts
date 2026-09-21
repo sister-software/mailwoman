@@ -233,21 +233,25 @@ const CORPUS_HASH = "7b5d32485dd7f46dd7e2dae9d14beb3584d49740a45ee5d13c7833addbc
 /**
  * `ablationBoardID` of the corpus.
  *
- * The id is content-addressed and not order-addressed, which is what carried it unchanged across the 2026-08-05 array →
- * jsonl migration. The country sweep is the opposite kind of change — it adds 114 rows — so this one moves, and it
- * should: the ablation board is genuinely a different board. Same again for the 24-row world-structures batch on
- * 2026-08-10 (`@490:c7bd678905d0` → `@514:5c5fca20db47`), for the 8-row bare-foreign-postcode board on 2026-08-11
- * (`@514:5c5fca20db47` → `@522:da202fa6e714`), and for the N7 0BT control the #1589 fix added the same day
- * (`@522:da202fa6e714` → `@523:08b0b462cb23`), for the 7-row fuzzy-scope board (`@523:08b0b462cb23` →
- * `@534:ee145335c825`), for the Teichstraße situs row (`@534:ee145335c825` → `@535:b54fe280134e`), and for the 2-row
- * G-NAF au_rooftop board (`@535:b54fe280134e` → `@537:61edb19b8e64`), and for the range-surface pin
- * (`@537:61edb19b8e64` → `@558:e5279b66a119`), and for the 11-row gloss-key board (`@558:e5279b66a119` →
- * `@569:841ca85a6402`), and for the Rochester-Kent disambiguation row (`@569:841ca85a6402` → `@570:7ec63e6affb2`), and
- * for the 2-row ca_qc_street witness pair (`@570:7ec63e6affb2` → `@572:7e171ef0a6af`), for the Newport-Wales row
- * (`@572:7e171ef0a6af` → `@573:0037d08bc94a`), for the 2-row stranded-affix pair (`@573:0037d08bc94a` →
- * `@575:acce97708a29`), for the 5-row trailing-region cohort (`@575:acce97708a29` → `@580:7ff4bfccaa0e`), and for the
- * 11-row lexical-boundary adversarial board (`@580:7ff4bfccaa0e` → `@649:3df68a3c428a`), and for the Brest split plus
- * the Whitby cap-bound row (`@649:3df68a3c428a` → this).
+ * The id is content-addressed and not order-addressed, which is what carried it unchanged
+ * across the 2026-08-05 array → jsonl migration. The country sweep is the opposite kind
+ * of change — it adds 114 rows — so this one moves, and it should: the ablation board
+ * is genuinely a different board. Same again for the 24-row world-structures batch on
+ * 2026-08-10 (`@490:c7bd678905d0` → `@514:5c5fca20db47`), for the 8-row bare-foreign-postcode
+ * board on 2026-08-11 (`@514:5c5fca20db47` → `@522:da202fa6e714`), and for the N7 0BT
+ * control the #1589 fix added the same day (`@522:da202fa6e714` → `@523:08b0b462cb23`),
+ * for the 7-row fuzzy-scope board (`@523:08b0b462cb23` → `@534:ee145335c825`),
+ * for the Teichstraße situs row (`@534:ee145335c825` → `@535:b54fe280134e`),
+ * and for the 2-row G-NAF au_rooftop board (`@535:b54fe280134e` → `@537:61edb19b8e64`),
+ * and for the range-surface pin (`@537:61edb19b8e64` → `@558:e5279b66a119`),
+ * and for the 11-row gloss-key board (`@558:e5279b66a119` → `@569:841ca85a6402`),
+ * and for the Rochester-Kent disambiguation row (`@569:841ca85a6402` → `@570:7ec63e6affb2`),
+ * and for the 2-row ca_qc_street witness pair (`@570:7ec63e6affb2` → `@572:7e171ef0a6af`),
+ * for the Newport-Wales row (`@572:7e171ef0a6af` → `@573:0037d08bc94a`),
+ * for the 2-row stranded-affix pair (`@573:0037d08bc94a` → `@575:acce97708a29`),
+ * for the 5-row trailing-region cohort (`@575:acce97708a29` → `@580:7ff4bfccaa0e`), and for
+ * the 11-row lexical-boundary adversarial board (`@580:7ff4bfccaa0e` → `@649:3df68a3c428a`),
+ * and for the Brest split plus the Whitby cap-bound row (`@649:3df68a3c428a` → this).
  */
 const BOARD_ID = "gauntlet-regression@1029:5476b9c49eb1"
 
@@ -314,8 +318,8 @@ describe("the committed corpus", () => {
 
 describe("the row schema", () => {
 	it("rejects an unknown key rather than ignoring it", () => {
-		// A typo'd `expectLon` that parsed as "coordinate not asserted" is the failure this strictness is for:
-		// the row still runs, still passes, and asserts half of what its author wrote.
+		// A typo'd `expectLon` that parsed as "coordinate not asserted" is the failure this strictness
+		// is for: the row still runs, still passes, and asserts half of what its author wrote.
 		const result = SeedCaseSchema.safeParse({ ...SAMPLE, expectLonn: 2.3 })
 
 		expect(result.success).toBe(false)

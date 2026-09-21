@@ -48,8 +48,9 @@ export type PremiseLinkageRedactionReason =
 	(typeof PremiseLinkageRedactionReason)[keyof typeof PremiseLinkageRedactionReason]
 
 /**
- * A refusal to publish, naming the value that caused it. The message carries the path and the reason, never the
- * offending value — an error message is a log line, and a log line is a disclosure.
+ * A refusal to publish, naming the value that caused it.
+ * The message carries the path and the reason, never the offending value —
+ * an error message is a log line, and a log line is a disclosure.
  */
 export class PremiseLinkageRedactionError extends Error {
 	readonly path: string
@@ -64,8 +65,9 @@ export class PremiseLinkageRedactionError extends Error {
 }
 
 /**
- * Every key the publishable report may carry, flattened. A flat set rather than a path-aware schema on purpose: the
- * question it answers is "is this name one we designed", and a name nobody designed is refused wherever it appears.
+ * Every key the publishable report may carry, flattened.
+ * A flat set rather than a path-aware schema on purpose: the question it answers is "is
+ * this name one we designed", and a name nobody designed is refused wherever it appears.
  */
 const REPORT_KEY_ALLOWLIST: ReadonlySet<string> = new Set<string>([
 	"mode",
@@ -100,22 +102,23 @@ const REPORT_KEY_ALLOWLIST: ReadonlySet<string> = new Set<string>([
 ])
 
 /**
- * A house number followed by a name — the shape of every street address in the registers this harness grades against,
- * and the shape no aggregate field has any reason to hold.
+ * A house number followed by a name — the shape of every street address in the registers
+ * this harness grades against, and the shape no aggregate field has any reason to hold.
  */
 const ADDRESS_SHAPE = /\d+\s+\p{L}/u
 
 /**
  * A digit run long enough to be an authoritative object identifier (a uprn reaches twelve).
  *
- * The cost of this check is that a dataset version written as a bare eight-digit date is refused. That is the intended
- * trade: a version string can be given a non-bare form in one edit, and a leaked identifier cannot be recalled.
+ * The cost of this check is that a dataset version written as a bare eight-digit date is refused.
+ * That is the intended trade: a version string can be given a non-bare form in one edit,
+ * and a leaked identifier cannot be recalled.
  */
 const IDENTIFIER_SHAPE = /\d{8,}/u
 
 function checkString(value: string, path: string, inputs: readonly string[]): void {
-	// Checked first because it is the only one of the three that proves a disclosure rather than
-	// suspecting one: this exact string was read from the controlled file during this run.
+	// Checked first because it is the only one of the three that proves a disclosure rather
+	// than suspecting one: this exact string was read from the controlled file during this run.
 	const haystack = value.toLowerCase()
 
 	for (const input of inputs) {
@@ -176,8 +179,8 @@ function walkPublishable(value: unknown, path: string, inputs: readonly string[]
 }
 
 /**
- * What the preflight reads. The rows and the inputs are checked and never written — they are how the writer knows what
- * the report was computed from.
+ * What the preflight reads. The rows and the inputs are checked and never written —
+ * they are how the writer knows what the report was computed from.
  */
 export interface PremiseLinkagePreflightInput {
 	report: PremiseLinkageReport
@@ -186,10 +189,11 @@ export interface PremiseLinkagePreflightInput {
 }
 
 /**
- * Remove per-class cells and coordinate rows measured over fewer than `minCellSize` rows, and count the removals.
+ * Remove per-class cells and coordinate rows measured over fewer than `minCellSize`
+ * rows, and count the removals.
  *
- * A per-class cell's size is the number of rows in that class — `refusedOverAll.of`, which is the only denominator on
- * the rates measured over every row of the class rather than a subset of it.
+ * A per-class cell's size is the number of rows in that class — `refusedOverAll.of`, which is the
+ * only denominator on the rates measured over every row of the class rather than a subset of it.
  */
 function suppressSmallCells(report: PremiseLinkageReport): PremiseLinkageReport {
 	const minimum = report.minCellSize
@@ -239,8 +243,8 @@ function checkRows(rows: readonly PremiseLinkageResultRow[]): void {
 }
 
 /**
- * Suppress, check, and return the report that may leave the controlled environment. Throws before producing anything
- * when the run cannot be published.
+ * Suppress, check, and return the report that may leave the controlled environment.
+ * Throws before producing anything when the run cannot be published.
  */
 export function publishableReport(input: PremiseLinkagePreflightInput): PremiseLinkageReport {
 	const smallestPublishableRun = input.report.minCellSize
@@ -263,7 +267,8 @@ export function publishableReport(input: PremiseLinkagePreflightInput): PremiseL
 }
 
 /**
- * Write the publishable report as JSON. One `writeFile` after every check, so a refusal leaves no file behind.
+ * Write the publishable report as JSON. One `writeFile` after every check,
+ * so a refusal leaves no file behind.
  */
 export async function writePremiseLinkageReport(
 	path: string,

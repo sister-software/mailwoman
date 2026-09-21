@@ -42,8 +42,8 @@ import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "#i
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/normalize"
 /**
- * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known point (`t = 2`). Past
- * it, the two-point line carries no evidence about the query number.
+ * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known
+ * point (`t = 2`). Past it, the two-point line carries no evidence about the query number.
  */
 const MAX_EXTRAPOLATION_T = 2
 
@@ -71,8 +71,8 @@ export class AddressPointInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
+	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 	readonly #fallback: StreetInterpolator | undefined
@@ -89,11 +89,11 @@ export class AddressPointInterpolator<
 
 		this.#fallback = opts.fallback
 
-		// Degrade gracefully on an empty/tableless extract (#568): with no `address_point` table this tier
-		// is skipped, deferring to the segment fallback rather than crashing at construction.
+		// Degrade gracefully on an empty/tableless extract (#568): with no `address_point` table this
+		// tier is skipped, deferring to the segment fallback rather than crashing at construction.
 		if (hasTable(this.#db, "address_point")) {
-			// Strictly-numeric neighbor numbers on the route-folded street key within the ZIP. The
-			// queried number itself is excluded here (see module doc: non-circular by construction).
+			// Strictly-numeric neighbor numbers on the route-folded street key within the ZIP.
+			// The queried number itself is excluded here (see module doc: non-circular by construction).
 			this.#byPostcode = prepareAll(
 				this.#db,
 				`SELECT CAST(number AS INTEGER) AS n, lat, lon, source, release

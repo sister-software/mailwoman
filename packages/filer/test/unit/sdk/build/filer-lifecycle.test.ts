@@ -119,8 +119,8 @@ describe("cessation closes a relationship window — when the two dates order co
 
 describe("cessation ABSTAINS rather than asserting an incoherent window", () => {
 	it("leaves the window open when the cessation date PREDATES the last filing", async () => {
-		// Form 499 is an annual filing, so a carrier that ceased in September still files the next April.
-		// 3,916 of 9,706 dated cessations in the 2025-12-07 vintage look like this.
+		// Form 499 is an annual filing, so a carrier that ceased in September still files the
+		// next April. 3,916 of 9,706 dated cessations in the 2025-12-07 vintage look like this.
 		const { result, edges } = await build([
 			filerRow({
 				form499ID: "900002",
@@ -132,8 +132,9 @@ describe("cessation ABSTAINS rather than asserting an incoherent window", () => 
 
 		const holding = edges.find((edge) => edge.relationship === FilerRelationship.HoldingCompany)
 
-		// An inverted window matches nothing under `valid_from <= t < valid_to` — the filer would vanish
-		// from every asOf read with no error to notice. Open is visibly incomplete. inverted is invisible.
+		// An inverted window matches nothing under `valid_from <= t < valid_to` —
+		// the filer would vanish from every asOf read with no error to notice.
+		// Open is visibly incomplete. inverted is invisible.
 		expect(holding?.valid_to).toBeNull()
 		expect(result.cessationWindowAbstained).toBe(1)
 		expect(result.closedByCessation).toBe(0)

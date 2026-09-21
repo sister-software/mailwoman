@@ -10,9 +10,10 @@ import { $private as corePrivate, liveEnv } from "@mailwoman/core/env"
 import { z } from "zod"
 
 /**
- * Google Maps Platform key for the reference-geocoder oracle (`geocode-oracle/lib/sdk/google-client.ts`). Verification
- * tooling only — nothing on the parse path reads this, and `@mailwoman/geocode-oracle` is a private workspace precisely
- * so it cannot become a runtime dependency of a published package. billed PER request: the client caches for 30 days
+ * Google Maps Platform key for the reference-geocoder oracle (`geocode-oracle/lib/sdk/google-client.ts`).
+ * Verification tooling only — nothing on the parse path reads this, and
+ * `@mailwoman/geocode-oracle` is a private workspace precisely so it cannot become a runtime
+ * dependency of a published package. billed PER request: the client caches for 30 days
  * and paces at 60/minute by default for that reason. Never log its value.
  */
 export const PrivateOracleEnvSchema = z.object({

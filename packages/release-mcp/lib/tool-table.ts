@@ -34,8 +34,9 @@ export interface ReleaseTool {
 }
 
 /**
- * What every tool answers: the operation's output beside the effect it declared, the dry-run flag it ran under, and the
- * progress lines the operation logged — a receipt a reader can check without a terminal.
+ * What every tool answers: the operation's output beside the effect it declared,
+ * the dry-run flag it ran under, and the progress lines the operation logged —
+ * a receipt a reader can check without a terminal.
  */
 export interface ReleaseToolResult {
 	operation: string
@@ -48,7 +49,8 @@ export interface ReleaseToolResult {
 export interface ReleaseToolTableOptions {
 	repoRoot: string
 	/**
-	 * Register the `external-write` operations too. Off by default, and the CLI exposes it as an explicit flag.
+	 * Register the `external-write` operations too. Off by default, and the CLI
+	 * exposes it as an explicit flag.
 	 */
 	allowExternalWrite?: boolean
 }
@@ -61,9 +63,9 @@ export function toolNameFor(operationID: string): string {
 }
 
 /**
- * Build the tool table over a registry. The operation's `inputSchema` must be an object schema: a tool's arguments are
- * a JSON object, and an operation that took anything else could not be called from any client, so it is refused here by
- * id rather than registered as a tool nobody can invoke.
+ * Build the tool table over a registry. The operation's `inputSchema` must be an object schema:
+ * a tool's arguments are a JSON object, and an operation that took anything else could not be called
+ * from any client, so it is refused here by id rather than registered as a tool nobody can invoke.
  */
 export function buildReleaseToolTable(
 	registry: ReadonlyArray<ReleaseOperation<unknown, unknown>>,
@@ -116,8 +118,9 @@ export function buildReleaseToolTable(
 }
 
 /**
- * The one tool that is not an operation: the registry itself, with the effect of every operation and whether this
- * server exposes it — so an agent that cannot see a publishing tool learns that it exists and why it is absent.
+ * The one tool that is not an operation: the registry itself, with the effect of
+ * every operation and whether this server exposes it — so an agent that cannot see
+ * a publishing tool learns that it exists and why it is absent.
  */
 export function registryTool(
 	registry: ReadonlyArray<ReleaseOperation<unknown, unknown>>,

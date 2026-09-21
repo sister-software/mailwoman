@@ -13,14 +13,15 @@ import type { buildParseRig } from "#eval-harness/oa/resolver/parse-rig"
 import { createRuntimePipeline, loadDefaultPlaceCountry } from "#index"
 
 /**
- * The rig pieces the assembled pipeline shares with the bare neural arm. Sharing them is the whole point: an arm-to-arm
- * delta that also swapped the classifier or the gazetteer would measure nothing.
+ * The rig pieces the assembled pipeline shares with the bare neural arm.
+ * Sharing them is the whole point: an arm-to-arm delta that also swapped the classifier
+ * or the gazetteer would measure nothing.
  */
 type SharedRig = Pick<Awaited<ReturnType<typeof buildParseRig>>, "neural" | "resolver">
 
 /**
- * Wire the assembled arm. `assembledPipeline` is `null` when the run does not grade it, which is the default: the arm
- * is opt-in. Therefore, an ordinary run stays byte-identical to the bare neural one.
+ * Wire the assembled arm. `assembledPipeline` is `null` when the run does not grade it, which is the
+ * default: the arm is opt-in. Therefore, an ordinary run stays byte-identical to the bare neural one.
  */
 export async function buildAssembledArm(
 	options: OAResolverEvalOptions,
@@ -30,10 +31,10 @@ export async function buildAssembledArm(
 	const { neural, resolver } = rig
 
 	// #478 inc 3 leg 2 — the assembled arms. Route each row through `createRuntimePipeline` using the
-	// same neural classifier (postcodeRepair on, for comparability with the neural arm) and the same
-	// resolver — without (`assembled`) and with (`assembled+arb`) per-component arbitration. The
-	// street+house_number precondition (the thing #566 broke) is counted per arm so a regression is
-	// visible directly.
+	// same neural classifier (postcodeRepair on, for comparability with the neural arm)
+	// and the same resolver — without (`assembled`) and with (`assembled+arb`) per-component
+	// arbitration. The street+house_number precondition (the thing #566 broke) is
+	// counted per arm so a regression is visible directly.
 	//
 	// placeCountry default is off here (`false`) so the assembled arm isolates arbitration from the
 	// #244 coarse prior. But the shipped `createRuntimePipeline`/`geocodeAddress` default is the
@@ -61,10 +62,11 @@ export async function buildAssembledArm(
 		? createRuntimePipeline({
 				classifier: {
 					parse: (text: string, o?: object) => neural.parse(text, { ...o, postcodeRepair: true }),
-					// `autoLoadWeightsFST` (runtime-pipeline.ts) reads `fstPath` off the classifier, so this
-					// shim — which exists only to force `postcodeRepair: true` — silently dropped the
-					// gazetteer prior for every assembled run before #1497. A bare `{ parse }` literal has no
-					// `fstPath` key, `"fstPath" in classifier` is false, and the pipeline degrades to the
+					// `autoLoadWeightsFST` (runtime-pipeline.ts) reads `fstPath` off the classifier,
+					// so this shim — which exists only to force `postcodeRepair: true` —
+					// silently dropped the gazetteer prior for every assembled run
+					// before #1497. A bare `{ parse }` literal has no `fstPath` key,
+					// `"fstPath" in classifier` is false, and the pipeline degrades to the
 					// no-FST default without a word. Forward it.
 					...(neural.fstPath ? { fstPath: neural.fstPath } : {}),
 				},

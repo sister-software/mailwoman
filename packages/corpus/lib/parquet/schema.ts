@@ -79,8 +79,9 @@ export const PARQUET_COLUMNS = [
 ] as const
 
 /**
- * The DuckDB type each column is read and written as. Paired with {@linkcode PARQUET_COLUMNS} so a `read_json` column
- * map and a `copy` select list are built from one list rather than two that can disagree.
+ * The DuckDB type each column is read and written as. Paired with {@linkcode PARQUET_COLUMNS}
+ * so a `read_json` column map and a `copy` select list are built from one list
+ * rather than two that can disagree.
  */
 export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], string> = {
 	raw: "VARCHAR",
@@ -103,8 +104,8 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
    and the rule has no way to tell the two apart. */
 
 /**
- * Parquet schema for `LabeledRow` per #18 §4. Optional fields use `optional: true`; repeated UTF8 columns capture
- * tokens/labels arrays. Compression is per-column snappy.
+ * Parquet schema for `LabeledRow` per #18 §4. Optional fields use `optional: true`;
+ * repeated UTF8 columns capture tokens/labels arrays. Compression is per-column snappy.
  */
 export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	raw: { type: "UTF8", compression: PARQUET_COMPRESSION },
@@ -131,9 +132,10 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 /**
  * Project a labeled row to the Parquet schema.
  *
- * The span triple is required here (#519): `alignRow` emits it on every labeled row, so a row arriving without it came
- * from a producer that hasn't migrated — writing it would silently drop the v0.5.0 labels from the file (the "builders
- * before parquet = silent loss" hazard). Loud failure, naming the row, instead.
+ * The span triple is required here (#519): `alignRow` emits it on every labeled row, so a row
+ * arriving without it came from a producer that hasn't migrated — writing it would silently
+ * drop the v0.5.0 labels from the file (the "builders before parquet = silent loss" hazard).
+ * Loud failure, naming the row, instead.
  */
 export function rowToParquet(row: LabeledRow): ParquetRow {
 	const { span_starts, span_ends, span_tags } = row

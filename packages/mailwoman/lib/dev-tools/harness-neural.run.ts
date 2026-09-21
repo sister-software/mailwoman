@@ -75,9 +75,9 @@ interface Args {
 	unitRepair: boolean
 	/**
 	 * #478: also grade the assembled runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper →
-	 * reconcile → classify), not just the raw neural classifier. This is the #566-lesson eval: a pipeline regression
-	 * (e.g. a reconcile/arbitration change) is invisible when the eval grades raw neural. Off by default → the existing
-	 * raw-neural report is byte-stable.
+	 * reconcile → classify), not just the raw neural classifier.
+	 * This is the #566-lesson eval: a pipeline regression (e.g. a reconcile/arbitration change) is invisible
+	 * when the eval grades raw neural. Off by default → the existing raw-neural report is byte-stable.
 	 */
 	assembled: boolean
 }
@@ -90,9 +90,9 @@ function parseArgs(): Args {
 		assembled: false,
 	}
 
-	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated — including the
-	// retired `--symmetric-match` (only ever governed the deleted v0 arm's scoring) and the retired
-	// `--arbitrate` (#478 inc 3. the `arbitrate` PipelineOpt no longer exists)).
+	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated —
+	// including the retired `--symmetric-match` (only ever governed the deleted v0 arm's scoring)
+	// and the retired `--arbitrate` (#478 inc 3. the `arbitrate` PipelineOpt no longer exists)).
 	const { values } = parseArguments({
 		options: {
 			"admin-fst": { type: "string" },
@@ -209,9 +209,9 @@ function localeFromFilename(file: string): string {
 }
 
 /**
- * Recursively unwrap a literal object expression like `{ street: ["Main St"] }` into a plain JS object. Returns `null`
- * for anything that isn't a literal-of-literals (we intentionally don't try to evaluate variables or computed
- * properties — none of the test files use those).
+ * Recursively unwrap a literal object expression like `{ street: ["Main St"] }` into a plain JS object.
+ * Returns `null` for anything that isn't a literal-of-literals (we intentionally don't
+ * try to evaluate variables or computed properties — none of the test files use those).
  */
 function objectLiteralToRecord(node: ts.ObjectLiteralExpression): ClassificationRecord | null {
 	const out: Record<string, string[]> = {}
@@ -305,12 +305,12 @@ async function discoverAssertions(testsDir: string): Promise<ExtractedAssertion[
 	const all: ExtractedAssertion[] = []
 
 	for await (const entry of Globerator.from("*.test.ts", { cwd: testsDir, absolute: false })) {
-		// Only the address.*.test.ts / addressit.*.test.ts / venue.*.test.ts / intersection.test.ts
-		// / compound_street.test.ts / place.*.test.ts / transit.test.ts / libpostal.test.ts /
-		// functional.test.ts use the `assert(input, ...expected)` shape. CLI integration tests
-		// (resolve-flag, benchmark-flag, runtime-pipeline, etc.) use vitest's `test()` directly.
-		// We extract from all .test.ts files and skip the ones with zero matching calls — the
-		// extractor is a no-op on those.
+		// Only the address.*.test.ts / addressit.*.test.ts / venue.*.test.ts /
+		// intersection.test.ts / compound_street.test.ts / place.*.test.ts / transit.test.ts /
+		// libpostal.test.ts / functional.test.ts use the `assert(input, ...expected)` shape.
+		// CLI integration tests (resolve-flag, benchmark-flag, runtime-pipeline, etc.)
+		// use vitest's `test()` directly. We extract from all .test.ts files and skip the
+		// ones with zero matching calls — the extractor is a no-op on those.
 		const filePath = join(testsDir, entry)
 
 		try {
@@ -349,17 +349,17 @@ const VISIBLE_TAGS = new Set([
 ])
 
 /**
- * Fold the neural classifier's Stage 3 component tags into the visible classification set. The fold is principled but
- * lossy:
+ * Fold the neural classifier's Stage 3 component tags into the visible classification set.
+ * The fold is principled but lossy:
  *
- * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → `street` (concat in document order,
- *   preserving inter-token spacing implicitly via concatenation).
+ * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → `street`
+ *   (concat in document order, preserving inter-token spacing implicitly via concatenation).
  * - `intersection_a` + `intersection_b` → `street` (two separate values, matching the fixtures' `{street: ["Main St",
  *   "Second Ave"]}` shape for intersections).
  * - `house_number`, `unit`, `venue`, `country`, `region`, `locality`, `postcode` → identity.
- * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`, JP-specific tags → dropped (no fixture
- *   equivalent). The dropped tags are surfaced in the per-assertion report so the harness consumer can see what was
- *   lost.
+ * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`, JP-specific
+ *   tags → dropped (no fixture equivalent). The dropped tags are surfaced in the
+ *   per-assertion report so the harness consumer can see what was lost.
  */
 function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>): {
 	record: ClassificationRecord
@@ -423,8 +423,9 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 //#region Comparison — case-insensitive superset match
 
 /**
- * Pass if every tag in `expected` is present in `actual` and the actual value (string-equality, case-folded, trimmed)
- * contains the expected value. We accept `actual` being a superset because the neural parser may emit extra components
+ * Pass if every tag in `expected` is present in `actual` and the actual
+ * value (string-equality, case-folded, trimmed) contains the expected value.
+ * We accept `actual` being a superset because the neural parser may emit extra components
  * the test doesn't pin down (e.g. it labels a country when the test only asserted street).
  */
 function expectedMatchesActual(expected: ClassificationRecord, actual: ClassificationRecord): boolean {
@@ -433,14 +434,14 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 
 		if (!actualValues || !expectedValues) return false
 
-		// For multi-value tags (intersection: ["Main St", "Second Ave"]) we require all of the
-		// expected values to appear in actual, order-sensitive.
+		// For multi-value tags (intersection: ["Main St", "Second Ave"]) we require all
+		// of the expected values to appear in actual, order-sensitive.
 		if (expectedValues.length !== actualValues.length) return false
 
 		for (let i = 0; i < expectedValues.length; i++) {
 			if (normLoose(expectedValues[i]!) !== normLoose(actualValues[i]!)) {
-				// Allow substring containment in either direction — the neural parser sometimes
-				// over- or under-spans (e.g. "5th Avenue" vs "Avenue"). The fixture suite is the
+				// Allow substring containment in either direction — the neural parser sometimes over-
+				// or under-spans (e.g. "5th Avenue" vs "Avenue"). The fixture suite is the
 				// authority on the expected span. we count a substring match as a partial pass.
 				const exp = normLoose(expectedValues[i]!)
 				const act = normLoose(actualValues[i]!)
@@ -498,9 +499,9 @@ async function runAssertion(
 	const treeValidity = validateTree(tree) // #37 — structural coherence of the neural parse
 
 	// #478 assembled-pipeline arm: grade the full `runPipeline` parse (what production runs) — same
-	// loose top-1 semantics + tree→visible-record conversion as neural. Off unless `--assembled`
-	// wired the pipeline. This is the #566-lesson measurement: an assembled-pipeline regression is
-	// invisible against raw-neural F1.
+	// loose top-1 semantics + tree→visible-record conversion as neural.
+	// Off unless `--assembled` wired the pipeline. This is the #566-lesson measurement:
+	// an assembled-pipeline regression is invisible against raw-neural F1.
 	let assembledPass: boolean | undefined
 	let assembledRecord: ClassificationRecord | undefined
 
@@ -719,9 +720,9 @@ async function main(): Promise<void> {
 			ONNXRunner.create(args.modelPath),
 		])
 
-		// Gaz-trained models (v4.2.0+) must be fed the lexicon + the postcode-anchor lookup with
-		// near-postcode suppression — zero-filled clues depress country recall and fake an affix
-		// crash (the ship config. see CONTRIBUTING_MODEL_WORK eval invariants).
+		// Gaz-trained models (v4.2.0+) must be fed the lexicon + the postcode-anchor
+		// lookup with near-postcode suppression — zero-filled clues depress country recall
+		// and fake an affix crash (the ship config. see CONTRIBUTING_MODEL_WORK eval invariants).
 		let gazetteerLexicon: GazetteerLexicon | undefined
 
 		if (args.gazetteerLexiconPath) {
@@ -764,8 +765,9 @@ async function main(): Promise<void> {
 
 			morphologyFST = deserializeFST(await readLocalBuffer(args.morphologyBinPath))
 		} else {
-			// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
-			// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to inline.
+			// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder —
+			// data-root `fst-street-morphology.bin`, degrading to the per-process
+			// dictionary build this site used to inline.
 			const loaded = await loadStreetMorphologyFST({ onWarn: (message) => console.error(`  WARN: ${message}`) })
 			morphologyFST = loaded.matcher
 

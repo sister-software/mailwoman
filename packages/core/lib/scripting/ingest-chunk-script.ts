@@ -22,8 +22,8 @@ import { stringifyJSON } from "#json"
 import { parseArguments, requiredArgument, type ParseArgsConfig } from "#scripting/arguments"
 
 /**
- * The flags every ingest-chunk script shares. A script spreads these into its own `options`, so the helper can rely on
- * them being parsed while the script's values stay precisely typed.
+ * The flags every ingest-chunk script shares. A script spreads these into its own `options`,
+ * so the helper can rely on them being parsed while the script's values stay precisely typed.
  */
 export const INGEST_CHUNK_FLAGS = {
 	database: { type: "string" },
@@ -44,8 +44,8 @@ export interface IngestChunkScriptContext {
 }
 
 /**
- * Run one ingest-chunk script: parse its flags, open the parent's database with the build pragmas, run the chunk, and
- * print its JSON result line.
+ * Run one ingest-chunk script: parse its flags, open the parent's database with the
+ * build pragmas, run the chunk, and print its JSON result line.
  */
 export async function runIngestChunkScript<
 	DB,
@@ -67,9 +67,10 @@ export async function runIngestChunkScript<
 }): Promise<void> {
 	const { values } = parseArguments({ options: config.options })
 
-	// A second, lenient parse over only the shared flags: the strict parse above is typed by the script's own generic
-	// config, whose conditional value type does not resolve inside this generic body — while this one is concretely
-	// typed, and non-strict parsing reads the known flags identically. Non-strict parsing widens every value to
+	// A second, lenient parse over only the shared flags: the strict parse above is typed
+	// by the script's own generic config, whose conditional value type does not resolve
+	// inside this generic body — while this one is concretely typed, and non-strict
+	// parsing reads the known flags identically. Non-strict parsing widens every value to
 	// `string | boolean`, so the string-typed flags are narrowed back before use.
 	const { values: shared } = parseArguments({ options: INGEST_CHUNK_FLAGS, strict: false })
 

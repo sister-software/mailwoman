@@ -20,19 +20,20 @@
 import { readPackagedTable } from "#packaged-data"
 
 /**
- * One mined hint row. Rates are per-million tokens of the respective name corpus. shares are of the token's poi
- * occurrences.
+ * One mined hint row. Rates are per-million tokens of the respective name corpus.
+ * shares are of the token's poi occurrences.
  */
 export interface VenueWordHint {
 	/**
-	 * The dominant category class (food, retail, civic, health, lodging, transit, burial, …) — the grain a single token
-	 * reliably predicts.
+	 * The dominant category class (food, retail, civic, health, lodging, transit, burial, …) —
+	 * the grain a single token reliably predicts.
 	 */
 	topClass: string
 	topClassShare: number
 	/**
-	 * The dominant leaf category, carried for consumers that can use the sharper grain. Its share is typically far below
-	 * the class share — act on it only when it clears the consumer's own bar.
+	 * The dominant leaf category, carried for consumers that can use the sharper grain.
+	 * Its share is typically far below the class share — act on it only
+	 * when it clears the consumer's own bar.
 	 */
 	topCategory: string | null
 	topCategoryShare: number
@@ -60,9 +61,9 @@ const TABLE = await readPackagedTable<VenueWordHintTable>("venue-word-hints.json
 const HINTS = new Map<string, VenueWordHint>(Object.entries(TABLE.hints))
 
 /**
- * The mined class hint for a single lowercased token, or `null` when the survey has nothing to say. Callers pass one
- * token — the table is token-grained by construction. n-gram extraction from longer queries belongs to the kind
- * classifier, mirroring the phrase-lookup interface.
+ * The mined class hint for a single lowercased token, or `null` when the survey has nothing to say.
+ * Callers pass one token — the table is token-grained by construction. n-gram extraction
+ * from longer queries belongs to the kind classifier, mirroring the phrase-lookup interface.
  */
 export function venueWordHint(token: string): VenueWordHint | null {
 	return HINTS.get(token.toLowerCase()) ?? null

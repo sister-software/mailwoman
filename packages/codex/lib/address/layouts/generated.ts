@@ -1573,8 +1573,9 @@ ${country}`,
 /**
  * Latin-script layouts, for the countries whose Latin print order differs from the one in their own script.
  *
- * Keyed by ISO 3166-1 alpha-2, and sparse on purpose: a country absent here writes one order in both scripts, so its
- * country-keyed layout serves both. The `lfmt` each was derived from is quoted above it.
+ * Keyed by ISO 3166-1 alpha-2, and sparse on purpose: a country absent here
+ * writes one order in both scripts, so its country-keyed layout serves both.
+ * The `lfmt` each was derived from is quoted above it.
  */
 export const GENERATED_LATIN_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 	// %N%n%O%n%A%n%D%n%C%n%S, %Z
@@ -1645,10 +1646,12 @@ ${country}`,
 }
 
 /**
- * Local-script layouts for the same countries — the `fmt` skeleton, emitted even where the country is hand-authored.
+ * Local-script layouts for the same countries — the `fmt` skeleton, emitted even
+ * where the country is hand-authored.
  *
- * A hand-authored entry states one order, and for Hong Kong that order is the Latin one, so its own script's order has
- * nowhere else to live. Sparse for the same reason as the Latin table: a country absent here writes one order in both.
+ * A hand-authored entry states one order, and for Hong Kong that order is the Latin one,
+ * so its own script's order has nowhere else to live. Sparse for the same reason as
+ * the Latin table: a country absent here writes one order in both.
  */
 export const GENERATED_LOCAL_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 	// %Z%n%S%C%D%n%A%n%O%n%N

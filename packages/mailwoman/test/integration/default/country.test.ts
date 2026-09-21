@@ -30,10 +30,10 @@ import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
 
 /**
- * Wall-clock budgets for the CLI spawns in this suite. Every test here runs at least one full `parse --resolve`, which
- * loads the weights and opens the global WOF database — several seconds before any assertion, and vitest's global
- * `testTimeout` is nowhere near it. The per-test budget must exceed the spawn budget it wraps, plus time queued on the
- * shared spawn lock.
+ * Wall-clock budgets for the CLI spawns in this suite. Every test here runs at least one
+ * full `parse --resolve`, which loads the weights and opens the global WOF database —
+ * several seconds before any assertion, and vitest's global `testTimeout` is nowhere near it.
+ * The per-test budget must exceed the spawn budget it wraps, plus time queued on the shared spawn lock.
  */
 const CLI_SPAWN_TIMEOUT_MS = 60_000
 const CLI_TEST_TIMEOUT_MS = 120_000
@@ -41,10 +41,11 @@ const CLI_TEST_TIMEOUT_MS = 120_000
 /**
  * Vitest's per-test budget for this whole file.
  *
- * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
- * assertion runs and then queues behind {@link withCLISpawnLockAsync}. A per-test annotation has to be remembered on
- * each new test, and the one that forgets inherits the global 15s — which kills the test before the thing being
- * measured can report, surfacing as a bare timeout with no attribution.
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
+ * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
+ * A per-test annotation has to be remembered on each new test, and the one that forgets
+ * inherits the global 15s — which kills the test before the thing being measured
+ * can report, surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
@@ -84,9 +85,10 @@ describe("resolverDefaultCountry", () => {
 })
 
 describe("--country-scope separates country policy from the resolver backend", () => {
-	// 'auto' passes the locale-derived country regardless of backend (2026-08-08 NZ scope-leakage fix —
-	// the candidate backend was dropping the locale hint, causing structured queries under en-NZ to resolve
-	// to foreign namesakes). 'locale' and 'none' still pin the policy explicitly for A/B measurements.
+	// 'auto' passes the locale-derived country regardless of backend
+	// (2026-08-08 NZ scope-leakage fix — the candidate backend was dropping the locale hint,
+	// causing structured queries under en-NZ to resolve to foreign namesakes).
+	// 'locale' and 'none' still pin the policy explicitly for A/B measurements.
 	test("'auto' passes locale country on both backends", () => {
 		expect(resolverDefaultCountry({ locale: "en-US" }, false)).toBe("US")
 		expect(resolverDefaultCountry({ locale: "en-US" }, true)).toBe("US")
@@ -164,15 +166,17 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 	test(
 		"--default-country scoping is a real mechanism: US vs FR flips the resolved namesake",
 		async () => {
-			// `Paris, TX`, no postcode (a postcode would re-pin the country via the #369 anchor). The en-US
-			// default scopes "Paris" to Paris, texas (~33.7°N); an explicit `--default-country FR` scopes it to
-			// Paris, france (~48.9°N). Same input, different country scope, demonstrably different place.
-			// history: this probe used `--default-country none` and asserted the unscoped ranking picks the
-			// more-populous foreign twin (itself replacing the NY→Scotland probe #595 found dead). That premise
-			// broke on current gazetteer artifacts — unscoped ranking now keeps US namesakes (#905, pre-existing
-			// on main, invisible in CI because this suite needs the lab DB). Probing an explicit scope flip tests
-			// the same mechanism without depending on global-ranking policy. adminCoherence is pinned off so the
-			// probe observes scoping alone (default-on since #895 — asserted separately below).
+			// `Paris, TX`, no postcode (a postcode would re-pin the country via the #369 anchor).
+			// The en-US default scopes "Paris" to Paris, texas (~33.7°N);
+			// an explicit `--default-country FR` scopes it to Paris, france (~48.9°N).
+			// Same input, different country scope, demonstrably different place. history:
+			// this probe used `--default-country none` and asserted the unscoped ranking picks the
+			// more-populous foreign twin (itself replacing the NY→Scotland probe #595 found dead).
+			// That premise broke on current gazetteer artifacts — unscoped ranking now keeps US namesakes
+			// (#905, pre-existing on main, invisible in CI because this suite needs the lab DB).
+			// Probing an explicit scope flip tests the same mechanism without depending on
+			// global-ranking policy. adminCoherence is pinned off so the probe observes
+			// scoping alone (default-on since #895 — asserted separately below).
 			const usLat = localityLat((await run("Paris, TX")).stdout)
 			const frLat = localityLat((await run("Paris, TX", ["--default-country", "FR", "--no-admin-coherence"])).stdout)
 
@@ -190,8 +194,8 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 
 	test("adminCoherence (default-ON, #895) binds a namesake to its region token even with no country scope", async () => {
 		// The #833 class: with coherence on (the default), "Paris, TX" under `--default-country none`
-		// stays Paris, Texas — the region token wins over the more-populous foreign twin. This is the
-		// behavior the greedy probe above must pin off to observe raw ranking.
+		// stays Paris, Texas — the region token wins over the more-populous foreign twin.
+		// This is the behavior the greedy probe above must pin off to observe raw ranking.
 		const lat = localityLat((await run("Paris, TX", ["--default-country", "none"])).stdout)
 
 		expect(lat, "expected a Paris locality").not.toBeNull()

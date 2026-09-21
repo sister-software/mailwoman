@@ -16,22 +16,23 @@
 import { sha256Hex } from "@mailwoman/core/hash"
 
 /**
- * Hex characters kept from the digest. Sixty-four bits of identifier: long enough that a run's rows do not collide,
- * short enough that nobody mistakes it for something to look up.
+ * Hex characters kept from the digest. Sixty-four bits of identifier: long enough that a
+ * run's rows do not collide, short enough that nobody mistakes it for something to look up.
  */
 const CASE_ID_LENGTH = 16
 
 /**
- * The shortest salt this harness will run with. Below this a salt is enumerable, and an enumerable salt is no salt: the
- * holder of the register recovers every published case identifier by trying them all.
+ * The shortest salt this harness will run with. Below this a salt is enumerable,
+ * and an enumerable salt is no salt: the holder of the register recovers every
+ * published case identifier by trying them all.
  */
 const MINIMUM_SALT_LENGTH = 16
 
 /**
  * Refuse a salt that cannot do its job, before any row is read.
  *
- * Checked once at the start of a run rather than per row, so an operator who forgot to export the secret is told so
- * immediately instead of after the licensed file has been opened.
+ * Checked once at the start of a run rather than per row, so an operator who forgot to export
+ * the secret is told so immediately instead of after the licensed file has been opened.
  */
 export function assertUsableSalt(salt: string): void {
 	if (salt.length < MINIMUM_SALT_LENGTH) {
@@ -46,8 +47,9 @@ export function assertUsableSalt(salt: string): void {
 /**
  * The published identifier for one input under one run's salt.
  *
- * The NUL separator is required: without it `salt + input` lets a different (salt, input) split produce the same
- * digest, so two runs whose salts happen to be prefixes of one another would share identifiers.
+ * The NUL separator is required: without it `salt + input` lets a different
+ * (salt, input) split produce the same digest, so two runs whose salts happen to
+ * be prefixes of one another would share identifiers.
  */
 export function caseIDFor(input: string, salt: string): string {
 	return sha256Hex(`${salt}\0${input}`).slice(0, CASE_ID_LENGTH)

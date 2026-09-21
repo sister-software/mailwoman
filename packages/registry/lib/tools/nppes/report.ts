@@ -63,8 +63,8 @@ export interface NPPESReportInput {
 	 */
 	progression: readonly SettingScore[]
 	/**
-	 * Zero-config `resolveEntities(records)` — reported apart from the progression because its address-frequency table is
-	 * input-scoped, which on a sub-sample is intentionally sparse.
+	 * Zero-config `resolveEntities(records)` — reported apart from the progression because its
+	 * address-frequency table is input-scoped, which on a sub-sample is intentionally sparse.
 	 */
 	defaultOutOfBox: Score
 	sweep: readonly SweepArm[]
@@ -130,9 +130,10 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 	} = input
 
 	const baseline = progression[0]! // no settings — the prior-prior behaviour
-	// The last progression row — the whole A1–A5 stack, never compared on F1 against the others. Named for what it
-	// is: a row called `best` invites reading a stack-wide delta as one setting's marginal effect, which is how the
-	// authorized-official sentence below came to quote a five-setting number.
+	// The last progression row — the whole A1–A5 stack, never compared on F1 against the others.
+	// Named for what it is: a row called `best` invites reading a stack-wide delta as
+	// one setting's marginal effect, which is how the authorized-official sentence
+	// below came to quote a five-setting number.
 	const fullStack = progression.at(-1)!
 	const base = sweep[0]! // threshold 0, full setting stack
 

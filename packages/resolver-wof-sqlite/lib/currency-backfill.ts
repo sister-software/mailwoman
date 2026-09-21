@@ -30,8 +30,9 @@ const CURRENCY_BACKFILL_RADIUS_KM = 10
 const CURRENCY_BACKFILL_POP_FLOOR = 1000
 
 /**
- * Restore a deprecated locality only when no nearby live namesake exists and GeoNames attests the same folded name
- * above {@link CURRENCY_BACKFILL_POP_FLOOR}. The staged row retains WOF identity.
+ * Restore a deprecated locality only when no nearby live namesake exists
+ * and GeoNames attests the same folded name above {@link CURRENCY_BACKFILL_POP_FLOOR}.
+ * The staged row retains WOF identity.
  */
 export interface CurrencyBackfillOutcomes {
 	judged: number
@@ -42,8 +43,8 @@ export interface CurrencyBackfillOutcomes {
 }
 
 /**
- * One country's read of the check — every dead name judged, by outcome and by the dead row's placetype — so a census
- * can say what a wider dead-row query admits before a build carries it.
+ * One country's read of the check — every dead name judged, by outcome and by the dead row's
+ * placetype — so a census can say what a wider dead-row query admits before a build carries it.
  */
 export interface CurrencyBackfillCountryReport extends CurrencyBackfillOutcomes {
 	country: string
@@ -51,8 +52,8 @@ export interface CurrencyBackfillCountryReport extends CurrencyBackfillOutcomes 
 	dumpPresent: boolean
 	byDeadPlacetype: Record<string, CurrencyBackfillOutcomes>
 	/**
-	 * The first resurrected names, `placetype:name`, so a census reads what a wider query admits — capped, because the
-	 * report is a receipt and not the table.
+	 * The first resurrected names, `placetype:name`, so a census reads what a wider query
+	 * admits — capped, because the report is a receipt and not the table.
 	 */
 	sample: string[]
 }
@@ -60,8 +61,9 @@ export interface CurrencyBackfillCountryReport extends CurrencyBackfillOutcomes 
 const REPORT_SAMPLE_SIZE = 25
 
 /**
- * The placetypes a dead row may carry to be judged at all. `locality` is the shipped default; `localadmin` is the
- * second cause #1746 named (one GB row of seventeen) and is admitted through this option once its census is read.
+ * The placetypes a dead row may carry to be judged at all.
+ * `locality` is the shipped default; `localadmin` is the second cause #1746 named
+ * (one GB row of seventeen) and is admitted through this option once its census is read.
  */
 export const DEFAULT_DEAD_PLACETYPES: readonly string[] = ["locality"]
 
@@ -72,7 +74,8 @@ function emptyOutcomes(): CurrencyBackfillOutcomes {
 export async function resurrectCurrencyHoles(ctx: {
 	src: DatabaseClient<WOFDatabase>
 	/**
-	 * The candidate build's transaction. Required unless `dryRun` — a dry run judges every row and stages nothing.
+	 * The candidate build's transaction. Required unless `dryRun` — a dry run
+	 * judges every row and stages nothing.
 	 */
 	tx?: DatabaseClient<CandidateDatabase>
 	geonamesDir: string
@@ -139,9 +142,9 @@ export async function resurrectCurrencyHoles(ctx: {
 			continue
 		}
 
-		// Dead rows first: a country with no deprecated-no-successor localities needs no attestors at all, and
-		// loading a national dump to judge zero rows is pure heap pressure on a build already near its ceiling
-		// (the first live run OOM'd in a later pass with JP/KR dumps loaded for 0 dead names each).
+		// Dead rows first: a country with no deprecated-no-successor localities needs no attestors at all,
+		// and loading a national dump to judge zero rows is pure heap pressure on a build already near its
+		// ceiling (the first live run OOM'd in a later pass with JP/KR dumps loaded for 0 dead names each).
 		const dead = deadStmt.all(cc, ...deadPlacetypes)
 
 		if (!dead.length) {
@@ -151,8 +154,8 @@ export async function resurrectCurrencyHoles(ctx: {
 			continue
 		}
 
-		// Only the dead names' own folded keys can ever be probed, so only those keys are worth holding —
-		// the rest of the national dump streams through without residency.
+		// Only the dead names' own folded keys can ever be probed, so only those keys are
+		// worth holding — the rest of the national dump streams through without residency.
 		const deadKeys = new Set<string>()
 
 		for (const d of dead) {
@@ -163,8 +166,8 @@ export async function resurrectCurrencyHoles(ctx: {
 			}
 		}
 
-		// Folded name → P-class attestors. GeoNames columns by index: 1 name, 2 ascii, 4 lat, 5 lon,
-		// 6 feature_class, 14 population.
+		// Folded name → P-class attestors. GeoNames columns by index: 1 name, 2 ascii,
+		// 4 lat, 5 lon, 6 feature_class, 14 population.
 		const attestors = new Map<string, { lat: number; lon: number; pop: number }[]>()
 
 		for await (const f of TSVSpliterator.fromAsync(dumpPath, { header: false })) {
@@ -208,31 +211,33 @@ export async function resurrectCurrencyHoles(ctx: {
 
 			if (!pkey || seen.has(pkey)) continue
 			seen.add(pkey)
-			// Read from the row: the query admits whatever `deadPlacetypes` names, and the rank comparison below must
-			// judge each candidate against its dead rung, never a hardcoded one.
+			// Read from the row: the query admits whatever `deadPlacetypes` names, and the rank
+			// comparison below must judge each candidate against its dead rung, never a hardcoded one.
 			const deadPlacetype = String(d.placetype ?? "locality")
 
 			count(deadPlacetype, "judged")
 			const dLat = Number(d.latitude)
 			const dLon = Number(d.longitude)
 
-			// A live row blocks only when it is AT least AS coarse as the dead one. The original check compared name and
-			// distance alone, on the premise that a nearby same-name row means "the place is alive under another
-			// placetype" — true for a place recorded twice, false for a placetype demotion, which is the shape that
-			// actually occurs: WOF retired `Gillingham` the locality (pop 101,187) and kept `Gillingham` the
-			// neighbourhood 3.2 km away, and the check read the surviving child as covering its own dead parent.
+			// A live row blocks only when it is AT least AS coarse as the dead one.
+			// The original check compared name and distance alone, on the premise that a nearby
+			// same-name row means "the place is alive under another placetype" — true for a place
+			// recorded twice, false for a placetype demotion, which is the shape that actually occurs:
+			// WOF retired `Gillingham` the locality (pop 101,187) and kept `Gillingham` the neighbourhood
+			// 3.2 km away, and the check read the surviving child as covering its own dead parent.
 			// Sixteen of seventeen GB refusals had exactly that shape (#1746).
 			//
-			// An unranked placetype blocks, which is the conservative direction: this check's failure mode is inventing
-			// a place. Therefore, a row we cannot rank is treated as covering rather than waved through.
+			// An unranked placetype blocks, which is the conservative direction:
+			// this check's failure mode is inventing a place. Therefore, a row we cannot
+			// rank is treated as covering rather than waved through.
 			const liveNear = liveStmt.all(cc, name).some((row) => {
 				if (haversineKm(dLat, dLon, Number(row.latitude), Number(row.longitude)) > CURRENCY_BACKFILL_RADIUS_KM) {
 					return false
 				}
 
-				// Blocks unless the live row is strictly finer. The equal rung must still block — a live `locality`
-				// covers a dead `locality` — and an unranked placetype blocks too, since this check's failure mode
-				// is inventing a place.
+				// Blocks unless the live row is strictly finer. The equal rung must still block —
+				// a live `locality` covers a dead `locality` — and an unranked placetype blocks too,
+				// since this check's failure mode is inventing a place.
 				return isStrictlyFiner(String(row.placetype ?? ""), deadPlacetype) !== true
 			})
 

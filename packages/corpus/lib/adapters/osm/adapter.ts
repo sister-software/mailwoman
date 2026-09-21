@@ -50,7 +50,8 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 export const OSM_ADAPTER_ID = "osm"
 
 /**
- * OpenStreetMap's license. Share-alike: `SHARE_ALIKE_PATTERN` matches it, and `--exclude-share-alike` drops the rows.
+ * OpenStreetMap's license. Share-alike: `SHARE_ALIKE_PATTERN` matches it,
+ * and `--exclude-share-alike` drops the rows.
  */
 export const OSM_LICENSE = "ODbL-1.0"
 
@@ -76,10 +77,10 @@ interface OSMCorpusRow {
 const MAX_STREET_WORDS = 8
 
 /**
- * Whether `addr:housenumber` holds a designator a person writes after or before the street: digits with an optional
- * letter, fraction or dash suffix (`12`, `188a`, `14/E`, `1/1146`, `167-c`), or a one- or two-letter block prefix
- * (`B-77`, `L58`, `R 948`, Karachi's plot numbering). `House 34, Road 4, Sector 9`, `Plot #27`, `-` and a name are
- * not.
+ * Whether `addr:housenumber` holds a designator a person writes after or before the street:
+ * digits with an optional letter, fraction or dash suffix (`12`, `188a`, `14/E`, `1/1146`, `167-c`),
+ * or a one- or two-letter block prefix (`B-77`, `L58`, `R 948`, Karachi's plot numbering).
+ * `House 34, Road 4, Sector 9`, `Plot #27`, `-` and a name are not.
  */
 export function housenumberIsDesignator(value: string): boolean {
 	const trimmed = value.trim()
@@ -103,8 +104,8 @@ export function isStreetName(value: string): boolean {
 }
 
 /**
- * Split an `addr:city` that carries a neighborhood ahead of the city (`Mirpur 10, Dhaka` → locality `Dhaka`, head
- * `Mirpur 10`). A value without a comma is the locality alone.
+ * Split an `addr:city` that carries a neighborhood ahead of the city (`Mirpur 10, Dhaka`
+ * → locality `Dhaka`, head `Mirpur 10`). A value without a comma is the locality alone.
  */
 export function splitCityValue(value: string): { locality: string; head: string | null } {
 	const parts = extractDelimited(value)
@@ -171,7 +172,8 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.locality = split.locality
 	}
 
-	// The first candidate that is a name of its own: not a comma-joined pair rather than the street or the locality again.
+	// The first candidate that is a name of its own: not a comma-joined pair
+	// rather than the street or the locality again.
 	const dependent = [row.suburb, row.subdistrict, row.district, row.place, split?.head]
 		.map((value) => clean(value ?? undefined))
 		.find(
@@ -192,17 +194,18 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.region = province
 	}
 
-	// A street alone is not an address row. the coarse adapters already teach bare names. A number and a street is one:
-	// 41,000 of Vietnam's 70,069 rows carry nothing above the street, and `568 Đường Điện Biên Phủ` is the line a
-	// person types.
+	// A street alone is not an address row. the coarse adapters already teach bare names.
+	// A number and a street is one: 41,000 of Vietnam's 70,069 rows carry nothing above
+	// the street, and `568 Đường Điện Biên Phủ` is the line a person types.
 	if (Object.keys(components).length === 1) return null
 
 	return components
 }
 
 /**
- * The admin-generic prefixes a mapper puts in front of a Vietnamese place name (`Thành phố Hà Nội`, `Tỉnh Bắc Ninh`,
- * `TP. Hồ Chí Minh`), compared away so a province that repeats the city is read as the repeat it is.
+ * The admin-generic prefixes a mapper puts in front of a Vietnamese place name
+ * (`Thành phố Hà Nội`, `Tỉnh Bắc Ninh`, `TP. Hồ Chí Minh`), compared away
+ * so a province that repeats the city is read as the repeat it is.
  */
 const NAME_PREFIXES = /^(?:thanh pho|tinh|tp\.?|quan|phuong|huyen|thi xa)\s+/u
 

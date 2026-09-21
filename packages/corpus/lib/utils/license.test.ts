@@ -35,8 +35,8 @@ describe("license exclusion (#26)", () => {
 	})
 
 	it("--exclude-share-alike (SHARE_ALIKE_PATTERN) leaves elected-Licence-Ouverte BAN untouched", () => {
-		// The BAN election: stamped `Licence Ouverte 2.0`, so a proprietary-weights build's
-		// share-alike exclusion does not drop it (the whole point of correcting the conservative stamp).
+		// The BAN election: stamped `Licence Ouverte 2.0`, so a proprietary-weights build's share-alike
+		// exclusion does not drop it (the whole point of correcting the conservative stamp).
 		expect(licenseExcluded("Licence Ouverte 2.0", [SHARE_ALIKE_PATTERN])).toBe(false)
 	})
 })

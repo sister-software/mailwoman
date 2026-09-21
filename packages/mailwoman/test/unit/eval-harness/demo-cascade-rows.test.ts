@@ -37,8 +37,8 @@ describe("parseSmokeRows", () => {
 	})
 
 	test("skips blank lines and both comment markers, and numbers rows by FILE line", () => {
-		// The row number in an error must point at the line a human would count to in the file, which is
-		// why the skipped lines still advance the counter.
+		// The row number in an error must point at the line a human would count to in the file,
+		// which is why the skipped lines still advance the counter.
 		const text = ["# a comment", "", "// another", VALID, "{}"].join("\n")
 
 		expect(() => parseSmokeRows(text, "test.jsonl")).toThrow(/row 5/)

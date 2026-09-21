@@ -51,8 +51,8 @@ const { values } = parseArguments({
 		"memory-limit": { type: "string", default: "8GB" },
 		threads: { type: "string", default: "8" },
 		/**
-		 * Read only the first N parquet files of the split. A truncated run reports a share of one corner of the corpus, so
-		 * the header names the count it read against the count the manifest holds.
+		 * Read only the first N parquet files of the split. A truncated run reports a share of one corner
+		 * of the corpus, so the header names the count it read against the count the manifest holds.
 		 */
 		files: { type: "string" },
 	},
@@ -66,9 +66,9 @@ const { db, fileList } = await openMixture(mixture.files, {
 })
 
 /**
- * `span_starts` and `span_ends` are character offsets into `raw`, and `span_tags` is the parallel tag list, so the
- * region surface is the substring the `region` entry covers. DuckDB's `list_position` is 1-based and answers NULL when
- * the row carries no region span.
+ * `span_starts` and `span_ends` are character offsets into `raw`, and `span_tags` is the
+ * parallel tag list, so the region surface is the substring the `region` entry covers.
+ * DuckDB's `list_position` is 1-based and answers NULL when the row carries no region span.
  */
 const sql = `
 WITH us AS (
@@ -105,7 +105,8 @@ console.log(
 )
 
 /**
- * Per source: rows by folded region code, rows whose region text folds to no US code, and rows with no region span.
+ * Per source: rows by folded region code, rows whose region text folds to no US code,
+ * and rows with no region span.
  */
 interface SourceComposition {
 	source: string
@@ -119,10 +120,11 @@ const bySource = new Map<string, SourceComposition>()
 /**
  * Per region: rows, how many carry a `street` span anywhere, and what tag opens the row.
  *
- * The opening tag is the one the trace points at. The bare admin surface writes the locality first, and a region whose
- * rows open on a street has shown the model a street in the position the probe puts a locality in. The unconditioned
- * street share does not separate the regions — 47 of 50 sit between 89% and 99.5% — because it counts a street anywhere
- * in the row rather than in front.
+ * The opening tag is the one the trace points at. The bare admin surface writes the
+ * locality first, and a region whose rows open on a street has shown the model a
+ * street in the position the probe puts a locality in. The unconditioned street
+ * share does not separate the regions — 47 of 50 sit between 89% and 99.5% —
+ * because it counts a street anywhere in the row rather than in front.
  */
 const streetShapes = new Map<
 	string,
@@ -131,9 +133,10 @@ const streetShapes = new Map<
 		withStreet: number
 		bareAdmin: number
 		/**
-		 * Rows writing the region as its two-letter code rather than its name, and how many of those are the bare admin
-		 * surface. The model reads a surface: `Arkansas` and `AR` are one region to a counter and two strings to it, so a
-		 * count that folds them cannot say what the code token was seen in company with.
+		 * Rows writing the region as its two-letter code rather than its name,
+		 * and how many of those are the bare admin surface. The model reads a surface:
+		 * `Arkansas` and `AR` are one region to a counter and two strings to it, so a count
+		 * that folds them cannot say what the code token was seen in company with.
 		 */
 		codeForm: number
 		codeFormBare: number
@@ -207,8 +210,9 @@ function regionRows(entry: SourceComposition): number {
 }
 
 /**
- * The share of a source's region-containing rows held by its largest five regions. A source that writes all 56 codes
- * evenly reads near 5/56. one that writes a corner of the country reads near 1.
+ * The share of a source's region-containing rows held by its largest five regions.
+ * A source that writes all 56 codes evenly reads near 5/56. one that writes a
+ * corner of the country reads near 1.
  */
 function topFiveShare(entry: SourceComposition): number {
 	const counts = [...entry.byRegion.values()].toSorted((a, b) => b - a)

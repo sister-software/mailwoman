@@ -32,8 +32,8 @@ const CHECK_ID = "python-prefix-directories"
 const PYTHON_ROOT = "corpus-python/"
 
 /**
- * How many children must share a prefix before it is a family. Two siblings are a coincidence often enough that the
- * TypeScript check uses the same floor.
+ * How many children must share a prefix before it is a family.
+ * Two siblings are a coincidence often enough that the TypeScript check uses the same floor.
  */
 const GROUP_THRESHOLD = 3
 
@@ -46,9 +46,10 @@ const SOURCE_FILE = /\.py$/u
 const RESERVED = new Set(["__init__.py", "__main__.py"])
 
 /**
- * Prefixes that are a discovery interface rather than a hierarchy. pytest collects `test_*.py` by default, so every
- * test file in the tree shares the prefix by obligation. grouping them would report every test directory in the
- * repository and propose moving each into a `test/` subdirectory pytest would then have to be retaught to find.
+ * Prefixes that are a discovery interface rather than a hierarchy. pytest collects
+ * `test_*.py` by default, so every test file in the tree shares the prefix by obligation.
+ * grouping them would report every test directory in the repository and propose moving
+ * each into a `test/` subdirectory pytest would then have to be retaught to find.
  */
 const RESERVED_PREFIXES = new Set(["test"])
 
@@ -82,8 +83,8 @@ function isSource(file: string): boolean {
 /**
  * Every directory-with-children view of the Python tree, as one member list per parent directory.
  *
- * A directory child is admitted only when it carries a tracked `.py` file somewhere beneath it, which is what keeps a
- * data directory mirroring someone else's names out of the grouping.
+ * A directory child is admitted only when it carries a tracked `.py` file somewhere beneath it,
+ * which is what keeps a data directory mirroring someone else's names out of the grouping.
  */
 function directoryChildren(trackedFiles: readonly string[]): Map<string, PythonPrefixMember[]> {
 	const pythonFiles = trackedFiles.filter((file) => file.startsWith(PYTHON_ROOT) && !file.includes("/.venv/"))
@@ -146,8 +147,9 @@ export function findPythonPrefixGroups(trackedFiles: readonly string[]): PythonP
 			byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), member])
 		}
 
-		// A sibling named for the prefix itself heads the family rather than sitting beside it: `splice.py` beside
-		// `splice_check.py` is the family's own module, and leaving it out splits the family across two levels.
+		// A sibling named for the prefix itself heads the family rather than sitting
+		// beside it: `splice.py` beside `splice_check.py` is the family's own module,
+		// and leaving it out splits the family across two levels.
 		for (const [prefix, grouped] of byPrefix) {
 			const head = stems.get(prefix)
 

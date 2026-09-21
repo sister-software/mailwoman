@@ -40,8 +40,8 @@ test("isGooglePlaceID: characters outside [A-Za-z0-9_-] are rejected", () => {
 })
 
 test("isGooglePlaceID: the pattern is fully anchored (a bad char anywhere fails)", () => {
-	// A leading or trailing invalid character must fail even when the rest is valid — proving the
-	// regex is anchored at both ends rather than merely "contains a valid run".
+	// A leading or trailing invalid character must fail even when the rest is valid —
+	// proving the regex is anchored at both ends rather than merely "contains a valid run".
 	expect(isGooglePlaceID(" ChIJN1t_tDeuEmsRUsoyG83frY4")).toBe(false)
 	expect(isGooglePlaceID("ChIJN1t_tDeuEmsRUsoyG83frY4 ")).toBe(false)
 	expect(isGooglePlaceID("valid\ninvalid")).toBe(false)

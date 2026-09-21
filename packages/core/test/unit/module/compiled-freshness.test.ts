@@ -15,8 +15,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * The one workspace these fixtures build. A caller names its own set, so the tests name one rather than importing a
- * list from a package that happens to have one.
+ * The one workspace these fixtures build. A caller names its own set, so the tests name one
+ * rather than importing a list from a package that happens to have one.
  */
 const WORKSPACE = "packages/probe"
 
@@ -73,10 +73,10 @@ describe("checkCompiledFreshness", () => {
 	})
 
 	it("reads the newest EMITTED FILE rather than the out/ directory's own mtime", async () => {
-		// `tsc` overwrites in place, and a directory's mtime moves only when an entry is added or removed. A check
-		// anchored on the directory therefore never advances on a recompile. Measured on `packages/core`, the
-		// directory read 2026-09-14T17:36:04Z against a newest emit of 2026-09-19T02:33:12Z, so the battery's own
-		// copy of this warned after every successful compile.
+		// `tsc` overwrites in place, and a directory's mtime moves only when an entry is added
+		// or removed. A check anchored on the directory therefore never advances on a recompile.
+		// Measured on `packages/core`, the directory read 2026-09-14T17:36:04Z against a newest emit of
+		// 2026-09-19T02:33:12Z, so the battery's own copy of this warned after every successful compile.
 		const { root, workspace } = await checkout()
 		const source = join(workspace, "thing.ts")
 		const compiled = join(workspace, "out", "thing.js")
@@ -92,8 +92,8 @@ describe("checkCompiledFreshness", () => {
 	})
 
 	it("ignores emitted .d.ts on the source side, so a compile is not an edit", async () => {
-		// Declaration output lands in out/ and is newer than everything by construction. Counting it as source would
-		// make the check permanently unsatisfiable.
+		// Declaration output lands in out/ and is newer than everything by construction.
+		// Counting it as source would make the check permanently unsatisfiable.
 		const { root, workspace } = await checkout()
 
 		await writeLocalTextFile("export const x = 1\n", join(workspace, "thing.ts"))

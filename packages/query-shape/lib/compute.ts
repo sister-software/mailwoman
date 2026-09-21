@@ -49,7 +49,8 @@ function detectWhitespacePattern(text: string): WhitespacePattern {
 }
 
 /**
- * Compute a `QueryShape` from a string or normalized input. Microseconds-cheap, pure-function.
+ * Compute a `QueryShape` from a string or normalized input.
+ * Microseconds-cheap, pure-function.
  *
  * @example
  * 	Const shape = computeQueryShape("350 5th Ave, New York, NY 10118") //

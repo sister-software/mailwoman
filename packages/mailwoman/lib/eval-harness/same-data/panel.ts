@@ -48,8 +48,8 @@ const SOURCE = { register: "geonames:cities15000", license: "CC-BY-4.0", attribu
 const POPULATION_FLOOR = 50_000
 
 /**
- * The homograph rule's contest floor: the runner-up must hold at least this share of the largest bearer's population,
- * so the pair is a real contest rather than a formality.
+ * The homograph rule's contest floor: the runner-up must hold at least this share of the
+ * largest bearer's population, so the pair is a real contest rather than a formality.
  */
 const HOMOGRAPH_CONTEST_SHARE = 1 / 3
 
@@ -59,9 +59,9 @@ const HOMOGRAPH_CONTEST_SHARE = 1 / 3
 const COUNTRY_INFO_COLUMNS = { iso: 0, country: 4 } as const
 
 /**
- * The postal dump's admin1 code column. `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS} names the admin1 name at
- * index 3 because that is what a corpus row renders. this panel keys on the code beside it, which is stable across the
- * register's language variants.
+ * The postal dump's admin1 code column. `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS}
+ * names the admin1 name at index 3 because that is what a corpus row renders. this panel
+ * keys on the code beside it, which is stable across the register's language variants.
  */
 const POSTAL_ADMIN1_CODE_COLUMN = 4
 
@@ -80,10 +80,10 @@ export interface GeoNamesCity {
 }
 
 /**
- * Parse a GeoNames main-table dump. This benchmark reads `cities15000.txt`, the table filtered to places above 15,000
- * population. a per-country dump (`FR.txt`) carries the same columns and parses here unchanged, which is what a panel
- * reaching below that floor would read. `header: false`: the dump is headerless, and a spliterator that assumed one
- * would eat the first row.
+ * Parse a GeoNames main-table dump. This benchmark reads `cities15000.txt`, the table filtered
+ * to places above 15,000 population. a per-country dump (`FR.txt`) carries the same columns
+ * and parses here unchanged, which is what a panel reaching below that floor would read.
+ * `header: false`: the dump is headerless, and a spliterator that assumed one would eat the first row.
  */
 export async function readCities(path: string): Promise<GeoNamesCity[]> {
 	const rows: GeoNamesCity[] = []
@@ -107,8 +107,8 @@ export async function readCities(path: string): Promise<GeoNamesCity[]> {
 }
 
 /**
- * The English short country names, read from `countryInfo.txt` — the register's own column, so a country qualifier is
- * spelled the way the gold source spells it rather than the way this file would.
+ * The English short country names, read from `countryInfo.txt` — the register's own column, so a
+ * country qualifier is spelled the way the gold source spells it rather than the way this file would.
  */
 export async function readCountryNames(path: string): Promise<Map<string, string>> {
 	const names = new Map<string, string>()
@@ -128,9 +128,9 @@ export async function readCountryNames(path: string): Promise<Map<string, string
 /**
  * The first postcode seen for each `(country, admin1)` pair, from `allCountries-postal.txt`.
  *
- * First rather than random: the register's order is the register's, and taking the first makes the choice a property of
- * the source instead of a second seeded draw nobody registered. The file carries 1.8 million rows, so it is streamed
- * and only the index is held.
+ * First rather than random: the register's order is the register's, and taking the first makes
+ * the choice a property of the source instead of a second seeded draw nobody registered.
+ * The file carries 1.8 million rows, so it is streamed and only the index is held.
  */
 export async function readPostcodeByAdmin(path: string): Promise<Map<string, string>> {
 	const byAdmin = new Map<string, string>()
@@ -162,8 +162,8 @@ export interface PanelBuildInputs {
 	countryNames: ReadonlyMap<string, string>
 	postcodeByAdmin: ReadonlyMap<string, string>
 	/**
-	 * Geonameid → the coherent gold identity set, from `readGoldSets`. A geonameid absent from this map is ungradeable
-	 * and can never enter the panel.
+	 * Geonameid → the coherent gold identity set, from `readGoldSets`.
+	 * A geonameid absent from this map is ungradeable and can never enter the panel.
 	 */
 	goldSets: ReadonlyMap<string, number[]>
 }
@@ -176,8 +176,8 @@ export interface PanelBuildResult {
 /**
  * Build the panel by executing the frozen selection rules.
  *
- * Strata are filled in the definition's order and draw from disjoint geonameid pools: every row a stratum takes is
- * marked used, and a later stratum's eligibility excludes it.
+ * Strata are filled in the definition's order and draw from disjoint geonameid pools:
+ * every row a stratum takes is marked used, and a later stratum's eligibility excludes it.
  */
 export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	const { definition, cities, countryNames, postcodeByAdmin, goldSets } = inputs
@@ -243,8 +243,8 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		}
 	})
 
-	// Stratum 2 — a qualified homograph. The gold alternates between the largest bearer and a smaller one, and the
-	// qualifier alternates between the country's English name and the bearer's admin1 code.
+	// Stratum 2 — a qualified homograph. The gold alternates between the largest bearer and a smaller one,
+	// and the qualifier alternates between the country's English name and the bearer's admin1 code.
 	const homographEligible = cities
 		.filter((city) => {
 			const bearers = byName.get(city.asciiname.toLowerCase())!
@@ -257,8 +257,8 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 
 			if (populations[1]! < populations[0]! * HOMOGRAPH_CONTEST_SHARE) return false
 
-			// Only the two largest bearers need a gradeable gold: the stratum's gold alternates between them, and every
-			// other bearer is a distractor, which needs no identity join to distract.
+			// Only the two largest bearers need a gradeable gold: the stratum's gold alternates between them,
+			// and every other bearer is a distractor, which needs no identity join to distract.
 			return bearers
 				.toSorted((left, right) => right.population - left.population)
 				.slice(0, 2)
@@ -323,8 +323,8 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		}
 	})
 
-	// The register's `(country, admin1)` keys grouped once, in code-point order — the same walk per row would be a
-	// re-scan of the whole index for every candidate.
+	// The register's `(country, admin1)` keys grouped once, in code-point order —
+	// the same walk per row would be a re-scan of the whole index for every candidate.
 	const adminKeysByCountry = new Map<string, string[]>()
 
 	for (const key of [...postcodeByAdmin.keys()].toSorted(compareByCodePoint)) {
@@ -360,8 +360,9 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		}
 	})
 
-	// Stratum 5 — the bare toponym again, with the gold withheld from the fixture after recording. `goldPresent: false`
-	// is what the recorder reads to know which candidates to remove, and what the scorer reads to pick the denominator.
+	// Stratum 5 — the bare toponym again, with the gold withheld from the fixture after recording.
+	// `goldPresent: false` is what the recorder reads to know which candidates to remove,
+	// and what the scorer reads to pick the denominator.
 	take("gold_absent", uniqueEligible(), (city, index) => {
 		const gold = goldFor(city)
 

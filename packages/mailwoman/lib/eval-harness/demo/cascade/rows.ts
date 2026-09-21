@@ -36,8 +36,8 @@ export interface SmokeRowExpect {
 	 */
 	placetype?: string
 	/**
-	 * The cascade dead-ends (no WOF row) and the demo's anchor-centroid fallback must fire instead. Mutually exclusive
-	 * with `id`.
+	 * The cascade dead-ends (no WOF row) and the demo's anchor-centroid fallback must fire
+	 * instead. Mutually exclusive with `id`.
 	 */
 	anchor_centroid?: boolean
 }
@@ -59,8 +59,8 @@ const EXPECT_KEYS = new Set(["id", "name", "placetype", "anchor_centroid"])
 const ROW_KEYS = new Set(["input", "expect", "note", "source"])
 
 /**
- * How much of an offending row the error echoes back. Long enough to recognize the row at a glance, short enough that a
- * pathological single-line file cannot flood the terminal.
+ * How much of an offending row the error echoes back. Long enough to recognize the row at
+ * a glance, short enough that a pathological single-line file cannot flood the terminal.
  */
 const ERROR_ROW_ECHO_LIMIT = 200
 
@@ -78,9 +78,9 @@ class SmokeRowError extends Error {
 }
 
 /**
- * Parse + validate a jsonl smoke-row file. Throws a {@link SmokeRowError} naming the 1-based row number (and echoing the
- * offending line) on any malformed row. Returns at least one row — an empty file is an error rather than a vacuous
- * pass.
+ * Parse + validate a jsonl smoke-row file. Throws a {@link SmokeRowError} naming
+ * the 1-based row number (and echoing the offending line) on any malformed row.
+ * Returns at least one row — an empty file is an error rather than a vacuous pass.
  */
 export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 	// The row number is the point of this parser: every error names the 1-based line a human would
@@ -171,8 +171,9 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			}
 		}
 
-		// Assembled field by field rather than cast: every value above has been checked, and building the row from those
-		// checks is what makes the schema and the validator one statement instead of two that can drift.
+		// Assembled field by field rather than cast: every value above has been checked,
+		// and building the row from those checks is what makes the schema and the
+		// validator one statement instead of two that can drift.
 		rows.push({
 			input: row.input,
 			expect: {

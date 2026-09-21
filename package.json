@@ -72,6 +72,7 @@
 	"devDependencies": {
 		"@duckdb/node-api": "^1.5.5-r.4",
 		"@mailwoman/core": "workspace:*",
+		"@oxlint/plugins": "1.83.0",
 		"@release-it-plugins/workspaces": "^6.0.0",
 		"@sister.software/oxfmt-config": "^13.0.1",
 		"@sister.software/oxlint-config": "^13.0.1",

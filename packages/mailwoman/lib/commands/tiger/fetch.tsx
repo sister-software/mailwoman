@@ -49,9 +49,9 @@ const TIGERFetch: CommandComponent<typeof spec> = ({ options }) => {
 
 	const state = useCommandTask(async () => {
 		// `@mailwoman/tiger` is an optional dependency (the census-tiger fetch tooling is for
-		// operators building the street tier rather than end-user geocoding) — imported lazily here so a
-		// clean geocoding-only install of the CLI never loads it at startup, and a missing optional
-		// dep degrades to a friendly message instead of crashing the whole CLI.
+		// operators building the street tier rather than end-user geocoding) — imported lazily here
+		// so a clean geocoding-only install of the CLI never loads it at startup, and a missing
+		// optional dep degrades to a friendly message instead of crashing the whole CLI.
 		let fetchTIGER: typeof import("@mailwoman/tiger/sdk").fetchTIGER
 
 		try {

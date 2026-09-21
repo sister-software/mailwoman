@@ -12,8 +12,9 @@ import { mostSpecificResolved } from "@mailwoman/resolver"
 /**
  * A resolver-attributed node: the WOF place it landed on, that place's name/placetype, and its coordinate.
  *
- * `value` is the parsed span, kept beside the resolver's own `name` because ranking a `postalcode` needs both — a full
- * unit shape the resolver answered with a coarser stem is area-grade, whatever the user typed.
+ * `value` is the parsed span, kept beside the resolver's own `name` because ranking
+ * a `postalcode` needs both — a full unit shape the resolver answered with a
+ * coarser stem is area-grade, whatever the user typed.
  */
 export interface Resolved {
 	id: number
@@ -21,8 +22,8 @@ export interface Resolved {
 	value: string
 	placetype: string
 	/**
-	 * ISO-3166 alpha-2 the resolver placed the node in, when it stamped one. Read only for a `postalcode`, whose rank
-	 * against the locality is per-address-system.
+	 * ISO-3166 alpha-2 the resolver placed the node in, when it stamped one.
+	 * Read only for a `postalcode`, whose rank against the locality is per-address-system.
 	 */
 	country?: string
 	lat: number
@@ -78,10 +79,10 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 			})
 		}
 
-		// Multi-role completion (#415/#416): a dual-role region carries extra roles (e.g. `locality`) as
-		// interpretations on the same node rather than separate children. Surface each resolved interpretation as
-		// its own Resolved so the eval finds the completed locality (placetype/coord/name come from the
-		// interpretation).
+		// Multi-role completion (#415/#416): a dual-role region carries extra roles
+		// (e.g. `locality`) as interpretations on the same node rather than separate children.
+		// Surface each resolved interpretation as its own Resolved so the eval finds the
+		// completed locality (placetype/coord/name come from the interpretation).
 		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{
 			tag: string
 			placeID?: string
@@ -123,9 +124,9 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 /**
  * The deepest resolved place in the set — the one whose coordinate the eval grades.
  *
- * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly actually returns. A flat
- * `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode` over the locality, which is production's ladder on
- * one arm and its opposite on the other.
+ * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly
+ * actually returns. A flat `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode`
+ * over the locality, which is production's ladder on one arm and its opposite on the other.
  */
 export function mostSpecific(rs: Resolved[]): Resolved | null {
 	return mostSpecificResolved(rs, (r) => ({
@@ -137,8 +138,8 @@ export function mostSpecific(rs: Resolved[]): Resolved | null {
 }
 
 /**
- * True when the tree carries both a street and a house number — the precondition the street-level tiers need before a
- * miss can be read as a database gap rather than a parse gap.
+ * True when the tree carries both a street and a house number — the precondition the
+ * street-level tiers need before a miss can be read as a database gap rather than a parse gap.
  */
 export function hasStreetHouseNumber(tree: AddressTree | null): boolean {
 	if (!tree) return false
@@ -167,8 +168,8 @@ export function hasStreetHouseNumber(tree: AddressTree | null): boolean {
 }
 
 /**
- * The first non-empty street / house-number / postcode values in the tree — the interpolation tier's precondition
- * triple, and the text a diagnostic miss line reproduces.
+ * The first non-empty street / house-number / postcode values in the tree — the interpolation
+ * tier's precondition triple, and the text a diagnostic miss line reproduces.
  */
 export function findInterpolationSpans(tree: AddressTree): {
 	street?: string

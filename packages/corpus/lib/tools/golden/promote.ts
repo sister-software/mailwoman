@@ -96,8 +96,8 @@ export interface PromoteGoldenOptions {
 // ── Filters ───────────────────────────────────────────────────────────────
 
 /**
- * Heuristic: an address with 5+ components but fewer than 2 separators (commas/newlines/dashes) is most likely glued
- * together rather than human-typed.
+ * Heuristic: an address with 5+ components but fewer than 2 separators (commas/newlines/dashes)
+ * is most likely glued together rather than human-typed.
  */
 function isComponentsGlued(entry: GoldenEntry): boolean {
 	const componentCount = Object.keys(entry.components).length
@@ -109,9 +109,9 @@ function isComponentsGlued(entry: GoldenEntry): boolean {
 }
 
 /**
- * Heuristic: in US/UK conventions, postcode goes at the END of the address. If postcode appears in the first third of a
- * multi-component raw and there are 4+ components, the LLM probably over-aggressively reordered. FR is exempt (postcode
- * often precedes locality there).
+ * Heuristic: in US/UK conventions, postcode goes at the END of the address.
+ * If postcode appears in the first third of a multi-component raw and there are 4+ components,
+ * the LLM probably over-aggressively reordered. FR is exempt (postcode often precedes locality there).
  */
 function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
 	if (Object.keys(entry.components).length < MIN_PROMOTABLE_COMPONENTS) return false
@@ -128,8 +128,8 @@ function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
 }
 
 /**
- * Heuristic: catch-all for visually-bad outputs — unmatched brackets, control chars, suspicious punctuation that
- * suggests the LLM emitted markup instead of an address.
+ * Heuristic: catch-all for visually-bad outputs — unmatched brackets, control chars,
+ * suspicious punctuation that suggests the LLM emitted markup instead of an address.
  */
 function isSuspicious(entry: GoldenEntry): boolean {
 	const raw = entry.raw
@@ -160,9 +160,10 @@ export async function promoteGolden(
 
 	report?.(`reading candidates: ${options.input}`)
 
-	// The candidates file is the required input, so its absence must not read as "zero candidates" —
-	// that promotes the prior version unchanged and reports success. `JSONSpliterator.fromAsync`
-	// reports a missing path as a bare `TypeError` naming its own internals, so name the path here.
+	// The candidates file is the required input, so its absence must not read as "zero
+	// candidates" — that promotes the prior version unchanged and reports success.
+	// `JSONSpliterator.fromAsync` reports a missing path as a bare `TypeError`
+	// naming its own internals, so name the path here.
 	if (!(await pathExists(options.input))) {
 		throw new Error(`Candidates file not found: ${options.input}`)
 	}

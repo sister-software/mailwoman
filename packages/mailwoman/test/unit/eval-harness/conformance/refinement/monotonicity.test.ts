@@ -95,8 +95,8 @@ describe("classifying a pair", () => {
 	})
 
 	it("settles an overlap by declaration order rather than by whichever branch ran last", () => {
-		// "12 Rue" is one segment, so only the numeric step can act; "A, 12 B" is reachable by the leading-segment
-		// step, and the numeric one cannot touch it because "A," carries no digit.
+		// "12 Rue" is one segment, so only the numeric step can act; "A, 12 B" is reachable by the
+		// leading-segment step, and the numeric one cannot touch it because "A," carries no digit.
 		expect(classifyRefinementStep("Rue", "12 Rue")).toBe("drop-leading-numeric-token")
 		expect(classifyRefinementStep("12 B", "A, 12 B")).toBe("drop-leading-segment")
 	})

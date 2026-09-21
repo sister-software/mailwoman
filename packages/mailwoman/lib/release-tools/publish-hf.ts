@@ -76,10 +76,11 @@ const REQUIRED_FILES: RequiredFile[] = [
 ]
 
 /**
- * A character-path family (`@mailwoman/neural-weights-cjk`) ships a graph behind `char_ids` and a sealed character
- * vocabulary. there is no SentencePiece tokenizer to require. Staged under the family's own directory
- * (`<family>/<version>/`), the shape `fetch-hf-weights` reads a family from, and never into the Latin base's, because
- * the graph shares a basename with the base's and is not the same bytes.
+ * A character-path family (`@mailwoman/neural-weights-cjk`) ships a graph behind `char_ids`
+ * and a sealed character vocabulary. there is no SentencePiece tokenizer to require.
+ * Staged under the family's own directory (`<family>/<version>/`), the shape
+ * `fetch-hf-weights` reads a family from, and never into the Latin base's,
+ * because the graph shares a basename with the base's and is not the same bytes.
  */
 const REQUIRED_CHAR_FILES: RequiredFile[] = [
 	{ option: "model", remoteName: "model.onnx", description: "ONNX classifier (char_ids graph)" },
@@ -97,15 +98,17 @@ function requiredFilesFor(args: PublishHFOptions): RequiredFile[] {
 const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
 
 /**
- * Head-probe the demo's R2 serving path for an optional artifact (the demo reads R2, so R2 is the truth for demo
- * flags).
+ * Head-probe the demo's R2 serving path for an optional artifact
+ * (the demo reads R2, so R2 is the truth for demo flags).
  *
- * Fixme (pre-existing latent bug — preserved, do not "fix" without an operator + release review): the original `.mjs`
- * referenced an out-of-scope `args` here, so this always threw → caught → returned `false`; the probe never actually
- * ran. The `.sh`/`.mjs`→`.ts` conversion keeps that exact behavior so release output is byte-identical. The real fix is
- * to head-probe `${DEMO_BASE}/${locale}/${version}/${name}` and return `r.ok` — but that can flip `hasAnchor` /
- * `hasPolygons` in releases.json (only in the postcodeBins-empty / no-`--polygons` fallback path), so it needs a
- * deliberate review before a release dispatch rather than a silent change inside a cleanup.
+ * Fixme (pre-existing latent bug — preserved, do not "fix" without an operator + release review):
+ * the original `.mjs` referenced an out-of-scope `args` here, so this always threw → caught
+ * → returned `false`; the probe never actually ran. The `.sh`/`.mjs`→`.ts`
+ * conversion keeps that exact behavior so release output is byte-identical.
+ * The real fix is to head-probe `${DEMO_BASE}/${locale}/${version}/${name}`
+ * and return `r.ok` — but that can flip `hasAnchor` / `hasPolygons` in releases.json
+ * (only in the postcodeBins-empty / no-`--polygons` fallback path), so it needs a deliberate
+ * review before a release dispatch rather than a silent change inside a cleanup.
  */
 async function servedOnDemoPath(_name: string, _locale: string, _version: string): Promise<boolean> {
 	return false
@@ -124,8 +127,8 @@ export interface PublishHFOptions {
 	model?: string
 	tokenizer?: string
 	/**
-	 * The sealed character vocabulary of a character-path family. given, the release is staged as that family (no
-	 * tokenizer, no `releases.json` entry — the demo does not serve it).
+	 * The sealed character vocabulary of a character-path family. given, the release is staged
+	 * as that family (no tokenizer, no `releases.json` entry — the demo does not serve it).
 	 */
 	charVocab?: string
 	modelCard?: string
@@ -155,9 +158,9 @@ function fail(msg: string): never {
 const run = (cmd: string, args: string[]): void => runProcessOrFail(cmd, args)
 
 /**
- * Hugging Face throttles, and this runs a head per published artifact during a release verification sweep. Retry keeps
- * a throttled probe from reading as a missing artifact — the one answer that would have a release believe it failed to
- * upload something it uploaded.
+ * Hugging Face throttles, and this runs a head per published artifact during a release
+ * verification sweep. Retry keeps a throttled probe from reading as a missing artifact —
+ * the one answer that would have a release believe it failed to upload something it uploaded.
  */
 const hfClient = new APIClient({ displayName: "publish-hf", retry: true })
 
@@ -177,8 +180,9 @@ interface ReleaseManifest {
 }
 
 /**
- * Resolve one comma-separated `--<artifact>` flag into a verified path list. Every listed file must exist and be
- * non-empty — a staged-but-truncated binary is a silent 404 at runtime, so it fails here instead.
+ * Resolve one comma-separated `--<artifact>` flag into a verified path list.
+ * Every listed file must exist and be non-empty — a staged-but-truncated binary
+ * is a silent 404 at runtime, so it fails here instead.
  */
 async function stageBinaryList(spec: string | undefined, label: string): Promise<string[]> {
 	const paths = extractDelimited(spec)
@@ -193,8 +197,9 @@ async function stageBinaryList(spec: string | undefined, label: string): Promise
 }
 
 /**
- * Resolve one optional `--<artifact>` path, verifying it exists and is non-empty. `null` when the flag was not passed —
- * every caller of this is an artifact a locale may ship rather than one it must.
+ * Resolve one optional `--<artifact>` path, verifying it exists and is non-empty.
+ * `null` when the flag was not passed — every caller of this is an artifact a
+ * locale may ship rather than one it must.
  */
 async function stageOptionalBinary(spec: string | undefined, label: string): Promise<string | null> {
 	const localPath = spec || null
@@ -207,8 +212,8 @@ async function stageOptionalBinary(spec: string | undefined, label: string): Pro
 }
 
 /**
- * Upload a verified path list flat under the version dir, keyed by basename (the postcode/pair-index/FST/Fisher pattern
- * — the local basename is the remote name).
+ * Upload a verified path list flat under the version dir, keyed by basename
+ * (the postcode/pair-index/FST/Fisher pattern — the local basename is the remote name).
  */
 function uploadFlatByBasename(paths: string[], remoteBase: string): void {
 	for (const localPath of paths) {
@@ -222,8 +227,8 @@ function uploadFlatByBasename(paths: string[], remoteBase: string): void {
 }
 
 /**
- * Verify each basename-keyed artifact is reachable via the resolve URL — the same interface Phase 3 applies to
- * REQUIRED_FILES.
+ * Verify each basename-keyed artifact is reachable via the resolve URL —
+ * the same interface Phase 3 applies to REQUIRED_FILES.
  */
 async function verifyFlatByBasename(paths: string[], remoteBase: string): Promise<void> {
 	for (const localPath of paths) {
@@ -240,8 +245,8 @@ async function verifyFlatByBasename(paths: string[], remoteBase: string): Promis
 }
 
 /**
- * Phase 1: every REQUIRED_FILES entry must be present and non-empty before a single byte is uploaded. The last point at
- * which a bad release can be stopped for free — after this the bucket has partial state.
+ * Phase 1: every REQUIRED_FILES entry must be present and non-empty before a single byte is uploaded.
+ * The last point at which a bad release can be stopped for free — after this the bucket has partial state.
  */
 async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
 	for (const f of requiredFilesFor(args)) {
@@ -266,24 +271,26 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
 }
 
 /**
- * Refuse a model release whose card records no training attribution, and print the gaps in the records it does carry.
+ * Refuse a model release whose card records no training attribution,
+ * and print the gaps in the records it does carry.
  *
- * Uploading is publication. Attribution and share-alike conditions attach to a source and survive redistribution, so
- * the moment to establish that a record exists is before the bytes leave, while somebody can still answer what the
- * model was trained on. This path used to upload `model.onnx`, `tokenizer.model`, `model-card.json` and the FST and
- * postcode binaries after reading only their sizes.
+ * Uploading is publication. Attribution and share-alike conditions attach to a source
+ * and survive redistribution, so the moment to establish that a record exists is
+ * before the bytes leave, while somebody can still answer what the model was trained on.
+ * This path used to upload `model.onnx`, `tokenizer.model`, `model-card.json`
+ * and the FST and postcode binaries after reading only their sizes.
  *
- * The refusal turns on presence alone. An entry that names no license is printed and allowed through, because missing
- * evidence about a source is a gap to record while a finding against the source is a conclusion somebody has to reach —
- * the distinction the per-package `PROVENANCE.json` exists to keep. A release that records nothing at all is the one
- * this refuses.
+ * The refusal turns on presence alone. An entry that names no license is printed and allowed through,
+ * because missing evidence about a source is a gap to record while a finding against the source
+ * is a conclusion somebody has to reach — the distinction the per-package `PROVENANCE.json`
+ * exists to keep. A release that records nothing at all is the one this refuses.
  */
 export async function verifyTrainingProvenance(cardPath: string): Promise<void> {
 	const card = await readLocalJSONFile<{ attribution?: unknown; training?: { data_attribution?: unknown } }>(cardPath)
 
-	// Both spellings the two graph packages use. `en-us` records its entries at `training.data_attribution` and `cjk`
-	// at a top-level `attribution`, so reading one reports the other as recording nothing — a false absence, and the
-	// one answer a control like this must never give.
+	// Both spellings the two graph packages use. `en-us` records its entries at `training.data_attribution`
+	// and `cjk` at a top-level `attribution`, so reading one reports the other as recording
+	// nothing — a false absence, and the one answer a control like this must never give.
 	const entries = [card.training?.data_attribution, card.attribution]
 		.filter((candidate): candidate is unknown[] => Array.isArray(candidate))
 		.map((candidate) => candidate.filter((entry): entry is string => typeof entry === "string"))
@@ -299,9 +306,9 @@ export async function verifyTrainingProvenance(cardPath: string): Promise<void> 
 
 	console.error(`  ✓ recorded training sources: ${entries.length} entries`)
 
-	// A parenthetical carrying a version number or a known family name is how the cards state a license. An entry
-	// without one is reported with its text, so the operator sees which source is unaccounted for at the moment of
-	// publication rather than in a later audit.
+	// A parenthetical carrying a version number or a known family name is how the cards
+	// state a license. An entry without one is reported with its text, so the operator sees
+	// which source is unaccounted for at the moment of publication rather than in a later audit.
 	for (const entry of entries) {
 		const text = String(entry)
 		const parenthetical = /\(([^()]{1,120})\)/u.exec(text)
@@ -331,9 +338,10 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		fail("--description required")
 	}
 
-	// Per-locale FST gazetteer (#1318 FST-distribution arc) — optional (en-nz ships none). When provided,
-	// the remote name adapts to BCP-47 casing ("en-us" → "en-US" → "fst-en-US.bin") to match the browser
-	// runtime's fetcher (packages/mailwoman/lib/browser-runtime/resources.ts); a casing mismatch 404s the gazetteer at runtime.
+	// Per-locale FST gazetteer (#1318 FST-distribution arc) — optional (en-nz ships none).
+	// When provided, the remote name adapts to BCP-47 casing ("en-us" → "en-US" → "fst-en-US.bin")
+	// to match the browser runtime's fetcher (packages/mailwoman/lib/browser-runtime/resources.ts);
+	// a casing mismatch 404s the gazetteer at runtime.
 	const bcp47 = args.locale
 		.split("-")
 		.map((part: string, i: number) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))
@@ -347,56 +355,61 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// Verify every required local artifact before uploading.
 	await verifyRequiredFiles(args)
 
-	// And that the card being uploaded records where the model's training inputs came from. Runs after the file checks
-	// so a missing card reports as a missing card rather than as an unreadable record.
+	// And that the card being uploaded records where the model's training inputs came from.
+	// Runs after the file checks so a missing card reports as a missing card
+	// rather than as an unreadable record.
 	await verifyTrainingProvenance(args.modelCard!)
 
-	// Optional postcode binaries for the anchor channel (#240): comma-separated --postcodes paths
-	// (e.g. postcode-us.bin,postcode-de.bin). Uploaded under the version dir by basename. the demo
-	// fetches them when the release's `hasAnchor` flag is set.
+	// Optional postcode binaries for the anchor channel (#240): comma-separated --postcodes
+	// paths (e.g. postcode-us.bin,postcode-de.bin). Uploaded under the version dir by
+	// basename. the demo fetches them when the release's `hasAnchor` flag is set.
 	const postcodeBins = await stageBinaryList(args.postcodes, "postcode binary")
 
 	// Optional placetype-pair-index binaries (placetype-pair-prior arc): comma-separated
-	// --pair-indexes paths (e.g. pair-index-gb.bin). country-specific BY design — mirrors
-	// postcodeBins exactly, but this artifact never falls back to a base package (see
-	// neural/weights.ts's resolvePairIndexSibling), so a locale that ships one must have it staged.
+	// --pair-indexes paths (e.g. pair-index-gb.bin). country-specific BY design —
+	// mirrors postcodeBins exactly, but this artifact never falls back to a base package
+	// (see neural/weights.ts's resolvePairIndexSibling), so a locale that ships one must have it staged.
 	const pairIndexBins = await stageBinaryList(args.pairIndexes, "pair-index binary")
 
-	// Per-locale FST gazetteer binaries for the NPM packages (#1318 FST-distribution): comma-separated
-	// --fsts paths (e.g. fst-en-us.bin,fst-fr-fr.bin,fst-en-gb.bin). Uploaded flat under the version dir
-	// by their lowercase npm basename — this is what publish.yml fetches into each weights workspace so
-	// the published tarball carries its `fst-<locale>.bin` (files-guard requires it). Distinct from the
-	// singular --fst above, which stages the demo's BCP-47-cased `fst-en-US.bin`. en-nz ships no FST.
+	// Per-locale FST gazetteer binaries for the NPM packages (#1318 FST-distribution):
+	// comma-separated --fsts paths (e.g. fst-en-us.bin,fst-fr-fr.bin,fst-en-gb.bin).
+	// Uploaded flat under the version dir by their lowercase npm basename — this is what
+	// publish.yml fetches into each weights workspace so the published tarball carries its
+	// `fst-<locale>.bin` (files-guard requires it). Distinct from the singular --fst above,
+	// which stages the demo's BCP-47-cased `fst-en-US.bin`. en-nz ships no FST.
 	const fstBins = await stageBinaryList(args.fsts, "FST binary")
 
-	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path, uploaded as
-	// anchor-lexicon-v1.json. Required for gazetteer-trained models (v4.2.0+, ONNX declares
-	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades loudly
-	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
+	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path,
+	// uploaded as anchor-lexicon-v1.json. Required for gazetteer-trained models
+	// (v4.2.0+, ONNX declares gazetteer_features) — the demo loader fetches it beside model.onnx and degrades
+	// loudly (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
 	const gazetteerLexicon = await stageOptionalBinary(args.gazetteerLexicon, "gazetteer lexicon")
 
-	// country-surface-lexicon-v1.json (#1104). Required for country-channel models (v6.2.0+, ONNX
-	// declares country_features + the card carries requires.country); ships beside anchor-lexicon-v1.json.
+	// country-surface-lexicon-v1.json (#1104). Required for country-channel models
+	// (v6.2.0+, ONNX declares country_features + the card carries requires.country);
+	// ships beside anchor-lexicon-v1.json.
 	const countryLexicon = await stageOptionalBinary(args.countryLexicon, "country lexicon")
 
 	// Evidence-bundle lexicons (Option-A, 6.7.0-bundle): street-type-lexicon-v3.json +
-	// locality-surface-lexicon-v6.json. Required for bundle-trained models (ONNX declares
-	// street_type_features/locality_surface_features + the card requires them); the browser loader
-	// fetches them beside model.onnx and degrades loudly (channel-off fragment parses) on a 404.
+	// locality-surface-lexicon-v6.json. Required for bundle-trained models
+	// (ONNX declares street_type_features/locality_surface_features + the card requires them); the browser
+	// loader fetches them beside model.onnx and degrades loudly (channel-off fragment parses) on a 404.
 	const streetTypeLexicon = await stageOptionalBinary(args.streetTypeLexicon, "street-type lexicon")
 	const localitySurfaceLexicon = await stageOptionalBinary(args.localitySurfaceLexicon, "locality-surface lexicon")
 
-	// Optional crisp-polygon DB (`mailwoman gazetteer polygons`): a single --polygons path. Uploaded as
-	// wof-polygons.db. the demo draws the real admin boundary instead of the bbox when `hasPolygons`
-	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
-	// via `mailwoman gazetteer polygons` --admin (the --points wof-hot.db source is retired).
+	// Optional crisp-polygon DB (`mailwoman gazetteer polygons`): a single --polygons path.
+	// Uploaded as wof-polygons.db. the demo draws the real admin boundary instead of the bbox
+	// when `hasPolygons` is set. Keyed by WOF id (the candidate table returns the same spr ids),
+	// built from the admin DB via `mailwoman gazetteer polygons` --admin
+	// (the --points wof-hot.db source is retired).
 	const polygonsDB = await stageOptionalBinary(args.polygons, "polygon DB")
 
-	// Fisher consolidation artifacts (#1354): fisher-diag-v1-model-X.npz + its .json sidecar. The
-	// bundle-interface addition from the 7.0.0 base — "the weights bundle ships its Fisher" — so every
-	// fine-tune (ours and customers') can apply the EWC brake. HF/R2 distribution only: runtime never
-	// reads it, npm never ships it, publish.yml never fetches it (its preflight head-checks it when
-	// the model card declares fisher_artifact). Versioned basenames, staged flat like the postcode bins.
+	// Fisher consolidation artifacts (#1354): fisher-diag-v1-model-X.npz + its .json sidecar.
+	// The bundle-interface addition from the 7.0.0 base — "the weights bundle ships
+	// its Fisher" — so every fine-tune (ours and customers') can apply the EWC brake.
+	// HF/R2 distribution only: runtime never reads it, npm never ships it, publish.yml never
+	// fetches it (its preflight head-checks it when the model card declares fisher_artifact).
+	// Versioned basenames, staged flat like the postcode bins.
 	const fisherArtifacts = await stageBinaryList(args.fisher, "Fisher artifact")
 
 	// Upload the verified artifacts to the bucket.
@@ -419,8 +432,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// basename. publish.yml fetches these into each weights workspace so the tarball ships its FST.
 	uploadFlatByBasename(fstBins, remoteBase)
 
-	// Demo's BCP-47-cased FST gazetteer (#1318) — optional (en-nz ships none). Distinct filename from
-	// the lowercase --fsts above. the demo fetcher expects `fst-en-US.bin`.
+	// Demo's BCP-47-cased FST gazetteer (#1318) — optional (en-nz ships none).
+	// Distinct filename from the lowercase --fsts above. the demo fetcher expects `fst-en-US.bin`.
 	if (fstPath) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/${fstRemoteName}`
 
@@ -455,8 +468,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	if (localitySurfaceLexicon) {
 		// Staged by source basename (was a hardcoded v6 name until 9.0.0): publish.yml's preflight
-		// head-checks the exact generation the release ships (v7 as of the v4.2.0 base), so the
-		// remote name must follow the artifact rather than a frozen string.
+		// head-checks the exact generation the release ships (v7 as of the v4.2.0 base),
+		// so the remote name must follow the artifact rather than a frozen string.
 		const dst = `${BUCKET_PATH}/${remoteBase}/${basename(localitySurfaceLexicon)}`
 
 		console.error(`  → ${dst}`)
@@ -533,9 +546,9 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		steps: args.steps ?? 100_000,
 		hasFST: !!fstPath,
 		hasWOFDB: true,
-		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the
-		// truth by probing the demo's serving path (the four-release hasPolygons:false rectangle bug,
-		// 2026-06-11). CLI args still count. either source sets the flag.
+		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the truth
+		// by probing the demo's serving path (the four-release hasPolygons:false rectangle bug, 2026-06-11).
+		// CLI args still count. either source sets the flag.
 		hasAnchor: postcodeBins.length > 0 || (await servedOnDemoPath("postcode-us.bin", args.locale, args.version)),
 		hasPolygons: !!polygonsDB || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
 	}

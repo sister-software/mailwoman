@@ -72,9 +72,10 @@ function circleRing(lat: number, lon: number, radiusKM: number): number[][] {
 }
 
 /**
- * Approximate-extent circle for places without a crisp polygon: centered on the place point, radius from the bbox
- * half-diagonal (clamped 0.5–50 km). 64-point ring with latitude correction — visually a circle anywhere outside the
- * poles. With no bbox (anchor-centroid postcodes carry no extent) it defaults to a ~ZIP-sized 3 km radius.
+ * Approximate-extent circle for places without a crisp polygon: centered on the
+ * place point, radius from the bbox half-diagonal (clamped 0.5–50 km). 64-point
+ * ring with latitude correction — visually a circle anywhere outside the poles.
+ * With no bbox (anchor-centroid postcodes carry no extent) it defaults to a ~ZIP-sized 3 km radius.
  */
 export function approxCircleGeometry(lat: number, lon: number, bbox?: PlaceBBox): PlaceGeometry {
 	const halfDiagKm = bbox
@@ -87,9 +88,10 @@ export function approxCircleGeometry(lat: number, lon: number, bbox?: PlaceBBox)
 }
 
 /**
- * A circle of an exact radius in meters — for the street-level uncertainty (#377): a 10 m situs floor or a calibrated
- * interp radius. Unlike {@link approxCircleGeometry} (clamped to a ~ZIP-sized 0.5 km floor for admin fallbacks), this
- * honors small radii so an exact building reads as a tight dot (an ~8 m floor keeps a 10 m situs circle visible).
+ * A circle of an exact radius in meters — for the street-level uncertainty (#377):
+ * a 10 m situs floor or a calibrated interp radius. Unlike {@link approxCircleGeometry}
+ * (clamped to a ~ZIP-sized 0.5 km floor for admin fallbacks), this honors small radii
+ * so an exact building reads as a tight dot (an ~8 m floor keeps a 10 m situs circle visible).
  */
 export function radiusCircleGeometry(lat: number, lon: number, radiusM: number): PlaceGeometry {
 	const radiusKM = Math.max(0.008, radiusM / 1000)
@@ -98,9 +100,10 @@ export function radiusCircleGeometry(lat: number, lon: number, radiusM: number):
 }
 
 /**
- * Bounding box of a Polygon / MultiPolygon, for `fitBounds`. Walks the nested coordinate arrays, so it handles both a
- * single-ring polygon and a multi-part polygon uniformly. Antimeridian-crossing geometry is not normalized (the naive
- * min/max is returned) — matching the ported behavior. callers that need a wrapped bbox must handle it upstream.
+ * Bounding box of a Polygon / MultiPolygon, for `fitBounds`.
+ * Walks the nested coordinate arrays, so it handles both a single-ring polygon and a multi-part polygon
+ * uniformly. Antimeridian-crossing geometry is not normalized (the naive min/max is returned) —
+ * matching the ported behavior. callers that need a wrapped bbox must handle it upstream.
  */
 export function geomBounds(geometry: PlaceGeometry): PlaceBBox {
 	let minLon = Infinity

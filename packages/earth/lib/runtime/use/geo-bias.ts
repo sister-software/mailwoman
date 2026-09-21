@@ -20,9 +20,9 @@ export interface GeoBiasControl {
 	 */
 	active: boolean
 	/**
-	 * Why the last attempt failed, or `null`. The chip alone cannot say this: a denial turns it back off, which looks
-	 * exactly like a visitor toggling it off themselves, and pressing it again does nothing visible because the browser
-	 * remembers the denial and never prompts twice.
+	 * Why the last attempt failed, or `null`. The chip alone cannot say this: a denial turns it
+	 * back off, which looks exactly like a visitor toggling it off themselves, and pressing it
+	 * again does nothing visible because the browser remembers the denial and never prompts twice.
 	 */
 	error: GeoBiasError | null
 	/**

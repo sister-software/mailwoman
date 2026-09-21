@@ -39,10 +39,11 @@ async function reposRoot(): Promise<PathBuilder> {
 /**
  * A clone with one commit, so the audit has a vintage to read.
  *
- * The commit dates are pinned: a git commit hash covers author + committer timestamps, so two same-content clones only
- * hash identically when both commits land in the same wall-clock second. Fast local runs always did. a loaded CI runner
- * sometimes straddled the boundary, and the "duplicated" fixture read as diverged — a flake that surfaced twice on
- * 2026-08-18 before the mechanism was pinned. With the dates fixed, identical content ⇒ identical hash, always.
+ * The commit dates are pinned: a git commit hash covers author + committer timestamps, so two
+ * same-content clones only hash identically when both commits land in the same wall-clock second.
+ * Fast local runs always did. a loaded CI runner sometimes straddled the boundary,
+ * and the "duplicated" fixture read as diverged — a flake that surfaced twice on 2026-08-18
+ * before the mechanism was pinned. With the dates fixed, identical content ⇒ identical hash, always.
  */
 async function clone(dir: PathBuilderLike, marker: string): Promise<void> {
 	const env = childEnv({
@@ -189,10 +190,10 @@ describe("reposSentence", () => {
 
 describe("auditReposRoot — an alias is not a duplicate", () => {
 	it("reports a symlinked second path as ALIASED, not as a second checkout", async () => {
-		// The lab's nested `whosonfirst-data-admin-us` is a symlink to the flat one. Comparing `ls` output calls
-		// that a duplicate and it is not — a directory cannot diverge from itself. `ingestWOF` does not follow directory
-		// symlinks. the audit still records both layouts so an operator can see the
-		// alias rather than mistaking it for two independent clones.
+		// The lab's nested `whosonfirst-data-admin-us` is a symlink to the flat one.
+		// Comparing `ls` output calls that a duplicate and it is not — a directory cannot diverge from itself.
+		// `ingestWOF` does not follow directory symlinks. the audit still records both layouts
+		// so an operator can see the alias rather than mistaking it for two independent clones.
 		const root = await reposRoot()
 
 		await clone(root("whosonfirst-data-admin-us"), "x")
@@ -210,8 +211,8 @@ describe("auditReposRoot — an alias is not a duplicate", () => {
 	})
 
 	it("traverses a symlinked entry at all — Dirent.isDirectory() is false for one", async () => {
-		// The bug this pins: a walk keyed on isDirectory() alone skipped the link entirely and reported the repo
-		// as single-layout, hiding the alias from the operator.
+		// The bug this pins: a walk keyed on isDirectory() alone skipped the link entirely
+		// and reported the repo as single-layout, hiding the alias from the operator.
 		const root = await reposRoot()
 
 		await clone(root("whosonfirst-data-admin-us"), "x")

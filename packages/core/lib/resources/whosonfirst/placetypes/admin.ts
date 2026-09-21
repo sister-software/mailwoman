@@ -27,8 +27,9 @@ export interface WOFBaseProperties {
 	"wof:country"?: string
 	"wof:concordances"?: Record<string, string | number>
 	/**
-	 * Every ancestor chain the place belongs to, coarsest key first — `[{ country_id, region_id, locality_id }, …]`. More
-	 * than one entry means the place has multiple parents, which is what `wof:parent_id` records as the `-4` sentinel.
+	 * Every ancestor chain the place belongs to, coarsest key first —
+	 * `[{ country_id, region_id, locality_id }, …]`. More than one entry means the place
+	 * has multiple parents, which is what `wof:parent_id` records as the `-4` sentinel.
 	 * the keys present vary by branch, so a missing rung is absent rather than null.
 	 */
 	"wof:hierarchy"?: Array<Record<string, number>>
@@ -37,16 +38,16 @@ export interface WOFBaseProperties {
 	"geom:latitude"?: number
 	"geom:longitude"?: number
 	/**
-	 * The label centroid — where a human would drop the pin, distinct from the geometry's mathematical centroid. The
-	 * difference is territorial: France's `geom:` centroid sits in Spain (42.19, -2.74) because the multipolygon spans
-	 * the overseas territories, while `lbl:` is metropolitan France (46.71, 2.46). Prefer `lbl:` wherever a point stands
-	 * in for the place.
+	 * The label centroid — where a human would drop the pin, distinct from the geometry's
+	 * mathematical centroid. The difference is territorial: France's `geom:` centroid sits in
+	 * Spain (42.19, -2.74) because the multipolygon spans the overseas territories, while `lbl:`
+	 * is metropolitan France (46.71, 2.46). Prefer `lbl:` wherever a point stands in for the place.
 	 */
 	"lbl:latitude"?: number
 	"lbl:longitude"?: number
 	/**
-	 * `"minLon,minLat,maxLon,maxLat"` — WOF writes the bbox as a comma-joined string rather than an array. Read by the
-	 * gazetteer ingest for the resolver's point-in-box proximity.
+	 * `"minLon,minLat,maxLon,maxLat"` — WOF writes the bbox as a comma-joined string rather
+	 * than an array. Read by the gazetteer ingest for the resolver's point-in-box proximity.
 	 */
 	"geom:bbox"?: string
 	"gn:population"?: number
@@ -56,8 +57,8 @@ export interface WOFBaseProperties {
 }
 
 /**
- * Name kinds Who's On First records per language, in descending preference — a preferred name wins over a variant,
- * which wins over a colloquial one.
+ * Name kinds Who's On First records per language, in descending preference —
+ * a preferred name wins over a variant, which wins over a colloquial one.
  */
 export const WOFNameKinds = ["preferred", "variant", "colloquial", "abbr", "short"] as const
 

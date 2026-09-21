@@ -195,8 +195,8 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 	})
 
 	it("fast-paths unambiguous postcode (US ZIP+4) inputs to resolver, skipping classifier", async () => {
-		// US ZIP+4 is unambiguous (confidence 0.95 from QueryShape) — the kind classifier scores
-		// it as postcode_only with confidence > 0.95, clearing the fast-path threshold.
+		// US ZIP+4 is unambiguous (confidence 0.95 from QueryShape) — the kind classifier
+		// scores it as postcode_only with confidence > 0.95, clearing the fast-path threshold.
 		const classifier = fakeClassifier()
 		const resolver = passthroughResolver()
 		const pipeline = createRuntimePipeline({ classifier, resolver })
@@ -207,9 +207,9 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 	})
 
 	it("does NOT fast-path ambiguous 5-digit input (US/FR/DE overlap)", async () => {
-		// "10118" matches three postcode formats (US/FR/DE) with confidence 0.6 each — kind is
-		// postcode_only but confidence stays below the 0.95 fast-path threshold. Advisory-not-
-		// authoritative principle in action.
+		// "10118" matches three postcode formats (US/FR/DE) with confidence 0.6 each —
+		// kind is postcode_only but confidence stays below the 0.95 fast-path threshold.
+		// Advisory-not- authoritative principle in action.
 		const classifier = fakeClassifier()
 		const resolver = passthroughResolver()
 		const pipeline = createRuntimePipeline({ classifier, resolver })

@@ -30,15 +30,15 @@ import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index
 import { downloadToFile, loadManifestEntries, writeManifest } from "#tools/fetch/download/index"
 
 /**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
- * than data.
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below
+ * which a "download" is an error page rather than data.
  */
 
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
 /**
- * All département codes — metropolitan 01-95 (with 2A/2B for Corsica instead of 20) plus overseas DOM/TOM. Codes do not
- * change.
+ * All département codes — metropolitan 01-95 (with 2A/2B for Corsica instead of 20)
+ * plus overseas DOM/TOM. Codes do not change.
  */
 const DEPT_CODES = [
 	"01",

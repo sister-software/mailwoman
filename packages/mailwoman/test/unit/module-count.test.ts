@@ -23,11 +23,13 @@ import { describe, expect, test } from "vitest"
 const cliBin = await mailwomanCLIPath()
 
 /**
- * Current whole-process module count for `mailwoman --version`. The license notice the launcher prints after every
- * command verifies the configured key offline, and reading `MAILWOMAN_LICENSE_KEY` goes through the typed env boundary:
- * zod is 94 of these modules, and the key payload schema shares it. Two things are not on this path and each once was:
- * `@mailwoman/core/license/publication` carries the http client and sits outside the `license` barrel (321 with it
- * inside), and `spliterator` left when the JSON helpers moved to `core/json` (164 with it).
+ * Current whole-process module count for `mailwoman --version`.
+ * The license notice the launcher prints after every command verifies the configured
+ * key offline, and reading `MAILWOMAN_LICENSE_KEY` goes through the typed env
+ * boundary: zod is 94 of these modules, and the key payload schema shares it.
+ * Two things are not on this path and each once was: `@mailwoman/core/license/publication`
+ * carries the http client and sits outside the `license` barrel (321 with it inside),
+ * and `spliterator` left when the JSON helpers moved to `core/json` (164 with it).
  */
 const MEASURED_MODULE_COUNT = 136
 
@@ -37,8 +39,8 @@ const MEASURED_MODULE_COUNT = 136
 const MODULE_COUNT_CEILING = 200
 
 /**
- * `registerHooks` covers ESM and CJS. `node:` builtins are excluded — they are resident before the CLI starts and
- * counting them would make the number depend on the Node version rather than on this repo.
+ * `registerHooks` covers ESM and CJS. `node:` builtins are excluded — they are resident before the CLI
+ * starts and counting them would make the number depend on the Node version rather than on this repo.
  */
 const COUNTING_HOOK =
 	"data:text/javascript," +

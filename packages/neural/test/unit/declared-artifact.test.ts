@@ -94,11 +94,11 @@ describe("readDeclaredArtifactFile", () => {
 	})
 
 	it("reads the SHIPPED cards: en-us/fr-fr/en-gb declare their binaries, en-nz declares none", async () => {
-		// The two postures this reader must keep apart, against the real cards rather than fixtures — a card
-		// edit that dropped either one would leave every fixture test above green. en-gb moved to the
-		// declaring column 2026-08-06 (9.0.0, ROAD_TO_V9 A4): the v4.2.0 base trained the GB anchor slot,
-		// so postcode-gb.bin returned — the #1467-era "declares none" posture now lives only on en-nz
-		// (no NZ postcode extract exists).
+		// The two postures this reader must keep apart, against the real cards rather than
+		// fixtures — a card edit that dropped either one would leave every fixture test above
+		// green. en-gb moved to the declaring column 2026-08-06 (9.0.0, ROAD_TO_V9 A4):
+		// the v4.2.0 base trained the GB anchor slot, so postcode-gb.bin returned — the #1467-era
+		// "declares none" posture now lives only on en-nz (no NZ postcode extract exists).
 		expect(await readDeclaredArtifactFile(workspacePath("neural-weights-en-us"))).toMatchObject({
 			file: "postcode-us.bin",
 		})
@@ -131,10 +131,10 @@ describe("unfedAnchorDetail — whether an unfed anchor channel is worth a warni
 	})
 
 	it("stays SILENT for a package that declares no binary — the #1516 false alarm", async () => {
-		// en-gb's shape. Its card says `requires.anchor.required: true` (about the shared encoder) and ships no
-		// binary on purpose, and the old condition read only the first half — so every process that loaded this
-		// overlay printed an anchor-off warning naming no package, which an operator whose primary bin was
-		// present and feeding could only read as being about the primary.
+		// en-gb's shape. Its card says `requires.anchor.required: true` (about the shared encoder)
+		// and ships no binary on purpose, and the old condition read only the first half — so every
+		// process that loaded this overlay printed an anchor-off warning naming no package, which an
+		// operator whose primary bin was present and feeding could only read as being about the primary.
 		const dir = packageDir({
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — deliberate" },

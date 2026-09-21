@@ -60,7 +60,8 @@ import {
 	resolveCandidateDBPath,
 } from "#resolver-backend"
 /**
- * Default per-state database root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`).
+ * Default per-state database root + interp calibration — mirrors the express
+ * server's defaults (`GeocodeRouter.ts`).
  */
 const DATA_ROOT = mailwomanDataRoot()
 
@@ -75,14 +76,14 @@ interface GeocodeDepsBundle {
 }
 
 /**
- * Same WOF-path resolution as the express `GeocodeRouter`/`HealthRouter` (env override, else the conventional
- * databases).
+ * Same WOF-path resolution as the express `GeocodeRouter`/`HealthRouter`
+ * (env override, else the conventional databases).
  */
 async function wofPaths(): Promise<string[]> {
 	const env = $public.MAILWOMAN_WOF_DB
 
-	// The env override is comma-split and probed like the convention set: a listed database that is not on
-	// disk is dropped here rather than handed to the resolver to fail on open.
+	// The env override is comma-split and probed like the convention set: a listed database
+	// that is not on disk is dropped here rather than handed to the resolver to fail on open.
 	const explicit = env ? extractDelimited(env) : undefined
 
 	return await existingWOFDatabasePaths(explicit)
@@ -100,8 +101,8 @@ function buildPreflightMessage(): string {
 }
 
 /**
- * Best-effort model-card read: env override → installed weights package → dev-tree fallback. Ported from
- * `HealthRouter`.
+ * Best-effort model-card read: env override → installed weights package → dev-tree fallback.
+ * Ported from `HealthRouter`.
  */
 async function readModelCard(): Promise<Record<string, unknown> | null> {
 	const candidates: string[] = []
@@ -111,12 +112,13 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 	}
 
 	try {
-		// Native ESM resolution of the weights package's card. `@mailwoman/neural-weights-*` packages carry no `exports`
-		// map, so the subpath resolves as a plain file inside the package, and (unlike `node:module`'s
-		// `findPackageJSON`) `import.meta.resolve` realpaths through the workspace symlink — the same string the CJS
-		// `require.resolve` this replaced returned. It does not throw for a missing file inside a resolvable package,
-		// only for an unresolvable package. the `pathExists` below already checks every candidate, so that is a no-op
-		// here.
+		// Native ESM resolution of the weights package's card.
+		// `@mailwoman/neural-weights-*` packages carry no `exports` map, so the subpath resolves
+		// as a plain file inside the package, and (unlike `node:module`'s `findPackageJSON`)
+		// `import.meta.resolve` realpaths through the workspace symlink — the same string the
+		// CJS `require.resolve` this replaced returned. It does not throw for a missing file
+		// inside a resolvable package, only for an unresolvable package. the `pathExists`
+		// below already checks every candidate, so that is a no-op here.
 		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
 		/* package not resolvable from here — fall through */
@@ -140,8 +142,8 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 }
 
 /**
- * Count canonical per-state databases (`<prefix>-us-<2-letter>.db`) in a data subdir. 0 if absent. Ported from
- * `HealthRouter`.
+ * Count canonical per-state databases (`<prefix>-us-<2-letter>.db`) in a data
+ * subdir. 0 if absent. Ported from `HealthRouter`.
  */
 async function countDatabases(subdir: string, prefix: string): Promise<number> {
 	try {
@@ -156,14 +158,15 @@ async function countDatabases(subdir: string, prefix: string): Promise<number> {
 }
 
 /**
- * The `/health` data block: model card + data-root inventory. Ported from `HealthRouter`'s `healthHandler`. Always
- * available — reads files best-effort and never throws, regardless of preflight status.
+ * The `/health` data block: model card + data-root inventory.
+ * Ported from `HealthRouter`'s `healthHandler`. Always available — reads files best-effort
+ * and never throws, regardless of preflight status.
  */
 async function buildHealthData(): Promise<HealthData> {
 	const card = await readModelCard()
-	// The express HealthRouter existence-filtered here where GeocodeRouter's wofPaths() didn't (for
-	// env-supplied paths); this diagnostic field keeps the health-side behavior (no phantom env paths in
-	// "what's deployed").
+	// The express HealthRouter existence-filtered here where GeocodeRouter's wofPaths()
+	// didn't (for env-supplied paths); this diagnostic field keeps the health-side
+	// behavior (no phantom env paths in "what's deployed").
 	const wofDBs: string[] = []
 
 	for (const p of await wofPaths()) {
@@ -212,7 +215,8 @@ function oneGeocode(
 }
 
 /**
- * Pull the street node's resolution tier (if any) for the metric. Ported verbatim from `GeocodeRouter`.
+ * Pull the street node's resolution tier (if any) for the metric.
+ * Ported verbatim from `GeocodeRouter`.
  */
 function collectStreetTier(
 	node: AddressTree["roots"][number]
@@ -240,17 +244,19 @@ export interface ServeEngine {
 }
 
 /**
- * Build the wired `mailwoman serve` engine. Awaited once at boot (unlike express's lazy per-request `getDeps()`), so a
- * misconfigured deployment reports its preflight failure before the process starts listening — the caller (the `serve`
- * command) decides whether to boot degraded (parse+health only) or exit friendly.
+ * Build the wired `mailwoman serve` engine. Awaited once at boot
+ * (unlike express's lazy per-request `getDeps()`), so a misconfigured deployment reports its
+ * preflight failure before the process starts listening — the caller (the `serve` command)
+ * decides whether to boot degraded (parse+health only) or exit friendly.
  */
 export async function createServeEngine(): Promise<ServeEngine> {
-	// `health` reads files best-effort and never throws — wired unconditionally, matching `HealthRouter`'s "answers even
-	// when broken" interface.
+	// `health` reads files best-effort and never throws — wired unconditionally,
+	// matching `HealthRouter`'s "answers even when broken" interface.
 	const health: MailwomanAPIEngine["health"] = () => buildHealthData()
 
-	// Parse needs only the model weights — not the gazetteer. Load them independently of the WOF-data check below so
-	// `/v1/parse` answers whenever weights resolve, even on a geocode-degraded boot. The classifier instance loaded
+	// Parse needs only the model weights — not the gazetteer.
+	// Load them independently of the WOF-data check below so `/v1/parse` answers whenever
+	// weights resolve, even on a geocode-degraded boot. The classifier instance loaded
 	// here is reused by the geocode stack below — weights load once per boot.
 	let parse: MailwomanAPIEngine["parse"]
 	let neuralMod: typeof import("@mailwoman/neural") | undefined
@@ -301,11 +307,13 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	}
 
 	const paths = await wofPaths()
-	// Candidate backend → country-agnostic default (demo's global, population-first behavior); a per-request `country`
-	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin database) is a valid boot
-	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight check below checks both,
-	// mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` condition rather than `GeocodeRouter`'s WOF-only check.
-	// This check governs geocode/batch/resolveTree/reload only — `parse` is already wired above and unaffected.
+	// Candidate backend → country-agnostic default (demo's global, population-first behavior);
+	// a per-request `country` still scopes. FTS backend keeps the US default.
+	// (#170) A candidate DB alone (no WOF admin database) is a valid boot configuration —
+	// `createResolverBackend` prefers it over `wofPaths` — so the preflight check below checks both,
+	// mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` condition rather than
+	// `GeocodeRouter`'s WOF-only check. This check governs geocode/batch/resolveTree/reload
+	// only — `parse` is already wired above and unaffected.
 	const candidateDB = await resolveCandidateDBPath()
 
 	if (!paths.length && !candidateDB) {
@@ -319,20 +327,22 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	const databases = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
 	const deps: GeocodeDepsBundle = { classifier, resolver, databases, defaultCountry: candidateDB ? undefined : "US" }
 
-	// Route records the whole-call metric already (`@mailwoman/api`'s `routes.ts`) — the engine records nothing extra
-	// here. Ported from `GeocodeRouter`'s `singleHandler`. The cast mirrors `@mailwoman/api/routes.ts`'s established
-	// "documented wire shape looser than the domain type" idiom — `GeocodeOutcome` is a deliberately loose passthrough.
+	// Route records the whole-call metric already (`@mailwoman/api`'s `routes.ts`) —
+	// the engine records nothing extra here. Ported from `GeocodeRouter`'s `singleHandler`.
+	// The cast mirrors `@mailwoman/api/routes.ts`'s established "documented wire shape looser
+	// than the domain type" idiom — `GeocodeOutcome` is a deliberately loose passthrough.
 	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts?.inputMode)
 
 	// Sequential loop — results land in input order. a thrown row is isolated to its own
 	// `{ input, error }` slot. Rows are trimmed here (the route passes the raw validated array through).
 	//
-	// This was a bounded-concurrency worker pool (`MAILWOMAN_BATCH_CONCURRENCY`, default 8) until
-	// 2026-07-16. The pool was measured at 1.00x — a geocode cannot overlap another in-process, because
-	// `onnxruntime-node`'s `session.run()` blocks the JS thread rather than releasing to the libuv pool,
-	// and `node:sqlite` reads are synchronous. The pool bought nothing but the appearance of tuning, so
-	// it's a plain loop now. To actually parallelize, cross a thread boundary — see
-	// `mailwoman/geocode-stream.ts`. Receipts: `docs/engineering/reference/performance.mdx`.
+	// This was a bounded-concurrency worker pool (`MAILWOMAN_BATCH_CONCURRENCY`, default 8)
+	// until 2026-07-16. The pool was measured at 1.00x — a geocode cannot overlap another
+	// in-process, because `onnxruntime-node`'s `session.run()` blocks the JS thread
+	// rather than releasing to the libuv pool, and `node:sqlite` reads are synchronous.
+	// The pool bought nothing but the appearance of tuning, so it's a plain loop now.
+	// To actually parallelize, cross a thread boundary — see `mailwoman/geocode-stream.ts`.
+	// Receipts: `docs/engineering/reference/performance.mdx`.
 	const batch: MailwomanAPIEngine["batch"] = async (addresses, opts) => {
 		// Decision A endpoint default: batch rows are the record register.
 		const inputMode = opts?.inputMode ?? "formatted"
@@ -356,9 +366,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		return { results }
 	}
 
-	// Metrics are the engine's own responsibility here — unlike `/v1/geocode`, the route wraps no try/catch around
-	// `resolveTree` (it lets a fault fall through to the app's 500 safety net), so the tier metric and the rethrow both
-	// happen here. Ported from `GeocodeRouter`'s `resolveTreeHandler`.
+	// Metrics are the engine's own responsibility here — unlike `/v1/geocode`, the route wraps no
+	// try/catch around `resolveTree` (it lets a fault fall through to the app's 500 safety net), so the
+	// tier metric and the rethrow both happen here. Ported from `GeocodeRouter`'s `resolveTreeHandler`.
 	const resolveTree: MailwomanAPIEngine["resolveTree"] = async (tree, rawOpts) => {
 		const incomingOpts = (rawOpts ?? {}) as ResolveOpts
 		const t0 = performance.now()
@@ -372,9 +382,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
 				...(addressPoints ? { addressPoints } : {}),
 				// #374 calibration ladder: explicit incoming factor (instrument override, survives the spread) →
-				// the artifact's own header value (`interpolation.radiusCalibration`, read at database open — the
-				// resolver consumes it directly, nothing passed here) → the in-code per-region table for databases
-				// predating the `interp_calibration` metadata table.
+				// the artifact's own header value (`interpolation.radiusCalibration`, read at database
+				// open — the resolver consumes it directly, nothing passed here) → the in-code
+				// per-region table for databases predating the `interp_calibration` metadata table.
 				...(interpolation
 					? {
 							interpolation,

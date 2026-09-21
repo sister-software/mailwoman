@@ -60,7 +60,7 @@ export {
 
 export type { ResolvedPostcodeHit, ResolvedSpecificityInput } from "#admin/winner"
 
-// The type interface + placetype helpers live in core (pure types, keep core a leaf). Re-export so
-// consumers get the whole surface from `@mailwoman/resolver`.
+// The type interface + placetype helpers live in core (pure types, keep core a leaf).
+// Re-export so consumers get the whole surface from `@mailwoman/resolver`.
 
 export * from "#rerank"

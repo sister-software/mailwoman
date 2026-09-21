@@ -58,8 +58,9 @@ import { classifyWhitespaceTransformation } from "mailwoman/eval-harness/conform
 import { describe, expect, it } from "vitest"
 
 /**
- * Committed board inputs, verbatim. Quoted here rather than loaded so a test failure shows the exact text under
- * discussion; `nfc-nfd-suite.test.ts` is what proves the suite's own rows still match the corpus.
+ * Committed board inputs, verbatim. Quoted here rather than loaded so a test
+ * failure shows the exact text under discussion; `nfc-nfd-suite.test.ts` is what
+ * proves the suite's own rows still match the corpus.
  */
 const DE_NIPPES = "Neusser Str. 12, Nippes, 50733 Köln"
 const FR_OPERA = "Avenue de l’Opéra"
@@ -72,14 +73,16 @@ const decompose = CANONICAL_TRANSFORMATION_BY_NAME.nfd
 const compose = CANONICAL_TRANSFORMATION_BY_NAME.nfc
 
 /**
- * The Hanoi row with its first accented word decomposed and every later one left composed — a query written in neither
- * canonical form, and therefore canonically equivalent to the base while being reproducible from neither
- * transformation's name. It is the shape a string assembled from two differently-normalized sources arrives in.
+ * The Hanoi row with its first accented word decomposed and every later one left
+ * composed — a query written in neither canonical form, and therefore canonically
+ * equivalent to the base while being reproducible from neither transformation's name.
+ * It is the shape a string assembled from two differently-normalized sources arrives in.
  */
 const VN_PARTLY = VN_LY_THAI_TO.replace("Lý", decompose("Lý"))
 
 /**
- * A string's code points, hex, space-separated. The only reviewable way to state what a decomposition produced.
+ * A string's code points, hex, space-separated. The only reviewable way to
+ * state what a decomposition produced.
  */
 function codePoints(text: string): string {
 	return [...text].map((character) => character.codePointAt(0)!.toString(16).padStart(4, "0")).join(" ")
@@ -121,8 +124,8 @@ describe("the canonical forms", () => {
 	})
 
 	it("splits a base letter carrying two stacked marks into three code points", () => {
-		// Vietnamese Ổ is O plus a circumflex plus a hook above, so this query's decomposition grows by more than
-		// one mark per accented letter — the shape a one-mark-per-letter assumption gets wrong.
+		// Vietnamese Ổ is O plus a circumflex plus a hook above, so this query's decomposition grows by
+		// more than one mark per accented letter — the shape a one-mark-per-letter assumption gets wrong.
 		expect(codePoints(decompose("Ổ"))).toBe("004f 0302 0309")
 		expect([...decompose(VN_LY_THAI_TO)].length).toBeGreaterThan([...VN_LY_THAI_TO].length + 1)
 	})
@@ -339,10 +342,11 @@ describe("a seeded normalization regression", () => {
 	/**
 	 * Two pipeline stand-ins differing in one thing: whether Stage 1 composed before the parse.
 	 *
-	 * The leaky one echoes the query's own bytes into the component values, which is what a pipeline that skipped NFC
-	 * produces. the composing one applies Stage 1 first, which is what the shipped one does. Seeding the regression
-	 * rather than waiting for one is what proves the failure line carries enough to diagnose from — and running one
-	 * fixture through both is what shows the reading is about Stage 1 rather than about the row.
+	 * The leaky one echoes the query's own bytes into the component values, which is what
+	 * a pipeline that skipped NFC produces. the composing one applies Stage 1 first,
+	 * which is what the shipped one does. Seeding the regression rather than waiting for one is
+	 * what proves the failure line carries enough to diagnose from — and running one fixture
+	 * through both is what shows the reading is about Stage 1 rather than about the row.
 	 */
 	function observer(stage1: (query: string) => string): ConformanceObserver {
 		return async (query) => {

@@ -23,16 +23,18 @@ import { changeMode, movePath, removePath, removePathIfPresent } from "@mailwoma
 import { basename, type PathBuilderLike } from "path-ts"
 
 /**
- * The one capability {@link assertDatabaseIntegrity} needs. Narrowing to it rather than naming a handle type lets a
- * `DatabaseClient` satisfy the parameter with no import and no cast.
+ * The one capability {@link assertDatabaseIntegrity} needs.
+ * Narrowing to it rather than naming a handle type lets a `DatabaseClient` satisfy
+ * the parameter with no import and no cast.
  */
 type IntegrityProbe = Pick<DatabaseSync, "prepare">
 
 /**
- * `node:sqlite` via {@link process.getBuiltinModule} — invisible to bundlers. A static import here would ride the
- * `@mailwoman/core/utils` barrel into every consumer, and the docs' plugin loader (which transpiles `docusaurus.config`
- * imports) can't resolve `node:sqlite` (CI: "Cannot find module 'sqlite'"). The builtin accessor keeps `node:sqlite`
- * out of the static import graph with zero resolve surface.
+ * `node:sqlite` via {@link process.getBuiltinModule} — invisible to bundlers.
+ * A static import here would ride the `@mailwoman/core/utils` barrel into every consumer,
+ * and the docs' plugin loader (which transpiles `docusaurus.config` imports) can't resolve
+ * `node:sqlite` (CI: "Cannot find module 'sqlite'"). The builtin accessor keeps
+ * `node:sqlite` out of the static import graph with zero resolve surface.
  */
 function sqlite(): typeof import("node:sqlite") {
 	return process.getBuiltinModule("node:sqlite")
@@ -60,8 +62,8 @@ export async function isSealed(path: PathBuilderLike): Promise<boolean> {
 }
 
 /**
- * Finalize a built DB: WAL-checkpoint → `journal_mode = delete` → remove `-wal`/`-shm` sidecars → `chmod 0o444`.
- * Idempotent. Throws if the checkpoint cannot complete (another writer holds the DB).
+ * Finalize a built DB: WAL-checkpoint → `journal_mode = delete` → remove `-wal`/`-shm` sidecars →
+ * `chmod 0o444`. Idempotent. Throws if the checkpoint cannot complete (another writer holds the DB).
  */
 export async function sealDatabase(path: PathBuilderLike): Promise<void> {
 	// A previously sealed artifact needs the write bit back for the journal-mode switch.
@@ -98,10 +100,11 @@ export async function sealDatabase(path: PathBuilderLike): Promise<void> {
 /**
  * Verify a freshly-built database is not corrupt, immediately before it is sealed and published.
  *
- * Belongs beside {@link sealDatabase} for the same reason `swapDatabaseIntoPlace` does: the check is part of the
- * built-artifact lifecycle, and every builder was running it from its own copy. `integrity_check` answers with the
- * single row `{ integrity_check: "ok" }` on a healthy file and one row per problem otherwise, so only the first matters
- * — a builder that reads the column and compares it to `"ok"` has done the whole check.
+ * Belongs beside {@link sealDatabase} for the same reason `swapDatabaseIntoPlace` does:
+ * the check is part of the built-artifact lifecycle, and every builder was running it from
+ * its own copy. `integrity_check` answers with the single row `{ integrity_check: "ok" }`
+ * on a healthy file and one row per problem otherwise, so only the first matters —
+ * a builder that reads the column and compares it to `"ok"` has done the whole check.
  *
  * @throws When the database reports anything other than `ok`, naming the artifact and what SQLite said.
  */
@@ -115,11 +118,12 @@ export function assertDatabaseIntegrity(db: IntegrityProbe, artifact: PathBuilde
 }
 
 /**
- * Refuse a write-mode open of a sealed artifact, naming the rebuild command instead of letting SQLite answer
- * `SQLITE_READONLY`.
+ * Refuse a write-mode open of a sealed artifact, naming the rebuild command
+ * instead of letting SQLite answer `SQLITE_READONLY`.
  *
- * The open itself lives in `@mailwoman/sqlite/sealed` — `openBuiltClient`, which every caller uses. This half stays
- * here because it is a filesystem predicate, and because this module reaches `node:sqlite` through
+ * The open itself lives in `@mailwoman/sqlite/sealed` — `openBuiltClient`,
+ * which every caller uses. This half stays here because it is a filesystem predicate,
+ * and because this module reaches `node:sqlite` through
  * {@link process.getBuiltinModule} to keep the `@mailwoman/core/utils` barrel free of it.
  *
  * @throws {SealedArtifactError} When `path` is sealed.
@@ -131,13 +135,13 @@ export async function assertUnsealedForWrite(path: PathBuilderLike): Promise<voi
 /**
  * Atomically move a freshly-built database into its published location.
  *
- * The build writes to a temp path, so a mid-build crash never leaves a half-written DB at `finalPath`. This moves any
- * prior version aside, slots the new one in, then drops the old — the previous file stays intact until the replacement
- * is committed, and the `-wal`/`-shm` siblings of both paths are cleared so a stale journal can never be paired with a
- * new main file.
+ * The build writes to a temp path, so a mid-build crash never leaves a half-written DB at `finalPath`.
+ * This moves any prior version aside, slots the new one in, then drops the old — the previous
+ * file stays intact until the replacement is committed, and the `-wal`/`-shm` siblings of
+ * both paths are cleared so a stale journal can never be paired with a new main file.
  *
- * Sealing (`sealDatabase`) happens on the temp file before the swap: a sealed artifact is what gets published, and 0444
- * does not prevent a rename.
+ * Sealing (`sealDatabase`) happens on the temp file before the swap: a sealed artifact
+ * is what gets published, and 0444 does not prevent a rename.
  */
 export async function swapDatabaseIntoPlace(tmpPath: PathBuilderLike, finalPath: PathBuilderLike): Promise<void> {
 	const tmpPathString = tmpPath.toString()
@@ -155,8 +159,8 @@ export async function swapDatabaseIntoPlace(tmpPath: PathBuilderLike, finalPath:
 	try {
 		await movePath(tmpPathString, finalPathString)
 	} catch (error) {
-		// The prior version is already aside at this point — a failed forward rename must not leave
-		// the slot empty while a restorable artifact sits one rename away.
+		// The prior version is already aside at this point — a failed forward rename must
+		// not leave the slot empty while a restorable artifact sits one rename away.
 		if ((await pathExists(aside)) && !(await pathExists(finalPathString))) {
 			await movePath(aside, finalPathString)
 		}

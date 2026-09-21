@@ -15,8 +15,8 @@ import { orgTokens, type NPIPrimary } from "#tools/nppes/org-name"
 import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C } from "#tools/shared"
 
 /**
- * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityID` the site-level entity-level
- * truth (subpart-collapsed).
+ * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth,
+ * `entityID` the site-level entity-level truth (subpart-collapsed).
  */
 export interface MessyRow extends Record<string, string> {
 	npi: string
@@ -51,9 +51,9 @@ export interface NPPESStateSample {
  */
 export interface NPPESSample extends NPPESStateSample {
 	/**
-	 * Corpus-wide address-frequency table — the inverse-frequency signal. Counted over every practice address in the
-	 * registry rather than just the sample, so the sharing structure is a corpus statistic rather than a sampling
-	 * artifact.
+	 * Corpus-wide address-frequency table — the inverse-frequency signal.
+	 * Counted over every practice address in the registry rather than just the sample,
+	 * so the sharing structure is a corpus statistic rather than a sampling artifact.
 	 */
 	addressFrequency: TermFrequencyTable
 }
@@ -87,9 +87,9 @@ export interface NPPESMultiSampleOptions {
 /**
  * Build the benchmark's input records from the real registry, one bucket per requested state.
  *
- * Two passes over two files, and the second one cannot break early: the address-frequency table needs every registry
- * row even after the sample is full, so the per-bucket `keptNpis.size < maxNpisPerState` test bounds only the sample
- * branch.
+ * Two passes over two files, and the second one cannot break early: the address-frequency
+ * table needs every registry row even after the sample is full, so the per-bucket
+ * `keptNpis.size < maxNpisPerState` test bounds only the sample branch.
  */
 export async function buildNPPESStateSamples(
 	options: NPPESMultiSampleOptions,
@@ -118,8 +118,8 @@ export async function buildNPPESStateSamples(
 
 	report?.(`    ${altNames.size} NPIs with ≥1 alternate name`)
 
-	// Make one full registry pass to build the global address-frequency table.
-	// address, so the sharing structure is corpus-wide rather than sample-biased) and collect every state's sample. ---
+	// Make one full registry pass to build the global address-frequency table. address, so the sharing
+	// structure is corpus-wide rather than sample-biased) and collect every state's sample. ---
 	report?.(`[B] full registry pass: address-frequency table + ${maxNpisPerState} × ${states.join("/")} sample…`)
 
 	const byState = new Map<string, NPPESStateSample>(
@@ -146,8 +146,8 @@ export async function buildNPPESStateSamples(
 			addrTotal++
 		}
 
-		// Sample: in-state NPIs with ≥1 alternate name, up to maxNpisPerState — no early break (the table
-		// needs the full pass).
+		// Sample: in-state NPIs with ≥1 alternate name, up to maxNpisPerState —
+		// no early break (the table needs the full pass).
 		const npi = norm(r[C.npi])
 		const bucket = byState.get(norm(r[C.pState]).toUpperCase())
 
@@ -168,17 +168,18 @@ export async function buildNPPESStateSamples(
 
 				// the NPI's registrant — shared across its records
 				// #625: the taxonomy-code set (up to 15 slots), whitespace-joined — identical across the NPI's
-				// records by construction (it's a per-NPI registry attribute), so it never splits one entity.
-				// it only separates co-located distinct providers whose sets are disjoint.
+				// records by construction (it's a per-NPI registry attribute), so it never splits one
+				// entity. it only separates co-located distinct providers whose sets are disjoint.
 				const taxonomy = C.taxonomy
 					.map((col) => norm(r[col]))
 					.filter(isPresent)
 					.join(" ")
 
-				// Entity-level (site) truth: same org + same physical address. Subparts (NPPES
-				// "Is Organization Subpart" + parent LBN/TIN) collapse to their parent, so the matcher isn't
-				// charged for correctly fusing one org's many subpart-NPIs at a site. an NPI's mailing-vs-
-				// practice records stay distinct sites. orgKey = parent identity for subparts, else the NPI
+				// Entity-level (site) truth: same org + same physical address.
+				// Subparts (NPPES "Is Organization Subpart" + parent LBN/TIN) collapse
+				// to their parent, so the matcher isn't charged for correctly fusing one
+				// org's many subpart-NPIs at a site. an NPI's mailing-vs- practice records
+				// stay distinct sites. orgKey = parent identity for subparts, else the NPI
 				// (independent orgs sharing an address stay distinct — the conservative choice).
 				const isSubpart = norm(r[C.isSubpart]).toUpperCase() === "Y"
 				const parentKey = `${norm(r[C.parentLBN])}|${norm(r[C.parentTIN])}`.toLowerCase()

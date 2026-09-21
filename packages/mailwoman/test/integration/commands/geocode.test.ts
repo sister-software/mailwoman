@@ -60,10 +60,11 @@ const CLI_TEST_TIMEOUT_MS = 120_000
 /**
  * Vitest's per-test budget for this whole file.
  *
- * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
- * assertion runs and then queues behind {@link withCLISpawnLockAsync}. A per-test annotation has to be remembered on
- * each new test, and the one that forgets inherits the global 15s — which kills the test before the thing being
- * measured can report, surfacing as a bare timeout with no attribution.
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
+ * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
+ * A per-test annotation has to be remembered on each new test, and the one that forgets
+ * inherits the global 15s — which kills the test before the thing being measured
+ * can report, surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
@@ -172,9 +173,9 @@ describe("geocode argument validation", () => {
 				runFile(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
 					encoding: "utf8",
 					// Unset the env var and point the data root at an empty dir: since the proximity-bias
-					// pass, geocode auto-attaches the wofExtractPaths default set when the env is absent —
-					// on a standard data root that now succeeds (the new interface). The error interface
-					// only survives when no default database exists either.
+					// pass, geocode auto-attaches the wofExtractPaths default set when the env
+					// is absent — on a standard data root that now succeeds (the new interface).
+					// The error interface only survives when no default database exists either.
 					env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 				})
@@ -197,8 +198,8 @@ describe("geocode argument validation", () => {
 const hasTxDatabases = hasTxAddressPoints && hasTxInterpolation
 
 /**
- * Integration: compiled CLI geocodes a real Round Rock, TX address with explicit database overrides. Expects a
- * street-level coordinate near 30.5, -97.6 (Round Rock area).
+ * Integration: compiled CLI geocodes a real Round Rock, TX address with explicit database overrides.
+ * Expects a street-level coordinate near 30.5, -97.6 (Round Rock area).
  */
 describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 	`geocode integration — ${wofPath} + TX databases`,
@@ -272,10 +273,10 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 		}, 60_000)
 
 		test("--format=json stdout is machine-parseable even with >80-col lines (Ink wrap regression)", async () => {
-			// "Toledo Ohio" is a route_pair query: its intent_markers[].message is a ~140-char JSON
-			// string. Before writeRawStdout (2026-08-07), Ink's <Text> renderer word-wrapped piped
-			// output at 80 cols, inserting real newlines inside the JSON string and breaking
-			// JSON.parse. This test fails against the unfixed CLI.
+			// "Toledo Ohio" is a route_pair query: its intent_markers[].message is a ~140-char JSON string.
+			// Before writeRawStdout (2026-08-07), Ink's <Text> renderer word-wrapped piped output
+			// at 80 cols, inserting real newlines inside the JSON string and breaking JSON.parse.
+			// This test fails against the unfixed CLI.
 			const { stdout } = await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode", "Toledo Ohio", `--resolve-db=${wofPath}`], {
 					encoding: "utf8",
@@ -348,7 +349,8 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 )
 
 /**
- * Admin-only degradation: when no database is provided, geocode still returns a coordinate from the WOF admin centroid.
+ * Admin-only degradation: when no database is provided, geocode still returns
+ * a coordinate from the WOF admin centroid.
  */
 describe.skipIf(!hasCLICompiled || !hasWOFDB)(`geocode admin-only degradation — ${wofPath}`, () => {
 	test("geocodes to admin centroid when no databases provided", async () => {

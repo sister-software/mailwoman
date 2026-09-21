@@ -12,8 +12,8 @@ import { writeWeightsRightsFiles } from "#weights/rights/write"
 const rightsFileState = z.object({ file: z.string(), changed: z.boolean() })
 
 /**
- * `release.write-rights-files` — writes inside the checkout. Listed in `registry.ts`; the description on the operation
- * is what `mwops` prints.
+ * `release.write-rights-files` — writes inside the checkout.
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const writeRightsFiles = defineOperation({
 	id: "release.write-rights-files",

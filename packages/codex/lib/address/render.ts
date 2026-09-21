@@ -30,15 +30,16 @@ import type { ComponentTag } from "#component"
 export type ComponentDict = Partial<Record<ComponentTag, string>>
 
 /**
- * One rendered piece. `tag` is null for a connector, which is what makes a rendering re-joinable at any separator
- * without re-deriving which characters were structural.
+ * One rendered piece. `tag` is null for a connector, which is what makes a rendering
+ * re-joinable at any separator without re-deriving which characters were structural.
  */
 export interface AddressPiece {
 	readonly tag: ComponentTag | null
 	readonly text: string
 	/**
-	 * Set on a line break the layout marked soft — one that collapses to a space on a single line rather than taking the
-	 * system's join. Absent on every other piece, so a reader testing `text === "\n"` still sees every break.
+	 * Set on a line break the layout marked soft — one that collapses to a space on a
+	 * single line rather than taking the system's join. Absent on every other piece,
+	 * so a reader testing `text === "\n"` still sees every break.
 	 */
 	readonly softBreak?: true
 }
@@ -56,9 +57,10 @@ export interface AddressRendering {
 	 */
 	readonly placed: readonly ComponentTag[]
 	/**
-	 * Tags the dict carried a value for that the layout has no slot for — named rather than silently dropped. France
-	 * absorbing a region into its postcode line is the common case, and a caller aligning components against the output
-	 * needs to know the difference between "not printed" and "not supplied".
+	 * Tags the dict carried a value for that the layout has no slot for — named
+	 * rather than silently dropped. France absorbing a region into its postcode line
+	 * is the common case, and a caller aligning components against the output needs to
+	 * know the difference between "not printed" and "not supplied".
 	 */
 	readonly unplaced: readonly ComponentTag[]
 }
@@ -99,11 +101,12 @@ function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly Ad
 /**
  * Which of a run of surviving connectors to print.
  *
- * A run forms when the slots between two connectors all render nothing, so what is left is several separators with no
- * values between them. The strongest wins: a connector carrying punctuation is a harder boundary than a space, and
- * printing the space would join two values the layout meant to separate. `Calle Mayor, 12` keeps its comma when the
- * street suffix is absent, and `New York, 10118` keeps its comma when the region is. the space forms of both would read
- * as one value.
+ * A run forms when the slots between two connectors all render nothing,
+ * so what is left is several separators with no values between them.
+ * The strongest wins: a connector carrying punctuation is a harder boundary than a space,
+ * and printing the space would join two values the layout meant to separate.
+ * `Calle Mayor, 12` keeps its comma when the street suffix is absent, and `New York, 10118`
+ * keeps its comma when the region is. the space forms of both would read as one value.
  */
 function strongestConnector(run: readonly string[]): string {
 	return run.find((text) => /\S/u.test(text)) ?? run[0]!
@@ -153,8 +156,8 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 }
 
 function evaluateLines(layout: AddressLayout, components: ComponentDict): readonly AddressPiece[] {
-	// The layout index travels with the line, because `softBreakBefore` names the line a break precedes and the filter
-	// below renumbers whatever survives it.
+	// The layout index travels with the line, because `softBreakBefore` names the line
+	// a break precedes and the filter below renumbers whatever survives it.
 	const lines = layout.lines
 		.map((line, index) => ({ index, pieces: evaluateLine(line, components) }))
 		.filter((line) => line.pieces.length)
@@ -188,9 +191,9 @@ export function renderAddress(layout: AddressLayout, components: ComponentDict):
 /**
  * Join a rendering into one string, replacing its line breaks with `separator`.
  *
- * `softSeparator` replaces a break the layout marked soft. It defaults to `separator`, so a caller that does not know
- * about soft breaks gets what it always got, and a multi-line render passes `"\n"` for both because a soft break is a
- * real break down the page.
+ * `softSeparator` replaces a break the layout marked soft.
+ * It defaults to `separator`, so a caller that does not know about soft breaks gets what it always got,
+ * and a multi-line render passes `"\n"` for both because a soft break is a real break down the page.
  */
 export function joinRendering(rendering: AddressRendering, separator = "\n", softSeparator = separator): string {
 	return rendering.pieces

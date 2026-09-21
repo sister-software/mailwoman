@@ -23,8 +23,8 @@ const CANDIDATE_DB = String(dataRootPath("wof", "candidate.db"))
 const haveArtifacts =
 	(await pathExists(CANDIDATE_DB)) && (await pathExists(dataRootPath("weights", "cjk", "model.onnx")))
 
-// Kamiichi, Toyama: the entrance point of `富山県中新川郡上市町大岩148-7` on the JP board. the municipality centroid the
-// served path answers sits 4.9 km from it.
+// Kamiichi, Toyama: the entrance point of `富山県中新川郡上市町大岩148-7` on the JP board. the
+// municipality centroid the served path answers sits 4.9 km from it.
 const KAMIICHI = { lat: 36.658101, lon: 137.384089 }
 
 describe.skipIf(!haveArtifacts)("createGeocodeSession — a bare kanji line under --locale en-US (#2164 routing)", () => {

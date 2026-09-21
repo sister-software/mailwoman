@@ -30,13 +30,13 @@ import { readReleaseManifest } from "#data/release"
 /**
  * The two shapes a bundle's artifacts carry a publisher stamp in, as one schema.
  *
- * It names both tables `BundleSourceCensus.table` can hold rather than describing one artifact, so the table a record
- * names is a member of `keyof CensusSchema` and Kysely checks the query without a cast. Only the stamp column is
- * declared on each: this reader selects that column and a count, and a column it never reads would be a claim about a
- * schema nobody checks.
+ * It names both tables `BundleSourceCensus.table` can hold rather than describing one artifact,
+ * so the table a record names is a member of `keyof CensusSchema` and Kysely checks the query
+ * without a cast. Only the stamp column is declared on each: this reader selects that column
+ * and a count, and a column it never reads would be a claim about a schema nobody checks.
  *
- * An artifact shape added to the union in `BundleSourceCensus` is a compile error here until it is added here too,
- * which is the point of the union.
+ * An artifact shape added to the union in `BundleSourceCensus` is a compile error here
+ * until it is added here too, which is the point of the union.
  */
 interface CensusSchema {
 	address_point: { source: string }
@@ -57,26 +57,27 @@ interface SourceTally {
 export interface BundleSourceCensusResult {
 	bundle: string
 	/**
-	 * Absent when the bundle declares no {@link BundleSourceCensus}, which says its artifacts carry no publisher column
-	 * rather than that a census found nothing.
+	 * Absent when the bundle declares no {@link BundleSourceCensus}, which says its
+	 * artifacts carry no publisher column rather than that a census found nothing.
 	 */
 	status: "censused" | "none-recorded-in-the-artifacts" | "nothing-on-disk"
 	/**
-	 * Artifacts read, and artifacts the data root does not hold. A census over part of a bundle is reported as partial
-	 * rather than presented as the bundle's composition.
+	 * Artifacts read, and artifacts the data root does not hold.
+	 * A census over part of a bundle is reported as partial rather than presented as the bundle's composition.
 	 */
 	artifactsRead: number
 	artifactsAbsent: number
 	/**
-	 * Artifacts the census's declared family excludes. They are outside what this census covers rather than missing from
-	 * it, so they neither reduce the share denominator nor read as a failure.
+	 * Artifacts the census's declared family excludes. They are outside what this census covers
+	 * rather than missing from it, so they neither reduce the share denominator nor read as a failure.
 	 */
 	artifactsOutOfScope: number
 	tallies: SourceTally[]
 	totalRows: number
 	/**
-	 * What could not be read, one message per artifact. An artifact present but unreadable is named here rather than
-	 * being counted as absent, since the two mean different things to somebody checking a download.
+	 * What could not be read, one message per artifact. An artifact present
+	 * but unreadable is named here rather than being counted as absent, since the two
+	 * mean different things to somebody checking a download.
 	 */
 	problems: string[]
 }
@@ -84,8 +85,8 @@ export interface BundleSourceCensusResult {
 /**
  * The stamps in one artifact, or a message saying why it could not be read.
  *
- * A `layer_manifest` carries one row, so its `count(*)` is 1 and the tally reports one manifest row rather than a row
- * count. {@link BundleSourceCensus.shape} is what tells a caller which it is holding.
+ * A `layer_manifest` carries one row, so its `count(*)` is 1 and the tally reports one manifest row
+ * rather than a row count. {@link BundleSourceCensus.shape} is what tells a caller which it is holding.
  */
 async function tallyArtifact(
 	path: string,
@@ -111,8 +112,9 @@ async function tallyArtifact(
 /**
  * Census one bundle against the copy in `dataRoot`.
  *
- * The artifact paths come from {@link resolveBundleArtifacts} with the release manifest applied, so a versioned
- * per-state database is read where `resolveDatabasePath` would find it rather than at its unversioned fallback.
+ * The artifact paths come from {@link resolveBundleArtifacts} with the release manifest
+ * applied, so a versioned per-state database is read where `resolveDatabasePath`
+ * would find it rather than at its unversioned fallback.
  */
 export async function censusBundleSources(bundle: DataBundle, dataRoot: string): Promise<BundleSourceCensusResult> {
 	const census = bundle.sourceCensus
@@ -186,8 +188,9 @@ export async function censusBundleSources(bundle: DataBundle, dataRoot: string):
 /**
  * One census as lines for a terminal.
  *
- * A share is printed only beside a census that read every artifact of its bundle. A percentage over part of a bundle
- * describes the part rather than the bundle, and the two are easy to confuse once the number is on the page.
+ * A share is printed only beside a census that read every artifact of its bundle.
+ * A percentage over part of a bundle describes the part rather than the bundle,
+ * and the two are easy to confuse once the number is on the page.
  */
 export function renderSourceCensus(result: BundleSourceCensusResult, recordedPublishers: readonly string[]): string[] {
 	const lines: string[] = [`${result.bundle}:`]

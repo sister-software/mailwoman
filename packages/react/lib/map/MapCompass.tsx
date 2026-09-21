@@ -57,8 +57,8 @@ export function MapCompass({ bearing, onResetNorth, label, className }: MapCompa
 			className={cx("mw-map-compass", facingNorth && "mw-map-compass--north", className)}
 			aria-label={label ?? "Reset bearing to north"}
 			title={label ?? "Reset bearing to north"}
-			// Out of the tab order and out of the accessibility tree while it is invisible, so a keyboard reaches only
-			// the controls a pointer can see.
+			// Out of the tab order and out of the accessibility tree while it is invisible,
+			// so a keyboard reaches only the controls a pointer can see.
 			aria-hidden={facingNorth}
 			tabIndex={facingNorth ? -1 : 0}
 			onClick={onResetNorth}

@@ -17,15 +17,15 @@ import { BDCFilingDataType, type BDCFile } from "#sdk/common"
 /**
  * Download and cache an FCC BDC availability file, extracting its zip-wrapped CSV to `destinationDir`.
  *
- * Cache-if-exists: if the extracted CSV already exists at the destination path, this returns immediately without
- * issuing any network request. Otherwise it downloads the zip via `client`, extracts the CSV, writes it to
- * `destinationDir`, and returns the written path. Only the extracted CSV is ever cached — the intermediate `.zip` is
- * never written to disk.
+ * Cache-if-exists: if the extracted CSV already exists at the destination path, this returns
+ * immediately without issuing any network request. Otherwise it downloads the zip via
+ * `client`, extracts the CSV, writes it to `destinationDir`, and returns the written path.
+ * Only the extracted CSV is ever cached — the intermediate `.zip` is never written to disk.
  *
- * This file owns the cache FOR the download path, which is why `BDCClient.getArrayBuffer` switches the client's own
- * response cache off: the `existsSync`-equivalent check above is the real cache hit, and running a
- * multi-hundred-megabyte archive through a JSON-validating disk cache would write a second, unreadable copy of a file
- * already on disk here.
+ * This file owns the cache FOR the download path, which is why `BDCClient.getArrayBuffer`
+ * switches the client's own response cache off: the `existsSync`-equivalent check above is
+ * the real cache hit, and running a multi-hundred-megabyte archive through a JSON-validating
+ * disk cache would write a second, unreadable copy of a file already on disk here.
  *
  * @returns The path of the extracted (and now cached) CSV file.
  */

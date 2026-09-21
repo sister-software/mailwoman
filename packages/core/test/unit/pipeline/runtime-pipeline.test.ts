@@ -246,9 +246,9 @@ describe("runPipeline — stage composition", () => {
 			queryShape: shape,
 			postcodeRepair: true,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-			// Decision A: the pipeline passes an explicit register on every parse. The default kind
-			// classifier (no fast-path) reads structured_address → formatted. an explicit
-			// PipelineOpts.inputMode overrides (see the dedicated inputMode tests).
+			// Decision A: the pipeline passes an explicit register on every parse.
+			// The default kind classifier (no fast-path) reads structured_address → formatted.
+			// an explicit PipelineOpts.inputMode overrides (see the dedicated inputMode tests).
 			inputMode: "formatted",
 		})
 	})
@@ -390,9 +390,10 @@ describe("runPipeline — fast-path routing", () => {
 	})
 
 	it("fast-paths even when resolver is absent (fast-path tree is built from QueryShape alone)", async () => {
-		// Previously the coordinator required a resolver for fast-path to fire. As of the kind-
-		// classifier ship, the fast-path tree from QueryShape is useful standalone — a consumer who
-		// just wants the parsed structure for "10118" shouldn't be forced to pay for the classifier.
+		// Previously the coordinator required a resolver for fast-path to fire.
+		// As of the kind- classifier ship, the fast-path tree from QueryShape is useful
+		// standalone — a consumer who just wants the parsed structure for "10118"
+		// shouldn't be forced to pay for the classifier.
 		const classifier = fakeClassifier(fakeTree("10118"))
 
 		const stages: RuntimePipelineStages = {
@@ -595,10 +596,11 @@ describe("runPipeline — timing budget shape", () => {
 })
 
 describe("runPipeline — non-graceful stage failures", () => {
-	// Interface: classifier + resolver are wrapped in safe* helpers (graceful). The pre-classifier
-	// stages — detectLocale, classifyKind — are not wrapped because their failure modes indicate a
-	// genuine interface violation (locale detector returning null, kind classifier crashing on its
-	// own rules), not external-data noise. These tests pin the asymmetry as a interface.
+	// Interface: classifier + resolver are wrapped in safe* helpers (graceful).
+	// The pre-classifier stages — detectLocale, classifyKind — are not wrapped
+	// because their failure modes indicate a genuine interface violation
+	// (locale detector returning null, kind classifier crashing on its own rules),
+	// not external-data noise. These tests pin the asymmetry as a interface.
 
 	it("detectLocale throwing propagates (not swallowed)", async () => {
 		const detectLocale = vi.fn(async () => {
@@ -633,8 +635,8 @@ describe("runPipeline — non-graceful stage failures", () => {
 	})
 
 	it("resolver throwing on fast-path returns the fast-path tree unchanged (graceful)", async () => {
-		// Fast-path uses safeResolve, so a resolver failure does not propagate. The fast-path tree
-		// built from QueryShape is the fallback.
+		// Fast-path uses safeResolve, so a resolver failure does not propagate.
+		// The fast-path tree built from QueryShape is the fallback.
 		const postcodeShape: QueryShapeLite = {
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 			totalLength: 5,
@@ -717,8 +719,8 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 
 	it("uses the placer's full posterior distribution when supplied (vs the one-hot argmax)", async () => {
 		const { resolver, seen } = captureResolveOpts()
-		// A country-ambiguous in-map guess: argmax FR, but GB nearly as likely. The distribution lets the
-		// resolver break the tie with its own evidence instead of committing to FR.
+		// A country-ambiguous in-map guess: argmax FR, but GB nearly as likely.
+		// The distribution lets the resolver break the tie with its own evidence instead of committing to FR.
 		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.45, posterior: { FR: 0.45, GB: 0.4 } }))
 		await runPipeline("Birmingham", { resolver, placeCountry })
 		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.45, GB: 0.4 }, anchorWeight: 1 })
@@ -798,11 +800,13 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 
 /**
  * #40 / mailfail finding 4 — the defensive `safeClassify` wrapper caught every classifier throw and returned an empty
- * tree, which the grouper-audit then repopulated from rule-based phrase proposals. The caller got a normal-looking
- * parse with no indication the model never ran: measured on the mailfail probes, 10 of 110 inputs crashed the
- * classifier while the pipeline reported success (`size-10kb` produced a tidy five-field parse off a 3,031-node tree).
- * The interface now is that the wrapper still degrades — it does not abort the pipeline — but it records what it caught
- * on `PipelineResult.faults`, so "the model faulted" is distinguishable from "the model found nothing".
+ * tree, which the grouper-audit then repopulated from rule-based phrase proposals.
+ * The caller got a normal-looking parse with no indication the model never ran:
+ * measured on the mailfail probes, 10 of 110 inputs crashed the classifier while the pipeline
+ * reported success (`size-10kb` produced a tidy five-field parse off a 3,031-node tree).
+ * The interface now is that the wrapper still degrades — it does not abort the pipeline —
+ * but it records what it caught on `PipelineResult.faults`, so "the model faulted"
+ * is distinguishable from "the model found nothing".
  */
 describe("stage faults — a swallowed stage crash is recorded, never silent (#40)", () => {
 	const throwingClassifier = (error: unknown): AddressClassifier => ({

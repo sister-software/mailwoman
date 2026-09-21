@@ -17,7 +17,8 @@ import type { PipelineRuntime } from "#pipeline/types"
 import type { MapCanvasStyle } from "./MapCanvas.tsx"
 
 /**
- * An offline stub map style — one solid `background` layer, zero sources, zero network. Safe for headless Storybook.
+ * An offline stub map style — one solid `background` layer, zero sources, zero network.
+ * Safe for headless Storybook.
  */
 export const STUB_MAP_STYLE: MapCanvasStyle = {
 	version: 8,
@@ -36,11 +37,13 @@ export const FAKE_SUGGESTIONS: Suggestion[] = [
 ]
 
 /**
- * A fake demo runtime — the map analogue of {@link makePipelineRuntime}. It composes the pipeline fake (canned
- * parse+resolve) with the map surface: the offline stub style, a version list, a backend, an injected autocomplete, and
- * a `resolveMapPlace` that hands the selected candidate a bbox so the declarative overlays draw a marker + outline. No
- * network, no ONNX, no maplibre-at-runtime — everything is data. `runParseWithBias` delegates to the base parse (the
- * bias is ignored by the fake but present so the parameter is exercised).
+ * A fake demo runtime — the map analogue of {@link makePipelineRuntime}.
+ * It composes the pipeline fake (canned parse+resolve) with the map surface:
+ * the offline stub style, a version list, a backend, an injected autocomplete,
+ * and a `resolveMapPlace` that hands the selected candidate a bbox so the declarative
+ * overlays draw a marker + outline. No network, no ONNX, no maplibre-at-runtime —
+ * everything is data. `runParseWithBias` delegates to the base parse
+ * (the bias is ignored by the fake but present so the parameter is exercised).
  */
 export function makeFakeGeocoderRuntime(overrides: Partial<GeocoderRuntime> = {}): GeocoderRuntime {
 	const base = makePipelineRuntime()
@@ -79,7 +82,8 @@ export function makeFakeGeocoderRuntime(overrides: Partial<GeocoderRuntime> = {}
 }
 
 /**
- * A fixed, fully-populated parse+resolve result — the shared fixture behind the pipeline runtime + the result panel.
+ * A fixed, fully-populated parse+resolve result — the shared fixture behind
+ * the pipeline runtime + the result panel.
  */
 export function makeFakeParseResult(input = "350 5th Ave, New York, NY 10118"): ParseResult {
 	return {

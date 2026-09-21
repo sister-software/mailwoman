@@ -42,8 +42,9 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { join, resolvePath as resolve } from "path-ts"
 
 /**
- * How many stabilization passes the worker makes before giving up. Each pass costs two `gh` round trips (~2s), so five
- * bounds one worker's `gh` calls at ~10s of background work. A waiting worker then reads the latest payload.
+ * How many stabilization passes the worker makes before giving up.
+ * Each pass costs two `gh` round trips (~2s), so five bounds one worker's `gh` calls at
+ * ~10s of background work. A waiting worker then reads the latest payload.
  */
 const MAX_SYNC_PASSES = 5
 const LOCK_RETRY_MS = 100
@@ -156,8 +157,9 @@ export async function workerMain(
 	const dir = join(stateDir(cwd), "todo-sync")
 	const lock = join(dir, "lock")
 
-	// A worker that loses the lock must wait for its own turn. Its payload can arrive after the lock holder's final read.
-	// exiting here would leave that payload unpublished until another TodoWrite happened.
+	// A worker that loses the lock must wait for its own turn.
+	// Its payload can arrive after the lock holder's final read. exiting here would
+	// leave that payload unpublished until another TodoWrite happened.
 	if (!(await acquireLock(lock, wait))) return
 
 	try {

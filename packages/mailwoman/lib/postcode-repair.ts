@@ -40,8 +40,8 @@ const REPAIRABLE_POSTCODE_FORMATS: ReadonlySet<string> = new Set(["uk_postcode",
 const MIN_FORMAT_CONFIDENCE = 0.9
 
 /**
- * The tags the misread produces. A node with any other tag overlapping the format span vetoes the repair — the rung
- * replaces a wrong reading, never a plausible one.
+ * The tags the misread produces. A node with any other tag overlapping the format span
+ * vetoes the repair — the rung replaces a wrong reading, never a plausible one.
  */
 const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street",
@@ -63,10 +63,10 @@ function within(node: AddressNode, start: number, end: number): boolean {
 }
 
 /**
- * Repair the tree IN place when a high-confidence letter-digit postcode span carries no postcode node and every node
- * inside it is a street/house-number-family misread. Returns `true` when a repair was applied. Idempotent: a tree that
- * already carries a postcode node over the span never repairs, so the alternate-register retry path cannot
- * double-fire.
+ * Repair the tree IN place when a high-confidence letter-digit postcode span carries
+ * no postcode node and every node inside it is a street/house-number-family misread.
+ * Returns `true` when a repair was applied. Idempotent: a tree that already carries a postcode
+ * node over the span never repairs, so the alternate-register retry path cannot double-fire.
  */
 export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape): boolean {
 	let repaired = false
@@ -79,8 +79,8 @@ export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape
 		// Condition 1: the span already resolved to a postcode node somewhere — nothing to repair.
 		if (anyNode(tree, (n) => n.tag === "postcode" && overlaps(n, start, end))) continue
 
-		// Condition 2: every value-containing node touching the span is a misread-family node sitting wholly
-		// inside it. A node of any other tag, or one extending beyond the span, vetoes the repair.
+		// Condition 2: every value-containing node touching the span is a misread-family node sitting
+		// wholly inside it. A node of any other tag, or one extending beyond the span, vetoes the repair.
 		const touching = collectNodes(tree.roots, (n) => overlaps(n, start, end))
 
 		if (!touching.length) continue

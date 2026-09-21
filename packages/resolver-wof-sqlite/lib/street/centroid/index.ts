@@ -36,7 +36,8 @@ import {
 } from "#street/normalize"
 
 /**
- * The weighted-centroid + extent + provenance an aggregate probe projects. `lat` is null when nothing matched.
+ * The weighted-centroid + extent + provenance an aggregate probe projects.
+ * `lat` is null when nothing matched.
  */
 interface AggRow {
 	lat: number | null
@@ -50,7 +51,8 @@ interface AggRow {
 }
 
 /**
- * Weighted-centroid aggregate over a where-filtered set. `SUM(coord*n)/SUM(n)` reconstructs the grand centroid.
+ * Weighted-centroid aggregate over a where-filtered set.
+ * `SUM(coord*n)/SUM(n)` reconstructs the grand centroid.
  */
 const AGG_SELECT =
 	"SUM(lat * point_count) / SUM(point_count) AS lat, " +
@@ -73,15 +75,17 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 
 	/**
 	 * @param dbPath Extract path.
-	 * @param opts.streetLocale The street-normalization locale this extract was built with — must match, or every key
-	 *   misses. Defaults to `"fr"` (BAN is the French national register. the tier is FR-only today).
+	 * @param opts.streetLocale The street-normalization locale this extract was
+	 *   built with — must match, or every key misses. Defaults to `"fr"`
+	 *   (BAN is the French national register. the tier is FR-only today).
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "fr"
 
-		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
-		// `street_centroid` table this lookup is a no-op miss rather than a crash (mirrors the address-point reader).
+		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file):
+		// with no `street_centroid` table this lookup is a no-op miss rather than a
+		// crash (mirrors the address-point reader).
 		if (hasTable(this.#db, "street_centroid")) {
 			this.#byPostcode = prepareGet(
 				this.#db,

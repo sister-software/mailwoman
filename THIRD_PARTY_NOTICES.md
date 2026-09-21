@@ -86,6 +86,16 @@ first-party artifact and the corpus provenance is tracked per row.
 The following are used to build the corpus, gazetteer databases, evaluations, and the
 documentation site. They are **not** redistributed in any published npm package.
 
+### oxlint-plugin-comment-reflow — MIT
+
+`config/oxlint/comment-reflow/` is a fork of
+[oxlint-plugin-comment-reflow](https://github.com/diegohaz/oxlint-plugin-comment-reflow)
+(© Diego Haz), under the
+[MIT license](https://github.com/diegohaz/oxlint-plugin-comment-reflow/blob/main/LICENSE).
+Comment eligibility, paragraph detection, and markup preservation are upstream's; the line
+breaker (`chooseBreaks`) and the width options around it are ours. It runs as
+`mailwoman/comment-reflow` and never leaves the repository.
+
 ### GeoNames — CC-BY 4.0
 
 [GeoNames](https://www.geonames.org/) postal and centroid data is used to build gazetteer

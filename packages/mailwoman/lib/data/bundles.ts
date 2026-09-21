@@ -19,31 +19,33 @@ export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
  */
 export interface BundleArtifact {
 	/**
-	 * The R2 object key, relative to {@link PUBLIC_BUCKET_BASE_URL} (e.g. `"gazetteer/2026-07-07a/candidate.db"`).
+	 * The R2 object key, relative to {@link PUBLIC_BUCKET_BASE_URL}
+	 * (e.g. `"gazetteer/2026-07-07a/candidate.db"`).
 	 */
 	remotePath: string
 	/**
-	 * Where the artifact lands, relative to the data root (e.g. `"wof/candidate.db"`). For a `family`-tagged (`"us"`
-	 * bundle) artifact this is the legacy unversioned path; {@link resolveBundleArtifacts} substitutes the manifest-pinned
-	 * versioned name when one is configured.
+	 * Where the artifact lands, relative to the data root (e.g. `"wof/candidate.db"`).
+	 * For a `family`-tagged (`"us"` bundle) artifact this is the legacy unversioned path;
+	 * {@link resolveBundleArtifacts} substitutes the manifest-pinned versioned name when one is configured.
 	 */
 	localPath: string
 	/**
-	 * Whether the bucket publishes a `<remotePath>.md5` sidecar to verify against. `false` for every artifact today
-	 * (surveyed 2026-08-03 — see the module docstring); the field exists so a bundle that starts publishing one needs no
-	 * shape change, only a flip.
+	 * Whether the bucket publishes a `<remotePath>.md5` sidecar to verify against.
+	 * `false` for every artifact today (surveyed 2026-08-03 — see the module docstring);
+	 * the field exists so a bundle that starts publishing one needs no shape change, only a flip.
 	 */
 	md5Sidecar: boolean
 	/**
-	 * Byte size at survey time — for the dry-run plan and `data status`'s human-readable sizes only. Not a integrity
-	 * check target (a rebuild at the same dated path would be a bug, since these paths are meant to be immutable, but
-	 * this field is not how a mismatch would be caught — the head `Content-Length` at pull time is).
+	 * Byte size at survey time — for the dry-run plan and `data status`'s human-readable sizes only.
+	 * Not a integrity check target (a rebuild at the same dated path would be a bug,
+	 * since these paths are meant to be immutable, but this field is not how a mismatch
+	 * would be caught — the head `Content-Length` at pull time is).
 	 */
 	approxBytes: number
 	/**
-	 * The `data-release.ts` family this artifact belongs to (`"address-points"` | `"interpolation"`), for the `us`
-	 * bundle's per-state databases only. Absent for every other bundle (candidate/poi/fr are single fixed-path artifacts
-	 * with no local version-pinning story).
+	 * The `data-release.ts` family this artifact belongs to (`"address-points"` | `"interpolation"`),
+	 * for the `us` bundle's per-state databases only. Absent for every other bundle
+	 * (candidate/poi/fr are single fixed-path artifacts with no local version-pinning story).
 	 */
 	family?: "address-points" | "interpolation"
 	/**
@@ -55,31 +57,35 @@ export interface BundleArtifact {
 /**
  * What a bundle's rows came from and what using them obliges an operator to.
  *
- * A bundle is downloaded rather than installed with the package, so its terms reach an operator through nothing the npm
- * tarball carries. `data --list` and `data pull` print these before the transfer, since the moment to read terms is
- * before taking a copy rather than after.
+ * A bundle is downloaded rather than installed with the package, so its terms reach an
+ * operator through nothing the npm tarball carries. `data --list` and `data pull` print these
+ * before the transfer, since the moment to read terms is before taking a copy rather than after.
  *
- * `unresolved` is a field rather than an omission. A bundle assembled from several upstream sources carries whatever is
- * unestablished about them, and leaving that blank would present a partially-read bundle as a fully-read one.
+ * `unresolved` is a field rather than an omission. A bundle assembled from several
+ * upstream sources carries whatever is unestablished about them, and leaving that
+ * blank would present a partially-read bundle as a fully-read one.
  */
 /**
- * Where a bundle's artifacts carry the publisher of each row, so the record's claim can be checked against the bytes.
+ * Where a bundle's artifacts carry the publisher of each row, so the record's
+ * claim can be checked against the bytes.
  *
- * The `us` bundle's record named the Census Bureau and OpenAddresses while 68.2% of its rows carried a stamp naming the
- * National Address Database, and the record's own open question asked for a list the databases already held on every
- * row. Prose about publishers drifts from the data it describes, and nothing read the data.
+ * The `us` bundle's record named the Census Bureau and OpenAddresses while 68.2% of
+ * its rows carried a stamp naming the National Address Database, and the record's
+ * own open question asked for a list the databases already held on every row.
+ * Prose about publishers drifts from the data it describes, and nothing read the data.
  *
- * Absent means the artifacts carry no per-row publisher. That is a recorded fact rather than an omission: the
- * `candidate` gazetteer's rows name no source, so a census of it would report nothing and reporting nothing would read
- * as a clean result.
+ * Absent means the artifacts carry no per-row publisher.
+ * That is a recorded fact rather than an omission: the `candidate` gazetteer's rows name no source,
+ * so a census of it would report nothing and reporting nothing would read as a clean result.
  */
 export interface BundleSourceCensus {
 	/**
 	 * The table holding one row per record, or one row describing the layer.
 	 *
-	 * A union rather than a string. A runtime table name has no schema to check a query against, which is what pushes a
-	 * reader into casting through `never` and then validating the string by hand. A closed set is checkable by the
-	 * compiler, and adding an artifact shape means adding a member here and to the census reader's schema together.
+	 * A union rather than a string. A runtime table name has no schema to check a query against,
+	 * which is what pushes a reader into casting through `never` and then validating the
+	 * string by hand. A closed set is checkable by the compiler, and adding an artifact
+	 * shape means adding a member here and to the census reader's schema together.
 	 */
 	table: "address_point" | "layer_manifest"
 	/**
@@ -87,17 +93,19 @@ export interface BundleSourceCensus {
 	 */
 	column: "source"
 	/**
-	 * Whether {@link BundleSourceCensus.table} holds one row per record or one row for the whole artifact. A manifest row
-	 * describes the layer, so its count is the number of manifest rows rather than a row count.
+	 * Whether {@link BundleSourceCensus.table} holds one row per record
+	 * or one row for the whole artifact. A manifest row describes the layer,
+	 * so its count is the number of manifest rows rather than a row count.
 	 */
 	shape: "per-row" | "manifest"
 	/**
 	 * The artifact family this census covers, when a bundle carries more than one.
 	 *
-	 * The `us` bundle ships address-point databases beside TIGER interpolation databases, and only the first carries an
-	 * `address_point` table. Reading every artifact reported 51 interpolation databases as unreadable, which is the wrong
-	 * description: a TIGER database is a different artifact whose publisher the record names separately, rather than an
-	 * address-point database that failed to open. A census that names its family says what it covers.
+	 * The `us` bundle ships address-point databases beside TIGER interpolation databases, and
+	 * only the first carries an `address_point` table. Reading every artifact reported 51
+	 * interpolation databases as unreadable, which is the wrong description: a TIGER database is a
+	 * different artifact whose publisher the record names separately, rather than an address-point
+	 * database that failed to open. A census that names its family says what it covers.
 	 */
 	family?: BundleArtifact["family"]
 }
@@ -129,13 +137,13 @@ export interface DataBundle {
 	description: string
 	artifacts: BundleArtifact[]
 	/**
-	 * The terms this bundle's rows carry. Required, so a bundle added without one fails to compile rather than
-	 * downloading with its obligations unstated.
+	 * The terms this bundle's rows carry. Required, so a bundle added without one fails
+	 * to compile rather than downloading with its obligations unstated.
 	 */
 	rights: BundleRights
 	/**
-	 * Where this bundle's artifacts name the publisher of a row, so `mailwoman data sources` can check the record above
-	 * against the bytes. Absent when the artifacts carry no such column.
+	 * Where this bundle's artifacts name the publisher of a row, so `mailwoman data sources` can
+	 * check the record above against the bytes. Absent when the artifacts carry no such column.
 	 */
 	sourceCensus?: BundleSourceCensus
 }
@@ -201,8 +209,8 @@ const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number 
 }
 
 /**
- * Expand {@link US_STREET_DATABASE_SIZES} into the `us` bundle's artifact list: `remotePath` mirrors the bucket's
- * `street/us/<slug>/{situs,interp}.db` layout; `localPath` mirrors `geocode-core.ts`'s
+ * Expand {@link US_STREET_DATABASE_SIZES} into the `us` bundle's artifact list: `remotePath` mirrors
+ * the bucket's `street/us/<slug>/{situs,interp}.db` layout; `localPath` mirrors `geocode-core.ts`'s
  * `address-points-us-<slug>.db`/`interpolation-us-<slug>.db` legacy (unversioned) convention.
  */
 function usStreetArtifacts(): BundleArtifact[] {
@@ -234,9 +242,10 @@ function usStreetArtifacts(): BundleArtifact[] {
 }
 
 /**
- * The bundle registry. Every artifact here was checked against the live bucket on 2026-08-03 (see the module docstring)
- * — no invented paths. `timezone` (named in this task's brief as a candidate bundle) is absent on purpose: nothing
- * under `mailwoman/` in the bucket serves it.
+ * The bundle registry. Every artifact here was checked against the live
+ * bucket on 2026-08-03 (see the module docstring) — no invented paths.
+ * `timezone` (named in this task's brief as a candidate bundle) is absent on purpose:
+ * nothing under `mailwoman/` in the bucket serves it.
  */
 export const BUNDLES: Record<string, DataBundle> = {
 	candidate: {
@@ -352,10 +361,12 @@ export const BUNDLES: Record<string, DataBundle> = {
 }
 
 /**
- * One bundle's terms as lines for a terminal, publishers first, then terms, conditions and what stays unresolved.
+ * One bundle's terms as lines for a terminal, publishers first, then terms,
+ * conditions and what stays unresolved.
  *
- * The unresolved lines are printed rather than held back. A bundle whose conditions are listed and whose gaps are not
- * reads as fully established, and an operator deciding whether to take a copy is the reader those gaps are for.
+ * The unresolved lines are printed rather than held back.
+ * A bundle whose conditions are listed and whose gaps are not reads as fully established,
+ * and an operator deciding whether to take a copy is the reader those gaps are for.
  */
 export function describeBundleRights(bundle: DataBundle): string[] {
 	const { rights } = bundle
@@ -369,10 +380,11 @@ export function describeBundleRights(bundle: DataBundle): string[] {
 }
 
 /**
- * Resolve `${base}${artifact.remotePath}` — the one place that string gets built. `baseURL` defaults to the public
- * bucket; `data pull --host` passes a mirror or private registry serving the same object keys (the catalog schema is
- * host-independent — an air-gapped install mirrors the key space rather than a rewritten layout). A missing trailing
- * slash is repaired rather than concatenated into a mangled key.
+ * Resolve `${base}${artifact.remotePath}` — the one place that string gets built.
+ * `baseURL` defaults to the public bucket; `data pull --host` passes a mirror
+ * or private registry serving the same object keys (the catalog schema is host-independent —
+ * an air-gapped install mirrors the key space rather than a rewritten layout).
+ * A missing trailing slash is repaired rather than concatenated into a mangled key.
  */
 export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_BUCKET_BASE_URL): string {
 	const base = baseURL.endsWith("/") ? baseURL : `${baseURL}/`
@@ -381,17 +393,18 @@ export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_B
 }
 
 /**
- * Map a bundle's artifacts against a (possibly `null`) local `releases.json` manifest, resolving each `family`-tagged
- * artifact's {@link BundleArtifact.localPath} to the versioned filename (`resolveDatabasePath`'s naming convention:
- * `<family>/<family>-us-<slug>-<version>.db`) when the manifest pins that family to a version — so a download lands
- * exactly where `resolveDatabasePath` (`data-release.ts`) will find it on the next `mailwoman geocode` run. Artifacts
- * with no `family` (candidate/poi/fr — single fixed-path downloads) pass through unchanged. a family artifact with no
- * matching manifest entry also passes through unchanged (the legacy unversioned path, `resolveDatabasePath`'s
- * fallback).
+ * Map a bundle's artifacts against a (possibly `null`) local `releases.json` manifest,
+ * resolving each `family`-tagged artifact's {@link BundleArtifact.localPath} to the versioned
+ * filename (`resolveDatabasePath`'s naming convention: `<family>/<family>-us-<slug>-<version>.db`)
+ * when the manifest pins that family to a version — so a download lands exactly where
+ * `resolveDatabasePath` (`data-release.ts`) will find it on the next `mailwoman geocode` run.
+ * Artifacts with no `family` (candidate/poi/fr — single fixed-path downloads) pass through
+ * unchanged. a family artifact with no matching manifest entry also passes through
+ * unchanged (the legacy unversioned path, `resolveDatabasePath`'s fallback).
  *
- * Pure: no filesystem access. This computes the intended destination path. whether something already exists there (or
- * at a differently-versioned path `resolveDatabasePath` would also accept) is the caller's `existsSync`/
- * `resolveDatabasePath` check rather than this function's.
+ * Pure: no filesystem access. This computes the intended destination path. whether something already
+ * exists there (or at a differently-versioned path `resolveDatabasePath` would also accept)
+ * is the caller's `existsSync`/ `resolveDatabasePath` check rather than this function's.
  */
 export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataReleaseManifest | null): BundleArtifact[] {
 	return bundle.artifacts.map((artifact) => {
@@ -409,9 +422,10 @@ export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataRelease
 }
 
 /**
- * Filter a resolved artifact list to those whose `remotePath`, `localPath`, or `stateSlug` contains `only`
- * (case-insensitive). `undefined`/empty `only` returns `artifacts` unchanged. Lets `data pull us --only nh` target one
- * state instead of the whole 41 GB tier — the CLI-facing complement to the bundle-level granularity above.
+ * Filter a resolved artifact list to those whose `remotePath`, `localPath`, or `stateSlug`
+ * contains `only` (case-insensitive). `undefined`/empty `only` returns `artifacts` unchanged.
+ * Lets `data pull us --only nh` target one state instead of the whole 41 GB tier —
+ * the CLI-facing complement to the bundle-level granularity above.
  */
 export function filterArtifacts(artifacts: readonly BundleArtifact[], only: string | undefined): BundleArtifact[] {
 	if (!only) return [...artifacts]
@@ -427,8 +441,9 @@ export function filterArtifacts(artifacts: readonly BundleArtifact[], only: stri
 }
 
 /**
- * What's on disk for one artifact, gathered by the caller (a `statSync` + optional `md5File`) — kept separate from the
- * gathering itself so {@link needsDownload} stays pure and unit-testable without a filesystem.
+ * What's on disk for one artifact, gathered by the caller (a `statSync` + optional `md5File`) —
+ * kept separate from the gathering itself so {@link needsDownload} stays pure
+ * and unit-testable without a filesystem.
  */
 export interface LocalArtifactState {
 	exists: boolean
@@ -446,11 +461,13 @@ export interface RemoteArtifactState {
 }
 
 /**
- * Decide whether an artifact needs downloading: absent locally → yes. An available md5 (sidecar present) is the
- * authoritative signal once local exists — mismatch → yes, match → no, checked before content-length so a bundle that
- * publishes a sidecar can't be short-circuited by a coincidentally-matching size. With no md5 to compare, fall back to
- * a `Content-Length` size comparison. With neither signal available, the artifact is treated as up to date (the caller
- * is expected to surface a "couldn't verify" warning in that case rather than force a redundant multi-GB re-fetch).
+ * Decide whether an artifact needs downloading: absent locally → yes.
+ * An available md5 (sidecar present) is the authoritative signal once local exists —
+ * mismatch → yes, match → no, checked before content-length so a bundle that
+ * publishes a sidecar can't be short-circuited by a coincidentally-matching size.
+ * With no md5 to compare, fall back to a `Content-Length` size comparison.
+ * With neither signal available, the artifact is treated as up to date (the caller is expected to
+ * surface a "couldn't verify" warning in that case rather than force a redundant multi-GB re-fetch).
  */
 export function needsDownload(local: LocalArtifactState, remote: RemoteArtifactState): boolean {
 	if (!local.exists) return true

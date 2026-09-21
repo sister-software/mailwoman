@@ -21,12 +21,14 @@ import { dirname, resolvePath } from "path-ts"
 import { assertNoSourceTargets, transformExportsForPublish, transformImportsForPublish } from "#pack/publish/exports"
 
 /**
- * Replace any symlinked `files` entries with real copies of their targets. `yarn pack` stores symlinks AS symlinks in
- * the tarball — the registry rejects those outright (YN0035 / http 415), and npm's local-tarball extraction handles
- * them no better, so a smoke install of a packed weights workspace whose `model.onnx` is a `link-dev-weights` symlink
- * breaks the same way. Single-sourced here (2026-07-23) so both pack callers get it: `publish-workspace.ts` keeps its
- * own pre-pack invocation as the documented safety net (see agents.md "symlinks in the publish tarball"), and
- * `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
+ * Replace any symlinked `files` entries with real copies of their targets.
+ * `yarn pack` stores symlinks AS symlinks in the tarball — the registry rejects those
+ * outright (YN0035 / http 415), and npm's local-tarball extraction handles them no better,
+ * so a smoke install of a packed weights workspace whose `model.onnx` is a
+ * `link-dev-weights` symlink breaks the same way. Single-sourced here (2026-07-23)
+ * so both pack callers get it: `publish-workspace.ts` keeps its own pre-pack invocation
+ * as the documented safety net (see agents.md "symlinks in the publish tarball"),
+ * and `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
  */
 export async function dereferenceWorkspaceSymlinks(workspaceDir: string): Promise<void> {
 	const pkg = await readPackageJSON(resolvePath(workspaceDir, "package.json"))
@@ -47,8 +49,9 @@ export async function dereferenceWorkspaceSymlinks(workspaceDir: string): Promis
 }
 
 /**
- * Pack `workspaceDir` into `outFile` with the derived publish map substituted. Throws on pack failure. The workspace
- * manifest is byte-restored even on failure. Symlinked `files` entries are dereferenced first (see
+ * Pack `workspaceDir` into `outFile` with the derived publish map substituted.
+ * Throws on pack failure. The workspace manifest is byte-restored even on failure.
+ * Symlinked `files` entries are dereferenced first (see
  * {@link dereferenceWorkspaceSymlinks}).
  */
 export async function packWorkspaceForPublish(workspaceDir: string, outFile: string): Promise<void> {

@@ -11,12 +11,13 @@
  */
 export const TIGERFunctionalStatus = {
 	/**
-	 * Active government providing primary general-purpose functions. Active entity (federally recognized entities only).
+	 * Active government providing primary general-purpose functions.
+	 * Active entity (federally recognized entities only).
 	 */
 	ActiveGovernment: "A",
 	/**
-	 * Active government that is partially consolidated with another government but with separate officials providing
-	 * primary general-purpose functions.
+	 * Active government that is partially consolidated with another government
+	 * but with separate officials providing primary general-purpose functions.
 	 */
 	PartiallyConsolidatedActiveGovernment: "B",
 	/**

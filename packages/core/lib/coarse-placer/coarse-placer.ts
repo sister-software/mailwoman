@@ -27,9 +27,10 @@ export interface CoarsePlacerArtifact {
 	 */
 	temperature: number
 	/**
-	 * Bias vector. The bias is the log-prior of each class (the model's belief before seeing any input). The bias is
-	 * learned during training, and the temperature is fit on the validation set to calibrate the confidence. The bias is
-	 * added to the weighted sum of features for each class before applying the softmax.
+	 * Bias vector. The bias is the log-prior of each class (the model's belief before seeing any input).
+	 * The bias is learned during training, and the temperature is fit on the validation
+	 * set to calibrate the confidence. The bias is added to the weighted sum of
+	 * features for each class before applying the softmax.
 	 */
 	bias: number[]
 	/**
@@ -39,9 +40,10 @@ export interface CoarsePlacerArtifact {
 }
 
 /**
- * On-disk `meta.json` shape. The fp32 artifact omits `quantization`/`scales`; the int8 artifact (from
- * `scripts/coarse-placer/quantize.mjs`) sets `quantization: "int8-per-row"` and carries one `scale` per class, so
- * `weights.bin` can be a 4×-smaller `Int8Array` dequantized as `int8 * scales[class]`.
+ * On-disk `meta.json` shape. The fp32 artifact omits `quantization`/`scales`; the int8
+ * artifact (from `scripts/coarse-placer/quantize.mjs`) sets `quantization: "int8-per-row"`
+ * and carries one `scale` per class, so `weights.bin` can be a 4×-smaller
+ * `Int8Array` dequantized as `int8 * scales[class]`.
  */
 export interface CoarsePlacerMeta {
 	classes: string[]
@@ -56,9 +58,9 @@ export interface CoarsePlacerMeta {
 }
 
 /**
- * Dequantize a per-row int8 weight matrix back to fp32: `W[c][i] = int8[c*dim + i] * scales[c]`. The predict path stays
- * fp32 (identical math); quantization only shrinks the serialized/wire artifact. Pure — usable in the browser loader
- * too.
+ * Dequantize a per-row int8 weight matrix back to fp32: `W[c][i] = int8[c*dim + i] * scales[c]`.
+ * The predict path stays fp32 (identical math); quantization only shrinks the
+ * serialized/wire artifact. Pure — usable in the browser loader too.
  */
 export function dequantizeInt8Weights(
 	int8: Int8Array,
@@ -86,10 +88,10 @@ export function dequantizeInt8Weights(
 }
 
 /**
- * Read an artifact directory's `weights.bin` into a fresh `ArrayBuffer` — fp32 or int8, the caller picks the view.
- * Copies out of the (possibly pooled, possibly mis-aligned) Buffer: `readFile` serves small files out of a shared 8 KiB
- * pool, so a typed-array view over `.buffer` alone would start at the pool's origin and run its full length — the wrong
- * floats, and 2048 of them.
+ * Read an artifact directory's `weights.bin` into a fresh `ArrayBuffer` — fp32 or int8,
+ * the caller picks the view. Copies out of the (possibly pooled, possibly mis-aligned) Buffer:
+ * `readFile` serves small files out of a shared 8 KiB pool, so a typed-array view over `.buffer` alone
+ * would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.
  */
 export async function readWeightsBin(dir: string): Promise<ArrayBufferLike> {
 	const { join } = await import("path-ts")
@@ -115,8 +117,9 @@ export interface CoarsePrediction {
 }
 
 /**
- * With the explicit `other` class, an off-map input is handled when the model routes it to `other` or abstains — either
- * way it is not a confident mis-placement onto a wrong (trained) country. The shared predicate of the off-map evals.
+ * With the explicit `other` class, an off-map input is handled when the model routes
+ * it to `other` or abstains — either way it is not a confident mis-placement onto a
+ * wrong (trained) country. The shared predicate of the off-map evals.
  */
 export function isOffMapHandled(prediction: CoarsePrediction): boolean {
 	return prediction.abstained || prediction.country === "OTHER"
@@ -165,11 +168,11 @@ export class CoarsePlacer {
 	}
 
 	/**
-	 * Load a placer from an artifact directory holding `meta.json` + `weights.bin` (the layout
-	 * `scripts/coarse-placer/train.mjs` and `quantize.mjs` write). Handles both the fp32 artifact (`weights.bin` is a
-	 * `Float32Array`) and the int8 artifact (`meta.quantization === "int8-per-row"`, `weights.bin` is an `Int8Array`
-	 * dequantized via `meta.scales`). Node-only — the `node:` imports are dynamic so bundling the class for the browser
-	 * doesn't pull them in.
+	 * Load a placer from an artifact directory holding `meta.json` + `weights.bin`
+	 * (the layout `scripts/coarse-placer/train.mjs` and `quantize.mjs` write).
+	 * Handles both the fp32 artifact (`weights.bin` is a `Float32Array`) and the int8 artifact
+	 * (`meta.quantization === "int8-per-row"`, `weights.bin` is an `Int8Array` dequantized via `meta.scales`).
+	 * Node-only — the `node:` imports are dynamic so bundling the class for the browser doesn't pull them in.
 	 */
 	static async fromArtifactDir(dir: string, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
 		const { join } = await import("path-ts")
@@ -191,11 +194,12 @@ export class CoarsePlacer {
 	}
 
 	/**
-	 * Load the int8 model bundled in `@mailwoman/core` (`core/data/coarse-placer/`). Node-only — uses the package path
-	 * builder (the #481-corrected `__isCompiledTree` makes this resolve to the shipped `data/` in source, compiled, and
-	 * installed-package layouts). Override the directory with `$MAILWOMAN_COARSE_PLACER_DIR`. Callers set `abstainBelow`
-	 * per their use (the soft-country-prior wiring passes 0.9 — see
-	 * docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md).
+	 * Load the int8 model bundled in `@mailwoman/core` (`core/data/coarse-placer/`).
+	 * Node-only — uses the package path builder (the #481-corrected `__isCompiledTree` makes
+	 * this resolve to the shipped `data/` in source, compiled, and installed-package layouts).
+	 * Override the directory with `$MAILWOMAN_COARSE_PLACER_DIR`.
+	 * Callers set `abstainBelow` per their use (the soft-country-prior wiring passes 0.9 —
+	 * see docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md).
 	 */
 	static async fromBundled(opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
 		const dir = $public.MAILWOMAN_COARSE_PLACER_DIR
@@ -222,9 +226,10 @@ export class CoarsePlacer {
 			logits[c] = s / this.#temp
 		}
 
-		// Numerically-stable softmax, kept inline rather than routed through `softmaxInto`: the fp32 `probs`
-		// buffer rounds each exponent before the lazy divide below, so `p` is `f32(exp)/f64(sum)` — a float
-		// path a normalizing helper cannot reproduce, and this is the inference path whose bytes are interface.
+		// Numerically-stable softmax, kept inline rather than routed through `softmaxInto`:
+		// the fp32 `probs` buffer rounds each exponent before the lazy divide below,
+		// so `p` is `f32(exp)/f64(sum)` — a float path a normalizing helper cannot reproduce,
+		// and this is the inference path whose bytes are interface.
 		let maxLogit = -Infinity
 
 		for (let c = 0; c < C; c++)
@@ -266,8 +271,9 @@ export class CoarsePlacer {
 			}
 		}
 
-		// Open-set rule (#244 M2): reject on total in-map mass, route on the in-map argmax. Decouples
-		// "is it in-map?" from "which country?". The posterior weight is the routed country's marginal.
+		// Open-set rule (#244 M2): reject on total in-map mass, route on the in-map argmax.
+		// Decouples "is it in-map?" from "which country?". The posterior weight
+		// is the routed country's marginal.
 		if (this.#openSet) {
 			const inMapMass = 1 - otherProb
 			const abstained = inMapMass < this.#threshold
@@ -305,13 +311,15 @@ export function inMapPosterior(
 	prediction: CoarsePrediction,
 	opts?: {
 		/**
-		 * Epsilon floor (see the glossary): drop countries whose probability falls below this cutoff before the resolver
-		 * sees the posterior, so implausible tails cannot influence ranking. Domain [0, 1]: `0` (the default) passes the
-		 * full distribution through unchanged. raising it keeps only stronger beliefs — at the extreme only the argmax
-		 * survives (a one-hot). The default is 0 deliberately: the #928 investigation swept 0.05–0.30 against the misroute
-		 * battery and every value was byte-identical (the drift's real cause was the anchor re-rank's score key, fixed
-		 * separately) — no nonzero default has a measured basis, and the shipped distribution interface stays
-		 * byte-identical. The knob exists for distribution-mode experiments (`--posterior-floor` on the misroute eval).
+		 * Epsilon floor (see the glossary): drop countries whose probability falls below this cutoff
+		 * before the resolver sees the posterior, so implausible tails cannot influence ranking.
+		 * Domain [0, 1]: `0` (the default) passes the full distribution through unchanged.
+		 * raising it keeps only stronger beliefs — at the extreme only the argmax
+		 * survives (a one-hot). The default is 0 deliberately: the #928 investigation
+		 * swept 0.05–0.30 against the misroute battery and every value was byte-identical
+		 * (the drift's real cause was the anchor re-rank's score key, fixed separately) — no nonzero
+		 * default has a measured basis, and the shipped distribution interface stays byte-identical.
+		 * The knob exists for distribution-mode experiments (`--posterior-floor` on the misroute eval).
 		 */
 		epsilonFloor?: number
 	}

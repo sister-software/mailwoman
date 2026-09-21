@@ -50,8 +50,9 @@ describe("readServiceException", () => {
 	})
 
 	it("answers in linear time on a report whose exception element is never closed", () => {
-		// The shape a lazy `[\\s\\S]*?` scan backtracks polynomially over: an opening tag with no closing partner, in a
-		// body a network service produced. It must return the "could not read" reading rather than spend the document.
+		// The shape a lazy `[\\s\\S]*?` scan backtracks polynomially over:
+		// an opening tag with no closing partner, in a body a network service produced.
+		// It must return the "could not read" reading rather than spend the document.
 		const unclosed = `<ServiceExceptionReport xmlns="http://www.opengis.net/ogc"><ServiceException>${"x".repeat(200_000)}`
 		const started = performance.now()
 
@@ -70,8 +71,8 @@ describe("readServiceException", () => {
 })
 
 /**
- * The shape of the fgdc document nrcs ships inside every survey-area archive, trimmed to the elements this layer reads.
- * The dates and the scale are `IA153`'s real ones.
+ * The shape of the fgdc document nrcs ships inside every survey-area archive, trimmed to
+ * the elements this layer reads. The dates and the scale are `IA153`'s real ones.
  */
 const FGDC = `<metadata><idinfo><citation><citeinfo><origin>
 U.S. Department of Agriculture, Natural Resources Conservation Service
@@ -89,8 +90,9 @@ describe("readFGDCMetadata", () => {
 	it("takes the OLDEST source citation, which is the field survey the polygons rest on", () => {
 		const metadata = readFGDCMetadata(FGDC, "IA153")
 
-		// The refresh is 2025. the ground was walked in 1960. A consumer reading the refresh as survey currency reads it
-		// wrong by sixty-five years, so both travel and the older one names its source.
+		// The refresh is 2025. the ground was walked in 1960.
+		// A consumer reading the refresh as survey currency reads it wrong by sixty-five years,
+		// so both travel and the older one names its source.
 		expect(metadata.publicationDate).toBe("2025-09-09")
 		expect(metadata.oldestSourceDate).toBe("1960")
 		expect(metadata.oldestSourceTitle).toBe("Soil Survey of Polk County, Iowa")
@@ -100,8 +102,8 @@ describe("readFGDCMetadata", () => {
 	it("refuses a survey area whose use constraints no longer carry the public-information sentence", () => {
 		const withoutGrant = FGDC.replace("This is public information and may be interpreted", "This is restricted and")
 
-		// That sentence is the grant this layer ships on. A build that absorbed its removal would ship an artifact under
-		// terms nobody checked.
+		// That sentence is the grant this layer ships on. A build that absorbed its
+		// removal would ship an artifact under terms nobody checked.
 		expect(() => readFGDCMetadata(withoutGrant, "IA153")).toThrow(/public information/u)
 	})
 
@@ -112,9 +114,9 @@ describe("readFGDCMetadata", () => {
 	})
 
 	it("reads an unclosed element as unreadable, in one pass rather than by scanning for it", () => {
-		// What a truncated archive produces, and what a lazy-quantifier reader backtracks polynomially over. Every element
-		// after the truncation is unreadable, so the licence assertion — the first thing read — is what refuses, and the refusal
-		// doubles as the timing check.
+		// What a truncated archive produces, and what a lazy-quantifier reader backtracks polynomially over.
+		// Every element after the truncation is unreadable, so the licence assertion —
+		// the first thing read — is what refuses, and the refusal doubles as the timing check.
 		const truncated = `${FGDC.slice(0, FGDC.indexOf("<pubdate>") + "<pubdate>".length)}${"9".repeat(200_000)}`
 		const started = performance.now()
 

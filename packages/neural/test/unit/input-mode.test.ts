@@ -64,16 +64,17 @@ describe("inputMode register enforcement (Decision A)", () => {
 	})
 
 	it("street-context check: a bare place name feeds NO locality evidence even in fragmented mode", async () => {
-		// The 8.2.0 pre-ship gauntlet catch: homograph-flagged locality evidence on a bare world-city
-		// lookup rotates the parse (locality → region/street). No street context → locality channel
-		// withheld (the declared-ablation identity); the street channel is inert on such input anyway.
+		// The 8.2.0 pre-ship gauntlet catch: homograph-flagged locality evidence on
+		// a bare world-city lookup rotates the parse (locality → region/street).
+		// No street context → locality channel withheld (the declared-ablation identity);
+		// the street channel is inert on such input anyway.
 		const seen = { evidence: [] as unknown[] }
 		const classifier = await makeClassifier(seen)
 
 		await classifier.parse("Springfield", { inputMode: "fragmented" })
 		expect(seen.evidence).toHaveLength(1)
-		// The street channel rides (all-zero confidence on a street-word-less input — inert by
-		// construction); the locality channel is what the eval withholds.
+		// The street channel rides (all-zero confidence on a street-word-less input — inert by construction);
+		// the locality channel is what the eval withholds.
 		const evidence = seen.evidence[0] as { streetType?: unknown; localitySurface?: unknown }
 		expect(evidence.localitySurface).toBeUndefined()
 		expect(evidence.streetType).toBeDefined()

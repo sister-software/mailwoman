@@ -75,8 +75,9 @@ const LOCALITY_TOLERANCE_M = 25_000
 const QUALIFIER_TOLERANCE_M = 10_000
 
 /**
- * The id's tail: the input lower-cased, every run of non-alphanumerics one dash. A lowercase leg (an input that is
- * already its own lowercase) carries `-lower`, so it and its cased twin keep distinct ids.
+ * The id's tail: the input lower-cased, every run of non-alphanumerics one dash.
+ * A lowercase leg (an input that is already its own lowercase) carries `-lower`,
+ * so it and its cased twin keep distinct ids.
  */
 function slugOf(input: string): string {
 	const slug = input
@@ -173,7 +174,8 @@ function poBox(
 }
 
 /**
- * The board: every row of the four families, in family order. The header says where each family's rows come from.
+ * The board: every row of the four families, in family order.
+ * The header says where each family's rows come from.
  */
 export const FAMILY_ROWS: readonly FamilyRow[] = [
 	// F3 — district plus city.

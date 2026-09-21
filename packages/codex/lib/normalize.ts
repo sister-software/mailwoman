@@ -15,11 +15,12 @@
  */
 
 /**
- * Fold a name to its ascii match key: lower-cased, accents stripped, every run of non-alphanumerics collapsed to a
- * single space.
+ * Fold a name to its ascii match key: lower-cased, accents stripped, every run
+ * of non-alphanumerics collapsed to a single space.
  *
- * This is the aggressive fold used to match a user's surface form against a codex table — `"Québec"` and `"quebec"` and
- * `"quebec"` all become `"quebec"`. It is lossy by design and never used to render anything back to a user.
+ * This is the aggressive fold used to match a user's surface form against a
+ * codex table — `"Québec"` and `"quebec"` and `"quebec"` all become `"quebec"`.
+ * It is lossy by design and never used to render anything back to a user.
  */
 export function foldName(s: string): string {
 	return s
@@ -31,12 +32,13 @@ export function foldName(s: string): string {
 }
 
 /**
- * Strip leading and trailing punctuation from every whitespace-separated word, dropping words that were nothing but
- * punctuation, and rejoin on single spaces.
+ * Strip leading and trailing punctuation from every whitespace-separated word,
+ * dropping words that were nothing but punctuation, and rejoin on single spaces.
  *
- * Unlike {@link foldName} this preserves case and non-Latin scripts — it works on Unicode letter and number classes, so
- * `"Кыргызстан,"` and `"日本 。"` survive with their content intact. That is what makes it the right normalizer for
- * building surface lexicons, where the entry has to remain renderable, and the wrong one for building a match key.
+ * Unlike {@link foldName} this preserves case and non-Latin scripts — it works on Unicode letter
+ * and number classes, so `"Кыргызстан,"` and `"日本 。"` survive with their content intact.
+ * That is what makes it the right normalizer for building surface lexicons, where the
+ * entry has to remain renderable, and the wrong one for building a match key.
  */
 export function wordNorm(s: string): string {
 	return s
@@ -54,11 +56,12 @@ export function wordNormLower(s: string): string {
 }
 
 /**
- * Fold a single token to its lowercase, diacritic-free form: lower-cased, NFD-decomposed, combining marks stripped —
- * `"Côte"` → `"cote"`, `"Tōkyō"` → `"tokyo"`.
+ * Fold a single token to its lowercase, diacritic-free form: lower-cased, NFD-decomposed,
+ * combining marks stripped — `"Côte"` → `"cote"`, `"Tōkyō"` → `"tokyo"`.
  *
- * The shared core of the per-country token matchers. Unlike {@link foldName} it does not touch punctuation or whitespace
- * — each matcher layers its own character filtering (letters-only, hyphen-keeping, suffix-stripping) on top.
+ * The shared core of the per-country token matchers. Unlike {@link foldName} it
+ * does not touch punctuation or whitespace — each matcher layers its own character
+ * filtering (letters-only, hyphen-keeping, suffix-stripping) on top.
  */
 export function foldToken(s: string): string {
 	return s

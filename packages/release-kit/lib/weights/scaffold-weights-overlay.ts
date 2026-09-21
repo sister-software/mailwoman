@@ -41,7 +41,8 @@ import { isRegisteredWorkspace } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 
 /**
- * Where the clean-install smoke's pack set lives, relative to the repo root — the register this operation edits.
+ * Where the clean-install smoke's pack set lives, relative to the repo root —
+ * the register this operation edits.
  */
 const SMOKE_PACK_SET_PATH = "packages/release-kit/lib/release/smoke/clean-install.ts"
 
@@ -52,14 +53,15 @@ export interface ScaffoldWeightsOverlayOptions {
 	 */
 	locale: string
 	/**
-	 * The one artifact the overlay adds. defaults to `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
+	 * The one artifact the overlay adds. defaults to `pair-index-<cc>.bin`,
+	 * or `fst-<locale>.bin` under `base`.
 	 */
 	artifact?: string
 	/**
-	 * A character-path family (`cjk`) to inherit from instead of the Latin base: the overlay declares
-	 * `mailwoman.baseWeights` on `@mailwoman/neural-weights-<base>`, carries its locale FST, and registers in
-	 * `release.config.json`'s `charWeights.<base>.overlays` rather than `locales` — the family's bucket directory is
-	 * where it is staged and fetched.
+	 * A character-path family (`cjk`) to inherit from instead of the Latin base: the overlay
+	 * declares `mailwoman.baseWeights` on `@mailwoman/neural-weights-<base>`, carries its
+	 * locale FST, and registers in `release.config.json`'s `charWeights.<base>.overlays`
+	 * rather than `locales` — the family's bucket directory is where it is staged and fetched.
 	 */
 	base?: string
 	log: (line: string) => void
@@ -85,9 +87,10 @@ export async function scaffoldWeightsOverlay(
 	const repoPath = (...segments: string[]) => resolvePath(repoRoot, ...segments)
 
 	/**
-	 * BCP-47 in, lowercase package suffix out: `es-ES` → `es-es`. The workspace directory, the package name and every
-	 * register use this form. the original casing is kept only for the model card's `locale` field, which is the one
-	 * place the tag is a tag rather than an identifier.
+	 * BCP-47 in, lowercase package suffix out: `es-ES` → `es-es`.
+	 * The workspace directory, the package name and every register use this form.
+	 * the original casing is kept only for the model card's `locale` field,
+	 * which is the one place the tag is a tag rather than an identifier.
 	 */
 	const localeTag = options.locale
 	const slug = localeTag.toLowerCase()
@@ -103,9 +106,9 @@ export async function scaffoldWeightsOverlay(
 	}
 
 	/**
-	 * Read the root version rather than a sibling package's. `prepare-version` refuses to bump a tree that is not
-	 * version-synced, so a new workspace must be born at the root version — the v8.4.0 bdc/filer drift is what that guard
-	 * exists to catch.
+	 * Read the root version rather than a sibling package's.
+	 * `prepare-version` refuses to bump a tree that is not version-synced, so a new workspace must
+	 * be born at the root version — the v8.4.0 bdc/filer drift is what that guard exists to catch.
 	 */
 	const rootVersion = await readPackageJSON<{ version: string }>(repoPath("package.json")).then((res) => res.version)
 
@@ -118,16 +121,16 @@ export async function scaffoldWeightsOverlay(
 			description: `${localeTag} weights overlay for mailwoman — data-only; shares the base model with ${basePackage}.`,
 			license: "AGPL-3.0",
 			type: "module",
-			// `directory` names this package. It is the field that has been wrong every time an overlay was
-			// created by copying a sibling.
+			// `directory` names this package. It is the field that has been wrong every
+			// time an overlay was created by copying a sibling.
 			repository: {
 				type: "git",
 				url: "https://github.com/sister-software/mailwoman.git",
 				directory: `packages/neural-weights-${slug}`,
 			},
-			// `!scripts/**` keeps the dev linker out of the tarball. It imports the shared builder by
-			// relative path, which fails after unpacking — and a data-only overlay has no use
-			// for a dev script anyway.
+			// `!scripts/**` keeps the dev linker out of the tarball.
+			// It imports the shared builder by relative path, which fails after unpacking —
+			// and a data-only overlay has no use for a dev script anyway.
 			files: [
 				"model-card.json",
 				artifact,
@@ -159,10 +162,11 @@ export async function scaffoldWeightsOverlay(
 		".npmignore"
 	)
 
-	// The dev linker, emitted rather than copied. This step used to be a printed instruction reading
-	// "copy the closest sibling's build block", and that is precisely how es-es and it-it came to ship
-	// de-de's docstring — describing German addresses, in packages whose code was correct. Generating it
-	// leaves nothing to copy. the magnitudes below are placeholders the author is told to calibrate.
+	// The dev linker, emitted rather than copied. This step used to be a printed instruction
+	// reading "copy the closest sibling's build block", and that is precisely how es-es
+	// and it-it came to ship de-de's docstring — describing German addresses,
+	// in packages whose code was correct. Generating it leaves nothing to copy. the
+	// magnitudes below are placeholders the author is told to calibrate.
 	await writeLocalTextFile(
 		base
 			? `/**
@@ -244,8 +248,9 @@ await materializeDevOverlay({
 	)
 
 	/**
-	 * Insert `entry` into a JSON array-valued key, immediately after `after`, preserving tab indentation. Returns false
-	 * when the entry is already present so re-running the command is a no-op rather than a duplicate.
+	 * Insert `entry` into a JSON array-valued key, immediately after `after`,
+	 * preserving tab indentation. Returns false when the entry is already present
+	 * so re-running the command is a no-op rather than a duplicate.
 	 */
 	async function registerInJSONArray(file: string, findAfter: string, entry: string): Promise<boolean> {
 		const path = repoPath(file)
@@ -260,8 +265,9 @@ await materializeDevOverlay({
 
 	const registered: string[] = []
 
-	// 1. Root workspaces. The field is `packages/*` plus literals, so a new overlay directory is covered by the glob
-	//    the moment it exists. a literal entry is only written when no pattern already names the directory.
+	// 1. Root workspaces. The field is `packages/*` plus literals, so a new overlay directory
+	//    is covered by the glob the moment it exists. a literal entry is only written
+	//    when no pattern already names the directory.
 	const rootPath = repoPath("package.json")
 	const rootPkg = await readLocalJSONFile<{ workspaces: string[] }>(rootPath)
 

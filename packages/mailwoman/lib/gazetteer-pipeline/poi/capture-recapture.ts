@@ -43,11 +43,12 @@ export interface CaptureRow {
 }
 
 /**
- * One match rule. A candidate pair is accepted when it clears the near band, or the FAR band, or — when either row is
- * unnamed, so no name evidence exists — the unnamed distance alone.
+ * One match rule. A candidate pair is accepted when it clears the near band, or the FAR band,
+ * or — when either row is unnamed, so no name evidence exists — the unnamed distance alone.
  *
- * The two named bands express one idea: the further apart two rows are, the more the names have to agree. The unnamed
- * band is the only place position decides alone, which is why it is the tightest of the three.
+ * The two named bands express one idea: the further apart two rows are, the more the
+ * names have to agree. The unnamed band is the only place position decides alone,
+ * which is why it is the tightest of the three.
  */
 export interface MatchProtocol {
 	label: string
@@ -66,11 +67,12 @@ export interface MatchProtocol {
 }
 
 /**
- * The pre-registered grid. Fixed before any completeness value was read off it, and the spread between its ends is the
- * honest width of the measurement — on the pharmacy/Île-de-France pilot it ran 0.6665 to 0.8423.
+ * The pre-registered grid. Fixed before any completeness value was read off it,
+ * and the spread between its ends is the honest width of the measurement —
+ * on the pharmacy/Île-de-France pilot it ran 0.6665 to 0.8423.
  *
- * `strict` is the conservative end: it accepts only rows that agree on both position and name, so it under-counts `m`,
- * over-states `N̂`, and under-states completeness.
+ * `strict` is the conservative end: it accepts only rows that agree on both position
+ * and name, so it under-counts `m`, over-states `N̂`, and under-states completeness.
  */
 export const MATCH_PROTOCOL_GRID: readonly MatchProtocol[] = [
 	{ label: "strict", near: [25, 0.85], far: [25, 0.85], unnamedMetres: 25 },
@@ -79,9 +81,10 @@ export const MATCH_PROTOCOL_GRID: readonly MatchProtocol[] = [
 ]
 
 /**
- * `@mailwoman/codex`'s match-key fold, widened to the nullable name a POI row carries. The fold itself is not
- * re-implemented here: it is the same lossy ascii key the codex tables are probed by, and a private copy would drift
- * from it silently — `Pharmacie de l'Église` and `pharmacie DE L eglise` have to reach the comparator as one string.
+ * `@mailwoman/codex`'s match-key fold, widened to the nullable name a POI row carries.
+ * The fold itself is not re-implemented here: it is the same lossy ascii key the codex tables
+ * are probed by, and a private copy would drift from it silently — `Pharmacie de l'Église`
+ * and `pharmacie DE L eglise` have to reach the comparator as one string.
  */
 function foldPOIName(name: string | null): string {
 	return name ? foldName(name) : ""
@@ -104,9 +107,9 @@ function widestBand(protocol: MatchProtocol): number {
 /**
  * Whether `protocol` accepts this pair, and the name similarity it was judged on.
  *
- * `similarity` is 0 both when a row is unnamed and when the pair is beyond {@link widestBand} — no protocol can accept a
- * pair at that distance, so the comparator is skipped rather than run over every one of the O(n1·n2) candidates. Read
- * it only alongside `accepted`.
+ * `similarity` is 0 both when a row is unnamed and when the pair is beyond {@link widestBand} —
+ * no protocol can accept a pair at that distance, so the comparator is skipped rather than
+ * run over every one of the O(n1·n2) candidates. Read it only alongside `accepted`.
  */
 export function evaluatePair(
 	a: CaptureRow,
@@ -140,13 +143,15 @@ export interface CapturePair {
 /**
  * One-to-one greedy assignment over the accepted pairs, best first (highest similarity, then closest).
  *
- * One-to-one is required rather than tidiness: `m` is a count of agreements between two inventories, so letting one row
- * of the first inventory answer for three rows of the second counts one agreement three times, deflates `N̂`, and
- * inflates completeness — again in the direction that turns a gap into negative evidence.
+ * One-to-one is required rather than tidiness: `m` is a count of agreements between two
+ * inventories, so letting one row of the first inventory answer for three rows of the
+ * second counts one agreement three times, deflates `N̂`, and inflates completeness —
+ * again in the direction that turns a gap into negative evidence.
  *
- * The candidate scan is quadratic in the two inputs. That is deliberate at pilot scale (a few thousand rows a side, a
- * few seconds) and is the wrong shape for a region an order of magnitude larger. the spatial pre-bucket that fixes it
- * belongs with the breadth work rather than ahead of the basis review.
+ * The candidate scan is quadratic in the two inputs. That is deliberate at pilot
+ * scale (a few thousand rows a side, a few seconds) and is the wrong shape for a
+ * region an order of magnitude larger. the spatial pre-bucket that fixes it belongs
+ * with the breadth work rather than ahead of the basis review.
  */
 export function matchInventories(
 	first: readonly CaptureRow[],
@@ -201,8 +206,9 @@ export interface ChapmanEstimate {
 const Z_95 = 1.96
 
 /**
- * Chapman's estimator and its variance. Chapman rather than plain Lincoln-Petersen because the plain form is undefined
- * at `m = 0` and badly biased at small `m`; the `+1` terms make it defined everywhere and near-unbiased.
+ * Chapman's estimator and its variance. Chapman rather than plain Lincoln-Petersen
+ * because the plain form is undefined at `m = 0` and badly biased at small `m`;
+ * the `+1` terms make it defined everywhere and near-unbiased.
  */
 export function chapmanEstimate(n1: number, n2: number, m: number): ChapmanEstimate {
 	if (!Number.isSafeInteger(n1) || !Number.isSafeInteger(n2) || !Number.isSafeInteger(m) || n1 < 0 || n2 < 0 || m < 0) {
@@ -230,7 +236,8 @@ export interface ProtocolCompleteness {
 	matched: number
 	estimate: ChapmanEstimate
 	/**
-	 * Point estimate of the second inventory's completeness — the one a pilot layer built from `second` records.
+	 * Point estimate of the second inventory's completeness — the one a pilot
+	 * layer built from `second` records.
 	 */
 	completeness: number
 	/**
@@ -254,11 +261,12 @@ export interface CoverageCompleteness {
 }
 
 /**
- * Run the whole grid and report the weakest lower bound it supports, which is the value a `surveyed` cell records.
+ * Run the whole grid and report the weakest lower bound it supports,
+ * which is the value a `surveyed` cell records.
  *
- * Taking the minimum across the grid rather than a chosen protocol's value is what keeps the threshold choice out of
- * the claim: every protocol in the grid is a defensible reading of "the same POI", so the claim is only as strong as
- * the weakest of them.
+ * Taking the minimum across the grid rather than a chosen protocol's value is what keeps
+ * the threshold choice out of the claim: every protocol in the grid is a defensible
+ * reading of "the same POI", so the claim is only as strong as the weakest of them.
  */
 export function completenessAcrossProtocols(
 	first: readonly CaptureRow[],

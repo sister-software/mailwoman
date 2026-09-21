@@ -23,8 +23,8 @@
 import type { HardCaseClass } from "#eval-harness/hard-case-board"
 
 /**
- * Sweep rows lifted verbatim. `class` is assigned by the curator. everything else — input, coordinate, tolerance —
- * comes from the corpus row so the two artifacts cannot disagree.
+ * Sweep rows lifted verbatim. `class` is assigned by the curator. everything else — input,
+ * coordinate, tolerance — comes from the corpus row so the two artifacts cannot disagree.
  */
 export const SWEEP_ROWS: Array<{
 	cc: string

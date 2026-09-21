@@ -35,8 +35,9 @@ import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 import { EA_DECLARED_BBOX, EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "#vocabulary"
 
 /**
- * The ring types, and the proj guard, both re-exported from `@mailwoman/spatial`: neither is flood-specific, and a
- * second copy of the `projinfo` parse would be a second place for the ballpark check to stop refusing.
+ * The ring types, and the proj guard, both re-exported from `@mailwoman/spatial`:
+ * neither is flood-specific, and a second copy of the `projinfo` parse would be a
+ * second place for the ballpark check to stop refusing.
  */
 
 /**
@@ -71,42 +72,46 @@ export interface FloodIngestOptions {
 	 */
 	limit?: number
 	/**
-	 * The epsg code the source must declare. A source declaring anything else is a product change rather than a variation
-	 * to absorb.
+	 * The epsg code the source must declare. A source declaring anything else is a
+	 * product change rather than a variation to absorb.
 	 */
 	expectEPSG?: number
 	/**
-	 * The extent every reprojected vertex must land inside. Defaults to the EA collection's own declaration.
+	 * The extent every reprojected vertex must land inside.
+	 * Defaults to the EA collection's own declaration.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
 	/**
 	 * Read only the authority's feature ids in `[objectIDFrom, objectIDTo]`, inclusive.
 	 *
-	 * This is what makes a bounded build possible: the classification cannot run over the whole file in one process (see
-	 * `ingest-chunk.ts`), so the builder walks ranges of the authority's own ids. Ranges rather than an offset because
-	 * `objectid` is the source's stable key — a range names the same features on every run, which an offset into a result
-	 * set does not.
+	 * This is what makes a bounded build possible: the classification cannot run over the whole file in
+	 * one process (see `ingest-chunk.ts`), so the builder walks ranges of the authority's own ids.
+	 * Ranges rather than an offset because `objectid` is the source's stable key —
+	 * a range names the same features on every run, which an offset into a result set does not.
 	 */
 	objectIDFrom?: number
 	objectIDTo?: number
 }
 
 /**
- * Coordinate decimals ogr2ogr writes into the stream. Nine is ~0.1 mm at this latitude — far past the source's own
- * precision, and chosen so the reprojection contributes nothing measurable to the area cross-check.
+ * Coordinate decimals ogr2ogr writes into the stream. Nine is ~0.1 mm at this latitude —
+ * far past the source's own precision, and chosen so the reprojection contributes
+ * nothing measurable to the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 
 /**
  * How far outside the declared extent a vertex may fall before the ingest refuses.
  *
- * A declared extent is itself a rounded published value, so an exact test would be brittle. this margin is small enough
- * that an unprojected or axis-swapped read — which lands degrees or whole hemispheres away — still fails.
+ * A declared extent is itself a rounded published value, so an exact test would be
+ * brittle. this margin is small enough that an unprojected or axis-swapped read —
+ * which lands degrees or whole hemispheres away — still fails.
  */
 const BBOX_MARGIN_DEGREES = 0.01
 
 /**
- * What the source declares about itself: its authority code and its feature count, read before any feature is.
+ * What the source declares about itself: its authority code and its feature count,
+ * read before any feature is.
  *
  * @throws {Error} When the layer is missing, or its declared epsg is not `expectEPSG`.
  */
@@ -156,12 +161,13 @@ interface RawFeature {
 /**
  * Stream the layer as WGS84 features.
  *
- * Every feature is checked against the declared extent as it passes. A swapped coordinate order survives a projection
- * check — both axes are still numbers in a plausible range — and shows up here immediately, before 813,627 polygons are
- * written to the wrong side of the planet.
+ * Every feature is checked against the declared extent as it passes.
+ * A swapped coordinate order survives a projection check — both axes are still
+ * numbers in a plausible range — and shows up here immediately, before 813,627
+ * polygons are written to the wrong side of the planet.
  *
- * @throws {Error} When ogr2ogr fails, when a feature carries no geometry or no zone value, or when a reprojected vertex
- *   falls outside the declared extent.
+ * @throws {Error} When ogr2ogr fails, when a feature carries no geometry or no zone value,
+ *   or when a reprojected vertex falls outside the declared extent.
  */
 export async function* readFloodSourceFeatures(options: FloodIngestOptions): AsyncGenerator<FloodSourceFeature> {
 	const layer = options.layer ?? EA_FLOOD_LAYER
@@ -227,8 +233,8 @@ function toSourceFeature(
  */
 export interface FloodFeatureSource {
 	/**
-	 * What the source says it holds. The build compares its own streamed total against this, so a short read throws
-	 * instead of building a smaller England.
+	 * What the source says it holds. The build compares its own streamed total against this,
+	 * so a short read throws instead of building a smaller England.
 	 */
 	declaredFeatureCount: number
 	layer: string
@@ -249,8 +255,9 @@ export async function createGeodatabaseFeatureSource(
 	const identity = await readFloodSourceIdentity(options)
 
 	return {
-		// A range's own count is supplied by the caller, because `ogrinfo` reports the layer's total and nothing narrower.
-		// The whole-file total is still checked: the builder sums what its chunks streamed and compares that.
+		// A range's own count is supplied by the caller, because `ogrinfo` reports the
+		// layer's total and nothing narrower. The whole-file total is still checked:
+		// the builder sums what its chunks streamed and compares that.
 		declaredFeatureCount: declaredFeatureCount({
 			declared: options.declaredFeatureCount,
 			limit: options.limit,

@@ -31,8 +31,8 @@ export const PAGE_ROLES = ["tutorial", "guide", "reference", "explanation", "lan
 export type PageRole = (typeof PAGE_ROLES)[number]
 
 /**
- * Roles that must carry `verified-with:` — a task/guide's captured command output is only as good as the version it was
- * run against.
+ * Roles that must carry `verified-with:` — a task/guide's captured command output
+ * is only as good as the version it was run against.
  */
 const VERIFIED_WITH_ROLES = new Set<PageRole>(["tutorial", "guide"])
 
@@ -41,9 +41,9 @@ function isRoleValue(value: unknown): value is PageRole {
 }
 
 /**
- * A field counts as declared when it has a non-empty scalar value, or is present as a non-scalar value the caller has
- * already normalized to `true` (see `check-docs-structure.ts`'s `toFrontmatterRecord`). `undefined`, `null`, and `""`
- * all count as not-declared.
+ * A field counts as declared when it has a non-empty scalar value, or is present as a non-scalar value
+ * the caller has already normalized to `true` (see `check-docs-structure.ts`'s `toFrontmatterRecord`).
+ * `undefined`, `null`, and `""` all count as not-declared.
  */
 function isDeclared(frontmatter: Record<string, unknown>, key: string): boolean {
 	const value = frontmatter[key]
@@ -54,9 +54,10 @@ function isDeclared(frontmatter: Record<string, unknown>, key: string): boolean 
 /**
  * Validate one page's frontmatter against the six-role interface.
  *
- * Returns human-readable failure strings prefixed with `path`, or `[]` when the page is valid. A missing or
- * unrecognized `role:` short-circuits — the role-conditional field rules below don't apply until the role itself is
- * known-good, so each of those cases returns a single failure rather than compounding with the field-level checks.
+ * Returns human-readable failure strings prefixed with `path`, or `[]` when the page is valid.
+ * A missing or unrecognized `role:` short-circuits — the role-conditional field rules
+ * below don't apply until the role itself is known-good, so each of those cases returns
+ * a single failure rather than compounding with the field-level checks.
  */
 export function validatePage(frontmatter: Record<string, unknown>, path: string): string[] {
 	if (!isDeclared(frontmatter, "role")) {

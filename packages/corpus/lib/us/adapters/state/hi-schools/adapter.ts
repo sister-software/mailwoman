@@ -37,13 +37,13 @@ import { type HiSchoolRow, schoolCellText, STATE_HI_SCHOOL_SHEETS } from "#us/ad
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const STATE_HI_SCHOOLS_ADAPTER_ID = "state-hi-schools"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const STATE_HI_SCHOOLS_DEFAULT_LICENSE = "Public Domain"
 
@@ -54,9 +54,9 @@ function normalizeZip(raw: HiSchoolRow["zip"]): string {
 
 	if (!trimmed) return ""
 
-	// xlsx → CSV conversion may emit numeric ZIPs without leading zeros. HI ZIPs all begin
-	// with 96, so a 4-digit value indicates a leading-zero stripped during numeric coercion
-	// (defensive — has not been observed in the published file as of 2026-05).
+	// xlsx → CSV conversion may emit numeric ZIPs without leading zeros.
+	// HI ZIPs all begin with 96, so a 4-digit value indicates a leading-zero stripped during
+	// numeric coercion (defensive — has not been observed in the published file as of 2026-05).
 	if (/^\d{4}$/.test(trimmed)) return `0${trimmed}`
 
 	return trimmed

@@ -66,8 +66,9 @@ describe("evidenceCensus", () => {
 	})
 
 	it("does not call an unconfigured session starved", () => {
-		// No channels at all is a fact about the configuration rather than about this input. Reporting it as starvation would
-		// send the reader to the retrieval side when the wiring is what is missing.
+		// No channels at all is a fact about the configuration rather than about this input.
+		// Reporting it as starvation would send the reader to the retrieval side
+		// when the wiring is what is missing.
 		expect(evidenceCensus(trace()).silent).toBe(false)
 	})
 

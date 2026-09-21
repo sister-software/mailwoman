@@ -31,10 +31,12 @@ export function preregistrationPath(directory: string, name: string): string {
 }
 
 /**
- * Canonical JSON for hashing: keys sorted at every depth, array order preserved, no insignificant whitespace.
+ * Canonical JSON for hashing: keys sorted at every depth, array order preserved,
+ * no insignificant whitespace.
  *
- * The hash covers content rather than bytes so a formatter pass cannot break the freeze and a reordered key cannot slip
- * past it. Array order is meaningful — row order is reported order — so it is never sorted.
+ * The hash covers content rather than bytes so a formatter pass cannot break the
+ * freeze and a reordered key cannot slip past it. Array order is meaningful —
+ * row order is reported order — so it is never sorted.
  */
 export function canonicalJSON(value: unknown): string {
 	if (value === null || typeof value !== "object") return stringifyJSON(value) ?? "null"
@@ -56,9 +58,9 @@ export function definitionContentHash(definition: unknown): string {
 }
 
 /**
- * The freeze record every pre-registration commits beside its definition: the definition's identity and the content
- * hash that pins it. The identity field's name varies per ruler (`probeID`, `decisionID`), so the loader takes it as a
- * parameter rather than declaring it here.
+ * The freeze record every pre-registration commits beside its definition: the definition's
+ * identity and the content hash that pins it. The identity field's name varies per ruler
+ * (`probeID`, `decisionID`), so the loader takes it as a parameter rather than declaring it here.
  */
 export interface FrozenDefinitionFreezeRecord {
 	definition: string
@@ -88,8 +90,9 @@ export interface LoadFrozenDefinitionOptions<T> {
 /**
  * Load a frozen pre-registration, refusing anything that would let the ruler move.
  *
- * Three refusals, in order: the freeze record must name this definition and version, the definition's content hash must
- * equal the frozen hash, and the audit must be clean. A caller never receives a definition it may only partly trust.
+ * Three refusals, in order: the freeze record must name this definition and version,
+ * the definition's content hash must equal the frozen hash, and the audit must be clean.
+ * A caller never receives a definition it may only partly trust.
  */
 export async function loadFrozenDefinition<T extends { version: string }>(
 	options: LoadFrozenDefinitionOptions<T>
@@ -159,9 +162,10 @@ export interface SamplingRegistration {
 }
 
 /**
- * The sampling half of a definition audit, shared because every stratified ruler registers the same three quantities
- * and each has one way to be unexecutable: a target too small for the power the record will claim, a floor sitting
- * above the target it is a floor for, and a seed the generator cannot take.
+ * The sampling half of a definition audit, shared because every stratified ruler
+ * registers the same three quantities and each has one way to be unexecutable:
+ * a target too small for the power the record will claim, a floor sitting above the
+ * target it is a floor for, and a seed the generator cannot take.
  */
 export function samplingProblems(sampling: SamplingRegistration, minimumTarget: number): string[] {
 	const problems: string[] = []
@@ -186,8 +190,8 @@ export function samplingProblems(sampling: SamplingRegistration, minimumTarget: 
 }
 
 /**
- * The withheld-fields half of a definition audit: the ruler's list and the fixture type's list must name the same
- * fields, or "equal evidence" means one thing in the record and another in the file.
+ * The withheld-fields half of a definition audit: the ruler's list and the fixture type's list must
+ * name the same fields, or "equal evidence" means one thing in the record and another in the file.
  */
 export function withheldFieldProblems(registered: readonly string[], enforced: readonly string[]): string[] {
 	const left = [...registered].toSorted(compareByCodePoint).join(",")
@@ -210,9 +214,9 @@ interface ModelCard {
 export interface WeightsIdentity {
 	weightsLocale: string
 	/**
-	 * Md5 of the resolved `model.onnx`, which is what distinguishes two arms. A staged candidate's `model-card.json` can
-	 * be a symlink into the shared data root, so two caches holding different graphs read the same `weightsVersion`; the
-	 * bytes never do.
+	 * Md5 of the resolved `model.onnx`, which is what distinguishes two arms.
+	 * A staged candidate's `model-card.json` can be a symlink into the shared data root,
+	 * so two caches holding different graphs read the same `weightsVersion`; the bytes never do.
 	 */
 	weightsModelMD5: string
 	weightsModelPath: string
@@ -250,8 +254,9 @@ export async function readWeightsIdentity(options: WeightsIdentityOptions): Prom
 export interface PreregisteredArtifactIdentity extends WeightsIdentity {
 	poiDatabasePath: string
 	/**
-	 * The database's own `layer_manifest` row, or the reason it could not be read. Never silently absent: an unstamped
-	 * artifact and an unreadable one are different findings, and both matter to a reproduction.
+	 * The database's own `layer_manifest` row, or the reason it could not be read.
+	 * Never silently absent: an unstamped artifact and an unreadable one are different
+	 * findings, and both matter to a reproduction.
 	 */
 	poiLayerManifest?: LayerManifest
 	poiLayerManifestNote?: string

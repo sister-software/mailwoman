@@ -78,9 +78,9 @@ describe("temporal-column guards", () => {
 
 	it("refuses a vintage LABEL as valid_from", () => {
 		expect(() => assertProviderValidFrom("2026-Q2")).toThrow(/ISO YYYY-MM-DD/)
-		// Why it has to be refused: string comparison decides at the first differing character, and `Q` outranks
-		// every digit — so within its own year the label sorts above every real date and `valid_from <= asOf`
-		// never matches.
+		// Why it has to be refused: string comparison decides at the first differing character,
+		// and `Q` outranks every digit — so within its own year the label sorts above
+		// every real date and `valid_from <= asOf` never matches.
 		const datesInThatYear = ["2026-01-01", "2026-06-30", "2026-12-31"]
 
 		expect(datesInThatYear.every((asOf) => "2026-Q2" > asOf)).toBe(true)

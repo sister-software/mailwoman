@@ -126,9 +126,9 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 	})
 
 	it("a complete-token walk must not SHADOW the partial interpretation: 'chic' with a real place named Chic still reaches Chicago", () => {
-		// The live en-us artifact holds a place literally named "Chic" — with it, the typed prefix is
-		// both a complete edge and a partial of "chicago", and the walk's success silently dropped
-		// every longer completion (the prod typeahead offered only "Chic" for "Chic").
+		// The live en-us artifact holds a place literally named "Chic" — with it, the typed prefix
+		// is both a complete edge and a partial of "chicago", and the walk's success silently
+		// dropped every longer completion (the prod typeahead offered only "Chic" for "Chic").
 		const shadowed = new FSTMatcher([
 			{
 				edges: new Map([
@@ -174,9 +174,10 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 	})
 
 	it("a dense branch does not starve a high-importance sibling (#587 per-branch cap)", () => {
-		// "go" → "diego" (12 low-importance places) + "tham" (one high-importance Gotham). Without the
-		// per-branch cap, the 12 "Go Diego"s blow the budget before "tham" is ever visited, so Gotham
-		// (the place a user most likely wants) is dropped — the real "new → New London not New York" bug.
+		// "go" → "diego" (12 low-importance places) + "tham" (one high-importance Gotham).
+		// Without the per-branch cap, the 12 "Go Diego"s blow the budget before "tham"
+		// is ever visited, so Gotham (the place a user most likely wants) is dropped —
+		// the real "new → New London not New York" bug.
 		const dense = new FSTMatcher([
 			{ edges: new Map([["go", 1]]), places: [] },
 			{
@@ -197,10 +198,10 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		expect(r.suggestions[0]?.name).toBe("Gotham")
 	})
 
-	// Robustness interface for the demo typeahead (#190/#585): the box feeds raw, half-typed input on
-	// every keystroke, so the function must never throw and must return [] (not garbage) for input it
-	// can't complete. These lock that in so a future refactor can't reintroduce the "Denver for New
-	// Yor" class of bug.
+	// Robustness interface for the demo typeahead (#190/#585): the box feeds raw,
+	// half-typed input on every keystroke, so the function must never throw and must return
+	// [] (not garbage) for input it can't complete. These lock that in so a future
+	// refactor can't reintroduce the "Denver for New Yor" class of bug.
 	it("empty / whitespace-only query → no suggestions, depth 0", () => {
 		for (const q of ["", "   ", "\t"]) {
 			const r = autocomplete(matcher, q)

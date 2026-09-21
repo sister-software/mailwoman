@@ -22,8 +22,9 @@ import { resolvePath } from "path-ts"
 import { $ } from "zx"
 
 /**
- * The generated surfaces, each with the generator that owns it. Adding a version-stamped generated document means
- * adding a row here — the prepare job stages exactly these paths.
+ * The generated surfaces, each with the generator that owns it.
+ * Adding a version-stamped generated document means adding a row here —
+ * the prepare job stages exactly these paths.
  */
 const GENERATED_SURFACES: ReadonlyArray<{ file: string; generator: readonly string[] }> = [
 	{
@@ -51,8 +52,8 @@ export async function releaseGeneratedSurfaces(
 		)
 	}
 
-	// Each generator is `node <entry> [args]` with the entry resolved against the repo root. two surfaces sharing a
-	// generator run it once.
+	// Each generator is `node <entry> [args]` with the entry resolved against the
+	// repo root. two surfaces sharing a generator run it once.
 	const generators = new Map(GENERATED_SURFACES.map((surface) => [surface.generator.join(" "), surface.generator]))
 
 	for (const [entry, ...args] of generators.values()) {

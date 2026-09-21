@@ -87,8 +87,8 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00001")!
-		// Alignment downstream must place the venue's "Buffalo" under B-venue and the
-		// locality's "Buffalo" under B-locality (not vice versa).
+		// Alignment downstream must place the venue's "Buffalo" under B-venue
+		// and the locality's "Buffalo" under B-locality (not vice versa).
 		const result = alignRow(row)
 		expect(result.kind).toBe("labeled")
 

@@ -31,8 +31,9 @@ import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 
 /**
- * Libaddressinput's placeholder vocabulary in this project's tag names. `%A` is the one opaque street-address field the
- * table expands into several tags, so it compares as a single marker.
+ * Libaddressinput's placeholder vocabulary in this project's tag names.
+ * `%A` is the one opaque street-address field the table expands into several tags,
+ * so it compares as a single marker.
  */
 const FIELD: Readonly<Record<string, string>> = {
 	N: "attention",
@@ -49,21 +50,23 @@ const FIELD: Readonly<Record<string, string>> = {
 /**
  * The skeleton a layout prints: field names per line, street line collapsed to one marker.
  *
- * Two slots drop out. Both are authored rather than transcribed, so comparing them against the source would report
- * every country carrying one as a departure and say nothing:
+ * Two slots drop out. Both are authored rather than transcribed, so comparing them against
+ * the source would report every country carrying one as a departure and say nothing:
  *
- * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's consumers add the destination country
- *   themselves.
- * - `dependent_locality`, for the 47 countries measured as printing one; `%D` appears in 14 of the 197 shipped `fmt`
- *   strings, and a country that really has the line still needs it. It takes a line of its own beside the locality, or
- *   a place inside the locality's line where that line also carries the street, so it is dropped wherever it sits
- *   rather than only as a line. where the generator put it is what `address-layouts.test.ts` checks.
+ * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's
+ *   consumers add the destination country themselves.
+ * - `dependent_locality`, for the 47 countries measured as printing one; `%D` appears in 14
+ *   of the 197 shipped `fmt` strings, and a country that really has the line still needs it.
+ *   It takes a line of its own beside the locality, or a place inside the locality's line
+ *   where that line also carries the street, so it is dropped wherever it sits rather than
+ *   only as a line. where the generator put it is what `address-layouts.test.ts` checks.
  */
 const AUTHORED_SLOTS = new Set(["country", "dependent_locality"])
 
 function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): string[][] {
-	// A slot counts as authored only when the source does not name it. The 14 `fmt` strings that carry `%D` are
-	// compared like any other line, so a transcription error there still fails.
+	// A slot counts as authored only when the source does not name it.
+	// The 14 `fmt` strings that carry `%D` are compared like any other line,
+	// so a transcription error there still fails.
 	const inSource = new Set(source.flat())
 	const transcribed = (name: string): boolean => !AUTHORED_SLOTS.has(name) || inSource.has(name)
 
@@ -80,8 +83,9 @@ function nameOf(atom: AddressAtom): string[] {
 }
 
 /**
- * The skeleton a `fmt` prints, in the same vocabulary. A placeholder this project does not model drops out, which is
- * what lets a country whose `fmt` names only such fields be reported as unusable rather than as a mismatch.
+ * The skeleton a `fmt` prints, in the same vocabulary. A placeholder this project
+ * does not model drops out, which is what lets a country whose `fmt` names only such
+ * fields be reported as unusable rather than as a mismatch.
  */
 function skeletonOfFormat(fmt: string): string[][] {
 	return fmt
@@ -162,8 +166,9 @@ describe("the generated layout table matches libaddressinput", () => {
 	it("answers null for a country the dataset gives no usable order", () => {
 		const unusable = [...countryFormats].filter(([, fmt]) => !fmt || !skeletonOfFormat(fmt).length).map(([cc]) => cc)
 
-		// Absence is a real answer here: rendering nothing beats inventing an order. The count is pinned so that a
-		// dataset refresh which quietly drops a country's `fmt` shows up as a failure rather than as silence.
+		// Absence is a real answer here: rendering nothing beats inventing an order.
+		// The count is pinned so that a dataset refresh which quietly drops a country's
+		// `fmt` shows up as a failure rather than as silence.
 		expect(unusable).toHaveLength(55)
 
 		for (const country of unusable) {

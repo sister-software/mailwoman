@@ -56,8 +56,8 @@ export interface TranslitOverlayOptions {
 	/**
 	 * Prefix the base manifest's file paths currently carry, to be rewritten to
 	 * {@link TranslitOverlayOptions.canonicalPathPrefix}. Defaults to `mailwomanDataRoot()` with a trailing slash — the
-	 * root that wrote those paths. Pass it explicitly when translating a manifest generated under a different
-	 * `$MAILWOMAN_DATA_ROOT` than the one you are running with.
+	 * root that wrote those paths. Pass it explicitly when translating a manifest generated
+	 * under a different `$MAILWOMAN_DATA_ROOT` than the one you are running with.
 	 */
 	legacyPathPrefix?: string
 }
@@ -77,8 +77,8 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
 }
 
 /**
- * Write one parquet file for a single source slug. Returns the populated ParquetFileDescriptor + a list of quarantine
- * reasons for rows that failed alignment.
+ * Write one parquet file for a single source slug. Returns the populated ParquetFileDescriptor +
+ * a list of quarantine reasons for rows that failed alignment.
  */
 async function writeOneFile(
 	rows: readonly LabeledRow[],
@@ -184,9 +184,9 @@ export async function buildTranslitOverlay(
 		report?.(`quarantine log → ${qPath} (${quarantine.length} rows)`)
 	}
 
-	// Compose final manifest: rewrite the base's file paths from the data root → /data/... and append
-	// the new translit files. The kryptonite file already lives in the base manifest (it was written
-	// there by Thread B).
+	// Compose final manifest: rewrite the base's file paths from the data root → /data/...
+	// and append the new translit files. The kryptonite file already lives in the
+	// base manifest (it was written there by Thread B).
 	const base = await readLocalJSONFile<ParquetManifest>(options.baseManifest)
 
 	const rewrittenBase = base.slices.map((file) => ({

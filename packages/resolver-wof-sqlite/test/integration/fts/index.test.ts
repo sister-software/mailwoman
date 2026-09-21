@@ -21,8 +21,9 @@ import { describe, expect, test } from "vitest"
 function buildBaseSchema(): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
 
-	// Mirror the real WOF SQLite schema subset that fts.ts queries. Includes the bbox columns
-	// (min_latitude/max_latitude/min_longitude/max_longitude) the R*Tree builder reads.
+	// Mirror the real WOF SQLite schema subset that fts.ts queries.
+	// Includes the bbox columns (min_latitude/max_latitude/min_longitude/max_longitude)
+	// the R*Tree builder reads.
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY,
@@ -123,10 +124,11 @@ describe("buildPlaceSearchFTS", () => {
 	test("a phrase query cannot match ACROSS two aliases' concatenation boundary (#523)", () => {
 		using db = buildBaseSchema()
 
-		// Two aliases whose concatenation forms a third phrase: the bag "York <sep> New City" must
-		// not phrase-match "york new". Without the separator token, FTS5 assigns the aliases' tokens
-		// consecutive positions and the cross-boundary phrase falsely matches (see the ALIAS_SEPARATOR
-		// probe table in fts.ts — punctuation separators do not fix this. only an indexed token does).
+		// Two aliases whose concatenation forms a third phrase: the bag "York <sep>
+		// New City" must not phrase-match "york new". Without the separator token,
+		// FTS5 assigns the aliases' tokens consecutive positions and the cross-boundary
+		// phrase falsely matches (see the ALIAS_SEPARATOR probe table in fts.ts —
+		// punctuation separators do not fix this. only an indexed token does).
 		db.exec(`
 			INSERT INTO spr VALUES (5, NULL, 'Twin Hamlet', 'locality', 'US', 40.0, -80.0, 39.9, 40.1, -80.1, -79.9, -1, 0);
 			INSERT INTO names (id, language, name) VALUES (5, 'eng', 'York');
@@ -242,9 +244,9 @@ describe("buildPlaceSearchFTS", () => {
 	test("indexes places with is_current = 1 (legacy Mapzen-era) as well as is_current = -1 (modern); see #91", () => {
 		using db = buildBaseSchema()
 
-		// Add one place tagged with the legacy convention (`is_current = 1`). WOF mixes both
-		// conventions; ~42% of admin-US rows carry `1` rather than `-1`. The filter must accept
-		// both — the Phase 4.2 regression was excluding all of these.
+		// Add one place tagged with the legacy convention (`is_current = 1`).
+		// WOF mixes both conventions; ~42% of admin-US rows carry `1` rather than `-1`.
+		// The filter must accept both — the Phase 4.2 regression was excluding all of these.
 		db.exec(`
 			INSERT INTO spr VALUES (
 				1000, NULL, 'Legacy Place', 'locality', 'US',
@@ -257,8 +259,7 @@ describe("buildPlaceSearchFTS", () => {
 		const result = buildPlaceSearchFTS(db)
 		expect(result.indexedRows).toBe(4)
 
-		// 3 modern + 1 legacy
-		// `match` against the new row to confirm it's actually queryable.
+		// 3 modern + 1 legacy `match` against the new row to confirm it's actually queryable.
 		const hit = db.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH ?`).get("Legacy Place") as
 			| { wof_id: number }
 			| undefined

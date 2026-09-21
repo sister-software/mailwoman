@@ -51,8 +51,9 @@ export async function renderPlotlyHTMLToPNG(
 		async (page) => {
 			await page.goto(pathToFileURL(resolve(options.inHTML)).href, { waitUntil: "networkidle" })
 
-			// Resolve once every Plotly graph div has fired plotly_afterplot (3D paints land async, after
-			// newPlot's promise resolves), with a per-div fallback so an already-painted div can't hang us.
+			// Resolve once every Plotly graph div has fired plotly_afterplot
+			// (3D paints land async, after newPlot's promise resolves), with a per-div fallback
+			// so an already-painted div can't hang us.
 			await page.evaluate(async () => {
 				// Runs in the browser — reach DOM/Plotly globals via globalThis so the script needs no DOM lib.
 				interface PlotlyDiv {

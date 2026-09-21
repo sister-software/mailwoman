@@ -49,7 +49,8 @@ function zipOf(entryName: string, content: string): Buffer {
 }
 
 /**
- * The catalog names three countries: AA (published), BB (published), XX (in the catalog, but the dump directory 404s).
+ * The catalog names three countries: AA (published), BB (published),
+ * XX (in the catalog, but the dump directory 404s).
  */
 const COUNTRY_INFO = [
 	"# comment line",

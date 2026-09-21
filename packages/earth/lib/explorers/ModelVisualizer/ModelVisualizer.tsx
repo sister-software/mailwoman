@@ -34,10 +34,10 @@ import styles from "./styles.module.css"
 const labelText = (label: string): string => tagOf(label) || label
 
 /**
- * Fallback locale-head axis for traces produced before `localeCountries` rode with the logits. Live traces are
- * self-describing — never extend this list. the model's own axis wins. (Mirrors neural/address-system.ts
- * LOCALE_COUNTRIES as of 2026-07. the PLACETYPE_ORDER dual-maintenance class is exactly why the trace now carries the
- * axis itself.)
+ * Fallback locale-head axis for traces produced before `localeCountries` rode with the logits.
+ * Live traces are self-describing — never extend this list. the model's own axis wins.
+ * (Mirrors neural/address-system.ts LOCALE_COUNTRIES as of 2026-07. the PLACETYPE_ORDER
+ * dual-maintenance class is exactly why the trace now carries the axis itself.)
  */
 const LOCALE_ORDER_FALLBACK = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
 
@@ -46,7 +46,8 @@ export interface ModelVisualizerProps {
 }
 
 /**
- * Memoized: the live wrapper re-renders on every input keystroke; `trace` is referentially stable between runs.
+ * Memoized: the live wrapper re-renders on every input keystroke; `trace` is
+ * referentially stable between runs.
  */
 export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: ModelVisualizerProps): React.JSX.Element {
 	const [matrixMode, setMatrixMode] = useState<"logits" | "emissions">("emissions")
@@ -58,8 +59,8 @@ export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: Mo
 		[trace.localeLogits]
 	)
 
-	// Stage-prefix rule: the model may emit fewer logits than the card's label list. Only the
-	// emittable prefix gets heatmap rows.
+	// Stage-prefix rule: the model may emit fewer logits than the card's label list.
+	// Only the emittable prefix gets heatmap rows.
 	const emissionWidth = matrix[0]?.length ?? 0
 	const rowLabels = trace.labels.slice(0, emissionWidth)
 

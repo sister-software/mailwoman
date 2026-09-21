@@ -39,8 +39,8 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the `partial`-share measurement — see the workspace readme for the table and the
- * reasoning. `--measure-resolutions` re-derives it.
+ * Index resolution, chosen from the `partial`-share measurement — see the workspace
+ * readme for the table and the reasoning. `--measure-resolutions` re-derives it.
  */
 const DEFAULT_INDEX_RESOLUTION = "9"
 
@@ -100,9 +100,10 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 
 		const client = createEAFloodClient()
 
-		// The catalogue read supplies the product's ISO revision date and the direct file URL. Both are read rather than
-		// assembled: the EA's file service keys on an opaque id with no relationship to the dataset id, so a hard-coded
-		// URL survives a republish by pointing at a file that is no longer the product.
+		// The catalogue read supplies the product's ISO revision date and the direct file URL.
+		// Both are read rather than assembled: the EA's file service keys on an opaque
+		// id with no relationship to the dataset id, so a hard-coded URL survives a
+		// republish by pointing at a file that is no longer the product.
 		const catalogue = options.offline ? undefined : await client.readCatalogueRecord()
 		const sourceVintage = options.sourceVintage ?? catalogue?.revisionDate
 
@@ -148,8 +149,8 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			]
 		}
 
-		// The outline is a second authority's artifact: the EA says its mapping covers all of England and does not publish
-		// where England is. Which outline was used rides in `flood_map_extent`.
+		// The outline is a second authority's artifact: the EA says its mapping covers all of England
+		// and does not publish where England is. Which outline was used rides in `flood_map_extent`.
 		const outline = options.boundary
 			? outlineFromGeoJSON(await readLocalJSONFile<unknown>(options.boundary), options.boundary)
 			: (await createONSBoundaryClient().readCountryGeometry(EA_COVERAGE_COUNTRY)).geometry
@@ -179,9 +180,9 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
 		const result = await buildFloodDatabase({
-			// A `--limit` run is the smoke rung and reads a prefix in one process. a full build is batched, one child
-			// process per range of the authority's own feature ids. The reason is reproducibility rather than speed — see
-			// `@mailwoman/flood/sdk/ingest-chunk`.
+			// A `--limit` run is the smoke rung and reads a prefix in one process. a full build
+			// is batched, one child process per range of the authority's own feature ids.
+			// The reason is reproducibility rather than speed — see `@mailwoman/flood/sdk/ingest-chunk`.
 			...(options.limit
 				? {
 						source: await createGeodatabaseFeatureSource({ geodatabasePath, limit: Number(options.limit) }),
@@ -203,9 +204,10 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			indexResolution,
 			coverageResolution,
 			extent,
-			// The live service's feature count is the cheapest two-path check there is, and it catches a stale or
-			// truncated archive before anything is written. A `--limit` run has deliberately fewer features than the
-			// service reports, so the check is skipped there rather than made to pass.
+			// The live service's feature count is the cheapest two-path check there is,
+			// and it catches a stale or truncated archive before anything is written.
+			// A `--limit` run has deliberately fewer features than the service reports,
+			// so the check is skipped there rather than made to pass.
 			...(options.offline || options.limit ? {} : { expectedFeatureCount: await client.readFeatureCount() }),
 			onProgress: (message) => console.error(`  [flood] ${message}`),
 		})

@@ -27,8 +27,8 @@ export interface DebugInfoProps {
 	 */
 	activeBackend?: string
 	/**
-	 * Whether the CPU/wasm backend is currently forced, which explains a `wasm` backend that would otherwise be a WebGPU
-	 * failure.
+	 * Whether the CPU/wasm backend is currently forced, which explains a `wasm`
+	 * backend that would otherwise be a WebGPU failure.
 	 */
 	forceWASM?: boolean
 	/**
@@ -56,8 +56,8 @@ function Row({ label, value }: { label: string; value: string }): ReactNode {
 export function DebugInfo({ activeBackend, forceWASM, selectedVersion, ready }: DebugInfoProps): ReactNode {
 	const build = useBuildInfo()
 
-	// Memoized on the primitives it reads, so the log below fires when a value changes rather than on every render —
-	// a record rebuilt each render would be a new object each time and log continuously.
+	// Memoized on the primitives it reads, so the log below fires when a value changes rather than on
+	// every render — a record rebuilt each render would be a new object each time and log continuously.
 	const record = useMemo(
 		() => ({
 			app: build?.app ?? "—",

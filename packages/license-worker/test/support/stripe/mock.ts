@@ -33,7 +33,8 @@ export async function signedWebhook(
 }
 
 /**
- * A fixed JSON body, or a body computed from the request's form fields (a write's parameters, a list's query).
+ * A fixed JSON body, or a body computed from the request's form fields
+ * (a write's parameters, a list's query).
  */
 export type StripeRoute = Record<string, unknown> | ((form: URLSearchParams) => unknown)
 

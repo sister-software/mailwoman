@@ -42,9 +42,9 @@ import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from
 /**
  * Every change a caller can set, in the CLI's own vocabulary.
  *
- * `undefined` means the production default, never "off" — the rule `GauntletResolverChanges` states in `harness.ts:69`:
- * "the library defaults are the thing under test". A tool that coerced undefined to false would grade a configuration
- * nobody ships.
+ * `undefined` means the production default, never "off" — the rule `GauntletResolverChanges`
+ * states in `harness.ts:69`: "the library defaults are the thing under test".
+ * A tool that coerced undefined to false would grade a configuration nobody ships.
  */
 export interface EngineConfig {
 	locale?: string
@@ -55,11 +55,12 @@ export interface EngineConfig {
 	resolve_db?: string
 	data_root?: string
 	/**
-	 * Grade a candidate weights bundle rather than the installed one — the change that turns a model question into a
-	 * comparison. Unset means whatever the resolution ladder finds, which is what production loads.
+	 * Grade a candidate weights bundle rather than the installed one — the change that
+	 * turns a model question into a comparison. Unset means whatever the resolution
+	 * ladder finds, which is what production loads.
 	 *
-	 * Guarded by {@link assertWeightsCacheStaged} at {@link EngineRegistry.acquire} because the ladder's fall-through is
-	 * silent: see that function.
+	 * Guarded by {@link assertWeightsCacheStaged} at {@link EngineRegistry.acquire}
+	 * because the ladder's fall-through is silent: see that function.
 	 */
 	weights_cache?: string
 	gazetteer_prior?: boolean
@@ -72,31 +73,33 @@ export interface EngineConfig {
 	postcode_containment_coherence?: boolean
 	admin_containment_rerank?: boolean
 	/**
-	 * The opt-in venue tier (#1684's POI half) — off by default in production. this change exists so the promotion
-	 * battery measures it with the standard tooling.
+	 * The opt-in venue tier (#1684's POI half) — off by default in production. this change
+	 * exists so the promotion battery measures it with the standard tooling.
 	 */
 	poi_venue_tier?: boolean
 	/**
-	 * The capital-status ranking axis (#1880) — bounded national-capital promotion on the bare-toponym class. Off by
-	 * default (D-rule).
+	 * The capital-status ranking axis (#1880) — bounded national-capital promotion
+	 * on the bare-toponym class. Off by default (D-rule).
 	 */
 	capital_tier?: boolean
 	/**
 	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Effective only against
-	 * an artifact whose `name_role` column carries the stamp. Off by default (D-rule).
+	 * an artifact whose `name_role` column carries the stamp.
+	 * Off by default (D-rule).
 	 */
 	variant_alias_exemption?: boolean
 	/**
-	 * Record the decode-path evidence on every run. Off by default and left off by the measuring tools: the trace is kept
-	 * per run, so it is a per-row cost paid only where the evidence is the answer.
+	 * Record the decode-path evidence on every run. Off by default and left off by the measuring tools:
+	 * the trace is kept per run, so it is a per-row cost paid only where the evidence is the answer.
 	 */
 	trace?: boolean
 	/**
 	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it.
 	 *
-	 * Not a change and deliberately absent from the tool schemas: the answer is byte-identical either way, so declaring
-	 * it as a variable in a comparison would be declaring a variable that cannot move an outcome. The measuring tools
-	 * that read misses force it on, the same way they force `trace`.
+	 * Not a change and deliberately absent from the tool schemas: the answer is
+	 * byte-identical either way, so declaring it as a variable in a comparison would be
+	 * declaring a variable that cannot move an outcome. The measuring tools that read
+	 * misses force it on, the same way they force `trace`.
 	 */
 	diagnose_unreachable?: boolean
 }
@@ -104,23 +107,27 @@ export interface EngineConfig {
 /**
  * The session options a config resolves to, with every default made explicit.
  *
- * Resolving before recording is what makes a confound check possible at all. Two arms whose stated configs differ in
- * one field can differ in three effective ones — `--country-scope auto` means "scope on FTS, no scope on candidate"
- * (`docs/engineering/reference/resolver-backends.mdx`), so switching backend also switches country scoping. A
- * comparison that reads stated configs cannot see that. one that reads effective configs can.
+ * Resolving before recording is what makes a confound check possible at all.
+ * Two arms whose stated configs differ in one field can differ in three effective
+ * ones — `--country-scope auto` means "scope on FTS, no scope on candidate"
+ * (`docs/engineering/reference/resolver-backends.mdx`), so switching backend also switches country scoping.
+ * A comparison that reads stated configs cannot see that. one that reads effective configs can.
  */
 /**
  * Which `GeocodeSessionOptions` key each `EngineConfig` key becomes.
  *
- * The two vocabularies differ by design — a caller writes the CLI's snake_case, a session reads camelCase — and
+ * The two vocabularies differ by design — a caller writes the CLI's snake_case,
+ * a session reads camelCase — and
  * {@link resolveConfig} performs the translation inline, where it is invisible to anyone else who needs it. This map is
- * the same translation, named, because `confound.ts` compares a caller's declared keys against the keys that actually
- * differ between two resolved configs. Without it, declaring `["place_country"]` and having `placeCountry` move reads
- * as two separate facts — one change declared and unmoved, one moved and undeclared — and every correctly-declared
- * comparison grades itself ambiguous.
+ * the same translation, named, because `confound.ts` compares a caller's declared
+ * keys against the keys that actually differ between two resolved configs.
+ * Without it, declaring `["place_country"]` and having `placeCountry` move reads as
+ * two separate facts — one change declared and unmoved, one moved and undeclared —
+ * and every correctly-declared comparison grades itself ambiguous.
  *
- * `configKeyMapping.test.ts` asserts this stays in step with `resolveConfig`, which is the only thing that can: a
- * change added to one and not the other is a silent regression to exactly the behaviour above.
+ * `configKeyMapping.test.ts` asserts this stays in step with `resolveConfig`,
+ * which is the only thing that can: a change added to one and not the other is a
+ * silent regression to exactly the behaviour above.
  */
 export const EFFECTIVE_KEY_FOR = {
 	locale: "locale",
@@ -150,9 +157,10 @@ export const EFFECTIVE_KEY_FOR = {
 /**
  * Translate a caller's declared key into the effective key it becomes, or return it unchanged.
  *
- * Unchanged rather than rejected: a caller may legitimately declare something that is not an `EngineConfig` key at all
- * — `["engine"]` across two geocoders is the common one — and turning that into an error would refuse the correct
- * declaration for the one comparison where no config key can express the variable.
+ * Unchanged rather than rejected: a caller may legitimately declare something that is not
+ * an `EngineConfig` key at all — `["engine"]` across two geocoders is the common one —
+ * and turning that into an error would refuse the correct declaration for the one
+ * comparison where no config key can express the variable.
  */
 export function effectiveKeyFor(declared: string): string {
 	return (EFFECTIVE_KEY_FOR as Record<string, string>)[declared] ?? declared
@@ -161,20 +169,21 @@ export function effectiveKeyFor(declared: string): string {
 /**
  * {@link GeocodeSessionOptions} in a form a JSON record accepts.
  *
- * Structurally the same type, field for field. It exists because TypeScript withholds an implicit index signature from
- * an interface — declaration merging could add a member later — so an interface value is not assignable to
- * `Record<string, unknown>` however it is one. The mapping is checked property by property and keeps each field's own
- * type, which a cast through `unknown` would discard.
+ * Structurally the same type, field for field. It exists because TypeScript withholds an
+ * implicit index signature from an interface — declaration merging could add a member later —
+ * so an interface value is not assignable to `Record<string, unknown>` however it is one.
+ * The mapping is checked property by property and keeps each field's own type,
+ * which a cast through `unknown` would discard.
  */
 export type EffectiveConfig = { [Key in keyof GeocodeSessionOptions]: GeocodeSessionOptions[Key] }
 
 export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 	// The production defaults, from the geocode command's own factory — never re-typed here (#1732).
 	// The hand-copied table this replaces drifted on three values (postcodeShapeCoherence,
-	// postcodeContainmentCoherence, placeCountryThreshold: true/true/0.5 vs the shipped
-	// false/false/0.9), so every unset-change measurement graded a configuration production does not
-	// ship. Comparisons where both arms shared the drift stayed internally valid. absolute numbers
-	// did not. `resolve-config.test.ts` pins this function against the factory field by field.
+	// postcodeContainmentCoherence, placeCountryThreshold: true/true/0.5 vs the shipped false/false/0.9),
+	// so every unset-change measurement graded a configuration production does not ship.
+	// Comparisons where both arms shared the drift stayed internally valid. absolute numbers did not.
+	// `resolve-config.test.ts` pins this function against the factory field by field.
 	const production = createGeocodeCommandOptions()
 
 	return {
@@ -206,16 +215,18 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 /**
  * Refuse a candidate weights root that would not actually be loaded.
  *
- * `resolveWeights` honours an explicit `cacheRoot` only when that directory holds `model.onnx` and `tokenizer.model`,
- * and otherwise walks on to the installed workspace package — which in this repo always resolves. So the failure mode
- * of a mis-typed or half-staged candidate is not an error: it is a full run of the shipped model, reported under the
- * candidate's label, with every number plausible. `promotion-eval.ts` refuses the same way and for the same reason.
+ * `resolveWeights` honours an explicit `cacheRoot` only when that directory holds `model.onnx`
+ * and `tokenizer.model`, and otherwise walks on to the installed workspace package — which in
+ * this repo always resolves. So the failure mode of a mis-typed or half-staged candidate is
+ * not an error: it is a full run of the shipped model, reported under the candidate's label,
+ * with every number plausible. `promotion-eval.ts` refuses the same way and for the same reason.
  * this is that guard on the warm path, sharing its check rather than re-deriving the layout.
  *
  * Runs before the session build, so a bad path costs a `stat` rather than the ~1.4 s construction.
  *
- * @throws When the root is wrong-shaped (no binaries) or under-staged (binaries present, but siblings its own card
- *   declares are missing — the #1516 shape, which degrades a channel silently and reads as a model regression).
+ * @throws When the root is wrong-shaped (no binaries) or under-staged
+ *   (binaries present, but siblings its own card declares are missing — the #1516 shape,
+ *   which degrades a channel silently and reads as a model regression).
  */
 export async function assertWeightsCacheStaged(cacheRoot: string, locale = "en-us"): Promise<void> {
 	const { kind, paths } = await missingWeightsCacheArtifacts(cacheRoot, locale)
@@ -262,8 +273,8 @@ export interface EngineSummary {
 	/**
 	 * The model this engine actually loaded, and the ladder rung that produced it.
 	 *
-	 * Reported beside the config rather than derived from it, because the two can disagree in the one direction that
-	 * matters: `weights_cache` names what was asked FOR, and only this says what answered.
+	 * Reported beside the config rather than derived from it, because the two can disagree in the one
+	 * direction that matters: `weights_cache` names what was asked FOR, and only this says what answered.
 	 */
 	weights: { model_path: string; source: string } | null
 }
@@ -271,19 +282,21 @@ export interface EngineSummary {
 /**
  * Resident engines, evicted least-recently-used first.
  *
- * The cap is small on purpose. `geocode-stream.ts:23-28` records the measurement that sets it: on a shared multi-GB WOF
- * SQLite, throughput peaked at 2 workers (~1.4×) and degraded beyond — memory bandwidth and the shared database are the
- * ceiling rather than core count. Two resident candidate gazetteers are already several GB before the ONNX sessions, so
- * holding more engines adds nothing and can cost the box.
+ * The cap is small on purpose. `geocode-stream.ts:23-28` records the measurement that sets it:
+ * on a shared multi-GB WOF SQLite, throughput peaked at 2 workers (~1.4×) and degraded beyond —
+ * memory bandwidth and the shared database are the ceiling rather than core count.
+ * Two resident candidate gazetteers are already several GB before the ONNX sessions,
+ * so holding more engines adds nothing and can cost the box.
  */
 /**
  * What a tool needs from the engine registry.
  *
- * The tools take this rather than {@linkcode EngineRegistry}, for one reason a test finds immediately: the class carries
- * private fields, so no object literal can ever be assignable to it, and every stub in this package's tests had to
- * assert through `unknown` — which then keeps compiling after a method is renamed or its signature changes, and the
- * stub silently stops standing for the thing it doubles. `OracleGeocoderLike` in `oracle-arm.ts` is the same idea,
- * arrived at earlier.
+ * The tools take this rather than {@linkcode EngineRegistry}, for one reason a
+ * test finds immediately: the class carries private fields, so no object literal
+ * can ever be assignable to it, and every stub in this package's tests had to
+ * assert through `unknown` — which then keeps compiling after a method is renamed
+ * or its signature changes, and the stub silently stops standing for the thing it doubles.
+ * `OracleGeocoderLike` in `oracle-arm.ts` is the same idea, arrived at earlier.
  */
 export interface EngineRegistryLike {
 	readonly repoRoot: string
@@ -311,10 +324,11 @@ export class EngineRegistry implements EngineRegistryLike {
 	readonly #bootFingerprint: TreeFingerprint
 
 	/**
-	 * Compute the boot fingerprint, then construct. The boot fingerprint is the tree the process imported — not the tree
-	 * any individual engine was built from. Those differ after a reload, and the difference is required: a registry with
-	 * no resident engine has nothing stale to compare against, so without this the first call after a reload builds and
-	 * stamps the new fingerprint onto answers produced by the old modules.
+	 * Compute the boot fingerprint, then construct. The boot fingerprint is the tree
+	 * the process imported — not the tree any individual engine was built from.
+	 * Those differ after a reload, and the difference is required: a registry with no resident
+	 * engine has nothing stale to compare against, so without this the first call after a
+	 * reload builds and stamps the new fingerprint onto answers produced by the old modules.
 	 */
 	static async create(repoRoot: string, maxResident = 2): Promise<EngineRegistry> {
 		return new EngineRegistry(repoRoot, maxResident, await computeTreeFingerprint(repoRoot))
@@ -331,16 +345,17 @@ export class EngineRegistry implements EngineRegistryLike {
 	}
 
 	/**
-	 * The tree this process imported its modules from. Equality with {@link fingerprint} is the only condition under which
-	 * any answer from this registry describes the source on disk.
+	 * The tree this process imported its modules from. Equality with {@link fingerprint} is the
+	 * only condition under which any answer from this registry describes the source on disk.
 	 */
 	get bootFingerprint(): TreeFingerprint {
 		return this.#bootFingerprint
 	}
 
 	/**
-	 * Whether the working tree has moved since this process imported its modules. When true, every engine — resident or
-	 * not yet built — can only serve the old code, and no in-process action can change that.
+	 * Whether the working tree has moved since this process imported its modules.
+	 * When true, every engine — resident or not yet built — can only serve the old code,
+	 * and no in-process action can change that.
 	 */
 	async sourceMoved(): Promise<boolean> {
 		return (await this.fingerprint()).digest !== this.#bootFingerprint.digest
@@ -353,9 +368,9 @@ export class EngineRegistry implements EngineRegistryLike {
 	/**
 	 * Get or build the engine for a configuration.
 	 *
-	 * @throws When a resident engine was built against different source. The refusal is the honest answer: Node cannot
-	 *   evict an imported module, so "reloaded" would be a lie and serving the old code silently is the failure this
-	 *   whole surface exists to prevent.
+	 * @throws When a resident engine was built against different source.
+	 *   The refusal is the honest answer: Node cannot evict an imported module, so "reloaded" would
+	 *   be a lie and serving the old code silently is the failure this whole surface exists to prevent.
 	 */
 	async acquire(config: EngineConfig): Promise<Engine> {
 		const current = await this.fingerprint()
@@ -371,16 +386,17 @@ export class EngineRegistry implements EngineRegistryLike {
 			return existing
 		}
 
-		// Refuse against the boot fingerprint rather than merely against whatever is resident. A resident engine under a
-		// different digest is one symptom of a moved tree. an empty registry under a moved tree is the other, and it
-		// is the dangerous one, because there is nothing stale left to notice. Both are the same fact — this process
-		// cannot import the new source — so both refuse here.
+		// Refuse against the boot fingerprint rather than merely against whatever is resident.
+		// A resident engine under a different digest is one symptom of a moved tree. an
+		// empty registry under a moved tree is the other, and it is the dangerous one,
+		// because there is nothing stale left to notice. Both are the same fact —
+		// this process cannot import the new source — so both refuse here.
 		if (current.digest !== this.#bootFingerprint.digest) {
 			throw new Error(staleEngineMessage(this.#bootFingerprint, current))
 		}
 
-		// After the stale-tree refusal (a moved tree invalidates every answer, candidate or not) and before the build,
-		// so a mis-staged candidate costs a stat rather than a construction.
+		// After the stale-tree refusal (a moved tree invalidates every answer, candidate or not)
+		// and before the build, so a mis-staged candidate costs a stat rather than a construction.
 		if (effective.weightsCacheRoot) {
 			await assertWeightsCacheStaged(effective.weightsCacheRoot, effective.locale)
 		}

@@ -258,8 +258,8 @@ describe("findPlace — backwards compat", () => {
 		// Without the bbox filter (silently dropped) all Parises are returned.
 		expect(all).toHaveLength(2)
 
-		// `near` without `maxDistanceKm` is purely a boost — works without the R*Tree because the
-		// haversine math runs on each row's centroid columns.
+		// `near` without `maxDistanceKm` is purely a boost — works without the R*Tree
+		// because the haversine math runs on each row's centroid columns.
 		const near = await oldLookup.findPlace({
 			text: "Paris",
 			placetype: "locality",

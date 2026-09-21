@@ -20,11 +20,12 @@ import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "#synth
 import { alignRow } from "#utils"
 
 /**
- * Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11% (recover the 84% locality drop on bare
- * "City, state" rows without becoming a locality-first majority), and house-number-before:after = 7:3 (FR's dominant
- * order is number-before. 30% after breaks the order-bias shortcut without risking FR hn-before accuracy). The three
- * original non-number shapes keep the bulk. Weights sum to 1.0. Key order is required — it drives the cumulative
- * thresholds below.
+ * Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11%
+ * (recover the 84% locality drop on bare "City, state" rows without becoming a locality-first majority),
+ * and house-number-before:after = 7:3 (FR's dominant order is number-before. 30%
+ * after breaks the order-bias shortcut without risking FR hn-before accuracy).
+ * The three original non-number shapes keep the bulk. Weights sum to 1.0.
+ * Key order is required — it drives the cumulative thresholds below.
  */
 const WEIGHTS: Record<BoundaryStressTemplate, number> = {
 	"street-eats-affix": 0.22,
@@ -52,8 +53,8 @@ function pickTemplate(r: () => number): BoundaryStressTemplate {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const boundaryStressRecipe: CorpusRecipe = {
 	name: "boundary-stress",

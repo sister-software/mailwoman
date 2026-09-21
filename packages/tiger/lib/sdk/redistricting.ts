@@ -33,9 +33,9 @@ const REDISTRICTING_BASE =
 const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
 /**
- * P.L. 94-171 (2020) pipe-delimited field offsets (0-based). Geographic header:
- * …|sumlev(2)|…|logrecno(7)|geoid(8)|geocode(9)|… — geocode is the bare 15-char block FIPS (matches tiger GEOID20);
- * sumlev 750 = tabulation block.
+ * P.L. 94-171 (2020) pipe-delimited field offsets (0-based).
+ * Geographic header: …|sumlev(2)|…|logrecno(7)|geoid(8)|geocode(9)|… — geocode is the
+ * bare 15-char block FIPS (matches tiger GEOID20); sumlev 750 = tabulation block.
  */
 const GEO_SUMLEV = 2
 const GEO_LOGRECNO = 7
@@ -48,9 +48,10 @@ const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
 
 /**
  * Segment 2: fileid|stusab|chariter|cifsn|logrecno(4)| P3×71 | P4×73 | H1×3 — 152 fields, H1 at the tail. Verified
- * against the real file: `ca000022020.pl`'s state row reads 14,392,140 / 13,475,623 / 916,517, the published CA 2020
- * figures. `occupied + vacant === housing_units` is the invariant that distinguishes a correct offset from a plausible
- * one, and {@link parseH1} refuses a row where it does not hold.
+ * against the real file: `ca000022020.pl`'s state row reads 14,392,140 / 13,475,623
+ * / 916,517, the published CA 2020 figures. `occupied + vacant === housing_units`
+ * is the invariant that distinguishes a correct offset from a plausible one,
+ * and {@link parseH1} refuses a row where it does not hold.
  */
 export const SEG2_FIELD_COUNT = 152
 /**
@@ -73,8 +74,9 @@ export interface H1Counts {
 }
 
 /**
- * The three H1 counts from one segment-2 row. The last field carries crlf's trailing CR when the file has one, so each
- * field is trimmed before it is read as a number. a row whose counts do not add up is refused rather than stored.
+ * The three H1 counts from one segment-2 row. The last field carries crlf's trailing CR
+ * when the file has one, so each field is trimmed before it is read as a number. a
+ * row whose counts do not add up is refused rather than stored.
  */
 export function parseH1(fields: readonly string[]): H1Counts {
 	if (fields.length !== SEG2_FIELD_COUNT) {
@@ -154,10 +156,11 @@ export interface FetchRedistrictingResult {
 	inserted: number
 }
 
-// Pipe-delimited, fixed field-offset census rows — the manual `split("|")` at each call site stays (the
-// parse indexes by position rather than by header). spliterator keeps crlf's trailing CR where readline stripped
-// it, but every field this parser reads (geo geocode/logrecno ≤ 9, segment-1 logrecno + P2 ≤ 86) sits well
-// before the final column, so the retained CR only ever lands on an unread trailing field.
+// Pipe-delimited, fixed field-offset census rows — the manual `split("|")` at each call
+// site stays (the parse indexes by position rather than by header). spliterator keeps
+// crlf's trailing CR where readline stripped it, but every field this parser reads
+// (geo geocode/logrecno ≤ 9, segment-1 logrecno + P2 ≤ 86) sits well before the final column,
+// so the retained CR only ever lands on an unread trailing field.
 async function eachLine(path: string, fn: (line: string) => void): Promise<void> {
 	for await (const line of TextSpliterator.fromAsync(path)) {
 		if (line) {
@@ -167,7 +170,8 @@ async function eachLine(path: string, fn: (line: string) => void): Promise<void>
 }
 
 /**
- * Fetch one state's P.L. 94-171 block race counts into `pl_block`. Yields progress. returns the tally.
+ * Fetch one state's P.L. 94-171 block race counts into `pl_block`.
+ * Yields progress. returns the tally.
  */
 export async function* fetchRedistricting(
 	options: FetchRedistrictingOptions
@@ -220,8 +224,9 @@ export async function* fetchRedistricting(
 	const total = logToGeoid.size
 	yield { phase: "header", blocks: total }
 
-	// Pass 1b: segment 2 → H1 housing counts for the mapped LOGRECNOs. Read before segment 1 so a block's P2 and H1
-	// land in one row. a mapped block with no segment-2 row is a data defect the load refuses, never a zero.
+	// Pass 1b: segment 2 → H1 housing counts for the mapped LOGRECNOs.
+	// Read before segment 1 so a block's P2 and H1 land in one row. a mapped block with
+	// no segment-2 row is a data defect the load refuses, never a zero.
 	const h1ByLogrecno = new Map<string, H1Counts>()
 
 	await eachLine(seg2Path, (line) => {

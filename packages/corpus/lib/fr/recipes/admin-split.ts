@@ -71,9 +71,10 @@ interface AdminSplitVariant {
 async function readCommunes(path: string): Promise<CommuneRow[]> {
 	const rows: CommuneRow[] = []
 
-	// The TSV is headerless — every line is a commune tuple — so `header: false` keeps row 1 instead of
-	// spending it on column names. Source is repo-generated (LF); even under crlf only the trailing `lat`
-	// column carries a CR, and it's consumed via `Number()` (whitespace-trimming), so it stays harmless.
+	// The TSV is headerless — every line is a commune tuple — so `header: false` keeps row 1
+	// instead of spending it on column names. Source is repo-generated (LF);
+	// even under crlf only the trailing `lat` column carries a CR, and it's consumed
+	// via `Number()` (whitespace-trimming), so it stays harmless.
 	for await (const [commune, postcode, lon, lat] of CSVSpliterator.fromAsync(path, {
 		columnDelimiter: Delimiters.Tab,
 		header: false,
@@ -101,9 +102,10 @@ const CANONICAL_PC_FIRST_CUTOFF = 0.85
 const APPEND_COUNTRY_SHARE = 0.2
 
 /**
- * Render one admin-split variant. The core teaching signal: the département, even as a full word after a comma or a
- * space, is `region` — never folded into `locality`. Variants 1-3 are the failure class. 4-5 are canonical-FR
- * preservation so the model doesn't over-fire region on every trailing token (and the bare commune still resolves).
+ * Render one admin-split variant. The core teaching signal: the département,
+ * even as a full word after a comma or a space, is `region` — never folded into `locality`.
+ * Variants 1-3 are the failure class. 4-5 are canonical-FR preservation so the model
+ * doesn't over-fire region on every trailing token (and the bare commune still resolves).
  */
 function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 	const r = random()
@@ -133,10 +135,11 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 		out = { raw: `${loc} ${pc}`, components: { locality: loc, postcode: pc }, order: "commune-pc" }
 	}
 
-	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 recipe output's bare rows carried no country
-	// token, so the model under-emitted country on FR (fr.country −3.5pp). ~20% of rows now append an
-	// explicit "France" + a `country` component — the model relearns to emit country when the token is
-	// present without over-firing it on the (still-majority) country-less rows. Substring all values satisfy the required relationship.
+	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 recipe output's bare rows
+	// carried no country token, so the model under-emitted country on FR (fr.country −3.5pp).
+	// ~20% of rows now append an explicit "France" + a `country` component — the model relearns
+	// to emit country when the token is present without over-firing it on the (still-majority)
+	// country-less rows. Substring all values satisfy the required relationship.
 	if (random() < APPEND_COUNTRY_SHARE) {
 		out = {
 			raw: `${out.raw}, France`,
@@ -149,8 +152,8 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const frAdminSplitRecipe: CorpusRecipe = {
 	name: "fr-admin-split",

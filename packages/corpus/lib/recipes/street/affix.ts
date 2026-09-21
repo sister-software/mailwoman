@@ -73,10 +73,10 @@ const EVAL_SOURCE: USSource = {
 	region: "VT",
 }
 
-// Multi-locale balance sources (--multilocale-count > 0). These rows carry no affix split — they exist
-// only to keep the postcode-order distribution multi-locale. Native-order rendering mirrors the
-// `country-balanced` recipe: FR = number-street, postcode-city. DE/IT/NL = street-number,
-// postcode-city. `order` drives the body.
+// Multi-locale balance sources (--multilocale-count > 0).
+// These rows carry no affix split — they exist only to keep the postcode-order distribution multi-locale.
+// Native-order rendering mirrors the `country-balanced` recipe: FR = number-street, postcode-city.
+// DE/IT/NL = street-number, postcode-city. `order` drives the body.
 interface BalanceSource {
 	zip: PathBuilderLike
 	csv: string
@@ -183,8 +183,9 @@ const isSuffixOrDirectional = (word: string): boolean =>
 	matchTrailingSuffix(word) !== null || matchLeadingDirectional(word) !== null
 
 /**
- * Split an OA street into { prefix?, name, suffix } using the codex. Requires a trailing suffix and a non-empty name
- * that isn't itself an affix token. Returns null when the street has no usable suffix.
+ * Split an OA street into { prefix?, name, suffix } using the codex.
+ * Requires a trailing suffix and a non-empty name that isn't itself an affix token.
+ * Returns null when the street has no usable suffix.
  */
 function parseStreet(
 	street: string,
@@ -298,12 +299,14 @@ function renderStreet(
 const VENUES = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Maria Garcia", "Riverside Clinic"]
 
 /**
- * Real-venue pool for the suffix-boundary v2 venue shell (corpus 0.19.0). The 2026-08-10 recipe review found the
- * v0.18.x recipe output's venue-led rows detectable as templates (six fixed venue strings), and the frozen B1 board's
- * failures concentrate in exactly that shell (rich rows 5/43 vs bare 53/65 at v4.3.3 step-40k). HRSA's health-center
- * site file supplies thousands of real US facility names ('Alburg Health Center'-register), US-government public
- * domain, already a corpus source (`usgov-hrsa-fqhc`). Kept verbatim (including the ~11% all-caps names — real register
- * diversity); comma-carrying names are dropped because the venue layout uses commas as its field delimiter.
+ * Real-venue pool for the suffix-boundary v2 venue shell (corpus 0.19.0).
+ * The 2026-08-10 recipe review found the v0.18.x recipe output's venue-led rows
+ * detectable as templates (six fixed venue strings), and the frozen B1 board's failures
+ * concentrate in exactly that shell (rich rows 5/43 vs bare 53/65 at v4.3.3 step-40k).
+ * HRSA's health-center site file supplies thousands of real US facility names
+ * ('Alburg Health Center'-register), US-government public domain, already a corpus source
+ * (`usgov-hrsa-fqhc`). Kept verbatim (including the ~11% all-caps names — real register diversity);
+ * comma-carrying names are dropped because the venue layout uses commas as its field delimiter.
  */
 const VENUE_POOL_CSV = dataRootPath(
 	"corpus",
@@ -321,8 +324,8 @@ async function readVenuePool(csvPath: PathBuilderLike): Promise<string[]> {
 	const pool: string[] = []
 
 	for await (const record of readCSVRecords(csvPath)) {
-		// One key, where the source's `Site Name` and `site name` both used to need naming: the reader snake-cases and
-		// lower-cases a header, so either spelling arrives here as `site_name`.
+		// One key, where the source's `Site Name` and `site name` both used to need naming:
+		// the reader snake-cases and lower-cases a header, so either spelling arrives here as `site_name`.
 		const name = (record.site_name ?? "").trim().replaceAll(/\s+/gu, " ")
 
 		if (
@@ -356,8 +359,8 @@ interface RenderRowOpts {
 }
 
 /**
- * Embed the rendered street in a random layout so the model recognizes affixes wherever the street sits: full address,
- * bare house+street, street-only (pure affix parse), or venue-prefixed.
+ * Embed the rendered street in a random layout so the model recognizes affixes wherever the street
+ * sits: full address, bare house+street, street-only (pure affix parse), or venue-prefixed.
  */
 export function renderRow(
 	random: () => number,
@@ -398,9 +401,9 @@ export function renderRow(
 }
 
 /**
- * Capped reader for the multi-locale balance sources. The FR/IT/NL countrywide extracts are GB-scale, so this reads
- * only as far as `limit` distinct tuples — the `break` closes the reader and releases the archive. Only keeps tuples
- * that carry a postcode.
+ * Capped reader for the multi-locale balance sources. The FR/IT/NL countrywide extracts
+ * are GB-scale, so this reads only as far as `limit` distinct tuples — the `break` closes
+ * the reader and releases the archive. Only keeps tuples that carry a postcode.
  */
 async function readBalanceTuples(source: BalanceSource, limit: number): Promise<BalanceTuple[]> {
 	return readOATuples(source, {
@@ -416,8 +419,9 @@ async function readBalanceTuples(source: BalanceSource, limit: number): Promise<
 }
 
 /**
- * Render a non-US balance row in native order — no affix split, no country token. `street` is the OA value verbatim.
- * The sole job is to put a postcode in its native position so the recipe output doesn't pull the model US-ward.
+ * Render a non-US balance row in native order — no affix split, no country token.
+ * `street` is the OA value verbatim. The sole job is to put a postcode in its native
+ * position so the recipe output doesn't pull the model US-ward.
  */
 function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<Record<ComponentTag, string>> } {
 	const { house_number: hn, street, locality: loc, postcode: pc, order } = t
@@ -434,8 +438,8 @@ function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<R
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const streetAffixRecipe: CorpusRecipe = {
 	name: "street-affix",
@@ -547,8 +551,8 @@ export const streetAffixRecipe: CorpusRecipe = {
 		}
 
 		// ── Multi-locale balance rows (--multilocale-count) ─────────────────────────────────────────────
-		// Appended after the US affix rows so the US affix signal is unchanged (same `--count`), and the
-		// non-US rows ride the same source weight. Native-order postcodes, no affix labels.
+		// Appended after the US affix rows so the US affix signal is unchanged (same `--count`),
+		// and the non-US rows ride the same source weight. Native-order postcodes, no affix labels.
 		let balanceEmitted = 0
 		let balanceSkipped = 0
 		const balanceISO: Record<string, number> = {}
@@ -639,17 +643,20 @@ const TERMINAL_ONLY_SHARE = 0.8
 
 /**
  * #1569 root-fix recipe. Both classes come from real non-Vermont OA streets and use the affix recipe's existing layout
- * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row train sample only 4→11
- * while contrast was already 95/100 before training (93/100 after). Post-run audit found that the global affix relabel
- * pass corrupts many already-decomposed target rows into double suffixes. do not retrain this recipe until relabel is
- * idempotent over a decomposed street family. The 20% contrast leg remains explicit, additive to the already-strong
- * base distribution, and B2 still checks it unchanged.
+ * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row
+ * train sample only 4→11 while contrast was already 95/100 before training (93/100 after).
+ * Post-run audit found that the global affix relabel pass corrupts many already-decomposed
+ * target rows into double suffixes. do not retrain this recipe until relabel is
+ * idempotent over a decomposed street family. The 20% contrast leg remains explicit,
+ * additive to the already-strong base distribution, and B2 still checks it unchanged.
  *
- * V2 (corpus 0.19.0, 2026-08-10 recipe review): the v4.3.3 board split (rich venue-led rows 5/43 vs bare 53/65) showed
- * the model separating template rows from real ones, and the venue shell was the giveaway — six fixed venue strings. v2
- * draws the venue shell from thousands of real HRSA facility names and raises its share (venue 30%, full 35%, bare 20%,
- * street-only 15%). Reps policy moved to the recipe's config side: weight ≤4 effective passes per run (Muennighoff
- * 2023's repetition knee) and the source is excluded from the augmentation pool — see the v4.4.0 config.
+ * V2 (corpus 0.19.0, 2026-08-10 recipe review): the v4.3.3 board split
+ * (rich venue-led rows 5/43 vs bare 53/65) showed the model separating template rows
+ * from real ones, and the venue shell was the giveaway — six fixed venue strings. v2
+ * draws the venue shell from thousands of real HRSA facility names and raises its share
+ * (venue 30%, full 35%, bare 20%, street-only 15%). Reps policy moved to the recipe's
+ * config side: weight ≤4 effective passes per run (Muennighoff 2023's repetition knee)
+ * and the source is excluded from the augmentation pool — see the v4.4.0 config.
  */
 export const suffixBoundaryRecipe: CorpusRecipe = {
 	name: "suffix-boundary",
@@ -773,11 +780,11 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 
 			if (!emitOne(rowClass, base, parsed, `suffix-boundary:${rowClass}`)) continue
 
-			// Stem-pair hard negative (v2, 2026-08-10 recipe review): after a terminal-only row
-			// ('Menlo Park' + 'Road'), also emit the same stem without its true suffix as a
-			// contrast row ('Menlo' + 'Park' under the canonical last-token rule). Sharing the stem
-			// forces the model to key on the licensing evidence — the trailing true suffix — rather
-			// than on name identity. Reps-neutral: these fill the existing 20% contrast target.
+			// Stem-pair hard negative (v2, 2026-08-10 recipe review): after a terminal-only
+			// row ('Menlo Park' + 'Road'), also emit the same stem without its true suffix
+			// as a contrast row ('Menlo' + 'Park' under the canonical last-token rule).
+			// Sharing the stem forces the model to key on the licensing evidence — the trailing true suffix —
+			// rather than on name identity. Reps-neutral: these fill the existing 20% contrast target.
 			if (
 				rowClass === "terminal-only" &&
 				classCounts["terminal-contrast"] < classTargets["terminal-contrast"] &&

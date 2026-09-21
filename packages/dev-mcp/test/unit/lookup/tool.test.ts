@@ -28,8 +28,9 @@ afterAll(() => emptyRoot[Symbol.asyncDispose]())
 
 describe("runLookup", () => {
 	it("reports a pinned candidate path BY NAME rather than as an unresolved one", async () => {
-		// `resolveCandidateDBPath` answers `undefined` for a pinned path that does not exist, which is right for the
-		// runtime and wrong to relay: someone who typo'd the flag would be told the gazetteer is missing.
+		// `resolveCandidateDBPath` answers `undefined` for a pinned path that does not exist,
+		// which is right for the runtime and wrong to relay: someone who typo'd the
+		// flag would be told the gazetteer is missing.
 		const result = await runLookup(noRegistry, {
 			source: "candidate",
 			queries: ["Vaduz"],

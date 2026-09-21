@@ -15,8 +15,9 @@ const base = readEnv(env)
 
 describe("the signing self-test", () => {
 	it("trusts the worker's own key in a sandbox when its public half digests to the configured kid, and reads mismatch for the same key in live mode", async () => {
-		// A test key is never in the register: the register is release-bound trust, and that is what keeps a sandbox key
-		// out of production. In a sandbox the worker vouches for itself, so an end-to-end run can mint.
+		// A test key is never in the register: the register is release-bound
+		// trust, and that is what keeps a sandbox key out of production.
+		// In a sandbox the worker vouches for itself, so an end-to-end run can mint.
 		const { env: worker, kid } = await envWithSigningKey(base)
 
 		expect(await signingSelfTest(worker)).toEqual({ status: "ok", kid, trust: "sandbox" })

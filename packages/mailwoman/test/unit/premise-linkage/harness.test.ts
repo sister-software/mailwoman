@@ -106,8 +106,8 @@ function armNamed(report: PremiseLinkageReport, arm: string): PremiseLinkageArmR
 }
 
 /**
- * Run something that must refuse, and hand back the refusal itself — a reason and a path are what the writer promises,
- * and a message match would pass on a refusal for the wrong reason.
+ * Run something that must refuse, and hand back the refusal itself — a reason and a path are
+ * what the writer promises, and a message match would pass on a refusal for the wrong reason.
  */
 function refusalFrom(run: () => unknown): PremiseLinkageRedactionError {
 	try {
@@ -248,8 +248,8 @@ describe("#1902: the report prints every numerator and denominator", () => {
 		expect(comparison.improved.of).toBe(comparison.changed.of)
 		expect(comparison.improved.n + comparison.regressed.n).toBeLessThanOrEqual(comparison.changed.n)
 
-		// The open arm refuses on identity everywhere, so a provider match is a strict improvement and a
-		// provider that names the wrong premise is a strict regression.
+		// The open arm refuses on identity everywhere, so a provider match is a strict improvement
+		// and a provider that names the wrong premise is a strict regression.
 		expect(comparison.improved.n).toBeGreaterThan(0)
 		expect(comparison.regressed.n).toBeGreaterThan(0)
 	})
@@ -341,8 +341,8 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 
 		injected.arms[0]!.providerName = `graded ${run.inputs[0]!} in 4 ms`
 
-		// The one check that proves a disclosure — this string was read from the run's own input — is the
-		// one reported, ahead of the two heuristics the same value also trips.
+		// The one check that proves a disclosure — this string was read from the run's own input —
+		// is the one reported, ahead of the two heuristics the same value also trips.
 		expect(refusalFrom(() => publishableReport({ ...run, report: injected })).reason).toBe(
 			PremiseLinkageRedactionReason.InputSubstring
 		)
@@ -446,8 +446,8 @@ describe("#1902: the Mailwoman-only arm uses the production pipeline, unchanged"
 			authoritativeProvider: syntheticFixtureProvider({ log }),
 		})
 
-		// Two arms, one provider consult per row: the open arm ran the same rows through the same
-		// `geocodeAddress` with nothing in the provider slot.
+		// Two arms, one provider consult per row: the open arm ran the same rows through
+		// the same `geocodeAddress` with nothing in the provider slot.
 		expect(log).toHaveLength(rows.length)
 	})
 
@@ -481,8 +481,8 @@ describe("#1902: the Mailwoman-only arm uses the production pipeline, unchanged"
 
 		expect(openRows.length).toBeGreaterThan(0)
 
-		// `none` is the recorded provider precisely because the arm consulted one and got nothing back —
-		// the block is absent, so every open row reports the structural refusal.
+		// `none` is the recorded provider precisely because the arm consulted one and got
+		// nothing back — the block is absent, so every open row reports the structural refusal.
 		expect(openRows.every((row) => row.failureCategory === PremiseLinkageFailureCategory.ArmAssertsNoIdentifier)).toBe(
 			true
 		)

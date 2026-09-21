@@ -40,10 +40,11 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * Provenance tag for the baked `interp_calibration` row — the split-conformal multi-region recalibration this build
- * selects its multiplier from (`docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`). Bump
- * when the calibration source of record (`interp-calibration.ts` / `data/calibration/interp-radius-conformal.json`) is
- * re-measured.
+ * Provenance tag for the baked `interp_calibration` row — the split-conformal
+ * multi-region recalibration this build selects its multiplier from
+ * (`docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`).
+ * Bump when the calibration source of record (`interp-calibration.ts` /
+ * `data/calibration/interp-radius-conformal.json`) is re-measured.
  */
 const CALIBRATION_METHOD = "split-conformal:2026-06-14"
 
@@ -163,8 +164,8 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		)
 
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
-		// and the DuckDB spatial reader (@duckdb/node-api, a dev dep). Both dynamic + guarded so the
-		// published CLI doesn't force them on every consumer.
+		// and the DuckDB spatial reader (@duckdb/node-api, a dev dep).
+		// Both dynamic + guarded so the published CLI doesn't force them on every consumer.
 		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street")
 		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
 
@@ -218,9 +219,9 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		let sides = 0
 		let skippedNonNumeric = 0
 		// #374 doctrine: the conformal radius multiplier is a property of the calibration set, so it ships IN
-		// the artifact — bake the state's factor (or the conservative default for unmeasured states) into the
-		// database's `interp_calibration` metadata table. `StreetInterpolator` reads it at open time. callers
-		// stop carrying the number.
+		// the artifact — bake the state's factor (or the conservative default for unmeasured states)
+		// into the database's `interp_calibration` metadata table.
+		// `StreetInterpolator` reads it at open time. callers stop carrying the number.
 		const measuredMultiplier = INTERP_RADIUS_CALIBRATION.byRegion[STATE]
 
 		const calibration = {
@@ -336,8 +337,8 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			name: `interpolation-us-${STATE.toLowerCase()}`,
 			version: String(options.release),
 			schemaVersion: 1,
-			// US Census tiger/Line is public domain, so unlike the ODbL layers this one could ship. It is
-			// build-local because nothing publishes it today rather than because the licence forbids it.
+			// US Census tiger/Line is public domain, so unlike the ODbL layers this one could ship.
+			// It is build-local because nothing publishes it today rather than because the licence forbids it.
 			tier: LayerTier.BuildLocal,
 			license: "public-domain",
 			attribution: "US Census Bureau TIGER/Line",

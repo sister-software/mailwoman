@@ -55,8 +55,9 @@ export interface FanoutCandidate {
 	lat: number
 	lon: number
 	/**
-	 * WOF population, or 0 when the place has no `place_population` row. Zero means absent, never "a population of
-	 * nobody" — {@link resolveConcordanceFanout} refuses to treat it as a winner.
+	 * WOF population, or 0 when the place has no `place_population` row.
+	 * Zero means absent, never "a population of nobody" — {@link resolveConcordanceFanout}
+	 * refuses to treat it as a winner.
 	 */
 	population: number
 }
@@ -64,36 +65,38 @@ export interface FanoutCandidate {
 export interface FanoutResolution {
 	verdict: "single" | "coincident" | "population" | "unresolvable"
 	/**
-	 * The place ids that keep this id's Wikipedia importance. Empty on `unresolvable`.
+	 * The place ids that keep this id's Wikipedia importance.
+	 * Empty on `unresolvable`.
 	 */
 	keep: number[]
 }
 
 /**
- * How close candidates must be to read as one place modelled several times, rather than as different places sharing a
- * Wikidata id.
+ * How close candidates must be to read as one place modelled several times,
+ * rather than as different places sharing a Wikidata id.
  *
- * Measured rather than guessed. Intra-group max spread across the 7,061 fanned-out groups: p10 0.12 km, p25 0.91, p50
- * 2.61, p75 5.80, p90 35.84, max 8,848. The distribution has a knee here — 5,044 groups sit at ≤5 km and only 1,168
- * more appear by 25 km — so 5 km separates "the same settlement described twice" from "two towns with one article
- * between them". Frankfurt's city/neighbourhood pair at 12 km falls outside deliberately: they are different places,
- * and population picks the city.
+ * Measured rather than guessed. Intra-group max spread across the 7,061 fanned-out
+ * groups: p10 0.12 km, p25 0.91, p50 2.61, p75 5.80, p90 35.84, max 8,848.
+ * The distribution has a knee here — 5,044 groups sit at ≤5 km and only 1,168 more appear
+ * by 25 km — so 5 km separates "the same settlement described twice" from "two towns
+ * with one article between them". Frankfurt's city/neighbourhood pair at 12 km falls
+ * outside deliberately: they are different places, and population picks the city.
  */
 export const FANOUT_SPREAD_EPSILON_KM = 5
 
 /**
  * Decide which of `candidates` may carry the Wikidata id's importance.
  *
- * Pure and total: a single candidate passes straight through, and every multi-candidate group lands in exactly one of
- * the three branches documented in the module header.
+ * Pure and total: a single candidate passes straight through, and every multi-candidate
+ * group lands in exactly one of the three branches documented in the module header.
  */
 export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[]): FanoutResolution {
 	if (candidates.length <= 1) {
 		return { verdict: "single", keep: candidates.map((c) => c.id) }
 	}
 
-	// Whole-group spread rather than the first pair: a group of two coincident rows plus one 6,000 km
-	// straggler is not coincident, and a pairwise-first check would keep the straggler.
+	// Whole-group spread rather than the first pair: a group of two coincident rows plus one
+	// 6,000 km straggler is not coincident, and a pairwise-first check would keep the straggler.
 	let maxSpread = 0
 
 	for (let i = 0; i < candidates.length && maxSpread <= FANOUT_SPREAD_EPSILON_KM; i++) {
@@ -114,8 +117,8 @@ export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[])
 	const top = sorted[0]!
 	const runnerUp = sorted[1]!
 
-	// A zero maximum is an absent population rather than a small one. a tie is not evidence. Either way,
-	// picking a winner would be picking by row order.
+	// A zero maximum is an absent population rather than a small one. a tie is not evidence.
+	// Either way, picking a winner would be picking by row order.
 	if (top.population > 0 && top.population > runnerUp.population) {
 		return { verdict: "population", keep: [top.id] }
 	}

@@ -20,24 +20,27 @@ import { registerPhotonRoutes } from "#routes"
  */
 export interface PhotonAppOptions {
 	/**
-	 * Emit permissive cors headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `options`
-	 * with `204`. Default `true` — upstream komoot/photon serves permissive cors, and the map-widget use case
-	 * (leaflet-control-geocoder, @openrunner/photon-geocoder, …) needs it: a browser's cross-origin XHR is blocked
-	 * without it (#1017). Set `false` when a reverse proxy already owns the cors headers.
+	 * Emit permissive cors headers (`Access-Control-Allow-Origin: *`) on every response and answer
+	 * preflight `options` with `204`. Default `true` — upstream komoot/photon serves permissive cors,
+	 * and the map-widget use case (leaflet-control-geocoder, @openrunner/photon-geocoder, …)
+	 * needs it: a browser's cross-origin XHR is blocked without it (#1017).
+	 * Set `false` when a reverse proxy already owns the cors headers.
 	 */
 	cors?: boolean
 
 	/**
-	 * The engine stamp to carry on every response: `engine` as a foreign member of each FeatureCollection, and the
-	 * `Server` + `Link: rel="license"` headers everywhere. Absent when an embedding application builds the app without
-	 * the `mailwoman` package. the `photon` bin always passes one.
+	 * The engine stamp to carry on every response: `engine` as a foreign member of each
+	 * FeatureCollection, and the `Server` + `Link: rel="license"` headers everywhere.
+	 * Absent when an embedding application builds the app without the `mailwoman`
+	 * package. the `photon` bin always passes one.
 	 */
 	engine?: EngineStamp
 }
 
 /**
- * The document info stamped into the emitted OpenAPI document. Exported (not inlined) so the CLI's `openapi` subcommand
- * can call `emitOpenAPIDocuments` with the same info the mounted `/openapi.json` route (below, via
+ * The document info stamped into the emitted OpenAPI document.
+ * Exported (not inlined) so the CLI's `openapi` subcommand can call `emitOpenAPIDocuments`
+ * with the same info the mounted `/openapi.json` route (below, via
  * {@link attachOpenAPIDocs}) uses — one source of truth, no risk of the two drifting.
  */
 export const PHOTON_DOC_INFO: OpenAPIDocInfo = {
@@ -67,8 +70,9 @@ export const PHOTON_DOC_INFO: OpenAPIDocInfo = {
 export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 
-	// Browser-embedded widgets need cors or their cross-origin XHR is blocked before the request completes (#1017).
-	// GET-only — photon has no mutating routes, so unlike libpostal's cors there is no post in the methods list.
+	// Browser-embedded widgets need cors or their cross-origin XHR is blocked
+	// before the request completes (#1017). GET-only — photon has no mutating routes,
+	// so unlike libpostal's cors there is no post in the methods list.
 	if (options.cors !== false) {
 		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
@@ -77,8 +81,8 @@ export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions 
 		app.use(engineHeaders(options.engine))
 	}
 
-	// Safety net: malformed input or an engine fault returns an empty FeatureCollection, never a crash (photon's
-	// envelope — not `{error}`, which is the libpostal/nominatim shape).
+	// Safety net: malformed input or an engine fault returns an empty FeatureCollection,
+	// never a crash (photon's envelope — not `{error}`, which is the libpostal/nominatim shape).
 	app.onError((_error, c) => c.json({ type: "FeatureCollection", features: [], message: "internal error" }, 500))
 
 	registerPhotonRoutes(app, engine, options.engine)

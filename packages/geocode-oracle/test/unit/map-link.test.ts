@@ -19,8 +19,8 @@ const DONKEYS =
 
 describe("parseMapURL", () => {
 	it("takes the PLACE PIN, not the viewport, when both are present", () => {
-		// The two differ by ~230 m here. Reading `@` instead would spend the entire tolerance budget of a rooftop case
-		// before the geocoder is even asked anything.
+		// The two differ by ~230 m here. Reading `@` instead would spend the entire tolerance
+		// budget of a rooftop case before the geocoder is even asked anything.
 		const row = parseMapURL("https://maps.app.goo.gl/Ze46", DONKEYS)
 
 		expect(row.resolved).toBe(true)
@@ -52,8 +52,8 @@ describe("parseMapURL", () => {
 	})
 
 	it("reports an unresolvable URL rather than inventing a coordinate", () => {
-		// Never 0,0 and never a silent drop: a batch that loses rows quietly produces a case file whose denominator
-		// nobody can reconstruct.
+		// Never 0,0 and never a silent drop: a batch that loses rows quietly produces
+		// a case file whose denominator nobody can reconstruct.
 		const row = parseMapURL("https://maps.app.goo.gl/nope", "https://www.google.com/maps/search/nothing+here")
 
 		expect(row.resolved).toBe(false)

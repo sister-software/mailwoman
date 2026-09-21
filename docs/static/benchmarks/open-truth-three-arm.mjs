@@ -154,8 +154,8 @@ async function score() {
 		)
 	}
 
-	// Paired bootstrap on the Mailwoman-minus-Pelias difference, per §4 (seed 20260807, 1000
-	// resamples, percentile 2.5/97.5, ±5 pp equivalence bound @25 km).
+	// Paired bootstrap on the Mailwoman-minus-Pelias difference, per §4
+	// (seed 20260807, 1000 resamples, percentile 2.5/97.5, ±5 pp equivalence bound @25 km).
 	lines.push("")
 	lines.push("## Paired bootstrap, Mailwoman − Pelias (seed 20260807, 1000 resamples)")
 	lines.push("")
@@ -232,8 +232,8 @@ const LOCALE_MAP = {
 }
 
 /**
- * Bounded retry for the http arms — transient failures only; the third failure is recorded as a no-result, which the
- * protocol scores as a miss at every threshold.
+ * Bounded retry for the http arms — transient failures only; the third failure is recorded
+ * as a no-result, which the protocol scores as a miss at every threshold.
  */
 const QUERY_ATTEMPTS = 3
 

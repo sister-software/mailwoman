@@ -47,15 +47,16 @@ export const JP_INNER_SHI_TOWNS: readonly JapaneseInnerShiTown[] = [
 ]
 
 /**
- * Every surface a municipality span may legitimately close on for these towns: the postal form with the county
- * (`中新川郡上市町`) and the bare town (`上市町`).
+ * Every surface a municipality span may legitimately close on for these towns:
+ * the postal form with the county (`中新川郡上市町`) and the bare town (`上市町`).
  */
 export const JP_INNER_SHI_TOWN_NAMES: readonly string[] = JP_INNER_SHI_TOWNS.flatMap((t) => [t.county + t.town, t.town])
 
 /**
- * The characters a municipality surface must absorb from what follows it to become one of the register's names, or null
- * when no name extends it. `following` is the text after the surface. the answer is a prefix of it. A surface that
- * already is a register name answers null: nothing to absorb.
+ * The characters a municipality surface must absorb from what follows it
+ * to become one of the register's names, or null when no name extends it.
+ * `following` is the text after the surface. the answer is a prefix of it.
+ * A surface that already is a register name answers null: nothing to absorb.
  */
 export function jpMunicipalityCompletion(surface: string, following: string): string | null {
 	return completeFromRegister(JP_INNER_SHI_TOWN_NAMES, surface, following)

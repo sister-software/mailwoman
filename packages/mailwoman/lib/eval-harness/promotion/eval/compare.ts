@@ -100,8 +100,8 @@ async function listFiles(directory: PathBuilderLike, prefix = ""): Promise<strin
 }
 
 /**
- * Compare every top-level promotion output. JSON files receive a field-level comparison so a changed score names its
- * field. Markdown and provenance files compare byte-for-byte.
+ * Compare every top-level promotion output. JSON files receive a field-level comparison
+ * so a changed score names its field. Markdown and provenance files compare byte-for-byte.
  */
 export async function comparePromotionOutputs(
 	baselineDirectory: PathBuilderLike,

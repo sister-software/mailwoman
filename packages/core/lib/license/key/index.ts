@@ -36,7 +36,8 @@ export const LICENSE_KEY_PREFIX = "mwl1"
 const LICENSE_KEY_PARTS = 3
 
 /**
- * A calendar date as `yyyy-MM-DD`. Dates rather than instants: a license runs to the end of its last day in UTC.
+ * A calendar date as `yyyy-MM-DD`. Dates rather than instants: a license runs
+ * to the end of its last day in UTC.
  */
 const CalendarDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u, "expected YYYY-MM-DD")
 
@@ -66,12 +67,13 @@ export const LicenseKeyPayloadSchema = z.object({
 	 */
 	scope: z.union([z.literal("all"), z.array(z.string().min(1)).min(1)]),
 	/**
-	 * The spdx branch the key selects. One value today. the field exists so a different agreement can be named later.
+	 * The spdx branch the key selects. One value today. the field exists
+	 * so a different agreement can be named later.
 	 */
 	terms: z.literal("LicenseRef-Commercial"),
 	/**
-	 * An opaque per-license serial a self-service issuer sets, stable for the subscription's life. Online status is keyed
-	 * by it, and it names nothing about the customer.
+	 * An opaque per-license serial a self-service issuer sets, stable for the subscription's life.
+	 * Online status is keyed by it, and it names nothing about the customer.
 	 */
 	lid: z.string().min(1).optional(),
 	/**
@@ -83,7 +85,8 @@ export const LicenseKeyPayloadSchema = z.object({
 export type LicenseKeyPayload = z.infer<typeof LicenseKeyPayloadSchema>
 
 /**
- * A payload a self-service issuer produced: both fields present. A hand-issued payload has neither.
+ * A payload a self-service issuer produced: both fields present.
+ * A hand-issued payload has neither.
  */
 export type SelfServiceLicenseKeyPayload = LicenseKeyPayload & { lid: string; agreement: string }
 
@@ -92,7 +95,8 @@ export function isSelfServicePayload(payload: LicenseKeyPayload): payload is Sel
 }
 
 /**
- * The outcome of verifying a token. Every failure names its reason. a caller that only wants a yes reads `status`.
+ * The outcome of verifying a token. Every failure names its reason. a caller
+ * that only wants a yes reads `status`.
  */
 export type LicenseKeyVerification =
 	| { status: "valid"; kid: string; payload: LicenseKeyPayload }
@@ -113,9 +117,10 @@ export function generateLicenseSigningKeyPair(): Promise<LicenseSigningKeyPair> 
 }
 
 /**
- * The id a public key is registered under: the mailwoman major version it was minted for, then the first eight hex
- * digits of the SHA-256 of the key's DER encoding — `v9-3f2a9c1d`. The version prefix is what lets a well-known file on
- * mailwoman.ai be read per major version. the digest is what makes two keys distinguishable without a registry.
+ * The id a public key is registered under: the mailwoman major version it was minted for,
+ * then the first eight hex digits of the SHA-256 of the key's DER encoding — `v9-3f2a9c1d`.
+ * The version prefix is what lets a well-known file on mailwoman.ai be read per major
+ * version. the digest is what makes two keys distinguishable without a registry.
  */
 export async function licenseKeyID(publicKeyPEM: string, majorVersion: number): Promise<string> {
 	const digest = hexOf(await sha256Bytes(publicKeyDER(publicKeyPEM))).slice(0, 8)
@@ -142,8 +147,9 @@ function expiryInstant(expires: string): Date {
 }
 
 /**
- * The payload a token carries, AS written and unverified: for reporting what a token this build cannot verify claims
- * (its key id, its license id), never for a decision. `undefined` for anything that is not a well-formed token.
+ * The payload a token carries, AS written and unverified: for reporting what a token
+ * this build cannot verify claims (its key id, its license id), never for a decision.
+ * `undefined` for anything that is not a well-formed token.
  */
 export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | undefined {
 	const parts = token.trim().split(".")
@@ -158,7 +164,8 @@ export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | unde
 }
 
 /**
- * Verify a token against the trusted public keys, keyed by kid. Offline; `now` is injectable for tests.
+ * Verify a token against the trusted public keys, keyed by kid.
+ * Offline; `now` is injectable for tests.
  */
 export async function verifyLicenseKey(
 	token: string,

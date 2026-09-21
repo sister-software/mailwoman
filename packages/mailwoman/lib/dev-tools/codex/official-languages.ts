@@ -25,8 +25,8 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { join } from "path-ts"
 /**
- * The committed output path, anchored at the `@mailwoman/codex` package root rather than at this module, so it names
- * the same file from the source tree, `out/`, and a published tarball.
+ * The committed output path, anchored at the `@mailwoman/codex` package root rather than at
+ * this module, so it names the same file from the source tree, `out/`, and a published tarball.
  */
 const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "official-languages.ts")
 
@@ -39,7 +39,8 @@ export interface GenerateOfficialLanguagesOptions {
 	 */
 	cldrDir?: string
 	/**
-	 * Pinned cldr-core release fetched from jsdelivr when {@linkcode GenerateOfficialLanguagesOptions.cldrDir} is absent.
+	 * Pinned cldr-core release fetched from jsdelivr when
+	 * {@linkcode GenerateOfficialLanguagesOptions.cldrDir} is absent.
 	 */
 	cldrVersion?: string
 	/**
@@ -58,8 +59,9 @@ export interface GenerateOfficialLanguagesSummary {
 }
 
 /**
- * One call per CLDR supplemental file, against a CDN that throttles. Retry only — the caller makes a handful of
- * requests, so a rate budget would be ceremony over a burst that never happens.
+ * One call per CLDR supplemental file, against a CDN that throttles.
+ * Retry only — the caller makes a handful of requests, so a rate budget would
+ * be ceremony over a burst that never happens.
  */
 const cldrClient = new APIClient({ displayName: "cldr", retry: true })
 

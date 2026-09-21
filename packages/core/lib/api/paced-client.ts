@@ -35,7 +35,8 @@ export interface PacedCachedClientProduct {
 	 */
 	minRequestIntervalMs: number
 	/**
-	 * How long a cached response stays fresh — chosen against the product's own cadence, so it lives with the product.
+	 * How long a cached response stays fresh — chosen against the product's own cadence,
+	 * so it lives with the product.
 	 */
 	cacheTTLMs: number
 	/**

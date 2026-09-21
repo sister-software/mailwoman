@@ -66,8 +66,8 @@ function seed(db: DatabaseClient<StreetSegmentDatabase>, segments: SeedSegment[]
 	}
 }
 
-// A straight 0.001-degree east-west street on the equator (~111 m): even 100–198 on the
-// right, odd 101–199 on the left, both in ZIP 05601.
+// A straight 0.001-degree east-west street on the equator (~111 m): even 100–198
+// on the right, odd 101–199 on the left, both in ZIP 05601.
 const MAIN_EVEN: SeedSegment = {
 	street_norm: "main street",
 	side: "R",
@@ -273,14 +273,15 @@ describe("StreetInterpolator", () => {
 })
 
 // #374 doctrine: the conformal radius multiplier is a property of the calibration set the artifact was
-// built against, so it ships in the extract's `interp_calibration` metadata table and is read once at open
-// time. A extract predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
+// built against, so it ships in the extract's `interp_calibration` metadata table
+// and is read once at open time. A extract predating the table (the shipped fleet)
+// reads `undefined` — never a throw, never a guess.
 describe("StreetInterpolator — artifact-carried radius calibration (#374)", () => {
 	it("reads the extract's baked multiplier at open time", async () => {
 		await using kdb = DatabaseClient.temp<StreetSegmentDatabase>()
 		seed(kdb, [MAIN_EVEN])
-		// The same producer the extract builder runs (`writeInterpCalibration`), so the fixture can't
-		// drift from the production shape.
+		// The same producer the extract builder runs (`writeInterpCalibration`),
+		// so the fixture can't drift from the production shape.
 
 		await writeInterpCalibration(kdb, { radius_multiplier: 1.7, method: "split-conformal:2026-06-14", region: "TX" })
 		const calibrated = new StreetInterpolator({ database: kdb })
@@ -321,8 +322,8 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
  */
 describe("StreetInterpolator — parity-first ambiguity, near tie-break, key variants", () => {
 	it("answers without a postcode when PARITY selects a single ZIP (the boundary-road class)", () => {
-		// 151 is odd. only the 05601 odd side can hold it. The even 05602 namesake used to veto this
-		// via the pre-parity postcode count.
+		// 151 is odd. only the 05601 odd side can hold it. The even 05602 namesake used
+		// to veto this via the pre-parity postcode count.
 		const hit = interpolator.find({ street: "Main St", number: "151" })
 
 		expect(hit).not.toBeNull()
@@ -436,9 +437,9 @@ describe("StreetInterpolator — parity-first ambiguity, near tie-break, key var
 		})
 
 		it("advances the key-variant ladder past a wrong-register variant that covers but cannot answer", () => {
-			// "Saint Pauls PL St": the doubled-type collapse gives `saint pauls place`, which reaches the
-			// two far ZIPs and fails the near check — the ladder must go on to `st pauls place` and answer
-			// from 33333 rather than stopping at "rows found".
+			// "Saint Pauls PL St": the doubled-type collapse gives `saint pauls place`,
+			// which reaches the two far ZIPs and fails the near check — the ladder must go on
+			// to `st pauls place` and answer from 33333 rather than stopping at "rows found".
 			const hit = nearInterp.find({ street: "Saint Pauls PL St", number: "10", near: { lat: 0.01, lon: 0 } })
 
 			expect(hit).not.toBeNull()

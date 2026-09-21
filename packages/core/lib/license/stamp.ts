@@ -18,14 +18,14 @@ import type { LicenseKeyVerification } from "#license/key/index"
 import { appliedLicenseBranch } from "#license/obligations"
 
 /**
- * The page the notice and the `Link: rel="license"` header point at. Singular, matching `license_url` and the `license`
- * command.
+ * The page the notice and the `Link: rel="license"` header point at.
+ * Singular, matching `license_url` and the `license` command.
  */
 export const LICENSE_PAGE_PATH = "/license"
 
 /**
- * The obligation the notice states, in the doctor's vocabulary: the agpl source offer to network users, which is the
- * one a network deployment carries and the one the commercial agreement waives.
+ * The obligation the notice states, in the doctor's vocabulary: the agpl source offer to network users,
+ * which is the one a network deployment carries and the one the commercial agreement waives.
  */
 const NOTICE_OBLIGATION = "modified or network-served copies must offer their source."
 const NOTICE_REMEDY = "A commercial license waives that obligation"
@@ -37,8 +37,8 @@ export interface EngineStamp {
 	name: "mailwoman"
 	version: string
 	/**
-	 * The license branch that applies to this installation: `AGPL-3.0-only`, or `LicenseRef-Commercial` when the
-	 * configured key verifies.
+	 * The license branch that applies to this installation: `AGPL-3.0-only`,
+	 * or `LicenseRef-Commercial` when the configured key verifies.
 	 */
 	license: string
 	license_url: string
@@ -59,9 +59,9 @@ function noticeSentence(license: string, expiredOn?: string): string {
 }
 
 /**
- * Build the stamp. `key` is the offline verification of the configured key, or absent when none is configured. The
- * branch comes from `appliedLicenseBranch`, the function the doctor calls too. the stamp passes no publication because
- * it is offline by design.
+ * Build the stamp. `key` is the offline verification of the configured key, or absent
+ * when none is configured. The branch comes from `appliedLicenseBranch`, the function the
+ * doctor calls too. the stamp passes no publication because it is offline by design.
  */
 export function buildEngineStamp(input: {
 	version: string
@@ -81,9 +81,9 @@ export function buildEngineStamp(input: {
 }
 
 /**
- * The stderr notice: two lines, or nothing when the commercial branch applies. An expired key is the one reading whose
- * cause the notice states, because the date tells the operator what to do. every other failed reading leaves the reason
- * to `mailwoman doctor`.
+ * The stderr notice: two lines, or nothing when the commercial branch applies.
+ * An expired key is the one reading whose cause the notice states, because the date tells the
+ * operator what to do. every other failed reading leaves the reason to `mailwoman doctor`.
  */
 export function licenseNoticeLines(stamp: EngineStamp, key?: LicenseKeyVerification): [string, string] | undefined {
 	if (!stamp.notice) return undefined

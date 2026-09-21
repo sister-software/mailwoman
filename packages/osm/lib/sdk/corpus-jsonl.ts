@@ -25,8 +25,8 @@ import { createNewlineWriter } from "spliterator"
 import { extractAddrPoints, type OSMAddrRecord } from "#sdk/extract"
 
 /**
- * The corpus jsonl row: the extract's record with the house number under the `number` key the Overture rows use, so an
- * adapter reading either file meets the same shape.
+ * The corpus jsonl row: the extract's record with the house number under the `number` key
+ * the Overture rows use, so an adapter reading either file meets the same shape.
  */
 export interface OSMCorpusRow {
 	street: string

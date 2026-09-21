@@ -25,9 +25,9 @@
 import postcodeShapeData from "./shapes.json" with { type: "json" }
 
 /**
- * What a match is eligible to do. `designated` may overwrite any existing label, `alnum` may add a postcode where the
- * model emitted none, and `numeric` may only snap an existing one — so a numeric shape can never invent a postcode over
- * a hyphenated house number.
+ * What a match is eligible to do. `designated` may overwrite any existing label, `alnum` may
+ * add a postcode where the model emitted none, and `numeric` may only snap an existing one —
+ * so a numeric shape can never invent a postcode over a hyphenated house number.
  */
 export type PostcodeShapeKind = "alnum" | "numeric" | "designated"
 
@@ -41,8 +41,8 @@ export interface PostcodeShape {
 }
 
 /**
- * Every postcode shape, in priority order. Compiled once at module load. each `RegExp` carries the `g` flag because
- * callers scan a whole line, and `u` as well where the row declares it.
+ * Every postcode shape, in priority order. Compiled once at module load. each `RegExp` carries
+ * the `g` flag because callers scan a whole line, and `u` as well where the row declares it.
  */
 export const POSTCODE_SHAPES: readonly PostcodeShape[] = postcodeShapeData.shapes.map((shape) => ({
 	label: shape.label,

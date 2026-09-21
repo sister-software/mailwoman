@@ -106,9 +106,10 @@ describe("buildFloodDatabase", () => {
 	it("derives the footprint from the coverage statement, not from the polygon union", () => {
 		expect(lookup.identity.extent.statement).toBe(EA_COVERAGE_STATEMENT)
 
-		// The polygons occupy a few square kilometres. the statement's footprint is the whole outline, so the coverage
-		// cells vastly outnumber the cells any polygon reaches. A footprint taken from the polygons would be the other way
-		// round — and every Zone 1 location would read as unmapped.
+		// The polygons occupy a few square kilometres. the statement's footprint is the whole
+		// outline, so the coverage cells vastly outnumber the cells any polygon reaches.
+		// A footprint taken from the polygons would be the other way round —
+		// and every Zone 1 location would read as unmapped.
 		expect(result.coverageCells).toBeGreaterThan(result.coverageCellsWithRows * 10)
 		expect(result.coverageCellsWithRows).toBeGreaterThan(0)
 	})
@@ -203,8 +204,9 @@ describe("FloodZoneLookup — the three readings", () => {
 	})
 
 	it("reads a point inside a polygon's HOLE as the designated absence, not as the polygon's zone", () => {
-		// Feature 3 is a square with a hole through its middle. The hole is inside the footprint and inside no polygon, so
-		// the authority's map assigns Zone 1 there — a hole read as an exterior ring would answer FZ3 instead.
+		// Feature 3 is a square with a hole through its middle.
+		// The hole is inside the footprint and inside no polygon, so the authority's map
+		// assigns Zone 1 there — a hole read as an exterior ring would answer FZ3 instead.
 		const reading = lookup.lookup(FIXTURE_ORIGIN.lat + FIXTURE_SIDE * 2.5, FIXTURE_ORIGIN.lon + FIXTURE_SIDE * 0.5)
 
 		expect(reading.kind).toBe(FloodReadingKind.DesignatedAbsence)

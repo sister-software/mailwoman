@@ -68,9 +68,10 @@ export interface ReconciliationResult {
 }
 
 /**
- * Bucket an entity from the source labels its records span. Returns `null` when the entity carries no eligibility- or
- * funding-tagged source (it is outside this reconciliation — e.g. a source the caller didn't assign a role) so callers
- * can exclude it rather than silently miscount it.
+ * Bucket an entity from the source labels its records span.
+ * Returns `null` when the entity carries no eligibility- or funding-tagged source
+ * (it is outside this reconciliation — e.g. a source the caller didn't assign a role)
+ * so callers can exclude it rather than silently miscount it.
  */
 export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): ReconciliationBucket | null {
 	const elig = new Set(config.eligibilitySources)
@@ -98,8 +99,8 @@ export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): Re
 }
 
 /**
- * Classify resolved entities into reconciliation buckets. Entities with no eligibility- or funding-tagged source are
- * excluded (see {@link bucketOf}).
+ * Classify resolved entities into reconciliation buckets.
+ * Entities with no eligibility- or funding-tagged source are excluded (see {@link bucketOf}).
  */
 export function reconcileCoverage(entities: readonly ResolvedEntity[], config: ReconcileConfig): ReconciliationResult {
 	const reconciled: ReconciledEntity[] = []
@@ -125,8 +126,8 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 }
 
 /**
- * A display name for a reconciled entity's representative record — the organization's canonical form, else the person
- * name, else the record id.
+ * A display name for a reconciled entity's representative record — the organization's
+ * canonical form, else the person name, else the record id.
  */
 export function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
@@ -172,9 +173,9 @@ export interface ReconciliationReportOptions {
 }
 
 /**
- * A markdown reconciliation report: the bucket counts, the enrolled-rate floor, an anti-join spot-check, and — always,
- * by construction — the neutral caveat. The deliverable is the anti-join SET rather than a rate, and never an
- * allegation.
+ * A markdown reconciliation report: the bucket counts, the enrolled-rate floor,
+ * an anti-join spot-check, and — always, by construction — the neutral caveat.
+ * The deliverable is the anti-join SET rather than a rate, and never an allegation.
  */
 export function reconciliationReport(result: ReconciliationResult, options: ReconciliationReportOptions = {}): string {
 	const { counts, reconciled } = result

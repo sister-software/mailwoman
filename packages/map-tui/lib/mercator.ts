@@ -7,9 +7,10 @@
 /**
  * Web-Mercator projection math for map-tui.
  *
- * This module reimplements the standard Web-Mercator projection (epsg:3857) math locally rather than importing from
- * `@mailwoman/cartographer` or `@mailwoman/spatial`. The cartographer dependency drags maplibre-gl +
- * `@mailwoman/tiger`; spatial drags `@mailwoman/core`'s shipped data. map-tui maintains a dependency-lean surface for
+ * This module reimplements the standard Web-Mercator projection (epsg:3857) math locally
+ * rather than importing from `@mailwoman/cartographer` or `@mailwoman/spatial`.
+ * The cartographer dependency drags maplibre-gl + `@mailwoman/tiger`; spatial drags
+ * `@mailwoman/core`'s shipped data. map-tui maintains a dependency-lean surface for
  * the standalone `npx` story (the nuts-lookup precedent).
  */
 
@@ -64,8 +65,9 @@ export function wrapLongitude(lon: number): number {
 }
 
 /**
- * Subpixel dimensions of one braille cell — 2 columns wide, 4 rows tall. The unit every projection-to-cell conversion
- * works in, shared by the renderer and the browser so both sides of the frame boundary agree on the grid.
+ * Subpixel dimensions of one braille cell — 2 columns wide, 4 rows tall.
+ * The unit every projection-to-cell conversion works in, shared by the renderer
+ * and the browser so both sides of the frame boundary agree on the grid.
  */
 export const SUBPIXEL_COLUMNS_PER_CELL = 2
 

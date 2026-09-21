@@ -20,9 +20,9 @@ import { type BlockingKey, exactKey } from "@mailwoman/match"
 import type { SourceRecord } from "#types"
 
 /**
- * The stable address primary key for a record, or null when it isn't geocoded (no coordinate → no locality cell) or
- * carries no raw address to hash. Uses the resolved coordinate + the raw address. the state prefix is plucked from the
- * address when present.
+ * The stable address primary key for a record, or null when it isn't geocoded
+ * (no coordinate → no locality cell) or carries no raw address to hash.
+ * Uses the resolved coordinate + the raw address. the state prefix is plucked from the address when present.
  */
 export function postalAddressID(record: SourceRecord): PostalAddressID | null {
 	const coordinate = record.address?.geocode?.coordinate
@@ -34,8 +34,9 @@ export function postalAddressID(record: SourceRecord): PostalAddressID | null {
 }
 
 /**
- * A blocking key on the {@link postalAddressID} — records that resolve to the same place with the same canonical address
- * block together. Add it to {@link defaultBlockingKeys}'s union when an exact address join should never be missed.
+ * A blocking key on the {@link postalAddressID} — records that resolve to the same place
+ * with the same canonical address block together. Add it to {@link defaultBlockingKeys}'s
+ * union when an exact address join should never be missed.
  */
 export function addressIDBlockingKey(): BlockingKey<SourceRecord> {
 	return exactKey((record) => postalAddressID(record))

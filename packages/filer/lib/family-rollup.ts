@@ -62,8 +62,8 @@ import { assertFamilySchemaVersion, readFamilyDisplayNames, readFamilyMembers, t
 import { readFilerManifest, type FilerDatabase } from "#schema"
 
 /**
- * Exactly one of `familyID`/`nodeID` is required — {@linkcode familyRollup} throws otherwise. `asOf` defaults to today
- * (see {@linkcode todayISODate}).
+ * Exactly one of `familyID`/`nodeID` is required — {@linkcode familyRollup} throws otherwise.
+ * `asOf` defaults to today (see {@linkcode todayISODate}).
  */
 export interface FamilyRollupQuery {
 	familyID?: string
@@ -72,25 +72,28 @@ export interface FamilyRollupQuery {
 }
 
 /**
- * One member of a corporate family, `asOf` the query's date — `relationship` is one of {@link FilerRelationship}
- * (`schema.ts`), and `source` is the `filer_family` row's own provenance. Never collapsed on a repeat `node_id`: two
- * different sources independently asserting the same node's membership in the same family both survive as separate
- * entries, the same provenance-plurality convention every other reader in this SDK follows.
+ * One member of a corporate family, `asOf` the query's date — `relationship` is one of
+ * {@link FilerRelationship} (`schema.ts`), and `source` is the `filer_family` row's own provenance.
+ * Never collapsed on a repeat `node_id`: two different sources independently asserting
+ * the same node's membership in the same family both survive as separate entries,
+ * the same provenance-plurality convention every other reader in this SDK follows.
  */
 export interface FamilyRollupMember {
 	node_id: string
 	relationship: string
 	/**
-	 * One of {@link FilerEdgeAssertion} (`schema.ts`) — how strongly this member's membership is evidenced. Carried here
-	 * even though `source` is already present, because `source` provably cannot answer the question: `edgar-exhibit-21`
-	 * writes an authoritative disclosure edge and an inferred corroboration in the same build, so one source name spans
-	 * both grades, and any caller reading strength off `source` would need a private table of which sources are
-	 * inferential — the same implicit-knowledge scheme `relationship` was added to end when relationship kind lived in
-	 * the target node's `identifier_type`.
+	 * One of {@link FilerEdgeAssertion} (`schema.ts`) — how strongly this member's membership is
+	 * evidenced. Carried here even though `source` is already present, because `source` provably
+	 * cannot answer the question: `edgar-exhibit-21` writes an authoritative disclosure edge
+	 * and an inferred corroboration in the same build, so one source name spans both grades,
+	 * and any caller reading strength off `source` would need a private table of which sources
+	 * are inferential — the same implicit-knowledge scheme `relationship` was added to end
+	 * when relationship kind lived in the target node's `identifier_type`.
 	 */
 	assertion: string
 	/**
-	 * The inferred match's score; `null` on an authoritative membership. See {@link FamilyRollupMember.assertion}.
+	 * The inferred match's score; `null` on an authoritative membership.
+	 * See {@link FamilyRollupMember.assertion}.
 	 */
 	match_score: number | null
 	source: string
@@ -162,10 +165,10 @@ async function readFamilyRollup(
 }
 
 /**
- * Read every corporate family a `familyID`/`nodeID` resolves to — see the module docstring for the full interface (XOR
- * query, manifest-first, schema-version guard, temporal scoping, the always-array return shape). A `familyID` query
- * returns at most one element. a `nodeID` query may return more than one (a node legitimately belonging to more than
- * one family is a normal shape, never an error).
+ * Read every corporate family a `familyID`/`nodeID` resolves to — see the module docstring for the full
+ * interface (XOR query, manifest-first, schema-version guard, temporal scoping, the always-array return shape).
+ * A `familyID` query returns at most one element. a `nodeID` query may return more than one
+ * (a node legitimately belonging to more than one family is a normal shape, never an error).
  */
 export async function familyRollup(
 	db: DatabaseClient<FilerDatabase>,
@@ -193,8 +196,8 @@ export async function familyRollup(
 
 	const nodeID = query.nodeID!
 
-	// Resolve every family this node belongs to as of asOf — same half-open predicate as every other temporal read
-	// in this module. Never throws on >1 result: a node carrying both a
+	// Resolve every family this node belongs to as of asOf — same half-open predicate as every
+	// other temporal read in this module. Never throws on >1 result: a node carrying both a
 	// HoldingCompany and a ManagementCompany family membership is a normal, builder-emitted shape.
 	const nodeFamilyRows = await db
 		.selectFrom("filer_family")
@@ -211,10 +214,11 @@ export async function familyRollup(
 	for (const familyID of distinctFamilyIDs) {
 		const rollup = await readFamilyRollup(db, familyID, asOf, manifest.source_vintage)
 
-		// Not expected to ever be null here — nodeFamilyRows just confirmed this node has an in-force row for this
-		// exact familyID at this exact asOf, so readFamilyRollup's own identical predicate will find at least that
-		// one member row. Guarded anyway rather than asserted, since silently trusting that invariant across two
-		// separate queries is the same class of shortcut this crosswalk's design otherwise refuses to take.
+		// Not expected to ever be null here — nodeFamilyRows just confirmed this node has an in-force
+		// row for this exact familyID at this exact asOf, so readFamilyRollup's own identical
+		// predicate will find at least that one member row. Guarded anyway rather than asserted,
+		// since silently trusting that invariant across two separate queries is the same
+		// class of shortcut this crosswalk's design otherwise refuses to take.
 		if (rollup) {
 			rollups.push(rollup)
 		}

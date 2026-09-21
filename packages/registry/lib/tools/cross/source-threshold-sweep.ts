@@ -93,10 +93,10 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
 	new Set(e.records.map((r) => r.source).filter((s): s is string => !!s))
 
 /**
- * Label-free precision proxy: does this cross-source entity carry the same phone in records from two different sources?
- * (Phone isn't the join key, so a match is independent corroboration of same-facility.) Entities where no two
- * cross-source records both have a phone are "unknown" — we only count corroborated / contradicted among those that can
- * be checked.
+ * Label-free precision proxy: does this cross-source entity carry the same phone in records from two
+ * different sources? (Phone isn't the join key, so a match is independent corroboration of same-facility.)
+ * Entities where no two cross-source records both have a phone are "unknown" —
+ * we only count corroborated / contradicted among those that can be checked.
  */
 function phoneEvidence(e: ResolvedEntity): "corroborated" | "contradicted" | "unknown" {
 	const bySource = new Map<string, Set<string>>()
@@ -266,8 +266,8 @@ export async function crossSourceThresholdSweep(
 		resolveEntities(records, { trainEM: true, collapseSpatial: true, addressFrequency, learnedScorer: false }).entities
 	)
 
-	// Evaluate the bundled GBT over a fine threshold sweep.
-	// cross-source pairs sit at strongly negative logits). ---
+	// Evaluate the bundled GBT over a fine threshold sweep. cross-source pairs
+	// sit at strongly negative logits). ---
 	const SWEEP = [-8, -6, -5, -4, -3, -2, -1, 0, 1, 2, DEDUP_GBT_META.recommendedThreshold]
 	const gbtArms: ArmMetrics[] = []
 
@@ -285,9 +285,9 @@ export async function crossSourceThresholdSweep(
 	}
 
 	// The threshold fix passes only when a GBT arm dominates FS.
-	// cross-source links at ≥ FS phone-corroboration without over-merging (entity count must not
-	// collapse below ~90% of FS, else the "links" are giant-blob artifacts). Otherwise FS is on the
-	// frontier and threshold alone is insufficient. ---
+	// cross-source links at ≥ FS phone-corroboration without over-merging
+	// (entity count must not collapse below ~90% of FS, else the "links" are giant-blob artifacts).
+	// Otherwise FS is on the frontier and threshold alone is insufficient. ---
 	const pct = (n: number, d: number) => formatPercent(n, d, 0)
 	// Evaluate the cross-source-trained GBT at its recommended threshold.
 	const candidateArms: ArmMetrics[] = []
@@ -334,8 +334,8 @@ export async function crossSourceThresholdSweep(
 		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
 	)
 
-	// The candidate (#655 option-2 models) gets its own verdict scan — the hardcoded option-1 verdict
-	// below is about the dedup GBT and must not silently absorb (or ignore) a candidate arm.
+	// The candidate (#655 option-2 models) gets its own verdict scan — the hardcoded option-1
+	// verdict below is about the dedup GBT and must not silently absorb (or ignore) a candidate arm.
 	const candidateDominating = candidateArms.find(
 		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
 	)

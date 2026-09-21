@@ -30,7 +30,8 @@ import type { ReactNode } from "react"
 import styles from "./styles.module.css"
 
 /**
- * Display labels for the `status:` frontmatter vocabulary. Unknown values render no chrome.
+ * Display labels for the `status:` frontmatter vocabulary.
+ * Unknown values render no chrome.
  */
 const STATUS_LABELS: Record<string, string> = {
 	"active-decision": "Active decision",

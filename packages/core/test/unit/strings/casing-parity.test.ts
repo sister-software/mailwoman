@@ -26,8 +26,9 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * Inputs that separate the two implementations' branches: a caseless script, a dotted acronym, an all-caps column, a
- * spaced name, a camel name, and a name carrying characters that cannot be part of a key.
+ * Inputs that separate the two implementations' branches: a caseless script,
+ * a dotted acronym, an all-caps column, a spaced name, a camel name, and a name
+ * carrying characters that cannot be part of a key.
  */
 const INPUTS = [
 	"영업상태명",

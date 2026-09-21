@@ -32,8 +32,8 @@ export const OSMNodeTag = {
 export type OSMNodeTag = (typeof OSMNodeTag)[keyof typeof OSMNodeTag]
 
 /**
- * OSM node tags that disqualify a node from being treated as residential — a node carrying one of these is
- * infrastructure or commercial, whatever else it claims.
+ * OSM node tags that disqualify a node from being treated as residential — a node carrying
+ * one of these is infrastructure or commercial, whatever else it claims.
  */
 export const ForbiddenResidentialOSMNodeTags: ReadonlySet<OSMNodeTag> = new Set<OSMNodeTag>([
 	OSMNodeTag.Shop,
@@ -81,8 +81,9 @@ export function isResidentialElement(element: OSMOverpassElement): boolean {
  *
  * This is useful when working with the Overpass API.
  */
-// `unknown`, matched by the guard on the next line: this reads geometry off an API response, and a parameter that
-// promises a polygon makes the guard look redundant while forcing every test of it to assert past the signature.
+// `unknown`, matched by the guard on the next line: this reads geometry off an API
+// response, and a parameter that promises a polygon makes the guard look redundant
+// while forcing every test of it to assert past the signature.
 export function polygonToOSMFilter(input: unknown): string {
 	if (!isPolygonLiteral(input)) return ""
 

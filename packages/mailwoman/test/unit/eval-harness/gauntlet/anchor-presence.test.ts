@@ -27,8 +27,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Lay out `<root>/node_modules/@mailwoman/neural-weights-<locale>` with the two binaries `resolveWeights` probes for,
- * the given card, and whichever sibling artifacts the case wants present.
+ * Lay out `<root>/node_modules/@mailwoman/neural-weights-<locale>` with the two binaries
+ * `resolveWeights` probes for, the given card, and whichever sibling artifacts the case wants present.
  */
 async function fixtureWeights(locale: string, card: Record<string, unknown>, siblings: string[] = []): Promise<string> {
 	const root = fixtures.use(await temporaryDirectory("gauntlet-weights-")).path.toString()
@@ -77,9 +77,10 @@ describe("the anchor-artifact presence assertion", () => {
 	})
 
 	it("stays silent for a package that declares no anchor artifact — the #1476 en-gb posture", async () => {
-		// Verbatim shape of the en-gb card: `requires.anchor.required` is true (a fact about the shared encoder)
-		// while `files` carries only a comment where the binary key would be. A guard keyed on `requires` calls
-		// this broken. a guard keyed on `files` calls it what it is.
+		// Verbatim shape of the en-gb card: `requires.anchor.required` is true
+		// (a fact about the shared encoder) while `files` carries only a comment
+		// where the binary key would be. A guard keyed on `requires` calls this broken.
+		// a guard keyed on `files` calls it what it is.
 		const root = await fixtureWeights("zz-zz", {
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-zz.bin (deliberate)" },
@@ -101,9 +102,10 @@ describe("the anchor-artifact presence assertion", () => {
 	})
 
 	it("reports EVERY missing package, not just the first", async () => {
-		// One fixture root cannot hold two locales' packages under the cache layout `resolveWeights` probes, so
-		// the multi-locale case is posed as two calls against the same root — what matters is that the message
-		// is per-locale and carries the locale tag, which is what makes a six-overlay run diagnosable.
+		// One fixture root cannot hold two locales' packages under the cache layout `resolveWeights`
+		// probes, so the multi-locale case is posed as two calls against the same root —
+		// what matters is that the message is per-locale and carries the locale tag,
+		// which is what makes a six-overlay run diagnosable.
 		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
 
 		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).rejects.toThrow(/✗ zz-zz:/)

@@ -72,8 +72,8 @@
  */
 
 import { readFramedHeader, writeFramedHeader } from "#binary-frame"
-// Coordinate quantization identical to PCB1's — one grid for the family. A prefix prior whose own
-// p95 radius is measured in kilometres has nothing to gain from a finer grid.
+// Coordinate quantization identical to PCB1's — one grid for the family.
+// A prefix prior whose own p95 radius is measured in kilometres has nothing to gain from a finer grid.
 import { dequantizeCoordinate, LAT_Q, LON_Q, quantizeCoordinate } from "#postcode/binary-resolver"
 
 /**
@@ -91,8 +91,8 @@ const FLAG_HAS_RADIUS = 0b0000_0010
 const MAX_U8_LEN = 255
 
 /**
- * Largest integer an f64 represents exactly. WOF IDs are asserted against it at serialize time so a future ID beyond
- * the safe range fails the build rather than round-tripping to a neighbour.
+ * Largest integer an f64 represents exactly. WOF IDs are asserted against it at serialize time
+ * so a future ID beyond the safe range fails the build rather than round-tripping to a neighbour.
  */
 const MAX_EXACT_WOF_ID = Number.MAX_SAFE_INTEGER
 
@@ -119,30 +119,32 @@ export interface PostcodePrefixAncestor {
  */
 export interface PostcodePrefixNode {
 	/**
-	 * The prefix in the sanitized-query token shape (#920) — every non-letter/number stripped, uppercased for the
-	 * letter-containing systems: `"941"`, `"SW1A"`, `"BT9"`.
+	 * The prefix in the sanitized-query token shape (#920) — every non-letter/number stripped,
+	 * uppercased for the letter-containing systems: `"941"`, `"SW1A"`, `"BT9"`.
 	 */
 	prefix: string
 	/**
-	 * Admin ancestry the prefix asserts, coarsest-first. Empty when the prefix asserts none — which is a real answer
-	 * rather than a build failure: a GB outward code in one of the two documented border-straddling postcode areas
-	 * asserts the United Kingdom and nothing finer.
+	 * Admin ancestry the prefix asserts, coarsest-first. Empty when the prefix asserts none —
+	 * which is a real answer rather than a build failure: a GB outward code in one of the two
+	 * documented border-straddling postcode areas asserts the United Kingdom and nothing finer.
 	 */
 	ancestors: readonly PostcodePrefixAncestor[]
 	/**
-	 * Centroid latitude. Absent (with {@link PostcodePrefixNode.lon}) for the ancestry-only tier. Never `0`-as-absent.
+	 * Centroid latitude. Absent (with {@link PostcodePrefixNode.lon}) for the
+	 * ancestry-only tier. Never `0`-as-absent.
 	 */
 	lat?: number
 	lon?: number
 	/**
-	 * The measured p95 great-circle distance, in km, from this prefix's centroid to the units observed under it — the
-	 * prior's own confidence, shipped rather than assumed. mandatory whenever a coordinate is present, and forbidden
-	 * without one.
+	 * The measured p95 great-circle distance, in km, from this prefix's centroid to the
+	 * units observed under it — the prior's own confidence, shipped rather than assumed.
+	 * mandatory whenever a coordinate is present, and forbidden without one.
 	 */
 	radiusP95Km?: number
 	/**
-	 * Units observed under this prefix at build time — the denominator behind `radiusP95Km`, and, for a partial source,
-	 * the number that says how partial. It is an observation, never a claim about how many units exist.
+	 * Units observed under this prefix at build time — the denominator behind
+	 * `radiusP95Km`, and, for a partial source, the number that says how partial.
+	 * It is an observation, never a claim about how many units exist.
 	 */
 	unitCount: number
 }
@@ -169,14 +171,15 @@ export interface PostcodePrefixHeader {
 	scope: string
 	schemaVersion: 1
 	/**
-	 * Which prefix granularity the node table carries — `["outward"]` for GB, `["3"]` for a US sectional-centre build.
+	 * Which prefix granularity the node table carries — `["outward"]` for GB,
+	 * `["3"]` for a US sectional-centre build.
 	 */
 	levels: readonly string[]
 	/**
-	 * The numbering authority the prefixes came from rather than the gazetteer they were joined to. M-3 is the receipt:
-	 * 7.9% of US ZIPs disagree with their own gazetteer parent's state because a firm/unique ZIP names an organization's
-	 * mail processor rather than the code's range, so an index derived from `spr.parent_id` bakes that misattribution
-	 * in.
+	 * The numbering authority the prefixes came from rather than the gazetteer they were joined to.
+	 * M-3 is the receipt: 7.9% of US ZIPs disagree with their own gazetteer parent's state
+	 * because a firm/unique ZIP names an organization's mail processor rather than the code's
+	 * range, so an index derived from `spr.parent_id` bakes that misattribution in.
 	 */
 	source: string
 	/**
@@ -192,8 +195,8 @@ export interface PostcodePrefixHeader {
 	 */
 	tier: PostcodePrefixTier
 	/**
-	 * Licence attribution carried through from the source artifact, so an artifact that is copied somewhere still names
-	 * the terms it travels under.
+	 * Licence attribution carried through from the source artifact, so an artifact that
+	 * is copied somewhere still names the terms it travels under.
 	 */
 	attribution: string
 	/**
@@ -203,7 +206,8 @@ export interface PostcodePrefixHeader {
 	 */
 	coverageNote: string
 	/**
-	 * Optional soft-prior bias magnitude. Absent until a calibration task measures one — a defaulted number here would
+	 * Optional soft-prior bias magnitude. Absent until a calibration task measures one —
+	 * a defaulted number here would
 	 * let an uncalibrated bias reach the decoder unnoticed (PCN1's rule, verbatim). B3-1 ships data + loader + offline
 	 * probe with no decode wiring, so nothing reads this yet.
 	 */
@@ -217,9 +221,10 @@ function ancestorKey(a: PostcodePrefixAncestor): string {
 /**
  * Serialize a postcode-prefix index to PFX1 bytes.
  *
- * Refuses, loudly, three things a plausible-looking artifact could otherwise hide: a duplicate prefix (two extractions
- * merged without summing), a coordinate with no `radiusP95Km` (a consumer would read a 696 km band like a 3 km outward
- * code), and a `radiusP95Km` with no coordinate (a dispersion measured to nothing).
+ * Refuses, loudly, three things a plausible-looking artifact could otherwise hide:
+ * a duplicate prefix (two extractions merged without summing), a coordinate with
+ * no `radiusP95Km` (a consumer would read a 696 km band like a 3 km outward code),
+ * and a `radiusP95Km` with no coordinate (a dispersion measured to nothing).
  */
 export function serializePostcodePrefixIndex(
 	header: PostcodePrefixHeader,
@@ -397,9 +402,9 @@ export function serializePostcodePrefixIndex(
 }
 
 /**
- * Minimal subset of {@link PostcodePrefixIndexResolver} a consumer module reads — structural typing so a caller depends
- * on the shape rather than the class, and so `@mailwoman/resolver` can consume a prefix index without taking a
- * dependency on `@mailwoman/neural`.
+ * Minimal subset of {@link PostcodePrefixIndexResolver} a consumer module reads — structural
+ * typing so a caller depends on the shape rather than the class, and so `@mailwoman/resolver`
+ * can consume a prefix index without taking a dependency on `@mailwoman/neural`.
  */
 export interface PostcodePrefixIndexLike {
 	probe(prefix: string): PostcodePrefixNode | null
@@ -491,8 +496,8 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	}
 
 	/**
-	 * The header's ISO country code, so a load site can refuse an index built for a different country than the locale
-	 * being parsed — the eval `PlacetypeCensusLike.country` exists for.
+	 * The header's ISO country code, so a load site can refuse an index built for a different
+	 * country than the locale being parsed — the eval `PlacetypeCensusLike.country` exists for.
 	 */
 	get country(): string {
 		return this.header.country
@@ -507,9 +512,10 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	}
 
 	/**
-	 * Look up one prefix. Returns `null` when the index has no node for it — absence is not evidence. Read the header's
-	 * `coverageNote` before treating a miss as anything but neutral: for a partial register a miss means unattested, and
-	 * for a complete one it means the prefix is not in the numbering plan.
+	 * Look up one prefix. Returns `null` when the index has no node for it —
+	 * absence is not evidence. Read the header's `coverageNote` before treating a
+	 * miss as anything but neutral: for a partial register a miss means unattested,
+	 * and for a complete one it means the prefix is not in the numbering plan.
 	 */
 	probe(prefix: string): PostcodePrefixNode | null {
 		return this.#nodes.get(prefix) ?? null

@@ -19,8 +19,8 @@ export interface PlanetarySource {
 	kind: PlanetarySourceKind
 	url: string
 	/**
-	 * The product's byte count where the product is stable; `null` for a nightly archive, whose size moves by a few
-	 * kilobytes between snapshots.
+	 * The product's byte count where the product is stable; `null` for a nightly archive,
+	 * whose size moves by a few kilobytes between snapshots.
 	 */
 	expectedBytes: number | null
 	pinned: "snapshot" | "product"
@@ -28,8 +28,9 @@ export interface PlanetarySource {
 }
 
 /**
- * The four products the pipeline reads, as measured on 2026-09-07: the nomenclature centre-point shapefiles (9,086 Moon
- * points, 2,052 Mars points, longitude 0..360) and the lola 118 m and mola 463 m global DEMs.
+ * The four products the pipeline reads, as measured on 2026-09-07: the nomenclature
+ * centre-point shapefiles (9,086 Moon points, 2,052 Mars points, longitude 0..360)
+ * and the lola 118 m and mola 463 m global DEMs.
  */
 const SOURCES = {
 	"moon-nomenclature": {

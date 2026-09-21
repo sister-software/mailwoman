@@ -49,8 +49,9 @@ import { NCERM_ATTRIBUTION, NCERM_CATALOGUE_PACKAGE_ID, NCERM_DATASET_ID, NCERM_
 export const EA_NCERM_SPATIAL_BASE_URL = `https://environment.data.gov.uk/spatialdata/${NCERM_SERVICE_SLUG}`
 
 /**
- * The EA's CSW, where the ISO 19115 record is readable. The dataset landing page is a client-side application and
- * returns only its shell to a fetch, so this is the primary source that can actually be read.
+ * The EA's CSW, where the ISO 19115 record is readable.
+ * The dataset landing page is a client-side application and returns only its shell to
+ * a fetch, so this is the primary source that can actually be read.
  */
 export const EA_CSW_URL = "https://environment.data.gov.uk/discover/ea/csw"
 
@@ -61,25 +62,26 @@ export const EA_CSW_URL = "https://environment.data.gov.uk/discover/ea/csw"
 /**
  * Minimum spacing between EA requests, in milliseconds.
  *
- * The EA publishes no rate limit for these services and its WFS `GetCapabilities` reports `<ows:Fees>none`, so this is
- * courtesy pacing rather than a published ceiling — stated as such rather than dressed up as a measured limit. Two
- * requests a second is far below anything a public OGC endpoint is provisioned for and costs a build nothing: the
- * acquisition path makes single-digit numbers of calls, and the verification a few dozen.
+ * The EA publishes no rate limit for these services and its WFS `GetCapabilities` reports
+ * `<ows:Fees>none`, so this is courtesy pacing rather than a published ceiling — stated
+ * as such rather than dressed up as a measured limit. Two requests a second is far
+ * below anything a public OGC endpoint is provisioned for and costs a build nothing:
+ * the acquisition path makes single-digit numbers of calls, and the verification a few dozen.
  */
 export const EA_MIN_REQUEST_INTERVAL_MS = 500
 
 /**
  * How long a cached EA metadata response stays fresh.
  *
- * Six hours, chosen against the product's cadence rather than a wall-clock intuition. The ISO
- * `MD_MaintenanceFrequencyCode` is `annually` and no prose names a publication month, so the revision date moves at
- * most once a year. A shorter TTL adds nothing.
+ * Six hours, chosen against the product's cadence rather than a wall-clock intuition.
+ * The ISO `MD_MaintenanceFrequencyCode` is `annually` and no prose names a publication month,
+ * so the revision date moves at most once a year. A shorter TTL adds nothing.
  */
 const EA_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
 /**
- * The licence value the catalogue entry must carry. A different value is a licence change, and a build that absorbed
- * one would ship an artifact under terms nobody checked.
+ * The licence value the catalogue entry must carry. A different value is a licence change,
+ * and a build that absorbed one would ship an artifact under terms nobody checked.
  */
 export const EA_EXPECTED_CATALOGUE_LICENCE = "Open Government Licence"
 
@@ -96,7 +98,8 @@ export type CoastalCatalogueRecord = CKANPackageRecord
 const ATTRIBUTION_MARKER = "Attribution statement:"
 
 /**
- * A four-digit year, anywhere in a statement. Bounded and anchored to word boundaries, so it is linear on any input.
+ * A four-digit year, anywhere in a statement. Bounded and anchored to word boundaries,
+ * so it is linear on any input.
  */
 const YEAR_PATTERN = /\b\d{4}\b/u
 
@@ -136,8 +139,8 @@ export function parseAttributionStatement(text: string): string {
 		const nextMarker = text.indexOf(ATTRIBUTION_MARKER, from)
 		const nextTag = text.indexOf("<", from)
 
-		// `Math.min` over the two ends, with an absent end reading as the end of the string rather than as `-1` — which
-		// would sort below every real index and truncate every statement to nothing.
+		// `Math.min` over the two ends, with an absent end reading as the end of the string rather
+		// than as `-1` — which would sort below every real index and truncate every statement to nothing.
 		const end = Math.min(nextMarker === -1 ? text.length : nextMarker, nextTag === -1 ? text.length : nextTag)
 		const statement = text.slice(from, end).trim()
 
@@ -167,12 +170,12 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	/**
 	 * The catalogue entry: reference dates, licence, and the direct file URLs.
 	 *
-	 * The download URL is read from here rather than assembled, because the EA's file service keys on an opaque
-	 * `fileDataSetId` that has no relationship to the dataset id — a hard-coded URL survives a republish by pointing at a
-	 * file that is no longer the product.
+	 * The download URL is read from here rather than assembled, because the EA's file
+	 * service keys on an opaque `fileDataSetId` that has no relationship to the dataset id —
+	 * a hard-coded URL survives a republish by pointing at a file that is no longer the product.
 	 *
-	 * @throws {Error} When the entry names a different dataset, carries no `revision` reference date, or names a licence
-	 *   other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
+	 * @throws {Error} When the entry names a different dataset, carries no `revision`
+	 *   reference date, or names a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<CoastalCatalogueRecord> {
 		return readCKANPackageRecord(this, {
@@ -186,9 +189,10 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	/**
 	 * The attribution statement the published record carries, checked against the constant the build ships.
 	 *
-	 * Read at build time rather than trusted from `vocabulary.ts`: the constant is what the artifact is stamped with
-	 * offline, and this is the live value it is reconciled with when the network is available. OGL v3.0 makes the
-	 * statement a licence condition, so a change in it is a change in what a re-user has to publish.
+	 * Read at build time rather than trusted from `vocabulary.ts`: the constant is what the
+	 * artifact is stamped with offline, and this is the live value it is reconciled with
+	 * when the network is available. OGL v3.0 makes the statement a licence condition,
+	 * so a change in it is a change in what a re-user has to publish.
 	 */
 	public async readAttributionStatement(): Promise<string> {
 		const { data } = await this.fetch<string>({
@@ -211,12 +215,12 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The feature count the WFS reports for one layer — `resultType=hits`, which returns the count without a single
-	 * geometry.
+	 * The feature count the WFS reports for one layer — `resultType=hits`,
+	 * which returns the count without a single geometry.
 	 *
-	 * This is the second path in the build's two-path agreement check: the same authority, a different distribution
-	 * channel. A geodatabase whose feature count disagrees with the live service is not a file this build should be
-	 * writing into a sealed artifact.
+	 * This is the second path in the build's two-path agreement check: the same authority,
+	 * a different distribution channel. A geodatabase whose feature count disagrees with
+	 * the live service is not a file this build should be writing into a sealed artifact.
 	 */
 	public async readFeatureCount(layer: string): Promise<number> {
 		return readWFSFeatureCount(this, {
@@ -230,8 +234,9 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	/**
 	 * The extent one OGC API Features collection declares, in CRS84 order.
 	 *
-	 * Read at build time rather than trusted from the constant in `vocabulary.ts`: the constant is what the ingest
-	 * asserts against offline, and this is the live value it is reconciled with when the network is available.
+	 * Read at build time rather than trusted from the constant in `vocabulary.ts`:
+	 * the constant is what the ingest asserts against offline, and this is the live
+	 * value it is reconciled with when the network is available.
 	 */
 	public async readDeclaredBBox(layer: string): Promise<[number, number, number, number]> {
 		return readOGCCollectionBBox(this, {

@@ -62,8 +62,8 @@ test("parseOSMHstore: empty and missing input yield an empty dict, not a throw",
 })
 
 test("buildSubVenueSQL: reads aeroway bare on multipolygons and via hstore on points", () => {
-	// The per-layer promotion split the module docstring turns on, verified against the installed
-	// osmconf.ini: `aeroway` is promoted on multipolygons only, `ref` on points only.
+	// The per-layer promotion split the module docstring turns on, verified against the
+	// installed osmconf.ini: `aeroway` is promoted on multipolygons only, `ref` on points only.
 	const points = buildSubVenueSQL("points")
 	const areas = buildSubVenueSQL("multipolygons")
 

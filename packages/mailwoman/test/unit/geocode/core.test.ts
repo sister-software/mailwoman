@@ -123,9 +123,10 @@ describe("extractGeocodeResult — resolved-place surfacing (#1014)", () => {
 })
 
 describe("extractGeocodeResult — a component the answer did not follow (#2301)", () => {
-	// `Nawāda, 744301`: 744301 is an Andaman and Nicobar Islands code, the walk selects Nawada in Bihar, and the
-	// resolver refuses to relocate the coordinate 1,914 km onto Port Blair. Both components are still in the result.
-	// without this field nothing in it says they name different places.
+	// `Nawāda, 744301`: 744301 is an Andaman and Nicobar Islands code, the walk
+	// selects Nawada in Bihar, and the resolver refuses to relocate the coordinate
+	// 1,914 km onto Port Blair. Both components are still in the result. without this
+	// field nothing in it says they name different places.
 	const refused = (): AddressTree => ({
 		raw: "Nawāda, 744301",
 		roots: [
@@ -256,8 +257,9 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 })
 
 describe("extractGeocodeResult — parsed house-grade fields (#1041)", () => {
-	// A rooftop parse of "123 East Sheldon Rd 75001 Paris": the street node is stamped `address_point`, and its
-	// name-containing subtree (prefix + base + suffix) plus the house_number nest under it (per the containment schema).
+	// A rooftop parse of "123 East Sheldon Rd 75001 Paris": the street node is stamped
+	// `address_point`, and its name-containing subtree (prefix + base + suffix) plus
+	// the house_number nest under it (per the containment schema).
 	const rooftopTree = (tier: "address_point" | "interpolated" | "admin"): AddressTree => ({
 		raw: "123 east sheldon rd 75001 paris",
 		roots: [
@@ -391,9 +393,10 @@ describe("recognizeBarePostcode (#22)", () => {
 
 describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#977 NL, #22 GB)", () => {
 	/**
-	 * The GB shape of the defect: `29 Brecknock Road, London, N7 0BT` resolves both the locality (the London centroid,
-	 * 51.5005/-0.1094) and the unit postcode (`N70BT`, 51.5500/-0.1307 — 38 m from the rooftop truth), and the admin
-	 * ladder returned London, 5.6 km out. Coordinates are the live `candidate.db` rows, read 2026-08-10.
+	 * The GB shape of the defect: `29 Brecknock Road, London, N7 0BT` resolves both
+	 * the locality (the London centroid, 51.5005/-0.1094) and the unit postcode
+	 * (`N70BT`, 51.5500/-0.1307 — 38 m from the rooftop truth), and the admin ladder returned
+	 * London, 5.6 km out. Coordinates are the live `candidate.db` rows, read 2026-08-10.
 	 */
 	const gbTree = (postcodeName = "N70BT"): AddressTree => ({
 		raw: "29 Brecknock Road, London, N7 0BT",
@@ -473,10 +476,10 @@ describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#
 })
 
 describe("extractGeocodeResult — street-tier locality from the register commune (#1058)", () => {
-	// "Rue Sainte-Catherine, Bordeaux": the street-centroid tier matched the register's (street,
-	// commune) pair and stamped `street_locality: "Bordeaux"` on the street node. span-rescore's
-	// speculative locality ("Rue", the street's first token — a real commune in the Somme) was
-	// dropped by the resolver for contradicting the register.
+	// "Rue Sainte-Catherine, Bordeaux": the street-centroid tier matched the register's (street, commune)
+	// pair and stamped `street_locality: "Bordeaux"` on the street node. span-rescore's
+	// speculative locality ("Rue", the street's first token — a real commune in the Somme)
+	// was dropped by the resolver for contradicting the register.
 	const streetTierTree = (): AddressTree => ({
 		raw: "Rue Sainte-Catherine, Bordeaux",
 		roots: [
@@ -544,9 +547,10 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 	type ParseOpts = Parameters<GeocodeClassifier["parse"]>[1]
 
 	/**
-	 * A recording classifier: captures the opts geocode-core hands the model. Lets us assert the query-shape prior the
-	 * runtime pipeline applies (`core/pipeline/runtime-pipeline.ts` → `safeClassify`) now reaches the geocode path too —
-	 * without loading a real model.
+	 * A recording classifier: captures the opts geocode-core hands the model.
+	 * Lets us assert the query-shape prior the runtime pipeline applies
+	 * (`core/pipeline/runtime-pipeline.ts` → `safeClassify`) now reaches the geocode
+	 * path too — without loading a real model.
 	 */
 	function recordingClassifier(): { classifier: GeocodeClassifier; calls: Array<{ text: string; opts?: ParseOpts }> } {
 		const calls: Array<{ text: string; opts?: ParseOpts }> = []
@@ -600,9 +604,9 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 		await parseForGeocode("Wetstraat, Brussel", { classifier })
 
 		const qs = calls[0]!.opts!.queryShape!
-		// The Wetstraat/Rue-de-la-Loi cross-border class: no known postcode format, no region abbreviation, so
-		// buildEmissionPriors returns an all-zeros matrix — the emission prior cannot move it. That class needs a
-		// lexical country prior rather than this belt.
+		// The Wetstraat/Rue-de-la-Loi cross-border class: no known postcode format, no region abbreviation,
+		// so buildEmissionPriors returns an all-zeros matrix — the emission prior cannot move it.
+		// That class needs a lexical country prior rather than this belt.
 		expect(qs.knownFormats).toHaveLength(0)
 		expect(qs.regionAbbreviations ?? []).toHaveLength(0)
 	})
@@ -657,11 +661,12 @@ describe("the #404 lineage-attachment wiring (#1717)", () => {
 
 describe("#1537: a famous namesake the model reads as a `street` keeps its candidate list", () => {
 	/**
-	 * The live shape the issue reports, reduced to a fixture. The model tags a bare `Springfield` / `Berlin` / `Moscow`
-	 * as a `street` (they read as street names), so the admin walk resolves nothing and the #370 span-rescore tier is the
-	 * only thing that recovers the place. It used to decorate the injected node with an empty alternatives list, so
-	 * `candidates` came back holding one entry and `declared_ambiguity` — whose whole trigger is a top-1-vs-top-2 margin
-	 * — could not fire for the very class it exists for.
+	 * The live shape the issue reports, reduced to a fixture.
+	 * The model tags a bare `Springfield` / `Berlin` / `Moscow` as a `street` (they read as street names),
+	 * so the admin walk resolves nothing and the #370 span-rescore tier is the only thing that
+	 * recovers the place. It used to decorate the injected node with an empty alternatives list,
+	 * so `candidates` came back holding one entry and `declared_ambiguity` — whose whole
+	 * trigger is a top-1-vs-top-2 margin — could not fire for the very class it exists for.
 	 */
 	const SPRINGFIELDS: ResolvedPlace[] = [
 		{
@@ -711,8 +716,9 @@ describe("#1537: a famous namesake the model reads as a `street` keeps its candi
 			findPlace: async (query) =>
 				query.text.trim().toLowerCase() === "springfield" ? SPRINGFIELDS.map((p) => ({ ...p })) : [],
 		}),
-		// No placer: this test is about the resolver's candidate list rather than the country prior — and loading the
-		// bundled placer model in a unit test would be a several-hundred-millisecond side quest.
+		// No placer: this test is about the resolver's candidate list rather than the
+		// country prior — and loading the bundled placer model in a unit test would
+		// be a several-hundred-millisecond side quest.
 		placeCountry: false,
 	})
 

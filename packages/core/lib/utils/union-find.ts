@@ -17,8 +17,9 @@ export interface UnionFind {
 }
 
 /**
- * Path-compressing union-find. `find` walks iteratively, so a chain as long as the input — the shape a sorted ingest
- * produces when every row unions with the previous one — cannot overflow the stack the way a recursive walk does.
+ * Path-compressing union-find. `find` walks iteratively, so a chain as long as the input —
+ * the shape a sorted ingest produces when every row unions with the previous one —
+ * cannot overflow the stack the way a recursive walk does.
  */
 export function createUnionFind(): UnionFind {
 	const parent = new Map<string, string>()

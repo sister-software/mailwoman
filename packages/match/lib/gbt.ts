@@ -33,11 +33,13 @@ const QUANTILE_SPLIT_COUNT = 6
  */
 export type TreeNode = { leaf: number } | { f: number; thr: number; lo: TreeNode; hi: TreeNode }
 
-// Local by design: `@mailwoman/registry`'s tools/shared.ts exports this sigmoid. registry depends on match rather than the reverse.
+// Local by design: `@mailwoman/registry`'s tools/shared.ts exports this sigmoid.
+// registry depends on match rather than the reverse.
 const sigmoid = (z: number): number => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
 
 /**
- * Per-feature candidate split thresholds: midpoints for few-valued/binary features, quantiles for continuous.
+ * Per-feature candidate split thresholds: midpoints for few-valued/binary features,
+ * quantiles for continuous.
  */
 export function buildThresholds(X: number[][]): number[][] {
 	const dim = X[0]?.length ?? 0
@@ -168,7 +170,8 @@ function predictTree(t: TreeNode, x: number[]): number {
 }
 
 /**
- * A trained gradient-boosted-tree model: an additive ensemble over a base log-odds. Plain JSON.
+ * A trained gradient-boosted-tree model: an additive ensemble over a
+ * base log-odds. Plain JSON.
  */
 export interface GBT {
 	trees: TreeNode[]

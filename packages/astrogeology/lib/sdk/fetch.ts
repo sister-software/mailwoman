@@ -107,8 +107,9 @@ export async function downloadPinned(
 		}
 	}
 
-	// A file at the final path finished (the transfer renames from `.part` only on a clean end), so a complete file
-	// with no pin is hashed and pinned rather than fetched again. the size check below still holds it to the table.
+	// A file at the final path finished (the transfer renames from `.part` only on a clean end),
+	// so a complete file with no pin is hashed and pinned rather than fetched again.
+	// the size check below still holds it to the table.
 	if (!onDisk) {
 		// The transfer opens its `.part` stream in place. the source directory is this fetch's to create.
 		await makeDirectories(dirname(path))
@@ -137,8 +138,8 @@ export async function downloadPinned(
 		)
 	}
 
-	// Re-read before writing: a transfer runs for minutes, and a lock read before it started would write back over
-	// every pin another fetch recorded meanwhile.
+	// Re-read before writing: a transfer runs for minutes, and a lock read before it
+	// started would write back over every pin another fetch recorded meanwhile.
 	await writeLock({
 		...(await readLock()),
 		[source.id]: { url: source.url, bytes, sha256, fetchedAt: isoSeconds(), ...(snapshot ? { snapshot } : {}) },

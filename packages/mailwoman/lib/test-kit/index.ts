@@ -51,7 +51,8 @@ export function* zip<T, U>(
 }
 
 /**
- * Given two iterables, assert that they are congruent, i.e. that they have the same elements in the same order.
+ * Given two iterables, assert that they are congruent, i.e. that they have
+ * the same elements in the same order.
  */
 export function assertCongruent<Item>(
 	actualItemIterators: Iterable<Iterable<Item>>,

@@ -74,10 +74,11 @@ const SPRINGFIELD_RES9_SHORT = shortCellToInt(SPRINGFIELD_RES9_FULL)
 const SPRINGFIELD_RES6_PARENT_FULL = cellToParent(SPRINGFIELD_RES9_FULL, 6) as H3Cell
 const SPRINGFIELD_RES6_PARENT_SHORT = res9ShortCellToRes6Parent(SPRINGFIELD_RES9_SHORT)
 
-// A sibling res-9 cell sharing springfield's res-6 parent but carrying no bdc_availability rows of its own — the
-// "covered res-6 parent, zero filings in this exact cell" positive-absence case (filing-landscape.ts's own
-// docstring: the h3Cells query path is the only way to exercise this, since geoid-mode's "no rows ⇒ no candidate
-// cell" shortcut can never produce it). Derived from h3-js, never hardcoded.
+// A sibling res-9 cell sharing springfield's res-6 parent but carrying no bdc_availability rows
+// of its own — the "covered res-6 parent, zero filings in this exact cell" positive-absence
+// case (filing-landscape.ts's own docstring: the h3Cells query path is the only way to exercise
+// this, since geoid-mode's "no rows ⇒ no candidate cell" shortcut can never produce it).
+// Derived from h3-js, never hardcoded.
 const SPRINGFIELD_SIBLING_RES9_FULL = cellToChildren(SPRINGFIELD_RES6_PARENT_FULL, 9).find(
 	(cell) => cell !== SPRINGFIELD_RES9_FULL
 ) as H3Cell
@@ -96,8 +97,8 @@ function blockCentroids(geoid: string): { lat: number; lon: number } | undefined
 }
 
 /**
- * One matching-tech/matching-or-better-speed row (corroborates the fiber@1000 claim) and one lesser-tech row (DSL —
- * never corroborates a fiber claim, regardless of speed) at the same geoid.
+ * One matching-tech/matching-or-better-speed row (corroborates the fiber@1000 claim) and one
+ * lesser-tech row (DSL — never corroborates a fiber claim, regardless of speed) at the same geoid.
  */
 function fixtureRows(): BDCAvailabilityRow[] {
 	return [
@@ -125,7 +126,8 @@ function fixtureRows(): BDCAvailabilityRow[] {
 }
 
 /**
- * A built `bdc.db`, its open reader, and the scratch directory holding it — all released when the binding leaves scope.
+ * A built `bdc.db`, its open reader, and the scratch directory holding it —
+ * all released when the binding leaves scope.
  */
 type BDCFixture = TemporaryDirectory & { db: DatabaseClient<BDCDatabase> }
 
@@ -388,8 +390,8 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 		expect(bundle.vintage).toBeNull()
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
-		// The filing axis names why it's not covered — the layer was never wired — distinct from a
-		// wired-but-unsurveyed cell (see the next test).
+		// The filing axis names why it's not covered — the layer was never wired —
+		// distinct from a wired-but-unsurveyed cell (see the next test).
 		expect(bundle.coverage_detail.filing).toBe("layer_missing")
 	})
 
@@ -498,11 +500,11 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
 		expect(bundle.evidence_found.some((e) => e.type === "abstain")).toBe(false)
-		// DSL has no physical falsifier, so with no poi dep the confidence is filing-axis-only: covered -> "low"
-		// (this module's conservative not_applicable extension — see plausibility.ts's module docstring).
+		// DSL has no physical falsifier, so with no poi dep the confidence is filing-axis-only: covered ->
+		// "low" (this module's conservative not_applicable extension — see plausibility.ts's module docstring).
 		expect(bundle.coverage_confidence).toBe("low")
-		// The bundle names why this is "low": physical is not_applicable (DSL has no physical falsifier at all),
-		// not a poi survey gap.
+		// The bundle names why this is "low": physical is not_applicable
+		// (DSL has no physical falsifier at all), not a poi survey gap.
 		expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "not_applicable" })
 	})
 })
@@ -524,8 +526,8 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 			layer: "poi",
 		})
 
-		// Physical is layer_missing here — fiber does have a falsifier (see the next test's not_applicable
-		// contrast for a tech that has none at all).
+		// Physical is layer_missing here — fiber does have a falsifier
+		// (see the next test's not_applicable contrast for a tech that has none at all).
 		expect(bundle.coverage_detail.physical).toBe("layer_missing")
 	})
 
@@ -609,10 +611,11 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "insufficient_survey_data", layer: "bdc" })
 	})
 
-	// `combineCoverage`'s genuine mixed branch — one axis covered, the other not. It takes deliberate
-	// construction: any single point remote enough for bdc.db to have missed it is also outside the poi coverage
-	// table, so both axes land on unknown together and the both-unknown branch runs instead. The two tests below
-	// drive the mixed branch in both directions by separating the two axes on purpose.
+	// `combineCoverage`'s genuine mixed branch — one axis covered, the other not.
+	// It takes deliberate construction: any single point remote enough for bdc.db to have
+	// missed it is also outside the poi coverage table, so both axes land on unknown together
+	// and the both-unknown branch runs instead. The two tests below drive the mixed
+	// branch in both directions by separating the two axes on purpose.
 	it("MIXED: filing covered, physical layer entirely missing (no poi dep) -> low", async () => {
 		await using bdc = await buildBDCFixture()
 
@@ -642,10 +645,10 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		using poischemadb = await openpoischemadb()
 		using poiLookup = new POILookup({ databasePath: poi.path })
 
-		// Deliberately covering the remote point's own res-6 parent (not Springfield's) — decoupled from any real poi
-		// row, same idiom `nearest-infrastructure.test.ts`'s `openemptyschemadb` establishes — so the physical axis
-		// reads covered at a cell bdc.db never surveyed, genuinely separating the two axes instead of both landing on
-		// unknown together.
+		// Deliberately covering the remote point's own res-6 parent (not Springfield's) — decoupled
+		// from any real poi row, same idiom `nearest-infrastructure.test.ts`'s `openemptyschemadb`
+		// establishes — so the physical axis reads covered at a cell bdc.db never surveyed,
+		// genuinely separating the two axes instead of both landing on unknown together.
 		const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
 		const remoteCell = cellFor(41.8781, -87.6298)
 
@@ -687,9 +690,9 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 
 	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with poi wired ALONE (no bdcDB)", async () => {
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		// Same mismatch as above, but with bdcDB never wired at all — the case an assertion checking both layers
-		// being present would skip entirely. `pointCell` (below) is still derived from BDC_H3_RESOLUTION regardless,
-		// so poi's own resolution must be checked here too.
+		// Same mismatch as above, but with bdcDB never wired at all — the case an assertion checking
+		// both layers being present would skip entirely. `pointCell` (below) is still derived
+		// from BDC_H3_RESOLUTION regardless, so poi's own resolution must be checked here too.
 		using poischemadb = await openpoischemadb(6)
 		using poiLookup = new POILookup({ databasePath: poi.path })
 
@@ -739,12 +742,13 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 })
 
 /**
- * The §7-2b acceptance criteria — one describe per criterion, mapped 1:1 to the four bullets in
- * `docs/superpowers/plans/2026-07-30-bdc-2b-plan.md`'s "The §7-2b checks" section. Several criteria' behavioral claims
- * are already proven by the suites above — `plausibility.ts`'s own module docstring says as much ("this module is
- * designed for them but doesn't assert them itself"). Where that's true, the test below asserts the criterion's
- * specific claim against a real bundle (reusing the established fixtures, including the hoisted `openBoth()`) and
- * cross-references the fuller proof by comment, rather than re-deriving the whole scenario.
+ * The §7-2b acceptance criteria — one describe per criterion, mapped 1:1 to the four bullets
+ * in `docs/superpowers/plans/2026-07-30-bdc-2b-plan.md`'s "The §7-2b checks" section.
+ * Several criteria' behavioral claims are already proven by the suites above — `plausibility.ts`'s own
+ * module docstring says as much ("this module is designed for them but doesn't assert them itself").
+ * Where that's true, the test below asserts the criterion's specific claim against a
+ * real bundle (reusing the established fixtures, including the hoisted `openBoth()`)
+ * and cross-references the fuller proof by comment, rather than re-deriving the whole scenario.
  */
 describe("§7-2b criteria", () => {
 	describe("Criterion 1 — positive-evidence-only invariant (required)", () => {
@@ -754,11 +758,12 @@ describe("§7-2b criteria", () => {
 			using poischemadb = await openpoischemadb()
 			using poiLookup = new POILookup({ databasePath: poi.path })
 
-			// SIBLING_POINT: same res-6 parent as Springfield (real bdc.db coverage), zero bdc_availability rows of
-			// its own — filing-landscape.ts's meaning-of-zero positive case (see the "positive absence" test in the
-			// "filing evidence + corroboration" suite above). Cover that same res-6 parent on the poi side too, so
-			// the physical axis is genuinely surveyed as well rather than merely absent — the well-covered half of this
-			// criterion’s contrast (the sparse-cell half is the next test).
+			// SIBLING_POINT: same res-6 parent as Springfield (real bdc.db coverage), zero
+			// bdc_availability rows of its own — filing-landscape.ts's meaning-of-zero positive case
+			// (see the "positive absence" test in the "filing evidence + corroboration" suite above).
+			// Cover that same res-6 parent on the poi side too, so the physical axis is
+			// genuinely surveyed as well rather than merely absent — the well-covered half of
+			// this criterion’s contrast (the sparse-cell half is the next test).
 			await writeLayerCoverage(poischemadb, [
 				{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 0 },
 			])
@@ -775,9 +780,9 @@ describe("§7-2b criteria", () => {
 			// The core claim: absence never manufactures a negative entry. It just isn't there.
 			expect(bundle.evidence_found).toEqual([])
 			expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
-			// Both axes are genuinely covered -> "high", not "insufficient_survey_data" — mislabeling a real,
-			// surveyed "nothing here" as a generic unknown would erase the meaning-of-zero distinction the next
-			// test proves in the opposite direction.
+			// Both axes are genuinely covered -> "high", not "insufficient_survey_data" —
+			// mislabeling a real, surveyed "nothing here" as a generic unknown would erase the
+			// meaning-of-zero distinction the next test proves in the opposite direction.
 			expect(bundle.coverage_confidence).toBe("high")
 		})
 
@@ -797,8 +802,8 @@ describe("§7-2b criteria", () => {
 			expect(bundle.coverage_detail).toEqual({ filing: "cell_unsurveyed", physical: "cell_unsurveyed" })
 			expect(bundle.coverage_confidence).toBe("insufficient_survey_data")
 
-			// A criterion anchor must never assert less than the ordinary test it cites as fuller proof, so the abstain
-			// assertion from the "both axes unknown" test is mirrored here too.
+			// A criterion anchor must never assert less than the ordinary test it cites as fuller proof,
+			// so the abstain assertion from the "both axes unknown" test is mirrored here too.
 			expect(bundle.evidence_found).toContainEqual({
 				type: "abstain",
 				reason: "insufficient_survey_data",
@@ -882,8 +887,8 @@ describe("§7-2b criteria", () => {
 				...Object.keys(BLOCK_RESOLUTION_VALUES),
 			]
 
-			// Exhaustive means non-empty — a refactor that hollowed out one of the objects above (e.g. via a bad
-			// merge) must not silently pass a loop over nothing.
+			// Exhaustive means non-empty — a refactor that hollowed out one of the objects
+			// above (e.g. via a bad merge) must not silently pass a loop over nothing.
 			expect(allValues).toHaveLength(16)
 
 			for (const value of allValues) {
@@ -892,10 +897,11 @@ describe("§7-2b criteria", () => {
 		})
 
 		it("PLAUSIBILITY_BUNDLE_KEYS (the key-set pin) is non-empty — a hollowed-out pin object would make the compile-time guard above vacuous", () => {
-			// The pin's real teeth are the `satisfies` clause itself, which is compile-time only — to check it by
-			// hand, temporarily add a field to `PlausibilityBundle`, rebuild `bdc/out`, confirm `tsc` fails here,
-			// then revert. This runtime assertion is only the same non-empty backstop the union pins' own
-			// `toHaveLength(16)` above provides — it can't observe a missing key the way `tsc` does.
+			// The pin's real teeth are the `satisfies` clause itself, which is compile-time only —
+			// to check it by hand, temporarily add a field to `PlausibilityBundle`, rebuild `bdc/out`,
+			// confirm `tsc` fails here, then revert. This runtime assertion is only the same
+			// non-empty backstop the union pins' own `toHaveLength(16)` above provides —
+			// it can't observe a missing key the way `tsc` does.
 			expect(Object.keys(PLAUSIBILITY_BUNDLE_KEYS)).toHaveLength(6)
 		})
 	})
@@ -915,8 +921,8 @@ describe("§7-2b criteria", () => {
 			)
 
 			expect(bundle.coverage_confidence).toBe("high")
-			// A criterion anchor must never assert less than the ordinary test it cites as fuller proof, so the
-			// coverage_detail and no-abstain assertions from the co-presence test are mirrored here too.
+			// A criterion anchor must never assert less than the ordinary test it cites as fuller proof, so
+			// the coverage_detail and no-abstain assertions from the co-presence test are mirrored here too.
 			expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
 			expect(bundle.evidence_found.some((e) => e.type === "filing" && e.corroborates)).toBe(true)
 			expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(true)

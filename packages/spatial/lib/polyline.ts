@@ -17,8 +17,8 @@ import { haversineKm } from "#distance"
 /**
  * Clamp a fraction into `[0, 1]`.
  *
- * NaN passes through, which is deliberate: an interpolation whose inputs were not numbers should produce NaN
- * coordinates a caller can detect rather than silently snap to a segment's start.
+ * NaN passes through, which is deliberate: an interpolation whose inputs were not numbers should
+ * produce NaN coordinates a caller can detect rather than silently snap to a segment's start.
  */
 export function clampFraction(t: number): number {
 	return t < 0 ? 0 : Math.min(1, t)
@@ -27,8 +27,8 @@ export function clampFraction(t: number): number {
 /**
  * The point at fraction `t` of a polyline's total arc length (haversine), plus that total in km.
  *
- * `t` is assumed clamped to `[0, 1]`. A zero-length polyline yields its first vertex and a length of 0, so a degenerate
- * segment still produces a usable coordinate rather than NaN.
+ * `t` is assumed clamped to `[0, 1]`. A zero-length polyline yields its first vertex
+ * and a length of 0, so a degenerate segment still produces a usable coordinate rather than NaN.
  */
 export function pointAlong(
 	polyline: readonly [number, number][],

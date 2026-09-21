@@ -52,8 +52,8 @@ export async function convertTXHHSC(
 	const records: string[] = []
 	let skipped = 0
 
-	// Column indices, captured from the first non-blank row. `header: false` keeps that row in the stream so the
-	// blank-row guard below applies to it too.
+	// Column indices, captured from the first non-blank row.
+	// `header: false` keeps that row in the stream so the blank-row guard below applies to it too.
 	let cAddr = -1
 	let cCity = -1
 	let cZip = -1

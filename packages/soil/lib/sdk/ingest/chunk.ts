@@ -29,8 +29,8 @@ import { classifyDelineationCells } from "#sdk/cells"
 import type { SoilFeatureSource } from "#sdk/ingest/index"
 
 /**
- * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob: a larger transaction grows
- * the write-ahead file without improving throughput.
+ * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob:
+ * a larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
 
@@ -40,8 +40,8 @@ const INSERT_TRANSACTION_ROWS = 5000
 const PROGRESS_STRIDE = 20_000
 
 /**
- * What one chunk produced. Every field is JSON-serializable, because a chunk normally reports across a process
- * boundary.
+ * What one chunk produced. Every field is JSON-serializable, because a chunk
+ * normally reports across a process boundary.
  */
 export interface SoilChunkResult {
 	areaSymbol: string
@@ -51,7 +51,8 @@ export interface SoilChunkResult {
 	 */
 	coarsened: number
 	/**
-	 * `[coverageCell, delineationsReachingIt]` pairs — an array rather than a `Map` so it survives the process boundary.
+	 * `[coverageCell, delineationsReachingIt]` pairs — an array rather than a `Map`
+	 * so it survives the process boundary.
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
@@ -73,8 +74,9 @@ export interface IngestSoilChunkOptions {
 	indexResolution: number
 	coverageResolution: number
 	/**
-	 * The map units with no soil mapping behind them — `notcom`, `notpub`, access denied, or no readable component
-	 * weights. Passed in rather than joined here so the chunk stays a streaming pass over geometry.
+	 * The map units with no soil mapping behind them — `notcom`, `notpub`,
+	 * access denied, or no readable component weights. Passed in rather than joined here
+	 * so the chunk stays a streaming pass over geometry.
 	 */
 	noMappingMukeys: ReadonlySet<string>
 	onProgress?: (message: string) => void
@@ -83,7 +85,8 @@ export interface IngestSoilChunkOptions {
 /**
  * Stream one chunk of one survey area into `database`.
  *
- * @throws {Error} On a delineation the classifier refuses — which includes the allocator's silent zero-cell answer.
+ * @throws {Error} On a delineation the classifier refuses — which includes the
+ *   allocator's silent zero-cell answer.
  */
 export async function ingestSoilChunk(
 	database: DatabaseClient<SoilDatabase>,

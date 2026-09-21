@@ -84,9 +84,10 @@ describe("readTuples (OA CSV parse)", () => {
 
 	afterAll(() => Promise.all(dirs.map((d) => removePathIfPresent(d))))
 
-	// A tiny OA sample exercising exactly what the CSVSpliterator migration touches: a crlf terminator
-	// (the real OA files are crlf), a quoted field with an embedded comma, an empty region cell that
-	// must fall back to part.region, and a header-driven column index. rng is unused below RESERVOIR_CAP.
+	// A tiny OA sample exercising exactly what the CSVSpliterator migration touches:
+	// a crlf terminator (the real OA files are crlf), a quoted field with an embedded comma,
+	// an empty region cell that must fall back to part.region, and a header-driven
+	// column index. rng is unused below RESERVOIR_CAP.
 	const OA_HEADER = "LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH"
 
 	it("parses quoted fields, CRLF terminators, and the region fallback", async () => {

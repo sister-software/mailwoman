@@ -58,9 +58,10 @@ import {
 } from "#sdk/tag-columns"
 
 /**
- * One Overture Places row, decoded to the flat shape `buildPOIDatabase`'s injected-rows injection point consumes.
- * Structurally identical to `POISourceRow` in `mailwoman/gazetteer-pipeline/poi/build-poi.ts` — kept as a local copy
- * per this module's header docstring (dependency-direction note).
+ * One Overture Places row, decoded to the flat shape `buildPOIDatabase`'s
+ * injected-rows injection point consumes. Structurally identical to `POISourceRow`
+ * in `mailwoman/gazetteer-pipeline/poi/build-poi.ts` — kept as a local copy per
+ * this module's header docstring (dependency-direction note).
  */
 export interface POISourceRow {
 	name: string | null
@@ -74,8 +75,9 @@ export interface POISourceRow {
 }
 
 /**
- * One telecom-category match rule: `categoryID` wins when every `[key, value]` pair in `all` is present on the feature
- * (a conjunction within a rule). A disjunction across tags is expressed as multiple rules sharing a `categoryID` — see
+ * One telecom-category match rule: `categoryID` wins when every `[key, value]`
+ * pair in `all` is present on the feature (a conjunction within a rule).
+ * A disjunction across tags is expressed as multiple rules sharing a `categoryID` — see
  * {@link TELECOM_TAG_RULES}'s two `telecom_exchange` rules and two `data_center` rules.
  */
 export interface OSMPOITagRule {
@@ -91,9 +93,10 @@ export interface OSMPOITagRule {
  * - `tower_comms` ← `man_made=mast` and `tower:type=communication`
  * - `data_center` ← `man_made=data_center` or `telecom=data_center`
  *
- * Rule order only matters in that the first matching rule wins per feature; `man_made` alone appears in four rules and
- * `telecom` in two, but every rule sharing a key requires a different value for it, so a real-world feature — which
- * carries one value per key — can match at most one rule regardless of order.
+ * Rule order only matters in that the first matching rule wins per feature;
+ * `man_made` alone appears in four rules and `telecom` in two, but every rule sharing
+ * a key requires a different value for it, so a real-world feature — which carries
+ * one value per key — can match at most one rule regardless of order.
  */
 export const TELECOM_TAG_RULES: OSMPOITagRule[] = [
 	{ categoryID: "telecom_exchange", all: [["man_made", "telephone_exchange"]] },
@@ -119,8 +122,9 @@ export const TELECOM_TAG_RULES: OSMPOITagRule[] = [
 /**
  * Turn a taxonomy record's scalar `osmTag` (`amenity=pharmacy`) into a single-conjunct rule table entry.
  *
- * Hard-splits on one `=`, the same reading `poi-taxonomy/overpass.ts` gives the field, so a category extracted here and
- * the Overpass query emitted for it cannot come to disagree about what the category means.
+ * Hard-splits on one `=`, the same reading `poi-taxonomy/overpass.ts` gives the field,
+ * so a category extracted here and the Overpass query emitted for it cannot come
+ * to disagree about what the category means.
  */
 export function tagRuleFromOSMTag(categoryID: string, osmTag: string): OSMPOITagRule {
 	const parts = osmTag.split("=")
@@ -133,21 +137,23 @@ export function tagRuleFromOSMTag(categoryID: string, osmTag: string): OSMPOITag
 }
 
 /**
- * The OSM driver layers that can carry telecom infrastructure: nodes and building-ish ways/relations. Mirrors
- * `extract.ts`'s `ADDR_LAYERS`.
+ * The OSM driver layers that can carry telecom infrastructure: nodes and building-ish
+ * ways/relations. Mirrors `extract.ts`'s `ADDR_LAYERS`.
  */
 const POI_LAYERS = ["points", "multipolygons"] as const
 
 /**
- * Tag keys gdal's default `osmconf.ini` promotes to real OGR fields, PER layer — selected as bare columns rather than
- * via `hstore_get_value`. See the module docstring's "Promoted vs. hstore tag columns" note.
+ * Tag keys gdal's default `osmconf.ini` promotes to real OGR fields,
+ * PER layer — selected as bare columns rather than via `hstore_get_value`.
+ * See the module docstring's "Promoted vs. hstore tag columns" note.
  *
- * The two lists differ, and the difference is not cosmetic: a promoted key is removed from `other_tags`, so reading it
- * with `hstore_get_value` on a layer that promotes it returns NULL for every feature — a whole layer of real matches
- * reported as an empty result. Measured on the Île-de-France extract with `amenity=pharmacy` (promoted on
- * `multipolygons`, hstore on `points`): the hstore expression answered 0 on `multipolygons` where the bare column
- * answered 178, against 3,130 from `points` — 5.4% of the class silently absent, in the direction that inflates a
- * completeness estimate.
+ * The two lists differ, and the difference is not cosmetic: a promoted key is removed
+ * from `other_tags`, so reading it with `hstore_get_value` on a layer that promotes
+ * it returns NULL for every feature — a whole layer of real matches reported as
+ * an empty result. Measured on the Île-de-France extract with `amenity=pharmacy`
+ * (promoted on `multipolygons`, hstore on `points`): the hstore expression answered 0
+ * on `multipolygons` where the bare column answered 178, against 3,130 from `points` —
+ * 5.4% of the class silently absent, in the direction that inflates a completeness estimate.
  */
 const PROMOTED_KEYS_BY_LAYER: PromotedKeysByLayer = {
 	points: new Set(["name", "barrier", "highway", "ref", "address", "is_in", "place", "man_made"]),
@@ -178,23 +184,25 @@ const PROMOTED_KEYS_BY_LAYER: PromotedKeysByLayer = {
 }
 
 /**
- * The shared {@link distinctTagKeys} minus `name` — always selected separately as the row's display name, never a rule
- * predicate here.
+ * The shared {@link distinctTagKeys} minus `name` — always selected separately as
+ * the row's display name, never a rule predicate here.
  */
 function distinctPredicateKeys(rules: readonly OSMPOITagRule[]): string[] {
 	return distinctTagKeys(rules).filter((key) => key !== "name")
 }
 
 /**
- * Build the ogrsql select+where for one layer: an `or` of the rule table's and-groups over promoted-column/`other_tags`
- * tag values, projecting `name` plus every referenced key so {@link extractOSMPOIs} can re-derive the matched category
- * in JS via {@link matchOSMPOITagRule} — the belt to this predicate's suspenders. A gdal ogrsql dialect quirk could
- * only narrow, never widen, what this where matches, and the JS-side matcher re-checks the same rule table before a row
- * is ever yielded, so no false positive can slip through even if the pushdown predicate were imprecise.
+ * Build the ogrsql select+where for one layer: an `or` of the rule table's and-groups
+ * over promoted-column/`other_tags` tag values, projecting `name` plus every
+ * referenced key so {@link extractOSMPOIs} can re-derive the matched category in
+ * JS via {@link matchOSMPOITagRule} — the belt to this predicate's suspenders.
+ * A gdal ogrsql dialect quirk could only narrow, never widen, what this where matches,
+ * and the JS-side matcher re-checks the same rule table before a row is ever yielded,
+ * so no false positive can slip through even if the pushdown predicate were imprecise.
  *
- * Throws via {@link assertSafeTagRules} if `rules` contains a key/value outside the OSM tag-token allowlist — `rules`
- * is a public, caller-suppliable parameter, so this validates before any interpolation rather than trusting the
- * hardcoded default table's shape.
+ * Throws via {@link assertSafeTagRules} if `rules` contains a key/value outside the OSM
+ * tag-token allowlist — `rules` is a public, caller-suppliable parameter, so this validates
+ * before any interpolation rather than trusting the hardcoded default table's shape.
  */
 export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[] = TELECOM_TAG_RULES): string {
 	assertSafeTagRules(rules, "buildTelecomPOISQL")
@@ -214,9 +222,10 @@ export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[
 }
 
 /**
- * Pure tag-rule matcher (decision 2): the first rule whose `all` conjunction is fully satisfied by `tags` wins, `null`
- * when none match. `tags` is a plain key -> value dict (a decoded feature's promoted-column/`other_tags` values) — no
- * OGR/ogr2ogr involved, so this is unit-testable over synthetic dicts alone.
+ * Pure tag-rule matcher (decision 2): the first rule whose `all` conjunction is fully
+ * satisfied by `tags` wins, `null` when none match. `tags` is a plain key -> value dict
+ * (a decoded feature's promoted-column/`other_tags` values) — no OGR/ogr2ogr involved,
+ * so this is unit-testable over synthetic dicts alone.
  */
 export function matchOSMPOITagRule(
 	tags: Readonly<Record<string, string | undefined>>,
@@ -232,8 +241,8 @@ export function matchOSMPOITagRule(
 }
 
 /**
- * Decode one ogr2ogr GeoJSONSeq feature into a {@link POISourceRow}, or `null` when it satisfies none of `rules` (the
- * JS-side re-check) or carries no usable geometry.
+ * Decode one ogr2ogr GeoJSONSeq feature into a {@link POISourceRow}, or `null`
+ * when it satisfies none of `rules` (the JS-side re-check) or carries no usable geometry.
  */
 function toPOISourceRow(
 	feature: { properties?: Record<string, unknown>; geometry?: { type?: string; coordinates?: unknown } },
@@ -265,8 +274,8 @@ function toPOISourceRow(
 		brandWikidata: null,
 		longitude: pt[0],
 		latitude: pt[1],
-		// No feature-level country on a bare OSM extract — see the module docstring. The
-		// `--source osm` build branch stamps the invocation's `--country` onto each row.
+		// No feature-level country on a bare OSM extract — see the module docstring.
+		// The `--source osm` build branch stamps the invocation's `--country` onto each row.
 		country: "",
 		confidence: 1,
 		gersID: null,
@@ -274,8 +283,8 @@ function toPOISourceRow(
 }
 
 /**
- * Run ogr2ogr against one layer, yielding matched {@link POISourceRow}s from its GeoJSONSeq stdout. Mirrors
- * `extract.ts`'s `runLayer` process-spawn/stderr-capture/exit-code idiom exactly.
+ * Run ogr2ogr against one layer, yielding matched {@link POISourceRow}s from its GeoJSONSeq stdout.
+ * Mirrors `extract.ts`'s `runLayer` process-spawn/stderr-capture/exit-code idiom exactly.
  */
 async function* runPOILayer(
 	pbfPath: string,
@@ -299,10 +308,10 @@ async function* runPOILayer(
 }
 
 /**
- * Stream every telecom-infrastructure feature matching `rules` (default {@link TELECOM_TAG_RULES}) from a PBF extract's
- * `points` + `multipolygons` layers, geometry reduced to a representative coordinate (centroid for polygons).
- * `confidence` is fixed at `1` and `gersID`/`brandWikidata` are always `null` — OSM rows carry neither. See the module
- * docstring for the `country` caveat.
+ * Stream every telecom-infrastructure feature matching `rules` (default {@link TELECOM_TAG_RULES})
+ * from a PBF extract's `points` + `multipolygons` layers, geometry reduced to a representative
+ * coordinate (centroid for polygons). `confidence` is fixed at `1` and `gersID`/`brandWikidata`
+ * are always `null` — OSM rows carry neither. See the module docstring for the `country` caveat.
  */
 export async function* extractOSMPOIs(
 	pbfPath: string,

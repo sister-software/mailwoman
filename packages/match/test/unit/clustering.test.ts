@@ -68,8 +68,8 @@ describe("cluster", () => {
 })
 
 describe("cluster average-linkage (A4)", () => {
-	// Two dense pairs (1-2, 3-4) joined by an above-threshold bridge (2-3), with a disagreeing
-	// below-threshold edge (1-4) crossing it.
+	// Two dense pairs (1-2, 3-4) joined by an above-threshold bridge (2-3),
+	// with a disagreeing below-threshold edge (1-4) crossing it.
 	const bridged = [
 		{ a: r1, b: r2, weight: 10 },
 		{ a: r3, b: r4, weight: 10 },

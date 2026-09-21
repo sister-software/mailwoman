@@ -99,10 +99,11 @@ export interface SynthesizedBoundaryStressRow {
 }
 
 /**
- * Multi-word street names — the suffix boundary only bites when "Club" could be read as part of the name. Single-word
- * names alone teach nothing about the suffix edge. Multi-word names are what make the suffix boundary bite (the model
- * must not read the trailing suffix word as part of the name). Kept diverse so the recipe output teaches the boundary
- * rather than the lexeme.
+ * Multi-word street names — the suffix boundary only bites when "Club" could
+ * be read as part of the name. Single-word names alone teach nothing about
+ * the suffix edge. Multi-word names are what make the suffix boundary bite
+ * (the model must not read the trailing suffix word as part of the name).
+ * Kept diverse so the recipe output teaches the boundary rather than the lexeme.
  */
 const MULTIWORD_STREETS = [
 	"Country Club",
@@ -227,13 +228,14 @@ const SUFFIXES = [
 	"Walk",
 ] as const
 
-// Vocabulary compile-checked against the codex. the order stays this literal's. `Object.values(DirectionalAbbreviation)`
-// runs N,E,S,W,… — deriving the array from it would re-map every sample() draw and change shipped recipe-output bytes.
+// Vocabulary compile-checked against the codex. the order stays this literal's.
+// `Object.values(DirectionalAbbreviation)` runs N,E,S,W,… — deriving the array from it
+// would re-map every sample() draw and change shipped recipe-output bytes.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
- * FR street-type prefixes + hyphenated honorific street names (the hyphen is incidental. the boundary stress is the
- * prefix↔name split + the number-after-street order).
+ * FR street-type prefixes + hyphenated honorific street names (the hyphen is incidental.
+ * the boundary stress is the prefix↔name split + the number-after-street order).
  */
 const FR_PREFIXES = [
 	"Rue",
@@ -280,15 +282,18 @@ const FR_NAMES = [
 ] as const
 
 /**
- * Org/venue prefixes for the bare-locality shape — the v1.6.0 locality drop hit org-prefixed real rows hardest ("lisbon
- * public library, …, Lisbon ND"; "Alburg Health Center"). Teaching the locality with a leading venue keeps the model
- * emitting it on facility-style addresses (NPPES/HRSA shapes). `venue` is a base ComponentTag. #511-linted 2026-06-18
- * (scripts/lint-venue-vocab — scan of nppes/hrsa/tiger/nad/wof-admin): every token here is venue-dominant in the base,
- * so the recipe output agrees with it. The first draft was naive — 9 terms were dropped because their tokens are
- * dominantly street/locality and would contradict the base the way Madison-as-street did (#511): "Fire" 93% street,
- * "Veterans" 94% street, "City" 68% locality, "Hall" 63% street, "Memorial"/"Hospital" 62-63% street, "Recreation" 79%
- * street, "Town" 48% locality, "Library" 51% street, "County" 68% street, "Arts"/"Courthouse"/"Municipal"
- * dependent_locality. Kept tokens: Clinic 98%, Practice 98%, Dental 100%, Health 99%, Medical 88%, Community 92%,
+ * Org/venue prefixes for the bare-locality shape — the v1.6.0 locality drop hit org-prefixed
+ * real rows hardest ("lisbon public library, …, Lisbon ND"; "Alburg Health Center").
+ * Teaching the locality with a leading venue keeps the model emitting it on facility-style
+ * addresses (NPPES/HRSA shapes). `venue` is a base ComponentTag. #511-linted
+ * 2026-06-18 (scripts/lint-venue-vocab — scan of nppes/hrsa/tiger/nad/wof-admin):
+ * every token here is venue-dominant in the base, so the recipe output agrees with it.
+ * The first draft was naive — 9 terms were dropped because their tokens are dominantly
+ * street/locality and would contradict the base the way Madison-as-street did (#511):
+ * "Fire" 93% street, "Veterans" 94% street, "City" 68% locality, "Hall" 63% street,
+ * "Memorial"/"Hospital" 62-63% street, "Recreation" 79% street, "Town" 48% locality,
+ * "Library" 51% street, "County" 68% street, "Arts"/"Courthouse"/"Municipal" dependent_locality.
+ * Kept tokens: Clinic 98%, Practice 98%, Dental 100%, Health 99%, Medical 88%, Community 92%,
  * Department 90%, Group 87%, Center 65%, School 70%, Public 89%, Elementary/Family 97% (all venue).
  */
 const VENUES = [
@@ -309,10 +314,11 @@ const VENUES = [
 ] as const
 
 /**
- * Localities derived from the base corpus (#511): every name here is verified locality-dominant in the training data
- * (B-locality ≫ I-street), so the recipe output agrees with the base instead of fighting it. The night's targeted scan
- * caught the prior vocab (Madison, Portland, Springfield IL…) at 92–100% street in the base ("Madison Ave"), the "5th
- * Avenue Theatre" #511 trap. See 2026-06-17-locality-vocab-fix.
+ * Localities derived from the base corpus (#511): every name here is verified
+ * locality-dominant in the training data (B-locality ≫ I-street), so the recipe output
+ * agrees with the base instead of fighting it. The night's targeted scan caught the prior
+ * vocab (Madison, Portland, Springfield IL…) at 92–100% street in the base ("Madison Ave"),
+ * the "5th Avenue Theatre" #511 trap. See 2026-06-17-locality-vocab-fix.
  */
 const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Albuquerque", region: "NM", postcode: "87102", country: "US" },
@@ -346,11 +352,12 @@ const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 ]
 
 /**
- * FR localities derived from the FR (ban) parquet files specifically — where these famous cities are 95–99%
- * locality-dominant (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114). NB: the all-files scan falsely
- * flagged them street-dominant by undersampling the FR block (parts 180–209) and mixing in US street-contexts. the
- * FR-block scan is the honest distribution. Dept-diverse (28 depts), region empty (French addresses carry no region
- * token. the generator's region-optional path handles it).
+ * FR localities derived from the FR (ban) parquet files specifically — where these famous cities
+ * are 95–99% locality-dominant (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114).
+ * NB: the all-files scan falsely flagged them street-dominant by undersampling
+ * the FR block (parts 180–209) and mixing in US street-contexts. the FR-block
+ * scan is the honest distribution. Dept-diverse (28 depts), region empty
+ * (French addresses carry no region token. the generator's region-optional path handles it).
  */
 const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Paris", region: "", postcode: "75003", country: "FR" },
@@ -373,9 +380,10 @@ const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Rambouillet", region: "", postcode: "78120", country: "FR" },
 ]
 
-// NB: no DE_TUPLES — German cities are street-dominated too ("Berliner Straße"), and the base yielded
-// zero locality-dominant DE towns in the scan, so house-number-after-street is FR-only here. DE's
-// native-order number-after-street is covered by the dedicated `german` recipe (source `synth-german`).
+// NB: no DE_TUPLES — German cities are street-dominated too ("Berliner Straße"),
+// and the base yielded zero locality-dominant DE towns in the scan,
+// so house-number-after-street is FR-only here. DE's native-order number-after-street
+// is covered by the dedicated `german` recipe (source `synth-german`).
 const houseNumber = (random: () => number): string => String(1 + Math.floor(random() * 4999))
 const localeFor: Record<string, string> = { US: "en-US", FR: "fr-FR", DE: "de-DE" }
 
@@ -389,9 +397,10 @@ const ALL_TEMPLATES: readonly BoundaryStressTemplate[] = [
 ]
 
 /**
- * Synthesize one boundary-stress row. `base` is optional — when omitted, a locale-appropriate tuple is drawn from the
- * internal pools (so the generator is self-contained. a build script can pass real tuples for scale + diversity). Every
- * component value is a verbatim substring of `raw`, so `alignRow` locates + BIO-labels it.
+ * Synthesize one boundary-stress row. `base` is optional — when omitted,
+ * a locale-appropriate tuple is drawn from the internal pools
+ * (so the generator is self-contained. a build script can pass real tuples for scale + diversity).
+ * Every component value is a verbatim substring of `raw`, so `alignRow` locates + BIO-labels it.
  */
 export function synthesizeBoundaryStressRow(
 	base: BoundaryStressBaseTuple | undefined,
@@ -401,15 +410,17 @@ export function synthesizeBoundaryStressRow(
 	const template = opts.forceTemplate ?? sample(ALL_TEMPLATES, random)
 
 	if (template === "bare-locality") {
-		// The v1.6.0 ship-blocker fix: locality was dropped on bare/short "City, state" rows (84% of the
-		// regression) because every prior shape placed a street before the city, so the model learned "the
-		// city follows a street" and stopped emitting locality without one. Teach the locality with no street,
-		// across the forms real data carries it — bare, comma-less, postcode'd, and venue/org-prefixed.
+		// The v1.6.0 ship-blocker fix: locality was dropped on bare/short "City, state" rows
+		// (84% of the regression) because every prior shape placed a street before the city,
+		// so the model learned "the city follows a street" and stopped emitting locality without one.
+		// Teach the locality with no street, across the forms real data carries it —
+		// bare, comma-less, postcode'd, and venue/org-prefixed.
 		const b = base ?? (random() < 0.3 ? sample(FR_TUPLES, random) : sample(US_TUPLES, random))
 		const venue = random() < 0.45 ? sample(VENUES, random) : ""
-		// ~12% carry a trailing country token — the v1.7.1 country patch (DeepSeek 2026-06-18). The pure
-		// "City, state" bare rows carry no country token, which cost ~4pp on us.country_homograph in v1.7.0.
-		// teaching "…, USA"/"…, France" recovers it as a single-variable additive without diluting locality.
+		// ~12% carry a trailing country token — the v1.7.1 country patch (DeepSeek 2026-06-18).
+		// The pure "City, state" bare rows carry no country token, which cost ~4pp on
+		// us.country_homograph in v1.7.0. teaching "…, USA"/"…, France" recovers it as
+		// a single-variable additive without diluting locality.
 		const withCountry = random() < 0.12
 
 		if (b.country === "FR") {
@@ -431,8 +442,9 @@ export function synthesizeBoundaryStressRow(
 
 		const withZip = random() < 0.5
 		const comma = random() < 0.6 ? "," : "" // include the comma-less "City STATE" form too
-		// "United States" (United 98% / States 98% country in the base) rather than "USA" — the #511 lint found
-		// "USA" is locality-dominant (75%, only 6% country) in the base. labeling it country would contradict.
+		// "United States" (United 98% / States 98% country in the base) rather than "USA" —
+		// the #511 lint found "USA" is locality-dominant (75%, only 6% country) in
+		// the base. labeling it country would contradict.
 		const countryName = "United States"
 		const core = `${b.locality}${comma} ${b.region}${withZip ? ` ${b.postcode}` : ""}${withCountry ? `, ${countryName}` : ""}`
 
@@ -461,9 +473,11 @@ export function synthesizeBoundaryStressRow(
 		const hn = houseNumber(random)
 
 		if (template === "house-number-before-street") {
-			// The confounding mirror of house-number-after-street: the same FR street vocab with the number
-			// before the name. A balanced before:after mix (the build/recipe sets the ratio, ~7:3 to keep US
-			// house_number 99.8% safe) teaches the model a street-adjacent number is a house_number by form rather than position — the probe found v1.6.0 confidently absorbs the trailing number into street (I-street
+			// The confounding mirror of house-number-after-street: the same FR street
+			// vocab with the number before the name. A balanced before:after mix
+			// (the build/recipe sets the ratio, ~7:3 to keep US house_number 99.8% safe) teaches
+			// the model a street-adjacent number is a house_number by form rather than position —
+			// the probe found v1.6.0 confidently absorbs the trailing number into street (I-street
 			// P=0.96), the order-bias.
 			const raw = `${hn} ${name}, ${b.postcode} ${b.locality}`
 
@@ -505,8 +519,9 @@ export function synthesizeBoundaryStressRow(
 		}
 	}
 
-	// en-US street shapes (street-eats-affix + comma-less). US-only — US zips are base-consistent and
-	// the boundary these teach is locale-agnostic. no need to introduce a non-base locale.
+	// en-US street shapes (street-eats-affix + comma-less).
+	// US-only — US zips are base-consistent and the boundary these teach is
+	// locale-agnostic. no need to introduce a non-base locale.
 	const b = base ?? sample(US_TUPLES, random)
 	const hn = houseNumber(random)
 	const dir = random() < 0.4 ? sample(DIRECTIONALS, random) : ""

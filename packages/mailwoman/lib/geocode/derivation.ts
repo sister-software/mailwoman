@@ -12,8 +12,8 @@ import type { ResolveNodeTrace, ResolveOpts } from "@mailwoman/core/resolver"
 import { type DerivationNode, type DerivationProjection, observation, projectDerivation } from "@mailwoman/evidence"
 
 /**
- * The source name the trace's observations carry. The trace does not record the gazetteer extract's vintage, so the
- * observation carries `null` there. the answer's provenance names the artifact.
+ * The source name the trace's observations carry. The trace does not record the gazetteer extract's
+ * vintage, so the observation carries `null` there. the answer's provenance names the artifact.
  */
 export const TRACE_SOURCE = "gazetteer"
 
@@ -52,8 +52,8 @@ export interface TraceCollector {
 	 */
 	traceSink: ResolveOpts["traceSink"]
 	/**
-	 * Attach the projected derivation to a finished result when a sink was supplied. otherwise return the result
-	 * unchanged, without a field. The one branch lives here so the geocode core carries none.
+	 * Attach the projected derivation to a finished result when a sink was supplied. otherwise return
+	 * the result unchanged, without a field. The one branch lives here so the geocode core carries none.
 	 */
 	attach<T extends { epistemic_status: DerivationProjection["status"]; uncertainty_m: number | null }>(
 		result: T
@@ -61,9 +61,9 @@ export interface TraceCollector {
 }
 
 /**
- * Wrap a caller's trace sink so the same records also feed the derivation projection. No sink means no wrapper, no
- * records and no `derivation` field: the walk does zero bookkeeping and stays byte-identical, and the opt-in cost is
- * never made unconditional here.
+ * Wrap a caller's trace sink so the same records also feed the derivation projection.
+ * No sink means no wrapper, no records and no `derivation` field: the walk does zero bookkeeping
+ * and stays byte-identical, and the opt-in cost is never made unconditional here.
  */
 export function traceCollector(callerSink: ResolveOpts["traceSink"]): TraceCollector {
 	const records: ResolveNodeTrace[] = []

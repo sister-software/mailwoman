@@ -92,8 +92,8 @@ describe("parseCORESRegistration — abstention", () => {
 	})
 
 	it("REFUSES a page whose own FRN row disagrees with the FRN requested", async () => {
-		// The false-identity-link guard: a redirect or a mis-served cache entry would otherwise be
-		// attributed to the FRN that was asked for.
+		// The false-identity-link guard: a redirect or a mis-served cache entry would
+		// otherwise be attributed to the FRN that was asked for.
 		const otherFRN = toFRN("0009999999")!
 
 		expect(parseCORESRegistration(otherFRN, await fixture("frn-0001753557-knology-wow.html"))).toBeNull()

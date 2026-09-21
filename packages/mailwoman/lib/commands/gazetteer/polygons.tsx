@@ -93,8 +93,9 @@ interface RawGeometry {
 /**
  * Where a country's admin record sits under a repositories root.
  *
- * `--repos` defaults to the owner directory (`<data-root>/wof/repos/whosonfirst-data`), so the repository name is
- * appended flat to whatever root the caller gave. The id-to-path rule itself belongs to `wofIDPathSegments`.
+ * `--repos` defaults to the owner directory (`<data-root>/wof/repos/whosonfirst-data`),
+ * so the repository name is appended flat to whatever root the caller gave.
+ * The id-to-path rule itself belongs to `wofIDPathSegments`.
  */
 function geojsonPath(repos: string, country: string, id: number): string {
 	return resolvePath(repos, wofRepoName("admin", country), "data", ...wofIDPathSegments(id)).toString()
@@ -155,7 +156,8 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 }
 
 /**
- * Simplify a Polygon / MultiPolygon geometry. drop rings that collapse. Returns null if nothing left.
+ * Simplify a Polygon / MultiPolygon geometry. drop rings that collapse.
+ * Returns null if nothing left.
  */
 function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 	const ringSet = (poly: LinearRing[]): LinearRing[] =>
@@ -213,9 +215,9 @@ const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 			...(countries ?? [])
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
 
-		// Build to a temp sibling, then atomically swap into place (scripts/agents.md: a DB is a
-		// readonly artifact — never write the live path in case the build dies halfway). The
-		// original .mjs wrote `out` directly. this hardens it without changing the result.
+		// Build to a temp sibling, then atomically swap into place (scripts/agents.md:
+		// a DB is a readonly artifact — never write the live path in case the build dies halfway).
+		// The original .mjs wrote `out` directly. this hardens it without changing the result.
 		const tmpOut = `${out}.tmp-${process.pid}`
 
 		for (const stale of [tmpOut, `${tmpOut}-wal`, `${tmpOut}-shm`, `${tmpOut}-journal`]) {

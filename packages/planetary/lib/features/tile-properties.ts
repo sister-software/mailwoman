@@ -13,8 +13,9 @@ import { PlanetaryNomenclatureFeatureSchema } from "@mailwoman/astrogeology/sche
 import type { SelectedFeature } from "#features/selected"
 
 /**
- * The fields a selection carries, as the pipeline defines them. The tile carries the center as geometry rather than as
- * a property, so the caller passes the coordinates it read from the feature's geometry.
+ * The fields a selection carries, as the pipeline defines them.
+ * The tile carries the center as geometry rather than as a property, so the caller
+ * passes the coordinates it read from the feature's geometry.
  */
 const SelectedFeatureSchema = PlanetaryNomenclatureFeatureSchema.pick({
 	id: true,

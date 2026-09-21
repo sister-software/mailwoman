@@ -9,8 +9,8 @@ import { H1_OCCUPIED, H1_TOTAL, H1_VACANT, parseH1, SEG2_FIELD_COUNT } from "@ma
 import { describe, expect, it } from "vitest"
 
 /**
- * A segment-2 row with the published California 2020 state figures in the H1 slots: `ca000022020.pl` has 152 fields and
- * its state row ends 14,392,140 / 13,475,623 / 916,517.
+ * A segment-2 row with the published California 2020 state figures in the H1 slots:
+ * `ca000022020.pl` has 152 fields and its state row ends 14,392,140 / 13,475,623 / 916,517.
  */
 function californiaStateRow(): string[] {
 	const fields = new Array<string>(SEG2_FIELD_COUNT).fill("0")

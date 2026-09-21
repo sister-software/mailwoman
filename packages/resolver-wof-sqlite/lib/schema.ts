@@ -18,8 +18,8 @@
 /**
  * The FTS5 virtual table built by this package on first open (not shipped by upstream WOF).
  *
- * `content` is unindexed — it's there so we can roundtrip the original name back to the caller without a second select.
- * The actual FTS rebuild happens in `fts.ts::buildPlaceSearchFTS`.
+ * `content` is unindexed — it's there so we can roundtrip the original name back to the caller
+ * without a second select. The actual FTS rebuild happens in `fts.ts::buildPlaceSearchFTS`.
  */
 export interface PlaceSearchTable {
 	rowid: number
@@ -29,16 +29,17 @@ export interface PlaceSearchTable {
 }
 
 /**
- * `spr` — the Who's On First "Standard Places Response": a denormalized lightweight summary of one row per place. The
- * resolver's main lookup table.
+ * `spr` — the Who's On First "Standard Places Response": a denormalized lightweight
+ * summary of one row per place. The resolver's main lookup table.
  *
- * Lifecycle flags carry two conventions, both meaning "currently valid": `is_current = -1` (modern Who's On First) and
- * `is_current = 1` (legacy Mapzen-era). Only `is_current = 0` means "not current". Filters in `lookup.ts` and `fts.ts`
- * use `is_current != 0 and is_deprecated = 0` — see #91 for the diagnostic that uncovered the mixed-convention
- * reality.
+ * Lifecycle flags carry two conventions, both meaning "currently valid":
+ * `is_current = -1` (modern Who's On First) and `is_current = 1` (legacy Mapzen-era).
+ * Only `is_current = 0` means "not current". Filters in `lookup.ts` and `fts.ts`
+ * use `is_current != 0 and is_deprecated = 0` — see #91 for the diagnostic that
+ * uncovered the mixed-convention reality.
  *
- * Lat/lon live directly on this row — no GeoJSON extraction needed for centroid resolution. `min_*` / `max_*` form a
- * bounding box if callers want one (Phase 4.3 candidate).
+ * Lat/lon live directly on this row — no GeoJSON extraction needed for centroid resolution.
+ * `min_*` / `max_*` form a bounding box if callers want one (Phase 4.3 candidate).
  */
 export interface SprTable {
 	id: number
@@ -63,15 +64,15 @@ export interface SprTable {
 }
 
 /**
- * Alternate names per place, keyed by language tag subfields (BCP-47 components). Joins back to `spr.id` via `id` (not
- * `place_id` — the real WOF schema uses the same column name as the spr primary key. this is a normal join across two
- * tables with the same FK column name).
+ * Alternate names per place, keyed by language tag subfields (BCP-47 components).
+ * Joins back to `spr.id` via `id` (not `place_id` — the real WOF schema uses the same column name
+ * as the spr primary key. this is a normal join across two tables with the same FK column name).
  *
  * No `kind` column in real WOF — the FTS build just concatenates all names per id.
  *
- * `official` (#936 ingest bit, our unified builds only. absent in real WOF dumps) marks a preferred-form name in an
- * official language of the place's country — the aliases eligible to join the name-exact tier under the option-3 rule.
- * See `unified-schema.ts` for the full interface.
+ * `official` (#936 ingest bit, our unified builds only. absent in real WOF dumps) marks a
+ * preferred-form name in an official language of the place's country — the aliases eligible to join
+ * the name-exact tier under the option-3 rule. See `unified-schema.ts` for the full interface.
  */
 export interface NamesTable {
 	id: number
@@ -90,8 +91,9 @@ export interface NamesTable {
 }
 
 /**
- * Per-place GeoJSON blob. Centroid lat/lon are already exposed via `spr.{latitude,longitude}` so the resolver doesn't
- * need to parse this. we keep the table modeled in case Phase 4.3 wants the full geometry for bbox / polygon work.
+ * Per-place GeoJSON blob. Centroid lat/lon are already exposed via `spr.{latitude,longitude}`
+ * so the resolver doesn't need to parse this. we keep the table modeled in case
+ * Phase 4.3 wants the full geometry for bbox / polygon work.
  */
 export interface GeojsonTable {
 	id: number
@@ -103,8 +105,8 @@ export interface GeojsonTable {
 }
 
 /**
- * Adjacency table for ancestor relationships. One row per (place, ancestor) pair, including transitive ancestors. Used
- * to implement `FindPlaceQuery.parentID` (descendant lookup).
+ * Adjacency table for ancestor relationships. One row per (place, ancestor) pair, including
+ * transitive ancestors. Used to implement `FindPlaceQuery.parentID` (descendant lookup).
  */
 export interface AncestorsTable {
 	id: number
@@ -114,9 +116,10 @@ export interface AncestorsTable {
 }
 
 /**
- * `place_population` — `id → wof:population`, split off `spr` so a population-rank join is a single indexed probe.
- * Written by the build/augment ingest + the GeoNames backfill. read by the candidate build's `neg_rank`. WOF carries
- * population for ~15% of localities. absent = unknown rather than zero.
+ * `place_population` — `id → wof:population`, split off `spr` so a population-rank
+ * join is a single indexed probe. Written by the build/augment ingest + the GeoNames
+ * backfill. read by the candidate build's `neg_rank`. WOF carries population for
+ * ~15% of localities. absent = unknown rather than zero.
  */
 export interface PlacePopulationTable {
 	id: number
@@ -124,8 +127,8 @@ export interface PlacePopulationTable {
 }
 
 /**
- * `place_abbr` — `id → abbreviation` (e.g. `IL → Illinois`), derived from `names` rows whose `language = 'abbr'`. Lets
- * the resolver accept a 2-letter region abbreviation as an exact match.
+ * `place_abbr` — `id → abbreviation` (e.g. `IL → Illinois`), derived from `names` rows whose
+ * `language = 'abbr'`. Lets the resolver accept a 2-letter region abbreviation as an exact match.
  */
 export interface PlaceAbbrTable {
 	id: number
@@ -133,8 +136,8 @@ export interface PlaceAbbrTable {
 }
 
 /**
- * `concordances` — external-id cross-references per place (`id → (other_source, other_id)`), e.g. a GeoNames or
- * Overture gers id. Metadata only. not part of the resolve path.
+ * `concordances` — external-id cross-references per place (`id → (other_source, other_id)`),
+ * e.g. a GeoNames or Overture gers id. Metadata only. not part of the resolve path.
  */
 export interface ConcordancesTable {
 	id: number
@@ -144,8 +147,9 @@ export interface ConcordancesTable {
 }
 
 /**
- * `coincident_roles` (#402) — the dual-role relation: a place that is both an admin region and a locality (Berlin the
- * city-state). One row per (admin, locality) pair the resolver can complete a hierarchy with. Surfaced by
+ * `coincident_roles` (#402) — the dual-role relation: a place that is both an admin region
+ * and a locality (Berlin the city-state). One row per (admin, locality) pair the
+ * resolver can complete a hierarchy with. Surfaced by
  * {@link MailwomanLookupLike.coincidentRolesFor}.
  */
 export interface CoincidentRolesTable {
@@ -158,14 +162,15 @@ export interface CoincidentRolesTable {
 }
 
 /**
- * The full schema we hand to `Kysely<WOFDatabase>` / `new DatabaseClient<WOFDatabase>(...)`. Tables not listed here
- * will fail type-checked queries — by design. The reader ({@link WOFSQLitePlaceLookup}) already consumes this. the
- * build/augment writers adopt it so a column rename is a compile error on both sides (the drift that bit the corpus
- * tiger adapter).
+ * The full schema we hand to `Kysely<WOFDatabase>` / `new DatabaseClient<WOFDatabase>(...)`.
+ * Tables not listed here will fail type-checked queries — by design.
+ * The reader ({@link WOFSQLitePlaceLookup}) already consumes this. the build/augment writers adopt it
+ * so a column rename is a compile error on both sides (the drift that bit the corpus tiger adapter).
  */
 /**
- * The provenance row every built extract carries: source fingerprints travelling with the database rather than in a
- * document that can drift from it. Written by the postcode builders in `mailwoman/gazetteer-pipeline`.
+ * The provenance row every built extract carries: source fingerprints travelling
+ * with the database rather than in a document that can drift from it.
+ * Written by the postcode builders in `mailwoman/gazetteer-pipeline`.
  */
 export interface ExtractMetaTable {
 	key: string

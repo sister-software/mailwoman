@@ -41,8 +41,9 @@ describe("optionPropertyName", () => {
 		expect(scriptingUtils.optionPropertyName(flag)).toBe(property)
 	})
 
-	// An acronym segment the derivation does not know title-cases instead, and the flag then fills a property no
-	// command declares: it parses, it validates, and it does nothing. Each row below is a flag a command ships.
+	// An acronym segment the derivation does not know title-cases instead, and the flag
+	// then fills a property no command declares: it parses, it validates, and it does nothing.
+	// Each row below is a flag a command ships.
 	it.each([
 		["out-json", "outJSON"],
 		["errors-json", "errorsJSON"],

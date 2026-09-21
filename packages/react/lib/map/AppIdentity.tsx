@@ -23,8 +23,8 @@ import type { ReactNode } from "react"
 import { useBuildInfo } from "#common/useBuildInfo"
 
 /**
- * How much of the revision the link shows. Long enough to be unambiguous in this repository, short enough to sit in a
- * one-line strip beside the name and the credits.
+ * How much of the revision the link shows. Long enough to be unambiguous in this repository,
+ * short enough to sit in a one-line strip beside the name and the credits.
  */
 const DISPLAYED_LENGTH = 6
 
@@ -46,11 +46,12 @@ export interface AppIdentityProps {
 	 */
 	buildInfoURL?: string
 	/**
-	 * Build the href for a commit. injected rather than written here: the repository's URL belongs to the deployment, and
-	 * `@mailwoman/react` publishes to npm while `@mailwoman/site-kit` — which owns `commitURL` beside the record that
-	 * carries the sha — is private, so this package cannot import it. `commitURL` takes the sha for this reason: every
-	 * caller passes it directly, so no app writes an adapter and the URL keeps a single home. Without this prop the
-	 * revision renders as text rather than a link.
+	 * Build the href for a commit. injected rather than written here: the repository's URL belongs
+	 * to the deployment, and `@mailwoman/react` publishes to npm while `@mailwoman/site-kit` —
+	 * which owns `commitURL` beside the record that carries the sha — is private,
+	 * so this package cannot import it. `commitURL` takes the sha for this reason: every
+	 * caller passes it directly, so no app writes an adapter and the URL keeps a single home.
+	 * Without this prop the revision renders as text rather than a link.
 	 */
 	commitHref?: (commit: string) => string
 }

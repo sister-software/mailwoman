@@ -91,9 +91,10 @@ async function parse(): Promise<BuildArgs> {
 }
 
 /**
- * Enumerate the per-département BAN dumps in `csvDir`, keyed by département code. Excludes the `merged` / `france`
- * aggregates (they duplicate the per-département rows), and prefers an uncompressed `.csv` over a `.csv.gz` when both
- * exist (the same dept, faster read). When `depts` is set, restricts to that list (for a fast validation build).
+ * Enumerate the per-département BAN dumps in `csvDir`, keyed by département code.
+ * Excludes the `merged` / `france` aggregates (they duplicate the per-département rows),
+ * and prefers an uncompressed `.csv` over a `.csv.gz` when both exist (the same dept, faster read).
+ * When `depts` is set, restricts to that list (for a fast validation build).
  */
 async function departementFiles(csvDir: string, depts: string[] | null): Promise<Map<string, string>> {
 	const byDept = new Map<string, string>()
@@ -172,8 +173,8 @@ async function main(): Promise<void> {
 				// Fold `rep` into the house-number key: "8" + "bis" → "8 bis" (matches a parsed "8 bis Rue X").
 				const number = rec.rep ? `${numTrim} ${rec.rep}` : numTrim
 
-				// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number, unit, postcode,
-				// locality_norm, street_raw, lat, lon, source, release.
+				// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number,
+				// unit, postcode, locality_norm, street_raw, lat, lon, source, release.
 				insert.run(
 					streetNorm,
 					canonicalizeRouteKey(streetNorm),
@@ -222,8 +223,9 @@ async function main(): Promise<void> {
 	const md5 = await md5File(args.output)
 	const bytes = (await statPath(args.output)).size
 
-	// Provenance manifest — additive, written at creation (house discipline). Only for a full national build
-	// (the fast --depts validation builds are transient and don't rewrite the record).
+	// Provenance manifest — additive, written at creation (house discipline).
+	// Only for a full national build (the fast --depts validation builds are transient
+	// and don't rewrite the record).
 	if (!args.depts) {
 		const attributionPath = dataRootPath("ban", "ATTRIBUTION.json")
 

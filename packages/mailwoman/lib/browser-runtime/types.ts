@@ -26,13 +26,14 @@ export interface FSTMatcherLike {
 		wofID: number
 		placetype: string
 		/**
-		 * The referential likelihood (population-anchored) the decoder bias reads — see ROAD_TO_V9 §2. Was `importance`
-		 * through FST format v4, where the same float could be either score with nothing to say which.
+		 * The referential likelihood (population-anchored) the decoder bias reads —
+		 * see ROAD_TO_V9 §2. Was `importance` through FST format v4, where the same
+		 * float could be either score with nothing to say which.
 		 */
 		referential: number
 		/**
-		 * Encyclopedic (Wikipedia) importance, when the artifact is v5+ and this place has an article. Displayed, never
-		 * ranked on; `undefined` is absence rather than 0.
+		 * Encyclopedic (Wikipedia) importance, when the artifact is v5+ and this place has an article.
+		 * Displayed, never ranked on; `undefined` is absence rather than 0.
 		 */
 		encyclopedic?: number
 	}>
@@ -43,8 +44,8 @@ export interface FSTMatcherLike {
 export interface MailwomanClassifierLike {
 	parse: (text: string, opts?: { queryShape?: unknown; fst?: FSTMatcherLike }) => Promise<unknown>
 	/**
-	 * Decode-path introspection (spec 2026-07-03). Optional: deployed bundles built before the `traceParse` hook lack it
-	 * — feature-detect before calling.
+	 * Decode-path introspection (spec 2026-07-03). Optional: deployed bundles built
+	 * before the `traceParse` hook lack it — feature-detect before calling.
 	 */
 	traceParse?: (text: string, opts?: { addressSystemConventions?: "auto" }) => Promise<ParseTraceLike>
 }
@@ -87,7 +88,8 @@ export interface ParseTraceLike {
 	logits: number[][]
 	localeLogits?: number[]
 	/**
-	 * The locale-head axis (country code per `localeLogits` index) — self-describing, never hardcode the order.
+	 * The locale-head axis (country code per `localeLogits` index) — self-describing,
+	 * never hardcode the order.
 	 */
 	localeCountries?: string[]
 	detectedSystem: string | null
@@ -102,12 +104,14 @@ export interface ParseTraceLike {
 }
 
 /**
- * How a release loader reports progress to its host while assets arrive. `@mailwoman/react`'s `AssetsLoadContext`
- * satisfies it structurally. a host without a UI passes no-op setters.
+ * How a release loader reports progress to its host while assets arrive.
+ * `@mailwoman/react`'s `AssetsLoadContext` satisfies it structurally. a host
+ * without a UI passes no-op setters.
  */
 export interface AssetLoadProgress {
 	/**
-	 * Aborts when this load is superseded or the host goes away. the loader stops handing back a lookup once it fires.
+	 * Aborts when this load is superseded or the host goes away. the loader stops
+	 * handing back a lookup once it fires.
 	 */
 	signal: AbortSignal
 	/**
@@ -119,11 +123,11 @@ export interface AssetLoadProgress {
 	setStepIndex: (index: number) => void
 	setBackend: (backend: string) => void
 	/**
-	 * Bytes received over bytes expected for the artifact downloading right now, in [0, 1]; `null` once nothing is in
-	 * flight. Optional so a host that predates it still satisfies this interface.
+	 * Bytes received over bytes expected for the artifact downloading right now, in [0, 1]; `null`
+	 * once nothing is in flight. Optional so a host that predates it still satisfies this interface.
 	 *
-	 * The step index cannot report the model: it is fetched before the first step is entered, so a step-derived bar holds
-	 * one value for the whole of a 38 MB transfer.
+	 * The step index cannot report the model: it is fetched before the first step is entered,
+	 * so a step-derived bar holds one value for the whole of a 38 MB transfer.
 	 */
 	setByteFraction?: (fraction: number | null) => void
 }

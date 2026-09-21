@@ -65,9 +65,9 @@ export interface AbsenceProbeRow {
 	locale?: string
 	expectedOutcome: AbsenceExpectedOutcome
 	/**
-	 * Whether this row needs the semantic phrase route injected to reach a category at all. An activity-phrased row
-	 * without it never forms a POI intent, which would read as the absence route staying silent when in fact the query
-	 * never reached it.
+	 * Whether this row needs the semantic phrase route injected to reach a category at all.
+	 * An activity-phrased row without it never forms a POI intent, which would read as
+	 * the absence route staying silent when in fact the query never reached it.
 	 */
 	requiresSemanticRoute: boolean
 	/**
@@ -79,7 +79,8 @@ export interface AbsenceProbeRow {
 	 */
 	searchedCategories?: string[]
 	/**
-	 * How the anchor was derived — the cell first, the place second. Stated per row so a reader can re-derive it.
+	 * How the anchor was derived — the cell first, the place second.
+	 * Stated per row so a reader can re-derive it.
 	 */
 	anchorDerivation: string
 	/**
@@ -106,8 +107,8 @@ export interface AbsenceProbeDefinition {
 	rows: AbsenceProbeRow[]
 	rowsNote: string
 	/**
-	 * How many registered rows must hit their registered outcome. Equal to the row count: this probe asserts a
-	 * conjunction, and a conjunction with a tolerance is not one.
+	 * How many registered rows must hit their registered outcome.
+	 * Equal to the row count: this probe asserts a conjunction, and a conjunction with a tolerance is not one.
 	 */
 	requiredRowHolds: number
 	decisionRule: string[]
@@ -143,8 +144,9 @@ export function absenceProbeDefinitionHash(definition: AbsenceProbeDefinition): 
 }
 
 /**
- * Everything that must be true of a definition, checked without running anything. One message per problem, each naming
- * the field or row id. Empty means the definition is executable.
+ * Everything that must be true of a definition, checked without running anything.
+ * One message per problem, each naming the field or row id.
+ * Empty means the definition is executable.
  */
 export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition): string[] {
 	const problems: string[] = []
@@ -215,8 +217,9 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 /**
  * Load the frozen pre-registration, refusing anything that would let the ruler move.
  *
- * Three refusals, in order: the freeze record must name this definition and version, the definition's content hash must
- * equal the frozen hash, and the audit must be clean. A caller never receives a definition it may only partly trust.
+ * Three refusals, in order: the freeze record must name this definition and version,
+ * the definition's content hash must equal the frozen hash, and the audit must be clean.
+ * A caller never receives a definition it may only partly trust.
  */
 export async function loadAbsenceProbeDefinition(
 	definitionPath: string = ABSENCE_PROBE_DEFINITION_PATH,
@@ -241,27 +244,29 @@ export interface AbsenceRowOutcome {
 	expectedOutcome: AbsenceExpectedOutcome
 	observedOutcome: AbsenceExpectedOutcome
 	/**
-	 * The registered outcome was observed and, when the row registers a `searchedCategories`, the POI branch searched
-	 * exactly that set.
+	 * The registered outcome was observed and, when the row registers a `searchedCategories`,
+	 * the POI branch searched exactly that set.
 	 */
 	holds: boolean
 	/**
-	 * The category set the POI branch searched, in code-point order — present whenever the branch formed a category
-	 * intent, registered or not, so a receipt shows what the binding produced on every row.
+	 * The category set the POI branch searched, in code-point order — present whenever the branch formed
+	 * a category intent, registered or not, so a receipt shows what the binding produced on every row.
 	 */
 	searchedCategories?: string[]
 	/**
-	 * Named when the row registers a searched set and the observed one differs. The outcome may still match — a route
-	 * that fired over a set nobody registered is exactly the breach this field exists to name.
+	 * Named when the row registers a searched set and the observed one differs.
+	 * The outcome may still match — a route that fired over a set nobody registered
+	 * is exactly the breach this field exists to name.
 	 */
 	searchedSetBreach?: string
 	/**
-	 * The observation the row produced, when it produced one. Absent — the key omitted — on a silent row.
+	 * The observation the row produced, when it produced one.
+	 * Absent — the key omitted — on a silent row.
 	 */
 	observationLine?: string
 	/**
-	 * Whether the POI branch answered at all, and with what — carried so a silent row can be told apart from a row whose
-	 * query never reached the POI branch.
+	 * Whether the POI branch answered at all, and with what — carried so a silent row
+	 * can be told apart from a row whose query never reached the POI branch.
 	 */
 	poiOutcome: "none" | "abstain" | "intent"
 	abstainReason?: string
@@ -280,8 +285,8 @@ export interface AbsenceCounts {
 /**
  * Count one run.
  *
- * The denominators are the registered row counts, never the rows that happened to answer, so a probe that stops being
- * able to read a row reports a lower hold count rather than a smaller board.
+ * The denominators are the registered row counts, never the rows that happened to answer, so a probe
+ * that stops being able to read a row reports a lower hold count rather than a smaller board.
  */
 export function computeAbsenceCounts(
 	definition: AbsenceProbeDefinition,
@@ -304,8 +309,9 @@ export function computeAbsenceCounts(
 }
 
 /**
- * The two decisions this probe admits. There is no middle: the asymmetry either holds over every registered row or it
- * does not, and a partial asymmetry is a route that fires somewhere nobody registered.
+ * The two decisions this probe admits. There is no middle: the asymmetry either
+ * holds over every registered row or it does not, and a partial asymmetry is a
+ * route that fires somewhere nobody registered.
  */
 export const ABSENCE_DECISIONS = ["HOLDS", "BREACHED"] as const
 

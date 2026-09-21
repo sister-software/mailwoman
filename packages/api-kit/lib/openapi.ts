@@ -16,9 +16,11 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 type OpenAPISecurityRequirements = Parameters<OpenAPIHono["getOpenAPI31Document"]>[0]["security"]
 
 /**
- * The document config stamped into emitted documents: `title`/`version`/`description`/`summary`/`license`/`contact`
- * land under the document's `info` block; `externalDocs`/`servers`/`tags`/`security` are top-level document fields. All
- * fields beyond `title`/`version` are optional — existing callers that only pass those two are unaffected.
+ * The document config stamped into emitted documents:
+ * `title`/`version`/`description`/`summary`/`license`/`contact` land under
+ * the document's `info` block; `externalDocs`/`servers`/`tags`/`security` are
+ * top-level document fields. All fields beyond `title`/`version` are optional —
+ * existing callers that only pass those two are unaffected.
  */
 export interface OpenAPIDocInfo {
 	title: string
@@ -38,16 +40,18 @@ export interface OpenAPIDocInfo {
 }
 
 /**
- * The three document fields a served package takes from its own manifest, read at load rather than imported as a
- * module: a JSON import makes `tsc` copy the manifest into `out/`, where it becomes the package scope for the compiled
- * tree and breaks every `#` import in it.
+ * The three document fields a served package takes from its own manifest, read at load
+ * rather than imported as a module: a JSON import makes `tsc` copy the manifest into `out/`,
+ * where it becomes the package scope for the compiled tree and breaks every `#` import in it.
  *
- * Each of the four served packages (`api`, `libpostal`, `nominatim`, `photon`) publishes a document naming itself, so
- * the read and the mapping live here rather than four times over. A manifest missing any of the three raises: the
- * document has no meaningful form without them, and every manifest here carries all three.
+ * Each of the four served packages (`api`, `libpostal`, `nominatim`, `photon`) publishes a
+ * document naming itself, so the read and the mapping live here rather than four times over.
+ * A manifest missing any of the three raises: the document has no meaningful form
+ * without them, and every manifest here carries all three.
  *
- * @param base The caller's `import.meta.url`. The package resolves through the graph of the workspace that declares it,
- *   which is what `resolve-from` exists for. resolving from here would answer through `@mailwoman/api-kit`'s instead.
+ * @param base The caller's `import.meta.url`. The package resolves through the graph of
+ *   the workspace that declares it, which is what `resolve-from` exists for. resolving
+ *   from here would answer through `@mailwoman/api-kit`'s instead.
  */
 export async function readServedDocumentInfo(
 	base: string,
@@ -108,13 +112,14 @@ export function emitOpenAPIDocuments(app: OpenAPIHono, info: OpenAPIDocInfo): { 
 }
 
 /**
- * The shared body of every surface's `openapi` CLI subcommand (the three drop-ins + `mailwoman openapi`): pick the
- * flavor `emitOpenAPIDocuments` produces (`--flavor 3.0` → the 3.0.3 diet client generators like progenitor want.
- * default 3.1.0), then either print it to stdout or write it to `out`. Always compact (single-line) JSON — never
- * pretty-printed — so the stdout form is a stable `startsWith('{"openapi":"3.1.0"')` smoke check, matching what a live
- * `/openapi.json` response looks like. `out`'s parent directory is created if missing (the docs build writes into a
- * gitignored rather than-yet-existing `docs/static/openapi/`). One place owns this so the four emitters can't drift out
- * of lockstep with each other.
+ * The shared body of every surface's `openapi` CLI subcommand
+ * (the three drop-ins + `mailwoman openapi`): pick the flavor `emitOpenAPIDocuments` produces
+ * (`--flavor 3.0` → the 3.0.3 diet client generators like progenitor want. default 3.1.0), then either
+ * print it to stdout or write it to `out`. Always compact (single-line) JSON — never pretty-printed —
+ * so the stdout form is a stable `startsWith('{"openapi":"3.1.0"')` smoke check, matching what
+ * a live `/openapi.json` response looks like. `out`'s parent directory is created if missing
+ * (the docs build writes into a gitignored rather than-yet-existing `docs/static/openapi/`).
+ * One place owns this so the four emitters can't drift out of lockstep with each other.
  */
 export async function printOpenAPIDocument(
 	app: OpenAPIHono,
@@ -122,8 +127,8 @@ export async function printOpenAPIDocument(
 	opts: { flavor?: string; out?: string } = {}
 ): Promise<void> {
 	const { v31, v30 } = emitOpenAPIDocuments(app, info)
-	// Compact JSON, one line, the same bytes to a file and to stdout — a consumer piping either into a diff or a
-	// generator sees one form.
+	// Compact JSON, one line, the same bytes to a file and to stdout — a consumer
+	// piping either into a diff or a generator sees one form.
 	const json = `${stringifyJSON(opts.flavor === "3.0" ? v30 : v31)}\n`
 
 	if (opts.out) {
@@ -136,9 +141,10 @@ export async function printOpenAPIDocument(
 /**
  * An OpenAPI error-response descriptor: a description plus a JSON body of `schema`.
  *
- * Takes the schema rather than owning one, because each drop-in's error envelope reproduces the wire shape of the
- * project it replaces — Nominatim's differs from libpostal's, and both are recorded decisions rather than drift. What
- * repeats between them is this four-line descriptor rather than the shape it wraps.
+ * Takes the schema rather than owning one, because each drop-in's error envelope reproduces
+ * the wire shape of the project it replaces — Nominatim's differs from libpostal's,
+ * and both are recorded decisions rather than drift. What repeats between them is
+ * this four-line descriptor rather than the shape it wraps.
  */
 export function errorContent<S>(description: string, schema: S) {
 	return {

@@ -19,7 +19,8 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 const WELL_KNOWN_FILE = "docs/static/.well-known/mailwoman/license-keys.json"
 
 /**
- * The `license-register` check: one error when the committed well-known file and the register's derivation differ.
+ * The `license-register` check: one error when the committed well-known file
+ * and the register's derivation differ.
  */
 export const licenseRegisterCheck: RepoCheck = {
 	id: "license-register",

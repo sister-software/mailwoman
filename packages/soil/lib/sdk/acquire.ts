@@ -28,8 +28,8 @@ import { readSurveyAreaAttributes, readSurveyAreaOutline } from "#sdk/survey-are
 export interface AcquireRegionOptions {
 	client: SoilDataAccessClient
 	/**
-	 * The survey-area symbol prefix — a state code (`IA`) for a whole state, or a full symbol (`IA153`) for the
-	 * single-area rung.
+	 * The survey-area symbol prefix — a state code (`IA`) for a whole state,
+	 * or a full symbol (`IA153`) for the single-area rung.
 	 */
 	prefix: string
 	/**
@@ -37,7 +37,8 @@ export interface AcquireRegionOptions {
 	 */
 	cacheRoot: string
 	/**
-	 * Build only these symbols out of the ones the catalogue returns. Absent means all of them.
+	 * Build only these symbols out of the ones the catalogue returns.
+	 * Absent means all of them.
 	 */
 	only?: ReadonlyArray<string>
 	onProgress?: (message: string) => void
@@ -59,8 +60,8 @@ export interface AcquiredRegion {
 /**
  * Acquire every survey area a prefix names, and turn them into builder inputs.
  *
- * @throws {Error} When the catalogue holds nothing for the prefix, when `only` names a symbol the catalogue does not
- *   carry, or when any area's archive, metadata or shapefile refuses.
+ * @throws {Error} When the catalogue holds nothing for the prefix, when `only` names a symbol
+ *   the catalogue does not carry, or when any area's archive, metadata or shapefile refuses.
  */
 export async function acquireRegion(options: AcquireRegionOptions): Promise<AcquiredRegion> {
 	const catalog = await options.client.readSurveyAreaCatalog(options.prefix)
@@ -112,9 +113,9 @@ export async function acquireRegion(options: AcquireRegionOptions): Promise<Acqu
 		})
 	}
 
-	// The latest refresh among the areas built, because that is the date after which nothing in this artifact changed.
-	// Taking the earliest would claim a currency the newest area does not have. taking today's date would claim one no
-	// area has.
+	// The latest refresh among the areas built, because that is the date after
+	// which nothing in this artifact changed. Taking the earliest would claim a currency
+	// the newest area does not have. taking today's date would claim one no area has.
 	const sourceVintage = selected
 		.map((entry) => entry.saverest)
 		.toSorted()

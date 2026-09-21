@@ -31,8 +31,9 @@ import type { MapProps, MapRef, ViewStateChangeEvent } from "react-map-gl/maplib
 export type MapCanvasStyle = NonNullable<MapProps["mapStyle"]>
 
 /**
- * Override for the `<Map>` props `<MapCanvas>` does not surface explicitly (e.g. `minZoom`, `attributionControl`,
- * `maplibreLogo`). The controlled fields MapCanvas owns are omitted so they can't be set twice.
+ * Override for the `<Map>` props `<MapCanvas>` does not surface
+ * explicitly (e.g. `minZoom`, `attributionControl`, `maplibreLogo`).
+ * The controlled fields MapCanvas owns are omitted so they can't be set twice.
  */
 export type MapCanvasExtraProps = Partial<
 	Omit<MapProps, "mapStyle" | "initialViewState" | "viewState" | "onMove" | "children" | "style" | "ref">
@@ -64,7 +65,8 @@ export interface MapCanvasProps {
 	 */
 	mapRef?: Ref<MapRef>
 	/**
-	 * Overlays, markers, and controls — rendered as `<Map>` children. Empty in phase 1.
+	 * Overlays, markers, and controls — rendered as `<Map>`
+	 * children. Empty in phase 1.
 	 */
 	children?: ReactNode
 	/**
@@ -84,8 +86,9 @@ export interface MapCanvasProps {
 const FILL: CSSProperties = { width: "100%", height: "100%" }
 
 /**
- * The controlled-viewport map shell. Renders a sized wrapper around a `react-map-gl/maplibre` `<Map>`; everything
- * host-specific (the composed `mapStyle`, the initial center) is injected, and overlays ride in as `children`.
+ * The controlled-viewport map shell. Renders a sized wrapper around a `react-map-gl/maplibre`
+ * `<Map>`; everything host-specific (the composed `mapStyle`, the initial center)
+ * is injected, and overlays ride in as `children`.
  */
 export function MapCanvas({
 	mapStyle,

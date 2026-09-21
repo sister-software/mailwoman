@@ -37,8 +37,9 @@ const MAGIC = 0x31_42_43_50
 const REC_TAIL = 5
 
 /**
- * Latitude quantization scale — `latQ = round(lat / 90 × 32767)`, giving ~300 m resolution. The single home for the
- * PCB1/PFX1 grid: `postcode-prefix-index.ts` imports these so the two formats decode coordinates identically.
+ * Latitude quantization scale — `latQ = round(lat / 90 × 32767)`, giving ~300 m resolution.
+ * The single home for the PCB1/PFX1 grid: `postcode-prefix-index.ts` imports these
+ * so the two formats decode coordinates identically.
  */
 export const LAT_Q = 32_767 / 90
 
@@ -48,8 +49,8 @@ export const LAT_Q = 32_767 / 90
 export const LON_Q = 32_767 / 180
 
 /**
- * Quantize a coordinate onto the i16 grid, clamped to the representable range so an out-of-range input can never
- * overflow the record's i16 write.
+ * Quantize a coordinate onto the i16 grid, clamped to the representable range
+ * so an out-of-range input can never overflow the record's i16 write.
  */
 export function quantizeCoordinate(value: number, scale: number): number {
 	return Math.max(-32_767, Math.min(32_767, Math.round(value * scale)))
@@ -70,8 +71,8 @@ export interface PostcodeBinaryEntry {
 }
 
 /**
- * Right-pad an ascii postcode to `width` with NUL; `\0` sorts below any real char, so shorter keys order before longer
- * ones with the same prefix, which is what we want.
+ * Right-pad an ascii postcode to `width` with NUL; `\0` sorts below any real char,
+ * so shorter keys order before longer ones with the same prefix, which is what we want.
  */
 function encodeKey(s: string, width: number, out: Uint8Array, offset: number): void {
 	for (let i = 0; i < width; i++) {
@@ -80,8 +81,8 @@ function encodeKey(s: string, width: number, out: Uint8Array, offset: number): v
 }
 
 /**
- * Serialize postcode entries into the flat binary. Entries are sorted by (postcode, country) so equal postcodes land in
- * adjacent records. Run in Node. consumed by {@link PostcodeBinaryResolver}.
+ * Serialize postcode entries into the flat binary. Entries are sorted by (postcode, country)
+ * so equal postcodes land in adjacent records. Run in Node. consumed by {@link PostcodeBinaryResolver}.
  */
 export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[]): Uint8Array {
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
@@ -140,8 +141,9 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 }
 
 /**
- * Pure-JS, browser-safe postcode resolver over the flat binary. Implements the same `lookup()` interface as the SQLite
- * `WOFPostcodeLookup`, so `extractPostcodeAnchors` is agnostic to which backs it.
+ * Pure-JS, browser-safe postcode resolver over the flat binary.
+ * Implements the same `lookup()` interface as the SQLite `WOFPostcodeLookup`,
+ * so `extractPostcodeAnchors` is agnostic to which backs it.
  */
 export class PostcodeBinaryResolver {
 	readonly #buf: Uint8Array
@@ -223,12 +225,13 @@ export class PostcodeBinaryResolver {
 	}
 
 	/**
-	 * Decode the whole binary into an {@link AnchorLookup} (`Map<postcode, AnchorEntry>`) for the neural anchor channel
-	 * (#239/#240): each postcode → a uniform posterior over its member countries
+	 * Decode the whole binary into an {@link AnchorLookup} (`Map<postcode, AnchorEntry>`) for the
+	 * neural anchor channel (#239/#240): each postcode → a uniform posterior over its member countries
 	 *
-	 * - The mean of its non-zero centroids. This is the browser-side equivalent of the pilot postcode→anchor lookup the
-	 *   model trained against, built live from the shipped binary instead of a precomputed JSON. Records are stored
-	 *   sorted by (postcode, country), so equal keys are contiguous.
+	 * - The mean of its non-zero centroids. This is the browser-side equivalent of the
+	 *   pilot postcode→anchor lookup the model trained against, built live from the
+	 *   shipped binary instead of a precomputed JSON. Records are stored sorted by
+	 *   (postcode, country), so equal keys are contiguous.
 	 */
 	toAnchorLookup(): AnchorLookup {
 		const out: AnchorLookup = new Map()

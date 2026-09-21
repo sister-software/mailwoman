@@ -36,19 +36,20 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const USGOV_SAMHSA_ADAPTER_ID = "usgov-samhsa-treatment-locator"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_SAMHSA_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * Subset of samhsa Treatment Locator CSV columns consulted by the adapter. Column names match the canonical samhsa Open
- * Data Foundry export header. `name1` is the venue; `name2` is optional and folded into the venue when present.
+ * Subset of samhsa Treatment Locator CSV columns consulted by the adapter.
+ * Column names match the canonical samhsa Open Data Foundry export header.
+ * `name1` is the venue; `name2` is optional and folded into the venue when present.
  */
 interface SamhsaSiteRow {
 	name1: string
@@ -65,9 +66,9 @@ interface SamhsaSiteRow {
 }
 
 /**
- * Join the samhsa two-line street: primary street + optional secondary line (suite / unit / floor / "behind main
- * building") on `", "`. The combined value is the `street` component surface form. Phase 1 does not break this out into
- * the `unit` component — see the file-level comment.
+ * Join the samhsa two-line street: primary street + optional secondary line (suite / unit / floor
+ * / "behind main building") on `", "`. The combined value is the `street` component surface form.
+ * Phase 1 does not break this out into the `unit` component — see the file-level comment.
  */
 function joinTwoLineStreet(street1: string, street2: string | undefined): string {
 	const s1 = street1.trim()
@@ -88,8 +89,8 @@ function joinTwoLineStreet(street1: string, street2: string | undefined): string
  * - `name1` is the program / clinic name ("Mountain Plains Counseling Services").
  * - `name2` is the parent organization ("Catholic Charities of Wyoming"), if any.
  *
- * Both render together as `"<name1> - <name2>"` when both are present — geocoder users typically type either form, so
- * the model benefits from the joined surface.
+ * Both render together as `"<name1> - <name2>"` when both are present — geocoder users
+ * typically type either form, so the model benefits from the joined surface.
  */
 function composeVenue(name1: string, name2: string | undefined): string {
 	const n1 = name1.trim()

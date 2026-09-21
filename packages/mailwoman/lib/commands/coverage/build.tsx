@@ -27,14 +27,15 @@ import {
 } from "#cli-kit"
 
 /**
- * The coarsest and finest H3 resolutions the library defines. A cell index outside 0–15 is not a
- * resolution the H3 bindings can address, so this bound is the format's rather than a tuning choice.
+ * The coarsest and finest H3 resolutions the library defines.
+ * A cell index outside 0–15 is not a resolution the H3 bindings can address,
+ * so this bound is the format's rather than a tuning choice.
  */
 const MAX_H3_RESOLUTION = 15
 
 /**
- * The deepest zoom a tile pyramid addresses. Tippecanoe and the Web Mercator tile scheme both stop at
- * 22, so a higher value names a tile no renderer will request.
+ * The deepest zoom a tile pyramid addresses. Tippecanoe and the Web Mercator tile scheme
+ * both stop at 22, so a higher value names a tile no renderer will request.
  */
 const MAX_TILE_ZOOM = 22
 

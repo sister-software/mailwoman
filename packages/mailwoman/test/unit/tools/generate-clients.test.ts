@@ -32,8 +32,8 @@ test("pythonPyproject interpolates the given version and names the mailwoman-cli
 	expect(toml).toContain('name = "mailwoman-client"')
 	expect(toml).toContain('version = "5.10.1"')
 
-	// The four generated subpackages must all be carved out of the ruff pass — a missed entry here
-	// means ruff lints/reformats generated code as if it were hand-maintained.
+	// The four generated subpackages must all be carved out of the ruff pass — a missed
+	// entry here means ruff lints/reformats generated code as if it were hand-maintained.
 	for (const surface of CLIENT_SURFACES) {
 		expect(toml).toContain(`mailwoman_client/${surface}`)
 	}
@@ -81,11 +81,12 @@ test("emitterCLIPath resolves every surface to the compiled bin its manifest dec
 		expect(cli.split(sep)).toContain("packages")
 		expect(cli.split(sep)).toContain(surface)
 
-		// The assertion, and the one this test did not make before: the file the emitter will be run as
-		// has to be there. It checked that the workspace's package.json existed instead, so when the
-		// prefix-directory pass moved mailwoman's `lib/cli.ts` to `lib/cli/index.ts` — making its emit
-		// `out/cli/index.js` while the other three kept `out/cli.js` — this stayed green and the release
-		// run failed on it. A path that is merely well-shaped is not a path that resolves.
+		// The assertion, and the one this test did not make before: the file the emitter will
+		// be run as has to be there. It checked that the workspace's package.json existed
+		// instead, so when the prefix-directory pass moved mailwoman's `lib/cli.ts`
+		// to `lib/cli/index.ts` — making its emit `out/cli/index.js` while the other
+		// three kept `out/cli.js` — this stayed green and the release run failed on it.
+		// A path that is merely well-shaped is not a path that resolves.
 		expect(await pathExists(cli), `${surface}: ${cli} does not exist — run \`yarn compile\``).toBe(true)
 	}
 })

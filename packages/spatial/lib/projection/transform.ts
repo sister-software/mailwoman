@@ -88,8 +88,8 @@ export interface AssertDatumTransformationOptions {
 /**
  * Refuse an ingest whose best available datum transformation is a ballpark one, or is missing its grid.
  *
- * @throws {Error} When proj names no candidate, would use a ballpark offset, or would use an operation whose grid is
- *   not installed.
+ * @throws {Error} When proj names no candidate, would use a ballpark offset,
+ *   or would use an operation whose grid is not installed.
  */
 export async function assertDatumTransformationAvailable(
 	sourceEPSG: number,

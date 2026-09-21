@@ -42,14 +42,14 @@ import {
 import { expect, test } from "vitest"
 
 /**
- * Timing samples per measurement. Best-of, for the reason `phrase-grouper/rules.scaling.test.ts` gives: contention only
- * ever adds time, so the minimum is the sample least polluted by the neighbours.
+ * Timing samples per measurement. Best-of, for the reason `phrase-grouper/rules.scaling.test.ts` gives:
+ * contention only ever adds time, so the minimum is the sample least polluted by the neighbours.
  */
 const TIMING_SAMPLES = 5
 
 /**
- * Capitalized run — every token is candidate place-name content, which is the shape that makes `bareNameWords`'s word
- * split and per-word Set probes work hardest before the length check can reject.
+ * Capitalized run — every token is candidate place-name content, which is the shape that makes
+ * `bareNameWords`'s word split and per-word Set probes work hardest before the length check can reject.
  */
 const CAPS_RUN_UNIT = "Aa "
 
@@ -71,11 +71,13 @@ function bestOf(run: () => void): number {
 }
 
 /**
- * Median of per-pair ratios, with the two arms measured back-TO-back inside each pair. Measuring all small trials then
- * all large trials (even as best-of-N) leaves the ratio exposed to a load burst that arrives between the two blocks —
- * on a host that also runs the CI fleet, that is the common case, and it fired the 3x bar three times in one night at
- * 3.19–3.25x with both arms individually healthy. Pairing puts any burst into both arms of the affected pair, and the
- * median sheds the corrupted pairs in either direction. a genuinely quadratic run still shows ~4x in every clean pair.
+ * Median of per-pair ratios, with the two arms measured back-TO-back inside each pair.
+ * Measuring all small trials then all large trials (even as best-of-N) leaves
+ * the ratio exposed to a load burst that arrives between the two blocks —
+ * on a host that also runs the CI fleet, that is the common case, and it fired the
+ * 3x bar three times in one night at 3.19–3.25x with both arms individually healthy.
+ * Pairing puts any burst into both arms of the affected pair, and the median sheds the corrupted
+ * pairs in either direction. a genuinely quadratic run still shows ~4x in every clean pair.
  */
 function medianPairedRatio(small: () => void, large: () => void): { ratio: number; smallMs: number; largeMs: number } {
 	small()
@@ -119,10 +121,11 @@ test("the intent rules stay linear in input length", () => {
 		}
 	}
 
-	// Sizes chosen so the absolute timings clear a millisecond: at 50k/100k the whole measurement lands under 0.3 ms,
-	// where scheduler noise on a parallel test runner is larger than the signal and the ratio flakes (measured: 3.25x on
-	// a run where both arms were sub-millisecond). The work being timed is a `trim` + `toLowerCase` + two anchored
-	// regexes over the full string, which is linear. the length check rejects everything else at 30 characters.
+	// Sizes chosen so the absolute timings clear a millisecond: at 50k/100k the whole measurement
+	// lands under 0.3 ms, where scheduler noise on a parallel test runner is larger than the signal
+	// and the ratio flakes (measured: 3.25x on a run where both arms were sub-millisecond).
+	// The work being timed is a `trim` + `toLowerCase` + two anchored regexes over the full
+	// string, which is linear. the length check rejects everything else at 30 characters.
 	const { ratio, smallMs, largeMs } = medianPairedRatio(runAt(500_000), runAt(1_000_000))
 
 	expect(
@@ -133,8 +136,8 @@ test("the intent rules stay linear in input length", () => {
 })
 
 /**
- * The pre-§4 scorer list, replayed. Same construction as `mailwoman/test/kind-intent-invariance.test.ts` and for the
- * same reason — a snapshot would drift the first time an incumbent rule was tuned.
+ * The pre-§4 scorer list, replayed. Same construction as `mailwoman/test/kind-intent-invariance.test.ts`
+ * and for the same reason — a snapshot would drift the first time an incumbent rule was tuned.
  */
 function classifyPreIntent(input: NormalizedInputLite, shape: QueryShapeLike): void {
 	Math.max(
@@ -150,8 +153,8 @@ function classifyPreIntent(input: NormalizedInputLite, shape: QueryShapeLike): v
 }
 
 /**
- * A realistic query mix: full addresses (the population that must not pay), bare toponyms, fragments, the intent shapes
- * themselves. Shapes are precomputed — Stage 2.2 is not what is being measured.
+ * A realistic query mix: full addresses (the population that must not pay), bare toponyms, fragments,
+ * the intent shapes themselves. Shapes are precomputed — Stage 2.2 is not what is being measured.
  */
 const QUERY_MIX = [
 	"350 5th Ave, New York, NY 10118",

@@ -27,11 +27,13 @@
 export type StreetOrder = "number-first" | "number-last"
 
 /**
- * Countries that separate the street name and the house number with a comma rather than a space — `Calle Mayor, 12`.
+ * Countries that separate the street name and the house number with a comma
+ * rather than a space — `Calle Mayor, 12`.
  *
- * Measured the same way, and on the same rendered output: 183 of the 213 template countries space-join, 22 comma-join,
- * and 8 name only one of the two slots so the question does not arise. The separator is not cosmetic — Spain's corpus
- * recipe renders both forms on purpose, and collapsing the comma is what its `nativeHouseJoin` option does.
+ * Measured the same way, and on the same rendered output: 183 of the 213 template countries
+ * space-join, 22 comma-join, and 8 name only one of the two slots so the question does not arise.
+ * The separator is not cosmetic — Spain's corpus recipe renders both forms on purpose,
+ * and collapsing the comma is what its `nativeHouseJoin` option does.
  */
 export const COMMA_JOINED_STREET_COUNTRIES: ReadonlySet<string> = new Set([
 	"BJ",
@@ -61,15 +63,18 @@ export const COMMA_JOINED_STREET_COUNTRIES: ReadonlySet<string> = new Set([
 /**
  * How the street line is written in a country's own script, for the countries that write two.
  *
- * `STREET_ORDERS` below is read from the OpenCage templates. It render in Latin. Therefore, it states the romanized
- * form of every country including these. Hong Kong's entry is `21 Jordan Road`; its Chinese register writes `佐敦道21號`,
- * which is a different order and a different separator, and neither is derivable from the other.
+ * `STREET_ORDERS` below is read from the OpenCage templates.
+ * It render in Latin. Therefore, it states the romanized form of every country including these.
+ * Hong Kong's entry is `21 Jordan Road`; its Chinese register writes `佐敦道21號`, which is a
+ * different order and a different separator, and neither is derivable from the other.
  *
- * The values are the codex's street-node names, so the generator emits the node rather than deriving one. `han` is the
- * unseparated name-then-number line the Chinese-writing systems use, and the entries follow the split `LINE_JOINS`
- * already makes: CN and TW join their lines with `""`, JP and KR with `" "`.
+ * The values are the codex's street-node names, so the generator emits the node
+ * rather than deriving one. `han` is the unseparated name-then-number line the
+ * Chinese-writing systems use, and the entries follow the split `LINE_JOINS` already makes:
+ * CN and TW join their lines with `""`, JP and KR with `" "`.
  *
- * Absent from this table means the country writes one street order in both scripts, which is every country but these.
+ * Absent from this table means the country writes one street order in both scripts,
+ * which is every country but these.
  */
 export const LOCAL_STREET_NODES: Readonly<Record<string, "han">> = {
 	CN: "han",

@@ -104,8 +104,8 @@ function tagClass(tag: string): string {
 }
 
 /**
- * Grade one predicted span against a row's gold. Returns `null` when the span is unlabelable (OA can't see this tag),
- * else `true`/`false`.
+ * Grade one predicted span against a row's gold. Returns `null` when the span is
+ * unlabelable (OA can't see this tag), else `true`/`false`.
  */
 function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean | null {
 	if (row.partial) {
@@ -147,8 +147,8 @@ async function main(): Promise<void> {
 		ONNXRunner.create(values["model"] || "packages/neural-weights-en-us/model.onnx"),
 	])
 
-	// Ship-config channels (v4.4.0): the calibrator must describe the model AS deployed — anchor +
-	// gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
+	// Ship-config channels (v4.4.0): the calibrator must describe the model AS deployed —
+	// anchor + gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
 	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const gazPath = values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json"

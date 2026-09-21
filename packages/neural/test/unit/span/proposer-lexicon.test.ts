@@ -50,15 +50,17 @@ test("buildCodexSpanLexicon: no systems → only the locale-general venue-struct
 	expect(lex.levelDesignators.size).toBe(0)
 	expect(lex.deliveryService).toBeUndefined()
 
-	// Every postal designator is system-conditional and therefore absent — that half of the original assertion still holds
-	// and is what this test guards: a codex table must never leak in without its system.
+	// Every postal designator is system-conditional and therefore absent —
+	// that half of the original assertion still holds and is what this test guards:
+	// a codex table must never leak in without its system.
 	for (const postal of ["apt", "ste", "suite", "rm", "flat", "po box"]) {
 		expect(lex.unitDesignators.has(postal), `postal designator "${postal}" leaked with no systems loaded`).toBe(false)
 	}
 
-	// What remains is the venue-interior vocabulary, which is deliberately not system-conditional: a concourse is a
-	// concourse regardless of which postal authority delivers to the building, and keying it on a codex system would
-	// make "Terminal 5" parse in one country and not another for no defensible reason. Sourced from the WOF placetype
-	// vocabulary + OSM aeroway — see core/resources/whosonfirst/placetypes/venue-structure.ts.
+	// What remains is the venue-interior vocabulary, which is deliberately not system-conditional:
+	// a concourse is a concourse regardless of which postal authority delivers to the building,
+	// and keying it on a codex system would make "Terminal 5" parse in one country
+	// and not another for no defensible reason. Sourced from the WOF placetype vocabulary +
+	// OSM aeroway — see core/resources/whosonfirst/placetypes/venue-structure.ts.
 	expect([...lex.unitDesignators].toSorted()).toEqual([...VENUE_STRUCTURE_DESIGNATORS].toSorted())
 })

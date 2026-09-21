@@ -38,10 +38,11 @@ export function makeDirectories<T extends PathBuilderLike[]>(...paths: T): Promi
 /**
  * Create one directory, raising eexist when something is already there.
  *
- * The exclusive counterpart to {@linkcode makeDirectories}. It is recursive. Therefore, idempotent. That idempotence is
- * what disqualifies it here: `mkdir` without `recursive` is an atomic test-and-set, and it is how both of this
- * repository's inter-process locks are held. Swapping one for {@linkcode makeDirectories} would let every waiter take
- * the lock at once, and nothing would report it.
+ * The exclusive counterpart to {@linkcode makeDirectories}.
+ * It is recursive. Therefore, idempotent. That idempotence is what disqualifies it here:
+ * `mkdir` without `recursive` is an atomic test-and-set, and it is how both of this
+ * repository's inter-process locks are held. Swapping one for {@linkcode makeDirectories}
+ * would let every waiter take the lock at once, and nothing would report it.
  */
 export function makeDirectoryExclusive(path: PathBuilderLike): Promise<void> {
 	return mkdir(path.toString()).then(() => undefined)
@@ -64,9 +65,10 @@ export type BufferLike =
 /**
  * Write a local text file, creating its parent directory first.
  *
- * A string is written verbatim. Any other iterable of strings — an array, a `Set`, a generator — is written one element
- * per line, every line terminated including the last: an unterminated final line appends badly and is not what
- * `TextSpliterator` round-trips. An empty iterable writes an empty file rather than a lone newline, because "no lines"
+ * A string is written verbatim. Any other iterable of strings — an array, a `Set`,
+ * a generator — is written one element per line, every line terminated including the last:
+ * an unterminated final line appends badly and is not what `TextSpliterator` round-trips.
+ * An empty iterable writes an empty file rather than a lone newline, because "no lines"
  * and "one blank line" are different files and a bare `join` produces the second.
  *
  * @category Files
@@ -99,8 +101,9 @@ export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 
 	if (typeof resolved === "string") return writeFile(filePath, resolved, "utf8")
 
-	// `try`/`finally` rather than `await using`, which is equivalent here: this module is in the import graph of the
-	// Docusaurus plugins, and that config loader babel-parses its graph without the `explicitResourceManagement` plugin.
+	// `try`/`finally` rather than `await using`, which is equivalent here: this module is
+	// in the import graph of the Docusaurus plugins, and that config loader babel-parses
+	// its graph without the `explicitResourceManagement` plugin.
 	const writer = createNewlineWriter(filePath)
 
 	try {
@@ -115,9 +118,9 @@ export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 /**
  * One line per element, every line terminated. no elements produces the empty string.
  *
- * The same shape {@linkcode writeLocalTextFile} applies to an iterable, for the sites that build a document and hand it
- * somewhere else. `lines.join("\n")` leaves the last line unterminated, and `lines.join("\n") + "\n"` turns an empty
- * list into a file containing one blank line.
+ * The same shape {@linkcode writeLocalTextFile} applies to an iterable, for the sites that build
+ * a document and hand it somewhere else. `lines.join("\n")` leaves the last line unterminated,
+ * and `lines.join("\n") + "\n"` turns an empty list into a file containing one blank line.
  */
 export function toLinesText(lines: readonly string[]): string {
 	return lines.length ? `${lines.join("\n")}\n` : ""
@@ -139,10 +142,11 @@ export function writeLocalJSONFile<T = Record<string, unknown>, S extends PathBu
 }
 
 /**
- * Write one JSON value per line, newline-terminated — the jsonl shape every panel, fixture and result file in this
- * repository is read back with by `JSONSpliterator.fromAsync`.
+ * Write one JSON value per line, newline-terminated — the jsonl shape every panel, fixture
+ * and result file in this repository is read back with by `JSONSpliterator.fromAsync`.
  *
- * The trailing newline is part of the interface: a file whose last line has none appends badly and diffs noisily.
+ * The trailing newline is part of the interface: a file whose last line has
+ * none appends badly and diffs noisily.
  *
  * @category Files
  * @runtime node
@@ -179,19 +183,22 @@ export async function writeLocalBuffer<S extends PathBuilderLike[]>(
 }
 
 /**
- * Write a local file, creating its parent directory first, letting the runtime decide how to encode `content`.
+ * Write a local file, creating its parent directory first, letting the runtime
+ * decide how to encode `content`.
  *
- * Prefer {@linkcode writeLocalTextFile} or {@linkcode writeLocalBuffer} when the call site knows which it has — the name
- * then says so, and a reader does not have to follow the value back to its producer. This overload exists for the sites
- * where it genuinely does not: a payload that is a string on one branch and bytes on another.
+ * Prefer {@linkcode writeLocalTextFile} or {@linkcode writeLocalBuffer} when the call site knows
+ * which it has — the name then says so, and a reader does not have to follow the value
+ * back to its producer. This overload exists for the sites where it genuinely does not:
+ * a payload that is a string on one branch and bytes on another.
  *
  * @category Files
  * @runtime node
  */
 /**
- * Write a UTF-8 text file readable and writable by its owner alone (`0600`), creating the parent directory. The mode is
- * applied after the write as well as at creation, because `writeFile` keeps the mode of a file that already exists. For
- * a signing key or any other secret the caller must not leave world-readable.
+ * Write a UTF-8 text file readable and writable by its owner alone (`0600`),
+ * creating the parent directory. The mode is applied after the write as well as
+ * at creation, because `writeFile` keeps the mode of a file that already exists.
+ * For a signing key or any other secret the caller must not leave world-readable.
  */
 export async function writePrivateTextFile<S extends PathBuilderLike[]>(
 	content: string | Promise<string>,
@@ -204,8 +211,9 @@ export async function writePrivateTextFile<S extends PathBuilderLike[]>(
 	const filePath = resolvePath(...pathSegments)
 
 	await makeDirectories(dirname(filePath))
-	// Not `writeLocalTextFile` + `changeMode`: the mode has to be set at creation, or the secret exists world-readable
-	// between the two calls. `changeMode` afterwards covers a file that already existed with a wider mode.
+	// Not `writeLocalTextFile` + `changeMode`: the mode has to be set at
+	// creation, or the secret exists world-readable between the two calls.
+	// `changeMode` afterwards covers a file that already existed with a wider mode.
 	await writeFile(filePath, await content, { encoding: "utf8", mode: 0o600 })
 	await changeMode(filePath, 0o600)
 }
@@ -322,8 +330,9 @@ export async function copyPath(source: PathBuilderLike, destination: PathBuilder
 /**
  * Copy one file, replacing whatever is at the destination.
  *
- * The destination is unlinked first: `copyFile` onto a symlink writes through it and leaves the link in place, which is
- * how a materialized weights artifact stayed a symlink and made `npm publish` answer http 415.
+ * The destination is unlinked first: `copyFile` onto a symlink writes through it
+ * and leaves the link in place, which is how a materialized weights artifact stayed
+ * a symlink and made `npm publish` answer http 415.
  */
 export async function copyFileTo(source: PathBuilderLike, destination: PathBuilderLike): Promise<void> {
 	const target = destination.toString()
@@ -337,7 +346,8 @@ export async function copyFileTo(source: PathBuilderLike, destination: PathBuild
 /**
  * Move a file or directory, creating the destination's parent directory first.
  *
- * Rename only, so it does not cross a filesystem boundary — which is the property an atomic publish depends on. Use
+ * Rename only, so it does not cross a filesystem boundary — which is the property
+ * an atomic publish depends on. Use
  * {@linkcode copyPath} followed by {@linkcode removePathIfPresent} where the two ends may live on different devices.
  */
 export async function movePath(source: PathBuilderLike, destination: PathBuilderLike): Promise<void> {

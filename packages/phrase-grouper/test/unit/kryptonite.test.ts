@@ -155,8 +155,9 @@ describe("kryptonite catalogue — 350 5th Ave, New York, NY 10118 (canonical)",
 	})
 
 	it("the STREET_PHRASE EXCLUDES the house number (5th Ave, not 350 5th Ave) — #565", () => {
-		// The house number lives in its own numeric proposal. bundling it into STREET_PHRASE is what let
-		// the reconciler fuse "350 5th Ave" into one node and drop the street (#566). Keep them separate.
+		// The house number lives in its own numeric proposal. bundling it into
+		// STREET_PHRASE is what let the reconciler fuse "350 5th Ave" into one node
+		// and drop the street (#566). Keep them separate.
 		const streetPhrases = out.filter((p) => p.kindHypothesis === "STREET_PHRASE")
 		expect(streetPhrases.find((p) => p.span.body === "5th Ave")).toBeDefined()
 		expect(streetPhrases.find((p) => p.span.body === "350 5th Ave")).toBeUndefined()

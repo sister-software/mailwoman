@@ -25,7 +25,8 @@ import { resolvePath } from "path-ts"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 
 /**
- * A dynamic import of a builtin the row tolerates: the file that makes it, the builtin, and why it is Node-only.
+ * A dynamic import of a builtin the row tolerates: the file that makes it,
+ * the builtin, and why it is Node-only.
  */
 interface AllowedDynamicImport {
 	file: RegExp
@@ -34,20 +35,22 @@ interface AllowedDynamicImport {
 }
 
 /**
- * One bundle to grade: the entry specifier, the platform a consumer bundles it for, and what the bundle must and must
- * not carry.
+ * One bundle to grade: the entry specifier, the platform a consumer bundles it for,
+ * and what the bundle must and must not carry.
  */
 export interface BundleRow {
 	entry: string
 	platform: "browser" | "neutral"
 	conditions: readonly string[]
 	/**
-	 * Third-party packages left out of the bundle because they are not under test and carry their own platform builds.
+	 * Third-party packages left out of the bundle because they are not under test
+	 * and carry their own platform builds.
 	 */
 	external?: readonly string[]
 	/**
-	 * Follow dynamic imports into the bundle instead of leaving them external. A row that asserts what a lazily imported
-	 * specifier resolves to under the row's conditions needs this. every other row grades the static graph alone.
+	 * Follow dynamic imports into the bundle instead of leaving them external.
+	 * A row that asserts what a lazily imported specifier resolves to under the row's
+	 * conditions needs this. every other row grades the static graph alone.
 	 */
 	followDynamicImports?: boolean
 	allowedDynamicImports?: readonly AllowedDynamicImport[]
@@ -62,8 +65,8 @@ const WORKER_CONDITIONS = ["workerd", "worker", "browser"] as const
 const BROWSER_CONDITIONS = ["browser"] as const
 
 /**
- * What a browser bundle of a mailwoman package never bundles itself: the UI runtime and the engines behind it, each
- * shipping its own platform builds.
+ * What a browser bundle of a mailwoman package never bundles itself: the UI runtime
+ * and the engines behind it, each shipping its own platform builds.
  */
 const BROWSER_EXTERNALS = [
 	"react",
@@ -79,7 +82,8 @@ const BROWSER_EXTERNALS = [
 ] as const
 
 /**
- * The two dynamic builtin imports on the neural client graph, each a Node-only branch behind an environment guard.
+ * The two dynamic builtin imports on the neural client graph, each a Node-only
+ * branch behind an environment guard.
  */
 const NEURAL_DYNAMIC_IMPORTS: readonly AllowedDynamicImport[] = [
 	{
@@ -103,8 +107,8 @@ const browserRow = (entry: string, extra: Partial<BundleRow> = {}): BundleRow =>
 })
 
 /**
- * Every entry graded, in two condition sets: the license key's subpaths as the Cloudflare Worker bundles them, and the
- * `@mailwoman/core` and `@mailwoman/neural` subpaths the browser client reaches.
+ * Every entry graded, in two condition sets: the license key's subpaths as the Cloudflare Worker
+ * bundles them, and the `@mailwoman/core` and `@mailwoman/neural` subpaths the browser client reaches.
  */
 const BUNDLE_ROWS: readonly BundleRow[] = [
 	{
@@ -147,8 +151,9 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 ]
 
 /**
- * The bare builtin names a dependency reaches without the `node:` prefix (graceful-fs, spliterator and unzipper do). A
- * `node:`-prefixed path is recognised by prefix. this list only has to cover the unprefixed spellings.
+ * The bare builtin names a dependency reaches without the `node:` prefix
+ * (graceful-fs, spliterator and unzipper do). A `node:`-prefixed path is recognised
+ * by prefix. this list only has to cover the unprefixed spellings.
  */
 const BARE_BUILTINS = new Set([
 	"assert",
@@ -179,10 +184,11 @@ const isNodeBuiltin = (path: string): boolean => path.startsWith("node:") || BAR
 const CORE_FS_HOME = /packages\/core\/(?:lib|out)\/fs\//u
 
 /**
- * A builtin stays external so the metafile records the edge onto it with the file that made it and the import kind,
- * instead of esbuild refusing to resolve it under the browser platform. A dynamic import stays external unless the row
- * follows them, so the metafile is the static graph: what a bundler compiles once each dynamic specifier resolves under
- * its own condition or is left to run time.
+ * A builtin stays external so the metafile records the edge onto it with the file that made it
+ * and the import kind, instead of esbuild refusing to resolve it under the browser platform.
+ * A dynamic import stays external unless the row follows them, so the metafile is
+ * the static graph: what a bundler compiles once each dynamic specifier resolves
+ * under its own condition or is left to run time.
  */
 function edgePolicy(row: BundleRow): Plugin {
 	return {
@@ -235,8 +241,8 @@ async function bundleRow(row: BundleRow, repoRoot: string): Promise<Metafile | D
 
 		return result.metafile
 	} catch (error) {
-		// A static reach past a builtin can fail to resolve under the browser platform before a metafile exists. each
-		// resolution error is the finding, named by the file that made the import.
+		// A static reach past a builtin can fail to resolve under the browser platform before a metafile
+		// exists. each resolution error is the finding, named by the file that made the import.
 		const failure = error as BuildFailure
 
 		return (failure.errors ?? [{ text: String(error) }]).map((entry) =>

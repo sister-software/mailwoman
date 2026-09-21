@@ -1,21 +1,26 @@
 /**
  * What a script-reading router does to the regression board's CJK-containing rows (#2282, #2305).
  *
- * `scriptFamilyForText` once routed on the folded character class alone, so only an input that was CJK end to end
- * reached the character model and every mixed input went to the Latin one — which is how `逊克二分场四队, heilongjiang, china`
- * came back as a single locality holding the whole Han unit. The question was never whether reading the per-span script
- * helps the Chinese rows. it is what it does to a Latin address that happens to carry a Han venue name.
+ * `scriptFamilyForText` once routed on the folded character class alone, so only an input that
+ * was CJK end to end reached the character model and every mixed input went to the Latin one —
+ * which is how `逊克二分场四队, heilongjiang, china` came back as a single locality holding the
+ * whole Han unit. The question was never whether reading the per-span script helps the
+ * Chinese rows. it is what it does to a Latin address that happens to carry a Han venue name.
  *
- * Two candidate rules are measured against the same rows, beside what the shipped router does today (`routedToday`):
+ * Two candidate rules are measured against the same rows, beside what the
+ * shipped router does today (`routedToday`):
  *
- * - `presence` — any CJK script anywhere in the input names the family. This is the rule the issue proposed.
- * - `segment` — a comma segment written wholly in a CJK script names it. A Han name inside a Latin line does not, because
- *   the line it sits in is not written in that script. This is the rule the router ships (`carriesFamilySegment`), so
- *   the rows it lists as newly routed are the ones a whole-input fold would still send to the Latin model.
+ * - `presence` — any CJK script anywhere in the input names the family.
+ *   This is the rule the issue proposed.
+ * - `segment` — a comma segment written wholly in a CJK script names it.
+ *   A Han name inside a Latin line does not, because the line it sits in is not written in that script.
+ *   This is the rule the router ships (`carriesFamilySegment`), so the rows it lists as
+ *   newly routed are the ones a whole-input fold would still send to the Latin model.
  *
- * What this measures is the classifier rather than the pipeline. Each arm calls `parse` directly, so normalization, the
- * phrase grouper and the resolver are all absent and the absolute scores here are not the board's. Both arms run
- * through the identical harness, so the comparison is sound and the direction is what the probe reports.
+ * What this measures is the classifier rather than the pipeline.
+ * Each arm calls `parse` directly, so normalization, the phrase grouper and the resolver are all absent
+ * and the absolute scores here are not the board's. Both arms run through the identical
+ * harness, so the comparison is sound and the direction is what the probe reports.
  *
  * Run:
  *
@@ -36,7 +41,8 @@ const { values } = parseArguments({
 })
 
 /**
- * An input that would warm the family classifier, so both arms hold a loaded model before the first row is timed.
+ * An input that would warm the family classifier, so both arms hold a loaded model
+ * before the first row is timed.
  */
 const FAMILY_WARMUP = "東京都千代田区"
 
@@ -50,8 +56,9 @@ function carriesFamilyScript(shape: QueryShape): boolean {
 /**
  * How many of a row's asserted components the parse got, and how many it asserted.
  *
- * Graded through `decodeAsJSON`, which is the projection the board's `expectComponents` is written against — a local
- * tree walk here would be a second answer to the same question and would drift from the one the board uses.
+ * Graded through `decodeAsJSON`, which is the projection the board's `expectComponents` is
+ * written against — a local tree walk here would be a second answer to the same question
+ * and would drift from the one the board uses.
  */
 function agreement(tree: AddressTree, want: Record<string, string> | undefined): [number, number] {
 	if (!want) return [0, 0]
@@ -109,8 +116,8 @@ for (const board of await loadRegressionCases()) {
 }
 
 /**
- * What a rule costs and provides over the rows it newly routes: a row whose character-model agreement is higher is a
- * gain, lower is a regression, equal is neither.
+ * What a rule costs and provides over the rows it newly routes: a row whose character-model
+ * agreement is higher is a gain, lower is a regression, equal is neither.
  */
 function verdict(newlyRouted: ArmRow[]): { gained: number; regressed: number; unchanged: number } {
 	let gained = 0

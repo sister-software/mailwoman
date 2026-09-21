@@ -34,8 +34,8 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 const REGENERATE = "run `yarn mwops release write-rights-files`"
 
 /**
- * The `weights-rights` check: one error per published weights package whose generated rights files are missing, stale,
- * or undeclared in the manifest's `files` array.
+ * The `weights-rights` check: one error per published weights package whose generated
+ * rights files are missing, stale, or undeclared in the manifest's `files` array.
  */
 export const weightsRightsCheck: RepoCheck = {
 	id: "weights-rights",

@@ -28,11 +28,12 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 /**
  * Open `path`, write `manifest`, and close.
  *
- * Opens its own connection rather than taking the builder's: every caller reaches this point after its own handle is
- * closed and before the seal, and threading a live handle through would make the ordering above depend on each
- * builder's cleanup rather than on this function.
+ * Opens its own connection rather than taking the builder's: every caller reaches this point
+ * after its own handle is closed and before the seal, and threading a live handle through
+ * would make the ordering above depend on each builder's cleanup rather than on this function.
  *
- * @throws When the database is already sealed, which is the ordering mistake this function exists to make loud.
+ * @throws When the database is already sealed, which is the ordering mistake
+ *   this function exists to make loud.
  */
 export async function stampLayerManifest(path: string, manifest: LayerManifest): Promise<void> {
 	using kdb = new DatabaseClient<layerschemadatabase>(path)
@@ -44,9 +45,10 @@ export async function stampLayerManifest(path: string, manifest: LayerManifest):
 /**
  * The git sha of the tree that ran a build, for `layer_manifest.build_sha`.
  *
- * Degrades to `unknown` rather than throwing. A build run outside a checkout — a container, an unpacked tarball — is a
- * legitimate build, and refusing to stamp a manifest over a missing git binary would leave the artifact with no
- * provenance at all, which is the state this phase exists to reduce.
+ * Degrades to `unknown` rather than throwing. A build run outside a checkout —
+ * a container, an unpacked tarball — is a legitimate build, and refusing to stamp a
+ * manifest over a missing git binary would leave the artifact with no provenance at all,
+ * which is the state this phase exists to reduce.
  */
 export function buildSHA(repoRoot: string): string {
 	try {

@@ -26,19 +26,20 @@ import { useMap } from "react-map-gl/maplibre"
 import type { MapCameraTarget } from "#map/place-render"
 
 /**
- * The `fitBounds` options for a `bounds` target — and the reason this is a named function rather than an object literal
- * at the call site.
+ * The `fitBounds` options for a `bounds` target — and the reason this is a named function
+ * rather than an object literal at the call site.
  *
- * `duration` is present only on the non-animated path, and its absence on the animated one is required. maplibre's
- * `Camera.flyTo` (which `fitBounds` funnels into via `_fitInternal`) branches on `'duration' in options`, not on the
- * value: an explicitly-passed `duration: undefined` therefore survives the key test and is coerced with `+undefined` →
- * `NaN`. Every ease frame then computes `k = easing(elapsed / NaN)` → `NaN`, the flight-path math yields a `NaN` world
- * coordinate, and the first frame throws `Invalid LngLat object: (NaN, NaN)` out of the RAF loop — before the map has
- * moved at all, and with no `move` event to notice it by.
+ * `duration` is present only on the non-animated path, and its absence on the animated one
+ * is required. maplibre's `Camera.flyTo` (which `fitBounds` funnels into via `_fitInternal`)
+ * branches on `'duration' in options`, not on the value: an explicitly-passed
+ * `duration: undefined` therefore survives the key test and is coerced with `+undefined` → `NaN`.
+ * Every ease frame then computes `k = easing(elapsed / NaN)` → `NaN`, the flight-path math yields
+ * a `NaN` world coordinate, and the first frame throws `Invalid LngLat object: (NaN, NaN)` out
+ * of the RAF loop — before the map has moved at all, and with no `move` event to notice it by.
  *
- * Measured 2026-08-05 against maplibre-gl 5.24.0, same bounds and same map: `{padding: 40, duration: undefined}` →
- * `map._easeOptions.duration = NaN` + the throw; `{padding: 40}` → `3937.7 ms` + a normal flight. So pass the key or
- * don't — never pass it holding `undefined`.
+ * Measured 2026-08-05 against maplibre-gl 5.24.0, same bounds and same map:
+ * `{padding: 40, duration: undefined}` → `map._easeOptions.duration = NaN` + the throw; `{padding: 40}`
+ * → `3937.7 ms` + a normal flight. So pass the key or don't — never pass it holding `undefined`.
  */
 export function fitBoundsOptionsFor(padding: number, animate: boolean): FitBoundsOptions {
 	return animate ? { padding } : { padding, duration: 0 }
@@ -50,8 +51,9 @@ export interface ResultCameraProps {
 	 */
 	target: MapCameraTarget | null
 	/**
-	 * Animate (`flyTo`/`fitBounds`) vs jump. @default true. When false, a `center` target jumps with `jumpTo`; a `bounds`
-	 * target still uses `fitBounds` (no instantaneous fit exists) but with `duration: 0`.
+	 * Animate (`flyTo`/`fitBounds`) vs jump. @default true.
+	 * When false, a `center` target jumps with `jumpTo`; a `bounds` target still uses
+	 * `fitBounds` (no instantaneous fit exists) but with `duration: 0`.
 	 */
 	animate?: boolean
 }

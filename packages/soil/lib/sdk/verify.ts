@@ -67,8 +67,9 @@ export interface SoilAgreementRow {
 	/**
 	 * Metres from the point to the nearest edge of the delineation the artifact matched.
 	 *
-	 * Carried on every row rather than only the tolerated ones, because it is what separates a real defect from two
-	 * channels rendering the same edge differently — and a receipt that omits it forces a re-run.
+	 * Carried on every row rather than only the tolerated ones, because it is what
+	 * separates a real defect from two channels rendering the same edge differently —
+	 * and a receipt that omits it forces a re-run.
 	 */
 	nearestEdgeMetres?: number
 }
@@ -97,13 +98,14 @@ export interface VerifySoilResult {
 }
 
 /**
- * Points outside the pilot region, named. Each is a place rather than a bare pair of numbers: a coordinate a reader
- * cannot name is a coordinate nobody can check.
+ * Points outside the pilot region, named. Each is a place rather than a bare pair of numbers:
+ * a coordinate a reader cannot name is a coordinate nobody can check.
  *
- * Every neighbouring state is included, because the failure this half catches is a footprint that leaked past the
- * survey-area outlines — and a footprint accidentally clipped to "the Midwest" would pass a one-state check. Two of
- * these sit close to the Iowa border on purpose: the outline test is conservative, so a near-border point must read
- * unknown rather than borrow Iowa's coverage.
+ * Every neighbouring state is included, because the failure this half catches
+ * is a footprint that leaked past the survey-area outlines — and a footprint
+ * accidentally clipped to "the Midwest" would pass a one-state check.
+ * Two of these sit close to the Iowa border on purpose: the outline test is conservative,
+ * so a near-border point must read unknown rather than borrow Iowa's coverage.
  */
 export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
 	{ label: "Lincoln, Nebraska", latitude: 40.8136, longitude: -96.7026 },
@@ -117,13 +119,14 @@ export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: numb
 ]
 
 /**
- * How close to a delineation edge a disagreement is attributed to the channels' differing rendering rather than to the
- * conversion.
+ * How close to a delineation edge a disagreement is attributed to the channels'
+ * differing rendering rather than to the conversion.
  *
- * One metre. The published shapefile carries nine decimals through this package's ingest and Soil Data Access renders
- * its own geometry independently. nrcs's own positional-accuracy statement says the difference between a boundary's
- * field location and its digitized location "is unknown", so this tolerance is about the two renderings agreeing rather
- * than about ground truth. One metre is far below the median delineation, which is 24,863 m² — about 158 m across.
+ * One metre. The published shapefile carries nine decimals through this package's ingest and Soil
+ * Data Access renders its own geometry independently. nrcs's own positional-accuracy statement
+ * says the difference between a boundary's field location and its digitized location "is unknown",
+ * so this tolerance is about the two renderings agreeing rather than about ground truth.
+ * One metre is far below the median delineation, which is 24,863 m² — about 158 m across.
  */
 const BOUNDARY_TOLERANCE_METRES = 1
 
@@ -131,7 +134,8 @@ export interface VerifySoilOptions {
 	databasePath: string
 	client: Pick<SoilDataAccessClient, "mukeyAtPoint">
 	/**
-	 * Points to re-ask the service about. A caller samples them from the artifact — see {@link sampleAgreementPoints}.
+	 * Points to re-ask the service about. A caller samples them from the artifact —
+	 * see {@link sampleAgreementPoints}.
 	 */
 	points: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
 	outsidePoints?: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
@@ -145,8 +149,8 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 	const database = new DatabaseClient<SoilDatabase>(options.databasePath, { readOnly: true })
 	const lookup = new SoilCapabilityLookup({ databasePath: options.databasePath })
 
-	// Read once: the stored index is mixed-resolution because the whole tier is compacted, and a probe that assumed one
-	// resolution would read every row at the others as an absence.
+	// Read once: the stored index is mixed-resolution because the whole tier is compacted,
+	// and a probe that assumed one resolution would read every row at the others as an absence.
 	const resolutions = (
 		database.prepare("SELECT DISTINCT resolution FROM soil_map_unit_cell ORDER BY resolution").all() as Array<{
 			resolution: number
@@ -198,16 +202,19 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 }
 
 /**
- * The candidate delineations reaching a point, found through the cell index rather than by scanning the geometry table.
+ * The candidate delineations reaching a point, found through the cell index
+ * rather than by scanning the geometry table.
  *
- * A bounding-box `where` over `soil_map_unit_area` reads as a prefilter and is a full table scan: none of those columns
- * is indexed, the rows carry the ring blobs, and at the pilot's scale that is 2.7 million rows and several gigabytes
- * read per point. The cell index exists to make exactly this question cheap — `soil_map_unit_cell` is `without rowid`
+ * A bounding-box `where` over `soil_map_unit_area` reads as a prefilter and is a
+ * full table scan: none of those columns is indexed, the rows carry the ring blobs,
+ * and at the pilot's scale that is 2.7 million rows and several gigabytes read per point.
+ * The cell index exists to make exactly this question cheap — `soil_map_unit_cell` is `without rowid`
  * keyed `(h3_cell, area_id)`, so naming the point's cell is a primary-key range scan.
  *
- * Every stored resolution is probed rather than just the index one. The whole tier is compacted parent-ward, so a
- * delineation that fills a run of cells is stored at a coarser resolution and a probe at the index resolution alone
- * would read it as an absence — the same ancestor walk the reader does, and the same false negative it avoids.
+ * Every stored resolution is probed rather than just the index one.
+ * The whole tier is compacted parent-ward, so a delineation that fills a run of cells is
+ * stored at a coarser resolution and a probe at the index resolution alone would read it as
+ * an absence — the same ancestor walk the reader does, and the same false negative it avoids.
  */
 function candidateDelineations(
 	database: DatabaseClient<SoilDatabase>,
@@ -233,12 +240,14 @@ function candidateDelineations(
 			mukey: string
 			rings: Uint8Array
 		}>) {
-			// dedupe on the delineation, never on its MAP unit. A delineation reached through two resolutions is one
-			// delineation and must be tested once. two different delineations of the same map unit are two shapes covering
-			// different ground and must both be tested. Keying on the map unit drops the second, and it drops it silently —
-			// the point test simply finds nothing and the row reads as a disagreement with the authority. Measured at Iowa
-			// scale: one point in 60, where the artifact's own geometry does contain the point and the index-driven read
-			// could not reach the delineation that holds it.
+			// dedupe on the delineation, never on its MAP unit.
+			// A delineation reached through two resolutions is one delineation
+			// and must be tested once. two different delineations of the same map
+			// unit are two shapes covering different ground and must both be tested.
+			// Keying on the map unit drops the second, and it drops it silently — the point
+			// test simply finds nothing and the row reads as a disagreement with the authority.
+			// Measured at Iowa scale: one point in 60, where the artifact's own geometry does contain
+			// the point and the index-driven read could not reach the delineation that holds it.
 			if (seen.has(row.area_id)) continue
 
 			seen.add(row.area_id)
@@ -250,11 +259,11 @@ function candidateDelineations(
 }
 
 /**
- * Which map unit the artifact's own geometry puts at a point, and how far the point is from that delineation's nearest
- * edge.
+ * Which map unit the artifact's own geometry puts at a point, and how far the
+ * point is from that delineation's nearest edge.
  *
- * The cell index narrows. the ray cast decides. The edge distance is measured against every candidate, so a near-miss
- * is reported with a distance rather than with nothing.
+ * The cell index narrows. the ray cast decides. The edge distance is measured against
+ * every candidate, so a near-miss is reported with a distance rather than with nothing.
  */
 function localDelineationAt(
 	database: DatabaseClient<SoilDatabase>,
@@ -286,8 +295,8 @@ function localDelineationAt(
 /**
  * Metres from a point to the nearest edge of an encoded ring set.
  *
- * Decoding here rather than walking the blob directly: this runs a few hundred times in a verification rather than per
- * geocode, and the decoded form is what makes the segment walk readable.
+ * Decoding here rather than walking the blob directly: this runs a few hundred times in a verification
+ * rather than per geocode, and the decoded form is what makes the segment walk readable.
  */
 function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number {
 	const { polygons } = decodeRings(blob)
@@ -317,8 +326,8 @@ function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number
 /**
  * Draw a reproducible sample of points from the artifact.
  *
- * The draw is a deterministic stride over the primary key rather than a random one, so a re-run compares the same
- * points and a disagreement can be looked at rather than re-rolled.
+ * The draw is a deterministic stride over the primary key rather than a random one, so a
+ * re-run compares the same points and a disagreement can be looked at rather than re-rolled.
  *
  * One row is read PER sample point and no more. A `where rowid % stride = 0` scan looks like the same thing and is not:
  * it walks the table itself, which means reading every ring blob to keep a few dozen. `order BY area_id limit 1 offset
@@ -334,9 +343,9 @@ export function sampleAgreementPoints(
 	const total = (database.prepare("SELECT count(*) AS n FROM soil_map_unit_area").get() as { n: number }).n
 	const stride = Math.max(1, Math.floor(total / Math.max(1, count)))
 
-	// One offset probe per sample point rather than one materialized key list. The list looks cheap because it reads
-	// only the primary key, and at the pilot's 2.7 million delineations it is still 2.7 million strings held to keep
-	// sixty of them.
+	// One offset probe per sample point rather than one materialized key list.
+	// The list looks cheap because it reads only the primary key, and at the pilot's 2.7
+	// million delineations it is still 2.7 million strings held to keep sixty of them.
 	const selectByOffset = database.prepare(
 		"SELECT area_id, mukey, min_lat, min_lon, max_lat, max_lon, rings FROM soil_map_unit_area ORDER BY area_id LIMIT 1 OFFSET ?"
 	)

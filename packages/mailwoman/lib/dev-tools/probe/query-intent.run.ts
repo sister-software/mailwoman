@@ -95,9 +95,9 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 
 /**
- * The default board: the hard-case board's `bare_namesake` + `fst_out_of_reach` surfaces (the populations ROAD_TO_V9 §3
- * assembled for exactly this register), plus the three controls a reader needs to trust the rest — a full address, a
- * lowercase full address, and a route pair.
+ * The default board: the hard-case board's `bare_namesake` + `fst_out_of_reach` surfaces
+ * (the populations ROAD_TO_V9 §3 assembled for exactly this register), plus the three controls a
+ * reader needs to trust the rest — a full address, a lowercase full address, and a route pair.
  */
 const DEFAULT_BOARD = [
 	"Springfield",

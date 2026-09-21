@@ -12,15 +12,15 @@ import { blankAsAbsent } from "@mailwoman/core/env/utils"
 import { z } from "zod"
 
 /**
- * The feature record every artifact carries. The optional strings take the shapefile's `""` as absence. the coordinates
- * are the normalized ones (east-positive, −180..180), never the source's 0..360.
+ * The feature record every artifact carries. The optional strings take the shapefile's `""` as absence.
+ * the coordinates are the normalized ones (east-positive, −180..180), never the source's 0..360.
  */
 export const PlanetaryNomenclatureFeatureSchema = z.object({
 	id: z.string().min(1),
 	body: z.enum(["moon", "mars"]),
 	name: z.string().min(1),
-	// The shapefile writes "" for an absent string; `blankAsAbsent` (the env schema helper, the one home for that
-	// mapping) turns it into absence before the optional applies.
+	// The shapefile writes "" for an absent string; `blankAsAbsent` (the env schema helper,
+	// the one home for that mapping) turns it into absence before the optional applies.
 	cleanName: blankAsAbsent(z.string().optional()),
 	featureType: z.string().min(1),
 	featureTypeCode: blankAsAbsent(z.string().optional()),

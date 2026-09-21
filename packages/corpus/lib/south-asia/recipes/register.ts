@@ -32,8 +32,8 @@ import { alignAndWrite, type CorpusRecipe, readTuples, type RecipeOptions, recip
 import type { CanonicalRow } from "#types"
 
 /**
- * Islamabad's residential sectors: the lettered rows E to I, the numbered columns the Capital Development Authority has
- * developed, and the four sub-sectors each splits into.
+ * Islamabad's residential sectors: the lettered rows E to I, the numbered columns the
+ * Capital Development Authority has developed, and the four sub-sectors each splits into.
  */
 const ISLAMABAD_SECTOR_ROWS = ["E", "F", "G", "I"] as const
 const ISLAMABAD_SECTOR_COLUMNS = [6, 7, 8, 9, 10, 11] as const
@@ -69,8 +69,8 @@ export function drawIslamabadSector(random: () => number): string {
 }
 
 /**
- * Render one register line from the adapter's components. Returns null when the row has no house number or no locality:
- * both registers need the two.
+ * Render one register line from the adapter's components.
+ * Returns null when the row has no house number or no locality: both registers need the two.
  */
 export function renderSouthAsiaRegister(
 	components: CanonicalRow["components"],

@@ -30,9 +30,9 @@ import { tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 
-// Hand-curated US street name pool. Real frequency-weighted street names — sampled
-// from US Census tiger 2024 top-1000 by occurrence count. Keep ~50 entries so the
-// synthesis distribution doesn't overfit to a tiny vocabulary.
+// Hand-curated US street name pool. Real frequency-weighted street names —
+// sampled from US Census tiger 2024 top-1000 by occurrence count.
+// Keep ~50 entries so the synthesis distribution doesn't overfit to a tiny vocabulary.
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
@@ -184,19 +184,20 @@ export interface StreetSynthesisOpts {
 	 */
 	includeHouseNumberProb?: number
 	/**
-	 * Probability of emitting the street bare — no `, City, ST ZIP` tail and no region/locality/ postcode components
-	 * (just `street_prefix`/`street`/`street_suffix` + optional `house_number`). Default 0 (preserves the original
-	 * full-address behavior exactly, including the RNG sequence). Set >0 to teach the model that a bare `10th Ave` /
-	 * `Main St` is a street rather than a locality — the functional-test failure cluster (bare streets mislabeled
-	 * `locality`), the bare-format analogue of the v0.7.x intersection-bare fix.
+	 * Probability of emitting the street bare — no `, City, ST ZIP` tail and no region/locality/
+	 * postcode components (just `street_prefix`/`street`/`street_suffix` + optional `house_number`).
+	 * Default 0 (preserves the original full-address behavior exactly, including the RNG sequence).
+	 * Set >0 to teach the model that a bare `10th Ave` / `Main St` is a street rather than a
+	 * locality — the functional-test failure cluster (bare streets mislabeled `locality`),
+	 * the bare-format analogue of the v0.7.x intersection-bare fix.
 	 */
 	bareProb?: number
 }
 
 function randomHouseNumber(random: () => number): string {
-	// US house number distribution: skewed low. 1-99 (30%), 100-999 (40%),
-	// 1000-9999 (25%), 10000+ (5%). The last band's 89_999 span is this file's own
-	// (the PO-box generators use 90_000) and is baked into every shipped street recipe output.
+	// US house number distribution: skewed low. 1-99 (30%), 100-999 (40%), 1000-9999 (25%), 10000+ (5%).
+	// The last band's 89_999 span is this file's own (the PO-box generators use 90_000)
+	// and is baked into every shipped street recipe output.
 	return tieredNumber(random, [
 		{ cutoff: 0.3, base: 1, span: 99 },
 		{ cutoff: 0.7, base: 100, span: 900 },
@@ -206,8 +207,9 @@ function randomHouseNumber(random: () => number): string {
 }
 
 /**
- * Synthesize a US street address with decomposed Stage 3 components. The street is built from prefix + name + suffix,
- * then passed through the same `decomposeStreet()` utility the tiger adapter uses — guarantees the synthetic
+ * Synthesize a US street address with decomposed Stage 3 components.
+ * The street is built from prefix + name + suffix, then passed through the same
+ * `decomposeStreet()` utility the tiger adapter uses — guarantees the synthetic
  * distribution matches the canonical decomposition logic.
  */
 export function synthesizeStreetRow(
@@ -231,12 +233,12 @@ export function synthesizeStreetRow(
 	// Pass through the same decomposeStreet tiger uses — match the training distribution.
 	const decomposed = decomposeStreet(fullStreet)
 
-	// note: country is intentionally omitted. We don't emit "USA" or "US" in the raw
-	// string, and the aligner's fuzzy match (edit distance 2) will spuriously match
-	// "US" against any 2-char token (e.g. a house number "45" is exactly 2 substitutions
-	// from "US"). The PO box synthesizer skips country for the same reason.
-	// Bare mode is guarded by `> 0` so the default (bareProb=0) consumes no RNG and reproduces the
-	// original full-address output byte-for-byte.
+	// note: country is intentionally omitted. We don't emit "USA" or "US" in the raw string,
+	// and the aligner's fuzzy match (edit distance 2) will spuriously match "US" against
+	// any 2-char token (e.g. a house number "45" is exactly 2 substitutions from "US").
+	// The PO box synthesizer skips country for the same reason.
+	// Bare mode is guarded by `> 0` so the default (bareProb=0) consumes no RNG
+	// and reproduces the original full-address output byte-for-byte.
 	const bareProb = opts.bareProb ?? 0
 	const bare = bareProb > 0 && random() < bareProb
 

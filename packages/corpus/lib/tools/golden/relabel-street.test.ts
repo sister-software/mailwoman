@@ -81,8 +81,8 @@ describe("relabelGoldenStreetRow", () => {
 	})
 
 	it("refuses to strip a post-directional when it would leave the street empty", () => {
-		// "1ST AVE SW BOX E": trailing "E" is a directional but "BOX" is no suffix — the b1 branch
-		// must not fire, and the b3 branch is not applied at all.
+		// "1ST AVE SW BOX E": trailing "E" is a directional but "BOX" is no suffix —
+		// the b1 branch must not fire, and the b3 branch is not applied at all.
 		const out = relabelGoldenStreetRow(row({ street: "1ST AVE SW BOX E" }))
 
 		expect(out.changed).toBe(false)

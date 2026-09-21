@@ -19,15 +19,15 @@ import { describe, expect, it } from "vitest"
 const run = recipeRunner("trailing-region", trailingRegionRecipe, 901)
 
 /**
- * One tuple repeated with each placement. Same locality, region, country and code throughout, so any difference in the
- * emitted `raw` is the placement and nothing else.
+ * One tuple repeated with each placement. Same locality, region, country and code throughout,
+ * so any difference in the emitted `raw` is the placement and nothing else.
  */
 const base = { locality: "Portopetro", region: "Illes Balears", country: "Spain", cc: "ES", locale: "es-ES" }
 
 /**
- * The recipe varies its surfaces by row index (`read % 2`, `read % 4`), so a single tuple cannot exercise a given
- * placement's plain form reliably. Repeating it lets the assertions look for a surface among the emitted rows rather
- * than pinning one index.
+ * The recipe varies its surfaces by row index (`read % 2`, `read % 4`), so a single tuple cannot
+ * exercise a given placement's plain form reliably. Repeating it lets the assertions
+ * look for a surface among the emitted rows rather than pinning one index.
  */
 const repeat = (tuple: object, n = 8): object[] => Array.from({ length: n }, () => ({ ...tuple }))
 
@@ -66,8 +66,8 @@ describe("trailing-region postcode placement", () => {
 	})
 
 	it("still labels every postcode-carrying row as the STRUCTURED source, whatever the placement", async () => {
-		// The sampler weights by `source`. A placement that leaked rows back into `synth-trailing-region` would make the
-		// new surface share the bare source's reps per row and become unweightable.
+		// The sampler weights by `source`. A placement that leaked rows back into `synth-trailing-region`
+		// would make the new surface share the bare source's reps per row and become unweightable.
 		const { rows } = await run(
 			[
 				{ ...base, postcode: "07691", postcodePlacement: "leading" },
@@ -139,8 +139,8 @@ describe("trailing-region Canadian province codes", () => {
 	})
 
 	it("writes the US state code too, which is the surface #2303 measured missing", async () => {
-		// The code reaches the model in volume through the US sources, but only ever with a street in front of the city.
-		// This recipe's `after_region` surface is the bare one: `Washington, DC 20003`.
+		// The code reaches the model in volume through the US sources, but only ever with a street in
+		// front of the city. This recipe's `after_region` surface is the bare one: `Washington, DC 20003`.
 		const us = (region: string) => ({
 			locality: "Washington",
 			region,
@@ -163,9 +163,10 @@ describe("trailing-region Canadian province codes", () => {
 
 describe("trailing-region source labelling", () => {
 	it("takes `--source-name`, so a rebuilt output can be weighted apart from the rows it must outweigh", async () => {
-		// The sampler buckets by `source` and weights each bucket. #1673's corrected Spanish surfaces are the same
-		// recipe over the same shape as the rows they exist to outweigh, so emitting them under the shipped label
-		// would have given them exactly the reps per row those rows already draw — no treatment at all.
+		// The sampler buckets by `source` and weights each bucket. #1673's corrected Spanish
+		// surfaces are the same recipe over the same shape as the rows they exist to outweigh,
+		// so emitting them under the shipped label would have given them exactly the
+		// reps per row those rows already draw — no treatment at all.
 		const tuples = repeat({ ...base, postcode: "07691", postcodePlacement: "leading" })
 		const { rows } = await run(tuples, [], { sourceName: "synth-trailing-region-es-v28" })
 
@@ -173,8 +174,9 @@ describe("trailing-region source labelling", () => {
 	})
 
 	it("keeps the structured and bare rows apart under an overridden name too", async () => {
-		// The split exists because pooling the structured rows with the 88,904 bare ones makes the new surface
-		// unweightable. an override that collapsed the two would reintroduce that under the renamed source.
+		// The split exists because pooling the structured rows with the 88,904 bare
+		// ones makes the new surface unweightable. an override that collapsed the two
+		// would reintroduce that under the renamed source.
 		const { rows } = await run(repeat({ ...base }), [], { sourceName: "synth-trailing-region-es-v28" })
 
 		expect(rows.every((row) => row.source === "synth-trailing-region-es-v28-bare")).toBe(true)

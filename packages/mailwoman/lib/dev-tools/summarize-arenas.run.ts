@@ -49,8 +49,8 @@ async function main(): Promise<void> {
 		let res: Result[]
 
 		try {
-			// Strict: the catch below re-throws anything that is not a missing file, so a corrupt
-			// sidecar must surface rather than read as an empty arena.
+			// Strict: the catch below re-throws anything that is not a missing file,
+			// so a corrupt sidecar must surface rather than read as an empty arena.
 			res = await readLocalJSONFile<Result[]>(`${outDir}/${a}.results.json`)
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === "ENOENT") {

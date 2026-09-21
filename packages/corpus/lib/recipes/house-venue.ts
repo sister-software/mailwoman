@@ -22,8 +22,8 @@ import {
 import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "#synthesizers/house-venue"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const houseVenueRecipe: CorpusRecipe = {
 	name: "house-venue",
@@ -41,8 +41,8 @@ export const houseVenueRecipe: CorpusRecipe = {
 		for await (const tuple of readTuples(opts.input)) {
 			read++
 
-			// FR renders without a region (postcode-before-locality tail — the run-2 contingency), so
-			// an empty region is valid there and stays required everywhere else.
+			// FR renders without a region (postcode-before-locality tail — the run-2 contingency),
+			// so an empty region is valid there and stays required everywhere else.
 			if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && tuple.country !== "FR")) {
 				skipped++
 

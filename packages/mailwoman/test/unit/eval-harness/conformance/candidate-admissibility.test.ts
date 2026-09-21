@@ -224,8 +224,8 @@ describe("reading a refinement pair", () => {
 		expect(reading.counts.beyond_window).toBe(2)
 	})
 
-	// The refined table being short does not explain a candidate arriving: its window bounds what the refined
-	// lookup could show, never what the base's roomy table failed to hold.
+	// The refined table being short does not explain a candidate arriving: its window bounds
+	// what the refined lookup could show, never what the base's roomy table failed to hold.
 	it("does not let the refined table's own window explain an addition the base had room for", () => {
 		const reading = accountRefinement(
 			[lookup({ candidates: [{ id: 1 }, { id: 2 }, { id: 3 }], limit: 5 })],
@@ -237,8 +237,9 @@ describe("reading a refinement pair", () => {
 		expect(reading.readings.find((entry) => entry.key === "locality:2")!.account).toBe("beyond_window")
 	})
 
-	// The case a `top5(refined) ⊆ top5(base)` assertion fails and this instrument must not: the refined query
-	// surfaced a candidate that was sixth before, and the base table is the only reason nobody saw it.
+	// The case a `top5(refined) ⊆ top5(base)` assertion fails and this instrument
+	// must not: the refined query surfaced a candidate that was sixth before,
+	// and the base table is the only reason nobody saw it.
 	it("explains an ADDITION by the base's own window, and does not hold the row back for it", () => {
 		const reading = accountRefinement(
 			[lookup({ candidates: [{ id: 1 }, { id: 2 }], limit: 2 })],

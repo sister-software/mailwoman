@@ -21,8 +21,8 @@ import {
 import { synthesizeMilitaryPoBoxRow, synthesizePoBoxRow, type PoBoxBaseTuple } from "#synthesizers/po-box"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const poBoxRecipe: CorpusRecipe = {
 	name: "po-box",
@@ -37,9 +37,10 @@ export const poBoxRecipe: CorpusRecipe = {
 		const random = makeLcg(opts.seed)
 		const pmbRatio = opts.pmbRatio ?? 0.15
 		const militaryRatio = opts.militaryRatio ?? 0
-		// `--source-name` so an output built for one class carries its own source label and its own reps per row. A
-		// military-only output (`--variants 0 --military-ratio 1`) is otherwise indistinguishable from the
-		// leader-template rows in the mixture, and the two are weighted for different reasons (#517).
+		// `--source-name` so an output built for one class carries its own source label
+		// and its own reps per row. A military-only output (`--variants 0 --military-ratio 1`)
+		// is otherwise indistinguishable from the leader-template rows in the mixture,
+		// and the two are weighted for different reasons (#517).
 		const source = opts.sourceName ?? "synth-po-box"
 		let read = 0
 		let emitted = 0
@@ -89,8 +90,9 @@ export const poBoxRecipe: CorpusRecipe = {
 				}
 			}
 
-			// US military/diplomatic rows (#517): self-contained, one per input line at --military-ratio.
-			// Default 0 → byte-stable (random() not called when off). US-only.
+			// US military/diplomatic rows (#517): self-contained,
+			// one per input line at --military-ratio. Default 0 → byte-stable
+			// (random() not called when off). US-only.
 			if (militaryRatio > 0 && random() < militaryRatio) {
 				const mil = synthesizeMilitaryPoBoxRow({ random })
 

@@ -109,8 +109,8 @@ let fixtureBinPath: string
 beforeAll(async () => {
 	fixtureMatcher = buildFixtureMatcher(FIXTURE_PLACES)
 
-	// Write the serialized fixture to a temp file so runAutocomplete (which reads from disk) can be
-	// tested end-to-end.
+	// Write the serialized fixture to a temp file so runAutocomplete
+	// (which reads from disk) can be tested end-to-end.
 	const buf = serializeFST(fixtureMatcher)
 	fixtureBinPath = tempRootPath(`mailwoman-fst-fixture-${Date.now()}.bin`)
 	await writeLocalFile(buf, fixtureBinPath)
@@ -128,9 +128,9 @@ describe("normalizeTokens symmetry", () => {
 	})
 
 	it("applies NFKC — composed characters are normalized but diacritics are preserved", () => {
-		// normalizeTokens applies nfkc + lowercase + punctuation strip. It does not decompose or
-		// strip diacritics — that's intentional so that "José" and "Jose" are treated as distinct
-		// tokens at both build time and query time (symmetry preserved).
+		// normalizeTokens applies nfkc + lowercase + punctuation strip.
+		// It does not decompose or strip diacritics — that's intentional so that "José" and "Jose"
+		// are treated as distinct tokens at both build time and query time (symmetry preserved).
 		const tokens = normalizeTokens("San José")
 		expect(tokens).toEqual(["san", "josé"])
 	})
@@ -174,8 +174,8 @@ describe("autocomplete — in-memory fixture", () => {
 
 	it("prefix 'San' yields San Francisco as the top result (highest referential)", () => {
 		// The FST is token-based: "San Fr" would require a token edge for "fr" which doesn't exist.
-		// The correct prefix is the full first token "San" — the BFS expansion then finds "Francisco"
-		// and "Jose" as the one-token continuations, ranked by importance.
+		// The correct prefix is the full first token "San" — the BFS expansion then finds
+		// "Francisco" and "Jose" as the one-token continuations, ranked by importance.
 		const result = autocomplete(fixtureMatcher, "San", { maxSuggestions: 5 })
 		expect(result.suggestions.length).toBeGreaterThan(0)
 		expect(result.suggestions[0]!.name).toBe("San Francisco")
@@ -246,8 +246,9 @@ describe("resolveFSTPath", () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", undefined)
 
 		try {
-			// Lowercase on both halves — the name `gazetteer-pipeline/fst.ts` actually writes. This assertion
-			// previously restated the resolver's own spelling, so it agreed with the code and with no artifact.
+			// Lowercase on both halves — the name `gazetteer-pipeline/fst.ts` actually writes.
+			// This assertion previously restated the resolver's own spelling,
+			// so it agreed with the code and with no artifact.
 			expect(String(resolveFSTPath())).toBe(String(dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")))
 		} finally {
 			vi.unstubAllEnvs()

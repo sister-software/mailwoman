@@ -66,7 +66,8 @@ async function fixture(
 		listInvoices?: boolean
 		chargeRefunded?: number
 		/**
-		 * Invoice ids the list answers ahead of this fixture's, with no object behind them: a retrieval of one fails.
+		 * Invoice ids the list answers ahead of this fixture's, with no object behind them:
+		 * a retrieval of one fails.
 		 */
 		unreadableInvoices?: string[]
 		/**

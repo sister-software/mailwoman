@@ -47,8 +47,8 @@ import {
 } from "#vocabulary"
 
 /**
- * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob: a larger transaction grows
- * the write-ahead file without improving throughput.
+ * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob:
+ * a larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
 
@@ -58,8 +58,8 @@ const INSERT_TRANSACTION_ROWS = 5000
 const PROGRESS_STRIDE = 5000
 
 /**
- * What one chunk produced. Every field is JSON-serializable, because a chunk normally reports across a process
- * boundary.
+ * What one chunk produced. Every field is JSON-serializable, because a chunk
+ * normally reports across a process boundary.
  */
 export interface CoastalChunkResult {
 	erosionFeatures: number
@@ -78,7 +78,8 @@ export interface CoastalChunkResult {
 	wholeCellRows: number
 	partialCellRows: number
 	/**
-	 * `[coverageCell, polygonsReachingIt]` pairs — an array rather than a `Map` so it survives the process boundary.
+	 * `[coverageCell, polygonsReachingIt]` pairs — an array rather than a `Map`
+	 * so it survives the process boundary.
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
@@ -86,8 +87,9 @@ export interface CoastalChunkResult {
 	 */
 	area: { sourceM2: number; nestedM2: number; allExteriorM2: number }
 	/**
-	 * The defence types this chunk saw, with counts — a census carried on the receipt rather than only checked, because
-	 * the domain is one the authority publishes no list for and the counts are how a reader sees it move.
+	 * The defence types this chunk saw, with counts — a census carried on the receipt
+	 * rather than only checked, because the domain is one the authority publishes no list for
+	 * and the counts are how a reader sees it move.
 	 */
 	defenceTypeCounts: Array<[string, number]>
 }
@@ -102,7 +104,8 @@ export interface IngestCoastalChunkOptions {
 /**
  * Stream one chunk of the source into `database`.
  *
- * @throws {Error} On a value outside the authority's declared domains, or on a feature the classifier refuses.
+ * @throws {Error} On a value outside the authority's declared domains,
+ *   or on a feature the classifier refuses.
  */
 export async function ingestCoastalChunk(
 	database: DatabaseClient<CoastalDatabase>,
@@ -254,9 +257,9 @@ export async function ingestCoastalChunk(
 				encodeRings(feature.polygons)
 			)
 
-			// no cell rows, and the absence is the structure. Ground instability is a different hazard from coastal erosion,
-			// and 160 rows answer a bounding-box scan faster than an index would. Not indexing them is what makes it
-			// impossible for one to reach an erosion probe.
+			// no cell rows, and the absence is the structure. Ground instability is a different hazard
+			// from coastal erosion, and 160 rows answer a bounding-box scan faster than an index would.
+			// Not indexing them is what makes it impossible for one to reach an erosion probe.
 			instabilityFeatures++
 
 			batch.rowWritten()
@@ -285,9 +288,10 @@ export async function ingestCoastalChunk(
 /**
  * Refuse a feature carrying a value outside a domain the census enumerated.
  *
- * Every domain here was read across all twelve published layers rather than one, because a domain taken from a single
- * layer throws on the day another layer carries its ninth value — and the two policy fields already disagree with each
- * other on the spelling of one policy, which a single-field census would have missed.
+ * Every domain here was read across all twelve published layers rather than one,
+ * because a domain taken from a single layer throws on the day another layer carries
+ * its ninth value — and the two policy fields already disagree with each other on the
+ * spelling of one policy, which a single-field census would have missed.
  */
 function assertDeclaredDomains(feature: CoastalSourceFeature): void {
 	for (const [field, value] of [

@@ -1,6 +1,6 @@
 /**
- * Report-only predicates for the decoder-grammar census. These functions observe a completed decode. they do not score,
- * repair, or replace it.
+ * Report-only predicates for the decoder-grammar census.
+ * These functions observe a completed decode. they do not score, repair, or replace it.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -26,8 +26,8 @@ export interface C6Violation {
 }
 
 /**
- * C6: report a decoded boundary when a longer accepted registry surface covers it and a proper nested accepted surface
- * exactly aligns with either adjacent decoded span under the same component tag.
+ * C6: report a decoded boundary when a longer accepted registry surface covers it and a proper nested
+ * accepted surface exactly aligns with either adjacent decoded span under the same component tag.
  */
 export function detectC6Violations(
 	spans: ReadonlyArray<CensusSpan>,
@@ -96,8 +96,8 @@ export interface LocatedTruthSpan {
 }
 
 /**
- * Locate only component truth that occurs exactly once in the input. Partial or repeated truth cannot determine whether
- * a detector firing is right and is deliberately omitted.
+ * Locate only component truth that occurs exactly once in the input.
+ * Partial or repeated truth cannot determine whether a detector firing is right and is deliberately omitted.
  */
 export function locateUniqueComponentTruth(
 	input: string,
@@ -126,9 +126,10 @@ export function locateUniqueComponentTruth(
 /**
  * Grade one reported boundary against partial component truth.
  *
- * A boundary inside a uniquely located expected component is a true positive. A boundary exactly on a uniquely located
- * expected component edge is a false positive unless another asserted component contains it. Everything else remains
- * unclassified rather than treating absent truth as negative truth.
+ * A boundary inside a uniquely located expected component is a true positive.
+ * A boundary exactly on a uniquely located expected component edge is a false positive
+ * unless another asserted component contains it. Everything else remains unclassified
+ * rather than treating absent truth as negative truth.
  */
 export function gradeBoundaryTruth(boundary: number, truth: ReadonlyArray<LocatedTruthSpan>): BoundaryTruthGrade {
 	if (truth.some((span) => span.start < boundary && boundary < span.end)) return "true_positive"
@@ -188,8 +189,8 @@ function scoredEntries(entries: ReadonlyArray<FSTPlaceEntryLike>): RegistryScore
 }
 
 /**
- * Compare BIO-mapped entries accepting the complete piece sequence with entries accepting any proper nested sequence.
- * Absence is `null`, never a score of zero.
+ * Compare BIO-mapped entries accepting the complete piece sequence with entries accepting
+ * any proper nested sequence. Absence is `null`, never a score of zero.
  */
 export function completeSpanRegistryReceipt(
 	matches: ReadonlyArray<FSTAcceptedMatch>,

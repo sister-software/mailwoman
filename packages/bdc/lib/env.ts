@@ -10,8 +10,8 @@ import { $private as corePrivate, liveEnv } from "@mailwoman/core/env"
 import { z } from "zod"
 
 /**
- * FCC Broadband Map (BDC) public-API credentials (`bdc/lib/sdk/client.ts`) — username + hash_value header auth. Never
- * log their values.
+ * FCC Broadband Map (BDC) public-API credentials (`bdc/lib/sdk/client.ts`) —
+ * username + hash_value header auth. Never log their values.
  */
 export const PrivateBDCEnvSchema = z.object({
 	FCC_MAP_USERNAME: z.string().optional().meta({

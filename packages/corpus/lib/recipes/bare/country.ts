@@ -22,13 +22,15 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 /**
- * Surfaces shorter than this are the code register (`JP`, `GER`), not a name — excluded (see the module doc).
+ * Surfaces shorter than this are the code register (`JP`, `GER`), not a name —
+ * excluded (see the module doc).
  */
 const MIN_NAME_LENGTH = 4
 
 /**
- * Every (surface, iso2) pair the recipe emits: the ISO canonical names plus each country's curated surface forms,
- * deduplicated on the surface string (a form shared across countries — none known — would keep its first bearer).
+ * Every (surface, iso2) pair the recipe emits: the ISO canonical names plus
+ * each country's curated surface forms, deduplicated on the surface string
+ * (a form shared across countries — none known — would keep its first bearer).
  */
 function* bareCountrySurfaces(): Generator<{ surface: string; iso2: string }> {
 	const seen = new Set<string>()
@@ -52,8 +54,8 @@ function* bareCountrySurfaces(): Generator<{ surface: string; iso2: string }> {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const bareCountryRecipe: CorpusRecipe = {
 	name: "bare-country",

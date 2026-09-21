@@ -32,8 +32,8 @@ import { runFileSync } from "@mailwoman/core/process"
 import { type ForkProbe, type RepoOrigin, resolveWOFRepoOrigin } from "#gazetteer-pipeline/wof/repo-origin"
 
 /**
- * What the sync would do to one repo. Every value except {@link SyncAction.Clone} and {@link SyncAction.FastForward}
- * leaves the working tree untouched.
+ * What the sync would do to one repo. Every value except {@link SyncAction.Clone}
+ * and {@link SyncAction.FastForward} leaves the working tree untouched.
  */
 export const SyncAction = {
 	/**
@@ -49,8 +49,8 @@ export const SyncAction = {
 	 */
 	UpToDate: "up-to-date",
 	/**
-	 * The clone's `origin` is not the resolved origin — typically upstream while a fork exists. Reported, never acted on
-	 * without an explicit opt-in, because it changes what the next build reads.
+	 * The clone's `origin` is not the resolved origin — typically upstream while a fork exists.
+	 * Reported, never acted on without an explicit opt-in, because it changes what the next build reads.
 	 */
 	RepointRequired: "repoint-required",
 	/**
@@ -62,7 +62,8 @@ export const SyncAction = {
 	 */
 	RefuseLocalCommits: "refuse-local-commits",
 	/**
-	 * A directory exists but is not a git checkout — an extracted archive rather than something to fetch into.
+	 * A directory exists but is not a git checkout — an extracted archive
+	 * rather than something to fetch into.
 	 */
 	RefuseNotAClone: "refuse-not-a-clone",
 } as const
@@ -70,8 +71,8 @@ export const SyncAction = {
 export type SyncAction = (typeof SyncAction)[keyof typeof SyncAction]
 
 /**
- * The observable state of one checkout. Every field is read, never inferred — `undefined` means the question could not
- * be answered here, which is different from a negative answer.
+ * The observable state of one checkout. Every field is read, never inferred — `undefined`
+ * means the question could not be answered here, which is different from a negative answer.
  */
 export interface CloneState {
 	exists: boolean
@@ -109,8 +110,9 @@ export interface RepoSyncPlan {
 /**
  * Two remote URLs naming the same repository.
  *
- * GitHub is reachable as `ssh://git@github.com/org/repo`, `git@github.com:org/repo` and `https://github.com/org/repo`,
- * with or without a `.git` suffix. Comparing the strings would report a re-point for a clone that is already correct,
+ * GitHub is reachable as `ssh://git@github.com/org/repo`, `git@github.com:org/repo`
+ * and `https://github.com/org/repo`, with or without a `.git` suffix.
+ * Comparing the strings would report a re-point for a clone that is already correct,
  * and a spurious re-point prompt trains a reader to approve them.
  */
 export function sameRemote(a: string | undefined, b: string | undefined): boolean {
@@ -178,8 +180,9 @@ function git(cwd: string, args: string[]): string {
 }
 
 /**
- * Read one checkout's state. Each probe is independently guarded: a repo with no tracked upstream still reports its
- * remote and vintage, rather than collapsing to "unknown" because one question had no answer.
+ * Read one checkout's state. Each probe is independently guarded: a repo with no
+ * tracked upstream still reports its remote and vintage, rather than collapsing
+ * to "unknown" because one question had no answer.
  */
 export async function inspectClone(directory: string): Promise<CloneState> {
 	if (!(await pathExists(directory))) return { exists: false, isRepository: false }
@@ -198,11 +201,12 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 		}
 	}
 
-	// Compared against origin's branch rather than `@{u}`. `git remote rename origin upstream` rewrites `branch.<name>.remote`,
-	// so after a re-point the tracked upstream is the remote we moved away from — and a clone sitting exactly level with
-	// its fork reports as carrying unpushed commits, which the planner then refuses to touch. Measured on the GB
-	// checkout the moment the re-point landed: `head...@{u}` answered `35 0` while `head` and `origin/master` were the
-	// same sha.
+	// Compared against origin's branch rather than `@{u}`.
+	// `git remote rename origin upstream` rewrites `branch.<name>.remote`, so after a
+	// re-point the tracked upstream is the remote we moved away from — and a clone sitting
+	// exactly level with its fork reports as carrying unpushed commits, which the planner
+	// then refuses to touch. Measured on the GB checkout the moment the re-point landed:
+	// `head...@{u}` answered `35 0` while `head` and `origin/master` were the same sha.
 	const branch = read(["rev-parse", "--abbrev-ref", "HEAD"])
 
 	const counts =
@@ -230,9 +234,10 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 /**
  * Plan the sync for a set of repos without touching anything.
  *
- * `fetchFirst` updates remote-tracking refs so `behind` is measured against the remote's actual tip rather than
- * whatever this machine last heard. Skipping it reports a stale clone as up-to-date, which is the failure the whole
- * command exists to prevent . Therefore, it defaults on, and turning it off is for offline inspection.
+ * `fetchFirst` updates remote-tracking refs so `behind` is measured against the remote's actual
+ * tip rather than whatever this machine last heard. Skipping it reports a stale
+ * clone as up-to-date, which is the failure the whole command exists to prevent .
+ * Therefore, it defaults on, and turning it off is for offline inspection.
  */
 export async function planReposSync(options: {
 	root: string
@@ -252,8 +257,8 @@ export async function planReposSync(options: {
 				// Depth-preserving: a shallow clone stays shallow, and an unshallow one is not truncated.
 				git(directory, ["fetch", "--quiet", "origin"])
 			} catch {
-				// An unreachable remote is a state the plan reports through `behind: undefined`, not a reason to abort the
-				// whole sweep — one dead remote must not hide the other twelve repos' verdicts.
+				// An unreachable remote is a state the plan reports through `behind: undefined`, not a reason
+				// to abort the whole sweep — one dead remote must not hide the other twelve repos' verdicts.
 			}
 		}
 

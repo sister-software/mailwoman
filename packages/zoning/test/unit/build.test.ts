@@ -156,9 +156,9 @@ describe("the sealed artifact", () => {
 			n: number
 		}
 
-		// A polyfill keyed on cell centres returns nothing for a 5 m square, and a feature indexed to nothing reads
-		// downstream as an absence — the failure the per-part zero-cell guard exists to make impossible. At resolution 9,
-		// that would be 86.8% of the real product's polygons.
+		// A polyfill keyed on cell centres returns nothing for a 5 m square, and a feature indexed to
+		// nothing reads downstream as an absence — the failure the per-part zero-cell guard exists
+		// to make impossible. At resolution 9, that would be 86.8% of the real product's polygons.
 		expect(sliver.n).toBeGreaterThan(0)
 	})
 
@@ -211,16 +211,16 @@ describe("the vocabulary decision", () => {
 		const reading = lookup.lookup(unzonedCentre.latitude, unzonedCentre.longitude)
 
 		expect(reading.designations[0]!.crosswalk?.declared).toBe(false)
-		// Its label is the code itself, because the row carried no description — never a label this package wrote for a
-		// code the publisher never declared.
+		// Its label is the code itself, because the row carried no description —
+		// never a label this package wrote for a code the publisher never declared.
 		expect(reading.designations[0]!.crosswalk?.label).toBe("N/A")
 	})
 
 	it("keeps a declared code the data never uses, at zero observed rows", () => {
 		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		// The domain is the publisher's statement of what a value may be rather than a census of what it is. `SDZ` is the real
-		// product's example: declared as a plan level and used on no row.
+		// The domain is the publisher's statement of what a value may be rather than a census of what it is.
+		// `SDZ` is the real product's example: declared as a plan level and used on no row.
 		const row = database
 			.prepare("SELECT declared, observed_rows FROM zoning_vocabulary WHERE scheme = ? AND code = ?")
 			.get("IE-PLAN-LEVEL", "SDZ") as { declared: number; observed_rows: number } | undefined
@@ -255,8 +255,9 @@ describe("the vocabulary decision", () => {
 	})
 
 	it("measures the crosswalk as NON-FUNCTIONAL over an (authority, code) pair", () => {
-		// The same local code assigned two different generic types by the same authority — which is the whole argument for
-		// carrying the local code verbatim and for the edge table being empty. Nationally: 52 of 795 pairs.
+		// The same local code assigned two different generic types by the same authority —
+		// which is the whole argument for carrying the local code verbatim and for the
+		// edge table being empty. Nationally: 52 of 795 pairs.
 		expect(result.crosswalk.pairs).toBeGreaterThan(0)
 		expect(result.crosswalk.nonFunctionalPairs).toBe(1)
 		expect(result.crosswalk.worst[0]?.crosswalkCodes).toEqual(["R2", "R3"])
@@ -303,8 +304,9 @@ describe("the plan is part of the claim", () => {
 		const reading = lookup.lookup(INSIDE_ZONE_A.latitude, INSIDE_ZONE_A.longitude)
 		const designation = reading.designations[0]!
 
-		// `currentPlan = 1` means not superseded. Whether the window has closed is `validTo`, and the comparison against a
-		// date is the caller's — 2,363 of the real product's 85,330 rows carry a `validTo` already in the past.
+		// `currentPlan = 1` means not superseded. Whether the window has closed is `validTo`,
+		// and the comparison against a date is the caller's — 2,363 of the real product's
+		// 85,330 rows carry a `validTo` already in the past.
 		expect(designation.plan.currentPlan).toBe(1)
 		expect(designation.plan.validFrom).toBeTruthy()
 		expect(designation.plan.validTo).toBeTruthy()
@@ -368,9 +370,10 @@ describe("the meaning-of-zero rule", () => {
 		expect(rows.length).toBeGreaterThan(0)
 		expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
 
-		// the failing test the issue asks FOR: not one assertion on one row, but the whole table read back and every row
-		// checked through the interface's own predicate. A code path that read `supportsExclusion` as true for this layer
-		// would have to make one of these rows carry a stronger basis, and this fails the moment it does.
+		// the failing test the issue asks FOR: not one assertion on one row, but the whole
+		// table read back and every row checked through the interface's own predicate.
+		// A code path that read `supportsExclusion` as true for this layer would have to make
+		// one of these rows carry a stronger basis, and this fails the moment it does.
 		for (const row of rows) {
 			expect(row.basis).toBe(CoverageBasis.SourcePresent)
 			expect(supportsExclusion({ basis: row.basis as CoverageBasis })).toBe(false)
@@ -425,8 +428,8 @@ describe("the provenance grade", () => {
 
 		expect(grades).toEqual(["authoritative"])
 
-		// The check is what makes the grade a constraint rather than a convention. `not NULL` alone accepts `''`, and a
-		// blank matches neither half of every read that splits on grade.
+		// The check is what makes the grade a constraint rather than a convention.
+		// `not NULL` alone accepts `''`, and a blank matches neither half of every read that splits on grade.
 		const path = scratch.resolve("grade-check.db")
 		using source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
@@ -442,8 +445,8 @@ describe("the provenance grade", () => {
 			/CHECK constraint failed/u
 		)
 
-		// And the one grade this artifact does not hold is still a legal value — the constraint is about the vocabulary,
-		// and keeping the grades apart is the artifact's job rather than the column's.
+		// And the one grade this artifact does not hold is still a legal value — the constraint is about
+		// the vocabulary, and keeping the grades apart is the artifact's job rather than the column's.
 		expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = 'inferred' WHERE area_id = '1'")).not.toThrow()
 	})
 
@@ -464,14 +467,15 @@ describe("the provenance grade", () => {
 describe("the area cross-check", () => {
 	it("reports the hole-blind reading beside the nested one, and it is larger", () => {
 		expect(result.area.allExteriorKM2).toBeGreaterThan(result.area.nestedKM2)
-		// The signed sum is the nested reading under this service's convention, which is the receipt that the orientation
-		// was read rather than assumed.
+		// The signed sum is the nested reading under this service's convention,
+		// which is the receipt that the orientation was read rather than assumed.
 		expect(result.area.signedKM2).toBeCloseTo(result.area.nestedKM2, 6)
 	})
 
 	it("leaves the publisher's figure ABSENT where it was not read, rather than defaulting it to its own", () => {
-		// A receipt printing "publisher 205.4 km², 0.000% apart" for a check that never ran is the one shape a reader cannot
-		// tell from a pass. The fixture build supplies no publisher figure, so the reading's witness is absent.
+		// A receipt printing "publisher 205.4 km², 0.000% apart" for a check that never ran is
+		// the one shape a reader cannot tell from a pass. The fixture build supplies no
+		// publisher figure, so the reading's witness is absent.
 		expect(result.area.witness).toBe("absent")
 	})
 

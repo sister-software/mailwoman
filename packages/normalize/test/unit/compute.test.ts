@@ -102,8 +102,7 @@ describe("normalize — offsetMap invariants", () => {
 	})
 
 	it("offsetMap correctness after whitespace collapse", () => {
-		// raw:  "350  5th"  (length 8, double space at 3,4)
-		// norm: "350 5th"   (length 7)
+		// raw: "350 5th" (length 8, double space at 3,4) norm: "350 5th" (length 7)
 		const r = normalize("350  5th")
 		expect(r.normalized).toBe("350 5th")
 		expect(r.offsetMap[0]).toBe(0) // '3' → 0

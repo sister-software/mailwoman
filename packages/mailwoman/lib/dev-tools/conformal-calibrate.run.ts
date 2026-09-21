@@ -123,18 +123,18 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 //#region Seeded deterministic shuffle — a reproducibility PIN
 
 /**
- * Keep this exact glibc-constant LCG stream: the published conformal thresholds were selected under it, and
- * `@mailwoman/core/utils`' `makeLcg` uses different constants — swapping streams re-splits calibration/test and
- * silently moves Q̂.
+ * Keep this exact glibc-constant LCG stream: the published conformal thresholds were
+ * selected under it, and `@mailwoman/core/utils`' `makeLcg` uses different constants —
+ * swapping streams re-splits calibration/test and silently moves Q̂.
  */
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
 	const step = makeGlibcLcgFloat64((seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff)
 
-	// The sampler takes the raw state modulo the bound rather than scaling a float, which is why this reaches for
-	// `shuffleBy` and not `shuffleWith`. Both are the same walk. the published conformal thresholds were selected under
-	// this sampler, so it stays exactly as it is.
+	// The sampler takes the raw state modulo the bound rather than scaling a float, which is why this
+	// reaches for `shuffleBy` and not `shuffleWith`. Both are the same walk. the published
+	// conformal thresholds were selected under this sampler, so it stays exactly as it is.
 	shuffleBy(out, (bound) => step() % bound)
 
 	return out
@@ -160,9 +160,9 @@ interface StreetHit {
 }
 
 /**
- * Kept local rather than tree-hits' `findAddressPointHit` / `findInterpolatedHit`: those answer only a coordinate, and
- * this walk also needs the stamped `resolution_tier` and the interpolation `uncertainty_m` to price the claimed radius
- * — neither of which the shared readers carry.
+ * Kept local rather than tree-hits' `findAddressPointHit` / `findInterpolatedHit`: those answer
+ * only a coordinate, and this walk also needs the stamped `resolution_tier` and the interpolation
+ * `uncertainty_m` to price the claimed radius — neither of which the shared readers carry.
  */
 function findStreetHit(tree: AddressTree): StreetHit | null {
 	for (const n of walkNodes(tree.roots)) {
@@ -208,9 +208,9 @@ interface HoldoutRow {
 //#region Main
 
 /**
- * Build the parse → resolve cascade this calibration measures. Mirrors `oa-resolver-eval.ts`'s construction exactly —
- * the whole point of a conformal threshold is that it was fitted against the same stack that will later apply it, so
- * the two must not drift.
+ * Build the parse → resolve cascade this calibration measures.
+ * Mirrors `oa-resolver-eval.ts`'s construction exactly — the whole point of a conformal threshold is
+ * that it was fitted against the same stack that will later apply it, so the two must not drift.
  */
 async function buildCascade(paths: {
 	modelPath: string
@@ -479,8 +479,8 @@ async function main(): Promise<void> {
 	console.log("")
 	console.log(hr)
 
-	// Print the concise three-line calibration summary.
-	// Characterise the dominant tier (address_point here. interp may lack sufficient rows).
+	// Print the concise three-line calibration summary. Characterise the dominant tier
+	// (address_point here. interp may lack sufficient rows).
 	const situsTC = tierConformal.find((x) => x.tier === "address_point")!
 	const interpTC = tierConformal.find((x) => x.tier === "interpolated")!
 

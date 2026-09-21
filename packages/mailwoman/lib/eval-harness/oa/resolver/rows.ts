@@ -8,8 +8,8 @@
 import { JSONSpliterator } from "spliterator"
 
 /**
- * One OpenAddresses row: a real address string plus the government point it was published with. `expected` is the admin
- * truth the resolver is graded against; `lat`/`lon` are the coordinate truth.
+ * One OpenAddresses row: a real address string plus the government point it was published with.
+ * `expected` is the admin truth the resolver is graded against; `lat`/`lon` are the coordinate truth.
  */
 export interface OARow {
 	input: string

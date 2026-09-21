@@ -33,8 +33,8 @@ function city(
 }
 
 /**
- * Two homograph bearers in different countries with a real contest, plus enough unique names to fill the other four
- * strata at the target the loaded definition registers.
+ * Two homograph bearers in different countries with a real contest, plus enough unique
+ * names to fill the other four strata at the target the loaded definition registers.
  */
 function corpus(uniqueCount: number): GeoNamesCity[] {
 	const rows: GeoNamesCity[] = [

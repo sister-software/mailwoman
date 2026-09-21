@@ -88,8 +88,8 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 	it("is resolution-byte-identical to the flag-off walk — only additive metadata differs", async () => {
 		const resolver = createWOFResolver(silentBackend)
 
-		// The US country sibling confirms the span (B1-1's confirmed leg — where the pass must be inert
-		// for resolution) while leaving the walk lookup-less either way.
+		// The US country sibling confirms the span (B1-1's confirmed leg — where the pass
+		// must be inert for resolution) while leaving the walk lookup-less either way.
 		const mkTree = () =>
 			tree(
 				node({ tag: "street", value: "Twin Peaks" }),
@@ -112,8 +112,8 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 	})
 
 	it("confirms a DE/FR shape-native 5-digit span — M-1 finding #1, the documented limit", () => {
-		// A 5-digit house number is shape-native to US/DE/FR, so with a DE signal the intersection is
-		// non-empty — the shape cannot exclude it, and the mechanism confirms it instead.
+		// A 5-digit house number is shape-native to US/DE/FR, so with a DE signal the intersection
+		// is non-empty — the shape cannot exclude it, and the mechanism confirms it instead.
 		const roots = [postcodeNode("50733"), node({ tag: "country", value: "Germany" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -204,8 +204,8 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 		const verdict = applyPostcodeShapeCoherence(roots)
 
 		expect(verdict.excluded).toEqual(["SW1A 2AA"])
-		// The compound-split corner (#942 territory): the span is not digit-only, so it cannot be
-		// retagged to house_number — it keeps its tag and is stamped.
+		// The compound-split corner (#942 territory): the span is not digit-only,
+		// so it cannot be retagged to house_number — it keeps its tag and is stamped.
 		expect(roots[0]!.tag).toBe("postcode")
 		expect(isShapeExcludedPostcode(roots[0]!)).toBe(true)
 	})
@@ -242,9 +242,9 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 	})
 
 	it("confounds: 'Sydney NSW 2000, Australia' stays CONFIRMED — the default country is never a signal", () => {
-		// B1-3: reached under a US default, 2000 must not be excluded — that would delete the
-		// evidence the country-scope pass needs. The mechanism has no defaultCountry input at all.
-		// the only signals are the tree's own country/region tokens.
+		// B1-3: reached under a US default, 2000 must not be excluded — that would delete
+		// the evidence the country-scope pass needs. The mechanism has no defaultCountry
+		// input at all. the only signals are the tree's own country/region tokens.
 		const roots = [postcodeNode("2000"), node({ tag: "country", value: "Australia" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -288,8 +288,8 @@ describe("firstPostcodeValue integration — excluded spans never become the add
 		const roots = [excluded, node({ tag: "region", value: "CO" }), good]
 		applyPostcodeShapeCoherence(roots)
 
-		// The resolver walk must use the good span as the address's postcode — the excluded one is
-		// skipped even though it appears first in tree order.
+		// The resolver walk must use the good span as the address's postcode —
+		// the excluded one is skipped even though it appears first in tree order.
 		const resolver = createWOFResolver(silentBackend)
 		const resolved = await resolver.resolveTree(tree(...roots), { postcodeShapeCoherence: true })
 

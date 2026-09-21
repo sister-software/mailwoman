@@ -25,8 +25,8 @@
  *   production.
  */
 
-// The exterior and hole ring builders live in `@mailwoman/spatial` — a winding convention rather than this
-// product's geometry, and a second copy of it is a second place for a hole to stop being one.
+// The exterior and hole ring builders live in `@mailwoman/spatial` — a winding convention rather than
+// this product's geometry, and a second copy of it is a second place for a hole to stop being one.
 import { rectangleRing, reversedRing as holeRing, ringAreaReadings, type MultiPolygonRings } from "@mailwoman/spatial"
 
 import type { CoastalFeatureSource, CoastalInstabilityFeature, CoastalSourceFeature } from "#sdk/ingest/index"
@@ -42,8 +42,8 @@ import { NCERM_SCENARIOS_BY_KEY, NCERM_SOURCE_EPSG, type CoastalScenario } from 
 export const FIXTURE_ORIGIN = { lon: 1.9, lat: 52.6 } as const
 
 /**
- * Side of a fixture erosion band, in degrees. About 1.1 km at this latitude — several res-9 cells across, so a band has
- * a real interior and a real fringe.
+ * Side of a fixture erosion band, in degrees. About 1.1 km at this latitude —
+ * several res-9 cells across, so a band has a real interior and a real fringe.
  */
 export const FIXTURE_SIDE = 0.01
 
@@ -56,8 +56,8 @@ export const FIXTURE_SCENARIOS = {
 } as const
 
 /**
- * One fixture erosion feature, with its area computed from its own rings so the build's area cross-check has something
- * true to compare against.
+ * One fixture erosion feature, with its area computed from its own rings
+ * so the build's area cross-check has something true to compare against.
  */
 export function fixtureFeature(
 	objectID: number,
@@ -82,8 +82,8 @@ export function fixtureFeature(
 		defenceType: "Vertical Wall - Concrete",
 		publishedYear: 2024,
 		maxOverlap: 0,
-		// The real source's figure comes from gdal. a fixture's comes from the same ring maths the build checks against,
-		// so the fixture exercises the comparison rather than the tolerance.
+		// The real source's figure comes from gdal. a fixture's comes from the same ring maths the
+		// build checks against, so the fixture exercises the comparison rather than the tolerance.
 		sourceAreaM2: ringAreaReadings(polygons).nested,
 		polygons,
 		...overrides,
@@ -91,11 +91,13 @@ export function fixtureFeature(
 }
 
 /**
- * The fixture erosion set: two adjacent bands in the no-intervention scenario (one of them holed), one band in the
- * with-plan scenario covering the same ground as the first, and one band narrower than a res-9 cell.
+ * The fixture erosion set: two adjacent bands in the no-intervention scenario
+ * (one of them holed), one band in the with-plan scenario covering the same ground
+ * as the first, and one band narrower than a res-9 cell.
  *
- * The overlap between scenarios is the point. A point inside the first band must answer under both scenarios with
- * different distances, which is what proves the twelve layers stay separable rather than pooled.
+ * The overlap between scenarios is the point. A point inside the first band must
+ * answer under both scenarios with different distances, which is what proves the
+ * twelve layers stay separable rather than pooled.
  */
 export function fixtureFeatures(): CoastalSourceFeature[] {
 	const { lon, lat } = FIXTURE_ORIGIN
@@ -117,8 +119,9 @@ export function fixtureFeatures(): CoastalSourceFeature[] {
 		],
 	]
 
-	// About 5.5 m across — narrower than a res-11 cell, let alone a res-9 one. `polygonToCells` returns nothing for a
-	// shape this size, so it is the fixture that proves the index takes cell-touches-polygon rather than centre-in-polygon.
+	// About 5.5 m across — narrower than a res-11 cell, let alone a res-9 one.
+	// `polygonToCells` returns nothing for a shape this size, so it is the fixture that
+	// proves the index takes cell-touches-polygon rather than centre-in-polygon.
 	const sliver = rectangleRing(lon + 3 * FIXTURE_SIDE, lat, lon + 3 * FIXTURE_SIDE + 0.00005, lat + 0.00005)
 
 	return [

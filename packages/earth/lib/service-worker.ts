@@ -84,8 +84,8 @@ self.addEventListener("fetch", (event) => {
 		return
 	}
 
-	// Only the database files, and only their plain URLs: a `?cb=` cache-busting retry from the readers means "give me
-	// untouched fresh bytes", so it bypasses this cache entirely.
+	// Only the database files, and only their plain URLs: a `?cb=` cache-busting retry from
+	// the readers means "give me untouched fresh bytes", so it bypasses this cache entirely.
 	if (url.hostname !== DB_HOST || !url.pathname.endsWith(".db") || url.search !== "") return
 
 	const range = request.headers.get("range")
@@ -102,8 +102,8 @@ self.addEventListener("fetch", (event) => {
 async function respondWithCachedRange(request: Request, href: string, start: number, end: number): Promise<Response> {
 	try {
 		const cache = await caches.open(CACHE_NAME)
-		// The Cache API rejects 206 responses, so chunks are stored as 200s under a synthetic per-range URL, with the
-		// real Content-Range stashed in a header for reconstruction.
+		// The Cache API rejects 206 responses, so chunks are stored as 200s under a synthetic
+		// per-range URL, with the real Content-Range stashed in a header for reconstruction.
 		const cacheKey = `${href}?mwrange=${start}-${end}`
 		const hit = await cache.match(cacheKey)
 
@@ -156,9 +156,9 @@ async function respondWithCachedRange(request: Request, href: string, start: num
 }
 
 /**
- * Read a 206 response's body and verify its length against the Content-Range header. The final chunk of a file is
- * legitimately shorter than requested, so the header rather than the request, is the truth. Null for a torn body or an
- * unparsable header.
+ * Read a 206 response's body and verify its length against the Content-Range header.
+ * The final chunk of a file is legitimately shorter than requested, so the header
+ * rather than the request, is the truth. Null for a torn body or an unparsable header.
  */
 async function validatedChunk(response: Response): Promise<ValidatedChunk | null> {
 	const contentRange = response.headers.get("content-range")

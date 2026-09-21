@@ -16,7 +16,8 @@
  */
 
 /**
- * Every way a document can fail validation. Closed, so a consumer branches on the code rather than on message prose.
+ * Every way a document can fail validation. Closed, so a consumer branches on the code
+ * rather than on message prose.
  */
 export const ValidationIssueCode = {
 	MissingField: "missing_field",
@@ -64,8 +65,8 @@ export type ValidationIssueCode = (typeof ValidationIssueCode)[keyof typeof Vali
  */
 export interface ValidationIssue {
 	/**
-	 * A JSONPath-style address into the validated input, e.g. `$.concepts[0].assertions[1].modality`. The document root
-	 * is `$`.
+	 * A JSONPath-style address into the validated input, e.g. `$.concepts[0].assertions[1].modality`.
+	 * The document root is `$`.
 	 */
 	path: string
 	code: ValidationIssueCode
@@ -73,9 +74,9 @@ export interface ValidationIssue {
 }
 
 /**
- * Name fragments that announce ranking policy. Matched case-insensitively against every field name at every depth, so
- * `score`, `boost`, `penalty`, `rankWeight`, `relevanceWeight`, and `affinityWeight` are refused by one rule rather
- * than by an enumeration that a seventh spelling walks past.
+ * Name fragments that announce ranking policy. Matched case-insensitively against every field name at
+ * every depth, so `score`, `boost`, `penalty`, `rankWeight`, `relevanceWeight`, and `affinityWeight`
+ * are refused by one rule rather than by an enumeration that a seventh spelling walks past.
  */
 const RANKING_FIELD_FRAGMENTS = [
 	"boost",

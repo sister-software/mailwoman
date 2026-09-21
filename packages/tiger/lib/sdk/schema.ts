@@ -31,9 +31,9 @@ export interface TIGERBlockTable {
 }
 
 /**
- * Kysely row type for `pl_block` — Census 2020 P.L. 94-171 table P2 (Hispanic-or-Latino by race), one row per
- * tabulation block, keyed on the same 15-char `geoid` as {@link TIGERBlockTable}. The eight category columns partition
- * `pop_total`.
+ * Kysely row type for `pl_block` — Census 2020 P.L. 94-171 table P2 (Hispanic-or-Latino by race),
+ * one row per tabulation block, keyed on the same 15-char `geoid` as {@link TIGERBlockTable}.
+ * The eight category columns partition `pop_total`.
  */
 export interface PLBlockTable {
 	GEOID: string
@@ -51,7 +51,8 @@ export interface PLBlockTable {
 	 */
 	housing_units: number
 	/**
-	 * H1 occupied. `occupied + vacant === housing_units` by construction. the reader refuses a row where it is not.
+	 * H1 occupied. `occupied + vacant === housing_units` by construction. the
+	 * reader refuses a row where it is not.
 	 */
 	occupied: number
 	/**
@@ -98,9 +99,9 @@ export interface TIGERDatabase {
  */
 
 /**
- * Build-tuning PRAGMAs, run raw before any table is created (`page_size`/`auto_vacuum` only take effect on an empty DB,
- * and pragma has no Kysely builder). The consumer execs this, then calls {@link initializeTIGERSchema} for the tables +
- * indexes.
+ * Build-tuning PRAGMAs, run raw before any table is created
+ * (`page_size`/`auto_vacuum` only take effect on an empty DB, and pragma has no Kysely builder).
+ * The consumer execs this, then calls {@link initializeTIGERSchema} for the tables + indexes.
  */
 export const TIGER_PRAGMAS = /* sql */ `
 PRAGMA auto_vacuum = INCREMENTAL;
@@ -110,19 +111,21 @@ PRAGMA journal_mode = WAL;
 `
 
 /**
- * Create the tiger tables + indexes via the Kysely schema-builder (the house idiom). Idempotent (`if not exists`). Pass
- * a {@link DatabaseClient} (or any `Kysely`) over the tiger DB. run {@link TIGER_PRAGMAS} first. `us_state`/`tract`
- * aren't in {@link TIGERDatabase} (created here but not queried via Kysely) — `createTable` takes any table name, so
- * that's fine.
+ * Create the tiger tables + indexes via the Kysely schema-builder (the house idiom).
+ * Idempotent (`if not exists`). Pass a {@link DatabaseClient} (or any `Kysely`) over the tiger
+ * DB. run {@link TIGER_PRAGMAS} first. `us_state`/`tract` aren't in {@link TIGERDatabase}
+ * (created here but not queried via Kysely) — `createTable` takes any table name, so that's fine.
  *
- * The `text(N)` length hints in the prior raw DDL were documentary only (SQLite uses text affinity regardless); the
- * lengths live on the {@link TIGERBlockTable} interface instead.
+ * The `text(N)` length hints in the prior raw DDL were documentary only
+ * (SQLite uses text affinity regardless); the lengths live on the {@link TIGERBlockTable} interface instead.
  */
 /**
- * Refuse a `pl_block` built before the H1 columns existed. `createTable(...).ifNotExists()` leaves an older table as it
- * is, and the next load would fail on the first insert with a message about a column rather than about the cause. The
- * table is derived (the redistricting command reloads it state by state), so the action is a rebuild: drop it and
- * re-run `mailwoman tiger redistricting` for each state you hold. Databases are never patched in place.
+ * Refuse a `pl_block` built before the H1 columns existed.
+ * `createTable(...).ifNotExists()` leaves an older table as it is, and the next load would
+ * fail on the first insert with a message about a column rather than about the cause.
+ * The table is derived (the redistricting command reloads it state by state),
+ * so the action is a rebuild: drop it and re-run `mailwoman tiger redistricting` for
+ * each state you hold. Databases are never patched in place.
  */
 async function assertPLBlockShape(db: Kysely<TIGERDatabase>): Promise<void> {
 	const columns = await sql<{ name: string }>`select name from pragma_table_info('pl_block')`.execute(db)
@@ -175,8 +178,9 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("geometry", "text", (c) => c.notNull())
 		.execute()
 
-	// No index on geoid alone — it's the primary KEY, which already carries a unique index. The prior
-	// schema's idx_tabblock20_geoid duplicated that for nothing (double insert cost, double footprint).
+	// No index on geoid alone — it's the primary KEY, which already carries a unique index.
+	// The prior schema's idx_tabblock20_geoid duplicated that for nothing
+	// (double insert cost, double footprint).
 	await db.schema.createIndex("idx_tabblock20_state_code").ifNotExists().on("tabblock20").column("state_code").execute()
 
 	await db.schema

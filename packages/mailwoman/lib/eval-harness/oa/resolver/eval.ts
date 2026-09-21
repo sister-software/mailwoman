@@ -115,10 +115,10 @@ export async function oaResolverEval(
 	const evalPath = options.eval || "data/eval/external/openaddresses-us-sample.jsonl"
 	const limit = (options.limit ?? 0) || Infinity
 
-	// Default attaches the coordinate-first candidate database (postcode-locality-intl.db) alongside the
-	// admin gazetteer, so locality resolution is coordinate-first by default for the locales it covers
-	// (DE/FR/GB/NL functional). It no-ops where the table has no rows (e.g. US), so US stays unchanged.
-	// Override `--wof` to measure the admin-only baseline.
+	// Default attaches the coordinate-first candidate database (postcode-locality-intl.db)
+	// alongside the admin gazetteer, so locality resolution is coordinate-first by default for
+	// the locales it covers (DE/FR/GB/NL functional). It no-ops where the table has no rows
+	// (e.g. US), so US stays unchanged. Override `--wof` to measure the admin-only baseline.
 	const wofPaths = (
 		options.wof ||
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
@@ -163,14 +163,14 @@ export async function oaResolverEval(
 		preferCountry: dc,
 	}
 
-	// Neural parser: overall + per-state aggregates. (The v0/Pelias head-to-head leg was removed with
-	// the v1 rules parser in the v7 excision — its history lives in the dated eval reports.)
+	// Neural parser: overall + per-state aggregates. (The v0/Pelias head-to-head leg was removed
+	// with the v1 rules parser in the v7 excision — its history lives in the dated eval reports.)
 	const agg = {
 		neural: newAggPair(),
 	}
 
-	// `neural+anchor`: neural's admin flags, but the coordinate replaced by the postcode-anchor centroid
-	// when available. Only the coord error column differs from `neural`.
+	// `neural+anchor`: neural's admin flags, but the coordinate replaced by the postcode-anchor
+	// centroid when available. Only the coord error column differs from `neural`.
 	const neuralAnchorAgg = newAggPair()
 	const neuralAddrPtAgg = newAggPair()
 	let addressPointHits = 0
@@ -186,16 +186,18 @@ export async function oaResolverEval(
 	let neuralPrecond = 0
 	let asmPrecond = 0
 
-	// Per-row failure dump (--errors-json): one record per row where neural or v0 missed locality,
-	// carrying each parser's resolved admin names so failures can be bucketed offline (resolve-wrong
-	// vs unresolved vs neural-only vs v0-only). Aggregates are unaffected.
+	// Per-row failure dump (--errors-json): one record per row where neural
+	// or v0 missed locality, carrying each parser's resolved admin names so failures
+	// can be bucketed offline (resolve-wrong vs unresolved vs neural-only vs v0-only).
+	// Aggregates are unaffected.
 	const collectErrors = !!(options.errorsJSON || "")
 	const errorRows: Record<string, unknown>[] = []
 
-	// `--out-resolved <path>`: per-row dump for the PIP-containment metric (packages/mailwoman/lib/dev-tools/pip-containment.run.ts).
+	// `--out-resolved <path>`: per-row dump for the PIP-containment
+	// metric (packages/mailwoman/lib/dev-tools/pip-containment.run.ts).
 	// Carries the gold OA point + the neural-resolved locality's WOF id, so an offline pass can test
-	// whether the gold point lies inside the resolved locality's polygon — a name-surface-independent
-	// truth check (the "Plauen" vs gold "Plauen Vogtl" name-match artifact, see the coordinate-first plan).
+	// whether the gold point lies inside the resolved locality's polygon — a name-surface-independent truth
+	// check (the "Plauen" vs gold "Plauen Vogtl" name-match artifact, see the coordinate-first plan).
 	const collectResolvedDump = !!(options.outResolved || "")
 	const resolvedRows: Record<string, unknown>[] = []
 
@@ -214,9 +216,10 @@ export async function oaResolverEval(
 			reportError(`  ${i}/${rows.length}`)
 		}
 
-		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
-		// (~380-parse sigkill on the lab box — it crashed the promotion-eval's de-order step tonight).
-		// Periodic forced GC reclaims it. run with `node --expose-gc`. No-op without the flag. (#787 pattern.)
+		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims
+		// it (~380-parse sigkill on the lab box — it crashed the promotion-eval's de-order step tonight).
+		// Periodic forced GC reclaims it. run with `node --expose-gc`.
+		// No-op without the flag. (#787 pattern.)
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()
 		}
@@ -285,8 +288,9 @@ export async function oaResolverEval(
 			recordInto(neuralAddrPtAgg, row.state, { ...ns, err: apErr })
 		}
 
-		// neural + interpolation (#483): the full street-level cascade — exact point if present, else the
-		// interpolated estimate, else the admin centroid. Same admin flags. only the coordinate changes.
+		// neural + interpolation (#483): the full street-level cascade — exact point
+		// if present, else the interpolated estimate, else the admin centroid.
+		// Same admin flags. only the coordinate changes.
 		if (runInterp) {
 			const exact = nDecorated ? findAddressPointHit(nDecorated) : null
 			const interp = nDecorated ? findInterpolatedHit(nDecorated) : null
@@ -300,9 +304,10 @@ export async function oaResolverEval(
 			recordInto(neuralInterpAgg, row.state, { ...ns, err: ipErr })
 
 			// In diagnostic mode, separate interpolation misses by cause.
-			// The interp tier only runs in resolveTree when the exact tier did not stamp. So:
-			//   precond met (street+house_number+postcode parsed) + exact miss + interp null
-			//   ⟹ a genuine StreetInterpolator.find() miss (database/normalization gap rather than parse rather than check).
+			// The interp tier only runs in resolveTree when the
+			// exact tier did not stamp. So:
+			//   precond met (street+house_number+postcode parsed) + exact miss + interp null ⟹ a genuine
+			//   StreetInterpolator.find() miss (database/normalization gap rather than parse rather than check).
 			if (diagInterp && nDecorated) {
 				const { street: s, houseNumber: hn, postcode: pc } = findInterpolationSpans(nDecorated)
 				const precond = !!(s && hn && pc)
@@ -332,9 +337,10 @@ export async function oaResolverEval(
 			outRows.push({
 				input: row.input,
 				expected: row.expected,
-				// `resolvedLoc` is what separates a parse miss from a resolve miss on a failing row: absent means no span
-				// reached the locality tier at all, a different name means the walk picked another place. Without it a
-				// dump can say a row failed and not which half of the pipeline to look in.
+				// `resolvedLoc` is what separates a parse miss from a resolve miss on a failing row:
+				// absent means no span reached the locality tier at all, a different name
+				// means the walk picked another place. Without it a dump can say a row failed
+				// and not which half of the pipeline to look in.
 				neural: {
 					loc: ns.locMatch,
 					reg: ns.regMatch,

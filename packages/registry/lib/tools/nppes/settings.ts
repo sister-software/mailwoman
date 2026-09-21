@@ -32,11 +32,12 @@ export interface Setting {
 /**
  * Build the progression against a corpus-wide address-frequency table.
  *
- * Every row sets both `collapseSpatial` and `addressFrequency` explicitly, because the proven settings are default-on
- * in `resolveEntities`: leave either implicit and the flipped default silently rides the `+ inverse-address-frequency`
- * row, making the A1 delta read as 0. Every row is fed the corpus-wide table — the realistic deployment, where the CLI
- * builds it from the full source files — so the zero-config default, whose input-scoped table is intentionally sparse
- * on a sub-sample, has to be measured separately.
+ * Every row sets both `collapseSpatial` and `addressFrequency` explicitly, because the proven
+ * settings are default-on in `resolveEntities`: leave either implicit and the flipped default
+ * silently rides the `+ inverse-address-frequency` row, making the A1 delta read as 0.
+ * Every row is fed the corpus-wide table — the realistic deployment, where the CLI builds
+ * it from the full source files — so the zero-config default, whose input-scoped table
+ * is intentionally sparse on a sub-sample, has to be measured separately.
  */
 export function buildSettings(addressFrequency: TermFrequencyTable): Setting[] {
 	return [

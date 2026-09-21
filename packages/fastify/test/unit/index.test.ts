@@ -14,7 +14,8 @@ import Fastify, { type FastifyInstance } from "fastify"
 import { describe, expect, it } from "vitest"
 
 /**
- * A minimal resolved locality node — carries a coordinate so `extractGeocodeResult` returns lat/lon (admin tier).
+ * A minimal resolved locality node — carries a coordinate so `extractGeocodeResult`
+ * returns lat/lon (admin tier).
  */
 function localityNode(value: string, lat: number, lon: number): AddressNode {
 	return {
@@ -31,7 +32,8 @@ function localityNode(value: string, lat: number, lon: number): AddressNode {
 }
 
 /**
- * Build a fake pipeline whose result is fixed except for the echoed input. `poiIntent` is attached when supplied.
+ * Build a fake pipeline whose result is fixed except for the echoed input.
+ * `poiIntent` is attached when supplied.
  */
 function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline {
 	return async (raw: string, _opts?: PipelineOpts): Promise<PipelineResult> => {

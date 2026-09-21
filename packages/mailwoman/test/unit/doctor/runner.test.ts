@@ -139,7 +139,8 @@ describe("runDoctor (injected boundaries)", () => {
 	it("candidate.db at the convention path with no env set → ok (the trap this used to report is closed)", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			// Env resolves nothing (no $MAILWOMAN_CANDIDATE_DB), no WOF database exists, the file sits at the convention path.
+			// Env resolves nothing (no $MAILWOMAN_CANDIDATE_DB), no WOF database exists,
+			// the file sits at the convention path.
 			envCandidatePath: async () => undefined,
 			exists: async () => false,
 			conventionCandidatePath: async () => "/data/wof/candidate.db",
@@ -440,10 +441,12 @@ describe("runDoctor (injected boundaries)", () => {
 	})
 })
 
-// The one dependency that is not injected in the suite above: `defaultDoctorDeps` reads `engines.node` from mailwoman's own
-// manifest, located by self-reference (`resolvePackageDirectory("mailwoman")("package.json")`). It touches the filesystem by
-// construction — that is the thing under test — and it degrades to ">=0" on any failure, so a broken resolution would
-// otherwise show up only as a doctor report that silently stops enforcing the Node floor.
+// The one dependency that is not injected in the suite above:
+// `defaultDoctorDeps` reads `engines.node` from mailwoman's own manifest,
+// located by self-reference (`resolvePackageDirectory("mailwoman")("package.json")`).
+// It touches the filesystem by construction — that is the thing under test —
+// and it degrades to ">=0" on any failure, so a broken resolution would otherwise show
+// up only as a doctor report that silently stops enforcing the Node floor.
 describe("defaultDoctorDeps — engines floor via package self-reference", () => {
 	it("reads the real engines.node, not the >=0 fallback", async () => {
 		const manifest = await readPackageJSON(import.meta.url, "mailwoman")
@@ -473,8 +476,8 @@ describe("describeEnvironment (--verbose)", () => {
 	})
 
 	it("keys with no value are present and marked, never dropped", async () => {
-		// The dump exists to tell "set to something surprising" apart from "never set". A row that
-		// disappears when the variable is unset answers neither question.
+		// The dump exists to tell "set to something surprising" apart from "never set".
+		// A row that disappears when the variable is unset answers neither question.
 		const entries = await describeEnvironment({ ...healthyDeps(), conventionCandidatePath: async () => undefined })
 		const convention = entries.find((entry) => entry.key === "candidate.db (convention)")
 

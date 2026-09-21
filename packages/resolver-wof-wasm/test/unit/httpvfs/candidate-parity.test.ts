@@ -27,10 +27,12 @@ const CANDIDATE_DB = dataRootPath("wof", "candidate.db")
 const present = await pathExists(CANDIDATE_DB)
 
 /**
- * The bare-name panel: every primary-preference contest the ranker's docstring names, the Zabiče production case the
- * staging repoint exists for, and the Moscow exact-tier rows (both readers must agree even where the answer is a known
- * defect). "NYC" is deliberately not here: the artifact carries no `nyc` key, so Node answers from its trigram fuzzy
- * tier — which the browser reader does not implement — and that one structural divergence has its own test below.
+ * The bare-name panel: every primary-preference contest the ranker's docstring names,
+ * the Zabiče production case the staging repoint exists for, and the Moscow
+ * exact-tier rows (both readers must agree even where the answer is a known defect).
+ * "NYC" is deliberately not here: the artifact carries no `nyc` key, so Node answers
+ * from its trigram fuzzy tier — which the browser reader does not implement —
+ * and that one structural divergence has its own test below.
  */
 const PANEL = [
 	"Cancun",
@@ -79,9 +81,10 @@ describe.skipIf(!present)("Node↔browser candidate parity over the real artifac
 		const nodeHits = await node!.findPlace({ text: "NYC", placetype: "locality", limit: 5 })
 		const browserHits = await browser!.findPlace({ text: "NYC", placetype: "locality", limit: 5 })
 
-		// The artifact carries no `nyc` key: every Node hit is a typo-corrector row (exactMatch=false),
-		// and the browser — which has no fuzzy tier — returns nothing. If this test starts failing with
-		// browser hits, the browser gained a fuzzy tier: extend the parity panel to cover it.
+		// The artifact carries no `nyc` key: every Node hit is a typo-corrector row
+		// (exactMatch=false), and the browser — which has no fuzzy tier — returns nothing.
+		// If this test starts failing with browser hits, the browser gained a fuzzy tier:
+		// extend the parity panel to cover it.
 		expect(nodeHits.every((h) => h.exactMatch !== true)).toBe(true)
 		expect(browserHits).toEqual([])
 	})

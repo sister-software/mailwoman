@@ -53,8 +53,9 @@ const PUBLIC_ORIGIN = "https://public.mailwoman.ai"
 const VERSION_HASH_LENGTH = 8
 
 /**
- * The version a build publishes under: its date compacted plus a digest over every output's checksum, so a build that
- * changes any one artifact (a re-tiled hillshade over an unchanged nomenclature) gets its own prefix.
+ * The version a build publishes under: its date compacted plus a digest
+ * over every output's checksum, so a build that changes any one artifact
+ * (a re-tiled hillshade over an unchanged nomenclature) gets its own prefix.
  */
 export function publishVersion(manifest: PlanetaryBuildManifest): string {
 	if (!manifest.outputs.some((output) => output.tileset === manifest.body)) {

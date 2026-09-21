@@ -67,7 +67,8 @@ import { expect, test } from "vitest"
 import { z } from "zod"
 
 /**
- * The schema's declared shape, rebuilt as a non-`.loose()` object — same fields, no catchall index signature.
+ * The schema's declared shape, rebuilt as a non-`.loose()` object — same fields,
+ * no catchall index signature.
  */
 const KnownFieldsSchema = z.object(GeocodeOutcomeSchema.shape)
 
@@ -90,24 +91,25 @@ type IsAssignable<A, B> = [A] extends [B] ? true : false
  */
 type Expect<T extends true> = T
 
-// Exact key-set parity — see file header. Fails to compile on any field added, removed, or renamed on
-// either side (GeocodeResult or GeocodeOutcomeSchema).
+// Exact key-set parity — see file header. Fails to compile on any field added, removed,
+// or renamed on either side (GeocodeResult or GeocodeOutcomeSchema).
 export type _KeysMatch = Expect<Equal<keyof GeocodeResult, keyof KnownInferred>>
 
-// Direction 1 — schema-too-narrow guard, narrowed to the schema's declared fields (see file header for
-// why the literal `.loose()` form is impossible). A real GeocodeResult must satisfy every field the
-// schema claims to describe.
+// Direction 1 — schema-too-narrow guard, narrowed to the schema's declared
+// fields (see file header for why the literal `.loose()` form is impossible).
+// A real GeocodeResult must satisfy every field the schema claims to describe.
 export type _SchemaAcceptsRealResult = Expect<IsAssignable<GeocodeResult, KnownInferred>>
 
-// Direction 2 — schema-too-wide guard, literal form. The schema must never promise more than a real
-// GeocodeResult actually guarantees.
+// Direction 2 — schema-too-wide guard, literal form. The schema must never promise
+// more than a real GeocodeResult actually guarantees.
 export type _ResultAcceptsSchema = Expect<IsAssignable<Inferred, GeocodeResult>>
 
 /**
- * Every `GeocodeResult` field name, as a `satisfies` object — TypeScript itself enforces this list can't drift from the
- * interface (add, remove, or rename a `GeocodeResult` field and this stops compiling). Exists so the runtime check
- * below has something concrete to compare against. JS has no reflection over a TS interface, so some hardcoded list is
- * unavoidable for a runtime assertion — this is the compile-time-guarded version of one.
+ * Every `GeocodeResult` field name, as a `satisfies` object — TypeScript itself enforces this list can't
+ * drift from the interface (add, remove, or rename a `GeocodeResult` field and this stops compiling).
+ * Exists so the runtime check below has something concrete to compare against.
+ * JS has no reflection over a TS interface, so some hardcoded list is unavoidable for
+ * a runtime assertion — this is the compile-time-guarded version of one.
  */
 const GEOCODE_RESULT_FIELD_NAMES = {
 	input: true,

@@ -43,9 +43,10 @@ import { moduleSpecifierLiterals } from "#ts-ast"
 const SOURCE_STEM = /\.(?:m|c)?[jt]sx?$/u
 
 /**
- * Every tracked `package.json`, read as a manifest. Reading the file rather than importing it is the rule this
- * repository enforces elsewhere for a different reason — a JSON import lands in `out/` and rewrites the package scope
- * of the compiled tree — and it is the only form available here anyway, since the set is discovered at runtime.
+ * Every tracked `package.json`, read as a manifest. Reading the file rather than
+ * importing it is the rule this repository enforces elsewhere for a different reason —
+ * a JSON import lands in `out/` and rewrites the package scope of the compiled tree —
+ * and it is the only form available here anyway, since the set is discovered at runtime.
  */
 export async function readPackageManifests(context: RepoContext): Promise<PackageManifest[]> {
 	const files = context.trackedFiles.filter((file) => file.endsWith("/package.json") && !file.includes("node_modules/"))
@@ -73,7 +74,8 @@ export async function readPackageManifests(context: RepoContext): Promise<Packag
 }
 
 /**
- * The manifest whose directory contains `file`, taking the deepest one so a nested workspace wins over its parent.
+ * The manifest whose directory contains `file`, taking the deepest one
+ * so a nested workspace wins over its parent.
  */
 function owningManifest(manifests: readonly PackageManifest[], file: string): PackageManifest | undefined {
 	let owner: PackageManifest | undefined
@@ -107,7 +109,8 @@ function referenceProbes(move: ModuleMove, manifests: readonly PackageManifest[]
 }
 
 /**
- * Replacement specifiers to try, in the order they should be tried, all in the family `specifier` is written in.
+ * Replacement specifiers to try, in the order they should be tried,
+ * all in the family `specifier` is written in.
  */
 function candidateReplacements(
 	specifier: string,
@@ -138,15 +141,15 @@ function candidateReplacements(
 /**
  * Read every move against the checkout in `context` and answer what would have to change.
  *
- * The plan is complete before anything is written: `moves` are the file renames, `rewrites` the specifier edits with
- * their offsets, and `unresolved` the specifiers no proven replacement was found for.
+ * The plan is complete before anything is written: `moves` are the file renames, `rewrites` the specifier
+ * edits with their offsets, and `unresolved` the specifiers no proven replacement was found for.
  */
 export async function planModuleMoves(context: RepoContext, moves: readonly ModuleMove[]): Promise<ModuleMovePlan> {
 	const manifests = await readPackageManifests(context)
 	const destinations = new Map(moves.map((move) => [move.from, move.to]))
 
-	// The manifest edits come first: the overlay the replacements are proven against has to be the tree the whole
-	// plan leaves behind, subpath targets included.
+	// The manifest edits come first: the overlay the replacements are proven against has
+	// to be the tree the whole plan leaves behind, subpath targets included.
 	const manifestRewrites = await planManifestRewrites(
 		context.repoRoot,
 		manifests.map((manifest) => manifest.dir),
@@ -168,8 +171,8 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 		)
 	}
 
-	// Candidates are derived from the maps the plan leaves rather than the ones it found: a target that has moved would
-	// otherwise offer a replacement naming the old path, or none at all.
+	// Candidates are derived from the maps the plan leaves rather than the ones it found:
+	// a target that has moved would otherwise offer a replacement naming the old path, or none at all.
 	const planned = manifests.map((manifest) => {
 		const text = rewrittenManifests.get(`${manifest.dir}/package.json`)
 

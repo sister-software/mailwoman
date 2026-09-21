@@ -98,8 +98,8 @@ describe("parseGauntletReport", () => {
 
 describe("summarizeGauntletReport", () => {
 	it("leads with the counted fraction, not the verdict word", () => {
-		// Reading the tail instead of this line is how a 329/352 run got reported as "zero regressions" against a
-		// 350/352 baseline on 2026-08-15.
+		// Reading the tail instead of this line is how a 329/352 run got reported as
+		// "zero regressions" against a 350/352 baseline on 2026-08-15.
 		const summary = summarizeGauntletReport(parseGauntletReport(STDOUT, STDERR))
 
 		expect(summary.startsWith("regression 352/354 counted")).toBe(true)

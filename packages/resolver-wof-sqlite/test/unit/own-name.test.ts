@@ -30,8 +30,8 @@ describe("isOwnNameVariant — the measured census contests", () => {
 	})
 
 	it("refuses the coincidental-collision class the penalty exists for", () => {
-		// Changchun's Turkish exonym "Çançun" folds to `cancun` — the required negative: the query
-		// means Cancún, Mexico, and the penalty must keep protecting it.
+		// Changchun's Turkish exonym "Çançun" folds to `cancun` — the required negative:
+		// the query means Cancún, Mexico, and the penalty must keep protecting it.
 		expect(isOwnNameVariant("чанчунь", "cancun")).toBe(false)
 		// Augsburg's Latin name `augusta` is a different name rather than an orthography of "Augsburg".
 		expect(isOwnNameVariant("augsburg", "augusta")).toBe(false)
@@ -48,8 +48,8 @@ describe("isOwnNameVariant — the measured census contests", () => {
 	})
 
 	it("answers no-verdict — never a stamp — on an uncovered script", () => {
-		// Arabic-script primary (Abadan, Iran): the romanizer covers Cyrillic only, and absence of a
-		// verdict must not read as "different name".
+		// Arabic-script primary (Abadan, Iran): the romanizer covers Cyrillic only,
+		// and absence of a verdict must not read as "different name".
 		expect(ownNameSimilarity("آبادان", "abadan")).toBeNull()
 		expect(isOwnNameVariant("آبادان", "abadan")).toBe(false)
 	})

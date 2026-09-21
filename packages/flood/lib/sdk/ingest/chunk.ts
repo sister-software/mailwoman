@@ -37,8 +37,8 @@ import type { FloodFeatureSource } from "#sdk/ingest/index"
 import { EA_FLOOD_ZONE_CODES } from "#vocabulary"
 
 /**
- * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob: a larger transaction grows
- * the write-ahead file without improving throughput.
+ * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob:
+ * a larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
 
@@ -48,8 +48,8 @@ const INSERT_TRANSACTION_ROWS = 5000
 const PROGRESS_STRIDE = 50_000
 
 /**
- * What one chunk produced. Every field is JSON-serializable, because a chunk normally reports across a process
- * boundary.
+ * What one chunk produced. Every field is JSON-serializable, because a chunk
+ * normally reports across a process boundary.
  */
 export interface FloodChunkResult {
 	features: number
@@ -59,7 +59,8 @@ export interface FloodChunkResult {
 	coarsened: number
 	zoneCounts: Record<string, number>
 	/**
-	 * `[coverageCell, polygonsReachingIt]` pairs — an array rather than a `Map` so it survives the process boundary.
+	 * `[coverageCell, polygonsReachingIt]` pairs — an array rather than a `Map`
+	 * so it survives the process boundary.
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
@@ -78,7 +79,8 @@ export interface IngestFloodChunkOptions {
 /**
  * Stream one chunk of the source into `database`.
  *
- * @throws {Error} On a zone code outside the authority's declared domain, or on a feature the classifier refuses.
+ * @throws {Error} On a zone code outside the authority's declared domain,
+ *   or on a feature the classifier refuses.
  */
 export async function ingestFloodChunk(
 	database: DatabaseClient<FloodDatabase>,

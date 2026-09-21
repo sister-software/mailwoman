@@ -144,8 +144,8 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 			return "cross-state: report emitted"
 		}
 		case "dedup-ceiling": {
-			// The same tool as `registry dedup-ceiling` (geocode-free) — kept in this enum so the whole
-			// record-matcher eval suite is reachable from one command.
+			// The same tool as `registry dedup-ceiling` (geocode-free) — kept in this enum
+			// so the whole record-matcher eval suite is reachable from one command.
 			const res = await dedupCeiling(
 				{ sources: options.sources, cap: options.cap, state: options.state, tau: options.tau, outMd: options.outMd },
 				reportToStderr

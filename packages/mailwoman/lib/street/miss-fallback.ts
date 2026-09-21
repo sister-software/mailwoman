@@ -13,8 +13,8 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
 
 /**
- * Retry a lone street-tagged token as a locality only after a null result and when no fork is declared. The retry omits
- * inferred country constraints but preserves an explicit default country.
+ * Retry a lone street-tagged token as a locality only after a null result and when no fork is declared.
+ * The retry omits inferred country constraints but preserves an explicit default country.
  */
 export async function applyStreetMissFallback(
 	result: GeocodeOutcomeLike,
@@ -22,8 +22,8 @@ export async function applyStreetMissFallback(
 		tree: AddressTree
 		opts: ResolveOpts
 		/**
-		 * The subset of GeocodeDeps this retry reads — structural, so this module needs no geocode-core import (the
-		 * no-cycle rule; `extract` is injected for the same reason).
+		 * The subset of GeocodeDeps this retry reads — structural, so this module needs no
+		 * geocode-core import (the no-cycle rule; `extract` is injected for the same reason).
 		 */
 		deps: {
 			resolver?: { resolveTree(tree: AddressTree, opts: ResolveOpts): Promise<AddressTree> }
@@ -63,9 +63,9 @@ export async function applyStreetMissFallback(
 }
 
 /**
- * The lone bare street span the street-miss fallback retries as a locality, or `null` when the tree is anything richer:
- * the check is exactly one value-containing node, tagged `street`, no prefix/suffix siblings — the single-token shape
- * the model mis-tags on unfamiliar capitals.
+ * The lone bare street span the street-miss fallback retries as a locality, or `null` when the
+ * tree is anything richer: the check is exactly one value-containing node, tagged `street`,
+ * no prefix/suffix siblings — the single-token shape the model mis-tags on unfamiliar capitals.
  */
 function loneBareStreetSpan(tree: AddressTree): string | null {
 	const lone = loneValueNode(tree)

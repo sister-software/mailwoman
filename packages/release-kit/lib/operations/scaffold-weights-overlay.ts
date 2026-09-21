@@ -11,8 +11,8 @@ import { text } from "#operations/inputs"
 import { scaffoldWeightsOverlay } from "#weights/scaffold-weights-overlay"
 
 /**
- * `release.scaffold-weights-overlay` — writes inside the checkout or the data root. Listed in `registry.ts`; the
- * description on the operation is what `mwops` prints.
+ * `release.scaffold-weights-overlay` — writes inside the checkout or the data root.
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const scaffoldWeightsOverlayOperation = defineOperation({
 	id: "release.scaffold-weights-overlay",

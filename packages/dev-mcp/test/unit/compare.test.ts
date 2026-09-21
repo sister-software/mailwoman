@@ -21,8 +21,9 @@ import { afterAll, describe, expect, it } from "vitest"
 import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 /**
- * Every comparison writes its answers to the run store. Redirected here so a test run never touches the operator's
- * store under `$MAILWOMAN_DATA_ROOT`, and so the retention sweep each write triggers has nothing real to prune.
+ * Every comparison writes its answers to the run store.
+ * Redirected here so a test run never touches the operator's store under `$MAILWOMAN_DATA_ROOT`,
+ * and so the retention sweep each write triggers has nothing real to prune.
  */
 const RUN_STORE = await temporaryDirectory("mwdev-compare-runs-")
 
@@ -55,11 +56,11 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 					resolution_tier: point.lat === null ? "none" : "admin",
 					locality: "stub",
 					region: null,
-					// Required on `GeocodeResult`, and the mailwoman arm reads its answer through the gauntlet projection —
-					// which walks it. A double missing it throws inside the arm, and every row then scores as a query
-					// failure, which reads as an arm that lost.
-					// A stated identity, so the tri-state pin below checks the one-sided comparison: the mailwoman
-					// arm carries place_ids and the external arm cannot — incomparable, never "same".
+					// Required on `GeocodeResult`, and the mailwoman arm reads its answer through the
+					// gauntlet projection — which walks it. A double missing it throws inside the arm,
+					// and every row then scores as a query failure, which reads as an arm that lost.
+					// A stated identity, so the tri-state pin below checks the one-sided comparison: the
+					// mailwoman arm carries place_ids and the external arm cannot — incomparable, never "same".
 					hierarchy: [{ tag: "locality", value: "stub", name: "stub", placeID: "wof:101" }],
 				},
 				timing: { total: 1 },
@@ -256,8 +257,9 @@ describe("mwdev_compare — external arm", () => {
 
 describe("mwdev_compare — an external arm that stops answering", () => {
 	it("abandons the run rather than scoring the remaining rows as misses", async () => {
-		// The pre-registered protocol counts a query failure as a miss, which is right per row and wrong for a service
-		// that died mid-run: the arm would lose a benchmark it stopped playing, and the result would look ordinary.
+		// The pre-registered protocol counts a query failure as a miss, which is right per row
+		// and wrong for a service that died mid-run: the arm would lose a benchmark it
+		// stopped playing, and the result would look ordinary.
 		const dead = { throws: { message: "socket hang up", code: "ERR_NETWORK" } }
 
 		const transport = stubTransport([{ status: 200, body: "status: ok" }, { body: peliasBody(ANDORRA_LA_VELLA) }, dead])

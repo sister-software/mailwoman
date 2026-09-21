@@ -47,8 +47,8 @@ const ATTRIBUTION = "提供機關／經濟部商業發展署 [<dataset title>] �
 const PACE_MS = 300
 
 /**
- * The bulk register files: `<region><register>資料-<industry letter><industry>`. The per-industry API datasets and the
- * monthly new-registration lists share the catalog and are not these.
+ * The bulk register files: `<region><register>資料-<industry letter><industry>`.
+ * The per-industry API datasets and the monthly new-registration lists share the catalog and are not these.
  */
 const BULK_TITLE = /(公司登記資料|商業登記資料)-[A-Z]/
 

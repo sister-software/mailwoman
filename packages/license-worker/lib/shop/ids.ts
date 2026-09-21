@@ -31,8 +31,8 @@ export type ShopIDsByMode = Record<ShopMode, ShopIDs>
 export const SHOP_IDS: ShopIDsByMode = ids
 
 /**
- * The next contents of `ids.json` after a provisioning run answered for `mode`: every id present replaces the recorded
- * one, an absent id leaves the recorded one standing.
+ * The next contents of `ids.json` after a provisioning run answered for `mode`:
+ * every id present replaces the recorded one, an absent id leaves the recorded one standing.
  */
 export function withShopIDs(
 	current: ShopIDsByMode,

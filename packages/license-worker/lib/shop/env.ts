@@ -11,12 +11,13 @@ import { $private as corePrivate, liveEnv } from "@mailwoman/core/env"
 import { z } from "zod"
 
 /**
- * Stripe secret keys for shop reconciliation, one per mode so a live write is a deliberate act. Never log their values.
+ * Stripe secret keys for shop reconciliation, one per mode so a live write is
+ * a deliberate act. Never log their values.
  */
 const PrivateShopEnvSchema = z.object({
 	/**
-	 * The test-mode secret key (`sk_test_…`): `mwops shop … --mode test` provisions the sandbox twins of the shop's
-	 * Stripe objects with it and refuses any other prefix.
+	 * The test-mode secret key (`sk_test_…`): `mwops shop … --mode test` provisions the
+	 * sandbox twins of the shop's Stripe objects with it and refuses any other prefix.
 	 */
 	MAILWOMAN_STRIPE_SECRET_KEY: z.string().optional().meta({
 		title: "Stripe test-mode secret key",

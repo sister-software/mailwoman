@@ -69,12 +69,13 @@ function plausibleUs(lat: number, lon: number): boolean {
 }
 
 /**
- * Retry is on because the page loop below is all-or-nothing: it walks offsets until a page comes back empty, and one
- * throttled page in the middle aborted the whole build. The tmp-then-rename tail means a partial run is discarded
- * rather than published, so the cost of a transient failure was the entire download rather than a corrupt artifact.
+ * Retry is on because the page loop below is all-or-nothing: it walks offsets until a
+ * page comes back empty, and one throttled page in the middle aborted the whole build.
+ * The tmp-then-rename tail means a partial run is discarded rather than published,
+ * so the cost of a transient failure was the entire download rather than a corrupt artifact.
  *
- * No `minRequestIntervalMs`: requests are strictly sequential and each returns {@link page} rows, so the loop already
- * paces itself at whatever the API takes to assemble 10,000 records.
+ * No `minRequestIntervalMs`: requests are strictly sequential and each returns {@link page} rows,
+ * so the loop already paces itself at whatever the API takes to assemble 10,000 records.
  */
 const fdicClient = new APIClient({ displayName: "fdic", retry: true })
 

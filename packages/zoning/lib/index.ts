@@ -143,7 +143,8 @@ export interface ZoningPlan {
 	validFrom: string | null
 	validTo: string | null
 	/**
-	 * The publisher's `CURRENT_PLAN` flag, carried as published. `1` means not superseded — not "in force today".
+	 * The publisher's `CURRENT_PLAN` flag, carried as published.
+	 * `1` means not superseded — not "in force today".
 	 */
 	currentPlan: number
 }
@@ -160,9 +161,10 @@ export interface ZoningDesignation {
 	localDescription: string | null
 	localCodeURL: string | null
 	/**
-	 * The publishing authority's own crosswalk into a shared scheme, where it publishes one. Beside the local code, never
-	 * instead of it: 52 of 795 (authority, local code) pairs take more than one generic type, so this cannot be
-	 * reconstructed from `localCode` and is a per-polygon fact the Department authored.
+	 * The publishing authority's own crosswalk into a shared scheme, where it publishes one.
+	 * Beside the local code, never instead of it: 52 of 795 (authority, local code) pairs
+	 * take more than one generic type, so this cannot be reconstructed from `localCode`
+	 * and is a per-polygon fact the Department authored.
 	 */
 	crosswalk?: {
 		scheme: string
@@ -173,8 +175,8 @@ export interface ZoningDesignation {
 		 */
 		rollup: string | null
 		/**
-		 * The publisher's own label for `code`, from its declared domain — absent for a code the publisher uses and never
-		 * declared.
+		 * The publisher's own label for `code`, from its declared domain —
+		 * absent for a code the publisher uses and never declared.
 		 */
 		label?: string
 		/**
@@ -183,15 +185,17 @@ export interface ZoningDesignation {
 		declared: boolean
 	}
 	/**
-	 * One of {@link ProvenanceGrade}. Every row of this artifact is `authoritative`; the column exists because a query
-	 * answered from an `inferred` row may never be presented as the authority's designation.
+	 * One of {@link ProvenanceGrade}. Every row of this artifact is `authoritative`;
+	 * the column exists because a query answered from an `inferred` row may never
+	 * be presented as the authority's designation.
 	 */
 	provenanceGrade: string
 	jurisdiction: ZoningJurisdiction
 	plan: ZoningPlan
 	/**
-	 * The authority states unzoned land positively on a handful of rows. `true` here is the authority saying so. an
-	 * absent designation says nothing at all, which is the distinction this layer exists to keep.
+	 * The authority states unzoned land positively on a handful of rows.
+	 * `true` here is the authority saying so. an absent designation says nothing at all,
+	 * which is the distinction this layer exists to keep.
 	 */
 	unzoned: boolean
 	containment: ZoningContainmentPath
@@ -203,8 +207,9 @@ export interface ZoningDesignation {
 export interface ZoningReading {
 	kind: ZoningReadingKind
 	/**
-	 * Every polygon containing the point, ordered by `area_id`. Usually one. several where a Local Area Plan overlays a
-	 * Development Plan over the same ground, which the source publishes as two rows.
+	 * Every polygon containing the point, ordered by `area_id`.
+	 * Usually one. several where a Local Area Plan overlays a Development Plan over
+	 * the same ground, which the source publishes as two rows.
 	 */
 	designations: ZoningDesignation[]
 	containment: ZoningContainmentPath
@@ -238,9 +243,9 @@ export interface ZoningLayerIdentity {
 	/**
 	 * Every resolution `zoning_cell` stores a row at, coarsest first — the ancestor chain a probe walks.
 	 *
-	 * Several, and necessarily so: each feature's whole tier is compacted parent-ward, and a polygon too large for h3's
-	 * allocator at the index resolution was indexed coarser. A reader that probed one resolution would read every row at
-	 * the others as an absence.
+	 * Several, and necessarily so: each feature's whole tier is compacted parent-ward,
+	 * and a polygon too large for h3's allocator at the index resolution was indexed coarser.
+	 * A reader that probed one resolution would read every row at the others as an absence.
 	 */
 	cellResolutions: number[]
 	/**
@@ -329,10 +334,10 @@ export class ZoningLookup implements Disposable {
 
 		this.#selectCell = this.#database.prepare("SELECT area_id, containment FROM zoning_cell WHERE h3_cell = ?")
 
-		// two statements, and the split is the point. The attributes and the bbox are read without the blob, because the
-		// bbox is the ray cast's prefilter: pulling hundreds of thousands of vertices off disk only to reject the polygon on
-		// a rectangle would make the prefilter cost more than the test it replaces. A `whole` cell never reads the blob at
-		// all.
+		// two statements, and the split is the point. The attributes and the bbox are read without
+		// the blob, because the bbox is the ray cast's prefilter: pulling hundreds of thousands
+		// of vertices off disk only to reject the polygon on a rectangle would make the prefilter
+		// cost more than the test it replaces. A `whole` cell never reads the blob at all.
 		this.#selectArea = this.#database.prepare(
 			"SELECT area_id, jurisdiction_id, plan_id, local_code, local_description, local_code_url, crosswalk_code, " +
 				"crosswalk_scheme, crosswalk_description, crosswalk_rollup, provenance_grade, min_lat, min_lon, max_lat, max_lon " +
@@ -425,8 +430,8 @@ export class ZoningLookup implements Disposable {
 
 			rayCastRan = true
 
-			// The bbox is the prefilter the geometry table stores precisely so the ray cast runs on the few polygons that
-			// could contain the point rather than on every polygon reaching the cell.
+			// The bbox is the prefilter the geometry table stores precisely so the ray cast runs on the
+			// few polygons that could contain the point rather than on every polygon reaching the cell.
 			if (!bboxContains(area, longitude, latitude)) {
 				continue
 			}
@@ -475,8 +480,8 @@ export class ZoningLookup implements Disposable {
 			localCode: area.local_code,
 			localDescription: area.local_description,
 			localCodeURL: area.local_code_url,
-			// The crosswalk travels as one object or not at all: a code without its scheme reads as a code in whichever
-			// vocabulary the consumer happened to assume.
+			// The crosswalk travels as one object or not at all: a code without its scheme
+			// reads as a code in whichever vocabulary the consumer happened to assume.
 			...(area.crosswalk_code === null || area.crosswalk_scheme === null
 				? {}
 				: {

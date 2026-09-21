@@ -105,7 +105,8 @@ export interface ScorerPairwiseEvalOptions {
 }
 
 /**
- * Learned-scorer pairwise probe (#603) — see the module doc. Emits the markdown report to stdout.
+ * Learned-scorer pairwise probe (#603) — see the module doc.
+ * Emits the markdown report to stdout.
  */
 export async function scorerPairwiseEval(
 	options: ScorerPairwiseEvalOptions,
@@ -129,8 +130,8 @@ export async function scorerPairwiseEval(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up features can read the
-	// authorized official. the FS arm ignores them (no discriminators configured).
+	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up features can
+	// read the authorized official. the FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -178,9 +179,10 @@ export async function scorerPairwiseEval(
 	}
 
 	/**
-	 * One train/test split (by NPI): train the L2 logistic regression on the train pairs, then score the held-out test
-	 * pairs with both the LR and the EM-fitted FS scorer. The FS model is seed-independent (fit unsupervised on all
-	 * pairs); only the LR weights and the test subset move with the seed, so repeating over seeds bounds split variance.
+	 * One train/test split (by NPI): train the L2 logistic regression on the train pairs,
+	 * then score the held-out test pairs with both the LR and the EM-fitted FS scorer.
+	 * The FS model is seed-independent (fit unsupervised on all pairs); only the LR weights
+	 * and the test subset move with the seed, so repeating over seeds bounds split variance.
 	 */
 	function runSplit(seed: number): SplitScored {
 		const rnd = makeLcg(seed || 1)
@@ -212,8 +214,8 @@ export async function scorerPairwiseEval(
 		const posWeight = train.filter((s) => s.y === 1).length / Math.max(1, train.length)
 		const sampleWeights = train.map((s) => (s.y === 1 ? 1 - posWeight : posWeight))
 
-		// L2-regularized logistic regression (batch gradient descent), rare class up-weighted — the
-		// shared trainer.
+		// L2-regularized logistic regression (batch gradient descent), rare class
+		// up-weighted — the shared trainer.
 		const lrScore = trainLogisticRegression(
 			train.map((s) => s.x),
 			train.map((s) => s.y),

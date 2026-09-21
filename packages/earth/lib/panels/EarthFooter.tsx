@@ -41,10 +41,11 @@ const BASEMAP_ATTRIBUTION = [
 /**
  * The basemap's credits, then one per publisher behind the rows a result is resolved against.
  *
- * The footer credited the tiles alone. A result shown here is resolved against the admin gazetteer, the POI layer and
- * the street extracts, whose publishers attach attribution conditions to exactly this display, and none of them was
- * named. `DATA_CREDITS` is read from the runtime that fetches those objects, so a surface that stops loading one stops
- * crediting it without anybody editing this file.
+ * The footer credited the tiles alone. A result shown here is resolved against the
+ * admin gazetteer, the POI layer and the street extracts, whose publishers attach
+ * attribution conditions to exactly this display, and none of them was named.
+ * `DATA_CREDITS` is read from the runtime that fetches those objects, so a surface that
+ * stops loading one stops crediting it without anybody editing this file.
  */
 const ATTRIBUTION = [
 	...BASEMAP_ATTRIBUTION,
@@ -57,9 +58,9 @@ const ATTRIBUTION = [
 
 export interface EarthFooterProps {
 	/**
-	 * What is loading right now, beside the identity. The bar across the top of the viewport says how far along it is.
-	 * this says which artifact it is fetching, which is the part a number cannot carry. Absent on the canned runtime,
-	 * which loads nothing.
+	 * What is loading right now, beside the identity. The bar across the top of the viewport
+	 * says how far along it is. this says which artifact it is fetching, which is the part
+	 * a number cannot carry. Absent on the canned runtime, which loads nothing.
 	 */
 	status?: ReactNode
 }

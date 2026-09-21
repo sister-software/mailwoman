@@ -33,7 +33,8 @@ import {
 } from "@mailwoman/repo-health"
 
 /**
- * How many times `health fix` re-takes a plan before giving up. See {@link runFix} for why one pass is not enough.
+ * How many times `health fix` re-takes a plan before giving up.
+ * See {@link runFix} for why one pass is not enough.
  */
 const MAXIMUM_FIX_PASSES = 8
 
@@ -45,8 +46,8 @@ export interface DispatchIO {
 }
 
 /**
- * `--key value` and `--flag` pairs into an object an operation's `inputSchema` then coerces and validates. Values stay
- * strings here on purpose: the schema is the one place a type is decided.
+ * `--key value` and `--flag` pairs into an object an operation's `inputSchema` then coerces
+ * and validates. Values stay strings here on purpose: the schema is the one place a type is decided.
  */
 export function parseOptions(args: readonly string[]): { options: Record<string, string | boolean>; rest: string[] } {
 	const options: Record<string, string | boolean> = {}
@@ -100,8 +101,8 @@ function usage(io: DispatchIO): number {
 }
 
 /**
- * Run one operation of a registry: the release registry under `mwops release`, the shop's under `mwops shop`. The
- * interface is the same object, so the view is one function.
+ * Run one operation of a registry: the release registry under `mwops release`, the shop's
+ * under `mwops shop`. The interface is the same object, so the view is one function.
  */
 async function runOperation(
 	verb: "release" | "shop",
@@ -156,8 +157,8 @@ async function runOperation(
 }
 
 /**
- * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings. `debt` is the only counter set
- * with a baseline. the target is named so a second one has a place to go.
+ * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings.
+ * `debt` is the only counter set with a baseline. the target is named so a second one has a place to go.
  */
 async function runBaseline(
 	targets: readonly string[],
@@ -191,9 +192,10 @@ async function runBaseline(
 /**
  * `mwops health comments [path]` — rebuild the source-comment inventory and its heuristic review leads.
  *
- * Not a check: it answers a report about the tree rather than a verdict on it, and its leads are for a human reviewer
- * to confirm. It sits under `health` for the same reason `baseline` does — it reads the same tracked-file context every
- * check gets, and CI runs a registered entry point rather than a path into a package's `lib/`.
+ * Not a check: it answers a report about the tree rather than a verdict on it,
+ * and its leads are for a human reviewer to confirm. It sits under `health` for the same
+ * reason `baseline` does — it reads the same tracked-file context every check gets,
+ * and CI runs a registered entry point rather than a path into a package's `lib/`.
  */
 async function runComments(
 	targets: readonly string[],
@@ -216,9 +218,9 @@ async function runComments(
 /**
  * `mwops health fix <check>` — apply the mechanical repair for one check.
  *
- * The plan is built and proven before anything is written, so `--dry-run` reports exactly what the write would do. A
- * plan carrying a specifier with no proven replacement is refused by `applyModuleMoves`, which is why this function has
- * no force flag to offer.
+ * The plan is built and proven before anything is written, so `--dry-run` reports exactly
+ * what the write would do. A plan carrying a specifier with no proven replacement is
+ * refused by `applyModuleMoves`, which is why this function has no force flag to offer.
  */
 async function runFix(
 	targets: readonly string[],
@@ -239,10 +241,10 @@ async function runFix(
 	const dryRun = options["dry-run"] === true
 	const passes: Array<{ moves: number; rewrites: number; manifests: number; literals: number; verified: number }> = []
 
-	// A fix can create work for itself: moving `build-outlier-oa.ts` into `build/` leaves `outlier-oa.ts` beside two
-	// siblings that now share `outlier-`. So the plan is re-taken until the check has nothing left to say. The bound is
-	// a guard against a rule that never settles rather than an expected number of passes — the repository's deepest family
-	// took two.
+	// A fix can create work for itself: moving `build-outlier-oa.ts` into `build/` leaves `outlier-oa.ts`
+	// beside two siblings that now share `outlier-`. So the plan is re-taken until the
+	// check has nothing left to say. The bound is a guard against a rule that never settles
+	// rather than an expected number of passes — the repository's deepest family took two.
 	for (let pass = 0; pass < MAXIMUM_FIX_PASSES; pass++) {
 		const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
 		const moves = await fix.plan(context)

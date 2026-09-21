@@ -85,9 +85,10 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 })
 
 describe("bash-write-guard: a Modal launch this shell could kill", () => {
-	// Both spellings have cost a training run. `timeout 600 modal run -d …` killed the v3.0.0 span-head probe at step
-	// ~1000 of 2000 on 2026-07-15 with no checkpoint written; `run_in_background` on `modal run -d …` was stopped by the
-	// host's memory guard on 2026-09-09 and Modal cancelled the input at step 21,000 of 60,000, last save at 20,000.
+	// Both spellings have cost a training run. `timeout 600 modal run -d …` killed the
+	// v3.0.0 span-head probe at step ~1000 of 2000 on 2026-07-15 with no checkpoint written;
+	// `run_in_background` on `modal run -d …` was stopped by the host's memory guard on 2026-09-09
+	// and Modal cancelled the input at step 21,000 of 60,000, last save at 20,000.
 	it.each([
 		["a detached launch", `modal run -d corpus-python/launch/train_remote.py --config x.yaml`],
 		["a detached launch, long flag", `modal run --detach corpus-python/launch/train_remote.py --config x.yaml`],

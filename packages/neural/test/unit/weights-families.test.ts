@@ -56,8 +56,8 @@ describe("the family registry", () => {
 	})
 
 	it("keeps a claimed language clear of another family's packaged locales", () => {
-		// The packaged lookup runs first, so a language claimed by one family while another packages a locale in it
-		// would make the language claim cover nothing and the two paths disagree.
+		// The packaged lookup runs first, so a language claimed by one family while another packages
+		// a locale in it would make the language claim cover nothing and the two paths disagree.
 		for (const family of FAMILIES) {
 			for (const language of family.languages ?? []) {
 				for (const other of FAMILIES) {
@@ -104,15 +104,16 @@ describe("the family registry", () => {
 	})
 
 	it("answers undefined for a locale no family serves, rather than defaulting to Latin", () => {
-		// A locale with no declared graph is a finding the `weights-family` check reports. Reading it as the Latin family
-		// would decode its rows on a graph nothing says serves them.
+		// A locale with no declared graph is a finding the `weights-family` check reports.
+		// Reading it as the Latin family would decode its rows on a graph nothing says serves them.
 		expect(familyForLocale("pt-br")).toBeUndefined()
 		expect(familyForScript("Cyrl")).toBeUndefined()
 	})
 
 	it("serves a language's unpackaged locales, so ko-KR and zh-TW reach the character family", () => {
-		// These three ship no weights package. Listing only the packaged locales made `familyForLocale` answer undefined
-		// while `scriptFamilyBase` answered `cjk` — two declarations of one fact, disagreeing.
+		// These three ship no weights package. Listing only the packaged locales made
+		// `familyForLocale` answer undefined while `scriptFamilyBase` answered `cjk` —
+		// two declarations of one fact, disagreeing.
 		for (const locale of ["ko-KR", "zh-TW", "zh-HK", "ja"]) {
 			expect(familyForLocale(locale)?.family, locale).toBe("cjk")
 		}
@@ -130,8 +131,8 @@ describe("familyFallbackFor", () => {
 		// A family id resolves to itself, so it falls back to nothing.
 		expect(familyFallbackFor("cjk")).toBeUndefined()
 		expect(familyFallbackFor("en-us")).toBeUndefined()
-		// A Latin overlay names its base in its manifest, so resolution follows `mailwoman.baseWeights` rather than a
-		// script rule. Answering here would give resolution two sources for one fact.
+		// A Latin overlay names its base in its manifest, so resolution follows `mailwoman.baseWeights`
+		// rather than a script rule. Answering here would give resolution two sources for one fact.
 		expect(familyFallbackFor("en-GB")).toBeUndefined()
 		expect(familyFallbackFor("fr-FR")).toBeUndefined()
 		// No family claims it.

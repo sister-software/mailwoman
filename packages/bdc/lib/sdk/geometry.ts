@@ -9,7 +9,8 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 
 /**
- * One GeoJSON `Polygon`/`MultiPolygon` geometry, as stored in `tabblock20.geometry` (see `tiger/sdk/schema.ts`).
+ * One GeoJSON `Polygon`/`MultiPolygon` geometry, as stored in `tabblock20.geometry`
+ * (see `tiger/sdk/schema.ts`).
  */
 interface GeoJSONPolygon {
 	type: "Polygon"
@@ -22,20 +23,23 @@ interface GeoJSONMultiPolygon {
 }
 
 /**
- * Area-weighted (shoelace) centroid of a GeoJSON `Polygon`/`MultiPolygon`'s exterior ring(s), area-weighted across
- * rings for a MultiPolygon. Interior rings/holes are still ignored — a hole moves a block's centroid far less than the
- * vertex-density skew this replaces, and only 1.0% of measured blocks carry one.
+ * Area-weighted (shoelace) centroid of a GeoJSON `Polygon`/`MultiPolygon`'s exterior ring(s),
+ * area-weighted across rings for a MultiPolygon. Interior rings/holes are still ignored —
+ * a hole moves a block's centroid far less than the vertex-density skew this replaces,
+ * and only 1.0% of measured blocks carry one.
  *
- * This replaced the first version's vertex-average, whose "same res-9 cell for all but pathological shapes" claim was
- * falsified by measurement over every real tiger 2020 block in LA + Orange county (118,360 blocks, 2026-08-11): the
- * vertex-average landed in a different res-9 cell for 11.6% of blocks, p99 displacement 286 m (past the ~174 m cell
- * edge), max 3.7 km — the tail is tiger's elongated rural/mountain blocks, whose boundary vertices cluster on the
- * squiggly natural edge and drag a vertex-average toward it.
+ * This replaced the first version's vertex-average, whose "same res-9 cell for all
+ * but pathological shapes" claim was falsified by measurement over every real tiger 2020
+ * block in LA + Orange county (118,360 blocks, 2026-08-11): the vertex-average landed in a
+ * different res-9 cell for 11.6% of blocks, p99 displacement 286 m (past the ~174 m cell edge),
+ * max 3.7 km — the tail is tiger's elongated rural/mountain blocks, whose boundary
+ * vertices cluster on the squiggly natural edge and drag a vertex-average toward it.
  *
- * A degenerate geometry with zero total ring area (a sliver the shoelace annihilates) falls back to the vertex average
- * — a weaker answer beats none, and the fallback is exactly the old behavior.
+ * A degenerate geometry with zero total ring area (a sliver the shoelace annihilates) falls back to
+ * the vertex average — a weaker answer beats none, and the fallback is exactly the old behavior.
  *
- * Returns `undefined` for anything that doesn't parse as one of the two geometry types (including `null` geometry).
+ * Returns `undefined` for anything that doesn't parse as one of the two geometry
+ * types (including `null` geometry).
  */
 export function geometryCentroid(geometryJSON: string | null): { lat: number; lon: number } | undefined {
 	if (!geometryJSON) return undefined
@@ -102,13 +106,14 @@ export function geometryCentroid(geometryJSON: string | null): { lat: number; lo
 }
 
 /**
- * The production `blockCentroids` supplier: opens the tiger blocks database read-only and probes `tabblock20.geoid`
- * (uppercase) per lookup, decoding its GeoJSON `geometry` column via {@linkcode geometryCentroid}. The factory awaits
- * its read-only open. the per-lookup probe and the `BuildBDCOptions.blockCentroids` interface stay synchronous — a
- * plain sync function (the same sync-by-interface discipline agents.md documents for the resolver ladder), so the
- * returned closure uses `node:sqlite`'s raw `.prepare()`/`.get()` directly rather than Kysely. The connection is left
- * open for the caller's process lifetime (a read-path lookup rather than a build) — same lifecycle as the
- * resolver-wof-sqlite lookups.
+ * The production `blockCentroids` supplier: opens the tiger blocks database read-only
+ * and probes `tabblock20.geoid` (uppercase) per lookup, decoding its GeoJSON `geometry` column
+ * via {@linkcode geometryCentroid}. The factory awaits its read-only open. the per-lookup probe
+ * and the `BuildBDCOptions.blockCentroids` interface stay synchronous — a plain sync function
+ * (the same sync-by-interface discipline agents.md documents for the resolver ladder),
+ * so the returned closure uses `node:sqlite`'s raw `.prepare()`/`.get()` directly
+ * rather than Kysely. The connection is left open for the caller's process lifetime
+ * (a read-path lookup rather than a build) — same lifecycle as the resolver-wof-sqlite lookups.
  */
 export async function createTIGERBlockCentroidLookup(
 	tigerDBPath: string

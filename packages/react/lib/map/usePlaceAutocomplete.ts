@@ -97,8 +97,8 @@ export interface UsePlaceAutocomplete {
 const LISTBOX_ID = "mw-demo-suggest-list"
 
 /**
- * Stable empty list for the derived no-suggestions state — a fresh `[]` per render would churn the identity every
- * consumer and every useCallback dependency list sees.
+ * Stable empty list for the derived no-suggestions state — a fresh `[]` per render would
+ * churn the identity every consumer and every useCallback dependency list sees.
  */
 const NO_SUGGESTIONS: Suggestion[] = []
 const optionID = (index: number) => `mw-demo-suggest-${index}`
@@ -125,17 +125,19 @@ export function usePlaceAutocomplete({
 	debounceMs = 150,
 }: UsePlaceAutocompleteOptions): UsePlaceAutocomplete {
 	/**
-	 * The last completed fetch, keyed by the query that produced it. Visibility is derived from this during render rather
-	 * than pushed through sync setStates in the effect — the effect's only job is the async fetch, so every state write
-	 * in it happens after an await and the react(set-state-in-effect) rule is satisfied by structure rather than by
-	 * exception.
+	 * The last completed fetch, keyed by the query that produced it.
+	 * Visibility is derived from this during render rather than pushed through
+	 * sync setStates in the effect — the effect's only job is the async fetch,
+	 * so every state write in it happens after an await and the react(set-state-in-effect)
+	 * rule is satisfied by structure rather than by exception.
 	 */
 	const [fetched, setFetched] = useState<{ query: string; suggestions: Suggestion[] } | null>(null)
 	/**
-	 * The query whose list was dismissed or picked. Suppression as data, replacing the one-shot ref flag: a pick stores
-	 * the query the rewritten text will produce, so the post-pick fetch is skipped and the place just chosen is never
-	 * re-suggested. One divergence from the ref version, accepted and small: after Esc, retyping the exact same string
-	 * keeps the list hidden until the query changes.
+	 * The query whose list was dismissed or picked. Suppression as data, replacing
+	 * the one-shot ref flag: a pick stores the query the rewritten text will produce,
+	 * so the post-pick fetch is skipped and the place just chosen is never re-suggested.
+	 * One divergence from the ref version, accepted and small: after Esc, retyping the
+	 * exact same string keeps the list hidden until the query changes.
 	 */
 	const [dismissed, setDismissed] = useState<string | null>(null)
 	const [activeIndex, setActiveIndex] = useState(-1)

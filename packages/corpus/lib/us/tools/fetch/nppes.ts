@@ -41,8 +41,9 @@ const SLUG = "usgov-nppes"
 export type FetchNPPESOptions = BaseFetchOptions
 
 /**
- * Scrape the NPI_Files.html index for the latest full monthly ZIP. Full-replacement files match
- * `NPPES_Data_Dissemination_<Month>_<Year>*.zip`; weekly files carry a `MMDDYY_MMDDYY` date range, which we exclude.
+ * Scrape the NPI_Files.html index for the latest full monthly ZIP.
+ * Full-replacement files match `NPPES_Data_Dissemination_<Month>_<Year>*.zip`;
+ * weekly files carry a `MMDDYY_MMDDYY` date range, which we exclude.
  */
 async function discoverLatestZip(): Promise<string | undefined> {
 	// `responseType: "text"` — the index is html, scraped by regex below.
@@ -64,8 +65,8 @@ async function discoverLatestZip(): Promise<string | undefined> {
 }
 
 /**
- * The main registry CSV (npidata_pfile_*.csv), which the archive also carries alongside a header file and a per-month
- * change file.
+ * The main registry CSV (npidata_pfile_*.csv), which the archive also carries
+ * alongside a header file and a per-month change file.
  */
 async function findNpidataCSV(zipPath: string): Promise<string | undefined> {
 	const entries = await listZipEntries(zipPath)
@@ -93,8 +94,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	const zipDest = join(destDir, zipFilename)
 	report?.(`  Latest full file: ${zipFilename}`)
 
-	// Idempotency check: if the main CSV already exists and sha matches,
-	// skip re-download.
+	// Idempotency check: if the main CSV already exists and sha matches, skip re-download.
 	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
 
 	if (recorded?.sha256 && recorded.filename) {

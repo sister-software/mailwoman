@@ -27,22 +27,22 @@ import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
- * Canonical voie type (lowercase, accent-kept) → its most common written abbreviation, from the codex table's first
- * entry. Types with no attested abbreviation stay canonical in the abbreviated form.
+ * Canonical voie type (lowercase, accent-kept) → its most common written abbreviation, from the codex
+ * table's first entry. Types with no attested abbreviation stay canonical in the abbreviated form.
  */
 const FR_VOIE_ABBREV: Record<string, string> = Object.fromEntries(
 	Object.entries(FR_VOIE_TYPES).flatMap(([canonical, abbrevs]) => (abbrevs[0] ? [[canonical, abbrevs[0]]] : []))
 )
 
 /**
- * The order-cycle slot for the bare-street-only form (`«voie» «name»`, no number, no locality) — the absence
- * counterweight to the locality-terminated comma-free forms (see the cycle comment).
+ * The order-cycle slot for the bare-street-only form (`«voie» «name»`, no number, no locality) —
+ * the absence counterweight to the locality-terminated comma-free forms (see the cycle comment).
  */
 const BARE_STREET_ONLY_FORM = 3
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const frBareStreetRecipe: CorpusRecipe = {
 	name: "fr-bare-street",
@@ -70,11 +70,11 @@ export const frBareStreetRecipe: CorpusRecipe = {
 
 			const { prefix, street } = decomposeFrStreet(fullStreet)
 
-			// A no-prefix nom_voie ("La Ville Mois") is not the prefix-led class the numbered forms
-			// exercise — but as a bare surface it is exactly the non-voie-led counterweight the v4.5.1
-			// probe showed missing ('Savile Row'-shaped spans still fell to the trailing-locality
-			// prior. the voie-led bare form guarded only voie-led spans). Alternate rows emit the
-			// whole span as a bare street. the rest skip as before.
+			// A no-prefix nom_voie ("La Ville Mois") is not the prefix-led class the numbered
+			// forms exercise — but as a bare surface it is exactly the non-voie-led counterweight
+			// the v4.5.1 probe showed missing ('Savile Row'-shaped spans still fell to the
+			// trailing-locality prior. the voie-led bare form guarded only voie-led spans).
+			// Alternate rows emit the whole span as a bare street. the rest skip as before.
 			if (!prefix || !street) {
 				if (read % 2 === 0 && fullStreet.split(" ").length >= 2) {
 					const bare = {
@@ -107,18 +107,18 @@ export const frBareStreetRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Four surfaces over the same tuple, cycled deterministically. The comma form was the
-			// original change. the comma-free form is the colloquial register users actually type
-			// ('12 rue de Rome Paris' — the street↔locality boundary with no delimiter, the fr-fr
-			// panel's named loss); the abbreviated form is the typeahead register the geocoder-tester
-			// FR sample attests at scale. and the bare-street-only form is the absence counterweight —
-			// without it, every delimiter-free surface in the mix ends in a locality, the model learns
-			// "trailing span = locality" as categorical, and bare street names across locales flip to
-			// locality wholesale (the v4.5.0 no-promote's measured erosion: 'Calle de Alcalá',
-			// 'Madison Square West', and comer's fork all fell to that prior). Tags are identical
-			// where present. each component value is the span as written (BIO alignment binds value
-			// to surface); the bare form carries no number and no locality because the surface has
-			// neither.
+			// Four surfaces over the same tuple, cycled deterministically.
+			// The comma form was the original change. the comma-free form is the colloquial
+			// register users actually type ('12 rue de Rome Paris' — the street↔locality
+			// boundary with no delimiter, the fr-fr panel's named loss); the abbreviated form
+			// is the typeahead register the geocoder-tester FR sample attests at scale. and the
+			// bare-street-only form is the absence counterweight — without it, every delimiter-free
+			// surface in the mix ends in a locality, the model learns "trailing span = locality"
+			// as categorical, and bare street names across locales flip to locality wholesale
+			// (the v4.5.0 no-promote's measured erosion: 'Calle de Alcalá', 'Madison Square West',
+			// and comer's fork all fell to that prior). Tags are identical where present. each
+			// component value is the span as written (BIO alignment binds value to surface);
+			// the bare form carries no number and no locality because the surface has neither.
 			const form = read % 4
 			const prefixSurface = form >= 2 ? (FR_VOIE_ABBREV[prefix.toLowerCase()] ?? prefix) : prefix
 
@@ -127,9 +127,9 @@ export const frBareStreetRecipe: CorpusRecipe = {
 					? { street_prefix: prefix, street }
 					: { house_number: number, street_prefix: prefixSurface, street, locality }
 
-			// When the tuple carries a WOF-attested neighbourhood, the comma slot renders the
-			// three-slot middle surface — the dependent-locality counterweight (the v4.5.1 erosion's
-			// untouched half: the two-slot comma-free endings squeezed the middle tag out).
+			// When the tuple carries a WOF-attested neighbourhood, the comma slot renders
+			// the three-slot middle surface — the dependent-locality counterweight
+			// (the v4.5.1 erosion's untouched half: the two-slot comma-free endings squeezed the middle tag out).
 			const hood = String(t.neighbourhood ?? "").trim()
 
 			if (form === 0 && hood) {

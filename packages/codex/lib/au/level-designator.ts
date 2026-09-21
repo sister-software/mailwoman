@@ -40,9 +40,9 @@
 /**
  * One amas / AS 4590.1 level-type row.
  *
- * The `type` is the AS 4590.1 LEVEL_TYPE_CODE value (what gnaf and amas use internally); the `abbreviation` is the
- * approved surface form used in formatted mail. the `requiresNumber` flag distinguishes designators that take a floor
- * identifier from standalone ones.
+ * The `type` is the AS 4590.1 LEVEL_TYPE_CODE value (what gnaf and amas use internally);
+ * the `abbreviation` is the approved surface form used in formatted mail. the `requiresNumber`
+ * flag distinguishes designators that take a floor identifier from standalone ones.
  */
 export interface AuLevelDesignator {
 	/**
@@ -58,15 +58,16 @@ export interface AuLevelDesignator {
 	 */
 	abbreviation: string
 	/**
-	 * True when the designator takes a numeric or alphanumeric floor identifier after it (`level 3`, `basement 2`). False
-	 * for standalone types (`ground`, `mezzanine`, `rooftop`) that name a specific well-known floor by vocabulary alone.
+	 * True when the designator takes a numeric or alphanumeric floor identifier after it
+	 * (`level 3`, `basement 2`). False for standalone types (`ground`, `mezzanine`, `rooftop`)
+	 * that name a specific well-known floor by vocabulary alone.
 	 */
 	requiresNumber: boolean
 }
 
 /**
- * Amas / AS 4590.1-2017 level-type table (Table 3). Verbatim codes. see the module header for provenance. Ordered with
- * the most-common forms first for match priority.
+ * Amas / AS 4590.1-2017 level-type table (Table 3). Verbatim codes. see the module header
+ * for provenance. Ordered with the most-common forms first for match priority.
  */
 export const AU_LEVEL_DESIGNATORS = [
 	{ code: "L", name: "LEVEL", abbreviation: "L", requiresNumber: true },
@@ -86,11 +87,12 @@ export const AU_LEVEL_DESIGNATORS = [
 export type AuLevelCode = (typeof AU_LEVEL_DESIGNATORS)[number]["code"]
 
 /**
- * Recognized surface variants for each amas level code — the canonical code/abbreviation pair plus additional forms
- * found in real AU addresses (Open Addresses export) that the parser must recognize but the synthesis layer should not
- * favor over the canonical form.
+ * Recognized surface variants for each amas level code — the canonical code/abbreviation
+ * pair plus additional forms found in real AU addresses (Open Addresses export) that the
+ * parser must recognize but the synthesis layer should not favor over the canonical form.
  *
- * Synthesis uses only the first element (the amas canonical surface). Recognition accepts all.
+ * Synthesis uses only the first element (the amas canonical surface).
+ * Recognition accepts all.
  */
 export const AU_LEVEL_DESIGNATOR_VARIANTS: Readonly<Record<AuLevelCode, readonly string[]>> = {
 	L: ["L", "LEVEL", "LVL", "LEVL", "LEV"],
@@ -105,13 +107,13 @@ export const AU_LEVEL_DESIGNATOR_VARIANTS: Readonly<Record<AuLevelCode, readonly
 }
 
 /**
- * Inverse lookup: every variant (abbreviation or surface form) → the canonical amas code. Lowercase-keyed for
- * case-insensitive matching (`"level"` → `"L"`, `"bsmt"` → `"B"`).
+ * Inverse lookup: every variant (abbreviation or surface form) → the canonical amas code.
+ * Lowercase-keyed for case-insensitive matching (`"level"` → `"L"`, `"bsmt"` → `"B"`).
  */
 export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() => {
-	// Structural integrity check: every code must have at least one non-empty variant. Throw at
-	// module load time so a malformed table entry fails loud rather than silently producing an empty
-	// lexicon (the "builder must round-trip loud" rule from the task interface).
+	// Structural integrity check: every code must have at least one non-empty variant.
+	// Throw at module load time so a malformed table entry fails loud rather than silently
+	// producing an empty lexicon (the "builder must round-trip loud" rule from the task interface).
 	for (const { code } of AU_LEVEL_DESIGNATORS) {
 		const variants = AU_LEVEL_DESIGNATOR_VARIANTS[code]
 
@@ -162,8 +164,8 @@ export interface AuLevelDesignatorMatch {
 }
 
 /**
- * One regex per level code. Multi-word variants ("lower ground", "ground floor") are matched before their shorter
- * constituents by ordering the variant list longest-first within each code.
+ * One regex per level code. Multi-word variants ("lower ground", "ground floor") are matched
+ * before their shorter constituents by ordering the variant list longest-first within each code.
  */
 const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean; re: RegExp }> = (() => {
 	const rows: Array<{ code: AuLevelCode; requiresNumber: boolean; re: RegExp }> = []
@@ -187,10 +189,10 @@ const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean
 })()
 
 /**
- * If `input` is a standalone AU level designator phrase ("Level 3", "L 12", "Ground Floor", "Mezzanine", "B 2"), return
- * the canonical code and identifier. Null otherwise. Malformed entries (a requires-number designator with no
- * identifier, e.g. bare "Level") return null — the builder throws loudly when a row in a table violates this
- * constraint.
+ * If `input` is a standalone AU level designator phrase ("Level 3", "L 12",
+ * "Ground Floor", "Mezzanine", "B 2"), return the canonical code and identifier.
+ * Null otherwise. Malformed entries (a requires-number designator with no identifier, e.g. bare "Level")
+ * return null — the builder throws loudly when a row in a table violates this constraint.
  */
 export function matchAuLevelDesignator(input: unknown): AuLevelDesignatorMatch | null {
 	if (typeof input !== "string") return null
@@ -218,10 +220,11 @@ export function isAuLevelDesignator(input: unknown): boolean {
 }
 
 /**
- * Normalize a recognized level phrase to the amas canonical form (`"level 3"` → `"L 3"`, `"ground floor"` → `"G"`).
- * Returns the input unchanged if it isn't a level designator phrase. Throws if a row in {@link AU_LEVEL_DESIGNATORS} is
- * malformed (requires-number entry with no abbreviation or empty name) — the builder must surface structural defects
- * loudly.
+ * Normalize a recognized level phrase to the amas canonical form
+ * (`"level 3"` → `"L 3"`, `"ground floor"` → `"G"`). Returns the input unchanged if
+ * it isn't a level designator phrase. Throws if a row in {@link AU_LEVEL_DESIGNATORS}
+ * is malformed (requires-number entry with no abbreviation or empty name) —
+ * the builder must surface structural defects loudly.
  */
 export function normalizeAuLevelDesignator(input: string): string {
 	const m = matchAuLevelDesignator(input)

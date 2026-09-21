@@ -47,9 +47,9 @@ describe("venue-word-hints table integrity", () => {
 	})
 
 	it("the toponym family the composed measure exists to kill stays out", () => {
-		// Venue-frequency alone admits famous place names (the f6 saturation finding: 'paris' out-ratios
-		// 'comer'); the place-rate suppressor is what keeps them out. The street-fork family is the
-		// falsifier's named false positives.
+		// Venue-frequency alone admits famous place names (the f6 saturation finding:
+		// 'paris' out-ratios 'comer'); the place-rate suppressor is what keeps them out.
+		// The street-fork family is the falsifier's named false positives.
 		for (const toponym of ["paris", "mexico", "augusta", "catherine", "savile", "alvear", "paulista"]) {
 			expect(venueWordHint(toponym), toponym).toBeNull()
 		}
@@ -68,8 +68,8 @@ describe("venue-word-hints table integrity", () => {
 	})
 
 	it("the table is the size the survey measured, within regeneration drift", () => {
-		// 2,249 at the committed bars. A regenerate against a new survey artifact may move this — move
-		// the pin with the provenance sourceMD5, deliberately.
+		// 2,249 at the committed bars. A regenerate against a new survey artifact may move this —
+		// move the pin with the provenance sourceMD5, deliberately.
 		expect(venueWordHintCount()).toBe(2249)
 		expect(venueWordHintProvenance().sourceMD5).toBe("a2ae6f4b29ee0ee45870273487d86e79")
 	})

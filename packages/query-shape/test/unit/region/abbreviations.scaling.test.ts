@@ -20,21 +20,22 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
 /**
- * One "City, ST ZIP" record. Repeating it grows segments and tokens together, which is the pairing that made the
- * original nested.
+ * One "City, ST ZIP" record. Repeating it grows segments and tokens together,
+ * which is the pairing that made the original nested.
  */
 const UNIT = "123 Main St, Springfield, IL 62701, "
 
 /**
- * Timing samples per size. Five keeps the minimum honest against back-to-back load spikes (three let one through on
- * 2026-08-05 — see the threshold note below) without making the test slow.
+ * Timing samples per size. Five keeps the minimum honest against back-to-back load spikes
+ * (three let one through on 2026-08-05 — see the threshold note below) without making the test slow.
  */
 const TIMING_SAMPLES = 5
 
 /**
- * Contention can only ever ADD time to a sample, never remove it, so the minimum is the run least polluted by whatever
- * else the machine was doing. A mean or a single sample inherits every load spike, which on a shared CI runner is the
- * difference between measuring the algorithm and measuring the neighbours.
+ * Contention can only ever ADD time to a sample, never remove it, so the
+ * minimum is the run least polluted by whatever else the machine was doing.
+ * A mean or a single sample inherits every load spike, which on a shared CI runner is
+ * the difference between measuring the algorithm and measuring the neighbours.
  */
 function timeAt(input: string): number {
 	const start = performance.now()
@@ -45,9 +46,10 @@ function timeAt(input: string): number {
 }
 
 /**
- * Sample both sizes interleaved (small, large, small, large, …) rather than all-small-then-all-large: runner load and
- * thermal state drift over the test's lifetime, and a block design hands the drift entirely to one side of the ratio.
- * Interleaving gives both sizes an equal draw from every load regime, so the two minimums are comparable.
+ * Sample both sizes interleaved (small, large, small, large, …) rather than all-small-then-all-large:
+ * runner load and thermal state drift over the test's lifetime, and a block design
+ * hands the drift entirely to one side of the ratio. Interleaving gives both sizes an
+ * equal draw from every load regime, so the two minimums are comparable.
  */
 function bestOfBoth(smallReps: number, largeReps: number): { small: number; large: number } {
 	const smallInput = UNIT.repeat(smallReps)
@@ -73,10 +75,10 @@ test("computeQueryShape stays linear as segment count doubles", () => {
 	const { small, large } = bestOfBoth(4000, 8000)
 	const ratio = large / Math.max(small, 0.001)
 
-	// 3.5 rather than 3: the 3x bar produced two false failures on loaded CI runners on 2026-08-05 (measured
-	// 3.13x, 15.3ms -> 48.0ms, best-of-three block design). Quadratic doubles to ~4x at these sizes —
-	// fixed overhead is <1ms against 15ms+ samples — so 3.5 still separates the real failure from a
-	// noisy neighbour.
+	// 3.5 rather than 3: the 3x bar produced two false failures on loaded CI runners
+	// on 2026-08-05 (measured 3.13x, 15.3ms -> 48.0ms, best-of-three block design).
+	// Quadratic doubles to ~4x at these sizes — fixed overhead is <1ms against 15ms+ samples —
+	// so 3.5 still separates the real failure from a noisy neighbour.
 	expect(
 		ratio,
 		`doubling the input multiplied the cost by ${ratio.toFixed(2)}x (${small.toFixed(1)}ms -> ${large.toFixed(1)}ms). ` +

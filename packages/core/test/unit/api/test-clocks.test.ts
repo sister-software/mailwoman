@@ -31,8 +31,9 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 	it("waits out real I/O that outlasts any turn budget", async () => {
 		const clock = new VirtualClock()
 
-		// 50ms of real time is thousands of idle setImmediate turns. Under the turn-budgeted guard
-		// this threw. the work was never stuck, the budget was just denominated in the wrong unit.
+		// 50ms of real time is thousands of idle setImmediate turns.
+		// Under the turn-budgeted guard this threw. the work was never stuck,
+		// the budget was just denominated in the wrong unit.
 		await expect(clock.runUntilSettled(realDelay(50))).resolves.toBeUndefined()
 	})
 
@@ -74,8 +75,9 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 	}, 30_000)
 
 	it("measures its budget with performance.now, not the fakeable Date", async () => {
-		// Consumers freeze Date inside their describe blocks. If the budget read Date.now() it would
-		// never advance there, and genuinely stuck work would hang instead of reporting.
+		// Consumers freeze Date inside their describe blocks.
+		// If the budget read Date.now() it would never advance there, and genuinely
+		// stuck work would hang instead of reporting.
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 
@@ -105,8 +107,8 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 			clearInterval(counter)
 		}
 
-		// A 5ms interval over ~120ms should fire ~24 times. A settle loop that hogs the event loop
-		// with back-to-back setImmediate turns starves it well below that.
+		// A 5ms interval over ~120ms should fire ~24 times. A settle loop that hogs the event
+		// loop with back-to-back setImmediate turns starves it well below that.
 		expect(ticks).toBeGreaterThanOrEqual(8)
 	})
 })

@@ -7,12 +7,12 @@
 import { greatCircleDistance, haversine, haversineKm } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
 
-// Earth mean radius the formula uses (radii.km). Reference distances below are derived from it rather than
-// looked up — so they pin the exact constant + formula rather than an approximation.
+// Earth mean radius the formula uses (radii.km). Reference distances below are derived from it
+// rather than looked up — so they pin the exact constant + formula rather than an approximation.
 const R = 6371
 
-// `[longitude, latitude]` tuples. the object form keeps the Null-Island sentinel, so the equator pair starts ten
-// degrees east of (0, 0).
+// `[longitude, latitude]` tuples. the object form keeps the Null-Island sentinel,
+// so the equator pair starts ten degrees east of (0, 0).
 test("greatCircleDistance takes the body radius: a quarter turn on the Moon is πR/2", () => {
 	const quarter = greatCircleDistance([10, 0], [100, 0], { body: "moon" })
 
@@ -49,8 +49,8 @@ test("haversineKm: symmetric in its arguments", () => {
 })
 
 test("haversineKm: (0,0) is a real point (Gulf of Guinea), not a missing-coordinate sentinel", () => {
-	// Unlike the object-form `haversine`, the raw-scalar form has no Null-Island sentinel — 0/0 is a
-	// real coordinate, so this returns a finite distance rather than NaN.
+	// Unlike the object-form `haversine`, the raw-scalar form has no Null-Island sentinel —
+	// 0/0 is a real coordinate, so this returns a finite distance rather than NaN.
 	const d = haversineKm(0, 0, 0.5, 0.5)
 	expect(Number.isNaN(d)).toBe(false)
 	expect(d).toBeGreaterThan(0)

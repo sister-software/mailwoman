@@ -80,9 +80,10 @@ const countryDirectories = (
 	.map((entry) => entry.name)
 	.toSorted()
 
-// Read every case file first and validate the whole list against it. Nothing is written until the list is known to be
-// good: a refusal that fires halfway through leaves some files promoted and some not, which is a worse state than
-// either outcome and reads as a partial application nobody asked for.
+// Read every case file first and validate the whole list against it.
+// Nothing is written until the list is known to be good: a refusal that fires halfway
+// through leaves some files promoted and some not, which is a worse state than either
+// outcome and reads as a partial application nobody asked for.
 const byPath = new Map<string, SeedCase[]>()
 const found = new Map<string, string>()
 

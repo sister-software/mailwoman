@@ -457,7 +457,8 @@ export const StateAbbreviation = {
 export type StateAbbreviation = (typeof StateAbbreviation)[keyof typeof StateAbbreviation]
 
 /**
- * Postal abbreviations for US territories, kept apart from the states so callers can include or exclude them.
+ * Postal abbreviations for US territories, kept apart from the states
+ * so callers can include or exclude them.
  */
 export const TerritoryAbbreviation = {
 	"American Samoa": "AS",
@@ -563,8 +564,8 @@ export type StateName = (typeof StateName)[keyof typeof StateName]
 //#region State Utilities
 
 /**
- * Predicate for checking if a string is a proper abbreviation for a US State or territory, rather than a random
- * 2-letter string.
+ * Predicate for checking if a string is a proper abbreviation for a US State
+ * or territory, rather than a random 2-letter string.
  *
  * @see {@link isStateAbbreviation} for a specific check for US States.
  * @see {@link isStateTerritoryAbbreviation} for a specific check for US Territories.
@@ -576,7 +577,8 @@ export function isStateLevelAbbreviation(input: unknown): input is AdminLevel1Ab
 }
 
 /**
- * Predicate for checking if a string is a proper abbreviation for a US State, rather than a random 2-letter string.
+ * Predicate for checking if a string is a proper abbreviation for a US State,
+ * rather than a random 2-letter string.
  *
  * @see {@link isStateLevelAbbreviation} for a general check for US States and Territories.
  * @see {@link isStateTerritoryAbbreviation} for a specific check for US Territories.
@@ -588,7 +590,8 @@ export function isStateAbbreviation(input: unknown): input is StateAbbreviation 
 }
 
 /**
- * Predicate for checking if a string is a proper abbreviation for a US Territory, rather than a random 2-letter string.
+ * Predicate for checking if a string is a proper abbreviation for a US Territory,
+ * rather than a random 2-letter string.
  *
  * @see {@link isStateLevelAbbreviation} for a general check for US States and Territories.
  * @see {@link isStateAbbreviation} for a specific check for US States.
@@ -667,8 +670,8 @@ export interface TIGERState {
 	[GeoIDPart.State]: AdminLevel1Code
 
 	/**
-	 * The geometry of the tabulated block, typically a polygon, but may be a multi-polygon for blocks with holes, or
-	 * islands.
+	 * The geometry of the tabulated block, typically a polygon, but may be a
+	 * multi-polygon for blocks with holes, or islands.
 	 *
 	 * @title Geometry
 	 */

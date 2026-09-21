@@ -26,8 +26,8 @@ import { readLabelsFromModelCard } from "@mailwoman/neural/weights-channels"
 import { describe, expect, test } from "vitest"
 
 /**
- * Every locale with a weights workspace. Spelled out rather than discovered: a carrier added without being listed here
- * is exactly the case that broke, so the list failing to grow is itself the signal.
+ * Every locale with a weights workspace. Spelled out rather than discovered: a carrier added without
+ * being listed here is exactly the case that broke, so the list failing to grow is itself the signal.
  */
 const LOCALES = ["en-US", "en-GB", "fr-FR", "de-DE", "en-IN", "es-ES", "it-IT", "en-NZ"] as const
 
@@ -56,8 +56,8 @@ describe("weights overlays inherit their base's label vocabulary", () => {
 		test.skipIf(!HAVE_WEIGHTS.get(locale))(`${locale} decodes with the model's full vocabulary`, async () => {
 			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
 
-			// Reaching into `labels` rather than asserting on a parse: a wrong vocabulary throws on the first
-			// parse, and a thrown assertion says less than a count comparison does.
+			// Reaching into `labels` rather than asserting on a parse: a wrong vocabulary throws
+			// on the first parse, and a thrown assertion says less than a count comparison does.
 			const labels = classifier["labels"]
 
 			expect(labels, `${locale} resolved ${labels.length} labels; en-US resolves ${baseline?.length}`).toHaveLength(

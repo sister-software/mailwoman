@@ -24,8 +24,8 @@ export interface Phase2Counts {
  */
 export interface Phase2Comparability {
 	/**
-	 * Every pinned artifact whose observed identity differs, named with both values. Empty means the run is comparable to
-	 * the receipts the ruler cites as baselines.
+	 * Every pinned artifact whose observed identity differs, named with both values.
+	 * Empty means the run is comparable to the receipts the ruler cites as baselines.
 	 */
 	deviations: string[]
 }
@@ -34,20 +34,22 @@ export interface Phase2Verdict {
 	decision: Phase2Decision
 	counts: Phase2Counts
 	/**
-	 * `partial` whenever any registered lane is blocked. Always stated: a verdict over three of four lanes is a different
-	 * claim from a verdict over all of them, and only one of the two is what this run produced.
+	 * `partial` whenever any registered lane is blocked. Always stated: a verdict
+	 * over three of four lanes is a different claim from a verdict over all of them,
+	 * and only one of the two is what this run produced.
 	 */
 	coverage: "complete" | "partial"
 	blockedLanes: string[]
 	/**
-	 * `deviated` when the run's artifacts differ from the pins. Reported, never a decision input — a decision measured on
-	 * other artifacts is still a decision about those artifacts.
+	 * `deviated` when the run's artifacts differ from the pins.
+	 * Reported, never a decision input — a decision measured on other artifacts
+	 * is still a decision about those artifacts.
 	 */
 	comparability: "pinned" | "deviated"
 	pinDeviations: string[]
 	/**
-	 * The default-change bar rows that do not read `met`. Recorded so nobody reads this decision as authorizing a default
-	 * change. never an input.
+	 * The default-change bar rows that do not read `met`.
+	 * Recorded so nobody reads this decision as authorizing a default change. never an input.
 	 */
 	defaultChangeBarUnmetRows: number[]
 	reasons: string[]

@@ -42,8 +42,9 @@ export interface PurposeEntry {
 }
 
 /**
- * The exported name a top-level statement declares, or `null`. A variable statement contributes its first declaration,
- * which is how `export const x = () => …` is written here. a statement declaring several names is not this shape.
+ * The exported name a top-level statement declares, or `null`.
+ * A variable statement contributes its first declaration, which is how `export const x = () => …`
+ * is written here. a statement declaring several names is not this shape.
  */
 function exportedName(statement: ts.Statement): string | null {
 	if (!ts.canHaveModifiers(statement)) return null
@@ -73,11 +74,12 @@ function exportedName(statement: ts.Statement): string | null {
 }
 
 /**
- * Words that appear in nearly every sentence here, so matching one says nothing about which declaration is meant.
+ * Words that appear in nearly every sentence here, so matching one says nothing about
+ * which declaration is meant.
  *
- * Prepositions warrant their place on this list the hard way: `over` is a word in `bestOver`, and a name match is
- * enough on its own to report a finding, so an unlisted preposition answers an unrelated question with a confident
- * hit.
+ * Prepositions warrant their place on this list the hard way: `over` is a word
+ * in `bestOver`, and a name match is enough on its own to report a finding,
+ * so an unlisted preposition answers an unrelated question with a confident hit.
  */
 const STOP_WORDS = new Set([
 	"a",
@@ -140,8 +142,9 @@ const STOP_WORDS = new Set([
 ])
 
 /**
- * The first sentence of a docstring body: comment furniture and tag blocks removed, newlines collapsed, and the text
- * ended at the first sentence boundary. A docstring that opens with a tag (`@file`, `@param`) contributes nothing.
+ * The first sentence of a docstring body: comment furniture and tag blocks removed,
+ * newlines collapsed, and the text ended at the first sentence boundary.
+ * A docstring that opens with a tag (`@file`, `@param`) contributes nothing.
  */
 export function firstSentence(doc: string): string {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one docstring, already resident and bounded by it.
@@ -159,7 +162,8 @@ export function firstSentence(doc: string): string {
 }
 
 /**
- * Split a phrase into the words worth matching: lowercase, camelCase separated, stop words and single characters gone.
+ * Split a phrase into the words worth matching: lowercase, camelCase separated,
+ * stop words and single characters gone.
  */
 function terms(phrase: string): string[] {
 	return phrase
@@ -173,9 +177,10 @@ function terms(phrase: string): string[] {
  * Every documented export in a workspace's `lib/`, read from the working tree.
  */
 async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
-	// The pathspec names a directory and the shape is filtered here. A pathspec with a globstar inside it silently drops
-	// every file sitting directly in `lib/`, because git's wildmatch requires a separator after one — which is how
-	// `packages/core/lib/stats.ts` and `packages/spatial/lib/distance.ts` went missing from the first index.
+	// The pathspec names a directory and the shape is filtered here.
+	// A pathspec with a globstar inside it silently drops every file sitting directly in `lib/`,
+	// because git's wildmatch requires a separator after one — which is how `packages/core/lib/stats.ts`
+	// and `packages/spatial/lib/distance.ts` went missing from the first index.
 	const files = await trackedFiles(repoRoot, ["packages"])
 	const entries: PurposeEntry[] = []
 
@@ -190,8 +195,8 @@ async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
 
 			if (!name) continue
 
-			// The last leading block comment is the declaration's own: a file header sits above an import, and a comment
-			// explaining the line before belongs to that line.
+			// The last leading block comment is the declaration's own: a file header sits above
+			// an import, and a comment explaining the line before belongs to that line.
 			const doc = (ts.getLeadingCommentRanges(text, statement.getFullStart()) ?? [])
 				.map((range) => text.slice(range.pos, range.end))
 				.findLast((comment) => comment.startsWith("/**"))
@@ -214,9 +219,10 @@ async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
 
 interface PurposeCache {
 	/**
-	 * The commit the index was built from, plus every working-tree change at that moment — staged, unstaged and untracked
-	 * alike. All of it is needed: keying on the commit alone goes stale over an uncommitted edit, and keying on tracked
-	 * changes alone misses a new file, which is the case this index most needs to see.
+	 * The commit the index was built from, plus every working-tree change at that moment —
+	 * staged, unstaged and untracked alike. All of it is needed: keying on the commit
+	 * alone goes stale over an uncommitted edit, and keying on tracked changes alone
+	 * misses a new file, which is the case this index most needs to see.
 	 */
 	head: string
 	status: string[]
@@ -230,16 +236,16 @@ function cachePath(): string {
 /**
  * The index, from cache when the working tree has not moved since it was built.
  *
- * A stale index is worse than a slow one here: it answers "nothing like that exists" for a helper written an hour ago,
- * which is the reading this tool exists to prevent.
+ * A stale index is worse than a slow one here: it answers "nothing like that exists" for
+ * a helper written an hour ago, which is the reading this tool exists to prevent.
  */
 export async function loadPurposeIndex(repoRoot: string): Promise<PurposeEntry[]> {
 	const head = await gitHead(repoRoot)
 	const status = (await workingTreeStatus(repoRoot, ["packages"])).toSorted()
 	const cached = await readLocalJSONFile<Partial<PurposeCache>>(cachePath()).catch(() => null)
 
-	// A cache written by an earlier shape of this module is a miss rather than a crash: the fields are checked rather than
-	// assumed, so a renamed key rebuilds instead of throwing inside a tool call.
+	// A cache written by an earlier shape of this module is a miss rather than a crash: the fields are
+	// checked rather than assumed, so a renamed key rebuilds instead of throwing inside a tool call.
 	if (
 		cached?.head === head &&
 		Array.isArray(cached.status) &&
@@ -266,9 +272,10 @@ export interface PurposeFinding extends PurposeEntry {
 /**
  * The declarations whose name or opening sentence answers `phrase`, best first.
  *
- * Scoring is term overlap, weighted so a word in the name counts double: a name is chosen to describe the thing, while
- * a sentence also carries the words around it. A single matching term is not enough — one shared word is what every
- * sentence in a domain has in common — so a finding needs two, or one that appears in the name.
+ * Scoring is term overlap, weighted so a word in the name counts double: a name is
+ * chosen to describe the thing, while a sentence also carries the words around it.
+ * A single matching term is not enough — one shared word is what every sentence in a
+ * domain has in common — so a finding needs two, or one that appears in the name.
  */
 export function searchPurpose(phrase: string, entries: readonly PurposeEntry[], limit = 10): PurposeFinding[] {
 	const wanted = new Set(terms(phrase))
@@ -284,8 +291,9 @@ export function searchPurpose(phrase: string, entries: readonly PurposeEntry[], 
 
 		if (matched.length < 2 && !matched.some((word) => inName.has(word))) continue
 
-		// A query word that is the whole name outranks any amount of sentence overlap: asking for "percentile of a list
-		// of numbers" must answer `percentile` before `splitNumberList`, which shares two of the surrounding words.
+		// A query word that is the whole name outranks any amount of sentence overlap:
+		// asking for "percentile of a list of numbers" must answer `percentile`
+		// before `splitNumberList`, which shares two of the surrounding words.
 		const exact = wanted.has(entry.name.toLowerCase()) ? 5 : 0
 		const score = exact + matched.reduce((total, word) => total + (inName.has(word) ? 2 : 1), 0)
 

@@ -24,8 +24,9 @@ beforeAll(async () => {
 	dbPath = dir.resolve("street-centroids-fr.db")
 	using seed = new DatabaseClient<StreetCentroidDatabase>(dbPath)
 
-	// The real extract shape: the geocoding `street_norm` plus the #727 phase-4c `name_key` (interface fold). The reader must
-	// prefer `name_key`; each row carries a deliberately wrong street_norm, so a passing lookup proves it read name_key.
+	// The real extract shape: the geocoding `street_norm` plus the #727 phase-4c `name_key`
+	// (interface fold). The reader must prefer `name_key`; each row carries a deliberately
+	// wrong street_norm, so a passing lookup proves it read name_key.
 	seed.exec(
 		"CREATE TABLE street_centroid (street_norm TEXT NOT NULL, postcode TEXT, locality_base TEXT NOT NULL, name_key TEXT NOT NULL)"
 	)

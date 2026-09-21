@@ -25,16 +25,16 @@ export function mailwomanDataRoot(): string {
 }
 
 /**
- * The per-user configuration root (`$MAILWOMAN_CONFIG_ROOT`, defaulting to the platform config directory): where the
- * license signing key lives, and anything else that is the operator's rather than the data's.
+ * The per-user configuration root (`$MAILWOMAN_CONFIG_ROOT`, defaulting to the platform config directory):
+ * where the license signing key lives, and anything else that is the operator's rather than the data's.
  */
 export function mailwomanConfigRoot(): string {
 	return $public.MAILWOMAN_CONFIG_ROOT
 }
 
 /**
- * A path under the config root — the sibling of {@link dataRootPath}, so no caller composes `$MAILWOMAN_CONFIG_ROOT` by
- * hand.
+ * A path under the config root — the sibling of {@link dataRootPath},
+ * so no caller composes `$MAILWOMAN_CONFIG_ROOT` by hand.
  */
 export const configRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[]) => {
 	const resolver = createPathBuilderResolver(mailwomanConfigRoot())
@@ -45,8 +45,9 @@ export const configRootPath: PathBuilderResolver = ((...segments: PathBuilderLik
 /**
  * Build a path under the data root, e.g. `dataRootPath("wof", "admin-global-priority.db")`.
  *
- * Reads the env on each call, so a late environment change (or a test stub) is honored — a resolver bound once at
- * module evaluation would freeze the root to whatever the first importer's environment held. The result is a
+ * Reads the env on each call, so a late environment change (or a test stub) is honored —
+ * a resolver bound once at module evaluation would freeze the root to whatever the
+ * first importer's environment held. The result is a
  * {@link PathBuilder}: call it to descend, `resolvePath(...)` or `.toString()` it at a string boundary.
  */
 export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[]) => {
@@ -58,14 +59,15 @@ export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[
 /**
  * The dev-weights overlay for a locale: `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
  *
- * One definition of the convention, because it is written by ten `link-dev-weights.ts` scripts and read by
- * `@mailwoman/neural`'s `resolveWeights`, and a reader that disagreed with the writers about the directory would report
- * the artifacts absent rather than misplaced — every sibling degrades `existsSync → undefined`.
+ * One definition of the convention, because it is written by ten `link-dev-weights.ts`
+ * scripts and read by `@mailwoman/neural`'s `resolveWeights`, and a reader that
+ * disagreed with the writers about the directory would report the artifacts absent
+ * rather than misplaced — every sibling degrades `existsSync → undefined`.
  *
- * It lives outside git deliberately. The binaries are not committed, so materializing them into the tracked package
- * directory is what made a fresh worktree unable to geocode, made `yarn test` mutate tracked directories as a side
- * effect, and put a symlink in a publish tarball (`YN0035`). The data root is shared across every checkout on the
- * machine and is not packed by anything.
+ * It lives outside git deliberately. The binaries are not committed, so materializing them into
+ * the tracked package directory is what made a fresh worktree unable to geocode, made `yarn test`
+ * mutate tracked directories as a side effect, and put a symlink in a publish tarball (`YN0035`).
+ * The data root is shared across every checkout on the machine and is not packed by anything.
  */
 export function weightsOverlayPath(locale: string, ...segments: string[]): PathBuilder {
 	return dataRootPath("weights", locale.toLowerCase(), ...segments)
@@ -79,8 +81,8 @@ export function mailwomanTempRoot(): PathBuilder {
 }
 
 /**
- * Path builder under Mailwoman's temporary-file root, e.g. `tempRootPathBuilder("reg", "fr-communes.tsv")`. Reads the
- * env on each call, so a late environment change (or a test stub) is honored.
+ * Path builder under Mailwoman's temporary-file root, e.g. `tempRootPathBuilder("reg", "fr-communes.tsv")`.
+ * Reads the env on each call, so a late environment change (or a test stub) is honored.
  */
 export function tempRootPathBuilder(...segments: string[]): PathBuilder {
 	return resolvePathBuilder($public.MAILWOMAN_TEMP_ROOT, ...segments)
@@ -117,33 +119,39 @@ export function cacheRootPath(...segments: string[]): string {
 }
 
 /**
- * The default WOF extract list the FTS backend probes when no single `--wof-db` is given: the global admin-priority
- * extract plus the postcode extracts, with country-aware routing in `pickExtractForPlacetype` sending each postcode
- * query to the extract that claims its country (#920). All under `dataRoot` (defaults to the configured
+ * The default WOF extract list the FTS backend probes when no single `--wof-db` is given:
+ * the global admin-priority extract plus the postcode extracts, with country-aware
+ * routing in `pickExtractForPlacetype` sending each postcode query to the extract that
+ * claims its country (#920). All under `dataRoot` (defaults to the configured
  * {@link mailwomanDataRoot}. callers thread a `--data-root` option through). A fresh array each call. callers filter
  * with `existsSync`, so a deployment missing any of them degrades to whatever is present.
  *
- * This list is deliberately smaller than `DEFAULT_POSTCODE_EXTRACTS` (`mailwoman/gazetteer-pipeline/index.ts`), which
- * is the set the candidate gazetteer is built from — twenty-odd extracts including the 876 MB Code-Point Open GB one.
- * These are attached live per query, so the cost of a member is paid at every boot rather than once at build time.
- * membership here is earned by a extract the runtime cannot resolve its locales without.
+ * This list is deliberately smaller than `DEFAULT_POSTCODE_EXTRACTS`
+ * (`mailwoman/gazetteer-pipeline/index.ts`), which is the set the candidate gazetteer
+ * is built from — twenty-odd extracts including the 876 MB Code-Point Open GB one.
+ * These are attached live per query, so the cost of a member is paid at every boot rather than once at
+ * build time. membership here is earned by a extract the runtime cannot resolve its locales without.
  *
  * Two notes on specific members, because both look like mistakes and are not:
  *
- * - The tail extract's own contents moved on 2026-08-05. It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until
- *   Code-Point Open replaced those rows under a clean licence. it is now the nine-country namesake set
+ * - The tail extract's own contents moved on 2026-08-05.
+ *   It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until Code-Point Open
+ *   replaced those rows under a clean licence. it is now the nine-country namesake set
  *   FI/CZ/SK/SI/DK/no/HR/PL/SE at 26 MB. Rebuild: `mailwoman gazetteer build postcode-geonames`.
- * - `postalcode-ni-osm.db` is **build-local**: OSM `addr:postcode` under ODbL, never published, so on any machine that
- *   did not build it the `existsSync` filter simply drops it and GB postcode queries behave as they did before. It is
- *   listed rather than special-cased because that filter is the tier's enforcement. It is also the only GB-claiming
- *   extract in this list — the Code-Point Open extract is not here — so nothing competes with it for `BT` routing.
+ * - `postalcode-ni-osm.db` is **build-local**: OSM `addr:postcode` under ODbL,
+ *   never published, so on any machine that did not build it the `existsSync`
+ *   filter simply drops it and GB postcode queries behave as they did before.
+ *   It is listed rather than special-cased because that filter is the tier's enforcement.
+ *   It is also the only GB-claiming extract in this list — the Code-Point Open extract
+ *   is not here — so nothing competes with it for `BT` routing.
  */
 export function wofExtractPaths(dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
 	return Object.values(wofExtractPathsByName(dataRoot))
 }
 
 /**
- * The extract set {@link wofExtractPaths} lists, keyed by role so a caller can name one without indexing a tuple.
+ * The extract set {@link wofExtractPaths} lists, keyed by role so a caller can
+ * name one without indexing a tuple.
  */
 export interface WOFExtractPaths {
 	/**
@@ -163,8 +171,8 @@ export interface WOFExtractPaths {
 	 */
 	postalcodeIntl: string
 	/**
-	 * The NL PC6 full-postcode extract (CBS via pdok; `scripts/build-postalcode-nl-pc6.ts`) — the data the lookup's NL
-	 * PC6 ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against (#977).
+	 * The NL PC6 full-postcode extract (CBS via pdok; `scripts/build-postalcode-nl-pc6.ts`) — the data
+	 * the lookup's NL PC6 ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against (#977).
 	 */
 	postalcodeNLPC6: string
 	/**

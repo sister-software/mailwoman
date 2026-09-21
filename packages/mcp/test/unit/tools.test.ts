@@ -21,8 +21,9 @@ function stubDeps(): MCPToolDeps {
 		poiSearch: vi.fn(async () => ({ tag: "poi-searched" })),
 		overpassExport: vi.fn(async () => '[out:json][timeout:25];\nnwr["amenity"="cafe"];\nout center;'),
 		layerManifest: vi.fn(async () => ({ tag: "manifest" })),
-		// Mirrors the real `filingLandscape`'s own XOR throw (`bdc/sdk/filing-landscape.ts`) so the dispatch tests
-		// below can exercise "the handler propagates a deps-level rejection" without reaching for a real bdc.db.
+		// Mirrors the real `filingLandscape`'s own XOR throw (`bdc/sdk/filing-landscape.ts`)
+		// so the dispatch tests below can exercise "the handler propagates a deps-level
+		// rejection" without reaching for a real bdc.db.
 		bdcFilingLandscape: vi.fn(async (query: { geoids?: string[]; h3Cells?: number[] }) => {
 			if (!query.geoids && !query.h3Cells) {
 				throw new Error("bdcFilingLandscape: exactly one of `geoids` or `h3Cells` is required")
@@ -73,8 +74,9 @@ function stubDeps(): MCPToolDeps {
 				}
 			}
 		),
-		// Mirrors the real `filerLookup`'s (`@mailwoman/filer/filer-lookup.ts`) own XOR throw so the dispatch
-		// tests below can exercise "the handler propagates a deps-level rejection" without reaching for a real filer.db.
+		// Mirrors the real `filerLookup`'s (`@mailwoman/filer/filer-lookup.ts`) own XOR throw
+		// so the dispatch tests below can exercise "the handler propagates a deps-level
+		// rejection" without reaching for a real filer.db.
 		filerLookup: vi.fn(
 			async (query: {
 				databasePath: string
@@ -103,9 +105,9 @@ function stubDeps(): MCPToolDeps {
 				}
 			}
 		),
-		// Mirrors the real `familyRollup`'s (`@mailwoman/filer/family-rollup.ts`) own XOR throw and its
-		// always-array return shape (never `null`, never a bare object) so the dispatch tests below can exercise
-		// both without reaching for a real filer.db.
+		// Mirrors the real `familyRollup`'s (`@mailwoman/filer/family-rollup.ts`) own XOR throw
+		// and its always-array return shape (never `null`, never a bare object) so the
+		// dispatch tests below can exercise both without reaching for a real filer.db.
 		filerFamily: vi.fn(async (query: { databasePath: string; familyID?: string; nodeID?: string; asOf?: string }) => {
 			const suppliedCount = (query.familyID !== undefined ? 1 : 0) + (query.nodeID !== undefined ? 1 : 0)
 
@@ -291,8 +293,9 @@ describe("buildToolTable", () => {
 		})
 
 		it("rejects an empty geoids array and an empty h3_cells array", () => {
-			// `[]` passes a bare `.optional()` array schema (it's still a valid, present array) and would otherwise
-			// reach `filingLandscape` as a query that answers with a vacuous all-zero landscape instead of erroring.
+			// `[]` passes a bare `.optional()` array schema (it's still a valid, present array)
+			// and would otherwise reach `filingLandscape` as a query that answers with
+			// a vacuous all-zero landscape instead of erroring.
 			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_bdc_filing_landscape")
 
 			expect(tool.inputSchema.safeParse({ database_path: "/data/bdc.db", geoids: [] }).success).toBe(false)

@@ -66,18 +66,19 @@ export interface AgreementRow {
 	 */
 	serviceInside: boolean
 	/**
-	 * The local code the service reports at the point, where it reports one. Compared verbatim against the artifact's,
-	 * because carrying the code verbatim is what this layer is for: two paths that agree on containment and disagree on
-	 * the code would be a silent vocabulary defect.
+	 * The local code the service reports at the point, where it reports one.
+	 * Compared verbatim against the artifact's, because carrying the code verbatim
+	 * is what this layer is for: two paths that agree on containment and disagree
+	 * on the code would be a silent vocabulary defect.
 	 */
 	serviceLocalCode?: string
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
-	 * Carried on every row rather than only the tolerated ones, because it is what separates a real defect from the two
-	 * channels rendering the same edge differently — and a receipt that omits it forces a re-run. `undefined` means the
-	 * service returned no polygon at all near the point.
+	 * Carried on every row rather than only the tolerated ones, because it is what separates a real
+	 * defect from the two channels rendering the same edge differently — and a receipt that omits
+	 * it forces a re-run. `undefined` means the service returned no polygon at all near the point.
 	 */
 	nearestEdgeMetres?: number
 }
@@ -129,18 +130,19 @@ export const OUTSIDE_PUBLICATION_POINTS: ReadonlyArray<{ label: string; latitude
 ]
 
 /**
- * Half-width of the bounding box the service is asked for, in degrees. About 11 m at this latitude — wide enough that a
- * polygon containing the point is certainly returned, narrow enough that the response stays small.
+ * Half-width of the bounding box the service is asked for, in degrees.
+ * About 11 m at this latitude — wide enough that a polygon containing the point is
+ * certainly returned, narrow enough that the response stays small.
  */
 const PROBE_HALF_WIDTH_DEGREES = 0.0001
 
 /**
- * How close to a service-polygon edge a disagreement is attributed to the channels' differing coordinate precision
- * rather than to the conversion.
+ * How close to a service-polygon edge a disagreement is attributed to the channels'
+ * differing coordinate precision rather than to the conversion.
  *
- * Half a metre. The two channels render the same edge from the same source coordinates through different rounding, so a
- * point between the two renderings lands on opposite sides. half a metre is far below any real zoning boundary and far
- * above the rounding difference.
+ * Half a metre. The two channels render the same edge from the same source coordinates
+ * through different rounding, so a point between the two renderings lands on opposite sides.
+ * half a metre is far below any real zoning boundary and far above the rounding difference.
  */
 const BOUNDARY_TOLERANCE_METRES = 0.5
 
@@ -155,19 +157,20 @@ export interface ServiceFeature {
 /**
  * The one call the verification makes against the service: the features it publishes near a point.
  *
- * A function rather than the client, and that is what makes the check's own logic testable. The comparison's value is
- * that it decides which of three outcomes a point gets. expressed against an http client it could only ever be watched
- * on a live run, and a scripted reader lets those decisions be pinned. {@link createServiceReader} builds the real
- * one.
+ * A function rather than the client, and that is what makes the check's own logic testable.
+ * The comparison's value is that it decides which of three outcomes a point gets. expressed
+ * against an http client it could only ever be watched on a live run, and a scripted reader
+ * lets those decisions be pinned. {@link createServiceReader} builds the real one.
  */
 export type ServiceFeatureReader = (latitude: number, longitude: number) => Promise<ServiceFeature[]>
 
 /**
  * The reader the live check uses: a bounding-box query against the Department's own service.
  *
- * The service answers a BOX rather than a point, so this returns what it published nearby and the containment decision
- * is made in {@link readServiceContainment} against those rings — comparing the artifact's verdict against a bare "the
- * service returned something here" would pass on any polygon within eleven metres.
+ * The service answers a BOX rather than a point, so this returns what it published nearby
+ * and the containment decision is made in {@link readServiceContainment} against
+ * those rings — comparing the artifact's verdict against a bare "the service returned
+ * something here" would pass on any polygon within eleven metres.
  */
 export function createServiceReader(client: Pick<GZTClient, "readFeaturesNear">): ServiceFeatureReader {
 	return async (latitude, longitude) => client.readFeaturesNear(latitude, longitude, PROBE_HALF_WIDTH_DEGREES)
@@ -177,7 +180,8 @@ export interface VerifyZoningOptions {
 	databasePath: string
 	readServiceFeatures: ServiceFeatureReader
 	/**
-	 * Points to re-ask the service about. A caller samples them from the artifact — see {@link sampleAgreementPoints}.
+	 * Points to re-ask the service about. A caller samples them from the artifact —
+	 * see {@link sampleAgreementPoints}.
 	 */
 	points: ReadonlyArray<{ label: string; latitude: number; longitude: number; localCode?: string }>
 	outsidePoints?: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
@@ -249,8 +253,9 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 }
 
 /**
- * Whether the service's own geometry contains the point, decided here with the same ring-role resolution and the same
- * even-odd rule the artifact's reader uses — so what is compared is a verdict against a verdict.
+ * Whether the service's own geometry contains the point, decided here with the same
+ * ring-role resolution and the same even-odd rule the artifact's reader uses —
+ * so what is compared is a verdict against a verdict.
  */
 async function readServiceContainment(
 	readServiceFeatures: ServiceFeatureReader,
@@ -279,14 +284,15 @@ async function readServiceContainment(
 			nearest = distance
 		}
 
-		// the service'S rings GET the same role resolution the ingest gave the archive'S. The publisher uses one convention on
-		// both channels, so reading this side as nested GeoJSON would answer "inside" for a point in a hole and report the
-		// artifact as wrong at exactly the locations the hole handling exists for.
+		// the service'S rings GET the same role resolution the ingest gave the archive'S.
+		// The publisher uses one convention on both channels, so reading this side as nested
+		// GeoJSON would answer "inside" for a point in a hole and report the artifact as
+		// wrong at exactly the locations the hole handling exists for.
 		const resolved = resolveRingRoles(raw, `service feature near ${latitude},${longitude}`)
 
-		// encoded and RE-read rather than RAY-cast directly, deliberately: the artifact answers through
-		// `pointInEncodedRings`, and running the service's geometry through a different predicate would compare two answers
-		// that were never asked the same question.
+		// encoded and RE-read rather than RAY-cast directly, deliberately: the artifact answers
+		// through `pointInEncodedRings`, and running the service's geometry through a different
+		// predicate would compare two answers that were never asked the same question.
 		if (pointInEncodedRings(encodeRings(resolved.polygons), longitude, latitude)) {
 			inside = true
 
@@ -306,13 +312,13 @@ async function readServiceContainment(
 }
 
 /**
- * Draw a reproducible sample of points from the artifact — interior points of stored polygons, spread across
- * authorities.
+ * Draw a reproducible sample of points from the artifact — interior points of
+ * stored polygons, spread across authorities.
  *
- * Spread across authorities rather than drawn from one, because 30 local authorities publish 581 distinct local codes
- * between them and a sample from one would verify one authority's conversion while reporting on all of them. The stride
- * discipline — keys chosen before any geometry is read, deterministic rather than random — is
- * `strideSampleInteriorPoints`'s.
+ * Spread across authorities rather than drawn from one, because 30 local authorities publish
+ * 581 distinct local codes between them and a sample from one would verify one authority's
+ * conversion while reporting on all of them. The stride discipline — keys chosen before any
+ * geometry is read, deterministic rather than random — is `strideSampleInteriorPoints`'s.
  */
 export function sampleAgreementPoints(
 	databasePath: string,
@@ -321,9 +327,10 @@ export function sampleAgreementPoints(
 	const count = options.count ?? 48
 	using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-	// ordered BY the authority first, so a stride walks across the 30 of them rather than down one. A stride over
-	// `area_id` alone would follow the publisher's own feature numbering, which is grouped by authority — and would draw
-	// every sample from whichever authorities happen to sit on the stride.
+	// ordered BY the authority first, so a stride walks across the 30 of them rather than down one.
+	// A stride over `area_id` alone would follow the publisher's own feature numbering,
+	// which is grouped by authority — and would draw every sample from whichever
+	// authorities happen to sit on the stride.
 	const areaIDs = (
 		database.prepare("SELECT area_id FROM zoning_area ORDER BY jurisdiction_id, area_id").all() as Array<{
 			area_id: string

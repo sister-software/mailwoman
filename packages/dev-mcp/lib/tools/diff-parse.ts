@@ -15,8 +15,8 @@ import type { DevTool, DevToolDeps } from "#tool-kit"
 /**
  * How many diffs to render in full before falling back to a one-line-per-input summary.
  *
- * Rendering every changed row is the point of the tool, and rendering three hundred of them is not — past this a caller
- * is comparing models rather than reading addresses, and should narrow the input set.
+ * Rendering every changed row is the point of the tool, and rendering three hundred of them is not —
+ * past this a caller is comparing models rather than reading addresses, and should narrow the input set.
  */
 const RENDERED_LIMIT = 40
 
@@ -59,10 +59,11 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 			...(weightsCache ? { weights_cache: weightsCache } : {}),
 		})
 
-		// participation guard. `EngineConfig` is a plain object, so a mistyped key is dropped in silence and both arms
-		// run the same weights — the tool then reports "0 differ", which reads as "the candidate is identical" and is
-		// really "the change never ran". That happened on this tool's first live call (`weightsCacheRoot` for
-		// `weights_cache`), so the engine is asked what it actually loaded rather than trusted to have taken the key.
+		// participation guard. `EngineConfig` is a plain object, so a mistyped key is dropped
+		// in silence and both arms run the same weights — the tool then reports "0 differ",
+		// which reads as "the candidate is identical" and is really "the change never ran".
+		// That happened on this tool's first live call (`weightsCacheRoot` for `weights_cache`),
+		// so the engine is asked what it actually loaded rather than trusted to have taken the key.
 		if (weightsCache && base.engineID === candidate.engineID) {
 			return {
 				error: "weights_cache did not take",
@@ -81,8 +82,9 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 			const a = await base.session.geocode(input)
 			const b = await candidate.session.geocode(input)
 
-			// `tree` hangs off the RUN rather than the result: `GeocodeResult` carries a flat component map and drops the spans,
-			// which is the lossy shape this tool exists to avoid. `localeCountry` is a property of the tree.
+			// `tree` hangs off the RUN rather than the result: `GeocodeResult` carries a flat
+			// component map and drops the spans, which is the lossy shape this tool exists to avoid.
+			// `localeCountry` is a property of the tree.
 			diffs.push(
 				diffParse(input, a.tree, b.tree, {
 					...(a.tree?.localeCountry ? { before: a.tree.localeCountry } : {}),
@@ -94,8 +96,9 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 		const shown = changesOnly ? diffs.filter((d) => !d.identical) : diffs
 		const rendered = shown.slice(0, RENDERED_LIMIT).map((d) => renderParseDiff(d))
 
-		// Which event dominates is the diagnosis. A run whose changes are mostly `retagged` is mislabelling. one whose
-		// changes are mostly `moved` has a boundary problem. one that is mostly `confidence` has not decided anything yet.
+		// Which event dominates is the diagnosis. A run whose changes are mostly `retagged`
+		// is mislabelling. one whose changes are mostly `moved` has a boundary problem.
+		// one that is mostly `confidence` has not decided anything yet.
 		const events: Record<string, number> = {}
 
 		for (const d of shown) {

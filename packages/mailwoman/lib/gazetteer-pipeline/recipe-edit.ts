@@ -30,8 +30,8 @@ export type RecipeEditResult =
 /**
  * Locate a list's entries by name.
  *
- * Returns the source offsets of the array body so a caller can splice inside it without touching anything else in the
- * file — including the docstring above the list, which every one of them carries.
+ * Returns the source offsets of the array body so a caller can splice inside it without touching
+ * anything else in the file — including the docstring above the list, which every one of them carries.
  */
 function listBody(source: string, listName: string): { start: number; end: number } | undefined {
 	const header = new RegExp(`export const ${listName}\\s*=\\s*\\[`, "u").exec(source)
@@ -55,8 +55,8 @@ function bodyLines(body: string): string[] {
 /**
  * Comment lines immediately above `index`, walking upward until a non-comment line.
  *
- * Blank lines stop the walk: a comment separated from an entry by a blank line belongs to the list rather than to the
- * entry, and treating it as attached would refuse removals that are perfectly safe.
+ * Blank lines stop the walk: a comment separated from an entry by a blank line belongs to the list
+ * rather than to the entry, and treating it as attached would refuse removals that are perfectly safe.
  */
 function attachedComment(lines: readonly string[], index: number): string[] {
 	const out: string[] = []
@@ -81,9 +81,10 @@ const entryPattern = (country: string): RegExp => new RegExp(`^\\s*"${country}",
 /**
  * Add a country to a list, in sorted position.
  *
- * Sorted rather than appended because every list is sorted today, and an appended entry reads as an afterthought in a
- * file whose whole purpose is to be reviewed. Adding a country that is already present is a no-OP reported as such
- * rather than an error: a caller running the same plan twice should get the same tree.
+ * Sorted rather than appended because every list is sorted today, and an appended
+ * entry reads as an afterthought in a file whose whole purpose is to be reviewed.
+ * Adding a country that is already present is a no-OP reported as such rather than an error:
+ * a caller running the same plan twice should get the same tree.
  */
 export function addCountry(source: string, listName: string, country: string): RecipeEditResult {
 	const cc = country.toUpperCase()
@@ -98,8 +99,9 @@ export function addCountry(source: string, listName: string, country: string): R
 		return { ok: true, source, changed: false, note: `${cc} is already in ${listName}` }
 	}
 
-	// The first entry that sorts after the new one. Comment lines are skipped as sort keys but stay attached to
-	// whatever follows them, so inserting before a comment block would separate it from its entry.
+	// The first entry that sorts after the new one. Comment lines are skipped
+	// as sort keys but stay attached to whatever follows them, so inserting
+	// before a comment block would separate it from its entry.
 	let insertAt = lines.length
 
 	for (const [i, line] of lines.entries()) {

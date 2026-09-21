@@ -83,9 +83,10 @@ export interface MaskRegressionOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a finer net than the load-time delta
-	 * check's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of its
-	 * mask-off F1 is considered unharmed by the mask. Default 0.02.
+	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp —
+	 * a finer net than the load-time delta check's 5pp, so subtler interaction harms
+	 * surface at release. A tag whose mask-on F1 is within this band of its mask-off
+	 * F1 is considered unharmed by the mask. Default 0.02.
 	 */
 	threshold?: number
 	/**
@@ -97,8 +98,8 @@ export interface MaskRegressionOptions {
 //#region Locale matrix (mirrors capability-manifest.ts)
 
 /**
- * The per-tag vocabulary scored, unfolded (street parts split — mirrors score-affix.ts / capability-manifest.ts). Every
- * tag here gets a mask-off↔mask-on delta computed.
+ * The per-tag vocabulary scored, unfolded (street parts split — mirrors score-affix.ts /
+ * capability-manifest.ts). Every tag here gets a mask-off↔mask-on delta computed.
  */
 const TAGS = UNFOLDED_ADDRESS_TAGS
 
@@ -151,10 +152,11 @@ export async function maskRegressionCheck(
 		const rows = await loadPerTagEvalRows(spec.files)
 		report(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades (#2048). The rows are
-		// formatted postal addresses, and on those the production pipeline derives `formatted` and runs the
-		// evidence-bundle channels off as a declared ablation. grading them in the bare-library default measured a
-		// path production never takes on these inputs. The per-tag numbers before this change grade `fragmented`.
+		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades (#2048).
+		// The rows are formatted postal addresses, and on those the production pipeline derives
+		// `formatted` and runs the evidence-bundle channels off as a declared ablation. grading
+		// them in the bare-library default measured a path production never takes on these inputs.
+		// The per-tag numbers before this change grade `fragmented`.
 		const { off, on } = await scoreConventionsMaskOffOn(
 			rows,
 			TAGS,

@@ -91,8 +91,8 @@ describe("swapDatabaseIntoPlace", () => {
 		const final = await makeDB()
 		const missingTmp = join(dirname(final), "never-built.db")
 
-		// A nonexistent tmp makes the forward rename throw after the prior version was moved aside —
-		// the exact crash window the restore closes.
+		// A nonexistent tmp makes the forward rename throw after the prior version was
+		// moved aside — the exact crash window the restore closes.
 		await expect(swapDatabaseIntoPlace(missingTmp, final)).rejects.toThrow(/ENOENT/)
 
 		expect(await pathExists(final)).toBe(true)

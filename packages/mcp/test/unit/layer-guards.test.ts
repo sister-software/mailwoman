@@ -35,9 +35,9 @@ afterEach(() => {
 })
 
 /**
- * A valid, empty sqlite file on disk (read-write open + immediate close). `openBDCDatabaseIfPresent` and
- * `assertBDCDatabaseExists` only ever re-open read-only and never query anything in these tests, so a schema-less empty
- * db is a faithful "file present" fixture for both.
+ * A valid, empty sqlite file on disk (read-write open + immediate close).
+ * `openBDCDatabaseIfPresent` and `assertBDCDatabaseExists` only ever re-open read-only and never query
+ * anything in these tests, so a schema-less empty db is a faithful "file present" fixture for both.
  */
 async function emptySqliteFile(name: string): Promise<string> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")
@@ -49,10 +49,10 @@ async function emptySqliteFile(name: string): Promise<string> {
 }
 
 /**
- * A minimal real poi.db — same fixture idiom as `bdc/sdk/nearest-infrastructure.test.ts`'s `buildPOIFixture`.
- * `POILookup`'s constructor eagerly prepares statements against `poi`/`poi_search` and queries `poi_category_codes`
- * (see `poi-lookup.ts`), so an arbitrary empty file won't do — `openPlausibilityPOIDeps`'s "file present" branch needs
- * these tables to actually exist.
+ * A minimal real poi.db — same fixture idiom as `bdc/sdk/nearest-infrastructure.test.ts`'s
+ * `buildPOIFixture`. `POILookup`'s constructor eagerly prepares statements against `poi`/`poi_search`
+ * and queries `poi_category_codes` (see `poi-lookup.ts`), so an arbitrary empty file won't do —
+ * `openPlausibilityPOIDeps`'s "file present" branch needs these tables to actually exist.
  */
 async function poiFixtureFile(name: string): Promise<string> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")

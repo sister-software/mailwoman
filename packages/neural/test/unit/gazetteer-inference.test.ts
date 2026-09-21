@@ -1,7 +1,8 @@
 /**
- * Cross-language parity for the gazetteer-anchor matcher (#464). These assertions mirror corpus-python's
- * test_gazetteer_anchor.py — if the TS matcher drifts from the Python one, the model sees different clues at inference
- * than it trained on. The inline lexicon matches the Python fixture exactly.
+ * Cross-language parity for the gazetteer-anchor matcher (#464).
+ * These assertions mirror corpus-python's test_gazetteer_anchor.py — if the TS matcher drifts
+ * from the Python one, the model sees different clues at inference than it trained on.
+ * The inline lexicon matches the Python fixture exactly.
  */
 
 import {

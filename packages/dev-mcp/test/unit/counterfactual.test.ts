@@ -84,8 +84,8 @@ describe("measureMove", () => {
 	})
 
 	it("reports a changed abstention with a NULL distance, never a zero", () => {
-		// An abstention has no distance from anything. Turning that into a number is the projection this surface
-		// exists to avoid.
+		// An abstention has no distance from anything. Turning that into a number is
+		// the projection this surface exists to avoid.
 		const move = measureMove({ lat: null, lon: null, tier: "admin" }, { lat: 1, lon: 2, tier: "admin" })
 
 		expect(move!.changed_abstention).toBe(true)

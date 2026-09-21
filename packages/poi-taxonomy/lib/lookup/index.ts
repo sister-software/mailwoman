@@ -22,9 +22,9 @@ const CORE = createLookupCore(TABLE)
 export type { CategoryMatch } from "#lookup/core"
 
 /**
- * Exact-phrase category lookup. `locale` selects locale-restricted synonyms with the variant-aliases semantics: exact
- * locale 1.0, language-only 0.5, otherwise no match. unrestricted phrases always match at 1.0. Deduplicated by category
- * (best confidence wins), sorted by confidence descending.
+ * Exact-phrase category lookup. `locale` selects locale-restricted synonyms with the variant-aliases
+ * semantics: exact locale 1.0, language-only 0.5, otherwise no match. unrestricted phrases always
+ * match at 1.0. Deduplicated by category (best confidence wins), sorted by confidence descending.
  */
 export function lookupPOICategory(text: string, locale?: string) {
 	return CORE.lookupPOICategory(text, locale)
@@ -60,9 +60,10 @@ export function requiresBuildLocalLayer(category: CategoryRecord): boolean {
 }
 
 /**
- * Resolve a canonical seed category id to the Overture `taxonomy.primary` leaf ids a built `poi.db` stores for it. Seed
- * ids that declare no `overtureCategories` resolve to `[seedID]` (identity); an unknown seed id resolves to `[]`. The
- * POI executor fans a category query out over this list and re-tags the hits with the canonical seed id.
+ * Resolve a canonical seed category id to the Overture `taxonomy.primary` leaf ids a built
+ * `poi.db` stores for it. Seed ids that declare no `overtureCategories` resolve to `[seedID]`
+ * (identity); an unknown seed id resolves to `[]`. The POI executor fans a category
+ * query out over this list and re-tags the hits with the canonical seed id.
  */
 export function resolveOvertureCategories(seedID: string): string[] {
 	return CORE.resolveOvertureCategories(seedID)

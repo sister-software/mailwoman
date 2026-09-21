@@ -46,8 +46,8 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the candidates-per-cell and zero-cell measurement — see the workspace readme for the
- * table and the reasoning. `--measure-resolutions` re-derives it.
+ * Index resolution, chosen from the candidates-per-cell and zero-cell measurement — see the
+ * workspace readme for the table and the reasoning. `--measure-resolutions` re-derives it.
  */
 const DEFAULT_INDEX_RESOLUTION = "10"
 
@@ -110,9 +110,9 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 
 		const client = createGZTClient()
 
-		// The item read supplies the product vintage and the licence text the build reconciles against. Both are read
-		// rather than trusted from a constant: the vintage stamps the manifest, and the Tailte Éireann clause is the reason
-		// this layer is built locally rather than shipped.
+		// The item read supplies the product vintage and the licence text the build reconciles against.
+		// Both are read rather than trusted from a constant: the vintage stamps the manifest,
+		// and the Tailte Éireann clause is the reason this layer is built locally rather than shipped.
 		const item = options.offline ? undefined : await client.readItemRecord()
 		const vintage = options.sourceVintage ?? item?.modifiedDate
 
@@ -127,9 +127,10 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		let exportPath = options.export
 
 		if (!exportPath) {
-			// the vintage is required here and not earlier. It keys the download cache and it stamps the manifest, so a run
-			// that neither downloads nor builds — `--measure-resolutions` over an export already on disk — needs none, and
-			// demanding one would make the measurement impossible offline.
+			// the vintage is required here and not earlier. It keys the download cache
+			// and it stamps the manifest, so a run that neither downloads nor builds —
+			// `--measure-resolutions` over an export already on disk — needs none,
+			// and demanding one would make the measurement impossible offline.
 			if (!vintage) {
 				throw new Error(
 					"gazetteer build zoning: no product vintage — pass --source-vintage, or drop --offline so the item can be read. " +
@@ -137,9 +138,9 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 				)
 			}
 
-			// The result URL is read from the Hub job rather than assembled: it carries a generated file id with no
-			// relationship to the item id, so a hard-coded URL survives a republish by pointing at a file that is no longer
-			// the product. It 302s, and the transfer follows.
+			// The result URL is read from the Hub job rather than assembled: it carries a generated file id
+			// with no relationship to the item id, so a hard-coded URL survives a republish by pointing
+			// at a file that is no longer the product. It 302s, and the transfer follows.
 			exportPath = await downloadZoningExport({
 				url: await client.readExportURL(),
 				vintage,
@@ -163,8 +164,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			]
 		}
 
-		// A build needs the vintage, because it stamps the manifest. A manifest carrying a guessed version carries a number
-		// that means nothing.
+		// A build needs the vintage, because it stamps the manifest.
+		// A manifest carrying a guessed version carries a number that means nothing.
 		if (!vintage) {
 			throw new Error(
 				"gazetteer build zoning: no product vintage — pass --source-vintage, or drop --offline so the item can be read. " +
@@ -178,8 +179,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		const out = options.out ?? dataRootPath("zoning", "zoning-ireland.db").toString()
 		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
-		// A narrowed run reads a subset on purpose, so its declared count is the subset's own and the build asserts the sum
-		// against that rather than against the whole product.
+		// A narrowed run reads a subset on purpose, so its declared count is the subset's own
+		// and the build asserts the sum against that rather than against the whole product.
 		const narrowed = Boolean(options.authority || options.limit)
 
 		const narrowing = {
@@ -188,10 +189,11 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			...(options.limit ? { limit: Number(options.limit) } : {}),
 		}
 
-		// A narrowed RUN counts itself first. `ogrinfo` reports the layer's total and nothing narrower, so a build whose
-		// declared count was the whole product's would refuse every smoke run — and the declared-count check is the thing
-		// that turns a truncated read into a failure rather than into a smaller country. Counting is one extra pass over a
-		// file the build reads anyway.
+		// A narrowed RUN counts itself first. `ogrinfo` reports the layer's total
+		// and nothing narrower, so a build whose declared count was the whole product's
+		// would refuse every smoke run — and the declared-count check is the thing that
+		// turns a truncated read into a failure rather than into a smaller country.
+		// Counting is one extra pass over a file the build reads anyway.
 		let narrowedCount = 0
 
 		if (narrowed) {
@@ -209,10 +211,11 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ source declares ${source.declaredFeatureCount.toLocaleString()} features`)
 
-		// The live service's own feature count and `Shape__Area` sum are the two-path checks, and the second is the one
-		// that catches a hole-orientation mistake: read with their holes the rings total 5,444.5 km², read without them
-		// 5,666.6 km². The publisher's figure is not in the archive at all, which is what makes it a second path. A
-		// narrowed run reads a subset on purpose, so both checks are skipped there rather than made to pass.
+		// The live service's own feature count and `Shape__Area` sum are the two-path
+		// checks, and the second is the one that catches a hole-orientation mistake:
+		// read with their holes the rings total 5,444.5 km², read without them 5,666.6 km².
+		// The publisher's figure is not in the archive at all, which is what makes it a second path.
+		// A narrowed run reads a subset on purpose, so both checks are skipped there rather than made to pass.
 		const serviceChecks =
 			options.offline || narrowed
 				? {}
@@ -222,9 +225,9 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 					}
 
 		const result = await buildZoningDatabase({
-			// A narrowed run is the smoke rung and reads a subset in one process. a full build is batched, one child process
-			// per range of the authority's own feature ids. The reason is reproducibility rather than speed — see
-			// `@mailwoman/zoning/sdk/ingest-chunk`.
+			// A narrowed run is the smoke rung and reads a subset in one process. a full build
+			// is batched, one child process per range of the authority's own feature ids.
+			// The reason is reproducibility rather than speed — see `@mailwoman/zoning/sdk/ingest-chunk`.
 			...(narrowed
 				? { source }
 				: {

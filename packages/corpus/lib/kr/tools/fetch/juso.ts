@@ -136,8 +136,8 @@ export async function fetchJusoKR(options: FetchJusoKROptions, report?: (line: s
 		let bytes: number
 
 		try {
-			// The portal drops a connection every few megabytes and answers Range with 206, so the transfer resumes
-			// from what landed rather than starting the 181 MB over.
+			// The portal drops a connection every few megabytes and answers Range with 206,
+			// so the transfer resumes from what landed rather than starting the 181 MB over.
 			bytes = await resumableDownload({ url, dest, headers: BROWSER_HEADERS, report })
 		} catch (error) {
 			report?.(`  ✗ ${(error as Error).message}`)

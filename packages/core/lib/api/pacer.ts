@@ -13,21 +13,25 @@
 import { type ClockLike, systemClock } from "#api/clock"
 
 /**
- * A strict-interval request pacer: grants are spaced AT least `intervalMs` apart, with no burst allowance beyond the
- * very first grant. {@linkcode RequestPacer.acquire} resolves immediately for the first call after construction (or
- * after any idle gap), and every call within one interval of the previous grant waits out the remainder of it.
+ * A strict-interval request pacer: grants are spaced AT least `intervalMs` apart,
+ * with no burst allowance beyond the very first grant. {@linkcode RequestPacer.acquire}
+ * resolves immediately for the first call after construction (or after any idle gap),
+ * and every call within one interval of the previous grant waits out the remainder of it.
  *
- * Why not A token bucket: a token bucket with capacity C admits up to `C + rate * 1s` requests within any sliding
- * one-second window — there is no non-zero capacity that honors a flat rate cap, only an average one. The bucket this
- * replaced started full (a one-time startup burst, by design) but also refilled to full after any idle gap, so a fresh
- * burst recurred every time a crawl paused and resumed — measured at 20 grants inside one 1000ms window against a 10/s
- * ceiling (2x). Upstreams that publish a flat rate (SEC edgar's 10 req/s, verified enforced) and actively police it
- * need the flat guarantee, at the cost of the first-call-of-a-burst latency a bucket would have avoided.
+ * Why not A token bucket: a token bucket with capacity C admits up to `C + rate * 1s`
+ * requests within any sliding one-second window — there is no non-zero capacity that
+ * honors a flat rate cap, only an average one. The bucket this replaced started full
+ * (a one-time startup burst, by design) but also refilled to full after any idle gap,
+ * so a fresh burst recurred every time a crawl paused and resumed — measured at 20 grants inside
+ * one 1000ms window against a 10/s ceiling (2x). Upstreams that publish a flat rate
+ * (SEC edgar's 10 req/s, verified enforced) and actively police it need the flat guarantee,
+ * at the cost of the first-call-of-a-burst latency a bucket would have avoided.
  *
- * Fairness (deliberately not addressed): under concurrent contention (N callers racing `acquire()` in the same
- * synchronous turn), grants are issued in whatever order the synchronous reservation happens to run in. This never
- * affects the rate — every grant is still exactly `intervalMs` after the last — only which specific caller waits how
- * long under backlog. A caller needing fifo fairness would need a real queue on top of this.
+ * Fairness (deliberately not addressed): under concurrent contention
+ * (N callers racing `acquire()` in the same synchronous turn), grants are issued in whatever
+ * order the synchronous reservation happens to run in. This never affects the rate —
+ * every grant is still exactly `intervalMs` after the last — only which specific caller waits
+ * how long under backlog. A caller needing fifo fairness would need a real queue on top of this.
  */
 export class RequestPacer {
 	readonly #intervalMs: number
@@ -35,8 +39,9 @@ export class RequestPacer {
 	#nextGrantAt: number
 
 	/**
-	 * @param intervalMs Minimum milliseconds between two grants. Values `<= 0` are rejected — a zero-interval pacer would
-	 *   never actually pace, and silently accepting one would make a misconfigured caller look throttled when it isn't.
+	 * @param intervalMs Minimum milliseconds between two grants.
+	 *   Values `<= 0` are rejected — a zero-interval pacer would never actually pace,
+	 *   and silently accepting one would make a misconfigured caller look throttled when it isn't.
 	 * @param clock Time source. Defaults to {@linkcode systemClock}.
 	 */
 	constructor(intervalMs: number, clock: ClockLike = systemClock) {
@@ -60,28 +65,32 @@ export class RequestPacer {
 	}
 
 	/**
-	 * Resolve once this call's turn comes up: immediately for the first call (or after any idle gap), or exactly
-	 * `intervalMs` after the previous grant otherwise.
+	 * Resolve once this call's turn comes up: immediately for the first call
+	 * (or after any idle gap), or exactly `intervalMs` after the previous grant otherwise.
 	 *
-	 * The grant time is reserved synchronously, before any `await` — `#nextGrantAt` is read and bumped in the same
-	 * synchronous step that computes this call's own wait. Moving the `#nextGrantAt` update to after the `await` (i.e.
-	 * "compute the wait, sleep, then update state") reopens the concurrency bug this pacer exists to close — N callers
-	 * invoked in the same synchronous turn would all read the same stale `#nextGrantAt` before any of them updates it,
+	 * The grant time is reserved synchronously, before any `await` — `#nextGrantAt` is read
+	 * and bumped in the same synchronous step that computes this call's own wait.
+	 * Moving the `#nextGrantAt` update to after the `await` (i.e. "compute the wait, sleep, then update state")
+	 * reopens the concurrency bug this pacer exists to close — N callers invoked in the same
+	 * synchronous turn would all read the same stale `#nextGrantAt` before any of them updates it,
 	 * compute the same wait, and all be released together instead of one interval apart.
 	 *
-	 * `Math.max(#nextGrantAt, now)` is also required. Without it, a long idle gap leaves `#nextGrantAt` stuck in the
-	 * past, and every call after the idle would compute a negative/zero wait forever (the increment-by-one-interval never
-	 * catches up to a `now` that's run far ahead) — pacing would silently stop working after any idle period.
+	 * `Math.max(#nextGrantAt, now)` is also required. Without it, a long idle gap leaves `#nextGrantAt`
+	 * stuck in the past, and every call after the idle would compute a negative/zero wait
+	 * forever (the increment-by-one-interval never catches up to a `now` that's run far ahead) —
+	 * pacing would silently stop working after any idle period.
 	 *
 	 * Both are mutation-proved in `pacer.test.ts`.
 	 *
-	 * Real-clock caveat, measured rather than assumed: the guarantee is on the clock's timeline. Grant instants are
-	 * scheduled exactly `intervalMs` apart, but the continuation that actually issues the request runs whenever the event
-	 * loop gets to it, which on real timers is 0-2ms after the deadline. A grant that lands 1ms late shifts toward the
-	 * following window, so a sliding-second count over the observed dispatch times reads 11 rather than 10 at a 100ms
-	 * interval (measured 3/3 runs of a 40-call fan-out. the preceding second correspondingly holds 9, and the long-run
-	 * rate is exactly at the cap). A caller that needs a hard sliding-window ceiling with no jitter headroom should pace
-	 * fractionally under the published rate rather than exactly at it.
+	 * Real-clock caveat, measured rather than assumed: the guarantee is on the clock's timeline.
+	 * Grant instants are scheduled exactly `intervalMs` apart, but the continuation that
+	 * actually issues the request runs whenever the event loop gets to it, which on real
+	 * timers is 0-2ms after the deadline. A grant that lands 1ms late shifts toward the
+	 * following window, so a sliding-second count over the observed dispatch times reads 11
+	 * rather than 10 at a 100ms interval (measured 3/3 runs of a 40-call fan-out. the
+	 * preceding second correspondingly holds 9, and the long-run rate is exactly at the cap).
+	 * A caller that needs a hard sliding-window ceiling with no jitter headroom should
+	 * pace fractionally under the published rate rather than exactly at it.
 	 */
 	public async acquire(): Promise<void> {
 		const now = this.#clock.now()

@@ -52,8 +52,8 @@ export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB
 	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
 	hasWofDb?: boolean
 	/**
-	 * The spelling the live 2026-08-11 manifest actually carries (WOF caps, lowercase b) — a wire key is a string
-	 * interface, and every spelling ever published must stay readable here.
+	 * The spelling the live 2026-08-11 manifest actually carries (WOF caps, lowercase b) —
+	 * a wire key is a string interface, and every spelling ever published must stay readable here.
 	 */
 	hasWOFDb?: boolean
 }
@@ -68,15 +68,16 @@ export interface WireReleasesManifest {
 }
 
 /**
- * Normalize a fetched releases.json into house-cased {@link ReleasesManifest} fields. All manifest consumption goes
- * through here — the wire tolerance lives in exactly one place, and everything past this boundary uses the acronym
- * convention (`hasFST` / `hasWOFDB`).
+ * Normalize a fetched releases.json into house-cased {@link ReleasesManifest} fields.
+ * All manifest consumption goes through here — the wire tolerance lives in exactly one place,
+ * and everything past this boundary uses the acronym convention (`hasFST` / `hasWOFDB`).
  *
- * Why the tolerance: the 2026-07-01 acronym sweep renamed the reads while the published R2 manifest kept the old keys —
- * every release read `undefined`, silently disabling the demo's WOF cascade and the FST for three days (zero console
- * errors; "no WOF hits" was the only symptom). The fix is not to freeze the wire keys but to migrate them deliberately:
- * the publisher now writes house-cased keys, this normalizer accepts both generations (old HF mirrors still carry the
- * legacy keys), and the interface test pins all three parties.
+ * Why the tolerance: the 2026-07-01 acronym sweep renamed the reads while the published R2 manifest
+ * kept the old keys — every release read `undefined`, silently disabling the demo's WOF cascade
+ * and the FST for three days (zero console errors; "no WOF hits" was the only symptom).
+ * The fix is not to freeze the wire keys but to migrate them deliberately:
+ * the publisher now writes house-cased keys, this normalizer accepts both generations
+ * (old HF mirrors still carry the legacy keys), and the interface test pins all three parties.
  */
 export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesManifest {
 	return {
@@ -85,17 +86,18 @@ export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesMa
 		releases: raw.releases.map((r) => ({
 			...r,
 			hasFST: r.hasFST ?? r.hasFst ?? false,
-			// The 2026-08-11 v9.1.0 manifest (live until the next model release) writes `hasWOFDb` — WOF caps,
-			// lowercase b. The 08-14 casing sweep renamed reader and writer to `hasWOFDB` but missed this third
-			// live spelling, which turned the demo's whole WOF cascade off silently for four days.
+			// The 2026-08-11 v9.1.0 manifest (live until the next model release) writes
+			// `hasWOFDb` — WOF caps, lowercase b. The 08-14 casing sweep renamed reader
+			// and writer to `hasWOFDB` but missed this third live spelling, which turned
+			// the demo's whole WOF cascade off silently for four days.
 			hasWOFDB: r.hasWOFDB ?? r.hasWOFDb ?? r.hasWofDb ?? false,
 		})),
 	}
 }
 
 /**
- * Fetch + normalize the demo's releases manifest. `cache: "reload"` bypasses the (immutable-Cache-Control) http cache
- * for the version pointer so a returning visitor sees a `defaultVersion` bump.
+ * Fetch + normalize the demo's releases manifest. `cache: "reload"` bypasses the (immutable-Cache-Control)
+ * http cache for the version pointer so a returning visitor sees a `defaultVersion` bump.
  */
 export async function fetchReleasesManifest(): Promise<ReleasesManifest | null> {
 	const res = await fetchWithRetry(releasesManifestURL(DEFAULT_LOCALE), { cache: "reload" })

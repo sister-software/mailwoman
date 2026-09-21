@@ -11,8 +11,8 @@ import { flag, text } from "#operations/inputs"
 import { linkWeightsOverlay } from "#weights/link-weights-overlay"
 
 /**
- * `release.link-weights-overlay` — writes inside the checkout or the data root. Listed in `registry.ts`; the
- * description on the operation is what `mwops` prints.
+ * `release.link-weights-overlay` — writes inside the checkout or the data root.
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const linkWeightsOverlayOperation = defineOperation({
 	id: "release.link-weights-overlay",

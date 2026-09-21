@@ -21,19 +21,21 @@ import { familyFallbackFor } from "#weights/families"
  */
 
 /**
- * The padding id: every slot outside the string or the unit's window, and every all-padding unit row. Fixed at 0 by the
- * trainer's `build_char_vocab`, which writes `<pad>` first.
+ * The padding id: every slot outside the string or the unit's window, and every all-padding unit row.
+ * Fixed at 0 by the trainer's `build_char_vocab`, which writes `<pad>` first.
  */
 export const PAD_CHAR_ID = 0
 
 /**
- * The unknown id: a code point the sealed vocabulary lacks. Fixed at 1 by `build_char_vocab`, which writes `<unk>`
- * second. every real character follows in code-point order.
+ * The unknown id: a code point the sealed vocabulary lacks.
+ * Fixed at 1 by `build_char_vocab`, which writes `<unk>` second. every real
+ * character follows in code-point order.
  */
 export const UNK_CHAR_ID = 1
 
 /**
- * A sealed character vocabulary: code point → id. The JSON artifact (`char-vocab-*.json`) is this map verbatim.
+ * A sealed character vocabulary: code point → id. The JSON artifact
+ * (`char-vocab-*.json`) is this map verbatim.
  */
 export type CharVocabulary = ReadonlyMap<string, number>
 
@@ -80,7 +82,8 @@ export interface CharEncoding {
 }
 
 /**
- * Encode one string under the interface. Every real unit is one code point of `raw`; the first S of them are kept.
+ * Encode one string under the interface. Every real unit is one code point of `raw`;
+ * the first S of them are kept.
  */
 export function encodeCharUnits(
 	raw: string,
@@ -151,15 +154,16 @@ export function parseCharVocabulary(parsed: unknown, source: string): CharVocabu
 }
 
 /**
- * How a weights package turns text into model input. Absent from a card means SentencePiece — every Latin bundle
- * shipped before the char path existed says nothing here.
+ * How a weights package turns text into model input. Absent from a card means SentencePiece —
+ * every Latin bundle shipped before the char path existed says nothing here.
  */
 export type EncoderDescriptor =
 	| { kind: "sentencepiece" }
 	| {
 			kind: "char"
 			/**
-			 * The sealed character vocabulary sibling's file name, relative to the package directory (`char-vocab.json`).
+			 * The sealed character vocabulary sibling's file name, relative to the
+			 * package directory (`char-vocab.json`).
 			 */
 			charVocab: string
 			maxUnits: number
@@ -168,9 +172,10 @@ export type EncoderDescriptor =
 	  }
 
 /**
- * Read a parsed card's `encoder` block (#2164). A char card names its vocabulary sibling and the `(S, W, ctx)`
- * interface the model was trained under. a runtime that guessed any of the three would encode every row differently
- * from training and score confidently on garbage, so a char card missing one of them is refused rather than defaulted.
+ * Read a parsed card's `encoder` block (#2164). A char card names its vocabulary sibling
+ * and the `(S, W, ctx)` interface the model was trained under. a runtime that guessed any
+ * of the three would encode every row differently from training and score confidently
+ * on garbage, so a char card missing one of them is refused rather than defaulted.
  * Pure, so the browser loader reads it from a fetched card and the node loader from a file.
  */
 export function encoderDescriptorFromCard(
@@ -213,14 +218,15 @@ export function encoderDescriptorFromCard(
 }
 
 /**
- * The base package a locale falls back to when it has no package of its own: the CJK char-path base for Japanese,
- * Chinese and Korean (#2164). Latin locales have no family base — `en-us` is the Latin base, and the overlays name it
- * through `mailwoman.baseWeights` instead.
+ * The base package a locale falls back to when it has no package of its own: the CJK char-path
+ * base for Japanese, Chinese and Korean (#2164). Latin locales have no family base —
+ * `en-us` is the Latin base, and the overlays name it through `mailwoman.baseWeights` instead.
  *
- * The mapping used to be three language subtags written here, which is the same claim `#weights/families` makes about
- * which locales the character family serves. Two copies disagreed: this one answered `cjk` for `ko-KR`, `zh-TW` and
- * `zh-HK` while the registry listed only the packaged `ja-jp` and `zh-cn`. The registry now declares the languages and
- * this delegates, so the answer has one home.
+ * The mapping used to be three language subtags written here, which is the same
+ * claim `#weights/families` makes about which locales the character family serves.
+ * Two copies disagreed: this one answered `cjk` for `ko-KR`, `zh-TW`
+ * and `zh-HK` while the registry listed only the packaged `ja-jp` and `zh-cn`.
+ * The registry now declares the languages and this delegates, so the answer has one home.
  */
 export function scriptFamilyBase(locale: string): string | undefined {
 	return familyFallbackFor(locale)

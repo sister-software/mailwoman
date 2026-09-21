@@ -110,8 +110,8 @@ describe("synthesizeLocaleRow (generic)", () => {
 		const row = synthesizeLocaleRow(madrid, "ES", { random: keepAll })!
 		expect(row).not.toBeNull()
 		expect(row.locale).toBe("es-ES")
-		// ES renders "Calle Mayor, 12, 28013 Madrid" — house after street (a comma between them,
-		// unlike German), postcode before city. The order is what the recipe teaches.
+		// ES renders "Calle Mayor, 12, 28013 Madrid" — house after street (a comma between them, unlike German),
+		// postcode before city. The order is what the recipe teaches.
 		expect(row.raw.indexOf("Calle Mayor")).toBeLessThan(row.raw.indexOf("12"))
 		expect(row.raw).toContain("28013 Madrid")
 	})
@@ -183,8 +183,9 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 })
 
 describe("NZ dependent_locality (suburb below city)", () => {
-	// NZ envelopes carry both a suburb and a city: "31 Rawene Road, Birkenhead, Auckland". The OA district
-	// column holds the city (Auckland), city the suburb (Birkenhead) — see `readTuples` districtAsLocality.
+	// NZ envelopes carry both a suburb and a city: "31 Rawene Road, Birkenhead, Auckland".
+	// The OA district column holds the city (Auckland), city the suburb (Birkenhead) —
+	// see `readTuples` districtAsLocality.
 	const AUCKLAND: LocaleBaseTuple = {
 		house_number: "31",
 		street: "Rawene Road",
@@ -210,8 +211,8 @@ describe("NZ dependent_locality (suburb below city)", () => {
 
 		if (aligned.kind !== "labeled") throw new Error("expected a labeled row")
 		const labels = aligned.row.labels
-		// Exact tag match after stripping the B-/I- prefix — "dependent_locality" contains "locality" as a
-		// substring, so a naive `.includes` would conflate the two.
+		// Exact tag match after stripping the B-/I- prefix — "dependent_locality" contains
+		// "locality" as a substring, so a naive `.includes` would conflate the two.
 		const firstOf = (tag: string) => labels.findIndex((l) => l.replace(/^[BI]-/, "") === tag)
 		expect(firstOf("dependent_locality")).toBeGreaterThan(firstOf("street"))
 		expect(firstOf("locality")).toBeGreaterThan(firstOf("dependent_locality"))

@@ -77,8 +77,8 @@ export async function runParseCompare(registry: EngineRegistryLike, args: Record
 			libpostal: theirs,
 			libpostal_error: libpostalError,
 			diff,
-			// A row libpostal could not answer is not an agreement. Without this it would be one, since an empty diff
-			// contains no disagreement.
+			// A row libpostal could not answer is not an agreement.
+			// Without this it would be one, since an empty diff contains no disagreement.
 			agrees: theirs !== null && diff.every((entry) => entry.verdict === SpanVerdict.Agree),
 		})
 	}
@@ -123,8 +123,8 @@ export async function runParseCompare(registry: EngineRegistryLike, args: Record
 }
 
 /**
- * Which labels the two parsers disagree on, most often first — the question a per-row list cannot answer at board
- * scale.
+ * Which labels the two parsers disagree on, most often first — the question a
+ * per-row list cannot answer at board scale.
  */
 function tallyByLabel(rows: readonly ParseComparisonRow[]): Array<{ label: string; verdicts: Record<string, number> }> {
 	const tally = new Map<string, Record<string, number>>()

@@ -16,17 +16,17 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * Key-count threshold for the gloss anomaly detector (#1730) — the sweep's own boundary: 4,000 places carried >= 50
- * keys, and a legitimate famous place at that count (New York, 176 keys) is separated by the prominence check, never by
- * this number alone.
+ * Key-count threshold for the gloss anomaly detector (#1730) — the sweep's own boundary:
+ * 4,000 places carried >= 50 keys, and a legitimate famous place at that count
+ * (New York, 176 keys) is separated by the prominence check, never by this number alone.
  */
 export const GLOSS_KEY_THRESHOLD = 50
 
 /**
- * Placetypes the gloss detector never flags. A country or region legitimately carries a name in every language — that
- * is what an exonym set is — so key volume discriminates nothing there. The detector's population is the non-admin
- * tail, where a place named by a common noun ("Poisson", "Sunday") accumulating 200+ translations is a
- * machine-translated gloss set rather than fame.
+ * Placetypes the gloss detector never flags. A country or region legitimately carries a name in
+ * every language — that is what an exonym set is — so key volume discriminates nothing there.
+ * The detector's population is the non-admin tail, where a place named by a common noun
+ * ("Poisson", "Sunday") accumulating 200+ translations is a machine-translated gloss set rather than fame.
  */
 export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
 	"country",
@@ -40,21 +40,24 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Pass 3c — the #1730 name-role prototype: two independent detectors over the staged rows, write-only in this
- * generation (no ranking consumer. the rank penalty is its own D-rule-conditional step with the `gloss_key` board as
- * regression check). Both stamp `is_primary = 0` rows only — a place's canonical name and the `place_abbr` region
- * abbreviations are never a gloss or a variant.
+ * Pass 3c — the #1730 name-role prototype: two independent detectors over the staged rows,
+ * write-only in this generation (no ranking consumer. the rank penalty is its
+ * own D-rule-conditional step with the `gloss_key` board as regression check).
+ * Both stamp `is_primary = 0` rows only — a place's canonical name and the `place_abbr`
+ * region abbreviations are never a gloss or a variant.
  *
- * - `gloss` is anomaly-based, and stamps only the certain core: key volume at/over the threshold + a non-admin placetype
+ * - `gloss` is anomaly-based, and stamps only the certain core: key volume at/over
+ *   the threshold + a non-admin placetype
  *
- *   - No measured prominence (population absent and importance unmeasured). Provenance cannot separate a gloss from an
- *     exonym — WOF imported both as `x_preferred` — and prominence is what rescues New York/Paris.
- * - `abbr` is provenance-based — the #936 signal: a WOF `variant` name in one of the country's official languages (or
- *   English), measured there at a 13× key-collision rate. A source without a `names` table (fixture-scale admin DBs)
- *   skips this detector loudly.
+ *   - No measured prominence (population absent and importance unmeasured).
+ *     Provenance cannot separate a gloss from an exonym — WOF imported both as
+ *     `x_preferred` — and prominence is what rescues New York/Paris.
+ * - `abbr` is provenance-based — the #936 signal: a WOF `variant` name in one of the
+ *   country's official languages (or English), measured there at a 13× key-collision rate.
+ *   A source without a `names` table (fixture-scale admin DBs) skips this detector loudly.
  *
- * Returns the stamp counts plus the census the prototype exists to report: how much of the ≥-threshold key tail carries
- * any role.
+ * Returns the stamp counts plus the census the prototype exists to report:
+ * how much of the ≥-threshold key tail carries any role.
  */
 export function stampNameRoles(ctx: {
 	src: DatabaseClient<WOFDatabase>
@@ -102,9 +105,9 @@ export function stampNameRoles(ctx: {
 	if (hasSourceNames) {
 		out.exec("BEGIN")
 
-		// Two provenance routes into the same stamp: WOF's abbreviation/short name kinds arrive in the
-		// language column ('abbr'/'short' — 280 rows, measured 2026-08-18, Toledo's 'TO' among them) and
-		// qualify by kind alone. everything else qualifies as a variant in an official language.
+		// Two provenance routes into the same stamp: WOF's abbreviation/short name kinds arrive in
+		// the language column ('abbr'/'short' — 280 rows, measured 2026-08-18, Toledo's 'TO' among them)
+		// and qualify by kind alone. everything else qualifies as a variant in an official language.
 		for (const r of src
 			.prepare("SELECT id, name, language FROM names WHERE privateuse = 'variant' OR language IN ('abbr', 'short')")
 			.iterate()) {
@@ -130,8 +133,8 @@ export function stampNameRoles(ctx: {
 		progress("roles", "source carries no `names` table — abbr detector skipped (gloss still runs)")
 	}
 
-	// Stamp order is precedence: the provenance-based abbr first, then the own-name variant verdict,
-	// then gloss fills what neither claimed.
+	// Stamp order is precedence: the provenance-based abbr first, then the own-name
+	// variant verdict, then gloss fills what neither claimed.
 	const roleAbbr = Number(
 		out
 			.prepare(
@@ -143,11 +146,12 @@ export function stampNameRoles(ctx: {
 	)
 
 	// Detect aliases that are the holder's own primary name in another variant.
-	// orthography — romanization, spacing/diacritic variant, or abbreviation expansion. The verdict
-	// is per (alias key, primary key) pair, so it runs in JS over the still-unstamped alias rows.
-	// an uncovered script answers no-verdict and stamps nothing (own-name.ts owns the predicate and
-	// its measured threshold). Runs before gloss on purpose: a surface that is the place's own name
-	// is not a translation, whatever the key volume says.
+	// orthography — romanization, spacing/diacritic variant, or abbreviation expansion.
+	// The verdict is per (alias key, primary key) pair, so it runs in JS over
+	// the still-unstamped alias rows. an uncovered script answers no-verdict
+	// and stamps nothing (own-name.ts owns the predicate and its measured threshold).
+	// Runs before gloss on purpose: a surface that is the place's own name is not
+	// a translation, whatever the key volume says.
 	out.exec(
 		"CREATE TEMP TABLE variant_key (spr_id INTEGER NOT NULL, name_key TEXT NOT NULL, PRIMARY KEY (spr_id, name_key)) WITHOUT ROWID"
 	)

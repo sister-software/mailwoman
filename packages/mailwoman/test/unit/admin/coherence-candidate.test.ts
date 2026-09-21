@@ -30,8 +30,8 @@ const TEXAS = 201
 const WEIMAR_US = 202
 
 /**
- * The Weimar defect in miniature: the DE original and a more-populous US namesake, each chained to its own region +
- * country, so a bare population-first "Weimar" answers Texas.
+ * The Weimar defect in miniature: the DE original and a more-populous US namesake,
+ * each chained to its own region + country, so a bare population-first "Weimar" answers Texas.
  */
 function buildFixtureAdmin(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -108,7 +108,8 @@ afterEach(async () => {
 })
 
 /**
- * Resolve the Weimar tree and read the verdicts the way the geocode assembly does. `adminCoherence: false` pins the
+ * Resolve the Weimar tree and read the verdicts the way the geocode assembly does.
+ * `adminCoherence: false` pins the
  * #263 re-pick out of the way — this test is about the stamp and the verdict rather than about any mechanism that might
  * one day fix the pick.
  */
@@ -130,8 +131,8 @@ describe("admin coherence over the candidate backend's ancestors sidecar", () =>
 	test("the qualifier the ranking ignored becomes a DECIDED contradiction — the flip from unverifiable", async () => {
 		const { winner, fragment } = await verdictFor("Thüringen", true)
 
-		// The ranking is untouched: population-first still answers Weimar, Texas — with the
-		// disambiguator in the input. That is the #1717 defect, faithfully reproduced.
+		// The ranking is untouched: population-first still answers Weimar, Texas —
+		// with the disambiguator in the input. That is the #1717 defect, faithfully reproduced.
 		const stamped = winner as AddressNode
 
 		expect(stamped.lat).toBeCloseTo(29.7, 1)

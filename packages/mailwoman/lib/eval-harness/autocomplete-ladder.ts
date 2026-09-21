@@ -32,8 +32,8 @@ import { buildGauntletDeps, type GauntletDepsOptions, type GauntletGeocodeOpts }
 import { routeCountry } from "#eval-harness/gauntlet/routing"
 
 /**
- * The two arms. `parse_resolve` is what `@mailwoman/photon`'s `/api` runs on a prefix today and answers one coordinate;
- * `fst` is the autocomplete tier, answering up to `topK` suggestions.
+ * The two arms. `parse_resolve` is what `@mailwoman/photon`'s `/api` runs on a prefix today
+ * and answers one coordinate; `fst` is the autocomplete tier, answering up to `topK` suggestions.
  */
 export const LADDER_ARMS = ["parse_resolve", "fst"] as const
 
@@ -60,17 +60,18 @@ export const LADDER_LENGTH_BANDS: ReadonlyArray<readonly [label: string, min: nu
 export const ABSTAIN_EXPECTED_MAX_CHARS = 2
 
 /**
- * A row whose truth tolerance exceeds this is ladder-eligible but stratified out of the headline: a region centroid
- * sits inside the top-5 of almost any prefix.
+ * A row whose truth tolerance exceeds this is ladder-eligible but stratified out of the
+ * headline: a region centroid sits inside the top-5 of almost any prefix.
  */
 export const HEADLINE_MAX_TOLERANCE_M = 25_000
 
 /**
- * Which per-locale FST the `fst` arm reads for a row's country. This is not the weights-overlay routing
- * (`OVERLAY_LOCALE_BY_COUNTRY`), which falls back to en-US for every country without an overlay: an FST is
- * country-scoped by construction, and grading a French row against the US FST would report "never" for `Paris` as a
- * property of the tier rather than of the artifact chosen. A country with no FST here answers nothing on that arm and
- * is counted out of its denominator, never graded as a miss.
+ * Which per-locale FST the `fst` arm reads for a row's country.
+ * This is not the weights-overlay routing (`OVERLAY_LOCALE_BY_COUNTRY`), which falls back
+ * to en-US for every country without an overlay: an FST is country-scoped by construction,
+ * and grading a French row against the US FST would report "never" for `Paris` as a property
+ * of the tier rather than of the artifact chosen. A country with no FST here answers
+ * nothing on that arm and is counted out of its denominator, never graded as a miss.
  */
 export const FST_LOCALE_BY_COUNTRY: Readonly<Record<string, string>> = {
 	US: "en-us",
@@ -85,9 +86,9 @@ export const FST_LOCALE_BY_COUNTRY: Readonly<Record<string, string>> = {
 }
 
 /**
- * How many single-character rungs open the ladder before token boundaries take over: the first three keystrokes are
- * where an autocomplete front decides whether to answer at all, and beyond three a per-character rung adds latency
- * samples without adding a decision.
+ * How many single-character rungs open the ladder before token boundaries take over:
+ * the first three keystrokes are where an autocomplete front decides whether to answer at all,
+ * and beyond three a per-character rung adds latency samples without adding a decision.
  */
 export const FIRST_KEYSTROKE_RUNGS = 3
 
@@ -134,7 +135,8 @@ export interface RungReading {
 	prefix: string
 	chars: number
 	/**
-	 * Every coordinate the arm answered, top first — one for `parse_resolve`, up to {@link LADDER_TOP_K} for `fst`.
+	 * Every coordinate the arm answered, top first — one for `parse_resolve`,
+	 * up to {@link LADDER_TOP_K} for `fst`.
 	 */
 	answers: Array<{ lat: number; lon: number }>
 	/**
@@ -158,7 +160,8 @@ export interface RowArmReading {
 	 */
 	firstHitFraction: number | null
 	/**
-	 * After the first hit, how many later rungs lost the truth again. `0` is a stable row; `null` when it never hit.
+	 * After the first hit, how many later rungs lost the truth again.
+	 * `0` is a stable row; `null` when it never hit.
 	 */
 	churn: number | null
 	/**
@@ -203,8 +206,8 @@ export interface LadderRow {
 	 */
 	headline: boolean
 	/**
-	 * The FST locale the `fst` arm read, or `null` when the row's country has none — the arm then answered nothing and
-	 * the row is outside that arm's denominators.
+	 * The FST locale the `fst` arm read, or `null` when the row's country has none —
+	 * the arm then answered nothing and the row is outside that arm's denominators.
 	 */
 	fstLocale: string | null
 	arms: Record<LadderArm, RowArmReading>
@@ -265,7 +268,8 @@ export interface AutocompleteLadderOptions extends GauntletDepsOptions {
 	country?: string
 	limit?: number
 	/**
-	 * Directory of per-locale FST binaries (`fst-<locale>.bin`). Default `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale`.
+	 * Directory of per-locale FST binaries (`fst-<locale>.bin`).
+	 * Default `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale`.
 	 */
 	fstDir?: string
 	/**

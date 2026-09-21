@@ -31,13 +31,13 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const USGOV_NPPES_ADAPTER_ID = "usgov-nppes"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_NPPES_DEFAULT_LICENSE = "Public Domain"
 

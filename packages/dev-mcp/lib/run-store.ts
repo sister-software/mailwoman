@@ -40,23 +40,23 @@ import { Globerator } from "spliterator/node/fs"
 export const RUN_STORE_DIR = dataRootPath("dev-mcp", "runs")
 
 /**
- * Age ceiling in days. A stored run describes the tree that produced it, and after two weeks of commits that tree is
- * gone.
+ * Age ceiling in days. A stored run describes the tree that produced it, and
+ * after two weeks of commits that tree is gone.
  */
 export const RETENTION_DAYS = 14
 
 /**
- * Hard ceiling on stored runs, newest first. The backstop the age rule cannot provide: a busy day can produce hundreds
- * of runs well inside the window.
+ * Hard ceiling on stored runs, newest first. The backstop the age rule cannot provide:
+ * a busy day can produce hundreds of runs well inside the window.
  */
 export const RETENTION_MAX_RUNS = 200
 
 /**
  * What one arm answered for one row, kept in a shape a later run can replay without re-deriving it.
  *
- * Deliberately the same shape a live arm produces (`ExternalAnswer`), so a recorded arm and a live one are
- * indistinguishable downstream. A replay that had its own row type would need its own grading path, and a second
- * grading path is how the two stop agreeing.
+ * Deliberately the same shape a live arm produces (`ExternalAnswer`), so a recorded arm
+ * and a live one are indistinguishable downstream. A replay that had its own row type would
+ * need its own grading path, and a second grading path is how the two stop agreeing.
  */
 export interface RecordedAnswer {
 	id: string
@@ -71,24 +71,26 @@ export interface RecordedAnswer {
 /**
  * One stored run.
  *
- * `payload` is whatever the producing tool returned, opaque here — this module owns storage and retention rather than
- * the shape of a result. `answers` is the one exception, and it is explicit rather than dug out of the payload: it is
- * the replay index `{kind:"recorded"}` reads, and a store that had to know a result's internals to find it would break
- * every time a result grew a field.
+ * `payload` is whatever the producing tool returned, opaque here —
+ * this module owns storage and retention rather than the shape of a result.
+ * `answers` is the one exception, and it is explicit rather than dug out of the payload:
+ * it is the replay index `{kind:"recorded"}` reads, and a store that had to know a
+ * result's internals to find it would break every time a result grew a field.
  */
 export interface StoredRun {
 	run_id: string
 	tool: string
 	/**
-	 * ISO-8601, supplied by the caller. Not generated here so a workflow that has to be deterministic can stamp its own.
+	 * ISO-8601, supplied by the caller. Not generated here so a workflow that has
+	 * to be deterministic can stamp its own.
 	 */
 	created_at: string
 	tree_fingerprint: string
 	engine_id: string | null
 	input_set_id: string | null
 	/**
-	 * Per-arm replay indices, keyed by the arm's label. Absent for a run nothing can replay — `mwdev_promotion_eval`,
-	 * say, which answers about a battery rather than about rows.
+	 * Per-arm replay indices, keyed by the arm's label. Absent for a run nothing can replay —
+	 * `mwdev_promotion_eval`, say, which answers about a battery rather than about rows.
 	 */
 	answers?: Record<string, RecordedAnswer[]>
 	payload: unknown
@@ -104,12 +106,14 @@ export interface RunSummary {
 	input_set_id: string | null
 	bytes: number
 	/**
-	 * Arm labels this run can be replayed as. Empty means it is stored evidence but not a usable `{kind:"recorded"}` arm
-	 * — reported rather than omitted, so a caller learns that before writing the call rather than from its refusal.
+	 * Arm labels this run can be replayed as. Empty means it is stored evidence
+	 * but not a usable `{kind:"recorded"}` arm — reported rather than omitted,
+	 * so a caller learns that before writing the call rather than from its refusal.
 	 */
 	replayable_arms: string[]
 	/**
-	 * Whether this run's tree still matches the caller's. `null` when the caller did not supply one to compare against.
+	 * Whether this run's tree still matches the caller's.
+	 * `null` when the caller did not supply one to compare against.
 	 */
 	fingerprint_matches_now: boolean | null
 }
@@ -131,10 +135,11 @@ export async function putRun(run: StoredRun, dir: PathBuilderLike = RUN_STORE_DI
 /**
  * Persist a run and apply retention, or say why it could not be done.
  *
- * A failure here must not fail the measurement that produced it. The store is a cache. the queries have already been
- * issued, and for a billed arm already paid for, so throwing away a completed comparison because a disk was full would
- * cost more than the cache is worth. The caller carries the returned sentence into its warnings, so the loss is
- * reported rather than discovered later as a run_id that "was pruned".
+ * A failure here must not fail the measurement that produced it.
+ * The store is a cache. the queries have already been issued, and for a billed arm already
+ * paid for, so throwing away a completed comparison because a disk was full would cost more
+ * than the cache is worth. The caller carries the returned sentence into its warnings,
+ * so the loss is reported rather than discovered later as a run_id that "was pruned".
  */
 export async function tryPutRun(run: StoredRun, dir: PathBuilderLike, now: Date): Promise<string | null> {
 	try {
@@ -153,8 +158,9 @@ export async function tryPutRun(run: StoredRun, dir: PathBuilderLike, now: Date)
 /**
  * Read one run back, or `null` when it is absent or unreadable.
  *
- * `null` here means pruned, never stored, or unreadable, and those are not distinguishable after the fact — which is
- * why {@link RETENTION_DAYS} is documented rather than silent. A caller that finds nothing has to re-measure.
+ * `null` here means pruned, never stored, or unreadable, and those are not distinguishable
+ * after the fact — which is why {@link RETENTION_DAYS} is documented rather than silent.
+ * A caller that finds nothing has to re-measure.
  */
 export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR): Promise<StoredRun | null> {
 	const path = runPath(runID, dir)
@@ -165,9 +171,9 @@ export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR
 /**
  * The replay index for one arm of a stored run, keyed by row id.
  *
- * @throws When that arm was not recorded. Naming what was recorded is the useful half of the error: the common mistake
- *   is asking for `mailwoman` on a run whose two arms were `mailwoman` and `photon` under different labels, and a bare
- *   "not found" sends the caller looking for the wrong thing.
+ * @throws When that arm was not recorded. Naming what was recorded is the useful half of the error:
+ *   the common mistake is asking for `mailwoman` on a run whose two arms were `mailwoman` and `photon`
+ *   under different labels, and a bare "not found" sends the caller looking for the wrong thing.
  */
 export function replayIndex(run: StoredRun, arm: string): Map<string, RecordedAnswer> {
 	const answers = run.answers?.[arm]
@@ -234,8 +240,8 @@ export interface PruneReport {
 /**
  * Apply both retention rules and report what went, by name.
  *
- * `now` is injected rather than read from the clock so the rule is testable without sleeping, and so a caller that has
- * to be deterministic can pass its own.
+ * `now` is injected rather than read from the clock so the rule is testable without sleeping,
+ * and so a caller that has to be deterministic can pass its own.
  */
 export async function pruneRuns(
 	now: Date,
@@ -251,8 +257,8 @@ export async function pruneRuns(
 	for (const entry of all) {
 		const created = Date.parse(entry.created_at)
 
-		// An unparseable timestamp is treated as old. A run that cannot say when it happened cannot be trusted to
-		// describe a current tree, and keeping it forever is the worse failure.
+		// An unparseable timestamp is treated as old. A run that cannot say when it happened cannot
+		// be trusted to describe a current tree, and keeping it forever is the worse failure.
 		if (!Number.isFinite(created) || created < cutoff) {
 			byAge.push(entry.run_id)
 

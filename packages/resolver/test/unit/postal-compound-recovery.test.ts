@@ -168,8 +168,8 @@ describe("postal-compound recovery (#942)", () => {
 	})
 
 	it("flag ON: street tokens stay blocked — no 'Ave, France' resurrection", async () => {
-		// A street-only failing parse: the street token equals a real place name, but street blocking
-		// must keep it out of recovery even with the flag on.
+		// A street-only failing parse: the street token equals a real place name,
+		// but street blocking must keep it out of recovery even with the flag on.
 		const resolver = createWOFResolver(await makeBackend())
 
 		const tree: AddressTree = {
@@ -186,8 +186,9 @@ describe("postal-compound recovery (#942)", () => {
 	})
 
 	it("check rejects a cross-border same-named decoy (unscoped)", async () => {
-		// No defaultCountry: the HR decoy is name-identical. The code-subset anchor (SI 1382) plus the
-		// 50km check must reject the 400+km decoy and accept the SI village.
+		// No defaultCountry: the HR decoy is name-identical.
+		// The code-subset anchor (SI 1382) plus the 50km check must reject the 400+km decoy
+		// and accept the SI village.
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { postalCompoundRecovery: true })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
@@ -199,10 +200,10 @@ describe("postal-compound recovery (#942)", () => {
 })
 
 describe("#961 joint country recovery — the locale-default trap", () => {
-	// The CLI's en-US locale default scoped both the anchor and the village probe to US, so the SI
-	// floor never fired through geocode-core. The joint pass probes spans unscoped and verifies each
-	// candidate against the postcode resolved in the candidate's own country — cross-country
-	// promotion only postcode-verified, never unrestricted.
+	// The CLI's en-US locale default scoped both the anchor and the village probe to US,
+	// so the SI floor never fired through geocode-core. The joint pass probes spans unscoped
+	// and verifies each candidate against the postcode resolved in the candidate's own country —
+	// cross-country promotion only postcode-verified, never unrestricted.
 	it("recovers under a WRONG defaultCountry via the postcode-verified joint pass", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })

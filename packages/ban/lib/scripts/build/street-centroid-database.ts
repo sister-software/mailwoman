@@ -128,10 +128,12 @@ async function main(): Promise<void> {
 	// The sealed input — read-only, immutable. register the base-commune folder as a scalar SQL function.
 	using src = new DatabaseClient<AddressPointDatabase>(args.source, { readOnly: true })
 
-	// SQLite hands a scalar function its argument as `unknown`, which erases the key brand. The value is
-	// `address_point.locality_norm`, which the shared schema declares a `NameKey` (the builder wrote it through
-	// `normalizeLocalityForKey`). Therefore, re-minting it here restores a fact the SQL boundary dropped rather than asserting a
-	// new one — the fold is not re-applied, because a second fold of an already-folded key is what would drift.
+	// SQLite hands a scalar function its argument as `unknown`, which erases the key brand.
+	// The value is `address_point.locality_norm`, which the shared schema declares
+	// a `NameKey` (the builder wrote it through `normalizeLocalityForKey`).
+	// Therefore, re-minting it here restores a fact the SQL boundary dropped
+	// rather than asserting a new one — the fold is not re-applied, because a second
+	// fold of an already-folded key is what would drift.
 	src.function("ban_base_commune", { deterministic: true }, (loc: unknown): string =>
 		typeof loc === "string" && loc ? stripArrondissement(loc as NameKey) : ""
 	)
@@ -148,8 +150,9 @@ async function main(): Promise<void> {
 			`INSERT INTO street_centroid VALUES (${STREET_CENTROID_COLUMNS.map(() => "?").join(", ")})`
 		)
 
-		// group BY the sealed rooftop points into per-(street, postcode, commune) roll-ups. AVG(lat/lon) over the group's
-		// member points is the exact centroid. MIN/MAX is the extent. count is the weight for the reader's cross-group mean.
+		// group BY the sealed rooftop points into per-(street, postcode, commune) roll-ups.
+		// AVG(lat/lon) over the group's member points is the exact centroid.
+		// MIN/MAX is the extent. count is the weight for the reader's cross-group mean.
 		// The base commune is emitted per group (2.2M calls), not per source row.
 		const agg = src.prepare(
 			`SELECT street_norm,
@@ -288,8 +291,9 @@ async function main(): Promise<void> {
 	const bytes = (await statPath(args.output)).size
 	const srcMD5 = await sourceMD5(args.country)
 
-	// Provenance manifest — additive, written at creation (house discipline). Records the derivation chain: this
-	// artifact is derived from the sealed #1012 rooftop extract, itself derived from the BAN release.
+	// Provenance manifest — additive, written at creation (house discipline).
+	// Records the derivation chain: this artifact is derived from the sealed #1012
+	// rooftop extract, itself derived from the BAN release.
 	const attributionPath = dataRootPath("ban", `street-centroids-${args.country}.ATTRIBUTION.json`)
 
 	await writeLocalTextFile(

@@ -56,17 +56,18 @@ describe("normalizeArmSpec", () => {
 	})
 
 	it("refuses an unknown kind rather than running the default configuration", () => {
-		// The hazard this closes: with the bare-config shorthand in the union, an unhandled `kind` parses as an empty
-		// mailwoman config. The caller would get a full comparison against the production defaults and no signal at all
-		// that the arm they asked for was never consulted.
+		// The hazard this closes: with the bare-config shorthand in the union, an unhandled `kind`
+		// parses as an empty mailwoman config. The caller would get a full comparison against the
+		// production defaults and no signal at all that the arm they asked for was never consulted.
 		expect(() => normalizeArmSpec({ kind: "whatever" }, "b")).toThrow(/unknown kind/)
 	})
 })
 
 describe("ARM_SPEC_SCHEMA", () => {
 	it("keeps each kind's discriminator intact rather than letting the shorthand swallow it", () => {
-		// Order-dependent: the bare-config branch accepts any object and strips unknown keys, so if it matched first
-		// these would parse to `{}` and the caller would silently get the production defaults on both sides.
+		// Order-dependent: the bare-config branch accepts any object and strips unknown keys,
+		// so if it matched first these would parse to `{}` and the caller would silently
+		// get the production defaults on both sides.
 		expect(ARM_SPEC_SCHEMA.parse({ kind: "oracle", provider: "census" })).toMatchObject({ kind: "oracle" })
 		expect(ARM_SPEC_SCHEMA.parse({ kind: "recorded", run_id: "abc" })).toMatchObject({ kind: "recorded" })
 	})

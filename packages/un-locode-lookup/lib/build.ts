@@ -26,8 +26,8 @@ interface CSVRow {
  * Read the code-list CSV at `csvPath` and write the lookup DB to `dbPath`.
  */
 export async function buildUNLocodeDB(csvPath: string, dbPath: string): Promise<{ rows: number; withCoords: number }> {
-	// `normalizeKeys: false` keeps the unece header casing the row shape above is written against
-	// (`NameWoDiacritics`, not `name_wo_diacritics`).
+	// `normalizeKeys: false` keeps the unece header casing the row shape above is
+	// written against (`NameWoDiacritics`, not `name_wo_diacritics`).
 	const records = CSVSpliterator.fromAsync<CSVRow>(csvPath, {
 		normalizeKeys: false,
 	})

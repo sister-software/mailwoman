@@ -18,7 +18,8 @@ import type { PlanetaryNomenclatureFeature } from "#schema/nomenclature"
 import { type NomenclatureSearchPayload, nomenclatureTokens } from "#search/tokens"
 
 /**
- * Build the search artifact over the features and write it to `outPath`. Answers the entry count.
+ * Build the search artifact over the features and write it to `outPath`.
+ * Answers the entry count.
  */
 export async function buildSearchIndex(
 	features: Iterable<PlanetaryNomenclatureFeature>,
@@ -35,8 +36,8 @@ export async function buildSearchIndex(
 			featureType: feature.featureType,
 			centerLon: feature.centerLon,
 			centerLat: feature.centerLat,
-			// Only when the gazetteer has them: an absent diameter is a real reading, and writing 0 would tell a camera
-			// the feature is a point.
+			// Only when the gazetteer has them: an absent diameter is a real reading,
+			// and writing 0 would tell a camera the feature is a point.
 			...(feature.featureTypeCode ? { featureTypeCode: feature.featureTypeCode } : {}),
 			...(feature.diameterKm === undefined ? {} : { diameterKm: feature.diameterKm }),
 		}

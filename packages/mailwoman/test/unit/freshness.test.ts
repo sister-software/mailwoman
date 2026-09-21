@@ -34,8 +34,9 @@ async function scratch(): Promise<string> {
 /**
  * A stamped artifact, written through `stampLayerManifest` — the same writer every builder uses.
  *
- * The fixture is deliberately not hand-rolled SQL: a reader tested against a table this test invented would keep
- * passing after the interface's own writer changed shape, which is the one regression it exists to catch.
+ * The fixture is deliberately not hand-rolled SQL: a reader tested against a table this
+ * test invented would keep passing after the interface's own writer changed shape,
+ * which is the one regression it exists to catch.
  */
 async function stamped(path: string, name: string, createdAt: string): Promise<string> {
 	await stampLayerManifest(path, {
@@ -76,8 +77,9 @@ describe("readFreshness — a stamped artifact", () => {
 		expect(entry?.manifest).toBe(ManifestState.Present)
 		expect(entry?.built).toBe("2026-08-17T19:21:17.000Z")
 		expect(entry?.version).toBe("candidate@2026-08-17")
-		// The candidate's source is a chain — it names its ancestor admin build — and the vintage carries the
-		// database counts that make one candidate build different from another. Both, or neither identifies it.
+		// The candidate's source is a chain — it names its ancestor admin build —
+		// and the vintage carries the database counts that make one candidate build
+		// different from another. Both, or neither identifies it.
 		expect(entry?.sources).toEqual(["admin-global-priority@2026-08-17", "postcode-databases=24"])
 		expect(entry?.reason).toBeUndefined()
 	})
@@ -130,8 +132,8 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 
 		const [entry] = (await readFreshness([{ name: "gazetteer", path }])).artifacts
 
-		// A fault to chase rather than a rebuild to schedule. Collapsing the two would file a corrupt artifact under
-		// the same heading as one that is merely old.
+		// A fault to chase rather than a rebuild to schedule.
+		// Collapsing the two would file a corrupt artifact under the same heading as one that is merely old.
 		expect(entry?.manifest).toBe(ManifestState.Unreadable)
 		expect(entry?.reason).toBeDefined()
 	})

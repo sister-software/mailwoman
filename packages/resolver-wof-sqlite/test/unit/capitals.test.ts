@@ -10,8 +10,8 @@
 import { CAPITAL_LEVEL, CAPITAL_MATCH_RADIUS_KM, CapitalIndex } from "@mailwoman/resolver-wof-sqlite/capitals"
 import { describe, expect, it } from "vitest"
 
-// San José CR (the national capital, with its GeoNames alternates) and Salt Lake City (an admin-1
-// seat) — real coordinates so the radius sentences below mean what they say.
+// San José CR (the national capital, with its GeoNames alternates) and Salt Lake City
+// (an admin-1 seat) — real coordinates so the radius sentences below mean what they say.
 const index = new CapitalIndex([
 	{ country: "CR", latitude: 9.9333, longitude: -84.0833, level: "national", k: ["san jose", "chepe"] },
 	{ country: "US", latitude: 40.7608, longitude: -111.891, level: "admin1", k: ["salt lake city", "slc"] },
@@ -33,8 +33,8 @@ describe("CapitalIndex.levelOfPlace", () => {
 	})
 
 	it("refuses a capital-ADJACENT namesake inside the radius — the iteration-1 false-positive class", () => {
-		// North Salt Lake sits ~10 km from the Utah seat and was promoted by the coordinate-only match.
-		// its name is not in Salt Lake City's name set, so the name conjunct excludes it.
+		// North Salt Lake sits ~10 km from the Utah seat and was promoted by the coordinate-only
+		// match. its name is not in Salt Lake City's name set, so the name conjunct excludes it.
 		expect(index.levelOfPlace("North Salt Lake", "US", 40.8477, -111.9227)).toBe(CAPITAL_LEVEL.none)
 		expect(index.levelOfPlace("Salt Lake City", "US", 40.7608, -111.891)).toBe(CAPITAL_LEVEL.admin1)
 	})

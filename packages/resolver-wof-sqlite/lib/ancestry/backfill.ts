@@ -67,17 +67,18 @@ export interface AncestryBackfillResult {
 	 */
 	rowsAdded: number
 	/**
-	 * Candidates whose source geojson could not be found (non-WOF backfilled places, or repos not present locally) —
-	 * skipped rather than an error.
+	 * Candidates whose source geojson could not be found
+	 * (non-WOF backfilled places, or repos not present locally) — skipped rather than an error.
 	 */
 	noGeojson: number
 }
 
 /**
- * Discover the `data` directories under a WOF repos root that hold attached geojson, e.g.
- * `<root>/whosonfirst-data/whosonfirst-data-admin-us/data`. Resolves an id to its geojson via these roots. Accepts both
- * the nested lab layout (a `whosonfirst-data` group dir holding the admin repos) and a flat layout (admin repos
- * directly under the root); searches at most two directory levels deep.
+ * Discover the `data` directories under a WOF repos root that hold attached
+ * geojson, e.g. `<root>/whosonfirst-data/whosonfirst-data-admin-us/data`.
+ * Resolves an id to its geojson via these roots. Accepts both the nested lab layout
+ * (a `whosonfirst-data` group dir holding the admin repos) and a flat layout
+ * (admin repos directly under the root); searches at most two directory levels deep.
  */
 export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promise<string[]> {
 	const roots: string[] = []
@@ -111,10 +112,10 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 	return roots
 }
 
-// `<placetype>_id` key → ancestor placetype. WOF hierarchy keys are e.g. region_id, county_id. Self
-// is filtered downstream by the `aid === id` check, so we do not special-case locality here: for a
-// locality candidate `locality_id` is self (dropped by aid===id), but for a neighbourhood candidate
-// `locality_id` is its parent locality — a real ancestor we must keep.
+// `<placetype>_id` key → ancestor placetype. WOF hierarchy keys are e.g. region_id, county_id.
+// Self is filtered downstream by the `aid === id` check, so we do not special-case locality
+// here: for a locality candidate `locality_id` is self (dropped by aid===id), but for a
+// neighbourhood candidate `locality_id` is its parent locality — a real ancestor we must keep.
 function placetypeFromKey(key: string): string | null {
 	if (!key.endsWith("_id")) return null
 
@@ -140,9 +141,9 @@ export async function backfillAncestorsFromHierarchy(
 ): Promise<AncestryBackfillResult> {
 	const maxID = opts.maxID ?? Number.MAX_SAFE_INTEGER
 
-	// "No country-tier ancestor" is the dead-end signal at any depth — see the module docstring. The
-	// earlier "<= 1 ancestor row" test only caught the dead end's origin, never the children that
-	// inherit it (a child of a repaired -4 place has two rows: itself and that parent) (#1445).
+	// "No country-tier ancestor" is the dead-end signal at any depth — see the module docstring.
+	// The earlier "<= 1 ancestor row" test only caught the dead end's origin, never the children
+	// that inherit it (a child of a repaired -4 place has two rows: itself and that parent) (#1445).
 	// The id bound is stated first so SQLite prunes by the PK index before the not exists runs at all.
 	const candidateBase = db
 		.selectFrom("spr")

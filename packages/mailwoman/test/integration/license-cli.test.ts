@@ -114,9 +114,10 @@ describe("mailwoman license", () => {
 	}
 
 	/**
-	 * The worker's two customer routes and the well-known register, as a fetch handler: the refresh route answers the
-	 * self-service token for the right secret, `lapsed` for one lid, and the worker's 404 otherwise. the status route
-	 * answers `revoked`; the register lists no key, so the publication reads `unlisted` without reaching mailwoman.ai.
+	 * The worker's two customer routes and the well-known register, as a fetch handler:
+	 * the refresh route answers the self-service token for the right secret, `lapsed` for one lid,
+	 * and the worker's 404 otherwise. the status route answers `revoked`; the register
+	 * lists no key, so the publication reads `unlisted` without reaching mailwoman.ai.
 	 */
 	async function stubWorker(token: string) {
 		const handler = async (request: Request): Promise<Response> => {

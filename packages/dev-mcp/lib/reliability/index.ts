@@ -10,9 +10,9 @@
 /**
  * One graded confidence.
  *
- * `strata` is free-form on purpose. A surface knows what its own useful splits are — tag and locale for the decode
- * path, expected/predicted country for the placer — and a fixed field list would either omit one or force every surface
- * to carry the others empty.
+ * `strata` is free-form on purpose. A surface knows what its own useful splits are — tag
+ * and locale for the decode path, expected/predicted country for the placer — and a fixed
+ * field list would either omit one or force every surface to carry the others empty.
  */
 export interface Observation {
 	confidence: number
@@ -30,8 +30,8 @@ export interface ReliabilityBin {
 	mean_confidence: number | null
 	accuracy: number | null
 	/**
-	 * `accuracy - mean_confidence`, signed. Negative is overconfidence — the direction that lets a caller trust a wrong
-	 * answer — and an unsigned gap cannot tell it from the harmless direction.
+	 * `accuracy - mean_confidence`, signed. Negative is overconfidence — the direction that lets a
+	 * caller trust a wrong answer — and an unsigned gap cannot tell it from the harmless direction.
 	 */
 	gap: number | null
 }
@@ -40,13 +40,15 @@ export interface ReliabilityCurve {
 	n: number
 	accuracy: number | null
 	/**
-	 * Expected calibration error: the population-weighted mean absolute gap. `null` on an empty sample, because 0 there
-	 * and 0 on a perfect model are the same number and opposite facts.
+	 * Expected calibration error: the population-weighted mean absolute gap.
+	 * `null` on an empty sample, because 0 there and 0 on a perfect model are
+	 * the same number and opposite facts.
 	 */
 	ece: number | null
 	/**
-	 * Maximum calibration error: the worst single bin, unweighted. Reported beside ECE rather than instead of it — a
-	 * rare, badly calibrated bin barely moves ECE and dominates MCE, so the pair says something neither says alone.
+	 * Maximum calibration error: the worst single bin, unweighted.
+	 * Reported beside ECE rather than instead of it — a rare, badly calibrated bin barely
+	 * moves ECE and dominates MCE, so the pair says something neither says alone.
 	 */
 	mce: number | null
 	bins: ReliabilityBin[]
@@ -57,13 +59,14 @@ export interface ThresholdRow {
 	admitted: number
 	admitted_share: number
 	/**
-	 * Accuracy among the admitted. `null` when nothing is admitted — an eval that admits nothing has no precision, and
-	 * reporting 0 there reads as an eval that admits only errors.
+	 * Accuracy among the admitted. `null` when nothing is admitted — an eval that admits
+	 * nothing has no precision, and reporting 0 there reads as an eval that admits only errors.
 	 */
 	precision_above: number | null
 	errors_admitted: number
 	/**
-	 * Correct observations the eval turned away. The cost side of the trade, which a precision column alone hides.
+	 * Correct observations the eval turned away. The cost side of the trade,
+	 * which a precision column alone hides.
 	 */
 	correct_below: number
 }
@@ -71,15 +74,16 @@ export interface ThresholdRow {
 /**
  * Equal-width bins over [0, 1].
  *
- * Empty bins are retained. A model whose confidences never enter the low bins is itself the finding, and a table that
- * silently starts at 0.8 reads as a narrower measurement rather than as a wider result.
+ * Empty bins are retained. A model whose confidences never enter the low bins is itself the finding,
+ * and a table that silently starts at 0.8 reads as a narrower measurement rather than as a wider result.
  */
 export function reliabilityCurve(sample: readonly Observation[], binCount: number): ReliabilityCurve {
 	const bins: Observation[][] = Array.from({ length: binCount }, () => [])
 
 	for (const observation of sample) {
-		// `Math.min` rather than a bare floor: a confidence of exactly 1.0 indexes one past the last bin, and dropping
-		// it would silently exclude the most-confident observations — the population an eval cares about most.
+		// `Math.min` rather than a bare floor: a confidence of exactly 1.0 indexes one
+		// past the last bin, and dropping it would silently exclude the most-confident
+		// observations — the population an eval cares about most.
 		const index = Math.min(binCount - 1, Math.floor(observation.confidence * binCount))
 
 		bins[index]!.push(observation)
@@ -118,10 +122,11 @@ export function reliabilityCurve(sample: readonly Observation[], binCount: numbe
 /**
  * What a confidence floor at each threshold would actually buy.
  *
- * The curve says whether the number is honest. this says what to do with it, and they are different questions — a
- * well-calibrated surface can still have no threshold worth setting, because the admitted-error count at every useful
- * recall is too high. Both columns of the trade are reported: a precision figure alone hides the correct answers the
- * check throws away.
+ * The curve says whether the number is honest. this says what to do with it,
+ * and they are different questions — a well-calibrated surface can still have no threshold
+ * worth setting, because the admitted-error count at every useful recall is too high.
+ * Both columns of the trade are reported: a precision figure alone hides the
+ * correct answers the check throws away.
  */
 export function thresholdTable(sample: readonly Observation[], thresholds: readonly number[]): ThresholdRow[] {
 	const correctTotal = sample.filter((o) => o.correct).length
@@ -150,12 +155,14 @@ export interface ErrorClass {
 /**
  * The confusions an eval at `threshold` lets through, most frequent first.
  *
- * Restricted to the admitted errors on purpose. A hard filter's cost is asymmetric — an admitted error scopes the whole
- * downstream resolve to the wrong answer, while a rejection only forgoes the narrowing — so the per-class rate above
- * the eval is the number that decides whether the eval is safe, and the overall confusion matrix is not.
+ * Restricted to the admitted errors on purpose. A hard filter's cost is asymmetric —
+ * an admitted error scopes the whole downstream resolve to the wrong answer, while a
+ * rejection only forgoes the narrowing — so the per-class rate above the eval is the number
+ * that decides whether the eval is safe, and the overall confusion matrix is not.
  *
- * Requires `expected` and `predicted` strata. a surface without them (the decode path grades a value against a label
- * and has no second class to name) returns nothing, which is absence and not a clean confusion matrix.
+ * Requires `expected` and `predicted` strata. a surface without them
+ * (the decode path grades a value against a label and has no second class to name)
+ * returns nothing, which is absence and not a clean confusion matrix.
  */
 export function errorClasses(sample: readonly Observation[], threshold: number, limit: number): ErrorClass[] {
 	const tally = new Map<string, ErrorClass>()
@@ -184,9 +191,9 @@ export function errorClasses(sample: readonly Observation[], threshold: number, 
 /**
  * Split a sample by one stratum key and curve each group.
  *
- * A group is keyed by the stratum's value, and observations missing the key are grouped under `(unset)` rather than
- * dropped — a stratum that half the sample does not carry is a fact about the corpus, and dropping those rows moves the
- * denominator of every other group without saying so.
+ * A group is keyed by the stratum's value, and observations missing the key are grouped under `(unset)`
+ * rather than dropped — a stratum that half the sample does not carry is a fact about the corpus,
+ * and dropping those rows moves the denominator of every other group without saying so.
  */
 export function curveByStratum(
 	sample: readonly Observation[],

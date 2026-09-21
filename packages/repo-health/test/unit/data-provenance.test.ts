@@ -23,8 +23,8 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * Write a tree of `path → contents` and return the check's context over it.
  *
- * `trackedFiles` is every planted path, because the check reads git's list rather than the filesystem — an untracked
- * artifact is a local build output and not a committed claim.
+ * `trackedFiles` is every planted path, because the check reads git's list rather than the
+ * filesystem — an untracked artifact is a local build output and not a committed claim.
  */
 async function plant(files: Record<string, string>) {
 	const repoRoot = String(fixtures.use(await temporaryDirectory("data-provenance-")).path)
@@ -73,8 +73,8 @@ describe("dataProvenanceCheck", () => {
 
 	it("reports a subdirectory the record does not name", async () => {
 		// The live case: `packages/core/data/coarse-placer/` shipped a trained classifier in every copy of
-		// `@mailwoman/core` and no record named it. Every artifact in that directory is a level down, so a rule over
-		// files alone reported nothing about any of core's four data directories.
+		// `@mailwoman/core` and no record named it. Every artifact in that directory is a level down,
+		// so a rule over files alone reported nothing about any of core's four data directories.
 		const context = await plant({
 			"packages/example/data/PROVENANCE.md": "# provenance\n\n`table.json` is written by `build-table`.\n",
 			"packages/example/data/table.json": "{}\n",
@@ -89,8 +89,8 @@ describe("dataProvenanceCheck", () => {
 	})
 
 	it("asks a record to name a subdirectory rather than the files inside it", async () => {
-		// Requiring every file at any depth would ask core's record to list 1,114 vendored dictionary files. Naming
-		// the directory is the claim a reader checks.
+		// Requiring every file at any depth would ask core's record to list 1,114 vendored
+		// dictionary files. Naming the directory is the claim a reader checks.
 		const context = await plant({
 			"packages/example/data/PROVENANCE.md": "# provenance\n\n`libpostal/` is fetched by `download`.\n",
 			"packages/example/data/libpostal/en/street_types.txt": "ave\n",
@@ -118,8 +118,9 @@ describe("dataProvenanceCheck", () => {
 	})
 
 	it("leaves a data directory with no record alone", async () => {
-		// Scoped on purpose. Asserting that every `data/` directory must carry a `PROVENANCE.md` is a different claim,
-		// and making this check assert it would fail the build on unrelated packages the moment it lands.
+		// Scoped on purpose. Asserting that every `data/` directory must carry a
+		// `PROVENANCE.md` is a different claim, and making this check assert it would
+		// fail the build on unrelated packages the moment it lands.
 		const context = await plant({ "packages/example/data/table.json": "{}\n" })
 
 		expect(await dataProvenanceCheck.run(context)).toEqual([])

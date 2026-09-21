@@ -56,8 +56,8 @@ import zod from "zod"
 import type { MutuallyAssignable, SameShape } from "#eval-harness/shape-assertions"
 
 /**
- * What a row is testing. The tag is the reporting axis — per-class deltas are how an arm's effect is localized to a
- * register, rather than averaged into a single number that hides both wins and losses.
+ * What a row is testing. The tag is the reporting axis — per-class deltas are how an arm's effect is
+ * localized to a register, rather than averaged into a single number that hides both wins and losses.
  */
 export const HARD_CASE_CLASSES = [
 	/**
@@ -107,8 +107,8 @@ export type FSTReach = (typeof FST_REACH)[number]
 /**
  * One row of the hard-case board.
  *
- * Field order is required: {@linkcode HARD_CASE_KEY_ORDER} mirrors it so every emitted row keys identically and a diff
- * shows content, never a re-shuffle.
+ * Field order is required: {@linkcode HARD_CASE_KEY_ORDER} mirrors it so every emitted
+ * row keys identically and a diff shows content, never a re-shuffle.
  */
 export interface HardCase {
 	id: string
@@ -128,9 +128,9 @@ export interface HardCase {
 	 */
 	probeSurface: string
 	/**
-	 * Measured `max(importance)` for {@linkcode probeSurface} under the shipped population-proxy FST, on the BIO tag named
-	 * by {@linkcode probeTag}. Recorded so a reader can tell a tie caused by "no bias difference" from a tie caused by
-	 * "bias difference the decoder ignored".
+	 * Measured `max(importance)` for {@linkcode probeSurface} under the shipped population-proxy FST,
+	 * on the BIO tag named by {@linkcode probeTag}. Recorded so a reader can tell a tie caused
+	 * by "no bias difference" from a tie caused by "bias difference the decoder ignored".
 	 */
 	popBias: number
 	/**
@@ -156,8 +156,8 @@ export interface HardCase {
 }
 
 /**
- * Canonical key order — {@linkcode HardCase}'s declaration order. Emission re-keys through this so the board's diff
- * means something.
+ * Canonical key order — {@linkcode HardCase}'s declaration order.
+ * Emission re-keys through this so the board's diff means something.
  */
 export const HARD_CASE_KEY_ORDER = [
 	"id",
@@ -182,14 +182,16 @@ export const HARD_CASE_KEY_ORDER = [
 ] as const satisfies readonly (keyof HardCase)[]
 
 /**
- * How many fields a coordinate assertion is made of — `expectLat`, `expectLon`, `expectToleranceM`. The refinement
- * below accepts 0 of them or all 3, never a partial, so this is the "all" side of that rule.
+ * How many fields a coordinate assertion is made of — `expectLat`, `expectLon`,
+ * `expectToleranceM`. The refinement below accepts 0 of them or all 3, never a partial,
+ * so this is the "all" side of that rule.
  */
 const COORDINATE_ASSERTION_FIELDS = 3
 
 /**
- * The runtime shadow. `strictObject`, and the coordinate triple is refined as all-or-nothing: a typo'd `expectLon` that
- * silently read as "coordinate not asserted" is exactly the input-tail defect this board exists to make loud.
+ * The runtime shadow. `strictObject`, and the coordinate triple is refined as all-or-nothing:
+ * a typo'd `expectLon` that silently read as "coordinate not asserted" is exactly
+ * the input-tail defect this board exists to make loud.
  */
 export const HardCaseSchema = zod
 	.strictObject({
@@ -226,8 +228,8 @@ export const HardCaseSchema = zod
 	)
 
 /**
- * The compile-time bridge: add a field to one of {@linkcode HardCase} / {@linkcode HardCaseSchema} and not the other, and
- * `tsc` stops here.
+ * The compile-time bridge: add a field to one of {@linkcode HardCase} /
+ * {@linkcode HardCaseSchema} and not the other, and `tsc` stops here.
  */
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof HardCaseSchema>, HardCase>
 
@@ -239,10 +241,10 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 	keyof HardCase
 >
 
-// Probe the directory rather than the board file: the builder that writes the board resolves this constant
-// before the file exists, and a file-existence probe would send the first build to the compiled-tree
-// fallback (which resolves outside the workspace). The fixtures dir is committed, so it is the stable
-// discriminator between source and compiled trees.
+// Probe the directory rather than the board file: the builder that writes the board
+// resolves this constant before the file exists, and a file-existence probe would send
+// the first build to the compiled-tree fallback (which resolves outside the workspace).
+// The fixtures dir is committed, so it is the stable discriminator between source and compiled trees.
 /**
  * The committed board, named from the package root — tsc emits no `.jsonl` into `out/`.
  */
@@ -255,8 +257,8 @@ export const HARD_CASE_BOARD_PATH: string = resolvePackagePath(
 )
 
 /**
- * Re-key a case into {@linkcode HARD_CASE_KEY_ORDER}, dropping absent optionals — used by any emitter so the board's
- * content hash is a function of content rather than of literal ordering.
+ * Re-key a case into {@linkcode HARD_CASE_KEY_ORDER}, dropping absent optionals — used by any emitter
+ * so the board's content hash is a function of content rather than of literal ordering.
  */
 export function canonicalizeHardCase(c: HardCase): HardCase {
 	const out: Partial<HardCase> = {}
@@ -264,8 +266,9 @@ export function canonicalizeHardCase(c: HardCase): HardCase {
 	for (const key of HARD_CASE_KEY_ORDER) {
 		const value = c[key]
 
-		// `Object.assign` rather than `out[key] = value`: a dynamic key widens the write target to the intersection of
-		// every field type, which nothing satisfies. The accumulator keeps its own type either way.
+		// `Object.assign` rather than `out[key] = value`: a dynamic key widens the write
+		// target to the intersection of every field type, which nothing satisfies.
+		// The accumulator keeps its own type either way.
 		if (value !== undefined) {
 			Object.assign(out, { [key]: value })
 		}
@@ -275,11 +278,11 @@ export function canonicalizeHardCase(c: HardCase): HardCase {
 }
 
 /**
- * Load + validate the board. Order is defined (by `id`, ascending), so a hand-appended row cannot change what the board
- * is — only what a text diff looks like.
+ * Load + validate the board. Order is defined (by `id`, ascending), so a hand-appended
+ * row cannot change what the board is — only what a text diff looks like.
  *
- * Throws on the first invalid row with its 1-based line number: a board that silently drops a malformed row would
- * under-report its own size, and the arm comparison would be run on a set nobody declared.
+ * Throws on the first invalid row with its 1-based line number: a board that silently drops a malformed
+ * row would under-report its own size, and the arm comparison would be run on a set nobody declared.
  */
 export async function loadHardCaseBoard(path: string = HARD_CASE_BOARD_PATH): Promise<HardCase[]> {
 	const cases: HardCase[] = []

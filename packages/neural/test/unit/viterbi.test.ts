@@ -96,10 +96,9 @@ describe("viterbi — basic", () => {
 	})
 
 	it("recovers the Saint Petersburg pattern (B-locality I-locality)", () => {
-		// emissions[0] = "Saint", uncertain between O and B-locality
-		// emissions[1] = "Petersburg", confident I-locality
-		// Naive argmax: O, I-locality (invalid)
-		// Viterbi: B-locality, I-locality (valid + globally best)
+		// emissions[0] = "Saint", uncertain between O and B-locality emissions[1] =
+		// "Petersburg", confident I-locality Naive argmax: O, I-locality (invalid) Viterbi:
+		// B-locality, I-locality (valid + globally best)
 		const emissions = [
 			[0.45, 0.4, 0.1, 0.05, 0], // O, B-loc, I-loc, B-reg, I-reg
 			[0.1, 0.2, 0.65, 0.05, 0],

@@ -59,8 +59,8 @@ describe("npx mailwoman parse --benchmark <N> --degraded '<input>'", () => {
 
 		expect(stdout).toContain("iterations + 5 warmup")
 		expect(stdout).toContain("stage")
-		// The regression guard for the flag this file used to pass: if the encoder loads, the header
-		// says so, and the run is neither deterministic nor fast.
+		// The regression guard for the flag this file used to pass: if the encoder loads,
+		// the header says so, and the run is neither deterministic nor fast.
 		expect(stdout).toContain("classifier: none")
 		expect(stdout).toContain("p50")
 		expect(stdout).toContain("TOTAL")
@@ -79,8 +79,9 @@ describe("npx mailwoman parse --benchmark <N> --degraded '<input>'", () => {
 		}
 
 		expect(err).toBeDefined()
-		// Ink renders the error to stdout (Text color=red), not stderr. Process exits 1 because the
-		// useEffect-driven setError(...) → setImmediate(() => process.exit(1)) path fires.
+		// Ink renders the error to stdout (Text color=red), not stderr.
+		// Process exits 1 because the useEffect-driven setError(...) →
+		// setImmediate(() => process.exit(1)) path fires.
 		const combined = `${err?.stdout ?? ""}${err?.stderr ?? ""}`
 		expect(combined).toMatch(/--benchmark requires the default runtime-pipeline path/)
 	}, 30_000)

@@ -38,9 +38,9 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Navigate to the geocoder and wait until the classifier is loaded (the address field enables). The navigation waits
-	 * for the DOM only: the gazetteer's warm-up range reads keep the network busy well past readiness, so "network idle"
-	 * is not a signal here, and the enabled address field is.
+	 * Navigate to the geocoder and wait until the classifier is loaded (the address field enables).
+	 * The navigation waits for the DOM only: the gazetteer's warm-up range reads keep the network busy
+	 * well past readiness, so "network idle" is not a signal here, and the enabled address field is.
 	 */
 	async goto(query?: string): Promise<void> {
 		const path = query ? `/?q=${encodeURIComponent(query)}` : "/"
@@ -49,16 +49,19 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete. The options are the third argument:
-	 * `waitForFunction` reads its second as the function's argument, and an options object passed there leaves the wait
-	 * on the 30 s action budget. Polling is on an interval rather than on animation frames: a page the browser treats as
-	 * hidden fires no frames, and the default polling then never re-evaluates an already-true predicate. A load error the
-	 * page reports ends the wait at once, with that text, instead of running out the budget.
+	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete.
+	 * The options are the third argument: `waitForFunction` reads its second as the function's
+	 * argument, and an options object passed there leaves the wait on the 30 s action budget.
+	 * Polling is on an interval rather than on animation frames: a page the browser
+	 * treats as hidden fires no frames, and the default polling then never re-evaluates
+	 * an already-true predicate. A load error the page reports ends the wait at once,
+	 * with that text, instead of running out the budget.
 	 *
-	 * Readiness is the address field being enabled, because `GeocoderControls` binds that field's `disabled` to
-	 * `runtime.ready` — the same state the search pill's submit button used to carry before the pill dropped it (a
-	 * `type="search"` field submits on Enter and brings its own clear control). Waiting on an element that the chrome is
-	 * free to restyle away turns "the classifier loaded" into "never true" with no error to report, which is how this
+	 * Readiness is the address field being enabled, because `GeocoderControls` binds that field's
+	 * `disabled` to `runtime.ready` — the same state the search pill's submit button used to carry before
+	 * the pill dropped it (a `type="search"` field submits on Enter and brings its own clear control).
+	 * Waiting on an element that the chrome is free to restyle away turns "the
+	 * classifier loaded" into "never true" with no error to report, which is how this
 	 * wait ran out its budget on every case for two days.
 	 */
 	async expectReady(): Promise<void> {
@@ -89,8 +92,8 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Type a partial address to trigger the place-autocomplete typeahead (#587), then read the "Did you mean" suggestion
-	 * texts once the debounced FST walk renders them.
+	 * Type a partial address to trigger the place-autocomplete typeahead (#587),
+	 * then read the "Did you mean" suggestion texts once the debounced FST walk renders them.
 	 */
 	async readSuggestions(text: string): Promise<string[]> {
 		await this.setAddress(text)
@@ -119,12 +122,12 @@ export class GeocoderFixture {
 	}
 
 	async submit(): Promise<void> {
-		// Enter rather than a button: the search pill carries no submit control, and a `type="search"` field submits its form on
-		// Enter. `Geocoder.test.tsx` drives the same control the same way.
+		// Enter rather than a button: the search pill carries no submit control, and a `type="search"`
+		// field submits its form on Enter. `Geocoder.test.tsx` drives the same control the same way.
 		await this.page.locator("#mw-pipeline-input").press("Enter")
 
-		// Block until the result panel renders so callers can immediately readResult(). The options are the third
-		// argument, as in `expectReady`.
+		// Block until the result panel renders so callers can immediately readResult().
+		// The options are the third argument, as in `expectReady`.
 		await this.page.waitForFunction(() => document.body.textContent?.includes("Parsed components"), undefined, {
 			timeout: 60_000,
 			polling: 500,
@@ -159,7 +162,8 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Parse the resolved-place "coords" row into numbers. `NaN` components mean nothing resolved.
+	 * Parse the resolved-place "coords" row into numbers.
+	 * `NaN` components mean nothing resolved.
 	 */
 	async readCoords(): Promise<{ lat: number; lon: number }> {
 		const { resolved } = await this.readResult()

@@ -21,10 +21,11 @@ import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, componentsOf, provenanceFor } f
 /**
  * The per-row fields `mwdev_run` can emit, in emission order.
  *
- * A full board's `components` map dominates the payload — an unprojected result can overflow a tool reply and spill to
- * a file, so the caller reads it back through `jq` instead of reading it. Everything an A/B diff needs is `id` plus
- * `lat`/`lon`/`tier`. The list is ordered so a projected row keeps a stable key order regardless of the order the
- * caller asked in.
+ * A full board's `components` map dominates the payload — an unprojected result can
+ * overflow a tool reply and spill to a file, so the caller reads it back through `jq`
+ * instead of reading it. Everything an A/B diff needs is `id` plus `lat`/`lon`/`tier`.
+ * The list is ordered so a projected row keeps a stable key order regardless
+ * of the order the caller asked in.
  */
 const RUN_ROW_FIELDS = [
 	"id",
@@ -97,8 +98,9 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 		const fullRows: unknown[] = []
 		const tallyRequest = args["tally"] as string[] | undefined
 		const errors: Array<{ id: string; input: string; message: string }> = []
-		// Counted as rows are produced. Reading it back off `rows` would make the headline number depend on
-		// whether the caller happened to project `lat` — a measurement quietly changing with a display option.
+		// Counted as rows are produced. Reading it back off `rows` would make the
+		// headline number depend on whether the caller happened to project `lat` —
+		// a measurement quietly changing with a display option.
 		let resolved = 0
 
 		for (const item of selected) {
@@ -120,16 +122,18 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 							: haversineKm(run.result.lat, run.result.lon, item.truthLat, item.truthLon),
 					tier: run.result.resolution_tier,
 					admin_coherence: run.result.admin_coherence ?? null,
-					// The resolved winner identities (name + placeID per rung) — what the chimera triage (#1731)
-					// otherwise drops to the CLI for. Coordinate diffs alone cannot see a wrong-instance win.
+					// The resolved winner identities (name + placeID per rung) —
+					// what the chimera triage (#1731) otherwise drops to the CLI for.
+					// Coordinate diffs alone cannot see a wrong-instance win.
 					hierarchy: run.result.hierarchy ?? null,
 					timing_ms: run.timing,
 				}
 
-				// `lat` is read below for the resolved count, so projection cannot drop it from the value the
-				// handler reasons over — only from what is emitted. Filtering here rather than at return keeps
-				// that separation in one place. Tallies count over `fullRows` for the same reason: a census must
-				// not change with a display option.
+				// `lat` is read below for the resolved count, so projection cannot drop
+				// it from the value the handler reasons over — only from what is emitted.
+				// Filtering here rather than at return keeps that separation in one place.
+				// Tallies count over `fullRows` for the same reason: a census must not
+				// change with a display option.
 				fullRows.push(row)
 
 				rows.push(keep ? Object.fromEntries(RUN_ROW_FIELDS.filter((f) => keep.has(f)).map((f) => [f, row[f]])) : row)

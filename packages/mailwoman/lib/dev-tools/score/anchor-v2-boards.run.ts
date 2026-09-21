@@ -60,14 +60,16 @@ const { values } = parseArguments({
 		label: { type: "string", default: "candidate" },
 		"dump-misses": { type: "string" },
 		/**
-		 * Dump the full per-row tag serialization. The ablation legs of a saturated board are indistinguishable by score —
-		 * diffing this is how you tell "the channel changed nothing" from "the board cannot see it".
+		 * Dump the full per-row tag serialization. The ablation legs of a saturated board
+		 * are indistinguishable by score — diffing this is how you tell "the channel
+		 * changed nothing" from "the board cannot see it".
 		 */
 		"dump-spans": { type: "string" },
 		/**
-		 * Pin `normalizeCase: false` (#690/#829 off) — the register in which the shaped anchor keyer was measured dead:
-		 * 0/120 gb-golden rows yield a shaped span on raw lowercase (#1512). With normalization on (the default) the
-		 * lowercase leg is rescued before the keyer ever sees it, so this flag is the only way to grade the keyer's
+		 * Pin `normalizeCase: false` (#690/#829 off) — the register in which the shaped
+		 * anchor keyer was measured dead: 0/120 gb-golden rows yield a shaped span on raw
+		 * lowercase (#1512). With normalization on (the default) the lowercase leg is rescued
+		 * before the keyer ever sees it, so this flag is the only way to grade the keyer's
 		 * register-sensitivity rather than `normalizeInputCase`'s.
 		 */
 		"raw-case": { type: "boolean", default: false },
@@ -96,8 +98,8 @@ const misses: Miss[] = []
 const spans: string[] = []
 
 /**
- * One row's parse as a stable string — every tag it emitted, sorted. Two arms that produce identical files produced
- * byte-identical parses.
+ * One row's parse as a stable string — every tag it emitted, sorted.
+ * Two arms that produce identical files produced byte-identical parses.
  */
 function serializeTags(key: string, byTag: Map<string, string[]>): string {
 	return `${key}\t${[...byTag.entries()]
@@ -192,8 +194,9 @@ if (board === "gb") {
 				if (!gold.length) continue
 
 				// The gold `street` is the whole street name. the model emits it as a family
-				// (prefix/name/particle/suffix). `parity-corpus.ts`'s floor compares the assembled family, so a
-				// bare tag-vs-tag read of `street` scores a correct parse as a miss. Assemble the same family.
+				// (prefix/name/particle/suffix). `parity-corpus.ts`'s floor compares the assembled
+				// family, so a bare tag-vs-tag read of `street` scores a correct parse as a miss.
+				// Assemble the same family.
 				const emitted =
 					tag === "street" ? STREET_FAMILY_TAGS.flatMap((t) => byTag.get(t) ?? []) : (byTag.get(tag) ?? [])
 

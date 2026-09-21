@@ -92,9 +92,9 @@ function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): 
 	return db
 }
 
-// Turku holds "Åbo" as its official Swedish name. the hamlet holds "Åbo" as its own primary. Under
-// the plain #912 sub-tier the hamlet's primary wins. under option 3 Turku joins the name-exact
-// sub-tier and its population decides.
+// Turku holds "Åbo" as its official Swedish name. the hamlet holds "Åbo" as its own primary.
+// Under the plain #912 sub-tier the hamlet's primary wins. under option 3 Turku
+// joins the name-exact sub-tier and its population decides.
 const TURKU_ABO: SeedPlace[] = [
 	{ id: 1, name: "Åbo", country: "SE", population: 300 },
 	{ id: 2, name: "Turku", country: "FI", population: 207_000, officialAliases: ["Åbo"] },

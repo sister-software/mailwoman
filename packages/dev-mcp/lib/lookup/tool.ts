@@ -55,8 +55,8 @@ import {
 import { syntheticIDNote } from "#place-id-provenance"
 
 /**
- * The `candidate` source's two-artifact answer: the primary artifact's rows, the compare artifact's rows for the same
- * queries, and the per-query delta between the returned sets.
+ * The `candidate` source's two-artifact answer: the primary artifact's rows, the compare
+ * artifact's rows for the same queries, and the per-query delta between the returned sets.
  */
 export interface CandidateCompareResult extends LookupResult {
 	rows_compare: LookupRow[]
@@ -71,16 +71,17 @@ export interface LookupArgs {
 	queries: string[]
 	locale?: string
 	/**
-	 * Sweep the same queries across several locales' own artifacts. FST sources only.
+	 * Sweep the same queries across several locales' own
+	 * artifacts. FST sources only.
 	 */
 	locales?: string[]
 	country?: string
 	limit?: number
 	config?: EngineConfig
 	/**
-	 * `candidate` only — a second candidate.db to run the same queries against, answering both row sets plus a per-query
-	 * delta (rows only one artifact holds. shared rows whose ranking fields moved). The two-artifact probe every staged
-	 * gazetteer diagnosis previously scripted by hand.
+	 * `candidate` only — a second candidate.db to run the same queries against, answering both row sets
+	 * plus a per-query delta (rows only one artifact holds. shared rows whose ranking fields moved).
+	 * The two-artifact probe every staged gazetteer diagnosis previously scripted by hand.
 	 */
 	compareCandidateDB?: string
 }
@@ -88,9 +89,9 @@ export interface LookupArgs {
 /**
  * Run one source and close whatever it opened.
  *
- * `unavailable_reason` and no rows is the answer for a missing artifact. The alternative — a row per query saying "no"
- * — is the same shape a genuine absence has, and a caller reading it would conclude the gazetteer lacks fifty places
- * when what it lacks is a file.
+ * `unavailable_reason` and no rows is the answer for a missing artifact.
+ * The alternative — a row per query saying "no" — is the same shape a genuine absence has,
+ * and a caller reading it would conclude the gazetteer lacks fifty places when what it lacks is a file.
  */
 export async function runLookup(
 	registry: EngineRegistryLike,
@@ -125,8 +126,9 @@ export async function runLookup(
 
 		case LookupSource.Candidate: {
 			return await withArtifact(source, await resolveCandidateDB(config, dataRoot), async (db, path) => {
-				// The score source's split channels ride along whenever the conventional importance DB exists beside the
-				// artifacts — the join every fame-contest diagnosis needs, attached rather than scripted.
+				// The score source's split channels ride along whenever the conventional
+				// importance DB exists beside the artifacts — the join every fame-contest
+				// diagnosis needs, attached rather than scripted.
 				const importancePath = String(resolvePath(dataRoot, "wof", "admin-global-priority-importance.db"))
 
 				const importanceDB = (await pathExists(importancePath))
@@ -253,13 +255,14 @@ export async function runLookup(
 }
 
 /**
- * The candidate gazetteer, resolved exactly as the session resolves it — with the one thing `resolveCandidateDBPath`
- * cannot say folded back in.
+ * The candidate gazetteer, resolved exactly as the session resolves it —
+ * with the one thing `resolveCandidateDBPath` cannot say folded back in.
  *
- * That function answers `undefined` for three different situations: nothing was pinned and the convention path is
- * absent, `none` was pinned to force the FTS backend, and a pinned path does not exist. The runtime is right not to
- * distinguish them (all three mean "no candidate backend"), but a probe that reported the third as "no path was
- * resolved" would tell someone who typo'd `--candidate-db` that the gazetteer is missing.
+ * That function answers `undefined` for three different situations: nothing was pinned
+ * and the convention path is absent, `none` was pinned to force the FTS backend,
+ * and a pinned path does not exist. The runtime is right not to distinguish them
+ * (all three mean "no candidate backend"), but a probe that reported the third as "no path
+ * was resolved" would tell someone who typo'd `--candidate-db` that the gazetteer is missing.
  */
 async function resolveCandidateDB(config: EngineConfig, dataRoot: string): Promise<string | undefined> {
 	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)
@@ -271,8 +274,8 @@ async function resolveCandidateDB(config: EngineConfig, dataRoot: string): Promi
 }
 
 /**
- * Open one sealed artifact, hand it to `build`, and close it whatever happens. An unopenable path short-circuits to the
- * unavailable envelope with no rows.
+ * Open one sealed artifact, hand it to `build`, and close it whatever happens.
+ * An unopenable path short-circuits to the unavailable envelope with no rows.
  */
 async function withArtifact<T extends LookupResult>(
 	source: LookupSource,
@@ -295,16 +298,16 @@ async function withArtifact<T extends LookupResult>(
 }
 
 /**
- * The one sentence every unavailable source returns, so the reason a result is empty can never be mistaken for the
- * answer.
+ * The one sentence every unavailable source returns, so the reason a result is
+ * empty can never be mistaken for the answer.
  */
 const UNAVAILABLE_NOTE =
 	"No row is reported, because a source whose artifact is missing answers 'no' to everything — which would read as " +
 	"absence for every query rather than as an unavailable source."
 
 /**
- * The WOF extracts, opened as a set. Unavailable only when no extract opens. a partial set is reported in the notes,
- * because "three of six extracts" is a different reading of a miss than "all six".
+ * The WOF extracts, opened as a set. Unavailable only when no extract opens. a partial set is reported
+ * in the notes, because "three of six extracts" is a different reading of a miss than "all six".
  */
 async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupResult> {
 	const paths = resolveWOFDatabasePaths(args.config?.resolve_db, dataRoot)
@@ -366,8 +369,9 @@ async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupR
 /**
  * The postcode→anchor artifact for one locale's weights package.
  *
- * The span mode comes from the package's own model card. Defaulting it here instead would describe a configuration the
- * loader never runs — `alnum-run` is the loader's default only when the card declares nothing.
+ * The span mode comes from the package's own model card.
+ * Defaulting it here instead would describe a configuration the loader never runs —
+ * `alnum-run` is the loader's default only when the card declares nothing.
  */
 async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	const locale = args.locale ?? args.config?.locale ?? "en-us"
@@ -425,9 +429,10 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 /**
  * Read the anchor artifact behind the resolver interface.
  *
- * The binary is probed by binary search, never decoded whole: `postcode-gb.bin` holds 1,749,839 keys and
- * `toAnchorLookup()` builds all of them into a Map in 2,035 ms (against 24 ms to construct the reader), which is the
- * wrong trade for a handful of queries. The JSON form has no search interface, so it is parsed and wrapped.
+ * The binary is probed by binary search, never decoded whole: `postcode-gb.bin` holds
+ * 1,749,839 keys and `toAnchorLookup()` builds all of them into a Map in 2,035 ms
+ * (against 24 ms to construct the reader), which is the wrong trade for a handful of queries.
+ * The JSON form has no search interface, so it is parsed and wrapped.
  */
 async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Promise<PostcodeAnchorResolver> {
 	if (artifact.binary) {
@@ -450,10 +455,11 @@ async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): 
 /**
  * The two FST sources, which need a warm session to learn which artifact the decoder would read.
  *
- * `gazetteer_prior: true` is forced. A session resolves the FST paths only when it will actually feed the prior, and it
- * is right to: `artifacts` reports what a session read rather than what it could have. A lookup wants the artifact the
- * decoder would consult, so it asks for an engine that loads one — resolving the path any other way would answer about
- * an FST no runtime configuration reads.
+ * `gazetteer_prior: true` is forced. A session resolves the FST paths only when it will
+ * actually feed the prior, and it is right to: `artifacts` reports what a session read
+ * rather than what it could have. A lookup wants the artifact the decoder would consult,
+ * so it asks for an engine that loads one — resolving the path any other way would
+ * answer about an FST no runtime configuration reads.
  */
 async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Promise<LookupResult> {
 	const notes =
@@ -468,9 +474,10 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 	if (args.locales?.length) {
 		const byLocale: NonNullable<LookupResult["by_locale"]> = {}
 
-		// Sequential, and each locale costs a full session build: `artifacts` reports what a session read, so learning
-		// which artifact a locale's decoder consults means building that locale's decoder. The registry evicts to its
-		// cap as this walks, so a wide sweep rebuilds rather than accumulating.
+		// Sequential, and each locale costs a full session build: `artifacts` reports what
+		// a session read, so learning which artifact a locale's decoder consults means
+		// building that locale's decoder. The registry evicts to its cap as this walks,
+		// so a wide sweep rebuilds rather than accumulating.
 		for (const locale of args.locales) {
 			byLocale[locale] = await probeLocaleFST(registry, args, locale)
 		}
@@ -495,8 +502,8 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 /**
  * One locale's answer, with a missing artifact reported IN place rather than by omission.
  *
- * Five shipped overlays carry no FST at all, so a sweep that dropped those locales would read as a set of locales that
- * knew nothing about the queries.
+ * Five shipped overlays carry no FST at all, so a sweep that dropped those locales
+ * would read as a set of locales that knew nothing about the queries.
  */
 async function probeLocaleFST(
 	registry: EngineRegistryLike,

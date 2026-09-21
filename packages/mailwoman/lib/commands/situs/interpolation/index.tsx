@@ -150,15 +150,16 @@ const STATE_FIPS: Record<string, string> = {
 }
 
 /**
- * Repo-relative anchor for the cached county-population ranking (resolves cleanly in both source + compiled trees via
- * the core repo-root builder).
+ * Repo-relative anchor for the cached county-population ranking
+ * (resolves cleanly in both source + compiled trees via the core repo-root builder).
  */
 const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json"))
 
 /**
- * The per-state street-segment builder is now the sibling `situs interpolation-database` command (the old
- * `scripts/build-interpolation-database.ts` was migrated into the CLI). Re-invoke the same CLI entry this process was
- * started from, so dev + published installs both resolve correctly.
+ * The per-state street-segment builder is now the sibling `situs interpolation-database`
+ * command (the old `scripts/build-interpolation-database.ts` was migrated into the CLI).
+ * Re-invoke the same CLI entry this process was started from, so dev + published
+ * installs both resolve correctly.
  */
 const CLI_ENTRY = scriptEntryPath()
 
@@ -175,8 +176,8 @@ interface CountyRecord {
 }
 
 /**
- * Fetch and parse the Census Population Estimates CSV, then materialise the sorted county list. sumlev=050 rows are
- * county-level. state + county form the 5-digit geoid (zero-padded).
+ * Fetch and parse the Census Population Estimates CSV, then materialise the sorted county
+ * list. sumlev=050 rows are county-level. state + county form the 5-digit geoid (zero-padded).
  */
 async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 	console.error("Fetching Census Population Estimates CSV (co-est2023-alldata.csv)…")
@@ -218,8 +219,8 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 }
 
 /**
- * Load (or generate) the ranked county list. On first run this downloads the Census CSV. on subsequent runs it reads
- * the cached JSON file.
+ * Load (or generate) the ranked county list. On first run this downloads the Census
+ * CSV. on subsequent runs it reads the cached JSON file.
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
 	if (await pathExists(RANKED_FILE)) {
@@ -251,8 +252,9 @@ async function fetchText(url: string): Promise<string> {
 }
 
 /**
- * Download a URL to a local file path via the shared `streamToDisk` (`.part` + rename, so an interrupted transfer never
- * presents as a complete archive), with retry on 5xx / network errors.
+ * Download a URL to a local file path via the shared `streamToDisk`
+ * (`.part` + rename, so an interrupted transfer never presents as a complete archive),
+ * with retry on 5xx / network errors.
  */
 async function downloadFile(url: string, dest: string, retries = 3): Promise<void> {
 	// oxlint-disable-next-line eslint/no-unreachable-loop -- the catch falls through to the next attempt when the error is retryable
@@ -281,14 +283,15 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 //#region ZIP extraction
 
 /**
- * The shapefile components DuckDB needs out of a tiger edges archive. The siblings are useless without each other, so a
- * partial extract is a broken layer rather than a smaller one.
+ * The shapefile components DuckDB needs out of a tiger edges archive.
+ * The siblings are useless without each other, so a partial extract is a broken layer
+ * rather than a smaller one.
  */
 const SHAPEFILE_MEMBERS = /\.(?:shp|dbf|prj|shx)$/i
 
 /**
- * Unpack a tiger edges ZIP into --edges-dir, flattened. Silently overwrites existing files (idempotent at the shapefile
- * level).
+ * Unpack a tiger edges ZIP into --edges-dir, flattened.
+ * Silently overwrites existing files (idempotent at the shapefile level).
  */
 async function extractEdgesZip(zipPath: string, destDir: string): Promise<void> {
 	const { extractZipEntries } = await import("@mailwoman/core/fs/zip")
@@ -376,8 +379,8 @@ interface DatabaseBuildResult {
 }
 
 /**
- * Build one state's interpolation database DB. Returns wall-clock ms + segment count from the script's stdout, or
- * `null` when the database already exists and `--force` was not passed.
+ * Build one state's interpolation database DB. Returns wall-clock ms + segment count from the
+ * script's stdout, or `null` when the database already exists and `--force` was not passed.
  */
 async function buildStateDatabase(
 	stateAbbr: string,
@@ -427,9 +430,9 @@ async function buildStateDatabase(
 		return { wallMs, segments: 0, counties: 0 }
 	}
 
-	// The child's parse-relevant facts span its Ink summary (stdout: "N segment-sides → …") + plain
-	// progress (stderr: "N county shapefiles for …") — combine + strip ansi, then match without line
-	// anchors so the summary's "✓ " render prefix doesn't defeat the regex.
+	// The child's parse-relevant facts span its Ink summary (stdout: "N segment-sides → …") +
+	// plain progress (stderr: "N county shapefiles for …") — combine + strip ansi, then match
+	// without line anchors so the summary's "✓ " render prefix doesn't defeat the regex.
 	const stdout = stripAnsi(result.stdout ?? "")
 	const stderr = stripAnsi(result.stderr ?? "")
 	const combined = `${stdout}\n${stderr}`
@@ -558,8 +561,8 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 		// ── Step 3: determine which states have ≥1 county SHP ─────────────────
 		console.error("Step 3: building per-state databases")
 
-		// States from our target list that have at least one downloaded county SHP. The listing is materialized once
-		// so the filter callback stays synchronous.
+		// States from our target list that have at least one downloaded county SHP.
+		// The listing is materialized once so the filter callback stays synchronous.
 		const edgesEntries = await Globerator.files("shp", { cwd: EDGES_DIR, absolute: false, recursive: false }).toArray()
 
 		const availableStates = TARGET_STATES.filter((abbr) => {
@@ -577,9 +580,9 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 		console.error("")
 
 		// ── Step 4: build databases sequentially ─────────────────────────────────
-		// Sequential (not parallel): each database script uses DuckDB + SQLite. they're already
-		// I/O + DuckDB-parallel internally. Running states concurrently risks memory OOM on the
-		// 32K-row state builds and complicates progress reporting.
+		// Sequential (not parallel): each database script uses DuckDB + SQLite. they're
+		// already I/O + DuckDB-parallel internally. Running states concurrently risks memory
+		// OOM on the 32K-row state builds and complicates progress reporting.
 		const wallStart = Date.now()
 		let totalSegments = 0
 		let builtStates = 0

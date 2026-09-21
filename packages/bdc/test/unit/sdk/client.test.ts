@@ -25,9 +25,10 @@ import type { BDCFile, RawBDCFile } from "@mailwoman/bdc/sdk/common"
 import type { FCCAsOfDateEntry } from "@mailwoman/bdc/sdk/filing-dates"
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
-// `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type (`as ResourceError`). The value
-// arrives via the post-reset dynamic import below. a `const` carries no type side, so the type position
-// needs its own static import. Type-only, so it never evaluates the mocked module chain.
+// `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type
+// (`as ResourceError`). The value arrives via the post-reset dynamic import below.
+// a `const` carries no type side, so the type position needs its own static import.
+// Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
 import { crc32 } from "@mailwoman/core/fs/compression"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -37,13 +38,15 @@ import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }` — `dotEnv` is
-// read from the repo's real `.env` once at module load, so `vi.stubEnv(..., undefined)` alone can't hide
-// real FCC_MAP_USERNAME/FCC_MAP_API_KEY values committed there: the merge falls back to `dotEnv`'s value
-// regardless of what the test stubs on `process.env`. Mock the module directly so the no-credentials test
-// below is isolated from whatever the ambient environment actually contains (live-data finding — this
-// broke the first time real credentials landed in `.env`). Every other test in this file passes explicit
-// `username`/`apiKey` options and never reads `$private`, so this mock doesn't affect them.
+// `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }` —
+// `dotEnv` is read from the repo's real `.env` once at module load,
+// so `vi.stubEnv(..., undefined)` alone can't hide real FCC_MAP_USERNAME/FCC_MAP_API_KEY
+// values committed there: the merge falls back to `dotEnv`'s value regardless of what
+// the test stubs on `process.env`. Mock the module directly so the no-credentials
+// test below is isolated from whatever the ambient environment actually contains
+// (live-data finding — this broke the first time real credentials landed in `.env`).
+// Every other test in this file passes explicit `username`/`apiKey` options
+// and never reads `$private`, so this mock doesn't affect them.
 vi.mock("@mailwoman/bdc/env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@mailwoman/bdc/env")>()
 
@@ -86,9 +89,9 @@ const API_KEY = "s3cr3t"
 const DEFAULT_INTERVAL_MS = 6000
 
 /**
- * BDC answers with a `{ data: … }` envelope, and the client refuses to cache a 200 whose body is not one — so the
- * stub's default body has to be a valid envelope or every cache assertion below would be testing the self-heal path
- * instead.
+ * BDC answers with a `{ data: … }` envelope, and the client refuses to cache a 200
+ * whose body is not one — so the stub's default body has to be a valid envelope
+ * or every cache assertion below would be testing the self-heal path instead.
  */
 const BDC_EMPTY_ENVELOPE = { data: [] }
 
@@ -106,8 +109,8 @@ beforeEach(async () => {
 	dataRoot = await temporaryDirectory("bdc-client-test-")
 	cacheDir = dataRoot.resolve("http-cache")
 
-	// Created up front so "the cache is empty" is a readable directory rather than an enoent — the
-	// distinction the never-cached assertions below depend on.
+	// Created up front so "the cache is empty" is a readable directory rather than an enoent —
+	// the distinction the never-cached assertions below depend on.
 	await makeDirectoryExclusive(cacheDir)
 	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())
 })
@@ -119,8 +122,8 @@ afterEach(() => {
 })
 
 /**
- * A client with every timing dependency pinned: an immediately-resolving clock, an isolated cache directory, and the
- * stub transport as its only route to "the network".
+ * A client with every timing dependency pinned: an immediately-resolving clock,
+ * an isolated cache directory, and the stub transport as its only route to "the network".
  */
 function clientFor(transport: StubTransport, overrides: Parameters<typeof createBDCClient>[0] = {}) {
 	return createBDCClient({
@@ -186,9 +189,9 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 	})
 
 	it("APPENDS the path to the base rather than RESOLVING it, so no path can redirect the credentials off-host", async () => {
-		// `new URL(path, BDC_API_BASE_URL)` would resolve an absolute-looking path to another origin and
-		// carry the `username`/`hash_value` pair there. Concatenation cannot: the host is already fixed by
-		// the time the path is appended.
+		// `new URL(path, BDC_API_BASE_URL)` would resolve an absolute-looking path
+		// to another origin and carry the `username`/`hash_value` pair there.
+		// Concatenation cannot: the host is already fixed by the time the path is appended.
 		const transport = bdcTransport([{ body: { data: [] } }, { body: { data: [] } }])
 		const client = clientFor(transport)
 
@@ -201,8 +204,8 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 	})
 
 	it("returns the response body UN-unwrapped, envelope intact", async () => {
-		// Every BDC endpoint nests its payload under `data`, and both callers pluck `.data` themselves. A
-		// client that unwrapped would silently break every call site's response type.
+		// Every BDC endpoint nests its payload under `data`, and both callers pluck `.data` themselves.
+		// A client that unwrapped would silently break every call site's response type.
 		const transport = bdcTransport([{ body: { data: [{ as_of_date: "2024-12-31" }] } }])
 
 		const body = await clientFor(transport).get<{ data: unknown[] }>("/map/listAsOfDates")
@@ -238,11 +241,11 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 	})
 
 	it("never lets more than the configured budget arrive inside any sliding minute", async () => {
-		// arrivals, timestamped inside the adapter — not `clock.sleepCalls`. The grant schedule is not what a
-		// rate limiter sees, and asserting it is how a throttle bug hides: sleeps can be spaced correctly
-		// while requests still land in a burst. `runUntilSettled` is required because the throttle sits
-		// downstream of the on-disk cache lookup, so each request spends real event-loop turns in `readFile`
-		// before it registers its sleep.
+		// arrivals, timestamped inside the adapter — not `clock.sleepCalls`.
+		// The grant schedule is not what a rate limiter sees, and asserting it is how a throttle
+		// bug hides: sleeps can be spaced correctly while requests still land in a burst.
+		// `runUntilSettled` is required because the throttle sits downstream of the on-disk cache lookup,
+		// so each request spends real event-loop turns in `readFile` before it registers its sleep.
 		const FAN_OUT = 12
 
 		const clock = new VirtualClock()
@@ -310,14 +313,16 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	it("unions concurrent waits instead of summing them, so waiting can never exceed elapsed", async () => {
-		// Under a fan-out every caller sleeps at once and each wait is longer than the last (6s, 12s, …),
-		// so summing them reports more waiting than the run took: the first version of this meter printed
-		// `78m 0s (2000%)` for a 40-call fan-out that finished in 3m54s. What the operator is assessing is
-		// what share of the wall clock went to the throttle, which only the union answers.
+		// Under a fan-out every caller sleeps at once and each wait is longer than the
+		// last (6s, 12s, …), so summing them reports more waiting than the run took:
+		// the first version of this meter printed `78m 0s (2000%)` for a 40-call fan-out
+		// that finished in 3m54s. What the operator is assessing is what share of the
+		// wall clock went to the throttle, which only the union answers.
 		//
-		// Deliberately under `BDC_DEFAULT_REQUESTS_PER_MINUTE`, so only the interval limit fires and `waits` is exactly
-		// one per call after the first. At 12 this also crossed the per-minute budget, and once that limit's cooldown was
-		// corrected to a full window (it had been releasing N back to back every `60000/N` ms — a 10x overrun) the extra
+		// Deliberately under `BDC_DEFAULT_REQUESTS_PER_MINUTE`, so only the interval limit fires and
+		// `waits` is exactly one per call after the first. At 12 this also crossed the
+		// per-minute budget, and once that limit's cooldown was corrected to a full window
+		// (it had been releasing N back to back every `60000/N` ms — a 10x overrun) the extra
 		// budget waits made the count ambiguous. Union-vs-sum is what this test is for. isolate it.
 		const FAN_OUT = 8
 
@@ -335,8 +340,8 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	it("counts a per-minute budget cooldown once the budget is spent", async () => {
-		// The budget limit (`requestsPerMinute`) is declared alongside the interval limit. this is what proves
-		// it is actually wired, since the interval limit alone produces identical arrival spacing.
+		// The budget limit (`requestsPerMinute`) is declared alongside the interval limit. this is what
+		// proves it is actually wired, since the interval limit alone produces identical arrival spacing.
 		const BUDGET = 2
 
 		const clock = new VirtualClock()
@@ -349,11 +354,13 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	/**
-	 * The composed steady state of both limits, at the shipped defaults — pinned because `createBDCClient` and
+	 * The composed steady state of both limits, at the shipped defaults — pinned
+	 * because `createBDCClient` and
 	 * {@link BDCThrottleStats.cooldowns} both describe it in prose, and both used to describe it wrongly: they claimed
-	 * the budget's cooldown "computes to <= 0" / is of "near-zero duration" once the interval limit has spaced the
-	 * dispatches, so the budget was said to cost nothing. It is a real 6 s wait. `APIClient` measures the cooldown to the
-	 * end of the minute the window opened in, and after nine 6 s intervals only 54 s of that minute is spent.
+	 * the budget's cooldown "computes to <= 0" / is of "near-zero duration" once the
+	 * interval limit has spaced the dispatches, so the budget was said to cost nothing.
+	 * It is a real 6 s wait. `APIClient` measures the cooldown to the end of the minute the
+	 * window opened in, and after nine 6 s intervals only 54 s of that minute is spent.
 	 *
 	 * Nothing checked either claim, which is how they survived. This is the check.
 	 */
@@ -367,9 +374,9 @@ describe("createBDCClient: the throttle meter", () => {
 
 		await clock.runUntilSettled(Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`/map/steady/${i}`))))
 
-		// 0, 6, …, 54 — then a 6s cooldown, and the pacer discards its stale grant across it (APIClient
-		// re-acquires rather than holding one, under-issuing by one, the safe direction), so the next window
-		// opens at 66s rather than 60s.
+		// 0, 6, …, 54 — then a 6s cooldown, and the pacer discards its stale grant across it
+		// (APIClient re-acquires rather than holding one, under-issuing by one, the safe direction),
+		// so the next window opens at 66s rather than 60s.
 		expect(transport.dispatchTimes).toEqual([
 			0, 6000, 12_000, 18_000, 24_000, 30_000, 36_000, 42_000, 48_000, 54_000, 66_000, 72_000, 78_000, 84_000, 90_000,
 			96_000, 102_000, 108_000, 114_000, 120_000, 132_000,
@@ -378,8 +385,8 @@ describe("createBDCClient: the throttle meter", () => {
 		// One cooldown per budget's worth of requests, and it is a wait rather than a zero-length rollover marker.
 		expect(client.throttleStats().cooldowns).toBe(WINDOWS)
 
-		// The composed rate lands below the published limit — conservative, which is why the two limits are left
-		// composed rather than dropping the budget.
+		// The composed rate lands below the published limit — conservative, which is why
+		// the two limits are left composed rather than dropping the budget.
 		expect(maxCountInSlidingWindow(transport.dispatchTimes, 60_000)).toBeLessThanOrEqual(
 			BDC_DEFAULT_REQUESTS_PER_MINUTE
 		)
@@ -408,8 +415,8 @@ describe("createBDCClient: the on-disk response cache", () => {
 	})
 
 	it("expires an entry after cacheTTLMs, triggering a re-fetch", async () => {
-		// `axios-cache-interceptor` stamps `createdAt`/expiry off `Date.now()`, not off the injected
-		// `ClockLike`, so cache AGE is driven by faking `Date` specifically.
+		// `axios-cache-interceptor` stamps `createdAt`/expiry off `Date.now()`, not off the
+		// injected `ClockLike`, so cache AGE is driven by faking `Date` specifically.
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 
@@ -467,8 +474,8 @@ describe("createBDCClient: the on-disk response cache", () => {
 	})
 
 	it("refuses to cache a 200 whose body is not a BDC `{ data: … }` envelope, and self-heals", async () => {
-		// Validate before writing: an upstream serving an error page under a 200 would otherwise be handed
-		// to the next run, whose caller destructures `.data` into `undefined`.
+		// Validate before writing: an upstream serving an error page under a 200 would otherwise
+		// be handed to the next run, whose caller destructures `.data` into `undefined`.
 		const bad = bdcTransport([{ body: { error: "nope" } }])
 
 		expect(await clientFor(bad).get("/map/not-an-envelope")).toEqual({ error: "nope" })
@@ -515,14 +522,15 @@ describe("createBDCClient: the binary download path", () => {
 	})
 
 	it("never reaches the cache layer at all, and re-fetches on a second call", async () => {
-		// A multi-hundred-megabyte zip through a JSON-validating disk cache is wrong twice over: it cannot
-		// be read back, and `downloadBDCFile` already writes the extracted CSV to disk itself.
+		// A multi-hundred-megabyte zip through a JSON-validating disk cache is wrong twice over:
+		// it cannot be read back, and `downloadBDCFile` already writes the extracted CSV to disk itself.
 		//
-		// An empty cache directory alone would not prove this — the storage layer's own `validate` check
-		// rejects a zip too, so the directory stays empty either way and the assertion would pass with
-		// `cache: false` deleted. What distinguishes "the request bypassed the cache" from "the cache
-		// refused the write" is the rejection itself: `buildDiskStorage` warns on every write it drops, so
-		// a silent run is the proof that the interceptor never saw this response.
+		// An empty cache directory alone would not prove this — the storage layer's
+		// own `validate` check rejects a zip too, so the directory stays empty
+		// either way and the assertion would pass with `cache: false` deleted.
+		// What distinguishes "the request bypassed the cache" from "the cache refused the
+		// write" is the rejection itself: `buildDiskStorage` warns on every write it drops,
+		// so a silent run is the proof that the interceptor never saw this response.
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
 
 		const transport = bdcTransport([{ body: Buffer.from("first") }, { body: Buffer.from("second") }])
@@ -549,11 +557,11 @@ describe("createBDCClient: the binary download path", () => {
 	})
 
 	it("copies out of a POOLED buffer rather than handing over its neighbours' bytes", async () => {
-		// Node pools small `Buffer.allocUnsafe` allocations, so a short body arrives as a view at a
-		// non-zero `byteOffset` into a shared 8 KiB backing store (measured: offset 88). Returning
-		// `.buffer` directly there would hand the caller the whole pool. The zero-copy branch is only
-		// correct for the exactly-sized allocation `Buffer.concat` makes past the pool threshold, which is
-		// what a real multi-hundred-megabyte download produces.
+		// Node pools small `Buffer.allocUnsafe` allocations, so a short body arrives as a view
+		// at a non-zero `byteOffset` into a shared 8 KiB backing store (measured: offset 88).
+		// Returning `.buffer` directly there would hand the caller the whole pool.
+		// The zero-copy branch is only correct for the exactly-sized allocation `Buffer.concat` makes
+		// past the pool threshold, which is what a real multi-hundred-megabyte download produces.
 		const pool = Buffer.alloc(64, 0xaa)
 		const view = pool.subarray(8, 12)
 
@@ -607,8 +615,8 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 	})
 })
 
-// The interface an ingestion run depends on. Each branch is decided from `status` and
-// `isTransientResourceError()` alone — never from message text.
+// The interface an ingestion run depends on. Each branch is decided from `status`
+// and `isTransientResourceError()` alone — never from message text.
 describe("createBDCClient: the caller's failure taxonomy, decided without reading any message", () => {
 	async function failureFor(outcomes: StubOutcome[], maxAttempts = 2): Promise<unknown> {
 		const client = clientFor(bdcTransport(outcomes), { maxAttempts, baseRetryDelayMs: 1 })
@@ -688,8 +696,8 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 
 		const transport = bdcTransport([{ status: 429, statusText: "Too Many Requests" }, { body: { data: [1] } }], clock)
 
-		// A backoff far shorter than the throttle interval, so only the throttle can produce the observed
-		// spacing — a test with a long backoff would pass with the throttle deleted.
+		// A backoff far shorter than the throttle interval, so only the throttle can produce the
+		// observed spacing — a test with a long backoff would pass with the throttle deleted.
 		const client = clientFor(transport, { clock, maxAttempts: 3, baseRetryDelayMs: 500 })
 
 		expect(await client.get("/map/retry")).toEqual({ data: [1] })
@@ -798,8 +806,8 @@ describe("the SDK callers, over the migrated client", () => {
 })
 
 /**
- * ZIP local-file-header, central-directory and end-of-central-directory signatures, and the fixed byte lengths of the
- * two headers this builder emits (30 and 46, per appnote 4.3.7/4.3.12).
+ * ZIP local-file-header, central-directory and end-of-central-directory signatures, and the fixed
+ * byte lengths of the two headers this builder emits (30 and 46, per appnote 4.3.7/4.3.12).
  */
 const ZIP_LOCAL_SIGNATURE = 0x04_03_4b_50
 const ZIP_CENTRAL_SIGNATURE = 0x02_01_4b_50
@@ -810,9 +818,10 @@ const ZIP_EOCD_BYTES = 22
 const ZIP_VERSION = 20
 
 /**
- * Build a single-entry, stored (uncompressed) zip archive — the shape an FCC availability download has, minus the
- * deflate. Hand-assembled rather than pulled from a fixture file or a new dependency: `yauzl-promise` (the extractor
- * under test) reads zips and does not write them, and a committed binary fixture would be unreadable in review.
+ * Build a single-entry, stored (uncompressed) zip archive — the shape an FCC availability
+ * download has, minus the deflate. Hand-assembled rather than pulled from a fixture file
+ * or a new dependency: `yauzl-promise` (the extractor under test) reads zips
+ * and does not write them, and a committed binary fixture would be unreadable in review.
  */
 function storedZip(filename: string, contents: string): Buffer {
 	const name = Buffer.from(filename, "utf8")

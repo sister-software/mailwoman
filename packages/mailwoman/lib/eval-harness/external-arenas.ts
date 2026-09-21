@@ -46,8 +46,8 @@ import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
 /**
- * The three child processes, located from the package root so the same file is named from the source tree and from
- * `out/`.
+ * The three child processes, located from the package root so the same file is
+ * named from the source tree and from `out/`.
  */
 const PERTURB_GOLDEN_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "perturb-golden.run.ts")
 const HARNESS_NEURAL_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "harness-neural.run.ts")
@@ -58,19 +58,21 @@ const SUMMARIZE_ARENAS_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools"
  */
 export interface ExternalArenasOptions {
 	/**
-	 * Where the staged arenas and their result JSON land. Default `/tmp/external-arenas`.
+	 * Where the staged arenas and their result JSON land.
+	 * Default `/tmp/external-arenas`.
 	 */
 	outDir?: string
 	/**
-	 * Candidate ONNX. Omit to grade the default shipped weights. When set, {@linkcode ExternalArenasOptions.tokenizer} and
+	 * Candidate ONNX. Omit to grade the default shipped weights.
+	 * When set, {@linkcode ExternalArenasOptions.tokenizer} and
 	 * {@linkcode ExternalArenasOptions.modelCard} become required.
 	 */
 	model?: string
 	tokenizer?: string
 	modelCard?: string
 	/**
-	 * Gaz-trained models (v4.2.0+): feed the ship config — zero-filled clues depress country recall and fake an affix
-	 * crash.
+	 * Gaz-trained models (v4.2.0+): feed the ship config — zero-filled clues depress
+	 * country recall and fake an affix crash.
 	 */
 	gazetteerLexicon?: string
 	anchorLookup?: string
@@ -85,8 +87,8 @@ export interface ExternalArenasOptions {
 }
 
 /**
- * Run the three unbiased capability arenas. Narration splits across `report`/`reportError` the way the child process's
- * stdout/stderr did, because the check concatenates them in that order into `arenas.md`.
+ * Run the three unbiased capability arenas. Narration splits across `report`/`reportError` the way the
+ * child process's stdout/stderr did, because the check concatenates them in that order into `arenas.md`.
  *
  * Throws on a failed inner probe — the in-process spelling of the non-zero exit the check treats as fatal.
  */

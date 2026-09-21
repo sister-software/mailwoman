@@ -29,8 +29,8 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const siBareVillageRecipe: CorpusRecipe = {
 	name: "si-bare-village",

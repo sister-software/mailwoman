@@ -40,8 +40,8 @@ export interface SpanResolution {
 	lat?: number
 	lon?: number
 	/**
-	 * How many candidates the retrieval considered. Breadth rather than correctness — a span that won from 40 is less
-	 * settled than one that won from 2, even when both picked the same place.
+	 * How many candidates the retrieval considered. Breadth rather than correctness — a span that
+	 * won from 40 is less settled than one that won from 2, even when both picked the same place.
 	 */
 	candidates?: number
 }
@@ -61,8 +61,8 @@ export interface SpanGeoDelta {
 	candidatesBefore?: number
 	candidatesAfter?: number
 	/**
-	 * `resolved` / `unresolved` / `repointed` — the last meaning the span kept its text and tag and landed on a different
-	 * place.
+	 * `resolved` / `unresolved` / `repointed` — the last meaning the span kept its text
+	 * and tag and landed on a different place.
 	 */
 	kind: "repointed" | "resolved" | "unresolved" | "unchanged"
 }
@@ -70,8 +70,8 @@ export interface SpanGeoDelta {
 export interface GeocodeDiff {
 	input: string
 	/**
-	 * The span-level parse story. A geocode change whose `parse.identical` is false was asked a different question, and
-	 * the resolver is not the suspect.
+	 * The span-level parse story. A geocode change whose `parse.identical` is false was
+	 * asked a different question, and the resolver is not the suspect.
 	 */
 	parse: ParseDiff
 	spanGeo: SpanGeoDelta[]
@@ -82,16 +82,17 @@ export interface GeocodeDiff {
 	latAfter?: number | null
 	lonAfter?: number | null
 	/**
-	 * Kilometres the final answer moved. Undefined when either arm returned no coordinate — which is a different event
-	 * from moving zero kilometres and must not read as one.
+	 * Kilometres the final answer moved. Undefined when either arm returned no coordinate —
+	 * which is a different event from moving zero kilometres and must not read as one.
 	 */
 	movedKm?: number
 	uncertaintyBefore?: number | null
 	uncertaintyAfter?: number | null
 	identical: boolean
 	/**
-	 * Which of the three explanations the evidence supports. Stated rather than left to the reader, because the whole
-	 * point is that a distance delta alone cannot choose between them.
+	 * Which of the three explanations the evidence supports.
+	 * Stated rather than left to the reader, because the whole point is that a
+	 * distance delta alone cannot choose between them.
 	 */
 	attribution:
 		| "parse-changed"
@@ -210,8 +211,8 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 /**
  * Metres below which a coordinate move is rendered as "same point".
  *
- * Int8 quantization and float round-tripping move a centroid by centimetres. rendering that as a delta buries the moves
- * that matter.
+ * Int8 quantization and float round-tripping move a centroid by centimetres.
+ * rendering that as a delta buries the moves that matter.
  */
 export const SAME_POINT_M = 1
 

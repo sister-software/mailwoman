@@ -58,9 +58,9 @@ import { Globerator } from "spliterator/node/fs"
 /**
  * How well a country can be geocoded, in the three tiers the resolution ladder actually has.
  *
- * `published` means a consumer can get it with `mailwoman data pull`. `build-local` means the artifact exists on a lab
- * machine and cannot be shipped — ODbL sources, mostly — which reads identically to `published` from inside the repo
- * and not at all from outside it.
+ * `published` means a consumer can get it with `mailwoman data pull`.
+ * `build-local` means the artifact exists on a lab machine and cannot be shipped — ODbL sources,
+ * mostly — which reads identically to `published` from inside the repo and not at all from outside it.
  */
 export type GeocodeTier = "rooftop-published" | "rooftop-build-local" | "locality" | "none"
 
@@ -74,11 +74,13 @@ export interface CountryCoverage {
 	 */
 	corpusRows: number
 	/**
-	 * Of those, rows carrying a `street` or `house_number` label — the ones that teach an address rather than a name.
+	 * Of those, rows carrying a `street` or `house_number` label — the ones that
+	 * teach an address rather than a name.
 	 */
 	corpusStreetRows: number
 	/**
-	 * Whether the training config's `country_weights` admits it. A false here means the rows train nothing.
+	 * Whether the training config's `country_weights` admits it.
+	 * A false here means the rows train nothing.
 	 */
 	admitted: boolean
 	/**
@@ -98,8 +100,9 @@ export interface CountryCoverage {
 }
 
 /**
- * Whether a country actually trains: admitted by `country_weights` and holding corpus rows. The Norway-bug predicate,
- * shared with `mailwoman data coverage`'s renderer so the two reports cannot disagree about what "trained" means.
+ * Whether a country actually trains: admitted by `country_weights` and holding corpus rows.
+ * The Norway-bug predicate, shared with `mailwoman data coverage`'s renderer
+ * so the two reports cannot disagree about what "trained" means.
  */
 export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boolean {
 	return c.admitted && c.corpusRows > 0
@@ -110,7 +113,8 @@ export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boo
  */
 export interface CoverageMismatches {
 	/**
-	 * Rows in the corpus rather than admitted by `country_weights` — trains on nothing. The Norway shape.
+	 * Rows in the corpus rather than admitted by `country_weights` —
+	 * trains on nothing. The Norway shape.
 	 */
 	presentButDropped: string[]
 	/**
@@ -140,8 +144,9 @@ export interface CoverageReport {
 	 */
 	configuredCorpusVersion?: string
 	/**
-	 * Set when the censused corpus and the configured corpus differ. Its presence means every row count in this report is
-	 * about a corpus the run does not read, so a zero is not evidence of absence.
+	 * Set when the censused corpus and the configured corpus differ.
+	 * Its presence means every row count in this report is about a corpus the run
+	 * does not read, so a zero is not evidence of absence.
 	 */
 	corpusMismatch?: string
 	corpusRowsTotal: number
@@ -155,8 +160,8 @@ export interface CoverageReport {
 }
 
 /**
- * Where the cached corpus census lives. Under the data root rather than the repo: it describes a build artifact rather than
- * source, and it is regenerated rather than edited.
+ * Where the cached corpus census lives. Under the data root rather than the repo:
+ * it describes a build artifact rather than source, and it is regenerated rather than edited.
  */
 export function corpusCensusPath(): string {
 	return String(dataRootPath("corpus", "coverage-census.json"))
@@ -172,9 +177,9 @@ interface CorpusCensus {
 	/**
 	 * Train files the manifest listed that this count could not read, and how many it did read.
 	 *
-	 * A census that skipped a file still answers a number, and that number is a floor rather than the corpus. Carrying
-	 * both counts is what lets a reader tell a country with no rows from a country whose rows were in a file nobody
-	 * opened.
+	 * A census that skipped a file still answers a number, and that number is a floor
+	 * rather than the corpus. Carrying both counts is what lets a reader tell a country
+	 * with no rows from a country whose rows were in a file nobody opened.
 	 */
 	filesRead: number
 	filesListed: number
@@ -182,8 +187,8 @@ interface CorpusCensus {
 }
 
 /**
- * Arrow list columns arrive as `{list:[{element:v}]}`. Reading one as a plain array yields nothing and every
- * label-based count comes back zero — a false negative that looks exactly like a real absence.
+ * Arrow list columns arrive as `{list:[{element:v}]}`. Reading one as a plain array yields nothing
+ * and every label-based count comes back zero — a false negative that looks exactly like a real absence.
  */
 export function normalizeArrowListColumn(value: unknown, column: string): string[] {
 	const entries = Array.isArray(value)
@@ -228,11 +233,12 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
 /**
  * The manifest's parquet-file list, under whichever key the manifest on disk writes.
  *
- * The key is a string interface with every corpus ever built, so it is read and never renamed. Both spellings are live:
- * of the 41 manifests under `$MAILWOMAN_DATA_ROOT/corpus/versioned`, 8 write `slices` and 33 write the pre-rename key.
- * A reader that knows only one of them finds no files, counts no rows, and reports every country as untrained — an
- * absence indistinguishable from the real thing, and the shape this census exists to catch. `manifest_files` in
- * `mailwoman_train/data/loader/corpus_files.py` is the same fallback on the Python side.
+ * The key is a string interface with every corpus ever built, so it is read and never renamed.
+ * Both spellings are live: of the 41 manifests under `$MAILWOMAN_DATA_ROOT/corpus/versioned`,
+ * 8 write `slices` and 33 write the pre-rename key. A reader that knows only one
+ * of them finds no files, counts no rows, and reports every country as untrained —
+ * an absence indistinguishable from the real thing, and the shape this census exists to catch.
+ * `manifest_files` in `mailwoman_train/data/loader/corpus_files.py` is the same fallback on the Python side.
  */
 function manifestFiles(manifest: Record<string, unknown>): Array<{ split?: string; path?: string }> {
 	const preRename = "sh" + "ards"
@@ -244,8 +250,9 @@ function manifestFiles(manifest: Record<string, unknown>): Array<{ split?: strin
 /**
  * Count every train row in the corpus, per country, and how many carry a street span.
  *
- * Exact rather than sampled: parquet files are grouped by source, so a stride over them reads a handful of families and
- * reports their countries as the corpus's. Column projection keeps the full read affordable.
+ * Exact rather than sampled: parquet files are grouped by source, so a stride over
+ * them reads a handful of families and reports their countries as the corpus's.
+ * Column projection keeps the full read affordable.
  */
 export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCensus> {
 	const manifest = await readLocalJSONFile<{ corpus_version?: string } & Record<string, unknown>>(manifestPath)
@@ -280,9 +287,10 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 		}
 	}
 
-	// A manifest that lists train files and a count of zero cannot both be true, so the count is the instrument
-	// failing. Answering zero here writes "every country trains on nothing" over a cache that held the real numbers,
-	// and the reading it produces is the one this census exists to catch.
+	// A manifest that lists train files and a count of zero cannot both be true,
+	// so the count is the instrument failing. Answering zero here writes "every country
+	// trains on nothing" over a cache that held the real numbers, and the reading
+	// it produces is the one this census exists to catch.
 	if (parquetFiles.length && total === 0) {
 		throw new Error(
 			`Corpus census read 0 rows from ${parquetFiles.length} train file(s) listed by ${manifestPath}, ` +
@@ -308,10 +316,11 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 /**
  * Whether two corpus-version strings name the same corpus.
  *
- * The two sides are written differently by construction: a manifest's `corpus_version` carries the `v` prefix the
- * directory does (`v0.31.0-region-code-and-unit`), and {@linkcode readConfiguredCorpusVersion} strips it. Comparing
- * the raw strings declares a mismatch on every correct pairing, and a warning that fires when nothing is wrong stops
- * being read — which costs the reading it exists to give.
+ * The two sides are written differently by construction: a manifest's `corpus_version`
+ * carries the `v` prefix the directory does (`v0.31.0-region-code-and-unit`), and
+ * {@linkcode readConfiguredCorpusVersion} strips it. Comparing the raw strings declares
+ * a mismatch on every correct pairing, and a warning that fires when nothing is wrong
+ * stops being read — which costs the reading it exists to give.
  */
 export function sameCorpusVersion(a: string, b: string): boolean {
 	const bare = (version: string): string => version.trim().replace(/^v/, "")
@@ -322,11 +331,12 @@ export function sameCorpusVersion(a: string, b: string): boolean {
 /**
  * The corpus version the training config points at, from its `corpus_dir`.
  *
- * This exists so a cached census can be checked against the corpus the run actually reads. The two are separate
- * artifacts that both look authoritative: the census names the corpus it counted, the config names the corpus it trains
- * on, and nothing made them agree. A census of `0.26.0` answering a question about a `0.27.0` run reports a country's
- * rows as zero when the newer corpus added them — an absence indistinguishable from the real thing, which is the
- * failure this whole file exists to prevent.
+ * This exists so a cached census can be checked against the corpus the run actually reads.
+ * The two are separate artifacts that both look authoritative: the census names the corpus
+ * it counted, the config names the corpus it trains on, and nothing made them agree.
+ * A census of `0.26.0` answering a question about a `0.27.0` run reports a country's
+ * rows as zero when the newer corpus added them — an absence indistinguishable from
+ * the real thing, which is the failure this whole file exists to prevent.
  *
  * Returns undefined when the config states no corpus_dir. that is "cannot check", not "they match".
  */
@@ -354,12 +364,13 @@ export async function readConfiguredCorpusVersion(configPath: string): Promise<s
 /**
  * Read `country_weights` out of a training config without a YAML dependency.
  *
- * The block is a flat `CC: weight` list, so a line scan is enough — and it preserves the one thing a YAML parser would
- * destroy here: a bare `no` key stays the string `"no"` rather than becoming the boolean `false`. That retyping is the
- * exact bug this file exists partly to surface, so the reader must not reproduce it.
+ * The block is a flat `CC: weight` list, so a line scan is enough — and it preserves the
+ * one thing a YAML parser would destroy here: a bare `no` key stays the string `"no"`
+ * rather than becoming the boolean `false`. That retyping is the exact bug this file
+ * exists partly to surface, so the reader must not reproduce it.
  *
- * Throws when the path names no file. An empty set means the config admits no country, and a caller cannot tell that
- * apart from a config nobody could open once both answer the same value.
+ * Throws when the path names no file. An empty set means the config admits no country, and a
+ * caller cannot tell that apart from a config nobody could open once both answer the same value.
  */
 export async function readAdmittedCountries(configPath: string): Promise<Set<string>> {
 	if (!(await pathExists(configPath))) {
@@ -401,8 +412,9 @@ export async function readAdmittedCountries(configPath: string): Promise<Set<str
 /**
  * Board rows per country, and how many of them check.
  *
- * Reads the cases tree the loader reads: two-letter directories only. `generalization/` is excluded by that same filter
- * and holds 279 rows, so a glob over `*\u200B/*.jsonl` overstates the board by 43%.
+ * Reads the cases tree the loader reads: two-letter directories only.
+ * `generalization/` is excluded by that same filter and holds 279 rows,
+ * so a glob over `*\u200B/*.jsonl` overstates the board by 43%.
  */
 export async function readBoardCoverage(casesRoot: string): Promise<Map<string, { rows: number; passed: number }>> {
 	const out = new Map<string, { rows: number; passed: number }>()
@@ -418,8 +430,8 @@ export async function readBoardCoverage(casesRoot: string): Promise<Map<string, 
 
 		for await (const file of Globerator.files("jsonl", { cwd: dirPath, recursive: false })) {
 
-			// A line that does not parse is skipped rather than failing the census, so a hand-edited fixture never hides
-			// the rest of its file.
+			// A line that does not parse is skipped rather than failing the census,
+			// so a hand-edited fixture never hides the rest of its file.
 			for await (const line of TextSpliterator.fromAsync(join(dirPath, file))) {
 				if (!line.trim()) continue
 
@@ -458,8 +470,8 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 		const tables = allRows<{ name: string }>(db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'"))
 		const names = new Set(tables.map((t) => t.name))
 
-		// The serving DB is the candidate table. the older admin build exposes `spr`. Support both rather than
-		// hard-coding one, because which is live is expressed in a symlink and changes.
+		// The serving DB is the candidate table. the older admin build exposes `spr`.
+		// Support both rather than hard-coding one, because which is live is expressed in a symlink and changes.
 		const sql = names.has("candidate")
 			? "SELECT c.code AS cc, COUNT(*) AS n FROM candidate x JOIN country_codes c ON c.id = x.country_id GROUP BY c.code"
 			: "SELECT country AS cc, COUNT(*) AS n FROM spr GROUP BY country"
@@ -479,9 +491,9 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 /**
  * Countries whose rooftop address points a consumer can actually obtain.
  *
- * `data-bundles.ts` is the authority and it has four entries — candidate, poi, us, fr. Every other rooftop database on
- * a lab machine is ODbL `build-local` and cannot be shipped, which reads identically to published from inside the
- * repo.
+ * `data-bundles.ts` is the authority and it has four entries — candidate, poi, us, fr.
+ * Every other rooftop database on a lab machine is ODbL `build-local` and cannot be shipped,
+ * which reads identically to published from inside the repo.
  */
 export const ROOFTOP_PUBLISHED = new Set(["US", "FR"])
 
@@ -552,17 +564,17 @@ export function resolveTrainingConfig(
 /**
  * The weights family whose config answers an admission question that names no family.
  *
- * The Latin family, because its `country_weights` covers every country outside the four the character family trains.
- * The choice is recorded rather than implied: reading the character config by default would report 4 admitted countries
- * for a repository whose shipped Latin graph admits 25.
+ * The Latin family, because its `country_weights` covers every country outside the four the character
+ * family trains. The choice is recorded rather than implied: reading the character config by
+ * default would report 4 admitted countries for a repository whose shipped Latin graph admits 25.
  */
 export const DEFAULT_ADMISSION_FAMILY = "en-us"
 
 /**
  * Every country some shipped graph's training config admits, and which family admitted it.
  *
- * The union, because admission is per graph and the two graphs partition the world between them. A country in neither
- * map trains nothing that ships today, whatever the in-flight configs promise.
+ * The union, because admission is per graph and the two graphs partition the world between them.
+ * A country in neither map trains nothing that ships today, whatever the in-flight configs promise.
  */
 export async function admittedByShippedGraphs(scope: ScopeConfig): Promise<Map<string, string[]>> {
 	const byCountry = new Map<string, string[]>()
@@ -665,9 +677,10 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	const board = await readBoardCoverage(options.casesRoot)
 	const gazetteerPath = options.gazetteerPath ?? String(dataRootPath("wof", "candidate.db"))
 	const gazetteer = await readGazetteerCoverage(gazetteerPath)
-	// derived from `release.config.json` rather than restated here. This was a hand-written eleven-entry table, and
-	// `repo-health`'s `locale-tables` check exists because it was a second copy of the config's two lists. the check
-	// still holds every other country→locale table against the config, and this one can no longer disagree with it.
+	// derived from `release.config.json` rather than restated here.
+	// This was a hand-written eleven-entry table, and `repo-health`'s `locale-tables` check exists
+	// because it was a second copy of the config's two lists. the check still holds every other
+	// country→locale table against the config, and this one can no longer disagree with it.
 	const weightsPackages = weightsPackageByCountry(await readReleaseConfig())
 
 	const all = new Set<string>([
@@ -701,8 +714,9 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 
 	const configuredCorpusVersion = await readConfiguredCorpusVersion(options.configPath)
 
-	// A cached census and a config are two artifacts that both look authoritative and were never made to agree. When
-	// they name different corpora every row count below is about the wrong corpus, and reads as a real absence.
+	// A cached census and a config are two artifacts that both look authoritative
+	// and were never made to agree. When they name different corpora every row count
+	// below is about the wrong corpus, and reads as a real absence.
 	const corpusMismatch =
 		configuredCorpusVersion &&
 		census.corpusVersion !== "unknown" &&

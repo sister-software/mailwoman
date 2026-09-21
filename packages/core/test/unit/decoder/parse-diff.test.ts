@@ -69,8 +69,8 @@ describe("diffParse", () => {
 	})
 
 	it("calls a boundary slide a MOVE, not a delete plus an insert", () => {
-		// `Green Point, Cape Town` -> the locality slides one segment left. Equality-keyed matching reports this as two
-		// events and loses the fact that it is one span shifting.
+		// `Green Point, Cape Town` -> the locality slides one segment left.
+		// Equality-keyed matching reports this as two events and loses the fact that it is one span shifting.
 		const before = tree(["locality", "Cape Town", 20, 29, 0.9])
 		const after = tree(["locality", "Cape Town, 8001", 20, 35, 0.7])
 
@@ -94,8 +94,8 @@ describe("diffParse", () => {
 	})
 
 	it("does not relate two spans that merely touch at the edges", () => {
-		// Below the overlap floor these are unrelated, and calling it a `moved` would invent a relationship the parse
-		// never asserted.
+		// Below the overlap floor these are unrelated, and calling it a `moved` would
+		// invent a relationship the parse never asserted.
 		const before = tree(["street", "Minories", 19, 27, 0.9])
 		const after = tree(["locality", "London", 29, 35, 0.9])
 
@@ -120,8 +120,8 @@ describe("diffParse", () => {
 	})
 
 	it("reports a locale-country move even when every span is identical", () => {
-		// A parse that changed nothing else but moved its country confidence across the scope threshold geocodes
-		// somewhere else entirely.
+		// A parse that changed nothing else but moved its country confidence across the
+		// scope threshold geocodes somewhere else entirely.
 		const same = tree(["locality", "London", 29, 35, 0.95])
 
 		const diff = diffParse(INPUT, same, same, {
@@ -149,8 +149,8 @@ describe("diffParse", () => {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and in-memory already
 		const lines = out.split("\n")
 
-		// An aggregate that reports a count without the string is the shape that let a venue-destroying regression read
-		// as routine for five runs.
+		// An aggregate that reports a count without the string is the shape that let a
+		// venue-destroying regression read as routine for five runs.
 		expect(lines[0]).toBe(INPUT)
 		expect(out).toContain("venue → locality")
 		expect(out).toContain('- street="Minories"')

@@ -68,8 +68,9 @@ import { openParquetRowStream } from "#parquet/streams"
 const MAX_CANDIDATE_LENGTH = 500
 
 /**
- * The stream position the per-source subsample draws from. Fixed rather than supplied, because the point is that two
- * runs over one corpus choose the same seeds. a caller-supplied seed would make that the caller's problem to remember.
+ * The stream position the per-source subsample draws from.
+ * Fixed rather than supplied, because the point is that two runs over one corpus choose
+ * the same seeds. a caller-supplied seed would make that the caller's problem to remember.
  */
 const SUBSAMPLE_SEED = 20_260_913
 
@@ -109,7 +110,8 @@ interface GoldenCandidate {
 
 export interface ExpandGoldenOptions {
 	/**
-	 * Corpus test-split parquet path(s), comma-separated. Default: the v0.2.0 test parquet file under the data root.
+	 * Corpus test-split parquet path(s), comma-separated.
+	 * Default: the v0.2.0 test parquet file under the data root.
 	 */
 	corpus?: string
 	/**
@@ -153,9 +155,10 @@ export interface ExpandGoldenSummary {
 // ── Seed loading ──────────────────────────────────────────────────────────
 
 /**
- * Decode BIO labels + tokens into a verified components map. Mirrors the Python `decode_components` in
- * mailwoman_train/eval.py — first-occurrence-wins per tag, contiguous B-X/I-X runs concatenated with a single space
- * (the canonical separator used by corpus alignment).
+ * Decode BIO labels + tokens into a verified components map.
+ * Mirrors the Python `decode_components` in mailwoman_train/eval.py —
+ * first-occurrence-wins per tag, contiguous B-X/I-X runs concatenated with a single
+ * space (the canonical separator used by corpus alignment).
  */
 function decodeComponents(tokens: string[], labels: string[]): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -211,9 +214,10 @@ async function loadSeeds(
 		report?.(`  include-sources filter: ${Array.from(includeSources).join(", ")}`)
 	}
 
-	// Stratified sampling: read all rows from all parquet files, group by source. Bounded by per-source
-	// reservoir: keep at most max(2*count, 5000) rows per source so we don't blow memory on train
-	// parquet files (1M rows × many files). Sampling later is uniform within each pool.
+	// Stratified sampling: read all rows from all parquet files, group by source.
+	// Bounded by per-source reservoir: keep at most max(2*count, 5000) rows per source
+	// so we don't blow memory on train parquet files (1M rows × many files).
+	// Sampling later is uniform within each pool.
 	const bySource = new Map<string, Seed[]>()
 	const PER_SOURCE_CAP = Math.max(2 * count, 5000)
 	let scanned = 0
@@ -265,14 +269,15 @@ async function loadSeeds(
 		report?.(`    ${src}: ${pool.length}`)
 	}
 
-	// Round-robin sample. Each source gives floor(count / nSources) seeds. rounding goes
-	// to sources in alphabetical order. If a pool is smaller than its target, take all of it.
+	// Round-robin sample. Each source gives floor(count / nSources) seeds. rounding goes to
+	// sources in alphabetical order. If a pool is smaller than its target, take all of it.
 	const sources = Array.from(bySource.keys()).toSorted()
 	const perSource = Math.floor(count / sources.length)
 	const remainder = count - perSource * sources.length
 	const picked: Seed[] = []
-	// One stream across every source, so the same inputs choose the same seeds on every run and two sources do not draw
-	// the same positions. The previous shuffle called `Math.random()` under a comment promising determinism.
+	// One stream across every source, so the same inputs choose the same seeds on every run
+	// and two sources do not draw the same positions. The previous shuffle called
+	// `Math.random()` under a comment promising determinism.
 	const random = new SeededRandom(SUBSAMPLE_SEED)
 
 	for (let i = 0; i < sources.length; i++) {

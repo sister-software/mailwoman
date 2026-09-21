@@ -32,8 +32,8 @@ describe("PairIndexBuilder", () => {
 		const b = new PairIndexBuilder()
 
 		// The US WOF source's two parent shapes on the same child tag: a locality parent and a borough
-		// parent. `WESTERN_PARENT_OF.dependent_locality` is `["locality"]`, so a derivation could only ever
-		// produce the first — the second is the edge PIX2 exists to be able to state.
+		// parent. `WESTERN_PARENT_OF.dependent_locality` is `["locality"]`, so a derivation could
+		// only ever produce the first — the second is the edge PIX2 exists to be able to state.
 		b.addRow("Astoria", "New York", "locality")
 		b.addRow("Park Slope", "Brooklyn", "dependent_locality")
 

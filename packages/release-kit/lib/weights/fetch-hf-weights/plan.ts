@@ -32,14 +32,16 @@ import { $private } from "#env/index"
 import { literalFilesEntries } from "#pack/verify-tarball"
 import { releaseWorkspaces } from "#release/stage"
 /**
- * The bucket's resolve root, when `$private.HF_BUCKET_RESOLVE_URL` does not name one. The bucket name itself comes from
- * `release.config.json`'s `assets.hfBucket`, so a bucket move is a config edit rather than a code edit.
+ * The bucket's resolve root, when `$private.HF_BUCKET_RESOLVE_URL` does not name one.
+ * The bucket name itself comes from `release.config.json`'s `assets.hfBucket`,
+ * so a bucket move is a config edit rather than a code edit.
  */
 const DEFAULT_HF_RESOLVE_ROOT = "https://huggingface.co/buckets"
 
 /**
- * The artifact that identifies the base weights package. Every overlay shares this file byte for byte and declares none
- * of its own, which is what makes the base self-contained — and what makes it derivable rather than spelled `en-us`.
+ * The artifact that identifies the base weights package.
+ * Every overlay shares this file byte for byte and declares none of its own, which is what
+ * makes the base self-contained — and what makes it derivable rather than spelled `en-us`.
  */
 const MODEL_FILENAME = "model.onnx"
 
@@ -59,19 +61,21 @@ export type ArtifactOrigin = { kind: "hf"; remoteName: string; base: string } | 
  */
 export interface WeightsArtifactPlan {
 	/**
-	 * Repo-relative workspace path — always under `packages/`, which the destination inherits. The v9.2.0 release's first
-	 * dispatch died because the YAML wrote `"$ws/…"` after the regroup, so this is the field the fixture pins.
+	 * Repo-relative workspace path — always under `packages/`, which the destination inherits.
+	 * The v9.2.0 release's first dispatch died because the YAML wrote `"$ws/…"`
+	 * after the regroup, so this is the field the fixture pins.
 	 */
 	workspace: string
 	/**
-	 * The `files` entry verbatim: the name the tarball must carry, which is not always the source's basename elsewhere in
-	 * the pipeline but is here, because the bucket is staged flat by shipped name.
+	 * The `files` entry verbatim: the name the tarball must carry, which is not always the source's
+	 * basename elsewhere in the pipeline but is here, because the bucket is staged flat by shipped name.
 	 */
 	filename: string
 	origin: ArtifactOrigin
 	/**
-	 * The md5 a release model card declares for this filename, when one does. Absent means no card declares one — never
-	 * "the bytes are unverified because the check was skipped"; the report separates the two.
+	 * The md5 a release model card declares for this filename, when one does.
+	 * Absent means no card declares one — never "the bytes are unverified
+	 * because the check was skipped"; the report separates the two.
 	 */
 	expectedMD5?: string
 }
@@ -86,7 +90,8 @@ export interface HFMaterializationReport {
 	 */
 	base: string
 	/**
-	 * Distinct bucket objects downloaded — fewer than `written` whenever several packages ship the same artifact.
+	 * Distinct bucket objects downloaded — fewer than `written` whenever several
+	 * packages ship the same artifact.
 	 */
 	downloaded: number
 	/**
@@ -99,8 +104,9 @@ export interface HFMaterializationReport {
 	 */
 	checksumVerified: number
 	/**
-	 * Filenames no release model card declares an md5 for. Reported by name because a silent "0 mismatches" over an empty
-	 * check set reads exactly like a verified fetch.
+	 * Filenames no release model card declares an md5 for.
+	 * Reported by name because a silent "0 mismatches" over an empty check set
+	 * reads exactly like a verified fetch.
 	 */
 	checksumUndeclared: string[]
 }
@@ -115,16 +121,16 @@ async function readWorkspaceManifest(repoRoot: string, workspace: string): Promi
 }
 
 /**
- * The workspace path for a release locale. The `packages/` prefix lives here once, so a future regroup moves one line
- * rather than every string that named a workspace.
+ * The workspace path for a release locale. The `packages/` prefix lives here once,
+ * so a future regroup moves one line rather than every string that named a workspace.
  */
 function weightsWorkspace(locale: string): string {
 	return `packages/neural-weights-${locale}`
 }
 
 /**
- * Which of these workspaces' files git already tracks — i.e. what `stageReleaseTree`'s `git archive` puts in the
- * staging tree for free (`model-card.json`, `calibration.json`, `readme.md`, the sources).
+ * Which of these workspaces' files git already tracks — i.e. what `stageReleaseTree`'s `git archive`
+ * puts in the staging tree for free (`model-card.json`, `calibration.json`, `readme.md`, the sources).
  */
 async function trackedWorkspaceFiles(repoRoot: string, workspaces: readonly string[]): Promise<Set<string>> {
 	return new Set(await trackedFiles(repoRoot, [...workspaces]))
@@ -133,10 +139,10 @@ async function trackedWorkspaceFiles(repoRoot: string, workspaces: readonly stri
 /**
  * The md5s the release model cards declare, keyed by shipped filename.
  *
- * Merged across every release weights card rather than read from the base alone: the base's card covers the artifacts
- * every overlay copies (`model.onnx`, the two bundle lexicons), and an overlay is free to declare its own. Two cards
- * declaring different md5s for one filename is refused outright — one bucket object cannot satisfy both, and a fetch
- * has no basis to choose.
+ * Merged across every release weights card rather than read from the base alone: the base's
+ * card covers the artifacts every overlay copies (`model.onnx`, the two bundle lexicons),
+ * and an overlay is free to declare its own. Two cards declaring different md5s for one filename
+ * is refused outright — one bucket object cannot satisfy both, and a fetch has no basis to choose.
  */
 async function declaredChecksums(repoRoot: string, workspaces: readonly string[]): Promise<Map<string, string>> {
 	const declared = new Map<string, string>()
@@ -169,7 +175,8 @@ async function declaredChecksums(repoRoot: string, workspaces: readonly string[]
 }
 
 /**
- * The locale whose package ships the model itself — the base, and the directory every artifact is staged under.
+ * The locale whose package ships the model itself — the base, and the directory
+ * every artifact is staged under.
  */
 export async function resolveBaseLocale(repoRoot: string, locales: readonly string[]): Promise<string> {
 	const carriers: string[] = []
@@ -194,8 +201,8 @@ export async function resolveBaseLocale(repoRoot: string, locales: readonly stri
 }
 
 /**
- * The model version a release publishes: the base package's model-card `version`, which is exactly what the publish
- * workflow read out of that card before this script existed.
+ * The model version a release publishes: the base package's model-card `version`,
+ * which is exactly what the publish workflow read out of that card before this script existed.
  */
 export async function readBaseModelVersion(repoRoot: string): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
@@ -211,13 +218,14 @@ export async function readBaseModelVersion(repoRoot: string): Promise<string> {
 }
 
 /**
- * Artifacts the base model card declares that ride the bucket but are never fetched into a tarball — today the #1354
- * Fisher consolidation pair (`fisher_artifact.file` + its `.sidecar`).
+ * Artifacts the base model card declares that ride the bucket but are never fetched into a tarball —
+ * today the #1354 Fisher consolidation pair (`fisher_artifact.file` + its `.sidecar`).
  *
- * The bundle interface says a weights release ships its Fisher, so every fine-tune off that base can apply the EWC
- * brake. the runtime never reads it and npm never carries it, which is exactly why nothing else would notice its
- * absence. head-probed with the rest so a half-staged release is refused before it publishes. Both halves are probed:
- * the YAML this replaces checked only `file`, and a declared sidecar that never uploaded would have passed.
+ * The bundle interface says a weights release ships its Fisher, so every fine-tune off
+ * that base can apply the EWC brake. the runtime never reads it and npm never carries it,
+ * which is exactly why nothing else would notice its absence. head-probed with the rest so a
+ * half-staged release is refused before it publishes. Both halves are probed: the YAML this
+ * replaces checked only `file`, and a declared sidecar that never uploaded would have passed.
  */
 export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): Promise<string[]> {
 	const cardPath = resolvePath(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
@@ -232,9 +240,10 @@ export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: 
 /**
  * The versioned bucket directory for `version`.
  *
- * `$private.HF_BUCKET_RESOLVE_URL` replaces the `<host>/<bucket>/resolve` prefix wholesale, for a mirror or a local
- * fixture server. unset, the prefix is built from `release.config.json`'s `assets.hfBucket`. Nothing about either path
- * needs a token — the bucket is public, and a credential here would only hide the day it stops being public.
+ * `$private.HF_BUCKET_RESOLVE_URL` replaces the `<host>/<bucket>/resolve` prefix wholesale,
+ * for a mirror or a local fixture server. unset, the prefix is built from `release.config.json`'s
+ * `assets.hfBucket`. Nothing about either path needs a token — the bucket is public,
+ * and a credential here would only hide the day it stops being public.
  */
 export async function hfVersionBase(repoRoot: string, version: string): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
@@ -244,8 +253,8 @@ export async function hfVersionBase(repoRoot: string, version: string): Promise<
 }
 
 /**
- * The versioned bucket directory of a character-path family: `<root>/<family>/v<version>`, the family's own card
- * version, beside the Latin base's directory rather than inside it.
+ * The versioned bucket directory of a character-path family: `<root>/<family>/v<version>`,
+ * the family's own card version, beside the Latin base's directory rather than inside it.
  */
 export async function hfFamilyBase(repoRoot: string, family: string, version: string): Promise<string> {
 	return `${await hfResolveRoot(repoRoot)}/${family}/v${version}`
@@ -265,8 +274,9 @@ async function hfResolveRoot(repoRoot: string): Promise<string> {
 		)
 	}
 
-	// Trailing slashes are stripped rather than trusted: the override is operator-supplied configuration and the lab's
-	// copy ends in one, which would otherwise put an empty path segment between the root and the locale.
+	// Trailing slashes are stripped rather than trusted: the override is operator-supplied
+	// configuration and the lab's copy ends in one, which would otherwise put an
+	// empty path segment between the root and the locale.
 	const configured = $private.HF_BUCKET_RESOLVE_URL ?? `${DEFAULT_HF_RESOLVE_ROOT}/${bucket}/resolve`
 
 	return configured.replace(/\/+$/, "")
@@ -275,8 +285,8 @@ async function hfResolveRoot(repoRoot: string): Promise<string> {
 /**
  * Every artifact a release's weights packages declare and a checkout does not carry.
  *
- * Derived from three machine-readable owners and nothing else: `release.config.json` names the locales, each package's
- * `files` array names its artifacts, and `git ls-files` says which are already here.
+ * Derived from three machine-readable owners and nothing else: `release.config.json` names the locales,
+ * each package's `files` array names its artifacts, and `git ls-files` says which are already here.
  */
 export async function planWeightsMaterialization(
 	repoRoot: string,
@@ -306,9 +316,10 @@ export async function planWeightsMaterialization(
 		}
 	}
 
-	// Character-path families (`release.config.json` `charWeights`): each is its own base, staged under its own bucket
-	// directory at its own card version, verified against its own card — and planned only once its workspace is in the
-	// release list, because a planned object the bucket does not hold refuses every release until it is staged.
+	// Character-path families (`release.config.json` `charWeights`): each is its own base,
+	// staged under its own bucket directory at its own card version, verified against its
+	// own card — and planned only once its workspace is in the release list, because a
+	// planned object the bucket does not hold refuses every release until it is staged.
 	const released = new Set(await releaseWorkspaces(repoRoot))
 
 	for (const [family, recipe] of Object.entries(config.charWeights ?? {})) {
@@ -318,8 +329,9 @@ export async function planWeightsMaterialization(
 
 		plans.push(...(await planCharFamilyArtifacts(repoRoot, family, workspace)))
 
-		// A family's data-only overlays live in the family's directory too: their objects (the locale FSTs) are
-		// staged beside the graph with `--fsts`, and their own cards declare whatever md5s they have.
+		// A family's data-only overlays live in the family's directory too:
+		// their objects (the locale FSTs) are staged beside the graph with `--fsts`,
+		// and their own cards declare whatever md5s they have.
 		for (const overlay of recipe.overlays ?? []) {
 			const overlayWorkspace = weightsWorkspace(overlay)
 
@@ -333,9 +345,9 @@ export async function planWeightsMaterialization(
 }
 
 /**
- * The `files` entries of `workspace` that git does not track — what the bucket (or the checkout's soft-feed sources)
- * has to supply. A nested entry is refused here rather than reported missing by the tarball audit after most of the
- * release has published.
+ * The `files` entries of `workspace` that git does not track — what the bucket
+ * (or the checkout's soft-feed sources) has to supply. A nested entry is refused here
+ * rather than reported missing by the tarball audit after most of the release has published.
  */
 function untrackedDeclaredArtifacts(
 	workspace: string,
@@ -362,9 +374,9 @@ function untrackedDeclaredArtifacts(
 }
 
 /**
- * The plans of one character-path family: its untracked `files` entries, read from `<root>/<family>/v<card version>`
- * and checked against the family's own `files_md5`. The Latin cards are not consulted — a family's `model.onnx` is a
- * different graph under the same name.
+ * The plans of one character-path family: its untracked `files` entries, read from
+ * `<root>/<family>/v<card version>` and checked against the family's own `files_md5`.
+ * The Latin cards are not consulted — a family's `model.onnx` is a different graph under the same name.
  */
 export async function planCharFamilyArtifacts(
 	repoRoot: string,

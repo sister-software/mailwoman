@@ -27,8 +27,8 @@ function token(label: string, confidence: number): DecoderToken {
 }
 
 /**
- * An engine that answers one canned run for every input — enough to exercise the fold without several gigabytes of
- * gazetteer.
+ * An engine that answers one canned run for every input — enough to exercise the
+ * fold without several gigabytes of gazetteer.
  */
 function stubEngine(run: GeocodeRunLike): EngineLike {
 	return { session: { geocode: async () => run } }
@@ -62,8 +62,8 @@ describe("decodeReliabilitySample", () => {
 	}
 
 	it("keeps a produced tag the truth row never mentions OUT of the curve, and counts it", async () => {
-		// No wired corpus asserts every component — the board asserts a median of one key per row — so an unasserted
-		// tag is not evidence of a hallucination, and curving it as one measures the corpus.
+		// No wired corpus asserts every component — the board asserts a median of one key per row —
+		// so an unasserted tag is not evidence of a hallucination, and curving it as one measures the corpus.
 		const sample = await decodeReliabilitySample(stubEngine(WITH_UNASSERTED), [ROW], ComponentAggregate.Min)
 
 		expect(sample.observations.map((observation) => observation.strata["tag"])).toEqual(["street"])
@@ -119,8 +119,9 @@ describe("decodeReliabilitySample", () => {
 	})
 
 	it("EXCLUDES a row with no component truth rather than grading it", async () => {
-		// A literal input carries no truth. Counting it as wrong would manufacture errors out of rows nobody asserted
-		// anything about. counting it as right would do the opposite. Both are worse than saying so.
+		// A literal input carries no truth. Counting it as wrong would manufacture errors out
+		// of rows nobody asserted anything about. counting it as right would do the opposite.
+		// Both are worse than saying so.
 		const run: GeocodeRunLike = {
 			result: { components: { street: "Main St" } },
 			trace: { parse: { tokens: [token("B-street", 0.8)] } },
@@ -149,8 +150,9 @@ describe("decodeReliabilitySample", () => {
 	})
 
 	it("ignores a component whose tokens are not in the trace, and says the row scored nothing", async () => {
-		// The result and the trace can disagree: a component assembled by a repair after the decode has no token
-		// carrying its tag. There is no confidence to grade there, and inventing one would be the whole defect.
+		// The result and the trace can disagree: a component assembled by a repair
+		// after the decode has no token carrying its tag. There is no confidence to grade there,
+		// and inventing one would be the whole defect.
 		const sample = await decodeReliabilitySample(
 			stubEngine({
 				result: { components: { locality: "Springfield" } },

@@ -21,8 +21,9 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data/bundles"
 
 /**
- * Shown at the top of `mailwoman data --help`. Commander reuses it in the root command listing, so it is held to two
- * sentences. the long-form "why" lives in {@link overview}, which is what a bare `mailwoman data` prints.
+ * Shown at the top of `mailwoman data --help`. Commander reuses it in the root command
+ * listing, so it is held to two sentences. the long-form "why" lives in {@link overview},
+ * which is what a bare `mailwoman data` prints.
  */
 export const description =
 	"Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data --list` " +
@@ -41,9 +42,10 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The per-bundle table `--list` prints: name, artifact count, total size, destination, and the one-line description
- * from the registry. Sizes are the surveyed `approxBytes` totals — the same numbers `data pull --dry-run` plans
- * against, so a reader can budget disk before starting a 41 GB download.
+ * The per-bundle table `--list` prints: name, artifact count, total size, destination,
+ * and the one-line description from the registry. Sizes are the surveyed
+ * `approxBytes` totals — the same numbers `data pull --dry-run` plans against,
+ * so a reader can budget disk before starting a 41 GB download.
  */
 function listBundles(dataRoot: string): string {
 	const lines: string[] = ["Downloadable bundles (mailwoman data pull <bundle>)", ""]
@@ -76,8 +78,9 @@ function listBundles(dataRoot: string): string {
 }
 
 /**
- * Bare `mailwoman data` — the explainer, then the shortest path to a working geocode. Keeps the reader from having to
- * guess that `pull` and `status` exist, or that `doctor` is the thing that names the gap.
+ * Bare `mailwoman data` — the explainer, then the shortest path to a working geocode.
+ * Keeps the reader from having to guess that `pull` and `status` exist,
+ * or that `doctor` is the thing that names the gap.
  */
 function overview(dataRoot: string): string {
 	return [

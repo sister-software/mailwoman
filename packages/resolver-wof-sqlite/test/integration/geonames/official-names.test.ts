@@ -36,8 +36,8 @@ function mainRow(over: Record<number, string>): string {
 }
 
 /**
- * One alternateNamesV2 row: alternateNameId, geonameid, isolanguage, name, isPreferredName, isShortName, isColloquial,
- * isHistoric, from, to.
+ * One alternateNamesV2 row: alternateNameId, geonameid, isolanguage, name,
+ * isPreferredName, isShortName, isColloquial, isHistoric, from, to.
  */
 function altRow(gid: string, lang: string, name: string, flags: Partial<Record<4 | 5 | 6 | 7, string>> = {}): string {
 	const f = ["1", gid, lang, name, "", "", "", "", "", ""]
@@ -89,9 +89,9 @@ beforeAll(async () => {
 		dir.resolve("FI.txt")
 	)
 
-	// "Santa Isabel" reproduces the Malabo shape: one language-tagged unflagged row + a separate
-	// language-less row carrying the historic evidence (isHistoric + a `to` date). Historic-ness is a
-	// fact about the name — the unflagged row must not classify official.
+	// "Santa Isabel" reproduces the Malabo shape: one language-tagged unflagged row + a
+	// separate language-less row carrying the historic evidence (isHistoric + a `to` date).
+	// Historic-ness is a fact about the name — the unflagged row must not classify official.
 	const santaIsabelHistoric = ["1", "633679", "", "Santa Isabel", "", "", "", "1", "", "1973"].join("\t")
 
 	await writeLocalTextFile(
@@ -119,8 +119,8 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 	const byName = (name: string): Row =>
 		db.prepare(`SELECT language, privateuse, official FROM names WHERE name = ?`).get(name) as Row
 
-	// Åbo qualifies without isPreferredName — the flag is sparse annotation in real dumps (Turku's
-	// actual sv row is unflagged), so officialness must not require it.
+	// Åbo qualifies without isPreferredName — the flag is sparse annotation in real dumps
+	// (Turku's actual sv row is unflagged), so officialness must not require it.
 	expect(byName("Åbo")).toEqual({ language: "sv", privateuse: "", official: 1 })
 	expect(byName("Tourkou")).toEqual({ language: "el", privateuse: "", official: 0 })
 	expect(byName("Aboa")).toEqual({ language: "la", privateuse: "", official: 0 })

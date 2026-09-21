@@ -141,8 +141,9 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		const countryParquet = (cc: string) => join(outDir, `addresses-${cc.toLowerCase()}.parquet`)
 
 		/**
-		 * Materialize one country into local Parquet. Column set preserves the Overture schema verbatim (nested `sources` +
-		 * `address_levels` included) plus lon/lat decoded from the WKB point via the spatial extension.
+		 * Materialize one country into local Parquet. Column set preserves the Overture
+		 * schema verbatim (nested `sources` + `address_levels` included) plus lon/lat
+		 * decoded from the WKB point via the spatial extension.
 		 */
 		const ingestCountry = async (cc: string): Promise<void> => {
 			const limitClause = limit ? `LIMIT ${limit}` : ""

@@ -36,9 +36,9 @@ const FRN_EPSILON = toFRN("0003333333")!
 const FRN_ZETA = toFRN("0004444444")!
 
 /**
- * Row A: a fully-populated 499 filing — FRN present, both company fields present, every attribute-containing field
- * populated. Row B: an unregistered filer (no FRN — legitimate per decision 3 rather than malformed) with most optional
- * fields blank.
+ * Row A: a fully-populated 499 filing — FRN present, both company fields present,
+ * every attribute-containing field populated. Row B: an unregistered filer
+ * (no FRN — legitimate per decision 3 rather than malformed) with most optional fields blank.
  */
 function form499FixtureRows(): Form499Row[] {
 	return [
@@ -84,9 +84,10 @@ function form499FixtureRows(): Form499Row[] {
 }
 
 /**
- * `providerID` 130077 carries two rows with different FRNs (decision 6 cardinality — must survive as two distinct
- * edges, never folded/last-wins). Row 2's `holdingCompany` is `null` (legitimate — must be counted as `skipped`, never
- * thrown). `providerID` 130080 is a second, independent provider.
+ * `providerID` 130077 carries two rows with different FRNs
+ * (decision 6 cardinality — must survive as two distinct edges, never folded/last-wins).
+ * Row 2's `holdingCompany` is `null` (legitimate — must be counted as `skipped`, never thrown).
+ * `providerID` 130080 is a second, independent provider.
  */
 function providerFixtureRows(): ProviderListRow[] {
 	return [
@@ -434,10 +435,10 @@ describe("buildFilerDatabase", () => {
 
 	describe("idempotent write path", () => {
 		/**
-		 * A single fully-populated row, deliberately small so every count below is hand-verifiable: 3 nodes (form499ID,
-		 * FRN, holdingCompanyName — managementCompany is blank, so no management-company node/edge), 2 edges
-		 * (FRN↔form499ID, FRN↔holdingCompanyName), 2 attributes (legal_name, classification), 1 skip (the blank
-		 * managementCompany).
+		 * A single fully-populated row, deliberately small so every count below is hand-verifiable:
+		 * 3 nodes (form499ID, FRN, holdingCompanyName — managementCompany is blank,
+		 * so no management-company node/edge), 2 edges (FRN↔form499ID, FRN↔holdingCompanyName),
+		 * 2 attributes (legal_name, classification), 1 skip (the blank managementCompany).
 		 */
 		function idempotencyFixtureRow(): Form499Row {
 			return {
@@ -531,9 +532,10 @@ describe("buildFilerDatabase", () => {
 			await using scratch = await temporaryDirectory("filer-build-")
 			const out = scratch.resolve("filer.db")
 
-			// usfContributor: true + an Incumbent principalCommType -> two classification values
-			// ("usf_contributor", "incumbent_lec") sharing (node_id, key="classification", source, source_vintage) —
-			// only `value` differs. Proves the stage table's dedup key includes `value`, not just
+			// usfContributor: true + an Incumbent principalCommType -> two
+			// classification values ("usf_contributor", "incumbent_lec") sharing
+			// (node_id, key="classification", source, source_vintage) — only `value` differs.
+			// Proves the stage table's dedup key includes `value`, not just
 			// (node_id, key, source, source_vintage), or the second classification would be silently dropped.
 			const row: Form499Row = {
 				...idempotencyFixtureRow(),
@@ -584,9 +586,9 @@ describe("buildFilerDatabase", () => {
 			using db = openFilerDB(out)
 			const edges = await db.selectFrom("filer_edge").selectAll().execute()
 
-			// Every edge belongs to the second build's vintage — none of the first build's rows survived
-			// alongside it as additional rows (that would be cross-build accumulation, which this artifact
-			// deliberately does not support — see the module docstring's minor-B note).
+			// Every edge belongs to the second build's vintage — none of the first build's rows
+			// survived alongside it as additional rows (that would be cross-build accumulation,
+			// which this artifact deliberately does not support — see the module docstring's minor-B note).
 			expect(edges.length).toBeGreaterThan(0)
 			expect(edges.every((e) => e.source_vintage === "2026-Q2")).toBe(true)
 
@@ -603,8 +605,9 @@ describe("buildFilerDatabase", () => {
 		const SOURCE_VINTAGE = "2026-Q3"
 
 		/**
-		 * A minimal, fully-blank Form499Row overridden per test — keeps each fixture below down to just the fields that
-		 * matter for what it's testing, matching `idempotencyFixtureRow`'s intent one describe block up.
+		 * A minimal, fully-blank Form499Row overridden per test — keeps each
+		 * fixture below down to just the fields that matter for what it's testing,
+		 * matching `idempotencyFixtureRow`'s intent one describe block up.
 		 */
 		function familyFixtureRow(overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID" | "frn">): Form499Row {
 			return {
@@ -722,8 +725,8 @@ describe("buildFilerDatabase", () => {
 				expect(family.source_vintage).toBe("2026-05-01")
 				expect(family.valid_from).toBe("2026-05-01")
 				expect(family.valid_to).toBeNull()
-				// A 499 row naming its own holding company is the filing — nothing was matched. The edgar
-				// block below pins the opposite grading from the same builder.
+				// A 499 row naming its own holding company is the filing — nothing was matched.
+				// The edgar block below pins the opposite grading from the same builder.
 				expect(family.assertion).toBe(FilerEdgeAssertion.Authoritative)
 				expect(family.match_score).toBeNull()
 			}
@@ -777,8 +780,8 @@ describe("buildFilerDatabase", () => {
 			using db = openFilerDB(out)
 			const families = await db.selectFrom("filer_family").selectAll().execute()
 
-			// form499FixtureRows' FRN_ACME row has both a holdingCompany and a managementCompany, so this suite
-			// isn't vacuously passing on account of there being no family rows at all.
+			// form499FixtureRows' FRN_ACME row has both a holdingCompany and a managementCompany,
+			// so this suite isn't vacuously passing on account of there being no family rows at all.
 			expect(families.length).toBeGreaterThan(0)
 
 			for (const family of families) {
@@ -860,8 +863,8 @@ describe("buildFilerDatabase", () => {
 		}
 
 		/**
-		 * A minimal, fully-blank Form499Row overridden per test — matches `familyFixtureRow`'s convention one describe
-		 * block up (that one is function-scoped there, so this describe block needs its own copy).
+		 * A minimal, fully-blank Form499Row overridden per test — matches `familyFixtureRow`'s convention one
+		 * describe block up (that one is function-scoped there, so this describe block needs its own copy).
 		 */
 		function corroborationForm499Row(
 			overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID" | "frn" | "legalNameOfCarrier">
@@ -1002,8 +1005,8 @@ describe("buildFilerDatabase", () => {
 
 			expect(familyRows).toHaveLength(1)
 
-			// The family row carries the same grading as the edge above — `source` alone
-			// cannot supply it, because this very build also writes an authoritative `edgar-exhibit-21`
+			// The family row carries the same grading as the edge above — `source` alone cannot
+			// supply it, because this very build also writes an authoritative `edgar-exhibit-21`
 			// disclosure edge, so the source name spans both grades.
 			expect(familyRows[0]).toMatchObject({
 				naming_node_id: cikNodeID,
@@ -1064,13 +1067,14 @@ describe("buildFilerDatabase", () => {
 		 * Broadband Corp"` all to `"american broadband"` (`record/organization.test.ts` pins the collapse), so a single
 		 * score across all three would claim a confidence the match provably cannot hold.
 		 *
-		 * The existing abstention does not cover it, and these fixtures show why: it fires only on a collision within the
-		 * 499 file, so a 499 carrying only the LLC against an Exhibit 21 disclosing the Inc. matches exactly one FRN and
-		 * writes an edge for what may be a different company.
+		 * The existing abstention does not cover it, and these fixtures show why:
+		 * it fires only on a collision within the 499 file, so a 499 carrying only
+		 * the LLC against an Exhibit 21 disclosing the Inc. matches exactly one FRN
+		 * and writes an edge for what may be a different company.
 		 *
-		 * Every case below goes through the real builder and reads the score off the sealed artifact. Three distinct
-		 * values, asserted against each other as well as against their literals — pin the score back to a constant and the
-		 * ordering assertions die rather than just the value ones.
+		 * Every case below goes through the real builder and reads the score off the sealed artifact.
+		 * Three distinct values, asserted against each other as well as against their literals —
+		 * pin the score back to a constant and the ordering assertions die rather than just the value ones.
 		 */
 		describe("the subsidiary→FRN match score varies with what the match actually knows", () => {
 			async function scoreFor(legalNameOfCarrier: string, subsidiaryName: string): Promise<number | null> {
@@ -1108,8 +1112,9 @@ describe("buildFilerDatabase", () => {
 			})
 
 			it("raw names differing in LEGAL DESIGNATION score weakest — canonicalization erased the only distinguishing part, and the abstention never sees this case", async () => {
-				// The case the abstention cannot see: 499 carries only the LLC, Exhibit 21 discloses the Inc.
-				// Exactly one FRN matches, so an edge is written — at the weakest score rather than the ceiling.
+				// The case the abstention cannot see: 499 carries only the LLC, Exhibit
+				// 21 discloses the Inc. Exactly one FRN matches, so an edge is written —
+				// at the weakest score rather than the ceiling.
 				expect(await scoreFor("American Broadband LLC", "American Broadband, Inc.")).toBe(0.5)
 			})
 

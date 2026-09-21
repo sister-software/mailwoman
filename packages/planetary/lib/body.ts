@@ -33,8 +33,8 @@ const PRODUCTION_HOSTS: Record<PlanetaryBody, string> = {
 }
 
 /**
- * The body a production hostname serves, or null for any other host: a preview deployment, localhost, a custom domain
- * still being set up.
+ * The body a production hostname serves, or null for any other host: a preview deployment,
+ * localhost, a custom domain still being set up.
  */
 export function bodyForHostname(hostname: string): PlanetaryBody | null {
 	for (const body of PLANETARY_BODIES) {
@@ -45,9 +45,9 @@ export function bodyForHostname(hostname: string): PlanetaryBody | null {
 }
 
 /**
- * A production host must serve its own body's build. Any other host serves either, so the check only fires when the
- * hostname is one of the two production names, and the error names both sides so the misconfigured project is
- * identifiable from the message alone.
+ * A production host must serve its own body's build. Any other host serves either,
+ * so the check only fires when the hostname is one of the two production names, and the error
+ * names both sides so the misconfigured project is identifiable from the message alone.
  */
 export function assertHostMatchesBody(hostname: string, body: PlanetaryBody): void {
 	const expected = bodyForHostname(hostname)

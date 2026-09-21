@@ -57,9 +57,10 @@ import { createSemanticObservationRoute, semanticObservationMarkers } from "#obs
 /**
  * The committed collision census the recognition lane's control checks read.
  *
- * Read rather than re-run on purpose: the census scans every `name_key` in the shipped `poi.db` and takes about eleven
- * minutes, and its own reader header says why the fast path is wrong. Its recorded lexicon and layer identity are
- * checked against the pins, so a stale census is a named deviation instead of a silent one.
+ * Read rather than re-run on purpose: the census scans every `name_key` in the shipped `poi.db`
+ * and takes about eleven minutes, and its own reader header says why the fast path is wrong.
+ * Its recorded lexicon and layer identity are checked against the pins,
+ * so a stale census is a named deviation instead of a silent one.
  */
 export const COLLISION_CENSUS_PATH = "packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json"
 
@@ -110,8 +111,8 @@ export interface Phase2LaneReport {
 	blockedBy?: string
 	blockedReason?: string
 	/**
-	 * The rows a blocked lane will read once it is unblocked, and what each reads today. Present only on a blocked lane,
-	 * and never counted anywhere.
+	 * The rows a blocked lane will read once it is unblocked, and what each reads today.
+	 * Present only on a blocked lane, and never counted anywhere.
 	 */
 	plannedChecks?: { id: string; measures: string; todayReads: string }[]
 }
@@ -131,7 +132,8 @@ export interface Phase2Receipt {
 	checks: Phase2CheckOutcome[]
 	verdict: Phase2Verdict
 	/**
-	 * Always `false`. The ruler maps measurements onto one decision. recording it is the operator's, per #1967.
+	 * Always `false`. The ruler maps measurements onto one decision. recording
+	 * it is the operator's, per #1967.
 	 */
 	recorded: false
 	recordingNote: string
@@ -139,8 +141,8 @@ export interface Phase2Receipt {
 
 export interface Phase2RunOptions extends POIBoardOptions {
 	/**
-	 * Override the frozen pre-registration — for a test that wants a synthetic definition. A run with no override reads
-	 * the committed one.
+	 * Override the frozen pre-registration — for a test that wants a synthetic definition.
+	 * A run with no override reads the committed one.
 	 */
 	definitionPath?: string
 	freezePath?: string
@@ -425,9 +427,10 @@ async function measure(
 	}
 
 	if (needed.has("poi_board")) {
-		// `quiet` because this receipt is the report: the board's own table would print 56 rows between two of this
-		// ruler's lines. `enforce` is left off deliberately — the floors are read as a measurement here, and a breach
-		// belongs in the verdict rather than in an exit code the ruler would have to interpret.
+		// `quiet` because this receipt is the report: the board's own table would print
+		// 56 rows between two of this ruler's lines. `enforce` is left off deliberately —
+		// the floors are read as a measurement here, and a breach belongs in the verdict
+		// rather than in an exit code the ruler would have to interpret.
 		const { report } = await runPOIBoard({
 			...options,
 			quiet: true,
@@ -474,8 +477,8 @@ async function measure(
 	}
 
 	if (needed.has("conformance_laws")) {
-		// Named fields rather than the whole options object: the laws run through the Gauntlet's deps, which take a
-		// weights root and a candidate gazetteer and nothing the POI board's options mean.
+		// Named fields rather than the whole options object: the laws run through the Gauntlet's deps,
+		// which take a weights root and a candidate gazetteer and nothing the POI board's options mean.
 		const { laws, problems, measured } = await measureConformance({
 			weightsCacheRoot: options.weightsCacheRoot,
 			candidateDB: options.candidateDB,
@@ -553,8 +556,9 @@ async function measure(
 /**
  * Every pinned artifact whose observed identity differs, named with both values.
  *
- * A measurement not taken is not a deviation: a definition registering no absence check leaves the absence pins
- * unmeasured, and reporting that as a difference would turn "this ruler did not ask" into "the artifact moved".
+ * A measurement not taken is not a deviation: a definition registering no absence
+ * check leaves the absence pins unmeasured, and reporting that as a difference would
+ * turn "this ruler did not ask" into "the artifact moved".
  */
 function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts): string[] {
 	const deviations: string[] = []
@@ -585,11 +589,13 @@ function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts
 }
 
 /**
- * Run the one frozen marker query and count the markers that reach a caller with the registered code and mechanism.
+ * Run the one frozen marker query and count the markers that reach a caller
+ * with the registered code and mechanism.
  *
- * This is the only instrument that builds its own pipeline, and it needs one: the probe runner grades an answer and
- * never hands back the query-kind verdict a marker is attached to. Everything the check reads comes from the definition
- * — the query, the locale, the code and the mechanism.
+ * This is the only instrument that builds its own pipeline, and it needs one:
+ * the probe runner grades an answer and never hands back the query-kind verdict a
+ * marker is attached to. Everything the check reads comes from the definition —
+ * the query, the locale, the code and the mechanism.
  */
 async function measureMarker(
 	definition: Phase2DecisionDefinition,
@@ -623,8 +629,8 @@ async function measureMarker(
 			detail: `marker kind ${first.kind}, code ${first.code}, mechanism ${first.mechanism}, evidence names assertion ${String((first.evidence as { assertion?: { id?: string } }).assertion?.id)}`,
 		}
 	} finally {
-		// The runtime pipeline never opens the artifact reader itself, so the route owns nothing to close. draining
-		// keeps one query's firings from being attributed to the next.
+		// The runtime pipeline never opens the artifact reader itself, so the route owns nothing
+		// to close. draining keeps one query's firings from being attributed to the next.
 		route.takeObservations()
 	}
 }
@@ -676,8 +682,8 @@ export async function runPhase2Decision(options: Phase2RunOptions = {}): Promise
 }
 
 /**
- * The human-readable report. Prints the frozen bar beside every measurement, so a reader never has to open the
- * definition to know what the number was compared against.
+ * The human-readable report. Prints the frozen bar beside every measurement, so a reader
+ * never has to open the definition to know what the number was compared against.
  */
 export function printPhase2Receipt(receipt: Phase2Receipt): void {
 	console.log(`\nphase-2 decision ${receipt.decisionID} v${receipt.definitionVersion}`)
@@ -752,7 +758,7 @@ export function printPhase2Receipt(receipt: Phase2Receipt): void {
 }
 
 /**
- * The `QueryIntentCode` the marker check registers, re-exported so the pre-registration's literal can be pinned against
- * the runtime vocabulary in a test rather than compared by eye.
+ * The `QueryIntentCode` the marker check registers, re-exported so the pre-registration's
+ * literal can be pinned against the runtime vocabulary in a test rather than compared by eye.
  */
 export const MARKER_PROBE_EXPECTED_CODE: string = QueryIntentCode.POICategory

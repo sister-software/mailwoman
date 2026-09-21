@@ -37,20 +37,21 @@ const BUILD_OUTPUT = /(?:^|\/)out\//u
 
 export interface MoveResolver {
 	/**
-	 * The repo-relative source file `specifier` names when written in `containingFile`, or nothing when it resolves
-	 * nowhere. Both paths are repo-relative.
+	 * The repo-relative source file `specifier` names when written in `containingFile`,
+	 * or nothing when it resolves nowhere. Both paths are repo-relative.
 	 */
 	resolve(specifier: string, containingFile: string): string | undefined
 }
 
 /**
- * A resolver that answers as though the whole plan had already happened. Pass no moves for the resolver that reads the
- * checkout as it stands.
+ * A resolver that answers as though the whole plan had already happened.
+ * Pass no moves for the resolver that reads the checkout as it stands.
  *
- * `contents` overrides what a file reads as, keyed by repo-relative path. The manifests belong in it: a subpath KEY
- * survives a move while its target changes, so `@mailwoman/core/decoder/serialize-json` still names the moved file
- * afterwards — and a resolver reading the manifest as it stands would report that specifier unrepointable and refuse a
- * plan that is in fact complete.
+ * `contents` overrides what a file reads as, keyed by repo-relative path.
+ * The manifests belong in it: a subpath KEY survives a move while its target changes,
+ * so `@mailwoman/core/decoder/serialize-json` still names the moved file afterwards —
+ * and a resolver reading the manifest as it stands would report that specifier
+ * unrepointable and refuse a plan that is in fact complete.
  */
 export function createMoveResolver(
 	repoRoot: string,
@@ -76,10 +77,11 @@ export function createMoveResolver(
 	/**
 	 * The real path a probe names, for a probe that goes through a symlink.
 	 *
-	 * A workspace is reached as `node_modules/@mailwoman/x/…`, which is a different string for the same file — and for a
-	 * file the plan has not written yet, `realpath` cannot answer at all, because nothing is there to resolve. So the
-	 * walk trims trailing segments until it reaches something that exists, resolves that, and puts the trimmed segments
-	 * back. Every overlay entry is keyed by a real path, and this is what lets a probe find one.
+	 * A workspace is reached as `node_modules/@mailwoman/x/…`, which is a different string for
+	 * the same file — and for a file the plan has not written yet, `realpath` cannot answer
+	 * at all, because nothing is there to resolve. So the walk trims trailing segments
+	 * until it reaches something that exists, resolves that, and puts the trimmed segments back.
+	 * Every overlay entry is keyed by a real path, and this is what lets a probe find one.
 	 */
 	const canonical = (path: string): string => {
 		if (!path.includes("/node_modules/")) return path

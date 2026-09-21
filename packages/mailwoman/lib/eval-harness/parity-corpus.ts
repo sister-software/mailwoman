@@ -24,14 +24,16 @@ import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import { JSONSpliterator } from "spliterator"
 
 /**
- * Default check corpus. ratified 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
- * assertions plus 33 gold-triage tombstones (rules-idiosyncratic fixtures a neural parser should not be graded against
- * — solver-permutation probes, autocomplete-era jitter, self-admitted TODOs. each carries a `dropped` reason).
- * Proposal
+ * Default check corpus. ratified 2026-07-13 to the triaged set (321 live / 55 tombstones):
+ * the 22 rules-era no-solution assertions plus 33 gold-triage tombstones
+ * (rules-idiosyncratic fixtures a neural parser should not be graded against —
+ * solver-permutation probes, autocomplete-era jitter, self-admitted TODOs. each
+ * carries a `dropped` reason). Proposal
  *
- * - Per-fixture rationale: `docs/articles/evals/competitive-parity/2026-07-13-parity-gold-triage.md`. The pre-#875 v1
- *   corpus stays reproducible via `--fixtures mailwoman/eval-harness/fixtures/parity-corpus.jsonl`; the run always
- *   prints which corpus + how many tombstones it skipped, so the denominator is never silent.
+ * - Per-fixture rationale: `docs/articles/evals/competitive-parity/2026-07-13-parity-gold-triage.md`.
+ *   The pre-#875 v1 corpus stays reproducible via
+ *   `--fixtures mailwoman/eval-harness/fixtures/parity-corpus.jsonl`; the run always prints
+ *   which corpus + how many tombstones it skipped, so the denominator is never silent.
  */
 /**
  * Examples a parity bucket needs before its rate is stable enough to compare across versions.
@@ -94,27 +96,29 @@ export interface ParityEvalOptions {
 	fixturesPath?: string
 	/**
 	 * Grade a candidate laid out as a package-shaped weights dir
-	 * (`<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`). Prefer this over modelPath/tokenizerPath for
-	 * candidates: the explicit-path branch feeds no sibling channels (anchor/gazetteer/calibration) and grades a crippled
-	 * model — the #718 zero-fill trap.
+	 * (`<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`).
+	 * Prefer this over modelPath/tokenizerPath for candidates: the explicit-path branch feeds no sibling
+	 * channels (anchor/gazetteer/calibration) and grades a crippled model — the #718 zero-fill trap.
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * Probe 0 (campaign runbook): feed the decode-time street-morphology emission bias, built from the in-repo libpostal
-	 * `street_types` dictionaries (all locales). Zero-training change.
+	 * Probe 0 (campaign runbook): feed the decode-time street-morphology emission
+	 * bias, built from the in-repo libpostal `street_types` dictionaries
+	 * (all locales). Zero-training change.
 	 */
 	streetMorphology?: boolean
 	/**
 	 * Feed the gazetteer FST emission prior (#1497).
 	 *
-	 * Present because until it was, this eval could not SEE the change: #1497's title is "FST decoder bias is invisible
-	 * to every live eval", and the gauntlet was the only exception. A default-on decision needs tier-1 per-tag evidence,
-	 * and that is what this corpus carries.
+	 * Present because until it was, this eval could not SEE the change: #1497's title is "FST
+	 * decoder bias is invisible to every live eval", and the gauntlet was the only exception.
+	 * A default-on decision needs tier-1 per-tag evidence, and that is what this corpus carries.
 	 */
 	gazetteerPrior?: boolean
 	/**
-	 * Ship-config word-consistency heal (default true since the 2026-07-15 check revision — production parses heal, so
-	 * the eval grades the healed parse). Pass `false` to reproduce pre-heal baselines.
+	 * Ship-config word-consistency heal (default true since the 2026-07-15 check
+	 * revision — production parses heal, so the eval grades the healed parse).
+	 * Pass `false` to reproduce pre-heal baselines.
 	 */
 	wordConsistency?: boolean
 	/**
@@ -149,8 +153,8 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	let fstGazetteer: FSTMatcher | undefined
 
 	if (options.gazetteerPrior !== false) {
-		// The classifier's own weights-package sibling — the same artifact the runtime loads, so this grades the prior
-		// production would use rather than one resolved by a second ladder.
+		// The classifier's own weights-package sibling — the same artifact the runtime loads,
+		// so this grades the prior production would use rather than one resolved by a second ladder.
 		const fstPath = (classifier as { fstPath?: string }).fstPath
 
 		if (fstPath) {
@@ -160,8 +164,9 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 			console.log(`gazetteer prior ON (${fstPath})`)
 		} else {
-			// Loud rather than silent. A requested prior that resolves nothing scores lower with no signal of its own, which
-			// reads as a model difference — #1516's shape, and the reason five overlays needed #1705.
+			// Loud rather than silent. A requested prior that resolves nothing scores lower
+			// with no signal of its own, which reads as a model difference — #1516's shape,
+			// and the reason five overlays needed #1705.
 			console.warn(
 				"gazetteer prior REQUESTED but this weights package ships no FST — the channel is OFF and these numbers " +
 					"are the base model's. Do not compare them against a prior-on arm."
@@ -172,9 +177,9 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	let fstStreetMorphology: FSTMatcher | undefined
 
 	if (options.streetMorphology) {
-		// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
-		// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to
-		// inline (with a cwd-relative dictionaries path, no less).
+		// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder —
+		// data-root `fst-street-morphology.bin`, degrading to the per-process dictionary build
+		// this site used to inline (with a cwd-relative dictionaries path, no less).
 		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street")
 		const loaded = await loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
 		fstStreetMorphology = loaded.matcher
@@ -198,14 +203,15 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	for (const fixture of live) {
 		const expect = fixture.expect!
 
-		// Ship-config parse (check-revision 2026-07-15): production's safeClassify/parseForGeocode heal
-		// with WORD_CONSISTENCY_SHIP_DEFAULT, so the check must grade the same parse the swapped
-		// surfaces serve. Floors unchanged. Pre-heal continuity: `--no-word-consistency`.
+		// Ship-config parse (check-revision 2026-07-15): production's safeClassify/parseForGeocode
+		// heal with WORD_CONSISTENCY_SHIP_DEFAULT, so the check must grade the same parse the
+		// swapped surfaces serve. Floors unchanged. Pre-heal continuity: `--no-word-consistency`.
 		// Production config parity (#1146): the query-shape emission prior is fed on every path
-		// production parses on — `safeClassify` in the runtime pipeline, and `geocode-core` since #981
-		// (which fixed this same divergence for the drop-in servers). Without it this check graded a
-		// starved parse. A no-op on inputs carrying no known format and no region abbrev, so the bare
-		// `street, city` class is byte-stable. it warrants its keep on the digit-span / region-abbrev rows.
+		// production parses on — `safeClassify` in the runtime pipeline, and `geocode-core`
+		// since #981 (which fixed this same divergence for the drop-in servers).
+		// Without it this check graded a starved parse. A no-op on inputs carrying no known
+		// format and no region abbrev, so the bare `street, city` class is byte-stable.
+		// it warrants its keep on the digit-span / region-abbrev rows.
 		const byTag = groupTuplesByTag(
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,
@@ -256,8 +262,8 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			}
 		}
 
-		// Full-case agreement (informational, never a check): every gold tag matches. Non-floor tags
-		// compare directly by tag name.
+		// Full-case agreement (informational, never a check): every gold tag matches.
+		// Non-floor tags compare directly by tag name.
 		for (const [tag, goldValues] of Object.entries(expect)) {
 			if (PARITY_FLOORS.some((f) => f.label === tag)) continue
 
@@ -301,9 +307,9 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		)
 	}
 
-	// The precision half. informational, never a verdict — a floor here is an operator act. Reported
-	// because "postcode 98.6%" is a recall number and reads like a capability, and the missing half is
-	// where the house_number deficit went.
+	// The precision half. informational, never a verdict — a floor here is an operator act.
+	// Reported because "postcode 98.6%" is a recall number and reads like a capability,
+	// and the missing half is where the house_number deficit went.
 	console.log("")
 	console.log("precision (the half the floors above cannot see — rows whose gold has NO such tag)")
 	console.log("label          spurious   rate     of rows")

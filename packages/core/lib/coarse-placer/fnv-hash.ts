@@ -9,8 +9,8 @@
  */
 
 /**
- * FNV-1a → uint32. The default seed is the standard FNV offset basis; {@link featurize} salts it per feature family by
- * XOR before hashing.
+ * FNV-1a → uint32. The default seed is the standard FNV offset basis; {@link featurize}
+ * salts it per feature family by XOR before hashing.
  */
 export function hashFNV1a(s: string, seed = 2_166_136_261): number {
 	let h = seed

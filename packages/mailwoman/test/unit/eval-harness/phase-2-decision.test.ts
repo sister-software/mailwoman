@@ -55,8 +55,9 @@ const definition = await loadPhase2Definition()
 const freeze = await readLocalJSONFile<Phase2FreezeRecord>(PHASE2_FREEZE_PATH)
 
 /**
- * The committed receipt's shape, narrowed to what this suite reads. Typing it here rather than importing the runner's
- * `Phase2Receipt` keeps the pure suite free of the module that loads a pipeline.
+ * The committed receipt's shape, narrowed to what this suite reads.
+ * Typing it here rather than importing the runner's `Phase2Receipt` keeps the pure
+ * suite free of the module that loads a pipeline.
  */
 interface CommittedReceipt {
 	decisionID: string
@@ -74,8 +75,8 @@ interface CommittedReceipt {
 const receipt = await readLocalJSONFile<CommittedReceipt>(PHASE2_RECEIPT_PATH)
 
 /**
- * Write a definition + freeze pair into a scratch directory, so a refusal can be provoked without touching the
- * committed ruler.
+ * Write a definition + freeze pair into a scratch directory, so a refusal can be
+ * provoked without touching the committed ruler.
  */
 async function scratchPair(
 	mutate: (definition: Phase2DecisionDefinition) => void,
@@ -97,7 +98,8 @@ async function scratchPair(
 }
 
 /**
- * Readings that put every registered check at its committed baseline — the run the ruler's baselines describe.
+ * Readings that put every registered check at its committed baseline —
+ * the run the ruler's baselines describe.
  */
 function baselineReadings(source: Phase2DecisionDefinition = definition): Map<Phase2Measurement, Phase2Reading> {
 	const readings = new Map<Phase2Measurement, Phase2Reading>()
@@ -402,8 +404,8 @@ describe("the decision the ruler maps to", () => {
 		expect(verdict.defaultChangeBarUnmetRows).toEqual([1, 2, 3, 4, 5, 6, 7, 9])
 		expect(verdict.reasons).toContainEqual(expect.stringContaining("this decision authorizes no default change"))
 
-		// The same measurements against a definition whose default bar reads met on every row still decide the same
-		// thing — the register is recorded, never read.
+		// The same measurements against a definition whose default bar reads met on every
+		// row still decide the same thing — the register is recorded, never read.
 		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 		for (const row of copy.defaultChangeBar) {

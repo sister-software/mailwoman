@@ -71,38 +71,43 @@ export interface FSTProvenance {
 	edgeCount: number
 	nameInsertions: number
 	/**
-	 * How many places carried a non-zero referential score at build time. Named `importanceMatches` for stamp
-	 * compatibility with every artifact written before the two-score split — renaming the JSON key would make every
-	 * existing stamp unreadable, and the number means the same thing it always did on a population-built artifact.
+	 * How many places carried a non-zero referential score at build time.
+	 * Named `importanceMatches` for stamp compatibility with every artifact written before
+	 * the two-score split — renaming the JSON key would make every existing stamp unreadable,
+	 * and the number means the same thing it always did on a population-built artifact.
 	 */
 	importanceMatches: number
 	/**
-	 * How many places carried an encyclopedic score at build time. `undefined` on a pre-split build — which is not the
-	 * same as 0 (a v5 build against a population-only database), so the freshness report says the two in different
-	 * words.
+	 * How many places carried an encyclopedic score at build time.
+	 * `undefined` on a pre-split build — which is not the same as 0 (a v5 build against a
+	 * population-only database), so the freshness report says the two in different words.
 	 */
 	encyclopedicMatches?: number
 	/**
-	 * How the builder obtained its two scores — an {@link ImportanceSplitSource}. Recorded so an artifact states, in its
-	 * own provenance, whether its encyclopedic channel is real, reconstructed from a legacy conflated column, or absent.
+	 * How the builder obtained its two scores — an {@link ImportanceSplitSource}.
+	 * Recorded so an artifact states, in its own provenance, whether its encyclopedic
+	 * channel is real, reconstructed from a legacy conflated column, or absent.
 	 */
 	importanceSource?: string
 	sourceDB?: string
 	/**
-	 * MD5 of the source database's bytes at build time — the artifact's link to the gazetteer it is a projection of.
+	 * MD5 of the source database's bytes at build time — the artifact's link to
+	 * the gazetteer it is a projection of.
 	 *
-	 * `sourceDB` records the path, which is exactly the field that cannot change when the bytes behind it do: the admin
-	 * DB is a sealed readonly artifact that a rebuild replaces in place. Therefore, every FST built before the 2026-08-04
-	 * swap still names the current file and none of them was built from it. Compared by `fst-freshness.ts`.
+	 * `sourceDB` records the path, which is exactly the field that cannot change when the bytes
+	 * behind it do: the admin DB is a sealed readonly artifact that a rebuild replaces in place.
+	 * Therefore, every FST built before the 2026-08-04 swap still names the current file
+	 * and none of them was built from it. Compared by `fst-freshness.ts`.
 	 *
-	 * `undefined` = built before the stamp existed (every artifact predating 2026-08-05). Never conflate that with "built
-	 * from a database whose md5 is unknown" — the freshness check reports the two in different words.
+	 * `undefined` = built before the stamp existed (every artifact predating 2026-08-05).
+	 * Never conflate that with "built from a database whose md5 is unknown" —
+	 * the freshness check reports the two in different words.
 	 */
 	sourceDBMD5?: string
 	/**
-	 * Byte size of the source database at build time. Not redundant with {@link FSTProvenance.sourceDBMD5}: it survives a
-	 * truncated source and it is what makes a staleness warning legible — "5,273,722,880 → 5,372,076,032" names the
-	 * rebuild, a hex delta does not.
+	 * Byte size of the source database at build time. Not redundant with {@link FSTProvenance.sourceDBMD5}:
+	 * it survives a truncated source and it is what makes a staleness warning legible —
+	 * "5,273,722,880 → 5,372,076,032" names the rebuild, a hex delta does not.
 	 */
 	sourceDBBytes?: number
 	modelCardVersion?: string
@@ -119,9 +124,10 @@ export interface FSTProvenance {
 export interface BuildFSTOpts {
 	dbPath: PathBuilderLike
 	/**
-	 * Pre-computed identity of `dbPath` to stamp into provenance. Omit and the builder reads it via
-	 * `readWOFSourceIdentity` (sidecar-cached). Supply it when the digest is already in hand, or when the caller is
-	 * building from something whose identity it defines itself.
+	 * Pre-computed identity of `dbPath` to stamp into provenance.
+	 * Omit and the builder reads it via `readWOFSourceIdentity` (sidecar-cached).
+	 * Supply it when the digest is already in hand, or when the caller is building
+	 * from something whose identity it defines itself.
 	 */
 	sourceIdentity?: { md5: string; bytes: number }
 	countries?: string[]
@@ -137,9 +143,10 @@ export interface BuildFSTOpts {
 	 */
 	excludeSurfaces?: ReadonlySet<string>
 	/**
-	 * Compositional clause of the same policy: refuse a name whose every normalized token is a member (e.g. "de la") — a
-	 * surface made entirely of function words cannot be discriminative. Source this from stopwords only, never
-	 * street-type words ("Avenue Road" is a real name; "de la" is not).
+	 * Compositional clause of the same policy: refuse a name whose every normalized
+	 * token is a member (e.g. "de la") — a surface made entirely of function words
+	 * cannot be discriminative. Source this from stopwords only, never street-type
+	 * words ("Avenue Road" is a real name; "de la" is not).
 	 */
 	excludeAllTokensOf?: ReadonlySet<string>
 	/**
@@ -147,13 +154,15 @@ export interface BuildFSTOpts {
 	 */
 	exclusionPolicy?: string
 	/**
-	 * Surface-ambiguity classes (survey #4, 2026-07-27): normalized-join surface → the number of distinct countries
-	 * (across the whole admin DB rather than just this build's country scope) with a place carrying that surface. When
-	 * supplied, every inserted place row records the count for its accepting surface (`PlaceEntry.crossCountryBranches`)
-	 * — an entry accessible under several surfaces records each surface's own count. Serialized into the place row's
-	 * former `_pad` byte with presence signaled by header flags bit0, so version stays put and pre-ambiguity artifacts
-	 * read as "no data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet. consumers (FST-prior
-	 * tempering, the Option-A evidence channel) arrive behind their own measured checks.
+	 * Surface-ambiguity classes (survey #4, 2026-07-27): normalized-join surface → the number of
+	 * distinct countries (across the whole admin DB rather than just this build's country scope)
+	 * with a place carrying that surface. When supplied, every inserted place row
+	 * records the count for its accepting surface (`PlaceEntry.crossCountryBranches`) —
+	 * an entry accessible under several surfaces records each surface's own count.
+	 * Serialized into the place row's former `_pad` byte with presence signaled by header
+	 * flags bit0, so version stays put and pre-ambiguity artifacts read as "no data"
+	 * (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet. consumers
+	 * (FST-prior tempering, the Option-A evidence channel) arrive behind their own measured checks.
 	 */
 	surfaceCountryCounts?: ReadonlyMap<string, number>
 	onProgress?: (phase: string, detail?: string) => void

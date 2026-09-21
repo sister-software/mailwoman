@@ -52,8 +52,8 @@ interface EntryMeta {
 }
 
 /**
- * A trie state after canonical renumbering: edges as (token, canonical target index) pairs in sorted-token order, entry
- * ids sorted ascending.
+ * A trie state after canonical renumbering: edges as (token, canonical target index)
+ * pairs in sorted-token order, entry ids sorted ascending.
  */
 interface CanonicalState {
 	edges: Array<[token: string, target: number]>
@@ -61,7 +61,8 @@ interface CanonicalState {
 }
 
 /**
- * The interval forest labels: pre/post per entry id, plus the pre-order entry sequence (`ordinals`) and its inverse.
+ * The interval forest labels: pre/post per entry id, plus the pre-order entry
+ * sequence (`ordinals`) and its inverse.
  */
 interface IntervalForest {
 	preOf: Map<number, number>
@@ -104,8 +105,8 @@ function encodePayload(payload: Uint8Array | JSONValue | undefined): EntryMeta["
 }
 
 /**
- * Renumber the trie canonically: a pre-order DFS that visits edges in sorted-token order assigns every state its index
- * (root = 0), independent of add order.
+ * Renumber the trie canonically: a pre-order DFS that visits edges in sorted-token
+ * order assigns every state its index (root = 0), independent of add order.
  */
 function canonicalizeTrie(root: TrieNode): CanonicalState[] {
 	const indexOfNode = new Map<TrieNode, number>()
@@ -135,8 +136,8 @@ function canonicalizeTrie(root: TrieNode): CanonicalState[] {
 }
 
 /**
- * Label the primary-parent forest with pre/post intervals from a single counter, visiting roots and sibling lists in
- * ascending-id order. Throws on a primary-parent cycle — an entry a root cannot reach.
+ * Label the primary-parent forest with pre/post intervals from a single counter, visiting roots and
+ * sibling lists in ascending-id order. Throws on a primary-parent cycle — an entry a root cannot reach.
  */
 function labelForest(entriesByID: ReadonlyMap<number, EntryMeta>): IntervalForest {
 	const childrenOf = new Map<number, number[]>()
@@ -146,8 +147,8 @@ function labelForest(entriesByID: ReadonlyMap<number, EntryMeta>): IntervalFores
 		const primary = meta.parentIDs[0]
 
 		if (primary === undefined || !entriesByID.has(primary)) {
-			// No parents, or a declared parent absent from this build: a forest root. The declared id
-			// is still stored in the parent table.
+			// No parents, or a declared parent absent from this build: a forest root.
+			// The declared id is still stored in the parent table.
 			rootIDs.push(id)
 		} else {
 			let siblings = childrenOf.get(primary)
@@ -228,9 +229,9 @@ export class AncestrieBuilder {
 	}
 
 	/**
-	 * Add one entry. May be called several times with the same `id` under different token sequences (aliases); the
-	 * id-carried fields — rank, parents, payload — must be identical on every add, and a divergence throws rather than
-	 * silently keeping one.
+	 * Add one entry. May be called several times with the same `id` under different token
+	 * sequences (aliases); the id-carried fields — rank, parents, payload — must be identical
+	 * on every add, and a divergence throws rather than silently keeping one.
 	 */
 	add(entry: AncestrieEntry): void {
 		const normalize = this.normalizeToken
@@ -281,8 +282,9 @@ export class AncestrieBuilder {
 	}
 
 	/**
-	 * Seal into the versioned binary: canonicalize the trie, label the primary-parent forest with pre/post intervals, and
-	 * serialize. Throws on a primary-parent cycle. Does not consume the builder — sealing twice yields identical bytes.
+	 * Seal into the versioned binary: canonicalize the trie, label the primary-parent
+	 * forest with pre/post intervals, and serialize. Throws on a primary-parent cycle.
+	 * Does not consume the builder — sealing twice yields identical bytes.
 	 */
 	seal(options: SealOptions = {}): Uint8Array {
 		const states = canonicalizeTrie(this.root)
@@ -462,7 +464,8 @@ export class AncestrieBuilder {
 	}
 
 	/**
-	 * Record (or verify) the id-carried fields of an entry — the alias interface: every add of the same id must agree.
+	 * Record (or verify) the id-carried fields of an entry — the alias interface:
+	 * every add of the same id must agree.
 	 */
 	private registerMeta(entry: AncestrieEntry): void {
 		const payload = encodePayload(entry.payload)

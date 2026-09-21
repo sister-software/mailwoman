@@ -12,8 +12,8 @@ import { releaseGeneratedSurfaces } from "#release/generated-surfaces"
 const surfaceState = z.object({ file: z.string(), changed: z.boolean() })
 
 /**
- * `release.generated-surfaces` — writes inside the checkout or the data root. Listed in `registry.ts`; the description
- * on the operation is what `mwops` prints.
+ * `release.generated-surfaces` — writes inside the checkout or the data root.
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const generatedSurfaces = defineOperation({
 	id: "release.generated-surfaces",

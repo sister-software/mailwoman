@@ -51,8 +51,8 @@ export const ADMIN_TOL = 25_000
 export const CITY_TOL = 15_000
 
 /**
- * The fragment-register rows: `comma_free` and its `comma_control` twins, US / FR / GB / DE. Each entry's `note` is its
- * justification and ships verbatim in the emitted board.
+ * The fragment-register rows: `comma_free` and its `comma_control` twins, US / FR / GB / DE.
+ * Each entry's `note` is its justification and ships verbatim in the emitted board.
  */
 export const FRAGMENT_ROWS: Curated[] = [
 	//#region comma_free

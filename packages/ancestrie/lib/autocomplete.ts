@@ -41,14 +41,15 @@ const DEFAULT_MAX_SUGGESTIONS = 10
 const DEFAULT_MAX_EXPANSION_DEPTH = 2
 
 /**
- * Default max entries collected per BFS branch — keeps one dense branch (a state with dozens of accepting entries) from
- * starving the search before a higher-ranked sibling branch is visited.
+ * Default max entries collected per BFS branch — keeps one dense branch
+ * (a state with dozens of accepting entries) from starving the search
+ * before a higher-ranked sibling branch is visited.
  */
 const DEFAULT_PER_BRANCH_LIMIT = 4
 
 /**
- * The BFS stops once `maxSuggestions ×` this many candidates are collected — enough surplus that the final
- * rank-descending sort and dedupe still have real choices, without exhausting a wide trie.
+ * The BFS stops once `maxSuggestions ×` this many candidates are collected — enough surplus that the
+ * final rank-descending sort and dedupe still have real choices, without exhausting a wide trie.
  */
 const SUGGESTION_BUDGET_FACTOR = 4
 
@@ -58,17 +59,18 @@ interface BFSItem {
 	tokens: string[]
 
 	/**
-	 * Absolute token depth of the state this item's expansion started from. The two seeding interpretations start one
-	 * token apart (the complete-token walk sits at N, the partial-token prefix at N−1), so a shared outer base would
-	 * mislabel one branch's depths.
+	 * Absolute token depth of the state this item's expansion started from.
+	 * The two seeding interpretations start one token apart (the complete-token walk sits at N,
+	 * the partial-token prefix at N−1), so a shared outer base would mislabel one branch's depths.
 	 */
 	base: number
 }
 
 /**
- * Autocomplete from the current token prefix. Returns suggestions ranked rank-descending, each with its full token path
- * and its ancestor chain. Takes any {@link AncestrieReaderLike} — a sealed {@link Ancestrie} or a consumer's adapter over
- * its own storage. the order interfaces the algorithm relies on are documented on the interface.
+ * Autocomplete from the current token prefix. Returns suggestions ranked rank-descending, each
+ * with its full token path and its ancestor chain. Takes any {@link AncestrieReaderLike} —
+ * a sealed {@link Ancestrie} or a consumer's adapter over its own storage. the order
+ * interfaces the algorithm relies on are documented on the interface.
  */
 export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	trie: AncestrieReaderLike<TPayload>,
@@ -102,8 +104,8 @@ export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	const depth = match?.depth ?? complete.length
 
 	if (match) {
-		// complete-token interpretation: the typed tokens land on a state. Seed its accepting entries
-		// and its continuations.
+		// complete-token interpretation: the typed tokens land on a state.
+		// Seed its accepting entries and its continuations.
 		for (const record of trie.entriesAt(match.stateID)) {
 			addSuggestion(trie, seen, record, match.depth, normalized, [])
 		}
@@ -114,9 +116,9 @@ export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	}
 
 	if (prefixState !== undefined) {
-		// partial-token interpretation: complete the last token by prefix-filtering the continuation
-		// edges. The exact edge is skipped — when it exists, the complete-token seeding above already
-		// covered that state.
+		// partial-token interpretation: complete the last token by prefix-filtering
+		// the continuation edges. The exact edge is skipped — when it exists,
+		// the complete-token seeding above already covered that state.
 		for (const cont of trie.continuations(prefixState)) {
 			if (cont.token === partial || !cont.token.startsWith(partial)) continue
 
@@ -130,9 +132,10 @@ export function autocomplete<TPayload = Uint8Array | JSONValue>(
 		}
 	}
 
-	// BFS expansion (shared by both paths) — find nearby completions up to maxExpansionDepth. Each
-	// branch contributes only its top perBranchLimit entries: a dense state would otherwise blow the
-	// budget before the BFS ever reaches a higher-ranked sibling branch. (#587)
+	// BFS expansion (shared by both paths) — find nearby completions up to maxExpansionDepth.
+	// Each branch contributes only its top perBranchLimit entries:
+	// a dense state would otherwise blow the budget before the BFS ever reaches
+	// a higher-ranked sibling branch. (#587)
 	while (queue.length && seen.size < maxSuggestions * SUGGESTION_BUDGET_FACTOR) {
 		const item = queue.shift()!
 
@@ -165,9 +168,9 @@ export function autocomplete<TPayload = Uint8Array | JSONValue>(
 }
 
 /**
- * The `dedupe: true` key: the suggestion's full token path, NUL-joined so a token containing a space cannot collide
- * with a token boundary. Distinct entries at the same lexical surface (a city and a county sharing a name) collapse to
- * the highest-ranked one.
+ * The `dedupe: true` key: the suggestion's full token path, NUL-joined so a token containing
+ * a space cannot collide with a token boundary. Distinct entries at the same lexical
+ * surface (a city and a county sharing a name) collapse to the highest-ranked one.
  */
 function joinedPathKey(suggestion: AncestrieSuggestion<unknown>): string {
 	return suggestion.tokens.join("\u0000")
@@ -200,8 +203,8 @@ function addSuggestion<TPayload>(
 }
 
 /**
- * Keep one suggestion per key — the highest-ranked. Input is already rank-sorted, so the first occurrence per key wins.
- * order is preserved.
+ * Keep one suggestion per key — the highest-ranked. Input is already rank-sorted,
+ * so the first occurrence per key wins. order is preserved.
  */
 function dedupe<TPayload>(
 	suggestions: AncestrieSuggestion<TPayload>[],

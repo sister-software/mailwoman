@@ -13,8 +13,9 @@
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 
 /**
- * Sequential little-endian reader over a byte buffer. Reads advance `offset`; an out-of-bounds fixed-width read throws
- * the `DataView` `RangeError`, which is the truncation signal the format readers rely on.
+ * Sequential little-endian reader over a byte buffer. Reads advance `offset`;
+ * an out-of-bounds fixed-width read throws the `DataView` `RangeError`,
+ * which is the truncation signal the format readers rely on.
  */
 export class ByteCursor {
 	readonly #bytes: Uint8Array
@@ -78,9 +79,9 @@ export class ByteCursor {
 }
 
 /**
- * Serialize the frame: magic, headerLen, and the header as UTF-8 JSON. A format's serializer sizes its buffer as
- * `frame.length + <record bytes>` and copies the frame in at offset 0, so the emitted bytes are identical to the
- * hand-rolled writes this replaces.
+ * Serialize the frame: magic, headerLen, and the header as UTF-8 JSON.
+ * A format's serializer sizes its buffer as `frame.length + <record bytes>` and copies the frame
+ * in at offset 0, so the emitted bytes are identical to the hand-rolled writes this replaces.
  */
 export function writeFramedHeader(magic: number, header: unknown): Uint8Array {
 	const headerBytes = new TextEncoder().encode(stringifyJSON(header))
@@ -95,9 +96,9 @@ export function writeFramedHeader(magic: number, header: unknown): Uint8Array {
 }
 
 /**
- * Validate the magic and decode the header JSON, returning the header plus a {@link ByteCursor} positioned at the first
- * record byte. `badMagicMessage` is the format's own wording — each reader's message is an error interface its tests
- * pin.
+ * Validate the magic and decode the header JSON, returning the header plus a {@link ByteCursor}
+ * positioned at the first record byte. `badMagicMessage` is the format's own wording —
+ * each reader's message is an error interface its tests pin.
  */
 export function readFramedHeader<Header>(
 	magic: number,

@@ -70,9 +70,10 @@ interface CompareRow {
 //#region Diff computation
 
 /**
- * Build a unified diff table of component rows across two parses. Row identity is by source-order position
- * (primary-first, then interleaving). For each primary node we look for a compare node covering the same character
- * span. when the tag differs, both sides are shown as a "tag-changed" row.
+ * Build a unified diff table of component rows across two parses.
+ * Row identity is by source-order position (primary-first, then interleaving).
+ * For each primary node we look for a compare node covering the same character span.
+ * when the tag differs, both sides are shown as a "tag-changed" row.
  */
 function computeCompareRows(primary: ParseResult, compare: ParseResult): CompareRow[] {
 	const rows: CompareRow[] = []

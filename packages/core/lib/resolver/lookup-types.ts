@@ -9,8 +9,8 @@
  */
 
 /**
- * One exact address-point hit (#476): a real situs coordinate for `(street, number)` within a postcode/locality scope —
- * the street-level tier in front of admin-centroid resolution.
+ * One exact address-point hit (#476): a real situs coordinate for `(street, number)` within
+ * a postcode/locality scope — the street-level tier in front of admin-centroid resolution.
  */
 export interface AddressPointHit {
 	lat: number
@@ -24,19 +24,19 @@ export interface AddressPointHit {
 	 */
 	release: string
 	/**
-	 * The point's own scope tags, when the extract row carries them — the register's locality (normalized key form) and
-	 * postcode. A rooftop answer can then be decorated with the commune/postcode the register attests, which a query that
-	 * never named them cannot supply. Optional: not every source carries both, and existing readers/consumers predate the
-	 * fields.
+	 * The point's own scope tags, when the extract row carries them — the register's locality
+	 * (normalized key form) and postcode. A rooftop answer can then be decorated with the
+	 * commune/postcode the register attests, which a query that never named them cannot supply.
+	 * Optional: not every source carries both, and existing readers/consumers predate the fields.
 	 */
 	localityNorm?: string
 	postcode?: string
 }
 
 /**
- * Street-level exact-point lookup (#476). Implementations own their normalization — both the extract build and this
- * lookup must apply the same normalizer (see `resolver-wof-sqlite/street-normalize.ts`). Core depends only on this
- * interface.
+ * Street-level exact-point lookup (#476). Implementations own their normalization —
+ * both the extract build and this lookup must apply the same normalizer
+ * (see `resolver-wof-sqlite/street-normalize.ts`). Core depends only on this interface.
  */
 export interface AddressPointLookup {
 	find(query: {
@@ -45,28 +45,30 @@ export interface AddressPointLookup {
 		postcode?: string
 		locality?: string
 		/**
-		 * The parse's `region` and `subregion` spans, for a register whose rows carry neither postcode nor locality. The
-		 * Taiwanese register scopes a point by 縣市 and 鄉鎮市區 (`臺北市` / `中正區`), which the parse tags `region` and `subregion`;
-		 * a reader built on that register composes its locality key from the pair. Every other reader ignores both, so the
-		 * Latin path is byte-stable.
+		 * The parse's `region` and `subregion` spans, for a register whose rows carry
+		 * neither postcode nor locality. The Taiwanese register scopes a point by 縣市
+		 * and 鄉鎮市區 (`臺北市` / `中正區`), which the parse tags `region` and `subregion`;
+		 * a reader built on that register composes its locality key from the pair.
+		 * Every other reader ignores both, so the Latin path is byte-stable.
 		 */
 		region?: string
 		subregion?: string
 		/**
-		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried after postcode/locality. For extracts whose
-		 * points carry no postcode/locality of their own (OSM addr nodes often don't) but do carry a coordinate — the
-		 * resolved locality's bounding box scopes the `(street, number)` probe instead. US situs never passes it
-		 * (byte-stable).
+		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried after postcode/locality.
+		 * For extracts whose points carry no postcode/locality of their own (OSM addr nodes often don't)
+		 * but do carry a coordinate — the resolved locality's bounding box scopes the
+		 * `(street, number)` probe instead. US situs never passes it (byte-stable).
 		 */
 		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 	}): AddressPointHit | null
 }
 
 /**
- * One interpolated coordinate estimate (#483) — never an exact situs point (`uncertaintyM` prices the estimate
- * honestly). Structural mirror of `InterpolatedHit` in `resolver-wof-sqlite/interpolation.ts`; keep this a subset of
- * that shape so the concrete `StreetInterpolator`/`AddressPointInterpolator` satisfy {@link InterpolationLookup} with no
- * adapter (the {@link AddressPointHit} precedent).
+ * One interpolated coordinate estimate (#483) — never an exact situs point
+ * (`uncertaintyM` prices the estimate honestly). Structural mirror of `InterpolatedHit` in
+ * `resolver-wof-sqlite/interpolation.ts`; keep this a subset of that shape so the concrete
+ * `StreetInterpolator`/`AddressPointInterpolator` satisfy {@link InterpolationLookup}
+ * with no adapter (the {@link AddressPointHit} precedent).
  */
 export interface InterpolatedPointHit {
 	lat: number
@@ -93,11 +95,12 @@ export interface InterpolatedPointHit {
 }
 
 /**
- * House-number interpolation lookup (#483). Like {@link AddressPointLookup}, implementations own their normalization
- * (the shared `resolver-wof-sqlite/street-normalize.ts`). core depends only on this interface. Postcode-scoped. without
- * a postcode the tier answers only when the covering ranges agree on one postcode — `near` (the resolved locality's
- * coordinate) lets an implementation break a multi-postcode tie by segment proximity instead of abstaining (the
- * Brooklyn-vs-Great-Neck namesake class). Optional and advisory: implementations may ignore it.
+ * House-number interpolation lookup (#483). Like {@link AddressPointLookup}, implementations
+ * own their normalization (the shared `resolver-wof-sqlite/street-normalize.ts`). core
+ * depends only on this interface. Postcode-scoped. without a postcode the tier answers only
+ * when the covering ranges agree on one postcode — `near` (the resolved locality's coordinate)
+ * lets an implementation break a multi-postcode tie by segment proximity instead of abstaining
+ * (the Brooklyn-vs-Great-Neck namesake class). Optional and advisory: implementations may ignore it.
  */
 export interface InterpolationLookup {
 	find(query: {
@@ -108,23 +111,26 @@ export interface InterpolationLookup {
 	}): InterpolatedPointHit | null
 	/**
 	 * The artifact's own conformal radius multiplier for `uncertaintyM` (#374), read from the extract's
-	 * `interp_calibration` metadata table at open time (the pair-index δ/transitionBeta header precedent): the multiplier
-	 * is a property of the calibration set the artifact was built against, so it ships in the artifact rather than in
-	 * caller code. The resolver applies it as the default whenever `ResolveOpts.interpolationRadiusCalibration` is
-	 * absent. `undefined` (or an implementation without the property) = the artifact carries none — extracts built before
-	 * the metadata table existed. behavior is then exactly the pre-artifact ladder (caller-supplied factor or raw).
-	 * Implementations must read this at open time (constructor/factory), never per-lookup — `find()` is synchronous by
-	 * design.
+	 * `interp_calibration` metadata table at open time (the pair-index δ/transitionBeta header precedent):
+	 * the multiplier is a property of the calibration set the artifact was built against, so it
+	 * ships in the artifact rather than in caller code. The resolver applies it as
+	 * the default whenever `ResolveOpts.interpolationRadiusCalibration` is absent.
+	 * `undefined` (or an implementation without the property) = the artifact carries none —
+	 * extracts built before the metadata table existed. behavior is then exactly the pre-artifact
+	 * ladder (caller-supplied factor or raw). Implementations must read this at open time
+	 * (constructor/factory), never per-lookup — `find()` is synchronous by design.
 	 */
 	readonly radiusCalibration?: number
 }
 
 /**
- * One street-centroid hit (#1042) — the street-level tier below the exact address-point tier and above admin-centroid
- * resolution. A street's centroid + an honest extent-derived radius, for a street-only query (no house number) that an
- * address-point tier cannot serve by definition. Derived from a national register's rooftop points
- * (`street-centroids-<cc>.db`, a `group BY street` roll-up). `uncertaintyM` prices the coarseness (half the street's
- * bbox diagonal) so a consumer never mistakes it for a rooftop.
+ * One street-centroid hit (#1042) — the street-level tier below the exact address-point
+ * tier and above admin-centroid resolution. A street's centroid + an honest
+ * extent-derived radius, for a street-only query (no house number) that an
+ * address-point tier cannot serve by definition. Derived from a national register's
+ * rooftop points (`street-centroids-<cc>.db`, a `group BY street` roll-up).
+ * `uncertaintyM` prices the coarseness (half the street's bbox diagonal)
+ * so a consumer never mistakes it for a rooftop.
  */
 export interface StreetCentroidHit {
 	lat: number
@@ -138,9 +144,10 @@ export interface StreetCentroidHit {
 }
 
 /**
- * Street-centroid lookup (#1042). Like {@link AddressPointLookup}, implementations own their normalization (the shared
- * `resolver-wof-sqlite/street-normalize.ts`); core depends only on this interface. Scoped by `postcode` (preferred) or
- * `locality` (the base commune) — no house number: this is the street-only tier.
+ * Street-centroid lookup (#1042). Like {@link AddressPointLookup}, implementations
+ * own their normalization (the shared `resolver-wof-sqlite/street-normalize.ts`);
+ * core depends only on this interface. Scoped by `postcode` (preferred) or `locality`
+ * (the base commune) — no house number: this is the street-only tier.
  */
 export interface StreetCentroidLookup {
 	find(query: { street: string; postcode?: string; locality?: string }): StreetCentroidHit | null
@@ -156,10 +163,12 @@ export interface PostcodePrefixAncestor {
 }
 
 /**
- * A PFX1 postcode-prefix node — the partial-code prior's payload ({@link ResolveOpts.postcodePrefixPrior}, #31
- * Mechanism 3). The coordinate is optional and its absence is meaningful: an ancestry-only tier (NI's 80 BT districts)
- * carries `ancestors` and no `lat`/`lon` — representable as absence, never as `0,0` (the meaning-of-zero rule).
- * `radiusP95Km` is mandatory whenever a coordinate is present (M-3's receipt: a 1-digit US band and a GB outward code
+ * A PFX1 postcode-prefix node — the partial-code prior's payload
+ * ({@link ResolveOpts.postcodePrefixPrior}, #31 Mechanism 3).
+ * The coordinate is optional and its absence is meaningful: an ancestry-only tier
+ * (NI's 80 BT districts) carries `ancestors` and no `lat`/`lon` — representable as absence,
+ * never as `0,0` (the meaning-of-zero rule). `radiusP95Km` is mandatory whenever
+ * a coordinate is present (M-3's receipt: a 1-digit US band and a GB outward code
  * are both "a prefix with a centroid" and differ by 200×).
  */
 export interface PostcodePrefixNode {
@@ -172,10 +181,11 @@ export interface PostcodePrefixNode {
 }
 
 /**
- * The PFX1 index the resolver probes — minimal, structural (`probe` + optional `country`), so `@mailwoman/resolver`
- * consumes an index built in `@mailwoman/neural` without depending on it (B3-5: the partial-code prior touches zero
- * model inputs). `country` is the ISO-3166 alpha-2 the index was built for (upper-case); the resolver only probes an
- * index whose country matches the query's country scope.
+ * The PFX1 index the resolver probes — minimal, structural (`probe` + optional `country`),
+ * so `@mailwoman/resolver` consumes an index built in `@mailwoman/neural` without
+ * depending on it (B3-5: the partial-code prior touches zero model inputs).
+ * `country` is the ISO-3166 alpha-2 the index was built for (upper-case); the resolver
+ * only probes an index whose country matches the query's country scope.
  */
 export interface PostcodePrefixIndexLike {
 	probe(prefix: string): PostcodePrefixNode | null

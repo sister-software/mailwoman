@@ -47,8 +47,9 @@ describe("packageSpecifiersFor", () => {
 	})
 
 	test("never mints the `#lib/…` form the language service proposed", () => {
-		// `getEditsForFileRename` answered `#lib/recipes/fr-fragment` for a moved recipe. The `#*` pattern maps to
-		// `./lib/*.ts`, so that specifier names `lib/lib/recipes/fr-fragment.ts` — a path no checkout has.
+		// `getEditsForFileRename` answered `#lib/recipes/fr-fragment` for a moved recipe.
+		// The `#*` pattern maps to `./lib/*.ts`, so that specifier names
+		// `lib/lib/recipes/fr-fragment.ts` — a path no checkout has.
 		const { internal } = packageSpecifiersFor(CORPUS, "packages/corpus/lib/recipes/fr-fragment.ts")
 
 		expect(internal).toEqual(["#recipes/fr-fragment"])

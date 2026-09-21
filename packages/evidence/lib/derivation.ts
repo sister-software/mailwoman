@@ -13,7 +13,8 @@ import type { EpistemicStatus } from "#status"
 
 export interface DerivationNode {
 	/**
-	 * What the constraint was about, in the caller's vocabulary — a component tag and its value, a layer, a probe.
+	 * What the constraint was about, in the caller's vocabulary — a component tag
+	 * and its value, a layer, a probe.
 	 */
 	label: string
 	evidence: Evidence
@@ -39,8 +40,8 @@ export interface DerivationInput {
 }
 
 /**
- * Shape a derivation for a reader. The result is frozen and holds copies of the nodes, so a caller that keeps mutating
- * its own record cannot change what was reported.
+ * Shape a derivation for a reader. The result is frozen and holds copies of the nodes,
+ * so a caller that keeps mutating its own record cannot change what was reported.
  */
 export function projectDerivation(input: DerivationInput): DerivationProjection {
 	const constraints = Object.freeze(input.nodes.map((node) => Object.freeze({ ...node })))

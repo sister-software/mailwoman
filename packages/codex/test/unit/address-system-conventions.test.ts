@@ -48,10 +48,10 @@ describe("GB address-system conventions (#1275)", () => {
 			expect(valid).toMatch(pattern)
 		}
 
-		// Clip fragments from the #1275 board ("1 9PD" for SK11 9PD, "2LH" for CV31 2LH, "3 2GL" for
-		// WF3 2GL) are shape-invalid. (A letter-led fragment like "K11 9PD" can still be shape-valid in
-		// isolation — the repair pass operates on raw-text sub-match rather than fragment shape, so the pattern
-		// only needs to describe the canonical form.)
+		// Clip fragments from the #1275 board ("1 9PD" for SK11 9PD, "2LH" for CV31 2LH, "3 2GL" for WF3 2GL)
+		// are shape-invalid. (A letter-led fragment like "K11 9PD" can still be shape-valid in
+		// isolation — the repair pass operates on raw-text sub-match rather than fragment shape,
+		// so the pattern only needs to describe the canonical form.)
 		for (const clipped of ["1 9PD", "2LH", "3 2GL"]) {
 			expect(clipped).not.toMatch(pattern)
 		}

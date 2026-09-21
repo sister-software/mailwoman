@@ -72,8 +72,8 @@ const SHAPES = [
 		tag: "street",
 		build: (c: Record<string, string>) =>
 			c.street ? [c.house_number, c.street].filter((part) => part != null && part.length).join(" ") : undefined,
-		// The model emits the street as a family (prefix/name/particle/suffix); assemble it the way
-		// `score-anchor-v2-boards.run.ts` does before comparing to the whole-name gold.
+		// The model emits the street as a family (prefix/name/particle/suffix); assemble it the
+		// way `score-anchor-v2-boards.run.ts` does before comparing to the whole-name gold.
 		emit: STREET_FAMILY_TAGS,
 	},
 	{

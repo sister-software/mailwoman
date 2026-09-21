@@ -32,8 +32,8 @@ const git = (repoRoot: string, args: string[]) =>
 	})
 
 /**
- * A repository where `packages/thing/lib/old-name.ts` was renamed to `new-name.ts`, plus whatever sources the caller
- * plants afterwards.
+ * A repository where `packages/thing/lib/old-name.ts` was renamed to `new-name.ts`,
+ * plus whatever sources the caller plants afterwards.
  */
 async function plant(sources: Record<string, string>) {
 	const repoRoot = await realPath(fixtures.use(await temporaryDirectory("stale-paths-")).path)

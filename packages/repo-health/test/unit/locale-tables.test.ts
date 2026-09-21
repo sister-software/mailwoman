@@ -101,9 +101,10 @@ describe("findLocaleTables", () => {
 
 describe("localeTablesCheck", () => {
 	it("no longer asks completeness of any table, because the one it bound is now derived", async () => {
-		// `WEIGHTS_PACKAGE_BY_COUNTRY` was a hand-written copy of `release.config.json`'s two lists, which is why it
-		// could omit `ja-jp` and `zh-cn`. `@mailwoman/core/release-config`'s `weightsPackageByCountry` derives it from
-		// that config now, and the invariant moved to that derivation's own test.
+		// `WEIGHTS_PACKAGE_BY_COUNTRY` was a hand-written copy of `release.config.json`'s
+		// two lists, which is why it could omit `ja-jp` and `zh-cn`.
+		// `@mailwoman/core/release-config`'s `weightsPackageByCountry` derives it from that
+		// config now, and the invariant moved to that derivation's own test.
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr"], charWeights: { cjk: { overlays: ["ja-jp", "zh-cn"] } } },
 			weights: [
@@ -157,8 +158,8 @@ describe("localeTablesCheck", () => {
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr"] },
 			extra: {
-				// `FST_LOCALE_BY_COUNTRY` carries `ko-kr` ahead of the Korean package. the ladder resolves an FST by
-				// path and answers nothing when the file is absent.
+				// `FST_LOCALE_BY_COUNTRY` carries `ko-kr` ahead of the Korean package. the ladder
+				// resolves an FST by path and answers nothing when the file is absent.
 				"packages/mailwoman/lib/eval-harness/autocomplete-ladder.ts": objectTable("FST_LOCALE_BY_COUNTRY", [
 					["US", "en-us"],
 					["KR", "ko-kr"],

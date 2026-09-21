@@ -21,7 +21,8 @@ import { cx } from "#common/cx"
 
 export interface MapProgressBarProps {
 	/**
-	 * Whether the bar is showing at all. It stays mounted through its fade rather than unmounting on the transition.
+	 * Whether the bar is showing at all. It stays mounted through its fade
+	 * rather than unmounting on the transition.
 	 */
 	active: boolean
 	/**

@@ -58,7 +58,8 @@ export interface EvalLatinOffmapResult {
 }
 
 /**
- * Coarse-placer Latin off-map handling eval — see the module doc. Emits the report to stdout.
+ * Coarse-placer Latin off-map handling eval — see the module doc.
+ * Emits the report to stdout.
  */
 export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Promise<EvalLatinOffmapResult> {
 	const modelDir = resolvePathBuilder(options.model || defaultModelDir())

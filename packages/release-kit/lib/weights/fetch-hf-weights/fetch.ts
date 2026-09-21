@@ -39,12 +39,13 @@ import { downloadRemote, probeRemote, verifyChecksum, writeArtifact } from "#wei
 
 export interface FetchHFWeightsOptions {
 	/**
-	 * The checkout the recipe is read from — manifests, model cards, committed lexicons. Never written to unless it is
-	 * also the destination.
+	 * The checkout the recipe is read from — manifests, model cards, committed lexicons.
+	 * Never written to unless it is also the destination.
 	 */
 	repoRoot?: string
 	/**
-	 * The model-card version naming the bucket directory. Defaults to the base package's card, which is what CI read.
+	 * The model-card version naming the bucket directory.
+	 * Defaults to the base package's card, which is what CI read.
 	 */
 	version?: string
 	/**
@@ -60,9 +61,10 @@ function writeStderr(line: string): void {
 /**
  * Materialize every planned artifact under `destRoot`.
  *
- * Fetches each distinct bucket object once and writes it to every workspace that declares it — the `cp` fan-out the
- * YAML spelled out by hand. head-probes the whole remote set first so an unstaged version fails in one pass with every
- * missing object named, rather than after the first 39 MB download dies on a 404.
+ * Fetches each distinct bucket object once and writes it to every workspace that declares it —
+ * the `cp` fan-out the YAML spelled out by hand. head-probes the whole remote set first
+ * so an unstaged version fails in one pass with every missing object named,
+ * rather than after the first 39 MB download dies on a 404.
  */
 export async function fetchHFWeights(
 	destRoot: string,
@@ -73,8 +75,8 @@ export async function fetchHFWeights(
 	const resolvedVersion = version ?? (await readBaseModelVersion(repoRoot))
 	const base = await hfVersionBase(repoRoot, resolvedVersion)
 	const plans = await planWeightsMaterialization(repoRoot, { version: resolvedVersion })
-	// Distinct bucket objects by URL: several packages share one Latin object, and a family's object shares only a
-	// basename with it.
+	// Distinct bucket objects by URL: several packages share one Latin object,
+	// and a family's object shares only a basename with it.
 	const objects = new Map<string, { base: string; remoteName: string }>()
 
 	for (const plan of plans) {

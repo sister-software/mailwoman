@@ -18,8 +18,9 @@ import { describe, expect, it, vi } from "vitest"
 
 describe("attributionReport", () => {
 	it("reads the installed weights packages rather than the source register", async () => {
-		// The register lists sources research resolved, which is a different set from the ones an installation carries.
-		// Reporting it here would tell an operator they owe attribution to publishers whose rows they do not have.
+		// The register lists sources research resolved, which is a different set from the
+		// ones an installation carries. Reporting it here would tell an operator they
+		// owe attribution to publishers whose rows they do not have.
 		const report = await attributionReport("AGPL-3.0-only OR LicenseRef-Commercial")
 
 		expect(report.engineLicense).toBe("AGPL-3.0-only OR LicenseRef-Commercial")
@@ -65,8 +66,9 @@ describe("renderAttributionReport", () => {
 	})
 
 	it("reports the same upstream sources under a commercial key as under the open-source branch", async () => {
-		// A commercial agreement covers the code and model artifacts Sister Software authors. Reporting fewer sources
-		// once a key is present would tell an operator the key discharged an obligation it cannot reach.
+		// A commercial agreement covers the code and model artifacts Sister Software authors.
+		// Reporting fewer sources once a key is present would tell an operator the
+		// key discharged an obligation it cannot reach.
 		const open = await attributionReport("AGPL-3.0-only")
 		const commercial = await attributionReport("LicenseRef-Commercial")
 
@@ -79,9 +81,10 @@ describe("renderAttributionReport", () => {
 	})
 
 	it("reports the same sources with no reference data on disk at all", async () => {
-		// The lineage is fixed when the model is trained, and this report reads installed packages through module
-		// resolution rather than the data root. Deleting every downloaded database cannot remove an entry from it, and
-		// this pins that a future edit reaching for the data root would change the answer.
+		// The lineage is fixed when the model is trained, and this report reads
+		// installed packages through module resolution rather than the data root.
+		// Deleting every downloaded database cannot remove an entry from it, and this pins
+		// that a future edit reaching for the data root would change the answer.
 		await using empty = await temporaryDirectory("mw-no-data-root-")
 		const before = await attributionReport("AGPL-3.0-only")
 

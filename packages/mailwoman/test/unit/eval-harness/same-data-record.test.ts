@@ -23,8 +23,8 @@ import { recordFixture } from "mailwoman/eval-harness/same-data/record"
 import { describe, expect, it } from "vitest"
 
 /**
- * Troyes as the gazetteer carries it: the concorded `locality`, its `localadmin` twin 0.6 km away, and a real namesake
- * far enough off to be a different place.
+ * Troyes as the gazetteer carries it: the concorded `locality`, its `localadmin` twin
+ * 0.6 km away, and a real namesake far enough off to be a different place.
  */
 const TROYES: ResolvedPlace[] = [
 	{ id: 101_750_981, name: "Troyes", placetype: "locality", country: "FR", lat: 48.2973, lon: 4.0744, score: 5 },
@@ -92,8 +92,8 @@ describe("the same-data recorder's withholding rule", () => {
 		const ids = await recordedIDs(false)
 
 		expect(ids.has("101750981")).toBe(false) // the concorded gold
-		// The defect v1 carries: one settlement, two rows, one link. The `localadmin` survives the filter
-		// and an arm returning it was graded as inventing a place.
+		// The defect v1 carries: one settlement, two rows, one link.
+		// The `localadmin` survives the filter and an arm returning it was graded as inventing a place.
 		expect(ids.has("404405659")).toBe(true)
 		expect(ids.has("999")).toBe(true)
 	})
@@ -108,8 +108,9 @@ describe("the same-data recorder's withholding rule", () => {
 	it("#2268: a real namesake at distance survives — both halves of the rule are required", async () => {
 		const ids = await recordedIDs(true)
 
-		// `Troyes` QC folds equal and sits thousands of km away. Withholding it would remove a candidate
-		// the stratum is entitled to offer, which is the `Batāla` case: same fold, 1,421 km apart.
+		// `Troyes` QC folds equal and sits thousands of km away.
+		// Withholding it would remove a candidate the stratum is entitled to offer,
+		// which is the `Batāla` case: same fold, 1,421 km apart.
 		expect(ids.has("999")).toBe(true)
 	})
 })

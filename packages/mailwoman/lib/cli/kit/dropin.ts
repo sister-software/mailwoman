@@ -36,24 +36,26 @@ import { printLicenseNotice, resolveEngineStamp, type ResolvedEngineStamp } from
 import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "#freshness"
 import { buildNoGazetteerMessage, existingWOFDatabasePaths, resolveCandidateDBPath } from "#resolver-backend"
 /**
- * The docs page every drop-in's missing-gazetteer message points a stranger at (#1009). One constant so the three
- * messages cannot drift onto different pages when the docs move.
+ * The docs page every drop-in's missing-gazetteer message points a stranger at (#1009).
+ * One constant so the three messages cannot drift onto different pages when the docs move.
  */
 const GAZETTEER_DOCS_PATH = "/docs/developers/get-started/ten-minute-trial"
 
 /**
- * Print an error and exit non-zero. Typed `never` so callers get definite-assignment narrowing after the call.
+ * Print an error and exit non-zero. Typed `never` so callers get definite-assignment
+ * narrowing after the call.
  */
 function fail(message: string): never {
 	return failScript(message)
 }
 
 /**
- * Parse the `openapi` subcommand's flags, validating `--flavor`. Exits 1 with the binary's usage line on a bad flavor.
+ * Parse the `openapi` subcommand's flags, validating `--flavor`.
+ * Exits 1 with the binary's usage line on a bad flavor.
  *
- * Returns the shape `printOpenAPIDocument` takes, so a drop-in's `openapi` command is this call plus building its app
- * around a stub engine — which is what keeps the command pure route-table introspection that never boots a classifier
- * or opens a gazetteer.
+ * Returns the shape `printOpenAPIDocument` takes, so a drop-in's `openapi` command is
+ * this call plus building its app around a stub engine — which is what keeps the command
+ * pure route-table introspection that never boots a classifier or opens a gazetteer.
  */
 export function parseOpenAPIFlags(binaryName: string): { flavor?: string; out?: string } {
 	const { values } = parseArguments({
@@ -76,9 +78,9 @@ export function parseOpenAPIFlags(binaryName: string): { flavor?: string; out?: 
 /**
  * A drop-in's `openapi` subcommand: print (or `--out`-write) the OpenAPI document for its surface.
  *
- * `createApp` receives a stub engine, so the command is pure route-table introspection that never boots a classifier or
- * opens a gazetteer and stays fast whatever the data-root holds. `--flavor 3.0` prints the 3.0.3 diet instead of the
- * default 3.1.0.
+ * `createApp` receives a stub engine, so the command is pure route-table introspection that
+ * never boots a classifier or opens a gazetteer and stays fast whatever the data-root holds.
+ * `--flavor 3.0` prints the 3.0.3 diet instead of the default 3.1.0.
  */
 export function openAPICommand<Engine>(
 	binaryName: string,
@@ -94,9 +96,9 @@ export function openAPICommand<Engine>(
 /**
  * Load the en-US neural classifier, failing friendly (#1009).
  *
- * `resolveWeights` (`neural/weights.ts`) already names the exact fix command. this guard only keeps that message from
- * being buried under an unhandled-rejection stack trace. Eager, so a missing-weights boot fails at startup rather than
- * on the first request.
+ * `resolveWeights` (`neural/weights.ts`) already names the exact fix command. this guard
+ * only keeps that message from being buried under an unhandled-rejection stack trace.
+ * Eager, so a missing-weights boot fails at startup rather than on the first request.
  */
 export async function loadClassifierOrExit(): Promise<NeuralAddressClassifier> {
 	try {
@@ -119,7 +121,8 @@ export interface GazetteerPaths {
 	 */
 	wofPaths: string[]
 	/**
-	 * The first database — the admin DB the reverse geocoder opens. `undefined` when there are no databases.
+	 * The first database — the admin DB the reverse geocoder opens.
+	 * `undefined` when there are no databases.
 	 */
 	adminDBPath: string | undefined
 }
@@ -127,10 +130,12 @@ export interface GazetteerPaths {
 /**
  * Locate the gazetteer for a geocoding drop-in, with both of the #1009 friendly failures:
  *
- * - An explicit `--candidate-db` that does not exist errors loudly. It must never silently fall back to whatever ambient
- *   data-root file happens to be present — a typo'd path would otherwise serve the wrong gazetteer without a word.
- * - No candidate DB and no databases prints the named-artifact message with the one command that fixes it, instead of
- *   letting the resolver throw its internal "resolveExtracts: at least one database is required".
+ * - An explicit `--candidate-db` that does not exist errors loudly.
+ *   It must never silently fall back to whatever ambient data-root file happens to be present —
+ *   a typo'd path would otherwise serve the wrong gazetteer without a word.
+ * - No candidate DB and no databases prints the named-artifact message with the
+ *   one command that fixes it, instead of letting the resolver throw its internal
+ *   "resolveExtracts: at least one database is required".
  */
 export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {
@@ -159,8 +164,8 @@ export function corsBannerLine(cors: boolean): string {
 }
 
 /**
- * The `wof:` + `resolver:` lines of a geocoding drop-in's startup banner — which gazetteer the process actually opened,
- * and (when it fell back to admin-only) the flag that widens it.
+ * The `wof:` + `resolver:` lines of a geocoding drop-in's startup banner — which gazetteer
+ * the process actually opened, and (when it fell back to admin-only) the flag that widens it.
  */
 export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPaths): string[] {
 	return [
@@ -174,14 +179,15 @@ export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPath
 /**
  * The provenance of the gazetteer artifacts a drop-in actually opened, for its `/status` surface (#997).
  *
- * The set is derived from the same {@link GazetteerPaths} the banner prints, and it follows the backend selection rather
- * than the search order: `createResolverBackend` opens the candidate gazetteer alone when one is resolved, so listing
- * the admin databases beside it would name databases this process never read. The reverse geocoder is the exception —
- * it opens the first admin database whatever the forward path chose. It can be a different build. Therefore, it is
- * reported separately unless it is already in the list.
+ * The set is derived from the same {@link GazetteerPaths} the banner prints, and it follows the
+ * backend selection rather than the search order: `createResolverBackend` opens the candidate
+ * gazetteer alone when one is resolved, so listing the admin databases beside it would name
+ * databases this process never read. The reverse geocoder is the exception — it opens the first
+ * admin database whatever the forward path chose. It can be a different build.
+ * Therefore, it is reported separately unless it is already in the list.
  *
- * Call once at boot: a server holds its handles for its whole life, so the artifact it serves from is the one it opened
- * at start, whatever a later symlink swap points at.
+ * Call once at boot: a server holds its handles for its whole life, so the artifact it
+ * serves from is the one it opened at start, whatever a later symlink swap points at.
  */
 export async function gazetteerFreshness({
 	adminDBPath,
@@ -218,8 +224,8 @@ export interface DropInCLI {
 	 */
 	usage: string[]
 	/**
-	 * Boot the listener and resolve once it is bound. the engine stamp is the process's, resolved here so every drop-in
-	 * carries it the same way and the license notice prints after the listening banner.
+	 * Boot the listener and resolve once it is bound. the engine stamp is the process's, resolved here
+	 * so every drop-in carries it the same way and the license notice prints after the listening banner.
 	 */
 	serve: (engineStamp: ResolvedEngineStamp) => Promise<void>
 	openapi: () => void | Promise<void>
@@ -228,8 +234,8 @@ export interface DropInCLI {
 /**
  * Dispatch a drop-in CLI's subcommand off the first positional.
  *
- * `strict: false` because the per-command parsers own their own flags — this pass only reads the positional. An unknown
- * command exits 1. a bare invocation prints usage and exits 0.
+ * `strict: false` because the per-command parsers own their own flags — this pass only reads
+ * the positional. An unknown command exits 1. a bare invocation prints usage and exits 0.
  */
 export async function runDropInCLI({ binaryName, openapi, serve, usage }: DropInCLI): Promise<void> {
 	const command = parseArguments({ strict: false, allowPositionals: true }).positionals[0]

@@ -40,7 +40,8 @@ export interface MeasureResolutionsOptions extends CoastalIngestOptions, Resolut
 export interface ResolutionMeasurementReport {
 	features: number
 	/**
-	 * The count each measured layer declares for itself. A run whose streamed total differs read a truncated file.
+	 * The count each measured layer declares for itself. A run whose streamed
+	 * total differs read a truncated file.
 	 */
 	declaredFeatureCounts: Record<string, number>
 	measurements: CellIndexMeasurement[]
@@ -51,8 +52,9 @@ const DEFAULT_PROGRESS_EVERY = 2000
 /**
  * Measure every candidate resolution over the real source, keeping the scenarios apart.
  *
- * @throws {Error} When a layer's streamed feature count does not match the count it declares. A short read produces a
- *   well-formed table describing a shorter coastline, which is the partial result that must throw.
+ * @throws {Error} When a layer's streamed feature count does not match the count it declares.
+ *   A short read produces a well-formed table describing a shorter coastline,
+ *   which is the partial result that must throw.
  */
 export async function measureCoastalCellResolutions(
 	options: MeasureResolutionsOptions

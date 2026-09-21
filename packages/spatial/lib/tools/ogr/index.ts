@@ -41,13 +41,13 @@ export interface ReadOGRLayerIdentityOptions {
 	 */
 	path: string
 	/**
-	 * Layer inside it, asserted against what the source answers. Omitted, the source's first layer answers and only its
-	 * presence is checked.
+	 * Layer inside it, asserted against what the source answers.
+	 * Omitted, the source's first layer answers and only its presence is checked.
 	 */
 	layer?: string
 	/**
-	 * The epsg code the source must declare. A source declaring anything else is a product change rather than a variation
-	 * to absorb.
+	 * The epsg code the source must declare. A source declaring anything else is a
+	 * product change rather than a variation to absorb.
 	 */
 	expectEPSG: number
 	/**
@@ -91,16 +91,18 @@ export interface ReadOGRLayerIdentityOptions {
 const OGRINFO_MAX_BUFFER = 32 * 1024 * 1024
 
 /**
- * Ordinates in a 2D extent: `minLon, minLat, maxLon, maxLat`. A shorter array is a 3D or degenerate extent this reader
- * does not understand rather than a 2D one with something missing.
+ * Ordinates in a 2D extent: `minLon, minLat, maxLon, maxLat`.
+ * A shorter array is a 3D or degenerate extent this reader does not understand
+ * rather than a 2D one with something missing.
  */
 const EXTENT_ORDINATES = 4
 
 /**
- * Read what the source declares about itself, and refuse a projection the calling ingest was not written for.
+ * Read what the source declares about itself, and refuse a projection the
+ * calling ingest was not written for.
  *
- * @throws {Error} When the layer is missing, declares no epsg authority code, declares one other than `expectEPSG`,
- *   reports no feature count, or fails a `requireExtent`/`requireFields` condition.
+ * @throws {Error} When the layer is missing, declares no epsg authority code, declares one other than
+ *   `expectEPSG`, reports no feature count, or fails a `requireExtent`/`requireFields` condition.
  */
 export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions): Promise<OGRLayerIdentity> {
 	const { stdout } = await runFile(
@@ -135,8 +137,8 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 		throw new Error(`${options.context}: ${options.path} does not carry a layer named ${stringifyJSON(options.layer)}`)
 	}
 
-	// The subject a refusal names: the layer where one was asked for, the dataset itself where the source's own first
-	// layer answered.
+	// The subject a refusal names: the layer where one was asked for, the dataset itself
+	// where the source's own first layer answered.
 	const subject = options.layer ?? options.path
 
 	const geometry = described.geometryFields?.[0]

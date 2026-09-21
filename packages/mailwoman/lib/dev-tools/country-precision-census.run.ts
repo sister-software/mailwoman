@@ -68,18 +68,19 @@ const NAME_PATTERN = new RegExp(
 /**
  * The country an input names, or null.
  *
- * Deliberately exact-name only: no ISO codes, no abbreviations. `GA` is Georgia the US state and Gabon's alpha-2 at
- * once. Used to select the population — a row is in scope when its input names the country the board declares for it —
- * never as truth about what the parse should answer, for the reason the file header states.
+ * Deliberately exact-name only: no ISO codes, no abbreviations.
+ * `GA` is Georgia the US state and Gabon's alpha-2 at once.
+ * Used to select the population — a row is in scope when its input names the country the board declares
+ * for it — never as truth about what the parse should answer, for the reason the file header states.
  */
 function namedCountry(input: string): string | null {
 	return NAME_PATTERN.exec(input)?.[1] ?? null
 }
 
 /**
- * Name-to-alpha-2, folded for lookup. The parse answers a surface form (`Canada`, `United Kingdom`, `España`) and the
- * board states a code, so one side has to cross over. crossing the parse's side keeps the board's field untouched as
- * the reference.
+ * Name-to-alpha-2, folded for lookup. The parse answers a surface form
+ * (`Canada`, `United Kingdom`, `España`) and the board states a code, so one side has to
+ * cross over. crossing the parse's side keeps the board's field untouched as the reference.
  */
 const CODE_BY_FOLDED_NAME = new Map(
 	Object.entries(CountryISO2).map(([name, code]) => [name.trim().toLowerCase(), code])
@@ -88,10 +89,11 @@ const CODE_BY_FOLDED_NAME = new Map(
 /**
  * Surface forms ISO 3166-1 does not carry as alpha-2, and which a parse legitimately answers.
  *
- * `UK` is the one that matters and it is not a parser error: the alpha-2 for the United Kingdom is `GB`, `UK` is
- * exceptionally reserved, and every British address in the wild writes the second. The first version of this census
- * scored `14 New St, London EC2M 4HE, UK` and `West End, Woking, UK` as contradictions, which charged the parser for
- * the difference between a standard and the language.
+ * `UK` is the one that matters and it is not a parser error: the alpha-2 for
+ * the United Kingdom is `GB`, `UK` is exceptionally reserved, and every British
+ * address in the wild writes the second. The first version of this census scored
+ * `14 New St, London EC2M 4HE, UK` and `West End, Woking, UK` as contradictions,
+ * which charged the parser for the difference between a standard and the language.
  */
 const SURFACE_ALIASES: Readonly<Record<string, string>> = {
 	uk: "GB",
@@ -103,8 +105,9 @@ const SURFACE_ALIASES: Readonly<Record<string, string>> = {
 /**
  * The alpha-2 a parsed country surface form denotes, or null when this table cannot place it.
  *
- * Null is a real answer and is counted as such: a surface form the codex does not carry is not a contradiction, it is
- * an unresolved reading, and scoring it as a miss would charge the parser for this table's gaps.
+ * Null is a real answer and is counted as such: a surface form the codex does not
+ * carry is not a contradiction, it is an unresolved reading, and scoring it as a
+ * miss would charge the parser for this table's gaps.
  */
 function codeOf(surface: string | null | undefined): string | null {
 	if (!surface) return null
@@ -147,16 +150,16 @@ for (const seed of cases) {
 
 	const truth = seed.country?.toUpperCase()
 
-	// A row with no declared country has no reference, and guessing one from the input is the error this
-	// census was rewritten to avoid.
+	// A row with no declared country has no reference, and guessing one from the
+	// input is the error this census was rewritten to avoid.
 	if (!truth) continue
 
 	const named = namedCountry(seed.input)
 
-	// the population is the question. "Did we get a named country wrong" is only askable where the input
-	// names one, and where the one it names is the row's own — 361 of the 982 rows. The other 621 either
-	// name no country (`Kabul`, `Al Wasl Road`) or name a decoy inside a venue, and scoring either as a
-	// miss measures the board's composition rather than the parser.
+	// the population is the question. "Did we get a named country wrong" is only askable
+	// where the input names one, and where the one it names is the row's own — 361 of the 982 rows.
+	// The other 621 either name no country (`Kabul`, `Al Wasl Road`) or name a decoy inside a venue,
+	// and scoring either as a miss measures the board's composition rather than the parser.
 	if (!named || codeOf(named) !== truth) continue
 
 	const parsed = decodeAsJSON(await classifier.parse(seed.input)).country ?? null

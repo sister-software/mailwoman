@@ -53,19 +53,22 @@ import type { VenueWordHint, VenueWordHintTable } from "#venue-word-hints"
 export const VENUE_RATIO_MIN = 0.9
 
 /**
- * Minimum absolute occurrences in the poi-name corpus — below this the ratio is a small-denominator artifact.
+ * Minimum absolute occurrences in the poi-name corpus — below this the ratio
+ * is a small-denominator artifact.
  */
 export const POI_FREQ_MIN = 100
 
 /**
- * Minimum share of the token's poi occurrences held by its top category class. The class grain (food, retail, civic, …)
- * is deliberate: single-token evidence rarely separates `mexican_restaurant` from `taco_restaurant`, but reliably
- * separates "this names a food venue" from "this names a place".
+ * Minimum share of the token's poi occurrences held by its top category class.
+ * The class grain (food, retail, civic, …) is deliberate: single-token evidence rarely
+ * separates `mexican_restaurant` from `taco_restaurant`, but reliably separates
+ * "this names a food venue" from "this names a place".
  */
 export const TOP_CLASS_SHARE_MIN = 0.7
 
 /**
- * Maximum per-million rate in primary place names — the toponym suppressor (see the header for the measured gap).
+ * Maximum per-million rate in primary place names — the toponym suppressor
+ * (see the header for the measured gap).
  */
 export const PLACE_RATE_PPM_MAX = 5
 

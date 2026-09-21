@@ -58,8 +58,8 @@ function memoryDatabase<DB>(): DatabaseClient<DB> {
 }
 
 /**
- * Rows measured against the shipped `candidate.db` on 2026-08-16 — the operator's three false absences plus the NL PC6
- * pair whose stem hides the unit code.
+ * Rows measured against the shipped `candidate.db` on 2026-08-16 — the operator's three
+ * false absences plus the NL PC6 pair whose stem hides the unit code.
  */
 const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name_key" | "spr_id">> = [
 	// Each key is minted from the surface the build folds, never written folded by hand — for an alias row that
@@ -172,8 +172,8 @@ function rowFor(rows: LookupRow[], query: string): LookupRow {
 
 describe("lookupCandidate", () => {
 	it("finds the three places an exact `name` probe reports as absent", async () => {
-		// The trap this source exists to prevent: `name_key` is the fold, so `where name = 'Porto Petro'` on a
-		// build that stores `porto petro` answers zero rows and reads as a gazetteer gap.
+		// The trap this source exists to prevent: `name_key` is the fold, so `where name = 'Porto Petro'`
+		// on a build that stores `porto petro` answers zero rows and reads as a gazetteer gap.
 		const db = await candidateFixture()
 		const rows = lookupCandidate(db, ["Porto Petro", "Illes Balears"])
 
@@ -210,9 +210,10 @@ describe("lookupCandidate", () => {
 	})
 
 	it("tries the whitespace fold BEFORE the qualifier strip", async () => {
-		// Measured against the shipped candidate.db: strip-first sends `1012 LG` to `1012`, resolving the NL PC6
-		// unit to its 4-digit stem (and to a DK row) while the unit's own record sits under `1012lg`. The runtime
-		// folds whitespace at the top of findPlace, so this order is the runtime's rather than a preference.
+		// Measured against the shipped candidate.db: strip-first sends `1012 LG` to `1012`,
+		// resolving the NL PC6 unit to its 4-digit stem (and to a DK row) while the unit's own
+		// record sits under `1012lg`. The runtime folds whitespace at the top of findPlace,
+		// so this order is the runtime's rather than a preference.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["1012 LG"])
 
@@ -248,8 +249,8 @@ describe("lookupCandidate", () => {
 })
 
 /**
- * Rows measured against the shipped `admin-global-priority.db`: one live place, and the GB name whose thirteen records
- * are every one deprecated.
+ * Rows measured against the shipped `admin-global-priority.db`: one live place,
+ * and the GB name whose thirteen records are every one deprecated.
  */
 async function wofFixture(): Promise<DatabaseClient<WOFDatabase>> {
 	const db = memoryDatabase<WOFDatabase>()
@@ -283,8 +284,9 @@ describe("lookupWOF", () => {
 	})
 
 	it("reports a deprecated-only name as the THIRD state, not as absence", async () => {
-		// The FTS content is built with `is_current != 0 and is_deprecated = 0` applied, so the resolver's index
-		// cannot hold this record at all — the `names` route is the only cheap way to see that it exists.
+		// The FTS content is built with `is_current != 0 and is_deprecated = 0` applied,
+		// so the resolver's index cannot hold this record at all — the `names` route
+		// is the only cheap way to see that it exists.
 		const db = await wofFixture()
 		const [row] = lookupWOF([{ name: "admin.db", db }], ["Birmingham/Wolverhampton/Walsall/Dudley"])
 
@@ -395,8 +397,9 @@ describe("lookupCodex", () => {
 
 describe("lookupPostcodeAnchor", () => {
 	/**
-	 * Centroids measured off the shipped binaries and rounded: `10118` carries one, `01477` is one of the 414 keys in
-	 * `postcode-us.bin` that carry none, and `SW1A2AA` is a GB key the US bundle does not hold.
+	 * Centroids measured off the shipped binaries and rounded: `10118` carries one,
+	 * `01477` is one of the 414 keys in `postcode-us.bin` that carry none,
+	 * and `SW1A2AA` is a GB key the US bundle does not hold.
 	 */
 	const resolver = {
 		lookup: (postcode: string) =>

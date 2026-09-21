@@ -66,8 +66,8 @@ describe("parseForm499", () => {
 
 		expect(rows[1]!.usfContributor).toBe(false)
 
-		// Row 3's raw FRN in the fixture is unpadded (7 digits) — parseForm499 must zero-pad it via
-		// toFRN, same as any other FRN source.
+		// Row 3's raw FRN in the fixture is unpadded (7 digits) — parseForm499 must
+		// zero-pad it via toFRN, same as any other FRN source.
 		expect(rows[2]!.frn).toBe("0003456789")
 	})
 

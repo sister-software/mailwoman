@@ -10,7 +10,8 @@
  */
 
 /**
- * Cell width in code points, so a multi-byte name pads to what a reader sees rather than to its UTF-16 length.
+ * Cell width in code points, so a multi-byte name pads to what a reader sees
+ * rather than to its UTF-16 length.
  */
 function cellWidth(cell: string): number {
 	return [...cell].length
@@ -19,9 +20,9 @@ function cellWidth(cell: string): number {
 /**
  * Render a GitHub-flavoured markdown table, padded the way `oxfmt` would pad it.
  *
- * A column is at least three characters wide, which is the narrowest separator GitHub accepts. A row shorter than the
- * header is padded with empty cells rather than raising: a report that drops a column should print a gap rather than
- * fail.
+ * A column is at least three characters wide, which is the narrowest separator GitHub accepts.
+ * A row shorter than the header is padded with empty cells rather than raising:
+ * a report that drops a column should print a gap rather than fail.
  */
 export function renderMarkdownTable(header: readonly string[], rows: ReadonlyArray<readonly string[]>): string[] {
 	const widths = header.map((cell, column) =>

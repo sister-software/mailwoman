@@ -90,9 +90,10 @@ test.describe("Chrome — the floating controls", () => {
 	})
 
 	test("a pointer move never queries every layer in the style", async ({ page }) => {
-		// The real basemap, because the canned runtime's style carries no label layers and the hook returns before it
-		// queries anything — a pass there would mean nothing. The basemap arrives well before the model, so this waits
-		// on the style having layers rather than on the geocoder being ready.
+		// The real basemap, because the canned runtime's style carries no label layers
+		// and the hook returns before it queries anything — a pass there would mean nothing.
+		// The basemap arrives well before the model, so this waits on the style having layers
+		// rather than on the geocoder being ready.
 		await page.goto("/")
 
 		await page.waitForFunction(
@@ -113,9 +114,9 @@ test.describe("Chrome — the floating controls", () => {
 	test("the bundled stylesheet keeps both halves of every vendor pair", async ({ page, request }) => {
 		await openChrome(page)
 
-		// The minifier collapses two declarations carrying the same value and keeps the last, so a standard property
-		// written before its `-webkit-` twin is dropped from the output while the source still reads correctly. This is
-		// the only place that difference is visible.
+		// The minifier collapses two declarations carrying the same value and keeps the last,
+		// so a standard property written before its `-webkit-` twin is dropped from the output
+		// while the source still reads correctly. This is the only place that difference is visible.
 		const href = await page.locator('link[rel="stylesheet"]').first().getAttribute("href")
 
 		expect(href, "the page links a stylesheet").not.toBeNull()
@@ -127,8 +128,8 @@ test.describe("Chrome — the floating controls", () => {
 
 			if (prefixed === 0) continue
 
-			// Every prefixed declaration has a standard one beside it. `-webkit-x:` also contains `x:`, so the standard
-			// count is the raw count minus the prefixed ones.
+			// Every prefixed declaration has a standard one beside it.
+			// `-webkit-x:` also contains `x:`, so the standard count is the raw count minus the prefixed ones.
 			const standard = css.split(`${property}:`).length - 1 - prefixed
 
 			expect(standard, `${property} survived the bundle beside its -webkit- twin`).toBeGreaterThanOrEqual(prefixed)
@@ -143,9 +144,10 @@ test.describe("Chrome — the floating controls", () => {
 
 		const popover = page.locator(".mw-map-footer__popover")
 
-		// reachable rather than merely visible. The popover shipped in the DOM carrying the right credits while the footer
-		// strip's own `overflow-x` clipped it away, and both a `textContent` read and a `toBeVisible` assertion passed
-		// over that — a clipped element keeps its box. Only hit-testing tells the difference.
+		// reachable rather than merely visible. The popover shipped in the DOM carrying
+		// the right credits while the footer strip's own `overflow-x` clipped it away,
+		// and both a `textContent` read and a `toBeVisible` assertion passed over that —
+		// a clipped element keeps its box. Only hit-testing tells the difference.
 		await expectReachable(page, ".mw-map-footer__popover")
 		await expect(popover).toContainText("OpenStreetMap")
 

@@ -33,11 +33,12 @@ export interface InferEvidenceChannels {
 }
 
 /**
- * The `infer()` signature — one exported type for the three call surfaces that previously restated it
- * (`ONNXRunner.infer`, `WebONNXRunner.infer`, and the classifier's `NeuralRunner` interface).
+ * The `infer()` signature — one exported type for the three call surfaces that previously restated
+ * it (`ONNXRunner.infer`, `WebONNXRunner.infer`, and the classifier's `NeuralRunner` interface).
  *
  * @param tokenIDs The id sequence produced by the tokenizer (no special tokens added).
- * @param anchor Optional postcode-anchor channel (#239/#240) — fed only when the graph declares the anchor inputs.
+ * @param anchor Optional postcode-anchor channel (#239/#240) — fed only
+ *   when the graph declares the anchor inputs.
  * @param gazetteer Optional gazetteer-anchor channel (#464) — same feed interface as the postcode anchor.
  * @param country Optional country-lexicon channel (#1104).
  * @param evidence Optional evidence-bundle channels (Option-A).
@@ -68,29 +69,33 @@ export interface InferResult {
 	 */
 	numLabels: number
 	/**
-	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order), when the model exports it (v1.1.0+,
+	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order),
+	 * when the model exports it (v1.1.0+,
 	 * #511 Tier A). Absent on older bundles — consumers must treat undefined as "no address-system detection available".
 	 */
 	localeLogits?: number[]
 	/**
 	 * #727 stage-2: per-span type scores from the semi-Markov span head (`span_scores` output, v3.x+). Indexed
-	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`, of length `lengthIdx + 1`
-	 * tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the weights bundle's `semi-crf-transitions.json`,
-	 * never hardcoded — the PLACETYPE_ORDER class).
+	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`,
+	 * of length `lengthIdx + 1` tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the
+	 * weights bundle's `semi-crf-transitions.json`, never hardcoded — the PLACETYPE_ORDER class).
 	 *
-	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span decode available" and fall back to the
-	 * BIO path. Fetching it costs ~0.75 ms (CPU, S=128); a runtime that never reads it pays nothing (ORT prunes the
-	 * unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
+	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span decode
+	 * available" and fall back to the BIO path. Fetching it costs ~0.75 ms (CPU, S=128);
+	 * a runtime that never reads it pays nothing (ORT prunes the unfetched branch) —
+	 * measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
 	 */
 	spanScores?: number[][][]
 	/**
-	 * Max span length (the `L` axis of {@link spanScores}). Absent iff `spanScores` is.
+	 * Max span length (the `L` axis of {@link spanScores}).
+	 * Absent iff `spanScores` is.
 	 */
 	maxSpan?: number
 }
 
 /**
- * A packed tensor payload: the typed-array data plus the dims a runner hands to its `ort.Tensor` constructor.
+ * A packed tensor payload: the typed-array data plus the dims a runner hands
+ * to its `ort.Tensor` constructor.
  */
 export interface PackedFeed<Data extends Float32Array | BigInt64Array = Float32Array> {
 	data: Data
@@ -98,8 +103,8 @@ export interface PackedFeed<Data extends Float32Array | BigInt64Array = Float32A
 }
 
 /**
- * The `{data, dims}` view of an output tensor `decodeInferOutput` reads — structurally satisfied by an `ort.Tensor`
- * whose float32 dtype the export interface guarantees.
+ * The `{data, dims}` view of an output tensor `decodeInferOutput` reads — structurally
+ * satisfied by an `ort.Tensor` whose float32 dtype the export interface guarantees.
  */
 export interface OutputTensor {
 	readonly data: Float32Array
@@ -107,8 +112,9 @@ export interface OutputTensor {
 }
 
 /**
- * Pack the token ids into the fixed-length `input_ids`/`attention_mask` pair: pad to `fixedSeqLen` with id 0 + mask 0,
- * truncate if longer. `seqLen` is the real (unpadded) length every downstream read trims to.
+ * Pack the token ids into the fixed-length `input_ids`/`attention_mask` pair:
+ * pad to `fixedSeqLen` with id 0 + mask 0, truncate if longer.
+ * `seqLen` is the real (unpadded) length every downstream read trims to.
  */
 export function packTokenFeed(
 	tokenIDs: number[],
@@ -131,8 +137,9 @@ export function packTokenFeed(
 }
 
 /**
- * Pack a char-path encoding (`char_ids (S, W)` + `attention_mask (S)`, already S-padded by the encoder) into the two
- * int64 tensors the char graph declares. `seqLen` is the count of real units, what the logits are trimmed back to.
+ * Pack a char-path encoding (`char_ids (S, W)` + `attention_mask (S)`, already S-padded by the encoder)
+ * into the two int64 tensors the char graph declares. `seqLen` is the count of
+ * real units, what the logits are trimmed back to.
  */
 export function packCharFeed(
 	charIDs: ReadonlyArray<readonly number[]>,
@@ -166,9 +173,9 @@ export function packCharFeed(
 }
 
 /**
- * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence` tensors, zero-padded to
- * `fixedSeqLen`. An `undefined` channel packs all zeros — the confidence=0 identity, the model's channel-off behavior
- * for a graph that declares the inputs as mandatory.
+ * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence` tensors,
+ * zero-padded to `fixedSeqLen`. An `undefined` channel packs all zeros — the confidence=0
+ * identity, the model's channel-off behavior for a graph that declares the inputs as mandatory.
  */
 function packChannelFeed(
 	channel: InferChannel | undefined,
@@ -199,14 +206,16 @@ function packChannelFeed(
 }
 
 /**
- * Pack every soft-feed channel the graph declares, in feed-name order. Every channel is conditioned on the graph's
- * declared inputs: a supplied channel the graph does not declare is never fed (an undeclared feed crashes ORT), and a
- * declared channel the caller did not supply gets the zero-fill confidence=0 identity so the session never throws on a
- * missing required input. The anchor channel historically skipped the declared-input check on the supplied path — an
- * undeclared feed — and now takes the same check as every other channel.
+ * Pack every soft-feed channel the graph declares, in feed-name order.
+ * Every channel is conditioned on the graph's declared inputs: a supplied channel
+ * the graph does not declare is never fed (an undeclared feed crashes ORT),
+ * and a declared channel the caller did not supply gets the zero-fill
+ * confidence=0 identity so the session never throws on a missing required input.
+ * The anchor channel historically skipped the declared-input check on the supplied path —
+ * an undeclared feed — and now takes the same check as every other channel.
  *
- * `supplied` dims read the channel's own rows. the fallback dim covers the zero-fill path (and, for the evidence
- * channels, a supplied channel with no rows).
+ * `supplied` dims read the channel's own rows. the fallback dim covers the zero-fill path
+ * (and, for the evidence channels, a supplied channel with no rows).
  */
 export function packSoftChannelFeeds(
 	inputNames: readonly string[],
@@ -250,8 +259,9 @@ export function packSoftChannelFeeds(
 }
 
 /**
- * Decode a session's outputs into an {@link InferResult}, trimmed to the real `seqLen` (the pad tail is never real).
- * `localeLogits` and `spanScores` are optional exactly as the exports are — absent tensors yield absent fields.
+ * Decode a session's outputs into an {@link InferResult}, trimmed to the real `seqLen`
+ * (the pad tail is never real). `localeLogits` and `spanScores` are optional exactly
+ * as the exports are — absent tensors yield absent fields.
  */
 export function decodeInferOutput(
 	output: { logits?: OutputTensor; localeLogits?: OutputTensor; spanScores?: OutputTensor },
@@ -280,8 +290,9 @@ export function decodeInferOutput(
 	// Locale head (#511 Tier A): present on v1.1.0+ exports, absent (and optional) before.
 	const localeLogits = output.localeLogits ? Array.from(output.localeLogits.data) : undefined
 
-	// Span head (#727 stage-2): present on v3.x+ exports. Same optional interface as the locale head
-	// — a pre-v3 bundle simply has no `span_scores` output and the BIO path is unaffected.
+	// Span head (#727 stage-2): present on v3.x+ exports.
+	// Same optional interface as the locale head — a pre-v3 bundle simply has no
+	// `span_scores` output and the BIO path is unaffected.
 	const spanTensor = output.spanScores
 	let spanScores: number[][][] | undefined
 	let maxSpan: number | undefined
@@ -322,12 +333,13 @@ export function decodeInferOutput(
 }
 
 /**
- * Back-compat inference of the required soft-feature channels from an ONNX model's declared input names (#718). A model
- * that exports `anchor_features` / `gazetteer_features` declared those channels mandatory at train time — feeding zeros
- * is the channel-off identity, but a model trained with the channel is OOD when scored without it. Cards without a
- * `requires` block (every pre-#718 bundle) route through here so the fail-closed guard still guards them.
- * Conventions/bridge are not graph-observable (no dedicated input), so they're left undeclared here — only the card
- * declares them.
+ * Back-compat inference of the required soft-feature channels from an ONNX model's declared
+ * input names (#718). A model that exports `anchor_features` / `gazetteer_features`
+ * declared those channels mandatory at train time — feeding zeros is the channel-off
+ * identity, but a model trained with the channel is OOD when scored without it.
+ * Cards without a `requires` block (every pre-#718 bundle) route through here
+ * so the fail-closed guard still guards them. Conventions/bridge are not graph-observable
+ * (no dedicated input), so they're left undeclared here — only the card declares them.
  */
 export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): RequiredChannels {
 	const names = new Set(inputNames)

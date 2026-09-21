@@ -33,7 +33,8 @@ import { openSealedArtifact } from "#lookup/index"
 import { provenanceFor, type Provenance } from "#tool-kit"
 
 /**
- * One lookup that resolved nothing, with the constraint that was in force and what the gazetteer holds regardless.
+ * One lookup that resolved nothing, with the constraint that was in force
+ * and what the gazetteer holds regardless.
  */
 interface ConstraintMiss {
 	id: string
@@ -42,8 +43,9 @@ interface ConstraintMiss {
 	value: string
 	name_key: string
 	/**
-	 * The placetype band the query was scoped to. Chosen by the model'S TAG, which is the whole point: a wrong tag makes
-	 * a row we hold unreachable, and the miss is indistinguishable from the row not existing.
+	 * The placetype band the query was scoped to. Chosen by the model'S TAG,
+	 * which is the whole point: a wrong tag makes a row we hold unreachable,
+	 * and the miss is indistinguishable from the row not existing.
 	 */
 	band: string
 	checks: string[]
@@ -53,8 +55,9 @@ interface ConstraintMiss {
 	 */
 	elsewhere: string[]
 	/**
-	 * Candidates present on a null pick means the rows came back and lost downstream. none means the probe itself
-	 * returned an empty set. Calling a scoring filter an empty gazetteer is the misreading this separates.
+	 * Candidates present on a null pick means the rows came back and lost downstream.
+	 * none means the probe itself returned an empty set. Calling a scoring filter
+	 * an empty gazetteer is the misreading this separates.
 	 */
 	had_candidates: boolean
 }
@@ -62,9 +65,10 @@ interface ConstraintMiss {
 /**
  * What the census reader needs of a connection it is handed: one prepared read, and a way to end it.
  *
- * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is injectable — the tests supply a fake
- * that answers fixed rows without opening a file. `destroy` rather than `close` is what a `DatabaseClient` offers, so
- * the real opener satisfies this without an adapter.
+ * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is
+ * injectable — the tests supply a fake that answers fixed rows without opening a file.
+ * `destroy` rather than `close` is what a `DatabaseClient` offers, so the real
+ * opener satisfies this without an adapter.
  */
 interface CensusDatabase {
 	prepare(sql: string): { all(nameKey: string): Array<Record<string, unknown>> }
@@ -78,8 +82,8 @@ interface CheckReading {
 	fired: number
 	resolved_nothing: number
 	/**
-	 * Of the misses under this constraint set, how many hold the key in another band — the subset a retrieval change
-	 * could convert, as opposed to the subset that needs data we do not have.
+	 * Of the misses under this constraint set, how many hold the key in another band — the subset
+	 * a retrieval change could convert, as opposed to the subset that needs data we do not have.
 	 */
 	reachable_elsewhere: number
 }
@@ -91,7 +95,8 @@ export interface ConstraintCensusResult {
 	n_lookups: number
 	n_resolved_nothing: number
 	/**
-	 * We hold the row and could not reach it. A retrieval fix, and the only column a cross-band retry can move.
+	 * We hold the row and could not reach it. A retrieval fix, and the only
+	 * column a cross-band retry can move.
 	 */
 	n_reachability: number
 	/**
@@ -101,7 +106,8 @@ export interface ConstraintCensusResult {
 	n_coverage: number
 	checks: CheckReading[]
 	/**
-	 * Reachability classes, largest first: which band was probed, and which bands actually hold the key. The largest
+	 * Reachability classes, largest first: which band was probed, and
+	 * which bands actually hold the key. The largest
 	 * class is the one a cross-band retry should try first.
 	 */
 	by_band: Array<{ probed: string; found_in: string[]; n: number; examples: ConstraintMiss[] }>
@@ -111,10 +117,11 @@ export interface ConstraintCensusResult {
 }
 
 /**
- * Above this, an eval that never once accompanies a successful pick is called inert rather than merely unlucky.
+ * Above this, an eval that never once accompanies a successful pick is called inert
+ * rather than merely unlucky.
  *
- * Small on purpose: the claim is about a mechanism that has never worked, and at n below this the honest report is "not
- * enough firings to say", which the rendering states instead.
+ * Small on purpose: the claim is about a mechanism that has never worked, and at n below
+ * this the honest report is "not enough firings to say", which the rendering states instead.
  */
 const INERT_MIN_FIRINGS = 20
 
@@ -176,8 +183,9 @@ export async function runConstraintCensus(
 	dependencies: { openArtifact?: OpenCensusArtifact } = {}
 ): Promise<ConstraintCensusResult> {
 	const set = await resolveInputSet(args.inputs ?? { kind: "board" })
-	// Tracing is the census's entire input, and the band probe is what separates reachability from coverage. Both are
-	// forced on regardless of what the caller passed — neither can change an answer, so neither is a change.
+	// Tracing is the census's entire input, and the band probe is what separates
+	// reachability from coverage. Both are forced on regardless of what the caller passed —
+	// neither can change an answer, so neither is a change.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 	const dataRoot = String(engine.effective.dataRoot ?? "")
 	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(`${dataRoot}/wof/candidate.db`)

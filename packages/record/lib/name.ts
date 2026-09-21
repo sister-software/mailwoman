@@ -161,8 +161,8 @@ const SUFFIXES = new Set([
 ])
 
 /**
- * Surname particles. Consecutive particles fold together (`de` + `la` → `de la`), and the next non-particle token
- * begins the bare surname.
+ * Surname particles. Consecutive particles fold together (`de` + `la` → `de la`),
+ * and the next non-particle token begins the bare surname.
  */
 const PARTICLES = new Set([
 	"al",
@@ -204,8 +204,8 @@ const norm = (token: string): string => token.replace(/\.$/, "").toLowerCase()
 const countChar = (s: string, c: string): number => s.split(c).length - 1
 
 /**
- * Parse a full name into components. Returns `null` for empty input. Best-effort and non-throwing — ambiguous input
- * degrades gracefully rather than erroring.
+ * Parse a full name into components. Returns `null` for empty input.
+ * Best-effort and non-throwing — ambiguous input degrades gracefully rather than erroring.
  */
 export function parsePersonName(input: string | null | undefined): PersonName | null {
 	if (!isPresent(input)) return null
@@ -327,14 +327,15 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 }
 
 /**
- * The order a person name prints in. Western / romanized only, the same scope {@linkcode parsePersonName} declares: a
- * family-first system is not this order reversed, and inventing one here would be worse than having none.
+ * The order a person name prints in. Western / romanized only, the same scope
+ * {@linkcode parsePersonName} declares: a family-first system is not this order reversed,
+ * and inventing one here would be worse than having none.
  */
 const NAME_ORDER: readonly (keyof PersonName)[] = ["prefix", "given", "middle", "familyParticle", "family", "suffix"]
 
 /**
- * The parts {@linkcode formatPersonName} prints for the short style — what a person is addressed by, without the title,
- * the nickname or the letters after.
+ * The parts {@linkcode formatPersonName} prints for the short style — what a person
+ * is addressed by, without the title, the nickname or the letters after.
  */
 const SHORT_NAME_ORDER: readonly (keyof PersonName)[] = ["given", "familyParticle", "family"]
 
@@ -346,12 +347,13 @@ export type PersonNameStyle = "full" | "short"
 /**
  * Render a {@linkcode PersonName} back to a string — the inverse of {@linkcode parsePersonName}.
  *
- * `"full"` prints every part the parser identified except the nickname, which is an alternative to the given name
- * rather than an addition to it. `"short"` prints what a person is addressed by, which is the form a display label and
- * a match key want.
+ * `"full"` prints every part the parser identified except the nickname, which is an alternative
+ * to the given name rather than an addition to it. `"short"` prints what a person is
+ * addressed by, which is the form a display label and a match key want.
  *
- * The particle travels with the surname in both styles. The parser stores it separately so the matcher can compare
- * `Vega` independently of `de la`; printing them apart would produce a name nobody wrote.
+ * The particle travels with the surname in both styles.
+ * The parser stores it separately so the matcher can compare `Vega` independently of
+ * `de la`; printing them apart would produce a name nobody wrote.
  */
 export function formatPersonName(name: PersonName | null | undefined, style: PersonNameStyle = "full"): string {
 	if (!name) return ""

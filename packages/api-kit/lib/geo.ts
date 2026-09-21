@@ -21,7 +21,8 @@ export const PointGeometrySchema = z
 	.openapi("PointGeometry")
 
 /**
- * A `[minLon, minLat, maxLon, maxLat]`-style 4-tuple (photon's `extent` uses `[minLon, maxLat, maxLon, minLat]`).
+ * A `[minLon, minLat, maxLon, maxLat]`-style 4-tuple
+ * (photon's `extent` uses `[minLon, maxLat, maxLon, minLat]`).
  */
 export const BBoxSchema = z.tuple([z.number(), z.number(), z.number(), z.number()])
 

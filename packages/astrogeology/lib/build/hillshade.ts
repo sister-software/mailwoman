@@ -32,12 +32,14 @@ import { resolvePath, type PathBuilderLike } from "path-ts"
 import { BODIES, type BuildableBodyID } from "#bodies"
 
 /**
- * How far a source's width may differ from the body's circumference (or from 360°) and still count as a global mosaic.
+ * How far a source's width may differ from the body's circumference (or from 360°)
+ * and still count as a global mosaic.
  */
 const GLOBAL_EXTENT_TOLERANCE = 0.005
 
 /**
- * The whole-body extent every archive is tiled on, as `gdal_translate -a_ullr` takes it: west, north, east, south.
+ * The whole-body extent every archive is tiled on, as `gdal_translate -a_ullr`
+ * takes it: west, north, east, south.
  */
 const WHOLE_BODY_ULLR = ["-180", "90", "180", "-90"] as const
 
@@ -55,8 +57,8 @@ interface DEMGrid {
 }
 
 /**
- * The unit and width of a DEM's grid, from `gdalinfo`. A source that does not span the whole body is refused: the
- * extent assigned below is the whole body's.
+ * The unit and width of a DEM's grid, from `gdalinfo`. A source that does not span the
+ * whole body is refused: the extent assigned below is the whole body's.
  */
 async function readDEMGrid(demPath: PathBuilderLike, body: BuildableBodyID): Promise<DEMGrid> {
 	const { stdout } = await runFile("gdalinfo", ["-json", demPath])
@@ -96,22 +98,24 @@ export interface HillshadeBuildOptions {
 }
 
 /**
- * The terrarium encoding's zero point: a height of `-TERRARIUM_DATUM_METRES` encodes as byte zero. MapLibre reads
- * `height = (R * 256 + G + B / 256) - 32768`, so the envelope is ±32,768 m. Both bodies sit well inside it — mola spans
- * about −8,200 m to +21,200 m and lola about −9,100 m to +10,800 m — and the build refuses a DEM that does not, rather
- * than wrapping a height silently into a wrong one.
+ * The terrarium encoding's zero point: a height of `-TERRARIUM_DATUM_METRES` encodes as byte zero.
+ * MapLibre reads `height = (R * 256 + G + B / 256) - 32768`, so the envelope is ±32,768 m.
+ * Both bodies sit well inside it — mola spans about −8,200 m to +21,200 m
+ * and lola about −9,100 m to +10,800 m — and the build refuses a DEM that does not,
+ * rather than wrapping a height silently into a wrong one.
  */
 const TERRARIUM_DATUM_METRES = 32_768
 
 /**
- * `B` carries the fractional metre. The usgs mosaics are integer metres, so it is constant zero and the encoding keeps
- * its full 1 m precision without a third band computation.
+ * `B` carries the fractional metre. The usgs mosaics are integer metres, so it is constant zero
+ * and the encoding keeps its full 1 m precision without a third band computation.
  */
 const TERRARIUM_FRACTIONAL_BAND = "0"
 
 /**
- * Refuse a raster whose elevations do not fit terrarium's ±32,768 m envelope. A height outside it wraps to a different,
- * plausible-looking height rather than failing, which is the shape of defect a reader cannot see.
+ * Refuse a raster whose elevations do not fit terrarium's ±32,768 m envelope.
+ * A height outside it wraps to a different, plausible-looking height rather than failing,
+ * which is the shape of defect a reader cannot see.
  */
 async function assertWithinTerrariumEnvelope(rasterPath: string): Promise<void> {
 	const { stdout } = await runFile("gdalinfo", ["-json", "-stats", rasterPath])
@@ -149,12 +153,14 @@ export async function buildHillshadePMTiles(
 	const forTiling = resolvePath(scratch.path, "hillshade-4326.tif")
 	const mbtiles = resolvePath(scratch.path, "hillshade.mbtiles")
 
-	// 1. Resample the elevations and declare the tiling grid, in one pass. Averaging is meaningful here and nowhere
-	//    later: the mean of four heights is a height. The XYZ scheme is angular, so the epsg:4326 label with the
-	//    whole-body extent only tells gdal which grid to tile. The resize to exactly the requested zoom's pixel grid
-	//    is what fixes the tiling zoom, because the MBTiles driver picks it from the source resolution and nothing
-	//    else: its maxzoom is a metadata value and ZOOM_LEVEL an open option, and under both the 118 m Moon mosaic
-	//    landed at zoom 7 and 8 (907 MB and 2.98 GB) against a requested 6.
+	// 1. Resample the elevations and declare the tiling grid, in one pass.
+	//    Averaging is meaningful here and nowhere later: the mean of four heights is a height.
+	//    The XYZ scheme is angular, so the epsg:4326 label with the whole-body extent
+	//    only tells gdal which grid to tile. The resize to exactly the requested zoom's
+	//    pixel grid is what fixes the tiling zoom, because the MBTiles driver picks it
+	//    from the source resolution and nothing else: its maxzoom is a metadata value
+	//    and ZOOM_LEVEL an open option, and under both the 118 m Moon mosaic landed at zoom 7
+	//    and 8 (907 MB and 2.98 GB) against a requested 6.
 	const width = TILE_PIXELS * 2 ** options.maxZoom
 
 	const declare = [
@@ -175,13 +181,14 @@ export async function buildHillshadePMTiles(
 
 	await runFile("gdal_translate", declare)
 
-	// Read the range off the resampled raster rather than the source: it is the data that gets encoded, and it is a
-	// few hundred megapixels rather than the source's several gigabytes. A height outside the envelope would wrap to
-	// a wrong one silently, so it is refused instead.
+	// Read the range off the resampled raster rather than the source: it is the data that gets
+	// encoded, and it is a few hundred megapixels rather than the source's several gigabytes.
+	// A height outside the envelope would wrap to a wrong one silently, so it is refused instead.
 	await assertWithinTerrariumEnvelope(resampled)
 
-	// 2. Encode terrarium: R is the high byte of the offset height, G the low byte, B the fractional metre. Each band
-	//    is computed separately because `gdal_calc.py` writes one band per run, then the three are stacked.
+	// 2. Encode terrarium: R is the high byte of the offset height, G the low byte,
+	//    B the fractional metre. Each band is computed separately because `gdal_calc.py`
+	//    writes one band per run, then the three are stacked.
 	const offset = `(A.astype(numpy.float64) + ${TERRARIUM_DATUM_METRES})`
 
 	const red = [
@@ -235,15 +242,17 @@ export async function buildHillshadePMTiles(
 
 	await runFile("gdal_translate", materialize)
 
-	// 3. MBTiles with PNG tiles at the source's zoom, then overviews down to zoom 0, then PMTiles. The driver's zoom
-	//    estimate for a grid of exactly 256·2^z pixels sits a hair under z: measured on blank whole-globe rasters, auto
-	//    and lower answered 5 for 16,384 pixels and lower answered 1 for 1,024, while upper answered 6 and 2. upper is
-	//    the strategy that lands on the requested zoom.
-	// MBTiles is a Web Mercator format, so this step reprojects from the epsg:4326 grid above — and a reprojection
-	// resamples. `-r nearest` is stated rather than inherited: it is `gdal_translate`'s default today, and the encoded
-	// bytes are a base-256 numeral that any interpolating kernel would turn into heights that are not samples of
-	// anything. Verified by decoding the built archive at named places — Olympus Mons reads 20,009 m against the
-	// source's 20,012 m, Hellas Planitia −6,044 m against −6,044 m.
+	// 3. MBTiles with PNG tiles at the source's zoom, then overviews down to zoom 0,
+	//    then PMTiles. The driver's zoom estimate for a grid of exactly 256·2^z pixels sits
+	//    a hair under z: measured on blank whole-globe rasters, auto and lower answered
+	//    5 for 16,384 pixels and lower answered 1 for 1,024, while upper answered 6
+	//    and 2. upper is the strategy that lands on the requested zoom.
+	// MBTiles is a Web Mercator format, so this step reprojects from the epsg:4326 grid above —
+	// and a reprojection resamples. `-r nearest` is stated rather than inherited:
+	// it is `gdal_translate`'s default today, and the encoded bytes are a base-256 numeral
+	// that any interpolating kernel would turn into heights that are not samples of anything.
+	// Verified by decoding the built archive at named places — Olympus Mons reads 20,009
+	// m against the source's 20,012 m, Hellas Planitia −6,044 m against −6,044 m.
 	const tile = [
 		"-of",
 		"MBTILES",
@@ -266,9 +275,11 @@ export async function buildHillshadePMTiles(
 		throw new Error(`${mbtiles}: GDAL tiled at zoom ${zoom}, not the requested ${options.maxZoom}`)
 	}
 
-	// Overviews run from that zoom down to 0, resampled nearest. The bytes are a base-256 numeral by now: averaging
-	//    the high byte of two neighbours answers an elevation that is neither of them, and the error is a whole 256 m
-	//    step wherever the two straddle a boundary. Decimation keeps every overview pixel a real sample.
+	// Overviews run from that zoom down to 0, resampled nearest.
+	// The bytes are a base-256 numeral by now: averaging
+	//    the high byte of two neighbours answers an elevation that is neither of them,
+	//    and the error is a whole 256 m step wherever the two straddle a boundary.
+	//    Decimation keeps every overview pixel a real sample.
 	const overviews = ["-r", "nearest", mbtiles, ...Array.from({ length: zoom }, (_, index) => String(2 ** (index + 1)))]
 
 	if (zoom > 0) {

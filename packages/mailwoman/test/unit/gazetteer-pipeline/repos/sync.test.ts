@@ -119,8 +119,9 @@ describe("planRepoSync", () => {
 	})
 
 	it("does not refuse a clone that is level with its fork — the post-repoint state a naive @{u} read mistakes for unpushed work", () => {
-		// What the GB checkout looked like the moment its remote was re-pointed: level with `origin`, 35 ahead of the
-		// remote it was moved away from. Reading the latter refuses to sync a perfectly clean clone, permanently.
+		// What the GB checkout looked like the moment its remote was re-pointed:
+		// level with `origin`, 35 ahead of the remote it was moved away from.
+		// Reading the latter refuses to sync a perfectly clean clone, permanently.
 		expect(planRepoSync(forkOrigin, DIR, clone({ ahead: 0, behind: 0 })).action).toBe(SyncAction.UpToDate)
 	})
 

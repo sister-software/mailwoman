@@ -15,8 +15,8 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
-// The package's own `#` map rather than `./lib/…`: the config sits outside `lib/`, so a relative path into the
-// emitting project cannot be rewritten by the test project that checks this file.
+// The package's own `#` map rather than `./lib/…`: the config sits outside `lib/`, so a relative
+// path into the emitting project cannot be rewritten by the test project that checks this file.
 import { BODY_CONFIGS } from "#bodies/index"
 import { $public } from "#env"
 

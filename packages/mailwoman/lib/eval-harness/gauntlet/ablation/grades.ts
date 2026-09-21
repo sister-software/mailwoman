@@ -8,11 +8,13 @@
 /**
  * The verdict for one deletion variant under the expectation model.
  *
- * `held` / `degraded` / `correctlyAbstained` are passes. the rest are failures, kept as distinct classes because they
- * ask the operator for different things. `lost` is a recall bug, `overconfident` is a calibration bug, `coarser` is a
- * precision bug (it stayed on the ladder but gave up more than the surviving evidence justified), `wrong` is a
- * resolution bug (it left the ladder — a different place), `substituted` is a slot-hazard bug, and `homonymTakeover` is
- * arguably not a bug at all: the remaining text genuinely names a different place.
+ * `held` / `degraded` / `correctlyAbstained` are passes. the rest are failures,
+ * kept as distinct classes because they ask the operator for different things.
+ * `lost` is a recall bug, `overconfident` is a calibration bug, `coarser` is a precision
+ * bug (it stayed on the ladder but gave up more than the surviving evidence justified),
+ * `wrong` is a resolution bug (it left the ladder — a different place),
+ * `substituted` is a slot-hazard bug, and `homonymTakeover` is arguably not a bug at all:
+ * the remaining text genuinely names a different place.
  */
 export type AblationGrade =
 	| "held"
@@ -52,8 +54,8 @@ export const PASSING_GRADES: ReadonlySet<AblationGrade> = new Set<AblationGrade>
 ])
 
 /**
- * The empty verdict histogram — every {@linkcode AblationGrade} present at zero. Built fresh per cell so no two cells
- * share a mutable map.
+ * The empty verdict histogram — every {@linkcode AblationGrade} present at zero.
+ * Built fresh per cell so no two cells share a mutable map.
  */
 export function emptyGrades(): Record<AblationGrade, number> {
 	return {

@@ -69,8 +69,9 @@ describe("enumerateCountryDisplayNames", () => {
 		const rows = [...enumerateCountryDisplayNames()]
 		const countries = new Set(rows.map((r) => r.iso2))
 
-		// Measured 280 regions / 5,244 surfaces at time of writing. Floors rather than equalities — an ICU upgrade may add
-		// names, and pinning exact counts would fail on a Node bump for no reason.
+		// Measured 280 regions / 5,244 surfaces at time of writing.
+		// Floors rather than equalities — an ICU upgrade may add names, and pinning
+		// exact counts would fail on a Node bump for no reason.
 		expect(countries.size).toBeGreaterThanOrEqual(240)
 		expect(rows.length).toBeGreaterThanOrEqual(3000)
 	})

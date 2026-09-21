@@ -45,7 +45,8 @@ export interface GNAFAssembleOptions {
 	 */
 	out: string
 	/**
-	 * Optional held-out eval jsonl (rows with a `components` field) — its (street,locality,postcode) are excluded.
+	 * Optional held-out eval jsonl (rows with a `components` field) —
+	 * its (street,locality,postcode) are excluded.
 	 */
 	holdoutPath?: string
 	/**

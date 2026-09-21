@@ -25,18 +25,20 @@ import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
  * The six ways a truth-graded row can relate to the answers on hand, plus the ungraded bucket.
  *
  * - `correct_as_is` — the delivered answer is inside tolerance. no rescue question arises.
- * - `entity_rescued_already` — the #1585 wire fired (the result includes `entity`) and the answer is correct: the current
- *   mechanism already performed the rescue.
- * - `rescue_available_entity` — delivered answer wrong. the unconditional fork-entity probe holds a hit inside tolerance.
- *   The check (incumbent resolved) is what stands between the row and the right answer.
- * - `rescue_available_rank` — delivered answer wrong. a NON-winning entry of the resolver's own `candidates` list is
- *   inside tolerance. The ranking rather than the retrieval, lost the row.
+ * - `entity_rescued_already` — the #1585 wire fired (the result includes `entity`)
+ *   and the answer is correct: the current mechanism already performed the rescue.
+ * - `rescue_available_entity` — delivered answer wrong. the unconditional fork-entity
+ *   probe holds a hit inside tolerance. The check (incumbent resolved) is what
+ *   stands between the row and the right answer.
+ * - `rescue_available_rank` — delivered answer wrong. a NON-winning entry of the resolver's own
+ *   `candidates` list is inside tolerance. The ranking rather than the retrieval, lost the row.
  * - `rescue_available_both` — both of the above hold.
- * - `no_rescue_on_hand` — delivered answer wrong and neither source holds the truth: these rows need retrieval or parse
- *   work rather than rescue plumbing.
- * - `check_protects` is not a value here — it is a separate boolean, because it can hold alongside `correct_as_is`: the
- *   row is correct and an unconditional entity hit exists (necessarily elsewhere, or redundant), so loosening the check
- *   puts the row at risk. The loosening decision needs both lists rather than one label.
+ * - `no_rescue_on_hand` — delivered answer wrong and neither source holds the truth:
+ *   these rows need retrieval or parse work rather than rescue plumbing.
+ * - `check_protects` is not a value here — it is a separate boolean, because it can hold
+ *   alongside `correct_as_is`: the row is correct and an unconditional entity hit exists
+ *   (necessarily elsewhere, or redundant), so loosening the check puts the row at risk.
+ *   The loosening decision needs both lists rather than one label.
  */
 export type RescueClass =
 	| "correct_as_is"
@@ -69,8 +71,8 @@ export interface RescueRowInput {
 	 */
 	entityFired: boolean
 	/**
-	 * The unconditional fork-entity probe's hit for this input, when a `declared_fork` marker rode and the probe was
-	 * asked ignoring check 1. Undefined = probe not applicable or no hit.
+	 * The unconditional fork-entity probe's hit for this input, when a `declared_fork` marker rode
+	 * and the probe was asked ignoring check 1. Undefined = probe not applicable or no hit.
 	 */
 	unconditionalEntityHit?: RescueCandidate
 	/**
@@ -94,8 +96,8 @@ export interface RescueRowReport {
 	 */
 	rescueRank?: number
 	/**
-	 * The row is correct as delivered while an unconditional entity hit exists — the set a check loosening puts at risk.
-	 * Reported beside the classification, never instead of it.
+	 * The row is correct as delivered while an unconditional entity hit exists — the set a
+	 * check loosening puts at risk. Reported beside the classification, never instead of it.
 	 */
 	checkProtects: boolean
 }
@@ -138,8 +140,9 @@ export function classifyRescueRow(row: RescueRowInput): {
 		}
 	}
 
-	// A correct row with an unconditional entity hit is the loosening-risk set — even a correct entity hit belongs in
-	// it, because a changed check reorders which mechanism answers, and reordering is a behavior change to re-grade.
+	// A correct row with an unconditional entity hit is the loosening-risk set —
+	// even a correct entity hit belongs in it, because a changed check reorders
+	// which mechanism answers, and reordering is a behavior change to re-grade.
 	const checkProtects = deliveredCorrect && row.unconditionalEntityHit !== undefined
 
 	if (deliveredCorrect) {

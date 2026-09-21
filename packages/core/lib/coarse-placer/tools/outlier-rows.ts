@@ -24,19 +24,20 @@ const MIN_OUTLIER_LENGTH = 6
  */
 export interface AssembleOutlierOptions {
 	/**
-	 * Derive the locality string from the source row (Overture: `postal_city` falling back to `address_levels`; OA:
-	 * `city`).
+	 * Derive the locality string from the source row
+	 * (Overture: `postal_city` falling back to `address_levels`; OA: `city`).
 	 */
 	locality: (row: Record<string, unknown>) => string
 	/**
-	 * Drop raw-coord-only / PO-box-ish noise (the OA failure mode): without a street, the locality must carry a real word
-	 * character.
+	 * Drop raw-coord-only / PO-box-ish noise (the OA failure mode): without a street,
+	 * the locality must carry a real word character.
 	 */
 	requireLetterLocality?: boolean
 }
 
 /**
- * Assemble a plausible address string from a source row. Deterministic shape variant by hash.
+ * Assemble a plausible address string from a source row.
+ * Deterministic shape variant by hash.
  */
 export function assembleOutlierRow(row: Record<string, unknown>, options: AssembleOutlierOptions): string | null {
 	const num = (row.number ?? "").toString().trim()

@@ -51,9 +51,9 @@ export interface Provenance {
 /**
  * The input-set half of a provenance block, on its own.
  *
- * An external arm has no engine, no tree fingerprint and no effective config, but it is measured over exactly the same
- * rows — and the denominators, hash and selection kind are the half that must be identical across a comparison's two
- * arms whatever either arm is.
+ * An external arm has no engine, no tree fingerprint and no effective config, but it is
+ * measured over exactly the same rows — and the denominators, hash and selection kind are
+ * the half that must be identical across a comparison's two arms whatever either arm is.
  */
 export function inputSetProvenance(set: ResolvedInputSet): Provenance["input_set"] {
 	return {
@@ -96,12 +96,12 @@ export function provenanceFor(
 /**
  * One hand-picked input, with or without a truth point.
  *
- * The coordinate is an assertion by the caller — nothing here verifies it, and an invented pin looks identical to a
- * surveyed one in the output. That is why the set's `why` is required, and why this describes where a point should come
- * from rather than merely accepting a number.
+ * The coordinate is an assertion by the caller — nothing here verifies it, and an invented pin
+ * looks identical to a surveyed one in the output. That is why the set's `why` is required,
+ * and why this describes where a point should come from rather than merely accepting a number.
  *
- * Declared out of line because the union nests four calls deep inside the set schema, which `unicorn/max-nested-calls`
- * refuses — and rightly: a reader should meet this shape under its own name.
+ * Declared out of line because the union nests four calls deep inside the set schema, which
+ * `unicorn/max-nested-calls` refuses — and rightly: a reader should meet this shape under its own name.
  */
 const LITERAL_INPUT_WITH_TRUTH_SCHEMA = z.object({
 	input: z.string().min(1),
@@ -131,9 +131,10 @@ const LITERAL_INPUTS_DESCRIPTION =
 /**
  * Which inputs a measuring tool runs over.
  *
- * `{"kind":"board"}` is the shortest legal value and the default everywhere, so the well-powered choice is the cheapest
- * one to type. The hand-picked branch is deliberately wordier — an array and a `why` — because choosing a small panel
- * is a claim about what is worth measuring, and the claim is echoed into every number the set produces.
+ * `{"kind":"board"}` is the shortest legal value and the default everywhere, so the
+ * well-powered choice is the cheapest one to type. The hand-picked branch is deliberately
+ * wordier — an array and a `why` — because choosing a small panel is a claim about what
+ * is worth measuring, and the claim is echoed into every number the set produces.
  */
 export const INPUT_SET_SCHEMA = z
 	.union([
@@ -196,9 +197,9 @@ export const INPUT_SET_SCHEMA = z
 /**
  * Every construction- and call-time pin, in the CLI's own vocabulary.
  *
- * Unset means the production default, never "off" — the rule `GauntletResolverPins` states in `harness.ts`: "the
- * library defaults are the thing under test". A schema that coerced undefined to false would grade a configuration
- * nobody ships.
+ * Unset means the production default, never "off" — the rule `GauntletResolverPins`
+ * states in `harness.ts`: "the library defaults are the thing under test".
+ * A schema that coerced undefined to false would grade a configuration nobody ships.
  */
 export const ENGINE_CONFIG_SCHEMA = z
 	.object({
@@ -255,16 +256,19 @@ export function componentsOf(run: GeocodeRun): Record<string, string> {
 /**
  * The rendered evidence rows for one run, or a stated absence.
  *
- * `trace-rows` is pure and Ink-free by its own design, so the same strings the `--debug` pane shows are returnable
- * here. Both forms go back: the structured trace is what makes evidence diffable across arms, and the rendered rows are
- * what let a human read it in a transcript without an agent paraphrasing — which is where detail goes missing.
+ * `trace-rows` is pure and Ink-free by its own design, so the same strings the `--debug`
+ * pane shows are returnable here. Both forms go back: the structured trace is what makes
+ * evidence diffable across arms, and the rendered rows are what let a human read it in a
+ * transcript without an agent paraphrasing — which is where detail goes missing.
  */
 /**
- * The parse trace without its matrices. The full `NeuralParseTrace` ships per-token logit and emission rows (33 floats
- * × tokens, twice) plus per-channel feature matrices — thousands of numbers that no reader consumes inline and that
- * crowd a context window the rendered rows already serve. The slim form keeps everything discrete and diagnostic
- * (pieces, tokens with labels + confidences, the viterbi path, priors, locale head, repairs, per-channel confidence
- * vectors) and states what it dropped; `full_parse_trace: true` returns the raw object for the rare numeric dig.
+ * The parse trace without its matrices. The full `NeuralParseTrace` ships per-token logit
+ * and emission rows (33 floats × tokens, twice) plus per-channel feature matrices —
+ * thousands of numbers that no reader consumes inline and that crowd a context
+ * window the rendered rows already serve. The slim form keeps everything discrete
+ * and diagnostic (pieces, tokens with labels + confidences, the viterbi path, priors,
+ * locale head, repairs, per-channel confidence vectors) and states what it dropped;
+ * `full_parse_trace: true` returns the raw object for the rare numeric dig.
  */
 export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"]): Record<string, unknown> {
 	const { logits, emissions, anchor, gazetteer, country, ...rest } = parse
@@ -289,11 +293,12 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 /**
  * The #1649 intent check's verdict, when it fired.
  *
- * A refusal is not a parse failure, and everything downstream of it looks exactly like one: the eval discards a
- * completed tree and hands back `roots: []`, so `decodeAsJSON` answers `{}` and the resolver-interior records are
- * empty. Rendered without this line, `Cafe at St Mary's, Oxford` reads as an input the parser could make nothing of,
- * when in fact it parsed to `locality=Oxford › dependent_locality=St Mary's › street=Cafe` and was refused as a
- * thing-query. Reporting the refusal is what separates "we could not" from "we would not".
+ * A refusal is not a parse failure, and everything downstream of it looks exactly like one:
+ * the eval discards a completed tree and hands back `roots: []`, so `decodeAsJSON` answers
+ * `{}` and the resolver-interior records are empty. Rendered without this line,
+ * `Cafe at St Mary's, Oxford` reads as an input the parser could make nothing of, when in fact
+ * it parsed to `locality=Oxford › dependent_locality=St Mary's › street=Cafe` and was refused
+ * as a thing-query. Reporting the refusal is what separates "we could not" from "we would not".
  */
 function droppedRow(run: GeocodeRun): string[] {
 	const dropped = (run.result as { dropped_components?: Array<{ tag: string; value: string; kept: string }> })
@@ -314,9 +319,10 @@ function refusalRow(run: GeocodeRun): string[] {
 
 	if (!markers?.length) return []
 
-	// `evidence` is the marker's measurement (`Record<string, unknown>`), so it is serialized rather than interpolated.
-	// a template literal renders it `[object Object]` and the line then names a refusal it cannot justify. `mechanism`
-	// is the `family:rule` that fired and is what a reader acts on — the kind alone does not say which rule refused.
+	// `evidence` is the marker's measurement (`Record<string, unknown>`), so it is serialized
+	// rather than interpolated. a template literal renders it `[object Object]` and the line
+	// then names a refusal it cannot justify. `mechanism` is the `family:rule` that fired
+	// and is what a reader acts on — the kind alone does not say which rule refused.
 	const named = markers
 		.map((marker) => {
 			const evidence = marker.evidence ? ` ${stringifyJSON(marker.evidence)}` : ""
@@ -356,10 +362,10 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 }
 
 /**
- * The #1721 resolver-interior rows — one line per backend lookup: the query as sent, the checks that fired, the pick,
- * and the candidate table with each row's per-stage rank vector. `resolver: []` renders as its own claim (the walk
- * performed no lookups) rather than nothing, because an absent line is indistinguishable from a section that predates
- * the field.
+ * The #1721 resolver-interior rows — one line per backend lookup: the query as sent,
+ * the checks that fired, the pick, and the candidate table with each row's per-stage rank vector.
+ * `resolver: []` renders as its own claim (the walk performed no lookups) rather than nothing,
+ * because an absent line is indistinguishable from a section that predates the field.
  */
 function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 	const records = trace.resolver
@@ -422,12 +428,12 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 }
 
 /**
- * Firing signals a {@link GauntletResult} carries for free — a mechanism reporting that it spoke, separately from
- * whether the outcome moved.
+ * Firing signals a {@link GauntletResult} carries for free — a mechanism reporting
+ * that it spoke, separately from whether the outcome moved.
  *
- * `postcode_country_scope` is the worked example and the harness's own reason for carrying it (`harness.ts`): it is
- * "the firing count, so a pinned run can say how many rows the mechanism actually spoke on rather than leaving an
- * unchanged verdict to mean either 'harmless' or 'never ran'."
+ * `postcode_country_scope` is the worked example and the harness's own reason for carrying it
+ * (`harness.ts`): it is "the firing count, so a pinned run can say how many rows the mechanism actually
+ * spoke on rather than leaving an unchanged verdict to mean either 'harmless' or 'never ran'."
  */
 export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; b: number }> {
 	const scoped = (row: ComparedRow, arm: "a" | "b"): boolean =>
@@ -456,8 +462,8 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 }
 
 /**
- * One input under both arms. `differed` and `grade` answer different questions and are reported separately, because an
- * unchanged verdict from a mechanism that never ran proves nothing (`run.ts:32`).
+ * One input under both arms. `differed` and `grade` answer different questions and are reported
+ * separately, because an unchanged verdict from a mechanism that never ran proves nothing (`run.ts:32`).
  */
 export interface ComparedRow {
 	id: string
@@ -472,14 +478,15 @@ export interface ComparedRow {
 	issues_a: string[]
 	issues_b: string[]
 	/**
-	 * Whether the two arms' place-identity chains differ — present only when both arms stated one (see
-	 * `ExternalAnswer.place_ids`). Deliberately outside `differed`: the coordinate-level zero-diff interface batteries
-	 * pin on is unchanged, and identity is its own claim.
+	 * Whether the two arms' place-identity chains differ — present only when both arms stated one
+	 * (see `ExternalAnswer.place_ids`). Deliberately outside `differed`: the coordinate-level
+	 * zero-diff interface batteries pin on is unchanged, and identity is its own claim.
 	 */
 	identity_differed?: boolean
 	/**
-	 * Whether the two arms answered with different result tiers — present only when both arms answered and stated one.
-	 * Outside `differed` for the same reason as identity: a tier is a claim about the answer rather than its coordinate.
+	 * Whether the two arms answered with different result tiers — present only when both
+	 * arms answered and stated one. Outside `differed` for the same reason as identity:
+	 * a tier is a claim about the answer rather than its coordinate.
 	 */
 	tier_differed?: boolean
 }
@@ -487,17 +494,18 @@ export interface ComparedRow {
 /**
  * Which column a output is invalid out by.
  *
- * `truth_tolerance_m` is meaningful only where rows are graded against a coordinate: it separates rows whose truth is a
- * rooftop from rows whose truth is a 25 km area centroid, which is the difference between a sub-kilometre column that
- * measures the arm and one that measures the corpus.
+ * `truth_tolerance_m` is meaningful only where rows are graded against a coordinate: it separates
+ * rows whose truth is a rooftop from rows whose truth is a 25 km area centroid, which is the
+ * difference between a sub-kilometre column that measures the arm and one that measures the corpus.
  */
 export type StratumKey = "country" | "address_kind" | "status" | "truth_tolerance_m" | "truth_type"
 
 /**
  * Every legal stratum, for a runtime check the type cannot give a caller that reached the handler directly.
  *
- * An unrecognised key used to bucket every row as `unknown` and report a single stratum — a table that looks like a
- * stratified result and is not one. Measured 2026-08-16: `stratify_by: "truth_type"` against a 60-row FR panel returned
+ * An unrecognised key used to bucket every row as `unknown` and report a
+ * single stratum — a table that looks like a stratified result and is not one.
+ * Measured 2026-08-16: `stratify_by: "truth_type"` against a 60-row FR panel returned
  * `{"unknown": {n: 60}}` rather than saying the key did not exist.
  */
 const STRATUM_KEYS: readonly StratumKey[] = ["country", "address_kind", "status", "truth_tolerance_m", "truth_type"]
@@ -534,8 +542,9 @@ export function bucketRows<Row>(rows: Row[], key: (row: Row) => string): Map<str
 }
 
 /**
- * Per-stratum counts. Reported rather than blended because the benchmark plan's own rule is that a headline number
- * "lives or dies on `truth_type`" — a blended figure hides an arm that won one stratum and lost another.
+ * Per-stratum counts. Reported rather than blended because the benchmark plan's
+ * own rule is that a headline number "lives or dies on `truth_type`" — a blended
+ * figure hides an arm that won one stratum and lost another.
  */
 export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, unknown> {
 	const buckets = bucketRows(
@@ -559,9 +568,9 @@ export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, un
 }
 
 /**
- * One sentence for a job, whichever kind it is. A still-running check gets no partial reading: its numbers live in
- * `verdict.json`. It the assembler writes at the END. Therefore, anything read before then is not a partial answer — it
- * is no answer.
+ * One sentence for a job, whichever kind it is. A still-running check gets no partial
+ * reading: its numbers live in `verdict.json`. It the assembler writes at the END.
+ * Therefore, anything read before then is not a partial answer — it is no answer.
  */
 export function summarizeJob(
 	state: string,

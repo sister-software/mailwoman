@@ -26,27 +26,30 @@ import type { ArmRowResult } from "#eval-harness/same-data/arms"
 import type { SameDataPanelRow } from "#eval-harness/same-data/fixture"
 
 /**
- * The registered confidence bins for the reliability table, low edge inclusive and high edge exclusive except the last.
+ * The registered confidence bins for the reliability table, low edge inclusive
+ * and high edge exclusive except the last.
  */
 export const CONFIDENCE_BINS = [0, 0.2, 0.4, 0.6, 0.8, 1] as const
 
 /**
- * The largest discordant-pair count the exact test computes. The first term is `2 ** -n`, which is representable down
- * to about n = 1074. the bound is well inside that and refusing past it beats returning a silent zero.
+ * The largest discordant-pair count the exact test computes.
+ * The first term is `2 ** -n`, which is representable down to about n = 1074. the bound
+ * is well inside that and refusing past it beats returning a silent zero.
  */
 const MAX_EXACT_N = 1000
 
 /**
- * The registered two-sided significance level. Frozen with the rest of the decision rule, because a level chosen after
- * a p-value is visible is the decision rule moving.
+ * The registered two-sided significance level. Frozen with the rest of the decision rule,
+ * because a level chosen after a p-value is visible is the decision rule moving.
  */
 export const SIGNIFICANCE_ALPHA = 0.05
 
 /**
  * The two-sided exact McNemar p-value for `b` rows the first arm won and `c` rows the second won.
  *
- * Computed as a two-sided exact binomial test at p = 0.5 over the discordant pairs. The terms are built by the ratio
- * `C(n, i+1) = C(n, i) * (n - i) / (i + 1)` starting from `2 ** -n`, so no factorial is formed and nothing overflows.
+ * Computed as a two-sided exact binomial test at p = 0.5 over the discordant pairs.
+ * The terms are built by the ratio `C(n, i+1) = C(n, i) * (n - i) / (i + 1)` starting
+ * from `2 ** -n`, so no factorial is formed and nothing overflows.
  */
 export function mcnemarExactP(b: number, c: number): number {
 	const n = b + c
@@ -72,10 +75,11 @@ export function mcnemarExactP(b: number, c: number): number {
 /**
  * A rate together with the two counts that produced it.
  *
- * The counts travel with the value because a renderer that is handed only the rate has to recover the numerator by
- * multiplying, and it can only multiply by the denominator it happens to hold. Pooled selection accuracy is measured
- * over the gold-present rows while the table's `n` column counts every scored row, so that reconstruction printed a
- * numerator no arm ever produced beside a rate that was correct.
+ * The counts travel with the value because a renderer that is handed only the rate has
+ * to recover the numerator by multiplying, and it can only multiply by the denominator
+ * it happens to hold. Pooled selection accuracy is measured over the gold-present rows
+ * while the table's `n` column counts every scored row, so that reconstruction printed
+ * a numerator no arm ever produced beside a rate that was correct.
  */
 export interface Ratio {
 	numerator: number
@@ -97,16 +101,16 @@ export interface ArmMetrics {
 	arm: string
 	stratum: string
 	/**
-	 * Rows scored — after errored rows are removed. This is the row count rather than the denominator of any rate below.
-	 * each rate carries its own.
+	 * Rows scored — after errored rows are removed. This is the row count rather than
+	 * the denominator of any rate below. each rate carries its own.
 	 */
 	n: number
 	errors: number
 	selections: number
 	abstentions: number
 	/**
-	 * Correct over the rows whose gold is present. Unmeasured in the withheld-gold stratum, which has no correct answer
-	 * by construction.
+	 * Correct over the rows whose gold is present. Unmeasured in the withheld-gold stratum,
+	 * which has no correct answer by construction.
 	 */
 	selectionAccuracy: Ratio
 	/**
@@ -221,8 +225,8 @@ export interface PairedComparison {
 /**
  * Compare two arms over the rows both scored, paired row by row.
  *
- * The bootstrap resamples rows rather than arms: a resample draws row indices with replacement and recomputes both
- * arms' accuracy on the same draw, which is what makes the interval a paired one.
+ * The bootstrap resamples rows rather than arms: a resample draws row indices with replacement
+ * and recomputes both arms' accuracy on the same draw, which is what makes the interval a paired one.
  */
 export function comparePaired(
 	first: readonly ArmRowResult[],
@@ -289,8 +293,8 @@ export function comparePaired(
 }
 
 /**
- * The registered decision, evaluated. Both conditions must hold. each is reported with what it read, so a refusal names
- * the quantity that refused it.
+ * The registered decision, evaluated. Both conditions must hold. each is reported
+ * with what it read, so a refusal names the quantity that refused it.
  */
 export interface BenchmarkVerdict {
 	marginPoints: number
@@ -299,16 +303,17 @@ export interface BenchmarkVerdict {
 	pValue: number
 	significanceMet: boolean
 	/**
-	 * Strata where Mailwoman's wrong-area rate or false-selection rate exceeds the baseline's. Empty means the secondary
-	 * condition held.
+	 * Strata where Mailwoman's wrong-area rate or false-selection rate exceeds the baseline's.
+	 * Empty means the secondary condition held.
 	 */
 	regressions: string[]
 	passed: boolean
 }
 
 /**
- * Evaluate the frozen decision rule: an 8-point pooled margin and an exact McNemar rejection at alpha 0.05, with no
- * stratum where Mailwoman's wrong-area or false-selection rate is higher than the baseline's.
+ * Evaluate the frozen decision rule: an 8-point pooled margin and an exact
+ * McNemar rejection at alpha 0.05, with no stratum where Mailwoman's wrong-area
+ * or false-selection rate is higher than the baseline's.
  */
 export function evaluateVerdict(
 	pooled: PairedComparison,

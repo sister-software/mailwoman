@@ -52,8 +52,8 @@ describe("censusTrees", () => {
 	})
 
 	it("enumerates every strict dependent, fired or not", () => {
-		// The check's denominator is the tag set, so a class that never fires still has to appear — otherwise the
-		// report is a list of what happened with no way to see what did not.
+		// The check's denominator is the tag set, so a class that never fires still has to appear —
+		// otherwise the report is a list of what happened with no way to see what did not.
 		const census = censusTrees([row("plain", "Alburgh, VT", [node("locality", "Alburgh")])])
 
 		expect(census.stranding.map((entry) => entry.tag).toSorted()).toEqual([

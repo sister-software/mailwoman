@@ -39,8 +39,8 @@ import { stableSourceID } from "#adapters/utils"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const GNAF_ADAPTER_ID = "gnaf"
 /**
@@ -57,9 +57,9 @@ interface GNAFTuple {
 }
 
 /**
- * The address layouts an AU address actually arrives in. The model already handles postcode-trailing (canonical); the
- * two postcode-leading forms are the ones it fails, so they carry the change. We keep the canonical form too so the
- * retrain doesn't forget it.
+ * The address layouts an AU address actually arrives in.
+ * The model already handles postcode-trailing (canonical); the two postcode-leading forms are the ones
+ * it fails, so they carry the change. We keep the canonical form too so the retrain doesn't forget it.
  */
 function renderOrders(c: GNAFTuple): string[] {
 	const region = c.region ? ` ${c.region}` : ""
@@ -75,8 +75,8 @@ function renderOrders(c: GNAFTuple): string[] {
 }
 
 /**
- * Build the G-NAF adapter. `inputPath` is the assembled component jsonl (see {@link ./assemble}); it is country-pinned
- * to AU regardless of `opts.country` (G-NAF is Australia-only).
+ * Build the G-NAF adapter. `inputPath` is the assembled component jsonl (see {@link ./assemble});
+ * it is country-pinned to AU regardless of `opts.country` (G-NAF is Australia-only).
  */
 export function createGNAFAdapter(): CorpusAdapter {
 	return {
@@ -90,9 +90,10 @@ export function createGNAFAdapter(): CorpusAdapter {
 			let emitted = 0
 			let idx = 0
 
-			// Input is the assembled component jsonl (one tuple per line). TextSpliterator auto-disposes on
-			// loop completion and on an early `break` (abort / limit), so the old explicit handle teardown is
-			// gone. the parse tolerates a trailing CR on crlf sources and the `!line.trim()` guard skips blanks.
+			// Input is the assembled component jsonl (one tuple per line).
+			// TextSpliterator auto-disposes on loop completion and on an early `break`
+			// (abort / limit), so the old explicit handle teardown is gone. the parse tolerates
+			// a trailing CR on crlf sources and the `!line.trim()` guard skips blanks.
 			// The render order rotates (i % 3), matching v1.9.1's rerender.
 			for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 				if (opts.signal?.aborted) break
@@ -126,8 +127,10 @@ export function createGNAFAdapter(): CorpusAdapter {
 					components.region = t.region
 				}
 
-				// `raw` here is one of three deliberate word orders, two of which no layout prints — the postcode-leading
-				// forms this adapter exists to teach. So the question is containment against a string this adapter built rather than what a layout would have printed.
+				// `raw` here is one of three deliberate word orders, two of which no
+				// layout prints — the postcode-leading forms this adapter exists to teach.
+				// So the question is containment against a string this adapter built
+				// rather than what a layout would have printed.
 				const aligned = componentsPresentIn(components, raw)
 
 				if (!Object.keys(aligned).length) continue

@@ -34,16 +34,17 @@ const { values, positionals } = parseArguments({
 	options: {
 		locale: { type: "string", default: "en-us" },
 		/**
-		 * Print every accepting entry at full precision instead of the per-tag max — how you tell "the arms agree" from
-		 * "the arms agree to four decimal places".
+		 * Print every accepting entry at full precision instead of the per-tag max —
+		 * how you tell "the arms agree" from "the arms agree to four decimal places".
 		 */
 		raw: { type: "boolean", default: false },
 	},
 })
 
 /**
- * The arms, by the artifact each one is. `pop` fell back to population because its source DB has no `place_importance`
- * table; `imp` carries the real Wikipedia join. Both stamps are readable in the binaries' provenance tails.
+ * The arms, by the artifact each one is. `pop` fell back to population because its
+ * source DB has no `place_importance` table; `imp` carries the real Wikipedia join.
+ * Both stamps are readable in the binaries' provenance tails.
  */
 const ARMS: Record<string, string> = {
 	pop: String(dataRootPath("wof", "fst-per-locale")),

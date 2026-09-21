@@ -90,9 +90,9 @@ function buildFixtureAdmin(path: string): void {
 }
 
 /**
- * A postcode extract: `spr` with placetype='postalcode', plus the `names` table `createUnifiedSchema` gives every real
- * extract — that's where `postcode/centroid-fills.ts` writes the GeoNames delivery-city names (#1495). One real-coord
- * ZIP + one placeholder 0,0.
+ * A postcode extract: `spr` with placetype='postalcode', plus the `names` table
+ * `createUnifiedSchema` gives every real extract — that's where `postcode/centroid-fills.ts`
+ * writes the GeoNames delivery-city names (#1495). One real-coord ZIP + one placeholder 0,0.
  *
  * @param withNames Build the extract without a `names` table, to cover the tolerate-and-say-so path.
  */
@@ -134,8 +134,9 @@ function buildFixturePostcodes(path: string, withNames = true): void {
 }
 
 /**
- * The admin fixture plus a `names` table and a second US region, Indiana (103), whose alias bag carries `Illinois` —
- * the shape of Hsinchu County carrying `新竹市`, Hsinchu City's official name. Illinois's `names` row is official.
+ * The admin fixture plus a `names` table and a second US region, Indiana (103),
+ * whose alias bag carries `Illinois` — the shape of Hsinchu County carrying `新竹市`,
+ * Hsinchu City's official name. Illinois's `names` row is official.
  */
 function buildFixtureAdminWithVariantRegion(path: string): void {
 	buildFixtureAdmin(path)
@@ -159,8 +160,9 @@ function buildFixtureAdminWithVariantRegion(path: string): void {
 }
 
 /**
- * A locality extract in the register-derived shape (`gazetteer build tw-districts`): two `locality` rows, one whose
- * `ancestors` table names the admin fixture's Illinois region (id 101) and one that names nothing — the NZ shape.
+ * A locality extract in the register-derived shape (`gazetteer build tw-districts`):
+ * two `locality` rows, one whose `ancestors` table names the admin fixture's Illinois
+ * region (id 101) and one that names nothing — the NZ shape.
  */
 function buildFixtureLocalities(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -329,8 +331,8 @@ describe("buildCandidateTable", () => {
 			// Prominence rescue: same key volume, measured population — no gloss stamp.
 			expect(role("bigtown")[0]).toMatchObject({ role: null })
 
-			// Abbr provenance: official-language variant stamps. non-official variant does not. the
-			// preferred-name alias does not.
+			// Abbr provenance: official-language variant stamps. non-official variant
+			// does not. the preferred-name alias does not.
 			expect(role(normalizeLocalityForKey("Chi-Town"))[0]).toMatchObject({ role: "abbr", primary: 0 })
 			expect(role(normalizeLocalityForKey("Windy City"))[0]).toMatchObject({ role: null })
 			expect(role(normalizeLocalityForKey("St Etienne"))[0]).toMatchObject({ role: null })
@@ -445,8 +447,8 @@ describe("buildCandidateTable", () => {
 
 		const baseline = await buildCandidateTable({ input, output: scratch.resolve("baseline.db") })
 		const result = await buildCandidateTable({ input, output, localities: [localities] })
-		// The scoped district takes its region plus the region's own chain (Illinois, then United States); the
-		// unscoped row adds none.
+		// The scoped district takes its region plus the region's own chain
+		// (Illinois, then United States); the unscoped row adds none.
 		expect(result.ancestorRows).toBe(baseline.ancestorRows + 2)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -481,15 +483,14 @@ describe("buildCandidateTable", () => {
 		buildFixturePostcodes(pc)
 
 		const result = await buildCandidateTable({ input, output, postcodes: [pc] })
-		// Only "Brooklyn". The extract's own '11201' names row keys to the primary and is skipped, and
-		// 'The White House' hangs off 20500, which the coord filter never staged.
+		// Only "Brooklyn". The extract's own '11201' names row keys to the primary and is skipped,
+		// and 'The White House' hangs off 20500, which the coord filter never staged.
 		expect(result.postcodeAliases).toBe(1)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		// Before the fix this probe returned nothing: the delivery-city names reached
-		// `place_search.alt_names` (FTS) but never the candidate table, where every row is an
-		// exact-tier row.
+		// `place_search.alt_names` (FTS) but never the candidate table, where every row is an exact-tier row.
 		const [brooklyn] = probe(db, normalizeLocalityForKey("Brooklyn"))
 		expect(brooklyn).toBeDefined()
 		expect(brooklyn!.placetype).toBe("postalcode")
@@ -498,8 +499,8 @@ describe("buildCandidateTable", () => {
 		expect(brooklyn!.country).toBe("US")
 		expect(brooklyn!.latitude).toBeCloseTo(40.694, 3)
 		expect(brooklyn!.min_lat).toBeCloseTo(40.68, 2)
-		// `is_primary = 0` — the rank/demotion contest must treat it as an alias rather than a canonical
-		// postcode name.
+		// `is_primary = 0` — the rank/demotion contest must treat it as an alias
+		// rather than a canonical postcode name.
 		expect(brooklyn!.is_primary).toBe(0)
 
 		// The primary row is untouched by the new pass.
@@ -549,8 +550,8 @@ describe("buildCandidateTable", () => {
 
 	describe("the importance column (#28)", () => {
 		/**
-		 * A score source whose ids share nothing with the admin fixture's — the join must work anyway. Chicago and
-		 * Saint-Étienne are scored. Springfield deliberately is not (the unmeasured case).
+		 * A score source whose ids share nothing with the admin fixture's — the join must work anyway.
+		 * Chicago and Saint-Étienne are scored. Springfield deliberately is not (the unmeasured case).
 		 */
 		function buildFixtureImportance(path: string): void {
 			using db = new DatabaseClient<WOFDatabase>(path)
@@ -598,12 +599,13 @@ describe("buildCandidateTable", () => {
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			expect(importanceOf(db, normalizeLocalityForKey("Chicago"))).toEqual([0.8125])
-			// The score is a property of the place, so the alias rows carry it. This is what lets a bare
-			// "Moscow" reach Москва's score through the alias row that holds the Latin key.
+			// The score is a property of the place, so the alias rows carry it.
+			// This is what lets a bare "Moscow" reach Москва's score through the
+			// alias row that holds the Latin key.
 			expect(importanceOf(db, normalizeLocalityForKey("Chi-Town"))).toEqual([0.8125])
 			expect(importanceOf(db, normalizeLocalityForKey("Windy City"))).toEqual([0.8125])
-			// Folded key parity holds on the join too: "Saint-Étienne" scores through its folded form,
-			// and its alias row inherits.
+			// Folded key parity holds on the join too: "Saint-Étienne" scores through
+			// its folded form, and its alias row inherits.
 			expect(importanceOf(db, normalizeLocalityForKey("Saint-Étienne"))).toEqual([0.44])
 			expect(importanceOf(db, normalizeLocalityForKey("St Etienne"))).toEqual([0.44])
 		})
@@ -618,8 +620,9 @@ describe("buildCandidateTable", () => {
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-			// Springfield's only same-key scored place is 1,500 km away — a different town. The check
-			// refuses it, and the refusal is recorded as absence rather than as a zero a consumer could rank on.
+			// Springfield's only same-key scored place is 1,500 km away — a different town.
+			// The check refuses it, and the refusal is recorded as absence
+			// rather than as a zero a consumer could rank on.
 			expect(importanceOf(db, normalizeLocalityForKey("Springfield"))).toEqual([null])
 			// Illinois (region) and the US (country) were never scored at all.
 			expect(importanceOf(db, normalizeLocalityForKey("Illinois"))).toEqual([null])
@@ -751,8 +754,9 @@ describe("stageCountryDisplayNames (#1678 thread 1)", () => {
 
 describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	/**
-	 * A GB admin fixture in the deprecated-no-successor shapes: the Rochester class (dead + distant live namesake), an
-	 * unattested blob, a near-live block, an under-floor hamlet, and a superseded record the pass must never judge.
+	 * A GB admin fixture in the deprecated-no-successor shapes: the Rochester
+	 * class (dead + distant live namesake), an unattested blob, a near-live block,
+	 * an under-floor hamlet, and a superseded record the pass must never judge.
 	 */
 	function buildFixtureCurrency(path: string): void {
 		using db = new DatabaseClient<WOFDatabase>(path)
@@ -791,8 +795,8 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	}
 
 	/**
-	 * GeoNames dump lines: 19 tab-separated columns. the pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 feature_class, 14
-	 * population.
+	 * GeoNames dump lines: 19 tab-separated columns. the pass reads 1 name, 2 ascii,
+	 * 4 lat, 5 lon, 6 feature_class, 14 population.
 	 */
 	function geonamesLine(id: number, name: string, lat: number, lon: number, fclass: string, pop: number): string {
 		const f = Array.from({ length: 19 }).fill("")
@@ -864,8 +868,8 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {
 			const rows = db.prepare(`SELECT spr_id FROM candidate WHERE name_key = ?`).all(key) as { spr_id: number }[]
 
-			// `nearlive` keeps its live localadmin row (304); the dead 303 must not join it. The others
-			// stage nothing at all.
+			// `nearlive` keeps its live localadmin row (304); the dead 303 must not join it.
+			// The others stage nothing at all.
 			expect(rows.map((r) => r.spr_id)).toEqual(key === "nearlive" ? [304] : [])
 		}
 	})

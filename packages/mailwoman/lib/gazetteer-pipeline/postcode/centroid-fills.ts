@@ -34,12 +34,14 @@ export interface CentroidFillOptions {
 	 */
 	geonamesDir?: PathBuilderLike
 	/**
-	 * The combined `allCountries-postal.txt`, consulted when {@link geonamesDir} has no `<CC>.txt` for a country. Default
-	 * `<data-root>/geonames/allCountries-postal.txt` — the only place the US dump exists.
+	 * The combined `allCountries-postal.txt`, consulted when {@link geonamesDir} has no
+	 * `<CC>.txt` for a country. Default `<data-root>/geonames/allCountries-postal.txt` —
+	 * the only place the US dump exists.
 	 */
 	geonamesCombined?: PathBuilderLike
 	/**
-	 * The admin gazetteer to borrow parent/ancestor centroids from (ATTACHed read-only). Omit to skip passes 3–4.
+	 * The admin gazetteer to borrow parent/ancestor centroids from (ATTACHed read-only).
+	 * Omit to skip passes 3–4.
 	 */
 	adminPath?: string
 	/**
@@ -52,8 +54,8 @@ export interface CentroidFillOptions {
 export interface CentroidFillResult {
 	geonamesFixed: number
 	/**
-	 * Delivery-city name rows written from GeoNames postal. Zero means the database's postcodes are nameless — the state
-	 * `postalcode-us.db` shipped in.
+	 * Delivery-city name rows written from GeoNames postal.
+	 * Zero means the database's postcodes are nameless — the state `postalcode-us.db` shipped in.
 	 */
 	geonamesNames: number
 	parentBorrowFixed: number
@@ -64,29 +66,32 @@ export interface CentroidFillResult {
 }
 
 /**
- * Priority-2 fill: for every coordinate-less postcode, take its own centroid from the GeoNames postal file for that
- * country. A postcode on several GeoNames rows is averaged. Matched by the postcode string only — the WOF id is
- * untouched, so the eval keys stay WOF's.
+ * Priority-2 fill: for every coordinate-less postcode, take its own centroid from the
+ * GeoNames postal file for that country. A postcode on several GeoNames rows is averaged.
+ * Matched by the postcode string only — the WOF id is untouched, so the eval keys stay WOF's.
  */
 /**
- * Rows per multi-row insert. SQLite binds one variable per column per row and caps the total per statement
- * (`SQLITE_MAX_VARIABLE_NUMBER`, 32,766 on current builds); eight columns at this width leaves ample headroom.
+ * Rows per multi-row insert. SQLite binds one variable per column per row and caps
+ * the total per statement (`SQLITE_MAX_VARIABLE_NUMBER`, 32,766 on current builds);
+ * eight columns at this width leaves ample headroom.
  */
 const INSERT_CHUNK = 1000
 
 /**
- * GeoNames files a US territory under its own ISO code — Puerto Rico as `PR`, Guam as `GU` — while the WOF postcode
- * repo files all of them as `US`. Reading only `US` rows therefore leaves every territory postcode unnamed and
- * unplaced: 149 of them, verified against the 2024 Census zcta gazetteer, which is the entire set of five-digit ZIPs
- * zcta lists and GeoNames appears to miss. GeoNames misses no mainland ZIP at all.
+ * GeoNames files a US territory under its own ISO code — Puerto Rico as `PR`,
+ * Guam as `GU` — while the WOF postcode repo files all of them as `US`.
+ * Reading only `US` rows therefore leaves every territory postcode unnamed and unplaced: 149 of them,
+ * verified against the 2024 Census zcta gazetteer, which is the entire set of five-digit
+ * ZIPs zcta lists and GeoNames appears to miss. GeoNames misses no mainland ZIP at all.
  */
 const GEONAMES_COUNTRY_ALIASES: Readonly<Record<string, readonly string[]>> = {
 	US: ["US", "PR", "VI", "GU", "MP", "AS"],
 }
 
 /**
- * One postcode's accumulated GeoNames evidence: the mean of its centroids, and every distinct place name it appears
- * under. A postcode legitimately carries several names — those are its delivery-city aliases, which is the point.
+ * One postcode's accumulated GeoNames evidence: the mean of its centroids, and every
+ * distinct place name it appears under. A postcode legitimately carries several names —
+ * those are its delivery-city aliases, which is the point.
  */
 interface GeonamesPostcode {
 	lat: number
@@ -123,9 +128,10 @@ async function readGeonamesPostal(
 
 	if (!(await pathExists(source))) return acc
 
-	// Streamed: `source` is a per-country dump of ~1 MB or the 140 MB combined file, and only the caller
-	// knows which. `header: false` is required — the spliterator consumes row 1 as a header even in
-	// array mode, and GeoNames postal is headerless, so the first postcode would vanish without it.
+	// Streamed: `source` is a per-country dump of ~1 MB or the 140 MB combined file,
+	// and only the caller knows which. `header: false` is required — the spliterator
+	// consumes row 1 as a header even in array mode, and GeoNames postal is headerless,
+	// so the first postcode would vanish without it.
 	//
 	// Columns: country, postcode, place, admin1..3 (name + code pairs), latitude, longitude, accuracy.
 	for await (const cells of readUnquotedTSV(source)) {
@@ -162,10 +168,11 @@ async function readGeonamesPostal(
 /**
  * Attach each postcode's GeoNames delivery-city name(s) to the database's `names` table.
  *
- * Separate from the centroid pass because the two select different rows: a centroid is only wanted where one is
- * missing, while a name is wanted on every postcode — 11201 has had a Census zcta coordinate all along and no name at
- * all. Rows are the USPS delivery city, which is frequently not the geographic locality (11201 is Brooklyn, inside the
- * locality New York), and for Queens is a neighbourhood name rather than the borough (Astoria, Flushing, Jamaica).
+ * Separate from the centroid pass because the two select different rows: a centroid is only wanted
+ * where one is missing, while a name is wanted on every postcode — 11201 has had a Census
+ * zcta coordinate all along and no name at all. Rows are the USPS delivery city, which is
+ * frequently not the geographic locality (11201 is Brooklyn, inside the locality New York),
+ * and for Queens is a neighbourhood name rather than the borough (Astoria, Flushing, Jamaica).
  *
  * Shipping these rows obliges the "GeoNames (CC-BY 4.0)" attribution the sibling modules already carry.
  */
@@ -206,8 +213,8 @@ async function geonamesNameFill(
 			}
 		}
 
-		// `official` stays 0: a delivery city is what the postal system calls the place rather than an official
-		// name OF it, and the #936 name-exact tier reads that bit.
+		// `official` stays 0: a delivery city is what the postal system calls the place
+		// rather than an official name OF it, and the #936 name-exact tier reads that bit.
 		const rows = [...acc]
 			.flatMap(([postcode, entry]) => {
 				const id = byPostcode.get(postcode)
@@ -244,8 +251,8 @@ async function geonamesFill(
 	combinedPath: PathBuilderLike
 ): Promise<number> {
 	// The GeoNames update matches on (country, name); the build only indexes placetype/country/parent,
-	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows). `kdb`
-	// wraps `db` for the DDL. the caller owns `db`'s lifecycle, so we don't destroy it here.
+	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows).
+	// `kdb` wraps `db` for the DDL. the caller owns `db`'s lifecycle, so we don't destroy it here.
 	const kdb = db
 	await kdb.schema.createIndex("spr_by_country_name").ifNotExists().on("spr").columns(["country", "name"]).execute()
 
@@ -283,13 +290,14 @@ async function geonamesFill(
 }
 
 /**
- * Pass-4 fallback: for postcodes still coordinate-less after the parent-borrow (their immediate parent locality is
- * absent from the admin DB — common for city-states like Berlin), borrow the finest available ancestor centroid from
- * the GeoJSON hierarchy. County is preferred over region for tighter placement.
+ * Pass-4 fallback: for postcodes still coordinate-less after the parent-borrow
+ * (their immediate parent locality is absent from the admin DB — common for city-states like Berlin),
+ * borrow the finest available ancestor centroid from the GeoJSON hierarchy.
+ * County is preferred over region for tighter placement.
  */
 async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: string): Promise<number> {
-	// Resolved once per country rather than composed per row: the answer depends on which layout the repository was
-	// cloned in, and a row-rate stat over an unplaced set is wasted work.
+	// Resolved once per country rather than composed per row: the answer depends on which layout
+	// the repository was cloned in, and a row-rate stat over an unplaced set is wasted work.
 	const dataDirByCountry = new Map<string, string | null>()
 
 	const dataDirFor = async (country: string): Promise<string | null> => {
@@ -356,7 +364,8 @@ async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: strin
 }
 
 /**
- * Run the fill ladder (passes 2–4) on an open staging postcode DB. See the module docstring for priorities.
+ * Run the fill ladder (passes 2–4) on an open staging postcode DB.
+ * See the module docstring for priorities.
  */
 export async function fillPostcodeCentroids(
 	db: DatabaseClient<WOFDatabase>,
@@ -378,9 +387,10 @@ export async function fillPostcodeCentroids(
 
 	// Pass 2: GeoNames postal — runs first so the postcode's own centroid wins over the coarser parent-borrow.
 	if (opts.geonamesDir && (await pathExists(opts.geonamesDir))) {
-		// Where the US lives. The per-country directory is populated for locales fetched one at a time and
-		// has no US.txt. the combined dump does. Resolved through the data-root builder rather than by
-		// walking up out of `geonamesDir`, which only lands correctly when that argument is the default.
+		// Where the US lives. The per-country directory is populated for locales
+		// fetched one at a time and has no US.txt. the combined dump does.
+		// Resolved through the data-root builder rather than by walking up out of `geonamesDir`,
+		// which only lands correctly when that argument is the default.
 		const combinedPath = opts.geonamesCombined ?? dataRootPath("geonames", "allCountries-postal.txt")
 
 		phase("fill-geonames", `${opts.geonamesDir}`)
@@ -395,8 +405,8 @@ export async function fillPostcodeCentroids(
 		db.exec(`ATTACH '${opts.adminPath.replaceAll("'", "''")}' AS adm`)
 
 		try {
-			// Pass 3: borrow the parent locality's centroid. A single correlated update keeps the WOF id
-			// and every other column intact.
+			// Pass 3: borrow the parent locality's centroid. A single correlated update
+			// keeps the WOF id and every other column intact.
 			phase("fill-parent-borrow")
 			db.exec("BEGIN")
 

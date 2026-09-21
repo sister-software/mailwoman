@@ -43,8 +43,8 @@ async function main(): Promise<void> {
 	const sessionID = typeof payload?.session_id === "string" ? payload.session_id : ""
 	const marker = sessionID ? markerPath(sessionID) : ""
 
-	// One revision pass per block: the marker written by the previous block is consumed here, so
-	// the corrective reply passes unchecked rather than looping.
+	// One revision pass per block: the marker written by the previous block is consumed here,
+	// so the corrective reply passes unchecked rather than looping.
 	if (marker && (await pathExists(marker))) {
 		await removePath(marker)
 

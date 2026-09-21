@@ -20,8 +20,9 @@ import { DebugControl } from "./MapDebug.tsx"
  * Mounts the feature-inspector control on the surrounding `<Map>`.
  */
 export const MapControls: React.FC = () => {
-	// The feature inspector needs the raw maplibre map handle. `useMap().current` is set once the map instance exists.
-	// track it in state so `<DebugControl>` re-renders (and runs its `addControl` effect) when the map becomes ready.
+	// The feature inspector needs the raw maplibre map handle.
+	// `useMap().current` is set once the map instance exists. track it in state so
+	// `<DebugControl>` re-renders (and runs its `addControl` effect) when the map becomes ready.
 	const { current: mapRef } = useMap()
 	const map = mapRef?.getMap() ?? null
 

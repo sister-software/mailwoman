@@ -27,9 +27,9 @@ import { mapUnitProfile, reduceCell, type CellCandidate, type MapUnitProfile } f
 /**
  * Resolve the touch table into the stored containment index.
  *
- * Compaction happens here and only on the whole side. It is expected to yield close to nothing on this layer, which is
- * the inversion the survey predicts: compaction needs a uniform interior, and 85.4% of `IA153`'s delineations are
- * smaller than one resolution-9 cell.
+ * Compaction happens here and only on the whole side. It is expected to yield close to nothing
+ * on this layer, which is the inversion the survey predicts: compaction needs a uniform
+ * interior, and 85.4% of `IA153`'s delineations are smaller than one resolution-9 cell.
  */
 export function resolveCells(
 	database: DatabaseClient<SoilDatabase>,
@@ -49,9 +49,9 @@ export function resolveCells(
 
 	let wholeRows = 0
 
-	// One group per (delineation, resolution): `compactCells` takes a single resolution, and an adaptively-indexed layer
-	// has several. Pooling them throws. compacting only the target-resolution group would silently drop every coarsened
-	// delineation's interior.
+	// One group per (delineation, resolution): `compactCells` takes a single resolution,
+	// and an adaptively-indexed layer has several. Pooling them throws. compacting only the
+	// target-resolution group would silently drop every coarsened delineation's interior.
 	database.exec("BEGIN")
 
 	for (const { area_id: areaID, resolution } of groups) {
@@ -71,9 +71,10 @@ export function resolveCells(
 
 	database.exec("COMMIT")
 
-	// The partial rows are every touch that is not whole for its own delineation. `insert or replace` above already put
-	// the whole rows in, and the primary key is `(h3_cell, area_id)`, so this insert must skip them explicitly rather
-	// than rely on the key: a partial row replacing a whole one would demote an answered cell to a ray cast.
+	// The partial rows are every touch that is not whole for its own delineation.
+	// `insert or replace` above already put the whole rows in, and the primary key is
+	// `(h3_cell, area_id)`, so this insert must skip them explicitly rather than rely on the key:
+	// a partial row replacing a whole one would demote an answered cell to a ray cast.
 	database.exec(
 		"INSERT OR IGNORE INTO soil_map_unit_cell (h3_cell, resolution, area_id, containment) " +
 			"SELECT DISTINCT t.h3_cell, t.resolution, t.area_id, 'partial' FROM build_cell_touch t WHERE t.is_full = 0"
@@ -97,8 +98,8 @@ export function resolveCells(
 }
 
 /**
- * Cells reduced per progress report. The reduction is the slow phase — a lattice of 49 point tests per sampled cell —
- * so it reports often enough that a long run is visibly alive.
+ * Cells reduced per progress report. The reduction is the slow phase — a lattice of 49 point
+ * tests per sampled cell — so it reports often enough that a long run is visibly alive.
  */
 const REDUCE_PROGRESS_STRIDE = 50_000
 
@@ -117,19 +118,19 @@ interface StoredDelineation {
 /**
  * How many delineations the reduction keeps in memory at once.
  *
- * Sized to bound the phase rather than to hold everything: the pilot region's median delineation encodes to roughly 1.4
- * kB, so 200,000 of them is a few hundred megabytes — comfortable, and far below the 2.5 million a whole state holds.
- * Memory stays flat in row count, which is the property the poi build lost when a reader materialized instead of
- * streaming.
+ * Sized to bound the phase rather than to hold everything: the pilot region's median delineation
+ * encodes to roughly 1.4 kB, so 200,000 of them is a few hundred megabytes — comfortable,
+ * and far below the 2.5 million a whole state holds. Memory stays flat in row count,
+ * which is the property the poi build lost when a reader materialized instead of streaming.
  */
 const GEOMETRY_CACHE_ENTRIES = 200_000
 
 /**
  * Reduce the touch table into `soil_capability_cell`.
  *
- * Reads the touch table rather than `soil_map_unit_cell` on purpose: the stored index is compacted on the whole side,
- * so a compacted parent no longer names the cells the reduction has to answer. The touch table is the uncompacted truth
- * about which delineation reaches which cell.
+ * Reads the touch table rather than `soil_map_unit_cell` on purpose: the stored index is compacted on
+ * the whole side, so a compacted parent no longer names the cells the reduction has to answer.
+ * The touch table is the uncompacted truth about which delineation reaches which cell.
  */
 export function reduceCells(
 	database: DatabaseClient<SoilDatabase>,
@@ -169,11 +170,13 @@ export function reduceCells(
 	let currentResolution = indexResolution
 	let candidates: CellCandidate[] = []
 
-	// A delineation is named by every cell it reaches — 5.35 of them per cell at resolution 9 on the pilot region — so a
-	// naive read fetches each ring blob once per touch. At Iowa's scale that is millions of blob reads of ground already
-	// in memory. The cache is bounded and cleared whole when it fills rather than evicted one at a time: h3 cell integers
-	// carry their ancestry in their high bits, so a scan in `h3_cell` order visits neighbours together and a cleared cache
-	// refills with the delineations the next run of cells actually names.
+	// A delineation is named by every cell it reaches — 5.35 of them per cell at resolution
+	// 9 on the pilot region — so a naive read fetches each ring blob once per touch.
+	// At Iowa's scale that is millions of blob reads of ground already in memory.
+	// The cache is bounded and cleared whole when it fills rather than evicted
+	// one at a time: h3 cell integers carry their ancestry in their high bits,
+	// so a scan in `h3_cell` order visits neighbours together and a cleared cache refills
+	// with the delineations the next run of cells actually names.
 	const geometry = new Map<string, StoredDelineation>()
 
 	const batch = beginBatched(database, { rowsPerCommit: REDUCE_PROGRESS_STRIDE })

@@ -145,8 +145,8 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 				`- interp HITS: ${interpHits} → of full-parse non-exact rows, hit rate ${((100 * interpHits) / Math.max(1, interpFullParseMiss + interpHits)).toFixed(1)}%`
 			)
 
-			// Error CDF over the neural+interp coordinate (DeepSeek: "where's the cliff?"). Cumulative % of
-			// all rows within each radius — the within-100m DoD metric + the shape of the tail.
+			// Error CDF over the neural+interp coordinate (DeepSeek: "where's the cliff?").
+			// Cumulative % of all rows within each radius — the within-100m DoD metric + the shape of the tail.
 			const ierrs = neuralInterpAgg.overall.errs
 			lines.push("")
 			lines.push(`error CDF (neural+interp, n=${ierrs.length}) — cumulative % within radius:`)
@@ -156,8 +156,9 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 				lines.push(`  ≤ ${m} m: ${((100 * within) / Math.max(1, ierrs.length)).toFixed(1)}%`)
 			}
 
-			// Dump all full-parse misses for the standalone database-membership categorization (segment-not-found
-			// vs in-database-range-miss vs normalization). Bump cap done at collection site.
+			// Dump all full-parse misses for the standalone database-membership
+			// categorization (segment-not-found vs in-database-range-miss vs normalization).
+			// Bump cap done at collection site.
 			if (diagMisses.length) {
 				await writeLocalTextFile(diagMisses.join("\n"), "/tmp/interp-misses.txt")
 				lines.push("")

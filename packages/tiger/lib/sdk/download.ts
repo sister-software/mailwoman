@@ -20,12 +20,12 @@ import { movePath } from "@mailwoman/core/fs/writers"
 import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
 
 /**
- * Download `url` to `dest` unless a valid copy is already there. Returns `true` when the cache was reused, `false` when
- * a download happened.
+ * Download `url` to `dest` unless a valid copy is already there.
+ * Returns `true` when the cache was reused, `false` when a download happened.
  *
- * "Valid" means every member's CRC-32 checks out — an existence check alone is not enough, because an interrupted
- * download leaves a plausible-looking file that fails only much later, inside ogr2ogr. Writes to a `.tmp` sibling and
- * renames, so `dest` is never a partial archive.
+ * "Valid" means every member's CRC-32 checks out — an existence check alone is not enough,
+ * because an interrupted download leaves a plausible-looking file that fails only much later,
+ * inside ogr2ogr. Writes to a `.tmp` sibling and renames, so `dest` is never a partial archive.
  */
 export async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 	if (await pathExists(dest)) {

@@ -57,8 +57,8 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * Open a sealed artifact. Validates magic, version, and that the buffer covers the layout the header declares. throws
-	 * rather than reading past either.
+	 * Open a sealed artifact. Validates magic, version, and that the buffer covers the
+	 * layout the header declares. throws rather than reading past either.
 	 */
 	static from(data: Uint8Array): Ancestrie {
 		const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
@@ -129,8 +129,8 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * The entries accepting at a state, highest rank first (the stored order — no query-time sort). `limit` caps how many
-	 * are decoded. an out-of-range state yields `[]`.
+	 * The entries accepting at a state, highest rank first (the stored order — no query-time sort).
+	 * `limit` caps how many are decoded. an out-of-range state yields `[]`.
 	 */
 	entriesAt(stateID: number, limit?: number): AncestrieRecord[] {
 		if (stateID < 0 || stateID >= this.header.stateCount) return []
@@ -184,9 +184,10 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * The primary-parent lineage of an entry, nearest parent first. Every id resolves within the artifact except possibly
-	 * the last: a declared-but-absent primary parent is included, then the chain stops (it cannot be walked further). An
-	 * unknown `id` yields `[]`.
+	 * The primary-parent lineage of an entry, nearest parent first.
+	 * Every id resolves within the artifact except possibly the last: a declared-but-absent
+	 * primary parent is included, then the chain stops (it cannot be walked further).
+	 * An unknown `id` yields `[]`.
 	 */
 	ancestorsOf(id: number): number[] {
 		const chain: number[] = []
@@ -216,17 +217,17 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * The full declared parent list of an entry, primary first — DAG edges, verbatim from the build. An unknown `id`
-	 * yields `[]`.
+	 * The full declared parent list of an entry, primary first — DAG edges,
+	 * verbatim from the build. An unknown `id` yields `[]`.
 	 */
 	parentsOf(id: number): number[] {
 		return this.getEntry(id)?.parentIDs ?? []
 	}
 
 	/**
-	 * O(1) containment over the primary-parent forest: is `descendantID` inside `ancestorID`'s subtree? An entry contains
-	 * itself. Secondary (non-primary) parent edges do not contribute — see the DAG-canonicalization rule in `format.ts`.
-	 * Unknown ids answer `false`.
+	 * O(1) containment over the primary-parent forest: is `descendantID` inside `ancestorID`'s subtree?
+	 * An entry contains itself. Secondary (non-primary) parent edges do not contribute —
+	 * see the DAG-canonicalization rule in `format.ts`. Unknown ids answer `false`.
 	 */
 	contains(ancestorID: number, descendantID: number): boolean {
 		const ancestorOrdinal = this.ordinalOf(ancestorID)
@@ -243,9 +244,10 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * Every proper descendant of an entry over the primary-parent forest, in pre-order. Entries are stored in forest
-	 * pre-order, so this is a contiguous range scan of the entry table — the subtree size falls out of the interval
-	 * labels as (post − pre − 1) / 2. Unknown ids yield `[]`.
+	 * Every proper descendant of an entry over the primary-parent forest, in pre-order.
+	 * Entries are stored in forest pre-order, so this is a contiguous range scan
+	 * of the entry table — the subtree size falls out of the interval labels as
+	 * (post − pre − 1) / 2. Unknown ids yield `[]`.
 	 */
 	descendantsOf(id: number): number[] {
 		const ordinal = this.ordinalOf(id)
@@ -265,7 +267,8 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * Binary search the state's sorted edges for an exact token. Returns the target state, or −1.
+	 * Binary search the state's sorted edges for an exact token.
+	 * Returns the target state, or −1.
 	 */
 	private findEdge(stateID: number, token: string): number {
 		if (stateID < 0 || stateID >= this.header.stateCount) return -1

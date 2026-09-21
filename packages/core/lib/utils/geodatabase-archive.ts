@@ -30,8 +30,8 @@ import { streamToDisk } from "#utils/stream-to-disk"
 
 export interface DownloadZippedGeodatabaseOptions {
 	/**
-	 * The direct file URL, read from the catalogue entry rather than assembled — these file services key on an opaque id
-	 * with no relationship to the dataset id.
+	 * The direct file URL, read from the catalogue entry rather than assembled —
+	 * these file services key on an opaque id with no relationship to the dataset id.
 	 */
 	url: string
 	/**
@@ -60,8 +60,8 @@ export interface DownloadZippedGeodatabaseOptions {
 /**
  * Download and unzip the geodatabase for one product vintage, returning the path of the `.gdb` directory.
  *
- * The transfer writes to a `.part` file and renames only on a clean finish, so an interrupted run never presents as a
- * complete archive — the same discipline the database build uses, for the same reason.
+ * The transfer writes to a `.part` file and renames only on a clean finish, so an interrupted run never
+ * presents as a complete archive — the same discipline the database build uses, for the same reason.
  */
 export async function downloadZippedGeodatabase(options: DownloadZippedGeodatabaseOptions): Promise<string> {
 	const vintageDir = join(options.cacheRoot, options.revisionDate)

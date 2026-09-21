@@ -24,14 +24,15 @@ export type MultiPolygonCoords = number[][][][]
 /**
  * Ray-cast point-in-ring (even-odd rule). `ring` is `[[lon, lat], …]`.
  *
- * Deliberate duplicate of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose. This package has exactly one
- * dependency — zero-dep `@mailwoman/annotations` — and importing spatial to reach a fifteen-line ray cast would pull
- * `@mailwoman/core` with it, whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data. Eleven
- * megabytes for fifteen lines is the wrong trade for a leaf lookup package. If this package ever gains a real spatial
- * dependency, delete these and import them.
+ * Deliberate duplicate of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose.
+ * This package has exactly one dependency — zero-dep `@mailwoman/annotations` —
+ * and importing spatial to reach a fifteen-line ray cast would pull `@mailwoman/core`
+ * with it, whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data.
+ * Eleven megabytes for fifteen lines is the wrong trade for a leaf lookup package.
+ * If this package ever gains a real spatial dependency, delete these and import them.
  *
- * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11
- * MB of shipped data. see the docstring
+ * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package
+ * stays off @mailwoman/core's ~11 MB of shipped data. see the docstring
  */
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	let inside = false
@@ -53,8 +54,8 @@ function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 /**
  * Inside the outer ring and outside every hole.
  *
- * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11
- * MB of shipped data. see the docstring
+ * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package
+ * stays off @mailwoman/core's ~11 MB of shipped data. see the docstring
  */
 function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolean {
 	if (!polygon[0] || !pointInRing(lon, lat, polygon[0])) return false
@@ -72,8 +73,8 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 }
 
 /**
- * The current UTC offset (seconds) for an iana timezone, via `Intl` (no tz-db dependency). Returns `undefined` if the
- * runtime can't resolve the zone.
+ * The current UTC offset (seconds) for an iana timezone, via `Intl` (no tz-db dependency).
+ * Returns `undefined` if the runtime can't resolve the zone.
  */
 export function offsetSecForTimezone(tzid: string, date: Date = new Date()): number | undefined {
 	try {
@@ -98,8 +99,8 @@ export function offsetSecForTimezone(tzid: string, date: Date = new Date()): num
 export class TimezoneLookup implements Disposable {
 	#db: DatabaseClient<TimezoneDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
+	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 	#stmt: ReturnType<DatabaseClient["prepare"]>

@@ -53,22 +53,23 @@ export interface AuDeliveryServiceDesignator {
 	 */
 	abbreviation: string
 	/**
-	 * Whether the designator "must have an associated number for a match to occur" (amas rule. exceptions are Care of
-	 * Post Office, Community Mail Agent, Community Postal Agent, and Community Mail Bag).
+	 * Whether the designator "must have an associated number for a match to occur" (amas rule. exceptions
+	 * are Care of Post Office, Community Mail Agent, Community Postal Agent, and Community Mail Bag).
 	 */
 	requiresNumber: boolean
 	/**
-	 * True when the designator is recognized by the amas Postal Delivery Type table but absent from every current
-	 * auspost.com.au addressing/product page (accessed 2026-06-11) — the rural and community forms superseded by rural
-	 * street addressing under AS/NZS 4819. The parser must still recognize these on old addresses. synthesis should
-	 * weight them low.
+	 * True when the designator is recognized by the amas Postal Delivery Type table
+	 * but absent from every current auspost.com.au addressing/product page (accessed 2026-06-11) —
+	 * the rural and community forms superseded by rural street addressing under AS/NZS 4819.
+	 * The parser must still recognize these on old addresses. synthesis should weight them low.
 	 */
 	legacy: boolean
 }
 
 /**
- * The verbatim Postal Delivery Type table (see the module header for the per-row provenance). Multiple names can share
- * an abbreviation (roadside mail BAG and roadside mail BOX are both RMB. poste restante is addressed as care PO).
+ * The verbatim Postal Delivery Type table (see the module header for the per-row provenance).
+ * Multiple names can share an abbreviation (roadside mail BAG and roadside mail BOX
+ * are both RMB. poste restante is addressed as care PO).
  */
 export const AU_DELIVERY_SERVICE_DESIGNATORS = [
 	{ name: "GENERAL POST OFFICE BOX", abbreviation: "GPO BOX", requiresNumber: true, legacy: false },
@@ -93,13 +94,14 @@ export const AU_DELIVERY_SERVICE_DESIGNATORS = [
 export type AuDeliveryServiceAbbreviation = (typeof AU_DELIVERY_SERVICE_DESIGNATORS)[number]["abbreviation"]
 
 /**
- * Per-designator surface patterns (designator phrase only, no anchor, no id). Ordered longest / most-specific first so
- * the matcher prefers "GPO Box" over "PO Box" and "RMS" over "MS". Each pattern tolerates the punctuation amas tells
- * mailers to strip ("the full stops and commas in R.M.B and P.O.") — recognition must accept what deliverable mail
- * actually carries.
+ * Per-designator surface patterns (designator phrase only, no anchor, no id).
+ * Ordered longest / most-specific first so the matcher prefers "GPO Box" over "PO Box"
+ * and "RMS" over "MS". Each pattern tolerates the punctuation amas tells mailers
+ * to strip ("the full stops and commas in R.M.B and P.O.") — recognition must
+ * accept what deliverable mail actually carries.
  *
- * MS is special-cased in {@link matchAuDeliveryService}: its identifier must start with a digit so the bare two-letter
- * designator cannot swallow an honorific ("Ms Smith").
+ * MS is special-cased in {@link matchAuDeliveryService}: its identifier must start with a digit
+ * so the bare two-letter designator cannot swallow an honorific ("Ms Smith").
  */
 const DESIGNATOR_PATTERNS: ReadonlyArray<readonly [AuDeliveryServiceAbbreviation, string]> = [
 	["GPO BOX", String.raw`general\s+post\s+office\s+box|g\.?\s*p\.?\s*o\.?\s*box`],
@@ -121,8 +123,9 @@ const DESIGNATOR_INFO = new Map<AuDeliveryServiceAbbreviation, { requiresNumber:
 )
 
 /**
- * One anchored regex per designator: phrase + (required|optional) identifier. The id shape matches the US address
- * system ([\dA-Za-z][\dA-Za-z-]*); MS additionally requires a digit-leading id (see above).
+ * One anchored regex per designator: phrase + (required|optional) identifier.
+ * The id shape matches the US address system ([\dA-Za-z][\dA-Za-z-]*);
+ * MS additionally requires a digit-leading id (see above).
  */
 const MATCHERS: ReadonlyArray<{ abbreviation: AuDeliveryServiceAbbreviation; re: RegExp }> = DESIGNATOR_PATTERNS.map(
 	([abbreviation, src]) => {
@@ -157,9 +160,10 @@ export interface AuDeliveryServiceMatch {
 }
 
 /**
- * If `input` is a standalone Australia Post delivery-service phrase ("GPO Box 2890", "Locked Bag 1797", "RMB 4600",
- * bare "CMB"), return the canonical designator, the id, and the legacy flag. Null otherwise — including for "Private
- * Box", which Australia Post explicitly calls out as not a valid type.
+ * If `input` is a standalone Australia Post delivery-service phrase
+ * ("GPO Box 2890", "Locked Bag 1797", "RMB 4600", bare "CMB"), return the canonical
+ * designator, the id, and the legacy flag. Null otherwise — including for "Private Box",
+ * which Australia Post explicitly calls out as not a valid type.
  */
 export function matchAuDeliveryService(input: unknown): AuDeliveryServiceMatch | null {
 	if (typeof input !== "string") return null
@@ -189,8 +193,8 @@ export function isAuDeliveryService(input: unknown): boolean {
 }
 
 /**
- * Normalize a recognized delivery-service phrase to the canonical amas form (`"g.p.o. box 123"` → `"GPO BOX 123"`).
- * Returns the input unchanged if it isn't one.
+ * Normalize a recognized delivery-service phrase to the canonical amas form
+ * (`"g.p.o. box 123"` → `"GPO BOX 123"`). Returns the input unchanged if it isn't one.
  */
 export function normalizeAuDeliveryService(input: string): string {
 	const m = matchAuDeliveryService(input)

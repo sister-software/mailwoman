@@ -31,8 +31,9 @@ import { trackedSourcePaths } from "#tracked-sources"
 export const AFFIX_IGNORE_MARKER = "repo-health-ignore export-name-affix --"
 
 /**
- * How many camelCase components a shared run must carry. One-component runs are the vocabulary of the tree — `read`,
- * `build`, `file` — so a floor of one reports nearly every name against nearly every other. measured over this
+ * How many camelCase components a shared run must carry.
+ * One-component runs are the vocabulary of the tree — `read`, `build`, `file` —
+ * so a floor of one reports nearly every name against nearly every other. measured over this
  * repository's exported function names, the floor is the difference between 417 pairs and 130.
  */
 const COMPONENT_FLOOR = 2
@@ -59,16 +60,16 @@ interface ExportSite {
 }
 
 /**
- * Split an identifier into camelCase components, keeping a run of capitals whole and attaching digits to the capitals
- * they follow: `readPackageJSONFile` → `read`, `Package`, `JSON`, `File`.
+ * Split an identifier into camelCase components, keeping a run of capitals whole and attaching
+ * digits to the capitals they follow: `readPackageJSONFile` → `read`, `Package`, `JSON`, `File`.
  */
 function nameComponents(name: string): string[] {
 	return name.match(/[A-Z]+\d*(?![a-z])|[A-Z]?[a-z0-9]+|[A-Z]/gu) ?? []
 }
 
 /**
- * Every contiguous run of at least {@linkcode COMPONENT_FLOOR} components, shorter than the whole name, lowercased for
- * comparison.
+ * Every contiguous run of at least {@linkcode COMPONENT_FLOOR} components,
+ * shorter than the whole name, lowercased for comparison.
  */
 function containedRuns(name: string): string[] {
 	const components = nameComponents(name)
@@ -117,7 +118,8 @@ function exportedFunctionSites(file: string, text: string): ExportSite[] {
 }
 
 /**
- * The package a repo-relative path belongs to, so a family inside one workspace is not reported against itself.
+ * The package a repo-relative path belongs to, so a family inside one workspace
+ * is not reported against itself.
  */
 function packageOf(file: string): string {
 	return file.split("/").slice(0, 2).join("/")
@@ -151,8 +153,8 @@ export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]>
 		byLowerName.set(key, [...(byLowerName.get(key) ?? []), site])
 	}
 
-	// One diagnostic per declaration rather than per matching run and not per overload: an overload set is one name, and a name
-	// containing several shorter names is still one thing to look at.
+	// One diagnostic per declaration rather than per matching run and not per overload: an overload
+	// set is one name, and a name containing several shorter names is still one thing to look at.
 	const pairs = new Map<string, AffixPair>()
 
 	for (const site of sites) {
@@ -186,7 +188,8 @@ export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]>
 }
 
 /**
- * The check: each pair as a warning, so a reviewer sees the longer name and the home the shorter one already has.
+ * The check: each pair as a warning, so a reviewer sees the longer name
+ * and the home the shorter one already has.
  */
 export const exportNameAffixCheck: RepoCheck = {
 	id: "export-name-affix",

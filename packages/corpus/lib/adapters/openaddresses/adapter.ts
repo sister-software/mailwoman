@@ -45,19 +45,20 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 import { SHARE_ALIKE_PATTERN } from "#utils"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
 /**
- * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (CC-BY-4.0), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * Subset of OpenAddresses Feature properties the adapter inspects. The runtime accepts uppercase or lowercase keys.
- * this interface documents the canonical lowercase form after normalization.
+ * Subset of OpenAddresses Feature properties the adapter inspects.
+ * The runtime accepts uppercase or lowercase keys. this interface documents the
+ * canonical lowercase form after normalization.
  */
 interface OaProperties {
 	hash?: string
@@ -109,23 +110,25 @@ function parseFeatureLine(line: string): OaProperties | null {
 
 export interface OpenaddressesAdapterOptions {
 	/**
-	 * Per-row license used when a Feature lacks an explicit `LICENSE` property. Defaults to `CC-BY-4.0` — the most common
-	 * license across the OpenAddresses collection. Override per dump via the runner's adapter-options passthrough.
+	 * Per-row license used when a Feature lacks an explicit `LICENSE` property.
+	 * Defaults to `CC-BY-4.0` — the most common license across the OpenAddresses collection.
+	 * Override per dump via the runner's adapter-options passthrough.
 	 */
 	defaultLicense?: string
 
 	/**
-	 * Per-adapter share-alike drop. Default **true** (include) as of 2026-06-19: exclusion is a deliberate build-level
-	 * act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`), not a silent adapter default (#26 — "purposely
-	 * exclude, don't opt in to include"). Set false only for an explicit adapter-scoped drop. the build-level
+	 * Per-adapter share-alike drop. Default **true** (include) as of 2026-06-19: exclusion is a
+	 * deliberate build-level act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`),
+	 * not a silent adapter default (#26 — "purposely exclude, don't opt in to include").
+	 * Set false only for an explicit adapter-scoped drop. the build-level
 	 * `--exclude-share-alike` is the normal path.
 	 */
 	allowShareAlike?: boolean
 }
 
 /**
- * Build an OpenAddresses adapter. The optional `defaultLicense` lets callers stamp a non-default fallback for dumps
- * known to carry a single license throughout (e.g. a pddl-only state extract).
+ * Build an OpenAddresses adapter. The optional `defaultLicense` lets callers stamp a non-default
+ * fallback for dumps known to carry a single license throughout (e.g. a pddl-only state extract).
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE
@@ -146,9 +149,9 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 			const country = adapterOpts.country
 
-			// TextSpliterator streams string lines (parseFeatureLine keeps tolerating blank/`#`/
-			// malformed lines by returning null); passing the path string lets the lib own + dispose
-			// the file handle, including on an early `break`.
+			// TextSpliterator streams string lines (parseFeatureLine keeps tolerating
+			// blank/`#`/ malformed lines by returning null); passing the path string lets the
+			// lib own + dispose the file handle, including on an early `break`.
 			const lines = TextSpliterator.fromAsync(adapterOpts.inputPath)
 
 			let emitted = 0

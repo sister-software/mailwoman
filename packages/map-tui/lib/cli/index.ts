@@ -9,15 +9,15 @@
 /**
  * The `map-tui` bin — `npx @mailwoman/map-tui` opens a PMTiles archive as a full-screen terminal map.
  *
- * This file owns everything process-shaped so the rest of the package stays testable without one: argv and the
- * environment (parsed by ./cli-args.ts), the archive handle, signal handlers, and the exit code. `MapBrowser` takes
- * streams rather than reaching for `process` itself, which is what lets the PTY smoke test drive the real bin and a
- * unit test drive the parser with neither.
+ * This file owns everything process-shaped so the rest of the package stays testable without one:
+ * argv and the environment (parsed by ./cli-args.ts), the archive handle, signal handlers,
+ * and the exit code. `MapBrowser` takes streams rather than reaching for `process` itself, which is
+ * what lets the PTY smoke test drive the real bin and a unit test drive the parser with neither.
  *
- * Signal handling is not optional here. This is a raw-mode app on the alternate screen with mouse reporting on, and
- * there is no framework underneath to put any of that back — a process killed between `start` and `restore` leaves the
- * user with an unusable shell. So `restore` is wired to sigint, sigterm and `exit`, and it is idempotent for exactly
- * that reason.
+ * Signal handling is not optional here. This is a raw-mode app on the alternate screen
+ * with mouse reporting on, and there is no framework underneath to put any of that back —
+ * a process killed between `start` and `restore` leaves the user with an unusable shell.
+ * So `restore` is wired to sigint, sigterm and `exit`, and it is idempotent for exactly that reason.
  */
 
 import { errorMessage } from "@mailwoman/core/errors/schema"
@@ -35,9 +35,10 @@ const EXIT_USAGE = 1
 /**
  * Reads the package's own version.
  *
- * Self-reference (`@mailwoman/map-tui/...`, which the package's `exports` publishes) rather than a path relative to
- * this file: the bin runs from `out/` when installed and from the workspace root in development, and only the package
- * graph knows which. `createRequire` parses the JSON itself, so no reader here has to.
+ * Self-reference (`@mailwoman/map-tui/...`, which the package's `exports` publishes)
+ * rather than a path relative to this file: the bin runs from `out/` when installed
+ * and from the workspace root in development, and only the package graph knows which.
+ * `createRequire` parses the JSON itself, so no reader here has to.
  */
 function readVersion(): string {
 	const require = createRequire(import.meta.url)
@@ -97,9 +98,9 @@ async function main(): Promise<number> {
 		/**
 		 * Keep reads of argv and env here and nowhere else in the package.
 		 *
-		 * We intentionally avoid `@mailwoman/core/env`: its typed readers depend on core's data-backed env schema, while
-		 * this CLI is designed to run as a lightweight `npx` entrypoint. So the bin passes raw argv/env records into the
-		 * pure `parseCLIArgs` function instead.
+		 * We intentionally avoid `@mailwoman/core/env`: its typed readers depend on core's data-backed
+		 * env schema, while this CLI is designed to run as a lightweight `npx` entrypoint.
+		 * So the bin passes raw argv/env records into the pure `parseCLIArgs` function instead.
 		 */
 		// oxlint-disable-next-line sister-software/no-process-globals -- see above.
 		args = parseCLIArgs(process.argv.slice(2), process.env)
@@ -125,8 +126,8 @@ async function main(): Promise<number> {
 
 	let opened: TileSource
 
-	// A bad `--tiles` path is a usage error rather than a crash — the guard stays around the open, and ownership passes to the
-	// `using` declaration only once the open succeeded.
+	// A bad `--tiles` path is a usage error rather than a crash — the guard stays around the open,
+	// and ownership passes to the `using` declaration only once the open succeeded.
 	try {
 		opened = await openTiles(args.tiles)
 	} catch (error) {

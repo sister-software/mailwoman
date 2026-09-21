@@ -24,8 +24,8 @@ import { haversineKm } from "@mailwoman/spatial"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * Capital status of one candidate: national capital, admin-1 seat, or neither. Numeric so the resolver's promotion can
- * compare levels.
+ * Capital status of one candidate: national capital, admin-1 seat, or neither.
+ * Numeric so the resolver's promotion can compare levels.
  */
 export const CAPITAL_LEVEL = {
 	none: 0,
@@ -36,9 +36,9 @@ export const CAPITAL_LEVEL = {
 export type CapitalLevel = (typeof CAPITAL_LEVEL)[keyof typeof CAPITAL_LEVEL]
 
 /**
- * How far a candidate row may sit from the reference point and still read as the same place — a centroid-convention
- * allowance (GeoNames point vs WOF centroid on a metro-scale city), not a catchment: the name-membership conjunct is
- * what excludes neighbours inside the radius.
+ * How far a candidate row may sit from the reference point and still read as the same place —
+ * a centroid-convention allowance (GeoNames point vs WOF centroid on a metro-scale city),
+ * not a catchment: the name-membership conjunct is what excludes neighbours inside the radius.
  */
 export const CAPITAL_MATCH_RADIUS_KM = 25
 
@@ -54,8 +54,8 @@ export interface CapitalPoint {
 	longitude: number
 	level: "national" | "admin1"
 	/**
-	 * Folded name keys (name + romanization + alternate names, `normalizeLocalityForKey` fold) — the membership set for
-	 * the name conjunct.
+	 * Folded name keys (name + romanization + alternate names, `normalizeLocalityForKey` fold) —
+	 * the membership set for the name conjunct.
 	 */
 	k: string[]
 }
@@ -73,9 +73,9 @@ interface IndexedPoint {
 }
 
 /**
- * Country-bucketed capital points with the three-conjunct identity probe. Construct from the parsed reference file's
- * `entries` — the loader that reads the file off disk lives with the path owners (`mailwoman`'s resolver backend),
- * keeping this module platform-free.
+ * Country-bucketed capital points with the three-conjunct identity probe.
+ * Construct from the parsed reference file's `entries` — the loader that reads the file off disk
+ * lives with the path owners (`mailwoman`'s resolver backend), keeping this module platform-free.
  */
 export class CapitalIndex {
 	readonly #byCountry = new Map<string, IndexedPoint[]>()
@@ -102,8 +102,9 @@ export class CapitalIndex {
 	}
 
 	/**
-	 * The highest capital level whose entry passes all three conjuncts for this place. `none` — never a throw — for a
-	 * missing name, country, or coordinate, an unknown country, or no matching entry.
+	 * The highest capital level whose entry passes all three conjuncts for this place.
+	 * `none` — never a throw — for a missing name, country, or coordinate,
+	 * an unknown country, or no matching entry.
 	 */
 	levelOfPlace(
 		name: string | null | undefined,

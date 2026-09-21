@@ -35,7 +35,8 @@ export interface EnrichAdminResult {
 }
 
 /**
- * Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table. Idempotent.
+ * Enrich an admin staging DB: region-abbreviation `names` rows + the
+ * `place_abbr` join table. Idempotent.
  */
 export async function enrichAdmin<DB>(
 	db: DatabaseClient<DB>,
@@ -47,8 +48,8 @@ export async function enrichAdmin<DB>(
 
 	// idempotent re-run
 
-	// One read of every region row, bucketed by country — the per-country query it replaces was
-	// re-`prepare`d inside the loop, once for each of ~200 countries.
+	// One read of every region row, bucketed by country — the per-country query it replaces
+	// was re-`prepare`d inside the loop, once for each of ~200 countries.
 	const regionsByCountry = new Map<string, Array<{ id: number; name: string }>>()
 
 	for (const row of db.prepare("SELECT id, name, country FROM spr WHERE placetype='region'").all() as Array<{
@@ -106,8 +107,8 @@ export async function enrichAdmin<DB>(
 		db.exec("COMMIT")
 	}
 
-	// `place_abbr` — the id → abbreviation join the resolver probes for 2-letter exact matches. Rebuilt
-	// from the rows above (the build-slim.ts recipe); dropped first so a re-run stays idempotent.
+	// `place_abbr` — the id → abbreviation join the resolver probes for 2-letter exact matches.
+	// Rebuilt from the rows above (the build-slim.ts recipe); dropped first so a re-run stays idempotent.
 	db.exec("DROP TABLE IF EXISTS place_abbr")
 	db.exec("CREATE TABLE place_abbr (id INTEGER NOT NULL, abbr TEXT NOT NULL)")
 	db.exec("INSERT INTO place_abbr (id, abbr) SELECT id, name FROM names WHERE language = 'abbr'")

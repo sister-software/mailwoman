@@ -34,9 +34,9 @@
 import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/definition"
 
 /**
- * Higher is finer. Absent placetypes are unranked and must be handled by the caller rather than defaulted — a missing
- * entry silently scoring 0 would rank an unknown placetype as coarse as `country`, which is the wrong direction for
- * every check that reads this.
+ * Higher is finer. Absent placetypes are unranked and must be handled by the caller
+ * rather than defaulted — a missing entry silently scoring 0 would rank an unknown placetype
+ * as coarse as `country`, which is the wrong direction for every check that reads this.
  */
 export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype | (string & {}), number>>> = {
 	address: 11,
@@ -64,8 +64,9 @@ export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype
 /**
  * The rank of a placetype, or `undefined` when it carries none.
  *
- * Returning `undefined` rather than a number is the point: a caller that cannot rank a row has to decide what that
- * means for its own check, and the two reasonable answers (block conservatively, or ignore) differ per call site.
+ * Returning `undefined` rather than a number is the point: a caller that cannot rank
+ * a row has to decide what that means for its own check, and the two reasonable
+ * answers (block conservatively, or ignore) differ per call site.
  */
 export function placetypeSpecificity(placetype: string | null | undefined): number | undefined {
 	if (!placetype) return undefined
@@ -76,8 +77,9 @@ export function placetypeSpecificity(placetype: string | null | undefined): numb
 /**
  * Is `candidate` at least as fine-grained as `reference`?
  *
- * `undefined` when either placetype is unranked — the caller decides. The comparison is `>=` so an equal rung counts as
- * covering, which is what a "this place is already represented" check wants.
+ * `undefined` when either placetype is unranked — the caller decides.
+ * The comparison is `>=` so an equal rung counts as covering, which is what a
+ * "this place is already represented" check wants.
  */
 export function isAtLeastAsSpecific(
 	candidate: string | null | undefined,
@@ -94,13 +96,15 @@ export function isAtLeastAsSpecific(
 /**
  * Is `candidate` strictly finer than `reference` — a child rung rather than the same one?
  *
- * The distinction from {@link isAtLeastAsSpecific} is the whole bug it was written for. "Does this live row cover that
- * dead one" wants the equal case to count as covering: a live `locality` covers a dead `locality` of the same name.
- * Asking `isAtLeastAsSpecific(live, dead)` and negating it answers "is the live row strictly coarser", which quietly
- * drops the equal case — measured on the real artifact, that turned 973 blocked rows into 18 and would have resurrected
- * 955 places that are already alive.
+ * The distinction from {@link isAtLeastAsSpecific} is the whole bug it was written for.
+ * "Does this live row cover that dead one" wants the equal case to count as
+ * covering: a live `locality` covers a dead `locality` of the same name.
+ * Asking `isAtLeastAsSpecific(live, dead)` and negating it answers "is the live row strictly
+ * coarser", which quietly drops the equal case — measured on the real artifact, that turned
+ * 973 blocked rows into 18 and would have resurrected 955 places that are already alive.
  *
- * `undefined` when either placetype is unranked. a caller filtering on this should treat that as "not strictly finer".
+ * `undefined` when either placetype is unranked. a caller filtering on this
+ * should treat that as "not strictly finer".
  */
 export function isStrictlyFiner(
 	candidate: string | null | undefined,

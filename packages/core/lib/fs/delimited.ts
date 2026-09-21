@@ -21,9 +21,9 @@ import { TextSpliterator, TSVSpliterator } from "spliterator"
 /**
  * Stream the records of an unquoted tab-separated file.
  *
- * Use this for any source whose `"` is literal — the GeoNames dumps, and every register that writes plain TSV. A source
- * that really is quoted (a spreadsheet export, a register that escapes its delimiters) wants `TSVSpliterator` directly
- * with the default, and should say so where it is read.
+ * Use this for any source whose `"` is literal — the GeoNames dumps, and every register that writes plain
+ * TSV. A source that really is quoted (a spreadsheet export, a register that escapes its delimiters)
+ * wants `TSVSpliterator` directly with the default, and should say so where it is read.
  */
 export function readUnquotedTSV(path: PathBuilderLike): AsyncIterable<string[]> {
 	return TSVSpliterator.fromAsync(path, {
@@ -45,16 +45,17 @@ export function readUnquotedTSVText(text: string): Iterable<string[]> {
 /**
  * The same read, checked against the file's own line count, raising rather than answering short.
  *
- * A reader that can return a partial result must say what it got or throw: a short read and a small file are the same
- * number to every consumer, and absence is the answer a gazetteer build is looking for, so the wrong answer arrives
- * looking like a discovery. This costs one extra pass over the bytes and is the right default for a build step that
- * will bake its result into a shipped artifact.
+ * A reader that can return a partial result must say what it got or throw: a short read
+ * and a small file are the same number to every consumer, and absence is the answer a
+ * gazetteer build is looking for, so the wrong answer arrives looking like a discovery.
+ * This costs one extra pass over the bytes and is the right default for a build
+ * step that will bake its result into a shipped artifact.
  */
 export async function readUnquotedTSVChecked(path: PathBuilderLike): Promise<string[][]> {
 	let expected = 0
 
-	// Streamed rather than split: the largest dump this guards is Finland's at 552,802 lines, and the point of
-	// the check is to be cheap enough that a build step always runs it.
+	// Streamed rather than split: the largest dump this guards is Finland's at 552,802 lines,
+	// and the point of the check is to be cheap enough that a build step always runs it.
 	for await (const line of TextSpliterator.fromAsync(path)) {
 		if (line.length) {
 			expected++

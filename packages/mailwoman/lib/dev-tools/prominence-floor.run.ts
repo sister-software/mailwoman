@@ -66,12 +66,14 @@ const { values, positionals } = parseArguments({
 
 const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
- * The FTS gazetteer, read for its `concordances` + `spr` tables — the identity join. The candidate backend below
- * carries no concordance table, which is why the two are separate flags rather than one.
+ * The FTS gazetteer, read for its `concordances` + `spr` tables — the identity join.
+ * The candidate backend below carries no concordance table, which is why the
+ * two are separate flags rather than one.
  */
 const GAZETTEER = values.gazetteer || dataRootPath("wof", "admin-global-priority.db")
 /**
- * The backend the recording drives. Defaults to the promoted candidate table, which is what the shipped geocoder reads.
+ * The backend the recording drives. Defaults to the promoted candidate table,
+ * which is what the shipped geocoder reads.
  */
 const BACKEND = values.backend || dataRootPath("wof", "candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
@@ -83,18 +85,20 @@ const RECEIPT_PATH = `${OUT}/prominence-floor-receipt.json`
 const SCORE_PATH = `${OUT}/prominence-floor-report.md`
 
 /**
- * The frozen decision rule's two conditions, in percentage points. They are prose in `benchmark-definition.json`: the
- * false-selection rate must fall by at least 10 percentage points against the default arm in every band, and selection
- * accuracy must not fall more than 5 percentage points below the default arm's in any band. So they are named here
- * rather than carried as data: adding them to the definition after the freeze would move the content hash the freeze
- * record pins.
+ * The frozen decision rule's two conditions, in percentage points.
+ * They are prose in `benchmark-definition.json`: the false-selection rate must fall by
+ * at least 10 percentage points against the default arm in every band, and selection
+ * accuracy must not fall more than 5 percentage points below the default arm's in any band.
+ * So they are named here rather than carried as data: adding them to the definition
+ * after the freeze would move the content hash the freeze record pins.
  */
 const REQUIRED_FALSE_SELECTION_DROP_POINTS = 10
 const ALLOWED_ACCURACY_COST_POINTS = 5
 
 /**
- * Every arm's `ResolveOpts`, in the definition's order. The default arm's empty bag is listed explicitly: an omitted
- * default is a missing replay key, and `replayBackend` would raise on the arm the benchmark compares against.
+ * Every arm's `ResolveOpts`, in the definition's order.
+ * The default arm's empty bag is listed explicitly: an omitted default is a missing replay key,
+ * and `replayBackend` would raise on the arm the benchmark compares against.
  */
 function armOptionSets(definition: ProminenceFloorDefinition): ResolveOpts[] {
 	return definition.arms.map((arm) => ({ ...arm.resolveOpts }))
@@ -246,8 +250,8 @@ async function scorePhase(): Promise<void> {
 	const panelByID = new Map(panel.map((row) => [row.id, row]))
 	const bandOf = new Map(panel.map((row) => [row.id, row.band]))
 
-	// A raised floor changes what the walk asks next, so each arm loses a different set of rows to replay misses.
-	// Scoring each arm over its own survivors would compare rates whose denominators moved.
+	// A raised floor changes what the walk asks next, so each arm loses a different set of rows to replay
+	// misses. Scoring each arm over its own survivors would compare rates whose denominators moved.
 	const errored = new Set(results.filter((result) => result.error).map((result) => result.rowID))
 	const scored = results.filter((result) => !errored.has(result.rowID))
 	const survivors = new Map([...panelByID].filter(([id]) => !errored.has(id)))
@@ -279,8 +283,8 @@ async function scorePhase(): Promise<void> {
 	const reading = (band: string, arm: string): BandReading | undefined =>
 		readings.find((entry) => entry.band === band && entry.arm === arm)
 
-	// The registered rule: some floor must reduce the false-selection rate by at least 10 points against the default in
-	// every band, while costing at most 5 points of selection accuracy in any band.
+	// The registered rule: some floor must reduce the false-selection rate by at least 10 points against
+	// the default in every band, while costing at most 5 points of selection accuracy in any band.
 	const verdictRows = definition.arms
 		.filter((arm) => arm.id !== "default")
 		.map((arm) => {
@@ -294,8 +298,8 @@ async function scorePhase(): Promise<void> {
 				return { band: band.id, falseDrop, accuracyCost }
 			})
 
-			// The rule is per band and decisive, so the arm is judged on its worst band on each axis: the
-			// smallest refusal it bought anywhere, and the largest accuracy it cost anywhere.
+			// The rule is per band and decisive, so the arm is judged on its worst band on each axis:
+			// the smallest refusal it bought anywhere, and the largest accuracy it cost anywhere.
 			const worstDrop = Math.min(...perBand.map((entry) => entry.falseDrop))
 			const worstCost = Math.max(...perBand.map((entry) => entry.accuracyCost))
 			const passed = worstDrop >= REQUIRED_FALSE_SELECTION_DROP_POINTS && worstCost <= ALLOWED_ACCURACY_COST_POINTS

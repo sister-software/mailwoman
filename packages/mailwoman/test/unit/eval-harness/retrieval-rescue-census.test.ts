@@ -20,8 +20,8 @@ function row(overrides: Partial<RescueRowInput>): RescueRowInput {
 
 describe("classifyRescueRow", () => {
 	it("classifies the COMER placebo shape: wrong resolvable pick, correct entity conditional off", () => {
-		// The placebo delivered Comer, Georgia, US (34.062167, -83.126341) — ~7,000 km from truth — while the
-		// unconditional probe holds the restaurant 6 m away.
+		// The placebo delivered Comer, Georgia, US (34.062167, -83.126341) — ~7,000 km from
+		// truth — while the unconditional probe holds the restaurant 6 m away.
 		const graded = classifyRescueRow(
 			row({
 				...PARIS,
@@ -60,8 +60,8 @@ describe("classifyRescueRow", () => {
 	})
 
 	it("keeps check_protects a SEPARATE flag on a correct row with an entity hit", () => {
-		// Loosening the check reorders which mechanism answers even when both are right — that row belongs in the
-		// risk list without leaving the correct_as_is count.
+		// Loosening the check reorders which mechanism answers even when both are right —
+		// that row belongs in the risk list without leaving the correct_as_is count.
 		const graded = classifyRescueRow(
 			row({
 				...PARIS,

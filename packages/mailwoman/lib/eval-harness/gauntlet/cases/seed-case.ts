@@ -25,9 +25,9 @@ import type { MutuallyAssignable, SameShape } from "#eval-harness/shape-assertio
 /**
  * One row of the curated regression corpus, as committed under `cases/<cc>/*.jsonl`.
  *
- * The field order here is required twice over: {@linkcode SEED_CASE_KEY_ORDER} mirrors it (so every emitted jsonl row
- * keys identically and a diff shows content changes, never a re-shuffle), and the migration that produced the corpus
- * keyed its rows by it.
+ * The field order here is required twice over: {@linkcode SEED_CASE_KEY_ORDER} mirrors it
+ * (so every emitted jsonl row keys identically and a diff shows content changes, never a re-shuffle),
+ * and the migration that produced the corpus keyed its rows by it.
  */
 export interface SeedCase {
 	id: string
@@ -41,14 +41,16 @@ export interface SeedCase {
 	 */
 	defaultCountry?: string
 	/**
-	 * The CLI locale this row runs under (`en-NZ`); the runner derives the weights overlay from its region subtag,
-	 * mirroring production's locale-hint routing. A locale hint, never a country constraint — `country` above stays the
-	 * truth's country, which for a locale row can differ (`Paris` under `en-US` is an FR row run with the US overlay).
-	 * See #1585's interface.
+	 * The CLI locale this row runs under (`en-NZ`); the runner derives the weights
+	 * overlay from its region subtag, mirroring production's locale-hint routing.
+	 * A locale hint, never a country constraint — `country` above stays the truth's country,
+	 * which for a locale row can differ (`Paris` under `en-US` is an FR row run
+	 * with the US overlay). See #1585's interface.
 	 */
 	locale?: string
 	/**
-	 * Asserted admin/parse fields, when relevant — `{ country?, region?, locality? }` (matched case-insensitively).
+	 * Asserted admin/parse fields, when relevant — `{ country?, region?, locality? }`
+	 * (matched case-insensitively).
 	 */
 	expectComponents?: Record<string, string>
 	/**
@@ -90,9 +92,9 @@ export interface SeedCase {
 /**
  * The canonical key order for an emitted jsonl row — {@linkcode SeedCase}'s declaration order.
  *
- * Emission re-keys through this rather than trusting object literal order, because the corpus was authored by hand over
- * ~40 batches and the literals are not consistently ordered. Re-keying makes a `git diff` of the corpus mean
- * something.
+ * Emission re-keys through this rather than trusting object literal order, because the corpus
+ * was authored by hand over ~40 batches and the literals are not consistently ordered.
+ * Re-keying makes a `git diff` of the corpus mean something.
  */
 export const SEED_CASE_KEY_ORDER = [
 	"id",
@@ -136,8 +138,8 @@ export const SeedCaseSchema = zod.strictObject({
 		.regex(/^[a-z]{2}-[A-Z]{2}$/)
 		.optional(),
 	expectComponents: zod.record(zod.string(), zod.string()).optional(),
-	// Non-empty string arrays only: an empty rendering list would assert nothing while looking asserted, and a
-	// non-array value is the `expectComponents` shape filed under the wrong key.
+	// Non-empty string arrays only: an empty rendering list would assert nothing while looking
+	// asserted, and a non-array value is the `expectComponents` shape filed under the wrong key.
 	expectComponentRenderings: zod.record(zod.string(), zod.array(zod.string().min(1)).min(1)).optional(),
 	expectPlaceID: zod.string().optional(),
 	expectPlaceName: zod.string().optional(),
@@ -153,16 +155,18 @@ export const SeedCaseSchema = zod.strictObject({
 })
 
 /**
- * The compile-time bridge. If you add a field to {@linkcode SeedCase} and not to {@linkcode SeedCaseSchema} (or the other
- * way round), this line is where `tsc` stops you — `true satisfies never` does not compile.
+ * The compile-time bridge. If you add a field to {@linkcode SeedCase}
+ * and not to {@linkcode SeedCaseSchema} (or the other way round), this line is
+ * where `tsc` stops you — `true satisfies never` does not compile.
  */
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof SeedCaseSchema>, SeedCase>
 
 /**
  * The third leg: {@linkcode SEED_CASE_KEY_ORDER} must list every key rather than merely valid ones.
  *
- * Its `satisfies readonly (keyof SeedCase)[]` checks membership only, so a new field that never reaches the array would
- * be silently dropped from every emitted row and from the content hash. This fails instead.
+ * Its `satisfies readonly (keyof SeedCase)[]` checks membership only, so a new field
+ * that never reaches the array would be silently dropped from every emitted row
+ * and from the content hash. This fails instead.
  */
 export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 	(typeof SEED_CASE_KEY_ORDER)[number],
@@ -172,8 +176,8 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 /**
  * Re-key a case into {@linkcode SEED_CASE_KEY_ORDER}, dropping absent optionals.
  *
- * Used by the emitter and by the corpus content hash, so the hash is a function of content and not of how a given
- * authoring session happened to order its literals.
+ * Used by the emitter and by the corpus content hash, so the hash is a function of content
+ * and not of how a given authoring session happened to order its literals.
  */
 export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 	const out: Partial<SeedCase> = {}
@@ -181,8 +185,9 @@ export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 	for (const key of SEED_CASE_KEY_ORDER) {
 		const value = c[key]
 
-		// `Object.assign` rather than `out[key] = value`: a dynamic key widens the write target to the intersection of
-		// every field type, which nothing satisfies. The accumulator keeps its own type either way.
+		// `Object.assign` rather than `out[key] = value`: a dynamic key widens the write
+		// target to the intersection of every field type, which nothing satisfies.
+		// The accumulator keeps its own type either way.
 		if (value !== undefined) {
 			Object.assign(out, { [key]: value })
 		}
@@ -192,10 +197,10 @@ export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 }
 
 /**
- * The `gauntlet_case` row a seed case becomes: the camelCase seed keys onto the snake_case columns, every absent
- * expectation an explicit `null`, the JSON-valued expectations serialized. The regression-db builder inserts through
- * this, and a board author grades a candidate row through it before committing it, so the two cannot disagree about
- * what a seed field means.
+ * The `gauntlet_case` row a seed case becomes: the camelCase seed keys onto the snake_case columns,
+ * every absent expectation an explicit `null`, the JSON-valued expectations serialized.
+ * The regression-db builder inserts through this, and a board author grades a candidate row
+ * through it before committing it, so the two cannot disagree about what a seed field means.
  */
 export function seedCaseToTableRow(c: SeedCase): GauntletCaseTable {
 	return {

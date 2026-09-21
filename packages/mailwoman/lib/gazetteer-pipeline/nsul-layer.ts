@@ -90,8 +90,8 @@ export const NSUL_LICENSE = "OGL-UK-3.0"
 export const NSUL_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * Where ONS states the licence terms for its address products, and that Northern Ireland (`BT`) postcode data is
- * outside them.
+ * Where ONS states the licence terms for its address products, and that Northern
+ * Ireland (`BT`) postcode data is outside them.
  */
 export const NSUL_LICENSE_INFO_URL = "https://www.ons.gov.uk/methodology/geography/licences"
 
@@ -114,8 +114,8 @@ export function nsulAttribution(year: number): string {
 }
 
 /**
- * The exact CSV header of every region file, verified against Epoch 127 (June 2026). A drifted header fails the build
- * loudly rather than silently mapping `pcds` by position.
+ * The exact CSV header of every region file, verified against Epoch 127 (June 2026).
+ * A drifted header fails the build loudly rather than silently mapping `pcds` by position.
  */
 export const NSUL_HEADER =
 	"UPRN,GRIDGB1E,GRIDGB1N,PCDS,OA21CD,CTY25CD,CED25CD,LAD25CD,WD25CD,HLTH19CD,CTRY25CD,RGN25CD,PCON24CD,EER20CD," +
@@ -123,29 +123,33 @@ export const NSUL_HEADER =
 	"LEP21CD2,PFA23CD,IMD19IND"
 
 /**
- * Field count of {@link NSUL_HEADER} — a line splitting to anything else is malformed. The file is quote-free by
- * construction (every field is a code or a number), so a plain comma split is exact.
+ * Field count of {@link NSUL_HEADER} — a line splitting to anything else is malformed.
+ * The file is quote-free by construction (every field is a code or a number),
+ * so a plain comma split is exact.
  */
 const NSUL_COLUMN_COUNT = 29
 
 /**
- * Column positions read from each line. Every other column is a statistical geography this layer does not carry.
+ * Column positions read from each line. Every other column is a statistical
+ * geography this layer does not carry.
  */
 const UPRN_COLUMN = 0
 const PCDS_COLUMN = 3
 
 /**
- * The eleven nsul region files that together are Great Britain: the nine English regions, Scotland and Wales. The
- * archive is refused when its `Data/` members are not exactly this set — a missing region is a truncated Britain and an
- * extra one is a product change, and neither may pass as a smaller or larger row count.
+ * The eleven nsul region files that together are Great Britain: the nine English regions,
+ * Scotland and Wales. The archive is refused when its `Data/` members are not exactly this
+ * set — a missing region is a truncated Britain and an extra one is a product change,
+ * and neither may pass as a smaller or larger row count.
  */
 export const NSUL_REGIONS = ["EE", "EM", "LN", "NE", "NW", "SC", "SE", "SW", "WA", "WM", "YH"] as const
 
 export type NSULRegion = (typeof NSUL_REGIONS)[number]
 
 /**
- * Row floor for {@link buildNSULLayer}'s truncation guard. Epoch 127 writes 40,833,043 rows from 41,546,385 lines (the
- * rest have no Code-Point postcode or no Open uprn point) and the register only grows, so a full-source build under
+ * Row floor for {@link buildNSULLayer}'s truncation guard.
+ * Epoch 127 writes 40,833,043 rows from 41,546,385 lines (the rest have no Code-Point postcode
+ * or no Open uprn point) and the register only grows, so a full-source build under
  * this floor read a truncated archive. Fixture builds pass their own.
  */
 export const NSUL_MINIMUM_PLAUSIBLE_ROWS = 35_000_000
@@ -160,8 +164,9 @@ export const NSUL_COVERAGE_NOTE =
 	"AND OS Open UPRN publishes a coordinate for it; the two skipped counts are in nsul_meta.quality_drops."
 
 /**
- * A unit postcode as nsul writes it: outward code (area letters, district digit, optional sub-district), one space,
- * inward code (sector digit, two unit letters). `GIR 0AA` is the one non-geographic code Code-Point Open carries.
+ * A unit postcode as nsul writes it: outward code (area letters, district digit,
+ * optional sub-district), one space, inward code (sector digit, two unit letters).
+ * `GIR 0AA` is the one non-geographic code Code-Point Open carries.
  */
 const PCDS_SHAPE = /^(?:[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}|GIR 0AA)$/
 
@@ -194,8 +199,8 @@ const MONTHS: Record<string, { number: string; name: string }> = {
 }
 
 /**
- * What one nsul data line is, for the accounting identity. Exactly one class per line, so the five counters sum to the
- * lines read.
+ * What one nsul data line is, for the accounting identity.
+ * Exactly one class per line, so the five counters sum to the lines read.
  */
 export type NSULLineClass =
 	| { kind: "row"; uprn: number; pcds: string }
@@ -205,10 +210,11 @@ export type NSULLineClass =
 /**
  * Classify one data line of an nsul region file.
  *
- * Crlf-terminated in the wild: the `\r` is stripped at the reader boundary or the last column carries it into every
- * value (the G-NAF lesson). A line is malformed when its field count is not {@link NSUL_COLUMN_COUNT}, when `uprn` is
- * not a literal digit string within the safe-integer range, or when a non-empty `pcds` does not have a unit-postcode
- * shape — a postcode-shaped column holding anything else is a defect to be counted rather than a key to be stored.
+ * Crlf-terminated in the wild: the `\r` is stripped at the reader boundary or the last column
+ * carries it into every value (the G-NAF lesson). A line is malformed when its field count is not
+ * {@link NSUL_COLUMN_COUNT}, when `uprn` is not a literal digit string within the safe-integer
+ * range, or when a non-empty `pcds` does not have a unit-postcode shape — a postcode-shaped
+ * column holding anything else is a defect to be counted rather than a key to be stored.
  */
 export function classifyNSULLine(line: string): NSULLineClass {
 	const parts = (line.endsWith("\r") ? line.slice(0, -1) : line).split(",")
@@ -233,8 +239,8 @@ export function classifyNSULLine(line: string): NSULLineClass {
 }
 
 /**
- * Strip the header line's crlf terminator and compare it to {@link NSUL_HEADER}. Returns the header as found when it
- * drifts, `null` when it matches.
+ * Strip the header line's crlf terminator and compare it to {@link NSUL_HEADER}.
+ * Returns the header as found when it drifts, `null` when it matches.
  */
 export function nsulHeaderDrift(rawLine: string): string | null {
 	const header = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine
@@ -289,8 +295,9 @@ export function nsulVintageLabel(vintage: NSULVintage): string {
 }
 
 /**
- * One region's CSV, as a stream of lines — the interface between "which bytes" and "what they mean", so a fixture
- * supplies files on disk and the real build streams archive members through the same ingest loop.
+ * One region's CSV, as a stream of lines — the interface between "which bytes"
+ * and "what they mean", so a fixture supplies files on disk and the real build
+ * streams archive members through the same ingest loop.
  */
 export interface NSULRegionSource {
 	region: NSULRegion
@@ -316,8 +323,8 @@ interface NSULItemRecord {
 }
 
 /**
- * Locate the archive in `sourceDir` and turn its eleven region members into streaming sources, refusing a region set
- * that is not exactly {@link NSUL_REGIONS}.
+ * Locate the archive in `sourceDir` and turn its eleven region members into streaming sources,
+ * refusing a region set that is not exactly {@link NSUL_REGIONS}.
  */
 export async function openNSULArchive(sourceDir: string): Promise<{
 	archivePath: string
@@ -377,8 +384,9 @@ export async function openNSULArchive(sourceDir: string): Promise<{
 }
 
 /**
- * The newest vintage directory under `<data-root>/nsul/` holding an nsul archive — the default source when the caller
- * names none. Vintage directories are `yyyy-MM`, so lexical order is chronological order.
+ * The newest vintage directory under `<data-root>/nsul/` holding an nsul archive —
+ * the default source when the caller names none. Vintage directories are `yyyy-MM`,
+ * so lexical order is chronological order.
  */
 export async function resolveLatestNSULSourceDir(root = String(dataRootPath("nsul"))): Promise<string> {
 	const candidates = await Globerator.from("*", {
@@ -407,12 +415,14 @@ export async function resolveLatestNSULSourceDir(root = String(dataRootPath("nsu
 
 export interface BuildNSULLayerOptions {
 	/**
-	 * Acquisition directory holding the archive, its `.md5` sidecar and `item.json`. Default: the newest vintage
-	 * directory under `<data-root>/nsul/` that holds an archive ({@link resolveLatestNSULSourceDir}).
+	 * Acquisition directory holding the archive, its `.md5` sidecar and `item.json`.
+	 * Default: the newest vintage directory under `<data-root>/nsul/` that holds
+	 * an archive ({@link resolveLatestNSULSourceDir}).
 	 */
 	sourceDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/nsul/nsul.db`. Built to a staging path and atomically swapped into place.
+	 * Output artifact. Default `<data-root>/nsul/nsul.db`.
+	 * Built to a staging path and atomically swapped into place.
 	 */
 	out?: string
 	/**
@@ -428,7 +438,8 @@ export interface BuildNSULLayerOptions {
 	 */
 	createdAt?: string
 	/**
-	 * Git sha of the building tree (`buildSHA(repoRoot)` from `stamp-manifest.ts`) — the builder never guesses it.
+	 * Git sha of the building tree (`buildSHA(repoRoot)` from `stamp-manifest.ts`) —
+	 * the builder never guesses it.
 	 */
 	buildSHA: string
 	/**
@@ -436,8 +447,8 @@ export interface BuildNSULLayerOptions {
 	 */
 	minimumPlausibleRows?: number
 	/**
-	 * Injected region sources plus the vintage they carry — the fixture path. Skips the archive entirely. provenance
-	 * still comes from `sourceDir`'s sidecars when present.
+	 * Injected region sources plus the vintage they carry — the fixture path.
+	 * Skips the archive entirely. provenance still comes from `sourceDir`'s sidecars when present.
 	 */
 	sources?: { vintage: NSULVintage; regions: NSULRegionSource[] }
 	onPhase?: (phase: string, detail?: string) => void
@@ -463,12 +474,13 @@ export interface BuildNSULLayerResult {
 	 */
 	skippedDuplicate: number
 	/**
-	 * Lines whose `pcds` is empty — the postcode is not in Code-Point Open. Expected non-zero. recorded, never a defect.
+	 * Lines whose `pcds` is empty — the postcode is not in Code-Point Open.
+	 * Expected non-zero. recorded, never a defect.
 	 */
 	skippedNoPostcode: number
 	/**
-	 * Lines whose uprn `uprn.db` holds no point for. Expected small and non-zero (the two products are extracted from
-	 * AddressBase at different dates); recorded, never a defect.
+	 * Lines whose uprn `uprn.db` holds no point for. Expected small and non-zero
+	 * (the two products are extracted from AddressBase at different dates); recorded, never a defect.
 	 */
 	skippedNoCoordinate: number
 	/**
@@ -551,14 +563,14 @@ interface IngestNSULSourcesOptions {
 }
 
 /**
- * The ingest loop: stream every region, classify every line, join the coordinate, write, and account. Throws on header
- * drift. the caller owns the transaction and rolls it back.
+ * The ingest loop: stream every region, classify every line, join the coordinate, write,
+ * and account. Throws on header drift. the caller owns the transaction and rolls it back.
  */
 async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSULIngestCounts> {
 	const { sources, coordinateOf, write, parentCell, checkpoint, phase } = options
 	const coverage = new Map<number, number>()
-	// res-9 short cell → res-6 short cell. Rows cluster many to a res-9 cell, so the parent walk runs once per cell
-	// rather than once per row.
+	// res-9 short cell → res-6 short cell. Rows cluster many to a res-9 cell,
+	// so the parent walk runs once per cell rather than once per row.
 	const parentOf = new Map<number, number>()
 	const readByRegion = Object.fromEntries(NSUL_REGIONS.map((region) => [region, 0])) as Record<NSULRegion, number>
 	let read = 0
@@ -655,8 +667,8 @@ async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSU
 }
 
 /**
- * The checks, in words. ONS publishes no row-count manifest for the collection, so they are internal consistency plus
- * the truncation floor. Empty on a clean build.
+ * The checks, in words. ONS publishes no row-count manifest for the collection, so they
+ * are internal consistency plus the truncation floor. Empty on a clean build.
  */
 export function nsulMismatches(counts: NSULIngestCounts, minimumPlausibleRows: number): string[] {
 	const { read, inserted, skippedMalformed, skippedDuplicate, skippedNoPostcode, skippedNoCoordinate } = counts
@@ -776,9 +788,9 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)
 
-	// Hot positional insert — raw prepared statement, per the agents.md bulk-load carve-out. or ignore so a
-	// source-side duplicate uprn is counted (via `changes === 0`) rather than aborting a 40M-row load. the
-	// accounting check then reports any as a defect.
+	// Hot positional insert — raw prepared statement, per the agents.md bulk-load carve-out.
+	// or ignore so a source-side duplicate uprn is counted (via `changes === 0`)
+	// rather than aborting a 40M-row load. the accounting check then reports any as a defect.
 	const insert = kdb.prepare(
 		"INSERT OR IGNORE INTO uprn_postcode (uprn, pcds, pcds_compact, lat, lon, h3_cell) VALUES (?, ?, ?, ?, ?, ?)"
 	)
@@ -832,8 +844,9 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 
 	phase("coverage", `${coverage.size.toLocaleString()} res-${NSUL_COVERAGE_H3_RESOLUTION} cells`)
 
-	// ONS designates the register complete for GB, so observed cells are `designated`/1.0 — a miss inside one is
-	// evidence of absence. Unobserved cells stay absent (unknown), per the meaning-of-zero rule.
+	// ONS designates the register complete for GB, so observed cells are `designated`/1.0 —
+	// a miss inside one is evidence of absence. Unobserved cells stay absent (unknown),
+	// per the meaning-of-zero rule.
 	await writeLayerCoverage(
 		kdb,
 		[...coverage.entries()]

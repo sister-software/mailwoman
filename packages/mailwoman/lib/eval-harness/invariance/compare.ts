@@ -23,17 +23,17 @@
  */
 
 /**
- * Tags whose change under a transform counts as a real failure. A shifted venue, unit or locality is tolerable. a
- * shifted house number, street or postcode is not.
+ * Tags whose change under a transform counts as a real failure.
+ * A shifted venue, unit or locality is tolerable. a shifted house number, street or postcode is not.
  */
 export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const
 
 export type Verdict = "INVARIANT" | "DEGRADED" | "LOST"
 
 /**
- * Ordinal severity — invariant < degraded < lost. Used by the runner's `--baseline` regression check to decide whether
- * a candidate's verdict on a (row, transform) pair is "at least as bad as" the baseline's rather than merely "also
- * non-invariant" (see runner.ts's `preExisting` computation).
+ * Ordinal severity — invariant < degraded < lost. Used by the runner's `--baseline` regression check
+ * to decide whether a candidate's verdict on a (row, transform) pair is "at least as bad as" the
+ * baseline's rather than merely "also non-invariant" (see runner.ts's `preExisting` computation).
  */
 export const VERDICT_SEVERITY: Record<Verdict, number> = { INVARIANT: 0, DEGRADED: 1, LOST: 2 }
 
@@ -46,7 +46,8 @@ export interface CompareResult {
 }
 
 /**
- * Normalize a component value for comparison: trim, lowercase, collapse internal whitespace. Non-string/empty → "".
+ * Normalize a component value for comparison: trim, lowercase, collapse internal
+ * whitespace. Non-string/empty → "".
  */
 function normVal(v: unknown): string {
 	if (typeof v !== "string") return ""
@@ -55,8 +56,8 @@ function normVal(v: unknown): string {
 }
 
 /**
- * Compare a baseline (`original`) component map against a perturbed (`transformed`) one. Order-insensitive by
- * construction — both are plain key→value records.
+ * Compare a baseline (`original`) component map against a perturbed (`transformed`) one.
+ * Order-insensitive by construction — both are plain key→value records.
  */
 export function compareComponents(
 	original: Record<string, string>,
@@ -65,9 +66,9 @@ export function compareComponents(
 	const originalKeys = Object.keys(original).filter((k) => normVal(original[k]))
 	const transformedKeys = Object.keys(transformed).filter((k) => normVal(transformed[k]))
 
-	// The `lost` verdict: the transformed parse is empty (or all-blank) while the original had components at all.
-	// "unresolvable-shaped": a fully collapsed decode, the parse-level analog of a resolver falling back
-	// to an admin-only tier with no coordinate.
+	// The `lost` verdict: the transformed parse is empty (or all-blank) while the original
+	// had components at all. "unresolvable-shaped": a fully collapsed decode, the parse-level
+	// analog of a resolver falling back to an admin-only tier with no coordinate.
 	if (!transformedKeys.length && originalKeys.length) {
 		return { verdict: "LOST", diff: ["transformed parse is empty"] }
 	}
@@ -80,8 +81,9 @@ export function compareComponents(
 		const t = normVal(transformed[tag])
 
 		if (!o) {
-			// Not present in the original. A hallucinated value on the transformed side still yields the `lost`
-			// verdict — see the header doc comment (a wrong-but-confident rooftop is worse than a graceful fallback).
+			// Not present in the original. A hallucinated value on the transformed
+			// side still yields the `lost` verdict — see the header doc comment
+			// (a wrong-but-confident rooftop is worse than a graceful fallback).
 			if (t) {
 				criticalBroken = true
 				diff.push(`${tag}: ∅ → "${transformed[tag]}" (hallucinated)`)

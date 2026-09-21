@@ -31,8 +31,8 @@ export const IntentOnly: Story = {}
 export const WithLiveSearch: Story = { args: { runLiveSearch: mockLiveSearchSuccess } }
 
 /**
- * A chain-brand subject, intent-only — the QID chip renders but no live block (the docs' default: no brand-capable
- * probe).
+ * A chain-brand subject, intent-only — the QID chip renders but no live block
+ * (the docs' default: no brand-capable probe).
  */
 export const BrandIntentOnly: Story = {
 	args: { defaultText: "chevron near Houston", loadRuntime: async () => makeBrandPOIRuntime() },

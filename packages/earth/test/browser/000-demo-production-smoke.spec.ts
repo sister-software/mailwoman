@@ -20,8 +20,9 @@ import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — production functional smoke @smoke", () => {
 	test("the basemap requests a vector tile (the tile worker is alive)", async ({ demo, page }) => {
-		// MapLibre fetches vector tiles inside its worker. A map that composes its style, sizes its canvas and never
-		// requests a tile is the shape of a worker that failed to start, which the console does not report.
+		// MapLibre fetches vector tiles inside its worker. A map that composes its style,
+		// sizes its canvas and never requests a tile is the shape of a worker that
+		// failed to start, which the console does not report.
 		const tileRequest = page.waitForRequest(/\/basemap-v4\/\d+\/\d+\/\d+\.mvt/, { timeout: 60_000 })
 		await demo.goto()
 

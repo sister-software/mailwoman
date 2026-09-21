@@ -61,8 +61,8 @@ interface BaselineReceipt {
 const receipt = await readLocalJSONFile<BaselineReceipt>(PROBE_BASELINE_RECEIPT_PATH)
 
 /**
- * Write a definition + freeze pair into a scratch directory, so a refusal can be provoked without touching the
- * committed ruler.
+ * Write a definition + freeze pair into a scratch directory, so a refusal can be
+ * provoked without touching the committed ruler.
  */
 async function scratchPair(
 	mutate: (definition: SemanticProbeDefinition) => void,

@@ -157,9 +157,9 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	})
 
 	it("does not let share classes manufacture a tie that suppresses `limit`", () => {
-		// The phantom tie is the actual damage: three rows at the top score made the tie rule fire,
-		// so `limit` stopped trimming and a caller asking for one answer got the same CIK back three
-		// times alongside nothing else.
+		// The phantom tie is the actual damage: three rows at the top score made the tie
+		// rule fire, so `limit` stopped trimming and a caller asking for one answer got
+		// the same CIK back three times alongside nothing else.
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
 			{ cik: toCIK("0001611983")!, ticker: "LBRDK", title: "Liberty Broadband Corp" },
@@ -343,8 +343,8 @@ describe("Exhibit 21 document discovery", () => {
 	it("reads every document in the manifest, not only the exhibits", () => {
 		const documents = parseFilingDocuments(LUMEN_CIK, "0000018926-26-000014", headerHTML)
 
-		// The fixture's own sgml manifest carries 161 `<document>` blocks — see the module docstring above for
-		// why this differs from the header's `public-document-count: 162`.
+		// The fixture's own sgml manifest carries 161 `<document>` blocks — see the module
+		// docstring above for why this differs from the header's `public-document-count: 162`.
 		expect(documents).toHaveLength(161)
 		expect(documents[0]).toMatchObject({ type: "10-K", filename: "lumn-20251231.htm" })
 	})

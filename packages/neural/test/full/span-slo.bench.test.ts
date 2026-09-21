@@ -24,8 +24,9 @@ import { describe, expect, it } from "vitest"
 /**
  * The two staged weights caches this benchmark compares, under `$MAILWOMAN_TEMP_ROOT`.
  *
- * `weightsCachePackageDir` owns the `node_modules/<package>` segment — the layout belongs to the weights package, and a
- * hand-assembled path into it reads a missing artifact as "absent" rather than "looked in the wrong place".
+ * `weightsCachePackageDir` owns the `node_modules/<package>` segment — the layout
+ * belongs to the weights package, and a hand-assembled path into it reads a missing
+ * artifact as "absent" rather than "looked in the wrong place".
  */
 function stagedModel(cacheName: string): string {
 	return join(weightsCachePackageDir(String(tempRootPath(cacheName)), "en-us"), "model.onnx")
@@ -65,9 +66,9 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 		console.log(`  delta           : ${(b.ms - a.ms).toFixed(2)} ms (${((100 * (b.ms - a.ms)) / a.ms).toFixed(1)}%)`)
 		console.log(`  NOTE: v301 unflattens spans on EVERY infer here — the full cost, not logits-only.\n`)
 
-		// Timing is reported rather than asserted, being machine-dependent. What the comparison is
-		// actually for — that v264 emits no span scores and v301 does — is an invariant, and was
-		// going unchecked.
+		// Timing is reported rather than asserted, being machine-dependent.
+		// What the comparison is actually for — that v264 emits no span scores
+		// and v301 does — is an invariant, and was going unchecked.
 		expect(a.spans).toBe(false)
 		expect(b.spans).toBe(true)
 	}, 300_000)

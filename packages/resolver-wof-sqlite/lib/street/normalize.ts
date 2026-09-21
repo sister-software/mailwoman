@@ -23,36 +23,39 @@ import type { Tagged } from "type-fest"
 export type NameKey = Tagged<string, "NameKey">
 
 /**
- * A street name folded by {@link normalizeStreetForKey} / {@link normalizeStreetForKeyLocale} — the value stored in a
- * `street_norm` address-point column and required to probe it.
+ * A street name folded by {@link normalizeStreetForKey} / {@link normalizeStreetForKeyLocale} —
+ * the value stored in a `street_norm` address-point column and required to probe it.
  *
- * Distinct from {@link RouteKey}: the route fold is a further canonicalization applied to some columns and not others,
- * so the two are not interchangeable even though both are folded streets.
+ * Distinct from {@link RouteKey}: the route fold is a further canonicalization applied to some columns
+ * and not others, so the two are not interchangeable even though both are folded streets.
  */
 export type StreetKey = Tagged<string, "StreetKey">
 
 /**
- * A street key that has additionally passed {@link canonicalizeRouteKey} — the numbered-route canonical form.
+ * A street key that has additionally passed {@link canonicalizeRouteKey} —
+ * the numbered-route canonical form.
  *
- * A separate brand from {@link StreetKey} because it identifies a different set of columns, and the two folds disagree
- * exactly on the rows that motivate the route fold: binding a plain street key to a route-folded column silently misses
- * every row whose source spelled the route differently, which is the miss class the fold exists to close.
+ * A separate brand from {@link StreetKey} because it identifies a different set of columns,
+ * and the two folds disagree exactly on the rows that motivate the route fold:
+ * binding a plain street key to a route-folded column silently misses every row whose
+ * source spelled the route differently, which is the miss class the fold exists to close.
  */
 export type RouteKey = Tagged<string, "RouteKey">
 
 /**
- * Token count a street must exceed before its trailing pair is merged. At or below it the pair is the whole street
- * name, and merging would leave nothing to match on.
+ * Token count a street must exceed before its trailing pair is merged.
+ * At or below it the pair is the whole street name, and merging would leave nothing to match on.
  */
 const MIN_TOKENS_FOR_TAIL_MERGE = 3
 
 /**
- * Spelled ordinal street names → their digit-ordinal form ("tenth" → "10th"), applied only when a street-type suffix
- * follows (#723 admin-tail) — so the ordinal cross-streets common in grid cities ("Tenth Street", "Fifth Avenue") match
- * the extracts' digit keys, without rewriting ordinal-word names where the next token is not a suffix ("First National
- * Bank Rd" stays "first national …"). Digit-source extracts are unaffected (a digit token isn't in this map), so the
- * existing keys need no rebuild. a future rebuild folds any spelled-source key the same way (the one-function
- * discipline).
+ * Spelled ordinal street names → their digit-ordinal form ("tenth" → "10th"), applied only
+ * when a street-type suffix follows (#723 admin-tail) — so the ordinal cross-streets
+ * common in grid cities ("Tenth Street", "Fifth Avenue") match the extracts' digit keys,
+ * without rewriting ordinal-word names where the next token is not a suffix
+ * ("First National Bank Rd" stays "first national …"). Digit-source extracts are unaffected
+ * (a digit token isn't in this map), so the existing keys need no rebuild. a future
+ * rebuild folds any spelled-source key the same way (the one-function discipline).
  */
 const SPELLED_ORDINAL_TO_DIGIT = new Map<string, string>([
 	["first", "1st"],
@@ -99,16 +102,17 @@ function fold(input: string): string {
 }
 
 /**
- * Normalize a street name for address-point keying. Same function at build time and lookup time — see module docstring
- * for the interface.
+ * Normalize a street name for address-point keying. Same function at build time
+ * and lookup time — see module docstring for the interface.
  */
 export function normalizeStreetForKey(street: string): StreetKey {
 	const tokens = fold(street).split(" ")
 
 	if (!tokens.length) return "" as StreetKey
 
-	// Spelled-ordinal street names → digit form when a street suffix follows ("Tenth Street" →
-	// "10th street", #723). Conditioned on the next token being a suffix so ordinal-word names are untouched.
+	// Spelled-ordinal street names → digit form when a street suffix follows
+	// ("Tenth Street" → "10th street", #723). Conditioned on the next token being a suffix
+	// so ordinal-word names are untouched.
 	for (let i = 0; i < tokens.length - 1; i++) {
 		const digit = SPELLED_ORDINAL_TO_DIGIT.get(tokens[i]!)
 
@@ -117,10 +121,10 @@ export function normalizeStreetForKey(street: string): StreetKey {
 		}
 	}
 
-	// Directional expansion at the edges only ("N Main St" / "Main St N" — never interior
-	// tokens, where "W" may be an initial in a person-named street). The codex expands
-	// compounds to two words ("SE" → "south east"); we key on the spaceless form
-	// ("southeast"), and also merge an already-written two-token pair ("South East …").
+	// Directional expansion at the edges only ("N Main St" / "Main St N" —
+	// never interior tokens, where "W" may be an initial in a person-named street).
+	// The codex expands compounds to two words ("SE" → "south east"); we key on the spaceless
+	// form ("southeast"), and also merge an already-written two-token pair ("South East …").
 	const edgeDirectional = (raw: string) =>
 		AbbreviationToDirectional.get(raw.toUpperCase())?.toLowerCase().replace(" ", "")
 
@@ -153,8 +157,8 @@ export function normalizeStreetForKey(street: string): StreetKey {
 		}
 	}
 
-	// Street-type canonicalization via the codex table (lowercase keys, upper canonical
-	// values). The suffix is usually the last token, but sits second-to-last when a trailing
+	// Street-type canonicalization via the codex table (lowercase keys, upper canonical values).
+	// The suffix is usually the last token, but sits second-to-last when a trailing
 	// directional follows ("Main St N") — check both positions, canonicalize the first hit.
 	for (const at of [tokens.length - 1, tokens.length - 2]) {
 		if (at < 1) continue // never canonicalize the only/first token ("Street Road" exists)
@@ -171,19 +175,21 @@ export function normalizeStreetForKey(street: string): StreetKey {
 }
 
 /**
- * Street-name locale for the address-point key. The US path is the full USPS pipeline ({@link normalizeStreetForKey});
- * the international paths fold + apply a small, consistent per-locale type-token canonicalization. Same discipline as
- * the US normalizer: build side and probe side call the identical function, so the key only needs to be consistent
- * rather than linguistically perfect — a folded "rue du chevaleret" keys the same on both sides whether or not we
- * reorder the article, so no salient-token / multi-key index is built yet (deferred until probing shows the normalizer
- * can't absorb the false-negatives).
+ * Street-name locale for the address-point key. The US path is the full USPS pipeline
+ * ({@link normalizeStreetForKey}); the international paths fold + apply a small,
+ * consistent per-locale type-token canonicalization. Same discipline as the US normalizer:
+ * build side and probe side call the identical function, so the key only needs to be consistent
+ * rather than linguistically perfect — a folded "rue du chevaleret" keys the same on both sides
+ * whether or not we reorder the article, so no salient-token / multi-key index is built
+ * yet (deferred until probing shows the normalizer can't absorb the false-negatives).
  */
 export type StreetLocale = "us" | "en" | "fr" | "de" | "nl" | "pl" | "vn" | "id" | "zh"
 
 /**
- * The Han fold shared by every `zh` key: nfkc so a full-width digit or letter keys as its ascii form (the Taiwanese
- * civil-affairs registers write `１２２`, a person types `122`), 臺 → 台 (the register writes 臺北市, the common hand writes
- * 台北市), and no whitespace at all, because a Han surface carries none and a stray space would split one key into two.
+ * The Han fold shared by every `zh` key: nfkc so a full-width digit or letter keys as its
+ * ascii form (the Taiwanese civil-affairs registers write `１２２`, a person types `122`),
+ * 臺 → 台 (the register writes 臺北市, the common hand writes 台北市), and no whitespace at all,
+ * because a Han surface carries none and a stray space would split one key into two.
  * Kanji numerals stay as written: the register spells a road section `一段`, and so does a query.
  */
 function foldHan(input: string): string {
@@ -191,11 +197,12 @@ function foldHan(input: string): string {
 }
 
 /**
- * Country → street-locale registry surface for the acquisition SDKs (BAN, OSM). Each SDK keeps its own map — membership
- * is a per-register decision — and this factory owns the lookup discipline: throw for an unsupported country rather
- * than silently folding with the wrong rules, because a extract built with the wrong normalizer keys every street
- * incorrectly and looks fine until a probe misses. `label` is the SDK's own registration instructions, appended to the
- * error verbatim.
+ * Country → street-locale registry surface for the acquisition SDKs (BAN, OSM).
+ * Each SDK keeps its own map — membership is a per-register decision —
+ * and this factory owns the lookup discipline: throw for an unsupported country
+ * rather than silently folding with the wrong rules, because a extract built with the
+ * wrong normalizer keys every street incorrectly and looks fine until a probe misses.
+ * `label` is the SDK's own registration instructions, appended to the error verbatim.
  */
 export function createStreetLocaleRegistry(
 	registry: ReadonlyMap<string, StreetLocale>,
@@ -216,9 +223,10 @@ export function createStreetLocaleRegistry(
 }
 
 /**
- * French street-type abbreviations → canonical full form, applied per token after {@link fold}. French address types
- * lead the name ("Av. de…", "Bd …", "Pl. …") and "St"/"Ste" abbreviate Saint/Sainte inside names ("Rue St-Honoré" →
- * "rue saint honore"). fold() has already stripped the trailing period, so the keys are point-free ("av", "bd").
+ * French street-type abbreviations → canonical full form, applied per token after {@link fold}.
+ * French address types lead the name ("Av. de…", "Bd …", "Pl. …") and "St"/"Ste" abbreviate
+ * Saint/Sainte inside names ("Rue St-Honoré" → "rue saint honore"). fold() has already
+ * stripped the trailing period, so the keys are point-free ("av", "bd").
  */
 const FR_STREET_ABBREV = new Map<string, string>([
 	["av", "avenue"],
@@ -243,12 +251,14 @@ const FR_STREET_ABBREV = new Map<string, string>([
 ])
 
 /**
- * Polish leading street-type tokens, stripped rather than expanded. Measured on the 5.56M-row PL OSM extract
- * (2026-08-19): OSM Poland tags `addr:street` bare — `ulica%` covers 22 rows and `ul.%` eight, so an expansion rule
- * makes a typed query ("ul. Świętokrzyska" → "ulica swietokrzyska") miss the 3,846 bare "swietokrzyska" rows. Stripping
- * the leading type on both sides keys typed and bare surfaces identically. The full words are stripped too: the
- * aleja/plac/osiedle populations (48,597 / 26,815 / 39,552 rows) spell the word out, and "Plac Zamkowy" must key the
- * same as a query's "plac zamkowy" or bare "Zamkowy". Never stripped when it is the only token.
+ * Polish leading street-type tokens, stripped rather than expanded.
+ * Measured on the 5.56M-row PL OSM extract (2026-08-19): OSM Poland tags `addr:street` bare —
+ * `ulica%` covers 22 rows and `ul.%` eight, so an expansion rule makes a typed query
+ * ("ul. Świętokrzyska" → "ulica swietokrzyska") miss the 3,846 bare "swietokrzyska" rows.
+ * Stripping the leading type on both sides keys typed and bare surfaces identically.
+ * The full words are stripped too: the aleja/plac/osiedle populations (48,597 / 26,815 / 39,552 rows)
+ * spell the word out, and "Plac Zamkowy" must key the same as a query's "plac zamkowy"
+ * or bare "Zamkowy". Never stripped when it is the only token.
  */
 const PL_LEADING_TYPE = new Set(["ul", "ulica", "al", "aleja", "aleje", "pl", "plac", "os", "osiedle"])
 
@@ -262,37 +272,42 @@ const ID_STREET_ABBREV = new Map<string, string>([
 ])
 
 /**
- * Normalize a street name for the address-point key in a non-US locale. Same function build-side and probe-side (the
- * one-function discipline). US delegates to {@link normalizeStreetForKey}.
+ * Normalize a street name for the address-point key in a non-US locale.
+ * Same function build-side and probe-side (the one-function discipline).
+ * US delegates to {@link normalizeStreetForKey}.
  *
- * - **en** — the shared English address-key pipeline (directionals + suffix aliases), currently identical to US.
+ * - **en** — the shared English address-key pipeline (directionals + suffix aliases),
+ *   currently identical to US.
  * - **fr** — fold + expand leading type abbreviations and Saint/Sainte (token map).
- * - **de** — fold + ß→ss + canonicalize the glued `-str(.)` suffix to `-strasse` ("Lindenstr." → "lindenstrasse",
- *   "Lindenstraße" → "lindenstrasse"); an already-full "-strasse" is left intact.
+ * - **de** — fold + ß→ss + canonicalize the glued `-str(.)` suffix to `-strasse`
+ *   ("Lindenstr." → "lindenstrasse", "Lindenstraße" → "lindenstrasse");
+ *   an already-full "-strasse" is left intact.
  * - **nl** — fold + canonicalize the glued `-str` suffix to `-straat` ("Kerkstr." → "kerkstraat").
- * - **pl** — fold + ł→l (Ł does not nfkd-decompose, so the generic fold keeps it and an undiacritized query would miss.
- *   every other Polish diacritic is a combining form the fold already strips) + strip the leading type token — see
+ * - **pl** — fold + ł→l (Ł does not nfkd-decompose, so the generic fold keeps it and an undiacritized
+ *   query would miss. every other Polish diacritic is a combining form the fold already strips) +
+ *   strip the leading type token — see
  *   {@link PL_LEADING_TYPE} for the measured reason expansion was wrong for this source.
- * - **vn** — fold + đ→d and ð→d (both non-decomposing, and OSM mixes the two codepoints inside single values — see the
- *   branch comment). Deliberately no type-abbreviation map yet: the common abbreviation is the single letter "Đ." for
- *   Đường, and expanding a bare folded "d" token would rewrite initials — measure the miss rate on the built extract
- *   before adding anything.
- * - **id** — fold + expand leading type abbreviations (jl/jln→jalan, gg→gang); Indonesian street surfaces are otherwise
- *   ascii-clean.
+ * - **vn** — fold + đ→d and ð→d (both non-decomposing, and OSM mixes the two codepoints inside
+ *   single values — see the branch comment). Deliberately no type-abbreviation map yet:
+ *   the common abbreviation is the single letter "Đ." for Đường, and expanding a bare folded "d"
+ *   token would rewrite initials — measure the miss rate on the built extract before adding anything.
+ * - **id** — fold + expand leading type abbreviations (jl/jln→jalan, gg→gang);
+ *   Indonesian street surfaces are otherwise ascii-clean.
  */
 export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): StreetKey {
 	if (locale === "us" || locale === "en") return normalizeStreetForKey(street)
 
-	// A Han street name has no tokens, no type abbreviation and no diacritics. the Latin pipeline below would only
-	// split it on whitespace it never carries. `zh` keys are the Han fold and nothing else.
+	// A Han street name has no tokens, no type abbreviation and no diacritics. the
+	// Latin pipeline below would only split it on whitespace it never carries.
+	// `zh` keys are the Han fold and nothing else.
 	if (locale === "zh") return foldHan(street) as StreetKey
 
-	// Hyphen → space so a compound name keys the same whether the source or the query writes the
-	// hyphen ("Champs-Élysées", "St-Honoré") or a space — both sides fold identically, so this is pure
-	// robustness. It also splits a hyphenated abbreviation ("St-Honoré" → "st honore") into tokens the
-	// per-locale type/Saint map can see. Letter maps for non-decomposing letters (ß, ł, đ) live in the
-	// per-locale branches, never here: widening the shared pipeline would silently change keys under
-	// every already-built extract of the other locales.
+	// Hyphen → space so a compound name keys the same whether the source or the query writes
+	// the hyphen ("Champs-Élysées", "St-Honoré") or a space — both sides fold identically,
+	// so this is pure robustness. It also splits a hyphenated abbreviation ("St-Honoré" → "st honore")
+	// into tokens the per-locale type/Saint map can see. Letter maps for non-decomposing letters
+	// (ß, ł, đ) live in the per-locale branches, never here: widening the shared pipeline
+	// would silently change keys under every already-built extract of the other locales.
 	const tokens = fold(street)
 		.replaceAll("ß", "ss")
 		.replaceAll("-", " ")
@@ -362,23 +377,26 @@ export function normalizeLocalityForKey(locality: string): NameKey {
 }
 
 /**
- * The locality key under a street locale: the Han fold for `zh`, {@link normalizeLocalityForKey} for every other.
- * Separate from the shared fold on purpose — the candidate gazetteer's `name_key` column is the shared fold, and a Han
- * rule inside it would re-key every 臺 name under an extract built without the rule.
+ * The locality key under a street locale: the Han fold for `zh`,
+ * {@link normalizeLocalityForKey} for every other. Separate from the shared fold on purpose —
+ * the candidate gazetteer's `name_key` column is the shared fold, and a Han rule inside
+ * it would re-key every 臺 name under an extract built without the rule.
  */
 export function normalizeLocalityForKeyLocale(locality: string, locale: StreetLocale): NameKey {
 	return locale === "zh" ? (foldHan(locality) as NameKey) : normalizeLocalityForKey(locality)
 }
 
 /**
- * The house-number key under a street locale. Every Latin register stores a lower-cased, trimmed number and the reader
- * probes the same; `zh` additionally folds width and drops the trailing 號 the Taiwanese registers write on the number
- * itself (`１２２號`), which a parse also carries on the `house_number` span (`122號`). Both sides key `122`.
+ * The house-number key under a street locale. Every Latin register stores a lower-cased,
+ * trimmed number and the reader probes the same; `zh` additionally folds width and drops
+ * the trailing 號 the Taiwanese registers write on the number itself (`１２２號`), which a parse
+ * also carries on the `house_number` span (`122號`). Both sides key `122`.
  */
 export function normalizeHouseNumberForKey(number: string, locale: StreetLocale): string {
-	// The sub-number is written two ways — `30之19號` and `30號之19` — and an attached number a third (`30附40號`,
-	// `55之23附1號`); the register stores the base `30` with the rest in `unit`. Every form keys with the 號 dropped and
-	// the base number first, which the reader's sub-number rung then falls from.
+	// The sub-number is written two ways — `30之19號` and `30號之19` — and an attached
+	// number a third (`30附40號`, `55之23附1號`); the register stores the base `30` with the
+	// rest in `unit`. Every form keys with the 號 dropped and the base number first,
+	// which the reader's sub-number rung then falls from.
 	if (locale === "zh") {
 		return foldHan(number)
 			.replace(/^(\d+)號([之附]\d+)$/u, "$1$2")
@@ -389,43 +407,51 @@ export function normalizeHouseNumberForKey(number: string, locale: StreetLocale)
 }
 
 /**
- * Leading French street-type token. French types lead the name ("avenue du Parc", "boul Saint-Laurent") while English
- * types trail ("Fifth Avenue", "Grosvenor Place"), so a leading type-token is the discriminating signal — "1 Avenue NE"
- * starts with a digit and never matches. The separator lookahead is explicit rather than `\b` because a word boundary
+ * Leading French street-type token. French types lead the name ("avenue du Parc", "boul Saint-Laurent")
+ * while English types trail ("Fifth Avenue", "Grosvenor Place"), so a leading type-token
+ * is the discriminating signal — "1 Avenue NE" starts with a digit and never matches.
+ * The separator lookahead is explicit rather than `\b` because a word boundary
  * after an accented final letter ("carré") is not one to an ascii-word `\b`.
  */
 const FRENCH_LEAD_TYPE =
 	/^(?:rue|ruelle|av|ave|avenue|boul|bd|boulevard|ch|che|chemin|all[ée]e|imp|impasse|mont[ée]e|c[ôo]te|pl|place|prom|promenade|rang|rte|route|autoroute|carr[eé]|croissant|terrasse|sentier)(?=[\s.-]|$)/i
 
 /**
- * Surface-driven street-locale router for bilingual extracts — the Québec finishing move on the CA rooftop extract.
+ * Surface-driven street-locale router for bilingual extracts — the Québec
+ * finishing move on the CA rooftop extract.
  *
- * A country registers one street locale, but Canada's street surfaces are two languages: under the `en` rules a French
- * surface passes through mostly unchanged (both sides fold identically, so those rows stay reachable), and what breaks
- * is abbreviation variance — the `en` rules cannot fold "boul"/"Ste-" to the full French word, so an abbreviated query
- * misses a full-word row and vice versa. Routing on the surface (not the province) also carries bilingual NB and the
- * French street names outside Québec for free.
+ * A country registers one street locale, but Canada's street surfaces are two
+ * languages: under the `en` rules a French surface passes through mostly unchanged
+ * (both sides fold identically, so those rows stay reachable), and what breaks is abbreviation
+ * variance — the `en` rules cannot fold "boul"/"Ste-" to the full French word, so an abbreviated
+ * query misses a full-word row and vice versa. Routing on the surface (not the province)
+ * also carries bilingual NB and the French street names outside Québec for free.
  *
- * One function, called by the extract builder and the query probe alike — the #861 discipline: routing is part of the
- * fold interface, and two transcriptions of this predicate would diverge exactly where it matters. Only an `en` base
- * re-routes: a `fr`/`de`/`nl` extract already speaks its own rules, and the US pipeline stays untouched.
+ * One function, called by the extract builder and the query probe alike — the #861 discipline:
+ * routing is part of the fold interface, and two transcriptions of this predicate would
+ * diverge exactly where it matters. Only an `en` base re-routes: a `fr`/`de`/`nl`
+ * extract already speaks its own rules, and the US pipeline stays untouched.
  *
- * Measured basis (CA extract, 2026-08-19): 183,963 distinct surfaces, 43,762 French-lead. 29,682 fold differently under
- * fr-vs-en (888,265 rows), and the non-French half of those are English surfaces this router keeps on `en` unchanged.
+ * Measured basis (CA extract, 2026-08-19): 183,963 distinct surfaces, 43,762 French-lead.
+ * 29,682 fold differently under fr-vs-en (888,265 rows), and the non-French half of
+ * those are English surfaces this router keeps on `en` unchanged.
  */
 export function streetLocaleForSurface(street: string, base: StreetLocale): StreetLocale {
 	return base === "en" && FRENCH_LEAD_TYPE.test(street.trimStart()) ? "fr" : base
 }
 
 /**
- * Strip a trailing French arrondissement designator from a folded commune key ("paris 8e arrondissement" → "paris",
- * "lyon 1er arrondissement" → "lyon", "marseille 10e arrondissement" → "marseille"). Paris, Lyon and Marseille are the
- * only French communes subdivided into _arrondissements municipaux_. a national register (BAN) names each row per
- * arrondissement, but a query names the base commune ("Place Bellecour, Lyon", never "…, Lyon 2e"). Applied on both
- * sides of the #1042 street-centroid key — build-side (deriving the `locality_base` column) and query-side (folding the
- * probe commune) — so the two agree by construction (the one-function discipline). The {@link NameKey} parameter is the
- * enforcement of "must already be folded": stripping an arrondissement off an unfolded surface yields a key neither
- * side stores. A no-op for every other commune, and the strip leaves a fold fixed point, so the result is still a
+ * Strip a trailing French arrondissement designator from a folded commune key
+ * ("paris 8e arrondissement" → "paris", "lyon 1er arrondissement" → "lyon",
+ * "marseille 10e arrondissement" → "marseille"). Paris, Lyon and Marseille are the
+ * only French communes subdivided into _arrondissements municipaux_. a national
+ * register (BAN) names each row per arrondissement, but a query names the base commune
+ * ("Place Bellecour, Lyon", never "…, Lyon 2e"). Applied on both sides of the #1042
+ * street-centroid key — build-side (deriving the `locality_base` column) and query-side
+ * (folding the probe commune) — so the two agree by construction (the one-function discipline).
+ * The {@link NameKey} parameter is the enforcement of "must already be folded":
+ * stripping an arrondissement off an unfolded surface yields a key neither side stores.
+ * A no-op for every other commune, and the strip leaves a fold fixed point, so the result is still a
  * {@link NameKey}. Returns the input unchanged if the strip would empty it.
  */
 export function stripArrondissement(localityNorm: NameKey): NameKey {
@@ -435,17 +461,20 @@ export function stripArrondissement(localityNorm: NameKey): NameKey {
 }
 
 /**
- * Strip a locality qualifier for a query-side fallback — when an OA locality's exact normalized name misses the
- * gazetteer's canonical name, retry with the qualifier removed. OA address data carries disambiguating qualifiers the
- * gazetteer's canonical name omits: Austrian `Kraubath/Mur` and `Hart b.Graz` → `Hart`; Swiss `Lenk im Simmental` →
- * `Lenk`, `Roche VD` → `Roche`; Danish `Odense S`, `Hurup Thy`. A fallback only — the exact name is tried first, and
- * the region-bbox disambiguation resolves any base-name ambiguity downstream. The candidate table is unchanged (this is
- * purely query-side); feed the result back through {@link normalizeLocalityForKey}. Returns "" when nothing was stripped
- * (no point re-probing the identical key).
+ * Strip a locality qualifier for a query-side fallback — when an OA locality's exact
+ * normalized name misses the gazetteer's canonical name, retry with the qualifier removed.
+ * OA address data carries disambiguating qualifiers the gazetteer's canonical
+ * name omits: Austrian `Kraubath/Mur` and `Hart b.Graz` → `Hart`; Swiss
+ * `Lenk im Simmental` → `Lenk`, `Roche VD` → `Roche`; Danish `Odense S`, `Hurup Thy`.
+ * A fallback only — the exact name is tried first, and the region-bbox disambiguation
+ * resolves any base-name ambiguity downstream. The candidate table is unchanged
+ * (this is purely query-side); feed the result back through {@link normalizeLocalityForKey}.
+ * Returns "" when nothing was stripped (no point re-probing the identical key).
  *
- * Measured (`scripts/eval/candidate-recall.ts --strip-fallback`, EU OA holdouts): recovers AT 74.1→88.2% (+14.1pp), DK
- * 91.5→96.2%, CH 90.4→92.6%; +1.3pp overall (diluted by the already-100% locales). Conservative by design — only the
- * qualifier forms above. FI/PT/SI misses are untouched.
+ * Measured (`scripts/eval/candidate-recall.ts --strip-fallback`, EU OA holdouts):
+ * recovers AT 74.1→88.2% (+14.1pp), DK 91.5→96.2%, CH 90.4→92.6%; +1.3pp
+ * overall (diluted by the already-100% locales). Conservative by design —
+ * only the qualifier forms above. FI/PT/SI misses are untouched.
  */
 export function stripLocalityQualifier(locality: string): string {
 	let s = locality.trim()
@@ -504,50 +533,55 @@ export function stripLocalityQualifier(locality: string): string {
  * (the state abbreviation form) fold to `state route N…`. Only digit-leading route numbers fold — `State Street` and
  * friends never match.
  *
- * Used by both the segment-extract builder (`scripts/build-interpolation-extract.ts`) and the interpolation lookup —
- * same one-function discipline as {@link normalizeStreetForKey}. The address-point tier (#476) does not apply it yet:
- * adopting it there requires a extract rebuild (noted on #483).
+ * Used by both the segment-extract builder (`scripts/build-interpolation-extract.ts`)
+ * and the interpolation lookup — same one-function discipline as {@link normalizeStreetForKey}.
+ * The address-point tier (#476) does not apply it yet: adopting it there requires
+ * a extract rebuild (noted on #483).
  *
- * A same-numbered US and state route stay distinct keys (`us route 5` vs `state route 5`); only the bare `route N` form
- * is ambiguous (designator unknown) and it stays unfolded — a bare-route query therefore misses rather than guessing a
- * designator.
+ * A same-numbered US and state route stay distinct keys (`us route 5` vs `state route 5`);
+ * only the bare `route N` form is ambiguous (designator unknown) and it stays unfolded —
+ * a bare-route query therefore misses rather than guessing a designator.
  */
 export function canonicalizeRouteKey(streetNorm: StreetKey): RouteKey {
 	const match = /^(us|state|[a-z]{2}) (?:route|rte|rt|highway|hwy) (\d.*)$/.exec(streetNorm)
 
-	// A street naming no route is already its own route key. {@link StreetKey} and {@link RouteKey} are
-	// sibling brands rather than nested ones — precisely so neither column accepts the other's key — so
-	// re-minting here is an explicit hop through the unbranded string.
+	// A street naming no route is already its own route key. {@link StreetKey} and {@link RouteKey}
+	// are sibling brands rather than nested ones — precisely so neither column accepts the
+	// other's key — so re-minting here is an explicit hop through the unbranded string.
 	if (!match) return streetNorm as string as RouteKey
 
 	return `${match[1] === "us" ? "us" : "state"} route ${match[2]}` as RouteKey
 }
 
 /**
- * The canonical street-type words (lowercase) — the value side of the codex suffix table. Membership means "this
- * normalized token is a fully-spelled street type" ("place", "street", "road" …), which is how the doubled-type
- * collapse below recognizes its shape without any parse-tree knowledge.
+ * The canonical street-type words (lowercase) — the value side of the codex suffix table.
+ * Membership means "this normalized token is a fully-spelled street type" ("place", "street", "road" …),
+ * which is how the doubled-type collapse below recognizes its shape without any parse-tree knowledge.
  */
 const CANONICAL_TYPE_WORDS: ReadonlySet<string> = new Set(
 	[...US_STREET_SUFFIX_LOOKUP.values()].map((v) => v.toLowerCase())
 )
 
 /**
- * Ordered lookup-key variants for a US/EN street span — the primary normalized key first, then the null-only recovery
- * forms a reader may probe when the primary misses. Two register mismatches motivate them, both measured on live
- * queries (2026-08-14):
+ * Ordered lookup-key variants for a US/EN street span — the primary normalized key first,
+ * then the null-only recovery forms a reader may probe when the primary misses.
+ * Two register mismatches motivate them, both measured on live queries (2026-08-14):
  *
- * - **Doubled type** — a user types the type twice ("Saint Pauls PL St"), and the normalizer canonicalizes only the last
- *   type token, leaving `saint pauls pl street`, which matches nothing anywhere. The signature is visible in the key
- *   itself: a canonical type word in last position directly after an uncanonicalized type abbreviation. The variant
- *   drops the trailing word and canonicalizes what remains (`saint pauls place`). A street genuinely named with two
- *   types keys identically on both sides and is caught by the primary probe first.
- * - **Saint↔St register split** — the artifacts preserve each source's spelling (NYC situs keys `st pauls place`, Nassau
- *   keys `saint pauls place`), and a query arrives in whichever register the user typed. A leading `saint` or `st`
- *   token is swapped for its sibling. leading position only — a leading `st` is always the hagionym in US street names,
+ * - **Doubled type** — a user types the type twice ("Saint Pauls PL St"), and the
+ *   normalizer canonicalizes only the last type token, leaving `saint pauls pl street`,
+ *   which matches nothing anywhere. The signature is visible in the key itself:
+ *   a canonical type word in last position directly after an uncanonicalized type abbreviation.
+ *   The variant drops the trailing word and canonicalizes what remains (`saint pauls place`).
+ *   A street genuinely named with two types keys identically on both sides
+ *   and is caught by the primary probe first.
+ * - **Saint↔St register split** — the artifacts preserve each source's spelling
+ *   (NYC situs keys `st pauls place`, Nassau keys `saint pauls place`), and a query arrives
+ *   in whichever register the user typed. A leading `saint` or `st` token is swapped for its
+ *   sibling. leading position only — a leading `st` is always the hagionym in US street names,
  *   and interior tokens ("Mount Saint Helens Dr") are out of scope until measured.
  *
- * Deduplicated and ordered most-literal-first, so probing the list in order preserves the primary key's precedence.
+ * Deduplicated and ordered most-literal-first, so probing the list in order
+ * preserves the primary key's precedence.
  */
 export function streetKeyVariants(street: string, locale: StreetLocale = "us"): StreetKey[] {
 	const primary = locale === "us" ? normalizeStreetForKey(street) : normalizeStreetForKeyLocale(street, locale)
@@ -574,8 +608,8 @@ export function streetKeyVariants(street: string, locale: StreetLocale = "us"): 
 		}
 	}
 
-	// Snapshot before the swap pass — it appends while reading, and iterating the live array would
-	// re-visit its own additions.
+	// Snapshot before the swap pass — it appends while reading, and iterating the
+	// live array would re-visit its own additions.
 	const preSwap = variants.slice()
 
 	for (const variant of preSwap) {
@@ -583,9 +617,9 @@ export function streetKeyVariants(street: string, locale: StreetLocale = "us"): 
 		const swapped = head === "saint" ? "st" : head === "st" ? "saint" : null
 
 		if (swapped && rest.length) {
-			// Substituting a leading hagionym token in an already-normalized key leaves a fold fixed point —
-			// the suffix pass never rewrites position 0 — so the swap yields a {@link StreetKey} without
-			// re-folding.
+			// Substituting a leading hagionym token in an already-normalized key
+			// leaves a fold fixed point — the suffix pass never rewrites position 0 —
+			// so the swap yields a {@link StreetKey} without re-folding.
 			const candidate = [swapped, ...rest].join(" ") as StreetKey
 
 			if (!variants.includes(candidate)) {

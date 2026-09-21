@@ -33,8 +33,8 @@ import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index
 import { readManifest, streamDownload, writeManifest } from "#tools/fetch/download/index"
 
 /**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
- * than data.
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below
+ * which a "download" is an error page rather than data.
  */
 /**
  * Lowest 2xx status. anything below is informational.
@@ -50,8 +50,8 @@ const TIGER_BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT"
 
 export interface FetchTigerFullOptions extends BaseFetchOptions {
 	/**
-	 * Space-separated list of 2-digit state FIPS codes to skip entirely. Default `"50"` — Vermont, already fetched in
-	 * v0.1.1.
+	 * Space-separated list of 2-digit state FIPS codes to skip entirely.
+	 * Default `"50"` — Vermont, already fetched in v0.1.1.
 	 */
 	skipStateFips?: string
 	/**
@@ -145,8 +145,8 @@ export async function fetchTigerFull(
 
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
 
-	// `responseType: "text"` — an Apache directory index, scraped below. The per-county archive downloads
-	// stay on raw `fetch` (they stream to disk. see `downloadOne`).
+	// `responseType: "text"` — an Apache directory index, scraped below.
+	// The per-county archive downloads stay on raw `fetch` (they stream to disk. see `downloadOne`).
 	const listingRes = await new APIClient({
 		displayName: "tiger-listing",
 		retry: true,
@@ -160,8 +160,8 @@ export async function fetchTigerFull(
 	const totalCounties = allZips.length
 	report?.(`  Found ${totalCounties} county ZIPs in the TIGER 2024 ADDRFEAT index.`)
 
-	// Build a map: state_fips -> list of filenames.
-	// tl_2024_SSCCC_addrfeat.zip — SS = 2-digit state FIPS (chars 8-9), CCC = county FIPS.
+	// Build a map: state_fips -> list of filenames. tl_2024_SSCCC_addrfeat.zip —
+	// SS = 2-digit state FIPS (chars 8-9), CCC = county FIPS.
 	const stateFiles = new Map<string, string[]>()
 
 	for (const fname of allZips) {

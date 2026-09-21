@@ -28,23 +28,25 @@ import type { TokenLike } from "#query-shape-prior"
 
 export interface StreetMorphologyPriorOpts {
 	/**
-	 * Multiplier on the base bias before {@linkcode maxBias} is applied. Default 1.0.
+	 * Multiplier on the base bias before {@linkcode maxBias}
+	 * is applied. Default 1.0.
 	 */
 	biasScale?: number
 	/**
-	 * Maximum bias magnitude (logits) on the affix span itself. Default 3.0 — same as the admin FST. The morphology
-	 * signal is structurally less ambiguous than admin names (`Avenue` is almost never anything but street-typing), so
-	 * equal magnitude is justified.
+	 * Maximum bias magnitude (logits) on the affix span itself.
+	 * Default 3.0 — same as the admin FST. The morphology signal is structurally less ambiguous than
+	 * admin names (`Avenue` is almost never anything but street-typing), so equal magnitude is justified.
 	 */
 	maxAffixBias?: number
 	/**
-	 * Maximum bias magnitude (logits) on the adjacent (neighbour) tokens for the `street` label. Default 2.0 — a touch
-	 * weaker than the affix bias because the neighbour is inferred from adjacency rather than direct match.
+	 * Maximum bias magnitude (logits) on the adjacent (neighbour) tokens for the `street` label.
+	 * Default 2.0 — a touch weaker than the affix bias because the neighbour is
+	 * inferred from adjacency rather than direct match.
 	 */
 	maxNeighbourStreetBias?: number
 	/**
-	 * Magnitude of the negative bias applied to `dependent_locality` BIO labels on the adjacent tokens. Default 2.0. This
-	 * is the essential piece.
+	 * Magnitude of the negative bias applied to `dependent_locality` BIO labels on the
+	 * adjacent tokens. Default 2.0. This is the essential piece.
 	 */
 	dependentLocalityPenalty?: number
 }
@@ -52,8 +54,8 @@ export interface StreetMorphologyPriorOpts {
 /**
  * Build a `[seqLen][numLabels]` bias matrix from street-morphology FST matches.
  *
- * The output composes with the admin FST bias matrix via {@linkcode addEmissionMatrix} — same
- * `addEmissionMatrix(emissions, fstBias) → biasedEmissions` pattern as the existing admin prior.
+ * The output composes with the admin FST bias matrix via {@linkcode addEmissionMatrix} —
+ * same `addEmissionMatrix(emissions, fstBias) → biasedEmissions` pattern as the existing admin prior.
  */
 export function buildStreetMorphologyEmissionPriors(
 	fst: FSTMatcherLike,
@@ -80,8 +82,8 @@ export function buildStreetMorphologyEmissionPriors(
 	const bDepLoc = labelToCol.get("B-dependent_locality")
 	const iDepLoc = labelToCol.get("I-dependent_locality")
 
-	// If the label vocabulary doesn't include street tags at all (e.g. a Stage 1 model), there's
-	// nothing to bias toward. Return zero-matrix and let the additive pipeline no-op.
+	// If the label vocabulary doesn't include street tags at all (e.g. a Stage 1 model),
+	// there's nothing to bias toward. Return zero-matrix and let the additive pipeline no-op.
 	if (bStreet === undefined || bStreetPrefix === undefined || bStreetSuffix === undefined) {
 		return matrix
 	}
@@ -90,8 +92,8 @@ export function buildStreetMorphologyEmissionPriors(
 
 	if (!wordGroups.length) return matrix
 
-	// Track which word-group indices are matched as affixes (and which spans they cover) so the
-	// second pass can locate neighbours without re-walking the FST.
+	// Track which word-group indices are matched as affixes (and which spans they cover)
+	// so the second pass can locate neighbours without re-walking the FST.
 	interface AffixMatch {
 		startGroupIdx: number
 		endGroupIdx: number // inclusive
@@ -99,8 +101,8 @@ export function buildStreetMorphologyEmissionPriors(
 
 	const affixMatches: AffixMatch[] = []
 
-	// Pass 1 — walk every contiguous subpath, collect accepting morphology matches, and apply
-	// the affix bias to matched tokens.
+	// Pass 1 — walk every contiguous subpath, collect accepting morphology matches,
+	// and apply the affix bias to matched tokens.
 	for (let start = 0; start < wordGroups.length; start++) {
 		const group = wordGroups[start]!
 
@@ -139,8 +141,8 @@ export function buildStreetMorphologyEmissionPriors(
 
 		if (bestEnd === -1) continue
 
-		// Verify the accepting entries are street_affix (the morphology FST may eventually contain
-		// other placetypes if the binary format is reused for related priors).
+		// Verify the accepting entries are street_affix (the morphology FST may eventually
+		// contain other placetypes if the binary format is reused for related priors).
 		const entries = fst.accepting(bestStateID)
 		const hasAffix = entries.some((e) => e.placetype === "street_affix")
 
@@ -161,9 +163,9 @@ export function buildStreetMorphologyEmissionPriors(
 			}
 		}
 
-		// Apply affix bias: positive bias toward both prefix and suffix BIO labels on the matched
-		// tokens. The model's existing logits + the QueryShape prior + the adjacent context (via
-		// pass 2) determine which of {prefix, suffix} actually wins. We don't pre-commit to one.
+		// Apply affix bias: positive bias toward both prefix and suffix BIO labels on the matched tokens.
+		// The model's existing logits + the QueryShape prior + the adjacent context (via pass 2) determine
+		// which of {prefix, suffix} actually wins. We don't pre-commit to one.
 		const affixBias = biasScale * maxAffixBias
 
 		for (let k = 0; k < affixPieceIndices.length; k++) {
@@ -177,9 +179,9 @@ export function buildStreetMorphologyEmissionPriors(
 
 	if (!affixMatches.length) return matrix
 
-	// Pass 2 — for each affix match, identify the immediately-adjacent word groups (skipping
-	// empty/punctuation groups) on either side and bias them toward street, away from
-	// dependent_locality.
+	// Pass 2 — for each affix match, identify the immediately-adjacent word groups
+	// (skipping empty/punctuation groups) on either side and bias them toward street,
+	// away from dependent_locality.
 	const neighbourStreetBias = biasScale * maxNeighbourStreetBias
 
 	for (const match of affixMatches) {
@@ -207,8 +209,9 @@ export function buildStreetMorphologyEmissionPriors(
 }
 
 /**
- * Walk word groups outward from `fromGroupIdx` in `direction` (+1 or -1), skipping empty groups (whitespace /
- * punctuation), and return the first non-empty group encountered — or `null` if no such neighbour exists.
+ * Walk word groups outward from `fromGroupIdx` in `direction` (+1 or -1),
+ * skipping empty groups (whitespace / punctuation), and return the first non-empty
+ * group encountered — or `null` if no such neighbour exists.
  */
 function findNeighbour(groups: WordGroup[], fromGroupIdx: number, direction: 1 | -1): WordGroup | null {
 	for (let i = fromGroupIdx + direction; i >= 0 && i < groups.length; i += direction) {

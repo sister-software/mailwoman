@@ -147,8 +147,8 @@ describe("postcodePrefixResolvedPlace — the synthetic place (B3-2/B3-3)", () =
 		// The B3-2 tier: the node resolves to the index node's coordinate…
 		expect(postcode.lat).toBe(54.577232)
 		expect(postcode.lon).toBe(-5.94725)
-		// …and the metadata interface rides along: prefix, ancestry, radius — never read a coordinate
-		// without its radius (M-3's 200× receipt).
+		// …and the metadata interface rides along: prefix, ancestry, radius —
+		// never read a coordinate without its radius (M-3's 200× receipt).
 		expect(postcode.metadata?.["postcode_prefix"]).toBe("BT9")
 
 		expect(postcode.metadata?.["postcode_prefix_ancestors"]).toEqual([
@@ -197,8 +197,8 @@ describe("B3-3 — the ancestry-only tier is coordinate-free (0% get a coordinat
 		const postcode = resolved.roots[0]!
 		expect(postcode.source).toBe("resolver")
 		expect(postcode.placeID).toBe("wof:0")
-		// 0% coordinate — absence, never 0,0 (inventing a BT centroid would reproduce the
-		// `BT3 9QQ` → Sheffield defect #1480 just fixed).
+		// 0% coordinate — absence, never 0,0 (inventing a BT centroid would reproduce
+		// the `BT3 9QQ` → Sheffield defect #1480 just fixed).
 		expect(postcode.lat).toBeUndefined()
 		expect(postcode.lon).toBeUndefined()
 		expect(postcode.metadata?.["coordinate_source"]).toBeUndefined()
@@ -211,8 +211,8 @@ describe("B3-3 — the ancestry-only tier is coordinate-free (0% get a coordinat
 
 describe("B3-5 — structural consumption, no model imports", () => {
 	it("accepts any structurally-conforming index, from any implementation", async () => {
-		// A plain object with `probe` + `country` — nothing about `@mailwoman/neural` enters this
-		// graph. The resolver's only dependency is the structure (compile-enforced).
+		// A plain object with `probe` + `country` — nothing about `@mailwoman/neural` enters this graph.
+		// The resolver's only dependency is the structure (compile-enforced).
 		const structuralIndex: PostcodePrefixIndexLike = {
 			country: "GB",
 			probe: (prefix) =>

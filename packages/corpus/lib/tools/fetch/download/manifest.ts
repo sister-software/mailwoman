@@ -18,8 +18,8 @@ import { HTTPStatusError, type SourceManifest } from "#tools/fetch/download/netw
 export async function readManifest<T>(path: string): Promise<T | null> {
 	if (!(await pathExists(path))) return null
 
-	// A read failure (e.g. the file vanished after the existsSync probe) maps to null like corrupt
-	// JSON does. tryParsingJSON returns null for the non-string sentinel.
+	// A read failure (e.g. the file vanished after the existsSync probe) maps to null like
+	// corrupt JSON does. tryParsingJSON returns null for the non-string sentinel.
 	const text = await readLocalTextFile(path).catch(() => null)
 
 	return tryParsingJSON<T>(text)
@@ -47,9 +47,10 @@ export async function writeManifest(path: string, manifest: unknown): Promise<vo
 }
 
 /**
- * The sibling `manifest.json` shape for a source that is a collection of files behind one portal (a monthly register
- * published per region, per industry, or per first letter). It carries what a trained artifact has to be able to cite
- * later: the license the portal labels the data with, the attribution wording it requires, and one
+ * The sibling `manifest.json` shape for a source that is a collection of files behind one
+ * portal (a monthly register published per region, per industry, or per first letter).
+ * It carries what a trained artifact has to be able to cite later: the license the
+ * portal labels the data with, the attribution wording it requires, and one
  * {@link SourceManifest} per file.
  */
 export interface SourceCollectionManifest {
@@ -62,10 +63,12 @@ export interface SourceCollectionManifest {
 }
 
 /**
- * Pipe a response body to `dest` and answer the byte count. The one primitive the portal fetchers share when the
- * request is not a bare GET — a session cookie, a csrf header, or a form post stands between the listing and the file,
- * so {@link streamDownload}'s URL-only interface does not fit and each module builds its own `Response` first. Writes a
- * `.tmp` sibling and renames, so an interrupted transfer never lands at the final path looking complete.
+ * Pipe a response body to `dest` and answer the byte count.
+ * The one primitive the portal fetchers share when the request is not a bare GET —
+ * a session cookie, a csrf header, or a form post stands between the listing
+ * and the file, so {@link streamDownload}'s URL-only interface does not fit
+ * and each module builds its own `Response` first. Writes a `.tmp` sibling and renames,
+ * so an interrupted transfer never lands at the final path looking complete.
  */
 export async function streamBodyToFile(res: Response, dest: string): Promise<number> {
 	if (!res.body) throw new HTTPStatusError(res.status, `HTTP ${res.status} with no body — ${res.url}`)
@@ -86,9 +89,10 @@ export async function streamBodyToFile(res: Response, dest: string): Promise<num
 }
 
 /**
- * The per-file entries of a {@link SourceCollectionManifest} keyed by file name, or an empty map when the manifest is
- * missing or not in the collection shape, so a re-run after an interruption fetches only what is missing. The
- * single-file modules' `loadManifestEntries` reads a bare array and is not this.
+ * The per-file entries of a {@link SourceCollectionManifest} keyed by file name,
+ * or an empty map when the manifest is missing or not in the collection shape, so a re-run
+ * after an interruption fetches only what is missing. The single-file modules'
+ * `loadManifestEntries` reads a bare array and is not this.
  */
 export async function loadCollectionFiles(path: string): Promise<Map<string, SourceManifest>> {
 	const parsed = await readManifest<SourceCollectionManifest>(path)

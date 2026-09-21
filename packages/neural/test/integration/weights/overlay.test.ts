@@ -32,8 +32,8 @@ async function scratch(): Promise<string> {
 }
 
 /**
- * A weights directory in the shipped layout — the same fixed filenames `resolveFromPackageDir` reads, which is exactly
- * why the overlay needs no logic of its own.
+ * A weights directory in the shipped layout — the same fixed filenames `resolveFromPackageDir`
+ * reads, which is exactly why the overlay needs no logic of its own.
  */
 async function weightsDir(root: string, locale: string, files: Record<string, string>): Promise<string> {
 	const dir = join(root, locale)
@@ -50,8 +50,9 @@ async function weightsDir(root: string, locale: string, files: Record<string, st
 const BINARIES = { "model.onnx": "onnx", "tokenizer.model": "sp" }
 
 /**
- * A locale with no published package, so module resolution misses and the ladder falls through to the probes under
- * test. Using a real locale would make the result depend on whether someone had linked dev weights.
+ * A locale with no published package, so module resolution misses and the ladder falls
+ * through to the probes under test. Using a real locale would make the result depend on
+ * whether someone had linked dev weights.
  */
 const ABSENT = "xx-xx"
 
@@ -71,8 +72,8 @@ describe("resolveWeights — the data-root overlay rung", () => {
 	it("refuses a half-populated overlay rather than resolving one binary", async () => {
 		const root = await scratch()
 
-		// A tokenizer without a model is not a weaker answer, it is a broken one — and the failure it would
-		// otherwise produce arrives much later, inside the ONNX session.
+		// A tokenizer without a model is not a weaker answer, it is a broken one — and the
+		// failure it would otherwise produce arrives much later, inside the ONNX session.
 		await weightsDir(root, ABSENT, { "tokenizer.model": "sp" })
 
 		await expect(resolveWeights({ locale: ABSENT, overlayRoot: root })).rejects.toThrow(/Could not resolve/)
@@ -102,8 +103,9 @@ describe("resolveWeights — the data-root overlay rung", () => {
 			message = (error as Error).message
 		}
 
-		// An explicit candidate cache is an isolation boundary. It must name the failed cache package and must not report
-		// an overlay probe, because consulting that overlay would mix installed artifacts into the candidate run.
+		// An explicit candidate cache is an isolation boundary.
+		// It must name the failed cache package and must not report an overlay probe,
+		// because consulting that overlay would mix installed artifacts into the candidate run.
 		expect(message).toContain(cache)
 		expect(message).toContain(`@mailwoman/neural-weights-${ABSENT}`)
 		expect(message).not.toContain(join(overlay, ABSENT))
@@ -122,8 +124,9 @@ describe("resolveWeights — the artifact report", () => {
 		expect(by.get("model.onnx")?.origin).toBe(WeightsOrigin.Overlay)
 		expect(by.get("model-card.json")?.origin).toBe(WeightsOrigin.Overlay)
 
-		// An artifact the overlay does not carry is reported with a null origin rather than omitted. Omitting
-		// it would make "this checkout has no FST" and "this build never had an FST field" the same shape.
+		// An artifact the overlay does not carry is reported with a null origin
+		// rather than omitted. Omitting it would make "this checkout has no FST"
+		// and "this build never had an FST field" the same shape.
 		const fst = by.get("fst-xx-xx.bin")
 
 		expect(fst).toBeDefined()
@@ -138,8 +141,8 @@ describe("resolveWeights — the artifact report", () => {
 
 		const { artifacts } = await resolveWeights({ locale: ABSENT, overlayRoot: root })
 
-		// A report whose length varied with what happened to resolve could not answer "how much am I
-		// missing" — the question the rung makes newly askable.
+		// A report whose length varied with what happened to resolve could not answer "how
+		// much am I missing" — the question the rung makes newly askable.
 		expect(artifacts.length).toBeGreaterThan(10)
 		expect(artifacts.filter((a) => a.origin === null).length).toBeGreaterThan(0)
 		expect(new Set(artifacts.map((a) => a.name)).size).toBe(artifacts.length)

@@ -10,8 +10,8 @@ import { defineOperation, OperationEffect } from "#operation"
 import { smokeCleanInstall } from "#release/smoke/clean-install"
 
 /**
- * `release.smoke-clean-install` — writes inside the checkout or the data root. Listed in `registry.ts`; the description
- * on the operation is what `mwops` prints.
+ * `release.smoke-clean-install` — writes inside the checkout or the data root.
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const smokeCleanInstallOperation = defineOperation({
 	id: "release.smoke-clean-install",

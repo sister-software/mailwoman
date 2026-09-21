@@ -35,7 +35,8 @@ export interface UseGeocodeOptions {
 	 */
 	defaultText: string
 	/**
-	 * Read the current viewport bias (the map center) at submit time. Absent → no bias.
+	 * Read the current viewport bias (the map center) at
+	 * submit time. Absent → no bias.
 	 */
 	getBias?: () => MapBias | null
 }
@@ -48,8 +49,8 @@ export interface UseGeocode extends UseParsePipeline {
 }
 
 export function useGeocode({ runtime, defaultText, getBias }: UseGeocodeOptions): UseGeocode {
-	// Bind the viewport bias into a derived `runParse` so `useParsePipeline` is reused unchanged. When the runtime has no
-	// bias-aware parse, pass it straight through.
+	// Bind the viewport bias into a derived `runParse` so `useParsePipeline` is reused unchanged.
+	// When the runtime has no bias-aware parse, pass it straight through.
 	const geoRuntime = useMemo<PipelineRuntime>(() => {
 		const withBias = runtime.runParseWithBias
 

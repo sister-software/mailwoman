@@ -14,7 +14,8 @@ import { caseCarriesTruth, seedToCaseTable } from "#grade"
 import type { ResolvedInput } from "#input-sets"
 
 /**
- * How the row was graded, and against what. `met: null` means the row asserts nothing — never that it passed.
+ * How the row was graded, and against what. `met: null` means the row asserts
+ * nothing — never that it passed.
  */
 export interface ExpectationReading {
 	source: "board_case" | "corpus_row" | "none"
@@ -27,9 +28,10 @@ export interface ExpectationReading {
 /**
  * The case table this row is graded against, or `null` when it asserts nothing.
  *
- * A board row carries a `SeedCase` and grades through the board's own `checkCase`. A panel / holdout / golden / parity
- * row carries expectations without a seed, so one is synthesized around what its corpus actually pinned — the same
- * grader then reads both, which is what keeps a second grading path from appearing here.
+ * A board row carries a `SeedCase` and grades through the board's own `checkCase`.
+ * A panel / holdout / golden / parity row carries expectations without a seed,
+ * so one is synthesized around what its corpus actually pinned — the same grader
+ * then reads both, which is what keeps a second grading path from appearing here.
  */
 export function expectationCase(
 	item: ResolvedInput
@@ -57,8 +59,8 @@ export function expectationCase(
 			expect_place_name: null,
 			expect_lat: item.truthLat ?? null,
 			expect_lon: item.truthLon ?? null,
-			// Null where the corpus pinned none, so `checkCase` applies its own default rather than this module
-			// inventing a tolerance no corpus agreed to.
+			// Null where the corpus pinned none, so `checkCase` applies its own default
+			// rather than this module inventing a tolerance no corpus agreed to.
 			expect_tolerance_m: item.toleranceM ?? null,
 			expect_tier: null,
 			default_country: null,
@@ -75,8 +77,9 @@ export function expectationCase(
 /**
  * Grade one row against whatever its corpus pinned.
  *
- * Typed against the real `GeocodeResult` rather than {@link AccountInput}: `checkCase` reads the gauntlet projection,
- * and projecting twice is how a recorded answer and the live one it came from stop agreeing.
+ * Typed against the real `GeocodeResult` rather than {@link AccountInput}:
+ * `checkCase` reads the gauntlet projection, and projecting twice is how a recorded answer
+ * and the live one it came from stop agreeing.
  */
 export function gradeExpectation(item: ResolvedInput, result: GeocodeRun["result"]): ExpectationReading {
 	const expectation = expectationCase(item)

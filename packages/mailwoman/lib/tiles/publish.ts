@@ -22,8 +22,9 @@ import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 /**
- * A transport that puts one local file at `bucket/key`. The default is rclone over the `RCLONE_S3_*` credentials. a
- * caller with another credential (the planetary pipeline uploads through wrangler and the account's API token) injects
+ * A transport that puts one local file at `bucket/key`.
+ * The default is rclone over the `RCLONE_S3_*` credentials. a caller with another credential
+ * (the planetary pipeline uploads through wrangler and the account's API token) injects
  * its own, and the key layout, the size report and the served-at line stay shared.
  */
 export type UploadTransport = (target: { file: string; bucket: string; key: string }) => Promise<void>
@@ -60,8 +61,8 @@ export interface PublishTilesOptions {
 const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S3_SECRET_ACCESS_KEY"] as const
 
 /**
- * The default transport: rclone over the inherited `RCLONE_S3_*` credentials, on the on-the-fly `:s3:` remote. The
- * flags skip the post-PUT head + checksum ops that 501 against R2.
+ * The default transport: rclone over the inherited `RCLONE_S3_*` credentials, on the on-the-fly
+ * `:s3:` remote. The flags skip the post-PUT head + checksum ops that 501 against R2.
  */
 export const uploadWithRclone: UploadTransport = async ({ file, bucket, key }) => {
 	const { $private } = await import("#env")
@@ -100,7 +101,8 @@ export async function uploadToBucket(options: UploadToBucketOptions): Promise<st
 }
 
 /**
- * Publish a PMTiles archive under the tile worker's key layout. Answers the report with the URL it serves at.
+ * Publish a PMTiles archive under the tile worker's key layout.
+ * Answers the report with the URL it serves at.
  */
 export async function publishTiles(options: PublishTilesOptions): Promise<string> {
 	if (!options.file.endsWith(".pmtiles")) throw new CommandError(`--file must be a .pmtiles archive: ${options.file}`)

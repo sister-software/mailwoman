@@ -53,9 +53,10 @@ interface LocaleSource {
 }
 
 /**
- * Size past which a `.bin` written into the browser asset dir is worth a word. Not a limit and not enforced — the
- * command's default `--out` is `docs/static/mailwoman`, and a GB unit build lands 20 MB there, so the number exists to
- * make the reader notice rather than to decide for them.
+ * Size past which a `.bin` written into the browser asset dir is worth a word.
+ * Not a limit and not enforced — the command's default `--out` is `docs/static/mailwoman`,
+ * and a GB unit build lands 20 MB there, so the number exists to make the reader notice
+ * rather than to decide for them.
  */
 const BROWSER_BUDGET_BYTES = 4 * 1024 * 1024
 
@@ -80,8 +81,9 @@ export const spec = {
 const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
-		// `@mailwoman/neural/postcode-binary-resolver` is a self-contained serializer whose only imports are
-		// type-only, so this load costs a file read rather than the ONNX runtime the package name suggests.
+		// `@mailwoman/neural/postcode-binary-resolver` is a self-contained serializer
+		// whose only imports are type-only, so this load costs a file read
+		// rather than the ONNX runtime the package name suggests.
 		const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode")
 
 		const { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES } =
@@ -128,8 +130,8 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 				gbGranularity: granularity,
 			})
 
-			// refuse before writing (#1509). A magnitude never carries its own absence: a zero-key binary
-			// is structurally valid, so the only place the failure can surface is here.
+			// refuse before writing (#1509). A magnitude never carries its own absence: a zero-key
+			// binary is structurally valid, so the only place the failure can surface is here.
 			const violation = keyFloorViolation(country, entries.length, granularity)
 
 			if (violation) {
@@ -153,12 +155,12 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 					`) → ${outPath} (${ByteFormatter.formatIEC(bytes.length)})`
 			)
 
-			// The GB default is `unit` because that is what the anchor-v2 model was trained against, and a
-			// serving bundle shipping anything coarser feeds the channel a different distribution than
-			// training painted. But this command's default `--out` is the browser asset dir, where 20 MB is
-			// not a postcode binary, it is the whole page budget. The size is printed either way. this names
-			// the setting rather than deciding for the operator. Which countries carry a browser granularity is
-			// the source table's to say.
+			// The GB default is `unit` because that is what the anchor-v2 model was trained against,
+			// and a serving bundle shipping anything coarser feeds the channel a different
+			// distribution than training painted. But this command's default `--out` is the browser
+			// asset dir, where 20 MB is not a postcode binary, it is the whole page budget.
+			// The size is printed either way. this names the setting rather than deciding for the operator.
+			// Which countries carry a browser granularity is the source table's to say.
 			const browserGranularity = browserGranularityFor(country)
 
 			if (browserGranularity && granularity !== browserGranularity && bytes.length > BROWSER_BUDGET_BYTES) {

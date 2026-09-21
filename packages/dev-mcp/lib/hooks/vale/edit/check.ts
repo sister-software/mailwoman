@@ -28,16 +28,16 @@ import { isProcessError, runFile } from "@mailwoman/core/process"
 import { relative, resolvePath } from "path-ts"
 
 /**
- * Which Vale surface reads a file, by extension. `docs-vocab` is deliberately absent: it runs the same rules over a
- * narrower set, so a file it covers is already covered by `docs` here and a second pass would report each finding
- * twice.
+ * Which Vale surface reads a file, by extension. `docs-vocab` is deliberately absent:
+ * it runs the same rules over a narrower set, so a file it covers is already covered
+ * by `docs` here and a second pass would report each finding twice.
  */
 const CODE_EXTENSIONS = [".ts", ".tsx", ".py", ".yaml", ".yml"]
 const DOC_EXTENSIONS = [".md", ".mdx"]
 
 function surfaceFor(filePath: string): "code" | "docs" | null {
-	// A suffix test rather than `extname`: path-ts reads the extension out of the path's TYPE, so a value widened to
-	// `string` answers `""` and every arm of a switch over it is unreachable.
+	// A suffix test rather than `extname`: path-ts reads the extension out of the path's TYPE,
+	// so a value widened to `string` answers `""` and every arm of a switch over it is unreachable.
 	if (CODE_EXTENSIONS.some((extension) => filePath.endsWith(extension))) return "code"
 
 	if (DOC_EXTENSIONS.some((extension) => filePath.endsWith(extension))) return "docs"
@@ -46,7 +46,8 @@ function surfaceFor(filePath: string): "code" | "docs" | null {
 }
 
 /**
- * The edited path the payload names, repo-relative, or null when it names none or names one outside the repository.
+ * The edited path the payload names, repo-relative, or null when it names none
+ * or names one outside the repository.
  */
 function editedPath(payload: Record<string, unknown> | null): string | null {
 	const input = payload?.tool_input
@@ -75,16 +76,17 @@ async function main(): Promise<void> {
 
 	const linter = resolvePath(repoRootPath("config", "vale", "lint-prose.ts"))
 
-	// Vale exits non-zero when it has error-severity findings, so the REPORT is on stdout in both cases and the exit
-	// code carries no separate signal.
+	// Vale exits non-zero when it has error-severity findings, so the REPORT is on
+	// stdout in both cases and the exit code carries no separate signal.
 	const report = await runFile(process.execPath, [String(linter), surface, filePath], {
 		cwd: String(repoRootPath()),
 		maxBuffer: 8 * 1024 * 1024,
 	}).catch((error: unknown) => (isProcessError(error) ? error : null))
 
 	const output = (report?.stdout ?? "").trim()
-	// The COUNT off Vale's summary, never the word: a clean run ends `✔ 0 errors, 0 warnings …`, so a substring test
-	// for "error" blocks on every clean file. Absent summary means absent output means nothing to report.
+	// The COUNT off Vale's summary, never the word: a clean run ends
+	// `✔ 0 errors, 0 warnings …`, so a substring test for "error" blocks on every clean file.
+	// Absent summary means absent output means nothing to report.
 	const errorCount = Number(/^[✔✖]\s+(\d+)\s+error/mu.exec(output)?.[1] ?? 0)
 
 	if (!errorCount) return

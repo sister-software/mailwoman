@@ -68,8 +68,8 @@ import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 // ── Types ──────────────────────────────────────────────────────────────────
 
 /**
- * A golden-set row, as stored one-per-line in `us.jsonl` / `fr.jsonl` / `adversarial.jsonl`. Only the fields this tool
- * reads are modeled. every other key rides through untouched.
+ * A golden-set row, as stored one-per-line in `us.jsonl` / `fr.jsonl` / `adversarial.jsonl`.
+ * Only the fields this tool reads are modeled. every other key rides through untouched.
  */
 export interface GoldenStreetRow {
 	raw: string
@@ -97,8 +97,8 @@ export type GoldenRelabelClass =
 	| "untrimmed-street"
 
 /**
- * A review trigger on a row the tool did change. A flag is never an adjudication — it marks the row for the operator's
- * deck, and the split is applied either way.
+ * A review trigger on a row the tool did change. A flag is never an adjudication —
+ * it marks the row for the operator's deck, and the split is applied either way.
  */
 export interface GoldenRelabelFlag {
 	kind: "name-prone-suffix" | "venue-context" | "remainder-is-affix"
@@ -129,13 +129,15 @@ export interface GoldenRelabelResult {
 // ── The name-prone suffix set ──────────────────────────────────────────────
 
 /**
- * Pub-28 canonicals that are also ordinary head nouns of proper names — "Lincoln Park", "Boston Common", "Willow
- * Brook". A split on one of these is still applied (the table is the table), but the row lands in the review deck
- * because the trailing word may belong to the name rather than to the street type.
+ * Pub-28 canonicals that are also ordinary head nouns of proper names — "Lincoln Park",
+ * "Boston Common", "Willow Brook". A split on one of these is still applied
+ * (the table is the table), but the row lands in the review deck because the trailing
+ * word may belong to the name rather than to the street type.
  *
- * Chosen against the surfaces this golden set actually carries (park 6, green 5, hill 7, heights 3, hollow 3, brook 3,
- * pass 3 — the whole flagged class is 60 rows of 1,906) rather than from the whole 200-entry table: flagging every
- * possible name-head would mark a third of the corrections and stop being a review artifact.
+ * Chosen against the surfaces this golden set actually carries (park 6, green 5, hill 7,
+ * heights 3, hollow 3, brook 3, pass 3 — the whole flagged class is 60 rows of 1,906)
+ * rather than from the whole 200-entry table: flagging every possible name-head would
+ * mark a third of the corrections and stop being a review artifact.
  */
 // ── Byte-exact tail split ──────────────────────────────────────────────────
 
@@ -146,8 +148,9 @@ interface TailSplit {
 }
 
 /**
- * Split `s` at its last whitespace run, returning the three pieces verbatim. Null when there is no interior whitespace,
- * when the head would be empty, or when `s` carries leading/trailing whitespace (a golden row is stored trimmed. an
+ * Split `s` at its last whitespace run, returning the three pieces verbatim.
+ * Null when there is no interior whitespace, when the head would be empty, or
+ * when `s` carries leading/trailing whitespace (a golden row is stored trimmed. an
  * untrimmed one is reported rather than silently normalized).
  */
 function splitLastWord(s: string): TailSplit | null {
@@ -160,8 +163,8 @@ function splitLastWord(s: string): TailSplit | null {
 }
 
 /**
- * Split `s` at its first whitespace run — the leading-directional counterpart of {@link splitLastWord}. `head` is the
- * first word, `tail` the rest, both verbatim.
+ * Split `s` at its first whitespace run — the leading-directional counterpart of
+ * {@link splitLastWord}. `head` is the first word, `tail` the rest, both verbatim.
  */
 function splitFirstWord(s: string): TailSplit | null {
 	if (s !== s.trim() || !s) return null
@@ -175,8 +178,8 @@ function splitFirstWord(s: string): TailSplit | null {
 // ── Row-level relabel ──────────────────────────────────────────────────────
 
 /**
- * Rebuild `components` with `street_suffix` inserted immediately after `street`, so the written row reads in address
- * order rather than with the new tag appended at the end.
+ * Rebuild `components` with `street_suffix` inserted immediately after `street`,
+ * so the written row reads in address order rather than with the new tag appended at the end.
  */
 function withStreetSpans(
 	components: Record<string, string>,
@@ -211,7 +214,8 @@ function withStreetSpans(
  */
 export interface RelabelStreetRowOptions {
 	/**
-	 * Also lift a folded leading directional out into `street_prefix`. Default true.
+	 * Also lift a folded leading directional out into
+	 * `street_prefix`. Default true.
 	 *
 	 * On by default because the fold applies both ways and the answer key has to be corrected on both, or the correction
 	 * is not a correction: 207 of the 1,682 split dev rows (12.3%) still opened with a directional after the suffix move
@@ -222,8 +226,8 @@ export interface RelabelStreetRowOptions {
 }
 
 /**
- * Decide, and apply, the US street-span split for one golden row. Pure: never mutates its argument, and returns the
- * same object reference when the row is left alone.
+ * Decide, and apply, the US street-span split for one golden row.
+ * Pure: never mutates its argument, and returns the same object reference when the row is left alone.
  */
 export function relabelGoldenStreetRow(
 	row: GoldenStreetRow,
@@ -260,8 +264,9 @@ export function relabelGoldenStreetRow(
 	if (!split) {
 		rowClass = matchTrailingSuffix(street) ? "suffix-only-street" : "single-token"
 	} else if (isStreetDirectionalToken(split.tail)) {
-		// Street type + post-directional ("Pennsylvania Avenue NW"). The corpus adapter emits the pair as
-		// one suffix span, and there is no post-directional tag to move it to.
+		// Street type + post-directional ("Pennsylvania Avenue NW").
+		// The corpus adapter emits the pair as one suffix span, and there is no
+		// post-directional tag to move it to.
 		const inner = splitLastWord(split.head)
 		const typeMatch = inner ? matchTrailingSuffix(inner.tail) : null
 
@@ -288,8 +293,8 @@ export function relabelGoldenStreetRow(
 		}
 	}
 
-	// Leading directional → street_prefix, on whatever name survived the suffix move. Independent of the
-	// suffix branch, because "N Main" is as folded as "N Main St" is.
+	// Leading directional → street_prefix, on whatever name survived the suffix move.
+	// Independent of the suffix branch, because "N Main" is as folded as "N Main St" is.
 	let prefix: string | undefined
 	let prefixGap = ""
 
@@ -309,8 +314,8 @@ export function relabelGoldenStreetRow(
 		rowClass = "split-prefix-only"
 	}
 
-	// The invariant this tool exists to keep: the spans plus the whitespace between them are the original
-	// span, byte for byte. Anything else means a token was rewritten.
+	// The invariant this tool exists to keep: the spans plus the whitespace between them
+	// are the original span, byte for byte. Anything else means a token was rewritten.
 	const rebuilt = `${prefix ? prefix + prefixGap : ""}${name}${suffix ? suffixGap + suffix : ""}`
 
 	if (rebuilt !== street) {
@@ -333,10 +338,10 @@ export function relabelGoldenStreetRow(
 		})
 	}
 
-	// Narrow on purpose: a name that happens to be a Pub-28 canonical is not interesting ("Mountain Rd",
-	// "Valley Dr", "Mills Ln" are ordinary streets, and flagging them buried the deck — 108 rows of noise
-	// on the first run). A name that is a bare directional is: "East Rd" leaves `street: "East"`, which is
-	// a direction rather than a name.
+	// Narrow on purpose: a name that happens to be a Pub-28 canonical is not interesting
+	// ("Mountain Rd", "Valley Dr", "Mills Ln" are ordinary streets, and flagging them buried
+	// the deck — 108 rows of noise on the first run). A name that is a bare directional is:
+	// "East Rd" leaves `street: "East"`, which is a direction rather than a name.
 	if (isStreetDirectionalToken(name)) {
 		flags.push({
 			kind: "remainder-is-affix",

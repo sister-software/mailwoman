@@ -159,8 +159,8 @@ describe("isSignIdentifier", () => {
 			expect([value, isSignIdentifier(value)]).toEqual([value, true])
 		}
 
-		// Multi-letter prefixes are campus / platform / stop codes rather than identifiers — `AG1` is a
-		// Sheffield bus stop on a street called Arundel Gate.
+		// Multi-letter prefixes are campus / platform / stop codes rather than identifiers —
+		// `AG1` is a Sheffield bus stop on a street called Arundel Gate.
 		for (const value of ["AG1", "AG124", "BS04", "PWP2", "WSW3687", "RQ8", "CHU", "Inn", "de"]) {
 			expect([value, isSignIdentifier(value)]).toEqual([value, false])
 		}
@@ -302,8 +302,8 @@ describe("buildPositiveForms", () => {
 			const form = buildSubVenueForm(leg, promoted, model, shippedModifiers, [], random)
 
 			if (form?.form !== "modifier-designator") continue
-			// "East Gate" and "Building Society Place" are streets — `gate` and `building` are not
-			// modifier-eligible, and neither is the newly-promoted `pier`.
+			// "East Gate" and "Building Society Place" are streets — `gate` and `building`
+			// are not modifier-eligible, and neither is the newly-promoted `pier`.
 			expect(form.designatorID).not.toBe("gate")
 			expect(form.designatorID).not.toBe("building")
 			expect(form.designatorID).not.toBe("pier")

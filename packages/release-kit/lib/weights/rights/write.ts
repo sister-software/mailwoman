@@ -38,9 +38,9 @@ export interface RightsFileState {
 /**
  * Every published `neural-weights-*` workspace, in the order `readWorkspaceDirectories` lists them.
  *
- * Read from the root workspace list rather than from `.release-it.json`, because a weights workspace held out of the
- * release still publishes the moment it is added back, and a rights file that only appears at that point is one nobody
- * reviewed.
+ * Read from the root workspace list rather than from `.release-it.json`, because a
+ * weights workspace held out of the release still publishes the moment it is added back,
+ * and a rights file that only appears at that point is one nobody reviewed.
  */
 export async function publishedWeightsWorkspaces(repoRoot: string): Promise<string[]> {
 	const workspaces = await readWorkspaceDirectories(repoRoot)
@@ -67,8 +67,8 @@ export async function weightsRightsRecords(repoRoot: string): Promise<WeightsRig
 }
 
 /**
- * Whether the committed file at `path` already holds `expected`. A missing or unreadable file reads as different rather
- * than as equal, so a first run writes it.
+ * Whether the committed file at `path` already holds `expected`.
+ * A missing or unreadable file reads as different rather than as equal, so a first run writes it.
  */
 async function licenseDiffers(repoRoot: string, workspace: string, expected: string): Promise<boolean> {
 	try {

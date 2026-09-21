@@ -20,7 +20,8 @@ export interface DetectLocaleOpts {
 	 */
 	machinePreferences?: MachinePreferences
 	/**
-	 * Below this confidence, the detector returns the top candidate but also surfaces alternatives. Default 0.7.
+	 * Below this confidence, the detector returns the top candidate but also
+	 * surfaces alternatives. Default 0.7.
 	 */
 	confidenceFloor?: number
 }

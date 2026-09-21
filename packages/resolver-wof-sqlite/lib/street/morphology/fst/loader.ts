@@ -32,7 +32,8 @@ import type { FSTProvenance } from "#fst/types"
 import { buildStreetMorphologyFST } from "#street/morphology/fst/builder"
 
 /**
- * The sealed artifact's canonical filename — identical in the data-root staging dir and as a weights-package sibling.
+ * The sealed artifact's canonical filename — identical in the data-root staging dir
+ * and as a weights-package sibling.
  */
 export const STREET_MORPHOLOGY_ARTIFACT_FILENAME = "fst-street-morphology.bin"
 
@@ -45,8 +46,9 @@ export function defaultStreetMorphologyArtifactPath(): PathBuilder {
 
 export interface LoadStreetMorphologyFSTOpts {
 	/**
-	 * Explicit artifact path (e.g. a weights-package sibling). When given it is the only artifact probed — missing or
-	 * unreadable degrades straight to the dictionary build, never a throw.
+	 * Explicit artifact path (e.g. a weights-package sibling).
+	 * When given it is the only artifact probed — missing or unreadable degrades
+	 * straight to the dictionary build, never a throw.
 	 */
 	artifactPath?: PathBuilderLike
 	/**
@@ -76,7 +78,8 @@ export interface LoadedStreetMorphologyFST {
 }
 
 /**
- * Load the street-morphology matcher: sealed artifact first, per-process dictionary build as the degrade path.
+ * Load the street-morphology matcher: sealed artifact first, per-process
+ * dictionary build as the degrade path.
  */
 export async function loadStreetMorphologyFST(
 	opts: LoadStreetMorphologyFSTOpts = {}

@@ -25,23 +25,25 @@ import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * One lieu-dit pair in the pair-index entry shape. Raw surfaces — the caller applies the same `normalizeFSTToken` fold
- * as every other source, keeping one normalization owner.
+ * One lieu-dit pair in the pair-index entry shape. Raw surfaces — the caller applies the
+ * same `normalizeFSTToken` fold as every other source, keeping one normalization owner.
  */
 export interface LieuDitPair {
 	child: string
 	parent: string
 	tag: "dependent_locality"
 	/**
-	 * Always `locality` (PIX2 / schema 3). The parent surface is BAN's `nom_commune` (`record.city` below) — the commune,
-	 * which is the French postal locality line and the slot every FR address writes after the postcode. There is no
-	 * per-row variation to read here: BAN carries exactly one commune column and every row's parent comes from it.
+	 * Always `locality` (PIX2 / schema 3). The parent surface is BAN's `nom_commune`
+	 * (`record.city` below) — the commune, which is the French postal locality line and the slot
+	 * every FR address writes after the postcode. There is no per-row variation to read here:
+	 * BAN carries exactly one commune column and every row's parent comes from it.
 	 */
 	parentTag: "locality"
 }
 
 /**
- * The commune column BAN gives as a pair's parent projects onto exactly one tag — see {@link LieuDitPair.parentTag}.
+ * The commune column BAN gives as a pair's parent projects onto exactly one tag —
+ * see {@link LieuDitPair.parentTag}.
  */
 const LIEU_DIT_PARENT_TAG = "locality" as const
 
@@ -60,10 +62,11 @@ export interface LieuDitExtractResult {
 /**
  * Enumerate `adresses-<dept>.csv[.gz]` files, one per département.
  *
- * Excludes the `merged`/`france` aggregates (they duplicate the per-département rows, so counting them would inflate
- * every frequency) and prefers an uncompressed `.csv` when both forms exist for the same département — a stale-refetch
- * artifact observed on disk for 13/2A/48/69/75. Mirrors `corpus/src/database-recipes/fr-lieudit.ts`'s enumeration. the
- * two must agree or the index and the training database would read different populations.
+ * Excludes the `merged`/`france` aggregates (they duplicate the per-département rows, so counting
+ * them would inflate every frequency) and prefers an uncompressed `.csv` when both forms exist
+ * for the same département — a stale-refetch artifact observed on disk for 13/2A/48/69/75.
+ * Mirrors `corpus/src/database-recipes/fr-lieudit.ts`'s enumeration. the two must agree
+ * or the index and the training database would read different populations.
  */
 export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
 	const byDept = new Map<string, string>()
@@ -91,8 +94,8 @@ export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
 /**
  * Stream every département file and collect distinct (lieu-dit, commune) pairs.
  *
- * Reads the full national dump (~26M rows), so this is minutes rather than seconds — the caller is a build command,
- * never a request path.
+ * Reads the full national dump (~26M rows), so this is minutes rather than seconds —
+ * the caller is a build command, never a request path.
  */
 export async function extractLieuDitPairs(banDir: string): Promise<LieuDitExtractResult> {
 	const files = await enumerateBANDeptFiles(banDir)

@@ -7,8 +7,8 @@ import type { ScriptCallback } from "#scripting/utils/index"
  * runIfScript(import.meta, async () => {...})
  * ```
  *
- * The caller's meta is required: `import.meta.main` is per-module, so checking our own would always be false. This is
- * useful for conditionally running scripts without too much boilerplate.
+ * The caller's meta is required: `import.meta.main` is per-module, so checking our own would
+ * always be false. This is useful for conditionally running scripts without too much boilerplate.
  *
  * @internal
  */

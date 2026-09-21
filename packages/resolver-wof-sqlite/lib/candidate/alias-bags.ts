@@ -15,14 +15,16 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * The official name of every current region, keyed `${country id}\0${name key}` → region id, from the source `names`
- * table's `official` bit. Empty when the source carries no `names` table (a fixture, or an extract shape).
+ * The official name of every current region, keyed `${country id}\0${name key}` → region id,
+ * from the source `names` table's `official` bit. Empty when the source carries
+ * no `names` table (a fixture, or an extract shape).
  *
- * This is the positive evidence behind the one alias refusal below: a name is refused from a region's bag only when
- * another region of the same country holds it as its official name. Three such pairs exist in the admin artifact —
- * `新竹市` on Hsinchu County (the city's official name), `嘉義市` on Chiayi County, `충청남도` on Sejong — and each let the more
- * populous holder of the variant outrank the place the name officially is, so a `新竹市` region node resolved the county
- * and every district scoped to the city contradicted it.
+ * This is the positive evidence behind the one alias refusal below: a name is refused from a
+ * region's bag only when another region of the same country holds it as its official name.
+ * Three such pairs exist in the admin artifact — `新竹市` on Hsinchu County (the city's official name),
+ * `嘉義市` on Chiayi County, `충청남도` on Sejong — and each let the more populous holder of
+ * the variant outrank the place the name officially is, so a `新竹市` region node resolved
+ * the county and every district scoped to the city contradicted it.
  */
 function officialNameHoldersByRegion(
 	src: DatabaseClient<WOFDatabase>,
@@ -50,12 +52,13 @@ function officialNameHoldersByRegion(
 }
 
 /**
- * Pass 2 — explode each place's `place_search.alt_names` bag into distinct-key alias rows (`is_primary = 0`), and count
- * each place's distinct staged keys (primary included) — the gloss detector's key-count signal (#1730).
+ * Pass 2 — explode each place's `place_search.alt_names` bag into distinct-key alias rows
+ * (`is_primary = 0`), and count each place's distinct staged keys (primary included) —
+ * the gloss detector's key-count signal (#1730).
  *
- * With `regionPlacetypeID` and `ccID` given, a region's alias that is another same-country region's official name is
- * refused and counted rather than staged (see {@link officialNameHoldersByRegion}); without them the pass stages every
- * alias.
+ * With `regionPlacetypeID` and `ccID` given, a region's alias that is another
+ * same-country region's official name is refused and counted rather than staged
+ * (see {@link officialNameHoldersByRegion}); without them the pass stages every alias.
  */
 export function explodeAliasBags(
 	src: DatabaseClient<WOFDatabase>,
@@ -84,9 +87,9 @@ export function explodeAliasBags(
 		const seen = new Set<string>([a.pkey])
 		const isRegion = a.ptid === opts.regionPlacetypeID
 
-		// The writer space-pads each separator and appends a trailing one, so every piece arrives with
-		// surrounding whitespace and the last one is empty. `normalizeLocalityForKey` folds both away,
-		// and the empty tail falls out at the `!k` guard below.
+		// The writer space-pads each separator and appends a trailing one,
+		// so every piece arrives with surrounding whitespace and the last one is empty.
+		// `normalizeLocalityForKey` folds both away, and the empty tail falls out at the `!k` guard below.
 		for (const piece of alt.split(ALIAS_SEPARATOR)) {
 			const k = normalizeLocalityForKey(piece)
 

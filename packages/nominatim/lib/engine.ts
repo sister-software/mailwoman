@@ -11,14 +11,16 @@
 import type { OpenCageAnnotations } from "@mailwoman/annotations"
 
 /**
- * Output serialization formats Nominatim supports. `jsonv2` is the modern default. `jsonld` is the Mailwoman extension
- * (#1052) — schema.org `Place` JSON-LD rather than part of upstream Nominatim.
+ * Output serialization formats Nominatim supports. `jsonv2` is the modern default.
+ * `jsonld` is the Mailwoman extension (#1052) — schema.org `Place` JSON-LD
+ * rather than part of upstream Nominatim.
  */
 export type NominatimFormat = "jsonv2" | "json" | "geojson" | "jsonld"
 
 /**
- * The structured address breakdown returned under `address` when `addressdetails=1`. Keys mirror Nominatim's
- * OSM-derived tag names. populated from Mailwoman's `ComponentTag` / resolved ancestor lineage (mapping owned by
+ * The structured address breakdown returned under `address` when `addressdetails=1`.
+ * Keys mirror Nominatim's OSM-derived tag names. populated from Mailwoman's
+ * `ComponentTag` / resolved ancestor lineage (mapping owned by
  * #804).
  */
 export type NominatimAddressDetails = Record<string, string>
@@ -95,17 +97,18 @@ export interface NominatimLookupParams {
 }
 
 /**
- * Whether an artifact could state its own provenance. `unreadable` is kept apart from `absent` because "we could not
- * open it" is a fault to chase rather than a rebuild to schedule.
+ * Whether an artifact could state its own provenance. `unreadable` is kept apart from `absent`
+ * because "we could not open it" is a fault to chase rather than a rebuild to schedule.
  */
 export type NominatimManifestState = "present" | "absent" | "unreadable"
 
 /**
  * One database this deployment is serving from, and what it says about itself.
  *
- * Modeled here rather than imported from `mailwoman/freshness`, matching this package's convention that a wire surface
- * owns its own doc-accuracy types. The CLI assigns the reader's report straight into this shape, so a drift between the
- * two is a compile error at that assignment rather than a silently different response body.
+ * Modeled here rather than imported from `mailwoman/freshness`, matching this
+ * package's convention that a wire surface owns its own doc-accuracy types.
+ * The CLI assigns the reader's report straight into this shape, so a drift between the two
+ * is a compile error at that assignment rather than a silently different response body.
  */
 export interface NominatimStatusArtifact {
 	/**
@@ -133,13 +136,14 @@ export interface NominatimStatusArtifact {
 }
 
 /**
- * The native provenance block. A Nominatim client ignores unknown keys, so this rides alongside the compatible
- * `data_updated` without breaking one.
+ * The native provenance block. A Nominatim client ignores unknown keys, so this rides
+ * alongside the compatible `data_updated` without breaking one.
  */
 export interface NominatimStatusExtension {
 	/**
-	 * Every artifact this process opened, including the ones that carry no manifest — an unstamped artifact reports its
-	 * own absence rather than being omitted, because an omission cannot be told apart from an artifact nobody opened.
+	 * Every artifact this process opened, including the ones that carry no manifest —
+	 * an unstamped artifact reports its own absence rather than being omitted,
+	 * because an omission cannot be told apart from an artifact nobody opened.
 	 */
 	artifacts: NominatimStatusArtifact[]
 }
@@ -151,16 +155,17 @@ export interface NominatimStatus {
 	status: number
 	message: string
 	/**
-	 * The newest build epoch across the artifacts this deployment opened. Left OUT when none of them carries a manifest —
-	 * never filled with a boot time or a file mtime, which would answer a question the process cannot answer.
+	 * The newest build epoch across the artifacts this deployment opened.
+	 * Left OUT when none of them carries a manifest — never filled with a boot time
+	 * or a file mtime, which would answer a question the process cannot answer.
 	 */
 	data_updated?: string
 	mailwoman?: NominatimStatusExtension
 }
 
 /**
- * A freshness report as this surface consumes it — structurally `mailwoman/freshness`'s `FreshnessReport`, declared
- * here so the wire interface keeps no import from the engine implementation.
+ * A freshness report as this surface consumes it — structurally `mailwoman/freshness`'s
+ * `FreshnessReport`, declared here so the wire interface keeps no import from the engine implementation.
  */
 export interface NominatimFreshnessReport {
 	dataUpdated?: string
@@ -170,13 +175,15 @@ export interface NominatimFreshnessReport {
 /**
  * Compose the `/status` payload from a freshness report.
  *
- * A function rather than four lines at the one call site, because the CLI and the test that checks this response would
- * otherwise each hold their own copy of the same mapping — and the field this mapping exists to get right is one that
- * is omitted under a condition, which is exactly what two copies stop agreeing about first.
+ * A function rather than four lines at the one call site, because the CLI and the test
+ * that checks this response would otherwise each hold their own copy of the same mapping —
+ * and the field this mapping exists to get right is one that is omitted under a condition,
+ * which is exactly what two copies stop agreeing about first.
  *
- * `data_updated` is dropped when no artifact carried a build date. Nominatim declares the field optional, so leaving it
- * out is the interface's own way of saying the deployment cannot date its data. filling it with a boot time or a file
- * mtime would answer with something that looks measured and is not.
+ * `data_updated` is dropped when no artifact carried a build date.
+ * Nominatim declares the field optional, so leaving it out is the interface's own
+ * way of saying the deployment cannot date its data. filling it with a boot time
+ * or a file mtime would answer with something that looks measured and is not.
  */
 export function nominatimStatus(freshness: NominatimFreshnessReport): NominatimStatus {
 	return {
@@ -188,9 +195,10 @@ export function nominatimStatus(freshness: NominatimFreshnessReport): NominatimS
 }
 
 /**
- * The geocoding engine the router delegates to. Each method is optional. a route whose method is not provided answers
- * `501 Not Implemented`. The real implementation (Mailwoman parse → resolve, plus `WOFReverseGeocoder`) is wired by the
- * CLI and fleshed out across #802–#805.
+ * The geocoding engine the router delegates to. Each method is optional.
+ * a route whose method is not provided answers `501 Not Implemented`.
+ * The real implementation (Mailwoman parse → resolve, plus `WOFReverseGeocoder`)
+ * is wired by the CLI and fleshed out across #802–#805.
  */
 export interface NominatimEngine {
 	search?(params: NominatimSearchParams): Promise<NominatimResult[]>

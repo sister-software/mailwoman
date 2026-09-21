@@ -46,9 +46,10 @@ export interface SourceProvenanceMapOptions {
 	cap?: number
 }
 
-// Collapse the raw `source` string into a human, mappable category. The address-point DB stores e.g.
-// "overture:NAD" or "overture:OpenAddresses/NY/NYC Open Data" — the suffix is the real upstream
-// publisher, which is what we want to color by (the "overture:" prefix is just the theme it arrived in).
+// Collapse the raw `source` string into a human, mappable category.
+// The address-point DB stores e.g. "overture:NAD" or "overture:OpenAddresses/NY/NYC
+// Open Data" — the suffix is the real upstream publisher, which is what we want to
+// color by (the "overture:" prefix is just the theme it arrived in).
 function categorize(source: string): { bucket: string; publisher: string } {
 	if (source === "overture:NAD") return { bucket: "National Address Database", publisher: "NAD (federal)" }
 

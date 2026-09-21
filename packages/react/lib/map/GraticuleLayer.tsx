@@ -25,8 +25,9 @@ import { buildGraticule } from "./graticule.ts"
 
 export interface GraticuleLayerProps {
 	/**
-	 * The basemap layer to insert beneath — the id of the lowest layer that draws data. Omit and the grid renders on top
-	 * of the basemap, which is wrong but not broken: `<Layer>` with no `beforeId` appends.
+	 * The basemap layer to insert beneath — the id of the lowest layer that draws data.
+	 * Omit and the grid renders on top of the basemap, which is wrong but not broken:
+	 * `<Layer>` with no `beforeId` appends.
 	 */
 	beforeID?: string
 	/**
@@ -38,8 +39,8 @@ export interface GraticuleLayerProps {
 export function GraticuleLayer({ beforeID, hidden = false }: GraticuleLayerProps): ReactNode {
 	const data = useMemo(() => buildGraticule(), [])
 
-	// `<Source>` and `<Layer>` as siblings with an explicit `source`, matching `OverlayLayers`. Nesting the layer
-	// inside the source renders nothing here — no source, no layer, and no error to say so.
+	// `<Source>` and `<Layer>` as siblings with an explicit `source`, matching `OverlayLayers`.
+	// Nesting the layer inside the source renders nothing here — no source, no layer, and no error to say so.
 	return (
 		<>
 			<Source id="mw-graticule" type="geojson" data={data} />
@@ -51,8 +52,8 @@ export function GraticuleLayer({ beforeID, hidden = false }: GraticuleLayerProps
 				layout={{ visibility: hidden ? "none" : "visible", "line-cap": "round" }}
 				paint={{
 					"line-color": "#8aa0c8",
-					// Fades out as the globe gives way to a street map: the grid is orientation for a whole-earth view and
-					// clutter by z8, at which point there are tiles to look at anyway.
+					// Fades out as the globe gives way to a street map: the grid is orientation for a
+					// whole-earth view and clutter by z8, at which point there are tiles to look at anyway.
 					"line-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.3, 3, 0.2, 6, 0.09, 8, 0],
 					"line-width": ["interpolate", ["linear"], ["zoom"], 0, 0.5, 4, 0.75],
 				}}

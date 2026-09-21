@@ -43,8 +43,8 @@ async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null>
 
 test("submit drives the result panel + a map marker over the fake runtime", async () => {
 	// applyResultCamera=false keeps this deterministic: the marker + outline still render, but the animated fly/fit is
-	// skipped, exactly as the overlays test uses applyCamera=false. The camera has its own guard with a live map: see
-	// `ResultCamera.test.tsx`.
+	// skipped, exactly as the overlays test uses applyCamera=false.
+	// The camera has its own guard with a live map: see `ResultCamera.test.tsx`.
 	const { container } = renderComponent(
 		<Geocoder
 			runtime={makeFakeGeocoderRuntime()}
@@ -56,8 +56,8 @@ test("submit drives the result panel + a map marker over the fake runtime", asyn
 	// ClientOnly mounts asynchronously. wait for the reused QueryForm input.
 	await vi.waitFor(() => expect(container.querySelector("#mw-pipeline-input")).toBeTruthy())
 
-	// The pill carries no submit button, the way the reference map apps carry none: a search field submits on Enter,
-	// and the leading magnifier is a mark rather than a control.
+	// The pill carries no submit button, the way the reference map apps carry none: a search
+	// field submits on Enter, and the leading magnifier is a mark rather than a control.
 	await userEvent.click(container.querySelector("#mw-pipeline-input") as HTMLInputElement)
 	await userEvent.keyboard("{Enter}")
 
@@ -79,9 +79,9 @@ test("mounts the map container + floating control panel", async () => {
 	const { container } = renderComponent(<Geocoder runtime={makeFakeGeocoderRuntime()} defaultAddress="90210" />)
 
 	await vi.waitFor(() => expect(container.querySelector(".mw-geocoder-demo")).toBeTruthy())
-	// The chrome + the map wrapper both render synchronously (map canvas is best-effort, tested in MapCanvas). The
-	// chrome is one panel — a left column on a desktop, a bottom drawer on a phone — holding the search, the examples
-	// and the result, plus a control capsule down the right edge.
+	// The chrome + the map wrapper both render synchronously (map canvas is best-effort, tested in MapCanvas).
+	// The chrome is one panel — a left column on a desktop, a bottom drawer on a phone —
+	// holding the search, the examples and the result, plus a control capsule down the right edge.
 	expect(container.querySelector(".mw-map-panel")).not.toBeNull()
 	expect(container.querySelector(".mw-map-panel__header")).not.toBeNull()
 	expect(container.querySelector(".mw-map-searchbar")).not.toBeNull()

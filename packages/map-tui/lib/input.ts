@@ -7,9 +7,9 @@
 /**
  * Terminal input decoding for the interactive map browser.
  *
- * `decodeInputChunk` turns a raw-mode stdin chunk into zero or more {@link MapTUIInput} events. It stays pure — the
- * caller owns the only state there is, the unresolved trailing fragment the function hands back — so one chunk in gives
- * the same events out every time.
+ * `decodeInputChunk` turns a raw-mode stdin chunk into zero or more {@link MapTUIInput} events.
+ * It stays pure — the caller owns the only state there is, the unresolved trailing fragment
+ * the function hands back — so one chunk in gives the same events out every time.
  *
  * The fallback is the dangerous part. An ESC this decoder had no rule for used to mean "the Esc key", i.e. quit, which
  * made every unrecognized escape sequence a quit: F1 (`ESC O P`), an OSC reply the terminal sends unasked (`ESC ] 11 ;
@@ -17,24 +17,26 @@
  * first half ends inside the sequence. So the fallback now separates three cases:
  *
  * - A sequence this decoder recognizes is consumed and acted on (arrows, SGR mouse).
- * - A sequence it does not recognize is consumed whole and ignored: CSI (`ESC [ … final`), SS3 (`ESC O final`), and the
- *   string family (OSC/DCS/SOS/PM/APC, terminated by BEL or ST). Re-scanning their bodies as characters is how a `q`
- *   inside a cursor-position report quit the app.
- * - A chunk that ends mid-sequence — including a lone trailing ESC, which is byte-for-byte the start of one — is not
- *   decoded at all: it comes back as {@link DecodedInput.pending} for the caller to prepend to the next chunk. Quit is
- *   emitted only for an ESC that is neither, i.e. one whose following byte cannot continue a sequence.
+ * - A sequence it does not recognize is consumed whole and ignored: CSI (`ESC [ … final`),
+ *   SS3 (`ESC O final`), and the string family (OSC/DCS/SOS/PM/APC, terminated by BEL or ST).
+ *   Re-scanning their bodies as characters is how a `q` inside a cursor-position report quit the app.
+ * - A chunk that ends mid-sequence — including a lone trailing ESC, which is byte-for-byte
+ *   the start of one — is not decoded at all: it comes back as {@link DecodedInput.pending}
+ *   for the caller to prepend to the next chunk. Quit is emitted only for an ESC that
+ *   is neither, i.e. one whose following byte cannot continue a sequence.
  *
- * Holding costs a lone Esc keypress its effect until the next byte arrives. That is the right side of the trade for a
- * browser whose advertised quit keys are `q` and Ctrl+C: the alternative is a drag ending the session because the
- * kernel split a read.
+ * Holding costs a lone Esc keypress its effect until the next byte arrives.
+ * That is the right side of the trade for a browser whose advertised quit keys are `q`
+ * and Ctrl+C: the alternative is a drag ending the session because the kernel split a read.
  *
- * Mouse reports are SGR-encoded (DEC private mode 1006), which is what {@link MOUSE_ENABLE} asks for. Their coordinates
- * are 1-based on the wire and 0-based in every event here — the off-by-one lives at this boundary and nowhere else.
+ * Mouse reports are SGR-encoded (DEC private mode 1006), which is what {@link MOUSE_ENABLE}
+ * asks for. Their coordinates are 1-based on the wire and 0-based in every event here —
+ * the off-by-one lives at this boundary and nowhere else.
  */
 
 /**
- * Enables mouse reporting: button events (1000), drag/button-motion tracking (1002), and SGR extended coordinates
- * (1006) so columns past 223 survive.
+ * Enables mouse reporting: button events (1000), drag/button-motion tracking (1002),
+ * and SGR extended coordinates (1006) so columns past 223 survive.
  */
 export const MOUSE_ENABLE = "\u001B[?1000h\u001B[?1002h\u001B[?1006h"
 
@@ -44,8 +46,8 @@ export const MOUSE_ENABLE = "\u001B[?1000h\u001B[?1002h\u001B[?1006h"
 export const MOUSE_DISABLE = "\u001B[?1006l\u001B[?1002l\u001B[?1000l"
 
 /**
- * A decoded input event. Pan and zoom carry direction and magnitude only — how far a step moves the map is the
- * browser's decision rather than the decoder's.
+ * A decoded input event. Pan and zoom carry direction and magnitude only — how far a
+ * step moves the map is the browser's decision rather than the decoder's.
  */
 export type MapTUIInput =
 	| { kind: "quit" }
@@ -77,34 +79,36 @@ const MOUSE_SGR_PATTERN = /\u001B\[<(\d+);(\d+);(\d+)([Mm])/y
 const ARROW_PATTERN = /\u001B(?:\[|O)([ABCD])/y
 
 /**
- * Any other CSI sequence, consumed whole and ignored. Without this, an unhandled sequence's body would be re-scanned as
- * individual key presses, and a stray `q` inside one would quit the app.
+ * Any other CSI sequence, consumed whole and ignored. Without this, an unhandled sequence's body
+ * would be re-scanned as individual key presses, and a stray `q` inside one would quit the app.
  */
 const UNKNOWN_CSI_PATTERN = /\u001B\[[\d;<>?]*[\u0020-\u002F]*[\u0040-\u007E]/y
 
 /**
- * Any other SS3 sequence (`ESC O <final>`) — F1–F4 on xterm, and the numeric keypad in application mode. Two bytes
- * shorter than a CSI, and until this pattern existed the likeliest key on a keyboard to quit the browser by accident.
+ * Any other SS3 sequence (`ESC O <final>`) — F1–F4 on xterm, and the numeric keypad
+ * in application mode. Two bytes shorter than a CSI, and until this pattern existed
+ * the likeliest key on a keyboard to quit the browser by accident.
  */
 const UNKNOWN_SS3_PATTERN = /\u001BO[\u0040-\u007E]/y
 
 /**
- * The string-sequence family: OSC (`ESC ]`), DCS (`ESC P`), SOS (`ESC X`), PM (`ESC ^`), APC (`ESC _`), each running to
- * a BEL or an ST (`ESC \`). A terminal sends these unasked — an OSC colour or clipboard reply lands on stdin with no
- * key pressed — so consuming them is not a nicety.
+ * The string-sequence family: OSC (`ESC ]`), DCS (`ESC P`), SOS (`ESC X`), PM (`ESC ^`), APC (`ESC _`),
+ * each running to a BEL or an ST (`ESC \`). A terminal sends these unasked — an OSC colour
+ * or clipboard reply lands on stdin with no key pressed — so consuming them is not a nicety.
  */
 const STRING_SEQUENCE_PATTERN = /\u001B[P\]X^_][\s\S]*?(?:\u0007|\u001B\\)/y
 
 /**
- * Every "unrecognized but complete" sequence, in the order they are tried. Sharing one list is what keeps a new
- * sequence family from being added to the consumer and forgotten in the incomplete test below.
+ * Every "unrecognized but complete" sequence, in the order they are tried.
+ * Sharing one list is what keeps a new sequence family from being added to the consumer
+ * and forgotten in the incomplete test below.
  */
 const UNRECOGNIZED_PATTERNS = [UNKNOWN_CSI_PATTERN, UNKNOWN_SS3_PATTERN, STRING_SEQUENCE_PATTERN] as const
 
 /**
- * A chunk that stops inside a sequence. The end-anchors are what make these "incomplete" rather than "unrecognized":
- * each requires the whole remainder of the chunk to be a legal prefix and nothing more. The first covers both a lone
- * trailing ESC and an `ESC O` still waiting for its final byte.
+ * A chunk that stops inside a sequence. The end-anchors are what make these "incomplete" rather than
+ * "unrecognized": each requires the whole remainder of the chunk to be a legal prefix and nothing more.
+ * The first covers both a lone trailing ESC and an `ESC O` still waiting for its final byte.
  */
 const PARTIAL_PATTERNS = [/\u001BO?$/y, /\u001B\[[\d;<>?]*[\u0020-\u002F]*$/y, /\u001B[P\]X^_][^\u0007]*$/y] as const
 
@@ -124,8 +128,8 @@ const BUTTON_MASK = 3
 const LEFT_BUTTON = 0
 
 /**
- * The longest fragment worth holding for the next chunk (64 KB). See the drop site: this bounds an unterminated string
- * sequence rather than a real key.
+ * The longest fragment worth holding for the next chunk (64 KB).
+ * See the drop site: this bounds an unterminated string sequence rather than a real key.
  */
 const MAX_PENDING_LENGTH = 65_536
 
@@ -137,9 +141,9 @@ const ARROW_INPUTS: Record<string, MapTUIInput> = {
 }
 
 /**
- * Single-character bindings. `a`/`z` are mapscii's zoom keys, `+`/`-` the ones every other map uses, and `hjkl` the vim
- * pan set mapscii also accepts. `y` joins `z` for zoom-out because on a qwertz keyboard it sits where `z` does on
- * qwerty — mapscii binds both for the same reason.
+ * Single-character bindings. `a`/`z` are mapscii's zoom keys, `+`/`-` the ones every other map uses,
+ * and `hjkl` the vim pan set mapscii also accepts. `y` joins `z` for zoom-out because on a
+ * qwertz keyboard it sits where `z` does on qwerty — mapscii binds both for the same reason.
  */
 const CHARACTER_INPUTS: Record<string, MapTUIInput> = {
 	q: { kind: "quit" },
@@ -163,8 +167,8 @@ const CHARACTER_INPUTS: Record<string, MapTUIInput> = {
 export interface DecodedInput {
 	events: MapTUIInput[]
 	/**
-	 * An unresolved escape fragment from the end of the chunk — prepend it to the next one. Empty when the chunk ended
-	 * cleanly, which is the overwhelmingly common case.
+	 * An unresolved escape fragment from the end of the chunk — prepend it to the next one.
+	 * Empty when the chunk ended cleanly, which is the overwhelmingly common case.
 	 */
 	pending: string
 }
@@ -183,8 +187,8 @@ function consumeUnrecognized(buffer: string, index: number): number | null {
 }
 
 /**
- * True when everything from `index` to the end of the chunk is a legal prefix of a sequence — i.e. the terminal is
- * mid-sequence and the rest is in the next read.
+ * True when everything from `index` to the end of the chunk is a legal prefix of a sequence —
+ * i.e. the terminal is mid-sequence and the rest is in the next read.
  */
 function isIncompleteSequence(buffer: string, index: number): boolean {
 	for (const pattern of PARTIAL_PATTERNS) {
@@ -212,8 +216,9 @@ function mouseInput(button: number, column: number, row: number, final: string):
 }
 
 /**
- * Decodes one raw-mode stdin chunk into input events. Unrecognized bytes are dropped. an unresolved trailing escape
- * fragment is returned rather than decoded, and the caller passes it back as `pending` with the next chunk.
+ * Decodes one raw-mode stdin chunk into input events. Unrecognized bytes are
+ * dropped. an unresolved trailing escape fragment is returned rather than decoded,
+ * and the caller passes it back as `pending` with the next chunk.
  */
 export function decodeInputChunk(chunk: string, pending = ""): DecodedInput {
 	const events: MapTUIInput[] = []
@@ -272,10 +277,11 @@ export function decodeInputChunk(chunk: string, pending = ""): DecodedInput {
 		if (isIncompleteSequence(buffer, index)) {
 			const fragment = buffer.slice(index)
 
-			// …unless it has stopped being plausible. An unterminated string sequence would otherwise grow the held
-			// fragment for the life of the process. Dropping is the safe failure: it emits nothing, where flushing
-			// the fragment back through the decoder would read its body as keys, which is the bug this all exists
-			// for. The cap is generous because an OSC 52 clipboard reply is legitimately large.
+			// …unless it has stopped being plausible. An unterminated string sequence
+			// would otherwise grow the held fragment for the life of the process.
+			// Dropping is the safe failure: it emits nothing, where flushing the fragment back
+			// through the decoder would read its body as keys, which is the bug this all exists for.
+			// The cap is generous because an OSC 52 clipboard reply is legitimately large.
 			return { events, pending: fragment.length > MAX_PENDING_LENGTH ? "" : fragment }
 		}
 

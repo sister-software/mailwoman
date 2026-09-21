@@ -18,16 +18,18 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 
 /**
- * The admin fallback order when the postcode leads — a unit-grade exact hit, or an address system whose area-grade code
- * is still finer than its locality ({@link areaPostcodeLeadsLocality}).
+ * The admin fallback order when the postcode leads — a unit-grade exact hit, or an address system
+ * whose area-grade code is still finer than its locality ({@link areaPostcodeLeadsLocality}).
  *
- * The JP rungs (`municipality`, `district`, `prefecture`) sit beside their Latin counterparts, and `municipality`
- * stands above `district` on purpose. `subregion` (a county, a Korean 시군구) sits between the postcode and `region`:
- * finer than the region it belongs to, coarser than any postcode. Absent from the ladder it was never the answer, and
- * `부산광역시 해운대구 반송로 910-1` resolved both nodes and reported Busan's point, 3.3 km from the address, over Haeundae's. It
- * stands above `district` on purpose: a district (大字 / 町名) resolves without its municipality as a parent more often
- * than not, and the unscoped namesake it then picks can be another prefecture's (`市原市大作` → 921 km). Measured on 300 JP
- * board rows @15 km: district-first 202 accepted, municipality-first 271.
+ * The JP rungs (`municipality`, `district`, `prefecture`) sit beside their
+ * Latin counterparts, and `municipality` stands above `district` on purpose.
+ * `subregion` (a county, a Korean 시군구) sits between the postcode and `region`: finer than
+ * the region it belongs to, coarser than any postcode. Absent from the ladder it was never
+ * the answer, and `부산광역시 해운대구 반송로 910-1` resolved both nodes and reported Busan's point,
+ * 3.3 km from the address, over Haeundae's. It stands above `district` on purpose:
+ * a district (大字 / 町名) resolves without its municipality as a parent more often than not,
+ * and the unscoped namesake it then picks can be another prefecture's (`市原市大作` → 921 km).
+ * Measured on 300 JP board rows @15 km: district-first 202 accepted, municipality-first 271.
  */
 export const ADMIN_LADDER_POSTCODE_FIRST: ReadonlyArray<string> = [
 	"postcode",
@@ -42,10 +44,12 @@ export const ADMIN_LADDER_POSTCODE_FIRST: ReadonlyArray<string> = [
 ]
 
 /**
- * The admin fallback order everywhere else: the locality tiers lead and the postcode sits between them and `region`.
+ * The admin fallback order everywhere else: the locality tiers lead
+ * and the postcode sits between them and `region`.
  *
- * This is the #945 epoch convention and the default rather than the universal answer — which address systems leave it
- * is `AREA_POSTCODE_FINER_THAN_LOCALITY`'s question, and that table carries the per-country measurement.
+ * This is the #945 epoch convention and the default rather than the universal answer —
+ * which address systems leave it is `AREA_POSTCODE_FINER_THAN_LOCALITY`'s question,
+ * and that table carries the per-country measurement.
  */
 export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
 	"locality",
@@ -60,19 +64,20 @@ export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
 ]
 
 /**
- * The resolved postcode a ladder decision reads: the parsed span, the resolver's own hit, and the country the resolver
- * placed it in.
+ * The resolved postcode a ladder decision reads: the parsed span, the resolver's own hit,
+ * and the country the resolver placed it in.
  *
- * The first two are needed together because a full unit shape the resolver answered with a coarser stem is area-grade,
- * whatever the user typed. `country` is separate evidence and answers a different question — not how tight this code
- * is, but whether this address system's codes are tighter than its localities at all.
+ * The first two are needed together because a full unit shape the resolver answered with a
+ * coarser stem is area-grade, whatever the user typed. `country` is separate evidence
+ * and answers a different question — not how tight this code is, but whether this
+ * address system's codes are tighter than its localities at all.
  */
 export interface ResolvedPostcodeHit {
 	value: string
 	resolverName: string | undefined
 	/**
-	 * ISO-3166 alpha-2 the resolver placed the postcode in rather than a caller's requested scope. Absent when the
-	 * postcode did not resolve to a country, which reads as the locality-first default.
+	 * ISO-3166 alpha-2 the resolver placed the postcode in rather than a caller's requested scope.
+	 * Absent when the postcode did not resolve to a country, which reads as the locality-first default.
 	 */
 	country?: string
 }
@@ -80,9 +85,9 @@ export interface ResolvedPostcodeHit {
 /**
  * Pick the admin fallback order for one resolved tree.
  *
- * Two independent routes to postcode-first: the code itself is unit-grade, or the address system's area-grade codes are
- * finer than its localities. Either one is sufficient and the second is what makes this per-country rather than
- * global.
+ * Two independent routes to postcode-first: the code itself is unit-grade,
+ * or the address system's area-grade codes are finer than its localities.
+ * Either one is sufficient and the second is what makes this per-country rather than global.
  */
 export function adminLadderFor(postcode: ResolvedPostcodeHit | undefined): ReadonlyArray<string> {
 	if (postcode === undefined) return ADMIN_LADDER_LOCALITY_FIRST
@@ -96,10 +101,11 @@ export function adminLadderFor(postcode: ResolvedPostcodeHit | undefined): Reado
 /**
  * The ladder for a flat list of resolved nodes — the shape result assembly holds.
  *
- * Which node counts, and which of its fields the decision reads, is part of the ordering rather than the caller's
- * business: `country` is the one the resolver placed the code in, never a caller's requested scope, because the ladder
- * is asking which address system this code belongs to and a scope is a filter on the answer rather than evidence about
- * it. Getting that wrong at a call site would be invisible.
+ * Which node counts, and which of its fields the decision reads, is part of the ordering
+ * rather than the caller's business: `country` is the one the resolver placed the code in,
+ * never a caller's requested scope, because the ladder is asking which address system this
+ * code belongs to and a scope is a filter on the answer rather than evidence about it.
+ * Getting that wrong at a call site would be invisible.
  */
 export function adminLadderForNodes(nodes: readonly AddressNode[]): ReadonlyArray<string> {
 	const node = nodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
@@ -116,12 +122,14 @@ export function adminLadderForNodes(nodes: readonly AddressNode[]): ReadonlyArra
 }
 
 /**
- * Where an area-grade postal code sits on `PLACETYPE_SPECIFICITY`: below the whole locality tier, above `county` (2).
+ * Where an area-grade postal code sits on `PLACETYPE_SPECIFICITY`: below the
+ * whole locality tier, above `county` (2).
  *
- * The tier is `PLACETYPE_FILTER_GROUPS.locality` — `locality` (4), `borough` (5) and `localadmin` (3) — not the
- * `locality` placetype alone, because that is what the resolver's own `locality` tag expands to. New England civil
- * towns are `localadmin` in WOF, so a value between `locality` and `localadmin` would rank a US ZIP above the town it
- * sits in and reproduce the defect on exactly the rows that motivated the group.
+ * The tier is `PLACETYPE_FILTER_GROUPS.locality` — `locality` (4), `borough` (5)
+ * and `localadmin` (3) — not the `locality` placetype alone, because that is what the
+ * resolver's own `locality` tag expands to. New England civil towns are `localadmin` in WOF,
+ * so a value between `locality` and `localadmin` would rank a US ZIP above the town it sits in
+ * and reproduce the defect on exactly the rows that motivated the group.
  *
  * Deliberately not an integer. The scale's rungs are placetypes and this is not one — it is the position
  * {@link ADMIN_LADDER_LOCALITY_FIRST} puts a postcode in, expressed on the scale the sorting consumers already use.
@@ -134,8 +142,9 @@ export const AREA_GRADE_POSTALCODE_SPECIFICITY = 2.5
 export interface ResolvedSpecificityInput {
 	placetype: string
 	/**
-	 * ISO-3166 alpha-2 the resolver placed this candidate in. Read only for a `postalcode`, where it decides whether the
-	 * address system's area-grade codes outrank its localities.
+	 * ISO-3166 alpha-2 the resolver placed this candidate in.
+	 * Read only for a `postalcode`, where it decides whether the address system's
+	 * area-grade codes outrank its localities.
 	 */
 	country?: string
 	/**
@@ -149,8 +158,8 @@ export interface ResolvedSpecificityInput {
 }
 
 /**
- * Rank a resolved place for "whose coordinate answers the query" — `PLACETYPE_SPECIFICITY`, except that a `postalcode`
- * is ranked by its hit.
+ * Rank a resolved place for "whose coordinate answers the query" — `PLACETYPE_SPECIFICITY`,
+ * except that a `postalcode` is ranked by its hit.
  *
  * An unranked placetype returns `-Infinity` so it wins only when nothing else resolved.
  */
@@ -167,12 +176,12 @@ export function resolvedSpecificity(candidate: ResolvedSpecificityInput): number
 }
 
 /**
- * The best of a resolved set under {@link resolvedSpecificity}, or `null` when the set is empty. Ties keep the first,
- * which is document order.
+ * The best of a resolved set under {@link resolvedSpecificity}, or `null`
+ * when the set is empty. Ties keep the first, which is document order.
  *
- * `toInput` is explicit rather than structural because each consumer spells the resolver's hit differently — the eval
- * harnesses carry it as `name`, result assembly reads it off `resolver_name` metadata — and a projection at the call
- * site is where that mapping is visible.
+ * `toInput` is explicit rather than structural because each consumer spells the resolver's
+ * hit differently — the eval harnesses carry it as `name`, result assembly reads it off
+ * `resolver_name` metadata — and a projection at the call site is where that mapping is visible.
  */
 export function mostSpecificResolved<T>(
 	candidates: readonly T[],

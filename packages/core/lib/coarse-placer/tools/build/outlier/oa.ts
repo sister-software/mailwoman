@@ -82,11 +82,12 @@ export interface BuildOutlierOAResult {
 const IN_MAP = new Set<string>(COUNTRIES)
 
 /**
- * Language/region families for the leave-one-family-out split. Off-map countries OA's europe+asia zips plausibly carry.
- * the actual train/heldout set is intersected with what's on disk at runtime. heldout families are the generalization
- * probe (the model never sees a single row from them). Off-map families, intersected at runtime with what OA's
- * europe+asia zips actually carry (verified on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro
- * sa se sg si sk).
+ * Language/region families for the leave-one-family-out split.
+ * Off-map countries OA's europe+asia zips plausibly carry. the actual train/heldout
+ * set is intersected with what's on disk at runtime. heldout families are
+ * the generalization probe (the model never sees a single row from them).
+ * Off-map families, intersected at runtime with what OA's europe+asia zips actually carry
+ * (verified on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro sa se sg si sk).
  */
 const FAMILIES: Record<string, string[]> = {
 	slavic_latin: ["PL", "CZ", "SK", "SI"],
@@ -102,8 +103,8 @@ const FAMILIES: Record<string, string[]> = {
 }
 
 /**
- * Leave-one-language-family-out probe (DeepSeek): hold out whole families the model never sees a row from — Baltic
- * (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
+ * Leave-one-language-family-out probe (DeepSeek): hold out whole families the model never sees a row
+ * from — Baltic (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
  */
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 
@@ -132,8 +133,9 @@ export async function buildOutlierOA(
 	 */
 	async function rowsFor(cc: string): Promise<string[]> {
 		const lc = cc.toLowerCase()
-		// OA collected layout: `<cc>/[<region>/]<source>.csv` (country at root; `summary/` excluded by
-		// rooting the glob at <cc>). `**` matches zero-or-more dirs → handles both flat + region-nested.
+		// OA collected layout: `<cc>/[<region>/]<source>.csv`
+		// (country at root; `summary/` excluded by rooting the glob at <cc>).
+		// `**` matches zero-or-more dirs → handles both flat + region-nested.
 		const glob = resolvePath(oaDir, lc, "**", "*.csv")
 		let res
 

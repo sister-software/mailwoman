@@ -20,8 +20,8 @@ beforeAll(async () => {
 
 describe("normalizeGauntletSurface", () => {
 	it("folds the spacing a postcode differs by between board and corpus", () => {
-		// The board spells it `100 00` and the recipe holds `10000`. A check that missed this pair would report a
-		// clean build over the leak it exists to catch.
+		// The board spells it `100 00` and the recipe holds `10000`.
+		// A check that missed this pair would report a clean build over the leak it exists to catch.
 		expect(normalizeGauntletSurface("100 00")).toBe(normalizeGauntletSurface("10000"))
 		expect(normalizeGauntletSurface("SW1A 1AA")).toBe("SW1A1AA")
 		expect(normalizeGauntletSurface("  1012 lg ")).toBe("1012LG")
@@ -47,14 +47,15 @@ describe("readGauntletInputs", () => {
 	})
 
 	it("reaches a board row outside the two-letter country directories", () => {
-		// `generalization/` holds parked passes. The gauntlet loader skips it. this register must not, because a
-		// parked row is still an input a recipe would be training on.
+		// `generalization/` holds parked passes. The gauntlet loader skips it. this register
+		// must not, because a parked row is still an input a recipe would be training on.
 		expect(inputs.has(normalizeGauntletSurface("Praha 100 00, Czechia"))).toBe(true)
 	})
 
 	it("answers an empty set for a directory holding no boards", async () => {
-		// Absence is a real answer, and a caller treating it as "nothing is reserved" is reading the truth about an
-		// empty directory rather than a failed read — `readGauntletInputs` skips what it cannot parse.
+		// Absence is a real answer, and a caller treating it as "nothing is reserved"
+		// is reading the truth about an empty directory rather than a failed read —
+		// `readGauntletInputs` skips what it cannot parse.
 		const empty = await readGauntletInputs("packages/corpus/lib/tools")
 
 		expect(empty.size).toBe(0)

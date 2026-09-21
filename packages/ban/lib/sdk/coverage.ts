@@ -17,8 +17,8 @@ import { CoverageBasis } from "@mailwoman/evidence"
 import { type H3Cell, shortCellToInt } from "@mailwoman/spatial/h3/cell"
 import { latLngToCell } from "h3-js"
 /**
- * The resolution `layer_coverage` is written at — the same as the OSM and BDC address layers, so a consumer's probe
- * walks one cell size across the register-backed layers.
+ * The resolution `layer_coverage` is written at — the same as the OSM and BDC address layers,
+ * so a consumer's probe walks one cell size across the register-backed layers.
  */
 export const STREET_CENTROID_COVERAGE_RESOLUTION = 9
 
@@ -32,8 +32,8 @@ export interface CoveragePoint {
 }
 
 /**
- * Which communes the register declares whole: every point carries `certified = 1`. A commune with a null flag anywhere
- * is not whole — an absent statement is not a statement.
+ * Which communes the register declares whole: every point carries `certified = 1`.
+ * A commune with a null flag anywhere is not whole — an absent statement is not a statement.
  *
  * @param flags Per commune, the minimum of its points' `certified` values with null treated as the minimum.
  */

@@ -14,8 +14,9 @@ import type { BuildableBodyID } from "#bodies"
 import { type PlanetaryNomenclatureFeature, PlanetaryNomenclatureFeatureSchema } from "#schema/nomenclature"
 
 /**
- * One shapefile row as the GeoJSON transport carries it. An absent text attribute arrives as `""` from some rows and as
- * `null` from others (the Mars archive writes `null` for a missing `quad_name`); both mean absence.
+ * One shapefile row as the GeoJSON transport carries it.
+ * An absent text attribute arrives as `""` from some rows and as `null` from others
+ * (the Mars archive writes `null` for a missing `quad_name`); both mean absence.
  */
 export interface NomenclatureSourceRow {
 	name: string
@@ -47,15 +48,15 @@ export interface NormalizedBBox {
 	minLat: number
 	maxLat: number
 	/**
-	 * True when the box's west edge is east of its east edge after normalization: the box runs across ±180 and a renderer
-	 * must split it, never draw it as a near-global rectangle.
+	 * True when the box's west edge is east of its east edge after normalization: the box runs
+	 * across ±180 and a renderer must split it, never draw it as a near-global rectangle.
 	 */
 	crossesAntimeridian: boolean
 }
 
 /**
- * A full turn in degrees: the width of the source's 0..360 range, and the shift that carries a longitude past 180 back
- * into −180..180.
+ * A full turn in degrees: the width of the source's 0..360 range, and the shift
+ * that carries a longitude past 180 back into −180..180.
  */
 const FULL_TURN_DEGREES = 360
 
@@ -77,8 +78,9 @@ export function normalizeLongitude(lon: number): number {
 const clampLat = (lat: number): number => Math.max(-90, Math.min(90, lat))
 
 export function normalizeBBox(box: { minLon: number; maxLon: number; minLat: number; maxLat: number }): NormalizedBBox {
-	// A box that runs past 360 wraps to the prime meridian. a box that runs past 180 wraps to the antimeridian. Both
-	// arrive as minLon < maxLon in source units. only the second one crosses ±180 after normalization.
+	// A box that runs past 360 wraps to the prime meridian. a box that runs past 180
+	// wraps to the antimeridian. Both arrive as minLon < maxLon in source units.
+	// only the second one crosses ±180 after normalization.
 	const minLon = normalizeLongitude(box.minLon > FULL_TURN_DEGREES ? box.minLon - FULL_TURN_DEGREES : box.minLon)
 	const maxLon = normalizeLongitude(box.maxLon > FULL_TURN_DEGREES ? box.maxLon - FULL_TURN_DEGREES : box.maxLon)
 

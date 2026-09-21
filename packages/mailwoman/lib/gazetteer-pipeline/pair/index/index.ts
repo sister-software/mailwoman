@@ -34,8 +34,9 @@ import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { PairIndexEntry } from "@mailwoman/neural/pair"
 
 /**
- * The one child tag this arc's extractions ever emit — the city-slot candidate is always a dependent_locality. The
- * parent tag is per-row and per-source, so it is a parameter rather than a constant (see
+ * The one child tag this arc's extractions ever emit — the city-slot candidate
+ * is always a dependent_locality. The parent tag is per-row and per-source,
+ * so it is a parameter rather than a constant (see
  * {@link PairIndexBuilder.addRow}).
  */
 const PAIR_TAG = "dependent_locality" as const
@@ -49,7 +50,8 @@ export interface WordLengthBucket {
 }
 
 /**
- * Percentile summary of the raw (pre-fold) city word-length distribution, plus the full per-length histogram.
+ * Percentile summary of the raw (pre-fold) city word-length distribution,
+ * plus the full per-length histogram.
  */
 export interface CityWordLengthDistribution {
 	/**
@@ -83,9 +85,10 @@ export interface PairIndexBuildResult {
 }
 
 /**
- * Nearest-rank percentile over an ascending-sorted array (matches the convention `docs/articles/evals` percentile
- * tables use). `p` in `[0, 100]`. Throws on an empty array — there's no percentile of nothing, and a silent `0` would
- * hide the empty-input bug from the caller.
+ * Nearest-rank percentile over an ascending-sorted array
+ * (matches the convention `docs/articles/evals` percentile tables use).
+ * `p` in `[0, 100]`. Throws on an empty array — there's no percentile of nothing,
+ * and a silent `0` would hide the empty-input bug from the caller.
  */
 export function nearestRankPercentile(sortedAscending: readonly number[], p: number): number {
 	if (!sortedAscending.length) {
@@ -98,8 +101,9 @@ export function nearestRankPercentile(sortedAscending: readonly number[], p: num
 }
 
 /**
- * Incrementally folds (rawCity, rawDistrict) rows into deduplicated PIX1 entries, tracking the skip count and the raw
- * city word-length distribution. One instance per build. call {@link addRow} per source row, then {@link finish} once.
+ * Incrementally folds (rawCity, rawDistrict) rows into deduplicated PIX1 entries,
+ * tracking the skip count and the raw city word-length distribution.
+ * One instance per build. call {@link addRow} per source row, then {@link finish} once.
  */
 export class PairIndexBuilder {
 	readonly #seen = new Map<string, PairIndexEntry>()
@@ -108,13 +112,14 @@ export class PairIndexBuilder {
 	#rowsSkipped = 0
 
 	/**
-	 * Fold one source row. `rawCity`/`rawDistrict` are the unfolded CSV cell values (already `.trim()`-ed by the caller's
-	 * CSV read is fine either way — this trims again defensively). A row with an empty city is skipped: PPD's district
-	 * (post town) is populated on virtually every row, but city (dependent_locality) legitimately isn't, and an empty
-	 * child has nothing to pair.
+	 * Fold one source row. `rawCity`/`rawDistrict` are the unfolded CSV cell values
+	 * (already `.trim()`-ed by the caller's CSV read is fine either way — this trims again defensively).
+	 * A row with an empty city is skipped: PPD's district (post town) is populated on virtually every row,
+	 * but city (dependent_locality) legitimately isn't, and an empty child has nothing to pair.
 	 *
-	 * `parentTag` is required and caller-supplied: the builder cannot know whether `rawDistrict` came from a post-town
-	 * column, a commune column, or a WOF borough row, and PIX2 records the answer rather than deriving it.
+	 * `parentTag` is required and caller-supplied: the builder cannot know whether
+	 * `rawDistrict` came from a post-town column, a commune column, or a WOF borough row,
+	 * and PIX2 records the answer rather than deriving it.
 	 */
 	addRow(rawCity: string, rawDistrict: string, parentTag: ComponentTag): void {
 		const trimmedCity = rawCity.trim()
@@ -136,24 +141,27 @@ export class PairIndexBuilder {
 			return
 		}
 
-		// Length-prefixed key (mirrors pair-index-resolver.ts's `pairKey`): folded names can contain spaces, so a plain
-		// delimiter could collide two distinct (child, parent) splits onto the same joined string.
+		// Length-prefixed key (mirrors pair-index-resolver.ts's `pairKey`):
+		// folded names can contain spaces, so a plain delimiter could collide two distinct
+		// (child, parent) splits onto the same joined string.
 		const key = `${child.length}:${child}:${parent}`
 
-		// first write wins on (child, parent), parent tag included. The sources are merged in a fixed order (register
-		// CSV → WOF → curated jsonl), so a pair both a register and WOF assert keeps the register's reading of the
-		// parent slot — the same precedence the pre-PIX2 dedupe already gave the whole entry.
+		// first write wins on (child, parent), parent tag included.
+		// The sources are merged in a fixed order (register CSV → WOF → curated jsonl),
+		// so a pair both a register and WOF assert keeps the register's reading of the parent
+		// slot — the same precedence the pre-PIX2 dedupe already gave the whole entry.
 		if (!this.#seen.has(key)) {
 			this.#seen.set(key, { child, parent, tag: PAIR_TAG, parentTag })
 		}
 	}
 
 	/**
-	 * Finalize the build: deduplicated entries (sort order left to `serializePairIndex`) + the word-length distribution.
+	 * Finalize the build: deduplicated entries (sort order left to `serializePairIndex`) +
+	 * the word-length distribution.
 	 */
 	/**
-	 * Distinct (child, parent) pairs accumulated so far — lets a caller measure how many new pairs a secondary source
-	 * (the R2 borough extraction) contributed on top of the primary CSV.
+	 * Distinct (child, parent) pairs accumulated so far — lets a caller measure how many new
+	 * pairs a secondary source (the R2 borough extraction) contributed on top of the primary CSV.
 	 */
 	get distinctCount(): number {
 		return this.#seen.size
@@ -203,18 +211,20 @@ export interface PairIndexHoldoutResult {
 }
 
 /**
- * Deterministically withhold a `fraction` of `entries` from a pair-index build — the pair-holdout falsifier: "rebuild
- * the GB index minus a random 10% of pairs (seed 42)" so the acceptance bars can be re-anchored against a measured
- * degradation curve rather than an assumed one. Dev/eval-only — never wired into a real shipped-artifact build (a
- * shipped index always has `fraction: 0`, i.e. holds out nothing).
+ * Deterministically withhold a `fraction` of `entries` from a pair-index build —
+ * the pair-holdout falsifier: "rebuild the GB index minus a random 10% of pairs (seed 42)"
+ * so the acceptance bars can be re-anchored against a measured degradation curve
+ * rather than an assumed one. Dev/eval-only — never wired into a real shipped-artifact
+ * build (a shipped index always has `fraction: 0`, i.e. holds out nothing).
  *
- * Order-independent and seed-deterministic: entries are sorted by (child, parent) before the seeded shuffle (mirrors
+ * Order-independent and seed-deterministic: entries are sorted by (child, parent)
+ * before the seeded shuffle (mirrors
  * {@link serializePairIndex}'s own sort), so the same `(fraction, seed)` pair always withholds the same entries
  * regardless of what order the caller's `entries` array arrives in (e.g. `Map` iteration order, which
  * {@link PairIndexBuilder.finish} does not guarantee is stable across runs/engines).
  *
- * `fraction` is clamped to `[0, 1]`; `Math.round(fraction * entries.length)` entries are withheld — rounds to 0 (a
- * no-op holdout) on a fraction too small to withhold even one entry from a small input.
+ * `fraction` is clamped to `[0, 1]`; `Math.round(fraction * entries.length)` entries are withheld —
+ * rounds to 0 (a no-op holdout) on a fraction too small to withhold even one entry from a small input.
  */
 export function applyPairIndexHoldout(
 	entries: readonly PairIndexEntry[],

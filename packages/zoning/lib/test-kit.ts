@@ -52,8 +52,8 @@ export const holeRing = counterClockwiseRing
 export const FIXTURE_ORIGIN = { lon: -5.99, lat: 53.3 } as const
 
 /**
- * Side of a fixture zone, in degrees. About 1.1 km at this latitude — several res-10 cells across, so a zone has a real
- * interior and a real fringe.
+ * Side of a fixture zone, in degrees. About 1.1 km at this latitude — several res-10
+ * cells across, so a zone has a real interior and a real fringe.
  */
 export const FIXTURE_SIDE = 0.01
 
@@ -63,11 +63,11 @@ export const FIXTURE_SIDE = 0.01
 export const FIXTURE_AUTHORITY = { code: "Fx", name: "Fixture County Council" } as const
 
 /**
- * The two plans the fixture set uses, shaped like the real product's: a Development Plan and a Local Area Plan, each
- * with its own stated window, both able to zone the same ground.
+ * The two plans the fixture set uses, shaped like the real product's: a Development Plan
+ * and a Local Area Plan, each with its own stated window, both able to zone the same ground.
  *
- * The dates are in the source's own RFC 1123 form, because that is what the export publishes and this layer carries
- * them as published rather than re-formatting them.
+ * The dates are in the source's own RFC 1123 form, because that is what the export publishes
+ * and this layer carries them as published rather than re-formatting them.
  */
 export const FIXTURE_PLANS = {
 	development: {
@@ -113,18 +113,21 @@ export function fixtureFeature(
 		crosswalkDescription: "Existing residential",
 		crosswalkRollup: "RE",
 		...overrides,
-		// resolved through the real resolver, never hand-assembled: a fixture that nested its own holes would test the
-		// assertion rather than the resolution, and the resolution is the part of this layer no sibling already has.
+		// resolved through the real resolver, never hand-assembled: a fixture that
+		// nested its own holes would test the assertion rather than the resolution,
+		// and the resolution is the part of this layer no sibling already has.
 		rings: resolveRingRoles(polygons, String(objectID)),
 	}
 }
 
 /**
- * The fixture set: two adjacent zones, one of them holed the way this service encodes holes. a second plan over the
- * same ground as the first. a zone smaller than a cell. and a zone the authority states as unzoned.
+ * The fixture set: two adjacent zones, one of them holed the way this service encodes
+ * holes. a second plan over the same ground as the first. a zone smaller than a cell.
+ * and a zone the authority states as unzoned.
  *
- * The overlap between plans is the point. A point inside the first zone must answer with both rows, each naming its own
- * plan — which is what proves a plan is part of the claim rather than a parameter of it.
+ * The overlap between plans is the point. A point inside the first zone must
+ * answer with both rows, each naming its own plan — which is what proves a plan
+ * is part of the claim rather than a parameter of it.
  */
 export function fixtureFeatures(): ZoningSourceFeature[] {
 	const { lon, lat } = FIXTURE_ORIGIN
@@ -132,8 +135,9 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 	const zoneA = exteriorRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)
 	const zoneB = exteriorRing(lon + FIXTURE_SIDE, lat, lon + 2 * FIXTURE_SIDE, lat + FIXTURE_SIDE)
 
-	// the hole is A separate part rather than a nested ring — which is how the real service encodes it on the features that carry
-	// one, and the encoding a nesting-aware reader turns into a second zoned area.
+	// the hole is A separate part rather than a nested ring — which is how the
+	// real service encodes it on the features that carry one, and the encoding a
+	// nesting-aware reader turns into a second zoned area.
 	const holed: MultiPolygonRings = [
 		[exteriorRing(lon, lat + 2 * FIXTURE_SIDE, lon + FIXTURE_SIDE, lat + 3 * FIXTURE_SIDE)],
 		[
@@ -146,8 +150,9 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 		],
 	]
 
-	// About 5.5 m across — smaller than a res-11 cell, let alone a res-9 one. `polygonToCells` returns nothing for a shape
-	// this size, so it is the fixture that proves the index takes cell-touches-polygon rather than centre-in-polygon.
+	// About 5.5 m across — smaller than a res-11 cell, let alone a res-9 one.
+	// `polygonToCells` returns nothing for a shape this size, so it is the fixture that
+	// proves the index takes cell-touches-polygon rather than centre-in-polygon.
 	const sliver = exteriorRing(lon + 3 * FIXTURE_SIDE, lat, lon + 3 * FIXTURE_SIDE + 0.00005, lat + 0.00005)
 
 	const unzoned = exteriorRing(lon + 4 * FIXTURE_SIDE, lat, lon + 5 * FIXTURE_SIDE, lat + FIXTURE_SIDE)

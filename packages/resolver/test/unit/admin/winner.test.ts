@@ -94,8 +94,8 @@ describe("adminLadderFor", () => {
 		expect(adminLadderFor(DE_PLZ)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 	})
 
-	// The membership table is a measured claim, so a silent addition is the thing to catch — a new entry has to arrive
-	// with its panel, the way DE did.
+	// The membership table is a measured claim, so a silent addition is the thing to catch —
+	// a new entry has to arrive with its panel, the way DE did.
 	it("holds exactly the countries a full-panel measurement has admitted", () => {
 		expect([...AREA_POSTCODE_FINER_THAN_LOCALITY].toSorted()).toEqual(["DE", "JP", "SG"])
 	})
@@ -146,8 +146,9 @@ describe("resolvedSpecificity", () => {
 		expect(rank("postalcode", NL_PC6)).toBeGreaterThan(rank("locality"))
 	})
 
-	// The tier is the resolver's own `locality` group rather than the `locality` placetype: a New England civil town resolves
-	// as `localadmin`, and ranking a ZIP above it puts the postcode point back on exactly those rows.
+	// The tier is the resolver's own `locality` group rather than the `locality` placetype:
+	// a New England civil town resolves as `localadmin`, and ranking a ZIP above it
+	// puts the postcode point back on exactly those rows.
 	it("ranks an AREA-grade postcode below every member of the locality tier", () => {
 		const tier = PLACETYPE_FILTER_GROUPS["locality"] ?? []
 

@@ -34,9 +34,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { conventionCandidateDBPath, existingWOFDatabasePaths } from "#resolver-backend"
 
 /**
- * One real pair per codex system — a postcode that exists and the locality it belongs to. The pass needs both halves,
- * so a system whose postcodes are present but whose localities are not still reads as unreachable, which is correct:
- * the mechanism would abstain there.
+ * One real pair per codex system — a postcode that exists and the locality it belongs to.
+ * The pass needs both halves, so a system whose postcodes are present but whose localities
+ * are not still reads as unreachable, which is correct: the mechanism would abstain there.
  */
 const PROBES: ReadonlyArray<{ system: string; country: string; postcode: string; locality: string }> = [
 	{ system: "us", country: "US", postcode: "75001", locality: "Addison" },
@@ -129,8 +129,9 @@ for (const probe of PROBES) {
 	const located = postcodeHits.find((p) => p.lat !== 0 || p.lon !== 0)
 	const exact = localityHits.some((p) => p.exactMatch && (p.lat !== 0 || p.lon !== 0))
 
-	// The verdict the pass itself would reach, via the impossible-default probe (step 1 always fails, so the
-	// alternatives alone decide) — the one number that says whether this country is reachable evidence.
+	// The verdict the pass itself would reach, via the impossible-default probe
+	// (step 1 always fails, so the alternatives alone decide) — the one number that says
+	// whether this country is reachable evidence.
 	const scope = await findPostcodeCountryScope(
 		[
 			{ tag: "postcode", value: probe.postcode, start: 0, end: probe.postcode.length, confidence: 0.95, children: [] },

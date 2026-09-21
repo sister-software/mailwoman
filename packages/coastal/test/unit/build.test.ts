@@ -136,8 +136,8 @@ describe("the sealed artifact", () => {
 			frontage_id: number
 		}>
 
-		// Every fixture feature carries frontage 1000 — the real product repeats a frontage id within one layer, and a
-		// build keyed on it would have collapsed five rows into one.
+		// Every fixture feature carries frontage 1000 — the real product repeats a frontage id
+		// within one layer, and a build keyed on it would have collapsed five rows into one.
 		expect(new Set(rows.map((row) => row.frontage_id))).toEqual(new Set([1000]))
 		expect(rows).toHaveLength(5)
 		expect(new Set(rows.map((row) => row.area_id)).size).toBe(5)
@@ -151,8 +151,9 @@ describe("the sealed artifact", () => {
 			.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id = ?")
 			.get(`${NFI}:4`) as { n: number }
 
-		// A polyfill keyed on cell centres returns nothing for a 5 m square, and a feature indexed to nothing reads
-		// downstream as an absence — the failure the per-part zero-cell guard exists to make impossible.
+		// A polyfill keyed on cell centres returns nothing for a 5 m square,
+		// and a feature indexed to nothing reads downstream as an absence — the failure
+		// the per-part zero-cell guard exists to make impossible.
 		expect(sliver.n).toBeGreaterThan(0)
 	})
 })
@@ -220,9 +221,10 @@ describe("the meaning-of-zero inversion", () => {
 		expect(rows.length).toBeGreaterThan(0)
 		expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
 
-		// the failing test the issue asks FOR: not one assertion on one row, but the whole table read back and every row
-		// checked through the interface's own predicate. A code path that read `supportsExclusion` as true for this layer
-		// would have to make one of these rows carry a stronger basis, and this fails the moment it does.
+		// the failing test the issue asks FOR: not one assertion on one row, but the whole
+		// table read back and every row checked through the interface's own predicate.
+		// A code path that read `supportsExclusion` as true for this layer would have to make
+		// one of these rows carry a stronger basis, and this fails the moment it does.
 		for (const row of rows) {
 			expect(row.basis).toBe(CoverageBasis.SourcePresent)
 			expect(supportsExclusion({ basis: row.basis as CoverageBasis })).toBe(false)
@@ -350,7 +352,8 @@ describe("the declared domains", () => {
 			published_year: number
 		}
 
-		// A single space rather than an empty string — a reader testing `=== ""` finds nothing and reports these as ordinary.
+		// A single space rather than an empty string — a reader testing `=== ""`
+		// finds nothing and reports these as ordinary.
 		expect(row.mt_policy).toBe(" ")
 		expect(row.published_year).toBe(0)
 	})

@@ -7,8 +7,8 @@
 import { PLACETYPE_DEPTH, placetypeDepth } from "@mailwoman/resolver-wof-sqlite/ancestry"
 import { expect, test } from "vitest"
 
-// `ancestorLineage` takes a live `DatabaseSync` handle + queries `ancestors`/`spr`, so it's out of
-// scope for a pure unit test. Only the depth helpers below are value-in/value-out.
+// `ancestorLineage` takes a live `DatabaseSync` handle + queries `ancestors`/`spr`, so it's
+// out of scope for a pure unit test. Only the depth helpers below are value-in/value-out.
 
 test("placetypeDepth: coarsest → finest containment ordering, country=1 up to microhood=11", () => {
 	expect(placetypeDepth("country")).toBe(1)

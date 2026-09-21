@@ -72,18 +72,19 @@ import {
 } from "#vocabulary"
 
 /**
- * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
- * ignore.
+ * Schema version of the domain tables. Bumped when a column changes meaning,
+ * never for an added column a reader can ignore.
  */
 export const SOIL_SCHEMA_VERSION = 1
 
 /**
  * Delineation ids per chunk process.
  *
- * Sized against the ceiling the flood layer measured rather than guessed: single-process runs over that product died
- * after roughly 510,000 and 798,000 features as h3's wasm heap fragmented. 100,000 leaves five times that margin, and
- * the cost of a smaller number is one interpreter start per chunk. Iowa's largest survey area holds well under it, so
- * on this build the bound costs one process per area — which is what makes an area's failure nameable.
+ * Sized against the ceiling the flood layer measured rather than guessed: single-process
+ * runs over that product died after roughly 510,000 and 798,000 features as h3's wasm heap
+ * fragmented. 100,000 leaves five times that margin, and the cost of a smaller number is one
+ * interpreter start per chunk. Iowa's largest survey area holds well under it, so on this
+ * build the bound costs one process per area — which is what makes an area's failure nameable.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
 
@@ -93,13 +94,15 @@ export const DEFAULT_CHUNK_SIZE = 100_000
 const M2_PER_ACRE = 4046.8564224
 
 /**
- * The relative gap between the ring-area total and the authority's own published acreage that fails the build.
+ * The relative gap between the ring-area total and the authority's own published
+ * acreage that fails the build.
  *
- * Two percent. The comparison is a spherical ring area against a figure nrcs itself warns "may differ from that
- * measured using GIS software due to different measuring techniques and rounding practices, or due to the fact that the
- * value has been adjusted so that the sum total of all map units in the legend equals that listed for soil survey area"
- * — so an exact test would be brittle. Two percent sits far above the 0.03% `IA153` measures and far below the error a
- * hole-blind read produces, which the zoning survey measured at 4.1% over a whole national layer.
+ * Two percent. The comparison is a spherical ring area against a figure nrcs itself warns "may differ
+ * from that measured using GIS software due to different measuring techniques and rounding practices,
+ * or due to the fact that the value has been adjusted so that the sum total of all map units
+ * in the legend equals that listed for soil survey area" — so an exact test would be brittle.
+ * Two percent sits far above the 0.03% `IA153` measures and far below the error a hole-blind
+ * read produces, which the zoning survey measured at 4.1% over a whole national layer.
  */
 const AREA_TOLERANCE = 0.02
 
@@ -117,8 +120,8 @@ export interface SurveyAreaInput {
 	 */
 	outline: ParsedGeometry
 	/**
-	 * An in-process feature source. Correct for a fixture and for anything small. the batched path builds one of these
-	 * per chunk, so the two share one implementation.
+	 * An in-process feature source. Correct for a fixture and for anything small. the
+	 * batched path builds one of these per chunk, so the two share one implementation.
 	 */
 	source?: SoilFeatureSource
 	/**
@@ -147,8 +150,8 @@ export interface BuildSoilOptions {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the interface says so, and a library-generated timestamp
-	 * makes two builds of the same inputs differ.
+	 * ISO-8601, supplied by the caller. Never generated here: the interface says so,
+	 * and a library-generated timestamp makes two builds of the same inputs differ.
 	 */
 	createdAt: string
 	/**
@@ -164,8 +167,8 @@ export interface BuildSoilOptions {
 	 */
 	chunkSize?: number
 	/**
-	 * Run the ingest IN this process rather than spawning chunk children. Only for fixtures, which carry no shapefile for
-	 * a child to open.
+	 * Run the ingest IN this process rather than spawning chunk children.
+	 * Only for fixtures, which carry no shapefile for a child to open.
 	 */
 	inProcess?: boolean
 	onProgress?: (message: string) => void
@@ -183,8 +186,9 @@ export interface BuildSoilResult {
 	wholeCellRows: number
 	partialCellRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored index rows. The whole side is compacted, so
-	 * this is not the same number the resolution was chosen on and is reported separately.
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored index rows.
+	 * The whole side is compacted, so this is not the same number the resolution
+	 * was chosen on and is reported separately.
 	 */
 	storedPartialShare: number
 	capabilityCells: number
@@ -193,8 +197,8 @@ export interface BuildSoilResult {
 	 */
 	sampledCells: number
 	/**
-	 * Cells whose top class covers less than half the cell — the §4.7 number, taken off the shipping artifact rather than
-	 * out of a separate harness.
+	 * Cells whose top class covers less than half the cell — the §4.7 number,
+	 * taken off the shipping artifact rather than out of a separate harness.
 	 */
 	topClassUnderHalfCells: number
 	topClassUnderHalfShare: number
@@ -203,8 +207,9 @@ export interface BuildSoilResult {
 	 */
 	classlessCells: number
 	/**
-	 * Cells the index touched that no lattice point landed inside. Dropped rather than stored as an all-zero
-	 * distribution, and counted because a large number would mean the lattice is too coarse for this geometry.
+	 * Cells the index touched that no lattice point landed inside.
+	 * Dropped rather than stored as an all-zero distribution, and counted because a large
+	 * number would mean the lattice is too coarse for this geometry.
 	 */
 	unsampledCells: number
 	meanDelineationsPerCell: number
@@ -218,8 +223,9 @@ export interface BuildSoilResult {
 	 */
 	coverageCellsWithoutMapping: number
 	/**
-	 * The area readings in square kilometres against the authority's own published figure, with the witness stated. The
-	 * `known` count of areas that publish an acreage is what a receipt reads the absence against.
+	 * The area readings in square kilometres against the authority's own published figure,
+	 * with the witness stated. The `known` count of areas that publish an acreage
+	 * is what a receipt reads the absence against.
 	 */
 	area: AreaAgreementReading
 	sizeBytes: number
@@ -252,17 +258,18 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			await createLayerManifestTable(kdb)
 			await createLayerCoverageTable(kdb)
 
-			// The touch table exists only for this build and is dropped before the artifact is sealed. No primary key while
-			// loading: the resolution queries below read it through indexes created once the load is done, and a clustered
-			// key would sort every insert against an ingest order nothing controls.
+			// The touch table exists only for this build and is dropped before the artifact is sealed.
+			// No primary key while loading: the resolution queries below read it through
+			// indexes created once the load is done, and a clustered key would sort every
+			// insert against an ingest order nothing controls.
 			kdb.exec(
 				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 			)
 		},
 		ingest: async (kdb) => {
-			// Attributes first because the ingest needs one thing out of them — which map units have no soil mapping behind
-			// them — and because a delineation whose map unit is missing must fail while the artifact is still empty rather
-			// than after millions of geometry rows are written.
+			// Attributes first because the ingest needs one thing out of them — which map units have no
+			// soil mapping behind them — and because a delineation whose map unit is missing must fail
+			// while the artifact is still empty rather than after millions of geometry rows are written.
 			writeAttributes(kdb, options.areas)
 
 			if (!options.inProcess) return undefined
@@ -293,10 +300,11 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			writeSurveyAreaRows(kdb, options, coverage.cellsByArea)
 			writeVocabularyRows(kdb, options.areas)
 
-			// the spine KEY names the table A consumer joins on, table-qualified, per the layer interface. For this layer
-			// that is the reduction rather than the containment index: `soil_capability_cell` holds one row per cell at one
-			// resolution, which `soil_map_unit_cell` does not — it is keyed `(cell, delineation)` and is mixed-resolution by
-			// construction. Therefore, it is a tier the reader walks rather than a key a consumer joins.
+			// the spine KEY names the table A consumer joins on, table-qualified, per the layer interface.
+			// For this layer that is the reduction rather than the containment index: `soil_capability_cell`
+			// holds one row per cell at one resolution, which `soil_map_unit_cell` does not —
+			// it is keyed `(cell, delineation)` and is mixed-resolution by construction.
+			// Therefore, it is a tier the reader walks rather than a key a consumer joins.
 			await writeLayerManifest(
 				kdb,
 				polygonLayerManifest(options, {
@@ -414,9 +422,10 @@ function assertDelineationCounts(areas: ReadonlyArray<SurveyAreaInput>, streamed
 /**
  * Refuse an artifact whose rings do not add up to the acreage the authority publishes.
  *
- * The message carries the hole-blind total beside the nested one, because the gap between them is the diagnosis: a hole
- * read as an exterior ring answers "inside" for every point in it. A build over survey areas that publish no acreage
- * has no witness — the reading's own type says so, and the `known` count is what a receipt names.
+ * The message carries the hole-blind total beside the nested one, because the gap between them
+ * is the diagnosis: a hole read as an exterior ring answers "inside" for every point in it.
+ * A build over survey areas that publish no acreage has no witness — the reading's
+ * own type says so, and the `known` count is what a receipt names.
  */
 function assertAreaAgreement(areas: ReadonlyArray<SurveyAreaInput>, streamed: StreamResult): AreaAgreementReading {
 	let publishedAcres = 0
@@ -516,7 +525,8 @@ function noMappingMukeys(areas: ReadonlyArray<SurveyAreaInput>): Set<string> {
 }
 
 /**
- * The in-process ingest — one chunk per survey area, all in this interpreter. Fixtures only.
+ * The in-process ingest — one chunk per survey area, all in this
+ * interpreter. Fixtures only.
  */
 async function ingestInProcess(
 	database: DatabaseClient<SoilDatabase>,
@@ -547,9 +557,9 @@ async function ingestInProcess(
 }
 
 /**
- * Run the ingest as a sequence of bounded child processes, one per range of one survey area's FIDs. The shared chunk
- * interface — the parent's no-handle rule, and the fail-loud handling of a chunk that dies or prints nothing — lives
- * with `ingestChunkArguments` and `runChunkProcess`.
+ * Run the ingest as a sequence of bounded child processes, one per range of one survey area's FIDs.
+ * The shared chunk interface — the parent's no-handle rule, and the fail-loud handling of a
+ * chunk that dies or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Promise<SoilChunkResult[]> {
 	const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE
@@ -756,8 +766,8 @@ function writeSurveyAreaRows(
 /**
  * Insert the authority's declared domains, plus the weighting the shares were produced under.
  *
- * The weighting rides in the vocabulary table as well as on every row: the row-level copy is what a consumer reads, and
- * this one carries the sentence that says what it means, which no column can.
+ * The weighting rides in the vocabulary table as well as on every row: the row-level copy is what a
+ * consumer reads, and this one carries the sentence that says what it means, which no column can.
  */
 function writeVocabularyRows(database: DatabaseClient<SoilDatabase>, areas: ReadonlyArray<SurveyAreaInput>): void {
 	const insert = database.prepare(

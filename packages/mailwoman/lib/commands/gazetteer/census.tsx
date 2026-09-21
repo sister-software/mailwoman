@@ -32,8 +32,9 @@ import { join } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Known parents probed after write, PER country. Probing another country's names against a freshly built census prints
- * reassuring-looking misses that verify nothing (the lesson the pair-index command's en-nz first build taught).
+ * Known parents probed after write, PER country. Probing another country's names
+ * against a freshly built census prints reassuring-looking misses that verify nothing
+ * (the lesson the pair-index command's en-nz first build taught).
  */
 const PROBE_PARENTS_BY_COUNTRY: Readonly<Record<string, readonly string[]>> = {
 	gb: ["London", "Manchester", "Birmingham"],

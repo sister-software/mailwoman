@@ -61,8 +61,8 @@ describe("regionSlugFromTree country check", () => {
 	})
 
 	it("still yields a slug when the country is UNKNOWN", () => {
-		// Dropping it here would take the street tier from every US address whose country never resolved — the failure
-		// this check exists to avoid rather than to cause.
+		// Dropping it here would take the street tier from every US address whose country
+		// never resolved — the failure this check exists to avoid rather than to cause.
 		expect(regionSlugFromTree(tree("MI"))).toBe("mi")
 		expect(regionSlugFromTree(tree("TX"))).toBe("tx")
 	})

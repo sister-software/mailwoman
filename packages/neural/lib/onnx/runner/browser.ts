@@ -33,7 +33,8 @@ const BROWSER_MESSAGE =
 	"In a browser use WebONNXRunner (onnxruntime-web), which satisfies the same NeuralRunner interface."
 
 /**
- * Shaped to match the Node class's static surface so an importer sees the same API either way. An object rather than a
+ * Shaped to match the Node class's static surface so an importer sees the same
+ * API either way. An object rather than a
  * class because there is nothing to instantiate — every entry point throws.
  */
 export const ONNXRunner = {

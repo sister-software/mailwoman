@@ -17,12 +17,12 @@ import type { Database } from "#database-schema"
 import { assertUnsealedForWrite } from "#sealed/db"
 
 /**
- * Open a built data artifact. Read-only by default; `write: true` is for builders working on UNsealed staging, and
- * throws `SealedArtifactError` against a sealed file.
+ * Open a built data artifact. Read-only by default; `write: true` is for builders working
+ * on UNsealed staging, and throws `SealedArtifactError` against a sealed file.
  *
- * Together with `new DatabaseClient(path)` this is the whole set of ways a connection comes into being. `DatabaseSync`
- * is constructed in exactly one place, inside `DatabaseClient`, so no caller holds a raw handle and no database ends up
- * described by two schemas.
+ * Together with `new DatabaseClient(path)` this is the whole set of ways a connection comes
+ * into being. `DatabaseSync` is constructed in exactly one place, inside `DatabaseClient`,
+ * so no caller holds a raw handle and no database ends up described by two schemas.
  */
 export async function openBuiltClient<DB = Database>(
 	path: string,

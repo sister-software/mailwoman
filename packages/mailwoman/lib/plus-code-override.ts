@@ -16,20 +16,22 @@ import { decodePlusCode, isFullPlusCode, recoverNearestPlusCode } from "@mailwom
 import { epistemicStatusFor } from "#geocode/epistemic-status"
 
 /**
- * A plus-code token anywhere in the input: `VFQ6+92P` (short) or `764MVFQ6+92P` (full). The digit alphabet excludes
- * every vowel-like letter, so an ordinary word cannot match. the boundary guard keeps the token from being split out of
- * a longer alphanumeric run.
+ * A plus-code token anywhere in the input: `VFQ6+92P` (short) or `764MVFQ6+92P` (full).
+ * The digit alphabet excludes every vowel-like letter, so an ordinary word cannot match.
+ * the boundary guard keeps the token from being split out of a longer alphanumeric run.
  */
 const PLUS_CODE_TOKEN = /(?:^|[\s,])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{2,3})(?=[\s,]|$)/i
 
 /**
- * Plus-code override: when the query carries an Open Location Code, the code is the user's most precise claim — Google
- * prints these on every place card, and in sparse-addressing countries they are the address (the Nicaraguan board
- * rows). A full code decodes directly. a short code recovers against the coordinate the rest of the address resolved to
- * (the locality/admin answer — which is why this runs last, after every resolve tier). The parse typically mislabels
- * the code (`street: "VFQ6+92P"`), which is irrelevant here: the override replaces the coordinate claim, tier
- * `plus_code`, uncertainty priced at the decoded cell's half-diagonal. A short code with no resolved reference stays an
- * abstention — a cell modulo 20° is not an answer.
+ * Plus-code override: when the query carries an Open Location Code, the code is the user's most
+ * precise claim — Google prints these on every place card, and in sparse-addressing countries
+ * they are the address (the Nicaraguan board rows). A full code decodes directly.
+ * a short code recovers against the coordinate the rest of the address resolved to
+ * (the locality/admin answer — which is why this runs last, after every resolve tier).
+ * The parse typically mislabels the code (`street: "VFQ6+92P"`), which is irrelevant here:
+ * the override replaces the coordinate claim, tier `plus_code`, uncertainty priced
+ * at the decoded cell's half-diagonal. A short code with no resolved reference
+ * stays an abstention — a cell modulo 20° is not an answer.
  */
 export function applyPlusCodeOverride(result: GeocodeOutcomeLike, input: string, resolved: AddressTree): void {
 	const token = PLUS_CODE_TOKEN.exec(input)?.[1]
@@ -41,11 +43,12 @@ export function applyPlusCodeOverride(result: GeocodeOutcomeLike, input: string,
 	if (!token) return
 	const upper = token.toUpperCase()
 
-	// The short-code reference must be locality-grade: recovery needs a point within half a
-	// prefix-resolution (0.5 degrees for the common 4-digit short form) of the true cell, and the
-	// blended result coordinate can be poisoned by a ZIP-lookalike postcode ('Managua 11001'
-	// answered a Floral Park NY point) or a coarse admin centroid (Ulaanbaatar's reference arrived
-	// ~2 degrees off) — both measured recovering into the wrong degree cell with perfect fractions.
+	// The short-code reference must be locality-grade: recovery needs a point within
+	// half a prefix-resolution (0.5 degrees for the common 4-digit short form)
+	// of the true cell, and the blended result coordinate can be poisoned by a
+	// ZIP-lookalike postcode ('Managua 11001' answered a Floral Park NY point)
+	// or a coarse admin centroid (Ulaanbaatar's reference arrived ~2 degrees off) —
+	// both measured recovering into the wrong degree cell with perfect fractions.
 	// The resolved locality node is the reference the code was shortened against.
 	const referenceNode = firstNodeWhere(
 		resolved.roots,
@@ -93,11 +96,12 @@ const COMPONENT_SLOTS = [
 ] as const
 
 /**
- * A plus code is a coordinate claim and never a component, whatever tag the parse gave it. Evict the token from every
- * slot it landed in and let the next span of that tag — grounded first, then text order, the same `slotNodes` order the
- * projections read — take the slot. `Simpson's Field, 5G8H+8F5, Douglas, Isle of Man IM2 4RE, Isle of Man` parses the
- * code as `postcode`; without this the row's postcode was the code and `IM2 4RE` was the dropped span. Runs whether or
- * not the code decodes: a short code with no reference is still not a postcode.
+ * A plus code is a coordinate claim and never a component, whatever tag the parse gave it.
+ * Evict the token from every slot it landed in and let the next span of that tag — grounded
+ * first, then text order, the same `slotNodes` order the projections read — take the slot.
+ * `Simpson's Field, 5G8H+8F5, Douglas, Isle of Man IM2 4RE, Isle of Man` parses the code as
+ * `postcode`; without this the row's postcode was the code and `IM2 4RE` was the dropped span.
+ * Runs whether or not the code decodes: a short code with no reference is still not a postcode.
  */
 function evictCodeFromComponents(result: GeocodeOutcomeLike, tree: AddressTree, token: string): void {
 	const upper = token.toUpperCase()

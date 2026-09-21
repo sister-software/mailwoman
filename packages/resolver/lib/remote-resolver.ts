@@ -26,7 +26,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 
 /**
- * `ResolveOpts` minus the non-serializable live lookup handles. What actually crosses the wire.
+ * `ResolveOpts` minus the non-serializable live lookup handles.
+ * What actually crosses the wire.
  */
 export type SerializableResolveOpts = Omit<ResolveOpts, "addressPoints" | "interpolation">
 
@@ -53,9 +54,9 @@ export interface RemoteResolverOpts {
 	/**
 	 * Injectable fetch (tests / custom agents). Defaults to the global `fetch`.
 	 *
-	 * Typed by what this module reads — `ok`, `status`, `statusText`, `json()` — rather than the full `fetch`, whose
-	 * `Response` carries a body stream and headers no code here touches. The global `fetch` satisfies this shape, and a
-	 * test double can be an object instead of an assertion.
+	 * Typed by what this module reads — `ok`, `status`, `statusText`, `json()` — rather than the
+	 * full `fetch`, whose `Response` carries a body stream and headers no code here touches.
+	 * The global `fetch` satisfies this shape, and a test double can be an object instead of an assertion.
 	 */
 	fetch?: RemoteResolverFetch
 	/**

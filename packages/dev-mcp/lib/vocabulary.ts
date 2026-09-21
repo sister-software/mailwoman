@@ -32,8 +32,8 @@
  */
 
 /**
- * SentencePiece renders a byte it cannot represent as `<0xNN>`. This is the whole measurement — everything else is
- * aggregation over it.
+ * SentencePiece renders a byte it cannot represent as `<0xNN>`.
+ * This is the whole measurement — everything else is aggregation over it.
  */
 const BYTE_PIECE = /^<0x[0-9A-Fa-f]{2}>$/
 
@@ -43,13 +43,13 @@ interface VocabularyLine {
 	characters: number
 	byteFallbacks: number
 	/**
-	 * Pieces per character. Latin text against this tokenizer runs around 0.4. a figure near or above 1.0 means the
-	 * string is being spelled out rather than tokenized.
+	 * Pieces per character. Latin text against this tokenizer runs around 0.4. a figure near
+	 * or above 1.0 means the string is being spelled out rather than tokenized.
 	 */
 	piecesPerCharacter: number
 	/**
-	 * The piece sequence, joined by `|`. Present only when asked for — it is the part that shows where a word shatters,
-	 * and the part that makes a reply long.
+	 * The piece sequence, joined by `|`. Present only when asked for — it is the part that shows
+	 * where a word shatters, and the part that makes a reply long.
 	 */
 	sequence?: string
 }
@@ -63,8 +63,8 @@ export interface VocabularyReport {
 		byteFallbacks: number
 		piecesPerCharacter: number
 		/**
-		 * Byte fallbacks as a share of pieces. The headline number, and meaningless without a comparison arm — pass
-		 * `control` so the reply carries one.
+		 * Byte fallbacks as a share of pieces. The headline number, and meaningless without
+		 * a comparison arm — pass `control` so the reply carries one.
 		 */
 		byteFallbackShare: number
 	}
@@ -114,9 +114,9 @@ function total(lines: readonly VocabularyLine[]): VocabularyReport["totals"] {
 /**
  * Which letters in `texts` the vocabulary can express on their own.
  *
- * Judged one character at a time on purpose. A character that falls back inside a word might merely be an unlucky
- * segmentation. a character that falls back alone is absent from the vocabulary, which is the fact a vocabulary
- * decision needs.
+ * Judged one character at a time on purpose. A character that falls back inside a word
+ * might merely be an unlucky segmentation. a character that falls back alone is absent
+ * from the vocabulary, which is the fact a vocabulary decision needs.
  */
 function characterCoverage(
 	tokenizer: Tokenizer,
@@ -142,8 +142,8 @@ function characterCoverage(
 export interface VocabularyOptions {
 	texts: readonly string[]
 	/**
-	 * A comparison arm — the same content the tokenizer handles well, usually the same addresses transliterated. Without
-	 * one a fallback share is a number with nothing to be high or low against.
+	 * A comparison arm — the same content the tokenizer handles well, usually the same addresses
+	 * transliterated. Without one a fallback share is a number with nothing to be high or low against.
 	 */
 	control?: readonly string[]
 	tokenizerPath?: string
@@ -153,8 +153,9 @@ export interface VocabularyOptions {
 }
 
 /**
- * Measure vocabulary coverage. The tokenizer is resolved through `resolveWeights` like every other consumer, so the
- * answer describes the tokenizer the runtime would actually load rather than a file someone typed a path to.
+ * Measure vocabulary coverage. The tokenizer is resolved through `resolveWeights`
+ * like every other consumer, so the answer describes the tokenizer the runtime would
+ * actually load rather than a file someone typed a path to.
  */
 export async function runVocabulary(options: VocabularyOptions): Promise<VocabularyReport> {
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")

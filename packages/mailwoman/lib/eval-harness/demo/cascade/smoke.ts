@@ -61,8 +61,8 @@ import { resolveWOFHotDB, wofHotStageDir } from "#eval-harness/wof-hot-db"
  */
 export interface DemoCascadeSmokeOptions {
 	/**
-	 * Staged demo release directory. Defaults beneath `$MAILWOMAN_TEMP_ROOT`; every artifact below defaults to a sibling
-	 * of it.
+	 * Staged demo release directory. Defaults beneath `$MAILWOMAN_TEMP_ROOT`;
+	 * every artifact below defaults to a sibling of it.
 	 */
 	stageDir?: string
 	/**
@@ -82,7 +82,8 @@ export interface DemoCascadeSmokeOptions {
 	 */
 	file?: string
 	/**
-	 * Write the sidecar here — the check verdict reads `summary.pass_rate_pct` from it for `cascade.demo_smoke`.
+	 * Write the sidecar here — the check verdict reads `summary.pass_rate_pct`
+	 * from it for `cascade.demo_smoke`.
 	 */
 	json?: string
 	/**
@@ -92,9 +93,10 @@ export interface DemoCascadeSmokeOptions {
 }
 
 /**
- * What {@linkcode demoCascadeSmoke} returns. `exitCode` carries what the script signalled with `process.exit`: 0 = the
- * run completed (row failures are in the table + sidecar. the check verdict enforces any floor), 2 = missing artifacts
- * or malformed rows. The check reports a non-zero code and continues, exactly as it did with the child.
+ * What {@linkcode demoCascadeSmoke} returns. `exitCode` carries what the script signalled
+ * with `process.exit`: 0 = the run completed (row failures are in the table + sidecar.
+ * the check verdict enforces any floor), 2 = missing artifacts or malformed rows.
+ * The check reports a non-zero code and continues, exactly as it did with the child.
  */
 export interface DemoCascadeSmokeResult {
 	exitCode: number
@@ -115,24 +117,26 @@ interface RowResult {
 }
 
 /**
- * Run every smoke row through the full stack — neural parse (ship config) → `runPipeline` + grouper audit → the demo's
- * `runCascade` over the slim hot DB — and assert the resolved WOF place ID of the top hit.
+ * Run every smoke row through the full stack — neural parse (ship config) →
+ * `runPipeline` + grouper audit → the demo's `runCascade` over the slim hot DB —
+ * and assert the resolved WOF place ID of the top hit.
  *
- * The table goes to `report` (the runner captures it into `cascade-smoke.md`); preflight refusals and `explain`
- * narration go to `reportError`, which is where the child's stderr went — captured and dropped. A preflight refusal
- * therefore leaves an empty `cascade-smoke.md` and a non-zero {@linkcode DemoCascadeSmokeResult.exitCode}, which is
- * exactly what the child process produced.
+ * The table goes to `report` (the runner captures it into `cascade-smoke.md`); preflight refusals
+ * and `explain` narration go to `reportError`, which is where the child's stderr went — captured
+ * and dropped. A preflight refusal therefore leaves an empty `cascade-smoke.md` and a non-zero
+ * {@linkcode DemoCascadeSmokeResult.exitCode}, which is exactly what the child process produced.
  */
 export async function demoCascadeSmoke(
 	options: DemoCascadeSmokeOptions = {},
 	report: (line: string) => void = console.log,
 	reportError: (line: string) => void = console.error
 ): Promise<DemoCascadeSmokeResult> {
-	// lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`, and the CLI's
-	// module walk (`mailwoman --help`) loads this file in every clean install — a top-level import
-	// here failed the ci:smoke clean-install leg the day it was added (2026-08-06). The cascade leg
-	// is dev-only (it needs a local wof-hot.db), so the dependency loads only when the leg actually
-	// runs. in a clean install without the package the leg fails here, loudly, naming the import.
+	// lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`,
+	// and the CLI's module walk (`mailwoman --help`) loads this file in every clean install —
+	// a top-level import here failed the ci:smoke clean-install leg the day it was
+	// added (2026-08-06). The cascade leg is dev-only (it needs a local wof-hot.db),
+	// so the dependency loads only when the leg actually runs. in a clean install without
+	// the package the leg fails here, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = options.stageDir || wofHotStageDir()
 	const DB = options.db || resolveWOFHotDB(String(STAGE))
@@ -235,11 +239,12 @@ export async function demoCascadeSmoke(
 			fst: fst as Parameters<typeof runPipeline>[1]["fst"],
 		})
 
-		// Node selection mirrors the demo page (docs/src/pages/demo/_runtime.ts) — same locality filter,
-		// same highest-confidence region pick, same postcode find.
-		// `city` / `state` / `postal_code` are libpostal vocabulary and are not `ComponentTag`s, so the
-		// `|| n.tag === "…"` arms that used to sit here could never match. They compiled only while the
-		// flattener returned `{ tag: string }`; the real tag union makes them a type error.
+		// Node selection mirrors the demo page (docs/src/pages/demo/_runtime.ts) —
+		// same locality filter, same highest-confidence region pick, same postcode find.
+		// `city` / `state` / `postal_code` are libpostal vocabulary and are not `ComponentTag`s,
+		// so the `|| n.tag === "…"` arms that used to sit here could never match.
+		// They compiled only while the flattener returned `{ tag: string }`;
+		// the real tag union makes them a type error.
 		const nodes = flattenTreeNodes(tree)
 		const localityNodes = nodes.filter((n) => n.tag === "locality")
 
@@ -250,12 +255,13 @@ export async function demoCascadeSmoke(
 		const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
 		// #861: runCascade now takes the tree and runs the shared resolveTree (greedy walk + coherence
-		// passes + span-rescore) over the lookup, exactly as the browser composes it. The node
-		// extraction above stays for the explain output + the anchor-centroid fallback below.
+		// passes + span-rescore) over the lookup, exactly as the browser composes it.
+		// The node extraction above stays for the explain output + the anchor-centroid fallback below.
 		const hits = await runCascade(lookup as Parameters<typeof runCascade>[0], tree, row.input)
 
-		// The demo's anchor-centroid fallback for postcode-only dead ends (WOF placeholder zeros / the
-		// slim DB's absent postalcode rows): synthesize the approximate hit from the anchor channel.
+		// The demo's anchor-centroid fallback for postcode-only dead ends
+		// (WOF placeholder zeros / the slim DB's absent postalcode rows): synthesize
+		// the approximate hit from the anchor channel.
 		let anchorCentroid = false
 
 		if (!hits.length && postcodeNode?.value && anchorLookup) {

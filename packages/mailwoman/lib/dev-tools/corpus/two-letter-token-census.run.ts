@@ -47,8 +47,8 @@ const { values } = parseArguments({
 		 */
 		codes: { type: "string" },
 		/**
-		 * Rows are also grouped by the row's `country`, so a code's two readings can be attributed to the countries that
-		 * write them.
+		 * Rows are also grouped by the row's `country`, so a code's two readings can
+		 * be attributed to the countries that write them.
 		 */
 		"by-country": { type: "boolean", default: false },
 		detail: { type: "string", default: "30" },
@@ -66,9 +66,9 @@ const { db, fileList } = await openMixture(mixture.files, {
 })
 
 /**
- * Unnesting three parallel lists in one select zips them positionally, so each row of `spans` is one span with its own
- * offsets and tag. `regexp_full_match` keeps only a span whose entire text is two uppercase letters, which is the
- * surface an address line writes a region code as.
+ * Unnesting three parallel lists in one select zips them positionally, so each row of `spans`
+ * is one span with its own offsets and tag. `regexp_full_match` keeps only a span whose entire
+ * text is two uppercase letters, which is the surface an address line writes a region code as.
  */
 const sql = `
 WITH spans AS (
@@ -130,8 +130,9 @@ for (const row of reader.getRowObjects()) {
 }
 
 /**
- * The share of a token's occurrences held by its commonest tag. A token that teaches one reading is 1.0. one the decode
- * has to disambiguate is lower, and how much lower is the size of the contest.
+ * The share of a token's occurrences held by its commonest tag.
+ * A token that teaches one reading is 1.0. one the decode has to disambiguate is lower,
+ * and how much lower is the size of the contest.
  */
 function dominance(entry: TokenCensus): number {
 	return entry.total === 0 ? 0 : Math.max(...entry.byTag.values()) / entry.total
@@ -149,15 +150,15 @@ function tagBreakdown(entry: TokenCensus): string {
 }
 
 /**
- * A token whose commonest tag holds less than this share teaches more than one reading at a rate the decode has to
- * resolve. Set where a rounding artifact stops and a real second reading starts rather than against a measured
- * separation.
+ * A token whose commonest tag holds less than this share teaches more than one
+ * reading at a rate the decode has to resolve. Set where a rounding artifact stops
+ * and a real second reading starts rather than against a measured separation.
  */
 const CONTESTED_DOMINANCE = 0.95
 
 /**
- * Tokens below this many spans are dropped from the contested table. A handful of occurrences splitting two ways is a
- * ratio over noise.
+ * Tokens below this many spans are dropped from the contested table.
+ * A handful of occurrences splitting two ways is a ratio over noise.
  */
 const CONTESTED_FLOOR = 1000
 

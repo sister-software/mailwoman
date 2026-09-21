@@ -44,7 +44,8 @@ let scratch: TemporaryDirectory
 let databasePath: string
 
 /**
- * The service's rendering of the first fixture zone, in the publisher's own ring convention: a clockwise exterior.
+ * The service's rendering of the first fixture zone, in the publisher's own
+ * ring convention: a clockwise exterior.
  */
 function zoneFeature(): ServiceFeature {
 	const { lon, lat } = FIXTURE_ORIGIN
@@ -135,8 +136,9 @@ describe("the positive half", () => {
 	})
 
 	it("tolerates a point a few centimetres outside the service's rendering of the same edge", async () => {
-		// The service's rendering of zone A's southern edge sits 0.000004° — about 45 cm — north of the artifact's, which is
-		// the scale of a rounding difference between two renderings of the same coordinates.
+		// The service's rendering of zone A's southern edge sits 0.000004° — about 45 cm —
+		// north of the artifact's, which is the scale of a rounding difference between
+		// two renderings of the same coordinates.
 		const shifted: ServiceFeatureReader = async () => [
 			{
 				geometry: {
@@ -183,8 +185,8 @@ describe("the positive half", () => {
 			points: [holeCentre],
 		})
 
-		// A checker that read the service's two single-ring parts as two exteriors would report `inside` here, and the
-		// artifact — which resolves the roles — would read as wrong.
+		// A checker that read the service's two single-ring parts as two exteriors would report
+		// `inside` here, and the artifact — which resolves the roles — would read as wrong.
 		expect(verified.agreement[0]!.serviceInside).toBe(false)
 	})
 })

@@ -28,8 +28,8 @@ const CLI_PATH = await mailwomanCLIPath()
 const hasCLICompiled = await pathExists(CLI_PATH)
 
 /**
- * Wall-clock budget for a CLI spawn — see the note in `geocode.test.ts`. A single spawn costs ~5.6 s, 2.7 s of it node
- * boot alone.
+ * Wall-clock budget for a CLI spawn — see the note in `geocode.test.ts`.
+ * A single spawn costs ~5.6 s, 2.7 s of it node boot alone.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
@@ -41,10 +41,11 @@ const CLI_TEST_TIMEOUT_MS = 120_000
 /**
  * Vitest's per-test budget for this whole file.
  *
- * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
- * assertion runs and then queues behind {@link withCLISpawnLockAsync}. A per-test annotation has to be remembered on
- * each new test, and the one that forgets inherits the global 15s — which kills the test before the thing being
- * measured can report, surfacing as a bare timeout with no attribution.
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
+ * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
+ * A per-test annotation has to be remembered on each new test, and the one that forgets
+ * inherits the global 15s — which kills the test before the thing being measured
+ * can report, surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
@@ -88,9 +89,9 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 				})
 			)
 
-		// The old sync form ran `spawn()` and then re-ran it inside `expect(spawn).not.toThrow()` — the second run is
-		// the idempotence assertion. An async rejection is invisible to that form, so await both runs: either one
-		// failing rejects this test.
+		// The old sync form ran `spawn()` and then re-ran it inside `expect(spawn).not.toThrow()` —
+		// the second run is the idempotence assertion. An async rejection is invisible to
+		// that form, so await both runs: either one failing rejects this test.
 		await spawn()
 		await spawn()
 
@@ -120,8 +121,8 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		const skillDir = join(cwd, ".claude", "skills", "mailwoman")
 		const staleFile = join(skillDir, "stale-reference.md")
 
-		// Plant a file that a hypothetical older install left behind and the current shipped skill no
-		// longer carries — a merge-only copy (bare cpSync) would leave this in place forever.
+		// Plant a file that a hypothetical older install left behind and the current shipped skill
+		// no longer carries — a merge-only copy (bare cpSync) would leave this in place forever.
 		await makeDirectories(skillDir)
 		await writeLocalTextFile("belongs to an older skill version; must not survive a reinstall", staleFile)
 

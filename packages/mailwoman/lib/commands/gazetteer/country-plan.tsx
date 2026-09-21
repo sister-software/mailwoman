@@ -63,8 +63,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The repositories a WOF move would clone. Names only — `--plan` never reaches the network, so their existence and size
- * are reported as unknown rather than guessed.
+ * The repositories a WOF move would clone. Names only — `--plan` never reaches the network,
+ * so their existence and size are reported as unknown rather than guessed.
  */
 function wofRepoNames(country: string): string[] {
 	const cc = country.toLowerCase()
@@ -160,8 +160,8 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 			}
 
 			if (!(await adminDBAvailable(adminDB))) {
-				// Absence reported as absence: without the artifact there is no current state to move from, and
-				// guessing it from the lists is the thing this command exists not to do.
+				// Absence reported as absence: without the artifact there is no current state to move
+				// from, and guessing it from the lists is the thing this command exists not to do.
 				lines.push(
 					"",
 					`No admin gazetteer at ${adminDB}.`,
@@ -223,9 +223,10 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 
 			let writeFailures = 0
 
-			// `--write` edits the working tree and stops there. It does not stage, commit or build: the value
-			// this command adds is that both halves of a move are written or neither, and a diff a person reads
-			// is what keeps that reviewable. A commit would move the review to after the fact.
+			// `--write` edits the working tree and stops there.
+			// It does not stage, commit or build: the value this command adds is that both halves of
+			// a move are written or neither, and a diff a person reads is what keeps that reviewable.
+			// A commit would move the review to after the fact.
 			if (options.write && plan.edits.length && !plan.blockers.length) {
 				const defaultsPath = String(repoRootPath("packages", "mailwoman", "lib", "gazetteer-pipeline", "defaults.ts"))
 				let source = await readLocalTextFile(defaultsPath)
@@ -252,8 +253,8 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 					applied.push(`  ${result.changed ? "✓" : "·"} ${result.note}`)
 				}
 
-				// All or nothing. A half-applied move is the exact state the #267 warning describes, and writing
-				// one edit while refusing the other would manufacture it.
+				// All or nothing. A half-applied move is the exact state the #267 warning describes,
+				// and writing one edit while refusing the other would manufacture it.
 				if (writeFailures) {
 					lines.push("", "NOT WRITTEN — every edit must apply or none do:", ...applied)
 				} else {

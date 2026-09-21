@@ -68,8 +68,8 @@ import {
 } from "#vocabulary"
 
 /**
- * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
- * ignore.
+ * Schema version of the domain tables. Bumped when a column changes meaning,
+ * never for an added column a reader can ignore.
  */
 export const FLOOD_SCHEMA_VERSION = 1
 
@@ -79,25 +79,27 @@ export const FLOOD_SCHEMA_VERSION = 1
 export type BuildFloodInput =
 	| {
 			/**
-			 * A feature source consumed IN this process. Correct for a fixture and for anything small. it is what the batched
-			 * form falls back to per chunk, so the two share one implementation.
+			 * A feature source consumed IN this process. Correct for a fixture and for anything small.
+			 * it is what the batched form falls back to per chunk, so the two share one implementation.
 			 */
 			source: FloodFeatureSource
 	  }
 	| {
 			/**
-			 * The published geodatabase, ingested in bounded chunks — one child process per range of the authority's own
-			 * feature ids.
+			 * The published geodatabase, ingested in bounded chunks — one child process
+			 * per range of the authority's own feature ids.
 			 *
-			 * This is the shape a national build takes, and the reason is reproducibility rather than speed: h3's wasm heap
-			 * cannot be reset from JavaScript and does not survive an unbounded number of polyfill calls, so a single-process
-			 * build over 813,627 polygons succeeds or fails on how the allocator happens to fragment. See `ingest-chunk.ts`.
+			 * This is the shape a national build takes, and the reason is reproducibility rather than speed:
+			 * h3's wasm heap cannot be reset from JavaScript and does not survive an unbounded
+			 * number of polyfill calls, so a single-process build over 813,627 polygons succeeds or
+			 * fails on how the allocator happens to fragment. See `ingest-chunk.ts`.
 			 */
 			batched: {
 				geodatabasePath: string
 				layer?: string
 				/**
-				 * Inclusive bounds of the authority's own `objectid` values, and the feature count they should yield.
+				 * Inclusive bounds of the authority's own `objectid` values,
+				 * and the feature count they should yield.
 				 */
 				objectIDFrom: number
 				objectIDTo: number
@@ -121,8 +123,8 @@ export type BuildFloodOptions = BuildFloodInput & {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the interface says so, and a library-generated timestamp
-	 * makes two builds of the same inputs differ.
+	 * ISO-8601, supplied by the caller. Never generated here: the interface says so,
+	 * and a library-generated timestamp makes two builds of the same inputs differ.
 	 */
 	createdAt: string
 	/**
@@ -138,9 +140,9 @@ export type BuildFloodOptions = BuildFloodInput & {
 	 */
 	extent: FloodMapExtent
 	/**
-	 * The feature count a second distribution channel reports — the live WFS. Supplied, it is asserted against the
-	 * geodatabase's own count, which is the cheapest two-path check available and catches a stale or truncated archive
-	 * before anything is written.
+	 * The feature count a second distribution channel reports — the live WFS.
+	 * Supplied, it is asserted against the geodatabase's own count, which is the cheapest two-path
+	 * check available and catches a stale or truncated archive before anything is written.
 	 */
 	expectedFeatureCount?: number
 	onProgress?: (message: string) => void
@@ -156,22 +158,24 @@ export interface BuildFloodResult {
 	partialCellRows: number
 	candidateRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` at the built resolution, over the stored rows — the whole
-	 * side is compacted, so this is not the same number the resolution was chosen on and is reported separately.
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` at the built resolution,
+	 * over the stored rows — the whole side is compacted, so this is not the same number
+	 * the resolution was chosen on and is reported separately.
 	 */
 	storedPartialShare: number
 	/**
-	 * Features whose bounding box forced a resolution coarser than `indexResolution`, and the resolutions the stored cell
-	 * rows are actually at. Both are reported rather than smoothed over: a reader that assumed one resolution would probe
-	 * at the wrong one and read every coarsened feature as an absence.
+	 * Features whose bounding box forced a resolution coarser than `indexResolution`, and the
+	 * resolutions the stored cell rows are actually at. Both are reported rather than
+	 * smoothed over: a reader that assumed one resolution would probe at the wrong one
+	 * and read every coarsened feature as an absence.
 	 */
 	coarsenedFeatures: number
 	storedResolutions: number[]
 	coverageCells: number
 	coverageCellsWithRows: number
 	/**
-	 * The area totals in square kilometres — what the source says, what the encoded rings say read with their holes, and
-	 * what they would say read without — with the witness stated.
+	 * The area totals in square kilometres — what the source says, what the encoded rings say
+	 * read with their holes, and what they would say read without — with the witness stated.
 	 */
 	area: AreaAgreementReading
 	sizeBytes: number
@@ -180,8 +184,8 @@ export interface BuildFloodResult {
 /**
  * Build the layer.
  *
- * @throws {Error} On an unknown zone code, a feature that reaches no cell, a feature count that disagrees with the
- *   source's own declaration, or an area total that disagrees with the source's.
+ * @throws {Error} On an unknown zone code, a feature that reaches no cell, a feature count that
+ *   disagrees with the source's own declaration, or an area total that disagrees with the source's.
  */
 export async function buildFloodDatabase(options: BuildFloodOptions): Promise<BuildFloodResult> {
 	if (options.coverageResolution >= options.indexResolution) {
@@ -213,9 +217,10 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			await createLayerManifestTable(kdb)
 			await createLayerCoverageTable(kdb)
 
-			// The touch table exists only for this build and is dropped before the artifact is sealed. No primary key while
-			// loading: the resolution queries below read it through indexes created once the load is done, and a clustered
-			// key would sort every insert against an ingest order nothing controls.
+			// The touch table exists only for this build and is dropped before the artifact is sealed.
+			// No primary key while loading: the resolution queries below read it through
+			// indexes created once the load is done, and a clustered key would sort every
+			// insert against an ingest order nothing controls.
 			kdb.exec(
 				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, zone_code TEXT NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 			)
@@ -309,21 +314,22 @@ interface StreamResult {
 /**
  * The relative gap between the two area readings that fails the build.
  *
- * The comparison is a spherical ring area against gdal's planar area in the source's own projection, so the two never
- * agree exactly: British National Grid's scale factor runs 0.9996 at its central meridian to about 1.0004 at the edges
- * of its usable zone, contributing roughly a tenth of a percent, and the spherical approximation contributes a similar
- * amount against the ellipsoid. One percent leaves both far inside the tolerance while sitting well below the error a
- * hole-blind read produces — the zoning survey measured that at 4.1% over a whole national layer, and this product's
- * own smoke rung at 17%.
+ * The comparison is a spherical ring area against gdal's planar area in the source's
+ * own projection, so the two never agree exactly: British National Grid's scale factor
+ * runs 0.9996 at its central meridian to about 1.0004 at the edges of its usable zone,
+ * contributing roughly a tenth of a percent, and the spherical approximation contributes a
+ * similar amount against the ellipsoid. One percent leaves both far inside the tolerance
+ * while sitting well below the error a hole-blind read produces — the zoning survey measured
+ * that at 4.1% over a whole national layer, and this product's own smoke rung at 17%.
  */
 const AREA_TOLERANCE = 0.01
 
 /**
  * Feature ids per chunk process.
  *
- * Sized against the measured ceiling rather than guessed: single-process runs over this product died after roughly
- * 510,000 and 798,000 features as h3's wasm heap fragmented. 100,000 leaves five times that margin, and the cost of a
- * smaller number is only one interpreter start per chunk.
+ * Sized against the measured ceiling rather than guessed: single-process runs over this product died
+ * after roughly 510,000 and 798,000 features as h3's wasm heap fragmented. 100,000 leaves five
+ * times that margin, and the cost of a smaller number is only one interpreter start per chunk.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
 
@@ -371,9 +377,9 @@ export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): Stream
 }
 
 /**
- * Run the ingest as a sequence of bounded child processes, one per range of the authority's feature ids. The shared
- * chunk interface — the parent's no-handle rule, and the fail-loud handling of a chunk that dies or prints nothing —
- * lives with `ingestChunkArguments` and `runChunkProcess`.
+ * Run the ingest as a sequence of bounded child processes, one per range of the authority's feature ids.
+ * The shared chunk interface — the parent's no-handle rule, and the fail-loud handling of a
+ * chunk that dies or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(
 	tmpPath: string,
@@ -422,9 +428,10 @@ async function runBatchedIngest(
 /**
  * Resolve the touch table into the two stored cell tiers.
  *
- * Compaction happens here and only on the whole side. A zone's uniform interior collapses parent-ward into a handful of
- * coarse cells while the fringe stays fine — hierarchy-respecting run-length encoding. A partial cell's parent is not
- * partial in any useful sense, so compacting the fringe would claim it covers ground it does not.
+ * Compaction happens here and only on the whole side. A zone's uniform interior
+ * collapses parent-ward into a handful of coarse cells while the fringe stays fine —
+ * hierarchy-respecting run-length encoding. A partial cell's parent is not partial in any
+ * useful sense, so compacting the fringe would claim it covers ground it does not.
  */
 function resolveCells(database: DatabaseClient<FloodDatabase>): {
 	wholeRows: number
@@ -447,9 +454,10 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 	let wholeRows = 0
 	let partialRows = 0
 
-	// One group per (zone, resolution): `compactCells` takes a single resolution, and an adaptively-indexed layer has
-	// several. Pooling them throws. compacting only the target group would silently drop every coarsened feature's
-	// interior — the shape of failure this repo keeps writing down, because the artifact would still build.
+	// One group per (zone, resolution): `compactCells` takes a single resolution,
+	// and an adaptively-indexed layer has several. Pooling them throws. compacting only the
+	// target group would silently drop every coarsened feature's interior — the shape of
+	// failure this repo keeps writing down, because the artifact would still build.
 	for (const { zone_code: zoneCode, resolution } of zones) {
 		const wholeShort = database
 			.prepare("SELECT DISTINCT h3_cell FROM build_cell_touch WHERE zone_code = ? AND resolution = ? AND is_full = 1")
@@ -489,8 +497,9 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 		database.exec("COMMIT")
 	}
 
-	// The candidate list exists for the fringe only: a whole cell is answered by `flood_zone_cell` alone, so carrying its
-	// polygons would store the geometry join for every interior cell in England to no purpose.
+	// The candidate list exists for the fringe only: a whole cell is answered by
+	// `flood_zone_cell` alone, so carrying its polygons would store the geometry join
+	// for every interior cell in England to no purpose.
 	database.exec(
 		"INSERT INTO flood_zone_cell_area (h3_cell, resolution, area_id) " +
 			"SELECT DISTINCT t.h3_cell, t.resolution, t.area_id FROM build_cell_touch t " +

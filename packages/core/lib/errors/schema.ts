@@ -15,7 +15,8 @@ export type ExtractResourceErrorStatusCode<T> = T extends ResourceError<infer S>
 const kResourceError = "_kResourceError"
 
 /**
- * An entity registered with the Federal Communications Commission (FCC) that provides telecommunications services.
+ * An entity registered with the Federal Communications Commission (FCC) that
+ * provides telecommunications services.
  */
 export class ResourceError<S extends StatusCodes = StatusCodes> extends Error {
 	static DefaultStatus = 500
@@ -156,8 +157,8 @@ export class ResourceError<S extends StatusCodes = StatusCodes> extends Error {
 export type ResourceErrorSchema = Pick<ResourceError, "status" | "message" | "name">
 
 /**
- * The display string of an unknown throwable — the one-liner beside {@link ResourceError.wrap} for the message-only
- * case.
+ * The display string of an unknown throwable — the one-liner beside
+ * {@link ResourceError.wrap} for the message-only case.
  */
 export function errorMessage(error: unknown): string {
 	return error instanceof Error ? error.message : String(error)

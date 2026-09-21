@@ -7,17 +7,20 @@
 /**
  * The interactive map browser — a full-screen, alternate-screen terminal app over `MapRenderer`.
  *
- * `MapBrowser` owns exactly three things the frame-first library deliberately does not: terminal mode (alternate
- * screen, hidden cursor, raw stdin, mouse reporting), viewport state (center, zoom, drag anchor), and the write path.
- * Frames still come from `MapRenderer.renderFrame` as values; `blitFrame` copies one into an `AsciifyTerminal`, whose
- * damage diff decides what actually goes down the wire.
+ * `MapBrowser` owns exactly three things the frame-first library deliberately does not:
+ * terminal mode (alternate screen, hidden cursor, raw stdin, mouse reporting),
+ * viewport state (center, zoom, drag anchor), and the write path.
+ * Frames still come from `MapRenderer.renderFrame` as values; `blitFrame` copies one into
+ * an `AsciifyTerminal`, whose damage diff decides what actually goes down the wire.
  *
- * The pane is the terminal minus its bottom row, which is the status bar. `AsciifyTerminal` is told that size and never
- * addresses a cell outside it, so the two writers never fight over a cell.
+ * The pane is the terminal minus its bottom row, which is the status bar.
+ * `AsciifyTerminal` is told that size and never addresses a cell outside it,
+ * so the two writers never fight over a cell.
  *
- * Every mode change made in {@link MapBrowser.start} is undone by {@link MapBrowser.restore}. It is idempotent.
- * Therefore, a signal handler, an `exit` hook and the normal path can all call it. A terminal left in raw mode with
- * mouse reporting on is not a recoverable shell, so restore is the one operation that must survive any exit path.
+ * Every mode change made in {@link MapBrowser.start} is undone by {@link MapBrowser.restore}.
+ * It is idempotent. Therefore, a signal handler, an `exit` hook and the normal path can all call it.
+ * A terminal left in raw mode with mouse reporting on is not a recoverable shell,
+ * so restore is the one operation that must survive any exit path.
  */
 
 import { errorMessage } from "@mailwoman/core/errors/schema"
@@ -50,35 +53,37 @@ const REVERSE_VIDEO = "\u001B[7m"
 const STATUS_BAR_ROWS = 1
 
 /**
- * Size assumed when the output reports none. A pty opened without a window size (util-linux `script`, some CI
- * harnesses) reports 0 columns and 0 rows, which is neither an error nor a usable grid.
+ * Size assumed when the output reports none. A pty opened without a window
+ * size (util-linux `script`, some CI harnesses) reports 0 columns and 0 rows,
+ * which is neither an error nor a usable grid.
  */
 const FALLBACK_COLUMNS = 80
 const FALLBACK_ROWS = 24
 
 /**
- * Floor on the pane's dimensions. Below this the renderer is being asked for a grid too small to mean anything, and a
- * zero-sized one would divide by zero in the projection.
+ * Floor on the pane's dimensions. Below this the renderer is being asked for a grid too
+ * small to mean anything, and a zero-sized one would divide by zero in the projection.
  */
 const MIN_COLUMNS = 4
 const MIN_PANE_ROWS = 1
 
 /**
- * How much of the pane one arrow-key press travels. An eighth is far enough to feel like progress at a keystroke and
- * short enough that the next frame still overlaps the last.
+ * How much of the pane one arrow-key press travels. An eighth is far enough to feel like
+ * progress at a keystroke and short enough that the next frame still overlaps the last.
  */
 const PAN_FRACTION = 0.125
 
 /**
- * Web-Mercator's latitude cutoff — the projection is undefined at the poles, and the square tile pyramid ends here.
+ * Web-Mercator's latitude cutoff — the projection is undefined at the poles,
+ * and the square tile pyramid ends here.
  */
 const MERCATOR_LATITUDE_LIMIT = 85.05112878
 
 const COORDINATE_DIGITS = 4
 
 /**
- * The subset of a readable stream the browser drives. Structural so `process.stdin` satisfies it without the app being
- * welded to it — the same reasoning asciify applies to its own output type.
+ * The subset of a readable stream the browser drives. Structural so `process.stdin` satisfies it
+ * without the app being welded to it — the same reasoning asciify applies to its own output type.
  */
 export interface BrowserInput {
 	setRawMode?(mode: boolean): unknown
@@ -119,8 +124,8 @@ interface DragAnchor {
 }
 
 /**
- * Clips a string to a cell budget, counting codepoints — the status bar's arrows are one cell each but two UTF-16
- * units, and `String.prototype.slice` would split one in half.
+ * Clips a string to a cell budget, counting codepoints — the status bar's arrows are one
+ * cell each but two UTF-16 units, and `String.prototype.slice` would split one in half.
  */
 function clipToCells(text: string, cells: number): string {
 	const codePoints = Array.from(text)
@@ -151,9 +156,9 @@ export class MapBrowser {
 	private resolveExit: ((code: number) => void) | null = null
 
 	/**
-	 * The trailing bytes of the last chunk that could not be decoded yet — a sequence the kernel split across two reads.
-	 * Threading it back through `decodeInputChunk` is what keeps a split mouse report from being read as an Esc keypress
-	 * (which used to quit); the decoder itself stays pure.
+	 * The trailing bytes of the last chunk that could not be decoded yet — a sequence the kernel split
+	 * across two reads. Threading it back through `decodeInputChunk` is what keeps a split mouse
+	 * report from being read as an Esc keypress (which used to quit); the decoder itself stays pure.
 	 */
 	private pendingInput = ""
 
@@ -192,8 +197,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Runs until the user quits, resolving with the process exit code (0 for a normal quit, 130 for Ctrl+C). The terminal
-	 * is restored before this resolves.
+	 * Runs until the user quits, resolving with the process exit code
+	 * (0 for a normal quit, 130 for Ctrl+C). The terminal is restored before this resolves.
 	 */
 	async run(): Promise<number> {
 		this.start()
@@ -208,8 +213,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Asks the browser to exit with a code. Safe to call from a signal handler, and a no-op once an exit is already under
-	 * way.
+	 * Asks the browser to exit with a code. Safe to call from a signal handler,
+	 * and a no-op once an exit is already under way.
 	 */
 	requestExit(code: number): void {
 		const resolve = this.resolveExit
@@ -240,8 +245,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Puts the terminal back exactly as it was found. Idempotent: the normal exit path, a signal handler and a
-	 * process-level `exit` hook may each call it.
+	 * Puts the terminal back exactly as it was found. Idempotent: the normal exit path,
+	 * a signal handler and a process-level `exit` hook may each call it.
 	 */
 	restore(): void {
 		if (!this.started || this.restored) return
@@ -293,8 +298,9 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Moves the center by a cell delta, through world pixels so the step is the same distance on screen at every latitude
-	 * — the naive degrees-per-keypress version crawls at the equator and sprints near the poles.
+	 * Moves the center by a cell delta, through world pixels so the step is the same
+	 * distance on screen at every latitude — the naive degrees-per-keypress version
+	 * crawls at the equator and sprints near the poles.
 	 */
 	private panByCells(columns: number, rows: number): void {
 		const center = lonLatToWorldPx(this.centerLon, this.centerLat, this.zoom)
@@ -329,8 +335,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Zooms one or more whole levels. With an anchor cell (the wheel's pointer), the center shifts so whatever was under
-	 * the pointer stays under it. without one, the pane center holds.
+	 * Zooms one or more whole levels. With an anchor cell (the wheel's pointer), the center shifts
+	 * so whatever was under the pointer stays under it. without one, the pane center holds.
 	 */
 	private zoomBy(delta: number, anchor: { column: number; row: number } | null): void {
 		const next = clamp(this.zoom + delta, this.source.minZoom, this.source.maxZoom)
@@ -381,8 +387,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Pans relative to where the drag started rather than the previous motion report. Accumulating per-report deltas
-	 * would drift, since each one is rounded to a whole cell.
+	 * Pans relative to where the drag started rather than the previous motion report.
+	 * Accumulating per-report deltas would drift, since each one is rounded to a whole cell.
 	 */
 	private continueDrag(column: number, row: number): void {
 		const anchor = this.drag
@@ -404,8 +410,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * A press and release with no motion between them is a click, which centers the map — mapscii's behavior, and the
-	 * reason centering waits for the release rather than acting on the press.
+	 * A press and release with no motion between them is a click, which centers the map — mapscii's
+	 * behavior, and the reason centering waits for the release rather than acting on the press.
 	 */
 	private endDrag(): void {
 		const anchor = this.drag
@@ -414,8 +420,8 @@ export class MapBrowser {
 
 		if (!anchor || anchor.moved) return
 
-		// A wheel event between press and release moved the map out from under the click, so the cell no longer names
-		// the place the user pointed at.
+		// A wheel event between press and release moved the map out from under the click,
+		// so the cell no longer names the place the user pointed at.
 		if (anchor.zoom !== this.zoom) return
 
 		const target = this.cellToLonLat(anchor.column, anchor.row)
@@ -439,8 +445,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Requests a frame. Renders never overlap: a request arriving mid-render is coalesced into one more pass, so a held
-	 * arrow key queues a single redraw rather than a backlog of them.
+	 * Requests a frame. Renders never overlap: a request arriving mid-render is coalesced into
+	 * one more pass, so a held arrow key queues a single redraw rather than a backlog of them.
 	 */
 	private scheduleRender(): void {
 		if (this.renderInFlight) {
@@ -478,12 +484,12 @@ export class MapBrowser {
 		try {
 			const frame = await this.renderer.renderFrame(viewport)
 
-			// The terminal may have been restored while the tiles were in flight. writing then would paint over the
-			// user's shell.
+			// The terminal may have been restored while the tiles were in flight. writing
+			// then would paint over the user's shell.
 			if (this.restored) return
 
-			// A resize between the request and now leaves the frame the wrong shape for the pane — drop it and let the
-			// resize's own render answer instead.
+			// A resize between the request and now leaves the frame the wrong shape for the pane —
+			// drop it and let the resize's own render answer instead.
 			if (frame.columns !== this.columns || frame.rows !== this.paneRows) return
 
 			this.error = null

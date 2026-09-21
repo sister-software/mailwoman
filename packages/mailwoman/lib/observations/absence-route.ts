@@ -75,9 +75,9 @@ import { latLngToCell } from "h3-js"
 import { readCommittedModel } from "#observations/committed-model"
 import { resolvePOISearchCenter } from "#poi/executor"
 /**
- * The relation an affordance is asserted under — the one the frozen vertical defines, and the only one this route
- * reads. The semantic route reads the same relation for the opposite direction (phrase → category); this one reads it
- * from the category back to the activity it affords.
+ * The relation an affordance is asserted under — the one the frozen vertical defines, and the only
+ * one this route reads. The semantic route reads the same relation for the opposite direction
+ * (phrase → category); this one reads it from the category back to the activity it affords.
  */
 const AFFORDS_RELATION = "affords"
 
@@ -105,7 +105,8 @@ export interface AbsenceObservation {
 	 */
 	concept: string
 	/**
-	 * The activity the concept affords, and which the observation therefore states is not obtainable in the cell.
+	 * The activity the concept affords, and which the observation therefore
+	 * states is not obtainable in the cell.
 	 */
 	activity: string
 	assertion: {
@@ -136,8 +137,9 @@ export interface AbsenceObservation {
 		completeness: number
 		observedRows: number
 		/**
-		 * The class the layer holds, read from its own `poi_category_codes`. Equal to `categoryID` on every observation —
-		 * carried anyway, because the equality is the guard and a receipt that does not show it cannot be checked.
+		 * The class the layer holds, read from its own `poi_category_codes`.
+		 * Equal to `categoryID` on every observation — carried anyway, because the equality
+		 * is the guard and a receipt that does not show it cannot be checked.
 		 */
 		surveyedCategoryID: string
 		layer: {
@@ -168,9 +170,9 @@ export interface AbsenceObservation {
 }
 
 /**
- * Why a query produced no absence observation. Every one of these is a silence the route owes an account of — an
- * unnamed silence and a silence for the right reason read identically on a receipt, and the control rows are graded on
- * exactly which one occurred.
+ * Why a query produced no absence observation. Every one of these is a silence the
+ * route owes an account of — an unnamed silence and a silence for the right reason read
+ * identically on a receipt, and the control rows are graded on exactly which one occurred.
  */
 export const ABSENCE_REFUSALS = [
 	/**
@@ -272,14 +274,15 @@ export interface AbsenceObservationRouteOptions {
 	 */
 	coverageDatabasePath: string
 	/**
-	 * Override the compiled artifact — for a test that wants a synthetic model. Absent reads the committed one.
+	 * Override the compiled artifact — for a test that wants a synthetic model.
+	 * Absent reads the committed one.
 	 */
 	model?: CompiledGeographicModel
 }
 
 /**
- * One category the artifact can speak about: the concept it names, the affordance assertion, and the mapping that ties
- * the external identifier to the concept.
+ * One category the artifact can speak about: the concept it names, the affordance assertion,
+ * and the mapping that ties the external identifier to the concept.
  */
 interface AffordingCategory {
 	concept: ConceptRecord
@@ -288,12 +291,12 @@ interface AffordingCategory {
 }
 
 /**
- * Index the artifact by external category id, keeping only categories that both map into `poi-taxonomy` and carry an
- * `affords` assertion.
+ * Index the artifact by external category id, keeping only categories that both map
+ * into `poi-taxonomy` and carry an `affords` assertion.
  *
- * A category reaching more than one affordance is not resolved here — the first in concept code-point order is taken
- * and the count is not hidden, because choosing among affordances would be a preference this program does not author.
- * The frozen vertical reaches exactly one.
+ * A category reaching more than one affordance is not resolved here — the first in concept
+ * code-point order is taken and the count is not hidden, because choosing among affordances
+ * would be a preference this program does not author. The frozen vertical reaches exactly one.
  */
 function indexAffordingCategories(model: CompiledGeographicModel): Map<string, AffordingCategory> {
 	const byExternalID = new Map<string, AffordingCategory>()
@@ -470,8 +473,9 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 
 	if (!cell) return { fired: false, refusal: "cell_unsurveyed" }
 
-	// `readLayerCoverage` resolves a NULL column to `source_present`, so a cell that reaches here always names its basis —
-	// but the field is optional on the parsed type, and `supportsExclusion` is what narrows it to the two that qualify.
+	// `readLayerCoverage` resolves a NULL column to `source_present`, so a cell that
+	// reaches here always names its basis — but the field is optional on the parsed type,
+	// and `supportsExclusion` is what narrows it to the two that qualify.
 	const basis = cell.basis
 
 	if (!basis || !supportsExclusion(cell)) return { fired: false, refusal: "basis_supports_no_exclusion" }

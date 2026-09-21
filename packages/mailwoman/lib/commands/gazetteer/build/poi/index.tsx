@@ -110,11 +110,11 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` injection point.
 			const rows: POISourceRow[] = []
 
-			// dynamic import, required: @mailwoman/osm is unpublished (ODbL counsel sign-off
-			// pending — see osm/readme.md), and this dependency belongs only on the selected build path,
-			// so a top-level import breaks the whole published CLI on a clean install — the smoke
-			// test's clean-install leg is what catches it. The osm source branch is build-local by
-			// design. it may only resolve its SDK when actually invoked.
+			// dynamic import, required: @mailwoman/osm is unpublished
+			// (ODbL counsel sign-off pending — see osm/readme.md), and this dependency belongs
+			// only on the selected build path, so a top-level import breaks the whole published
+			// CLI on a clean install — the smoke test's clean-install leg is what catches it.
+			// The osm source branch is build-local by design. it may only resolve its SDK when actually invoked.
 			const { extractOSMPOIs } = await import("@mailwoman/osm/sdk")
 
 			for await (const row of extractOSMPOIs(pbf)) {

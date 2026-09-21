@@ -18,8 +18,9 @@
 import type { Tagged } from "type-fest"
 
 /**
- * A German postcode: five digits since the 1993 reform (`12623`). A bare 5-digit string, same shape as a US ZIP or a
- * French code postal — disambiguation is the parser's job rather than the shape's.
+ * A German postcode: five digits since the 1993 reform (`12623`).
+ * A bare 5-digit string, same shape as a US ZIP or a French code postal —
+ * disambiguation is the parser's job rather than the shape's.
  *
  * @category Postal
  * @type string
@@ -34,8 +35,8 @@ export type Postleitzahl = Tagged<string, "Postleitzahl">
 export const PLZ_PATTERN = /^\d{5}$/
 
 /**
- * Normalize a PLZ surface form to the bare five digits: strip the `D-` / `DE-` country courtesy prefix and surrounding
- * whitespace (`D-68161` → `68161`). Returns null if the result is not a PLZ.
+ * Normalize a PLZ surface form to the bare five digits: strip the `D-` / `DE-` country courtesy prefix
+ * and surrounding whitespace (`D-68161` → `68161`). Returns null if the result is not a PLZ.
  */
 export function normalizePLZ(raw: unknown): Postleitzahl | null {
 	if (typeof raw !== "string") return null
@@ -72,9 +73,10 @@ export interface LeitzoneInfo {
 }
 
 /**
- * PLZ first digit → Leitzone. A coarse, postal-routing prior: these zones cross Bundesland borders, so the label is
- * "which corner of Germany", not "which state". Anchor cities are the safe, well-known way to pin a zone without
- * over-claiming a boundary the routing geography does not actually follow.
+ * PLZ first digit → Leitzone. A coarse, postal-routing prior: these zones cross
+ * Bundesland borders, so the label is "which corner of Germany", not "which state".
+ * Anchor cities are the safe, well-known way to pin a zone without over-claiming a
+ * boundary the routing geography does not actually follow.
  */
 export const PLZ_LEITZONEN = {
 	0: { digit: 0, region: "Sachsen / Ostthüringen", cities: ["Leipzig", "Dresden", "Chemnitz"] },

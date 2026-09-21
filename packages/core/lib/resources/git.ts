@@ -36,8 +36,9 @@ export async function prepareRepositoryDirectories(
 /**
  * What a synchronization did, so a caller can report it.
  *
- * A clone and a pull differ by orders of magnitude in both time and bytes — reporting them as one "synchronized" makes
- * a first-time clone indistinguishable from a no-op refresh while it holds the progress display still.
+ * A clone and a pull differ by orders of magnitude in both time and bytes —
+ * reporting them as one "synchronized" makes a first-time clone indistinguishable
+ * from a no-op refresh while it holds the progress display still.
  */
 export type SynchronizeAction = "cloned" | "pulled" | "skipped"
 

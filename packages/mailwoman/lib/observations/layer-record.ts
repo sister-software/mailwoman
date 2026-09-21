@@ -113,8 +113,9 @@ export function describeCoverage(
 }
 
 /**
- * The provenance sentence: which artifact answered, in one wording. `tier` widens it for a layer whose tier is part of
- * the claim (zoning ships `build-local`, and a reader must see that on the line).
+ * The provenance sentence: which artifact answered, in one wording.
+ * `tier` widens it for a layer whose tier is part of the claim
+ * (zoning ships `build-local`, and a reader must see that on the line).
  */
 export function describeLayerProvenance(layer: ObservationLayerRecord, options: { tier?: boolean } = {}): string {
 	const terms = options.tier ? `tier ${layer.tier}, license ${layer.license}` : layer.license
@@ -145,9 +146,9 @@ export interface CreateDesignationRouteOptions<Reading, Observation, Refusal ext
 }
 
 /**
- * The factory frame every designation route shares: the nullable-coordinate refusal (a geocode result has `lat`/`lon`
- * as nullable, and a coordinate-less answer is a named refusal here rather than a caller's problem), the reading-shaped
- * refusal, and the disposal that closes the lookup.
+ * The factory frame every designation route shares: the nullable-coordinate refusal
+ * (a geocode result has `lat`/`lon` as nullable, and a coordinate-less answer is a named refusal here
+ * rather than a caller's problem), the reading-shaped refusal, and the disposal that closes the lookup.
  */
 export function createDesignationRoute<Identity, Reading, Observation, Refusal extends string>(
 	lookup: { identity: Identity } & Disposable,

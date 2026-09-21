@@ -12,8 +12,9 @@
 import { openParquetRowStream } from "#parquet/streams"
 
 /**
- * Separator inside a bigram key (`tok1␟tok2`) and a label-bigram value (`lab1␟lab2`): U+001F unit separator, a
- * character no address token contains. Render a key for humans with `key.split(COOCCURRENCE_KEY_SEP).join(" ")`.
+ * Separator inside a bigram key (`tok1␟tok2`) and a label-bigram value
+ * (`lab1␟lab2`): U+001F unit separator, a character no address token contains.
+ * Render a key for humans with `key.split(COOCCURRENCE_KEY_SEP).join(" ")`.
  */
 export const COOCCURRENCE_KEY_SEP = ""
 
@@ -49,8 +50,8 @@ function bump(table: CooccurrenceTable, key: string, sub: string): void {
 }
 
 /**
- * Fold one row's parallel `tokens`/`labels` into the tables. The caller has already checked the arrays are the same
- * length.
+ * Fold one row's parallel `tokens`/`labels` into the tables.
+ * The caller has already checked the arrays are the same length.
  */
 export function accumulateCooccurrences(
 	stats: CooccurrenceStats,
@@ -81,8 +82,9 @@ export interface TokenLabelRow {
 /**
  * Stream a parquet file's `tokens`/`labels` columns.
  *
- * Projected rather than read whole: parquet is columnar, so the unused columns are never touched. `limit` stops the
- * iteration rather than filtering afterwards, so a capped run reads only the row groups it needs.
+ * Projected rather than read whole: parquet is columnar, so the unused columns are
+ * never touched. `limit` stops the iteration rather than filtering afterwards,
+ * so a capped run reads only the row groups it needs.
  */
 export async function* streamTokenLabelRows(parquetPath: string, limit?: number): AsyncIterable<TokenLabelRow> {
 	let emitted = 0

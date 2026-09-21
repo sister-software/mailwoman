@@ -192,8 +192,8 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 })
 
 describe("open-set reject rule (#244 M2)", () => {
-	// Zero weights ⇒ logits == bias ⇒ probs == softmax(bias), independent of the input string. Lets us
-	// engineer an exact class distribution and assert the reject/route decoupling deterministically.
+	// Zero weights ⇒ logits == bias ⇒ probs == softmax(bias), independent of the input string.
+	// Lets us engineer an exact class distribution and assert the reject/route decoupling deterministically.
 	const classes = ["US", "FR", "OTHER"]
 	// dim must be FEATURE_DIM: featurize() returns hashed indices in [0, FEATURE_DIM); a smaller dim
 	// would index past the (zero) weight rows → NaN logits. Zero weights ⇒ logits == bias regardless.

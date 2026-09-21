@@ -24,14 +24,15 @@ import type { SubVenuePromotion } from "#tools/sub/venue/promotions"
 /**
  * This table's own data version. Bump when the source vintages or the build semantics change.
  *
- * `0.2.0` — wave 2: per-region attestation, the phrase-attribution fix (finding 3 above), derived head nouns, the
- * Overture source, and the `promotions[]` receipts section.
+ * `0.2.0` — wave 2: per-region attestation, the phrase-attribution fix (finding 3 above),
+ * derived head nouns, the Overture source, and the `promotions[]` receipts section.
  */
 export const SUBVENUE_LEXICON_VERSION = "0.2.0"
 
 /**
- * Which side of the containment relation a designator names. Mirrors `@mailwoman/osm/sdk`'s `SubVenueTier`; re-declared
- * for the same dependency-direction reason as the seed.
+ * Which side of the containment relation a designator names.
+ * Mirrors `@mailwoman/osm/sdk`'s `SubVenueTier`; re-declared for the same
+ * dependency-direction reason as the seed.
  */
 export const LexiconTier = {
 	SubVenue: "subvenue",
@@ -45,23 +46,24 @@ export type LexiconTier = (typeof LexiconTier)[keyof typeof LexiconTier]
  */
 export interface SubVenueDesignator {
 	/**
-	 * Canonical id, lowercase English. Matches `neural/venue-structure.ts`'s `VENUE_STRUCTURE_DESIGNATORS` wherever the
-	 * two overlap.
+	 * Canonical id, lowercase English. Matches `neural/venue-structure.ts`'s
+	 * `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap.
 	 */
 	id: string
 	tier: LexiconTier
 	/**
 	 * Whether this designator may be preceded by a {@link SubVenueModifier} — the `North Terminal` shape.
 	 *
-	 * A subset, and the exclusions are required: `gate` and `building` form ordinary street names in exactly this shape
-	 * ("East Gate" is a real GB street, "Building Society Place" is a real street), so admitting them turns a correct
-	 * street parse into a sub-venue one. Setting this true means claiming no street is named `<modifier> <id>`. Check
-	 * before you do.
+	 * A subset, and the exclusions are required: `gate` and `building` form
+	 * ordinary street names in exactly this shape ("East Gate" is a real GB street,
+	 * "Building Society Place" is a real street), so admitting them turns a correct
+	 * street parse into a sub-venue one. Setting this true means claiming no street
+	 * is named `<modifier> <id>`. Check before you do.
 	 */
 	modifierEligible: boolean
 	/**
-	 * Whether the shipped span proposer already recognizes this designator. `false` means the lexicon proposes it and
-	 * nothing consumes it yet.
+	 * Whether the shipped span proposer already recognizes this designator.
+	 * `false` means the lexicon proposes it and nothing consumes it yet.
 	 */
 	shipped: boolean
 	/**
@@ -87,12 +89,13 @@ export interface SubVenueModifier {
  */
 export interface SubVenueSurface {
 	/**
-	 * The phrase, lowercased for Latin-script languages and left as written otherwise — case-folding is meaningless for
-	 * Han and Kana, which the script guard excludes.
+	 * The phrase, lowercased for Latin-script languages and left as written otherwise —
+	 * case-folding is meaningless for Han and Kana, which the script guard excludes.
 	 *
-	 * It does not exclude Turkish: `İ` (U+0130) is `\p{Script=Latin}`, so the guard admits it and `toLowerCase` folds it
-	 * to `i` plus a combining dot above. A Turkish surface therefore round-trips through a form its own locale would not
-	 * write. Nothing shipped depends on that today. a Turkish designator would.
+	 * It does not exclude Turkish: `İ` (U+0130) is `\p{Script=Latin}`, so the guard
+	 * admits it and `toLowerCase` folds it to `i` plus a combining dot above.
+	 * A Turkish surface therefore round-trips through a form its own locale would not write.
+	 * Nothing shipped depends on that today. a Turkish designator would.
 	 */
 	phrase: string
 	/**
@@ -104,38 +107,42 @@ export interface SubVenueSurface {
 	 */
 	recordKind: "designator" | "modifier"
 	/**
-	 * BCP-47-ish language subtag as the source wrote it (`en`, `ja`, `zh-Hant`, `pt-BR`), or `und` when the source gave
-	 * an untagged default name.
+	 * BCP-47-ish language subtag as the source wrote it (`en`, `ja`, `zh-Hant`, `pt-BR`),
+	 * or `und` when the source gave an untagged default name.
 	 */
 	lang: string
 	/**
-	 * ISO 3166-1 alpha-2 of the data the phrase was attested in, `""` for vocabulary sources that attest a term's
-	 * existence rather than its use anywhere. This is the axis promotion is decided on: `hall` is attested 3,274 times in
-	 * `GB` and every promotion of it lives or dies on a per-region census, never a global one.
+	 * ISO 3166-1 alpha-2 of the data the phrase was attested in, `""` for vocabulary
+	 * sources that attest a term's existence rather than its use anywhere.
+	 * This is the axis promotion is decided on: `hall` is attested 3,274 times in `GB`
+	 * and every promotion of it lives or dies on a per-region census, never a global one.
 	 */
 	region: string
 	/**
-	 * `wikidata:label`, `wikidata:alt`, `osm:name`, `osm:name:<lang>`, `overture:name`, `derived:head-noun`, or `seed`.
+	 * `wikidata:label`, `wikidata:alt`, `osm:name`, `osm:name:<lang>`, `overture:name`,
+	 * `derived:head-noun`, or `seed`.
 	 */
 	source: string
 	/**
-	 * Whether a human has approved this surface for parsing use IN its region. Everything machine-derived starts `false`
-	 * and is flipped only by a matching {@link SubVenuePromotion}. A consumer that gates a parse must filter on this — see
+	 * Whether a human has approved this surface for parsing use IN its region.
+	 * Everything machine-derived starts `false` and is flipped only by a matching
+	 * {@link SubVenuePromotion}. A consumer that gates a parse must filter on this — see
 	 * `sub-venue-lexicon.ts`'s module docstring for what a promotion decides and why it is per-locale.
 	 */
 	curated: boolean
 	/**
-	 * How many source features attested this exact phrase, when the source counts (OSM, Overture). `0` for vocabulary
-	 * sources, which attest a term's existence rather than its frequency.
+	 * How many source features attested this exact phrase, when the source counts (OSM, Overture).
+	 * `0` for vocabulary sources, which attest a term's existence rather than its frequency.
 	 */
 	observations: number
 	/**
 	 * The rule-assigned designator of the features that carried this phrase, with a count each — `platform:3205
 	 * campus:49` for GB's `hall`. Empty for vocabulary sources.
 	 *
-	 * This is the confound axis. A `hall` on a `platform` row is a British bus stop named after a village hall. a `hall`
-	 * on a `terminal` row is a real German departure hall. Without it, a surface's `observations` count is a magnitude
-	 * with no sign — see the repo's "meaning of zero" rule, which applies just as hard to a large number.
+	 * This is the confound axis. A `hall` on a `platform` row is a British bus stop named
+	 * after a village hall. a `hall` on a `terminal` row is a real German departure hall.
+	 * Without it, a surface's `observations` count is a magnitude with no sign —
+	 * see the repo's "meaning of zero" rule, which applies just as hard to a large number.
 	 */
 	context: Record<string, number>
 }
@@ -143,22 +150,24 @@ export interface SubVenueSurface {
 /**
  * The measured shape of a designator's identifier half — what follows `Gate`/`Terminal` in real data.
  *
- * Derived from OSM `ref` values rather than from names, and that is why the artifact has a section for it at all. Every
- * one of Berlin's 26 `aeroway=gate` features is unnamed and carries only a `ref`: `13`, `6`, `0/1`, `14/15`, `16-18`.
- * So `Gate A12` is a rendering (`<designator> <ref>`) rather than a string anyone has written down, and a recipe that
- * wants to generate the designator+identifier form needs the identifier distribution rather than a list of phrases.
+ * Derived from OSM `ref` values rather than from names, and that is why the artifact has a section for
+ * it at all. Every one of Berlin's 26 `aeroway=gate` features is unnamed and carries only a `ref`:
+ * `13`, `6`, `0/1`, `14/15`, `16-18`. So `Gate A12` is a rendering (`<designator> <ref>`)
+ * rather than a string anyone has written down, and a recipe that wants to generate the
+ * designator+identifier form needs the identifier distribution rather than a list of phrases.
  */
 export interface IdentifierShape {
 	designatorID: string
 	/**
-	 * ISO 3166-1 alpha-2 of the extract this distribution was measured in. Per-region because the shapes differ: GB gates
-	 * are 70% bare digits, Japanese platform refs are overwhelmingly bare digits with a different range, and a recipe
-	 * that generates `Gate <ref>` for a French address should sample France's distribution.
+	 * ISO 3166-1 alpha-2 of the extract this distribution was measured in.
+	 * Per-region because the shapes differ: GB gates are 70% bare digits, Japanese platform
+	 * refs are overwhelmingly bare digits with a different range, and a recipe that generates
+	 * `Gate <ref>` for a French address should sample France's distribution.
 	 */
 	region: string
 	/**
-	 * A coarse class: `digit` (`5`), `letter` (`B`), `letter-digit` (`A12`), `digit-letter` (`2F`), `range` (`16-18`,
-	 * `0/1`), or `other`.
+	 * A coarse class: `digit` (`5`), `letter` (`B`), `letter-digit` (`A12`),
+	 * `digit-letter` (`2F`), `range` (`16-18`, `0/1`), or `other`.
 	 */
 	shape: string
 	observations: number
@@ -190,20 +199,21 @@ export interface SubVenueLexiconTable {
 	surfaces: SubVenueSurface[]
 	identifierShapes: IdentifierShape[]
 	/**
-	 * Every curation decision taken against this table, promotion and rejection, each with the census that backs it. A
-	 * rejection is as required as a promotion: it is what stops the next reader re-proposing `hall` for en-GB.
+	 * Every curation decision taken against this table, promotion and rejection,
+	 * each with the census that backs it. A rejection is as required as a promotion:
+	 * it is what stops the next reader re-proposing `hall` for en-GB.
 	 */
 	promotions: SubVenuePromotion[]
 }
 
 /**
- * The vocabulary that already ships in `neural/venue-structure.ts`, re-declared. See the module docstring for why this
- * duplication exists.
+ * The vocabulary that already ships in `neural/venue-structure.ts`, re-declared.
+ * See the module docstring for why this duplication exists.
  *
- * `tier` is added here (the shipped list has no such field): the seven WOF placetypes plus `terminal`/`gate` are all
- * venue-interior, except `campus` and `building`, which name a whole venue as often as a part of one. They are marked
- * `subvenue` anyway, because that is the role the span proposer uses them in — `Building 43, Googleplex` is a unit
- * inside a venue.
+ * `tier` is added here (the shipped list has no such field): the seven WOF placetypes plus
+ * `terminal`/`gate` are all venue-interior, except `campus` and `building`, which name a whole
+ * venue as often as a part of one. They are marked `subvenue` anyway, because that is the
+ * role the span proposer uses them in — `Building 43, Googleplex` is a unit inside a venue.
  */
 export const SHIPPED_DESIGNATOR_SEED: ReadonlyArray<{
 	id: string
@@ -248,8 +258,9 @@ export const SHIPPED_MODIFIER_SEED: readonly string[] = [
  * wave 2 on 282 Overture attestations in the `pier` category plus 162 in the GB extract — the corpus task names `Pier
  * C` as a target shape, so the record has to exist before a recipe can generate it.
  *
- * None is `modifierEligible`: that claim needs a confound board per term and per locale, and `sub-venue-promotions.ts`
- * is where those live. A promotion marks a surface usable. it does not widen the modifier grammar.
+ * None is `modifierEligible`: that claim needs a confound board per term
+ * and per locale, and `sub-venue-promotions.ts` is where those live.
+ * A promotion marks a surface usable. it does not widen the modifier grammar.
  */
 export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 	id: string
@@ -265,9 +276,9 @@ export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 ]
 
 /**
- * `designatorID` → Wikidata QID, mirroring `fetch/wikidata-subvenue.ts`'s `SUBVENUE_CONCEPTS`. Re-declared here so the
- * builder stays a pure function over parsed input rather than reaching into a fetch module for a constant. the test
- * pins the two against each other.
+ * `designatorID` → Wikidata QID, mirroring `fetch/wikidata-subvenue.ts`'s `SUBVENUE_CONCEPTS`.
+ * Re-declared here so the builder stays a pure function over parsed input rather than
+ * reaching into a fetch module for a constant. the test pins the two against each other.
  */
 export const CONCEPT_QIDS: Readonly<Record<string, string>> = {
 	terminal: "Q849706",

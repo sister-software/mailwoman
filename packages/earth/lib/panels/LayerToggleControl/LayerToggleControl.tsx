@@ -19,8 +19,8 @@ import type { MapInstance } from "react-map-gl/maplibre"
 
 import styles from "./styles.module.css"
 
-// Order matters: first match wins. Labels go first so road-label / earth-label / address-label
-// don't get pulled into the Roads / Landuse buckets.
+// Order matters: first match wins. Labels go first so road-label / earth-label /
+// address-label don't get pulled into the Roads / Landuse buckets.
 /**
  * Patterns grouping map layers into the toggles shown in the control, so related layers switch together.
  */
@@ -58,8 +58,9 @@ interface LayerGroup {
 }
 
 /**
- * Bucket the style's layers by prefix. The resolver's own output (`mailwoman-*`) is skipped: it is transient result
- * geometry rather than part of the basemap, and a visitor switching it off would lose the marker for their answer.
+ * Bucket the style's layers by prefix. The resolver's own output (`mailwoman-*`)
+ * is skipped: it is transient result geometry rather than part of the basemap,
+ * and a visitor switching it off would lose the marker for their answer.
  */
 function readGroups(map: MapInstance): LayerGroup[] {
 	const layers = map.getStyle()?.layers ?? []
@@ -73,8 +74,8 @@ function readGroups(map: MapInstance): LayerGroup[] {
 
 		bucket.layerIDs.push(layer.id)
 
-		// A group reads visible when any of its layers is: the per-layer default is "visible", stated only when a
-		// layer opts out.
+		// A group reads visible when any of its layers is: the per-layer default is
+		// "visible", stated only when a layer opts out.
 		if ((layer.layout && "visibility" in layer.layout ? layer.layout.visibility : "visible") !== "none") {
 			bucket.visible = true
 		}
@@ -98,8 +99,9 @@ export function LayerToggleControl({ map }: LayerToggleControlProps) {
 	useEffect(() => {
 		if (!map) return
 
-		// `styledata` fires before the layers are populated, so a render on that alone produces zero buckets and would
-		// replace a good reading with an empty one. Both events are subscribed and the empty answer is refused.
+		// `styledata` fires before the layers are populated, so a render on that alone
+		// produces zero buckets and would replace a good reading with an empty one.
+		// Both events are subscribed and the empty answer is refused.
 		const sync = () => {
 			if (!map.isStyleLoaded()) return
 
@@ -112,9 +114,9 @@ export function LayerToggleControl({ map }: LayerToggleControlProps) {
 
 		map.on("styledata", sync)
 		map.on("idle", sync)
-		// The map is usually already idle when this control mounts, and an idle map sends nothing. Asking for one more
-		// frame produces the `idle` that reads the first set of groups, so the reading arrives from an event rather
-		// than from a write during the effect.
+		// The map is usually already idle when this control mounts, and an idle map sends nothing.
+		// Asking for one more frame produces the `idle` that reads the first set of groups,
+		// so the reading arrives from an event rather than from a write during the effect.
 		map.triggerRepaint()
 
 		return () => {

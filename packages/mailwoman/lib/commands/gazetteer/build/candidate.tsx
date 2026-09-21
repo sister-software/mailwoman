@@ -71,8 +71,9 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 
 		let adminDB = adminIn
 
-		// A fold output that predates its admin database carries the admin database's old coordinates (the Frankfurt
-		// read of 2026-09-06): refused unless asked for, since the action is `--fold` on this same command.
+		// A fold output that predates its admin database carries the admin database's
+		// old coordinates (the Frankfurt read of 2026-09-06): refused unless asked for,
+		// since the action is `--fold` on this same command.
 		if (!options.fold && !options.allowStaleFold) {
 			const source = foldSourceAdminPath(adminIn)
 			const [foldStat, adminStat] = await Promise.all([tryStat(adminIn), source ? tryStat(source) : null])
@@ -117,8 +118,8 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 		if (importanceDB) {
 			console.error(`  importance ← ${importanceDB}`)
 		} else {
-			// Say which of the two absences this is. "No importance column" from a missing artifact and
-			// from `--skip-importance` produce the same DB and want different follow-ups.
+			// Say which of the two absences this is. "No importance column" from a missing artifact
+			// and from `--skip-importance` produce the same DB and want different follow-ups.
 			console.error(
 				options.skipImportance
 					? "  importance: SKIPPED by --skip-importance — the column will be empty"

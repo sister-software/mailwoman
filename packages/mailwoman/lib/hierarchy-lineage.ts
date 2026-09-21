@@ -26,15 +26,16 @@
  */
 
 /**
- * One link of the winner's stamped lineage — the id-containing subset of `@mailwoman/core`'s `Ancestor` (declared
- * locally so this module stays decoder/resolver-import-free, the `admin-coherence.ts` posture).
+ * One link of the winner's stamped lineage — the id-containing subset of `@mailwoman/core`'s `Ancestor`
+ * (declared locally so this module stays decoder/resolver-import-free, the `admin-coherence.ts` posture).
  */
 interface LineageAncestor {
 	id: number | string
 }
 
 /**
- * The subset of a resolved-tree node the assembly reads — structurally satisfied by the decorated `AddressNode`.
+ * The subset of a resolved-tree node the assembly reads — structurally satisfied
+ * by the decorated `AddressNode`.
  */
 export interface HierarchySourceNode {
 	tag: string
@@ -57,9 +58,10 @@ export interface HierarchyEntry extends HierarchyLineageEntry {
 }
 
 /**
- * The admin tags the hierarchy admits, most specific first. The JP tiers (`municipality`, `district`, `prefecture`) sit
- * beside their Latin counterparts in the order the admin ladder uses — `municipality` above `district`, because the
- * anchor below is graded on lineage and an unscoped district can resolve a namesake.
+ * The admin tags the hierarchy admits, most specific first.
+ * The JP tiers (`municipality`, `district`, `prefecture`) sit beside their Latin counterparts
+ * in the order the admin ladder uses — `municipality` above `district`, because the anchor
+ * below is graded on lineage and an unscoped district can resolve a namesake.
  */
 const HIERARCHY_TAGS = [
 	"locality",
@@ -73,7 +75,8 @@ const HIERARCHY_TAGS = [
 ]
 
 /**
- * The most-specific resolved admin node — the lineage anchor for tiers without an admin-ladder pick (#1731 follow-up).
+ * The most-specific resolved admin node — the lineage anchor for tiers without
+ * an admin-ladder pick (#1731 follow-up).
  *
  * The first live `mwdev_diagnose` run caught the defect this fixes: on an address-point result the fallback anchor was
  * the first resolved admin node in tree order — often the region — and an ancestor chain never contains its own
@@ -92,12 +95,12 @@ export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): Hierar
 }
 
 /**
- * Assemble the result `hierarchy` from the resolved tree's admin nodes and annotate each entry's lineage standing
- * against `anchor` (see {@link annotateHierarchyLineage}).
+ * Assemble the result `hierarchy` from the resolved tree's admin nodes and annotate each
+ * entry's lineage standing against `anchor` (see {@link annotateHierarchyLineage}).
  *
- * `streetLocality` is the #1058 register commune: on a street-tier result with no locality entry it fills the locality
- * slot, because a street-tier `city` must come from the register, never from a token of the street name. It carries no
- * place identity, so it is never lineage-graded.
+ * `streetLocality` is the #1058 register commune: on a street-tier result with no locality
+ * entry it fills the locality slot, because a street-tier `city` must come from the register,
+ * never from a token of the street name. It carries no place identity, so it is never lineage-graded.
  */
 export function assembleHierarchy(
 	nodes: readonly HierarchySourceNode[],
@@ -110,8 +113,9 @@ export function assembleHierarchy(
 		.map((n) => ({
 			tag: n.tag,
 			value: n.value.trim(),
-			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`; fall back to the raw
-			// parsed span when a node resolved without one. #1014: consumers should display this rather than `value`.
+			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`;
+			// fall back to the raw parsed span when a node resolved without one. #1014:
+			// consumers should display this rather than `value`.
 			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
 			...(n.placeID ? { placeID: n.placeID } : {}),
@@ -135,8 +139,8 @@ export interface HierarchyLineageEntry {
 }
 
 /**
- * The winner node the entries are graded against — the admin-ladder pick, or the primary resolved node on street-backed
- * tiers (the same anchor `adminCoherenceField` uses).
+ * The winner node the entries are graded against — the admin-ladder pick, or the primary
+ * resolved node on street-backed tiers (the same anchor `adminCoherenceField` uses).
  */
 export interface LineageAnchor {
 	placeID?: string | undefined
@@ -146,9 +150,9 @@ export interface LineageAnchor {
 /**
  * Annotate `entries` in place with `in_winner_lineage` against `anchor`'s stamped ancestor chain.
  *
- * Grading is by place identity (`wof:<id>`), never by name — a name match across instances is exactly the confusion the
- * field exists to expose. Without a sidecar only the anchor's own entry can be vouched for. every other entry stays
- * ungraded rather than guessed.
+ * Grading is by place identity (`wof:<id>`), never by name — a name match across instances
+ * is exactly the confusion the field exists to expose. Without a sidecar only the anchor's
+ * own entry can be vouched for. every other entry stays ungraded rather than guessed.
  */
 export function annotateHierarchyLineage(
 	entries: readonly HierarchyLineageEntry[],

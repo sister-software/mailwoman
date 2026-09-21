@@ -12,8 +12,8 @@ import { resolvePath, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * The layer databases the session attaches when present, keyed by the layer's short id, each as the path segments under
- * the data root.
+ * The layer databases the session attaches when present, keyed by the layer's short id,
+ * each as the path segments under the data root.
  */
 const LAYER_DATABASES = {
 	flood: { label: "Flood zones (EA England)", segments: ["flood", "flood.db"] },

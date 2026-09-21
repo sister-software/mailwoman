@@ -23,8 +23,9 @@ import { sql, type Kysely } from "kysely"
 import type { NameKey } from "#street/normalize"
 
 /**
- * One postal-city → geo-locality edge, keyed exactly by `(name_key, postcode)`. The probe returns the geographic
- * locality directly. the denormalized name/coord avoid a join back to `candidate`.
+ * One postal-city → geo-locality edge, keyed exactly by `(name_key, postcode)`.
+ * The probe returns the geographic locality directly. the denormalized name/coord
+ * avoid a join back to `candidate`.
  */
 export interface PostalCityCandidateTable {
 	/**
@@ -72,9 +73,10 @@ export const POSTAL_CITY_CANDIDATE_COLUMNS = [
 ] as const
 
 /**
- * Create the side-index — a clustered `without rowid` B-tree on `(name_key, postcode)` so the resolve is a single exact
- * probe. Idempotent (`if not exists`); pass a {@link DatabaseClient} (or any `Kysely`) over the candidate DB. The
- * Kysely schema-builder is the house idiom for table creation — see `agents.md` (inline-SQL → Kysely).
+ * Create the side-index — a clustered `without rowid` B-tree on `(name_key, postcode)` so the
+ * resolve is a single exact probe. Idempotent (`if not exists`); pass a {@link DatabaseClient}
+ * (or any `Kysely`) over the candidate DB. The Kysely schema-builder is the house
+ * idiom for table creation — see `agents.md` (inline-SQL → Kysely).
  */
 export async function createPostalCityCandidateTable(db: Kysely<PostalCityCandidateDatabase>): Promise<void> {
 	await db.schema

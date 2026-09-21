@@ -32,9 +32,9 @@ export interface SheetCloseProps {
 /**
  * The × that dismisses a sheet.
  *
- * Exported because the geocoder's panel needs the same control and had grown its own copy: identical markup, the same
- * borrowed class, a separately worded label. One component so they cannot disagree about the glyph, the target or the
- * fact that it is a `button`.
+ * Exported because the geocoder's panel needs the same control and had grown its
+ * own copy: identical markup, the same borrowed class, a separately worded label.
+ * One component so they cannot disagree about the glyph, the target or the fact that it is a `button`.
  */
 export function SheetClose({ label, onClose, className }: SheetCloseProps): ReactNode {
 	return (

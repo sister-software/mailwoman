@@ -19,8 +19,8 @@ import { identityMap } from "#offset-map"
 const INLINE_SPACE = /[ \t]/
 const ANY_SPACE = /[ \t\n\r]/
 /**
- * Trailing noise trimmed off the end of the input: whitespace + the sentence-punctuation that a user commonly appends.
- * Not leading (a leading token is required) and not quotes/brackets/parens.
+ * Trailing noise trimmed off the end of the input: whitespace + the sentence-punctuation that a
+ * user commonly appends. Not leading (a leading token is required) and not quotes/brackets/parens.
  */
 const TRAILING_NOISE = /[ \t\n\r.,;:]/
 
@@ -28,8 +28,9 @@ export interface WhitespaceResult {
 	text: string
 	map: number[]
 	/**
-	 * How many inline-whitespace runs were rewritten — a run longer than one character, or a one-character run that was
-	 * not already an ascii space. A run that was already a single space is not one of them.
+	 * How many inline-whitespace runs were rewritten — a run longer than one
+	 * character, or a one-character run that was not already an ascii space.
+	 * A run that was already a single space is not one of them.
 	 */
 	runs: number
 }
@@ -63,9 +64,9 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 				i += 1
 			}
 
-			// A one-character run counts too when the character is not already an ascii space: the tab→space
-			// rewrite emitted above is a real edit, and `changed` is what decides whether the caller ever
-			// receives it — the early return below hands back the untouched input otherwise.
+			// A one-character run counts too when the character is not already an ascii space:
+			// the tab→space rewrite emitted above is a real edit, and `changed` is what decides whether the
+			// caller ever receives it — the early return below hands back the untouched input otherwise.
 			if (i - start > 1 || ch !== " ") {
 				changed = true
 				runs += 1

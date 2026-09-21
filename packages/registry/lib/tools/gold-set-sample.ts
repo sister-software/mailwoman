@@ -90,8 +90,9 @@ export async function goldSetSample(
 	const { byAddr, kept } = await scanColocatedProviders({ registryPath: REGISTRY, state: STATE, cap: CAP })
 	report?.(`    ${kept} providers at ${byAddr.size} addresses`)
 
-	// Hard pairs: co-located, name-similar (≥τ), distinct NPIs that programmatic truth can't confidently
-	// collapse (not subparts of the same parent). Tag the programmatic verdict so adjudication can grade it.
+	// Hard pairs: co-located, name-similar (≥τ), distinct NPIs that programmatic
+	// truth can't confidently collapse (not subparts of the same parent).
+	// Tag the programmatic verdict so adjudication can grade it.
 	const hard: HardPair[] = []
 
 	for (const { a, b } of colocatedDistinctPairs(byAddr)) {
@@ -114,9 +115,9 @@ export async function goldSetSample(
 			sameAuthorizedOfficial: sameAuth,
 			sameTaxonomy: sameTax,
 			bothSubpartSameParent: false,
-			// Programmatic heuristic verdict (what an entity-level rule would say, beyond the flagged
-			// subparts): same authorized official ⇒ likely one org. different official + different
-			// specialty ⇒ likely distinct. The whole point is to adjudicate whether this is right.
+			// Programmatic heuristic verdict (what an entity-level rule would say, beyond the flagged subparts):
+			// same authorized official ⇒ likely one org. different official + different specialty
+			// ⇒ likely distinct. The whole point is to adjudicate whether this is right.
 			programmaticVerdict: sameAuth ? "same-entity" : "distinct",
 			adjudication: null,
 		})

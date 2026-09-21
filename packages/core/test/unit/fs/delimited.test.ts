@@ -53,9 +53,9 @@ describe("reading an unquoted delimited file", () => {
 	})
 
 	/**
-	 * The defect this module exists for, pinned as the behaviour it must not have. A quote-aware reader over this input
-	 * answers two rows and neither of them is Türkmenabat — and two rows is indistinguishable from a two-row file at
-	 * every later boundary.
+	 * The defect this module exists for, pinned as the behaviour it must not have.
+	 * A quote-aware reader over this input answers two rows and neither of them is Türkmenabat —
+	 * and two rows is indistinguishable from a two-row file at every later boundary.
 	 */
 	it("differs from the default, which swallows the rows between one quote and the next", async () => {
 		const rows: string[][] = []
@@ -75,8 +75,8 @@ describe("the checked read", () => {
 	})
 
 	it("recovers the full count on an input where the default answers short", async () => {
-		// An unterminated quote is the worst case: the default reader runs to the end of the file holding one
-		// open region and answers fewer records than the file has lines.
+		// An unterminated quote is the worst case: the default reader runs to the end of the
+		// file holding one open region and answers fewer records than the file has lines.
 		const truncating = String(dir.resolve("open-quote.txt"))
 
 		await writeLocalTextFile(`1\tAshgabat\t37.95\t58.38\n2\tOvrag "on\t38.23\t55.11\n3\tMary\t37.6\t61.8`, truncating)
@@ -93,16 +93,17 @@ describe("the checked read", () => {
 	})
 
 	/**
-	 * The shortfall branch is defence IN depth and no file content reaches it: with quote handling off, the TSV reader
-	 * yields one record per non-empty line for every input, which is what the cases above establish. It exists to catch a
-	 * reader whose options regress — the defect it was written for was a default rather than a file — so the test drives
+	 * The shortfall branch is defence IN depth and no file content reaches it: with quote
+	 * handling off, the TSV reader yields one record per non-empty line for every input,
+	 * which is what the cases above establish. It exists to catch a reader whose options regress —
+	 * the defect it was written for was a default rather than a file — so the test drives
 	 * the branch directly rather than inventing content that cannot produce it.
 	 */
 	it("raises rather than answering short, naming both counts", async () => {
 		const missing = String(dir.resolve("gone.txt"))
 
-		// A read that cannot happen at all must also not answer an empty array, which is the same failure
-		// wearing a different mask.
+		// A read that cannot happen at all must also not answer an empty array,
+		// which is the same failure wearing a different mask.
 		await expect(readUnquotedTSVChecked(missing)).rejects.toThrow(/Cannot read from the provided source/)
 	})
 })

@@ -74,8 +74,9 @@ const AIRY_1830_A = 6_377_563.396
 const AIRY_1830_B = 6_356_256.909
 
 /**
- * Semi-major axis of the GRS80 ellipsoid, in metres. WGS84's own semi-major axis is identical. the two ellipsoids
- * differ only in the flattening's last digits (~0.1 mm at the pole), far below this module's error budget.
+ * Semi-major axis of the GRS80 ellipsoid, in metres. WGS84's own semi-major axis
+ * is identical. the two ellipsoids differ only in the flattening's last digits
+ * (~0.1 mm at the pole), far below this module's error budget.
  */
 const GRS80_A = 6_378_137
 
@@ -105,8 +106,8 @@ const NATIONAL_GRID_LON0 = (-2 * Math.PI) / 180
 const NATIONAL_GRID_E0 = 400_000
 
 /**
- * Northing of the National Grid's true origin (the "false northing"), in metres. Negative because the true origin sits
- * south-west of the grid's own zero.
+ * Northing of the National Grid's true origin (the "false northing"), in metres.
+ * Negative because the true origin sits south-west of the grid's own zero.
  */
 const NATIONAL_GRID_N0 = -100_000
 
@@ -121,33 +122,37 @@ const ARCSEC_TO_RAD = Math.PI / (180 * 3600)
 const PPM = 1e-6
 
 /**
- * Convergence threshold for the meridional-arc iteration in {@link osgb36GridToAiryLatLon}, in metres of northing. OS's
- * guide specifies 0.01 mm. this is that figure. It bounds the northing residual rather than the latitude, which is why
- * it is expressed in metres and compared against `northing - N0 - M`.
+ * Convergence threshold for the meridional-arc iteration in {@link osgb36GridToAiryLatLon},
+ * in metres of northing. OS's guide specifies 0.01 mm. this is that figure.
+ * It bounds the northing residual rather than the latitude, which is why it is
+ * expressed in metres and compared against `northing - N0 - M`.
  */
 const MERIDIONAL_ARC_TOLERANCE_M = 1e-5
 
 /**
- * Convergence threshold for the cartesian→geodetic latitude iteration in {@link osgb36AiryToWGS84}, in radians. 1e-13
- * rad is ~0.6 µm on the ground — far below anything this module claims, and reached in four or five passes at GB
- * latitudes.
+ * Convergence threshold for the cartesian→geodetic latitude iteration in {@link osgb36AiryToWGS84},
+ * in radians. 1e-13 rad is ~0.6 µm on the ground — far below anything this module claims,
+ * and reached in four or five passes at GB latitudes.
  */
 const GEODETIC_LATITUDE_TOLERANCE_RAD = 1e-13
 
 /**
- * The seven-parameter Helmert transformation taking OSGB36 (Airy 1830) geocentric cartesian coordinates to WGS84.
+ * The seven-parameter Helmert transformation taking OSGB36 (Airy 1830) geocentric
+ * cartesian coordinates to WGS84.
  *
  * OS publishes this transform in the ETRS89/WGS84 → OSGB36 direction (guide table 4), as `tx = -446.448, ty = +125.157,
  * tz = -542.060, s = +20.4894 ppm, rx = -0.1502", ry = -0.2470", rz = -0.8421"`. We need the other direction, so every
- * parameter is negated — valid to well inside the transform's own metre-scale error because the rotations are
- * microradian-scale and the second-order terms of a proper inversion are sub-millimetre.
+ * parameter is negated — valid to well inside the transform's own metre-scale error because the
+ * rotations are microradian-scale and the second-order terms of a proper inversion are sub-millimetre.
  *
- * The rotation convention is **Position Vector** (epsg method 1033), not Coordinate Frame Rotation (epsg 1032). The two
- * differ only in the sign of the three rotations, which is why citing the method code matters more than it looks: paste
- * these numbers into a library expecting 1032 and every result moves by roughly 20 m with no error raised.
+ * The rotation convention is **Position Vector** (epsg method 1033), not Coordinate
+ * Frame Rotation (epsg 1032). The two differ only in the sign of the three rotations,
+ * which is why citing the method code matters more than it looks: paste these numbers into
+ * a library expecting 1032 and every result moves by roughly 20 m with no error raised.
  *
- * Getting a sign wrong here does not produce a subtly worse answer. it produces a coordinate tens to hundreds of metres
- * out, in a consistent direction — which reads as a plausible coordinate. That is what the Annexe D test is for.
+ * Getting a sign wrong here does not produce a subtly worse answer. it produces a
+ * coordinate tens to hundreds of metres out, in a consistent direction — which reads
+ * as a plausible coordinate. That is what the Annexe D test is for.
  */
 const OSGB36_TO_WGS84_HELMERT = {
 	/**
@@ -181,8 +186,9 @@ const OSGB36_TO_WGS84_HELMERT = {
 } as const
 
 /**
- * A geodetic position on an unspecified ellipsoid, in degrees. Which ellipsoid is the caller's business — the whole
- * point of this module is that the same numbers mean different places on Airy 1830 and on GRS80.
+ * A geodetic position on an unspecified ellipsoid, in degrees.
+ * Which ellipsoid is the caller's business — the whole point of this module is that
+ * the same numbers mean different places on Airy 1830 and on GRS80.
  */
 export interface GeodeticLatLon {
 	/**
@@ -210,11 +216,12 @@ export interface NationalGridPoint {
 }
 
 /**
- * Convert National Grid eastings/northings to OSGB36 geodetic lat/lon on the Airy 1830 ellipsoid, by Redfearn's inverse
- * transverse Mercator series.
+ * Convert National Grid eastings/northings to OSGB36 geodetic lat/lon on the Airy
+ * 1830 ellipsoid, by Redfearn's inverse transverse Mercator series.
  *
- * This is the exact half of the pipeline — pure projection algebra, no datum shift. The result is still on Airy 1830,
- * so it is not a WGS84 coordinate and must not be handed to anything expecting one. feed it to
+ * This is the exact half of the pipeline — pure projection algebra, no datum shift.
+ * The result is still on Airy 1830, so it is not a WGS84 coordinate and must not
+ * be handed to anything expecting one. feed it to
  * {@link osgb36AiryToWGS84}. Exported separately so the projection can be tested against OS's worked example
  * independently of the Helmert, which is the only way to tell a projection bug from a datum-shift bug.
  */
@@ -233,8 +240,8 @@ export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint)
 	const n2 = n * n
 	const n3 = n2 * n
 
-	// Iterate latitude until the meridional arc `M` matches the northing. OS's guide specifies a 0.01 mm
-	// threshold. it converges in three or four passes anywhere in GB.
+	// Iterate latitude until the meridional arc `M` matches the northing.
+	// OS's guide specifies a 0.01 mm threshold. it converges in three or four passes anywhere in GB.
 	let lat = lat0
 	let m = 0
 
@@ -294,10 +301,11 @@ export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint)
 /**
  * Convert OSGB36 geodetic lat/lon (Airy 1830) to WGS84 lat/lon (GRS80) via the seven-parameter Helmert.
  *
- * This is the approximate half — see the module docstring for the ±5 m budget and when it stops being acceptable.
- * Heights are not modelled: the input is treated as sitting on the Airy ellipsoid and the output's ellipsoidal height
- * is discarded. For a horizontal postcode centroid that costs well under a metre. for anything vertical it is wrong by
- * the ~50 m geoid–ellipsoid separation over GB, so this function does not pretend to return a height.
+ * This is the approximate half — see the module docstring for the ±5 m budget and when it stops being
+ * acceptable. Heights are not modelled: the input is treated as sitting on the Airy ellipsoid
+ * and the output's ellipsoidal height is discarded. For a horizontal postcode centroid that
+ * costs well under a metre. for anything vertical it is wrong by the ~50 m geoid–ellipsoid
+ * separation over GB, so this function does not pretend to return a height.
  */
 export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): GeodeticLatLon {
 	const { tx, ty, tz, scalePPM, rx, ry, rz } = OSGB36_TO_WGS84_HELMERT
@@ -348,13 +356,16 @@ export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): Geod
 }
 
 /**
- * Convert a British National Grid (epsg:27700) easting/northing straight to WGS84 (epsg:4326) lat/lon — the composition
- * of {@link osgb36GridToAiryLatLon} and {@link osgb36AiryToWGS84}, and the function callers actually want.
+ * Convert a British National Grid (epsg:27700) easting/northing straight to
+ * WGS84 (epsg:4326) lat/lon — the composition of {@link osgb36GridToAiryLatLon}
+ * and {@link osgb36AiryToWGS84}, and the function callers actually want.
  *
- * Accurate to about ±5 m across GB (see the module docstring). Does not validate that the input lies within the grid's
- * GB extent: `{easting: 0, northing: 0}` is a real point in the Atlantic south-west of the Scillies, and Code-Point
- * Open uses exactly that to mean "no coordinate available" (its 865 positional-quality-90 rows). Callers must filter
- * those rows themselves — a zero here is a legitimate coordinate, so this module cannot tell the difference.
+ * Accurate to about ±5 m across GB (see the module docstring).
+ * Does not validate that the input lies within the grid's GB extent: `{easting: 0, northing: 0}`
+ * is a real point in the Atlantic south-west of the Scillies, and Code-Point Open uses
+ * exactly that to mean "no coordinate available" (its 865 positional-quality-90 rows).
+ * Callers must filter those rows themselves — a zero here is a legitimate coordinate,
+ * so this module cannot tell the difference.
  */
 export function osgb36ToWGS84(point: NationalGridPoint): GeodeticLatLon {
 	return osgb36AiryToWGS84(osgb36GridToAiryLatLon(point))

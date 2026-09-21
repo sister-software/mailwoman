@@ -153,8 +153,8 @@ describe("nsulAttribution", () => {
 })
 
 /**
- * The fixture `uprn.db`: three points. uprn 5 is deliberately absent so a register row naming it becomes
- * `skipped-no-coordinate`.
+ * The fixture `uprn.db`: three points. uprn 5 is deliberately absent so a register
+ * row naming it becomes `skipped-no-coordinate`.
  */
 const UPRN_POINTS = [
 	{ uprn: 14_000_003, lat: 51.3742681, lon: -0.8682259 },
@@ -199,8 +199,9 @@ async function writeFixtureUPRNDatabase(dir: string): Promise<string> {
 }
 
 /**
- * Eleven region files in the wild file's exact shape — BOM-prefixed header, crlf terminators — with the rows spread
- * over two regions and the other nine header-only, so the region-set check and the per-region counts are exercised.
+ * Eleven region files in the wild file's exact shape — BOM-prefixed header,
+ * crlf terminators — with the rows spread over two regions and the other nine header-only,
+ * so the region-set check and the per-region counts are exercised.
  */
 async function writeFixtureRegions(
 	dir: string,

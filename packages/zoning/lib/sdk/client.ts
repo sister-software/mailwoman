@@ -55,19 +55,21 @@ export const HUB_DOWNLOAD_API_BASE_URL = "https://hub.arcgis.com/api/download/v1
 /**
  * Minimum spacing between requests to the Department's hosts, in milliseconds.
  *
- * The Department publishes no rate limit for this service, so this is courtesy pacing rather than a published ceiling —
- * stated as such rather than dressed up as a measured limit. Two requests a second is far below anything a hosted
- * ArcGIS feature service is provisioned for and costs a build nothing: the acquisition path makes single-digit numbers
- * of calls and the verification a few dozen.
+ * The Department publishes no rate limit for this service, so this is courtesy pacing
+ * rather than a published ceiling — stated as such rather than dressed up as a measured limit.
+ * Two requests a second is far below anything a hosted ArcGIS feature service is
+ * provisioned for and costs a build nothing: the acquisition path makes single-digit
+ * numbers of calls and the verification a few dozen.
  */
 export const GZT_MIN_REQUEST_INTERVAL_MS = 500
 
 /**
  * How long a cached metadata response stays fresh.
  *
- * Six hours, chosen against the product's own cadence rather than a wall-clock intuition. The Department publishes no
- * maintenance-frequency statement at all. what is observable is that the item's `modified` date and the data's latest
- * `UPLOAD_DATE` move a handful of times a year, so a shorter TTL adds nothing.
+ * Six hours, chosen against the product's own cadence rather than a wall-clock intuition.
+ * The Department publishes no maintenance-frequency statement at all. what is
+ * observable is that the item's `modified` date and the data's latest `UPLOAD_DATE`
+ * move a handful of times a year, so a shorter TTL adds nothing.
  */
 const GZT_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
@@ -88,8 +90,8 @@ export interface ZoningItemRecord {
 	 */
 	accessInformation: string
 	/**
-	 * `licenseInfo`, verbatim, with its markup stripped. Read rather than trusted from the constant, so a change in the
-	 * terms is visible at build time.
+	 * `licenseInfo`, verbatim, with its markup stripped. Read rather than trusted from
+	 * the constant, so a change in the terms is visible at build time.
 	 */
 	licenseInfo: string
 	/**
@@ -165,9 +167,9 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	/**
 	 * The feature count the service reports, and the epsg code it declares.
 	 *
-	 * The second path in the build's agreement check: the same authority, a different distribution channel. An archive
-	 * whose feature count disagrees with the live service is not a file this build should be writing into a sealed
-	 * artifact.
+	 * The second path in the build's agreement check: the same authority, a different
+	 * distribution channel. An archive whose feature count disagrees with the live service
+	 * is not a file this build should be writing into a sealed artifact.
 	 */
 	public async readServiceIdentity(): Promise<{ featureCount: number; epsg: number; maxRecordCount: number }> {
 		const { data } = await this.fetch<{
@@ -203,9 +205,10 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	/**
 	 * The sum of the Department's own `Shape__Area` column, in square metres.
 	 *
-	 * The one number that settles the hole question, and it has to come from the service because the bulk export drops
-	 * the column. Read with the holes the rings total 5,444.5 km²; read without them, 5,666.6 km². The difference is 4.1%
-	 * of area and, far more importantly, a ray cast that answers "inside" for every location a plan carved out.
+	 * The one number that settles the hole question, and it has to come from the service
+	 * because the bulk export drops the column. Read with the holes the rings total 5,444.5 km²;
+	 * read without them, 5,666.6 km². The difference is 4.1% of area and, far more importantly,
+	 * a ray cast that answers "inside" for every location a plan carved out.
 	 */
 	public async readShapeAreaSum(): Promise<number> {
 		const { data } = await this.fetch<{ features?: Array<{ attributes?: Record<string, number> }> }>({
@@ -236,11 +239,11 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	/**
 	 * Ask the Hub for a bulk GeoJSON export and return the URL it answers with.
 	 *
-	 * `redirect=false` asks for the job record rather than a redirect, so this call reads a small JSON body. The URL it
-	 * returns is the one that 302s — see {@link downloadZoningExport}.
+	 * `redirect=false` asks for the job record rather than a redirect, so this call reads a small
+	 * JSON body. The URL it returns is the one that 302s — see {@link downloadZoningExport}.
 	 *
-	 * @throws {Error} When the job is not `Completed`, or names no result URL. A partial job that answered with a status
-	 *   and no URL would otherwise present as an empty download.
+	 * @throws {Error} When the job is not `Completed`, or names no result URL.
+	 *   A partial job that answered with a status and no URL would otherwise present as an empty download.
 	 */
 	public async readExportURL(): Promise<string> {
 		const { data } = await this.fetch<{ status?: string; resultUrl?: string; message?: string }>({
@@ -265,9 +268,10 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	/**
 	 * The features the service publishes near a point — the verification's second path.
 	 *
-	 * `outSR=4326` on the query path, because the service answers in Irish Transverse Mercator otherwise and the
-	 * comparison is against coordinates this package reprojected itself. The service answers a bounding box rather than a
-	 * point, so the containment decision is made against the returned rings by the caller.
+	 * `outSR=4326` on the query path, because the service answers in Irish Transverse Mercator
+	 * otherwise and the comparison is against coordinates this package reprojected itself.
+	 * The service answers a bounding box rather than a point, so the containment
+	 * decision is made against the returned rings by the caller.
 	 */
 	public async readFeaturesNear(
 		latitude: number,
@@ -306,11 +310,13 @@ export class GZTClient extends APIClient<APIClientConfig> {
 /**
  * Refuse an attribution the published item no longer matches.
  *
- * Read AT build time rather than trusted from the constant. The constant is what the artifact is stamped with offline.
- * this is the live value it is reconciled with when the network is available. The check is on the department'S credit
- * line and on the Tailte Éireann clause separately, because they are two different statements and the second is the one
- * that holds this layer at `build-local`: an item that dropped it would be a licence change worth hearing about, and an
- * item that dropped only the credit line would be a different one.
+ * Read AT build time rather than trusted from the constant.
+ * The constant is what the artifact is stamped with offline. this is the live value it
+ * is reconciled with when the network is available. The check is on the department'S
+ * credit line and on the Tailte Éireann clause separately, because they are two
+ * different statements and the second is the one that holds this layer at `build-local`:
+ * an item that dropped it would be a licence change worth hearing about, and an item
+ * that dropped only the credit line would be a different one.
  *
  * @throws {Error} When either half of {@link GZT_ATTRIBUTION} is no longer in the item's own fields.
  */

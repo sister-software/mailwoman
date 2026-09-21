@@ -24,7 +24,7 @@ export const PublicPlanetaryEnvSchema = z.object({
 })
 
 /**
- * The live build environment over core's public view. A missing or unknown `PLANETARY_BODY` fails the build with the
- * schema's message.
+ * The live build environment over core's public view. A missing or unknown
+ * `PLANETARY_BODY` fails the build with the schema's message.
  */
 export const $public = liveEnv(PublicPlanetaryEnvSchema, corePublic)

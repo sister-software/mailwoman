@@ -30,9 +30,10 @@
  */
 
 /**
- * Canonical USPS secondary unit designator → recognized variants. The first variant is the approved USPS abbreviation.
- * Keys + values uppercase per the publication. The designators marked by USPS as "requires a secondary number" (APT,
- * bldg, FL, …) and the standalone ones (bsmt, lbby, PH, …) are both included — synthesis treats them uniformly.
+ * Canonical USPS secondary unit designator → recognized variants.
+ * The first variant is the approved USPS abbreviation. Keys + values uppercase per the publication.
+ * The designators marked by USPS as "requires a secondary number" (APT, bldg, FL, …) and the
+ * standalone ones (bsmt, lbby, PH, …) are both included — synthesis treats them uniformly.
  */
 export const US_UNIT_DESIGNATOR_VARIANTS = {
 	APARTMENT: ["APT", "APRT", "APMT"],
@@ -67,8 +68,9 @@ export const US_UNIT_DESIGNATOR_VARIANTS = {
 export type USUnitDesignator = keyof typeof US_UNIT_DESIGNATOR_VARIANTS
 
 /**
- * Inverse lookup: every variant abbreviation or full canonical word → its canonical key, built once at module load,
- * lowercase-keyed for case-insensitive matching (`apt` → `"apartment"`, `ste` → `"suite"`, `suite` → `"suite"`).
+ * Inverse lookup: every variant abbreviation or full canonical word → its canonical key,
+ * built once at module load, lowercase-keyed for case-insensitive matching
+ * (`apt` → `"apartment"`, `ste` → `"suite"`, `suite` → `"suite"`).
  */
 export const US_UNIT_DESIGNATOR_LOOKUP: ReadonlyMap<string, USUnitDesignator> = (() => {
 	const out = new Map<string, USUnitDesignator>()
@@ -95,9 +97,10 @@ export const US_UNIT_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USUnitDesignator
 ) as Readonly<Record<USUnitDesignator, string>>
 
 /**
- * Canonical designators Appendix C2 marks as "Requires a Secondary Number" — the designator must be followed by an
- * identifier ("Apt 4B", "Rm 12"), never appearing bare. The remaining designators (basement, front, lobby, lower,
- * office, penthouse, rear, side, upper) may stand alone with no trailing identifier. Verbatim from USPS Pub-28 C2. see
+ * Canonical designators Appendix C2 marks as "Requires a Secondary Number" —
+ * the designator must be followed by an identifier ("Apt 4B", "Rm 12"), never appearing bare.
+ * The remaining designators (basement, front, lobby, lower, office, penthouse, rear, side, upper)
+ * may stand alone with no trailing identifier. Verbatim from USPS Pub-28 C2. see
  * the module header for provenance (#1100).
  */
 export const US_UNIT_DESIGNATOR_REQUIRES_RANGE: Readonly<Record<USUnitDesignator, boolean>> = {
@@ -128,9 +131,10 @@ export const US_UNIT_DESIGNATOR_REQUIRES_RANGE: Readonly<Record<USUnitDesignator
 } as const satisfies Record<USUnitDesignator, boolean>
 
 /**
- * If the first whitespace-separated word of `unit` is a known USPS designator variant, return the canonical key and the
- * matched word. Returns null if the leading word isn't a known designator (e.g. a bare `"4B"` or `"#210"`).
- * Leading-word-only — designators introduce the unit, unlike street suffixes which trail.
+ * If the first whitespace-separated word of `unit` is a known USPS designator variant,
+ * return the canonical key and the matched word. Returns null if the leading word isn't
+ * a known designator (e.g. a bare `"4B"` or `"#210"`). Leading-word-only —
+ * designators introduce the unit, unlike street suffixes which trail.
  */
 export function matchLeadingDesignator(unit: string): { canonical: USUnitDesignator; matched: string } | null {
 	const trimmed = unit.trim()
@@ -145,7 +149,8 @@ export function matchLeadingDesignator(unit: string): { canonical: USUnitDesigna
 }
 
 /**
- * Result of {@link matchLeadingDesignatorWithRange}: the leading designator plus its optional secondary range.
+ * Result of {@link matchLeadingDesignatorWithRange}: the leading designator
+ * plus its optional secondary range.
  */
 export interface UnitDesignatorRangeMatch {
 	/**
@@ -157,9 +162,10 @@ export interface UnitDesignatorRangeMatch {
 	 */
 	matched: string
 	/**
-	 * The secondary range/identifier token immediately following the designator, i.e. "4B" in "Apt 4B". Undefined when
-	 * the designator appears standalone (e.g. bare "Basement"). This module does not validate the range's own shape —
-	 * numeric, letter, or alphanumeric ranges are all USPS-valid.
+	 * The secondary range/identifier token immediately following the designator, i.e. "4B"
+	 * in "Apt 4B". Undefined when the designator appears standalone (e.g. bare "Basement").
+	 * This module does not validate the range's own shape — numeric, letter,
+	 * or alphanumeric ranges are all USPS-valid.
 	 */
 	range: string | undefined
 	/**
@@ -170,9 +176,10 @@ export interface UnitDesignatorRangeMatch {
 }
 
 /**
- * Like {@link matchLeadingDesignator}, but also captures the secondary range/identifier token immediately following the
- * designator, if present ("Apt 4B" → designator "apartment", range "4B"; "Basement" → range `undefined`). Mirrors
- * `street-suffix`/`street-directional`'s designator+adjacent-token matchers.
+ * Like {@link matchLeadingDesignator}, but also captures the secondary
+ * range/identifier token immediately following the designator, if present
+ * ("Apt 4B" → designator "apartment", range "4B"; "Basement" → range `undefined`).
+ * Mirrors `street-suffix`/`street-directional`'s designator+adjacent-token matchers.
  */
 export function matchLeadingDesignatorWithRange(unit: string): UnitDesignatorRangeMatch | null {
 	const trimmed = unit.trim()
@@ -207,8 +214,8 @@ export interface UnitDesignatorMatch<D extends USUnitDesignator = USUnitDesignat
 }
 
 /**
- * Look up a USPS secondary unit designator (by canonical word, abbreviation, or any variant) and its approved
- * abbreviation.
+ * Look up a USPS secondary unit designator (by canonical word, abbreviation, or any variant)
+ * and its approved abbreviation.
  */
 export function lookupUnitDesignator<D extends USUnitDesignator>(designator: D): UnitDesignatorMatch<D>
 export function lookupUnitDesignator(input: string | null | undefined): UnitDesignatorMatch | null
@@ -223,16 +230,17 @@ export function lookupUnitDesignator(input: string | null | undefined): UnitDesi
 }
 
 /**
- * True when a token is any USPS secondary unit designator or abbreviation (case-insensitive) — `"Apt"`, `"STE"`,
- * `"floor"`.
+ * True when a token is any USPS secondary unit designator or abbreviation
+ * (case-insensitive) — `"Apt"`, `"STE"`, `"floor"`.
  */
 export function isUnitDesignatorToken(input: unknown): boolean {
 	return typeof input === "string" && US_UNIT_DESIGNATOR_LOOKUP.has(input.trim().toLowerCase())
 }
 
 /**
- * Alias of {@link isUnitDesignatorToken} under Pub-28's own term ("secondary unit designator"). Added for #1100 so
- * secondary-address call sites can spell the predicate after the publication's vocabulary.
+ * Alias of {@link isUnitDesignatorToken} under Pub-28's own term ("secondary unit designator").
+ * Added for #1100 so secondary-address call sites can spell the predicate
+ * after the publication's vocabulary.
  */
 export function isSecondaryUnitDesignatorToken(input: unknown): boolean {
 	return isUnitDesignatorToken(input)

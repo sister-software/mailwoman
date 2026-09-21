@@ -23,8 +23,8 @@ interface PlaceFixture {
 	lat: number
 	lon: number
 	/**
-	 * `-log10(population + 1)` negated — i.e. `log10(population + 1)`. Bigger = more populous, matching the resolver's
-	 * `prominence` on the candidate backend.
+	 * `-log10(population + 1)` negated — i.e. `log10(population + 1)`.
+	 * Bigger = more populous, matching the resolver's `prominence` on the candidate backend.
 	 */
 	prominence: number
 }
@@ -63,8 +63,8 @@ function treeOf(winner: PlaceFixture, alternatives: PlaceFixture[]): AddressTree
 const BARE: QueryKind[] = ["locality_only", "bare_toponym", "vague"]
 
 /**
- * The 144-bearer namesake class. log10 populations 5.10 / 5.05 → a 0.05 margin, an order of magnitude under the
- * threshold.
+ * The 144-bearer namesake class. log10 populations 5.10 / 5.05 → a 0.05 margin,
+ * an order of magnitude under the threshold.
  */
 const SPRINGFIELD = treeOf({ name: "Springfield", lat: 37.2153, lon: -93.2982, prominence: 5.1 }, [
 	{ name: "Springfield", lat: 42.1015, lon: -72.5898, prominence: 5.05 },
@@ -95,9 +95,10 @@ describe("declaredAmbiguityMarker", () => {
 	})
 
 	test("collapses the coincident WOF twin before measuring — the trap that would fire on every capital", () => {
-		// Paris the `locality` and Paris the `localadmin`: same city, same population, ~0.3 km apart. A RAW top-2 margin
-		// here is 0.01, which is under the threshold. the 10 km collapse is what makes the number mean anything. Without it
-		// this assertion returns a marker and every major city in the world reads as ambiguous.
+		// Paris the `locality` and Paris the `localadmin`: same city, same population, ~0.3 km apart.
+		// A RAW top-2 margin here is 0.01, which is under the threshold. the 10 km collapse
+		// is what makes the number mean anything. Without it this assertion returns a marker
+		// and every major city in the world reads as ambiguous.
 		const tree = treeOf({ name: "Paris", lat: 48.8566, lon: 2.3522, prominence: 6.32 }, [
 			{ name: "Paris", placetype: "localadmin", lat: 48.8589, lon: 2.347, prominence: 6.31 },
 			{ name: "Paris", lat: 33.6609, lon: -95.5555, prominence: 4.4 },
@@ -141,13 +142,15 @@ describe("declaredAmbiguityMarker", () => {
 /**
  * `coarserAnswerMarker` — the other direction of the same reading.
  *
- * `declaredAmbiguityMarker` above reports too many answers. This reports too FEW, and it exists because the two were
- * asymmetric: `301 College Ave #101, Athens, GA 30601` returned the Athens label centroid at `admin`, 1,627 m from the
- * rooftop that `301 College Ave, Athens, GA 30601` reaches at `address_point`, and nothing in the response separated it
- * from a correct answer to `Athens, GA`.
+ * `declaredAmbiguityMarker` above reports too many answers.
+ * This reports too FEW, and it exists because the two were asymmetric:
+ * `301 College Ave #101, Athens, GA 30601` returned the Athens label centroid at `admin`,
+ * 1,627 m from the rooftop that `301 College Ave, Athens, GA 30601` reaches at `address_point`,
+ * and nothing in the response separated it from a correct answer to `Athens, GA`.
  *
- * The false-positive cases are the ones that shape the table. A house number on an interpolated answer is located —
- * interpolation is how a house number is placed along a segment — and a unit is located by nothing in this repository,
+ * The false-positive cases are the ones that shape the table.
+ * A house number on an interpolated answer is located — interpolation is how a house
+ * number is placed along a segment — and a unit is located by nothing in this repository,
  * so a floor for either would fire on correct answers.
  */
 describe("coarserAnswerMarker", () => {
@@ -177,8 +180,9 @@ describe("coarserAnswerMarker", () => {
 	})
 
 	test("an INTERPOLATED answer locates a house number, so it raises nothing", () => {
-		// `129 E Burr Oak St, Athens, MI` — 124 m uncertainty, and the house is placed as precisely as the tier allows.
-		// The first version of the floor table read `address_point` here and reported a shortfall on a correct answer.
+		// `129 E Burr Oak St, Athens, MI` — 124 m uncertainty, and the house is placed
+		// as precisely as the tier allows. The first version of the floor table read
+		// `address_point` here and reported a shortfall on a correct answer.
 		expect(
 			coarserAnswerMarker({
 				kinds: STRUCTURED,
@@ -205,8 +209,8 @@ describe("coarserAnswerMarker", () => {
 	})
 
 	test("a postcode alone is met by a street-grade answer", () => {
-		// A postcode centroid is street-grade in most address systems. A finer floor would report a shortfall on every
-		// correct Dutch result.
+		// A postcode centroid is street-grade in most address systems.
+		// A finer floor would report a shortfall on every correct Dutch result.
 		expect(
 			coarserAnswerMarker({ kinds: STRUCTURED, components: { postcode: "30601" }, reachedTier: "street" })
 		).toBeNull()

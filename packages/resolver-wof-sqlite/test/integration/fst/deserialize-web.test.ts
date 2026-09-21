@@ -58,9 +58,10 @@ interface BuildOpts {
 }
 
 /**
- * Builds a minimal valid FST binary buffer in the v1/v2 layout. Mirrors fst-serialize.ts closely enough to round-trip
- * through the web deserializer, but kept hand-rolled so the test asserts the format the reader actually expects (not
- * whatever the Node serializer happens to emit at v4).
+ * Builds a minimal valid FST binary buffer in the v1/v2 layout.
+ * Mirrors fst-serialize.ts closely enough to round-trip through the web deserializer,
+ * but kept hand-rolled so the test asserts the format the reader actually expects
+ * (not whatever the Node serializer happens to emit at v4).
  */
 function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array {
 	const version = opts.version ?? 2
@@ -338,9 +339,9 @@ test("deserializeFSTWeb: version 0 is rejected", () => {
 })
 
 test("deserializeFSTWeb: a version above MAX_VERSION (now 5) is rejected", () => {
-	// MAX_VERSION tracks the serializer's version (5, the two-score split): v3/v4/v5 parse, v6+ is
-	// rejected. This assertion is why the check stops drifting — it fails the moment the serializer
-	// bumps and the reader's check does not.
+	// MAX_VERSION tracks the serializer's version (5, the two-score split):
+	// v3/v4/v5 parse, v6+ is rejected. This assertion is why the check stops drifting —
+	// it fails the moment the serializer bumps and the reader's check does not.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE)
 	new DataView(bytes.buffer).setUint16(4, 6, true)
 	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 6 unsupported/i)

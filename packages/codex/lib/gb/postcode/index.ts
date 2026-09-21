@@ -30,9 +30,10 @@
 import type { Tagged } from "type-fest"
 
 /**
- * A UK postcode: variable-length alphanumeric, outward + inward (`SW1A 1AA`, `M1 1AE`). The canonical form carries
- * exactly one space before the final three characters. Unlike a US/DE/FR postcode, the shape is not a fixed-width
- * numeric string — see {@link UK_POSTCODE_PATTERN}.
+ * A UK postcode: variable-length alphanumeric, outward + inward (`SW1A 1AA`, `M1 1AE`).
+ * The canonical form carries exactly one space before the final three characters.
+ * Unlike a US/DE/FR postcode, the shape is not a fixed-width numeric string —
+ * see {@link UK_POSTCODE_PATTERN}.
  *
  * @category Postal
  * @type string
@@ -47,16 +48,18 @@ const MIN_POSTCODE_LENGTH = 5
 export type Postcode = Tagged<string, "UkPostcode">
 
 /**
- * UK postcode shape. A permissive form of the Royal Mail / UK-gov regex: one or two leading letters (the area), a
- * district digit, an optional district letter-or-digit, then the inward sector digit and two unit letters, with the
- * inward space optional so an un-spaced `SW1A1AA` still validates. The full UK-gov pattern additionally whitelists the
- * British Overseas Territory codes (`ascn`, `sthl`, `bbnd`, …); those are rare enough to leave to the gazetteer.
+ * UK postcode shape. A permissive form of the Royal Mail / UK-gov regex: one or two leading letters
+ * (the area), a district digit, an optional district letter-or-digit, then the inward sector digit
+ * and two unit letters, with the inward space optional so an un-spaced `SW1A1AA` still validates.
+ * The full UK-gov pattern additionally whitelists the British Overseas Territory codes
+ * (`ascn`, `sthl`, `bbnd`, …); those are rare enough to leave to the gazetteer.
  */
 export const UK_POSTCODE_PATTERN = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i
 
 /**
- * Normalize a UK postcode surface form: uppercase, strip surrounding whitespace, and ensure exactly one space before
- * the final three characters (the inward code). `sw1a1aa` → `SW1A 1AA`, `M11AE` → `M1 1AE`, `b33 8th` → `B33 8TH`.
+ * Normalize a UK postcode surface form: uppercase, strip surrounding whitespace,
+ * and ensure exactly one space before the final three characters (the inward code).
+ * `sw1a1aa` → `SW1A 1AA`, `M11AE` → `M1 1AE`, `b33 8th` → `B33 8TH`.
  * Returns null if the result is not a valid postcode.
  */
 export function normalizeUkPostcode(raw: unknown): Postcode | null {
@@ -78,8 +81,8 @@ export function isUkPostcode(input: unknown): input is Postcode {
 }
 
 /**
- * The outward code — the part before the space (area + district), e.g. `SW1A 1AA` → `SW1A`, `M1 1AE` → `M1`. Normalizes
- * first so an un-spaced input still cleaves correctly. null if invalid.
+ * The outward code — the part before the space (area + district), e.g. `SW1A 1AA` → `SW1A`,
+ * `M1 1AE` → `M1`. Normalizes first so an un-spaced input still cleaves correctly. null if invalid.
  */
 export function outwardCode(pc: unknown): string | null {
 	const normalized = normalizeUkPostcode(pc)
@@ -90,8 +93,8 @@ export function outwardCode(pc: unknown): string | null {
 }
 
 /**
- * The inward code — the three characters after the space (sector + unit), e.g. `SW1A 1AA` → `1AA`, `M1 1AE` → `1AE`.
- * Null if invalid.
+ * The inward code — the three characters after the space (sector + unit),
+ * e.g. `SW1A 1AA` → `1AA`, `M1 1AE` → `1AE`. Null if invalid.
  */
 export function inwardCode(pc: unknown): string | null {
 	const normalized = normalizeUkPostcode(pc)
@@ -102,9 +105,10 @@ export function inwardCode(pc: unknown): string | null {
 }
 
 /**
- * The postcode area — the leading one or two letters of the outward code, the Royal Mail routing region named after a
- * sorting town: `SW1A 1AA` → `SW`, `M1 1AE` → `M`, `B33 8TH` → `B`. This is the key into `postcode-area.ts`'s
- * area→country map. Null if the input is not a valid postcode.
+ * The postcode area — the leading one or two letters of the outward code, the Royal
+ * Mail routing region named after a sorting town: `SW1A 1AA` → `SW`, `M1 1AE` → `M`,
+ * `B33 8TH` → `B`. This is the key into `postcode-area.ts`'s area→country map.
+ * Null if the input is not a valid postcode.
  */
 export function postcodeArea(pc: unknown): string | null {
 	const outward = outwardCode(pc)

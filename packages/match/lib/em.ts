@@ -45,7 +45,8 @@ export interface EmOptions {
 	 */
 	maxIterations?: number
 	/**
-	 * Convergence tolerance on the largest parameter change between iterations. Default 1e-6.
+	 * Convergence tolerance on the largest parameter change between
+	 * iterations. Default 1e-6.
 	 */
 	tolerance?: number
 	/**
@@ -71,9 +72,10 @@ export interface EmResult<R> {
 }
 
 /**
- * Estimate `m`/`u` and the prior `λ` from unlabeled agreement patterns via EM. The patterns are per-comparison level
- * indices (as produced by {@link agreementPattern}); a `-1` (missing) field contributes no evidence to either class. The
- * model's existing level `m`/`u` seed the iteration.
+ * Estimate `m`/`u` and the prior `λ` from unlabeled agreement patterns via EM.
+ * The patterns are per-comparison level indices (as produced by {@link agreementPattern});
+ * a `-1` (missing) field contributes no evidence to either class.
+ * The model's existing level `m`/`u` seed the iteration.
  */
 export function estimateParameters<R>(
 	model: FellegiSunterModel<R>,

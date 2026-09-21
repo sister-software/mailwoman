@@ -30,8 +30,8 @@ function spacePostcode(pc: string): string {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const nlPostcodeRecipe: CorpusRecipe = {
 	name: "nl-postcode",
@@ -61,8 +61,8 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Spacing rotates so the model sees both the failing spaced form and the unspaced form. the
-			// components.postcode value must match the raw form so alignment tags the right span.
+			// Spacing rotates so the model sees both the failing spaced form and the unspaced form.
+			// the components.postcode value must match the raw form so alignment tags the right span.
 			const spaced = read % 2 === 0
 			const postcode = spaced ? spacePostcode(rawPostcode) : rawPostcode
 

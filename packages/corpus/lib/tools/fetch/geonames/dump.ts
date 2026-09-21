@@ -34,8 +34,8 @@ const HTTP_NOT_FOUND = 404
 const SLUG = "geonames-dump"
 
 /**
- * GeoNames' gazetteer-dump directory — one zip per ISO alpha-2 code holding `<CC>.txt`, plus `countryInfo.txt` as a
- * bare text file.
+ * GeoNames' gazetteer-dump directory — one zip per ISO alpha-2 code holding `<CC>.txt`,
+ * plus `countryInfo.txt` as a bare text file.
  */
 const BASE_URL = "https://download.geonames.org/export/dump"
 
@@ -75,32 +75,34 @@ export interface GeonamesDumpManifest {
 	 */
 	skipped_present: string[]
 	/**
-	 * Countries in the source catalog that the source's dump directory nonetheless 404s — a fact about the source,
-	 * recorded so a later reader does not spend the fetch to rediscover it.
+	 * Countries in the source catalog that the source's dump directory nonetheless 404s —
+	 * a fact about the source, recorded so a later reader does not spend the fetch to rediscover it.
 	 */
 	unavailable: string[]
 	/**
-	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps — GeoNames' postal exports share the same basename,
-	 * and seven tier-1 postal files sat at these paths reading as "present" until the capitals build found them
-	 * capital-less. Left in place (this tool never overwrites data it did not fetch); the fix is to move the file to its
-	 * own home and rerun.
+	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps — GeoNames' postal
+	 * exports share the same basename, and seven tier-1 postal files sat at these
+	 * paths reading as "present" until the capitals build found them capital-less.
+	 * Left in place (this tool never overwrites data it did not fetch);
+	 * the fix is to move the file to its own home and rerun.
 	 */
 	wrong_format_present: string[]
 }
 
 /**
- * Column count of a gazetteer dump row — the discriminator against GeoNames' 12-column postal exports, which share the
- * `<CC>.txt` basename.
+ * Column count of a gazetteer dump row — the discriminator against GeoNames' 12-column
+ * postal exports, which share the `<CC>.txt` basename.
  */
 const GAZETTEER_DUMP_COLUMNS = 19
 
 /**
- * True when the first non-empty line carries the gazetteer dump's 19 tab-separated columns. Accepts a partial head read
- * — the first line is the whole question, so callers need not hand it a resident 350 MB dump.
+ * True when the first non-empty line carries the gazetteer dump's 19 tab-separated columns.
+ * Accepts a partial head read — the first line is the whole question,
+ * so callers need not hand it a resident 350 MB dump.
  *
- * Walk the string directly rather than constructing a spliterator: the capitals builder already holds whole country
- * dumps as strings, and a byte-oriented spliterator would UTF-8 encode that input — allocating up to another 350 MB —
- * merely to inspect its first non-empty line.
+ * Walk the string directly rather than constructing a spliterator: the capitals builder already
+ * holds whole country dumps as strings, and a byte-oriented spliterator would UTF-8 encode
+ * that input — allocating up to another 350 MB — merely to inspect its first non-empty line.
  */
 export function looksLikeGazetteerDump(text: string): boolean {
 	let start = 0
@@ -128,8 +130,8 @@ export function looksLikeGazetteerDump(text: string): boolean {
 }
 
 /**
- * Parse the ISO codes (column 1) and capital names (column 6) out of `countryInfo.txt` — `#`-prefixed lines are the
- * file's own commentary.
+ * Parse the ISO codes (column 1) and capital names (column 6) out of `countryInfo.txt` —
+ * `#`-prefixed lines are the file's own commentary.
  */
 export function parseCountryInfo(text: string): Array<{ country: string; capital: string }> {
 	const rows: Array<{ country: string; capital: string }> = []
@@ -151,14 +153,15 @@ export function parseCountryInfo(text: string): Array<{ country: string; capital
 }
 
 /**
- * Bytes read to classify a present file: enough to cover a first dump row whose alternate-names column runs long (they
- * reach several KB), a fraction of the largest dumps (US.txt is ~350 MB).
+ * Bytes read to classify a present file: enough to cover a first dump row whose alternate-names
+ * column runs long (they reach several KB), a fraction of the largest dumps (US.txt is ~350 MB).
  */
 const FORMAT_SNIFF_BYTES = 65_536
 
 /**
- * Download `countryInfo.txt` plus every missing `<CC>.zip`, extracting each to `<outRoot>/<CC>.txt` beside the
- * hand-fetched dumps, with a `manifest.json` naming fetched, skipped-present, and source-unavailable countries.
+ * Download `countryInfo.txt` plus every missing `<CC>.zip`, extracting each to
+ * `<outRoot>/<CC>.txt` beside the hand-fetched dumps, with a `manifest.json` naming fetched,
+ * skipped-present, and source-unavailable countries.
  */
 export async function fetchGeonamesDumps(
 	options: FetchGeonamesDumpOptions,
@@ -226,8 +229,8 @@ export async function fetchGeonamesDumps(
 
 			const message = error instanceof Error ? error.message : String(error)
 
-			// Branch on the typed status (the geonames-postal lesson): message prose contains the URL, and a URL
-			// can contain any substring.
+			// Branch on the typed status (the geonames-postal lesson): message prose
+			// contains the URL, and a URL can contain any substring.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {
 				report?.(`✗ ${country}: GeoNames publishes no gazetteer dump for this country`)
 				unavailable.push(country)

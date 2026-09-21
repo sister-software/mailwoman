@@ -17,8 +17,8 @@
  */
 
 /**
- * A minimal, injectable time source. Anything in this package that would otherwise call `Date.now()` or `setTimeout`
- * directly reads through this instead, so tests can drive time deterministically.
+ * A minimal, injectable time source. Anything in this package that would otherwise call `Date.now()`
+ * or `setTimeout` directly reads through this instead, so tests can drive time deterministically.
  */
 export interface ClockLike {
 	/**

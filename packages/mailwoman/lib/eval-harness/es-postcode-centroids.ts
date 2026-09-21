@@ -27,27 +27,29 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  */
 export interface ESPostcodeCentroidsOptions {
 	/**
-	 * ISO country code selecting the Overture addresses parquet + output name. Default `ES`.
+	 * ISO country code selecting the Overture addresses parquet +
+	 * output name. Default `ES`.
 	 */
 	country?: string
 	/**
-	 * Postcode digit length for the leading-zero-preserving lpad: 5 for ES/DE/FR/IT/NL, 4 for AT/CH/DK. `0` = no lpad
-	 * (use the raw Overture form). Default 5.
+	 * Postcode digit length for the leading-zero-preserving lpad: 5 for ES/DE/FR/IT/NL, 4 for AT/CH/DK.
+	 * `0` = no lpad (use the raw Overture form). Default 5.
 	 */
 	pcLen?: number
 	/**
-	 * Overture addresses parquet. Default: the addresses-theme pin (`OVERTURE_ADDRESSES_RELEASE`) under
-	 * `$MAILWOMAN_DATA_ROOT`.
+	 * Overture addresses parquet. Default: the addresses-theme pin
+	 * (`OVERTURE_ADDRESSES_RELEASE`) under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	parquet?: string
 	/**
 	 * Output SQLite DB. Default `$MAILWOMAN_DATA_ROOT/wof/postalcode-<cc>-overture.db`.
 	 *
-	 * The `postalcode-` prefix is required rather than cosmetic: `deriveSchemaName` turns the filename into the attached
-	 * SQL schema name and `pickExtractsForPlacetype` routes by testing it against the placetype, which is `postalcode`. A
-	 * database spelled `postcode-` matches no branch and is silently never queried. The sibling `postcode-locality-*.db`
-	 * family keeps the shorter prefix on purpose — those carry a `postcode_locality` relation table and no `spr`, so they
-	 * are never routed as place databases in the first place.
+	 * The `postalcode-` prefix is required rather than cosmetic: `deriveSchemaName` turns the
+	 * filename into the attached SQL schema name and `pickExtractsForPlacetype` routes by testing
+	 * it against the placetype, which is `postalcode`. A database spelled `postcode-` matches
+	 * no branch and is silently never queried. The sibling `postcode-locality-*.db` family
+	 * keeps the shorter prefix on purpose — those carry a `postcode_locality` relation table
+	 * and no `spr`, so they are never routed as place databases in the first place.
 	 */
 	out?: string
 }
@@ -64,8 +66,9 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 		String(dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE, `addresses-${CC.toLowerCase()}.parquet`))
 
 	const OUT_DB = options.out || String(dataRootPath("wof", `postalcode-${CC.toLowerCase()}-overture.db`))
-	// The `source` stamp names the Overture release the rows came from, read off the parquet's release directory rather
-	// than typed: a build over a newer parquet used to stamp the pinned default's release on every row.
+	// The `source` stamp names the Overture release the rows came from, read off the
+	// parquet's release directory rather than typed: a build over a newer parquet
+	// used to stamp the pinned default's release on every row.
 	const RELEASE = /\d{4}-\d{2}-\d{2}\.\d+/u.exec(PARQUET)?.[0] ?? "unknown"
 
 	// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load it
@@ -86,11 +89,12 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 	)
 
 	// Per-postcode centroid: mean of points within 3σ of the per-postcode mean (population stddev).
-	// ES postcodes are 5-digit. left-pad numeric codes so leading zeros survive (eval truth uses "01001").
-	// pcLen 0 = no lpad (use the raw Overture form). Correct when both the candidate database and the
-	// eval/query come from Overture (same surface form), and the only safe choice for non-numeric formats
-	// (PT "xxxx-XXX", SK/CZ "XXX XX", LV "LV-xxxx"). A positive pcLen left-pads numeric codes to that
-	// width (the GeoNames-comparison case the ES build used).
+	// ES postcodes are 5-digit. left-pad numeric codes so leading zeros survive
+	// (eval truth uses "01001"). pcLen 0 = no lpad (use the raw Overture form).
+	// Correct when both the candidate database and the eval/query come from Overture
+	// (same surface form), and the only safe choice for non-numeric formats
+	// (PT "xxxx-XXX", SK/CZ "XXX XX", LV "LV-xxxx"). A positive pcLen left-pads numeric
+	// codes to that width (the GeoNames-comparison case the ES build used).
 	const pcExpr =
 		PC_LEN > 0
 			? `CASE WHEN regexp_full_match(trim(CAST(postcode AS VARCHAR)), '[0-9]{1,${PC_LEN}}') THEN lpad(trim(CAST(postcode AS VARCHAR)), ${PC_LEN}, '0') ELSE trim(CAST(postcode AS VARCHAR)) END`
@@ -122,9 +126,10 @@ GROUP BY b.pc
 	// Emit the spr table the WOFPostcodeLookup query consumes:
 	//   select country, latitude, longitude from spr where name=? and placetype='postalcode' and is_current!=0
 	using out = new DatabaseClient<WOFDatabase>(OUT_DB)
-	// Throwaway build artifact — no durability needed; `journal_mode=off` + a single transaction around the
-	// inserts makes large locales (CA = 843k rows) finish in seconds instead of one implicit
-	// transaction (with its own journal write) per row, which is slow enough to be killed by a timeout.
+	// Throwaway build artifact — no durability needed; `journal_mode=off` + a single
+	// transaction around the inserts makes large locales (CA = 843k rows) finish in seconds
+	// instead of one implicit transaction (with its own journal write) per row,
+	// which is slow enough to be killed by a timeout.
 	out.exec(`PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;`)
 
 	out.exec(`

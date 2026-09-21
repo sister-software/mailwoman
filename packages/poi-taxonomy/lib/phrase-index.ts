@@ -9,8 +9,8 @@
  */
 
 /**
- * Build a lowercased phrase index. `populate` receives `add`, which keys each entry by the lowercased phrase. multiple
- * entries may share a key.
+ * Build a lowercased phrase index. `populate` receives `add`, which keys each entry
+ * by the lowercased phrase. multiple entries may share a key.
  */
 export function createPhraseIndex<Entry>(
 	populate: (add: (phrase: string, entry: Entry) => void) => void
@@ -28,8 +28,9 @@ export function createPhraseIndex<Entry>(
 }
 
 /**
- * A locale-independent string order for deterministic tie-breaks. `localeCompare` answers differently under different
- * ICU builds. code-point order is reproducible everywhere. A local copy of `@mailwoman/core/strings/compare`'s
+ * A locale-independent string order for deterministic tie-breaks.
+ * `localeCompare` answers differently under different ICU builds. code-point order
+ * is reproducible everywhere. A local copy of `@mailwoman/core/strings/compare`'s
  * `compareByCodePoint` — this package keeps `@mailwoman/core` out of its runtime graph.
  */
 export function compareByCodePoint(left: string, right: string): number {

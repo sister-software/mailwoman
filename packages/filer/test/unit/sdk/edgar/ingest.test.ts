@@ -34,7 +34,8 @@ const CABLE_ONE_HEADERS = `
 &lt;/DOCUMENT&gt;`
 
 /**
- * Build a client over a per-registrant script: SIC, whether it has a 10-K, and which exhibit fixture to serve.
+ * Build a client over a per-registrant script: SIC, whether it has a 10-K,
+ * and which exhibit fixture to serve.
  */
 async function stubClient(
 	script: Record<
@@ -63,8 +64,8 @@ async function stubClient(
 		},
 		getDocument: (input: string | URL): Promise<string> => {
 			const url = String(input)
-			// The URL's filename comes from the scripted document manifest rather than from the fixture name, so
-			// match on the CIK in the archive path instead.
+			// The URL's filename comes from the scripted document manifest rather than from
+			// the fixture name, so match on the CIK in the archive path instead.
 			const bare = /edgar\/data\/(\d+)\//.exec(url)?.[1] ?? ""
 			const entry = Object.values(script).find((candidate) => candidate.cikPath === bare) ?? Object.values(script)[0]
 
@@ -157,8 +158,8 @@ describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 	})
 
 	it("corroborates every candidate, not only the top-scoring one", async () => {
-		// The top name match is uncorroborated. a lower-scoring candidate is the real carrier. Scoring
-		// alone would stop at the first and report nothing.
+		// The top name match is uncorroborated. a lower-scoring candidate is the real carrier.
+		// Scoring alone would stop at the first and report nothing.
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: WIDEPOINT, ticker: "WYY", title: "Cable One Holdings" },
 			{ cik: CABLE_ONE, ticker: "CABO", title: "Cable One, Inc." },

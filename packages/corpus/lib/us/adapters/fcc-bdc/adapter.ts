@@ -43,13 +43,13 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record
+ * can be traced back to the dataset it came from.
  */
 export const FCC_BDC_ADAPTER_ID = "fcc-bdc"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const FCC_BDC_DEFAULT_LICENSE = "Public Domain"
 
@@ -68,8 +68,8 @@ interface BdcLocationRow {
 /**
  * Combine `zip` + optional `zip_suffix` into the canonical USPS postcode surface form.
  *
- * NTIARecord doc is ambiguous about whether `zip_suffix` is the 4-digit extension alone or the full ZIP+4 string. This
- * handles both:
+ * NTIARecord doc is ambiguous about whether `zip_suffix` is the 4-digit extension alone
+ * or the full ZIP+4 string. This handles both:
  *
  * - Bare 4-digit extension (`zip="94103"`, `zip_suffix="1234"`) → `"94103-1234"`
  * - Already-joined form (`zip_suffix="94103-1234"`) → returned as-is

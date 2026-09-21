@@ -28,8 +28,9 @@ import { WORKING_TREE_REF } from "#worktree/arm"
 /**
  * How one arm answers one raw query string, whichever kind of arm it is.
  *
- * Lives beside the arm specs rather than inside the comparison, so a new arm kind can be implemented in its own module
- * without that module importing the comparison — which would close a cycle, since the comparison must import it back.
+ * Lives beside the arm specs rather than inside the comparison, so a new arm kind can
+ * be implemented in its own module without that module importing the comparison —
+ * which would close a cycle, since the comparison must import it back.
  */
 export interface ArmRunner {
 	label: string
@@ -41,9 +42,10 @@ export interface ArmRunner {
 /**
  * A mailwoman arm — one warm engine under one configuration.
  *
- * "Configuration" includes the model: `config.weights_cache` names a candidate weights bundle, so shipped-vs-candidate
- * is an ordinary two-arm comparison here rather than a pair of hand-written scripts. What it cannot vary is source —
- * both arms run whatever this process imported, which is what {@link WorktreeArm} exists for.
+ * "Configuration" includes the model: `config.weights_cache` names a candidate
+ * weights bundle, so shipped-vs-candidate is an ordinary two-arm comparison here
+ * rather than a pair of hand-written scripts. What it cannot vary is source — both arms
+ * run whatever this process imported, which is what {@link WorktreeArm} exists for.
  */
 interface MailwomanArm {
 	kind: "mailwoman"
@@ -58,14 +60,16 @@ export interface ExternalArm {
 	engine: ExternalEngine
 	endpoint: string
 	/**
-	 * What the caller believes is running there. Required only when the endpoint will not identify itself. see
-	 * `external-arm.ts`'s identity probe for why an unidentified endpoint is refused rather than scored.
+	 * What the caller believes is running there. Required only when the endpoint
+	 * will not identify itself. see `external-arm.ts`'s identity probe for why an
+	 * unidentified endpoint is refused rather than scored.
 	 */
 	version?: string
 }
 
 /**
- * A reference geocoder as an arm. Never a grading truth — see `oracle-arm.ts` for the refusal and its two reasons.
+ * A reference geocoder as an arm. Never a grading truth — see `oracle-arm.ts`
+ * for the refusal and its two reasons.
  */
 export interface OracleArm {
 	kind: "oracle"
@@ -75,8 +79,9 @@ export interface OracleArm {
 /**
  * A stored past run, replayed row by row.
  *
- * `arm` names which side of that run to replay, because a stored comparison has two. It defaults to `mailwoman` at the
- * call site rather than here, so this type keeps saying that a recorded arm is a run plus a side.
+ * `arm` names which side of that run to replay, because a stored comparison has two.
+ * It defaults to `mailwoman` at the call site rather than here, so this type keeps
+ * saying that a recorded arm is a run plus a side.
  */
 export interface RecordedArm {
 	kind: "recorded"
@@ -87,10 +92,11 @@ export interface RecordedArm {
 /**
  * A mailwoman arm running a different version OF the source, in its own process (see `worktree-arm.ts`).
  *
- * The kind a source change needs and the other four cannot express. A `mailwoman` arm runs whatever this process
- * imported, so two of them can only differ by config — which does cover the model, via `weights_cache`, but never the
- * code that loads it. a `recorded` arm replays a past run but cannot produce a new one at an old ref. Neither answers
- * "what does my edit do", which is the question most maintainer changes are.
+ * The kind a source change needs and the other four cannot express.
+ * A `mailwoman` arm runs whatever this process imported, so two of them can only differ by
+ * config — which does cover the model, via `weights_cache`, but never the code that loads
+ * it. a `recorded` arm replays a past run but cannot produce a new one at an old ref.
+ * Neither answers "what does my edit do", which is the question most maintainer changes are.
  */
 export interface WorktreeArm {
 	kind: "worktree"
@@ -106,8 +112,9 @@ export type ArmSpec = MailwomanArm | ExternalArm | OracleArm | RecordedArm | Wor
 /**
  * Which side of a stored run a recorded arm replays when the caller does not say.
  *
- * `mailwoman` because the question a recorded arm answers is almost always "did OUR side change since that run" — the
- * external or oracle side is the control, and re-running it is what a recorded arm exists to avoid.
+ * `mailwoman` because the question a recorded arm answers is almost always "did
+ * OUR side change since that run" — the external or oracle side is the control,
+ * and re-running it is what a recorded arm exists to avoid.
  */
 const DEFAULT_RECORDED_ARM = "mailwoman"
 
@@ -165,8 +172,8 @@ const WORKTREE_ARM_SCHEMA = z.object({
 /**
  * One side of a comparison.
  *
- * Order matters: the bare-{@link EngineConfig} shorthand is last, because it accepts any object and would otherwise
- * swallow every other branch.
+ * Order matters: the bare-{@link EngineConfig} shorthand is last, because it accepts
+ * any object and would otherwise swallow every other branch.
  */
 export const ARM_SPEC_SCHEMA = z
 	.union([

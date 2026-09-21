@@ -75,29 +75,31 @@ import {
 import { createDatabaseMetaTable, writeMetaRows } from "#gazetteer-pipeline/postcode/geonames/tail"
 
 /**
- * ISO-3166-1 alpha-2 stamped on every row. Code-Point Open is a GB-only product. the ONS country code distinguishing
- * England/Scotland/Wales is carried separately on the parsed record and is not what `spr.country` means.
+ * ISO-3166-1 alpha-2 stamped on every row. Code-Point Open is a GB-only product.
+ * the ONS country code distinguishing England/Scotland/Wales is carried separately
+ * on the parsed record and is not what `spr.country` means.
  */
 const COUNTRY = "GB"
 
 export interface BuildPostcodeCodePointOptions {
 	/**
-	 * Acquisition directory holding (or to hold) `codepo_gb.zip` and its extracted `Data/CSV` tree. Default
-	 * `<data-root>/codepoint/<yyyy-MM-DD>` — a new dated directory per acquisition.
+	 * Acquisition directory holding (or to hold) `codepo_gb.zip` and its extracted `Data/CSV` tree.
+	 * Default `<data-root>/codepoint/<yyyy-MM-DD>` — a new dated directory per acquisition.
 	 */
 	sourceDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-gb-codepoint-<yyyy-MM-DD>.db` — a new dated path every build.
-	 * Promoting it into `DEFAULT_POSTCODE_DATABASES` is a deliberate, separate swap.
+	 * Output artifact. Default `<data-root>/wof/postalcode-gb-codepoint-<yyyy-MM-DD>.db` — a new dated
+	 * path every build. Promoting it into `DEFAULT_POSTCODE_DATABASES` is a deliberate, separate swap.
 	 */
 	out?: PathBuilderLike
 	/**
-	 * Skip the network entirely and use whatever is already in `sourceDir`. Fails if the CSVs are not there.
+	 * Skip the network entirely and use whatever is already in `sourceDir`.
+	 * Fails if the CSVs are not there.
 	 */
 	offline?: boolean
 	/**
-	 * Build clock — stamped into `meta.built_at` and the default paths. Passed in so the module never reads the clock
-	 * implicitly (the `defaultGazetteerVersion` convention).
+	 * Build clock — stamped into `meta.built_at` and the default paths.
+	 * Passed in so the module never reads the clock implicitly (the `defaultGazetteerVersion` convention).
 	 */
 	now?: Date
 	onPhase?: (phase: string, detail?: string) => void
@@ -119,8 +121,8 @@ export interface BuildPostcodeCodePointResult {
 	 */
 	metadata: CodePointMetadata
 	/**
-	 * Areas whose parsed count differs from the manifest, as `area: manifest→parsed`. Empty when every area agrees after
-	 * accounting for the no-coordinate drops.
+	 * Areas whose parsed count differs from the manifest, as `area: manifest→parsed`.
+	 * Empty when every area agrees after accounting for the no-coordinate drops.
 	 */
 	manifestMismatches: string[]
 	ancestorRows: number
@@ -153,11 +155,11 @@ export async function buildPostcodeCodePoint(
 
 	// Acquire the Code-Point source archive.
 	//
-	// An offline build must not silently produce an artifact with blank provenance. `downloadCodePointOpen`
-	// leaves an `acquisition.json` sidecar next to the archive precisely so a later offline rebuild can
-	// recover the release label and md5 it would otherwise have to invent. when even that is missing, the
-	// meta records the absence in words rather than an empty string, because "" reads as "no release" to
-	// anyone grepping it.
+	// An offline build must not silently produce an artifact with blank provenance.
+	// `downloadCodePointOpen` leaves an `acquisition.json` sidecar next to the archive precisely
+	// so a later offline rebuild can recover the release label and md5 it would otherwise
+	// have to invent. when even that is missing, the meta records the absence in words
+	// rather than an empty string, because "" reads as "no release" to anyone grepping it.
 	let archiveMD5: string
 	let osVersion: string
 
@@ -255,10 +257,10 @@ export async function buildPostcodeCodePoint(
 
 		// Check the archive's own manifest. codepoint/extract.ts explains this oracle.
 
-		// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this writes the self row per place
-		// and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with
-		// `spr.id IN (select id from ancestors where ancestor_id = ?)`, and a place absent from `ancestors`
-		// can never satisfy it.
+		// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this writes the
+		// self row per place and nothing else. Not decorative: the resolver's parent-constraint
+		// scopes a lookup with `spr.id IN (select id from ancestors where ancestor_id = ?)`,
+		// and a place absent from `ancestors` can never satisfy it.
 		phase("ancestors")
 		ancestorRows = populateAncestors(db)
 
@@ -312,15 +314,17 @@ export async function buildPostcodeCodePoint(
 /**
  * Compare per-area parsed counts against the archive's `Doc/metadata.txt` manifest.
  *
- * The manifest counts rows IN the file. It includes the positional-quality-90 rows we deliberately drop. Therefore, the
- * identity being checked is `manifest[area] === parsed[area] + noCoordinateDrops[area]`.
+ * The manifest counts rows IN the file. It includes the positional-quality-90 rows we deliberately drop.
+ * Therefore, the identity being checked is `manifest[area] === parsed[area] + noCoordinateDrops[area]`.
  *
- * The tolerance must not include malformed rows, and the first version of this function got that wrong in a way worth
- * recording: it set `tolerance = skippedNoCoordinate + skippedMalformed`, so when a CSV-parsing bug rejected all
- * 1,746,976 coordinate-containing rows, the tolerance grew to 1.75 M and every area "reconciled" against a database
- * holding zero postcodes. A check whose slack is derived from the size of the failure it is meant to catch cannot catch
- * it. The tolerance is now the no-coordinate drops alone — a deliberate, bounded, understood exclusion — and any
- * malformed row at all is reported separately as a defect by {@link buildPostcodeCodePoint}'s caller.
+ * The tolerance must not include malformed rows, and the first version of this function got that
+ * wrong in a way worth recording: it set `tolerance = skippedNoCoordinate + skippedMalformed`,
+ * so when a CSV-parsing bug rejected all 1,746,976 coordinate-containing rows, the tolerance
+ * grew to 1.75 M and every area "reconciled" against a database holding zero postcodes.
+ * A check whose slack is derived from the size of the failure it is meant to catch
+ * cannot catch it. The tolerance is now the no-coordinate drops alone — a deliberate,
+ * bounded, understood exclusion — and any malformed row at all is reported separately
+ * as a defect by {@link buildPostcodeCodePoint}'s caller.
  */
 function compareAgainstManifest(metadata: CodePointMetadata, stats: CodePointParseStats): string[] {
 	const mismatches: string[] = []
@@ -340,8 +344,8 @@ function compareAgainstManifest(metadata: CodePointMetadata, stats: CodePointPar
 		}
 	}
 
-	// The national identity, which no per-area check implies: every manifest row is either yielded or
-	// explicitly dropped for a known reason. This is the assertion that would have failed loudly above.
+	// The national identity, which no per-area check implies: every manifest row is either yielded
+	// or explicitly dropped for a known reason. This is the assertion that would have failed loudly above.
 	const accounted = stats.yielded + stats.skippedNoCoordinate + stats.skippedMalformed
 
 	if (accounted !== metadata.totalRows) {

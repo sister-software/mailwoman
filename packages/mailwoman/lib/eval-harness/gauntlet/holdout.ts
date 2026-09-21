@@ -21,8 +21,8 @@ import { TextSpliterator } from "spliterator"
 import { buildGauntletDeps, type GauntletDeps, type GauntletResolverPins } from "#eval-harness/gauntlet/harness"
 
 /**
- * Two-sided 95% critical value of the standard normal. The check blocks only on a significant regression, so a
- * candidate that is ahead or within noise passes. this is the noise boundary.
+ * Two-sided 95% critical value of the standard normal. The check blocks only on a significant
+ * regression, so a candidate that is ahead or within noise passes. this is the noise boundary.
  */
 const Z_CRITICAL_95_TWO_SIDED = -1.96
 
@@ -43,9 +43,10 @@ export interface HoldoutLayerOptions {
 	 */
 	source?: string
 	/**
-	 * A tokenizer-splice candidate (#444/#884/#912) ships a new vocab. grading it needs the candidate tokenizer (+ card)
-	 * paired with the candidate model. Production is then also run through the shipped trio (createScorer both sides) so
-	 * the only variables are the ONNX + the vocab. Omit for a model-only bump.
+	 * A tokenizer-splice candidate (#444/#884/#912) ships a new vocab. grading
+	 * it needs the candidate tokenizer (+ card) paired with the candidate model.
+	 * Production is then also run through the shipped trio (createScorer both sides)
+	 * so the only variables are the ONNX + the vocab. Omit for a model-only bump.
 	 */
 	tokenizer?: string
 	/**
@@ -53,15 +54,15 @@ export interface HoldoutLayerOptions {
 	 */
 	card?: string
 	/**
-	 * Package-shaped candidate weights dir — the #718-safe path (see {@link GauntletLayerOptions.weightsCacheRoot}). Like
-	 * a splice candidate it carries its own vocab, so production also runs through the shipped trio to keep the z-test
-	 * clean.
+	 * Package-shaped candidate weights dir — the #718-safe path (see
+	 * {@link GauntletLayerOptions.weightsCacheRoot}). Like a splice candidate it carries its
+	 * own vocab, so production also runs through the shipped trio to keep the z-test clean.
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * Resolver-side pin pins, applied to both arms. A resolver pin is a property of the configuration rather than of the
-	 * model under test, so pinning it on one side would confound the z-test with the very thing the layer holds
-	 * constant.
+	 * Resolver-side pin pins, applied to both arms. A resolver pin is a property of the
+	 * configuration rather than of the model under test, so pinning it on one side would
+	 * confound the z-test with the very thing the layer holds constant.
 	 */
 	pins?: GauntletResolverPins
 }
@@ -85,10 +86,11 @@ export interface Sample {
 }
 
 /**
- * Held-out truth sources — fresh-draw rather than in mailwoman's training corpus, so they measure generalization. Each
- * parses a semicolon row of its staging file into a bare-form query (no postcode — the hard case the tail exercises) +
- * truth coord. FR/BAN streams the 5 GB file. the smaller pools (US/fdic, ~77k) are the fast draw. Add a source by
- * dropping a staging file + a parser here.
+ * Held-out truth sources — fresh-draw rather than in mailwoman's training corpus,
+ * so they measure generalization. Each parses a semicolon row of its staging file into
+ * a bare-form query (no postcode — the hard case the tail exercises) + truth coord.
+ * FR/BAN streams the 5 GB file. the smaller pools (US/fdic, ~77k) are the fast draw.
+ * Add a source by dropping a staging file + a parser here.
  */
 export interface SourceDef {
 	file: string
@@ -137,10 +139,11 @@ export function holdoutSources(): Record<string, SourceDef> {
 /**
  * Reservoir-sample N rows with truth coords from the selected source — a genuinely fresh draw each run.
  *
- * `random` is injectable so a caller that must be able to re-draw the same sample can seed it. The layer itself never
- * passes one: an unseeded draw is what makes this the only check the model cannot have memorized, and a seeded default
- * would quietly turn the generalization measure into a fixed set. It also returns `drawnFrom`, the count of parseable
- * rows the reservoir saw, because the sample size alone does not say what it was drawn out of.
+ * `random` is injectable so a caller that must be able to re-draw the same sample can seed it.
+ * The layer itself never passes one: an unseeded draw is what makes this the only check the
+ * model cannot have memorized, and a seeded default would quietly turn the generalization
+ * measure into a fixed set. It also returns `drawnFrom`, the count of parseable rows the
+ * reservoir saw, because the sample size alone does not say what it was drawn out of.
  */
 export async function drawHoldoutSample(
 	src: SourceDef,
@@ -151,9 +154,9 @@ export async function drawHoldoutSample(
 	let seen = 0
 	let line = 0
 
-	// Semicolon-delimited CSV (not jsonl) → TextSpliterator for the line layer, keep the `.split(";")`.
-	// crlf: the staging files are LF today, but the final column (the truth coord) would otherwise
-	// carry a stray \r on a crlf source and fail to parse.
+	// Semicolon-delimited CSV (not jsonl) → TextSpliterator for the line layer,
+	// keep the `.split(";")`. crlf: the staging files are LF today, but the final column
+	// (the truth coord) would otherwise carry a stray \r on a crlf source and fail to parse.
 	for await (const raw of TextSpliterator.fromAsync(src.file, { crlf: true })) {
 		if (line++ === 0) continue // header
 		const s = src.parse(raw.split(";"))
@@ -211,8 +214,8 @@ function zStat(cand: number, prod: number, n: number): number {
 }
 
 /**
- * Run the held-out candidate-vs-prod layer. `exitCode` is 0 for `pass` and 1 when the candidate significantly worse, 2
- * = usage error (missing candidate / unknown source).
+ * Run the held-out candidate-vs-prod layer. `exitCode` is 0 for `pass` and 1 when the
+ * candidate significantly worse, 2 = usage error (missing candidate / unknown source).
  */
 export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promise<{ pass: boolean; exitCode: number }> {
 	const N = options.n ?? 300
@@ -245,9 +248,10 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 
 	console.error(`[gauntlet/holdout] scoring production vs candidate on the SAME ${sample.length} addresses…`)
 
-	// A splice/multisplice candidate (--tokenizer or --weights-cache) swaps the vocab, so production must also run
-	// through the shipped (model, tokenizer, card) trio via createScorer — otherwise the two sides have different
-	// anchor/gazetteer wiring and the z-test is confounded. resolveWeights gives the shipped trio for production.
+	// A splice/multisplice candidate (--tokenizer or --weights-cache) swaps the vocab,
+	// so production must also run through the shipped (model, tokenizer, card) trio via
+	// createScorer — otherwise the two sides have different anchor/gazetteer wiring
+	// and the z-test is confounded. resolveWeights gives the shipped trio for production.
 	const shipped = CAND_TOKENIZER || CAND_CACHE ? await resolveWeights({ locale: "en-us" }) : null
 	const pins = options.pins ? { pins: options.pins } : {}
 

@@ -10,16 +10,17 @@ import type { CamelCase, SnakeCase } from "type-fest"
 /**
  * Any character that is not a letter, a digit, or an underscore, in any script.
  *
- * `\W` cannot serve: it is `[^A-Za-z0-9_]` in JavaScript with or without the `u` flag, so every character of a
- * non-Latin name is "non-word" and the name is replaced rather than kept.
+ * `\W` cannot serve: it is `[^A-Za-z0-9_]` in JavaScript with or without the `u` flag,
+ * so every character of a non-Latin name is "non-word" and the name is replaced rather than kept.
  */
 const NON_KEY_CHARACTER = /[^\p{L}\p{N}_]+/gu
 
 /**
  * Converts a name to snake_case, unless the name is already in all caps.
  *
- * A caseless script takes the all-caps branch, because `toUpperCase()` is the identity on Korean, Japanese, Chinese,
- * Hebrew and Arabic. That is the right branch — those names have no case to convert and survive as written.
+ * A caseless script takes the all-caps branch, because `toUpperCase()` is the identity
+ * on Korean, Japanese, Chinese, Hebrew and Arabic. That is the right branch —
+ * those names have no case to convert and survive as written.
  */
 export function smartSnakeCase<T extends string>(name: T): T extends Uppercase<T> ? T : SnakeCase<T> {
 	const normalizedName = name
@@ -72,8 +73,9 @@ export function smartCapitalCase(input: string): string {
 /**
  * Python `str.isupper()`: at least one cased character, and every cased character uppercase.
  *
- * Distinct from {@link isUniformlyCased}, which reports `true` for a string with no cased characters at all — `"123"` is
- * uniformly cased and is not `isupper()`. Ports that condition on a titlecase on the Python predicate need this one.
+ * Distinct from {@link isUniformlyCased}, which reports `true` for a string with
+ * no cased characters at all — `"123"` is uniformly cased and is not `isupper()`.
+ * Ports that condition on a titlecase on the Python predicate need this one.
  */
 export function pyIsUpper(input: string): boolean {
 	let hasCased = false
@@ -92,8 +94,8 @@ export function pyIsUpper(input: string): boolean {
 /**
  * Python `str.title()`: titlecase the first cased character of each run, lowercase the rest.
  *
- * Not `capitalCase` from change-case, which splits on word boundaries and drops punctuation — Python titlecases
- * `"o'brien"` to `"O'Brien"` because the apostrophe ends a cased run.
+ * Not `capitalCase` from change-case, which splits on word boundaries and drops punctuation —
+ * Python titlecases `"o'brien"` to `"O'Brien"` because the apostrophe ends a cased run.
  */
 export function pyTitle(input: string): string {
 	let out = ""
@@ -110,7 +112,8 @@ export function pyTitle(input: string): string {
 }
 
 /**
- * Titlecase a shouted string, leave anything else alone — the shape source dumps use when a field arrives all caps.
+ * Titlecase a shouted string, leave anything else alone — the shape source dumps use
+ * when a field arrives all caps.
  */
 export function titlecaseIfUpper(input: string): string {
 	return pyIsUpper(input) ? pyTitle(input) : input

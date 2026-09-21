@@ -10,8 +10,8 @@ import { $public as resolverPublic } from "@mailwoman/resolver-wof-sqlite/env"
 import { PrivateReleaseEnvSchema, PublicReleaseEnvSchema } from "./schema.ts"
 
 /**
- * Live release settings over the resolver's and core's (the development weights overlay lives with the resolver),
- * sharing their getters and cached values.
+ * Live release settings over the resolver's and core's (the development weights overlay
+ * lives with the resolver), sharing their getters and cached values.
  */
 export const $public = liveEnv(PublicReleaseEnvSchema, resolverPublic)
 

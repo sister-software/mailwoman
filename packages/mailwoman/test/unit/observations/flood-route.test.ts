@@ -40,8 +40,8 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * A minimal always-resolves engine that answers at `latitude`/`longitude`, so the coordinate the route is handed is the
- * one this test chose.
+ * A minimal always-resolves engine that answers at `latitude`/`longitude`,
+ * so the coordinate the route is handed is the one this test chose.
  */
 function testDeps(latitude: number, longitude: number): GeocodeDeps {
 	const classifier: GeocodeClassifier = {
@@ -64,8 +64,8 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 		}),
 	}
 
-	// An explicit verdict, so the assertion below compares the marker's `kind` against a kind this test chose rather
-	// than against whatever the built-in classifier happened to reach.
+	// An explicit verdict, so the assertion below compares the marker's `kind` against a kind
+	// this test chose rather than against whatever the built-in classifier happened to reach.
 	return {
 		classifier,
 		resolver,
@@ -77,8 +77,8 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 const INPUT = "Testtown"
 
 /**
- * The kind the mock classifier reports. A designation marker must name it — the verdict's own top kind — because a
- * designation is not raised by intent and has no kind of its own.
+ * The kind the mock classifier reports. A designation marker must name it — the verdict's
+ * own top kind — because a designation is not raised by intent and has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
@@ -167,8 +167,8 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 
 			expect(marker.code).toBe("authority_designation")
 			expect(marker.mechanism).toBe("layer:flood_zone")
-			// The settled answer to the survey's open question: the marker names the verdict's own top kind, because a
-			// designation is not raised by intent and has no kind of its own to name.
+			// The settled answer to the survey's open question: the marker names the verdict's own top kind,
+			// because a designation is not raised by intent and has no kind of its own to name.
 			expect(marker.kind).toBe(TEST_VERDICT_KIND)
 			const evidence = marker.evidence!
 

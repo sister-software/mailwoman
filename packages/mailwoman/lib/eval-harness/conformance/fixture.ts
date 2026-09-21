@@ -37,18 +37,22 @@ import { JSONSpliterator } from "spliterator"
 import type { GauntletGeocodeOpts } from "#eval-harness/gauntlet/harness"
 
 /**
- * The closed set of outcome comparators. Each names an observable interface a law can preserve. adding one is a
- * reviewed instrument in `comparators.ts`, never an inline callback in a fixture.
+ * The closed set of outcome comparators. Each names an observable interface a law can preserve.
+ * adding one is a reviewed instrument in `comparators.ts`, never an inline callback in a fixture.
  *
- * - `resolution_identity` — which entity was resolved, read from the namespaced place ids and nothing else. It never
- *   reads a coordinate, so an identity law cannot pass because two different places happen to sit close together.
- * - `assembled_coordinate` — where the answer landed, graded on the Gauntlet's own great-circle tolerance and tier.
- * - `parse_whole_strict` — the whole component map, key set included, under the Gauntlet's exact case-folded equality.
+ * - `resolution_identity` — which entity was resolved, read from the namespaced place ids
+ *   and nothing else. It never reads a coordinate, so an identity law cannot pass
+ *   because two different places happen to sit close together.
+ * - `assembled_coordinate` — where the answer landed, graded on the Gauntlet's
+ *   own great-circle tolerance and tier.
+ * - `parse_whole_strict` — the whole component map, key set included,
+ *   under the Gauntlet's exact case-folded equality.
  * - `component_map` — the invariance suite's critical/non-critical severity reading over the same map.
  * - `mechanism_shape` — the mechanism-account shapes the two runs matched.
- * - `candidate_admissibility` — which candidates the resolver's own lookups held, read from the recorded candidate tables
- *   with their fetch windows. The only comparator that reads the pipeline's interior rather than its answer, and the
- *   only one whose observation can fail to decide: see `candidate-admissibility.ts`.
+ * - `candidate_admissibility` — which candidates the resolver's own lookups held,
+ *   read from the recorded candidate tables with their fetch windows.
+ *   The only comparator that reads the pipeline's interior rather than its answer,
+ *   and the only one whose observation can fail to decide: see `candidate-admissibility.ts`.
  */
 export const OUTCOME_COMPARATORS = [
 	"resolution_identity",
@@ -64,27 +68,30 @@ export type OutcomeComparatorName = (typeof OUTCOME_COMPARATORS)[number]
 /**
  * The closed set of relations a law can expect between the base and variant outcomes.
  *
- * - `equivalent` — a normalization law: the variant carries the same information, so the comparator must find no
- *   difference on its axis.
- * - `refines` — a refinement law: the variant carries more information, so the variant's outcome must contain the base's
- *   and add to it.
- * - `diverges` — a contradiction law: the variant carries different information, so the outcomes must differ.
+ * - `equivalent` — a normalization law: the variant carries the same information,
+ *   so the comparator must find no difference on its axis.
+ * - `refines` — a refinement law: the variant carries more information,
+ *   so the variant's outcome must contain the base's and add to it.
+ * - `diverges` — a contradiction law: the variant carries different information,
+ *   so the outcomes must differ.
  */
 export const CONFORMANCE_RELATIONS = ["equivalent", "refines", "diverges"] as const
 
 export type ConformanceRelation = (typeof CONFORMANCE_RELATIONS)[number]
 
 /**
- * What a row's outcome is allowed to mean for the verdict — the Gauntlet regression layer's own `CaseStatus`, spelled
- * again here because a law suite grades relations rather than cases and must not import the corpus schema to say so.
+ * What a row's outcome is allowed to mean for the verdict — the Gauntlet regression
+ * layer's own `CaseStatus`, spelled again here because a law suite grades relations
+ * rather than cases and must not import the corpus schema to say so.
  *
- * - `pass` — the default, and the only status that checks. A `pass` row whose law is violated fails the run.
- * - `known_fail` / `improvement_target` — the row is run and reported, and does not block. A tracked row that starts
- *   holding is printed as a promotion instruction, which is what keeps the tracked list from becoming a place rows go
- *   to be forgotten.
+ * - `pass` — the default, and the only status that checks.
+ *   A `pass` row whose law is violated fails the run.
+ * - `known_fail` / `improvement_target` — the row is run and reported, and does not block.
+ *   A tracked row that starts holding is printed as a promotion instruction,
+ *   which is what keeps the tracked list from becoming a place rows go to be forgotten.
  *
- * A red row is never deleted to make a run green, and it is never re-stated as `expect: diverges` either: that would
- * make the suite assert the defect, so fixing the defect would fail the suite.
+ * A red row is never deleted to make a run green, and it is never re-stated as `expect: diverges`
+ * either: that would make the suite assert the defect, so fixing the defect would fail the suite.
  */
 export const CONFORMANCE_STATUSES = ["pass", "known_fail", "improvement_target"] as const
 
@@ -93,17 +100,18 @@ export type ConformanceStatus = (typeof CONFORMANCE_STATUSES)[number]
 /**
  * Which relations each comparator can actually express.
  *
- * `parse_whole_strict` and `mechanism_shape` are two-valued by construction: a strict parse is identical or it is not,
- * and a set of mechanism shapes has no containment order that means "more specific". A fixture asking either of them
- * for `refines` is refused at load rather than graded against a relation the instrument cannot report — an unreachable
- * expectation is a row that can only ever fail, which reads as a defect in the pipeline instead of a defect in the
- * fixture.
+ * `parse_whole_strict` and `mechanism_shape` are two-valued by construction: a strict parse is identical
+ * or it is not, and a set of mechanism shapes has no containment order that means "more specific".
+ * A fixture asking either of them for `refines` is refused at load rather than graded against
+ * a relation the instrument cannot report — an unreachable expectation is a row that can only
+ * ever fail, which reads as a defect in the pipeline instead of a defect in the fixture.
  *
- * `candidate_admissibility` is two-valued for the opposite reason: it reads a candidate pool, where "unchanged" is the
- * degenerate case of "nothing admissible was lost" rather than a separate finding. Splitting the two would make a
- * fixture's expectation a claim about whether the added text reaches the resolver at all, which is behaviour rather
- * than law . Therefore, an identical pool reports `refines` and says so in its basis, and only a lost or unexplained
- * candidate reports `diverges`.
+ * `candidate_admissibility` is two-valued for the opposite reason: it reads a candidate pool,
+ * where "unchanged" is the degenerate case of "nothing admissible was lost" rather than
+ * a separate finding. Splitting the two would make a fixture's expectation a claim about
+ * whether the added text reaches the resolver at all, which is behaviour rather than law .
+ * Therefore, an identical pool reports `refines` and says so in its basis,
+ * and only a lost or unexplained candidate reports `diverges`.
  */
 export const RELATIONS_BY_COMPARATOR: Record<OutcomeComparatorName, readonly ConformanceRelation[]> = {
 	resolution_identity: ["equivalent", "refines", "diverges"],
@@ -117,15 +125,15 @@ export const RELATIONS_BY_COMPARATOR: Record<OutcomeComparatorName, readonly Con
 /**
  * The per-query priors a law row may pin, held constant across both sides.
  *
- * Aliased from the Gauntlet's own {@linkcode GauntletGeocodeOpts} rather than re-declared: a law row's context is the
- * same thing a Gauntlet case's context is, and a second copy would let the two vocabularies drift while looking
- * identical at the call site.
+ * Aliased from the Gauntlet's own {@linkcode GauntletGeocodeOpts} rather than re-declared:
+ * a law row's context is the same thing a Gauntlet case's context is, and a second copy
+ * would let the two vocabularies drift while looking identical at the call site.
  */
 export type ConformanceContext = GauntletGeocodeOpts
 
 /**
- * The keys {@linkcode ConformanceContext} accepts. Kept beside the alias because a structural type has no runtime
- * membership test, and the loader needs one to refuse a misspelled key.
+ * The keys {@linkcode ConformanceContext} accepts. Kept beside the alias because a structural
+ * type has no runtime membership test, and the loader needs one to refuse a misspelled key.
  */
 const CONTEXT_KEYS = ["defaultCountry", "caseCountry", "fuzzyCountryScope"] as const
 
@@ -140,7 +148,8 @@ export interface ConformanceFixture {
 	 */
 	id: string
 	/**
-	 * The law this row belongs to, e.g. `case-folding-invariance`. Owned by the suite that declares it.
+	 * The law this row belongs to, e.g. `case-folding-invariance`.
+	 * Owned by the suite that declares it.
 	 */
 	law: string
 	/**
@@ -148,8 +157,9 @@ export interface ConformanceFixture {
 	 */
 	base: string
 	/**
-	 * The query the law's relation is stated to. May equal {@linkcode ConformanceFixture.base} — an idempotence law states
-	 * that running the same input twice agrees, which is a relation between two runs rather than two strings.
+	 * The query the law's relation is stated to. May equal {@linkcode ConformanceFixture.base} —
+	 * an idempotence law states that running the same input twice agrees,
+	 * which is a relation between two runs rather than two strings.
 	 */
 	variant: string
 	/**
@@ -165,23 +175,25 @@ export interface ConformanceFixture {
 	 */
 	expect: ConformanceRelation
 	/**
-	 * Whether this row checks the run. Absent means {@linkcode CONFORMANCE_STATUSES}'s `pass` — a row says nothing about
-	 * its status only when it is expected to hold.
+	 * Whether this row checks the run. Absent means {@linkcode CONFORMANCE_STATUSES}'s `pass` —
+	 * a row says nothing about its status only when it is expected to hold.
 	 */
 	status?: ConformanceStatus
 	/**
-	 * Issue or record this row's tracked status points at, e.g. `#1919`. Free-form and never graded. it exists so a
-	 * tracked row names where its diagnosis lives.
+	 * Issue or record this row's tracked status points at, e.g. `#1919`.
+	 * Free-form and never graded. it exists so a tracked row names where its diagnosis lives.
 	 */
 	bugRef?: string
 	/**
-	 * The committed row or input set this fixture was drawn from, e.g. `parity-corpus.jsonl#fr-0042`. Carried into the
-	 * failure line so a violation names the population it came from rather than only the synthetic pair.
+	 * The committed row or input set this fixture was drawn from, e.g. `parity-corpus.jsonl#fr-0042`.
+	 * Carried into the failure line so a violation names the population it came from
+	 * rather than only the synthetic pair.
 	 */
 	rowRef?: string
 	/**
-	 * Great-circle tolerance for `assembled_coordinate`, in metres. Absent uses the Gauntlet's own default. Refused on
-	 * any other comparator: a stored expectation no branch reads is the defect this interface exists to make loud.
+	 * Great-circle tolerance for `assembled_coordinate`, in metres.
+	 * Absent uses the Gauntlet's own default. Refused on any other comparator: a stored
+	 * expectation no branch reads is the defect this interface exists to make loud.
 	 */
 	toleranceM?: number
 	/**
@@ -191,8 +203,9 @@ export interface ConformanceFixture {
 }
 
 /**
- * Every key a fixture record may carry. An unknown key is refused rather than dropped: a plain object silently discards
- * a misspelled field, and the row then grades under a default nobody wrote while reading as authored.
+ * Every key a fixture record may carry. An unknown key is refused rather than dropped:
+ * a plain object silently discards a misspelled field, and the row then grades
+ * under a default nobody wrote while reading as authored.
  */
 const FIXTURE_KEYS = new Set<string>([
 	"id",
@@ -262,8 +275,8 @@ function readContext(raw: unknown, label: string): ConformanceContext | undefine
 /**
  * Validate one fixture record and return it typed, or throw naming the fixture.
  *
- * `origin` is the file (and row) the record came from. it is prefixed to every message so a refusal points at the line
- * to edit even when the record has no usable id of its own.
+ * `origin` is the file (and row) the record came from. it is prefixed to every message
+ * so a refusal points at the line to edit even when the record has no usable id of its own.
  */
 export function parseConformanceFixture(raw: unknown, origin: string): ConformanceFixture {
 	if (!isPlainObject(raw)) {
@@ -335,8 +348,9 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 		throw new Error(`${label}: "bugRef" must be a non-empty string when present (got ${stringifyJSON(bugRef)})`)
 	}
 
-	// A `bugRef` on a enforcing row points at a diagnosis for a row that is expected to hold, which reads as a tracked
-	// row to everyone but the verdict. Refused for the same reason `toleranceM` is refused off its comparator.
+	// A `bugRef` on a enforcing row points at a diagnosis for a row that is
+	// expected to hold, which reads as a tracked row to everyone but the verdict.
+	// Refused for the same reason `toleranceM` is refused off its comparator.
 	if (bugRef !== undefined && (status === undefined || status === "pass")) {
 		throw new Error(
 			`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
@@ -392,8 +406,9 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 /**
  * Read a jsonl law suite, validating every row.
  *
- * Loud on the first bad row rather than collecting the good ones: a partially-loaded suite reports fewer violations
- * than it has rows, and a smaller violation count is indistinguishable from a law that holds.
+ * Loud on the first bad row rather than collecting the good ones: a partially-loaded
+ * suite reports fewer violations than it has rows, and a smaller violation count
+ * is indistinguishable from a law that holds.
  */
 export async function loadConformanceFixtures(path: string): Promise<ConformanceFixture[]> {
 	const fixtures: ConformanceFixture[] = []
@@ -416,13 +431,15 @@ export async function loadConformanceFixtures(path: string): Promise<Conformance
 }
 
 /**
- * The population clause the invariance suites share: a base query that names no committed row names no population.
+ * The population clause the invariance suites share: a base query that names
+ * no committed row names no population.
  */
 export const MISSING_ROW_REF_PROBLEM =
 	"no rowRef — every base query is drawn from a committed row, so a row without one names no population"
 
 /**
- * The locale clause every suite shares: `context.caseCountry` selects the weights overlay the row grades through.
+ * The locale clause every suite shares: `context.caseCountry` selects the
+ * weights overlay the row grades through.
  */
 export const MISSING_CASE_COUNTRY_PROBLEM =
 	"no context.caseCountry — it selects the weights overlay the row grades through, and without it the row is graded base-only against a locale that is not its own"
@@ -437,9 +454,10 @@ export function invarianceExpectProblem(fixture: ConformanceFixture, lawNoun: st
 }
 
 /**
- * The per-fixture frame every law-suite audit opens with: the label a problem line names the row by, and the refusal of
- * a row filed under another suite's law. Suite-specific clauses run in `auditFixture`, in the order the suite states
- * them. a clause that disqualifies the rest of a row's checks returns early.
+ * The per-fixture frame every law-suite audit opens with: the label a problem line
+ * names the row by, and the refusal of a row filed under another suite's law.
+ * Suite-specific clauses run in `auditFixture`, in the order the suite states them. a
+ * clause that disqualifies the rest of a row's checks returns early.
  */
 export function auditCommonFixtureFields(
 	fixtures: readonly ConformanceFixture[],

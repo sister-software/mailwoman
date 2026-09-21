@@ -29,18 +29,18 @@ import { TextSpliterator } from "spliterator"
 import { assertScorableEndpoint } from "#external-arm"
 
 /**
- * Pacing for rig traffic, ms between dispatches. These are our own containers on our own host, so the interval is not
- * politeness — it is the same discipline the graded arm uses, kept identical so an observation here and a measurement
- * there cannot differ by request pattern.
+ * Pacing for rig traffic, ms between dispatches. These are our own containers on our own host,
+ * so the interval is not politeness — it is the same discipline the graded arm uses, kept
+ * identical so an observation here and a measurement there cannot differ by request pattern.
  */
 const RIG_MIN_REQUEST_INTERVAL_MS = 250
 
 const RIG_TIMEOUT_MS = 15_000
 
 /**
- * One paced client per rig, built on first use and reused — the house `APIClient` rather than raw `fetch`, so rig
- * traffic gets the same pacing, bounded retry and `ResourceError` mapping as every other http caller in the repo (and
- * so this tool exercises the client we ship).
+ * One paced client per rig, built on first use and reused — the house `APIClient` rather than
+ * raw `fetch`, so rig traffic gets the same pacing, bounded retry and `ResourceError` mapping
+ * as every other http caller in the repo (and so this tool exercises the client we ship).
  */
 const clients = new Map<EngineRigName, APIClient>()
 
@@ -58,8 +58,8 @@ function clientFor(name: EngineRigName): APIClient {
 			baseURL: assertScorableEndpoint(rig.endpoint),
 			timeout: RIG_TIMEOUT_MS,
 			headers: { "User-Agent": "mailwoman-dev-mcp" },
-			// A rig that is still warming answers 4xx/5xx. those are states here, read from the status field rather than
-			// exceptions to throw. `rigQuery` reports the code per row.
+			// A rig that is still warming answers 4xx/5xx. those are states here, read from the
+			// status field rather than exceptions to throw. `rigQuery` reports the code per row.
 			validateStatus: () => true,
 		},
 	})
@@ -70,40 +70,41 @@ function clientFor(name: EngineRigName): APIClient {
 }
 
 /**
- * Container runtime the rigs were built with. Podman rather than Docker because that is what the lab host runs and what
- * the rig scripts already created these containers under — a `docker` invocation here would report "no such container"
- * for containers that exist.
+ * Container runtime the rigs were built with. Podman rather than Docker because that is
+ * what the lab host runs and what the rig scripts already created these containers under —
+ * a `docker` invocation here would report "no such container" for containers that exist.
  */
 const CONTAINER_RUNTIME = "podman"
 
 /**
- * How long to wait for a rig to answer after `start`, ms. Elasticsearch dominates: a cold Pelias stack answers its
- * first query around 30s after the containers report running, and a fixed sleep would either lie or waste the
- * difference.
+ * How long to wait for a rig to answer after `start`, ms.
+ * Elasticsearch dominates: a cold Pelias stack answers its first query around 30s after the
+ * containers report running, and a fixed sleep would either lie or waste the difference.
  */
 const HEALTH_TIMEOUT_MS = 180_000
 
 const HEALTH_POLL_MS = 3000
 
 /**
- * The 2xx band — a rig's answer counts only when the response is one, and both call sites read the same pair rather
- * than re-typing the numbers.
+ * The 2xx band — a rig's answer counts only when the response is one, and both call
+ * sites read the same pair rather than re-typing the numbers.
  */
 const HTTP_OK_MIN = 200
 const HTTP_OK_MAX = 300
 
 /**
- * Where a rig's lifecycle script lives: under `$MAILWOMAN_TEMP_ROOT`, because these are maintainer-authored scripts
- * that no checkout carries. The value is quoted back to a maintainer who has to run one, so it has to name a path that
- * exists on their machine rather than one relative to a repository that never held it.
+ * Where a rig's lifecycle script lives: under `$MAILWOMAN_TEMP_ROOT`,
+ * because these are maintainer-authored scripts that no checkout carries.
+ * The value is quoted back to a maintainer who has to run one, so it has to name a path
+ * that exists on their machine rather than one relative to a repository that never held it.
  */
 function rigScriptPath(...segments: string[]): string {
 	return String(tempRootPath(...segments))
 }
 
 /**
- * The rigs this tool can drive. `containers` is in start order. stop reverses it, because Elasticsearch must outlive
- * the API that queries it.
+ * The rigs this tool can drive. `containers` is in start order. stop reverses it,
+ * because Elasticsearch must outlive the API that queries it.
  */
 export const ENGINE_RIGS = {
 	pelias: {
@@ -129,9 +130,10 @@ export type EngineRigName = keyof typeof ENGINE_RIGS
 interface ContainerState {
 	name: string
 	/**
-	 * The runtime's own status string (`Up 2 minutes`, `Exited (0) 3 days ago`, `Created`), or `absent` when no container
-	 * by that name exists — which is a different fact from a stopped one: absent means the rig was never built here, and
-	 * building it is the manual half this module refuses to do.
+	 * The runtime's own status string (`Up 2 minutes`, `Exited (0) 3 days ago`, `Created`),
+	 * or `absent` when no container by that name exists — which is a different fact
+	 * from a stopped one: absent means the rig was never built here, and building
+	 * it is the manual half this module refuses to do.
 	 */
 	status: string
 }
@@ -141,8 +143,8 @@ export interface RigStatus {
 	endpoint: string
 	containers: ContainerState[]
 	/**
-	 * Whether the endpoint answered its health query just now. `false` with running containers is the normal state during
-	 * an Elasticsearch warm-up rather than a fault.
+	 * Whether the endpoint answered its health query just now.
+	 * `false` with running containers is the normal state during an Elasticsearch warm-up rather than a fault.
 	 */
 	answering: boolean
 	/**
@@ -177,8 +179,8 @@ async function runtime(args: string[]): Promise<string> {
 }
 
 /**
- * Container states for one rig — absent containers reported as `absent` rather than omitted, so a partially built rig
- * is legible.
+ * Container states for one rig — absent containers reported as `absent`
+ * rather than omitted, so a partially built rig is legible.
  */
 async function containerStates(rig: (typeof ENGINE_RIGS)[EngineRigName]): Promise<ContainerState[]> {
 	let listing: string
@@ -203,7 +205,8 @@ async function containerStates(rig: (typeof ENGINE_RIGS)[EngineRigName]): Promis
 }
 
 /**
- * Does the endpoint answer right now? A failed fetch is `false`, never a throw: "not answering" is the answer.
+ * Does the endpoint answer right now? A failed fetch is `false`, never a throw:
+ * "not answering" is the answer.
  */
 async function answering(name: EngineRigName): Promise<boolean> {
 	try {
@@ -229,8 +232,9 @@ export async function rigStatus(name: EngineRigName): Promise<RigStatus> {
 }
 
 /**
- * Start a rig and wait for it to answer rather than merely to be running — a container that is up while Elasticsearch
- * is still loading serves 500s, and a caller told "started" would read those as the engine's opinion.
+ * Start a rig and wait for it to answer rather than merely to be running —
+ * a container that is up while Elasticsearch is still loading serves 500s,
+ * and a caller told "started" would read those as the engine's opinion.
  */
 export async function rigStart(name: EngineRigName): Promise<RigStatus & { waitedMs: number }> {
 	const rig = ENGINE_RIGS[name]
@@ -259,8 +263,8 @@ export async function rigStart(name: EngineRigName): Promise<RigStatus & { waite
 }
 
 /**
- * Stop a rig in reverse start order. Never removes a container or its data — the rigs carry frozen indices that cost
- * hours to rebuild, and `podman rm` is not a verb this tool has.
+ * Stop a rig in reverse start order. Never removes a container or its data — the rigs carry
+ * frozen indices that cost hours to rebuild, and `podman rm` is not a verb this tool has.
  */
 export async function rigStop(name: EngineRigName): Promise<RigStatus> {
 	const rig = ENGINE_RIGS[name]
@@ -276,10 +280,10 @@ export async function rigStop(name: EngineRigName): Promise<RigStatus> {
 /**
  * Normalize one engine's payload into {@link RigResult}s.
  *
- * Both rigs answer GeoJSON, and both put the interesting identity in `properties` under different keys: Pelias carries
- * `gid` + `layer`, Photon carries `osm_type`/`osm_id` + `osm_key`/`osm_value`. Reading the position is the classic
- * hazard — GeoJSON orders it [lon, lat], and reading it the other way lands every result in the wrong hemisphere while
- * still looking plausible near the equator.
+ * Both rigs answer GeoJSON, and both put the interesting identity in `properties` under different keys:
+ * Pelias carries `gid` + `layer`, Photon carries `osm_type`/`osm_id` + `osm_key`/`osm_value`.
+ * Reading the position is the classic hazard — GeoJSON orders it [lon, lat], and reading it the other
+ * way lands every result in the wrong hemisphere while still looking plausible near the equator.
  */
 export function normalizeRigResults(engine: EngineRigName, body: unknown): RigResult[] {
 	const features = (body as { features?: unknown[] })?.features
@@ -315,8 +319,8 @@ export function normalizeRigResults(engine: EngineRigName, body: unknown): RigRe
 }
 
 /**
- * Ask a running rig about a handful of strings. Sequential by construction — these are observations, and a rig sharing
- * a host with a build has no business being flooded.
+ * Ask a running rig about a handful of strings. Sequential by construction — these are
+ * observations, and a rig sharing a host with a build has no business being flooded.
  */
 export async function rigQuery(name: EngineRigName, queries: readonly string[]): Promise<RigQueryRow[]> {
 	const rig = ENGINE_RIGS[name]

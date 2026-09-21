@@ -103,9 +103,9 @@ export interface DanglingLink {
 }
 
 /**
- * This module's own repo-relative path, excluded from the sweep it performs: the header has to spell the tag shapes it
- * looks for, and `{@link foo}` in an explanation is an example rather than a promise. `debt.ts` excludes itself from
- * its own vocabulary count for the same reason.
+ * This module's own repo-relative path, excluded from the sweep it performs: the header has
+ * to spell the tag shapes it looks for, and `{@link foo}` in an explanation is an example
+ * rather than a promise. `debt.ts` excludes itself from its own vocabulary count for the same reason.
  */
 const SELF = "packages/repo-health/lib/checks/doc-link-targets.ts"
 
@@ -147,8 +147,8 @@ export async function findDanglingLinks(context: RepoContext): Promise<DanglingL
 
 			if (known.has(head)) continue
 
-			// A language built-in is a legitimate target and belongs to no file. Asked of the runtime rather than kept as
-			// a list, which would go stale against the platform.
+			// A language built-in is a legitimate target and belongs to no file.
+			// Asked of the runtime rather than kept as a list, which would go stale against the platform.
 			if (head in globalThis) continue
 
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- counting newlines in a string already resident.
@@ -162,8 +162,8 @@ export async function findDanglingLinks(context: RepoContext): Promise<DanglingL
 }
 
 /**
- * The check: each dangling link as a warning, because a tag promising a symbol that does not exist is how a name gets
- * implemented instead of imported.
+ * The check: each dangling link as a warning, because a tag promising a symbol that
+ * does not exist is how a name gets implemented instead of imported.
  */
 export const docLinkTargetsCheck: RepoCheck = {
 	id: "doc-link-targets",

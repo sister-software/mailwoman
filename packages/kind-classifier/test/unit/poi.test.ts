@@ -110,12 +110,14 @@ describe("matchPOISubject", () => {
 })
 
 /**
- * What a lookup's second hit means, which decides whether narrowing to the first is an answer or an invented ordering.
+ * What a lookup's second hit means, which decides whether narrowing to the first
+ * is an answer or an invented ordering.
  *
- * The committed phrase index returns the categories one typed phrase could name, most specific first, and the first
- * entry is the subject — which category a typed phrase reaches is #1933's question and is unchanged here. An affordance
- * rung returns every kind that affords one activity, in an enumeration that is not a preference, and flags each member
- * `searchAsSet`; the whole set is then carried and the POI branch searches their union.
+ * The committed phrase index returns the categories one typed phrase could name, most specific first,
+ * and the first entry is the subject — which category a typed phrase reaches is #1933's question
+ * and is unchanged here. An affordance rung returns every kind that affords one activity,
+ * in an enumeration that is not a preference, and flags each member `searchAsSet`;
+ * the whole set is then carried and the POI branch searches their union.
  */
 describe("a lookup returning several hits", () => {
 	const preferenceList: POIPhraseLookup = (phrase) =>
@@ -167,8 +169,9 @@ describe("a lookup returning several hits", () => {
 		expect(m?.remainder).toBe("")
 	})
 
-	// `match` is the hit the subject scores under, and it is always the head of `matches` — two names for one value, so
-	// a scorer reading the kind and a branch reading the set can never disagree about which subject was matched.
+	// `match` is the hit the subject scores under, and it is always the head of `matches` —
+	// two names for one value, so a scorer reading the kind and a branch reading the
+	// set can never disagree about which subject was matched.
 	it("scores under the head of the set", () => {
 		const m = matchPOISubject("prescription near Denver CO", "en-US", affordedSet)
 
@@ -179,16 +182,18 @@ describe("a lookup returning several hits", () => {
 /**
  * ANCHOR_SEPARATOR behaviour-preservation + ReDoS safety.
  *
- * The separator regex was linearized (`\s*,\s*|\s+(?:…)\s+` → `,\s*|\s(?:…)\s+`) to clear CodeQL's
- * `js/polynomial-redos` alert. `matchPOISubject` trims both the subject and the remainder, so surrounding whitespace on
- * the separator is redundant — the split behaviour must be byte-identical. These cases pin the split point, subject,
- * remainder, and match for every branch, anchor word, and whitespace shape. Values are the exact output of the
- * pre-linearization regex (each anchor word is flanked by whitespace on both sides, a comma splits regardless of
- * surrounding whitespace).
+ * The separator regex was linearized (`\s*,\s*|\s+(?:…)\s+` → `,\s*|\s(?:…)\s+`) to
+ * clear CodeQL's `js/polynomial-redos` alert. `matchPOISubject` trims both the subject
+ * and the remainder, so surrounding whitespace on the separator is redundant —
+ * the split behaviour must be byte-identical. These cases pin the split point,
+ * subject, remainder, and match for every branch, anchor word, and whitespace shape.
+ * Values are the exact output of the pre-linearization regex (each anchor word is flanked
+ * by whitespace on both sides, a comma splits regardless of surrounding whitespace).
  */
 describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearization)", () => {
-	// Fixed subject lexicon: hits only these short leading phrases. The whole inputs below are longer (they carry the
-	// place), so the whole-input path misses and the separator scan runs — surfacing the split point itself.
+	// Fixed subject lexicon: hits only these short leading phrases.
+	// The whole inputs below are longer (they carry the place), so the whole-input path misses
+	// and the separator scan runs — surfacing the split point itself.
 	const SUBJECTS = new Set(["cafe", "gas station", "hotel", "atm", "trails", "x"])
 
 	const subjectLookup: POIPhraseLookup = (phrase) => {
@@ -331,8 +336,8 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 		const m = matchPOISubject(pathological, "en-US", neverHits)
 		const elapsed = performance.now() - start
 		expect(m).toBeNull()
-		// The old O(n²) form took seconds on 1e5 chars. the linear form completes in single-digit ms. 100ms is a
-		// generous ceiling that still fails loudly if quadratic backtracking returns.
+		// The old O(n²) form took seconds on 1e5 chars. the linear form completes in single-digit
+		// ms. 100ms is a generous ceiling that still fails loudly if quadratic backtracking returns.
 		expect(elapsed).toBeLessThan(100)
 	})
 
@@ -349,9 +354,10 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 describe("createKindClassifier with a poi lexicon", () => {
 	const classify = createKindClassifier({ poiLexicon: LOOKUP })
 
-	// ROAD_TO_V9 §4.4 split this row's population off `poi_query`: a bare category is `poi_category` now, and
-	// `poi_query` stays underneath it as the alternative. Both kinds take the coordinator's POI branch, so the routing
-	// this test was protecting is unchanged — `core/pipeline/poi-branch.test.ts` is where that is asserted.
+	// ROAD_TO_V9 §4.4 split this row's population off `poi_query`: a bare category
+	// is `poi_category` now, and `poi_query` stays underneath it as the alternative.
+	// Both kinds take the coordinator's POI branch, so the routing this test was protecting
+	// is unchanged — `core/pipeline/poi-branch.test.ts` is where that is asserted.
 	it("emits poi_category for a bare category phrase, with poi_query underneath", async () => {
 		const result = await classify(input("hospital"), shape(), LOCALE)
 		expect(result.kind).toBe("poi_category")

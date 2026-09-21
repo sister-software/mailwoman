@@ -28,8 +28,8 @@ let cacheRoot: TemporaryDirectory
 let packageDir: PathBuilder
 
 /**
- * A package-shaped directory the `cache:` resolution rung finds:
- * `<cacheRoot.path>/node_modules/@mailwoman/neural-weights-en-us`.
+ * A package-shaped directory the `cache:` resolution rung
+ * finds: `<cacheRoot.path>/node_modules/@mailwoman/neural-weights-en-us`.
  */
 async function stagePackage(card: Record<string, unknown>, lexicons: readonly string[]): Promise<void> {
 	await writeLocalTextFile("", join(packageDir, "model.onnx"))
@@ -91,8 +91,9 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 	})
 
 	test("a card naming a lexicon against a package shipping NONE of the family is plain absence, not a mismatch", async () => {
-		// `neural-weights-base-latn` is the live example: it symlinks en-us's card and ships no lexicons.
-		// createScorer's declared-required fail-closed is what covers this case rather than a resolution throw.
+		// `neural-weights-base-latn` is the live example: it symlinks en-us's card
+		// and ships no lexicons. createScorer's declared-required fail-closed is what
+		// covers this case rather than a resolution throw.
 		await stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), [])
 
 		expect(

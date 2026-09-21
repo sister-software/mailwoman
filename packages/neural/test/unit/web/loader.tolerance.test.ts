@@ -53,8 +53,8 @@ vi.mock("@mailwoman/neural/tokenizer", async (importOriginal) => ({
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 
-// Capture-only stub: the real classifier needs the real tokenizer + label wiring. We only care
-// that it is constructed (the load reached the end) and what postcode lookup it received.
+// Capture-only stub: the real classifier needs the real tokenizer + label wiring.
+// We only care that it is constructed (the load reached the end) and what postcode lookup it received.
 vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/classifier")>()),
 	NeuralAddressClassifier: class {
@@ -74,8 +74,8 @@ vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import after the mock declarations + reset. `postcode-binary-resolver.ts` is not mocked, so the
-// binaries we build here decode through the real reader.
+// Import after the mock declarations + reset. `postcode-binary-resolver.ts` is not mocked,
+// so the binaries we build here decode through the real reader.
 const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode")
 const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
@@ -99,9 +99,9 @@ const MODEL_URL = "https://cdn.example/mailwoman/v9/model.onnx"
 const TOKENIZER_URL = "https://cdn.example/mailwoman/v9/tokenizer.model"
 
 /**
- * A fake `fetch` whose per-URL status is decided by `statusFor`. 200 responses carry real bytes: a decodable
- * single-record postcode binary for the `.bin` URLs, dummy bytes for model/tokenizer (the ORT session + tokenizer are
- * mocked, so the content is irrelevant).
+ * A fake `fetch` whose per-URL status is decided by `statusFor`. 200 responses carry real
+ * bytes: a decodable single-record postcode binary for the `.bin` URLs, dummy bytes for
+ * model/tokenizer (the ORT session + tokenizer are mocked, so the content is irrelevant).
  */
 function makeFetch(statusFor: (url: string) => number): typeof fetch {
 	return async (input) => {

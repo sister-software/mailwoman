@@ -170,7 +170,8 @@ export function realizeFloodMapExtent(options: RealizeExtentOptions): FloodMapEx
 }
 
 /**
- * The outline's bounding rectangle, holes included — a coarse descriptor for the receipt, never the footprint itself.
+ * The outline's bounding rectangle, holes included — a coarse descriptor for
+ * the receipt, never the footprint itself.
  */
 function geometryBounds(geometry: ParsedGeometry): {
 	minLat: number

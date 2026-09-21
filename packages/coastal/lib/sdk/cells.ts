@@ -56,7 +56,8 @@ export interface ScenarioCellMeasurement {
 	 */
 	partialCells: number
 	/**
-	 * `partialCells / touchedCells`. The share of in-layer probes that cannot be answered from the index alone.
+	 * `partialCells / touchedCells`. The share of in-layer probes that cannot
+	 * be answered from the index alone.
 	 */
 	partialShare: number
 	/**
@@ -76,9 +77,10 @@ export interface CellIndexMeasurement {
 	resolution: number
 	perScenario: ScenarioCellMeasurement[]
 	/**
-	 * Cell rows the artifact would store at this resolution, across every scenario — the compacted whole rows plus the
-	 * partial rows. This is the artifact's size, and it is a SUM over scenarios rather than a union: two scenarios naming
-	 * the same cell are two rows, because they are two different claims.
+	 * Cell rows the artifact would store at this resolution, across every scenario —
+	 * the compacted whole rows plus the partial rows. This is the artifact's size,
+	 * and it is a SUM over scenarios rather than a union: two scenarios naming the same
+	 * cell are two rows, because they are two different claims.
 	 */
 	storedCellRows: number
 	/**
@@ -87,8 +89,8 @@ export interface CellIndexMeasurement {
 	touchedCells: number
 	partialCells: number
 	/**
-	 * `partialCells / touchedCells` pooled. Reported for the size question only. the resolution is chosen on the
-	 * per-scenario shares above.
+	 * `partialCells / touchedCells` pooled. Reported for the size question only. the
+	 * resolution is chosen on the per-scenario shares above.
 	 */
 	pooledPartialShare: number
 }
@@ -96,9 +98,9 @@ export interface CellIndexMeasurement {
 /**
  * Accumulate one resolution's cell index over a stream of features, keeping the scenarios apart.
  *
- * Held as short-cell strings rather than the integers the tables store, because `compactCells` and `cellToParent` are
- * h3-js functions over full indexes and round-tripping through the integer form at every step would cost more than the
- * strings do.
+ * Held as short-cell strings rather than the integers the tables store, because `compactCells`
+ * and `cellToParent` are h3-js functions over full indexes and round-tripping through
+ * the integer form at every step would cost more than the strings do.
  */
 export class CoastalCellIndex {
 	readonly resolution: number
@@ -140,10 +142,11 @@ export class CoastalCellIndex {
 	/**
 	 * The measurement, per scenario and then pooled.
 	 *
-	 * The compacted count here is an approximation of what the build stores and is reported as one: the build compacts
-	 * each feature's whole set, while this compacts the scenario's union of them. The union can only compact at least as
-	 * far, so this is a lower bound on the stored row count — which is the direction a size estimate should err in, and
-	 * the build's own receipt reports the real number.
+	 * The compacted count here is an approximation of what the build stores
+	 * and is reported as one: the build compacts each feature's whole set, while this
+	 * compacts the scenario's union of them. The union can only compact at least as far,
+	 * so this is a lower bound on the stored row count — which is the direction a size
+	 * estimate should err in, and the build's own receipt reports the real number.
 	 */
 	finish(): CellIndexMeasurement {
 		const perScenario: ScenarioCellMeasurement[] = []
@@ -191,8 +194,8 @@ export class CoastalCellIndex {
 }
 
 /**
- * The per-scenario measurement as markdown table rows — what a build receipt carries, one line per element so a caller
- * printing them never has to split a joined string back apart.
+ * The per-scenario measurement as markdown table rows — what a build receipt carries,
+ * one line per element so a caller printing them never has to split a joined string back apart.
  */
 export function formatScenarioMeasurementRows(measurements: readonly CellIndexMeasurement[]): string[] {
 	const lines = [

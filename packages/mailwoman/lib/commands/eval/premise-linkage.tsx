@@ -59,14 +59,14 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The synthetic self-check publishes nothing, so its cell floor exists only to keep the writer's suppression path on
- * the same code the controlled run takes.
+ * The synthetic self-check publishes nothing, so its cell floor exists only to keep
+ * the writer's suppression path on the same code the controlled run takes.
  */
 const SYNTHETIC_MIN_CELL_SIZE = 1
 
 /**
- * Bytes of per-run salt generated when the synthetic self-check finds none in the environment. A controlled run never
- * reaches this: it is told to supply its own.
+ * Bytes of per-run salt generated when the synthetic self-check finds none in the environment.
+ * A controlled run never reaches this: it is told to supply its own.
  */
 const GENERATED_SALT_BYTES = 24
 
@@ -168,8 +168,9 @@ const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
 }
 
 /**
- * Import a private run configuration from outside this repository. The specifier is the operator's. nothing here
- * inspects it beyond handing it to the loader, and `resolve` decides whether what came back is usable.
+ * Import a private run configuration from outside this repository.
+ * The specifier is the operator's. nothing here inspects it beyond handing it to the loader,
+ * and `resolve` decides whether what came back is usable.
  */
 async function loadControlledConfig<T>(
 	specifier: string,
@@ -181,8 +182,8 @@ async function loadControlledConfig<T>(
 }
 
 /**
- * The shipped synthetic fixture, its matching provider, and a pipeline stub — the self-check's three pieces, which ship
- * together. Therefore, they cannot disagree.
+ * The shipped synthetic fixture, its matching provider, and a pipeline stub —
+ * the self-check's three pieces, which ship together. Therefore, they cannot disagree.
  */
 async function loadSyntheticConfig() {
 	const { syntheticFixtureAdapter, syntheticFixtureDeps, syntheticFixtureProvider } =

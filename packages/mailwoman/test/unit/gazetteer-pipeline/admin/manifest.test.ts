@@ -19,8 +19,8 @@ const BASE = { buildSHA: "abc1234", createdAt: "2026-08-17T00:00:00.000Z", versi
 
 describe("adminLayerManifest — source is derived from the run", () => {
 	it("names only the folds that actually ingested rows", () => {
-		// The #1015 lesson at its narrowest: the manifest that lagged recorded an intention. A build that read
-		// no Overture rows must not claim Overture, whatever the recipe lists.
+		// The #1015 lesson at its narrowest: the manifest that lagged recorded an intention.
+		// A build that read no Overture rows must not claim Overture, whatever the recipe lists.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 100, overture: 0, geonames: 0 } })
 
 		expect(manifest.source).toBe("whosonfirst")
@@ -50,8 +50,9 @@ describe("adminLayerManifest — source is derived from the run", () => {
 
 describe("adminLayerManifest — the licence is a conjunction", () => {
 	it("ANDs every contributing source's terms rather than picking one", () => {
-		// Three sources, three different licences, one file. Recording the most permissive — or the licence of
-		// the largest contributor — would be a distribution claim nobody made.
+		// Three sources, three different licences, one file.
+		// Recording the most permissive — or the licence of the largest contributor —
+		// would be a distribution claim nobody made.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 1, geonames: 1 } })
 
 		expect(manifest.license).toBe("ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0")
@@ -74,8 +75,8 @@ describe("adminLayerManifest — the licence is a conjunction", () => {
 
 describe("adminLayerManifest — vintages", () => {
 	it("records a contributing source with no known vintage as unknown, not as blank", () => {
-		// A vintage nobody captured is a fact about the build. Omitting it would read as a source with no
-		// version rather than as a gap in what was recorded.
+		// A vintage nobody captured is a fact about the build.
+		// Omitting it would read as a source with no version rather than as a gap in what was recorded.
 		const manifest = adminLayerManifest({
 			...BASE,
 			counts: { wof: 1, overture: 1, geonames: 0 },
@@ -98,8 +99,8 @@ describe("adminLayerManifest — vintages", () => {
 
 describe("adminLayerManifest — the fields a reader acts on", () => {
 	it("names a build command that is a real CLI verb, not a path", () => {
-		// `data inventory` flags a build_cmd whose path tokens do not resolve. A CLI verb has none, which is
-		// what makes it survive a workspace regroup.
+		// `data inventory` flags a build_cmd whose path tokens do not resolve.
+		// A CLI verb has none, which is what makes it survive a workspace regroup.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 0, geonames: 0 } })
 
 		expect(manifest.buildCmd).toBe("mailwoman gazetteer build admin")

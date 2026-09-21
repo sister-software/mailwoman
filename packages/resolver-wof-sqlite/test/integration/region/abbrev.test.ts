@@ -52,8 +52,8 @@ function buildDB(): DatabaseClient<WOFDatabase> {
 	spr.run(12, 1, "California", "region", "US", 36.7, -119.4, 32.5, 42, -124.4, -114.1)
 	spr.run(13, 1, "District of Columbia", "region", "US", 38.9, -77, 38.8, 39, -77.1, -76.9)
 	spr.run(14, 1, "Puerto Rico", "region", "US", 18.2, -66.5, 17.9, 18.5, -67.3, -65.2)
-	// Counties — in US WOF a locality's direct parent is a county rather than the region (the gap the
-	// ancestry backfill bridges).
+	// Counties — in US WOF a locality's direct parent is a county rather than the
+	// region (the gap the ancestry backfill bridges).
 	spr.run(20, 10, "Franklin County", "county", "US", 44.9, -72.9, 44.7, 45, -73.1, -72.5)
 	spr.run(21, 11, "O'Brien County", "county", "US", 43.1, -95.6, 43, 43.3, -95.9, -95.4)
 	// Two same-named localities — the bug's signature.
@@ -62,8 +62,8 @@ function buildDB(): DatabaseClient<WOFDatabase> {
 	const pop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 	pop.run(30, 932) // Sheldon, VT
 	pop.run(31, 5455) // Sheldon, IA — larger, so it wins an unconstrained, population-led lookup
-	// USPS abbreviations — what add-region-abbrevs.ts writes (language='abbr'); build-fts folds
-	// `names` into place_search.alt_names so findPlace can match them.
+	// USPS abbreviations — what add-region-abbrevs.ts writes (language='abbr');
+	// build-fts folds `names` into place_search.alt_names so findPlace can match them.
 	const nm = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, 'abbr', ?)`)
 	nm.run(10, "VT")
 	nm.run(11, "IA")
@@ -113,8 +113,8 @@ describe("region-abbreviation resolution (#440/#441)", () => {
 
 	it("constrains the locality lookup to the region's descendants — the right-state town beats a larger namesake", async () => {
 		// Vermont = region id 10. "Sheldon" has a Vermont town (pop 932) and a larger Iowa town
-		// (pop 5455). With the region constraint the Iowa town is filtered out (not a descendant of
-		// Vermont), so the correct Vermont Sheldon wins despite its smaller population.
+		// (pop 5455). With the region constraint the Iowa town is filtered out (not a descendant of Vermont),
+		// so the correct Vermont Sheldon wins despite its smaller population.
 		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentID: 10, country: "US" })
 		expect(r[0]?.id).toBe(30)
 		expect(r.some((p) => p.id === 31)).toBe(false)
@@ -128,9 +128,9 @@ describe("region-abbreviation resolution (#440/#441)", () => {
 	})
 
 	it("the constraint reaches a place whose direct parent is a county, not the region (the ancestry-backfill case)", async () => {
-		// Sheldon, VT's direct parent is Franklin County (20), not Vermont (10). The constraint still
-		// reaches it through the `ancestors` table — the exact linkage the backfill restores for
-		// multi/ambiguous-parent places (e.g. NYC, parent_id=-4).
+		// Sheldon, VT's direct parent is Franklin County (20), not Vermont (10).
+		// The constraint still reaches it through the `ancestors` table — the exact linkage
+		// the backfill restores for multi/ambiguous-parent places (e.g. NYC, parent_id=-4).
 		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentID: 10, country: "US" })
 		expect(r[0]?.id).toBe(30)
 	})

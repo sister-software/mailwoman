@@ -26,8 +26,8 @@ export interface ResolvedPlaceView {
 	score: number
 	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 	/**
-	 * How the coordinate was reached when a street-tier lookup answered: a rooftop point, or an interpolation along the
-	 * segment. Absent for a gazetteer place.
+	 * How the coordinate was reached when a street-tier lookup answered: a rooftop point,
+	 * or an interpolation along the segment. Absent for a gazetteer place.
 	 */
 	tier?: "address_point" | "interpolated"
 	uncertaintyM?: number
@@ -55,8 +55,9 @@ export interface FSTProvenance {
 }
 
 /**
- * The query kind as a client shows it. `kind` is any string here, where the pipeline's own `QueryKindResult` carries
- * the typed union, because a renderer must show a kind it does not know rather than refuse the result.
+ * The query kind as a client shows it. `kind` is any string here, where the pipeline's
+ * own `QueryKindResult` carries the typed union, because a renderer must show a
+ * kind it does not know rather than refuse the result.
  */
 export interface KindView {
 	kind: string
@@ -67,8 +68,8 @@ export interface KindView {
 export interface ParseResult {
 	input: string
 	/**
-	 * The decoder's `AddressTree`, opaque here so this module stays free of the decoder's types. a renderer that walks it
-	 * imports `@mailwoman/core/decoder/types`.
+	 * The decoder's `AddressTree`, opaque here so this module stays free of the decoder's
+	 * types. a renderer that walks it imports `@mailwoman/core/decoder/types`.
 	 */
 	tree: unknown
 	nodes: ParsedComponent[]

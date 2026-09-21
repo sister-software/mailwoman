@@ -15,13 +15,15 @@ import { buildWeightsInstallArgs, probeWeights } from "mailwoman/cli-kit/weights
 import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-// A locale with no weights package, which is the whole point: these cases assert the not-resolvable
-// path. Therefore, the locale must be one nothing can resolve. It was `de-DE` until 2026-08-02, when campaign
-// R9 shipped `@mailwoman/neural-weights-de-de` and silently invalidated the premise — `resolveWeights`
-// started finding the real workspace package and every "nothing resolves" assertion inverted.
+// A locale with no weights package, which is the whole point: these cases assert
+// the not-resolvable path. Therefore, the locale must be one nothing can resolve.
+// It was `de-DE` until 2026-08-02, when campaign R9 shipped `@mailwoman/neural-weights-de-de`
+// and silently invalidated the premise — `resolveWeights` started finding the real
+// workspace package and every "nothing resolves" assertion inverted.
 //
-// `pt-BR` is the current choice because Brazil has no carrier package. If one ever ships, this breaks
-// the same way, and the fix is the same: move to a locale that is still unclaimed.
+// `pt-BR` is the current choice because Brazil has no carrier package.
+// If one ever ships, this breaks the same way, and the fix is the same:
+// move to a locale that is still unclaimed.
 const LOCALE = "pt-BR"
 
 let cacheRoot: TemporaryDirectory

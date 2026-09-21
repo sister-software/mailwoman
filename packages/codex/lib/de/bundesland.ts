@@ -30,8 +30,8 @@ export interface GermanStateInfo {
 }
 
 /**
- * ISO 3166-2:DE code → state info, for all 16 Bundesländer. Codes are the official subdivision codes minus the `DE-`
- * prefix.
+ * ISO 3166-2:DE code → state info, for all 16 Bundesländer.
+ * Codes are the official subdivision codes minus the `DE-` prefix.
  */
 export const DE_BUNDESLAENDER = {
 	BW: { code: "BW", name: "Baden-Württemberg", english: "Baden-Württemberg" },
@@ -67,10 +67,11 @@ export function isGermanStateCode(input: unknown): input is GermanStateCode {
 }
 
 /**
- * Name (native German, English exonym, or common alias) → ISO 3166-2:DE code, lowercase-keyed. Includes the everyday
- * aliases a parser actually meets: `NRW` for Nordrhein-Westfalen, `Bavaria` for Bayern, `Saxony` for Sachsen. The point
- * is resolver region-matching: a German parse emits a region surface form, and the eval needs to map it to a code
- * without a US-USPS-shaped matcher.
+ * Name (native German, English exonym, or common alias) → ISO 3166-2:DE code,
+ * lowercase-keyed. Includes the everyday aliases a parser actually meets:
+ * `NRW` for Nordrhein-Westfalen, `Bavaria` for Bayern, `Saxony` for Sachsen.
+ * The point is resolver region-matching: a German parse emits a region surface form,
+ * and the eval needs to map it to a code without a US-USPS-shaped matcher.
  */
 export const DE_STATE_NAME_TO_CODE: ReadonlyMap<string, GermanStateCode> = (() => {
 	const out = new Map<string, GermanStateCode>()
@@ -102,8 +103,8 @@ export const DE_STATE_NAME_TO_CODE: ReadonlyMap<string, GermanStateCode> = (() =
 })()
 
 /**
- * Resolve a German state surface form (code, German name, English name, or common alias) to its ISO 3166-2:DE code.
- * Returns null when unrecognized.
+ * Resolve a German state surface form (code, German name, English name, or common alias)
+ * to its ISO 3166-2:DE code. Returns null when unrecognized.
  */
 export function lookupGermanState(input: string | null | undefined): GermanStateCode | null {
 	if (!input || typeof input !== "string") return null

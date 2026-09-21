@@ -88,8 +88,9 @@ const HOUSE_NUMBERS = [
  */
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
-// Recipe-fidelity: this accent-stripping fold is the surface key every committed fr-fragment recipe output and the
-// fragment board's reserved list were built with — not the diacritic-keeping `foldNOSurface` the Norwegian recipes share.
+// Recipe-fidelity: this accent-stripping fold is the surface key every committed
+// fr-fragment recipe output and the fragment board's reserved list were built with —
+// not the diacritic-keeping `foldNOSurface` the Norwegian recipes share.
 const norm = (value: string): string =>
 	value
 		.normalize("NFD")
@@ -99,13 +100,14 @@ const norm = (value: string): string =>
 		.trim()
 
 /**
- * French commune convention: capitalize each element, leave the joining particles lowercase. `saint-jean-de-luz` →
- * `Saint-Jean-de-Luz`, not `Saint-Jean-De-Luz`.
+ * French commune convention: capitalize each element, leave the joining particles lowercase.
+ * `saint-jean-de-luz` → `Saint-Jean-de-Luz`, not `Saint-Jean-De-Luz`.
  *
- * Needed because BAN's per-region extract databases keep only `locality_base` — normalized, lowercase, accent-stripped.
- * Emitting that verbatim would teach the counter-distribution that a lowercase accent-stripped string is a locality,
- * which is not a fact about French and would not match the fragment board (which reconstructs the same casing). The
- * accents are gone from the source and cannot be recovered here. the casing can.
+ * Needed because BAN's per-region extract databases keep only `locality_base` — normalized,
+ * lowercase, accent-stripped. Emitting that verbatim would teach the counter-distribution
+ * that a lowercase accent-stripped string is a locality, which is not a fact about French
+ * and would not match the fragment board (which reconstructs the same casing).
+ * The accents are gone from the source and cannot be recovered here. the casing can.
  */
 const FR_LOWER = new Set([
 	"le",
@@ -155,8 +157,8 @@ const DATEISH =
 const ALNUM_HOUSE_NUMBER_SHARE = 0.25
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const frFragmentRecipe: CorpusRecipe = {
 	name: "fr-fragment",
@@ -204,8 +206,8 @@ export const frFragmentRecipe: CorpusRecipe = {
 		const hnProb = opts.hnProb ?? 0.35
 		const bareLocalityProb = opts.bareProb ?? 0.25
 
-		// The locality pool is harvested from the tuples themselves — every BAN row carries its
-		// commune, so the counter-distribution needs no second source.
+		// The locality pool is harvested from the tuples themselves — every BAN row carries
+		// its commune, so the counter-distribution needs no second source.
 		const localities = new Set<string>()
 
 		let read = 0
@@ -237,8 +239,8 @@ export const frFragmentRecipe: CorpusRecipe = {
 
 			const { prefix, street } = decomposeFrStreet(fullStreet)
 
-			// The failing class is the designator-led street. A no-prefix nom_voie ("La Ville Mois")
-			// is a different problem and would muddy the signal.
+			// The failing class is the designator-led street. A no-prefix nom_voie
+			// ("La Ville Mois") is a different problem and would muddy the signal.
 			if (!prefix || !street) {
 				skipped++
 
@@ -290,10 +292,10 @@ export const frFragmentRecipe: CorpusRecipe = {
 			}
 		}
 
-		// MARK: counter-distribution — bare localities
-		// Minted last so the locality pool is complete. Without these the model can satisfy every row
-		// above by flipping its default from "bare => locality" to "bare => street", which trades one
-		// broken prior for another and would show up as bare-locality collapsing on the board.
+		// MARK: counter-distribution — bare localities Minted last so the locality pool is complete.
+		// Without these the model can satisfy every row above by flipping its default from
+		// "bare => locality" to "bare => street", which trades one broken prior for another
+		// and would show up as bare-locality collapsing on the board.
 		const pool = [...localities].toSorted()
 		const wanted = Math.round((emitted / Math.max(1, 1 - bareLocalityProb)) * bareLocalityProb)
 

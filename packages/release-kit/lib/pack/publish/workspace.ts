@@ -85,7 +85,8 @@ export function releaseItWorkspaceEnvironment(): {
 export async function publishWorkspace(options: PublishWorkspaceOptions): Promise<PublishWorkspaceReport> {
 	const { repoRoot, workspacePath, log } = options
 
-	// Before anything is packed, and before the weights skip, so a held-out workspace is refused on every path into this
+	// Before anything is packed, and before the weights skip, so a held-out
+	// workspace is refused on every path into this
 	// function rather than on the ones that reach the npm call.
 	assertWorkspacePublishable(workspacePath)
 
@@ -100,17 +101,16 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 
 	const cwd = resolvePath(repoRoot, workspacePath)
 
-	// Dereference any symlinks among the workspace's `files` entries before
-	// publishing — npm/yarn refuse to upload tarballs containing symlinks
-	// (registry returns http 415). The neural-weights workspaces in particular
-	// can end up with symlinks from a dev linker.
+	// Dereference any symlinks among the workspace's `files` entries before publishing —
+	// npm/yarn refuse to upload tarballs containing symlinks (registry returns http 415).
+	// The neural-weights workspaces in particular can end up with symlinks from a dev linker.
 	await dereferenceWorkspaceSymlinks(cwd)
 
 	await using tmpDir = await temporaryDirectory("mailwoman-publish-")
 	const tarballPath = tmpDir.resolve("package.tgz")
 
-	// Step 1: pack with the derived publish map injected (shared helper — same path the CI
-	// smoke test uses, so what we test is what we ship).
+	// Step 1: pack with the derived publish map injected
+	// (shared helper — same path the CI smoke test uses, so what we test is what we ship).
 	log(`publish-workspace: packing ${workspacePath} with injected publish exports`)
 
 	await packWorkspaceForPublish(cwd, tarballPath)
@@ -123,8 +123,8 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 
 	log(`publish-workspace: verified ${audit.name} (${tarballAudit})`)
 
-	// Step 3: npm publish <tarball> — npm CLI auto-detects OIDC environment
-	// in GitHub Actions and uses it for Trusted Publishing.
+	// Step 3: npm publish <tarball> — npm CLI auto-detects OIDC environment in
+	// GitHub Actions and uses it for Trusted Publishing.
 	const publishArgs = ["publish", tarballPath, "--tag", options.tag]
 
 	if (options.access) {
@@ -135,9 +135,10 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 		publishArgs.push("--otp", options.otp)
 	}
 
-	// npm can only mint a provenance attestation from a CI provider it supports, so this is conditioned on GitHub Actions
-	// rather than on CI generally: a local `yarn release` passing --provenance fails outright, with no OIDC token to
-	// sign against. Trusted Publishing works either way — the attestation is the part that needs the CI identity.
+	// npm can only mint a provenance attestation from a CI provider it supports,
+	// so this is conditioned on GitHub Actions rather than on CI generally: a local
+	// `yarn release` passing --provenance fails outright, with no OIDC token to sign against.
+	// Trusted Publishing works either way — the attestation is the part that needs the CI identity.
 	//
 	// MAILWOMAN_NPM_PROVENANCE=0 turns it off, so a release blocked by a sigstore or registry outage can still ship.
 	if ($public.GITHUB_ACTIONS && $public.MAILWOMAN_NPM_PROVENANCE !== "0") {
@@ -170,10 +171,10 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 	return { workspace: workspacePath, outcome: "published", tarballAudit }
 }
 
-// The tarball audit lives in verify-tarball.ts so both publish paths inherit it — `bless-package` packs
-// the first publish of a package and had no guard at all, which is how neural-weights-en-in@8.6.0
-// shipped without the one binary it exists to carry.
+// The tarball audit lives in verify-tarball.ts so both publish paths inherit it —
+// `bless-package` packs the first publish of a package and had no guard at all,
+// which is how neural-weights-en-in@8.6.0 shipped without the one binary it exists to carry.
 
-// dereferenceWorkspaceSymlinks lives in pack-workspace.ts so packWorkspaceForPublish derefs for every
-// caller (smoke included); the explicit call above stays as the documented safety net (agents.md
-// "symlinks in the publish tarball").
+// dereferenceWorkspaceSymlinks lives in pack-workspace.ts so packWorkspaceForPublish
+// derefs for every caller (smoke included); the explicit call above stays as the
+// documented safety net (agents.md "symlinks in the publish tarball").

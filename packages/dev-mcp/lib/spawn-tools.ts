@@ -28,9 +28,9 @@ import { summarizeJob, type DevTool } from "#tool-kit"
 /**
  * Where each check job wrote its battery, keyed by job id.
  *
- * Kept beside the tools rather than re-derived from the log afterwards: the out-dir is chosen when the job starts, so
- * recovering it from printed output would fail exactly when the run died before printing any — the case where knowing
- * the directory matters most.
+ * Kept beside the tools rather than re-derived from the log afterwards: the out-dir is chosen
+ * when the job starts, so recovering it from printed output would fail exactly
+ * when the run died before printing any — the case where knowing the directory matters most.
  */
 const promotionEvalOutDirs = new Map<string, string>()
 
@@ -57,9 +57,10 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				n: z.number().int().positive().optional(),
 			}),
 			handler: async (args) => {
-				// The gauntlet writes its whole report to stdout, and stdout here is the JSON-RPC channel — so it is
-				// spawned rather than imported. That puts the compiled tree back on the path, which is what this guard is
-				// for: a stale out/ would grade replaced code and report a verdict rather than an error.
+				// The gauntlet writes its whole report to stdout, and stdout here
+				// is the JSON-RPC channel — so it is spawned rather than imported.
+				// That puts the compiled tree back on the path, which is what this guard is for:
+				// a stale out/ would grade replaced code and report a verdict rather than an error.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 
 				const layer = (args["layer"] as string) ?? "regression"
@@ -73,8 +74,8 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					argv.push("--gazetteer-prior")
 				}
 
-				// The CLI spells the two directions as separate flags rather than one boolean, and `undefined` must reach
-				// neither: unset means the production default, which is what the board grades.
+				// The CLI spells the two directions as separate flags rather than one boolean, and `undefined`
+				// must reach neither: unset means the production default, which is what the board grades.
 				if (args["postcode_country_coherence"] === true) {
 					argv.push("--postcode-country-coherence")
 				}
@@ -179,13 +180,14 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					}
 				}
 
-				// Spawned for the same reason the gauntlet is: it writes its battery report to stdout, which here is the
-				// JSON-RPC channel. The eval also runs its own recompile-before-eval guard, stricter than this one and meant
-				// to fire — it is surfaced verbatim rather than pre-empted.
+				// Spawned for the same reason the gauntlet is: it writes its battery report to stdout,
+				// which here is the JSON-RPC channel. The eval also runs its own recompile-before-eval guard,
+				// stricter than this one and meant to fire — it is surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
-				// The promotion battery is `mailwoman eval promote --check <spec>`; `eval check --spec` named a command that no
-				// longer exists, and the CLI answered its command list with exit 0, so the job "succeeded" with no verdict.
+				// The promotion battery is `mailwoman eval promote --check <spec>`;
+				// `eval check --spec` named a command that no longer exists, and the CLI answered
+				// its command list with exit 0, so the job "succeeded" with no verdict.
 				const argv = ["packages/mailwoman/out/cli/index.js", "eval", "promote", "--check", check, "--out-dir", outDir]
 
 				for (const [flag, key] of [
@@ -335,11 +337,12 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				return {
 					...summary,
-					// A running job still reports what it has produced so far, clearly marked — a partial log is useful and
-					// a silent "not ready" is not.
+					// A running job still reports what it has produced so far, clearly marked —
+					// a partial log is useful and a silent "not ready" is not.
 					partial: job.state === "running",
-					// A graded `fail` exits 1, so `state: "failed"` is what a completed-and-failing gauntlet looks like. That
-					// reads as a crash, and the two need different responses — say which happened.
+					// A graded `fail` exits 1, so `state: "failed"` is what a completed-and-failing
+					// gauntlet looks like. That reads as a crash, and the two need different
+					// responses — say which happened.
 					...(job.state === "failed" && report.verdict
 						? {
 								job_outcome: `The run COMPLETED and graded ${report.verdict}. The non-zero exit is the verdict, not a crash.`,

@@ -55,8 +55,8 @@ export const US_MILITARY_POST_OFFICE_CODES = [
 export type USMilitaryPostOfficeCode = (typeof US_MILITARY_POST_OFFICE_CODES)[number]["code"]
 
 /**
- * USPS Armed Forces "state" codes used in place of state names on military/diplomatic addresses. These appear where a
- * US state abbreviation (NY, CA, …) would appear in a civilian address.
+ * USPS Armed Forces "state" codes used in place of state names on military/diplomatic addresses.
+ * These appear where a US state abbreviation (NY, CA, …) would appear in a civilian address.
  */
 export const US_ARMED_FORCES_REGIONS = [
 	{ code: "AA", name: "Armed Forces Americas", description: "Americas (excluding Canada)" },
@@ -67,15 +67,15 @@ export const US_ARMED_FORCES_REGIONS = [
 export type USArmedForcesRegionCode = (typeof US_ARMED_FORCES_REGIONS)[number]["code"]
 
 /**
- * USPS Pub 28 Appendix B unit-line designators for military/diplomatic overseas addresses. Each designator introduces
- * an installation identifier and optionally a box number.
+ * USPS Pub 28 Appendix B unit-line designators for military/diplomatic overseas addresses.
+ * Each designator introduces an installation identifier and optionally a box number.
  *
  * Format rules per Appendix B:
  *
  * - `PSC <id> BOX <box>` — Postal Service Center
  * - `CMR <id> BOX <box>` — Community Mail Room
- * - `unit <id> BOX <box>` — numbered unit (battalion/company); unit may stand alone with just an id and no BOX when the
- *   unit has direct mail delivery
+ * - `unit <id> BOX <box>` — numbered unit (battalion/company); unit may stand alone
+ *   with just an id and no BOX when the unit has direct mail delivery
  *
  * BOX is required for PSC and CMR. unit may omit BOX.
  */
@@ -125,15 +125,16 @@ export interface USMilitaryUnitMatch {
 }
 
 /**
- * Unit-line regex: PSC/CMR/unit <id> [BOX <box>] Identifiers are numeric. box numbers are alphanumeric. unit may stand
- * without BOX.
+ * Unit-line regex: PSC/CMR/unit <id> [BOX <box>] Identifiers are numeric. box
+ * numbers are alphanumeric. unit may stand without BOX.
  */
 const UNIT_LINE_RE = /^\s*(psc|cmr|unit)\s+(\d+)(?:\s+box\s+([\dA-Za-z]+))?\s*$/i
 
 /**
- * If `input` is a USPS military unit-line ("PSC 1520 BOX 4620", "CMR 453 BOX 100", "unit 7 BOX 234A", "unit 7"), return
- * the canonical designator, installation id, and optional box. Null otherwise. Throws on a PSC or CMR line without a
- * BOX component (per Appendix B, BOX is required for PSC/CMR. a bare "PSC 1520" is malformed).
+ * If `input` is a USPS military unit-line ("PSC 1520 BOX 4620", "CMR 453 BOX 100",
+ * "unit 7 BOX 234A", "unit 7"), return the canonical designator, installation id,
+ * and optional box. Null otherwise. Throws on a PSC or CMR line without a BOX component
+ * (per Appendix B, BOX is required for PSC/CMR. a bare "PSC 1520" is malformed).
  */
 export function matchMilitaryUnitLine(input: unknown): USMilitaryUnitMatch | null {
 	if (typeof input !== "string") return null
@@ -183,28 +184,30 @@ export interface USMilitaryCityMatch {
 	 */
 	region: USArmedForcesRegionCode
 	/**
-	 * The 5-digit or 9-digit ZIP code. Typical ranges per Pub 28: 09xxx (AE), 34xxx (AA), 96xxx (AP) — range validation
-	 * per region is caller responsibility.
+	 * The 5-digit or 9-digit ZIP code. Typical ranges per Pub 28: 09xxx (AE), 34xxx (AA),
+	 * 96xxx (AP) — range validation per region is caller responsibility.
 	 */
 	zip: string
 }
 
 /**
- * City-line regex: APO/FPO/DPO <region> <zip> USPS military ZIP assignment per Pub 28 and the Armed Forces zip code
- * list: - AA (Americas): 340xx range - AE (Europe/ME/Africa/Canada): 09xxx range - AP (Pacific): 962xx-966xx range The
- * regex accepts any 5-digit or 9-digit ZIP code in combination with a valid region code — validating the specific
- * numeric range for each region is left to the caller (region+ZIP co-validation is operational policy rather than
- * structural syntax).
+ * City-line regex: APO/FPO/DPO <region> <zip> USPS military ZIP assignment per
+ * Pub 28 and the Armed Forces zip code list: - AA (Americas): 340xx range -
+ * AE (Europe/ME/Africa/Canada): 09xxx range - AP (Pacific): 962xx-966xx range The regex
+ * accepts any 5-digit or 9-digit ZIP code in combination with a valid region code —
+ * validating the specific numeric range for each region is left to the caller
+ * (region+ZIP co-validation is operational policy rather than structural syntax).
  */
 const CITY_LINE_RE = /^\s*(apo|fpo|dpo)\s+(aa|ae|ap)\s+(\d{5}(?:-\d{4})?)\s*$/i
 
 /**
- * If `input` is a USPS military city line ("APO AE 09165", "FPO AP 96602-1254", "DPO AE 09498", "APO AA 34022", "APO AP
- * 96525"), return the canonical code, region, and ZIP. Null otherwise.
+ * If `input` is a USPS military city line ("APO AE 09165", "FPO AP 96602-1254",
+ * "DPO AE 09498", "APO AA 34022", "APO AP 96525"), return the canonical code,
+ * region, and ZIP. Null otherwise.
  *
- * ZIP ranges per Pub 28: AE (Europe/ME/Africa/Canada) → 09xxx. AP (Pacific) → 96xxx. AA (Americas) → 34xxx. Range
- * validation per region is left to the caller. the matcher accepts any 5. or 9-digit ZIP paired with a valid region
- * code.
+ * ZIP ranges per Pub 28: AE (Europe/ME/Africa/Canada) → 09xxx.
+ * AP (Pacific) → 96xxx. AA (Americas) → 34xxx. Range validation per region is left to the
+ * caller. the matcher accepts any 5. or 9-digit ZIP paired with a valid region code.
  */
 export function matchMilitaryCityLine(input: unknown): USMilitaryCityMatch | null {
 	if (typeof input !== "string") return null

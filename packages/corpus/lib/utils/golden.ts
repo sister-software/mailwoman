@@ -31,8 +31,9 @@ const TAG_SET = new Set<string>(COMPONENT_TAGS as readonly string[])
 /**
  * A golden-set candidate row, as `golden-expand` writes and `golden-promote` reads.
  *
- * `source` names the producer (`expand-golden:<provider>`); the seed/provenance fields trace the candidate back to the
- * corpus row and LLM call that produced it. A committed golden entry is the {@link GoldenEntry} narrowing.
+ * `source` names the producer (`expand-golden:<provider>`); the seed/provenance
+ * fields trace the candidate back to the corpus row and LLM call that produced it.
+ * A committed golden entry is the {@link GoldenEntry} narrowing.
  */
 export interface GoldenCandidateEntry {
 	raw: string
@@ -75,8 +76,8 @@ export interface GoldenReport {
  * Parse a single jsonl line into a `GoldenEntry`. Throws on schema violations.
  */
 export function parseGoldenLine(line: string): GoldenEntry {
-	// The throw is the result: `validateGoldenFile` catches it and records the message against the line
-	// number, so a tolerant parse would report a corrupt row as valid.
+	// The throw is the result: `validateGoldenFile` catches it and records the message
+	// against the line number, so a tolerant parse would report a corrupt row as valid.
 	const obj = parseJSONStrict<Partial<GoldenEntry> & Record<string, unknown>>(line)
 
 	if (typeof obj.raw !== "string" || !obj.raw.length) {
@@ -113,9 +114,9 @@ export function parseGoldenLine(line: string): GoldenEntry {
 /**
  * Check that every component in `entry` appears in `entry.raw`.
  *
- * A golden entry's `raw` is hand-written ground truth rather than a render, so the question here really is containment:
- * does this labeled span occur in the string a person typed. That is the weaker of the two reconciliations, and the
- * right one for a string no layout produced.
+ * A golden entry's `raw` is hand-written ground truth rather than a render, so the question
+ * here really is containment: does this labeled span occur in the string a person typed.
+ * That is the weaker of the two reconciliations, and the right one for a string no layout produced.
  */
 export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 	const present = componentsPresentIn(entry.components, entry.raw)
@@ -133,10 +134,11 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 /**
  * Validate one `.jsonl` file end-to-end, returning a list of issues.
  *
- * Parses line by line over `TextSpliterator` rather than `JSONSpliterator`: every issue this returns carries the line
- * number it was found on, and a malformed line has to be reported rather than thrown. `JSONSpliterator` parses each row
- * for you and throws on the first bad one — correct for consumers that want the rows, wrong for the validator whose
- * whole job is locating the bad ones.
+ * Parses line by line over `TextSpliterator` rather than `JSONSpliterator`:
+ * every issue this returns carries the line number it was found on, and a malformed
+ * line has to be reported rather than thrown. `JSONSpliterator` parses each row for you
+ * and throws on the first bad one — correct for consumers that want the rows,
+ * wrong for the validator whose whole job is locating the bad ones.
  */
 export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 	const issues: GoldenIssue[] = []

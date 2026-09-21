@@ -16,8 +16,8 @@ import type { AliasLookupResult, LocaleScopeMatch, VariantAlias, VariantAliasTab
 const moduleDir = import.meta.dirname
 
 /**
- * Read the shipped alias table, located by the shared source-tree/`out/` probe in
- * `@mailwoman/core/module/packaged-data`.
+ * Read the shipped alias table, located by the shared source-tree/`out/` probe
+ * in `@mailwoman/core/module/packaged-data`.
  */
 async function loadTable(): Promise<VariantAliasTable> {
 	return readLocalJSONFile<VariantAliasTable>(await resolvePackagedDataPath(moduleDir, "aliases.json"))
@@ -26,9 +26,9 @@ async function loadTable(): Promise<VariantAliasTable> {
 const TABLE = await loadTable()
 
 /**
- * Indexed by lowercased variant string for O(1) lookup. Multiple entries can share the same variant key (e.g. ambiguous
- * "takeaway" only matches GB but not AU if both list it differently), so each entry is an array of all aliases that
- * share the key.
+ * Indexed by lowercased variant string for O(1) lookup.
+ * Multiple entries can share the same variant key (e.g. ambiguous "takeaway" only matches GB
+ * but not AU if both list it differently), so each entry is an array of all aliases that share the key.
  */
 const INDEX: ReadonlyMap<string, ReadonlyArray<VariantAlias>> = (() => {
 	const map = new Map<string, VariantAlias[]>()
@@ -44,15 +44,15 @@ const INDEX: ReadonlyMap<string, ReadonlyArray<VariantAlias>> = (() => {
 })()
 
 /**
- * Decide how a locale-scoped record answers under a detected locale — the rule every locale-restricted vocabulary in
- * the pipeline follows.
+ * Decide how a locale-scoped record answers under a detected locale — the rule every
+ * locale-restricted vocabulary in the pipeline follows.
  *
  * - `unscoped` (confidence 1) when the record declares no locales at all.
  * - `exact` (confidence 1) when the detected locale is one the record declares.
- * - `language` (confidence 0.5) when only the language subtag agrees — weaker on purpose, because regional variants are
- *   by definition regional.
- * - `null` otherwise, and for any scoped record when the locale is unknown: a phrasing declared regional cannot be
- *   reached without knowing the region.
+ * - `language` (confidence 0.5) when only the language subtag agrees — weaker on purpose,
+ *   because regional variants are by definition regional.
+ * - `null` otherwise, and for any scoped record when the locale is unknown:
+ *   a phrasing declared regional cannot be reached without knowing the region.
  */
 export function resolveLocaleScope(
 	locales: ReadonlyArray<string> | undefined,
@@ -77,12 +77,12 @@ export function resolveLocaleScope(
  * Confidence:
  *
  * - `1.0` when the detected locale (e.g. `en-AU`) is in the alias's `locales` list.
- * - `0.5` when only the language part matches (e.g. detected `en-IE`, alias supports `en-AU`). This is intentionally
- *   weaker because regional variants are by definition regional.
+ * - `0.5` when only the language part matches (e.g. detected `en-IE`, alias supports `en-AU`).
+ *   This is intentionally weaker because regional variants are by definition regional.
  * - No match when neither holds.
  *
- * Returns all matches sorted by confidence descending. Multi-locale variants (like "petrol station" →
- * en-GB/en-AU/en-NZ/en-ZA) return one entry per locale list — the caller picks.
+ * Returns all matches sorted by confidence descending. Multi-locale variants
+ * (like "petrol station" → en-GB/en-AU/en-NZ/en-ZA) return one entry per locale list — the caller picks.
  */
 export function lookupVariantAliases(text: string, locale: string): AliasLookupResult[] {
 	const norm = text.trim().toLowerCase()

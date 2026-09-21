@@ -10,11 +10,12 @@
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 /**
- * Gap text qualifies when it is at most three characters of punctuation and whitespace, with at least one punctuation
- * character. Commas and semicolons remain separators.
+ * Gap text qualifies when it is at most three characters of punctuation and whitespace,
+ * with at least one punctuation character. Commas and semicolons remain separators.
  */
 /**
- * Tokens a gap may span and still be bridged. Wider gaps are separate spans rather than one interrupted span.
+ * Tokens a gap may span and still be bridged. Wider gaps are separate spans
+ * rather than one interrupted span.
  */
 const MAX_BRIDGEABLE_GAP = 3
 
@@ -31,12 +32,13 @@ function bridgeable(gap: string): boolean {
  */
 export interface BridgePunctuationOpts {
 	/**
-	 * Structural spans (from the Stage 2.7 span proposer — annotation/quoted groups, delimiters inclusive) whose
-	 * boundaries no merge may straddle: M2's crossing constraint, the bridge's mirror image (the bridge merges across
-	 * weak punctuation. this blocks merging across structural punctuation). A merge is blocked when either span boundary
-	 * falls inside the gap being bridged — e.g. an apostrophe-quoted name whose closing quote sits in an
-	 * otherwise-bridgeable gap. Boundaries already inside a labeled token are the model's call rather than the bridge's.
-	 * only gaps are policed.
+	 * Structural spans (from the Stage 2.7 span proposer — annotation/quoted groups, delimiters inclusive)
+	 * whose boundaries no merge may straddle: M2's crossing constraint, the bridge's mirror image
+	 * (the bridge merges across weak punctuation. this blocks merging across structural punctuation).
+	 * A merge is blocked when either span boundary falls inside the gap being bridged —
+	 * e.g. an apostrophe-quoted name whose closing quote sits in an otherwise-bridgeable gap.
+	 * Boundaries already inside a labeled token are the model's call rather than
+	 * the bridge's. only gaps are policed.
 	 */
 	blockedSpans?: ReadonlyArray<{ start: number; end: number }>
 }
@@ -62,9 +64,10 @@ function crossesBlockedBoundary(
 }
 
 /**
- * Merge same-label fragments separated only by punctuation gaps. Returns a new token array where the first fragment of
- * each bridged group is widened to the group's full char range (so span extraction reads the raw text straight through
- * the punctuation), and later fragments are dropped. Labels, ordering, and all non-bridged tokens are untouched.
+ * Merge same-label fragments separated only by punctuation gaps.
+ * Returns a new token array where the first fragment of each bridged group is widened to the group's
+ * full char range (so span extraction reads the raw text straight through the punctuation),
+ * and later fragments are dropped. Labels, ordering, and all non-bridged tokens are untouched.
  */
 export function bridgePunctuationGaps(
 	text: string,
@@ -75,8 +78,8 @@ export function bridgePunctuationGaps(
 
 	for (const token of input) {
 		if (token.label !== "O") {
-			// Look back past any O tokens that sit inside the candidate gap (the punctuation pieces
-			// themselves decode as O — they are exactly what we bridge across).
+			// Look back past any O tokens that sit inside the candidate gap
+			// (the punctuation pieces themselves decode as O — they are exactly what we bridge across).
 			let back = out.length - 1
 
 			while (back >= 0 && out[back]!.label === "O" && out[back]!.start >= (out[back - 1]?.end ?? 0)) {

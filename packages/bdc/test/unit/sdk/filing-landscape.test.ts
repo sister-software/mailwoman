@@ -67,9 +67,10 @@ const ASOF_DATE = "2026-07-15"
 
 const GEOID_SF = "060750001001001"
 const GEOID_NY = "360610001001001"
-// A rural-Virginia point found by brute-force search over a conus bounding box specifically because its
-// directly-indexed res-6 cell (`latLngToCell(_, 6)`) disagrees with its res-9 cell's H3 hierarchy parent
-// (`cellToParent(latLngToCell(_, 9), 6)`) — the exact divergence class builder/reader unification guards.
+// A rural-Virginia point found by brute-force search over a conus bounding box specifically
+// because its directly-indexed res-6 cell (`latLngToCell(_, 6)`) disagrees with
+// its res-9 cell's H3 hierarchy parent (`cellToParent(latLngToCell(_, 9), 6)`) —
+// the exact divergence class builder/reader unification guards.
 const GEOID_DIVERGENT = "510090101001001"
 // Deliberately never passed to `buildBDCDatabase` at all — criterion 2's "absent from the fixture" block.
 const GEOID_UNKNOWN = "999999999999999"
@@ -96,14 +97,15 @@ const PROVIDER_A = 130_077
 const PROVIDER_B = 130_080
 
 /**
- * 5 rows, one location each (`includeLocationIDs` stays default-off. one row per (geoid, provider, technology) triple
- * keeps the block-grain collapse a no-op, so `result.rows` and the hand-computed census in criterion 3 agree without
- * any surprise collapsing):
+ * 5 rows, one location each (`includeLocationIDs` stays default-off. one row per (geoid,
+ * provider, technology) triple keeps the block-grain collapse a no-op, so `result.rows`
+ * and the hand-computed census in criterion 3 agree without any surprise collapsing):
  *
  * - SF: provider A / tech 50 / 1000 Mbps (gigabit), provider B / tech 40 / 80 Mbps (25-100)
- * - NY: provider A / tech 50 / 1000 Mbps (gigabit — same bucket/tech/provider as SF, block_count sums to 2), provider B /
- *   tech 10 / 10 Mbps (under-25)
- * - Divergent: provider A / tech 30 / 500 Mbps (100-1000) — not queried by Criteria 1–4, only by the fix-round-1 tests.
+ * - NY: provider A / tech 50 / 1000 Mbps (gigabit — same bucket/tech/provider as SF,
+ *   block_count sums to 2), provider B / tech 10 / 10 Mbps (under-25)
+ * - Divergent: provider A / tech 30 / 500 Mbps (100-1000) — not queried by Criteria 1–4,
+ *   only by the fix-round-1 tests.
  */
 function fixtureRows(): BDCAvailabilityRow[] {
 	return [
@@ -223,8 +225,8 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 		const withUnknown = await filingLandscape(db, { geoids: [GEOID_SF, GEOID_NY, GEOID_UNKNOWN] })
 
 		expect(withUnknown.unknown_block_count).toBe(1)
-		// surveyed_block_count is unchanged by the unknown geoid's presence in the query — it's never
-		// folded in as a (zero-filing) survey result.
+		// surveyed_block_count is unchanged by the unknown geoid's presence in the query —
+		// it's never folded in as a (zero-filing) survey result.
 		expect(withUnknown.surveyed_block_count).toBe(knownOnly.surveyed_block_count)
 		expect(withUnknown.surveyed_block_count).toBe(2)
 
@@ -277,9 +279,10 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 		expect(result.unknown_block_count).toBe(1)
 		expect(result.surveyed_block_count).toBe(1)
 
-		// SF's rows must not leak into filings now that SF is unknown: the SF-only (PROVIDER_B/tech40/25-100)
-		// entry must be absent entirely, and the gigabit entry PROVIDER_A/tech50 shares with NY must drop from
-		// block_count 2 to 1 (NY only) — never silently kept at 2 as if SF still counted as surveyed.
+		// SF's rows must not leak into filings now that SF is unknown: the SF-only
+		// (PROVIDER_B/tech40/25-100) entry must be absent entirely, and the gigabit entry
+		// PROVIDER_A/tech50 shares with NY must drop from block_count 2 to 1 (NY only) —
+		// never silently kept at 2 as if SF still counted as surveyed.
 		expect(result.filings).toEqual([
 			{ provider_id: PROVIDER_A, technology_code: 50, speed_bucket: BDC_SPEED_BUCKET_GIGABIT, block_count: 1 },
 			{ provider_id: PROVIDER_B, technology_code: 10, speed_bucket: BDC_SPEED_BUCKET_UNDER_25, block_count: 1 },
@@ -314,11 +317,11 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 			.where("geoid", "=", GEOID_DIVERGENT)
 			.executeTakeFirstOrThrow()
 
-		// Prove this is a genuinely divergent point before trusting the rest of the test: the independent
-		// derivation — `latLngToCell(centroid, 6)`, taken without reference to the stored res-9 cell — disagrees
-		// with the reader's hierarchy-parent derivation for this exact point. If this assertion ever stops holding
-		// (e.g. an h3-js upgrade changes cell boundaries), the point needs re-selecting via a fresh brute-force
-		// search.
+		// Prove this is a genuinely divergent point before trusting the rest of the test:
+		// the independent derivation — `latLngToCell(centroid, 6)`, taken without reference to the stored
+		// res-9 cell — disagrees with the reader's hierarchy-parent derivation for this exact point.
+		// If this assertion ever stops holding (e.g. an h3-js upgrade changes cell boundaries),
+		// the point needs re-selecting via a fresh brute-force search.
 		const oldBuggyDerivation = shortCellToInt(latLngToCell(CENTROID_DIVERGENT.lat, CENTROID_DIVERGENT.lon, 6) as H3Cell)
 		const unifiedDerivation = res9ShortCellToRes6Parent(row.h3_cell)
 		expect(unifiedDerivation).not.toBe(oldBuggyDerivation)
@@ -328,8 +331,8 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 		expect(await readLayerCoverage(schemadb, oldBuggyDerivation)).toBeUndefined()
 
 		// End-to-end: this block must read back as surveyed, with its own filing intact — the exact
-		// self-contradiction (unknown_block_count claiming "never surveyed" while filings shows a real entry for
-		// it) the review reproduced against the pre-fix code is what this proves absent.
+		// self-contradiction (unknown_block_count claiming "never surveyed" while filings shows a real
+		// entry for it) the review reproduced against the pre-fix code is what this proves absent.
 		const result = await filingLandscape(db, { geoids: [GEOID_DIVERGENT] })
 		expect(result.surveyed_block_count).toBe(1)
 		expect(result.unknown_block_count).toBe(0)
@@ -349,8 +352,8 @@ describe("filingLandscape — Check 3: hand-verified census", () => {
 		expect(result.surveyed_block_count).toBe(2)
 		expect(result.unknown_block_count).toBe(0)
 
-		// Hand-computed: PROVIDER_A/tech 50/gigabit appears at both blocks (block_count 2); each
-		// PROVIDER_B row is distinct per block (25-100 at SF only, under-25 at NY only).
+		// Hand-computed: PROVIDER_A/tech 50/gigabit appears at both blocks (block_count 2);
+		// each PROVIDER_B row is distinct per block (25-100 at SF only, under-25 at NY only).
 		expect(result.filings).toEqual([
 			{ provider_id: PROVIDER_A, technology_code: 50, speed_bucket: BDC_SPEED_BUCKET_GIGABIT, block_count: 2 },
 			{ provider_id: PROVIDER_B, technology_code: 10, speed_bucket: BDC_SPEED_BUCKET_UNDER_25, block_count: 1 },
@@ -403,8 +406,8 @@ describe("filingLandscape — Check 4: vintage-or-throw", () => {
 			blockCentroids,
 		})
 
-		// `buildBDCDatabase` seals (chmod 0444). Unseal so the manifest row can be deleted, per
-		// `openBuiltClient`'s `write: true` mode (throws `SealedArtifactError` while still sealed).
+		// `buildBDCDatabase` seals (chmod 0444). Unseal so the manifest row can be deleted,
+		// per `openBuiltClient`'s `write: true` mode (throws `SealedArtifactError` while still sealed).
 		await changeMode(corruptOut, 0o644)
 		expect(await pathExists(corruptOut)).toBe(true)
 
@@ -429,9 +432,10 @@ describe("speed bucket boundaries", () => {
 	})
 
 	describe("SQL CASE agrees with the JS mirror at every boundary", () => {
-		// One geoid per boundary value, all at the same centroid (the geoid string rather than location, is what
-		// `filingLandscape` groups on) — same provider/tech throughout, so the only thing that can split the
-		// resulting groups is the SQL case's bucketing of `max_advertised_download_speed`.
+		// One geoid per boundary value, all at the same centroid
+		// (the geoid string rather than location, is what `filingLandscape` groups on) —
+		// same provider/tech throughout, so the only thing that can split the resulting
+		// groups is the SQL case's bucketing of `max_advertised_download_speed`.
 		const BOUNDARY_PROVIDER = 999_001
 		const BOUNDARY_TECH = 99
 		const BOUNDARY_SPEEDS = [0, 24, 25, 99, 100, 999, 1000] as const

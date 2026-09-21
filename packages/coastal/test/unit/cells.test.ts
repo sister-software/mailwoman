@@ -62,10 +62,10 @@ describe("featureCellRows", () => {
 	it("indexes a polygon smaller than a cell rather than returning nothing", () => {
 		const rows = featureCellRows(classifyFeatureCells(sliver, 9, "sliver", "test"))
 
-		// Cell-touches-polygon rather than centre-in-polygon: a polyfill keyed on centres returns zero cells here, and a feature
-		// indexed to nothing reads downstream as an absence. It touches two cells rather than one at this coordinate,
-		// because a 5.5 m square that straddles a cell boundary is in both — which is the answer overlapping containment
-		// is supposed to give.
+		// Cell-touches-polygon rather than centre-in-polygon: a polyfill keyed on centres returns
+		// zero cells here, and a feature indexed to nothing reads downstream as an absence.
+		// It touches two cells rather than one at this coordinate, because a 5.5 m square that straddles a
+		// cell boundary is in both — which is the answer overlapping containment is supposed to give.
 		expect(rows.length).toBeGreaterThan(0)
 		expect(rows.every((row) => row.containment === "partial")).toBe(true)
 
@@ -93,9 +93,10 @@ describe("CoastalCellIndex", () => {
 		expect(nfi!.features).toBe(1)
 		expect(smp!.features).toBe(1)
 
-		// The band has an interior. the sliver is entirely fringe. So the two scenarios' partial shares are genuinely
-		// different numbers — and a pooled report would have averaged them into one that describes neither. The pooled
-		// value sits strictly between them, which is exactly why it cannot be read as either.
+		// The band has an interior. the sliver is entirely fringe.
+		// So the two scenarios' partial shares are genuinely different numbers —
+		// and a pooled report would have averaged them into one that describes neither.
+		// The pooled value sits strictly between them, which is exactly why it cannot be read as either.
 		expect(nfi!.partialShare).toBeLessThan(1)
 		expect(smp!.partialShare).toBe(1)
 		expect(measurement.pooledPartialShare).toBeGreaterThan(nfi!.partialShare)

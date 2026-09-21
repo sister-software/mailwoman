@@ -25,11 +25,12 @@ import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// `$private` is a live getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the repo's
-// real `.env` once at module load — which on this machine does carry a `GOOGLE_MAPS_API_KEY`. A
-// `vi.stubEnv(..., undefined)` cannot hide it: the merge falls back to `dotEnv` regardless of what the
-// test puts on `process.env`. Mocking the module is the only way to make the missing-key test test
-// anything. (`bdc/sdk/client.test.ts` learned this the first time real FCC credentials landed in `.env`.)
+// `$private` is a live getter over `{ ...dotEnv, ...process.env }`, and `dotEnv`
+// is read from the repo's real `.env` once at module load — which on this machine
+// does carry a `GOOGLE_MAPS_API_KEY`. A `vi.stubEnv(..., undefined)` cannot hide it:
+// the merge falls back to `dotEnv` regardless of what the test puts on `process.env`.
+// Mocking the module is the only way to make the missing-key test test anything.
+// (`bdc/sdk/client.test.ts` learned this the first time real FCC credentials landed in `.env`.)
 vi.mock("@mailwoman/geocode-oracle/env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@mailwoman/geocode-oracle/env")>()
 
@@ -46,9 +47,9 @@ afterAll(() => vi.resetModules())
 const { createGoogleGeocoderClient, geocodeCacheKey, isCacheableGoogleBody } =
 	await import("@mailwoman/geocode-oracle/sdk/google-client")
 
-// Also imported after the reset, so the `ResourceError` this file compares against is the same class
-// identity the client under test throws — a `vi.resetModules()` mints a fresh module registry, and a
-// statically-imported class from the old one would fail every `toBeInstanceOf`.
+// Also imported after the reset, so the `ResourceError` this file compares against is the same
+// class identity the client under test throws — a `vi.resetModules()` mints a fresh module
+// registry, and a statically-imported class from the old one would fail every `toBeInstanceOf`.
 const { isTransientResourceError } = await import("@mailwoman/core/api")
 const { ResourceError } = await import("@mailwoman/core/errors")
 
@@ -78,8 +79,9 @@ const OK_BODY = {
 }
 
 /**
- * Await a call that must reject and hand back its {@linkcode ResourceError}. Fails loudly if it resolves — a
- * `.catch(error => error)` inline would silently turn "it did not throw" into an assertion against `undefined`.
+ * Await a call that must reject and hand back its {@linkcode ResourceError}.
+ * Fails loudly if it resolves — a `.catch(error => error)` inline would silently
+ * turn "it did not throw" into an assertion against `undefined`.
  */
 async function captureError(promise: Promise<unknown>): Promise<ResourceErrorShape> {
 	try {
@@ -119,8 +121,8 @@ describe("createGoogleGeocoderClient", () => {
 
 		await client.geocodeAddress("1600 Amphitheatre Parkway")
 
-		// This is what `APIClient` logs and what `delegateAxiosError` interpolates into timeout/DNS
-		// messages, so the key must not be in it.
+		// This is what `APIClient` logs and what `delegateAxiosError` interpolates into
+		// timeout/DNS messages, so the key must not be in it.
 		expect(transport.calls[0]).not.toContain(API_KEY)
 		expect(transport.calls[0]).toBe("https://maps.googleapis.com/maps/api/geocode/json")
 	})
@@ -148,8 +150,8 @@ describe("createGoogleGeocoderClient", () => {
 
 		expect(params?.components).toBe("country:NZ")
 		expect(params?.language).toBe("en")
-		// The isp-nexus original hardcoded a contiguous-US bounding box on every forward geocode, with
-		// no way to turn it off. There is no default here.
+		// The isp-nexus original hardcoded a contiguous-US bounding box on every forward geocode,
+		// with no way to turn it off. There is no default here.
 		expect(params?.bounds).toBeUndefined()
 	})
 })
@@ -262,8 +264,8 @@ describe("the response cache", () => {
 
 		await client.geocodeAddress("anywhere").catch(() => undefined)
 
-		// A REQUEST_DENIED cached under a 30-day TTL would make an unbilled key look like a permanently
-		// broken address, self-healing only by hand-deleting a hash-named file.
+		// A REQUEST_DENIED cached under a 30-day TTL would make an unbilled key look like a
+		// permanently broken address, self-healing only by hand-deleting a hash-named file.
 		expect(await Globerator.files("json", { cwd: cacheDir, recursive: false }).toArray()).toHaveLength(0)
 	})
 
@@ -344,10 +346,10 @@ describe("input dispatch", () => {
 	})
 
 	it("treats a bare coordinate STRING as an address rather than a point", async () => {
-		// Deliberate. `"48.85, 2.29"` means latitude-then-longitude to Google's `latlng` parameter and
-		// longitude-then-latitude to GeoJSON, and `GeoPoint.from` resolves that as GeoJSON without a
-		// heuristic — so reading the string as a point would silently reverse-geocode Somalia for
-		// someone who typed Paris.
+		// Deliberate. `"48.85, 2.29"` means latitude-then-longitude to Google's `latlng`
+		// parameter and longitude-then-latitude to GeoJSON, and `GeoPoint.from` resolves
+		// that as GeoJSON without a heuristic — so reading the string as a point would
+		// silently reverse-geocode Somalia for someone who typed Paris.
 		const transport = stubTransport([{ body: OK_BODY }])
 
 		await using client = createGoogleGeocoderClient({ apiKey: API_KEY, cacheDir, axios: transport.axios })
@@ -401,8 +403,8 @@ describe("pacing", () => {
 
 		await Promise.all([client.geocodeAddress("a"), client.geocodeAddress("b"), client.geocodeAddress("c")])
 
-		// 60000 / 60 = 1000ms. `requestsPerMinute` alone would have let all three go out at once — it is
-		// a budget rather than a rate. See `bdc/sdk/client.ts` for the measurement.
+		// 60000 / 60 = 1000ms. `requestsPerMinute` alone would have let all three go out at once —
+		// it is a budget rather than a rate. See `bdc/sdk/client.ts` for the measurement.
 		expect(transport.dispatchTimes).toEqual([0, 1000, 2000])
 	})
 })

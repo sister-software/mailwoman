@@ -22,14 +22,14 @@ import type { CapitalPoint } from "#capitals"
 import { hasTable } from "#sqlite-utils"
 
 /**
- * The table name the builder writes and the reader probes — one word, singular, matching the artifact's other reference
- * tables (`candidate`, `country_codes`).
+ * The table name the builder writes and the reader probes — one word, singular,
+ * matching the artifact's other reference tables (`candidate`, `country_codes`).
  */
 export const CAPITAL_TABLE = "capital"
 
 /**
- * One reference entry as the artifact stores it. `level` is the reference vocabulary (`national` | `admin1`) kept as
- * text — the reader validates on load rather than trusting bytes.
+ * One reference entry as the artifact stores it. `level` is the reference vocabulary
+ * (`national` | `admin1`) kept as text — the reader validates on load rather than trusting bytes.
  */
 export interface CapitalTable {
 	country: string
@@ -43,8 +43,8 @@ export interface CapitalTable {
 }
 
 /**
- * Create the table on a build in progress. Async because Kysely's schema-builder is. called from the candidate build's
- * DDL phase alongside the other typed builders.
+ * Create the table on a build in progress. Async because Kysely's schema-builder is.
+ * called from the candidate build's DDL phase alongside the other typed builders.
  */
 export async function createCapitalTable<DB extends { capital: CapitalTable }>(db: Kysely<DB>): Promise<void> {
 	await db.schema
@@ -58,9 +58,9 @@ export async function createCapitalTable<DB extends { capital: CapitalTable }>(d
 }
 
 /**
- * Read the whole reference out of an artifact, or `null` when the artifact predates the table — the caller then falls
- * back to its next source rather than treating an old artifact as "no capitals" (the meaning-of-zero rule: a missing
- * table is unmeasured, an empty one is a finding).
+ * Read the whole reference out of an artifact, or `null` when the artifact predates the table —
+ * the caller then falls back to its next source rather than treating an old artifact as "no
+ * capitals" (the meaning-of-zero rule: a missing table is unmeasured, an empty one is a finding).
  */
 export function readCapitalPoints<DB>(db: DatabaseClient<DB>): CapitalPoint[] | null {
 	if (!hasTable(db, CAPITAL_TABLE)) return null

@@ -54,8 +54,8 @@ export function applyCjkNormalization(input: string, opts: { postalMark?: "strip
 	const map: number[] = []
 	const stripPostalMark = opts.postalMark !== "keep"
 
-	// All transformed code points are in the BMP (single UTF-16 unit), and every other character is
-	// passed through verbatim, so a per-unit walk is safe for surrogate-pair input too.
+	// All transformed code points are in the BMP (single UTF-16 unit), and every other character
+	// is passed through verbatim, so a per-unit walk is safe for surrogate-pair input too.
 	for (let i = 0; i < input.length; i++) {
 		const code = input.charCodeAt(i)
 

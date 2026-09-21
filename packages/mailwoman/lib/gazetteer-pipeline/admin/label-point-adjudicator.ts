@@ -41,14 +41,14 @@ export interface PointPair {
 }
 
 /**
- * Below this label-versus-geometric disagreement the anchor is never consulted — the pair agrees to within ordinary
- * centroid noise and the label preference stands.
+ * Below this label-versus-geometric disagreement the anchor is never consulted —
+ * the pair agrees to within ordinary centroid noise and the label preference stands.
  */
 export const LABEL_GEOM_DISAGREEMENT_KM = 5
 
 /**
- * The anchor must be this many times closer to one point than the other to override the default. At less separation the
- * anchor cannot say which point is the settlement, and the label keeps winning.
+ * The anchor must be this many times closer to one point than the other to override the default.
+ * At less separation the anchor cannot say which point is the settlement, and the label keeps winning.
  */
 export const ANCHOR_DECISIVE_RATIO = 2
 
@@ -59,17 +59,18 @@ export interface AdjudicatedPoint extends PointPair {
 }
 
 /**
- * Resolve a `gn:id` concordance to its GeoNames coordinate, scoped by country. `undefined` is absence — no anchor for
- * this record — and the caller must fall back to the label preference rather than treating it as a zero-distance
- * anchor.
+ * Resolve a `gn:id` concordance to its GeoNames coordinate, scoped by country.
+ * `undefined` is absence — no anchor for this record — and the caller must fall back
+ * to the label preference rather than treating it as a zero-distance anchor.
  */
 export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => Promise<PointPair | undefined>
 
 /**
  * Choose the stored point for a record carrying both a label and a geometric centroid.
  *
- * With no disagreement, no anchor, or an anchor that does not separate the pair decisively, the label point wins — the
- * existing preference, unchanged. The anchor speaks only in the narrow band the module docstring's census measured.
+ * With no disagreement, no anchor, or an anchor that does not separate the
+ * pair decisively, the label point wins — the existing preference, unchanged.
+ * The anchor speaks only in the narrow band the module docstring's census measured.
  */
 export function choosePoint(geom: PointPair, lbl: PointPair, anchor: PointPair | undefined): AdjudicatedPoint {
 	const disagreement = haversineKm(geom.latitude, geom.longitude, lbl.latitude, lbl.longitude)
@@ -93,8 +94,8 @@ export function choosePoint(geom: PointPair, lbl: PointPair, anchor: PointPair |
 }
 
 /**
- * GeoNames tab-separated column offsets (the standard country-file dump layout): id first, then name fields. latitude
- * and longitude sit at columns 4 and 5.
+ * GeoNames tab-separated column offsets (the standard country-file dump layout):
+ * id first, then name fields. latitude and longitude sit at columns 4 and 5.
  */
 const GN_COLUMN_ID = 0
 const GN_COLUMN_LAT = 4
@@ -103,11 +104,12 @@ const GN_COLUMN_LON = 5
 /**
  * Build a lazy per-country anchor lookup over a GeoNames country-file directory (`<dir>/<CC>.txt`).
  *
- * A country file loads on the first anchor request for that country and is cached as an id → point map. a country whose
- * file is absent caches an empty map, so a data root without GeoNames extracts degrades to "no anchor anywhere" — the
- * label preference, byte-identical to a build without this module. Loading is lazy by design: the consult fires only
- * for the rare wide-disagreement records, so the cost is one asynchronous file read per country that has such a
- * record.
+ * A country file loads on the first anchor request for that country and is cached
+ * as an id → point map. a country whose file is absent caches an empty map,
+ * so a data root without GeoNames extracts degrades to "no anchor anywhere" —
+ * the label preference, byte-identical to a build without this module.
+ * Loading is lazy by design: the consult fires only for the rare wide-disagreement records,
+ * so the cost is one asynchronous file read per country that has such a record.
  */
 export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): Promise<GeoNamesAnchorLookup> {
 	const byCountry = new Map<string, Promise<Map<string, PointPair>>>()
@@ -121,9 +123,9 @@ export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): 
 			const points = new Map<string, PointPair>()
 			const path = join(geonamesDir, `${country.toUpperCase()}.txt`)
 
-			// Missing country extract → empty map, cached: absence of anchors, never an error. `from` parses content
-			// (a path argument would be parsed as one row of itself), so the file is read once and streamed through the
-			// TSV parser.
+			// Missing country extract → empty map, cached: absence of anchors, never an error.
+			// `from` parses content (a path argument would be parsed as one row of itself),
+			// so the file is read once and streamed through the TSV parser.
 			if (await pathExists(path)) {
 				for (const cols of readUnquotedTSVText(await readLocalTextFile(path))) {
 					const latitude = Number(cols[GN_COLUMN_LAT])

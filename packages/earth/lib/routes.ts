@@ -9,8 +9,8 @@
  */
 
 /**
- * The three views the app serves: the geocoder at `/`, the same page with the debug drawer open at `/debug`, and the
- * trace page at `/trace`.
+ * The three views the app serves: the geocoder at `/`, the same page with the debug
+ * drawer open at `/debug`, and the trace page at `/trace`.
  */
 export const Route = {
 	Geocoder: "geocoder",
@@ -36,8 +36,8 @@ export function routeForPath(pathname: string): Route | null {
 }
 
 /**
- * Which runtime the page mounts. `fake` is the canned runtime the shell smoke and the stories use. every other value,
- * and no value, is the real geocoder.
+ * Which runtime the page mounts. `fake` is the canned runtime the shell smoke
+ * and the stories use. every other value, and no value, is the real geocoder.
  */
 export type RuntimeMode = "real" | "fake"
 
@@ -46,8 +46,8 @@ export function runtimeModeFromSearch(search: string): RuntimeMode {
 }
 
 /**
- * The `?q=` query, decoded, or null when absent or blank. Blank is null so a link that carries `?q=` with nothing after
- * it behaves like a link without it.
+ * The `?q=` query, decoded, or null when absent or blank.
+ * Blank is null so a link that carries `?q=` with nothing after it behaves like a link without it.
  */
 export function queryFromSearch(search: string): string | null {
 	const value = new URLSearchParams(search).get("q")
@@ -58,10 +58,12 @@ export function queryFromSearch(search: string): string | null {
 }
 
 /**
- * The URL a search should leave behind: the current one with `q` set, or with `q` removed when the query is empty.
+ * The URL a search should leave behind: the current one with `q` set,
+ * or with `q` removed when the query is empty.
  *
- * It returns a string rather than writing history, so the caller decides between `pushState` and `replaceState` and
- * this stays testable without a document. Every other parameter is carried through untouched — a viewport or a runtime
+ * It returns a string rather than writing history, so the caller decides between
+ * `pushState` and `replaceState` and this stays testable without a document.
+ * Every other parameter is carried through untouched — a viewport or a runtime
  * flag in the address bar must survive a search.
  */
 export function searchWithQuery(url: URL, query: string): string {

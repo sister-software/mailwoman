@@ -18,18 +18,20 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * The stylesheet that carries the design system's own invariants — the reset and the base layer live here, and the
- * first two rules below assert their contents rather than searching for their absence everywhere else.
+ * The stylesheet that carries the design system's own invariants — the reset
+ * and the base layer live here, and the first two rules below assert their contents
+ * rather than searching for their absence everywhere else.
  */
 const SYSTEM_STYLESHEET = "packages/react/styles.css"
 
 /**
- * A rule, as the text gives it up: the selector list, the declarations inside the braces, and the at-rules it is nested
- * in.
+ * A rule, as the text gives it up: the selector list, the declarations inside
+ * the braces, and the at-rules it is nested in.
  *
- * The enclosing at-rules are what separate a rule that uses a token from a rule that is a material's fallback. The
- * chip's hover background and a sticky header both paint the fallback colour on purpose. only the rules inside
- * `@supports not (backdrop-filter…)` and `@media (prefers-reduced-transparency: reduce)` are the fallback itself.
+ * The enclosing at-rules are what separate a rule that uses a token from a rule that is
+ * a material's fallback. The chip's hover background and a sticky header both paint the
+ * fallback colour on purpose. only the rules inside `@supports not (backdrop-filter…)`
+ * and `@media (prefers-reduced-transparency: reduce)` are the fallback itself.
  */
 interface StyleRule {
 	selector: string
@@ -44,8 +46,8 @@ interface StyleRule {
 /**
  * Split a stylesheet into rules, carrying the at-rule nesting each one sits in.
  *
- * Comments are blanked rather than deleted, so every reported line number still matches the file on disk and a
- * declaration quoted in prose is not read as one.
+ * Comments are blanked rather than deleted, so every reported line number still matches
+ * the file on disk and a declaration quoted in prose is not read as one.
  */
 function styleRules(css: string): StyleRule[] {
 	const clean = css.replaceAll(/\/\*[\s\S]*?\*\//gu, (comment) => comment.replaceAll(/[^\n]/gu, " "))
@@ -53,8 +55,9 @@ function styleRules(css: string): StyleRule[] {
 	const context: string[] = []
 	// The text since the last brace: an at-rule preamble, a selector list, or a run of declarations.
 	let pending = ""
-	// Where the current line is, and where the first NON-blank character of `pending` sat — the second is the line a
-	// diagnostic names, so a selector is reported at its own line rather than at the blank one after the rule above.
+	// Where the current line is, and where the first NON-blank character of `pending` sat —
+	// the second is the line a diagnostic names, so a selector is reported at its own line
+	// rather than at the blank one after the rule above.
 	let line = 1
 	let selectorLine = 1
 
@@ -125,16 +128,18 @@ function declares(body: string, property: string): boolean {
 }
 
 /**
- * Whether the selector names a state of something styled elsewhere — `:hover`, `:disabled`, a `--active` modifier.
+ * Whether the selector names a state of something styled elsewhere — `:hover`,
+ * `:disabled`, a `--active` modifier.
  *
- * A state rule states only what changes, and takes the rest from the rule it varies, so asking it to repeat a color
- * would be asking for the copy this file exists to prevent.
+ * A state rule states only what changes, and takes the rest from the rule it varies,
+ * so asking it to repeat a color would be asking for the copy this file exists to prevent.
  */
 const STATE_SELECTOR = /:(?:hover|active|disabled|focus|focus-visible|focus-within|checked|first|last|nth)|--[a-z]+$/u
 
 /**
- * Vendor pairs the bundler collapses. A minifier keeps the last of two declarations carrying the same value, so the
- * standard property has to come after its prefixed twin or it is the one dropped from the output.
+ * Vendor pairs the bundler collapses. A minifier keeps the last of two declarations
+ * carrying the same value, so the standard property has to come after its prefixed twin
+ * or it is the one dropped from the output.
  */
 const VENDOR_PAIRS = ["backdrop-filter", "mask-image", "user-select", "text-stroke", "box-decoration-break"] as const
 
@@ -144,11 +149,12 @@ const VENDOR_PAIRS = ["backdrop-filter", "mask-image", "user-select", "text-stro
 /**
  * A radius written as a raw pixel length.
  *
- * The design system carries a radius scale — `tick`, `tight`, `control`, `panel` / `sheet`, `pill` — and the
- * stylesheets carried six raw pixel values beside it (2, 3, 4, 6, 8, 10) plus `999px` written out four times next to
- * the `--radius-pill` that already said it. Nothing about a raw radius is wrong on its own. the defect is that six of
- * them cannot be told apart from a decision, so two components meant to match never quite do and nobody can say which
- * value was meant. `0` and `50%` are exempt because neither is a step on any scale.
+ * The design system carries a radius scale — `tick`, `tight`, `control`, `panel` / `sheet`,
+ * `pill` — and the stylesheets carried six raw pixel values beside it (2, 3, 4, 6, 8, 10)
+ * plus `999px` written out four times next to the `--radius-pill` that already said it.
+ * Nothing about a raw radius is wrong on its own. the defect is that six of them cannot be told
+ * apart from a decision, so two components meant to match never quite do and nobody can say
+ * which value was meant. `0` and `50%` are exempt because neither is a step on any scale.
  */
 const RAW_RADIUS = /border-radius\s*:\s*[^;}]*\d+px/u
 
@@ -156,7 +162,8 @@ const MATERIAL_BACKGROUND = "var(--material-glass-background)"
 const MATERIAL_FALLBACK = "var(--material-glass-fallback-background)"
 
 /**
- * A selector list as an order-independent key, so a fallback that names the same surfaces in another order matches.
+ * A selector list as an order-independent key, so a fallback that names the
+ * same surfaces in another order matches.
  */
 function selectorSet(selector: string): string {
 	return selector
@@ -169,8 +176,8 @@ function selectorSet(selector: string): string {
 /**
  * Every diagnostic one stylesheet earns, from its text alone.
  *
- * Exported so the rules are exercised on the shapes that broke rather than only on a tree that already passes: a check
- * that has never been shown to fail is a check nobody has tested.
+ * Exported so the rules are exercised on the shapes that broke rather than only on a tree that
+ * already passes: a check that has never been shown to fail is a check nobody has tested.
  *
  * @param file The repo-relative path, which decides whether the system-wide invariants are asserted on it.
  */
@@ -274,8 +281,9 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 }
 
 /**
- * The check the chrome arc ends on: the invariants that make two of these defects impossible, and detectors for the two
- * no invariant expresses. Registered in `#registry` and run by `mwops health stylesheet-interface`.
+ * The check the chrome arc ends on: the invariants that make two of these
+ * defects impossible, and detectors for the two no invariant expresses.
+ * Registered in `#registry` and run by `mwops health stylesheet-interface`.
  */
 export const stylesheetCheck: RepoCheck = {
 	id: "stylesheet-interface",

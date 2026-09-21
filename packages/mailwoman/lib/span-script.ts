@@ -17,13 +17,14 @@ import { classifyTokens, scriptForRange } from "@mailwoman/query-shape"
 /**
  * Write `script` onto every node of `tree`, in place.
  *
- * `text` must be the string the node offsets index into — the normalized input rather than the raw one, since that is
- * what the classifier labelled. Passing the raw string would silently mis-range every span on any input normalization
- * touched.
+ * `text` must be the string the node offsets index into — the normalized input
+ * rather than the raw one, since that is what the classifier labelled.
+ * Passing the raw string would silently mis-range every span on any input normalization touched.
  *
- * The tokens are classified here rather than read off the pipeline's `QueryShapeLite`, whose per-token `script` is
- * optional and typed as a plain string: narrowing that back to `ScriptCode` would be a cast asserting what this call
- * can simply compute. It is one codepoint scan of an address-length string, next to a model inference.
+ * The tokens are classified here rather than read off the pipeline's `QueryShapeLite`,
+ * whose per-token `script` is optional and typed as a plain string: narrowing that
+ * back to `ScriptCode` would be a cast asserting what this call can simply compute.
+ * It is one codepoint scan of an address-length string, next to a model inference.
  */
 export function stampSpanScripts(tree: AddressTree, text: string): void {
 	const tokens = classifyTokens(text)

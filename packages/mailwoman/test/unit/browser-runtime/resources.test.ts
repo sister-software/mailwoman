@@ -43,10 +43,10 @@ describe("pair-index URL construction", () => {
 	})
 })
 
-// The regression the versioning scheme undoes was a bare base URL string literal in the loader
-// (`const pairIndexBaseURL = "https://public.mailwoman.ai/mailwoman/pair-index"`), which is
-// how the path escaped the versioning discipline the sibling assets follow. Keep the literal in
-// resources/, where the version constant lives next to it.
+// The regression the versioning scheme undoes was a bare base URL string literal in the
+// loader (`const pairIndexBaseURL = "https://public.mailwoman.ai/mailwoman/pair-index"`),
+// which is how the path escaped the versioning discipline the sibling assets follow.
+// Keep the literal in resources/, where the version constant lives next to it.
 const source = await readLocalTextFile(resolveModulePath("mailwoman/browser-runtime/load-assets"))
 
 describe("the release loader owns no pair-index URL of its own", () => {

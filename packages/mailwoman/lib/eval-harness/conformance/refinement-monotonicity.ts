@@ -46,16 +46,18 @@ export const REFINEMENT_MONOTONICITY_LAW = "refinement-monotonicity"
 /**
  * The closed set of named coarsenings a row may state, and the only three a committed row may name.
  *
- * Each removes information, so the surviving text is a query the fuller one strictly contains. That direction is what
- * makes the pair a refinement at all: the variant says everything the base says and one thing more.
+ * Each removes information, so the surviving text is a query the fuller one
+ * strictly contains. That direction is what makes the pair a refinement at all:
+ * the variant says everything the base says and one thing more.
  *
- * - `drop-leading-segment` — remove the first comma-delimited part. Peels a venue or a street line off the front of a
- *   structured address, leaving the place it sits in.
- * - `drop-trailing-segment` — remove the last comma-delimited part. Peels the coarsest admin off the back, which is the
- *   arm that produces an ambiguous bare toponym from a disambiguated one.
- * - `drop-leading-numeric-token` — remove the leading whitespace-delimited token when it carries a digit. A postcode or a
- *   house number written without a comma is not a segment, so neither segment step can reach it, and the DE and FR
- *   structured rows are written exactly that way.
+ * - `drop-leading-segment` — remove the first comma-delimited part.
+ *   Peels a venue or a street line off the front of a structured address, leaving the place it sits in.
+ * - `drop-trailing-segment` — remove the last comma-delimited part.
+ *   Peels the coarsest admin off the back, which is the arm that produces an
+ *   ambiguous bare toponym from a disambiguated one.
+ * - `drop-leading-numeric-token` — remove the leading whitespace-delimited token when it carries
+ *   a digit. A postcode or a house number written without a comma is not a segment, so neither
+ *   segment step can reach it, and the DE and FR structured rows are written exactly that way.
  */
 export const REFINEMENT_STEPS = ["drop-leading-segment", "drop-trailing-segment", "drop-leading-numeric-token"] as const
 
@@ -72,11 +74,11 @@ function segmentsOf(text: string): string[] {
 }
 
 /**
- * Each step's derivation: given the fuller query, return the coarser one, or `null` when the step has nothing to
- * remove.
+ * Each step's derivation: given the fuller query, return the coarser one,
+ * or `null` when the step has nothing to remove.
  *
- * `null` rather than the input unchanged, because a step that removed nothing has not stated the law — the pair would
- * be the identity wearing a refinement label, and it would hold trivially.
+ * `null` rather than the input unchanged, because a step that removed nothing has not stated the law —
+ * the pair would be the identity wearing a refinement label, and it would hold trivially.
  */
 export const REFINEMENT_DERIVATION_BY_STEP: Record<RefinementStep, (text: string) => string | null> = {
 	"drop-leading-segment": (text) => {
@@ -101,12 +103,14 @@ export const REFINEMENT_DERIVATION_BY_STEP: Record<RefinementStep, (text: string
 /**
  * Which named step turns `variant` into `base`, or `null` when none does.
  *
- * Derived from the pair rather than stored on the fixture, on the canonical-form law's own reasoning: a stored step
- * name is a second copy of something the two strings already say, and the copy is what goes stale.
+ * Derived from the pair rather than stored on the fixture, on the canonical-form
+ * law's own reasoning: a stored step name is a second copy of something the two
+ * strings already say, and the copy is what goes stale.
  *
- * The steps are tried in {@linkcode REFINEMENT_STEPS} order and the first match wins. Two steps can agree on a pair — a
- * two-token single-segment query is reachable by both a segment step and the numeric one — and the order determines the
- * result rather than leaving the name to whichever branch ran last.
+ * The steps are tried in {@linkcode REFINEMENT_STEPS} order and the first match wins.
+ * Two steps can agree on a pair — a two-token single-segment query is reachable by
+ * both a segment step and the numeric one — and the order determines the result
+ * rather than leaving the name to whichever branch ran last.
  */
 export function classifyRefinementStep(base: string, variant: string): RefinementStep | null {
 	if (base === variant) return null
@@ -128,8 +132,8 @@ export function statableSteps(text: string): RefinementStep[] {
 /**
  * The committed suite.
  *
- * Anchored at the package root: `tsc` emits no `.jsonl` into `out/`, so the file is named from where the package starts
- * rather than from where this module runs.
+ * Anchored at the package root: `tsc` emits no `.jsonl` into `out/`, so the file is named from
+ * where the package starts rather than from where this module runs.
  */
 export const REFINEMENT_MONOTONICITY_SUITE_PATH: string = resolvePackagePath(
 	"mailwoman",
@@ -221,13 +225,14 @@ export interface RefinementCoverage {
 	 */
 	stated: number
 	/**
-	 * Links stated, across every chain. Always at least {@linkcode stated}, and larger wherever a row carries a chain.
+	 * Links stated, across every chain. Always at least {@linkcode stated},
+	 * and larger wherever a row carries a chain.
 	 */
 	links: number
 	/**
-	 * Eligible rows by the step that can act on them. A row several steps reach is counted under each, so these do not
-	 * sum to {@linkcode eligible} — the question the breakdown answers is which arms the population can state rather than
-	 * how the rows partition.
+	 * Eligible rows by the step that can act on them. A row several steps reach is counted under each,
+	 * so these do not sum to {@linkcode eligible} — the question the breakdown answers is
+	 * which arms the population can state rather than how the rows partition.
 	 */
 	eligibleByStep: Record<RefinementStep, number>
 }
@@ -235,8 +240,8 @@ export interface RefinementCoverage {
 /**
  * Measure this suite against the population it draws from.
  *
- * `corpusInputs` is every committed board row's query text, supplied by the runner rather than loaded here, so the law
- * module stays free of the corpus loader.
+ * `corpusInputs` is every committed board row's query text, supplied by the runner
+ * rather than loaded here, so the law module stays free of the corpus loader.
  */
 export function refinementCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -287,11 +292,12 @@ export function describeRefinementCoverage(
 /**
  * Everything that must be true of a refinement row, checked without running anything.
  *
- * Returns one message per problem, each naming the fixture. Empty means the suite states this law and only this law.
+ * Returns one message per problem, each naming the fixture.
+ * Empty means the suite states this law and only this law.
  *
- * The `caseCountry` requirement is the canonical-form law's, for the same reason: a row graded with no country routes
- * through the base en-US weights package rather than its own overlay, so a violation would be reported for an
- * instrument that was never pointed at the row's locale.
+ * The `caseCountry` requirement is the canonical-form law's, for the same reason: a row graded
+ * with no country routes through the base en-US weights package rather than its own overlay,
+ * so a violation would be reported for an instrument that was never pointed at the row's locale.
  */
 export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	const problems = auditCommonFixtureFields(
@@ -364,8 +370,9 @@ export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): s
 }
 
 /**
- * The step label a report line carries, e.g. `drop-trailing-segment`. `?` when the pair does not classify — which the
- * audit refuses, so it can only appear on a hand-built fixture that skipped the loader.
+ * The step label a report line carries, e.g. `drop-trailing-segment`.
+ * `?` when the pair does not classify — which the audit refuses, so it can only
+ * appear on a hand-built fixture that skipped the loader.
  */
 export function describeRefinementStep(fixture: ConformanceFixture): string {
 	return classifyRefinementStep(fixture.base, fixture.variant) ?? "?"

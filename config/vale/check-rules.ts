@@ -62,7 +62,8 @@ interface ValeAlert {
 }
 
 /**
- * Vale's `--output=JSON` document: file path -> alerts. An entirely clean run emits `{}`.
+ * Vale's `--output=JSON` document: file path -> alerts.
+ * An entirely clean run emits `{}`.
  */
 type ValeReport = Record<string, ValeAlert[]>
 
@@ -87,8 +88,9 @@ interface StyleLeg {
 	 */
 	cleanFixture: string
 	/**
-	 * The error-severity count the dirty fixture produces today (measured rather than estimated). It is a `>=` bar, so
-	 * adding a rule plus its fixture line passes without a bump. Only a rule that stops firing fails.
+	 * The error-severity count the dirty fixture produces today (measured rather than estimated).
+	 * It is a `>=` bar, so adding a rule plus its fixture line passes without a bump.
+	 * Only a rule that stops firing fails.
 	 */
 	minDirtyErrors: number
 	/**
@@ -96,8 +98,9 @@ interface StyleLeg {
 	 */
 	ruleChecks: string[]
 	/**
-	 * Read the clean fixture's verdict from the JSON rather than the exit code when the style carries warning-severity
-	 * rules: Vale's exit code only reflects errors, so a plain run would pass a clean file that trips a warning.
+	 * Read the clean fixture's verdict from the JSON rather than the exit code
+	 * when the style carries warning-severity rules: Vale's exit code only reflects errors,
+	 * so a plain run would pass a clean file that trips a warning.
 	 */
 	cleanCountsEverySeverity: boolean
 }
@@ -148,8 +151,7 @@ const LEGS: StyleLeg[] = [
 			"styles.Grammar.SloganAssertions",
 			"styles.Grammar.RelativeClauseChains",
 		],
-		// Both rules this config runs are error-severity, so the exit code carries the whole
-		// verdict.
+		// Both rules this config runs are error-severity, so the exit code carries the whole verdict.
 		cleanCountsEverySeverity: false,
 	},
 	{
@@ -198,9 +200,10 @@ const $vale = $({ cwd: VALE_DIR, nothrow: true })
 async function runVale(config: string, fixture: string): Promise<{ alerts: ValeAlert[]; exitCode: number }> {
 	const result = await $vale`${VALE.file} ${VALE.argv} --config ${config} --output=JSON ${fixture}`.quiet()
 
-	// Vale writes a config or rule-file error to stderr and leaves stdout empty. Parsing that empty string raises
-	// `Expected JSON input, got` and names neither the rule file nor the reason, so a malformed token in a style reads as
-	// a defect in this script — `did not find expected node content` is the message that was being thrown away.
+	// Vale writes a config or rule-file error to stderr and leaves stdout empty.
+	// Parsing that empty string raises `Expected JSON input, got` and names neither the rule file
+	// nor the reason, so a malformed token in a style reads as a defect in this script —
+	// `did not find expected node content` is the message that was being thrown away.
 	if (!result.stdout.trim()) {
 		const detail = result.stderr.trim() || `exit ${result.exitCode ?? 0} with no output`
 

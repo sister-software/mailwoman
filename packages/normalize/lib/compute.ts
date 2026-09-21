@@ -29,9 +29,10 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 		transforms.push({ kind: "nfc", changed: r.changed })
 	}
 
-	// 1.5 CJK normalization — strip the postal mark 〒 (byte-fallback OOV that poisons the postcode
-	// parse) and fold full-width ascii + the ideographic space. Runs after NFC so it sees composed
-	// forms, before punctuation/whitespace so any gap left by 〒 is then collapsed. No-op off-script.
+	// 1.5 CJK normalization — strip the postal mark 〒 (byte-fallback OOV that poisons the postcode parse)
+	// and fold full-width ascii + the ideographic space. Runs after NFC
+	// so it sees composed forms, before punctuation/whitespace so any gap left by 〒 is
+	// then collapsed. No-op off-script.
 	{
 		const r = applyCjkNormalization(text, opts?.postalMark ? { postalMark: opts.postalMark } : {})
 
@@ -53,9 +54,9 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 		}
 	}
 
-	// 2.5 Comma spacing — a comma glued to a letter gains a space. Runs after punctuation (so a folded
-	// full-width comma is seen) and before whitespace collapse (so a comma already followed by a space is
-	// never doubled).
+	// 2.5 Comma spacing — a comma glued to a letter gains a space.
+	// Runs after punctuation (so a folded full-width comma is seen) and before whitespace
+	// collapse (so a comma already followed by a space is never doubled).
 	{
 		const r = spaceAfterComma(text)
 
@@ -70,8 +71,8 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	{
 		const r = collapseWhitespace(text)
 
-		// Compare the text rather than its length: folding a lone tab to a space is length-preserving, and a
-		// length test reads that edit as no edit at all.
+		// Compare the text rather than its length: folding a lone tab to a space is
+		// length-preserving, and a length test reads that edit as no edit at all.
 		if (r.text !== text) {
 			text = r.text
 			map = composeMaps(map, r.map)

@@ -33,9 +33,9 @@
 import { isAbsolute, resolvePath } from "path-ts"
 
 /**
- * Commands that read, search, build, test, or talk to git, the registry and the services this repository operates. None
- * of them takes file content from the agent as an argument, which is the property that matters: what they write, they
- * derive.
+ * Commands that read, search, build, test, or talk to git, the registry and the services
+ * this repository operates. None of them takes file content from the agent as an argument,
+ * which is the property that matters: what they write, they derive.
  */
 const ADMITTED = new Set([
 	// Reading, searching and shell built-ins that answer questions.
@@ -120,8 +120,9 @@ const ADMITTED = new Set([
 ])
 
 /**
- * Commands that write wherever their arguments point. Each is admitted only when no path argument lands inside the
- * repository, which is what keeps a scratch directory usable without opening the tree to a shell edit.
+ * Commands that write wherever their arguments point. Each is admitted only
+ * when no path argument lands inside the repository, which is what keeps a scratch
+ * directory usable without opening the tree to a shell edit.
  */
 const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 	chmod: "all",
@@ -137,21 +138,23 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 }
 
 /**
- * Repository paths that hold derived files only — compiler output and the dependency install. Measured against the
- * index: no tracked path matches, so removing one deletes nothing a commit holds, and `tsc -b` or `yarn install`
- * restores it. `.yarn/` is not here — it carries the pinned yarn binary, which is tracked.
+ * Repository paths that hold derived files only — compiler output and the dependency install.
+ * Measured against the index: no tracked path matches, so removing one
+ * deletes nothing a commit holds, and `tsc -b` or `yarn install` restores it.
+ * `.yarn/` is not here — it carries the pinned yarn binary, which is tracked.
  *
- * The exemption is granted to {@link REMOVER} alone, and the asymmetry is the point: removing derived output restores
- * the derived state, while writing one by hand fabricates it. A hand-written `out/<subpath>.d.ts` answers for a source
- * file that does not exist, because every subpath map lists `types` first.
+ * The exemption is granted to {@link REMOVER} alone, and the asymmetry is the point:
+ * removing derived output restores the derived state, while writing one by hand fabricates it.
+ * A hand-written `out/<subpath>.d.ts` answers for a source file that does not exist,
+ * because every subpath map lists `types` first.
  */
 const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules)(?:\/|$)|\.tsbuildinfo$/u
 
 const REMOVER = "rm"
 
 /**
- * Commands that run another command. The words after one are re-judged as a command of their own, so a writer cannot
- * hide behind a wrapper.
+ * Commands that run another command. The words after one are re-judged as a command
+ * of their own, so a writer cannot hide behind a wrapper.
  */
 const WRAPPERS = new Set(["command", "env", "nohup", "time", "timeout", "xargs"])
 
@@ -161,7 +164,8 @@ const WRAPPERS = new Set(["command", "env", "nohup", "time", "timeout", "xargs"]
 const WRAPPER_ARGUMENT = /^(?:-|\d)/u
 
 /**
- * What to do instead of launching a Modal run from Bash, carried by the two rules that need it rather than by
+ * What to do instead of launching a Modal run from Bash, carried by the two
+ * rules that need it rather than by
  * {@link GUIDANCE}, which talks about the Write and Edit tools and would be the wrong advice here.
  */
 const DETACHED_LAUNCH_GUIDANCE =
@@ -172,8 +176,8 @@ const DETACHED_LAUNCH_GUIDANCE =
 	"open. A run that did die continues with `--resume auto` from its last save."
 
 /**
- * What to do instead of removing a repository path, carried by the {@link REMOVER} refusal. {@link GUIDANCE} names the
- * Write and Edit tools, and neither of them deletes anything.
+ * What to do instead of removing a repository path, carried by the {@link REMOVER} refusal.
+ * {@link GUIDANCE} names the Write and Edit tools, and neither of them deletes anything.
  */
 const REMOVAL_GUIDANCE =
 	"Removing DERIVED output is admitted: a path under `out/`, `dist/` or `node_modules/`, or a `*.tsbuildinfo`, read " +
@@ -182,9 +186,10 @@ const REMOVAL_GUIDANCE =
 	"a variable, is never derived; name the path in full."
 
 /**
- * Spellings of an admitted command that this guard refuses. Each is checked against that command's own segment, never
- * against the whole line. Most write a file the agent supplies and take {@link guidance}; a rule about something else
- * supplies its own `guidance`.
+ * Spellings of an admitted command that this guard refuses.
+ * Each is checked against that command's own segment, never against the whole line.
+ * Most write a file the agent supplies and take {@link guidance}; a rule about
+ * something else supplies its own `guidance`.
  */
 const REFUSED_SPELLINGS: ReadonlyArray<{
 	head: string
@@ -194,8 +199,9 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 }> = [
 	{
 		head: "modal",
-		// `-d` is the tell that the run is meant to outlive this shell, which is the intent a killable client breaks. A
-		// plain `modal run` of a sync or an audit is short and cheap to lose, so it stays admitted.
+		// `-d` is the tell that the run is meant to outlive this shell, which is the intent
+		// a killable client breaks. A plain `modal run` of a sync or an audit is short
+		// and cheap to lose, so it stays admitted.
 		pattern: /(?:^|\s)run\b[^\n]*(?:\s-d\b|\s--detach\b)/u,
 		because:
 			"`modal run -d` from Bash leaves the client in this shell's process group, and killing the client cancels the remote run",
@@ -203,8 +209,10 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	},
 	{
 		head: "modal",
-		// The 2026-07-15 spelling. `timeout` is a wrapper, so it is stripped before the head is read and the head here is
-		// `modal`; the segment still carries the wrapper, which is what this matches. Any timed Modal command is refused rather than only a launch: the expiry kills the client either way, and a timeout is never how you bound a Modal run.
+		// The 2026-07-15 spelling. `timeout` is a wrapper, so it is stripped before the
+		// head is read and the head here is `modal`; the segment still carries the wrapper,
+		// which is what this matches. Any timed Modal command is refused rather than only a launch:
+		// the expiry kills the client either way, and a timeout is never how you bound a Modal run.
 		pattern: /^\s*timeout\b/u,
 		because: "a shell `timeout` kills the `modal` client when it expires, which cancels whatever it was running",
 		guidance: DETACHED_LAUNCH_GUIDANCE,
@@ -219,22 +227,25 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	},
 	{
 		head: "git",
-		// The reading forms of these subcommands are ordinary work: `stash list`, `stash show`, and a `checkout` that
-		// names a branch rather than a pathspec. Only the spellings that overwrite the working tree are refused.
+		// The reading forms of these subcommands are ordinary work: `stash list`,
+		// `stash show`, and a `checkout` that names a branch rather than a pathspec.
+		// Only the spellings that overwrite the working tree are refused.
 		//
-		// `git stash drop stash@{N}` is admitted, and only in that spelling. It writes no file — it removes one ref
-		// from a stack the operator's standing rule says to clear after restoring an entry, so refusing it made that
-		// rule impossible to follow. The explicit index is the whole condition: bare `git stash drop` silently takes
-		// `stash@{0}`, and the stack is shared across every worktree, so the entry at the top is as likely to be
-		// another session's. Naming the index is what the standing rule already requires — re-find the entry by its
-		// SHA, then drop that index.
+		// `git stash drop stash@{N}` is admitted, and only in that spelling.
+		// It writes no file — it removes one ref from a stack the operator's standing rule says
+		// to clear after restoring an entry, so refusing it made that rule impossible to follow.
+		// The explicit index is the whole condition: bare `git stash drop` silently takes
+		// `stash@{0}`, and the stack is shared across every worktree, so the entry at the
+		// top is as likely to be another session's. Naming the index is what the standing
+		// rule already requires — re-find the entry by its SHA, then drop that index.
 		//
-		// `git apply` is not among them. The refusals here exist to route an edit through the symbol precheck, and to
-		// stop a command from discarding work the agent cannot see. A patch does neither: it is an artifact the author
-		// produced and can dry-run with `git apply --check`, it fails rather than clobbering when the context does not
-		// match, and it is the only exact way to land a mechanically generated change — a bulk deletion, a moved block
-		// — without retyping every line. Retyping a thousand lines to satisfy a guard is itself the correctness risk
-		// the guard is meant to reduce.
+		// `git apply` is not among them. The refusals here exist to route an edit through the
+		// symbol precheck, and to stop a command from discarding work the agent cannot see.
+		// A patch does neither: it is an artifact the author produced and can dry-run with
+		// `git apply --check`, it fails rather than clobbering when the context does not match,
+		// and it is the only exact way to land a mechanically generated change — a bulk deletion,
+		// a moved block — without retyping every line. Retyping a thousand lines to satisfy
+		// a guard is itself the correctness risk the guard is meant to reduce.
 		pattern: /(?:^|\s)(?:restore\b|stash\s+(?!list\b|show\b|drop\s+stash@\{\d+\}\s*$)|checkout\s+[^\n]*--\s)/u,
 		because: "this `git` subcommand overwrites the working tree",
 	},
@@ -257,33 +268,36 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 ]
 
 /**
- * An inline script that reaches the filesystem, checked against the interpreter's own segment. A probe printing to
- * stdout is the point of `-e` and `-c`; a write inside one is an edit wearing a probe's clothes.
+ * An inline script that reaches the filesystem, checked against the interpreter's
+ * own segment. A probe printing to stdout is the point of `-e` and `-c`;
+ * a write inside one is an edit wearing a probe's clothes.
  */
 const INLINE_WRITE =
 	/(?:writeFile|appendFile|createWriteStream|openSync|cpSync|renameSync|rmSync|unlinkSync|mkdirSync|execSync|spawnSync|shutil\.|os\.system|subprocess\.)/u
 
 /**
- * An interpreter reading its script from a heredoc. `<<<` is a here-string feeding stdin, which is not a script.
+ * An interpreter reading its script from a heredoc. `<<<` is a here-string
+ * feeding stdin, which is not a script.
  */
 const INTERPRETER_HEREDOC = /<<(?!<)-?\s*['"]?[A-Za-z_]/u
 
 /**
- * A redirect and its target, including `&>` and a numbered descriptor. A descriptor duplication (`2>&1`) names no file
- * and yields no target.
+ * A redirect and its target, including `&>` and a numbered descriptor.
+ * A descriptor duplication (`2>&1`) names no file and yields no target.
  */
 const REDIRECT = /(?:&|\d)?>>?\|?\s*(?:&[\d-]|(?<target>[^\s;|&<>]*))/gu
 
 /**
- * Shell grammar rather than commands. A loop header binds a variable to a word list. the words that open a body are
- * dropped, and whatever follows is judged as a command.
+ * Shell grammar rather than commands. A loop header binds a variable to a word list. the
+ * words that open a body are dropped, and whatever follows is judged as a command.
  */
 const LOOP_HEADER = /^(?:for|select)\s+\w+\s+in\b/u
 const CONTROL_FLOW_WORDS = new Set(["do", "done", "then", "elif", "else", "fi", "esac", "while", "until", "if", "case"])
 
 /**
- * Remove quoted spans and heredoc bodies in one pass, so the earliest quote wins. Stripping single quotes before double
- * quotes lets the apostrophe in a word like `don't` pair with a later quote and swallow the command between them.
+ * Remove quoted spans and heredoc bodies in one pass, so the earliest quote wins.
+ * Stripping single quotes before double quotes lets the apostrophe in a word like
+ * `don't` pair with a later quote and swallow the command between them.
  */
 function withoutQuotedText(command: string): string {
 	return (
@@ -302,8 +316,8 @@ function withoutQuotedText(command: string): string {
 }
 
 /**
- * Every command word in the text, in order, with wrappers unwrapped and grammar dropped. A command substitution opens a
- * command of its own rather than disappearing.
+ * Every command word in the text, in order, with wrappers unwrapped and grammar dropped.
+ * A command substitution opens a command of its own rather than disappearing.
  */
 function commandSegments(stripped: string): Array<{ head: string; segment: string }> {
 	const found: Array<{ head: string; segment: string }> = []
@@ -375,10 +389,10 @@ function workingDirectory(stripped: string, cwd: string): string {
 }
 
 /**
- * `~` is the shell's rather than a path segment. It is read from the raw environment rather than through the typed view
- * because this module is loaded by a hook that must answer in milliseconds and must not fail when a variable is unset:
- * an absent `home` leaves the path unexpanded, which then reads as relative and resolves under the repository — the
- * refusing direction.
+ * `~` is the shell's rather than a path segment. It is read from the raw environment rather than
+ * through the typed view because this module is loaded by a hook that must answer in milliseconds
+ * and must not fail when a variable is unset: an absent `home` leaves the path unexpanded,
+ * which then reads as relative and resolves under the repository — the refusing direction.
  */
 // oxlint-disable-next-line sister-software/no-process-globals -- see above.
 const HOME_DIRECTORY = process.env["HOME"] ?? ""
@@ -388,9 +402,10 @@ function expandHome(path: string): string {
 }
 
 /**
- * Where a target resolves, or null when this cannot read it: a stripped quote and a variable are both opaque. Every
- * caller takes its own refusing branch on null, so no reader of a target has to re-derive the resolution — and
- * `resolvePath` normalizes `..`, which is what stops `out/../lib` from reading as derived output.
+ * Where a target resolves, or null when this cannot read it: a stripped quote
+ * and a variable are both opaque. Every caller takes its own refusing branch on null,
+ * so no reader of a target has to re-derive the resolution — and `resolvePath` normalizes
+ * `..`, which is what stops `out/../lib` from reading as derived output.
  */
 function resolveTarget(raw: string, cwd: string): string | null {
 	if (!raw || raw === "QUOTED" || raw === "HEREDOC" || raw.includes("$")) return null
@@ -401,8 +416,8 @@ function resolveTarget(raw: string, cwd: string): string | null {
 }
 
 /**
- * True when a path lands inside the repository. A path this cannot read counts as inside: an unknown target is the case
- * a guard must not wave through.
+ * True when a path lands inside the repository. A path this cannot read counts as inside:
+ * an unknown target is the case a guard must not wave through.
  */
 function insideRepository(raw: string, repoRoot: string, cwd: string): boolean {
 	if (!raw || raw.startsWith("/dev/")) return false
@@ -426,9 +441,10 @@ function isDerivedPath(raw: string, cwd: string): boolean {
 /**
  * A refusal: why the command is refused, and what to do instead.
  *
- * Most refusals are about writing a file and take {@link guidance}. A rule about something else — process ownership, say
- * — carries its own `guidance`, because being told to use the Write tool over a cancelled training run is advice for a
- * problem the caller does not have.
+ * Most refusals are about writing a file and take {@link guidance}.
+ * A rule about something else — process ownership, say — carries its own `guidance`,
+ * because being told to use the Write tool over a cancelled training run is
+ * advice for a problem the caller does not have.
  */
 export interface CommandRefusal {
 	reason: string
@@ -447,8 +463,9 @@ export function judgeCommand(command: string, repoRoot: string, sessionCwd: stri
 	const cwd = workingDirectory(stripped, sessionCwd)
 	const segments = commandSegments(stripped)
 
-	// An inline script and a heredoc body both live inside the quoting stripped above, so these two read the RAW
-	// command. Requiring an interpreter first is what stops `grep -rn writeFile packages` from refusing itself.
+	// An inline script and a heredoc body both live inside the quoting stripped above,
+	// so these two read the RAW command. Requiring an interpreter first is what stops
+	// `grep -rn writeFile packages` from refusing itself.
 	if (segments.some(({ head }) => head === "node" || head.startsWith("python"))) {
 		if (INTERPRETER_HEREDOC.test(command)) {
 			return refuse("This runs a script from a heredoc, which rewrites a file whole.")

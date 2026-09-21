@@ -199,8 +199,9 @@ test("usePlaceAutocomplete stays closed for numeric input (postcode)", async () 
 	const input = container.querySelector('[data-testid="ac-input"]') as HTMLInputElement
 	await userEvent.type(input, "90210")
 
-	// A short wait past the debounce — a digit-leading query never fires the fetcher. Held in act() so the
-	// debounce's own state update + the abstaining effect (which do run) settle in-scope rather than unwrapped.
+	// A short wait past the debounce — a digit-leading query never fires the fetcher.
+	// Held in act() so the debounce's own state update + the abstaining effect
+	// (which do run) settle in-scope rather than unwrapped.
 	await actDelay(60)
 	expect(autocomplete).not.toHaveBeenCalled()
 	expect(container.querySelectorAll('[role="option"]')).toHaveLength(0)

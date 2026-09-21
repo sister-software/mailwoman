@@ -17,7 +17,8 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 
 export interface LegTiming {
 	/**
-	 * The leg's name, as the runbook and the output filenames spell it: `per-locale`, `affix`, `de-order`, `arena`.
+	 * The leg's name, as the runbook and the output filenames spell it: `per-locale`,
+	 * `affix`, `de-order`, `arena`.
 	 */
 	leg: string
 	/**
@@ -28,26 +29,29 @@ export interface LegTiming {
 }
 
 /**
- * Collects one entry per timed leg, in completion order, and writes the ledger when the scope holding it ends.
+ * Collects one entry per timed leg, in completion order, and writes the ledger
+ * when the scope holding it ends.
  *
- * Hold it with `await using`: a battery that fails part way through is exactly when the timings are worth reading, and
- * disposal writes what was collected before the throw rather than nothing.
+ * Hold it with `await using`: a battery that fails part way through is exactly when the timings
+ * are worth reading, and disposal writes what was collected before the throw rather than nothing.
  */
 export class LegProfile implements AsyncDisposable {
 	readonly #timings: LegTiming[] = []
 	readonly #path: string
 
 	/**
-	 * @param path Where to write the ledger. An empty path writes nothing, which is the default for every run that did
-	 *   not ask to be profiled. A non-empty one must sit outside the battery's output directory — see the file header.
+	 * @param path Where to write the ledger. An empty path writes nothing,
+	 *   which is the default for every run that did not ask to be profiled.
+	 *   A non-empty one must sit outside the battery's output directory — see the file header.
 	 */
 	constructor(path: string) {
 		this.#path = path
 	}
 
 	/**
-	 * Run `work`, record its wall time, and hand back whatever it returned. A leg that throws is still recorded, because
-	 * the time it spent before failing is the number a reader is looking for.
+	 * Run `work`, record its wall time, and hand back whatever it returned.
+	 * A leg that throws is still recorded, because the time it spent before failing
+	 * is the number a reader is looking for.
 	 */
 	async time<T>(leg: string, tag: string | undefined, work: () => Promise<T>): Promise<T> {
 		const startedAt = performance.now()
@@ -64,8 +68,9 @@ export class LegProfile implements AsyncDisposable {
 	}
 
 	/**
-	 * Write the ledger, or nothing when the path is empty. `total_ms` sums the legs, which is less than the run's wall
-	 * clock: the untimed remainder is the verdict assembly, the spec read, and whatever else sits between legs.
+	 * Write the ledger, or nothing when the path is empty.
+	 * `total_ms` sums the legs, which is less than the run's wall clock: the untimed remainder
+	 * is the verdict assembly, the spec read, and whatever else sits between legs.
 	 */
 	async [Symbol.asyncDispose](): Promise<void> {
 		if (!this.#path) return

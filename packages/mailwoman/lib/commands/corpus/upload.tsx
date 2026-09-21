@@ -90,8 +90,9 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		// rclone reads `:s3:` credentials from the environment. Point RCLONE_CONFIG at nothing so the
-		// "config file not found" notice stops appearing in output that people read as a failure.
+		// rclone reads `:s3:` credentials from the environment.
+		// Point RCLONE_CONFIG at nothing so the "config file not found" notice stops
+		// appearing in output that people read as a failure.
 		const env = childEnv({
 			RCLONE_CONFIG: "",
 			RCLONE_S3_PROVIDER: "Cloudflare",
@@ -156,9 +157,9 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			setSteps((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)))
 
 		for (const [index, job] of jobs.entries()) {
-			// check the source first. rclone's own error for an absent directory arrives buried under the
-			// config notice, which is exactly how "this version does not exist here" got read as "R2 is
-			// broken". Say which path was missing instead.
+			// check the source first. rclone's own error for an absent directory arrives buried
+			// under the config notice, which is exactly how "this version does not exist here"
+			// got read as "R2 is broken". Say which path was missing instead.
 			if (!(await pathExists(job.source))) {
 				update(index, { status: "error", detail: `not found locally: ${job.source}` })
 
@@ -178,8 +179,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 		}
 	})
 
-	// A thrown selection/credential error is the whole message here — rendering only the step list would
-	// print a bare header and look like a no-op.
+	// A thrown selection/credential error is the whole message here — rendering only
+	// the step list would print a bare header and look like a no-op.
 	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	return (

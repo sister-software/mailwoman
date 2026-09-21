@@ -45,21 +45,22 @@ const { values: args } = parseArguments({
 const RATIO = Number(args.ratio ?? 10)
 
 /**
- * At or below this many localities of the same name in the country, the name is distinctive enough that a tiny
- * population under a huge same-name parent reads as a mis-recorded settlement rather than a village.
+ * At or below this many localities of the same name in the country, the name is
+ * distinctive enough that a tiny population under a huge same-name parent reads
+ * as a mis-recorded settlement rather than a village.
  */
 const RARE_NAME_MAX = Number(args.bearers ?? 3)
 
 /**
- * Placetypes a locality's same-name parent may be. A locality nested inside a same-name `region` is the ordinary
- * capital-of-its-region shape (Luxembourg, Djibouti, Kuwait City) and is not this defect.
+ * Placetypes a locality's same-name parent may be. A locality nested inside a same-name `region` is
+ * the ordinary capital-of-its-region shape (Luxembourg, Djibouti, Kuwait City) and is not this defect.
  */
 const PARENT_PLACETYPES = ["county", "localadmin", "borough"]
 
 /**
- * Aurangabad, Maharashtra — renamed Chhatrapati Sambhajinagar, a city of roughly 1.2 million whose `locality` row
- * records 19,172. The row this detector was written for, reported at the end so a run says whether it still reaches
- * it.
+ * Aurangabad, Maharashtra — renamed Chhatrapati Sambhajinagar, a city of roughly 1.2
+ * million whose `locality` row records 19,172. The row this detector was written for,
+ * reported at the end so a run says whether it still reaches it.
  */
 const AURANGABAD_MAHARASHTRA = 102_030_887
 
@@ -68,8 +69,9 @@ using db = new DatabaseClient<WOFDatabase>(String(args.admin ?? dataRootPath("wo
 })
 
 /**
- * The comparison surface. Diacritic-folded and case-folded, but not emptied for a non-Latin name the way the resolver's
- * `foldName` is — a Han or Cyrillic locality would otherwise fold equal to its parent by both being empty.
+ * The comparison surface. Diacritic-folded and case-folded, but not emptied for a
+ * non-Latin name the way the resolver's `foldName` is — a Han or Cyrillic locality
+ * would otherwise fold equal to its parent by both being empty.
  */
 const nameKey = (name: string): string =>
 	name
@@ -88,8 +90,8 @@ interface Row {
 	parentPopulation: number
 	ratio: number
 	/**
-	 * Localities of this name in this country. High means a common village name. a handful means a real settlement and
-	 * its namesakes.
+	 * Localities of this name in this country. High means a common village name. a
+	 * handful means a real settlement and its namesakes.
 	 */
 	nameBearers: number
 }
@@ -123,16 +125,18 @@ const candidates = db
 
 const sameName = candidates.filter((row) => nameKey(row.name) === nameKey(row.parentName))
 
-// How many reported rows carry the `gn:id` link a second register would be read through. Counted rather than
-// followed: the GeoNames population file is a separate download, and the queue is orderable only once it is read.
+// How many reported rows carry the `gn:id` link a second register would be read through.
+// Counted rather than followed: the GeoNames population file is a separate download,
+// and the queue is orderable only once it is read.
 const wanted = new Set(sameName.map((row) => row.id))
 
 const linked = (
 	db.prepare(`SELECT id FROM concordances WHERE other_source = 'gn:id'`).all() as Array<{ id: number }>
 ).filter((link) => wanted.has(link.id)).length
 
-// Counted in SQL and on the exact name: `spr` holds 4,386,926 named localities, so folding every one in JS to key a
-// map costs the whole scan, and `Sultanpur` is spelled one way across all 312 of its Indian rows.
+// Counted in SQL and on the exact name: `spr` holds 4,386,926 named localities,
+// so folding every one in JS to key a map costs the whole scan, and `Sultanpur`
+// is spelled one way across all 312 of its Indian rows.
 const bearerCount = db.prepare(
 	`SELECT COUNT(*) AS n FROM spr WHERE placetype = 'locality' AND country = ? AND name = ?`
 )

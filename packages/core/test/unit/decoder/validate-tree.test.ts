@@ -74,9 +74,10 @@ describe("validateTree", () => {
 	})
 
 	test("a unit anchored by a VENUE is valid — the sub-venue case the interface used to omit", () => {
-		// `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA` parses to exactly this shape and is a conditional pass on the
-		// board. Before `venue` joined PARENT_OF[unit] the checker called it a stranded dependent, so the interface was
-		// narrower than the capability already being tested — the checker was wrong rather than the parse.
+		// `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA` parses to exactly this shape
+		// and is a conditional pass on the board. Before `venue` joined PARENT_OF[unit] the
+		// checker called it a stranded dependent, so the interface was narrower than the
+		// capability already being tested — the checker was wrong rather than the parse.
 		const tree = {
 			raw: "Terminal 5, Heathrow Airport, Hounslow",
 			roots: [node("venue", "Heathrow Airport"), node("unit", "Terminal 5"), node("locality", "Hounslow")],

@@ -45,8 +45,9 @@ import { classifyWhitespaceTransformation } from "mailwoman/eval-harness/conform
 import { describe, expect, it } from "vitest"
 
 /**
- * Committed board inputs, verbatim. Quoted here rather than loaded so a test failure shows the exact text under
- * discussion; `punctuation-suite.test.ts` is what proves the suite's own rows still match the corpus.
+ * Committed board inputs, verbatim. Quoted here rather than loaded so a test
+ * failure shows the exact text under discussion; `punctuation-suite.test.ts` is
+ * what proves the suite's own rows still match the corpus.
  */
 const GB_LLOYDS = "Lloyd's of London, 1 Lime St, London EC3M 7HA"
 const GD_ST_GEORGES = "St. George's"
@@ -345,9 +346,9 @@ describe("auditPunctuationSuite", () => {
 
 describe("a seeded punctuation regression", () => {
 	/**
-	 * The pipeline stand-in that fails only on the comma-removed arm: with the separators gone, the dependent locality
-	 * joins the street span. Seeding the regression rather than waiting for one is what proves the failure line carries
-	 * enough to diagnose from.
+	 * The pipeline stand-in that fails only on the comma-removed arm: with the separators gone,
+	 * the dependent locality joins the street span. Seeding the regression rather than
+	 * waiting for one is what proves the failure line carries enough to diagnose from.
 	 */
 	const observe: ConformanceObserver = async (query) => {
 		const commaless = !query.includes(",")

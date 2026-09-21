@@ -48,8 +48,9 @@ function landuseTile(kind: string): DecodedTile {
 }
 
 /**
- * A provider shaped like the spatially sparse lean archive: one z8 parent tile of residential fill covering z12 tiles
- * 992-1007 × 1488-1503, plus (optionally) a single native z12 commercial tile at 1000/1500.
+ * A provider shaped like the spatially sparse lean archive: one z8 parent tile
+ * of residential fill covering z12 tiles 992-1007 × 1488-1503, plus (optionally)
+ * a single native z12 commercial tile at 1000/1500.
  */
 function stubProvider(options?: { native?: boolean }): TileProvider {
 	return {
@@ -94,9 +95,9 @@ describe("MapRenderer", async () => {
 	})
 
 	it("falls back to an ancestor tile where the archive has no native coverage", async () => {
-		// The provider has one z8 tile and nothing deeper — the shape of a spatially sparse deep band outside its mask.
-		// Without the ancestor walk a z12 viewport here renders blank. with it, the z8 fill rasterizes at the z12
-		// projection.
+		// The provider has one z8 tile and nothing deeper — the shape of a spatially sparse
+		// deep band outside its mask. Without the ancestor walk a z12 viewport here renders
+		// blank. with it, the z8 fill rasterizes at the z12 projection.
 		const sparse = new MapRenderer(stubProvider())
 		const center = worldPxToLonLat(1000.5 * TILE_SIZE, 1500.5 * TILE_SIZE, 12)
 
@@ -121,9 +122,10 @@ describe("MapRenderer", async () => {
 	})
 
 	it("paints native detail over the ancestor fallback where both cover a cell", async () => {
-		// Viewport straddles the edge between absent tile 999 (left half — falls back to the z8 parent's residential
-		// fill) and native tile 1000 (right half — commercial fill). Coarse tiles rasterize first, so the native fill
-		// must win its own cells while the fallback keeps the rest.
+		// Viewport straddles the edge between absent tile 999
+		// (left half — falls back to the z8 parent's residential fill) and native tile
+		// 1000 (right half — commercial fill). Coarse tiles rasterize first, so the native
+		// fill must win its own cells while the fallback keeps the rest.
 		const straddling = new MapRenderer(stubProvider({ native: true }))
 		const centerOnEdge = worldPxToLonLat(1000 * TILE_SIZE, 1500.5 * TILE_SIZE, 12)
 

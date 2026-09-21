@@ -68,10 +68,10 @@ interface FrTuple {
 }
 
 /**
- * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale, so this reads only as far as `limit`
- * distinct tuples — the `break` closes the reader and releases the archive. Only keeps rows with a house_number (the
- * recipe's core signal) and a postcode (required for reversed-order rendering to be meaningful. it is also part of this
- * recipe's dedup key).
+ * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale, so this reads
+ * only as far as `limit` distinct tuples — the `break` closes the reader and releases the archive.
+ * Only keeps rows with a house_number (the recipe's core signal) and a postcode
+ * (required for reversed-order rendering to be meaningful. it is also part of this recipe's dedup key).
  */
 async function readTuples(limit: number): Promise<FrTuple[]> {
 	return readOATuples(SOURCE, {
@@ -83,8 +83,9 @@ async function readTuples(limit: number): Promise<FrTuple[]> {
 }
 
 /**
- * Optionally augment a house_number with a French ordinal suffix ("59 bis", "4 ter"). Appended with a space so it forms
- * one multi-token house_number string that alignRow can still locate verbatim.
+ * Optionally augment a house_number with a French ordinal suffix ("59 bis", "4 ter").
+ * Appended with a space so it forms one multi-token house_number string that
+ * alignRow can still locate verbatim.
  */
 function maybeAddOrdinal(random: () => number, house_number: string): string {
 	if (random() >= ORDINAL_PROB) return house_number
@@ -108,15 +109,15 @@ function renderCanonical(
 	return { raw, components: { house_number: hn, street, postcode, locality } }
 }
 
-// Reversed layouts, a quarter each: A postcode+city then HN+street. B city, postcode, HN+street. C run-together.
-// D postcode, HN+street, city.
+// Reversed layouts, a quarter each: A postcode+city then HN+street.
+// B city, postcode, HN+street. C run-together. D postcode, HN+street, city.
 const REVERSED_VARIANT_A_CUTOFF = 0.25
 const REVERSED_VARIANT_B_CUTOFF = 0.5
 const REVERSED_VARIANT_C_CUTOFF = 0.75
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour
+ * it exists to exercise, and `description` below for the surface form it generates.
  */
 export const frOrderRecipe: CorpusRecipe = {
 	name: "fr-order",

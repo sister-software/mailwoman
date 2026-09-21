@@ -19,7 +19,8 @@ import { Globerator } from "spliterator/node/fs"
 import type { Aligned } from "#kr/adapters/localdata/align"
 
 /**
- * The source label every row of this adapter carries, and the name a config's `source_weights` addresses it by.
+ * The source label every row of this adapter carries, and the name a config's
+ * `source_weights` addresses it by.
  */
 export const SOURCE = "localdata-kr"
 
@@ -59,9 +60,9 @@ export interface PermitRow {
 /**
  * The first of these column spellings the row carries, trimmed, or the empty string.
  *
- * The publisher's older and newer exports name the same field differently — `도로명주소` against `도로명전체주소`, `좌표정보(X)`
- * against `좌표정보(x)` — and a directory holds both vintages, so each field names every spelling it has been delivered
- * under.
+ * The publisher's older and newer exports name the same field differently — `도로명주소`
+ * against `도로명전체주소`, `좌표정보(X)` against `좌표정보(x)` — and a directory holds both vintages,
+ * so each field names every spelling it has been delivered under.
  */
 function firstColumn(row: Record<string, string | undefined>, ...names: readonly string[]): string {
 	for (const name of names) {
@@ -140,9 +141,10 @@ export async function* readPermitDirectory(
 /**
  * One aligned string as a row in the CJK corpus schema.
  *
- * The token labels are derived from the spans rather than carried beside them: a token is `B-<tag>` when its first
- * character falls inside a span, `O` otherwise. A span covering several tokens therefore labels only the token it
- * starts in, which is what the char-path trainer reads the spans for.
+ * The token labels are derived from the spans rather than carried beside them:
+ * a token is `B-<tag>` when its first character falls inside a span, `O` otherwise.
+ * A span covering several tokens therefore labels only the token it starts in,
+ * which is what the char-path trainer reads the spans for.
  */
 export function alignedToCJKRow(aligned: Aligned): Record<string, unknown> {
 	const raw = aligned.raw

@@ -13,8 +13,8 @@ import { type SurfaceResult, verifyReleaseMetadata } from "#release/verify-metad
 const surfaceResult: z.ZodType<SurfaceResult> = z.object({ surface: z.string(), ok: z.boolean(), message: z.string() })
 
 /**
- * `release.verify-metadata` — reads and changes nothing. Listed in `registry.ts`; the description on the operation is
- * what `mwops` prints.
+ * `release.verify-metadata` — reads and changes nothing.
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const verifyMetadata = defineOperation({
 	id: "release.verify-metadata",

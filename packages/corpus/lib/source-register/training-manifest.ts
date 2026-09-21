@@ -24,17 +24,18 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { LicenseReviewState, type LicenseDecision, type SourceOperation } from "#source-register/types"
 
 /**
- * What one source contributed to one build, and what had been established about its terms when the build ran.
+ * What one source contributed to one build, and what had been established
+ * about its terms when the build ran.
  */
 export interface TrainingSourceRecord {
 	/**
-	 * The adapter id stamped into every row's `source`. This is the join key to the register's `sourceID` where the
-	 * register carries one.
+	 * The adapter id stamped into every row's `source`. This is the join key to the
+	 * register's `sourceID` where the register carries one.
 	 */
 	source: string
 	/**
-	 * Rows this source contributed after license exclusion and eligibility, before augmentation. A synthetic row is
-	 * counted under the source it was fanned from rather than as a source of its own.
+	 * Rows this source contributed after license exclusion and eligibility, before augmentation.
+	 * A synthetic row is counted under the source it was fanned from rather than as a source of its own.
 	 */
 	rows: number
 	/**
@@ -42,16 +43,17 @@ export interface TrainingSourceRecord {
 	 */
 	license: string
 	/**
-	 * The register's decision for that license when the build ran, or `null` when the register named no decision for it.
-	 * `null` is the ordinary case for an adapter whose id is not a register source.
+	 * The register's decision for that license when the build ran, or `null` when the register named no
+	 * decision for it. `null` is the ordinary case for an adapter whose id is not a register source.
 	 */
 	decision: {
 		licenseID: string
 		state: LicenseReviewState
 		electedTerms: string | null
 		/**
-		 * The operations the elected grant permitted at build time. An operation absent from this list was `unreviewed` or
-		 * `refused`, which are different answers and both recorded on the decision rather than flattened here.
+		 * The operations the elected grant permitted at build time.
+		 * An operation absent from this list was `unreviewed` or `refused`, which are different
+		 * answers and both recorded on the decision rather than flattened here.
 		 */
 		permitted: SourceOperation[]
 	} | null
@@ -66,7 +68,8 @@ export interface TrainingManifest {
 	corpusVersion: string
 	builtAt: string
 	/**
-	 * The build profile, so a reader can tell a corpus whose sources were checked from one whose sources were not.
+	 * The build profile, so a reader can tell a corpus whose sources were checked
+	 * from one whose sources were not.
 	 */
 	profile: string
 	/**
@@ -74,8 +77,8 @@ export interface TrainingManifest {
 	 */
 	sources: TrainingSourceRecord[]
 	/**
-	 * Sources the build refused, with the reasons. Kept beside the included ones because a release record has to show
-	 * what was left out as well as what went in.
+	 * Sources the build refused, with the reasons. Kept beside the included ones
+	 * because a release record has to show what was left out as well as what went in.
 	 */
 	refused: Record<string, readonly string[]>
 	totalRows: number
@@ -95,9 +98,10 @@ export function trainingManifestDigest(manifest: TrainingManifest): string {
 /**
  * Freeze one build's source observations into a manifest.
  *
- * `decisionsByLicense` is the register's decision table as the build read it. A license the table does not carry
- * records `decision: null` rather than being omitted: the row count is an observation either way, and dropping the
- * source would make a build that read an unregistered adapter indistinguishable from one that read nothing.
+ * `decisionsByLicense` is the register's decision table as the build read it.
+ * A license the table does not carry records `decision: null` rather than being omitted:
+ * the row count is an observation either way, and dropping the source would make a build
+ * that read an unregistered adapter indistinguishable from one that read nothing.
  */
 export function freezeTrainingManifest(input: {
 	corpusVersion: string
@@ -151,8 +155,9 @@ export function freezeTrainingManifest(input: {
 /**
  * Everything wrong with a training manifest, one message per problem.
  *
- * The digest check is what makes the record frozen rather than merely written: a manifest edited after its build fails
- * here, which is the failure the source register's own digest exists to catch (#2352).
+ * The digest check is what makes the record frozen rather than merely written:
+ * a manifest edited after its build fails here, which is the failure the source
+ * register's own digest exists to catch (#2352).
  */
 export function auditTrainingManifest(manifest: TrainingManifest): string[] {
 	const problems: string[] = []
@@ -185,11 +190,13 @@ export function auditTrainingManifest(manifest: TrainingManifest): string[] {
 }
 
 /**
- * The sources in a manifest whose terms did not permit an operation when the build ran, with the reason for each.
+ * The sources in a manifest whose terms did not permit an operation
+ * when the build ran, with the reason for each.
  *
- * This is what a publication path asks before redistributing a model trained on the corpus. A source whose decision is
- * `null`, whose state is anything but `elected`, or whose elected grant never named the operation, is returned — the
- * three are different situations and each message says which.
+ * This is what a publication path asks before redistributing a model trained on the corpus.
+ * A source whose decision is `null`, whose state is anything but `elected`,
+ * or whose elected grant never named the operation, is returned — the three are
+ * different situations and each message says which.
  */
 export function sourcesNotPermitting(
 	manifest: TrainingManifest,

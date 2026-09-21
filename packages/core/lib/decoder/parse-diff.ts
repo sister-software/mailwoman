@@ -33,8 +33,8 @@ import type { AddressTree } from "#decoder/types"
 /**
  * What happened to one span between the two arms.
  *
- * `unchanged` is emitted rather than dropped so a renderer can show context lines. a caller wanting only the changes
- * filters on {@linkcode isChange}.
+ * `unchanged` is emitted rather than dropped so a renderer can show context lines. a
+ * caller wanting only the changes filters on {@linkcode isChange}.
  */
 export type SpanDeltaKind = "added" | "removed" | "retagged" | "moved" | "confidence" | "unchanged"
 
@@ -55,12 +55,14 @@ export interface SpanDelta {
 	confidenceBefore?: number
 	confidenceAfter?: number
 	/**
-	 * `after - before`, present only when both sides are. Negative means the arm under test is less sure.
+	 * `after - before`, present only when both sides are.
+	 * Negative means the arm under test is less sure.
 	 */
 	confidenceDelta?: number
 	/**
-	 * Where the assertion came from — `rule`, `neural`, `resolver`. A span whose tag is unchanged but whose source moved
-	 * from `resolver` to `neural` lost its gazetteer backing, which no tag-level diff can show.
+	 * Where the assertion came from — `rule`, `neural`, `resolver`.
+	 * A span whose tag is unchanged but whose source moved from `resolver` to `neural`
+	 * lost its gazetteer backing, which no tag-level diff can show.
 	 */
 	sourceBefore?: string
 	sourceAfter?: string
@@ -82,8 +84,9 @@ export interface ParseDiff {
 	input: string
 	spans: SpanDelta[]
 	/**
-	 * The locale/country call and how sure each arm was of it. A parse that changed nothing else but moved its country
-	 * confidence across the scope threshold will geocode somewhere else entirely.
+	 * The locale/country call and how sure each arm was of it.
+	 * A parse that changed nothing else but moved its country confidence across the
+	 * scope threshold will geocode somewhere else entirely.
 	 */
 	localeCountryBefore?: { country: string; confidence: number }
 	localeCountryAfter?: { country: string; confidence: number }
@@ -118,9 +121,9 @@ function toFlat(tree: AddressTree | null | undefined): Flat[] {
 /**
  * How much of the shorter span the two share, in [0, 1].
  *
- * Overlap rather than equality because the interesting failures move a boundary by a token or two, and an
- * equality-keyed match reports those as a delete plus an insert — which is exactly the information loss this file
- * exists to prevent.
+ * Overlap rather than equality because the interesting failures move a boundary by a token
+ * or two, and an equality-keyed match reports those as a delete plus an insert —
+ * which is exactly the information loss this file exists to prevent.
  */
 function overlap(a: Flat, b: Flat): number {
 	const lo = Math.max(a.start, b.start)
@@ -134,16 +137,17 @@ function overlap(a: Flat, b: Flat): number {
 /**
  * The share of overlap below which two spans are treated as unrelated rather than moved.
  *
- * Half the shorter span: a boundary that slid by a token still matches, while two spans that merely touch at their
- * edges do not, and reporting those as a `moved` would invent a relationship the parse does not assert.
+ * Half the shorter span: a boundary that slid by a token still matches,
+ * while two spans that merely touch at their edges do not, and reporting those as a
+ * `moved` would invent a relationship the parse does not assert.
  */
 const RELATED_OVERLAP = 0.5
 
 /**
  * Diff two parses of the same input.
  *
- * Matching is greedy on overlap, strongest pair first, with tag equality breaking ties — so a span that kept its tag is
- * preferred over one that merely sits in the same place.
+ * Matching is greedy on overlap, strongest pair first, with tag equality breaking ties —
+ * so a span that kept its tag is preferred over one that merely sits in the same place.
  */
 export function diffParse(
 	input: string,
@@ -255,16 +259,16 @@ export function diffParse(
 /**
  * Confidence movement below which a same-tag same-span pair is not worth a line of its own.
  *
- * Two hundredths: the decoder's aggregate is a mean over a span's tokens, so a one-token re-scoring moves a long span
- * by a hair and reporting that as a change buries the spans that actually moved.
+ * Two hundredths: the decoder's aggregate is a mean over a span's tokens, so a one-token re-scoring
+ * moves a long span by a hair and reporting that as a change buries the spans that actually moved.
  */
 export const CONFIDENCE_NOISE_FLOOR = 0.02
 
 /**
  * Render a diff the way a reader reads one — the address first, then the spans that moved under it.
  *
- * Address-first is the point. An aggregate that reports "18 regressed" without the strings is the shape that let a
- * venue-destroying regression read as a routine count for five runs.
+ * Address-first is the point. An aggregate that reports "18 regressed" without the strings
+ * is the shape that let a venue-destroying regression read as a routine count for five runs.
  */
 export function renderParseDiff(diff: ParseDiff, options: { context?: boolean } = {}): string {
 	const lines: string[] = [diff.input]

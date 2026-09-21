@@ -22,8 +22,9 @@ export interface USStateInfo {
 }
 
 /**
- * FIPS state-or-territory code → `{ abbreviation, name }`. Includes all 50 states, DC, and the five primary territories
- * (PR, GU, VI, MP, AS). Codes are two-digit zero-padded strings to match tiger column `statefp`.
+ * FIPS state-or-territory code → `{ abbreviation, name }`.
+ * Includes all 50 states, DC, and the five primary territories (PR, GU, VI, MP, AS).
+ * Codes are two-digit zero-padded strings to match tiger column `statefp`.
  */
 export const US_FIPS_STATE: Readonly<Record<string, USStateInfo>> = Object.freeze({
 	"01": { abbreviation: "AL", name: "Alabama" },
@@ -95,16 +96,17 @@ export function lookupFipsState(statefp: string | null | undefined): USStateInfo
 }
 
 /**
- * Inverted view: two-letter postal abbreviation → `USStateInfo`. Built once at module load. Used by adapters whose
- * source data ships the abbreviation rather than the FIPS code (FCC BDC, most federal CSVs).
+ * Inverted view: two-letter postal abbreviation → `USStateInfo`.
+ * Built once at module load. Used by adapters whose source data ships the abbreviation
+ * rather than the FIPS code (FCC BDC, most federal CSVs).
  */
 export const US_STATE_BY_ABBREVIATION: Readonly<Record<string, USStateInfo>> = Object.freeze(
 	Object.fromEntries(Object.values(US_FIPS_STATE).map((info) => [info.abbreviation, info]))
 )
 
 /**
- * Lookup helper for adapters carrying 2-char USPS abbreviations (`"CA"`, `"VT"`). Case-folded. null for any value
- * outside the 50 states + DC + the five primary territories.
+ * Lookup helper for adapters carrying 2-char USPS abbreviations (`"CA"`, `"VT"`).
+ * Case-folded. null for any value outside the 50 states + DC + the five primary territories.
  */
 export function lookupStateAbbreviation(abbreviation: string | null | undefined): USStateInfo | null {
 	if (!abbreviation) return null

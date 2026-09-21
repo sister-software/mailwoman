@@ -28,7 +28,8 @@ export interface OSMAddrRecord {
 	 */
 	housenumber: string
 	/**
-	 * `addr:street` — null when the point carries no street tag (the association gap. counted rather than written).
+	 * `addr:street` — null when the point carries no street tag
+	 * (the association gap. counted rather than written).
 	 */
 	street: string | null
 	postcode: string | null
@@ -60,8 +61,8 @@ export interface OSMAddrRecord {
 }
 
 /**
- * The `addr:*` tags the extract projects, in the order the record names them. The rooftop builder reads the first five.
- * the corpus jsonl carries them all.
+ * The `addr:*` tags the extract projects, in the order the record names them.
+ * The rooftop builder reads the first five. the corpus jsonl carries them all.
  */
 const ADDR_TAGS = [
 	"housenumber",
@@ -91,7 +92,8 @@ function tagValue(properties: Record<string, unknown>, tag: string): string | nu
 const ADDR_LAYERS = ["points", "multipolygons"] as const
 
 /**
- * Ogrsql projecting the `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number.
+ * Ogrsql projecting the `addr:*` tags out of the `other_tags` hstore,
+ * filtered to rows that have a house number.
  */
 function addrSQL(layer: string): string {
 	const projection = ADDR_TAGS.map((tag) => `hstore_get_value(other_tags,'addr:${tag}') AS ${tag}`).join(", ")

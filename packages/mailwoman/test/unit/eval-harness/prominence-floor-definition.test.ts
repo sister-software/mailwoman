@@ -66,8 +66,8 @@ describe("prominence-floor ruler (#2264)", () => {
 	it("refuses a band whose ceiling sits below its floor", () => {
 		const problems = auditProminenceDefinition(
 			withChange((draft) => {
-				// The second band, so the inverted ceiling is not 0 — that value means unbounded and would be refused by a
-				// different check, which would let this one pass without ever running.
+				// The second band, so the inverted ceiling is not 0 — that value means unbounded and would
+				// be refused by a different check, which would let this one pass without ever running.
 				draft.populationBands[1]!.max = draft.populationBands[1]!.min - 1
 			})
 		)
@@ -157,9 +157,10 @@ describe("prominence-floor ruler (#2264)", () => {
 
 		expect(floors).toEqual([1, 2, 3, 4])
 
-		// A floor of F admits population 10^F. The registered set must reject at least one whole band, or the benchmark
-		// repeats the same-data panel's blind spot: every gold clearing every floor, and a rate nobody can attribute.
-		// floor_4 admits 10,000 and the second band ends at 4,999, so it rejects both of the two smallest bands outright.
+		// A floor of F admits population 10^F. The registered set must reject at least
+		// one whole band, or the benchmark repeats the same-data panel's blind spot:
+		// every gold clearing every floor, and a rate nobody can attribute. floor_4 admits 10,000
+		// and the second band ends at 4,999, so it rejects both of the two smallest bands outright.
 		const highest = Math.max(...floors)
 
 		const bandsRejectedOutright = frozen.populationBands.filter(

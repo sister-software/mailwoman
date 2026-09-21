@@ -25,9 +25,9 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, parseRoles,
 const BATCH_SIZE = availableParallelism()
 
 /**
- * Auto-discover d3-scale-chromatic's sequential interpolators so callers can pass e.g. `--interpolator viridis` and we
- * map it to `interpolateViridis`. Categorical scales (`scheme*`) are deliberately excluded — they're string[]s rather
- * than (t)=>string.
+ * Auto-discover d3-scale-chromatic's sequential interpolators so callers can
+ * pass e.g. `--interpolator viridis` and we map it to `interpolateViridis`.
+ * Categorical scales (`scheme*`) are deliberately excluded — they're string[]s rather than (t)=>string.
  */
 async function loadD3Interpolators(): Promise<Record<string, InterpolateColorCallback>> {
 	const d3Chromatic = await import("d3-scale-chromatic")

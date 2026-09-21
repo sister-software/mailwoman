@@ -58,8 +58,9 @@ function coveredMask(tree: AddressTree): Uint8Array {
 }
 
 /**
- * Tile `tree.raw` into maximal covered/unknown runs, in source order. The concatenation of the segment values
- * reproduces `tree.raw` exactly — that is the #493 round-trip invariant ({@link isLossless}).
+ * Tile `tree.raw` into maximal covered/unknown runs, in source order.
+ * The concatenation of the segment values reproduces `tree.raw` exactly —
+ * that is the #493 round-trip invariant ({@link isLossless}).
  */
 export function losslessSegments(tree: AddressTree): LosslessSegment[] {
 	const len = tree.raw.length
@@ -95,8 +96,8 @@ export function unknownSpans(tree: AddressTree): UnknownSpan[] {
 }
 
 /**
- * The #493 round-trip guarantee: concatenating the lossless segments (covered + unknown), in order, reproduces the
- * original input. Holds by construction unless a node span overshoots the input bounds.
+ * The #493 round-trip guarantee: concatenating the lossless segments (covered + unknown), in order,
+ * reproduces the original input. Holds by construction unless a node span overshoots the input bounds.
  */
 export function isLossless(tree: AddressTree): boolean {
 	return (

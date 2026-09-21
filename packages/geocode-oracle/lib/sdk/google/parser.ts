@@ -56,24 +56,26 @@ interface ComponentRule {
 }
 
 /**
- * The component-type → `ComponentTag` table, IN priority order. Two independent first-writer-wins rules apply as it is
- * walked, and both are required:
+ * The component-type → `ComponentTag` table, IN priority order.
+ * Two independent first-writer-wins rules apply as it is walked, and both are required:
  *
  * 1. **A tag is written once.** A later rule for an already-filled tag is skipped.
  * 2. **A component is consumed once.** A component that already claimed a tag cannot claim a second one.
  *
- * Rule 2 is what makes the two `locality` entries below correct rather than a duplication bug, and the case it exists
- * for is Great Britain. Google returns a GB address as `postal_town: "London"` plus, frequently, a `locality` holding
- * the district (`"Shoreditch"`). The post town is what a GB postal address puts on the locality line, so `postal_town`
- * is listed first and takes `locality`; the district component then falls through to `dependent_locality`, which is
- * exactly the tag mailwoman's GB work uses for it. In a country with no `postal_town` the first `locality` rule fires,
- * consumes the component, and the second one finds nothing left to place — so no country gets its locality written into
- * two tags.
+ * Rule 2 is what makes the two `locality` entries below correct rather than a duplication
+ * bug, and the case it exists for is Great Britain. Google returns a GB address as
+ * `postal_town: "London"` plus, frequently, a `locality` holding the district (`"Shoreditch"`).
+ * The post town is what a GB postal address puts on the locality line, so `postal_town`
+ * is listed first and takes `locality`; the district component then falls through to
+ * `dependent_locality`, which is exactly the tag mailwoman's GB work uses for it.
+ * In a country with no `postal_town` the first `locality` rule fires, consumes the component, and the
+ * second one finds nothing left to place — so no country gets its locality written into two tags.
  *
- * Deliberately unmapped, and available on `raw`: `political` (a modifier that co-occurs with everything and names
- * nothing), `administrative_area_level_3` and below (which is a comune in Italy, a ward in Japan, and a
- * census-designated nothing in the United States — no single tag survives that), `postal_code_prefix`, and every
- * `plus_code`-derived pseudo-component.
+ * Deliberately unmapped, and available on `raw`: `political`
+ * (a modifier that co-occurs with everything and names nothing), `administrative_area_level_3`
+ * and below (which is a comune in Italy, a ward in Japan, and a census-designated
+ * nothing in the United States — no single tag survives that), `postal_code_prefix`,
+ * and every `plus_code`-derived pseudo-component.
  */
 const COMPONENT_RULES: readonly ComponentRule[] = [
 	{ types: ["street_number"], tag: "house_number", form: "short" },
@@ -104,23 +106,25 @@ const COMPONENT_RULES: readonly ComponentRule[] = [
 ]
 
 /**
- * The countries whose written postal convention puts the first-level subdivision in its abbreviated form, so
- * `administrative_area_level_1` is taken from `short_name` there and `long_name` everywhere else.
+ * The countries whose written postal convention puts the first-level subdivision in its abbreviated form,
+ * so `administrative_area_level_1` is taken from `short_name` there and `long_name` everywhere else.
  *
- * The list is short on purpose. An abbreviation is the conventional written form in these five and almost nowhere else:
- * a French address writes `Île-de-France`, not `IDF`; a German one writes `Nordrhein-Westfalen`, not `NW`; Google has a
- * `short_name` for both regardless, and taking it would produce a `region` no parser will ever see in real input. The
- * United States, Canada, Australia, Mexico and Brazil are the cases where the opposite is true — `NY`, `on`, `NSW`,
- * `JAL`, `SP` are what appears on the envelope.
+ * The list is short on purpose. An abbreviation is the conventional written form in these five
+ * and almost nowhere else: a French address writes `Île-de-France`, not `IDF`; a German one
+ * writes `Nordrhein-Westfalen`, not `NW`; Google has a `short_name` for both regardless,
+ * and taking it would produce a `region` no parser will ever see in real input.
+ * The United States, Canada, Australia, Mexico and Brazil are the cases where the opposite
+ * is true — `NY`, `on`, `NSW`, `JAL`, `SP` are what appears on the envelope.
  *
- * When this is wrong FOR your case, read `raw.address_components` — both forms are always there. This is a default that
- * makes the common case right rather than a claim about postal law.
+ * When this is wrong FOR your case, read `raw.address_components` — both forms are always there.
+ * This is a default that makes the common case right rather than a claim about postal law.
  */
 const REGION_ABBREVIATION_COUNTRIES = new Set(["US", "CA", "AU", "MX", "BR"])
 
 /**
- * Index every component by every type it carries, so a lookup is a map probe rather than a scan of the array. A
- * component tagged both `locality` and `political` is reachable under either key and is the same object under both,
+ * Index every component by every type it carries, so a lookup is a map probe
+ * rather than a scan of the array. A component tagged both `locality`
+ * and `political` is reachable under either key and is the same object under both,
  * which is what lets {@linkcode buildGoogleComponents} consume it once.
  */
 function indexByType(components: readonly GoogleAddressComponent[]): Map<string, GoogleAddressComponent> {
@@ -128,8 +132,8 @@ function indexByType(components: readonly GoogleAddressComponent[]): Map<string,
 
 	for (const component of components) {
 		for (const type of component.types) {
-			// First wins: Google does not return two components of one type in a single result, but if
-			// it ever did, taking the first keeps this deterministic.
+			// First wins: Google does not return two components of one type in a single result,
+			// but if it ever did, taking the first keeps this deterministic.
 			if (!index.has(type)) {
 				index.set(type, component)
 			}
@@ -140,8 +144,8 @@ function indexByType(components: readonly GoogleAddressComponent[]): Map<string,
 }
 
 /**
- * The ISO-3166 alpha-2 code for a result, read off its `country` component's `short_name`. `null` when the result has
- * no country component at all, which happens for a bare `plus_code` query.
+ * The ISO-3166 alpha-2 code for a result, read off its `country` component's `short_name`.
+ * `null` when the result has no country component at all, which happens for a bare `plus_code` query.
  */
 export function countryCodeOf(result: GoogleGeocodeResult): string | null {
 	const country = result.address_components.find((component) => component.types.includes("country"))
@@ -150,7 +154,8 @@ export function countryCodeOf(result: GoogleGeocodeResult): string | null {
 }
 
 /**
- * Walk {@linkcode COMPONENT_RULES} against one result's components and build the `ComponentTag`-keyed dictionary.
+ * Walk {@linkcode COMPONENT_RULES} against one result's components and build
+ * the `ComponentTag`-keyed dictionary.
  */
 export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDict {
 	const index = indexByType(result.address_components)
@@ -179,10 +184,10 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
 		}
 	}
 
-	// ZIP+4 arrives as a separate component, and an address written with one writes it hyphenated onto
-	// the ZIP (`10001-1234`). Appending is what makes the oracle's `postcode` comparable to a parser
-	// output for the same input. leaving the suffix on `raw` alone would make every ZIP+4 case look
-	// like a mismatch on the last five characters.
+	// ZIP+4 arrives as a separate component, and an address written with one writes it
+	// hyphenated onto the ZIP (`10001-1234`). Appending is what makes the oracle's `postcode`
+	// comparable to a parser output for the same input. leaving the suffix on `raw` alone
+	// would make every ZIP+4 case look like a mismatch on the last five characters.
 	const postcodeSuffix = index.get("postal_code_suffix")
 
 	if (components.postcode && postcodeSuffix?.long_name) {
@@ -195,13 +200,16 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
 /**
  * Google's `location_type` → mailwoman's `ResolutionTier`.
  *
- * Three of the four are unambiguous. `GEOMETRIC_CENTER` is not: Google documents it as the centre of "a polyline (for
- * example, a street) or polygon (region)", which spans both the `street` and `admin` tiers depending on which shape it
- * was. A `route` value in the result's own `types` identifies a street. otherwise this reports `admin`, which
- * under-claims. That direction is deliberate — an oracle that over-claims precision is worse than one that
- * under-claims, because a case author pinning `expectTier` from it would encode a tolerance the parser can never earn.
+ * Three of the four are unambiguous. `GEOMETRIC_CENTER` is not: Google documents
+ * it as the centre of "a polyline (for example, a street) or polygon (region)",
+ * which spans both the `street` and `admin` tiers depending on which shape it was.
+ * A `route` value in the result's own `types` identifies a street. otherwise this
+ * reports `admin`, which under-claims. That direction is deliberate — an oracle that
+ * over-claims precision is worse than one that under-claims, because a case author pinning
+ * `expectTier` from it would encode a tolerance the parser can never earn.
  *
- * A missing `location_type` returns `null` rather than a guess. Read `raw.geometry` when it does.
+ * A missing `location_type` returns `null` rather than a guess.
+ * Read `raw.geometry` when it does.
  */
 export function toResolutionTier(result: GoogleGeocodeResult): ResolutionTier | null {
 	switch (result.geometry.location_type) {
@@ -221,12 +229,13 @@ export function toResolutionTier(result: GoogleGeocodeResult): ResolutionTier | 
 /**
  * The `{ latitude, longitude }` shape the rest of the repo speaks, from Google's `{ lat, lng }`.
  *
- * `GeoPoint` is deliberately not in this path. It would validate the pair — which is worth doing on an input, and
- * `google-client.ts` does exactly that on the reverse-geocode argument — but on an output it can only discard: a
- * `GeoPoint.from` returning `null` for a coordinate Google actually served would turn a reportable oddity into a
- * missing result. Null Island is the concrete case: `GeoPoint.from` treats `0, 0` as the missing-coordinate sentinel,
- * and a geocode that genuinely lands in the Gulf of Guinea is exactly the kind of thing an oracle should surface rather
- * than swallow.
+ * `GeoPoint` is deliberately not in this path. It would validate the pair — which is worth
+ * doing on an input, and `google-client.ts` does exactly that on the reverse-geocode argument —
+ * but on an output it can only discard: a `GeoPoint.from` returning `null` for a
+ * coordinate Google actually served would turn a reportable oddity into a missing result.
+ * Null Island is the concrete case: `GeoPoint.from` treats `0, 0` as the missing-coordinate
+ * sentinel, and a geocode that genuinely lands in the Gulf of Guinea is exactly the
+ * kind of thing an oracle should surface rather than swallow.
  */
 function toCoordinate(location: GoogleLatLngLiteral): { latitude: number; longitude: number } {
 	return { latitude: location.lat, longitude: location.lng }
@@ -235,8 +244,8 @@ function toCoordinate(location: GoogleLatLngLiteral): { latitude: number; longit
 /**
  * Turn one Google `results` entry into the package's normalized {@linkcode OracleGeocodeResult}.
  *
- * `uncertaintyMeters` is left `null` throughout: Google publishes no uncertainty radius, and inventing one per
- * `location_type` would put a fabricated number where the matcher expects a calibrated one.
+ * `uncertaintyMeters` is left `null` throughout: Google publishes no uncertainty radius, and inventing
+ * one per `location_type` would put a fabricated number where the matcher expects a calibrated one.
  */
 export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeocodeResult<GoogleGeocodeResult> {
 	const components = buildGoogleComponents(result)
@@ -244,9 +253,9 @@ export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeo
 
 	const geocode: AddressGeocode = {
 		coordinate,
-		// The tier is required on `AddressGeocode`, and `admin` is the weakest claim available — the
-		// right value for "Google did not say". `raw.geometry.location_type` is the ground truth when
-		// this matters.
+		// The tier is required on `AddressGeocode`, and `admin` is the
+		// weakest claim available — the right value for "Google did not say".
+		// `raw.geometry.location_type` is the ground truth when this matters.
 		tier: toResolutionTier(result) ?? "admin",
 		uncertaintyMeters: null,
 	}

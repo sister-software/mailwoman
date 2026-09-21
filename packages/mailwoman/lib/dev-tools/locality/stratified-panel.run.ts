@@ -70,8 +70,8 @@ const source = values.source ?? geonamesPostalPath(country)
 const perRegion = Number(values["per-region"])
 
 /**
- * The export's own coordinate for each postcode, keyed before the triples pass so the filtered triples can take it
- * without a second reader spelling the column map again.
+ * The export's own coordinate for each postcode, keyed before the triples pass
+ * so the filtered triples can take it without a second reader spelling the column map again.
  */
 const coordinateOf = new Map<string, { lat: number; lon: number }>()
 
@@ -95,8 +95,9 @@ if (!STRATIFY.has(values.stratify!)) {
 }
 
 /**
- * The locality name's shape, in the same three buckets `us/locality-region-postcode-arms.run.ts` reports, using the
- * same {@linkcode suffixTail} so a rate read on this panel and a rate read on that one are about the same populations.
+ * The locality name's shape, in the same three buckets `us/locality-region-postcode-arms.run.ts`
+ * reports, using the same {@linkcode suffixTail} so a rate read on this panel
+ * and a rate read on that one are about the same populations.
  */
 function shapeOf(locality: string): string {
 	if (suffixTail(locality)) return "suffix-tail"
@@ -105,8 +106,8 @@ function shapeOf(locality: string): string {
 }
 
 /**
- * A deterministic comparator that shuffles a bucket. Seeded so two runs of this tool write the same panel: a panel that
- * changes between draws cannot be used to compare two models measured a day apart.
+ * A deterministic comparator that shuffles a bucket. Seeded so two runs of this tool write the same
+ * panel: a panel that changes between draws cannot be used to compare two models measured a day apart.
  */
 function seededOrder(size: number): (a: unknown, b: unknown) => number {
 	const next = mulberry32(size)
@@ -126,9 +127,9 @@ function seededOrder(size: number): (a: unknown, b: unknown) => number {
 }
 
 /**
- * Keyed by the stratum the draw is even across. The region form is the one the panel writes out — GeoNames publishes
- * `California`, never `CA`, and the surface under test is the code — so folding here keeps the shortfall report and the
- * rows speaking the same vocabulary.
+ * Keyed by the stratum the draw is even across. The region form is the one the panel writes out —
+ * GeoNames publishes `California`, never `CA`, and the surface under test is the code —
+ * so folding here keeps the shortfall report and the rows speaking the same vocabulary.
  */
 const byStratum = new Map<string, Array<(typeof quotaed)[number] & { written: string }>>()
 
@@ -137,8 +138,8 @@ let keptSourceForm = 0
 for (const triple of quotaed) {
 	if (!coordinateOf.has(triple.postcode)) continue
 
-	// A country whose subdivisions codex does not carry keeps the source's form, counted so the run says how much of
-	// the panel that is rather than writing two kinds of row silently.
+	// A country whose subdivisions codex does not carry keeps the source's form, counted
+	// so the run says how much of the panel that is rather than writing two kinds of row silently.
 	const subdivision = matchSubdivisionIn(triple.cc, triple.region)
 
 	if (!subdivision) {
@@ -193,7 +194,8 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 			country: triple.cc,
 			expected: { locality: triple.locality, region: triple.written, postcode: triple.postcode },
 			/**
-			 * Named on every row because a consumer that grades distance needs to know it is holding a postcode centroid.
+			 * Named on every row because a consumer that grades distance needs to know
+			 * it is holding a postcode centroid.
 			 */
 			coordinate_basis: "geonames-postcode-centroid",
 		})

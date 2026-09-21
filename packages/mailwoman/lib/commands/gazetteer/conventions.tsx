@@ -24,9 +24,10 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
-// resolver-wof-sqlite is an optional peer dep of mailwoman. its runtime value `BUILTIN_STRATEGY_NAMES`
-// is imported dynamically inside the command (the gazetteer-pipeline convention) so merely loading the
-// commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
+// resolver-wof-sqlite is an optional peer dep of mailwoman. its runtime
+// value `BUILTIN_STRATEGY_NAMES` is imported dynamically inside the command
+// (the gazetteer-pipeline convention) so merely loading the commands (e.g. `mailwoman --help`)
+// doesn't fault when the peer is absent. `Convention` is type-only.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
 import {
 	createAddressConventionTable,

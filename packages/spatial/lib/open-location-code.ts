@@ -17,16 +17,16 @@
  */
 
 /**
- * The 20-character OLC digit set. Deliberately excludes letters that read as words or digits (no A/E/I/L/N/O/S/T…), so
- * a matched token is very unlikely to be ordinary text.
+ * The 20-character OLC digit set. Deliberately excludes letters that read as words
+ * or digits (no A/E/I/L/N/O/S/T…), so a matched token is very unlikely to be ordinary text.
  */
 const OLC_ALPHABET = "23456789CFGHJMPQRVWX"
 
 const OLC_DIGIT_VALUE = new Map<string, number>([...OLC_ALPHABET].map((c, i) => [c, i]))
 
 /**
- * Degree width of each pair-position, most significant first: the pair at index i spans `20^(2-i)` degrees. Ten pair
- * digits (five lat/lon pairs) take a cell to 1/400° ≈ 275 m. grid digits refine further.
+ * Degree width of each pair-position, most significant first: the pair at index i spans `20^(2-i)` degrees.
+ * Ten pair digits (five lat/lon pairs) take a cell to 1/400° ≈ 275 m. grid digits refine further.
  */
 const PAIR_RESOLUTIONS = [20, 1, 1 / 20, 1 / 400, 1 / 8000] as const
 
@@ -37,8 +37,8 @@ const GRID_COLUMNS = 4
 const GRID_ROWS = 5
 
 /**
- * A decoded plus-code cell: the center (the coordinate consumers want) plus the cell's span, from which callers price
- * the claim (`uncertaintyM` ≈ the half-diagonal).
+ * A decoded plus-code cell: the center (the coordinate consumers want) plus the cell's span,
+ * from which callers price the claim (`uncertaintyM` ≈ the half-diagonal).
  */
 export interface DecodedPlusCode {
 	lat: number
@@ -48,16 +48,17 @@ export interface DecodedPlusCode {
 }
 
 /**
- * A syntactically-valid full plus code: exactly 8 digits, `+`, then 2 or 3 digits. (The spec allows padded and longer
- * forms. addresses carry the 10–11 digit register, which is all this reader accepts.)
+ * A syntactically-valid full plus code: exactly 8 digits, `+`, then 2 or 3 digits.
+ * (The spec allows padded and longer forms. addresses carry the 10–11 digit register,
+ * which is all this reader accepts.)
  */
 export function isFullPlusCode(token: string): boolean {
 	return /^[23456789CFGHJMPQRVWX]{8}\+[23456789CFGHJMPQRVWX]{2,3}$/i.test(token)
 }
 
 /**
- * A syntactically-valid short plus code: 2, 4, or 6 leading digits removed — so 6, 4, or 2 digits before the `+`. The
- * 4-before-`+` form (`VFQ6+92P`) is the one Google prints on place cards.
+ * A syntactically-valid short plus code: 2, 4, or 6 leading digits removed — so 6, 4, or 2 digits
+ * before the `+`. The 4-before-`+` form (`VFQ6+92P`) is the one Google prints on place cards.
  */
 export function isShortPlusCode(token: string): boolean {
 	return /^[23456789CFGHJMPQRVWX]{2,6}\+[23456789CFGHJMPQRVWX]{2,3}$/i.test(token) && token.indexOf("+") % 2 === 0
@@ -131,9 +132,10 @@ function encodePairDigits(lat: number, lon: number, length: number): string {
 }
 
 /**
- * Recover a short plus code against a reference coordinate, per the spec's `recoverNearest`: prepend the reference's
- * prefix at the missing precision, then shift the candidate cell by whole prefix-resolutions when a neighboring cell
- * center sits closer to the reference. Returns the decoded nearest cell, or null for an invalid short code.
+ * Recover a short plus code against a reference coordinate, per the spec's `recoverNearest`:
+ * prepend the reference's prefix at the missing precision, then shift the candidate cell
+ * by whole prefix-resolutions when a neighboring cell center sits closer to the reference.
+ * Returns the decoded nearest cell, or null for an invalid short code.
  */
 export function recoverNearestPlusCode(shortCode: string, refLat: number, refLon: number): DecodedPlusCode | null {
 	if (!isShortPlusCode(shortCode)) return null
@@ -144,9 +146,9 @@ export function recoverNearestPlusCode(shortCode: string, refLat: number, refLon
 
 	if (!candidate) return null
 
-	// The prefix pins the cell modulo its own resolution. the nearest bearer of the short code may sit
-	// one prefix-cell away (the reference near a cell edge). Shift by whole prefix-resolutions, never
-	// past the poles.
+	// The prefix pins the cell modulo its own resolution. the nearest bearer of the
+	// short code may sit one prefix-cell away (the reference near a cell edge).
+	// Shift by whole prefix-resolutions, never past the poles.
 	const LAT_MIN = -90
 	const LAT_MAX = 90
 	const prefixResolution = PAIR_RESOLUTIONS[missing / 2 - 1]!

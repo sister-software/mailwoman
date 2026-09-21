@@ -30,14 +30,15 @@ import { routeCountry } from "mailwoman/eval-harness/gauntlet/routing"
 import type { Selection } from "#power"
 
 /**
- * Repo-relative home of the triaged parity fixtures — the same literal `parity-corpus.ts` exports as
- * `PARITY_FIXTURES_PATH`, kept here as a constant rather than an inline string so a move breaks one place.
+ * Repo-relative home of the triaged parity fixtures — the same literal
+ * `parity-corpus.ts` exports as `PARITY_FIXTURES_PATH`, kept here as a constant
+ * rather than an inline string so a move breaks one place.
  */
 const PARITY_FIXTURES_RELATIVE_PATH = "packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
 /**
- * A reference to an input set. Discriminated so a caller cannot pass a bare array by accident — see the module
- * docstring for why the hand-picked case is deliberately the wordy one.
+ * A reference to an input set. Discriminated so a caller cannot pass a bare array by accident —
+ * see the module docstring for why the hand-picked case is deliberately the wordy one.
  */
 export type InputSetRef =
 	| { kind: "board"; country?: string; address_kind?: string; status?: string }
@@ -53,30 +54,31 @@ export type InputSetRef =
 	  }
 
 /**
- * Held-out truth sources. `fr` is BAN, `us` is fdic — the two `gauntlet/holdout.ts` defines, named here so a caller
- * gets a closed set rather than a string that fails at read time.
+ * Held-out truth sources. `fr` is BAN, `us` is fdic — the two `gauntlet/holdout.ts` defines,
+ * named here so a caller gets a closed set rather than a string that fails at read time.
  */
 export const HOLDOUT_SOURCES = ["fr", "us"] as const
 
 type HoldoutSource = (typeof HOLDOUT_SOURCES)[number]
 
 /**
- * Default holdout draw size. Matches `runHoldoutLayer`'s own default, so a set drawn here is the size the eval is
- * calibrated on.
+ * Default holdout draw size. Matches `runHoldoutLayer`'s own default,
+ * so a set drawn here is the size the eval is calibrated on.
  */
 export const HOLDOUT_DEFAULT_N = 300
 
 /**
- * Benchmark panels, by version. Each is a fixed file under `$MAILWOMAN_DATA_ROOT/pelias-rig/panel/`; v2 is the 420-row
- * set the head-to-head protocol was pre-registered against.
+ * Benchmark panels, by version. Each is a fixed file under `$MAILWOMAN_DATA_ROOT/pelias-rig/panel/`;
+ * v2 is the 420-row set the head-to-head protocol was pre-registered against.
  */
 const PANEL_VERSIONS = ["v1", "v2", "v2.1", "v3", "v3.1"] as const
 
 type PanelVersion = (typeof PANEL_VERSIONS)[number]
 
 /**
- * Golden splits. `dev` is the tuning half and the one an iterating change may look at. the top-level files are the
- * held-back half, so reaching for them casually is how a held-out set stops being held out.
+ * Golden splits. `dev` is the tuning half and the one an iterating change may look
+ * at. the top-level files are the held-back half, so reaching for them casually
+ * is how a held-out set stops being held out.
  */
 const GOLDEN_SPLITS = ["dev", "full"] as const
 
@@ -85,9 +87,10 @@ type GoldenSplit = (typeof GOLDEN_SPLITS)[number]
 /**
  * A hand-picked input that carries its own truth point.
  *
- * `lat`/`lon` are an assertion by whoever wrote the call. Nothing here verifies them, so the set's `why` has to say
- * where they came from — a resolved map link, an oracle, a survey. An invented pin grades nothing and looks identical
- * to a real one in the output.
+ * `lat`/`lon` are an assertion by whoever wrote the call.
+ * Nothing here verifies them, so the set's `why` has to say where they came from —
+ * a resolved map link, an oracle, a survey. An invented pin grades nothing
+ * and looks identical to a real one in the output.
  */
 export interface LiteralInputWithTruth {
 	input: string
@@ -99,7 +102,8 @@ export interface LiteralInputWithTruth {
 
 export interface ResolvedInput {
 	/**
-	 * Case id for a board row. for a literal input, the input's own index. Carried so a result row can be traced back.
+	 * Case id for a board row. for a literal input, the input's own index.
+	 * Carried so a result row can be traced back.
 	 */
 	id: string
 	input: string
@@ -119,32 +123,35 @@ export interface ResolvedInput {
 	addressKind?: string
 	status?: string
 	/**
-	 * The case's expectations, when it has any. Present so a caller can grade. absent for literal inputs, which have no
-	 * truth attached. Therefore, it cannot be graded — only observed.
+	 * The case's expectations, when it has any. Present so a caller can grade. absent for literal
+	 * inputs, which have no truth attached. Therefore, it cannot be graded — only observed.
 	 */
 	seed?: SeedCase
 	/**
 	 * Truth coordinate, when the row carries one — the only axis a cross-engine comparison has.
 	 *
-	 * Populated here for every corpus rather than read off `seed` by the caller, because only the board has a `SeedCase`
-	 * and a panel row does not. One field means `mwdev_compare` does not have to know which corpus a row came from, which
-	 * is what keeps a second truth path from appearing the first time a new set is added.
+	 * Populated here for every corpus rather than read off `seed` by the caller,
+	 * because only the board has a `SeedCase` and a panel row does not.
+	 * One field means `mwdev_compare` does not have to know which corpus a row came from,
+	 * which is what keeps a second truth path from appearing the first time a new set is added.
 	 */
 	truthLat?: number
 	truthLon?: number
 	/**
-	 * How the truth point was established — `rooftop`, `parcel`, `interpolated`, `centroid`. Panels carry it and the
-	 * benchmark plan is explicit that a headline "@1km lives or dies on `truth_type`", so it is stratifiable rather than
-	 * blended.
+	 * How the truth point was established — `rooftop`, `parcel`, `interpolated`, `centroid`.
+	 * Panels carry it and the benchmark plan is explicit that a headline "@1km lives
+	 * or dies on `truth_type`", so it is stratifiable rather than blended.
 	 */
 	truthType?: string
 	/**
-	 * Per-row distance tolerance in metres, when the corpus pins one. `undefined` means the caller's threshold applies.
+	 * Per-row distance tolerance in metres, when the corpus pins one.
+	 * `undefined` means the caller's threshold applies.
 	 */
 	toleranceM?: number
 	/**
-	 * Component expectations for a corpus that has them but no `SeedCase` — golden and parity both do. Without this the
-	 * truth census reads them as carrying nothing, which is how a 4,255-row golden set reported `none: 4255`.
+	 * Component expectations for a corpus that has them but no `SeedCase` — golden
+	 * and parity both do. Without this the truth census reads them as carrying nothing,
+	 * which is how a 4,255-row golden set reported `none: 4255`.
 	 */
 	expectComponents?: Record<string, string>
 }
@@ -156,31 +163,33 @@ export interface ResolvedInputSet {
 	sha256: string
 	selection: Selection
 	/**
-	 * Size of the set this was drawn from, when this is a subset. `undefined` for a full board.
+	 * Size of the set this was drawn from, when this is a subset.
+	 * `undefined` for a full board.
 	 */
 	populationN?: number
 	/**
-	 * Required and echoed for a hand-picked set. It appears in every result derived from the set, so the reason for a
-	 * small panel is visible next to the number it produced.
+	 * Required and echoed for a hand-picked set. It appears in every result derived from the set,
+	 * so the reason for a small panel is visible next to the number it produced.
 	 */
 	why?: string
 	/**
-	 * Strata present in the population but absent from this set — the answer to "what would this panel have been blind
-	 * to?", available before the run rather than after. Empty for a full board.
+	 * Strata present in the population but absent from this set — the answer
+	 * to "what would this panel have been blind to?", available before the run
+	 * rather than after. Empty for a full board.
 	 */
 	notCovered: string[]
 	/**
 	 * How many rows carry each kind of truth.
 	 *
-	 * The per-kind counts overlap — a row can pin components and a coordinate and a tier — so they must never be summed.
-	 * `any` is the distinct row count and `none` its complement. those two are what add up to `n`. An earlier draft
-	 * summed the three and reported 839 rows carrying truth on a 558-row board, which is the shape of every
-	 * double-counted denominator.
+	 * The per-kind counts overlap — a row can pin components and a coordinate and a tier —
+	 * so they must never be summed. `any` is the distinct row count and `none` its complement.
+	 * those two are what add up to `n`. An earlier draft summed the three and reported 839 rows
+	 * carrying truth on a 558-row board, which is the shape of every double-counted denominator.
 	 */
 	hasTruth: { components: number; coordinates: number; tier: number; any: number; none: number }
 	/**
-	 * The live corpus hash, for a board-derived set. Recomputed on every resolve and never cached: a cached stamp verdict
-	 * is the 2026-08-06 failure with extra steps.
+	 * The live corpus hash, for a board-derived set. Recomputed on every resolve
+	 * and never cached: a cached stamp verdict is the 2026-08-06 failure with extra steps.
 	 */
 	corpusHash?: string
 	notes: string[]
@@ -237,9 +246,9 @@ function truthCounts(cases: SeedCase[]): ResolvedInputSet["hasTruth"] {
 /**
  * Resolve a reference into the rows it names.
  *
- * A board subset reports what it excluded rather than merely what it kept. That asymmetry is the point: a caller who
- * filters to `country: "gb"` is told which countries just left the measurement, in the same object that carries the
- * result.
+ * A board subset reports what it excluded rather than merely what it kept.
+ * That asymmetry is the point: a caller who filters to `country: "gb"` is told
+ * which countries just left the measurement, in the same object that carries the result.
  */
 export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSet> {
 	switch (ref.kind) {
@@ -261,15 +270,17 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
 }
 
 /**
- * The autocomplete ladder over a board filter (#2154): every board row that carries a coordinate truth, expanded into
- * its prefix rungs — the input truncated at each token boundary plus the first three single characters — with each rung
- * graded against the row's truth and tolerance. This is what lets `mwdev_compare` run two arms over partial queries
- * under the same grading and significance report as a finished one; `mailwoman eval autocomplete` reads the ladder in
+ * The autocomplete ladder over a board filter (#2154): every board row that carries a coordinate
+ * truth, expanded into its prefix rungs — the input truncated at each token boundary plus the
+ * first three single characters — with each rung graded against the row's truth and tolerance.
+ * This is what lets `mwdev_compare` run two arms over partial queries under the same grading
+ * and significance report as a finished one; `mailwoman eval autocomplete` reads the ladder in
  * its own top-k terms, and the full-string rung here must equal the ordinary board grade for the row.
  *
- * The locale hint is part of the input interface: a two-letter prefix carries no country evidence of its own, so every
- * rung runs with the row's country as its route, its fuzzy scope and its default country. A rung measured without the
- * hint would grade the gazetteer's population prior rather than autocomplete.
+ * The locale hint is part of the input interface: a two-letter prefix carries no
+ * country evidence of its own, so every rung runs with the row's country as its route,
+ * its fuzzy scope and its default country. A rung measured without the hint would
+ * grade the gazetteer's population prior rather than autocomplete.
  */
 async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Promise<ResolvedInputSet> {
 	const board = await resolveBoard({
@@ -323,16 +334,17 @@ async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Pro
 /**
  * A fresh draw from a held-out truth source — the only set here the model cannot have memorized.
  *
- * Reproducibility is OPT-IN, and the default is the unseeded draw. A seeded default would be the more convenient choice
- * and it would quietly convert the one generalization measure in this file into a fixed corpus that the next training
- * run can absorb. `seed` is there for the case that genuinely needs it — re-running one arm later, or a
- * `{kind:"recorded"}` comparison, both of which require the two runs to see the same rows — and the result says which
- * of the two happened.
+ * Reproducibility is OPT-IN, and the default is the unseeded draw.
+ * A seeded default would be the more convenient choice and it would quietly convert the one
+ * generalization measure in this file into a fixed corpus that the next training run can absorb.
+ * `seed` is there for the case that genuinely needs it — re-running one arm later,
+ * or a `{kind:"recorded"}` comparison, both of which require the two runs to see the
+ * same rows — and the result says which of the two happened.
  *
- * Cost, measured 2026-08-16 on this box, because a reservoir draw reads the entire source: **`us` 113 ms over 77,442
- * parseable rows; `fr` 45.5 s over 26,721,353 rows** (BAN is a 5.06 GB CSV). The FR draw is therefore a per-call cost
- * on the order of a minute rather than a cached one — there is nowhere to cache it that would not defeat the freshness
- * the set exists for.
+ * Cost, measured 2026-08-16 on this box, because a reservoir draw reads the entire source:
+ * **`us` 113 ms over 77,442 parseable rows; `fr` 45.5 s over 26,721,353 rows** (BAN is a 5.06 GB CSV).
+ * The FR draw is therefore a per-call cost on the order of a minute rather than a cached one —
+ * there is nowhere to cache it that would not defeat the freshness the set exists for.
  */
 async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): Promise<ResolvedInputSet> {
 	const source = ref.source ?? "fr"
@@ -366,8 +378,9 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		country: source.toUpperCase(),
 		truthLat: row.lat,
 		truthLon: row.lon,
-		// Every row in both sources is a house-number address point from a national register, so the truth is a rooftop
-		// rather than a centroid. Stated per row so a stratified report reads the same way it does for a panel.
+		// Every row in both sources is a house-number address point from a national register,
+		// so the truth is a rooftop rather than a centroid. Stated per row
+		// so a stratified report reads the same way it does for a panel.
 		truthType: "rooftop",
 	}))
 
@@ -407,9 +420,10 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 		)
 	}
 
-	// A row may carry its own truth point. That is what turns this from an observation set into the authoring loop
-	// for a new board row: measure the candidates against real coordinates first, then write the case file with the
-	// status you measured — rather than writing rows and discovering the score afterwards.
+	// A row may carry its own truth point. That is what turns this from an observation
+	// set into the authoring loop for a new board row: measure the candidates against
+	// real coordinates first, then write the case file with the status you measured —
+	// rather than writing rows and discovering the score afterwards.
 	const rows: ResolvedInput[] = ref.inputs.map((entry, index) =>
 		typeof entry === "string"
 			? { id: String(index), input: entry }
@@ -424,8 +438,8 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 	)
 
 	const graded = rows.filter((row) => row.truthLat !== undefined).length
-	// The digest keys on what was measured — input plus its truth point — so two sets that share inputs but pin
-	// different coordinates cannot collide on `setID` and be read as the same run.
+	// The digest keys on what was measured — input plus its truth point — so two sets that share inputs
+	// but pin different coordinates cannot collide on `setID` and be read as the same run.
 	const digest = rows.map((row) => `${row.input}\u0000${row.truthLat ?? ""}\u0000${row.truthLon ?? ""}`)
 
 	return {
@@ -525,7 +539,8 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 }
 
 /**
- * One jsonl corpus row, read loosely because these files are operator artifacts rather than a schema this repo owns.
+ * One jsonl corpus row, read loosely because these files are operator artifacts
+ * rather than a schema this repo owns.
  */
 interface CorpusRow {
 	id?: string
@@ -544,8 +559,8 @@ interface CorpusRow {
 /**
  * Read a jsonl corpus, or say precisely which file was missing.
  *
- * A corpus that cannot be read must not resolve to an empty set: a measurement over zero rows reports zero differences,
- * which reads as "no effect" rather than "nothing ran".
+ * A corpus that cannot be read must not resolve to an empty set: a measurement over zero
+ * rows reports zero differences, which reads as "no effect" rather than "nothing ran".
  */
 async function readCorpus(path: string, what: string): Promise<CorpusRow[]> {
 	if (!(await pathExists(path))) {
@@ -563,7 +578,8 @@ async function readCorpus(path: string, what: string): Promise<CorpusRow[]> {
 }
 
 /**
- * Truth census for a coordinate-containing corpus, where `components` is the only non-coordinate expectation available.
+ * Truth census for a coordinate-containing corpus, where `components` is the
+ * only non-coordinate expectation available.
  */
 function coordinateTruthCounts(rows: ResolvedInput[]): ResolvedInputSet["hasTruth"] {
 	let coordinates = 0
@@ -596,9 +612,9 @@ function coordinateTruthCounts(rows: ResolvedInput[]): ResolvedInputSet["hasTrut
 /**
  * A benchmark panel — the corpus the head-to-head protocol was pre-registered against.
  *
- * `truthType` is carried per row and never blended away: the benchmark plan's own words are that a headline "@1km lives
- * or dies on `truth_type`", so a caller that reports one number across rooftop and centroid rows has reported a number
- * about its own row mix.
+ * `truthType` is carried per row and never blended away: the benchmark plan's own words
+ * are that a headline "@1km lives or dies on `truth_type`", so a caller that reports one
+ * number across rooftop and centroid rows has reported a number about its own row mix.
  */
 async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promise<ResolvedInputSet> {
 	const version = ref.version ?? "v2"
@@ -710,9 +726,9 @@ async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Pro
 	const path = String(repoRootPath(PARITY_FIXTURES_RELATIVE_PATH))
 	const raw = await readCorpus(path, "parity corpus")
 
-	// The same live filter `parity-corpus.ts` applies: 22 rules-era no-solution assertions plus 33 gold-triage
-	// tombstones are fixtures a neural parser must not be graded against. Feeding them in would quietly inflate the
-	// denominator with rows that cannot pass.
+	// The same live filter `parity-corpus.ts` applies: 22 rules-era no-solution assertions
+	// plus 33 gold-triage tombstones are fixtures a neural parser must not be graded against.
+	// Feeding them in would quietly inflate the denominator with rows that cannot pass.
 	const all = raw.filter((row) => !(row as { dropped?: boolean }).dropped && row.expect)
 	const tombstones = raw.length - all.length
 
@@ -739,8 +755,8 @@ async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Pro
 		notCovered: isSubset
 			? [`countries excluded: ${[...new Set(all.map((r) => r.country))].filter((c) => c !== ref.country).join(", ")}`]
 			: [],
-		// Component expectations only. `coordinateTruthCounts` reports 0 coordinates, which is the honest reading: this
-		// corpus cannot support a distance claim however many rows it has.
+		// Component expectations only. `coordinateTruthCounts` reports 0 coordinates, which is the
+		// honest reading: this corpus cannot support a distance claim however many rows it has.
 		hasTruth: { components: inputs.length, coordinates: 0, tier: 0, any: inputs.length, none: 0 },
 		notes: [
 			`Parity corpus, ${all.length} live fixtures (${tombstones} tombstones skipped)${isSubset ? `, filtered to ${inputs.length}` : ""}.`,

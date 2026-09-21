@@ -30,8 +30,8 @@ import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { DISTANCE_THRESHOLDS_KM } from "#geo-grade"
 
 /**
- * The fixed setting space, in the CLI's own vocabulary — the same keys `EngineConfig` uses, so a flip a reader wants to
- * reproduce is a `config` they can paste into any other tool.
+ * The fixed setting space, in the CLI's own vocabulary — the same keys `EngineConfig` uses,
+ * so a flip a reader wants to reproduce is a `config` they can paste into any other tool.
  */
 export const COUNTERFACTUAL_SETTINGS = ["locale", "gazetteer_prior", "country_scope", "fork_entity"] as const
 
@@ -40,24 +40,26 @@ export type CounterfactualSetting = (typeof COUNTERFACTUAL_SETTINGS)[number]
 /**
  * How far an answer must move before the flip is reported, in kilometres.
  *
- * The finest of the pre-registered distance thresholds, borrowed rather than chosen: a flip that moves the answer less
- * than the tightest threshold anything here grades at cannot change a verdict, so reporting it would fill the result
- * with coordinate jitter. A flip that changes abstention is reported at any distance — there is no distance to measure,
- * which is the point.
+ * The finest of the pre-registered distance thresholds, borrowed rather than chosen:
+ * a flip that moves the answer less than the tightest threshold anything here grades at
+ * cannot change a verdict, so reporting it would fill the result with coordinate jitter.
+ * A flip that changes abstention is reported at any distance — there is no
+ * distance to measure, which is the point.
  */
 export const COUNTERFACTUAL_MOVED_KM = DISTANCE_THRESHOLDS_KM[0]
 
 /**
- * The self-contained base weights locale. Every other `@mailwoman/neural-weights-*` package is a data overlay sharing
- * this one's `model.onnx` byte-for-byte, so it is the locale a flip returns TO when the row is already running under
- * its own overlay.
+ * The self-contained base weights locale. Every other `@mailwoman/neural-weights-*`
+ * package is a data overlay sharing this one's `model.onnx` byte-for-byte, so it is the
+ * locale a flip returns TO when the row is already running under its own overlay.
  */
 export const BASE_LOCALE = "en-US"
 
 /**
- * Repo-relative home of the release manifest, whose `locales` array is the list of weights overlays that exist. Read
- * rather than re-typed: an overlay added by `packages/release-kit/lib/weights/scaffold-weights-overlay.ts` lands there,
- * and a hand-kept copy here would make the locale setting silently stop offering the newest locale.
+ * Repo-relative home of the release manifest, whose `locales` array is the list
+ * of weights overlays that exist. Read rather than re-typed: an overlay added by
+ * `packages/release-kit/lib/weights/scaffold-weights-overlay.ts` lands there, and a hand-kept
+ * copy here would make the locale setting silently stop offering the newest locale.
  */
 const RELEASE_CONFIG_RELATIVE_PATH = "release.config.json"
 
@@ -70,9 +72,10 @@ let overlayLocaleCache: Map<string, string> | null = null
 /**
  * Country (ISO alpha-2, upper) → the canonical locale tag of the weights overlay that scopes it.
  *
- * Derived from each overlay's own region subtag, which is what makes this a derivation rather than a second table:
- * `en-gb` scopes GB because that is what the tag says. A country with two overlays would keep the first listed. none
- * exists today, and the manifest is the place that would have to decide.
+ * Derived from each overlay's own region subtag, which is what makes this a derivation
+ * rather than a second table: `en-gb` scopes GB because that is what the tag says.
+ * A country with two overlays would keep the first listed. none exists today,
+ * and the manifest is the place that would have to decide.
  */
 async function overlayLocaleByCountry(): Promise<Map<string, string>> {
 	if (overlayLocaleCache) return overlayLocaleCache
@@ -109,8 +112,9 @@ export interface CounterfactualFlip {
 }
 
 /**
- * A setting that could not be flipped for this row, and why. Reported so an empty flip list is readable: no setting
- * applied, or every setting applied and none moved the answer.
+ * A setting that could not be flipped for this row, and why.
+ * Reported so an empty flip list is readable: no setting applied, or every
+ * setting applied and none moved the answer.
  */
 export interface SettingSkip {
 	setting: CounterfactualSetting
@@ -120,10 +124,11 @@ export interface SettingSkip {
 /**
  * The single-setting flips available for one row.
  *
- * `effective` is the resolved session options — the production defaults already filled in — because the flip has to be
- * stated against what the engine will actually do rather than against what the caller happened to type. An unset
- * setting in a caller's `EngineConfig` means the production default, so reading the caller's object would report every
- * unset setting as absent and flip it in the wrong direction.
+ * `effective` is the resolved session options — the production defaults already filled in —
+ * because the flip has to be stated against what the engine will actually do rather
+ * than against what the caller happened to type. An unset setting in a caller's
+ * `EngineConfig` means the production default, so reading the caller's object would
+ * report every unset setting as absent and flip it in the wrong direction.
  */
 export async function enumerateFlips(
 	effective: GeocodeSessionOptions,
@@ -169,9 +174,10 @@ export async function enumerateFlips(
 /**
  * The locale flip, or the reason there is none.
  *
- * Two directions, never one: a row running under the base weights flips TO its country's overlay, and a row already
- * running under its country's overlay flips back to the base. The second direction is what prices the overlay — "the
- * overlay is required here" is a claim only its removal can support.
+ * Two directions, never one: a row running under the base weights flips TO its country's
+ * overlay, and a row already running under its country's overlay flips back to the base.
+ * The second direction is what prices the overlay — "the overlay is required
+ * here" is a claim only its removal can support.
  */
 async function localeCounterfactual(
 	current: string,
@@ -219,11 +225,12 @@ export interface CounterfactualAnswer {
 }
 
 /**
- * A flip that moved the answer. Flips that changed nothing are counted, never listed — the list is the finding.
+ * A flip that moved the answer. Flips that changed nothing are counted,
+ * never listed — the list is the finding.
  *
- * `moved_km` is `null` when one side has no coordinate: an abstention has no distance from anything, and turning that
- * into a number (zero, or infinity) is the projection this whole surface exists to avoid. `changed_abstention` is the
- * fact in that case.
+ * `moved_km` is `null` when one side has no coordinate: an abstention has no distance
+ * from anything, and turning that into a number (zero, or infinity) is the projection
+ * this whole surface exists to avoid. `changed_abstention` is the fact in that case.
  */
 interface CounterfactualMove extends MoveReading {
 	setting: CounterfactualSetting
@@ -232,7 +239,8 @@ interface CounterfactualMove extends MoveReading {
 }
 
 /**
- * The distance half of a move, with no setting attached — what {@link measureMove} can know from two answers alone.
+ * The distance half of a move, with no setting attached — what {@link measureMove}
+ * can know from two answers alone.
  */
 export interface MoveReading {
 	moved_km: number | null
@@ -308,8 +316,8 @@ export async function runCounterfactuals(
 	}
 
 	for (const { flip, targets: batched } of batches.values()) {
-		// Tracing is off on a flip arm: the flip is graded on its answer, and a traced session pays an extra
-		// decode per input for evidence nothing here reads.
+		// Tracing is off on a flip arm: the flip is graded on its answer, and a traced
+		// session pays an extra decode per input for evidence nothing here reads.
 		const engine = await registry.acquire({ ...baseConfig, ...flip.patch, trace: false })
 
 		for (const target of batched) {

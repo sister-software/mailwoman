@@ -41,16 +41,17 @@ import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts
 //#region Scope policy
 
 /**
- * The command groups this page documents in full. `""` is the root of `commands/`, i.e. the commands invoked as
- * `mailwoman <name>` with no group. Every command found in these groups is emitted, so adding a sibling command needs
- * no edit here.
+ * The command groups this page documents in full. `""` is the root of `commands/`,
+ * i.e. the commands invoked as `mailwoman <name>` with no group.
+ * Every command found in these groups is emitted, so adding a sibling command needs no edit here.
  */
 export const DOCUMENTED_GROUPS: readonly string[] = ["", "data", "skill", "clients", "registry"]
 
 /**
- * One line per top-level group the page does not document, stating what the group is for. Every group discovered
- * outside {@link DOCUMENTED_GROUPS} must appear here — {@link collectCLISurface} throws otherwise, so a new group is
- * impossible to add without deciding whether a consumer needs it.
+ * One line per top-level group the page does not document, stating what the group is for.
+ * Every group discovered outside {@link DOCUMENTED_GROUPS} must appear here —
+ * {@link collectCLISurface} throws otherwise, so a new group is impossible to add
+ * without deciding whether a consumer needs it.
  */
 export const GROUP_NOTES: Readonly<Record<string, string>> = {
 	corpus: "Builds and audits the BIO-labeled training corpus.",
@@ -173,9 +174,9 @@ function renderFlag(name: string, option: OptionSpec): string {
 }
 
 /**
- * The `Default` column. Absolute paths are suppressed: `geocode --data-root` defaults to the resolved data root, so
- * printing the value would bake the generating machine's filesystem into a published page. Each such flag's description
- * already states which variable it reads.
+ * The `Default` column. Absolute paths are suppressed: `geocode --data-root` defaults to the
+ * resolved data root, so printing the value would bake the generating machine's filesystem
+ * into a published page. Each such flag's description already states which variable it reads.
  */
 export function renderDefault(value: unknown): string {
 	if (value === undefined) return "—"
@@ -196,12 +197,13 @@ export function renderDefault(value: unknown): string {
 //#region MDX escaping + tables
 
 /**
- * Make a source-authored help string safe as MDX table-cell text. Docusaurus compiles `.mdx` through micromark's JSX
- * extension, so a bare `<address>` is an element and a bare `{ checks: [...] }` is an expression — both build-breaking
- * or content-eating (the class `mailwoman dev lint mdx-angles` catches). Entities render as the literal characters and
- * cannot be parsed as syntax. The pipe escape is the table's own requirement, and the asterisk escape is `oxfmt`'s: a
- * literal `*` in prose (`place_bbox R*Tree`) is emphasis syntax, and leaving it raw makes the emitted file fail
- * `--check`.
+ * Make a source-authored help string safe as MDX table-cell text.
+ * Docusaurus compiles `.mdx` through micromark's JSX extension, so a bare `<address>` is an element
+ * and a bare `{ checks: [...] }` is an expression — both build-breaking or content-eating
+ * (the class `mailwoman dev lint mdx-angles` catches). Entities render as the literal characters
+ * and cannot be parsed as syntax. The pipe escape is the table's own requirement,
+ * and the asterisk escape is `oxfmt`'s: a literal `*` in prose (`place_bbox R*Tree`) is
+ * emphasis syntax, and leaving it raw makes the emitted file fail `--check`.
  */
 export function escapeCell(text: string): string {
 	return text
@@ -279,14 +281,15 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 	}
 }
 
-// The package root rather than the directory of the package's entry file. `dirname(resolveModulePath("mailwoman"))`
-// answered the same thing only while the entry sat at the package root. once source moved under `lib/` it started
-// answering `mailwoman/lib`, and the `out/` joins below silently became `mailwoman/lib/out/…`.
+// The package root rather than the directory of the package's entry file.
+// `dirname(resolveModulePath("mailwoman"))` answered the same thing only while the entry sat
+// at the package root. once source moved under `lib/` it started answering `mailwoman/lib`,
+// and the `out/` joins below silently became `mailwoman/lib/out/…`.
 const packagePath = resolvePackageDirectory("mailwoman")
 
 /**
- * The compiled command tree this generator reads, resolved from this file rather than a working directory so the script
- * behaves the same from the repo root and from `docs/`.
+ * The compiled command tree this generator reads, resolved from this file rather than a
+ * working directory so the script behaves the same from the repo root and from `docs/`.
  */
 export const COMMANDS_DIRECTORY = join(packagePath, "out", "commands")
 /**

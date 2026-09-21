@@ -14,7 +14,8 @@ import { createRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
 import { describe, expect, it } from "vitest"
 
 /**
- * Records every chunk separately, so the test can tell one write of `"a\n"` from two writes of `"a"` and `"\n"`.
+ * Records every chunk separately, so the test can tell one write of `"a\n"`
+ * from two writes of `"a"` and `"\n"`.
  */
 function recordingSink() {
 	const chunks: string[] = []

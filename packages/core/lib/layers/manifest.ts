@@ -28,7 +28,8 @@ export interface SpineKeys {
 	 */
 	addressID?: string
 	/**
-	 * The normalized-street column a extract is probed by, for layers keyed by street rather than by cell or id.
+	 * The normalized-street column a extract is probed by, for layers keyed by street
+	 * rather than by cell or id.
 	 *
 	 * Added because the interface's first three keys describe the two layer shapes that existed when it was written — a
 	 * cellular one (`poi.db`, H3) and an id-joined one — and the situs extracts are a third. `address_point` and
@@ -62,9 +63,9 @@ export interface CoverageCell {
 	h3Cell: number
 	completeness: number
 	/**
-	 * What `completeness` rests on. A writer that omits it is declaring {@link CoverageBasis.SourcePresent} — the weakest
-	 * reading — because a builder that has not thought about basis is recording source presence whether or not it says
-	 * so.
+	 * What `completeness` rests on. A writer that omits it is declaring
+	 * {@link CoverageBasis.SourcePresent} — the weakest reading — because a builder that
+	 * has not thought about basis is recording source presence whether or not it says so.
 	 */
 	basis?: CoverageBasis
 	observedRows: number
@@ -183,12 +184,13 @@ export function singleManifestRow(
 /**
  * One `layer_manifest` row as a synchronous reader gets it back, mapped onto {@link LayerManifest}.
  *
- * Shared BY every layer reader, and separate from the identity check on purpose. `readLayerManifest` above is the
- * Kysely path. a reader that opens the artifact with `node:sqlite` for its own synchronous probes reads the same single
- * row and needs the same mapping. What such readers do not share is how they recognize their own layer — most match a
- * fixed name, and a layer whose name carries a build's region suffix matches a prefix instead — so the mapping lives
- * here and the assertion stays with the caller. {@link parseManifestRows} is the fixed-name case, wired for the callers
- * that have one.
+ * Shared BY every layer reader, and separate from the identity check on purpose.
+ * `readLayerManifest` above is the Kysely path. a reader that opens the artifact with `node:sqlite`
+ * for its own synchronous probes reads the same single row and needs the same mapping.
+ * What such readers do not share is how they recognize their own layer — most match a
+ * fixed name, and a layer whose name carries a build's region suffix matches a prefix
+ * instead — so the mapping lives here and the assertion stays with the caller.
+ * {@link parseManifestRows} is the fixed-name case, wired for the callers that have one.
  *
  * @throws {Error} When the manifest's invariants do not hold.
  */
@@ -219,8 +221,8 @@ export function toLayerManifest(row: Record<string, string | number | null>): La
  *
  * @param rows Every row of `layer_manifest`.
  * @param context Names the caller in every refusal.
- * @throws {Error} When the table does not hold exactly one row, when the layer is not `expectedName`, or when the
- *   manifest's invariants do not hold.
+ * @throws {Error} When the table does not hold exactly one row, when the layer is not
+ *   `expectedName`, or when the manifest's invariants do not hold.
  */
 export function parseManifestRows(
 	rows: ReadonlyArray<Record<string, string | number | null>>,
@@ -284,8 +286,8 @@ export interface PolygonLayerBuildStamp {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the interface says so, and a library-generated timestamp
-	 * makes two builds of the same inputs differ.
+	 * ISO-8601, supplied by the caller. Never generated here: the interface says so,
+	 * and a library-generated timestamp makes two builds of the same inputs differ.
 	 */
 	createdAt: string
 	/**
@@ -295,8 +297,8 @@ export interface PolygonLayerBuildStamp {
 }
 
 /**
- * The manifest every polygon layer stamps: the build's own options plus the product's identity, under the
- * `versioned-refresh` freshness policy and an h3 spine key.
+ * The manifest every polygon layer stamps: the build's own options plus the product's
+ * identity, under the `versioned-refresh` freshness policy and an h3 spine key.
  */
 export function polygonLayerManifest(
 	options: PolygonLayerBuildStamp,
@@ -311,7 +313,8 @@ export function polygonLayerManifest(
 		 */
 		cellColumn: string
 		/**
-		 * Defaults to {@link LayerTier.Shipped}; a product whose licence holds it at `build-local` passes its own.
+		 * Defaults to {@link LayerTier.Shipped}; a product whose licence holds it
+		 * at `build-local` passes its own.
 		 */
 		tier?: LayerTier
 	}
@@ -441,8 +444,9 @@ export async function readLayerCoverage(db: layerschemahandle, h3Cell: number): 
 	const cell: CoverageCell = {
 		h3Cell: row.h3_cell,
 		completeness: row.completeness,
-		// A NULL basis is an artifact built before the column existed. It was recording source presence,
-		// so that is what it reads back as — never a stronger basis than the builder actually had.
+		// A NULL basis is an artifact built before the column existed.
+		// It was recording source presence, so that is what it reads back as —
+		// never a stronger basis than the builder actually had.
 		basis: (row.basis as CoverageBasis | null) ?? CoverageBasis.SourcePresent,
 		observedRows: row.observed_rows,
 	}

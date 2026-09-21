@@ -38,8 +38,8 @@ const LOT_NUMBER = /^산?\d+(?:-\d+)?(?:번지)?$/u
 const UNIT_TOKEN = /^(?:지하\s?)?(?:B?\d+(?:~\d+)?(?:층|호)|\d+층|B\d+|지하\d*층?|\d+동|[가-힣]?\d*호)(?:,)?$/u
 
 /**
- * The shortest either form can be: 시도, 시군구, and the road or the 법정동. Anything shorter cannot carry the key, whatever
- * else it holds.
+ * The shortest either form can be: 시도, 시군구, and the road or the 법정동.
+ * Anything shorter cannot carry the key, whatever else it holds.
  */
 const MINIMUM_TOKENS = 3
 
@@ -65,8 +65,8 @@ interface Span {
 /**
  * Record a span, unless it is empty or blank.
  *
- * A blank span is what a clerk's double space produces, and a zero-width one what a token found at its own end
- * produces. Neither is a component, and both would train the model on nothing.
+ * A blank span is what a clerk's double space produces, and a zero-width one what a token found
+ * at its own end produces. Neither is a component, and both would train the model on nothing.
  */
 function put(spans: Span[], text: string, start: number, end: number, tag: string): void {
 	if (end > start && text.slice(start, end).trim()) {
@@ -75,8 +75,8 @@ function put(spans: Span[], text: string, start: number, end: number, tag: strin
 }
 
 /**
- * Where each token begins in the original text, walked left to right so a repeated token takes its own position rather
- * than the first one's.
+ * Where each token begins in the original text, walked left to right so a repeated
+ * token takes its own position rather than the first one's.
  */
 function tokenPositions(text: string, tokens: readonly string[], from = 0): number[] {
 	const positions: number[] = []
@@ -147,8 +147,8 @@ export function alignRoadAddress(text: string, index: KeyIndex): Aligned | null 
 	let roadAt = 1 + width
 	let eupmyeonAt: number | null = null
 
-	// In an 읍/면 area the road form carries the 읍/면 between the 시군구 and the road (`기장군 기장읍 기장해안로 205`); the
-	// register lists those names beside the 동 of the same unit.
+	// In an 읍/면 area the road form carries the 읍/면 between the 시군구 and the road
+	// (`기장군 기장읍 기장해안로 205`); the register lists those names beside the 동 of the same unit.
 	if (roadAt + 2 < tokens.length && dongs.has(tokens[roadAt]!) && roads.has(tokens[roadAt + 1]!)) {
 		eupmyeonAt = roadAt
 		roadAt += 1
@@ -188,8 +188,8 @@ export function alignRoadAddress(text: string, index: KeyIndex): Aligned | null 
 
 	put(spans, text, numberAt, numberAt + number.length, "house_number")
 
-	// What follows the number, with or without a comma, is the building name and then the floor/unit — the same
-	// leading-venue, unit-tail reading the lot form uses.
+	// What follows the number, with or without a comma, is the building name and
+	// then the floor/unit — the same leading-venue, unit-tail reading the lot form uses.
 	const restTokens = [...tokens.slice(numberAtToken + 1), ...detail.split(/\s+/u).filter((token) => token.length)]
 
 	if (restTokens.length) {
@@ -282,8 +282,9 @@ export function alignLotAddress(text: string, index: KeyIndex): Aligned | null {
 	const rest = tokens.slice(lotAt + 1)
 
 	if (rest.length) {
-		// The clerk writes the building name first and the floor/unit after it (`교보생명빌딩 2층`, `지강빌딩 1층 일부호`):
-		// the venue is the run of tokens before the first unit-shaped one, the unit everything from there to the end.
+		// The clerk writes the building name first and the floor/unit after it
+		// (`교보생명빌딩 2층`, `지강빌딩 1층 일부호`): the venue is the run of tokens before the first
+		// unit-shaped one, the unit everything from there to the end.
 		const firstUnit = firstUnitIndex(rest)
 
 		if (firstUnit) {

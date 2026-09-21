@@ -33,23 +33,26 @@ import { gridDisk } from "h3-js"
 import type { UPRNDatabase } from "#uprn/schema"
 import { uprnFullCell } from "#uprn/schema"
 /**
- * Conservative floor on how much centre distance one unit of res-9 grid distance buys, metres. Adjacent centres sit √3
- * × edge apart (avg edge 174.4 m → ≈302 m); the worst direction across a ring costs a further ×0.866, and H3's
- * projection distortion shrinks edges by well under the slack this leaves (the true worst is ≈217 m per grid step).
- * Dividing a radius by this over-counts rings and can never miss a cell. multiplying a grid distance by it under-states
- * reach and can never end the ring walk early.
+ * Conservative floor on how much centre distance one unit of res-9 grid distance buys, metres.
+ * Adjacent centres sit √3 × edge apart (avg edge 174.4 m → ≈302 m); the worst direction
+ * across a ring costs a further ×0.866, and H3's projection distortion shrinks edges
+ * by well under the slack this leaves (the true worst is ≈217 m per grid step).
+ * Dividing a radius by this over-counts rings and can never miss a cell. multiplying a
+ * grid distance by it under-states reach and can never end the ring walk early.
  */
 const RES9_CENTER_SPACING_FLOOR_M = 150
 
 /**
- * Conservative ceiling on a res-9 cell's centre-to-vertex distance, metres (avg edge 174.4 m. distortion stays well
- * under this). A point within `radiusM` of the query sits in a cell whose centre is within `radiusM` + this.
+ * Conservative ceiling on a res-9 cell's centre-to-vertex distance,
+ * metres (avg edge 174.4 m. distortion stays well under this).
+ * A point within `radiusM` of the query sits in a cell whose centre is within `radiusM` + this.
  */
 const RES9_CELL_RADIUS_CEILING_M = 300
 
 /**
- * Hard ceiling on `radiusM`. Keeps the probe bounded (10 km → ~72 rings ≈ 15.8k cells ≈ 18 `IN` chunks); a caller who
- * wants a wider search than "which property is this coordinate" has outgrown this reader and should say so loudly.
+ * Hard ceiling on `radiusM`. Keeps the probe bounded (10 km → ~72 rings ≈ 15.8k cells ≈ 18 `IN` chunks);
+ * a caller who wants a wider search than "which property is this coordinate" has
+ * outgrown this reader and should say so loudly.
  */
 export const UPRN_MAX_NEAREST_RADIUS_M = 10_000
 
@@ -75,7 +78,8 @@ export interface UPRNNearestHit {
 
 export interface UPRNLookupOpts {
 	/**
-	 * Path to a `uprn.db` built by `mailwoman`'s gazetteer pipeline. Opened read-only.
+	 * Path to a `uprn.db` built by `mailwoman`'s gazetteer
+	 * pipeline. Opened read-only.
 	 */
 	databasePath?: string
 	/**
@@ -91,14 +95,14 @@ interface UPRNRow {
 }
 
 /**
- * Node reader over `uprn.db`. `implements Disposable` so callers can `using lookup = new UPRNLookup(...)` — the same
- * precedent as {@link POILookup}.
+ * Node reader over `uprn.db`. `implements Disposable` so callers can
+ * `using lookup = new UPRNLookup(...)` — the same precedent as {@link POILookup}.
  */
 export class UPRNLookup implements Disposable {
 	#db: DatabaseClient<UPRNDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
+	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 
@@ -120,8 +124,8 @@ export class UPRNLookup implements Disposable {
 	}
 
 	/**
-	 * The WGS84 point OS publishes for `uprn`, or `null` when the layer holds no such uprn (see the module docstring for
-	 * what that `null` claims).
+	 * The WGS84 point OS publishes for `uprn`, or `null` when the layer holds no such
+	 * uprn (see the module docstring for what that `null` claims).
 	 */
 	coordinateOf(uprn: number): UPRNCoordinate | null {
 		const row = this.#coordinateProbe.get(uprn) as { lat: number; lon: number } | undefined
@@ -130,15 +134,18 @@ export class UPRNLookup implements Disposable {
 	}
 
 	/**
-	 * The single nearest uprn within `radiusM` metres of the query point, or `null` when no uprn lies inside the radius.
+	 * The single nearest uprn within `radiusM` metres of the query point, or `null`
+	 * when no uprn lies inside the radius.
 	 *
-	 * Bounded two ways: `radiusM` is capped at {@link UPRN_MAX_NEAREST_RADIUS_M}, and rings expand outward only until no
-	 * unprobed cell could beat the best hit found so far (or the radius, when nothing has been found). The stop rule is
-	 * geometric — a cell at grid distance `g` holds no point nearer than `g` × spacing floor − cell radius, using the
-	 * same conservative constants the reach math uses — so unlike POILookup's row-count accumulation there is no
-	 * early-exit ambiguity: a break can never strand a nearer point in an unprobed ring. This is what keeps a
-	 * capped-radius call over dense ground at milliseconds instead of a full-disk fetch (measured 6.4 s → 13 ms for a 10
-	 * km radius over central London, 41.6M-row layer. an empty-sea miss at the cap runs the full expansion, 74 ms).
+	 * Bounded two ways: `radiusM` is capped at {@link UPRN_MAX_NEAREST_RADIUS_M},
+	 * and rings expand outward only until no unprobed cell could beat the best hit found so far
+	 * (or the radius, when nothing has been found). The stop rule is geometric — a cell at grid
+	 * distance `g` holds no point nearer than `g` × spacing floor − cell radius, using the same
+	 * conservative constants the reach math uses — so unlike POILookup's row-count accumulation
+	 * there is no early-exit ambiguity: a break can never strand a nearer point in an unprobed ring.
+	 * This is what keeps a capped-radius call over dense ground at milliseconds instead of
+	 * a full-disk fetch (measured 6.4 s → 13 ms for a 10 km radius over central London,
+	 * 41.6M-row layer. an empty-sea miss at the cap runs the full expansion, 74 ms).
 	 *
 	 * @throws {RangeError} When `radiusM` is not a positive finite number, or exceeds the cap.
 	 */
@@ -155,17 +162,18 @@ export class UPRNLookup implements Disposable {
 		const seenCells = new Set<string>()
 		let best: UPRNNearestHit | null = null
 
-		// `ring` is H3 grid distance. the loop terminates because the break bound is at most radiusM, which the
-		// RangeError above caps.
+		// `ring` is H3 grid distance. the loop terminates because the break bound is
+		// at most radiusM, which the RangeError above caps.
 		for (let ring = 0; ; ring++) {
-			// A cell at grid distance `ring` holds no point nearer than this. Once it exceeds what could still
-			// win — the best hit so far, or the radius itself — further rings cannot improve the answer.
+			// A cell at grid distance `ring` holds no point nearer than this.
+			// Once it exceeds what could still win — the best hit so far, or the radius itself —
+			// further rings cannot improve the answer.
 			const closestPossibleM = ring * RES9_CENTER_SPACING_FLOOR_M - RES9_CELL_RADIUS_CEILING_M
 
 			if (closestPossibleM > Math.min(radiusM, best?.distanceM ?? radiusM)) break
 
-			// gridDisk(origin, ring) returns the whole disk out to `ring`; diffing against what's already been
-			// probed derives just this ring's new cells (the POILookup pattern).
+			// gridDisk(origin, ring) returns the whole disk out to `ring`; diffing against what's
+			// already been probed derives just this ring's new cells (the POILookup pattern).
 			const diskCells = gridDisk(origin, ring) as string[]
 			const newCells: number[] = []
 

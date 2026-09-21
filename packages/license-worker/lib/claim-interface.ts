@@ -11,8 +11,9 @@
 import { z } from "zod"
 
 /**
- * The three answers: `pending` until the first invoice is paid, `revoked` after a full refund or a dispute, and the
- * token with its dates once minted, carrying the refresh secret on the one claim that reads it.
+ * The three answers: `pending` until the first invoice is paid, `revoked`
+ * after a full refund or a dispute, and the token with its dates once minted,
+ * carrying the refresh secret on the one claim that reads it.
  */
 export const ClaimResponseSchema = z.discriminatedUnion("status", [
 	z.object({ status: z.literal("pending") }),
@@ -33,7 +34,8 @@ export type ClaimResponse = z.infer<typeof ClaimResponseSchema>
 export type IssuedClaim = Extract<ClaimResponse, { status: "issued" }>
 
 /**
- * A decoded body as a claim, or `undefined` for a body of another shape: a 200 whose fields are missing is no claim.
+ * A decoded body as a claim, or `undefined` for a body of another shape:
+ * a 200 whose fields are missing is no claim.
  */
 export function parseClaimResponse(body: unknown): ClaimResponse | undefined {
 	const parsed = ClaimResponseSchema.safeParse(body)

@@ -104,8 +104,9 @@ describe("aggregateChunks", () => {
 			}),
 		])
 
-		// The two spellings stay apart in the census: the fold is what the domain check compares on, and folding the
-		// receipt too would hide the source's own inconsistency from the reader who has to see it.
+		// The two spellings stay apart in the census: the fold is what the domain
+		// check compares on, and folding the receipt too would hide the source's own
+		// inconsistency from the reader who has to see it.
 		expect(result.defenceTypeCounts).toEqual([
 			["Sheet piles", 1350],
 			["Sheet Piles", 270],

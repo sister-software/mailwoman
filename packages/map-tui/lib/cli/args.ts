@@ -11,9 +11,10 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 /**
  * Argument parsing for the `map-tui` bin.
  *
- * `parseCLIArgs` is pure: it takes the argv array and an environment record, and answers with a discriminated result
- * (`help` / `version` / `browse`) or throws {@link CLIArgsError}. Reading `process.argv` / `process.env` is the bin's
- * job (./cli.ts), which keeps every rejection path testable without a subprocess.
+ * `parseCLIArgs` is pure: it takes the argv array and an environment record,
+ * and answers with a discriminated result (`help` / `version` / `browse`) or throws
+ * {@link CLIArgsError}. Reading `process.argv` / `process.env` is the bin's job (./cli.ts),
+ * which keeps every rejection path testable without a subprocess.
  */
 
 /**
@@ -27,8 +28,8 @@ const DEFAULT_LON = 0
 const DEFAULT_LAT = 0
 
 /**
- * Zoom when `--zoom` is omitted. z2 shows a full hemisphere in a typical terminal, so a planet archive opens on
- * something recognizable rather than a single ocean tile.
+ * Zoom when `--zoom` is omitted. z2 shows a full hemisphere in a typical terminal,
+ * so a planet archive opens on something recognizable rather than a single ocean tile.
  */
 const DEFAULT_ZOOM = 2
 
@@ -38,14 +39,15 @@ const DEFAULT_ZOOM = 2
 const MIN_ZOOM = 0
 
 /**
- * Deepest zoom the Web-Mercator tile pyramid is defined for. The archive's own `maxZoom` clamps further at runtime.
- * this is only the range a flag value must fall inside to be meaningful at all.
+ * Deepest zoom the Web-Mercator tile pyramid is defined for.
+ * The archive's own `maxZoom` clamps further at runtime. this is only the range a
+ * flag value must fall inside to be meaningful at all.
  */
 const MAX_ZOOM = 24
 
-// True geographic bounds rather than Web-Mercator's ±85.05113: the flag accepts any real latitude, and the browser clamps
-// the center to the projection's MERCATOR_LATITUDE_LIMIT itself (see ./browser.ts) — rejecting 87 here would refuse a
-// value the viewport handles fine.
+// True geographic bounds rather than Web-Mercator's ±85.05113: the flag accepts any real latitude,
+// and the browser clamps the center to the projection's MERCATOR_LATITUDE_LIMIT itself
+// (see ./browser.ts) — rejecting 87 here would refuse a value the viewport handles fine.
 const MIN_LAT = -90
 const MAX_LAT = 90
 const MIN_LON = -180
@@ -63,8 +65,8 @@ export interface BrowseArgs {
 	lat: number
 	lon: number
 	/**
-	 * Integer zoom level. The renderer draws whole tile-pyramid levels, so a fractional flag value is rounded here rather
-	 * than carried as a lie through the viewport.
+	 * Integer zoom level. The renderer draws whole tile-pyramid levels, so a fractional
+	 * flag value is rounded here rather than carried as a lie through the viewport.
 	 */
 	zoom: number
 }
@@ -72,8 +74,8 @@ export interface BrowseArgs {
 export type CLIArgs = { mode: "help" } | { mode: "version" } | BrowseArgs
 
 /**
- * A rejected command line. The message is user-facing: it says what was wrong and what to pass instead, since the bin
- * prints it verbatim to stderr.
+ * A rejected command line. The message is user-facing: it says what was wrong
+ * and what to pass instead, since the bin prints it verbatim to stderr.
  */
 export class CLIArgsError extends Error {
 	override name = "CLIArgsError"
@@ -87,8 +89,9 @@ export interface CLIEnvironment {
 }
 
 /**
- * `--help` output. It doubles as the package's key reference, so the bindings listed here and the ones ./input.ts
- * decodes are the same list said twice — a key added there without a line here is a key nobody finds.
+ * `--help` output. It doubles as the package's key reference, so the bindings
+ * listed here and the ones ./input.ts decodes are the same list said twice —
+ * a key added there without a line here is a key nobody finds.
  */
 export const HELP_TEXT = `map-tui — the whole world in your terminal
 
@@ -117,8 +120,8 @@ archive from https://protomaps.com/downloads and point --tiles at it.
 `
 
 /**
- * Reads one numeric flag, rejecting anything `Number` would quietly accept as garbage (empty string, whitespace,
- * `Infinity`) as well as out-of-range values.
+ * Reads one numeric flag, rejecting anything `Number` would quietly accept as garbage
+ * (empty string, whitespace, `Infinity`) as well as out-of-range values.
  */
 function numericFlag(name: string, raw: string | undefined, fallback: number, min: number, max: number): number {
 	if (raw == null) return fallback
@@ -144,10 +147,11 @@ const NUMERIC_FLAGS = new Set(["--lat", "--lon", "--zoom"])
 /**
  * Joins `--lon -122.6` into `--lon=-122.6` before `parseArgs` sees it.
  *
- * `node:util`'s parser refuses a separate value that starts with a dash — it cannot tell a negative number from a
- * mistyped flag, and says so ("argument is ambiguous"). Half the planet has a negative longitude, so the space-form has
- * to work. The join is conditional on the next token parsing as a finite number, which leaves a genuinely missing value
- * (`--lon --zoom 3`) to `parseArgs` and its own error.
+ * `node:util`'s parser refuses a separate value that starts with a dash — it cannot
+ * tell a negative number from a mistyped flag, and says so ("argument is ambiguous").
+ * Half the planet has a negative longitude, so the space-form has to work.
+ * The join is conditional on the next token parsing as a finite number, which leaves a
+ * genuinely missing value (`--lon --zoom 3`) to `parseArgs` and its own error.
  */
 function joinNegativeNumbers(argv: readonly string[]): string[] {
 	const joined: string[] = []
@@ -179,8 +183,8 @@ interface ParsedFlags {
 }
 
 /**
- * `node:util`'s own rejections (unknown flag, missing value) name the flag but not the action, so they're re-thrown as
- * a {@link CLIArgsError} pointing at `--help`.
+ * `node:util`'s own rejections (unknown flag, missing value) name the flag but not the action,
+ * so they're re-thrown as a {@link CLIArgsError} pointing at `--help`.
  */
 function readFlags(argv: readonly string[]): ParsedFlags {
 	try {
@@ -207,7 +211,8 @@ function readFlags(argv: readonly string[]): ParsedFlags {
 /**
  * Parses a `map-tui` command line.
  *
- * @throws {CLIArgsError} On an unknown flag, an unparseable or out-of-range number, or a missing archive path.
+ * @throws {CLIArgsError} On an unknown flag, an unparseable or out-of-range number,
+ *   or a missing archive path.
  */
 export function parseCLIArgs(argv: readonly string[], environment: CLIEnvironment = {}): CLIArgs {
 	const values = readFlags(argv)

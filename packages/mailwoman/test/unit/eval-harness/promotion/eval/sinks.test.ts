@@ -63,8 +63,8 @@ describe("renderLines — child stdout parity", () => {
 })
 
 /**
- * How a leg's failure reaches the runner, and what the check does about it. Each row is the behavior the child-process
- * spawn had. the migration must not change any of them.
+ * How a leg's failure reaches the runner, and what the check does about it.
+ * Each row is the behavior the child-process spawn had. the migration must not change any of them.
  */
 const LEG_SEMANTICS = [
 	{
@@ -139,10 +139,11 @@ describe("error semantics — the per-leg table", () => {
 	})
 
 	test("the legs that merge stderr into their .md declare a SECOND sink", () => {
-		// A module that merges must accept (options, report, reportError); one that does not may take
-		// only (options, report). `Function.length` cannot see this — every one of these parameters has a
-		// default. It zeroes it. Therefore, the check reads the declaration instead. Crude, but it fails
-		// loudly if someone drops the error sink, and losing it would silently halve a merged .md.
+		// A module that merges must accept (options, report, reportError); one that does not
+		// may take only (options, report). `Function.length` cannot see this — every one
+		// of these parameters has a default. It zeroes it. Therefore, the check reads the
+		// declaration instead. Crude, but it fails loudly if someone drops the error sink,
+		// and losing it would silently halve a merged .md.
 		for (const row of LEG_SEMANTICS) {
 			if (!row.mergesStderr) continue
 

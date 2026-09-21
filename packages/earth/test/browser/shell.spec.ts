@@ -16,22 +16,24 @@ test.describe("Mailwoman Earth shell", () => {
 		await expect(page.locator("main[data-route='geocoder']")).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toHaveValue("90210")
 
-		// The search pill carries no submit button, the way the reference map apps carry none: the field submits on
-		// Enter, and the leading magnifier is a mark rather than a control.
+		// The search pill carries no submit button, the way the reference map apps carry none:
+		// the field submits on Enter, and the leading magnifier is a mark rather than a control.
 		await page.locator("#mw-pipeline-input").press("Enter")
 
 		await expect(page.getByText("New York").first()).toBeVisible()
 	})
 
 	test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
-		// The real runtime's footer rather than the canned one's. The app mounts two, and when each built its own the commit
-		// link went into the fake path and rendered nowhere a visitor could see it — a smoke that checked the canned
-		// footer would have passed the whole time. `?runtime=fake` is absent here for that reason.
+		// The real runtime's footer rather than the canned one's.
+		// The app mounts two, and when each built its own the commit link went into the fake path
+		// and rendered nowhere a visitor could see it — a smoke that checked the canned footer
+		// would have passed the whole time. `?runtime=fake` is absent here for that reason.
 		//
-		// The data origin is refused for the whole page so no model or gazetteer byte is fetched: the origin throttles
-		// on download count and the rest of this suite spends that budget on results. Refusing it also states the
-		// requirement more sharply than a successful load would — the identity strip is the page's own chrome, so it
-		// must render before, during and after a load that never finishes.
+		// The data origin is refused for the whole page so no model or gazetteer byte is fetched:
+		// the origin throttles on download count and the rest of this suite spends
+		// that budget on results. Refusing it also states the requirement more sharply
+		// than a successful load would — the identity strip is the page's own chrome,
+		// so it must render before, during and after a load that never finishes.
 		await page.route("https://public.mailwoman.ai/**", (route) => route.abort())
 
 		await page.goto("/")
@@ -43,8 +45,8 @@ test.describe("Mailwoman Earth shell", () => {
 			"https://mailwoman.ai/docs"
 		)
 
-		// The commit link resolves against build.json. It only a built deployment serves. Therefore, this asserts the shape
-		// rather than a particular sha.
+		// The commit link resolves against build.json. It only a built deployment serves.
+		// Therefore, this asserts the shape rather than a particular sha.
 		const commit = footer.locator("a[href*='/commit/']")
 
 		await expect(commit).toBeVisible()

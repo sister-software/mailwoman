@@ -86,8 +86,9 @@ describe("ExternalGeocoderClient.search", () => {
 	})
 
 	it("refuses a transposed position instead of scoring the distance to it", async () => {
-		// A latitude past ±90 is what a lat/lon swap looks like on the wire. Accepting it would produce a finite
-		// haversine distance and an ordinary-looking miss, which is indistinguishable from a real answer that is wrong.
+		// A latitude past ±90 is what a lat/lon swap looks like on the wire.
+		// Accepting it would produce a finite haversine distance and an ordinary-looking miss,
+		// which is indistinguishable from a real answer that is wrong.
 		const swapped = {
 			features: [{ type: "Feature", geometry: { type: "Point", coordinates: [37.3, -120.4] }, properties: {} }],
 		}
@@ -129,8 +130,9 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 	})
 
 	it("refuses an endpoint that will not say what it is, because a drop-in answers identically", async () => {
-		// Photon's search path has no version anywhere in it, so a 404 on /status leaves nothing to identify the arm
-		// by. Scoring it anyway is how a benchmark ends up comparing mailwoman against mailwoman.
+		// Photon's search path has no version anywhere in it, so a 404 on /status
+		// leaves nothing to identify the arm by. Scoring it anyway is how a benchmark
+		// ends up comparing mailwoman against mailwoman.
 		const search = {
 			features: [{ type: "Feature", geometry: { type: "Point", coordinates: [2.35, 48.85] }, properties: {} }],
 		}
@@ -164,9 +166,9 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 
 describe("ExternalGeocoderClient pacing", () => {
 	it("spaces dispatches at the configured interval, which is the check that actually holds a rate", async () => {
-		// Asserted rather than assumed: `requestsPerMinute` alone does not deliver N requests per minute (agents.md
-		// records 100/min measured against a budget of 10), so the claim that this client is paced rests entirely on
-		// the interval limit being the one configured.
+		// Asserted rather than assumed: `requestsPerMinute` alone does not deliver N requests per
+		// minute (agents.md records 100/min measured against a budget of 10), so the claim that
+		// this client is paced rests entirely on the interval limit being the one configured.
 		const clock = createFakeClock()
 		const transport = stubTransport([{ body: PELIAS_HIT }], { clock })
 

@@ -1,10 +1,11 @@
 /**
  * Threshold-free, report-only observations for decoder-grammar constraint C4.
  *
- * A phrase proposal is evidence rather than a constraint. Overlapping proposals are retained verbatim and this module
- * never turns their presence into a binary violation. It records every adjacent decoded span boundary and the
- * structural evidence available at that boundary so a census can measure which combinations distinguish wrong splits
- * from legal component edges.
+ * A phrase proposal is evidence rather than a constraint.
+ * Overlapping proposals are retained verbatim and this module never turns their
+ * presence into a binary violation. It records every adjacent decoded span boundary
+ * and the structural evidence available at that boundary so a census can measure
+ * which combinations distinguish wrong splits from legal component edges.
  */
 
 /* oxlint-disable sister-software/multiline-statement-padding -- feature-vector records stay adjacent as one receipt */
@@ -99,8 +100,9 @@ function tokenClassAt(shape: QueryShape, character: number) {
 /**
  * Record every boundary between adjacent decoded, non-O spans.
  *
- * `undefined` FST matches mean the corresponding license source was unavailable. An empty array means it was available
- * and had no edge at this boundary. Those two states remain distinct in both receipts and aggregation.
+ * `undefined` FST matches mean the corresponding license source was unavailable.
+ * An empty array means it was available and had no edge at this boundary.
+ * Those two states remain distinct in both receipts and aggregation.
  */
 export function observeC4Boundaries(
 	spans: ReadonlyArray<CensusSpan>,
@@ -211,7 +213,8 @@ export interface C4FeatureVectorCount {
 const FEATURE_VECTOR_EXAMPLE_LIMIT = 3
 
 /**
- * Aggregate exact structural-presence vectors. Proposal confidence remains in row receipts and is never thresholded.
+ * Aggregate exact structural-presence vectors. Proposal confidence remains in
+ * row receipts and is never thresholded.
  */
 export function summarizeC4FeatureVectors(
 	boundaries: ReadonlyArray<ClassifiedC4BoundaryReceipt>

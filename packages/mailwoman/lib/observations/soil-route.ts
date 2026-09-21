@@ -74,8 +74,9 @@ export interface SoilCapabilityObservation {
 	 */
 	reading: SoilReadingKind
 	/**
-	 * The largest class share, and the share it rests on. Absent on a designated-no-rating reading, which is the survey
-	 * saying it mapped this ground and rated nothing here.
+	 * The largest class share, and the share it rests on.
+	 * Absent on a designated-no-rating reading, which is the survey saying it
+	 * mapped this ground and rated nothing here.
 	 */
 	topClass?: string
 	topClassShare?: number
@@ -84,8 +85,9 @@ export interface SoilCapabilityObservation {
 	 */
 	topClassDefinition?: string
 	/**
-	 * The whole distribution, including the four absence shares and the truncated tail. What #1683's signal consumer
-	 * reads directly from the artifact, carried here so the two consumers can be checked against each other.
+	 * The whole distribution, including the four absence shares and the truncated tail.
+	 * What #1683's signal consumer reads directly from the artifact, carried here
+	 * so the two consumers can be checked against each other.
 	 */
 	distribution: SoilCapabilityDistribution
 	/**
@@ -107,8 +109,8 @@ export interface SoilCapabilityObservation {
 }
 
 /**
- * Why a coordinate produced no observation. Every one of these is a silence the route owes an account of — an unnamed
- * silence and a silence for the right reason read identically on a receipt.
+ * Why a coordinate produced no observation. Every one of these is a silence the route owes an
+ * account of — an unnamed silence and a silence for the right reason read identically on a receipt.
  */
 export const SOIL_DESIGNATION_REFUSALS = [
 	/**
@@ -134,19 +136,20 @@ export type SoilDesignationDecision =
 export interface SoilCapabilityRoute extends Disposable {
 	identity: SoilLayerIdentity
 	/**
-	 * Decide one resolved coordinate. Pure with respect to the pipeline: it reads the layer and returns a record.
+	 * Decide one resolved coordinate. Pure with respect to the pipeline:
+	 * it reads the layer and returns a record.
 	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` — a caller that had to
-	 * narrow them first would be narrowing on this route's behalf, and a coordinate-less answer is a named refusal here
-	 * rather than a caller's problem.
+	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` —
+	 * a caller that had to narrow them first would be narrowing on this route's behalf,
+	 * and a coordinate-less answer is a named refusal here rather than a caller's problem.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => SoilDesignationDecision
 }
 
 export interface SoilCapabilityRouteOptions {
 	/**
-	 * The sealed layer to read. Required: there is no default layer, and a route that guessed one would report a survey
-	 * from a region nobody asked about.
+	 * The sealed layer to read. Required: there is no default layer, and a route that
+	 * guessed one would report a survey from a region nobody asked about.
 	 */
 	databasePath: string
 }
@@ -204,8 +207,8 @@ function toObservation(
 }
 
 /**
- * What the survey assigns, in one wording — the class never travels without the share it rests on — shared by the
- * one-line description and the marker message.
+ * What the survey assigns, in one wording — the class never travels without the share
+ * it rests on — shared by the one-line description and the marker message.
  */
 export function soilCapabilityAssignmentClause(observation: SoilCapabilityObservation): string {
 	return observation.topClass
@@ -214,7 +217,8 @@ export function soilCapabilityAssignmentClause(observation: SoilCapabilityObserv
 }
 
 /**
- * One line a reader can check the claim from, with the authority, both dates, and the share the class rests on.
+ * One line a reader can check the claim from, with the authority, both dates,
+ * and the share the class rests on.
  */
 export function describeSoilCapability(observation: SoilCapabilityObservation): string {
 	const vintage = observation.surveyArea

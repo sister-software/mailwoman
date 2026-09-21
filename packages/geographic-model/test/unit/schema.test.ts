@@ -142,8 +142,8 @@ const derived: DerivedFactRecord = {
 }
 
 /**
- * Concepts and the one relation, with every other table empty. The base for the refusal cases, so an expected issue
- * list stays short enough to state in full.
+ * Concepts and the one relation, with every other table empty.
+ * The base for the refusal cases, so an expected issue list stays short enough to state in full.
  */
 const minimalDocument: GeographicModelDocument = {
 	version: "0.1.0",
@@ -155,8 +155,8 @@ const minimalDocument: GeographicModelDocument = {
 }
 
 /**
- * The whole first record set: the concepts, the mapping into the external vocabulary, one source observation, and one
- * derived fact naming every record its derivation read.
+ * The whole first record set: the concepts, the mapping into the external vocabulary,
+ * one source observation, and one derived fact naming every record its derivation read.
  */
 const pharmacyDocument: GeographicModelDocument = {
 	...minimalDocument,
@@ -198,8 +198,8 @@ function refusalOf(input: unknown): ValidationIssue[] {
 }
 
 /**
- * Every issue as a `path → code` pair, so a case can state the whole expected list rather than the one entry it
- * remembered to look for.
+ * Every issue as a `path → code` pair, so a case can state the whole expected list
+ * rather than the one entry it remembered to look for.
  */
 function refusalPairs(input: unknown): Array<[string, ValidationIssueCode]> {
 	return refusalOf(input).map((issue) => [issue.path, issue.code])
@@ -528,8 +528,8 @@ describe("relation refusals", () => {
 			})
 		})
 
-		// Both records declare the pairing, so both are named. Either one could be the half that is wrong, and the
-		// validator does not get to decide which.
+		// Both records declare the pairing, so both are named.
+		// Either one could be the half that is wrong, and the validator does not get to decide which.
 		expect(refusalPairs(input)).toEqual([
 			["$.relations[0].inverse", ValidationIssueCode.InverseKindsMismatch],
 			["$.relations[1].inverse", ValidationIssueCode.InverseKindsMismatch],
@@ -587,8 +587,9 @@ describe("derived-fact refusals", () => {
 
 describe("reporting every violation at once", () => {
 	/**
-	 * Nine independent defects across four records and both passes. The whole list is stated, because a validator that
-	 * reports the first violation and stops is the behavior this suite exists to refuse.
+	 * Nine independent defects across four records and both passes.
+	 * The whole list is stated, because a validator that reports the first violation
+	 * and stops is the behavior this suite exists to refuse.
 	 */
 	function ninefoldDefect(): unknown {
 		return draft(pharmacyDocument, (document) => {

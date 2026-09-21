@@ -68,8 +68,9 @@ export interface GeocodeStreamOptions {
 	 */
 	geocode: GeocodeStreamConfig
 	/**
-	 * Worker pool size. Keep it small — geocoding is I/O/memory-bound, so throughput peaks at ~2 workers and degrades
-	 * past that (see the module doc). Bounded by RAM too (each worker loads the model + opens the DB).
+	 * Worker pool size. Keep it small — geocoding is I/O/memory-bound,
+	 * so throughput peaks at ~2 workers and degrades past that (see the module doc).
+	 * Bounded by RAM too (each worker loads the model + opens the DB).
 	 *
 	 * @default Math.min(4, availableParallelism())
 	 */
@@ -87,15 +88,16 @@ export interface GeocodeStreamOptions {
 /**
  * The compiled worker, resolved whether this runs from `out/` (prod) or `.ts` source (tests).
  *
- * One spelling serves both, because `lib/` and `out/` are siblings: this module is `lib/geocode-stream.ts` in source
- * and `out/geocode-stream.js` compiled, so `../` is the package root either way. The `import.meta.url` branch this
- * replaced existed only because source used to sit one level shallower than its own output.
+ * One spelling serves both, because `lib/` and `out/` are siblings: this module is
+ * `lib/geocode-stream.ts` in source and `out/geocode-stream.js` compiled, so `../` is
+ * the package root either way. The `import.meta.url` branch this replaced existed only
+ * because source used to sit one level shallower than its own output.
  */
 const GEOCODE_WORKER_URL = new URL("../out/geocode-worker.js", import.meta.url)
 
 /**
- * Geocode `records` across a worker pool, yielding enriched {@link SourceRecord}s (with `address` populated) in
- * completion order. See the module doc for composition + the in-worker dep rebuild.
+ * Geocode `records` across a worker pool, yielding enriched {@link SourceRecord}s (with `address` populated)
+ * in completion order. See the module doc for composition + the in-worker dep rebuild.
  */
 export function geocodeStream(
 	records: AsyncIterable<SourceRecord> | Iterable<SourceRecord>,

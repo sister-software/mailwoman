@@ -35,8 +35,8 @@ const NEG_INF = -1e9
  * - `X → B-Y` always permitted (0)
  * - `X → I-Y` permitted only if `X` is `B-Y` or `I-Y` (0); otherwise -inf
  *
- * Returns a `numLabels × numLabels` matrix where `mask[from][to]` is the additive log-score (0 for permitted, NEG_INF
- * for forbidden).
+ * Returns a `numLabels × numLabels` matrix where `mask[from][to]` is the additive
+ * log-score (0 for permitted, NEG_INF for forbidden).
  */
 export function buildBIOTransitionMask(labels: readonly string[]): number[][] {
 	const n = labels.length
@@ -65,8 +65,8 @@ export function buildBIOStartMask(labels: readonly string[]): number[] {
 }
 
 /**
- * End-of-sequence transitions. By default all labels are valid endings (returns zeros). Override if the trained model
- * has learned end transitions.
+ * End-of-sequence transitions. By default all labels are valid endings (returns zeros).
+ * Override if the trained model has learned end transitions.
  */
 export function buildBIOEndMask(labels: readonly string[]): number[] {
 	return labels.map(() => 0)
@@ -87,17 +87,18 @@ function isValidTransition(from: string, to: string): boolean {
 }
 
 /**
- * A position-scoped transition bonus (transition-beta build, 2026-07-24): `+bonus` on every transition into `toLabel`
- * at exactly `timestep` — from any predecessor label (at `timestep === 0` the "predecessor" is the sequence start, so
- * the bonus lands on the start transition instead). The placetype-pair prior emits one per pair hit at the child span's
- * first piece when its index header carries `transitionBeta`; the hook itself is generic — a sparse list of
- * adjustments, no knowledge of who produced them.
+ * A position-scoped transition bonus (transition-beta build, 2026-07-24): `+bonus` on every
+ * transition into `toLabel` at exactly `timestep` — from any predecessor label (at `timestep === 0`
+ * the "predecessor" is the sequence start, so the bonus lands on the start transition instead).
+ * The placetype-pair prior emits one per pair hit at the child span's first piece
+ * when its index header carries `transitionBeta`; the hook itself is generic —
+ * a sparse list of adjustments, no knowledge of who produced them.
  *
- * Because the bonus is predecessor-independent, it cannot change which predecessor wins for `toLabel` at `timestep` —
- * it changes whether paths entering `toLabel` there outscore paths that stay fused through a competing run (the task-8
- * probe's path-fusion mechanism: a locally-winning emission bias can still lose globally when the forced
- * `I-`/fresh-`B-` continuation costs more than the local emission bias recovers. a transition-entry bonus pays that
- * structural toll directly).
+ * Because the bonus is predecessor-independent, it cannot change which predecessor wins for `toLabel`
+ * at `timestep` — it changes whether paths entering `toLabel` there outscore paths that stay fused
+ * through a competing run (the task-8 probe's path-fusion mechanism: a locally-winning emission
+ * bias can still lose globally when the forced `I-`/fresh-`B-` continuation costs more than the
+ * local emission bias recovers. a transition-entry bonus pays that structural toll directly).
  */
 interface ViterbiTransitionAdjustment {
 	/**
@@ -116,7 +117,8 @@ interface ViterbiTransitionAdjustment {
 
 export interface ViterbiInput {
 	/**
-	 * `emissions[t][k]` — log-emission for label k at timestep t. Pass raw logits or log-softmaxes.
+	 * `emissions[t][k]` — log-emission for label k at timestep t.
+	 * Pass raw logits or log-softmaxes.
 	 */
 	emissions: number[][]
 	/**
@@ -132,8 +134,8 @@ export interface ViterbiInput {
 	 */
 	endTransitions?: number[]
 	/**
-	 * Position-scoped transition bonuses (see {@link ViterbiTransitionAdjustment}). Omitted/empty = the exact
-	 * pre-transition-beta decode — no behavioral term is added anywhere.
+	 * Position-scoped transition bonuses (see {@link ViterbiTransitionAdjustment}).
+	 * Omitted/empty = the exact pre-transition-beta decode — no behavioral term is added anywhere.
 	 */
 	transitionAdjustments?: ReadonlyArray<ViterbiTransitionAdjustment>
 }
@@ -164,8 +166,9 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	const startTrans = input.startTransitions ?? new Array<number>(numLabels).fill(0)
 	const endTrans = input.endTransitions ?? new Array<number>(numLabels).fill(0)
 
-	// Sparse per-timestep lookup for the position-scoped transition bonuses. Null when none were
-	// passed — the hot loop below then never consults it (the pre-transition-beta code path, exactly).
+	// Sparse per-timestep lookup for the position-scoped transition bonuses.
+	// Null when none were passed — the hot loop below then never consults it
+	// (the pre-transition-beta code path, exactly).
 	let adjustAt: Map<number, Map<number, number>> | null = null
 
 	if (input.transitionAdjustments?.length) {
@@ -179,9 +182,9 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				adjustAt.set(adj.timestep, byLabel)
 			}
 
-			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX rather than sum — the
-			// emission side's `applyWindowBias` uses the same Math.max discipline, and overlapping window-mode
-			// candidates must not stack the bonus.
+			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX
+			// rather than sum — the emission side's `applyWindowBias` uses the same Math.max
+			// discipline, and overlapping window-mode candidates must not stack the bonus.
 			byLabel.set(adj.toLabel, Math.max(byLabel.get(adj.toLabel) ?? NEG_INF, adj.bonus))
 		}
 	}
@@ -220,8 +223,8 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				}
 			}
 
-			// The bonus is predecessor-independent, so it distributes over the max — adding it after the
-			// argmax over j is exact rather than an approximation.
+			// The bonus is predecessor-independent, so it distributes over the max — adding it
+			// after the argmax over j is exact rather than an approximation.
 			cur[k] = bestScore + (tAdjust?.get(k) ?? 0) + emissions[t]![k]!
 			ptr[k] = bestPrev
 		}
@@ -255,8 +258,9 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 }
 
 /**
- * Convenience: argmax over per-token softmax (existing behavior). Provided so callers can opt in to Viterbi only when
- * transitions are available, falling back to this cleanly.
+ * Convenience: argmax over per-token softmax (existing behavior).
+ * Provided so callers can opt in to Viterbi only when transitions are available,
+ * falling back to this cleanly.
  */
 export function perTokenArgmax(emissions: readonly number[][]): number[] {
 	return emissions.map((row) => {
@@ -304,8 +308,8 @@ export function argmaxWithConfidence(row: number[]): { idx: number; conf: number
 /**
  * Softmax of a logit row (returns probabilities summing to 1).
  *
- * Used to compute per-token confidence after Viterbi picks the label sequence — the confidence is the softmax
- * probability of the Viterbi-chosen label at that timestep.
+ * Used to compute per-token confidence after Viterbi picks the label sequence —
+ * the confidence is the softmax probability of the Viterbi-chosen label at that timestep.
  */
 export function softmax(row: readonly number[]): number[] {
 	let max = row[0]!

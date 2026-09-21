@@ -26,7 +26,8 @@ const COLOCATED_TEST_WORKSPACES = new Set(["packages/corpus"])
 const playwrightSuites = new Set([...vitestSuites, "browser", "build", "e2e"])
 
 /**
- * The `test-interface` check: one error per test file outside its workspace's declared test layout and per relative
+ * The `test-interface` check: one error per test file outside its workspace's
+ * declared test layout and per relative
  * import a test makes. Corpus tests live next to their modules under `lib/`; other workspaces use
  * `test/{unit,integration,full}/`.
  */
@@ -68,9 +69,10 @@ export const testLayoutCheck: RepoCheck = {
 				const sourceText = await readLocalTextFile(filePath)
 				const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
 
-				// Type-only specifiers count here: tests are consumers of the package interface, types included. A relative
-				// specifier that stays inside `test/` names a test helper, which has no interface to bypass. one that leaves
-				// `test/` reaches the package's source by location, and the `#` map is refused in tests by
+				// Type-only specifiers count here: tests are consumers of the package interface,
+				// types included. A relative specifier that stays inside `test/` names a test
+				// helper, which has no interface to bypass. one that leaves `test/` reaches
+				// the package's source by location, and the `#` map is refused in tests by
 				// `mailwoman/no-private-import-in-test`, so the module needs an `exports` entry instead.
 				const testRoot = resolvePath(workspaceRoot, "test")
 

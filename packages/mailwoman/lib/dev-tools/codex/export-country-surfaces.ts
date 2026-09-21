@@ -18,8 +18,8 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 
-// Merge: rich surface forms where the codex curates them, else the canonical English name for every
-// ISO 3166-1 alpha-2. Canonical-name-first (the codex's own ordering) so the common form leads.
+// Merge: rich surface forms where the codex curates them, else the canonical English name for
+// every ISO 3166-1 alpha-2. Canonical-name-first (the codex's own ordering) so the common form leads.
 const surfaces: Record<string, string[]> = {}
 
 for (const [iso2, forms] of Object.entries(COUNTRY_SURFACE_FORMS)) {

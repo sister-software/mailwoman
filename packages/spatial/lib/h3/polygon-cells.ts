@@ -79,16 +79,17 @@ import { shortCellToInt, type H3Cell } from "#h3/cell"
 /**
  * The largest bounding-box cell estimate a single polyfill may reserve.
  *
- * H3-js allocates its output buffer from the polygon's bounding box before walking, so this is a memory ceiling rather
- * than a limit on real output: two million cells is sixteen megabytes of `uint64`, comfortably inside the wasm heap,
- * and the largest EA flood features exceed it by orders of magnitude at resolution 9 (the run that established this
- * failed with `Memory allocation failed (code: 13)`).
+ * H3-js allocates its output buffer from the polygon's bounding box before walking,
+ * so this is a memory ceiling rather than a limit on real output: two million
+ * cells is sixteen megabytes of `uint64`, comfortably inside the wasm heap,
+ * and the largest EA flood features exceed it by orders of magnitude at resolution 9
+ * (the run that established this failed with `Memory allocation failed (code: 13)`).
  */
 export const CELL_ESTIMATE_BUDGET = 2_000_000
 
 /**
- * The coarsest resolution a feature may be pushed down to. Below this a "cell" is tens of thousands of square
- * kilometres and the index stops summarizing anything.
+ * The coarsest resolution a feature may be pushed down to.
+ * Below this a "cell" is tens of thousands of square kilometres and the index stops summarizing anything.
  */
 export const MIN_INDEX_RESOLUTION = 4
 
@@ -103,7 +104,8 @@ export interface DegreeBox {
 }
 
 /**
- * A degree box's height and width in metres, longitude scaled at the box's mid-latitude so the two are comparable.
+ * A degree box's height and width in metres, longitude scaled at the box's
+ * mid-latitude so the two are comparable.
  */
 function boxExtentMetres(box: DegreeBox): { heightM: number; widthM: number } {
 	const midLat = ((box.minLat + box.maxLat) / 2) * (Math.PI / 180)
@@ -117,10 +119,10 @@ function boxExtentMetres(box: DegreeBox): { heightM: number; widthM: number } {
 /**
  * The single cell containing this whole bounding box, or `undefined` when it spans more than one.
  *
- * An H3 cell is convex, so a rectangle whose four corners all fall in the same cell lies entirely inside it. That makes
- * this an exact answer rather than an approximation, and it takes the wasm polyfill off the majority of a small-polygon
- * product's parts: 38.8% of the EA flood features are under 11 m across, and most parts of the multi-part ones are
- * smaller still.
+ * An H3 cell is convex, so a rectangle whose four corners all fall in the same cell lies entirely
+ * inside it. That makes this an exact answer rather than an approximation, and it takes the
+ * wasm polyfill off the majority of a small-polygon product's parts: 38.8% of the EA flood
+ * features are under 11 m across, and most parts of the multi-part ones are smaller still.
  */
 function enclosingCell(box: DegreeBox, resolution: number): string | undefined {
 	if (!Number.isFinite(box.minLat)) return undefined
@@ -141,10 +143,11 @@ function enclosingCell(box: DegreeBox, resolution: number): string | undefined {
 /**
  * Could a shape this size contain a whole cell?
  *
- * A hexagon's minimum width is twice its inradius, and its inradius is `edge × √3/2` — so a bounding box narrower than
- * `edge × √3` in either direction cannot enclose one, and the `containmentFull` polyfill is guaranteed to return
- * nothing. The comparison is deliberately permissive: a wrong `true` costs one polyfill call, while a wrong `false`
- * would demote a whole cell to a partial one, which the ray cast still answers correctly but more slowly.
+ * A hexagon's minimum width is twice its inradius, and its inradius is `edge × √3/2` — so a bounding
+ * box narrower than `edge × √3` in either direction cannot enclose one, and the `containmentFull`
+ * polyfill is guaranteed to return nothing. The comparison is deliberately permissive:
+ * a wrong `true` costs one polyfill call, while a wrong `false` would demote a whole cell
+ * to a partial one, which the ray cast still answers correctly but more slowly.
  */
 function canContainCell(box: DegreeBox, resolution: number): boolean {
 	if (!Number.isFinite(box.minLat)) return false
@@ -160,7 +163,8 @@ function canContainCell(box: DegreeBox, resolution: number): boolean {
  */
 export interface FeatureCells {
 	/**
-	 * The resolution this feature was indexed at — the target, or coarser where the target's estimate did not fit.
+	 * The resolution this feature was indexed at — the target, or coarser
+	 * where the target's estimate did not fit.
 	 */
 	resolution: number
 	/**
@@ -176,8 +180,8 @@ export interface FeatureCells {
 /**
  * How many cells at `resolution` the feature's bounding box spans.
  *
- * The same quantity h3 reserves its buffer from, computed here so an oversized polyfill is never issued. Approximate on
- * purpose: it decides which resolution to ask for rather than what the answer is.
+ * The same quantity h3 reserves its buffer from, computed here so an oversized polyfill is never issued.
+ * Approximate on purpose: it decides which resolution to ask for rather than what the answer is.
  */
 export function estimateCellCount(polygons: MultiPolygonRings, resolution: number): number {
 	const box = ringsBoundingBox(polygons)
@@ -205,10 +209,11 @@ export function resolutionForFeature(polygons: MultiPolygonRings, target: number
 /**
  * Classify one feature's cells, at `targetResolution` or the coarsest resolution its bounding box allows.
  *
- * @param layerLabel Names the layer in every message, so a build log says which artifact refused rather than only which
- *   feature.
- * @throws {Error} When the feature reaches no cell at all. That cannot happen with overlapping containment on a valid
- *   ring, so it means the geometry is degenerate — and a silently skipped feature is an invented absence.
+ * @param layerLabel Names the layer in every message, so a build log says
+ *   which artifact refused rather than only which feature.
+ * @throws {Error} When the feature reaches no cell at all.
+ *   That cannot happen with overlapping containment on a valid ring, so it means the
+ *   geometry is degenerate — and a silently skipped feature is an invented absence.
  */
 export function classifyFeatureCells(
 	polygons: MultiPolygonRings,
@@ -233,15 +238,17 @@ export function classifyFeatureCells(
 			full = new Set<string>()
 
 			for (const rings of polygons) {
-				// `isGeoJSON = true`: the rings are already `[lon, lat]`, which is the order an ingest emits. Converting
-				// instead would put a transposition between the geometry and the index that nothing downstream could see.
+				// `isGeoJSON = true`: the rings are already `[lon, lat]`, which is the order an
+				// ingest emits. Converting instead would put a transposition between the geometry
+				// and the index that nothing downstream could see.
 				const geoJSONRings = rings as number[][][]
 				const box = ringsBoundingBox([rings])
 				const enclosing = enclosingCell(box, resolution)
 
-				// A part that fits inside one cell is answered without the allocator, and that is a fact rather than an
-				// approximation: an H3 cell is convex, so a rectangle whose four corners all fall in one cell lies entirely
-				// within it. Such a part touches exactly that cell and fills none of it.
+				// A part that fits inside one cell is answered without the allocator,
+				// and that is a fact rather than an approximation: an H3 cell is convex,
+				// so a rectangle whose four corners all fall in one cell lies entirely within it.
+				// Such a part touches exactly that cell and fills none of it.
 				if (enclosing) {
 					touched.add(enclosing)
 
@@ -255,12 +262,14 @@ export function classifyFeatureCells(
 					true
 				)
 
-				// An empty answer for a real part is an allocator failure wearing a result's clothes, and it has to be caught
-				// here rather than after the whole feature. h3-js sizes its output buffer with `_calloc`, and a `_calloc`
-				// that fails returns the null pointer — which in wasm is ordinary writable memory, so the call reports
-				// success and the reader hands back an array of zeros, i.e. nothing. Every part with a non-degenerate
-				// bounding box touches at least one cell, so zero is impossible as an answer. Checking per feature instead
-				// would pass any multi-part feature whose other parts happened to answer, and silently index it short.
+				// An empty answer for a real part is an allocator failure wearing a result's clothes,
+				// and it has to be caught here rather than after the whole feature. h3-js
+				// sizes its output buffer with `_calloc`, and a `_calloc` that fails returns
+				// the null pointer — which in wasm is ordinary writable memory, so the call
+				// reports success and the reader hands back an array of zeros, i.e. nothing.
+				// Every part with a non-degenerate bounding box touches at least one cell,
+				// so zero is impossible as an answer. Checking per feature instead would pass any
+				// multi-part feature whose other parts happened to answer, and silently index it short.
 				if (!overlapping.length) {
 					throw new Error(
 						`${layerLabel}: part of feature ${featureID} spanning ${box.minLat},${box.minLon} to ${box.maxLat},${box.maxLon} returned no cell at resolution ${resolution} — a part always touches at least one, so this is an allocator failure reported as an answer`
@@ -271,9 +280,10 @@ export function classifyFeatureCells(
 					touched.add(cell)
 				}
 
-				// A part narrower than a cell's minimum width cannot contain one, so its `full` set is empty and asking for it
-				// is pure cost. Erring towards asking is safe — a missed whole cell becomes a partial one and the ray cast
-				// still answers correctly — so the comparison is the permissive one.
+				// A part narrower than a cell's minimum width cannot contain one, so its `full`
+				// set is empty and asking for it is pure cost. Erring towards asking is safe —
+				// a missed whole cell becomes a partial one and the ray cast still answers
+				// correctly — so the comparison is the permissive one.
 				if (!canContainCell(box, resolution)) continue
 
 				for (const cell of polygonToCellsExperimental(
@@ -306,8 +316,8 @@ export function classifyFeatureCells(
 		)
 	}
 
-	// A cell can be full for one polygon of a MultiPolygon and merely touched by another. full wins, because the point
-	// is inside either way.
+	// A cell can be full for one polygon of a MultiPolygon and merely touched by
+	// another. full wins, because the point is inside either way.
 	const partial: H3Cell[] = []
 
 	for (const cell of touched) {
@@ -320,11 +330,12 @@ export function classifyFeatureCells(
 }
 
 /**
- * Split a cell set into same-resolution groups — what `compactCells` requires, and what an adaptively-indexed layer
- * cannot assume it already has.
+ * Split a cell set into same-resolution groups — what `compactCells` requires,
+ * and what an adaptively-indexed layer cannot assume it already has.
  *
- * Pooling mixed resolutions throws inside h3. compacting only the target-resolution group would silently drop every
- * coarsened feature's interior, which is the shape of failure that still produces an artifact.
+ * Pooling mixed resolutions throws inside h3. compacting only the target-resolution
+ * group would silently drop every coarsened feature's interior, which is the
+ * shape of failure that still produces an artifact.
  */
 export function groupCellsByResolution(cells: Iterable<string>): string[][] {
 	const groups = new Map<number, string[]>()
@@ -346,10 +357,10 @@ export function groupCellsByResolution(cells: Iterable<string>): string[][] {
 /**
  * Compact a cell set that may span several resolutions.
  *
- * `compactCells` takes one resolution at a time, and an adaptively-indexed layer's coarsened features sit at another —
- * so the set is grouped before compaction rather than pooled. Pooling would throw. compacting only the
- * target-resolution group would silently drop every coarsened feature's interior, which is the shape of failure that
- * still produces an artifact.
+ * `compactCells` takes one resolution at a time, and an adaptively-indexed layer's coarsened
+ * features sit at another — so the set is grouped before compaction rather than pooled.
+ * Pooling would throw. compacting only the target-resolution group would silently drop every
+ * coarsened feature's interior, which is the shape of failure that still produces an artifact.
  */
 export function compactAcrossResolutions(cells: Iterable<string>): string[] {
 	const compacted: string[] = []
@@ -362,12 +373,12 @@ export function compactAcrossResolutions(cells: Iterable<string>): string[] {
 }
 
 /**
- * The cells a probe walks for one index cell: the cell itself at the index resolution, and its parent at every other
- * resolution the layer stores.
+ * The cells a probe walks for one index cell: the cell itself at the index resolution,
+ * and its parent at every other resolution the layer stores.
  *
- * The stored rows sit at several resolutions — each feature's whole tier is compacted parent-ward, and a polygon too
- * large for h3's allocator at the index resolution was indexed coarser — so a point is answered by walking its own
- * ancestor chain over every resolution the layer stores.
+ * The stored rows sit at several resolutions — each feature's whole tier is compacted parent-ward,
+ * and a polygon too large for h3's allocator at the index resolution was indexed coarser —
+ * so a point is answered by walking its own ancestor chain over every resolution the layer stores.
  */
 export function ancestorChainCells(
 	indexCell: H3Cell,
@@ -380,16 +391,17 @@ export function ancestorChainCells(
 }
 
 /**
- * One classified feature's cell rows, ready for insertion — the whole set compacted, the partial set left at its own
- * resolution.
+ * One classified feature's cell rows, ready for insertion — the whole set compacted,
+ * the partial set left at its own resolution.
  *
- * Shared BY every polygon layer whose cell row names A polygon rather than a class accumulated across features. There
- * is no product knowledge in it: compaction, the short-cell encoding and the belt-and-braces subtraction below are h3
- * and blob arithmetic, and a second copy is a second place for the subtraction to stop happening.
+ * Shared BY every polygon layer whose cell row names A polygon rather than a class
+ * accumulated across features. There is no product knowledge in it: compaction,
+ * the short-cell encoding and the belt-and-braces subtraction below are h3 and blob arithmetic,
+ * and a second copy is a second place for the subtraction to stop happening.
  *
- * Compaction is PER feature, which is what keeps a build's memory flat in row count with no temporary table: a row that
- * names one polygon is final the moment that polygon is classified. Only the whole set is compacted — compacting the
- * fringe would claim it covers ground it does not.
+ * Compaction is PER feature, which is what keeps a build's memory flat in row count with no
+ * temporary table: a row that names one polygon is final the moment that polygon is classified.
+ * Only the whole set is compacted — compacting the fringe would claim it covers ground it does not.
  */
 export function featureCellRows(cells: FeatureCells): Array<{
 	h3Cell: number
@@ -410,8 +422,8 @@ export function featureCellRows(cells: FeatureCells): Array<{
 	for (const cell of cells.partial) {
 		const short = shortCellToInt(cell)
 
-		// A cell cannot be both for one polygon. the classifier already subtracts the whole set, and this is belt and braces
-		// against a compaction that produced a parent the partial set also names.
+		// A cell cannot be both for one polygon. the classifier already subtracts the whole set, and this
+		// is belt and braces against a compaction that produced a parent the partial set also names.
 		if (wholeShort.has(short)) continue
 
 		rows.push({ h3Cell: short, resolution: cells.resolution, containment: "partial" })

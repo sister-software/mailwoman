@@ -53,9 +53,9 @@ describe("char-level partial completion + BFS (#587 ports)", () => {
 	})
 
 	it("a complete-token walk must not SHADOW the partial interpretation", () => {
-		// The live FST artifact held a place literally named "Chic" — the typed prefix is both a
-		// complete edge and a partial of "chicago", and letting the successful walk short-circuit
-		// silently dropped every longer completion.
+		// The live FST artifact held a place literally named "Chic" — the typed prefix
+		// is both a complete edge and a partial of "chicago", and letting the successful
+		// walk short-circuit silently dropped every longer completion.
 		const shadowed = seal([
 			{ tokens: ["chic"], id: 10, parentIDs: [], rank: 0.1 },
 			{ tokens: ["chicago"], id: 11, parentIDs: [], rank: 0.85 },
@@ -98,8 +98,9 @@ describe("char-level partial completion + BFS (#587 ports)", () => {
 	})
 
 	it("a dense branch does not starve a high-rank sibling (#587 per-branch cap)", () => {
-		// "go" → "diego" (12 low-rank entries) + "tham" (one high-rank Gotham). Without the cap the
-		// 12 fill the budget before "tham" is visited, and the entry a user most likely wants drops.
+		// "go" → "diego" (12 low-rank entries) + "tham" (one high-rank Gotham).
+		// Without the cap the 12 fill the budget before "tham" is visited,
+		// and the entry a user most likely wants drops.
 		const dense = seal([
 			...Array.from({ length: 12 }, (_, i): AncestrieEntry => {
 				return { tokens: ["go", "diego"], id: 100 + i, parentIDs: [], rank: 0.1 }

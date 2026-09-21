@@ -27,8 +27,8 @@
  */
 
 /**
- * ISO 639-3 codes of the co-official languages of each Spanish province that has one, keyed by the province's Castilian
- * name (the `spa` preferred name in the Who's On First names table).
+ * ISO 639-3 codes of the co-official languages of each Spanish province that has one, keyed by
+ * the province's Castilian name (the `spa` preferred name in the Who's On First names table).
  */
 export const ES_PROVINCE_CO_OFFICIAL_LANGUAGES: ReadonlyMap<string, readonly string[]> = new Map([
 	// Catalonia: Catalan and Aranese Occitan (Statute of Catalonia 2006, art. 6).

@@ -36,9 +36,9 @@ function grammar(overrides: Partial<SemiCRFTransitions> = {}): SemiCRFTransition
  */
 function scores(seqLen: number, maxSpan: number, seed = 1): number[][][] {
 	const step = makeGlibcLcgFloat64(seed)
-	// The scores this fixture expects came from this exact stream, so it is the FLOAT64 generator rather than
-	// `makeGlibcLcgInt32`, which shares its constants and produces a different sequence. Verified identical to the loop
-	// this replaced over 10,000 steps from five seeds.
+	// The scores this fixture expects came from this exact stream, so it is the FLOAT64 generator
+	// rather than `makeGlibcLcgInt32`, which shares its constants and produces a different sequence.
+	// Verified identical to the loop this replaced over 10,000 steps from five seeds.
 	const next = (): number => (step() / 2_147_483_648) * 4 - 2
 
 	return Array.from({ length: seqLen }, () =>

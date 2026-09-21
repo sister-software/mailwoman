@@ -26,9 +26,10 @@ import {
 export { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation/expectation"
 
 /**
- * Render one cell for the matrix: `broken/support` plus the p90 displacement. A missing cell or a zero-support one
- * renders as {@linkcode ABLATION_ABSENT} — never `0`, never `0.0%`. This is the meaning-of-zero rule at the only place
- * a human reads the map and the reason the renderer takes `AblationCell | undefined` rather than a number.
+ * Render one cell for the matrix: `broken/support` plus the p90 displacement.
+ * A missing cell or a zero-support one renders as {@linkcode ABLATION_ABSENT} — never `0`,
+ * never `0.0%`. This is the meaning-of-zero rule at the only place a human reads the map
+ * and the reason the renderer takes `AblationCell | undefined` rather than a number.
  */
 export function formatAblationCell(cell: AblationCell | undefined): string {
 	if (!cell || cell.support === 0) return ABLATION_ABSENT
@@ -37,7 +38,8 @@ export function formatAblationCell(cell: AblationCell | undefined): string {
 }
 
 /**
- * Render one cell under the expectation model: `trueFail/ladderGraded`. Absence has one more source here than in
+ * Render one cell under the expectation model: `trueFail/ladderGraded`.
+ * Absence has one more source here than in
  * {@linkcode formatAblationCell} — a cell can have real support and still have nothing the ladder could grade (no
  * gazetteer, or an anchor that resolved no place id). That is `ladderGradedCount: 0`, and it renders as
  * {@linkcode ABLATION_ABSENT} rather than `0/0`, which would read as "nothing failed here".
@@ -53,10 +55,10 @@ function cellKey(component: string, locale: string): string {
 }
 
 /**
- * Render the map: a global per-component summary, then the component × locale matrix over the locales carrying at least
- * `minLocaleRows` rows, then the tail locales in long form. The matrix is bounded on purpose — 29 countries × 9
- * components is a table nobody reads, and folding the tail is only acceptable because it is printed rather than
- * dropped.
+ * Render the map: a global per-component summary, then the component × locale matrix over
+ * the locales carrying at least `minLocaleRows` rows, then the tail locales in long form.
+ * The matrix is bounded on purpose — 29 countries × 9 components is a table nobody reads,
+ * and folding the tail is only acceptable because it is printed rather than dropped.
  */
 export function renderAblationMarkdown(
 	cells: readonly AblationCell[],
@@ -164,8 +166,8 @@ export function renderAblationMarkdown(
 	lines.push(`## component × locale — broken / support (the pre-2026-08-05 anchor grading, kept for the diff)`)
 	lines.push("")
 
-	// A zero-column matrix would render as a table with an empty header, which reads as a rendering bug rather
-	// than as "no locale cleared the threshold". Say the latter.
+	// A zero-column matrix would render as a table with an empty header, which reads as a rendering bug
+	// rather than as "no locale cleared the threshold". Say the latter.
 	if (!wide.length) {
 		lines.push(`No locale carries ${minLocaleRows} or more measured rows — every locale is in the tail below.`)
 	} else {

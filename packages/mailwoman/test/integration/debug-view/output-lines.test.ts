@@ -82,8 +82,9 @@ describe("outputLines", () => {
 	})
 
 	it("omits the sections whose source produced nothing", () => {
-		// No trace ⇒ no kind verdict and no timing to report. Omitted rather than rendered empty: an empty `kind` section
-		// would read as "the classifier had no opinion", which is a different claim from "nobody asked it".
+		// No trace ⇒ no kind verdict and no timing to report.
+		// Omitted rather than rendered empty: an empty `kind` section would read as "the
+		// classifier had no opinion", which is a different claim from "nobody asked it".
 		const lines = outputLines({ result: { ...RESULT, hierarchy: [], candidates: [] }, tree: TREE })
 
 		expect(labels(lines)).toEqual(["components", "resolved"])
@@ -106,8 +107,9 @@ describe("outputLines", () => {
 	})
 
 	it("reads the resolved place off the DEEPEST hierarchy entry, not the candidate head", () => {
-		// On a rooftop tier the candidate head is the resolver's primary node (often the region), which is not the
-		// place the query resolved to. Regression for showing "Oregon" as the resolved place of a Portland address.
+		// On a rooftop tier the candidate head is the resolver's primary node
+		// (often the region), which is not the place the query resolved to.
+		// Regression for showing "Oregon" as the resolved place of a Portland address.
 		const result = {
 			...RESULT,
 			candidates: [

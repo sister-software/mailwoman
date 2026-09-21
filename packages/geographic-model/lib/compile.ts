@@ -48,26 +48,28 @@ import {
 } from "#schema"
 import { parseGeographicModelDocument } from "#validate"
 /**
- * The name a fact derived by `isA` inheritance carries in its `derivation` field. A consumer branches on this rather
- * than on where the record sits.
+ * The name a fact derived by `isA` inheritance carries in its `derivation` field.
+ * A consumer branches on this rather than on where the record sits.
  */
 export const DERIVATION_ISA_INHERITANCE = "isa-assertion-inheritance"
 
 /**
  * Every way compilation can refuse a document the validator accepted.
  *
- * Both are discovered while writing derived records, which is why the validator cannot report them: they are properties
- * of what the compiler is about to write rather than of what the author wrote.
+ * Both are discovered while writing derived records, which is why the validator cannot report them:
+ * they are properties of what the compiler is about to write rather than of what the author wrote.
  */
 export const CompileIssueCode = {
 	/**
-	 * An inherited assertion would land on a concept whose kind the relation does not accept on the asserting side.
-	 * Emitting it would put a record in the artifact that the document validator would reject if it were authored.
+	 * An inherited assertion would land on a concept whose kind the relation does not
+	 * accept on the asserting side. Emitting it would put a record in the artifact
+	 * that the document validator would reject if it were authored.
 	 */
 	InheritedDomainKindMismatch: "inherited_domain_kind_mismatch",
 	/**
-	 * Two derived facts claim one identifier. Reachable when an authored derived fact takes an identifier a derivation
-	 * also produces, or when authored identifiers carry the separators the derived form is built from.
+	 * Two derived facts claim one identifier. Reachable when an authored derived fact
+	 * takes an identifier a derivation also produces, or when authored identifiers
+	 * carry the separators the derived form is built from.
 	 */
 	DuplicateDerivedFactID: "duplicate_derived_fact_id",
 } as const
@@ -83,8 +85,8 @@ export interface CompileIssue {
 }
 
 /**
- * Thrown by {@link compileGeographicModel}. Carries every reason at once, and states them all in its message, so a
- * caller that only prints `error.message` still sees the whole list.
+ * Thrown by {@link compileGeographicModel}. Carries every reason at once, and states them all
+ * in its message, so a caller that only prints `error.message` still sees the whole list.
  */
 export class GeographicModelCompileError extends Error {
 	readonly issues: readonly CompileIssue[]
@@ -100,8 +102,8 @@ export class GeographicModelCompileError extends Error {
 }
 
 /**
- * The order derivation inputs are listed in. Grouping by table first keeps a long input list readable. the identifier
- * breaks ties inside a table.
+ * The order derivation inputs are listed in. Grouping by table first keeps a long
+ * input list readable. the identifier breaks ties inside a table.
  */
 const DERIVATION_INPUT_ORDER: readonly DerivationInputKind[] = [
 	DerivationInputKind.Concept,
@@ -113,9 +115,10 @@ const DERIVATION_INPUT_ORDER: readonly DerivationInputKind[] = [
 ]
 
 /**
- * The separator for the compound keys this module groups by. `U+0000` cannot appear in a readable identifier without
- * being visible in it, so two different key tuples cannot collapse onto one string. The derived identifiers written
- * into the artifact use readable separators instead, and are checked for collisions once they are all built.
+ * The separator for the compound keys this module groups by.
+ * `U+0000` cannot appear in a readable identifier without being visible in it, so two different
+ * key tuples cannot collapse onto one string. The derived identifiers written into the artifact
+ * use readable separators instead, and are checked for collisions once they are all built.
  */
 const KEY_SEPARATOR = "\u0000"
 
@@ -131,9 +134,10 @@ function compareByID(left: { id: string }, right: { id: string }): number {
 /**
  * Walk `isA` upward from one concept and return every concept reachable, in code-point order.
  *
- * Breadth-first over a visited set: each concept is expanded once, so the walk terminates on any graph and the answer
- * does not depend on how the parents were authored. The concept itself is never in its own list — it could only get
- * there around a cycle, and the validator refuses those before the compiler runs.
+ * Breadth-first over a visited set: each concept is expanded once, so the walk terminates
+ * on any graph and the answer does not depend on how the parents were authored.
+ * The concept itself is never in its own list — it could only get there around a cycle,
+ * and the validator refuses those before the compiler runs.
  */
 function ancestorsOfConcept(
 	conceptID: ConceptID,
@@ -142,8 +146,8 @@ function ancestorsOfConcept(
 	const visited = new Set<string>()
 	const frontier: ConceptID[] = [...(parents.get(conceptID) ?? [])]
 
-	// An array iterator reads entries appended during the walk, which is what makes this breadth-first rather than a
-	// pass over the direct parents.
+	// An array iterator reads entries appended during the walk, which is what makes
+	// this breadth-first rather than a pass over the direct parents.
 	for (const next of frontier) {
 		if (next === conceptID || visited.has(next)) continue
 
@@ -157,9 +161,10 @@ function ancestorsOfConcept(
 }
 
 /**
- * One derived fact under construction. Drafts are keyed by the proposition they state, so two ancestors asserting the
- * same thing produce one fact naming both of them as inputs, while two ancestors asserting the same triple under
- * different modality produce two facts — a contradiction a consumer can see, rather than a silent choice between them.
+ * One derived fact under construction. Drafts are keyed by the proposition they state,
+ * so two ancestors asserting the same thing produce one fact naming both of them as inputs,
+ * while two ancestors asserting the same triple under different modality produce two facts —
+ * a contradiction a consumer can see, rather than a silent choice between them.
  */
 interface DerivedDraft {
 	subject: ConceptID
@@ -183,8 +188,9 @@ function draftInputs(draft: DerivedDraft): DerivationInput[] {
 }
 
 /**
- * The identifier a derived fact carries. Built from the proposition it states, so it is stable across edits elsewhere
- * in the document, and readable, so a reader meeting one in a diff can tell what it says.
+ * The identifier a derived fact carries. Built from the proposition it states,
+ * so it is stable across edits elsewhere in the document, and readable,
+ * so a reader meeting one in a diff can tell what it says.
  */
 function derivedFactID(draft: DerivedDraft): string {
 	const scope = draft.countries?.length ? `:${draft.countries.join(COUNTRY_SEPARATOR)}` : ""
@@ -209,9 +215,10 @@ function draftKey(subject: ConceptID, assertion: RelationAssertion, countries: r
 /**
  * Materialize every ancestor's assertions onto their descendants.
  *
- * A concept that authors its own assertion for the same relation and target inherits nothing for that pair. The
- * authored record is the more specific one, which is what `isA` means, and re-stating the pair would put two modalities
- * for one proposition into the artifact with no rule saying which of them holds.
+ * A concept that authors its own assertion for the same relation and target
+ * inherits nothing for that pair. The authored record is the more specific one,
+ * which is what `isA` means, and re-stating the pair would put two modalities for one
+ * proposition into the artifact with no rule saying which of them holds.
  */
 function deriveInheritedFacts(
 	concepts: readonly ConceptRecord[],
@@ -233,9 +240,9 @@ function deriveInheritedFacts(
 		for (const ancestorID of entry.ancestors) {
 			const ancestor = conceptByID.get(String(ancestorID))
 
-			// Validation refuses an `isA` naming an undeclared concept, and an assertion naming an undeclared relation,
-			// so both resolve for any document that reached the compiler. The guards keep the walk total. they do not
-			// describe a state the artifact can hold.
+			// Validation refuses an `isA` naming an undeclared concept, and an assertion naming
+			// an undeclared relation, so both resolve for any document that reached the compiler.
+			// The guards keep the walk total. they do not describe a state the artifact can hold.
 			if (!ancestor) continue
 
 			for (const assertion of ancestor.assertions) {
@@ -311,8 +318,8 @@ function checkDerivedIdentifiers(facts: readonly DerivedFactRecord[], issues: Co
  * {@link GeographicModelCompileError} with every reason if it validates but its derivations cannot be written. Nothing
  * partial is ever returned.
  *
- * The document is read, never rewritten: the artifact's tables are new arrays holding the authored records themselves,
- * ordered by identifier, and the derived tables are new records built beside them.
+ * The document is read, never rewritten: the artifact's tables are new arrays holding the authored
+ * records themselves, ordered by identifier, and the derived tables are new records built beside them.
  */
 export function compileGeographicModel(input: unknown): CompiledGeographicModel {
 	const document: GeographicModelDocument = parseGeographicModelDocument(input)

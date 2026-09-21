@@ -73,9 +73,9 @@ import { geocodeAddress } from "mailwoman/geocode-core"
 const HERE = dirname(fileURLToPath(import.meta.url))
 
 /**
- * The three configurations, each named for the reader question it answers. `geocodeOpts` is merged into the per-row
- * `geocodeAddress` call; everything not named here stays at the shipped default, including the coarse-placer country
- * prior and its hard filter.
+ * The three configurations, each named for the reader question it answers.
+ * `geocodeOpts` is merged into the per-row `geocodeAddress` call; everything not named here
+ * stays at the shipped default, including the coarse-placer country prior and its hard filter.
  */
 const ARMS = [
 	{ name: "base", locale: "en-US", geocodeOpts: {} },
@@ -109,8 +109,8 @@ if (!dataRoot) {
 const candidatePath = join(dataRoot, "wof", "candidate.db")
 
 /**
- * Fold a place name to the form the committed `acceptedLocality` lists are written in: lowercase, no diacritics, no
- * punctuation, single spaces. `Liège` and `liege` both fold to `liege`.
+ * Fold a place name to the form the committed `acceptedLocality` lists are written in: lowercase,
+ * no diacritics, no punctuation, single spaces. `Liège` and `liege` both fold to `liege`.
  */
 function fold(name) {
 	return name
@@ -124,23 +124,27 @@ function fold(name) {
 /**
  * Three locality checks, deliberately kept apart.
  *
- * `parsed` reads `result.locality` — the span the model labeled. It is close to circular: the commune is right there in
- * the input string, so a high number here says the parser found a token, not that anything was resolved.
+ * `parsed` reads `result.locality` — the span the model labeled.
+ * It is close to circular: the commune is right there in the input string, so a high
+ * number here says the parser found a token, not that anything was resolved.
  *
- * `nameMatched` reads only the nodes the resolver decorated (`result.hierarchy`). It says the gazetteer returned a
- * place carrying an accepted name — and a place name is not unique on Earth.
+ * `nameMatched` reads only the nodes the resolver decorated (`result.hierarchy`).
+ * It says the gazetteer returned a place carrying an accepted name —
+ * and a place name is not unique on Earth.
  *
- * `resolved` is `nameMatched` and the coordinate landing inside Belgium. That conjunct is the metric, and it is the one
- * this panel needs: `Oude Markt 1, 3000 Leuven` resolves to a hierarchy reading `["Leuven"]` in the netherlands, and
- * `Place Saint-Lambert 1, 4000 Liège` to `["Le Liège", "Liège"]` in france. Both are name matches in the wrong country,
- * and a panel built to catch cross-border misrouting scored both as locality hits until the conjunct was added.
+ * `resolved` is `nameMatched` and the coordinate landing inside Belgium.
+ * That conjunct is the metric, and it is the one this panel needs:
+ * `Oude Markt 1, 3000 Leuven` resolves to a hierarchy reading `["Leuven"]` in the netherlands,
+ * and `Place Saint-Lambert 1, 4000 Liège` to `["Le Liège", "Liège"]` in france.
+ * Both are name matches in the wrong country, and a panel built to catch cross-border
+ * misrouting scored both as locality hits until the conjunct was added.
  */
 function localityChecks(result, accepted, inBelgium) {
 	const acceptedSet = new Set(accepted.map(fold))
 
-	// A decorated node carries a gazetteer `name`; `value` is the parsed text the node was matched
-	// from. Both are collected because the two differ on an exonym (`Antwerp` against `Antwerpen`),
-	// and either is a legitimate way for the gazetteer to have agreed. Absent fields are dropped.
+	// A decorated node carries a gazetteer `name`; `value` is the parsed text the node was matched from.
+	// Both are collected because the two differ on an exonym (`Antwerp` against `Antwerpen`), and either is
+	// a legitimate way for the gazetteer to have agreed. Absent fields are dropped.
 	const hierarchyNames = (result.hierarchy ?? []).flatMap((node) => [node.name, node.value]).filter(Boolean)
 	const nameMatched = hierarchyNames.some((name) => acceptedSet.has(fold(name)))
 
@@ -157,16 +161,18 @@ function inBox(box, lat, lon) {
 }
 
 /**
- * Which weights actually answered, for one locale. `resolveWeights` runs the same resolution order the classifier does,
- * so this reports the artifact that was loaded rather than the one that was asked for — including the base-package
- * fallback an overlay locale takes for its `model.onnx`. Paths are dereferenced because a development checkout symlinks
- * them into the workspace, and the symlink name says nothing about which checkpoint is behind it.
+ * Which weights actually answered, for one locale. `resolveWeights` runs the same resolution order
+ * the classifier does, so this reports the artifact that was loaded rather than the one that was
+ * asked for — including the base-package fallback an overlay locale takes for its `model.onnx`.
+ * Paths are dereferenced because a development checkout symlinks them into the workspace,
+ * and the symlink name says nothing about which checkpoint is behind it.
  */
 async function weightsStamp(locale) {
 	const resolved = await resolveWeights({ locale })
 
-	// `resolveWeights` answers `undefined` when the bundle ships no card. The stamp is the point of this function, so a
-	// missing card is a failure to report rather than a field to omit.
+	// `resolveWeights` answers `undefined` when the bundle ships no card.
+	// The stamp is the point of this function, so a missing card is a failure to report
+	// rather than a field to omit.
 	if (!resolved.modelCardPath) throw new Error("be-panel: the resolved weights bundle carries no model card.")
 
 	// oxlint-disable-next-line no-restricted-properties -- shipped doc asset (no monorepo install); a throw on a corrupt model-card is the interface
@@ -181,9 +187,10 @@ async function weightsStamp(locale) {
 }
 
 /**
- * The three versions a differing re-run has to be able to tell apart: the code, the model, and the reference data.
- * Without them a reader whose numbers disagree with the published ones cannot tell data drift from code drift, which is
- * the whole value of publishing the result file next to the script.
+ * The three versions a differing re-run has to be able to tell apart: the code,
+ * the model, and the reference data. Without them a reader whose numbers disagree
+ * with the published ones cannot tell data drift from code drift, which is the whole
+ * value of publishing the result file next to the script.
  */
 async function versionStamp() {
 	const require = createRequire(import.meta.url)
@@ -231,10 +238,10 @@ async function runArm(arm, panel) {
 				pair: row.pair,
 				lat: result.lat,
 				lon: result.lon,
-				// `tier` is the raw `resolution_tier` field, kept verbatim. `answeredAt` is the tier the
-				// row is counted under, and it is `none` when no coordinate came back: `resolution_tier`
-				// reports where the cascade ended, not whether it produced anything, so it still reads
-				// "admin" on a row that answered nothing.
+				// `tier` is the raw `resolution_tier` field, kept verbatim.
+				// `answeredAt` is the tier the row is counted under, and it is `none` when no
+				// coordinate came back: `resolution_tier` reports where the cascade ended, not
+				// whether it produced anything, so it still reads "admin" on a row that answered nothing.
 				tier: result.resolution_tier,
 				answeredAt: hasCoordinate ? (result.resolution_tier ?? "none") : "none",
 				countryCode: result.countryCode,
@@ -255,9 +262,9 @@ async function runArm(arm, panel) {
 		lookup[Symbol.dispose]()
 	}
 
-	// Every pair the panel declares is reported, including the ones that cannot be measured. Dropping
-	// an unmeasurable pair from the denominator was the first version of this harness, and it turned a
-	// row that returned no coordinate at all into a silent 4-of-4.
+	// Every pair the panel declares is reported, including the ones that cannot be measured.
+	// Dropping an unmeasurable pair from the denominator was the first version of this harness,
+	// and it turned a row that returned no coordinate at all into a silent 4-of-4.
 	const byPair = new Map()
 
 	for (const record of records) {
@@ -278,16 +285,17 @@ async function runArm(arm, panel) {
 			nl: bucket.find((r) => r.language === "nl")?.input ?? null,
 			fr: bucket.find((r) => r.language === "fr")?.input ?? null,
 			comparable,
-			// `null` here means "not measured because a side returned no coordinate", which is a
-			// different fact from "measured, and the two sides disagree by 0 km".
+			// `null` here means "not measured because a side returned no coordinate",
+			// which is a different fact from "measured, and the two sides disagree by 0 km".
 			km: comparable ? Number(haversineKm(a.lat, a.lon, b.lat, b.lon).toFixed(4)) : null,
 			sameTier: bucket.length === 2 ? a.tier === b.tier : null,
 		}
 	})
 
-	// Bucketed on `answeredAt`, not on the raw tier field. Bucketing on `resolution_tier` alone put
-	// every unresolved row in the `admin` column, so the tier row read 30 while the resolve row above
-	// it read 27 — two lines of one table disagreeing about the same six rows.
+	// Bucketed on `answeredAt`, not on the raw tier field.
+	// Bucketing on `resolution_tier` alone put every unresolved row in the `admin`
+	// column, so the tier row read 30 while the resolve row above it read 27 —
+	// two lines of one table disagreeing about the same six rows.
 	const tiers = {}
 
 	for (const record of records) {
@@ -336,8 +344,8 @@ const report = {
 	ranAt: new Date().toISOString(),
 	elapsedMs: Date.now() - startedAt,
 	panel: { rows: panel.rows.length, bbox: panel.bbox },
-	// The panel carries no data release because there is no Belgian register to carry one from — the
-	// only reference artifact is the gazetteer, and it is stamped below.
+	// The panel carries no data release because there is no Belgian register to carry one from —
+	// the only reference artifact is the gazetteer, and it is stamped below.
 	versions: await versionStamp(),
 	config: {
 		gazetteer: "candidate.db",

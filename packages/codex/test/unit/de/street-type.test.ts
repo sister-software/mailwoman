@@ -22,8 +22,8 @@ describe("isGermanStreetToken", () => {
 	})
 
 	it("does NOT flag city names that merely end in a place-name suffix", () => {
-		// The collision guard: -berg/-burg/-dorf/-feld are excluded so a city token in a `PLZ City`
-		// segment is not mistaken for a street.
+		// The collision guard: -berg/-burg/-dorf/-feld are excluded so a city token in
+		// a `PLZ City` segment is not mistaken for a street.
 		expect(isGermanStreetToken("Nürnberg")).toBe(false)
 		expect(isGermanStreetToken("Hamburg")).toBe(false)
 		expect(isGermanStreetToken("Düsseldorf")).toBe(false)

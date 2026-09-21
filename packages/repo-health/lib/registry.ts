@@ -42,8 +42,8 @@ import { weightsReconciliationCheck } from "#checks/weights/reconciliation"
 import { weightsRightsCheck } from "#checks/weights/rights"
 
 /**
- * Every health check, in the order `mwops health all` runs them: the ones that only read files first, then the ones
- * that bundle with esbuild or spawn Vale, knip and tsc.
+ * Every health check, in the order `mwops health all` runs them: the ones that only read
+ * files first, then the ones that bundle with esbuild or spawn Vale, knip and tsc.
  */
 export const checks: ReadonlyArray<RepoCheck> = [
 	versionSyncCheck,

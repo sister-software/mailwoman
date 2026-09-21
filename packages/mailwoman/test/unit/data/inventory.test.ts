@@ -95,8 +95,9 @@ describe("takeInventory — the four states stay distinct", () => {
 
 		const report = await takeInventory({ dataRoot: root })
 
-		// Counting a third party's build as our debt makes the number unimprovable, so it is skipped rather
-		// than classified — and the skip is reported, because a silently bounded walk reads as coverage.
+		// Counting a third party's build as our debt makes the number unimprovable,
+		// so it is skipped rather than classified — and the skip is reported,
+		// because a silently bounded walk reads as coverage.
 		expect(report.skippedForeign).toBe(1)
 		expect(report.entries.some((e) => e.path.startsWith("pelias-rig"))).toBe(false)
 		expect(Object.keys(FOREIGN_ROOTS)).toContain("pelias-rig")
@@ -193,9 +194,9 @@ describe("rebuildHint", () => {
 
 describe("buildCommandGaps — a manifest is only worth its build command", () => {
 	it("flags a path the workspace regroup moved", async () => {
-		// Measured on the shipped osm databases: they record `node osm/out/scripts/build-rooftop-database.js`, which
-		// now lives under `packages/osm/`. The literal survived the move inside a built database, where no lint
-		// reaches it, and the artifact still passes every "has a manifest" check.
+		// Measured on the shipped osm databases: they record `node osm/out/scripts/build-rooftop-database.js`,
+		// which now lives under `packages/osm/`. The literal survived the move inside a built database,
+		// where no lint reaches it, and the artifact still passes every "has a manifest" check.
 		const root = await dataRoot()
 
 		expect(await buildCommandGaps("node osm/out/scripts/build-rooftop-database.js", root)).toEqual([
@@ -204,8 +205,8 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 	})
 
 	it("treats a bare CLI verb as runnable rather than guessing", async () => {
-		// Verifying `mailwoman gazetteer build poi` means running the CLI. Reporting it as a gap would flood the
-		// report with the artifacts that are actually in the best shape.
+		// Verifying `mailwoman gazetteer build poi` means running the CLI.
+		// Reporting it as a gap would flood the report with the artifacts that are actually in the best shape.
 		expect(await buildCommandGaps("mailwoman gazetteer build poi", await dataRoot())).toEqual([])
 	})
 

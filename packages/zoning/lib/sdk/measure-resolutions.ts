@@ -30,9 +30,9 @@ import { readZoningFeatures, readZoningSourceIdentity, type ZoningIngestOptions 
 
 export interface MeasureResolutionsOptions extends ZoningIngestOptions, ResolutionMeasurementOptions {
 	/**
-	 * Also run a centre-in-polygon polyfill per feature per resolution, to report what a polyfill-only index would have
-	 * dropped. On by default: it is the column the resolution is chosen on, and its cost is one extra h3 call per
-	 * feature.
+	 * Also run a centre-in-polygon polyfill per feature per resolution, to report what
+	 * a polyfill-only index would have dropped. On by default: it is the column the
+	 * resolution is chosen on, and its cost is one extra h3 call per feature.
 	 */
 	measurePolyfill?: boolean
 }
@@ -51,8 +51,9 @@ const DEFAULT_PROGRESS_EVERY = 5000
 /**
  * Measure every candidate resolution over the real source.
  *
- * @throws {Error} When the streamed feature count does not match the count the source declares. A short read produces a
- *   well-formed table describing a smaller country, which is the partial result that must throw.
+ * @throws {Error} When the streamed feature count does not match the count the source declares.
+ *   A short read produces a well-formed table describing a smaller country,
+ *   which is the partial result that must throw.
  */
 export async function measureZoningCellResolutions(
 	options: MeasureResolutionsOptions
@@ -80,8 +81,8 @@ export async function measureZoningCellResolutions(
 		}
 	}
 
-	// A range or an authority selector narrows the population on purpose, so the declared total is only a check on a whole
-	// pass. Narrowed runs report what they read and assert nothing about it.
+	// A range or an authority selector narrows the population on purpose, so the declared total is
+	// only a check on a whole pass. Narrowed runs report what they read and assert nothing about it.
 	const narrowed =
 		options.limit !== undefined || options.authorityCode !== undefined || options.objectIDFrom !== undefined
 

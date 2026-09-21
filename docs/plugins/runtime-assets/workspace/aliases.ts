@@ -68,11 +68,12 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	/**
 	 * Alias a specifier this file named, refusing a target that does not resolve.
 	 *
-	 * The lists below are a hand-maintained mirror of several packages' `exports` maps, so they go stale every time a
-	 * subpath moves — and the failure was silent: `resolvePackageFile` answers `null` and the alias was simply skipped,
-	 * leaving the site to resolve through the real exports map and nobody any the wiser. That is how
-	 * `@mailwoman/resolver-wof-sqlite/geo` stayed on the list after the module was deleted. A named entry that cannot
-	 * resolve is a defect in this file, so it throws.
+	 * The lists below are a hand-maintained mirror of several packages' `exports` maps,
+	 * so they go stale every time a subpath moves — and the failure was silent:
+	 * `resolvePackageFile` answers `null` and the alias was simply skipped,
+	 * leaving the site to resolve through the real exports map and nobody any the wiser.
+	 * That is how `@mailwoman/resolver-wof-sqlite/geo` stayed on the list after the module was deleted.
+	 * A named entry that cannot resolve is a defect in this file, so it throws.
 	 */
 	const requireAlias = (specifier: string, target: string | null): void => {
 		if (!target) {
@@ -97,16 +98,17 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	)
 
 	for (const [packageName, subpath] of FILE_SUBPATHS) {
-		// A subpath is a public export KEY, and the file under it can be either `<subpath>.ts` or `<subpath>/index.ts` —
-		// the key does not change when a module grows siblings and becomes a directory.
+		// A subpath is a public export KEY, and the file under it can be either `<subpath>.ts` or
+		// `<subpath>/index.ts` — the key does not change when a module grows siblings and becomes a directory.
 		const target =
 			(await resolvePackageFile(packageName, subpath)) ?? (await resolvePackageFile(packageName, `${subpath}/index`))
 
 		requireAlias(`${packageName}/${subpath}`, target)
 	}
 
-	// The one entry whose export KEY and file path have no spelling in common: `web-loader` is the public name and the
-	// file is `web/loader`, so the pair above — one string for both — cannot express it.
+	// The one entry whose export KEY and file path have no spelling in common:
+	// `web-loader` is the public name and the file is `web/loader`, so the pair above —
+	// one string for both — cannot express it.
 	requireAlias("@mailwoman/neural/web-loader", await resolvePackageFile("@mailwoman/neural", "web/loader"))
 
 	setAlias("@mailwoman/core/errors", await resolvePackageFile("@mailwoman/core", "errors/schema"))
@@ -115,8 +117,9 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 		requireAlias(`${packageName}/${subpath}`, await resolvePackageDirectoryEntry(packageName, subpath))
 	}
 
-	// The resolver root deliberately bypasses its barrel: the browser graph only needs the core resolver interfaces,
-	// while runtime resolution enters through the explicit `@mailwoman/resolver/resolve` alias above.
+	// The resolver root deliberately bypasses its barrel: the browser graph only
+	// needs the core resolver interfaces, while runtime resolution enters through the
+	// explicit `@mailwoman/resolver/resolve` alias above.
 	setAlias("@mailwoman/resolver$", await resolvePackageFile("@mailwoman/core", "resolver/types"))
 
 	for (const subpath of CODEX_SUBPATHS) {
