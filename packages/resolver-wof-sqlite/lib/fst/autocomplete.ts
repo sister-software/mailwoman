@@ -92,7 +92,12 @@ function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry
 }
 
 /**
- * {@link FSTMatcher} presented through ancestrie's storage interface. Records carry the {@link PlaceEntry} itself as the payload, so the entry that wins the algorithm's shallowest-depth rule is the entry whose fields the suggestion reports. A side lookup keyed on id could pick a different surface's row (`crossCountryBranches` differs per surface).
+ * {@link FSTMatcher} presented through ancestrie's storage interface.
+ *
+ * Records carry the {@link PlaceEntry} itself as the payload, so the entry that wins the
+ * algorithm's shallowest-depth rule is the entry whose fields the suggestion reports.
+ * A side lookup keyed on id could pick a different surface's row
+ * (`crossCountryBranches` differs per surface).
  */
 class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 	readonly #fst: FSTMatcher
@@ -148,7 +153,7 @@ class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 /**
  * Autocomplete from the current prefix.
  *
- * @returns suggestions ranked referential-descending.
+ * @returns Suggestions ranked referential-descending.
  */
 export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
 	const normalizedTokens = normalizeTokens(query)

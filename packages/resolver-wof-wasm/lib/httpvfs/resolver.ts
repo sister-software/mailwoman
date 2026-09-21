@@ -507,9 +507,9 @@ interface CandidateCodeMaps {
  * PlaceLookup over the byte-range candidate table (`build-candidate.ts`) —
  * the FTS-free gazetteer that replaces the slim `wof-hot.db` for the demo.
  *
- * A resolve is a single contiguous B-tree probe on `name_key` (the shared
- * {@link normalizeLocalityForKey}, build/query-consistent): no FTS, no join — each row is denormalized (display `name`,
- * centroid, bbox) and population rank is precomputed into `neg_rank`.
+ * A resolve is a single contiguous B-tree probe on `name_key`
+ * (the shared {@link normalizeLocalityForKey}, build/query-consistent): no FTS, no join — each row is
+ * denormalized (display `name`, centroid, bbox) and population rank is precomputed into `neg_rank`.
  * Drop-in for {@link WOFHTTPVFSPlaceLookup} (same `MailwomanLookupLike` surface),
  * but ~12 range fetches per session instead of 243 on the full DB, with global coverage.
  *

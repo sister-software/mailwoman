@@ -89,7 +89,7 @@ export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
  * Placeholders without a zcta stay placeholder (and get no provenance row).
  * Idempotent.
  *
- * @returns the number of rows filled.
+ * @returns The number of rows filled.
  */
 export function fillPlaceholderCentroids(
 	db: DatabaseClient<WOFDatabase>,

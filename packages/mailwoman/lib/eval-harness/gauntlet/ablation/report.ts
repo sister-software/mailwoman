@@ -68,7 +68,8 @@ function cellKey(component: string, locale: string): string {
 export function renderAblationMarkdown(
 	cells: readonly AblationCell[],
 	/**
-	 * The per-row outcomes behind `cells`. Needed because percentiles do not aggregate: a global p90 has to be taken over the pooled displacements rather than over the per-cell p90s. Pass `[]` to render the matrix alone.
+	 * The per-row outcomes behind `cells`. Needed because percentiles do not aggregate: a global p90 has to be taken over
+	 * the pooled displacements rather than over the per-cell p90s. Pass `[]` to render the matrix alone.
 	 */
 	rows: readonly AblationRowOutcome[],
 	meta: {

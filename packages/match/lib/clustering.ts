@@ -40,14 +40,12 @@ export interface ClusterOptions {
 	/**
 	 * How the above-threshold link graph resolves into clusters:
 	 *
-	 * - `"single"` (default) — connected components (union-find).
-	 *   Fast. any above-threshold link fuses two groups, so a single weak link can
-	 *   over-merge unrelated records through a transitive chain.
-	 * - `"average"` — agglomerative average-linkage refinement within each connected component:
-	 *   two sub-clusters merge only when the average weight of the links between them clears
-	 *   the threshold, so a lone weak bridge no longer fuses two otherwise-dense groups.
-	 *   The documented over-merge fix (Dedupe).
-	 *   Falls back to single-linkage for any component larger than {@link maxAverageLinkageComponent}.
+	 * - `"single"` (default) — connected components (union-find). Fast. any above-threshold link fuses two groups, so a
+	 *   single weak link can over-merge unrelated records through a transitive chain.
+	 * - `"average"` — agglomerative average-linkage refinement within each connected component: two sub-clusters merge only
+	 *   when the average weight of the links between them clears the threshold, so a lone weak bridge no longer fuses two
+	 *   otherwise-dense groups. The documented over-merge fix (Dedupe). Falls back to single-linkage for any component
+	 *   larger than {@link maxAverageLinkageComponent}.
 	 */
 	linkage?: "single" | "average"
 	/**

@@ -29,7 +29,7 @@ export type DataReleaseManifest = Record<string, string>
 /**
  * Read `<dataRoot>/releases.json`.
  *
- * @returns null (legacy mode) when absent or malformed.
+ * @returns Null (legacy mode) when absent or malformed.
  */
 export async function readReleaseManifest(dataRoot: string): Promise<DataReleaseManifest | null> {
 	try {

@@ -88,7 +88,7 @@ const npmWrite = $({ stdio: ["inherit", "inherit", "pipe"] })
  * The default, `external`, sets the clipboard from tmux's own copy-mode but silently
  * discards sequences that applications emit — the copy appears to work and nothing arrives.
  *
- * @returns whether the sequence was written.
+ * @returns Whether the sequence was written.
  *   The terminal on the other end may still ignore it, which is not detectable from here.
  */
 function copyToTerminalClipboard(text: string): boolean {

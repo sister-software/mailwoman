@@ -88,7 +88,7 @@ const O_TYPE_ID = 0
 /**
  * Parse the `semi-crf-transitions.json` sidecar.
  *
- * @throws on a shape mismatch rather than decoding with a half-valid grammar —
+ * @throws On a shape mismatch rather than decoding with a half-valid grammar —
  *   a silently-wrong transition table trains nothing but corrupts every decode.
  */
 export function parseSemiCRFTransitions(raw: unknown): SemiCRFTransitions {
@@ -132,7 +132,8 @@ export function parseSemiCRFTransitions(raw: unknown): SemiCRFTransitions {
  * `O` segments are length 1 by construction (every non-entity token is its own `O`),
  * which keeps the state space small and matches the training-side DP that produced the scores.
  *
- * State = (token index, last non-O segment type); the top-`k` paths are kept per state. Returns up to `k` complete segmentations, best first. Every returned segmentation covers `[0, seqLen)` exactly — no gaps, no overlaps.
+ * State = (token index, last non-O segment type); the top-`k` paths are kept per state. Returns up to `k` complete
+ * segmentations, best first. Every returned segmentation covers `[0, seqLen)` exactly — no gaps, no overlaps.
  */
 export function decodeSegmentationsKBest(
 	spanScores: number[][][],

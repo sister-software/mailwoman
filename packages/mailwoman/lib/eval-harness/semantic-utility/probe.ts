@@ -53,15 +53,13 @@ import {
  * The closed set of outcome shapes this probe reads, derived from `PipelineResult["path"]`
  * and `POIIntentOutcome["type"]`.
  *
- * - `no_poi_branch` — the coordinator never took the POI branch, so there is no POI outcome at all.
- *   This is the measured baseline shape for every target row: an activity phrase scores `0`
- *   against the phrase lexicon, so the input is answered as an address parse of a sentence.
- * - `poi_abstain` — the branch was taken and declined.
- *   The reason travels beside the shape.
- * - `poi_intent_no_results` — the branch was taken, an intent was formed,
- *   and the executor returned nothing.
- * - `poi_intent_results` — the branch was taken and at least one row came back.
- *   The only shape the primary metric can grade, since the comparator reads the top result.
+ * - `no_poi_branch` — the coordinator never took the POI branch, so there is no POI outcome at all. This is the measured
+ *   baseline shape for every target row: an activity phrase scores `0` against the phrase lexicon, so the input is
+ *   answered as an address parse of a sentence.
+ * - `poi_abstain` — the branch was taken and declined. The reason travels beside the shape.
+ * - `poi_intent_no_results` — the branch was taken, an intent was formed, and the executor returned nothing.
+ * - `poi_intent_results` — the branch was taken and at least one row came back. The only shape the primary metric can
+ *   grade, since the comparator reads the top result.
  */
 export const POI_OUTCOME_SHAPES = [
 	"no_poi_branch",

@@ -90,7 +90,7 @@ export interface IngestSoilChunkOptions {
  * Stream one chunk of one survey area into `database`.
  *
  * @throws {Error} On a delineation the classifier refuses — which includes the
- *   allocator's silent zero-cell answer.
+ * allocator's silent zero-cell answer.
  */
 export async function ingestSoilChunk(
 	database: DatabaseClient<SoilDatabase>,

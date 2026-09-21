@@ -132,13 +132,11 @@ export type Phase2CheckRole = (typeof PHASE2_CHECK_ROLES)[number]
 /**
  * Which decision a target check speaks to.
  *
- * - `resolution` — the recognition capability itself: an activity phrase reaching the
- *   entity kinds that afford it, graded on the assembled answer.
- *   These are what "proceed to what the integration record authorized" rests on.
- * - `evidence` — the observation surface: the phrase attestations, the coverage-qualified
- *   absence rows, and the marker that carries an observation to a caller.
- *   The integration record's §7 names exactly this half as what a diagnostic-strength
- *   result would justify on its own.
+ * - `resolution` — the recognition capability itself: an activity phrase reaching the entity kinds that afford it, graded
+ *   on the assembled answer. These are what "proceed to what the integration record authorized" rests on.
+ * - `evidence` — the observation surface: the phrase attestations, the coverage-qualified absence rows, and the marker
+ *   that carries an observation to a caller. The integration record's §7 names exactly this half as what a
+ *   diagnostic-strength result would justify on its own.
  */
 export const PHASE2_TARGET_TIERS = ["resolution", "evidence"] as const
 

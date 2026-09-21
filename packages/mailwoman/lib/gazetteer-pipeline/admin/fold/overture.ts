@@ -285,7 +285,9 @@ export async function ingestOvertureDivisions(
 	countries: readonly string[],
 	release: string,
 	/**
-	 * Starting synthetic id. Defaults to {@link OVERTURE_ID_BASE} (a single full build). An incremental augment of a DB that already holds Overture rows must pass `max(spr.id) + 1` so the new ids don't collide with — and `insert or replace` clobber — the existing ones.
+	 * Starting synthetic id. Defaults to {@link OVERTURE_ID_BASE} (a single full build). An incremental augment of a DB
+	 * that already holds Overture rows must pass `max(spr.id) + 1` so the new ids don't collide with — and `insert or
+	 * replace` clobber — the existing ones.
 	 */
 	idBase: number = OVERTURE_ID_BASE
 ): Promise<number> {

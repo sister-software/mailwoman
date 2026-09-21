@@ -57,7 +57,7 @@ const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: t
 /**
  * Head-probe one bucket object.
  *
- * @returns the failure's message rather than a bare boolean: a throttled or unroutable probe
+ * @returns The failure's message rather than a bare boolean: a throttled or unroutable probe
  *   is indistinguishable from an unstaged artifact at the call site, and "missing" is the
  *   answer that would send an operator to re-run a staging step that already succeeded.
  */

@@ -202,20 +202,14 @@ export function deleteSpan(input: string, at: number, length: number): string {
  *
  * Four refusals, each one a class the corpus actually contains:
  *
- * 1. `empty` — the asserted value is the empty string.
- *    `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty.
- *    There is nothing to delete, and treating it as a deletion would manufacture support.
- * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the
- *    resolved value, e.g. `country: "United States"` against an input saying `USA`).
- *    Deleting it would require guessing which span it came from.
- * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value
- *    asserted for a second component.
- *    Either way the deletion is not attributable to one component,
- *    which is the only thing this map measures.
- * 4. `nested` — the value is a proper substring of another asserted component's
- *    value (`York` inside `New York`).
- *    Deleting it damages the neighbour, so the row would measure a two-component
- *    deletion under one component's name.
+ * 1. `empty` — the asserted value is the empty string. `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot
+ *    stays empty. There is nothing to delete, and treating it as a deletion would manufacture support.
+ * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the resolved value, e.g. `country:
+ *    "United States"` against an input saying `USA`). Deleting it would require guessing which span it came from.
+ * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value asserted for a second component. Either way
+ *    the deletion is not attributable to one component, which is the only thing this map measures.
+ * 4. `nested` — the value is a proper substring of another asserted component's value (`York` inside `New York`). Deleting
+ *    it damages the neighbour, so the row would measure a two-component deletion under one component's name.
  */
 export function ablationVariants(
 	input: string,

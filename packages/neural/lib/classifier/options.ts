@@ -56,12 +56,10 @@ export interface NeuralAddressClassifierConfig {
 	/**
 	 * Decoding strategy:
 	 *
-	 * - `"viterbi"` (default) — linear-chain CRF Viterbi with the BIO structural mask.
-	 *   Prevents orphan-`I-*` sequences.
-	 *   If `transitions` is provided, uses learned scores on top.
-	 * - `"argmax"` — per-token argmax.
-	 *   Faster but produces structurally invalid sequences.
-	 *   Use only for debugging / comparison.
+	 * - `"viterbi"` (default) — linear-chain CRF Viterbi with the BIO structural mask. Prevents orphan-`I-*` sequences. If
+	 *   `transitions` is provided, uses learned scores on top.
+	 * - `"argmax"` — per-token argmax. Faster but produces structurally invalid sequences. Use only for debugging /
+	 *   comparison.
 	 */
 	decode?: "viterbi" | "argmax"
 	/**
@@ -83,7 +81,8 @@ export interface NeuralAddressClassifierConfig {
 	 */
 	endTransitions?: number[]
 	/**
-	 * #727 stage-2: the parsed semi-Markov segment-transition grammar (`semi-crf-transitions.json`), for the span head's k-best decode.
+	 * #727 stage-2: the parsed semi-Markov segment-transition grammar (`semi-crf-transitions.json`), for the span head's
+	 * k-best decode.
 	 *
 	 * `loadFromWeights` populates it when the bundle ships the sidecar.
 	 *
@@ -479,12 +478,11 @@ export interface ParseOpts {
 	/**
 	 * Address-system conventions enforcement (#511 Tier A / the rules-as-constraints part of #478).
 	 *
-	 * - `"auto"` — detect the system from the model's locale head
-	 *   (`locale_logits` output, v1.1.0+ exports. Silently no-ops on models without it)
-	 *   and apply that system's codex conventions: forbidden tags become a hard emission mask
+	 * - `"auto"` — detect the system from the model's locale head (`locale_logits` output, v1.1.0+ exports. Silently no-ops
+	 *   on models without it) and apply that system's codex conventions: forbidden tags become a hard emission mask
 	 *   before Viterbi, and a conventions postcode shape enables the snap-only postcode repair pass.
-	 * - A `SystemCode` (`"fr"`, `"us"`, …) — apply that system's conventions unconditionally
-	 *   (callers that already know the locale, e.g. the pipeline's BCP-47 region).
+	 * - A `SystemCode` (`"fr"`, `"us"`, …) — apply that system's conventions unconditionally (callers that already know the
+	 *   locale, e.g. the pipeline's BCP-47 region).
 	 * - Omit — byte-stable default: no detection, no mask (pre-#511 behavior).
 	 *
 	 * The detection threshold is deliberately high (0.8): the mask must never fire on a guess.

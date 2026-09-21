@@ -227,7 +227,8 @@ export async function ingestGeonamesAliases(
 	onProgress?: (event: GeonamesIngestProgress) => void,
 	opts?: {
 		/**
-		 * #267: the countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link each locality's `parent_id` + ancestry chain (locality → region → country).
+		 * #267: the countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link each
+		 * locality's `parent_id` + ancestry chain (locality → region → country).
 		 *
 		 * PER-country because a country that already carries WOF admin would double up — pass only
 		 * the zero-coverage gap countries (the coverage-expansion targets), never the EU alias set.
@@ -237,7 +238,8 @@ export async function ingestGeonamesAliases(
 		 */
 		adminForCountries?: ReadonlySet<string>
 		/**
-		 * #936: directory of per-country alternateNamesV2 dumps (`download.geonames.org/export/dump/alternatenames/<CC>.zip` → `<CC>.txt`).
+		 * #936: directory of per-country alternateNamesV2 dumps
+		 * (`download.geonames.org/export/dump/alternatenames/<CC>.zip` → `<CC>.txt`).
 		 *
 		 * When a country's file is present, alias rows gain their language tag,
 		 * `privateuse` ("preferred" from `isPreferredName`), and the `official` bit

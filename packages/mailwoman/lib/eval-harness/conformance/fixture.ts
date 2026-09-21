@@ -42,19 +42,15 @@ import type { GauntletGeocodeOpts } from "#eval-harness/gauntlet/harness"
  * Each names an observable interface a law can preserve.
  * Adding one is a reviewed instrument in `comparators.ts`, never an inline callback in a fixture.
  *
- * - `resolution_identity` — which entity was resolved, read from the namespaced place ids and nothing else.
- *   It never reads a coordinate, so an identity law cannot pass because two
- *   different places happen to sit close together.
- * - `assembled_coordinate` — where the answer landed, graded on the Gauntlet's
- *   own great-circle tolerance and tier.
- * - `parse_whole_strict` — the whole component map, key set included,
- *   under the Gauntlet's exact case-folded equality.
+ * - `resolution_identity` — which entity was resolved, read from the namespaced place ids and nothing else. It never
+ *   reads a coordinate, so an identity law cannot pass because two different places happen to sit close together.
+ * - `assembled_coordinate` — where the answer landed, graded on the Gauntlet's own great-circle tolerance and tier.
+ * - `parse_whole_strict` — the whole component map, key set included, under the Gauntlet's exact case-folded equality.
  * - `component_map` — the invariance suite's critical/non-critical severity reading over the same map.
  * - `mechanism_shape` — the mechanism-account shapes the two runs matched.
- * - `candidate_admissibility` — which candidates the resolver's own lookups held,
- *   read from the recorded candidate tables with their fetch windows.
- *   The only comparator that reads the pipeline's interior rather than its answer,
- *   and the only one whose observation can fail to decide: see `candidate-admissibility.ts`.
+ * - `candidate_admissibility` — which candidates the resolver's own lookups held, read from the recorded candidate tables
+ *   with their fetch windows. The only comparator that reads the pipeline's interior rather than its answer, and the
+ *   only one whose observation can fail to decide: see `candidate-admissibility.ts`.
  */
 export const OUTCOME_COMPARATORS = [
 	"resolution_identity",
@@ -70,12 +66,11 @@ export type OutcomeComparatorName = (typeof OUTCOME_COMPARATORS)[number]
 /**
  * The closed set of relations a law can expect between the base and variant outcomes.
  *
- * - `equivalent` — a normalization law: the variant carries the same information,
- *   so the comparator must find no difference on its axis.
- * - `refines` — a refinement law: the variant carries more information,
- *   so the variant's outcome must contain the base's and add to it.
- * - `diverges` — a contradiction law: the variant carries different information,
- *   so the outcomes must differ.
+ * - `equivalent` — a normalization law: the variant carries the same information, so the comparator must find no
+ *   difference on its axis.
+ * - `refines` — a refinement law: the variant carries more information, so the variant's outcome must contain the base's
+ *   and add to it.
+ * - `diverges` — a contradiction law: the variant carries different information, so the outcomes must differ.
  */
 export const CONFORMANCE_RELATIONS = ["equivalent", "refines", "diverges"] as const
 
@@ -87,12 +82,10 @@ export type ConformanceRelation = (typeof CONFORMANCE_RELATIONS)[number]
  * The Gauntlet regression layer's own `CaseStatus`, spelled again here because a law suite
  * grades relations rather than cases and must not import the corpus schema to say so.
  *
- * - `pass` — the default, and the only status that checks.
- *   A `pass` row whose law is violated fails the run.
- * - `known_fail` / `improvement_target`.
- *   The row is run and reported, and does not block.
- *   A tracked row that starts holding is printed as a promotion instruction,
- *   which is what keeps the tracked list from becoming a place rows go to be forgotten.
+ * - `pass` — the default, and the only status that checks. A `pass` row whose law is violated fails the run.
+ * - `known_fail` / `improvement_target`. The row is run and reported, and does not block. A tracked row that starts
+ *   holding is printed as a promotion instruction, which is what keeps the tracked list from becoming a place rows go
+ *   to be forgotten.
  *
  * A red row is never deleted to make a run green, and it is never re-stated as `expect: diverges`
  * either: that would make the suite assert the defect, so fixing the defect would fail the suite.

@@ -50,10 +50,10 @@ const INDEX: ReadonlyMap<string, ReadonlyArray<VariantAlias>> = (() => {
  *
  * - `unscoped` (confidence 1) when the record declares no locales at all.
  * - `exact` (confidence 1) when the detected locale is one the record declares.
- * - `language` (confidence 0.5) when only the language subtag agrees — weaker on purpose,
- *   because regional variants are by definition regional.
- * - `null` otherwise, and for any scoped record when the locale is unknown:
- *   a phrasing declared regional cannot be reached without knowing the region.
+ * - `language` (confidence 0.5) when only the language subtag agrees — weaker on purpose, because regional variants are
+ *   by definition regional.
+ * - `null` otherwise, and for any scoped record when the locale is unknown: a phrasing declared regional cannot be
+ *   reached without knowing the region.
  */
 export function resolveLocaleScope(
 	locales: ReadonlyArray<string> | undefined,
@@ -78,8 +78,8 @@ export function resolveLocaleScope(
  * Confidence:
  *
  * - `1.0` when the detected locale (e.g. `en-AU`) is in the alias's `locales` list.
- * - `0.5` when only the language part matches (e.g. detected `en-IE`, alias supports `en-AU`).
- *   This is intentionally weaker because regional variants are by definition regional.
+ * - `0.5` when only the language part matches (e.g. detected `en-IE`, alias supports `en-AU`). This is intentionally
+ *   weaker because regional variants are by definition regional.
  * - No match when neither holds.
  *
  * Returns all matches sorted by confidence descending.

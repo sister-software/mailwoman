@@ -108,12 +108,10 @@ export function painterFold(surface: string): string[] {
  * Each entry carries its receipt — a v3.19.0 flip-census row where the surface,
  * admitted through a WOF data-noise carrier, painted evidence that broke a golden parse:
  *
- * - `school` — WOF neighbourhood 85872377 / locality 1226662441 named "School"
- *   (pop-row 4019, parent-vouched); "maplehill school, E hill road, plainfield,
- *   VT" parsed locality="School".
- * - `state` — WOF alias rows pairing alt-name "State" with places primary-named "Manor"
- *   (85879785 et al., not a sub-phrase so hygiene passes it); "05857 State Rte 14,
- *   VT" truncated street to "Rte 14".
+ * - `school` — WOF neighbourhood 85872377 / locality 1226662441 named "School" (pop-row 4019, parent-vouched); "maplehill
+ *   school, E hill road, plainfield, VT" parsed locality="School".
+ * - `state` — WOF alias rows pairing alt-name "State" with places primary-named "Manor" (85879785 et al., not a
+ *   sub-phrase so hygiene passes it); "05857 State Rte 14, VT" truncated street to "Rte 14".
  */
 export const EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES: readonly string[] = ["school", "state"]
 

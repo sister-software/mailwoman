@@ -331,7 +331,7 @@ const HOMOGRAPH_WITH_STREET_SHARE = 0.6
  * A homograph contrast row: ~half render the surface as `country` (foreign city),
  * half as the US `region`/`locality` (US ZIP, no country).
  *
- * @returns iso2 for provenance.
+ * @returns Iso2 for provenance.
  */
 function renderHomograph(random: () => number): {
 	fmt: string

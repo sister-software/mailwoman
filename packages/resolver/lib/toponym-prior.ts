@@ -96,10 +96,10 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  * Two ends of that class, and why neither widening the band nor scoping importance
  * to cross-country pairs was taken:
  *
- * - `Irvington` — NJ (population 61,323, importance 0.4258) against NY (6,417, 0.4565), a 0.0307 gap.
- *   The policy wants the town of 61,323 and the band is 0.011 too narrow to reach it.
- * - `Aurangabad` — regresses under a per-country arm that would satisfy Irvington,
- *   while 15 of the 16 ratified bare rows hold.
+ * - `Irvington` — NJ (population 61,323, importance 0.4258) against NY (6,417, 0.4565), a 0.0307 gap. The policy wants
+ *   the town of 61,323 and the band is 0.011 too narrow to reach it.
+ * - `Aurangabad` — regresses under a per-country arm that would satisfy Irvington, while 15 of the 16 ratified bare rows
+ *   hold.
  *
  * No measured feature separates them: widening to cover Irvington breaks Aurangabad,
  * and so does the scoped arm.
@@ -278,7 +278,8 @@ function countedFirstWithinCountry<T extends Rankable>(rows: readonly T[]): T[] 
  * A cluster therefore moves as a unit: a same-country near-tie cannot be split by
  * a foreign row falling between its members' scores.
  *
- * {@link countedFirstWithinCountry} runs last, so a row the gazetteer never counted holds its cluster's slot rather than its country's head.
+ * {@link countedFirstWithinCountry} runs last, so a row the gazetteer never counted
+ * holds its cluster's slot rather than its country's head.
  */
 function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] {
 	// Group by country in first-appearance order.

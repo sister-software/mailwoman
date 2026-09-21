@@ -236,6 +236,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	/**
 	 * `level` picks the table and the row shape, but nothing ties them at the type level:
 	 * {@link buildRow} returns the union and Kysely needs the arm's concrete row.
+	 *
 	 * The narrowings below are sound only because `buildRow` switches on the same `level` —
 	 * keep the two switches in step, or a row shape reaches the wrong table.
 	 */

@@ -348,7 +348,10 @@ describe("importance key in the admin walk (#17)", () => {
 	})
 
 	/**
-	 * #27 — the other half of the #912 change. A bare toponym the model tags `locality` never reaches span-rescore (the tree resolves, so the #685 brake holds), so the soft country prior that fixed `Zürich` cannot see it. The CLI's answer today is to drop the locale country entirely, which is why `--locale en-GB Whitby` and `--default-country GB Whitby` disagree.
+	 * #27 — the other half of the #912 change. A bare toponym the model tags `locality` never reaches span-rescore (the
+	 * tree resolves, so the #685 brake holds), so the soft country prior that fixed `Zürich` cannot see it. The CLI's
+	 * answer today is to drop the locale country entirely, which is why `--locale en-GB Whitby` and `--default-country GB
+	 * Whitby` disagree.
 	 *
 	 * OPT-IN, and the calibration is in `ResolveOpts.localeCountryPrior`: the weight that
 	 * flips these four is disjoint from the weight that holds the en-US board.
@@ -390,16 +393,14 @@ describe("importance key in the admin walk (#17)", () => {
  * Two independent defects, measured through the compiled CLI on 2026-08-13 against the shipped candidate.db
  * (which carries every country at `placetype: country` with real centroids and `is_primary = 1`):
  *
- * - The parser tags bare country names `locality` about half the time
- *   (Japan, China, Nigeria, Australia — vs France, Germany, United States tagged `country`),
- *   and the locality placetype filter made the country row unreachable at any rank:
- *   bare `Japan` answered Japan, Pennsylvania.
- *   Fix: the lone bare locality-tagged span also races the `country` placetype, prominence arbitrates.
- * - Even a correct `country` tag failed under the locale-inferred default scope: the hard filter can
- *   only admit the scope country itself, so bare `Germany` under en-US filtered out the DE row
- *   and fell to Camp Dennison, Ohio (an FTS alias — its historical name is "Germany").
- *   Fix: an inferred scope is withheld from `country`-placetype lookups.
- *   An explicit scope stays supreme.
+ * - The parser tags bare country names `locality` about half the time (Japan, China, Nigeria, Australia — vs France,
+ *   Germany, United States tagged `country`), and the locality placetype filter made the country row unreachable at any
+ *   rank: bare `Japan` answered Japan, Pennsylvania. Fix: the lone bare locality-tagged span also races the `country`
+ *   placetype, prominence arbitrates.
+ * - Even a correct `country` tag failed under the locale-inferred default scope: the hard filter can only admit the scope
+ *   country itself, so bare `Germany` under en-US filtered out the DE row and fell to Camp Dennison, Ohio (an FTS alias
+ *   — its historical name is "Germany"). Fix: an inferred scope is withheld from `country`-placetype lookups. An
+ *   explicit scope stays supreme.
  */
 describe("bare-country class", () => {
 	const WORLD: ResolvedPlace[] = [

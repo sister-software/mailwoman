@@ -311,14 +311,12 @@ export function rungRadiusKm(place: AblationPlace): { radiusKM: number; radiusSo
  *
  * Two rules warrant their keep here:
  *
- * - **Radii are made monotonic going up.** A locality with a real 30 km bbox inside a
- *   county whose bbox is degenerate (floor 75 km) is fine, but the reverse happens too.
- *   An ancestor whose recorded extent is tighter than its child's, which would make a
- *   correct coarsening fail at the coarser rung and pass at the finer one.
- *   The running max removes that, and the pre-max value stays visible via `radiusSource`.
- * - **A place with no usable radius is dropped, loudly.** It becomes an
- *   {@linkcode AblationLadderGap}, so a two-rung ladder is attributable to the gazetteer
- *   rather than read as "this address has no ancestry".
+ * - **Radii are made monotonic going up.** A locality with a real 30 km bbox inside a county whose bbox is degenerate
+ *   (floor 75 km) is fine, but the reverse happens too. An ancestor whose recorded extent is tighter than its child's,
+ *   which would make a correct coarsening fail at the coarser rung and pass at the finer one. The running max removes
+ *   that, and the pre-max value stays visible via `radiusSource`.
+ * - **A place with no usable radius is dropped, loudly.** It becomes an {@linkcode AblationLadderGap}, so a two-rung
+ *   ladder is attributable to the gazetteer rather than read as "this address has no ancestry".
  */
 export function ablationLadderFromChain(
 	anchor: { lat: number; lon: number },
@@ -475,7 +473,8 @@ export function deriveExpectedRung(
 	ladder: AblationLadder,
 	gz: AblationGazetteerProbe,
 	/**
-	 * Words left in the ablated input that no surviving component accounts for ({@linkcode residualWords}). Untyped evidence: it can only stop an abstain expectation, never deepen a rung one.
+	 * Words left in the ablated input that no surviving component accounts for ({@linkcode residualWords}). Untyped
+	 * evidence: it can only stop an abstain expectation, never deepen a rung one.
 	 */
 	residual: readonly string[] = []
 ): ExpectedRung {
@@ -924,7 +923,8 @@ export function buildCaseLadder(
 	 */
 	expected?: { lat: number | null; lon: number | null },
 	/**
-	 * The row's stated country (the corpus's `country` column, ISO-3166 alpha-2) — corpus metadata, never a pipeline output, and the only independent check on the containment walk available here.
+	 * The row's stated country (the corpus's `country` column, ISO-3166 alpha-2) — corpus metadata, never a pipeline
+	 * output, and the only independent check on the containment walk available here.
 	 */
 	statedCountry?: string
 ): { ladder: AblationLadder; anchorSource: "corpus-expected" | "pipeline-anchor" } | { ladder: null; reason: string } {

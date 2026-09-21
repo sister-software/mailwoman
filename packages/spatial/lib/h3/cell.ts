@@ -169,7 +169,7 @@ export function shortCellToInt(cell: H3Cell): number {
  *
  * @param context Names the caller in both messages, so a failure says which reader refused.
  * @throws {Error} When `cells` is empty, when a value is not a short cell, or
- *   when the set mixes resolutions.
+ * when the set mixes resolutions.
  */
 export function recoverShortCellResolution(cells: readonly number[], context = "layer coverage"): number {
 	if (!cells.length) {

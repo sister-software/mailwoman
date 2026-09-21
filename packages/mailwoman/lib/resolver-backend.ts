@@ -172,7 +172,8 @@ export async function createResolverBackend(
 		wofPaths: string | string[]
 		postalCityAliasDB?: string
 		/**
-		 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Candidate backend only (the penalty lives there).
+		 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Candidate backend
+		 * only (the penalty lives there).
 		 *
 		 * Default on.
 		 *
@@ -331,7 +332,7 @@ export async function resolvePOIResolverPaths(options: {
 /**
  * The admin FTS database path a command requires: the explicit flag, else `$MAILWOMAN_WOF_DB`.
  *
- * @throws naming the build command when neither is set.
+ * @throws Naming the build command when neither is set.
  */
 export async function requireWOFPath(explicit?: string): Promise<string> {
 	const resolved = explicit ?? $public.MAILWOMAN_WOF_DB

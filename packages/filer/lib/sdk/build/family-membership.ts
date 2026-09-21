@@ -82,7 +82,11 @@ export interface FamilyMembershipFact {
  * rather than closed over, so every emission path writes through the one statement
  * `buildFilerDatabase` prepared against the shared handle.
  *
- * {@link FamilyMembershipFact.namingNodeID} is the company node this row's `family_id` was minted from. The edge's `to_node_id`, which every caller has already minted immediately above its call. It is deliberately taken as a field rather than re-derived from `identifierType`/`name` here, so the family row and the edge can never name two different nodes.
+ * {@link FamilyMembershipFact.namingNodeID} is the company node this row's `family_id` was minted from.
+ * The edge's `to_node_id`, which every caller has already minted immediately above its call.
+ *
+ * It is deliberately taken as a field rather than re-derived from `identifierType`/`name` here,
+ * so the family row and the edge can never name two different nodes.
  *
  * Persisting it is what lets `filer-lookup.ts`'s `readFamilyDisplayNames` recover the raw spelling by
  * a plain join instead of re-running `canonicalizeOrganizationName` at read time against a sealed,

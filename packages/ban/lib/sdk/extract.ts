@@ -54,10 +54,9 @@ export interface BANAddrRecord {
 	 * `nom_ld` ("nom du lieu-dit") — the hamlet/place name below the commune,
 	 * cleaned via {@link cleanLieuDit}.
 	 *
-	 * Filled on 6.94% of BAN rows nationally. null on the rest and on any row
-	 * whose raw value is junk/duplicate (see
-	 * {@link cleanLieuDit} for the filter breakdown — survey: `.superpowers/sdd/deploc-world-survey.md`, FR section,
-	 * 2026-07-22).
+	 * Filled on 6.94% of BAN rows nationally. null on the rest and on any row whose raw
+	 * value is junk/duplicate (see {@link cleanLieuDit} for the filter breakdown — survey:
+	 * `.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22).
 	 */
 	lieuDit: string | null
 	lon: number

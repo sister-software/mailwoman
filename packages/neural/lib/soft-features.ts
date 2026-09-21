@@ -148,10 +148,8 @@ export interface SoftFeatureSources {
  *
  * 1. Anchor channel from `postcodeAnchorLookup` (no-op when unset).
  * 2. Gazetteer channel from `gazetteerLexicon` (no-op when unset).
- * 3. If both channels exist and `suppressGazetteerNearPostcode`, zero the gazetteer
- *    clue adjacent to postcode-anchor hits.
- * 4. Country channel from `countryLexicon` (no-op when unset) — independent
- *    of the near-postcode choreography.
+ * 3. If both channels exist and `suppressGazetteerNearPostcode`, zero the gazetteer clue adjacent to postcode-anchor hits.
+ * 4. Country channel from `countryLexicon` (no-op when unset) — independent of the near-postcode choreography.
  *
  * Pure + byte-stable: the returned channels are identical to the pre-#718 inline path,
  * so wiring this into `#decode` is a behavior-preserving refactor.

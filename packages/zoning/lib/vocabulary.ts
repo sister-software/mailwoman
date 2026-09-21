@@ -91,7 +91,9 @@ export const GZT_ATTRIBUTION =
  *
  * `noassertion` is spdx's own token for a determination that has not been made, which is exactly the state.
  *
- * {@linkcode assertTierMatchesLicense} refuses a `shipped` build while this holds, so moving the tier takes a deliberate edit at a guard that names the reason rather than a manifest field nobody notices.
+ * {@linkcode assertTierMatchesLicense} refuses a `shipped` build while this holds,
+ * so moving the tier takes a deliberate edit at a guard that names the reason
+ * rather than a manifest field nobody notices.
  */
 export const GZT_LICENSE = "NOASSERTION"
 

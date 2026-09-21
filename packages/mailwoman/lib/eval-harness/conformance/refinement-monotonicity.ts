@@ -50,14 +50,13 @@ export const REFINEMENT_MONOTONICITY_LAW = "refinement-monotonicity"
  * That direction is what makes the pair a refinement at all: the variant says
  * everything the base says and one thing more.
  *
- * - `drop-leading-segment` — remove the first comma-delimited part.
- *   Peels a venue or a street line off the front of a structured address, leaving the place it sits in.
- * - `drop-trailing-segment` — remove the last comma-delimited part.
- *   Peels the coarsest admin off the back, which is the arm that produces an
- *   ambiguous bare toponym from a disambiguated one.
- * - `drop-leading-numeric-token` — remove the leading whitespace-delimited token when it carries a digit.
- *   A postcode or a house number written without a comma is not a segment, so neither segment
- *   step can reach it, and the DE and FR structured rows are written exactly that way.
+ * - `drop-leading-segment` — remove the first comma-delimited part. Peels a venue or a street line off the front of a
+ *   structured address, leaving the place it sits in.
+ * - `drop-trailing-segment` — remove the last comma-delimited part. Peels the coarsest admin off the back, which is the
+ *   arm that produces an ambiguous bare toponym from a disambiguated one.
+ * - `drop-leading-numeric-token` — remove the leading whitespace-delimited token when it carries a digit. A postcode or a
+ *   house number written without a comma is not a segment, so neither segment step can reach it, and the DE and FR
+ *   structured rows are written exactly that way.
  */
 export const REFINEMENT_STEPS = ["drop-leading-segment", "drop-trailing-segment", "drop-leading-numeric-token"] as const
 

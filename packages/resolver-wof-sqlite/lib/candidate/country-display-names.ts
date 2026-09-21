@@ -29,7 +29,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * The display `name` stays whatever the gazetteer already had, so resolving `格鲁吉亚`
  * answers with the Georgia country row rather than renaming it.
  *
- * @returns the row count so the caller can report it.
+ * @returns The row count so the caller can report it.
  *   A zero means ICU supplied nothing, which is a different fact from the pass not having run.
  */
 export function stageCountryDisplayNames(ctx: {

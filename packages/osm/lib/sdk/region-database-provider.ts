@@ -34,9 +34,9 @@ export interface OSMExtracts {
  * `for` is synchronous, so on-disk existence is probed asynchronously once instead of
  * per call: {@linkcode warm} awaits `pathExists` for every supported country's extract
  * and records what exists; `for` consults that map.
- * Prefer
- * {@linkcode OSMRegionDatabaseProvider.create}, which constructs and warms before answering — a provider constructed
- * directly must be warmed before its first `for`, or it answers `{}` for every country.
+ * Prefer {@linkcode OSMRegionDatabaseProvider.create}, which constructs
+ * and warms before answering — a provider constructed directly must be warmed
+ * before its first `for`, or it answers `{}` for every country.
  */
 export class OSMRegionDatabaseProvider implements Disposable {
 	readonly #dataRoot: string
@@ -74,8 +74,8 @@ export class OSMRegionDatabaseProvider implements Disposable {
 	 *
 	 * Awaits `pathExists` for each supported country's rooftop extract, recording the
 	 * paths that exist so `for` never touches the filesystem.
-	 * Safe to call more than once: the probe promise is cached, so every caller (and
-	 * {@linkcode OSMRegionDatabaseProvider.create}) shares one pass.
+	 * Safe to call more than once: the probe promise is cached, so every caller
+	 * (and {@linkcode OSMRegionDatabaseProvider.create}) shares one pass.
 	 */
 	readonly warm = (): Promise<void> => (this.#warmPromise ??= this.#probeExtracts())
 

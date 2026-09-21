@@ -69,7 +69,8 @@ function familyForSegment(shape: Pick<QueryShape, "tokenClasses" | "segments">):
 /**
  * Whether some comma segment of the input is written wholly in a script some declared family serves.
  *
- * {@linkcode carriesFamilySegmentFor} decides one script set. This asks it once per declared family, which is the question the router answers.
+ * {@linkcode carriesFamilySegmentFor} decides one script set.
+ * This asks it once per declared family, which is the question the router answers.
  */
 export function carriesFamilySegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): boolean {
 	return familyForSegment(shape) !== undefined

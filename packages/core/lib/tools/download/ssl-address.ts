@@ -92,7 +92,7 @@ async function fetchCountry(cc: string, outDir: string): Promise<void> {
 /**
  * Download every country's ssl-address metadata record.
  *
- * @returns the failure count (the command maps `failed > 0` to exit 1).
+ * @returns The failure count (the command maps `failed > 0` to exit 1).
  */
 export async function downloadSSLAddress(
 	options: DownloadSSLAddressOptions = {},

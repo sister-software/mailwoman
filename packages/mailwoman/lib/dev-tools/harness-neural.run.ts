@@ -74,7 +74,8 @@ interface Args {
 	postcodeRepair: boolean
 	unitRepair: boolean
 	/**
-	 * #478: also grade the assembled runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper → reconcile → classify), not just the raw neural classifier.
+	 * #478: also grade the assembled runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper →
+	 * reconcile → classify), not just the raw neural classifier.
 	 *
 	 * This is the #566-lesson eval: a pipeline regression (e.g. A reconcile/arbitration change)
 	 * is invisible when the eval grades raw neural.
@@ -333,9 +334,9 @@ async function discoverAssertions(testsDir: string): Promise<ExtractedAssertion[
 //#region Neural output → the visible ClassificationRecord vocabulary
 
 /**
- * Visible classification labels in the assertion vocabulary —
- * the fixture format inherited from the retired rule-based suite:
- * `country, dependency, house_number, level_designator, level, locality, postcode, region, street, unit_designator, unit, venue`.
+ * Visible classification labels in the assertion vocabulary — the fixture format inherited from the retired rule-based
+ * suite: `country, dependency, house_number, level_designator, level, locality, postcode, region, street,
+ * unit_designator, unit, venue`.
  *
  * Anything outside this set is invisible to the comparison and gets folded or dropped.
  */
@@ -359,14 +360,14 @@ const VISIBLE_TAGS = new Set([
  *
  * The fold is principled but lossy:
  *
- * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → `street`
- *   (concat in document order, preserving inter-token spacing implicitly via concatenation).
- * - `intersection_a` + `intersection_b` → `street` (two separate values, matching the
- *   fixtures' `{street: ["Main St", "Second Ave"]}` shape for intersections).
+ * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → `street` (concat in document order,
+ *   preserving inter-token spacing implicitly via concatenation).
+ * - `intersection_a` + `intersection_b` → `street` (two separate values, matching the fixtures' `{street: ["Main St",
+ *   "Second Ave"]}` shape for intersections).
  * - `house_number`, `unit`, `venue`, `country`, `region`, `locality`, `postcode` → identity.
- * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`,
- *   JP-specific tags → dropped (no fixture equivalent).
- *   The dropped tags are surfaced in the per-assertion report so the harness consumer can see what was lost.
+ * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`, JP-specific tags → dropped (no fixture
+ *   equivalent). The dropped tags are surfaced in the per-assertion report so the harness consumer can see what was
+ *   lost.
  */
 function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>): {
 	record: ClassificationRecord

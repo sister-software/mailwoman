@@ -562,8 +562,7 @@ export function classifyTokens(text: string): TokenClass[] {
 /**
  * Walk a string and emit token spans (whitespace-and-punctuation-separated).
  *
- * Callers usually want
- * {@linkcode classifyTokens}, which adds the class and the script to each span.
+ * Callers usually want {@linkcode classifyTokens}, which adds the class and the script to each span.
  */
 export function tokenizeForClass(text: string): SpanRange[] {
 	const tokens: SpanRange[] = []

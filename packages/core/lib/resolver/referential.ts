@@ -86,8 +86,8 @@ export interface ReferentiallyRankable {
  * Negative when `a` outranks `b`, so it drops straight into `Array#sort`.
  *
  * The population tiebreak is not a hedge.
- * It is what makes "rank by referential" and "rank by population" the same order on every
- * input, because {@link referentialFromPopulation} is strictly increasing below
+ * It is what makes "rank by referential" and "rank by population" the same order on
+ * every input, because {@link referentialFromPopulation} is strictly increasing below
  * {@link REFERENTIAL_SATURATION_POPULATION} and constant above it.
  *
  * Without the tiebreak this comparator would silently re-order the world's largest cities:

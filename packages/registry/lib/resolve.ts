@@ -128,7 +128,9 @@ export function normalizePhone(raw: string | null | undefined): string | null {
 }
 
 /**
- * {@link normalizePhone} under the probes' stricter interface: only a full line counts. The last 10 digits when the input carries at least 10, `""` otherwise (never a partial digit string).
+ * {@link normalizePhone} under the probes' stricter interface: only a full line counts.
+ *
+ * The last 10 digits when the input carries at least 10, `""` otherwise (never a partial digit string).
  *
  * Callers guard on truthiness, so `""` reads as "no comparable phone" rather than a weaker key.
  */
@@ -204,8 +206,8 @@ export interface DefaultModelOptions {
 /**
  * The default geocode-first scoring model: name + organization + a spatial signal.
  *
- * The spatial signal is either two comparisons (address-key similarity + great-circle
- * distance — the legacy default, which double-counts) or, with
+ * The spatial signal is either two comparisons (address-key similarity +
+ * great-circle distance — the legacy default, which double-counts) or, with
  * {@link DefaultModelOptions.collapseSpatial}, one collapsed {@link spatialComparison}.
  * `addressFrequency` down-weights agreement on a crowded address either way.
  */

@@ -105,21 +105,16 @@ export function parseAnchorLookup(
 /**
  * How {@linkcode buildAnchorFeatures} decides which substrings to look up.
  *
- * - `alnum-run` — every `[A-Za-z0-9]+` run in the text, uppercased.
- *   The shipped behaviour, and structurally incapable of producing a key that contains a space-joined
- *   pair: `SW1A 2AA` is scanned as `SW1A` then `2AA`, never as the `SW1A2AA` the train painter writes.
- *   Every model shipped to date was trained against a DE/FR/US-only lookup whose
- *   keys are all five digits, so this never mattered.
- *   No space-containing postcode had a key.
- * - `shaped` — the postcode-shaped spans from {@linkcode collectMatches}
- *   (`neural/postcode-repair.ts`), keyed the way `mailwoman_train/tokenizer.py::_paint_anchor_chars`
- *   keys them: `span.replace(" ", "").toUpperCase()`.
- *   This is the train-parity mode.
- *   Pair it with a lookup that has letter-containing keys and a model trained on both.
- *   On its own against a shipped model it is a no-op, because no shaped GB/NL span will resolve.
- *   The shape scan runs over an ascii-uppercased copy of the text ({@linkcode asciiUpper}) —
- *   see #1512 there — so the register cannot silently cost the channel.
- *   The KEY is unchanged.
+ * - `alnum-run` — every `[A-Za-z0-9]+` run in the text, uppercased. The shipped behaviour, and structurally incapable of
+ *   producing a key that contains a space-joined pair: `SW1A 2AA` is scanned as `SW1A` then `2AA`, never as the
+ *   `SW1A2AA` the train painter writes. Every model shipped to date was trained against a DE/FR/US-only lookup whose
+ *   keys are all five digits, so this never mattered. No space-containing postcode had a key.
+ * - `shaped` — the postcode-shaped spans from {@linkcode collectMatches} (`neural/postcode-repair.ts`), keyed the way
+ *   `mailwoman_train/tokenizer.py::_paint_anchor_chars` keys them: `span.replace(" ", "").toUpperCase()`. This is the
+ *   train-parity mode. Pair it with a lookup that has letter-containing keys and a model trained on both. On its own
+ *   against a shipped model it is a no-op, because no shaped GB/NL span will resolve. The shape scan runs over an
+ *   ascii-uppercased copy of the text ({@linkcode asciiUpper}) — see #1512 there — so the register cannot silently cost
+ *   the channel. The KEY is unchanged.
  *
  * The train painter's shape source is `mailwoman_train/postcode_shapes.py::collect_matches`,
  * a declared verbatim mirror of `collectMatches`.
@@ -310,7 +305,11 @@ export function shapedKeyerObligationViolation(
 let warnedShapedObligation = false
 
 /**
- * {@linkcode shapedKeyerObligationViolation}, emitted at most once per process. The tolerant half of the A2 pair: `createScorer` throws on the same condition (the eval path fails closed), while a runtime parse says it once and carries on. The loader interface this package has always had for a mis-shipped channel.
+ * {@linkcode shapedKeyerObligationViolation}, emitted at most once per process.
+ *
+ * The tolerant half of the A2 pair: `createScorer` throws on the same condition
+ * (the eval path fails closed), while a runtime parse says it once and carries on.
+ * The loader interface this package has always had for a mis-shipped channel.
  *
  * Called from `buildSoftFeatures`, not from a loader, and that placement is the point: it is the only
  * site where the loaded lookup and the card-declared mode are both in hand, so it covers every

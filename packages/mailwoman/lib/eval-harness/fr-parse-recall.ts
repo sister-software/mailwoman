@@ -78,7 +78,7 @@ const MAX_REPORTED_FAILURES = 12
  * The tracked workspace is last and is only non-empty on a release checkout
  * where `copy-weights.ts` has run.
  *
- * @throws with every path it tried rather than returning a default.
+ * @throws With every path it tried rather than returning a default.
  *   A missing anchor lexicon changes the parse, so a silent fallback here would
  *   produce a well-formed wrong floor reading.
  */

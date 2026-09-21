@@ -613,20 +613,16 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
  *
  * Writes:
  *
- * - `filer_cluster` rows (`assertion: "inferred"`) for every record `resolveEntities`
- *   considered — singletons included, so every scored node gets an inferred assignment,
- *   mirroring pass (a)'s own completeness.
- *   Idempotent the same way as pass (a) (see the module docstring): cleared
- *   and rewritten wholesale, every run.
- * - `filer_edge` rows (`assertion: "inferred"`) for every entity with more than one member:
- *   one edge per non-representative member → the entity's `representative`, carrying
- *   `match_score` (the entity's `cohesion` — the weakest intra-cluster link weight;
- *   `resolveEntities` doesn't expose the individual pairwise weights behind a larger entity,
- *   so this is the honest single number available) and `evidence` (the full membership, as JSON).
- *   Made idempotent/current every run, same-vintage or not, by clearing this
- *   run's own vintage first and closing out any still-open earlier-vintage row
- *   (see the module docstring's "cross-vintage supersession" section) so a link that
- *   no longer holds never lingers as falsely "still valid".
+ * - `filer_cluster` rows (`assertion: "inferred"`) for every record `resolveEntities` considered — singletons included,
+ *   so every scored node gets an inferred assignment, mirroring pass (a)'s own completeness. Idempotent the same way as
+ *   pass (a) (see the module docstring): cleared and rewritten wholesale, every run.
+ * - `filer_edge` rows (`assertion: "inferred"`) for every entity with more than one member: one edge per
+ *   non-representative member → the entity's `representative`, carrying `match_score` (the entity's `cohesion` — the
+ *   weakest intra-cluster link weight; `resolveEntities` doesn't expose the individual pairwise weights behind a larger
+ *   entity, so this is the honest single number available) and `evidence` (the full membership, as JSON). Made
+ *   idempotent/current every run, same-vintage or not, by clearing this run's own vintage first and closing out any
+ *   still-open earlier-vintage row (see the module docstring's "cross-vintage supersession" section) so a link that no
+ *   longer holds never lingers as falsely "still valid".
  */
 export async function clusterInferredLinks(
 	db: Kysely<FilerDatabase>,

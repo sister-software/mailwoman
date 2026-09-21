@@ -50,18 +50,15 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
  * Both stamp `is_primary = 0` rows only.
  * A place's canonical name and the `place_abbr` region abbreviations are never a gloss or a variant.
  *
- * - `gloss` is anomaly-based, and stamps only the certain core: key volume at/over
- *   the threshold + a non-admin placetype
+ * - `gloss` is anomaly-based, and stamps only the certain core: key volume at/over the threshold + a non-admin placetype
  *
- *   - No measured prominence (population absent and importance unmeasured).
- *     Provenance cannot separate a gloss from an exonym — WOF imported both as
- *     `x_preferred` — and prominence is what rescues New York/Paris.
- * - `abbr` is provenance-based.
- *   The #936 signal: a WOF `variant` name in one of the country's official languages
- *   (or English), measured there at a 13× key-collision rate.
- *   A source without a `names` table (fixture-scale admin DBs) skips this detector loudly.
+ *   - No measured prominence (population absent and importance unmeasured). Provenance cannot separate a gloss from an
+ *     exonym — WOF imported both as `x_preferred` — and prominence is what rescues New York/Paris.
+ * - `abbr` is provenance-based. The #936 signal: a WOF `variant` name in one of the country's official languages (or
+ *   English), measured there at a 13× key-collision rate. A source without a `names` table (fixture-scale admin DBs)
+ *   skips this detector loudly.
  *
- * @returns the stamp counts plus the census the prototype exists to report:
+ * @returns The stamp counts plus the census the prototype exists to report:
  *   how much of the ≥-threshold key tail carries any role.
  */
 export function stampNameRoles(ctx: {

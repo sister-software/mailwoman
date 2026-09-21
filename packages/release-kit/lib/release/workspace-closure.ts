@@ -41,7 +41,7 @@ export async function workspaceDirectories(repoRoot: string): Promise<Map<string
  * The set a consumer's `npm install` of the seeds pulls from the registry, computed
  * so a package added to a seed's graph is picked up without anyone editing a list.
  *
- * @throws when a seed or a reached dependency names no workspace: a `workspace:`
+ * @throws When a seed or a reached dependency names no workspace: a `workspace:`
  *   specifier that resolves nowhere is a broken manifest rather than an absence.
  */
 export async function walkWorkspaceClosure(repoRoot: string, seeds: readonly string[]): Promise<Map<string, string>> {

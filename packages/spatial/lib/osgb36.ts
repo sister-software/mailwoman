@@ -401,7 +401,8 @@ export function osgb36ToWGS84(point: NationalGridPoint): GeodeticLatLon {
 }
 
 /**
- * {@link osgb36ToWGS84} in GeoJSON axis order — `[longitude, latitude]`, matching {@link Coordinates2D} and every geometry helper in this package.
+ * {@link osgb36ToWGS84} in GeoJSON axis order — `[longitude, latitude]`, matching
+ * {@link Coordinates2D} and every geometry helper in this package.
  */
 export function osgb36ToCoordinates2D(point: NationalGridPoint): Coordinates2D {
 	const { latitude, longitude } = osgb36ToWGS84(point)

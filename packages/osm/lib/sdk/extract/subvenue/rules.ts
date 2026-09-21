@@ -41,8 +41,8 @@ export type SubVenueTier = (typeof SubVenueTier)[keyof typeof SubVenueTier]
  * One match rule: `designatorID` wins when every `[key, value]` pair in `all` is
  * present on the feature (a conjunction within a rule).
  *
- * A disjunction across tags is expressed as multiple rules sharing a `designatorID` — see
- * {@link SUBVENUE_TAG_RULES}'s two `platform` rules and two `station` rules.
+ * A disjunction across tags is expressed as multiple rules sharing a `designatorID` —
+ * see {@link SUBVENUE_TAG_RULES}'s two `platform` rules and two `station` rules.
  */
 export interface SubVenueTagRule {
 	/**
@@ -69,20 +69,17 @@ export interface SubVenueTagRule {
  *
  * Provenance, per rule, all documented OSM tags:
  *
- * - `aeroway=terminal` / `aeroway=gate` — the two `OSM_AEROWAY_STRUCTURE_DESIGNATORS`
- *   already in the span proposer's vocabulary.
- *   This is the class that motivated the whole arc.
- * - `building=terminal` — the building-classification equivalent, used where the
- *   terminal is mapped as a building rather than an aeroway feature.
- * - `public_transport=platform` / `railway=platform` — the rail equivalent.
- *   The corpus task asks for both aviation and rail specifically because their
- *   naming conventions differ (`Concourse B` vs `Platform 3`).
+ * - `aeroway=terminal` / `aeroway=gate` — the two `OSM_AEROWAY_STRUCTURE_DESIGNATORS` already in the span proposer's
+ *   vocabulary. This is the class that motivated the whole arc.
+ * - `building=terminal` — the building-classification equivalent, used where the terminal is mapped as a building rather
+ *   than an aeroway feature.
+ * - `public_transport=platform` / `railway=platform` — the rail equivalent. The corpus task asks for both aviation and
+ *   rail specifically because their naming conventions differ (`Concourse B` vs `Platform 3`).
  * - `aeroway=aerodrome`, `railway=station`, `public_transport=station` — the containing venues.
- * - `amenity=university` / `amenity=college` / `amenity=hospital` — mapped to `campus`,
- *   which is a WOF placetype already in `WOF_VENUE_STRUCTURE_PLACETYPES`.
- *   `wof-osm-placetype-map.mdx` rates the WOF↔OSM mapping for `campus` as moderate
- *   confidence (no single tag. these three amenities plus `landuse=education`),
- *   so treat these rows as the weakest in the table.
+ * - `amenity=university` / `amenity=college` / `amenity=hospital` — mapped to `campus`, which is a WOF placetype already
+ *   in `WOF_VENUE_STRUCTURE_PLACETYPES`. `wof-osm-placetype-map.mdx` rates the WOF↔OSM mapping for `campus` as moderate
+ *   confidence (no single tag. these three amenities plus `landuse=education`), so treat these rows as the weakest in
+ *   the table.
  *
  * Not here, deliberately: `indoor=*` (Simple Indoor Tagging).
  * `wof-osm-placetype-map.mdx` establishes that concourses and wings live in OSM's indoor scheme
@@ -126,8 +123,8 @@ export const PROMOTED_KEYS_BY_LAYER: PromotedKeysByLayer = {
 }
 
 /**
- * Distinct tag keys referenced across a rule table's `all` conjunctions, in first-seen order — the shared
- * {@link distinctTagKeys}, re-exported under this module's established name.
+ * Distinct tag keys referenced across a rule table's `all` conjunctions, in first-seen order —
+ * the shared {@link distinctTagKeys}, re-exported under this module's established name.
  */
 export function distinctSubVenueTagKeys(rules: readonly SubVenueTagRule[]): string[] {
 	return distinctTagKeys(rules)

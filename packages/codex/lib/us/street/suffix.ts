@@ -109,7 +109,7 @@ export function matchCase(target: string, reference: string): string {
  * If the last whitespace-separated word of `street` is a known USPS suffix variant,
  * return the canonical key and the matched word.
  *
- * @returns null if the trailing word isn't a known suffix.
+ * @returns Null if the trailing word isn't a known suffix.
  */
 export function matchTrailingSuffix(street: string): { canonical: USStreetSuffix; matched: string } | null {
 	const trimmed = street.trim()

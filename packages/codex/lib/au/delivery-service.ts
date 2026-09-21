@@ -203,7 +203,7 @@ export function isAuDeliveryService(input: unknown): boolean {
  * Normalize a recognized delivery-service phrase to the canonical amas form
  * (`"g.p.o. Box 123"` → `"GPO BOX 123"`).
  *
- * @returns the input unchanged if it isn't one.
+ * @returns The input unchanged if it isn't one.
  */
 export function normalizeAuDeliveryService(input: string): string {
 	const m = matchAuDeliveryService(input)

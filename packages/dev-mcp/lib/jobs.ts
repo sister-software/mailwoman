@@ -68,7 +68,7 @@ export class JobRegistry {
 	/**
 	 * Spawn a child and track it.
 	 *
-	 * @returns immediately.
+	 * @returns Immediately.
 	 */
 	start(label: string, command: string, args: string[], cwd: string): Job {
 		const jobID = `job-${++this.#counter}`

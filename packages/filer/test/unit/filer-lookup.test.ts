@@ -997,7 +997,11 @@ describe("§7-3a criteria", () => {
 describe("§7-3b criteria", () => {
 	describe("1. Family and entity cluster are never conflated (required)", () => {
 		/**
-		 * Structural half: {@link FilerLookupCluster} (`cluster_id`/`members`) and {@link FilerLookupFamily} (`family_id`/`relationship`) are shapes with no field in common — assigning one to a variable typed as the other is a compile error (`@ts-expect-error` below asserts exactly that). Only `tsc` (`yarn typecheck:tests`) checks this. `yarn vitest run` alone (esbuild, types stripped) skips the `@ts-expect-error` line entirely, so the runtime half in the next test is what actually fails if the two rollups ever get folded together.
+		 * Structural half: {@link FilerLookupCluster} (`cluster_id`/`members`) and {@link FilerLookupFamily}
+		 * (`family_id`/`relationship`) are shapes with no field in common — assigning one to a variable typed as the other
+		 * is a compile error (`@ts-expect-error` below asserts exactly that). Only `tsc` (`yarn typecheck:tests`) checks
+		 * this. `yarn vitest run` alone (esbuild, types stripped) skips the `@ts-expect-error` line entirely, so the
+		 * runtime half in the next test is what actually fails if the two rollups ever get folded together.
 		 */
 		it("FilerLookupCluster and FilerLookupFamily are structurally incompatible types", () => {
 			const clusterShaped: FilerLookupCluster = { cluster_id: "authoritative:x", members: ["a", "b"] }

@@ -25,11 +25,10 @@ export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetyp
  * Per-token rules:
  *
  * - Strip all punctuation except trailing `*` from each whitespace-separated token.
- * - **Trailing `*`** is preserved as FTS5 **prefix syntax** — `627*` becomes the literal `627*` (unquoted).
- *   The caller signaled they want a prefix.
- *   Respect that.
- * - All other tokens are wrapped in `"..."` as a single-word phrase.
- *   Conservative — handles apostrophes, parens, accented input, etc. safely.
+ * - **Trailing `*`** is preserved as FTS5 **prefix syntax** — `627*` becomes the literal `627*` (unquoted). The caller
+ *   signaled they want a prefix. Respect that.
+ * - All other tokens are wrapped in `"..."` as a single-word phrase. Conservative — handles apostrophes, parens, accented
+ *   input, etc. safely.
  * - Multiple tokens join with implicit `and`.
  *
  * Examples:
@@ -37,8 +36,8 @@ export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetyp
  * - `"Paris"` → `"Paris"` (phrase)
  * - `"627*"` → `627*` (prefix)
  * - `"St. (Petersburg)"` → `"St" "Petersburg"` (two phrases, and-joined)
- * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation splits — #945. Fusing to
- *   `ThironGardais` matched nothing because the FTS doc tokenizes the hyphenated name as two terms)
+ * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation splits — #945. Fusing to `ThironGardais` matched
+ *   nothing because the FTS doc tokenizes the hyphenated name as two terms)
  * - `"110 00"` with `fuseTokens` (postcode-typed) → `"110" "00"` per-token fused — the #920 name law
  * - `"Pari* TX"` → `Pari* "TX"` (mixed prefix + phrase)
  * - `"*"` alone → `""` (no body → drop)

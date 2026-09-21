@@ -257,8 +257,8 @@ await materializeDevOverlay({
 	/**
 	 * Insert `entry` into a JSON array-valued key, immediately after `after`, preserving tab indentation.
 	 *
-	 * @returns false when the entry is already present so re-running the command
-	 *   is a no-op rather than a duplicate.
+	 * @returns False when the entry is already present so re-running the command
+	 * is a no-op rather than a duplicate.
 	 */
 	async function registerInJSONArray(file: string, findAfter: string, entry: string): Promise<boolean> {
 		const path = repoPath(file)

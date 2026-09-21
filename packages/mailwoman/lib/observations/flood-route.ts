@@ -116,7 +116,8 @@ export const DESIGNATION_REFUSALS = [
 	 */
 	"no_coordinate",
 	/**
-	 * The layer holds no coverage row for the location. Outside the authority's footprint, which is unknown and never a low-hazard reading.
+	 * The layer holds no coverage row for the location. Outside the authority's footprint, which is unknown and never a
+	 * low-hazard reading.
 	 */
 	"outside_authority_footprint",
 ] as const

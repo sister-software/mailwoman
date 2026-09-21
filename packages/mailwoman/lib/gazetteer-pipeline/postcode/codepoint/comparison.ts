@@ -129,7 +129,8 @@ export interface CodePointCheckReport {
 	onlyInCodePoint: AreaHistogram
 	onlyInIncumbent: AreaHistogram
 	/**
-	 * {@link onlyInIncumbent}, decomposed. See {@link IncumbentOnlyBreakdown}.
+	 * {@link onlyInIncumbent}, decomposed.
+	 * See {@link IncumbentOnlyBreakdown}.
 	 */
 	incumbentOnlyBreakdown: IncumbentOnlyBreakdown
 	delta: DeltaDistribution

@@ -173,7 +173,9 @@ export interface NeuralParseTrace {
 	 */
 	localeLogits?: number[]
 	/**
-	 * #727 stage-2: per-span type scores from the semi-Markov head — `spanScores[token][length-1][type]`. Absent on pre-v3 bundles (the model exports no `span_scores`); the type axis lives in the weights bundle's `semi-crf-transitions.json`, never hardcoded here.
+	 * #727 stage-2: per-span type scores from the semi-Markov head — `spanScores[token][length-1][type]`. Absent on
+	 * pre-v3 bundles (the model exports no `span_scores`); the type axis lives in the weights bundle's
+	 * `semi-crf-transitions.json`, never hardcoded here.
 	 */
 	spanScores?: number[][][]
 	/**

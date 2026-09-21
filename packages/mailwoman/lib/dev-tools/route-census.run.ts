@@ -57,14 +57,12 @@
  *
  * Two routers run here and a third is named:
  *
- * - `script` is the shipped router (`routeFamilyForText`).
- *   Abstaining means the caller's locale decides, which for a Latin request is
- *   the ordinary path rather than a failure.
- * - `locale-hint` is `@mailwoman/locale-hint`'s `detectLocale` folded to a family.
- *   It costs a query-shape computation and runs before any model.
- * - The model's `locale_logits` router is left out.
- *   Reading that output needs a parse, so a posterior route runs the primary graph before
- *   it can pick another one, and that cost belongs in the same measurement as its accuracy.
+ * - `script` is the shipped router (`routeFamilyForText`). Abstaining means the caller's locale decides, which for a
+ *   Latin request is the ordinary path rather than a failure.
+ * - `locale-hint` is `@mailwoman/locale-hint`'s `detectLocale` folded to a family. It costs a query-shape computation and
+ *   runs before any model.
+ * - The model's `locale_logits` router is left out. Reading that output needs a parse, so a posterior route runs the
+ *   primary graph before it can pick another one, and that cost belongs in the same measurement as its accuracy.
  *   Reading it also means loading weights, which this tool does not do.
  *
  * Run:

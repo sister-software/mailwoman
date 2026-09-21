@@ -106,7 +106,7 @@ function isAreaShape(area: unknown): area is string {
 /**
  * The constituent country a postcode area belongs to.
  *
- * @returns the explicit country for a known non-England area (e.g. `BT` → `NIR`, `G` → `SCT`, `CF` → `WLS`),
+ * @returns The explicit country for a known non-England area (e.g. `BT` → `NIR`, `G` → `SCT`, `CF` → `WLS`),
  *   and `ENG` as the default for any other validly-shaped area.
  *   England is by far the largest, so the default is transparent and the non-England
  *   exceptions live in {@link GB_POSTCODE_AREA_COUNTRY}.

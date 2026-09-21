@@ -152,7 +152,7 @@ export function normalizeOSMPostcode(raw: string): string {
  * Read an element's coordinate: nodes carry `lat`/`lon` directly, ways and relations
  * carry `center` because the query asked for `out center`.
  *
- * @returns null when neither is usable.
+ * @returns Null when neither is usable.
  */
 function elementPoint(element: OverpassElement): PostcodePoint | null {
 	const lat = element.lat ?? element.center?.lat

@@ -388,7 +388,7 @@ export async function writeLayerManifest(db: layerschemahandle, manifest: LayerM
 /**
  * Read + validate the manifest.
  *
- * @throws if the table is empty, multi-row, or invalid.
+ * @throws If the table is empty, multi-row, or invalid.
  */
 export async function readLayerManifest(db: layerschemahandle): Promise<LayerManifest> {
 	const rows = await db.selectFrom("layer_manifest").selectAll().execute()

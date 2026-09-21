@@ -228,26 +228,19 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
  *
  * 1. Coordinate, great-circle against `expect_tolerance_m` (default {@linkcode DEFAULT_TOL_M}).
  * 2. Tier, strict — an `address_point` that drifts to `admin` is a regression even inside tolerance.
- * 3. Place identity (#1507, wired 2026-08-06) — `expect_place_name` / `expect_place_id`
- *    against the resolved {@linkcode resolvedPlace}.
- *    This is the one the other three cannot express: the country sweep's family-A rows
- *    (Gaborone → the Austrian hamlet `Aichegg`, Kinshasa → `Alionys II`, Djibouti → `Ober-Himmeri`)
- *    came back with the right parsed locality and only a coordinate 8,045 km away to say so, and a row
- *    whose expected place sits inside a 25 km bar of its impostor would have had nothing at all.
- *    The corpus stored both columns from the first migration and no branch read them,
- *    so "wrong place, plausible coordinate" was unassertable for the corpus's whole life.
- * 4. Components, exact case-insensitive per key, against the parsed/assembled
- *    spans ({@linkcode componentMatches}).
- *    Last because a corrupt `expect_components` JSON short-circuits the rest of its check,
- *    and the place check must still have run.
- *    Rows whose input carries a span in two or more scripts opt in per key via
- *    `expect_component_renderings` — `{ tag: [rendering, …] }` — and for a listed key the
- *    assertion becomes: {@linkcode scriptRenderings} of the got value must contain every
- *    listed rendering, case-folded (both scripts required when the case defines both).
- *    Nothing else about that value is asserted.
- *    Precedence: a key present in `expect_component_renderings` supersedes
- *    the same key in `expect_components`; an empty rendering list throws
- *    (an authoring bug the seed schema refuses upstream).
+ * 3. Place identity (#1507, wired 2026-08-06) — `expect_place_name` / `expect_place_id` against the resolved
+ *    {@linkcode resolvedPlace}. This is the one the other three cannot express: the country sweep's family-A rows
+ *    (Gaborone → the Austrian hamlet `Aichegg`, Kinshasa → `Alionys II`, Djibouti → `Ober-Himmeri`) came back with the
+ *    right parsed locality and only a coordinate 8,045 km away to say so, and a row whose expected place sits inside a
+ *    25 km bar of its impostor would have had nothing at all. The corpus stored both columns from the first migration
+ *    and no branch read them, so "wrong place, plausible coordinate" was unassertable for the corpus's whole life.
+ * 4. Components, exact case-insensitive per key, against the parsed/assembled spans ({@linkcode componentMatches}). Last
+ *    because a corrupt `expect_components` JSON short-circuits the rest of its check, and the place check must still
+ *    have run. Rows whose input carries a span in two or more scripts opt in per key via `expect_component_renderings`
+ *    — `{ tag: [rendering, …] }` — and for a listed key the assertion becomes: {@linkcode scriptRenderings} of the got
+ *    value must contain every listed rendering, case-folded (both scripts required when the case defines both). Nothing
+ *    else about that value is asserted. Precedence: a key present in `expect_component_renderings` supersedes the same
+ *    key in `expect_components`; an empty rendering list throws (an authoring bug the seed schema refuses upstream).
  */
 export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	const issues: string[] = []

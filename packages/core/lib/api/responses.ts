@@ -239,13 +239,11 @@ function responseReason(status: number): string {
  * across 18 failure shapes in the exact `TileAPI` configuration found **16 of
  * them changed**, not the two originally claimed:
  *
- * - Every responseless failure (`ERR_NETWORK`, `econnrefused`, `econnreset`, `econnaborted`,
- *   `etimedout`, `ERR_CANCELED`) used to collapse into a uniform 500.
- *   They now split into 503 / 504 / 400 by cause, and `ERR_CANCELED` flips from
- *   transient to terminal, which is the point.
- *   A caller who cancelled should not requeue.
- * - Every non-401 http status used to rethrow the raw `AxiosError`, so `status`-based branching
- *   (404 → skip, 403 → abort) had to reach into `error.response`. 401's own message and URN changed too.
+ * - Every responseless failure (`ERR_NETWORK`, `econnrefused`, `econnreset`, `econnaborted`, `etimedout`, `ERR_CANCELED`)
+ *   used to collapse into a uniform 500. They now split into 503 / 504 / 400 by cause, and `ERR_CANCELED` flips from
+ *   transient to terminal, which is the point. A caller who cancelled should not requeue.
+ * - Every non-401 http status used to rethrow the raw `AxiosError`, so `status`-based branching (404 → skip, 403 → abort)
+ *   had to reach into `error.response`. 401's own message and URN changed too.
  *
  * The earlier claim that `econnaborted`/`etimedout`/`ERR_CANCELED` resolved the
  * chain with `undefined` was wrong for every shape axios actually produces: the old

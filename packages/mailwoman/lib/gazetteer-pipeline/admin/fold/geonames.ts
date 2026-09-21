@@ -40,7 +40,8 @@ export interface FoldGeonamesOptions {
 	 */
 	alternateDir?: string
 	/**
-	 * #267/#1026: countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link locality ancestry.
+	 * #267/#1026: countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link
+	 * locality ancestry.
 	 *
 	 * Pass only zero-coverage locales (no WOF/Overture admin) — see `geonamesAdminGapCountries()`.
 	 *

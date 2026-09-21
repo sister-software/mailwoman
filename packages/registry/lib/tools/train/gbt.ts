@@ -88,7 +88,8 @@ export interface TrainDedupGBTOptions {
 	 * Cost-sensitive training (#625): up-weight the negative (distinct-pair) class by this
 	 * factor so the model is more conservative about merging — directly trades recall for
 	 * precision to reduce over-merge. 1 = the symmetric class-balanced default;
-	 * >1 penalizes a false merge more than a missed one.
+	 *
+	 * > 1 penalizes a false merge more than a missed one.
 	 */
 	cost?: number
 	/**

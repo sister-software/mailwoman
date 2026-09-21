@@ -136,7 +136,7 @@ export interface AdapterRunManifest {
  * Returns the manifest describing the run.
  * Writes `canonical.jsonl` + `manifest.json` under `outputDir/<adapter.id>/`.
  *
- * @throws if the output directory cannot be created, if a row arrives with a missing
+ * @throws If the output directory cannot be created, if a row arrives with a missing
  *   required field, or if the abort signal fires.
  */
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
@@ -258,7 +258,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
  *
  * Stops on the first failure (caller can filter the registry before calling if partial-failure is desired).
  *
- * @returns the manifests in registry insertion order.
+ * @returns The manifests in registry insertion order.
  */
 export async function runAllAdapters(
 	registry: AdapterRegistry,

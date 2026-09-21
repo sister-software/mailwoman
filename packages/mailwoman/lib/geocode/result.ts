@@ -26,8 +26,7 @@ import { assembleStreetName } from "#street/name-assembly"
  *
  * - `address_point` — rooftop / parcel centroid. uncertainty_m is a small floor (~1 m)
  * - `interpolated` — house-number estimate. uncertainty_m is honest (calibrated bracket span)
- * - `street` — street centroid for a street-only query (#1042); uncertainty_m
- *   is half the street's bbox diagonal
+ * - `street` — street centroid for a street-only query (#1042); uncertainty_m is half the street's bbox diagonal
  * - `admin` — admin centroid. uncertainty_m is null (no sub-locality estimate available)
  */
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"

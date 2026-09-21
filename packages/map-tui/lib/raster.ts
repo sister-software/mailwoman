@@ -9,10 +9,11 @@
  *
  * Rasterizes vector geometry (polylines, filled polygons, circles) onto a plain rgba
  * byte grid — the shape asciify's rasterize step consumes.
- * Every draw call clips through
- * {@link RGBAGrid.setPixel}, so callers never need to bounds-check geometry themselves.
- * The polyline and circle primitives floor their coordinates to integers on entry;
- * {@link fillPolygon} does not — its scanline edge math keeps ring vertices as given, see its own docstring.
+ * Every draw call clips through {@link RGBAGrid.setPixel}, so callers never
+ * need to bounds-check geometry themselves.
+ *
+ * The polyline and circle primitives floor their coordinates to integers on entry; {@link fillPolygon}
+ * does not — its scanline edge math keeps ring vertices as given, see its own docstring.
  */
 
 import type { RGB } from "#style"

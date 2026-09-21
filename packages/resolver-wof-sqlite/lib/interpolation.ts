@@ -40,8 +40,8 @@ import type { StreetSegmentDatabase } from "#street/segment-schema"
  *
  * - `address_point` — bracketed/extrapolated between real neighbor points from the #476 extract
  *   (`AddressPointInterpolator`), replacing tiger's uniform-spacing assumption with occupancy.
- * - `tiger_range` — linear position within a tiger segment's theoretical house-number
- *   range (`StreetInterpolator`), the fallback for streets too sparse to bracket.
+ * - `tiger_range` — linear position within a tiger segment's theoretical house-number range (`StreetInterpolator`), the
+ *   fallback for streets too sparse to bracket.
  */
 export type InterpolationMethod = "address_point" | "tiger_range"
 

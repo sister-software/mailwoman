@@ -70,14 +70,14 @@ export interface PipelineOpts {
 	 */
 	resolveOpts?: ResolveOpts
 	/**
-	 * #690: title-case detected all-caps ascii input before the Stage 3 classifier (helps on all-caps registry/compliance data).
+	 * #690: title-case detected all-caps ascii input before the Stage 3 classifier (helps on all-caps registry/compliance
+	 * data).
 	 *
 	 * Threaded to `ClassifierOpts.normalizeCase`.
 	 * Detection-restricted
 	 *
-	 * - **Default-on** (#895 settled drift D2. The classifier applies it when unset) —
-	 *   byte-stable for mixed-case input either way.
-	 *   Pass `false` to restore the raw-case parse.
+	 * - **Default-on** (#895 settled drift D2. The classifier applies it when unset) — byte-stable for mixed-case input
+	 *   either way. Pass `false` to restore the raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
@@ -94,7 +94,8 @@ export interface PipelineOpts {
 	 */
 	placetypePair?: PlacetypePairPassthrough
 	/**
-	 * #743/#194: promote a confident coarse-placer guess from the soft `anchorPosterior` boost to a hard country filter (empty→unresolved) — see {@link ResolveOpts.hardCountry}.
+	 * #743/#194: promote a confident coarse-placer guess from the soft `anchorPosterior` boost to a hard country filter
+	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}.
 	 *
 	 * Conditioned three ways: the placer's confidence ≥ `HARD_PLACE_COUNTRY_MIN_CONF`
 	 * (ambiguous DK↔no stay soft), the country is in the coverage `HARD_PLACE_COUNTRY_SAFELIST`
@@ -106,7 +107,9 @@ export interface PipelineOpts {
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`) when it carries one, else the built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback (byte-identical for artifacts predating the manifest).
+	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer
+	 * artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`) when it carries one, else the
+	 * built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback (byte-identical for artifacts predating the manifest).
 	 *
 	 * Supply a set to test/measure a different coverage frontier.
 	 *
@@ -229,24 +232,39 @@ export type QueryKind =
 	| "poi_query"
 	| "vague"
 	/**
-	 * ROAD_TO_V9 §4 — the query-intent vocabulary. Four kinds that describe what the user is asking FOR rather than what their string is shaped like. They are ordinary members of this union (intent is vocabulary of the existing Stage 2.5, never a new stage), and each one, when it fires, attaches a {@link QueryIntentMarker} to the result.
+	 * ROAD_TO_V9 §4 — the query-intent vocabulary. Four kinds that describe what the user is asking FOR rather than what
+	 * their string is shaped like. They are ordinary members of this union (intent is vocabulary of the existing Stage
+	 * 2.5, never a new stage), and each one, when it fires, attaches a {@link QueryIntentMarker} to the result.
 	 *
-	 * Two of the four are deliberately ranked below their structural incumbent and therefore surface in {@link QueryKindResult.alternatives} rather than as the top kind — see the individual docstrings in `@mailwoman/kind-classifier`'s `intent-rules.ts`. That is the D-rule discharge: the top kind is the only thing the coordinator routes on (`deriveInputMode`, `canShortCircuit`, the POI branch), so leaving it untouched is what makes the addition provably answer-neutral on the populations those incumbents already own.
+	 * Two of the four are deliberately ranked below their structural incumbent and therefore surface in
+	 * {@link QueryKindResult.alternatives} rather than as the top kind — see the individual docstrings in
+	 * `@mailwoman/kind-classifier`'s `intent-rules.ts`. That is the D-rule discharge: the top kind is the only thing the
+	 * coordinator routes on (`deriveInputMode`, `canShortCircuit`, the POI branch), so leaving it untouched is what makes
+	 * the addition provably answer-neutral on the populations those incumbents already own.
 	 */
 	/**
-	 * A single coherent place-name carrying no address grammar — no house number, no postcode, no street-type word. A strict refinement of `locality_only` (which also admits an admin tail: `Paris, FR`), scored just below it so the top kind never moves. Feeds the declared-ambiguity path: a bare toponym whose resolved candidates are not decisive gets a `declared_ambiguity` marker at geocode time.
+	 * A single coherent place-name carrying no address grammar — no house number, no postcode, no street-type word. A
+	 * strict refinement of `locality_only` (which also admits an admin tail: `Paris, FR`), scored just below it so the
+	 * top kind never moves. Feeds the declared-ambiguity path: a bare toponym whose resolved candidates are not decisive
+	 * gets a `declared_ambiguity` marker at geocode time.
 	 */
 	| "bare_toponym"
 	/**
-	 * Two coherent toponyms with no address grammar between them — `Paris London`. Classification plus a declared fork, never a router (ROAD_TO_V9 §4.3): structure alone cannot separate a route pair from a comma-free locality+region fragment (`Moscow Idaho`), so both interpretations are named in the marker and neither wins.
+	 * Two coherent toponyms with no address grammar between them — `Paris London`. Classification plus a declared fork,
+	 * never a router (ROAD_TO_V9 §4.3): structure alone cannot separate a route pair from a comma-free locality+region
+	 * fragment (`Moscow Idaho`), so both interpretations are named in the marker and neither wins.
 	 */
 	| "route_pair"
 	/**
-	 * Preposition/deictic locator with no anchor — `gas station near me`, `restaurants nearby`. The query names a category and a relation to the asker, and the asker's position is not in the string. Classification only in v9: the marker states that a focus point is required and absent.
+	 * Preposition/deictic locator with no anchor — `gas station near me`, `restaurants nearby`. The query names a
+	 * category and a relation to the asker, and the asker's position is not in the string. Classification only in v9: the
+	 * marker states that a focus point is required and absent.
 	 */
 	| "near_me"
 	/**
-	 * A bare POI category with nowhere to search — `tacos`, `grocery store`. The anchorless subset of `poi_query`, carrying the resolved `@mailwoman/poi-taxonomy` category id on its marker. Routes exactly as `poi_query` does (the coordinator's POI branch accepts both); resolution against `poi.db` is out of scope.
+	 * A bare POI category with nowhere to search — `tacos`, `grocery store`. The anchorless subset of `poi_query`,
+	 * carrying the resolved `@mailwoman/poi-taxonomy` category id on its marker. Routes exactly as `poi_query` does (the
+	 * coordinator's POI branch accepts both); resolution against `poi.db` is out of scope.
 	 */
 	| "poi_category"
 
@@ -570,8 +588,7 @@ export type PhraseKind =
  *
  * - `span`: the input span (a sub-span of the tokenized input) the proposal applies to.
  * - `kindHypothesis`: structural shape this span looks like.
- * - `confidence`: 0..1 score.
- *   Used by downstream stages to weight proposals.
+ * - `confidence`: 0..1 score. Used by downstream stages to weight proposals.
  *
  * Per "possibilities not constraints", emit a proposal whenever a rule fires — overlapping proposals
  * over the same tokens are expected (e.g. `Saint Petersburg` may surface as one `LOCALITY_PHRASE`
@@ -646,7 +663,8 @@ export interface ClassifierOpts {
 	 */
 	postcodeRepair?: boolean
 	/**
-	 * #690: title-case a detected all-caps ascii input before the model (all-caps registry/compliance data is partly OOD).
+	 * #690: title-case a detected all-caps ascii input before the model (all-caps registry/compliance data is partly
+	 * OOD).
 	 *
 	 * Detection-restricted — mixed-case + non-ascii input is untouched. **Default-on**
 	 * (#895 settled drift D2); `false` restores the raw-case parse.

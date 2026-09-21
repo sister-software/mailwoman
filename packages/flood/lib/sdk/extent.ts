@@ -113,7 +113,7 @@ export interface RealizeExtentOptions {
  * coverage claim is about, and the claim is only as good as the outline it was clipped to.
  *
  * @throws {TypeError} When the document holds no geometry, or a collection
- *   holds anything other than one feature.
+ * holds anything other than one feature.
  */
 export function outlineFromGeoJSON(document: unknown, origin: string): ParsedGeometry {
 	const node = document as {

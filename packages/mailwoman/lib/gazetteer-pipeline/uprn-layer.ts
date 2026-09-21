@@ -99,7 +99,9 @@ export const OPEN_UPRN_LICENSE = "OGL-UK-3.0"
 export const OPEN_UPRN_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * The attribution OS requires of OS OpenData redistributors, in the wording the archive's own `licence.txt` uses. `year` is the OS copyright year as stated in that licence text — not the build year. Republishing a 2026 extract in 2027 still attributes the 2026 data.
+ * The attribution OS requires of OS OpenData redistributors, in the wording the archive's own `licence.txt` uses.
+ * `year` is the OS copyright year as stated in that licence text — not the build year. Republishing a 2026 extract in
+ * 2027 still attributes the 2026 data.
  */
 export function openUPRNAttribution(year: number): string {
 	return `Contains Ordnance Survey data © Crown copyright and database right ${year}.`

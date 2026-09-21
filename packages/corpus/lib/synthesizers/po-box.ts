@@ -119,7 +119,7 @@ const LEADERS_BY_LOCALE = new Map<string, LocaleTemplate>(PO_BOX_LOCALE_TEMPLATE
 /**
  * Inject number-format noise into a box number string.
  *
- * @returns the noisy variant or the original (10% probability of noise per the design).
+ * @returns The noisy variant or the original (10% probability of noise per the design).
  */
 export function maybeNoisifyBoxNumber(num: string, random: () => number): string {
 	if (random() > 0.1) return num
@@ -141,8 +141,8 @@ export function maybeNoisifyBoxNumber(num: string, random: () => number): string
 /**
  * Compose a PO box phrase like "PO Box 123" or "PMB 200".
  *
- * @returns both the phrase and the canonical leader+number so the BIO aligner
- *   can mark the entire span as `po_box`.
+ * @returns Both the phrase and the canonical leader+number so the BIO aligner
+ * can mark the entire span as `po_box`.
  */
 export function composePoBoxPhrase(leader: string, number: string): string {
 	return `${leader} ${number}`

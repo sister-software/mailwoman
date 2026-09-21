@@ -274,7 +274,7 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
  * Suppressing the clue adjacent to the postcode removes the interference
  * while leaving every other clue intact.
  *
- * @returns a new features/confidence pair (does not mutate).
+ * @returns A new features/confidence pair (does not mutate).
  *   `anchorConfidence[i] > 0` marks postcode-span pieces.
  *   Pairs with the train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`)
  *   — enable both or neither.

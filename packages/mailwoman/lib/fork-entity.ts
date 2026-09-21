@@ -79,8 +79,8 @@ function distanceM(latA: number, lonA: number, latB: number, lonB: number): numb
 /**
  * Probe the entity layer for a fork surface.
  *
- * @returns the single entity the world knows by this exact name, or `null`
- *   (check failed / no entity / ambiguous).
+ * @returns The single entity the world knows by this exact name, or `null`
+ * (check failed / no entity / ambiguous).
  */
 export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): ForkEntityHit | null {
 	const nameKey = normalizeLocalityForKey(rawQuery)
@@ -303,19 +303,15 @@ export function probeVenueNearAnchor(
  * The entity answers, applied in tier order — extracted from `geocodeAddressOnce`
  * as one cohesive unit (the ceiling-extraction discipline):
  *
- * 1. The fork→entity probe (#1585's entity half): a declared fork whose incumbent
- *    resolution produced no coordinate takes the worldwide-unique entity.
- *    Default-on under the D-rule.
- *    A null is the only thing that can change.
- * 2. The venue tier (#1684's POI half) — opt-in, default off: a venue-led address that
- *    resolved only to its admin anchor upgrades to the entity with the venue's exact name-key
- *    near that anchor ({@link probeVenueNearAnchor} owns the local-uniqueness discipline).
- *    Measured ceiling before any mechanism existed: 30 of 55 gb_venue* board rows
- *    name a poi.db-visible venue, 15 of them tracked failures.
- *    Measured effect at first light: 7 of 57 rows upgrade admin→venue, all within 0.14 km of their anchors.
- *    Never fires over an address_point/interpolated answer — a street+number
- *    that resolved rooftop is the venue's address — and the flag stays opt-in
- *    until a full-board battery warrants the D-rule promotion.
+ * 1. The fork→entity probe (#1585's entity half): a declared fork whose incumbent resolution produced no coordinate takes
+ *    the worldwide-unique entity. Default-on under the D-rule. A null is the only thing that can change.
+ * 2. The venue tier (#1684's POI half) — opt-in, default off: a venue-led address that resolved only to its admin anchor
+ *    upgrades to the entity with the venue's exact name-key near that anchor ({@link probeVenueNearAnchor} owns the
+ *    local-uniqueness discipline). Measured ceiling before any mechanism existed: 30 of 55 gb_venue* board rows name a
+ *    poi.db-visible venue, 15 of them tracked failures. Measured effect at first light: 7 of 57 rows upgrade
+ *    admin→venue, all within 0.14 km of their anchors. Never fires over an address_point/interpolated answer — a
+ *    street+number that resolved rooftop is the venue's address — and the flag stays opt-in until a full-board battery
+ *    warrants the D-rule promotion.
  */
 export function applyEntityTiers(
 	result: ForkEntityAnswerTarget & {
@@ -416,7 +412,13 @@ function venueHeadSegment(venueRaw: string): string | null {
 }
 
 /**
- * {@link probeVenueNearAnchor} with the qualifier-folding second leg: the exact leg runs first and an exact local-unique hit is never second-guessed. Only when it abstains does the probe retry comparing head segments on both sides ({@link venueHeadSegment}). Local uniqueness binds on the folded key exactly as on the exact one — a chain with two branches in the metro ("The North Face" twice in London) abstains.
+ * {@link probeVenueNearAnchor} with the qualifier-folding second leg: the exact leg
+ * runs first and an exact local-unique hit is never second-guessed.
+ *
+ * Only when it abstains does the probe retry comparing head segments on both
+ * sides ({@link venueHeadSegment}).
+ * Local uniqueness binds on the folded key exactly as on the exact one — a chain with
+ * two branches in the metro ("The North Face" twice in London) abstains.
  */
 export function probeVenueNearAnchorFolded(
 	venueRaw: string,

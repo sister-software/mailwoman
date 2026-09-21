@@ -254,7 +254,7 @@ function checkRows(rows: readonly PremiseLinkageResultRow[]): void {
 /**
  * Suppress, check, and return the report that may leave the controlled environment.
  *
- * @throws before producing anything when the run cannot be published.
+ * @throws Before producing anything when the run cannot be published.
  */
 export function publishableReport(input: PremiseLinkagePreflightInput): PremiseLinkageReport {
 	const smallestPublishableRun = input.report.minCellSize

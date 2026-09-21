@@ -22,7 +22,7 @@ import { describe, expect, it } from "vitest"
  * Build a minimal but real FST binary (one locality entry, "testville") via the
  * actual builder + serializer — no hand-rolled bytes.
  *
- * @returns the written file path.
+ * @returns The written file path.
  */
 async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
 	const dbPath = join(dir, "tiny-wof.db")

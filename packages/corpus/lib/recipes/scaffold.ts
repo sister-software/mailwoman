@@ -20,7 +20,9 @@ import { stableSourceIDFromParts } from "#adapters/utils"
 import { alignRow } from "#utils"
 
 /**
- * {@link stableSourceIDFromParts} under the name the recipes use: arbitrary disambiguator keys (e.g. A variant index `v`) that aren't `ComponentTag`s, which is how the legacy builders kept per-variant ids unique.
+ * {@link stableSourceIDFromParts} under the name the recipes use: arbitrary
+ * disambiguator keys (e.g. A variant index `v`) that aren't `ComponentTag`s,
+ * which is how the legacy builders kept per-variant ids unique.
  */
 export function recipeSourceID(adapterID: string, parts: Record<string, string | undefined>): string {
 	return stableSourceIDFromParts(adapterID, parts)
@@ -38,13 +40,12 @@ export function recipeSourceID(adapterID: string, parts: Record<string, string |
  *
  * Each is attested by a gauntlet board row, which is the bar for adding another:
  *
- * - `leading` — `«postcode» «locality», «region»`.
- *   `Rua da Praia, 15, 8600-315 Lagos, Algarve, Portugal` (`pt_structured`).
- *   The default, and what every tuple written before this field existed means.
- * - `after_locality` — `«locality» «postcode», «region»`.
- *   `…, Barcelona 6001, Anzoátegui, Venezuela` (`ve_city_postcode_trailing_state`).
- * - `after_region` — `«locality», «region» «postcode»`.
- *   `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India` (`in_structured`).
+ * - `leading` — `«postcode» «locality», «region»`. `Rua da Praia, 15, 8600-315 Lagos, Algarve, Portugal`
+ *   (`pt_structured`). The default, and what every tuple written before this field existed means.
+ * - `after_locality` — `«locality» «postcode», «region»`. `…, Barcelona 6001, Anzoátegui, Venezuela`
+ *   (`ve_city_postcode_trailing_state`).
+ * - `after_region` — `«locality», «region» «postcode»`. `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`
+ *   (`in_structured`).
  */
 export type PostcodePlacement = "leading" | "after_locality" | "after_region"
 
@@ -79,8 +80,8 @@ export interface RecipeTuple {
  * `@mailwoman/core/utils` so a recipe keeps importing everything it needs from this one scaffold module.
  *
  * - `makeLcg` (`s = s*1664525 + 1013904223 mod 2^32`) — what the street/po-box/anchor builders seeded.
- * - `makeMulberry32` — what the majority of them used (german, locale, boundary-stress, unit, fr-order,
- *   country-balanced, intersection, fr-admin-split, street-affix, street-bare, po-box-cedex).
+ * - `makeMulberry32` — what the majority of them used (german, locale, boundary-stress, unit, fr-order, country-balanced,
+ *   intersection, fr-admin-split, street-affix, street-bare, po-box-cedex).
  *
  * A recipe must seed the same one its `.mjs` did, the same way it did
  * (usually `seed`, but some derive a per-stream seed), or `--seed N` stops being byte-reproducible.
@@ -150,7 +151,8 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
 }
 
 /**
- * {@link readCSVRecords} over one member of a zip archive — what every recipe reading a cached OA source wants.
+ * {@link readCSVRecords} over one member of a zip archive — what every recipe
+ * reading a cached OA source wants.
  *
  * A source a checkout has not cached yields nothing, after saying so.
  *
@@ -346,7 +348,7 @@ export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
  * Run a canonical row through `alignRow` and, on success, write the `LabeledRow`
  * (+ `synth_method` / `synth_base_id`) as one jsonl line.
  *
- * @returns true if emitted, false if alignment quarantined it.
+ * @returns True if emitted, false if alignment quarantined it.
  */
 export function alignAndWrite(
 	write: WriteRecipeLine,
@@ -458,7 +460,8 @@ export interface RecipeOptions {
 	/**
 	 * `sub-venue`: the sub-venue lexicon JSON.
 	 *
-	 * Default = the committed `corpus/data/sub-venue-lexicon.json`, resolved through the package manifest so it works from the source tree and from `out/`.
+	 * Default = the committed `corpus/data/sub-venue-lexicon.json`, resolved through the package manifest so it works
+	 * from the source tree and from `out/`.
 	 */
 	lexicon?: string
 	/**

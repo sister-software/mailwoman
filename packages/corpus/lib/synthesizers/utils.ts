@@ -79,7 +79,7 @@ function withAugmentation(
 /**
  * Upper-case raw + every component value.
  *
- * @returns null if already all-upper.
+ * @returns Null if already all-upper.
  */
 export const caseUpper: Augmentation = (row) => {
 	if (row.raw === row.raw.toUpperCase()) return null
@@ -98,7 +98,7 @@ export const caseUpper: Augmentation = (row) => {
 /**
  * Lower-case raw + every component value.
  *
- * @returns null if already all-lower.
+ * @returns Null if already all-lower.
  */
 export const caseLower: Augmentation = (row) => {
 	if (row.raw === row.raw.toLowerCase()) return null
@@ -894,8 +894,7 @@ export interface ComposeAdversarialOptions {
 	 * Recommended values (Phase 1.6 §2.1):
 	 *
 	 * - `"place-name-venue"` — venue token shared with locality (`Buffalo Health Clinic, Buffalo NY`).
-	 * - `"place-shaped-venue"` — venue contains a place-shaped
-	 *   substring (`New York, New York Steakhouse, Las Vegas NV`).
+	 * - `"place-shaped-venue"` — venue contains a place-shaped substring (`New York, New York Steakhouse, Las Vegas NV`).
 	 * - `"particle-honorific"` — apostrophe + St./Saint ambiguity (`P'tit St. Denis Street Café`).
 	 */
 	pattern: string
@@ -951,9 +950,8 @@ export type ComposeResult = { kind: "labeled"; row: LabeledRow } | { kind: "quar
  * Returns `{ kind: "quarantined" }` when:
  *
  * - The venue is empty or whitespace-only.
- * - The venue is not NFC-normalized (char offsets over a non-NFC raw are ambiguous —
- *   the same discipline `alignRow` enforces on adapter rows, surfaced as quarantine here
- *   because the venue is caller-supplied data).
+ * - The venue is not NFC-normalized (char offsets over a non-NFC raw are ambiguous — the same discipline `alignRow`
+ *   enforces on adapter rows, surfaced as quarantine here because the venue is caller-supplied data).
  * - The address row fails alignment in isolation (the underlying failure reason is propagated).
  */
 export function composeAdversarialRow(

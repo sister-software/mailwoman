@@ -206,7 +206,9 @@ export interface ResolvedPlace {
 	 */
 	containedByQualifier?: boolean
 	/**
-	 * #1731: `true` when a `parentID` region scope was applied, missed across the whole probe cascade, and the backend's unscoped fallback produced this row. The re-admission path where a wrong-instance namesake enters (the Astoria class: no locality-group row exists under the parent, so the fallback answers population-first from anywhere).
+	 * #1731: `true` when a `parentID` region scope was applied, missed across the whole probe cascade, and the backend's
+	 * unscoped fallback produced this row. The re-admission path where a wrong-instance namesake enters (the Astoria
+	 * class: no locality-group row exists under the parent, so the fallback answers population-first from anywhere).
 	 *
 	 * Absent when the question never arose (no parent scope, or the scoped probe answered).
 	 *
@@ -409,11 +411,10 @@ export interface CoincidentLocality extends ResolvedPlace {
  * Which reading of "resolved weakly" lifts the #685 span-rescore brake,
  * or `false` to take a `placeID` at face value.
  *
- * - `score` — the pick carries `resolver_score: 0`, which the candidate backend writes
- *   when the gazetteer records no population for it.
- * - `containment` — `admin_containment` reads `no_contained_candidate`: the query
- *   named a qualifier, the probe ran, and no candidate sat inside it.
- *   `unavailable` is not this, because the backend could not answer.
+ * - `score` — the pick carries `resolver_score: 0`, which the candidate backend writes when the gazetteer records no
+ *   population for it.
+ * - `containment` — `admin_containment` reads `no_contained_candidate`: the query named a qualifier, the probe ran, and
+ *   no candidate sat inside it. `unavailable` is not this, because the backend could not answer.
  * - `either` — either reading.
  *
  * The two are different claims about the same pick, so a rule has to say which it acts on.
@@ -485,7 +486,11 @@ export interface ResolveOpts {
 	 */
 	defaultCountryIsInferred?: boolean
 	/**
-	 * #1585 — the locale hint's country, scoping the backend's typo-fuzzy tier only. Unlike {@link defaultCountry} this is threaded even where the bare-toponym guard withholds the hard scope: an exact foreign match still resolves (`Paris` under en-US), but a typo correction stays inside the hinted country, and a scoped-empty correction abstains rather than falling through to a world-fuzzy candidate (`Stanmore Bay` under en-NZ must not answer Banmore IN).
+	 * #1585 — the locale hint's country, scoping the backend's typo-fuzzy tier only. Unlike {@link defaultCountry} this
+	 * is threaded even where the bare-toponym guard withholds the hard scope: an exact foreign match still resolves
+	 * (`Paris` under en-US), but a typo correction stays inside the hinted country, and a scoped-empty correction
+	 * abstains rather than falling through to a world-fuzzy candidate (`Stanmore Bay` under en-NZ must not answer Banmore
+	 * IN).
 	 *
 	 * Never a country filter on exact matches.
 	 * The fuzzy tier is the only consumer.
@@ -553,7 +558,8 @@ export interface ResolveOpts {
 	 */
 	anchorWeight?: number
 	/**
-	 * #27 — the locale's country as a soft ranking prior on the admin walk, for the one query shape that has no other country signal: a bare toponym.
+	 * #27 — the locale's country as a soft ranking prior on the admin walk, for the one query shape that has no other
+	 * country signal: a bare toponym.
 	 *
 	 * `--locale en-GB "Whitby"` and `--default-country GB "Whitby"` should not disagree,
 	 * and they do: the second is gold and the first answers Whitby, Ontario, 5,508 km away.
@@ -603,7 +609,8 @@ export interface ResolveOpts {
 	 */
 	localeCountryPriorWeight?: number
 	/**
-	 * #1880 — capital status of a candidate (2 national capital, 1 admin-1 seat, 0 neither), answered by the caller's reference against the candidate's own name + country + coordinates.
+	 * #1880 — capital status of a candidate (2 national capital, 1 admin-1 seat, 0 neither), answered by the caller's
+	 * reference against the candidate's own name + country + coordinates.
 	 *
 	 * Consumed by the resolver's bounded capital promotion
 	 * (`resolver/toponym-prior.ts` — the bare-toponym class only, after the fame key).
@@ -614,7 +621,10 @@ export interface ResolveOpts {
 	 */
 	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 	/**
-	 * #743/#194 — a confident coarse-placer country applied as a hard candidate filter (`query.country`), not the soft {@link anchorPosterior} boost. This collapses the off-continent tail for LOW-population places the soft prior can't move (FI/PL — their towns lose to a high-pop namesake in the population-first gazetteer even when the country is pinned).
+	 * #743/#194 — a confident coarse-placer country applied as a hard candidate filter (`query.country`), not the soft
+	 * {@link anchorPosterior} boost. This collapses the off-continent tail for LOW-population places the soft prior can't
+	 * move (FI/PL — their towns lose to a high-pop namesake in the population-first gazetteer even when the country is
+	 * pinned).
 	 *
 	 * On a miss the node is left unresolved ("in-region or unresolved") rather than re-resolved globally.
 	 *
@@ -882,7 +892,12 @@ export interface ResolveOpts {
 	 * and the node is flagged `postcode_city_mismatch` without `coordinate_source`,
 	 * so the disagreement is still reported and the answer still names one place.
 	 *
-	 * {@link postcodeConsistencyThresholdKm} bounds whether the fallback fires. Without this, nothing bounds how far it then moves the answer. `Nawāda, 744301` is the measured case: `744301` is an Andaman and Nicobar Islands code, the walk selects Nawada in Bihar, and the fallback relocates the coordinate 1,914 km to Port Blair while the result keeps Nawada's place id, so the id and the coordinate name different places.
+	 * {@link postcodeConsistencyThresholdKm} bounds whether the fallback fires.
+	 * Without this, nothing bounds how far it then moves the answer.
+	 *
+	 * `Nawāda, 744301` is the measured case: `744301` is an Andaman and Nicobar Islands code,
+	 * the walk selects Nawada in Bihar, and the fallback relocates the coordinate 1,914 km to Port Blair
+	 * while the result keeps Nawada's place id, so the id and the coordinate name different places.
 	 *
 	 * The fallback's premise is that "a postcode is unambiguous within a country in a way a town name is not".
 	 * A postcode carries no checksum, so a transposed one is a valid code naming a real place,
@@ -914,7 +929,8 @@ export interface ResolveOpts {
 	 * FI and SI carried two of #370's three promotion counts and no coordinate set for
 	 * either survives, so neither was re-measured under the cap.
 	 *
-	 * {@link postcodeCountryCoherence} closes the same disagreement across a border. This is the within-country half, which country scoping does not reach.
+	 * {@link postcodeCountryCoherence} closes the same disagreement across a border.
+	 * This is the within-country half, which country scoping does not reach.
 	 */
 	postcodeConsistencyMaxMoveKm?: number
 	/**
@@ -1044,7 +1060,8 @@ export interface ResolveOpts {
 	 */
 	postcodePrefixPrior?: boolean
 	/**
-	 * #1589 — countries the parsed postcode's format implies (the #928 unforgeable singles plus the shared `NNN NN` CZ/SK/SE/GR family).
+	 * #1589 — countries the parsed postcode's format implies (the #928 unforgeable singles plus the shared `NNN NN`
+	 * CZ/SK/SE/GR family).
 	 *
 	 * Applied by the `postalcode` lookup only when no explicit country selection applies
 	 * (an explicit `defaultCountry` outranks format evidence, which outranks a locale hint):

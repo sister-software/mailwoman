@@ -192,11 +192,13 @@ export const ABSENCE_REFUSALS = [
 	 */
 	"no_poi_answer",
 	/**
-	 * The POI branch answered, but the executor never ran (intent-only mode). A search that did not happen returns nothing for a reason that has nothing to do with the world.
+	 * The POI branch answered, but the executor never ran (intent-only mode). A search that did not happen returns
+	 * nothing for a reason that has nothing to do with the world.
 	 */
 	"executor_did_not_run",
 	/**
-	 * The subject was a brand or a free-text name. The artifact maps categories, so a non-category subject reaches no assertion.
+	 * The subject was a brand or a free-text name. The artifact maps categories, so a non-category subject reaches no
+	 * assertion.
 	 */
 	"subject_not_a_category",
 	/**
@@ -212,19 +214,23 @@ export const ABSENCE_REFUSALS = [
 	 */
 	"no_search_center",
 	/**
-	 * The layer carries no coverage row for the cell the search was centred on — unmapped, which is unknown and never absence.
+	 * The layer carries no coverage row for the cell the search was centred on — unmapped, which is unknown and never
+	 * absence.
 	 */
 	"cell_unsurveyed",
 	/**
-	 * The cell has a coverage row whose basis is `source_present`. The source looked and returned rows. That is presence evidence and supports no exclusion.
+	 * The cell has a coverage row whose basis is `source_present`. The source looked and returned rows. That is presence
+	 * evidence and supports no exclusion.
 	 */
 	"basis_supports_no_exclusion",
 	/**
-	 * The layer holds rows in the cell, so the cell is not empty. Whether the search reached them is a retrieval question rather than an absence.
+	 * The layer holds rows in the cell, so the cell is not empty. Whether the search reached them is a retrieval question
+	 * rather than an absence.
 	 */
 	"cell_not_empty",
 	/**
-	 * The layer's coverage row says the cell is empty and the answer returned a row inside it. The two readers disagree, and an absence claim asserted over a disagreement is the confident wrong answer this whole route exists to avoid.
+	 * The layer's coverage row says the cell is empty and the answer returned a row inside it. The two readers disagree,
+	 * and an absence claim asserted over a disagreement is the confident wrong answer this whole route exists to avoid.
 	 */
 	"coverage_contradicted_by_answer",
 ] as const
@@ -355,7 +361,7 @@ function indexAffordingCategories(model: CompiledGeographicModel): Map<string, A
  * This name and its message prefix are kept so callers and their receipts read the same.
  *
  * @throws {Error} When the table is empty, when a cell expands at no resolution,
- *   or when the cells disagree.
+ * or when the cells disagree.
  */
 export function recoverCoverageResolution(cells: readonly number[]): number {
 	return recoverShortCellResolution(cells, "absence route")

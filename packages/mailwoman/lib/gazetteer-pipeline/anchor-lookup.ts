@@ -239,11 +239,10 @@ function loadGBCodePoint(): Map<string, Centroid> {
  *
  * Two consumers want them, and neither is the common path:
  *
- * - The inference parity fix's outward fallback.
- *   A unit that misses (a new-build code, or an NI `BT` code Code-Point Open does not carry)
- *   still anchors its full span from the district;
- * - A bare outward code in the text, which the train painter never looks up
- *   (`collect_matches`'s GB pattern requires the inward half) but the default alnum-run inference scan does.
+ * - The inference parity fix's outward fallback. A unit that misses (a new-build code, or an NI `BT` code Code-Point Open
+ *   does not carry) still anchors its full span from the district;
+ * - A bare outward code in the text, which the train painter never looks up (`collect_matches`'s GB pattern requires the
+ *   inward half) but the default alnum-run inference scan does.
  *
  * Outward keys cannot collide with anything else in the lookup: they are letter-initial and ≤4 chars,
  * unit keys are ≥5, NL keys are digit-initial, and every numeric system's keys are digits only.

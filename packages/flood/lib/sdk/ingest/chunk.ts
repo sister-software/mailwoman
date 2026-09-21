@@ -83,7 +83,7 @@ export interface IngestFloodChunkOptions {
  * Stream one chunk of the source into `database`.
  *
  * @throws {Error} On a zone code outside the authority's declared domain,
- *   or on a feature the classifier refuses.
+ * or on a feature the classifier refuses.
  */
 export async function ingestFloodChunk(
 	database: DatabaseClient<FloodDatabase>,

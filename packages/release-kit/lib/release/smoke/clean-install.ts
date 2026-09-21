@@ -407,7 +407,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 /**
  * Run a command with stdin ignored and both output streams captured, answering stdout.
  *
- * @throws the builtin's error (which carries stdout and stderr) on a non-zero exit.
+ * @throws The builtin's error (which carries stdout and stderr) on a non-zero exit.
  */
 function run(cmd: string, args: string[], cwd: string): string {
 	return runFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
@@ -460,7 +460,7 @@ export interface SmokeCleanInstallReport {
 /**
  * Pack the closure, install it into a throwaway project, and run the CLI plus every import probe.
  *
- * @throws on the first failure with the failing command's stdout and stderr attached to the message.
+ * @throws On the first failure with the failing command's stdout and stderr attached to the message.
  */
 export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOptions): Promise<SmokeCleanInstallReport> {
 	await using tmp = await temporaryDirectory("mw-smoke-")

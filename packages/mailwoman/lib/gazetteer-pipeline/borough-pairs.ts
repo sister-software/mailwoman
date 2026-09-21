@@ -57,7 +57,7 @@ export interface BoroughPair {
 /**
  * Project a WOF parent placetype onto the `ComponentTag` the parent span carries.
  *
- * @throws rather than defaulting: every placetype this module can select is in {@link PLACETYPE_PROJECTION}
+ * @throws Rather than defaulting: every placetype this module can select is in {@link PLACETYPE_PROJECTION}
  *   by construction (the SQL's parent list is drawn from `PAIR_PLACETYPES_BY_COUNTRY`),
  *   so a miss means someone added a placetype to that table without deciding what it
  *   projects to — which is exactly the decision PIX2 exists to stop being made silently.
@@ -81,14 +81,12 @@ function parentTagFor(placetype: string): ComponentTag {
  * This is deliberately per-country rather than one global rule, because the two shipped
  * instances are shaped by their sources rather than by a universal truth about hierarchy:
  *
- * - **GB** takes boroughs only.
- *   Its neighbourhood pairs come from a curated, venue-confound-boarded file
- *   (`data/gazetteer/london-pairs-v2.jsonl`, campaign R4b) — sweeping in all ~20k GB WOF neighbourhoods
- *   here would ship an unboarded batch and skip the law-1 discipline every GB increment has cleared.
- * - **US** takes boroughs and neighbourhoods, and admits `borough` as a parent.
- *   WOF parents US neighbourhoods to the locality rather than to the borough
- *   ("Astoria" hangs off New York rather than off Queens), so a locality-only parent rule
- *   silently drops the borough-level pairs the US instance exists for (campaign R5).
+ * - **GB** takes boroughs only. Its neighbourhood pairs come from a curated, venue-confound-boarded file
+ *   (`data/gazetteer/london-pairs-v2.jsonl`, campaign R4b) — sweeping in all ~20k GB WOF neighbourhoods here would ship
+ *   an unboarded batch and skip the law-1 discipline every GB increment has cleared.
+ * - **US** takes boroughs and neighbourhoods, and admits `borough` as a parent. WOF parents US neighbourhoods to the
+ *   locality rather than to the borough ("Astoria" hangs off New York rather than off Queens), so a locality-only
+ *   parent rule silently drops the borough-level pairs the US instance exists for (campaign R5).
  *
  * A country absent from this table gets the GB-shaped default, so adding a country is an explicit act.
  */

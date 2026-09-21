@@ -90,7 +90,7 @@ export const US_FIPS_STATE: Readonly<Record<string, USStateInfo>> = Object.freez
 /**
  * Lookup helper.
  *
- * @returns null when the FIPS code isn't recognized.
+ * @returns Null when the FIPS code isn't recognized.
  */
 export function lookupFipsState(statefp: string | null | undefined): USStateInfo | null {
 	if (!statefp) return null

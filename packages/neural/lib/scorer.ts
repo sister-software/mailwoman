@@ -180,7 +180,10 @@ function declaredAnchorSpanMode(declared: RequiredChannels): AnchorSpanMode | un
 }
 
 /**
- * {@linkcode shapedKeyerObligationViolation}, wired to {@linkcode fail}. A one-call wrapper so `createScorer` gains no branch. It sits one step under the complexity ceiling (see {@linkcode fstPathEntry}).
+ * {@linkcode shapedKeyerObligationViolation}, wired to {@linkcode fail}.
+ *
+ * A one-call wrapper so `createScorer` gains no branch.
+ * It sits one step under the complexity ceiling (see {@linkcode fstPathEntry}).
  */
 function assertShapedKeyerObligation(
 	lookup: AnchorLookup | undefined,

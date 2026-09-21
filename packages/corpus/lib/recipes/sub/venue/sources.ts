@@ -116,12 +116,11 @@ export function isCleanName(name: string): boolean {
  *
  * Two populations, both found by reading the 2026-08-05 smoke output rather than predicted:
  *
- * - **Street types.** A bus stop is routinely named after the street it stands on,
- *   so the FR extract offers `Rue de la Porte Bergault` as a `porte` confound.
- *   It is a confound, but it is a street, and putting it in the venue slot would train
- *   `Rue …` as a venue name — trading one mislabel for another.
- * - **Stop qualifiers.** British stop names carry a position prefix
- *   (`opposite bricklehampton hall`, `ADJ the green`) that names a relationship rather than a place.
+ * - **Street types.** A bus stop is routinely named after the street it stands on, so the FR extract offers `Rue de la
+ *   Porte Bergault` as a `porte` confound. It is a confound, but it is a street, and putting it in the venue slot would
+ *   train `Rue …` as a venue name — trading one mislabel for another.
+ * - **Stop qualifiers.** British stop names carry a position prefix (`opposite bricklehampton hall`, `ADJ the green`)
+ *   that names a relationship rather than a place.
  *
  * Per-language and short on purpose: this is a head-token filter over four Latin
  * languages rather than a street-type gazetteer.
@@ -380,13 +379,11 @@ export function matchesPromotedShape(
  *
  * Two inputs, and the difference between them is the advisory/binding split the ledger's docstring names:
  *
- * - The shipped English vocabulary (`neural/venue-structure.ts`, re-declared in the
- *   lexicon as `shipped: true`) is a flat English list with no locale gate.
- *   It is promoted-by-shipping for the English legs, because the span proposer fires
+ * - The shipped English vocabulary (`neural/venue-structure.ts`, re-declared in the lexicon as `shipped: true`) is a flat
+ *   English list with no locale gate. It is promoted-by-shipping for the English legs, because the span proposer fires
  *   on it there today and the eval board's target cases are drawn from it.
- * - {@link SUBVENUE_PROMOTIONS} adds the localized surfaces and subtracts the rejections.
- *   A rejection of a shipped designator cannot un-ship it
- *   (nothing here stops the proposer firing on "Red Wing"), but it absolutely stops this
+ * - {@link SUBVENUE_PROMOTIONS} adds the localized surfaces and subtracts the rejections. A rejection of a shipped
+ *   designator cannot un-ship it (nothing here stops the proposer firing on "Red Wing"), but it absolutely stops this
  *   recipe generating a positive: en-US `wing` produces negatives instead.
  */
 export function promotedSurfacesFor(

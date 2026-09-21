@@ -406,26 +406,20 @@ async function groupProviderListRows(
  *
  * For each distinct `provider_id`:
  *
- * - Exactly one `frn` among its rows → that FRN is primary by construction.
- *   No `filerDB` query needed at all.
- * - More than one distinct `frn` → `readFRNFilingCandidates`
- *   (`@mailwoman/filer/sdk`, lazily imported — see below) reads each FRN's own most
- *   recent IN-force `form-499` filing edge from `filerDB`, `asOf` the given date,
- *   and `pickPrimaryFRN` picks the winner (decision 6: most recent 499 filing date wins).
- *   A `provider_id` whose FRNs carry no 499 filing to rank by inserts `frn: NULL` rather than
- *   guessing — `pickPrimaryFRN` throws on empty input, so this checks `candidates.length` first,
- *   mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
- * - `filerDB` is required the instant a multi-FRN `provider_id` is encountered.
- *   Its absence throws immediately, naming the offending `provider_id`,
- *   rather than silently picking an arbitrary FRN.
- * - `holding_company` gets the identical single-distinct-value shortcut `frn` gets:
- *   exactly one distinct non-null `holdingCompany` across a provider's rows means there's
- *   no conflict to resolve, so it's populated directly, no rule needed.
- *   Two or more distinct values is the real conflict decision 6 refuses to paper over with last-wins.
- *   That case inserts NULL, and every value stays recoverable from `filer.db`.
- *   A `null` `holdingCompany` on some rows doesn't count as a competing
- *   value (a row simply not stating it isn't a conflicting assertion) —
- *   only distinct NON-NULL strings are compared.
+ * - Exactly one `frn` among its rows → that FRN is primary by construction. No `filerDB` query needed at all.
+ * - More than one distinct `frn` → `readFRNFilingCandidates` (`@mailwoman/filer/sdk`, lazily imported — see below) reads
+ *   each FRN's own most recent IN-force `form-499` filing edge from `filerDB`, `asOf` the given date, and
+ *   `pickPrimaryFRN` picks the winner (decision 6: most recent 499 filing date wins). A `provider_id` whose FRNs carry
+ *   no 499 filing to rank by inserts `frn: NULL` rather than guessing — `pickPrimaryFRN` throws on empty input, so this
+ *   checks `candidates.length` first, mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
+ * - `filerDB` is required the instant a multi-FRN `provider_id` is encountered. Its absence throws immediately, naming
+ *   the offending `provider_id`, rather than silently picking an arbitrary FRN.
+ * - `holding_company` gets the identical single-distinct-value shortcut `frn` gets: exactly one distinct non-null
+ *   `holdingCompany` across a provider's rows means there's no conflict to resolve, so it's populated directly, no rule
+ *   needed. Two or more distinct values is the real conflict decision 6 refuses to paper over with last-wins. That case
+ *   inserts NULL, and every value stays recoverable from `filer.db`. A `null` `holdingCompany` on some rows doesn't
+ *   count as a competing value (a row simply not stating it isn't a conflicting assertion) — only distinct NON-NULL
+ *   strings are compared.
  *
  * `brand_name` is always inserted NULL.
  * The provider list carries no brand-name column at all, so there is nothing to

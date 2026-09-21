@@ -159,13 +159,11 @@ function candidateSelect(hasNameRole: boolean): string {
  *
  * Two values in a hit are zeros that must not be read as absences, and two absences are not zeros:
  *
- * - `importance: null` is unmeasured — the score source had no row for that place —
- *   while `population: 0` and a `(0, 0)` centroid are the build's own written
- *   values (the latter its unlocated sentinel).
- * - A `country` naming no `country_codes` entry means the artifact carries no rows
- *   for that country at all, so the miss is a coverage gap.
- *   A country it does carry, with rows under the key elsewhere, is a filter miss
- *   and reports the third state (`hit`, no entries).
+ * - `importance: null` is unmeasured — the score source had no row for that place — while `population: 0` and a `(0, 0)`
+ *   centroid are the build's own written values (the latter its unlocated sentinel).
+ * - A `country` naming no `country_codes` entry means the artifact carries no rows for that country at all, so the miss
+ *   is a coverage gap. A country it does carry, with rows under the key elsewhere, is a filter miss and reports the
+ *   third state (`hit`, no entries).
  */
 export function lookupCandidate<DB>(
 	db: DatabaseClient<DB>,
@@ -925,13 +923,12 @@ export interface PostcodeLookupOptions {
  * which is what makes `SW1A 2AA` reachable at all.
  * Two readings this must keep apart:
  *
- * - A record whose lat and lon are both 0 is a measured zero: the postcode is a member,
- *   the artifact holds no centroid for it, and the channel feeds a country posterior
- *   with a (0, 0) centroid. 414 of `postcode-us.bin`'s 42,317 keys are like this.
- * - Under a card declaring `alnum-run`, a key containing a space-joined pair is
- *   present in the artifact and unreachable at serve.
- *   The scan produces `SW1A` and `2AA` separately and never the joined key.
- *   The row is a hit and the note says the running model is not fed it, because those are different facts.
+ * - A record whose lat and lon are both 0 is a measured zero: the postcode is a member, the artifact holds no centroid
+ *   for it, and the channel feeds a country posterior with a (0, 0) centroid. 414 of `postcode-us.bin`'s 42,317 keys
+ *   are like this.
+ * - Under a card declaring `alnum-run`, a key containing a space-joined pair is present in the artifact and unreachable
+ *   at serve. The scan produces `SW1A` and `2AA` separately and never the joined key. The row is a hit and the note
+ *   says the running model is not fed it, because those are different facts.
  */
 export function lookupPostcodeAnchor(
 	resolver: PostcodeAnchorResolver,

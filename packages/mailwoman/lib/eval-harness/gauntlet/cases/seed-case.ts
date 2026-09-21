@@ -79,7 +79,8 @@ export interface SeedCase {
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
 	/**
-	 * True = the expected outcome is no coordinate: the resolver abstains rather than answering, and any resolved coordinate fails the row.
+	 * True = the expected outcome is no coordinate: the resolver abstains rather than answering, and any resolved
+	 * coordinate fails the row.
 	 *
 	 * Mutually exclusive with `expectLat`/`expectLon` (the schema refuses the combination).
 	 *

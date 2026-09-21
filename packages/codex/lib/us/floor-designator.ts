@@ -117,7 +117,7 @@ export const US_FLOOR_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USFloorDesignat
  * Look up a USPS floor-class designator (by canonical name, abbreviation, or any Appendix C2 variant)
  * and return the canonical name + approved abbreviation.
  *
- * @returns null if the token isn't a recognized floor-class designator.
+ * @returns Null if the token isn't a recognized floor-class designator.
  */
 export function lookupFloorDesignator(input: string | null | undefined): {
 	designator: USFloorDesignatorName

@@ -222,7 +222,7 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 /**
  * Run the conformance-law suites from CLI-shaped options.
  *
- * @returns the process exit code (0 = pass).
+ * @returns The process exit code (0 = pass).
  */
 export async function runConformanceCommand(options: ConformanceCommandOptions = {}): Promise<number> {
 	const { problems, measured } = await measureConformance(options)

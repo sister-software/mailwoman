@@ -157,14 +157,16 @@ export interface GauntletDepsOptions {
  */
 export interface GauntletResolverPins {
 	/**
-	 * #42 postcode-country coherence — a (postcode, locality) pair coherent in exactly one country overrides a wrong `defaultCountry`.
+	 * #42 postcode-country coherence — a (postcode, locality) pair coherent in exactly one country overrides a wrong
+	 * `defaultCountry`.
 	 *
 	 * Library default on since the 2026-08-05 promotion (this pin was the D-rule evidence
 	 * path that got it there); the `false` pin now grades the pre-promotion configuration.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
-	 * #1497 — feed the gazetteer FST prior to the parse. Unlike the boolean pins above this one carries an artifact, so the harness loads it rather than `resolverPinDeps` (which stays pure).
+	 * #1497 — feed the gazetteer FST prior to the parse. Unlike the boolean pins above this one carries an artifact, so
+	 * the harness loads it rather than `resolverPinDeps` (which stays pure).
 	 *
 	 * Default-on here since 2026-08-16, matching the library: only an explicit `false`
 	 * withholds the prior, and that pin now grades the pre-promotion configuration.
@@ -174,27 +176,33 @@ export interface GauntletResolverPins {
 	 */
 	gazetteerPrior?: boolean
 	/**
-	 * #1717 stage 2 — the admin-containment re-rank: a parsed region qualifier participates in locality-candidate selection through the candidate gazetteer's ancestors sidecar.
+	 * #1717 stage 2 — the admin-containment re-rank: a parsed region qualifier participates in locality-candidate
+	 * selection through the candidate gazetteer's ancestors sidecar.
 	 *
 	 * Library default off (D-rule), so the `true` pin is the one that carries evidence today.
 	 * The `false` pin grades the production default explicitly.
 	 */
 	adminContainmentRerank?: boolean
 	/**
-	 * #1880 — the capital-status ranking axis: bounded national-capital promotion on the bare-toponym class. Like `gazetteerPrior` this pin carries an artifact (the candidate `capital` table, repo-file fallback), so the harness loads it rather than `resolverPinDeps` (which stays pure).
+	 * #1880 — the capital-status ranking axis: bounded national-capital promotion on the bare-toponym class. Like
+	 * `gazetteerPrior` this pin carries an artifact (the candidate `capital` table, repo-file fallback), so the harness
+	 * loads it rather than `resolverPinDeps` (which stays pure).
 	 *
 	 * Library default on (PR #1888's board-651 receipt); unset follows it, `false` pins the off arm,
 	 * and an unset pin degrades on a reference-less artifact exactly as the session does.
 	 */
 	capitalTier?: boolean
 	/**
-	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. The stamp lives in the artifact (the candidate build's own-name detector), so against a candidate.db without it the exemption matches no row — vary it against a stamped artifact.
+	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. The stamp lives in the
+	 * artifact (the candidate build's own-name detector), so against a candidate.db without it the exemption matches no
+	 * row — vary it against a stamped artifact.
 	 *
 	 * Library default on (same receipt); `false` pins the off arm.
 	 */
 	variantAliasExemption?: boolean
 	/**
-	 * #1684's POI half — the opt-in venue tier (`GeocodeDeps.poiVenueTier`): upgrade a venue-led address's admin or street answer to the poi.db entity with the venue's name near the resolved anchor.
+	 * #1684's POI half — the opt-in venue tier (`GeocodeDeps.poiVenueTier`): upgrade a venue-led address's admin or
+	 * street answer to the poi.db entity with the venue's name near the resolved anchor.
 	 *
 	 * Library default off (the D-rule battery is what this pin exists to run); `true` pins it on.
 	 *
@@ -203,11 +211,14 @@ export interface GauntletResolverPins {
 	 */
 	poiVenueTier?: boolean
 	/**
-	 * #2266 — a span-rescore sub-span may drop context but never a word of the name. Library default off (D-rule), so the `true` pin is the one that carries evidence today; `false` pins the production default explicitly.
+	 * #2266 — a span-rescore sub-span may drop context but never a word of the name. Library default off (D-rule), so the
+	 * `true` pin is the one that carries evidence today; `false` pins the production default explicitly.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
-	 * #2264 — which reading of a weak resolution lifts the #685 span-rescore brake. Not a boolean: three readings, and the shipped brake is the absence of all of them, so `undefined` is the production arm and there is no off pin to pair with a `true` one.
+	 * #2264 — which reading of a weak resolution lifts the #685 span-rescore brake. Not a boolean: three readings, and
+	 * the shipped brake is the absence of all of them, so `undefined` is the production arm and there is no off pin to
+	 * pair with a `true` one.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 }
@@ -302,13 +313,16 @@ export interface GauntletGeocodeOpts {
 	 */
 	caseCountry?: string
 	/**
-	 * #1585 — the locale hint's country for the typo-fuzzy tier (geocodeAddress's `fuzzyCountryScope`). The runner derives it from a row's `locale` field. Forwarded verbatim like `defaultCountry`.
+	 * #1585 — the locale hint's country for the typo-fuzzy tier (geocodeAddress's `fuzzyCountryScope`). The runner
+	 * derives it from a row's `locale` field. Forwarded verbatim like `defaultCountry`.
 	 */
 	fuzzyCountryScope?: string
 }
 
 /**
- * #1024 drift guard: the materialized model the check is about to grade must match the en-us model-card's `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json` (what copy-weights.ts materializes from) drifted once and the superseded model shipped past a silent check.
+ * #1024 drift guard: the materialized model the check is about to grade must match the en-us model-card's
+ * `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json` (what copy-weights.ts materializes
+ * from) drifted once and the superseded model shipped past a silent check.
  *
  * Throws loudly on mismatch so the release before:release step (releasing.md) blocks the ship.
  *

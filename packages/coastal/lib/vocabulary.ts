@@ -82,9 +82,15 @@ export const NCERM_SERVICE_SLUG = "ncern-national-2024"
 /**
  * The attribution string the record's structured licence field carries, trimmed of its trailing space.
  *
- * OGL v3.0 requires a re-user to "acknowledge the source of the Information in your product or application by including or linking to any attribution statement specified by the Information Provider(s)", so this string is the licence condition rather than decoration, and it rides in `layer_manifest.attribution`.
+ * OGL v3.0 requires a re-user to "acknowledge the source of the Information in your product or application by including
+ * or linking to any attribution statement specified by the Information Provider(s)", so this string is the licence
+ * condition rather than decoration, and it rides in `layer_manifest.attribution`.
  *
- * Taken from the structured field, never from the abstract. The abstract ends with a doubled and malformed pair — "…© Environment Agency copyright and/or database right Attribution statement: © Environment Agency copyright and/or database right 2025. All rights reserved. " — whose first copy is inherited from the superseded 2018–2021 record and carries no year. The ISO record has no `gmd:credit` element at all. `parseAttributionStatement` in `sdk/client.ts` is the reader that refuses the yearless copy.
+ * Taken from the structured field, never from the abstract. The abstract ends with a doubled and malformed pair — "…©
+ * Environment Agency copyright and/or database right Attribution statement: © Environment Agency copyright and/or
+ * database right 2025. All rights reserved. " — whose first copy is inherited from the superseded 2018–2021 record and
+ * carries no year. The ISO record has no `gmd:credit` element at all. `parseAttributionStatement` in `sdk/client.ts` is
+ * the reader that refuses the yearless copy.
  */
 export const NCERM_ATTRIBUTION = "© Environment Agency copyright and/or database right 2025. All rights reserved."
 

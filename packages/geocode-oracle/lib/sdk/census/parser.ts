@@ -77,18 +77,15 @@ function joinParts(...parts: Array<string | undefined>): string | undefined {
  *
  * The mapping, and why each choice:
  *
- * - `street_prefix` ← `preDirection`.
- *   The tag means the directional in front of the name, which is exactly this slot.
- *   `preType` deliberately does not land here: `avenue` in `Avenue of the Americas`
- *   is part of how the street is written rather than a prefix modifier,
- *   and a parser reading that input emits it inside `street`.
- * - `street` ← `preQualifier` + `preType` + `streetName` + `suffixQualifier`.
- *   The words that make up the name as written, in written order.
- * - `street_suffix` ← `suffixType` + `suffixDirection`. mailwoman has no separate suffix-directional tag,
- *   and the two are adjacent and in this order on the envelope (`123 N main ST E` → suffix `ST E`).
- * - `street_prefix_particle` is left unset.
- *   It exists for grammatical particles (`de la`, `van der`), which US street names
- *   do not carry and the Census geocoder has no slot for.
+ * - `street_prefix` ← `preDirection`. The tag means the directional in front of the name, which is exactly this slot.
+ *   `preType` deliberately does not land here: `avenue` in `Avenue of the Americas` is part of how the street is
+ *   written rather than a prefix modifier, and a parser reading that input emits it inside `street`.
+ * - `street` ← `preQualifier` + `preType` + `streetName` + `suffixQualifier`. The words that make up the name as written,
+ *   in written order.
+ * - `street_suffix` ← `suffixType` + `suffixDirection`. mailwoman has no separate suffix-directional tag, and the two are
+ *   adjacent and in this order on the envelope (`123 N main ST E` → suffix `ST E`).
+ * - `street_prefix_particle` is left unset. It exists for grammatical particles (`de la`, `van der`), which US street
+ *   names do not carry and the Census geocoder has no slot for.
  */
 export function buildStreetComponents(components: CensusAddressComponents): ComponentDict {
 	const dict: ComponentDict = {}

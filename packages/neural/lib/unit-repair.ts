@@ -104,7 +104,7 @@ function collectMatches(text: string): UnitMatch[] {
 /**
  * Repair secondary-unit label spans in a decoded token sequence using designator regexes.
  *
- * @returns a new token array (inputs are not mutated) plus a change count.
+ * @returns A new token array (inputs are not mutated) plus a change count.
  */
 export function repairUnitLabels(text: string, input: readonly DecoderToken[]): RepairResult {
 	const matches = collectMatches(text)

@@ -37,7 +37,10 @@ export interface ParsedSubsidiary {
 }
 
 /**
- * {@linkcode parseExhibit21}'s result. `unparseable` is a count rather than a list of the offending text — criterion 3 only requires knowing abstention happened and how often rather than what was abstained from.
+ * {@linkcode parseExhibit21}'s result.
+ *
+ * `unparseable` is a count rather than a list of the offending text — criterion 3 only
+ * requires knowing abstention happened and how often rather than what was abstained from.
  */
 export interface ParsedExhibit21 {
 	subsidiaries: ParsedSubsidiary[]
@@ -90,7 +93,7 @@ const MINIMUM_HEADER_ROW_CELLS = 3
  * still maps to `{name: 0, jurisdiction: 1}`.
  *
  * @returns `null` when no row qualifies.
- *   The caller then keeps whatever mapping a preceding sibling table established.
+ * The caller then keeps whatever mapping a preceding sibling table established.
  */
 function headerColumnMapping(
 	rows: readonly TableCell[][],
@@ -152,8 +155,8 @@ const MINIMUM_NAME_OVER_NAME_ROWS = 4
  * More than half the second values must carry a legal designation.
  *
  * IDT's two-across name table is 5/5.
- * A genuine jurisdiction column is 0/N except where the filer spells the entity type out
- * (Charter's `"Delaware limited liability company"`, 135/135) — which is what
+ * A genuine jurisdiction column is 0/N except where the filer spells the entity type
+ * out (Charter's `"Delaware limited liability company"`, 135/135) — which is what
  * {@linkcode DISTINCT_SECOND_VALUE_RATIO} is there to separate.
  */
 const DESIGNATED_SECOND_VALUE_RATIO = 0.5
@@ -218,7 +221,7 @@ function isSingleColumnNameList(rows: readonly TableCell[][], rawWidth: number):
  * Turns one top-level table's extracted rows into subsidiaries, given the column
  * mapping a preceding sibling table established (or `null`).
  *
- * @returns the mapping in force at the end so the caller can carry it to the next sibling —
+ * @returns The mapping in force at the end so the caller can carry it to the next sibling —
  *   see the module docstring's "table strategy" section for the full rule order.
  */
 function subsidiariesFromTable(
@@ -464,14 +467,12 @@ const COLUMN_GAP_PATTERN = /[ \t\u00A0]{2,}/
  *
  * 1. A 2+-space (or tab) column gap — the fixed-width plain-text convention.
  * 2. A trailing `(Jurisdiction)` parenthetical — the common nested-list-item convention.
- * 3. Exactly one comma — `"Acme Fiber LLC, Delaware"`.
- *    Zero or 2+ commas is not split this way (a legal name can itself contain a comma,
- *    e.g. `"Acme Fiber, LLC"`, so 2+ commas is genuinely ambiguous about where the name ends) —
- *    decision 6 abstains from the split rather than from recording the line.
- *    Nor is a single comma split when the text after it is just a corporate designator
- *    (`{@linkcode isBareLegalDesignation}` — `canonicalizeOrganizationName` reduces
- *    `"Inc."` to an empty canonical name) — `"Horizon Services, Inc."` is one entity's
- *    whole legal name, and "Inc." is not a place a comma could plausibly be introducing.
+ * 3. Exactly one comma — `"Acme Fiber LLC, Delaware"`. Zero or 2+ commas is not split this way (a legal name can itself
+ *    contain a comma, e.g. `"Acme Fiber, LLC"`, so 2+ commas is genuinely ambiguous about where the name ends) —
+ *    decision 6 abstains from the split rather than from recording the line. Nor is a single comma split when the text
+ *    after it is just a corporate designator (`{@linkcode isBareLegalDesignation}` — `canonicalizeOrganizationName`
+ *    reduces `"Inc."` to an empty canonical name) — `"Horizon Services, Inc."` is one entity's whole legal name, and
+ *    "Inc." is not a place a comma could plausibly be introducing.
  *
  * Falls through to `{name: <the whole cleaned line>}` when none of the above apply.
  * An honest "no jurisdiction found", never a fabricated one.
@@ -656,11 +657,10 @@ function isEntirelyBlankTable(tables: readonly TableCell[][][]): boolean {
  * (a real Exhibit 21 uses one consistent format throughout, so there's no ambiguity
  * in picking the first match rather than trying all three and merging):
  *
- * 1. An html `<table>` — the common modern shape.
- *    A table every one of whose cells is blank ({@linkcode isEntirelyBlankTable}) is
- *    treated as no table at all and falls through to shape 2/3 instead.
- * 2. A `<li>`-based list (nested subsidiary trees included, flattened) — see
- *    {@linkcode extractListItemOwnText}'s docstring for how nesting is handled without a real html parser.
+ * 1. An html `<table>` — the common modern shape. A table every one of whose cells is blank
+ *    ({@linkcode isEntirelyBlankTable}) is treated as no table at all and falls through to shape 2/3 instead.
+ * 2. A `<li>`-based list (nested subsidiary trees included, flattened) — see {@linkcode extractListItemOwnText}'s
+ *    docstring for how nesting is handled without a real html parser.
  * 3. Plain fixed-width text (no recognized markup at all) — the older sgml-era shape.
  */
 export function parseExhibit21(html: string): ParsedExhibit21 {

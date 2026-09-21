@@ -317,9 +317,20 @@ const GEONAMES_ATTRIBUTION = "Contains data from GeoNames (geonames.org), © Geo
 /**
  * GB is not plain GeoNames provenance, and GeoNames' own labelling of it is incomplete (researched 2026-08-05).
  *
- * `download.geonames.org/export/zip/readme.txt` puts everything under CC-BY (linking the 3.0 deed while saying 4.0) and adds exactly one GB rider — `UK (GB_full.csv.zip): Contains Royal Mail data Royal Mail copyright and database right 2022` — naming neither Ordnance Survey, Code-Point Open, OGL, nor Crown copyright. GeoNames documents the real source elsewhere: its 2010 announcement (geonames.wordpress.com/2010/04/19/uk-open-public-data) says the GB full codes came from Code-Point Open, and `geonames.org/datasources` row 174 lists GB / Ordnance Survey under `OGLv3.0`. The shipped file agrees — every row carries accuracy 6 and ONS GSS codes.
+ * `download.geonames.org/export/zip/readme.txt` puts everything under CC-BY (linking the 3.0 deed while saying 4.0) and
+ * adds exactly one GB rider — `UK (GB_full.csv.zip): Contains Royal Mail data Royal Mail copyright and database right
+ * 2022` — naming neither Ordnance Survey, Code-Point Open, OGL, nor Crown copyright. GeoNames documents the real source
+ * elsewhere: its 2010 announcement (geonames.wordpress.com/2010/04/19/uk-open-public-data) says the GB full codes came
+ * from Code-Point Open, and `geonames.org/datasources` row 174 lists GB / Ordnance Survey under `OGLv3.0`. The shipped
+ * file agrees — every row carries accuracy 6 and ONS GSS codes.
  *
- * So the binding licence for the GB rows is OGL v3, which CC-BY cannot relax, and the OS attribution block is required of a redistributor. Two gaps stay open and are recorded rather than resolved: (1) GeoNames' GB_full also ships ~48,990 `BT` (Northern Ireland) rows plus IM/GY/JE, territories Code-Point Open does not cover. The 2010 post says only "we continue using the previous data", ONS's OGL grant for postcode products explicitly excludes Northern Ireland data, and commercial NI use needs a separate Land & Property Services licence; (2) whether a downstream database counts as "derived" for OGL purposes is a counsel question, the same posture `osm/` already sits in. This builder records the facts. It does not make the redistribution decision.
+ * So the binding licence for the GB rows is OGL v3, which CC-BY cannot relax, and the OS attribution block is required
+ * of a redistributor. Two gaps stay open and are recorded rather than resolved: (1) GeoNames' GB_full also ships
+ * ~48,990 `BT` (Northern Ireland) rows plus IM/GY/JE, territories Code-Point Open does not cover. The 2010 post says
+ * only "we continue using the previous data", ONS's OGL grant for postcode products explicitly excludes Northern
+ * Ireland data, and commercial NI use needs a separate Land & Property Services licence; (2) whether a downstream
+ * database counts as "derived" for OGL purposes is a counsel question, the same posture `osm/` already sits in. This
+ * builder records the facts. It does not make the redistribution decision.
  */
 const GB_LICENSE_NOTE =
 	"GB rows come from the GeoNames GB_full dump, whose GB (England/Scotland/Wales) portion derives from Ordnance " +

@@ -42,7 +42,7 @@ interface GeoJSONMultiPolygon {
  * A weaker answer beats none, and the fallback is exactly the old behavior.
  *
  * @returns `undefined` for anything that doesn't parse as one of the two geometry
- *   types (including `null` geometry).
+ * types (including `null` geometry).
  */
 export function geometryCentroid(geometryJSON: string | null): { lat: number; lon: number } | undefined {
 	if (!geometryJSON) return undefined

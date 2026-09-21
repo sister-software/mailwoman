@@ -73,7 +73,7 @@ export function isShortPlusCode(token: string): boolean {
 /**
  * Decode a full plus code to its cell.
  *
- * @returns null on anything `isFullPlusCode` rejects.
+ * @returns Null on anything `isFullPlusCode` rejects.
  */
 export function decodePlusCode(code: string): DecodedPlusCode | null {
 	if (!isFullPlusCode(code)) return null
@@ -146,7 +146,7 @@ function encodePairDigits(lat: number, lon: number, length: number): string {
  * prepend the reference's prefix at the missing precision, then shift the candidate cell
  * by whole prefix-resolutions when a neighboring cell center sits closer to the reference.
  *
- * @returns the decoded nearest cell, or null for an invalid short code.
+ * @returns The decoded nearest cell, or null for an invalid short code.
  */
 export function recoverNearestPlusCode(shortCode: string, refLat: number, refLon: number): DecodedPlusCode | null {
 	if (!isShortPlusCode(shortCode)) return null

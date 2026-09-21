@@ -40,14 +40,12 @@ export type PrimaryPreferenceRow = Pick<CandidateTable, "neg_rank" | "country_id
  * "NYC"→New York, "LA"→Los Angeles, "Frisco"→San Francisco).
  * Two bounds keep it a soft prior:
  *
- * 1. **Cross-country only.** The penalty applies to an alias only when the top-population
- *    primary sharing the key is in a different country.
- *    A same-country nickname contest (San Francisco's alias "Frisco" vs the primary Frisco, TX — both US)
- *    is left on pure population, so the legitimate alias still wins.
- * 2. **Population-bounded.** The penalty is {@link PRIMARY_PREFERENCE_LOG10} in log10-population units.
- *    An alias must be at least 10x more populous than the foreign primary to still win.
- *    So a genuinely dominant alias keeps winning ("Los Angeles" over La, Ghana —
- *    gap 1.6; "Las Vegas" over Vegas, Cuba — gap 2.4) while a near-tie coincidental
+ * 1. **Cross-country only.** The penalty applies to an alias only when the top-population primary sharing the key is in a
+ *    different country. A same-country nickname contest (San Francisco's alias "Frisco" vs the primary Frisco, TX —
+ *    both US) is left on pure population, so the legitimate alias still wins.
+ * 2. **Population-bounded.** The penalty is {@link PRIMARY_PREFERENCE_LOG10} in log10-population units. An alias must be
+ *    at least 10x more populous than the foreign primary to still win. So a genuinely dominant alias keeps winning
+ *    ("Los Angeles" over La, Ghana — gap 1.6; "Las Vegas" over Vegas, Cuba — gap 2.4) while a near-tie coincidental
  *    collision defers to the primary (Cancún over Changchun — gap 0.7).
  */
 export const PRIMARY_PREFERENCE_LOG10 = 1

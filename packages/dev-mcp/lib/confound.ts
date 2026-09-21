@@ -162,7 +162,14 @@ export function checkConfounds(
 /**
  * The reading for a comparison whose two arms are different geocoders.
  *
- * {@link checkConfounds} is the wrong instrument here and would be actively misleading if pointed at this case. Its question is "did more config keys move than the caller declared", and across engines the answer is a list of keys one arm does not have — every mailwoman change against an endpoint and a version string. A reader would get a paragraph of true, useless warnings, and paragraphs of those train a reader to skip the field.
+ * {@link checkConfounds} is the wrong instrument here and would be actively
+ * misleading if pointed at this case.
+ * Its question is "did more config keys move than the caller declared",
+ * and across engines the answer is a list of keys one arm does not have —
+ * every mailwoman change against an endpoint and a version string.
+ *
+ * A reader would get a paragraph of true, useless warnings, and paragraphs of
+ * those train a reader to skip the field.
  *
  * What is actually true is shorter and worse: the arms hold different indexes built from
  * different sources at different vintages, and no record either arm can produce says by how much.
@@ -203,7 +210,10 @@ export interface WorktreeTreeDelta {
 /**
  * The reading for a comparison whose two arms are both worktree arms with clean commits.
  *
- * {@link crossEngineReading}'s "different geocoders over different indexes" is written for Pelias-vs-mailwoman, where nothing in either arm's provenance can bound the difference. A worktree pair is the opposite case: both arms name a commit, so the tool can measure what separates them and say it, instead of disclaiming an attribution the caller set the comparison up to make.
+ * {@link crossEngineReading}'s "different geocoders over different indexes" is written for
+ * Pelias-vs-mailwoman, where nothing in either arm's provenance can bound the difference.
+ * A worktree pair is the opposite case: both arms name a commit, so the tool can measure what separates
+ * them and say it, instead of disclaiming an attribution the caller set the comparison up to make.
  *
  * The isolation verdict stays {@link VariableIsolation.CrossEngine} — the config-key checker
  * still has nothing to check across two processes — but the warning carries the bounded surface:

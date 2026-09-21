@@ -310,8 +310,7 @@ export function toNative(set: AnnotationSet): AnnotationSet {
 
 /**
  * A schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node —
- * the resolved coordinate, embedded under a
- * {@link SchemaOrgPlace}'s `geo`.
+ * the resolved coordinate, embedded under a {@link SchemaOrgPlace}'s `geo`.
  */
 export interface SchemaOrgGeoCoordinates {
 	"@type": "GeoCoordinates"

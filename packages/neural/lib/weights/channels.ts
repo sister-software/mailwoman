@@ -284,7 +284,7 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined)
  * Defensive: returns `undefined` when the card is absent, unreadable, or has no `requires` field
  * (callers then infer the required channels from the ONNX graph — see `inferRequiredChannelsFromInputs`).
  *
- * @throws only when the field is present but corrupt
+ * @throws Only when the field is present but corrupt
  *   (not an object, or a channel entry with a non-boolean `required`).
  *   A malformed declared interface is a loud artifact bug rather than a silent re-default.
  */
@@ -419,7 +419,7 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
  * Defensive, mirroring `readRequiredChannels`: returns `undefined` when the card is absent, unreadable,
  * or has no `capabilities` field (a pre-#718 card → the loader's delta check is skipped, back-compat).
  *
- * @throws only when the field is present but not an object.
+ * @throws Only when the field is present but not an object.
  *   A corrupt declared interface is a loud artifact bug rather than a silent skip.
  *   Tier/system/tag sub-shapes are read leniently (a malformed cell simply yields no
  *   capability claim — `undefined` from `lookupTagCapability`).
@@ -480,7 +480,7 @@ export interface CRFTransitions {
  * Read learned CRF transition parameters from `crf-transitions.json`.
  *
  * @returns `undefined` when the file is missing or malformed — callers fall
- *   back to the structural BIO mask only.
+ * back to the structural BIO mask only.
  */
 export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): Promise<CRFTransitions | undefined> {
 	if (!crfPath || !(await pathExists(crfPath))) return undefined

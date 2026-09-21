@@ -175,8 +175,8 @@ export interface ActivityPhraseLexicon {
  *
  * - `unscoped` — the entry declares no locales and answers under any.
  * - `exact` — the query's locale tag is one the entry declares.
- * - `language` — only the language subtag agrees.
- *   Weaker on purpose: a regional phrasing reached through its language alone is a guess about the region.
+ * - `language` — only the language subtag agrees. Weaker on purpose: a regional phrasing reached through its language
+ *   alone is a guess about the region.
  */
 export type ActivityPhraseLocaleScope = "unscoped" | "exact" | "language"
 

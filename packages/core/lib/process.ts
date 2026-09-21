@@ -122,7 +122,10 @@ export interface RunFileSyncOptions extends Omit<ExecFileSyncOptions, "cwd"> {
 }
 
 /**
- * {@linkcode runFile} for a synchronous slot. Answers stdout. Throws on a non-zero exit, with the builtin's error.
+ * {@linkcode runFile} for a synchronous slot.
+ *
+ * Answers stdout.
+ * Throws on a non-zero exit, with the builtin's error.
  *
  * When `stdio` inherits the parent's streams there is nothing to capture
  * and the answer is the empty string.
@@ -207,7 +210,10 @@ export function spawnProcess(
 export type SpawnProcessSyncOptions = SpawnSyncOptions & { cwd?: PathBuilderLike }
 
 /**
- * {@linkcode spawnProcess} run to completion in a synchronous slot. Unlike {@linkcode runFileSync} a non-zero exit does not throw. The status, the signal and both streams come back in the result, for a caller that reads them.
+ * {@linkcode spawnProcess} run to completion in a synchronous slot.
+ *
+ * Unlike {@linkcode runFileSync} a non-zero exit does not throw.
+ * The status, the signal and both streams come back in the result, for a caller that reads them.
  */
 export function spawnProcessSync(
 	file: PathBuilderLike,

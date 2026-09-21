@@ -170,7 +170,7 @@ function hasCriticalComponent(components: Record<string, string>): boolean {
 /**
  * Run the full suite.
  *
- * @returns a report with per-pair outcomes, summary counts, and the check exit code.
+ * @returns A report with per-pair outcomes, summary counts, and the check exit code.
  */
 export async function runInvarianceSuite(options: RunInvarianceOptions): Promise<InvarianceReport> {
 	const maxDegraded = options.maxDegraded ?? 0

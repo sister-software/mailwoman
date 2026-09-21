@@ -177,13 +177,12 @@ export interface BuildSubVenueLexiconInput {
  *
  * Order of operations is required in three places:
  *
- * 1. Seed surfaces are inserted before anything else, so `terminal` indexes to the
- *    `terminal` designator rather than to whichever Wikidata alias sorts first.
- * 2. Head nouns are derived after Wikidata and before the harvests, because `ターミナル` has
- *    to exist as a surface before a Japanese extract can be searched for it.
- *    That ordering is the entire reason the Japan harvest finds anything — see `provenance.md`.
- * 3. Promotions are applied last, over the union, so a decision can promote a
- *    surface whichever source produced it.
+ * 1. Seed surfaces are inserted before anything else, so `terminal` indexes to the `terminal` designator rather than to
+ *    whichever Wikidata alias sorts first.
+ * 2. Head nouns are derived after Wikidata and before the harvests, because `ターミナル` has to exist as a surface before a
+ *    Japanese extract can be searched for it. That ordering is the entire reason the Japan harvest finds anything — see
+ *    `provenance.md`.
+ * 3. Promotions are applied last, over the union, so a decision can promote a surface whichever source produced it.
  */
 export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenueLexiconTable {
 	const designators: SubVenueDesignator[] = SHIPPED_DESIGNATOR_SEED.map((seed) => ({

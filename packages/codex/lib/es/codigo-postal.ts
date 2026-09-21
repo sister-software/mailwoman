@@ -37,7 +37,7 @@ export const CODIGO_POSTAL_PATTERN = /^\d{5}$/
  * Normalize a código-postal surface form to the bare five digits: trim surrounding
  * whitespace (`" 28001 "` → `"28001"`).
  *
- * @returns null when the result is not a five-digit code.
+ * @returns Null when the result is not a five-digit code.
  */
 export function normalizeCodigoPostal(raw: unknown): CodigoPostal | null {
 	if (typeof raw !== "string") return null

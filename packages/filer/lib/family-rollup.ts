@@ -105,7 +105,11 @@ export interface FamilyRollupMember {
 }
 
 /**
- * {@linkcode familyRollup}'s per-family result shape — a corporate family's full membership, `asOf`-scoped. Deliberately carries no `cluster_id`-shaped key and no single top-level `relationship`, unlike the other family type this SDK exports, `filer-lookup.ts`'s `FilerLookupFamily`, which answers "which families does one node belong to."
+ * {@linkcode familyRollup}'s per-family result shape — a corporate family's full membership, `asOf`-scoped.
+ *
+ * Deliberately carries no `cluster_id`-shaped key and no single top-level `relationship`,
+ * unlike the other family type this SDK exports, `filer-lookup.ts`'s `FilerLookupFamily`,
+ * which answers "which families does one node belong to."
  *
  * This is the inverse view, "who belongs to this family," so `relationship` lives per-member instead.
  *

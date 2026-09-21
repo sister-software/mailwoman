@@ -42,7 +42,7 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
 /**
  * Run the invariance mini-suite from CLI-shaped options.
  *
- * @returns the process exit code (0 = pass).
+ * @returns The process exit code (0 = pass).
  */
 export async function runInvarianceCommand(options: InvarianceCommandOptions): Promise<number> {
 	const rows = await loadSuite(options.suite)

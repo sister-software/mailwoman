@@ -99,7 +99,8 @@ export function resolvePackageSpecifier(base: string, packageName: string, ...su
 }
 
 /**
- * {@link resolvePackageSpecifier}, answering `null` instead of throwing for a specifier that does not resolve.
+ * {@link resolvePackageSpecifier}, answering `null` instead of throwing for
+ * a specifier that does not resolve.
  */
 export function tryResolvePackageSpecifier(
 	base: string,

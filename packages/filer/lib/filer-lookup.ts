@@ -311,7 +311,9 @@ export interface FilerLookupResult {
 }
 
 /**
- * {@link FilerLookupResult.primary_frn}'s shape — visibly a derived conclusion (`derived_from`, `as_of`), never confusable with a sourced `filer_attribute` fact (which carries `source`/`source_vintage` instead).
+ * {@link FilerLookupResult.primary_frn}'s shape — visibly a derived conclusion
+ * (`derived_from`, `as_of`), never confusable with a sourced `filer_attribute` fact
+ * (which carries `source`/`source_vintage` instead).
  */
 export interface FilerLookupPrimaryFRN {
 	frn: FRN
@@ -331,7 +333,8 @@ export interface FilerLookupPrimaryFRN {
 }
 
 /**
- * {@link FilerLookupPrimaryFRN.derived_from}'s value for {@linkcode pickPrimaryFRN}'s rule — decision 6, "the primary FRN is the one from the most recent 499 filing date".
+ * {@link FilerLookupPrimaryFRN.derived_from}'s value for {@linkcode pickPrimaryFRN}'s rule —
+ * decision 6, "the primary FRN is the one from the most recent 499 filing date".
  */
 export const PRIMARY_FRN_DERIVATION = "most-recent-499-filing"
 
@@ -353,7 +356,7 @@ export interface FRNFilingRecord {
  * A tie keeps whichever candidate appears first in `candidates` (deterministic rather than meaningful —
  * a genuine same-day double-filing under two different FRNs is not a case decision 6 resolves).
  *
- * @throws on an empty input: there is no "primary" of nothing.
+ * @throws On an empty input: there is no "primary" of nothing.
  */
 export function pickPrimaryFRN(candidates: readonly FRNFilingRecord[]): FRN {
 	if (!candidates.length) {

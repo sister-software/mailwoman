@@ -159,7 +159,7 @@ export function collectMissingBinTargets(bin: unknown, shipped: Set<string>): st
 /**
  * Read a packed tarball's member list and its `package.json`.
  *
- * @throws with the tar exit status rather than a parse error on a truncated
+ * @throws With the tar exit status rather than a parse error on a truncated
  *   or non-tarball input, so a pack failure upstream reads as a pack failure here.
  */
 function readTarball(tarballPath: string): TarballContents {

@@ -92,10 +92,9 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	 */
 	partialMatch: boolean
 	/**
-	 * The provider's own stable identifier for the matched place,
-	 * when it has one: a Google Place ID, or `null` for the Census geocoder
-	 * (whose `tigerLine.tigerLineId` identifies a street segment rather than a place, and is carried on
-	 * {@linkcode OracleGeocodeResult.raw} instead).
+	 * The provider's own stable identifier for the matched place, when it has one: a Google Place ID,
+	 * or `null` for the Census geocoder (whose `tigerLine.tigerLineId` identifies a street segment
+	 * rather than a place, and is carried on {@linkcode OracleGeocodeResult.raw} instead).
 	 */
 	placeID: string | null
 	/**

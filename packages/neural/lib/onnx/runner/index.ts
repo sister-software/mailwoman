@@ -94,12 +94,10 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
  * with a compromise default rather than a tuned constant.
  * Measured on a 16-core box:
  *
- * - One process, 120 warm parses: 1 thread 18.3 ms/parse, 2 threads 12.5,
- *   4 threads 9.2, ORT's all-cores default 9.3.
- *   More threads win.
- *   The parallelism is doing real work.
- * - Four concurrent processes, full geocode: 1 thread 32 req/s each, 2 threads 45, 4 threads 33.
- *   Fewer threads win, because N processes each sizing a pool to the machine oversubscribe it N-fold.
+ * - One process, 120 warm parses: 1 thread 18.3 ms/parse, 2 threads 12.5, 4 threads 9.2, ORT's all-cores default 9.3.
+ *   More threads win. The parallelism is doing real work.
+ * - Four concurrent processes, full geocode: 1 thread 32 req/s each, 2 threads 45, 4 threads 33. Fewer threads win,
+ *   because N processes each sizing a pool to the machine oversubscribe it N-fold.
  *
  * Two is the compromise: it costs a single process ~35% latency against its own optimum, and
  * provides a four-process server ~36% throughput against the single-process optimum applied blindly.

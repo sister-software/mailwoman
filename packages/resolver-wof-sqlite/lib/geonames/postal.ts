@@ -162,7 +162,8 @@ export function medoidPoint(points: readonly PostcodePoint[]): PostcodePoint {
 }
 
 /**
- * {@link medoidPoint} with the group size it rested on, for a caller that must record how thin the answer was.
+ * {@link medoidPoint} with the group size it rested on, for a caller that must
+ * record how thin the answer was.
  */
 export function medoidWithSupport(points: readonly PostcodePoint[]): MedoidSupport {
 	if (!points.length) throw new Error("medoidWithSupport: no member points")

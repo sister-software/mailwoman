@@ -57,13 +57,12 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
  * The map names the tier by tag.
  * WOF names it by placetype, and the two agree for most countries and not for all.
  *
- * - **TW** — 鄉鎮市區, the tier below the 縣市 that the parse tags `subregion`, is `locality`
- *   or `localadmin` in WOF for 164 of the 178 held-out districts the candidate table carries
- *   and `county` for 14 (the census in `docs/records/evals/2026-09-08-v8-cjk-regs.md` §5).
- *   Under the default `county` band `臺北市中正區` reached nothing and the admin tier fell to the 縣市.
- *   The `locality` group admits `localadmin` too, the rule the JP `municipality`
- *   tag already relies on, and the exact-type preference in ranking keeps a
- *   `locality` row ahead of a same-name `localadmin` row.
+ * - **TW** — 鄉鎮市區, the tier below the 縣市 that the parse tags `subregion`, is `locality` or `localadmin` in WOF for 164 of
+ *   the 178 held-out districts the candidate table carries and `county` for 14 (the census in
+ *   `docs/records/evals/2026-09-08-v8-cjk-regs.md` §5). Under the default `county` band `臺北市中正區` reached nothing and
+ *   the admin tier fell to the 縣市. The `locality` group admits `localadmin` too, the rule the JP `municipality` tag
+ *   already relies on, and the exact-type preference in ranking keeps a `locality` row ahead of a same-name
+ *   `localadmin` row.
  */
 const COUNTRY_PLACETYPE_OVERRIDES: Readonly<Record<string, PlacetypeMap>> = {
 	tw: { subregion: "locality" },
@@ -93,24 +92,19 @@ export function placetypeMapForCountry(countryCode: string | null | undefined): 
  * Three tiers are affected (the value of each entry is the set the SQL filter should accept.
  * The first entry is the canonical/requested type, which extract routing keys off):
  *
- * - **`locality`** — `locality` (most cities), `borough` (Brooklyn, the Paris arrondissements,
- *   the London boroughs), and `localadmin` (FR communes, US towns/townships in New England).
- *   Without the group, Brooklyn-the-borough (pop 2.5M) was unreachable
- *   and the fuzzy "Brooklyn Park, MN" won.
- * - **`region`** — `region` + `macroregion` (#718).
- *   WOF does not model every country's top-level civil division as `region`: Italian
- *   regions (Lombardia, Veneto, Toscana…) are `macroregion` (their provinces are `region`),
- *   and the post-2016 French régions (Île-de-France) are `macroregion` too.
- *   An address's `region` span names exactly those, so a `region`-only filter resolved
- *   them to nothing (confirmed against the IT/FR eval rows).
- *   US states / DE Bundesländer / ES provincias are genuine `region`, so the exact-type
- *   match is preferred in ranking (see the resolve.ts fallback-quality annotation).
- *   The macro is the recall safety net rather than a demotion.
- * - **`county`** — `county` + `macrocounty` (#718).
- *   The `subregion` ComponentTag maps to `county` via {@link DEFAULT_PLACETYPE_MAP};
- *   WOF carries `macrocounty` for FR départements-grouping / DE / GB tiers above the county.
- *   Proactive (no eval row exercises `subregion` today) but symmetric with `region` — biasing to
- *   inclusion, since a missed resolution costs more than a too-broad candidate (which is QA-visible).
+ * - **`locality`** — `locality` (most cities), `borough` (Brooklyn, the Paris arrondissements, the London boroughs), and
+ *   `localadmin` (FR communes, US towns/townships in New England). Without the group, Brooklyn-the-borough (pop 2.5M)
+ *   was unreachable and the fuzzy "Brooklyn Park, MN" won.
+ * - **`region`** — `region` + `macroregion` (#718). WOF does not model every country's top-level civil division as
+ *   `region`: Italian regions (Lombardia, Veneto, Toscana…) are `macroregion` (their provinces are `region`), and the
+ *   post-2016 French régions (Île-de-France) are `macroregion` too. An address's `region` span names exactly those, so
+ *   a `region`-only filter resolved them to nothing (confirmed against the IT/FR eval rows). US states / DE
+ *   Bundesländer / ES provincias are genuine `region`, so the exact-type match is preferred in ranking (see the
+ *   resolve.ts fallback-quality annotation). The macro is the recall safety net rather than a demotion.
+ * - **`county`** — `county` + `macrocounty` (#718). The `subregion` ComponentTag maps to `county` via
+ *   {@link DEFAULT_PLACETYPE_MAP}; WOF carries `macrocounty` for FR départements-grouping / DE / GB tiers above the
+ *   county. Proactive (no eval row exercises `subregion` today) but symmetric with `region` — biasing to inclusion,
+ *   since a missed resolution costs more than a too-broad candidate (which is QA-visible).
  *
  *   Same exact-type preference applies.
  *

@@ -621,7 +621,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
  * (`package:`) or the guard's cache prefix (`cache:`), so the sibling artifacts
  * (model card, CRF transitions, anchor binary, gazetteer lexicon) resolve the same way for both.
  *
- * @throws when the model files themselves are missing.
+ * @throws When the model files themselves are missing.
  */
 async function resolveFromPackageDir(
 	packageDir: PathBuilder,
@@ -817,7 +817,7 @@ async function resolveFromPackageDir(
  * preferring the compact PCB1 binary (`postcode-<cc>.bin`, ~0.66 MB) over the much
  * larger JSON lookup (`anchor-lookup.json`, the 3.2 MB pilot dump).
  *
- * @returns the path + a `binary` flag so the loader picks the right parser
+ * @returns The path + a `binary` flag so the loader picks the right parser
  *   (`PostcodeBinaryResolver.toAnchorLookup()` vs `parseAnchorLookup`).
  *   `undefined` when neither ships.
  */
@@ -947,7 +947,12 @@ export async function loadPlacetypeCensus(
 }
 
 /**
- * #1177 base-overlay dedup: resolve the base weights package a locale package overlays. A data-only weights package (fr-fr/en-gb/en-nz, and future CA/MX overlays) can declare `"mailwoman": { "baseWeights": "@mailwoman/neural-weights-en-us" }` in its package.json to share the base `model.onnx` + `tokenizer.model` rather than ship a byte-identical copy. Returns the resolved base package dir, or `undefined` when the field is absent or the base package can't be resolved (in which case the caller keeps the local model paths — no behavior change for a self-contained package).
+ * #1177 base-overlay dedup: resolve the base weights package a locale package overlays. A data-only weights package
+ * (fr-fr/en-gb/en-nz, and future CA/MX overlays) can declare `"mailwoman": { "baseWeights":
+ * "@mailwoman/neural-weights-en-us" }` in its package.json to share the base `model.onnx` + `tokenizer.model` rather
+ * than ship a byte-identical copy. Returns the resolved base package dir, or `undefined` when the field is absent or
+ * the base package can't be resolved (in which case the caller keeps the local model paths — no behavior change for a
+ * self-contained package).
  */
 async function resolveBaseWeightsDir(
 	packageDir: PathBuilderLike,

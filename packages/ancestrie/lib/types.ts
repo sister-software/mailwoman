@@ -116,8 +116,8 @@ export interface AncestrieSuggestion<TPayload = Uint8Array | JSONValue> {
 	rank: number
 
 	/**
-	 * The suggestion's full token path from the trie root — the typed prefix plus
-	 * {@link AncestrieSuggestion.completionTokens}.
+	 * The suggestion's full token path from the trie root — the typed prefix
+	 * plus {@link AncestrieSuggestion.completionTokens}.
 	 */
 	tokens: string[]
 
@@ -176,8 +176,7 @@ export interface AutocompleteOptions<TPayload = Uint8Array | JSONValue> {
 	/**
 	 * Applied to each query token before walking.
 	 *
-	 * Must be the same function the builder was given — see
-	 * {@link TokenNormalizer}.
+	 * Must be the same function the builder was given — see {@link TokenNormalizer}.
 	 */
 	normalizeToken?: TokenNormalizer
 }
@@ -206,13 +205,12 @@ export interface AutocompleteResult<TPayload = Uint8Array | JSONValue> {
  * Order interfaces the algorithm observes:
  *
  * - `entriesAt(stateID)` with no limit answers every accepting entry, in the reader's stored order.
- * - `entriesAt(stateID, limit)` answers the top-`limit` entries by rank, descending.
- *   A sealed artifact serves a prefix of its rank-sorted storage. an adapter over
- *   unsorted storage must select by rank itself.
- *   Order among rank ties is the reader's own, and is observable in suggestion order —
- *   two readers over the same entries may legitimately differ there.
- * - `ancestorsOf` decorates suggestions' `chain`.
- *   A reader that materializes lineage per entry may serve it from its records rather than walking a graph.
+ * - `entriesAt(stateID, limit)` answers the top-`limit` entries by rank, descending. A sealed artifact serves a prefix of
+ *   its rank-sorted storage. an adapter over unsorted storage must select by rank itself. Order among rank ties is the
+ *   reader's own, and is observable in suggestion order — two readers over the same entries may legitimately differ
+ *   there.
+ * - `ancestorsOf` decorates suggestions' `chain`. A reader that materializes lineage per entry may serve it from its
+ *   records rather than walking a graph.
  */
 export interface AncestrieReaderLike<TPayload = Uint8Array | JSONValue> {
 	walk(tokens: readonly string[]): AncestrieMatch | null

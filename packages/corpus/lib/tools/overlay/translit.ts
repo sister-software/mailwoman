@@ -81,8 +81,8 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
 /**
  * Write one parquet file for a single source slug.
  *
- * @returns the populated ParquetFileDescriptor + a list of quarantine reasons
- *   for rows that failed alignment.
+ * @returns The populated ParquetFileDescriptor + a list of quarantine reasons
+ * for rows that failed alignment.
  */
 async function writeOneFile(
 	rows: readonly LabeledRow[],

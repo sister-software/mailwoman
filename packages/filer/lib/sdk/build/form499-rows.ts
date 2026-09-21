@@ -143,7 +143,9 @@ export function processForm499Lifecycle(
 }
 
 /**
- * {@linkcode processForm499FRNRelationships}'s per-row context — bundled into one options argument (matching {@linkcode FamilyMembershipFact}'s own precedent) once threading `legalNameByFRN` through pushed this function's positional arity past the linter's `max-params` ceiling.
+ * {@linkcode processForm499FRNRelationships}'s per-row context — bundled into one options argument
+ * (matching {@linkcode FamilyMembershipFact}'s own precedent) once threading `legalNameByFRN`
+ * through pushed this function's positional arity past the linter's `max-params` ceiling.
  */
 export interface Form499FRNContext {
 	row: Form499Row

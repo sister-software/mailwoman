@@ -81,7 +81,7 @@ export interface StreamToDiskOptions {
  * write a redirect page to disk and report success.
  *
  * @throws {Error} When the response is not OK, or carries no body.
- *   A partial file is removed on any failure.
+ * A partial file is removed on any failure.
  */
 export async function streamToDisk(options: StreamToDiskOptions): Promise<number> {
 	const partialPath = `${options.destination}.part`

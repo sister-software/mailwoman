@@ -490,7 +490,10 @@ export interface FilerLinkageEvalOptions {
 }
 
 /**
- * {@linkcode filerLinkageEval}'s return value — both runs, always. There is no single "the score": the withheld run is the measurement and the control run is what makes it mean anything, and a caller that reports one without the other is reporting half a result.
+ * {@linkcode filerLinkageEval}'s return value — both runs, always.
+ *
+ * There is no single "the score": the withheld run is the measurement and the control run is what
+ * makes it mean anything, and a caller that reports one without the other is reporting half a result.
  */
 export interface FilerLinkageEvalResult {
 	markdown: string

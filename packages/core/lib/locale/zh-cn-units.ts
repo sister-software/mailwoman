@@ -122,7 +122,7 @@ export function isCNUnitChain(span: string): boolean {
 /**
  * Read a `locality_unit` span into its rungs, outermost first.
  *
- * @throws on a span that is not a chain: a consumer that reached this with anything else
+ * @throws On a span that is not a chain: a consumer that reached this with anything else
  *   has a labeling defect, and reading part of it would report a hierarchy nobody wrote.
  */
 export function readCNUnits(span: string): CNUnit[] {

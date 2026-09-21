@@ -75,8 +75,8 @@ function splitAnchor(text: string): { localityText: string; regionText?: string 
  * Resolve an anchor string ("Springfield", "Springfield, IL", or "Springfield IL") to a center
  * point against the admin candidate gazetteer — no neural runtime, no full-address parse.
  *
- * When a region qualifier splits off (see
- * {@link splitAnchor}) it's resolved first (for its bbox), then the locality lookup is point-in-bbox-constrained by it,
+ * When a region qualifier splits off (see {@link splitAnchor}) it's resolved first
+ * (for its bbox), then the locality lookup is point-in-bbox-constrained by it,
  * the same disambiguation the `/demo` cascade uses.
  * Returns `null` when nothing resolves — callers show "couldn't place '<anchor>'"
  * rather than silently defaulting to zero results.

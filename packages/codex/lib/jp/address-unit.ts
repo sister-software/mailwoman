@@ -31,14 +31,10 @@
 /**
  * The kanji suffixes that close an administrative-area name, largest unit to smallest:
  *
- * - 都 (to) — metropolis.
- *   Only Tokyo.
- * - 道 (dō) — circuit.
- *   Only Hokkaido.
- * - 府 (fu) — urban prefecture.
- *   Osaka and Kyoto.
- * - 県 (ken) — prefecture.
- *   The other 43.
+ * - 都 (to) — metropolis. Only Tokyo.
+ * - 道 (dō) — circuit. Only Hokkaido.
+ * - 府 (fu) — urban prefecture. Osaka and Kyoto.
+ * - 県 (ken) — prefecture. The other 43.
  * - 市 (shi) — city.
  * - 区 (ku) — ward (a subdivision of a designated city, e.g. Tokyo's 23 special wards).
  * - 郡 (gun) — district / county (rural grouping of towns and villages).

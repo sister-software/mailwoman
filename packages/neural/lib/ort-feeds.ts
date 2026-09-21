@@ -76,7 +76,10 @@ export interface InferResult {
 	 */
 	localeLogits?: number[]
 	/**
-	 * #727 stage-2: per-span type scores from the semi-Markov span head (`span_scores` output, v3.x+). Indexed `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`, of length `lengthIdx + 1` tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the weights bundle's `semi-crf-transitions.json`, never hardcoded — the PLACETYPE_ORDER class).
+	 * #727 stage-2: per-span type scores from the semi-Markov span head (`span_scores` output, v3.x+). Indexed
+	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`, of length `lengthIdx + 1`
+	 * tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the weights bundle's `semi-crf-transitions.json`,
+	 * never hardcoded — the PLACETYPE_ORDER class).
 	 *
 	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span
 	 * decode available" and fall back to the BIO path.

@@ -48,7 +48,7 @@ export const JP_POSTAL_CODE_PATTERN = /^\d{3}-?\d{4}$/
  * strip a leading 〒 mark and any whitespace, then re-insert the hyphen if the input gave
  * the bare seven digits (`〒100-0001` → `100-0001`, `1000001` → `100-0001`).
  *
- * @returns null if the result is not seven digits.
+ * @returns Null if the result is not seven digits.
  */
 export function normalizeJpPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null

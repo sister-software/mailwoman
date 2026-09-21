@@ -87,8 +87,8 @@ export async function assertBDCDatabaseExists(toolName: string, databasePath: st
  * Open a filer.db, or return `undefined` when `databasePath` is unset or the file is missing —
  * never a raw sqlite throw (mirroring {@link openBDCDatabaseIfPresent}).
  *
- * Used by `cli.ts`'s `mailwoman_filer_lookup` handler after
- * {@link assertFilerDatabaseExists} has already confirmed the file is present.
+ * Used by `cli.ts`'s `mailwoman_filer_lookup` handler after {@link assertFilerDatabaseExists}
+ * has already confirmed the file is present.
  */
 export async function openFilerDatabaseIfPresent(
 	databasePath: string | undefined

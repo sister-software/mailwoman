@@ -28,7 +28,7 @@ export function argument(config: CommandArgumentMetadata): string {
  * and published installs all answer the same file.
  *
  * @throws {TypeError} When the manifest carries no string version — a broken install
- *   rather than a formatting choice.
+ * rather than a formatting choice.
  */
 /**
  * The fields of mailwoman's own `package.json` that the CLI reports about itself:

@@ -56,7 +56,7 @@ function fail(message: string): never {
  *
  * Exits 1 with the binary's usage line on a bad flavor.
  *
- * @returns the shape `printOpenAPIDocument` takes, so a drop-in's `openapi` command is
+ * @returns The shape `printOpenAPIDocument` takes, so a drop-in's `openapi` command is
  *   this call plus building its app around a stub engine — which is what keeps the command
  *   pure route-table introspection that never boots a classifier or opens a gazetteer.
  */
@@ -135,12 +135,10 @@ export interface GazetteerPaths {
 /**
  * Locate the gazetteer for a geocoding drop-in, with both of the #1009 friendly failures:
  *
- * - An explicit `--candidate-db` that does not exist errors loudly.
- *   It must never silently fall back to whatever ambient data-root file happens to be present.
- *   A typo'd path would otherwise serve the wrong gazetteer without a word.
- * - No candidate DB and no databases prints the named-artifact message with the
- *   one command that fixes it, instead of letting the resolver throw its internal
- *   "resolveExtracts: at least one database is required".
+ * - An explicit `--candidate-db` that does not exist errors loudly. It must never silently fall back to whatever ambient
+ *   data-root file happens to be present. A typo'd path would otherwise serve the wrong gazetteer without a word.
+ * - No candidate DB and no databases prints the named-artifact message with the one command that fixes it, instead of
+ *   letting the resolver throw its internal "resolveExtracts: at least one database is required".
  */
 export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {

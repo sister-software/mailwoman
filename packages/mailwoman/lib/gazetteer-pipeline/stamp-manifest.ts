@@ -33,7 +33,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  * would make the ordering above depend on each builder's cleanup rather than on this function.
  *
  * @throws When the database is already sealed, which is the ordering mistake
- *   this function exists to make loud.
+ * this function exists to make loud.
  */
 export async function stampLayerManifest(path: string, manifest: LayerManifest): Promise<void> {
 	using kdb = new DatabaseClient<layerschemadatabase>(path)

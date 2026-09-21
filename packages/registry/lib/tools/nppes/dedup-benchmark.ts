@@ -99,7 +99,8 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	trainEm?: boolean
 	/**
-	 * #694 A/B: reproduce the pre-flip ingest (space-joined address columns + `normalizeCase` off). Default off (the validated flip: comma-join + #690 all-caps normalization).
+	 * #694 A/B: reproduce the pre-flip ingest (space-joined address columns + `normalizeCase` off). Default off (the
+	 * validated flip: comma-join + #690 all-caps normalization).
 	 *
 	 * Same data + GBT, only the flip toggled.
 	 * So a delta here is attributable to the flip.

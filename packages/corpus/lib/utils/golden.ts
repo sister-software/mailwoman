@@ -75,7 +75,7 @@ export interface GoldenReport {
 /**
  * Parse a single jsonl line into a `GoldenEntry`.
  *
- * @throws on schema violations.
+ * @throws On schema violations.
  */
 export function parseGoldenLine(line: string): GoldenEntry {
 	// The throw is the result: `validateGoldenFile` catches it and records the message

@@ -39,7 +39,9 @@ import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
  * `loadNeuralClassifierFromURLs` from that subpath instead.
  */
 /**
- * {@link loadClassifierFromWeights} for the caller's locale, wrapped so an input whose script names another weights family (`cjk` for Han, kana and Hangul) runs on that family's classifier, loaded once on first use from the same resolution options (cache root, overlay root).
+ * {@link loadClassifierFromWeights} for the caller's locale, wrapped so an input whose script
+ * names another weights family (`cjk` for Han, kana and Hangul) runs on that family's classifier,
+ * loaded once on first use from the same resolution options (cache root, overlay root).
  *
  * A family whose package is absent is reported once on stderr and its inputs stay on the primary.
  */

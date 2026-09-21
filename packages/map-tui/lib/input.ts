@@ -17,14 +17,12 @@
  * first half ends inside the sequence. So the fallback now separates three cases:
  *
  * - A sequence this decoder recognizes is consumed and acted on (arrows, SGR mouse).
- * - A sequence it does not recognize is consumed whole and ignored: CSI (`ESC [ … final`),
- *   SS3 (`ESC O final`), and the string family (OSC/DCS/SOS/PM/APC, terminated by BEL or ST).
- *   Re-scanning their bodies as characters is how a `q` inside a cursor-position report quit the app.
- * - A chunk that ends mid-sequence — including a lone trailing ESC, which is byte-for-byte
- *   the start of one — is not decoded at all: it comes back as
- *   {@link DecodedInput.pending} for the caller to prepend to the next chunk.
- *   Quit is emitted only for an ESC that is neither, i.e. one whose following
- *   byte cannot continue a sequence.
+ * - A sequence it does not recognize is consumed whole and ignored: CSI (`ESC [ … final`), SS3 (`ESC O final`), and the
+ *   string family (OSC/DCS/SOS/PM/APC, terminated by BEL or ST). Re-scanning their bodies as characters is how a `q`
+ *   inside a cursor-position report quit the app.
+ * - A chunk that ends mid-sequence — including a lone trailing ESC, which is byte-for-byte the start of one — is not
+ *   decoded at all: it comes back as {@link DecodedInput.pending} for the caller to prepend to the next chunk. Quit is
+ *   emitted only for an ESC that is neither, i.e. one whose following byte cannot continue a sequence.
  *
  * Holding costs a lone Esc keypress its effect until the next byte arrives.
  * That is the right side of the trade for a browser whose advertised quit keys are `q`

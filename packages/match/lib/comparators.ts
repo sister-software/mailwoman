@@ -148,10 +148,10 @@ export function levenshteinSimilarity(a: string, b: string): number {
  *
  * Jaro-Winkler by default, with the compound-surname fallback the literature prescribes:
  *
- * - If one name's tokens are a strict subset of the other's (`Lopez` ⊂ `Garcia Lopez`),
- *   that is strong partial agreement J-W misses — floor the score at 0.9.
- * - Otherwise return the better of Jaro-Winkler and normalized edit similarity, so a single token
- *   that is a substring of a longer compound (`Garcia` vs `Garcialopez`) still scores sensibly.
+ * - If one name's tokens are a strict subset of the other's (`Lopez` ⊂ `Garcia Lopez`), that is strong partial agreement
+ *   J-W misses — floor the score at 0.9.
+ * - Otherwise return the better of Jaro-Winkler and normalized edit similarity, so a single token that is a substring of
+ *   a longer compound (`Garcia` vs `Garcialopez`) still scores sensibly.
  *
  * Case- and whitespace-insensitive.
  * Empty input scores 0.

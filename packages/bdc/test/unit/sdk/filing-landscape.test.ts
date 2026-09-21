@@ -103,10 +103,9 @@ const PROVIDER_B = 130_080
  * and the hand-computed census in criterion 3 agree without any surprise collapsing):
  *
  * - SF: provider A / tech 50 / 1000 Mbps (gigabit), provider B / tech 40 / 80 Mbps (25-100)
- * - NY: provider A / tech 50 / 1000 Mbps (gigabit — same bucket/tech/provider as SF,
- *   block_count sums to 2), provider B / tech 10 / 10 Mbps (under-25)
- * - Divergent: provider A / tech 30 / 500 Mbps (100-1000) — not queried by Criteria 1–4,
- *   only by the fix-round-1 tests.
+ * - NY: provider A / tech 50 / 1000 Mbps (gigabit — same bucket/tech/provider as SF, block_count sums to 2), provider B /
+ *   tech 10 / 10 Mbps (under-25)
+ * - Divergent: provider A / tech 30 / 500 Mbps (100-1000) — not queried by Criteria 1–4, only by the fix-round-1 tests.
  */
 function fixtureRows(): BDCAvailabilityRow[] {
 	return [

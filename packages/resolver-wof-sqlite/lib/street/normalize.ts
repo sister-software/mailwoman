@@ -294,24 +294,20 @@ const ID_STREET_ABBREV = new Map<string, string>([
  * Same function build-side and probe-side (the one-function discipline).
  * US delegates to {@link normalizeStreetForKey}.
  *
- * - **en** — the shared English address-key pipeline (directionals + suffix aliases),
- *   currently identical to US.
+ * - **en** — the shared English address-key pipeline (directionals + suffix aliases), currently identical to US.
  * - **fr** — fold + expand leading type abbreviations and Saint/Sainte (token map).
- * - **de** — fold + ß→ss + canonicalize the glued `-str(.)` suffix to `-strasse`
- *   ("Lindenstr." → "lindenstrasse", "Lindenstraße" → "lindenstrasse");
- *   an already-full "-strasse" is left intact.
+ * - **de** — fold + ß→ss + canonicalize the glued `-str(.)` suffix to `-strasse` ("Lindenstr." → "lindenstrasse",
+ *   "Lindenstraße" → "lindenstrasse"); an already-full "-strasse" is left intact.
  * - **nl** — fold + canonicalize the glued `-str` suffix to `-straat` ("Kerkstr." → "kerkstraat").
- * - **pl** — fold + ł→l (Ł does not nfkd-decompose, so the generic fold keeps it and an undiacritized
- *   query would miss. Every other Polish diacritic is a combining form the fold already strips) +
- *   strip the leading type token — see {@link PL_LEADING_TYPE} for the measured
- *   reason expansion was wrong for this source.
- * - **vn** — fold + đ→d and ð→d (both non-decomposing, and OSM mixes the two
- *   codepoints inside single values — see the branch comment).
- *   Deliberately no type-abbreviation map yet: the common abbreviation is the single
- *   letter "Đ." for Đường, and expanding a bare folded "d" token would rewrite initials —
- *   measure the miss rate on the built extract before adding anything.
- * - **id** — fold + expand leading type abbreviations (jl/jln→jalan, gg→gang);
- *   Indonesian street surfaces are otherwise ascii-clean.
+ * - **pl** — fold + ł→l (Ł does not nfkd-decompose, so the generic fold keeps it and an undiacritized query would miss.
+ *   Every other Polish diacritic is a combining form the fold already strips) + strip the leading type token — see
+ *   {@link PL_LEADING_TYPE} for the measured reason expansion was wrong for this source.
+ * - **vn** — fold + đ→d and ð→d (both non-decomposing, and OSM mixes the two codepoints inside single values — see the
+ *   branch comment). Deliberately no type-abbreviation map yet: the common abbreviation is the single letter "Đ." for
+ *   Đường, and expanding a bare folded "d" token would rewrite initials — measure the miss rate on the built extract
+ *   before adding anything.
+ * - **id** — fold + expand leading type abbreviations (jl/jln→jalan, gg→gang); Indonesian street surfaces are otherwise
+ *   ascii-clean.
  */
 export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): StreetKey {
 	if (locale === "us" || locale === "en") return normalizeStreetForKey(street)
@@ -616,18 +612,14 @@ const CANONICAL_TYPE_WORDS: ReadonlySet<string> = new Set(
  *
  * Two register mismatches motivate them, both measured on live queries (2026-08-14):
  *
- * - **Doubled type** — a user types the type twice ("Saint Pauls PL St"), and the normalizer canonicalizes
- *   only the last type token, leaving `saint pauls pl street`, which matches nothing anywhere.
- *   The signature is visible in the key itself: a canonical type word in last position
- *   directly after an uncanonicalized type abbreviation.
- *   The variant drops the trailing word and canonicalizes what remains (`saint pauls place`).
- *   A street genuinely named with two types keys identically on both sides
- *   and is caught by the primary probe first.
- * - **Saint↔St register split** — the artifacts preserve each source's spelling
- *   (NYC situs keys `st pauls place`, Nassau keys `saint pauls place`),
- *   and a query arrives in whichever register the user typed.
- *   A leading `saint` or `st` token is swapped for its sibling.
- *   Leading position only — a leading `st` is always the hagionym in US street names,
+ * - **Doubled type** — a user types the type twice ("Saint Pauls PL St"), and the normalizer canonicalizes only the last
+ *   type token, leaving `saint pauls pl street`, which matches nothing anywhere. The signature is visible in the key
+ *   itself: a canonical type word in last position directly after an uncanonicalized type abbreviation. The variant
+ *   drops the trailing word and canonicalizes what remains (`saint pauls place`). A street genuinely named with two
+ *   types keys identically on both sides and is caught by the primary probe first.
+ * - **Saint↔St register split** — the artifacts preserve each source's spelling (NYC situs keys `st pauls place`, Nassau
+ *   keys `saint pauls place`), and a query arrives in whichever register the user typed. A leading `saint` or `st`
+ *   token is swapped for its sibling. Leading position only — a leading `st` is always the hagionym in US street names,
  *   and interior tokens ("Mount Saint Helens Dr") are out of scope until measured.
  *
  * Deduplicated and ordered most-literal-first, so probing the list in order

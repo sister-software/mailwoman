@@ -45,8 +45,7 @@ export const PLACE_SEARCH_TABLE = "place_search"
  * - `' ; '` (punctuation) — false HIT
  * - `' \u2016 '` (double vertical line) — false HIT
  * - `' \x1F '` (ascii unit separator) — false HIT
- * - `' \uE000 '` (PUA, this constant).
- *   No match, while `'"york"'` and `'"new city"'` still match the bag individually
+ * - `' \uE000 '` (PUA, this constant). No match, while `'"york"'` and `'"new city"'` still match the bag individually
  *   under every variant above.
  *
  * U+E000 works because unicode61 classifies it (category Co — neither space nor punctuation)
@@ -54,18 +53,16 @@ export const PLACE_SEARCH_TABLE = "place_search"
  * own token and the aliases' tokens are no longer positionally adjacent.
  * The remaining requirements also hold:
  *
- * - **Unreachable from queries**: `sanitizeFTSQuery` (Node + wasm resolvers) strips
- *   everything outside `\p{L}\p{N}` from token bodies, and U+E000 is neither.
- *   No user query can ever address the separator token.
- *   The demo's `sanitizeFTS` strips it explicitly.
- * - **Never in place names**: PUA codepoints are unassigned by definition.
- *   Real-world WOF names don't carry them.
- *   Defensively, the insert below also strips any embedded U+E000 from source names
- *   so a poisoned row can't forge an alias boundary.
- * - **Survives GROUP_CONCAT**: verified.
- *   `GROUP_CONCAT(name, ' ' || char(57344) || ' ')` emits the codepoint intact (`57344` = 0xE000).
- * - **Cost**: one extra token per alias boundary in the FTS document.
- *   Marginal BM25 length-norm impact, on a column whose length stats are already the known #189 problem.
+ * - **Unreachable from queries**: `sanitizeFTSQuery` (Node + wasm resolvers) strips everything outside `\p{L}\p{N}` from
+ *   token bodies, and U+E000 is neither. No user query can ever address the separator token. The demo's `sanitizeFTS`
+ *   strips it explicitly.
+ * - **Never in place names**: PUA codepoints are unassigned by definition. Real-world WOF names don't carry them.
+ *   Defensively, the insert below also strips any embedded U+E000 from source names so a poisoned row can't forge an
+ *   alias boundary.
+ * - **Survives GROUP_CONCAT**: verified. `GROUP_CONCAT(name, ' ' || char(57344) || ' ')` emits the codepoint intact
+ *   (`57344` = 0xE000).
+ * - **Cost**: one extra token per alias boundary in the FTS document. Marginal BM25 length-norm impact, on a column whose
+ *   length stats are already the known #189 problem.
  *
  * Interaction with #189 (split `alt_names` into its own FTS table for independent BM25 length stats):
  * the separator survives that split as proposed — #189 still GROUP_CONCATs all aliases
@@ -105,18 +102,14 @@ export function foldQueryText(input: string): string {
  *
  * Two formats exist in the wild:
  *
- * - **Separated bags** (built since #523): aliases joined with {@link ALIAS_SEPARATOR},
- *   plus a trailing separator so even a single-alias bag self-identifies as separator-formatted.
- *   Split + per-alias equality.
- *   A true exact-alias check, matching the semantics of the full `names` table
- *   (`names.name = ? Collate nocase`), so it runs unrestricted: an alias match is an
- *   exact match whether or not another candidate matched on its canonical name.
- * - **Legacy bags** (pre-#523 artifacts, e.g. an already-deployed slim DB):
- *   aliases space-joined, boundaries lost.
- *   Falls back to the historical padded-containment check, conditioned on `anyStrictExact` — unrestricted
- *   containment would false-promote interior fragments ("York" inside the alias "New York City")
- *   and cross-boundary fragments ("York New" across "…York" + "New…").
- *   Delete this branch once every shipped artifact carries the separator.
+ * - **Separated bags** (built since #523): aliases joined with {@link ALIAS_SEPARATOR}, plus a trailing separator so even
+ *   a single-alias bag self-identifies as separator-formatted. Split + per-alias equality. A true exact-alias check,
+ *   matching the semantics of the full `names` table (`names.name = ? Collate nocase`), so it runs unrestricted: an
+ *   alias match is an exact match whether or not another candidate matched on its canonical name.
+ * - **Legacy bags** (pre-#523 artifacts, e.g. an already-deployed slim DB): aliases space-joined, boundaries lost. Falls
+ *   back to the historical padded-containment check, conditioned on `anyStrictExact` — unrestricted containment would
+ *   false-promote interior fragments ("York" inside the alias "New York City") and cross-boundary fragments ("York New"
+ *   across "…York" + "New…"). Delete this branch once every shipped artifact carries the separator.
  *
  * @param altNames The `alt_names` bag from `place_search` (null when the row has no aliases).
  * @param normalizedQuery The query, pre-normalized: lowercased, trimmed, internal
@@ -230,7 +223,7 @@ export interface BuildPlaceSearchFTSOpts {
  * The R*Tree is used for bbox + proximity filtering.
  * Both are pure SQLite — no extensions required.
  *
- * @returns a `BuildPlaceSearchFTSResult` summary.
+ * @returns A `BuildPlaceSearchFTSResult` summary.
  *   Idempotent when `drop: false` — re-running against an already-indexed DB
  *   skips whichever indexes already exist.
  */

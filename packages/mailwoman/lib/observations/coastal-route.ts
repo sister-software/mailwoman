@@ -123,7 +123,9 @@ export const COASTAL_REFUSALS = [
 	 */
 	"no_coordinate",
 	/**
-	 * The authority's mapping assigns no erosion zone here under the scenario asked about. Not an absence claim: the location may be inland, or on the coast outside the mapped risk area, and ncerm publishes nothing that tells those apart.
+	 * The authority's mapping assigns no erosion zone here under the scenario asked about. Not an absence claim: the
+	 * location may be inland, or on the coast outside the mapped risk area, and ncerm publishes nothing that tells those
+	 * apart.
 	 */
 	"no_designation_here",
 ] as const

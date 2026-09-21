@@ -247,7 +247,7 @@ export function isNZDeliveryService(input: unknown): boolean {
 /**
  * Normalize a recognized phrase to the ADV358 form (`"p.o. Box 24999"` → `"PO Box 24999"`).
  *
- * @returns the input unchanged if it isn't a delivery-service phrase.
+ * @returns The input unchanged if it isn't a delivery-service phrase.
  */
 export function normalizeNZDeliveryService(input: string): string {
 	const m = matchNZDeliveryService(input)

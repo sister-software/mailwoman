@@ -101,7 +101,8 @@ export const NSUL_LICENSE_INFO_URL = "https://www.ons.gov.uk/methodology/geograp
 export const NSUL_PORTAL_URL = "https://geoportal.statistics.gov.uk"
 
 /**
- * The four attribution statements the nsul User Guide requires of anyone redistributing an address product derived from AddressBase, in the guide's wording and order. `year` is the copyright year of the data rather than the build year.
+ * The four attribution statements the nsul User Guide requires of anyone redistributing an address product derived from
+ * AddressBase, in the guide's wording and order. `year` is the copyright year of the data rather than the build year.
  */
 export function nsulAttribution(year: number): string {
 	return (
@@ -252,7 +253,7 @@ export function classifyNSULLine(line: string): NSULLineClass {
 /**
  * Strip the header line's crlf terminator and compare it to {@link NSUL_HEADER}.
  *
- * @returns the header as found when it drifts, `null` when it matches.
+ * @returns The header as found when it drifts, `null` when it matches.
  */
 export function nsulHeaderDrift(rawLine: string): string | null {
 	const header = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine
@@ -602,8 +603,8 @@ interface IngestNSULSourcesOptions {
 /**
  * The ingest loop: stream every region, classify every line, join the coordinate, write, and account.
  *
- * @throws on header drift.
- *   The caller owns the transaction and rolls it back.
+ * @throws On header drift.
+ * The caller owns the transaction and rolls it back.
  */
 async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSULIngestCounts> {
 	const { sources, coordinateOf, write, parentCell, checkpoint, phase } = options

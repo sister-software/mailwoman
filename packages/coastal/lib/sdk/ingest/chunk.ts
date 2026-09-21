@@ -109,7 +109,7 @@ export interface IngestCoastalChunkOptions {
  * Stream one chunk of the source into `database`.
  *
  * @throws {Error} On a value outside the authority's declared domains,
- *   or on a feature the classifier refuses.
+ * or on a feature the classifier refuses.
  */
 export async function ingestCoastalChunk(
 	database: DatabaseClient<CoastalDatabase>,

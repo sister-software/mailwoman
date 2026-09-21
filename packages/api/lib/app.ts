@@ -80,8 +80,8 @@ function summarizeValidationError(error: { issues: Array<{ path: PropertyKey[]; 
  * The document info stamped into the emitted OpenAPI document.
  *
  * Exported (not inlined) so the `mailwoman openapi` command can call `emitOpenAPIDocuments`
- * with the same info the mounted `/openapi.json` route (below, via
- * {@link attachOpenAPIDocs}) uses — one source of truth, no risk of the two drifting.
+ * with the same info the mounted `/openapi.json` route (below, via {@link attachOpenAPIDocs})
+ * uses — one source of truth, no risk of the two drifting.
  */
 export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
 	...(await readServedDocumentInfo(import.meta.url, "@mailwoman/api")),

@@ -150,18 +150,14 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
  * so every source has to name the slot it read.
  * The evidence for each:
  *
- * - `registerDistrict` — the `--source` CSV's `district` column.
- *   On GB's PPD tuples that is the post town (`corpus/src/database-recipes/locale.ts`'s
- *   `districtAsLocality` check reads it as the locality line); on the NZ linz/OpenAddresses
- *   countrywide export it is the town/city above the suburb in `city`.
- *   Both are the locality slot.
- * - `secondaryPairsJSONL` — the `--pairs-jsonl` files.
- *   All three shipped ones pair a neighbourhood-class child with a town:
- *   `london-pairs-v2.jsonl` (966 London wards ∪ neighbourhoods under "London", R3/R4b),
- *   `ni-pairs-v1.jsonl` (87 Belfast-area, R7), `gb-regions-v1.jsonl`
- *   (10,708 Scotland/Wales/England villages under their post town or civil parish, R8 — with the parish's
- *   administrative suffix stripped precisely so the parent reads as the town an address writes).
- *   A line may override with its own `parentTag` when a future source is not that shape.
+ * - `registerDistrict` — the `--source` CSV's `district` column. On GB's PPD tuples that is the post town
+ *   (`corpus/src/database-recipes/locale.ts`'s `districtAsLocality` check reads it as the locality line); on the NZ
+ *   linz/OpenAddresses countrywide export it is the town/city above the suburb in `city`. Both are the locality slot.
+ * - `secondaryPairsJSONL` — the `--pairs-jsonl` files. All three shipped ones pair a neighbourhood-class child with a
+ *   town: `london-pairs-v2.jsonl` (966 London wards ∪ neighbourhoods under "London", R3/R4b), `ni-pairs-v1.jsonl` (87
+ *   Belfast-area, R7), `gb-regions-v1.jsonl` (10,708 Scotland/Wales/England villages under their post town or civil
+ *   parish, R8 — with the parish's administrative suffix stripped precisely so the parent reads as the town an address
+ *   writes). A line may override with its own `parentTag` when a future source is not that shape.
  *
  * The two remaining sources state their own and are not in this table:
  * `--borough-db` reads the WOF parent row's placetype per pair (`borough-pairs.ts`),

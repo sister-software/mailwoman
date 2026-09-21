@@ -370,8 +370,8 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 /**
  * Route one invocation.
  *
- * @returns the exit code.
- *   Never touches `process`.
+ * @returns The exit code.
+ * Never touches `process`.
  */
 export async function dispatch(args: readonly string[], io: DispatchIO): Promise<number> {
 	const [verb, ...rest] = args

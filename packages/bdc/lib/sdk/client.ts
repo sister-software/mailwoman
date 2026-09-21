@@ -284,7 +284,8 @@ export interface BDCThrottleStats {
 }
 
 /**
- * {@linkcode APIClient} configuration plus the BDC-specific fields {@linkcode BDCClient} reads back off `config`.
+ * {@linkcode APIClient} configuration plus the BDC-specific fields
+ * {@linkcode BDCClient} reads back off `config`.
  */
 export interface BDCClientConfig extends APIClientConfig {
 	/**
@@ -601,7 +602,7 @@ function createMeteredClock(base: ClockLike): {
  *
  * See the file header for the full rationale.
  *
- * @throws immediately, before any request is made, when constructed without explicit credentials
+ * @throws Immediately, before any request is made, when constructed without explicit credentials
  *   and without the `FCC_MAP_USERNAME`/`FCC_MAP_API_KEY` environment values.
  */
 export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient {

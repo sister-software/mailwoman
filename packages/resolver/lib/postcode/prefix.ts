@@ -88,7 +88,7 @@ const MIN_US_SECTION_CODE_LENGTH = 3
 /**
  * Derive the prefix the index is keyed by, per the artifact's own country law.
  *
- * @returns null (abstain) for a country with no derivation law, or a code too short to carry a prefix.
+ * @returns Null (abstain) for a country with no derivation law, or a code too short to carry a prefix.
  */
 export function derivePostcodePrefix(code: string, country?: string): string | null {
 	if (!code || !country) return null

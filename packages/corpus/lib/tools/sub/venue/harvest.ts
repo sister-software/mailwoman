@@ -137,8 +137,8 @@ export interface HarvestOptions {
  * The index also decides attribution: a hit is a surface of the record the phrase names,
  * and the row's own designator is recorded as `context`.
  *
- * @returns surfaces with real `observations` counts, so the lexicon can rank
- *   `terminal` above a phrase attested once.
+ * @returns Surfaces with real `observations` counts, so the lexicon can rank
+ * `terminal` above a phrase attested once.
  */
 export function extractAttestedPhrases(
 	rows: Iterable<SubVenueHarvestRow>,

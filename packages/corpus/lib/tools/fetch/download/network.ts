@@ -137,8 +137,8 @@ export interface DownloadOptions {
 /**
  * Download `url` to `dest` with per-attempt timeout and transient-status retry.
  *
- * @throws on a non-transient http status or once retries are exhausted.
- *   Returns the byte count written.
+ * @throws On a non-transient http status or once retries are exhausted.
+ * Returns the byte count written.
  */
 export async function downloadToFile(options: DownloadOptions): Promise<{ bytes: number }> {
 	const {

@@ -204,7 +204,8 @@ export interface CensusAddressQuery {
 export type CensusGeocoderInput = string | CensusAddressQuery
 
 /**
- * {@linkcode APIClient} configuration plus the fields {@linkcode CensusGeocoderClient} reads back off `config`.
+ * {@linkcode APIClient} configuration plus the fields {@linkcode CensusGeocoderClient}
+ * reads back off `config`.
  */
 export interface CensusGeocoderClientConfig extends APIClientConfig {
 	/**
@@ -278,9 +279,8 @@ export class CensusGeocoderClient extends APIClient<CensusGeocoderClientConfig> 
 	 * A no-match is an error here rather than an empty array, and the choice is deliberate: it makes
 	 * "the address did not geocode" land on the same `error.status` branch a caller already writes
 	 * for every other client in this repo, rather than as a second success shape only this one has.
-	 * The empty response is still cached (see
-	 * {@linkcode isCacheableCensusBody}) — the error is raised after the interceptor has persisted the body, so a repeat
-	 * of an unmatched address costs no request.
+	 * The empty response is still cached (see {@linkcode isCacheableCensusBody}) — the error is raised
+	 * after the interceptor has persisted the body, so a repeat of an unmatched address costs no request.
 	 */
 	async #matches<Match extends CensusAddressMatch>(
 		path: string,

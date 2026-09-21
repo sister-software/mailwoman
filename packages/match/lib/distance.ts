@@ -92,12 +92,11 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
  *
  * This folds them into one comparison:
  *
- * - **level 0 `same-key`** — an exact canonical-key match: the strongest tier, and the one the
- *   inverse-address-frequency adjustment rides ({@link withTermFrequency} on level 0), so agreement on
- *   a crowded shared key is down-weighted toward worthless while a rare one keeps full weight.
- * - **levels 1…n** — great-circle distance buckets for pairs whose keys differ,
- *   so "123 Main St" vs "123 Main Street Apt 2" that geocode to the same rooftop still
- *   warrants near-agreement (the geo-first point of the whole design).
+ * - **level 0 `same-key`** — an exact canonical-key match: the strongest tier, and the one the inverse-address-frequency
+ *   adjustment rides ({@link withTermFrequency} on level 0), so agreement on a crowded shared key is down-weighted
+ *   toward worthless while a rare one keeps full weight.
+ * - **levels 1…n** — great-circle distance buckets for pairs whose keys differ, so "123 Main St" vs "123 Main Street Apt
+ *   2" that geocode to the same rooftop still warrants near-agreement (the geo-first point of the whole design).
  * - Keys differ and no usable coordinate → no evidence.
  *
  * Exactly one spatial vote, no redundancy.

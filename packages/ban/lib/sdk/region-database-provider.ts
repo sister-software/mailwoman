@@ -37,9 +37,9 @@ export interface BANExtracts {
  * A non-US geocode consults `for(country)`; the first hit for a country opens its
  * extract (with the matching street locale) once, subsequent calls reuse it.
  *
- * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per call:
- * {@linkcode warm} awaits `pathExists` for every supported country × extract-tier combination
- * and records what exists; `for` consults that map.
+ * `for` is synchronous, so on-disk existence is probed asynchronously once
+ * instead of per call: {@linkcode warm} awaits `pathExists` for every supported country
+ * × extract-tier combination and records what exists; `for` consults that map.
  * Prefer {@linkcode BANRegionDatabaseProvider.create}, which constructs
  * and warms before answering — a provider constructed directly must be warmed
  * before its first `for`, or it answers `{}` for every country.

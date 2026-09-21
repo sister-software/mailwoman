@@ -209,19 +209,25 @@ export type PlausibilitySharedEvidence =
 export type PlausibilityCoverageAxisState =
 	| "covered"
 	/**
-	 * The required dependency (`deps.bdcDB` for filing, `deps.poi` for physical) was never wired at all — the `requires_bdc_layer` / `requires_build_local_layer` abstain precedent.
+	 * The required dependency (`deps.bdcDB` for filing, `deps.poi` for physical) was never wired at all — the
+	 * `requires_bdc_layer` / `requires_build_local_layer` abstain precedent.
 	 */
 	| "layer_missing"
 	/**
-	 * The dependency is wired, but the specific queried block/cell carries no survey coverage of its own. The `insufficient_survey_data` abstain precedent (filing), or an absent `readLayerCoverage` read (physical).
+	 * The dependency is wired, but the specific queried block/cell carries no survey coverage of its own. The
+	 * `insufficient_survey_data` abstain precedent (filing), or an absent `readLayerCoverage` read (physical).
 	 */
 	| "cell_unsurveyed"
 	/**
-	 * Physical axis only: the claim resolved no coordinate (a geoid-only claim — see the module docstring's claim-resolution note), so no physical-evidence search point exists. A genuine capability gap rather than a missing layer — distinct from `"layer_missing"` even though both degrade `coverage_confidence` the same way.
+	 * Physical axis only: the claim resolved no coordinate (a geoid-only claim — see the module docstring's
+	 * claim-resolution note), so no physical-evidence search point exists. A genuine capability gap rather than a missing
+	 * layer — distinct from `"layer_missing"` even though both degrade `coverage_confidence` the same way.
 	 */
 	| "no_coordinate"
 	/**
-	 * Physical axis only: the claimed technology maps to no physical-plant category at all (see {@link PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES}). There is no applicable second channel for this tech, ever, regardless of layer availability. Distinct from every other state: this claim can never warrant `"high"`.
+	 * Physical axis only: the claimed technology maps to no physical-plant category at all (see
+	 * {@link PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES}). There is no applicable second channel for this tech, ever,
+	 * regardless of layer availability. Distinct from every other state: this claim can never warrant `"high"`.
 	 */
 	| "not_applicable"
 

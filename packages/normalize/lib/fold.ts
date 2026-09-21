@@ -25,8 +25,8 @@ export function stripCombiningMarks(input: string): string {
 }
 
 /**
- * {@link foldCaseWhitespace} over the nfkc composition, with locale-aware lower-casing: fullwidth and compatibility
- * forms fold together before comparison.
+ * {@link foldCaseWhitespace} over the nfkc composition, with locale-aware lower-casing:
+ * fullwidth and compatibility forms fold together before comparison.
  */
 export function foldNFKCWhitespace(input: string): string {
 	return input.normalize("NFKC").toLocaleLowerCase().replaceAll(/\s+/gu, " ").trim()

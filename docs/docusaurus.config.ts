@@ -12,14 +12,12 @@ import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
  *
  * Two false-positive classes warrant a word a place here, both measured across the built site:
  *
- * 1. A common English word that is also a glossary alias.
- *    `state` is an alias of `region`, so every ordinary use — "the state of the pipeline",
- *    "stateless", "US state law" — tooltipped the address component.
- *    It fired on 38 pages, and almost none of them meant the component.
- * 2. A common English word that is also a glossary term in a narrower sense.
- *    `tier` is defined as the model's label tier, but the site's own vocabulary uses
- *    the word for geocode-cascade tiers, locale tiers and pricing tiers.
- *    It fired on 39 pages including pricing.mdx, where the definition on offer is the wrong one every time.
+ * 1. A common English word that is also a glossary alias. `state` is an alias of `region`, so every ordinary use — "the
+ *    state of the pipeline", "stateless", "US state law" — tooltipped the address component. It fired on 38 pages, and
+ *    almost none of them meant the component.
+ * 2. A common English word that is also a glossary term in a narrower sense. `tier` is defined as the model's label tier,
+ *    but the site's own vocabulary uses the word for geocode-cascade tiers, locale tiers and pricing tiers. It fired on
+ *    39 pages including pricing.mdx, where the definition on offer is the wrong one every time.
  *
  * Suppression is by surface rather than by term: `region` still links, and
  * so does a multi-word phrase that merely contains a suppressed word, like the FST

@@ -110,7 +110,8 @@ type TailPropertyName<Value extends string> = Value extends `${infer Head}-${inf
 	: InitialismOf<Value>
 
 /**
- * {@linkcode optionPropertyName} at the type level, so a command's option properties are derived from its flags rather than restated beside them.
+ * {@linkcode optionPropertyName} at the type level, so a command's option properties
+ * are derived from its flags rather than restated beside them.
  *
  * The two must agree for a flag to bind, and matched tables would not hold that:
  * the type and the value diverge at the points a constant cannot express.

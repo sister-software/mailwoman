@@ -55,7 +55,7 @@ interface RawSubmissionsPayload {
 /**
  * Validates + extracts every 10-K filing from a raw submissions payload for `cik`.
  *
- * @throws a descriptive error naming `cik` on a structural mismatch
+ * @throws A descriptive error naming `cik` on a structural mismatch
  *   (missing `filings.recent`, or its parallel arrays disagreeing in length) —
  *   decision 8's "malformed input must be loud" discipline.
  *   This is SEC's own documented API shape, so either failure means the upstream

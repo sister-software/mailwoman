@@ -59,7 +59,9 @@ export interface UPRNPostcodeTable {
 	 */
 	pcds: string
 	/**
-	 * {@link pcds} with the space removed (`RG404HR`). The form Code-Point Open's `spr.name` carries, and the column `uprnsForPostcode` probes.
+	 * {@link pcds} with the space removed (`RG404HR`).
+	 *
+	 * The form Code-Point Open's `spr.name` carries, and the column `uprnsForPostcode` probes.
 	 */
 	pcds_compact: string
 	/**

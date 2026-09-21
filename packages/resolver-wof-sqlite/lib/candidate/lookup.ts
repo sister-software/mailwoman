@@ -67,7 +67,8 @@ export interface WOFCandidateTableLookupOpts {
 	 */
 	database?: DatabaseClient<CandidateDatabase>
 	/**
-	 * #1882 opt-in: exempt `name_role = 'variant'` aliases — the holder's own primary name in another orthography, stamped by the build's own-name detector — from the cross-country primary-preference penalty.
+	 * #1882 opt-in: exempt `name_role = 'variant'` aliases — the holder's own primary name in another orthography,
+	 * stamped by the build's own-name detector — from the cross-country primary-preference penalty.
 	 *
 	 * No-ops on an artifact without the role column.
 	 * Off by default (D-rule).
@@ -145,7 +146,7 @@ const POSTCODE_CONTAINMENT_THRESHOLD_KM = 25
  * (each quoted so FTS treats it as a literal term).
  *
  * @returns "" when `s` is shorter than a trigram or yields no clean grams —
- *   the caller then skips the fuzzy probe.
+ * the caller then skips the fuzzy probe.
  */
 function ftsTrigramQuery(s: string): string {
 	const grams = new Set<string>()
@@ -464,22 +465,18 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 *
 	 * Three steps, each additive:
 	 *
-	 * 1. Resolve the qualifier to its region-band rows ({@link #qualifierRegionIDs})
-	 *    and stamp every existing row's `containedByQualifier`.
-	 *    The stamp is the trace surface, written even when nothing reorders.
-	 * 2. Inject contained same-key candidates the country scope hid: the deciding-site
-	 *    measurement (2026-08-18, the #1729 lesson re-confirmed) showed `Weimar, Thüringen`
-	 *    under the en-US locale probes `country_id = US`, so the DE row is not IN the list
-	 *    and no reorder of the list can reach it.
-	 *    The injection probe runs the same exact fold (and, on a contained-miss,
-	 *    the qualifier-strip variant restricted to primary keys — the #1626 alias-scrape guard)
-	 *    under the shape conds only, appends contained rows not already present,
-	 *    and never removes anything — recall can only widen.
-	 *    The typo-fuzzy tier is deliberately not probed: a qualifier cannot vouch
-	 *    for a name the gazetteer does not carry.
-	 * 3. Partition contained-first — the shared {@link partitionByContainment}
-	 *    (tier-safe, stable. The resolver walk runs the same function after its fame re-rank,
-	 *    one function at both deciding sites per the #861 rule) — then re-window to `limit`.
+	 * 1. Resolve the qualifier to its region-band rows ({@link #qualifierRegionIDs}) and stamp every existing row's
+	 *    `containedByQualifier`. The stamp is the trace surface, written even when nothing reorders.
+	 * 2. Inject contained same-key candidates the country scope hid: the deciding-site measurement (2026-08-18, the #1729
+	 *    lesson re-confirmed) showed `Weimar, Thüringen` under the en-US locale probes `country_id = US`, so the DE row
+	 *    is not IN the list and no reorder of the list can reach it. The injection probe runs the same exact fold (and,
+	 *    on a contained-miss, the qualifier-strip variant restricted to primary keys — the #1626 alias-scrape guard)
+	 *    under the shape conds only, appends contained rows not already present, and never removes anything — recall can
+	 *    only widen. The typo-fuzzy tier is deliberately not probed: a qualifier cannot vouch for a name the gazetteer
+	 *    does not carry.
+	 * 3. Partition contained-first — the shared {@link partitionByContainment} (tier-safe, stable. The resolver walk runs
+	 *    the same function after its fame re-rank, one function at both deciding sites per the #861 rule) — then
+	 *    re-window to `limit`.
 	 *
 	 * A qualifier that matches nothing stamps `false` everywhere and reorders nothing —
 	 * byte-identical answers, and the walk's verdict reads `no_contained_candidate`

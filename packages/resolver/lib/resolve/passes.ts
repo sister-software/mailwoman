@@ -237,11 +237,15 @@ export interface ResolutionState {
 	 */
 	postcodePrefixPrior: boolean
 	/**
-	 * #1589 — the countries the parsed postcode's format implies (the #928 singles plus the shared `NNN NN` family). When set and no explicit country selection applies, the `postalcode` lookup probes exactly these countries and abstains if all miss — never falling through to an unconstrained probe, whose space-stripped fold collides across systems (`100 00` folded to `10000` answers Troyes FR while Prague sits in the artifact under both keyings).
+	 * #1589 — the countries the parsed postcode's format implies (the #928 singles plus the shared `NNN NN` family). When
+	 * set and no explicit country selection applies, the `postalcode` lookup probes exactly these countries and abstains
+	 * if all miss — never falling through to an unconstrained probe, whose space-stripped fold collides across systems
+	 * (`100 00` folded to `10000` answers Troyes FR while Prague sits in the artifact under both keyings).
 	 */
 	postcodeFormatCountries?: readonly string[]
 	/**
-	 * #1585 — the locale hint's country, forwarded to the backend as `fuzzyCountry` on every primary lookup. Scopes the typo-fuzzy tier only. Exact matches stay worldwide.
+	 * #1585 — the locale hint's country, forwarded to the backend as `fuzzyCountry` on every primary lookup. Scopes the
+	 * typo-fuzzy tier only. Exact matches stay worldwide.
 	 *
 	 * See `ResolveOpts.fuzzyCountryScope`.
 	 */
@@ -279,7 +283,8 @@ export interface ResolutionState {
 	 */
 	diagnoseUnreachable?: boolean
 	/**
-	 * #27 locale-country soft prior for the bare-toponym admin walk. Undefined = no prior (the shipped default) → byte-stable.
+	 * #27 locale-country soft prior for the bare-toponym admin walk. Undefined = no prior (the shipped default) →
+	 * byte-stable.
 	 *
 	 * See `ResolveOpts.localeCountryPrior` for the calibration and why it ships opt-in.
 	 */
@@ -474,7 +479,9 @@ export async function applySpanRescore(
 }
 
 /**
- * #942: find the first confident-but-unresolved postcode node whose value is a polluted compound ("1382 Kožljek"), resolve its code-shaped token subset as a `postalcode`, and decorate the node from that hit (`postal_compound_recovered` metadata marks the provenance).
+ * #942: find the first confident-but-unresolved postcode node whose value is a polluted compound ("1382 Kožljek"),
+ * resolve its code-shaped token subset as a `postalcode`, and decorate the node from that hit
+ * (`postal_compound_recovered` metadata marks the provenance).
  *
  * No-op when every postcode node resolved, the value has no digit-containing tokens,
  * or the subset equals the full value (then the walk already tried it).
@@ -533,14 +540,13 @@ export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
  * because the coordinate-picker prefers the (wrong) locality node and never cross- checks it.
  * This post-walk pass closes that loop, backend-agnostically and with no extra query:
  *
- * 1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is
- *    unambiguous within a country in a way a town name is not).
- * 2. For each resolved locality node farther than `thresholdKm` from it:
- *    re-pick the same-named candidate from the node's already-captured `alternatives`
- *    that is nearest the postcode and within the radius.
- *    This keeps locality granularity at the correct instance.
- * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate
- *    back to the postcode point (right area, the safe answer) and flag `postcode_city_mismatch`.
+ * 1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is unambiguous within a country in a way
+ *    a town name is not).
+ * 2. For each resolved locality node farther than `thresholdKm` from it: re-pick the same-named candidate from the node's
+ *    already-captured `alternatives` that is nearest the postcode and within the radius. This keeps locality
+ *    granularity at the correct instance.
+ * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate back to the postcode point
+ *    (right area, the safe answer) and flag `postcode_city_mismatch`.
  *
  * Step 3 rests on the postcode being the more reliable of the two, which holds
  * while the postcode is correct.

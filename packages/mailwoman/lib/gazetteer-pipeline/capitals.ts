@@ -196,7 +196,7 @@ export interface BuildCapitalsResult {
  * Read every catalog country's dump, extract the capital rows, grade the extraction
  * against the catalog's own capital names, and write the reference.
  *
- * @throws when `countryInfo.txt` is absent.
+ * @throws When `countryInfo.txt` is absent.
  *   Without the catalog there is no denominator, and a reference built from "whatever
  *   files exist" cannot state what it failed to cover.
  */

@@ -45,7 +45,7 @@ export interface AdapterRegistry {
 	/**
 	 * Add an adapter.
 	 *
-	 * @throws if `adapter.id` is already registered.
+	 * @throws If `adapter.id` is already registered.
 	 */
 	register(adapter: CorpusAdapter): void
 
@@ -123,7 +123,9 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
 }
 
 /**
- * {@link stableSourceID} over arbitrary disambiguator keys. A variant index, a slot number, anything that is not a `ComponentTag`.
+ * {@link stableSourceID} over arbitrary disambiguator keys.
+ *
+ * A variant index, a slot number, anything that is not a `ComponentTag`.
  *
  * Every key handed in is sorted and hashed either way.
  *

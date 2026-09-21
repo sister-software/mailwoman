@@ -149,7 +149,8 @@ export interface ClassifyStageResult {
  * The caller owns resolution (`runCascade`, plus the map path's street tier / anchor fallback)
  * and the staged `onStage` progress ticks.
  *
- * #1278: this is the single point the locale-check pre-parse plugs into. A future per-parse country / conventions hint is threaded through {@link ClassifyStageDeps} into the `runPipeline` call here — one insertion point for both paths.
+ * #1278: this is the single point the locale-check pre-parse plugs into. A future per-parse country / conventions hint
+ * is threaded through {@link ClassifyStageDeps} into the `runPipeline` call here — one insertion point for both paths.
  */
 /**
  * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278),

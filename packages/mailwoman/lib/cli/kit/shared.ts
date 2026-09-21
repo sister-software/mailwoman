@@ -363,7 +363,9 @@ export function countOption(raw: string | undefined, fallback: number): number {
 }
 
 /**
- * {@linkcode extractDelimited} as numbers — resolution and size flags. Blank entries are dropped before conversion, so a trailing comma is not a NaN.
+ * {@linkcode extractDelimited} as numbers — resolution and size flags.
+ *
+ * Blank entries are dropped before conversion, so a trailing comma is not a NaN.
  */
 export function splitNumberList(raw: string | undefined): number[] {
 	return extractDelimited(raw).map(Number)
@@ -481,8 +483,8 @@ export function runProcessOrFail(
  * Two failure modes are distinguished:
  *
  * - Weights absent (package not installed / carries no binaries) → an install hint, no scary error text.
- * - Weights present but the encoder failed to load (corrupt / partial bundle, a bad explicit path)
- *   → the underlying error is surfaced rather than swallowed.
+ * - Weights present but the encoder failed to load (corrupt / partial bundle, a bad explicit path) → the underlying error
+ *   is surfaced rather than swallowed.
  *
  * `onDegrade` receives the warning line.
  * Callers send it to stderr so piped stdout parsing is unaffected.

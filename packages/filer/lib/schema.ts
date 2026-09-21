@@ -161,35 +161,29 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  * A scheme that cannot distinguish a holding company from a parent CIK from a transfer-of-control,
  * and had no way to express a corporate-family fact (`filer_family`) at all.
  *
- * - `SameEntity` — the two nodes denote the same underlying filer under different
- *   identifiers (an FRN and its Form 499 ID, a BDC `provider_id` and its FRN) —
- *   the crosswalk's original, still-dominant edge meaning, and the only kind
+ * - `SameEntity` — the two nodes denote the same underlying filer under different identifiers (an FRN and its Form 499
+ *   ID, a BDC `provider_id` and its FRN) — the crosswalk's original, still-dominant edge meaning, and the only kind
  *   {@link FilerNodeTable} entity-clustering (`cluster-filers.ts`) ever asserts.
  * - `HoldingCompany` — the target node is the source node's holding company (an ownership fact).
- * - `ManagementCompany` — the target node operates/manages the source node without
- *   owning it — operational control, never collapsed into `HoldingCompany`
- *   (spec §3.1 finding 1: ownership and operational control are different assertions).
- * - `ParentCompany` — the target is the source's parent in a corporate-family rollup
- *   ({@link FilerFamilyTable}), distinct from `HoldingCompany`: a parent-company
- *   relationship is a family-tree fact rather than necessarily an ownership filing.
- * - `Subsidiary` — the inverse of `ParentCompany`, kept as its own value (never just "read backwards")
- *   so a row's `relationship` always describes the edge in the direction it was asserted,
- *   without requiring the reader to know which side is the source.
- * - `SupersededBy` — the source registration was replaced by the target one.
- *   Identity continuity over time, and deliberately not an ownership or control fact:
- *   it says this registration became that registration, and nothing about who owns either.
- *   Written from Form 499's `Replaced by filer <id>` note (`form499-notes.ts`),
- *   which the FCC states on 2,826 filers in the 2025-12-07 vintage, 2,820 of whose
- *   targets resolve to a filer in the same file.
+ * - `ManagementCompany` — the target node operates/manages the source node without owning it — operational control, never
+ *   collapsed into `HoldingCompany` (spec §3.1 finding 1: ownership and operational control are different assertions).
+ * - `ParentCompany` — the target is the source's parent in a corporate-family rollup ({@link FilerFamilyTable}), distinct
+ *   from `HoldingCompany`: a parent-company relationship is a family-tree fact rather than necessarily an ownership
+ *   filing.
+ * - `Subsidiary` — the inverse of `ParentCompany`, kept as its own value (never just "read backwards") so a row's
+ *   `relationship` always describes the edge in the direction it was asserted, without requiring the reader to know
+ *   which side is the source.
+ * - `SupersededBy` — the source registration was replaced by the target one. Identity continuity over time, and
+ *   deliberately not an ownership or control fact: it says this registration became that registration, and nothing
+ *   about who owns either. Written from Form 499's `Replaced by filer <id>` note (`form499-notes.ts`), which the FCC
+ *   states on 2,826 filers in the 2025-12-07 vintage, 2,820 of whose targets resolve to a filer in the same file.
  *
- *   Two consequences a reader has to hold.
- *   First, the edge is directional in time as well as in identity.
+ *   Two consequences a reader has to hold. First, the edge is directional in time as well as in identity.
  *
  *   The source is the older registration, always, and the pair is never symmetric.
  *
- *   Second, `linkage-eval.ts`'s `OWNERSHIP_BY_RELATIONSHIP` pins this `false`;
- *   a supersession chain is not evidence of a corporate family, and an eval that scored
- *   it as one would credit itself for recovering ownership it never saw.
+ *   Second, `linkage-eval.ts`'s `OWNERSHIP_BY_RELATIONSHIP` pins this `false`; a supersession chain is not evidence of a
+ *   corporate family, and an eval that scored it as one would credit itself for recovering ownership it never saw.
  *   Operator ruling, 2026-08-07.
  */
 export const FilerRelationship = {

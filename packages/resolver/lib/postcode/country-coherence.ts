@@ -125,14 +125,13 @@ export const POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM = 25
  * The firing receipt, so a reader of a scoped result can tell a two-sided agreement
  * from a one-sided uniqueness claim without re-deriving it.
  *
- * - `pair` — postcode and locality both resolve in this country, within the radius.
- *   The strongest rung and the only one that existed before #24.
- * - `locality` — the locality names exactly one country in the whole gazetteer,
- *   and the postcode names none that contradict it.
- *   This is the CH/be class: the gazetteer carries no Swiss or Belgian postcodes at all,
- *   so the pair test can never fire there no matter how good the locality evidence is.
- * - `postcode` — the postcode is held in exactly one country and the locality is in no gazetteer at all.
- *   The `Praha 3` class: a municipal district nobody's admin gazetteer names.
+ * - `pair` — postcode and locality both resolve in this country, within the radius. The strongest rung and the only one
+ *   that existed before #24.
+ * - `locality` — the locality names exactly one country in the whole gazetteer, and the postcode names none that
+ *   contradict it. This is the CH/be class: the gazetteer carries no Swiss or Belgian postcodes at all, so the pair
+ *   test can never fire there no matter how good the locality evidence is.
+ * - `postcode` — the postcode is held in exactly one country and the locality is in no gazetteer at all. The `Praha 3`
+ *   class: a municipal district nobody's admin gazetteer names.
  */
 export type PostcodeCountryScopeEvidence = "pair" | "locality" | "postcode"
 
@@ -378,7 +377,7 @@ async function countriesHolding(
 /**
  * Is the (postcode, locality) pair geographically consistent in `country`?
  *
- * @returns the winning pair and its distance, or `null` when the postcode does not resolve
+ * @returns The winning pair and its distance, or `null` when the postcode does not resolve
  *   there, no same-named locality exists there, or the nearest one is outside the check.
  *   Costs one postcode lookup plus (only if that hit) one locality lookup —
  *   or just the locality lookup when the caller already knows the country's postcode

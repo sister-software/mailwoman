@@ -62,7 +62,7 @@ export const CA_POSTAL_CODE_PATTERN = /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?
  * exactly one space between the FSA (first three chars) and the LDU (last three) —
  * `K1A0B1` → `K1A 0B1`, `k1a 0b1` → `K1A 0B1`.
  *
- * @returns null if the input is not a valid Canadian postcode.
+ * @returns Null if the input is not a valid Canadian postcode.
  */
 export function normalizeCaPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
@@ -112,7 +112,7 @@ export const FSA_LETTER_TO_PROVINCE: Record<string, CanadianProvinceCode | Canad
 /**
  * The province/territory a postcode belongs to, via its FSA first letter.
  *
- * @returns the single code for the clean letters, the `["NT", "NU"]` pair for
+ * @returns The single code for the clean letters, the `["NT", "NU"]` pair for
  *   the shared `X`, and null if the input is not a valid Canadian postcode
  *   (or its first letter has no province, which the pattern already forbids).
  */

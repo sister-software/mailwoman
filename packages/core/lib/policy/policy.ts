@@ -19,8 +19,8 @@ import type { ClassificationProposal } from "#types"
  * - `rule_only`: keep only `source === "rule"` proposals (default).
  * - `neural_only`: keep only `source === "neural"` proposals.
  * - `both`: keep proposals from any source.
- * - `neural_preferred`: keep all proposals, but drop rule proposals when at least
- *   one neural proposal exists for the same component.
+ * - `neural_preferred`: keep all proposals, but drop rule proposals when at least one neural proposal exists for the same
+ *   component.
  * - `rule_preferred`: mirror of `neural_preferred`, with rule winning.
  */
 export type PolicyMode = "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"

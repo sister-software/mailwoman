@@ -355,7 +355,7 @@ export interface VerifyReleaseMetadataReport {
 /**
  * Check every surface for the shipped model version.
  *
- * @throws when any surface is stale, with each remediation already reported through `log`,
+ * @throws When any surface is stale, with each remediation already reported through `log`,
  *   so a caller's exit code follows the verdict.
  */
 export async function verifyReleaseMetadata(

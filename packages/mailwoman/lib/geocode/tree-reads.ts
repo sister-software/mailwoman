@@ -96,8 +96,8 @@ export function treePostcodeValue(tree: AddressTree): string | undefined {
  *
  * - The tree carries no postcode node already (never second-guess a parse that found one),
  * - The retagged node is the only value-containing node in the tree, and
- * - Its value matches a format that is unforgeable across the systems we resolve
- *   ({@link POSTCODE_FORMAT_COUNTRY} — GB/CA/IE, the same table #928 already trusts to name a country outright).
+ * - Its value matches a format that is unforgeable across the systems we resolve ({@link POSTCODE_FORMAT_COUNTRY} —
+ *   GB/CA/IE, the same table #928 already trusts to name a country outright).
  *
  * So it fires on `N7 0BT` and `K2P 1L4` and on nothing that is also a plausible street, venue or city name.
  * A US ZIP is out of scope by construction: `90210` alone is five digits, which the model

@@ -115,7 +115,8 @@ export interface RungMeasurement {
 	 */
 	parentsCovered: number
 	/**
-	 * {@link parentsCovered} over the country's locality-class node count. Zero when the country has no locality parents.
+	 * {@link parentsCovered} over the country's locality-class node count.
+	 * Zero when the country has no locality parents.
 	 */
 	parentCoverage: number
 }

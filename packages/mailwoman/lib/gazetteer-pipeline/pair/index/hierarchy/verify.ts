@@ -101,7 +101,7 @@ function readPairCount(bytes: Uint8Array): number {
  * Re-derive the expected folded (child, parent) pair set for a country with a single flat SQL query —
  * surface unions (spr.name ∪ official names) as CTEs, edges joined SQL-side — then fold in JS.
  *
- * @returns folded pairs keyed length-prefixed (the pairKey convention).
+ * @returns Folded pairs keyed length-prefixed (the pairKey convention).
  */
 function expectedPairSet(
 	db: DatabaseClient<WOFDatabase>,

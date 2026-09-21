@@ -207,7 +207,7 @@ const SEC_ALLOWED_HOSTS = new Set(["www.sec.gov", "data.sec.gov", "sec.gov", "ef
 /**
  * Reject a URL this client must not send its User-Agent to.
  *
- * @throws a {@linkcode ResourceError} whose URN kind is `request` — never transient,
+ * @throws A {@linkcode ResourceError} whose URN kind is `request` — never transient,
  *   because re-issuing the identical URL can only fail identically.
  */
 function assertSECHost(url: URL): void {
@@ -295,7 +295,8 @@ export interface CreateSECClientOptions {
 }
 
 /**
- * {@linkcode APIClient} configuration plus the SEC-specific fields {@linkcode SECClient} reads back off `config`.
+ * {@linkcode APIClient} configuration plus the SEC-specific fields
+ * {@linkcode SECClient} reads back off `config`.
  */
 export interface SECClientConfig extends APIClientConfig {
 	/**
@@ -427,18 +428,16 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  *
  * Two shapes are worth caching, and the same edgar host serves both depending on the endpoint:
  *
- * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`).
- *   Axios already rejects an unparseable body via `transitional.silentJSONParsing`
- *   (see the `axios` config below), so this is the second check rather than the first.
- *   A decoded body that isn't an object means the upstream served something other than what it claimed.
- * - A non-empty string (every `getDocument` call — a filing document is html/text, never JSON):
- *   admits the body `getDocument`'s `responseType: "text"` override actually produces.
- *   A `typeof === "object"` test alone would reject it outright, since a string is never `typeof "object"`.
- *   `.length > 0` is the truncated/empty guard on this shape.
- *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does,
- *   so this predicate is the only check standing between a truncated/empty document
- *   and a permanent (`/Archives/edgar/data/`) cache entry with no self-healing
- *   path short of hand-deleting a hash-named file.
+ * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`). Axios already
+ *   rejects an unparseable body via `transitional.silentJSONParsing` (see the `axios` config below), so this is the
+ *   second check rather than the first. A decoded body that isn't an object means the upstream served something other
+ *   than what it claimed.
+ * - A non-empty string (every `getDocument` call — a filing document is html/text, never JSON): admits the body
+ *   `getDocument`'s `responseType: "text"` override actually produces. A `typeof === "object"` test alone would reject
+ *   it outright, since a string is never `typeof "object"`. `.length > 0` is the truncated/empty guard on this shape.
+ *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does, so this predicate is the only
+ *   check standing between a truncated/empty document and a permanent (`/Archives/edgar/data/`) cache entry with no
+ *   self-healing path short of hand-deleting a hash-named file.
  *
  * An `/Archives/` entry cached under the permanent TTL has no self-healing path
  * short of hand-deleting a hash-named file, which is why both branches exist
@@ -459,7 +458,7 @@ function isCacheableSECBody(value: { data?: { data?: unknown } }): boolean {
  *
  * See the file header for the full rationale.
  *
- * @throws immediately, before any request is made, when constructed without an
+ * @throws Immediately, before any request is made, when constructed without an
  *   explicit `userAgent` and without `SEC_EDGAR_USER_AGENT` set.
  */
 export function createSECClient(options: CreateSECClientOptions = {}): SECClient {

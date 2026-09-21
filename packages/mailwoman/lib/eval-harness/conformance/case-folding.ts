@@ -48,10 +48,9 @@ export const CASE_FOLDING_LAW = "case-folding-invariance"
  *
  * - `upper` — the shouting register: a pasted spreadsheet cell, a scanned form, a legacy mainframe export.
  * - `lower` — the mobile register, and the one the house treats as first-class rather than degraded.
- * - `mixed` — title case, the autocapitalize register: every token's first cased
- *   character capitalized, the rest folded down.
- *   Named `mixed` rather than `title` because what the law tests is a case pattern that is neither
- *   extreme, and title case is the reproducible member of that class a user actually produces.
+ * - `mixed` — title case, the autocapitalize register: every token's first cased character capitalized, the rest folded
+ *   down. Named `mixed` rather than `title` because what the law tests is a case pattern that is neither extreme, and
+ *   title case is the reproducible member of that class a user actually produces.
  */
 export const CASE_TRANSFORMATIONS = ["upper", "lower", "mixed"] as const
 
@@ -130,16 +129,14 @@ export function classifyCaseTransformation(base: string, variant: string): CaseT
 /**
  * The declared reasons a case transformation is not a semantic equivalent for a given row.
  *
- * - `identity-transformation` — the transformation returns the text unchanged, either
- *   because the script has no case (Japanese, Chinese, Thai, Hebrew, Arabic) or
- *   because the text is already written in the target case (`N7 0BT` uppercased).
- *   Such a row is the identity law wearing a case-folding label: it would hold whatever the
- *   pipeline does with casing, and its holding would be counted as evidence that casing is handled.
- * - `locale-sensitive-casing` — the row's locale maps the cases of a letter differently
- *   from the root locale, so a root-locale transformation changes which letter is written.
- *   Turkish and Azeri separate dotted `i`/`İ` from dotless `ı`/`I`, and Lithuanian
- *   retains the dot on a lowercase `i`/`j` under an accent.
- *   Unicode records all three in `SpecialCasing.txt` as the only locale-conditional casing rules.
+ * - `identity-transformation` — the transformation returns the text unchanged, either because the script has no case
+ *   (Japanese, Chinese, Thai, Hebrew, Arabic) or because the text is already written in the target case (`N7 0BT`
+ *   uppercased). Such a row is the identity law wearing a case-folding label: it would hold whatever the pipeline does
+ *   with casing, and its holding would be counted as evidence that casing is handled.
+ * - `locale-sensitive-casing` — the row's locale maps the cases of a letter differently from the root locale, so a
+ *   root-locale transformation changes which letter is written. Turkish and Azeri separate dotted `i`/`İ` from dotless
+ *   `ı`/`I`, and Lithuanian retains the dot on a lowercase `i`/`j` under an accent. Unicode records all three in
+ *   `SpecialCasing.txt` as the only locale-conditional casing rules.
  */
 export const CASE_APPLICABILITY_RULES = ["identity-transformation", "locale-sensitive-casing"] as const
 

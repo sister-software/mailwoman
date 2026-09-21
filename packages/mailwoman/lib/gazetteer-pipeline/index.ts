@@ -58,9 +58,8 @@ import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest
  * The canonical postcode-database set (filenames under `<data-root>/wof/`):
  * US + the WOF intl database (NL/FR/DE/ES/IT)
  *
- * - The GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM
- *   Northern Ireland database + the GeoNames-postal tail database (nine countries) +
- *   Overture postcode centroids (CA + the EU-coverage locales).
+ * - The GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM Northern Ireland database + the
+ *   GeoNames-postal tail database (nine countries) + Overture postcode centroids (CA + the EU-coverage locales).
  *   Missing databases are skipped rather than fatal.
  *
  * That skip is not merely tolerant.
@@ -238,19 +237,23 @@ export interface FoldOptions {
 	 */
 	geonamesDir?: string
 	/**
-	 * #267: the countries to also fold A-class admin (pcli + ADM1) for, linking the locality→region→country ancestry. Zero-coverage gap countries only (the coverage-expansion targets). A country that already has WOF admin would double up, so the EU alias set is left off.
+	 * #267: the countries to also fold A-class admin (pcli + ADM1) for, linking the locality→region→country ancestry.
+	 * Zero-coverage gap countries only (the coverage-expansion targets). A country that already has WOF admin would
+	 * double up, so the EU alias set is left off.
 	 *
 	 * Without it the gap localities are orphans and "Tbilisi, GE" can't resolve.
 	 */
 	adminForCountries?: ReadonlySet<string>
 	/**
-	 * #936: dir holding `<CC>.txt` alternateNamesV2 dumps (default {@link geonamesAlternateDir}) — tags alias rows with language / privateuse / `official`.
+	 * #936: dir holding `<CC>.txt` alternateNamesV2 dumps (default {@link geonamesAlternateDir}) — tags alias rows with
+	 * language / privateuse / `official`.
 	 *
 	 * Countries without a file fold untagged, exactly as before.
 	 */
 	alternateDir?: string
 	/**
-	 * #1514 override: proceed even when `adminIn` already carries alias rows for countries this run does not list. The fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
+	 * #1514 override: proceed even when `adminIn` already carries alias rows for countries this run does not list. The
+	 * fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
 	 *
 	 * Only pass this when shrinking the fold is the point.
 	 */
@@ -285,7 +288,11 @@ export interface FoldResult {
  *
  * Build-on-copy — `adminIn` is never touched.
  *
- * #1514: the fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale. The synthetic id is a position in the run, so a partial rewrite binds one run's names to another run's places. Folding a country set narrower than what `adminIn` already carries therefore drops the difference, and since `buildAdmin` bakes the full `DEFAULT_GEONAMES_COUNTRIES` fold into every admin artifact it builds, that is the normal case here rather than an exotic one.
+ * #1514: the fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale. The synthetic id is a position in the
+ * run, so a partial rewrite binds one run's names to another run's places. Folding a country set narrower than what
+ * `adminIn` already carries therefore drops the difference, and since `buildAdmin` bakes the full
+ * `DEFAULT_GEONAMES_COUNTRIES` fold into every admin artifact it builds, that is the normal case here rather than an
+ * exotic one.
  *
  * The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} says otherwise.
  */

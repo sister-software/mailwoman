@@ -353,7 +353,7 @@ export interface IngestCSVOptions {
 /**
  * Ingest a CSV into SQLite: infer column types from a sample, create the table, import the rows.
  *
- * @throws when `input` is missing. note(phase1): progress narration still writes stderr directly.
+ * @throws When `input` is missing. note(phase1): progress narration still writes stderr directly.
  *   This predates the report-callback interface and the write sites are deep in the type-inference helpers.
  *   Thread a report param if a caller ever needs to capture it.
  */

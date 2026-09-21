@@ -97,24 +97,20 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
  *
  * Two derivations, because the table holds two kinds of writing:
  *
- * - **Latin script — the cognate test.** A token is the head when its ascii fold shares
- *   {@link HEAD_NOUN_PREFIX_FLOOR} leading characters with the designator's own canonical id.
- *   Nothing subtler survived contact with the data: an earlier version matched a token
- *   against any single-token surface of the record, and because Dutch `universiteit`
- *   is a one-token surface of `campus`, it derived `universitario`, `universitaire`,
- *   `üniversite` and twenty more as head nouns of `campus`.
- *   Those are the modifier half of the label, and admitting them would have taught
- *   the harvest to read "Ciudad Universitaria" as sub-venue structure.
- * - **Non-Latin script — the shared-substring test.** The cognate test cannot reach a script
- *   the id is not written in, and for Han and Kana a token split finds nothing at all.
- *   So every substring of length ≥ {@link NON_LATIN_HEAD_MIN_LENGTH} occurring in
- *   at least two distinct surfaces of the same record and primary language becomes
- *   a candidate, ranked by how many surfaces carry it.
- *   Japanese yields `ターミナル` (in all five `ja` terminal labels) ahead of `ターミナルビル`
- *   (three); Chinese yields `航站`, `航站楼`, `航站樓`.
+ * - **Latin script — the cognate test.** A token is the head when its ascii fold shares {@link HEAD_NOUN_PREFIX_FLOOR}
+ *   leading characters with the designator's own canonical id. Nothing subtler survived contact with the data: an
+ *   earlier version matched a token against any single-token surface of the record, and because Dutch `universiteit` is
+ *   a one-token surface of `campus`, it derived `universitario`, `universitaire`, `üniversite` and twenty more as head
+ *   nouns of `campus`. Those are the modifier half of the label, and admitting them would have taught the harvest to
+ *   read "Ciudad Universitaria" as sub-venue structure.
+ * - **Non-Latin script — the shared-substring test.** The cognate test cannot reach a script the id is not written in,
+ *   and for Han and Kana a token split finds nothing at all. So every substring of length ≥
+ *   {@link NON_LATIN_HEAD_MIN_LENGTH} occurring in at least two distinct surfaces of the same record and primary
+ *   language becomes a candidate, ranked by how many surfaces carry it. Japanese yields `ターミナル` (in all five `ja`
+ *   terminal labels) ahead of `ターミナルビル` (three); Chinese yields `航站`, `航站楼`, `航站樓`.
  *
- *   Where the script does space its words (Korean, Greek, Cyrillic) a candidate must be
- *   a whole token, so `공항 터미널` ∩ `공항터미널` gives `터미널` and never a fragment.
+ *   Where the script does space its words (Korean, Greek, Cyrillic) a candidate must be a whole token, so `공항 터미널` ∩
+ *   `공항터미널` gives `터미널` and never a fragment.
  *
  * The non-Latin branch deliberately emits several candidates instead of picking one.
  * Choosing between `航站` and `航站楼` from Wikidata alone is guesswork.

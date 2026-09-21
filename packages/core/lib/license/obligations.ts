@@ -16,10 +16,10 @@ import type { LicenseKeyPublication } from "#license/publication"
  * The responsibility classes the summary reports.
  *
  * - `attribution`: credit the source where results derived from it are shown or redistributed.
- * - `share_alike`: a derived work or derived database carries the same license
- *   (ODbL's Derived Database. Agpl's copyleft on modifications).
- * - `source_offer`: users who interact with the software over a network must be offered
- *   its source, including modifications (AGPL-3.0 section 13).
+ * - `share_alike`: a derived work or derived database carries the same license (ODbL's Derived Database. Agpl's copyleft
+ *   on modifications).
+ * - `source_offer`: users who interact with the software over a network must be offered its source, including
+ *   modifications (AGPL-3.0 section 13).
  */
 export const LicenseObligation = {
 	Attribution: "attribution",

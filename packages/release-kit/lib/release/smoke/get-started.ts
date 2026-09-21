@@ -126,7 +126,7 @@ function assertNeedles(output: string, needles: readonly string[], page: string)
 /**
  * Pack the seeds' closure, install it into a throwaway project, and run the two pages' transcripts.
  *
- * @throws on the first claim that no longer holds, naming the page.
+ * @throws On the first claim that no longer holds, naming the page.
  */
 export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<SmokeGetStartedReport> {
 	const { repoRoot, log } = options

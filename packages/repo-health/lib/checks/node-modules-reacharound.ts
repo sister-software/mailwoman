@@ -113,7 +113,8 @@ async function listCandidateSources(context: RepoContext): Promise<string[]> {
 }
 
 /**
- * The `paths containing node_modules string arguments of every path-building call in one source file, each with its line.
+ * The `paths containing node_modules string arguments of every path-building call in one source file, each with its
+ * line.
  *
  * Both literal forms count: a plain string and a template literal (`` `node_modules/${scope}/${name}` ``),
  * since the interpolated form is the one a "make it dynamic" refactor reaches for first.

@@ -541,7 +541,7 @@ function auditUnresolvedClaim(register: AddressSourceRegister): string[] {
  * Read the committed register, refusing one that fails the audit.
  *
  * @throws When the file does not parse, or when the audit reports anything,
- *   with every problem in the message.
+ * with every problem in the message.
  */
 export async function readAddressSourceRegister(path?: string): Promise<AddressSourceRegister> {
 	const resolved = path ?? addressSourceRegisterPath()

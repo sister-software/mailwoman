@@ -45,7 +45,7 @@ const defaultOnListen = ({ port, address }: { port: number; address: string }) =
 /**
  * Boot a node http listener for a Hono app.
  *
- * @returns an async-disposable handle once the listener is ready.
+ * @returns An async-disposable handle once the listener is ready.
  */
 export function serveNode({ onListen = defaultOnListen, ...options }: ServeNodeOptions): Promise<ServerHandle> {
 	return new Promise<ServerHandle>((resolve, reject) => {

@@ -756,7 +756,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	 * So a small town the name-match never finds is recovered by the postcode,
 	 * while an unambiguous name (Berlin) still wins on name + population.
 	 *
-	 * @returns null when the postcode isn't in the table (→ caller falls back to the FTS path).
+	 * @returns Null when the postcode isn't in the table (→ caller falls back to the FTS path).
 	 */
 	async #findLocalityCoordFirst(
 		query: FindPlaceQuery,

@@ -115,11 +115,21 @@ const YEAR_PATTERN = /\b\d{4}\b/u
 /**
  * The attribution statement carrying a year, taken from a block of text that may hold the statement more than once.
  *
- * The first copy is the wrong one, measured. The 2024 record's abstract ends "…© Environment Agency copyright and/or database right Attribution statement: © Environment Agency copyright and/or database right 2025. All rights reserved. " — two copies, the first inherited from the superseded record and carrying no year. A parse that took the first match would ship an attribution naming no year, which is a licence condition stated incorrectly rather than a cosmetic slip.
+ * The first copy is the wrong one, measured. The 2024 record's abstract ends "…© Environment Agency copyright and/or
+ * database right Attribution statement: © Environment Agency copyright and/or database right 2025. All rights reserved.
+ * " — two copies, the first inherited from the superseded record and carrying no year. A parse that took the first
+ * match would ship an attribution naming no year, which is a licence condition stated incorrectly rather than a
+ * cosmetic slip.
  *
- * Index scans rather than A regex, and that is A correctness choice rather than A speed one. The obvious form — `/Attribution statement:\s*([^<]*?)(?=Attribution statement:|<|$)/g` — backtracks polynomially, because the `\s*` and the lazy run overlap on whitespace and the lookahead's `$` alternative makes every position a candidate end. The input here is a 27,643-byte document that arrived over the network, so "a pathological one cannot happen" is not a claim this reader gets to make. Two `indexOf` calls per copy answer the same question in one pass.
+ * Index scans rather than A regex, and that is A correctness choice rather than A speed one. The obvious form —
+ * `/Attribution statement:\s*([^<]*?)(?=Attribution statement:|<|$)/g` — backtracks polynomially, because the `\s*` and
+ * the lazy run overlap on whitespace and the lookahead's `$` alternative makes every position a candidate end. The
+ * input here is a 27,643-byte document that arrived over the network, so "a pathological one cannot happen" is not a
+ * claim this reader gets to make. Two `indexOf` calls per copy answer the same question in one pass.
  *
- * Each copy ends AT the next marker or the next TAG, whichever comes first. The statement sits inside a `gco:CharacterString`, so a scan that ran to the end of the document would return several kilobytes of XML that happens to contain a year.
+ * Each copy ends AT the next marker or the next TAG, whichever comes first. The statement sits inside a
+ * `gco:CharacterString`, so a scan that ran to the end of the document would return several kilobytes of XML that
+ * happens to contain a year.
  *
  * @throws {Error} When no copy carries a four-digit year. A statement without one is not this product's attribution,
  *   and guessing which copy was meant is exactly the choice that produced the malformed pair.

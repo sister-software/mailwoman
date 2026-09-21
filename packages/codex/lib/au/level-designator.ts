@@ -236,7 +236,7 @@ export function isAuLevelDesignator(input: unknown): boolean {
  * Normalize a recognized level phrase to the amas canonical form
  * (`"level 3"` → `"L 3"`, `"ground floor"` → `"G"`).
  *
- * @returns the input unchanged if it isn't a level designator phrase.
+ * @returns The input unchanged if it isn't a level designator phrase.
  *   Throws if a row in {@link AU_LEVEL_DESIGNATORS} is malformed
  *   (requires-number entry with no abbreviation or empty name).
  *   The builder must surface structural defects loudly.

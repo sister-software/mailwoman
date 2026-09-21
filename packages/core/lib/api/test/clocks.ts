@@ -186,12 +186,18 @@ export class VirtualClock implements ClockLike {
 	 * Drive `work` to completion, jumping virtual time to the next pending deadline
 	 * whenever the real event loop goes idle.
 	 *
-	 * {@linkcode advance} alone is not enough once the code under test interleaves virtual sleeps with real asynchrony. A paced client whose limit sits downstream of an on-disk cache spends several real event-loop turns in `readFile` before it ever registers its `sleep()`. A caller that drains once and then advances finds nothing pending, jumps the clock past the deadlines that are registered a moment later, and the test hangs.
+	 * {@linkcode advance} alone is not enough once the code under test interleaves
+	 * virtual sleeps with real asynchrony.
+	 * A paced client whose limit sits downstream of an on-disk cache spends several real
+	 * event-loop turns in `readFile` before it ever registers its `sleep()`.
+	 *
+	 * A caller that drains once and then advances finds nothing pending, jumps the clock
+	 * past the deadlines that are registered a moment later, and the test hangs.
 	 *
 	 * This polls instead: drain, and if any sleep is pending, advance to the earliest deadline.
 	 * If none is, yield and look again.
 	 *
-	 * @throws rather than hanging when the work neither settles nor schedules anything
+	 * @throws Rather than hanging when the work neither settles nor schedules anything
 	 *   for {@linkcode IDLE_BUDGET_MS} of real time — a diagnosable failure beats a
 	 *   test-timeout stack trace pointing at the `it()`.
 	 */

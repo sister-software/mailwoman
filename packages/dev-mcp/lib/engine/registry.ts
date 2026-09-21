@@ -88,7 +88,8 @@ export interface EngineConfig {
 	 */
 	capital_tier?: boolean
 	/**
-	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Effective only against an artifact whose `name_role` column carries the stamp.
+	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Effective only against
+	 * an artifact whose `name_role` column carries the stamp.
 	 *
 	 * Off by default (D-rule).
 	 */

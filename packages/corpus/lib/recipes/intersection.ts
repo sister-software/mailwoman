@@ -352,7 +352,7 @@ function renderRow(
 /**
  * Label-correctness audit for one aligned row, on the RAW surface via the #519 span triple.
  *
- * @returns a list of violations (empty = clean).
+ * @returns A list of violations (empty = clean).
  *   Re-derives the span checks independent of `alignRow`'s own assertion,
  *   so a builder bug can't vouch for itself.
  */

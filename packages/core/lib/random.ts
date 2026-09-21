@@ -90,7 +90,8 @@ export function shuffleWith<T>(array: T[], random: () => number): void {
  * the single-draw companion to {@link shuffleWith}, taking the same `() => number` shape
  * so a caller threads one generator through both.
  *
- * {@link SeededRandom.choice} answers the same question for a caller holding the generator as an object. This free function is for the ones threading a thunk, which is most of the corpus synthesizers.
+ * {@link SeededRandom.choice} answers the same question for a caller holding the generator as an object.
+ * This free function is for the ones threading a thunk, which is most of the corpus synthesizers.
  *
  * Raises on an empty array rather than answering `undefined`: a sampler that returns nothing
  * has no element to report, and a caller that reads that as a value writes it into a row.

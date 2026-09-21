@@ -305,10 +305,10 @@ export interface ZoningCellTable {
  * Empty IN this edition, and its emptiness is the claim.
  * The Department states "Awaiting data for some Local Authorities
  *
- * - Please see map viewer for coverage details" and publishes that detail only inside a map application,
- *   so there is no footprint to record and `layer_coverage` carries `basis = source_present`.
- *   Donegal County Council's absence — the one local authority of 31 missing from the layer —
- *   was recovered by measuring `LA_CODE`, not read from a statement.
+ * - Please see map viewer for coverage details" and publishes that detail only inside a map application, so there is no
+ *   footprint to record and `layer_coverage` carries `basis = source_present`. Donegal County Council's absence — the
+ *   one local authority of 31 missing from the layer — was recovered by measuring `LA_CODE`, not read from a
+ *   statement.
  *
  * Deriving a footprint from the union of the zoning polygons is forbidden: the union of zoned areas is
  * not the area the authority examined, and the difference is the whole content of a negative answer.

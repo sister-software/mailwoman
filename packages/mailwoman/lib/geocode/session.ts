@@ -151,7 +151,8 @@ export interface GeocodeSessionOptions {
 	 */
 	capitalTier?: boolean
 	/**
-	 * #1882 — exempt own-name `variant` aliases (the holder's primary name in another orthography, stamped by the candidate build's own-name detector) from the cross-country primary-preference penalty.
+	 * #1882 — exempt own-name `variant` aliases (the holder's primary name in another orthography, stamped by the
+	 * candidate build's own-name detector) from the cross-country primary-preference penalty.
 	 *
 	 * Candidate backend only.
 	 *
@@ -248,7 +249,8 @@ export interface GeocodeTrace {
 	 */
 	locale: string
 	/**
-	 * #1721 — the resolver's interior: one record per backend lookup the walk performed, carrying the query as sent, the candidate table with per-stage ranks, the checks that fired, and the pick's provenance.
+	 * #1721 — the resolver's interior: one record per backend lookup the walk performed, carrying the query as sent, the
+	 * candidate table with per-stage ranks, the checks that fired, and the pick's provenance.
 	 *
 	 * An empty array means the walk performed no lookups (nothing resolvable in the tree);
 	 * the field is absent only when tracing was off.

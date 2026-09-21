@@ -330,20 +330,15 @@ import type { TokenLike } from "#query-shape-prior"
  * "Probe mode" section for the 2026-07-22 venue-confound falsifier verdict
  * and the 2026-07-24 anchored adjacent-pair design.
  *
- * - `"auto"` (**default**) — the production probe chain: segment path when the input has ≥2
- *   comma-delimited segments (byte-identical to explicit `"segment"` there, by construction),
- *   else the anchored-adjacent path.
- * - `"segment"` — a candidate is a whole comma-delimited segment, folded as one unit.
- *   Requires `inputText` to find segment boundaries (see {@link PlacetypePairPriorOpts.inputText});
- *   without it, the entire input is treated as one segment
- *   (matches the documented comma-free-input degradation rather than a distinct failure mode).
- * - `"anchored"` — the anchored adjacent-pair path alone (see the module docstring's "Anchored mode" section).
- *   Explicit value for harness use.
- *   The chain reaches it only on comma-free input.
- * - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior.
- *   Opt-in only.
- *   Re-enabling as a default requires a venue-aware suppression mechanism
- *   and a re-measured venue-confound FP=0 (see the module docstring).
+ * - `"auto"` (**default**) — the production probe chain: segment path when the input has ≥2 comma-delimited segments
+ *   (byte-identical to explicit `"segment"` there, by construction), else the anchored-adjacent path.
+ * - `"segment"` — a candidate is a whole comma-delimited segment, folded as one unit. Requires `inputText` to find
+ *   segment boundaries (see {@link PlacetypePairPriorOpts.inputText}); without it, the entire input is treated as one
+ *   segment (matches the documented comma-free-input degradation rather than a distinct failure mode).
+ * - `"anchored"` — the anchored adjacent-pair path alone (see the module docstring's "Anchored mode" section). Explicit
+ *   value for harness use. The chain reaches it only on comma-free input.
+ * - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only. Re-enabling as a default requires a
+ *   venue-aware suppression mechanism and a re-measured venue-confound FP=0 (see the module docstring).
  */
 type PlacetypePairProbeMode = "auto" | "segment" | "anchored" | "window"
 

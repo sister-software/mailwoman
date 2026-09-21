@@ -151,7 +151,7 @@ export function isAddSafe(
 /**
  * Indices of the tokens whose char span intersects the half-open range `[start, end)`, in token order.
  *
- * @returns an empty array when the range falls between tokens.
+ * @returns An empty array when the range falls between tokens.
  */
 export function tokenIndicesOverlapping(tokens: readonly DecoderToken[], start: number, end: number): number[] {
 	const overlap: number[] = []

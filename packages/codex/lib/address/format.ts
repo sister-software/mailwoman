@@ -190,7 +190,7 @@ function scriptIsFreeToDerive(country: string): boolean {
 /**
  * Render a component dict into an idiomatic per-country address string.
  *
- * @returns an empty string when the dict is empty, and when no layout names `country` —
+ * @returns An empty string when the dict is empty, and when no layout names `country` —
  *   55 of the 252 shipped country records carry no usable skeleton, and answering
  *   nothing for one of those reports absence rather than inventing an order.
  *   Throws nothing.

@@ -120,10 +120,9 @@ const MS_PER_MINUTE = 60_000
 const DEFAULT_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 /**
- * Total attempts (including the first) before giving up on a transient failure —
- * http 429/5xx and network-class failures via `APIClient`'s retry loop,
- * and Google's 200-wrapped `OVER_QUERY_LIMIT`/`UNKNOWN_ERROR` via
- * {@linkcode GoogleGeocoderClient.request}.
+ * Total attempts (including the first) before giving up on a transient failure — http 429/5xx
+ * and network-class failures via `APIClient`'s retry loop, and Google's 200-wrapped
+ * `OVER_QUERY_LIMIT`/`UNKNOWN_ERROR` via {@linkcode GoogleGeocoderClient.request}.
  */
 const DEFAULT_MAX_ATTEMPTS = 3
 
@@ -254,15 +253,13 @@ export interface GeocodeRequestOptions {
 	/**
 	 * The BCP-47 language for this response, overriding the client-wide default.
 	 *
-	 * See
-	 * {@linkcode CreateGoogleGeocoderClientOptions.language}.
+	 * See {@linkcode CreateGoogleGeocoderClientOptions.language}.
 	 */
 	language?: string
 	/**
 	 * The ccTLD region code (`"uk"`, `"es"`) whose interpretation Google should prefer.
 	 *
-	 * A soft bias, unlike
-	 * {@linkcode GeocodeRequestOptions.country}.
+	 * A soft bias, unlike {@linkcode GeocodeRequestOptions.country}.
 	 */
 	region?: string
 	/**
@@ -279,7 +276,8 @@ export interface GeocodeRequestOptions {
 }
 
 /**
- * {@linkcode APIClient} configuration plus the fields {@linkcode GoogleGeocoderClient} reads back off `config`.
+ * {@linkcode APIClient} configuration plus the fields {@linkcode GoogleGeocoderClient}
+ * reads back off `config`.
  */
 export interface GoogleGeocoderClientConfig extends APIClientConfig {
 	/**
@@ -317,13 +315,12 @@ type GeocodeParams = Record<string, string>
  *
  * Two things this provides, in order of how much they matter:
  *
- * 1. **The cache survives key rotation.** The key is an instance-level Axios `params` default,
- *    so the interceptor's stock key generator would fold it in and a rotated key would
- *    silently orphan every entry — on an API where a miss is a charge.
- * 2. **No key material is derivable from anything on disk.** Already true without this
- *    (`buildDiskStorage` names files by the SHA-256 of the key, and `axios-cache-interceptor`
- *    persists `data`/`ttl`/`createdAt`/`state`, never `config`), but a secret that is
- *    never put into the string in the first place cannot leak from it later.
+ * 1. **The cache survives key rotation.** The key is an instance-level Axios `params` default, so the interceptor's stock
+ *    key generator would fold it in and a rotated key would silently orphan every entry — on an API where a miss is a
+ *    charge.
+ * 2. **No key material is derivable from anything on disk.** Already true without this (`buildDiskStorage` names files by
+ *    the SHA-256 of the key, and `axios-cache-interceptor` persists `data`/`ttl`/`createdAt`/`state`, never `config`),
+ *    but a secret that is never put into the string in the first place cannot leak from it later.
  *
  * The remaining params are serialized through a sorted key list so two requests
  * differing only in property order share an entry.

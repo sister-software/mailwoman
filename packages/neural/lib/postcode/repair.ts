@@ -117,7 +117,7 @@ export function collectMatches(text: string): PostcodeMatch[] {
 /**
  * Repair postcode label spans in a decoded token sequence using per-country regexes.
  *
- * @returns a new token array (inputs are not mutated) plus a change count.
+ * @returns A new token array (inputs are not mutated) plus a change count.
  */
 export function repairPostcodeLabels(text: string, input: readonly DecoderToken[]): RepairResult {
 	const matches = collectMatches(text)

@@ -1017,7 +1017,10 @@ class WOFResolver implements Resolver {
 }
 
 /**
- * #1880's promotion plus its firing receipt, in one place: when the promotion changes the race's leading candidate, the node is stamped `capital_promotion` with the promoted candidate's country. The same posture as `postcode_country_scope`, a mechanism reporting that it spoke apart from whether the outcome moved, so an unchanged verdict downstream can never mean either "harmless" or "never ran".
+ * #1880's promotion plus its firing receipt, in one place: when the promotion changes the race's leading candidate, the
+ * node is stamped `capital_promotion` with the promoted candidate's country. The same posture as
+ * `postcode_country_scope`, a mechanism reporting that it spoke apart from whether the outcome moved, so an unchanged
+ * verdict downstream can never mean either "harmless" or "never ran".
  *
  * Metadata-only.
  * Nothing reads it to rank.

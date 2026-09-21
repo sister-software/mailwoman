@@ -85,7 +85,9 @@ export interface ParsedCommand {
 /**
  * Collapse an intersection of mapped types into one object type, preserving each property's optionality.
  *
- * {@linkcode OptionsOf} builds its required and optional halves separately, because a single mapped type cannot vary `?` per key. Without this the editor shows the intersection and an error names one half of it.
+ * {@linkcode OptionsOf} builds its required and optional halves separately,
+ * because a single mapped type cannot vary `?` per key.
+ * Without this the editor shows the intersection and an error names one half of it.
  */
 type OneObject<Shape> = { [Key in keyof Shape]: Shape[Key] }
 

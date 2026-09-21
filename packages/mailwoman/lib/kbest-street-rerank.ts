@@ -207,7 +207,8 @@ function spliceStreetTree(
  *
  * @param evidence The injected street-name index (FR = `SQLiteStreetNameLookup` over BAN street-centroids).
  * @param grammar The segment-transition grammar from the weights bundle's `semi-crf-transitions.json`.
- * @returns the winning tree + whether evidence moved the pick.
+ *
+ * @returns The winning tree + whether evidence moved the pick.
  *   Falls back to the plain argmax tree (byte-stable) when the model exports no
  *   span scores or the evidence keeps rank-1.
  */

@@ -194,9 +194,9 @@ function tokenPresent(raw: string, value: string): boolean {
  * renders verbatim and would break BIO alignment), while international order includes it
  * in the tail ("City, Region Postcode" — the US/feed layout the eval uses. v0.9.3 / #327).
  *
- * Pass `opts.order: "international"` to render the same components house-first
- * / postcode-after-city instead (see
- * {@link LocaleSynthesisOpts.order}) — the layout international feeds impose on foreign addresses, and the one a native-order-trained model treats as a "collapse."
+ * Pass `opts.order: "international"` to render the same components house-first / postcode-after-city
+ * instead (see {@link LocaleSynthesisOpts.order}) — the layout international feeds impose
+ * on foreign addresses, and the one a native-order-trained model treats as a "collapse."
  */
 export function synthesizeLocaleRow(
 	base: LocaleBaseTuple,

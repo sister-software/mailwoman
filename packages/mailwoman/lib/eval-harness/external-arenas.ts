@@ -95,7 +95,7 @@ export interface ExternalArenasOptions {
  * Narration splits across `report`/`reportError` the way the child process's stdout/stderr did,
  * because the check concatenates them in that order into `arenas.md`.
  *
- * @throws on a failed inner probe — the in-process spelling of the non-zero exit the check treats as fatal.
+ * @throws On a failed inner probe — the in-process spelling of the non-zero exit the check treats as fatal.
  */
 export async function externalArenas(
 	options: ExternalArenasOptions = {},

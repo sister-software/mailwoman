@@ -62,7 +62,10 @@ export interface POIExecutorOpts {
 	 * injected synchronously because this executor's return type (`POIIntentOutcome`, no Promise)
 	 * is called synchronously from `poi-intent.ts`'s `deps.execute`.
 	 *
-	 * Absent = no reverse geocoder wired (missing admin gazetteer db, or `poiQueryKind: true` with no `poiDatabasePath`) — results carry no `ancestry` key at all (house meaning-of-zero: absence rather than an empty array). `runtime-pipeline.ts` wires a `WOFReverseGeocoder`-backed sync adapter. This module never imports `@mailwoman/resolver-wof-sqlite` itself — stays pure/testable with a stub fn.
+	 * Absent = no reverse geocoder wired (missing admin gazetteer db, or `poiQueryKind: true` with no `poiDatabasePath`)
+	 * — results carry no `ancestry` key at all (house meaning-of-zero: absence rather than an empty array).
+	 * `runtime-pipeline.ts` wires a `WOFReverseGeocoder`-backed sync adapter. This module never imports
+	 * `@mailwoman/resolver-wof-sqlite` itself — stays pure/testable with a stub fn.
 	 */
 	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined
 }
@@ -72,11 +75,11 @@ export interface POIExecutorOpts {
  *
  * Abstain precedence:
  *
- * 1. `requires_build_local_layer` — a build-local category with no local rows.
- *    Fires with no lookup configured at all (trivially: no db, no local rows possible)
- *    as well as with a lookup present that comes back empty for the category.
- * 2. `anchor_required` — a category/brand subject with a lookup present but no resolvable
- *    center (name subjects don't need one. The FTS path searches un-anchored).
+ * 1. `requires_build_local_layer` — a build-local category with no local rows. Fires with no lookup configured at all
+ *    (trivially: no db, no local rows possible) as well as with a lookup present that comes back empty for the
+ *    category.
+ * 2. `anchor_required` — a category/brand subject with a lookup present but no resolvable center (name subjects don't need
+ *    one. The FTS path searches un-anchored).
  * 3. No lookup + non-build-local subject → the bare intent, unchanged (intent-only mode).
  * 4. Otherwise: run `lookup.search(...)` and attach the mapped results.
  */

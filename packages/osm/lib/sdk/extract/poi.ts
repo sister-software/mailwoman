@@ -79,8 +79,8 @@ export interface POISourceRow {
  * One telecom-category match rule: `categoryID` wins when every `[key, value]` pair
  * in `all` is present on the feature (a conjunction within a rule).
  *
- * A disjunction across tags is expressed as multiple rules sharing a `categoryID` — see
- * {@link TELECOM_TAG_RULES}'s two `telecom_exchange` rules and two `data_center` rules.
+ * A disjunction across tags is expressed as multiple rules sharing a `categoryID` —
+ * see {@link TELECOM_TAG_RULES}'s two `telecom_exchange` rules and two `data_center` rules.
  */
 export interface OSMPOITagRule {
 	categoryID: string

@@ -190,8 +190,8 @@ function artifactProblem(value: unknown): string | undefined {
 }
 
 /**
- * Read a parsed artifact — the value `JSON.parse` produced from the compiled bytes — as a
- * {@link CompiledGeographicModel}.
+ * Read a parsed artifact — the value `JSON.parse` produced from the compiled bytes —
+ * as a {@link CompiledGeographicModel}.
  *
  * It checks the format version and the presence of every table, and does not re-validate the records.
  * An artifact is generated from a document that `parseGeographicModelDocument` already accepted.

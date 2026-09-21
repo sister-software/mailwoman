@@ -95,21 +95,17 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  * Two systems are the other way round, and membership here is earned by measurement
  * of the code's granularity, never by "the code has letters in it":
  *
- * - **NL PC6** (`1012 LG`) — ~8 addresses per code.
- *   The CBS polygon centroid (#977, the original carve-out).
- * - **GB unit** (`N7 0BT`) — ~15 addresses per code, 1,751,733 shipped from OS Code-Point Open.
- *   Measured 2026-08-10 against the panel-v2 GB rooftop truth: unit centroid within
- *   1 km on 15/15 rows, median 38 m, max 100 m, while the locality centroid the
- *   ladder returned instead was 5.1–14.6 km out.
- * - **CA urban LDU** (`M1J 1A8`) — 843,739 six-character codes.
- *   Measured on 879 graded rows of the CA OSM-rooftop panel, through the production
- *   candidate backend, ladder arm against ladder arm:
+ * - **NL PC6** (`1012 LG`) — ~8 addresses per code. The CBS polygon centroid (#977, the original carve-out).
+ * - **GB unit** (`N7 0BT`) — ~15 addresses per code, 1,751,733 shipped from OS Code-Point Open. Measured 2026-08-10
+ *   against the panel-v2 GB rooftop truth: unit centroid within 1 km on 15/15 rows, median 38 m, max 100 m, while the
+ *   locality centroid the ladder returned instead was 5.1–14.6 km out.
+ * - **CA urban LDU** (`M1J 1A8`) — 843,739 six-character codes. Measured on 879 graded rows of the CA OSM-rooftop panel,
+ *   through the production candidate backend, ladder arm against ladder arm:
  *
  *   | 732 urban rows | p50 | p75 | p90 | ≤1 km | | -------------- | ---: | ---: | ---: | ---: | | locality-first | 2.51
  *   km | 5.42 km | 9.53 km | 26.4% | | postcode-first | **78 m** | **162 m** | **373 m** | **94.7%** |
  *
- *   Closer on 90.4% of them.
- *   That is GB's tier on a sample fifty times larger than GB's.
+ *   Closer on 90.4% of them. That is GB's tier on a sample fifty times larger than GB's.
  *
  * **CA rural is excluded, and the code says which.** Canada Post puts a `0` in the second position of
  * a rural forward sortation area, so `T0H 1M0` is rural and `M1J 1A8` is not — no lookup required.
@@ -159,9 +155,8 @@ const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpper
  *
  * 1. The parsed span is a full unit shape ({@link UNIT_GRADE_POSTCODE}), not a stem the user typed.
  * 2. The node resolved (a coordinate is present — checked by the caller); and
- * 3. The resolver's own hit is the full code rather than a coarsened prefix
- *    (a 4-digit NL stem or a GB outward district is area-class, and promoting it
- *    is the exact trade the epoch convention forbids).
+ * 3. The resolver's own hit is the full code rather than a coarsened prefix (a 4-digit NL stem or a GB outward district is
+ *    area-class, and promoting it is the exact trade the epoch convention forbids).
  */
 export function isUnitGradePostcodeHit(parsed: string, resolverName: string | undefined): boolean {
 	const value = parsed.trim()

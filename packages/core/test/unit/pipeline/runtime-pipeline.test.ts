@@ -800,7 +800,8 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 })
 
 /**
- * #40 / mailfail finding 4 — the defensive `safeClassify` wrapper caught every classifier throw and returned an empty tree, which the grouper-audit then repopulated from rule-based phrase proposals.
+ * #40 / mailfail finding 4 — the defensive `safeClassify` wrapper caught every classifier throw and returned an empty
+ * tree, which the grouper-audit then repopulated from rule-based phrase proposals.
  *
  * The caller got a normal-looking parse with no indication the model never ran:
  * measured on the mailfail probes, 10 of 110 inputs crashed the classifier while the pipeline

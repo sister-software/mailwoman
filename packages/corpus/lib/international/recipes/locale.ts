@@ -217,23 +217,21 @@ const NL_GLUED_POSTCODE_FRACTION = 0.5
  *
  * Cleaned classes:
  *
- * 1. Drop pseudo-localities — the ES cadastral aggregates
- *    (`Comunidad de 09076, 09150 y 09578`, `Ledanía de …`; 0.06% of ES rows): any city containing
- *    a comma or a ≥4-digit run is a land-register aggregate rather than a renderable city.
- *    Structural, locale-safe — NL's genuine `2e Valthermond` (one digit) survives.
- *    IT/NL have zero hits.
- * 2. Strip a trailing parenthesized 1–3-letter admin code — the NL BAG province disambiguator
- *    (`Bergen (NH)`, `Rijswijk (GLD)` → `Bergen`, `Rijswijk`; 0.13% of NL rows).
- *    The analogue of the German Kreis/region-suffix class (#241 names `Rabenau Sachs` / `Weißwasser /O.L.`):
- *    an admin-region gloss glued onto the locality value that dirties locality labels.
+ * 1. Drop pseudo-localities — the ES cadastral aggregates (`Comunidad de 09076, 09150 y 09578`, `Ledanía de …`; 0.06% of
+ *    ES rows): any city containing a comma or a ≥4-digit run is a land-register aggregate rather than a renderable
+ *    city. Structural, locale-safe — NL's genuine `2e Valthermond` (one digit) survives. IT/NL have zero hits.
+ * 2. Strip a trailing parenthesized 1–3-letter admin code — the NL BAG province disambiguator (`Bergen (NH)`, `Rijswijk
+ *    (GLD)` → `Bergen`, `Rijswijk`; 0.13% of NL rows). The analogue of the German Kreis/region-suffix class (#241 names
+ *    `Rabenau Sachs` / `Weißwasser /O.L.`): an admin-region gloss glued onto the locality value that dirties locality
+ *    labels.
  *
  * Audit-verified NON-noise, deliberately not cleaned (a naive suffix rule would mangle real names):
  *
- * - ES/IT city-ends-with-province (`Alhama de Almería`, `genzano DI roma`; ~0.8% each): genuine
- *   toponyms whose linking `de`/`di` makes them full names, unlike the German glued-abbreviation class.
+ * - ES/IT city-ends-with-province (`Alhama de Almería`, `genzano DI roma`; ~0.8% each): genuine toponyms whose linking
+ *   `de`/`di` makes them full names, unlike the German glued-abbreviation class.
  * - ES bilingual slash names (`Laudio/Llodio`; 2.16%): official co-names — the eval expects them verbatim.
- * - IT all-caps city casing (98.79% of the source, and the eval's observed form):
- *   casing is the #829 case-augmentation change rather than this recipe's.
+ * - IT all-caps city casing (98.79% of the source, and the eval's observed form): casing is the #829 case-augmentation
+ *   change rather than this recipe's.
  */
 export function cleanCityNoise(city: string): string | null {
 	if (/,|\d{4}/.test(city)) return null
@@ -251,7 +249,8 @@ interface ColumnIndex {
 	region: number
 	post: number
 	/**
-	 * {@link LocalePart.cnigRaw} only — the road-type column (`tipo_vial`) joined onto `street` (`nombre_via`). -1 otherwise.
+	 * {@link LocalePart.cnigRaw} only — the road-type column (`tipo_vial`) joined
+	 * onto `street` (`nombre_via`). -1 otherwise.
 	 */
 	tipoVial: number
 }

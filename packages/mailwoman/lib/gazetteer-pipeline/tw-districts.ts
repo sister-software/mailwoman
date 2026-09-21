@@ -71,8 +71,8 @@ export interface TaiwanRegionName {
  *
  * 1. The official `zho` name (`新竹市` → Hsinchu City, never Hsinchu County, which also lists `新竹市` as a variant);
  * 2. Any Han name, when only one region carries it.
- * 3. The name minus its 縣/市 suffix against rung 1 and 2 (`桃園市` → `桃園`, the only name WOF
- *    gives the region that became a special municipality after the record was written).
+ * 3. The name minus its 縣/市 suffix against rung 1 and 2 (`桃園市` → `桃園`, the only name WOF gives the region that became a
+ *    special municipality after the record was written).
  *
  * Every comparison runs through the `zh` locality fold, so 臺 and 台 spellings meet.
  * `undefined` is a real absence — a 縣市 the admin artifact does not know —

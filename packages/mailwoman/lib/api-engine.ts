@@ -90,7 +90,8 @@ async function wofPaths(): Promise<string[]> {
 }
 
 /**
- * #1009-style boot preflight message. Same shape as the drop-ins' (`photon/cli.ts`, `nominatim/cli.ts`). A stranger's first `mailwoman serve` must say exactly what data is missing and the one command that fixes it.
+ * #1009-style boot preflight message. Same shape as the drop-ins' (`photon/cli.ts`, `nominatim/cli.ts`). A stranger's
+ * first `mailwoman serve` must say exactly what data is missing and the one command that fixes it.
  */
 function buildPreflightMessage(): string {
 	return buildNoGazetteerMessage({

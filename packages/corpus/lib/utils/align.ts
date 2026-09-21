@@ -77,7 +77,8 @@ export interface AlignOptions {
 export type AlignmentResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
 /**
- * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The element type behind the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on `LabeledRow` (#519).
+ * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The element type behind
+ * the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on `LabeledRow` (#519).
  */
 export interface ComponentSpan {
 	tag: ComponentTag
@@ -225,7 +226,7 @@ export function assertSpanInvariants(
  * Falls back to a fuzzy window scan when verbatim fails and `maxEditDistance > 0`.
  * Already-claimed spans are skipped so two components don't grab overlapping ranges.
  *
- * @returns the span in the original `raw` (not the lower-cased `haystack`).
+ * @returns The span in the original `raw` (not the lower-cased `haystack`).
  */
 function locateSpan(args: {
 	haystack: string

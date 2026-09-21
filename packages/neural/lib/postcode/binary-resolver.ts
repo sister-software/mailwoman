@@ -234,10 +234,9 @@ export class PostcodeBinaryResolver {
 	 * Decode the whole binary into an {@link AnchorLookup} (`Map<postcode, AnchorEntry>`) for the
 	 * neural anchor channel (#239/#240): each postcode → a uniform posterior over its member countries
 	 *
-	 * - The mean of its non-zero centroids.
-	 *   This is the browser-side equivalent of the pilot postcode→anchor lookup the model
-	 *   trained against, built live from the shipped binary instead of a precomputed JSON.
-	 *   Records are stored sorted by (postcode, country), so equal keys are contiguous.
+	 * - The mean of its non-zero centroids. This is the browser-side equivalent of the pilot postcode→anchor lookup the
+	 *   model trained against, built live from the shipped binary instead of a precomputed JSON. Records are stored
+	 *   sorted by (postcode, country), so equal keys are contiguous.
 	 */
 	toAnchorLookup(): AnchorLookup {
 		const out: AnchorLookup = new Map()

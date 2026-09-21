@@ -33,10 +33,9 @@ import { JSONSpliterator } from "spliterator"
  *
  * Proposal
  *
- * - Per-fixture rationale: `docs/articles/evals/competitive-parity/2026-07-13-parity-gold-triage.md`.
- *   The pre-#875 v1 corpus stays reproducible via
- *   `--fixtures mailwoman/eval-harness/fixtures/parity-corpus.jsonl`; the run always prints
- *   which corpus + how many tombstones it skipped, so the denominator is never silent.
+ * - Per-fixture rationale: `docs/articles/evals/competitive-parity/2026-07-13-parity-gold-triage.md`. The pre-#875 v1
+ *   corpus stays reproducible via `--fixtures mailwoman/eval-harness/fixtures/parity-corpus.jsonl`; the run always
+ *   prints which corpus + how many tombstones it skipped, so the denominator is never silent.
  */
 /**
  * Examples a parity bucket needs before its rate is stable enough to compare across versions.

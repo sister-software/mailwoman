@@ -255,7 +255,7 @@ function tokenize(text: string): RawToken[] {
 /**
  * Find balanced pairs for one open/close class.
  *
- * @returns null when any delimiter of the class is unbalanced (stray opener or closer) —
+ * @returns Null when any delimiter of the class is unbalanced (stray opener or closer) —
  *   the caller emits nothing for the class.
  */
 function findBalancedPairs(text: string, open: string, close: string): Array<{ open: number; close: number }> | null {
@@ -303,13 +303,12 @@ function findSameCharPairs(text: string, ch: string): Array<{ open: number; clos
 /**
  * Shape-derived annotation confidence (M2: "confidence from balance + content shape"):
  *
- * - Content that is exactly a strong designator + identifier ("Suite 9") is probably
- *   a real component written in brackets (gold convention 2) → very low annotation
- *   confidence, letting the designator cue own the span.
- * - Lowercase- or digit-leading content ("rear entrance", "2nd floor", "code 2580")
- *   is the instruction/aside shape → high.
- * - A short capitalized group at the very END of the input ("(Australia)", "[New Zealand]")
- *   is the trailing-component shape (often a country) → low, below typical consumer floors.
+ * - Content that is exactly a strong designator + identifier ("Suite 9") is probably a real component written in brackets
+ *   (gold convention 2) → very low annotation confidence, letting the designator cue own the span.
+ * - Lowercase- or digit-leading content ("rear entrance", "2nd floor", "code 2580") is the instruction/aside shape →
+ *   high.
+ * - A short capitalized group at the very END of the input ("(Australia)", "[New Zealand]") is the trailing-component
+ *   shape (often a country) → low, below typical consumer floors.
  * - Everything else (capitalized mid-string: "[Building A]", "(The White House)") → moderate.
  */
 function annotationConfidence(content: string, atEndOfInput: boolean, lexicon: SpanProposerLexicon): number {
@@ -512,7 +511,8 @@ const HYPHEN_COMPOUND = /^(\d{1,4})-(\d{1,5})$/
 const FRACTION = /^\d\/\d$/
 
 /**
- * #481 item 7: the "plausible but genuinely ambiguous" proposal confidence. A FUSED_NUMBER reading that is real but not the only reading of the token (a trailing-fused slash compound, a hyphen at house-number position).
+ * #481 item 7: the "plausible but genuinely ambiguous" proposal confidence. A FUSED_NUMBER reading that is real but not
+ * the only reading of the token (a trailing-fused slash compound, a hyphen at house-number position).
  *
  * Deliberately below the confident readings (0.8–0.9) and above coin-flip,
  * and the same operating point as the phrase grouper's `NEUTRAL_PROPOSAL_CONFIDENCE` —

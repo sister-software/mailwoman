@@ -161,8 +161,8 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
  * Routing rules, in order:
  *
  * 1. If any extract has explicit `placetypes` that includes the requested placetype, use it.
- * 2. Otherwise, if a non-main extract's `schemaName` matches the placetype
- *    (e.g. `postalcode_us` matches `postalcode`), use it.
+ * 2. Otherwise, if a non-main extract's `schemaName` matches the placetype (e.g. `postalcode_us` matches `postalcode`),
+ *    use it.
  * 3. Otherwise, fall back to `main`.
  *
  * This deliberately doesn't union across extracts.
@@ -211,7 +211,9 @@ export function pickExtractForPlacetype(
 	placetype: string | undefined,
 	opts?: {
 		/**
-		 * #920: the query's country constraint, when the caller has one. With multiple extracts matching a placetype (postalcode-us + postalcode-geonames-tail), first-match routing sent every postcode query to the first extract and starved the rest. A FI postcode could never reach the tail extract.
+		 * #920: the query's country constraint, when the caller has one. With multiple extracts matching a placetype
+		 * (postalcode-us + postalcode-geonames-tail), first-match routing sent every postcode query to the first extract
+		 * and starved the rest. A FI postcode could never reach the tail extract.
 		 *
 		 * When `country` is given and a matching extract's probed country set contains it, that extract wins.
 		 *

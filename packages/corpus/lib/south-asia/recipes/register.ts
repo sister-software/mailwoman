@@ -72,7 +72,7 @@ export function drawIslamabadSector(random: () => number): string {
 /**
  * Render one register line from the adapter's components.
  *
- * @returns null when the row has no house number or no locality: both registers need the two.
+ * @returns Null when the row has no house number or no locality: both registers need the two.
  */
 export function renderSouthAsiaRegister(
 	components: CanonicalRow["components"],

@@ -326,9 +326,10 @@ function checkDerivedIdentifiers(facts: readonly DerivedFactRecord[], issues: Co
 /**
  * Compile an authored geographic-model document into its runtime artifact.
  *
- * Throws `GeographicModelValidationError` with every violation if the input is not a valid document, and
- * {@link GeographicModelCompileError} with every reason if it validates but its derivations cannot be written. Nothing
- * partial is ever returned.
+ * Throws `GeographicModelValidationError` with every violation if the input is not
+ * a valid document, and {@link GeographicModelCompileError} with every reason if
+ * it validates but its derivations cannot be written.
+ * Nothing partial is ever returned.
  *
  * The document is read, never rewritten: the artifact's tables are new arrays holding the authored
  * records themselves, ordered by identifier, and the derived tables are new records built beside them.

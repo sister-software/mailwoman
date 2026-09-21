@@ -23,8 +23,8 @@ export type ZipCodeDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
  * a section of a street, a collection of streets, an establishment, structure,
  * or group of post office boxes, for the delivery of mail.
  *
- * - The first 3 digits of the ZIP code represent a specific central mail processing facility,
- *   which can be used to identify the locality and region of the address, i.e. the city and state.
+ * - The first 3 digits of the ZIP code represent a specific central mail processing facility, which can be used to
+ *   identify the locality and region of the address, i.e. the city and state.
  * - The last 2 digits of the ZIP code represent a specific post office or delivery area.
  *
  * ```txt

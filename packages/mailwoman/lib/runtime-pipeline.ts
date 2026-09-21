@@ -153,8 +153,8 @@ export interface CreateRuntimePipelineOpts {
 	 * Coarse country router (#244, soft prior) — **default-on (#244 M2, after the misroute check).** A
 	 * confident in-map guess becomes a soft country prior the resolver re-rank boosts (never filters).
 	 *
-	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is
-	 *   lazy-loaded on the first pipeline call and applied (no prior if the model can't be resolved).
+	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is lazy-loaded on the
+	 *   first pipeline call and applied (no prior if the model can't be resolved).
 	 * - A function → use it (a custom placer / threshold).
 	 * - `false` → disabled (no prior. Byte-stable pre-M2 behavior).
 	 *
@@ -162,7 +162,8 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 	/**
-	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ascii input before the model (helps on all-caps registry/compliance data. Detection-restricted, mixed-case untouched).
+	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ascii input before the
+	 * model (helps on all-caps registry/compliance data. Detection-restricted, mixed-case untouched).
 	 *
 	 * The classifier is **default-on** since #895 (drift D2 settled), so leaving this unset runs it.
 	 *
@@ -171,14 +172,19 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	normalizeCase?: boolean
 	/**
-	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a confident coarse-placer guess from the soft prior to a hard country filter (empty→unresolved). **default-on** (#743, 2026-06-22): the built-in coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard filter to well-covered countries (US/ES/IT/NL/DE/FR), so it's a pure win there and a no-op (soft prior) for the low-coverage tail (FI/PL) — no recall regression.
+	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a confident coarse-placer guess from
+	 * the soft prior to a hard country filter (empty→unresolved). **default-on** (#743, 2026-06-22): the built-in
+	 * coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard filter to well-covered countries
+	 * (US/ES/IT/NL/DE/FR), so it's a pure win there and a no-op (soft prior) for the low-coverage tail (FI/PL) — no
+	 * recall regression.
 	 *
 	 * Pass `false` to opt out entirely.
 	 * A per-call `runOpts.hardPlaceCountry` overrides this.
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that checks the hard country filter.
+	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that checks the hard
+	 * country filter.
 	 *
 	 * Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`.
 	 *
@@ -187,14 +193,14 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
-	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a positive-evidence-conditional street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR fragment street, measured 2026-07-18).
+	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a
+	 * positive-evidence-conditional street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR
+	 * fragment street, measured 2026-07-18).
 	 *
-	 * - `undefined` (default) → **default-on**: when the classifier ships
-	 *   a span grammar (a v3+ span-head bundle), the bundled FR index
-	 *   ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on
-	 *   the first call and the Stage-3 classifier reranks the street.
-	 *   A pre-v3 (span-less) classifier, or a missing database, → no-op (byte-stable):
-	 *   the rerank can only ADD an atlas-confirmed street, never remove a model call.
+	 * - `undefined` (default) → **default-on**: when the classifier ships a span grammar (a v3+ span-head bundle), the
+	 *   bundled FR index ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on the first call
+	 *   and the Stage-3 classifier reranks the street. A pre-v3 (span-less) classifier, or a missing database, → no-op
+	 *   (byte-stable): the rerank can only ADD an atlas-confirmed street, never remove a model call.
 	 * - A `StreetLocalityEvidence` → use it (a custom / multi-country index).
 	 * - `false` → disabled (no rerank).
 	 */
@@ -209,14 +215,13 @@ export interface CreateRuntimePipelineOpts {
 	 * same pipeline with the poi stage off (recursion guard).
 	 * An explicit `classifyKind` override wins over the poi-aware default.
 	 *
-	 * - `undefined` (default) — same as `true`: intent-only mode.
-	 *   The stage extracts the intent but never executes it (today's Plan-2 behavior), except the
-	 *   build-local abstain still fires (`requires_build_local_layer` needs no db — see `poi-executor.ts`).
+	 * - `undefined` (default) — same as `true`: intent-only mode. The stage extracts the intent but never executes it
+	 *   (today's Plan-2 behavior), except the build-local abstain still fires (`requires_build_local_layer` needs no db —
+	 *   see `poi-executor.ts`).
 	 * - `true` — explicit intent-only mode, same as the default.
-	 * - `{ poiDatabasePath }` — additionally executes: a `POILookup` is constructed lazily
-	 *   on the first pipeline call (mirrors the {@link placeCountry} lazy-load pattern
-	 *   so this factory stays synchronous) and wired into the executor, so a matched intent
-	 *   comes back with `results` attached (or an `anchor_required` abstain).
+	 * - `{ poiDatabasePath }` — additionally executes: a `POILookup` is constructed lazily on the first pipeline call
+	 *   (mirrors the {@link placeCountry} lazy-load pattern so this factory stays synchronous) and wired into the
+	 *   executor, so a matched intent comes back with `results` attached (or an `anchor_required` abstain).
 	 * - `false` — disabled: the pipeline is byte-identical to pre-flag builds.
 	 */
 	poiQueryKind?: boolean | { poiDatabasePath?: PathBuilderLike }
@@ -249,7 +254,8 @@ export interface CreateRuntimePipelineOpts {
 }
 
 /**
- * #727 phase-4c: wrap the Stage-3 classifier so its `parse` reranks the street on street-name evidence — but only when an evidence index is injected and the classifier ships a span grammar (a v3+ span-head bundle).
+ * #727 phase-4c: wrap the Stage-3 classifier so its `parse` reranks the street on street-name evidence — but only when
+ * an evidence index is injected and the classifier ships a span grammar (a v3+ span-head bundle).
  *
  * Otherwise the original classifier passes through untouched (byte-stable).
  *
@@ -287,7 +293,8 @@ function wrapWithStreetEvidence(
  * 	NeuralAddressClassifier.loadFromWeights({ locale: "en-US" }), resolver:
  * 	createWOFResolver(backend), }) const result = await pipeline("350 5th Ave, New York, NY 10118", {
  * 	locale: "en-US" })
- * @returns a function that takes raw input + per-call opts and runs the full pipeline.
+ *
+ * @returns A function that takes raw input + per-call opts and runs the full pipeline.
  */
 /**
  * FST-distribution arc (2026-07-25): deserialize the per-locale FST gazetteer

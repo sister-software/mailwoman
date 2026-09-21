@@ -82,7 +82,8 @@ export interface CrossSourceThresholdSweepOptions {
 	 */
 	state?: string
 	/**
-	 * #655 option 2: a trained cross-source GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as a third arm at its recommended threshold — the model `registry train-scorer cross-gbt` emits.
+	 * #655 option 2: a trained cross-source GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as a third arm
+	 * at its recommended threshold — the model `registry train-scorer cross-gbt` emits.
 	 */
 	candidate?: string
 	/**

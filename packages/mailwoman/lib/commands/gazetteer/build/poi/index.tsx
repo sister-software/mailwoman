@@ -67,7 +67,7 @@ const BBOX_FIELD_COUNT = 4
 /**
  * Parse `--bbox "minLon,minLat,maxLon,maxLat"` into a {@link BBox}.
  *
- * @throws with the raw input echoed back on any shape/finiteness mismatch.
+ * @throws With the raw input echoed back on any shape/finiteness mismatch.
  *   A silently-mis-parsed bbox would corrupt coverage silently, so fail loud instead.
  */
 function parseBBoxFlag(raw: string): BBox {

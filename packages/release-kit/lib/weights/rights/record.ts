@@ -389,7 +389,7 @@ function stringOrNull(value: unknown): string | null {
 /**
  * Read one weights workspace's record.
  *
- * @throws when the manifest is unreadable rather than returning an empty record: a rights
+ * @throws When the manifest is unreadable rather than returning an empty record: a rights
  *   record nobody can read must not resolve to a package that ships nothing and owes nothing.
  */
 export async function readWeightsRightsRecord(repoRoot: string, workspace: string): Promise<WeightsRightsRecord> {

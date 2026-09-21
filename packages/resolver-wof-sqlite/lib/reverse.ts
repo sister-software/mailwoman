@@ -52,10 +52,9 @@ const MAX_ABS_LONGITUDE = 180
  * How the deepest returned place was confirmed:
  *
  * - `"polygon"` — the point ray-cast inside the place's real (DP-simplified) admin boundary.
- * - `"approximate"` — the place has no polygon on record.
- *   It won by nearest-centroid among the candidates whose bbox (or parent) contains the point.
- *   The same honesty convention as the demo's approximate circles — country-dependent
- *   data reality, surfaced instead of hidden.
+ * - `"approximate"` — the place has no polygon on record. It won by nearest-centroid among the candidates whose bbox (or
+ *   parent) contains the point. The same honesty convention as the demo's approximate circles — country-dependent data
+ *   reality, surfaced instead of hidden.
  */
 export type ContainmentKind = "polygon" | "approximate"
 

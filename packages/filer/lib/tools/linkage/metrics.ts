@@ -44,7 +44,10 @@
  */
 
 /**
- * {@linkcode scorePairwiseGrouping}'s result. Every count is over unordered pairs drawn from the `ids` passed in — see the module docstring for why pairs rather than aligned clusters.
+ * {@linkcode scorePairwiseGrouping}'s result.
+ *
+ * Every count is over unordered pairs drawn from the `ids` passed in — see the
+ * module docstring for why pairs rather than aligned clusters.
  */
 export interface PairwiseGroupingScore {
 	/**

@@ -109,7 +109,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * The gazetteer FST prior (#1497).
 	 *
-	 * Absent = the prior is never constructed and the decode is byte-identical to the pre-#1497 geocode path — which is what every caller got, because this field did not exist and `classifier.parse` has no config fallback for it.
+	 * Absent = the prior is never constructed and the decode is byte-identical to the pre-#1497 geocode path — which is
+	 * what every caller got, because this field did not exist and `classifier.parse` has no config fallback for it.
 	 */
 	fst?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
@@ -198,7 +199,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	defaultCountry?: string
 	/**
-	 * #27 — the locale's country as a soft ranking prior (`ResolveOpts.localeCountryPrior`), for the query shape where {@link defaultCountry} is deliberately withheld: a bare toponym.
+	 * #27 — the locale's country as a soft ranking prior (`ResolveOpts.localeCountryPrior`), for the query shape where
+	 * {@link defaultCountry} is deliberately withheld: a bare toponym.
 	 *
 	 * The #912 guard in `mailwoman/commands/geocode.tsx` drops the locale-inferred
 	 * country for a bare-locality tree, because as a hard filter it is a disaster
@@ -219,7 +221,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	localeCountryPriorWeight?: number
 	/**
-	 * #1880 — capital status of a candidate (2 national capital, 1 admin-1 seat, 0 neither), for the resolver's bounded capital promotion on the bare-toponym class (`ResolveOpts.capitalLevel`).
+	 * #1880 — capital status of a candidate (2 national capital, 1 admin-1 seat, 0 neither), for the resolver's bounded
+	 * capital promotion on the bare-toponym class (`ResolveOpts.capitalLevel`).
 	 *
 	 * The session builds it from the capitals reference by default (`capitalTier`, on);
 	 * undefined — an opted-out session, or a reference-less artifact under the
@@ -227,7 +230,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 	/**
-	 * #1585 — the locale hint's country, scoping the backend's typo-fuzzy tier only (`ResolveOpts.fuzzyCountryScope`). Unlike {@link localeCountryPrior} this is not opt-in and not a ranking prior: exact matches stay worldwide, a typo correction stays inside the hinted country, and a scoped-empty correction abstains instead of falling through to a world-fuzzy candidate.
+	 * #1585 — the locale hint's country, scoping the backend's typo-fuzzy tier only (`ResolveOpts.fuzzyCountryScope`).
+	 * Unlike {@link localeCountryPrior} this is not opt-in and not a ranking prior: exact matches stay worldwide, a typo
+	 * correction stays inside the hinted country, and a scoped-empty correction abstains instead of falling through to a
+	 * world-fuzzy candidate.
 	 *
 	 * Threaded even when {@link defaultCountry} is set (harmless — the hard scope is already narrower).
 	 */
@@ -272,13 +278,11 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 * and this option is not consulted for it.
 	 * The two remaining roles:
 	 *
-	 * - A per-region {@link InterpCalibrationTable}.
-	 *   The legacy-database fallback, selected by the parsed region
-	 *   (DC 1.44 … AZ 3.12, `default` otherwise, #584), applied only when the database
-	 *   predates the metadata table (the artifact is silent).
-	 * - A single number — an explicit instrument override forced everywhere,
-	 *   artifact value included (the CLI's `--interp-calibration`).
-	 *   `1` or `undefined` + artifact-silent keeps the raw half-segment heuristic.
+	 * - A per-region {@link InterpCalibrationTable}. The legacy-database fallback, selected by the parsed region (DC 1.44 …
+	 *   AZ 3.12, `default` otherwise, #584), applied only when the database predates the metadata table (the artifact is
+	 *   silent).
+	 * - A single number — an explicit instrument override forced everywhere, artifact value included (the CLI's
+	 *   `--interp-calibration`). `1` or `undefined` + artifact-silent keeps the raw half-segment heuristic.
 	 *
 	 * See `docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`.
 	 */
@@ -293,9 +297,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 *
 	 * **Default-on (#244 M2, after the misroute check):**
 	 *
-	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9)
-	 *   is lazy-loaded and applied.
-	 *   Degrades to no prior if the model can't be resolved.
+	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is lazy-loaded and
+	 *   applied. Degrades to no prior if the model can't be resolved.
 	 * - A function → use it (a custom placer / threshold).
 	 * - `false` → disabled (no prior. The pre-M2 byte-stable behavior).
 	 */
@@ -306,15 +309,24 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
-	 * #743/#194: promote a confident placer guess to a hard country filter (empty→unresolved) for coverage-safelisted countries — see {@link hardCountryFor}. **default-on** (#743): a pure win on well-covered countries (US/ES/IT/NL/DE/FR), soft (no-op) for the rest. Pass `false` to opt out.
+	 * #743/#194: promote a confident placer guess to a hard country filter (empty→unresolved) for coverage-safelisted
+	 * countries — see {@link hardCountryFor}. **default-on** (#743): a pure win on well-covered countries
+	 * (US/ES/IT/NL/DE/FR), soft (no-op) for the rest. Pass `false` to opt out.
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer artifact's own coverage manifest when it carries one, else the built-in constant (the fallback for artifacts predating the manifest).
+	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer
+	 * artifact's own coverage manifest when it carries one, else the built-in constant (the fallback for artifacts
+	 * predating the manifest).
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
-	 * #928: when the parsed postcode's format unambiguously implies a country ({@link POSTCODE_FORMAT_COUNTRY} — GB `E4 9AZ`, CA `K2P 1L4`), use it as the country prior IN place OF the coarse placer, which conflates GB/CA with US on shared English patterns and mis-routes them to US namesakes at high confidence (London E4 → London, Ohio). **default-on** (promoted 2026-07-06. Check: GB 63→90% ok, CA 42→67%, US byte-identical 0/150. The formats never match a US ZIP / NL / FR code). Only fires when no explicit `defaultCountry`. Pass `false` to opt out (the pre-promote behavior). A format is a stronger, unforgeable signal than the language model.
+	 * #928: when the parsed postcode's format unambiguously implies a country ({@link POSTCODE_FORMAT_COUNTRY} — GB `E4
+	 * 9AZ`, CA `K2P 1L4`), use it as the country prior IN place OF the coarse placer, which conflates GB/CA with US on
+	 * shared English patterns and mis-routes them to US namesakes at high confidence (London E4 → London, Ohio).
+	 * **default-on** (promoted 2026-07-06. Check: GB 63→90% ok, CA 42→67%, US byte-identical 0/150. The formats never
+	 * match a US ZIP / NL / FR code). Only fires when no explicit `defaultCountry`. Pass `false` to opt out (the
+	 * pre-promote behavior). A format is a stronger, unforgeable signal than the language model.
 	 */
 	postcodeCountryPrior?: boolean
 	/**

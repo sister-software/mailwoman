@@ -79,8 +79,8 @@ export interface BrandNameCount {
 }
 
 /**
- * Reads the exact aggregate the design calls for:
- * `select brand_wikidata, name, count(*) n from poi where brand_wikidata is not NULL and name is not NULL group BY brand_wikidata, name`.
+ * Reads the exact aggregate the design calls for: `select brand_wikidata, name, count(*) n from poi where
+ * brand_wikidata is not NULL and name is not NULL group BY brand_wikidata, name`.
  *
  * Opens `dbPath` read-only.
  * This builder only ever reads a sealed `poi.db`, never writes one.
@@ -110,7 +110,8 @@ export async function readSourceLayer(dbPath: PathBuilderLike): Promise<POIBrand
 }
 
 /**
- * {@link aggregateBrands}'s pre-branded output — a plain-string `wikidata`, cast to `BrandRecord["wikidata"]` by the caller.
+ * {@link aggregateBrands}'s pre-branded output — a plain-string `wikidata`,
+ * cast to `BrandRecord["wikidata"]` by the caller.
  */
 interface RawBrandAggregate {
 	wikidata: string

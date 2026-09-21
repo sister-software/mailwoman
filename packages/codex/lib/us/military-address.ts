@@ -38,7 +38,8 @@
  */
 export const US_MILITARY_POST_OFFICE_CODES = [
 	/**
-	 * Army Post Office — domestic USPS gateway for Army and Air Force overseas mail. Also used for some diplomatic addresses (DPO is preferred for State Dept posts since 2011).
+	 * Army Post Office — domestic USPS gateway for Army and Air Force overseas mail. Also used for some diplomatic
+	 * addresses (DPO is preferred for State Dept posts since 2011).
 	 */
 	{ code: "APO", name: "Army Post Office", armedForces: true },
 	/**
@@ -75,8 +76,8 @@ export type USArmedForcesRegionCode = (typeof US_ARMED_FORCES_REGIONS)[number]["
  *
  * - `PSC <id> BOX <box>` — Postal Service Center
  * - `CMR <id> BOX <box>` — Community Mail Room
- * - `unit <id> BOX <box>` — numbered unit (battalion/company); unit may stand alone
- *   with just an id and no BOX when the unit has direct mail delivery
+ * - `unit <id> BOX <box>` — numbered unit (battalion/company); unit may stand alone with just an id and no BOX when the
+ *   unit has direct mail delivery
  *
  * BOX is required for PSC and CMR.
  * Unit may omit BOX.

@@ -110,7 +110,7 @@ export const DE_STATE_NAME_TO_CODE: ReadonlyMap<string, GermanStateCode> = (() =
  * Resolve a German state surface form (code, German name, English name, or common alias)
  * to its ISO 3166-2:DE code.
  *
- * @returns null when unrecognized.
+ * @returns Null when unrecognized.
  */
 export function lookupGermanState(input: string | null | undefined): GermanStateCode | null {
 	if (!input || typeof input !== "string") return null

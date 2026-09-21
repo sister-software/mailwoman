@@ -245,7 +245,10 @@ export class NeuralAddressClassifier {
 	/**
 	 * One-call factory — see `classifier-loader.ts`, where the whole resolution lives.
 	 *
-	 * **Node-only.** `#classifier/loader` carries a `browser` condition that resolves to a refusing module, so a browser bundle that follows this import stays free of `onnxruntime-node` and the fs-reading weights resolver, and calling it there throws. The `webpackIgnore` comment keeps webpack's SSR bundle, which resolves the `node` condition, from following the Node half.
+	 * **Node-only.** `#classifier/loader` carries a `browser` condition that resolves to a refusing module, so a browser
+	 * bundle that follows this import stays free of `onnxruntime-node` and the fs-reading weights resolver, and calling
+	 * it there throws. The `webpackIgnore` comment keeps webpack's SSR bundle, which resolves the `node` condition, from
+	 * following the Node half.
 	 *
 	 * Browser callers use `loadNeuralClassifierFromURLs`.
 	 */
@@ -258,7 +261,9 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
-	 * {@link loadFromWeights} behind a {@link ScriptRoutedClassifier}: the caller's locale is the primary, and an input whose script names another weights family runs on that family's classifier, loaded on first use.
+	 * {@link loadFromWeights} behind a {@link ScriptRoutedClassifier}: the caller's
+	 * locale is the primary, and an input whose script names another weights family
+	 * runs on that family's classifier, loaded on first use.
 	 *
 	 * The served entry points (`mailwoman geocode`, the drop-in servers, the batch worker) load through
 	 * this one, so a bare kanji or Hangul line reaches the character-path model without a `--locale`.
