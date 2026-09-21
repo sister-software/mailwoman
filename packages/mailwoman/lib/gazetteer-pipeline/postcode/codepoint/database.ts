@@ -77,8 +77,9 @@ import { createDatabaseMetaTable, writeMetaRows } from "#gazetteer-pipeline/post
 /**
  * ISO-3166-1 alpha-2 stamped on every row.
  *
- * Code-Point Open is a GB-only product. the ONS country code distinguishing England/Scotland/Wales
- * is carried separately on the parsed record and is not what `spr.country` means.
+ * Code-Point Open is a GB-only product.
+ * The ONS country code distinguishing England/Scotland/Wales is carried separately
+ * on the parsed record and is not what `spr.country` means.
  */
 const COUNTRY = "GB"
 
@@ -125,7 +126,8 @@ export interface BuildPostcodeCodePointResult {
 	 */
 	stats: CodePointParseStats
 	/**
-	 * The archive's own manifest — the row-count oracle this build is conditioned on.
+	 * The archive's own manifest.
+	 * The row-count oracle this build is conditioned on.
 	 */
 	metadata: CodePointMetadata
 	/**
@@ -166,9 +168,9 @@ export async function buildPostcodeCodePoint(
 	//
 	// An offline build must not silently produce an artifact with blank provenance.
 	// `downloadCodePointOpen` leaves an `acquisition.json` sidecar next to the archive precisely
-	// so a later offline rebuild can recover the release label and md5 it would otherwise
-	// have to invent. when even that is missing, the meta records the absence in words
-	// rather than an empty string, because "" reads as "no release" to anyone grepping it.
+	// so a later offline rebuild can recover the release label and md5 it would otherwise have to invent.
+	// When even that is missing, the meta records the absence in words rather than an
+	// empty string, because "" reads as "no release" to anyone grepping it.
 	let archiveMD5: string
 	let osVersion: string
 
@@ -388,8 +390,7 @@ interface DatabaseMetaInput {
 /**
  * Bake the provenance record into the staging DB (pre-vacuum, pre-seal — a shipped DB is never patched).
  *
- * The attribution year comes from OS's own `copyright date`, not from the build clock: republishing a 2026 extract in
- * 2027 still attributes the 2026 data. Both dates are stored so the distinction stays visible.
+ * The attribution year comes from OS's own `copyright date`, not from the build clock: republishing a 2026 extract in 2027 still attributes the 2026 data. Both dates are stored so the distinction stays visible.
  */
 async function writeDatabaseMeta(db: DatabaseClient<WOFDatabase>, input: DatabaseMetaInput): Promise<void> {
 	await createDatabaseMetaTable(db)

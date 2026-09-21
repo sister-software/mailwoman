@@ -112,8 +112,9 @@ async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<PO
 
 	try {
 		for (const parquetPath of parquetPaths) {
-			// stream the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising the
-			// whole result — a full four-country build (millions of US rows) blew the ~4GB V8 heap that way
+			// stream the parquet scan in DuckDB DataChunks (~2048 rows each)
+			// rather than materialising the whole result.
+			// A full four-country build (millions of US rows) blew the ~4GB V8 heap that way
 			// (OOM 2026-07-18, `DuckDBNodeAddon::get_data_from_pointer` → `napi_create_buffer_copy`).
 			// stream()+fetchChunk() keeps JS memory bounded to one chunk at a time,
 			// matching the address-points.tsx / coverage-core.ts precedent (OOM 2026-06-14).
@@ -157,7 +158,9 @@ async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<PO
 }
 
 /**
- * A simple lon/lat rectangle — the shape a Geofabrik extract's declared bounding box takes.
+ * A simple lon/lat rectangle.
+ *
+ * The shape a Geofabrik extract's declared bounding box takes.
  *
  * Not a general polygon (OSM extracts are rectangular extracts); {@link bboxCoverageCells}
  * turns it into a 4-vertex ring for `polygonToCells`.
@@ -173,19 +176,20 @@ export interface BBox {
  * Extract-bbox coverage polyfill (decision 5): every res-6 H3 cell whose center falls inside
  * `bbox` gets a coverage entry, paired with how many `rows` actually landed in it (0 permitted).
  *
- * This is the `--source osm` build branch's coverage strategy, used in place of
- * the default Overture path's "a cell gets a row only if a POI fell in it" —
- * an OSM telecom-infrastructure extract is sparse BY category, so most of a well-surveyed
+ * This is the `--source osm` build branch's coverage strategy, used in place of the
+ * default Overture path's "a cell gets a row only if a POI fell in it".
+ * An OSM telecom-infrastructure extract is sparse BY category, so most of a well-surveyed
  * region would otherwise report as unsurveyed (missing from `layer_coverage`) even
  * though the whole extract region was in fact covered by the source.
+ *
  * An explicit `observedRows: 0` cell carries the meaning "surveyed, nothing found
  * here" — never conflate it with a cell absent from `layer_coverage` entirely
  * (unsurveyed/unknown, the interface's meaning-of-zero rule).
  *
  * Rows whose H3 cell falls outside the bbox's own polyfilled cell set are not represented
  * in the returned coverage (their observed count is silently uncounted) — acceptable
- * because `bbox` is expected to describe the same extract region the rows were pulled
- * from. a caller passing a bbox narrower than its rows' actual extent will undercount.
+ * because `bbox` is expected to describe the same extract region the rows were pulled from.
+ * A caller passing a bbox narrower than its rows' actual extent will undercount.
  *
  * Pure function: no DuckDB/ogr2ogr/network involved, so it's directly
  * unit-testable over synthetic coordinates.
@@ -200,15 +204,16 @@ export function bboxCoverageCells(
 	for (const row of rows) {
 		if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) continue
 
-		// Derive the coverage cell from the same res-9 cell the row is keyed by — `cellToParent(res9Cell,
-		// resolution)` — never a direct `latLngToCell(row, resolution)`. Matches the default (non-override)
-		// coverage path below (~:592) and every reader (`res9ShortCellToRes6Parent` in
-		// bdc/sdk/filing-landscape.ts, plausibility.ts, nearest-infrastructure.ts). H3's cell hierarchy is not
-		// geometrically exact, so the direct derivation disagrees with the hierarchy-parent one for a real
-		// fraction of points (~6.56% measured over 20k conus points) — the identical builder/reader divergence
-		// class fixed in bdc 2a fix-round-1 (see filing-landscape.ts's module docstring). Getting this wrong
-		// means a row's observed count lands on a neighbouring cell, or is silently dropped
-		// when its direct-res-6 cell isn't a member of the bbox polyfill below.
+		// Derive the coverage cell from the same res-9 cell the row is keyed by —
+		// `cellToParent(res9Cell, resolution)` — never a direct `latLngToCell(row, resolution)`.
+		// Matches the default (non-override) coverage path below (~:592) and every reader
+		// (`res9ShortCellToRes6Parent` in bdc/sdk/filing-landscape.ts, plausibility.ts, nearest-infrastructure.ts).
+		// H3's cell hierarchy is not geometrically exact, so the direct derivation
+		// disagrees with the hierarchy-parent one for a real fraction of points
+		// (~6.56% measured over 20k conus points) — the identical builder/reader divergence
+		// class fixed in bdc 2a fix-round-1 (see filing-landscape.ts's module docstring).
+		// Getting this wrong means a row's observed count lands on a neighbouring cell, or is
+		// silently dropped when its direct-res-6 cell isn't a member of the bbox polyfill below.
 		const res9Cell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
 		const cell = cellToParent(res9Cell, resolution) as H3Cell
 		const h3Cell = shortCellToInt(cell)
@@ -236,9 +241,9 @@ export function bboxCoverageCells(
 /**
  * `source` literal → the manifest `license`/`attribution` pair to write.
  *
- * Keyed by {@link BuildPOIOptions.source} so the default (`overture-places`, when `source` is omitted)
- * writes the Overture pair — an omitted `source` must produce a manifest
- * byte-identical to an explicit `"overture-places"` one.
+ * Keyed by {@link BuildPOIOptions.source} so the default
+ * (`overture-places`, when `source` is omitted) writes the Overture pair.
+ * An omitted `source` must produce a manifest byte-identical to an explicit `"overture-places"` one.
  */
 const SOURCE_MANIFEST_DEFAULTS = {
 	"overture-places": { license: "CDLA-Permissive-2.0", attribution: "Overture Maps Foundation" },
@@ -262,7 +267,7 @@ export interface BuildPOIOptions {
 	/**
 	 * Output `poi.db` path.
 	 *
-	 * Removed + rebuilt if already present (build-on-copy at the file level. see module docstring).
+	 * Removed + rebuilt if already present (build-on-copy at the file level. See module docstring).
 	 */
 	out: PathBuilderLike
 	/**
@@ -295,21 +300,24 @@ export interface BuildPOIOptions {
 	 * Manifest distribution tier.
 	 *
 	 * Default {@link LayerTier.Shipped}.
-	 * The `--source osm` build branch passes
-	 * {@link LayerTier.BuildLocal} (ODbL share-alike. see `osm/readme.md`).
+	 * The `--source osm` build branch passes {@link LayerTier.BuildLocal}
+	 * (ODbL share-alike. See `osm/readme.md`).
 	 */
 	tier?: LayerTier
 	/**
-	 * Decision 5: when given, replaces the rows-derived res-6 coverage with this pre-computed set (typically
-	 * {@link bboxCoverageCells} over the extract's bbox), `observedRows` taken as-is (0 permitted). Default: undefined,
-	 * meaning "coverage = the cells a row actually fell into".
+	 * Decision 5: when given, replaces the rows-derived res-6 coverage with this
+	 * pre-computed set (typically {@link bboxCoverageCells} over the extract's bbox),
+	 * `observedRows` taken as-is (0 permitted).
+	 *
+	 * Default: undefined, meaning "coverage = the cells a row actually fell into".
 	 *
 	 * `completeness` and `basis` are per-cell and optional, defaulting to the `1` /
 	 * `source_present` pair the rest of this pipeline writes.
 	 * A cell only reaches an exclusion-grade basis ({@link CoverageBasis.Surveyed} or
-	 * {@link CoverageBasis.Designated}) by naming one here, alongside the completeness that basis measured — the default
-	 * is the weakest reading precisely so that a builder which has not measured
-	 * anything cannot claim otherwise.
+	 * {@link CoverageBasis.Designated}) by naming one here, alongside the completeness that basis measured.
+	 *
+	 * The default is the weakest reading precisely so that a builder which has not
+	 * measured anything cannot claim otherwise.
 	 */
 	coverageCellsOverride?: Iterable<{
 		h3Cell: number
@@ -512,8 +520,8 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		// Coverage is source-level rather than survey completeness: a res-6 cell we have Overture Places
 		// rows in is recorded at completeness 1.0 (Overture claims global coverage for the theme);
 		// this is not a claim about how complete Overture's own Places extraction is within that cell.
-		// A cell absent from `layer_coverage` means no rows were observed there at all —
-		// the meaning-of-zero rule (missing = unknown, never `{completeness: 0}`).
+		// A cell absent from `layer_coverage` means no rows were observed there at all.
+		// The meaning-of-zero rule (missing = unknown, never `{completeness: 0}`).
 		//
 		// `coverageCellsOverride` (decision 5, the `--source osm` branch) replaces this rows-derived set
 		// entirely with a pre-computed one (typically `bboxCoverageCells` over the extract's bbox) —
@@ -521,11 +529,11 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		// Default path (no override) is unchanged.
 		// `basis: source_present` states in the artifact what the paragraph above states in prose:
 		// the 1.0 is "Overture returned rows here", not "everything here is known".
-		// A consumer building an exclusion reads the basis and refuses. one reading
-		// `completeness` alone would have concluded the opposite.
+		// A consumer building an exclusion reads the basis and refuses.
+		// One reading `completeness` alone would have concluded the opposite.
 		//
-		// An override entry may carry its own `completeness`/`basis` — the only way a
-		// cell in this pipeline reaches an exclusion-grade basis.
+		// An override entry may carry its own `completeness`/`basis`.
+		// The only way a cell in this pipeline reaches an exclusion-grade basis.
 		// Omitting either falls back to the source-present pair above, so a caller that
 		// has not measured completeness cannot claim one by accident.
 		coverageCells = opts.coverageCellsOverride
@@ -546,9 +554,9 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 		progress("finalize", "ANALYZE + VACUUM")
 		kdb.exec("ANALYZE")
-		// page_size must be set right before vacuum (node:sqlite initializes the file at the 4096 default on
-		// `new DatabaseSync`, so the earlier pragma is a no-op until a vacuum rebuilds at the new size) —
-		// the same discipline build-candidate.ts uses.
+		// page_size must be set right before vacuum (node:sqlite initializes the file at the 4096 default
+		// on `new DatabaseSync`, so the earlier pragma is a no-op until a vacuum rebuilds at the new size).
+		// The same discipline build-candidate.ts uses.
 		kdb.exec("PRAGMA page_size=8192")
 		kdb.exec("VACUUM")
 	}

@@ -27,8 +27,8 @@
  * A stale pin therefore fails every default build outright (the S3 listing finds nothing),
  * and a sealed artifact built from a pruned release can never be rebuilt.
  *
- * Bump this pin when a build reports the release missing. treat the bump as a
- * new-vintage decision (row deltas ride along), never a routine chore.
+ * Bump this pin when a build reports the release missing.
+ * Treat the bump as a new-vintage decision (row deltas ride along), never a routine chore.
  */
 export const DEFAULT_RELEASE = "2026-07-22.0"
 

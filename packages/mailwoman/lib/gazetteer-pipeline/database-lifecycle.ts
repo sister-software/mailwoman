@@ -62,8 +62,9 @@ export function freezeStagingDatabase<DB>(db: DatabaseClient<DB>): void {
 }
 
 /**
- * Publish the frozen staging database to `out` via `vacuum into`, replacing any previous
- * artifact at that path first — `vacuum into` refuses to overwrite.
+ * Publish the frozen staging database to `out` via `vacuum into`, replacing any
+ * previous artifact at that path first.
+ * `vacuum into` refuses to overwrite.
  */
 export async function vacuumDatabaseInto<DB>(db: DatabaseClient<DB>, out: string): Promise<void> {
 	if (await pathExists(out)) {

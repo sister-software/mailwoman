@@ -77,9 +77,9 @@ export function censusForCountry(adminDBPath: string, country: string): SourceCe
 /**
  * The source serving a country today, or `undefined` when it has no rows at all.
  *
- * Returns the largest contributor when several are present, because that is the
- * one a move is actually moving away from — and names the rest, so a two-source
- * country reads as two-source rather than as its winner.
+ * @returns the largest contributor when several are present, because that is the
+ *   one a move is actually moving away from — and names the rest, so a two-source
+ *   country reads as two-source rather than as its winner.
  */
 export function servingSources(census: SourceCensus): AdminSource[] {
 	return (
@@ -95,7 +95,8 @@ export function servingSources(census: SourceCensus): AdminSource[] {
 }
 
 /**
- * GitHub reports packed size. a WOF repo unpacks to millions of small GeoJSON files.
+ * GitHub reports packed size.
+ * A WOF repo unpacks to millions of small GeoJSON files.
  *
  * Measured on a `--countries tr` sync: three repositories reported as 83.4 MB occupied 633 MB once cloned.
  * The ratio is stated here rather than at each call site because the number a caller is about to show
@@ -106,8 +107,9 @@ export const CHECKOUT_SIZE_RATIO = 7
 /**
  * One edit a move requires, as a reviewable statement rather than an applied patch.
  *
- * `defaults.ts` is reviewed like code and its entries carry measurements — the `IN`
- * entry is six lines recording 189,026 sub-locality nodes at 98.6% conversion.
+ * `defaults.ts` is reviewed like code and its entries carry measurements.
+ * The `IN` entry is six lines recording 189,026 sub-locality nodes at 98.6% conversion.
+ *
  * A tool that rewrote that file silently would drop the prose at the one moment a reader
  * most needs it, so the plan prints the edit and leaves the commit to a person.
  */
@@ -164,9 +166,10 @@ export function planCountryMove(options: {
 		}
 
 		// Only when the target is not already serving.
-		// A country whose rows already come from WOF needs no addition, and printing one would
-		// have a reader edit a list the country is on — the plan would then be describing
-		// work that is done, which is the failure mode a plan is supposed to remove.
+		// A country whose rows already come from WOF needs no addition, and printing
+		// one would have a reader edit a list the country is on.
+		// The plan would then be describing work that is done, which is the failure
+		// mode a plan is supposed to remove.
 		if (!current.includes(AdminSource.WOF)) {
 			edits.push({
 				list: "DEFAULT_WOF_PRIORITY_COUNTRIES",

@@ -90,8 +90,9 @@ function cleanName(raw: string | undefined): string {
  * where core floors (`floor(p/100 · n)`) — swapping conventions moves a percentile
  * by up to one member row and with it every derived label point.
  *
- * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank the
- * shipped NZ label points were computed with. core floors
+ * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank
+ * the shipped NZ label points were computed with.
+ * Core floors
  */
 function percentileSorted(sorted: readonly number[], p: number): number {
 	const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1))
@@ -124,7 +125,8 @@ export async function buildNZLocalitiesDatabase(
 		throw new Error(`source md5 mismatch: computed ${sourceMD5}, sidecar ${sidecar} — re-verify the extract`)
 	}
 
-	// Pass 1 — aggregate (city, district) → coordinate lists. ~2.1M rows. two float arrays per group.
+	// Pass 1 — aggregate (city, district) → coordinate lists. ~2.1M rows.
+	// Two float arrays per group.
 	const groups = new Map<string, { city: string; district: string; lats: number[]; lons: number[] }>()
 	let header: string[] | undefined
 

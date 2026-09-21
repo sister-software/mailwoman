@@ -144,7 +144,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 
 		phase("ingest", `${ingest.placesIngested.toLocaleString()} postcodes`)
 
-		// US pass 1: Census zcta + GeoNames US (provenance-stamped in centroid_source. see zcta-centroids.ts).
+		// US pass 1: Census zcta + GeoNames US (provenance-stamped in centroid_source. See zcta-centroids.ts).
 
 		if (cc === "us") {
 			const zctaPath = opts.zctaPath ?? dataRootPath("census", "2024_Gaz_zcta_national.txt")

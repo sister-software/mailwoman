@@ -34,7 +34,8 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
- * Columns a US Census gazetteer row carries. short rows are truncated and skipped.
+ * Columns a US Census gazetteer row carries.
+ * Short rows are truncated and skipped.
  */
 const GAZETTEER_ROW_COLUMNS = 7
 
@@ -56,7 +57,7 @@ export interface ZCTACentroid {
 }
 
 /**
- * Parse a Census zcta Gazetteer file (tab-delimited. header `geoid ... intptlat intptlong`)
+ * Parse a Census zcta Gazetteer file (tab-delimited. Header `geoid ... Intptlat intptlong`)
  * into a 5-digit-code → centroid map.
  *
  * Skips the header, non-5-digit GEOIDs, non-finite coordinates, and `(0,0)` rows
@@ -84,11 +85,11 @@ export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
  * Fill `(0,0)`-placeholder US postcode rows in a WOF postcode database's `spr` table
  * from the zcta centroid map, recording per-row provenance in `centroid_source`.
  *
- * Rows with a real coordinate are never touched. placeholders without a zcta
- * stay placeholder (and get no provenance row).
+ * Rows with a real coordinate are never touched.
+ * Placeholders without a zcta stay placeholder (and get no provenance row).
  * Idempotent.
  *
- * Returns the number of rows filled.
+ * @returns the number of rows filled.
  */
 export function fillPlaceholderCentroids(
 	db: DatabaseClient<WOFDatabase>,
@@ -135,7 +136,7 @@ export function fillPlaceholderCentroids(
 }
 
 /**
- * Parse a GeoNames postal file (TSV, no header. columns: country(0), postcode(1), place(2),
+ * Parse a GeoNames postal file (TSV, no header. Columns: country(0), postcode(1), place(2),
  * adm1-name(3), adm1-code(4), adm2-name(5), adm2-code(6), adm3-name(7), adm3-code(8),
  * lat(9), lon(10), accuracy(11)) into a postcode → mean-centroid map.
  *

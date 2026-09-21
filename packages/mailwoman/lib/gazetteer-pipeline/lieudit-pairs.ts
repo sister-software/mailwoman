@@ -37,8 +37,10 @@ export interface LieuDitPair {
 	/**
 	 * Always `locality` (PIX2 / schema 3).
 	 *
-	 * The parent surface is BAN's `nom_commune` (`record.city` below) — the commune, which is
-	 * the French postal locality line and the slot every FR address writes after the postcode.
+	 * The parent surface is BAN's `nom_commune` (`record.city` below).
+	 * The commune, which is the French postal locality line and the slot every
+	 * FR address writes after the postcode.
+	 *
 	 * There is no per-row variation to read here: BAN carries exactly one commune column
 	 * and every row's parent comes from it.
 	 */
@@ -69,8 +71,9 @@ export interface LieuDitExtractResult {
  * Excludes the `merged`/`france` aggregates (they duplicate the per-département rows, so counting
  * them would inflate every frequency) and prefers an uncompressed `.csv` when both forms exist
  * for the same département — a stale-refetch artifact observed on disk for 13/2A/48/69/75.
- * Mirrors `corpus/src/database-recipes/fr-lieudit.ts`'s enumeration. the two must agree
- * or the index and the training database would read different populations.
+ * Mirrors `corpus/src/database-recipes/fr-lieudit.ts`'s enumeration.
+ *
+ * The two must agree or the index and the training database would read different populations.
  */
 export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
 	const byDept = new Map<string, string>()
@@ -98,8 +101,8 @@ export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
 /**
  * Stream every département file and collect distinct (lieu-dit, commune) pairs.
  *
- * Reads the full national dump (~26M rows), so this is minutes rather than seconds —
- * the caller is a build command, never a request path.
+ * Reads the full national dump (~26M rows), so this is minutes rather than seconds.
+ * The caller is a build command, never a request path.
  */
 export async function extractLieuDitPairs(banDir: string): Promise<LieuDitExtractResult> {
 	const files = await enumerateBANDeptFiles(banDir)

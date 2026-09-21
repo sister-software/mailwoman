@@ -99,9 +99,7 @@ export const OPEN_UPRN_LICENSE = "OGL-UK-3.0"
 export const OPEN_UPRN_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * The attribution OS requires of OS OpenData redistributors, in the wording the archive's own `licence.txt` uses.
- * `year` is the OS copyright year as stated in that licence text — not the build year. republishing a 2026 extract in
- * 2027 still attributes the 2026 data.
+ * The attribution OS requires of OS OpenData redistributors, in the wording the archive's own `licence.txt` uses. `year` is the OS copyright year as stated in that licence text — not the build year. Republishing a 2026 extract in 2027 still attributes the 2026 data.
  */
 export function openUPRNAttribution(year: number): string {
 	return `Contains Ordnance Survey data © Crown copyright and database right ${year}.`
@@ -110,19 +108,22 @@ export function openUPRNAttribution(year: number): string {
 /**
  * The exact CSV header of the product.
  *
- * Verified against the 2026-08 extract. a drifted header fails the build loudly
- * rather than silently mapping columns by position.
+ * Verified against the 2026-08 extract.
+ * A drifted header fails the build loudly rather than silently mapping columns by position.
  */
 export const OPEN_UPRN_HEADER = "UPRN,X_COORDINATE,Y_COORDINATE,LATITUDE,LONGITUDE"
 
 /**
- * Field count of {@link OPEN_UPRN_HEADER} — a line splitting to anything else is malformed.
+ * Field count of {@link OPEN_UPRN_HEADER}.
+ * A line splitting to anything else is malformed.
  */
 const OPEN_UPRN_COLUMN_COUNT = 5
 
 /**
- * What `GB` means on this product: England, Scotland and Wales — the Downloads API publishes
- * a single `GB` area, and the product derives from AddressBase Premium, whose scope is GB.
+ * What `GB` means on this product: England, Scotland and Wales.
+ *
+ * The Downloads API publishes a single `GB` area, and the product derives from
+ * AddressBase Premium, whose scope is GB.
  *
  * Northern Ireland's property identifiers are administered by Land & Property Services (Pointer)
  * and appear in no OS OpenData product, so the layer's NI hole is a licensing fact rather than
@@ -165,8 +166,10 @@ export interface OpenUPRNProduct {
 }
 
 /**
- * The three label lines of the archive's `versions.txt` — no row counts,
- * no checksums. just enough to date the extract.
+ * The three label lines of the archive's `versions.txt`.
+ *
+ * No row counts, no checksums.
+ * Just enough to date the extract.
  */
 export interface OpenUPRNVersions {
 	/**
@@ -378,8 +381,9 @@ export interface ExtractOpenUPRNResult {
 /**
  * Decode a small provenance text file whose encoding OS does not declare.
  *
- * Strict UTF-8 first. a failure falls back to Latin-1, whose only plausible non-ascii
- * byte here is `0xA9` (`©`) — the Code-Point mojibake lesson.
+ * Strict UTF-8 first.
+ * A failure falls back to Latin-1, whose only plausible non-ascii byte here is
+ * `0xA9` (`©`) — the Code-Point mojibake lesson.
  */
 function decodeProvenanceText(bytes: Uint8Array): string {
 	try {
@@ -392,9 +396,10 @@ function decodeProvenanceText(bytes: Uint8Array): string {
 /**
  * Extract the CSV + provenance texts from the Open uprn archive into `<destDir>/extracted/`.
  *
- * The extracted CSV is reused when its on-disk size matches the zip entry's uncompressed
- * size exactly — the dated acquisition directory is the cache, and the size check is
- * what tells a completed extraction from one that died mid-write.
+ * The extracted CSV is reused when its on-disk size matches the zip entry's uncompressed size exactly.
+ * The dated acquisition directory is the cache, and the size check is what tells
+ * a completed extraction from one that died mid-write.
+ *
  * (Byte size rather than mtime: the zip's entries carry mode 000 and a 2026 timestamp,
  * neither of which says anything about our copy's completeness.)
  */
@@ -487,12 +492,13 @@ export interface BuildUPRNLayerOptions {
 	/**
 	 * ISO-8601 `layer_manifest.created_at`.
 	 *
-	 * Caller-supplied per the layer interface. defaults to `now`.
+	 * Caller-supplied per the layer interface.
+	 * Defaults to `now`.
 	 */
 	createdAt?: string
 	/**
-	 * Git sha of the building tree (`buildSHA(repoRoot)` from `stamp-manifest.ts`) —
-	 * the builder never guesses it.
+	 * Git sha of the building tree (`buildSHA(repoRoot)` from `stamp-manifest.ts`).
+	 * The builder never guesses it.
 	 */
 	buildSHA: string
 	/**
@@ -504,8 +510,8 @@ export interface BuildUPRNLayerOptions {
 	/**
 	 * Injected extraction result — the fixture path, the `build-poi.ts` `rows` precedent.
 	 *
-	 * Skips download and unzip entirely. provenance still comes from `sourceDir`'s
-	 * `acquisition.json` when one is present.
+	 * Skips download and unzip entirely.
+	 * Provenance still comes from `sourceDir`'s `acquisition.json` when one is present.
 	 */
 	extracted?: ExtractOpenUPRNResult
 	onPhase?: (phase: string, detail?: string) => void
@@ -523,7 +529,8 @@ export interface BuildUPRNLayerResult {
 	 */
 	inserted: number
 	/**
-	 * Lines that failed {@link parseOpenUPRNLine} — expected to be 0. any are reported in `mismatches`.
+	 * Lines that failed {@link parseOpenUPRNLine} — expected to be 0.
+	 * Any are reported in `mismatches`.
 	 */
 	skippedMalformed: number
 	/**
@@ -544,7 +551,8 @@ export interface BuildUPRNLayerResult {
 	/**
 	 * Every violated check, in words.
 	 *
-	 * Empty on a clean build. the caller decides whether to fail on them.
+	 * Empty on a clean build.
+	 * The caller decides whether to fail on them.
 	 */
 	mismatches: string[]
 	durationMs: number
@@ -588,8 +596,9 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	const out = options.out ?? dataRootPath("uprn", "uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS
 
-	// Acquire the source. offline rebuilds recover provenance from acquisition.json, and
-	// when that is missing, the layer records the absence in words (the Code-Point discipline).
+	// Acquire the source.
+	// Offline rebuilds recover provenance from acquisition.json, and when that is missing,
+	// the layer records the absence in words (the Code-Point discipline).
 	let archiveMD5: string
 	let osVersion: string
 
@@ -659,8 +668,9 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	await createLayerCoverageTable(kdb)
 
 	// Hot positional insert — raw prepared statement, per the agents.md bulk-load carve-out.
-	// or ignore so a source-side duplicate uprn is counted (via `changes === 0`)
-	// rather than aborting a 41M-row load. the accounting check then reports any as a defect.
+	// Or ignore so a source-side duplicate uprn is counted (via `changes === 0`)
+	// rather than aborting a 41M-row load.
+	// The accounting check then reports any as a defect.
 	const insert = kdb.prepare("INSERT OR IGNORE INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
 
 	const coverage = new Map<number, number>()
@@ -730,8 +740,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	kdb.exec("COMMIT")
 	phase("ingest", `${inserted.toLocaleString()} UPRNs (${read.toLocaleString()} lines read)`)
 
-	// Validate against the available product evidence. no upstream row-count manifest exists,
-	// so the checks are internal consistency plus the truncation floor.
+	// Validate against the available product evidence.
+	// No upstream row-count manifest exists, so the checks are internal consistency plus the truncation floor.
 	const mismatches: string[] = []
 
 	if (inserted + skippedMalformed + skippedDuplicate !== read) {
@@ -759,8 +769,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	phase("coverage", `${coverage.size.toLocaleString()} res-${UPRN_COVERAGE_H3_RESOLUTION} cells`)
 
-	// OS designates the product complete for GB, so observed cells are `designated`/1.0 —
-	// a miss inside one is evidence of absence.
+	// OS designates the product complete for GB, so observed cells are `designated`/1.0.
+	// A miss inside one is evidence of absence.
 	// Unobserved cells stay absent (unknown), per the meaning-of-zero rule.
 	await writeLayerCoverage(
 		kdb,

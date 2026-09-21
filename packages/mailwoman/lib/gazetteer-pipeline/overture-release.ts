@@ -30,9 +30,9 @@ const BUCKET_URL = "https://overturemaps-us-west-2.s3.amazonaws.com"
 /**
  * What this function needs from an http client: one `fetch`.
  *
- * Narrower than {@link APIClient} on purpose — a parameter shaped like the whole
- * client makes a test double an assertion rather than an object, and the assertion
- * then survives a signature change that the double does not.
+ * Narrower than {@link APIClient} on purpose.
+ * A parameter shaped like the whole client makes a test double an assertion rather than
+ * an object, and the assertion then survives a signature change that the double does not.
  */
 export interface OvertureListingClient {
 	fetch(request: {
@@ -124,7 +124,8 @@ export interface ReleaseCheck {
  *
  * A failed listing reports `reachable: false` and `present: true` — deliberately permissive.
  * This is a pre-flight whose only job is to turn a 30-minute failure into an immediate one.
- * letting it block a build on its own network trouble would trade a slow failure for a spurious one.
+ *
+ * Letting it block a build on its own network trouble would trade a slow failure for a spurious one.
  */
 export async function checkOvertureRelease(release: string, client?: OvertureListingClient): Promise<ReleaseCheck> {
 	let available: string[]

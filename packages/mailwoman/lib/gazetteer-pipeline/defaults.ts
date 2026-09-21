@@ -25,11 +25,7 @@ export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
 	"ES",
 	"FR",
 	"GB",
-	// Added 2026-08-02 after the granularity probe. `whosonfirst-data-admin-in` carries 189,026 sub-locality nodes —
-	// more than Germany's 67,162, the richest tier shipped before this — converting at 98.6% into 186,469 (child,
-	// parent) pairs, against Overture-IN's 74,920 nodes. That is 6× the shipped GB pair index, which took eight
-	// campaign rungs to assemble. IN moves OUT of DEFAULT_OVERTURE_COUNTRIES in the same change: a country served by
-	// both would double up its admin (the #267 warning).
+	// Added 2026-08-02 after the granularity probe. `whosonfirst-data-admin-in` carries 189,026 sub-locality nodes — more than Germany's 67,162, the richest tier shipped before this — converting at 98.6% into 186,469 (child, parent) pairs, against Overture-IN's 74,920 nodes. That is 6× the shipped GB pair index, which took eight campaign rungs to assemble. IN moves OUT of DEFAULT_OVERTURE_COUNTRIES in the same change: a country served by both would double up its admin (the #267 warning).
 	"IN",
 	"IT",
 	"JP",
@@ -299,10 +295,12 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 ] as const
 
 /**
- * Pinned Overture release for the divisions theme (rows churn between monthly releases. never mix two).
+ * Pinned Overture release for the divisions theme (rows churn between monthly releases. Never mix two).
  *
- * Overture deletes old releases — the bucket held exactly two when this was last checked, so a pin
- * survives on the order of a month and then the build fails with `No files found that match the pattern`.
+ * Overture deletes old releases.
+ * The bucket held exactly two when this was last checked, so a pin survives on the order
+ * of a month and then the build fails with `No files found that match the pattern`.
+ *
  * Keep this equal to `poi/defaults.ts`'s `DEFAULT_RELEASE`: two pins drifting apart
  * is what left this one on a pruned release while POI moved, and mixing two vintages
  * inside one artifact is the thing the line above forbids.
@@ -320,7 +318,7 @@ export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
  * These are the `adminForCountries` targets for the GeoNames fold (#267): without the A-class
  * fold (pcli country + ADM1 regions + locality ancestry linking), their localities are orphans
  * and "City, Country" scoping breaks (#1023/#1026 — the canonical recipe silently omitted this
- * until 2026-07-07. the country nodes had come from coverage-expansion runs outside the recipe).
+ * until 2026-07-07. The country nodes had come from coverage-expansion runs outside the recipe).
  * Countries with WOF/Overture admin are excluded by construction — folding their
  * GeoNames admin would double up (the #267 warning).
  */
@@ -331,16 +329,17 @@ export function geonamesAdminGapCountries(): string[] {
 }
 
 /**
- * The country set a standalone fold re-derives — the same recipe `buildAdmin` bakes into
- * the admin artifact ({@link DEFAULT_GEONAMES_COUNTRIES}), because the fold rewrites
- * its whole id range and any narrower list drops the difference (#1514).
+ * The country set a standalone fold re-derives.
+ *
+ * The same recipe `buildAdmin` bakes into the admin artifact ({@link DEFAULT_GEONAMES_COUNTRIES}),
+ * because the fold rewrites its whole id range and any narrower list drops the difference (#1514).
  *
  * It used to be the 14-country bilingual EU set this fold was born for
- * (#743/#193 — FI hard-resolve 69.5 → 85.8 %), from when the fold was a separate step
- * run against an unfolded admin. #1027 moved the fold inside `buildAdmin` and widened it
- * to 161 countries. the 14-country default outlived that and became the payload of the
- * 2026-08-05 incident, re-folding 212,993 places over the front of a 774,338-place range
- * and leaving the rest of the world's names attached to Austrian, Swiss and Lithuanian villages.
+ * (#743/#193 — FI hard-resolve 69.5 → 85.8 %), from when the fold was a separate step run against
+ * an unfolded admin. #1027 moved the fold inside `buildAdmin` and widened it to 161 countries.
+ * The 14-country default outlived that and became the payload of the 2026-08-05 incident,
+ * re-folding 212,993 places over the front of a 774,338-place range and leaving the rest
+ * of the world's names attached to Austrian, Swiss and Lithuanian villages.
  */
 export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
 
@@ -378,14 +377,16 @@ export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
  * Any change here re-freezes the artifact: rebuild, run the parity check against
  * the previous database, and rotate via the .prev workflow.
  *
- * The first ten entries are order-critical. all later countries must be appended.
+ * The first ten entries are order-critical.
+ * All later countries must be appended.
+ *
  * Ids are positional in ingest order, so inserting a country shifts every following id.
  *
  * The parity check validates ids as well as counts for this reason.
  *
  * Historically this tail started as ten countries from #920.
  * GeoNames publishes 121 countries, while the gazetteer had a postcode tier for 28.
- * the appended set adds the 93 with on-disk data and no tier.
+ * The appended set adds the 93 with on-disk data and no tier.
  *
  * On rebuild this changed coverage from 10 to 103 countries and from 57,221 to 505,784 codes,
  * with no code loss and no id movement in the original ten.
@@ -407,18 +408,11 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"SE",
 	"BE",
 	"AD",
-	// AE is deliberately absent and is the largest single country GeoNames publishes here: 178,171 rows, more than
-	// RU + RO + KR combined. Every one is a `nnnnn nnnnn` pair at Dubai-area coordinates (lat 24.63–25.32, lon
-	// 54.91–56.20) — Makani building codes rather than postcodes. The United Arab Emirates has no postal code system. mail
-	// goes to PO boxes. Ingesting them as `placetype = 'postalcode'` would claim 178,171 postcodes for a country
-	// with none, and every coverage figure taken from that tier would inherit the claim.
+	// AE is deliberately absent and is the largest single country GeoNames publishes here: 178,171 rows, more than RU + RO + KR combined. Every one is a `nnnnn nnnnn` pair at Dubai-area coordinates (lat 24.63–25.32, lon 54.91–56.20) — Makani building codes rather than postcodes. The United Arab Emirates has no postal code system. Mail goes to PO boxes. Ingesting them as `placetype = 'postalcode'` would claim 178,171 postcodes for a country with none, and every coverage figure taken from that tier would inherit the claim.
 	//
-	// The lookup would have worked, which is why this would have shipped unnoticed: the #920 name law strips
-	// non-alphanumerics. Therefore, `28119 95762` keys as `2811995762` and matches a query typed the same way. Correct
-	// behaviour under a wrong placetype is the hardest kind of wrong to see.
+	// The lookup would have worked, which is why this would have shipped unnoticed: the #920 name law strips non-alphanumerics. Therefore, `28119 95762` keys as `2811995762` and matches a query typed the same way. Correct behaviour under a wrong placetype is the hardest kind of wrong to see.
 	//
-	// These belong in a building tier rather than being dropped — Makani is a rooftop-grade geocode with a
-	// coordinate per building (#2300).
+	// These belong in a building tier rather than being dropped. Makani is a rooftop-grade geocode with a coordinate per building (#2300).
 	"AI",
 	"AL",
 	"AR",
@@ -516,9 +510,10 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
  * Default parent-coverage floor for crediting a sub-locality rung.
  *
  * This is the weakest number in the design and is deliberately a parameter.
- * GB — the one country with a validated reading — sits around 33%,
- * so 5% is far below the only calibration point we have. it is set low on purpose,
- * to catch thin-but-real tiers rather than to certify them.
+ * GB — the one country with a validated reading — sits around 33%, so 5% is far
+ * below the only calibration point we have.
+ *
+ * It is set low on purpose, to catch thin-but-real tiers rather than to certify them.
  * A second calibration point should harden it.
  */
 export const DEFAULT_COVERAGE_FLOOR = 0.05

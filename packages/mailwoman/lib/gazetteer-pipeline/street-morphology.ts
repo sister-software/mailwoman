@@ -66,7 +66,7 @@ export interface BuiltStreetMorphologyArtifact {
 /**
  * Build + seal the street-morphology FST artifact.
  *
- * Returns the written path and build counts.
+ * @returns the written path and build counts.
  */
 export async function buildStreetMorphologyArtifact(
 	opts: BuildStreetMorphologyArtifactOpts = {}

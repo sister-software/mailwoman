@@ -86,8 +86,9 @@ export function resolveHierarchyRunInputs(values: { countries?: string; db?: str
  * The (locality, region) edge spec per country — ComponentTag space on the artifact side,
  * WOF placetype space on the extraction side.
  *
- * FR's `region` ComponentTag covers both WOF `region` (départements: "Ille-et-Vilaine") and WOF
- * `macroregion` (régions: "Bretagne") — either surface is a region-tagged parent in a French address.
+ * FR's `region` ComponentTag covers both WOF `region` (départements: "Ille-et-Vilaine")
+ * and WOF `macroregion` (régions: "Bretagne").
+ * Either surface is a region-tagged parent in a French address.
  */
 export const EDGE_SPEC_BY_COUNTRY: Readonly<
 	Record<string, { childWOFPlacetypes: string[]; parentWOFPlacetypes: string[] }>
@@ -120,7 +121,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ch
  */
 export interface HierarchyPairIndexHeader extends PairIndexHeaderInput {
 	/**
-	 * The hierarchy edge in ComponentTag space (child resolves to `edge.child` on a hit. parent is context).
+	 * The hierarchy edge in ComponentTag space (child resolves to `edge.child` on a hit. Parent is context).
 	 */
 	edge: { child: "locality"; parent: "region" }
 	/**
@@ -210,7 +211,8 @@ async function main(): Promise<void> {
 
 	await makeDirectories(outDir)
 
-	// read-only on the admin DB — this module must never write to it.
+	// read-only on the admin DB.
+	// This module must never write to it.
 	await using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 
 	const sourceMD5 = values["skip-source-md5"] ? "(skipped)" : await md5File(dbPath)
@@ -245,18 +247,19 @@ async function main(): Promise<void> {
 		)
 
 		// Phase 2: surfaces.
-		// Country-scoping the parent side is sound — every ancestor of a US locality is itself
-		// US. a parent outside the scope would simply have no surfaces and the edge is skipped.
+		// Country-scoping the parent side is sound.
+		// Every ancestor of a US locality is itself US.
+		// A parent outside the scope would simply have no surfaces and the edge is skipped.
 		const childSurfaces = collectSurfaces(db, wofCountry, spec.childWOFPlacetypes)
 		const parentSurfaces = collectSurfaces(db, wofCountry, spec.parentWOFPlacetypes)
 
 		// Phase 3: fold + dedupe into PIX1 entries.
 		// Tag = the child's ComponentTag — what a decode hit resolves the child span to.
-		// `parentTag` (PIX2 / schema 3) = the parent's, which this builder knows from its
-		// own edge declaration rather than from the row: `edge.parent` below is `region`,
-		// and both WOF parent placetypes this spec selects (`region`, FR's `macroregion`) project
-		// onto that one ComponentTag — a département and a région are alike region-tagged
-		// surfaces in a French address, which is exactly why the spec pairs them.
+		// `parentTag` (PIX2 / schema 3) = the parent's, which this builder knows from its own edge
+		// declaration rather than from the row: `edge.parent` below is `region`, and both WOF parent
+		// placetypes this spec selects (`region`, FR's `macroregion`) project onto that one ComponentTag.
+		// A département and a région are alike region-tagged surfaces in a French address,
+		// which is exactly why the spec pairs them.
 		const seen = new Map<string, PairIndexEntry>()
 		let surfacePairs = 0
 		let emptyChildFolds = 0

@@ -38,8 +38,10 @@ export const FORK_ORG = "mailwoman"
 export const UPSTREAM_ORG = "whosonfirst-data"
 
 /**
- * Where a repo should be pulled from, and why — the `reason` travels so a build log can say
- * which remote it read without the reader inferring it from the URL.
+ * Where a repo should be pulled from, and why.
+ *
+ * The `reason` travels so a build log can say which remote it read without the
+ * reader inferring it from the URL.
  */
 export interface RepoOrigin {
 	repo: string
@@ -50,7 +52,8 @@ export interface RepoOrigin {
 }
 
 /**
- * SSH remote for an org/repo pair — the form the existing clones already use.
+ * SSH remote for an org/repo pair.
+ * The form the existing clones already use.
  */
 export function repoURL(org: string, repo: string): string {
 	return `ssh://git@github.com/${org}/${repo}`
@@ -69,7 +72,8 @@ export type ForkState = "absent" | "clean" | "diverged"
 /**
  * What our fork looks like.
  *
- * Injected so the resolver stays pure and testable. the CLI passes a `gh`-backed probe, tests pass a map.
+ * Injected so the resolver stays pure and testable.
+ * The CLI passes a `gh`-backed probe, tests pass a map.
  *
  * A boolean cannot express this: "a fork exists" and "the fork holds a correction" are
  * different questions, and the fork org answers yes to the first for every WOF repo.
@@ -161,7 +165,8 @@ export const githubForkProbe: ForkProbe = async (org, repo) => {
 
 		return Number(stdout.trim()) > 0 ? "diverged" : "clean"
 	} catch {
-		// The fork is known to exist. only the comparison failed.
+		// The fork is known to exist.
+		// Only the comparison failed.
 		// Calling that "diverged" would prefer a possibly-stale snapshot on no evidence.
 		return "clean"
 	}

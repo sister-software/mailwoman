@@ -59,7 +59,8 @@ export interface ExclusionCoverageInput {
 	 */
 	resolution: number
 	/**
-	 * The inventory the layer being built is made of — the one whose completeness is recorded.
+	 * The inventory the layer being built is made of.
+	 * The one whose completeness is recorded.
 	 */
 	subject: readonly CaptureRow[]
 	/**
@@ -72,7 +73,8 @@ export interface ExclusionCoverageInput {
 export interface ExclusionCoverageResult {
 	cells: ExclusionCoverageCell[]
 	/**
-	 * Interior cells holding no subject row — the exclusion payload, and the count worth reading first.
+	 * Interior cells holding no subject row.
+	 * The exclusion payload, and the count worth reading first.
 	 */
 	emptyCells: number
 	/**

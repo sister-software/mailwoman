@@ -159,8 +159,9 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 		})
 	}
 
-	// 6. bbox-extents (#1015): spot countries with region rows must have at least one real extent
-	//    (dLat > 0.05°) — a degenerate label-point bbox is invisible to reverse bbox-containment.
+	// 6. bbox-extents (#1015): spot countries with region rows must have at least
+	//    one real extent (dLat > 0.05°).
+	//    A degenerate label-point bbox is invisible to reverse bbox-containment.
 	{
 		const placeholders = EXTENT_SPOT_COUNTRIES.map(() => "?").join(",")
 
@@ -210,7 +211,8 @@ export const REVERSE_PANEL_CASES: ReadonlyArray<readonly [string, number, number
 /**
  * The end-to-end reverse leg: every panel case must land in the expected country.
  *
- * Opens the DB read-only. lazy-imports the resolver (an optional peer).
+ * Opens the DB read-only.
+ * Lazy-imports the resolver (an optional peer).
  */
 export async function verifyReversePanel(adminDBPath: string): Promise<VerifyResult> {
 	const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
@@ -236,7 +238,8 @@ export async function verifyReversePanel(adminDBPath: string): Promise<VerifyRes
  * Generate a baseline from an existing DB — the deliberate-update path
  * (review the diff of `verify-baseline.ts` like code).
  *
- * Requires `country` for every country that has one. adds `region` where regions exist.
+ * Requires `country` for every country that has one.
+ * Adds `region` where regions exist.
  */
 export function generateBaseline<DB>(db: DatabaseClient<DB>): VerifyBaseline {
 	const requiredNodes: Record<string, Array<"country" | "region">> = {}

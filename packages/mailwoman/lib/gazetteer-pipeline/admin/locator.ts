@@ -40,8 +40,9 @@ interface Shape extends LocatedAdmin {
 
 /**
  * Grid cell size in degrees. 0.25° is small enough that a US state's bbox spans a few
- * hundred cells and a dense metro cell holds a handful of candidates — the tradeoff is
- * index build time against candidates per probe, and both stay negligible at admin scale.
+ * hundred cells and a dense metro cell holds a handful of candidates.
+ *
+ * The tradeoff is index build time against candidates per probe, and both stay negligible at admin scale.
  */
 const CELL_DEGREES = 0.25
 
@@ -121,7 +122,8 @@ export class AdminLocator {
 				let maxLat = Number.NEGATIVE_INFINITY
 
 				for (const polygon of polygons) {
-					// The outer ring bounds the polygon. holes are inside it by definition.
+					// The outer ring bounds the polygon.
+					// Holes are inside it by definition.
 					for (const [lon, lat] of polygon[0] ?? []) {
 						minLon = Math.min(minLon, lon!)
 						maxLon = Math.max(maxLon, lon!)

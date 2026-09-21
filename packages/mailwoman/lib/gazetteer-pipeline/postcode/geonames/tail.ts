@@ -57,9 +57,10 @@ import type { BuildFTSResult } from "#gazetteer-pipeline/fts"
 export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
- * `meta` is the artifact's own provenance record — a key/value table read at open,
- * so the licence obligation and the source fingerprints travel with the database
- * instead of in a document that can drift from it.
+ * `meta` is the artifact's own provenance record.
+ *
+ * A key/value table read at open, so the licence obligation and the source fingerprints
+ * travel with the database instead of in a document that can drift from it.
  */
 
 /**
@@ -89,8 +90,9 @@ export async function createDatabaseMetaTable<DB extends DatabaseMetaDatabase>(d
 /**
  * Upsert provenance rows into a `meta` table the caller has already created.
  *
- * One implementation for every database and postcode-locality builder — the column-list form, which
- * is byte-equivalent to the bare `values (?,?)` some builders used against the same two-column table.
+ * One implementation for every database and postcode-locality builder.
+ * The column-list form, which is byte-equivalent to the bare `values (?,?)` some
+ * builders used against the same two-column table.
  */
 export function writeMetaRows<DB>(db: DatabaseClient<DB>, rows: ReadonlyArray<readonly [string, string]>): void {
 	const insert = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
@@ -119,8 +121,9 @@ export interface GeonamesPostalSourceFact {
 	 * GeoNames computes a postal coordinate by matching the code against place names
 	 * and admin divisions, averaging neighbouring codes where the match fails,
 	 * so those rows are one value inherited N times rather than N settlements agreeing.
-	 * The centroid is still the best the source offers. the count is what tells a
-	 * consumer how much of the country's coverage is that.
+	 * The centroid is still the best the source offers.
+	 *
+	 * The count is what tells a consumer how much of the country's coverage is that.
 	 */
 	singlePointRows: number
 }
@@ -142,7 +145,7 @@ export interface BuildPostcodeGeonamesTailOptions {
 	 * Output artifact.
 	 *
 	 * Default `<data-root>/wof/postalcode-geonames-tail-<yyyy-MM-DD>.db` — a new dated path every build.
-	 * promoting it over the shipped `postalcode-geonames-tail.db` is a deliberate, separate swap.
+	 * Promoting it over the shipped `postalcode-geonames-tail.db` is a deliberate, separate swap.
 	 */
 	out?: PathBuilderLike
 	/**
@@ -164,7 +167,7 @@ export interface BuildPostcodeGeonamesTailResult {
 	byCountry: Record<string, number>
 	/**
 	 * Countries whose `<CC>.txt` was absent — reported rather than fatal (a partial database
-	 * is still a valid database. the parity check is what decides whether it may be promoted).
+	 * is still a valid database. The parity check is what decides whether it may be promoted).
 	 */
 	missing: string[]
 	sources: GeonamesPostalSourceFact[]
@@ -276,8 +279,9 @@ export async function buildPostcodeGeonamesTail(
 /**
  * Fingerprint each present source dump.
  *
- * A country whose file is missing gets no fact row rather than a zeroed one — the meaning-of-zero rule:
- * `rows: 0` would read as "measured, empty", which is a different claim from "never present".
+ * A country whose file is missing gets no fact row rather than a zeroed one.
+ * The meaning-of-zero rule: `rows: 0` would read as "measured, empty",
+ * which is a different claim from "never present".
  */
 async function collectSourceFacts(
 	countries: readonly string[],
@@ -313,20 +317,9 @@ const GEONAMES_ATTRIBUTION = "Contains data from GeoNames (geonames.org), © Geo
 /**
  * GB is not plain GeoNames provenance, and GeoNames' own labelling of it is incomplete (researched 2026-08-05).
  *
- * `download.geonames.org/export/zip/readme.txt` puts everything under CC-BY (linking the 3.0 deed while saying 4.0) and
- * adds exactly one GB rider — `UK (GB_full.csv.zip): Contains Royal Mail data Royal Mail copyright and database right
- * 2022` — naming neither Ordnance Survey, Code-Point Open, OGL, nor Crown copyright. GeoNames documents the real source
- * elsewhere: its 2010 announcement (geonames.wordpress.com/2010/04/19/uk-open-public-data) says the GB full codes came
- * from Code-Point Open, and `geonames.org/datasources` row 174 lists GB / Ordnance Survey under `OGLv3.0`. The shipped
- * file agrees — every row carries accuracy 6 and ONS GSS codes.
+ * `download.geonames.org/export/zip/readme.txt` puts everything under CC-BY (linking the 3.0 deed while saying 4.0) and adds exactly one GB rider — `UK (GB_full.csv.zip): Contains Royal Mail data Royal Mail copyright and database right 2022` — naming neither Ordnance Survey, Code-Point Open, OGL, nor Crown copyright. GeoNames documents the real source elsewhere: its 2010 announcement (geonames.wordpress.com/2010/04/19/uk-open-public-data) says the GB full codes came from Code-Point Open, and `geonames.org/datasources` row 174 lists GB / Ordnance Survey under `OGLv3.0`. The shipped file agrees — every row carries accuracy 6 and ONS GSS codes.
  *
- * So the binding licence for the GB rows is OGL v3, which CC-BY cannot relax, and the OS attribution block is required
- * of a redistributor. Two gaps stay open and are recorded rather than resolved: (1) GeoNames' GB_full also ships
- * ~48,990 `BT` (Northern Ireland) rows plus IM/GY/JE, territories Code-Point Open does not cover — the 2010 post says
- * only "we continue using the previous data", ONS's OGL grant for postcode products explicitly excludes Northern
- * Ireland data, and commercial NI use needs a separate Land & Property Services licence; (2) whether a downstream
- * database counts as "derived" for OGL purposes is a counsel question, the same posture `osm/` already sits in. This
- * builder records the facts. it does not make the redistribution decision.
+ * So the binding licence for the GB rows is OGL v3, which CC-BY cannot relax, and the OS attribution block is required of a redistributor. Two gaps stay open and are recorded rather than resolved: (1) GeoNames' GB_full also ships ~48,990 `BT` (Northern Ireland) rows plus IM/GY/JE, territories Code-Point Open does not cover. The 2010 post says only "we continue using the previous data", ONS's OGL grant for postcode products explicitly excludes Northern Ireland data, and commercial NI use needs a separate Land & Property Services licence; (2) whether a downstream database counts as "derived" for OGL purposes is a counsel question, the same posture `osm/` already sits in. This builder records the facts. It does not make the redistribution decision.
  */
 const GB_LICENSE_NOTE =
 	"GB rows come from the GeoNames GB_full dump, whose GB (England/Scotland/Wales) portion derives from Ordnance " +

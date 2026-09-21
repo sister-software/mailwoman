@@ -72,11 +72,12 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 /**
  * Digit at which a fractional remainder is exactly half.
  *
- * Above it the value rounds up. at it the tie is broken toward even, which is
- * what keeps repeated centroid rounding unbiased.
+ * Above it the value rounds up.
+ * At it the tie is broken toward even, which is what keeps repeated centroid rounding unbiased.
  */
 /**
- * Columns a US Census gazetteer row carries. short rows are truncated and skipped.
+ * Columns a US Census gazetteer row carries.
+ * Short rows are truncated and skipped.
  */
 const GAZETTEER_ROW_COLUMNS = 7
 
@@ -159,26 +160,27 @@ function loadUs(): Map<string, Centroid> {
  * A GB unit postcode in the space-stripped key form the train painter writes:
  * outward (`SW1A`) glued to inward (`2AA`).
  *
- * Code-Point Open already stores `name` in exactly this shape, so this is a validation
- * filter rather than a transform — it drops anything that would key a span the
- * inference-side shape detector could never produce.
+ * Code-Point Open already stores `name` in exactly this shape, so this is a
+ * validation filter rather than a transform.
+ * It drops anything that would key a span the inference-side shape detector could never produce.
  */
 const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
- * A GB unit's inward code is always the last three characters (`\d[A-Z]{2}`) —
- * the outward district is everything before it.
+ * A GB unit's inward code is always the last three characters (`\d[A-Z]{2}`).
+ * The outward district is everything before it.
  *
- * Structural rather than a guess. it is the same split `neural/postcode-anchor.ts::gbOutwardCode`
- * makes on the spaced form.
+ * Structural rather than a guess.
+ * It is the same split `neural/postcode-anchor.ts::gbOutwardCode` makes on the spaced form.
  */
 const GB_INWARD_LENGTH = 3
 
 /**
  * An NL PC6 key: four digits glued to two letters (`1012LG`).
  *
- * The CBS database stores the normalized form as `name` and the display form (`1012 LG`)
- * as an alt `names` row. the painter only ever sees the normalized one.
+ * The CBS database stores the normalized form as `name` and the display form
+ * (`1012 LG`) as an alt `names` row.
+ * The painter only ever sees the normalized one.
  */
 const NL_PC6_KEY = /^\d{4}[A-Z]{2}$/
 
@@ -200,14 +202,15 @@ const NL_SOURCE = "cbs-pc6"
 
 /**
  * GB unit postcodes → centroid from `postalcode-gb-codepoint.db`
- * (Ordnance Survey Code-Point Open, OGL v3.0 — 1,746,976 units, every one placed. the database's
+ * (Ordnance Survey Code-Point Open, OGL v3.0 — 1,746,976 units, every one placed. The database's
  * `meta` carries the full attribution string that must accompany any redistribution).
  *
  * This is the licence-clean GB source: the retired GeoNames GB rows are not it,
  * and Overture has no GB postcodes at all.
- * Coverage gap, measured not assumed: zero Northern Ireland (BT) codes — Code-Point
- * Open is England/Scotland/Wales only, and NI postcode geography is LPS-licensed
- * (see the database's `coverage_gap_northern_ireland_options`).
+ * Coverage gap, measured not assumed: zero Northern Ireland (BT) codes.
+ *
+ * Code-Point Open is England/Scotland/Wales only, and NI postcode geography is
+ * LPS-licensed (see the database's `coverage_gap_northern_ireland_options`).
  */
 function loadGBCodePoint(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
@@ -236,9 +239,9 @@ function loadGBCodePoint(): Map<string, Centroid> {
  *
  * Two consumers want them, and neither is the common path:
  *
- * - The inference parity fix's outward fallback — a unit that misses
- *   (a new-build code, or an NI `BT` code Code-Point Open does not carry) still
- *   anchors its full span from the district;
+ * - The inference parity fix's outward fallback.
+ *   A unit that misses (a new-build code, or an NI `BT` code Code-Point Open does not carry)
+ *   still anchors its full span from the district;
  * - A bare outward code in the text, which the train painter never looks up
  *   (`collect_matches`'s GB pattern requires the inward half) but the default alnum-run inference scan does.
  *
@@ -395,10 +398,12 @@ type LookupRow = [Record<string, number>, number, number, string | null]
 export const ANCHOR_PILOT_COUNTRIES = ["DE", "FR", "US"] as const
 
 /**
- * The v2 country set (2026-08-05) — the pilot three plus every country with a licence-clean postcode
- * source and a slot in `LOCALE_ORDER`: GB (Code-Point Open, OGL v3), NL (CBS PC6, CC-BY 4.0),
- * ES + IT (GeoNames-lineage rows in `postalcode-intl.db`, CC-BY 4.0). order is centroid priority,
- * and the pilot three lead so a 5-digit code that already had a DE/FR/US centroid keeps it verbatim.
+ * The v2 country set (2026-08-05) — the pilot three plus every country with a licence-clean
+ * postcode source and a slot in `LOCALE_ORDER`: GB (Code-Point Open, OGL v3),
+ * NL (CBS PC6, CC-BY 4.0), ES + IT (GeoNames-lineage rows in `postalcode-intl.db`, CC-BY 4.0).
+ *
+ * Order is centroid priority, and the pilot three lead so a 5-digit code that
+ * already had a DE/FR/US centroid keeps it verbatim.
  *
  * ES/IT only ever ADD posterior mass and fill placeholders.
  *
@@ -415,8 +420,7 @@ export const ANCHOR_V2_COUNTRIES = ["DE", "FR", "US", "GB", "NL", "ES", "IT"] as
 /**
  * Per-country centroid loaders.
  *
- * A country's presence here is what makes it selectable via
- * {@linkcode AnchorLookupOptions.include}.
+ * A country's presence here is what makes it selectable via {@linkcode AnchorLookupOptions.include}.
  */
 const COUNTRY_LOADERS: Record<string, () => Map<string, Centroid>> = {
 	DE: () => loadIntl("DE"),
@@ -431,9 +435,9 @@ const COUNTRY_LOADERS: Record<string, () => Map<string, Centroid>> = {
 /**
  * Flush the output string every this many entries.
  *
- * The v2 set is ~2.2M keys / ~170 MB of JSON. accumulating that as one `Array.join`
- * peaked well past a gigabyte, so the serializer streams instead. 4,096 keeps the
- * intermediate string in the low hundreds of KB.
+ * The v2 set is ~2.2M keys / ~170 MB of JSON.
+ * Accumulating that as one `Array.join` peaked well past a gigabyte, so the serializer streams
+ * instead. 4,096 keeps the intermediate string in the low hundreds of KB.
  */
 const WRITE_FLUSH_ENTRIES = 4096
 
@@ -443,14 +447,16 @@ export interface AnchorLookupOptions {
 	/**
 	 * Country codes to include, in centroid-priority order.
 	 *
-	 * Defaults to {@linkcode ANCHOR_PILOT_COUNTRIES}; pass
-	 * {@linkcode ANCHOR_V2_COUNTRIES} (or a subset) to widen the key set. Every code must have a loader.
+	 * Defaults to {@linkcode ANCHOR_PILOT_COUNTRIES}; pass {@linkcode ANCHOR_V2_COUNTRIES}
+	 * (or a subset) to widen the key set.
+	 * Every code must have a loader.
 	 */
 	include?: readonly string[]
 	/**
 	 * Emit GB outward-district keys beside the unit keys (see {@linkcode addGBOutwardKeys}).
 	 *
-	 * Defaults to `true` whenever GB is included. ignored otherwise.
+	 * Defaults to `true` whenever GB is included.
+	 * Ignored otherwise.
 	 */
 	gbOutward?: boolean
 }
@@ -471,8 +477,9 @@ export interface AnchorLookupStats {
 	 */
 	byCountry: Record<string, number>
 	/**
-	 * Keys carrying at least one `A-Z` character — the count the GB hole was
-	 * measured by (the pilot lookup's is 0).
+	 * Keys carrying at least one `A-Z` character.
+	 *
+	 * The count the GB hole was measured by (the pilot lookup's is 0).
 	 */
 	letterKeyCount: number
 	/**
@@ -553,7 +560,8 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 			letterKeyCount++
 		}
 
-		// centroid: the first source in `include` order with a non-zero centroid. never overwritten by zcta.
+		// centroid: the first source in `include` order with a non-zero centroid.
+		// Never overwritten by zcta.
 		let lat = 0
 		let lon = 0
 		let source: string | null = null
@@ -586,8 +594,9 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 
 		if (written % WRITE_FLUSH_ENTRIES === 0) {
 			// Backpressure honoured explicitly.
-			// `writeSync` blocked, which bounded memory for free. a stream buffers whatever it
-			// is handed, and at ~2.2M keys that is the cost this loop exists to avoid.
+			// `writeSync` blocked, which bounded memory for free.
+			// A stream buffers whatever it is handed, and at ~2.2M keys that is the
+			// cost this loop exists to avoid.
 			if (!output.write(buffer)) {
 				await once(output, "drain")
 			}

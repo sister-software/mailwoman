@@ -107,7 +107,8 @@ export interface SourceConflict {
  * `wofCountries` is passed in rather than read from `DEFAULT_WOF_PRIORITY_COUNTRIES`
  * because that list is a declaration and the WOF leg is presence-driven:
  * what actually gets ingested is whatever is cloned.
- * A caller checking a build should pass what is on disk. a caller checking the recipe should pass the list.
+ * A caller checking a build should pass what is on disk.
+ * A caller checking the recipe should pass the list.
  *
  * Conflating them is how a clone that nobody declared, or a declaration nobody cloned, reads as fine.
  */
@@ -140,8 +141,8 @@ export function countrySourceMap(lists: {
  *
  * A WOF conflict is reported regardless of the baseline: every entry in
  * {@link ACCEPTED_TWO_SOURCE_COUNTRIES} is Overture + GeoNames, so a country that gains
- * WOF coverage while staying on a list is the #267 case the comments warned about —
- * the clone landed and the list was never edited.
+ * WOF coverage while staying on a list is the #267 case the comments warned about.
+ * The clone landed and the list was never edited.
  */
 export function sourceConflicts(sources: readonly CountrySources[]): SourceConflict[] {
 	return sources

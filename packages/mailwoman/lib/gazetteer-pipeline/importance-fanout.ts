@@ -121,7 +121,8 @@ export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[])
 	const top = sorted[0]!
 	const runnerUp = sorted[1]!
 
-	// A zero maximum is an absent population rather than a small one. a tie is not evidence.
+	// A zero maximum is an absent population rather than a small one.
+	// A tie is not evidence.
 	// Either way, picking a winner would be picking by row order.
 	if (top.population > 0 && top.population > runnerUp.population) {
 		return { verdict: "population", keep: [top.id] }

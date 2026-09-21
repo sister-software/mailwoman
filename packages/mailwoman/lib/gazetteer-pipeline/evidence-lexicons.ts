@@ -87,9 +87,11 @@ const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
  * non-letter/digit chars (keep internal — "saint-thomas", "d'azur"), lowercase, single-space join.
  *
  * Lexicon entry keys must use this fold or they are unreachable at paint time.
- * Not the FST fold (`normalizeTokens` strips internal punctuation too) — the FST and painter
- * worlds fold differently by design. caught at Phase 2 when the locality builder briefly used
- * the FST fold ("Saint-Thomas" → "saintthomas" could never match the painter's "saint-thomas").
+ * Not the FST fold (`normalizeTokens` strips internal punctuation too) — the FST
+ * and painter worlds fold differently by design.
+ *
+ * Caught at Phase 2 when the locality builder briefly used the FST fold
+ * ("Saint-Thomas" → "saintthomas" could never match the painter's "saint-thomas").
  */
 export function painterFold(surface: string): string[] {
 	return surface
@@ -118,15 +120,16 @@ export const EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES: readonly string[] = ["sc
 /**
  * Law-1 directional closure (v5): whole surfaces from libpostal `directionals.txt` per curation language.
  *
- * Loaded separately from `loadDegenerateSurfaces` on purpose — that loader is the shipped
- * FST curation policy (degenerate-surface-exclusion v1.1, baked into FST artifact trailers);
- * evidence-lexicon curation extends it without moving the FST policy.
+ * Loaded separately from `loadDegenerateSurfaces` on purpose.
+ * That loader is the shipped FST curation policy (degenerate-surface-exclusion v1.1, baked into
+ * FST artifact trailers); evidence-lexicon curation extends it without moving the FST policy.
  */
 export async function loadDirectionalSurfaces(fold: (surface: string) => string[] = painterFold): Promise<Set<string>> {
 	// Memoized on the same grounds as loadPersonNameSurfaces: static dictionaries,
 	// process-lifetime, no invalidation key.
 	// Keyed by fold identity — the FST and painter folds must not share.
-	// The returned set is shared. every caller only iterates it.
+	// The returned set is shared.
+	// Every caller only iterates it.
 	let hit = directionalSurfacesMemo.get(fold)
 
 	if (!hit) {
@@ -165,8 +168,8 @@ async function scanDirectionalSurfaces(fold: (surface: string) => string[]): Pro
 /**
  * Law-4 region vocabulary (v5): US state names + abbreviations, painter-folded.
  *
- * Per-country scoping lives at the call site — the set only applies when the build
- * covers the country whose region vocabulary it is.
+ * Per-country scoping lives at the call site.
+ * The set only applies when the build covers the country whose region vocabulary it is.
  */
 export function loadUSRegionVocabulary(fold: (surface: string) => string[] = painterFold): Set<string> {
 	const surfaces = new Set<string>()
@@ -190,17 +193,20 @@ const DE_CITY_STATES: ReadonlySet<GermanStateCode> = new Set(["BE", "HB", "HH"])
 
 /**
  * Law-4 region vocabulary for DE (v7, the per-country revisit the law reserves at each locale fold):
- * the 13 territorial-state names — native, English exonym, and the everyday aliases
- * the codex alias map carries (NRW, Thueringen, …) — are region vocabulary,
- * never locality evidence. painting "bayern" as a locality teaches the same evidence→region
- * rotation the v3.19 US flip census measured for state names.
+ * the 13 territorial-state names — native, English exonym, and the everyday aliases the codex
+ * alias map carries (NRW, Thueringen, …) — are region vocabulary, never locality evidence.
+ *
+ * Painting "bayern" as a locality teaches the same evidence→region rotation the
+ * v3.19 US flip census measured for state names.
  *
  * The city-states (Berlin, Hamburg, Bremen) are deliberately absent from the exclusion:
- * the US analogy does not transfer — Washington-the-state and Washington-the-city are
- * different places (a rotation hazard), while Berlin-the-Land and Berlin-the-Stadt are
- * one coextensive place whose dominant reading in user text is the locality.
+ * the US analogy does not transfer.
+ * Washington-the-state and Washington-the-city are different places (a rotation hazard),
+ * while Berlin-the-Land and Berlin-the-Stadt are one coextensive place whose
+ * dominant reading in user text is the locality.
+ *
  * Withholding evidence there would gut the DE fold's value on the three largest cities.
- * the model owns the residual region/locality call (model-first).
+ * The model owns the residual region/locality call (model-first).
  */
 export function loadDERegionVocabulary(fold: (surface: string) => string[] = painterFold): Set<string> {
 	const surfaces = new Set<string>()
@@ -261,9 +267,11 @@ export async function loadPersonNameSurfaces(): Promise<Set<string>> {
 /**
  * Memo for {@link loadPersonNameSurfaces}.
  *
- * The curation inputs are static files, so this is process-lifetime — no invalidation key, unlike
- * {@link computeSurfaceCountryCounts}, whose input is a rebuildable artifact. The FR and US locality-surface passes were
- * each re-reading and re-folding the whole given-names + surnames + personal-titles set.
+ * The curation inputs are static files, so this is process-lifetime.
+ * No invalidation key, unlike {@link computeSurfaceCountryCounts}, whose input is a rebuildable artifact.
+ *
+ * The FR and US locality-surface passes were each re-reading and re-folding the
+ * whole given-names + surnames + personal-titles set.
  *
  * The returned set is shared.
  * Every caller only probes it (`clearsProminenceFloor` takes it as `ReadonlySet`);
@@ -309,9 +317,10 @@ async function scanPersonNameSurfaces(): Promise<Set<string>> {
  *
  * `ownImportance` = the surface's max importance across places named it; `parentImportance` = the
  * max parent-locality importance across neighbourhoods named it (the v4 parent-prominence proxy).
- * LAW-3 guard: person-name surfaces may only clear via own importance — a neighbourhood named
- * after a person inside a metropolis is exactly the "Rue Joseph" street-interior hazard,
- * and parent prominence must never launder it (the v3.17→v3.18 tuition).
+ * LAW-3 guard: person-name surfaces may only clear via own importance.
+ *
+ * A neighbourhood named after a person inside a metropolis is exactly the "Rue Joseph"
+ * street-interior hazard, and parent prominence must never launder it (the v3.17→v3.18 tuition).
  */
 export function clearsProminenceFloor(
 	surface: string,
@@ -416,10 +425,10 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 	}
 
 	// Neighbourhood prominence rides the parent locality (v4): neighbourhoods structurally
-	// lack population rows, and refusing them on absent data is the meaning-of-zero trap —
+	// lack population rows, and refusing them on absent data is the meaning-of-zero trap.
 	// Montmartre is prominent because Paris is.
-	// Resolved via the ancestors table. a neighbourhood surface's floor input is
-	// max(own importance, parent locality/localadmin importance).
+	// Resolved via the ancestors table.
+	// A neighbourhood surface's floor input is max(own importance, parent locality/localadmin importance).
 	const parentImportanceByID = new Map<number, number>()
 
 	if (placetypes.includes("neighbourhood")) {
@@ -514,7 +523,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 	}
 
 	// Laws 2 + 3, applied post-scan (a surface's floor input is its MAX importance across carriers.
-	// own vs parent tracked separately so law 3 can refuse parent-laundered person-names).
+	// Own vs parent tracked separately so law 3 can refuse parent-laundered person-names).
 	for (const [key, imp] of oneTokenMaxImportance) {
 		if (!clearsProminenceFloor(key, imp.own, personNames, imp.parent)) {
 			entries.delete(key)
@@ -581,9 +590,9 @@ export interface BuildStreetTypeLexiconOpts {
  * Street-type surfaces from the codex per-locale tables (fr/us/gb/de/ca).
  *
  * Canonical words (rue/avenue/street/straße) are case-insensitive regardless of length —
- * "rue" is 3 letters and must match lowercase. short abbreviation variants (r, av, ST)
- * are case-sensitive uppercase `code_entries` so they never fire on lowercase
- * prose (the anchor-lexicon short-code discipline).
+ * "rue" is 3 letters and must match lowercase.
+ * Short abbreviation variants (r, av, ST) are case-sensitive uppercase `code_entries`
+ * so they never fire on lowercase prose (the anchor-lexicon short-code discipline).
  *
  * V2 (the v3.19.0 flip-census fix, family F1): `code_entries` that are also US state/territory
  * abbreviations (CT/KY/ MT/PR/WY — Court/Key/Mount/Prairie/Way) are dropped.

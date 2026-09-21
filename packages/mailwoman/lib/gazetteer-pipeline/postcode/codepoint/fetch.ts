@@ -156,7 +156,8 @@ export interface CodePointProduct {
  * So a database built from this source has a real, permanent `BT` hole,
  * and the hole is a licensing fact rather than a data-quality one.
  *
- * Report it. do not fill it from an unlicensed source.
+ * Report it.
+ * Do not fill it from an unlicensed source.
  */
 export const CODEPOINT_COVERAGE_NOTE =
 	"Code-Point Open covers England, Scotland and Wales only (country codes E92000001/S92000003/W92000004). " +
@@ -190,9 +191,9 @@ export const CODEPOINT_COVERAGE_NOTE =
  *
  * Shipping BT rows in a published package is therefore out under any reading, commercial
  * or not — and that applies equally to the onspd re-publishers (doogal, FreeMapTools),
- * whose own terms reproduce the same exclusion. nisra's Central Postcode Directory
- * is free but no better: its MOU forbids passing copies to third parties
- * and permits only internal use and non-commercial statistics.
+ * whose own terms reproduce the same exclusion.
+ * Nisra's Central Postcode Directory is free but no better: its MOU forbids passing copies
+ * to third parties and permits only internal use and non-commercial statistics.
  *
  * There is also no NI counterpart to Code-Point Open to fall back on.
  * LPS's osni Open Data catalogue is 77 datasets, all OGL v3, and contains boundaries,
@@ -207,13 +208,16 @@ export const CODEPOINT_COVERAGE_NOTE =
  * The authoritative NI address database, ~1 M points with UPRNs.
  *
  * The osni mapshop lists full NI coverage at £9,224 excl.
- * VAT. orders over £3,000 need a formal licence application with a ≥12-month term.
+ * VAT.
+ *
+ * Orders over £3,000 need a formal licence application with a ≥12-month term.
  *
  * This is the only route to complete NI centroids in a permissively-licensed package.
  * (b) Ship NI as ODbL from OpenStreetMap `addr:postcode`.
  *
- * Coverage is partial and uneven, and ODbL's share-alike would infect the artifact —
- * the same posture `@mailwoman/osm` already sits in, awaiting counsel.
+ * Coverage is partial and uneven, and ODbL's share-alike would infect the artifact.
+ * The same posture `@mailwoman/osm` already sits in, awaiting counsel.
+ *
  * Note the OSM community explicitly forbids importing LPS/onspd centroids into OSM,
  * so this cannot be laundered.
  *
@@ -221,13 +225,16 @@ export const CODEPOINT_COVERAGE_NOTE =
  * Fall back to the OGL-clean osni Streetnames gazetteer (every NI street with Irish Grid coordinates)
  * for street-level NI resolution.
  *
- * **(b) landed 2026-08-05, at the build-local tier** — `../ni-osm-database.ts`, `mailwoman gazetteer build
- * postcode-ni-osm`. The share-alike problem is solved by not publishing: the database is built on the operator's own
- * machine and reaches the resolver only through `DEFAULT_POSTCODE_DATABASES`'s `existsSync` filter, so no npm consumer
- * ever receives an ODbL byte. Measured coverage is 4,757 of the 50,032 live NI postcodes (9.5 %), across 250 of 886
- * sectors and 80 of 80 districts, from 12,327 OSM address elements. Partial, and additive rather than risky: since
- * #1480 an unknown postcode abstains, so a `BT` code the database lacks behaves exactly as it did when there was no
- * database at all.
+ * **(b) landed 2026-08-05, at the build-local tier** —
+ * `../ni-osm-database.ts`, `mailwoman gazetteer build postcode-ni-osm`.
+ * The share-alike problem is solved by not publishing: the database is built on the
+ * operator's own machine and reaches the resolver only through `DEFAULT_POSTCODE_DATABASES`'s
+ * `existsSync` filter, so no npm consumer ever receives an ODbL byte.
+ *
+ * Measured coverage is 4,757 of the 50,032 live NI postcodes (9.5 %), across 250 of
+ * 886 sectors and 80 of 80 districts, from 12,327 OSM address elements.
+ * Partial, and additive rather than risky: since #1480 an unknown postcode abstains,
+ * so a `BT` code the database lacks behaves exactly as it did when there was no database at all.
  *
  * This database — Code-Point Open, the published one — still does (c), and must:
  * its `BT` hole is a licensing fact and filling it from an ODbL source would be
@@ -361,16 +368,18 @@ export interface DownloadCodePointResult {
  *
  * RAW `fetch` FOR the archive body is deliberate, and `agents.md` draws exactly this line:
  * the rule binds API requests — small bodies, repeated calls, rate-limited hosts —
- * and the two metadata GETs above honour it through
- * {@link createOSDownloadsClient}. The archive is a file transfer streamed to disk. Caching a 14 MB body in the response
- * cache is pointless when the dated directory is the cache, there is one request to pace,
- * and axios buffers a non-stream response type in memory.
+ * and the two metadata GETs above honour it through {@link createOSDownloadsClient}.
+ * The archive is a file transfer streamed to disk.
+ *
+ * Caching a 14 MB body in the response cache is pointless when the dated directory is the cache,
+ * there is one request to pace, and axios buffers a non-stream response type in memory.
  * Same call as `osm/sdk/fetch.ts` and `tiger/sdk/download.ts`.
  *
  * The md5 check is not ceremony.
  * A truncated or CDN-corrupted archive still unzips far enough to yield plausible CSVs,
- * and the failure would surface as a quietly short postcode count in a 1.7 M-row database —
- * the kind of defect that reads as a data change rather than a transfer error.
+ * and the failure would surface as a quietly short postcode count in a 1.7 M-row database.
+ *
+ * The kind of defect that reads as a data change rather than a transfer error.
  */
 export async function downloadCodePointOpen(options: DownloadCodePointOptions): Promise<DownloadCodePointResult> {
 	const { destDir, format = "CSV", reuseExisting = true } = options

@@ -101,7 +101,7 @@ function readPairCount(bytes: Uint8Array): number {
  * Re-derive the expected folded (child, parent) pair set for a country with a single flat SQL query —
  * surface unions (spr.name ∪ official names) as CTEs, edges joined SQL-side — then fold in JS.
  *
- * Returns folded pairs keyed length-prefixed (the pairKey convention).
+ * @returns folded pairs keyed length-prefixed (the pairKey convention).
  */
 function expectedPairSet(
 	db: DatabaseClient<WOFDatabase>,
@@ -111,8 +111,8 @@ function expectedPairSet(
 	// Explicitly numbered placeholders throughout: `?1` (country) and `?2..?N`
 	// (parent placetypes) are each reused across several clauses.
 	// Mixing `?1` with anonymous `?` silently mis-numbers the anonymous ones past the
-	// bound arguments (they bind NULL and the INs match nothing) — the first run of this
-	// verifier did exactly that and "verified" against an empty expected set.
+	// bound arguments (they bind NULL and the INs match nothing).
+	// The first run of this verifier did exactly that and "verified" against an empty expected set.
 	const parentPlaceholder = parentPlacetypes.map((_, i) => `?${i + 2}`).join(",")
 	const wofCountry = country.toUpperCase()
 

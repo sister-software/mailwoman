@@ -34,13 +34,16 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  * The complete Who's on First placetype vocabulary (35 as of 2026-08-02). {@link PLACETYPE_PROJECTION}
  * must carry a key for every entry — a test asserts it — so a placetype can never reach
  * {@link buildPlacetypeCensus} unmapped and turn a build into a throw at the worst moment.
+ *
  * Sorted to keep the diff readable when WOF grows the vocabulary.
  *
  * Pinned to `WhosOnFirstPlacetype` (`@mailwoman/core/resources/whosonfirst`)
  * with `satisfies`, the same discipline `WOF_VENUE_STRUCTURE_PLACETYPES` uses:
  * this list stops compiling if it names something outside the vocabulary.
- * The type is the authority on membership. this array exists because a type union cannot
- * be enumerated at runtime, which is what the completeness test needs.
+ * The type is the authority on membership.
+ *
+ * This array exists because a type union cannot be enumerated at runtime,
+ * which is what the completeness test needs.
  *
  * A hand-maintained copy drifted once already — it was missing `custom`.
  */
@@ -119,8 +122,9 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	// Venue sub-structure.
 	// A WOF `building`/`campus` place carries a venue name ("Empire State Building", "MIT Campus");
 	// the interior subdivisions carry a unit designator ("Concourse B", "Terminal 4", "West Wing").
-	// The admin build stocks none of these today — that is the ingest allowlist (`ADMIN_PLACETYPES`),
-	// not the source, and measuring the difference is what `mailwoman gazetteer granularity` exists for.
+	// The admin build stocks none of these today.
+	// That is the ingest allowlist (`ADMIN_PLACETYPES`), not the source, and measuring
+	// the difference is what `mailwoman gazetteer granularity` exists for.
 	building: "venue",
 	campus: "venue",
 	arcade: "unit",
@@ -152,15 +156,19 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 }
 
 /**
- * The projection every census parent is keyed by — a census node describes the children of a
- * place, and the placetypes that host address-containing children are the locality-class ones.
+ * The projection every census parent is keyed by.
+ *
+ * A census node describes the children of a place, and the placetypes that host
+ * address-containing children are the locality-class ones.
  */
 const PARENT_PLACETYPES = ["locality", "localadmin"] as const
 
 export interface PlacetypeCensusBuildResult {
 	/**
-	 * Census nodes, keyed by RAW parent surface — the caller applies the fold (`normalizeFSTToken`),
-	 * keeping one normalization owner exactly as the pair-index path does.
+	 * Census nodes, keyed by RAW parent surface.
+	 *
+	 * The caller applies the fold (`normalizeFSTToken`), keeping one normalization
+	 * owner exactly as the pair-index path does.
 	 */
 	nodes: PlacetypeCensusNode[]
 	/**
@@ -173,8 +181,9 @@ export interface PlacetypeCensusBuildResult {
 	 */
 	links: number
 	/**
-	 * Placetypes seen in the source but absent from {@link PLACETYPE_PROJECTION} — a build that
-	 * reports any of these is reading a source the projection table has not been extended for.
+	 * Placetypes seen in the source but absent from {@link PLACETYPE_PROJECTION}.
+	 *
+	 * A build that reports any of these is reading a source the projection table has not been extended for.
 	 */
 	unmappedPlacetypes: string[]
 }
@@ -183,8 +192,10 @@ export interface PlacetypeCensusBuildResult {
  * Count each parent's children through the projection table, for one country.
  *
  * Read-only against the admin DB.
- * The child and parent must share a country — a cross-border ancestor link (WOF carries some)
- * would attribute a child's evidence to the wrong locale's artifact.
+ * The child and parent must share a country.
+ *
+ * A cross-border ancestor link (WOF carries some) would attribute a child's
+ * evidence to the wrong locale's artifact.
  */
 export function buildPlacetypeCensus(adminDBPath: string, country: string): PlacetypeCensusBuildResult {
 	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })

@@ -355,9 +355,9 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	{
 		using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
-		// Accumulate per country into one shared DB (the resolver attaches a
-		// single postcode_locality database and country-filters at query time).
-		// create-if-not-exists + delete-this-country makes each --country run idempotent,
+		// Accumulate per country into one shared DB (the resolver attaches a single
+		// postcode_locality database and country-filters at query time).
+		// Create-if-not-exists + delete-this-country makes each --country run idempotent,
 		// so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
 
 		await createPostcodeLocalityTable(db, { ifNotExists: true })

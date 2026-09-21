@@ -34,11 +34,11 @@ import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { PairIndexEntry } from "@mailwoman/neural/pair"
 
 /**
- * The one child tag this arc's extractions ever emit — the city-slot candidate
- * is always a dependent_locality.
+ * The one child tag this arc's extractions ever emit.
+ * The city-slot candidate is always a dependent_locality.
  *
- * The parent tag is per-row and per-source, so it is a parameter rather than a constant (see
- * {@link PairIndexBuilder.addRow}).
+ * The parent tag is per-row and per-source, so it is a parameter rather than a
+ * constant (see {@link PairIndexBuilder.addRow}).
  */
 const PAIR_TAG = "dependent_locality" as const
 
@@ -90,8 +90,9 @@ export interface PairIndexBuildResult {
  * (matches the convention `docs/articles/evals` percentile tables use).
  *
  * `p` in `[0, 100]`.
- * Throws on an empty array — there's no percentile of nothing, and a silent `0`
- * would hide the empty-input bug from the caller.
+ * Throws on an empty array.
+ *
+ * There's no percentile of nothing, and a silent `0` would hide the empty-input bug from the caller.
  */
 export function nearestRankPercentile(sortedAscending: readonly number[], p: number): number {
 	if (!sortedAscending.length) {
@@ -107,7 +108,8 @@ export function nearestRankPercentile(sortedAscending: readonly number[], p: num
  * Incrementally folds (rawCity, rawDistrict) rows into deduplicated PIX1 entries,
  * tracking the skip count and the raw city word-length distribution.
  *
- * One instance per build. call {@link addRow} per source row, then {@link finish} once.
+ * One instance per build.
+ * Call {@link addRow} per source row, then {@link finish} once.
  */
 export class PairIndexBuilder {
 	readonly #seen = new Map<string, PairIndexEntry>()
@@ -143,7 +145,7 @@ export class PairIndexBuilder {
 		const parent = normalizeFSTToken(rawDistrict.trim())
 
 		if (!child) {
-			// Folds to nothing (e.g. a city that was pure punctuation) — nothing left to index.
+			// Folds to nothing (e.g. A city that was pure punctuation) — nothing left to index.
 			return
 		}
 
@@ -154,8 +156,8 @@ export class PairIndexBuilder {
 
 		// first write wins on (child, parent), parent tag included.
 		// The sources are merged in a fixed order (register CSV → WOF → curated jsonl),
-		// so a pair both a register and WOF assert keeps the register's reading of the parent
-		// slot — the same precedence the pre-PIX2 dedupe already gave the whole entry.
+		// so a pair both a register and WOF assert keeps the register's reading of the parent slot.
+		// The same precedence the pre-PIX2 dedupe already gave the whole entry.
 		if (!this.#seen.has(key)) {
 			this.#seen.set(key, { child, parent, tag: PAIR_TAG, parentTag })
 		}
@@ -217,18 +219,19 @@ export interface PairIndexHoldoutResult {
 }
 
 /**
- * Deterministically withhold a `fraction` of `entries` from a pair-index build — the pair-holdout
- * falsifier: "rebuild the GB index minus a random 10% of pairs (seed 42)" so the acceptance
- * bars can be re-anchored against a measured degradation curve rather than an assumed one.
+ * Deterministically withhold a `fraction` of `entries` from a pair-index build.
+ *
+ * The pair-holdout falsifier: "rebuild the GB index minus a random 10% of pairs (seed 42)" so the
+ * acceptance bars can be re-anchored against a measured degradation curve rather than an assumed one.
  *
  * Dev/eval-only — never wired into a real shipped-artifact build
  * (a shipped index always has `fraction: 0`, i.e. holds out nothing).
  *
  * Order-independent and seed-deterministic: entries are sorted by (child, parent)
- * before the seeded shuffle (mirrors
- * {@link serializePairIndex}'s own sort), so the same `(fraction, seed)` pair always withholds the same entries
- * regardless of what order the caller's `entries` array arrives in (e.g. `Map` iteration order, which
- * {@link PairIndexBuilder.finish} does not guarantee is stable across runs/engines).
+ * before the seeded shuffle (mirrors {@link serializePairIndex}'s own sort),
+ * so the same `(fraction, seed)` pair always withholds the same entries regardless
+ * of what order the caller's `entries` array arrives in (e.g. `Map` iteration order,
+ * which {@link PairIndexBuilder.finish} does not guarantee is stable across runs/engines).
  *
  * `fraction` is clamped to `[0, 1]`; `Math.round(fraction * entries.length)` entries are withheld —
  * rounds to 0 (a no-op holdout) on a fraction too small to withhold even one entry from a small input.

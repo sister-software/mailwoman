@@ -83,8 +83,9 @@ export async function buildNLPC6Database(
 
 		db.exec("BEGIN")
 
-		// `header: false` so the header row arrives as data and can be checked — the CBS export has
-		// reordered its columns before, and a silent lon/lat swap puts every Dutch postcode in Somalia.
+		// `header: false` so the header row arrives as data and can be checked.
+		// The CBS export has reordered its columns before, and a silent lon/lat swap
+		// puts every Dutch postcode in Somalia.
 		let headerSeen = false
 
 		for await (const [pc6Raw, lonS, latS] of CSVSpliterator.fromAsync(csvPath, { header: false })) {
@@ -101,7 +102,8 @@ export async function buildNLPC6Database(
 			const lon = Number(lonS)
 			const lat = Number(latS)
 
-			// A valid PC6 is 4 digits + 2 letters. the CBS file is already normalized (no space).
+			// A valid PC6 is 4 digits + 2 letters.
+			// The CBS file is already normalized (no space).
 			if (!/^\d{4}[A-Z]{2}$/.test(pc6) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
 				skipped++
 
@@ -130,7 +132,8 @@ export async function buildNLPC6Database(
 		db.exec("ANALYZE")
 	}
 
-	// Build-on-copy: the previous version moves aside. the new artifact swaps in atomically.
+	// Build-on-copy: the previous version moves aside.
+	// The new artifact swaps in atomically.
 	await swapDatabaseIntoPlace(tmpPath, outPath)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	await sealDatabase(outPath)

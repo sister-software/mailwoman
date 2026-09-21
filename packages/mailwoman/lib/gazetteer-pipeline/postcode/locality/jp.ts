@@ -60,8 +60,8 @@ import {
 /**
  * Digit at which a fractional remainder is exactly half.
  *
- * Above it the value rounds up. at it the tie is broken toward even, which is
- * what keeps repeated centroid rounding unbiased.
+ * Above it the value rounds up.
+ * At it the tie is broken toward even, which is what keeps repeated centroid rounding unbiased.
  */
 /**
  * Columns a Japan Post KEN_ALL row needs before it is usable.

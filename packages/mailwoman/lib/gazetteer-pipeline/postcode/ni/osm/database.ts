@@ -84,8 +84,9 @@ import {
 /**
  * ISO-3166-1 alpha-2 stamped on every row.
  *
- * Northern Ireland is part of the United Kingdom, so `spr.country` is `GB` —
- * the same value the Code-Point Open database writes.
+ * Northern Ireland is part of the United Kingdom, so `spr.country` is `GB`.
+ * The same value the Code-Point Open database writes.
+ *
  * The NI-vs-GB distinction lives in the postcode area itself (`BT`), not in the country column,
  * and the database routing (`pickExtractForPlacetype`) keys on country, so writing
  * anything else here would take this database out of GB postcode routing entirely.
@@ -93,7 +94,8 @@ import {
 const COUNTRY = "GB"
 
 /**
- * Live NI postcodes per onspd Feb 2025 — the denominator the coverage fraction is stated against.
+ * Live NI postcodes per onspd Feb 2025.
+ * The denominator the coverage fraction is stated against.
  *
  * Sourced in `../codepoint/fetch.ts`'s `NORTHERN_IRELAND_OPTIONS_NOTE`.
  */
@@ -194,7 +196,8 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const out = (options.out ?? dataRootPath("wof", `postalcode-ni-osm-${stamp}.db`)).toString()
 	const responsePath = join(sourceDir, "response.json")
 
-	// Acquire the source. offline operation is the normal path described by the option.
+	// Acquire the source.
+	// Offline operation is the normal path described by the option.
 	if (!options.offline) {
 		await acquireNIPostcodes({ destDir: sourceDir, now, onPhase: phase })
 	}
@@ -377,8 +380,8 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
  * 1. Every tagged element is either a point or an accounted drop.
  *    A parser that silently skips a shape fails here.
  * 2. Districts ≤ 80 and sectors ≤ 886, the national totals.
- *    Exceeding either means the validator is admitting codes that are not NI —
- *    the failure mode of loosening {@link NI_UNIT_POSTCODE} to make more rows pass.
+ *    Exceeding either means the validator is admitting codes that are not NI.
+ *    The failure mode of loosening {@link NI_UNIT_POSTCODE} to make more rows pass.
  * 3. Every record has at least one attestation, so a zero can only mean "not in OSM",
  *    never "in OSM with no evidence".
  */
@@ -461,7 +464,7 @@ async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 		["source_query_md5", input.queryMD5],
 		["source_response_md5", input.responseMD5],
 		["source_retrieved_at", input.retrievedAt],
-		// The data extract, which is the date that matters — `source_retrieved_at` only says when we asked.
+		// The data extract, which is the date that matters. `source_retrieved_at` only says when we asked.
 		["source_osm_timestamp", input.osmTimestamp],
 		["license", OSM_LICENSE],
 		["license_url", OSM_LICENSE_URL],

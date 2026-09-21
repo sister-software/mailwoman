@@ -39,8 +39,10 @@ export interface BoroughPair {
 	parent: string
 	tag: "dependent_locality"
 	/**
-	 * The parent row's own `ComponentTag` (PIX2 / schema 3) — the WOF `placetype` of the
-	 * ancestor this pair was drawn from, projected through {@link PLACETYPE_PROJECTION}.
+	 * The parent row's own `ComponentTag` (PIX2 / schema 3).
+	 *
+	 * The WOF `placetype` of the ancestor this pair was drawn from, projected
+	 * through {@link PLACETYPE_PROJECTION}.
 	 *
 	 * Per-row rather than per-source: `PAIR_PLACETYPES_BY_COUNTRY` admits `locality`,
 	 * `localadmin` and `borough` as parents on several countries, and those do not project to
@@ -55,10 +57,10 @@ export interface BoroughPair {
 /**
  * Project a WOF parent placetype onto the `ComponentTag` the parent span carries.
  *
- * Throws rather than defaulting: every placetype this module can select is in {@link PLACETYPE_PROJECTION}
- * by construction (the SQL's parent list is drawn from `PAIR_PLACETYPES_BY_COUNTRY`),
- * so a miss means someone added a placetype to that table without deciding what it projects to —
- * which is exactly the decision PIX2 exists to stop being made silently.
+ * @throws rather than defaulting: every placetype this module can select is in {@link PLACETYPE_PROJECTION}
+ *   by construction (the SQL's parent list is drawn from `PAIR_PLACETYPES_BY_COUNTRY`),
+ *   so a miss means someone added a placetype to that table without deciding what it
+ *   projects to — which is exactly the decision PIX2 exists to stop being made silently.
  */
 function parentTagFor(placetype: string): ComponentTag {
 	const tag = PLACETYPE_PROJECTION[placetype]
@@ -159,7 +161,9 @@ const LATIN_SURFACE_PATTERN = /^[\p{Script=Latin}\p{Mark}0-9 '\-.,()/]+$/u
 /**
  * Extract dependent-locality-class (child, parent) pairs for one country from a WOF admin DB.
  *
- * Read-only. dedupes (child, parent) across the locality/localadmin parent duplication.
+ * Read-only.
+ * Dedupes (child, parent) across the locality/localadmin parent duplication.
+ *
  * See {@link PAIR_PLACETYPES_BY_COUNTRY} for why the placetype sets are per-country.
  */
 export function extractBoroughPairs(adminDBPath: string, country: string): BoroughPair[] {
@@ -225,8 +229,9 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 
 			// The writer's language decides which alias is worth carrying: the country's
 			// own official languages, plus English as the lingua franca.
-			// WOF's preferred name is often neither — it stores `Rome` (eng) for a city Italians
-			// write `Roma` (ita), and `Bangalore` for one Indians write `Bengaluru`.
+			// WOF's preferred name is often neither.
+			// It stores `Rome` (eng) for a city Italians write `Roma` (ita),
+			// and `Bangalore` for one Indians write `Bengaluru`.
 			// Restricting on `eng` alone, as this did when India motivated it,
 			// misses every Italian and Spanish form.
 			//
@@ -236,8 +241,8 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 			if (language !== "eng" && !isOfficialLanguage(country, language)) continue
 
 			// latin script only.
-			// India has 22 official languages and WOF carries Devanagari, Tamil and Bengali names for
-			// its cities. this model never sees those scripts, so indexing them is pure artifact weight.
+			// India has 22 official languages and WOF carries Devanagari, Tamil and Bengali names for its cities.
+			// This model never sees those scripts, so indexing them is pure artifact weight.
 			// The check is on the alias rather than the language tag, because a language
 			// can be written in more than one script.
 			if (!LATIN_SURFACE_PATTERN.test(alias)) continue
@@ -266,8 +271,9 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 
 				if (seen.has(aliasKey) || child === alias) continue
 
-				// An alias is a second surface for the same parent row, so it carries that row's placetype
-				// and therefore the same tag — the alias query is scoped to the same parent placetype list.
+				// An alias is a second surface for the same parent row, so it carries that
+				// row's placetype and therefore the same tag.
+				// The alias query is scoped to the same parent placetype list.
 				seen.add(aliasKey)
 				pairs.push({ child, parent: alias, tag: "dependent_locality", parentTag })
 			}

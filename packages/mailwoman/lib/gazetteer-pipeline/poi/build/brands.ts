@@ -43,8 +43,8 @@ export { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/def
 /**
  * The brand table's own schema/data version — bump when the shape or matching semantics change.
  *
- * Independent of
- * {@link POIBrandSourceLayer.version}, which tracks the source `poi.db`'s own layer-manifest version.
+ * Independent of {@link POIBrandSourceLayer.version}, which tracks the source
+ * `poi.db`'s own layer-manifest version.
  */
 export const BRAND_TABLE_VERSION = "0.2.0"
 
@@ -79,9 +79,11 @@ export interface BrandNameCount {
 }
 
 /**
- * Reads the exact aggregate the design calls for: `select brand_wikidata, name, count(*) n from poi where
- * brand_wikidata is not NULL and name is not NULL group BY brand_wikidata, name`. Opens `dbPath` read-only — this
- * builder only ever reads a sealed `poi.db`, never writes one.
+ * Reads the exact aggregate the design calls for:
+ * `select brand_wikidata, name, count(*) n from poi where brand_wikidata is not NULL and name is not NULL group BY brand_wikidata, name`.
+ *
+ * Opens `dbPath` read-only.
+ * This builder only ever reads a sealed `poi.db`, never writes one.
  */
 export function readBrandNameCounts(dbPath: PathBuilderLike): BrandNameCount[] {
 	using db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
@@ -108,8 +110,7 @@ export async function readSourceLayer(dbPath: PathBuilderLike): Promise<POIBrand
 }
 
 /**
- * {@link aggregateBrands}'s pre-branded output — a plain-string `wikidata`, cast to `BrandRecord["wikidata"]` by the
- * caller.
+ * {@link aggregateBrands}'s pre-branded output — a plain-string `wikidata`, cast to `BrandRecord["wikidata"]` by the caller.
  */
 interface RawBrandAggregate {
 	wikidata: string
@@ -128,9 +129,10 @@ interface RawBrandAggregate {
  * QIDs whose total falls under `minRows` are dropped entirely.
  *
  * QIDs whose modal name covers less than `dominance` of the total
- * (default {@link DEFAULT_DOMINANCE} = 0.5) are also dropped entirely — a modal share under
- * the floor means the QID is systematically mistagged across many unrelated names rather than
- * one real chain with noisy spelling variants, so no single name/alias split is trustworthy.
+ * (default {@link DEFAULT_DOMINANCE} = 0.5) are also dropped entirely.
+ * A modal share under the floor means the QID is systematically mistagged across many unrelated names
+ * rather than one real chain with noisy spelling variants, so no single name/alias split is trustworthy.
+ *
  * The final list is sorted by `rows` descending, ties broken by QID.
  *
  * The two explicit tie-breaks (alphabetical for name/alias ties, QID for brand-total ties)

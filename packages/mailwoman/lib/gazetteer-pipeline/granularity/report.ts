@@ -22,20 +22,24 @@ import { DEFAULT_WOF_PRIORITY_COUNTRIES } from "#gazetteer-pipeline/defaults"
 import { LADDER, type CountryGranularity, bottomsOutAt } from "#gazetteer-pipeline/granularity/index"
 
 /**
- * Which build path supplied a country's rows — the single most important column in this report.
+ * Which build path supplied a country's rows.
+ * The single most important column in this report.
  *
  * A country whose rows are Overture- or GeoNames-sourced had no WOF GeoJSON repo ingested,
  * so its empty sub-locality rung says nothing whatsoever about WOF's depth there.
- * Only a dozen of the 260 admin repos WOF publishes are in the recipe. the rest of the world
- * arrives via Overture divisions (5 subtypes, none hood-level) or the GeoNames alias fold.
+ * Only a dozen of the 260 admin repos WOF publishes are in the recipe.
+ *
+ * The rest of the world arrives via Overture divisions (5 subtypes, none hood-level)
+ * or the GeoNames alias fold.
  *
  * Without this column a reader would take "233 countries bottom out at locality"
  * as a finding about WOF rather than about the recipe.
  *
  * Derived from the artifact (synthetic id ranges on the locality rung), not from the recipe constants.
  * A recipe-derived column silently goes wrong the moment a country is added to
- * `DEFAULT_WOF_PRIORITY_COUNTRIES` and the gazetteer has not been rebuilt yet —
- * it would claim `wof-repo` over rows that are still 100% Overture.
+ * `DEFAULT_WOF_PRIORITY_COUNTRIES` and the gazetteer has not been rebuilt yet.
+ *
+ * It would claim `wof-repo` over rows that are still 100% Overture.
  *
  * Instead the recipe is used only as a cross-check: a mismatch renders as `rebuild pending`,
  * which is the honest description of that window.

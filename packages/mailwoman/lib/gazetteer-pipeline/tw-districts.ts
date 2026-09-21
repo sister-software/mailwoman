@@ -166,7 +166,8 @@ export interface BuildTWDistrictsResult {
 	out: string
 	inserted: number
 	/**
-	 * Rows whose 縣市 matched a WOF region and carry an `ancestors` row. the remainder folded unscoped.
+	 * Rows whose 縣市 matched a WOF region and carry an `ancestors` row.
+	 * The remainder folded unscoped.
 	 */
 	scoped: number
 	/**

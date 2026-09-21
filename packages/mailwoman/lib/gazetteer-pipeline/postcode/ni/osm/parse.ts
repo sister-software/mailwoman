@@ -70,8 +70,8 @@ export interface NIOSMParseStats {
 	/**
 	 * The distinct malformed values, with their element counts.
 	 *
-	 * Kept verbatim (capped) because a drop counter tells you something broke and this tells
-	 * you what — `"BT36 4RU,"` is a typo, a sudden thousand `"BT"`s would be a filter bug.
+	 * Kept verbatim (capped) because a drop counter tells you something broke and this tells you what.
+	 * `"BT36 4RU,"` is a typo, a sudden thousand `"BT"`s would be a filter bug.
 	 */
 	malformedValues: Record<string, number>
 	/**
@@ -152,7 +152,7 @@ export function normalizeOSMPostcode(raw: string): string {
  * Read an element's coordinate: nodes carry `lat`/`lon` directly, ways and relations
  * carry `center` because the query asked for `out center`.
  *
- * Returns null when neither is usable.
+ * @returns null when neither is usable.
  */
 function elementPoint(element: OverpassElement): PostcodePoint | null {
 	const lat = element.lat ?? element.center?.lat

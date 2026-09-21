@@ -110,8 +110,9 @@ export function parseRepoName(name: string): { theme?: string; country?: string 
 /**
  * `head` for a checkout, or `undefined` when the directory is not one.
  *
- * A clone with no git metadata is not an error here — it is a directory someone extracted from an
- * archive, and reporting the vintage as absent is more useful than refusing to audit the root.
+ * A clone with no git metadata is not an error here.
+ * It is a directory someone extracted from an archive, and reporting the vintage
+ * as absent is more useful than refusing to audit the root.
  */
 function headOf(dir: string): string | undefined {
 	try {
@@ -183,7 +184,8 @@ export async function auditReposRoot(
 		}
 
 		// An owner directory.
-		// Its children are the nested layout. a name that is itself a repo was handled above.
+		// Its children are the nested layout.
+		// A name that is itself a repo was handled above.
 		for await (const child of Globerator.from("*", { cwd: full, withFileTypes: true, onlyFiles: false })) {
 			const childPath = join(full, child.name)
 

@@ -42,8 +42,9 @@ import { join } from "path-ts"
 /**
  * The public Overpass API endpoint.
  *
- * Volunteer-run. see https://operations.osmfoundation.org/policies/api/ —
- * the acquisition makes exactly one request against it.
+ * Volunteer-run.
+ * See https://operations.osmfoundation.org/policies/api/.
+ * The acquisition makes exactly one request against it.
  */
 export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
 
@@ -57,8 +58,9 @@ export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
  * at 95 s that `overpass-api.de` answered 200 in 8 s from the same machine minutes later.
  *
  * A mirror that cannot serve an 8-second query is an unhealthy host rather than a capacity answer.
- * Pass it via {@link AcquireNIPostcodesOptions.endpoint} if it recovers. do not
- * promote it to default on the strength of the wiki page.
+ * Pass it via {@link AcquireNIPostcodesOptions.endpoint} if it recovers.
+ *
+ * Do not promote it to default on the strength of the wiki page.
  */
 export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpreter"
 
@@ -81,14 +83,16 @@ export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpr
  *
  * Be careful how much that proves.
  * Over the same fifteen-minute window `overpass-api.de` returned 504 for the bbox form too
- * (once, at 7 s) while answering an identical curl seconds earlier, and later returned 429 —
- * the instance was flapping, so the area form is not proven too expensive, only observed to fail twice.
+ * (once, at 7 s) while answering an identical curl seconds earlier, and later returned 429.
+ *
+ * The instance was flapping, so the area form is not proven too expensive, only observed to fail twice.
  *
  * The bbox form is preferred on two independent grounds regardless: it is index-backed,
  * and re-issuing a whole-region scan against a flaking volunteer endpoint is the wrong kind of retry.
  *
- * The bbox loses nothing, because **`BT` is a Northern Ireland-exclusive postcode area** —
- * the tag filter is already the NI selector, and the bbox exists only to make it index-cheap.
+ * The bbox loses nothing, because **`BT` is a Northern Ireland-exclusive postcode area**.
+ * The tag filter is already the NI selector, and the bbox exists only to make it index-cheap.
+ *
  * The corners are a deliberate superset of NI: a tight box could clip a border townland,
  * and a `BT` postcode on the Republic side of the line is still a `BT` postcode,
  * which is exactly the fact this database attests.
@@ -145,8 +149,9 @@ export const OSM_ATTRIBUTION =
  * The enforcement is not a policy document: `DEFAULT_POSTCODE_DATABASES` is resolved through
  * `existsSync`, and nothing copies this file into a tarball, an R2 bucket, or the demo.
  *
- * An operator who wants NI coverage runs the builder and accepts ODbL on their own artifact — the same
- * opt-in-per-country posture `@mailwoman/osm` already documents, and the same tier `poi.db` sits in.
+ * An operator who wants NI coverage runs the builder and accepts ODbL on their own artifact.
+ * The same opt-in-per-country posture `@mailwoman/osm` already documents,
+ * and the same tier `poi.db` sits in.
  */
 export const NI_OSM_BUILD_LOCAL_NOTE =
 	"BUILD-LOCAL TIER — this artifact is never published. OSM data is ODbL 1.0, whose share-alike clause (§4.4) binds a " +
@@ -177,8 +182,8 @@ export interface OverpassElement {
 /**
  * The Overpass JSON envelope.
  *
- * `osm3s.timestamp_osm_base` is the data extract this response reflects —
- * a far more useful provenance stamp than the wall clock at retrieval,
+ * `osm3s.timestamp_osm_base` is the data extract this response reflects.
+ * A far more useful provenance stamp than the wall clock at retrieval,
  * and it is why the response is kept whole rather than reduced.
  */
 export interface OverpassResponse {
@@ -257,7 +262,8 @@ export interface AcquireNIPostcodesOptions {
 
 export interface AcquireNIPostcodesResult {
 	/**
-	 * Absolute path of the saved response — the only file the builder reads.
+	 * Absolute path of the saved response.
+	 * The only file the builder reads.
 	 */
 	responsePath: string
 	/**
@@ -354,8 +360,9 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 		data: new URLSearchParams({ data: NI_POSTCODE_OVERPASS_QUERY }).toString(),
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		responseType: "arraybuffer",
-		// The dated directory is the cache. a second response body in the disk cache would
-		// only be a second copy that can drift from the artifact the builder reads.
+		// The dated directory is the cache.
+		// A second response body in the disk cache would only be a second copy that
+		// can drift from the artifact the builder reads.
 		cache: false,
 	} as Parameters<APIClient["fetch"]>[0])
 
@@ -393,8 +400,9 @@ export interface NIAcquisitionSidecar {
 	attribution: string
 	tier: string
 	/**
-	 * Present and `true` only when the sidecar was rebuilt from a response file found already
-	 * on disk — so its `retrievedAt` is the file's mtime rather than an observed request time.
+	 * Present and `true` only when the sidecar was rebuilt from a response file found already on disk.
+	 *
+	 * So its `retrievedAt` is the file's mtime rather than an observed request time.
 	 *
 	 * Absent means first-hand.
 	 */
@@ -404,9 +412,10 @@ export interface NIAcquisitionSidecar {
 /**
  * Write `acquisition.json`.
  *
- * The licence block is written here rather than assembled by the caller so that every path
- * that produces a sidecar produces the same one — the ODbL attribution is an obligation,
- * and an obligation that depends on which branch wrote the file is an obligation waiting to be missed.
+ * The licence block is written here rather than assembled by the caller
+ * so that every path that produces a sidecar produces the same one.
+ * The ODbL attribution is an obligation, and an obligation that depends on
+ * which branch wrote the file is an obligation waiting to be missed.
  */
 async function writeAcquisitionSidecar(
 	path: string,

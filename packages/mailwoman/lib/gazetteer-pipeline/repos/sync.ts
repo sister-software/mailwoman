@@ -76,8 +76,8 @@ export type SyncAction = (typeof SyncAction)[keyof typeof SyncAction]
 /**
  * The observable state of one checkout.
  *
- * Every field is read, never inferred — `undefined` means the question could not be
- * answered here, which is different from a negative answer.
+ * Every field is read, never inferred.
+ * `undefined` means the question could not be answered here, which is different from a negative answer.
  */
 export interface CloneState {
 	exists: boolean
@@ -143,8 +143,10 @@ export function sameRemote(a: string | undefined, b: string | undefined): boolea
  * Pure: every input is already measured.
  *
  * Order matters and encodes the priority.
- * Refusals come first, before the re-point question — a dirty tree is a reason to touch nothing at all,
- * and reporting it as a re-point candidate would invite exactly the action that loses the work.
+ * Refusals come first, before the re-point question.
+ *
+ * A dirty tree is a reason to touch nothing at all, and reporting it as a re-point
+ * candidate would invite exactly the action that loses the work.
  */
 export function planRepoSync(origin: RepoOrigin, directory: string, state: CloneState): RepoSyncPlan {
 	const plan = (action: SyncAction, reason: string): RepoSyncPlan => ({
@@ -268,8 +270,9 @@ export async function planReposSync(options: {
 				// Depth-preserving: a shallow clone stays shallow, and an unshallow one is not truncated.
 				git(directory, ["fetch", "--quiet", "origin"])
 			} catch {
-				// An unreachable remote is a state the plan reports through `behind: undefined`, not a reason
-				// to abort the whole sweep — one dead remote must not hide the other twelve repos' verdicts.
+				// An unreachable remote is a state the plan reports through `behind: undefined`,
+				// not a reason to abort the whole sweep.
+				// One dead remote must not hide the other twelve repos' verdicts.
 			}
 		}
 

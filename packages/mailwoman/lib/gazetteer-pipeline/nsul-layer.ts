@@ -101,8 +101,7 @@ export const NSUL_LICENSE_INFO_URL = "https://www.ons.gov.uk/methodology/geograp
 export const NSUL_PORTAL_URL = "https://geoportal.statistics.gov.uk"
 
 /**
- * The four attribution statements the nsul User Guide requires of anyone redistributing an address product derived from
- * AddressBase, in the guide's wording and order. `year` is the copyright year of the data rather than the build year.
+ * The four attribution statements the nsul User Guide requires of anyone redistributing an address product derived from AddressBase, in the guide's wording and order. `year` is the copyright year of the data rather than the build year.
  */
 export function nsulAttribution(year: number): string {
 	return (
@@ -124,7 +123,8 @@ export const NSUL_HEADER =
 	"LEP21CD2,PFA23CD,IMD19IND"
 
 /**
- * Field count of {@link NSUL_HEADER} — a line splitting to anything else is malformed.
+ * Field count of {@link NSUL_HEADER}.
+ * A line splitting to anything else is malformed.
  *
  * The file is quote-free by construction (every field is a code or a number),
  * so a plain comma split is exact.
@@ -143,8 +143,8 @@ const PCDS_COLUMN = 3
  * The eleven nsul region files that together are Great Britain: the nine
  * English regions, Scotland and Wales.
  *
- * The archive is refused when its `Data/` members are not exactly this set —
- * a missing region is a truncated Britain and an extra one is a product change,
+ * The archive is refused when its `Data/` members are not exactly this set.
+ * A missing region is a truncated Britain and an extra one is a product change,
  * and neither may pass as a smaller or larger row count.
  */
 export const NSUL_REGIONS = ["EE", "EM", "LN", "NE", "NW", "SC", "SE", "SW", "WA", "WM", "YH"] as const
@@ -221,10 +221,11 @@ export type NSULLineClass =
  *
  * Crlf-terminated in the wild: the `\r` is stripped at the reader boundary
  * or the last column carries it into every value (the G-NAF lesson).
- * A line is malformed when its field count is not
- * {@link NSUL_COLUMN_COUNT}, when `uprn` is not a literal digit string within the safe-integer
- * range, or when a non-empty `pcds` does not have a unit-postcode shape — a postcode-shaped
- * column holding anything else is a defect to be counted rather than a key to be stored.
+ * A line is malformed when its field count is not {@link NSUL_COLUMN_COUNT},
+ * when `uprn` is not a literal digit string within the safe-integer range, or
+ * when a non-empty `pcds` does not have a unit-postcode shape.
+ *
+ * A postcode-shaped column holding anything else is a defect to be counted rather than a key to be stored.
  */
 export function classifyNSULLine(line: string): NSULLineClass {
 	const parts = (line.endsWith("\r") ? line.slice(0, -1) : line).split(",")
@@ -251,7 +252,7 @@ export function classifyNSULLine(line: string): NSULLineClass {
 /**
  * Strip the header line's crlf terminator and compare it to {@link NSUL_HEADER}.
  *
- * Returns the header as found when it drifts, `null` when it matches.
+ * @returns the header as found when it drifts, `null` when it matches.
  */
 export function nsulHeaderDrift(rawLine: string): string | null {
 	const header = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine
@@ -273,7 +274,7 @@ export interface NSULVintage {
 	 */
 	monthName: string
 	/**
-	 * The copyright year of the data — the year in the archive name.
+	 * The copyright year of the data. The year in the archive name.
 	 */
 	year: number
 }
@@ -306,9 +307,10 @@ export function nsulVintageLabel(vintage: NSULVintage): string {
 }
 
 /**
- * One region's CSV, as a stream of lines — the interface between "which bytes"
- * and "what they mean", so a fixture supplies files on disk and the real build
- * streams archive members through the same ingest loop.
+ * One region's CSV, as a stream of lines.
+ *
+ * The interface between "which bytes" and "what they mean", so a fixture supplies files on disk
+ * and the real build streams archive members through the same ingest loop.
  */
 export interface NSULRegionSource {
 	region: NSULRegion
@@ -395,8 +397,8 @@ export async function openNSULArchive(sourceDir: string): Promise<{
 }
 
 /**
- * The newest vintage directory under `<data-root>/nsul/` holding an nsul archive —
- * the default source when the caller names none.
+ * The newest vintage directory under `<data-root>/nsul/` holding an nsul archive.
+ * The default source when the caller names none.
  *
  * Vintage directories are `yyyy-MM`, so lexical order is chronological order.
  */
@@ -455,12 +457,13 @@ export interface BuildNSULLayerOptions {
 	/**
 	 * ISO-8601 `layer_manifest.created_at`.
 	 *
-	 * Caller-supplied per the layer interface. defaults to `now`.
+	 * Caller-supplied per the layer interface.
+	 * Defaults to `now`.
 	 */
 	createdAt?: string
 	/**
-	 * Git sha of the building tree (`buildSHA(repoRoot)` from `stamp-manifest.ts`) —
-	 * the builder never guesses it.
+	 * Git sha of the building tree (`buildSHA(repoRoot)` from `stamp-manifest.ts`).
+	 * The builder never guesses it.
 	 */
 	buildSHA: string
 	/**
@@ -472,7 +475,8 @@ export interface BuildNSULLayerOptions {
 	/**
 	 * Injected region sources plus the vintage they carry — the fixture path.
 	 *
-	 * Skips the archive entirely. provenance still comes from `sourceDir`'s sidecars when present.
+	 * Skips the archive entirely.
+	 * Provenance still comes from `sourceDir`'s sidecars when present.
 	 */
 	sources?: { vintage: NSULVintage; regions: NSULRegionSource[] }
 	onPhase?: (phase: string, detail?: string) => void
@@ -490,7 +494,8 @@ export interface BuildNSULLayerResult {
 	 */
 	inserted: number
 	/**
-	 * Lines {@link classifyNSULLine} refused — expected zero. any are reported in `mismatches`.
+	 * Lines {@link classifyNSULLine} refused — expected zero.
+	 * Any are reported in `mismatches`.
 	 */
 	skippedMalformed: number
 	/**
@@ -498,9 +503,11 @@ export interface BuildNSULLayerResult {
 	 */
 	skippedDuplicate: number
 	/**
-	 * Lines whose `pcds` is empty — the postcode is not in Code-Point Open.
+	 * Lines whose `pcds` is empty.
+	 * The postcode is not in Code-Point Open.
 	 *
-	 * Expected non-zero. recorded, never a defect.
+	 * Expected non-zero.
+	 * Recorded, never a defect.
 	 */
 	skippedNoPostcode: number
 	/**
@@ -527,7 +534,8 @@ export interface BuildNSULLayerResult {
 	/**
 	 * Every violated check, in words.
 	 *
-	 * Empty on a clean build. the caller decides whether to fail on them.
+	 * Empty on a clean build.
+	 * The caller decides whether to fail on them.
 	 */
 	mismatches: string[]
 	durationMs: number
@@ -594,7 +602,8 @@ interface IngestNSULSourcesOptions {
 /**
  * The ingest loop: stream every region, classify every line, join the coordinate, write, and account.
  *
- * Throws on header drift. the caller owns the transaction and rolls it back.
+ * @throws on header drift.
+ *   The caller owns the transaction and rolls it back.
  */
 async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSULIngestCounts> {
 	const { sources, coordinateOf, write, parentCell, checkpoint, phase } = options
@@ -824,8 +833,9 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	await createLayerCoverageTable(kdb)
 
 	// Hot positional insert — raw prepared statement, per the agents.md bulk-load carve-out.
-	// or ignore so a source-side duplicate uprn is counted (via `changes === 0`)
-	// rather than aborting a 40M-row load. the accounting check then reports any as a defect.
+	// Or ignore so a source-side duplicate uprn is counted (via `changes === 0`)
+	// rather than aborting a 40M-row load.
+	// The accounting check then reports any as a defect.
 	const insert = kdb.prepare(
 		"INSERT OR IGNORE INTO uprn_postcode (uprn, pcds, pcds_compact, lat, lon, h3_cell) VALUES (?, ?, ?, ?, ?, ?)"
 	)
@@ -879,8 +889,8 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 
 	phase("coverage", `${coverage.size.toLocaleString()} res-${NSUL_COVERAGE_H3_RESOLUTION} cells`)
 
-	// ONS designates the register complete for GB, so observed cells are `designated`/1.0 —
-	// a miss inside one is evidence of absence.
+	// ONS designates the register complete for GB, so observed cells are `designated`/1.0.
+	// A miss inside one is evidence of absence.
 	// Unobserved cells stay absent (unknown), per the meaning-of-zero rule.
 	await writeLayerCoverage(
 		kdb,

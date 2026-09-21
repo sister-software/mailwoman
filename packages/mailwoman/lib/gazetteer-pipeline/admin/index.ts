@@ -153,8 +153,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			dataDir,
 			concurrency: opts.concurrency,
 			batchCommitSize: opts.batchCommitSize,
-			// #1905: GeoNames-anchored label-point adjudication. Reads the same per-country extracts fold-geonames
-			// consumes. a data root without them degrades to the plain label preference.
+			// #1905: GeoNames-anchored label-point adjudication. Reads the same per-country extracts fold-geonames consumes. A data root without them degrades to the plain label preference.
 			anchorLookup: await createGeoNamesAnchorLookup(String(dataRootPath("geonames"))),
 			onProgress: (processed, skipped, total) =>
 				phase(
@@ -172,9 +171,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
 		phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
 
-		// #1026: the A-class admin fold for the zero-coverage locales — country + region nodes + locality
-		// ancestry.
-		// Scoped to the countries actually in this run's geonames set.
+		// #1026: the A-class admin fold for the zero-coverage locales — country + region nodes + locality ancestry. Scoped to the countries actually in this run's geonames set.
 		const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
 		phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
 		folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet })

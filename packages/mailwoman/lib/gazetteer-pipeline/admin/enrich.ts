@@ -51,8 +51,8 @@ export async function enrichAdmin<DB>(
 
 	// idempotent re-run
 
-	// One read of every region row, bucketed by country — the per-country query it replaces
-	// was re-`prepare`d inside the loop, once for each of ~200 countries.
+	// One read of every region row, bucketed by country.
+	// The per-country query it replaces was re-`prepare`d inside the loop, once for each of ~200 countries.
 	const regionsByCountry = new Map<string, Array<{ id: number; name: string }>>()
 
 	for (const row of db.prepare("SELECT id, name, country FROM spr WHERE placetype='region'").all() as Array<{

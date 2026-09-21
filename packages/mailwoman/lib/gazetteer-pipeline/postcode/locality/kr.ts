@@ -158,7 +158,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number }> =>
 		grid.nearby(lat, lon, MATCH_RADIUS_KM).map(({ d, entry }) => ({ d, pid: entry.pid }))
 
-	// GeoNames postal KR: group by postcode (first row wins. multi-row postcodes cluster tightly).
+	// GeoNames postal KR: group by postcode (first row wins. Multi-row postcodes cluster tightly).
 	const postal = new Map<string, [string, string, number, number]>()
 
 	// Streamed — `args.geonames` is a caller-supplied national dump.

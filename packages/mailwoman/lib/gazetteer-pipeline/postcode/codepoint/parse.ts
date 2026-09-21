@@ -70,8 +70,8 @@ export interface CodePointRecord {
 	/**
 	 * The postcode in OS's own spacing — outward code, one space, inward code (`SW1A 1AA`).
 	 *
-	 * This is the display form. the normalized lookup form is derived by the
-	 * database builder via the #920 name law.
+	 * This is the display form.
+	 * The normalized lookup form is derived by the database builder via the #920 name law.
 	 */
 	postcode: string
 	/**
@@ -161,8 +161,8 @@ export function postcodeArea(postcode: string): string {
  * and a comma inside quotes is data rather than a separator.
  *
  * Retained as a compatibility helper for callers parsing one resident record.
- * Streaming callers should use
- * {@linkcode readCodePointCSV}, which preserves quoted newlines across read boundaries.
+ * Streaming callers should use {@linkcode readCodePointCSV}, which preserves
+ * quoted newlines across read boundaries.
  *
  * @deprecated Use `CSVSpliterator` directly.
  */
@@ -177,8 +177,8 @@ export function splitCSVLine(line: string): string[] {
  * inserts as it reads rather than materializing an array it would only iterate once.
  */
 export async function* readCodePointCSV(csvPath: string, stats: CodePointParseStats): AsyncGenerator<CodePointRecord> {
-	// These files have no header row. the column names ship separately
-	// in `Doc/Code-Point_Open_Column_Headers.csv`.
+	// These files have no header row.
+	// The column names ship separately in `Doc/Code-Point_Open_Column_Headers.csv`.
 	for await (const row of CSVSpliterator.fromAsync<string[]>(csvPath, {
 		header: false,
 	})) {
@@ -230,8 +230,10 @@ export async function* readCodePointCSV(csvPath: string, stats: CodePointParseSt
 /**
  * Normalize Code-Point's postcode spacing to the single-space display form.
  *
- * The product is specified as a fixed 7-character field — the outward code left-justified, the inward
- * code right-justified, so a short postcode like `B1 1AA` is padded to `B1 1AA` with two spaces.
+ * The product is specified as a fixed 7-character field.
+ * The outward code left-justified, the inward code right-justified, so a short
+ * postcode like `B1 1AA` is padded to `B1 1AA` with two spaces.
+ *
  * The 2026-05 CSVs happen to ship the single-spaced form already, but the specification
  * is what a future extract will follow, and a double space would otherwise sail
  * through as a distinct postcode from its single-spaced twin.

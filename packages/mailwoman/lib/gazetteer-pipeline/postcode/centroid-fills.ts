@@ -39,7 +39,8 @@ export interface CentroidFillOptions {
 	 * The combined `allCountries-postal.txt`, consulted when {@link geonamesDir}
 	 * has no `<CC>.txt` for a country.
 	 *
-	 * Default `<data-root>/geonames/allCountries-postal.txt` — the only place the US dump exists.
+	 * Default `<data-root>/geonames/allCountries-postal.txt`.
+	 * The only place the US dump exists.
 	 */
 	geonamesCombined?: PathBuilderLike
 	/**
@@ -77,7 +78,8 @@ export interface CentroidFillResult {
  * from the GeoNames postal file for that country.
  *
  * A postcode on several GeoNames rows is averaged.
- * Matched by the postcode string only — the WOF id is untouched, so the eval keys stay WOF's.
+ * Matched by the postcode string only.
+ * The WOF id is untouched, so the eval keys stay WOF's.
  */
 /**
  * Rows per multi-row insert.
@@ -105,7 +107,8 @@ const GEONAMES_COUNTRY_ALIASES: Readonly<Record<string, readonly string[]>> = {
  * One postcode's accumulated GeoNames evidence: the mean of its centroids,
  * and every distinct place name it appears under.
  *
- * A postcode legitimately carries several names — those are its delivery-city aliases, which is the point.
+ * A postcode legitimately carries several names.
+ * Those are its delivery-city aliases, which is the point.
  */
 interface GeonamesPostcode {
 	lat: number
@@ -146,8 +149,9 @@ async function readGeonamesPostal(
 
 	// Streamed: `source` is a per-country dump of ~1 MB or the 140 MB combined file,
 	// and only the caller knows which.
-	// `header: false` is required — the spliterator consumes row 1 as a header even in array mode,
-	// and GeoNames postal is headerless, so the first postcode would vanish without it.
+	// `header: false` is required.
+	// The spliterator consumes row 1 as a header even in array mode, and GeoNames postal
+	// is headerless, so the first postcode would vanish without it.
 	//
 	// Columns: country, postcode, place, admin1..3 (name + code pairs), latitude, longitude, accuracy.
 	for await (const cells of readUnquotedTSV(source)) {
@@ -269,7 +273,8 @@ async function geonamesFill(
 ): Promise<number> {
 	// The GeoNames update matches on (country, name); the build only indexes placetype/country/parent,
 	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows).
-	// `kdb` wraps `db` for the DDL. the caller owns `db`'s lifecycle, so we don't destroy it here.
+	// `kdb` wraps `db` for the DDL.
+	// The caller owns `db`'s lifecycle, so we don't destroy it here.
 	const kdb = db
 	await kdb.schema.createIndex("spr_by_country_name").ifNotExists().on("spr").columns(["country", "name"]).execute()
 
@@ -407,8 +412,8 @@ export async function fillPostcodeCentroids(
 	// Pass 2: GeoNames postal — runs first so the postcode's own centroid wins over the coarser parent-borrow.
 	if (opts.geonamesDir && (await pathExists(opts.geonamesDir))) {
 		// Where the US lives.
-		// The per-country directory is populated for locales fetched one at a time
-		// and has no US.txt. the combined dump does.
+		// The per-country directory is populated for locales fetched one at a time and has no US.txt.
+		// The combined dump does.
 		// Resolved through the data-root builder rather than by walking up out of `geonamesDir`,
 		// which only lands correctly when that argument is the default.
 		const combinedPath = opts.geonamesCombined ?? dataRootPath("geonames", "allCountries-postal.txt")

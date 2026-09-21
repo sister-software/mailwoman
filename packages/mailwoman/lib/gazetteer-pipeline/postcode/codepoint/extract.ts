@@ -62,8 +62,8 @@ export interface CodePointMetadata {
 	/**
 	 * `2026.2.0` — the internal dataset version.
 	 *
-	 * Distinct from the Downloads API's `2026-05` release label. both are recorded in
-	 * the database's provenance because they move independently.
+	 * Distinct from the Downloads API's `2026-05` release label.
+	 * Both are recorded in the database's provenance because they move independently.
 	 */
 	datasetVersion: string
 	/**
@@ -79,7 +79,8 @@ export interface CodePointMetadata {
 	 */
 	rowsByArea: Record<string, number>
 	/**
-	 * Sum of {@link rowsByArea} — the total row count the archive claims to contain.
+	 * Sum of {@link rowsByArea}.
+	 * The total row count the archive claims to contain.
 	 */
 	totalRows: number
 }
@@ -90,8 +91,10 @@ export interface CodePointMetadata {
  * The format is positional and undocumented, so this is defensive: the four header
  * fields are located by their `KEY:` label rather than by line number, and the count
  * table is every remaining line that looks like `<area> <integer>`.
- * A line that does not is skipped rather than fatal — OS has added header fields before
- * (the `RM update date` row is newer than the product), and a new one must not break the build.
+ * A line that does not is skipped rather than fatal.
+ *
+ * OS has added header fields before (the `RM update date` row is newer than the product),
+ * and a new one must not break the build.
  */
 export function parseCodePointMetadata(text: string): CodePointMetadata {
 	const field = (label: string): string => {
@@ -151,11 +154,7 @@ export interface ExtractCodePointResult {
 	/**
 	 * `Doc/licence.txt` verbatim, so the database's provenance quotes OS's own words rather than ours.
 	 *
-	 * Decoded as **Latin-1**, and that is required rather than fussy. The archive declares no encoding, and the file's
-	 * only non-ascii byte is `0xA9` — Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every
-	 * copyright symbol into U+fffd, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the
-	 * database's `meta`. Mojibake in a decorative string is cosmetic. mojibake in the attribution text a redistributor is
-	 * legally required to carry is not.
+	 * Decoded as **Latin-1**, and that is required rather than fussy. The archive declares no encoding, and the file's only non-ascii byte is `0xA9`. Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every copyright symbol into U+fffd, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the database's `meta`. Mojibake in a decorative string is cosmetic. Mojibake in the attribution text a redistributor is legally required to carry is not.
 	 */
 	licenseText: string
 	totalBytes: number

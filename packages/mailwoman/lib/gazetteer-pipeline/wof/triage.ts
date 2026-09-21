@@ -90,8 +90,8 @@ export type CurrencyClass = (typeof CurrencyClass)[keyof typeof CurrencyClass]
  * - `covered_exact` — a live record of the same folded name within {@link COVERAGE_RADIUS_KM}.
  * - `covered_containment` — a live neighbour whose name this one contains:
  *   `Town of Gilbert` over live `Gilbert`, `Arrondissement de Lyon` over live `Lyon`.
- *   This verdict is what keeps the legal-form class out of the hole count —
- *   a same-name-string test alone called 21,010 US rows holes, and the samples were
+ *   This verdict is what keeps the legal-form class out of the hole count.
+ *   A same-name-string test alone called 21,010 US rows holes, and the samples were
  *   `Commonwealth of Pennsylvania` and `Town of Cary`.
  *   Directional: `Telford` inside live `Telford and Wrekin` is not a cover,
  *   because no query for Telford resolves through it.
@@ -151,8 +151,9 @@ export interface TriageRow {
 	currencyClass: CurrencyClass
 	coverage: CoverageVerdict
 	/**
-	 * The live record that covers this place, when one does — so a reviewer can see
-	 * which record made the call, and at what band.
+	 * The live record that covers this place, when one does.
+	 *
+	 * So a reviewer can see which record made the call, and at what band.
 	 */
 	coveredBy?: CoveredBy
 	attestation: TriageAttestation
@@ -215,8 +216,10 @@ interface LiveRecord {
 /**
  * The shared fold for this pass: diacritic-stripped, lower-cased, whitespace-collapsed.
  *
- * Deliberately not `normalizeLocalityForKey` — that is the resolver's key discipline,
- * and importing it here would tie a reporting pass to a runtime interface it must be free to outlive.
+ * Deliberately not `normalizeLocalityForKey`.
+ * That is the resolver's key discipline, and importing it here would tie a reporting
+ * pass to a runtime interface it must be free to outlive.
+ *
  * And deliberately not `@mailwoman/normalize`'s `stripCombiningMarks` either
  * (NFD, no case/space fold): this fold decomposes under nfkd, so compatibility forms
  * fold too, and the triage artifact was built under it.
@@ -233,8 +236,8 @@ function fold(value: string): string {
 /**
  * Does a live neighbour cover this place?
  *
- * Exact name first, then containment in either direction — see
- * {@link CoverageVerdict} for why containment is the required half.
+ * Exact name first, then containment in either direction — see {@link CoverageVerdict}
+ * for why containment is the required half.
  */
 function judgeCoverage(
 	dead: { key: string; words: Set<string>; lat: number; lon: number; placetype: string },
@@ -249,9 +252,9 @@ function judgeCoverage(
 		if (distanceKm > COVERAGE_RADIUS_KM) continue
 
 		if (live.key === dead.key) {
-			// Same band is a true cover. another band answers the query at a coarser grain
-			// and is reported as such — but only after the whole neighbourhood is searched,
-			// since an in-band cover may follow.
+			// Same band is a true cover.
+			// Another band answers the query at a coarser grain and is reported as such — but only
+			// after the whole neighbourhood is searched, since an in-band cover may follow.
 			if (live.placetype === dead.placetype) {
 				return {
 					verdict: CoverageVerdict.CoveredExact,
@@ -269,8 +272,8 @@ function judgeCoverage(
 		// directional, and the direction is the whole point: the dead name must contain
 		// a live one, because then the place is reachable by the shorter name people
 		// type (`Town of Gilbert` over live `Gilbert`).
-		// The reverse is not a cover — `Telford` sits inside live `Telford and Wrekin`,
-		// and nothing answers a query for Telford.
+		// The reverse is not a cover.
+		// `Telford` sits inside live `Telford and Wrekin`, and nothing answers a query for Telford.
 		// An empty live key would `includes()`-match everything, so it never participates.
 		const contains =
 			live.key.length > 0 &&
@@ -310,7 +313,7 @@ function judgeCoverage(
 
 /**
  * Folded name → P-class GeoNames rows for one country, restricted to the names actually
- * being judged (the dump is streamed. only the keys under review are held).
+ * being judged (the dump is streamed. Only the keys under review are held).
  */
 async function loadAttestors(
 	dumpPath: string,

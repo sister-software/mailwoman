@@ -52,7 +52,7 @@ export interface ReferenceInventory {
 /**
  * Every row of `category` inside `bbox`.
  *
- * Throws when the artifact holds no such category.
+ * @throws when the artifact holds no such category.
  */
 export async function readReferenceInventory(query: ReferenceInventoryQuery): Promise<ReferenceInventory> {
 	using db = new DatabaseClient<POIDatabase>(query.databasePath, { readOnly: true })

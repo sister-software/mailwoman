@@ -58,7 +58,8 @@ export interface MatchProtocol {
 	 */
 	near: readonly [number, number]
 	/**
-	 * `[metres, minimum name similarity]` — the far band, tighter on names.
+	 * `[metres, minimum name similarity]`.
+	 * The far band, tighter on names.
 	 */
 	far: readonly [number, number]
 	/**
@@ -85,9 +86,9 @@ export const MATCH_PROTOCOL_GRID: readonly MatchProtocol[] = [
 /**
  * `@mailwoman/codex`'s match-key fold, widened to the nullable name a POI row carries.
  *
- * The fold itself is not re-implemented here: it is the same lossy ascii key the codex tables
- * are probed by, and a private copy would drift from it silently — `Pharmacie de l'Église`
- * and `pharmacie DE L eglise` have to reach the comparator as one string.
+ * The fold itself is not re-implemented here: it is the same lossy ascii key the codex
+ * tables are probed by, and a private copy would drift from it silently.
+ * `Pharmacie de l'Église` and `pharmacie DE L eglise` have to reach the comparator as one string.
  */
 function foldPOIName(name: string | null): string {
 	return name ? foldName(name) : ""
@@ -110,8 +111,8 @@ function widestBand(protocol: MatchProtocol): number {
 /**
  * Whether `protocol` accepts this pair, and the name similarity it was judged on.
  *
- * `similarity` is 0 both when a row is unnamed and when the pair is beyond {@link widestBand} —
- * no protocol can accept a pair at that distance, so the comparator is skipped
+ * `similarity` is 0 both when a row is unnamed and when the pair is beyond {@link widestBand}.
+ * No protocol can accept a pair at that distance, so the comparator is skipped
  * rather than run over every one of the O(n1·n2) candidates.
  * Read it only alongside `accepted`.
  */
@@ -154,8 +155,9 @@ export interface CapturePair {
  *
  * The candidate scan is quadratic in the two inputs.
  * That is deliberate at pilot scale (a few thousand rows a side, a few seconds)
- * and is the wrong shape for a region an order of magnitude larger. the spatial pre-bucket
- * that fixes it belongs with the breadth work rather than ahead of the basis review.
+ * and is the wrong shape for a region an order of magnitude larger.
+ *
+ * The spatial pre-bucket that fixes it belongs with the breadth work rather than ahead of the basis review.
  */
 export function matchInventories(
 	first: readonly CaptureRow[],
@@ -289,7 +291,8 @@ export function completenessAcrossProtocols(
 			matched,
 			estimate,
 			completeness: second.length / estimate.population,
-			// A degenerate interval (upper <= 0) can only arise from an empty inventory. read it as no evidence.
+			// A degenerate interval (upper <= 0) can only arise from an empty inventory.
+			// Read it as no evidence.
 			completenessLowerBound: estimate.upper > 0 ? Math.min(1, second.length / estimate.upper) : 0,
 		}
 	})

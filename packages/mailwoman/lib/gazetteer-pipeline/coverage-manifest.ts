@@ -28,8 +28,9 @@
  */
 
 import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resolver"
-// resolver-wof-sqlite is an optional peer of mailwoman (the geocode.tsx convention) — runtime
-// imports are dynamic inside the functions. type-only imports are erased and safe at module level.
+// resolver-wof-sqlite is an optional peer of mailwoman (the geocode.tsx convention) —
+// runtime imports are dynamic inside the functions.
+// Type-only imports are erased and safe at module level.
 import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite/coverage-manifest-schema"
 import { COUNTRY_BBOX } from "@mailwoman/resolver/plausibility"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -48,12 +49,13 @@ const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
  * The reviewed per-country hard-filter coverage record — every promote-eval verdict +
  * measurement that grew (or deliberately kept a country off) the hard-country safelist.
  *
- * This is the structured form of the receipts that lived in the `HARD_PLACE_COUNTRY_SAFELIST`
- * code comment. the derived safelist (`hardFilterSafe === true`) is asserted byte-identical
- * to that constant in `coverage-manifest.test.ts`, so the two cannot drift silently.
+ * This is the structured form of the receipts that lived in the `HARD_PLACE_COUNTRY_SAFELIST` code comment.
+ * The derived safelist (`hardFilterSafe === true`) is asserted byte-identical to that
+ * constant in `coverage-manifest.test.ts`, so the two cannot drift silently.
  *
- * Grow this at promotes (with the panel receipt in `source`); the fact reaches production at the next
- * gazetteer rebuild — the constant in core is only the fallback for artifacts predating the manifest.
+ * Grow this at promotes (with the panel receipt in `source`); the fact reaches
+ * production at the next gazetteer rebuild.
+ * The constant in core is only the fallback for artifacts predating the manifest.
  */
 export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	{ country: "US", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
@@ -62,16 +64,10 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	{ country: "ES", hardFilterSafe: true, hardResolveRate: 0.998, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "NL", hardFilterSafe: true, hardResolveRate: 0.973, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "IT", hardFilterSafe: true, hardResolveRate: 0.968, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	// Measured and failed the check — present rows on purpose (meaning-of-zero: a failed measurement is a
-	// first-class negative result, distinguishable from "never measured"). They stay on the soft prior
-	// until their gazetteer coverage is filled (#193).
+	// Measured and failed the check — present rows on purpose (meaning-of-zero: a failed measurement is a first-class negative result, distinguishable from "never measured"). They stay on the soft prior until their gazetteer coverage is filled (#193).
 	{ country: "FI", hardFilterSafe: false, hardResolveRate: 0.695, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "PL", hardFilterSafe: false, hardResolveRate: 0.778, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	// #928 promote (2026-07-06): the postcodeCountryPrior format signal routes GB/CA confidently (the
-	// language placer conflated both with US), and the OSM-panel checks passed with the hard filter on.
-	// Rates here are the panels' resolve rates (1 − unresolved/n): GB 293/300 (271 ok, 7 unresolved),
-	// CA 269/300 (200 ok, 31 unresolved) — CA cleared on the format-prior rationale despite the sub-95%
-	// panel number, which is exactly why `hardFilterSafe` is a stored verdict rather than a rate threshold.
+	// #928 promote (2026-07-06): the postcodeCountryPrior format signal routes GB/CA confidently (the language placer conflated both with US), and the OSM-panel checks passed with the hard filter on. Rates here are the panels' resolve rates (1 − unresolved/n): GB 293/300 (271 ok, 7 unresolved), CA 269/300 (200 ok, 31 unresolved). CA cleared on the format-prior rationale despite the sub-95% panel number, which is exactly why `hardFilterSafe` is a stored verdict rather than a rate threshold.
 	{
 		country: "GB",
 		hardFilterSafe: true,
@@ -88,9 +84,7 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 		measuredAt: "2026-07-06",
 		source: OSM_PANEL_SOURCE,
 	},
-	// AU added with the #244 AU placer class: 150k-row G-NAF training → AU test-acc 100%, and the hard
-	// filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20). No single-rate number
-	// in the receipt → no `hardResolveRate` (never invent a magnitude).
+	// AU added with the #244 AU placer class: 150k-row G-NAF training → AU test-acc 100%, and the hard filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20). No single-rate number in the receipt → no `hardResolveRate` (never invent a magnitude).
 	{
 		country: "AU",
 		hardFilterSafe: true,
@@ -145,8 +139,8 @@ export interface EmitCoverageManifestOptions {
 /**
  * Bake the coverage manifest into a candidate DB under construction.
  *
- * Called by `buildCandidate` between the candidate build and the seal. standalone use
- * is fine for tests/fixtures (never against a sealed artifact).
+ * Called by `buildCandidate` between the candidate build and the seal.
+ * Standalone use is fine for tests/fixtures (never against a sealed artifact).
  */
 export async function emitCoverageManifest(opts: EmitCoverageManifestOptions): Promise<void> {
 	const { writeGazetteerCoverageManifest } = await import("@mailwoman/resolver-wof-sqlite")

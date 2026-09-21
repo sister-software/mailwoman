@@ -35,13 +35,17 @@ const BBOX_2D_LENGTH = 4
  *
  * `macrohood`/`microhood` are the nesting-depth siblings of `neighbourhood` and map to the same
  * `dependent_locality` ComponentTag (`docs/engineering/reference/placetype-evidence.mdx`).
- * WOF stocks them in quantity — a 20,000-file sample of `whosonfirst-data-admin-us`
- * holds 561 microhood and 99 macrohood against 1,532 neighbourhood.
+ * WOF stocks them in quantity.
  *
- * They are ingested without being reachable by name. No `PLACETYPE_FILTER_GROUPS` entry lists either, and placetypes
- * absent from that table pass through unfiltered, so a `locality` query expands to exactly `[locality, borough,
- * localadmin]`. Those rows answer only an unfiltered query, which ranks population-first and sorts a hood carrying no
- * population last.
+ * A 20,000-file sample of `whosonfirst-data-admin-us` holds 561 microhood
+ * and 99 macrohood against 1,532 neighbourhood.
+ *
+ * They are ingested without being reachable by name.
+ * No `PLACETYPE_FILTER_GROUPS` entry lists either, and placetypes absent from that table pass
+ * through unfiltered, so a `locality` query expands to exactly `[locality, borough, localadmin]`.
+ *
+ * Those rows answer only an unfiltered query, which ranks population-first
+ * and sorts a hood carrying no population last.
  *
  * `campus` is deliberately not here despite being commoner than macrohood in the same sample (1,368).
  * It is a venue tier — universities, hospitals, airports — not an admin one,
@@ -115,7 +119,7 @@ async function parseFeature(
 	// postcode-locality builder applies.
 	// The math centroid is wrong exactly where it matters most: a multipolygon
 	// spanning overseas territories pulls it off the mainland entirely
-	// (France's geom: point is in Spain. lbl: is metropolitan France).
+	// (France's geom: point is in Spain. Lbl: is metropolitan France).
 	// Both coordinates are taken from the same source or neither: a lbl:latitude paired
 	// with a geom:longitude would be a point on neither centroid.
 	//
@@ -133,7 +137,8 @@ async function parseFeature(
 	// Settlement records only: a GeoNames locality anchor marks the urban seat, but its records for
 	// regions/counties are centroids, so consulting them there re-imports the very defect class this
 	// exists to fix (measured: the anchor moved the Texas region 172 km off its label placement).
-	// The census the rule is sized against is locality-scoped. so is the check.
+	// The census the rule is sized against is locality-scoped.
+	// So is the check.
 	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
 		const gnID = props["wof:concordances"]?.["gn:id"]
 
@@ -174,9 +179,7 @@ async function parseFeature(
 		if (!match || !value) continue
 		const lang = match[1]!
 		const privateuse = match[2]!
-		// #936: only preferred forms in an official language are official names — x_variant rows
-		// tagged with an official language are abbreviations/codes ("MSP", "Frisco"),
-		// and marking them official scored 13× the collision count in the risk probe.
+		// #936: only preferred forms in an official language are official names — x_variant rows tagged with an official language are abbreviations/codes ("MSP", "Frisco"), and marking them official scored 13× the collision count in the risk probe.
 		const official = privateuse === "preferred" && isOfficialLanguage(country, lang) ? 1 : 0
 		const vals = Array.isArray(value) ? value : [value]
 
@@ -241,6 +244,7 @@ export interface IngestWOFOptions {
 	onProgress?: (processed: number, skipped: number, total: number) => void
 	/**
 	 * GeoNames anchor lookup for the label-point adjudication (#1905) — see `label-point-adjudicator.ts`.
+	 *
 	 * Absent = the plain label preference, byte-identical to a build before the adjudicator existed.
 	 */
 	anchorLookup?: GeoNamesAnchorLookup
@@ -254,8 +258,8 @@ export interface IngestWOFResult {
 	 * Records whose stored point is the geometric centroid because the GeoNames anchor
 	 * overrode the label preference (`choice === "geom-by-anchor"`).
 	 *
-	 * Zero with no anchor lookup configured. a build that expected the adjudicator
-	 * to run reads this instead of assuming.
+	 * Zero with no anchor lookup configured.
+	 * A build that expected the adjudicator to run reads this instead of assuming.
 	 */
 	labelPointOverrides: number
 }

@@ -68,8 +68,10 @@ export interface CountryExpression {
  * a row with a NULL/empty `addresses` list has `addresses[1]` evaluate to NULL,
  * so `addresses[1].country = '<cc>'` is NULL (never true) and the row is dropped from every
  * per-country subset — rows with no address struct are simply excluded from country-filtered ingests.
- * Acceptable for v1. the excluded-row count is visible as the delta between a per-country subset's
- * row count and an unfiltered `count(*)` over the same Parquet, if this ever needs auditing.
+ * Acceptable for v1.
+ *
+ * The excluded-row count is visible as the delta between a per-country subset's row count
+ * and an unfiltered `count(*)` over the same Parquet, if this ever needs auditing.
  */
 export function chooseCountryExpression(describeRows: readonly DescribeColumn[]): CountryExpression {
 	if (describeRows.some((r) => r.column_name === "country")) {
@@ -164,8 +166,9 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 		`category column: ${categoryColumn}; brand: ${hasBrand ? "present" : "absent"}; country: ${countryExpression.filterExpr}`
 	)
 
-	// brand.wikidata only: the QID is the join key. the row's own name carries the display
-	// form. brand.names.primary is deliberately not extracted (review 2026-07-18).
+	// brand.wikidata only: the QID is the join key.
+	// The row's own name carries the display form.
+	// Brand.names.primary is deliberately not extracted (review 2026-07-18).
 	const brandExprs = hasBrand ? "brand.wikidata AS brand_wikidata" : "CAST(NULL AS VARCHAR) AS brand_wikidata"
 
 	const countryParquet: Record<string, string> = {}

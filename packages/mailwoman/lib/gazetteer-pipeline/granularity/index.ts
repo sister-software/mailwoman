@@ -85,8 +85,9 @@ export function placetypesForRung(rung: ComponentTag): string[] {
 /**
  * One rung's measurement for one country.
  *
- * A rung the builder looked AT and found empty is a present row of zeroes. a rung with
- * no measurable source is absent from {@link CountryGranularity.rungs} entirely.
+ * A rung the builder looked AT and found empty is a present row of zeroes.
+ * A rung with no measurable source is absent from {@link CountryGranularity.rungs} entirely.
+ *
  * Collapsing those two would violate the meaning-of-zero requirement inside the artifact.
  */
 export interface RungMeasurement {
@@ -105,9 +106,8 @@ export interface RungMeasurement {
 	/**
 	 * How many of {@link nodes} come from the GeoNames alias fold (`id >= GEONAMES_ID_BASE`).
 	 *
-	 * Split out from
-	 * {@link overtureBackfilled} because a single `id >= OVERTURE_ID_BASE` test sweeps these in and mislabels every
-	 * GeoNames-only country's rows as Overture.
+	 * Split out from {@link overtureBackfilled} because a single `id >= OVERTURE_ID_BASE`
+	 * test sweeps these in and mislabels every GeoNames-only country's rows as Overture.
 	 */
 	geonamesBackfilled: number
 	/**
@@ -136,8 +136,8 @@ export interface CountryGranularity {
  * Build a `case` expression projecting a placetype column onto a rung name,
  * generated from the projection table so it cannot drift from it.
  *
- * Placetypes projecting onto nothing in
- * {@link ladder} fall through to NULL and are filtered by the caller's `where`.
+ * Placetypes projecting onto nothing in {@link ladder} fall through to NULL
+ * and are filtered by the caller's `where`.
  */
 function rungCaseExpression(column: string): string {
 	const whens = LADDER.flatMap((rung) =>
@@ -280,8 +280,9 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 /**
  * The deepest rung a country actually reaches, or `null` when it has nothing live at any rung.
  *
- * Two presence rules, because parent-coverage is only meaningful below the locality
- * backbone — the backbone is its denominator.
+ * Two presence rules, because parent-coverage is only meaningful below the locality backbone.
+ * The backbone is its denominator.
+ *
  * At or above `locality`, a rung counts as reached when it has any nodes.
  * Below it, when parent-coverage clears `floor`.
  */

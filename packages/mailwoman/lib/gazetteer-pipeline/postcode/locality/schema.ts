@@ -21,8 +21,10 @@ import type { Kysely } from "kysely"
 /**
  * One postcode → locality candidate.
  *
- * `is_containing=1` marks the authoritative tier — the locality whose polygon contains the
- * postcode centroid (the polygon builds) or the name-confirmed municipality (the CJK builds).
+ * `is_containing=1` marks the authoritative tier.
+ * The locality whose polygon contains the postcode centroid (the polygon builds)
+ * or the name-confirmed municipality (the CJK builds).
+ *
  * `is_containing=0` rows are the proximity candidates the resolver soft-scores against.
  *
  * `distance_km` is 0 for a containment hit and the haversine distance otherwise.
@@ -57,7 +59,8 @@ export interface PostcodeLocalityDatabase {
 }
 
 /**
- * The subset of a Kysely handle the DDL below touches — the parameter type the builders take.
+ * The subset of a Kysely handle the DDL below touches.
+ * The parameter type the builders take.
  */
 export type PostcodeLocalitySchemaHandle = Pick<Kysely<PostcodeLocalityDatabase>, "schema">
 
@@ -104,8 +107,8 @@ type ColumnValues<Columns extends readonly (keyof PostcodeLocalityTable)[]> = {
 export type PostcodeLocalityInsertValues = ColumnValues<typeof POSTCODE_LOCALITY_COLUMNS>
 
 /**
- * The builders' bulk-load statement — named columns, one placeholder each, both derived from
- * {@link POSTCODE_LOCALITY_COLUMNS}.
+ * The builders' bulk-load statement — named columns, one placeholder each,
+ * both derived from {@link POSTCODE_LOCALITY_COLUMNS}.
  */
 export const POSTCODE_LOCALITY_INSERT_SQL = `INSERT INTO postcode_locality (${POSTCODE_LOCALITY_COLUMNS.join(", ")}) VALUES (${POSTCODE_LOCALITY_COLUMNS.map(() => "?").join(", ")})`
 
