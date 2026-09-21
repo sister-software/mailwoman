@@ -380,11 +380,19 @@ notices files describe the third-party data beside it, no model card exists for 
 `packages/core/data/` holds no `PROVENANCE.md`. It is the same gap the twelve weights packages
 carry, in the one package every consumer of Mailwoman installs.
 
-The check that would have found it is scoped not to look. `data-provenance` reads every `data/`
-directory **that already carries a `PROVENANCE.md`** and reports each artifact the file omits.
-`packages/core/data/` has no such file, so the directory is outside the check by construction, which
-its own header states. Four packages carry one: `activity-lexicon`, `corpus`, `geographic-model` and
+Two scope limits in `data-provenance` put it out of reach, and only the first is stated in the
+check's own header.
+
+The check reads every `data/` directory **that already carries a `PROVENANCE.md`** and reports each
+artifact the file omits. `packages/core/data/` has no such file, so the directory is outside the check
+by construction. Four packages carry one: `activity-lexicon`, `corpus`, `geographic-model` and
 `poi-taxonomy`.
+
+The check is also **non-recursive**: it collects files whose directory equals the `data/` directory
+itself. Every artifact in `packages/core/data/` is a level down, in `libpostal/`, `chromium-i18n/`,
+`internal/` or `coarse-placer/`. So adding a `PROVENANCE.md` there would bring the directory into
+scope and the check would find zero artifacts to name and pass. Writing that record is worth doing
+because the record is what a reader opens, and it would not be enforced by this check as written.
 
 The Who's On First path was also wrong. Both notice copies said the dictionaries are under
 `data/whosonfirst/`, which holds **0 files** in the tarball; they are at
