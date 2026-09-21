@@ -30,6 +30,7 @@
 		"ci:workers": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b packages/license-worker packages/tile-worker",
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"clean": "yarn mwops release clean",
+		"comments:sweep": "node config/oxlint/comment-reflow/dash-sweep.ts",
 		"comments:triage": "yarn mwops health comments",
 		"docs:build": "yarn workspace @mailwoman/docs build",
 		"fix:oxlint": "oxlint --fix --fix-suggestions && oxlint --fix --fix-suggestions",
