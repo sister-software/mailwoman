@@ -3,21 +3,19 @@ title: Privacy Policy
 description: How Sister Software handles personal information related to Mailwoman.
 ---
 
----
-
 # Privacy Policy
 
-Last updated: September 9, 2026.
+Last updated: September 21, 2026.
 
 Sister Software is currently operated by **Nirrus LLC**, a Delaware limited liability company.
 
 Mailwoman is self-hosted software. We do not operate a hosted geocoding service, and ordinary use of Mailwoman does not send your addresses, coordinates, queries, customer records, or other workload data to us.
 
-## Mailwoman does not collect your data
+## Your workload stays on your infrastructure
 
 Mailwoman runs on infrastructure you control.
 
-The published libraries, CLI, browser engine, and self-hosted API servers contain no usage telemetry, behavioral analytics, crash reporting, query harvesting, or automatic transmission of geocoding activity to Sister Software.
+The published libraries, CLI, browser engine, and self-hosted API servers contain no usage telemetry, behavioral analytics, crash reporting, or query harvesting, and none of them transmits the content of a parse or geocode request to Sister Software.
 
 When you parse or geocode an address with Mailwoman, that operation occurs locally on your computer, browser, server, or other infrastructure.
 
@@ -31,6 +29,29 @@ We therefore do not receive or maintain:
 - datasets you process locally.
 
 If information never leaves your infrastructure, Sister Software is neither receiving nor processing that information.
+
+## Requests that do leave your infrastructure
+
+Four activities send a request to a server. Each one carries the request metadata any web request carries, such as an IP address, a request time, and a requested URL. None of them carries the content of a parse or geocode request.
+
+- **Installing from a package registry.** npm, or whichever registry you configure, receives the request. Its operator's policy governs it.
+- **Downloading a reference-data bundle.** `mailwoman data pull` requests the bundle's objects from `public.mailwoman.ai`, which is served through Cloudflare R2. Nothing downloads a bundle without that command: a Mailwoman server started without a gazetteer prints the command and stops.
+- **Running the browser engine or a map surface.** A page that loads the browser engine requests its model and database assets from `public.mailwoman.ai` as it starts, and a map surface requests fonts and sprites from the same origin. These requests happen without a prompt, and they identify which assets a visitor's page loaded.
+- **Optional online license actions.** `mailwoman license verify --online` and `mailwoman license refresh` contact Sister Software infrastructure and send the license information the request needs. A key verifies offline without them.
+
+A third-party network provider or content-delivery network in front of any of these endpoints may keep its own request records under its own policy.
+
+## Where our training data comes from
+
+The records Mailwoman is trained on are separate from anything you send us, and this section is about the former.
+
+We obtain address records from public and third-party sources to build training corpora and the pretrained models we publish. Those records are not customer queries: ordinary self-hosted use transmits no query to us, so no customer query can reach a corpus. Saying that does not establish that a corpus contains no personal data, and the two claims are recorded separately here for that reason.
+
+The register of candidate sources is public, at `packages/corpus/data/address-source-register.json`. It holds 389 sources. As of this update, no license decision has been recorded for any of them and none of the 389 is eligible for ingest, so no source in that register has contributed to a published model.
+
+The assessment of personal data in training sources is incomplete. Some candidate registers, such as the French SIRENE enterprise register, carry records about sole traders that identify a natural person at a business address. We have not completed a purpose, category, role, lawful-basis, retention, and individual-rights analysis for that class of source, and this Policy does not assert one. A source in that class stays ineligible for ingest until the analysis is complete, which is the control that keeps it out of a published model rather than a promise about a model already published.
+
+Where a published model was trained on address records, we cannot at present recover an individual record from the trained weights, and we do not claim that the weights are anonymous within the meaning of any particular law.
 
 ## Information you provide directly to us
 
@@ -103,7 +124,7 @@ We do not sell personal information.
 
 We do not sell Mailwoman query data.
 
-We do not use customer geocoding queries for advertising or model training because ordinary Mailwoman queries are not transmitted to us.
+We do not use customer geocoding queries for advertising or model training because ordinary Mailwoman queries are not transmitted to us. That statement is about customer queries. What our training corpora are built from is described under "Where our training data comes from".
 
 ## Service providers
 
@@ -130,7 +151,9 @@ Depending on applicable law, you may have rights to access, correct, delete, res
 
 These rights apply only to information we hold.
 
-Because Mailwoman normally processes your workload locally, we cannot access, export, correct, or delete addresses or queries that were never transmitted to us.
+Because Mailwoman normally processes your workload locally, we cannot access, export, correct, or delete addresses or queries that were never transmitted to us. Data held inside an installation you operate is yours to act on; we have no access to it and cannot act on it for you.
+
+For a record in a public source we used to build a corpus, write to the address under "Contact". We will identify what we hold, what we can remove from a corpus we still hold, and what a published model retains. We do not claim an ability to delete a record from weights that are already published.
 
 ## International processing
 

@@ -5,7 +5,7 @@ description: Terms governing Mailwoman websites, commercial licensing, support, 
 
 # Terms of Service
 
-Last updated: September 9, 2026.
+Last updated: September 21, 2026.
 
 Sister Software is currently operated by **Nirrus LLC**, a Delaware limited liability company.
 
@@ -59,6 +59,10 @@ These Terms apply to services operated by Sister Software, which may include:
 - separately agreed commercial services.
 
 Some browser applications or demonstrations may download Mailwoman software, models, datasets, maps, or other assets from our infrastructure while performing the substantive processing locally.
+
+We also host reference-data bundles for download by the `mailwoman data` commands. Operating that catalog is a service covered by these Terms. What a bundle's rows permit is decided by the publisher of those rows rather than by these Terms, and Section 9 addresses that.
+
+These Terms reach the services listed in this section. Installing Mailwoman from a package registry and operating it on your own infrastructure engages no service in this list, and nothing in these Terms adds a condition to rights an applicable software license grants you.
 
 Unless we expressly state otherwise, free websites, demonstrations, previews, or experimental services may be changed, suspended, or discontinued without an availability commitment.
 
@@ -187,7 +191,21 @@ Sister Software cannot waive or grant rights belonging to a third party.
 
 Before redistributing data, models, or derived datasets, you are responsible for reviewing the applicable third-party notices and provenance information.
 
-Each published `@mailwoman/neural-weights-*` package carries a `PROVENANCE.json` recording, per artifact, what we hold about its inputs and which questions we have not answered. It records gaps as gaps: a package whose model card names no training sources reads as recording none, which is a different statement from having none. No artifact is recorded there as cleared for any particular use.
+That responsibility covers what you do with the material. It does not shift to you the permissions Sister Software needs for its own acquisition, preparation, hosting, and distribution of the material we publish. Those remain ours.
+
+### Optional datasets
+
+Reference-data bundles are separate materials. Each one is rows a third party published, and its original license, notices, and conditions govern that material. Neither a Mailwoman software license nor a commercial license waives them, and the publishers of those rows are not licensors of anything Sister Software offers.
+
+Choosing at runtime which bundles to download is your decision about your installation. It is a separate question from the permissions we need to prepackage, host, and distribute a bundle, and your choice neither grants nor limits those.
+
+`mailwoman data --list` and `mailwoman data pull` print each bundle's publishers, terms, conditions, and open questions before any transfer begins.
+
+### Pretrained artifacts
+
+A pretrained package's inputs are fixed when the model is trained, including inputs inherited from a base package whose model graph a data-only overlay decodes through. Installing a package without downloading any reference-data bundle does not change that lineage and does not remove a notice attached to it.
+
+Each published `@mailwoman/neural-weights-*` package carries a `PROVENANCE.json` recording, per artifact, what we hold about its inputs and which questions we have not answered. It records gaps as gaps: a package whose model card names no training sources reads as recording none, which is a different statement from having none. No artifact is recorded there as cleared for any particular use, and a generated notice explains what we hold rather than granting a right we lack.
 
 ## 10. Confidential information
 

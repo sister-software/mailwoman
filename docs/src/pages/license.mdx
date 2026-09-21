@@ -7,9 +7,13 @@ import { BuyLicense } from "#components/License/BuyLicense"
 
 # License
 
-Mailwoman is dual-licensed: **AGPL-3.0-only**, or **LicenseRef-Commercial** under a paid agreement. Every
-release ships under both, and the branch that applies to an installation is the one it can show a
-key for.
+Mailwoman is dual-licensed: **AGPL-3.0-only**, or **LicenseRef-Commercial** under a paid agreement. Both
+branches are offered for every release, and the branch that applies to an installation is the one it
+can show a key for. The offer reaches the code and model artifacts Sister Software authors, to the
+extent it holds or controls the rights in them. Third-party components distributed with Mailwoman, and
+reference data you download, stay under the terms of whoever published them; no branch of this offer
+changes those. The two sections below, on reference data and on what a pretrained package carries, say
+where to read them.
 
 ## The open-source branch
 
@@ -21,18 +25,30 @@ reports these three by name for the installation it runs on.
 Without a license key, every `mailwoman` command ends with a two-line notice on stderr that says so,
 and every HTTP response from the native API and the drop-in servers carries a `Server` header naming
 the branch and a `Link: rel="license"` header pointing here. JSON responses carry the same in an
-`engine` object. None of it changes what runs.
+`engine` object. None of it changes what runs. The AGPL grants those rights directly and no key is
+needed to exercise them. The notice records which branch applies, and every command runs the same with
+or without a key.
 
 ## The commercial branch
 
 A commercial license releases you from the source offer and the share-alike condition on the code and
 model artifacts we author, so you can build closed products and services on Mailwoman. The agreement
 you accept at checkout is the [commercial license agreement](/license/terms/commercial-2026-10),
-published at its own address and never edited after publication. It is the agreement that binds.
+published at its own address and never edited after publication. It is the agreement that binds, and
+it is the document to read for what you owe and what you are owed. This page and the site
+[terms of service](/terms-of-service) describe the website and the catalog, and neither replaces a
+term of the agreement you accepted. What each tier covers, and the enterprise and OEM tiers, are on
+the [pricing page](/docs/pricing).
+
 [`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md)
-states the same terms in the repository as a reference template, and its own opening notice says it is
-not self-executing and grants no rights on its own. What each tier covers, and the enterprise and OEM
-tiers, are on the [pricing page](/docs/pricing).
+in the repository is a reference template, and its own opening notice says it is not self-executing and
+grants no rights on its own. It carries the same ten sections in the same order, and four of them read
+differently from `commercial-2026-10`: the template defines the licensee generically where the
+published agreement names the entity given at checkout, the template leaves fees and term open where
+the published agreement states the subscription price and the key-period mechanics, and the template's
+attribution section carries a paragraph limiting the waiver to Sister Software's own attribution that
+the published agreement states only in its grant section. Read the published version for a purchase
+made under it. The template is where a negotiated agreement starts.
 
 ### What the commercial grant does not cover
 
@@ -42,8 +58,57 @@ licenses, and any attribution or share-alike obligation attaching to those compo
 apply. Buying a commercial license does not waive or relicense them.
 [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md)
 lists the components we distribute and the terms each one carries. Reference data an operator
-downloads separately carries the terms of whoever published it, and this page makes no claim about
-those terms.
+downloads separately carries the terms of whoever published it, and the next section says what those
+terms are for each bundle we host.
+
+## Reference data you download
+
+The resolver needs a gazetteer, and no npm package carries one. Four bundles are published for
+download — `candidate`, `poi`, `fr` and `us` — and each one is rows somebody else published. Taking a
+copy engages that publisher's terms:
+
+| bundle      | published by                               | terms as the publisher names them                                              |
+| ----------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| `candidate` | Who's On First, GeoNames                   | Creative Commons Zero over Mapzen's own work; Creative Commons Attribution     |
+| `poi`       | Overture Maps Foundation                   | CDLA-Permissive-2.0                                                            |
+| `fr`        | DINUM and IGN, for Base Adresse Nationale  | Licence Ouverte 2.0, the attribution-only half of a dual grant                 |
+| `us`        | United States Census Bureau; OpenAddresses | TIGER/Line carries no copyright; OpenAddresses is per-source terms that differ |
+
+Nothing downloads a bundle for you. `mailwoman serve` and `mailwoman geocode` with no gazetteer print
+the command to run and stop; the download happens when you run `mailwoman data pull <bundle>`. Both
+`mailwoman data --list` and `mailwoman data pull` print each bundle's publishers, its terms, what it
+obliges you to do, and what nobody has established about it, before any bytes move. Two paths do fetch
+without a prompt and are not this command: a page running the browser engine loads its model and
+database assets from `public.mailwoman.ai` as it starts, and a map surface loads fonts and sprites from
+the same origin.
+
+A commercial key does not reach any of this. The publishers above are not parties to your agreement
+with us, and their attribution and share-alike conditions apply to you whichever branch you are on.
+
+## What a pretrained package already carries
+
+A model's inputs are fixed when it is trained. Installing `@mailwoman/neural-weights-en-us` without
+pulling a single bundle still gives you artifacts built from the sources that package records, and
+skipping a runtime download changes nothing about them. To use different inputs, install a different
+package.
+
+Every published weights package carries two generated files in its tarball. `LICENSE.md` states the
+terms above. `PROVENANCE.json` records each artifact it ships with its digest or `unrecorded`, the
+sources its model card attributes with the license each one names, the base package a data-only overlay
+decodes through together with that base's own sources, and the questions the record leaves open. Read
+it as a record of what the model card holds: a package recording no attribution is a package whose card
+records none, which is a different statement from a package with no attributable inputs. Nothing in
+either file says an artifact is cleared for a particular use.
+
+For the installation in front of you:
+
+```bash
+mailwoman license attribution
+```
+
+It reads the `PROVENANCE.json` of every weights package present in `node_modules` and prints the sources, the
+inherited lineage, and what each record leaves unresolved. It names what it does not cover: reference
+data you pulled separately, and whether a recorded entry is the whole of what that source requires.
 
 ### Purchase a license
 
