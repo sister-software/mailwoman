@@ -65,9 +65,10 @@ import {
 /**
  * One zoning designation, recorded beside an answer.
  *
- * Everything a reader needs to check the claim is here: which authority, which plan and window, which product and
- * vintage, the polygons the location falls inside with each one's verbatim local code, how containment was established,
- * and the coverage record with the sentence saying what it does not license.
+ * Everything a reader needs to check the claim is here: which authority, which plan
+ * and window, which product and vintage, the polygons the location falls inside with
+ * each one's verbatim local code, how containment was established, and the coverage
+ * record with the sentence saying what it does not license.
  */
 export interface ZoningDesignationObservation {
 	/**
@@ -85,7 +86,9 @@ export interface ZoningDesignationObservation {
 	designations: ZoningDesignation[]
 	containment: ZoningContainmentPath
 	/**
-	 * The coverage side of the claim. Its basis is `source_present`, which supports presence and nothing else.
+	 * The coverage side of the claim.
+	 *
+	 * Its basis is `source_present`, which supports presence and nothing else.
 	 */
 	coverage?: ObservationCoverageRecord
 	/**
@@ -160,10 +163,11 @@ export interface ZoningDesignationRouteOptions {
 /**
  * Build the route against one sealed layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused by the reader's own constructor — a
- * manifest naming a different layer, a coverage table with no rows, an empty jurisdiction table, and above all a
- * coverage row whose basis would support an exclusion. That last one would otherwise present as a route reporting
- * unmapped and unzoned land alike as free of restriction.
+ * Everything that would make the route answer a well-formed wrong thing is refused by the
+ * reader's own constructor — a manifest naming a different layer, a coverage table with no rows,
+ * an empty jurisdiction table, and above all a coverage row whose basis would support an exclusion.
+ * That last one would otherwise present as a route reporting unmapped
+ * and unzoned land alike as free of restriction.
  */
 export function createZoningDesignationRoute(options: ZoningDesignationRouteOptions): ZoningDesignationRoute {
 	const lookup = new ZoningLookup({ databasePath: options.databasePath })

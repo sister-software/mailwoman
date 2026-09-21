@@ -53,9 +53,12 @@ export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
 /**
  * Whether a coverage reading can support an exclusion — a claim that the thing asked for is not there.
  *
- * Presence is supportable from any basis. Absence is not: `source_present` records that the source returned rows, which
- * says nothing about what it missed. Callers building negative evidence must check on this rather than on
- * `completeness` alone, or an exclusion fires identically on a genuinely empty cell and on one we never surveyed.
+ * Presence is supportable from any basis.
+ * Absence is not: `source_present` records that the source returned rows,
+ * which says nothing about what it missed.
+ *
+ * Callers building negative evidence must check on this rather than on `completeness` alone,
+ * or an exclusion fires identically on a genuinely empty cell and on one we never surveyed.
  */
 export function supportsExclusion(cell: { basis?: CoverageBasis | null }): boolean {
 	return cell.basis === CoverageBasis.Designated || cell.basis === CoverageBasis.Surveyed
@@ -89,8 +92,10 @@ export interface RequireExclusionInput {
 	vintage: string
 	h3Cell: number
 	/**
-	 * The layer's coverage row for this cell. `undefined` means the cell is absent from `layer_coverage`, which is
-	 * unknown — never a zero-completeness record (the meaning-of-zero rule).
+	 * The layer's coverage row for this cell.
+	 *
+	 * `undefined` means the cell is absent from `layer_coverage`, which is unknown —
+	 * never a zero-completeness record (the meaning-of-zero rule).
 	 */
 	cell: { basis?: CoverageBasis | null } | undefined
 	/**

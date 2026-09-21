@@ -370,9 +370,9 @@ async function main(): Promise<void> {
 		if (!innerRows.length)
 			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
 
-		// innerRows rather than the outer holdout `rows` — the previous lax scripts tsconfig let the wrong
-		// array through and the per-tier medians silently printed NaN (the headline Q/coverage were
-		// computed on the correct splits. only this breakdown was dead).
+		// innerRows rather than the outer holdout `rows` — the previous lax scripts tsconfig
+		// let the wrong array through and the per-tier medians silently printed NaN
+		// (the headline Q/coverage were computed on the correct splits. only this breakdown was dead).
 		const claimedMeds = median(innerRows.map((r) => r.claimedRadiusM)) ?? Number.NaN
 		const errMeds = median(innerRows.map((r) => r.errorM)) ?? Number.NaN
 

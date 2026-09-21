@@ -449,26 +449,34 @@ export interface QuantileStats {
 }
 
 /**
- * Pre-registered pass-rate floors for the board (spec §3.6). Set in the follow-up PR after the v1 baseline
+ * Pre-registered pass-rate floors for the board (spec §3.6).
+ *
+ * Set in the follow-up PR after the v1 baseline
  * (`docs/articles/evals/2026-07-19-poi-query-board-v1-baseline.md`) established numbers to hold against.
  *
- * RE-registered when the activity-phrased family was promoted (#1960), and the three numbers are the whole argument.
- * Before: 51 rows, 49 pass, 96.1% against a 0.90 floor. After, with the four promoted activity rows tracked: the floors
- * read 51 rows, 49 pass, 96.1% — the same denominator, the same numerator, the same comparison. The counterfactual is
- * why the tracked convention is what carries them: had the four counted, 49/55 = 89.1% would sit below the 0.90 floor,
- * so committing a known failure class would have turned the board red without any candidate changing, and lowering the
- * floor to admit them would have loosened the bar every other row is held to.
+ * RE-registered when the activity-phrased family was promoted (#1960),
+ * and the three numbers are the whole argument.
+ * Before: 51 rows, 49 pass, 96.1% against a 0.90 floor.
  *
- * That is also why a later tracked row needs no re-registration and must not get one: it moves the committed total and
- * leaves the counted set the floors read exactly where it was. A row that would move these numbers is a row being
- * counted, and that is the change to argue for.
+ * After, with the four promoted activity rows tracked: the floors read 51 rows, 49 pass,
+ * 96.1% — the same denominator, the same numerator, the same comparison.
+ * The counterfactual is why the tracked convention is what carries them: had the four counted,
+ * 49/55 = 89.1% would sit below the 0.90 floor, so committing a known failure class
+ * would have turned the board red without any candidate changing, and lowering the floor
+ * to admit them would have loosened the bar every other row is held to.
  *
- * - `overall` ≥ 0.90 — the assembled-answer pass rate over the rows the floors read. A soft floor: coverage gaps in
- *   poi.db (the `trail`/`supermarket` holdouts) are allowed to cost a few points without failing the board.
- * - `abstain` = 1.00 — every abstain case must abstain for the right reason. A hard floor: an abstain miss means the poi
- *   branch claimed a query poi.db structurally cannot answer, the exact false-positive this board guards.
- * - `address` = 1.00 — every address-guard case must stay on the address path. A hard floor for the same reason: the poi
- *   branch must never hijack a full address.
+ * That is also why a later tracked row needs no re-registration and must not get one:
+ * it moves the committed total and leaves the counted set the floors read exactly where it was.
+ * A row that would move these numbers is a row being counted, and that is the change to argue for.
+ *
+ * - `overall` ≥ 0.90 — the assembled-answer pass rate over the rows the floors read.
+ *   A soft floor: coverage gaps in poi.db (the `trail`/`supermarket` holdouts) are
+ *   allowed to cost a few points without failing the board.
+ * - `abstain` = 1.00 — every abstain case must abstain for the right reason.
+ *   A hard floor: an abstain miss means the poi branch claimed a query poi.db structurally
+ *   cannot answer, the exact false-positive this board guards.
+ * - `address` = 1.00 — every address-guard case must stay on the address path.
+ *   A hard floor for the same reason: the poi branch must never hijack a full address.
  */
 export const POI_BOARD_FLOORS = {
 	overall: 0.9,

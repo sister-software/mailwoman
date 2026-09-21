@@ -21,11 +21,13 @@ import { assembleHierarchy, lineageAnchorNode, type HierarchyEntry } from "#hier
 import { assembleStreetName } from "#street/name-assembly"
 
 /**
- * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `street` > `admin`.
+ * The resolution tier that produced the coordinate.
+ * `address_point` > `interpolated` > `street` > `admin`.
  *
  * - `address_point` — rooftop / parcel centroid. uncertainty_m is a small floor (~1 m)
  * - `interpolated` — house-number estimate. uncertainty_m is honest (calibrated bracket span)
- * - `street` — street centroid for a street-only query (#1042); uncertainty_m is half the street's bbox diagonal
+ * - `street` — street centroid for a street-only query (#1042); uncertainty_m
+ *   is half the street's bbox diagonal
  * - `admin` — admin centroid. uncertainty_m is null (no sub-locality estimate available)
  */
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
@@ -334,8 +336,9 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	let uncertaintyM: number | null = null
 
 	let rooftop: { localityNorm?: string; postcode?: string } | undefined
-	// The answering register row's coverage basis, when the address-point lookup stamped one. No lookup stamps it yet, so
-	// today every rooftop reads `observed`; the hook exists so a register with a designated basis can say so.
+	// The answering register row's coverage basis, when the address-point lookup stamped one.
+	// No lookup stamps it yet, so today every rooftop reads `observed`; the hook exists
+	// so a register with a designated basis can say so.
 	let answeringBasis: string | undefined
 
 	// The admin-ladder node whose coordinate won (#1717) — captured where the ladder picks it, because

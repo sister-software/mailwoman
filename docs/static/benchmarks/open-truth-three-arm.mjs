@@ -5,41 +5,43 @@
 //
 // what this measures, and what IT does not
 //
-// Three geocoders — Mailwoman, Pelias, Photon — are asked the same raw query strings, top-1 result
-// only, and each answer is graded by haversine distance against a reference coordinate drawn from an
-// open address register (via the OpenAddresses collections). Thresholds are 1 / 5 / 25 km; an arm
-// that returns nothing is a miss at every threshold. The protocol is the pre-registered §4 of
-// docs/superpowers/plans/2026-08-06-local-pelias-benchmark-rig.md.
+// Three geocoders — Mailwoman, Pelias, Photon — are asked the same raw query strings,
+// top-1 result only, and each answer is graded by haversine distance against a reference
+// coordinate drawn from an open address register (via the OpenAddresses collections).
+// Thresholds are 1 / 5 / 25 km; an arm that returns nothing is a miss at every threshold.
+// The protocol is the pre-registered §4 of docs/superpowers/plans/2026-08-06-local-pelias-benchmark-rig.md.
 //
-// The reference coordinates and two of the arms' indexes share upstream data: OpenAddresses is a
-// Pelias-indexed source, and Mailwoman's own rooftop registers for AU / NZ / FR derive from the same
-// national registers the truth does. Photon's index is OpenStreetMap only. So read the @1 km column
-// as "does the engine reproduce the register's rooftop", partly recall-of-own-data for Mailwoman and
-// Pelias, and as an OSM-coverage measure for Photon. The record states this beside the tables.
+// The reference coordinates and two of the arms' indexes share upstream data:
+// OpenAddresses is a Pelias-indexed source, and Mailwoman's own rooftop registers for
+// AU / NZ / FR derive from the same national registers the truth does.
+// Photon's index is OpenStreetMap only.
+// So read the @1 km column as "does the engine reproduce the register's rooftop", partly
+// recall-of-own-data for Mailwoman and Pelias, and as an OSM-coverage measure for Photon.
+// The record states this beside the tables.
 //
 // two modes
 //
-//   score (default)  Recompute every table in the record from the committed per-row results file.
+//   score (default) Recompute every table in the record from the committed per-row results file.
 //                    Deterministic, no network. The paired bootstrap (mulberry32, seed 20260807,
 //                    1000 resamples) reproduces byte-for-byte.
-//   --run            Query live arms over the committed panel and write a fresh results file in the
+//   --run Query live arms over the committed panel and write a fresh results file in the
 //                    same shape. Requires a Pelias and a Photon endpoint plus the compiled Mailwoman
 //                    CLI. Data footprints are yours to build; the record documents what the original
 //                    run used.
 //
 // usage
 //
-//   node open-truth-three-arm.mjs                       # score the committed results
-//   node open-truth-three-arm.mjs --results other.jsonl # score a different results file
+//   node open-truth-three-arm.mjs # score the committed results node open-truth-three-arm.mjs
+//   --results other.jsonl # score a different results file
 //   node open-truth-three-arm.mjs --run \
 //     --pelias-url http://localhost:4000 \
 //     --photon-url http://localhost:2322 \
 //     --mailwoman-cli path/to/mailwoman/out/cli.js \
 //     --out results.jsonl
 //
-// The panel and results default to the committed copies beside this script. This script is
-// standalone on purpose (node builtins only, no monorepo install), so the prng and haversine are
-// local copies of the shared implementations.
+// The panel and results default to the committed copies beside this script.
+// This script is standalone on purpose (node builtins only, no monorepo install),
+// so the prng and haversine are local copies of the shared implementations.
 
 // oxlint-disable-next-line typescript/no-restricted-imports -- standalone script (node builtins only, no monorepo install)
 import { spawn } from "node:child_process"

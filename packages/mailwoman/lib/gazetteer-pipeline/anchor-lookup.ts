@@ -199,12 +199,15 @@ const GB_OUTWARD_SOURCE = "os-codepoint-open-outward"
 const NL_SOURCE = "cbs-pc6"
 
 /**
- * GB unit postcodes → centroid from `postalcode-gb-codepoint.db` (Ordnance Survey Code-Point Open, OGL v3.0 — 1,746,976
- * units, every one placed. the database's `meta` carries the full attribution string that must accompany any
- * redistribution). This is the licence-clean GB source: the retired GeoNames GB rows are not it, and Overture has no GB
- * postcodes at all. Coverage gap, measured not assumed: zero Northern Ireland (BT) codes — Code-Point Open is
- * England/Scotland/Wales only, and NI postcode geography is LPS-licensed (see the database's
- * `coverage_gap_northern_ireland_options`).
+ * GB unit postcodes → centroid from `postalcode-gb-codepoint.db`
+ * (Ordnance Survey Code-Point Open, OGL v3.0 — 1,746,976 units, every one placed. the database's
+ * `meta` carries the full attribution string that must accompany any redistribution).
+ *
+ * This is the licence-clean GB source: the retired GeoNames GB rows are not it,
+ * and Overture has no GB postcodes at all.
+ * Coverage gap, measured not assumed: zero Northern Ireland (BT) codes — Code-Point
+ * Open is England/Scotland/Wales only, and NI postcode geography is LPS-licensed
+ * (see the database's `coverage_gap_northern_ireland_options`).
  */
 function loadGBCodePoint(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()

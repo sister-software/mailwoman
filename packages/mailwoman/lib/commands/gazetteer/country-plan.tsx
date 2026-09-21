@@ -85,9 +85,10 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 				geonamesCountries: DEFAULT_GEONAMES_COUNTRIES as readonly string[],
 			}
 
-			// The repos root is checked against the declared wof list rather than substituted for it. The WOF leg
-			// is presence-driven, so a clone nobody declared becomes coverage on the next build and a declaration
-			// nobody cloned silently does not — and only comparing the two can tell those apart.
+			// The repos root is checked against the declared wof list rather than substituted for it.
+			// The WOF leg is presence-driven, so a clone nobody declared becomes coverage
+			// on the next build and a declaration nobody cloned silently does not —
+			// and only comparing the two can tell those apart.
 			const reposRoot = String(resolvePath(mailwomanDataRoot(), "wof", "repos"))
 			const audit = await auditReposRoot(reposRoot)
 			const cloned = clonedCountries(audit)

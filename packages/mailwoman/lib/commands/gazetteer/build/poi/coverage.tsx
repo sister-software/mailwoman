@@ -36,8 +36,10 @@ import type { POISourceRow } from "#gazetteer-pipeline/poi/build/poi"
 import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * Coverage resolution. Res 6 matches what the rest of the POI pipeline writes, so a reader already keyed to poi.db's
- * coverage cells finds these ones without knowing which build produced them.
+ * Coverage resolution.
+ *
+ * Res 6 matches what the rest of the POI pipeline writes, so a reader already keyed to
+ * poi.db's coverage cells finds these ones without knowing which build produced them.
  */
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 

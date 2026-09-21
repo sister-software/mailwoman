@@ -123,7 +123,8 @@ export function classifyRefinementStep(base: string, variant: string): Refinemen
 }
 
 /**
- * Every step that can be stated over `text` at all — the eligibility reading the coverage line is built from.
+ * Every step that can be stated over `text` at all — the eligibility reading
+ * the coverage line is built from.
  */
 export function statableSteps(text: string): RefinementStep[] {
 	return REFINEMENT_STEPS.filter((step) => REFINEMENT_DERIVATION_BY_STEP[step](text) !== null)
@@ -210,8 +211,9 @@ export function refinementChains(fixtures: readonly ConformanceFixture[]): Refin
 /**
  * How much of the population this law states a link over.
  *
- * Counted in committed rows, like the canonical-form law's own coverage: the denominator is rows a step can be stated
- * over at all, and a row carrying a three-link chain would otherwise read as three rows of coverage.
+ * Counted in committed rows, like the canonical-form law's own coverage:
+ * the denominator is rows a step can be stated over at all, and a row carrying a
+ * three-link chain would otherwise read as three rows of coverage.
  */
 export interface RefinementCoverage {
 	/**
@@ -278,8 +280,8 @@ export function refinementCoverage(
 }
 
 /**
- * The coverage line a report prints — stated rows over eligible rows, with the link count and the denominator's own
- * breakdown, so a hold count cannot imply a breadth the suite never exercised.
+ * The coverage line a report prints — stated rows over eligible rows, with the link count and the
+ * denominator's own breakdown, so a hold count cannot imply a breadth the suite never exercised.
  */
 export function describeRefinementCoverage(
 	fixtures: readonly ConformanceFixture[],

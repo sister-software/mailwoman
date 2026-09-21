@@ -59,8 +59,9 @@ export const cleanOperation = defineOperation({
 			buildMetadataNames.map((fileName) => workspaces.packagePathBuilder(packageName, fileName).toString())
 		)
 
-		// `docker` is a root TypeScript project but deliberately not a Yarn workspace: its manifest consumes published npm
-		// packages. Preserve the coverage of the former `tsc -b --clean` root script when cleaning the entire checkout.
+		// `docker` is a root TypeScript project but deliberately not a Yarn workspace:
+		// its manifest consumes published npm packages.
+		// Preserve the coverage of the former `tsc -b --clean` root script when cleaning the entire checkout.
 		if (!input.workspace) {
 			directoryTargets.push(resolvePath(context.repoRoot, "docker", "out"))
 			directoryTargets.push(resolvePath(context.repoRoot, "docker", "dist"))

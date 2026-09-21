@@ -133,8 +133,8 @@ export function interiorCoverageCells(geometry: ParsedGeometry, resolution: numb
 }
 
 /**
- * The 48-bit short-cell form of {@link interiorCoverageCells}, as a membership set — the shape both a row clipper and a
- * coverage writer probe.
+ * The 48-bit short-cell form of {@link interiorCoverageCells}, as a membership set —
+ * the shape both a row clipper and a coverage writer probe.
  */
 export function interiorCoverageCellSet(geometry: ParsedGeometry, resolution: number): Set<number> {
 	return new Set(interiorCoverageCells(geometry, resolution).map((cell) => shortCellToInt(cell)))

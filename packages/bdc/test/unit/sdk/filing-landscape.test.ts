@@ -78,9 +78,10 @@ const GEOID_UNKNOWN = "999999999999999"
 const CENTROID_SF = { lat: 37.7749, lon: -122.4194 }
 const CENTROID_NY = { lat: 40.7128, lon: -74.006 }
 const CENTROID_DIVERGENT = { lat: 37.119, lon: -79.6658 }
-// Never registered in `blockCentroids` — purely a coordinate the test uses to prove that area's res-6
-// cell carries no coverage row at all (an independent check on the fixture's honesty rather than something
-// `filingLandscape` ever looks up for an unrouted geoid — it has no cell to look up in the first place).
+// Never registered in `blockCentroids` — purely a coordinate the test
+// uses to prove that area's res-6 cell carries no coverage row at all
+// (an independent check on the fixture's honesty rather than something `filingLandscape`
+// ever looks up for an unrouted geoid — it has no cell to look up in the first place).
 const CENTROID_NEVER_SURVEYED = { lat: 41.8781, lon: -87.6298 }
 
 const CENTROIDS: Record<string, { lat: number; lon: number }> = {
@@ -213,8 +214,8 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 		using db = openFixture()
 		const schemadb = db
 
-		// Independent honesty check on the fixture: an area never fed to the builder carries no
-		// coverage row at all — proves the "absence" below is real rather than an artifact of the query.
+		// Independent honesty check on the fixture: an area never fed to the builder carries no coverage
+		// row at all — proves the "absence" below is real rather than an artifact of the query.
 		const neverSurveyedRes6 = shortCellToInt(
 			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 6) as H3Cell
 		)
@@ -237,11 +238,12 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 })
 
 describe("filingLandscape — Check 2 (extended): coverage-check is required, not a rows-shortcut proxy", () => {
-	// criterion 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows, so it's classified unknown by
-	// the "no candidate cell" shortcut alone, and the coverage-check branch can be deleted outright without turning
-	// it red. These two tests target that branch directly: (a) a geoid with rows whose coverage row is deliberately
-	// deleted, and (b) an `h3Cells` query — which has no rows-based shortcut available at all — against a cell that
-	// was never surveyed.
+	// criterion 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows,
+	// so it's classified unknown by the "no candidate cell" shortcut alone, and the
+	// coverage-check branch can be deleted outright without turning it red.
+	// These two tests target that branch directly: (a) a geoid with rows whose coverage
+	// row is deliberately deleted, and (b) an `h3Cells` query — which has no rows-based
+	// shortcut available at all — against a cell that was never surveyed.
 	it("(a) a geoid with real rows but a deleted coverage row is unknown, and its rows do not leak into filings", async () => {
 		await using coverageScratch = await temporaryDirectory("bdc-filing-landscape-coverage-corrupt-")
 		const corruptOut = coverageScratch.resolve("bdc.db")
@@ -267,8 +269,8 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 		const sfCoverageCell = res9ShortCellToRes6Parent(sfRow.h3_cell)
 
 		const schemadb = writable
-		// Sanity: the builder did write this coverage row, at the cell the reader derives — deleting it below is a
-		// deliberate corruption rather than a pre-existing gap.
+		// Sanity: the builder did write this coverage row, at the cell the reader derives —
+		// deleting it below is a deliberate corruption rather than a pre-existing gap.
 		expect(await readLayerCoverage(schemadb, sfCoverageCell)).toBeDefined()
 
 		await schemadb.deleteFrom("layer_coverage").where("h3_cell", "=", sfCoverageCell).execute()
@@ -292,8 +294,9 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 	it("(b) an h3Cells query against a never-surveyed cell is unknown, never a zero-filing claim", async () => {
 		using db = openFixture()
 
-		// h3Cells mode has no "zero rows" shortcut — the cell is supplied directly, so this is the only code path
-		// that can classify it, proving the coverage-check branch itself (not a rows-existence proxy) is what runs.
+		// h3Cells mode has no "zero rows" shortcut — the cell is supplied directly,
+		// so this is the only code path that can classify it, proving the coverage-check
+		// branch itself (not a rows-existence proxy) is what runs.
 		const neverSurveyedRes9Cell = shortCellToInt(
 			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 9) as H3Cell
 		)

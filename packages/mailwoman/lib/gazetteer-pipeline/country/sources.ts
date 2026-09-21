@@ -60,12 +60,15 @@ export const AdminSource = {
 export type AdminSource = (typeof AdminSource)[keyof typeof AdminSource]
 
 /**
- * The countries measured as two-source on 2026-08-17, with Overture + GeoNames, against both the config lists and the
- * shipped artifact.
+ * The countries measured as two-source on 2026-08-17, with Overture + GeoNames,
+ * against both the config lists and the shipped artifact.
  *
- * A baseline rather than a permission slip. It exists so a new double-listing is distinguishable from the fourteen that
- * were already there — the difference between a trade someone made and an accident nobody noticed. Removing an entry is
- * a coverage decision (see the overlap table above); adding one is what this module refuses.
+ * A baseline rather than a permission slip.
+ * It exists so a new double-listing is distinguishable from the fourteen that were already
+ * there — the difference between a trade someone made and an accident nobody noticed.
+ *
+ * Removing an entry is a coverage decision (see the overlap table above);
+ * adding one is what this module refuses.
  */
 export const ACCEPTED_TWO_SOURCE_COUNTRIES: ReadonlySet<string> = new Set([
 	"AT",
@@ -135,9 +138,10 @@ export function countrySourceMap(lists: {
 /**
  * Countries served by more than one source that the baseline does not already record.
  *
- * A WOF conflict is reported regardless of the baseline: every entry in {@link ACCEPTED_TWO_SOURCE_COUNTRIES} is
- * Overture + GeoNames, so a country that gains WOF coverage while staying on a list is the #267 case the comments
- * warned about — the clone landed and the list was never edited.
+ * A WOF conflict is reported regardless of the baseline: every entry in
+ * {@link ACCEPTED_TWO_SOURCE_COUNTRIES} is Overture + GeoNames, so a country that gains
+ * WOF coverage while staying on a list is the #267 case the comments warned about —
+ * the clone landed and the list was never edited.
  */
 export function sourceConflicts(sources: readonly CountrySources[]): SourceConflict[] {
 	return sources

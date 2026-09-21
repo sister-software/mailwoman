@@ -176,8 +176,9 @@ export function semanticObservationMarkers(
 /**
  * Turn one coverage-qualified absence into a marker on the query's verdict.
  *
- * The coverage half rides in full — cell, basis, completeness, observed rows and the layer's own manifest identity —
- * because an absence claim a reader cannot re-derive from the receipt is an assertion rather than a measurement.
+ * The coverage half rides in full — cell, basis, completeness, observed rows
+ * and the layer's own manifest identity — because an absence claim a reader cannot
+ * re-derive from the receipt is an assertion rather than a measurement.
  */
 export function absenceObservationMarker(
 	observation: AbsenceObservation,
@@ -328,23 +329,28 @@ export function soilCapabilityMarker(
 /**
  * Turn one coastal-erosion reading into a marker on a geocode verdict.
  *
- * Same code, same family, different rule — the third under the `layer` family, sharing `authority_designation` with the
- * flood and soil markers because all three report what an authority designates at a resolved coordinate. The rule half
- * names the layer, so a reader meeting several designation markers on one answer can tell which authority spoke.
+ * Same code, same family, different rule — the third under the `layer` family,
+ * sharing `authority_designation` with the flood and soil markers because all three
+ * report what an authority designates at a resolved coordinate.
+ * The rule half names the layer, so a reader meeting several designation markers
+ * on one answer can tell which authority spoke.
  *
- * The scenario travels IN the message rather than only IN the evidence. ncerm publishes twelve erosion-zone layers and
- * they answer twelve different questions. a message reading "at erosion risk" without naming which one would let a 2105
- * projection under a 95th-percentile sea-level-rise allowance be read as a present-day designation. So the scenario key
- * and its plain-language label are in the sentence itself.
+ * The scenario travels IN the message rather than only IN the evidence. ncerm publishes
+ * twelve erosion-zone layers and they answer twelve different questions. a message
+ * reading "at erosion risk" without naming which one would let a 2105 projection under a
+ * 95th-percentile sea-level-rise allowance be read as a present-day designation.
+ * So the scenario key and its plain-language label are in the sentence itself.
  *
- * The message also records the coverage limit, because this layer's silence is not a reassurance. The Environment
- * Agency publishes no coverage statement for ncerm, so an absent designation says nothing — and the marker only ever
- * fires on a present one, which is why the limit rides on the evidence rather than being implied by the marker's
- * absence.
+ * The message also records the coverage limit, because this layer's silence is not a reassurance.
+ * The Environment Agency publishes no coverage statement for ncerm, so an absent designation
+ * says nothing — and the marker only ever fires on a present one, which is why the limit
+ * rides on the evidence rather than being implied by the marker's absence.
  *
- * The message reports what the authority'S mapping assigns at a location, never whether a property will erode. The
- * authority itself declines the second statement — its data "cannot provide details for individual properties" — and a
- * wording that blurred them would be this program's invention rather than the authority's.
+ * The message reports what the authority'S mapping assigns at a location,
+ * never whether a property will erode.
+ * The authority itself declines the second statement — its data "cannot provide
+ * details for individual properties" — and a wording that blurred them would be
+ * this program's invention rather than the authority's.
  */
 export function coastalErosionMarkers(
 	route: CoastalErosionRoute | undefined,
@@ -490,9 +496,11 @@ export interface LayerDesignationRoutes {
 	 */
 	soilCapabilityRoute?: SoilCapabilityRoute
 	/**
-	 * The EA coastal-erosion route (#1993) — a third layer, and the one whose absence reading is nothing. ncerm publishes
-	 * no coverage statement, so this route fires on a designation and stays silent otherwise, which is the opposite of
-	 * the flood route above. One field across both would put one rule over two opposite meanings of an empty answer.
+	 * The EA coastal-erosion route (#1993) — a third layer, and the one whose absence reading
+	 * is nothing. ncerm publishes no coverage statement, so this route fires on a designation
+	 * and stays silent otherwise, which is the opposite of the flood route above.
+	 *
+	 * One field across both would put one rule over two opposite meanings of an empty answer.
 	 */
 	coastalErosionRoute?: CoastalErosionRoute
 	/**

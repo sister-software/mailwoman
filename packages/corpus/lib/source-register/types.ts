@@ -45,7 +45,8 @@ export const BackboneState = {
 	 */
 	VerifiedPartial: "A~",
 	/**
-	 * An official address system exists, and bulk access, openness, coverage or redistribution rights are incomplete.
+	 * An official address system exists, and bulk access, openness, coverage
+	 * or redistribution rights are incomplete.
 	 */
 	Restricted: "B",
 	/**
@@ -546,7 +547,8 @@ export interface AddressSourceRecord {
 	 */
 	upstreamLineage?: readonly string[]
 	/**
-	 * A measured coverage statement. A national portal is not evidence of national coverage.
+	 * A measured coverage statement.
+	 * A national portal is not evidence of national coverage.
 	 */
 	coverage?: string
 	/**

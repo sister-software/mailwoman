@@ -316,8 +316,10 @@ export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenue
 }
 
 /**
- * Serialize the table the way the committed artifact stores it: pretty-printed, trailing newline. Run `oxfmt` over the
- * result before committing — repo law is that committed JSON is oxfmt-clean, which `JSON.stringify` cannot reproduce.
+ * Serialize the table the way the committed artifact stores it: pretty-printed, trailing newline.
+ *
+ * Run `oxfmt` over the result before committing — repo law is that committed JSON
+ * is oxfmt-clean, which `JSON.stringify` cannot reproduce.
  */
 export function serializeSubVenueLexicon(table: SubVenueLexiconTable): string {
 	return prettyJSON(table)
@@ -374,8 +376,8 @@ export interface GenerateSubVenueLexiconOptions {
 /**
  * Read the fetch outputs, build the table, and write it.
  *
- * The IO half only — every decision lives in {@link buildSubVenueLexicon}, which is pure. Run `oxfmt` over `outPath`
- * afterwards. repo law is that committed JSON is oxfmt-clean.
+ * The IO half only — every decision lives in {@link buildSubVenueLexicon}, which is pure.
+ * Run `oxfmt` over `outPath` afterwards. repo law is that committed JSON is oxfmt-clean.
  */
 export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOptions): Promise<SubVenueLexiconTable> {
 	const sources: SubVenueLexiconSource[] = []

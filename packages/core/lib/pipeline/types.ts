@@ -92,21 +92,26 @@ export interface PipelineOpts {
 	placetypePair?: PlacetypePairPassthrough
 	/**
 	 * #743/#194: promote a confident coarse-placer guess from the soft `anchorPosterior` boost to a hard country filter
-	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}. Conditioned three ways: the placer's confidence ≥
-	 * `HARD_PLACE_COUNTRY_MIN_CONF` (ambiguous DK↔no stay soft), the country is in the coverage
-	 * `HARD_PLACE_COUNTRY_SAFELIST` (or a {@link hardCountrySafelist} override), and no caller
-	 * `hardCountry`/`defaultCountry` is already set. **Default-on** in the shipped
-	 * `createRuntimePipeline`/`geocodeAddress` (#743, 2026-06-22) — but the safelist confines the hard filter to
-	 * well-covered countries, so the low-coverage tail (FI/PL) keeps its recall on the soft path with no regression. Pass
-	 * `false` to force the pre-#194 soft-only behavior.
+	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}.
+	 *
+	 * Conditioned three ways: the placer's confidence ≥ `HARD_PLACE_COUNTRY_MIN_CONF`
+	 * (ambiguous DK↔no stay soft), the country is in the coverage `HARD_PLACE_COUNTRY_SAFELIST`
+	 * (or a {@link hardCountrySafelist} override), and no caller `hardCountry`/`defaultCountry`
+	 * is already set. **Default-on** in the shipped `createRuntimePipeline`/`geocodeAddress`
+	 * (#743, 2026-06-22) — but the safelist confines the hard filter to well-covered countries,
+	 * so the low-coverage tail (FI/PL) keeps its recall on the soft path with no regression.
+	 * Pass `false` to force the pre-#194 soft-only behavior.
 	 */
 	hardPlaceCountry?: boolean
 	/**
 	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer
-	 * artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`) when it carries one, else the
-	 * built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback (byte-identical for artifacts predating the manifest). Supply a set
-	 * to test/measure a different coverage frontier — the resolver eval passes the full in-map country set to measure
-	 * unrestricted hard-resolve-rates (which is how the production safelist is grown).
+	 * artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`)
+	 * when it carries one, else the built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback
+	 * (byte-identical for artifacts predating the manifest).
+	 *
+	 * Supply a set to test/measure a different coverage frontier — the resolver eval
+	 * passes the full in-map country set to measure unrestricted hard-resolve-rates
+	 * (which is how the production safelist is grown).
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	signal?: AbortSignal
@@ -294,39 +299,52 @@ export const QueryIntentCode = {
 	 */
 	POICategory: "poi_category",
 	/**
-	 * The answer holds nothing of the asked-for kind, and a coverage layer surveyed the searched cell for exactly that
-	 * kind — so the emptiness is a statement about the world rather than about retrieval. `evidence.coverage` carries the
-	 * cell, its basis and the layer that measured it. without exclusion-grade coverage this code is never raised, because
-	 * an unsurveyed cell is unknown and never absence.
+	 * The answer holds nothing of the asked-for kind, and a coverage layer surveyed the searched cell for
+	 * exactly that kind — so the emptiness is a statement about the world rather than about retrieval.
+	 *
+	 * `evidence.coverage` carries the cell, its basis and the layer that
+	 * measured it. without exclusion-grade coverage this code is never raised,
+	 * because an unsurveyed cell is unknown and never absence.
 	 */
 	CoverageQualifiedAbsence: "coverage_qualified_absence",
 	/**
-	 * An authority publishes a designation for the resolved coordinate, and this is it — the code in that authority's own
-	 * vocabulary, with the product and vintage it was read from and the coverage record stating that the authority made a
-	 * determination there. `evidence.layer` names the artifact; `evidence.coverage` carries the cell and its basis.
+	 * An authority publishes a designation for the resolved coordinate, and this is it —
+	 * the code in that authority's own vocabulary, with the product and vintage it was read from
+	 * and the coverage record stating that the authority made a determination there.
 	 *
-	 * The code is raised at resolve time and names the verdict's own top kind rather than a kind of its own: the marker
-	 * is about the coordinate an answer reached rather than about how the query was read, so there is no intent kind to
-	 * name. A reading the authority does not make raises nothing — outside its footprint there is no coverage row, and an
-	 * advisory there would report a determination nobody made.
+	 * `evidence.layer` names the artifact; `evidence.coverage` carries the cell and its basis.
+	 *
+	 * The code is raised at resolve time and names the verdict's own top kind
+	 * rather than a kind of its own: the marker is about the coordinate an answer reached
+	 * rather than about how the query was read, so there is no intent kind to name.
+	 * A reading the authority does not make raises nothing — outside its footprint there is
+	 * no coverage row, and an advisory there would report a determination nobody made.
 	 */
 	AuthorityDesignation: "authority_designation",
 	/**
-	 * The query supplied components finer than the answer reached, and the answer says which ones it could not use.
+	 * The query supplied components finer than the answer reached, and the answer says
+	 * which ones it could not use.
 	 *
-	 * The counterpart of `declared_ambiguity`, and it exists because the two failures were reported asymmetrically. Too
-	 * many answers raised a marker with a margin and a runner-up. too FEW — a street parsed and a locality centroid
-	 * returned — raised nothing, so `301 College Ave #101, Athens, GA 30601` and `Athens, GA` came back as the same shape
-	 * of answer at the same tier with `uncertainty_m` null on both. A consumer could not tell "a city is the whole
-	 * answer" from "I was handed a street and a house number and discarded them".
+	 * The counterpart of `declared_ambiguity`, and it exists because the two
+	 * failures were reported asymmetrically.
+	 * Too many answers raised a marker with a margin and a runner-up. too FEW —
+	 * a street parsed and a locality centroid returned — raised nothing,
+	 * so `301 College Ave #101, Athens, GA 30601` and `Athens, GA` came back as the same
+	 * shape of answer at the same tier with `uncertainty_m` null on both.
 	 *
-	 * Raised at resolve time, because the shortfall is a property of the tier reached rather than of the string.
-	 * `evidence.unusedComponents` names the parsed tags the answer's tier does not carry, `evidence.impliedTier` the tier
-	 * the finest of them implies, and `evidence.reachedTier` what the walk actually returned.
+	 * A consumer could not tell "a city is the whole answer" from "I was handed a street
+	 * and a house number and discarded them".
 	 *
-	 * It reports and never re-ranks: an answer that degraded for a good reason — the street is genuinely absent from
-	 * coverage — raises the same marker as one that degraded for a bad one, because this surface cannot tell them apart
-	 * and saying so is the honest reading. What it removes is the silence.
+	 * Raised at resolve time, because the shortfall is a property of the tier reached
+	 * rather than of the string.
+	 * `evidence.unusedComponents` names the parsed tags the answer's tier does
+	 * not carry, `evidence.impliedTier` the tier the finest of them implies,
+	 * and `evidence.reachedTier` what the walk actually returned.
+	 *
+	 * It reports and never re-ranks: an answer that degraded for a good reason — the street is
+	 * genuinely absent from coverage — raises the same marker as one that degraded for a bad one,
+	 * because this surface cannot tell them apart and saying so is the honest reading.
+	 * What it removes is the silence.
 	 */
 	DeclaredCoarserAnswer: "declared_coarser_answer",
 } as const

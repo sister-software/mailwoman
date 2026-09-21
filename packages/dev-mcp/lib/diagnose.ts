@@ -291,15 +291,20 @@ interface LookupFact {
 
 export interface RetrievalFacts {
 	/**
-	 * `null` when the trace carries no resolver records at all (a trace predating them). An empty array is the walk
-	 * stating it performed no lookups — a different claim, and one the shapes must not read as retrieval failure.
+	 * `null` when the trace carries no resolver records at all (a trace predating them).
 	 *
-	 * Coverage bound, and it is required for every retrieval shape below: the trace records the walk's own
-	 * `#lookupAndPick` and nothing else. The resolver's post-walk recovery passes — span-rescore (a famous name the model
-	 * tagged `street`, which the walk never queries because `street` is not in the placetype map) and the
-	 * postcode-compound recovery — query the backend directly and emit no record. So a row can carry a resolved
-	 * coordinate beside an empty lookup list; {@link RowAccount.resolved_without_recorded_lookup} states exactly that
-	 * case rather than leaving the reader to read the empty list as "no retrieval happened".
+	 * An empty array is the walk stating it performed no lookups — a different claim,
+	 * and one the shapes must not read as retrieval failure.
+	 *
+	 * Coverage bound, and it is required for every retrieval shape below: the trace
+	 * records the walk's own `#lookupAndPick` and nothing else.
+	 * The resolver's post-walk recovery passes — span-rescore (a famous name the model tagged
+	 * `street`, which the walk never queries because `street` is not in the placetype map)
+	 * and the postcode-compound recovery — query the backend directly and emit no record.
+	 *
+	 * So a row can carry a resolved coordinate beside an empty lookup list;
+	 * {@link RowAccount.resolved_without_recorded_lookup} states exactly that case
+	 * rather than leaving the reader to read the empty list as "no retrieval happened".
 	 */
 	lookups: LookupFact[] | null
 	checks_fired: string[]
@@ -339,10 +344,12 @@ export interface RowAccount {
 	outcome: OutcomeFacts
 	expectation: ExpectationReading
 	/**
-	 * A coordinate arrived and the resolver trace recorded no lookup — the account's retrieval facts are blind for this
-	 * row. See {@link RetrievalFacts.lookups} for which passes are outside the trace's coverage. Reported so the empty
-	 * lookup list is not read as "retrieval had nothing to do": the retrieval shapes cannot fire here, and their silence
-	 * is a coverage bound rather than a finding.
+	 * A coordinate arrived and the resolver trace recorded no lookup —
+	 * the account's retrieval facts are blind for this row.
+	 *
+	 * See {@link RetrievalFacts.lookups} for which passes are outside the trace's coverage.
+	 * Reported so the empty lookup list is not read as "retrieval had nothing to do": the retrieval
+	 * shapes cannot fire here, and their silence is a coverage bound rather than a finding.
 	 */
 	resolved_without_recorded_lookup: boolean
 	/**

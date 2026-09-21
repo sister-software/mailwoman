@@ -24,9 +24,11 @@ import { describe, expect, test, vi } from "vitest"
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
 /**
- * Vitest's own per-test budget. It has to exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock — a
- * per-test timeout below the child's timeout means vitest kills the test before the thing it is measuring can report,
- * which reads as "timed out" with no indication of what actually took the time.
+ * Vitest's own per-test budget.
+ *
+ * It has to exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock — a per-test
+ * timeout below the child's timeout means vitest kills the test before the thing it is measuring
+ * can report, which reads as "timed out" with no indication of what actually took the time.
  */
 const CLI_TEST_TIMEOUT_MS = 90_000
 

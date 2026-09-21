@@ -46,11 +46,11 @@ let scratch: TemporaryDirectory
 function buildFixtureAdmin(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
-	// Throwaway fixture, so durability is worthless and expensive. `db.exec` runs each statement in
-	// its own autocommit transaction, and the ~50 INSERTs below were paying an fsync apiece —
-	// measured at ~1.8s per build inside vitest against 1ms for the build itself. Turning off
-	// synchronous writes and keeping the journal in memory is what makes this layer cheap enough to
-	// run on every PR, which is the whole point of it.
+	// Throwaway fixture, so durability is worthless and expensive.
+	// `db.exec` runs each statement in its own autocommit transaction, and the ~50 INSERTs below were
+	// paying an fsync apiece — measured at ~1.8s per build inside vitest against 1ms for the build itself.
+	// Turning off synchronous writes and keeping the journal in memory is what makes this
+	// layer cheap enough to run on every PR, which is the whole point of it.
 	db.exec(`
 		PRAGMA synchronous = OFF;
 		PRAGMA journal_mode = MEMORY;

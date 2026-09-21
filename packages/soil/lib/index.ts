@@ -70,7 +70,9 @@ export const SoilReadingKind = {
 	 */
 	DesignatedNoRating: "designated_no_rating",
 	/**
-	 * No coverage row. Unmapped by this authority, and never a low-capability reading.
+	 * No coverage row.
+	 *
+	 * Unmapped by this authority, and never a low-capability reading.
 	 */
 	Unknown: "unknown",
 } as const
@@ -165,7 +167,8 @@ export interface SoilCapabilityReading {
 	 */
 	surveyArea?: SoilSurveyAreaRecord
 	/**
-	 * The coverage row that licenses the reading, when there is one. Absent on `unknown`, which is the absence.
+	 * The coverage row that licenses the reading, when there is one.
+	 * Absent on `unknown`, which is the absence.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
 	/**
@@ -209,10 +212,11 @@ export interface SoilCapabilityLookupOptions {
 /**
  * Read a sealed `soil.db`.
  *
- * Everything that would make the reader answer a well-formed wrong thing is refused at construction rather than at
- * query time: a manifest naming a different product, a coverage table with no rows, a vocabulary with no classes. Each
- * of those would otherwise present as a reader that simply always answers `unknown`, which on a receipt is
- * indistinguishable from a region the authority genuinely has not surveyed.
+ * Everything that would make the reader answer a well-formed wrong thing is refused
+ * at construction rather than at query time: a manifest naming a different product,
+ * a coverage table with no rows, a vocabulary with no classes.
+ * Each of those would otherwise present as a reader that simply always answers `unknown`,
+ * which on a receipt is indistinguishable from a region the authority genuinely has not surveyed.
  */
 export class SoilCapabilityLookup implements Disposable {
 	readonly identity: SoilLayerIdentity
@@ -256,9 +260,10 @@ export class SoilCapabilityLookup implements Disposable {
 		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution) as H3Cell
 		const coverage = this.#readCoverage(indexCell)
 
-		// coverage qualifies the reading, and without it there is nothing to report. Unlike a polygon hit — which is a
-		// determination at a location and needs no coverage row to be true — every answer this layer gives is a per-cell
-		// summary, so a summary row without a coverage row would state a determination outside the authority's footprint.
+		// coverage qualifies the reading, and without it there is nothing to report.
+		// Unlike a polygon hit — which is a determination at a location and needs no coverage
+		// row to be true — every answer this layer gives is a per-cell summary, so a summary row
+		// without a coverage row would state a determination outside the authority's footprint.
 		if (!coverage) {
 			return {
 				kind: SoilReadingKind.Unknown,
@@ -283,9 +288,10 @@ export class SoilCapabilityLookup implements Disposable {
 			| undefined
 
 		if (!row) {
-			// A coverage row without a summary row means the coverage cell is designated and this finer cell holds nothing —
-			// the survey-area edge. Unknown rather than "no rating": the authority's statement covers the coverage cell, and
-			// this location may be outside the delineations it covers.
+			// A coverage row without a summary row means the coverage cell is designated
+			// and this finer cell holds nothing — the survey-area edge.
+			// Unknown rather than "no rating": the authority's statement covers the coverage cell,
+			// and this location may be outside the delineations it covers.
 			return {
 				kind: SoilReadingKind.Unknown,
 				coverage,

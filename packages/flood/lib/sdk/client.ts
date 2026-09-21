@@ -167,9 +167,10 @@ export function createEAFloodClient(options: CreateFloodClientOptions = {}): EAF
 /**
  * The ONS Open Geography boundary service — where "England" comes from.
  *
- * The EA states that its mapping "covers all of England" and does not publish where England is. the national
- * statistical authority does. Realizing the coverage statement therefore takes a second authority's artifact, and which
- * one it was is written into `flood_map_extent` rather than left implicit.
+ * The EA states that its mapping "covers all of England" and does not publish
+ * where England is. the national statistical authority does.
+ * Realizing the coverage statement therefore takes a second authority's artifact, and
+ * which one it was is written into `flood_map_extent` rather than left implicit.
  */
 export const ONS_BOUNDARY_BASE_URL =
 	"https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Countries_December_2025_Boundaries_UK_BGC/FeatureServer/0"
@@ -177,10 +178,10 @@ export const ONS_BOUNDARY_BASE_URL =
 /**
  * The ONS product the default boundary comes from — generalised (20 m) and clipped to the coastline.
  *
- * Generalised rather than full-resolution on purpose: the interior test is conservative by construction, so a cell near
- * the border is dropped rather than mis-claimed, and 20 m of boundary generalisation is invisible against a coverage
- * cell whose edge is kilometres long. The full-resolution product would multiply the download for no change in the cell
- * set.
+ * Generalised rather than full-resolution on purpose: the interior test is conservative by
+ * construction, so a cell near the border is dropped rather than mis-claimed, and 20 m of
+ * boundary generalisation is invisible against a coverage cell whose edge is kilometres long.
+ * The full-resolution product would multiply the download for no change in the cell set.
  */
 export const ONS_BOUNDARY_PRODUCT = "Countries (December 2025) Boundaries UK BGC"
 

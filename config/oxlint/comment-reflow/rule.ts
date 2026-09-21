@@ -285,8 +285,8 @@ export const reflowRule: CreateRule = {
 					}
 					const previousEdit = edits.at(-1)
 					if ((previousEdit && range[0] < previousEdit.range[1]) || replacement === text.slice(...range)) continue
-					// Oxlint treats touching fix ranges as conflicts. Combine them so adjacent block comments are fixed in
-					// the same pass.
+					// Oxlint treats touching fix ranges as conflicts.
+					// Combine them so adjacent block comments are fixed in the same pass.
 					if (previousEdit && range[0] === previousEdit.range[1]) {
 						previousEdit.range[1] = range[1]
 						previousEdit.replacement += replacement

@@ -57,13 +57,14 @@ vi.mock("@mailwoman/bdc/env", async (importOriginal) => {
 
 // Shared-graph guard: the root vitest config runs `isolate: false`, so `./client.ts` may already sit
 // in the worker's cache — evaluated without this file's `@mailwoman/bdc/env` mock by an earlier file
-// (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation). Reset
-// on the way in so the chain re-evaluates against the mock, and on the way out so the next file in
-// this fork never inherits our mocked env module from the cache.
+// (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation).
+// Reset on the way in so the chain re-evaluates against the mock, and on the way out
+// so the next file in this fork never inherits our mocked env module from the cache.
 //
-// Carried through the APIClient migration: the module surface grew (the client now exports its rate
-// default, throttle formatter and error helpers, and `./download.ts` joined the chain), but every one
-// of these still reaches `@mailwoman/core/env` transitively, so all of them must load after the reset.
+// Carried through the APIClient migration: the module surface grew (the client now exports its
+// rate default, throttle formatter and error helpers, and `./download.ts` joined the chain),
+// but every one of these still reaches `@mailwoman/core/env` transitively,
+// so all of them must load after the reset.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 

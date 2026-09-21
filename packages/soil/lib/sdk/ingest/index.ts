@@ -247,9 +247,9 @@ function toDelineation(
 /**
  * Where a build's delineations come from, and what the source declares about itself.
  *
- * The builder takes one of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
- * with no network and no gdal still exercises the whole database half — the domain check, the cell classification, the
- * reduction, the coverage rows, the manifest and the seal.
+ * The builder takes one of these rather than a path, which is what makes the fixture rung possible:
+ * hand-built geometry with no network and no gdal still exercises the whole database half — the
+ * domain check, the cell classification, the reduction, the coverage rows, the manifest and the seal.
  */
 export interface SoilFeatureSource {
 	areaSymbol: string

@@ -97,13 +97,18 @@ export interface VerifyCoastalResult {
 }
 
 /**
- * Points this product's mapping does not reach, named. Each is a place rather than a bare pair of numbers: a coordinate
- * a reader cannot name is a coordinate nobody can check.
+ * Points this product's mapping does not reach, named.
  *
- * Two populations, and both are required. The inland English points are the case this layer's coverage posture exists
- * for — a builder that generalized the flood rule would answer them confidently. The Welsh and Scottish coastal points
- * are the case the flood layer's negative half exists for, and they are on the coast here rather than inland, so they
- * also confirm the artifact is clipped to the English product rather than to "the island".
+ * Each is a place rather than a bare pair of numbers: a coordinate a reader
+ * cannot name is a coordinate nobody can check.
+ *
+ * Two populations, and both are required.
+ * The inland English points are the case this layer's coverage posture exists for —
+ * a builder that generalized the flood rule would answer them confidently.
+ *
+ * The Welsh and Scottish coastal points are the case the flood layer's negative half
+ * exists for, and they are on the coast here rather than inland, so they also confirm
+ * the artifact is clipped to the English product rather than to "the island".
  */
 export const OUTSIDE_MAPPING_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
 	{ label: "Birmingham city centre, inland England", latitude: 52.4796, longitude: -1.9026 },

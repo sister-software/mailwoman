@@ -580,8 +580,8 @@ export async function readPairsFromAdmin(
  * 3a Sección` — and a row teaching one of those as `locality` trains the locality/dependent_locality boundary in the
  * wrong direction. Dropping the row instead costs coverage and teaches nothing false, which is the better of the two.
  *
- * Returns a predicate that answers `true` for everything when the gazetteer is not on disk, so a checkout without it
- * builds the same rows it did before rather than silently emitting none.
+ * Returns a predicate that answers `true` for everything when the gazetteer is not on disk,
+ * so a checkout without it builds the same rows it did before rather than silently emitting none.
  */
 export async function createKnownLocalityCheck(country: string, adminDB?: string): Promise<(name: string) => boolean> {
 	const path = adminDB ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
@@ -600,8 +600,9 @@ export async function createKnownLocalityCheck(country: string, adminDB?: string
 		}
 	}
 
-	// An empty set means the gazetteer has no localities for this country at all, which is a coverage fact about the
-	// gazetteer rather than a verdict on the source . Therefore, check nothing rather than drop everything.
+	// An empty set means the gazetteer has no localities for this country at all,
+	// which is a coverage fact about the gazetteer rather than a verdict on the source .
+	// Therefore, check nothing rather than drop everything.
 	if (!names.size) return () => true
 
 	return (name: string) => names.has(name.toLowerCase())

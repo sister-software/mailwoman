@@ -584,10 +584,12 @@ async function readSources(
 /**
  * Values the research pass wrote into a column it did not resolve per source.
  *
- * Every one of the 389 rows carries `address_role: varies` and `coverage: country-specific`, and none carries an
- * `upstream` value at all. Those two strings are the pass saying it did not determine the field, so carrying them onto
- * a record would turn "nobody looked" into a value a consumer reads as an answer — and `ingestEligibilityProblems`
- * would then stop reporting the two blockers that apply to every source in the register.
+ * Every one of the 389 rows carries `address_role: varies` and `coverage: country-specific`,
+ * and none carries an `upstream` value at all.
+ * Those two strings are the pass saying it did not determine the field,
+ * so carrying them onto a record would turn "nobody looked" into a value a consumer
+ * reads as an answer — and `ingestEligibilityProblems` would then stop reporting
+ * the two blockers that apply to every source in the register.
  */
 const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "country-specific", "unknown", "n/a"])
 

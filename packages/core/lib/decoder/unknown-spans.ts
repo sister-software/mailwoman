@@ -87,8 +87,8 @@ export function losslessSegments(tree: AddressTree): LosslessSegment[] {
 }
 
 /**
- * The all-O runs no node covers, as typed `unknown` spans, in source order. The complement of the node coverage over
- * `tree.raw`.
+ * The all-O runs no node covers, as typed `unknown` spans, in source order.
+ * The complement of the node coverage over `tree.raw`.
  */
 export function unknownSpans(tree: AddressTree): UnknownSpan[] {
 	return losslessSegments(tree)

@@ -119,12 +119,16 @@ export interface RescoreCandidate {
 	 */
 	place: ResolvedPlace
 	/**
-	 * Whether the postcode-consistency check fired for this recovery — i.e. the postcode resolved to a point and the
-	 * match was validated within `thresholdKm` of it. `true` = high-precision (postcode- consistent); `false` =
-	 * unrestricted (no postcode→point coverage for this country, so the match wasn't geo-validated — the ~83%-precision
-	 * case). The caller surfaces this as `metadata.rescore_postcode_verified` so a consumer can threshold on it without a
-	 * hidden per-country coverage map. Deliberately not folded into the calibrated `confidence` — that would break the
-	 * isotonic guarantee (a true calibrated 0.83 must not be confused with a rescore plug-in estimate).
+	 * Whether the postcode-consistency check fired for this recovery — i.e. the postcode
+	 * resolved to a point and the match was validated within `thresholdKm` of it.
+	 *
+	 * `true` = high-precision (postcode- consistent); `false` = unrestricted (no postcode→point
+	 * coverage for this country, so the match wasn't geo-validated — the ~83%-precision case).
+	 * The caller surfaces this as `metadata.rescore_postcode_verified` so a consumer
+	 * can threshold on it without a hidden per-country coverage map.
+	 *
+	 * Deliberately not folded into the calibrated `confidence` — that would break the isotonic
+	 * guarantee (a true calibrated 0.83 must not be confused with a rescore plug-in estimate).
 	 */
 	postcodeVerified: boolean
 	/**
@@ -401,8 +405,9 @@ export async function findRescoreCandidate(
 	const country = opts.country
 	const postcode = opts.postcode?.trim() || undefined
 
-	// Postcode-consistency anchor: where does the postcode itself resolve? (No-op when the backend has
-	// no postcode coverage — findPlace returns nothing → no anchor → check can't fire → match accepted.)
+	// Postcode-consistency anchor: where does the postcode itself resolve?
+	// (No-op when the backend has no postcode coverage — findPlace returns nothing
+	// → no anchor → check can't fire → match accepted.)
 	let anchor: { lat: number; lon: number } | null = null
 
 	if (postcode && thresholdKm > 0) {
@@ -582,11 +587,11 @@ export async function findRescoreCandidate(
 		const key = foldName(sp.text)
 
 		if (key.length < 2 || /^\d+$/.test(key)) continue // skip bare numbers / empties
-		// Whole-input coverage and the soft-country prior are separate checks. `bare` (the prior) also
-		// needs an unqualified tree + a caller country; `wholeSpan` alone decides the alias tier below —
-		// a scope-less bare "Riyadh"/"Frankfurt" is still a naming (their Latin surfaces live in alias
-		// rows: الرياض / Frankfurt am Main), and conflating the two checks cost exactly those rows on the
-		// 2026-08-15 board before this line split them.
+		// Whole-input coverage and the soft-country prior are separate checks.
+		// `bare` (the prior) also needs an unqualified tree + a caller country; `wholeSpan` alone
+		// decides the alias tier below — a scope-less bare "Riyadh"/"Frankfurt" is still a naming
+		// (their Latin surfaces live in alias rows: الرياض / Frankfurt am Main), and conflating the
+		// two checks cost exactly those rows on the 2026-08-15 board before this line split them.
 		const wholeSpan = !!wholeInput && sp.start === wholeInput.start && sp.end === wholeInput.end
 
 		// A sub-span that drops a word of the name is a corruption rather than a recovery.

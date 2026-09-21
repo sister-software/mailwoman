@@ -149,34 +149,44 @@ export const FilerEdgeAssertion = {
 export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerEdgeAssertion]
 
 /**
- * The kind of relationship a `filer_edge` or `filer_family` row asserts between two nodes (decisions 1, 2) — orthogonal
- * to {@link FilerEdgeAssertion}, which grades how strongly the same assertion is evidenced, never what it means. Before
- * this column existed, relationship kind lived implicitly in the target node's `identifier_type` (e.g. an edge into a
- * `holding_company_name` node was "assumed" to mean ownership) — a scheme that cannot distinguish a holding company
- * from a parent CIK from a transfer-of-control, and had no way to express a corporate-family fact (`filer_family`) at
- * all.
+ * The kind of relationship a `filer_edge` or `filer_family` row asserts between two
+ * nodes (decisions 1, 2) — orthogonal to {@link FilerEdgeAssertion}, which grades how
+ * strongly the same assertion is evidenced, never what it means.
  *
- * - `SameEntity` — the two nodes denote the same underlying filer under different identifiers (an FRN and its Form 499
- *   ID, a BDC `provider_id` and its FRN) — the crosswalk's original, still-dominant edge meaning, and the only kind
+ * Before this column existed, relationship kind lived implicitly in the target node's `identifier_type`
+ * (e.g. an edge into a `holding_company_name` node was "assumed" to mean ownership) —
+ * a scheme that cannot distinguish a holding company from a parent CIK from a transfer-of-control,
+ * and had no way to express a corporate-family fact (`filer_family`) at all.
+ *
+ * - `SameEntity` — the two nodes denote the same underlying filer under different
+ *   identifiers (an FRN and its Form 499 ID, a BDC `provider_id` and its FRN) —
+ *   the crosswalk's original, still-dominant edge meaning, and the only kind
  *   {@link FilerNodeTable} entity-clustering (`cluster-filers.ts`) ever asserts.
  * - `HoldingCompany` — the target node is the source node's holding company (an ownership fact).
- * - `ManagementCompany` — the target node operates/manages the source node without owning it — operational control, never
- *   collapsed into `HoldingCompany` (spec §3.1 finding 1: ownership and operational control are different assertions).
- * - `ParentCompany` — the target is the source's parent in a corporate-family rollup ({@link FilerFamilyTable}), distinct
- *   from `HoldingCompany`: a parent-company relationship is a family-tree fact rather than necessarily an ownership
- *   filing.
- * - `Subsidiary` — the inverse of `ParentCompany`, kept as its own value (never just "read backwards") so a row's
- *   `relationship` always describes the edge in the direction it was asserted, without requiring the reader to know
- *   which side is the source.
- * - `SupersededBy` — the source registration was replaced by the target one. Identity continuity over time, and
- *   deliberately not an ownership or control fact: it says this registration became that registration, and nothing
- *   about who owns either. Written from Form 499's `Replaced by filer <id>` note (`form499-notes.ts`), which the FCC
- *   states on 2,826 filers in the 2025-12-07 vintage, 2,820 of whose targets resolve to a filer in the same file.
+ * - `ManagementCompany` — the target node operates/manages the source node without
+ *   owning it — operational control, never collapsed into `HoldingCompany`
+ *   (spec §3.1 finding 1: ownership and operational control are different assertions).
+ * - `ParentCompany` — the target is the source's parent in a corporate-family rollup
+ *   ({@link FilerFamilyTable}), distinct from `HoldingCompany`: a parent-company
+ *   relationship is a family-tree fact rather than necessarily an ownership filing.
+ * - `Subsidiary` — the inverse of `ParentCompany`, kept as its own value (never just "read backwards")
+ *   so a row's `relationship` always describes the edge in the direction it was asserted,
+ *   without requiring the reader to know which side is the source.
+ * - `SupersededBy` — the source registration was replaced by the target one.
+ *   Identity continuity over time, and deliberately not an ownership or control fact:
+ *   it says this registration became that registration, and nothing about who owns either.
+ *   Written from Form 499's `Replaced by filer <id>` note (`form499-notes.ts`),
+ *   which the FCC states on 2,826 filers in the 2025-12-07 vintage, 2,820 of whose
+ *   targets resolve to a filer in the same file.
  *
- *   Two consequences a reader has to hold. First, the edge is directional in time as well as in identity — the source is
- *   the older registration, always, and the pair is never symmetric. Second, `linkage-eval.ts`'s
- *   `OWNERSHIP_BY_RELATIONSHIP` pins this `false`; a supersession chain is not evidence of a corporate family, and an
- *   eval that scored it as one would credit itself for recovering ownership it never saw. Operator ruling, 2026-08-07.
+ *   Two consequences a reader has to hold.
+ *   First, the edge is directional in time as well as in identity — the source is the
+ *   older registration, always, and the pair is never symmetric.
+ *
+ *   Second, `linkage-eval.ts`'s `OWNERSHIP_BY_RELATIONSHIP` pins this `false`;
+ *   a supersession chain is not evidence of a corporate family, and an eval that scored
+ *   it as one would credit itself for recovering ownership it never saw.
+ *   Operator ruling, 2026-08-07.
  */
 export const FilerRelationship = {
 	SameEntity: "same_entity",
@@ -546,32 +556,43 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
 /**
  * Create `filer_family` with the composite PK `(node_id, family_id, naming_node_id, source, valid_from)` — mirrors
  * {@link createFilerEdgeTable}'s reasoning exactly: the PK's job is telling apart different provenance (a different
- * source, or the same source at a later vintage), and `relationship` is deliberately excluded from it for the same
- * contradiction-vs-plurality reason — one source asserting both `"parent_company"` and `"subsidiary"` for the identical
- * `(node_id, family_id)` pair at the identical instant is a contradiction to reject rather than a plurality to store.
- * The same blank/whitespace-rejecting check constraint applies to `relationship` here too. Call
+ * source, or the same source at a later vintage), and `relationship` is deliberately
+ * excluded from it for the same contradiction-vs-plurality reason — one source asserting
+ * both `"parent_company"` and `"subsidiary"` for the identical `(node_id, family_id)` pair
+ * at the identical instant is a contradiction to reject rather than a plurality to store.
+ * The same blank/whitespace-rejecting check constraint applies to `relationship` here too.
+ * Call
  * {@link createFilerFamilyIndex} separately, after bulk load, for the "all members of this family" lookup path.
  *
- * **`naming_node_id` is in the key, and that placement is required.** Two different raw spellings can canonicalize to
- * the same `family_id` — `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to `"acme"`
- * (`record/organization.test.ts` pins that collapse) — which is the documented decision-6 shape when one FRN files two
- * 499 rows the same day, or one `bdcProviderID` appears twice in the provider list. Those two rows differ only in
- * `naming_node_id`. Left out of the key they would share an identical PK tuple, the builder's `insert or ignore` would
- * silently drop the second, and the second spelling's display name would vanish from every rollup — regressing the
- * "expose the plurality within one family, never guess which spelling is right" rule this SDK follows everywhere else
- * (`identifiers`' cardinality fidelity, `inferred_links` kept separate from `cluster`, family membership never deduped
- * across sources). This is not the `relationship` situation: two spellings under one source at one instant are two
- * things the filer really did report, a plurality to store — where two conflicting `relationship` values for one pair
- * are two incompatible claims about what that pair means, a contradiction to reject.
+ * **`naming_node_id` is in the key, and that placement is required.** Two different raw spellings
+ * can canonicalize to the same `family_id` — `"Acme Corp"` and `"Acme Corporation, LLC"`
+ * both reduce to `"acme"` (`record/organization.test.ts` pins that collapse) —
+ * which is the documented decision-6 shape when one FRN files two 499 rows the same day,
+ * or one `bdcProviderID` appears twice in the provider list.
+ * Those two rows differ only in `naming_node_id`.
  *
- * **`assertion` is excluded from the key for that same reason** and the reason it is excluded from `filer_edge`'s key
- * too: one source, at one instant, grading the identical membership both `authoritative` and `inferred` is a
- * contradiction rather than a plurality — two sources disagreeing about the strength of the same fact already produce
- * two rows, because `source` is in the key. It gets the same blank-rejecting check as `relationship`: `not NULL` alone
- * would accept `''`, and a blank assertion is worse than a wrong one, since it matches neither half of every
- * criterion-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would vanish from any
- * surface that split on strength. `match_score` gets a check of its own — a score may appear only on an inferred row,
- * since an authoritative membership matched nothing and any number there would be a fabricated confidence.
+ * Left out of the key they would share an identical PK tuple, the builder's `insert or ignore`
+ * would silently drop the second, and the second spelling's display name would vanish from
+ * every rollup — regressing the "expose the plurality within one family, never guess which
+ * spelling is right" rule this SDK follows everywhere else (`identifiers`' cardinality fidelity,
+ * `inferred_links` kept separate from `cluster`, family membership never deduped across sources).
+ * This is not the `relationship` situation: two spellings under one source at
+ * one instant are two things the filer really did report, a plurality to store —
+ * where two conflicting `relationship` values for one pair are two incompatible
+ * claims about what that pair means, a contradiction to reject.
+ *
+ * **`assertion` is excluded from the key for that same reason** and the reason
+ * it is excluded from `filer_edge`'s key too: one source, at one instant,
+ * grading the identical membership both `authoritative` and `inferred` is a contradiction
+ * rather than a plurality — two sources disagreeing about the strength of the same
+ * fact already produce two rows, because `source` is in the key.
+ * It gets the same blank-rejecting check as `relationship`: `not NULL` alone would accept `''`,
+ * and a blank assertion is worse than a wrong one, since it matches neither half of
+ * every criterion-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it)
+ * and the row would vanish from any surface that split on strength.
+ *
+ * `match_score` gets a check of its own — a score may appear only on an inferred row, since an
+ * authoritative membership matched nothing and any number there would be a fabricated confidence.
  */
 export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema

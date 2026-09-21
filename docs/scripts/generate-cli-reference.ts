@@ -228,8 +228,8 @@ export function escapeCell(text: string): string {
 }
 
 /**
- * Render a GitHub-flavored table with cells padded to the widest in their column — the shape `oxfmt` normalizes
- * markdown tables to, so the emitted file passes `oxfmt --check` without a reformat pass.
+ * Render a GitHub-flavored table with cells padded to the widest in their column — the shape `oxfmt`
+ * normalizes markdown tables to, so the emitted file passes `oxfmt --check` without a reformat pass.
  */
 export function renderTable(headers: readonly string[], rows: readonly (readonly string[])[]): string {
 	const widths = headers.map((header, column) =>

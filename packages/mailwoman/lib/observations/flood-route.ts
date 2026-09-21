@@ -55,10 +55,11 @@ import {
 /**
  * One authority designation, recorded beside an answer.
  *
- * Everything a reader needs to check the claim is here: which authority, which product and vintage, the code in that
- * authority's own vocabulary with the authority's own definition of it, how containment was established, and the
- * coverage record — cell, basis, completeness — that licenses an absence reading. A reader holding the code alone
- * cannot tell whether it was earned.
+ * Everything a reader needs to check the claim is here: which authority, which product
+ * and vintage, the code in that authority's own vocabulary with the authority's own
+ * definition of it, how containment was established, and the coverage record — cell,
+ * basis, completeness — that licenses an absence reading.
+ * A reader holding the code alone cannot tell whether it was earned.
  */
 export interface AuthorityDesignationObservation {
 	/**
@@ -157,10 +158,11 @@ export interface AuthorityDesignationRouteOptions {
 /**
  * Build the route against one sealed layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused by the reader's own constructor — a
- * manifest naming a different layer, a coverage table with no rows, a missing footprint row. Each of those would
- * otherwise present as a route that simply never fires, which on a receipt is indistinguishable from a region the
- * authority genuinely has not mapped.
+ * Everything that would make the route answer a well-formed wrong thing is
+ * refused by the reader's own constructor — a manifest naming a different layer,
+ * a coverage table with no rows, a missing footprint row.
+ * Each of those would otherwise present as a route that simply never fires, which on a
+ * receipt is indistinguishable from a region the authority genuinely has not mapped.
  */
 export function createAuthorityDesignationRoute(options: AuthorityDesignationRouteOptions): AuthorityDesignationRoute {
 	const lookup = new FloodZoneLookup({ databasePath: options.databasePath })

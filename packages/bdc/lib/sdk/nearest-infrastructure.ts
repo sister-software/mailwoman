@@ -53,9 +53,11 @@ import { res9ShortCellToRes6Parent } from "#sdk/filing/landscape"
 export const NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS = 32
 
 /**
- * One k-nearest telecom-infrastructure hit, paired with the res-6 coverage cell it falls in. `coverage: undefined`
- * means `schemadb`'s layer has never surveyed that area (the meaning-of-zero rule. see `@mailwoman/core/layers`) —
- * never conflate it with a covered-but-empty cell.
+ * One k-nearest telecom-infrastructure hit, paired with the res-6 coverage cell it falls in.
+ *
+ * `coverage: undefined` means `schemadb`'s layer has never surveyed that area
+ * (the meaning-of-zero rule. see `@mailwoman/core/layers`) — never conflate
+ * it with a covered-but-empty cell.
  */
 export interface InfrastructureHit {
 	categoryID: string
@@ -88,10 +90,12 @@ export interface NearestInfrastructureOptions {
 }
 
 /**
- * K-nearest telecom-infrastructure POIs from `options.center`, each paired with the coverage cell it falls in per
- * `schemadb`'s own `layer_coverage` table. Never throws on a sparse result — no infrastructure within `maxRings`, or
- * every `categoryIDs` entry unresolvable against `poiLookup`'s dictionary — returns `[]`, the same discipline
- * `POILookup.search` itself follows.
+ * K-nearest telecom-infrastructure POIs from `options.center`, each paired with the
+ * coverage cell it falls in per `schemadb`'s own `layer_coverage` table.
+ *
+ * Never throws on a sparse result — no infrastructure within `maxRings`,
+ * or every `categoryIDs` entry unresolvable against `poiLookup`'s dictionary —
+ * returns `[]`, the same discipline `POILookup.search` itself follows.
  */
 export async function nearestInfrastructure(
 	poiLookup: POILookup,

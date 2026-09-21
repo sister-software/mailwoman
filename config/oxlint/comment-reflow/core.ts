@@ -27,19 +27,16 @@ export interface ReflowOptions {
 	targetWidth?: number
 	/**
 	 * Columns a tab advances.
-	 *
 	 * Default: 2, matching oxfmt.
 	 */
 	tabWidth?: number
 	/**
 	 * Sentences a paragraph may hold after the lead.
-	 *
 	 * Default: 2.
 	 */
 	paragraphSentences?: number
 	/**
 	 * Placement of eligible trailing comments.
-	 *
 	 * Default: "overflow".
 	 */
 	trailingComments?: "ignore" | "always" | "overflow"
@@ -55,7 +52,6 @@ export const defaultOptions: Required<ReflowOptions> = {
 
 /**
  * Penalties in the breaker's cost function.
- *
  * Tuned against the monorepo's own comments.
  */
 export const weights = {
@@ -73,7 +69,6 @@ export const weights = {
 	line: 12,
 	/**
 	 * Breaking with a parenthesis still open.
-	 *
 	 * Buys roughly 17 columns of overrun.
 	 */
 	parenSplit: 1200,
@@ -85,6 +80,8 @@ export const weights = {
 	orphan: 2400,
 	/** A last line shorter than this many columns of content counts as an orphan. */
 	orphanColumns: 24,
+	/** A trailing sentence shorter than this many characters joins the paragraph before it rather than standing alone. */
+	orphanParagraph: 60,
 } as const
 
 /** Count Unicode code points; a tab advances to the next `tabWidth` stop. */
@@ -96,11 +93,19 @@ export function columns(text: string, tabWidth: number = defaultOptions.tabWidth
 	return width
 }
 
-/** Comments with tool directives or legal text must remain byte-for-byte intact. */
+/**
+ * Comments carrying a tool directive or legal text must remain byte-for-byte intact.
+ *
+ * The tool names are only half of a directive, so each has to be followed by the word that makes it one.
+ * Upstream matched the name alone, which made every comment citing `…-v8-cjk-regs.md` or a Vite
+ * config protected, and a protected comment is one this rule never touches and never reports.
+ */
 export function isProtected(text: string): boolean {
-	return /(?:eslint|oxlint|biome|prettier|oxfmt|stylelint|jshint|jslint|istanbul|c8|v8|vitest|webpack|vite|rollup|parcel|coverage|tslint|deno-lint)[-\s:]|@(?:ts-|jsx|flow\b|noflow\b|license\b|preserve\b|copyright\b|cc_on\b)|[#@]__[A-Z_]+__|[#@]\s*source(?:Mapping)?URL\s*=|\b(?:copyright|SPDX-License-Identifier|@license)\b|^\s*(?:global[s]?\s|exported\s|<reference\s|<amd-|!|:|#?region\b|#?endregion\b|language\s*=)/im.test(
-		text,
-	)
+	const directive =
+		/\b(?:eslint|oxlint|biome|prettier|oxfmt|stylelint|jshint|jslint|istanbul|c8|v8|vitest|webpack|vite|rollup|parcel|coverage|tslint|deno-lint)[-\s:]*(?:ignore|disable|enable|expect|skip|environment|chunk|exports|include|exclude|preserve|prefetch|preload|mode|no-)/i
+	const legal =
+		/@(?:ts-|jsx|flow\b|noflow\b|license\b|preserve\b|copyright\b|cc_on\b)|[#@]__[A-Z_]+__|[#@]\s*source(?:Mapping)?URL\s*=|\b(?:copyright|SPDX-License-Identifier|@license)\b|^\s*(?:global[s]?\s|exported\s|<reference\s|<amd-|!|:|#?region\b|#?endregion\b|language\s*=)/im
+	return directive.test(text) || legal.test(text)
 }
 
 // Read balanced inline constructs without changing their internal whitespace.
@@ -371,6 +376,11 @@ function groupSentences(sentences: readonly string[], perParagraph: number, lead
 		rest = rest.slice(1)
 	}
 	for (let i = 0; i < rest.length; i += perParagraph) groups.push(rest.slice(i, i + perParagraph))
+	const last = groups.at(-1)
+	// A short sentence left over on its own is a stranded paragraph, which reads worse than a paragraph of three.
+	if (groups.length > 1 && last && last.length === 1 && last[0]!.length < weights.orphanParagraph) {
+		groups.at(-2)!.push(...groups.pop()!)
+	}
 	return groups
 }
 
@@ -614,7 +624,6 @@ function fitsOnOneLine(lines: readonly string[], overhead: number, options: Requ
 
 /**
  * Format a group of standalone line comments.
- *
  * The first indent is external.
  */
 export function reflowLineComments(

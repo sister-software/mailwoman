@@ -164,10 +164,12 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("carries all three ingest conditions, so no one of them reads as the bottleneck", async () => {
-		// `ingestEligibilityProblems` refuses a source for an unchecked licence, an unresolved address role and
-		// unmeasured coverage alike. An earlier version of this funnel carried `licensed` and neither of the others, so
-		// the one universal blocker it could see is the one it reported. The fixture's sources carry no role and no
-		// coverage, which is the state of all 389 in the committed register.
+		// `ingestEligibilityProblems` refuses a source for an unchecked licence,
+		// an unresolved address role and unmeasured coverage alike.
+		// An earlier version of this funnel carried `licensed` and neither of the others,
+		// so the one universal blocker it could see is the one it reported.
+		// The fixture's sources carry no role and no coverage, which is the state
+		// of all 389 in the committed register.
 		const report = await funnel()
 		const kenya = report.rows.find((row) => row.iso2 === "KE")
 

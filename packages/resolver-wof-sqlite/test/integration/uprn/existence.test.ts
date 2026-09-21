@@ -34,7 +34,10 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Westminster holds a point. Edinburgh is covered and empty. New York is outside coverage entirely.
+ * Westminster holds a point.
+ *
+ * Edinburgh is covered and empty.
+ * New York is outside coverage entirely.
  */
 const WESTMINSTER = { latitude: 51.5007, longitude: -0.1246 }
 const EDINBURGH = { latitude: 55.9533, longitude: -3.1883 }

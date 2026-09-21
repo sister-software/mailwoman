@@ -62,10 +62,12 @@ import {
 /**
  * One coastal-erosion designation, recorded beside an answer.
  *
- * Everything a reader needs to check the claim is here: which authority, which product and vintage, which scenario, the
- * polygons the authority's mapping places the location inside with the distance each publishes, how containment was
- * established, and the coverage record with the sentence saying what it does not license. A reader holding the distance
- * alone cannot tell whether it was earned or which of twelve questions it answers.
+ * Everything a reader needs to check the claim is here: which authority, which product
+ * and vintage, which scenario, the polygons the authority's mapping places the
+ * location inside with the distance each publishes, how containment was established,
+ * and the coverage record with the sentence saying what it does not license.
+ * A reader holding the distance alone cannot tell whether it was earned or
+ * which of twelve questions it answers.
  */
 export interface CoastalErosionObservation {
 	/**
@@ -86,7 +88,9 @@ export interface CoastalErosionObservation {
 	designations: CoastalDesignation[]
 	containment: CoastalContainmentPath
 	/**
-	 * The coverage side of the claim. Its basis is `source_present`, which supports presence and nothing else.
+	 * The coverage side of the claim.
+	 *
+	 * Its basis is `source_present`, which supports presence and nothing else.
 	 */
 	coverage?: ObservationCoverageRecord
 	/**
@@ -171,10 +175,11 @@ export interface CoastalErosionRouteOptions {
 /**
  * Build the route against one sealed layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused by the reader's own constructor — a
- * manifest naming a different layer, a coverage table with no rows, and above all a coverage row whose basis would
- * support an exclusion. That last one would otherwise present as a route reporting the whole of inland England as
- * designated free of coastal erosion.
+ * Everything that would make the route answer a well-formed wrong thing is refused by the
+ * reader's own constructor — a manifest naming a different layer, a coverage table with
+ * no rows, and above all a coverage row whose basis would support an exclusion.
+ * That last one would otherwise present as a route reporting the whole of inland
+ * England as designated free of coastal erosion.
  */
 export function createCoastalErosionRoute(options: CoastalErosionRouteOptions): CoastalErosionRoute {
 	const lookup = new CoastalErosionLookup({ databasePath: options.databasePath })

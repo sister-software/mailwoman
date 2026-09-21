@@ -47,12 +47,14 @@ export async function buildAssembledArm(
 	// #743 EU country-constraint integrity fix: without it the assembled EU coords are not what a real
 	// caller sees (ambiguous EU names without a country constraint place off-continent).
 	const runAssembled = options.assembled ?? false
-	// `--place-country-hard` (#194/#743) promotes a confident placer guess to a hard country filter
-	// (empty→unresolved) — the change for the low-pop EU tail the soft prior can't move. Production-
-	// representative: conditional by the built-in coverage safelist (only well-covered countries hard-filter).
-	// `--place-country-hard-all` measures unrestricted (every confident country hard-filters, via a safelist
-	// override of the full in-map set) — how per-country hard-resolve-rates are measured to grow the
-	// safelist. Both imply the placer is loaded.
+	// `--place-country-hard` (#194/#743) promotes a confident placer guess to a hard country
+	// filter (empty→unresolved) — the change for the low-pop EU tail the soft prior can't move.
+	// Production- representative: conditional by the built-in coverage safelist
+	// (only well-covered countries hard-filter).
+	// `--place-country-hard-all` measures unrestricted
+	// (every confident country hard-filters, via a safelist override of the full in-map set) —
+	// how per-country hard-resolve-rates are measured to grow the safelist.
+	// Both imply the placer is loaded.
 	const useHardCountryAll = options.placeCountryHardAll ?? false
 	const useHardCountry = (options.placeCountryHard ?? false) || useHardCountryAll
 	const usePlaceCountry = (options.placeCountry ?? false) || useHardCountry
@@ -77,9 +79,10 @@ export async function buildAssembledArm(
 				resolver,
 				placeCountry: evalPlacer ?? false,
 				hardPlaceCountry: useHardCountry && !!evalPlacer,
-				// `--place-country-hard-all` overrides the production coverage safelist with the full in-map
-				// set, so every confident country hard-filters (unrestricted measurement). Plain `--place-country-hard`
-				// leaves it undefined → the built-in safelist (production-representative).
+				// `--place-country-hard-all` overrides the production coverage safelist with the full
+				// in-map set, so every confident country hard-filters (unrestricted measurement).
+				// Plain `--place-country-hard` leaves it undefined → the built-in
+				// safelist (production-representative).
 				...(useHardCountryAll
 					? { hardCountrySafelist: new Set(COARSE_CLASSES.filter((c) => c !== "OTHER")) as ReadonlySet<string> }
 					: {}),

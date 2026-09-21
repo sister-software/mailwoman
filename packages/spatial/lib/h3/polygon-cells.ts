@@ -443,9 +443,10 @@ export function featureCellRows(cells: FeatureCells): Array<{
 /**
  * The coverage cell a row at `cell` belongs to.
  *
- * `cellToParent` of the finer cell, never a fresh `latLngToCell` at the coarse resolution: every existing reader in
- * this repo derives a coverage cell that way, and the two agree for a point but not for a cell — a re-derivation from a
- * representative point would put a fringe row in a neighbouring coverage cell.
+ * `cellToParent` of the finer cell, never a fresh `latLngToCell` at the coarse resolution:
+ * every existing reader in this repo derives a coverage cell that way, and the two
+ * agree for a point but not for a cell — a re-derivation from a representative point
+ * would put a fringe row in a neighbouring coverage cell.
  */
 export function coverageCellFor(cell: H3Cell, coverageResolution: number): H3Cell {
 	return cellToParent(cell, coverageResolution) as H3Cell
@@ -454,9 +455,9 @@ export function coverageCellFor(cell: H3Cell, coverageResolution: number): H3Cel
 /**
  * Record the coverage cells one index cell falls in.
  *
- * An adaptively-coarsened cell can be coarser than the coverage resolution, in which case it spans several coverage
- * cells and every one of them is recorded: a coarse cell counted against one arbitrary child would leave the others
- * reading as empty.
+ * An adaptively-coarsened cell can be coarser than the coverage resolution, in
+ * which case it spans several coverage cells and every one of them is recorded:
+ * a coarse cell counted against one arbitrary child would leave the others reading as empty.
  */
 export function addCoverageCells(
 	into: Set<number>,

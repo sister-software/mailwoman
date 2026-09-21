@@ -133,9 +133,10 @@ function percent(value: number): string {
 /**
  * Turn a count into a reading that states its own limits.
  *
- * The zero case is the one that matters and gets the strongest wording: a zero is not a measurement of absence unless
- * the denominator is large enough to have detected the thing. This is the repo's standing meaning-of-zero rule aimed at
- * the agent's own probes rather than at a coverage cell.
+ * The zero case is the one that matters and gets the strongest wording: a zero is not a
+ * measurement of absence unless the denominator is large enough to have detected the thing.
+ * This is the repo's standing meaning-of-zero rule aimed at the agent's own probes
+ * rather than at a coverage cell.
  */
 export function describeObservedRate(observed: ObservedRate): PowerReading {
 	const { events, n, selection, eventLabel, populationN } = observed

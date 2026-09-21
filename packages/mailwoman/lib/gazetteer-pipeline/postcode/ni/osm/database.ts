@@ -93,8 +93,9 @@ import {
 const COUNTRY = "GB"
 
 /**
- * Live NI postcodes per onspd Feb 2025 — the denominator the coverage fraction is stated against. Sourced in
- * `../codepoint/fetch.ts`'s `NORTHERN_IRELAND_OPTIONS_NOTE`.
+ * Live NI postcodes per onspd Feb 2025 — the denominator the coverage fraction is stated against.
+ *
+ * Sourced in `../codepoint/fetch.ts`'s `NORTHERN_IRELAND_OPTIONS_NOTE`.
  */
 export const NI_LIVE_POSTCODES = 50_032
 

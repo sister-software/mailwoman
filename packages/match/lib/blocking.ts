@@ -137,10 +137,11 @@ export interface BlockResult<R> {
 }
 
 /**
- * Generate candidate pairs from `records` via one or more blocking keys (their union). Builds an inverted index (key →
- * records) and emits the unique within-block pairs. A block larger than `maxBlockSize` is skipped and reported in
- * `droppedBlocks` rather than blowing up into a quadratic scan — an explicit, visible coverage limit rather than a
- * silent drop.
+ * Generate candidate pairs from `records` via one or more blocking keys (their union).
+ *
+ * Builds an inverted index (key → records) and emits the unique within-block pairs.
+ * A block larger than `maxBlockSize` is skipped and reported in `droppedBlocks` rather than blowing
+ * up into a quadratic scan — an explicit, visible coverage limit rather than a silent drop.
  */
 export function block<R>(
 	records: readonly R[],

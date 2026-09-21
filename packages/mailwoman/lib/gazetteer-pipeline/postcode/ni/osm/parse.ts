@@ -107,8 +107,10 @@ export interface NIPostcodeRecord {
 	latitude: number
 	longitude: number
 	/**
-	 * How many OSM elements attested this postcode. Coverage evidence, and the reason a database consumer can tell a
-	 * one-node guess from a 40-building consensus.
+	 * How many OSM elements attested this postcode.
+	 *
+	 * Coverage evidence, and the reason a database consumer can tell a one-node
+	 * guess from a 40-building consensus.
 	 */
 	attestations: number
 	/**

@@ -52,8 +52,8 @@ export const LADDER: readonly ComponentTag[] = [
 ]
 
 /**
- * Rungs measured by parent-coverage share rather than node presence — everything below the locality backbone, which is
- * the denominator those shares are taken against.
+ * Rungs measured by parent-coverage share rather than node presence — everything below
+ * the locality backbone, which is the denominator those shares are taken against.
  */
 export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
 	"dependent_locality",
@@ -62,8 +62,10 @@ export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTa
 ])
 
 /**
- * The locality-class placetypes that host address-containing children — the parent set and the parent-coverage
- * denominator. Matches `PARENT_PLACETYPES` in `placetype-census.ts` by construction.
+ * The locality-class placetypes that host address-containing children —
+ * the parent set and the parent-coverage denominator.
+ *
+ * Matches `PARENT_PLACETYPES` in `placetype-census.ts` by construction.
  */
 export const PARENT_PLACETYPES: readonly string[] = ["locality", "localadmin"]
 
@@ -278,9 +280,10 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 /**
  * The deepest rung a country actually reaches, or `null` when it has nothing live at any rung.
  *
- * Two presence rules, because parent-coverage is only meaningful below the locality backbone — the backbone is its
- * denominator. At or above `locality`, a rung counts as reached when it has any nodes. Below it, when parent-coverage
- * clears `floor`.
+ * Two presence rules, because parent-coverage is only meaningful below the locality
+ * backbone — the backbone is its denominator.
+ * At or above `locality`, a rung counts as reached when it has any nodes.
+ * Below it, when parent-coverage clears `floor`.
  */
 export function bottomsOutAt(country: CountryGranularity, floor: number = DEFAULT_COVERAGE_FLOOR): ComponentTag | null {
 	for (const rung of [...LADDER].toReversed()) {

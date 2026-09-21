@@ -291,8 +291,8 @@ export function canonicalFormCoverage(
 }
 
 /**
- * The coverage line a report prints — the DoD's transformed-over-eligible ratio, with the denominator's own breakdown
- * beside it so a reader can see which arms the population is able to state.
+ * The coverage line a report prints — the DoD's transformed-over-eligible ratio, with the denominator's
+ * own breakdown beside it so a reader can see which arms the population is able to state.
  */
 export function describeCanonicalFormCoverage(
 	fixtures: readonly ConformanceFixture[],

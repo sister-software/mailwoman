@@ -464,10 +464,11 @@ export async function applySpanRescore(
 	// reads was uncomputable for exactly the famous-homonym class.
 	// The winner is unchanged (see findRescoreCandidate); this is additive.
 	decorateNode(node, hit.place, hit.alternatives)
-	// `rescore_postcode_verified` carries the check's precision signal as an explicit handle — not folded into the
-	// calibrated `confidence`, which would violate the isotonic bound (a true calibrated 0.83 must not
-	// be confused with a rescore plug-in estimate. DeepSeek 2026-06-23). true = postcode check fired
-	// (high-precision); false = unrestricted (no postcode→point coverage for this country, ~83%-precision).
+	// `rescore_postcode_verified` carries the check's precision signal as an explicit handle —
+	// not folded into the calibrated `confidence`, which would violate the isotonic bound
+	// (a true calibrated 0.83 must not be confused with a rescore plug-in estimate. DeepSeek 2026-06-23).
+	// true = postcode check fired (high-precision); false = unrestricted
+	// (no postcode→point coverage for this country, ~83%-precision).
 	node.metadata = { ...node.metadata, span_rescore: true, rescore_postcode_verified: hit.postcodeVerified }
 	roots.push(node)
 
@@ -539,31 +540,38 @@ async function recoverPostcodeNode(
 export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
 
 /**
- * Postcode-disambiguated locality selection (#370 "Change A"). The single biggest miss on the EU/AU panel is a
- * same-named town resolved to the wrong instance — "06260 Saint-Pierre" lands 617 km off — while the postcode that
- * would disambiguate it (06260 → Alpes-Maritimes) sits resolved in the same tree, discarded because the
- * coordinate-picker prefers the (wrong) locality node and never cross- checks it. This post-walk pass closes that loop,
- * backend-agnostically and with no extra query:
+ * Postcode-disambiguated locality selection (#370 "Change A").
  *
- * 1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is unambiguous within a country in a way
- *    a town name is not).
- * 2. For each resolved locality node farther than `thresholdKm` from it: re-pick the same-named candidate from the node's
- *    already-captured `alternatives` that is nearest the postcode and within the radius. This keeps locality
- *    granularity at the correct instance.
- * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate back to the postcode point
- *    (right area, the safe answer) and flag `postcode_city_mismatch`.
+ * The single biggest miss on the EU/AU panel is a same-named town resolved to the wrong
+ * instance — "06260 Saint-Pierre" lands 617 km off — while the postcode that would
+ * disambiguate it (06260 → Alpes-Maritimes) sits resolved in the same tree, discarded
+ * because the coordinate-picker prefers the (wrong) locality node and never cross- checks it.
+ * This post-walk pass closes that loop, backend-agnostically and with no extra query:
  *
- * Step 3 rests on the postcode being the more reliable of the two, which holds while the postcode is correct. A
- * postcode carries no checksum, so a transposed one is a valid code naming a real place and the step relocates the
- * answer there; `maxMoveKm` bounds that relocation, at {@link DEFAULT_POSTCODE_MAX_MOVE_KM} unless a caller names one.
- * Past the bound the coordinate stays on the selected locality and the node is still flagged, because the components
- * did disagree — what changes is which one the answer follows. Unbounded, the step moved `Nawāda, 744301` 1,914 km onto
- * Port Blair while keeping Nawada's place id.
+ * 1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is
+ *    unambiguous within a country in a way a town name is not).
+ * 2. For each resolved locality node farther than `thresholdKm` from it:
+ *    re-pick the same-named candidate from the node's already-captured `alternatives`
+ *    that is nearest the postcode and within the radius.
+ *    This keeps locality granularity at the correct instance.
+ * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate
+ *    back to the postcode point (right area, the safe answer) and flag `postcode_city_mismatch`.
  *
- * Only fires where the postcode resolved to a point, so it composes with postcode coverage (#193) — add a country's
- * postcodes and this immediately disambiguates its same-named towns. **Default-on** since the #370 operator promotion
- * (2026-07-04, commit `0010bb8c`) — `opts.postcodeConsistency: false` opts out, and the pass is byte-stable on every
- * tree with no resolved postcode point (the `!anchor` early return below).
+ * Step 3 rests on the postcode being the more reliable of the two, which holds
+ * while the postcode is correct.
+ * A postcode carries no checksum, so a transposed one is a valid code naming a real place
+ * and the step relocates the answer there; `maxMoveKm` bounds that relocation,
+ * at {@link DEFAULT_POSTCODE_MAX_MOVE_KM} unless a caller names one.
+ *
+ * Past the bound the coordinate stays on the selected locality and the node is still flagged,
+ * because the components did disagree — what changes is which one the answer follows.
+ * Unbounded, the step moved `Nawāda, 744301` 1,914 km onto Port Blair while keeping Nawada's place id.
+ *
+ * Only fires where the postcode resolved to a point, so it composes with postcode coverage
+ * (#193) — add a country's postcodes and this immediately disambiguates its same-named
+ * towns. **Default-on** since the #370 operator promotion (2026-07-04, commit `0010bb8c`) —
+ * `opts.postcodeConsistency: false` opts out, and the pass is byte-stable on every tree
+ * with no resolved postcode point (the `!anchor` early return below).
  */
 export function applyPostcodeConsistency(
 	roots: readonly AddressNode[],

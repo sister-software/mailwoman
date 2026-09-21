@@ -99,8 +99,10 @@ export const HARD_CASE_CLASSES = [
 export type HardCaseClass = (typeof HARD_CASE_CLASSES)[number]
 
 /**
- * Whether this row's country is inside the shipped FST country scope. See the file header — a row marked `out` is
- * expected to tie across arms, and its tie is evidence about coverage rather than about importance.
+ * Whether this row's country is inside the shipped FST country scope.
+ *
+ * See the file header — a row marked `out` is expected to tie across arms,
+ * and its tie is evidence about coverage rather than about importance.
  */
 export const FST_REACH = ["in", "out"] as const
 

@@ -47,8 +47,10 @@ export interface FetchGeonamesDumpOptions extends BaseFetchOptions {
 	 */
 	countries?: readonly string[]
 	/**
-	 * Dump directory to read from. Defaults to GeoNames' own. exists so the 404 and coverage behaviour can be exercised
-	 * against a local server.
+	 * Dump directory to read from.
+	 *
+	 * Defaults to GeoNames' own. exists so the 404 and coverage behaviour can
+	 * be exercised against a local server.
 	 */
 	baseURL?: string
 	/**

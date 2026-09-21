@@ -215,7 +215,9 @@ export interface BuildZoningResult {
 	storedResolutions: number[]
 	coverageCells: number
 	/**
-	 * The basis every coverage row carries. `source_present`, always, while `zoning_mapped_extent` is empty.
+	 * The basis every coverage row carries.
+	 *
+	 * `source_present`, always, while `zoning_mapped_extent` is empty.
 	 */
 	coverageBasis: CoverageBasis
 	tier: LayerTier
@@ -292,9 +294,10 @@ const WORST_PAIRS_REPORTED = 8
 /**
  * Build the layer.
  *
- * @throws {Error} On a feature that reaches no cell, a feature count that disagrees with the source's own declaration,
- *   an area total that disagrees with the publisher's, a coverage row that would license a negative claim, a crosswalk
- *   edge table written while the mapping is not a function, or a `shipped` tier asked for under an unresolved licence.
+ * @throws {Error} On a feature that reaches no cell, a feature count that disagrees with
+ *   the source's own declaration, an area total that disagrees with the publisher's,
+ *   a coverage row that would license a negative claim, a crosswalk edge table written while
+ *   the mapping is not a function, or a `shipped` tier asked for under an unresolved licence.
  */
 export async function buildZoningDatabase(options: BuildZoningOptions): Promise<BuildZoningResult> {
 	const tier = options.tier ?? LayerTier.BuildLocal
@@ -482,9 +485,10 @@ interface StreamResult {
 /**
  * Add up what the chunks reported.
  *
- * Exported for its own test: the coverage-cell arithmetic and the crosswalk-pair merge are the parts of the batched
- * path a fixture build cannot reach, and getting either wrong produces a well-formed artifact — one that under-reports
- * how many polygons a cell holds, or one that reports a mapping as a function because no single chunk saw it break.
+ * Exported for its own test: the coverage-cell arithmetic and the crosswalk-pair merge are
+ * the parts of the batched path a fixture build cannot reach, and getting either wrong
+ * produces a well-formed artifact — one that under-reports how many polygons a cell holds,
+ * or one that reports a mapping as a function because no single chunk saw it break.
  */
 export function aggregateChunks(chunks: ReadonlyArray<ZoningChunkResult>): StreamResult {
 	const observedByCoverageCell = new Map<number, number>()
@@ -523,8 +527,8 @@ export function aggregateChunks(chunks: ReadonlyArray<ZoningChunkResult>): Strea
 		adjacentHoles += chunk.rings.adjacentHoles
 		exteriorByMagnitude += chunk.rings.exteriorByMagnitude
 
-		// A coverage cell straddles chunk boundaries, so the counts ADD rather than replace. Taking the last chunk's value
-		// would report a cell as holding only the last chunk's polygons.
+		// A coverage cell straddles chunk boundaries, so the counts ADD rather than replace.
+		// Taking the last chunk's value would report a cell as holding only the last chunk's polygons.
 		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
 
 		for (const [code, name] of chunk.jurisdictions) {
@@ -705,11 +709,13 @@ async function runBatchedIngest(
 /**
  * Refuse a coverage row that would license a negative claim.
  *
- * This is the check the meaning-OF-zero rule turns on, and it is a condition rather than a convention. The Department
- * publishes its coverage detail only inside a map viewer, so no row of this layer may support an exclusion — a
- * `designated` or `surveyed` basis here would let an absent zoning polygon be read as a statement that no restriction
- * applies, over most of the map. The reader checks the same thing at open time, so an artifact built by some other path
- * cannot get past it either.
+ * This is the check the meaning-OF-zero rule turns on, and it is a condition rather than a convention.
+ * The Department publishes its coverage detail only inside a map viewer, so no row of this
+ * layer may support an exclusion — a `designated` or `surveyed` basis here would let an absent
+ * zoning polygon be read as a statement that no restriction applies, over most of the map.
+ *
+ * The reader checks the same thing at open time, so an artifact built by some
+ * other path cannot get past it either.
  */
 export function assertNoNegativeClaim(cells: ReadonlyArray<CoverageCell>): void {
 	assertCoverageNoNegativeClaim("zoning build", cells, GZT_COVERAGE_LIMIT)

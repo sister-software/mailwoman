@@ -146,8 +146,8 @@ describe("readBoardCoverage", () => {
 	})
 
 	it("counts PASSING rows apart from tracked ones", async () => {
-		// A country whose rows are all `improvement_target` has nothing verified, and reporting its row count as
-		// coverage is the mistake this separation exists to prevent.
+		// A country whose rows are all `improvement_target` has nothing verified, and reporting
+		// its row count as coverage is the mistake this separation exists to prevent.
 		const board = await readBoardCoverage(join(root, "cases"))
 
 		expect(board.get("GB")).toEqual({ rows: 2, passed: 1 })

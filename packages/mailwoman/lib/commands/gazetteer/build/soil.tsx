@@ -40,8 +40,10 @@ import {
 import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * Coverage resolution. Res 6 matches what the POI and flood layers write, so a reader already keyed to another layer's
- * coverage cells finds these without knowing which build produced them.
+ * Coverage resolution.
+ *
+ * Res 6 matches what the POI and flood layers write, so a reader already keyed to another
+ * layer's coverage cells finds these without knowing which build produced them.
  */
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 

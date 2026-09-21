@@ -323,8 +323,9 @@ export interface ResolverBackend {
 	 */
 	ancestors?(id: number | string): Ancestor[]
 	/**
-	 * Facts the loaded gazetteer artifact declares about itself (its coverage-manifest tables, read at open). optional —
-	 * absent when the artifact predates the manifest, and consumers fall back to the code constants.
+	 * Facts the loaded gazetteer artifact declares about itself
+	 * (its coverage-manifest tables, read at open). optional — absent when the artifact
+	 * predates the manifest, and consumers fall back to the code constants.
 	 */
 	artifactCoverage?: GazetteerArtifactCoverage
 }
@@ -595,13 +596,18 @@ export interface ResolveOpts {
 	/**
 	 * #743/#194 — a confident coarse-placer country applied as a hard candidate filter (`query.country`), not the soft
 	 * {@link anchorPosterior} boost. This collapses the off-continent tail for LOW-population places the soft prior can't
-	 * move (FI/PL — their towns lose to a high-pop namesake in the population-first gazetteer even when the country is
-	 * pinned). On a miss the node is left unresolved ("in-region or unresolved") rather than re-resolved globally — the
-	 * off-continent rows are precisely the ones whose locality isn't among the gazetteer's rows for the country, so a
-	 * global fallback just re-admits the wrong-continent guess (measured: it collapses back to the soft-prior baseline).
-	 * The improvement is coverage-bounded: tail collapse at a recall cost set by how complete the country's gazetteer is
-	 * (PL −9.5pp, FI −32pp). Undefined (default) → byte-stable. Ignored when a resolved parent or {@link defaultCountry}
-	 * already pins the country.
+	 * move (FI/PL — their towns lose to a high-pop namesake in the population-first
+	 * gazetteer even when the country is pinned).
+	 *
+	 * On a miss the node is left unresolved ("in-region or unresolved") rather than
+	 * re-resolved globally — the off-continent rows are precisely the ones whose locality
+	 * isn't among the gazetteer's rows for the country, so a global fallback just re-admits
+	 * the wrong-continent guess (measured: it collapses back to the soft-prior baseline).
+	 * The improvement is coverage-bounded: tail collapse at a recall cost set by how
+	 * complete the country's gazetteer is (PL −9.5pp, FI −32pp).
+	 *
+	 * Undefined (default) → byte-stable.
+	 * Ignored when a resolved parent or {@link defaultCountry} already pins the country.
 	 */
 	hardCountry?: string
 	/**
@@ -734,8 +740,10 @@ export interface ResolveOpts {
 	 */
 	spanRescore?: boolean
 	/**
-	 * Postcode-consistency check radius (km) for the span-rescore tier — reject a recovered locality farther than this
-	 * from where the postcode resolves. Only bites when the backend has postcode coverage (else no anchor, no check).
+	 * Postcode-consistency check radius (km) for the span-rescore tier — reject a recovered
+	 * locality farther than this from where the postcode resolves.
+	 *
+	 * Only bites when the backend has postcode coverage (else no anchor, no check).
 	 * Default 50.
 	 */
 	spanRescoreThresholdKm?: number
@@ -1125,15 +1133,18 @@ export interface ResolveOpts {
 	 */
 	traceSink?: (record: ResolveNodeTrace) => void
 	/**
-	 * When a lookup resolves nothing, re-probe the same value across the other admin bands and record which ones hold it
-	 * ({@link ResolveNodeTrace.reachableIn}) — a diagnostic that never changes the answer.
+	 * When a lookup resolves nothing, re-probe the same value across the other admin bands
+	 * and record which ones hold it ({@link ResolveNodeTrace.reachableIn}) —
+	 * a diagnostic that never changes the answer.
 	 *
-	 * The distinction it provides is the one a `null` cannot carry: a key we hold under a different placetype is a
-	 * reachability failure — the model's tag chose the band, and a wrong tag makes a row we own unreachable — while a key
-	 * that exists nowhere is a coverage fact. Those call for opposite work and today reach a caller identically.
+	 * The distinction it provides is the one a `null` cannot carry: a key we hold under a
+	 * different placetype is a reachability failure — the model's tag chose the band, and a wrong
+	 * tag makes a row we own unreachable — while a key that exists nowhere is a coverage fact.
+	 * Those call for opposite work and today reach a caller identically.
 	 *
-	 * Costs one extra backend call per band per miss, so it is off by default and belongs to debug surfaces. Requires
-	 * `traceSink`: with no sink there is nowhere to record the answer, and the probes would be pure cost.
+	 * Costs one extra backend call per band per miss, so it is off by default and belongs to debug surfaces.
+	 * Requires `traceSink`: with no sink there is nowhere to record the answer,
+	 * and the probes would be pure cost.
 	 */
 	diagnoseUnreachable?: boolean
 }
@@ -1231,9 +1242,11 @@ export interface Resolver {
 	 */
 	findPlace?: ResolverBackend["findPlace"]
 	/**
-	 * Facts the loaded gazetteer artifact declares about itself, passed through from the {@link ResolverBackend} so
-	 * pipeline-level consumers (the hard-country coverage check, guard-B plausibility) read them from the handle they
-	 * already hold. Absent = artifact predates the manifest → code-constant fallback.
+	 * Facts the loaded gazetteer artifact declares about itself, passed
+	 * through from the {@link ResolverBackend} so pipeline-level consumers
+	 * (the hard-country coverage check, guard-B plausibility) read them from the handle they already hold.
+	 *
+	 * Absent = artifact predates the manifest → code-constant fallback.
 	 */
 	artifactCoverage?: GazetteerArtifactCoverage
 	/**

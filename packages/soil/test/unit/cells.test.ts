@@ -81,8 +81,9 @@ function chunk(partial: Partial<SoilChunkResult>): SoilChunkResult {
 
 describe("aggregateChunks", () => {
 	it("ADDS coverage-cell counts across chunks rather than replacing them", () => {
-		// A coverage cell straddles chunk boundaries — a range of feature ids is not a region, and a coverage cell can
-		// straddle two survey areas. Taking the last chunk's value would report a dense county as holding only its final
+		// A coverage cell straddles chunk boundaries — a range of feature ids is not a region,
+		// and a coverage cell can straddle two survey areas.
+		// Taking the last chunk's value would report a dense county as holding only its final
 		// few delineations, which is a well-formed artifact that under-reports what it holds.
 		const result = aggregateChunks([
 			chunk({ delineations: 3, observedByCoverageCell: [[11, 3]], mappedByCoverageCell: [[11, 2]] }),

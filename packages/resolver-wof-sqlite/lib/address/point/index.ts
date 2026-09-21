@@ -206,12 +206,14 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			}
 		}
 
-		// Letter-suffix spacing fallback: the registers disagree on the joint — BAN stores "3 a"
-		// (space-separated), G-NAF and most OA sources store "3a" — and the parsed surface can arrive
-		// either way. On a miss, retry the other spacing. on a double miss, the base number (the
-		// register attests no 3A but does attest 3 — the adjacent-parcel approximation, priced the
-		// same as the range fallback's low end). Null-only throughout, and only for the
-		// digits+single-letter shape (never touches "12 1/2" or unit-containing forms).
+		// Letter-suffix spacing fallback: the registers disagree on the joint —
+		// BAN stores "3 a" (space-separated), G-NAF and most OA sources store "3a" —
+		// and the parsed surface can arrive either way.
+		// On a miss, retry the other spacing. on a double miss, the base number
+		// (the register attests no 3A but does attest 3 — the adjacent-parcel approximation,
+		// priced the same as the range fallback's low end).
+		// Null-only throughout, and only for the digits+single-letter shape
+		// (never touches "12 1/2" or unit-containing forms).
 		if (!row) {
 			const joined = /^(\d+)\s+([a-z])$/.exec(number)
 			const spaced = /^(\d+)([a-z])$/.exec(number)
@@ -223,11 +225,12 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			}
 		}
 
-		// Sub-number fallback for the Taiwanese register: `14之12` is building 12 off number 14, `30附40` an attached
-		// number, stored as number `14` / `30` with the rest in `unit`. A query that kept the pair on the number span
-		// falls to the base number — the same adjacent-parcel approximation the letter-suffix rung makes, priced the
-		// same: on the 2,000-row served read the rows answered this way sit a median 256 m and at most 1.0 km from the
-		// building.
+		// Sub-number fallback for the Taiwanese register: `14之12` is building 12 off number 14,
+		// `30附40` an attached number, stored as number `14` / `30` with the rest in `unit`.
+		// A query that kept the pair on the number span falls to the base number —
+		// the same adjacent-parcel approximation the letter-suffix rung makes, priced the same:
+		// on the 2,000-row served read the rows answered this way sit a median 256 m
+		// and at most 1.0 km from the building.
 		if (!row && this.#locale === "zh") {
 			const base = /^(\d+)(?:[之附]\d+)+$/u.exec(number)?.[1]
 

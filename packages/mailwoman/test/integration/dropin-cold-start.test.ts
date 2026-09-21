@@ -112,8 +112,8 @@ const TEST_TIMEOUT_MS = 150_000
 const PULL_TIMEOUT_MS = 600_000
 
 /**
- * The conditional test's own vitest timeout: the pull, plus two server boots and a geocode call, each independently
- * bounded.
+ * The conditional test's own vitest timeout: the pull, plus two server boots
+ * and a geocode call, each independently bounded.
  */
 const CONDITIONAL_TEST_TIMEOUT_MS = PULL_TIMEOUT_MS + 3 * HEALTHY_TIMEOUT_MS + 30_000
 

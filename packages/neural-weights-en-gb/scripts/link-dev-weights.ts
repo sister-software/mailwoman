@@ -121,9 +121,12 @@ const overlay = await materializeDevOverlay({
 const POSTCODE_BIN_DEST = resolvePath(overlay.destDir, "postcode-gb.bin")
 
 /**
- * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0), 1,746,976 units, every one placed.
- * The retired GeoNames-lineage `postalcode-gb.db` is not it. Coverage gap, measured: zero Northern Ireland (`BT`) codes
- * — the shaped keyer's outward fallback is what carries those rows.
+ * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0),
+ * 1,746,976 units, every one placed.
+ *
+ * The retired GeoNames-lineage `postalcode-gb.db` is not it.
+ * Coverage gap, measured: zero Northern Ireland (`BT`) codes — the shaped keyer's
+ * outward fallback is what carries those rows.
  */
 const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
 

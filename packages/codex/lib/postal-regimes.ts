@@ -101,7 +101,8 @@ export interface PostalRegime {
 	 */
 	shape: string
 	/**
-	 * What the repository does with such an address today, and what is missing when coverage is not `modeled`.
+	 * What the repository does with such an address today, and what is missing
+	 * when coverage is not `modeled`.
 	 */
 	note: string
 }

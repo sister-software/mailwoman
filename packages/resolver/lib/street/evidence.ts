@@ -179,19 +179,27 @@ export interface StreetEvidencePick<T = unknown> {
 	 */
 	moved: boolean
 	/**
-	 * Indices an exclusion demoted, in input order. Empty when no exclusion applied — a loggable record of what the
-	 * coverage check licensed, distinct from what evidence found.
+	 * Indices an exclusion demoted, in input order.
+	 *
+	 * Empty when no exclusion applied — a loggable record of what the coverage check
+	 * licensed, distinct from what evidence found.
 	 */
 	demoted: number[]
 }
 
 /**
- * The measured v2 rerank policy. Given candidates in parse-score order (rank-1 first) and an evidence probe, return the
- * first candidate whose street surface passes all of: (1) exists in the index, (2) G1 — not pure type vocabulary, (3)
- * G2 — within `marginCap` of rank-1. If none passes, return rank-1 (fail-open). Positive evidence only. the model's
- * order is preserved among equal-evidence candidates. This is the `resolver/rerank.ts` anti-Pelias discipline applied
- * to the name signal: one bit, no blending. `opts.exclusions` adds one more bit in the same fold: a coverage-licensed
- * absence demotes its candidate behind every un-excluded sibling and never removes it.
+ * The measured v2 rerank policy.
+ *
+ * Given candidates in parse-score order (rank-1 first) and an evidence probe,
+ * return the first candidate whose street surface passes all of: (1) exists in the index,
+ * (2) G1 — not pure type vocabulary, (3) G2 — within `marginCap` of rank-1.
+ * If none passes, return rank-1 (fail-open).
+ *
+ * Positive evidence only. the model's order is preserved among equal-evidence candidates.
+ * This is the `resolver/rerank.ts` anti-Pelias discipline applied to the name signal: one bit, no blending.
+ *
+ * `opts.exclusions` adds one more bit in the same fold: a coverage-licensed absence
+ * demotes its candidate behind every un-excluded sibling and never removes it.
  *
  * @param candidates Parse candidates, rank-1 first (the caller sorts by score descending).
  */

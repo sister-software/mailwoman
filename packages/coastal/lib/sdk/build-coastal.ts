@@ -198,7 +198,9 @@ export interface BuildCoastalResult {
 	storedResolutions: number[]
 	coverageCells: number
 	/**
-	 * The basis every coverage row carries. `source_present`, always, while `coastal_mapped_extent` is empty.
+	 * The basis every coverage row carries.
+	 *
+	 * `source_present`, always, while `coastal_mapped_extent` is empty.
 	 */
 	coverageBasis: CoverageBasis
 	/**
@@ -228,9 +230,9 @@ const AREA_TOLERANCE = 0.01
 /**
  * Build the layer.
  *
- * @throws {Error} On a value outside the authority's declared domains, a feature that reaches no cell, a feature count
- *   that disagrees with the source's own declaration, an area total that disagrees with the source's, or a coverage row
- *   that would license a negative claim.
+ * @throws {Error} On a value outside the authority's declared domains, a feature that reaches
+ *   no cell, a feature count that disagrees with the source's own declaration, an area total
+ *   that disagrees with the source's, or a coverage row that would license a negative claim.
  */
 export async function buildCoastalDatabase(options: BuildCoastalOptions): Promise<BuildCoastalResult> {
 	if (options.coverageResolution >= options.indexResolution) {
@@ -362,8 +364,9 @@ interface StreamResult {
 /**
  * Add up what the chunks reported.
  *
- * Exported for its own test: the coverage-cell arithmetic is the one part of the batched path a fixture build cannot
- * reach, and getting it wrong produces a well-formed artifact that under-reports how many polygons a cell holds.
+ * Exported for its own test: the coverage-cell arithmetic is the one part of the batched
+ * path a fixture build cannot reach, and getting it wrong produces a well-formed
+ * artifact that under-reports how many polygons a cell holds.
  */
 export function aggregateChunks(chunks: ReadonlyArray<CoastalChunkResult>): StreamResult {
 	const scenarioCounts: Record<string, number> = {}
@@ -395,9 +398,10 @@ export function aggregateChunks(chunks: ReadonlyArray<CoastalChunkResult>): Stre
 
 		mergeCountsInto(defenceTypeCounts, chunk.defenceTypeCounts)
 
-		// A coverage cell straddles chunk boundaries — one chunk is one scenario, and every scenario covers the same coast
-		// — so the counts ADD rather than replace. Taking the last chunk's value would report a cell as holding only the
-		// last scenario's polygons, which is a twelfth of what is there.
+		// A coverage cell straddles chunk boundaries — one chunk is one scenario,
+		// and every scenario covers the same coast — so the counts ADD rather than replace.
+		// Taking the last chunk's value would report a cell as holding only the last
+		// scenario's polygons, which is a twelfth of what is there.
 		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
 	}
 
@@ -443,10 +447,11 @@ function assertScenarioCounts(
 /**
  * Refuse a coverage row that would license a negative claim.
  *
- * This is the check the meaning-OF-zero inversion turns on. ncerm publishes no coverage statement, so no row of this
- * layer may support an exclusion — a `designated` or `surveyed` basis here would let an absent polygon be read as a
- * designation of safety over the whole of inland England. The reader checks the same thing at open time, so an artifact
- * built by some other path cannot get past it either.
+ * This is the check the meaning-OF-zero inversion turns on. ncerm publishes no coverage statement,
+ * so no row of this layer may support an exclusion — a `designated` or `surveyed` basis here would
+ * let an absent polygon be read as a designation of safety over the whole of inland England.
+ * The reader checks the same thing at open time, so an artifact built by some
+ * other path cannot get past it either.
  */
 export function assertNoNegativeClaim(cells: ReadonlyArray<CoverageCell>): void {
 	assertCoverageNoNegativeClaim("coastal build", cells, NCERM_COVERAGE_LIMIT)

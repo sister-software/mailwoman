@@ -35,9 +35,10 @@ import { $public } from "#env"
 import { fstFreshnessWarning } from "#fst/freshness"
 
 /**
- * Replicate `ln -sf SRC dest` atomically: symlink under a temp name, then rename over the destination. A plain
- * unlink-then-symlink leaves a no-file window that concurrent vitest workers can hit mid-suite — bit CI on 2026-07-24.
- * rename(2) replaces the destination atomically.
+ * Replicate `ln -sf SRC dest` atomically: symlink under a temp name, then rename over the destination.
+ *
+ * A plain unlink-then-symlink leaves a no-file window that concurrent vitest workers can
+ * hit mid-suite — bit CI on 2026-07-24. rename(2) replaces the destination atomically.
  */
 export async function linkForce(src: string, dest: string): Promise<void> {
 	const tmp = `${dest}.tmp-link`

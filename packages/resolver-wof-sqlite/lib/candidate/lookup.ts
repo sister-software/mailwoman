@@ -205,9 +205,12 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 */
 	readonly #nameKeyExistsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
-	 * Facts this candidate DB declares about itself — the coverage manifest (`country_coverage` + `country_bbox`) the
-	 * gazetteer build emits, read once at open. `undefined` when the artifact predates the manifest, so every consumer
-	 * (the hard-country coverage check, guard-B plausibility) falls back to its code constants byte-identically.
+	 * Facts this candidate DB declares about itself — the coverage manifest
+	 * (`country_coverage` + `country_bbox`) the gazetteer build emits, read once at open.
+	 *
+	 * `undefined` when the artifact predates the manifest, so every consumer
+	 * (the hard-country coverage check, guard-B plausibility) falls back to its
+	 * code constants byte-identically.
 	 */
 	readonly artifactCoverage: GazetteerArtifactCoverage | undefined
 	/**
@@ -343,9 +346,9 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			}
 		}
 
-		// Coverage manifest (survey candidate #2): the artifact's own coverage facts, existence-restricted like
-		// the probes above — a candidate.db built before the manifest reads `undefined` and consumers keep
-		// their code-constant fallbacks byte-identically.
+		// Coverage manifest (survey candidate #2): the artifact's own coverage facts,
+		// existence-restricted like the probes above — a candidate.db built before the manifest
+		// reads `undefined` and consumers keep their code-constant fallbacks byte-identically.
 		this.artifactCoverage = readGazetteerCoverageManifest(this.#db)
 	}
 

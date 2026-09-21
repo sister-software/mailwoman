@@ -221,9 +221,11 @@ export interface ZoningReading {
 	designations: ZoningDesignation[]
 	containment: ZoningContainmentPath
 	/**
-	 * The coverage row for the location, when the product has data in that cell. Its basis is always `source_present`, so
-	 * it licenses presence and nothing else — an absent coverage row and a present one are both compatible with "no
-	 * zoning polygon here", and neither says the location is unrestricted.
+	 * The coverage row for the location, when the product has data in that cell.
+	 *
+	 * Its basis is always `source_present`, so it licenses presence and nothing else —
+	 * an absent coverage row and a present one are both compatible with "no zoning
+	 * polygon here", and neither says the location is unrestricted.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
 	/**
@@ -264,13 +266,16 @@ export interface ZoningLayerIdentity {
 	 */
 	crosswalkScheme?: string
 	/**
-	 * The authority's footprint statements. Empty in this edition, which is what makes `source_present` the only basis
+	 * The authority's footprint statements.
+	 *
+	 * Empty in this edition, which is what makes `source_present` the only basis
 	 * the coverage may carry — see `schema.ts`.
 	 */
 	mappedExtents: Array<{ extentID: string; source: string; statement: string; statementURL: string }>
 	/**
-	 * The coverage basis every row carries. Always `source_present` while `mappedExtents` is empty. checked at open time
-	 * rather than assumed.
+	 * The coverage basis every row carries.
+	 *
+	 * Always `source_present` while `mappedExtents` is empty. checked at open time rather than assumed.
 	 */
 	coverageBasis: CoverageBasis
 	databasePath: string
@@ -310,11 +315,12 @@ interface PlanRow {
 /**
  * Read a sealed `zoning-ireland.db`.
  *
- * Everything that would make the reader answer a well-formed wrong thing is refused at construction rather than at
- * query time: a manifest naming a different layer, a coverage table with no rows, a coverage row whose basis would
- * support an exclusion, an empty jurisdiction table. Each of those would otherwise present as a reader that quietly
- * always answers `unknown` — or, in the exclusion case, as a reader that confidently reports unzoned-and-unmapped land
- * as free of restriction.
+ * Everything that would make the reader answer a well-formed wrong thing is refused at construction
+ * rather than at query time: a manifest naming a different layer, a coverage table with no rows,
+ * a coverage row whose basis would support an exclusion, an empty jurisdiction table.
+ * Each of those would otherwise present as a reader that quietly always answers
+ * `unknown` — or, in the exclusion case, as a reader that confidently reports
+ * unzoned-and-unmapped land as free of restriction.
  */
 export class ZoningLookup implements Disposable {
 	readonly identity: ZoningLayerIdentity
@@ -547,10 +553,13 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 		throw new Error(`zoning reader: ${databasePath} declares no h3 spine key`)
 	}
 
-	// the exclusion check, and IT is A condition rather than A convention. The Department publishes its coverage detail
-	// only inside a map viewer, so no row of this layer may license a claim that a location is unrestricted. A stronger
-	// basis reaching a caller would let an absent polygon be read as a designation of freedom to build over most of the
-	// map. The check itself is the interface's rather than this product's. the sentence saying why is this product's.
+	// the exclusion check, and IT is A condition rather than A convention.
+	// The Department publishes its coverage detail only inside a map viewer, so no row
+	// of this layer may license a claim that a location is unrestricted.
+	// A stronger basis reaching a caller would let an absent polygon be read as a
+	// designation of freedom to build over most of the map.
+	// The check itself is the interface's rather than this product's. the sentence
+	// saying why is this product's.
 	assertCoverageLicensesNoExclusion(
 		(database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{ basis: string | null }>).map(
 			(coverageRow) => coverageRow.basis
@@ -589,10 +598,11 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 			.all() as Array<{ crosswalk_scheme: string }>
 	).map((entry) => entry.crosswalk_scheme)
 
-	// the coverage resolution is recovered from the cells rather than declared. The manifest's spine key names the index
-	// resolution; `layer_coverage` is keyed at a coarser one, and this layer has no footprint row to carry it. Recovering
-	// it is exact rather than approximate — a short cell expands to a valid index at exactly one resolution — and the
-	// shared helper throws on a table that mixes them.
+	// the coverage resolution is recovered from the cells rather than declared.
+	// The manifest's spine key names the index resolution; `layer_coverage` is keyed at
+	// a coarser one, and this layer has no footprint row to carry it.
+	// Recovering it is exact rather than approximate — a short cell expands to a valid index
+	// at exactly one resolution — and the shared helper throws on a table that mixes them.
 	const coverageResolution = recoverShortCellResolution(
 		(database.prepare("SELECT h3_cell FROM layer_coverage").all() as Array<{ h3_cell: number }>).map(
 			(coverageRow) => coverageRow.h3_cell

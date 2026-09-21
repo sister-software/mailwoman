@@ -49,10 +49,12 @@ export async function syncArtifact(
 }
 
 /**
- * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + wasm) into `destDir`. The demo loads these at
- * runtime by URL — the UMD via a classic <script>, the worker + wasm passed to createDbWorker — so webpack never sees
- * them. That's deliberate: bundling sql.js-httpvfs (a webpack UMD bundle with dynamic Worker/wasm requires) is exactly
- * what produces "Critical dependency" build warnings, so we keep it out of the graph entirely.
+ * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + wasm) into `destDir`.
+ *
+ * The demo loads these at runtime by URL — the UMD via a classic <script>,
+ * the worker + wasm passed to createDbWorker — so webpack never sees them.
+ * That's deliberate: bundling sql.js-httpvfs (a webpack UMD bundle with dynamic Worker/wasm requires) is
+ * exactly what produces "Critical dependency" build warnings, so we keep it out of the graph entirely.
  *
  * @param destDir - E.g. static/mailwoman/sqljs
  */

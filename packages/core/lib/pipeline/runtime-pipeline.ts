@@ -85,21 +85,28 @@ const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
 /**
  * #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering costs no recall
- * — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss → unresolved" is rare and
- * almost always a genuine non-match rather than a coverage gap. A confident placement outside this set stays on the
- * soft prior, so the low-coverage tail (FI/PL/…) keeps its recall until its gazetteer is filled (#193): covered
- * countries get the hard filter's precision, and the rest keep their recall.
+ * — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss
+ * → unresolved" is rare and almost always a genuine non-match rather than a coverage gap.
  *
- * Fallback role (survey candidate #2, 2026-07-26): this set is now the fallback for gazetteer artifacts that predate
- * the coverage manifest. Facts about the artifact live IN the artifact — the candidate gazetteer's `country_coverage`
- * table carries the per-country promotion-eval verdicts + the measured rates (the numbers that used to be trivia in
- * this comment), and a loaded artifact's derived safelist (`resolver.artifactCoverage.hardCountrySafelist`) takes
- * precedence over this constant. The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
- * (MEASURED_COUNTRY_COVERAGE — grow that at promotes. it updates the artifact at rebuild). Precedence: per-call
- * `PipelineOpts.hardCountrySafelist` (the eval's instrument, measures unrestricted to grow the list) → the loaded
- * artifact's manifest → this constant. Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE:
- * US/FR/DE 100, ES 99.8, NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (measured, out); GB + CA at the #928 promote
- * (2026-07-06, OSM panels, night 34); AU with the #244 placer class (2026-07-06).
+ * A confident placement outside this set stays on the soft prior, so the low-coverage
+ * tail (FI/PL/…) keeps its recall until its gazetteer is filled (#193): covered countries
+ * get the hard filter's precision, and the rest keep their recall.
+ *
+ * Fallback role (survey candidate #2, 2026-07-26): this set is now the fallback for
+ * gazetteer artifacts that predate the coverage manifest.
+ * Facts about the artifact live IN the artifact — the candidate gazetteer's `country_coverage`
+ * table carries the per-country promotion-eval verdicts + the measured rates
+ * (the numbers that used to be trivia in this comment), and a loaded artifact's derived safelist
+ * (`resolver.artifactCoverage.hardCountrySafelist`) takes precedence over this constant.
+ *
+ * The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
+ * (MEASURED_COUNTRY_COVERAGE — grow that at promotes. it updates the artifact at rebuild).
+ * Precedence: per-call `PipelineOpts.hardCountrySafelist` (the eval's instrument,
+ * measures unrestricted to grow the list) → the loaded artifact's manifest → this constant.
+ *
+ * Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE: US/FR/DE 100,
+ * ES 99.8, NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (measured, out); GB + CA at the #928
+ * promote (2026-07-06, OSM panels, night 34); AU with the #244 placer class (2026-07-06).
  */
 export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 	"US",
@@ -147,14 +154,18 @@ export function isBarePostcodeTree(tree: AddressTree): boolean {
 
 /**
  * #743/#194: the shared coverage-guard check — decide whether a confident coarse-placer country should become a hard
- * candidate filter. Exported so the two production placeCountry call sites (the runtime pipeline and `geocodeAddress`)
- * apply the same three conditions and can't drift: confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF}, country in the
- * safelist (override or the default {@link HARD_PLACE_COUNTRY_SAFELIST}), and no caller-set hard/default country to
- * respect. Returns the country to hard-filter, or `undefined` to stay on the soft prior.
+ * candidate filter.
  *
- * `safelist` precedence is the caller's job: pass `perCallOverride ?? resolver.artifactCoverage?.hardCountrySafelist`
- * (the eval instrument first, then the loaded artifact's own manifest) and this check falls back to the code constant
- * only when both are absent — byte-identical to the pre-manifest behavior.
+ * Exported so the two production placeCountry call sites (the runtime pipeline and `geocodeAddress`)
+ * apply the same three conditions and can't drift: confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF},
+ * country in the safelist (override or the default {@link HARD_PLACE_COUNTRY_SAFELIST}),
+ * and no caller-set hard/default country to respect.
+ * Returns the country to hard-filter, or `undefined` to stay on the soft prior.
+ *
+ * `safelist` precedence is the caller's job: pass
+ * `perCallOverride ?? resolver.artifactCoverage?.hardCountrySafelist`
+ * (the eval instrument first, then the loaded artifact's own manifest) and this check falls back
+ * to the code constant only when both are absent — byte-identical to the pre-manifest behavior.
  */
 export function hardCountryFor(
 	placedCountry: string,
@@ -349,14 +360,16 @@ export async function runPipeline(
 
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
 			// #194/#743: promote a confident placement to a hard country filter (empty→unresolved) when the
-			// caller opts in, the confidence clears the bar, and the country is in the coverage safelist. The
-			// soft posterior alone can't move a LOW-population place (a FI town loses to a high-pop namesake
-			// even when FI is pinned); the hard filter does. Three conditions: confidence (ambiguous DK↔no stay
-			// soft), the safelist (only well-covered countries — where a miss is a genuine non-match rather than a
-			// coverage gap — hard-filter. the low-coverage tail keeps its recall on the soft path), and the
-			// caller's own hardCountry/defaultCountry is never overwritten. Safelist precedence: the per-call
-			// `hardCountrySafelist` override (the eval measures unrestricted to grow it) → the loaded gazetteer
-			// artifact's own coverage manifest → the code-constant fallback inside hardCountryFor.
+			// caller opts in, the confidence clears the bar, and the country is in the coverage safelist.
+			// The soft posterior alone can't move a LOW-population place
+			// (a FI town loses to a high-pop namesake even when FI is pinned); the hard filter does.
+			// Three conditions: confidence (ambiguous DK↔no stay soft), the safelist
+			// (only well-covered countries — where a miss is a genuine non-match rather than a
+			// coverage gap — hard-filter. the low-coverage tail keeps its recall on the soft path),
+			// and the caller's own hardCountry/defaultCountry is never overwritten.
+			// Safelist precedence: the per-call `hardCountrySafelist` override
+			// (the eval measures unrestricted to grow it) → the loaded gazetteer artifact's
+			// own coverage manifest → the code-constant fallback inside hardCountryFor.
 			const hardCountry = hardCountryFor(
 				placed.country,
 				placed.confidence,

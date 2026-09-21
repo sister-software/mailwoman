@@ -75,7 +75,10 @@ export interface SeedCase {
 	expectTier?: ResolutionTier
 	/**
 	 * True = the expected outcome is no coordinate: the resolver abstains rather than answering, and any resolved
-	 * coordinate fails the row. Mutually exclusive with `expectLat`/`expectLon` (the schema refuses the combination). The
+	 * coordinate fails the row.
+	 *
+	 * Mutually exclusive with `expectLat`/`expectLon` (the schema refuses the combination).
+	 * The
 	 * #1585 fuzzy-scope interface: a scoped-empty typo correction abstains instead of falling through world-fuzzy. such a
 	 * row is re-pinned to real coordinates once coverage arrives (its note names the artifact).
 	 */

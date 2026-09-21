@@ -282,11 +282,13 @@ export interface GeocodeLike {
 }
 
 /**
- * The already-open infra layer this scorer composes against {@link nearestInfrastructure}. The caller owns both
- * handles' open/dispose lifecycle (mirrors `nearestInfrastructure`'s own `using poiLookup = new POILookup(...)`
- * precedent). `schemadb` is used two ways: passed straight through to `nearestInfrastructure` (per-hit coverage), and
- * read directly here (the whole-cell coverage check this module needs for `coverage_confidence`, independent of whether
- * any hit was actually found).
+ * The already-open infra layer this scorer composes against {@link nearestInfrastructure}.
+ *
+ * The caller owns both handles' open/dispose lifecycle
+ * (mirrors `nearestInfrastructure`'s own `using poiLookup = new POILookup(...)` precedent).
+ * `schemadb` is used two ways: passed straight through to `nearestInfrastructure`
+ * (per-hit coverage), and read directly here (the whole-cell coverage check this module
+ * needs for `coverage_confidence`, independent of whether any hit was actually found).
  */
 export interface PlausibilityPOIDeps {
 	lookup: POILookup
@@ -371,9 +373,9 @@ function confidenceStateForAxis(state: PlausibilityCoverageAxisState): "covered"
 }
 
 /**
- * Combine the two layers' coverage states into the bundle's `coverage_confidence` — see the module docstring for the
- * `"not_applicable"` extension's reasoning (deliberately conservative: never `"high"` without a real, applicable
- * two-channel opportunity).
+ * Combine the two layers' coverage states into the bundle's `coverage_confidence` —
+ * see the module docstring for the `"not_applicable"` extension's reasoning
+ * (deliberately conservative: never `"high"` without a real, applicable two-channel opportunity).
  */
 function combineCoverage(
 	filingState: PlausibilityCoverageAxisState,
@@ -394,17 +396,22 @@ function combineCoverage(
 }
 
 /**
- * See the module docstring's coverage-resolution note. Throws when a wired layer's manifest disagrees with
- * `BDC_H3_RESOLUTION` — the single constant `plausibilityCheck` actually uses at runtime to derive both the
- * filing-lookup cell (bdc side, via `pointCell`) and the coverage-cell join key `readLayerCoverage` is read against
- * (poi side, via `res9ShortCellToRes6Parent(pointCell)`).
+ * See the module docstring's coverage-resolution note.
  *
- * Checked independently per layer, whenever that layer is wired — not only when `bdcDB` and `poi` are wired together. A
- * poi-only call still needs poi's own recorded resolution checked, because `pointCell` is computed unconditionally from
- * `BDC_H3_RESOLUTION` and still drives the poi coverage-cell read below. Comparing each layer directly against the
- * constant, rather than the two manifests against each other, is also strictly stronger: it catches a layer built under
- * a since-changed `BDC_H3_RESOLUTION` even when the other layer is absent entirely rather than just a disagreement
- * between two present layers.
+ * Throws when a wired layer's manifest disagrees with `BDC_H3_RESOLUTION` — the single
+ * constant `plausibilityCheck` actually uses at runtime to derive both the filing-lookup
+ * cell (bdc side, via `pointCell`) and the coverage-cell join key `readLayerCoverage`
+ * is read against (poi side, via `res9ShortCellToRes6Parent(pointCell)`).
+ *
+ * Checked independently per layer, whenever that layer is wired — not only
+ * when `bdcDB` and `poi` are wired together.
+ * A poi-only call still needs poi's own recorded resolution checked, because `pointCell` is computed
+ * unconditionally from `BDC_H3_RESOLUTION` and still drives the poi coverage-cell read below.
+ *
+ * Comparing each layer directly against the constant, rather than the two manifests
+ * against each other, is also strictly stronger: it catches a layer built under a
+ * since-changed `BDC_H3_RESOLUTION` even when the other layer is absent entirely
+ * rather than just a disagreement between two present layers.
  */
 async function assertLayerSpineResolution(
 	layer: "bdc" | "poi",
@@ -464,9 +471,10 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 		? shortCellToInt(latLngToCell(point.coordinates[1], point.coordinates[0], BDC_H3_RESOLUTION) as H3Cell)
 		: undefined
 
-	// Cheap, one-time per-layer sanity check — see the module docstring's coverage-resolution note. Runs
-	// independently per wired layer rather than only when both are present: a poi-only call still joins poi's coverage
-	// table against a BDC_H3_RESOLUTION-derived cell (below) and must not do so unchecked.
+	// Cheap, one-time per-layer sanity check — see the module docstring's coverage-resolution note.
+	// Runs independently per wired layer rather than only when both are present:
+	// a poi-only call still joins poi's coverage table against a BDC_H3_RESOLUTION-derived
+	// cell (below) and must not do so unchecked.
 	if (deps.bdcDB) {
 		await assertLayerSpineResolution("bdc", deps.bdcDB, BDC_H3_RESOLUTION)
 	}

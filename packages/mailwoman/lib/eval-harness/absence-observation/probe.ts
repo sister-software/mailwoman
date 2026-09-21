@@ -74,11 +74,14 @@ export interface AbsenceProbeRow {
 	 */
 	requiresSemanticRoute: boolean
 	/**
-	 * The category set the row is graded on, in code-point order — the union the POI branch searched after the anchor's
-	 * country bound the reached set (#1999). A row's registered outcome binds to the categories the coverage layer
-	 * surveyed, and an activity phrase whose afforded set exceeds them can only be decidable if the binding narrowed it.
-	 * stating the set per row is what lets the runner refuse a row that fired for a set nobody registered. Optional for a
-	 * venue-noun row, whose set is the noun.
+	 * The category set the row is graded on, in code-point order — the union the POI
+	 * branch searched after the anchor's country bound the reached set (#1999).
+	 *
+	 * A row's registered outcome binds to the categories the coverage layer surveyed,
+	 * and an activity phrase whose afforded set exceeds them can only be decidable
+	 * if the binding narrowed it. stating the set per row is what lets the runner
+	 * refuse a row that fired for a set nobody registered.
+	 * Optional for a venue-noun row, whose set is the noun.
 	 */
 	searchedCategories?: string[]
 	/**
@@ -103,8 +106,9 @@ export interface AbsenceProbeDefinition {
 	claim: string
 	asymmetry: string
 	/**
-	 * The coverage layer the rows were registered against, by filename under `$MAILWOMAN_DATA_ROOT/poi/`. Never an
-	 * absolute path: the definition is committed and the data root is per-machine.
+	 * The coverage layer the rows were registered against, by filename under `$MAILWOMAN_DATA_ROOT/poi/`.
+	 *
+	 * Never an absolute path: the definition is committed and the data root is per-machine.
 	 */
 	coverageLayerFile: string
 	coverageLayerNote: string

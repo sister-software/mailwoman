@@ -47,8 +47,10 @@ export interface MapBias {
 }
 
 /**
- * A host-supplied overlay: one map `<Source>` plus one or more `<Layer>`s laid over the basemap (coverage "fog of war",
- * race-dots, …). The host composes the specs. the package renders them declaratively in a later phase.
+ * A host-supplied overlay: one map `<Source>` plus one or more `<Layer>`s laid
+ * over the basemap (coverage "fog of war", race-dots, …).
+ *
+ * The host composes the specs. the package renders them declaratively in a later phase.
  */
 export interface OverlaySpec {
 	/**

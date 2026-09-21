@@ -425,12 +425,14 @@ export const NCERM_PRODUCT_LIMITS: ReadonlyArray<string> = [
 /**
  * Why this layer's coverage licenses no negative claim, in one sentence a receipt can carry.
  *
- * The inversion OF the flood rule, and the whole reason this layer exists AS A second one. For flood zones the
- * authority states England-wide coverage and defines Zone 1 as the absence, so a location with no polygon is a
- * designation. ncerm publishes no coverage statement at all, and a location in England with no erosion polygon is one
- * of two entirely different things — not on the coast, or on the coast and outside the mapped risk area — which the
- * published layers cannot tell apart. A builder that copied the flood rule would write "no erosion risk" over the whole
- * country.
+ * The inversion OF the flood rule, and the whole reason this layer exists AS A second one.
+ * For flood zones the authority states England-wide coverage and defines Zone 1
+ * as the absence, so a location with no polygon is a designation. ncerm publishes
+ * no coverage statement at all, and a location in England with no erosion polygon
+ * is one of two entirely different things — not on the coast, or on the coast
+ * and outside the mapped risk area — which the published layers cannot tell apart.
+ *
+ * A builder that copied the flood rule would write "no erosion risk" over the whole country.
  */
 export const NCERM_COVERAGE_LIMIT =
 	"The Environment Agency publishes erosion zones and no coverage statement for this product. " +

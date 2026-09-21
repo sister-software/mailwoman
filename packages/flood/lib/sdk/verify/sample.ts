@@ -60,8 +60,8 @@ export function sampleAgreementPoints(
 		}
 	)
 
-	// A designated absence is a coverage cell the authority determined and no polygon reaches — exactly the cells whose
-	// `observed_rows` is zero, which is the storable form of a Zone 1 designation.
+	// A designated absence is a coverage cell the authority determined and no polygon reaches —
+	// exactly the cells whose `observed_rows` is zero, which is the storable form of a Zone 1 designation.
 	const emptyCount = (
 		database.prepare("SELECT count(*) AS n FROM layer_coverage WHERE observed_rows = 0").get() as { n: number }
 	).n

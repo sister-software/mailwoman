@@ -732,7 +732,9 @@ export function nsulMismatches(counts: NSULIngestCounts, minimumPlausibleRows: n
 }
 
 /**
- * Build the sealed `nsul.db` layer. See the module docstring for the checks and the coverage semantics.
+ * Build the sealed `nsul.db` layer.
+ *
+ * See the module docstring for the checks and the coverage semantics.
  */
 export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<BuildNSULLayerResult> {
 	const phase = options.onPhase ?? (() => {})

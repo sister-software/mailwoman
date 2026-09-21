@@ -29,8 +29,8 @@ import { TileSetSourceID } from "#styles/sources"
 /**
  * The MapLibre source id the address-coverage overlay is registered under.
  *
- * The `-v5` suffix is part of the id rather than a version to bump casually: a style and the PMTiles archive
- * it points at agree by this string, so changing it orphans every layer that names the old one.
+ * The `-v5` suffix is part of the id rather than a version to bump casually: a style and the PMTiles
+ * archive it points at agree by this string, so changing it orphans every layer that names the old one.
  */
 export const CoverageTileSetID = TileSetSourceID("coverage-v5")
 
@@ -63,8 +63,8 @@ export const CoverageLayerID = {
 } as const
 
 /**
- * Build the coverage source spec from the tile worker's TileJSON endpoint
- * (`https://tiles.mailwoman.ai/coverage-v5.json`).
+ * Build the coverage source spec from the tile worker's TileJSON
+ * endpoint (`https://tiles.mailwoman.ai/coverage-v5.json`).
  */
 export function createCoverageSource(url: string): VectorSourceSpecification {
 	return { type: "vector", url }

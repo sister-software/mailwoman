@@ -40,8 +40,8 @@ import { sql, type Kysely } from "kysely"
 export const NSUL_H3_RESOLUTION = 9
 
 /**
- * Resolution of the layer's `layer_coverage` cells — coarse, per the interface, and the same as `uprn.db`'s so the two
- * layers' coverage tables describe the same cells.
+ * Resolution of the layer's `layer_coverage` cells — coarse, per the interface,
+ * and the same as `uprn.db`'s so the two layers' coverage tables describe the same cells.
  */
 export const NSUL_COVERAGE_H3_RESOLUTION = 6
 

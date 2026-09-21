@@ -153,7 +153,9 @@ export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureC
 
 export interface ReconciliationReportOptions {
 	/**
-	 * H1 title. Default: "Coverage reconciliation — eligibility ↔ enrollment".
+	 * H1 title.
+	 *
+	 * Default: "Coverage reconciliation — eligibility ↔ enrollment".
 	 */
 	title?: string
 	/**

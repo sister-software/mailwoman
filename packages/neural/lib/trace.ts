@@ -85,10 +85,12 @@ export interface TracePrior {
 	 */
 	census?: PlacetypeCensusObservation[]
 	/**
-	 * `placetypeCensus` only: how many distinct parent surfaces were probed against the census, hit or miss — the
-	 * denominator for {@link census}. `0` with a census loaded means the probe chain never reached a parent candidate
-	 * (e.g. a single-token input); a positive count with an empty {@link census} means the census genuinely knew none of
-	 * them, which is coverage rather than a claim that those parents have no children.
+	 * `placetypeCensus` only: how many distinct parent surfaces were probed against
+	 * the census, hit or miss — the denominator for {@link census}.
+	 *
+	 * `0` with a census loaded means the probe chain never reached a parent candidate
+	 * (e.g. a single-token input); a positive count with an empty {@link census} means the census genuinely
+	 * knew none of them, which is coverage rather than a claim that those parents have no children.
 	 */
 	censusProbedParents?: number
 }

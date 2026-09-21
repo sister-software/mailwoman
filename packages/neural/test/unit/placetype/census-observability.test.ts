@@ -182,8 +182,9 @@ describe("census observability — what lands on the trace", () => {
 			LABELS
 		)
 
-		// Both segments take the parent role in the other's iteration, so two distinct surfaces were looked up and the
-		// census knew neither. An empty list with a positive denominator is coverage rather than a claim.
+		// Both segments take the parent role in the other's iteration, so two distinct
+		// surfaces were looked up and the census knew neither.
+		// An empty list with a positive denominator is coverage rather than a claim.
 		expect(probeTrace.censusObservations).toEqual([])
 		expect(probeTrace.censusProbedParents).toBe(2)
 	})

@@ -25,14 +25,16 @@ import type { CensusAddressComponents, CensusAddressMatch } from "#sdk/census/ty
 /**
  * The tier every Census match carries, without exception.
  *
- * The Census geocoder locates an address by finding the tiger/Line segment whose address range contains the house
- * number and interpolating a position along it — which is what `tigerLine.tigerLineId`, `tigerLine.side` and
- * `addressComponents.fromAddress`/`toAddress` are all evidence of. There is no parcel or structure layer behind it, so
- * it cannot produce a rooftop coordinate even for an address it matches perfectly. `interpolated` is not a hedge here.
- * it is the mechanism.
+ * The Census geocoder locates an address by finding the tiger/Line segment whose address range contains
+ * the house number and interpolating a position along it — which is what `tigerLine.tigerLineId`,
+ * `tigerLine.side` and `addressComponents.fromAddress`/`toAddress` are all evidence of.
+ * There is no parcel or structure layer behind it, so it cannot produce a rooftop
+ * coordinate even for an address it matches perfectly.
+ * `interpolated` is not a hedge here. it is the mechanism.
  *
- * A consequence worth carrying into a gauntlet case: a Census coordinate is routinely 20–100 m from the building, and
- * further on a long rural segment. Pin `expectToleranceM` against that rather than against a rooftop assumption.
+ * A consequence worth carrying into a gauntlet case: a Census coordinate is routinely
+ * 20–100 m from the building, and further on a long rural segment.
+ * Pin `expectToleranceM` against that rather than against a rooftop assumption.
  */
 export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
 

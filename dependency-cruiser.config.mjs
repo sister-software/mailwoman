@@ -11,9 +11,12 @@
 /// <reference types="node" />
 
 /**
- * Generated trees, excluded from the cruise and never followed into. `out/` is tsc's emit and `dist/` an app's Vite
- * output — bundled chunks whose cycles are the bundler's, not the source graph's. `public/sqljs/` is the sql.js-httpvfs
- * runtime staged by `@mailwoman/site-kit/vite/stage-sqljs`; it is gitignored, and the readers load it by URL.
+ * Generated trees, excluded from the cruise and never followed into.
+ *
+ * `out/` is tsc's emit and `dist/` an app's Vite output — bundled chunks whose
+ * cycles are the bundler's, not the source graph's.
+ * `public/sqljs/` is the sql.js-httpvfs runtime staged by `@mailwoman/site-kit/vite/stage-sqljs`;
+ * it is gitignored, and the readers load it by URL.
  */
 const GENERATED_TREES = "(?:^|/)(?:out|dist|node_modules|public/sqljs|sentencepiece[.]mjs)(?:/|$)"
 

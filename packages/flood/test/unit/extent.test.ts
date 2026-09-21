@@ -65,8 +65,10 @@ describe("realizeFloodMapExtent", () => {
 	})
 
 	it("refuses an outline that yields no interior cell rather than building a silent no-op", () => {
-		// Resolution 2 cells are hundreds of thousands of square kilometres, so nothing lies wholly inside this rectangle.
-		// A zero-cell footprint would write no coverage rows and answer "unknown" everywhere while reporting success.
+		// Resolution 2 cells are hundreds of thousands of square kilometres,
+		// so nothing lies wholly inside this rectangle.
+		// A zero-cell footprint would write no coverage rows and answer "unknown"
+		// everywhere while reporting success.
 		expect(() => realize(GEOMETRY, 2)).toThrow(/no interior cell/u)
 	})
 })

@@ -170,16 +170,21 @@ export interface CreateRuntimePipelineOpts {
 	normalizeCase?: boolean
 	/**
 	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a confident coarse-placer guess from
-	 * the soft prior to a hard country filter (empty→unresolved). **default-on** (#743, 2026-06-22): the built-in
-	 * coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard filter to well-covered countries
-	 * (US/ES/IT/NL/DE/FR), so it's a pure win there and a no-op (soft prior) for the low-coverage tail (FI/PL) — no
-	 * recall regression. Pass `false` to opt out entirely. a per-call `runOpts.hardPlaceCountry` overrides this.
+	 * the soft prior to a hard country filter (empty→unresolved). **default-on** (#743, 2026-06-22):
+	 * the built-in coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard
+	 * filter to well-covered countries (US/ES/IT/NL/DE/FR), so it's a pure win there
+	 * and a no-op (soft prior) for the low-coverage tail (FI/PL) — no recall regression.
+	 *
+	 * Pass `false` to opt out entirely. a per-call `runOpts.hardPlaceCountry` overrides this.
 	 */
 	hardPlaceCountry?: boolean
 	/**
 	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that checks the hard
-	 * country filter. Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`. Used by the resolver eval to measure
-	 * unrestricted hard-resolve-rates (the full in-map set) when growing the list.
+	 * country filter.
+	 *
+	 * Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`.
+	 * Used by the resolver eval to measure unrestricted hard-resolve-rates
+	 * (the full in-map set) when growing the list.
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
@@ -589,9 +594,9 @@ export function createRuntimePipeline(
 		}
 
 		// Apply factory-level defaults (#690 normalizeCase, #743/#194 hardPlaceCountry);
-		// a per-call runOpts value overrides each. hardPlaceCountry is default-on
-		// (#743, 2026-06-22): the coverage safelist confines the hard filter to well-covered
-		// countries, so this is a pure win there and a no-op (soft) for the rest.
+		// a per-call runOpts value overrides each. hardPlaceCountry is default-on (#743, 2026-06-22):
+		// the coverage safelist confines the hard filter to well-covered countries,
+		// so this is a pure win there and a no-op (soft) for the rest.
 		// A caller passes `hardPlaceCountry: false` to opt back out entirely.
 		const factoryHardPlaceCountry = opts.hardPlaceCountry ?? true
 		let effectiveRunOpts = runOpts

@@ -125,16 +125,22 @@ function placetypeFromKey(key: string): string | null {
 }
 
 /**
- * Insert missing ancestor rows for every place whose ancestry chain dead-ended before reaching a country, by reading
- * `wof:hierarchy` from its source geojson under `geojsonRoots` (see {@link discoverAdminDataRoots}). Runs inside a
- * single transaction. caller owns connection lifecycle (open, WAL checkpoint, close).
+ * Insert missing ancestor rows for every place whose ancestry chain dead-ended
+ * before reaching a country, by reading `wof:hierarchy` from its source geojson
+ * under `geojsonRoots` (see {@link discoverAdminDataRoots}).
  *
- * `opts.maxID` bounds the candidate scan to ids below it — pass the synthetic-id base (`OVERTURE_ID_BASE`, 8e12) so the
- * backfill considers only real WOF places. Overture/GeoNames rows carry synthetic ids and have no `wof:hierarchy`
- * geojson, so probing them is pure waste: on a wide-coverage DB the country-less set is millions of Overture/GeoNames
- * leaf localities, and the per-candidate geojson probe across every repo root turns a seconds-long WOF-only pass into a
- * ~40-minute one (their ancestry comes from the parent_id closure rather than this backfill). Correctness-preserving —
- * the skipped rows would have `noGeojson`-skipped anyway. Omit `maxID` (default) for the legacy WOF-only DBs.
+ * Runs inside a single transaction. caller owns connection lifecycle (open, WAL checkpoint, close).
+ *
+ * `opts.maxID` bounds the candidate scan to ids below it — pass the synthetic-id base
+ * (`OVERTURE_ID_BASE`, 8e12) so the backfill considers only real WOF places.
+ * Overture/GeoNames rows carry synthetic ids and have no `wof:hierarchy` geojson,
+ * so probing them is pure waste: on a wide-coverage DB the country-less set is
+ * millions of Overture/GeoNames leaf localities, and the per-candidate geojson probe
+ * across every repo root turns a seconds-long WOF-only pass into a ~40-minute one
+ * (their ancestry comes from the parent_id closure rather than this backfill).
+ *
+ * Correctness-preserving — the skipped rows would have `noGeojson`-skipped anyway.
+ * Omit `maxID` (default) for the legacy WOF-only DBs.
  */
 export async function backfillAncestorsFromHierarchy(
 	db: DatabaseClient<WOFDatabase>,
@@ -164,12 +170,12 @@ export async function backfillAncestorsFromHierarchy(
 
 	const candidates = await candidateBase.select(["id", "placetype"]).execute()
 
-	// Every candidate's existing ancestors in one query rather than an indexed read each. The widened
-	// candidate test made that per-candidate read the dominant cost of the pass, and the set is bounded:
-	// a candidate reaching this point has a handful of rows at most. The candidate set rides in as the
-	// same predicate re-issued as a subquery, never a materialized `IN (?, ?, …)` list — node:sqlite
-	// caps a statement at 32,766 bound variables and the wide-coverage build has 67,521 candidates
-	// (measured 2026-08-04).
+	// Every candidate's existing ancestors in one query rather than an indexed read each.
+	// The widened candidate test made that per-candidate read the dominant cost of the pass,
+	// and the set is bounded: a candidate reaching this point has a handful of rows at most.
+	// The candidate set rides in as the same predicate re-issued as a subquery, never a
+	// materialized `IN (?, ?, …)` list — node:sqlite caps a statement at 32,766 bound variables
+	// and the wide-coverage build has 67,521 candidates (measured 2026-08-04).
 	const alreadyPresent = new Map<number, Set<number>>()
 
 	for (const row of await db

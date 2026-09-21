@@ -91,9 +91,12 @@ export interface CoverageBuildOptions {
 	 */
 	optimisticGamma: number
 	/**
-	 * GeoNames postal file (12-col tab-separated) — the global postcode coverage signal that clears the "where do we need
-	 * data" holes. Null to skip. A postcode is area-scale, so centroids bin at the domain resolution and a domain cell
-	 * holding ≥1 postcode reads as postcode-resolvable (covered).
+	 * GeoNames postal file (12-col tab-separated) — the global postcode coverage
+	 * signal that clears the "where do we need data" holes.
+	 *
+	 * Null to skip.
+	 * A postcode is area-scale, so centroids bin at the domain resolution and a domain
+	 * cell holding ≥1 postcode reads as postcode-resolvable (covered).
 	 */
 	geonamesPostalFile: string | null
 	/**
@@ -317,8 +320,9 @@ export async function buildCoverageTiles(
 		await duck.run("CREATE TEMP TABLE data_seg (cell UBIGINT, cnt BIGINT)")
 	}
 
-	// domain9: every fine child of a domain-res parent holding either signal, with the address-point count
-	// (pt), segment count (seg), and a blended coverage score cov ∈ [0,1] (points strong, segments weak).
+	// domain9: every fine child of a domain-res parent holding either signal,
+	// with the address-point count (pt), segment count (seg), and a blended coverage
+	// score cov ∈ [0,1] (points strong, segments weak).
 	onProgress("domain", "expanding fog neighborhood + blending signals…")
 
 	await duck.run(`
@@ -407,15 +411,17 @@ export async function buildCoverageTiles(
 	}
 
 	// Build the global civilization-minus-coverage holes layer.
-	// The map's job worldwide: make it obvious where human civilization is and whether we cover it. A
-	// salient place we don't cover is a gray hole = work to do. We model it as fog = salience·(1−cov):
+	// The map's job worldwide: make it obvious where human civilization is and whether we cover it.
+	// A salient place we don't cover is a gray hole = work to do.
+	// We model it as fog = salience·(1−cov):
 	//   • salience ∈ [0,1] — WOF settlement places weighted by population/importance (a 1-ring halo), so
 	//     a big uncovered city is a dark hole, a hamlet a faint one, the empty steppe nothing.
 	//   • cov ∈ [0,1] — postcode presence (GeoNames) clears the hole (a postcode = we can geocode here).
 	//     US is excluded — the rooftop fine map above already covers it at street level.
-	// Only cells with residual fog (uncovered salient places) are emitted, so the layer is just the
-	// holes — covered + empty stay clear (basemap). Same `coverage` layer + fog props as the US tier, so
-	// the demo renders it unchanged, at res-domainRes [onset…max] + a res-4 low-zoom rollup.
+	// Only cells with residual fog (uncovered salient places) are emitted, so the layer
+	// is just the holes — covered + empty stay clear (basemap).
+	// Same `coverage` layer + fog props as the US tier, so the demo renders it unchanged,
+	// at res-domainRes [onset…max] + a res-4 low-zoom rollup.
 	if (opts.geonamesPostalFile && opts.wofDB) {
 		const exclude = opts.postcodeExcludeCountries.map((c) => `'${c.toUpperCase()}'`).join(", ") || "''"
 		onProgress("holes", "postcode coverage + civilization salience → holes…")

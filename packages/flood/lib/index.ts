@@ -70,7 +70,8 @@ export const FloodReadingKind = {
 	 */
 	DesignatedAbsence: "designated_absence",
 	/**
-	 * No coverage row. Unmapped by this authority, and never a low-hazard reading.
+	 * No coverage row.
+	 * Unmapped by this authority, and never a low-hazard reading.
 	 */
 	Unknown: "unknown",
 } as const
@@ -124,7 +125,8 @@ export interface FloodZoneReading {
 	 */
 	containment: FloodContainmentPath
 	/**
-	 * The coverage row that licenses the reading, when there is one. Absent on `unknown`, which is the absence.
+	 * The coverage row that licenses the reading, when there is one.
+	 * Absent on `unknown`, which is the absence.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
 	/**
@@ -184,10 +186,11 @@ export interface FloodZoneLookupOptions {
 /**
  * Read a sealed `flood.db`.
  *
- * Everything that would make the reader answer a well-formed wrong thing is refused at construction rather than at
- * query time: a manifest naming a different layer, a coverage table with no rows, an extent row that is missing or
- * duplicated. Each of those would otherwise present as a reader that simply always answers `unknown`, which on a
- * receipt is indistinguishable from a region the authority genuinely has not mapped.
+ * Everything that would make the reader answer a well-formed wrong thing is refused
+ * at construction rather than at query time: a manifest naming a different layer,
+ * a coverage table with no rows, an extent row that is missing or duplicated.
+ * Each of those would otherwise present as a reader that simply always answers `unknown`,
+ * which on a receipt is indistinguishable from a region the authority genuinely has not mapped.
  */
 export class FloodZoneLookup implements Disposable {
 	readonly identity: FloodLayerIdentity
@@ -241,9 +244,10 @@ export class FloodZoneLookup implements Disposable {
 		const coverage = this.#readCoverage(indexCell)
 		const zone = this.#resolveZone(indexCell, latitude, longitude)
 
-		// coverage qualifies the absence and nothing else — the same asymmetry `supportsExclusion` carries. A polygon
-		// containing the point is the authority's determination at that location, and needs no coverage row to be true.
-		// an empty answer needs one, because without it the emptiness is a statement about our map rather than theirs.
+		// coverage qualifies the absence and nothing else — the same asymmetry `supportsExclusion` carries.
+		// A polygon containing the point is the authority's determination at that location,
+		// and needs no coverage row to be true. an empty answer needs one, because without
+		// it the emptiness is a statement about our map rather than theirs.
 		if (zone.zoneCode) {
 			const definition = this.#definitions.get(zone.zoneCode)
 

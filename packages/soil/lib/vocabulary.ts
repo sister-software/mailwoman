@@ -29,9 +29,11 @@
  */
 
 /**
- * The layer-name prefix. The suffix names the region the build covers, because the manifest's declared extent and the
- * coverage rows describe the same set and that set is a list of published survey areas rather than "the United
- * States".
+ * The layer-name prefix.
+ *
+ * The suffix names the region the build covers, because the manifest's declared extent
+ * and the coverage rows describe the same set and that set is a list of published
+ * survey areas rather than "the United States".
  */
 export const SOIL_LAYER_NAME_PREFIX = "soil-capability-nrcs-ssurgo-"
 
@@ -109,10 +111,12 @@ export const SSURGO_PRODUCT_LIMITS: ReadonlyArray<string> = [
 ]
 
 /**
- * The coverage statement a `designated` basis rests on: what nrcs declares complete inside a published survey area.
+ * The coverage statement a `designated` basis rests on: what nrcs declares
+ * complete inside a published survey area.
  *
- * It is the mapping at the survey's own scale rather than a site-specific determination — which is why the observation
- * reports what the survey assigns to the map unit covering a location and never whether the land can be farmed.
+ * It is the mapping at the survey's own scale rather than a site-specific determination —
+ * which is why the observation reports what the survey assigns to the map unit
+ * covering a location and never whether the land can be farmed.
  */
 export const SSURGO_COVERAGE_STATEMENT =
 	"Soil surveys are published by survey area. Inside a published survey area the soil mapping is complete at the " +

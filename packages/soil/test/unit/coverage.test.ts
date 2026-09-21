@@ -57,11 +57,14 @@ const COUNTY_HALF_WIDTH = 0.9
 const SHARED_EDGE_LON = lon + 5 * FIXTURE_SIDE
 
 /**
- * How far the second delineation band sits from the shared edge — comfortably more than a resolution-6 cell's ~0.06°,
- * so a county's own interior test produces coverage over it whether or not the border cells survive.
+ * How far the second delineation band sits from the shared edge — comfortably more
+ * than a resolution-6 cell's ~0.06°, so a county's own interior test produces
+ * coverage over it whether or not the border cells survive.
  *
- * Both bands are needed. Without the interior band a single county yields no coverage rows at all (its mapped soil sits
- * entirely inside the strip its own interior test drops), and the comparison below would be against zero.
+ * Both bands are needed.
+ * Without the interior band a single county yields no coverage rows at all
+ * (its mapped soil sits entirely inside the strip its own interior test drops),
+ * and the comparison below would be against zero.
  */
 const INTERIOR_BAND_OFFSET = 0.3
 
@@ -163,8 +166,9 @@ describe("the coverage footprint over adjacent survey areas", () => {
 		const lookup = new SoilCapabilityLookup({ databasePath })
 
 		try {
-			// Well outside the single county built. The conservatism the union fix preserves: beyond the built set there is
-			// no coverage row, and that is the truthful answer rather than a low capability reading.
+			// Well outside the single county built.
+			// The conservatism the union fix preserves: beyond the built set there is no coverage row,
+			// and that is the truthful answer rather than a low capability reading.
 			const reading = lookup.lookup(lat + 5, lon + 5)
 
 			expect(reading.kind).toBe(SoilReadingKind.Unknown)

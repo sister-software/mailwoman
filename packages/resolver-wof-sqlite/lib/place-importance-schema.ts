@@ -249,9 +249,11 @@ export function encyclopedicClauses<DB>(db: DatabaseClient<DB>, schemaName: stri
 }
 
 /**
- * The tolerance {@link splitLegacyImportance} treats as "this value reproduces the population curve". Eight ULP —
- * comfortably wider than the one-ULP `log2` spread measured between CPython and V8 (see that function's docstring), and
- * ~1e-15 absolute against scores Nominatim publishes to four decimals.
+ * The tolerance {@link splitLegacyImportance} treats as "this value reproduces the population curve".
+ *
+ * Eight ULP — comfortably wider than the one-ULP `log2` spread measured between CPython
+ * and V8 (see that function's docstring), and ~1e-15 absolute against scores
+ * Nominatim publishes to four decimals.
  */
 export const LEGACY_FALLBACK_EPSILON = 8 * Number.EPSILON
 

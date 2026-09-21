@@ -154,7 +154,8 @@ export interface Phase2RunOptions extends POIBoardOptions {
 	 */
 	boardFixturesPath?: string
 	/**
-	 * The sealed coverage layer the absence lane reads. Absent resolves the absence pre-registration's own file.
+	 * The sealed coverage layer the absence lane reads.
+	 * Absent resolves the absence pre-registration's own file.
 	 */
 	coverageDatabasePath?: string
 	/**
@@ -182,8 +183,8 @@ function matches(observed: string | number, pinned: string | number): number {
 /**
  * Run every instrument the registered checks read, and answer with one reading per measurement.
  *
- * Instruments are selected from the checks rather than run unconditionally: a definition that registers no absence
- * check must not need a build-local coverage layer to produce a receipt.
+ * Instruments are selected from the checks rather than run unconditionally: a definition that
+ * registers no absence check must not need a build-local coverage layer to produce a receipt.
  */
 async function measure(
 	definition: Phase2DecisionDefinition,
@@ -379,10 +380,11 @@ async function measure(
 	let coverageVersion = "not measured"
 
 	if (needed.has("absence_observation_probe")) {
-		// `db` is deliberately not forwarded. The absence probe defaults the layer the executor queries to the coverage
-		// layer itself, and that default is the whole claim: an absence qualified by one layer's coverage while the
-		// answer came out of another is a statement about two artifacts nobody compared. A `--db` meant for the board
-		// would silently cross them.
+		// `db` is deliberately not forwarded.
+		// The absence probe defaults the layer the executor queries to the coverage layer itself,
+		// and that default is the whole claim: an absence qualified by one layer's coverage
+		// while the answer came out of another is a statement about two artifacts nobody compared.
+		// A `--db` meant for the board would silently cross them.
 		const absence = await runAbsenceObservationProbe({
 			locale: options.locale,
 			weightsCacheRoot: options.weightsCacheRoot,

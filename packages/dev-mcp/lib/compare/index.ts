@@ -388,9 +388,11 @@ async function compareMailwomanArms(
 }
 
 /**
- * A mailwoman arm projected onto the same answer shape an external one produces: a point, a label, a type, or a stated
- * absence. Everything else the pipeline knows is deliberately dropped here — the other arm cannot answer it, so
- * carrying it into a cross-engine row would invite a comparison that has no other side.
+ * A mailwoman arm projected onto the same answer shape an external one produces:
+ * a point, a label, a type, or a stated absence.
+ *
+ * Everything else the pipeline knows is deliberately dropped here — the other arm cannot answer it,
+ * so carrying it into a cross-engine row would invite a comparison that has no other side.
  */
 async function mailwomanRunner(
 	registry: EngineRegistryLike,

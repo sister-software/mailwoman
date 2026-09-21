@@ -234,9 +234,10 @@ export interface BuildSoilResult {
 	storedResolutions: number[]
 	coverageCells: number
 	/**
-	 * Coverage cells inside a survey-area outline that no delineation with soil mapping reached. Reported rather than
-	 * smoothed over: ssurgo is wall-to-wall inside a published area, so a large number means the outline and the
-	 * delineations disagree.
+	 * Coverage cells inside a survey-area outline that no delineation with soil mapping reached.
+	 *
+	 * Reported rather than smoothed over: ssurgo is wall-to-wall inside a published area,
+	 * so a large number means the outline and the delineations disagree.
 	 */
 	coverageCellsWithoutMapping: number
 	/**
@@ -252,9 +253,9 @@ export interface BuildSoilResult {
 /**
  * Build the layer.
  *
- * @throws {Error} On a delineation the classifier refuses, a streamed count that disagrees with the shapefile's own
- *   declaration, an area total that disagrees with the authority's published acreage, or a set of outlines that yields
- *   no interior coverage cell at all.
+ * @throws {Error} On a delineation the classifier refuses, a streamed count that disagrees
+ *   with the shapefile's own declaration, an area total that disagrees with the authority's
+ *   published acreage, or a set of outlines that yields no interior coverage cell at all.
  */
 export async function buildSoilDatabase(options: BuildSoilOptions): Promise<BuildSoilResult> {
 	if (options.coverageResolution >= options.indexResolution) {
@@ -386,8 +387,9 @@ interface StreamResult {
 /**
  * Add up what the chunks reported.
  *
- * Exported for its own test: the coverage-cell arithmetic is the one part of the batched path a fixture build cannot
- * reach, and getting it wrong produces a well-formed artifact that under-reports how many delineations a cell holds.
+ * Exported for its own test: the coverage-cell arithmetic is the one part of the batched
+ * path a fixture build cannot reach, and getting it wrong produces a well-formed
+ * artifact that under-reports how many delineations a cell holds.
  */
 export function aggregateChunks(chunks: ReadonlyArray<SoilChunkResult>): StreamResult {
 	const byArea = new Map<string, number>()
@@ -407,8 +409,8 @@ export function aggregateChunks(chunks: ReadonlyArray<SoilChunkResult>): StreamR
 
 		byArea.set(chunk.areaSymbol, (byArea.get(chunk.areaSymbol) ?? 0) + chunk.delineations)
 
-		// A coverage cell straddles chunk boundaries — a range of feature ids is not a region, and a coverage cell can
-		// straddle two survey areas — so the counts ADD rather than replace.
+		// A coverage cell straddles chunk boundaries — a range of feature ids is not a region,
+		// and a coverage cell can straddle two survey areas — so the counts ADD rather than replace.
 		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
 		mergeCountsInto(mappedByCoverageCell, chunk.mappedByCoverageCell)
 	}
@@ -632,22 +634,29 @@ async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Pro
 }
 
 /**
- * The coverage rows: one per interior cell of the built footprint that soil mapping actually reaches, and none outside.
+ * The coverage rows: one per interior cell of the built footprint that soil
+ * mapping actually reaches, and none outside.
  *
- * The interior test runs once over the union OF every outline built rather than PER survey area, and the difference is
- * most of a state. The test is conservative — it keeps only cells lying wholly inside — so applied per area it drops
- * every cell a county border crosses. Measured on Polk County alone at resolution 6: 20 interior cells against the
- * roughly 42 the county spans by area, so more than half of it would read `unknown` while sitting inside a survey the
- * build had ingested. Run over the union, only the outer border of the built set is dropped, which is the honest edge:
- * beyond it lies ground this artifact does not hold.
+ * The interior test runs once over the union OF every outline built rather than
+ * PER survey area, and the difference is most of a state.
+ * The test is conservative — it keeps only cells lying wholly inside — so applied
+ * per area it drops every cell a county border crosses.
  *
- * The conservatism itself stays. A cell wrongly called interior would state that an authority determined a location it
- * never looked at, and a point in the dropped strip reading `unknown` is the truthful answer for ground the built set
- * may or may not reach.
+ * Measured on Polk County alone at resolution 6: 20 interior cells against the
+ * roughly 42 the county spans by area, so more than half of it would read `unknown`
+ * while sitting inside a survey the build had ingested.
+ * Run over the union, only the outer border of the built set is dropped, which is the
+ * honest edge: beyond it lies ground this artifact does not hold.
  *
- * `observed_rows` counts the delineations reaching the cell, which is what the interface's column means. A cell reached
- * only by `notcom` and access-denied polygons gets no row — the polygon exists, the soil mapping behind it does not,
- * and the survey's §3.2 puts that case with the absences rather than with the coverage.
+ * The conservatism itself stays.
+ * A cell wrongly called interior would state that an authority determined a location
+ * it never looked at, and a point in the dropped strip reading `unknown` is the
+ * truthful answer for ground the built set may or may not reach.
+ *
+ * `observed_rows` counts the delineations reaching the cell, which is what the interface's column means.
+ * A cell reached only by `notcom` and access-denied polygons gets no row —
+ * the polygon exists, the soil mapping behind it does not, and the survey's §3.2
+ * puts that case with the absences rather than with the coverage.
  */
 function buildCoverageCells(
 	options: BuildSoilOptions,
@@ -685,8 +694,10 @@ function buildCoverageCells(
 			continue
 		}
 
-		// Attributed by the cell's centre, so each row is counted for exactly one survey area even where the cell straddles
-		// two. The count is a per-area receipt rather than part of the coverage claim — the claim is the row set itself.
+		// Attributed by the cell's centre, so each row is counted for exactly one
+		// survey area even where the cell straddles two.
+		// The count is a per-area receipt rather than part of the coverage claim —
+		// the claim is the row set itself.
 		const [latitude, longitude] = cellToLatLng(cell)
 		const owner = options.areas.find((input) => geometryContains(input.outline, longitude, latitude))
 
@@ -703,8 +714,9 @@ function buildCoverageCells(
 /**
  * One outline's polygons, in the `MultiPolygon` coordinate shape, whichever areal type it arrived as.
  *
- * @throws {TypeError} When the outline is not areal. A survey area whose footprint cannot be read would silently
- *   contribute nothing to the union, and the coverage over it would simply be absent.
+ * @throws {TypeError} When the outline is not areal.
+ *   A survey area whose footprint cannot be read would silently contribute nothing
+ *   to the union, and the coverage over it would simply be absent.
  */
 function outlinePolygons(outline: ParsedGeometry): MultiPolygonRings {
 	const polygons = arealPolygons(outline)

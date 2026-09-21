@@ -150,9 +150,11 @@ export interface GauntletCaseTable {
 	locale: string | null
 	/**
 	 * 1 = this row's expected outcome is no coordinate — the resolver abstains rather than answering. The grade inverts:
-	 * any resolved coordinate fails the row. For the #1585 fuzzy-scope class, a scoped-empty typo correction must abstain
-	 * rather than fall through to a world-fuzzy candidate. the abstain pin is the interface, and lands re-pinned to real
-	 * coordinates once coverage arrives (the row's note says which artifact).
+	 * any resolved coordinate fails the row.
+	 *
+	 * For the #1585 fuzzy-scope class, a scoped-empty typo correction must abstain rather than
+	 * fall through to a world-fuzzy candidate. the abstain pin is the interface, and lands
+	 * re-pinned to real coordinates once coverage arrives (the row's note says which artifact).
 	 */
 	expect_abstain: number | null
 }

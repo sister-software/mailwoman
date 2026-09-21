@@ -146,8 +146,10 @@ const speedBucketCaseSQL = sql<string>`CASE
 END`
 
 /**
- * Reconstruct the res-6 ancestor of a res-9 short-cell int without a centroid — see the module docstring for why the
- * centroid is the wrong input. Exported so tests can assert this agrees, cell-for-cell, with `build-bdc.ts`'s own
+ * Reconstruct the res-6 ancestor of a res-9 short-cell int without a centroid —
+ * see the module docstring for why the centroid is the wrong input.
+ *
+ * Exported so tests can assert this agrees, cell-for-cell, with `build-bdc.ts`'s own
  * coverage-cell derivation (the two must share this derivation — see that file's docstring).
  */
 export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
@@ -155,9 +157,12 @@ export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
 }
 
 /**
- * Read the provider/technology/speed-bucket filing census over a set of queried blocks (by `geoid` or by `h3Cell`,
- * never both). Always vintage-stamped. always throws on a broken manifest rather than answering unstamped. a queried
- * block with no coverage evidence is reported in `unknown_block_count` and never folded into a zero-filing claim.
+ * Read the provider/technology/speed-bucket filing census over a set of queried
+ * blocks (by `geoid` or by `h3Cell`, never both).
+ *
+ * Always vintage-stamped. always throws on a broken manifest rather than answering
+ * unstamped. a queried block with no coverage evidence is reported in `unknown_block_count`
+ * and never folded into a zero-filing claim.
  */
 export async function filingLandscape(
 	db: DatabaseClient<BDCDatabase>,
@@ -210,11 +215,12 @@ export async function filingLandscape(
 
 	let surveyedBlockCount = 0
 	let unknownBlockCount = 0
-	// Only units that pass the coverage check feed the census below — a unit with rows but no coverage evidence
-	// (a corrupted/inconsistent db — see filing-landscape.test.ts's "coverage row deleted" case) is `unknown`, and
-	// its rows must not leak into `filings` either: `surveyed_block_count` and the blocks backing `filings` must
-	// always agree, or a caller cross-referencing the two gets a contradiction (an "unknown" block whose filings
-	// still show up looks exactly like the false-negative bug this reader exists to prevent).
+	// Only units that pass the coverage check feed the census below — a unit with rows but no coverage
+	// evidence (a corrupted/inconsistent db — see filing-landscape.test.ts's "coverage row deleted" case)
+	// is `unknown`, and its rows must not leak into `filings` either: `surveyed_block_count`
+	// and the blocks backing `filings` must always agree, or a caller cross-referencing
+	// the two gets a contradiction (an "unknown" block whose filings still show up looks
+	// exactly like the false-negative bug this reader exists to prevent).
 	const surveyedUnits: Array<string | number> = []
 
 	for (const unit of requestedUnits) {

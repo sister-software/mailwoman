@@ -141,14 +141,18 @@ function minimalForm499Row(overrides: Partial<Form499Row> = {}): Form499Row {
 describe("§7-3a criteria", () => {
 	describe("1. Provenance completeness (required)", () => {
 		/**
-		 * Structural half of the criterion (the established idiom — see `bdc/sdk/plausibility.test.ts`): an exhaustive
-		 * `satisfies Record<keyof FilerEdgeInsert, true>` pin over `filer_edge`'s insert shape. `FilerEdgeTable` carries no
-		 * `Generated<>`-wrapped columns (`schema.ts`'s own docstring), so Kysely's `Insertable<FilerEdgeTable>` already
-		 * requires every field on insert — this pin's job is making sure that guarantee can't silently erode: a field added
-		 * to `FilerEdgeTable` that this literal doesn't also list fails `satisfies` (excess-property / missing-property
-		 * checking on an object literal assigned via `satisfies`), forcing a reviewer to touch this file and consciously
-		 * answer "is the new field also required provenance?" Only `tsc` (`yarn typecheck:tests`) checks the `satisfies`
-		 * clause itself — `yarn vitest run` alone (esbuild, types stripped) only runs the `it()` below.
+		 * Structural half of the criterion (the established idiom — see `bdc/sdk/plausibility.test.ts`):
+		 * an exhaustive `satisfies Record<keyof FilerEdgeInsert, true>` pin over `filer_edge`'s insert shape.
+		 *
+		 * `FilerEdgeTable` carries no `Generated<>`-wrapped columns (`schema.ts`'s own docstring),
+		 * so Kysely's `Insertable<FilerEdgeTable>` already requires every field on insert —
+		 * this pin's job is making sure that guarantee can't silently erode: a field
+		 * added to `FilerEdgeTable` that this literal doesn't also list fails `satisfies`
+		 * (excess-property / missing-property checking on an object literal assigned via `satisfies`),
+		 * forcing a reviewer to touch this file and consciously answer "is the new
+		 * field also required provenance?"
+		 * Only `tsc` (`yarn typecheck:tests`) checks the `satisfies` clause itself —
+		 * `yarn vitest run` alone (esbuild, types stripped) only runs the `it()` below.
 		 */
 		type FilerEdgeInsert = Insertable<FilerEdgeTable>
 
@@ -1891,9 +1895,9 @@ describe("§7-3b criteria", () => {
 			const rollup = await familyRollup(db, { familyID: cikNodeID, asOf })
 			expect(rollup).toHaveLength(1)
 
-			// familyRollup carries the same grading on its own member shape — `source: "edgar-exhibit-21"` alone
-			// could not supply it, since that one source writes an authoritative disclosure edge and this
-			// inferred corroboration in the same build.
+			// familyRollup carries the same grading on its own member shape —
+			// `source: "edgar-exhibit-21"` alone could not supply it, since that one source writes
+			// an authoritative disclosure edge and this inferred corroboration in the same build.
 			expect(rollup[0]?.members).toEqual([
 				{
 					node_id: `${FilerIdentifierType.FRN}:${FRN_SUBSIDIARY}`,

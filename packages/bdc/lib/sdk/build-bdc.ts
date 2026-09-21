@@ -488,9 +488,10 @@ async function populateBDCProviderTable(
 }
 
 /**
- * Build `bdc.db`: stage (raw dedup) → materialize (resolve `h3_cell` per geoid, skip+count unknown geoids) → drop stage
- * → geoid index (index-after-load) → coverage → layer manifest → seal → atomic move-into-place. See the module
- * docstring for the two deliberate deviations from `build-poi.ts`.
+ * Build `bdc.db`: stage (raw dedup) → materialize (resolve `h3_cell` per geoid, skip+count unknown geoids) →
+ * drop stage → geoid index (index-after-load) → coverage → layer manifest → seal → atomic move-into-place.
+ *
+ * See the module docstring for the two deliberate deviations from `build-poi.ts`.
  */
 export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildBDCResult> {
 	const progress = options.onProgress ?? (() => {})
@@ -645,15 +646,17 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 				resolved = centroid
 					? (() => {
-							// Coverage cell must be derived as the res-9 cell's H3 hierarchy parent — not a second,
-							// independent `latLngToCell(centroid, 6)` call. H3's cell hierarchy is not geometrically
-							// exact: a point's directly-indexed res-6 cell and its res-9 cell's `cellToParent(…, 6)`
-							// disagree for a real fraction of points (~6% empirically over conus — hexagon/pentagon
-							// boundary artifacts). Deriving both `h3_cell` and the coverage cell from
-							// the same full res-9 index is what lets `filing-landscape.ts`'s reader reconstruct this
-							// exact coverage cell from nothing but the stored `h3_cell` (its `res9ShortCellToRes6Parent`
-							// applies `cellToParent` to the reconstructed res-9 cell) — builder and reader must derive
-							// the res-6 parent identically, or a genuinely-surveyed block can read back as unknown.
+							// Coverage cell must be derived as the res-9 cell's H3 hierarchy parent —
+							// not a second, independent `latLngToCell(centroid, 6)` call.
+							// H3's cell hierarchy is not geometrically exact: a point's directly-indexed res-6 cell
+							// and its res-9 cell's `cellToParent(…, 6)` disagree for a real fraction of
+							// points (~6% empirically over conus — hexagon/pentagon boundary artifacts).
+							// Deriving both `h3_cell` and the coverage cell from the same full
+							// res-9 index is what lets `filing-landscape.ts`'s reader reconstruct
+							// this exact coverage cell from nothing but the stored `h3_cell`
+							// (its `res9ShortCellToRes6Parent` applies `cellToParent` to the reconstructed res-9 cell) —
+							// builder and reader must derive the res-6 parent identically,
+							// or a genuinely-surveyed block can read back as unknown.
 							const fullRes9Cell = latLngToCell(centroid.lat, centroid.lon, BDC_H3_RESOLUTION) as H3Cell
 
 							return {
@@ -706,9 +709,10 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		progress("geoid index (index-after-load — see schema.ts)")
 		await createBDCGeoidIndex(db)
 
-		// Coverage is source-level rather than survey completeness — same convention build-poi.ts documents: a res-6 cell we
-		// have availability rows in is recorded at completeness 1.0. A cell absent from `layer_coverage` means no rows
-		// were observed there at all (the meaning-of-zero rule — missing = unknown, never `{completeness: 0}`).
+		// Coverage is source-level rather than survey completeness — same convention build-poi.ts
+		// documents: a res-6 cell we have availability rows in is recorded at completeness 1.0.
+		// A cell absent from `layer_coverage` means no rows were observed there at all
+		// (the meaning-of-zero rule — missing = unknown, never `{completeness: 0}`).
 		const coverageCells = sourcePresentCoverageCells(coverage)
 
 		await writeLayerCoverage(db, coverageCells)

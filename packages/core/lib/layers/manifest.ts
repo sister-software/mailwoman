@@ -78,12 +78,13 @@ export interface CoverageCell {
 const BASES = new Set<string>(Object.values(CoverageBasis))
 
 /**
- * Reject a malformed coverage cell at both ends, the way {@link assertManifestInvariants} does for the manifest.
+ * Reject a malformed coverage cell at both ends, the way
+ * {@link assertManifestInvariants} does for the manifest.
  *
- * The magnitudes here are read as epistemics, so a well-formed wrong one is worse than a throw: a `completeness` above
- * 1 or an unknown `basis` reaching {@link supportsExclusion} turns into confident negative evidence, and a negative
- * `observedRows` reads as a survey that found less than nothing. None of that is distinguishable downstream from a real
- * measurement.
+ * The magnitudes here are read as epistemics, so a well-formed wrong one is worse than a throw:
+ * a `completeness` above 1 or an unknown `basis` reaching {@link supportsExclusion} turns into confident
+ * negative evidence, and a negative `observedRows` reads as a survey that found less than nothing.
+ * None of that is distinguishable downstream from a real measurement.
  */
 function assertCoverageCellInvariants(cell: CoverageCell): void {
 	if (!Number.isFinite(cell.completeness) || cell.completeness < 0 || cell.completeness > 1) {
@@ -140,12 +141,15 @@ export interface CoverageRow {
 }
 
 /**
- * A stored coverage row as the parsed {@link CoverageCell}, with the cell's own index and resolution beside it.
+ * A stored coverage row as the parsed {@link CoverageCell}, with the cell's own index
+ * and resolution beside it.
  *
- * Shared BY every polygon layer'S reader, and the reason is the second line of it. A NULL `basis` is an artifact built
- * before the column existed. it was recording source presence, so that is what it must read back as — never a stronger
- * basis than the builder actually had. Four readers writing that rule separately is four places for one of them to
- * write `?? CoverageBasis.Designated` and license an exclusion nobody measured.
+ * Shared BY every polygon layer'S reader, and the reason is the second line of it.
+ * A NULL `basis` is an artifact built before the column existed. it was recording source presence,
+ * so that is what it must read back as — never a stronger basis than the builder actually had.
+ *
+ * Four readers writing that rule separately is four places for one of them to write
+ * `?? CoverageBasis.Designated` and license an exclusion nobody measured.
  *
  * `undefined` in, `undefined` out: a cell with no coverage row is unknown, never `{completeness: 0}`.
  */
@@ -248,10 +252,11 @@ export function parseManifestRows(
 /**
  * Refuse an artifact whose coverage would license a claim that the thing asked for is not there.
  *
- * A condition rather than A convention, and shared because the rule is the interface's rather than any product's: a
- * layer whose source publishes no footprint may record presence and nothing else, and the day someone writes a stronger
- * basis without settling the footprint question the layer must refuse to open rather than answer confidently. Checked
- * over the distinct bases, so the cost is one query however large the table.
+ * A condition rather than A convention, and shared because the rule is the interface's
+ * rather than any product's: a layer whose source publishes no footprint may record presence
+ * and nothing else, and the day someone writes a stronger basis without settling the
+ * footprint question the layer must refuse to open rather than answer confidently.
+ * Checked over the distinct bases, so the cost is one query however large the table.
  *
  * @param bases Every distinct `basis` in `layer_coverage`, NULL included.
  * @param reason The layer's own sentence saying why its coverage licenses no negative claim.
@@ -409,15 +414,15 @@ export async function readLayerManifest(db: layerschemahandle): Promise<LayerMan
 }
 
 /**
- * Rows per insert statement (4 bound params/row = 16,000 params/statement), kept safely under SQLite's default 32,766
- * bound-variable ceiling — a continental-scale build's res-6 coverage cell count blows past that limit in a single
- * `.values()` call (found 2026-07-19).
+ * Rows per insert statement (4 bound params/row = 16,000 params/statement), kept safely
+ * under SQLite's default 32,766 bound-variable ceiling — a continental-scale build's res-6
+ * coverage cell count blows past that limit in a single `.values()` call (found 2026-07-19).
  */
 export const COVERAGE_INSERT_BATCH = 5000
 
 /**
- * Bulk-insert coverage cells (build-time. cold path, so Kysely inserts are fine), chunked to stay under SQLite's
- * bound-variable limit.
+ * Bulk-insert coverage cells (build-time. cold path, so Kysely inserts are fine),
+ * chunked to stay under SQLite's bound-variable limit.
  */
 export async function writeLayerCoverage(db: layerschemahandle, cells: CoverageCell[]): Promise<void> {
 	if (!cells.length) return
@@ -444,7 +449,9 @@ export async function writeLayerCoverage(db: layerschemahandle, cells: CoverageC
 }
 
 /**
- * Look up coverage for one short H3 cell. `undefined` = the cell was never surveyed (unknown) — callers must not
+ * Look up coverage for one short H3 cell.
+ *
+ * `undefined` = the cell was never surveyed (unknown) — callers must not
  * conflate this with `{completeness: 0}`.
  */
 export async function readLayerCoverage(db: layerschemahandle, h3Cell: number): Promise<CoverageCell | undefined> {

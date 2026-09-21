@@ -112,11 +112,11 @@ async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<PO
 
 	try {
 		for (const parquetPath of parquetPaths) {
-			// stream the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising
-			// the whole result — a full four-country build (millions of US rows) blew the ~4GB V8 heap
-			// that way (OOM 2026-07-18, `DuckDBNodeAddon::get_data_from_pointer` → `napi_create_buffer_copy`).
-			// stream()+fetchChunk() keeps JS memory bounded to one chunk at a time, matching the
-			// address-points.tsx / coverage-core.ts precedent (OOM 2026-06-14).
+			// stream the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising the
+			// whole result — a full four-country build (millions of US rows) blew the ~4GB V8 heap that way
+			// (OOM 2026-07-18, `DuckDBNodeAddon::get_data_from_pointer` → `napi_create_buffer_copy`).
+			// stream()+fetchChunk() keeps JS memory bounded to one chunk at a time,
+			// matching the address-points.tsx / coverage-core.ts precedent (OOM 2026-06-14).
 			const stream = await db.stream(
 				`SELECT name, category, brand_wikidata, lat, lon, country, confidence, gers_id
 				 FROM read_parquet('${parquetPath}')`
@@ -170,19 +170,25 @@ export interface BBox {
 }
 
 /**
- * Extract-bbox coverage polyfill (decision 5): every res-6 H3 cell whose center falls inside `bbox` gets a coverage
- * entry, paired with how many `rows` actually landed in it (0 permitted). This is the `--source osm` build branch's
- * coverage strategy, used in place of the default Overture path's "a cell gets a row only if a POI fell in it" — an OSM
- * telecom-infrastructure extract is sparse BY category, so most of a well-surveyed region would otherwise report as
- * unsurveyed (missing from `layer_coverage`) even though the whole extract region was in fact covered by the source. An
- * explicit `observedRows: 0` cell carries the meaning "surveyed, nothing found here" — never conflate it with a cell
- * absent from `layer_coverage` entirely (unsurveyed/unknown, the interface's meaning-of-zero rule).
+ * Extract-bbox coverage polyfill (decision 5): every res-6 H3 cell whose center falls inside
+ * `bbox` gets a coverage entry, paired with how many `rows` actually landed in it (0 permitted).
  *
- * Rows whose H3 cell falls outside the bbox's own polyfilled cell set are not represented in the returned coverage
- * (their observed count is silently uncounted) — acceptable because `bbox` is expected to describe the same extract
- * region the rows were pulled from. a caller passing a bbox narrower than its rows' actual extent will undercount.
+ * This is the `--source osm` build branch's coverage strategy, used in place of
+ * the default Overture path's "a cell gets a row only if a POI fell in it" —
+ * an OSM telecom-infrastructure extract is sparse BY category, so most of a well-surveyed
+ * region would otherwise report as unsurveyed (missing from `layer_coverage`) even
+ * though the whole extract region was in fact covered by the source.
+ * An explicit `observedRows: 0` cell carries the meaning "surveyed, nothing found
+ * here" — never conflate it with a cell absent from `layer_coverage` entirely
+ * (unsurveyed/unknown, the interface's meaning-of-zero rule).
  *
- * Pure function: no DuckDB/ogr2ogr/network involved, so it's directly unit-testable over synthetic coordinates.
+ * Rows whose H3 cell falls outside the bbox's own polyfilled cell set are not represented
+ * in the returned coverage (their observed count is silently uncounted) — acceptable
+ * because `bbox` is expected to describe the same extract region the rows were pulled
+ * from. a caller passing a bbox narrower than its rows' actual extent will undercount.
+ *
+ * Pure function: no DuckDB/ogr2ogr/network involved, so it's directly
+ * unit-testable over synthetic coordinates.
  */
 export function bboxCoverageCells(
 	bbox: BBox,
@@ -201,8 +207,8 @@ export function bboxCoverageCells(
 		// geometrically exact, so the direct derivation disagrees with the hierarchy-parent one for a real
 		// fraction of points (~6.56% measured over 20k conus points) — the identical builder/reader divergence
 		// class fixed in bdc 2a fix-round-1 (see filing-landscape.ts's module docstring). Getting this wrong
-		// means a row's observed count lands on a neighbouring cell, or is silently dropped when its
-		// direct-res-6 cell isn't a member of the bbox polyfill below.
+		// means a row's observed count lands on a neighbouring cell, or is silently dropped
+		// when its direct-res-6 cell isn't a member of the bbox polyfill below.
 		const res9Cell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
 		const cell = cellToParent(res9Cell, resolution) as H3Cell
 		const h3Cell = shortCellToInt(cell)
@@ -298,10 +304,12 @@ export interface BuildPOIOptions {
 	 * {@link bboxCoverageCells} over the extract's bbox), `observedRows` taken as-is (0 permitted). Default: undefined,
 	 * meaning "coverage = the cells a row actually fell into".
 	 *
-	 * `completeness` and `basis` are per-cell and optional, defaulting to the `1` / `source_present` pair the rest of
-	 * this pipeline writes. A cell only reaches an exclusion-grade basis ({@link CoverageBasis.Surveyed} or
+	 * `completeness` and `basis` are per-cell and optional, defaulting to the `1` /
+	 * `source_present` pair the rest of this pipeline writes.
+	 * A cell only reaches an exclusion-grade basis ({@link CoverageBasis.Surveyed} or
 	 * {@link CoverageBasis.Designated}) by naming one here, alongside the completeness that basis measured — the default
-	 * is the weakest reading precisely so that a builder which has not measured anything cannot claim otherwise.
+	 * is the weakest reading precisely so that a builder which has not measured
+	 * anything cannot claim otherwise.
 	 */
 	coverageCellsOverride?: Iterable<{
 		h3Cell: number
@@ -337,9 +345,10 @@ export interface BuildPOIResult {
 }
 
 /**
- * Build `poi.db`: stage → dictionary-encode → materialize the clustered table → FTS → layer manifest/coverage →
- * analyze/vacuum → seal. See the module docstring for the two-phase split and the build-on-copy deviation from the task
- * brief.
+ * Build `poi.db`: stage → dictionary-encode → materialize the clustered table →
+ * FTS → layer manifest/coverage → analyze/vacuum → seal.
+ *
+ * See the module docstring for the two-phase split and the build-on-copy deviation from the task brief.
  */
 export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIResult> {
 	const progress = opts.onProgress ?? (() => {})
@@ -500,22 +509,25 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			createdAt: opts.createdAt ?? new Date().toISOString(),
 		})
 
-		// Coverage is source-level rather than survey completeness: a res-6 cell we have Overture Places rows in
-		// is recorded at completeness 1.0 (Overture claims global coverage for the theme); this is not a
-		// claim about how complete Overture's own Places extraction is within that cell. A cell absent
-		// from `layer_coverage` means no rows were observed there at all — the meaning-of-zero rule
-		// (missing = unknown, never `{completeness: 0}`).
+		// Coverage is source-level rather than survey completeness: a res-6 cell we have Overture Places
+		// rows in is recorded at completeness 1.0 (Overture claims global coverage for the theme);
+		// this is not a claim about how complete Overture's own Places extraction is within that cell.
+		// A cell absent from `layer_coverage` means no rows were observed there at all —
+		// the meaning-of-zero rule (missing = unknown, never `{completeness: 0}`).
 		//
 		// `coverageCellsOverride` (decision 5, the `--source osm` branch) replaces this rows-derived set
-		// entirely with a pre-computed one (typically `bboxCoverageCells` over the extract's bbox) — see
-		// `BuildPOIOptions.coverageCellsOverride`'s docstring. Default path (no override) is unchanged.
-		// `basis: source_present` states in the artifact what the paragraph above states in prose: the 1.0 is
-		// "Overture returned rows here", not "everything here is known". A consumer building an exclusion
-		// reads the basis and refuses. one reading `completeness` alone would have concluded the opposite.
+		// entirely with a pre-computed one (typically `bboxCoverageCells` over the extract's bbox) —
+		// see `BuildPOIOptions.coverageCellsOverride`'s docstring.
+		// Default path (no override) is unchanged.
+		// `basis: source_present` states in the artifact what the paragraph above states in prose:
+		// the 1.0 is "Overture returned rows here", not "everything here is known".
+		// A consumer building an exclusion reads the basis and refuses. one reading
+		// `completeness` alone would have concluded the opposite.
 		//
-		// An override entry may carry its own `completeness`/`basis` — the only way a cell in this pipeline
-		// reaches an exclusion-grade basis. Omitting either falls back to the source-present pair above, so a
-		// caller that has not measured completeness cannot claim one by accident.
+		// An override entry may carry its own `completeness`/`basis` — the only way a
+		// cell in this pipeline reaches an exclusion-grade basis.
+		// Omitting either falls back to the source-present pair above, so a caller that
+		// has not measured completeness cannot claim one by accident.
 		coverageCells = opts.coverageCellsOverride
 			? [...opts.coverageCellsOverride].map((c) => ({
 					h3Cell: c.h3Cell,

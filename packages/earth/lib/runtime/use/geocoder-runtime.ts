@@ -580,9 +580,11 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[rt.assets]
 	)
 
-	// ── Coverage "fog of war" overlay: the XYZ vector source + default-off fill layers, handed to the package's
-	// declarative `<OverlayLayers>`. Default-off (`visible: false`); the LayerToggleControl (injected via
-	// `panels.mapControls`) flips each fog reading on. The tile-worker `race-dots` overlay stays off. ──
+	// ── Coverage "fog of war" overlay: the XYZ vector source + default-off fill layers,
+	// handed to the package's declarative `<OverlayLayers>`.
+	// Default-off (`visible: false`); the LayerToggleControl (injected via `panels.mapControls`)
+	// flips each fog reading on.
+	// The tile-worker `race-dots` overlay stays off. ──
 	const overlays = useMemo<OverlaySpec[]>(
 		() => [
 			{

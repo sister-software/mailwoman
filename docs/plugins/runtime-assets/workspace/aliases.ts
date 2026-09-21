@@ -53,8 +53,10 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 const CODEX_SUBPATHS = [null, "country", "de", "es", "fr", "gb", "it", "nz", "us"] as const
 
 /**
- * Build the source-first webpack alias map. Exact root aliases use webpack's `$` suffix so package subpaths continue
- * through their own explicit aliases or exports maps.
+ * Build the source-first webpack alias map.
+ *
+ * Exact root aliases use webpack's `$` suffix so package subpaths continue through
+ * their own explicit aliases or exports maps.
  */
 export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	const aliases: Record<string, string> = {}
@@ -91,8 +93,9 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 		setAlias(`${packageName}$`, await resolvePackageEntry(packageName))
 	}
 
-	// File aliases precede directory aliases: webpack matches aliases in insertion order, and the narrow
-	// `core/resources/whosonfirst/specificity` leaf must win before the broader `core/resources` barrel.
+	// File aliases precede directory aliases: webpack matches aliases in insertion order,
+	// and the narrow `core/resources/whosonfirst/specificity` leaf must win
+	// before the broader `core/resources` barrel.
 	setAlias(
 		"@mailwoman/core/resources/whosonfirst/specificity",
 		await resolvePackageFile("@mailwoman/core", "resources/whosonfirst/placetypes/specificity")

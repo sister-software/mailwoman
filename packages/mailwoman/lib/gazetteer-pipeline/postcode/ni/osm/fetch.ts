@@ -133,16 +133,20 @@ export const OSM_ATTRIBUTION =
 /**
  * Why this database is build-local, in one sentence plus the receipts.
  *
- * ODbL §4.4 makes a Derived Database share-alike: publish one and you must publish it under ODbL. Mailwoman's shipped
- * gazetteer is assembled from permissive sources (WOF, Overture, OpenAddresses, GeoNames, Code-Point Open) precisely so
- * that no consumer inherits a share-alike obligation from installing an npm package. Folding OSM-derived rows into a
- * shipped database would push that obligation onto every consumer of `mailwoman`, which is the outcome the whole
- * permissive sourcing discipline exists to avoid.
+ * ODbL §4.4 makes a Derived Database share-alike: publish one and you must publish it under ODbL.
+ * Mailwoman's shipped gazetteer is assembled from permissive sources
+ * (WOF, Overture, OpenAddresses, GeoNames, Code-Point Open) precisely so that no consumer
+ * inherits a share-alike obligation from installing an npm package.
  *
- * So the artifact stays on the machine that builds it. The enforcement is not a policy document:
- * `DEFAULT_POSTCODE_DATABASES` is resolved through `existsSync`, and nothing copies this file into a tarball, an R2
- * bucket, or the demo. An operator who wants NI coverage runs the builder and accepts ODbL on their own artifact — the
- * same opt-in-per-country posture `@mailwoman/osm` already documents, and the same tier `poi.db` sits in.
+ * Folding OSM-derived rows into a shipped database would push that obligation onto every consumer
+ * of `mailwoman`, which is the outcome the whole permissive sourcing discipline exists to avoid.
+ *
+ * So the artifact stays on the machine that builds it.
+ * The enforcement is not a policy document: `DEFAULT_POSTCODE_DATABASES` is resolved through
+ * `existsSync`, and nothing copies this file into a tarball, an R2 bucket, or the demo.
+ *
+ * An operator who wants NI coverage runs the builder and accepts ODbL on their own artifact — the same
+ * opt-in-per-country posture `@mailwoman/osm` already documents, and the same tier `poi.db` sits in.
  */
 export const NI_OSM_BUILD_LOCAL_NOTE =
 	"BUILD-LOCAL TIER — this artifact is never published. OSM data is ODbL 1.0, whose share-alike clause (§4.4) binds a " +

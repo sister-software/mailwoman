@@ -96,9 +96,9 @@ function line(label: string, c: Counter): string {
 
 	if (!n) return `  ${label}: n=0`
 
-	// PIP-containment is reported two ways: over all rows (strict) and over rows
-	// that have a polygon (coverage-adjusted), since WOF point-geometry localities
-	// can never PIP-contain and would otherwise count as silent failures.
+	// PIP-containment is reported two ways: over all rows (strict) and over rows that
+	// have a polygon (coverage-adjusted), since WOF point-geometry localities can never
+	// PIP-contain and would otherwise count as silent failures.
 	return (
 		`  ${padL(label, 10)} n=${padL(String(n), 5)} name-match=${padL(pct(get(c, "name"), n), 7)} ` +
 		`PIP-containment=${padL(pct(get(c, "pip"), n), 7)} delta=${pySigned((100 * (get(c, "pip") - get(c, "name"))) / n, 1)}pp  ` +

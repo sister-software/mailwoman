@@ -150,8 +150,9 @@ describe("parseCensusAddressMatch", () => {
 	})
 
 	it("always reports the interpolated tier", () => {
-		// Not a hedge — the mechanism. The Census geocoder has no parcel or structure layer, so it
-		// cannot produce a rooftop coordinate even for a perfect match.
+		// Not a hedge — the mechanism.
+		// The Census geocoder has no parcel or structure layer, so it cannot produce
+		// a rooftop coordinate even for a perfect match.
 		expect(parseCensusAddressMatch(match()).address.geocode?.tier).toBe(CENSUS_RESOLUTION_TIER)
 		expect(CENSUS_RESOLUTION_TIER).toBe("interpolated")
 	})

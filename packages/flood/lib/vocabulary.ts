@@ -127,12 +127,12 @@ export const EA_FLOOD_LICENSE = "OGL-UK-3.0"
 export const EA_FLOOD_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * The authority's coverage statement — the sentence that makes `CoverageBasis.Designated` reachable at all, and the
- * only thing `flood_map_extent` is derived from.
+ * The authority's coverage statement — the sentence that makes `CoverageBasis.Designated`
+ * reachable at all, and the only thing `flood_map_extent` is derived from.
  *
- * The union of hazard polygons is not the mapped area: Zone 1 is the mapped area minus the polygons, so a footprint
- * derived from the polygons would report every Zone 1 location as unmapped — the exact inversion this layer exists to
- * avoid.
+ * The union of hazard polygons is not the mapped area: Zone 1 is the mapped area minus
+ * the polygons, so a footprint derived from the polygons would report every Zone 1
+ * location as unmapped — the exact inversion this layer exists to avoid.
  */
 export const EA_COVERAGE_STATEMENT =
 	"The mapping of Flood Zone datasets covers all of England, down to catchments with an area of 3km2. " +

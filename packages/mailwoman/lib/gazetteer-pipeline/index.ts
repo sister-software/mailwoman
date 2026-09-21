@@ -55,27 +55,34 @@ import {
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * The canonical postcode-database set (filenames under `<data-root>/wof/`): US + the WOF intl database (NL/FR/DE/ES/IT)
+ * The canonical postcode-database set (filenames under `<data-root>/wof/`):
+ * US + the WOF intl database (NL/FR/DE/ES/IT)
  *
- * - The GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM Northern Ireland database + the
- *   GeoNames-postal tail database (nine countries) + Overture postcode centroids (CA + the EU-coverage locales).
+ * - The GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM
+ *   Northern Ireland database + the GeoNames-postal tail database (nine countries) +
+ *   Overture postcode centroids (CA + the EU-coverage locales).
  *   Missing databases are skipped rather than fatal.
  *
- * That skip is not merely tolerant — it is the **build-local tier's mechanism**. `postalcode-ni-osm.db` is ODbL and is
- * never published, so on every machine but the one that built it the `pathExists` filter in
+ * That skip is not merely tolerant — it is the **build-local tier's mechanism**.
+ * `postalcode-ni-osm.db` is ODbL and is never published, so on every machine
+ * but the one that built it the `pathExists` filter in
  * {@link resolvePostcodeDatabases} removes it and the set degrades to the permissive databases alone. Nothing else
  * enforces the tier, and nothing else needs to.
  *
- * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB — superseded by Code-Point Open, the same
- * underlying survey under a clean licence).
+ * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB —
+ * superseded by Code-Point Open, the same underlying survey under a clean licence).
  *
- * Every member is spelled `postalcode-`, and that is a routing interface rather than a house style. `deriveSchemaName`
- * (`resolver-wof-sqlite/extracts.ts`) turns the filename into the attached SQL schema name, and
- * `pickExtractsForPlacetype` selects by testing that name against the placetype — which is `postalcode`. A database
- * added here as `postcode-<cc>.db` builds the candidate table fine (the builders read `spr` directly) and is then
- * unreachable to any `findPlace({ placetype: "postalcode" })`, returning zero hits rather than an error. The
- * `postcode-locality-<cc>.db` family is the deliberate exception and is not a member of this list: those hold a
- * `postcode_locality` relation table and no `spr`, so they are never routed as place databases at all.
+ * Every member is spelled `postalcode-`, and that is a routing interface rather than a house style.
+ * `deriveSchemaName` (`resolver-wof-sqlite/extracts.ts`) turns the filename into
+ * the attached SQL schema name, and `pickExtractsForPlacetype` selects by testing
+ * that name against the placetype — which is `postalcode`.
+ *
+ * A database added here as `postcode-<cc>.db` builds the candidate table
+ * fine (the builders read `spr` directly) and is then unreachable to any
+ * `findPlace({ placetype: "postalcode" })`, returning zero hits rather than an error.
+ * The `postcode-locality-<cc>.db` family is the deliberate exception and is not a
+ * member of this list: those hold a `postcode_locality` relation table and no `spr`,
+ * so they are never routed as place databases at all.
  */
 export const DEFAULT_POSTCODE_DATABASES = [
 	"postalcode-us.db",
@@ -256,9 +263,10 @@ export interface FoldOptions {
 	geonamesDir?: string
 	/**
 	 * #267: the countries to also fold A-class admin (pcli + ADM1) for, linking the locality→region→country ancestry.
-	 * zero-coverage gap countries only (the coverage-expansion targets) — a country that already has WOF admin would
-	 * double up, so the EU alias set is left off. Without it the gap localities are orphans and "Tbilisi, GE" can't
-	 * resolve.
+	 * zero-coverage gap countries only (the coverage-expansion targets) — a country that
+	 * already has WOF admin would double up, so the EU alias set is left off.
+	 *
+	 * Without it the gap localities are orphans and "Tbilisi, GE" can't resolve.
 	 */
 	adminForCountries?: ReadonlySet<string>
 	/**
@@ -280,9 +288,11 @@ export interface FoldOptions {
 }
 
 /**
- * How many of the dropped country codes the coverage-loss error names before eliding. The realistic miss is the whole
- * fold minus a handful (161 → 14 in the #1514 incident), so the list is there to make the shape of the mistake obvious
- * rather than to enumerate it — a dozen codes plus the count does that on one terminal line.
+ * How many of the dropped country codes the coverage-loss error names before eliding.
+ *
+ * The realistic miss is the whole fold minus a handful (161 → 14 in the #1514 incident),
+ * so the list is there to make the shape of the mistake obvious rather than to enumerate it —
+ * a dozen codes plus the count does that on one terminal line.
  */
 const DROPPED_COUNTRIES_SHOWN = 12
 
@@ -361,8 +371,9 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	await using db = new DatabaseClient<WOFDatabase>(opts.adminOut)
 
 	// #1026 + #1514: the purge clears the A-class country/region nodes and the locality ancestry too, so a fold that
-	// does not pass adminForCountries un-parents the 95 zero-coverage locales' localities. Default it to the same
-	// gap set `buildAdmin` uses, scoped to this run — the caller opts OUT by passing an explicit set.
+	// does not pass adminForCountries un-parents the 95 zero-coverage locales' localities.
+	// Default it to the same gap set `buildAdmin` uses, scoped to this run —
+	// the caller opts OUT by passing an explicit set.
 	const adminForCountries =
 		opts.adminForCountries ?? new Set(geonamesAdminGapCountries().filter((cc) => requested.has(cc)))
 
@@ -419,9 +430,11 @@ export interface BuildOptions {
 }
 
 /**
- * Build the byte-range candidate gazetteer from an admin DB + postcode databases. The FTS5-trigram fuzzy index is baked
- * in by `buildCandidateTable`; the coverage manifest (survey candidate #2 — the artifact's own hard-filter coverage
- * record + guard-B bboxes, see `coverage-manifest.ts`) is baked in before the seal.
+ * Build the byte-range candidate gazetteer from an admin DB + postcode databases.
+ *
+ * The FTS5-trigram fuzzy index is baked in by `buildCandidateTable`; the coverage manifest
+ * (survey candidate #2 — the artifact's own hard-filter coverage record + guard-B bboxes,
+ * see `coverage-manifest.ts`) is baked in before the seal.
  */
 export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build-candidate")
@@ -457,14 +470,16 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		onProgress: opts.onProgress,
 	})
 
-	// Coverage manifest (survey candidate #2): facts about the artifact live IN the artifact — bake the
-	// measured hard-filter coverage record + guard-B bboxes so consumers read them at open instead of
-	// falling back to the code constants. Must run pre-seal (a shipped DB is never patched — rebuild).
+	// Coverage manifest (survey candidate #2): facts about the artifact live IN the artifact —
+	// bake the measured hard-filter coverage record + guard-B bboxes so consumers read
+	// them at open instead of falling back to the code constants.
+	// Must run pre-seal (a shipped DB is never patched — rebuild).
 	opts.onProgress?.("coverage-manifest", "baking country coverage + bbox manifest")
 	await emitCoverageManifest({ dbPath: opts.out })
 
-	// The layer interface's manifest, alongside the coverage one and for the same reason: facts about the
-	// artifact live IN the artifact. It names its ancestor rather than restating the ancestor's sources —
+	// The layer interface's manifest, alongside the coverage one and for the same reason:
+	// facts about the artifact live IN the artifact.
+	// It names its ancestor rather than restating the ancestor's sources —
 	// see candidate-manifest.ts for why a derived layer's provenance has to be a chain.
 	opts.onProgress?.("layer-manifest", "stamping provenance")
 	const sha = buildSHA(String(repoRootPath()))

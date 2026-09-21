@@ -70,11 +70,14 @@ export interface MCPToolDeps {
 }
 
 /**
- * One MCP tool. `inputSchema` is a plain Zod object (not `any` — this repo's oxlint config errors on
- * `typescript/no-explicit-any`) — `z.ZodRawShape` is zod's own umbrella type for "any object shape", so this stays
- * generic over the concrete per-tool schemas without reaching for `any`. `handler` re-parses `args` through the same
- * schema (cheap. zod objects are small here) rather than trusting an unchecked cast, so the array of heterogeneous
- * tools stays type-safe internally despite the necessarily-uniform external shape.
+ * One MCP tool.
+ *
+ * `inputSchema` is a plain Zod object (not `any` — this repo's oxlint config errors on
+ * `typescript/no-explicit-any`) — `z.ZodRawShape` is zod's own umbrella type for "any object
+ * shape", so this stays generic over the concrete per-tool schemas without reaching for `any`.
+ * `handler` re-parses `args` through the same schema (cheap. zod objects are small here)
+ * rather than trusting an unchecked cast, so the array of heterogeneous tools stays
+ * type-safe internally despite the necessarily-uniform external shape.
  */
 export interface MCPToolDef {
 	name: string

@@ -11,13 +11,16 @@ import { stringifyJSON } from "#json"
 import type { CoverageCell } from "#layers/manifest"
 
 /**
- * The coverage rows for a layer whose coverage is `source_present`: one per cell the authority's own polygons reach,
- * and none anywhere else.
+ * The coverage rows for a layer whose coverage is `source_present`: one per cell
+ * the authority's own polygons reach, and none anywhere else.
  *
- * `observedRows` counts the polygons reaching the cell, which is what the interface's column means. There is no
- * zero-row cell here and there cannot be one: a cell with no polygon gets no row, because a `source_present` layer
- * publishes nothing that would let an empty cell be distinguished from unmapped ground. A layer whose absence carries
- * meaning (flood's Zone 1) emits its rows from the designated extent instead, and does not use this.
+ * `observedRows` counts the polygons reaching the cell, which is what the interface's column means.
+ * There is no zero-row cell here and there cannot be one: a cell with no polygon
+ * gets no row, because a `source_present` layer publishes nothing that would let
+ * an empty cell be distinguished from unmapped ground.
+ *
+ * A layer whose absence carries meaning (flood's Zone 1) emits its rows from the
+ * designated extent instead, and does not use this.
  */
 export function sourcePresentCoverageCells(observed: ReadonlyMap<number, number>): CoverageCell[] {
 	const cells: CoverageCell[] = []
@@ -35,13 +38,13 @@ export function sourcePresentCoverageCells(observed: ReadonlyMap<number, number>
 }
 
 /**
- * The coverage rows for a layer whose footprint an authority designates: one per cell of the realized footprint, every
- * one at completeness 1 on the `designated` basis — `observed_rows` zero included, because a designated cell no polygon
- * reaches is the storable form of a designated absence, and the row a reader must not confuse with the absent row an
- * out-of-footprint cell has.
+ * The coverage rows for a layer whose footprint an authority designates: one per cell of the realized
+ * footprint, every one at completeness 1 on the `designated` basis — `observed_rows` zero included,
+ * because a designated cell no polygon reaches is the storable form of a designated absence,
+ * and the row a reader must not confuse with the absent row an out-of-footprint cell has.
  *
- * @param options.include Narrows the footprint where a product excludes some cells — which cells, and what their
- *   exclusion means, is the product's own rule and stays at its call site.
+ * @param options.include Narrows the footprint where a product excludes some cells — which cells,
+ *   and what their exclusion means, is the product's own rule and stays at its call site.
  */
 export function designatedCoverageCells(
 	cells: Iterable<number>,
@@ -65,9 +68,10 @@ export function designatedCoverageCells(
 }
 
 /**
- * Refuse a coverage row that would license a negative claim — the check the meaning-of-zero rule turns on for a
- * `source_present` layer, and a condition rather than a convention: the day someone writes a stronger basis without
- * settling the footprint question, the build refuses rather than letting an absent polygon be read as a designation.
+ * Refuse a coverage row that would license a negative claim — the check the meaning-of-zero
+ * rule turns on for a `source_present` layer, and a condition rather than a convention:
+ * the day someone writes a stronger basis without settling the footprint question,
+ * the build refuses rather than letting an absent polygon be read as a designation.
  *
  * @param scope Names the caller in the refusal, e.g. `coastal build`.
  * @param limitSentence The product's own sentence saying why its coverage licenses no negative claim.
@@ -84,8 +88,8 @@ export function assertNoNegativeClaim(scope: string, cells: ReadonlyArray<Covera
 }
 
 /**
- * Refuse a layer holding no coverage rows at all — every location would read as unknown, and a reader cannot tell that
- * artifact from ground nobody mapped.
+ * Refuse a layer holding no coverage rows at all — every location would read as unknown,
+ * and a reader cannot tell that artifact from ground nobody mapped.
  *
  * @param indistinguishableFrom The product's own words for what the empty answer would be mistaken for.
  */

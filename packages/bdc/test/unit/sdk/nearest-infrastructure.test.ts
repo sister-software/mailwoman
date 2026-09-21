@@ -187,8 +187,10 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 }
 
 /**
- * A minimal `layerschemadatabase`-only fixture — not poi.db's own coverage table. Proves the coverage join runs against
- * whatever database the caller passes, independent of poi.db's own coverage.
+ * A minimal `layerschemadatabase`-only fixture — not poi.db's own coverage table.
+ *
+ * Proves the coverage join runs against whatever database the caller passes,
+ * independent of poi.db's own coverage.
  */
 async function openemptyschemadb(): Promise<DatabaseClient<layerschemadatabase>> {
 	const kdb = DatabaseClient.temp<layerschemadatabase>()
@@ -274,8 +276,8 @@ describe("nearestInfrastructure", () => {
 		using schemadb = await openemptyschemadb()
 
 		// Discover which res-6 cells the hits land in (via the same reconstruction nearestInfrastructure
-		// itself uses), then write coverage for exactly those cells — robust regardless of whether the
-		// fixture's near/mid rows happen to share one res-6 parent or straddle a boundary.
+		// itself uses), then write coverage for exactly those cells — robust regardless of
+		// whether the fixture's near/mid rows happen to share one res-6 parent or straddle a boundary.
 		const uncoveredHits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: TELECOM_CATEGORY_IDS,

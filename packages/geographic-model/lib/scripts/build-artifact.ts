@@ -103,8 +103,8 @@ async function main(): Promise<void> {
 	)
 }
 
-// `import.meta.main` is undefined under a Vite/vitest module graph, so importing this module from a test stays
-// side-effect-free and never rewrites the committed artifact.
+// `import.meta.main` is undefined under a Vite/vitest module graph, so importing this
+// module from a test stays side-effect-free and never rewrites the committed artifact.
 if (import.meta.main) {
 	await main()
 }

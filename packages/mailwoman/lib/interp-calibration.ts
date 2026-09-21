@@ -24,8 +24,10 @@ export interface InterpCalibrationTable {
 	 */
 	byRegion: Record<string, number>
 	/**
-	 * Multiplier for regions not in the measured set. Deliberately high (near the rural end): under-coverage
-	 * (overconfidence) is the harmful error and most unmeasured states skew rural.
+	 * Multiplier for regions not in the measured set.
+	 *
+	 * Deliberately high (near the rural end): under-coverage (overconfidence) is the
+	 * harmful error and most unmeasured states skew rural.
 	 */
 	default: number
 }

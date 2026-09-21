@@ -130,8 +130,8 @@ export interface BDCDatabase extends layerschemadatabase {
 export const BDC_H3_RESOLUTION = 9
 
 /**
- * H3 resolution for `layer_coverage.h3_cell` in bdc.db — coarser than the availability spine, matching poi.db's res-6
- * coverage-cell convention.
+ * H3 resolution for `layer_coverage.h3_cell` in bdc.db — coarser than the availability
+ * spine, matching poi.db's res-6 coverage-cell convention.
  */
 export const BDC_COVERAGE_H3_RESOLUTION = 6
 

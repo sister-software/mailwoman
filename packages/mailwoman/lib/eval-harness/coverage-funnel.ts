@@ -483,9 +483,9 @@ export function opportunityCandidates(
 /**
  * The inputs a work-selection ranking reads, and which of them this instrument supplies today.
  *
- * Existing package and board coverage is absent from this list by design. It reduces what a piece of work costs, and
- * reading it as need would rank the jurisdictions already measured above the ones nobody has measured — the selection
- * the funnel exists to expose.
+ * Existing package and board coverage is absent from this list by design.
+ * It reduces what a piece of work costs, and reading it as need would rank the jurisdictions
+ * already measured above the ones nobody has measured — the selection the funnel exists to expose.
  */
 export const OPPORTUNITY_INPUTS = [
 	{

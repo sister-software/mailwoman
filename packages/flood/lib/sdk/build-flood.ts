@@ -350,9 +350,9 @@ export const DEFAULT_CHUNK_SIZE = 100_000
 /**
  * Add up what the chunks reported.
  *
- * Exported for its own test: the coverage-cell arithmetic is the one part of the batched path that a fixture build
- * cannot reach, and getting it wrong produces a well-formed artifact that under-reports how many polygons a cell
- * holds.
+ * Exported for its own test: the coverage-cell arithmetic is the one part of the
+ * batched path that a fixture build cannot reach, and getting it wrong produces a
+ * well-formed artifact that under-reports how many polygons a cell holds.
  */
 export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): StreamResult {
 	const zoneCounts: Record<string, number> = {}
@@ -375,9 +375,9 @@ export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): Stream
 			zoneCounts[zone] = (zoneCounts[zone] ?? 0) + count
 		}
 
-		// A coverage cell straddles chunk boundaries — a range of feature ids is not a region — so the counts ADD rather
-		// than replace. Taking the last chunk's value would report a busy floodplain as holding only its final few
-		// polygons.
+		// A coverage cell straddles chunk boundaries — a range of feature ids is not
+		// a region — so the counts ADD rather than replace.
+		// Taking the last chunk's value would report a busy floodplain as holding only its final few polygons.
 		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
 	}
 
@@ -537,9 +537,9 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 /**
  * The coverage rows: one per interior cell of the authority's footprint, and none outside it.
  *
- * `observed_rows` counts the polygons reaching into the cell, which is what the interface's column means. It is zero
- * for a cell the authority designated and no polygon covers — the storable form of the Zone 1 designation, and the row
- * a reader must not confuse with the absent row a cell outside England has.
+ * `observed_rows` counts the polygons reaching into the cell, which is what the interface's column means.
+ * It is zero for a cell the authority designated and no polygon covers — the storable form of the Zone
+ * 1 designation, and the row a reader must not confuse with the absent row a cell outside England has.
  */
 function buildCoverageCells(extent: FloodMapExtent, observed: Map<number, number>): CoverageCell[] {
 	return designatedCoverageCells(extent.coverageCells, observed)

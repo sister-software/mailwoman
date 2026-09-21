@@ -138,8 +138,10 @@ export async function createCountryBBoxTable(db: Kysely<GazetteerCoverageDatabas
 }
 
 /**
- * Write the coverage manifest into a candidate DB under construction (pre-seal — a shipped DB is never patched, rebuild
- * instead). Creates both tables and inserts the facts. call exactly once, from the gazetteer build.
+ * Write the coverage manifest into a candidate DB under construction
+ * (pre-seal — a shipped DB is never patched, rebuild instead).
+ *
+ * Creates both tables and inserts the facts. call exactly once, from the gazetteer build.
  */
 export async function writeGazetteerCoverageManifest(
 	db: Kysely<GazetteerCoverageDatabase>,
@@ -182,10 +184,13 @@ export async function writeGazetteerCoverageManifest(
 }
 
 /**
- * Read the coverage manifest from an open candidate DB, or `undefined` when the artifact predates it (neither table
- * present) — the signal for consumers to fall back to the code constants byte-identically. Synchronous raw reads on
- * purpose: this runs inside {@link WOFCandidateTableLookup}'s synchronous constructor (the sync-reader carve-out in
- * `agents.md`), and the tables are a few dozen rows read once per open.
+ * Read the coverage manifest from an open candidate DB, or `undefined`
+ * when the artifact predates it (neither table present) — the signal for consumers
+ * to fall back to the code constants byte-identically.
+ *
+ * Synchronous raw reads on purpose: this runs inside {@link WOFCandidateTableLookup}'s
+ * synchronous constructor (the sync-reader carve-out in `agents.md`),
+ * and the tables are a few dozen rows read once per open.
  */
 export function readGazetteerCoverageManifest<DB>(db: DatabaseClient<DB>): GazetteerArtifactCoverage | undefined {
 	const hasCoverage = hasTable(db, COUNTRY_COVERAGE_TABLE)

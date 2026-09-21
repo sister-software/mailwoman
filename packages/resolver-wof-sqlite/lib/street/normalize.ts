@@ -11,14 +11,17 @@ import { AbbreviationToDirectional, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/c
 import type { Tagged } from "type-fest"
 
 /**
- * A place name folded by {@link normalizeLocalityForKey} — the value stored in, and required to probe, every
- * `name_key`-style column: the candidate gazetteer, the postal-city side-index, the street-centroid extract, an
- * ancestor chain's `parent_name_key`, and the address-point locality scope.
+ * A place name folded by {@link normalizeLocalityForKey} — the value stored in,
+ * and required to probe, every `name_key`-style column: the candidate gazetteer,
+ * the postal-city side-index, the street-centroid extract, an ancestor chain's
+ * `parent_name_key`, and the address-point locality scope.
  *
- * The brand is here because the fold is applied at build time and is therefore mandatory at query time, while a
- * near-miss approximation of it (`toLowerCase()`, `trim()`) is still a `string`: it binds to the parameter, returns
- * fewer rows, and the shortfall reads as a coverage gap in the data rather than a defect in the probe. Requiring the
- * brand at the boundary turns that silent under-match into a compile error. Mint one only by calling the fold.
+ * The brand is here because the fold is applied at build time and is therefore mandatory
+ * at query time, while a near-miss approximation of it (`toLowerCase()`, `trim()`) is
+ * still a `string`: it binds to the parameter, returns fewer rows, and the shortfall
+ * reads as a coverage gap in the data rather than a defect in the probe.
+ * Requiring the brand at the boundary turns that silent under-match into a compile error.
+ * Mint one only by calling the fold.
  */
 export type NameKey = Tagged<string, "NameKey">
 

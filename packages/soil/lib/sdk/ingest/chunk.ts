@@ -61,9 +61,9 @@ export interface SoilChunkResult {
 	/**
 	 * The same, counting only delineations whose map unit has soil mapping behind it.
 	 *
-	 * Separate from the total because the coverage rule turns on it: a coverage cell reached only by `notcom` and
-	 * access-denied polygons is inside a published survey area and carries no digitized soil mapping, and the survey's
-	 * §3.2 gives it no row.
+	 * Separate from the total because the coverage rule turns on it: a coverage cell
+	 * reached only by `notcom` and access-denied polygons is inside a published survey area
+	 * and carries no digitized soil mapping, and the survey's §3.2 gives it no row.
 	 */
 	mappedByCoverageCell: Array<[number, number]>
 	/**

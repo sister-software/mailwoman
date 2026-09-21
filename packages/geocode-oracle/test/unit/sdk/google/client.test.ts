@@ -37,10 +37,10 @@ vi.mock("@mailwoman/geocode-oracle/env", async (importOriginal) => {
 	return { ...actual, $private: { ...actual.$private, GOOGLE_MAPS_API_KEY: undefined } }
 })
 
-// Shared-graph guard: the root vitest config runs `isolate: false`, so `./google-client.ts` may already
-// sit in the worker's cache — evaluated without this file's env mock by an earlier file. Reset on the
-// way in so the chain re-evaluates against the mock, and on the way out so the next file in this fork
-// does not inherit it.
+// Shared-graph guard: the root vitest config runs `isolate: false`, so `./google-client.ts` may
+// already sit in the worker's cache — evaluated without this file's env mock by an earlier file.
+// Reset on the way in so the chain re-evaluates against the mock, and on the way out
+// so the next file in this fork does not inherit it.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 

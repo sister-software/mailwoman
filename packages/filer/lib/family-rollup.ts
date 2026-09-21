@@ -104,22 +104,28 @@ export interface FamilyRollupMember {
 
 /**
  * {@linkcode familyRollup}'s per-family result shape — a corporate family's full membership, `asOf`-scoped.
- * Deliberately carries no `cluster_id`-shaped key and no single top-level `relationship`, unlike the other family type
- * this SDK exports, `filer-lookup.ts`'s `FilerLookupFamily`, which answers "which families does one node belong to."
+ * Deliberately carries no `cluster_id`-shaped key and no single top-level `relationship`,
+ * unlike the other family type this SDK exports, `filer-lookup.ts`'s `FilerLookupFamily`,
+ * which answers "which families does one node belong to."
+ *
  * This is the inverse view, "who belongs to this family," so `relationship` lives per-member instead.
  *
- * `distinct_member_count` is `members` deduped by `node_id` — `members` itself is never deduped (provenance plurality:
- * two different sources asserting the same node's membership both survive as separate entries, as do two different raw
- * spellings one member reported for the same family), so `members.length` alone over-counts whenever more than one row
- * corroborates the same member. This mirrors `filerLookup.ts`'s `cluster.members`, which is already deduped (one entry
- * per node) — without this field, a caller sizing a family by array length would get an inconsistent answer depending
- * on which rollup they read. It counts distinct member nodes, never rows, so widening `filer_family`'s primary key
- * cannot inflate it.
+ * `distinct_member_count` is `members` deduped by `node_id` — `members` itself is never deduped
+ * (provenance plurality: two different sources asserting the same node's membership both survive
+ * as separate entries, as do two different raw spellings one member reported for the same family),
+ * so `members.length` alone over-counts whenever more than one row corroborates the same member.
+ * This mirrors `filerLookup.ts`'s `cluster.members`, which is already deduped
+ * (one entry per node) — without this field, a caller sizing a family by array length
+ * would get an inconsistent answer depending on which rollup they read.
  *
- * `display_names` (`family_id` alone is a canonicalized slug, and losing the raw name entirely was a real product loss
- * for the headline "these filers report holding company H" output) is {@linkcode readFamilyDisplayNames}'s output over
- * this family's current members — see that function's docstring for the exact join and for why a multi-spelling family
- * (two raw names canonicalizing to the same `family_id`) surfaces every spelling, sorted, rather than picking one.
+ * It counts distinct member nodes, never rows, so widening `filer_family`'s primary key cannot inflate it.
+ *
+ * `display_names` (`family_id` alone is a canonicalized slug, and losing the raw name entirely
+ * was a real product loss for the headline "these filers report holding company H" output)
+ * is {@linkcode readFamilyDisplayNames}'s output over this family's current members —
+ * see that function's docstring for the exact join and for why a multi-spelling family
+ * (two raw names canonicalizing to the same `family_id`) surfaces every spelling,
+ * sorted, rather than picking one.
  */
 export interface FamilyRollup {
 	family_id: string
@@ -131,9 +137,12 @@ export interface FamilyRollup {
 }
 
 /**
- * Read a `familyID`'s rollup at `asOf` — `null` when it has no member row in force at that date (including when it has
- * never existed at all). Pulled out of {@linkcode familyRollup} so the `nodeID` path can call it once per distinct
- * family a node belongs to, instead of duplicating the member-query logic. Reuses `filer-lookup.ts`'s
+ * Read a `familyID`'s rollup at `asOf` — `null` when it has no member row in force
+ * at that date (including when it has never existed at all).
+ *
+ * Pulled out of {@linkcode familyRollup} so the `nodeID` path can call it once per
+ * distinct family a node belongs to, instead of duplicating the member-query logic.
+ * Reuses `filer-lookup.ts`'s
  * {@linkcode readFamilyMembers}/{@linkcode readFamilyDisplayNames} rather than inlining its own copies — `filerLookup`'s
  * `families` field needs the identical two queries for the identical reason.
  */

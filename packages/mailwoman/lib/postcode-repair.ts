@@ -24,13 +24,16 @@ import { collectNodes, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder
 import type { QueryShape } from "@mailwoman/query-shape"
 
 /**
- * Postcode formats whose surface is structurally distinguishable from anything else an address writes — letters mixed
- * into the digit groups (GB `KT2 6AB`, CA `M5H 2N2`). Membership is earned by that structural argument, never by
- * coverage ambition. Two exclusions, both measured rather than reasoned:
+ * Postcode formats whose surface is structurally distinguishable from anything else an
+ * address writes — letters mixed into the digit groups (GB `KT2 6AB`, CA `M5H 2N2`).
+ *
+ * Membership is earned by that structural argument, never by coverage ambition.
+ * Two exclusions, both measured rather than reasoned:
  *
  * - Five-digit families (us_zip / fr / de): `12345` in `12345 Main St` is a house number.
- * - `nl_postcode` (`\d{4} [A-Z]{2}`): **"3215 SE" in "3215 SE Clinton St" matches it** — a US house number plus a
- *   directional. The session-trace invariance test caught the first draft of this set eating exactly that span.
+ * - `nl_postcode` (`\d{4} [A-Z]{2}`): **"3215 SE" in "3215 SE Clinton St" matches it** —
+ *   a US house number plus a directional.
+ *   The session-trace invariance test caught the first draft of this set eating exactly that span.
  */
 const REPAIRABLE_POSTCODE_FORMATS: ReadonlySet<string> = new Set(["uk_postcode", "ca_postcode"])
 

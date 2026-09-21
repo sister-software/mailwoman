@@ -158,15 +158,17 @@ const measured = (c: Rankable): boolean => typeof c.importance === "number" && N
 /**
  * Reorder only the measured candidates, and only among the positions they already occupy.
  *
- * This is what "positive evidence only" has to mean when coverage is partial, which it always is — measured on the
- * shipped importance artifact, the four bare GB panel rows have 2/7, 8/10, 8/10 and 9/10 of their candidates scored. A
- * blanket "abstain unless everything is measured" throws the signal away on all four. treating absent as 0 would let a
- * scored hamlet leapfrog an unscored metropolis. Neither is right, and the resolution is that an unmeasured row simply
- * does not participate: it holds the rank population gave it, and the scored rows permute among the slots they hold
- * between them.
+ * This is what "positive evidence only" has to mean when coverage is partial,
+ * which it always is — measured on the shipped importance artifact, the four bare GB
+ * panel rows have 2/7, 8/10, 8/10 and 9/10 of their candidates scored.
+ * A blanket "abstain unless everything is measured" throws the signal away on all four.
+ * treating absent as 0 would let a scored hamlet leapfrog an unscored metropolis.
  *
- * So for `Whitby` — CA(0.5089), GB(0.5496), TC(—), then four unscored bearers — the swap is confined to slots 0 and 1,
- * GB takes the lead, and TC never moves.
+ * Neither is right, and the resolution is that an unmeasured row simply does not participate: it holds
+ * the rank population gave it, and the scored rows permute among the slots they hold between them.
+ *
+ * So for `Whitby` — CA(0.5089), GB(0.5496), TC(—), then four unscored bearers —
+ * the swap is confined to slots 0 and 1, GB takes the lead, and TC never moves.
  */
 function reorderMeasured<T extends Rankable>(tier: readonly T[], order: (measuredRows: T[]) => T[]): T[] {
 	const slots: number[] = []

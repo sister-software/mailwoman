@@ -126,13 +126,18 @@ function isStreetPrefix(token: string): boolean {
 }
 
 /**
- * Lowercase connective particles that live inside multi-word place names — the Romance/Germanic glue that bridges two
- * capitalized content words: "Las Palmas **de** Gran Canaria", "San Pietro **in** Casale", "Alphen **aan den** Rijn",
- * "Frankfurt **am** Main", "Rothenburg **ob der** Tauber". This is a bounded linguistic category (place-name
- * connectives) rather than a gazetteer or a stopword dump — and it only ever fires when bracketed by capitalized
- * content on both sides (see `scoreLocalityPhrase`), so a stray "and"/"the" in a street phrase can't smuggle a particle
- * through. Keep coverage to the connectives that actually bridge place-name tokens. growing it into a per-locale
- * stopword list is the wrong move — that pressure belongs on the gazetteer/reconciler rather than here.
+ * Lowercase connective particles that live inside multi-word place names —
+ * the Romance/Germanic glue that bridges two capitalized content words: "Las Palmas
+ * **de** Gran Canaria", "San Pietro **in** Casale", "Alphen **aan den** Rijn",
+ * "Frankfurt **am** Main", "Rothenburg **ob der** Tauber".
+ *
+ * This is a bounded linguistic category (place-name connectives) rather than a gazetteer
+ * or a stopword dump — and it only ever fires when bracketed by capitalized
+ * content on both sides (see `scoreLocalityPhrase`), so a stray "and"/"the" in a
+ * street phrase can't smuggle a particle through.
+ * Keep coverage to the connectives that actually bridge place-name tokens. growing
+ * it into a per-locale stopword list is the wrong move — that pressure belongs
+ * on the gazetteer/reconciler rather than here.
  */
 const PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([
 	// Spanish / Catalan / Portuguese

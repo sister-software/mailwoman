@@ -74,8 +74,9 @@ describe("sourceConflicts", () => {
 	})
 
 	it("accepts a baseline country, because that trade was measured", () => {
-		// CZ: 9,800 of its 11,904 GeoNames names are already in Overture. Duplication, and deliberate — FI in
-		// the same set gains ~12,000 names Overture lacks, so dropping the fold is a coverage decision.
+		// CZ: 9,800 of its 11,904 GeoNames names are already in Overture.
+		// Duplication, and deliberate — FI in the same set gains ~12,000 names Overture lacks,
+		// so dropping the fold is a coverage decision.
 		expect(
 			sourceConflicts(countrySourceMap({ wofCountries: [], overtureCountries: ["CZ"], geonamesCountries: ["CZ"] }))
 		).toEqual([])

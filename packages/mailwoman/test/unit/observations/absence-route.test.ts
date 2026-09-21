@@ -53,8 +53,8 @@ import { afterAll, describe, expect, it } from "vitest"
 const COVERAGE_RESOLUTION = 6
 
 /**
- * Four points in the same region, each in its own res-6 cell, so a scratch layer can give each one a different coverage
- * story without the cells colliding.
+ * Four points in the same region, each in its own res-6 cell, so a scratch layer can
+ * give each one a different coverage story without the cells colliding.
  */
 const POINTS = {
 	surveyedEmpty: { latitude: 48.82, longitude: 1.7553 },

@@ -73,9 +73,11 @@ const OPEN_PROVIDER_NAME = "none"
 const METERS_PER_KM = 1000
 
 /**
- * Coordinate thresholds reported when the caller names none — a rooftop bar, a parcel bar, and a building-block bar.
- * Every one is stated in the report beside its own denominator, so a caller substituting their own changes what is
- * reported and not what is claimed.
+ * Coordinate thresholds reported when the caller names none — a rooftop bar,
+ * a parcel bar, and a building-block bar.
+ *
+ * Every one is stated in the report beside its own denominator, so a caller substituting
+ * their own changes what is reported and not what is claimed.
  */
 const DEFAULT_COORDINATE_THRESHOLDS_M: readonly number[] = [5, 25, 100]
 

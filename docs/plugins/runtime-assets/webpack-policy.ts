@@ -28,9 +28,9 @@ export async function bundleAliases(isServer: boolean): Promise<Record<string, s
 	const alias = await buildWorkspaceAliases()
 
 	if (isServer) {
-		// The SSR bundle resolves the `node` condition, under which `@mailwoman/neural/onnx-runner` is the
-		// `onnxruntime-node` half, which webpack cannot bundle. The page is browser-only. the server bundle only has to
-		// build, so it takes the browser runner.
+		// The SSR bundle resolves the `node` condition, under which `@mailwoman/neural/onnx-runner`
+		// is the `onnxruntime-node` half, which webpack cannot bundle.
+		// The page is browser-only. the server bundle only has to build, so it takes the browser runner.
 		const browserRunner = await resolvePackageFile("@mailwoman/neural", "onnx/runner/browser")
 
 		if (browserRunner) {
@@ -65,10 +65,11 @@ export function configureRuntimeWebpack(
 ): Configuration {
 	return {
 		...filesystemCache(config, alias),
-		// isomorphic-dompurify's Node build constructs a jsdom window at import, and jsdom cannot be webpack-bundled
-		// (`__dirname is not defined` inside the SSR bundle). The server bundle requires the real package from
-		// node_modules at render time instead, so SSR sanitizes through the same jsdom-backed engine as any other Node
-		// process. The client bundle keeps bundling it — the package's `browser` build, plain DOMPurify.
+		// isomorphic-dompurify's Node build constructs a jsdom window at import, and jsdom
+		// cannot be webpack-bundled (`__dirname is not defined` inside the SSR bundle).
+		// The server bundle requires the real package from node_modules at render time instead,
+		// so SSR sanitizes through the same jsdom-backed engine as any other Node process.
+		// The client bundle keeps bundling it — the package's `browser` build, plain DOMPurify.
 		...(isServer ? { externals: [{ "isomorphic-dompurify": "commonjs isomorphic-dompurify" }] } : {}),
 		resolve: {
 			alias,

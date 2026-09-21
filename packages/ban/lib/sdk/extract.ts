@@ -67,8 +67,10 @@ export interface BANAddrRecord {
 	 */
 	codeInsee: string | null
 	/**
-	 * `certification_commune` — 1 when the commune certified the address, 0 when it did not. null when the column is
-	 * blank. Carried verbatim so a coverage basis can be computed per commune rather than inferred from a share.
+	 * `certification_commune` — 1 when the commune certified the address, 0
+	 * when it did not. null when the column is blank.
+	 *
+	 * Carried verbatim so a coverage basis can be computed per commune rather than inferred from a share.
 	 */
 	certified: number | null
 }

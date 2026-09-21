@@ -396,9 +396,9 @@ describe("buildPlacetypePairPriors — dual-key tie-break", () => {
 
 describe("buildPlacetypePairPriors — end-to-end cross-form regression (real PIX1 round trip)", () => {
 	// A real PairIndexBuilder-shaped entry, through a real tokenizer, through the real PIX1
-	// serialize/deserialize round trip — not a hand-built `PairIndexLike` double. Mock-only coverage cannot
-	// reach this case at all: `makePieces` emits one synthetic ▁-per-word piece, so it can never reproduce a
-	// genuine bare-▁-orphan split.
+	// serialize/deserialize round trip — not a hand-built `PairIndexLike` double.
+	// Mock-only coverage cannot reach this case at all: `makePieces` emits one synthetic
+	// ▁-per-word piece, so it can never reproduce a genuine bare-▁-orphan split.
 	//
 	// The entry below is not re-derived by calling `PairIndexBuilder` here: that class lives in the `mailwoman`
 	// workspace (CLI/gazetteer tooling), which depends on `@mailwoman/neural` — not the reverse — and

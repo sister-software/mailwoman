@@ -203,10 +203,10 @@ export function fixtureDelineations(areaSymbol = "XX001"): SoilDelineation[] {
 /**
  * The outline covering every fixture delineation, with margin — the survey area's own footprint.
  *
- * The margin is nearly a degree because the coverage test is conservative: `interiorCoverageCellSet` keeps only cells
- * lying wholly inside the outline, and a resolution-6 cell is about 36 km across. An outline the size of the fixture
- * squares yields zero interior cells and the build refuses — correctly, since an artifact with no coverage rows answers
- * unknown everywhere while reporting success.
+ * The margin is nearly a degree because the coverage test is conservative: `interiorCoverageCellSet`
+ * keeps only cells lying wholly inside the outline, and a resolution-6 cell is about 36 km across.
+ * An outline the size of the fixture squares yields zero interior cells and the build refuses —
+ * correctly, since an artifact with no coverage rows answers unknown everywhere while reporting success.
  */
 export function fixtureOutline(margin = 0.75): { type: "Polygon"; coordinates: number[][][] } {
 	const { lat, lon } = FIXTURE_ORIGIN

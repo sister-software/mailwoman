@@ -1,14 +1,17 @@
 /**
- * The twelve-stage coverage funnel over every jurisdiction the source register carries, plus the incumbency grouping
- * and the inputs a work-selection ranking would read.
+ * The twelve-stage coverage funnel over every jurisdiction the source register carries,
+ * plus the incumbency grouping and the inputs a work-selection ranking would read.
  *
- * `mailwoman data coverage` reports the countries the five registers mention. This reports the 250 the register knows,
- * so a jurisdiction that appears in none of them still gets a row saying so at every stage. The difference between the
- * two denominators is printed, because that difference is the population a failure-driven roadmap cannot see.
+ * `mailwoman data coverage` reports the countries the five registers mention.
+ * This reports the 250 the register knows, so a jurisdiction that appears in none
+ * of them still gets a row saying so at every stage.
  *
- * Every stage carries a state and a reason. `unknown` says this instrument cannot answer the stage from a checkout —
- * `sampled` reads it until an `audit_epoch_mixture` output is supplied — and it is never a claim about the
- * jurisdiction.
+ * The difference between the two denominators is printed, because that difference
+ * is the population a failure-driven roadmap cannot see.
+ *
+ * Every stage carries a state and a reason.
+ * `unknown` says this instrument cannot answer the stage from a checkout — `sampled` reads it
+ * until an `audit_epoch_mixture` output is supplied — and it is never a claim about the jurisdiction.
  *
  * Run:
  *
@@ -17,14 +20,17 @@
  *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --config <training config> --rows
  *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --mixture-audit <epoch-mixture-audit.json>
  *
- * Without `--config` the `admitted` stage reads the config `scope.config.json` records for the Latin family's shipped
- * graph, which admits 25 countries. The v5.9.0 in-flight config admits 135, so the stage reads a different number for
- * the same repository depending on which question is asked. The report names the file it read either way, and prints
- * the union across both shipped graphs beside it.
+ * Without `--config` the `admitted` stage reads the config `scope.config.json` records
+ * for the Latin family's shipped graph, which admits 25 countries.
+ * The v5.9.0 in-flight config admits 135, so the stage reads a different number for
+ * the same repository depending on which question is asked.
  *
- * `--mixture-audit` takes what `python -m mailwoman_train.audits.epoch_mixture --json` writes and fills the `sampled`
- * stage. Without it that stage reads `unknown` for all 250, because how many rows a country contributes to an epoch is
- * a property of a run.
+ * The report names the file it read either way, and prints the union across both shipped graphs beside it.
+ *
+ * `--mixture-audit` takes what `python -m mailwoman_train.audits.epoch_mixture --json`
+ * writes and fills the `sampled` stage.
+ * Without it that stage reads `unknown` for all 250, because how many rows a country
+ * contributes to an epoch is a property of a run.
  */
 
 import { POSTAL_REGIMES } from "@mailwoman/codex/postal-regimes"

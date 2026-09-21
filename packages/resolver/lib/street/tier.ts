@@ -26,11 +26,13 @@ import { foldName } from "#fold-name"
 const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /**
- * Reassemble the full street string from the street node's subtree (#483 coverage fix). The parser nests the
- * directional/suffix as `street_prefix`/`street_suffix` children of `street` (containment.ts), so `street.value` alone
- * is the bare base name ("Sheldon" for "East Sheldon Rd") — which misses the coordinate extracts keyed on the full
- * normalized name. Collect street + its prefix/particle/suffix descendants (not house_number/unit, which also nest
- * under street), order by span offset, and join.
+ * Reassemble the full street string from the street node's subtree (#483 coverage fix).
+ *
+ * The parser nests the directional/suffix as `street_prefix`/`street_suffix` children of `street`
+ * (containment.ts), so `street.value` alone is the bare base name ("Sheldon" for "East Sheldon Rd") —
+ * which misses the coordinate extracts keyed on the full normalized name.
+ * Collect street + its prefix/particle/suffix descendants
+ * (not house_number/unit, which also nest under street), order by span offset, and join.
  */
 function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressNode): string {
 	const parts = collectNodes([streetNode], (n) => STREET_NAME_TAGS.has(n.tag) && n.value.trim().length)
@@ -254,12 +256,14 @@ export function applyInterpolation(
 	if (!hit || !street || !houseNumber) return
 
 	houseNumber.metadata = { ...houseNumber.metadata, resolution_tier: "interpolated" }
-	// Conformal-calibrated radius (#374): the raw half-segment heuristic underestimates the true spread
-	// (~72% coverage on Travis); ×1.70 → a 90% bound. The artifact's own multiplier (read from the extract's
-	// `interp_calibration` metadata table at open time — `lookup.radiusCalibration`) is the default. an
-	// explicit caller factor is the @internal instrument override. Neither present (extracts predating the
-	// metadata table, no caller factor) keeps the raw value, byte-stable. Preserve the raw radius for
-	// transparency.
+	// Conformal-calibrated radius (#374): the raw half-segment heuristic underestimates
+	// the true spread (~72% coverage on Travis); ×1.70 → a 90% bound.
+	// The artifact's own multiplier (read from the extract's `interp_calibration`
+	// metadata table at open time — `lookup.radiusCalibration`) is the default. an
+	// explicit caller factor is the @internal instrument override.
+	// Neither present (extracts predating the metadata table, no caller factor)
+	// keeps the raw value, byte-stable.
+	// Preserve the raw radius for transparency.
 	const factor = radiusCalibration ?? lookup.radiusCalibration
 	const calibrated = factor ? Math.round(hit.uncertaintyM * factor) : hit.uncertaintyM
 

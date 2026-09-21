@@ -242,10 +242,10 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		let kept = 0
 		let totalReturned = 0
 
-		// stream the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising the
-		// whole result — a 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap that way (OOM 2026-06-14).
-		// stream()+fetchChunk() keeps JS memory bounded to one chunk. the growing data lives in the
-		// on-disk SQLite WAL inside a single transaction.
+		// stream the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising
+		// the whole result — a 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap that way
+		// (OOM 2026-06-14). stream()+fetchChunk() keeps JS memory bounded to one chunk. the
+		// growing data lives in the on-disk SQLite WAL inside a single transaction.
 		const oaCSVList = OA_MODE
 			? extractDelimited(options.oaCSV)
 					.map((p) => `'${p}'`)

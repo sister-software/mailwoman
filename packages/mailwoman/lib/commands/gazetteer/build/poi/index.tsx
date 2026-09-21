@@ -65,8 +65,10 @@ export const spec = {
 const BBOX_FIELD_COUNT = 4
 
 /**
- * Parse `--bbox "minLon,minLat,maxLon,maxLat"` into a {@link BBox}. Throws with the raw input echoed back on any
- * shape/finiteness mismatch — a silently-mis-parsed bbox would corrupt coverage silently, so fail loud instead.
+ * Parse `--bbox "minLon,minLat,maxLon,maxLat"` into a {@link BBox}.
+ *
+ * Throws with the raw input echoed back on any shape/finiteness mismatch —
+ * a silently-mis-parsed bbox would corrupt coverage silently, so fail loud instead.
  */
 function parseBBoxFlag(raw: string): BBox {
 	const parts = raw.split(",").map((s) => Number(s.trim()))

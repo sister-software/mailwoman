@@ -575,7 +575,9 @@ async function resolveOfflineArchive(sourceDir: string): Promise<string> {
 }
 
 /**
- * Build the sealed `uprn.db` layer. See the module docstring for the checks and the coverage semantics.
+ * Build the sealed `uprn.db` layer.
+ *
+ * See the module docstring for the checks and the coverage semantics.
  */
 export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<BuildUPRNLayerResult> {
 	const phase = options.onPhase ?? (() => {})

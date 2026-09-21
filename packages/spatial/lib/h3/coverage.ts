@@ -24,11 +24,11 @@ export interface CoverageRowProbe {
 }
 
 /**
- * The coverage row for `indexCell`'s parent at the coverage resolution, or `undefined` when the cell was never surveyed
- * — which a caller must read as unknown, never as `{completeness: 0}`.
+ * The coverage row for `indexCell`'s parent at the coverage resolution, or `undefined` when the
+ * cell was never surveyed — which a caller must read as unknown, never as `{completeness: 0}`.
  *
- * The NULL-basis rule lives in the shared mapping: a NULL column is an artifact built before `basis` existed, and it
- * was recording source presence — never a stronger basis than the builder actually had.
+ * The NULL-basis rule lives in the shared mapping: a NULL column is an artifact built before `basis`
+ * existed, and it was recording source presence — never a stronger basis than the builder actually had.
  */
 export function readCoverageAt(
 	select: CoverageRowProbe,

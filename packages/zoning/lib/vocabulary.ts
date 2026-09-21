@@ -60,8 +60,8 @@ export const GZT_SERVICE_URL = `https://services.arcgis.com/${GZT_ORG_ID}/arcgis
 export const GZT_ITEM_URL = `https://www.arcgis.com/home/item.html?id=${GZT_ITEM_ID}`
 
 /**
- * The Department's own zoning map viewer, which is where its coverage detail is published — and the reason
- * `zoning_mapped_extent` ships empty (see {@link GZT_COVERAGE_LIMIT}).
+ * The Department's own zoning map viewer, which is where its coverage detail is published —
+ * and the reason `zoning_mapped_extent` ships empty (see {@link GZT_COVERAGE_LIMIT}).
  */
 export const GZT_MAP_VIEWER_URL = "https://www.myplan.ie/zoning-map-viewer/"
 
@@ -265,23 +265,30 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 ])
 
 /**
- * A zoning row has exactly one provenance grade: `authoritative` or `inferred`. The two grades never merge.
+ * A zoning row has exactly one provenance grade: `authoritative` or `inferred`.
+ * The two grades never merge.
  *
- * `authoritative` is a planning or legislative authority for the land, or a government body republishing that
- * authority's own adopted records — the Department republishing 30 local authorities' plans is one. `inferred` is an
- * observation, a community mapping project or a research assembly: OpenStreetMap `landuse` is inferred, and so is
- * Overture's `base/land_use`, because it is the same data.
+ * `authoritative` is a planning or legislative authority for the land,
+ * or a government body republishing that authority's own adopted records —
+ * the Department republishing 30 local authorities' plans is one.
+ * `inferred` is an observation, a community mapping project or a research assembly: OpenStreetMap
+ * `landuse` is inferred, and so is Overture's `base/land_use`, because it is the same data.
  *
- * Neither grade is better. they answer different questions. The rule is that a query answered from an `inferred` row
- * may never be presented as the authority's designation. Measured in one jurisdiction on one day: of 1,652
- * OpenStreetMap `landuse=residential` polygons in South Dublin, only 558 — 33.8% — sit on land the authority zones
- * residential, and the two largest wrong answers are agriculture (23.4%) and conservation (19.6%).
+ * Neither grade is better. they answer different questions.
+ * The rule is that a query answered from an `inferred` row may never be presented
+ * as the authority's designation.
  *
- * Each artifact contains rows of one provenance grade only. An observed land-use layer is a different database with a
- * different `layer_manifest.name`, because `layer_coverage.observed_rows` means "rows this layer actually holds in the
- * cell" and coverage measured over community-mapped polygons cannot describe an authority's zones. The licences make
- * the separation compulsory anyway: OpenStreetMap and Overture `base` are ODbL, and merging an ODbL row into this table
- * would relicense it.
+ * Measured in one jurisdiction on one day: of 1,652 OpenStreetMap `landuse=residential`
+ * polygons in South Dublin, only 558 — 33.8% — sit on land the authority zones residential,
+ * and the two largest wrong answers are agriculture (23.4%) and conservation (19.6%).
+ *
+ * Each artifact contains rows of one provenance grade only.
+ * An observed land-use layer is a different database with a different `layer_manifest.name`,
+ * because `layer_coverage.observed_rows` means "rows this layer actually holds in the cell"
+ * and coverage measured over community-mapped polygons cannot describe an authority's zones.
+ *
+ * The licences make the separation compulsory anyway: OpenStreetMap and Overture `base`
+ * are ODbL, and merging an ODbL row into this table would relicense it.
  */
 export const ProvenanceGrade = {
 	Authoritative: "authoritative",
@@ -316,13 +323,17 @@ export const GZT_PRODUCT_LIMITS: ReadonlyArray<string> = [
 /**
  * Why this layer's coverage licenses no negative claim, in one sentence a receipt can carry.
  *
- * The meaning-OF-zero rule under its hardest case. For flood zones the Environment Agency states England-wide coverage
- * and the Planning Practice Guidance defines Zone 1 as the absence, so a location with no polygon is a designation. No
- * such definition exists anywhere for zoning. A location with no zoning polygon is one of at least four different
- * things: outside any adopted plan area, inside a plan area on land the plan does not zone, in a jurisdiction that has
- * never adopted zoning, or in a jurisdiction whose records nobody has published. And the source can state one of them
- * positively — `ZONE_ORIG = "UNZ - Unzoned"` appears on 4 of 85,330 rows — which is what proves the other absences are
- * absences rather than designations.
+ * The meaning-OF-zero rule under its hardest case.
+ * For flood zones the Environment Agency states England-wide coverage and the Planning Practice
+ * Guidance defines Zone 1 as the absence, so a location with no polygon is a designation.
+ *
+ * No such definition exists anywhere for zoning.
+ * A location with no zoning polygon is one of at least four different things: outside any
+ * adopted plan area, inside a plan area on land the plan does not zone, in a jurisdiction
+ * that has never adopted zoning, or in a jurisdiction whose records nobody has published.
+ *
+ * And the source can state one of them positively — `ZONE_ORIG = "UNZ - Unzoned"` appears on 4 of
+ * 85,330 rows — which is what proves the other absences are absences rather than designations.
  */
 export const GZT_COVERAGE_LIMIT =
 	"The Department publishes zoning polygons and states its coverage detail only inside a map viewer, so this layer " +
@@ -331,18 +342,18 @@ export const GZT_COVERAGE_LIMIT =
 	"not yet published — and the product cannot tell those apart, so nothing here supports a claim that no restriction applies."
 
 /**
- * The one local code that states unzoned land positively, and the reason the coverage rule above is grounded rather
- * than asserted: where the authority means "unzoned" it says so on a row, so every other absence is a row that is not
- * there.
+ * The one local code that states unzoned land positively, and the reason the coverage rule
+ * above is grounded rather than asserted: where the authority means "unzoned" it says
+ * so on a row, so every other absence is a row that is not there.
  */
 export const GZT_UNZONED_LOCAL_CODE = "UNZ - Unzoned"
 
 /**
  * Refuse a manifest that would ship this layer under a licence nobody resolved.
  *
- * A guard rather than A convention, for the same reason the coverage basis is one: the tier is a field, and a field can
- * be edited without anyone reading the three statements that disagree. Moving this layer to `shipped` has to go through
- * a line that names what is unresolved.
+ * A guard rather than A convention, for the same reason the coverage basis is one: the tier is
+ * a field, and a field can be edited without anyone reading the three statements that disagree.
+ * Moving this layer to `shipped` has to go through a line that names what is unresolved.
  *
  * @throws {Error} When a `shipped` tier is asked for while the licence is unresolved.
  */

@@ -96,8 +96,9 @@ export interface AbsenceProbeOptions extends POIBoardOptions {
 	definitionPath?: string
 	freezePath?: string
 	/**
-	 * The sealed coverage layer whose cells qualify the absence. Absent resolves the definition's own `coverageLayerFile`
-	 * under `$MAILWOMAN_DATA_ROOT/poi/`.
+	 * The sealed coverage layer whose cells qualify the absence.
+	 *
+	 * Absent resolves the definition's own `coverageLayerFile` under `$MAILWOMAN_DATA_ROOT/poi/`.
 	 */
 	coverageDatabasePath?: string
 	/**
@@ -111,9 +112,10 @@ export interface AbsenceProbeOptions extends POIBoardOptions {
 /**
  * Run the probe.
  *
- * The POI database the executor queries defaults to the coverage layer itself, and that default is required: an absence
- * qualified by one layer's coverage while the answer came out of a different layer is a claim about two artifacts that
- * were never compared. Pass `db` explicitly only to measure that mismatch on purpose.
+ * The POI database the executor queries defaults to the coverage layer itself, and that
+ * default is required: an absence qualified by one layer's coverage while the answer came
+ * out of a different layer is a claim about two artifacts that were never compared.
+ * Pass `db` explicitly only to measure that mismatch on purpose.
  */
 export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = {}): Promise<AbsenceProbeReceipt> {
 	const definition = await loadAbsenceProbeDefinition(options.definitionPath, options.freezePath)

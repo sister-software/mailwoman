@@ -223,8 +223,9 @@ async function main(): Promise<void> {
 
 		await createStreetCentroidIndexes(kdb)
 
-		// The layer interface's two tables (#2150): coverage per res-9 cell from BAN's own certification flag, the
-		// commune's whole total deciding the basis, and the manifest that names where the cells live.
+		// The layer interface's two tables (#2150): coverage per res-9 cell from
+		// BAN's own certification flag, the commune's whole total deciding the basis,
+		// and the manifest that names where the cells live.
 		console.error(`[ban] coverage from certification (per commune, ${STREET_CENTROID_COVERAGE_RESOLUTION} cells)…`)
 
 		const flags = new Map<string, number | null>()

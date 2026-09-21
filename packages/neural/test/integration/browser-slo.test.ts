@@ -154,11 +154,13 @@ const WARM_P95_WASM_MS_BUDGET = 220
 const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
 
 /**
- * Peak `performance.memory.usedJSHeapSize` across the whole browser session. V8 accounts `ArrayBuffer` storage and wasm
- * linear memory outside the JS heap, so this number does not include the ~53 MB of artifact bytes the session holds nor
- * ORT's own arena — it bounds the JS side only, which is where a leak in the runner or the tokenizer would show.
- * Measured at ~10 MiB on the first run. the budget is the "something is retaining objects per parse" regression check
- * rather than a memory target.
+ * Peak `performance.memory.usedJSHeapSize` across the whole browser session.
+ *
+ * V8 accounts `ArrayBuffer` storage and wasm linear memory outside the JS heap, so this number
+ * does not include the ~53 MB of artifact bytes the session holds nor ORT's own arena —
+ * it bounds the JS side only, which is where a leak in the runner or the tokenizer would show.
+ * Measured at ~10 MiB on the first run. the budget is the "something is retaining
+ * objects per parse" regression check rather than a memory target.
  */
 const PEAK_HEAP_BYTES_BUDGET = 268_435_456
 

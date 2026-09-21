@@ -52,8 +52,10 @@ export interface ExclusionCoverageInput {
 	 */
 	geometry: ParsedGeometry
 	/**
-	 * Resolution of the coverage cells. Match the layer being written, or a reader keyed to the other resolution finds
-	 * nothing and reads that as unsurveyed.
+	 * Resolution of the coverage cells.
+	 *
+	 * Match the layer being written, or a reader keyed to the other resolution
+	 * finds nothing and reads that as unsurveyed.
 	 */
 	resolution: number
 	/**
@@ -84,10 +86,11 @@ export interface ExclusionCoverageResult {
 /**
  * The coverage cell a row belongs to.
  *
- * Derived as `cellToParent(res-9 cell)` rather than by a direct `latLngToCell` at the coverage resolution, matching
- * `bboxCoverageCells` and every reader. H3's hierarchy is not geometrically exact, so the two derivations disagree for
- * a real fraction of points, and a row landing on a neighbouring cell here would move an observed count off the cell it
- * was observed in.
+ * Derived as `cellToParent(res-9 cell)` rather than by a direct `latLngToCell` at the
+ * coverage resolution, matching `bboxCoverageCells` and every reader.
+ * H3's hierarchy is not geometrically exact, so the two derivations disagree for
+ * a real fraction of points, and a row landing on a neighbouring cell here would
+ * move an observed count off the cell it was observed in.
  */
 function coverageCellOf(row: CaptureRow, resolution: number): number {
 	const rowCell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
@@ -96,7 +99,8 @@ function coverageCellOf(row: CaptureRow, resolution: number): number {
 }
 
 /**
- * Split an inventory into the part inside `interior` (keyed by coverage cell) and the count that fell outside.
+ * Split an inventory into the part inside `interior` (keyed by coverage cell)
+ * and the count that fell outside.
  */
 function clipToRegion(
 	rows: readonly CaptureRow[],
@@ -130,8 +134,8 @@ function clipToRegion(
 }
 
 /**
- * Measure the subject inventory's completeness against the reference, and emit one surveyed coverage cell per interior
- * cell of the region.
+ * Measure the subject inventory's completeness against the reference, and emit one
+ * surveyed coverage cell per interior cell of the region.
  */
 export function buildExclusionCoverage(input: ExclusionCoverageInput): ExclusionCoverageResult {
 	const interiorCells = interiorCoverageCells(input.geometry, input.resolution)

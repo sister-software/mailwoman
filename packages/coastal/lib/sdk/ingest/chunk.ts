@@ -205,10 +205,11 @@ export async function ingestCoastalChunk(
 				}
 			}
 
-			// coverage is derived from the uncompacted classification rather than from the stored rows. A compacted parent spans
-			// several coverage cells and `addCoverageCells` handles that, but the fringe is where this product's cells almost
-			// all are — so counting off the stored rows and counting off the classification agree here, and the
-			// classification is the one that cannot be changed by a compaction decision.
+			// coverage is derived from the uncompacted classification rather than from the stored rows.
+			// A compacted parent spans several coverage cells and `addCoverageCells`
+			// handles that, but the fringe is where this product's cells almost all are —
+			// so counting off the stored rows and counting off the classification agree here,
+			// and the classification is the one that cannot be changed by a compaction decision.
 			for (const cell of classified.whole) {
 				addCoverageCells(coverageCells, cell, classified.resolution, options.coverageResolution)
 			}

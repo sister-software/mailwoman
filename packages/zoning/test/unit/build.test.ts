@@ -170,8 +170,9 @@ describe("the sealed artifact", () => {
 		const extents = database.prepare("SELECT count(*) AS n FROM zoning_mapped_extent").get() as { n: number }
 
 		expect(edges.n).toBe(0)
-		// And the footprint table too: the publisher states its coverage detail only inside a map viewer, so there is no
-		// footprint to record and its emptiness is what keeps the coverage basis at `source_present`.
+		// And the footprint table too: the publisher states its coverage detail only
+		// inside a map viewer, so there is no footprint to record and its emptiness is
+		// what keeps the coverage basis at `source_present`.
 		expect(extents.n).toBe(0)
 		expect(lookup.identity.mappedExtents).toEqual([])
 	})
@@ -399,8 +400,9 @@ describe("the meaning-of-zero rule", () => {
 	it("refuses to OPEN an artifact whose coverage would license a negative claim", () => {
 		const path = scratch.resolve("tampered.db")
 
-		// The sealed artifact is copied and one coverage row is promoted to `designated`, which is exactly what a builder
-		// generalizing the flood layer's rule would have produced. The reader must refuse rather than answer confidently.
+		// The sealed artifact is copied and one coverage row is promoted to `designated`,
+		// which is exactly what a builder generalizing the flood layer's rule would have produced.
+		// The reader must refuse rather than answer confidently.
 		using source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		source.exec(`VACUUM INTO '${path}'`)

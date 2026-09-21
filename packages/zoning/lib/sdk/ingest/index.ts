@@ -369,10 +369,12 @@ function normalizePolygons(wkt: string, label: string): MultiPolygonRings {
 /**
  * Where a build's features come from, and what the source declares about itself.
  *
- * The builder takes one of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
- * with no network and no gdal still exercises the whole database half — the domain checks, the ring-role resolution,
- * the cell classification, the coverage rows, the manifest and the seal. A fixture rung that could only run through
- * ogr2ogr would test the conversion on the machines that have it and nothing at all on the ones that do not.
+ * The builder takes one of these rather than a path, which is what makes the
+ * fixture rung possible: hand-built geometry with no network and no gdal still
+ * exercises the whole database half — the domain checks, the ring-role resolution,
+ * the cell classification, the coverage rows, the manifest and the seal.
+ * A fixture rung that could only run through ogr2ogr would test the conversion on the
+ * machines that have it and nothing at all on the ones that do not.
  */
 export interface ZoningFeatureSource {
 	/**

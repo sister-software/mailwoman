@@ -26,8 +26,8 @@ const config: StorybookConfig = {
 		// react-docgen-typescript surfaces the JSDoc on each prop in the Storybook controls panel.
 		reactDocgen: "react-docgen-typescript",
 	},
-	// Storybook's react-vite preset wires most of this, but applying the React plugin explicitly keeps
-	// JSX/Fast-Refresh deterministic regardless of preset-detection order.
+	// Storybook's react-vite preset wires most of this, but applying the React plugin
+	// explicitly keeps JSX/Fast-Refresh deterministic regardless of preset-detection order.
 	viteFinal: (viteConfig) => {
 		viteConfig.plugins = [...(viteConfig.plugins ?? []), react()]
 

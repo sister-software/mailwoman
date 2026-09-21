@@ -65,8 +65,9 @@ export function loneValueNode(tree: AddressTree): AddressNode | null {
 /**
  * One flattened node, projected for display.
  *
- * A structural copy rather than the `AddressNode` itself: a consumer rendering a span list must not be handed the live
- * node, whose `children` and `metadata` invite a walk it has already been given the result of.
+ * A structural copy rather than the `AddressNode` itself: a consumer rendering
+ * a span list must not be handed the live node, whose `children` and `metadata`
+ * invite a walk it has already been given the result of.
  */
 export interface FlatTreeNode {
 	tag: ComponentTag

@@ -50,14 +50,16 @@ vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 	}
 })
 
-// Shared-graph guard, mirroring `bdc/sdk/client.test.ts`: the root vitest config runs `isolate: false`, so
-// `./sec-client.ts` may already sit in the worker's cache — evaluated without this file's `@mailwoman/filer/env` mock by
-// an earlier file (a cached module never re-evaluates, and `vi.mock` factories are only consulted at evaluation). Reset
-// on the way in so the chain re-evaluates against the mock, and on the way out so the next file in this fork never
-// inherits our mocked env module.
+// Shared-graph guard, mirroring `bdc/sdk/client.test.ts`: the root vitest config runs
+// `isolate: false`, so `./sec-client.ts` may already sit in the worker's cache —
+// evaluated without this file's `@mailwoman/filer/env` mock by an earlier file
+// (a cached module never re-evaluates, and `vi.mock` factories are only consulted at evaluation).
+// Reset on the way in so the chain re-evaluates against the mock, and on the way out
+// so the next file in this fork never inherits our mocked env module.
 //
-// Without this the UA fail-fast test passes in isolation and in a serialized run, then fails whenever unrelated test
-// files shift the worker's scheduling — which is exactly how it surfaced (2026-08-02), long after it was introduced.
+// Without this the UA fail-fast test passes in isolation and in a serialized run,
+// then fails whenever unrelated test files shift the worker's scheduling —
+// which is exactly how it surfaced (2026-08-02), long after it was introduced.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 

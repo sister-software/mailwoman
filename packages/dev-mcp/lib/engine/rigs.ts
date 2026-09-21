@@ -164,9 +164,12 @@ export interface RigStatus {
 }
 
 /**
- * One result as this tool reports it — engine-neutral, so a reader compares two engines without learning two payload
- * shapes. `sourceID` is the thing worth reading: Pelias's `gid` says which dataset supplied the answer
- * (`whosonfirst:locality:101750331` vs `geonames:locality:2639268`), which is how a coverage question gets settled.
+ * One result as this tool reports it — engine-neutral, so a reader compares two
+ * engines without learning two payload shapes.
+ *
+ * `sourceID` is the thing worth reading: Pelias's `gid` says which dataset supplied
+ * the answer (`whosonfirst:locality:101750331` vs `geonames:locality:2639268`),
+ * which is how a coverage question gets settled.
  */
 export interface RigResult {
 	name: string | null

@@ -421,19 +421,21 @@ export async function loadSoilCapabilityRoute(
 /**
  * The coastal-erosion route, opened when the sealed EA ncerm layer is on disk (#1993).
  *
- * Presence OF the layer file is the switch — the same posture as the two routes above, and for the same reason: a
- * boolean would have to construct the reader itself and would put a sealed database open on the default construction
- * path. No `coastal-england.db` in the data root, no route, and the geocode result is byte-identical to a build without
- * the field.
+ * Presence OF the layer file is the switch — the same posture as the two routes above,
+ * and for the same reason: a boolean would have to construct the reader itself
+ * and would put a sealed database open on the default construction path.
+ * No `coastal-england.db` in the data root, no route, and the geocode result is
+ * byte-identical to a build without the field.
  *
- * The artifact is named FOR its extent rather than for its subject, because the surveyed alternatives are not
- * interchangeable with it: Wales publishes ncerm on the previous generation's vocabulary, Scotland's Dynamic Coast
- * carries a property-level prohibition of its own, and Northern Ireland publishes 122 line segments carrying one
- * attribute. A file called `coastal.db` would invite one of them to overwrite the other.
+ * The artifact is named FOR its extent rather than for its subject, because the surveyed
+ * alternatives are not interchangeable with it: Wales publishes ncerm on the previous
+ * generation's vocabulary, Scotland's Dynamic Coast carries a property-level prohibition
+ * of its own, and Northern Ireland publishes 122 line segments carrying one attribute.
+ * A file called `coastal.db` would invite one of them to overwrite the other.
  *
- * Tolerate-and-degrade past the `pathExists` check: a layer that is present but refuses to open — a truncated file, a
- * manifest naming a different product, a coverage row that would license a negative claim — must not take the geocoder
- * down over an advisory it was never asked for.
+ * Tolerate-and-degrade past the `pathExists` check: a layer that is present but refuses to open —
+ * a truncated file, a manifest naming a different product, a coverage row that would license
+ * a negative claim — must not take the geocoder down over an advisory it was never asked for.
  */
 export async function loadCoastalErosionRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
@@ -454,19 +456,23 @@ export async function loadCoastalErosionRoute(
 /**
  * The zoning route, opened when the sealed Irish Generalised Zoning Types layer is on disk (#1995).
  *
- * Presence OF the layer file is the switch — the same posture as the three routes above, and for the same reason: a
- * boolean would have to construct the reader itself and would put a sealed database open on the default construction
- * path. No `zoning-ireland.db` in the data root, no route, and the geocode result is byte-identical to a build without
- * the field.
+ * Presence OF the layer file is the switch — the same posture as the three routes above,
+ * and for the same reason: a boolean would have to construct the reader itself
+ * and would put a sealed database open on the default construction path.
+ * No `zoning-ireland.db` in the data root, no route, and the geocode result is
+ * byte-identical to a build without the field.
  *
- * The artifact is named FOR its jurisdiction rather than for its subject, and here that matters more than anywhere
- * else. Zoning is decentralised by construction: 30 Irish local authorities publish 581 distinct zone codes between
- * them, and a California or a Washington layer would carry its own vocabulary under the same word. A file called
- * `zoning.db` would invite one jurisdiction's codes to answer for another's.
+ * The artifact is named FOR its jurisdiction rather than for its subject,
+ * and here that matters more than anywhere else.
+ * Zoning is decentralised by construction: 30 Irish local authorities publish 581
+ * distinct zone codes between them, and a California or a Washington layer would
+ * carry its own vocabulary under the same word.
  *
- * Tolerate-and-degrade past the `pathExists` check: a layer that is present but refuses to open — a truncated file, a
- * manifest naming a different product, a coverage row that would license a negative claim — must not take the geocoder
- * down over an advisory it was never asked for.
+ * A file called `zoning.db` would invite one jurisdiction's codes to answer for another's.
+ *
+ * Tolerate-and-degrade past the `pathExists` check: a layer that is present but refuses to open —
+ * a truncated file, a manifest naming a different product, a coverage row that would license
+ * a negative claim — must not take the geocoder down over an advisory it was never asked for.
  */
 export async function loadZoningDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">

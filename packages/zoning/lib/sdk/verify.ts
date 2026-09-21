@@ -114,12 +114,17 @@ export interface VerifyZoningResult {
 }
 
 /**
- * Points this product's publication does not reach, named. Each is a place rather than a bare pair of numbers: a
- * coordinate a reader cannot name is a coordinate nobody can check.
+ * Points this product's publication does not reach, named.
  *
- * Two populations, and both are required. The Donegal points are the case this layer's coverage posture exists for —
- * the Department has not published that authority's zoning, and a builder that read absence as "unrestricted" would
- * answer them confidently. The Northern Irish points confirm the artifact is clipped to the Republic rather than to the
+ * Each is a place rather than a bare pair of numbers: a coordinate a reader
+ * cannot name is a coordinate nobody can check.
+ *
+ * Two populations, and both are required.
+ * The Donegal points are the case this layer's coverage posture exists for —
+ * the Department has not published that authority's zoning, and a builder that read
+ * absence as "unrestricted" would answer them confidently.
+ *
+ * The Northern Irish points confirm the artifact is clipped to the Republic rather than to the
  * island: zoning there is a different jurisdiction's instrument under a different planning act.
  */
 export const OUTSIDE_PUBLICATION_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [

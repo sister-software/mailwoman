@@ -221,16 +221,19 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 			`over ${prepared.length} queries x ${PASSES} passes`
 	)
 
-	// The BAR is absolute, and the ratio above is reported rather than asserted, because the ratio's denominator is the
-	// unstable half of the pair: the baseline arm is a bare score-and-max with no allocation, which V8 optimizes
-	// aggressively and inconsistently — measured at 0.354, 0.585 and 0.663 us/query across three consecutive runs of
-	// this file, moving the ratio from 1.94x to 3.48x while the numerator barely moved (1.185-1.284 us/query). Asserting
-	// on the ratio measures the JIT's mood. asserting on the absolute measures Stage 2.5.
+	// The BAR is absolute, and the ratio above is reported rather than asserted, because
+	// the ratio's denominator is the unstable half of the pair: the baseline arm is a bare
+	// score-and-max with no allocation, which V8 optimizes aggressively and inconsistently —
+	// measured at 0.354, 0.585 and 0.663 us/query across three consecutive runs of this file,
+	// moving the ratio from 1.94x to 3.48x while the numerator barely moved (1.185-1.284 us/query).
+	// Asserting on the ratio measures the JIT's mood. asserting on the absolute measures Stage 2.5.
 	//
-	// 10 us is ~8x the measured cost. It is set to catch an order-OF-magnitude regression (someone adding a lexicon
-	// load, a gazetteer probe, or an unbounded scan to an intent rule), not to police a microsecond, and it sits far
-	// enough above the measurement to survive a loaded CI runner. For scale: the classifier's own neighbour on this path
-	// is a ~3 ms ONNX inference, so Stage 2.5 in full is ~0.04% of a parse.
+	// 10 us is ~8x the measured cost.
+	// It is set to catch an order-OF-magnitude regression (someone adding a lexicon load,
+	// a gazetteer probe, or an unbounded scan to an intent rule), not to police a microsecond,
+	// and it sits far enough above the measurement to survive a loaded CI runner.
+	// For scale: the classifier's own neighbour on this path is a ~3 ms ONNX inference,
+	// so Stage 2.5 in full is ~0.04% of a parse.
 	expect(
 		perQueryIntentUs,
 		`Stage 2.5 cost ${perQueryIntentUs.toFixed(3)} us/query (baseline ${perQueryBaselineUs.toFixed(3)}, ` +

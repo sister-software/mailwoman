@@ -210,9 +210,11 @@ export interface GeonamesPostalIngestResult {
 	 */
 	byCountry: Record<string, number>
 	/**
-	 * Per-country count of inserted codes the dump carried on several rows that all named one point. The coordinate rests
-	 * on a single value no matter how many settlements sit under the code. Reported rather than refused: the point is
-	 * still the best the source offers, and a consumer weighing postal coverage needs to know how much of it is this.
+	 * Per-country count of inserted codes the dump carried on several rows that all named one point.
+	 *
+	 * The coordinate rests on a single value no matter how many settlements sit under the code.
+	 * Reported rather than refused: the point is still the best the source offers,
+	 * and a consumer weighing postal coverage needs to know how much of it is this.
 	 */
 	singlePointByCountry: Record<string, number>
 	/**

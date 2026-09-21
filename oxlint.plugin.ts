@@ -691,9 +691,10 @@ function isDescendingFromLength(node: AstNode): boolean {
  * Two forms, because both are written here: the destructured `[xs[i], xs[j]] = [xs[j], xs[i]]`, and the temporary `tmp
  * = xs[i]; xs[i] = xs[j]; xs[j] = tmp`, which shows up as two index writes to the same base.
  *
- * Reads the body's own statements rather than walking the subtree. A generic walk over an oxlint node's values follows
- * its back-references and never terminates, and depth adds nothing here: a shuffle writes its swap at the top of the
- * loop, so a swap nested inside a branch is a different algorithm.
+ * Reads the body's own statements rather than walking the subtree.
+ * A generic walk over an oxlint node's values follows its back-references and never terminates,
+ * and depth adds nothing here: a shuffle writes its swap at the top of the loop,
+ * so a swap nested inside a branch is a different algorithm.
  */
 function swapsTwoIndices(body: AstNode): boolean {
 	const statements: AstNode[] = body.type === "BlockStatement" ? ((body.body as AstNode[]) ?? []) : [body]
@@ -922,10 +923,11 @@ const noCrossPackageReexportRule: Rule = {
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
-		// The only rule here that carries a fixer, so it speaks the full oxlint plugin API — `messageId`, `loc`,
-		// `fix` — rather than the narrow `Rule` shape its neighbours share.
+		// The only rule here that carries a fixer, so it speaks the full oxlint plugin API —
+		// `messageId`, `loc`, `fix` — rather than the narrow `Rule` shape its neighbours share.
 		//
-		// The cast is where the two meet. `config/oxlint/comment-reflow/rule.ts` is typed against `@oxlint/plugins`.
+		// The cast is where the two meet.
+		// `config/oxlint/comment-reflow/rule.ts` is typed against `@oxlint/plugins`.
 		"comment-reflow": reflowRule as unknown as Rule,
 		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
 		"no-cross-package-reexport": noCrossPackageReexportRule,

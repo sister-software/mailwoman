@@ -108,9 +108,13 @@ export interface IncumbentOnlyBreakdown {
 	 */
 	crownDependencies: number
 	/**
-	 * Everything else: postcodes the incumbent has and the current OS register does not. These are terminated postcodes —
-	 * the incumbent snapshot never dropped them. Diffuse across every area (top: B, W, M, GU, SW…), which is the shape of
-	 * churn rather than of a coverage hole. Losing them is a currency improvement rather than a regression, though a
+	 * Everything else: postcodes the incumbent has and the current OS register does not.
+	 *
+	 * These are terminated postcodes — the incumbent snapshot never dropped them.
+	 * Diffuse across every area (top: B, W, M, GU, SW…), which is the shape of churn
+	 * rather than of a coverage hole.
+	 *
+	 * Losing them is a currency improvement rather than a regression, though a
 	 * consumer geocoding historical addresses would feel it.
 	 */
 	terminated: number

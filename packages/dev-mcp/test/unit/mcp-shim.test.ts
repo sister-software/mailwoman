@@ -18,7 +18,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 const CLI_PATH = String(resolvePackagePath("@mailwoman/dev-mcp", "lib", "cli", "index.ts"))
 
 /**
- * Worker boot imports the whole mailwoman graph. under vitest concurrency that is seconds rather than milliseconds.
+ * Worker boot imports the whole mailwoman graph. under vitest concurrency that
+ * is seconds rather than milliseconds.
  */
 const BOOT_TIMEOUT_MS = 120_000
 

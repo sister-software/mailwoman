@@ -218,10 +218,12 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<PO
 }
 
 /**
- * A `layerschemadatabase`-only fixture standing in for poi.db's own manifest/coverage — not poi.db's actual file
- * (mirrors `nearest-infrastructure.test.ts`'s decoupled `openemptyschemadb`), but with a realistic recorded
- * `spineKeys.h3.resolution` (9, matching `POI_H3_RESOLUTION`) by default so `assertLayerSpineResolution` passes in the
- * happy-path tests. `resolutionOverride` lets the mismatch test set something else.
+ * A `layerschemadatabase`-only fixture standing in for poi.db's own manifest/coverage —
+ * not poi.db's actual file (mirrors `nearest-infrastructure.test.ts`'s decoupled `openemptyschemadb`),
+ * but with a realistic recorded `spineKeys.h3.resolution` (9, matching `POI_H3_RESOLUTION`)
+ * by default so `assertLayerSpineResolution` passes in the happy-path tests.
+ *
+ * `resolutionOverride` lets the mismatch test set something else.
  */
 async function openpoischemadb(resolutionOverride = 9): Promise<DatabaseClient<layerschemadatabase>> {
 	const kdb = DatabaseClient.temp<layerschemadatabase>()
@@ -248,9 +250,11 @@ async function openpoischemadb(resolutionOverride = 9): Promise<DatabaseClient<l
 }
 
 /**
- * Both layers open together, poi coverage written for exactly Springfield's own res-6 parent (the query point's cell).
- * Hoisted to module scope — shared by the "full composition" suite below and the `§7-2b criteria` block (criterion 2's
- * co-presence claim reuses this exact fixture rather than re-deriving it).
+ * Both layers open together, poi coverage written for exactly Springfield's own
+ * res-6 parent (the query point's cell).
+ *
+ * Hoisted to module scope — shared by the "full composition" suite below and the `§7-2b criteria`
+ * block (criterion 2's co-presence claim reuses this exact fixture rather than re-deriving it).
  */
 async function openBoth(): Promise<AsyncDisposableStack & { deps: PlausibilityDeps }> {
 	const stack = new AsyncDisposableStack()
@@ -596,9 +600,9 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		await using both = await openBoth()
 		const { deps } = both
 
-		// A remote point: bdc.db never surveyed it, and openBoth()'s poi coverage table only covers Springfield's
-		// own res-6 parent, so both axes genuinely come back unknown here — the both-unknown branch, distinct from
-		// the actual mixed branch (one covered, one not) exercised below.
+		// A remote point: bdc.db never surveyed it, and openBoth()'s poi coverage table only covers
+		// Springfield's own res-6 parent, so both axes genuinely come back unknown here — the both-unknown
+		// branch, distinct from the actual mixed branch (one covered, one not) exercised below.
 		const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
 
 		const bundle = await plausibilityCheck(
@@ -612,10 +616,10 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 	})
 
 	// `combineCoverage`'s genuine mixed branch — one axis covered, the other not.
-	// It takes deliberate construction: any single point remote enough for bdc.db to have
-	// missed it is also outside the poi coverage table, so both axes land on unknown together
-	// and the both-unknown branch runs instead. The two tests below drive the mixed
-	// branch in both directions by separating the two axes on purpose.
+	// It takes deliberate construction: any single point remote enough for bdc.db to
+	// have missed it is also outside the poi coverage table, so both axes land on
+	// unknown together and the both-unknown branch runs instead.
+	// The two tests below drive the mixed branch in both directions by separating the two axes on purpose.
 	it("MIXED: filing covered, physical layer entirely missing (no poi dep) -> low", async () => {
 		await using bdc = await buildBDCFixture()
 
@@ -793,8 +797,8 @@ describe("§7-2b criteria", () => {
 			await using both = await openBoth()
 			const { deps } = both
 
-			// Remote from Springfield: neither bdc.db's fixture rows nor openBoth()'s poi coverage table (scoped to
-			// Springfield's own res-6 parent) has ever surveyed this point.
+			// Remote from Springfield: neither bdc.db's fixture rows nor openBoth()'s poi coverage
+			// table (scoped to Springfield's own res-6 parent) has ever surveyed this point.
 			const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
 
 			const bundle = await plausibilityCheck(
@@ -815,25 +819,33 @@ describe("§7-2b criteria", () => {
 		})
 
 		/**
-		 * Structural half of the criterion: an exhaustive, `satisfies Record<T, true>` pin (the established idiom — see
-		 * `mailwoman/test/api-schema-drift.test.ts`) over every closed string-literal union on the bundle's public surface.
-		 * TypeScript enforces both directions on each object below: a union member missing from the list fails to compile
-		 * ("missing property"), and a listed key that isn't a real union member fails to compile ("excess property" — these
-		 * are object literals assigned directly via `satisfies`, so excess-property checking applies). A future change that
-		 * adds a verdict-shaped member (e.g. `"implausible"`) to any of these unions therefore either fails to compile here
-		 * — silently missing from the pinned list, forcing a reviewer to touch this file — or, once added to the list,
-		 * fails the runtime blocklist check below. That's the "mutation-style" assertion criterion 1 asks for: the pins are
-		 * what keep the property true rather than a reviewer's memory.
+		 * Structural half of the criterion: an exhaustive, `satisfies Record<T, true>` pin
+		 * (the established idiom — see `mailwoman/test/api-schema-drift.test.ts`) over
+		 * every closed string-literal union on the bundle's public surface.
 		 *
-		 * Only `tsc` checks the `satisfies` clauses (`yarn typecheck:tests`, which auto-discovers `bdc/tsconfig.test.json`)
-		 * — `yarn vitest run` alone (esbuild, types stripped) runs only the `it()` below, which still confirms none of the
-		 * current values reads as a negative verdict.
+		 * TypeScript enforces both directions on each object below: a union member missing
+		 * from the list fails to compile ("missing property"), and a listed key that isn't a
+		 * real union member fails to compile ("excess property" — these are object literals
+		 * assigned directly via `satisfies`, so excess-property checking applies).
+		 * A future change that adds a verdict-shaped member (e.g. `"implausible"`)
+		 * to any of these unions therefore either fails to compile here — silently
+		 * missing from the pinned list, forcing a reviewer to touch this file — or,
+		 * once added to the list, fails the runtime blocklist check below.
 		 *
-		 * The five union pins close every closed union, but none of them has a claim over the bundle's own KEY SET — a
-		 * wholly new field appended to `PlausibilityBundle` (e.g. a hypothetical `verdict: "plausible" | "implausible"`)
-		 * would compile and ship green, since no union pin even looks at it. `PLAUSIBILITY_BUNDLE_KEYS` below closes that
-		 * gap the same way: `satisfies Record<keyof PlausibilityBundle, true>` fails to compile if a key is added to (or
-		 * removed from) the interface without a matching update here.
+		 * That's the "mutation-style" assertion criterion 1 asks for: the pins are what
+		 * keep the property true rather than a reviewer's memory.
+		 *
+		 * Only `tsc` checks the `satisfies` clauses (`yarn typecheck:tests`, which auto-discovers
+		 * `bdc/tsconfig.test.json`) — `yarn vitest run` alone (esbuild, types stripped) runs only the
+		 * `it()` below, which still confirms none of the current values reads as a negative verdict.
+		 *
+		 * The five union pins close every closed union, but none of them has a claim over
+		 * the bundle's own KEY SET — a wholly new field appended to `PlausibilityBundle`
+		 * (e.g. a hypothetical `verdict: "plausible" | "implausible"`) would compile
+		 * and ship green, since no union pin even looks at it.
+		 * `PLAUSIBILITY_BUNDLE_KEYS` below closes that gap the same way:
+		 * `satisfies Record<keyof PlausibilityBundle, true>` fails to compile if a key is added to
+		 * (or removed from) the interface without a matching update here.
 		 */
 		const PLAUSIBILITY_BUNDLE_KEYS = {
 			claim: true,

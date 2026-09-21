@@ -211,10 +211,12 @@ describe("buildPOIDatabase", () => {
 })
 
 /**
- * Extract-bbox coverage polyfill (decision 5) — the pure helper `--source osm` uses in place of the Overture path's
- * "rows-present ⇒ 1" coverage. Springfield IL sits well inside this small bbox. the bbox spans several res-6 cells, so
- * an empty `rows` list (or rows clustered in only one spot) always leaves at least one cell with `observedRows: 0` to
- * exercise decision 5's "well-surveyed, none found" case.
+ * Extract-bbox coverage polyfill (decision 5) — the pure helper `--source osm` uses
+ * in place of the Overture path's "rows-present ⇒ 1" coverage.
+ *
+ * Springfield IL sits well inside this small bbox. the bbox spans several res-6 cells,
+ * so an empty `rows` list (or rows clustered in only one spot) always leaves at least one
+ * cell with `observedRows: 0` to exercise decision 5's "well-surveyed, none found" case.
  */
 describe("bboxCoverageCells", () => {
 	const bbox: BBox = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
@@ -255,10 +257,11 @@ describe("bboxCoverageCells", () => {
 })
 
 /**
- * The `--source osm` build-local branch (decisions 3/5): same `rows:` injection point as the default Overture path, but
- * `source`/`tier` swap the manifest to build-local/ODbL and `coverageCellsOverride` replaces the rows-derived coverage
- * with the bbox polyfill above — including a zero-observed-rows cell, which must round-trip through
- * `writeLayerCoverage` / `readLayerCoverage` (never silently dropped, never conflated with "unsurveyed").
+ * The `--source osm` build-local branch (decisions 3/5): same `rows:` injection point as
+ * the default Overture path, but `source`/`tier` swap the manifest to build-local/ODbL
+ * and `coverageCellsOverride` replaces the rows-derived coverage with the bbox polyfill above —
+ * including a zero-observed-rows cell, which must round-trip through `writeLayerCoverage`
+ * / `readLayerCoverage` (never silently dropped, never conflated with "unsurveyed").
  */
 describe("buildPOIDatabase — --source osm build-local branch", () => {
 	const bbox: BBox = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
@@ -353,8 +356,8 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 			createdAt: "2026-07-30T00:00:00Z",
 		})
 
-		// Both fixture rows share one res-9 cell -> one res-6 parent -> exactly one coverage row, matching
-		// the Overture path's "rows-present only" behavior when no override is supplied.
+		// Both fixture rows share one res-9 cell -> one res-6 parent -> exactly one coverage row,
+		// matching the Overture path's "rows-present only" behavior when no override is supplied.
 		expect(result.coverageCells).toBe(1)
 
 		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
@@ -366,19 +369,22 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 })
 
 /**
- * Builder/reader res-6 coverage-cell agreement — `bboxCoverageCells` (the `--source osm` build branch's coverage
- * aggregator, decision 5) must key a row's observed count off `cellToParent(res9Cell, 6)`, never a direct
- * `latLngToCell(row, 6)`: the default (non-override) rows-derived coverage path just above in this same file's
- * `buildPOIDatabase` (~:592) and every layer reader (`res9ShortCellToRes6Parent` in `bdc/sdk/filing-landscape.ts`,
- * `plausibility.ts`, `nearest-infrastructure.ts`) derive it the parent way, and a builder that disagrees with its
- * readers about the spine is the recurring failure class here. H3's cell hierarchy is not geometrically exact, so the
- * two derivations disagree for a real fraction of points (~6.56% measured over 20k conus points): a row's observed
- * count could land on a neighbouring cell, or be dropped entirely when its direct-res-6 cell isn't a member of the bbox
- * polyfill.
+ * Builder/reader res-6 coverage-cell agreement — `bboxCoverageCells`
+ * (the `--source osm` build branch's coverage aggregator, decision 5) must key a row's observed
+ * count off `cellToParent(res9Cell, 6)`, never a direct `latLngToCell(row, 6)`: the default
+ * (non-override) rows-derived coverage path just above in this same file's `buildPOIDatabase`
+ * (~:592) and every layer reader (`res9ShortCellToRes6Parent` in `bdc/sdk/filing-landscape.ts`,
+ * `plausibility.ts`, `nearest-infrastructure.ts`) derive it the parent way, and a builder
+ * that disagrees with its readers about the spine is the recurring failure class here.
  *
- * `DIVERGENT_POINT` is reused verbatim from `bdc/sdk/filing-landscape.test.ts`'s own brute-force-found divergent point
- * — the H3 math is generic (no domain data involved), so the exact same coordinate reproduces the exact same res-6
- * divergence regardless of which layer is asking.
+ * H3's cell hierarchy is not geometrically exact, so the two derivations disagree
+ * for a real fraction of points (~6.56% measured over 20k conus points):
+ * a row's observed count could land on a neighbouring cell, or be dropped entirely
+ * when its direct-res-6 cell isn't a member of the bbox polyfill.
+ *
+ * `DIVERGENT_POINT` is reused verbatim from `bdc/sdk/filing-landscape.test.ts`'s own brute-force-found
+ * divergent point — the H3 math is generic (no domain data involved), so the exact same
+ * coordinate reproduces the exact same res-6 divergence regardless of which layer is asking.
  */
 const DIVERGENT_POINT = { latitude: 37.119, longitude: -79.6658 }
 
@@ -424,8 +430,8 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 		const overrideCells = bboxCoverageCells(bbox, [row])
 		const overrideCell = overrideCells.find((c) => c.observedRows === 1)!
 
-		// The default (Overture) branch's rows-derived coverage — already correct (~:592) — built independently
-		// via the real `buildPOIDatabase` entry point over the exact same row.
+		// The default (Overture) branch's rows-derived coverage — already correct (~:592) —
+		// built independently via the real `buildPOIDatabase` entry point over the exact same row.
 		const result = await buildPOIDatabase({
 			rows: [row],
 			out,
@@ -442,10 +448,11 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 
 		const builderWrittenCoverage = await readLayerCoverage(schemadb, overrideCell.h3Cell)
 
-		// The builder's/reader's agreement, pinned: the OSM branch's coverage cell for this row is the same cell
-		// the default branch actually wrote coverage under — reverting the `bboxCoverageCells` fix makes
-		// `overrideCell.h3Cell` the old buggy direct-res-6 cell, which the default branch never writes to. Therefore,
-		// this read comes back `undefined` and the assertion below fails.
+		// The builder's/reader's agreement, pinned: the OSM branch's coverage cell for
+		// this row is the same cell the default branch actually wrote coverage under —
+		// reverting the `bboxCoverageCells` fix makes `overrideCell.h3Cell` the old buggy
+		// direct-res-6 cell, which the default branch never writes to.
+		// Therefore, this read comes back `undefined` and the assertion below fails.
 		expect(builderWrittenCoverage).toEqual({
 			h3Cell: overrideCell.h3Cell,
 			completeness: 1,

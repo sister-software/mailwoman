@@ -64,9 +64,9 @@ import {
 /**
  * One soil-capability reading, recorded beside an answer.
  *
- * Everything a reader needs to check the claim is here: which authority, which product and vintage, the class
- * distribution with the four absence shares kept apart, the weighting that produced them, the survey area with both its
- * dates, and the coverage record that licenses the reading.
+ * Everything a reader needs to check the claim is here: which authority, which product and vintage,
+ * the class distribution with the four absence shares kept apart, the weighting that produced them,
+ * the survey area with both its dates, and the coverage record that licenses the reading.
  */
 export interface SoilCapabilityObservation {
 	/**
@@ -166,10 +166,11 @@ export interface SoilCapabilityRouteOptions {
 /**
  * Build the route against one sealed layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused by the reader's own constructor — a
- * manifest naming a different product, a coverage table with no rows, a vocabulary with no classes. Each of those would
- * otherwise present as a route that simply never fires, which on a receipt is indistinguishable from a region the
- * authority genuinely has not surveyed.
+ * Everything that would make the route answer a well-formed wrong thing is refused
+ * by the reader's own constructor — a manifest naming a different product,
+ * a coverage table with no rows, a vocabulary with no classes.
+ * Each of those would otherwise present as a route that simply never fires, which on a
+ * receipt is indistinguishable from a region the authority genuinely has not surveyed.
  */
 export function createSoilCapabilityRoute(options: SoilCapabilityRouteOptions): SoilCapabilityRoute {
 	const lookup = new SoilCapabilityLookup({ databasePath: options.databasePath })

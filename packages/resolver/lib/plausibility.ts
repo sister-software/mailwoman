@@ -98,23 +98,32 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
 }
 
 /**
- * Coarse per-country bounding boxes `[latMin, latMax, lonMin, lonMax]` for the cross-country guard (guard B). These are
- * deliberately rough — a guard needs "obviously the wrong country", not cartography — and they mirror the boxes the
- * 2026-07-15 coordinate-parity receipt harness measured with (`scratchpad/coord-parity.mjs`). The US box spans Alaska →
- * the mainland east coast. continental FR only. etc. A country absent here simply never trips the guard (fail-open).
+ * Coarse per-country bounding boxes `[latMin, latMax, lonMin, lonMax]` for
+ * the cross-country guard (guard B).
  *
- * Fallback role (survey candidate #2): these boxes are also baked into the candidate gazetteer's `country_bbox`
- * manifest table at build time (`mailwoman/gazetteer-pipeline/coverage-manifest.ts` owns the measured record). When a
- * caller supplies artifact-declared boxes ({@link PlausibilityOpts.countryBBoxes}), those replace this table wholesale
- * — the artifact speaks for itself, and a country absent from the artifact's table fails open exactly like an absent
- * key here. This constant is the fallback for artifacts predating the manifest. grow the manifest record rather than
- * this.
+ * These are deliberately rough — a guard needs "obviously the wrong country",
+ * not cartography — and they mirror the boxes the 2026-07-15 coordinate-parity
+ * receipt harness measured with (`scratchpad/coord-parity.mjs`).
+ * The US box spans Alaska → the mainland east coast. continental FR only. etc. A
+ * country absent here simply never trips the guard (fail-open).
  *
- * A box bounds the country's outlying territory rather than its populated core: one trimmed to the mainland refuses the
- * Kermadecs for NZ, Minamitorishima for JP, Lampedusa for IT. A country whose extent crosses the antimeridian cannot be
- * expressed as one box, so NZ spans the full longitude range and constrains latitude only.
+ * Fallback role (survey candidate #2): these boxes are also baked into
+ * the candidate gazetteer's `country_bbox` manifest table at build time
+ * (`mailwoman/gazetteer-pipeline/coverage-manifest.ts` owns the measured record).
+ * When a caller supplies artifact-declared boxes ({@link PlausibilityOpts.countryBBoxes}),
+ * those replace this table wholesale — the artifact speaks for itself, and a country
+ * absent from the artifact's table fails open exactly like an absent key here.
  *
- * Every country whose locale ships weights has a box, checked in `plausibility.test.ts` against `release.config.json`.
+ * This constant is the fallback for artifacts predating the manifest. grow the
+ * manifest record rather than this.
+ *
+ * A box bounds the country's outlying territory rather than its populated core: one trimmed
+ * to the mainland refuses the Kermadecs for NZ, Minamitorishima for JP, Lampedusa for IT.
+ * A country whose extent crosses the antimeridian cannot be expressed as one box,
+ * so NZ spans the full longitude range and constrains latitude only.
+ *
+ * Every country whose locale ships weights has a box, checked in `plausibility.test.ts`
+ * against `release.config.json`.
  * An absent key fails open, so a missing box and a passing guard are the same answer here.
  */
 export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, number, number]>> = {

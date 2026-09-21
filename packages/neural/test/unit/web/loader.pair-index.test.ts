@@ -68,9 +68,9 @@ vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 }))
 
 // Shared-graph guard: the root vitest config runs `isolate: false`, so `./web-loader.ts` and its
-// dependencies may already sit in the worker's cache — evaluated without this file's mocks by an
-// earlier file (a cached module never re-evaluates, and vi.mock factories are only consulted at
-// evaluation). Reset on the way in so the chain re-evaluates against the mocks, and on the way out
+// dependencies may already sit in the worker's cache — evaluated without this file's mocks by an earlier
+// file (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation).
+// Reset on the way in so the chain re-evaluates against the mocks, and on the way out
 // so the next file in this fork never inherits our mocked modules from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())

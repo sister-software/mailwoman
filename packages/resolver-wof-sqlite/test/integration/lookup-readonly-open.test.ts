@@ -49,11 +49,11 @@ vi.mock("node:sqlite", async (importOriginal) => {
 
 // vi.resetModules() before importing the module under test: the root vitest config runs
 // `isolate: false` (one shared module graph per worker), so `node:sqlite` / `./lookup.ts` may
-// already sit in the shared cache — evaluated with the real DatabaseSync by an earlier file. A
-// cached module is never re-evaluated, so this file's vi.mock factory would never run and the
-// construction spy would stay empty (the failure this guards against reads as "expected [] to
-// have a length of 1"). Reset on the way in so the chain re-evaluates against the mock, and on the
-// way out so the next file in this fork never inherits our RecordingDatabaseSync from the cache.
+// already sit in the shared cache — evaluated with the real DatabaseSync by an earlier file.
+// A cached module is never re-evaluated, so this file's vi.mock factory would never run and the construction
+// spy would stay empty (the failure this guards against reads as "expected [] to have a length of 1").
+// Reset on the way in so the chain re-evaluates against the mock, and on the way out
+// so the next file in this fork never inherits our RecordingDatabaseSync from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 

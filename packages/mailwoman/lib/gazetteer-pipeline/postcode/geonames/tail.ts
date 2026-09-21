@@ -114,10 +114,13 @@ export interface GeonamesPostalSourceFact {
 	md5: string
 	rows: number
 	/**
-	 * How many of those codes the dump carried on several rows that all named one coordinate. GeoNames computes a postal
-	 * coordinate by matching the code against place names and admin divisions, averaging neighbouring codes where the
-	 * match fails, so those rows are one value inherited N times rather than N settlements agreeing. The centroid is
-	 * still the best the source offers. the count is what tells a consumer how much of the country's coverage is that.
+	 * How many of those codes the dump carried on several rows that all named one coordinate.
+	 *
+	 * GeoNames computes a postal coordinate by matching the code against place names
+	 * and admin divisions, averaging neighbouring codes where the match fails,
+	 * so those rows are one value inherited N times rather than N settlements agreeing.
+	 * The centroid is still the best the source offers. the count is what tells a
+	 * consumer how much of the country's coverage is that.
 	 */
 	singlePointRows: number
 }

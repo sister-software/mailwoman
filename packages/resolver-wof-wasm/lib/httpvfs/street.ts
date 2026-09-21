@@ -253,11 +253,14 @@ interface InterpLike {
 }
 
 /**
- * Street tier: exact situs point first (10 m floor), then tiger interpolation (honest calibrated radius), else null so
- * the caller falls back to the admin cascade ({@link runCascade}). Mirrors the node `geocode-core` tier order
- * (address_point > interpolated > admin) — but async, on the main thread, over the demo's httpvfs handles.
- * `interpRadiusCalibration` is the per-region conformal factor (#374 / data/calibration/interp-radius-conformal.json);
- * default 1.95 (the conservative national default — under-coverage is the harmful error).
+ * Street tier: exact situs point first (10 m floor), then tiger interpolation (honest calibrated radius),
+ * else null so the caller falls back to the admin cascade ({@link runCascade}).
+ *
+ * Mirrors the node `geocode-core` tier order (address_point > interpolated > admin) —
+ * but async, on the main thread, over the demo's httpvfs handles.
+ * `interpRadiusCalibration` is the per-region conformal factor
+ * (#374 / data/calibration/interp-radius-conformal.json); default 1.95
+ * (the conservative national default — under-coverage is the harmful error).
  */
 export async function resolveStreet(
 	street: string | undefined,

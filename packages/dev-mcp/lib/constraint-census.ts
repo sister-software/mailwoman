@@ -51,8 +51,10 @@ interface ConstraintMiss {
 	band: string
 	checks: string[]
 	/**
-	 * Bands holding this key other than the one probed, measured with no constraint applied at all. Empty means the key
-	 * exists nowhere in the gazetteer, which is a coverage fact rather than a retrieval failure.
+	 * Bands holding this key other than the one probed, measured with no constraint applied at all.
+	 *
+	 * Empty means the key exists nowhere in the gazetteer, which is a coverage fact
+	 * rather than a retrieval failure.
 	 */
 	elsewhere: string[]
 	/**
@@ -103,8 +105,9 @@ export interface ConstraintCensusResult {
 	 */
 	n_reachability: number
 	/**
-	 * The key exists nowhere in the gazetteer. A coverage fact, never counted as a retrieval failure and never summed
-	 * with the column above.
+	 * The key exists nowhere in the gazetteer.
+	 *
+	 * A coverage fact, never counted as a retrieval failure and never summed with the column above.
 	 */
 	n_coverage: number
 	checks: CheckReading[]

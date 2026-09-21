@@ -15,8 +15,8 @@
 
 import { resolvePath } from "path-ts"
 // `defineConfig` from "vitest/config" (not "vite"): vitest's overload carries the `test` field.
-// vite 8 (pulled in by docs/ Storybook) no longer applies the `vitest/config` type augmentation to
-// vite's own `defineConfig`, so importing from "vite" makes `test` a type error under vite 8.
+// vite 8 (pulled in by docs/ Storybook) no longer applies the `vitest/config` type augmentation
+// to vite's own `defineConfig`, so importing from "vite" makes `test` a type error under vite 8.
 import { defineConfig } from "vitest/config"
 
 const here = import.meta.dirname

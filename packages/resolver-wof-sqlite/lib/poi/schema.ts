@@ -44,8 +44,9 @@ export interface POITable {
 	/**
 	 * Probe key for exact name lookups, minted by {@link normalizeLocalityForKey} at build and at query.
 	 *
-	 * Branded because a `toLowerCase()` approximation of the fold is still a `string`: it binds to the parameter, returns
-	 * fewer rows, and the shortfall reads as a coverage gap in the data rather than a defect in the probe.
+	 * Branded because a `toLowerCase()` approximation of the fold is still a `string`:
+	 * it binds to the parameter, returns fewer rows, and the shortfall reads as a
+	 * coverage gap in the data rather than a defect in the probe.
 	 */
 	name_key: NameKey | null
 	brand_wikidata: string | null

@@ -453,8 +453,8 @@ function normalizeFGDCDate(value: string): string {
 /**
  * Read the survey area's own outline shapefile as a GeoJSON geometry.
  *
- * @throws {Error} When the shapefile holds anything other than exactly one feature. Taking the first of several would
- *   silently choose which ground the coverage claim is about.
+ * @throws {Error} When the shapefile holds anything other than exactly one feature.
+ *   Taking the first of several would silently choose which ground the coverage claim is about.
  */
 export async function readSurveyAreaOutline(shapefilePath: string): Promise<ParsedGeometry> {
 	const { stdout } = await runFile("ogr2ogr", ["-f", "GeoJSON", "/vsistdout/", "-t_srs", "EPSG:4326", shapefilePath], {

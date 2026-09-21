@@ -78,8 +78,9 @@ export interface ArmRowResult {
 	distanceKm: number | null
 	confidence: number
 	/**
-	 * The deciding check or refusal condition, in the arm's own vocabulary. Null when the arm produced none, which the
-	 * mechanism-coverage metric counts.
+	 * The deciding check or refusal condition, in the arm's own vocabulary.
+	 *
+	 * Null when the arm produced none, which the mechanism-coverage metric counts.
 	 */
 	mechanism: string | null
 	evidence: ArmEvidenceObservation

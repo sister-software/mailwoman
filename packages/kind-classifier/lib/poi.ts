@@ -45,19 +45,21 @@ export interface POIPhraseMatch {
 	 */
 	wikidata?: string
 	/**
-	 * Whether this hit is one member of a set the caller must search together, rather than one candidate in a preference
-	 * list.
+	 * Whether this hit is one member of a set the caller must search together,
+	 * rather than one candidate in a preference list.
 	 *
-	 * A lookup returning several hits means two different things, and the difference decides whether narrowing to the
-	 * first is an answer or an invented ordering. A phrase index returns the categories one typed phrase could name, the
-	 * curated reading first (`credit union` → the `bank` rollup its synonym redirects to, then the standalone
-	 * `credit_union` category), and the first entry is the subject. An affordance rung returns every entity kind that
-	 * affords one activity, in a stable enumeration that is not a preference, and taking the first picks a winner nobody
-	 * authored.
+	 * A lookup returning several hits means two different things, and the difference decides
+	 * whether narrowing to the first is an answer or an invented ordering.
+	 * A phrase index returns the categories one typed phrase could name, the curated
+	 * reading first (`credit union` → the `bank` rollup its synonym redirects to,
+	 * then the standalone `credit_union` category), and the first entry is the subject.
 	 *
-	 * Set on every member of such a set. {@link matchPOISubject} then carries them all, the POI branch searches their
-	 * union, and the candidate ordering the resolver already owns decides the answer. Absent — the committed lexicon's
-	 * shape — keeps the first-hit reading unchanged.
+	 * An affordance rung returns every entity kind that affords one activity, in a stable
+	 * enumeration that is not a preference, and taking the first picks a winner nobody authored.
+	 *
+	 * Set on every member of such a set. {@link matchPOISubject} then carries them all, the POI branch
+	 * searches their union, and the candidate ordering the resolver already owns decides the answer.
+	 * Absent — the committed lexicon's shape — keeps the first-hit reading unchanged.
 	 */
 	searchAsSet?: boolean
 	/**

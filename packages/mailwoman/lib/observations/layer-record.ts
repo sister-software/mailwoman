@@ -36,9 +36,10 @@ export interface ObservationLayerRecord {
 /**
  * The coverage side of a designation, flattened for a marker's evidence.
  *
- * `basis` travels as a plain string because a marker's evidence is JSON a caller reads rather than a typed value it
- * branches on — but it is never omitted: `completeness` alone is a magnitude, and the whole point of the interface's
- * `basis` column is that a magnitude cannot be acted on without it.
+ * `basis` travels as a plain string because a marker's evidence is JSON a caller reads
+ * rather than a typed value it branches on — but it is never omitted: `completeness`
+ * alone is a magnitude, and the whole point of the interface's `basis` column is
+ * that a magnitude cannot be acted on without it.
  */
 export interface ObservationCoverageRecord {
 	h3Cell: number
@@ -70,8 +71,8 @@ export function observationLayerRecord(manifest: LayerManifest): ObservationLaye
 /**
  * A reader's coverage row as the record a designation carries, or nothing where the reading had none.
  *
- * Absent rather than zeroed where the layer holds no coverage row for the cell: a missing row means unknown, and a
- * record reading `completeness: 0` would say the opposite.
+ * Absent rather than zeroed where the layer holds no coverage row for the cell:
+ * a missing row means unknown, and a record reading `completeness: 0` would say the opposite.
  */
 export function observationCoverageRecord(
 	coverage:
@@ -100,8 +101,9 @@ export function observationCoverageRecord(
 }
 
 /**
- * The coverage sentence a designation's one-line description carries — one wording for every layer, with the
- * completeness term added only where the layer's basis makes a completeness magnitude meaningful.
+ * The coverage sentence a designation's one-line description carries —
+ * one wording for every layer, with the completeness term added only where the
+ * layer's basis makes a completeness magnitude meaningful.
  */
 export function describeCoverage(
 	coverage: ObservationCoverageRecord | undefined,

@@ -179,8 +179,8 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 	// before this backfill. without it the correlated not exists is quadratic over 33k rows.
 	db.exec("CREATE INDEX ancestors_by_id ON ancestors(id)")
 
-	// node:sqlite caps a statement at 32,766 bound variables. the 2026-08-04 wide-coverage admin build
-	// carried 67,521 country-less candidates. 33,000 self-only places reproduce the overflow.
+	// node:sqlite caps a statement at 32,766 bound variables. the 2026-08-04 wide-coverage admin
+	// build carried 67,521 country-less candidates. 33,000 self-only places reproduce the overflow.
 	const insertSpr = db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')")
 	const insertAnc = db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)")
 	db.exec("BEGIN")

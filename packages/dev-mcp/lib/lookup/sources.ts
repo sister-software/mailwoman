@@ -39,10 +39,11 @@ import { type PlaceIDProvenance, placeIDProvenance } from "#place-id-provenance"
 /**
  * How many rows a probe returns per query before it stops.
  *
- * PER probe rather than per query: a source that reads several extracts on several routes binds this to each one, so a
- * set of six extracts on two routes can return up to twelve times this number. Every probe therefore reports `returned`
- * beside `matched` — the count the source actually holds, measured by its own count rather than inferred from the list
- * — because a truncated list whose length is presented as a total reads as coverage it does not have.
+ * PER probe rather than per query: a source that reads several extracts on several routes binds
+ * this to each one, so a set of six extracts on two routes can return up to twelve times this number.
+ * Every probe therefore reports `returned` beside `matched` — the count the source actually
+ * holds, measured by its own count rather than inferred from the list — because a truncated
+ * list whose length is presented as a total reads as coverage it does not have.
  */
 const DEFAULT_ENTRY_LIMIT = 10
 
@@ -77,8 +78,10 @@ type CandidateRoute = (typeof CandidateRoute)[keyof typeof CandidateRoute]
 
 export interface CandidateLookupOptions {
 	/**
-	 * ISO alpha-2 filter. A country the artifact carries no dictionary entry for is reported as a coverage gap, never as
-	 * a miss on the name.
+	 * ISO alpha-2 filter.
+	 *
+	 * A country the artifact carries no dictionary entry for is reported as a
+	 * coverage gap, never as a miss on the name.
 	 */
 	country?: string
 	limit?: number
@@ -143,17 +146,19 @@ function candidateSelect(hasNameRole: boolean): string {
 /**
  * Probe `candidate.db` on `name_key`, the key the build writes and the reader probes.
  *
- * Reports the matched key beside the stored `name`, because they routinely differ and the difference is the answer: a
- * hit on `illes balears` whose `name` reads "Balearic Islands" and whose `is_primary` is 0 was reached through an alias
- * row, which is a different fact from a canonical match.
+ * Reports the matched key beside the stored `name`, because they routinely differ
+ * and the difference is the answer: a hit on `illes balears` whose `name` reads
+ * "Balearic Islands" and whose `is_primary` is 0 was reached through an alias row,
+ * which is a different fact from a canonical match.
  *
  * Two values in a hit are zeros that must not be read as absences, and two absences are not zeros:
  *
- * - `importance: null` is unmeasured — the score source had no row for that place — while `population: 0` and a `(0, 0)`
- *   centroid are the build's own written values (the latter its unlocated sentinel).
- * - A `country` naming no `country_codes` entry means the artifact carries no rows for that country at all, so the miss
- *   is a coverage gap. a country it does carry, with rows under the key elsewhere, is a filter miss and reports the
- *   third state (`hit`, no entries).
+ * - `importance: null` is unmeasured — the score source had no row for that place —
+ *   while `population: 0` and a `(0, 0)` centroid are the build's own written
+ *   values (the latter its unlocated sentinel).
+ * - A `country` naming no `country_codes` entry means the artifact carries no rows for that
+ *   country at all, so the miss is a coverage gap. a country it does carry, with rows under
+ *   the key elsewhere, is a filter miss and reports the third state (`hit`, no entries).
  */
 export function lookupCandidate<DB>(
 	db: DatabaseClient<DB>,

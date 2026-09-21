@@ -139,11 +139,12 @@ export function sameRemote(a: string | undefined, b: string | undefined): boolea
 }
 
 /**
- * Decide what to do with one repo. Pure: every input is already measured.
+ * Decide what to do with one repo.
+ * Pure: every input is already measured.
  *
- * Order matters and encodes the priority. Refusals come first, before the re-point question — a dirty tree is a reason
- * to touch nothing at all, and reporting it as a re-point candidate would invite exactly the action that loses the
- * work.
+ * Order matters and encodes the priority.
+ * Refusals come first, before the re-point question — a dirty tree is a reason to touch nothing at all,
+ * and reporting it as a re-point candidate would invite exactly the action that loses the work.
  */
 export function planRepoSync(origin: RepoOrigin, directory: string, state: CloneState): RepoSyncPlan {
 	const plan = (action: SyncAction, reason: string): RepoSyncPlan => ({

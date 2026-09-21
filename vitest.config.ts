@@ -35,9 +35,10 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  * `Cannot find package` in unrelated suites until someone added it. The mirror-image gap on `@mailwoman/corpus/(.+) ->
  * corpus/src/$1.ts` mis-resolved the exported `./tools` directory subpath (#1523).
  *
- * Reading the map instead means a workspace that exports a subpath is importable in tests, one that does not is not,
- * and the answer matches what a real consumer gets. Order: every exact subpath before every wildcard, longest first,
- * since Vite takes the first `find` that matches.
+ * Reading the map instead means a workspace that exports a subpath is importable in tests,
+ * one that does not is not, and the answer matches what a real consumer gets.
+ * Order: every exact subpath before every wildcard, longest first, since Vite
+ * takes the first `find` that matches.
  */
 /**
  * Read a workspace manifest.
@@ -132,8 +133,9 @@ export default defineConfig({
 		isolate: false,
 		testTimeout: 15_000,
 		coverage: {
-			// `reportOnFailure` defaults to false, which means one failing test suppresses the entire report — and the
-			// symptom is an empty coverage directory, which reads as "coverage is broken" rather than "a test failed".
+			// `reportOnFailure` defaults to false, which means one failing test suppresses
+			// the entire report — and the symptom is an empty coverage directory,
+			// which reads as "coverage is broken" rather than "a test failed".
 			// A run that measured 64.45% statements on the unit leg is worth keeping when a suite goes red.
 			reportOnFailure: true,
 		},

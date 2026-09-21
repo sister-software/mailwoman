@@ -437,8 +437,8 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 	const geocoded = records.filter((r) => r.address?.geocode).length
 
-	// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
-	// same @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
+	// Reconciliation mode (#621): classify entities by eligibility/funding role membership,
+	// via the same @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
 	if (options.reconcile) {
 		const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
 		const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)

@@ -89,7 +89,8 @@ const ELIGIBILITY = new Set(["nppes", "txhhsc-nursing"])
 const FUNDING = new Set(["fcc-rhc"])
 
 /**
- * Coverage reconciliation (#621) — see the module doc. Emits the markdown report to stdout.
+ * Coverage reconciliation (#621) — see the module doc.
+ * Emits the markdown report to stdout.
  */
 export async function coverageReconciliation(
 	options: CoverageReconciliationOptions,

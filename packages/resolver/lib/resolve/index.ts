@@ -114,8 +114,9 @@ function explicitCountryScope(roots: readonly AddressNode[]): string | null {
 class WOFResolver implements Resolver {
 	readonly #backend: ResolverBackend
 	/**
-	 * The gazetteer artifact's self-declared coverage facts, passed through from the backend so pipeline-level consumers
-	 * read them from the resolver handle they already hold. Absent on artifacts predating the coverage manifest.
+	 * The gazetteer artifact's self-declared coverage facts, passed through from the backend
+	 * so pipeline-level consumers read them from the resolver handle they already hold.
+	 * Absent on artifacts predating the coverage manifest.
 	 */
 	readonly artifactCoverage: Resolver["artifactCoverage"]
 	/**

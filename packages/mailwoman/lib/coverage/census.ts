@@ -542,22 +542,27 @@ export interface ResolvedTrainingConfig {
 }
 
 /**
- * The training config whose `country_weights` decides admission, resolved from what the caller named or from the
- * register.
+ * The training config whose `country_weights` decides admission, resolved from
+ * what the caller named or from the register.
  *
- * Discovery does not work here and the register replaced it. Sorting the directory by modification time sorts a total
- * tie, because `git checkout` writes all 225 configs at one timestamp. One run took a config admitting 2 countries and
- * the coverage funnel printed `admitted 2 of 250` (#2349). Sorting by filename fails differently: the version scheme is
- * `v0.9.9-si-bare-village`, `v0.26.0-trailing-region-leftcontext` and `v8-cjk-regs` together, which orders neither
- * lexically nor numerically.
+ * Discovery does not work here and the register replaced it.
+ * Sorting the directory by modification time sorts a total tie, because `git checkout`
+ * writes all 225 configs at one timestamp.
  *
- * Under both sorts the premise is still wrong. Two graphs ship at once from two configs — the Latin config's
- * `country_weights` names 25 countries and the character config's names 4 — so no single file is the newest one.
+ * One run took a config admitting 2 countries and the coverage funnel printed `admitted 2 of 250` (#2349).
+ * Sorting by filename fails differently: the version scheme is `v0.9.9-si-bare-village`,
+ * `v0.26.0-trailing-region-leftcontext` and `v8-cjk-regs` together,
+ * which orders neither lexically nor numerically.
  *
- * `family` selects among the registered configs and defaults to the Latin family, which is the graph every untiered
- * shipping locale resolves through. Pass `requested` to read any other file. {@linkcode ResolvedTrainingConfig.provenance}
- * then reads `given` or `registered`, so a report can print whether its config was named by a caller or taken from the
- * register.
+ * Under both sorts the premise is still wrong.
+ * Two graphs ship at once from two configs — the Latin config's `country_weights` names
+ * 25 countries and the character config's names 4 — so no single file is the newest one.
+ *
+ * `family` selects among the registered configs and defaults to the Latin family,
+ * which is the graph every untiered shipping locale resolves through.
+ * Pass `requested` to read any other file. {@linkcode ResolvedTrainingConfig.provenance}
+ * then reads `given` or `registered`, so a report can print whether its config
+ * was named by a caller or taken from the register.
  */
 export function resolveTrainingConfig(
 	scope: ScopeConfig,
@@ -610,15 +615,19 @@ export async function admittedByShippedGraphs(scope: ScopeConfig): Promise<Map<s
 /**
  * The newest corpus manifest, by modification time.
  *
- * The directory name cannot order these. Corpus versions are `v0.9.9-si-bare-village`,
- * `v0.26.0-trailing-region-leftcontext`, `v8-jp-full-…` — a set that sorts neither lexically (`v0.9.9` beats
- * `v0.26.0`, because `9` > `2`) nor numerically (`v8` beats both). Measured: the name sort picked `v0.9.9` and
- * reported the coverage of a corpus nine versions old, with nothing in the output to say it had. Every caller names
- * the manifest it used.
+ * The directory name cannot order these.
+ * Corpus versions are `v0.9.9-si-bare-village`, `v0.26.0-trailing-region-leftcontext`,
+ * `v8-jp-full-…` — a set that sorts neither lexically (`v0.9.9` beats `v0.26.0`, because `9` > `2`)
+ * nor numerically (`v8` beats both).
  *
- * Two manifests sharing the newest mtime raise rather than one of them being returned. An mtime tie is what a fresh
- * checkout or a bulk copy produces, and the sibling `newestConfig` picked one of 225 configs that way and reported
- * another arm's numbers under this arm's name (#2349). The caller that hits this passes the manifest it means.
+ * Measured: the name sort picked `v0.9.9` and reported the coverage of a corpus nine
+ * versions old, with nothing in the output to say it had.
+ * Every caller names the manifest it used.
+ *
+ * Two manifests sharing the newest mtime raise rather than one of them being returned.
+ * An mtime tie is what a fresh checkout or a bulk copy produces, and the sibling `newestConfig` picked
+ * one of 225 configs that way and reported another arm's numbers under this arm's name (#2349).
+ * The caller that hits this passes the manifest it means.
  */
 export async function newestManifest(): Promise<string> {
 	const root = String(dataRootPath("corpus", "versioned"))

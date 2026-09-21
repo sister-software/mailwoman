@@ -159,9 +159,12 @@ export interface PostcodePrefixNode {
 }
 
 /**
- * Coverage tier of the source the index was built from, in the sense `docs/engineering/reference/layer-interface.mdx`
- * uses. Not part of the arc document's preregistered header. added because the NI source is ODbL and a share-alike
- * obligation that does not travel with the artifact is a licensing defect waiting for the first consumer.
+ * Coverage tier of the source the index was built from, in the sense
+ * `docs/engineering/reference/layer-interface.mdx` uses.
+ *
+ * Not part of the arc document's preregistered header. added because the NI source
+ * is ODbL and a share-alike obligation that does not travel with the artifact is
+ * a licensing defect waiting for the first consumer.
  */
 export type PostcodePrefixTier = "shipped" | "build-local"
 
@@ -171,11 +174,14 @@ export interface PostcodePrefixHeader {
 	 */
 	country: string
 	/**
-	 * Sub-national scope slug, because a country's prefixes can come from more than one numbering register with different
-	 * licences and different coverage: `"gb-esw"` is Code-Point Open (England, Scotland, Wales — no Northern Ireland),
-	 * `"gb-ni"` is the BT districts. Two files may therefore share a `country`; this is what tells them apart, and it is
-	 * the filename suffix. Not in the arc document's preregistered header — added because folding the two GB registers
-	 * into one file would have merged an OGL artifact with an ODbL one.
+	 * Sub-national scope slug, because a country's prefixes can come from more than one numbering
+	 * register with different licences and different coverage: `"gb-esw"` is Code-Point Open
+	 * (England, Scotland, Wales — no Northern Ireland), `"gb-ni"` is the BT districts.
+	 *
+	 * Two files may therefore share a `country`; this is what tells them apart,
+	 * and it is the filename suffix.
+	 * Not in the arc document's preregistered header — added because folding the two GB
+	 * registers into one file would have merged an OGL artifact with an ODbL one.
 	 */
 	scope: string
 	schemaVersion: 1
@@ -201,7 +207,8 @@ export interface PostcodePrefixHeader {
 	 */
 	buildDate: string
 	/**
-	 * Coverage tier of the source. See {@link PostcodePrefixTier}.
+	 * Coverage tier of the source.
+	 * See {@link PostcodePrefixTier}.
 	 */
 	tier: PostcodePrefixTier
 	/**
@@ -210,9 +217,10 @@ export interface PostcodePrefixHeader {
 	 */
 	attribution: string
 	/**
-	 * What a miss means for this file — the meaning-of-zero statement, mandatory. A prefix absent from a complete
-	 * register does not exist. a prefix absent from a partial one may simply be unattested, and a consumer that cannot
-	 * tell the two apart will read coverage as fact.
+	 * What a miss means for this file — the meaning-of-zero statement, mandatory.
+	 *
+	 * A prefix absent from a complete register does not exist. a prefix absent from a partial one may
+	 * simply be unattested, and a consumer that cannot tell the two apart will read coverage as fact.
 	 */
 	coverageNote: string
 	/**

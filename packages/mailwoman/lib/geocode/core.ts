@@ -307,14 +307,15 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
 	 * #743/#194: promote a confident placer guess to a hard country filter (empty→unresolved) for coverage-safelisted
-	 * countries — see {@link hardCountryFor}. **default-on** (#743): a pure win on well-covered countries
-	 * (US/ES/IT/NL/DE/FR), soft (no-op) for the rest. Pass `false` to opt out.
+	 * countries — see {@link hardCountryFor}. **default-on** (#743): a pure win on
+	 * well-covered countries (US/ES/IT/NL/DE/FR), soft (no-op) for the rest.
+	 * Pass `false` to opt out.
 	 */
 	hardPlaceCountry?: boolean
 	/**
 	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer
-	 * artifact's own coverage manifest when it carries one, else the built-in constant (the fallback for artifacts
-	 * predating the manifest).
+	 * artifact's own coverage manifest when it carries one, else the built-in constant
+	 * (the fallback for artifacts predating the manifest).
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
@@ -844,8 +845,9 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			}
 
 			// #743/#194: default-on coverage-guarded hard country filter (same check as the runtime pipeline,
-			// via the shared helper so the two production paths can't drift). Same safelist precedence as
-			// above: per-call override → the artifact's coverage manifest → the code-constant fallback.
+			// via the shared helper so the two production paths can't drift).
+			// Same safelist precedence as above: per-call override → the artifact's
+			// coverage manifest → the code-constant fallback.
 			const hardCountry = hardCountryFor(
 				placed.country,
 				placed.confidence,

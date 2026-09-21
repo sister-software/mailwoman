@@ -244,9 +244,10 @@ describe("the Hugging Face materialization plan", () => {
 
 describe("the pair-index parity selector", () => {
 	it("still matches a test file — the empty-selection class", async () => {
-		// The v9.2.0 release's second dispatch died because publish.yml named the parity test's pre-regroup path and
-		// Vitest matched zero files. The workflow now calls a package script whose filter is the test's name, and
-		// this asserts the filter is not empty-handed — the same answer a dispatch would return several minutes in.
+		// The v9.2.0 release's second dispatch died because publish.yml named the parity
+		// test's pre-regroup path and Vitest matched zero files.
+		// The workflow now calls a package script whose filter is the test's name, and this asserts
+		// the filter is not empty-handed — the same answer a dispatch would return several minutes in.
 		const repoRoot = String(repoRootPath())
 
 		const manifest = await readPackageJSON(join(repoRoot, "package.json"))

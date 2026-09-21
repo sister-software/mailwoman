@@ -293,20 +293,22 @@ export interface ZoningCellTable {
 }
 
 /**
- * The authority's own statement of what it mapped — one row per statement, never derived from the zoning polygons.
+ * The authority's own statement of what it mapped — one row per statement,
+ * never derived from the zoning polygons.
  *
- * Empty IN this edition, and its emptiness is the claim. The Department states "Awaiting data for some Local
- * Authorities
+ * Empty IN this edition, and its emptiness is the claim.
+ * The Department states "Awaiting data for some Local Authorities
  *
- * - Please see map viewer for coverage details" and publishes that detail only inside a map application, so there is no
- *   footprint to record and `layer_coverage` carries `basis = source_present`. Donegal County Council's absence — the
- *   one local authority of 31 missing from the layer — was recovered by measuring `LA_CODE`, not read from a
- *   statement.
+ * - Please see map viewer for coverage details" and publishes that detail only inside a map application,
+ *   so there is no footprint to record and `layer_coverage` carries `basis = source_present`.
+ *   Donegal County Council's absence — the one local authority of 31 missing from the layer —
+ *   was recovered by measuring `LA_CODE`, not read from a statement.
  *
- * Deriving a footprint from the union of the zoning polygons is forbidden: the union of zoned areas is not the area the
- * authority examined, and the difference is the whole content of a negative answer. One authority's drafting convention
- * moves the national zoned-area figure by 41% on its own — Meath County Council zones its entire rural remainder as one
- * 2,232 km² polygon, against 32.5 km² for the next largest in the country — so the union is not even a stable shape.
+ * Deriving a footprint from the union of the zoning polygons is forbidden: the union of zoned areas is
+ * not the area the authority examined, and the difference is the whole content of a negative answer.
+ * One authority's drafting convention moves the national zoned-area figure by 41% on its own —
+ * Meath County Council zones its entire rural remainder as one 2,232 km² polygon, against
+ * 32.5 km² for the next largest in the country — so the union is not even a stable shape.
  */
 export interface ZoningMappedExtentTable {
 	extent_id: string
@@ -458,8 +460,10 @@ export async function createZoningCellTable(db: ZoningSchemaHandle): Promise<voi
 }
 
 /**
- * Create `zoning_mapped_extent`. Created empty, and the reader refuses a stronger coverage basis while it stays that
- * way — see the interface's docstring.
+ * Create `zoning_mapped_extent`.
+ *
+ * Created empty, and the reader refuses a stronger coverage basis while it stays
+ * that way — see the interface's docstring.
  */
 export async function createZoningMappedExtentTable(db: ZoningSchemaHandle): Promise<void> {
 	const table = db.schema

@@ -213,8 +213,9 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		let skipped = 0
 		let unrecognized = 0
 
-		// Check the complete input set before writing the first row. A missing municipality otherwise
-		// produces a plausible non-empty artifact with less Swedish coverage than the recipe declares.
+		// Check the complete input set before writing the first row.
+		// A missing municipality otherwise produces a plausible non-empty artifact with
+		// less Swedish coverage than the recipe declares.
 		const missing = await findMissingPostcodeSources(SOURCES.map(({ csv }) => String(csv)))
 
 		if (missing.length) {

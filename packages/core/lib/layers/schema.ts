@@ -87,8 +87,9 @@ export interface LayerManifestTable {
 	created_at: string
 }
 
-// Owned by @mailwoman/evidence so bdc, resolver and filer can check on the same function rather than on matching copies
-// of the same three strings. The layer_coverage schema and its IO stay here.
+// Owned by @mailwoman/evidence so bdc, resolver and filer can check on the same function
+// rather than on matching copies of the same three strings.
+// The layer_coverage schema and its IO stay here.
 
 export interface LayerCoverageTable {
 	/**

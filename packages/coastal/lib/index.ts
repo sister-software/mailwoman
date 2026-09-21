@@ -180,9 +180,11 @@ export interface CoastalErosionReading {
 	 */
 	containment: CoastalContainmentPath
 	/**
-	 * The coverage row for the location, when the product has data in that cell. Its basis is always `source_present`, so
-	 * it licenses presence and nothing else — an absent coverage row and a present one are both compatible with "no
-	 * erosion polygon here", and neither says the location is not at risk.
+	 * The coverage row for the location, when the product has data in that cell.
+	 *
+	 * Its basis is always `source_present`, so it licenses presence and nothing else —
+	 * an absent coverage row and a present one are both compatible with "no erosion
+	 * polygon here", and neither says the location is not at risk.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
 	/**
@@ -234,13 +236,16 @@ export interface CoastalLayerIdentity {
 	 */
 	scenarioKeys: string[]
 	/**
-	 * The authority's footprint statements. Empty in this edition, which is what makes `source_present` the only basis
+	 * The authority's footprint statements.
+	 *
+	 * Empty in this edition, which is what makes `source_present` the only basis
 	 * the coverage may carry — see `schema.ts`.
 	 */
 	mappedExtents: Array<{ extentID: string; source: string; statement: string; statementURL: string }>
 	/**
-	 * The coverage basis every row carries. Always `source_present` while `mappedExtents` is empty. checked at open time
-	 * rather than assumed.
+	 * The coverage basis every row carries.
+	 *
+	 * Always `source_present` while `mappedExtents` is empty. checked at open time rather than assumed.
 	 */
 	coverageBasis: CoverageBasis
 	databasePath: string
@@ -272,11 +277,11 @@ interface AreaRow {
 /**
  * Read a sealed `coastal-england.db`.
  *
- * Everything that would make the reader answer a well-formed wrong thing is refused at construction rather than at
- * query time: a manifest naming a different layer, a coverage table with no rows, a coverage row whose basis would
- * support an exclusion, an empty scenario vocabulary. Each of those would otherwise present as a reader that quietly
- * always answers `unknown` — or, in the exclusion case, as a reader that confidently reports England as free of coastal
- * erosion.
+ * Everything that would make the reader answer a well-formed wrong thing is refused at construction
+ * rather than at query time: a manifest naming a different layer, a coverage table with no rows,
+ * a coverage row whose basis would support an exclusion, an empty scenario vocabulary.
+ * Each of those would otherwise present as a reader that quietly always answers `unknown` — or,
+ * in the exclusion case, as a reader that confidently reports England as free of coastal erosion.
  */
 export class CoastalErosionLookup implements Disposable {
 	readonly identity: CoastalLayerIdentity
@@ -553,10 +558,12 @@ function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: s
 		throw new Error(`coastal reader: ${databasePath} declares no h3 spine key`)
 	}
 
-	// the exclusion check, and IT is A condition rather than A convention. ncerm publishes no coverage statement, so no
-	// row of this layer may license a claim that a location is not at risk. A stronger basis reaching a caller would let
-	// an absent polygon be read as a designation of safety over the whole of inland England. The check itself is the
-	// interface's rather than this product's. the sentence saying why is this product's.
+	// the exclusion check, and IT is A condition rather than A convention. ncerm publishes no
+	// coverage statement, so no row of this layer may license a claim that a location is not at risk.
+	// A stronger basis reaching a caller would let an absent polygon be read as a
+	// designation of safety over the whole of inland England.
+	// The check itself is the interface's rather than this product's. the sentence
+	// saying why is this product's.
 	assertCoverageLicensesNoExclusion(
 		(database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{ basis: string | null }>).map(
 			(coverageRow) => coverageRow.basis
@@ -591,11 +598,13 @@ function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: s
 		)
 	}
 
-	// the coverage resolution is recovered from the cells rather than declared. The manifest's spine key names the index
-	// resolution; `layer_coverage` is keyed at a coarser one, and this layer has no footprint row to carry it (the flood
-	// layer's `flood_map_extent` and the soil layer's survey-area rows are where those two put theirs, and ncerm publishes
-	// no footprint at all). Recovering it is exact rather than approximate — a short cell expands to a valid index at
-	// exactly one resolution — and the shared helper throws on a table that mixes them.
+	// the coverage resolution is recovered from the cells rather than declared.
+	// The manifest's spine key names the index resolution; `layer_coverage` is
+	// keyed at a coarser one, and this layer has no footprint row to carry it
+	// (the flood layer's `flood_map_extent` and the soil layer's survey-area rows are
+	// where those two put theirs, and ncerm publishes no footprint at all).
+	// Recovering it is exact rather than approximate — a short cell expands to a valid index
+	// at exactly one resolution — and the shared helper throws on a table that mixes them.
 	const coverageResolution = recoverShortCellResolution(
 		(database.prepare("SELECT h3_cell FROM layer_coverage").all() as Array<{ h3_cell: number }>).map(
 			(coverageRow) => coverageRow.h3_cell

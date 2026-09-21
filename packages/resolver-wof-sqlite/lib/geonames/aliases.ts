@@ -224,10 +224,12 @@ export async function ingestGeonamesAliases(
 	opts?: {
 		/**
 		 * #267: the countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link each
-		 * locality's `parent_id` + ancestry chain (locality → region → country). PER-country because a country that already
-		 * carries WOF admin would double up — pass only the zero-coverage gap countries (the coverage-expansion targets),
-		 * never the EU alias set. Without admin, a gap country's localities are orphans (`parent_id=-1`, no ancestors), so
-		 * `parentID` scoping and adminCoherence can't reach them and "Tbilisi, GE" can't resolve.
+		 * locality's `parent_id` + ancestry chain (locality → region → country).
+		 *
+		 * PER-country because a country that already carries WOF admin would double up — pass only
+		 * the zero-coverage gap countries (the coverage-expansion targets), never the EU alias set.
+		 * Without admin, a gap country's localities are orphans (`parent_id=-1`, no ancestors),
+		 * so `parentID` scoping and adminCoherence can't reach them and "Tbilisi, GE" can't resolve.
 		 */
 		adminForCountries?: ReadonlySet<string>
 		/**

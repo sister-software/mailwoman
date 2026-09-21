@@ -19,9 +19,11 @@ const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
 const vitestSuites = new Set(["full", "integration", "unit"])
 const COLOCATED_TEST_WORKSPACES = new Set(["packages/corpus"])
 /**
- * A workspace that carries a `playwright.config.ts` runs Playwright suites too, and those live beside the vitest ones:
- * `browser` for page specs, `build` for a build-health project, `e2e` for the fixtures they share. Vitest's root
- * configs exclude those directories, so the two runners never collect each other's files.
+ * A workspace that carries a `playwright.config.ts` runs Playwright suites too,
+ * and those live beside the vitest ones: `browser` for page specs, `build` for a
+ * build-health project, `e2e` for the fixtures they share.
+ *
+ * Vitest's root configs exclude those directories, so the two runners never collect each other's files.
  */
 const playwrightSuites = new Set([...vitestSuites, "browser", "build", "e2e"])
 

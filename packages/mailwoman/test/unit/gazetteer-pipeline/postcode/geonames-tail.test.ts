@@ -123,8 +123,9 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten lead, in its ingest order", () => {
-	// `ingestGeonamesPostal` allocates ids from one counter in list order, so a country's id range is its
-	// position. Appending is therefore safe and reordering is not: these ten were recovered from the frozen
+	// `ingestGeonamesPostal` allocates ids from one counter in list order,
+	// so a country's id range is its position.
+	// Appending is therefore safe and reordering is not: these ten were recovered from the frozen
 	// artifact's per-country spr.id ranges, and a rebuild stays id-comparable to it only while they lead.
 	// Everything after them is coverage added since, which the frozen artifact never held an id for.
 	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES].slice(0, 10)).toEqual([

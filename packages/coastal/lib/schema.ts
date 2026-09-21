@@ -213,14 +213,17 @@ export interface CoastalGroundInstabilityTable {
 /**
  * The authority's mapped footprint — one row per statement, never derived from the hazard polygons.
  *
- * Empty IN this edition, and its emptiness is the claim. The Environment Agency publishes no coverage statement for
- * ncerm, so there is no footprint to record and `layer_coverage` carries `basis = source_present`. The table exists
- * because the day a footprint source is settled — the Shoreline Management Plan Mapping record, or the frontage
- * geometry behind `frontageid`; see the workspace readme — is the day this layer may write a stronger basis, and the
- * row that licenses it belongs beside the coverage rather than in a code change nobody can audit.
+ * Empty IN this edition, and its emptiness is the claim.
+ * The Environment Agency publishes no coverage statement for ncerm, so there is no
+ * footprint to record and `layer_coverage` carries `basis = source_present`.
  *
- * Deriving a footprint from the union of the erosion polygons is forbidden: the union of "at risk" areas is not the
- * mapped area, and the difference is the whole content of a negative answer.
+ * The table exists because the day a footprint source is settled — the Shoreline Management
+ * Plan Mapping record, or the frontage geometry behind `frontageid`; see the workspace
+ * readme — is the day this layer may write a stronger basis, and the row that licenses
+ * it belongs beside the coverage rather than in a code change nobody can audit.
+ *
+ * Deriving a footprint from the union of the erosion polygons is forbidden: the union of "at risk"
+ * areas is not the mapped area, and the difference is the whole content of a negative answer.
  */
 export interface CoastalMappedExtentTable {
 	extent_id: string
@@ -337,8 +340,10 @@ export async function createCoastalGroundInstabilityTable(db: CoastalSchemaHandl
 }
 
 /**
- * Create `coastal_mapped_extent`. Created empty, and the reader refuses a stronger coverage basis while it stays that
- * way — see the interface's docstring.
+ * Create `coastal_mapped_extent`.
+ *
+ * Created empty, and the reader refuses a stronger coverage basis while it stays
+ * that way — see the interface's docstring.
  */
 export async function createCoastalMappedExtentTable(db: CoastalSchemaHandle): Promise<void> {
 	const table = db.schema

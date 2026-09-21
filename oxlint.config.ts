@@ -13,9 +13,10 @@ const config = createOxlintConfig({
 	spdxLicenseIdentifier: "AGPL-3.0",
 	// Mailwoman ships React (ink) UIs, so keep the React rules the prior shared config applied.
 	react: true,
-	// Headers were disabled previously because the old eslint-plugin-headers stacked duplicate
-	// headers on --fix. That bug is fixed in the new oxlint header plugin, so headers can be safely
-	// re-enabled — set `headers: true` (or remove this line) to enforce + autofix them repo-wide.
+	// Headers were disabled previously because the old eslint-plugin-headers
+	// stacked duplicate headers on --fix.
+	// That bug is fixed in the new oxlint header plugin, so headers can be safely re-enabled —
+	// set `headers: true` (or remove this line) to enforce + autofix them repo-wide.
 	// Left off here to match the repo's prior behavior.
 	headers: false,
 	restrictProcessGlobals: true,
@@ -98,16 +99,19 @@ const config = createOxlintConfig({
 // The factory's `overrides` option shallow-spreads, so merge `rules` explicitly
 // to avoid clobbering the base rule set.
 /**
- * `@mailwoman/neural` is bundled for a browser whole: the demo reaches its web loader, which reaches the classifier and
- * every soft-feature channel behind it. So the browser-reachable set is the package minus its Node tier, stated that
- * way round because the Node tier is the short, stable list — an enumeration of the browser half needs an edit every
- * time a module is added, and gets one only if its author remembered this file.
+ * `@mailwoman/neural` is bundled for a browser whole: the demo reaches its web loader,
+ * which reaches the classifier and every soft-feature channel behind it.
  *
- * A value import of a Node-only module from here breaks the client bundle: webpack follows it eagerly and chokes on
- * `onnxruntime-node`'s binary assets. `import type` is erased before the bundler sees it and stays legal.
+ * So the browser-reachable set is the package minus its Node tier, stated that way round
+ * because the Node tier is the short, stable list — an enumeration of the browser half needs
+ * an edit every time a module is added, and gets one only if its author remembered this file.
  *
- * No node-side check catches a violation: `yarn compile`, the test legs and the gauntlet never bundle. Only the
- * separate docs-build workflow does, which is minutes later and in another run.
+ * A value import of a Node-only module from here breaks the client bundle:
+ * webpack follows it eagerly and chokes on `onnxruntime-node`'s binary assets.
+ * `import type` is erased before the bundler sees it and stays legal.
+ *
+ * No node-side check catches a violation: `yarn compile`, the test legs and the gauntlet never bundle.
+ * Only the separate docs-build workflow does, which is minutes later and in another run.
  */
 const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
 
@@ -354,20 +358,23 @@ export default {
 	],
 	rules: {
 		...(config.rules as Record<string, unknown>),
-		// The plugin measures a tab as four columns; oxfmt renders one as two. An indented comment is
-		// therefore measured wider than it prints, and wraps early by two columns per indent level.
+		// The plugin measures a tab as four columns; oxfmt renders one as two.
+		// An indented comment is therefore measured wider than it prints,
+		// and wraps early by two columns per indent level.
 		// One sentence per line.
 		//
-		// A sentence that fits takes a line of its own, and only a sentence too long for the measure wraps — at a
-		// comma or before a conjunction, with a parenthetical held whole.
+		// A sentence that fits takes a line of its own, and only a sentence too long for the
+		// measure wraps — at a comma or before a conjunction, with a parenthetical held whole.
 		//
-		// The lead sentence of a block stands alone and the rest travel in pairs, which is the shape the
-		// hand-written comments in isp-nexus settled on. There the author wrote short paragraphs and the formatter
-		// only ever filled inside one.
+		// The lead sentence of a block stands alone and the rest travel in pairs,
+		// which is the shape the hand-written comments in isp-nexus settled on.
+		// There the author wrote short paragraphs and the formatter only ever filled inside one.
 		//
-		// 90 is the measure and 120 the ceiling. The columns between are bought, by a parenthetical that would
-		// otherwise split or a tail that would otherwise strand, rather than filled. `tabWidth` matches oxfmt,
-		// whose tab is two columns. The upstream plugin assumed four and wrapped every indented comment early.
+		// 90 is the measure and 120 the ceiling.
+		// The columns between are bought, by a parenthetical that would otherwise split
+		// or a tail that would otherwise strand, rather than filled.
+		// `tabWidth` matches oxfmt, whose tab is two columns.
+		// The upstream plugin assumed four and wrapped every indented comment early.
 		"mailwoman/comment-reflow": ["warn", { printWidth: 120, targetWidth: 90, tabWidth: 2, paragraphSentences: 2 }],
 		"guard-for-in": "error",
 		// The shared base sets this to `warn`.

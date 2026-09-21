@@ -71,8 +71,8 @@ describe("diffGeocode", () => {
 	})
 
 	it("attributes a move to RETRIEVAL when the parse held and a span repointed", () => {
-		// Same text, same tag, different place. A ranking or gazetteer-coverage problem, and the only signal that says
-		// so is the placeID.
+		// Same text, same tag, different place.
+		// A ranking or gazetteer-coverage problem, and the only signal that says so is the placeID.
 		const before: GeocodeArm = {
 			tree: tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5074, -0.1278, 2]),
 			lat: 51.5074,

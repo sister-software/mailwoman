@@ -69,8 +69,8 @@ describe("censusTrees", () => {
 	})
 
 	it("counts a tag once per row however many nodes carry it", () => {
-		// Two stranded units on one row is one row that produced `unit`. Counting nodes would let a single pathological
-		// row report broad coverage of a tag.
+		// Two stranded units on one row is one row that produced `unit`.
+		// Counting nodes would let a single pathological row report broad coverage of a tag.
 		const census = censusTrees([row("two", "Apt 1 Apt 2", [node("unit", "Apt 1"), node("unit", "Apt 2")])])
 
 		expect(census.stranding.find((entry) => entry.tag === "unit")?.produced_on_rows).toBe(1)

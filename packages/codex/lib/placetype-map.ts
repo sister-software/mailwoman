@@ -50,15 +50,19 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 }
 
 /**
- * Where a country's WOF typing of a tier departs from {@link DEFAULT_PLACETYPE_MAP}, the entries that differ. The map
- * names the tier by tag. WOF names it by placetype, and the two agree for most countries and not for all.
+ * Where a country's WOF typing of a tier departs from {@link DEFAULT_PLACETYPE_MAP},
+ * the entries that differ.
  *
- * - **TW** — 鄉鎮市區, the tier below the 縣市 that the parse tags `subregion`, is `locality` or `localadmin` in WOF for 164 of
- *   the 178 held-out districts the candidate table carries and `county` for 14 (the census in
- *   `docs/records/evals/2026-09-08-v8-cjk-regs.md` §5). Under the default `county` band `臺北市中正區` reached nothing and
- *   the admin tier fell to the 縣市. The `locality` group admits `localadmin` too, the rule the JP `municipality` tag
- *   already relies on, and the exact-type preference in ranking keeps a `locality` row ahead of a same-name
- *   `localadmin` row.
+ * The map names the tier by tag.
+ * WOF names it by placetype, and the two agree for most countries and not for all.
+ *
+ * - **TW** — 鄉鎮市區, the tier below the 縣市 that the parse tags `subregion`, is `locality`
+ *   or `localadmin` in WOF for 164 of the 178 held-out districts the candidate table carries
+ *   and `county` for 14 (the census in `docs/records/evals/2026-09-08-v8-cjk-regs.md` §5).
+ *   Under the default `county` band `臺北市中正區` reached nothing and the admin tier fell to the 縣市.
+ *   The `locality` group admits `localadmin` too, the rule the JP `municipality`
+ *   tag already relies on, and the exact-type preference in ranking keeps a
+ *   `locality` row ahead of a same-name `localadmin` row.
  */
 const COUNTRY_PLACETYPE_OVERRIDES: Readonly<Record<string, PlacetypeMap>> = {
 	tw: { subregion: "locality" },

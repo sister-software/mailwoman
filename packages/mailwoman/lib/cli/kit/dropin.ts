@@ -148,9 +148,10 @@ export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined
 
 	const wofPaths = await existingWOFDatabasePaths()
 
-	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the FTS5-trigram typo
-	// fallback). --candidate-db, else $MAILWOMAN_CANDIDATE_DB, else the `<data-root>/wof/candidate.db` convention
-	// path. Absent → the admin FTS databases.
+	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage +
+	// the FTS5-trigram typo fallback). --candidate-db, else $MAILWOMAN_CANDIDATE_DB,
+	// else the `<data-root>/wof/candidate.db` convention path.
+	// Absent → the admin FTS databases.
 	const candidateDB = await resolveCandidateDBPath(candidateDBFlag)
 
 	if (!candidateDB && !wofPaths.length) {

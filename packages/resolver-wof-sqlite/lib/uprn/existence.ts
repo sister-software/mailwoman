@@ -53,17 +53,19 @@ export interface UPRNAbsenceInput {
 }
 
 /**
- * The coverage cell a coordinate falls in, derived from its stored res-9 cell exactly as the builder derives it — never
- * from the centroid, which lands in a different parent for a fraction of cells.
+ * The coverage cell a coordinate falls in, derived from its stored res-9 cell exactly as the builder
+ * derives it — never from the centroid, which lands in a different parent for a fraction of cells.
  */
 export function uprnCoverageCell(latitude: number, longitude: number): number {
 	return shortCellToParentInt(uprnH3Cell(latitude, longitude), UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)
 }
 
 /**
- * An {@link Exclusion} when no uprn lies within `radiusM` and the layer's coverage licenses saying so; `null` on a hit
- * (presence is not this probe's business) and on every refusal (unsurveyed cell, `source_present` basis, a country the
- * product does not cover). Never throws on a refusal: the caller falls open to the ranking it already had.
+ * An {@link Exclusion} when no uprn lies within `radiusM` and the layer's coverage licenses
+ * saying so; `null` on a hit (presence is not this probe's business) and on every refusal
+ * (unsurveyed cell, `source_present` basis, a country the product does not cover).
+ *
+ * Never throws on a refusal: the caller falls open to the ranking it already had.
  */
 export async function uprnAbsenceAt(input: UPRNAbsenceInput): Promise<Exclusion | null> {
 	const coverageCell = uprnCoverageCell(input.latitude, input.longitude)

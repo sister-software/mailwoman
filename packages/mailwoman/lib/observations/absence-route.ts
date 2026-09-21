@@ -91,11 +91,13 @@ const POI_TAXONOMY_VOCABULARY = "poi-taxonomy"
 /**
  * One coverage-qualified absence, recorded beside an answer.
  *
- * Everything a reader needs to check the claim is here, from both sides. From the artifact: which concept the answered
- * category names, which activity it affords, under what modality, and on whose authority — the assertion's own
- * provenance and the mapping's. From the coverage layer: the cell, its basis, the completeness that basis rests on, the
- * rows the layer holds there, and the layer's own manifest identity. A reader holding one half alone cannot tell
- * whether the claim was earned.
+ * Everything a reader needs to check the claim is here, from both sides.
+ * From the artifact: which concept the answered category names, which activity it affords,
+ * under what modality, and on whose authority — the assertion's own provenance and the mapping's.
+ *
+ * From the coverage layer: the cell, its basis, the completeness that basis rests on,
+ * the rows the layer holds there, and the layer's own manifest identity.
+ * A reader holding one half alone cannot tell whether the claim was earned.
  */
 export interface AbsenceObservation {
 	/**
@@ -129,8 +131,9 @@ export interface AbsenceObservation {
 	 */
 	coverage: {
 		/**
-		 * The 48-bit short-cell integer the layer stores, and the full index it expands to at the layer's coverage
-		 * resolution — the integer is what a reader queries the table with, the index is what a reader can draw.
+		 * The 48-bit short-cell integer the layer stores, and the full index it expands
+		 * to at the layer's coverage resolution — the integer is what a reader queries
+		 * the table with, the index is what a reader can draw.
 		 */
 		h3Cell: number
 		h3CellIndex: string
@@ -164,9 +167,10 @@ export interface AbsenceObservation {
 	 */
 	searchCenter: { latitude: number; longitude: number }
 	/**
-	 * How many rows the answer returned in total, and how many of them fell inside the observed cell. The second is
-	 * always zero on an observation: a returned row inside the cell contradicts the coverage row, and the route refuses
-	 * rather than choosing which reader to believe.
+	 * How many rows the answer returned in total, and how many of them fell inside the observed cell.
+	 *
+	 * The second is always zero on an observation: a returned row inside the cell contradicts
+	 * the coverage row, and the route refuses rather than choosing which reader to believe.
 	 */
 	resultsReturned: number
 	resultsInCell: number
@@ -238,10 +242,11 @@ export type AbsenceDecision =
 	| { fired: false; refusal: AbsenceRefusal }
 
 /**
- * What the route is, stated for a receipt: which artifact and which coverage layer it reads, and what it can speak to.
+ * What the route is, stated for a receipt: which artifact and which coverage
+ * layer it reads, and what it can speak to.
  *
- * A receipt recording only that "the route was on" cannot distinguish a route that found nothing from a route built
- * against the wrong layer, and those produce the same silence for opposite reasons.
+ * A receipt recording only that "the route was on" cannot distinguish a route that found nothing from
+ * a route built against the wrong layer, and those produce the same silence for opposite reasons.
  */
 export interface AbsenceRouteIdentity {
 	modelVersion: string
@@ -266,16 +271,19 @@ export interface AbsenceRouteIdentity {
 export interface AbsenceObservationRoute extends Disposable {
 	identity: AbsenceRouteIdentity
 	/**
-	 * Decide one answered query. Pure with respect to the pipeline: it reads the outcome and the coverage layer and
-	 * returns a record.
+	 * Decide one answered query.
+	 *
+	 * Pure with respect to the pipeline: it reads the outcome and the coverage layer and returns a record.
 	 */
 	observe: (outcome: POIIntentOutcome | undefined) => Promise<AbsenceDecision>
 }
 
 export interface AbsenceObservationRouteOptions {
 	/**
-	 * The sealed layer whose `layer_coverage` rows qualify the absence. Required: there is no default coverage layer, and
-	 * a route that guessed one would qualify an absence against a survey nobody asked for.
+	 * The sealed layer whose `layer_coverage` rows qualify the absence.
+	 *
+	 * Required: there is no default coverage layer, and a route that guessed one would
+	 * qualify an absence against a survey nobody asked for.
 	 */
 	coverageDatabasePath: string
 	/**
@@ -334,16 +342,22 @@ function indexAffordingCategories(model: CompiledGeographicModel): Map<string, A
 /**
  * The resolution a layer's coverage cells were captured at, recovered from the cells themselves.
  *
- * A short cell does not name its own resolution, so it cannot simply be read. It can be recovered: the digits past a
- * cell's own resolution are all `7`. It is not a valid digit. Therefore, exactly one resolution expands a given short
- * cell into a valid index. Every stored cell is probed rather than a sample of them, and a table whose cells disagree
- * throws — a mixed-resolution coverage table has no single resolution to probe at, and picking one would silently
- * answer "unsurveyed" for every cell at the other.
+ * A short cell does not name its own resolution, so it cannot simply be read.
+ * It can be recovered: the digits past a cell's own resolution are all `7`.
  *
- * The implementation lives IN `@mailwoman/spatial` because a second layer reader needed it and the two failure modes it
- * refuses are silent in a copy. This name and its message prefix are kept so callers and their receipts read the same.
+ * It is not a valid digit.
+ * Therefore, exactly one resolution expands a given short cell into a valid index.
  *
- * @throws {Error} When the table is empty, when a cell expands at no resolution, or when the cells disagree.
+ * Every stored cell is probed rather than a sample of them, and a table whose cells
+ * disagree throws — a mixed-resolution coverage table has no single resolution to probe at,
+ * and picking one would silently answer "unsurveyed" for every cell at the other.
+ *
+ * The implementation lives IN `@mailwoman/spatial` because a second layer reader needed it
+ * and the two failure modes it refuses are silent in a copy.
+ * This name and its message prefix are kept so callers and their receipts read the same.
+ *
+ * @throws {Error} When the table is empty, when a cell expands at no resolution,
+ *   or when the cells disagree.
  */
 export function recoverCoverageResolution(cells: readonly number[]): number {
 	return recoverShortCellResolution(cells, "absence route")
@@ -361,10 +375,11 @@ async function readSurveyedCategories(db: DatabaseClient<POIDatabase>): Promise<
 /**
  * Build the route against one compiled artifact and one sealed coverage layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused here rather than at query time: a
- * layer with no coverage rows, a layer holding more than one class, a coverage table whose resolution cannot be
- * recovered, an artifact that defines no `affords` relation. Each of those would otherwise present as a route that
- * simply never fires, which on a receipt is indistinguishable from a region that genuinely has nothing to say.
+ * Everything that would make the route answer a well-formed wrong thing is refused here
+ * rather than at query time: a layer with no coverage rows, a layer holding more than one class,
+ * a coverage table whose resolution cannot be recovered, an artifact that defines no `affords` relation.
+ * Each of those would otherwise present as a route that simply never fires, which on a
+ * receipt is indistinguishable from a region that genuinely has nothing to say.
  */
 export async function createAbsenceObservationRoute(
 	options: AbsenceObservationRouteOptions
@@ -441,10 +456,12 @@ interface DecisionContext {
 /**
  * The conjunction, in refusal order.
  *
- * Order is chosen so the reason a receipt records is the first thing that was missing rather than the last thing
- * checked: the artifact half before the coverage half, and within the coverage half, "we never surveyed here" before
- * "the survey supports no exclusion" before "the survey found something". A control row is graded on which of these it
- * hit, so an order that reported a later reason would let a row pass its control for a reason nobody registered.
+ * Order is chosen so the reason a receipt records is the first thing that was missing
+ * rather than the last thing checked: the artifact half before the coverage half,
+ * and within the coverage half, "we never surveyed here" before "the survey supports
+ * no exclusion" before "the survey found something".
+ * A control row is graded on which of these it hit, so an order that reported a later
+ * reason would let a row pass its control for a reason nobody registered.
  */
 async function decide(outcome: POIIntentOutcome | undefined, context: DecisionContext): Promise<AbsenceDecision> {
 	if (!outcome || outcome.type !== "intent") return { fired: false, refusal: "no_poi_answer" }
@@ -460,9 +477,10 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 
 	if (!afforded) return { fired: false, refusal: "no_affordance_assertion" }
 
-	// Every searched category must be the surveyed one. The coverage layer surveys a single category, so a union
-	// reaching past it has no survey behind the classes it added — "nothing here" would then be a claim about premises
-	// nobody looked for, which is the one thing a coverage-qualified absence exists to refuse.
+	// Every searched category must be the surveyed one.
+	// The coverage layer surveys a single category, so a union reaching past it has no survey
+	// behind the classes it added — "nothing here" would then be a claim about premises nobody
+	// looked for, which is the one thing a coverage-qualified absence exists to refuse.
 	if (!categoryIDs.every((id) => id === context.identity.surveyedCategoryID)) {
 		return { fired: false, refusal: "category_not_surveyed" }
 	}

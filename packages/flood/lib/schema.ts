@@ -151,13 +151,15 @@ export interface FloodZoneCellAreaTable {
 /**
  * The authority's mapped footprint — one row per statement, never derived from the hazard polygons.
  *
- * Deriving it from the polygon union is the error this whole layer is built to avoid: Zone 1 is the mapped area minus
- * the polygons, so a footprint taken from the polygons reports every Zone 1 location as unmapped. What is stored is the
- * authority's own coverage sentence, where it is published, and the boundary artifact used to realize "England" as a
- * cell set — because the sentence names a country and a cell set needs an outline, and which outline that was is part
- * of the claim.
+ * Deriving it from the polygon union is the error this whole layer is built to avoid:
+ * Zone 1 is the mapped area minus the polygons, so a footprint taken from the
+ * polygons reports every Zone 1 location as unmapped.
+ * What is stored is the authority's own coverage sentence, where it is published, and the
+ * boundary artifact used to realize "England" as a cell set — because the sentence names a
+ * country and a cell set needs an outline, and which outline that was is part of the claim.
  *
- * The machine-readable footprint is `layer_coverage`: a cell with a row is inside the statement, a cell without is not.
+ * The machine-readable footprint is `layer_coverage`: a cell with a row is
+ * inside the statement, a cell without is not.
  * This table is that claim's provenance.
  */
 export interface FloodMapExtentTable {

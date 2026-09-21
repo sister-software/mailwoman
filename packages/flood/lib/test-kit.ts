@@ -95,8 +95,8 @@ export function fixtureFeatures(): FloodSourceFeature[] {
 }
 
 /**
- * The fixture extent outline — a rectangle comfortably larger than every fixture polygon, so its interior cells exist
- * at the coverage resolution and its border strip is well away from the zone geometry.
+ * The fixture extent outline — a rectangle comfortably larger than every fixture polygon, so its interior
+ * cells exist at the coverage resolution and its border strip is well away from the zone geometry.
  */
 export function fixtureExtentGeometry(): { type: "Polygon"; coordinates: number[][][] } {
 	const { lon, lat } = FIXTURE_ORIGIN

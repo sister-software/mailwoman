@@ -21,12 +21,14 @@
  */
 
 /**
- * The locales whose display names are enumerated. Chosen for script coverage rather than speaker count: each entry
- * either contributes a distinct script (Han simplified/traditional, Kana, Hangul, Arabic, Cyrillic, Devanagari, Hebrew,
- * Greek, Thai) or a major Latin-script exonym set that diverges from English.
+ * The locales whose display names are enumerated.
  *
- * Adding a locale is additive and safe — surfaces are deduplicated — but every addition grows the candidate table, so
- * it warrants its place by contributing surfaces a user would plausibly type.
+ * Chosen for script coverage rather than speaker count: each entry either contributes a distinct
+ * script (Han simplified/traditional, Kana, Hangul, Arabic, Cyrillic, Devanagari, Hebrew, Greek, Thai)
+ * or a major Latin-script exonym set that diverges from English.
+ *
+ * Adding a locale is additive and safe — surfaces are deduplicated — but every addition grows the
+ * candidate table, so it warrants its place by contributing surfaces a user would plausibly type.
  */
 export const DISPLAY_NAME_LOCALES: readonly Intl.UnicodeBCP47LocaleIdentifier[] = [
 	"en",

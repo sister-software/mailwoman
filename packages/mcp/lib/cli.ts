@@ -367,8 +367,8 @@ const deps: MCPToolDeps = {
 	},
 
 	async filerFamily(q) {
-		// Same discipline as mailwoman_filer_lookup — familyRollup has no optional-dep abstain shape
-		// either, so filer.db is required unconditionally.
+		// Same discipline as mailwoman_filer_lookup — familyRollup has no optional-dep
+		// abstain shape either, so filer.db is required unconditionally.
 		await assertFilerDatabaseExists("mailwoman_filer_family", q.databasePath)
 
 		using db = (await openFilerDatabaseIfPresent(q.databasePath))!

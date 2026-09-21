@@ -45,13 +45,15 @@ const OA_PANEL_SOURCE = "#743 OA held-out hard-resolve panel (DeepSeek-advised c
 const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
 
 /**
- * The reviewed per-country hard-filter coverage record — every promote-eval verdict + measurement that grew (or
- * deliberately kept a country off) the hard-country safelist. This is the structured form of the receipts that lived in
- * the `HARD_PLACE_COUNTRY_SAFELIST` code comment. the derived safelist (`hardFilterSafe === true`) is asserted
- * byte-identical to that constant in `coverage-manifest.test.ts`, so the two cannot drift silently.
+ * The reviewed per-country hard-filter coverage record — every promote-eval verdict +
+ * measurement that grew (or deliberately kept a country off) the hard-country safelist.
  *
- * Grow this at promotes (with the panel receipt in `source`); the fact reaches production at the next gazetteer rebuild
- * — the constant in core is only the fallback for artifacts predating the manifest.
+ * This is the structured form of the receipts that lived in the `HARD_PLACE_COUNTRY_SAFELIST`
+ * code comment. the derived safelist (`hardFilterSafe === true`) is asserted byte-identical
+ * to that constant in `coverage-manifest.test.ts`, so the two cannot drift silently.
+ *
+ * Grow this at promotes (with the panel receipt in `source`); the fact reaches production at the next
+ * gazetteer rebuild — the constant in core is only the fallback for artifacts predating the manifest.
  */
 export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	{ country: "US", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
@@ -141,8 +143,10 @@ export interface EmitCoverageManifestOptions {
 }
 
 /**
- * Bake the coverage manifest into a candidate DB under construction. Called by `buildCandidate` between the candidate
- * build and the seal. standalone use is fine for tests/fixtures (never against a sealed artifact).
+ * Bake the coverage manifest into a candidate DB under construction.
+ *
+ * Called by `buildCandidate` between the candidate build and the seal. standalone use
+ * is fine for tests/fixtures (never against a sealed artifact).
  */
 export async function emitCoverageManifest(opts: EmitCoverageManifestOptions): Promise<void> {
 	const { writeGazetteerCoverageManifest } = await import("@mailwoman/resolver-wof-sqlite")

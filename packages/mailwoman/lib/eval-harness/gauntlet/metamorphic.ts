@@ -329,10 +329,14 @@ const BAND: Perturbation[] = [
 const KNOWN_INV_XFAIL = new Map<string, string>()
 
 /**
- * Known, deterministic band misses — the tolerance-band analog of KNOWN_INV_XFAIL, same anti-rot bookkeeping. These are
- * perturbation classes the pipeline neither normalizes nor was trained on, so a corrupted surface legitimately lands
- * outside the band. Tracked (visible, non-blocking) rather than hidden or conditional. See the input-robustness
- * coverage matrix (docs/articles/concepts/input-robustness.mdx) for the gaps these pin.
+ * Known, deterministic band misses — the tolerance-band analog of KNOWN_INV_XFAIL,
+ * same anti-rot bookkeeping.
+ *
+ * These are perturbation classes the pipeline neither normalizes nor was trained on,
+ * so a corrupted surface legitimately lands outside the band.
+ * Tracked (visible, non-blocking) rather than hidden or conditional.
+ *
+ * See the input-robustness coverage matrix (docs/articles/concepts/input-robustness.mdx) for the gaps these pin.
  */
 /**
  * All measured anchor-off/gazetteer-off (the harness default. the weights package ships no anchor artifacts).

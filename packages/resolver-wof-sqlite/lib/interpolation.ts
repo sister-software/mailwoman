@@ -271,9 +271,9 @@ export class StreetInterpolator<
 		for (const variant of streetKeyVariants(query.street)) {
 			const streetNorm = canonicalizeRouteKey(variant)
 
-			// A given ZIP that scopes to nothing is a miss rather than a statewide guess: the retry was
-			// measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail (p99 1.0 → 20.8
-			// km, max 204 km — a unique name statewide can live in a far-away town).
+			// A given ZIP that scopes to nothing is a miss rather than a statewide guess:
+			// the retry was measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail
+			// (p99 1.0 → 20.8 km, max 204 km — a unique name statewide can live in a far-away town).
 			const rows = query.postcode
 				? this.#byPostcode(query.postcode.trim(), streetNorm, n, n)
 				: this.#byStreet(streetNorm, n, n)

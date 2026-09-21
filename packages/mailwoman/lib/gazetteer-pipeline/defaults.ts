@@ -315,12 +315,14 @@ export const DEFAULT_OVERTURE_RELEASE = "2026-07-22.0"
 export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
 
 /**
- * The zero-coverage gap set — GeoNames-alias locales carrying no WOF or Overture admin. These are the
- * `adminForCountries` targets for the GeoNames fold (#267): without the A-class fold (pcli country + ADM1 regions +
- * locality ancestry linking), their localities are orphans and "City, Country" scoping breaks (#1023/#1026 — the
- * canonical recipe silently omitted this until 2026-07-07. the country nodes had come from coverage-expansion runs
- * outside the recipe). Countries with WOF/Overture admin are excluded by construction — folding their GeoNames admin
- * would double up (the #267 warning).
+ * The zero-coverage gap set — GeoNames-alias locales carrying no WOF or Overture admin.
+ *
+ * These are the `adminForCountries` targets for the GeoNames fold (#267): without the A-class
+ * fold (pcli country + ADM1 regions + locality ancestry linking), their localities are orphans
+ * and "City, Country" scoping breaks (#1023/#1026 — the canonical recipe silently omitted this
+ * until 2026-07-07. the country nodes had come from coverage-expansion runs outside the recipe).
+ * Countries with WOF/Overture admin are excluded by construction — folding their
+ * GeoNames admin would double up (the #267 warning).
  */
 export function geonamesAdminGapCountries(): string[] {
 	const covered = new Set<string>([...DEFAULT_OVERTURE_COUNTRIES, ...DEFAULT_WOF_PRIORITY_COUNTRIES])
@@ -368,20 +370,30 @@ export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
  */
 
 /**
- * The tail database's country set, in the frozen artifact's ingest order. GB moved to Code-Point Open on 2026-08-05.
- * Belgium was added on 2026-08-12 (the eu-mixed lane). Any change here re-freezes the artifact: rebuild, run the parity
- * check against the previous database, and rotate via the .prev workflow.
+ * The tail database's country set, in the frozen artifact's ingest order.
  *
- * The first ten entries are order-critical. all later countries must be appended. Ids are positional in ingest order,
- * so inserting a country shifts every following id. The parity check validates ids as well as counts for this reason.
+ * GB moved to Code-Point Open on 2026-08-05.
+ * Belgium was added on 2026-08-12 (the eu-mixed lane).
  *
- * Historically this tail started as ten countries from #920. GeoNames publishes 121 countries, while the gazetteer had
- * a postcode tier for 28. the appended set adds the 93 with on-disk data and no tier. On rebuild this changed coverage
- * from 10 to 103 countries and from 57,221 to 505,784 codes, with no code loss and no id movement in the original ten.
+ * Any change here re-freezes the artifact: rebuild, run the parity check against
+ * the previous database, and rotate via the .prev workflow.
  *
- * Prefer counts at resolver granularity. GeoNames postal publishes one row per (postcode, settlement) and duplicates
- * some hyphenated formats, so raw row totals overstate distinct codes. Across the appended 93, 938,543 rows fold to
- * 448,563 codes.
+ * The first ten entries are order-critical. all later countries must be appended.
+ * Ids are positional in ingest order, so inserting a country shifts every following id.
+ *
+ * The parity check validates ids as well as counts for this reason.
+ *
+ * Historically this tail started as ten countries from #920.
+ * GeoNames publishes 121 countries, while the gazetteer had a postcode tier for 28.
+ * the appended set adds the 93 with on-disk data and no tier.
+ *
+ * On rebuild this changed coverage from 10 to 103 countries and from 57,221 to 505,784 codes,
+ * with no code loss and no id movement in the original ten.
+ *
+ * Prefer counts at resolver granularity.
+ * GeoNames postal publishes one row per (postcode, settlement) and duplicates some
+ * hyphenated formats, so raw row totals overstate distinct codes.
+ * Across the appended 93, 938,543 rows fold to 448,563 codes.
  */
 export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"FI",
@@ -503,8 +515,10 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 /**
  * Default parent-coverage floor for crediting a sub-locality rung.
  *
- * This is the weakest number in the design and is deliberately a parameter. GB — the one country with a validated
- * reading — sits around 33%, so 5% is far below the only calibration point we have. it is set low on purpose, to catch
- * thin-but-real tiers rather than to certify them. A second calibration point should harden it.
+ * This is the weakest number in the design and is deliberately a parameter.
+ * GB — the one country with a validated reading — sits around 33%,
+ * so 5% is far below the only calibration point we have. it is set low on purpose,
+ * to catch thin-but-real tiers rather than to certify them.
+ * A second calibration point should harden it.
  */
 export const DEFAULT_COVERAGE_FLOOR = 0.05

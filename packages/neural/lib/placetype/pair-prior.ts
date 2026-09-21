@@ -541,18 +541,22 @@ export interface PlacetypePairPriorResult {
 type CensusParentRecorder = (parent: CandidateWindow) => void
 
 /**
- * Build the census side-probe recorder, or `undefined` when the feature is entirely inert (no census artifact loaded,
- * or no trace out-record to write into — this rung produces trace entries and nothing else, so a census without a trace
- * would be pure cost).
+ * Build the census side-probe recorder, or `undefined` when the feature is entirely inert
+ * (no census artifact loaded, or no trace out-record to write into — this rung produces
+ * trace entries and nothing else, so a census without a trace would be pure cost).
  *
- * Deduplicates by the parent candidate's key pair, so a surface probed under several children is looked up once and
- * appears once. `censusProbedParents` counts the distinct surfaces looked up; `censusObservations` gets an entry only
- * for the ones the census knew. The gap between the two numbers is the census's coverage on this input, and reporting
- * it is the whole reason the counter exists: a missing node means the gazetteer counted no children there, which is
- * usually coverage rather than a claim (`PlacetypeCensusResolver.probe`'s meaning-of-zero note).
+ * Deduplicates by the parent candidate's key pair, so a surface probed under
+ * several children is looked up once and appears once.
+ * `censusProbedParents` counts the distinct surfaces looked up; `censusObservations`
+ * gets an entry only for the ones the census knew.
  *
- * The dual-key try order mirrors {@link probeWindowPair} exactly — space-join first, bare concatenation second — so the
- * surface recorded here is the same one the pair probe would have keyed on.
+ * The gap between the two numbers is the census's coverage on this input,
+ * and reporting it is the whole reason the counter exists: a missing node means the
+ * gazetteer counted no children there, which is usually coverage rather than a claim
+ * (`PlacetypeCensusResolver.probe`'s meaning-of-zero note).
+ *
+ * The dual-key try order mirrors {@link probeWindowPair} exactly — space-join first, bare concatenation
+ * second — so the surface recorded here is the same one the pair probe would have keyed on.
  */
 function makeCensusParentRecorder(
 	census: PlacetypeCensusLike | undefined,
@@ -600,15 +604,19 @@ function makeCensusParentRecorder(
 }
 
 /**
- * Probe `index` for the `(x, y)` pair under every combination of their space-joined/concatenated key forms — see the
- * module docstring's "dual-key probe" section. Tries space/space, space/concat, concat/space, concat/concat in that
- * order and returns the first hit. a window's two forms collapse to one string when it's a single word, so this is a
- * single probe (not four) for the common case.
+ * Probe `index` for the `(x, y)` pair under every combination of their space-joined/concatenated
+ * key forms — see the module docstring's "dual-key probe" section.
  *
- * `recordCensusParent` (observability rung) is called with `y` — the parent half of the pair — before the index is
- * consulted. This is the single site every probe path funnels through, which is why the census hook lives here rather
- * than at the three call sites: segment, anchored and window modes get identical census coverage by construction, the
- * same argument `applyWindowBias`'s docstring makes for the transition adjustment.
+ * Tries space/space, space/concat, concat/space, concat/concat in that order and returns
+ * the first hit. a window's two forms collapse to one string when it's a single word,
+ * so this is a single probe (not four) for the common case.
+ *
+ * `recordCensusParent` (observability rung) is called with `y` — the parent half
+ * of the pair — before the index is consulted.
+ * This is the single site every probe path funnels through, which is why the
+ * census hook lives here rather than at the three call sites: segment, anchored
+ * and window modes get identical census coverage by construction, the same argument
+ * `applyWindowBias`'s docstring makes for the transition adjustment.
  */
 function probeWindowPair(
 	index: PairIndexLike,

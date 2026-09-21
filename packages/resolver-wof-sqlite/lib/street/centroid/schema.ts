@@ -74,11 +74,13 @@ export interface StreetCentroidTable {
 	/**
 	 * #727 phase-4c: `foldStreetSurface(street_raw)` — the interface-fold street-name existence key for
 	 * {@link StreetLocalityEvidence}. Distinct from `street_norm` (the `street-normalize` geocoding key): the
-	 * name-evidence rerank folds the model's street surface with the same `foldStreetSurface` used to build this column
-	 * (the fold-parity interface), so it must not drift from `street_norm`'s richer normalizer. Indexed (`idx_sc_name`)
-	 * for a direct seek.
+	 * name-evidence rerank folds the model's street surface with the same
+	 * `foldStreetSurface` used to build this column (the fold-parity interface),
+	 * so it must not drift from `street_norm`'s richer normalizer.
+	 * Indexed (`idx_sc_name`) for a direct seek.
 	 *
-	 * Deliberately unbranded despite the `name_key` column name: `foldStreetSurface` is a different fold from the
+	 * Deliberately unbranded despite the `name_key` column name: `foldStreetSurface`
+	 * is a different fold from the
 	 * {@link NameKey} one every other `name_key` column carries, and giving it that brand would invite exactly the
 	 * cross-fold probe the brands exist to stop.
 	 */

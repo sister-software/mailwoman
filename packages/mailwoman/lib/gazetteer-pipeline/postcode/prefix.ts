@@ -131,8 +131,8 @@ export interface BuildPostcodePrefixOptions {
 export interface BuildPostcodePrefixResult {
 	nodes: PostcodePrefixNode[]
 	/**
-	 * The database's `meta` table, verbatim — the command reads `source`, `attribution`, `tier` and the coverage keys out
-	 * of it rather than re-deriving prose the database already wrote about itself.
+	 * The database's `meta` table, verbatim — the command reads `source`, `attribution`, `tier` and the
+	 * coverage keys out of it rather than re-deriving prose the database already wrote about itself.
 	 */
 	meta: Record<string, string>
 	/**
@@ -277,9 +277,11 @@ function readMeta(db: DatabaseClient<WOFDatabase>): Record<string, string> {
 	const hasMeta =
 		db.prepare(`select name from sqlite_master where type = 'table' and name = 'meta'`).get() !== undefined
 
-	// A database with no `meta` table has made no declaration, which is not the same as declaring itself complete. The GB
-	// coverage rule keys off the absence of one specific key, so it can only be applied to a database that has the table to
-	// be missing a key from; `postalcode-us.db` does not, and the US arm never asks.
+	// A database with no `meta` table has made no declaration, which is not the
+	// same as declaring itself complete.
+	// The GB coverage rule keys off the absence of one specific key, so it can
+	// only be applied to a database that has the table to be missing a key from;
+	// `postalcode-us.db` does not, and the US arm never asks.
 	if (!hasMeta) return {}
 
 	const rows = db.prepare(`select key, value from meta`).all() as Array<{ key: string; value: string | null }>

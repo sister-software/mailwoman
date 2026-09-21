@@ -62,9 +62,9 @@ export interface ScopeConfig {
 /**
  * The training config behind one shipped model graph.
  *
- * The path is repository-relative and names a file under `corpus-python/src/mailwoman_train/configs`. Its
- * `country_weights` block is the hard admission filter every coverage report reads, so a report that reads a different
- * file reports different admissions for the same repository.
+ * The path is repository-relative and names a file under `corpus-python/src/mailwoman_train/configs`.
+ * Its `country_weights` block is the hard admission filter every coverage report reads,
+ * so a report that reads a different file reports different admissions for the same repository.
  */
 export interface ShippedTrainingConfig {
 	/**
@@ -130,9 +130,10 @@ export function shippedTrainingConfig(scope: ScopeConfig, family: string): Shipp
 /**
  * Every family's shipped training config, ordered by family id.
  *
- * A coverage reading that wants the countries the shipped models admit reads all of these and takes the union. Reading
- * one of them alone answers for one graph: the Latin config's `country_weights` names no CJK country, and the character
- * config's names no Latin one.
+ * A coverage reading that wants the countries the shipped models admit reads
+ * all of these and takes the union.
+ * Reading one of them alone answers for one graph: the Latin config's `country_weights`
+ * names no CJK country, and the character config's names no Latin one.
  */
 export function shippedTrainingConfigs(scope: ScopeConfig): Array<ShippedTrainingConfig & { family: string }> {
 	return Object.entries(scope.trainingConfigs ?? {})

@@ -66,28 +66,40 @@ export interface CandidateTable {
 	 */
 	is_primary: number | null
 	/**
-	 * Blended place importance in [0, 1] — the toponym-fame prior the bare-city-name class is decided on (#28). NULL
-	 * means the score source had no row for this place: unmeasured, never "an importance of zero" (meaning-of-zero).
-	 * Constant across every row of one place — primary, alias and abbrev alike — because it is a property of the place
-	 * rather than of the name that reached it, which is what lets a bare `Moscow` inherit Москва's score through the
-	 * alias row.
+	 * Blended place importance in [0, 1] — the toponym-fame prior the bare-city-name
+	 * class is decided on (#28).
 	 *
-	 * **this is the PRE-split conflation, and the name says SO.** It is `place_importance.importance` copied verbatim
-	 * from the score source — the bounded blend `place-importance-schema.ts`'s `blendImportance` writes (the
-	 * concordance's encyclopedia-derived channel clamped around a population-derived base); that module calls the column
-	 * deprecated. It is not the split `encyclopedic` channel, and the two must not be conflated in a future build:
-	 * writing the split value here instead was measured on 2026-08-10 and makes the ranking key inert on three of the
-	 * four rows it exists to fix. The reason is coverage rather than principle — the encyclopedia-concordance join in
-	 * `admin-global-priority-importance.db` reaches 133,888 of 702,709 scored places and only eleven countries
-	 * (US/FR/GB/DE/IT/ES/NL/JP/CN/KR/TW). CA, AU and RU have zero concordance rows, so Whitby CA, Windsor CA and Epping
-	 * AU carry the population fallback and nothing else. Under the strict split those three become unmeasured, the
-	 * consumer's positive-evidence-only rule leaves them exactly where population put them (first), and the famous GB
-	 * bearer can never overtake them. The conflated column is the only one on which every bearer of a name is scored on a
+	 * NULL means the score source had no row for this place: unmeasured,
+	 * never "an importance of zero" (meaning-of-zero).
+	 * Constant across every row of one place — primary, alias and abbrev alike —
+	 * because it is a property of the place rather than of the name that reached it,
+	 * which is what lets a bare `Moscow` inherit Москва's score through the alias row.
+	 *
+	 * **this is the PRE-split conflation, and the name says SO.** It is
+	 * `place_importance.importance` copied verbatim from the score source —
+	 * the bounded blend `place-importance-schema.ts`'s `blendImportance` writes
+	 * (the concordance's encyclopedia-derived channel clamped around a population-derived base);
+	 * that module calls the column deprecated.
+	 * It is not the split `encyclopedic` channel, and the two must not be conflated in
+	 * a future build: writing the split value here instead was measured on 2026-08-10
+	 * and makes the ranking key inert on three of the four rows it exists to fix.
+	 *
+	 * The reason is coverage rather than principle — the encyclopedia-concordance join
+	 * in `admin-global-priority-importance.db` reaches 133,888 of 702,709 scored places
+	 * and only eleven countries (US/FR/GB/DE/IT/ES/NL/JP/CN/KR/TW).
+	 * CA, AU and RU have zero concordance rows, so Whitby CA, Windsor CA and Epping
+	 * AU carry the population fallback and nothing else.
+	 *
+	 * Under the strict split those three become unmeasured, the consumer's
+	 * positive-evidence-only rule leaves them exactly where population put them (first),
+	 * and the famous GB bearer can never overtake them.
+	 * The conflated column is the only one on which every bearer of a name is scored on a
 	 * single comparable scale, which is the precondition for comparing them at all.
 	 *
-	 * So a consumer reads this as "fame, with population standing in where fame was never measured" — the legacy blended
-	 * semantics — and not as "this place has an encyclopedia entry of this importance". When the score source grows a
-	 * real `encyclopedic` column for every country, add a second column rather than redefining this one.
+	 * So a consumer reads this as "fame, with population standing in where fame was never measured" —
+	 * the legacy blended semantics — and not as "this place has an encyclopedia entry of this importance".
+	 * When the score source grows a real `encyclopedic` column for every country,
+	 * add a second column rather than redefining this one.
 	 */
 	importance: number | null
 	/**

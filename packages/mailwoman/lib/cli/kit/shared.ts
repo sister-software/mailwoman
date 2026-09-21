@@ -408,7 +408,8 @@ export interface FormatLayerVerificationOptions<Row> {
 	 */
 	extraSummary?: string
 	/**
-	 * The out-of-coverage line's all-clear tail. Default "none read a designation".
+	 * The out-of-coverage line's all-clear tail.
+	 * Default "none read a designation".
 	 */
 	outsideNoneLabel?: string
 }
