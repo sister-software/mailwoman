@@ -103,7 +103,7 @@ const HTTP_MULTIPLE_CHOICES = 300
 /**
  * The only host this client will send a request to.
  *
- * Matching is exact (a `Set` lookup on the hostname), never a suffix check —
+ * Matching is exact (a `Set` lookup on the hostname), never a suffix check.
  * `apps.fcc.gov.attacker.example` must not match, and an `.endsWith(".fcc.gov")` test would admit it.
  * Mirrors `sec-client.ts`'s allowlist rationale.
  */
@@ -112,8 +112,8 @@ const CORES_ALLOWED_HOSTS = new Set(["apps.fcc.gov"])
 /**
  * Reject a URL this client must not send.
  *
- * Throws a {@linkcode ResourceError} whose URN kind is `request` — never transient,
- * since re-issuing the identical URL fails identically.
+ * @throws a {@linkcode ResourceError} whose URN kind is `request` — never transient,
+ *   since re-issuing the identical URL fails identically.
  */
 function assertCORESHost(url: URL): void {
 	assertAllowedHost(url, {
@@ -135,7 +135,8 @@ export { coresDetailURL, fetchCORESRegistration, type CORESDocumentClient } from
  */
 export interface CreateCORESClientOptions {
 	/**
-	 * Descriptive User-Agent. cores does not require one — unlike SEC.
+	 * Descriptive User-Agent.
+	 * Cores does not require one — unlike SEC.
 	 *
 	 * It 403s without it.
 	 * Therefore, this never throws when unset.
@@ -149,8 +150,7 @@ export interface CreateCORESClientOptions {
 	/**
 	 * Desired requests/second, clamped to `[1, CORES_MAX_REQUESTS_PER_SECOND]`.
 	 *
-	 * Defaults to
-	 * {@linkcode CORES_DEFAULT_REQUESTS_PER_SECOND}.
+	 * Defaults to {@linkcode CORES_DEFAULT_REQUESTS_PER_SECOND}.
 	 */
 	requestsPerSecond?: number
 	clock?: ClockLike

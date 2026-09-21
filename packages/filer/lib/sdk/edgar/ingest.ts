@@ -48,7 +48,8 @@ import {
 import { parseExhibit21 } from "#sdk/exhibit21/index"
 
 /**
- * The subset of `SECClient` this module needs — JSON reads plus raw document reads.
+ * The subset of `SECClient` this module needs.
+ * JSON reads plus raw document reads.
  *
  * A real `createSECClient()` satisfies it structurally, and a test substitutes an
  * object literal rather than building an axios harness.
@@ -61,7 +62,8 @@ export interface SECIngestClient {
 /**
  * Why a registrant produced no rows.
  *
- * Each is ordinary. none is an error.
+ * Each is ordinary.
+ * None is an error.
  */
 export const EdgarSkipReason = {
 	/**
@@ -111,8 +113,8 @@ export interface EdgarIngestOutcome {
 	/**
 	 * What `parseExhibit21` recognized as an entry but could not confidently reduce.
 	 *
-	 * A high count against a low `subsidiaries` is the signal that a layout is unhandled —
-	 * the whole reason the parser counts rather than drops.
+	 * A high count against a low `subsidiaries` is the signal that a layout is unhandled.
+	 * The whole reason the parser counts rather than drops.
 	 */
 	unparseable: number
 	skipReason?: EdgarSkipReason
@@ -142,8 +144,8 @@ export interface EdgarIngestOptions extends CIKCorroborationOptions {
 /**
  * Edgar's submissions payload for one registrant.
  *
- * Only the two fields this module reads are declared — `sic` for the corroboration check,
- * and the rest is handed to `parseTenKFilings` untouched.
+ * Only the two fields this module reads are declared.
+ * `sic` for the corroboration check, and the rest is handed to `parseTenKFilings` untouched.
  */
 interface SubmissionsPayload {
 	sic?: unknown
@@ -190,18 +192,19 @@ async function resolveCorroboratedCIK(
 
 	if (!corroborated.length) return { ok: false, reason: EdgarSkipReason.Uncorroborated }
 
-	// Sort corroborated by score, highest first — the order from resolveCIKCandidates
-	// can shift once some candidates are dropped by the SIC check.
+	// Sort corroborated by score, highest first.
+	// The order from resolveCIKCandidates can shift once some candidates are dropped by the SIC check.
 	corroborated.sort((a, b) => b.score - a.score)
 
 	// Ambiguity is a genuine TIE at the top rather than "more than one survived".
-	// A slower-scoring candidate that also happened to be a telecom company is not
-	// ambiguity — it's noise the score already ranked.
+	// A slower-scoring candidate that also happened to be a telecom company is not ambiguity.
+	// It's noise the score already ranked.
 	// With the 7,998-entry ticker file this never diverged from `corroborated.length > 1`;
 	// with the 1,054,085-entry cik-lookup-data it catches 10 of 24 names as false ambiguities.
 	if (corroborated.length > 1 && corroborated[0]!.score === corroborated[1]!.score) {
-		// A pinned CIK at the top score breaks the tie — the operator already decided this
-		// registrant is in scope, which is a decision about identity rather than just corroboration.
+		// A pinned CIK at the top score breaks the tie.
+		// The operator already decided this registrant is in scope, which is a decision
+		// about identity rather than just corroboration.
 		const pinnedBreak = corroborated.find(
 			(candidate) => options.pinnedCIKs?.has(candidate.cik) && candidate.score === corroborated[0]!.score
 		)
@@ -250,7 +253,8 @@ async function collectForFiling(
 			rows.push({
 				cik: filing.cik,
 				subsidiaryName: subsidiary.name,
-				// Carried only when Exhibit 21 stated one — `parseExhibit21` already abstained on the rest.
+				// Carried only when Exhibit 21 stated one.
+				// `parseExhibit21` already abstained on the rest.
 				...(subsidiary.jurisdiction ? { jurisdiction: subsidiary.jurisdiction } : {}),
 				filingDate: filing.filingDate,
 			})
@@ -269,8 +273,8 @@ async function collectForFiling(
  * and none of Cellco Partnership, Windstream, Zayo, Brightspeed, Consolidated, Hargray or Altice.
  *
  * This sector is majority private-equity-owned, so a caller should build this
- * list from `cik-lookup-data.txt` instead. the parameter takes whatever index the
- * caller assembled rather than fetching one itself.
+ * list from `cik-lookup-data.txt` instead.
+ * The parameter takes whatever index the caller assembled rather than fetching one itself.
  *
  * Only the most recent 10-K is read.
  * A registrant's older filings restate the same family with an earlier vintage, and ingesting all of
@@ -340,8 +344,8 @@ export async function collectEdgarSubsidiaryRows(
 			...(collected.rows.length
 				? {}
 				: {
-						// Zero rows and zero abstentions means the filing had no Exhibit 21 to read
-						// at all. zero rows with abstentions means one was read and yielded nothing.
+						// Zero rows and zero abstentions means the filing had no Exhibit 21 to read at all.
+						// Zero rows with abstentions means one was read and yielded nothing.
 						skipReason: collected.unparseable ? EdgarSkipReason.NoSubsidiaries : EdgarSkipReason.NoExhibit21,
 					}),
 		})

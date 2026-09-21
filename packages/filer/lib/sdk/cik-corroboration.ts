@@ -41,9 +41,10 @@
 import type { CIK } from "#sdk/edgar/filings/index"
 
 /**
- * SIC codes this check accepts as corroborating a telecom identity — SEC's Office of
- * Telecommunications range, enumerated rather than expressed as a `48xx` prefix test
- * so each entry is a decision someone made.
+ * SIC codes this check accepts as corroborating a telecom identity.
+ *
+ * SEC's Office of Telecommunications range, enumerated rather than expressed as a
+ * `48xx` prefix test so each entry is a decision someone made.
  *
  * `4813` (telephone, no radiotelephone) covers the ILECs and most CLECs; `4841` the cable operators;
  * `4899` the "communications services, NEC" bucket satellite and in-flight providers land in.
@@ -61,9 +62,9 @@ export const TELECOM_SIC_CODES: ReadonlySet<string> = new Set([
 /**
  * Why a candidate was or was not corroborated.
  *
- * A caller reporting a run needs to distinguish these — a `pinned` acceptance is an
- * operator decision to audit, an `sic` acceptance is a source agreeing, and `no-sic`
- * is a gap in what edgar published rather than a judgment about the company.
+ * A caller reporting a run needs to distinguish these.
+ * A `pinned` acceptance is an operator decision to audit, an `sic` acceptance is a source agreeing,
+ * and `no-sic` is a gap in what edgar published rather than a judgment about the company.
  */
 export const CIKCorroborationBasis = {
 	/**
@@ -85,7 +86,8 @@ export const CIKCorroborationBasis = {
 	/**
 	 * Edgar published no SIC for this registrant.
 	 *
-	 * Nothing to corroborate against. not a judgment.
+	 * Nothing to corroborate against.
+	 * Not a judgment.
 	 */
 	NoSIC: "no-sic",
 } as const
@@ -109,8 +111,9 @@ export interface CIKCorroborationOptions {
 	 * Checked before the SIC, so a pin is a decision rather than a tiebreak.
 	 *
 	 * This is the escape valve for the Bandwidth/Ooma class — real carriers SEC files under a software SIC.
-	 * Keep it a list of specific registrants with a reason recorded alongside. the moment
-	 * it grows into a range it has become the widened allowlist this design rejected.
+	 * Keep it a list of specific registrants with a reason recorded alongside.
+	 *
+	 * The moment it grows into a range it has become the widened allowlist this design rejected.
 	 */
 	pinnedCIKs?: ReadonlySet<string>
 	/**
@@ -129,7 +132,8 @@ export interface CIKCorroborationOptions {
  * `sic` is the registrant's SIC exactly as edgar's submissions payload states it
  * (`sic` field, a 4-digit string); `null`/`undefined`/empty all mean edgar published none.
  *
- * Never throws, and never consults the name score — the score is what this exists to be independent of.
+ * Never throws, and never consults the name score.
+ * The score is what this exists to be independent of.
  */
 export function corroborateCIK(
 	cik: CIK,

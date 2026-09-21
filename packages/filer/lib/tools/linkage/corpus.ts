@@ -39,9 +39,8 @@ export const PUBLISHED_WITHHELD_INPUTS_SHA256 = "b20909439dcf6bc0d2b04da43b3b3fb
 /**
  * The same hash over the control run's inputs (the corpus with `holdingCompany` intact).
  *
- * Differs from
- * {@linkcode PUBLISHED_WITHHELD_INPUTS_SHA256} by construction — if the two ever matched, the two runs would not
- * actually differ in the field this eval claims to withhold.
+ * Differs from {@linkcode PUBLISHED_WITHHELD_INPUTS_SHA256} by construction.
+ * If the two ever matched, the two runs would not actually differ in the field this eval claims to withhold.
  */
 export const PUBLISHED_CONTROL_INPUTS_SHA256 = "86f4c23616835425615960dabbf22df214fb2001b325e9b0128f9e0abf45f802"
 
@@ -99,10 +98,11 @@ function evalForm499Row(
  * - **A same-canonical-name/different-entity trap.** "American Fiber Partners LLC" /
  *   "American Fiber Partners, LLC" canonicalize identically and are not the same company.
  *   Nothing in this crosswalk may merge them.
- * - **One registrant holding two FRNs** (`9100000010`/`9100000011`, joined by a shared `bdc_provider_id` in
- *   {@linkcode buildLinkageEvalProviderRows}), where only the second of the two discloses the parent. Its family
- *   membership therefore has to be found through the registrant rather than
- *   through whichever FRN happens to sort first.
+ * - **One registrant holding two FRNs** (`9100000010`/`9100000011`, joined by
+ *   a shared `bdc_provider_id` in {@linkcode buildLinkageEvalProviderRows}),
+ *   where only the second of the two discloses the parent.
+ *   Its family membership therefore has to be found through the registrant
+ *   rather than through whichever FRN happens to sort first.
  * - **Two filers reporting the same management company** (`9100000003`/`9100000012`) —
  *   the case the management-exclusion decision in the module docstring exists to handle.
  *
@@ -210,8 +210,9 @@ export function buildLinkageEvalForm499Rows(): Form499Row[] {
 /**
  * BDC provider-list rows layered onto a subset of the corpus above.
  *
- * Provider `700004` is reported for both `9100000010` and `9100000011` — one registrant that holds two
- * FRN registrations, the shape {@linkcode buildTruthRegistrants} exists to fold into a single scored id.
+ * Provider `700004` is reported for both `9100000010` and `9100000011`.
+ * One registrant that holds two FRN registrations, the shape {@linkcode buildTruthRegistrants}
+ * exists to fold into a single scored id.
  * Every other `providerID` maps to exactly one FRN.
  *
  * Each row's `holdingCompany` either agrees with its FRN's Form 499 value or is `null`, so stripping
@@ -230,8 +231,7 @@ export function buildLinkageEvalProviderRows(): ProviderListRow[] {
 }
 
 /**
- * {@linkcode filerLinkageEval}'s two input projections. `control` is the corpus verbatim; `withheld` is the same corpus
- * with `holdingCompany` cleared on every row of both sources.
+ * {@linkcode filerLinkageEval}'s two input projections. `control` is the corpus verbatim; `withheld` is the same corpus with `holdingCompany` cleared on every row of both sources.
  */
 export interface LinkageEvalInputs {
 	form499Rows: Form499Row[]
@@ -270,7 +270,8 @@ export function buildFilteredEvalInputs(): LinkageEvalInputs {
  */
 export interface LinkageEvalRegistrant {
 	/**
-	 * The lexicographically smallest member FRN — the id this registrant is scored under.
+	 * The lexicographically smallest member FRN.
+	 * The id this registrant is scored under.
 	 */
 	representative: FRN
 	/**
@@ -281,8 +282,9 @@ export interface LinkageEvalRegistrant {
 	 * Every `filer_node` id whose family memberships belong to this registrant:
 	 * its FRN nodes plus any `bdc_provider_id` node the provider list ties to one of them.
 	 *
-	 * The prediction reads all of these — a parent disclosed on one registration is a
-	 * fact about the company rather than about that one registration.
+	 * The prediction reads all of these.
+	 * A parent disclosed on one registration is a fact about the company
+	 * rather than about that one registration.
 	 */
 	nodeIDs: string[]
 }
@@ -290,13 +292,14 @@ export interface LinkageEvalRegistrant {
 /**
  * Fold the corpus's FRNs into registrants.
  *
- * Two FRNs reported under the same `bdc_provider_id` are one legal entity with two
- * registrations. scoring them as two separate ids lets the truth partition assert that one
- * company belongs to two different corporate families at once, which is not a coherent
- * thing for a truth partition to say and makes every downstream count questionable.
+ * Two FRNs reported under the same `bdc_provider_id` are one legal entity with two registrations.
+ * Scoring them as two separate ids lets the truth partition assert that one company
+ * belongs to two different corporate families at once, which is not a coherent thing
+ * for a truth partition to say and makes every downstream count questionable.
  *
- * Identity here is taken from `providerID`, a field the builder also sees — it is not withheld,
- * so using it to define the scored id universe leaks nothing about the field that is.
+ * Identity here is taken from `providerID`, a field the builder also sees.
+ * It is not withheld, so using it to define the scored id universe leaks nothing about the field that is.
+ *
  * The eval deliberately does not ask the built artifact who is the same entity:
  * that is the entity-resolution pass's question, measured elsewhere, and reading
  * it here would make the family measurement depend on it.
@@ -373,8 +376,8 @@ function singletonTruthGroup(representative: FRN): string {
  * so the corpus's spelling variants collapse onto the same truth group.
  *
  * Keyed by {@link LinkageEvalRegistrant.representative}.
- * A registrant's parent may be disclosed on any of its Form 499 filings
- * or provider-list rows. all of them count.
+ * A registrant's parent may be disclosed on any of its Form 499 filings or provider-list rows.
+ * All of them count.
  *
  * Registrants that name the same parent land in one truth group, and a registrant naming two
  * parents transitively joins both — hence the second union-find rather than a plain map.
@@ -401,7 +404,8 @@ export function buildTruthFamilyGroups(
 	// Keying this on the root as it stands mid-loop means a later union that re-roots the
 	// component orphans the earlier key, and the family id recorded under it silently vanishes
 	// from the label — the label being what the corpus and pairs tables publish as truth.
-	// The partition stays right either way, so no score moves. the published string is what goes wrong.
+	// The partition stays right either way, so no score moves.
+	// The published string is what goes wrong.
 	// Unreachable on today's corpus (no registrant names two parents) and reachable the moment one does.
 	const familyIDsOfRegistrant = new Map<FRN, Set<string>>()
 

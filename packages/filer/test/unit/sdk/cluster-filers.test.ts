@@ -140,9 +140,10 @@ async function readClusterMap(db: DatabaseClient<FilerDatabase>, assertion: stri
 }
 
 /**
- * Insert a pair of `form499_id` nodes that share an authoritative FRN
- * (a re-filing under one registrant) — the only shape that lets an inferred link form
- * at all under the identifier veto (see the module docstring).
+ * Insert a pair of `form499_id` nodes that share an authoritative FRN (a re-filing under one registrant).
+ *
+ * The only shape that lets an inferred link form at all under the identifier
+ * veto (see the module docstring).
  */
 async function seedSharedFRNPair(
 	db: DatabaseClient<FilerDatabase>,
@@ -326,8 +327,9 @@ describe("clusterInferredLinks — the identifier veto", () => {
 
 		// A nameless node (FORM499_D) is excluded from the candidate universe entirely.
 		expect(inferredResult.recordsConsidered).toBe(3)
-		// No link forms: Acme Telecom Inc (FRN_A) and Acme Telecom LLC (FRN_B) have disjoint frn/form499ID
-		// and no providerID at all — the hard veto fires despite the exact canonical-name match.
+		// No link forms: Acme Telecom Inc (FRN_A) and Acme Telecom LLC (FRN_B) have
+		// disjoint frn/form499ID and no providerID at all.
+		// The hard veto fires despite the exact canonical-name match.
 		expect(inferredResult.linkedClusters).toBe(0)
 		expect(inferredResult.links).toBe(0)
 
@@ -625,8 +627,8 @@ describe("clusterInferredLinks — the identifier veto", () => {
 			])
 			.execute()
 
-		// Both under the same frn (a shared authoritative component) — the only
-		// shape a link can form under the identifier veto, so this test isolates
+		// Both under the same frn (a shared authoritative component).
+		// The only shape a link can form under the identifier veto, so this test isolates
 		// "which vintage's name gets used" from "does the veto fire".
 		await db
 			.insertInto("filer_edge")
@@ -695,8 +697,8 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 		expect(edgesAfterV1[0]?.valid_from).toBe("2026-01-01")
 		expect(edgesAfterV1[0]?.valid_to).toBeNull()
 
-		// Between v1 and v2, node B's legal name diverges (a later, unrelated filing) —
-		// the names no longer co-block, so v2's clustering should not find a link anymore.
+		// Between v1 and v2, node B's legal name diverges (a later, unrelated filing).
+		// The names no longer co-block, so v2's clustering should not find a link anymore.
 		await db
 			.insertInto("filer_attribute")
 			.values({

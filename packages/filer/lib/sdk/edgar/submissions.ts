@@ -9,9 +9,8 @@ import type { CIK, SECGetClient } from "#sdk/edgar/cik"
  * Uses `cik` zero-padded (`CIK` is always the 10-digit padded form — see the type's own docstring) —
  * this is SEC's documented submissions API shape (`CIK0000320193.json`, never `CIK320193.json`).
  *
- * Contrast
- * {@linkcode accessionArchiveURL} below, whose archive paths use the unpadded form instead. both conventions are real
- * and both appear in this file.
+ * Contrast {@linkcode accessionArchiveURL} below, whose archive paths use the unpadded form instead.
+ * Both conventions are real and both appear in this file.
  */
 export function submissionsURL(cik: CIK): string {
 	return `https://data.sec.gov/submissions/CIK${cik}.json`
@@ -56,10 +55,11 @@ interface RawSubmissionsPayload {
 /**
  * Validates + extracts every 10-K filing from a raw submissions payload for `cik`.
  *
- * Throws a descriptive error naming `cik` on a structural mismatch
- * (missing `filings.recent`, or its parallel arrays disagreeing in length) — decision 8's
- * "malformed input must be loud" discipline. this is SEC's own documented API shape, so either
- * failure means the upstream interface changed rather than a row worth silently dropping.
+ * @throws a descriptive error naming `cik` on a structural mismatch
+ *   (missing `filings.recent`, or its parallel arrays disagreeing in length) —
+ *   decision 8's "malformed input must be loud" discipline.
+ *   This is SEC's own documented API shape, so either failure means the upstream
+ *   interface changed rather than a row worth silently dropping.
  */
 export function parseTenKFilings(cik: CIK, raw: unknown): TenKFiling[] {
 	const recent = (raw as RawSubmissionsPayload | null | undefined)?.filings?.recent

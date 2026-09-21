@@ -65,9 +65,10 @@ const MANAGEMENT_FAMILY_ID = "management_company_name:timberline management"
 const INJECTED_FAMILY_ID = "cik:0001234567"
 
 /**
- * One eval run shared by every test below — `filerLinkageEval` builds two real
- * SQLite artifacts and runs the full clustering pass twice, so re-running it per
- * test would multiply that for no added coverage.
+ * One eval run shared by every test below.
+ *
+ * `filerLinkageEval` builds two real SQLite artifacts and runs the full clustering pass twice,
+ * so re-running it per test would multiply that for no added coverage.
  *
  * The reproducibility test runs its own second pass on purpose.
  */
@@ -170,9 +171,10 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 	})
 
 	it("gives a multi-FRN registrant ONE truth family, taken from whichever registration disclosed the parent (C2)", () => {
-		// The parent is on 9100000011's filing. the registrant is scored under 9100000010.
-		// Before the C2 fix these were two ids in two different truth families —
-		// one legal entity asserted to be in two families at once.
+		// The parent is on 9100000011's filing.
+		// The registrant is scored under 9100000010.
+		// Before the C2 fix these were two ids in two different truth families.
+		// One legal entity asserted to be in two families at once.
 		expect(truth().get(FRN_SHARED_REGISTRANT_1)).toBe(truth().get(FRN_MERIDIAN_1))
 		expect(truth().has(FRN_SHARED_REGISTRANT_2)).toBe(false)
 	})
@@ -217,18 +219,19 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		const expected = "holding_company_name:fernbank partners + holding_company_name:ridgeway group"
 
 		expect(rolled.get(toFRN("9100000092")!)).toBe(expected)
-		// The sibling never named Fernbank, and must still carry it — that is what the roll-up is for.
+		// The sibling never named Fernbank, and must still carry it.
+		// That is what the roll-up is for.
 		expect(rolled.get(toFRN("9100000091")!)).toBe(expected)
 	})
 
 	it("keeps every family id in the label when one registrant names TWO parents", () => {
 		// Unreachable on the shipped corpus, reachable on any edit that adds a registrant naming two parents.
 		// Keying the accumulator on the union-find root as it stood MID-loop dropped
-		// whichever id was recorded before a later union re-rooted the component —
-		// the partition stayed correct, the published label silently lost a name.
-		// Both parents are unique to this registrant, so its label depends only on its
-		// own accumulated set — no other registrant's contribution can put a dropped
-		// id back via the component roll-up and mask the bug.
+		// whichever id was recorded before a later union re-rooted the component.
+		// The partition stayed correct, the published label silently lost a name.
+		// Both parents are unique to this registrant, so its label depends only on its own accumulated set.
+		// No other registrant's contribution can put a dropped id back via the
+		// component roll-up and mask the bug.
 		//
 		// both orientations are asserted, and that is the whole test.
 		// `union` merges toward the lexicographically smaller root, so exactly one ordering
@@ -265,8 +268,8 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		// and `toContain(":northbridge")` would pass just as on a label that had lost the other parent.
 		const expected = "holding_company_name:northbridge holdings + holding_company_name:southgate capital partners"
 
-		// Equal to each other and equal to the full expected set — the label is a property
-		// of the registrant rather than of which source happened to be read first.
+		// Equal to each other and equal to the full expected set.
+		// The label is a property of the registrant rather than of which source happened to be read first.
 		expect(northbridgeFirst).toBe(expected)
 		expect(southgateFirst).toBe(expected)
 	})
@@ -368,7 +371,8 @@ describe("filerLinkageEval — the control run (POSITIVE CONTROL: this is what d
 	it("finds the multi-FRN registrant's family through the registration that disclosed it", async () => {
 		const { control } = await runEval()
 
-		// The parent sits on 9100000011's filing. the registrant is scored under 9100000010.
+		// The parent sits on 9100000011's filing.
+		// The registrant is scored under 9100000010.
 		// A prediction that read only the representative FRN's own node would miss this.
 		expect(control.predictedFamilyIDsOf.get(FRN_SHARED_REGISTRANT_1)).toEqual([
 			"holding_company_name:meridian communications group",
@@ -446,8 +450,9 @@ describe("filerLinkageEval — what is really in the artifacts", () => {
 
 describe("the standing guarantee: this baseline CAN be beaten", () => {
 	/**
-	 * The three Cascade registrants, joined to one ownership family by a relationship the builder
-	 * never emits — `subsidiary`, the shape a corporate-filing importer is specified to produce.
+	 * The three Cascade registrants, joined to one ownership family by a relationship the builder never emits.
+	 *
+	 * `subsidiary`, the shape a corporate-filing importer is specified to produce.
 	 *
 	 * Injected into the withheld artifact after the leakage check has already passed on
 	 * the untouched build, so the check stays armed while the probe runs.
@@ -516,13 +521,14 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	it("keeps the leakage check armed while the probe runs — the check sees the untouched build", async () => {
 		// The injection adds exactly the ownership rows the check refuses.
 		// It does not throw, because the check reads the census before the probe writes.
-		// break that ordering and this test starts throwing instead of scoring.
+		// Break that ordering and this test starts throwing instead of scoring.
 		await expect(runInjected()).resolves.toBeDefined()
 	})
 
 	/**
-	 * A relationship string that is not a {@linkcode FilerRelationship} value at all —
-	 * the shape a `filer_family` row would carry if some future writer, or a hand-edited artifact,
+	 * A relationship string that is not a {@linkcode FilerRelationship} value at all.
+	 *
+	 * The shape a `filer_family` row would carry if some future writer, or a hand-edited artifact,
 	 * put an assertion in the table that this eval has never been taught to classify.
 	 */
 	const UNRECOGNIZED_RELATIONSHIP = "transfer_of_control"
@@ -600,8 +606,8 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 							to_node_id: INJECTED_FAMILY_ID,
 							// ParentCompany rather than Subsidiary: `schema.ts` defines the target as
 							// what it is TO the source, and `build-filer.ts` follows that convention.
-							// `from: frn → to: cik` with `Subsidiary` would assert the CIK is the FRN's
-							// subsidiary — the inverse of what a parent-CIK importer means.
+							// `from: frn → to: cik` with `Subsidiary` would assert the CIK is the FRN's subsidiary.
+							// The inverse of what a parent-CIK importer means.
 							relationship: FilerRelationship.ParentCompany,
 							assertion: "inferred",
 							match_score: 0.92,
@@ -615,7 +621,8 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 			},
 		})
 
-		// The edges are in the artifact and the census sees them — this is not a failed injection.
+		// The edges are in the artifact and the census sees them.
+		// This is not a failed injection.
 		expect(injected.census.ownershipEdges).toBe(3)
 		// And the score does not budge, because every corporate-family reader answers from `filer_family`.
 		expect(injected.score.truePositivePairs).toBe(0)

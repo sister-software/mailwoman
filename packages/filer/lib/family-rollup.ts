@@ -73,8 +73,10 @@ export interface FamilyRollupQuery {
 }
 
 /**
- * One member of a corporate family, `asOf` the query's date — `relationship` is one of
- * {@link FilerRelationship} (`schema.ts`), and `source` is the `filer_family` row's own provenance.
+ * One member of a corporate family, `asOf` the query's date.
+ *
+ * `relationship` is one of {@link FilerRelationship} (`schema.ts`), and `source`
+ * is the `filer_family` row's own provenance.
  * Never collapsed on a repeat `node_id`: two different sources independently asserting
  * the same node's membership in the same family both survive as separate entries,
  * the same provenance-plurality convention every other reader in this SDK follows.
@@ -85,11 +87,11 @@ export interface FamilyRollupMember {
 	/**
 	 * One of {@link FilerEdgeAssertion} (`schema.ts`) — how strongly this member's membership is evidenced.
 	 *
-	 * Carried here even though `source` is already present, because `source` provably cannot
-	 * answer the question: `edgar-exhibit-21` writes an authoritative disclosure edge
-	 * and an inferred corroboration in the same build, so one source name spans both grades,
-	 * and any caller reading strength off `source` would need a private table of which sources
-	 * are inferential — the same implicit-knowledge scheme `relationship` was added to end
+	 * Carried here even though `source` is already present, because `source` provably cannot answer
+	 * the question: `edgar-exhibit-21` writes an authoritative disclosure edge and an inferred
+	 * corroboration in the same build, so one source name spans both grades, and any caller
+	 * reading strength off `source` would need a private table of which sources are inferential.
+	 * The same implicit-knowledge scheme `relationship` was added to end
 	 * when relationship kind lived in the target node's `identifier_type`.
 	 */
 	assertion: string
@@ -103,20 +105,19 @@ export interface FamilyRollupMember {
 }
 
 /**
- * {@linkcode familyRollup}'s per-family result shape — a corporate family's full membership, `asOf`-scoped.
- * Deliberately carries no `cluster_id`-shaped key and no single top-level `relationship`,
- * unlike the other family type this SDK exports, `filer-lookup.ts`'s `FilerLookupFamily`,
- * which answers "which families does one node belong to."
+ * {@linkcode familyRollup}'s per-family result shape — a corporate family's full membership, `asOf`-scoped. Deliberately carries no `cluster_id`-shaped key and no single top-level `relationship`, unlike the other family type this SDK exports, `filer-lookup.ts`'s `FilerLookupFamily`, which answers "which families does one node belong to."
  *
  * This is the inverse view, "who belongs to this family," so `relationship` lives per-member instead.
  *
- * `distinct_member_count` is `members` deduped by `node_id` — `members` itself is never deduped
- * (provenance plurality: two different sources asserting the same node's membership both survive
- * as separate entries, as do two different raw spellings one member reported for the same family),
- * so `members.length` alone over-counts whenever more than one row corroborates the same member.
- * This mirrors `filerLookup.ts`'s `cluster.members`, which is already deduped
- * (one entry per node) — without this field, a caller sizing a family by array length
- * would get an inconsistent answer depending on which rollup they read.
+ * `distinct_member_count` is `members` deduped by `node_id`.
+ * `members` itself is never deduped (provenance plurality: two different sources
+ * asserting the same node's membership both survive as separate entries, as do two
+ * different raw spellings one member reported for the same family), so `members.length`
+ * alone over-counts whenever more than one row corroborates the same member.
+ *
+ * This mirrors `filerLookup.ts`'s `cluster.members`, which is already deduped (one entry per node).
+ * Without this field, a caller sizing a family by array length would get an
+ * inconsistent answer depending on which rollup they read.
  *
  * It counts distinct member nodes, never rows, so widening `filer_family`'s primary key cannot inflate it.
  *
@@ -137,14 +138,16 @@ export interface FamilyRollup {
 }
 
 /**
- * Read a `familyID`'s rollup at `asOf` — `null` when it has no member row in force
- * at that date (including when it has never existed at all).
+ * Read a `familyID`'s rollup at `asOf`.
+ *
+ * `null` when it has no member row in force at that date (including when it has never existed at all).
  *
  * Pulled out of {@linkcode familyRollup} so the `nodeID` path can call it once per
  * distinct family a node belongs to, instead of duplicating the member-query logic.
- * Reuses `filer-lookup.ts`'s
- * {@linkcode readFamilyMembers}/{@linkcode readFamilyDisplayNames} rather than inlining its own copies — `filerLookup`'s
- * `families` field needs the identical two queries for the identical reason.
+ * Reuses `filer-lookup.ts`'s {@linkcode readFamilyMembers}/{@linkcode readFamilyDisplayNames}
+ * rather than inlining its own copies.
+ *
+ * `filerLookup`'s `families` field needs the identical two queries for the identical reason.
  */
 async function readFamilyRollup(
 	db: DatabaseClient<FilerDatabase>,
@@ -181,8 +184,9 @@ async function readFamilyRollup(
  * docstring for the full interface (XOR query, manifest-first, schema-version guard,
  * temporal scoping, the always-array return shape).
  *
- * A `familyID` query returns at most one element. a `nodeID` query may return more than one
- * (a node legitimately belonging to more than one family is a normal shape, never an error).
+ * A `familyID` query returns at most one element.
+ * A `nodeID` query may return more than one (a node legitimately belonging to more
+ * than one family is a normal shape, never an error).
  */
 export async function familyRollup(
 	db: DatabaseClient<FilerDatabase>,
@@ -232,9 +236,8 @@ export async function familyRollup(
 		// Not expected to ever be null here — nodeFamilyRows just confirmed this node has
 		// an in-force row for this exact familyID at this exact asOf, so readFamilyRollup's
 		// own identical predicate will find at least that one member row.
-		// Guarded anyway rather than asserted, since silently trusting that invariant
-		// across two separate queries is the same
-		// class of shortcut this crosswalk's design otherwise refuses to take.
+		// Guarded anyway rather than asserted, since silently trusting that invariant across two separate
+		// queries is the same class of shortcut this crosswalk's design otherwise refuses to take.
 		if (rollup) {
 			rollups.push(rollup)
 		}

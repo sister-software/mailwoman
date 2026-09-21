@@ -175,7 +175,8 @@ describe("parseExhibit21 — header-mapped columns and the indented corporate tr
 	 * The name is not in doubt on those rows — the header says the jurisdiction is to its right,
 	 * so the only non-blank column between the two is the name — and the nesting depth is
 	 * discarded, since an Exhibit 21 row is a registrant→subsidiary edge either way.
-	 * TDS's own filing is 176 KB and is not vendored. this is its shape.
+	 * TDS's own filing is 176 KB and is not vendored.
+	 * This is its shape.
 	 */
 	it("reads an indented child row's name from the column between the header's name and jurisdiction columns", () => {
 		const html =
@@ -306,8 +307,9 @@ function normalizedDocument(html: string): string {
 
 /**
  * Every case the fabrication audit found (C1-C4, I1, I2), preserved here so the
- * substring-invariant test below runs across them alongside the four fixture files —
- * this is what makes the invariant test "required": mutating any one of the tightenings
+ * substring-invariant test below runs across them alongside the four fixture files.
+ *
+ * This is what makes the invariant test "required": mutating any one of the tightenings
  * above regresses at least one of these back to a name that fails the check.
  */
 const FABRICATION_AUDIT_CASES: Record<string, string> = {
@@ -338,10 +340,12 @@ const FIXTURE_FILES = [
  *
  * Every fragment they fabricate remains, structurally, a literal substring of the
  * same normalized whole document (it's built from real source text via the identical
- * strip/decode/collapse pipeline the invariant check itself uses) — so the substring check
- * alone does not independently catch any of those six. the case-specific behavioral tests
- * above do (mutation-proven: reverting `htmlToLayoutText`'s adjacent-whitespace check kills
- * the C4 test, reverting the plain-text block-boundary line-break kills the C2 test).
+ * strip/decode/collapse pipeline the invariant check itself uses).
+ * So the substring check alone does not independently catch any of those six.
+ *
+ * The case-specific behavioral tests above do (mutation-proven: reverting
+ * `htmlToLayoutText`'s adjacent-whitespace check kills the C4 test, reverting the
+ * plain-text block-boundary line-break kills the C2 test).
  * What the substring invariant does catch is the other real risk it's meant to guard against:
  * a jurisdiction/name fabricated from nothing — synthesized, defaulted, or otherwise not derived from
  * the input at all — which requires a name-only shape (no jurisdiction column/parenthetical/comma)

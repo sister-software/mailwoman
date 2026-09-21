@@ -38,7 +38,8 @@ export interface FamilyMembershipFact {
 	 */
 	namingNodeID: string
 	/**
-	 * One of {@link FilerIdentifierType} — the namespace `family_id` is minted under.
+	 * One of {@link FilerIdentifierType}.
+	 * The namespace `family_id` is minted under.
 	 */
 	identifierType: string
 	/**
@@ -74,16 +75,14 @@ export interface FamilyMembershipFact {
  * Write one `filer_family` membership row for a `HoldingCompany`/`ManagementCompany`
  * edge's source node (the edge's own `from_node_id` — an FRN or `bdcProviderID`) — see
  * {@linkcode mintFamilyID} for how `family_id` is derived from the target name's canonical form.
+ *
  * Skips silently (no row, no error, no `skipped` increment — a family row is a bonus
  * derived fact rather than an edge opportunity) when the name canonicalizes to nothing.
  * `insFamily` (the prepared statement it writes through) is passed in
  * rather than closed over, so every emission path writes through the one statement
  * `buildFilerDatabase` prepared against the shared handle.
  *
- * {@link FamilyMembershipFact.namingNodeID} is the company node this row's `family_id` was minted from — the edge's
- * `to_node_id`, which every caller has already minted immediately above its call.
- * It is deliberately taken as a field rather than re-derived from `identifierType`/`name` here,
- * so the family row and the edge can never name two different nodes.
+ * {@link FamilyMembershipFact.namingNodeID} is the company node this row's `family_id` was minted from. The edge's `to_node_id`, which every caller has already minted immediately above its call. It is deliberately taken as a field rather than re-derived from `identifierType`/`name` here, so the family row and the edge can never name two different nodes.
  *
  * Persisting it is what lets `filer-lookup.ts`'s `readFamilyDisplayNames` recover the raw spelling by
  * a plain join instead of re-running `canonicalizeOrganizationName` at read time against a sealed,

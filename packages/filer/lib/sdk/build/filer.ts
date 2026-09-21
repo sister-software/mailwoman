@@ -222,9 +222,10 @@ import { classifyFiler, parseForm499, type Form499Row } from "#sdk/form499/index
 import { assertISODate } from "#sdk/guards"
 import { parseProviderList, type ProviderListRow } from "#sdk/provider-list"
 
-// `@mailwoman/filer/sdk/build-filer` is EdgarSubsidiaryRow's published home — `edgar-ingest.ts`
-// and every consumer building rows for the `edgarRows` injection point import it from here, so it
-// stays exported from this module even though its declaration sits with the writer that validates it.
+// `@mailwoman/filer/sdk/build-filer` is EdgarSubsidiaryRow's published home.
+// `edgar-ingest.ts` and every consumer building rows for the `edgarRows`
+// injection point import it from here, so it stays exported from this module even
+// though its declaration sits with the writer that validates it.
 export type { EdgarSubsidiaryRow } from "#sdk/build/edgar/rows"
 
 /**
@@ -252,9 +253,10 @@ export interface BuildFilerOptions {
 	 * Injected edgar Exhibit 21 subsidiary-disclosure source — see the module
 	 * docstring's "edgar Exhibit 21 ingest" section.
 	 *
-	 * Subsidiary-name→FRN corroboration is matched against this same call's `form499Rows`
-	 * (their `legalNameOfCarrier`) — an `edgarRows` source with no accompanying `form499Rows`
-	 * still writes every disclosure edge, just with no corroborating FRN link possible.
+	 * Subsidiary-name→FRN corroboration is matched against this same call's
+	 * `form499Rows` (their `legalNameOfCarrier`).
+	 * An `edgarRows` source with no accompanying `form499Rows` still writes every
+	 * disclosure edge, just with no corroborating FRN link possible.
 	 */
 	edgarRows?: AsyncIterable<EdgarSubsidiaryRow> | Iterable<EdgarSubsidiaryRow>
 	/**
@@ -277,35 +279,45 @@ export interface BuildFilerOptions {
 	out: string
 	/**
 	 * The build's overall vintage — becomes the manifest's `version` and `source_vintage`
-	 * (filer.db has no independent versioning yet, same deferral `build-bdc.ts` makes
-	 * for `bdc.db`'s `release`), and the `source_vintage` (only — see
-	 * {@link BuildFilerOptions.validFrom} for `valid_from`) for every provider-list-derived edge (decision 7 — the
-	 * provider list carries no per-row date of its own).
-	 * A free-text human vintage label (`"2026-Q2"`) is fine here — this field is never written into a
-	 * temporal (`valid_from`/`valid_to`) column, so it carries no ISO-shape requirement of its own.
+	 * (filer.db has no independent versioning yet, same deferral `build-bdc.ts` makes for `bdc.db`'s `release`),
+	 * and the `source_vintage` (only — see {@link BuildFilerOptions.validFrom} for `valid_from`) for every
+	 * provider-list-derived edge (decision 7 — the provider list carries no per-row date of its own).
+	 *
+	 * A free-text human vintage label (`"2026-Q2"`) is fine here.
+	 * This field is never written into a temporal (`valid_from`/`valid_to`) column,
+	 * so it carries no ISO-shape requirement of its own.
 	 *
 	 * Snapshot semantics (see the module docstring's minor-B note): calling {@linkcode buildFilerDatabase}
-	 * again against the same `out` with a different `sourceVintage` replaces the artifact —
-	 * it does not accumulate the earlier vintage's rows alongside the new ones.
-	 * There is no options-level way to build a multi-vintage archive in one artifact. that
-	 * would require rows spanning multiple vintages passed into a single call.
+	 * again against the same `out` with a different `sourceVintage` replaces the artifact.
+	 * It does not accumulate the earlier vintage's rows alongside the new ones.
+	 *
+	 * There is no options-level way to build a multi-vintage archive in one artifact.
+	 * That would require rows spanning multiple vintages passed into a single call.
 	 */
 	sourceVintage: string
 	/**
-	 * ISO `yyyy-MM-DD` date for `valid_from` on every provider-list-derived edge —
-	 * deliberately a separate field from
-	 * {@link BuildFilerOptions.sourceVintage}, never derived from it. The provider list carries no per-row date, which
-	 * makes the whole-file `sourceVintage` the tempting single source for both `source_vintage` and `valid_from` — but
-	 * `sourceVintage` is a free-text human vintage label (e.g. `"2026-Q2"`), not guaranteed ISO-sortable, while
-	 * `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`'s `valid_from <= asOf`) as
-	 * a plain string comparison. `"2026-Q2"` sorts lexicographically above any ISO date in its own year (`"Q"` outranks
-	 * every digit at the first position where the two differ) — writing it into `valid_from` silently breaks every
-	 * `asOf`-scoped read against that edge (reviewer probe: a fully populated filer.db built with `sourceVintage:
-	 * "2026-Q2"` returned `identifiers: []` from `filerLookup`). Validated via {@linkcode assertISODate}. Required when
-	 * `providerRows`/`providerListPath` is supplied (thrown otherwise); ignored when no provider-list source is given.
-	 * Deliberately not derived automatically from `sourceVintage` when omitted — guessing a specific date from an
-	 * arbitrary label (which day inside "Q2"?) would be a fabrication this builder refuses to make. the caller, who knows
-	 * the file's actual publish/effective date, supplies it explicitly.
+	 * ISO `yyyy-MM-DD` date for `valid_from` on every provider-list-derived edge — deliberately
+	 * a separate field from {@link BuildFilerOptions.sourceVintage}, never derived from it.
+	 *
+	 * The provider list carries no per-row date, which makes the whole-file `sourceVintage` the
+	 * tempting single source for both `source_vintage` and `valid_from` — but `sourceVintage`
+	 * is a free-text human vintage label (e.g. `"2026-Q2"`), not guaranteed ISO-sortable,
+	 * while `valid_from` participates in every downstream `asOf`-scoped predicate
+	 * (`filer-lookup.ts`'s `valid_from <= asOf`) as a plain string comparison.
+	 * `"2026-Q2"` sorts lexicographically above any ISO date in its own year
+	 * (`"Q"` outranks every digit at the first position where the two differ) —
+	 * writing it into `valid_from` silently breaks every `asOf`-scoped read against that
+	 * edge (reviewer probe: a fully populated filer.db built with `sourceVintage: "2026-Q2"`
+	 * returned `identifiers: []` from `filerLookup`).
+	 *
+	 * Validated via {@linkcode assertISODate}.
+	 * Required when `providerRows`/`providerListPath` is supplied (thrown otherwise);
+	 * ignored when no provider-list source is given.
+	 *
+	 * Deliberately not derived automatically from `sourceVintage` when omitted —
+	 * guessing a specific date from an arbitrary label (which day inside "Q2"?) would
+	 * be a fabrication this builder refuses to make.
+	 * The caller, who knows the file's actual publish/effective date, supplies it explicitly.
 	 */
 	validFrom?: string
 	/**
@@ -327,16 +339,19 @@ export interface BuildFilerResult {
 	 */
 	edges: number
 	/**
-	 * Distinct `filer_attribute` rows after the build (staging-table-deduped on `(node_id, key, value, source,
-	 * source_vintage)` — see the module docstring for why `value` is part of that key).
+	 * Distinct `filer_attribute` rows after the build
+	 * (staging-table-deduped on `(node_id, key, value, source, source_vintage)` —
+	 * see the module docstring for why `value` is part of that key).
 	 */
 	attributes: number
 	/**
-	 * Distinct `filer_family` rows after the build — PK-deduped on `(node_id, family_id, naming_node_id, source,
-	 * valid_from)`, the identical composite shape as `filer_edge`'s own PK plus the naming provenance. One row per
-	 * `HoldingCompany`/`ManagementCompany` edge whose target name canonicalized to something non-empty (see
-	 * {@linkcode mintFamilyID}), so two different spellings of one family under one source at one instant count as two
-	 * rows here rather than one.
+	 * Distinct `filer_family` rows after the build — PK-deduped on
+	 * `(node_id, family_id, naming_node_id, source, valid_from)`, the identical composite
+	 * shape as `filer_edge`'s own PK plus the naming provenance.
+	 *
+	 * One row per `HoldingCompany`/`ManagementCompany` edge whose target name canonicalized
+	 * to something non-empty (see {@linkcode mintFamilyID}), so two different spellings of
+	 * one family under one source at one instant count as two rows here rather than one.
 	 */
 	families: number
 	/**
@@ -358,7 +373,8 @@ export interface BuildFilerResult {
 	 * or empty one, i.e. `ceasedAt <= lastFiledAt` — 1,440 of the 3,261 ceased filers
 	 * naming a holding or management company in the 2025-12-07 vintage.
 	 *
-	 * The date is still recorded as a `ceased_at` attribute. only the temporal window abstains.
+	 * The date is still recorded as a `ceased_at` attribute.
+	 * Only the temporal window abstains.
 	 *
 	 * Not an error.
 	 * See `closeableCessationDate` (`build/form499-rows.ts`) for why these two dates disagree so often.
@@ -415,7 +431,9 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	let skipped = 0
 
 	/**
-	 * Row tallies read off the built tables — the connection is gone by the time the summary is assembled.
+	 * Row tallies read off the built tables.
+	 *
+	 * The connection is gone by the time the summary is assembled.
 	 */
 	let materialized: { nodes: number; edges: number; attributes: number; families: number }
 
@@ -502,8 +520,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				`form499 row #${form499RowIndex} (form499ID=${stringifyJSON(row.form499ID)}) lastFiledAt`
 			)
 
-			// Attributes attach to the form499ID node — the only identifier guaranteed
-			// present on every row (frn can legitimately be null).
+			// Attributes attach to the form499ID node.
+			// The only identifier guaranteed present on every row (frn can legitimately be null).
 			// See the module docstring's DC-agent doctrine: dcAgent* fields land here
 			// as plain attributes only, never as edges.
 			stageAttribute(form499NodeID, "legal_name", row.legalNameOfCarrier, "form-499", lastFiledAt)

@@ -15,8 +15,9 @@
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
- * The subsidiary-name→FRN score when the two RAW names are byte-identical — the strongest
- * this match can ever be, and the ceiling for {@linkcode scoreEdgarSubsidiaryMatch}.
+ * The subsidiary-name→FRN score when the two RAW names are byte-identical.
+ *
+ * The strongest this match can ever be, and the ceiling for {@linkcode scoreEdgarSubsidiaryMatch}.
  *
  * **It is not 1, and it is bounded by what canonical-name matching can know,
  * which is less than identity.** Two disjoint companies can file under the same legal name;
@@ -28,21 +29,29 @@ import { canonicalizeOrganizationName } from "@mailwoman/record"
 export const EDGAR_MATCH_SCORE_IDENTICAL_RAW_NAME = 0.9
 
 /**
- * The score when the two raw names differ only in what canonicalization normalizes without deleting — case,
- * punctuation, accents, `&`/`and`, a leading `The`, whitespace — while carrying the same legal designations (`"acme
- * fiber, LLC"` vs `"Acme Fiber LLC"`). Real formatting variance between two filings of one company's name, so
- * meaningfully weaker than a byte-identical match but not the ambiguous case below.
+ * The score when the two raw names differ only in what canonicalization normalizes
+ * without deleting — case, punctuation, accents, `&`/`and`, a leading `The`, whitespace —
+ * while carrying the same legal designations (`"acme fiber, LLC"` vs `"Acme Fiber LLC"`).
+ *
+ * Real formatting variance between two filings of one company's name, so meaningfully
+ * weaker than a byte-identical match but not the ambiguous case below.
  */
 export const EDGAR_MATCH_SCORE_NORMALIZATION_ONLY = 0.75
 
 /**
- * The score when the two raw names differ in their legal designations — `"American Broadband LLC"` (499) vs `"American
- * Broadband, Inc."` (Exhibit 21). Weak on purpose: canonicalization is what erased the only part of the string that
- * distinguished them, so the match is resting on a token it deliberately threw away. The abstention in
- * {@linkcode processEdgarSubsidiaryRow} (`matchedFRNs.length !== 1`) does not cover this — it only fires on a collision
- * within the 499 file, so when 499 carries only the LLC and Exhibit 21 discloses the Inc.,
- * exactly one FRN matches and the edge is written.
- * That edge may well be the wrong company. this number says so.
+ * The score when the two raw names differ in their legal designations —
+ * `"American Broadband LLC"` (499) vs `"American Broadband, Inc."`
+ *
+ * (Exhibit 21).
+ * Weak on purpose: canonicalization is what erased the only part of the string that
+ * distinguished them, so the match is resting on a token it deliberately threw away.
+ *
+ * The abstention in {@linkcode processEdgarSubsidiaryRow} (`matchedFRNs.length !== 1`) does not cover this.
+ * It only fires on a collision within the 499 file, so when 499 carries only the LLC
+ * and Exhibit 21 discloses the Inc., exactly one FRN matches and the edge is written.
+ *
+ * That edge may well be the wrong company.
+ * This number says so.
  */
 export const EDGAR_MATCH_SCORE_DESIGNATION_DIFFERS = 0.5
 
@@ -60,19 +69,24 @@ export function strippedDesignationKey(name: string): string {
  * The `match_score` for one subsidiary-name→FRN inference — graded per match, never one
  * flat constant across every such link regardless of how much the match actually knows.
  *
- * Both names reaching this function already share a canonical form. that is the match. The question this answers is how
- * much of the original string that shared form threw away, because `canonicalizeOrganizationName` maps `"American
- * Broadband LLC"`, `"American Broadband, Inc."` and `"American Broadband Corp"` all to `"american broadband"`
- * (verified). A match that provably cannot tell three companies apart must not report the same confidence as one on
- * identical raw names.
+ * Both names reaching this function already share a canonical form.
+ * That is the match.
+ *
+ * The question this answers is how much of the original string that shared form threw away,
+ * because `canonicalizeOrganizationName` maps `"American Broadband LLC"`, `"American Broadband, Inc."`
+ * and `"American Broadband Corp"` all to `"american broadband"` (verified).
+ * A match that provably cannot tell three companies apart must not report the
+ * same confidence as one on identical raw names.
  *
  * **`@mailwoman/match`'s comparators were checked first and are the wrong instrument
  * here — measured rather than assumed.** `nameSimilarity` on the RAW pair scores
  * `"American Broadband LLC"` vs `"American Broadband, Inc."` at **0.9485**
  * and vs `"American Broadband Corp"` at **0.9557** — higher than a flat 0.92 would be,
  * because Jaro-Winkler's prefix boost rewards exactly the long shared head these pairs have.
- * String distance measures how alike two spellings look. the signal that separates a real match from
- * a designation collision is which tokens canonicalization deleted, which is a set comparison.
+ * String distance measures how alike two spellings look.
+ *
+ * The signal that separates a real match from a designation collision is
+ * which tokens canonicalization deleted, which is a set comparison.
  *
  * So this uses `canonicalizeOrganizationName`'s own `designations` output —
  * already computed on this path, no new dependency — rather than a comparator

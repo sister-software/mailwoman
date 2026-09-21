@@ -92,8 +92,9 @@ async function seedManifest(
 
 const FAMILY_ID = "holding_company_name:bigco-inc"
 // The company node whose raw spelling produced FAMILY_ID (`filer_family.naming_node_id`).
-// These reader-interface fixtures write no matching `filer_edge`, so their `display_names`
-// are `[]` either way. the column is not NULL, so a value is still required on every insert.
+// These reader-interface fixtures write no matching `filer_edge`, so their
+// `display_names` are `[]` either way.
+// The column is not NULL, so a value is still required on every insert.
 const NAMING_NODE_BIGCO = `${FilerIdentifierType.HoldingCompanyName}:BigCo Inc`
 const FRN_A = "frn:0001111111"
 const FRN_B = "frn:0002222222"
@@ -126,15 +127,17 @@ describe("familyRollup — general reader interface", () => {
 	})
 
 	/**
-	 * Without this guard, an artifact whose manifest predates `filer_family`
-	 * (`schema_version` < 2) surfaces a raw, unhelpful "no such table: filer_family" the
-	 * instant the member query runs — so this fixture deliberately never creates that table,
-	 * standing in for a real pre-`filer_family` artifact.
+	 * Without this guard, an artifact whose manifest predates `filer_family` (`schema_version` < 2)
+	 * surfaces a raw, unhelpful "no such table: filer_family" the instant the member query runs.
+	 *
+	 * So this fixture deliberately never creates that table, standing in for a
+	 * real pre-`filer_family` artifact.
 	 */
 	it("throws a descriptive, rebuild-pointing error — not a raw 'no such table' — when schema_version predates filer_family", async () => {
 		using db = openMemory()
 		await createFilerManifestTable(db)
-		// filer_family deliberately not created — this is the schema_version 1 shape being simulated.
+		// filer_family deliberately not created.
+		// This is the schema_version 1 shape being simulated.
 		await seedManifest(db, { schema_version: 1 })
 
 		await expect(familyRollup(db, { familyID: FAMILY_ID })).rejects.toThrow(
@@ -411,13 +414,15 @@ describe("familyRollup — general reader interface", () => {
 	 *
 	 * These fixtures are hand-written (nodes, edges and family rows inserted directly)
 	 * and each asserts a spelling the reader must surface.
-	 * They are not independent of the real canonicalizer, and deliberately so — `FAMILY_ID_SOLO`
-	 * and the multi-spelling pair below are minted through the real `mintFamilyID`, because made-up
-	 * `family_id` constants round-trip through a wrong join and hide the cross-family leak.
+	 * They are not independent of the real canonicalizer, and deliberately so.
 	 *
-	 * What each test proves is the reader's join. what the real `mintFamilyID` calls establish
-	 * is that the fixture's premise (these two spellings really do land in one family)
-	 * holds for real rather than by assumption.
+	 * `FAMILY_ID_SOLO` and the multi-spelling pair below are minted through the real `mintFamilyID`,
+	 * because made-up `family_id` constants round-trip through a wrong join and hide the cross-family leak.
+	 *
+	 * What each test proves is the reader's join.
+	 * What the real `mintFamilyID` calls establish is that the fixture's premise
+	 * (these two spellings really do land in one family) holds for real rather than by assumption.
+	 *
 	 * The end-to-end builder versions live in `filer-lookup.test.ts`.
 	 */
 	describe("display_names — the naming-provenance join", () => {
@@ -585,14 +590,22 @@ describe("familyRollup — general reader interface", () => {
 		})
 
 		/**
-		 * The join under direct unit pressure. Both tests above pass with the naming-provenance join removed — their
-		 * fixtures give each member exactly one holding-company edge, so any query keyed on `(from_node_id, relationship,
-		 * source, valid_from)` finds the same single row either way. This one does not: one member carries two edges
-		 * sharing that identical 4-tuple, whose targets canonicalize to two different families (the documented decision-6
-		 * shape — one FRN filing two 499 rows the same day with conflicting holding companies). Only `naming_node_id` tells
-		 * the two apart. Drop it from the query and each family reports the other's name too: a family claiming a holding
-		 * company its member never reported to it, the same false-assertion class as 3a's identity leaks. The real-builder
-		 * versions live in `filer-lookup.test.ts`; this is the reader-level unit that fails first.
+		 * The join under direct unit pressure.
+		 *
+		 * Both tests above pass with the naming-provenance join removed.
+		 * Their fixtures give each member exactly one holding-company edge, so any query keyed on
+		 * `(from_node_id, relationship, source, valid_from)` finds the same single row either way.
+		 *
+		 * This one does not: one member carries two edges sharing that identical 4-tuple,
+		 * whose targets canonicalize to two different families (the documented decision-6 shape —
+		 * one FRN filing two 499 rows the same day with conflicting holding companies).
+		 * Only `naming_node_id` tells the two apart.
+		 *
+		 * Drop it from the query and each family reports the other's name too:
+		 * a family claiming a holding company its member never reported to it,
+		 * the same false-assertion class as 3a's identity leaks.
+		 * The real-builder versions live in `filer-lookup.test.ts`; this is the
+		 * reader-level unit that fails first.
 		 */
 		it("one member, two same-tuple edges naming DIFFERENT families: each family surfaces only its OWN name", async () => {
 			using db = openMemory()
@@ -701,8 +714,9 @@ describe("familyRollup — general reader interface", () => {
 		 * today's code: the persisted `family_id` is one no current `mintFamilyID` call
 		 * would ever produce, while node, edge and membership are all intact.
 		 *
-		 * Any read path that re-canonicalizes returns `display_names: []` here —
-		 * no error, no warning, the name simply gone.
+		 * Any read path that re-canonicalizes returns `display_names: []` here.
+		 * No error, no warning, the name simply gone.
+		 *
 		 * Joining the stored `naming_node_id` cannot fail this way, because nothing
 		 * in the read path canonicalizes.
 		 */
@@ -766,13 +780,20 @@ describe("familyRollup — general reader interface", () => {
 		})
 
 		/**
-		 * "Documented relationships only". `readFamilyDisplayNames` filters the naming edge to `assertion:
-		 * "authoritative"`. Nothing in the pipeline emits an inferred holding-/management-company edge today —
-		 * `cluster-filers.ts` writes `SameEntity` and nothing else — so this cannot be produced through the real builder.
-		 * it is constructible only by hand, as here. The predicate is there because a `display_names` entry is presented as
-		 * a name this family's members actually reported. Surfacing one recovered from a matcher's guess would restate that
-		 * guess as a filing, which is the same category of error as 3a's inferred/authoritative conflation — the reason
-		 * `inferred_links` is a separate field from `cluster` rather than merged into it.
+		 * "Documented relationships only".
+		 *
+		 * `readFamilyDisplayNames` filters the naming edge to `assertion: "authoritative"`.
+		 * Nothing in the pipeline emits an inferred holding-/management-company
+		 * edge today — `cluster-filers.ts` writes `SameEntity` and nothing else —
+		 * so this cannot be produced through the real builder.
+		 *
+		 * It is constructible only by hand, as here.
+		 * The predicate is there because a `display_names` entry is presented as a
+		 * name this family's members actually reported.
+		 *
+		 * Surfacing one recovered from a matcher's guess would restate that guess as a filing,
+		 * which is the same category of error as 3a's inferred/authoritative conflation.
+		 * The reason `inferred_links` is a separate field from `cluster` rather than merged into it.
 		 */
 		it("ignores an INFERRED naming edge — a display name is a documented report, never a matcher's guess", async () => {
 			using db = openMemory()
@@ -827,8 +848,7 @@ describe("familyRollup — general reader interface", () => {
 
 			const result = await familyRollup(db, { familyID: FAMILY_GUESS, asOf: "2026-12-31" })
 
-			// The membership itself still reads back — only the name is withheld,
-			// because no authoritative edge documents it.
+			// The membership itself still reads back — only the name is withheld, because no authoritative edge documents it.
 			expect(result[0]?.members).toHaveLength(1)
 			expect(result[0]?.display_names).toEqual([])
 		})

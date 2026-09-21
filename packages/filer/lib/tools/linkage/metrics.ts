@@ -44,8 +44,7 @@
  */
 
 /**
- * {@linkcode scorePairwiseGrouping}'s result. Every count is over unordered pairs drawn from the `ids` passed in — see
- * the module docstring for why pairs rather than aligned clusters.
+ * {@linkcode scorePairwiseGrouping}'s result. Every count is over unordered pairs drawn from the `ids` passed in — see the module docstring for why pairs rather than aligned clusters.
  */
 export interface PairwiseGroupingScore {
 	/**
@@ -84,8 +83,10 @@ export interface PairwiseGroupingScore {
 	 */
 	recall: number | null
 	/**
-	 * `null` whenever `precision` or `recall` is `null` — an F1 over an undefined component
-	 * is undefined rather than zero (see the module docstring's worked example).
+	 * `null` whenever `precision` or `recall` is `null`.
+	 *
+	 * An F1 over an undefined component is undefined rather than zero
+	 * (see the module docstring's worked example).
 	 *
 	 * `0` when both are defined and `truePositivePairs === 0`
 	 * (the harmonic mean of two zeros, reported as the `0` it is rather than `NaN`).
@@ -104,11 +105,12 @@ export interface PairwiseGroupingScore {
  *
  * Accepting predicates rather than two group-id maps is deliberate: a truth grouping is
  * usually a clean partition (one group id per id — see {@linkcode groupPredicateFromMap}),
- * but a predicted grouping need not be a partition at all.
- * {@linkcode filerLinkageEval} is the worked case: a registrant can belong to several corporate families at once
+ * but a predicted grouping need not be a partition at all. {@linkcode filerLinkageEval}
+ * is the worked case: a registrant can belong to several corporate families at once
  * (`filer_family` admits more than one membership per node), and two registrants are predicted-same
  * when their family sets intersect — an overlap relation rather than an equivalence class.
- * A single group-id map cannot express that. a predicate can.
+ * A single group-id map cannot express that.
+ * A predicate can.
  */
 export function scorePairwiseGrouping<ID>(
 	ids: readonly ID[],
@@ -146,8 +148,9 @@ export function scorePairwiseGrouping<ID>(
 	const recall = truthPositivePairs > 0 ? truePositivePairs / truthPositivePairs : null
 
 	// `null` in, `null` out — never `0`.
-	// `0` is reserved for the case both components are defined and the prediction still
-	// recovered nothing, which is a measurement. an undefined component is the absence of one.
+	// `0` is reserved for the case both components are defined and the prediction
+	// still recovered nothing, which is a measurement.
+	// An undefined component is the absence of one.
 	let f1: number | null = null
 
 	if (precision !== null && recall !== null) {
@@ -168,12 +171,14 @@ export function scorePairwiseGrouping<ID>(
 }
 
 /**
- * Builds a `truthSame`/`predictedSame`-shaped predicate from a group-id map —
- * the common case, where "same group" means "maps to the identical group id"
+ * Builds a `truthSame`/`predictedSame`-shaped predicate from a group-id map.
+ *
+ * The common case, where "same group" means "maps to the identical group id"
  * (a genuine partition, unlike {@linkcode scorePairwiseGrouping}'s general predicate form).
  *
- * Two ids missing from `groupOf` entirely are never treated as "same" (both `undefined`
- * would otherwise compare equal) — every id scored must carry an explicit group assignment.
+ * Two ids missing from `groupOf` entirely are never treated as "same"
+ * (both `undefined` would otherwise compare equal).
+ * Every id scored must carry an explicit group assignment.
  */
 export function groupPredicateFromMap<ID>(groupOf: ReadonlyMap<ID, string>): (a: ID, b: ID) => boolean {
 	return (a, b) => {

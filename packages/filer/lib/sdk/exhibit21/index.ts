@@ -37,8 +37,7 @@ export interface ParsedSubsidiary {
 }
 
 /**
- * {@linkcode parseExhibit21}'s result. `unparseable` is a count rather than a list of the offending text — criterion 3
- * only requires knowing abstention happened and how often rather than what was abstained from.
+ * {@linkcode parseExhibit21}'s result. `unparseable` is a count rather than a list of the offending text — criterion 3 only requires knowing abstention happened and how often rather than what was abstained from.
  */
 export interface ParsedExhibit21 {
 	subsidiaries: ParsedSubsidiary[]
@@ -53,8 +52,7 @@ export interface ParsedExhibit21 {
 /**
  * The column indices a table's own header row assigns to the entity name and its jurisdiction.
  *
- * See
- * {@linkcode headerColumnMapping}.
+ * See {@linkcode headerColumnMapping}.
  */
 interface ColumnMapping {
 	name: number
@@ -76,18 +74,23 @@ interface ColumnMapping {
 const MINIMUM_HEADER_ROW_CELLS = 3
 
 /**
- * Reads a table's own header row to learn which column is the entity name and which is the jurisdiction —
- * the answer the document itself states, rather than a guess about which two of N columns matter.
+ * Reads a table's own header row to learn which column is the entity name and which is the jurisdiction.
  *
- * A row qualifies as the header only when every one of its non-blank values is a known label/decoration and exactly one
- * of them is a jurisdiction label (two would be ambiguous, zero leaves nothing to anchor on). The name column is then
- * the first other column not labelled with an "other" label (`% of ownership`, `conducts business under`, `d/b/a`, …) —
- * `att-2025.htm`'s `["Legal Name", "State of Incorporation/Formation", "Conducts Business Under"]` maps to `{name: 0,
- * jurisdiction: 1}`, and `atn-international-2025.htm`'s unlabelled first column (its header row is `["", "Jurisdiction
- * of Incorporation", "Other name(s) under which entity does business"]`) still maps to `{name: 0, jurisdiction: 1}`.
+ * The answer the document itself states, rather than a guess about which two of N columns matter.
  *
- * Returns `null` when no row qualifies. the caller then keeps whatever mapping
- * a preceding sibling table established.
+ * A row qualifies as the header only when every one of its non-blank values
+ * is a known label/decoration and exactly one of them is a jurisdiction label
+ * (two would be ambiguous, zero leaves nothing to anchor on).
+ * The name column is then the first other column not labelled with an "other" label
+ * (`% of ownership`, `conducts business under`, `d/b/a`, …).
+ *
+ * `att-2025.htm`'s `["Legal Name", "State of Incorporation/Formation", "Conducts Business Under"]`
+ * maps to `{name: 0, jurisdiction: 1}`, and `atn-international-2025.htm`'s unlabelled first column
+ * (its header row is `["", "Jurisdiction of Incorporation", "Other name(s) under which entity does business"]`)
+ * still maps to `{name: 0, jurisdiction: 1}`.
+ *
+ * @returns `null` when no row qualifies.
+ *   The caller then keeps whatever mapping a preceding sibling table established.
  */
 function headerColumnMapping(
 	rows: readonly TableCell[][],
@@ -134,19 +137,24 @@ function headerColumnMapping(
  *
  * The distinctness condition is not belt-and-braces.
  * Charter Communications writes its jurisdiction column as `"Delaware limited liability company"`,
- * so 135 of 135 second values carry a designation on a table that is a perfectly ordinary
- * name/jurisdiction list. what separates the two cases is repetition — a jurisdiction column
- * repeats (Charter 9 distinct over 135 rows, Comcast 0.05, Uniti 0.13, T-Mobile 0.15, Lumen 0.26),
- * a second name column does not (IDT 1.00).
+ * so 135 of 135 second values carry a designation on a table that is a perfectly
+ * ordinary name/jurisdiction list.
+ *
+ * What separates the two cases is repetition.
+ * A jurisdiction column repeats (Charter 9 distinct over 135 rows, Comcast 0.05,
+ * Uniti 0.13, T-Mobile 0.15, Lumen 0.26), a second name column does not (IDT 1.00).
  *
  * Measured 2026-08-03 across the large filings that are not vendored.
  */
 const MINIMUM_NAME_OVER_NAME_ROWS = 4
 
 /**
- * More than half the second values must carry a legal designation. IDT's two-across name table is 5/5. a genuine
- * jurisdiction column is 0/N except where the filer spells the entity type out (Charter's `"Delaware limited liability
- * company"`, 135/135) — which is what {@linkcode DISTINCT_SECOND_VALUE_RATIO} is there to separate.
+ * More than half the second values must carry a legal designation.
+ *
+ * IDT's two-across name table is 5/5.
+ * A genuine jurisdiction column is 0/N except where the filer spells the entity type out
+ * (Charter's `"Delaware limited liability company"`, 135/135) — which is what
+ * {@linkcode DISTINCT_SECOND_VALUE_RATIO} is there to separate.
  */
 const DESIGNATED_SECOND_VALUE_RATIO = 0.5
 
@@ -189,9 +197,10 @@ function isNameOverNameTable(rows: readonly TableCell[][]): boolean {
  * Every row must hold at most one value, and either two of them do (an actual list)
  * or the table is literally one cell wide (a one-row list has no heading to be confused with).
  *
- * The converse is what this rule exists for: a lone value in a table that also has multi-value rows is a section
- * heading (`idt-2025.htm`'s "Domestic Subsidiaries") or a trailing explanatory sentence (its `"*Versature
- * Communications Corp. has registered Net2Phone Canada as a Trade Name"`, a one-row table three columns wide).
+ * The converse is what this rule exists for: a lone value in a table that also has multi-value
+ * rows is a section heading (`idt-2025.htm`'s "Domestic Subsidiaries") or a trailing explanatory
+ * sentence (its `"*Versature Communications Corp. Has registered Net2Phone Canada as a Trade Name"`,
+ * a one-row table three columns wide).
  */
 const MINIMUM_NAME_LIST_ROWS = 2
 
@@ -209,8 +218,8 @@ function isSingleColumnNameList(rows: readonly TableCell[][], rawWidth: number):
  * Turns one top-level table's extracted rows into subsidiaries, given the column
  * mapping a preceding sibling table established (or `null`).
  *
- * Returns the mapping in force at the end so the caller can carry it to the next sibling —
- * see the module docstring's "table strategy" section for the full rule order.
+ * @returns the mapping in force at the end so the caller can carry it to the next sibling —
+ *   see the module docstring's "table strategy" section for the full rule order.
  */
 function subsidiariesFromTable(
 	extractedRows: readonly TableCell[][],
@@ -355,13 +364,13 @@ function subsidiariesFromTableRows(tables: readonly TableCell[][][]): ParsedExhi
 }
 
 /**
- * Narrows one raw edgar archive document to the markup every strategy below
- * should reason about, applied once in
- * {@linkcode parseExhibit21} so the table, list and plain-text strategies all see the same window rather than each
- * re-deriving it.
+ * Narrows one raw edgar archive document to the markup every strategy below should
+ * reason about, applied once in {@linkcode parseExhibit21} so the table, list
+ * and plain-text strategies all see the same window rather than each re-deriving it.
  *
- * The sgml `<text>` element is edgar's own envelope around the exhibit. a document with
- * no envelope (every hand-written fixture in `exhibit21.test.ts`) is left whole.
+ * The sgml `<text>` element is edgar's own envelope around the exhibit.
+ * A document with no envelope (every hand-written fixture in `exhibit21.test.ts`) is left whole.
+ *
  * The html `<head>` goes because its `<title>` is the source filename rather than
  * a subsidiary — `q42025exh211listofsubsidia.htm` was emitted as an entity name
  * before this window existed — and `<script>`/`<style>` because their text is code.
@@ -374,8 +383,10 @@ const LI_OPEN_PATTERN = /<li[^>]*>/gi
 const LI_CHILD_BOUNDARY_PATTERN = /<ul[^>]*>|<ol[^>]*>|<li[^>]*>|<\/li>/i
 
 /**
- * Extracts each `<li>`'s own text — the content up to (but not including) its first
- * child `<ul>`/`<ol>`/`<li>`, or its closing `</li>`, whichever comes first.
+ * Extracts each `<li>`'s own text.
+ *
+ * The content up to (but not including) its first child `<ul>`/`<ol>`/`<li>`,
+ * or its closing `</li>`, whichever comes first.
  *
  * This is what lets a nested subsidiary list flatten correctly without balanced-tag tracking:
  * scanning every `<li[^>]*>` open tag in document order and stopping each one's own text at its
@@ -420,11 +431,13 @@ function extractPlainTextLines(html: string): string[] {
 }
 
 /**
- * True when `value` is just a corporate legal-entity suffix ("Inc.", "LLC", "Corp.") with nothing else —
- * `canonicalizeOrganizationName` (`@mailwoman/record`, already used the same way by `edgar-filings.ts`) reduces such a
- * string to an empty canonical name and a non-empty `designations` list. Guards {@linkcode splitCandidateLine}'s
- * single-comma rule: a bare designation immediately after a comma is the tail of one entity's name (`"Horizon Services,
- * Inc."`), not a jurisdiction, and the comma rule must not treat "Inc." as if it were a place.
+ * True when `value` is just a corporate legal-entity suffix ("Inc.", "LLC", "Corp.") with nothing else.
+ *
+ * `canonicalizeOrganizationName` (`@mailwoman/record`, already used the same way by `edgar-filings.ts`)
+ * reduces such a string to an empty canonical name and a non-empty `designations` list.
+ * Guards {@linkcode splitCandidateLine}'s single-comma rule: a bare designation immediately
+ * after a comma is the tail of one entity's name (`"Horizon Services, Inc."`),
+ * not a jurisdiction, and the comma rule must not treat "Inc." as if it were a place.
  *
  * @todo Move to `@mailwoman/record/organization`
  */
@@ -460,8 +473,9 @@ const COLUMN_GAP_PATTERN = /[ \t\u00A0]{2,}/
  *    `"Inc."` to an empty canonical name) — `"Horizon Services, Inc."` is one entity's
  *    whole legal name, and "Inc." is not a place a comma could plausibly be introducing.
  *
- * Falls through to `{name: <the whole cleaned line>}` when none of the above apply —
- * an honest "no jurisdiction found", never a fabricated one.
+ * Falls through to `{name: <the whole cleaned line>}` when none of the above apply.
+ * An honest "no jurisdiction found", never a fabricated one.
+ *
  * The one exception is a 3+-column 2+-space-gap split (`name jurisdiction 100%`):
  * that's an extra column this parser has no confident meaning for, the same shape
  * {@linkcode subsidiariesFromTableRows} abstains on for a 3+-cell table row,
@@ -503,12 +517,13 @@ function splitCandidateLine(line: string): { name: string; jurisdiction?: string
 }
 
 /**
- * A leading bullet or list-marker glyph — markup convention rather than part of a name. Stripped from a candidate line
- * before the name/jurisdiction split runs (module docstring, "Line/list refinements"): `"• Bandwidth.com clec, LLC
- * (Delaware, United States)"` must become `"Bandwidth.com clec, LLC (Delaware, United States)"` before
- * {@linkcode splitCandidateLine} ever sees the (fabricated, tag-stripping-artifact) 2+-space gap the bullet leaves
- * behind — otherwise the trailing-parenthetical rule never gets a chance
- * and the bullet itself is read as the name.
+ * A leading bullet or list-marker glyph — markup convention rather than part of a name.
+ *
+ * Stripped from a candidate line before the name/jurisdiction split runs
+ * (module docstring, "Line/list refinements"): `"• Bandwidth.com clec, LLC (Delaware, United States)"`
+ * must become `"Bandwidth.com clec, LLC (Delaware, United States)"` before {@linkcode splitCandidateLine}
+ * ever sees the (fabricated, tag-stripping-artifact) 2+-space gap the bullet leaves behind.
+ * Otherwise the trailing-parenthetical rule never gets a chance and the bullet itself is read as the name.
  */
 const LIST_MARKER_PATTERN = /^[•●▪◦∙·*–—-]+\s*/
 
@@ -530,10 +545,13 @@ const TITLE_LINE_PATTERNS = [
 ]
 
 /**
- * A candidate line/list-item longer than this many whitespace-separated tokens is abstained on rather than split — see
- * the module docstring. The longest legitimate name in the real-filing corpus (`bandwidth-2025.htm`'s `"Voxbone
- * Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi"`) is 8 tokens. a preamble sentence or a run of
- * concatenated names is not a name at all, and decision 6 abstains rather than guessing a boundary.
+ * A candidate line/list-item longer than this many whitespace-separated tokens is
+ * abstained on rather than split — see the module docstring.
+ *
+ * The longest legitimate name in the real-filing corpus (`bandwidth-2025.htm`'s
+ * `"Voxbone Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi"`) is 8 tokens.
+ * A preamble sentence or a run of concatenated names is not a name at all,
+ * and decision 6 abstains rather than guessing a boundary.
  */
 const MAX_ENTITY_NAME_WORDS = 12
 
@@ -547,11 +565,13 @@ const MAX_ENTITY_NAME_WORDS = 12
  * title/column-header lines need the same content-based recognition), and keep the rest.
  *
  * A line reduced to nothing but whitespace by the marker strip falls through to
- * {@linkcode splitCandidateLine} same as any other line — it still ends up counted
- * `unparseable` there (a blank name), the same basis `"----"`-style decorative divider lines
- * were already counted on before this rule existed. that path is preserved deliberately
- * rather than special-cased to "skip uncounted", since the marker character class overlaps
- * with plain decorative dashes and the two cases aren't distinguishable from the marker alone.
+ * {@linkcode splitCandidateLine} same as any other line.
+ * It still ends up counted `unparseable` there (a blank name), the same basis `"----"`-style
+ * decorative divider lines were already counted on before this rule existed.
+ *
+ * That path is preserved deliberately rather than special-cased to "skip uncounted",
+ * since the marker character class overlaps with plain decorative dashes
+ * and the two cases aren't distinguishable from the marker alone.
  */
 function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
 	const subsidiaries: ParsedSubsidiary[] = []
@@ -602,14 +622,16 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
 }
 
 /**
- * True when every extracted cell of every extracted row is blank — a purely decorative
- * border/spacer table (the kind Word/Workiva exports use as a horizontal-rule substitute)
+ * True when every extracted cell of every extracted row is blank.
+ *
+ * A purely decorative border/spacer table (the kind Word/Workiva exports use as a horizontal-rule substitute)
  * carrying no subsidiary data at all, as opposed to a real table that legitimately abstains
  * on some or all of its rows (`subsidiariesFromTableRows`'s job, unchanged here).
  *
- * `shentel-2025.htm` states its subsidiary list as block text outside two such
- * decorative tables. committing to the (empty) table strategy the instant any `<table>`
- * tag exists would silence the real list this document states.
+ * `shentel-2025.htm` states its subsidiary list as block text outside two such decorative tables.
+ * Committing to the (empty) table strategy the instant any `<table>` tag exists
+ * would silence the real list this document states.
+ *
  * A table with even one real non-blank cell still commits to the table strategy as
  * before — reading a real table's data with more confidence (multiple sibling tables,
  * blank spacer columns, footnote rows, …) is Task 3's territory rather than this check's.
@@ -619,13 +641,16 @@ function isEntirelyBlankTable(tables: readonly TableCell[][][]): boolean {
 }
 
 /**
- * Parses an Exhibit 21 document into its subsidiary list. Decision 6 binds: a row/line that cannot be confidently
- * extracted is counted (`unparseable`) and dropped, never guessed at — this function never throws on malformed input
- * (criterion 3); the worst case for a document this parser cannot make sense of at all is `{subsidiaries: [],
- * unparseable: N}`.
+ * Parses an Exhibit 21 document into its subsidiary list.
  *
- * Runs {@linkcode documentWindow} once, first — every strategy below reasons about the
- * same window, never the raw archive document with its sgml envelope still attached.
+ * Decision 6 binds: a row/line that cannot be confidently extracted is counted
+ * (`unparseable`) and dropped, never guessed at.
+ * This function never throws on malformed input (criterion 3); the worst case for a document
+ * this parser cannot make sense of at all is `{subsidiaries: [], unparseable: N}`.
+ *
+ * Runs {@linkcode documentWindow} once, first.
+ * Every strategy below reasons about the same window, never the raw archive
+ * document with its sgml envelope still attached.
  *
  * Tries three shapes, in order, and commits to the first one it detects
  * (a real Exhibit 21 uses one consistent format throughout, so there's no ambiguity

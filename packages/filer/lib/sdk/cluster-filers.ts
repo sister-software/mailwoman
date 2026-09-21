@@ -184,10 +184,11 @@ const LEGAL_NAME_ATTRIBUTE_KEY = "legal_name"
 /**
  * Calibrated inferred-link threshold (match weight, in bits — {@link resolveEntities}'s `threshold`).
  *
- * `buildDefaultModel`'s prior (`lambda: 0.0001`) alone contributes
- * `log2(0.0001 / 0.9999) ≈ -13.29` bits — a large, constant tax on every pair,
- * since a match between two records drawn at random from the whole crosswalk is assumed
- * rare (the model was designed for the general case. it has no per-domain lambda change).
+ * `buildDefaultModel`'s prior (`lambda: 0.0001`) alone contributes `log2(0.0001 / 0.9999) ≈ -13.29` bits.
+ * A large, constant tax on every pair, since a match between two
+ * records drawn at random from the whole crosswalk is assumed rare
+ * (the model was designed for the general case. It has no per-domain lambda change).
+ *
  * Because pass (b)'s blocking key is an exact canonicalized-organization-name match, every
  * candidate pair this module scores already carries the organization comparison's `"exact"` level
  * (`m: 0.8, u: 0.01` → `log2(80) ≈ +6.32` bits) — the identity signal blocking selected for.
@@ -196,7 +197,7 @@ const LEGAL_NAME_ATTRIBUTE_KEY = "legal_name"
  * "different" level (`m: 0.25, u: 0.92` → `log2(0.25/0.92) ≈ -1.88` bits each) whenever
  * a candidate pair's code sets don't overlap — which, for two different authoritative
  * components, is the common case (their code sets are disjoint by construction.
- * components sharing a code would already be one authoritative component).
+ * Components sharing a code would already be one authoritative component).
  * Worst case, all three discriminators disagree: `-13.29 + 6.32 - 3×1.88 ≈ -12.61` bits.
  *
  * `-13` sits just below that worst case (empirically verified against `buildDefaultModel`'s
@@ -216,16 +217,17 @@ export const INFERRED_LINK_THRESHOLD = -13
 const IDENTIFIER_VETO_KEYS = ["frn", "form499ID", "providerID"] as const
 
 /**
- * Hard veto (decision 5's real enforcement mechanism. see the module docstring's "identifier veto" section).
+ * Hard veto (decision 5's real enforcement mechanism. See the module docstring's "identifier veto" section).
  *
  * `true` when `a` and `b` share at least one code across any of {@link IDENTIFIER_VETO_KEYS}.
  * In this domain, identifiers are authoritative — two different FRNs mean two different
  * registrants, full stop, no matter how similar the names look.
  *
- * A value missing on either side is not evidence of "different" —
- * it's silence on that dimension, so it never contributes to the veto
+ * A value missing on either side is not evidence of "different".
+ * It's silence on that dimension, so it never contributes to the veto
  * (only a value present and disjoint on both sides counts, exactly like `resolveEntities`'s
  * own `similarityComparison` treats a missing value as "no evidence", not "different").
+ *
  * Returns `false` — no shared identifier, i.e. veto territory — when `a`/`b` have no identifier in
  * common on any of the three types (including when one or both sides carry no identifier data at all).
  */
@@ -250,9 +252,9 @@ export function hasSharedIdentifier(a: SourceRecord, b: SourceRecord): boolean {
  * The Fellegi-Sunter model used only inside {@linkcode scoreWithIdentifierVeto} — built once,
  * at module load, since it depends on nothing but a fixed comparison config (no per-call state).
  *
- * `collapseSpatial: true` matches `resolveEntities`'s own default. the choice is
- * moot in practice, since no `SourceRecord` this module builds ever populates
- * `.address` (see the module docstring's "honest description" section),
+ * `collapseSpatial: true` matches `resolveEntities`'s own default.
+ * The choice is moot in practice, since no `SourceRecord` this module builds ever
+ * populates `.address` (see the module docstring's "honest description" section),
  * so the spatial comparison always evaluates to "missing" regardless.
  */
 const INFERRED_SCORING_MODEL = buildDefaultModel({
@@ -261,16 +263,16 @@ const INFERRED_SCORING_MODEL = buildDefaultModel({
 })
 
 /**
- * The custom `scorer` passed to `resolveEntities` — this is where the hard
- * identifier veto is actually enforced.
+ * The custom `scorer` passed to `resolveEntities`.
+ *
+ * This is where the hard identifier veto is actually enforced.
  *
  * Supplying a `scorer` makes `resolveEntities` use this function's return value
  * as a candidate pair's match weight instead of its own internal `scorePair` call
  * (`registry/resolve.ts`), so a disjoint-identifier pair is forced to `-Infinity` —
  * unable to clear any threshold — before the name-similarity score is even computed.
- * Only when
- * {@linkcode hasSharedIdentifier} finds real overlap does the ordinary Fellegi-Sunter weight (over
- * {@link INFERRED_SCORING_MODEL}) decide the outcome.
+ * Only when {@linkcode hasSharedIdentifier} finds real overlap does the ordinary
+ * Fellegi-Sunter weight (over {@link INFERRED_SCORING_MODEL}) decide the outcome.
  */
 function scoreWithIdentifierVeto(a: SourceRecord, b: SourceRecord): number {
 	if (!hasSharedIdentifier(a, b)) return Number.NEGATIVE_INFINITY
@@ -279,9 +281,10 @@ function scoreWithIdentifierVeto(a: SourceRecord, b: SourceRecord): number {
 }
 
 /**
- * Rows per `insert` statement when bulk-writing `filer_cluster` — keeps well under
- * SQLite's bound parameter limit (3 columns/row) without needing a staging-table
- * apparatus. this module reads the whole graph into memory for union-find regardless,
+ * Rows per `insert` statement when bulk-writing `filer_cluster` — keeps well under SQLite's
+ * bound parameter limit (3 columns/row) without needing a staging-table apparatus.
+ *
+ * This module reads the whole graph into memory for union-find regardless,
  * so there's no streaming/batch-commit concern the way `build-filer.ts` has.
  */
 const CLUSTER_INSERT_BATCH_SIZE = 500
@@ -312,8 +315,9 @@ export interface InferredClusterResult {
 	 */
 	recordsConsidered: number
 	/**
-	 * Entities `resolveEntities` produced with more than one record — an inferred link
-	 * was actually found (as opposed to a singleton, which contributes no edge).
+	 * Entities `resolveEntities` produced with more than one record.
+	 *
+	 * An inferred link was actually found (as opposed to a singleton, which contributes no edge).
 	 */
 	linkedClusters: number
 	/**
@@ -332,9 +336,10 @@ export interface ClusterFilersOptions {
 	 * becomes `source_vintage` (decision 7: the inferred pass carries no finer-grained
 	 * per-pair date than "when this clustering run happened").
 	 *
-	 * A free-text human vintage label (e.g. `"2026-cluster-v1"`) is fine —
-	 * this field is also the "same run" identity the same-vintage-rebuild half of
+	 * A free-text human vintage label (e.g. `"2026-cluster-v1"`) is fine.
+	 * This field is also the "same run" identity the same-vintage-rebuild half of
 	 * cross-vintage supersession keys on (see the module docstring).
+	 *
 	 * Never written into `valid_from`/`valid_to` directly — see
 	 * {@link ClusterFilersOptions.validFrom} for that.
 	 */
@@ -346,13 +351,14 @@ export interface ClusterFilersOptions {
 	 * (same rationale as `BuildFilerOptions.validFrom` in `build-filer.ts`).
 	 *
 	 * `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`)
-	 * as a plain string comparison, so it must always be ISO-sortable — a vintage label
-	 * like `"2026-cluster-v1"` sorts lexicographically above any ISO date in its own year
-	 * and would silently break every `asOf`-scoped read against the edge.
+	 * as a plain string comparison, so it must always be ISO-sortable.
+	 * A vintage label like `"2026-cluster-v1"` sorts lexicographically above any ISO date
+	 * in its own year and would silently break every `asOf`-scoped read against the edge.
 	 * Validated via {@linkcode assertISODate}.
 	 *
-	 * Also the "which real date did this change happen" half of cross-vintage supersession
-	 * (see the module docstring) — the "same run" half is answered by `sourceVintage`, not this field.
+	 * Also the "which real date did this change happen" half of cross-vintage
+	 * supersession (see the module docstring).
+	 * The "same run" half is answered by `sourceVintage`, not this field.
 	 */
 	validFrom: string
 	onProgress?: (message: string) => void
@@ -378,8 +384,8 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
 
 /**
  * Deduplicate + sort, then whitespace-join — the "code-set string" shape
- * {@linkcode ClusterFilersOptions}'s callers (and `resolveEntities`'s `exactDiscriminators`)
- * expect.
+ * {@linkcode ClusterFilersOptions}'s callers (and `resolveEntities`'s `exactDiscriminators`) expect.
+ *
  * Returns `""` for an empty input, which the caller treats as "no attribute"
  * (never a false `"different"` signal — see {@linkcode buildInferredRecords}).
  */
@@ -390,8 +396,7 @@ function codeSetString(values: Iterable<string>): string {
 /**
  * Read every `filer_node` row, keyed by `node_id`.
  *
- * Shared by both
- * {@linkcode readAuthoritativeGroups}'s callers (via the group members)
+ * Shared by both {@linkcode readAuthoritativeGroups}'s callers (via the group members)
  * and {@linkcode buildInferredRecords} (to classify a group's members by identifier type).
  */
 async function readNodeInfo(
@@ -409,21 +414,25 @@ async function readNodeInfo(
 }
 
 /**
- * Recompute the authoritative connected components: every `filer_node` row (ordered by `node_id`, for a deterministic
- * result independent of SQLite's own row order), union-found over every `assertion: "authoritative"` and `relationship:
- * "same_entity"` `filer_edge` (weight `Infinity` — an authoritative same-entity edge is never in doubt). A node touched
- * by no such edge is its own singleton component (`cluster()`'s own interface — see `match/clustering.ts`).
+ * Recompute the authoritative connected components: every `filer_node` row
+ * (ordered by `node_id`, for a deterministic result independent of SQLite's own row order),
+ * union-found over every `assertion: "authoritative"` and `relationship: "same_entity"`
+ * `filer_edge` (weight `Infinity` — an authoritative same-entity edge is never in doubt).
  *
- * **The `relationship` filter:** `assertion` and `relationship` are orthogonal columns —
+ * A node touched by no such edge is its own singleton component
+ * (`cluster()`'s own interface — see `match/clustering.ts`).
+ *
+ * **The `relationship` filter:** `assertion` and `relationship` are orthogonal columns.
  * `assertion` grades evidence strength, `relationship` grades what the edge means.
+ *
  * Before this filter existed, every authoritative edge unioned regardless of `relationship`,
  * so a `HoldingCompany`/`ManagementCompany` edge (correctly typed authoritative by Task 2's builder)
- * silently merged every filer sharing that holding/management company into one entity
- * cluster — the exact conflation `filer_family` exists to keep separate.
+ * silently merged every filer sharing that holding/management company into one entity cluster.
+ * The exact conflation `filer_family` exists to keep separate.
  *
  * Restricting to `same_entity` is what makes an entity cluster mean "these identifiers
- * denote the same legal entity" and nothing broader. a holding-company edge asserts
- * "A is held by B", a different claim that must never merge identities.
+ * denote the same legal entity" and nothing broader.
+ * A holding-company edge asserts "A is held by B", a different claim that must never merge identities.
  */
 async function readAuthoritativeGroups(db: Kysely<FilerDatabase>): Promise<string[][]> {
 	const nodeRows = await db.selectFrom("filer_node").select(["node_id"]).orderBy("node_id").execute()
@@ -498,7 +507,7 @@ export async function clusterAuthoritativeComponents(db: Kysely<FilerDatabase>):
  * As long as every `legal_name` vintage for one node is drawn from that same
  * lexicographically-sortable date scheme (the assumption this whole module makes about `filer.db`),
  * `>` and "chronologically later" agree.
- * This breaks if that assumption is ever violated (e.g. a future source starts writing `legal_name`
+ * This breaks if that assumption is ever violated (e.g. A future source starts writing `legal_name`
  * with a differently formatted or non-chronological `source_vintage`) — at that point "latest"
  * here means "lexicographically greatest", silently rather than "chronologically latest".
  */
@@ -559,11 +568,11 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 
 		const organization = canonicalizeOrganizationName(legalName)
 
-		// `canonicalizeOrganizationName` returns a truthy object even when the
-		// whole input was designation tokens (e.g. a bare "LLC") and stripped down
-		// to an empty canonical string — `!organization` alone misses that case,
-		// inflating `recordsConsidered` with a record that can never usefully block
-		// (an empty-string blocking key never matches another record. see `exactKey`, `match/blocking.ts`).
+		// `canonicalizeOrganizationName` returns a truthy object even when the whole input was
+		// designation tokens (e.g. A bare "LLC") and stripped down to an empty canonical string.
+		// `!organization` alone misses that case, inflating `recordsConsidered` with a
+		// record that can never usefully block (an empty-string blocking key never matches
+		// another record. See `exactKey`, `match/blocking.ts`).
 		if (!organization || !organization.canonical) continue
 
 		const group = groupOfNode.get(nodeID) ?? [nodeID]
@@ -573,10 +582,10 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 		const form499Codes = codesByType(group, FilerIdentifierType.Form499ID)
 		const providerCodes = codesByType(group, FilerIdentifierType.BDCProviderID)
 
-		// Only set a key when there's an actual code to carry — an unset key reads as
-		// "missing" (no evidence) to `resolveEntities`' exactDiscriminators comparison,
-		// never as a false "different" (see `registry/resolve.ts`'s `similarityComparison`:
-		// a falsy extracted value short-circuits to "missing").
+		// Only set a key when there's an actual code to carry.
+		// An unset key reads as "missing" (no evidence) to `resolveEntities`' exactDiscriminators
+		// comparison, never as a false "different" (see `registry/resolve.ts`'s
+		// `similarityComparison`: a falsy extracted value short-circuits to "missing").
 		if (frnCodes) {
 			attributes.frn = frnCodes
 		}
@@ -600,7 +609,7 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
  * (decision 4: binding `learnedScorer: false`, plus a hard identifier veto via a custom `scorer` —
  * see {@linkcode scoreWithIdentifierVeto} and the module docstring's "identifier veto" section),
  * and record the outcome as `assertion: "inferred"` rows — without touching any
- * `assertion: "authoritative"` row (decision 5 / criterion 2, binding. see the module docstring).
+ * `assertion: "authoritative"` row (decision 5 / criterion 2, binding. See the module docstring).
  *
  * Writes:
  *
@@ -644,8 +653,9 @@ export async function clusterInferredLinks(
 		// actual weight for every pair comes from `scorer` below rather than from resolveEntities'
 		// own internal model built from this config (see scoreWithIdentifierVeto's docstring).
 		exactDiscriminators: [...IDENTIFIER_VETO_KEYS],
-		// Decision 4, binding: the bundled GBT is trained on NPPES healthcare dedup. its calibrated
-		// threshold isn't in Fellegi-Sunter weight units and has no business scoring corporate legal names.
+		// Decision 4, binding: the bundled GBT is trained on NPPES healthcare dedup.
+		// Its calibrated threshold isn't in Fellegi-Sunter weight units and has no
+		// business scoring corporate legal names.
 		// Redundant with `scorer` below (a custom `scorer` already bypasses the learned-scorer branch entirely)
 		// but kept explicit for intent.
 		learnedScorer: false,
@@ -667,17 +677,17 @@ export async function clusterInferredLinks(
 		// 1. same-vintage rebuild (`source_vintage = sourceVintage` — the run's label identity) —
 		//    delete rather than close.
 		//    This run's own prior output at this exact vintage is being fully superseded
-		//    (e.g. filer.db was rebuilt with corrected input under the same clustering vintage label) —
-		//    there is no meaningful "historical" state to preserve at a vintage that,
+		//    (e.g. Filer.db was rebuilt with corrected input under the same clustering vintage label).
+		//    There is no meaningful "historical" state to preserve at a vintage that,
 		//    by definition, hasn't changed identity, and closing a row to its own valid_from
 		//    (a zero-duration `valid_from == valid_to` window) would itself be a stale,
-		//    un-reassertable row: `insert ... on conflict do nothing` below would silently skip
+		//    un-reassertable row: `insert ... On conflict do nothing` below would silently skip
 		//    re-inserting a still-valid link at that same PK, permanently mislabeling it "closed".
 		//    Deleting first, then letting the loop below reinsert whatever the current data
 		//    actually supports, is the only rebuild-safe option — mirrors filer_cluster's
 		//    own clear-and-rewrite discipline for this same pass.
 		//    Keyed on `source_vintage`, not `valid_from`: a same-label rebuild can legitimately carry
-		//    a different (later) `validFrom` (e.g. today's date on a same-label correction run)
+		//    a different (later) `validFrom` (e.g. Today's date on a same-label correction run)
 		//    without being "later vintage" history.
 		// 2. earlier-run edges (`valid_from < validFrom` — real ISO-date ordering) —
 		//    close (`SET valid_to`), not delete.
@@ -736,9 +746,7 @@ export async function clusterInferredLinks(
 						match_score: entity.cohesion,
 						evidence: stringifyJSON({ memberNodeIDs }),
 					})
-					// Both the same-vintage-rebuild and earlier-vintage-supersession cases are handled above, before
-					// this loop runs (see the module docstring's "cross-vintage supersession" section), so this
-					// `onConflict` is a defensive no-op for the (already-cleared) same-vintage PK.
+					// Both the same-vintage-rebuild and earlier-vintage-supersession cases are handled above, before this loop runs (see the module docstring's "cross-vintage supersession" section), so this `onConflict` is a defensive no-op for the (already-cleared) same-vintage PK.
 					.onConflict((oc) => oc.doNothing())
 					.execute()
 

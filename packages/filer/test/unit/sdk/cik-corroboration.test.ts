@@ -67,7 +67,8 @@ describe("corroborateCIK — pins", () => {
 	})
 
 	it("checks the pin BEFORE the SIC, so a pin is a decision rather than a tiebreak", () => {
-		// Same registrant, no SIC published at all — a pin still carries it.
+		// Same registrant, no SIC published at all.
+		// A pin still carries it.
 		const pinnedCIKs = new Set([cik("0001514416")])
 
 		expect(corroborateCIK(cik("0001514416"), null, { pinnedCIKs }).basis).toBe(CIKCorroborationBasis.Pinned)
@@ -107,7 +108,8 @@ describe("the allowlist itself", () => {
 	it("is enumerated, not a 48xx prefix test — 4899 is in, 4813 is in, 4899's neighbours are not", () => {
 		expect(TELECOM_SIC_CODES.has("4813")).toBe(true)
 		expect(TELECOM_SIC_CODES.has("4899")).toBe(true)
-		// A prefix test would admit these. each entry above is a decision someone made.
+		// A prefix test would admit these.
+		// Each entry above is a decision someone made.
 		expect(TELECOM_SIC_CODES.has("4800")).toBe(false)
 		expect(TELECOM_SIC_CODES.has("4890")).toBe(false)
 	})

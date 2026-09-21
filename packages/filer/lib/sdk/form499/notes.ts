@@ -49,9 +49,11 @@ export const Form499CessationReason = {
 	/**
 	 * `This company still exists, however it is no longer providing telecommunications services.`
 	 *
-	 * The entity survives. only the telecom operation ended.
-	 * Distinct from {@linkcode Form499CessationReason.OutOfBusiness} and the difference
-	 * is required — one of these companies can still be somebody's parent.
+	 * The entity survives.
+	 * Only the telecom operation ended.
+	 *
+	 * Distinct from {@linkcode Form499CessationReason.OutOfBusiness} and the difference is required.
+	 * One of these companies can still be somebody's parent.
 	 */
 	ExitedTelecom: "exited-telecom",
 	/**
@@ -68,8 +70,9 @@ export const Form499CessationReason = {
 	 * `This legal entity accout has been closed because their Form 499 filing is now submitted on a consolidated basis.`
 	 *
 	 * (`accout` is the source's own typo, matched verbatim below.)
-	 * The entity did not cease — its filing moved under a parent's, which is a
-	 * family signal rather than a death certificate.
+	 * The entity did not cease.
+	 *
+	 * Its filing moved under a parent's, which is a family signal rather than a death certificate.
 	 */
 	AccountConsolidated: "account-consolidated",
 	/**
@@ -95,8 +98,9 @@ export interface Form499Lifecycle {
 	/**
 	 * Every non-empty note, verbatim and in column order.
 	 *
-	 * The source text is never discarded — a reason code is a lossy summary of it, and an
-	 * auditor asking "what did the FCC actually say" must not have to refetch the workbook.
+	 * The source text is never discarded.
+	 * A reason code is a lossy summary of it, and an auditor asking "what did the FCC
+	 * actually say" must not have to refetch the workbook.
 	 */
 	notes: string[]
 	/**
@@ -119,15 +123,16 @@ export interface Form499Lifecycle {
 	/**
 	 * Every recognized reason, deduplicated, in the order first seen.
 	 *
-	 * A filer commonly carries two or three — a date, a replacement, and a reason
-	 * are three separate notes on the same row.
+	 * A filer commonly carries two or three.
+	 * A date, a replacement, and a reason are three separate notes on the same row.
 	 */
 	reasons: Form499CessationReasonValue[]
 	/**
 	 * Notes matching none of the eight templates.
 	 *
-	 * Always `0` for the 2025-12-07 vintage. a non-zero count in a later vintage means
-	 * the FCC added a template and this file needs revisiting.
+	 * Always `0` for the 2025-12-07 vintage.
+	 * A non-zero count in a later vintage means the FCC added a template and this file needs revisiting.
+	 *
 	 * Counted rather than silently dropped so that fact can be measured instead of assumed.
 	 */
 	unrecognized: number
@@ -154,9 +159,7 @@ const FIXED_NOTE_PATTERNS = [
 	],
 	[/^all assets of this company have been sold to another party\.$/i, Form499CessationReason.AssetsSold],
 	[
-		// `accout` is the source's typo and is matched as spelled. A tolerant `accou?nt` would also admit a
-		// corrected future spelling, but silently — a vintage that fixes the typo should surface as an
-		// `unrecognized` count so the change is noticed rather than absorbed.
+		// `accout` is the source's typo and is matched as spelled. A tolerant `accou?nt` would also admit a corrected future spelling, but silently. A vintage that fixes the typo should surface as an `unrecognized` count so the change is noticed rather than absorbed.
 		/^this legal entity accout has been closed because their form \d+ filing is now submitted on a consolidated basis\.$/i,
 		Form499CessationReason.AccountConsolidated,
 	],
@@ -178,8 +181,8 @@ function pad2(value: string): string {
  * and any number of cells is tolerated so a future vintage adding `note4` needs no signature change.
  *
  * Never throws.
- * A note this does not recognize is counted rather than guessed at — see
- * {@link Form499Lifecycle.unrecognized}.
+ * A note this does not recognize is counted rather than guessed at —
+ * see {@link Form499Lifecycle.unrecognized}.
  */
 export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefined>): Form499Lifecycle {
 	const notes: string[] = []

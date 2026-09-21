@@ -25,15 +25,18 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
  *
  * One implementation, shared, so the rule can't drift between writers.
  *
- * `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`'s `valid_from <= asOf`) as a
- * plain string comparison — correct only when every value compared is drawn from the same ISO-sortable `yyyy-MM-DD`
- * scheme. `source_vintage` is free to stay a human vintage label (`"2026-Q2"`, `"2026-cluster-v1"`) — that plurality is
- * exactly what the column is for (decision 7) — but that same label is not safe to also write into `valid_from`:
- * `"2026-Q2"` sorts lexicographically above any ISO date in the same year or earlier — string comparison decides at the
- * first differing character, and `"Q"` outranks every digit — so an edge dated that way silently fails `valid_from <=
- * asOf` at every `asOf` a build of that vintage is actually read against, and `filerLookup` would report the identifier
- * crosswalk as empty against a filer.db that actually has the data (reviewer probe, `build-filer.ts`'s final 3a review:
- * a fully populated filer.db built with `sourceVintage: "2026-Q2"` returned `identifiers: []`/`primary_frn: null`).
+ * `valid_from` participates in every downstream `asOf`-scoped predicate
+ * (`filer-lookup.ts`'s `valid_from <= asOf`) as a plain string comparison — correct only
+ * when every value compared is drawn from the same ISO-sortable `yyyy-MM-DD` scheme.
+ * `source_vintage` is free to stay a human vintage label (`"2026-Q2"`, `"2026-cluster-v1"`) —
+ * that plurality is exactly what the column is for (decision 7) — but that same label is
+ * not safe to also write into `valid_from`: `"2026-Q2"` sorts lexicographically above any
+ * ISO date in the same year or earlier — string comparison decides at the first differing
+ * character, and `"Q"` outranks every digit — so an edge dated that way silently fails
+ * `valid_from <= asOf` at every `asOf` a build of that vintage is actually read against,
+ * and `filerLookup` would report the identifier crosswalk as empty against a filer.db that
+ * actually has the data (reviewer probe, `build-filer.ts`'s final 3a review: a fully populated
+ * filer.db built with `sourceVintage: "2026-Q2"` returned `identifiers: []`/`primary_frn: null`).
  *
  * Thrown rather than coerced: there is no honest way to turn a whole-file vintage
  * label into a per-edge date without fabricating one.

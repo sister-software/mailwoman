@@ -17,8 +17,9 @@
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
- * Matches a cell value made only of punctuation and whitespace — a decorative rule
- * row (`"----"`, `"======="`), which no legal entity name can be.
+ * Matches a cell value made only of punctuation and whitespace.
+ *
+ * A decorative rule row (`"----"`, `"======="`), which no legal entity name can be.
  */
 const DECORATIVE_ONLY_PATTERN = /^[^a-z0-9]*$/i
 
@@ -30,8 +31,8 @@ const LETTER_OR_DIGIT_PATTERN = /[a-z0-9]/i
 /**
  * Column labels that name a jurisdiction column.
  *
- * Exactly one of these in a header row is what licenses a column mapping — the document says
- * which column means what, so reading it is not guessing.
+ * Exactly one of these in a header row is what licenses a column mapping.
+ * The document says which column means what, so reading it is not guessing.
  */
 export const JURISDICTION_HEADER_LABELS = new Set<string>([
 	"jurisdiction",
@@ -58,8 +59,8 @@ export const JURISDICTION_HEADER_LABELS = new Set<string>([
 ])
 
 /**
- * Column labels that name a column which is neither the entity name nor its jurisdiction —
- * a trade name, an ownership percentage, a tax ID.
+ * Column labels that name a column which is neither the entity name nor its jurisdiction.
+ * A trade name, an ownership percentage, a tax ID.
  *
  * A column mapping skips these when picking the name column, and every one of
  * them is also a header label in its own right.
@@ -136,40 +137,54 @@ export function isHeaderOrDecorationRow(values: readonly string[]): boolean {
 }
 
 /**
- * A row whose first non-blank value is nothing but a footnote marker — `(1)`, `[2]`, `3`, `*`, `***`. The row is the
- * footnote's own text rather than a subsidiary: `widepoint-2025.htm`'s second table is `[(1), "In January 2019,
- * WidePoint Solutions Corp. was merged into…"]`, and `echostar-2025.htm`/`atn-international-2025.htm` state one such
- * table per footnote. Checked before any column mapping is consulted, so a footnote table trailing a labelled list
- * never inherits that list's mapping.
+ * A row whose first non-blank value is nothing but a footnote marker — `(1)`, `[2]`, `3`, `*`, `***`.
+ *
+ * The row is the footnote's own text rather than a subsidiary: `widepoint-2025.htm`'s
+ * second table is `[(1), "In January 2019, WidePoint Solutions Corp. Was merged into…"]`,
+ * and `echostar-2025.htm`/`atn-international-2025.htm` state one such table per footnote.
+ * Checked before any column mapping is consulted, so a footnote table trailing a
+ * labelled list never inherits that list's mapping.
  */
 export const FOOTNOTE_MARKER_PATTERN = /^[([]?\d{1,3}[)\]]?$|^\*{1,3}$/
 
 /**
- * True when `value` carries a corporate legal designation ("Inc.", "LLC", "Limited") — `canonicalizeOrganizationName`
- * (`@mailwoman/record`) returns a non-empty `designations` array exactly then. Verified against the corpus on
- * 2026-08-03: `"IDT Payment Services, Inc*. (DE)"` → `["inc"]`, while `"South Carolina"`, `"Delaware"`, `"British
- * Columbia, Canada"`, `"England and Wales"` and `"DE"` all → `[]`. Used by {@linkcode isMultiValueCell} and the
- * name-over-name table rule to tell an entity name from a place — never on its own, always alongside a second
- * condition, because a jurisdiction can carry one (Charter writes `"Delaware limited liability company"`).
+ * True when `value` carries a corporate legal designation ("Inc.", "LLC", "Limited").
+ *
+ * `canonicalizeOrganizationName` (`@mailwoman/record`) returns a non-empty
+ * `designations` array exactly then.
+ * Verified against the corpus on 2026-08-03: `"IDT Payment Services, Inc*. (DE)"` →
+ * `["inc"]`, while `"South Carolina"`, `"Delaware"`, `"British Columbia, Canada"`,
+ * `"England and Wales"` and `"DE"` all → `[]`.
+ *
+ * Used by {@linkcode isMultiValueCell} and the name-over-name table rule to tell an
+ * entity name from a place — never on its own, always alongside a second condition,
+ * because a jurisdiction can carry one (Charter writes `"Delaware limited liability company"`).
  */
 export function carriesLegalDesignation(value: string): boolean {
 	return (canonicalizeOrganizationName(value)?.designations.length ?? 0) > 0
 }
 
 /**
- * True when one cell holds several entity values the source kept in separate blocks — a split point with a complete
- * legal entity name on both sides of it. `ooma-2025.htm`'s last row is a single `<td>` holding five `<p>` blocks.
- * reading it as one string runs them together into `"Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC
- * …"` against a jurisdiction of `"Delaware Delaware Delaware Colorado Delaware"`, which is five fabricated claims
- * rather than one. Decision 6: the row states more than this parser can align, so it abstains.
+ * True when one cell holds several entity values the source kept in separate blocks.
  *
- * A block boundary alone is not enough, and this is the rule's whole difficulty: edgar's Word/Workiva exporters also
- * emit a soft line wrap as a block boundary, so `att-2025.htm` states one name as `<div>Illinois Bell
- * Telephone</div><div>&#160.&#160.Company, LLC</div>` — text in both blocks, one entity. What separates the two is that
- * each half of a genuine multi-value cell is a whole legal name carrying its own designation
- * (`canonicalizeOrganizationName` — `"Trunking.IO, LLC"` / `"FluentStream Corp. …"` both do), whereas a wrap splits one
- * name's designation off the front half (`"Illinois Bell Telephone"` carries none). Ten of AT&T's nineteen subsidiaries
- * are stated on wrapped rows.
+ * A split point with a complete legal entity name on both sides of it.
+ * `ooma-2025.htm`'s last row is a single `<td>` holding five `<p>` blocks.
+ *
+ * Reading it as one string runs them together into
+ * `"Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC …"` against a jurisdiction of
+ * `"Delaware Delaware Delaware Colorado Delaware"`, which is five fabricated claims rather than one.
+ * Decision 6: the row states more than this parser can align, so it abstains.
+ *
+ * A block boundary alone is not enough, and this is the rule's whole difficulty: edgar's
+ * Word/Workiva exporters also emit a soft line wrap as a block boundary, so `att-2025.htm`
+ * states one name as `<div>Illinois Bell Telephone</div><div>&#160.&#160.Company, LLC</div>` —
+ * text in both blocks, one entity.
+ * What separates the two is that each half of a genuine multi-value cell is a
+ * whole legal name carrying its own designation (`canonicalizeOrganizationName` —
+ * `"Trunking.IO, LLC"` / `"FluentStream Corp. …"` both do), whereas a wrap splits one
+ * name's designation off the front half (`"Illinois Bell Telephone"` carries none).
+ *
+ * Ten of AT&T's nineteen subsidiaries are stated on wrapped rows.
  *
  * Each side is cumulative rather than the adjacent block: a name may itself wrap
  * across two blocks, and the question is whether the cell can be split in two

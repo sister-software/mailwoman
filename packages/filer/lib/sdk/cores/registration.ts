@@ -27,26 +27,29 @@ export interface CORESRegistration {
 	 */
 	entityName?: string
 	/**
-	 * Cores's own entity-type string, verbatim (e.g. `"Private Sector , Corporation"` —
-	 * the stray space before the comma is in the source).
+	 * Cores's own entity-type string, verbatim (e.g. `"Private Sector , Corporation"`.
+	 * The stray space before the comma is in the source).
 	 *
 	 * Deliberately not parsed into a union: the vocabulary is unenumerated and a caller
 	 * that needs a classification should corroborate rather than trust a string split.
 	 */
 	entityType?: string
 	/**
-	 * The organization the registered contact belongs to. In practice this is where the brand appears when it differs
-	 * from the legal name — `"WOW! Internet, Cable and Phone"` against a legal name of `"Knology Total Communications,
-	 * Inc."` — which makes it a genuinely independent name surface rather than a duplicate of `entityName`.
+	 * The organization the registered contact belongs to.
+	 *
+	 * In practice this is where the brand appears when it differs from the legal name —
+	 * `"WOW! Internet, Cable and Phone"` against a legal name of `"Knology Total Communications, Inc."` —
+	 * which makes it a genuinely independent name surface rather than a duplicate of `entityName`.
 	 */
 	contactOrganization?: string
 	contactName?: string
 	contactPosition?: string
 	/**
-	 * The contact's postal address as one string. cores renders it across several lines
-	 * and appends `"United States"`; both are collapsed here, the country suffix included,
-	 * since every record in scope is domestic and keeping it adds a token every
-	 * address-matching pass would have to strip again.
+	 * The contact's postal address as one string.
+	 *
+	 * Cores renders it across several lines and appends `"United States"`; both are
+	 * collapsed here, the country suffix included, since every record in scope is domestic
+	 * and keeping it adds a token every address-matching pass would have to strip again.
 	 */
 	contactAddress?: string
 	contactEmail?: string
@@ -55,9 +58,9 @@ export interface CORESRegistration {
 	/**
 	 * Raw `MM/DD/yyyy hh:mm:ss AM/PM` timestamps exactly as served.
 	 *
-	 * Not parsed to a `Date` here — the same discipline `Form499Row.lastFiledAt` follows,
-	 * so a caller that needs a temporal value performs (and can validate) its own
-	 * conversion rather than inheriting a silent one.
+	 * Not parsed to a `Date` here.
+	 * The same discipline `Form499Row.lastFiledAt` follows, so a caller that needs a temporal
+	 * value performs (and can validate) its own conversion rather than inheriting a silent one.
 	 */
 	registrationDate?: string
 	lastUpdated?: string
@@ -153,7 +156,8 @@ export function recaseUniform(value: string): string {
  * **The FRN cross-check is the required part.** Without it a page served for the wrong entity —
  * a redirect, a cached response for a different query, a truncated document — would be
  * attributed to the FRN that was asked for, which is a false identity link written silently.
- * The page states its own FRN. requiring the two to agree is free.
+ * The page states its own FRN.
+ * Requiring the two to agree is free.
  */
 export function parseCORESRegistration(frn: FRN, html: string): CORESRegistration | null {
 	const fields: Partial<Record<keyof CORESRegistration, string>> = {}
@@ -190,8 +194,9 @@ export function parseCORESRegistration(frn: FRN, html: string): CORESRegistratio
 	for (const [field, value] of Object.entries(fields)) {
 		if (field === "frn") continue
 
-		// Timestamps and free-text contact details keep their source casing. only the name surfaces
-		// get the uniform-case tidy, since they are what a human reads and what a display layer renders.
+		// Timestamps and free-text contact details keep their source casing.
+		// Only the name surfaces get the uniform-case tidy, since they are what a human reads
+		// and what a display layer renders.
 		registration[field as Exclude<keyof CORESRegistration, "frn">] =
 			field === "entityName" || field === "contactOrganization" || field === "contactName"
 				? recaseUniform(value)

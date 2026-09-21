@@ -22,8 +22,8 @@
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
 // `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type (`as ResourceErrorShape`).
-// The value arrives via the post-reset dynamic import below. a `const` carries no
-// type side, so the type position needs its own static import.
+// The value arrives via the post-reset dynamic import below.
+// A `const` carries no type side, so the type position needs its own static import.
 // Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -35,8 +35,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // A static import here would bind the module before the reset and reintroduce
 // the flake this file used to carry.
 
-// `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }` —
-// the repo's real `.env` already sets `SEC_EDGAR_USER_AGENT`, so `vi.stubEnv` alone can't
+// `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }`.
+// The repo's real `.env` already sets `SEC_EDGAR_USER_AGENT`, so `vi.stubEnv` alone can't
 // hide it (see `bdc/sdk/client.test.ts`'s identical finding against `FCC_MAP_*`).
 // Mock the module directly so the no-UA fail-fast test below is isolated from
 // whatever the ambient `.env` actually contains.
@@ -589,9 +589,9 @@ describe("createSECClient: rate limiting", () => {
 	it("holds the DEFAULT rate, one under the published ceiling, across a 40-call concurrent fan-out", async () => {
 		const FAN_OUT = 40
 		// The default is SEC_DEFAULT_REQUESTS_PER_SECOND (9), not the ceiling.
-		// Pacing exactly at 10/s put 11 requests inside a sliding second on 3 of 3
-		// real-timer runs — the grants were spaced right, but the continuation that issues
-		// each request lands 0-2ms late and tips one across the boundary.
+		// Pacing exactly at 10/s put 11 requests inside a sliding second on 3 of 3 real-timer runs.
+		// The grants were spaced right, but the continuation that issues each request
+		// lands 0-2ms late and tips one across the boundary.
 		// Asserting the ceiling here would pin the schedule that measured as a violation.
 		//
 		// The interval is ceiled, matching `createSECClient`: `1000/9` is `111.111…`,
@@ -738,8 +738,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 		["numeric", "60", 60_000],
 		["clamped", "999999", 60_000],
 		["unparseable (fails LONG, never the short exponential)", "not-a-valid-value", 60_000],
-		// RFC 9110's `delay-seconds` is `1*digit` only. `Number()` is laxer than the grammar, so a naive
-		// parse would silently honor either of these as a plausible-looking wait.
+		// RFC 9110's `delay-seconds` is `1*digit` only. `Number()` is laxer than the grammar, so a naive parse would silently honor either of these as a plausible-looking wait.
 		["hex-looking", "0x10", 60_000],
 		["fractional", "1.5", 60_000],
 	])("honors a %s Retry-After over the default exponential backoff", async (_label, header, expected) => {

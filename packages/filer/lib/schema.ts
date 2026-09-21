@@ -97,10 +97,12 @@ import { sql, type Kysely } from "kysely"
  * `HoldingCompanyName` and `ManagementCompanyName` cover free-text fields on
  * either source that carry no stable ID of their own.
  *
- * `spin` is defined here but unpopulated in 3a (a prior docstring here incorrectly implied it
- * was sourced from the provider list or a 499 row): neither of `filer/sdk`'s two 3a parsers
- * (`form499.ts`'s `Form499Row`, `provider-list.ts`'s `ProviderListRow`) carries a spin field,
- * and `build-filer.ts` mints no `spin:` node — there is no code path in this phase that populates one.
+ * `spin` is defined here but unpopulated in 3a (a prior docstring here incorrectly
+ * implied it was sourced from the provider list or a 499 row): neither of `filer/sdk`'s
+ * two 3a parsers (`form499.ts`'s `Form499Row`, `provider-list.ts`'s `ProviderListRow`)
+ * carries a spin field, and `build-filer.ts` mints no `spin:` node.
+ * There is no code path in this phase that populates one.
+ *
  * The namespace is reserved for whichever future task adds a source that actually carries a spin
  * rather than a claim that any `filer.db` `buildFilerDatabase` produces today has spin nodes in it.
  *
@@ -112,11 +114,12 @@ import { sql, type Kysely } from "kysely"
  * mirrors `FRN`'s own zero-padding convention (`frn.ts`) for the identical reason
  * (a bare `"320193"` would collide with a differently-padded value under naive string comparison).
  *
- * `SubsidiaryName` is a raw subsidiary name exactly as one parent CIK's Exhibit 21 disclosed
- * it — `build-filer.ts`'s edgar ingest mints one of these for every subsidiary row,
+ * `SubsidiaryName` is a raw subsidiary name exactly as one parent CIK's Exhibit 21 disclosed it.
+ * `build-filer.ts`'s edgar ingest mints one of these for every subsidiary row,
  * the same "global name-node" shape `HoldingCompanyName`/`ManagementCompanyName`
- * already use (the raw string, unnormalized. two different parents both disclosing
+ * already use (the raw string, unnormalized. Two different parents both disclosing
  * a subsidiary under the identical spelling share one node).
+ *
  * Deliberately its own namespace, never folded into `HoldingCompanyName`/`ManagementCompanyName`:
  * those name the source filer's own parent/manager, the opposite direction of
  * relationship from "a company this filer owns."
@@ -138,7 +141,7 @@ export type FilerIdentifierType = (typeof FilerIdentifierType)[keyof typeof File
  * How a `filer_edge` relationship was established.
  *
  * `Authoritative` — the source document states the relationship directly
- * (e.g. a Form 499 filing lists both an FRN and a Form 499 ID for the same filer).
+ * (e.g. A Form 499 filing lists both an FRN and a Form 499 ID for the same filer).
  * `Inferred` — derived by matching (name/address comparators); carries `match_score` and `evidence`.
  */
 export const FilerEdgeAssertion = {
@@ -153,9 +156,9 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  * nodes (decisions 1, 2) — orthogonal to {@link FilerEdgeAssertion}, which grades how
  * strongly the same assertion is evidenced, never what it means.
  *
- * Before this column existed, relationship kind lived implicitly in the target node's `identifier_type`
- * (e.g. an edge into a `holding_company_name` node was "assumed" to mean ownership) —
- * a scheme that cannot distinguish a holding company from a parent CIK from a transfer-of-control,
+ * Before this column existed, relationship kind lived implicitly in the target node's
+ * `identifier_type` (e.g. An edge into a `holding_company_name` node was "assumed" to mean ownership).
+ * A scheme that cannot distinguish a holding company from a parent CIK from a transfer-of-control,
  * and had no way to express a corporate-family fact (`filer_family`) at all.
  *
  * - `SameEntity` — the two nodes denote the same underlying filer under different
@@ -180,8 +183,9 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  *   targets resolve to a filer in the same file.
  *
  *   Two consequences a reader has to hold.
- *   First, the edge is directional in time as well as in identity — the source is the
- *   older registration, always, and the pair is never symmetric.
+ *   First, the edge is directional in time as well as in identity.
+ *
+ *   The source is the older registration, always, and the pair is never symmetric.
  *
  *   Second, `linkage-eval.ts`'s `OWNERSHIP_BY_RELATIONSHIP` pins this `false`;
  *   a supersession chain is not evidence of a corporate family, and an eval that scored
@@ -233,10 +237,10 @@ export interface FilerEdgeTable {
 	/**
 	 * One of {@link FilerRelationship} (decisions 1, 2).
 	 *
-	 * Orthogonal to `assertion` — see the file header and
-	 * {@link FilerRelationship}'s own docstring. Not part of {@link createFilerEdgeTable}'s primary key: see that
-	 * function's docstring for why a same-instant conflicting `relationship` from one
-	 * source is a contradiction to reject rather than a plurality to store.
+	 * Orthogonal to `assertion` — see the file header and {@link FilerRelationship}'s own docstring.
+	 * Not part of {@link createFilerEdgeTable}'s primary key: see that function's
+	 * docstring for why a same-instant conflicting `relationship` from one source is
+	 * a contradiction to reject rather than a plurality to store.
 	 */
 	relationship: string
 	/**
@@ -250,14 +254,17 @@ export interface FilerEdgeTable {
 	 */
 	source_vintage: string
 	/**
-	 * Mandatory (decision 7 / criterion 1) — every edge asserts a start of
-	 * validity, even an authoritative one lifted straight from a filing
-	 * (use the filing's vintage/date when no finer-grained date exists).
+	 * Mandatory (decision 7 / criterion 1).
+	 *
+	 * Every edge asserts a start of validity, even an authoritative one lifted straight
+	 * from a filing (use the filing's vintage/date when no finer-grained date exists).
 	 */
 	valid_from: string
 	/**
-	 * Null while the assertion is still in force. When set, the validity window is half-open: `valid_from <= t <
-	 * valid_to` — `valid_to` is the first date the assertion no longer holds rather than the last date it did.
+	 * Null while the assertion is still in force.
+	 *
+	 * When set, the validity window is half-open: `valid_from <= t < valid_to`.
+	 * `valid_to` is the first date the assertion no longer holds rather than the last date it did.
 	 *
 	 * This is forced rather than a stylistic choice: `cluster-filers.ts`'s cross-vintage
 	 * supersession (`clusterInferredLinks`) closes a superseded inferred edge with
@@ -274,13 +281,15 @@ export interface FilerEdgeTable {
 	 */
 	valid_to: string | null
 	/**
-	 * Inferred only. null for authoritative assertions.
+	 * Inferred only.
+	 * Null for authoritative assertions.
 	 */
 	match_score: number | null
 	/**
 	 * JSON-encoded match evidence.
 	 *
-	 * Inferred only. null for authoritative assertions.
+	 * Inferred only.
+	 * Null for authoritative assertions.
 	 */
 	evidence: string | null
 }
@@ -330,9 +339,11 @@ export interface FilerFamilyTable {
 	node_id: string
 	family_id: string
 	/**
-	 * The `filer_node.node_id` of the holding-/management-company node whose raw `identifier_value`
-	 * was canonicalized to produce this row's `family_id` — the naming provenance of the
-	 * family fact, persisted at build time so no reader ever has to re-derive it.
+	 * The `filer_node.node_id` of the holding-/management-company node whose raw
+	 * `identifier_value` was canonicalized to produce this row's `family_id`.
+	 *
+	 * The naming provenance of the family fact, persisted at build time
+	 * so no reader ever has to re-derive it.
 	 *
 	 * See the file header for the drift this closes, and {@link createFilerFamilyTable}'s
 	 * docstring for why it is part of the primary key.
@@ -361,9 +372,12 @@ export interface FilerFamilyTable {
 	 */
 	valid_to: string | null
 	/**
-	 * Inferred only. null for authoritative memberships, and a check constraint enforces that direction (see
-	 * {@link createFilerFamilyTable}). An inferred membership carrying no score tells a caller nothing about how far to
-	 * trust it, so every inferred writer should populate this — but, matching `filer_edge`'s own
+	 * Inferred only.
+	 *
+	 * Null for authoritative memberships, and a check constraint enforces that
+	 * direction (see {@link createFilerFamilyTable}).
+	 * An inferred membership carrying no score tells a caller nothing about how far to trust it,
+	 * so every inferred writer should populate this — but, matching `filer_edge`'s own
 	 * permissiveness ({@link FilerEdgeTable.match_score} is likewise nullable on inferred rows),
 	 * that direction is a writer's obligation rather than a constraint.
 	 */
@@ -385,19 +399,21 @@ export const FILER_FAMILY_SCHEMA_VERSION = 2
  * The current `schema_version` — version 3, which added {@link FilerRelationship.SupersededBy}
  * and made `filer_edge.valid_to` a column something actually writes.
  *
- * **No table changed shape between 2 and 3, and the bump is still correct.** A version-2 artifact
- * is structurally readable by a version-3 reader. what it cannot be trusted about is content.
- * Every ceased filer in a version-2 build carries `valid_to: null`, because nothing
- * set it — so an `asOf`-scoped read against a 2013 date returns carriers dissolved
- * a decade earlier, silently and with no error to notice.
+ * **No table changed shape between 2 and 3, and the bump is still correct.** A
+ * version-2 artifact is structurally readable by a version-3 reader.
+ * What it cannot be trusted about is content.
+ *
+ * Every ceased filer in a version-2 build carries `valid_to: null`, because nothing set it.
+ * So an `asOf`-scoped read against a 2013 date returns carriers dissolved a decade
+ * earlier, silently and with no error to notice.
  *
  * That is a worse failure than a missing table: it answers.
  *
  * Readers should therefore compare against {@linkcode FILER_FAMILY_SCHEMA_VERSION} for "can I
  * read this at all", and against this constant for "should I trust a temporal answer from it".
  *
- * `@mailwoman/filer` ships on npm, so this bump is a real versioned change with a consumer rebuild —
- * the "nothing has shipped yet, columns are free" argument that governed Phase 3b is spent.
+ * `@mailwoman/filer` ships on npm, so this bump is a real versioned change with a consumer rebuild.
+ * The "nothing has shipped yet, columns are free" argument that governed Phase 3b is spent.
  */
 export const FILER_SCHEMA_VERSION = 3
 
@@ -438,8 +454,10 @@ export interface FilerDatabase {
 }
 
 /**
- * Create `filer_node`. Plain rowid table — see the file header for why a single-column text PK doesn't warrant `without
- * rowid` here (no second column to cluster in alongside it).
+ * Create `filer_node`.
+ *
+ * Plain rowid table — see the file header for why a single-column text PK doesn't warrant
+ * `without rowid` here (no second column to cluster in alongside it).
  */
 export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema
@@ -468,8 +486,10 @@ export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<v
  * and both would silently persist side by side.
  *
  * That's a contradiction (one source, one moment, two incompatible claims about what the pair means)
- * rather than a provenance plurality — the composite `unique` index leaving `relationship`
- * out is what makes SQLite reject the second insert instead of quietly storing it.
+ * rather than a provenance plurality.
+ * The composite `unique` index leaving `relationship` out is what makes SQLite
+ * reject the second insert instead of quietly storing it.
+ *
  * A check constraint additionally rejects a blank/whitespace-only `relationship` — `not NULL`
  * alone doesn't (SQLite stores `""`), the same gap `assertLastFiledAt`/`assertISODate`
  * exist to close for the temporal columns.
@@ -493,8 +513,9 @@ export async function createFilerEdgeTable(db: Kysely<FilerDatabase>): Promise<v
 }
 
 /**
- * Secondary index for the reverse (in-edges) traversal path — the composite PK's leading
- * column is `from_node_id`, so a `to_node_id` lookup needs its own index.
+ * Secondary index for the reverse (in-edges) traversal path.
+ *
+ * The composite PK's leading column is `from_node_id`, so a `to_node_id` lookup needs its own index.
  *
  * Index-after-load, same discipline as `bdc_availability`'s geoid index
  * (see `bdc/schema.ts`'s {@link createBDCGeoidIndex} companion).
@@ -554,15 +575,16 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
 }
 
 /**
- * Create `filer_family` with the composite PK `(node_id, family_id, naming_node_id, source, valid_from)` — mirrors
- * {@link createFilerEdgeTable}'s reasoning exactly: the PK's job is telling apart different provenance (a different
- * source, or the same source at a later vintage), and `relationship` is deliberately
- * excluded from it for the same contradiction-vs-plurality reason — one source asserting
- * both `"parent_company"` and `"subsidiary"` for the identical `(node_id, family_id)` pair
- * at the identical instant is a contradiction to reject rather than a plurality to store.
+ * Create `filer_family` with the composite PK `(node_id, family_id, naming_node_id, source, valid_from)` —
+ * mirrors {@link createFilerEdgeTable}'s reasoning exactly: the PK's job is telling apart different
+ * provenance (a different source, or the same source at a later vintage), and `relationship`
+ * is deliberately excluded from it for the same contradiction-vs-plurality reason — one source
+ * asserting both `"parent_company"` and `"subsidiary"` for the identical `(node_id, family_id)`
+ * pair at the identical instant is a contradiction to reject rather than a plurality to store.
+ *
  * The same blank/whitespace-rejecting check constraint applies to `relationship` here too.
- * Call
- * {@link createFilerFamilyIndex} separately, after bulk load, for the "all members of this family" lookup path.
+ * Call {@link createFilerFamilyIndex} separately, after bulk load, for the "all
+ * members of this family" lookup path.
  *
  * **`naming_node_id` is in the key, and that placement is required.** Two different raw spellings
  * can canonicalize to the same `family_id` — `"Acme Corp"` and `"Acme Corporation, LLC"`
@@ -591,8 +613,9 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
  * every criterion-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it)
  * and the row would vanish from any surface that split on strength.
  *
- * `match_score` gets a check of its own — a score may appear only on an inferred row, since an
- * authoritative membership matched nothing and any number there would be a fabricated confidence.
+ * `match_score` gets a check of its own.
+ * A score may appear only on an inferred row, since an authoritative membership matched
+ * nothing and any number there would be a fabricated confidence.
  */
 export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema
@@ -610,8 +633,7 @@ export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise
 		.addPrimaryKeyConstraint("filer_family_pk", ["node_id", "family_id", "naming_node_id", "source", "valid_from"])
 		.addCheckConstraint("filer_family_relationship_not_blank", sql`trim(relationship) != ''`)
 		.addCheckConstraint("filer_family_assertion_not_blank", sql`trim(assertion) != ''`)
-		// sql.lit rather than a bound parameter: SQLite's DDL cannot carry one, and the literal is derived from
-		// FilerEdgeAssertion rather than hand-typed so the constraint and the const can never drift apart.
+		// sql.lit rather than a bound parameter: SQLite's DDL cannot carry one, and the literal is derived from FilerEdgeAssertion rather than hand-typed so the constraint and the const can never drift apart.
 		.addCheckConstraint(
 			"filer_family_match_score_inferred_only",
 			sql`match_score is null or assertion = ${sql.lit(FilerEdgeAssertion.Inferred)}`
@@ -620,9 +642,11 @@ export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise
 }
 
 /**
- * Secondary index for the "all members of this family" lookup path — the composite PK's
- * leading column is `node_id`, so a `family_id` lookup needs its own index, exactly matching
- * {@link createFilerClusterIndex}'s rationale. Index-after-load.
+ * Secondary index for the "all members of this family" lookup path.
+ *
+ * The composite PK's leading column is `node_id`, so a `family_id` lookup needs its own index,
+ * exactly matching {@link createFilerClusterIndex}'s rationale.
+ * Index-after-load.
  */
 export async function createFilerFamilyIndex(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema.createIndex("filer_family_family_id").on("filer_family").column("family_id").execute()

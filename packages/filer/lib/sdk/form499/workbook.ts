@@ -65,8 +65,8 @@ export const FORM_499_WORKBOOK_KEYS = {
 	dcAgentDisplayName: "dc_agent1",
 	dcAgentOrganizationName: "dc_agent2",
 	dcAgentTelephone: "dc_agent_telephone",
-	// `DC_Agent_EMail` normalizes to `dc_agent_e_mail`, not `dc_agent_email` —
-	// the inner capital M is a word boundary to the snake-caser.
+	// `DC_Agent_EMail` normalizes to `dc_agent_e_mail`, not `dc_agent_email`.
+	// The inner capital M is a word boundary to the snake-caser.
 	// Caught by `assertWorkbookHeader`, which is what it is for.
 	dcAgentEmailAddress: "dc_agent_e_mail",
 	firstState: "alabama",
@@ -201,11 +201,14 @@ const US_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
  * Convert the workbook's `M/D/yyyy` filing date to ISO `yyyy-MM-DD`.
  *
  * Returns `""` for anything that isn't that shape rather than inventing a date.
- * That is deliberate and it is not silent: `lastFiledAt` becomes `valid_from`, and
- * `assertISODate` throws on a non-ISO value — so an unconverted date fails the build loudly
- * at the point it would be written, which is where a reader can see which filer caused it.
+ * That is deliberate and it is not silent: `lastFiledAt` becomes `valid_from`,
+ * and `assertISODate` throws on a non-ISO value.
  *
- * Emitting the raw `M/D/yyyy` here would fail the same assertion. emitting a guess would not fail at all.
+ * So an unconverted date fails the build loudly at the point it would be written,
+ * which is where a reader can see which filer caused it.
+ *
+ * Emitting the raw `M/D/yyyy` here would fail the same assertion.
+ * Emitting a guess would not fail at all.
  */
 export function toISOFilingDate(value: string): string {
 	// A workbook whose cells are real dates rather than text arrives pre-converted by `cell`.
@@ -223,8 +226,8 @@ export function toISOFilingDate(value: string): string {
 /**
  * Read the jurisdiction columns into sorted USPS codes.
  *
- * A column is set when its cell is the literal `true` — the same comparison
- * `usfContributor` uses, and the same one the workbook's own values follow.
+ * A column is set when its cell is the literal `true`.
+ * The same comparison `usfContributor` uses, and the same one the workbook's own values follow.
  */
 export function readOperatingStates(row: WorkbookRow): string[] {
 	const states: string[] = []

@@ -40,7 +40,9 @@ import type { Form499Lifecycle } from "#sdk/form499/notes"
  *
  * So: close the window only when the two dates order coherently, and count the
  * abstentions ({@link BuildFilerResult.cessationWindowAbstained}).
- * The date itself is never lost — it is staged as a `ceased_at` attribute on every ceased filer regardless.
+ * The date itself is never lost.
+ *
+ * It is staged as a `ceased_at` attribute on every ceased filer regardless.
  */
 export function closeableCessationDate(ceasedAt: string | undefined, validFrom: string): string | null {
 	if (!ceasedAt) return null
@@ -60,6 +62,7 @@ export interface Form499LifecycleContext {
 /**
  * Running totals across every row's lifecycle writes, mutated in place by
  * {@linkcode processForm499Lifecycle} and read once into {@link BuildFilerResult}.
+ *
  * One accumulator object rather than three `let`s at the call site: this loop body sits
  * against the linter's `max-statements` ceiling, which is also why the helper exists at all.
  */
@@ -80,8 +83,8 @@ export interface Form499LifecycleTotals {
  * into the 499 loop, it pushes `buildFilerDatabase` past the linter's `max-statements` ceiling.
  *
  * A row whose `lifecycle` is `undefined` (every row the 17-column TSV parser produces)
- * writes nothing, touches no total and returns `null` — the TSV path is
- * byte-identical to what it was before this existed.
+ * writes nothing, touches no total and returns `null`.
+ * The TSV path is byte-identical to what it was before this existed.
  */
 export function processForm499Lifecycle(
 	insNode: StatementSync,
@@ -95,8 +98,9 @@ export function processForm499Lifecycle(
 	const relationshipValidTo = closeableCessationDate(ceasedAt, lastFiledAt)
 
 	if (ceasedAt) {
-		// Recorded unconditionally, including where the window abstains — the date is a fact the
-		// FCC stated, and losing it because the two clocks disagree would be the worse trade.
+		// Recorded unconditionally, including where the window abstains.
+		// The date is a fact the FCC stated, and losing it because the two clocks
+		// disagree would be the worse trade.
 		stageAttribute(form499NodeID, "ceased_at", ceasedAt, "form-499", lastFiledAt)
 
 		if (relationshipValidTo) {
@@ -112,9 +116,9 @@ export function processForm499Lifecycle(
 
 	if (lifecycle?.replacedByForm499ID) {
 		// Directional in time as well as identity: this registration is the older one, always.
-		// The successor's node is minted here rather than waited for — it is almost always
-		// its own row in the same file, but nothing guarantees this row is processed second,
-		// and `insNode` is insert or ignore.
+		// The successor's node is minted here rather than waited for.
+		// It is almost always its own row in the same file, but nothing guarantees this
+		// row is processed second, and `insNode` is insert or ignore.
 		const successorNodeID = `${FilerIdentifierType.Form499ID}:${lifecycle.replacedByForm499ID}`
 		insNode.run(successorNodeID, FilerIdentifierType.Form499ID, lifecycle.replacedByForm499ID)
 
@@ -125,8 +129,7 @@ export function processForm499Lifecycle(
 			FilerRelationship.SupersededBy,
 			"form-499",
 			lastFiledAt,
-			// The supersession takes effect when the filer ceased, when the FCC said so. Falling back to the
-			// filing date keeps `valid_from` mandatory (decision 7) without inventing a date.
+			// The supersession takes effect when the filer ceased, when the FCC said so. Falling back to the filing date keeps `valid_from` mandatory (decision 7) without inventing a date.
 			ceasedAt ?? lastFiledAt,
 			null,
 			null,
@@ -140,9 +143,7 @@ export function processForm499Lifecycle(
 }
 
 /**
- * {@linkcode processForm499FRNRelationships}'s per-row context — bundled into one options argument (matching
- * {@linkcode FamilyMembershipFact}'s own precedent) once threading `legalNameByFRN` through pushed this function's
- * positional arity past the linter's `max-params` ceiling.
+ * {@linkcode processForm499FRNRelationships}'s per-row context — bundled into one options argument (matching {@linkcode FamilyMembershipFact}'s own precedent) once threading `legalNameByFRN` through pushed this function's positional arity past the linter's `max-params` ceiling.
  */
 export interface Form499FRNContext {
 	row: Form499Row
@@ -167,10 +168,11 @@ export interface Form499FRNContext {
  * (when the corresponding field is non-empty, each its own edge + `filer_family` row) —
  * see `build-filer.ts`'s module docstring, "Edges emitted" section.
  *
- * Also records this row's legal name into `legalNameByFRN` for
- * {@linkcode processEdgarSubsidiaryRow}'s corroboration match, keeping the latest `lastFiledAt` per FRN. Returns the
- * number of edge opportunities declined (0, 1, or 2 — see `BuildFilerResult.skipped`'s docstring),
+ * Also records this row's legal name into `legalNameByFRN` for {@linkcode processEdgarSubsidiaryRow}'s
+ * corroboration match, keeping the latest `lastFiledAt` per FRN.
+ * Returns the number of edge opportunities declined (0, 1, or 2 — see `BuildFilerResult.skipped`'s docstring),
  * for the caller to add to its own running total.
+ *
  * Its own function so the 499 loop stays under the linter's `max-statements` ceiling.
  */
 export function processForm499FRNRelationships(

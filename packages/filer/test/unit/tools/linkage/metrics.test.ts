@@ -113,7 +113,8 @@ describe("scorePairwiseGrouping", () => {
 	})
 
 	it("reports F1 as 0 (not null) when BOTH components are defined and nothing was recovered — a measured miss", () => {
-		// truth: {a,b} together. prediction: {c,d} together.
+		// truth: {a,b} together.
+		// Prediction: {c,d} together.
 		// Both denominators are populated, zero overlap.
 		const truth = new Map([
 			["a", "g1"],
@@ -166,8 +167,11 @@ describe("scorePairwiseGrouping", () => {
 			groupPredicateFromMap(predicted)
 		)
 
-		// truth-positive pairs: {a,b},{a,c},{b,c} = 3. predicted-positive pairs: {a,b},{d,e} = 2.
-		// true positive: {a,b} only = 1. false positive: {d,e} = 1. false negative: {a,c},{b,c} = 2.
+		// truth-positive pairs: {a,b},{a,c},{b,c} = 3.
+		// Predicted-positive pairs: {a,b},{d,e} = 2.
+		// True positive: {a,b} only = 1.
+		// False positive: {d,e} = 1.
+		// False negative: {a,c},{b,c} = 2.
 		expect(score.truePositivePairs).toBe(1)
 		expect(score.falsePositivePairs).toBe(1)
 		expect(score.falseNegativePairs).toBe(2)

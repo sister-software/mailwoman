@@ -276,7 +276,7 @@ describe("buildFilerDatabase", () => {
 			expect(edge.assertion).toBe("authoritative")
 			expect(edge.valid_from.length).toBeGreaterThan(0)
 			// sourceVintage above ("2026-Q1") is deliberately not ISO — valid_from must never inherit that shape
-			//: every edge's valid_from is ISO YYYY-MM-DD regardless of source.
+			// : every edge's valid_from is ISO YYYY-MM-DD regardless of source.
 			expect(edge.valid_from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
 		}
 	})
@@ -404,8 +404,7 @@ describe("buildFilerDatabase", () => {
 		const out = scratch.resolve("filer.db")
 
 		const malformedRows: ProviderListRow[] = [
-			// Two different, unrelated providers, both with a blank frn — without the guard these would
-			// silently share one degenerate `frn:` node, falsely asserting they are the same filer.
+			// Two different, unrelated providers, both with a blank frn. Without the guard these would silently share one degenerate `frn:` node, falsely asserting they are the same filer.
 			{ providerID: 900_001, frn: "" as ProviderListRow["frn"], holdingCompany: null },
 			{ providerID: 900_002, frn: "" as ProviderListRow["frn"], holdingCompany: null },
 		]
@@ -1008,9 +1007,9 @@ describe("buildFilerDatabase", () => {
 
 			expect(familyRows).toHaveLength(1)
 
-			// The family row carries the same grading as the edge above — `source` alone cannot
-			// supply it, because this very build also writes an authoritative `edgar-exhibit-21`
-			// disclosure edge, so the source name spans both grades.
+			// The family row carries the same grading as the edge above.
+			// `source` alone cannot supply it, because this very build also writes an authoritative
+			// `edgar-exhibit-21` disclosure edge, so the source name spans both grades.
 			expect(familyRows[0]).toMatchObject({
 				naming_node_id: cikNodeID,
 				assertion: FilerEdgeAssertion.Inferred,
@@ -1065,14 +1064,16 @@ describe("buildFilerDatabase", () => {
 		})
 
 		/**
-		 * The subsidiary→FRN score must not be a constant. The join is on the canonicalized name, and
-		 * `canonicalizeOrganizationName` maps `"American Broadband LLC"`, `"American Broadband, Inc."` and `"American
-		 * Broadband Corp"` all to `"american broadband"` (`record/organization.test.ts` pins the collapse), so a single
-		 * score across all three would claim a confidence the match provably cannot hold.
+		 * The subsidiary→FRN score must not be a constant.
+		 *
+		 * The join is on the canonicalized name, and `canonicalizeOrganizationName` maps
+		 * `"American Broadband LLC"`, `"American Broadband, Inc."` and `"American Broadband Corp"`
+		 * all to `"american broadband"` (`record/organization.test.ts` pins the collapse),
+		 * so a single score across all three would claim a confidence the match provably cannot hold.
 		 *
 		 * The existing abstention does not cover it, and these fixtures show why:
 		 * it fires only on a collision within the 499 file, so a 499 carrying only
-		 * the LLC against an Exhibit 21 disclosing the Inc. matches exactly one FRN
+		 * the LLC against an Exhibit 21 disclosing the Inc. Matches exactly one FRN
 		 * and writes an edge for what may be a different company.
 		 *
 		 * Every case below goes through the real builder and reads the score off the sealed artifact.

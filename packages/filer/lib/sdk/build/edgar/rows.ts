@@ -28,15 +28,15 @@ import { assertISODate } from "#sdk/guards"
  * One edgar Exhibit 21 subsidiary disclosure — the shape upstream CIK resolution +
  * `parseExhibit21` produce somewhere outside this file.
  *
- * See `build-filer.ts`'s module docstring, "edgar Exhibit 21 ingest" section, for exactly what
- * {@linkcode buildFilerDatabase} does with one of these.
+ * See `build-filer.ts`'s module docstring, "edgar Exhibit 21 ingest" section,
+ * for exactly what {@linkcode buildFilerDatabase} does with one of these.
  */
 export interface EdgarSubsidiaryRow {
 	/**
 	 * Zero-padded 10-digit CIK of the filer whose Exhibit 21 disclosed this subsidiary — the parent.
 	 *
-	 * Validated the same zero-padded 10-digit shape `edgar-filings.ts`'s `CIK` branded type
-	 * requires. a malformed value throws (decision 8's "malformed input is loud" discipline).
+	 * Validated the same zero-padded 10-digit shape `edgar-filings.ts`'s `CIK` branded type requires.
+	 * A malformed value throws (decision 8's "malformed input is loud" discipline).
 	 */
 	cik: string
 	/**
@@ -47,7 +47,7 @@ export interface EdgarSubsidiaryRow {
 	/**
 	 * Jurisdiction of incorporation, when Exhibit 21 gave one ({@linkcode parseExhibit21}'s own
 	 * `unparseable` abstention already dropped any row this couldn't confidently extract — this field is
-	 * carried through for provenance/audit only. nothing in this builder currently writes it to a column).
+	 * carried through for provenance/audit only. Nothing in this builder currently writes it to a column).
 	 */
 	jurisdiction?: string
 	/**
@@ -64,7 +64,7 @@ export interface EdgarSubsidiaryRow {
  * One edgar subsidiary row's full write: the disclosure edge (always, authoritative)
  * plus — only when the subsidiary name canonically matches exactly one FRN's
  * legal name — the corroboration edge and its accompanying `filer_family` row
- * (inference, never authority. see `build-filer.ts`'s module docstring, "edgar Exhibit 21 ingest"
+ * (inference, never authority. See `build-filer.ts`'s module docstring, "edgar Exhibit 21 ingest"
  * section, for the full rationale and the family-visibility precondition this is written to satisfy).
  */
 export function processEdgarSubsidiaryRow(
@@ -139,10 +139,11 @@ export function processEdgarSubsidiaryRow(
 		stringifyJSON({ subsidiaryName: row.subsidiaryName, legalNameOfCarrier: matched.legalName, cik: row.cik })
 	)
 
-	// The family-visibility precondition: a filer_edge row alone is invisible to
-	// familyRollup/filerLookup.families — both answer membership from filer_family alone.
-	// family_id/naming_node_id are the CIK's own node id: a CIK needs no mintFamilyID canonicalization
-	// to be a stable family key, unlike a free-text holding-/management-company name.
+	// The family-visibility precondition: a filer_edge row alone is invisible
+	// to familyRollup/filerLookup.families.
+	// Both answer membership from filer_family alone. family_id/naming_node_id are the CIK's
+	// own node id: a CIK needs no mintFamilyID canonicalization to be a stable family key,
+	// unlike a free-text holding-/management-company name.
 	//
 	// assertion/match_score carry the same values as the edge above, for the same reason the row
 	// exists at all: a reader answering a family question from this table alone must be able to

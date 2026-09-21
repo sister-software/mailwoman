@@ -91,11 +91,11 @@ export const SEC_MAX_REQUESTS_PER_SECOND = 10
  *
  * Pacing exactly at the ceiling puts every grant on a schedule with zero slack,
  * and the schedule is not what SEC measures — the arriving request is.
- * Measured end-to-end through
- * {@linkcode createSECClient} on real timers, a 40-call fan-out at 10/s produced **11 requests
- * inside one sliding second on 3 of 3 runs**: the grants themselves are spaced correctly,
- * but the continuation that issues the request lands 0-2 ms late and tips one grant
- * across the boundary (the preceding second then holds 9).
+ * Measured end-to-end through {@linkcode createSECClient} on real timers, a 40-call
+ * fan-out at 10/s produced **11 requests inside one sliding second on 3 of 3 runs**:
+ * the grants themselves are spaced correctly, but the continuation that issues the request
+ * lands 0-2 ms late and tips one grant across the boundary (the preceding second then holds 9).
+ *
  * Against a true sliding-window limiter that is a violation, and it happens on a schedule that is
  * arithmetically compliant — which is exactly the kind of correctness nobody can debug after a block.
  *
@@ -108,10 +108,12 @@ export const SEC_MAX_REQUESTS_PER_SECOND = 10
  * under 10/s rather than merely the grant times.
  *
  * The rate alone is not enough, and this constant did not meet its own bar when it was introduced.
- * `1000 / 9` is `111.111…`, and a fractional interval puts the 10th grant at exactly 1000.0 ms
- * after the first — so sub-millisecond jitter tips a 10th arrival into the window every
- * time, measured 5/5 runs. {@linkcode createSECClient} therefore ceils the interval
- * (`Math.ceil(1000 / 9)` = 112 ms), which moves the 10th grant to 1008 ms and costs 0.8% throughput.
+ * `1000 / 9` is `111.111…`, and a fractional interval puts the 10th grant at
+ * exactly 1000.0 ms after the first.
+ *
+ * So sub-millisecond jitter tips a 10th arrival into the window every time, measured 5/5 runs.
+ * {@linkcode createSECClient} therefore ceils the interval (`Math.ceil(1000 / 9)` = 112 ms),
+ * which moves the 10th grant to 1008 ms and costs 0.8% throughput.
  *
  * Measured after the ceil: 9 arrivals per sliding second, 3/3 runs.
  * Any future rate that does not divide 1000 evenly needs the same treatment, which is
@@ -150,8 +152,9 @@ const PERMANENT_CACHE_TTL_MS = 100 * 365 * 24 * 60 * 60 * 1000
 const HTTP_FORBIDDEN = 403
 
 /**
- * The lowest success status, and the first status past the success range —
- * the window a response must land in before its body is worth caching.
+ * The lowest success status, and the first status past the success range.
+ *
+ * The window a response must land in before its body is worth caching.
  *
  * Deliberately narrower than the interceptor's default, which admits 3xx too.
  */
@@ -183,15 +186,18 @@ export function isImmutableArchiveURL(url: URL): boolean {
 
 /**
  * The only hosts this client will ever send a request to. {@linkcode SECClient.get} refuses
- * (before any cache/rate-limit/network activity) a URL on any other host, or any non-https
- * scheme — this is the designated SEC edgar client, and its configured User-Agent
- * carries a real contact address. sending that anywhere a caller happens to point it
- * (or in cleartext) would leak it outside SEC's fair-access program for no benefit.
+ * (before any cache/rate-limit/network activity) a URL on any other host, or any non-https scheme.
+ *
+ * This is the designated SEC edgar client, and its configured User-Agent carries a real contact address.
+ * Sending that anywhere a caller happens to point it (or in cleartext) would leak
+ * it outside SEC's fair-access program for no benefit.
  *
  * `sec.gov` (the apex) and `efts.sec.gov` (edgar full-text search — the Exhibit 21 discovery path)
  * are included alongside the two hosts decision 5 names.
- * Matching is exact (a `Set` lookup on `url.hostname`), not a suffix check — `www.sec.gov.attacker.example`
- * must not match, and an `.endsWith(".sec.gov")`-style check would let it through.
+ * Matching is exact (a `Set` lookup on `url.hostname`), not a suffix check.
+ *
+ * `www.sec.gov.attacker.example` must not match, and an `.endsWith(".sec.gov")`-style
+ * check would let it through.
  *
  * `url.hostname` (from the whatwg URL parser) already lower-cases, strips userinfo,
  * and percent/punycode-decodes, so those bypasses need no extra handling.
@@ -201,8 +207,8 @@ const SEC_ALLOWED_HOSTS = new Set(["www.sec.gov", "data.sec.gov", "sec.gov", "ef
 /**
  * Reject a URL this client must not send its User-Agent to.
  *
- * Throws a {@linkcode ResourceError} whose URN kind is `request` — never transient,
- * because re-issuing the identical URL can only fail identically.
+ * @throws a {@linkcode ResourceError} whose URN kind is `request` — never transient,
+ *   because re-issuing the identical URL can only fail identically.
  */
 function assertSECHost(url: URL): void {
 	assertAllowedHost(url, {
@@ -230,9 +236,8 @@ export interface CreateSECClientOptions {
 	 * Desired requests/second.
 	 *
 	 * Clamped to `[1, SEC_MAX_REQUESTS_PER_SECOND]` regardless of what's passed.
-	 * Defaults to
-	 * {@linkcode SEC_DEFAULT_REQUESTS_PER_SECOND}, which is one below the policy ceiling on purpose — see that constant
-	 * for the measurement behind it.
+	 * Defaults to {@linkcode SEC_DEFAULT_REQUESTS_PER_SECOND}, which is one below the
+	 * policy ceiling on purpose — see that constant for the measurement behind it.
 	 */
 	requestsPerSecond?: number
 	/**
@@ -247,7 +252,7 @@ export interface CreateSECClientOptions {
 	 * On-disk cache root.
 	 *
 	 * Defaults to `dataRootPath("sec", "cache")`, resolved once at construction (the standalone client
-	 * re-resolved it per request. construct the client after setting `$MAILWOMAN_DATA_ROOT` instead).
+	 * re-resolved it per request. Construct the client after setting `$MAILWOMAN_DATA_ROOT` instead).
 	 */
 	cacheDir?: PathBuilderLike
 	/**
@@ -304,8 +309,9 @@ export interface SECClientConfig extends APIClientConfig {
 /**
  * Rewrite a 403 into an error that tells a maintainer what actually went wrong.
  *
- * A generic "403 Forbidden" reads as "blocked" or "missing" and sends the reader down
- * the wrong path. the real cause is almost always the User-Agent.
+ * A generic "403 Forbidden" reads as "blocked" or "missing" and sends the reader down the wrong path.
+ * The real cause is almost always the User-Agent.
+ *
  * The URN and status are reconstructed identically, so the caller's `status === 403` branch is unaffected.
  */
 function explainForbidden(cause: ResourceError, url: URL, userAgent: string): ResourceError {
@@ -339,8 +345,8 @@ export class SECClient extends APIClient<SECClientConfig> {
 	 * Takes a full absolute URL rather than a path appended to one base: edgar is served
 	 * across several hosts, so there is no single base to append to.
 	 *
-	 * Concurrent calls for the same URL that both miss the cache share a single in-flight request —
-	 * the cache interceptor's own stampede guard, which the bespoke client had to hand-roll.
+	 * Concurrent calls for the same URL that both miss the cache share a single in-flight request.
+	 * The cache interceptor's own stampede guard, which the bespoke client had to hand-roll.
 	 */
 	public async get<T>(input: string | URL): Promise<T> {
 		const url = input instanceof URL ? input : new URL(input)
@@ -361,14 +367,16 @@ export class SECClient extends APIClient<SECClientConfig> {
 	}
 
 	/**
-	 * Issue a `GET` against a full absolute edgar URL and return the RAW response body as text — the sibling
-	 * {@linkcode get} cannot provide: a filing document (a 10-K, an Exhibit 21 exhibit) is html/text rather than JSON, and
-	 * `get`'s `responseType: "json"` plus its cache `validate` predicate both assume a JSON body.
+	 * Issue a `GET` against a full absolute edgar URL and return the RAW response body as text.
+	 *
+	 * The sibling {@linkcode get} cannot provide: a filing document (a 10-K, an Exhibit 21 exhibit)
+	 * is html/text rather than JSON, and `get`'s `responseType: "json"` plus its
+	 * cache `validate` predicate both assume a JSON body.
 	 *
 	 * Same client, same pacing limit, same host allowlist, same retry policy,
-	 * same {@linkcode ResourceError} mapping as
-	 * {@linkcode get} — only a per-request `responseType: "text"` override differs, which tells Axios to hand back the
-	 * body as-is rather than attempt `JSON.parse` on it (Axios's default `transformResponse` only parses
+	 * same {@linkcode ResourceError} mapping as {@linkcode get} — only a per-request
+	 * `responseType: "text"` override differs, which tells Axios to hand back the body as-is
+	 * rather than attempt `JSON.parse` on it (Axios's default `transformResponse` only parses
 	 * when `responseType === "json"`; this override is what turns that off for exactly this one call).
 	 * `/Archives/edgar/data/` documents still get the permanent cache TTL
 	 * ({@linkcode isImmutableArchiveURL}); the widened cache `validate` predicate below
@@ -397,8 +405,9 @@ export class SECClient extends APIClient<SECClientConfig> {
  * The TTL for one response: permanent for an immutable archive document,
  * `mutableTTLMs` for everything else.
  *
- * Structurally typed rather than importing `CacheAxiosResponse` — `filer` deliberately depends on
- * neither `axios` nor `axios-cache-interceptor`, reaching both only through `@mailwoman/core`.
+ * Structurally typed rather than importing `CacheAxiosResponse`.
+ * `filer` deliberately depends on neither `axios` nor `axios-cache-interceptor`,
+ * reaching both only through `@mailwoman/core`.
  */
 function responseTTL(response: { config: { url?: string } }, mutableTTLMs: number): number {
 	const { url } = response.config
@@ -420,20 +429,22 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  *
  * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`).
  *   Axios already rejects an unparseable body via `transitional.silentJSONParsing`
- *   (see the `axios` config below), so this is the second check rather than the first — a decoded
- *   body that isn't an object means the upstream served something other than what it claimed.
+ *   (see the `axios` config below), so this is the second check rather than the first.
+ *   A decoded body that isn't an object means the upstream served something other than what it claimed.
  * - A non-empty string (every `getDocument` call — a filing document is html/text, never JSON):
  *   admits the body `getDocument`'s `responseType: "text"` override actually produces.
  *   A `typeof === "object"` test alone would reject it outright, since a string is never `typeof "object"`.
- *   `.length > 0` is the truncated/empty guard on this shape — `getDocument` has no Axios-level
- *   parse step to lean on the way the JSON path does, so this predicate is the only check
- *   standing between a truncated/empty document and a permanent (`/Archives/edgar/data/`)
- *   cache entry with no self-healing path short of hand-deleting a hash-named file.
+ *   `.length > 0` is the truncated/empty guard on this shape.
+ *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does,
+ *   so this predicate is the only check standing between a truncated/empty document
+ *   and a permanent (`/Archives/edgar/data/`) cache entry with no self-healing
+ *   path short of hand-deleting a hash-named file.
  *
- * An `/Archives/` entry cached under the permanent TTL has no self-healing path short
- * of hand-deleting a hash-named file, which is why both branches exist rather than one
- * permissive `Boolean(value.data?.data)` check — that would also admit a numeric `0`
- * or a boolean `false` body, neither of which this client's endpoints ever legitimately return.
+ * An `/Archives/` entry cached under the permanent TTL has no self-healing path
+ * short of hand-deleting a hash-named file, which is why both branches exist
+ * rather than one permissive `Boolean(value.data?.data)` check.
+ * That would also admit a numeric `0` or a boolean `false` body, neither of
+ * which this client's endpoints ever legitimately return.
  */
 function isCacheableSECBody(value: { data?: { data?: unknown } }): boolean {
 	const body = value.data?.data
@@ -448,8 +459,8 @@ function isCacheableSECBody(value: { data?: { data?: unknown } }): boolean {
  *
  * See the file header for the full rationale.
  *
- * Throws immediately, before any request is made, when constructed without an
- * explicit `userAgent` and without `SEC_EDGAR_USER_AGENT` set.
+ * @throws immediately, before any request is made, when constructed without an
+ *   explicit `userAgent` and without `SEC_EDGAR_USER_AGENT` set.
  */
 export function createSECClient(options: CreateSECClientOptions = {}): SECClient {
 	const userAgent = options.userAgent ?? $private.SEC_EDGAR_USER_AGENT
@@ -499,8 +510,9 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 		axios: {
 			headers: {
 				// Per SEC's documented sample headers: a descriptive User-Agent plus Accept-Encoding.
-				// `Host` is also in that sample, but this client spans multiple hosts — the transport derives
-				// Host from the URL itself, and hardcoding one here would break requests to the others.
+				// `Host` is also in that sample, but this client spans multiple hosts.
+				// The transport derives Host from the URL itself, and hardcoding one here
+				// would break requests to the others.
 				"User-Agent": userAgent,
 				"Accept-Encoding": "gzip, deflate",
 			},
@@ -508,9 +520,9 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 			responseType: "json",
 			// `silentJSONParsing` defaults to true, which makes Axios hand back the RAW string
 			// when a body fails to parse instead of raising.
-			// SEC occasionally serves an html error page under a 200 status. silently
-			// returning that string as `T` is exactly the poisoning this client's cache
-			// rules exist to prevent, so parse failures must be errors.
+			// SEC occasionally serves an html error page under a 200 status.
+			// Silently returning that string as `T` is exactly the poisoning this client's
+			// cache rules exist to prevent, so parse failures must be errors.
 			transitional: { silentJSONParsing: false },
 			...options.axios,
 		},

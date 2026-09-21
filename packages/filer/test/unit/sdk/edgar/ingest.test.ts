@@ -159,7 +159,8 @@ describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 	})
 
 	it("corroborates every candidate, not only the top-scoring one", async () => {
-		// The top name match is uncorroborated. a lower-scoring candidate is the real carrier.
+		// The top name match is uncorroborated.
+		// A lower-scoring candidate is the real carrier.
 		// Scoring alone would stop at the first and report nothing.
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: WIDEPOINT, ticker: "WYY", title: "Cable One Holdings" },

@@ -43,9 +43,9 @@ import type { Form499Lifecycle } from "#sdk/form499/notes"
  * The Form 499 filer TSV's 17 columns, in file order — ported verbatim from Nexus's
  * `RawFCCForm499FilingColumns` (`sync/fcc/universal-service.ts`:27-44) and spec §3.1.
  *
- * The source TSV carries no header row (Nexus's own `csv.parse` call passes this same
- * tuple as its `columns` option rather than reading column names off row 1), so
- * {@linkcode parseForm499} treats every line as data.
+ * The source TSV carries no header row (Nexus's own `csv.parse` call passes this
+ * same tuple as its `columns` option rather than reading column names off row 1),
+ * so {@linkcode parseForm499} treats every line as data.
  */
 export const FORM_499_COLUMNS = [
 	"form499ID",
@@ -80,8 +80,10 @@ export interface Form499Row {
 	/**
 	 * The raw Form 499 filer ID, kept as a string.
 	 *
-	 * Nexus typed this `Tagged<number, "Form499ID">`, but its own CSV parse never actually
-	 * converted the field to a number — it was a bare type assertion over string CSV output.
+	 * Nexus typed this `Tagged<number, "Form499ID">`, but its own CSV parse never
+	 * actually converted the field to a number.
+	 * It was a bare type assertion over string CSV output.
+	 *
 	 * This port keeps the honest string type rather than perpetuate that mismatch.
 	 */
 	form499ID: string
@@ -113,8 +115,8 @@ export interface Form499Row {
 	 */
 	holdingCompany: string
 	/**
-	 * The filer's management company — an operational control assertion rather than a synonym for
-	 * {@link Form499Row.holdingCompany}.
+	 * The filer's management company — an operational control assertion rather than
+	 * a synonym for {@link Form499Row.holdingCompany}.
 	 */
 	managementCompany: string
 	hqAddress: string
@@ -123,7 +125,9 @@ export interface Form499Row {
 	/**
 	 * The DC agent's display name — the registered agent for service of process.
 	 *
-	 * Plain attribute only. see the module docstring.
+	 * Plain attribute only.
+	 * See the module docstring.
+	 *
 	 * Never treat this (or the other `dcAgent*` fields) as evidence that two
 	 * filers sharing an agent are related.
 	 */
@@ -141,8 +145,9 @@ export interface Form499Row {
 	 * **Optional because the source decides whether it exists rather than the filer.**
 	 * The 17-column TSV ({@linkcode FORM_499_COLUMNS}) has no note columns at all,
 	 * so {@linkcode parseForm499} can never populate this; `parseForm499Workbook` always does.
-	 * `undefined` therefore means "this source cannot say", which is not the same as the `{notes: [], …}`
-	 * an xlsx row with blank notes produces — that one means "the FCC said nothing about this filer".
+	 * `undefined` therefore means "this source cannot say", which is not the same as
+	 * the `{notes: [], …}` an xlsx row with blank notes produces.
+	 * That one means "the FCC said nothing about this filer".
 	 *
 	 * A consumer treating the two alike would read every TSV-sourced filer as confirmed-active.
 	 */
@@ -176,11 +181,12 @@ export const FilerClassification = {
 export type FilerClassification = (typeof FilerClassification)[keyof typeof FilerClassification]
 
 /**
- * Classify a Form 499 row by its free-text `principalCommType` plus its
- * `usfContributor` flag — a direct port of Nexus's `supplementOrganization` mapping
- * (`sync/fcc/universal-service.ts`:160-176), including its if/else-if between Incumbent LEC and clec
- * (a filer whose `principalCommType` contains "Incumbent" is classified as Incumbent LEC only, never
- * also clec, even though nothing in the FCC data guarantees those substrings are mutually exclusive).
+ * Classify a Form 499 row by its free-text `principalCommType` plus its `usfContributor` flag.
+ *
+ * A direct port of Nexus's `supplementOrganization` mapping (`sync/fcc/universal-service.ts`:160-176),
+ * including its if/else-if between Incumbent LEC and clec (a filer whose `principalCommType`
+ * contains "Incumbent" is classified as Incumbent LEC only, never also clec, even
+ * though nothing in the FCC data guarantees those substrings are mutually exclusive).
  *
  * Interexchange and Toll Reseller are independent checks, same as the original.
  */
@@ -211,10 +217,10 @@ export function classifyFiler(row: Form499Row): FilerClassification[] {
 /**
  * Splits one TSV line into {@linkcode FORM_499_COLUMNS}'s 17 named fields.
  *
- * Throws a descriptive error naming `tsvPath` and the 1-indexed `lineNumber` when the
- * field count doesn't match — decision 8's "malformed input must be loud" discipline
- * (the 2a `peekProviderID` precedent), replacing Nexus's `relax_column_count_less: true`,
- * which silently truncated short rows instead.
+ * @throws a descriptive error naming `tsvPath` and the 1-indexed `lineNumber` when the
+ *   field count doesn't match — decision 8's "malformed input must be loud" discipline
+ *   (the 2a `peekProviderID` precedent), replacing Nexus's `relax_column_count_less: true`,
+ *   which silently truncated short rows instead.
  */
 function toForm499Raw(fields: readonly string[], tsvPath: string, lineNumber: number): Record<Form499Column, string> {
 	if (fields.length !== FORM_499_COLUMNS.length) {
@@ -265,9 +271,10 @@ function toForm499Row(raw: Record<Form499Column, string>): Form499Row {
  * the file is never read into memory whole, unlike Nexus's `fs.readFile`-then-parse
  * original — and yields each row as a typed {@linkcode Form499Row}.
  *
- * A line whose column count doesn't match {@linkcode FORM_499_COLUMNS} throws
- * immediately, naming `tsvPath` and the 1-indexed line number (decision 8) —
- * no partial/truncated row is ever silently yielded.
+ * A line whose column count doesn't match {@linkcode FORM_499_COLUMNS} throws immediately,
+ * naming `tsvPath` and the 1-indexed line number (decision 8).
+ * No partial/truncated row is ever silently yielded.
+ *
  * A blank trailing line (a lone `\n` at EOF) is skipped rather than treated as malformed.
  */
 export async function* parseForm499(tsvPath: string): AsyncIterable<Form499Row> {

@@ -132,9 +132,10 @@ describe("cessation ABSTAINS rather than asserting an incoherent window", () => 
 
 		const holding = edges.find((edge) => edge.relationship === FilerRelationship.HoldingCompany)
 
-		// An inverted window matches nothing under `valid_from <= t < valid_to` —
-		// the filer would vanish from every asOf read with no error to notice.
-		// Open is visibly incomplete. inverted is invisible.
+		// An inverted window matches nothing under `valid_from <= t < valid_to`.
+		// The filer would vanish from every asOf read with no error to notice.
+		// Open is visibly incomplete.
+		// Inverted is invisible.
 		expect(holding?.valid_to).toBeNull()
 		expect(result.cessationWindowAbstained).toBe(1)
 		expect(result.closedByCessation).toBe(0)
@@ -251,7 +252,8 @@ describe("supersession edges", () => {
 
 describe("a TSV-shaped row is unaffected", () => {
 	it("writes no lifecycle attribute, no supersession, and closes no window", async () => {
-		// `lifecycle` is undefined for every row parseForm499 produces — the TSV has no note columns.
+		// `lifecycle` is undefined for every row parseForm499 produces.
+		// The TSV has no note columns.
 		const { result, edges, attributes } = await build([filerRow({ form499ID: "900009" })])
 
 		expect(result.closedByCessation).toBe(0)

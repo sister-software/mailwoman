@@ -42,19 +42,22 @@ const EVAL_SOURCE_VINTAGE = "2026-eval-v1"
 const EVAL_VALID_FROM = "2026-01-01"
 
 /**
- * The `asOf` date every `filer_family` read in this eval is scoped to — a fixed
- * constant, later than the latest `lastFiledAt` in the corpus and never "today",
+ * The `asOf` date every `filer_family` read in this eval is scoped to.
+ *
+ * A fixed constant, later than the latest `lastFiledAt` in the corpus and never "today",
  * for the same reproducibility reason as the two constants above.
  *
  * A family membership is a temporal fact in this schema (`valid_from`/`valid_to`),
- * so "predicted same family" is only well-defined relative to a date. this is that date.
+ * so "predicted same family" is only well-defined relative to a date.
+ * This is that date.
  */
 const EVAL_AS_OF = "2026-06-01"
 
 /**
- * `buildFilerDatabase`'s `buildSHA` for this eval's artifact — a fixed label
- * (not a real `git rev-parse`) since this is a synthetic, in-repo corpus with no
- * git-tracked source file of its own to attribute the build to.
+ * `buildFilerDatabase`'s `buildSHA` for this eval's artifact.
+ *
+ * A fixed label (not a real `git rev-parse`) since this is a synthetic, in-repo corpus
+ * with no git-tracked source file of its own to attribute the build to.
  */
 const EVAL_BUILD_SHA = "filer-linkage-eval"
 
@@ -75,7 +78,8 @@ const EVAL_BUILD_SHA = "filer-linkage-eval"
  */
 export interface LeakageCensus {
 	/**
-	 * `filer_node` rows of type `holding_company_name` — one per distinct raw parent name in the input.
+	 * `filer_node` rows of type `holding_company_name`.
+	 * One per distinct raw parent name in the input.
 	 */
 	holdingCompanyNodes: number
 	/**
@@ -123,15 +127,19 @@ export interface LeakageCensus {
  * Whether each {@linkcode FilerRelationship} asserts ownership — the thing this eval withholds
  * and scores — as opposed to operational control or plain identity.
  *
- * **Exhaustive by construction, and that is the point.** Expressed the obvious way — two denylists typed `readonly
- * string[]`, naming the relationships that don't count — a relationship class added to `FilerRelationship` later falls
- * through to "counts as ownership" silently, in both the prediction and the leakage census, scoring a fact nobody
- * decided should be scored and doing it without a test failing. The `satisfies Record<FilerRelationship, boolean>` pin
- * below inverts that default: a new member is a compile error here until someone classifies it deliberately. Same idiom
- * the BDC plausibility check uses (`bdc/sdk/plausibility.test.ts`'s `satisfies Record<keyof PlausibilityBundle,
- * true>`). Unlike the `satisfies` pins that live in test files — which only `yarn typecheck:tests` evaluates — this one
- * sits in a source file inside `filer/tsconfig.json`'s default include, so plain `tsc -b` enforces it: dropping a
- * member fails with TS1360 naming the missing relationship.
+ * **Exhaustive by construction, and that is the point.** Expressed the obvious way —
+ * two denylists typed `readonly string[]`, naming the relationships that don't count —
+ * a relationship class added to `FilerRelationship` later falls through to "counts as
+ * ownership" silently, in both the prediction and the leakage census, scoring a fact
+ * nobody decided should be scored and doing it without a test failing.
+ * The `satisfies Record<FilerRelationship, boolean>` pin below inverts that default:
+ * a new member is a compile error here until someone classifies it deliberately.
+ *
+ * Same idiom the BDC plausibility check uses
+ * (`bdc/sdk/plausibility.test.ts`'s `satisfies Record<keyof PlausibilityBundle, true>`).
+ * Unlike the `satisfies` pins that live in test files — which only `yarn typecheck:tests` evaluates —
+ * this one sits in a source file inside `filer/tsconfig.json`'s default include, so plain
+ * `tsc -b` enforces it: dropping a member fails with TS1360 naming the missing relationship.
  *
  * `SameEntity` is false because two identifiers denoting one filer say nothing about who owns it;
  * `ManagementCompany` because operational control is not ownership (spec §3.1 finding 1,
@@ -146,8 +154,9 @@ const OWNERSHIP_BY_RELATIONSHIP = {
 	[FilerRelationship.ParentCompany]: true,
 	[FilerRelationship.Subsidiary]: true,
 	// Identity continuity over time rather than control.
-	// A supersession chain says one registration became another. scoring it as ownership would
-	// let a withheld-parent run credit itself for recovering a family fact it never saw.
+	// A supersession chain says one registration became another.
+	// Scoring it as ownership would let a withheld-parent run credit itself for
+	// recovering a family fact it never saw.
 	// Operator ruling, 2026-08-07 — see FilerRelationship.SupersededBy.
 	[FilerRelationship.SupersededBy]: false,
 } as const satisfies Record<FilerRelationship, boolean>
@@ -155,9 +164,9 @@ const OWNERSHIP_BY_RELATIONSHIP = {
 /**
  * Does this relationship assert ownership?
  *
- * Single source of truth for
- * {@linkcode readLeakageCensus}'s "scored" count and {@linkcode readRegistrantFamilies}'s
- * filter, so the census can never promise to police rows the prediction quietly scored, or vice versa.
+ * Single source of truth for {@linkcode readLeakageCensus}'s "scored" count
+ * and {@linkcode readRegistrantFamilies}'s filter, so the census can never promise
+ * to police rows the prediction quietly scored, or vice versa.
  * An unrecognized value is treated as NON-ownership: it cannot come from `FilerRelationship`
  * (the pin above makes that a compile error), so it is a raw string read back from a
  * `filer_family`/`filer_edge` row this build did not write, and silently scoring an
@@ -180,9 +189,8 @@ function assertsOwnership(relationship: string): boolean {
 /**
  * Is this relationship one {@linkcode OWNERSHIP_BY_RELATIONSHIP} actually classifies?
  *
- * Distinct from
- * {@linkcode assertsOwnership} because the prediction and the check want opposite defaults for a string neither
- * recognizes, and one predicate cannot serve both.
+ * Distinct from {@linkcode assertsOwnership} because the prediction and the check want
+ * opposite defaults for a string neither recognizes, and one predicate cannot serve both.
  *
  * The prediction must not score an assertion it does not understand, so unknown → not ownership → ignored.
  * The check exists to refuse publication when the withheld build holds ownership facts it should
@@ -222,9 +230,9 @@ async function readLeakageCensus(db: DatabaseClient<FilerDatabase>): Promise<Lea
 /**
  * Hard check on the withheld build (decision 4).
  *
- * The leakage exclusion is structural —
- * {@linkcode buildFilteredEvalInputs} is the only thing that builds what the builder receives — but "structural" is an
- * argument, and this is a check: if any ownership artifact survives into the withheld build,
+ * The leakage exclusion is structural — {@linkcode buildFilteredEvalInputs} is the
+ * only thing that builds what the builder receives — but "structural" is an argument,
+ * and this is a check: if any ownership artifact survives into the withheld build,
  * the eval refuses to report a number rather than reporting a flattered one.
  * Runs against the census taken straight off the build, before any injected evidence,
  * so a deliberate probe can still be measured without disarming the check.
@@ -261,9 +269,11 @@ interface RegistrantFamilies {
 }
 
 /**
- * Read each registrant's corporate-family memberships through the shipped reader (`familyRollup`), at
- * {@linkcode EVAL_AS_OF}. This is the eval's entire prediction: no query is written here that a product caller couldn't
- * make, and nothing about the clustering output is consulted.
+ * Read each registrant's corporate-family memberships through the shipped reader
+ * (`familyRollup`), at {@linkcode EVAL_AS_OF}.
+ *
+ * This is the eval's entire prediction: no query is written here that a product caller
+ * couldn't make, and nothing about the clustering output is consulted.
  */
 async function readRegistrantFamilies(
 	db: DatabaseClient<FilerDatabase>,
@@ -319,8 +329,9 @@ function findTruthPositivePairs(
 			const b = representatives[j]!
 			const familyID = truthGroupOf.get(a)
 
-			// A `singleton:` label embeds its own representative, so it can never equal another
-			// registrant's label — no separate singleton check is needed here.
+			// A `singleton:` label embeds its own representative, so it can never
+			// equal another registrant's label.
+			// No separate singleton check is needed here.
 			if (familyID === undefined || familyID !== truthGroupOf.get(b)) continue
 
 			outcomes.push({ a, b, familyID, recovered: predictedSame(a, b) })
@@ -375,9 +386,11 @@ export interface LinkageEvalPassOptions {
 	 */
 	holdingCompanyWithheld: boolean
 	/**
-	 * Writes evidence into the built artifact after the leakage check has passed and
-	 * before the prediction is read — the injection point the standing "this baseline can
-	 * be beaten" test uses to simulate an evidence channel that does not exist yet.
+	 * Writes evidence into the built artifact after the leakage check has passed
+	 * and before the prediction is read.
+	 *
+	 * The injection point the standing "this baseline can be beaten" test uses to
+	 * simulate an evidence channel that does not exist yet.
 	 *
 	 * Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody touched.
 	 * Ordering is the point — the check still polices what the builder produced from a
@@ -414,14 +427,14 @@ export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<L
 
 	using db = new DatabaseClient<FilerDatabase>(out)
 
-	// Run the full shipped pipeline rather than just the builder — the entity-resolution
-	// pass is part of what produces a real filer.db, and its counters belong in the
-	// report even though this eval scores a different table.
+	// Run the full shipped pipeline rather than just the builder.
+	// The entity-resolution pass is part of what produces a real filer.db, and its counters
+	// belong in the report even though this eval scores a different table.
 	const { inferred } = await clusterFilers(db, { sourceVintage: EVAL_SOURCE_VINTAGE, validFrom: EVAL_VALID_FROM })
 
 	// Check the build, then inject, then census what will actually be scored.
-	// Taking one census for both jobs is what
-	// let three injected `subsidiary` family rows move recall to 0.500 while the published census still read 0.
+	// Taking one census for both jobs is what let three injected `subsidiary` family
+	// rows move recall to 0.500 while the published census still read 0.
 	if (holdingCompanyWithheld) {
 		assertNoOwnershipLeak(await readLeakageCensus(db))
 	}
@@ -477,9 +490,7 @@ export interface FilerLinkageEvalOptions {
 }
 
 /**
- * {@linkcode filerLinkageEval}'s return value — both runs, always. There is no single "the score": the withheld run is
- * the measurement and the control run is what makes it mean anything, and a caller
- * that reports one without the other is reporting half a result.
+ * {@linkcode filerLinkageEval}'s return value — both runs, always. There is no single "the score": the withheld run is the measurement and the control run is what makes it mean anything, and a caller that reports one without the other is reporting half a result.
  */
 export interface FilerLinkageEvalResult {
 	markdown: string
