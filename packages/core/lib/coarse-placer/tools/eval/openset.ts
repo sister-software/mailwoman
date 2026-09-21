@@ -44,7 +44,9 @@ import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalFile } from "#fs/writers"
 
 /**
- * Steps in the threshold sweep. finer than the reporting precision so the knee is not missed.
+ * Steps in the threshold sweep.
+ *
+ * Finer than the reporting precision so the knee is not missed.
  */
 const QUANTILE_SWEEP_STEPS = 200
 
@@ -383,8 +385,8 @@ export async function evalOpenSet(
 
 	// Honest threshold protocol: split each probe 50/50 (deterministic by index parity) into DEV + test.
 	// The operating threshold is picked on DEV (maximizing balanced min);
-	// the reported point is frozen on test — so the number is a generalization estimate
-	// rather than a threshold fit to the set it's scored on.
+	// the reported point is frozen on test.
+	// So the number is a generalization estimate rather than a threshold fit to the set it's scored on.
 	const inDev = inmapScored.filter((_, i) => i % 2 === 0)
 	const inTest = inmapScored.filter((_, i) => i % 2 === 1)
 	const heldDev = heldoutScored.filter((_, i) => i % 2 === 0)
@@ -411,8 +413,10 @@ export async function evalOpenSet(
 		return { t, inMapAcc: (100 * keepCorrect) / inSplit.length, heldCaught: (100 * caught) / heldSplit.length }
 	}
 
-	// For each score: keep (route in-map) iff score >= threshold. else reject (→ other).
-	// in-map accuracy = keep & correctRoute. heldout caught = rejected.
+	// For each score: keep (route in-map) iff score >= threshold.
+	// Else reject (→ other).
+	// In-map accuracy = keep & correctRoute.
+	// Heldout caught = rejected.
 	function paretoFor(scoreKey: ScoreKey) {
 		// Candidate thresholds: quantiles of the union of scores.
 		const all = [...inmapScored, ...heldoutScored].map((o) => o.s[scoreKey]).toSorted((a, b) => a - b)

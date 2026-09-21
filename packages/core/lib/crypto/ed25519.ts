@@ -33,7 +33,8 @@ function pemToDER(pem: string): Uint8Array<ArrayBuffer> {
 		.replace(/-----END [A-Z ]+-----/u, "")
 		.replaceAll(/\s+/gu, "")
 
-	// Standard base64 with padding. the url-safe decoder accepts it once the two alphabet characters are mapped.
+	// Standard base64 with padding.
+	// The url-safe decoder accepts it once the two alphabet characters are mapped.
 	return fromBase64URL(base64.replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/u, ""))
 }
 
@@ -106,8 +107,9 @@ export async function signEd25519(
 }
 
 /**
- * Answers `false` for a bad signature and never throws on one. a malformed KEY still throws,
- * because that is a caller error rather than an untrusted input.
+ * Answers `false` for a bad signature and never throws on one.
+ *
+ * A malformed KEY still throws, because that is a caller error rather than an untrusted input.
  */
 export async function verifyEd25519(
 	data: Uint8Array<ArrayBuffer>,

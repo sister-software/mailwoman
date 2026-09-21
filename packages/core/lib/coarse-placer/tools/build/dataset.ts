@@ -64,12 +64,7 @@ export interface BuildDatasetResult {
 const VAL_FRAC = 0.1
 const TEST_FRAC = 0.1
 
-// #743 EU expansion: draw the new in-map countries from the Overture per-country addresses theme.
-// The raw fields are formatted into native address strings with format variety
-// (4 templates picked deterministically per row) so the model can't shortcut on a
-// single template shape — it must use the actual street-type words + locality n-grams
-// (Finnish "katu/tie", Polish "ul.", Norwegian "veien") that include the country signal.
-// Same 80/10/10 dedup split as the corpus path.
+// #743 EU expansion: draw the new in-map countries from the Overture per-country addresses theme. The raw fields are formatted into native address strings with format variety (4 templates picked deterministically per row) so the model can't shortcut on a single template shape. It must use the actual street-type words + locality n-grams (Finnish "katu/tie", Polish "ul.", Norwegian "veien") that include the country signal. Same 80/10/10 dedup split as the corpus path.
 /**
  * Format a (street, number, postcode, locality) quad into a native address string.
  */
@@ -102,10 +97,7 @@ export async function buildDataset(
 
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
 
-	// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows. the v0.9.2 G-NAF extract carries
-	// 150k real Australian addresses.
-	// AU rides the same corpus sampling path as `countries`, just from its own glob —
-	// the (country, glob) pairs below unify the two.
+	// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows. The v0.9.2 G-NAF extract carries 150k real Australian addresses. AU rides the same corpus sampling path as `countries`, just from its own glob — the (country, glob) pairs below unify the two.
 	const AU_GLOB = dataRootPath(
 		"corpus",
 		"versioned",

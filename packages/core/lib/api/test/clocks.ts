@@ -68,9 +68,9 @@ export function drainMicrotasks(): Promise<void> {
 /**
  * Yield the event loop for `ms` of real time — a real macrotask no virtual clock drives.
  *
- * Used by
- * {@linkcode VirtualClock.runUntilSettled}'s idle backoff (so pending real I/O is serviced instead of competing with a
- * `setImmediate` spin), and by suites that need progress the clock cannot see.
+ * Used by {@linkcode VirtualClock.runUntilSettled}'s idle backoff
+ * (so pending real I/O is serviced instead of competing with a `setImmediate` spin),
+ * and by suites that need progress the clock cannot see.
  */
 export function realDelay(ms: number): Promise<void> {
 	return new Promise<void>((resolve) => {
@@ -118,8 +118,9 @@ export function createFakeClock(startAt = 0): FakeClock {
 
 /**
  * A virtual-time clock that resolves concurrent `sleep()`s one AT A time, strictly in
- * deadline order, only when explicitly driven via {@linkcode VirtualClock.advance} —
- * unlike {@linkcode createFakeClock}, which bumps `now()` synchronously the instant
+ * deadline order, only when explicitly driven via {@linkcode VirtualClock.advance}.
+ *
+ * Unlike {@linkcode createFakeClock}, which bumps `now()` synchronously the instant
  * `sleep()` is called (fine when nothing else races the clock, but not a faithful
  * model of "N callers all waiting on the same deadline").
  *
@@ -150,8 +151,9 @@ export class VirtualClock implements ClockLike {
 	}
 
 	/**
-	 * Advance virtual time to `now() + ms`, waking every pending `sleep()` due at or before that
-	 * instant — one at a time, earliest deadline first (ties broken by registration order),
+	 * Advance virtual time to `now() + ms`, waking every pending `sleep()` due at or before that instant.
+	 *
+	 * One at a time, earliest deadline first (ties broken by registration order),
 	 * draining the microtask queue after each wakeup so the woken continuation runs
 	 * to quiescence before the next deadline is considered.
 	 *
@@ -184,18 +186,14 @@ export class VirtualClock implements ClockLike {
 	 * Drive `work` to completion, jumping virtual time to the next pending deadline
 	 * whenever the real event loop goes idle.
 	 *
-	 * {@linkcode advance} alone is not enough once the code under test interleaves virtual sleeps with real asynchrony —
-	 * a paced client whose limit sits downstream of an on-disk cache spends several real
-	 * event-loop turns in `readFile` before it ever registers its `sleep()`.
-	 * A caller that drains once and then advances finds nothing pending, jumps the clock
-	 * past the deadlines that are registered a moment later, and the test hangs.
+	 * {@linkcode advance} alone is not enough once the code under test interleaves virtual sleeps with real asynchrony. A paced client whose limit sits downstream of an on-disk cache spends several real event-loop turns in `readFile` before it ever registers its `sleep()`. A caller that drains once and then advances finds nothing pending, jumps the clock past the deadlines that are registered a moment later, and the test hangs.
 	 *
-	 * This polls instead: drain, and if any sleep is pending, advance to the earliest
-	 * deadline. if none is, yield and look again.
+	 * This polls instead: drain, and if any sleep is pending, advance to the earliest deadline.
+	 * If none is, yield and look again.
 	 *
-	 * Throws rather than hanging when the work neither settles nor schedules anything
-	 * for {@linkcode IDLE_BUDGET_MS} of real time — a diagnosable failure beats a
-	 * test-timeout stack trace pointing at the `it()`.
+	 * @throws rather than hanging when the work neither settles nor schedules anything
+	 *   for {@linkcode IDLE_BUDGET_MS} of real time — a diagnosable failure beats a
+	 *   test-timeout stack trace pointing at the `it()`.
 	 */
 	public async runUntilSettled<T>(work: Promise<T>): Promise<T> {
 		let settled = false
@@ -213,8 +211,8 @@ export class VirtualClock implements ClockLike {
 			}
 		)
 
-		// Keep the rejection from surfacing as an unhandled rejection while we drive the
-		// clock. the real one is still delivered to whoever awaits the returned promise.
+		// Keep the rejection from surfacing as an unhandled rejection while we drive the clock.
+		// The real one is still delivered to whoever awaits the returned promise.
 		observed.catch(() => undefined)
 
 		let idleTurns = 0

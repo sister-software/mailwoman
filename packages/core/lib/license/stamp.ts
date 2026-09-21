@@ -66,7 +66,8 @@ function noticeSentence(license: string, expiredOn?: string): string {
  *
  * `key` is the offline verification of the configured key, or absent when none is configured.
  * The branch comes from `appliedLicenseBranch`, the function the doctor calls too.
- * the stamp passes no publication because it is offline by design.
+ *
+ * The stamp passes no publication because it is offline by design.
  */
 export function buildEngineStamp(input: {
 	version: string
@@ -88,8 +89,9 @@ export function buildEngineStamp(input: {
 /**
  * The stderr notice: two lines, or nothing when the commercial branch applies.
  *
- * An expired key is the one reading whose cause the notice states, because the date tells the
- * operator what to do. every other failed reading leaves the reason to `mailwoman doctor`.
+ * An expired key is the one reading whose cause the notice states, because the
+ * date tells the operator what to do.
+ * Every other failed reading leaves the reason to `mailwoman doctor`.
  */
 export function licenseNoticeLines(stamp: EngineStamp, key?: LicenseKeyVerification): [string, string] | undefined {
 	if (!stamp.notice) return undefined

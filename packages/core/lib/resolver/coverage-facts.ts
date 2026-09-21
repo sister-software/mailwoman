@@ -80,11 +80,14 @@ export interface CountryBBoxFact {
  */
 export interface GazetteerArtifactCoverage {
 	/**
-	 * Country → measured coverage fact. absence = never measured (meaning-of-zero), never "failed".
+	 * Country → measured coverage fact.
+	 * Absence = never measured (meaning-of-zero), never "failed".
 	 */
 	countryCoverage: ReadonlyMap<string, CountryCoverageFact>
 	/**
-	 * Country → guard-B bbox. absence = no box → the plausibility guard fails open for that country.
+	 * Country → guard-B bbox.
+	 *
+	 * Absence = no box → the plausibility guard fails open for that country.
 	 */
 	countryBBoxes: ReadonlyMap<string, CountryBBoxFact>
 	/**

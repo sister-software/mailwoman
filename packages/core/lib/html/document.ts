@@ -36,9 +36,9 @@ export interface DocumentNarrowingOptions {
 /**
  * Narrows `html` to the window described by `options` and renders it back to html.
  *
- * One parse, and the tree answers both questions — a regex `<head[^>]*>[\s\S]*?<\/head>`
- * cannot tell a `<` inside an attribute value from a tag, and a document whose envelope
- * is malformed is exactly the document a caller most needs read correctly.
+ * One parse, and the tree answers both questions.
+ * A regex `<head[^>]*>[\s\S]*?<\/head>` cannot tell a `<` inside an attribute value from a tag,
+ * and a document whose envelope is malformed is exactly the document a caller most needs read correctly.
  */
 export function narrowDocument(html: string, options: DocumentNarrowingOptions = {}): string {
 	const document = parseDocument(html, { decodeEntities: true })
@@ -57,8 +57,9 @@ export function narrowDocument(html: string, options: DocumentNarrowingOptions =
 		}
 	}
 
-	// `roots` is the live children array of the envelope (or the document), and `removeElement`
-	// splices each node out of its own parent — so the array read here is already the narrowed window.
+	// `roots` is the live children array of the envelope (or the document),
+	// and `removeElement` splices each node out of its own parent.
+	// So the array read here is already the narrowed window.
 	return render(roots)
 }
 
@@ -67,7 +68,7 @@ export function narrowDocument(html: string, options: DocumentNarrowingOptions =
  *
  * XML mode keeps tag case and treats every element as needing an explicit close,
  * which is what an OGC exception report, an fgdc metadata document, or an S3 listing want.
- * html mode recovers unclosed tags the way a browser does, which is what a filing wants.
+ * Html mode recovers unclosed tags the way a browser does, which is what a filing wants.
  */
 export interface MarkupQueryOptions {
 	xml?: boolean
@@ -76,8 +77,9 @@ export interface MarkupQueryOptions {
 /**
  * The local name of an element — `gco:CharacterString` is `characterstring`.
  *
- * A namespace prefix is the publisher's choice of alias and two documents from the
- * same service can spell it differently. the local name is the interface.
+ * A namespace prefix is the publisher's choice of alias and two documents from
+ * the same service can spell it differently.
+ * The local name is the interface.
  */
 function localName(name: string): string {
 	const colon = name.lastIndexOf(":")
@@ -109,8 +111,8 @@ export function elementText(markup: string, name: string, options: MarkupQueryOp
 /**
  * One attribute of the document's root element, or `undefined` when the root carries no such attribute.
  *
- * Asked of the root specifically, so a value repeated on a descendant cannot answer for the
- * document — the count a service reports for a collection is a property of the collection,
+ * Asked of the root specifically, so a value repeated on a descendant cannot answer for the document.
+ * The count a service reports for a collection is a property of the collection,
  * and a regex over the whole body cannot tell the two apart.
  */
 export function rootAttribute(markup: string, attribute: string, options: MarkupQueryOptions = {}): string | undefined {

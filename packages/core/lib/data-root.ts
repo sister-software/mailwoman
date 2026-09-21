@@ -45,11 +45,12 @@ export const configRootPath: PathBuilderResolver = ((...segments: PathBuilderLik
 /**
  * Build a path under the data root, e.g. `dataRootPath("wof", "admin-global-priority.db")`.
  *
- * Reads the env on each call, so a late environment change (or a test stub) is honored —
- * a resolver bound once at module evaluation would freeze the root to whatever
+ * Reads the env on each call, so a late environment change (or a test stub) is honored.
+ * A resolver bound once at module evaluation would freeze the root to whatever
  * the first importer's environment held.
- * The result is a
- * {@link PathBuilder}: call it to descend, `resolvePath(...)` or `.toString()` it at a string boundary.
+ *
+ * The result is a {@link PathBuilder}: call it to descend, `resolvePath(...)`
+ * or `.toString()` it at a string boundary.
  */
 export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[]) => {
 	const resolver = createPathBuilderResolver(mailwomanDataRoot())
@@ -93,8 +94,9 @@ export function tempRootPathBuilder(...segments: string[]): PathBuilder {
 }
 
 /**
- * Absolute-path-string resolver under the temporary-file root — the string-returning sibling of
- * {@link tempRootPathBuilder}, for handing paths straight to `node:fs` and other string APIs without a `.toString()`.
+ * Absolute-path-string resolver under the temporary-file root — the string-returning
+ * sibling of {@link tempRootPathBuilder}, for handing paths straight to `node:fs`
+ * and other string APIs without a `.toString()`.
  */
 export function tempRootPath(...segments: string[]): string {
 	return resolvePath($public.MAILWOMAN_TEMP_ROOT, ...segments)
@@ -115,8 +117,8 @@ export function cacheRootPathBuilder(...segments: string[]): PathBuilder {
 }
 
 /**
- * Absolute-path-string resolver under the cache directory — the string-returning sibling of
- * {@link cacheRootPathBuilder}.
+ * Absolute-path-string resolver under the cache directory — the string-returning
+ * sibling of {@link cacheRootPathBuilder}.
  */
 export function cacheRootPath(...segments: string[]): string {
 	return resolvePath($public.MAILWOMAN_CACHE_ROOT, ...segments)
@@ -127,21 +129,26 @@ export function cacheRootPath(...segments: string[]): string {
  * the global admin-priority extract plus the postcode extracts, with country-aware routing in
  * `pickExtractForPlacetype` sending each postcode query to the extract that claims its country (#920).
  *
- * All under `dataRoot` (defaults to the configured
- * {@link mailwomanDataRoot}. callers thread a `--data-root` option through). A fresh array each call. callers filter
- * with `existsSync`, so a deployment missing any of them degrades to whatever is present.
+ * All under `dataRoot` (defaults to the configured {@link mailwomanDataRoot}.
+ * Callers thread a `--data-root` option through).
+ * A fresh array each call.
+ *
+ * Callers filter with `existsSync`, so a deployment missing any of them degrades to whatever is present.
  *
  * This list is deliberately smaller than `DEFAULT_POSTCODE_EXTRACTS`
  * (`mailwoman/gazetteer-pipeline/index.ts`), which is the set the candidate gazetteer is
  * built from — twenty-odd extracts including the 876 MB Code-Point Open GB one.
- * These are attached live per query, so the cost of a member is paid at every boot rather than once at
- * build time. membership here is earned by a extract the runtime cannot resolve its locales without.
+ * These are attached live per query, so the cost of a member is paid at every boot
+ * rather than once at build time.
+ *
+ * Membership here is earned by a extract the runtime cannot resolve its locales without.
  *
  * Two notes on specific members, because both look like mistakes and are not:
  *
  * - The tail extract's own contents moved on 2026-08-05.
- *   It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until Code-Point Open replaced those rows
- *   under a clean licence. it is now the nine-country namesake set FI/CZ/SK/SI/DK/no/HR/PL/SE at 26 MB.
+ *   It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until Code-Point Open
+ *   replaced those rows under a clean licence.
+ *   It is now the nine-country namesake set FI/CZ/SK/SI/DK/no/HR/PL/SE at 26 MB.
  *   Rebuild: `mailwoman gazetteer build postcode-geonames`.
  * - `postalcode-ni-osm.db` is **build-local**: OSM `addr:postcode` under ODbL,
  *   never published, so on any machine that did not build it the `existsSync` filter
@@ -181,10 +188,14 @@ export interface WOFExtractPaths {
 	 */
 	postalcodeNLPC6: string
 	/**
-	 * Northern Ireland (BT) from OpenStreetMap — 4,757 of 50,032 live NI postcodes (9.5 %), the only coverage that exists
-	 * for the hole Code-Point Open leaves. ODbL, build-local, 2.5 MB. A miss on a BT code means not attested IN OSM. an
-	 * unknown postcode abstains (#1480), so the extract is strictly additive. Rebuild: `mailwoman gazetteer build
-	 * postcode-ni-osm`.
+	 * Northern Ireland (BT) from OpenStreetMap — 4,757 of 50,032 live NI postcodes (9.5 %),
+	 * the only coverage that exists for the hole Code-Point Open leaves.
+	 *
+	 * ODbL, build-local, 2.5 MB.
+	 * A miss on a BT code means not attested IN OSM.
+	 *
+	 * An unknown postcode abstains (#1480), so the extract is strictly additive.
+	 * Rebuild: `mailwoman gazetteer build postcode-ni-osm`.
 	 */
 	postalcodeNIOSM: string
 }

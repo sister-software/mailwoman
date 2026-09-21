@@ -30,8 +30,9 @@ export interface WOFBaseProperties {
 	 * Every ancestor chain the place belongs to, coarsest key
 	 * first — `[{ country_id, region_id, locality_id }, …]`.
 	 *
-	 * More than one entry means the place has multiple parents, which is what `wof:parent_id` records as
-	 * the `-4` sentinel. the keys present vary by branch, so a missing rung is absent rather than null.
+	 * More than one entry means the place has multiple parents, which is what
+	 * `wof:parent_id` records as the `-4` sentinel.
+	 * The keys present vary by branch, so a missing rung is absent rather than null.
 	 */
 	"wof:hierarchy"?: Array<Record<string, number>>
 	"wof:population"?: number
@@ -61,8 +62,9 @@ export interface WOFBaseProperties {
 }
 
 /**
- * Name kinds Who's On First records per language, in descending preference —
- * a preferred name wins over a variant, which wins over a colloquial one.
+ * Name kinds Who's On First records per language, in descending preference.
+ *
+ * A preferred name wins over a variant, which wins over a colloquial one.
  */
 export const WOFNameKinds = ["preferred", "variant", "colloquial", "abbr", "short"] as const
 

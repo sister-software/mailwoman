@@ -83,8 +83,8 @@ export async function changedFiles(repoRoot: PathBuilderLike, base: string, head
 /**
  * Every tracked path, repo-relative, optionally narrowed by git pathspecs.
  *
- * Read NUL-delimited so a path with a newline or a non-ascii byte survives. the 64
- * MiB buffer covers this repository's listing several times over.
+ * Read NUL-delimited so a path with a newline or a non-ascii byte survives.
+ * The 64 MiB buffer covers this repository's listing several times over.
  */
 export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
 	const output = await git(repoRoot, ["ls-files", "-z", ...pathspecs], 64 * 1024 * 1024)
@@ -115,8 +115,9 @@ export async function workingTreeFiles(repoRoot: PathBuilderLike, pathspecs: str
 /**
  * Every path this repository has ever renamed away from or deleted, across all refs.
  *
- * The set that separates a reference to something that moved from a reference to something that
- * never existed — the distinction a path-literal sweep turns on, because a path a tool writes
+ * The set that separates a reference to something that moved from a reference
+ * to something that never existed.
+ * The distinction a path-literal sweep turns on, because a path a tool writes
  * and a path a fixture invents are both absent from the tree and neither is a defect.
  *
  * `--no-renames` is what makes it answer the question asked.

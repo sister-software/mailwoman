@@ -25,7 +25,8 @@ try {
 	// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
 	process.loadEnvFile(join(process.cwd(), ".env"))
 } catch {
-	// No `.env` beside the working directory — `process.env` alone is the environment.
+	// No `.env` beside the working directory.
+	// `process.env` alone is the environment.
 }
 
 /**
@@ -79,8 +80,9 @@ export function liveEnv<Shape extends z.ZodRawShape, Base extends object = Recor
 }
 
 /**
- * Publicly accessible environment — the non-secret operational config core
- * reads (data roots, the license key).
+ * Publicly accessible environment.
+ *
+ * The non-secret operational config core reads (data roots, the license key).
  *
  * Safe to log.
  * A live, typed view over `process.env` layered on an optional `.env`;
@@ -96,9 +98,10 @@ export const $public = liveEnv(PublicEnvSchema)
  * Privately accessible environment — secrets and credentials.
  *
  * Do not log.
- * Core reads none itself, so this view is empty. it is the base a package's
- * private view extends (`liveEnv(PackageSecrets, $private)`), which keeps every
- * credential declared beside the code that sends it.
+ * Core reads none itself, so this view is empty.
+ *
+ * It is the base a package's private view extends (`liveEnv(PackageSecrets, $private)`),
+ * which keeps every credential declared beside the code that sends it.
  *
  * @see {@link $public} for non-secret operational config.
  */

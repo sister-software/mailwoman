@@ -53,8 +53,9 @@ const LicenseEnvSchema = z.object({
 	 * A signed commercial license key (`mwl1.<payload>.<signature>`, Ed25519 over the payload,
 	 * verified offline against the public keys `@mailwoman/core/license` ships).
 	 *
-	 * Its presence changes what `mailwoman doctor` reports about the license that applies
-	 * to this installation. it never changes what the runtime does.
+	 * Its presence changes what `mailwoman doctor` reports about the license
+	 * that applies to this installation.
+	 * It never changes what the runtime does.
 	 * Absent means the AGPL-3.0-only branch applies.
 	 *
 	 * Public in the sense that it is a signed assertion rather than a secret,

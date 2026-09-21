@@ -40,8 +40,9 @@ export interface StubRequestConfig {
 	 */
 	responseType?: string
 	/**
-	 * The per-request `axios-cache-interceptor` override — `false` is how a caller
-	 * turns caching off for one call without touching `core/api`.
+	 * The per-request `axios-cache-interceptor` override.
+	 *
+	 * `false` is how a caller turns caching off for one call without touching `core/api`.
 	 */
 	cache?: unknown
 }
@@ -53,9 +54,12 @@ export interface StubOutcome {
 	status?: number
 	statusText?: string
 	/**
-	 * The RAW body, as the transport would hand it to Axios's `transformResponse`. A string here is what an upstream
-	 * serving html under a 200 actually looks like. a `Buffer` is what Axios's Node adapter produces for `responseType:
-	 * "arraybuffer"`. Anything else is JSON-serialized the way a JSON endpoint would.
+	 * The RAW body, as the transport would hand it to Axios's `transformResponse`.
+	 *
+	 * A string here is what an upstream serving html under a 200 actually looks like.
+	 * A `Buffer` is what Axios's Node adapter produces for `responseType: "arraybuffer"`.
+	 *
+	 * Anything else is JSON-serialized the way a JSON endpoint would.
 	 */
 	body?: unknown
 	headers?: Record<string, string>
@@ -112,9 +116,11 @@ export interface StubTransportOptions {
 }
 
 /**
- * Build an Axios-shaped rejection without importing `axios`. `isAxiosError(payload)` is `isObject(payload) &&
- * payload.isAxiosError === true`, and everything downstream reads `config`, `code`, and `response` — so this is the
- * full interface that matters.
+ * Build an Axios-shaped rejection without importing `axios`.
+ *
+ * `isAxiosError(payload)` is `isObject(payload) && payload.isAxiosError === true`,
+ * and everything downstream reads `config`, `code`, and `response`.
+ * So this is the full interface that matters.
  */
 export function axiosLikeError(message: string, code: string, config: StubRequestConfig, response?: unknown): Error {
 	const error = new Error(message) as Error & Record<string, unknown>

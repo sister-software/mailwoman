@@ -37,7 +37,7 @@ export type Section = Span
  * - `rule`: emitted by a legacy rule classifier through the adapter.
  * - `neural`: emitted by an ONNX-backed sequence classifier.
  * - `merged`: synthetic source for a merger that fused proposals from multiple
- *   classifiers (rare. mostly for telemetry on `merged` ids).
+ *   classifiers (rare. Mostly for telemetry on `merged` ids).
  */
 export type ClassificationProposalSource = "rule" | "neural" | "merged"
 
@@ -116,7 +116,9 @@ export interface ClassifierContext {
 /**
  * Plug-in interface every classifier implements.
  *
- * Construction must be cheap. per-classification work runs in {@link classify}.
+ * Construction must be cheap.
+ * Per-classification work runs in {@link classify}.
+ *
  * Pre-flight work (loading dictionaries, warming up an ONNX session) belongs in the optional `ready()` step.
  */
 export interface ProposalClassifier {

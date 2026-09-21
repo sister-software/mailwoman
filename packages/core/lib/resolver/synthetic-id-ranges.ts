@@ -66,8 +66,8 @@ export const TW_DISTRICT_ID_BASE = 9_900_000_000_000
 /**
  * Every synthetic range, ascending.
  *
- * The test over this table is what keeps the bases distinct and spaced. a builder
- * reads its own constant above and never this list.
+ * The test over this table is what keeps the bases distinct and spaced.
+ * A builder reads its own constant above and never this list.
  */
 export const SYNTHETIC_ID_RANGES: ReadonlyArray<{ readonly name: string; readonly base: number }> = [
 	{ name: "overture", base: OVERTURE_ID_BASE },

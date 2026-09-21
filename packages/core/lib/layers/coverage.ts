@@ -38,10 +38,12 @@ export function sourcePresentCoverageCells(observed: ReadonlyMap<number, number>
 }
 
 /**
- * The coverage rows for a layer whose footprint an authority designates: one per cell of the realized
- * footprint, every one at completeness 1 on the `designated` basis — `observed_rows` zero included,
- * because a designated cell no polygon reaches is the storable form of a designated absence,
- * and the row a reader must not confuse with the absent row an out-of-footprint cell has.
+ * The coverage rows for a layer whose footprint an authority designates: one per cell of
+ * the realized footprint, every one at completeness 1 on the `designated` basis.
+ *
+ * `observed_rows` zero included, because a designated cell no polygon reaches is
+ * the storable form of a designated absence, and the row a reader must not confuse
+ * with the absent row an out-of-footprint cell has.
  *
  * @param options.include Narrows the footprint where a product excludes some cells — which cells,
  *   and what their exclusion means, is the product's own rule and stays at its call site.
@@ -68,10 +70,11 @@ export function designatedCoverageCells(
 }
 
 /**
- * Refuse a coverage row that would license a negative claim — the check the meaning-of-zero
- * rule turns on for a `source_present` layer, and a condition rather than a convention:
- * the day someone writes a stronger basis without settling the footprint question,
- * the build refuses rather than letting an absent polygon be read as a designation.
+ * Refuse a coverage row that would license a negative claim.
+ *
+ * The check the meaning-of-zero rule turns on for a `source_present` layer, and a condition
+ * rather than a convention: the day someone writes a stronger basis without settling the footprint
+ * question, the build refuses rather than letting an absent polygon be read as a designation.
  *
  * @param scope Names the caller in the refusal, e.g. `coastal build`.
  * @param limitSentence The product's own sentence saying why its coverage licenses no negative claim.
@@ -88,8 +91,9 @@ export function assertNoNegativeClaim(scope: string, cells: ReadonlyArray<Covera
 }
 
 /**
- * Refuse a layer holding no coverage rows at all — every location would read as unknown,
- * and a reader cannot tell that artifact from ground nobody mapped.
+ * Refuse a layer holding no coverage rows at all.
+ *
+ * Every location would read as unknown, and a reader cannot tell that artifact from ground nobody mapped.
  *
  * @param indistinguishableFrom The product's own words for what the empty answer would be mistaken for.
  */
@@ -215,8 +219,8 @@ export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number
 /**
  * Refuse an artifact whose rings do not add up to the area the source itself reports.
  *
- * A reading with no witness has nothing to disagree with and passes through —
- * its type is what keeps that from reading as a pass.
+ * A reading with no witness has nothing to disagree with and passes through.
+ * Its type is what keeps that from reading as a pass.
  *
  * The message carries the hole-blind total beside the nested one, because the gap between them
  * is the diagnosis: a hole read as an exterior ring answers "inside" for every point in it.

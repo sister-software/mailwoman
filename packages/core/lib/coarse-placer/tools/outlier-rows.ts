@@ -15,7 +15,8 @@ import { stringifyJSON } from "#json"
 import { isPresent } from "#objects"
 
 /**
- * Shortest raw string worth keeping as an outlier example. below it there is nothing to learn from.
+ * Shortest raw string worth keeping as an outlier example.
+ * Below it there is nothing to learn from.
  */
 const MIN_OUTLIER_LENGTH = 6
 

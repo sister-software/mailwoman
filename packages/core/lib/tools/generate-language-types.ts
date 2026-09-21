@@ -69,13 +69,14 @@ export async function generateLanguageTypes(
 
 	report?.(`Reading ${dataSourcePath}`)
 
-	// `header` defaults true, which skips the `alpha3-b,alpha2,English` line. the columns
-	// are read by position, so the mode is named rather than derived from it.
+	// `header` defaults true, which skips the `alpha3-b,alpha2,English` line.
+	// The columns are read by position, so the mode is named rather than derived from it.
 	for await (const columns of CSVSpliterator.fromAsync<string[]>(dataSourcePath, { mode: "array" })) {
 		const alpha3b = columns[0] as string
 		const alpha2 = columns[1] as string
 		const labelsConcatenated = columns[2] as string
-		// Empty for the 163 languages whose two 639-2 forms agree. a distinct code for the 20 that diverge.
+		// Empty for the 163 languages whose two 639-2 forms agree.
+		// A distinct code for the 20 that diverge.
 		const alpha3t = (columns[3] as string | undefined) ?? ""
 
 		const labels = labelsConcatenated.split("; ")
@@ -90,11 +91,12 @@ export async function generateLanguageTypes(
 		// It is the form WOF actually writes, so a lookup keyed on it must hit.
 		//
 		// It goes to `alpha3tPairs`, not to `entryLines`.
-		// Both lists build both direction maps from a `new Map([...])`, where the last
-		// entry for a key wins — so appending the /T form to `entryLines` would silently
-		// flip `Alpha2ToAlpha3b.get("de")` from `ger` to `deu`.
-		// That map is named for the /B standard and documented as returning it. changing what it
-		// answers is a separate decision from widening what the union accepts, and it is not this one.
+		// Both lists build both direction maps from a `new Map([...])`, where the last entry for a key wins.
+		// So appending the /T form to `entryLines` would silently flip
+		// `Alpha2ToAlpha3b.get("de")` from `ger` to `deu`.
+		// That map is named for the /B standard and documented as returning it.
+		// Changing what it answers is a separate decision from widening what the
+		// union accepts, and it is not this one.
 		if (alpha3t) {
 			alpha3bEntries.set(alpha3t, labels)
 			alpha3tPairs.push([alpha2, alpha3t])
@@ -212,8 +214,8 @@ export const Alpha2ToAlpha3b: ReadonlyMap<Alpha2LanguageCode, Alpha3bLanguageCod
 export const Alpha3bToAlpha2: ReadonlyMap<Alpha3bLanguageCode, Alpha2LanguageCode> = new Map([
 `)
 
-	// This direction accepts a code, so it takes both spellings — the keys are distinct,
-	// nothing is overwritten, and `deu` answers `de` exactly as `ger` does.
+	// This direction accepts a code, so it takes both spellings.
+	// The keys are distinct, nothing is overwritten, and `deu` answers `de` exactly as `ger` does.
 	for (const [alpha2, alpha3] of [...entryLines, ...alpha3tPairs]) {
 		await writeLine(`["${alpha3}", "${alpha2}"],`)
 	}

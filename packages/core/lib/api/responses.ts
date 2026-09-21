@@ -17,9 +17,10 @@ import { ResourceError } from "#errors/schema"
  *
  * Exists so a caller that opts out of throwing — `validateStatus: () => true`,
  * for a graceful non-2xx path — can still ask the question by name.
- * Written against axios's own `HttpStatusCode` because this package already owns that
- * dependency. a consumer package spelling `>= 200 && < 300` inline would either name
- * two bare thresholds or take an undeclared dependency to avoid it.
+ * Written against axios's own `HttpStatusCode` because this package already owns that dependency.
+ *
+ * A consumer package spelling `>= 200 && < 300` inline would either name two bare
+ * thresholds or take an undeclared dependency to avoid it.
  */
 export function isSuccessStatus(status: number): boolean {
 	return status >= HttpStatusCode.Ok && status < HttpStatusCode.MultipleChoices
@@ -93,9 +94,11 @@ export function pluckResponseData<Body>(input: ResponseContainer<Body> | Body): 
 }
 
 /**
- * The `kind` component of a {@linkcode ResourceError}'s `(source, kind, reason)` URN, as produced by
- * {@linkcode delegateAxiosError}. This is the axis {@linkcode isTransientResourceError} branches on, so a caller never
- * has to pattern-match an error message.
+ * The `kind` component of a {@linkcode ResourceError}'s `(source, kind, reason)` URN,
+ * as produced by {@linkcode delegateAxiosError}.
+ *
+ * This is the axis {@linkcode isTransientResourceError} branches on, so a caller
+ * never has to pattern-match an error message.
  */
 export const ResourceErrorKind = {
 	/**
@@ -163,15 +166,16 @@ export function resourceErrorKind(error: unknown): ResourceErrorKind | null {
 }
 
 /**
- * Whether `error` is the kind of failure a caller should requeue rather than give
- * up on — every network-class failure (connect, DNS, timeout, mid-transfer drop)
+ * Whether `error` is the kind of failure a caller should requeue rather than give up on.
+ *
+ * Every network-class failure (connect, DNS, timeout, mid-transfer drop)
  * and every transient http status (408/429/5xx).
  *
  * This stays `true` even after a client exhausted its own bounded attempts:
  * the client's ceiling is a statement about one call, while a caller's requeue is a new,
  * separate attempt budget minutes or hours later.
- * Callers branch on this plus
- * {@linkcode ResourceError.status} — 404 to skip, 403 to abort — and never on message text.
+ * Callers branch on this plus {@linkcode ResourceError.status} — 404 to skip,
+ * 403 to abort — and never on message text.
  */
 export function isTransientResourceError(error: unknown): boolean {
 	if (!(error instanceof ResourceError)) return false
@@ -227,17 +231,19 @@ function responseReason(status: number): string {
 /**
  * Delegate Axios errors to an appropriate error handler.
  *
- * Always throws — every failure past this point is a {@linkcode ResourceError} carrying a numeric `status`, a `(source,
- * kind, reason)` URN on `name`, and the originating `AxiosError` on `cause`. A non-Axios error is rethrown untouched.
+ * Always throws — every failure past this point is a {@linkcode ResourceError} carrying a numeric
+ * `status`, a `(source, kind, reason)` URN on `name`, and the originating `AxiosError` on `cause`.
+ * A non-Axios error is rethrown untouched.
  *
  * What changed, measured rather than recalled — a differential against `98c4dda1`
  * across 18 failure shapes in the exact `TileAPI` configuration found **16 of
  * them changed**, not the two originally claimed:
  *
  * - Every responseless failure (`ERR_NETWORK`, `econnrefused`, `econnreset`, `econnaborted`,
- *   `etimedout`, `ERR_CANCELED`) used to collapse into a uniform 500. they now split
- *   into 503 / 504 / 400 by cause, and `ERR_CANCELED` flips from transient to terminal,
- *   which is the point — a caller who cancelled should not requeue.
+ *   `etimedout`, `ERR_CANCELED`) used to collapse into a uniform 500.
+ *   They now split into 503 / 504 / 400 by cause, and `ERR_CANCELED` flips from
+ *   transient to terminal, which is the point.
+ *   A caller who cancelled should not requeue.
  * - Every non-401 http status used to rethrow the raw `AxiosError`, so `status`-based branching
  *   (404 → skip, 403 → abort) had to reach into `error.response`. 401's own message and URN changed too.
  *
@@ -252,8 +258,9 @@ function responseReason(status: number): string {
  *
  * Stock adapters never pair those, but this repo's own `axiosLikeError(message, code, config, response)`
  * helper builds that shape in one argument.
- * No regression follows from any of this — the sole call site has no `.catch`,
- * and every shape that rejects now also rejected before.
+ * No regression follows from any of this.
+ *
+ * The sole call site has no `.catch`, and every shape that rejects now also rejected before.
  *
  * @internal
  */

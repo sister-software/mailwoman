@@ -30,14 +30,15 @@ export interface ByteFormatterOptions {
  * Byte counts as a human reads them, in whichever of the two bases the number was actually measured in.
  *
  * Both bases, spelled correctly.
- * A formatter that divides by 1024 and prints `KB` is off by 2.4% at KB and 10% by TB, and the
- * label is the only thing telling a reader which it did — so the choice is named at the call site:
+ * A formatter that divides by 1024 and prints `KB` is off by 2.4% at KB and 10% by TB,
+ * and the label is the only thing telling a reader which it did.
+ * So the choice is named at the call site:
  *
  * - {@linkcode ByteFormatter.formatIEC} for anything a machine measured — heap,
  *   file size on disk, buffer length.
  * - {@linkcode ByteFormatter.formatSI} for a size a vendor reports.
  *   Disk capacity, download sizes and GitHub's own API are quoted in powers of ten.
- *   rendering GitHub's `41.3 GB` as `38.5 GiB` is correct arithmetic and the wrong answer.
+ *   Rendering GitHub's `41.3 GB` as `38.5 GiB` is correct arithmetic and the wrong answer.
  *
  * Rendering goes through `Intl.NumberFormat`, so the unit and the decimal separator follow the locale.
  * Pass an explicit locale when a caller needs a stable string — a test asserting

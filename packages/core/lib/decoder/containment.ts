@@ -62,13 +62,15 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	intersection_a: ["street", "locality"],
 	intersection_b: ["street", "locality"],
 
-	// Venue / mailing — separate top-level concepts. attach to street if labeled.
+	// Venue / mailing — separate top-level concepts.
+	// Attach to street if labeled.
 	venue: ["street", "locality"],
 	attention: ["venue"],
 	po_box: ["locality", "subregion", "region"],
 
-	// JP — declared for forward-compat. mapping is provisional and will be revisited in Phase 6,
-	// when a dedicated `japanese` system map likely supersedes these entries with a no-street hierarchy.
+	// JP — declared for forward-compat.
+	// Mapping is provisional and will be revisited in Phase 6, when a dedicated `japanese`
+	// system map likely supersedes these entries with a no-street hierarchy.
 	prefecture: ["country"],
 	municipality: ["prefecture"],
 	district: ["municipality"],
@@ -99,6 +101,6 @@ export function containmentFor(_system?: AddressSystem): Partial<Record<Componen
  * Backwards-compatible alias for the default (Western) containment map.
  *
  * Prefer `containmentFor()` in new code so the system parameter threads through.
- * this export remains for existing call sites.
+ * This export remains for existing call sites.
  */
 export const PARENT_OF = WESTERN_PARENT_OF

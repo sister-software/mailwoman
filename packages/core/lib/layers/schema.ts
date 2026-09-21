@@ -40,11 +40,12 @@ export type LayerTier = (typeof LayerTier)[keyof typeof LayerTier]
  */
 export const LayerFreshnessPolicy = {
 	/**
-	 * Immutable artifact. updates are full rebuilds (the gazetteer discipline).
+	 * Immutable artifact.
+	 * Updates are full rebuilds (the gazetteer discipline).
 	 */
 	Sealed: "sealed",
 	/**
-	 * Periodically re-issued under the same name (e.g. registries of people/programs).
+	 * Periodically re-issued under the same name (e.g. Registries of people/programs).
 	 */
 	VersionedRefresh: "versioned-refresh",
 } as const
@@ -107,8 +108,8 @@ export interface LayerCoverageTable {
 	 *
 	 * One of {@link CoverageBasis}.
 	 *
-	 * NULL means the row predates this column, and must be read as {@link CoverageBasis.SourcePresent} —
-	 * the weakest reading, because that is what every layer built before the column was writing.
+	 * NULL means the row predates this column, and must be read as {@link CoverageBasis.SourcePresent}.
+	 * The weakest reading, because that is what every layer built before the column was writing.
 	 */
 	basis: CoverageBasis | null
 	/**
@@ -128,7 +129,8 @@ export interface layerschemadatabase {
 }
 
 /**
- * The subset of a Kysely handle the interface helpers touch — the parameter type every one of them takes.
+ * The subset of a Kysely handle the interface helpers touch.
+ * The parameter type every one of them takes.
  *
  * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is not assignable
  * to `Kysely<layerschemadatabase>` even when `POIDatabase extends layerschemadatabase`.
@@ -172,11 +174,10 @@ export async function createLayerCoverageTable(db: layerschemahandle): Promise<v
 		.createTable("layer_coverage")
 		.addColumn("h3_cell", "integer", (c) => c.primaryKey())
 		.addColumn("completeness", "real", (c) => c.notNull())
-		// Nullable on purpose: artifacts built before this column exist and read back as NULL, which
-		// `readLayerCoverage` resolves to `source_present` — what they were in fact recording.
+		// Nullable on purpose: artifacts built before this column exist and read back as NULL, which `readLayerCoverage` resolves to `source_present` — what they were in fact recording.
 		.addColumn("basis", "text")
 		.addColumn("observed_rows", "integer", (c) => c.notNull())
-		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

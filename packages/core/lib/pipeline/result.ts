@@ -34,15 +34,16 @@ export interface PipelineFault {
 	 * The thrown value's `name` (`TypeError`, `RangeError`, …), or `"Error"`
 	 * when something that isn't an `Error` was thrown.
 	 *
-	 * Machine-stable enough to branch on. the `cause` carries the rest.
+	 * Machine-stable enough to branch on.
+	 * The `cause` carries the rest.
 	 */
 	name: string
 	message: string
 	/**
 	 * The value the stage threw, verbatim — kept so a caller can rethrow it or read its stack.
 	 *
-	 * Not JSON-serializable in the useful sense. serialize `stage`/`name`/`message`
-	 * when you need this on a wire.
+	 * Not JSON-serializable in the useful sense.
+	 * Serialize `stage`/`name`/`message` when you need this on a wire.
 	 */
 	cause: unknown
 }
@@ -73,19 +74,22 @@ export interface PipelineResult {
 	poiIntent?: POIIntentOutcome
 	timing: PipelineTiming
 	/**
-	 * Every stage crash the coordinator caught and degraded past, in the order they
-	 * happened. **Always present** — an empty array is the coordinator stating that no
-	 * stage faulted, which is a different claim from a missing field.
+	 * Every stage crash the coordinator caught and degraded past, in the order
+	 * they happened. **Always present**.
 	 *
-	 * Non-empty means the tree you are holding was produced with at least one
-	 * stage down. see {@link PipelineFault}.
+	 * An empty array is the coordinator stating that no stage faulted,
+	 * which is a different claim from a missing field.
+	 *
+	 * Non-empty means the tree you are holding was produced with at least one stage down.
+	 * See {@link PipelineFault}.
 	 */
 	faults: PipelineFault[]
 	/**
-	 * Query-intent advisories (ROAD_TO_V9 §4), lifted from the kind classifier's verdict.
-	 * **Always present** — an empty array is the coordinator stating that the intent
-	 * vocabulary examined this query and had nothing to say, which is a different claim
-	 * from a missing field (the {@link faults} discipline, same reasoning).
+	 * Query-intent advisories (ROAD_TO_V9 §4), lifted from the kind classifier's verdict. **Always present**.
+	 *
+	 * An empty array is the coordinator stating that the intent vocabulary examined
+	 * this query and had nothing to say, which is a different claim from a missing
+	 * field (the {@link faults} discipline, same reasoning).
 	 *
 	 * Nothing here changed which answer won.
 	 * The markers are advisory by construction: the two intent kinds that could have

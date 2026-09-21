@@ -57,8 +57,8 @@ function isEmittingSource(workspaceRoot: string, path: string): boolean {
 /**
  * Newest mtime under a directory, restricted to files matching a predicate.
  *
- * Answers `null` when the directory does not exist, which a caller must tell apart
- * from "old" — a missing `out/` means never compiled rather than stale.
+ * Answers `null` when the directory does not exist, which a caller must tell apart from "old".
+ * A missing `out/` means never compiled rather than stale.
  */
 async function newestMtime(
 	root: string,

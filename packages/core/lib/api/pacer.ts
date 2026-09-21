@@ -19,8 +19,9 @@ import { type ClockLike, systemClock } from "#api/clock"
  * and every call within one interval of the previous grant waits out the remainder of it.
  *
  * Why not A token bucket: a token bucket with capacity C admits up to `C + rate * 1s`
- * requests within any sliding one-second window — there is no non-zero capacity
- * that honors a flat rate cap, only an average one.
+ * requests within any sliding one-second window.
+ * There is no non-zero capacity that honors a flat rate cap, only an average one.
+ *
  * The bucket this replaced started full (a one-time startup burst, by design) but also
  * refilled to full after any idle gap, so a fresh burst recurred every time a crawl paused
  * and resumed — measured at 20 grants inside one 1000ms window against a 10/s ceiling (2x).
@@ -72,12 +73,14 @@ export class RequestPacer {
 	 * Resolve once this call's turn comes up: immediately for the first call
 	 * (or after any idle gap), or exactly `intervalMs` after the previous grant otherwise.
 	 *
-	 * The grant time is reserved synchronously, before any `await` — `#nextGrantAt` is read
-	 * and bumped in the same synchronous step that computes this call's own wait.
-	 * Moving the `#nextGrantAt` update to after the `await` (i.e. "compute the wait, sleep, then update state")
-	 * reopens the concurrency bug this pacer exists to close — N callers invoked in the same
-	 * synchronous turn would all read the same stale `#nextGrantAt` before any of them updates it,
-	 * compute the same wait, and all be released together instead of one interval apart.
+	 * The grant time is reserved synchronously, before any `await`.
+	 * `#nextGrantAt` is read and bumped in the same synchronous step that computes this call's own wait.
+	 *
+	 * Moving the `#nextGrantAt` update to after the `await` (i.e. "compute the wait, sleep,
+	 * then update state") reopens the concurrency bug this pacer exists to close.
+	 * N callers invoked in the same synchronous turn would all read the same
+	 * stale `#nextGrantAt` before any of them updates it, compute the same wait,
+	 * and all be released together instead of one interval apart.
 	 *
 	 * `Math.max(#nextGrantAt, now)` is also required.
 	 * Without it, a long idle gap leaves `#nextGrantAt` stuck in the past,
@@ -94,7 +97,7 @@ export class RequestPacer {
 	 *
 	 * A grant that lands 1ms late shifts toward the following window, so a sliding-second
 	 * count over the observed dispatch times reads 11 rather than 10 at a 100ms interval
-	 * (measured 3/3 runs of a 40-call fan-out. the preceding second correspondingly holds 9,
+	 * (measured 3/3 runs of a 40-call fan-out. The preceding second correspondingly holds 9,
 	 * and the long-run rate is exactly at the cap).
 	 * A caller that needs a hard sliding-window ceiling with no jitter headroom should
 	 * pace fractionally under the published rate rather than exactly at it.

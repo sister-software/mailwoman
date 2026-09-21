@@ -17,7 +17,7 @@ import type { LicenseKeyPublication } from "#license/publication"
  *
  * - `attribution`: credit the source where results derived from it are shown or redistributed.
  * - `share_alike`: a derived work or derived database carries the same license
- *   (ODbL's Derived Database. agpl's copyleft on modifications).
+ *   (ODbL's Derived Database. Agpl's copyleft on modifications).
  * - `source_offer`: users who interact with the software over a network must be offered
  *   its source, including modifications (AGPL-3.0 section 13).
  */
@@ -52,13 +52,11 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	["CC-BY-4.0", [LicenseObligation.Attribution]],
 	["CC0-1.0", []],
 	["PDDL-1.0", []],
-	// A work of the United States Government (17 U.S.C. § 105): no copyright, so no obligation. spdx has no identifier
-	// for it. the `LicenseRef` is defined in docs/engineering/reference/layer-interface.mdx.
+	// A work of the United States Government (17 U.S.C. § 105): no copyright, so no obligation. Spdx has no identifier for it. The `LicenseRef` is defined in docs/engineering/reference/layer-interface.mdx.
 	["LicenseRef-USGov-Public-Domain", []],
 	// Licence Ouverte 2.0 (etalab), BAN's elected license.
 	["etalab-2.0", [LicenseObligation.Attribution]],
-	// 政府資料開放授權條款－第1版, the Taiwanese civil-affairs address registers behind Overture-TW. Attribution is the
-	// condition of the grant itself: the license voids without the 顯名聲明, so the per-agency list travels with the data.
+	// 政府資料開放授權條款－第1版, the Taiwanese civil-affairs address registers behind Overture-TW. Attribution is the condition of the grant itself: the license voids without the 顯名聲明, so the per-agency list travels with the data.
 	["OGDL-Taiwan-1.0", [LicenseObligation.Attribution]],
 	["MIT", [LicenseObligation.Attribution]],
 	["Apache-2.0", [LicenseObligation.Attribution]],
@@ -79,8 +77,10 @@ export interface LicenseSummary {
 	 */
 	identifiers: string[]
 	/**
-	 * The union of the known obligations across every identifier — the conservative reading of an `and`,
-	 * and for an `or` the reading before a party has chosen a branch (see {@link chooseLicenseBranch}).
+	 * The union of the known obligations across every identifier.
+	 *
+	 * The conservative reading of an `and`, and for an `or` the reading before a party
+	 * has chosen a branch (see {@link chooseLicenseBranch}).
 	 */
 	obligations: LicenseObligation[]
 	/**
@@ -99,9 +99,9 @@ export interface LicenseSummary {
 /**
  * Split an spdx expression into its identifiers.
  *
- * Handles `and`, `or`, `with` (the exception is kept with its license)
- * and parentheses. anything more exotic still splits on the operators, which is
- * enough for a summary that reports what it did not recognize.
+ * Handles `and`, `or`, `with` (the exception is kept with its license) and parentheses.
+ * Anything more exotic still splits on the operators, which is enough for a
+ * summary that reports what it did not recognize.
  */
 export function licenseIdentifiers(expression: string): string[] {
 	return expression
@@ -147,7 +147,8 @@ export function summarizeLicense(expression: string): LicenseSummary {
  * reads offline and, when a caller has asked the well-known register, what it said.
  *
  * Only a `valid` key that the register has not retired or dropped selects the commercial branch.
- * The doctor passes both answers. the stamp, offline by design, passes the key alone.
+ * The doctor passes both answers.
+ * The stamp, offline by design, passes the key alone.
  */
 export function appliedLicenseBranch(
 	expression: string,
@@ -188,7 +189,7 @@ const LICENSE_REF = /^LicenseRef-[A-Za-z0-9.-]+$/u
 /**
  * Whether an spdx expression may be recorded in a layer manifest: every identifier is one
  * the obligations table knows, a `LicenseRef-…` this repository defines, or `noassertion`
- * (the publisher has stated no license. the doctor reports that as degraded, which is the correct reading).
+ * (the publisher has stated no license. The doctor reports that as degraded, which is the correct reading).
  *
  * Anything else is refused at build time, because a manifest is sealed data
  * and a vendor-suffixed identifier such as `pddl-1.0-USGov-nrcs` would otherwise ship

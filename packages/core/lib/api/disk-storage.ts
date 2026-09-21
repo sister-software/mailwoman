@@ -46,12 +46,13 @@ export interface DiskStorageOptions {
 	/**
 	 * An additional, domain-specific check run against every entry before it is written.
 	 *
-	 * Return `false` (or throw) to drop the write. the entry is removed
-	 * rather than persisted, so the next request re-fetches.
+	 * Return `false` (or throw) to drop the write.
+	 * The entry is removed rather than persisted, so the next request re-fetches.
 	 *
 	 * This is the hook for "a 200 whose body isn't what this API is supposed to return".
 	 * Some upstreams (SEC edgar among them) serve an html error page with a 200 status.
-	 * persisting one under a permanent TTL poisons that URL forever.
+	 *
+	 * Persisting one under a permanent TTL poisons that URL forever.
 	 *
 	 * The structural checks below (serializable, finite `createdAt`/`ttl`) always run regardless.
 	 */
@@ -67,9 +68,9 @@ export interface DiskStorageOptions {
 /**
  * Whether a storage value is one worth persisting.
  *
- * `loading` is an in-flight marker with no reusable body — it belongs in memory
- * (see {@linkcode buildDiskStorage}'s in-process overlay), not in a file that would
- * outlive the process that wrote it and block every later request for that key.
+ * `loading` is an in-flight marker with no reusable body.
+ * It belongs in memory (see {@linkcode buildDiskStorage}'s in-process overlay), not in a file
+ * that would outlive the process that wrote it and block every later request for that key.
  */
 function isPersistableState(value: NotEmptyStorageValue): boolean {
 	return value.state !== "loading"

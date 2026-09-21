@@ -122,7 +122,8 @@ export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 }
 
 /**
- * One line per element, every line terminated. no elements produces the empty string.
+ * One line per element, every line terminated.
+ * No elements produces the empty string.
  *
  * The same shape {@linkcode writeLocalTextFile} applies to an iterable,
  * for the sites that build a document and hand it somewhere else.
@@ -149,8 +150,10 @@ export function writeLocalJSONFile<T = Record<string, unknown>, S extends PathBu
 }
 
 /**
- * Write one JSON value per line, newline-terminated — the jsonl shape every panel, fixture
- * and result file in this repository is read back with by `JSONSpliterator.fromAsync`.
+ * Write one JSON value per line, newline-terminated.
+ *
+ * The jsonl shape every panel, fixture and result file in this repository is
+ * read back with by `JSONSpliterator.fromAsync`.
  *
  * The trailing newline is part of the interface: a file whose last line has
  * none appends badly and diffs noisily.
@@ -193,8 +196,10 @@ export async function writeLocalBuffer<S extends PathBuilderLike[]>(
  * Write a local file, creating its parent directory first, letting the runtime
  * decide how to encode `content`.
  *
- * Prefer {@linkcode writeLocalTextFile} or {@linkcode writeLocalBuffer} when the call site knows which
- * it has — the name then says so, and a reader does not have to follow the value back to its producer.
+ * Prefer {@linkcode writeLocalTextFile} or {@linkcode writeLocalBuffer}
+ * when the call site knows which it has.
+ * The name then says so, and a reader does not have to follow the value back to its producer.
+ *
  * This overload exists for the sites where it genuinely does not: a payload that
  * is a string on one branch and bytes on another.
  *
@@ -356,8 +361,8 @@ export async function copyFileTo(source: PathBuilderLike, destination: PathBuild
  *
  * Rename only, so it does not cross a filesystem boundary — which is the
  * property an atomic publish depends on.
- * Use
- * {@linkcode copyPath} followed by {@linkcode removePathIfPresent} where the two ends may live on different devices.
+ * Use {@linkcode copyPath} followed by {@linkcode removePathIfPresent}
+ * where the two ends may live on different devices.
  */
 export async function movePath(source: PathBuilderLike, destination: PathBuilderLike): Promise<void> {
 	const target = destination.toString()

@@ -21,8 +21,9 @@ import { TextSpliterator, TSVSpliterator } from "spliterator"
 /**
  * Stream the records of an unquoted tab-separated file.
  *
- * Use this for any source whose `"` is literal — the GeoNames dumps,
- * and every register that writes plain TSV.
+ * Use this for any source whose `"` is literal.
+ * The GeoNames dumps, and every register that writes plain TSV.
+ *
  * A source that really is quoted (a spreadsheet export, a register that escapes its delimiters)
  * wants `TSVSpliterator` directly with the default, and should say so where it is read.
  */

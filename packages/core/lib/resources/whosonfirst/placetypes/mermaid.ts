@@ -27,9 +27,8 @@ function toMermaidColor(input: string): string {
 /**
  * Hand-tuned default colors for placetype roles.
  *
- * Used when no `interpolator` is passed to
- * {@linkcode generateMermaidMarkup}. Each entry pairs a fill with a darker stroke and a text color chosen for contrast
- * against the fill.
+ * Used when no `interpolator` is passed to {@linkcode generateMermaidMarkup}.
+ * Each entry pairs a fill with a darker stroke and a text color chosen for contrast against the fill.
  */
 export const PlacetypeRoleColor = {
 	common: "#0066cc",
@@ -65,14 +64,17 @@ export interface GenerateMermaidMarkupOptions {
 	 */
 	roles?: Iterable<PlacetypeRole>
 	/**
-	 * Edge color interpolator. Each edge is colored by its child node's depth from the root: `t = (childDepth - 1) /
-	 * (maxDepth - 1)`. This traces a smooth gradient along any lineage path (e.g. `planet → continent → country → …`) and
-	 * gives a visual cue for how deep an edge sits in the tree.
+	 * Edge color interpolator.
+	 *
+	 * Each edge is colored by its child node's depth from the root: `t = (childDepth - 1) / (maxDepth - 1)`.
+	 * This traces a smooth gradient along any lineage path (e.g. `planet → continent → country → …`)
+	 * and gives a visual cue for how deep an edge sits in the tree.
 	 *
 	 * Defaults to d3-scale-chromatic's `interpolateViridis` — perceptually uniform and colorblind-friendly.
-	 * Node fills/strokes are _not_ affected. they always use the hand-tuned
-	 * {@linkcode PlacetypeRoleColor} palette, which carries more semantic weight than
-	 * a sampled gradient for only three categorical role values.
+	 * Node fills/strokes are _not_ affected.
+	 *
+	 * They always use the hand-tuned {@linkcode PlacetypeRoleColor} palette, which carries
+	 * more semantic weight than a sampled gradient for only three categorical role values.
 	 */
 	edgeInterpolator?: InterpolateColorCallback
 }
@@ -123,11 +125,12 @@ function measureMaxDepth(root: Placetype, roles: Iterable<PlacetypeRole> | undef
 /**
  * Generate a Mermaid flowchart markup for a placetype and its descendants.
  *
- * The walk is a recursive `findChildren` traversal — every emitted edge is a
- * real direct-parent → direct-child relationship.
+ * The walk is a recursive `findChildren` traversal.
+ * Every emitted edge is a real direct-parent → direct-child relationship.
+ *
  * WOF placetypes form a DAG (e.g. `borough` has both `country` and `macroregion` as parents),
- * so a child can legitimately appear on multiple edges. the `visited` set prevents
- * the subtree below it from being re-emitted.
+ * so a child can legitimately appear on multiple edges.
+ * The `visited` set prevents the subtree below it from being re-emitted.
  *
  * Edges are colored by depth from the root via {@linkcode GenerateMermaidMarkupOptions.edgeInterpolator}
  * (default: viridis), so any lineage path traces a smooth gradient down the chart.
@@ -149,8 +152,7 @@ export function generateMermaidMarkup(placetype: Placetype, options: GenerateMer
 			(role) =>
 				`  classDef ${role} fill:${palette[role].fill},stroke:${palette[role].stroke},color:${palette[role].text},font-weight:bold`
 		),
-		// The root is never the target of an emitted edge, so declare it standalone so it picks
-		// up the role classDef and renders alongside the others.
+		// The root is never the target of an emitted edge, so declare it standalone so it picks up the role classDef and renders alongside the others.
 		`  ${placetype.name}:::${placetype.role}`,
 	]
 

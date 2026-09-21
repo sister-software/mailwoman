@@ -46,8 +46,8 @@ export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 /**
  * The tree's single value-containing node, or null when the tree holds none or more than one.
  *
- * Callers check on the returned node's `tag` — the quantifier ("this is the whole query")
- * is what this walk answers.
+ * Callers check on the returned node's `tag`.
+ * The quantifier ("this is the whole query") is what this walk answers.
  */
 export function loneValueNode(tree: AddressTree): AddressNode | null {
 	let lone: AddressNode | null = null
@@ -90,8 +90,10 @@ export interface FlatTreeNode {
 	 * Carried for the same reason `source` is: a projection that keeps only the text
 	 * and the tag cannot tell a span that resolved to a different place from one that did
 	 * not move at all, and those are a ranking problem and a non-event respectively.
-	 * `alternatives` is reduced to its length — the retrieval breadth is what a consumer reads,
-	 * and handing over the candidate objects invites a walk this projection exists to have already done.
+	 * `alternatives` is reduced to its length.
+	 *
+	 * The retrieval breadth is what a consumer reads, and handing over the candidate
+	 * objects invites a walk this projection exists to have already done.
 	 */
 	placeID?: string
 	lat?: number

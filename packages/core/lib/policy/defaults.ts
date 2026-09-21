@@ -15,7 +15,8 @@ import type { ClassifierPolicy, PolicyMode } from "#policy/policy"
 /**
  * Build a fresh array of policies — one per `ComponentTag`, all in `mode`.
  *
- * Returns a new array on each call. callers may mutate it freely.
+ * Returns a new array on each call.
+ * Callers may mutate it freely.
  *
  * `mode` defaults to `rule_only` (the historical default — every component rule-sourced
  * until a per-tag migration).

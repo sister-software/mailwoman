@@ -34,10 +34,10 @@ export type ScopeTierKey = (typeof SCOPE_TIER_KEYS)[number]
 /**
  * `scope.config.json`, as read.
  *
- * `$comment`-prefixed keys carry the reasoning and are ignored here. a `Record` value
- * is country code → the reason that entry exists, and an empty reason is refused by the
- * `locale-scope` check rather than by this reader, so a malformed register still parses
- * and reports rather than throwing at every call site.
+ * `$comment`-prefixed keys carry the reasoning and are ignored here.
+ * A `Record` value is country code → the reason that entry exists, and an empty reason
+ * is refused by the `locale-scope` check rather than by this reader, so a malformed
+ * register still parses and reports rather than throwing at every call site.
  */
 export interface ScopeConfig {
 	tiers: Record<string, string[]>
@@ -108,9 +108,10 @@ export function tieredCountries(scope: ScopeConfig): Set<string> {
 /**
  * The training config the register names for one weights family.
  *
- * Throws when the family has no entry.
- * A family whose config nobody recorded is a family whose admission numbers cannot be produced, and
- * answering with another family's config would report one graph's admissions under another graph's name.
+ * @throws when the family has no entry.
+ *   A family whose config nobody recorded is a family whose admission numbers
+ *   cannot be produced, and answering with another family's config would report
+ *   one graph's admissions under another graph's name.
  */
 export function shippedTrainingConfig(scope: ScopeConfig, family: string): ShippedTrainingConfig {
 	const entry = scope.trainingConfigs?.[family]

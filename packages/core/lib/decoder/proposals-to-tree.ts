@@ -44,7 +44,9 @@ export function proposalsToTree(raw: string, proposals: readonly ClassificationP
  * Used to bring the whole-text neural parse into the arbitration layer's proposal currency
  * so it can be unioned with rule proposals and filtered by the policy registry.
  *
- * The spans are structural (`{ start, end, body }`) — we intentionally avoid `Span.from(...)`
+ * The spans are structural (`{ start, end, body }`).
+ * We intentionally avoid `Span.from(...)`
+ *
  * (which forces the tokenization module's filesystem-bound init); downstream
  * proposal consumers read only `start` / `end` / `body`.
  *

@@ -248,7 +248,7 @@ describe("runPipeline — stage composition", () => {
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 			// Decision A: the pipeline passes an explicit register on every parse.
 			// The default kind classifier (no fast-path) reads structured_address → formatted.
-			// an explicit PipelineOpts.inputMode overrides (see the dedicated inputMode tests).
+			// An explicit PipelineOpts.inputMode overrides (see the dedicated inputMode tests).
 			inputMode: "formatted",
 		})
 	})
@@ -391,9 +391,9 @@ describe("runPipeline — fast-path routing", () => {
 
 	it("fast-paths even when resolver is absent (fast-path tree is built from QueryShape alone)", async () => {
 		// Previously the coordinator required a resolver for fast-path to fire.
-		// As of the kind- classifier ship, the fast-path tree from QueryShape is useful
-		// standalone — a consumer who just wants the parsed structure for "10118"
-		// shouldn't be forced to pay for the classifier.
+		// As of the kind- classifier ship, the fast-path tree from QueryShape is useful standalone.
+		// A consumer who just wants the parsed structure for "10118" shouldn't be
+		// forced to pay for the classifier.
 		const classifier = fakeClassifier(fakeTree("10118"))
 
 		const stages: RuntimePipelineStages = {
@@ -757,7 +757,8 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 			{ resolveOpts: { anchorPosterior: { GB: 1 }, anchorWeight: 2 } }
 		)
 
-		// Caller's posterior wins. the coarse-placer is a no-op here.
+		// Caller's posterior wins.
+		// The coarse-placer is a no-op here.
 		expect(seen[0]).toEqual({ anchorPosterior: { GB: 1 }, anchorWeight: 2 })
 	})
 
@@ -799,12 +800,12 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 })
 
 /**
- * #40 / mailfail finding 4 — the defensive `safeClassify` wrapper caught every classifier throw and returned an empty
- * tree, which the grouper-audit then repopulated from rule-based phrase proposals.
+ * #40 / mailfail finding 4 — the defensive `safeClassify` wrapper caught every classifier throw and returned an empty tree, which the grouper-audit then repopulated from rule-based phrase proposals.
  *
  * The caller got a normal-looking parse with no indication the model never ran:
  * measured on the mailfail probes, 10 of 110 inputs crashed the classifier while the pipeline
  * reported success (`size-10kb` produced a tidy five-field parse off a 3,031-node tree).
+ *
  * The interface now is that the wrapper still degrades — it does not abort the pipeline —
  * but it records what it caught on `PipelineResult.faults`, so "the model faulted"
  * is distinguishable from "the model found nothing".

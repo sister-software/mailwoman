@@ -32,8 +32,8 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 		const clock = new VirtualClock()
 
 		// 50ms of real time is thousands of idle setImmediate turns.
-		// Under the turn-budgeted guard this threw. the work was never stuck,
-		// the budget was just denominated in the wrong unit.
+		// Under the turn-budgeted guard this threw.
+		// The work was never stuck, the budget was just denominated in the wrong unit.
 		await expect(clock.runUntilSettled(realDelay(50))).resolves.toBeUndefined()
 	})
 
@@ -47,7 +47,8 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 			return clock.now()
 		})()
 
-		// Virtual time jumps. no real 120s elapses.
+		// Virtual time jumps.
+		// No real 120s elapses.
 		await expect(clock.runUntilSettled(work)).resolves.toBe(120_000)
 	})
 

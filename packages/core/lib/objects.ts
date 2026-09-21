@@ -12,9 +12,10 @@ import type { JsonObject } from "type-fest"
  * True when `value` carries `Symbol.iterator`: arrays, sets, maps, strings, generators.
  *
  * `null` and `undefined` answer false.
- * The same predicate exists in `spliterator`, whose barrel also carries that library's
- * Node fs, worker-thread and xlsx readers. this module is on the browser client's
- * static import path, so it must not reach that barrel.
+ * The same predicate exists in `spliterator`, whose barrel also carries that
+ * library's Node fs, worker-thread and xlsx readers.
+ *
+ * This module is on the browser client's static import path, so it must not reach that barrel.
  */
 export function isIterable(value: unknown): value is Iterable<unknown> {
 	return Symbol.iterator in new Object(value)

@@ -49,14 +49,18 @@ export const REFERENTIAL_SATURATION_POPULATION = (2 ** REFERENTIAL_LOG2_SCALE - 
 /**
  * Population → referential likelihood in [0, 1].
  *
- * `min(1, log2(1 + pop/1000) / 14)` — the formula the FST builder has used for its population
- * fallback since the FST shipped, and the one `gazetteer importance` used for its fallback rows.
+ * `min(1, log2(1 + pop/1000) / 14)`.
+ * The formula the FST builder has used for its population fallback since the FST shipped,
+ * and the one `gazetteer importance` used for its fallback rows.
+ *
  * It is defined once here so the decode-bias artifact's values, the gazetteer's
  * `referential` column, and the resolver's ranking key are the same number by
  * construction rather than by three matching copies.
  *
  * Meaning OF zero: an absent population row and a recorded population of 0 both return 0,
- * and 0 means "no population evidence" — the ranking treats it as no boost, never a penalty.
+ * and 0 means "no population evidence".
+ * The ranking treats it as no boost, never a penalty.
+ *
  * WOF carries population for roughly 15% of localities, so absence is the common case and must stay cheap.
  */
 export function referentialFromPopulation(population: number | null | undefined): number {
@@ -81,11 +85,13 @@ export interface ReferentiallyRankable {
  *
  * Negative when `a` outranks `b`, so it drops straight into `Array#sort`.
  *
- * The population tiebreak is not a hedge — it is what makes "rank by referential"
- * and "rank by population" the same order on every input, because
- * {@link referentialFromPopulation} is strictly increasing below
- * {@link REFERENTIAL_SATURATION_POPULATION} and constant above it. Without the tiebreak this comparator would silently
- * re-order the world's largest cities: a real behavior change, and the one the D-rule would catch.
+ * The population tiebreak is not a hedge.
+ * It is what makes "rank by referential" and "rank by population" the same order on every
+ * input, because {@link referentialFromPopulation} is strictly increasing below
+ * {@link REFERENTIAL_SATURATION_POPULATION} and constant above it.
+ *
+ * Without the tiebreak this comparator would silently re-order the world's largest cities:
+ * a real behavior change, and the one the D-rule would catch.
  *
  * Encyclopedic importance is deliberately not a parameter.
  * Ranking by it is the thing §2 forbids, and a comparator that cannot express it

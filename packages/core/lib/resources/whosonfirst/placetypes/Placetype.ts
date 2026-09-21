@@ -94,7 +94,8 @@ export class Placetype implements Disposable {
 		)
 
 		for await (const _definition of batchIterator) {
-			// `parallelMap` performs registration above. its yielded definitions have no further consumer.
+			// `parallelMap` performs registration above.
+			// Its yielded definitions have no further consumer.
 		}
 	}
 
@@ -125,7 +126,7 @@ export class Placetype implements Disposable {
 	}
 
 	/**
-	 * Compare two placetypes, sorting less specific (i.e. bigger or higher) placetypes first.
+	 * Compare two placetypes, sorting less specific (i.e. Bigger or higher) placetypes first.
 	 *
 	 * Note that the two placetype IDs have no affect on the comparison as they
 	 * are not sequential, only unique.
@@ -143,7 +144,7 @@ export class Placetype implements Disposable {
 	}
 
 	/**
-	 * Compare two placetypes, sorting more specific (i.e. smaller or lower) placetypes first.
+	 * Compare two placetypes, sorting more specific (i.e. Smaller or lower) placetypes first.
 	 *
 	 * Note that the two placetype IDs have no affect on the comparison as they
 	 * are not sequential, only unique.

@@ -20,8 +20,8 @@ import { dirname, PathBuilder, resolvePath } from "path-ts"
  * directory, and that string is not internal — it lands in resolved artifact paths,
  * error messages and `mailwoman doctor` output.
  *
- * Throws `ERR_MODULE_NOT_FOUND` when the package is not installed.
- * Every package must expose `./package.json` in its `exports` map for this to resolve.
+ * @throws `ERR_MODULE_NOT_FOUND` when the package is not installed.
+ *   Every package must expose `./package.json` in its `exports` map for this to resolve.
  */
 export function resolvePackageDirectory<Name extends string = string>(packageName: Name): PathBuilder<Name> {
 	const manifestPath = fileURLToPath(import.meta.resolve(`${packageName}/package.json`))
@@ -30,8 +30,9 @@ export function resolvePackageDirectory<Name extends string = string>(packageNam
 }
 
 /**
- * A path inside an installed package, anchored at the package root rather than at the calling module —
- * so it answers the same file from the source tree, the compiled `out/` tree and a published tarball.
+ * A path inside an installed package, anchored at the package root rather than at the calling module.
+ *
+ * So it answers the same file from the source tree, the compiled `out/` tree and a published tarball.
  *
  * This is how a package reaches its own data files
  * (`resolvePackagePath("mailwoman", "lib", "eval-harness", "baselines.json")`)
@@ -50,8 +51,9 @@ export function resolvePackagePath(packageName: string, ...segments: string[]): 
  *
  * Resolution starts from this module, so it answers for anything visible from
  * `@mailwoman/core` — every workspace package and every hoisted dependency.
- * A package that only a nested `node_modules` can see is out of reach. that is the one case
- * where a caller's own `import.meta.resolve` says something this cannot.
+ * A package that only a nested `node_modules` can see is out of reach.
+ *
+ * That is the one case where a caller's own `import.meta.resolve` says something this cannot.
  *
  * A relative specifier has no business here: a module's own neighbours
  * are `resolvePath(import.meta.dirname, …)`.

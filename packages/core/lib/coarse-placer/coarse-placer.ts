@@ -57,7 +57,8 @@ export interface CoarsePlacerMeta {
 	bias: number[]
 	quantization?: "int8-per-row"
 	/**
-	 * Per-class dequantization scale. present iff `quantization === "int8-per-row"`.
+	 * Per-class dequantization scale.
+	 * Present iff `quantization === "int8-per-row"`.
 	 */
 	scales?: number[]
 }
@@ -125,8 +126,10 @@ export interface CoarsePrediction {
 }
 
 /**
- * With the explicit `other` class, an off-map input is handled when the model routes it to `other`
- * or abstains — either way it is not a confident mis-placement onto a wrong (trained) country.
+ * With the explicit `other` class, an off-map input is handled when the model
+ * routes it to `other` or abstains.
+ *
+ * Either way it is not a confident mis-placement onto a wrong (trained) country.
  *
  * The shared predicate of the off-map evals.
  */
@@ -140,14 +143,23 @@ export interface CoarsePlacerOpts {
 	 */
 	abstainBelow?: number
 	/**
-	 * Open-set reject rule (#244 M2). When `true`, the abstain decision uses the total IN-MAP probability mass `1 -
-	 * P(other)` instead of the single top-class prob, and a keep routes to the argmax IN-MAP class (never `other`). This
-	 * decouples "is it in-map at all?" (the reject question) from "which country?" (the routing question) — so a
-	 * clearly-in-map-but-country-ambiguous address (mass split across several in-map countries) is kept rather than
-	 * wrongly rejected. It clears the 90/90 the default max-prob rule cannot (post-hoc, no retrain: heldout-family
-	 * generalization 89→91 — see docs/articles/evals/resolver-geo/2026-06-14-coarse-placer-m2-openset.md). The returned
-	 * `confidence` becomes the routed in-map country's marginal probability (the soft-prior posterior weight). Default
-	 * `false` = the M1 max-prob rule (byte-stable. can still return `other`).
+	 * Open-set reject rule (#244 M2).
+	 *
+	 * When `true`, the abstain decision uses the total IN-MAP probability mass `1 - P(other)`
+	 * instead of the single top-class prob, and a keep routes to the argmax IN-MAP class (never `other`).
+	 * This decouples "is it in-map at all?"
+	 *
+	 * (the reject question) from "which country?"
+	 * (the routing question).
+	 *
+	 * So a clearly-in-map-but-country-ambiguous address (mass split across several in-map countries)
+	 * is kept rather than wrongly rejected.
+	 * It clears the 90/90 the default max-prob rule cannot (post-hoc, no retrain: heldout-family
+	 * generalization 89→91 — see docs/articles/evals/resolver-geo/2026-06-14-coarse-placer-m2-openset.md).
+	 *
+	 * The returned `confidence` becomes the routed in-map country's marginal
+	 * probability (the soft-prior posterior weight).
+	 * Default `false` = the M1 max-prob rule (byte-stable. Can still return `other`).
 	 */
 	openSet?: boolean
 }
@@ -238,10 +250,10 @@ export class CoarsePlacer {
 			logits[c] = s / this.#temp
 		}
 
-		// Numerically-stable softmax, kept inline rather than routed through `softmaxInto`:
-		// the fp32 `probs` buffer rounds each exponent before the lazy divide below,
-		// so `p` is `f32(exp)/f64(sum)` — a float path a normalizing helper cannot reproduce,
-		// and this is the inference path whose bytes are interface.
+		// Numerically-stable softmax, kept inline rather than routed through `softmaxInto`: the fp32
+		// `probs` buffer rounds each exponent before the lazy divide below, so `p` is `f32(exp)/f64(sum)`.
+		// A float path a normalizing helper cannot reproduce, and this is the
+		// inference path whose bytes are interface.
 		let maxLogit = -Infinity
 
 		for (let c = 0; c < C; c++)
@@ -310,14 +322,20 @@ export class CoarsePlacer {
 }
 
 /**
- * The coarse placer's country posterior, shaped for the resolver: a per-country probability map like `{GB: 0.8, FR:
- * 0.06}` — "given this address text, how likely is each country?" ("posterior" in the Bayesian sense: the model's
- * belief after seeing the input. see the glossary). Every in-map class except `other` is included. returns `null` when
- * the model abstained or routed off-map. The resolver consumes it as `anchorPosterior`: each candidate's rank gains
- * `anchorWeight × posterior[candidate.country]`, so every plausible country is boosted proportionally, and
- * country-ambiguous inputs (mass split DK↔no) let the resolver's own place evidence break the tie — strictly more
- * informative than committing to the single argmax. Values are raw marginals in [0, 1] (un-renormalized. they sum to
- * the in-map mass `1 − P(other)`), matching the one-hot `confidence` scale so `anchorWeight` needs no retuning.
+ * The coarse placer's country posterior, shaped for the resolver: a per-country probability
+ * map like `{GB: 0.8, FR: 0.06}` — "given this address text, how likely is each country?"
+ *
+ * ("posterior" in the Bayesian sense: the model's belief after seeing the input. See the glossary).
+ * Every in-map class except `other` is included.
+ *
+ * Returns `null` when the model abstained or routed off-map.
+ * The resolver consumes it as `anchorPosterior`: each candidate's rank gains
+ * `anchorWeight × posterior[candidate.country]`, so every plausible country is boosted
+ * proportionally, and country-ambiguous inputs (mass split DK↔no) let the resolver's own place
+ * evidence break the tie — strictly more informative than committing to the single argmax.
+ *
+ * Values are raw marginals in [0, 1] (un-renormalized. They sum to the in-map mass `1 − P(other)`),
+ * matching the one-hot `confidence` scale so `anchorWeight` needs no retuning.
  */
 export function inMapPosterior(
 	prediction: CoarsePrediction,
@@ -326,8 +344,9 @@ export function inMapPosterior(
 		 * Epsilon floor (see the glossary): drop countries whose probability falls below this cutoff
 		 * before the resolver sees the posterior, so implausible tails cannot influence ranking.
 		 *
-		 * Domain [0, 1]: `0` (the default) passes the full distribution through unchanged. raising
-		 * it keeps only stronger beliefs — at the extreme only the argmax survives (a one-hot).
+		 * Domain [0, 1]: `0` (the default) passes the full distribution through unchanged.
+		 * Raising it keeps only stronger beliefs — at the extreme only the argmax survives (a one-hot).
+		 *
 		 * The default is 0 deliberately: the #928 investigation swept 0.05–0.30
 		 * against the misroute battery and every value was byte-identical
 		 * (the drift's real cause was the anchor re-rank's score key, fixed separately) — no nonzero
@@ -348,7 +367,7 @@ export function inMapPosterior(
 		}
 	}
 
-	// The argmax always survives (it is ≥ every other marginal. if even it fell below the floor the
+	// The argmax always survives (it is ≥ every other marginal. If even it fell below the floor the
 	// prediction would have abstained upstream) — but guard anyway so the posterior is never empty.
 	if (!Object.keys(posterior).length) {
 		posterior[prediction.country] = prediction.confidence

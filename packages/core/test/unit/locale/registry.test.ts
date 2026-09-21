@@ -124,7 +124,7 @@ describe("LocaleProfile — bundled profiles", () => {
 		// JP remains forward-compatible: it has no `street` role (district/block carry that ladder)
 		// and the core abstraction must accept the omission.
 		// D4 added house_number — the compact number ("2-3-16") is one whole-span house_number.
-		// the fine block/sub_block/building_number tags label the kanji-designator long form only.
+		// The fine block/sub_block/building_number tags label the kanji-designator long form only.
 		expect(jaJP.componentsSupported).not.toContain("street")
 		expect(jaJP.componentsSupported).toContain("house_number")
 		expect(jaJP.componentsSupported).toContain("prefecture")

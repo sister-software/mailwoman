@@ -33,7 +33,8 @@ export interface DroppedSpan {
 	/**
 	 * The tag the span carried.
 	 *
-	 * Always one already present in the output — a drop happens because the slot was taken.
+	 * Always one already present in the output.
+	 * A drop happens because the slot was taken.
 	 */
 	tag: ComponentTag
 	/**
@@ -60,8 +61,9 @@ export interface SerializeJSONOpts {
 	/**
 	 * Add a `dropped` array naming every span first-occurrence-wins discarded (#1755).
 	 *
-	 * Default false, keeping the output libpostal-compatible. the geocode path opts in,
-	 * because a silently deleted component is the one thing a caller cannot recover for itself.
+	 * Default false, keeping the output libpostal-compatible.
+	 * The geocode path opts in, because a silently deleted component is the one
+	 * thing a caller cannot recover for itself.
 	 */
 	includeDropped?: boolean
 }
@@ -107,21 +109,22 @@ export function decodeAsJSON(
 	const out: Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[]; dropped?: DroppedSpan[] } = {}
 	const dropped: DroppedSpan[] = []
 
-	// Grounded spans first, then text order — the same order the named result slots read (tree-shape.ts).
+	// Grounded spans first, then text order.
+	// The same order the named result slots read (tree-shape.ts).
 	for (const node of slotNodes(tree.roots)) {
 		place(node, out, dropped)
 	}
 
-	// Always emit `unknown` (even `[]`) when asked — a consumer that opted in can
-	// iterate it without a presence check.
+	// Always emit `unknown` (even `[]`) when asked.
+	// A consumer that opted in can iterate it without a presence check.
 	// Omitting-when-empty was a libpostal-flat-map instinct that doesn't fit the opt-in path.
 	if (opts.includeUnknown) {
 		out.unknown = unknownSpans(tree)
 	}
 
-	// Always emitted when asked, `[]` included — the same reasoning as `unknown` above,
-	// and required here: a caller that has to presence-check cannot tell "nothing
-	// was dropped" from "this build does not report drops".
+	// Always emitted when asked, `[]` included.
+	// The same reasoning as `unknown` above, and required here: a caller that has to
+	// presence-check cannot tell "nothing was dropped" from "this build does not report drops".
 	if (opts.includeDropped) {
 		out.dropped = dropped
 	}

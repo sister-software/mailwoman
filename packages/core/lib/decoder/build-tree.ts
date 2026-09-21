@@ -47,7 +47,7 @@ export interface BuildTreeOpts {
 	 * Omit for the default Western hierarchy.
 	 *
 	 * Today all systems share one map, so this only records intent + threads the discriminator.
-	 * it becomes behavioral when a system-specific map lands (Phase 6 JP).
+	 * It becomes behavioral when a system-specific map lands (Phase 6 JP).
 	 * See `containment.ts`.
 	 */
 	system?: AddressSystem
@@ -99,7 +99,7 @@ function trimBoundary(raw: string, start: number, end: number): { start: number;
 	const isWordChar = (i: number): boolean => /[\p{L}\p{N}]/u.test(raw[i] ?? "")
 
 	// Leading trim: skip punctuation not part of an abbreviation prefix
-	// (e.g. leading "." before a word char is rare but symmetric — preserve it).
+	// (e.g. Leading "." before a word char is rare but symmetric — preserve it).
 	while (s < e && !isWordChar(s)) {
 		if (raw[s] === "." && s + 1 < e && isWordChar(s + 1)) {
 			// Abbreviation-dot prefix: ".com" style — preserve.
@@ -158,8 +158,9 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// A zero-width or whitespace-only `O` piece is a tokenizer artifact — SentencePiece
 			// emits a standalone `▁` word-boundary marker between words and the model labels it
 			// `O` (e.g. "Saint Paul" → "▁Saint"[B-loc], "▁"[O, zero-width], "Paul"[B-loc]).
-			// It is not a real component boundary, so it must not flush the open span. keeping the span alive
-			// lets the following same-tag `B-` token merge in (see the spurious-boundary repair below).
+			// It is not a real component boundary, so it must not flush the open span.
+			// Keeping the span alive lets the following same-tag `B-` token merge in
+			// (see the spurious-boundary repair below).
 			// A non-whitespace `O` (comma, slash, …) is a genuine separator and still flushes.
 			if (open !== null && /^\s*$/.test(raw.slice(tok.start, tok.end))) continue
 			open = flush(open, raw, out, attribution)
@@ -171,7 +172,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to
 			// an already-open `X` span is the model fragmenting a multi-word value —
 			// e.g. "Saint Paul" emitted as B-locality B-locality instead of B-locality I-locality
-			// (a real, decode-agnostic emission bug. see scripts/diagnostic/diag-saintalbans.ts).
+			// (a real, decode-agnostic emission bug. See scripts/diagnostic/diag-saintalbans.ts).
 			// Fold it into the open span.
 			//
 			// Guard: only merge when the text in `raw` between the two spans is whitespace-only.

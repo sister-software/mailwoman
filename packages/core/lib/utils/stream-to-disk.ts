@@ -47,8 +47,10 @@ export interface StreamToDiskOptions {
 	 */
 	context: string
 	/**
-	 * Extra request headers. The public data bucket's WAF refuses an unranged GET, so its consumer sends `range:
-	 * bytes=0-`; most transfers need none.
+	 * Extra request headers.
+	 *
+	 * The public data bucket's WAF refuses an unranged GET, so its consumer sends
+	 * `range: bytes=0-`; most transfers need none.
 	 */
 	headers?: Record<string, string>
 	onProgress?: (message: string) => void

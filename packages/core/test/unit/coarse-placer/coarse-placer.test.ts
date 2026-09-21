@@ -66,7 +66,8 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
 }
 
 /**
- * Write an fp32 and an int8 artifact dir for the same weights. return both paths.
+ * Write an fp32 and an int8 artifact dir for the same weights.
+ * Return both paths.
  */
 async function writeArtifacts(
 	classes: string[],
@@ -195,8 +196,7 @@ describe("open-set reject rule (#244 M2)", () => {
 	// Zero weights ⇒ logits == bias ⇒ probs == softmax(bias), independent of the input string.
 	// Lets us engineer an exact class distribution and assert the reject/route decoupling deterministically.
 	const classes = ["US", "FR", "OTHER"]
-	// dim must be FEATURE_DIM: featurize() returns hashed indices in [0, FEATURE_DIM); a smaller dim
-	// would index past the (zero) weight rows → NaN logits. Zero weights ⇒ logits == bias regardless.
+	// dim must be FEATURE_DIM: featurize() returns hashed indices in [0, FEATURE_DIM); a smaller dim would index past the (zero) weight rows → NaN logits. Zero weights ⇒ logits == bias regardless.
 	const dim = FEATURE_DIM
 
 	const make = (bias: number[], opts: { abstainBelow?: number; openSet?: boolean }) =>
@@ -228,7 +228,8 @@ describe("open-set reject rule (#244 M2)", () => {
 
 		// Default rule: `other` wins outright (0.8 ≥ 0.5) → a confident `other`, not an abstain.
 		expect(def.predict("x").country).toBe("OTHER")
-		// Open-set: in-map mass 0.2 < 0.5 → abstain. a reject is null, never the `other` class.
+		// Open-set: in-map mass 0.2 < 0.5 → abstain.
+		// A reject is null, never the `other` class.
 		const o = open.predict("x")
 		expect(o.abstained).toBe(true)
 		expect(o.country).toBeNull()
@@ -265,9 +266,7 @@ describe("abstention", () => {
 	})
 })
 
-// #928: the epsilon floor — tail mass below the floor is dropped before the resolver sees the
-// posterior (the GB→US misroute class: correct argmax, damaging tail), genuine above-floor
-// ambiguity passes through, and floor 0 reproduces the untempered distribution.
+// #928: the epsilon floor — tail mass below the floor is dropped before the resolver sees the posterior (the GB→US misroute class: correct argmax, damaging tail), genuine above-floor ambiguity passes through, and floor 0 reproduces the untempered distribution.
 describe("inMapPosterior — #928 epsilon floor", () => {
 	const pred = {
 		country: "GB",

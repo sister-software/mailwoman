@@ -33,8 +33,8 @@ import type { AddressTree } from "#decoder/types"
 /**
  * What happened to one span between the two arms.
  *
- * `unchanged` is emitted rather than dropped so a renderer can show context lines. a
- * caller wanting only the changes filters on {@linkcode isChange}.
+ * `unchanged` is emitted rather than dropped so a renderer can show context lines.
+ * A caller wanting only the changes filters on {@linkcode isChange}.
  */
 export type SpanDeltaKind = "added" | "removed" | "retagged" | "moved" | "confidence" | "unchanged"
 
@@ -151,8 +151,8 @@ const RELATED_OVERLAP = 0.5
 /**
  * Diff two parses of the same input.
  *
- * Matching is greedy on overlap, strongest pair first, with tag equality breaking ties —
- * so a span that kept its tag is preferred over one that merely sits in the same place.
+ * Matching is greedy on overlap, strongest pair first, with tag equality breaking ties.
+ * So a span that kept its tag is preferred over one that merely sits in the same place.
  */
 export function diffParse(
 	input: string,

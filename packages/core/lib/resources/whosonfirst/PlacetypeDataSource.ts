@@ -177,7 +177,8 @@ export class PlacetypeDataSource implements Disposable {
 			? new DatabaseClient<PlacetypeRecordDatabase>(databasePath.toString(), dbOptions)
 			: new DatabaseClient<PlacetypeRecordDatabase>(databasePath.toString())
 
-		// node:sqlite has no .pragma() helper. pragmas are executed as plain SQL.
+		// node:sqlite has no .pragma() helper.
+		// Pragmas are executed as plain SQL.
 		this.#db.exec("PRAGMA busy_timeout = 10000")
 		this.#db.exec("PRAGMA journal_mode = WAL")
 		this.#db.exec("PRAGMA synchronous = OFF")

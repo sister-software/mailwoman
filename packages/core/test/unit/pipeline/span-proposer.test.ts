@@ -238,7 +238,8 @@ describe("venue-structure provenance", () => {
 	})
 
 	it("does not fire on a confound: the designator needs a SHORT identifier after it", () => {
-		// "Gate House" / "Terminal Industrial Estate" — the next token is a word rather than an identifier.
+		// "Gate House" / "Terminal Industrial Estate".
+		// The next token is a word rather than an identifier.
 		expect(proposeSpans("Gate House, 1 Farringdon Street, London, EC4M 7LG", withVenueStructure)).toEqual([])
 		expect(proposeSpans("Terminal Industrial Estate, Portsmouth, PO3 5PA", withVenueStructure)).toEqual([])
 	})
@@ -265,7 +266,7 @@ describe("modifier + venue-interior designator", () => {
 
 	it("scores BELOW the designator+identifier form", () => {
 		// A qualifier before a designator is a shape ordinary street names also take.
-		// an identifier after one is nearly unambiguous.
+		// An identifier after one is nearly unambiguous.
 		// The weaker evidence must lose to a confident encoder more readily.
 		const [modifierSpan] = proposeSpans("West Wing, St Thomas' Hospital, London", withModifiers)
 		const [identifierSpan] = proposeSpans("Wing B, St Thomas' Hospital, London", withModifiers)

@@ -30,9 +30,11 @@ export type UserLocation = { lat: number; lon: number } | { country: string } | 
  * Opaque placetype-pair prior handle (placetype-pair-prior arc, #1278).
  *
  * `@mailwoman/core` carries no neural dependency, so this is a pure passthrough:
- * core never constructs or inspects it — it threads the value verbatim from
- * {@link PipelineOpts.placetypePair} into {@link ClassifierOpts.placetypePair}, and on into the neural classifier's
- * `parse` opts, where it is typed concretely (`PlacetypePairPriorOpts | false`).
+ * core never constructs or inspects it.
+ * It threads the value verbatim from {@link PipelineOpts.placetypePair} into
+ * {@link ClassifierOpts.placetypePair}, and on into the neural classifier's `parse` opts,
+ * where it is typed concretely (`PlacetypePairPriorOpts | false`).
+ *
  * The browser demo produces it via `@mailwoman/neural/web-loader`'s `LoadResult.selectPairIndexForText`.
  *
  * `undefined` (the default) is the byte-stable no-prior decode.
@@ -48,31 +50,32 @@ export interface PipelineOpts {
 	/**
 	 * Explicit input register (operator Decision A / GTM B10 — see {@link InputMode}).
 	 *
-	 * When unset the pipeline derives it from the kind classifier's verdict via
-	 * {@link deriveInputMode}. Endpoint wrappers set their register default here
+	 * When unset the pipeline derives it from the kind classifier's verdict via {@link deriveInputMode}.
+	 * Endpoint wrappers set their register default here
 	 * (validation/batch → `"formatted"`, autocomplete/demo search → `"fragmented"`).
 	 */
 	inputMode?: InputMode
 	/**
-	 * Disable fast-path shortcuts. always run the full pipeline.
+	 * Disable fast-path shortcuts.
+	 * Always run the full pipeline.
 	 *
-	 * Does not bypass the poi_query branch — that's a routing decision
-	 * (the kind classifier + `stages.poiIntent`), not a fast-path shortcut,
+	 * Does not bypass the poi_query branch.
+	 * That's a routing decision (the kind classifier + `stages.poiIntent`), not a fast-path shortcut,
 	 * so a `poi_query`-classified input still takes the poi branch regardless of this flag.
 	 */
 	forceFullPipeline?: boolean
 	/**
-	 * Hard cap on lookups the resolver may issue. passed through.
+	 * Hard cap on lookups the resolver may issue.
+	 * Passed through.
 	 */
 	resolveOpts?: ResolveOpts
 	/**
-	 * #690: title-case detected all-caps ascii input before the Stage 3 classifier (helps on all-caps registry/compliance
-	 * data).
+	 * #690: title-case detected all-caps ascii input before the Stage 3 classifier (helps on all-caps registry/compliance data).
 	 *
 	 * Threaded to `ClassifierOpts.normalizeCase`.
 	 * Detection-restricted
 	 *
-	 * - **Default-on** (#895 settled drift D2. the classifier applies it when unset) —
+	 * - **Default-on** (#895 settled drift D2. The classifier applies it when unset) —
 	 *   byte-stable for mixed-case input either way.
 	 *   Pass `false` to restore the raw-case parse.
 	 */
@@ -91,8 +94,7 @@ export interface PipelineOpts {
 	 */
 	placetypePair?: PlacetypePairPassthrough
 	/**
-	 * #743/#194: promote a confident coarse-placer guess from the soft `anchorPosterior` boost to a hard country filter
-	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}.
+	 * #743/#194: promote a confident coarse-placer guess from the soft `anchorPosterior` boost to a hard country filter (empty→unresolved) — see {@link ResolveOpts.hardCountry}.
 	 *
 	 * Conditioned three ways: the placer's confidence ≥ `HARD_PLACE_COUNTRY_MIN_CONF`
 	 * (ambiguous DK↔no stay soft), the country is in the coverage `HARD_PLACE_COUNTRY_SAFELIST`
@@ -104,14 +106,12 @@ export interface PipelineOpts {
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer
-	 * artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`)
-	 * when it carries one, else the built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback
-	 * (byte-identical for artifacts predating the manifest).
+	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`) when it carries one, else the built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback (byte-identical for artifacts predating the manifest).
 	 *
-	 * Supply a set to test/measure a different coverage frontier — the resolver eval
-	 * passes the full in-map country set to measure unrestricted hard-resolve-rates
-	 * (which is how the production safelist is grown).
+	 * Supply a set to test/measure a different coverage frontier.
+	 *
+	 * The resolver eval passes the full in-map country set to measure unrestricted
+	 * hard-resolve-rates (which is how the production safelist is grown).
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	signal?: AbortSignal
@@ -179,20 +179,21 @@ export interface LocaleHint {
 	/**
 	 * The ISO 15924 scripts the input is written in, ranked by share of its script-containing characters.
 	 *
-	 * Empty when nothing in the input names a script — a bare postcode does not.
+	 * Empty when nothing in the input names a script.
+	 * A bare postcode does not.
 	 *
 	 * Separate from `locale`, and added because it had nowhere else to go.
-	 * `locale` is one BCP-47 tag, so a Hangul address and a kanji address both had to
-	 * be reported under one of them, and the rule that picks it answers `ja-JP` for
-	 * every CJK input. on the Korean reference set that is every row.
+	 * `locale` is one BCP-47 tag, so a Hangul address and a kanji address both had to be reported
+	 * under one of them, and the rule that picks it answers `ja-JP` for every CJK input.
+	 * On the Korean reference set that is every row.
 	 *
 	 * The tag is not wrong about routing — the character path is one weights family for Japanese,
 	 * Korean and Chinese — it is wrong about what it says, and a consumer reading the hint
 	 * could not tell "Japanese" from "a script I cannot resolve a language for".
 	 *
 	 * This field lets it say the second.
-	 * `locale` keeps its current meaning and its current values. a consumer that
-	 * wants the writing system reads here.
+	 * `locale` keeps its current meaning and its current values.
+	 * A consumer that wants the writing system reads here.
 	 *
 	 * Script narrows language where it is diagnostic — Hangul decides Korean on 37 of 37 rows of
 	 * the Korean reference set — and does not where it is not: Han is shared, and kana decides
@@ -228,39 +229,24 @@ export type QueryKind =
 	| "poi_query"
 	| "vague"
 	/**
-	 * ROAD_TO_V9 §4 — the query-intent vocabulary. Four kinds that describe what the user is asking FOR rather than what
-	 * their string is shaped like. They are ordinary members of this union (intent is vocabulary of the existing Stage
-	 * 2.5, never a new stage), and each one, when it fires, attaches a {@link QueryIntentMarker} to the result.
+	 * ROAD_TO_V9 §4 — the query-intent vocabulary. Four kinds that describe what the user is asking FOR rather than what their string is shaped like. They are ordinary members of this union (intent is vocabulary of the existing Stage 2.5, never a new stage), and each one, when it fires, attaches a {@link QueryIntentMarker} to the result.
 	 *
-	 * Two of the four are deliberately ranked below their structural incumbent and therefore surface in
-	 * {@link QueryKindResult.alternatives} rather than as the top kind — see the individual docstrings in
-	 * `@mailwoman/kind-classifier`'s `intent-rules.ts`. That is the D-rule discharge: the top kind is the only thing the
-	 * coordinator routes on (`deriveInputMode`, `canShortCircuit`, the POI branch), so leaving it untouched is what makes
-	 * the addition provably answer-neutral on the populations those incumbents already own.
+	 * Two of the four are deliberately ranked below their structural incumbent and therefore surface in {@link QueryKindResult.alternatives} rather than as the top kind — see the individual docstrings in `@mailwoman/kind-classifier`'s `intent-rules.ts`. That is the D-rule discharge: the top kind is the only thing the coordinator routes on (`deriveInputMode`, `canShortCircuit`, the POI branch), so leaving it untouched is what makes the addition provably answer-neutral on the populations those incumbents already own.
 	 */
 	/**
-	 * A single coherent place-name carrying no address grammar — no house number, no postcode, no street-type word. A
-	 * strict refinement of `locality_only` (which also admits an admin tail: `Paris, FR`), scored just below it so the
-	 * top kind never moves. Feeds the declared-ambiguity path: a bare toponym whose resolved candidates are not decisive
-	 * gets a `declared_ambiguity` marker at geocode time.
+	 * A single coherent place-name carrying no address grammar — no house number, no postcode, no street-type word. A strict refinement of `locality_only` (which also admits an admin tail: `Paris, FR`), scored just below it so the top kind never moves. Feeds the declared-ambiguity path: a bare toponym whose resolved candidates are not decisive gets a `declared_ambiguity` marker at geocode time.
 	 */
 	| "bare_toponym"
 	/**
-	 * Two coherent toponyms with no address grammar between them — `Paris London`. Classification plus a declared fork,
-	 * never a router (ROAD_TO_V9 §4.3): structure alone cannot separate a route pair from a comma-free locality+region
-	 * fragment (`Moscow Idaho`), so both interpretations are named in the marker and neither wins.
+	 * Two coherent toponyms with no address grammar between them — `Paris London`. Classification plus a declared fork, never a router (ROAD_TO_V9 §4.3): structure alone cannot separate a route pair from a comma-free locality+region fragment (`Moscow Idaho`), so both interpretations are named in the marker and neither wins.
 	 */
 	| "route_pair"
 	/**
-	 * Preposition/deictic locator with no anchor — `gas station near me`, `restaurants nearby`. The query names a
-	 * category and a relation to the asker, and the asker's position is not in the string. Classification only in v9: the
-	 * marker states that a focus point is required and absent.
+	 * Preposition/deictic locator with no anchor — `gas station near me`, `restaurants nearby`. The query names a category and a relation to the asker, and the asker's position is not in the string. Classification only in v9: the marker states that a focus point is required and absent.
 	 */
 	| "near_me"
 	/**
-	 * A bare POI category with nowhere to search — `tacos`, `grocery store`. The anchorless subset of `poi_query`,
-	 * carrying the resolved `@mailwoman/poi-taxonomy` category id on its marker. Routes exactly as `poi_query` does (the
-	 * coordinator's POI branch accepts both); resolution against `poi.db` is out of scope.
+	 * A bare POI category with nowhere to search — `tacos`, `grocery store`. The anchorless subset of `poi_query`, carrying the resolved `@mailwoman/poi-taxonomy` category id on its marker. Routes exactly as `poi_query` does (the coordinator's POI branch accepts both); resolution against `poi.db` is out of scope.
 	 */
 	| "poi_category"
 
@@ -299,17 +285,20 @@ export const QueryIntentCode = {
 	 */
 	POICategory: "poi_category",
 	/**
-	 * The answer holds nothing of the asked-for kind, and a coverage layer surveyed the searched cell for
-	 * exactly that kind — so the emptiness is a statement about the world rather than about retrieval.
+	 * The answer holds nothing of the asked-for kind, and a coverage layer surveyed
+	 * the searched cell for exactly that kind.
 	 *
-	 * `evidence.coverage` carries the cell, its basis and the layer that
-	 * measured it. without exclusion-grade coverage this code is never raised,
-	 * because an unsurveyed cell is unknown and never absence.
+	 * So the emptiness is a statement about the world rather than about retrieval.
+	 *
+	 * `evidence.coverage` carries the cell, its basis and the layer that measured it.
+	 * Without exclusion-grade coverage this code is never raised, because an
+	 * unsurveyed cell is unknown and never absence.
 	 */
 	CoverageQualifiedAbsence: "coverage_qualified_absence",
 	/**
-	 * An authority publishes a designation for the resolved coordinate, and this is it —
-	 * the code in that authority's own vocabulary, with the product and vintage it was read from
+	 * An authority publishes a designation for the resolved coordinate, and this is it.
+	 *
+	 * The code in that authority's own vocabulary, with the product and vintage it was read from
 	 * and the coverage record stating that the authority made a determination there.
 	 *
 	 * `evidence.layer` names the artifact; `evidence.coverage` carries the cell and its basis.
@@ -327,8 +316,9 @@ export const QueryIntentCode = {
 	 *
 	 * The counterpart of `declared_ambiguity`, and it exists because the two
 	 * failures were reported asymmetrically.
-	 * Too many answers raised a marker with a margin and a runner-up. too FEW —
-	 * a street parsed and a locality centroid returned — raised nothing,
+	 * Too many answers raised a marker with a margin and a runner-up.
+	 *
+	 * Too FEW — a street parsed and a locality centroid returned — raised nothing,
 	 * so `301 College Ave #101, Athens, GA 30601` and `Athens, GA` came back as the same
 	 * shape of answer at the same tier with `uncertainty_m` null on both.
 	 *
@@ -356,8 +346,9 @@ export type QueryIntentCode = (typeof QueryIntentCode)[keyof typeof QueryIntentC
  *
  * Shaped after {@link PipelineFault} on purpose, and for the same reason: the caller needs to tell
  * "the pipeline considered this and had something to say" apart from "the pipeline said nothing".
- * A marker never changes which answer wins — it is additive, attributed,
- * and always accompanied by the ordinary result.
+ * A marker never changes which answer wins.
+ *
+ * It is additive, attributed, and always accompanied by the ordinary result.
  *
  * `mechanism` follows the `family:rule` convention `PhraseProposal.source`
  * established (`core/pipeline/span-proposer.ts`), so every marker names the rule
@@ -367,8 +358,8 @@ export interface QueryIntentMarker {
 	/**
 	 * The intent kind that raised this marker.
 	 *
-	 * Present in {@link QueryKindResult} as either the top `kind` or an entry in `alternatives` —
-	 * a marker whose kind appears in neither is a bug in the producer.
+	 * Present in {@link QueryKindResult} as either the top `kind` or an entry in `alternatives`.
+	 * A marker whose kind appears in neither is a bug in the producer.
 	 */
 	kind: QueryKind
 	code: QueryIntentCode
@@ -381,7 +372,8 @@ export interface QueryIntentMarker {
 	/**
 	 * Human-readable, for a surface that shows it.
 	 *
-	 * Not machine-stable. branch on `code`.
+	 * Not machine-stable.
+	 * Branch on `code`.
 	 */
 	message: string
 	/**
@@ -417,16 +409,18 @@ export interface QueryKindResult {
  * Explicitly settable on every surface (CLI/API); when unset, {@link deriveInputMode}
  * maps the kind-classifier's verdict.
  *
- * Endpoint defaults (GTM B10): validation/batch/CSV → formatted. autocomplete/demo
- * search → fragmented. plain parse → derived.
+ * Endpoint defaults (GTM B10): validation/batch/CSV → formatted. autocomplete/demo search → fragmented.
+ * Plain parse → derived.
  */
 export type InputMode = "fragmented" | "formatted"
 
 /**
  * Map a {@link QueryKind} to its {@link InputMode} register.
  *
- * Multi-component postal specifications (`structured_address`/`po_box`/`intersection`) are the
- * formatted register. single-thing lookups (postcode, locality, landmark, POI, vague) are fragments.
+ * Multi-component postal specifications (`structured_address`/`po_box`/`intersection`)
+ * are the formatted register.
+ * Single-thing lookups (postcode, locality, landmark, POI, vague) are fragments.
+ *
  * Never keyed on case — lowercase is the primary user register (operator doctrine).
  *
  * The four ROAD_TO_V9 §4 intent kinds are all fragments and all reach the register
@@ -449,8 +443,9 @@ export function deriveInputMode(kind: QueryKind): InputMode {
  * The structured POI intent — the pluggable boundary between detection (kind classifier),
  * the executors (Plan 3's poi.db SQL compiler), and the export formats (OverpassQL emitter).
  *
- * Category ids are `@mailwoman/poi-taxonomy` ids carried as plain strings —
- * core stays lexicon-free. the branded type lives with the data package.
+ * Category ids are `@mailwoman/poi-taxonomy` ids carried as plain strings — core stays lexicon-free.
+ * The branded type lives with the data package.
+ *
  * Spec §3.2: docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md
  */
 export interface POIIntent {
@@ -475,8 +470,9 @@ export interface POIIntent {
 				 * `anchorCountry` is the resolved anchor's ISO 3166-1 alpha-2 country, or `null`
 				 * when no anchor resolved to one — and `null` admits no scoped claim.
 				 * `excludedCategoryIDs` are the categories every one of whose authorities
-				 * scoped its claim to countries that do not include it. they were reached
-				 * by the phrase and are not in `categoryIDs`.
+				 * scoped its claim to countries that do not include it.
+				 *
+				 * They were reached by the phrase and are not in `categoryIDs`.
 				 *
 				 * A set that empties this way abstains as `country_scope_excluded`.
 				 */
@@ -504,7 +500,7 @@ export interface POIIntent {
 }
 
 /**
- * One executed POI search result (spec §3.4. produced by the executor, absent pre-execution).
+ * One executed POI search result (spec §3.4. Produced by the executor, absent pre-execution).
  */
 export interface POIResult {
 	name: string | null
@@ -534,7 +530,7 @@ export interface POIResult {
  * Outcome of the poi-intent stage.
  *
  * `abstain` = the query is POI-shaped but unanswerable as asked
- * (e.g. no executor wired for a build-local-only category) — surfaces map it to their
+ * (e.g. No executor wired for a build-local-only category) — surfaces map it to their
  * native empty-result envelope instead of a mangled parse.
  */
 export type POIIntentOutcome =
@@ -623,8 +619,9 @@ export interface ClassifierOpts {
 	/**
 	 * The input register (see {@link InputMode}).
 	 *
-	 * `formatted` runs the evidence-bundle channels deliberately off. the pipeline passes an
-	 * explicit mode on every parse (caller override or {@link deriveInputMode} of the kind verdict).
+	 * `formatted` runs the evidence-bundle channels deliberately off.
+	 * The pipeline passes an explicit mode on every parse
+	 * (caller override or {@link deriveInputMode} of the kind verdict).
 	 */
 	inputMode?: InputMode
 	fst?: FSTMatcherLike
@@ -633,9 +630,11 @@ export interface ClassifierOpts {
 	 * Street-morphology matcher.
 	 *
 	 * In the pipeline this is the signal source for the FST street-context check (#1315),
-	 * always paired with zeroed `fstStreetMorphologyOpts` — the morphology emission prior
-	 * measured US-golden-negative (−48, 2026-07-25 decomposition) and stays off on the production
-	 * paths. it remains reachable via direct `classifier.parse` for measured, opt-in use.
+	 * always paired with zeroed `fstStreetMorphologyOpts`.
+	 * The morphology emission prior measured US-golden-negative (−48, 2026-07-25 decomposition)
+	 * and stays off on the production paths.
+	 *
+	 * It remains reachable via direct `classifier.parse` for measured, opt-in use.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
 	/**
@@ -647,8 +646,7 @@ export interface ClassifierOpts {
 	 */
 	postcodeRepair?: boolean
 	/**
-	 * #690: title-case a detected all-caps ascii input before the model (all-caps registry/compliance data is partly
-	 * OOD).
+	 * #690: title-case a detected all-caps ascii input before the model (all-caps registry/compliance data is partly OOD).
 	 *
 	 * Detection-restricted — mixed-case + non-ascii input is untouched. **Default-on**
 	 * (#895 settled drift D2); `false` restores the raw-case parse.
@@ -665,9 +663,11 @@ export interface ClassifierOpts {
 		| boolean
 		| { minMeanConfidence?: number; skipByteFallbackWords?: boolean; splitOnPunctuation?: boolean }
 	/**
-	 * Placetype-pair prior (placetype-pair-prior arc, #1278) — an opaque passthrough (see
-	 * {@link PlacetypePairPassthrough}). `safeClassify` forwards `PipelineOpts.placetypePair` here, and the neural
-	 * classifier's `parse` reads it as its own `PlacetypePairPriorOpts | false`.
+	 * Placetype-pair prior (placetype-pair-prior arc, #1278) — an opaque passthrough
+	 * (see {@link PlacetypePairPassthrough}).
+	 *
+	 * `safeClassify` forwards `PipelineOpts.placetypePair` here, and the neural classifier's
+	 * `parse` reads it as its own `PlacetypePairPriorOpts | false`.
 	 * `@mailwoman/core` never inspects it; `undefined` is the byte-stable no-prior decode.
 	 */
 	placetypePair?: PlacetypePairPassthrough
@@ -694,8 +694,9 @@ export interface AddressClassifier {
  * The Stage-2 locale detector the coordinator calls: the normalized input
  * and its shape in, a {@link LocaleHint} out.
  *
- * The caller's hint wins outright. an environment locale sits below it
- * and above inferred machine preferences.
+ * The caller's hint wins outright.
+ * An environment locale sits below it and above inferred machine preferences.
+ *
  * `@mailwoman/locale-hint` implements it over the query shape alone.
  */
 export type LocaleDetector = (
@@ -713,8 +714,9 @@ export type LocaleDetector = (
  *
  * All optional — when a stage is absent, the coordinator either skips it (resolver) or substitutes
  * a no-op stub (normalize / queryShape / `@mailwoman/locale-check` stage / kind classifier).
- * The classifier is required for the full pipeline path. without it, the coordinator
- * can only fast-path on QueryShape known-formats.
+ * The classifier is required for the full pipeline path.
+ *
+ * Without it, the coordinator can only fast-path on QueryShape known-formats.
  */
 export interface RuntimePipelineStages {
 	normalize?: (raw: string, opts?: { locale?: string }) => NormalizedInputLite
@@ -727,8 +729,8 @@ export interface RuntimePipelineStages {
 	 * A `(normalizedText) → { country, confidence, posterior? }` predictor
 	 * (a `CoarsePlacer`-backed fn); `country: null` ⇒ abstained, `"other"` ⇒ off-map.
 	 * When provided, a confident IN-MAP guess becomes a soft country prior fed into the resolver's
-	 * #369 `anchorPosterior` re-rank (boosts the right-country candidate, never filters);
-	 * it defers to a caller-supplied posterior (a stronger postcode anchor) and is a no-op on abstain/other.
+	 * #369 `anchorPosterior` re-rank (boosts the right-country candidate, never filters); it defers
+	 * to a caller-supplied posterior (a stronger postcode anchor) and is a no-op on abstain/other.
 	 * Off by default → byte-stable.
 	 *
 	 * `posterior` (residual upgrade) is the full per-in-map-country distribution: when present it is the
@@ -742,10 +744,14 @@ export interface RuntimePipelineStages {
 		posterior?: Record<string, number>
 	}
 	/**
-	 * POI intent stage (spec §3.1). Runs only when the kind classifier emitted `poi_query`. Returns the extracted intent,
-	 * an abstain, or `null` to fall through to the full pipeline (the mis-detection safety valve — a `poi_query` kind
-	 * with no extractable subject parses normally). Absent by default. wired by `createRuntimePipeline({ poiQueryKind:
-	 * true })`.
+	 * POI intent stage (spec §3.1).
+	 *
+	 * Runs only when the kind classifier emitted `poi_query`.
+	 * Returns the extracted intent, an abstain, or `null` to fall through to the full pipeline
+	 * (the mis-detection safety valve — a `poi_query` kind with no extractable subject parses normally).
+	 *
+	 * Absent by default.
+	 * Wired by `createRuntimePipeline({ poiQueryKind: true })`.
 	 */
 	poiIntent?: (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null>
 	/**
@@ -768,7 +774,7 @@ export interface RuntimePipelineStages {
 	 * Street-morphology matcher — the signal source for the FST street-context check (#1315).
 	 *
 	 * Consumed only with the morphology emission prior zeroed at the classify call sites
-	 * (the emission prior is US-golden-negative. the check alone is golden-flat and fragment-positive).
+	 * (the emission prior is US-golden-negative. The check alone is golden-flat and fragment-positive).
 	 * Effective only when `fst` is also present.
 	 */
 	streetMorphology?: FSTMatcherLike

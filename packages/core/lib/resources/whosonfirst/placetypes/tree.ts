@@ -27,8 +27,9 @@ export interface PlacetypeTreeNode {
  *
  * The traversal mirrors {@linkcode Placetype.findChildren} — direct children
  * only at each level, recursively.
- * The DAG-to-tree projection may repeat descendants under multiple parents. if you need
- * each placetype to appear exactly once, use {@linkcode Placetype.findDescendants}
+ * The DAG-to-tree projection may repeat descendants under multiple parents.
+ *
+ * If you need each placetype to appear exactly once, use {@linkcode Placetype.findDescendants}
  * for a flat de-duplicated set instead.
  */
 export function generatePlacetypeTree(placetype: Placetype, roles?: Iterable<PlacetypeRole> | null): PlacetypeTreeNode {

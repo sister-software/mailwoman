@@ -95,7 +95,7 @@ describe("buildAddressTree", () => {
 // Samples sourced from v0.4.0's post-hoc regression
 // diagnostic (.playpen/control/drafts/v0_4_0-regression-diagnostic.md).
 // The shipped v0.4.0 model occasionally emits BIO spans with leading/trailing punctuation.
-// the decoder now trims the span boundary past non-word characters. start/end tighten in sync
+// The decoder now trims the span boundary past non-word characters. start/end tighten in sync
 // so consumers slicing raw[start:end] get the same string as node.value.
 describe("buildAddressTree — boundary trim", () => {
 	test("strips leading comma+space from postcode span", () => {
@@ -309,9 +309,9 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 // Spurious-boundary repair.
 // The neural model fragments some multi-word locality values into two B-locality spans
 // ("Saint Paul" → B-locality "Saint" + B-locality "Paul") — a real, decode- agnostic
-// emission bug (argmax == viterbi. see scripts/diag-saintalbans.ts).
+// emission bug (argmax == viterbi. See scripts/diag-saintalbans.ts).
 // A `B-X` token that is whitespace-adjacent to an open `X` span is folded in.
-// a comma/separator keeps spans distinct.
+// A comma/separator keeps spans distinct.
 describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", () => {
 	function localitySpans(nodes: AddressNode[]): AddressNode[] {
 		const out: AddressNode[] = []

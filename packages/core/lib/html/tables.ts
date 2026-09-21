@@ -30,10 +30,11 @@ export interface TableCell {
 	tag: "td" | "th"
 	text: string
 	/**
-	 * The cell's text split where the source broke IT — one entry per block-level boundary
-	 * (`</p>`, `</div>`, `<br>`, `</li>`), blanks dropped. {@linkcode TableCell.text} is
-	 * these joined by a space, and a caller that must tell one long value from several
-	 * stacked ones reads this instead of re-parsing the cell's markup.
+	 * The cell's text split where the source broke IT.
+	 *
+	 * One entry per block-level boundary (`</p>`, `</div>`, `<br>`, `</li>`), blanks dropped.
+	 * {@linkcode TableCell.text} is these joined by a space, and a caller that must tell one
+	 * long value from several stacked ones reads this instead of re-parsing the cell's markup.
 	 */
 	blocks: string[]
 }

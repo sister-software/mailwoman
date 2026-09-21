@@ -39,7 +39,9 @@ export function sanitizeHTML(untrustedHTML: string): string {
 const STRIP_CONFIG: DOMPurifyConfig = { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }
 
 /**
- * Every tag and attribute removed. only text content survives, entity-encoded for an html sink.
+ * Every tag and attribute removed.
+ *
+ * Only text content survives, entity-encoded for an html sink.
  *
  * For decoded plain text — comparison, storage — use {@link stripHTMLToText}.
  */
@@ -122,8 +124,10 @@ export function stripHTMLTrustPolicy(): ReturnType<typeof trustedTypes.createPol
 }
 
 /**
- * Create every policy eagerly — the client-boot call, so the names exist before any
- * sink asks and a CSP `trusted-types` allowlist can enumerate them.
+ * Create every policy eagerly.
+ *
+ * The client-boot call, so the names exist before any sink asks and a CSP
+ * `trusted-types` allowlist can enumerate them.
  */
 export function registerTrustPolicies(): void {
 	escapeTrustPolicy()

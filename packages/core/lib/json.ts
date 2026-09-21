@@ -111,8 +111,8 @@ export function parseJSONStrict<T = unknown>(input: PathBuilderLike): T {
  * A JSON array carried inside a string field.
  *
  * `undefined` answers `[]`; a value that parses to anything but an array throws,
- * because a non-array there is a schema change at the source rather than something to coerce —
- * an empty array would read as "none", which is not what a differently-shaped value means.
+ * because a non-array there is a schema change at the source rather than something to coerce.
+ * An empty array would read as "none", which is not what a differently-shaped value means.
  *
  * @param scope Names the reader in the error, e.g. `coastal client`.
  */

@@ -42,9 +42,10 @@ const HTTP_SERVER_ERROR_MAX = 599
  * Honoring `Retry-After` is the right side of most fair-access policies, but an unbounded
  * honor-anything policy would let a pathological (or misconfigured) server hang a bulk crawl
  * for hours. 60s is generous for anything a real rate limiter would plausibly ask for.
- * Also the fallback used when `Retry-After` is present but unparseable — a malformed header is
- * still the server asking us to back off, and guessing long is the safe failure mode. guessing
- * short (the exponential default) risks hammering a server that explicitly asked for space.
+ * Also the fallback used when `Retry-After` is present but unparseable.
+ *
+ * A malformed header is still the server asking us to back off, and guessing long is the safe failure mode.
+ * Guessing short (the exponential default) risks hammering a server that explicitly asked for space.
  */
 export const MAX_RETRY_AFTER_MS = 60_000
 
@@ -71,9 +72,11 @@ const RETRY_AFTER_DELAY_SECONDS_PATTERN = /^\d+$/
 /**
  * A necessary (not sufficient) pre-check before trusting `Date.parse` on the http-date
  * branch: `Date.parse` is FAR more lenient than RFC 9110's http-date grammar
- * and will parse plausible-looking garbage — `Date.parse("1.5")` returns a valid timestamp
- * (~Jan 2001, some locale-ish `M.D` reading), which very nearly slipped a bare fractional-seconds
- * typo through as an accepted http-date instead of falling back to the long ceiling.
+ * and will parse plausible-looking garbage.
+ *
+ * `Date.parse("1.5")` returns a valid timestamp (~Jan 2001, some locale-ish `M.D` reading),
+ * which very nearly slipped a bare fractional-seconds typo through as an accepted
+ * http-date instead of falling back to the long ceiling.
  *
  * Every valid RFC 9110 http-date form (the preferred IMF-fixdate and the obsolete RFC 850 form)
  * ends in the literal `GMT`; requiring that suffix rejects `Date.parse`'s stray non-date
@@ -86,9 +89,11 @@ const HTTP_DATE_SUFFIX_PATTERN = /GMT$/
  */
 export interface RetryDirective {
 	/**
-	 * Whether this class of failure is worth another attempt — `true` for 408/429/5xx and every
-	 * network-class failure (connect, DNS, timeout, mid-body-transfer drop), `false` for 403/404/other
-	 * non-transient statuses, a caller-initiated cancel, and a body that failed to decode.
+	 * Whether this class of failure is worth another attempt.
+	 *
+	 * `true` for 408/429/5xx and every network-class failure
+	 * (connect, DNS, timeout, mid-body-transfer drop), `false` for 403/404/other non-transient
+	 * statuses, a caller-initiated cancel, and a body that failed to decode.
 	 */
 	retryable: boolean
 	/**
@@ -108,9 +113,9 @@ export interface RetryDirective {
  * itself when the value is present but matches neither valid form — see the constant's
  * docstring for why unparseable fails open toward caution rather than speed.
  *
- * The http-date branch compares against real wall-clock time (`Date.now()`),
- * not an injectable clock — an http-date is an absolute calendar timestamp,
- * which only means something relative to the actual current time.
+ * The http-date branch compares against real wall-clock time (`Date.now()`), not an injectable clock.
+ * An http-date is an absolute calendar timestamp, which only means something
+ * relative to the actual current time.
  */
 export function parseRetryAfterMs(header: string | null | undefined): number | null {
 	if (!header) return null
@@ -144,8 +149,10 @@ export function parseRetryAfterMs(header: string | null | undefined): number | n
  *
  * Retrying it cannot succeed and burns rate budget on a request that was never going to be served.
  * An earlier revision spelled this out as a redundant `if (status === 403) return false`
- * ahead of the range check — no mutation could kill it, because the range check already
- * excluded 403, so it was removed rather than left as unfalsifiable decoration.
+ * ahead of the range check.
+ *
+ * No mutation could kill it, because the range check already excluded 403,
+ * so it was removed rather than left as unfalsifiable decoration.
  *
  * The property is proved by mutating this range instead: broadening it to
  * `>= 400` makes the 403 and 404 tests fail.
@@ -160,7 +167,7 @@ export function isRetryableStatus(status: number): boolean {
  * Read the `Retry-After` header off an Axios error's response, if it carried one.
  *
  * Axios lower-cases response header names, but `AxiosHeaders` lookups are case-insensitive anyway.
- * the lower-case spelling is used for the plain-object shape a stubbed adapter may return.
+ * The lower-case spelling is used for the plain-object shape a stubbed adapter may return.
  */
 function retryAfterFrom(error: AxiosError): number | null {
 	const headers = error.response?.headers
@@ -181,8 +188,9 @@ function retryAfterFrom(error: AxiosError): number | null {
  * This is the case a bulk crawler hits most: fetching multi-MB documents, a dropped socket is far more
  * common than a 503, and the standalone SEC client shipped a version that treated it as terminal.
  *
- * A caller-initiated cancel (`ERR_CANCELED`, i.e. the caller's own `AbortSignal` fired)
- * is not retryable — the caller asked us to stop, and retrying would defy that.
+ * A caller-initiated cancel (`ERR_CANCELED`, i.e. the caller's own `AbortSignal` fired) is not retryable.
+ * The caller asked us to stop, and retrying would defy that.
+ *
  * Axios reports its own `timeout` config as `econnaborted`/`etimedout`, so the two are distinguishable.
  */
 export function classifyAxiosFailure(error: unknown): RetryDirective {
@@ -212,8 +220,7 @@ export interface RetryOptions {
 	 * Total attempts, including the first, before giving up.
 	 *
 	 * A stated ceiling rather than "until it works".
-	 * Default
-	 * {@linkcode DEFAULT_MAX_ATTEMPTS}.
+	 * Default {@linkcode DEFAULT_MAX_ATTEMPTS}.
 	 */
 	maxAttempts?: number
 	/**
@@ -221,8 +228,7 @@ export interface RetryOptions {
 	 *
 	 * Attempt `n`'s wait is `baseDelayMs * 2^(n-1)`, unless the response carried a
 	 * `Retry-After` header, which is honored instead.
-	 * Default
-	 * {@linkcode DEFAULT_BASE_RETRY_DELAY_MS}.
+	 * Default {@linkcode DEFAULT_BASE_RETRY_DELAY_MS}.
 	 */
 	baseDelayMs?: number
 }

@@ -48,8 +48,9 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
  *
  * The national registers this repository reads are not all UTF-8: Korea's address
  * portal ships CP949, Japan's postcode file Shift_JIS.
- * `spliterator` splits UTF-8 bytes, so the decode happens upstream of the split rather than
- * after it — a line boundary found in CP949 bytes is not a line boundary.
+ * `spliterator` splits UTF-8 bytes, so the decode happens upstream of the split rather than after it.
+ *
+ * A line boundary found in CP949 bytes is not a line boundary.
  *
  * Not `TextDecoder`, and the difference is not small.
  * Node's whatwg `euc-kr` implements EUC-KR proper (KS X 1001) and not the UHC
@@ -60,8 +61,9 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
  * `iconv-lite` disagrees with `cp949` on none of the 17,048.
  *
  * It is not a rare corner.
- * One row in 48,000 of the Korean address register carries such a sequence — `더샾오피스텔`,
- * bytes `b4 f5 98 de bf c0 c7 c7 bd ba c5 da`, which `TextDecoder` reads as `더乍의퓰뵀�`.
+ * One row in 48,000 of the Korean address register carries such a sequence.
+ *
+ * `더샾오피스텔`, bytes `b4 f5 98 de bf c0 c7 c7 bd ba c5 da`, which `TextDecoder` reads as `더乍의퓰뵀�`.
  *
  * The decoder is streaming for the same reason a `TextDecoder` would need `{ stream: true }`:
  * a multi-byte character split across two chunks must be held until its tail arrives,
@@ -98,7 +100,8 @@ export async function* decodeByteStream(
  *
  * Same reasoning, same reason not to reach for `TextDecoder`, and it lives here
  * so a reader that finds one finds the other.
- * Use this when the whole file is a bounded size the publisher fixes. use the stream when it is not.
+ * Use this when the whole file is a bounded size the publisher fixes.
+ * Use the stream when it is not.
  *
  * @category Files
  * @param encoding An `iconv-lite` label — `cp949`, `cp932`, `gbk`.

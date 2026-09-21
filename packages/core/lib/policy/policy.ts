@@ -28,16 +28,19 @@ export type PolicyMode = "rule_only" | "neural_only" | "both" | "neural_preferre
 /**
  * A single policy entry.
  *
- * Locale-less entries are the global default. locale-scoped entries override
- * the global default for that locale.
+ * Locale-less entries are the global default.
+ * Locale-scoped entries override the global default for that locale.
  */
 export interface ClassifierPolicy {
 	component: ComponentTag
 	mode: PolicyMode
 
 	/**
-	 * Minimum confidence for a proposal to be retained. Applied before the policy-mode filter. Inclusive ([threshold,
-	 * 1.0]). Undefined means "no threshold."
+	 * Minimum confidence for a proposal to be retained.
+	 *
+	 * Applied before the policy-mode filter.
+	 * Inclusive ([threshold, 1.0]).
+	 * Undefined means "no threshold."
 	 */
 	confidence_threshold?: number
 
@@ -56,15 +59,16 @@ export interface PolicyRegistry {
 	/**
 	 * Look up the effective policy for a (component, locale) pair.
 	 *
-	 * A locale-specific entry wins over a global one. if neither exists,
-	 * the registry-wide default (`rule_only`, no threshold) is returned.
+	 * A locale-specific entry wins over a global one.
+	 * If neither exists, the registry-wide default (`rule_only`, no threshold) is returned.
 	 */
 	lookup(component: ComponentTag, locale?: string): ClassifierPolicy
 
 	/**
 	 * Apply policy filtering to a flat list of proposals.
 	 *
-	 * Output is a new array. the input is not mutated.
+	 * Output is a new array.
+	 * The input is not mutated.
 	 */
 	apply(proposals: readonly ClassificationProposal[], locale?: string): ClassificationProposal[]
 }

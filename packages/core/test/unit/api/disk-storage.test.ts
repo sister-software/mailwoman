@@ -185,8 +185,8 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 
 	it("refuses a non-finite ttl, which JSON would silently turn into an already-expired entry", async () => {
 		// `JSON.stringify(Infinity)` is `"null"`, and `null` reads back as 0 in the
-		// interceptor's `createdAt + ttl < Date.now()` expiry test — so "cache forever"
-		// would round-trip into "expired the instant it is read".
+		// interceptor's `createdAt + ttl < Date.now()` expiry test.
+		// So "cache forever" would round-trip into "expired the instant it is read".
 		// Rejecting loudly beats caching nothing.
 		const storage = buildDiskStorage({ directory: directory.path })
 
@@ -296,7 +296,8 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 		// `onFulfilled`, so a throwing write rejects a request whose http response already succeeded.
 		// It escapes as a bare `Error` — no `status` — which `isTransientResourceError` reads
 		// as false, so a caller is told the failure is permanent and drops the work.
-		// Any filesystem error does this. reproduced here with a `0o500` parent.
+		// Any filesystem error does this.
+		// Reproduced here with a `0o500` parent.
 		if (!(await makeUnwritable())) {
 			await restore()
 			throw new Error("could not make the cache directory.path unwritable (running as root?) — test cannot reproduce")
@@ -326,8 +327,8 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 	})
 
 	it("keeps three concurrent requests consistent when the cache cannot be written", async () => {
-		// The same repro showed one rejection and two successes for the same response — a request's
-		// outcome depending on whether it happened to be the one that lost a cache-write race.
+		// The same repro showed one rejection and two successes for the same response.
+		// A request's outcome depending on whether it happened to be the one that lost a cache-write race.
 		if (!(await makeUnwritable())) {
 			await restore()
 			throw new Error("could not make the cache directory.path unwritable (running as root?) — test cannot reproduce")

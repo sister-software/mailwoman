@@ -21,15 +21,10 @@ import { makeDirectories } from "#fs/writers"
  * together with everything registered on it.
  *
  * ```ts
- * await using scratch = await temporaryDirectory("filer-build-")
- * const out = scratch.resolve("filer.db")
+ * await using scratch = await temporaryDirectory("filer-build-") const out = scratch.resolve("filer.db")
  * ```
  *
- * {@linkcode move} answers this same shape rather than a bare `AsyncDisposableStack`, which is what a factory needs:
- * the stack's own `move()` drops `path`.
- * Therefore, every caller would rebuild it by hand afterwards.
- * {@linkcode moveWith} does that transfer and attaches what the caller asked for, so a fixture builder is one
- * statement.
+ * {@linkcode move} answers this same shape rather than a bare `AsyncDisposableStack`, which is what a factory needs: the stack's own `move()` drops `path`. Therefore, every caller would rebuild it by hand afterwards. {@linkcode moveWith} does that transfer and attaches what the caller asked for, so a fixture builder is one statement.
  */
 export interface TemporaryDirectory extends AsyncDisposable {
 	/**
@@ -54,7 +49,7 @@ export interface TemporaryDirectory extends AsyncDisposable {
 	 */
 	move(): TemporaryDirectory
 	/**
-	 * {@linkcode move}, carrying `extras` alongside — the shape a fixture builder returns.
+	 * {@linkcode move}, carrying `extras` alongside. The shape a fixture builder returns.
 	 */
 	moveWith<T extends object>(extras: T): TemporaryDirectory & T
 }

@@ -102,6 +102,7 @@ export function pyJSONDumps(value: unknown, options: PyJSONDumpOptions = {}): st
 }
 
 /**
- * Render a string->number map the way Python prints `dict(...)` / `dict(Counter(...))` — single-quoted keys, `, ` / `:
- * ` separators (e.g. `{'US': 1840, 'FR': 950}`). Insertion order is preserved.
+ * Render a string->number map the way Python prints `dict(...)` / `dict(Counter(...))` —
+ * single-quoted keys, `, ` / `: ` separators (e.g. `{'US': 1840, 'FR': 950}`).
+ * Insertion order is preserved.
  */

@@ -41,7 +41,8 @@ export function sha256Hex(data: string | NodeJS.ArrayBufferView | string[]): str
  * the HM Land Registry PPD snapshot ships an `.md5` sibling, and `gazetteer-pipeline/admin/index.ts`'s
  * build-log fingerprint is MD5 — so a extract/artifact header recording a source checksum
  * matches the surrounding provenance chain rather than mixing algorithms.
- * Not a security primitive. only ever used for accidental-corruption / drift detection.
+ * Not a security primitive.
+ * Only ever used for accidental-corruption / drift detection.
  */
 export async function md5File(path: PathBuilderLike): Promise<string> {
 	const hash = createHash("md5")
@@ -54,8 +55,9 @@ export async function md5File(path: PathBuilderLike): Promise<string> {
 }
 
 /**
- * MD5 of in-memory content, hex-encoded — the {@link md5File} counterpart for
- * a string that never becomes a file.
+ * MD5 of in-memory content, hex-encoded.
+ *
+ * The {@link md5File} counterpart for a string that never becomes a file.
  *
  * Same provenance-only rationale, and the same non-security caveat: it exists
  * so a query text, a manifest line or a config blob can be fingerprinted with the
@@ -69,7 +71,6 @@ export function md5Hex(data: string | NodeJS.ArrayBufferView): string {
 /**
  * The incremental hasher, for input that arrives in pieces — a row at a time, a chunk at a time.
  *
- * For a whole value,
- * {@linkcode sha256Hex} and {@linkcode md5Hex} say which digest in their name.
+ * For a whole value, {@linkcode sha256Hex} and {@linkcode md5Hex} say which digest in their name.
  */
 export { createHash, type Hash } from "node:crypto"

@@ -5,8 +5,10 @@ import { TSVSpliterator } from "spliterator"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Three GeoNames-shaped rows. The middle one carries a `"` in a place name, which the real dumps do — `Ovrag
- * Kyzylak"on` is line 394 of Turkmenistan's, and every row after it was swallowed.
+ * Three GeoNames-shaped rows.
+ *
+ * The middle one carries a `"` in a place name, which the real dumps do.
+ * `Ovrag Kyzylak"on` is line 394 of Turkmenistan's, and every row after it was swallowed.
  */
 const DUMP = ["1\tAshgabat\t37.95\t58.38", `2\tOvrag Kyzylak"on\t38.23\t55.11`, "3\tTürkmenabat\t39.07\t63.57"].join(
 	"\n"
@@ -88,7 +90,8 @@ describe("the checked read", () => {
 			viaDefault.push(row as string[])
 		}
 
-		// The comparison is only meaningful where the default actually loses rows. assert that first.
+		// The comparison is only meaningful where the default actually loses rows.
+		// Assert that first.
 		expect(viaDefault.length).toBeLessThan(3)
 		await expect(readUnquotedTSVChecked(truncating)).resolves.toHaveLength(3)
 	})

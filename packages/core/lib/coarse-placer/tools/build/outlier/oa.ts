@@ -90,9 +90,10 @@ const IN_MAP = new Set<string>(COUNTRIES)
 /**
  * Language/region families for the leave-one-family-out split.
  *
- * Off-map countries OA's europe+asia zips plausibly carry. the actual train/heldout
- * set is intersected with what's on disk at runtime. heldout families are the
- * generalization probe (the model never sees a single row from them).
+ * Off-map countries OA's europe+asia zips plausibly carry.
+ * The actual train/heldout set is intersected with what's on disk at runtime.
+ *
+ * Heldout families are the generalization probe (the model never sees a single row from them).
  * Off-map families, intersected at runtime with what OA's europe+asia zips actually carry
  * (verified on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro sa se sg si sk).
  */
@@ -148,8 +149,7 @@ export async function buildOutlierOA(
 
 		try {
 			res = await duck.runAndReadAll(
-				// union_by_name aligns the differing per-source schemas. lower the header access so number /
-				// number both resolve. Pull a generous superset, dedup+cap in JS.
+				// union_by_name aligns the differing per-source schemas. Lower the header access so number / number both resolve. Pull a generous superset, dedup+cap in JS.
 				`SELECT COLUMNS('(?i)^(number|street|city|postcode)$') FROM read_csv_auto('${glob}', union_by_name=true, ignore_errors=true, sample_size=-1) LIMIT ${PER * 8}`
 			)
 		} catch (error) {
@@ -161,7 +161,8 @@ export async function buildOutlierOA(
 
 		const out = collectOutlierRows(
 			res.getRowObjects().map((r) => {
-				// columns() preserves source-case keys. normalize to lowercase access.
+				// columns() preserves source-case keys.
+				// Normalize to lowercase access.
 				const row: Record<string, unknown> = {}
 
 				for (const [k, v] of Object.entries(r)) {

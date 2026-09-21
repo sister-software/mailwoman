@@ -71,13 +71,14 @@ export const BLOCK_ELEMENTS: ReadonlySet<string> = new Set([
  * itself: a caller splitting on a run must include U+00A0 in its own character class,
  * since `&nbsp;` and `&#160;` are the same character and `[ \t]` matches neither.
  *
- * Markup between two text runs inserts one separator, and only where the source states none —
- * so `<td>a</td><td>b</td>` separates into two values while `a <b>b</b>` stays single-spaced,
+ * Markup between two text runs inserts one separator, and only where the source states none.
+ * So `<td>a</td><td>b</td>` separates into two values while `a <b>b</b>` stays single-spaced,
  * and neither fabricates the 2+-space run a caller would read as a column boundary.
+ *
  * A run of markup is one separation rather than one per tag: `</p><p>` inserts a single break.
  *
- * An element in `lineBreakElements` makes that separator a newline, unconditionally —
- * a line boundary the document states is not a spacing judgment.
+ * An element in `lineBreakElements` makes that separator a newline, unconditionally.
+ * A line boundary the document states is not a spacing judgment.
  */
 export function htmlToLayoutText(html: string, lineBreakElements?: ReadonlySet<string>): string {
 	let text = ""

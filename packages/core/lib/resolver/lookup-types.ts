@@ -38,8 +38,9 @@ export interface AddressPointHit {
 /**
  * Street-level exact-point lookup (#476).
  *
- * Implementations own their normalization — both the extract build and this lookup must
- * apply the same normalizer (see `resolver-wof-sqlite/street-normalize.ts`).
+ * Implementations own their normalization.
+ * Both the extract build and this lookup must apply the same normalizer
+ * (see `resolver-wof-sqlite/street-normalize.ts`).
  * Core depends only on this interface.
  */
 export interface AddressPointLookup {
@@ -106,9 +107,12 @@ export interface InterpolatedPointHit {
  * House-number interpolation lookup (#483).
  *
  * Like {@link AddressPointLookup}, implementations own their normalization
- * (the shared `resolver-wof-sqlite/street-normalize.ts`). core depends only on this interface.
- * Postcode-scoped. without a postcode the tier answers only when the covering ranges agree on one
- * postcode — `near` (the resolved locality's coordinate) lets an implementation break a multi-postcode
+ * (the shared `resolver-wof-sqlite/street-normalize.ts`).
+ * Core depends only on this interface.
+ *
+ * Postcode-scoped.
+ * Without a postcode the tier answers only when the covering ranges agree on one postcode —
+ * `near` (the resolved locality's coordinate) lets an implementation break a multi-postcode
  * tie by segment proximity instead of abstaining (the Brooklyn-vs-Great-Neck namesake class).
  *
  * Optional and advisory: implementations may ignore it.
@@ -128,11 +132,12 @@ export interface InterpolationLookup {
 	 *
 	 * The resolver applies it as the default whenever `ResolveOpts.interpolationRadiusCalibration` is absent.
 	 * `undefined` (or an implementation without the property) = the artifact carries none —
-	 * extracts built before the metadata table existed. behavior is then exactly the
-	 * pre-artifact ladder (caller-supplied factor or raw).
+	 * extracts built before the metadata table existed.
 	 *
-	 * Implementations must read this at open time (constructor/factory),
-	 * never per-lookup — `find()` is synchronous by design.
+	 * Behavior is then exactly the pre-artifact ladder (caller-supplied factor or raw).
+	 *
+	 * Implementations must read this at open time (constructor/factory), never per-lookup.
+	 * `find()` is synchronous by design.
 	 */
 	readonly radiusCalibration?: number
 }
@@ -164,8 +169,8 @@ export interface StreetCentroidHit {
  *
  * Like {@link AddressPointLookup}, implementations own their normalization
  * (the shared `resolver-wof-sqlite/street-normalize.ts`); core depends only on this interface.
- * Scoped by `postcode` (preferred) or `locality` (the base commune) —
- * no house number: this is the street-only tier.
+ * Scoped by `postcode` (preferred) or `locality` (the base commune).
+ * No house number: this is the street-only tier.
  */
 export interface StreetCentroidLookup {
 	find(query: { street: string; postcode?: string; locality?: string }): StreetCentroidHit | null

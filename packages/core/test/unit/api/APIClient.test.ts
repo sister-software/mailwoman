@@ -334,13 +334,15 @@ describe("APIClient: bounded retry (A3)", () => {
 	})
 
 	it("maps a timeout to a transient network error, not the old uniform 500", async () => {
-		// The pre-migration mapper collapsed every responseless failure into `ResourceError.from(500,
-		// "Internal Server Error", "axios", "response", "missing")`, so a timeout was indistinguishable
-		// from a refused connection or a DNS failure. Its `econnaborted: return` arm — which would have
-		// resolved the chain with `undefined` — could not be reached BY axios: the `if (!response) throw`
-		// above it ran first, and axios never attaches a `response` to a timeout, so a differential across
-		// 18 failure shapes found no case that ever resolved. (Reachable in principle with a hand-built
-		// error carrying both a `response` and `econnaborted`, which no stock adapter produces.)
+		// The pre-migration mapper collapsed every responseless failure into
+		// `ResourceError.from(500, "Internal Server Error", "axios", "response", "missing")`,
+		// so a timeout was indistinguishable from a refused connection or a DNS failure.
+		// Its `econnaborted: return` arm — which would have resolved the chain with `undefined` —
+		// could not be reached BY axios: the `if (!response) throw` above it ran first,
+		// and axios never attaches a `response` to a timeout, so a differential across
+		// 18 failure shapes found no case that ever resolved.
+		// (Reachable in principle with a hand-built error carrying both a `response`
+		// and `econnaborted`, which no stock adapter produces.)
 		const { axios } = stubTransport([{ throws: { message: "timeout of 30000ms exceeded", code: "ECONNABORTED" } }])
 
 		const client = new APIClient({
@@ -491,8 +493,9 @@ describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", ()
 		const client = new APIClient({
 			displayName: "paced-retries",
 			minRequestIntervalMs: INTERVAL_MS,
-			// A backoff far shorter than the pacing interval, so the pacer is the only thing that can
-			// produce the spacing — a test with a long backoff would pass with the pacer deleted.
+			// A backoff far shorter than the pacing interval, so the pacer is the only
+			// thing that can produce the spacing.
+			// A test with a long backoff would pass with the pacer deleted.
 			retry: { maxAttempts: 3, baseDelayMs: 1 },
 			clock,
 			axios,
@@ -545,8 +548,9 @@ describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 describe("APIClient: a caller-supplied adapter cannot bypass the check", () => {
 	it("strips a per-request adapter so the pacing grant is still taken", async () => {
 		// `mergeConfig` lets a request-level `adapter` win over the instance default,
-		// and the check lives in that instance adapter — so before this was stripped,
-		// three concurrent calls made 3 dispatches, took 0 grants and slept 0 times.
+		// and the check lives in that instance adapter.
+		// So before this was stripped, three concurrent calls made 3 dispatches,
+		// took 0 grants and slept 0 times.
 		// The cache interceptor's own adapter swap is unaffected: it happens inside the
 		// interceptor chain on the merged config rather than through this entry point.
 		const clock = new VirtualClock()

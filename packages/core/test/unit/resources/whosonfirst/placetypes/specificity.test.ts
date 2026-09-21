@@ -54,8 +54,8 @@ describe("isAtLeastAsSpecific", () => {
 		// which is true — an Alaska borough is county-tier — but a tie is not a neutral answer.
 		// It made each cover the other, and one rung up that same tie let a live
 		// NYC-shaped borough cover its own dead parent locality.
-		// WOF's own containment ladder commits to sub-locality. a scale that has to pick one
-		// answer picks that one, and the Alaska reading stays wrong either way.
+		// WOF's own containment ladder commits to sub-locality.
+		// A scale that has to pick one answer picks that one, and the Alaska reading stays wrong either way.
 		expect(isAtLeastAsSpecific("borough", "localadmin")).toBe(true)
 		expect(isAtLeastAsSpecific("localadmin", "borough")).toBe(false)
 	})
@@ -126,8 +126,10 @@ describe("the table", () => {
 })
 
 /**
- * The admin ladder, coarsest first — a copy of `resolver-wof-sqlite/ancestry.ts`'s
- * `PLACETYPE_DEPTH` order, and the only place in `core` allowed to know it.
+ * The admin ladder, coarsest first.
+ *
+ * A copy of `resolver-wof-sqlite/ancestry.ts`'s `PLACETYPE_DEPTH` order,
+ * and the only place in `core` allowed to know it.
  *
  * `core` cannot import from `resolver-wof-sqlite` (the dependency runs the other way),
  * so the two tables cannot be derived from one another and this list is what keeps them honest.

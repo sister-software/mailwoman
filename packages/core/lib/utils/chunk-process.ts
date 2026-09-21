@@ -54,12 +54,13 @@ export interface RunChunkProcessOptions {
  *
  * The parent holds no handle while the chunks run — its caller closed one
  * before the batched ingest and opens another after.
- * Each child opens the same file and appends. chunks run one at a time, so there is
- * exactly one writer at every instant and no locking to reason about.
+ * Each child opens the same file and appends.
  *
- * A chunk that exits non-zero, or prints no result line, throws in
- * {@link runChunkProcess}: a chunk that died mid-range has written a partial set of rows, and continuing would seal an
- * artifact missing features nobody could name.
+ * Chunks run one at a time, so there is exactly one writer at every instant and no locking to reason about.
+ *
+ * A chunk that exits non-zero, or prints no result line, throws in {@link runChunkProcess}:
+ * a chunk that died mid-range has written a partial set of rows, and continuing
+ * would seal an artifact missing features nobody could name.
  */
 export function ingestChunkArguments(options: {
 	database: string

@@ -36,8 +36,8 @@ import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/def
 /**
  * Higher is finer.
  *
- * Absent placetypes are unranked and must be handled by the caller rather than defaulted —
- * a missing entry silently scoring 0 would rank an unknown placetype as coarse as `country`,
+ * Absent placetypes are unranked and must be handled by the caller rather than defaulted.
+ * A missing entry silently scoring 0 would rank an unknown placetype as coarse as `country`,
  * which is the wrong direction for every check that reads this.
  */
 export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype | (string & {}), number>>> = {
@@ -106,8 +106,8 @@ export function isAtLeastAsSpecific(
  * coarser", which quietly drops the equal case — measured on the real artifact, that turned
  * 973 blocked rows into 18 and would have resurrected 955 places that are already alive.
  *
- * `undefined` when either placetype is unranked. a caller filtering on this
- * should treat that as "not strictly finer".
+ * `undefined` when either placetype is unranked.
+ * A caller filtering on this should treat that as "not strictly finer".
  */
 export function isStrictlyFiner(
 	candidate: string | null | undefined,

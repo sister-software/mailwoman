@@ -46,8 +46,8 @@ export interface APIClientConfig {
 	/**
 	 * Where the client's own lines go.
 	 *
-	 * Defaults to a console logger prefixed with `displayName`, which writes debug lines
-	 * to stdout. a caller that owns stdout passes `silentLogger()` or its own.
+	 * Defaults to a console logger prefixed with `displayName`, which writes debug lines to stdout.
+	 * A caller that owns stdout passes `silentLogger()` or its own.
 	 */
 	logger?: IRuntimeLogger
 
@@ -61,8 +61,8 @@ export interface APIClientConfig {
 	 * spend `requestsPerMinute` dispatches, then stall until the cooldown lapses.
 	 *
 	 * This cannot express a flat per-second rate, which is what most fair-access policies actually publish.
-	 * For that use
-	 * {@linkcode minRequestIntervalMs}; the two compose (both limits must clear) but you almost certainly want one.
+	 * For that use {@linkcode minRequestIntervalMs}; the two compose (both limits must clear)
+	 * but you almost certainly want one.
 	 */
 	requestsPerMinute?: number
 
@@ -70,9 +70,9 @@ export interface APIClientConfig {
 	 * The minimum spacing between two dispatches, in milliseconds — strict pacing with no burst allowance.
 	 *
 	 * Set this when an upstream publishes a flat rate (SEC edgar: 10 requests/second, enforced): `1000 / rate`.
-	 * Unlike
-	 * {@linkcode requestsPerMinute}, the bound applies under arbitrary concurrency — grants are reserved synchronously, so
-	 * N callers racing in one turn are still spaced one interval apart.
+	 * Unlike {@linkcode requestsPerMinute}, the bound applies under arbitrary concurrency — grants are
+	 * reserved synchronously, so N callers racing in one turn are still spaced one interval apart.
+	 *
 	 * A token bucket cannot do this: capacity C admits `C + rate * 1s` inside a sliding
 	 * second, so no non-zero capacity honors a flat cap.
 	 */
@@ -83,11 +83,11 @@ export interface APIClientConfig {
 	 *
 	 * Pass `true` for the defaults.
 	 *
-	 * OPT-IN, and absent by default: an `APIClient` without this makes exactly one
-	 * attempt, which is what every existing consumer has always done. 429/5xx/408
-	 * and network-class failures (dropped socket, DNS, timeout, mid-body-transfer drop)
-	 * are retried. a 403 never is — it means the request failed to identify itself,
-	 * so retrying can only fail identically while burning rate budget.
+	 * OPT-IN, and absent by default: an `APIClient` without this makes exactly one attempt,
+	 * which is what every existing consumer has always done. 429/5xx/408 and network-class
+	 * failures (dropped socket, DNS, timeout, mid-body-transfer drop) are retried.
+	 * A 403 never is — it means the request failed to identify itself, so retrying
+	 * can only fail identically while burning rate budget.
 	 */
 	retry?: RetryOptions | boolean
 
@@ -200,30 +200,31 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	/**
-	 * Perform a fetch operation using the API's Axios instance: served from cache
-	 * when possible, paced and cooldown-conditional when not, retried within the
-	 * configured ceiling, and — on the final failure — mapped to a
-	 * {@linkcode ResourceError} carrying a numeric `status` and a `(source, kind, reason)` URN.
+	 * Perform a fetch operation using the API's Axios instance: served from cache when possible,
+	 * paced and cooldown-conditional when not, retried within the configured ceiling,
+	 * and — on the final failure — mapped to a {@linkcode ResourceError} carrying a
+	 * numeric `status` and a `(source, kind, reason)` URN.
 	 *
 	 * Error mapping happens here rather than in a response interceptor so the retry loop
 	 * can see the raw `AxiosError` (status and `Retry-After`) before it is summarized.
-	 * The pacing/cooldown limit deliberately does not happen here — it sits in the adapter
-	 * (see the constructor), downstream of the cache, so a hit costs nothing.
+	 * The pacing/cooldown limit deliberately does not happen here.
 	 *
-	 * Every retry attempt re-enters `this.axios(...)` and therefore re-enters that
-	 * limit. a retry burst cannot outrun the pacer.
+	 * It sits in the adapter (see the constructor), downstream of the cache, so a hit costs nothing.
+	 *
+	 * Every retry attempt re-enters `this.axios(...)` and therefore re-enters that limit.
+	 * A retry burst cannot outrun the pacer.
 	 */
 	public fetch = async <T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
 		const method = options.method?.toUpperCase() || "GET"
 
 		// A per-request `adapter` would win over the instance default in `mergeConfig`,
-		// and the pacing/cooldown limit lives in that instance adapter — so passing
-		// one here would dispatch with no grant at all.
+		// and the pacing/cooldown limit lives in that instance adapter.
+		// So passing one here would dispatch with no grant at all.
 		// Reproduced against the un-stripped form: a client at `minRequestIntervalMs: 5000` issuing three
 		// concurrent `fetch({ url, adapter })` calls made 3 dispatches, took 0 grants and slept 0 times.
 		//
-		// The cache interceptor swaps the adapter too, and that one is intended —
-		// it is how a cache hit skips the check without spending a grant.
+		// The cache interceptor swaps the adapter too, and that one is intended.
+		// It is how a cache hit skips the check without spending a grant.
 		// The difference is that it swaps on the merged config from inside the interceptor chain,
 		// after this method has already handed the request over.
 		// Stripping it here closes the caller-supplied door without touching the interceptor's.
@@ -269,10 +270,11 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * configured budget of 2/minute, and 40 against 10/minute.
 	 *
 	 * The pacer is re-acquired on every pass of the loop rather than taken once up front.
-	 * A grant is a claim on a specific instant. blocking on a cooldown after taking one
-	 * leaves it stale, and every caller holding a stale grant spends it the moment the
-	 * cooldown lifts — measured as four pairs dispatching 0ms apart against a documented
-	 * 100ms minimum when both limits were configured together.
+	 * A grant is a claim on a specific instant.
+	 *
+	 * Blocking on a cooldown after taking one leaves it stale, and every caller holding a
+	 * stale grant spends it the moment the cooldown lifts — measured as four pairs dispatching
+	 * 0ms apart against a documented 100ms minimum when both limits were configured together.
 	 *
 	 * Re-acquiring discards the stale grant (the pacer under-issues by one per cooldown wait,
 	 * which is the safe direction) and takes a fresh one for the instant we actually dispatch.
@@ -295,8 +297,8 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 
 			await pending.promise
 
-			// Clear the cooldown we observed, if it's still current — this is what terminates
-			// the loop once the timer resolved without opening a replacement.
+			// Clear the cooldown we observed, if it's still current.
+			// This is what terminates the loop once the timer resolved without opening a replacement.
 			if (this.#cooldownWithResolvers === pending) {
 				this.#cooldownWithResolvers = null
 			}

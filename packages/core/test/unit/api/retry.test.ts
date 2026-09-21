@@ -51,7 +51,8 @@ describe("parseRetryAfterMs", () => {
 	})
 
 	it("falls back to the LONG ceiling when the header is present but unparseable", () => {
-		// The server is still asking us to back off. guessing short risks hammering it.
+		// The server is still asking us to back off.
+		// Guessing short risks hammering it.
 		expect(parseRetryAfterMs("not-a-valid-value")).toBe(MAX_RETRY_AFTER_MS)
 		expect(parseRetryAfterMs("Tue, 99 Xyz 2026 99:99:99 GMT")).toBe(MAX_RETRY_AFTER_MS)
 	})

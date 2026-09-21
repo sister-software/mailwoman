@@ -35,7 +35,8 @@ export interface ConfiguredLicenseToken {
 /**
  * The token this installation has configured: the environment variable first, the key file second.
  *
- * `undefined` when neither is set. a blank file reads as absent.
+ * `undefined` when neither is set.
+ * A blank file reads as absent.
  */
 export async function readConfiguredLicenseToken(): Promise<ConfiguredLicenseToken | undefined> {
 	const fromEnvironment = $public.MAILWOMAN_LICENSE_KEY
@@ -52,7 +53,8 @@ export async function readConfiguredLicenseToken(): Promise<ConfiguredLicenseTok
 }
 
 /**
- * Write the key file. answers its path.
+ * Write the key file.
+ * Answers its path.
  */
 export async function writeLicenseKeyFile(token: string): Promise<string> {
 	const path = licenseKeyFilePath()
@@ -82,7 +84,8 @@ export async function readRefreshCredentials(): Promise<RefreshCredentials | und
 }
 
 /**
- * Write the refresh credentials, created 0600. answers the path.
+ * Write the refresh credentials, created 0600.
+ * Answers the path.
  */
 export async function writeRefreshCredentials(credentials: RefreshCredentials): Promise<string> {
 	const path = licenseRefreshFilePath()

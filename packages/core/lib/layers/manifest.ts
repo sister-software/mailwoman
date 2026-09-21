@@ -33,11 +33,14 @@ export interface SpineKeys {
 	 * The normalized-street column a extract is probed by, for layers keyed by street
 	 * rather than by cell or id.
 	 *
-	 * Added because the interface's first three keys describe the two layer shapes that existed when it was written — a
-	 * cellular one (`poi.db`, H3) and an id-joined one — and the situs extracts are a third. `address_point` and
-	 * `street_segment` carry no H3 cell, no WOF id and no address-id. they are probed on `(postcode | locality,
-	 * street_norm, number)`. Declaring one of the other three for them would name a column that does not exist, in the
-	 * field a consumer uses to join.
+	 * Added because the interface's first three keys describe the two layer
+	 * shapes that existed when it was written — a cellular one (`poi.db`, H3)
+	 * and an id-joined one — and the situs extracts are a third.
+	 * `address_point` and `street_segment` carry no H3 cell, no WOF id and no address-id.
+	 *
+	 * They are probed on `(postcode | locality, street_norm, number)`.
+	 * Declaring one of the other three for them would name a column that does not exist,
+	 * in the field a consumer uses to join.
 	 */
 	street?: { column: string }
 }
@@ -67,9 +70,9 @@ export interface CoverageCell {
 	/**
 	 * What `completeness` rests on.
 	 *
-	 * A writer that omits it is declaring
-	 * {@link CoverageBasis.SourcePresent} — the weakest reading — because a builder that
-	 * has not thought about basis is recording source presence whether or not it says so.
+	 * A writer that omits it is declaring {@link CoverageBasis.SourcePresent} —
+	 * the weakest reading — because a builder that has not thought about basis is
+	 * recording source presence whether or not it says so.
 	 */
 	basis?: CoverageBasis
 	observedRows: number
@@ -145,8 +148,10 @@ export interface CoverageRow {
  * and resolution beside it.
  *
  * Shared BY every polygon layer'S reader, and the reason is the second line of it.
- * A NULL `basis` is an artifact built before the column existed. it was recording source presence,
- * so that is what it must read back as — never a stronger basis than the builder actually had.
+ * A NULL `basis` is an artifact built before the column existed.
+ *
+ * It was recording source presence, so that is what it must read back as —
+ * never a stronger basis than the builder actually had.
  *
  * Four readers writing that rule separately is four places for one of them to write
  * `?? CoverageBasis.Designated` and license an exclusion nobody measured.
@@ -193,8 +198,10 @@ export function singleManifestRow(
  * One `layer_manifest` row as a synchronous reader gets it back, mapped onto {@link LayerManifest}.
  *
  * Shared BY every layer reader, and separate from the identity check on purpose.
- * `readLayerManifest` above is the Kysely path. a reader that opens the artifact with `node:sqlite`
- * for its own synchronous probes reads the same single row and needs the same mapping.
+ * `readLayerManifest` above is the Kysely path.
+ *
+ * A reader that opens the artifact with `node:sqlite` for its own synchronous probes
+ * reads the same single row and needs the same mapping.
  *
  * What such readers do not share is how they recognize their own layer — most match a
  * fixed name, and a layer whose name carries a build's region suffix matches a prefix
@@ -381,7 +388,7 @@ export async function writeLayerManifest(db: layerschemahandle, manifest: LayerM
 /**
  * Read + validate the manifest.
  *
- * Throws if the table is empty, multi-row, or invalid.
+ * @throws if the table is empty, multi-row, or invalid.
  */
 export async function readLayerManifest(db: layerschemahandle): Promise<LayerManifest> {
 	const rows = await db.selectFrom("layer_manifest").selectAll().execute()
@@ -414,14 +421,16 @@ export async function readLayerManifest(db: layerschemahandle): Promise<LayerMan
 }
 
 /**
- * Rows per insert statement (4 bound params/row = 16,000 params/statement), kept safely
- * under SQLite's default 32,766 bound-variable ceiling — a continental-scale build's res-6
- * coverage cell count blows past that limit in a single `.values()` call (found 2026-07-19).
+ * Rows per insert statement (4 bound params/row = 16,000 params/statement),
+ * kept safely under SQLite's default 32,766 bound-variable ceiling.
+ *
+ * A continental-scale build's res-6 coverage cell count blows past that limit in
+ * a single `.values()` call (found 2026-07-19).
  */
 export const COVERAGE_INSERT_BATCH = 5000
 
 /**
- * Bulk-insert coverage cells (build-time. cold path, so Kysely inserts are fine),
+ * Bulk-insert coverage cells (build-time. Cold path, so Kysely inserts are fine),
  * chunked to stay under SQLite's bound-variable limit.
  */
 export async function writeLayerCoverage(db: layerschemahandle, cells: CoverageCell[]): Promise<void> {

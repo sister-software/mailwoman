@@ -46,12 +46,17 @@ export class OGCServiceError extends Error {
 const EXCEPTION_OPEN = "<ServiceException"
 
 /**
- * The inner text of the first real `<ServiceException>` element. index scans rather than A regex. The obvious form —
- * `/<ServiceException(?:\s[^>]*)?>([\s\S]*?)<\/ServiceException>/` — backtracks polynomially on a body whose opening
- * tag has no closing partner, and this body is whatever a network service returned. Two more things it has to get
- * right, both of which cost nothing here: the tag name must END at the match, because `<ServiceExceptionReport
- * xmlns="…">` shares the prefix and taking it captures the entire report as the message. and an unclosed element reads
- * as unreadable rather than as empty.
+ * The inner text of the first real `<ServiceException>` element.
+ *
+ * Index scans rather than A regex.
+ * The obvious form — `/<ServiceException(?:\s[^>]*)?>([\s\S]*?)<\/ServiceException>/` —
+ * backtracks polynomially on a body whose opening tag has no closing partner,
+ * and this body is whatever a network service returned.
+ *
+ * Two more things it has to get right, both of which cost nothing here: the tag name
+ * must END at the match, because `<ServiceExceptionReport xmlns="…">` shares the prefix
+ * and taking it captures the entire report as the message.
+ * And an unclosed element reads as unreadable rather than as empty.
  */
 function exceptionText(body: string): string | undefined {
 	let cursor = 0
@@ -65,7 +70,8 @@ function exceptionText(body: string): string | undefined {
 
 		cursor = after
 
-		// `>` closes a bare tag. whitespace introduces attributes.
+		// `>` closes a bare tag.
+		// Whitespace introduces attributes.
 		// Anything else continues the tag name, which means this is `ServiceExceptionReport`
 		// or a sibling and not the element being read.
 		if (!/^[\s>]/u.test(body.slice(after, after + 1))) continue
@@ -195,8 +201,9 @@ export async function readOGCCollectionBBox(
 }
 
 /**
- * The feature count a WFS reports for one type — `resultType=hits`,
- * which returns the count without a single geometry.
+ * The feature count a WFS reports for one type.
+ *
+ * `resultType=hits`, which returns the count without a single geometry.
  *
  * @param options.subject Names the layer in the refusal, where the caller reads more than one.
  */

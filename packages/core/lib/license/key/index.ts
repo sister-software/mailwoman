@@ -70,7 +70,8 @@ export const LicenseKeyPayloadSchema = z.object({
 	/**
 	 * The spdx branch the key selects.
 	 *
-	 * One value today. the field exists so a different agreement can be named later.
+	 * One value today.
+	 * The field exists so a different agreement can be named later.
 	 */
 	terms: z.literal("LicenseRef-Commercial"),
 	/**
@@ -101,7 +102,8 @@ export function isSelfServicePayload(payload: LicenseKeyPayload): payload is Sel
 /**
  * The outcome of verifying a token.
  *
- * Every failure names its reason. a caller that only wants a yes reads `status`.
+ * Every failure names its reason.
+ * A caller that only wants a yes reads `status`.
  */
 export type LicenseKeyVerification =
 	| { status: "valid"; kid: string; payload: LicenseKeyPayload }
@@ -125,8 +127,8 @@ export function generateLicenseSigningKeyPair(): Promise<LicenseSigningKeyPair> 
  * The id a public key is registered under: the mailwoman major version it was minted for,
  * then the first eight hex digits of the SHA-256 of the key's DER encoding — `v9-3f2a9c1d`.
  *
- * The version prefix is what lets a well-known file on mailwoman.ai be read per major
- * version. the digest is what makes two keys distinguishable without a registry.
+ * The version prefix is what lets a well-known file on mailwoman.ai be read per major version.
+ * The digest is what makes two keys distinguishable without a registry.
  */
 export async function licenseKeyID(publicKeyPEM: string, majorVersion: number): Promise<string> {
 	const digest = hexOf(await sha256Bytes(publicKeyDER(publicKeyPEM))).slice(0, 8)

@@ -34,7 +34,8 @@ export interface FixtureAuthoritativeRule {
 
 export interface FixtureAuthoritativeProviderOptions {
 	/**
-	 * Rules checked in order. the first hit answers.
+	 * Rules checked in order.
+	 * The first hit answers.
 	 *
 	 * No hit → a `refused` response, because a fixture that silently "matches nothing"
 	 * is indistinguishable from a fixture that was never consulted.
@@ -52,7 +53,8 @@ const FIXTURE_ATTRIBUTION = "Synthetic fixture data — not derived from any lic
 /**
  * Build a fixture provider from rules.
  *
- * The returned provider is pure and synchronous under the hood. the async signature is the interface's.
+ * The returned provider is pure and synchronous under the hood.
+ * The async signature is the interface's.
  */
 export function createFixtureAuthoritativeProvider(
 	options: FixtureAuthoritativeProviderOptions

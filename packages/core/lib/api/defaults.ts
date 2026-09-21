@@ -7,8 +7,9 @@
 
 /**
  * The shared defaults: three attempts spaced by a 500 ms exponential backoff,
- * under a 30 s per-attempt socket-inactivity timeout — the numbers the SEC, cores
- * and BDC clients each declared before they were shared.
+ * under a 30 s per-attempt socket-inactivity timeout.
+ *
+ * The numbers the SEC, cores and BDC clients each declared before they were shared.
  */
 export const API_CLIENT_DEFAULTS = {
 	/**

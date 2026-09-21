@@ -93,7 +93,8 @@ export interface ProposedSpan {
 	/**
 	 * 0..1.
 	 *
-	 * Confidence is shape-derived. consumers weight or floor it (it is never a verdict).
+	 * Confidence is shape-derived.
+	 * Consumers weight or floor it (it is never a verdict).
 	 */
 	confidence: number
 	/**
@@ -254,8 +255,8 @@ function tokenize(text: string): RawToken[] {
 /**
  * Find balanced pairs for one open/close class.
  *
- * Returns null when any delimiter of the
- * class is unbalanced (stray opener or closer) — the caller emits nothing for the class.
+ * @returns null when any delimiter of the class is unbalanced (stray opener or closer) —
+ *   the caller emits nothing for the class.
  */
 function findBalancedPairs(text: string, open: string, close: string): Array<{ open: number; close: number }> | null {
 	const stack: number[] = []
@@ -278,7 +279,8 @@ function findBalancedPairs(text: string, open: string, close: string): Array<{ o
 }
 
 /**
- * Same-character quote pairing ("…"): consecutive occurrences pair up. an odd count is unbalanced.
+ * Same-character quote pairing ("…"): consecutive occurrences pair up.
+ * An odd count is unbalanced.
  */
 function findSameCharPairs(text: string, ch: string): Array<{ open: number; close: number }> | null {
 	const positions: number[] = []
@@ -366,8 +368,7 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 		() => findSameCharPairs(text, '"'),
 		() => findBalancedPairs(text, "“", "”"), // “ ”
 		() => findBalancedPairs(text, "«", "»"), // « »
-		// „…“ (low-9 opener, German/Czech): closes with “ — only scanned when a „ is present, so the
-		// “ ” class above (which would see a stray “) is skipped for such inputs.
+		// „…“ (low-9 opener, German/Czech): closes with “ — only scanned when a „ is present, so the “ ” class above (which would see a stray “) is skipped for such inputs.
 	]
 
 	const hasLow9 = text.includes("„")
@@ -484,7 +485,8 @@ function proposeDesignatorPhrases(
 	}
 
 	if (lexicon.deliveryService) {
-		// Fresh lastIndex per call — the lexicon regex is shared.
+		// Fresh lastIndex per call.
+		// The lexicon regex is shared.
 		const re = new RegExp(lexicon.deliveryService.source, lexicon.deliveryService.flags)
 
 		for (const m of text.matchAll(re)) {
@@ -510,8 +512,7 @@ const HYPHEN_COMPOUND = /^(\d{1,4})-(\d{1,5})$/
 const FRACTION = /^\d\/\d$/
 
 /**
- * #481 item 7: the "plausible but genuinely ambiguous" proposal confidence — a FUSED_NUMBER reading that is real but
- * not the only reading of the token (a trailing-fused slash compound, a hyphen at house-number position).
+ * #481 item 7: the "plausible but genuinely ambiguous" proposal confidence. A FUSED_NUMBER reading that is real but not the only reading of the token (a trailing-fused slash compound, a hyphen at house-number position).
  *
  * Deliberately below the confident readings (0.8–0.9) and above coin-flip,
  * and the same operating point as the phrase grouper's `NEUTRAL_PROPOSAL_CONFIDENCE` —
@@ -633,7 +634,8 @@ function proposeNumericReadings(
 					source: "slash:fused-alternative",
 				})
 			} else if (prev && /^\p{Lu}[\p{L}]{3,}$/u.test(prev.stripped)) {
-				// Trailing European form ("Hauptstraße 14/2") — one fused value after the street name.
+				// Trailing European form ("Hauptstraße 14/2").
+				// One fused value after the street name.
 				// The ≥4-char guard keeps short street-type leaders ("Hwy 50/89") out of this reading.
 				out.push({
 					start: t.strippedStart,
@@ -710,7 +712,9 @@ function proposeNumericReadings(
 /**
  * Propose typed spans over `text`.
  *
- * Pure and synchronous. safe to run on every parse.
+ * Pure and synchronous.
+ * Safe to run on every parse.
+ *
  * Proposals may overlap freely ("possibilities not constraints"); alternatives
  * of one surface share an `alternativeGroup`.
  *

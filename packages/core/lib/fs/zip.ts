@@ -54,7 +54,8 @@ async function openStreamingArchive(
  *
  * A zip flags UTF-8 names with bit 11, and yauzl decodes those correctly.
  * Without the flag the format says CP437, so a publisher writing CP949, Shift_JIS
- * or GBK names produces bytes that decode to mojibake and match no selector —
+ * or GBK names produces bytes that decode to mojibake and match no selector.
+ *
  * Korea's address portal writes `주소_서울특별시.txt` and the reader sees `┴╓╝╥_╝¡┐ïÆ╣▌╗π.txt`.
  *
  * Naming an encoding decodes the RAW bytes instead, which is not the same as
@@ -102,8 +103,9 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 
 	return Object.assign(contents, {
 		[Symbol.asyncDispose]: async () => {
-			// A member read to its end has already released yauzl's read, and its `close` has
-			// already been delivered — so waiting for that event here would wait forever.
+			// A member read to its end has already released yauzl's read,
+			// and its `close` has already been delivered.
+			// So waiting for that event here would wait forever.
 			// `readableEnded` is the test that separates the two paths: true after a full read,
 			// false after a `take` or a `break`.
 			// `closed` is not the test, because Node sets it when the close event is queued
@@ -297,7 +299,9 @@ export interface ExtractZipEntriesOptions {
 /**
  * Extract members of an archive into `destinationDirectory`.
  *
- * Directory entries are skipped. a nested path is created as needed unless `flatten` is set.
+ * Directory entries are skipped.
+ * A nested path is created as needed unless `flatten` is set.
+ *
  * Members stream one at a time, so this is bounded by the largest member rather than by the archive.
  *
  * @category Files
@@ -340,13 +344,14 @@ export async function extractZipEntries(
  * Verify every member's CRC-32 against the value its central-directory header
  * claims — what `unzip -t` is for.
  *
- * This is a corruption check on a download, so it decompresses everything
- * and keeps nothing. the archive is read one member at a time and the checksum is
- * folded chunk by chunk, so memory is bounded by the inflate window.
+ * This is a corruption check on a download, so it decompresses everything and keeps nothing.
+ * The archive is read one member at a time and the checksum is folded chunk by chunk,
+ * so memory is bounded by the inflate window.
  *
- * The CRC is computed here rather than delegated to yauzl's `validateCrc32`, which asserts `Cannot validate CRC32 for
- * uncompressed data` on a stored member — and a corrupt stored member is precisely what this is meant to catch. Folding
- * it locally covers both storage methods with one path.
+ * The CRC is computed here rather than delegated to yauzl's `validateCrc32`,
+ * which asserts `Cannot validate CRC32 for uncompressed data` on a stored member —
+ * and a corrupt stored member is precisely what this is meant to catch.
+ * Folding it locally covers both storage methods with one path.
  *
  * @category Files
  *

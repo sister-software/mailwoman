@@ -62,7 +62,7 @@ export interface DecoderToken {
  * One node of the address tree — a component span plus any nested child components.
  *
  * `value` is the raw text covered by this span, taken from the original input by `[start, end)`.
- * `confidence` is aggregated across the span's tokens (currently mean. see `build-tree.ts`).
+ * `confidence` is aggregated across the span's tokens (currently mean. See `build-tree.ts`).
  *
  * `children` are tagged subcomponents whose spans fall within this node's span
  * and whose tag's containment rule names this node's tag as a permitted parent.
@@ -131,31 +131,37 @@ export interface AddressNode {
 	/**
 	 * Additional roles this single span plays, beyond `tag` (#413).
 	 *
-	 * A place can hold multiple admin tiers under one name — a city-state (Berlin is region and locality)
-	 * or a capital-seat province (Milano province ~ Milano comune).
-	 * Rather than synthesize a second node with a borrowed span, the resolver records
-	 * the extra role(s) here, so one node = one
-	 * span = many roles (the model Google's `address_components[].types` uses). `tag`/`placeID`/`lat`/`lon` remain the
-	 * primary role. each interpretation is a distinct secondary role with its own resolved place.
+	 * A place can hold multiple admin tiers under one name.
+	 * A city-state (Berlin is region and locality) or a capital-seat province
+	 * (Milano province ~ Milano comune).
+	 *
+	 * Rather than synthesize a second node with a borrowed span, the resolver records the extra role(s)
+	 * here, so one node = one span = many roles (the model Google's `address_components[].types` uses).
+	 * `tag`/`placeID`/`lat`/`lon` remain the primary role.
+	 *
+	 * Each interpretation is a distinct secondary role with its own resolved place.
 	 * Serializers surface every role (a city-state emits both `region` and `locality`).
 	 *
-	 * Distinct from `alternatives` — those are same-role runner-up places (Springfield IL vs MA);
-	 * interpretations are different tags, same span.
+	 * Distinct from `alternatives`.
+	 * Those are same-role runner-up places (Springfield IL vs MA); interpretations
+	 * are different tags, same span.
 	 * Empty / absent for the common single-role node.
 	 *
 	 * Both completion (#415) and a future concordance decode write into this one slot.
 	 */
 	interpretations?: ReadonlyArray<Interpretation>
 	/**
-	 * The ISO 15924 script this span is written in — the one that writes most
-	 * of its script-containing codepoints.
+	 * The ISO 15924 script this span is written in.
+	 *
+	 * The one that writes most of its script-containing codepoints.
 	 *
 	 * The span is where the question is answerable.
 	 * A whole input folds to one answer and loses which part carried which writing system:
 	 * `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is majority Latin, so a reader of
 	 * the input's script cannot tell that the venue is Han.
 	 *
-	 * `Zyyy` is the abstention — a span holding only a house number borrows no neighbour's script.
+	 * `Zyyy` is the abstention.
+	 * A span holding only a house number borrows no neighbour's script.
 	 *
 	 * Absent on a tree built without a query shape to read it from, so a consumer
 	 * treats absence as unknown rather than as `Zyyy`.
@@ -187,7 +193,7 @@ export interface Interpretation {
  *
  * `roots` is the list of top-level components in source order.
  * Components that don't have a containing parent in the labeled output become roots
- * themselves (e.g. a bare "house_number" with no labeled street parent).
+ * themselves (e.g. A bare "house_number" with no labeled street parent).
  */
 export interface AddressTree {
 	/**
@@ -196,9 +202,10 @@ export interface AddressTree {
 	raw: string
 	roots: AddressNode[]
 	/**
-	 * The addressing system this tree was decoded under, which selects the containment hierarchy
-	 * (`containmentFor(system)` in `./containment.ts`). Absent means the default Western hierarchy (`house_number →
-	 * street → locality → …`).
+	 * The addressing system this tree was decoded under, which selects the containment
+	 * hierarchy (`containmentFor(system)` in `./containment.ts`).
+	 *
+	 * Absent means the default Western hierarchy (`house_number → street → locality → …`).
 	 *
 	 * This is forward-compat insurance rather than yet a behavioral switch: every system currently
 	 * resolves to the same map, so an absent or present `system` produces identical trees today.
@@ -212,11 +219,13 @@ export interface AddressTree {
 	/**
 	 * The parse-time locale-head verdict when it was confident (softmax >= the action threshold):
 	 * the model's own read of which country's addressing this text is shaped like.
+	 *
 	 * Absent = under threshold or the head never ran — unknown, never "domestic".
 	 * Evidence about the text rather than a resolved country: the head is a 9-way classifier,
 	 * so a Chinese address may read GB — right about "not the locale's country", wrong about which.
-	 * The scope check this exists for (#1684) therefore only ever drops an inferred
-	 * scope on a mismatch. it never re-points one.
+	 *
+	 * The scope check this exists for (#1684) therefore only ever drops an inferred scope on a mismatch.
+	 * It never re-points one.
 	 */
 	localeCountry?: { country: string; confidence: number }
 }

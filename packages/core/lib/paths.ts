@@ -60,15 +60,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * Source lives at `core/lib/paths.ts` and its emit at `core/out/paths.js`: `lib/` and `out/`
  * are siblings, so both trees put this file at the same depth and one constant serves both.
  *
- * If this file moves to a different depth, {@link PathReflection} must move with it — the
- * dictionary-path failure that followed the 2026-09 extraction was this constant counting the old depth.
+ * If this file moves to a different depth, {@link PathReflection} must move with it.
+ * The dictionary-path failure that followed the 2026-09 extraction was this constant counting the old depth.
  *
- * Before source moved under `lib/`, source sat one level shallower than its own output and this file carried an
- * `__isCompiledTree` flag — `basename(resolvePath(__dirname, "..")) === "out"` — to pick between two `__upCount`s and
- * two {@link CorePackageAbsolutePath} spellings. That flag was wrong in production once: it checked `resolvePath("..",
- * "..")`. It overshoots `out/` to `core/`. Therefore, the flag was always false, resolving
- * {@link CorePackageAbsolutePath} to `core/out` in the compiled tree and landing dictionary reads at the nonexistent
- * `core/out/data` (#481).
+ * Before source moved under `lib/`, source sat one level shallower than its own output and this
+ * file carried an `__isCompiledTree` flag — `basename(resolvePath(__dirname, "..")) === "out"` —
+ * to pick between two `__upCount`s and two {@link CorePackageAbsolutePath} spellings.
+ * That flag was wrong in production once: it checked `resolvePath("..", "..")`.
+ *
+ * It overshoots `out/` to `core/`.
+ * Therefore, the flag was always false, resolving {@link CorePackageAbsolutePath} to `core/out`
+ * in the compiled tree and landing dictionary reads at the nonexistent `core/out/data` (#481).
  * Equal depth removes the branch that bug lived in.
  *
  * If a future layout change breaks that equality — moving this file to a different
@@ -77,9 +79,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * {@link PathReflection} is the single declaration of that shared depth.
  *
  * Why not native resolution (2026-08-05 triage, still current).
- * `node:module`'s `findPackageJSON` would compute
- * {@link CorePackageAbsolutePath} without any arithmetic, but it cannot name {@link RepoRootAbsolutePath} — the
- * monorepo root is not a package on any resolution path from here — so the arithmetic survives regardless.
+ * `node:module`'s `findPackageJSON` would compute {@link CorePackageAbsolutePath} without
+ * any arithmetic, but it cannot name {@link RepoRootAbsolutePath} — the monorepo root is
+ * not a package on any resolution path from here — so the arithmetic survives regardless.
+ *
  * It would also break the demo bundle: this module is reachable from a bundled graph
  * (`core/resources/libpostal.ts` imports it and `@mailwoman/core/resources` is a webpack alias),
  * and that build maps every `node:` specifier to an empty shim
@@ -149,8 +152,8 @@ export const corePackagePathBuilder = createPathBuilderResolver<RepoRootAlias>(C
 
 /**
  * Absolute-path-string resolver relative to the `@mailwoman/core` workspace root —
- * the string-returning sibling of
- * {@link corePackagePathBuilder}. TODO: Deprecate this
+ * the string-returning sibling of {@link corePackagePathBuilder}.
+ * TODO: Deprecate this
  */
 export const corePackagePath = createPathResolver<RepoRootAlias>(CorePackageAbsolutePath)
 
@@ -173,8 +176,7 @@ export function resourceDictionaryPathBuilder<A extends AddressResource, S exten
 
 /**
  * Absolute-path-string resolver for an address resource dictionary directory —
- * the string-returning sibling of
- * {@link resourceDictionaryPathBuilder}.
+ * the string-returning sibling of {@link resourceDictionaryPathBuilder}.
  */
 export function resourceDictionaryPath<A extends AddressResource, S extends string[]>(resource: A, ...pathSegments: S) {
 	return corePackagePath("data", resource, "dictionaries", ...pathSegments)

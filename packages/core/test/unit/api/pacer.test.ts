@@ -89,8 +89,8 @@ describe("RequestPacer", () => {
 
 		// The first call resolves without sleeping, but awaiting an already-resolved
 		// promise still defers its `push` to the microtask queue.
-		// Flush it here, before driving the clock — otherwise `advance()`'s own first
-		// internal await would flush it, by which point `now()` has left t=0.
+		// Flush it here, before driving the clock.
+		// Otherwise `advance()`'s own first internal await would flush it, by which point `now()` has left t=0.
 		await drainMicrotasks()
 
 		await clock.advance((TOTAL_CALLS - 1) * INTERVAL_MS)

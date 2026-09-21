@@ -51,8 +51,8 @@ export function mulberry32(seed: number): () => number {
 }
 
 /**
- * In-place Fisher-Yates over `array`, taking the sampler as a parameter: `pick(bound)` returns an index in `[0,
- * bound)`.
+ * In-place Fisher-Yates over `array`, taking the sampler as a parameter:
+ * `pick(bound)` returns an index in `[0, bound)`.
  *
  * The walk is "swap `i` with a uniform index in `[0, i]`, counting down".
  * How that index is drawn is the sampler, and the samplers here differ because each
@@ -86,11 +86,11 @@ export function shuffleWith<T>(array: T[], random: () => number): void {
 }
 
 /**
- * One element of `array`, drawn with the supplied unit-interval source — the single-draw companion to
- * {@link shuffleWith}, taking the same `() => number` shape so a caller threads one generator through both.
+ * One element of `array`, drawn with the supplied unit-interval source —
+ * the single-draw companion to {@link shuffleWith}, taking the same `() => number` shape
+ * so a caller threads one generator through both.
  *
- * {@link SeededRandom.choice} answers the same question for a caller holding the generator as an object. This free
- * function is for the ones threading a thunk, which is most of the corpus synthesizers.
+ * {@link SeededRandom.choice} answers the same question for a caller holding the generator as an object. This free function is for the ones threading a thunk, which is most of the corpus synthesizers.
  *
  * Raises on an empty array rather than answering `undefined`: a sampler that returns nothing
  * has no element to report, and a caller that reads that as a value writes it into a row.
@@ -115,11 +115,11 @@ const GLIBC_LCG_INCREMENT = 12_345
  *
  * The float multiply is the point, and it is not a rounding detail: the state reaches 2³¹
  * and the product with the multiplier is about 2.3 × 10¹⁸, past 2⁵³ where a double stops being exact.
- * So this produces a different sequence from
- * {@link makeGlibcLcgInt32} despite the identical constants. Measured over every seed from 1 to 2,000,000, the draw the
- * two first disagree on is the 2nd for 1,963,788 seeds, the 3rd for 35,967,
- * the 4th for 242 and the 5th for 3 — never the 1st, because a seed under
- * 2⁵³/1103515245 = 8,162,279 keeps that first product exact.
+ * So this produces a different sequence from {@link makeGlibcLcgInt32} despite the identical constants.
+ *
+ * Measured over every seed from 1 to 2,000,000, the draw the two first disagree on is the 2nd
+ * for 1,963,788 seeds, the 3rd for 35,967, the 4th for 242 and the 5th for 3 — never the 1st,
+ * because a seed under 2⁵³/1103515245 = 8,162,279 keeps that first product exact.
  * Above it they part on the first draw, which is where this file's own caller sits:
  * the conformal seed mixes to 192,663,848.
  *
@@ -127,8 +127,9 @@ const GLIBC_LCG_INCREMENT = 12_345
  * They are not, and neither is substitutable for the other.
  *
  * Kept because the published conformal thresholds were selected under this one.
- * Prefer {@link mulberry32} for anything new. this exists to reproduce an artifact
- * rather than to generate numbers well.
+ * Prefer {@link mulberry32} for anything new.
+ *
+ * This exists to reproduce an artifact rather than to generate numbers well.
  */
 export function makeGlibcLcgFloat64(seed: number): () => number {
 	let state = seed
@@ -158,8 +159,9 @@ export function makeGlibcLcgInt32(seed: number): () => number {
  * scorers' train/test splits both reproduce from it.
  * Prefer `mulberry32` for anything new.
  *
- * Seed 0 is a valid state here (unlike mulberry32, which needs a non-zero one); callers that used to guard with `seed
- * || 1` keep doing so at the call site, since dropping the guard would shift their stream for that one seed.
+ * Seed 0 is a valid state here (unlike mulberry32, which needs a non-zero one);
+ * callers that used to guard with `seed || 1` keep doing so at the call site,
+ * since dropping the guard would shift their stream for that one seed.
  */
 export function makeLcg(seed: number): () => number {
 	let s = seed >>> 0

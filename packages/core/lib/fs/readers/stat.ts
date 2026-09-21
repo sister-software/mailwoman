@@ -26,10 +26,12 @@ import { ByteFormatter, type ByteFormatterOptions } from "#fs/formatters"
 /**
  * Attempts to stat a file or directory.
  *
- * A `URL` is passed through rather than stringified: `node:fs` accepts a `file:` URL object, and rejects the string it
- * prints — `stat("file:///etc/hostname")` is enoent, which this function reports as absence. Every caller that looks a
- * file up by URL therefore read "not there" for everything, and `cli-native/command-router.ts` answered `Unknown
- * command` for every command it has.
+ * A `URL` is passed through rather than stringified: `node:fs` accepts a `file:`
+ * URL object, and rejects the string it prints.
+ * `stat("file:///etc/hostname")` is enoent, which this function reports as absence.
+ *
+ * Every caller that looks a file up by URL therefore read "not there" for everything,
+ * and `cli-native/command-router.ts` answered `Unknown command` for every command it has.
  *
  * @throws If the path exists but cannot be statted for some reason other than non-existence.
  */

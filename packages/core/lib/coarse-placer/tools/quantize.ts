@@ -103,7 +103,8 @@ export async function quantizeCoarsePlacer(
 				q = -127
 			}
 
-			// symmetric range. avoid -128 so |q|≤127
+			// symmetric range.
+			// Avoid -128 so |q|≤127
 			int8[base + i] = q
 			const err = Math.abs(q * scale - w[base + i]!)
 

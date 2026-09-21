@@ -68,7 +68,8 @@ export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode?:
 /**
  * Runs a script callback and handles cleanup.
  *
- * A callback that throws exits 1. a clean return exits with `process.exitCode` (default 0).
+ * A callback that throws exits 1.
+ * A clean return exits with `process.exitCode` (default 0).
  *
  * @internal
  */

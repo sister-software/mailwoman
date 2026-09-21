@@ -55,8 +55,9 @@ const SHORT_CIRCUIT_MAX_LOCALITY_LENGTH = 30
  * Whether a QueryShape known-format name names a postcode shape.
  *
  * `@mailwoman/query-shape` owns the format table and its naming convention — `us_zip`,
- * `us_zip4`, or `<cc>_postcode` — and its test pins every table entry to that convention. this
- * package cannot depend on query-shape, so it reads the convention rather than a copied list.
+ * `us_zip4`, or `<cc>_postcode` — and its test pins every table entry to that convention.
+ * This package cannot depend on query-shape, so it reads the convention rather than a copied list.
+ *
  * The copied list it replaces held seven of the table's twelve names, so a Dutch, Czech, Slovak, Swedish
  * or Greek postcode passed the query-shape and kind-classifier checks and missed this pipeline's own.
  */
@@ -67,26 +68,21 @@ function isPostcodeFormat(format: string): boolean {
 /**
  * Anchor weight for the coarse-placer's country prior (#244).
  *
- * Lower than the postcode anchor's 2.0 default — a whole-string country guess is a broader, softer
- * signal than a postcode that pins the country, so it blends more gently with the candidate score.
+ * Lower than the postcode anchor's 2.0 default.
+ * A whole-string country guess is a broader, softer signal than a postcode that pins
+ * the country, so it blends more gently with the candidate score.
  */
 export const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
 /**
- * #194: minimum placer confidence to promote the soft country prior to a hard filter (empty→unresolved). The placer
- * already abstains below 0.9 in-map mass (open-set rule), but the per-country argmax prob
- * can still be split across neighbours (DK↔no, EE↔LT↔LV); requiring a high argmax confidence
- * keeps the hard filter to the cases the model is sure of (FI/PL routinely score ~1.0)
- * and leaves the ambiguous ones on the soft path.
+ * #194: minimum placer confidence to promote the soft country prior to a hard filter (empty→unresolved). The placer already abstains below 0.9 in-map mass (open-set rule), but the per-country argmax prob can still be split across neighbours (DK↔no, EE↔LT↔LV); requiring a high argmax confidence keeps the hard filter to the cases the model is sure of (FI/PL routinely score ~1.0) and leaves the ambiguous ones on the soft path.
  *
  * Deliberately strict — a wrong hard country is the #244 M2 misroute failure.
  */
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
 /**
- * #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering costs no recall
- * — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss
- * → unresolved" is rare and almost always a genuine non-match rather than a coverage gap.
+ * #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering costs no recall — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss → unresolved" is rare and almost always a genuine non-match rather than a coverage gap.
  *
  * A confident placement outside this set stays on the soft prior, so the low-coverage
  * tail (FI/PL/…) keeps its recall until its gazetteer is filled (#193): covered countries
@@ -94,13 +90,15 @@ const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
  *
  * Fallback role (survey candidate #2, 2026-07-26): this set is now the fallback for
  * gazetteer artifacts that predate the coverage manifest.
- * Facts about the artifact live IN the artifact — the candidate gazetteer's `country_coverage`
- * table carries the per-country promotion-eval verdicts + the measured rates
- * (the numbers that used to be trivia in this comment), and a loaded artifact's derived safelist
- * (`resolver.artifactCoverage.hardCountrySafelist`) takes precedence over this constant.
+ * Facts about the artifact live IN the artifact.
+ *
+ * The candidate gazetteer's `country_coverage` table carries the per-country promotion-eval
+ * verdicts + the measured rates (the numbers that used to be trivia in this comment),
+ * and a loaded artifact's derived safelist (`resolver.artifactCoverage.hardCountrySafelist`)
+ * takes precedence over this constant.
  *
  * The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
- * (MEASURED_COUNTRY_COVERAGE — grow that at promotes. it updates the artifact at rebuild).
+ * (MEASURED_COUNTRY_COVERAGE — grow that at promotes. It updates the artifact at rebuild).
  * Precedence: per-call `PipelineOpts.hardCountrySafelist` (the eval's instrument,
  * measures unrestricted to grow the list) → the loaded artifact's manifest → this constant.
  *
@@ -117,20 +115,17 @@ export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 	"FR",
 	"GB",
 	"CA",
-	// AU added with the #244 AU placer class (2026-07-06): 150k-row G-NAF training → AU test-acc 100%,
-	// and the hard filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20).
+	// AU added with the #244 AU placer class (2026-07-06): 150k-row G-NAF training → AU test-acc 100%, and the hard filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20).
 	"AU",
 ])
 
 /**
- * #912 change 1 — is this parse a single bare locality ("Paris", "Dublin")? The coarse placer is out-of-distribution on
- * one-token city names (trained on full addresses): measured on the gauntlet's bare-namesake
- * rows it emitted Paris→IT .35, Melbourne→GB .66 — all wrong, and even sub-threshold
- * the soft posterior still re-ranks the resolver toward the wrong country.
+ * #912 change 1 — is this parse a single bare locality ("Paris", "Dublin")? The coarse placer is out-of-distribution on one-token city names (trained on full addresses): measured on the gauntlet's bare-namesake rows it emitted Paris→IT .35, Melbourne→GB .66 — all wrong, and even sub-threshold the soft posterior still re-ranks the resolver toward the wrong country.
  *
  * A bare locality carries no country evidence the placer can read that the resolver's
  * exact-tier + population ranking doesn't already use better — so both production placeCountry
  * call sites (the runtime pipeline and `geocodeAddress`) abstain on this shape.
+ *
  * Any second non-empty component makes the input address-shaped and the placer runs as before.
  */
 export function isBareLocalityTree(tree: AddressTree): boolean {
@@ -153,17 +148,17 @@ export function isBarePostcodeTree(tree: AddressTree): boolean {
 }
 
 /**
- * #743/#194: the shared coverage-guard check — decide whether a confident coarse-placer country should become a hard
- * candidate filter.
+ * #743/#194: the shared coverage-guard check — decide whether a confident coarse-placer country should become a hard candidate filter.
  *
  * Exported so the two production placeCountry call sites (the runtime pipeline and `geocodeAddress`)
  * apply the same three conditions and can't drift: confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF},
  * country in the safelist (override or the default {@link HARD_PLACE_COUNTRY_SAFELIST}),
  * and no caller-set hard/default country to respect.
+ *
  * Returns the country to hard-filter, or `undefined` to stay on the soft prior.
  *
  * `safelist` precedence is the caller's job: pass
- * `perCallOverride ?? resolver.artifactCoverage?.hardCountrySafelist`
+ * `perCallOverride ?? Resolver.artifactCoverage?.hardCountrySafelist`
  * (the eval instrument first, then the loaded artifact's own manifest) and this check falls back
  * to the code constant only when both are absent — byte-identical to the pre-manifest behavior.
  */
@@ -316,7 +311,8 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
  * 2. Compute QueryShape (or empty)
  * 3. `@mailwoman/locale-hint` (or caller-trust)
  * 4. Kind classifier (or default structured_address)
- * 5. Branch: fast-path → resolver. full → classifier → resolver
+ * 5. Branch: fast-path → resolver.
+ *    Full → classifier → resolver
  *
  * Per-stage timing recorded on `result.timing`.
  * Fast-path stages are absent from the timing map.
@@ -349,8 +345,7 @@ export async function runPipeline(
 	// Off (no stage) → `effectiveOpts === opts` → byte-stable.
 	// See the soft-signal wiring spec.
 	let effectiveOpts = opts
-	// #912 change 1: true when the anchorPosterior in effectiveOpts came from the placer (not the
-	// caller) — the post-parse bare-locality abstention below only strips what the placer added.
+	// #912 change 1: true when the anchorPosterior in effectiveOpts came from the placer (not the caller). The post-parse bare-locality abstention below only strips what the placer added.
 	let placerAnchorApplied = false
 
 	if (stages.placeCountry) {
@@ -359,17 +354,7 @@ export async function runPipeline(
 		timing["place-country"] = performance.now() - tPlace
 
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
-			// #194/#743: promote a confident placement to a hard country filter (empty→unresolved) when the
-			// caller opts in, the confidence clears the bar, and the country is in the coverage safelist.
-			// The soft posterior alone can't move a LOW-population place
-			// (a FI town loses to a high-pop namesake even when FI is pinned); the hard filter does.
-			// Three conditions: confidence (ambiguous DK↔no stay soft), the safelist
-			// (only well-covered countries — where a miss is a genuine non-match rather than a
-			// coverage gap — hard-filter. the low-coverage tail keeps its recall on the soft path),
-			// and the caller's own hardCountry/defaultCountry is never overwritten.
-			// Safelist precedence: the per-call `hardCountrySafelist` override
-			// (the eval measures unrestricted to grow it) → the loaded gazetteer artifact's
-			// own coverage manifest → the code-constant fallback inside hardCountryFor.
+			// #194/#743: promote a confident placement to a hard country filter (empty→unresolved) when the caller opts in, the confidence clears the bar, and the country is in the coverage safelist. The soft posterior alone can't move a LOW-population place (a FI town loses to a high-pop namesake even when FI is pinned); the hard filter does. Three conditions: confidence (ambiguous DK↔no stay soft), the safelist (only well-covered countries — where a miss is a genuine non-match rather than a coverage gap — hard-filter. The low-coverage tail keeps its recall on the soft path), and the caller's own hardCountry/defaultCountry is never overwritten. Safelist precedence: the per-call `hardCountrySafelist` override (the eval measures unrestricted to grow it) → the loaded gazetteer artifact's own coverage manifest → the code-constant fallback inside hardCountryFor.
 			const hardCountry = hardCountryFor(
 				placed.country,
 				placed.confidence,
@@ -424,8 +409,8 @@ export async function runPipeline(
 
 	// POI branch (spec §3.1).
 	// Only reachable when a poi-aware kind classifier was wired
-	// (the default classifier never emits `poi_query`), and only acts when the stage is present —
-	// both absent by default, so the flag-off pipeline is byte-identical by construction.
+	// (the default classifier never emits `poi_query`), and only acts when the stage is present.
+	// Both absent by default, so the flag-off pipeline is byte-identical by construction.
 	// A `null` outcome falls through to the full pipeline: a poi_query kind with no extractable
 	// subject is a mis-detection, and the address path is the safe interpretation.
 	// `poi_category` (ROAD_TO_V9 §4.4) is the anchorless subset of `poi_query` —
@@ -491,8 +476,9 @@ export async function runPipeline(
 
 	// Full pipeline.
 	// Stage 2.7 — phrase grouper.
-	// Optional injection. runs when wired.
-	// Proposals flow forward to stages 3 + 5 (today: surfaced on the result. tomorrow:
+	// Optional injection.
+	// Runs when wired.
+	// Proposals flow forward to stages 3 + 5 (today: surfaced on the result. Tomorrow:
 	// passed in as classifier conditioning).
 	let phraseProposals: PhraseProposal[] = []
 
@@ -514,7 +500,8 @@ export async function runPipeline(
 			normalizeCase: opts?.normalizeCase,
 			placetypePair: opts?.placetypePair,
 			streetMorphology: stages.streetMorphology,
-			// Decision A: explicit caller register wins. otherwise the kind verdict decides.
+			// Decision A: explicit caller register wins.
+			// Otherwise the kind verdict decides.
 			// Never case-keyed.
 			inputMode: opts?.inputMode ?? deriveInputMode(kind.kind),
 		})
@@ -532,10 +519,7 @@ export async function runPipeline(
 		throwIfAborted(opts)
 		const tResolve = performance.now()
 
-		// #912 change 1: the placer abstains on a single bare locality — strip only the anchor it
-		// added (a caller-supplied posterior was never overwritten and passes through untouched).
-		// #1589: a bare postcode abstains the same way — the code's format carries the country
-		// evidence, and the placer's language read of it is noise (see isBarePostcodeTree).
+		// #912 change 1: the placer abstains on a single bare locality — strip only the anchor it added (a caller-supplied posterior was never overwritten and passes through untouched). #1589: a bare postcode abstains the same way — the code's format carries the country evidence, and the placer's language read of it is noise (see isBarePostcodeTree).
 		if (placerAnchorApplied && (isBareLocalityTree(tree) || isBarePostcodeTree(tree))) {
 			effectiveOpts = opts
 		}
@@ -564,9 +548,9 @@ export async function runPipeline(
  *
  * Coarse-grained cancellation: we check between stages, so the longest cancellation
  * latency is one stage's runtime.
- * Fine-grained mid-stage cancellation requires plumbing `signal` into each stage's
- * interface (`detectLocale`, `classifyKind`, `classifier.parse`, `resolver.resolveTree`) —
- * a future enhancement once stage authors are ready for it.
+ * Fine-grained mid-stage cancellation requires plumbing `signal` into each stage's interface
+ * (`detectLocale`, `classifyKind`, `classifier.parse`, `resolver.resolveTree`).
+ * A future enhancement once stage authors are ready for it.
  *
  * For now, in-flight stages always run to completion before the abort takes effect.
  */
@@ -584,7 +568,8 @@ function throwIfAborted(opts?: PipelineOpts): void {
  * no-match (#40 / mailfail finding 4) — the tree came back empty, the grouper-audit
  * refilled it from rule-based proposals, and the caller saw a tidy parse.
  *
- * Degrading is still the right behavior. doing it silently was not.
+ * Degrading is still the right behavior.
+ * Doing it silently was not.
  */
 function recordFault(faults: PipelineFault[], stage: PipelineFaultStage, cause: unknown): void {
 	faults.push({
@@ -625,13 +610,13 @@ async function safeClassify(
 	try {
 		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690
 		// normalizeCase forwards as-is — default-on at the classifier since #895
-		// (unset runs it. explicit false pins the raw-case parse).
+		// (unset runs it. Explicit false pins the raw-case parse).
 		// Word-consistency heal on by default (2026-07-15): arbitrates intra-word tag
 		// disagreement only, with the punctuation-separator + byte-fallback conditions —
 		// clean win across golden us/fr/adversarial + parity floors.
 		// Semantics in neural/word-consistency.ts. placetypePair (#1278): an opaque per-parse prior
 		// handle forwarded verbatim — undefined omits it (byte-stable no-prior decode), so the
-		// classifier's `opts?.placetypePair ?? cfg.placetypePair` resolution is unchanged when absent.
+		// classifier's `opts?.placetypePair ?? Cfg.placetypePair` resolution is unchanged when absent.
 		return await classifier.parse(text, {
 			queryShape,
 			inputMode,
@@ -726,12 +711,13 @@ const PHRASE_KIND_TO_TAG: ReadonlyMap<string, ComponentTag> = new Map([
  *
  * The audit once took a classifier top-k and deferred to it on an orphaned span,
  * and once suppressed a duplicate singleton tag.
- * Both existed for the joint-reconcile path, which fed the only top-k that
- * ever reached here and was removed in
- * #1749. on the surviving argmax path the parameter was always `undefined`,
- * so neither branch could fire.
- * Removed rather than left as unreachable code — the #425 reasoning they
- * encoded is in the retirement report.
+ * Both existed for the joint-reconcile path, which fed the only top-k that ever
+ * reached here and was removed in #1749.
+ *
+ * On the surviving argmax path the parameter was always `undefined`, so neither branch could fire.
+ * Removed rather than left as unreachable code.
+ *
+ * The #425 reasoning they encoded is in the retirement report.
  */
 export function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], text: string): AddressTree {
 	if (!proposals.length) return tree

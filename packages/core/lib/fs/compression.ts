@@ -20,8 +20,8 @@ function byteTransform(stream: CompressionStream | DecompressionStream): {
 	// `pipeThrough` rejects the native transform: its readable side is `NonSharedUint8Array`
 	// and its writable side is `BufferSource`, neither of which matches `ReadableStream<Uint8Array>`.
 	// Wrapping the writer bridges both.
-	// Keep the `new Uint8Array(chunk)` copy — `Uint8Array<ArrayBufferLike>` may sit
-	// on a SharedArrayBuffer, which `BufferSource` excludes.
+	// Keep the `new Uint8Array(chunk)` copy.
+	// `Uint8Array<ArrayBufferLike>` may sit on a SharedArrayBuffer, which `BufferSource` excludes.
 	// The copy produces a non-shared buffer.
 	const writer = stream.writable.getWriter()
 

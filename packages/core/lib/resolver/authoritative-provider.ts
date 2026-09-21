@@ -68,8 +68,9 @@ export interface AuthoritativeQuery {
 	 */
 	locale?: string
 	/**
-	 * Mailwoman's own confidence in the parse, [0, 1], when the decode produced one —
-	 * an adapter may use it to choose between a strict and a fuzzy provider query.
+	 * Mailwoman's own confidence in the parse, [0, 1], when the decode produced one.
+	 *
+	 * An adapter may use it to choose between a strict and a fuzzy provider query.
 	 *
 	 * Absent means unmeasured, never zero.
 	 */
@@ -89,8 +90,8 @@ export type AuthoritativeMatchStatus = (typeof AuthoritativeMatchStatus)[keyof t
 /**
  * One place the provider asserted.
  *
- * Every field is the provider'S claim, carried verbatim — nothing here is a Mailwoman
- * inference, which is exactly what makes the block auditable downstream.
+ * Every field is the provider'S claim, carried verbatim.
+ * Nothing here is a Mailwoman inference, which is exactly what makes the block auditable downstream.
  */
 export interface AuthoritativeMatch {
 	/**
@@ -100,7 +101,8 @@ export interface AuthoritativeMatch {
 	/**
 	 * Authoritative object identifiers by scheme, e.g. `{ uprn: "100023336956" }`.
 	 *
-	 * Schemes are lowercase keys owned by the adapter. a provider that supplies none omits the field.
+	 * Schemes are lowercase keys owned by the adapter.
+	 * A provider that supplies none omits the field.
 	 */
 	objectIDs?: Readonly<Record<string, string>>
 	/**
@@ -108,14 +110,15 @@ export interface AuthoritativeMatch {
 	 *
 	 * Deliberately not remapped to {@link ComponentTag}: a lossy remap would overwrite
 	 * the assertion this interface exists to preserve.
-	 * An adapter may additionally offer a mapped view. this field is the record.
+	 * An adapter may additionally offer a mapped view.
+	 * This field is the record.
 	 */
 	canonicalFields?: Readonly<Record<string, string>>
 	latitude?: number
 	longitude?: number
 	/**
 	 * The provider's stated precision or tier for the coordinate, in the provider's
-	 * own vocabulary (e.g. a rooftop/parcel/centroid label).
+	 * own vocabulary (e.g. A rooftop/parcel/centroid label).
 	 *
 	 * Verbatim — the resolver's own tier taxonomy does not apply to an assertion Mailwoman did not make.
 	 */
@@ -124,7 +127,8 @@ export interface AuthoritativeMatch {
 	/**
 	 * The provider's own match score, when it states one.
 	 *
-	 * Scale is provider-defined. ordinal only.
+	 * Scale is provider-defined.
+	 * Ordinal only.
 	 */
 	providerScore?: number
 }
@@ -192,13 +196,14 @@ export interface AuthoritativeResponse {
  *
  * One method, asynchronous, backend-neutral.
  *
- * A thrown error is a transport failure (network, auth, timeout) and is the adapter's to surface —
- * it is not a refusal, which is a well-formed {@link AuthoritativeResponse} with `status: "refused"`.
+ * A thrown error is a transport failure (network, auth, timeout) and is the adapter's to surface.
+ * It is not a refusal, which is a well-formed {@link AuthoritativeResponse} with `status: "refused"`.
+ *
  * Consumers keep the two apart the same way the resolver keeps a backend error apart from a miss.
  */
 export interface AuthoritativeProvider {
 	/**
-	 * Stable provider name for provenance stamps (e.g. an adapter package's registered name).
+	 * Stable provider name for provenance stamps (e.g. An adapter package's registered name).
 	 *
 	 * Lowercase kebab, owned by the adapter.
 	 */

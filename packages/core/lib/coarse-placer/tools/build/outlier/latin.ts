@@ -74,23 +74,26 @@ export interface BuildOutlierLatinResult {
 }
 
 /**
- * Off-map (not among the trained countries) and Latin-script. train feeds
- * the `other` class. heldout is test-only — the generalization probe
- * (unseen off-map countries should still route `other`). #743: PL/PT/CZ moved from `other`
- * to first-class in-map countries (they're now in COARSE_CLASSES), so they're removed here —
- * keeping them would feed contradictory gold (the same address labelled both PL and `other`).
+ * Off-map (not among the trained countries) and Latin-script.
+ *
+ * Train feeds the `other` class.
+ * Heldout is test-only — the generalization probe (unseen off-map countries should still route `other`).
+ * #743: PL/PT/CZ moved from `other` to first-class in-map countries
+ * (they're now in COARSE_CLASSES), so they're removed here — keeping them would feed
+ * contradictory gold (the same address labelled both PL and `other`).
  *
  * That leaves BR/MX as the Latin off-map train exposure and CA/LI as the heldout probe
  * (the hard near-twins of in-map US/DE — an honest worst case).
- * The in-map expansion itself shrinks the off-map Latin surface, and the bulk `other`
- * exposure is non-Latin (build- outlier-exposure.ts), so the thinner Latin train set
- * is acceptable. watch other-Latin recall in the openset eval.
+ * The in-map expansion itself shrinks the off-map Latin surface, and the bulk `other` exposure
+ * is non-Latin (build- outlier-exposure.ts), so the thinner Latin train set is acceptable.
+ * Watch other-Latin recall in the openset eval.
  */
 const TRAIN_COUNTRIES = ["BR", "MX"]
 const HELDOUT_COUNTRIES = ["CA", "LI"]
 
 /**
- * Address_levels arrives as a list (node-api) or its string repr. pull the value strings out.
+ * Address_levels arrives as a list (node-api) or its string repr.
+ * Pull the value strings out.
  */
 function levelValues(al: unknown): string[] {
 	if (Array.isArray(al)) return al.flatMap((x) => (x && x.value ? [String(x.value)] : []))
@@ -193,7 +196,8 @@ export async function buildOutlierLatin(
 
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
-	// Append `other` rows to train/val. write the dedicated Latin off-map test file.
+	// Append `other` rows to train/val.
+	// Write the dedicated Latin off-map test file.
 	await appendLocalTextFile(otherRowsJSONL(trainAppend), resolvePath(dataDir, "train.jsonl"))
 	await appendLocalTextFile(otherRowsJSONL(valAppend), resolvePath(dataDir, "val.jsonl"))
 

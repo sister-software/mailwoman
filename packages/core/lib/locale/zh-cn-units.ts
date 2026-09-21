@@ -41,8 +41,10 @@ export type CNUnitRung = (typeof CN_UNIT_RUNGS)[number]
  *
  * Longer generics are listed first so `生产队` is read before `队` and `大队` before `队`.
  * Every entry here is a suffix the census of the coarse-placer CN rows found at
- * least once as the tail of an ordinal unit. a generic that only ever follows a name
- * (`林场`, `牧场`, `垦殖场`) belongs to the named head and is deliberately absent.
+ * least once as the tail of an ordinal unit.
+ *
+ * A generic that only ever follows a name (`林场`, `牧场`, `垦殖场`) belongs to the
+ * named head and is deliberately absent.
  */
 export const CN_UNIT_GENERICS: ReadonlyArray<readonly [generic: string, rung: CNUnitRung]> = [
 	["生产大队", "brigade"],
@@ -120,8 +122,8 @@ export function isCNUnitChain(span: string): boolean {
 /**
  * Read a `locality_unit` span into its rungs, outermost first.
  *
- * Throws on a span that is not a chain: a consumer that reached this with anything else
- * has a labeling defect, and reading part of it would report a hierarchy nobody wrote.
+ * @throws on a span that is not a chain: a consumer that reached this with anything else
+ *   has a labeling defect, and reading part of it would report a hierarchy nobody wrote.
  */
 export function readCNUnits(span: string): CNUnit[] {
 	if (!isCNUnitChain(span)) {

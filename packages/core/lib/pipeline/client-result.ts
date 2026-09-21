@@ -71,8 +71,9 @@ export interface KindView {
 export interface ParseResult {
 	input: string
 	/**
-	 * The decoder's `AddressTree`, opaque here so this module stays free of the decoder's
-	 * types. a renderer that walks it imports `@mailwoman/core/decoder/types`.
+	 * The decoder's `AddressTree`, opaque here so this module stays free of the decoder's types.
+	 *
+	 * A renderer that walks it imports `@mailwoman/core/decoder/types`.
 	 */
 	tree: unknown
 	nodes: ParsedComponent[]

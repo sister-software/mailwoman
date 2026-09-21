@@ -52,7 +52,8 @@ export interface SoftFeedRecipe {
  * A char-path base package's binaries (#2164), keyed by script family (`cjk`).
  *
  * Paths are data-root relative, like `weights.model`.
- * The vocabulary is committed in the package too. the recipe's copy keeps it in step with the graph.
+ * The vocabulary is committed in the package too.
+ * The recipe's copy keeps it in step with the graph.
  */
 export interface CharWeightsRecipe {
 	model: string
