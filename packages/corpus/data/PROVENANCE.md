@@ -166,6 +166,19 @@ what `elected` records: the terms, the retrieved copy, the version, and why that
 another. `electedLicenseLabel()` is what the mechanical prefix filter in `utils/license.ts` reads,
 and it answers `undefined` for anything not elected.
 
+## `licenses/` — the retrieved texts a decision would be read from
+
+Seven grants as retrieved, each with the URL and the retrieval date at its head, plus the failures a
+fetch returned. Written by hand from a fetch rather than by a build, and never edited after
+retrieval — a correction is a new retrieval.
+
+The directory carries its own `PROVENANCE.md`, which lists what is there, what could not be
+retrieved, and the two readings a retrieval moved. It is named here so a reader of this file knows
+the directory is accounted for rather than overlooked.
+
+`ElectedLicense.retrievedCopy` in the source register names a file there, which is how a decision
+recorded in `license-decisions.json` points at the text it was made from.
+
 ## `license-decisions.json` — licence decisions somebody made by reading terms (#2351)
 
 Hand-written, and the only file in this directory that is. `address-source-register.json` is

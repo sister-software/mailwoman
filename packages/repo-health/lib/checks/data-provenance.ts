@@ -14,6 +14,17 @@
  *   that the record exists and covers every artifact, so an artifact landing without one is a deliberate act rather
  *   than an oversight. It does not verify the artifact's contents: `address-source-register.json` does that itself
  *   with a `contentDigest` its reader recomputes.
+ *
+ *   Coverage is two questions, because an artifact can be out of reach in two ways. Every artifact file directly in
+ *   the directory has to be named, and so does every immediate subdirectory. The second was added after
+ *   `packages/core/data/coarse-placer/` was found shipping a trained classifier in every copy of `@mailwoman/core`
+ *   with no record anywhere: each of core's four data directories is one level down, so a file-only rule reports
+ *   nothing about any of them.
+ *
+ *   A subdirectory is named rather than recursed into. Requiring every file at any depth would ask
+ *   `packages/core/data/PROVENANCE.md` to list 1,114 vendored dictionary files, which is a list nobody reads and
+ *   nobody keeps true. Naming the directory is the claim a reader checks, and a subdirectory with its own
+ *   `PROVENANCE.md` is covered by this check in its own right.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -33,6 +44,30 @@ const ARTIFACT_EXTENSIONS: ReadonlySet<string> = new Set([".json", ".jsonl", ".c
  * Files in a `data/` directory that document it rather than live in it.
  */
 const DOCUMENTATION_FILES: ReadonlySet<string> = new Set(["PROVENANCE.md", "README.md", "LICENSE.md", "LICENSE"])
+
+/**
+ * The names of the directories committed directly inside `directory`, in the order git lists them.
+ *
+ * Derived from the tracked-file list rather than by walking the filesystem, so an untracked scratch directory a build
+ * left behind is not reported as an undocumented one.
+ */
+function immediateSubdirectories(trackedFiles: readonly string[], directory: string): string[] {
+	const prefix = `${directory}/`
+	const names = new Set<string>()
+
+	for (const file of trackedFiles) {
+		if (!file.startsWith(prefix)) continue
+
+		const rest = file.slice(prefix.length)
+		const separator = rest.indexOf("/")
+
+		if (separator > 0) {
+			names.add(rest.slice(0, separator))
+		}
+	}
+
+	return [...names]
+}
 
 /**
  * Reads every package's `data` directory that carries a `PROVENANCE.md` and reports each artifact the file does not
@@ -78,6 +113,19 @@ export const dataProvenanceCheck: RepoCheck = {
 						`\`${name}\` is committed in \`${String(directory)}\` and \`${provenanceFile}\` does not name it. ` +
 						"Record what writes it and how a reader checks it, so the next person to open the file knows " +
 						"whether editing it by hand is a repair or a corruption.",
+					file: provenanceFile,
+				})
+			}
+
+			for (const child of immediateSubdirectories(trackedFiles, String(directory))) {
+				if (recorded.includes(child)) continue
+
+				diagnostics.push({
+					severity: DiagnosticSeverity.Error,
+					message:
+						`\`${child}/\` is committed in \`${String(directory)}\` and \`${provenanceFile}\` does not name it. ` +
+						"Say what the directory holds and what wrote it. Naming it is enough — this check does not ask " +
+						"for the files inside, and a subdirectory with its own `PROVENANCE.md` is checked separately.",
 					file: provenanceFile,
 				})
 			}
