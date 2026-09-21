@@ -114,6 +114,25 @@ describe("every bundle states its terms before it is pulled", () => {
 		expect(lines.some((line) => line.startsWith("you must:"))).toBe(true)
 		expect(lines.some((line) => line.startsWith("unresolved:"))).toBe(true)
 	})
+
+	it("says where each bundle's rows name their publisher, or that they do not", () => {
+		// `mailwoman data sources` checks the record above against the bytes, and it can only do that where the
+		// artifacts carry a publisher column. A bundle declaring none says so rather than being censused to an empty
+		// result, which would read as a clean check.
+		expect(BUNDLES["us"]?.sourceCensus).toStrictEqual({
+			table: "address_point",
+			column: "source",
+			shape: "per-row",
+			family: "address-points",
+		})
+
+		// The `us` bundle's interpolation databases are a different artifact family with no such column. Naming the
+		// family is what keeps 51 of them out of the census rather than reported as unreadable.
+		expect(BUNDLES["us"]?.artifacts.some((artifact) => artifact.family === "interpolation")).toBe(true)
+
+		expect(BUNDLES["poi"]?.sourceCensus?.shape).toBe("manifest")
+		expect(BUNDLES["candidate"]?.sourceCensus).toBeUndefined()
+	})
 })
 
 describe("resolveBundleArtifacts — maps versioned names", () => {

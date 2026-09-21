@@ -62,6 +62,46 @@ export interface BundleArtifact {
  * `unresolved` is a field rather than an omission. A bundle assembled from several upstream sources carries whatever is
  * unestablished about them, and leaving that blank would present a partially-read bundle as a fully-read one.
  */
+/**
+ * Where a bundle's artifacts carry the publisher of each row, so the record's claim can be checked against the bytes.
+ *
+ * The `us` bundle's record named the Census Bureau and OpenAddresses while 68.2% of its rows carried a stamp naming the
+ * National Address Database, and the record's own open question asked for a list the databases already held on every
+ * row. Prose about publishers drifts from the data it describes, and nothing read the data.
+ *
+ * Absent means the artifacts carry no per-row publisher. That is a recorded fact rather than an omission: the
+ * `candidate` gazetteer's rows name no source, so a census of it would report nothing and reporting nothing would read
+ * as a clean result.
+ */
+export interface BundleSourceCensus {
+	/**
+	 * The table holding one row per record, or one row describing the layer.
+	 *
+	 * A union rather than a string. A runtime table name has no schema to check a query against, which is what pushes a
+	 * reader into casting through `never` and then validating the string by hand. A closed set is checkable by the
+	 * compiler, and adding an artifact shape means adding a member here and to the census reader's schema together.
+	 */
+	table: "address_point" | "layer_manifest"
+	/**
+	 * The column naming the publisher of a row.
+	 */
+	column: "source"
+	/**
+	 * Whether {@link BundleSourceCensus.table} holds one row per record or one row for the whole artifact. A manifest row
+	 * describes the layer, so its count is the number of manifest rows rather than a row count.
+	 */
+	shape: "per-row" | "manifest"
+	/**
+	 * The artifact family this census covers, when a bundle carries more than one.
+	 *
+	 * The `us` bundle ships address-point databases beside TIGER interpolation databases, and only the first carries an
+	 * `address_point` table. Reading every artifact reported 51 interpolation databases as unreadable, which is the wrong
+	 * description: a TIGER database is a different artifact whose publisher the record names separately, rather than an
+	 * address-point database that failed to open. A census that names its family says what it covers.
+	 */
+	family?: BundleArtifact["family"]
+}
+
 export interface BundleRights {
 	/**
 	 * Who published the rows, as they name themselves.
@@ -93,6 +133,11 @@ export interface DataBundle {
 	 * downloading with its obligations unstated.
 	 */
 	rights: BundleRights
+	/**
+	 * Where this bundle's artifacts name the publisher of a row, so `mailwoman data sources` can check the record above
+	 * against the bytes. Absent when the artifacts carry no such column.
+	 */
+	sourceCensus?: BundleSourceCensus
 }
 
 /**
@@ -247,6 +292,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 				"Which upstream projects the Overture Places theme drew each row from, and what each of those requires. §3.1 is a statement about this agreement and reaches no other source's terms.",
 			],
 		},
+		sourceCensus: { table: "layer_manifest", column: "source", shape: "manifest" },
 	},
 	fr: {
 		name: "fr",
@@ -272,6 +318,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 				"Whether the election of the attribution-only half binds a redistributor of this database, since BAN is dual-licensed and the other half carries share-alike.",
 			],
 		},
+		sourceCensus: { table: "address_point", column: "source", shape: "per-row" },
 	},
 	us: {
 		name: "us",
@@ -300,6 +347,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 				"Which state statutes the mailing-list restriction refers to, and whether any of them reaches a use other than a mailing list.",
 			],
 		},
+		sourceCensus: { table: "address_point", column: "source", shape: "per-row", family: "address-points" },
 	},
 }
 
