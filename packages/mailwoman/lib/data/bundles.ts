@@ -209,16 +209,17 @@ export const BUNDLES: Record<string, DataBundle> = {
 		rights: {
 			publishers: ["Who's On First", "GeoNames"],
 			terms: [
-				"Who's On First: Creative Commons Zero covers Mapzen's own work, and the dataset is also a modification of existing open data whose sources carry their own terms.",
+				"Who's On First: Creative Commons Zero covers the format and structure, in those words, and the dataset is also a modification of existing open data whose sources carry their own terms. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/whosonfirst-licenses.md.",
 				"GeoNames: Creative Commons Attribution.",
 			],
 			conditions: [
-				"Link back to the Who's On First license, which its own LICENSE.md makes a requirement rather than a courtesy.",
+				"Link back to the Who's On First license. Its own text makes the link required and crediting the project recommended, which is the one place those two differ.",
 				"Attribute GeoNames.",
 			],
 			unresolved: [
 				"Which upstream project each row's name came from. Who's On First records a geometry source per record and the corpus adapters read none of it — see docs/engineering/reference/artifact-rights-inventory.mdx.",
-				"Whether the Ordnance Survey and Royal Mail notice in Who's On First's LICENSE.md reaches any row in this bundle.",
+				"Whether the Ordnance Survey notice in Who's On First's source list reaches any row in this bundle. The list names Ordnance Survey of Northern Ireland under Open Government Licence v3.0 and Ordnance Survey Ireland under its own portal terms, and names Royal Mail nowhere.",
+				"Which of the 102 sources the Who's On First list names contributed to a given record. The list was generated 2020-02-21 and the dataset has moved since, so it is evidence of what contributed up to that date.",
 			],
 		},
 	},

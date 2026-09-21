@@ -12,12 +12,18 @@ Nothing here elects anything. These are the texts a reading would be made from, 
 
 ## What is here
 
-| file                     | publisher                         | retrieved  | how                               |
-| ------------------------ | --------------------------------- | ---------- | --------------------------------- |
-| `licence-ouverte-2.0.md` | Etalab, for the French government | 2026-09-21 | `etalab/licence-ouverte`, `LO.md` |
-| `sirene-publication.md`  | INSEE, via data.gouv.fr           | 2026-09-21 | the dataset page                  |
+| file                      | publisher                         | retrieved  | how                                     |
+| ------------------------- | --------------------------------- | ---------- | --------------------------------------- |
+| `licence-ouverte-2.0.md`  | Etalab, for the French government | 2026-09-21 | `etalab/licence-ouverte`, `LO.md`       |
+| `sirene-publication.md`   | INSEE, via data.gouv.fr           | 2026-09-21 | the dataset page                        |
+| `whosonfirst-licenses.md` | Who's On First, originally Mapzen | 2026-09-21 | the docs page and the repo `LICENSE.md` |
 
 The first filename keeps the publisher's own spelling, which is the name of the grant rather than prose.
+
+The Who's On First file is here although no register source points at it, because the `candidate`
+runtime bundle's rights record cites those terms and an operator acts on them today. Its retrieval
+also settles half of that record's open question: the page names Ordnance Survey of Northern Ireland
+and Ordnance Survey Ireland, and names Royal Mail nowhere.
 
 ## What could not be retrieved, and what that means
 
