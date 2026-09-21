@@ -121,8 +121,8 @@ export function matchPOBox(input: unknown): PoBoxMatch | null {
  * Normalize any recognized PO-box phrase to the canonical USPS "PO BOX <id>" form.
  *
  * @returns The input unchanged if it isn't a PO box.
- *   (Widens the original isp-nexus normalizer, which only collapsed the "P.O.
- *   BOX" spelling and left the id/casing alone.)
+ * (Widens the original isp-nexus normalizer, which only collapsed the "P.O. BOX"
+ * spelling and left the id/casing alone.)
  */
 export function normalizePOBox(input: string): string {
 	const m = matchPOBox(input)

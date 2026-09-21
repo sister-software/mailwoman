@@ -563,8 +563,8 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	 * conditioned (a sibling postcode and a postcode_locality table and a locality query).
 	 *
 	 * @returns `null` — so the dispatcher falls through to the next strategy —
-	 *   when the condition is unmet or the postcode isn't in the table.
-	 *   Otherwise the soft-scored postcode∪name candidate set.
+	 * when the condition is unmet or the postcode isn't in the table.
+	 * Otherwise the soft-scored postcode∪name candidate set.
 	 */
 	#postcodeAreaResolution(query: FindPlaceQuery, convention: ResolvedConvention): Promise<PlaceCandidate[] | null> {
 		if (!(query.postcode && this.#postcodeLocalityExtract && this.#isLocalityQuery(query))) {

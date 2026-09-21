@@ -123,8 +123,8 @@ export interface DeclaredArtifact {
  * and inheriting the base's manifest would attribute `postcode-us.bin` to it.
  *
  * @returns `undefined` when the package has no card, the card has no `files` block,
- *   or none of `keys` appears there — all three meaning "this package declares no
- *   such artifact", which is a legal posture rather than a fault.
+ * or none of `keys` appears there — all three meaning "this package declares no such
+ * artifact", which is a legal posture rather than a fault.
  */
 export async function readDeclaredArtifactFile(
 	packageDir: PathBuilderLike | undefined,
@@ -285,8 +285,8 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined)
  * (callers then infer the required channels from the ONNX graph — see `inferRequiredChannelsFromInputs`).
  *
  * @throws Only when the field is present but corrupt
- *   (not an object, or a channel entry with a non-boolean `required`).
- *   A malformed declared interface is a loud artifact bug rather than a silent re-default.
+ * (not an object, or a channel entry with a non-boolean `required`).
+ * A malformed declared interface is a loud artifact bug rather than a silent re-default.
  */
 /**
  * The card's `encoder` block read from a file — the node-side twin of `encoderDescriptorFromCard` (#2164).
@@ -420,9 +420,9 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
  * or has no `capabilities` field (a pre-#718 card → the loader's delta check is skipped, back-compat).
  *
  * @throws Only when the field is present but not an object.
- *   A corrupt declared interface is a loud artifact bug rather than a silent skip.
- *   Tier/system/tag sub-shapes are read leniently (a malformed cell simply yields no
- *   capability claim — `undefined` from `lookupTagCapability`).
+ * A corrupt declared interface is a loud artifact bug rather than a silent skip.
+ * Tier/system/tag sub-shapes are read leniently (a malformed cell simply yields no
+ * capability claim — `undefined` from `lookupTagCapability`).
  */
 export async function readCapabilityManifest(
 	modelCardPath: PathBuilderLike | undefined

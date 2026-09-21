@@ -32,7 +32,7 @@ export function isStripeNotFound(error: unknown): boolean {
 
 /**
  * @param fetchImplementation The fetch the SDK calls. a test passes a stub that answers by method
- *   and path, so no request leaves the process and an unexpected retrieval fails loudly.
+ * and path, so no request leaves the process and an unexpected retrieval fails loudly.
  */
 export function stripeClient(env: LicenseWorkerEnv, fetchImplementation: typeof fetch = fetch): Stripe {
 	return new Stripe(env.STRIPE_SECRET_KEY, {

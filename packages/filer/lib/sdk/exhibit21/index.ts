@@ -222,7 +222,7 @@ function isSingleColumnNameList(rows: readonly TableCell[][], rawWidth: number):
  * mapping a preceding sibling table established (or `null`).
  *
  * @returns The mapping in force at the end so the caller can carry it to the next sibling —
- *   see the module docstring's "table strategy" section for the full rule order.
+ * see the module docstring's "table strategy" section for the full rule order.
  */
 function subsidiariesFromTable(
 	extractedRows: readonly TableCell[][],

@@ -76,16 +76,16 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	/**
 	 * @param dbPath Extract path.
 	 * @param opts.streetLocale The street-normalization locale this extract was
-	 *   built with — must match, or every key misses.
-	 *   Defaults to `"us"` (the situs tier), so existing callers are unchanged.
+	 * built with — must match, or every key misses.
+	 * Defaults to `"us"` (the situs tier), so existing callers are unchanged.
 	 * @param opts.localityKeys Whether the extract's `locality_norm` is a full
-	 *   place name a query can be held to.
-	 *   The BAN and OSM extracts write the commune or `addr:city` in full. the US
-	 *   situs extract writes the NAD city field, which several counties abbreviate
-	 *   (`addi` for Addison on 5,174 Texas rows, 327,264 Texas rows at four characters or fewer)
-	 *   or give as the parent town (`easton` for North Easton).
-	 *   A key like that can steer which row answers but cannot refuse one, so it never contradicts.
-	 *   Defaults from the street locale: `"us"` is abbreviated, the rest full.
+	 * place name a query can be held to.
+	 * The BAN and OSM extracts write the commune or `addr:city` in full. the US
+	 * situs extract writes the NAD city field, which several counties abbreviate
+	 * (`addi` for Addison on 5,174 Texas rows, 327,264 Texas rows at four characters or fewer)
+	 * or give as the parent town (`easton` for North Easton).
+	 * A key like that can steer which row answers but cannot refuse one, so it never contradicts.
+	 * Defaults from the street locale: `"us"` is abbreviated, the rest full.
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale; localityKeys?: "full" | "abbreviated" } = {}) {
 		this.#db = new DatabaseClient<DB>(dbPath, { readOnly: true })

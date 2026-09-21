@@ -87,7 +87,7 @@ export function assertWorkspacePublishable(workspacePath: string): void {
  * The publish set, verbatim from `.release-it.json` — the list both CI phases derive from.
  *
  * @throws On a missing, empty, or non-string list: every caller treats this as the full
- *   bump/publish surface, and an empty read must never be mistaken for zero workspaces.
+ * bump/publish surface, and an empty read must never be mistaken for zero workspaces.
  */
 export async function releaseWorkspaces(repoRoot: PathBuilderLike): Promise<string[]> {
 	const config = await readLocalJSONFile<{

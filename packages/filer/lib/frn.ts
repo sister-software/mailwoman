@@ -40,9 +40,9 @@ export function isFRN(value: unknown): value is FRN {
  * Zero-pads a numeric or string FRN candidate to the canonical 10-digit form and validates it.
  *
  * @returns `null` (never throws) for anything that isn't a non-negative integer fitting in 10 digits.
- *   An FRN missing or malformed on an otherwise well-formed Form 499 row is common
- *   and unremarkable (see `form499.ts`'s {@linkcode Form499Row.frn}),
- *   not the "malformed row" error decision 8 guards against.
+ * An FRN missing or malformed on an otherwise well-formed Form 499 row is common
+ * and unremarkable (see `form499.ts`'s {@linkcode Form499Row.frn}), not the
+ * "malformed row" error decision 8 guards against.
  */
 export function toFRN(value: string | number): FRN | null {
 	const raw = typeof value === "number" ? String(value) : value.trim()

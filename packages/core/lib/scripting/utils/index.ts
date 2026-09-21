@@ -44,7 +44,7 @@ export type ScriptCallback = (...args: unknown[]) => unknown | Promise<unknown>
  * Cleans up services and exits the script cleanly.
  *
  * @param exitCode - Explicit exit code. when omitted, whatever `process.exitCode`
- *   the script set (default 0) stands.
+ * the script set (default 0) stands.
  * @internal
  */
 export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode?: number): Promise<void> {

@@ -28,7 +28,7 @@ import type { MapCanvasStyle } from "./MapCanvas.tsx"
  * `[longitude, latitude]`.
  *
  * @deprecated Alias kept for existing imports — {@link LngLat}
- *   (from `@mailwoman/react/map`) is the canonical name.
+ * (from `@mailwoman/react/map`) is the canonical name.
  */
 export type LngLatTuple = LngLat
 

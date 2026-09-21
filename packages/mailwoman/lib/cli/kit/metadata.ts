@@ -71,7 +71,7 @@ let manifest: Promise<MailwomanManifest> | undefined
  * the license notice, the doctor and the license command all read the same file.
  *
  * @throws {TypeError} When the manifest carries no string `version` or `license` —
- *   a broken install rather than a choice.
+ * a broken install rather than a choice.
  */
 export function readMailwomanManifest(): Promise<MailwomanManifest> {
 	manifest ??= readManifestFile()

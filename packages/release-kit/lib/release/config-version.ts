@@ -15,8 +15,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
  * Replace the top-level `"version"` line, requiring exactly one match of the current value.
  *
  * @throws When the line is absent (a reformatted or hand-edited file — bump it by hand
- *   and fix the formatter drift) or when the current version does not match
- *   (the sync check's job, restated here so a caller cannot skip it).
+ * and fix the formatter drift) or when the current version does not match
+ * (the sync check's job, restated here so a caller cannot skip it).
  */
 export function bumpReleaseConfigVersion(text: string, currentVersion: string, targetVersion: string): string {
 	const line = `\t"version": ${stringifyJSON(currentVersion)},`

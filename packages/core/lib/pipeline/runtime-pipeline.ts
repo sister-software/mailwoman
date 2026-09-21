@@ -76,9 +76,10 @@ export const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
 /**
  * #194: minimum placer confidence to promote the soft country prior to a hard filter (empty→unresolved). The placer
- * already abstains below 0.9 in-map mass (open-set rule), but the per-country argmax prob can still be split across
- * neighbours (DK↔no, EE↔LT↔LV); requiring a high argmax confidence keeps the hard filter to the cases the model is sure
- * of (FI/PL routinely score ~1.0) and leaves the ambiguous ones on the soft path.
+ * already abstains below 0.9 in-map mass (open-set rule), but the per-country argmax prob
+ * can still be split across neighbours (DK↔no, EE↔LT↔LV); requiring a high argmax confidence
+ * keeps the hard filter to the cases the model is sure of (FI/PL routinely score ~1.0)
+ * and leaves the ambiguous ones on the soft path.
  *
  * Deliberately strict — a wrong hard country is the #244 M2 misroute failure.
  */
@@ -86,8 +87,8 @@ const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
 /**
  * #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering costs no recall
- * — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss → unresolved" is rare and
- * almost always a genuine non-match rather than a coverage gap.
+ * — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss
+ * → unresolved" is rare and almost always a genuine non-match rather than a coverage gap.
  *
  * A confident placement outside this set stays on the soft prior, so the low-coverage
  * tail (FI/PL/…) keeps its recall until its gazetteer is filled (#193): covered countries
@@ -126,9 +127,9 @@ export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 
 /**
  * #912 change 1 — is this parse a single bare locality ("Paris", "Dublin")? The coarse placer is out-of-distribution on
- * one-token city names (trained on full addresses): measured on the gauntlet's bare-namesake rows it emitted Paris→IT
- * .35, Melbourne→GB .66 — all wrong, and even sub-threshold the soft posterior still re-ranks the resolver toward the
- * wrong country.
+ * one-token city names (trained on full addresses): measured on the gauntlet's bare-namesake
+ * rows it emitted Paris→IT .35, Melbourne→GB .66 — all wrong, and even sub-threshold
+ * the soft posterior still re-ranks the resolver toward the wrong country.
  *
  * A bare locality carries no country evidence the placer can read that the resolver's
  * exact-tier + population ranking doesn't already use better — so both production placeCountry

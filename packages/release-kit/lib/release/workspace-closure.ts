@@ -42,7 +42,7 @@ export async function workspaceDirectories(repoRoot: string): Promise<Map<string
  * so a package added to a seed's graph is picked up without anyone editing a list.
  *
  * @throws When a seed or a reached dependency names no workspace: a `workspace:`
- *   specifier that resolves nowhere is a broken manifest rather than an absence.
+ * specifier that resolves nowhere is a broken manifest rather than an absence.
  */
 export async function walkWorkspaceClosure(repoRoot: string, seeds: readonly string[]): Promise<Map<string, string>> {
 	const byName = await workspaceDirectories(repoRoot)

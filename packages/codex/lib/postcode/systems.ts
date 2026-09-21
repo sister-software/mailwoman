@@ -105,7 +105,8 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  *   | 732 urban rows | p50 | p75 | p90 | ≤1 km | | -------------- | ---: | ---: | ---: | ---: | | locality-first | 2.51
  *   km | 5.42 km | 9.53 km | 26.4% | | postcode-first | **78 m** | **162 m** | **373 m** | **94.7%** |
  *
- *   Closer on 90.4% of them. That is GB's tier on a sample fifty times larger than GB's.
+ *   Closer on 90.4% of them.
+ *   That is GB's tier on a sample fifty times larger than GB's.
  *
  * **CA rural is excluded, and the code says which.** Canada Post puts a `0` in the second position of
  * a rural forward sortation area, so `T0H 1M0` is rural and `M1J 1A8` is not — no lookup required.

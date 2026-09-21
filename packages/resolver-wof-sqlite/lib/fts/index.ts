@@ -113,10 +113,10 @@ export function foldQueryText(input: string): string {
  *
  * @param altNames The `alt_names` bag from `place_search` (null when the row has no aliases).
  * @param normalizedQuery The query, pre-normalized: lowercased, trimmed, internal
- *   whitespace collapsed (every consumer already normalizes this way).
+ * whitespace collapsed (every consumer already normalizes this way).
  * @param anyStrictExact Whether any candidate in the pool already matched strictly
- *   (canonical name or region abbreviation).
- *   Only consulted for legacy bags.
+ * (canonical name or region abbreviation).
+ * Only consulted for legacy bags.
  */
 export function aliasBagExactMatch(altNames: string | null, normalizedQuery: string, anyStrictExact: boolean): boolean {
 	if (altNames === null || altNames === "" || !normalizedQuery) return false
@@ -224,8 +224,8 @@ export interface BuildPlaceSearchFTSOpts {
  * Both are pure SQLite — no extensions required.
  *
  * @returns A `BuildPlaceSearchFTSResult` summary.
- *   Idempotent when `drop: false` — re-running against an already-indexed DB
- *   skips whichever indexes already exist.
+ * Idempotent when `drop: false` — re-running against an already-indexed DB
+ * skips whichever indexes already exist.
  */
 export function buildPlaceSearchFTS<DB>(
 	db: DatabaseClient<DB>,

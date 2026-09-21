@@ -41,8 +41,8 @@ const DEFAULT_PROGRESS_EVERY = 5000
  * Measure every candidate resolution over one survey area's real delineations.
  *
  * @throws {Error} When the streamed count does not match the count the shapefile declares.
- *   A short read produces a well-formed table describing a smaller county,
- *   which is the partial result that must throw.
+ * A short read produces a well-formed table describing a smaller county,
+ * which is the partial result that must throw.
  */
 export async function measureSoilCellResolutions(
 	options: MeasureSoilResolutionsOptions

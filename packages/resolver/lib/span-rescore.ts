@@ -79,8 +79,8 @@ export interface SpanRescoreOptions {
 	postalCompoundRecovery?: boolean
 	/**
 	 * #17 bare-toponym soft country. When the span covers the whole unqualified input, treat {@link country} as an
-	 * additive prior instead of a hard gazetteer filter (see the block comment on {@link findRescoreCandidate}'s bare
-	 * branch).
+	 * additive prior instead of a hard gazetteer filter
+	 * (see the block comment on {@link findRescoreCandidate}'s bare branch).
 	 *
 	 * Default true; `false` restores the hard filter byte-for-byte.
 	 */
@@ -143,10 +143,11 @@ export interface RescoreCandidate {
 	 * Empty when the span named exactly one place.
 	 *
 	 * #1537: these were being discarded. A name the model reads as a `street` ("Springfield", "Berlin", "Manchester",
-	 * "Moscow", "Fulda") never reaches the admin walk, so the whole tree comes back unresolved and this tier is what
-	 * recovers it — and it decorated the injected node with no alternatives at all. The result was that the geocode
-	 * path's `candidates` array held one entry, and the top-1-vs-top-2 dominance margin that `declared_ambiguity` reads
-	 * was uncomputable, for exactly the famous-homonym class that marker exists for.
+	 * "Moscow", "Fulda") never reaches the admin walk, so the whole tree comes back unresolved
+	 * and this tier is what recovers it — and it decorated the injected node with no alternatives at all.
+	 * The result was that the geocode path's `candidates` array held one entry, and the
+	 * top-1-vs-top-2 dominance margin that `declared_ambiguity` reads was uncomputable,
+	 * for exactly the famous-homonym class that marker exists for.
 	 *
 	 * Measured on the shipped candidate backend, 2026-08-07: those five queries returned 1 candidate each
 	 * while `Cambridge`/`Athens`/`Paris` — the same class, but parsed as `locality` — returned 4-5.
@@ -400,7 +401,7 @@ function confidentRanges(
  * Find the best locality the raw text exact-matches in the gazetteer.
  *
  * @returns Null when nothing matches (or the postcode check rejects every match).
- *   Callers test `hasResolvedPlace` first.
+ * Callers test `hasResolvedPlace` first.
  */
 export async function findRescoreCandidate(
 	raw: string,

@@ -400,8 +400,8 @@ function emitDegradedBanner(options: ParseOptions): void {
 
 /**
  * #40 — announce every stage the coordinator degraded past. `runPipeline` catches a classifier / grouper / resolver
- * throw and keeps going (`PipelineResult.faults`), which used to mean a crashed model produced a tidy-looking parse
- * with nothing on stdout or stderr to say.
+ * throw and keeps going (`PipelineResult.faults`), which used to mean a crashed model
+ * produced a tidy-looking parse with nothing on stdout or stderr to say.
  *
  * The same `⚠` register applies to the encoder-load warnings above.
  * Stderr only, so stdout stays the machine-readable parse.

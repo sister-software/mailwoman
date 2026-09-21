@@ -469,8 +469,8 @@ function compareCandidateAdmissibility(base: ConformanceOutcome, variant: Confor
  * Read a pair of outcomes on the axis the fixture named.
  *
  * @throws On a comparator name outside the closed set.
- *   `loadConformanceFixtures` refuses one already, so reaching this means a caller built a
- *   fixture by hand and skipped the loader — which is exactly the path that must not default.
+ * `loadConformanceFixtures` refuses one already, so reaching this means a caller built a
+ * fixture by hand and skipped the loader — which is exactly the path that must not default.
  */
 export function compareOutcomes(
 	fixture: ConformanceFixture,

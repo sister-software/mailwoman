@@ -123,7 +123,7 @@ export async function checkBoardPins(): Promise<PinCheck> {
  * Rewrite the committed constants to the measured values, then re-check.
  *
  * @returns The verifying check, whose `stale` must be empty.
- *   A non-empty result after an update means the file reshaped under us.
+ * A non-empty result after an update means the file reshaped under us.
  */
 export async function updateBoardPins(): Promise<PinCheck> {
 	const path = resolvePath(String(repoRootPath()), PIN_TEST_PATH)

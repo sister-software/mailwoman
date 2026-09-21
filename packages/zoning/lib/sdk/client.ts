@@ -247,7 +247,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	 * The URL it returns is the one that 302s — see {@link downloadZoningExport}.
 	 *
 	 * @throws {Error} When the job is not `Completed`, or names no result URL.
-	 *   A partial job that answered with a status and no URL would otherwise present as an empty download.
+	 * A partial job that answered with a status and no URL would otherwise present as an empty download.
 	 */
 	public async readExportURL(): Promise<string> {
 		const { data } = await this.fetch<{ status?: string; resultUrl?: string; message?: string }>({

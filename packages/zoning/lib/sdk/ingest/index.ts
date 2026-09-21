@@ -202,7 +202,7 @@ export const ZONING_SOURCE_FIELDS: ReadonlyArray<string> = [
  * What the source declares about itself: its authority code, its feature count and its field list.
  *
  * @throws {Error} When the export is unreadable, its declared epsg is not `expectEPSG`,
- *   or it is missing a field the ingest reads.
+ * or it is missing a field the ingest reads.
  */
 export async function readZoningSourceIdentity(options: ZoningIngestOptions): Promise<ZoningSourceIdentity> {
 	const identity = await readOGRLayerIdentity({
@@ -268,8 +268,8 @@ function blankToNull(value: string | undefined): string | null {
  * polygons are written to the wrong side of the planet.
  *
  * @throws {Error} When ogr2ogr fails, when a feature carries no geometry,
- *   when a reprojected vertex falls outside the declared extent, or when a feature's
- *   rings cannot be resolved into at least one exterior.
+ * when a reprojected vertex falls outside the declared extent, or when a feature's
+ * rings cannot be resolved into at least one exterior.
  */
 export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGenerator<ZoningSourceFeature> {
 	const [minLon, minLat, maxLon, maxLat] = options.declaredBBox ?? GZT_DECLARED_BBOX

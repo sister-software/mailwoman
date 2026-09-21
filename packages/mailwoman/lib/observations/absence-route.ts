@@ -360,8 +360,7 @@ function indexAffordingCategories(model: CompiledGeographicModel): Map<string, A
  * and the two failure modes it refuses are silent in a copy.
  * This name and its message prefix are kept so callers and their receipts read the same.
  *
- * @throws {Error} When the table is empty, when a cell expands at no resolution,
- * or when the cells disagree.
+ * @throws {Error} When the table is empty, when a cell expands at no resolution, or when the cells disagree.
  */
 export function recoverCoverageResolution(cells: readonly number[]): number {
 	return recoverShortCellResolution(cells, "absence route")

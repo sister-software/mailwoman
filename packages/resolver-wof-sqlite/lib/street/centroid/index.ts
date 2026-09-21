@@ -78,8 +78,8 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	/**
 	 * @param dbPath Extract path.
 	 * @param opts.streetLocale The street-normalization locale this extract was
-	 *   built with — must match, or every key misses.
-	 *   Defaults to `"fr"` (BAN is the French national register. the tier is FR-only today).
+	 * built with — must match, or every key misses.
+	 * Defaults to `"fr"` (BAN is the French national register. the tier is FR-only today).
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })

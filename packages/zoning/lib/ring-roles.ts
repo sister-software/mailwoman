@@ -150,12 +150,12 @@ function containsMajority(ring: ReadonlyArray<readonly number[]>, outer: Readonl
  * Resolve one feature's hole roles from ring orientation.
  *
  * @param featureID Named in every refusal, so a build log says which feature
- *   rather than only that one failed.
+ * rather than only that one failed.
  * @throws {Error} When the feature carries no ring at all.
- *   That is the one case with no reading: a feature reduced to nothing reads downstream
- *   as an absence of zoning, which is the one answer this layer must never invent.
- *   A feature whose rings all read as holes does have a reading —
- *   see {@link ResolvedRingRoles.exteriorByMagnitude}.
+ * That is the one case with no reading: a feature reduced to nothing reads downstream
+ * as an absence of zoning, which is the one answer this layer must never invent.
+ * A feature whose rings all read as holes does have a reading —
+ * see {@link ResolvedRingRoles.exteriorByMagnitude}.
  */
 export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string): ResolvedRingRoles {
 	const rings = flattenRings(polygons)

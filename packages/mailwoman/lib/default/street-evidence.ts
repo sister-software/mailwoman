@@ -25,8 +25,8 @@ let cached: Promise<StreetLocalityEvidence | null> | null = null
  * Lazy-load + cache the bundled FR street-name index.
  *
  * @returns `null` when `@mailwoman/resolver-wof-sqlite` or the `street-centroids-fr.db`
- *   database can't be resolved — the pipeline then reranks nothing (byte-stable).
- *   Cached for the process lifetime (one handle, reused).
+ * database can't be resolved — the pipeline then reranks nothing (byte-stable).
+ * Cached for the process lifetime (one handle, reused).
  */
 export function loadDefaultStreetEvidence(): Promise<StreetLocalityEvidence | null> {
 	if (!cached) {

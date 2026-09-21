@@ -42,8 +42,8 @@ const DEFAULT_PROGRESS_EVERY = 50_000
  * Measure every candidate resolution over the real source.
  *
  * @throws {Error} When the streamed feature count does not match the count the source declares.
- *   A short read produces a well-formed table describing a smaller England,
- *   which is the partial result that must throw.
+ * A short read produces a well-formed table describing a smaller England,
+ * which is the partial result that must throw.
  */
 export async function measureFloodCellResolutions(
 	options: MeasureResolutionsOptions

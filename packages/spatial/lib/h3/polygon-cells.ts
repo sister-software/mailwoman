@@ -218,10 +218,10 @@ export function resolutionForFeature(polygons: MultiPolygonRings, target: number
  * Classify one feature's cells, at `targetResolution` or the coarsest resolution its bounding box allows.
  *
  * @param layerLabel Names the layer in every message, so a build log says
- *   which artifact refused rather than only which feature.
+ * which artifact refused rather than only which feature.
  * @throws {Error} When the feature reaches no cell at all.
- *   That cannot happen with overlapping containment on a valid ring, so it means the
- *   geometry is degenerate — and a silently skipped feature is an invented absence.
+ * That cannot happen with overlapping containment on a valid ring, so it means the
+ * geometry is degenerate — and a silently skipped feature is an invented absence.
  */
 export function classifyFeatureCells(
 	polygons: MultiPolygonRings,

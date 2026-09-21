@@ -86,9 +86,9 @@ class SmokeRowError extends Error {
  * Parse + validate a jsonl smoke-row file.
  *
  * @throws A {@link SmokeRowError} naming the 1-based row number
- *   (and echoing the offending line) on any malformed row.
- *   Returns at least one row.
- *   An empty file is an error rather than a vacuous pass.
+ * (and echoing the offending line) on any malformed row.
+ * Returns at least one row.
+ * An empty file is an error rather than a vacuous pass.
  */
 export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 	// The row number is the point of this parser: every error names the 1-based line a human would

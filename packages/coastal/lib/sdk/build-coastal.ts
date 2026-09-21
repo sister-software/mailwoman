@@ -232,8 +232,8 @@ const AREA_TOLERANCE = 0.01
  * Build the layer.
  *
  * @throws {Error} On a value outside the authority's declared domains, a feature that reaches
- *   no cell, a feature count that disagrees with the source's own declaration, an area total
- *   that disagrees with the source's, or a coverage row that would license a negative claim.
+ * no cell, a feature count that disagrees with the source's own declaration, an area total
+ * that disagrees with the source's, or a coverage row that would license a negative claim.
  */
 export async function buildCoastalDatabase(options: BuildCoastalOptions): Promise<BuildCoastalResult> {
 	if (options.coverageResolution >= options.indexResolution) {

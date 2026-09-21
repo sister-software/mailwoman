@@ -298,9 +298,9 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	 * Look up one folded parent surface.
 	 *
 	 * @returns `null` when the parent has no census node — absence is not evidence
-	 *   (the meaning-of-zero rule): a missing node means the gazetteer has no counted
-	 *   children there, which is usually coverage, .
-	 *   Therefore, a consumer must treat `null` as neutral and never as a prohibition.
+	 * (the meaning-of-zero rule): a missing node means the gazetteer has no counted
+	 * children there, which is usually coverage, .
+	 * Therefore, a consumer must treat `null` as neutral and never as a prohibition.
 	 */
 	probe(parent: string): PlacetypeCensusNode | null {
 		return this.#nodes.get(parent) ?? null

@@ -126,7 +126,7 @@ export interface FSTExpectation {
  * trade a freshness guard for a slower test suite and nobody would keep it.
  *
  * @returns `undefined` for a file that is absent, too small, or not an FST at all —
- *   none of which is this function's business to diagnose.
+ * none of which is this function's business to diagnose.
  */
 export async function peekFSTStampFields(path: string): Promise<FSTStampFields | undefined> {
 	if (!(await pathExists(path))) return undefined
@@ -278,8 +278,8 @@ export function fstStaleReason(fields: FSTStampFields | undefined, expected: FST
  * The whole check, for a caller that has a path and a source DB and wants a warning string or nothing.
  *
  * @returns `undefined` when the artifact is current or when it is absent.
- *   An absent artifact is a different problem with a different message,
- *   and every existing caller already reports it in place.
+ * An absent artifact is a different problem with a different message,
+ * and every existing caller already reports it in place.
  */
 export async function fstFreshnessWarning({
 	fstPath,

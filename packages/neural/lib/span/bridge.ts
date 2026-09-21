@@ -70,10 +70,10 @@ function crossesBlockedBoundary(
 /**
  * Merge same-label fragments separated only by punctuation gaps.
  *
- * @returns A new token array where the first fragment of each bridged group is widened to the group's
- *   full char range (so span extraction reads the raw text straight through the punctuation),
- *   and later fragments are dropped.
- *   Labels, ordering, and all non-bridged tokens are untouched.
+ * @returns A new token array where the first fragment of each bridged group is widened to the
+ * group's full char range (so span extraction reads the raw text straight through the punctuation),
+ * and later fragments are dropped.
+ * Labels, ordering, and all non-bridged tokens are untouched.
  */
 export function bridgePunctuationGaps(
 	text: string,

@@ -588,7 +588,7 @@ export async function readPairsFromAdmin(
  * Dropping the row instead costs coverage and teaches nothing false, which is the better of the two.
  *
  * @returns A predicate that answers `true` for everything when the gazetteer is not on disk,
- *   so a checkout without it builds the same rows it did before rather than silently emitting none.
+ * so a checkout without it builds the same rows it did before rather than silently emitting none.
  */
 export async function createKnownLocalityCheck(country: string, adminDB?: string): Promise<(name: string) => boolean> {
 	const path = adminDB ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))

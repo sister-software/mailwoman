@@ -543,9 +543,9 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	 * Look up one prefix.
 	 *
 	 * @returns `null` when the index has no node for it — absence is not evidence.
-	 *   Read the header's `coverageNote` before treating a miss as anything but neutral:
-	 *   for a partial register a miss means unattested, and for a complete one it
-	 *   means the prefix is not in the numbering plan.
+	 * Read the header's `coverageNote` before treating a miss as anything but neutral:
+	 * for a partial register a miss means unattested, and for a complete one it
+	 * means the prefix is not in the numbering plan.
 	 */
 	probe(prefix: string): PostcodePrefixNode | null {
 		return this.#nodes.get(prefix) ?? null

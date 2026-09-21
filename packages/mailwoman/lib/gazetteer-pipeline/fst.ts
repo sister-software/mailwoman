@@ -236,7 +236,7 @@ function surfacesOfLine(line: string): string[] {
  * Load the degenerate-surface exclusion sets from the shipped libpostal dictionaries.
  *
  * @returns Normalized-join keys (`normalizeTokens(surface).join(" ")`)
- *   so they compare exactly against the builder's insertion keys.
+ * so they compare exactly against the builder's insertion keys.
  */
 export async function loadDegenerateSurfaces(
 	languages: readonly string[] = CURATION_LANGUAGES,

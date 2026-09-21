@@ -30,7 +30,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * answers with the Georgia country row rather than renaming it.
  *
  * @returns The row count so the caller can report it.
- *   A zero means ICU supplied nothing, which is a different fact from the pass not having run.
+ * A zero means ICU supplied nothing, which is a different fact from the pass not having run.
  */
 export function stageCountryDisplayNames(ctx: {
 	attrs: Map<number, PlaceAttrs>

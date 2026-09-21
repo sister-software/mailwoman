@@ -208,7 +208,7 @@ const SEC_ALLOWED_HOSTS = new Set(["www.sec.gov", "data.sec.gov", "sec.gov", "ef
  * Reject a URL this client must not send its User-Agent to.
  *
  * @throws A {@linkcode ResourceError} whose URN kind is `request` — never transient,
- *   because re-issuing the identical URL can only fail identically.
+ * because re-issuing the identical URL can only fail identically.
  */
 function assertSECHost(url: URL): void {
 	assertAllowedHost(url, {
@@ -459,7 +459,7 @@ function isCacheableSECBody(value: { data?: { data?: unknown } }): boolean {
  * See the file header for the full rationale.
  *
  * @throws Immediately, before any request is made, when constructed without an
- *   explicit `userAgent` and without `SEC_EDGAR_USER_AGENT` set.
+ * explicit `userAgent` and without `SEC_EDGAR_USER_AGENT` set.
  */
 export function createSECClient(options: CreateSECClientOptions = {}): SECClient {
 	const userAgent = options.userAgent ?? $private.SEC_EDGAR_USER_AGENT

@@ -162,7 +162,7 @@ export interface TabularTable {
  * Read a logical ssurgo table, projecting `wanted` columns.
  *
  * @throws {Error} When the archive declares no file for the table, when a requested column is not in
- *   the shipped dictionary, or when a record is narrower than the position a requested column sits at.
+ * the shipped dictionary, or when a record is narrower than the position a requested column sits at.
  */
 export async function readTable(
 	tabularDirectory: PathBuilderLike,
@@ -280,8 +280,8 @@ export function domainCodes(members: ReadonlyArray<DomainMember>, domain: string
  * Parsing to a date rather than slicing the string is what makes both channels agree.
  *
  * @throws {Error} When the value is not one of those shapes.
- *   A freshness date guessed wrong asks the download host for a file that does not exist,
- *   and the host answers 400 rather than 404, which reads as a bad request rather than a bad date.
+ * A freshness date guessed wrong asks the download host for a file that does not exist,
+ * and the host answers 400 rather than 404, which reads as a bad request rather than a bad date.
  */
 // repo-health-ignore export-name-affix -- parses the survey's M/D/yyyy form; `isoDate` formats a Date and reads none.
 export function saverestToISODate(value: string): string {

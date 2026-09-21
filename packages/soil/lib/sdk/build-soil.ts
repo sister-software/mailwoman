@@ -255,8 +255,8 @@ export interface BuildSoilResult {
  * Build the layer.
  *
  * @throws {Error} On a delineation the classifier refuses, a streamed count that disagrees
- *   with the shapefile's own declaration, an area total that disagrees with the authority's
- *   published acreage, or a set of outlines that yields no interior coverage cell at all.
+ * with the shapefile's own declaration, an area total that disagrees with the authority's
+ * published acreage, or a set of outlines that yields no interior coverage cell at all.
  */
 export async function buildSoilDatabase(options: BuildSoilOptions): Promise<BuildSoilResult> {
 	if (options.coverageResolution >= options.indexResolution) {
@@ -718,8 +718,8 @@ function buildCoverageCells(
  * One outline's polygons, in the `MultiPolygon` coordinate shape, whichever areal type it arrived as.
  *
  * @throws {TypeError} When the outline is not areal.
- *   A survey area whose footprint cannot be read would silently contribute nothing
- *   to the union, and the coverage over it would simply be absent.
+ * A survey area whose footprint cannot be read would silently contribute nothing to
+ * the union, and the coverage over it would simply be absent.
  */
 function outlinePolygons(outline: ParsedGeometry): MultiPolygonRings {
 	const polygons = arealPolygons(outline)

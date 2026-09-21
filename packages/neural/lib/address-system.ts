@@ -71,7 +71,7 @@ export interface DetectedSystem {
  *
  * @param localeLogits The raw `locale_logits` output (LOCALE_COUNTRIES order).
  * @param threshold Minimum softmax probability to act on (default 0.8 — the head's held-out
- *   accuracy is ~0.98, so 0.8 trades a little recall for never masking on a coin flip).
+ * accuracy is ~0.98, so 0.8 trades a little recall for never masking on a coin flip).
  */
 export function detectAddressSystem(
 	localeLogits: readonly number[] | undefined,

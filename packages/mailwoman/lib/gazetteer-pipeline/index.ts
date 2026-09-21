@@ -238,8 +238,9 @@ export interface FoldOptions {
 	geonamesDir?: string
 	/**
 	 * #267: the countries to also fold A-class admin (pcli + ADM1) for, linking the locality→region→country ancestry.
-	 * Zero-coverage gap countries only (the coverage-expansion targets). A country that already has WOF admin would
-	 * double up, so the EU alias set is left off.
+	 * Zero-coverage gap countries only (the coverage-expansion targets).
+	 *
+	 * A country that already has WOF admin would double up, so the EU alias set is left off.
 	 *
 	 * Without it the gap localities are orphans and "Tbilisi, GE" can't resolve.
 	 */
@@ -289,10 +290,10 @@ export interface FoldResult {
  * Build-on-copy — `adminIn` is never touched.
  *
  * #1514: the fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale. The synthetic id is a position in the
- * run, so a partial rewrite binds one run's names to another run's places. Folding a country set narrower than what
- * `adminIn` already carries therefore drops the difference, and since `buildAdmin` bakes the full
- * `DEFAULT_GEONAMES_COUNTRIES` fold into every admin artifact it builds, that is the normal case here rather than an
- * exotic one.
+ * run, so a partial rewrite binds one run's names to another run's places.
+ * Folding a country set narrower than what `adminIn` already carries therefore drops the
+ * difference, and since `buildAdmin` bakes the full `DEFAULT_GEONAMES_COUNTRIES` fold into
+ * every admin artifact it builds, that is the normal case here rather than an exotic one.
  *
  * The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} says otherwise.
  */

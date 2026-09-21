@@ -10,15 +10,18 @@ import type { OxfmtConfig } from "oxfmt"
 
 const config: OxfmtConfig = {
 	...sisterSoftwareOxfmtConfig,
-	jsdoc: {
-		...(sisterSoftwareOxfmtConfig.jsdoc as Record<string, unknown>),
-		// `mailwoman/comment-reflow` decides where a comment breaks, and oxfmt's default `greedy` re-wrapped every
-		// block it touched back to the print width, which is the layout the rule exists to replace.
-		//
-		// `balance` keeps the breaks it is given as long as every line fits, so the two agree instead of taking turns.
-		// Tag canonicalisation, ordering and the blank line before `@returns` still come from here.
-		lineWrappingStyle: "balance",
-	},
+	// `mailwoman/comment-reflow` owns comment layout, and two formatters cannot own it at once.
+	//
+	// `lineWrappingStyle: "balance"` came close: oxfmt kept the breaks it was given
+	// as long as every line in the block fitted.
+	// One line over the print width — an identifier, a URL, a CJK run with nowhere to break —
+	// and it re-filled the whole block greedily, and the rule reported it again on the next run.
+	// A block a rule can never satisfy is a lint error with no fix.
+	//
+	// What this gives up is oxfmt's tag work: canonical aliases, capitalised descriptions,
+	// the blank line before `@returns`.
+	// Nothing reformats those now, so they hold where this branch left them.
+	jsdoc: false,
 }
 
 export default config

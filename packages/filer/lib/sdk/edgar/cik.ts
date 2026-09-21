@@ -30,9 +30,9 @@ export function isCIK(value: unknown): value is CIK {
  * Zero-pads a numeric or string CIK candidate to the canonical 10-digit form and validates it.
  *
  * @returns `null` (never throws) for anything that isn't a non-negative integer fitting
- *   in 10 digits — mirrors {@linkcode toFRN}'s (`frn.ts`) "malformed input is common
- *   rather than exceptional" posture for a value drawn from third-party data
- *   (`company_tickers.json` ships CIKs as bare numbers, e.g. `320193`, never pre-padded).
+ * in 10 digits — mirrors {@linkcode toFRN}'s (`frn.ts`) "malformed input is common
+ * rather than exceptional" posture for a value drawn from third-party data
+ * (`company_tickers.json` ships CIKs as bare numbers, e.g. `320193`, never pre-padded).
  */
 export function toCIK(value: string | number): CIK | null {
 	const raw = typeof value === "number" ? String(value) : value.trim()

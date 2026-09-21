@@ -234,12 +234,12 @@ function pairKey(child: string, parent: string): string {
  * Consumed by {@link PairIndexResolver}.
  *
  * @throws If `entries` contains a duplicate (child, parent) pair (dedupe upstream —
- *   see the file-header note on why this isn't silently resolved here), if a child/parent string
- *   exceeds the u16 length prefix (65,535 UTF-8 bytes — no real place name approaches this),
- *   or if an entry's `tag` / `parentTag` is missing or is not a `ComponentTag`.
- *   The `parentTag` check is not defensive noise: a builder that cannot state its
- *   parent's tag from its source's semantics must fail loudly here rather than have
- *   a plausible-looking default written into a shipped artifact.
+ * see the file-header note on why this isn't silently resolved here), if a child/parent string
+ * exceeds the u16 length prefix (65,535 UTF-8 bytes — no real place name approaches this),
+ * or if an entry's `tag` / `parentTag` is missing or is not a `ComponentTag`.
+ * The `parentTag` check is not defensive noise: a builder that cannot state its
+ * parent's tag from its source's semantics must fail loudly here rather than have a
+ * plausible-looking default written into a shipped artifact.
  */
 export function serializePairIndex(header: PairIndexHeaderInput, entries: readonly PairIndexEntry[]): Uint8Array {
 	if (COMPONENT_TAGS.length > MAX_TAGS_PER_BYTE) {
@@ -447,7 +447,7 @@ export class PairIndexResolver {
 	 * if the index has no entry for it.
 	 *
 	 * @returns Both tags — a caller that only wants the child's reads `.tag`.
-	 *   See {@link PairEdge} for why this is not the bare child tag.
+	 * See {@link PairEdge} for why this is not the bare child tag.
 	 */
 	probe(childFolded: string, parentFolded: string): PairEdge | undefined {
 		return this.#probeMap.get(pairKey(childFolded, parentFolded))

@@ -78,8 +78,8 @@ async function recordedDigests(locale: string): Promise<Record<string, string>> 
  * Link every release locale's artifacts into the data-root overlay.
  *
  * @throws On a digest mismatch.
- *   The one failure that must stop a caller, because it means the recipe and the card disagree about
- *   which model this is, which is the exact condition the 9.0.0 lockstep miss produced.
+ * The one failure that must stop a caller, because it means the recipe and the card disagree
+ * about which model this is, which is the exact condition the 9.0.0 lockstep miss produced.
  */
 export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Promise<LinkWeightsOverlayReport> {
 	const { repoRoot, plan, log } = options

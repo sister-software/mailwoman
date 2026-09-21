@@ -31,8 +31,8 @@ const FINITE =
 /**
  * Words a clause can open a sentence with.
  *
- * `so` and `unlike` are here because a dash in front of either is the same joint under another name, and both read as
- * openers once the dash is a full stop.
+ * `so` and `unlike` are here because a dash in front of either is the same joint under
+ * another name, and both read as openers once the dash is a full stop.
  */
 const OPENERS =
 	/^(?:the|a|an|it|this|that|they|we|you|there|each|every|nothing|nobody|its|their|those|these|both|neither|either|one|most|some|any|no|so|unlike|without|once|when|if|after|before|together|instead|otherwise)\b/i
@@ -54,7 +54,8 @@ const IDENTIFIER = /[._/]|[a-z][A-Z]/
 function openClause(clause: string): string {
 	const [first = ""] = clause.split(/\s+/)
 	if (!/^[a-z]/.test(first)) return clause
-	// `foo`, foo.bar, fooBar and foo_bar are names. Capitalising one would name something that does not exist.
+	// `foo`, foo.bar, fooBar and foo_bar are names.
+	// Capitalising one would name something that does not exist.
 	if (/^[`[(]/.test(first) || IDENTIFIER.test(first)) return clause
 	return first.charAt(0).toUpperCase() + clause.slice(1)
 }
@@ -62,9 +63,9 @@ function openClause(clause: string): string {
 /**
  * Rewrite one sentence whose dash is doing a semicolon's work, or return it as it stands.
  *
- * Every guard here is a reason to leave the sentence alone: a dash inside a code span or a bracket belongs to
- * something else's grammar, a short left half cannot stand as a sentence, and a right half without a finite verb is an
- * apposition rather than a clause.
+ * Every guard here is a reason to leave the sentence alone: a dash inside a code span
+ * or a bracket belongs to something else's grammar, a short left half cannot stand as a
+ * sentence, and a right half without a finite verb is an apposition rather than a clause.
  */
 export function sweepSentence(sentence: string): string {
 	const dashes = sentence.match(/[—–]/g)
@@ -103,8 +104,8 @@ export function sweepSentence(sentence: string): string {
 /**
  * Capitalise a sentence that opens in lower case.
  *
- * Nothing downstream can tell one of these from a clause. The reflow rule needs the capital to see a sentence, and a
- * reader needs it for the same reason.
+ * Nothing downstream can tell one of these from a clause.
+ * The reflow rule needs the capital to see a sentence, and a reader needs it for the same reason.
  */
 function openSentences(text: string): string {
 	return text.replace(/([.!?])(\s+)([a-z][a-z'’-]*)(?=\s|[.,;:)]|$)/g, (whole, stop, gap, word, offset: number) => {
@@ -123,8 +124,9 @@ function sweepParagraph(text: string): string {
 /**
  * Rewrite a run of comment body lines, joining each prose paragraph into one line.
  *
- * A list item owns the indented lines beneath it, so its continuation is folded into the item rather than read as a
- * paragraph of its own. Everything structural passes through untouched.
+ * A list item owns the indented lines beneath it, so its continuation is folded
+ * into the item rather than read as a paragraph of its own.
+ * Everything structural passes through untouched.
  */
 function sweepBody(lines: readonly string[]): string[] {
 	const output: string[] = []
@@ -184,8 +186,9 @@ function sweepBody(lines: readonly string[]): string[] {
 /**
  * Lift a trailing `Returns …` or `Throws …` sentence into the tag that already carries that meaning.
  *
- * A block that already has the tag keeps its prose, since the lift would say it twice. A block whose whole description
- * is that one sentence keeps it too, since the lift would leave the symbol undescribed.
+ * A block that already has the tag keeps its prose, since the lift would say it twice.
+ * A block whose whole description is that one sentence keeps it too,
+ * since the lift would leave the symbol undescribed.
  */
 function liftTagSentence(body: readonly string[], tags: readonly string[]) {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- One comment block, already resident as lines.
@@ -204,8 +207,8 @@ function liftTagSentence(body: readonly string[], tags: readonly string[]) {
 	return {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- The same block, re-split after the join above.
 		body: paragraphs.slice(0, -1).join("\n\n").split("\n"),
-		// The case stays as the sentence had it. oxfmt capitalises tag descriptions itself, and lowering it here only
-		// gave the two something to disagree about.
+		// The case stays as the sentence had it. oxfmt capitalises tag descriptions itself,
+		// and lowering it here only gave the two something to disagree about.
 		tags: [...tags, `@${name} ${rest}`],
 	}
 }
@@ -213,8 +216,9 @@ function liftTagSentence(body: readonly string[], tags: readonly string[]) {
 /**
  * The character ranges a rewrite must not touch: every string, template and regular expression in the file.
  *
- * A generator that emits `// TODO(…)` inside a template literal has comment-shaped text that is not a comment, and
- * rewriting it changes what the program prints. Two such sites in `release-kit` and `registry` are why this exists.
+ * A generator that emits `// TODO(…)` inside a template literal has comment-shaped text
+ * that is not a comment, and rewriting it changes what the program prints.
+ * Two such sites in `release-kit` and `registry` are why this exists.
  * Only a parse tells the two apart.
  */
 function literalSpans(source: string, fileName: string): Array<[number, number]> {
@@ -278,8 +282,8 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 		return [lines[0]!, ...marked, `${indent} */`].join("\n")
 	})
 
-	// The second pass reads the first pass's output, whose rewrites shift offsets, so the spans are taken again from
-	// the text this pass actually sees.
+	// The second pass reads the first pass's output, whose rewrites shift offsets,
+	// so the spans are taken again from the text this pass actually sees.
 	const shifted = literalSpans(blocks, fileName)
 
 	return blocks.replace(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group: string, offset: number) => {

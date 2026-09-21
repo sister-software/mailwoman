@@ -107,7 +107,7 @@ interface Ledger {
  * Append one eval run to the ledger.
  *
  * @returns 0 when appended and 1 when refused.
- *   (duplicate without `replace`, or an un-excepted `fail` verdict), 2 = usage error.
+ * (duplicate without `replace`, or an un-excepted `fail` verdict), 2 = usage error.
  */
 export async function ledgerAppend(options: LedgerAppendOptions): Promise<number> {
 	const card = options.card ?? "packages/neural-weights-en-us/model-card.json"

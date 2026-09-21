@@ -31,12 +31,11 @@ import { canonicalizeOrganizationName } from "@mailwoman/record"
  * and that separation should hold for family membership too rather than just for the edge kind).
  *
  * @returns `null` when the name canonicalizes to an empty string
- *   (rare — e.g. a bare legal-designation token with nothing else surviving) —
- *   the same defensive check `cluster-filers.ts`'s `buildInferredRecords` makes
- *   before using a canonical name as a blocking key: an empty canonical string can
- *   never usefully identify a family, so the caller skips emitting a family row for it
- *   (`build/family-membership.ts`'s `insertFamilyMembership`) or skips attributing a
- *   display name to it (`filer-lookup.ts`'s `readFamilyDisplayNames`).
+ * (rare — e.g. a bare legal-designation token with nothing else surviving) — the same defensive
+ * check `cluster-filers.ts`'s `buildInferredRecords` makes before using a canonical name as a
+ * blocking key: an empty canonical string can never usefully identify a family, so the caller
+ * skips emitting a family row for it (`build/family-membership.ts`'s `insertFamilyMembership`)
+ * or skips attributing a display name to it (`filer-lookup.ts`'s `readFamilyDisplayNames`).
  */
 export function mintFamilyID(identifierType: string, name: string): string | null {
 	const organization = canonicalizeOrganizationName(name)

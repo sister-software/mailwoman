@@ -185,9 +185,9 @@ export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR
  * The replay index for one arm of a stored run, keyed by row id.
  *
  * @throws When that arm was not recorded.
- *   Naming what was recorded is the useful half of the error: the common mistake is asking
- *   for `mailwoman` on a run whose two arms were `mailwoman` and `photon` under different
- *   labels, and a bare "not found" sends the caller looking for the wrong thing.
+ * Naming what was recorded is the useful half of the error: the common mistake is asking for
+ * `mailwoman` on a run whose two arms were `mailwoman` and `photon` under different labels,
+ * and a bare "not found" sends the caller looking for the wrong thing.
  */
 export function replayIndex(run: StoredRun, arm: string): Map<string, RecordedAnswer> {
 	const answers = run.answers?.[arm]

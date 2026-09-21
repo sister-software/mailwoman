@@ -184,7 +184,7 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	 * A hard-coded URL survives a republish by pointing at a file that is no longer the product.
 	 *
 	 * @throws {Error} When the entry names a different dataset, carries no `revision`
-	 *   reference date, or names a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
+	 * reference date, or names a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<CoastalCatalogueRecord> {
 		return readCKANPackageRecord(this, {

@@ -63,7 +63,7 @@ export interface AncestorPlaceRow {
  * The ancestor lineage of `id` — self excluded, nearest-first.
  *
  * @returns `[]` when the place has no recorded ancestry.
- *   Not memoized here; `WOFSQLitePlaceLookup` keeps its own per-id cache.
+ * Not memoized here; `WOFSQLitePlaceLookup` keeps its own per-id cache.
  */
 export function ancestorLineage<DB>(db: DatabaseClient<DB>, id: number, schemaName = "main"): AncestorPlaceRow[] {
 	const rows = allRows<AncestorPlaceRow>(

@@ -95,7 +95,7 @@ interface OurAirportsManifest {
  * Read the upstream `Last-Modified` with a head.
  *
  * @returns `null` on any failure — provenance metadata is nice to have
- *   and must never fail a download that otherwise succeeded.
+ * and must never fail a download that otherwise succeeded.
  */
 async function readLastModified(url: string): Promise<string | null> {
 	try {

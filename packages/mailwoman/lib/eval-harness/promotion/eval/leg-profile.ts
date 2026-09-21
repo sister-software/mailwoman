@@ -41,8 +41,8 @@ export class LegProfile implements AsyncDisposable {
 
 	/**
 	 * @param path Where to write the ledger.
-	 *   An empty path writes nothing, which is the default for every run that did not ask to be profiled.
-	 *   A non-empty one must sit outside the battery's output directory — see the file header.
+	 * An empty path writes nothing, which is the default for every run that did not ask to be profiled.
+	 * A non-empty one must sit outside the battery's output directory — see the file header.
 	 */
 	constructor(path: string) {
 		this.#path = path

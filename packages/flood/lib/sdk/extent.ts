@@ -146,9 +146,9 @@ export function outlineFromGeoJSON(document: unknown, origin: string): ParsedGeo
  * Turn an outline plus a coverage statement into a footprint.
  *
  * @throws {Error} When the outline yields no interior cell at `coverageResolution`.
- *   That is not an empty country: it means the resolution is coarser than the outline,
- *   and a zero-cell footprint would silently write no coverage rows — an artifact that
- *   answers "unknown" everywhere while reporting a successful build.
+ * That is not an empty country: it means the resolution is coarser than the outline,
+ * and a zero-cell footprint would silently write no coverage rows — an artifact that
+ * answers "unknown" everywhere while reporting a successful build.
  */
 export function realizeFloodMapExtent(options: RealizeExtentOptions): FloodMapExtent {
 	const coverageCells = interiorCoverageCellSet(options.geometry, options.coverageResolution)

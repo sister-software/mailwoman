@@ -31,7 +31,7 @@ export type RecipeEditResult =
  * Locate a list's entries by name.
  *
  * @returns The source offsets of the array body so a caller can splice inside it without touching
- *   anything else in the file — including the docstring above the list, which every one of them carries.
+ * anything else in the file — including the docstring above the list, which every one of them carries.
  */
 function listBody(source: string, listName: string): { start: number; end: number } | undefined {
 	const header = new RegExp(`export const ${listName}\\s*=\\s*\\[`, "u").exec(source)

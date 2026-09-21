@@ -46,7 +46,7 @@ export function sourcePresentCoverageCells(observed: ReadonlyMap<number, number>
  * with the absent row an out-of-footprint cell has.
  *
  * @param options.include Narrows the footprint where a product excludes some cells — which cells,
- *   and what their exclusion means, is the product's own rule and stays at its call site.
+ * and what their exclusion means, is the product's own rule and stays at its call site.
  */
 export function designatedCoverageCells(
 	cells: Iterable<number>,

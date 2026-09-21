@@ -172,7 +172,7 @@ interface RawFeature {
  * polygons are written to the wrong side of the planet.
  *
  * @throws {Error} When ogr2ogr fails, when a feature carries no geometry or no zone value,
- *   or when a reprojected vertex falls outside the declared extent.
+ * or when a reprojected vertex falls outside the declared extent.
  */
 export async function* readFloodSourceFeatures(options: FloodIngestOptions): AsyncGenerator<FloodSourceFeature> {
 	const layer = options.layer ?? EA_FLOOD_LAYER

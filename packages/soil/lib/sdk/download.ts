@@ -116,7 +116,7 @@ export interface SurveyAreaArchive {
  * The same discipline the database build uses, for the same reason.
  *
  * @throws {Error} When the host answers anything but 200, or when the extracted tree
- *   does not hold the two directories every survey area publishes.
+ * does not hold the two directories every survey area publishes.
  */
 export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Promise<SurveyAreaArchive> {
 	const vintageDirectory = join(options.cacheRoot, options.versionDate)

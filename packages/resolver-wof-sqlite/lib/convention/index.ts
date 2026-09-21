@@ -98,7 +98,7 @@ export const ADDRESS_CONVENTION_TABLE = "address_convention"
  * A named resolution primitive.
  *
  * @returns `null` to abstain (condition unmet / no data) → the dispatcher tries the next strategy.
- *   Returns an array (possibly empty) to claim the result.
+ * Returns an array (possibly empty) to claim the result.
  */
 export type Strategy = (query: FindPlaceQuery, convention: ResolvedConvention) => Promise<PlaceCandidate[] | null>
 

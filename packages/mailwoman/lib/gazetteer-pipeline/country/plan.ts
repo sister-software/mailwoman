@@ -78,8 +78,8 @@ export function censusForCountry(adminDBPath: string, country: string): SourceCe
  * The source serving a country today, or `undefined` when it has no rows at all.
  *
  * @returns The largest contributor when several are present, because that is the
- *   one a move is actually moving away from — and names the rest, so a two-source
- *   country reads as two-source rather than as its winner.
+ * one a move is actually moving away from — and names the rest, so a two-source
+ * country reads as two-source rather than as its winner.
  */
 export function servingSources(census: SourceCensus): AdminSource[] {
 	return (

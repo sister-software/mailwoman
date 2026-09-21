@@ -51,8 +51,8 @@ export interface OpenAPIDocInfo {
  * without them, and every manifest here carries all three.
  *
  * @param base The caller's `import.meta.url`.
- *   The package resolves through the graph of the workspace that declares it, which is what
- *   `resolve-from` exists for. resolving from here would answer through `@mailwoman/api-kit`'s instead.
+ * The package resolves through the graph of the workspace that declares it, which is what
+ * `resolve-from` exists for. resolving from here would answer through `@mailwoman/api-kit`'s instead.
  */
 export async function readServedDocumentInfo(
 	base: string,

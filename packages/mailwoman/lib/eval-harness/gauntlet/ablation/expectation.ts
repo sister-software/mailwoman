@@ -446,7 +446,7 @@ export type AblationExpectOverride = Record<string, string>
  * Resolve a hand-pin against a ladder.
  *
  * @returns `null` when the pin names a rung this ladder does not have.
- *   A pin that cannot be honoured must not silently fall back to the derived answer under the pin's name.
+ * A pin that cannot be honoured must not silently fall back to the derived answer under the pin's name.
  */
 export function overrideToExpectedRung(pin: string, ladder: AblationLadder): ExpectedRung | null {
 	if (pin === ABSTAIN_RUNG) return { kind: ABSTAIN_RUNG, why: "per-case override" }

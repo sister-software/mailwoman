@@ -235,8 +235,8 @@ const UK_COUNTRY_WOF_NAME: Record<UkCountryCode, string> = {
  * itself plus the four constituent countries.
  *
  * @throws When one is missing.
- *   A build that silently dropped an ancestor would ship nodes asserting less than the source
- *   supports, and nothing downstream could tell that from a prefix that genuinely asserts nothing.
+ * A build that silently dropped an ancestor would ship nodes asserting less than the source supports,
+ * and nothing downstream could tell that from a prefix that genuinely asserts nothing.
  */
 function resolveGBAncestry(adminPath: string): {
 	country: PostcodePrefixAncestor

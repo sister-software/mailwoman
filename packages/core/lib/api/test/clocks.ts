@@ -198,8 +198,8 @@ export class VirtualClock implements ClockLike {
 	 * If none is, yield and look again.
 	 *
 	 * @throws Rather than hanging when the work neither settles nor schedules anything
-	 *   for {@linkcode IDLE_BUDGET_MS} of real time — a diagnosable failure beats a
-	 *   test-timeout stack trace pointing at the `it()`.
+	 * for {@linkcode IDLE_BUDGET_MS} of real time — a diagnosable failure beats a
+	 * test-timeout stack trace pointing at the `it()`.
 	 */
 	public async runUntilSettled<T>(work: Promise<T>): Promise<T> {
 		let settled = false

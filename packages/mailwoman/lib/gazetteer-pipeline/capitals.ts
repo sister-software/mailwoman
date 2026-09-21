@@ -197,8 +197,8 @@ export interface BuildCapitalsResult {
  * against the catalog's own capital names, and write the reference.
  *
  * @throws When `countryInfo.txt` is absent.
- *   Without the catalog there is no denominator, and a reference built from "whatever
- *   files exist" cannot state what it failed to cover.
+ * Without the catalog there is no denominator, and a reference built from "whatever
+ * files exist" cannot state what it failed to cover.
  */
 export async function buildCapitalsReference(options: BuildCapitalsOptions): Promise<BuildCapitalsResult> {
 	const countryInfoPath = join(options.geonamesDir, "countryInfo.txt")

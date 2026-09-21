@@ -70,8 +70,8 @@ function within(node: AddressNode, start: number, end: number): boolean {
  * postcode node and every node inside it is a street/house-number-family misread.
  *
  * @returns `true` when a repair was applied.
- *   Idempotent: a tree that already carries a postcode node over the span never repairs,
- *   so the alternate-register retry path cannot double-fire.
+ * Idempotent: a tree that already carries a postcode node over the span never repairs,
+ * so the alternate-register retry path cannot double-fire.
  */
 export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape): boolean {
 	let repaired = false

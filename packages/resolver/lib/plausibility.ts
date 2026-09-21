@@ -72,7 +72,7 @@ export interface ResolvedCoordinate {
  * the node carrying a resolver-supplied coordinate at the deepest granularity tier.
  *
  * @returns `null` when nothing resolved (no node carries a `lat`/`lon`).
- *   Ties break toward the first node in document order.
+ * Ties break toward the first node in document order.
  */
 export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate | null {
 	let best: ResolvedCoordinate | null = null

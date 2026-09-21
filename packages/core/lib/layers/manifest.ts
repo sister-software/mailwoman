@@ -238,7 +238,7 @@ export function toLayerManifest(row: Record<string, string | number | null>): La
  * @param rows Every row of `layer_manifest`.
  * @param context Names the caller in every refusal.
  * @throws {Error} When the table does not hold exactly one row, when the layer is not
- *   `expectedName`, or when the manifest's invariants do not hold.
+ * `expectedName`, or when the manifest's invariants do not hold.
  */
 export function parseManifestRows(
 	rows: ReadonlyArray<Record<string, string | number | null>>,

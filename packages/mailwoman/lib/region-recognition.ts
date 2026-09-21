@@ -91,9 +91,9 @@ const STATE_SLUGS = new Set(Object.values(STATE_NAME_TO_SLUG))
  * Is `value` exactly a US state — its full name (e.g. "Texas") or 2-letter abbreviation (e.g. "TX")?
  *
  * @returns The canonical 2-letter slug, else null.
- *   Whitespace/case-insensitive.
- *   Rejects anything with extra tokens (so a city literally named after a state
- *   is only matched when it's the whole value).
+ * Whitespace/case-insensitive.
+ * Rejects anything with extra tokens (so a city literally named after a state
+ * is only matched when it's the whole value).
  */
 export function usStateSlug(value: string): string | null {
 	const v = value.trim().toLowerCase()

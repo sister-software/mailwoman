@@ -148,7 +148,7 @@ function buildStreetName(random: () => number): string {
  * Synthesize one US intersection row.
  *
  * @returns Null on the rare degenerate case where the two streets collide
- *   (so alignment never has two identical surface forms to disambiguate).
+ * (so alignment never has two identical surface forms to disambiguate).
  */
 export function synthesizeIntersectionRow(
 	base: IntersectionBaseTuple,

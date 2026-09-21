@@ -295,9 +295,8 @@ export function canonicalizeHardCase(c: HardCase): HardCase {
  * Order is defined (by `id`, ascending), so a hand-appended row cannot change what
  * the board is — only what a text diff looks like.
  *
- * @throws On the first invalid row with its 1-based line number: a board that
- *   silently drops a malformed row would under-report its own size, and the arm
- *   comparison would be run on a set nobody declared.
+ * @throws On the first invalid row with its 1-based line number: a board that silently drops a malformed
+ * row would under-report its own size, and the arm comparison would be run on a set nobody declared.
  */
 export async function loadHardCaseBoard(path: string = HARD_CASE_BOARD_PATH): Promise<HardCase[]> {
 	const cases: HardCase[] = []

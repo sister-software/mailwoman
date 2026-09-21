@@ -150,7 +150,8 @@ export interface ClassifyStageResult {
  * and the staged `onStage` progress ticks.
  *
  * #1278: this is the single point the locale-check pre-parse plugs into. A future per-parse country / conventions hint
- * is threaded through {@link ClassifyStageDeps} into the `runPipeline` call here — one insertion point for both paths.
+ * is threaded through {@link ClassifyStageDeps} into the `runPipeline` call here —
+ * one insertion point for both paths.
  */
 /**
  * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278),

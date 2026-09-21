@@ -71,8 +71,8 @@ export interface ReconciliationResult {
  * Bucket an entity from the source labels its records span.
  *
  * @returns `null` when the entity carries no eligibility- or funding-tagged source
- *   (it is outside this reconciliation — e.g. a source the caller didn't assign a role)
- *   so callers can exclude it rather than silently miscount it.
+ * (it is outside this reconciliation — e.g. a source the caller didn't assign a role)
+ * so callers can exclude it rather than silently miscount it.
  */
 export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): ReconciliationBucket | null {
 	const elig = new Set(config.eligibilitySources)

@@ -112,9 +112,9 @@ export const FSA_LETTER_TO_PROVINCE: Record<string, CanadianProvinceCode | Canad
 /**
  * The province/territory a postcode belongs to, via its FSA first letter.
  *
- * @returns The single code for the clean letters, the `["NT", "NU"]` pair for
- *   the shared `X`, and null if the input is not a valid Canadian postcode
- *   (or its first letter has no province, which the pattern already forbids).
+ * @returns The single code for the clean letters, the `["NT", "NU"]` pair
+ * for the shared `X`, and null if the input is not a valid Canadian postcode
+ * (or its first letter has no province, which the pattern already forbids).
  */
 export function provinceOfPostalCode(postalCode: unknown): CanadianProvinceCode | CanadianProvinceCode[] | null {
 	const normalized = normalizeCaPostalCode(postalCode)

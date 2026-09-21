@@ -160,9 +160,9 @@ export interface DeclaredAmbiguityOpts {
  * answer for that name is not decisive.
  *
  * @returns `null` — not an empty marker — when the query was not a bare toponym,
- *   when nothing resolved, or when the margin cleared the threshold.
- *   A magnitude never carries its own absence, and "we checked and it was decisive" is
- *   represented by the caller's marker array simply not gaining an entry.
+ * when nothing resolved, or when the margin cleared the threshold.
+ * A magnitude never carries its own absence, and "we checked and it was decisive" is
+ * represented by the caller's marker array simply not gaining an entry.
  */
 export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryIntentMarker | null {
 	if (!opts.kinds.includes("bare_toponym")) return null
@@ -288,8 +288,7 @@ export interface CoarserAnswerOpts {
  * and the response carried no field distinguishing it from a correct answer to `Athens, GA`.
  *
  * @returns `null` — never an empty marker — when nothing finer was asked for and when the tier met the ask.
- *   "We checked and the answer was as fine as the question" is the caller's
- *   marker array not gaining an entry.
+ * "We checked and the answer was as fine as the question" is the caller's marker array not gaining an entry.
  */
 export function coarserAnswerMarker(opts: CoarserAnswerOpts): QueryIntentMarker | null {
 	// `venue` and `plus_code` rank as house-grade in `tierRank`, so an entity answer

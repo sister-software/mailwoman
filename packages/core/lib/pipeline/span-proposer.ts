@@ -256,7 +256,7 @@ function tokenize(text: string): RawToken[] {
  * Find balanced pairs for one open/close class.
  *
  * @returns Null when any delimiter of the class is unbalanced (stray opener or closer) —
- *   the caller emits nothing for the class.
+ * the caller emits nothing for the class.
  */
 function findBalancedPairs(text: string, open: string, close: string): Array<{ open: number; close: number }> | null {
 	const stack: number[] = []

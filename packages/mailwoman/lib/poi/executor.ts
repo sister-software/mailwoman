@@ -64,8 +64,9 @@ export interface POIExecutorOpts {
 	 *
 	 * Absent = no reverse geocoder wired (missing admin gazetteer db, or `poiQueryKind: true` with no `poiDatabasePath`)
 	 * — results carry no `ancestry` key at all (house meaning-of-zero: absence rather than an empty array).
-	 * `runtime-pipeline.ts` wires a `WOFReverseGeocoder`-backed sync adapter. This module never imports
-	 * `@mailwoman/resolver-wof-sqlite` itself — stays pure/testable with a stub fn.
+	 * `runtime-pipeline.ts` wires a `WOFReverseGeocoder`-backed sync adapter.
+	 *
+	 * This module never imports `@mailwoman/resolver-wof-sqlite` itself — stays pure/testable with a stub fn.
 	 */
 	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined
 }

@@ -113,7 +113,7 @@ const CORES_ALLOWED_HOSTS = new Set(["apps.fcc.gov"])
  * Reject a URL this client must not send.
  *
  * @throws A {@linkcode ResourceError} whose URN kind is `request` — never transient,
- *   since re-issuing the identical URL fails identically.
+ * since re-issuing the identical URL fails identically.
  */
 function assertCORESHost(url: URL): void {
 	assertAllowedHost(url, {

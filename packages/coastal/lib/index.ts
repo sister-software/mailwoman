@@ -348,8 +348,8 @@ export class CoastalErosionLookup implements Disposable {
 	 * What the authority's map assigns at this coordinate, under one named scenario.
 	 *
 	 * @throws {Error} When `scenarioKey` names no scenario this layer holds.
-	 *   Returning an empty reading instead would make a typo indistinguishable
-	 *   from a coast the authority has not mapped.
+	 * Returning an empty reading instead would make a typo indistinguishable from
+	 * a coast the authority has not mapped.
 	 */
 	public lookup(latitude: number, longitude: number, scenarioKey: string): CoastalErosionReading {
 		const scenario = NCERM_SCENARIOS_BY_KEY.get(scenarioKey)

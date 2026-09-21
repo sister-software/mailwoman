@@ -89,7 +89,7 @@ const npmWrite = $({ stdio: ["inherit", "inherit", "pipe"] })
  * discards sequences that applications emit — the copy appears to work and nothing arrives.
  *
  * @returns Whether the sequence was written.
- *   The terminal on the other end may still ignore it, which is not detectable from here.
+ * The terminal on the other end may still ignore it, which is not detectable from here.
  */
 function copyToTerminalClipboard(text: string): boolean {
 	if (!process.stdout.isTTY) return false

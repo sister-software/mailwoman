@@ -269,8 +269,8 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
  * triage lesson recorded at the eval's own call site.
  *
  * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that is under-staged.
- *   the two need different fixes and one message for both sends the reader to the wrong place.
- *   `paths` is empty when well-formed.
+ * the two need different fixes and one message for both sends the reader to the wrong place.
+ * `paths` is empty when well-formed.
  */
 export async function missingWeightsCacheArtifacts(
 	cacheRoot: PathBuilderLike,

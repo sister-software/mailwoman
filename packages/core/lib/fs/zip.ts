@@ -356,7 +356,7 @@ export async function extractZipEntries(
  * @category Files
  *
  * @returns The number of members checked. @throws If the archive is unreadable,
- *   or any member's checksum or length disagrees with its header.
+ * or any member's checksum or length disagrees with its header.
  */
 export async function verifyZipIntegrity(archivePath: PathBuilderLike): Promise<number> {
 	await using archive = await openStreamingArchive(archivePath)

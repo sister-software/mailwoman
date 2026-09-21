@@ -62,7 +62,7 @@ export interface AcquiredRegion {
  * Acquire every survey area a prefix names, and turn them into builder inputs.
  *
  * @throws {Error} When the catalogue holds nothing for the prefix, when `only` names a symbol
- *   the catalogue does not carry, or when any area's archive, metadata or shapefile refuses.
+ * the catalogue does not carry, or when any area's archive, metadata or shapefile refuses.
  */
 export async function acquireRegion(options: AcquireRegionOptions): Promise<AcquiredRegion> {
 	const catalog = await options.client.readSurveyAreaCatalog(options.prefix)

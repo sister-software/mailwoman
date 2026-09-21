@@ -378,10 +378,10 @@ async function countriesHolding(
  * Is the (postcode, locality) pair geographically consistent in `country`?
  *
  * @returns The winning pair and its distance, or `null` when the postcode does not resolve
- *   there, no same-named locality exists there, or the nearest one is outside the check.
- *   Costs one postcode lookup plus (only if that hit) one locality lookup —
- *   or just the locality lookup when the caller already knows the country's postcode
- *   row (`knownPostcodePlace`, from the exhaustive unscoped probe).
+ * there, no same-named locality exists there, or the nearest one is outside the check.
+ * Costs one postcode lookup plus (only if that hit) one locality lookup —
+ * or just the locality lookup when the caller already knows the country's postcode
+ * row (`knownPostcodePlace`, from the exhaustive unscoped probe).
  */
 async function coherenceIn(
 	country: string,

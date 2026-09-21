@@ -215,7 +215,7 @@ function localeFromFilename(file: string): string {
  * Recursively unwrap a literal object expression like `{ street: ["Main St"] }` into a plain JS object.
  *
  * @returns `null` for anything that isn't a literal-of-literals (we intentionally don't
- *   try to evaluate variables or computed properties — none of the test files use those).
+ * try to evaluate variables or computed properties — none of the test files use those).
  */
 function objectLiteralToRecord(node: ts.ObjectLiteralExpression): ClassificationRecord | null {
 	const out: Record<string, string[]> = {}

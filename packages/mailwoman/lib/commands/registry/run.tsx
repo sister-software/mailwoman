@@ -346,7 +346,7 @@ export async function loadSources(option: string): Promise<MultiSourceSpec[]> {
  * returning the lines to append to the run summary.
  *
  * @returns `null` when neither is set — the signal to dump GeoJSON to stdout (the original default).
- *   Shared by both pipeline paths.
+ * Shared by both pipeline paths.
  */
 async function writeOutputs(
 	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,

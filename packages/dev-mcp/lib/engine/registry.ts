@@ -242,8 +242,8 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
  * Runs before the session build, so a bad path costs a `stat` rather than the ~1.4 s construction.
  *
  * @throws When the root is wrong-shaped (no binaries) or under-staged
- *   (binaries present, but siblings its own card declares are missing — the #1516 shape,
- *   which degrades a channel silently and reads as a model regression).
+ * (binaries present, but siblings its own card declares are missing — the #1516 shape,
+ * which degrades a channel silently and reads as a model regression).
  */
 export async function assertWeightsCacheStaged(cacheRoot: string, locale = "en-us"): Promise<void> {
 	const { kind, paths } = await missingWeightsCacheArtifacts(cacheRoot, locale)
@@ -393,8 +393,8 @@ export class EngineRegistry implements EngineRegistryLike {
 	 * Get or build the engine for a configuration.
 	 *
 	 * @throws When a resident engine was built against different source.
-	 *   The refusal is the honest answer: Node cannot evict an imported module, so "reloaded" would
-	 *   be a lie and serving the old code silently is the failure this whole surface exists to prevent.
+	 * The refusal is the honest answer: Node cannot evict an imported module, so "reloaded" would be a
+	 * lie and serving the old code silently is the failure this whole surface exists to prevent.
 	 */
 	async acquire(config: EngineConfig): Promise<Engine> {
 		const current = await this.fingerprint()

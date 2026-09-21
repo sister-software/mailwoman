@@ -630,7 +630,7 @@ export function readUnresolvedColumn(value: string | undefined, column: string, 
  * Run `yarn format` over the result, as the sub-venue lexicon's build does.
  *
  * @throws When an input row carries a vocabulary this build has no mapping for, when a declared
- *   rewrite never fires, or when the finished register fails {@linkcode auditAddressSourceRegister}.
+ * rewrite never fires, or when the finished register fails {@linkcode auditAddressSourceRegister}.
  */
 /**
  * The shape `license-decisions.json` carries: licence id to the decision minus its own id.

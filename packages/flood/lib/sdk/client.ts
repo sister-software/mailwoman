@@ -105,7 +105,7 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	 * a hard-coded URL survives a republish by pointing at a file that is no longer the product.
 	 *
 	 * @throws {Error} When the entry names a different dataset, carries no `revision`
-	 *   reference date, or names a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
+	 * reference date, or names a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<FloodCatalogueRecord> {
 		return readCKANPackageRecord(this, {
@@ -205,8 +205,8 @@ export class ONSBoundaryClient extends APIClient<APIClientConfig> {
 	 * One country's outline as a GeoJSON geometry, in WGS84.
 	 *
 	 * @throws {Error} When the service returns no feature for `countryName`, or more than one.
-	 *   A country matched twice is a product whose name column changed meaning,
-	 *   and picking the first would silently choose an outline.
+	 * A country matched twice is a product whose name column changed meaning,
+	 * and picking the first would silently choose an outline.
 	 */
 	public async readCountryGeometry(countryName: string): Promise<{
 		geometry: { type: string; coordinates: unknown }

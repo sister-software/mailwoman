@@ -15,7 +15,7 @@ import type { Plugin } from "vite"
 
 /**
  * @param destDir The directory to stage into, relative to Vite's root
- *   (the package directory), e.g. `public/sqljs`.
+ * (the package directory), e.g. `public/sqljs`.
  */
 export function stageSQLJSPlugin(destDir: PathBuilderLike): Plugin {
 	let root = ""

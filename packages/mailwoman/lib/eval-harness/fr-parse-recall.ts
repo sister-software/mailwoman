@@ -79,8 +79,8 @@ const MAX_REPORTED_FAILURES = 12
  * where `copy-weights.ts` has run.
  *
  * @throws With every path it tried rather than returning a default.
- *   A missing anchor lexicon changes the parse, so a silent fallback here would
- *   produce a well-formed wrong floor reading.
+ * A missing anchor lexicon changes the parse, so a silent fallback here would
+ * produce a well-formed wrong floor reading.
  */
 async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<string> {
 	const candidates = [

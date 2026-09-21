@@ -109,9 +109,8 @@ export function tieredCountries(scope: ScopeConfig): Set<string> {
  * The training config the register names for one weights family.
  *
  * @throws When the family has no entry.
- *   A family whose config nobody recorded is a family whose admission numbers
- *   cannot be produced, and answering with another family's config would report
- *   one graph's admissions under another graph's name.
+ * A family whose config nobody recorded is a family whose admission numbers cannot be produced, and
+ * answering with another family's config would report one graph's admissions under another graph's name.
  */
 export function shippedTrainingConfig(scope: ScopeConfig, family: string): ShippedTrainingConfig {
 	const entry = scope.trainingConfigs?.[family]

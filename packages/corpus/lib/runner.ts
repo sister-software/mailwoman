@@ -136,8 +136,8 @@ export interface AdapterRunManifest {
  * Returns the manifest describing the run.
  * Writes `canonical.jsonl` + `manifest.json` under `outputDir/<adapter.id>/`.
  *
- * @throws If the output directory cannot be created, if a row arrives with a missing
- *   required field, or if the abort signal fires.
+ * @throws If the output directory cannot be created, if a row arrives with a
+ * missing required field, or if the abort signal fires.
  */
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
 	const { adapter, adapterOptions, outputDir, corpusVersion } = opts

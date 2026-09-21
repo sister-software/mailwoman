@@ -339,7 +339,7 @@ interface RawFeature {
  * polygons are written to the wrong side of the planet.
  *
  * @throws {Error} When ogr2ogr fails, when a feature carries no geometry, or
- *   when a reprojected vertex falls outside the declared extent.
+ * when a reprojected vertex falls outside the declared extent.
  */
 async function* streamLayer(
 	sql: string,

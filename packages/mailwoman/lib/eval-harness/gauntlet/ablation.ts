@@ -395,8 +395,8 @@ function timestampDir(now: Date): string {
  * Run the ablation layer over the curated corpus.
  *
  * @returns `pass` — which reports only whether the instrument ran (at least one measured cell).
- *   A map is not a check.
- *   Nothing here can fail a ship.
+ * A map is not a check.
+ * Nothing here can fail a ship.
  */
 export async function runAblationLayer(
 	options: AblationLayerOptions = {}

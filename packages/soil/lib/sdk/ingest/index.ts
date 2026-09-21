@@ -129,7 +129,7 @@ export interface SoilIngestOptions {
  * Read what the shapefile declares about itself, and refuse a projection this ingest was not written for.
  *
  * @throws {Error} When the layer is missing, declares no epsg authority code,
- *   declares one other than `expectEPSG`, or reports no feature count.
+ * declares one other than `expectEPSG`, or reports no feature count.
  */
 export async function readSoilSourceIdentity(options: SoilIngestOptions): Promise<SoilSourceIdentity> {
 	const identity = await readOGRLayerIdentity({
@@ -179,7 +179,7 @@ interface RawFeature {
  * numbers in a plausible range — and shows up here immediately.
  *
  * @throws {Error} When ogr2ogr fails, when a feature carries no geometry or no `mukey`,
- *   or when a vertex falls outside the declared extent.
+ * or when a vertex falls outside the declared extent.
  */
 export async function* readSoilDelineations(
 	options: SoilIngestOptions & { bbox: readonly [number, number, number, number] }

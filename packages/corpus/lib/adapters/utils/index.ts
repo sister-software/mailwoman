@@ -180,11 +180,11 @@ export interface SplitStreetLine {
  * numbering. Hawaii uses it island-wide — `"47-470 Hui Aeko Place"`).
  *
  * @returns `null` for blank input.
- *   Anything that does not match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC 1"`)
- *   becomes a single `street` value rather than being mangled — the model sees the
- *   original surface form and downstream classifiers pick it up.
- *   Callers that need those forms recognized as something other than a street
- *   (see `usgov-irs-bmf`) test for them before calling this.
+ * Anything that does not match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC 1"`)
+ * becomes a single `street` value rather than being mangled — the model sees the
+ * original surface form and downstream classifiers pick it up.
+ * Callers that need those forms recognized as something other than a street
+ * (see `usgov-irs-bmf`) test for them before calling this.
  */
 export function splitStreetLine(line: string): SplitStreetLine | null {
 	const trimmed = line.trim()

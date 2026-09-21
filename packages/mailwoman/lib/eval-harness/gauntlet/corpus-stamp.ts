@@ -113,8 +113,8 @@ export async function readCorpusStamp(kdb: DatabaseClient<GauntletDatabase>): Pr
  *
  * @param kdb An open handle on the built DB.
  * @param liveRows The corpus as committed.
- *   Injectable so a test can pose "state B" without touching the repo's own `cases/`;
- *   the default reads the real corpus, which is what every caller in the product wants.
+ * Injectable so a test can pose "state B" without touching the repo's own `cases/`;
+ * the default reads the real corpus, which is what every caller in the product wants.
  */
 export async function assertCorpusStampFresh(
 	kdb: DatabaseClient<GauntletDatabase>,

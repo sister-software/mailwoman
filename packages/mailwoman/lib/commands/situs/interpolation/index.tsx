@@ -392,7 +392,7 @@ interface DatabaseBuildResult {
  * Build one state's interpolation database DB.
  *
  * @returns Wall-clock ms + segment count from the script's stdout, or `null`
- *   when the database already exists and `--force` was not passed.
+ * when the database already exists and `--force` was not passed.
  */
 async function buildStateDatabase(
 	stateAbbr: string,

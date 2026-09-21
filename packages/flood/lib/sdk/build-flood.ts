@@ -199,7 +199,7 @@ export interface BuildFloodResult {
  * Build the layer.
  *
  * @throws {Error} On an unknown zone code, a feature that reaches no cell, a feature count that
- *   disagrees with the source's own declaration, or an area total that disagrees with the source's.
+ * disagrees with the source's own declaration, or an area total that disagrees with the source's.
  */
 export async function buildFloodDatabase(options: BuildFloodOptions): Promise<BuildFloodResult> {
 	if (options.coverageResolution >= options.indexResolution) {

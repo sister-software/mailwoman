@@ -74,7 +74,7 @@ export interface DecodedRings {
  * Pack a GeoJSON `MultiPolygon`/`Polygon` coordinate tree into the stored blob.
  *
  * @throws {RangeError} When the geometry carries no ring, or a ring carries fewer than four positions
- *   (a linear ring is closed, so three is the minimum distinct-vertex count plus the repeat).
+ * (a linear ring is closed, so three is the minimum distinct-vertex count plus the repeat).
  */
 export function encodeRings(polygons: MultiPolygonRings): Uint8Array {
 	const entries: Array<{ pointCount: number; polygonIndex: number }> = []
@@ -128,9 +128,9 @@ export function encodeRings(polygons: MultiPolygonRings): Uint8Array {
  * The ring table plus a `Float64Array` over the coordinates — what both the point test and the decoder walk.
  *
  * @throws {Error} When the blob's version is not {@linkcode RING_BLOB_VERSION},
- *   or its declared ring table does not account for the bytes present.
- *   A blob that is silently mis-read answers a containment question wrongly,
- *   and a wrong containment answer is indistinguishable from a real one.
+ * or its declared ring table does not account for the bytes present.
+ * A blob that is silently mis-read answers a containment question wrongly,
+ * and a wrong containment answer is indistinguishable from a real one.
  */
 function openRings(blob: Uint8Array): {
 	ringCount: number
@@ -421,7 +421,7 @@ export interface EncodedArea {
  * so it is a caller's choice rather than a shared default nobody owns.
  *
  * @param gridSteps Grid divisions per axis.
- *   Only `steps − 1` interior lines are tested, so 7 gives a 6 × 6 grid.
+ * Only `steps − 1` interior lines are tested, so 7 gives a 6 × 6 grid.
  */
 export function interiorPointOfEncodedRings(
 	area: EncodedArea,
@@ -473,9 +473,8 @@ export function bboxContains(
  * The draw is deterministic rather than random, so a re-run compares the same points
  * and a disagreement can be looked at rather than re-rolled.
  *
- * @param options.gridSteps The interior-point search depth, per
- *   {@link interiorPointOfEncodedRings} — part of a layer's sampling receipt,
- *   so it is a caller's choice rather than a shared default nobody owns.
+ * @param options.gridSteps The interior-point search depth, per {@link interiorPointOfEncodedRings} —
+ * part of a layer's sampling receipt, so it is a caller's choice rather than a shared default nobody owns.
  */
 export function strideSampleInteriorPoints<Area extends EncodedArea, Point>(
 	keys: readonly string[],

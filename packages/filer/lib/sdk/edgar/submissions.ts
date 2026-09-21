@@ -56,10 +56,10 @@ interface RawSubmissionsPayload {
  * Validates + extracts every 10-K filing from a raw submissions payload for `cik`.
  *
  * @throws A descriptive error naming `cik` on a structural mismatch
- *   (missing `filings.recent`, or its parallel arrays disagreeing in length) —
- *   decision 8's "malformed input must be loud" discipline.
- *   This is SEC's own documented API shape, so either failure means the upstream
- *   interface changed rather than a row worth silently dropping.
+ * (missing `filings.recent`, or its parallel arrays disagreeing in length) —
+ * decision 8's "malformed input must be loud" discipline.
+ * This is SEC's own documented API shape, so either failure means the upstream
+ * interface changed rather than a row worth silently dropping.
  */
 export function parseTenKFilings(cik: CIK, raw: unknown): TenKFiling[] {
 	const recent = (raw as RawSubmissionsPayload | null | undefined)?.filings?.recent

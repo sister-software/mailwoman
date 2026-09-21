@@ -57,8 +57,8 @@ function fail(message: string): never {
  * Exits 1 with the binary's usage line on a bad flavor.
  *
  * @returns The shape `printOpenAPIDocument` takes, so a drop-in's `openapi` command is
- *   this call plus building its app around a stub engine — which is what keeps the command
- *   pure route-table introspection that never boots a classifier or opens a gazetteer.
+ * this call plus building its app around a stub engine — which is what keeps the command
+ * pure route-table introspection that never boots a classifier or opens a gazetteer.
  */
 export function parseOpenAPIFlags(binaryName: string): { flavor?: string; out?: string } {
 	const { values } = parseArguments({

@@ -157,14 +157,14 @@ function labelType(label: string): string {
  *
  * @param pieces SentencePiece pieces (the `▁`-marked surface is the word-boundary signal).
  * @param emissions Per-piece × per-label scores after all priors/masks
- *   (the distribution the argmax would see).
- *   Softmaxed per piece for the vote so each piece's confidence carries its weight.
+ * (the distribution the argmax would see).
+ * Softmaxed per piece for the vote so each piece's confidence carries its weight.
  * @param labels The BIO label vocabulary (index ↔ label).
  * @param labelIndices The current per-piece decision (viterbi path or argmax).
- *   Not mutated.
+ * Not mutated.
  * @param opts Optional conditions on the heal (confidence floor, byte-fallback skip, slash grouping) —
- *   the #727-tracked "confidence-thresholded variant".
- *   Omitted = the original unconditional behavior, byte-identical.
+ * the #727-tracked "confidence-thresholded variant".
+ * Omitted = the original unconditional behavior, byte-identical.
  */
 export function enforceWordConsistency(
 	pieces: ReadonlyArray<{ piece: string }>,

@@ -355,7 +355,7 @@ export function sameCorpusVersion(a: string, b: string): boolean {
  * An absence indistinguishable from the real thing, which is the failure this whole file exists to prevent.
  *
  * @returns undefined when the config states no corpus_dir.
- *   That is "cannot check", not "they match".
+ * That is "cannot check", not "they match".
  */
 export async function readConfiguredCorpusVersion(configPath: string): Promise<string | undefined> {
 	if (!(await pathExists(configPath))) return undefined
@@ -387,8 +387,8 @@ export async function readConfiguredCorpusVersion(configPath: string): Promise<s
  * That retyping is the exact bug this file exists partly to surface, so the reader must not reproduce it.
  *
  * @throws when the path names no file.
- *   An empty set means the config admits no country, and a caller cannot tell that
- *   apart from a config nobody could open once both answer the same value.
+ * An empty set means the config admits no country, and a caller cannot tell that apart
+ * from a config nobody could open once both answer the same value.
  */
 export async function readAdmittedCountries(configPath: string): Promise<Set<string>> {
 	if (!(await pathExists(configPath))) {

@@ -47,8 +47,8 @@ export interface BuildRegressionDBOptions {
  * Build the curated regression DB from the committed seed and swap it into place.
  *
  * @throws When the loader resolves zero cases — see {@linkcode assertCorpusIsNonEmpty}.
- *   A build that prints "built" over an empty corpus is the 2026-08-06 failure,
- *   and it exits 0 today unless something refuses.
+ * A build that prints "built" over an empty corpus is the 2026-08-06 failure,
+ * and it exits 0 today unless something refuses.
  */
 export async function buildRegressionDB(options: BuildRegressionDBOptions = {}): Promise<void> {
 	const casesDir = options.casesDir ?? CASES_DIR

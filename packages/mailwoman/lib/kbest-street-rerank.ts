@@ -209,8 +209,8 @@ function spliceStreetTree(
  * @param grammar The segment-transition grammar from the weights bundle's `semi-crf-transitions.json`.
  *
  * @returns The winning tree + whether evidence moved the pick.
- *   Falls back to the plain argmax tree (byte-stable) when the model exports no
- *   span scores or the evidence keeps rank-1.
+ * Falls back to the plain argmax tree (byte-stable) when the model exports no
+ * span scores or the evidence keeps rank-1.
  */
 export async function rerankByStreetEvidence(
 	// Only `traceParse` is called; `Pick` says so, and a test double is then an object rather than an assertion.

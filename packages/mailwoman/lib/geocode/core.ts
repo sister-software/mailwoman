@@ -110,7 +110,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 * The gazetteer FST prior (#1497).
 	 *
 	 * Absent = the prior is never constructed and the decode is byte-identical to the pre-#1497 geocode path — which is
-	 * what every caller got, because this field did not exist and `classifier.parse` has no config fallback for it.
+	 * what every caller got, because this field did not exist and `classifier.parse`
+	 * has no config fallback for it.
 	 */
 	fst?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
@@ -231,9 +232,9 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 	/**
 	 * #1585 — the locale hint's country, scoping the backend's typo-fuzzy tier only (`ResolveOpts.fuzzyCountryScope`).
-	 * Unlike {@link localeCountryPrior} this is not opt-in and not a ranking prior: exact matches stay worldwide, a typo
-	 * correction stays inside the hinted country, and a scoped-empty correction abstains instead of falling through to a
-	 * world-fuzzy candidate.
+	 * Unlike {@link localeCountryPrior} this is not opt-in and not a ranking prior:
+	 * exact matches stay worldwide, a typo correction stays inside the hinted country, and a
+	 * scoped-empty correction abstains instead of falling through to a world-fuzzy candidate.
 	 *
 	 * Threaded even when {@link defaultCountry} is set (harmless — the hard scope is already narrower).
 	 */
@@ -310,14 +311,15 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
 	 * #743/#194: promote a confident placer guess to a hard country filter (empty→unresolved) for coverage-safelisted
-	 * countries — see {@link hardCountryFor}. **default-on** (#743): a pure win on well-covered countries
-	 * (US/ES/IT/NL/DE/FR), soft (no-op) for the rest. Pass `false` to opt out.
+	 * countries — see {@link hardCountryFor}. **default-on** (#743): a pure win on
+	 * well-covered countries (US/ES/IT/NL/DE/FR), soft (no-op) for the rest.
+	 * Pass `false` to opt out.
 	 */
 	hardPlaceCountry?: boolean
 	/**
 	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer
-	 * artifact's own coverage manifest when it carries one, else the built-in constant (the fallback for artifacts
-	 * predating the manifest).
+	 * artifact's own coverage manifest when it carries one, else the built-in constant
+	 * (the fallback for artifacts predating the manifest).
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**

@@ -106,7 +106,7 @@ export function placeIDProvenance(id: number): PlaceIDProvenance {
  * The note a result set carries when it holds at least one synthetic id, naming the counts per source.
  *
  * @returns `undefined` when every id is a real WOF id: a note that fires unconditionally
- *   is one a reader learns to skip, and the interesting state here is the mixed set.
+ * is one a reader learns to skip, and the interesting state here is the mixed set.
  */
 export function syntheticIDNote(ids: readonly number[]): string | undefined {
 	const counts = new Map<PlaceIDSource, number>()

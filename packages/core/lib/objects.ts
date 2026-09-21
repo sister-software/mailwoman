@@ -36,8 +36,8 @@ export type StringKeyOf<O> = Extract<keyof O, string>
 
 /**
  * @param input Source object.
- * @param scalarEnum Unconstrained scalar enum whose values present in `input` will
- *   be used as keys, such as an enum-like object.
+ * @param scalarEnum Unconstrained scalar enum whose values present in `input`
+ * will be used as keys, such as an enum-like object.
  *
  * @returns A subset of the source object with only properties present in `scalarEnum`.
  */

@@ -173,10 +173,10 @@ export interface CreateRuntimePipelineOpts {
 	normalizeCase?: boolean
 	/**
 	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a confident coarse-placer guess from
-	 * the soft prior to a hard country filter (empty→unresolved). **default-on** (#743, 2026-06-22): the built-in
-	 * coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard filter to well-covered countries
-	 * (US/ES/IT/NL/DE/FR), so it's a pure win there and a no-op (soft prior) for the low-coverage tail (FI/PL) — no
-	 * recall regression.
+	 * the soft prior to a hard country filter (empty→unresolved). **default-on** (#743, 2026-06-22):
+	 * the built-in coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard
+	 * filter to well-covered countries (US/ES/IT/NL/DE/FR), so it's a pure win there
+	 * and a no-op (soft prior) for the low-coverage tail (FI/PL) — no recall regression.
 	 *
 	 * Pass `false` to opt out entirely.
 	 * A per-call `runOpts.hardPlaceCountry` overrides this.
@@ -194,8 +194,8 @@ export interface CreateRuntimePipelineOpts {
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
 	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a
-	 * positive-evidence-conditional street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR
-	 * fragment street, measured 2026-07-18).
+	 * positive-evidence-conditional street-splice into the argmax tree
+	 * (golden-safe: 0.000 golden regression, +16.9pp FR fragment street, measured 2026-07-18).
 	 *
 	 * - `undefined` (default) → **default-on**: when the classifier ships a span grammar (a v3+ span-head bundle), the
 	 *   bundled FR index ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on the first call

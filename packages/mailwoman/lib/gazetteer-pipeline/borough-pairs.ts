@@ -58,9 +58,9 @@ export interface BoroughPair {
  * Project a WOF parent placetype onto the `ComponentTag` the parent span carries.
  *
  * @throws Rather than defaulting: every placetype this module can select is in {@link PLACETYPE_PROJECTION}
- *   by construction (the SQL's parent list is drawn from `PAIR_PLACETYPES_BY_COUNTRY`),
- *   so a miss means someone added a placetype to that table without deciding what it
- *   projects to — which is exactly the decision PIX2 exists to stop being made silently.
+ * by construction (the SQL's parent list is drawn from `PAIR_PLACETYPES_BY_COUNTRY`),
+ * so a miss means someone added a placetype to that table without deciding what it projects to —
+ * which is exactly the decision PIX2 exists to stop being made silently.
  */
 function parentTagFor(placetype: string): ComponentTag {
 	const tag = PLACETYPE_PROJECTION[placetype]

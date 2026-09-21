@@ -295,10 +295,10 @@ const WORST_PAIRS_REPORTED = 8
 /**
  * Build the layer.
  *
- * @throws {Error} On a feature that reaches no cell, a feature count that disagrees with
- *   the source's own declaration, an area total that disagrees with the publisher's,
- *   a coverage row that would license a negative claim, a crosswalk edge table written while
- *   the mapping is not a function, or a `shipped` tier asked for under an unresolved licence.
+ * @throws {Error} On a feature that reaches no cell, a feature count that disagrees
+ * with the source's own declaration, an area total that disagrees with the publisher's,
+ * a coverage row that would license a negative claim, a crosswalk edge table written while
+ * the mapping is not a function, or a `shipped` tier asked for under an unresolved licence.
  */
 export async function buildZoningDatabase(options: BuildZoningOptions): Promise<BuildZoningResult> {
 	const tier = options.tier ?? LayerTier.BuildLocal
@@ -668,8 +668,8 @@ function assertAreaAgreement(
  * Chunks run one at a time, so there is exactly one writer at every instant and no locking to reason about.
  *
  * @throws {Error} When a chunk exits non-zero, or prints no result line —
- *   a chunk that died mid-range has written a partial set of rows, and continuing
- *   would seal an artifact missing features nobody could name.
+ * a chunk that died mid-range has written a partial set of rows, and continuing
+ * would seal an artifact missing features nobody could name.
  */
 async function runBatchedIngest(
 	tmpPath: string,

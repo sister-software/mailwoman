@@ -106,7 +106,7 @@ const EXTENT_ORDINATES = 4
  * calling ingest was not written for.
  *
  * @throws {Error} When the layer is missing, declares no epsg authority code, declares one other than
- *   `expectEPSG`, reports no feature count, or fails a `requireExtent`/`requireFields` condition.
+ * `expectEPSG`, reports no feature count, or fails a `requireExtent`/`requireFields` condition.
  */
 export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions): Promise<OGRLayerIdentity> {
 	const { stdout } = await runFile(

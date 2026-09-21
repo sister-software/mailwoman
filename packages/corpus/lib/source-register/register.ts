@@ -83,8 +83,8 @@ export function electedLicenseLabel(decision: LicenseDecision): string | undefin
  * with no error and a normal-looking count (#2351).
  *
  * @throws When a recorded decision names a licence the generated set does not carry.
- *   That decision licenses nothing — either a typo or a source that has been removed —
- *   and applying it silently would leave the register asserting a grant no source points at.
+ * That decision licenses nothing — either a typo or a source that has been removed —
+ * and applying it silently would leave the register asserting a grant no source points at.
  */
 export function applyLicenseDecisions(
 	generated: readonly LicenseDecision[],

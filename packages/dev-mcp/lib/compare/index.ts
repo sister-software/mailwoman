@@ -434,8 +434,8 @@ function answerFromGauntletResult(result: GauntletResult): ExternalAnswer {
  * A reference geocoder as a runner, admitted through the meter before a single query is issued.
  *
  * @throws When the meter refuses.
- *   Refusing here rather than per row is what keeps a half-spent run from existing:
- *   the caller is told it cannot afford the set before any of it is billed.
+ * Refusing here rather than per row is what keeps a half-spent run from existing:
+ * the caller is told it cannot afford the set before any of it is billed.
  */
 function oracleRunner(
 	spec: OracleArm,

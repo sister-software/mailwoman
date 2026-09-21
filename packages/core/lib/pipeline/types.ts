@@ -108,8 +108,9 @@ export interface PipelineOpts {
 	hardPlaceCountry?: boolean
 	/**
 	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer
-	 * artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`) when it carries one, else the
-	 * built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback (byte-identical for artifacts predating the manifest).
+	 * artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`)
+	 * when it carries one, else the built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback
+	 * (byte-identical for artifacts predating the manifest).
 	 *
 	 * Supply a set to test/measure a different coverage frontier.
 	 *

@@ -107,11 +107,11 @@ function isAreaShape(area: unknown): area is string {
  * The constituent country a postcode area belongs to.
  *
  * @returns The explicit country for a known non-England area (e.g. `BT` → `NIR`, `G` → `SCT`, `CF` → `WLS`),
- *   and `ENG` as the default for any other validly-shaped area.
- *   England is by far the largest, so the default is transparent and the non-England
- *   exceptions live in {@link GB_POSTCODE_AREA_COUNTRY}.
- *   Returns null for clearly-invalid input (not one-or-two letters),
- *   so a malformed token is not silently called England.
+ * and `ENG` as the default for any other validly-shaped area.
+ * England is by far the largest, so the default is transparent and the non-England
+ * exceptions live in {@link GB_POSTCODE_AREA_COUNTRY}.
+ * Returns null for clearly-invalid input (not one-or-two letters), so a malformed
+ * token is not silently called England.
  */
 export function countryOfPostcodeArea(area: unknown): UkCountryCode | null {
 	if (!isAreaShape(area)) return null

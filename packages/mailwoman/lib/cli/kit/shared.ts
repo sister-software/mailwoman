@@ -187,9 +187,9 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
  * Machine formats (json/jsonld/xml/tuple, `--json` flags) must never pass through `<Text>`.
  *
  * @returns `null` so the caller can `return writeRawStdout(result)` from the done branch.
- *   Safe to call from render: {@linkcode useCommandTask} renders the done frame
- *   exactly once before its `process.exit`.
- *   Same pattern as `commands/gazetteer/inspect/graph.tsx`.
+ * Safe to call from render: {@linkcode useCommandTask} renders the done frame
+ * exactly once before its `process.exit`.
+ * Same pattern as `commands/gazetteer/inspect/graph.tsx`.
  */
 export function writeRawStdout(text: string | object): null {
 	const normalized = typeof text === "string" ? text + "\n" : prettyJSON(text)

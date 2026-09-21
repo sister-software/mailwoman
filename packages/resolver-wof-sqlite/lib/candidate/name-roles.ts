@@ -59,7 +59,7 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
  *   skips this detector loudly.
  *
  * @returns The stamp counts plus the census the prototype exists to report:
- *   how much of the ≥-threshold key tail carries any role.
+ * how much of the ≥-threshold key tail carries any role.
  */
 export function stampNameRoles(ctx: {
 	src: DatabaseClient<WOFDatabase>

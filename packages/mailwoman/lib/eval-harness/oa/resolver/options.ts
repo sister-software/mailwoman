@@ -118,8 +118,9 @@ export interface OAResolverEvalOptions {
 	noAdminCoherence?: boolean
 	/**
 	 * #42 tri-state pin: force postcodeCountryCoherence off — the pre-2026-08-05 configuration. This is the leg that
-	 * measures whether letting a coherent (postcode, locality) pair override `defaultCountry` is byte-flat on a US panel,
-	 * which is the one number the default-on promotion needed and could not get from a confound board.
+	 * measures whether letting a coherent (postcode, locality) pair override `defaultCountry`
+	 * is byte-flat on a US panel, which is the one number the default-on promotion needed
+	 * and could not get from a confound board.
 	 */
 	noPostcodeCountryCoherence?: boolean
 	/**
@@ -154,7 +155,9 @@ export interface OAResolverEvalOptions {
 	normalizeCase?: boolean
 	/**
 	 * #42 tri-state pin: force postcodeCountryCoherence on. The library default has been on since 2026-08-05, so this pin
-	 * is now a no-op restatement. It stays because a check leg that says what it graded is the point of a tri-state.
+	 * is now a no-op restatement.
+	 *
+	 * It stays because a check leg that says what it graded is the point of a tri-state.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**

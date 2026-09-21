@@ -433,9 +433,9 @@ export class ExternalGeocoderClient extends APIClient {
 	 * Top-1 for one raw query string.
 	 *
 	 * @throws On a transport or http failure that survived the retry ceiling.
-	 *   Throwing rather than returning a no-result is what lets the caller separate
-	 *   "this endpoint does not hold this address" from "this endpoint is gone" —
-	 *   the second must not be able to accumulate silently into a row of misses.
+	 * Throwing rather than returning a no-result is what lets the caller separate
+	 * "this endpoint does not hold this address" from "this endpoint is gone" —
+	 * the second must not be able to accumulate silently into a row of misses.
 	 */
 	async search(query: string): Promise<ExternalAnswer> {
 		const response = await this.fetch<unknown>({ url: `${this.endpoint}${this.#protocol.searchPath(query)}` })

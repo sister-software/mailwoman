@@ -661,8 +661,8 @@ const TERMINAL_ONLY_SHARE = 0.8
 
 /**
  * #1569 root-fix recipe. Both classes come from real non-Vermont OA streets and use the affix recipe's existing layout
- * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row train sample only 4→11
- * while contrast was already 95/100 before training (93/100 after).
+ * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row
+ * train sample only 4→11 while contrast was already 95/100 before training (93/100 after).
  *
  * Post-run audit found that the global affix relabel pass corrupts many
  * already-decomposed target rows into double suffixes.

@@ -13,8 +13,8 @@
 
 /**
  * #928: distinctive postcode formats that unambiguously indicate a country — a stronger country signal than the
- * language-based coarse placer, which conflates GB/US (both carry English street patterns) and mis-routes GB addresses
- * to US namesakes (`London E4 9AZ` → London, Ohio) at 0.94–0.96 confidence.
+ * language-based coarse placer, which conflates GB/US (both carry English street patterns)
+ * and mis-routes GB addresses to US namesakes (`London E4 9AZ` → London, Ohio) at 0.94–0.96 confidence.
  *
  * The format is unforgeable across these countries: the GB pattern (letters-first)
  * never matches a US ZIP or an NL `\d{4} [A-Z]{2}` code.

@@ -109,8 +109,8 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
  *   language becomes a candidate, ranked by how many surfaces carry it. Japanese yields `ターミナル` (in all five `ja`
  *   terminal labels) ahead of `ターミナルビル` (three); Chinese yields `航站`, `航站楼`, `航站樓`.
  *
- *   Where the script does space its words (Korean, Greek, Cyrillic) a candidate must be a whole token, so `공항 터미널` ∩
- *   `공항터미널` gives `터미널` and never a fragment.
+ *   Where the script does space its words (Korean, Greek, Cyrillic) a candidate must be
+ *   a whole token, so `공항 터미널` ∩ `공항터미널` gives `터미널` and never a fragment.
  *
  * The non-Latin branch deliberately emits several candidates instead of picking one.
  * Choosing between `航站` and `航站楼` from Wikidata alone is guesswork.

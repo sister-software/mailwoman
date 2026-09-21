@@ -818,8 +818,8 @@ async function resolveFromPackageDir(
  * larger JSON lookup (`anchor-lookup.json`, the 3.2 MB pilot dump).
  *
  * @returns The path + a `binary` flag so the loader picks the right parser
- *   (`PostcodeBinaryResolver.toAnchorLookup()` vs `parseAnchorLookup`).
- *   `undefined` when neither ships.
+ * (`PostcodeBinaryResolver.toAnchorLookup()` vs `parseAnchorLookup`).
+ * `undefined` when neither ships.
  */
 async function resolveAnchorLookupSibling(
 	packageDir: PathBuilderLike,

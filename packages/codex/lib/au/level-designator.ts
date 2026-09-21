@@ -237,9 +237,9 @@ export function isAuLevelDesignator(input: unknown): boolean {
  * (`"level 3"` → `"L 3"`, `"ground floor"` → `"G"`).
  *
  * @returns The input unchanged if it isn't a level designator phrase.
- *   Throws if a row in {@link AU_LEVEL_DESIGNATORS} is malformed
- *   (requires-number entry with no abbreviation or empty name).
- *   The builder must surface structural defects loudly.
+ * Throws if a row in {@link AU_LEVEL_DESIGNATORS} is malformed
+ * (requires-number entry with no abbreviation or empty name).
+ * The builder must surface structural defects loudly.
  */
 export function normalizeAuLevelDesignator(input: string): string {
 	const m = matchAuLevelDesignator(input)

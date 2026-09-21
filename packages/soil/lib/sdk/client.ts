@@ -92,7 +92,7 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 	 * Run one query and return its rows.
 	 *
 	 * @throws {OGCServiceError} When the service answers with an exception report —
-	 *   including on an http 200, which is what a server-side timeout does.
+	 * including on an http 200, which is what a server-side timeout does.
 	 */
 	public async query(sql: string): Promise<string[][]> {
 		const { data } = await this.fetch<string>({
@@ -129,8 +129,8 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 	 * a state-scoped build, or a whole symbol for the single-area rung.
 	 *
 	 * @throws {Error} When the catalogue returns nothing.
-	 *   An empty catalogue for a prefix a caller named is either a typo or a service change,
-	 *   and building zero survey areas while reporting success is the shape this refuses.
+	 * An empty catalogue for a prefix a caller named is either a typo or a service change,
+	 * and building zero survey areas while reporting success is the shape this refuses.
 	 */
 	public async readSurveyAreaCatalog(prefix: string): Promise<SurveyAreaCatalogEntry[]> {
 		const escaped = prefix.replaceAll("'", "''")

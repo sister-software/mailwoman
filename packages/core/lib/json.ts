@@ -25,11 +25,11 @@ export type StringifiedJSON = Tagged<"StringifiedJSON", string>
  *
  * @param input The object to be pretty-printed.
  * @param newline Whether to append a newline character at the end of the output.
- *   Defaults to `true`.
+ * Defaults to `true`.
  * @param space The indent: a string to repeat, or a count of spaces.
- *   Defaults to a tab character (`"\t"`).
- *   Both forms are accepted because both are what the builtin accepts, and a caller converting
- *   `2` to `" "` at the call site would be doing the conversion this parameter exists to hold.
+ * Defaults to a tab character (`"\t"`).
+ * Both forms are accepted because both are what the builtin accepts, and a caller converting
+ * `2` to `" "` at the call site would be doing the conversion this parameter exists to hold.
  *
  * @returns A string containing the pretty-printed JSON representation of the input object.
  * @see {@linkcode stringifyJSON} for a jsonl-compatible version that returns a branded type.
@@ -47,9 +47,9 @@ export function prettyJSON(input: unknown, newline = true, space: string | numbe
  *
  * @param input The object to be stringified.
  * @param keys An allowlist of property names, in the order they should print.
- *   Two call sites need it and neither is cosmetic: a cache key that must omit the API key and fix
- *   the order of what remains, and a regenerated seed file that must diff only where a value changed.
- *   Passing the list here keeps both on the branded printer.
+ * Two call sites need it and neither is cosmetic: a cache key that must omit the API key and fix the
+ * order of what remains, and a regenerated seed file that must diff only where a value changed.
+ * Passing the list here keeps both on the branded printer.
  *
  * @returns A string containing the JSON representation of the input object.
  * @see {@linkcode prettyJSON} for human-friendly JSON output.

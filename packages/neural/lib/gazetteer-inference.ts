@@ -275,9 +275,8 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
  * while leaving every other clue intact.
  *
  * @returns A new features/confidence pair (does not mutate).
- *   `anchorConfidence[i] > 0` marks postcode-span pieces.
- *   Pairs with the train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`)
- *   — enable both or neither.
+ * `anchorConfidence[i] > 0` marks postcode-span pieces.
+ * Pairs with the train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`) — enable both or neither.
  */
 export function suppressGazetteerNearPostcode(
 	gazetteer: { features: number[][]; confidence: number[] },

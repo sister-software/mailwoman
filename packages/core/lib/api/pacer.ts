@@ -44,10 +44,10 @@ export class RequestPacer {
 
 	/**
 	 * @param intervalMs Minimum milliseconds between two grants.
-	 *   Values `<= 0` are rejected — a zero-interval pacer would never actually pace,
-	 *   and silently accepting one would make a misconfigured caller look throttled when it isn't.
+	 * Values `<= 0` are rejected — a zero-interval pacer would never actually pace,
+	 * and silently accepting one would make a misconfigured caller look throttled when it isn't.
 	 * @param clock Time source.
-	 *   Defaults to {@linkcode systemClock}.
+	 * Defaults to {@linkcode systemClock}.
 	 */
 	constructor(intervalMs: number, clock: ClockLike = systemClock) {
 		if (!Number.isFinite(intervalMs) || intervalMs <= 0) {

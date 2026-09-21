@@ -104,7 +104,7 @@ export function shortenH3Cell(cell: H3Cell): H3CellShort {
  * would refuse with `Cell arguments had incompatible resolutions`.
  *
  * @throws {RangeError} If `resolution` is not an integer in `[0, 15]`,
- *   or `h3CellShort` is wider than 13 hex characters.
+ * or `h3CellShort` is wider than 13 hex characters.
  * @throws {Error} If the short cell and resolution do not together name a valid H3 cell.
  */
 export function expandH3Cell(h3CellShort: H3CellShort, resolution = H3_MAX_RESOLUTION): H3Cell {
@@ -168,8 +168,8 @@ export function shortCellToInt(cell: H3Cell): number {
  * own name; `@mailwoman/coastal` calls it directly.
  *
  * @param context Names the caller in both messages, so a failure says which reader refused.
- * @throws {Error} When `cells` is empty, when a value is not a short cell, or
- * when the set mixes resolutions.
+ * @throws {Error} When `cells` is empty, when a value is not a short cell,
+ * or when the set mixes resolutions.
  */
 export function recoverShortCellResolution(cells: readonly number[], context = "layer coverage"): number {
 	if (!cells.length) {

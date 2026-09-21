@@ -181,8 +181,8 @@ export interface ReducedCell {
  * Reduce one cell.
  *
  * @throws {Error} When a candidate names a map unit the profile map does not hold.
- *   A missing profile means the attribute join is short, and answering with the remaining
- *   candidates would report a well-formed distribution over part of the cell.
+ * A missing profile means the attribute join is short, and answering with the remaining
+ * candidates would report a well-formed distribution over part of the cell.
  */
 export function reduceCell(
 	cell: H3Cell,

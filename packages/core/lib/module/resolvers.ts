@@ -21,7 +21,7 @@ import { dirname, PathBuilder, resolvePath } from "path-ts"
  * error messages and `mailwoman doctor` output.
  *
  * @throws `ERR_MODULE_NOT_FOUND` when the package is not installed.
- *   Every package must expose `./package.json` in its `exports` map for this to resolve.
+ * Every package must expose `./package.json` in its `exports` map for this to resolve.
  */
 export function resolvePackageDirectory<Name extends string = string>(packageName: Name): PathBuilder<Name> {
 	const manifestPath = fileURLToPath(import.meta.resolve(`${packageName}/package.json`))

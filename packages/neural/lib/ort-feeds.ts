@@ -38,7 +38,7 @@ export interface InferEvidenceChannels {
  *
  * @param tokenIDs The id sequence produced by the tokenizer (no special tokens added).
  * @param anchor Optional postcode-anchor channel (#239/#240) — fed only
- *   when the graph declares the anchor inputs.
+ * when the graph declares the anchor inputs.
  * @param gazetteer Optional gazetteer-anchor channel (#464) — same feed interface as the postcode anchor.
  * @param country Optional country-lexicon channel (#1104).
  * @param evidence Optional evidence-bundle channels (Option-A).
@@ -77,9 +77,9 @@ export interface InferResult {
 	localeLogits?: number[]
 	/**
 	 * #727 stage-2: per-span type scores from the semi-Markov span head (`span_scores` output, v3.x+). Indexed
-	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`, of length `lengthIdx + 1`
-	 * tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the weights bundle's `semi-crf-transitions.json`,
-	 * never hardcoded — the PLACETYPE_ORDER class).
+	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`,
+	 * of length `lengthIdx + 1` tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the
+	 * weights bundle's `semi-crf-transitions.json`, never hardcoded — the PLACETYPE_ORDER class).
 	 *
 	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span
 	 * decode available" and fall back to the BIO path.

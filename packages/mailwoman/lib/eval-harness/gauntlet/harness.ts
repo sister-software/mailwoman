@@ -185,8 +185,8 @@ export interface GauntletResolverPins {
 	adminContainmentRerank?: boolean
 	/**
 	 * #1880 — the capital-status ranking axis: bounded national-capital promotion on the bare-toponym class. Like
-	 * `gazetteerPrior` this pin carries an artifact (the candidate `capital` table, repo-file fallback), so the harness
-	 * loads it rather than `resolverPinDeps` (which stays pure).
+	 * `gazetteerPrior` this pin carries an artifact (the candidate `capital` table, repo-file fallback),
+	 * so the harness loads it rather than `resolverPinDeps` (which stays pure).
 	 *
 	 * Library default on (PR #1888's board-651 receipt); unset follows it, `false` pins the off arm,
 	 * and an unset pin degrades on a reference-less artifact exactly as the session does.
@@ -194,8 +194,8 @@ export interface GauntletResolverPins {
 	capitalTier?: boolean
 	/**
 	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. The stamp lives in the
-	 * artifact (the candidate build's own-name detector), so against a candidate.db without it the exemption matches no
-	 * row — vary it against a stamped artifact.
+	 * artifact (the candidate build's own-name detector), so against a candidate.db without
+	 * it the exemption matches no row — vary it against a stamped artifact.
 	 *
 	 * Library default on (same receipt); `false` pins the off arm.
 	 */
@@ -217,8 +217,8 @@ export interface GauntletResolverPins {
 	spanRescoreRequireContextRemainder?: boolean
 	/**
 	 * #2264 — which reading of a weak resolution lifts the #685 span-rescore brake. Not a boolean: three readings, and
-	 * the shipped brake is the absence of all of them, so `undefined` is the production arm and there is no off pin to
-	 * pair with a `true` one.
+	 * the shipped brake is the absence of all of them, so `undefined` is the production arm
+	 * and there is no off pin to pair with a `true` one.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 }
@@ -314,15 +314,17 @@ export interface GauntletGeocodeOpts {
 	caseCountry?: string
 	/**
 	 * #1585 — the locale hint's country for the typo-fuzzy tier (geocodeAddress's `fuzzyCountryScope`). The runner
-	 * derives it from a row's `locale` field. Forwarded verbatim like `defaultCountry`.
+	 * derives it from a row's `locale` field.
+	 * Forwarded verbatim like `defaultCountry`.
 	 */
 	fuzzyCountryScope?: string
 }
 
 /**
  * #1024 drift guard: the materialized model the check is about to grade must match the en-us model-card's
- * `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json` (what copy-weights.ts materializes
- * from) drifted once and the superseded model shipped past a silent check.
+ * `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json`
+ * (what copy-weights.ts materializes from) drifted once and the superseded
+ * model shipped past a silent check.
  *
  * Throws loudly on mismatch so the release before:release step (releasing.md) blocks the ship.
  *

@@ -152,8 +152,8 @@ export interface SemverTriple {
  * (`">=24.18.0"`, `"24.18.0"`, `">= 24"`).
  *
  * @returns `undefined` when no `<major>[.<minor>[.<patch>]]` is findable.
- *   Only the floor matters for the doctor.
- *   A caret/tilde/comparator prefix is stripped and missing minor/patch default to 0.
+ * Only the floor matters for the doctor.
+ * A caret/tilde/comparator prefix is stripped and missing minor/patch default to 0.
  */
 export function parseVersionFloor(engines: string): SemverTriple | undefined {
 	const match = engines.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/u)

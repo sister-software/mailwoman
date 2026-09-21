@@ -114,9 +114,9 @@ export interface RankingWeights {
 	exactMatchTiering: boolean
 	/**
 	 * #936 option 3 — official-language names are names. When true, a candidate holding the query as an official name
-	 * (`names.official = 1`: a preferred-form name in an official language of its country, stamped at ingest) joins the
-	 * name-exact sub-tier rather than the alias-exact one, provided its population clears
-	 * {@link officialNameExactFloor}.
+	 * (`names.official = 1`: a preferred-form name in an official language of its country,
+	 * stamped at ingest) joins the name-exact sub-tier rather than the alias-exact one,
+	 * provided its population clears {@link officialNameExactFloor}.
 	 *
 	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally named Åbo;
 	 * population still orders within the sub-tier, so Paris → Paris FR is untouched.

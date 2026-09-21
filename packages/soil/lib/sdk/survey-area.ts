@@ -85,8 +85,8 @@ export interface SurveyAreaAttributes {
  * Read one survey area's tabular export.
  *
  * @throws {Error} When the metadata's use constraints no longer carry the public-information
- *   sentence, when a `Choice` column holds a value outside the authority's own
- *   declared domain, or when the export declares no legend row.
+ * sentence, when a `Choice` column holds a value outside the authority's own declared
+ * domain, or when the export declares no legend row.
  */
 export async function readSurveyAreaAttributes(
 	tabularDirectory: PathBuilderLike,
@@ -332,8 +332,8 @@ export interface FGDCMetadata {
  * Those two decide the artifact's vintage and whether it may be shipped at all,
  * and neither has a safe default.
  *
- * @throws {Error} When the metadata carries no publication date, or its use constraints
- *   no longer carry the public-information sentence.
+ * @throws {Error} When the metadata carries no publication date, or its use
+ * constraints no longer carry the public-information sentence.
  */
 export function readFGDCMetadata(xml: string, areaSymbol: string): FGDCMetadata {
 	const useConstraints = elementText(xml, "useconst")
@@ -461,7 +461,7 @@ function normalizeFGDCDate(value: string): string {
  * Read the survey area's own outline shapefile as a GeoJSON geometry.
  *
  * @throws {Error} When the shapefile holds anything other than exactly one feature.
- *   Taking the first of several would silently choose which ground the coverage claim is about.
+ * Taking the first of several would silently choose which ground the coverage claim is about.
  */
 export async function readSurveyAreaOutline(shapefilePath: string): Promise<ParsedGeometry> {
 	const { stdout } = await runFile("ogr2ogr", ["-f", "GeoJSON", "/vsistdout/", "-t_srs", "EPSG:4326", shapefilePath], {

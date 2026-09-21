@@ -57,7 +57,7 @@ export interface AssertAllowedHostOptions {
  * https only, allowlisted hosts only.
  *
  * @throws {ResourceError} With URN kind `request` — never transient, because
- *   re-issuing the identical URL can only fail identically.
+ * re-issuing the identical URL can only fail identically.
  */
 export function assertAllowedHost(url: URL, options: AssertAllowedHostOptions): void {
 	if (url.protocol !== "https:") {

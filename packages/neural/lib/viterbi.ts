@@ -36,7 +36,7 @@ const NEG_INF = -1e9
  * - `X → I-Y` permitted only if `X` is `B-Y` or `I-Y` (0); otherwise -inf
  *
  * @returns A `numLabels × numLabels` matrix where `mask[from][to]` is the additive
- *   log-score (0 for permitted, NEG_INF for forbidden).
+ * log-score (0 for permitted, NEG_INF for forbidden).
  */
 export function buildBIOTransitionMask(labels: readonly string[]): number[][] {
 	const n = labels.length

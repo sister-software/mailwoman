@@ -218,9 +218,9 @@ export function classifyFiler(row: Form499Row): FilerClassification[] {
  * Splits one TSV line into {@linkcode FORM_499_COLUMNS}'s 17 named fields.
  *
  * @throws A descriptive error naming `tsvPath` and the 1-indexed `lineNumber` when the
- *   field count doesn't match — decision 8's "malformed input must be loud" discipline
- *   (the 2a `peekProviderID` precedent), replacing Nexus's `relax_column_count_less: true`,
- *   which silently truncated short rows instead.
+ * field count doesn't match — decision 8's "malformed input must be loud" discipline
+ * (the 2a `peekProviderID` precedent), replacing Nexus's `relax_column_count_less: true`,
+ * which silently truncated short rows instead.
  */
 function toForm499Raw(fields: readonly string[], tsvPath: string, lineNumber: number): Record<Form499Column, string> {
 	if (fields.length !== FORM_499_COLUMNS.length) {

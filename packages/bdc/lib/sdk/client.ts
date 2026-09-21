@@ -603,7 +603,7 @@ function createMeteredClock(base: ClockLike): {
  * See the file header for the full rationale.
  *
  * @throws Immediately, before any request is made, when constructed without explicit credentials
- *   and without the `FCC_MAP_USERNAME`/`FCC_MAP_API_KEY` environment values.
+ * and without the `FCC_MAP_USERNAME`/`FCC_MAP_API_KEY` environment values.
  */
 export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient {
 	const username = options.username ?? $private.FCC_MAP_USERNAME

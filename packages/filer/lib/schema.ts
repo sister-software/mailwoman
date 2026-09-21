@@ -178,12 +178,14 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  *   about who owns either. Written from Form 499's `Replaced by filer <id>` note (`form499-notes.ts`), which the FCC
  *   states on 2,826 filers in the 2025-12-07 vintage, 2,820 of whose targets resolve to a filer in the same file.
  *
- *   Two consequences a reader has to hold. First, the edge is directional in time as well as in identity.
+ *   Two consequences a reader has to hold.
+ *   First, the edge is directional in time as well as in identity.
  *
  *   The source is the older registration, always, and the pair is never symmetric.
  *
- *   Second, `linkage-eval.ts`'s `OWNERSHIP_BY_RELATIONSHIP` pins this `false`; a supersession chain is not evidence of a
- *   corporate family, and an eval that scored it as one would credit itself for recovering ownership it never saw.
+ *   Second, `linkage-eval.ts`'s `OWNERSHIP_BY_RELATIONSHIP` pins this `false`;
+ *   a supersession chain is not evidence of a corporate family, and an eval that scored
+ *   it as one would credit itself for recovering ownership it never saw.
  *   Operator ruling, 2026-08-07.
  */
 export const FilerRelationship = {

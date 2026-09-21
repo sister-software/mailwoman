@@ -207,8 +207,10 @@ export interface ResolvedPlace {
 	containedByQualifier?: boolean
 	/**
 	 * #1731: `true` when a `parentID` region scope was applied, missed across the whole probe cascade, and the backend's
-	 * unscoped fallback produced this row. The re-admission path where a wrong-instance namesake enters (the Astoria
-	 * class: no locality-group row exists under the parent, so the fallback answers population-first from anywhere).
+	 * unscoped fallback produced this row.
+	 *
+	 * The re-admission path where a wrong-instance namesake enters (the Astoria class: no locality-group
+	 * row exists under the parent, so the fallback answers population-first from anywhere).
 	 *
 	 * Absent when the question never arose (no parent scope, or the scoped probe answered).
 	 *
@@ -487,10 +489,10 @@ export interface ResolveOpts {
 	defaultCountryIsInferred?: boolean
 	/**
 	 * #1585 — the locale hint's country, scoping the backend's typo-fuzzy tier only. Unlike {@link defaultCountry} this
-	 * is threaded even where the bare-toponym guard withholds the hard scope: an exact foreign match still resolves
-	 * (`Paris` under en-US), but a typo correction stays inside the hinted country, and a scoped-empty correction
-	 * abstains rather than falling through to a world-fuzzy candidate (`Stanmore Bay` under en-NZ must not answer Banmore
-	 * IN).
+	 * is threaded even where the bare-toponym guard withholds the hard scope: an exact
+	 * foreign match still resolves (`Paris` under en-US), but a typo correction stays inside
+	 * the hinted country, and a scoped-empty correction abstains rather than falling through
+	 * to a world-fuzzy candidate (`Stanmore Bay` under en-NZ must not answer Banmore IN).
 	 *
 	 * Never a country filter on exact matches.
 	 * The fuzzy tier is the only consumer.
@@ -622,9 +624,11 @@ export interface ResolveOpts {
 	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 	/**
 	 * #743/#194 — a confident coarse-placer country applied as a hard candidate filter (`query.country`), not the soft
-	 * {@link anchorPosterior} boost. This collapses the off-continent tail for LOW-population places the soft prior can't
-	 * move (FI/PL — their towns lose to a high-pop namesake in the population-first gazetteer even when the country is
-	 * pinned).
+	 * {@link anchorPosterior} boost.
+	 *
+	 * This collapses the off-continent tail for LOW-population places the soft prior
+	 * can't move (FI/PL — their towns lose to a high-pop namesake in the population-first
+	 * gazetteer even when the country is pinned).
 	 *
 	 * On a miss the node is left unresolved ("in-region or unresolved") rather than re-resolved globally.
 	 *
