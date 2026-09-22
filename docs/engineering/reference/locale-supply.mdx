@@ -1,0 +1,82 @@
+---
+title: How much independent address data each measured locale has
+role: reference
+audience: maintainer
+owner: operations
+---
+
+# How much independent address data each measured locale has
+
+A row count answers neither question a locale-isolated graph turns on. The sampler restarts an
+exhausted source with a fresh shuffled pass, so a small source is presented once per pass and its
+row count reads as supply it does not have. And a corpus can carry one street rendered a hundred ways,
+which is still one street.
+
+`locale_supply_census` counts four things a row count cannot give, over a full scan rather than a
+sample, because a distinct count is the one statistic a sample cannot extrapolate. This page records
+what it found.
+
+Measured on `v0.32.0-locality-shape`, all 718 train files, unless a row says otherwise. Receipts live
+on the `mailwoman-training` volume as `audits/locale-supply-<iso2>.json`.
+
+## The five locales with a receipt
+
+| locale |        rows | carrying a street | distinct surfaces | distinct records | sequences |
+| ------ | ----------: | ----------------: | ----------------: | ---------------: | --------: |
+| FR     | 149,866,617 |       145,528,200 |       143,433,551 |      143,945,758 |        48 |
+| GB     |  15,644,707 |           825,083 |        15,449,524 |       15,505,544 |        42 |
+| DE     |   2,891,912 |           383,712 |         2,683,275 |        2,868,488 |        37 |
+| BE     |     150,000 |           150,000 |           150,000 |          150,000 |         9 |
+| US     |   1,839,635 |         1,780,240 |                 — |                — |         — |
+
+The US row is its **validation** split. Its receipt was taken with `splits=val,test` and holds no
+train measurement, so the US train figure is unmeasured rather than zero.
+
+Rows over surfaces is how much of the corpus is the same text written again: 1.04 for FR, 1.01 for
+GB, 1.08 for DE, 1.00 for BE. None of the four is carrying meaningful duplication.
+
+## GB's street rows are synthesized
+
+GB is the locale this page exists for. Its train supply by source:
+
+| source            |       rows |
+| ----------------- | ---------: |
+| `wof-postalcode`  | 13,548,202 |
+| `wof-admin`       |  1,263,798 |
+| `synth-gb`        |    800,000 |
+| `synth-sub-venue` |     31,800 |
+| `synth-fragment`  |        907 |
+
+The two `wof-*` sources are 14,812,000 rows and the three `synth-*` sources are 832,707.
+`street_rows` is 825,083, which fits inside the synthetic subtotal and nothing else.
+
+Scanned locally on `v0.5.0`, GB carries the same two natural sources — `wof-postalcode` and
+`wof-admin`, 14,812,000 rows — and **0** of them carry a `street` or `house_number` tag. So GB's
+street supply is produced by synthesis recipes over a postcode gazetteer rather than drawn from GB
+address records.
+
+Two further readings of the same receipt. 13,548,202 of GB's 15,644,707 rows — 86.6% — sit in two
+component sequences, `locality|postcode` and `postcode`. The largest sequence that carries a street,
+`house_number|street|locality|postcode`, holds 268,173 rows, or 1.7%.
+
+`v0.17.0-batch` is not a second opinion on any of this. All 831,800 of its GB rows are synthesized,
+and so is every row it holds for US, FR, ES and DE. It is a recipe output rather than a base corpus,
+and its postcode-area distribution describes `synth-gb` rather than GB.
+
+## What this does not establish
+
+Whether the synthesized rows are good training data. A recipe built from a real postcode gazetteer
+may teach a real grammar, and nothing here measures that.
+
+Whether GB is worse supplied than the alternatives. Five locales have a receipt, and the funnel's
+opportunity view lists 28 candidate jurisdictions with no corpus rows at all.
+
+What a natural GB street corpus would cost. That is a source-acquisition question, and every one of
+those 28 candidates reads `terms elected: no`.
+
+## Reading a locale metric against this page
+
+A validation metric for a locale is bounded by what that locale's split contains, which is a
+different measurement — `audit_validation_coverage`, and the per-locale floor in
+[Contributing model work](../CONTRIBUTING_MODEL_WORK.mdx). Supply says what could be held out.
+Coverage says what was.
