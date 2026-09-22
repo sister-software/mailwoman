@@ -51,11 +51,13 @@ import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { defaultAdapterRegistry } from "#adapters/utils"
 import { $public } from "#env"
+import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import { once, runAdapter, type AdapterRunManifest } from "#runner"
 import { ingestEligibilityProblems, readAddressSourceRegister, type LicenseDecision } from "#source-register/index"
@@ -129,6 +131,29 @@ export interface BuildCorpusOptions {
 	 * Default 1_000_000.
 	 */
 	rowsPerFile?: number
+
+	/**
+	 * Rows held in memory while shuffling each split before it is written to parquet.
+	 *
+	 * Rows arrive in adapter order.
+	 * Adapter order is country order within a source, so an unshuffled row-group
+	 * holds one to eleven of its source's countries.
+	 *
+	 * A bounded epoch draw reads one row-group and therefore sees only those.
+	 * See `docs/engineering/reference/corpus-draw-coverage.mdx`.
+	 *
+	 * Default {@linkcode DEFAULT_SHUFFLE_WINDOW}.
+	 * `0` or `1` writes the arrival order unchanged and consumes no random draw,
+	 * which is what every corpus built before this option existed carries.
+	 */
+	shuffleWindow?: number
+
+	/**
+	 * Seed for {@linkcode BuildCorpusOptions.shuffleWindow}'s draw.
+	 *
+	 * Fixed by default so two builds of one input write the same row order.
+	 */
+	shuffleSeed?: number
 
 	/**
 	 * Progress hook.
@@ -283,6 +308,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	const adapters = opts.adapters ?? defaultAdapterRegistry.list()
 	const synthesize = opts.synthesize ?? true
 	const rowsPerFile = opts.rowsPerFile ?? 1_000_000
+	const shuffleWindow = opts.shuffleWindow ?? DEFAULT_SHUFFLE_WINDOW
+	const shuffleSeed = opts.shuffleSeed ?? DEFAULT_SHUFFLE_SEED
 	const built_at = new Date().toISOString()
 
 	await makeDirectories(opts.outputDir)
@@ -518,11 +545,23 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	// `splitFor(source_id)` callback (and the `Map<source_id, SplitName>` behind it) is gone.
 	opts.onProgress?.("parquet", "writing parquet files")
 
+	// Each split gets its own generator seeded from one base, so a split's row order does
+	// not depend on how many rows the splits before it happened to carry.
+	const shuffled = (path: string, salt: number) =>
+		shuffleWithinWindow(streamJSONL<LabeledRow>(path), makeMulberry32(shuffleSeed + salt), shuffleWindow)
+
+	opts.onProgress?.(
+		"parquet",
+		shuffleWindow > 1
+			? `shuffling each split within a ${shuffleWindow.toLocaleString("en-US")}-row window, seed ${shuffleSeed}`
+			: "writing rows in arrival order (shuffle window disabled)"
+	)
+
 	const parquetManifest = await writeParquetSplits(
 		{
-			train: streamJSONL<LabeledRow>(labeledPaths.train),
-			val: streamJSONL<LabeledRow>(labeledPaths.val),
-			test: streamJSONL<LabeledRow>(labeledPaths.test),
+			train: shuffled(labeledPaths.train, 0),
+			val: shuffled(labeledPaths.val, 1),
+			test: shuffled(labeledPaths.test, 2),
 		},
 		{
 			outputDir: opts.outputDir,

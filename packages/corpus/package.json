@@ -222,6 +222,11 @@
 			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js"
 		},
+		"./parquet/shuffle": {
+			"types": "./out/parquet/shuffle.d.ts",
+			"node": "./lib/parquet/shuffle.ts",
+			"default": "./out/parquet/shuffle.js"
+		},
 		"./parquet/*": {
 			"types": "./out/parquet/*.d.ts",
 			"node": "./lib/parquet/*.ts",

@@ -47,6 +47,18 @@ export const spec = {
 			description: "Max rows per parquet file",
 			deprecatedName: "rows-per-slice",
 		},
+		"shuffle-window": {
+			type: "number",
+			validate: (value) => Number.isInteger(value) && value >= 0,
+			validationMessage: "--shuffle-window must be a non-negative integer.",
+			description: "Rows held in memory while shuffling each split. 0 writes arrival order",
+		},
+		"shuffle-seed": {
+			type: "number",
+			validate: (value) => Number.isInteger(value) && value >= 0,
+			validationMessage: "--shuffle-seed must be a non-negative integer.",
+			description: "Seed for --shuffle-window",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -104,6 +116,8 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			adapterInputs,
 			synthesize: options.synthesize,
 			rowsPerFile: options.rowsPerFile,
+			shuffleWindow: options.shuffleWindow,
+			shuffleSeed: options.shuffleSeed,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 
