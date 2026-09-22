@@ -22,7 +22,7 @@ import { $public } from "#env"
  * reports it as a missing artifact rather than as a name it got wrong.
  */
 export function resolveFSTPath(explicitPath?: string): PathBuilderLike {
-	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")
+	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? dataRootPath("db", "wof", "fst-per-locale", "fst-en-us.bin")
 }
 
 /**

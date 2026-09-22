@@ -281,7 +281,7 @@ export interface AutocompleteLadderOptions extends GauntletDepsOptions {
 	/**
 	 * Directory of per-locale FST binaries (`fst-<locale>.bin`).
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale`.
+	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale`.
 	 */
 	fstDir?: string
 	/**
@@ -327,8 +327,8 @@ export async function runAutocompleteLadder(
 	})
 
 	const selected = options.limit ? eligible.slice(0, options.limit) : eligible
-	const fstDir = options.fstDir ?? String(dataRootPath("wof", "fst-per-locale"))
-	const adminDB = options.adminDB ?? String(dataRootPath("wof", "admin-global-priority.db"))
+	const fstDir = options.fstDir ?? String(dataRootPath("db", "wof", "fst-per-locale"))
+	const adminDB = options.adminDB ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
 
 	using deps = await buildGauntletDeps(options)
 	using admin = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })

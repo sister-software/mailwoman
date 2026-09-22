@@ -65,7 +65,7 @@ more. Self-blocking: unreachable unless an override fired, and bounded at one ex
 ## 2. Blocker 2, verified from this end
 
 The 2026-08-04 rebuild attached the postal extracts. Counted directly against
-`$MAILWOMAN_DATA_ROOT/wof/candidate.db` (the `candidate.db` symlink → `candidate-global.db`):
+`$MAILWOMAN_DATA_ROOT/db/wof/candidate.db` (the `candidate.db` symlink → `candidate-global.db`):
 
 | placetype    | rows          |
 | ------------ | ------------- |

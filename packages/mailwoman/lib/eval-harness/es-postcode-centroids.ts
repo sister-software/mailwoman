@@ -48,7 +48,7 @@ export interface ESPostcodeCentroidsOptions {
 	/**
 	 * Output SQLite DB.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/wof/postalcode-<cc>-overture.db`.
+	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-<cc>-overture.db`.
 	 *
 	 * The `postalcode-` prefix is required rather than cosmetic: `deriveSchemaName` turns
 	 * the filename into the attached SQL schema name and `pickExtractsForPlacetype`
@@ -73,7 +73,7 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 		options.parquet ||
 		String(dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE, `addresses-${CC.toLowerCase()}.parquet`))
 
-	const OUT_DB = options.out || String(dataRootPath("wof", `postalcode-${CC.toLowerCase()}-overture.db`))
+	const OUT_DB = options.out || String(dataRootPath("db", "wof", `postalcode-${CC.toLowerCase()}-overture.db`))
 	// The `source` stamp names the Overture release the rows came from, read off the
 	// parquet's release directory rather than typed: a build over a newer parquet
 	// used to stamp the pinned default's release on every row.

@@ -43,7 +43,7 @@ export const configRootPath: PathBuilderResolver = ((...segments: PathBuilderLik
 }) as PathBuilderResolver
 
 /**
- * Build a path under the data root, e.g. `dataRootPath("wof", "admin-global-priority.db")`.
+ * Build a path under the data root, e.g. `dataRootPath("db", "wof", "admin-global-priority.db")`.
  *
  * Reads the env on each call, so a late environment change (or a test stub) is honored.
  * A resolver bound once at module evaluation would freeze the root to whatever

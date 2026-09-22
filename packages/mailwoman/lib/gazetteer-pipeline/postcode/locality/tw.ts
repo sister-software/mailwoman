@@ -46,8 +46,8 @@
  *   Usage: node scripts/build-postcode-locality-tw.ts\
  *   --postal-xml $MAILWOMAN_DATA_ROOT/tw-postal/district-centroids.xml\
  *   --divisions $MAILWOMAN_DATA_ROOT/overture/2026-06-17.0/divisions-tw-admin.jsonl\
- *   --admin-db $MAILWOMAN_DATA_ROOT/wof/dbs-per-country/admin-tw.db\
- *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-tw.db
+ *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/dbs-per-country/admin-tw.db\
+ *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-tw.db
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

@@ -42,7 +42,7 @@ function row(
 }
 
 const META = {
-	sourcePath: "$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db",
+	sourcePath: "$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db",
 	sourceMD5: "d41d8cd98f00b204e9800998ecf8427e",
 	buildDate: "2026-08-02T00:00:00.000Z",
 	floor: 0.05,

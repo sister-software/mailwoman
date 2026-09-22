@@ -256,7 +256,7 @@ mailwoman corpus sub-venue-extract \
 mailwoman corpus sub-venue-lexicon \
   --wikidata-dir $MAILWOMAN_DATA_ROOT/sub-venue/sources/wikidata-subvenue \
   --extracts "GB=$E/great-britain.jsonl,DE=$E/germany.jsonl,FR=$E/france.jsonl,ES=$E/spain.jsonl,JP=$E/japan.jsonl" \
-  --overture-db $MAILWOMAN_DATA_ROOT/poi/poi.db \
+  --overture-db $MAILWOMAN_DATA_ROOT/db/poi/poi.db \
   --out corpus/data/sub-venue-lexicon.json
 npx oxfmt corpus/data/sub-venue-lexicon.json
 ```

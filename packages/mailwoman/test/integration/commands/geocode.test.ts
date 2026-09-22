@@ -11,7 +11,7 @@
  *
  *   Integration suite paths:
  *
- *   - WOF admin DB: $MAILWOMAN_WOF_DB or $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
+ *   - WOF admin DB: $MAILWOMAN_WOF_DB or $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
  *   - Address-point database: --address-points-db flag (explicit, skips state-selection)
  *   - Interpolation database: --interpolation-db flag (explicit, skips state-selection)
  *
@@ -34,12 +34,12 @@ import { describe, expect, test, vi } from "vitest"
 
 const CLI_PATH = await mailwomanCLIPath()
 
-const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
+const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 
 // Per-state TX databases (the demo address is Round Rock, TX).
-const TX_ADDRESS_POINTS_DB = dataRootPath("address-points", "address-points-us-tx.db")
-const TX_INTERPOLATION_DB = dataRootPath("interpolation", "interpolation-us-tx.db")
+const TX_ADDRESS_POINTS_DB = dataRootPath("db", "address-points", "address-points-us-tx.db")
+const TX_INTERPOLATION_DB = dataRootPath("db", "interpolation", "interpolation-us-tx.db")
 
 /**
  * Wall-clock budget for a CLI spawn.

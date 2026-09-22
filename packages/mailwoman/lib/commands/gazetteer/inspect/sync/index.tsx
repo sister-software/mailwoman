@@ -118,7 +118,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				assertDestinationNotARepoName(requested)
 			}
 
-			const destination = PathBuilder.from(requested ?? dataRootPath("wof", "repos"))
+			const destination = PathBuilder.from(requested ?? dataRootPath("src", "wof-repos"))
 
 			const { Placetype, PLACETYPES_REPO_SOURCE, synchronizeRepo } = await import("@mailwoman/core")
 			const { parallelMap } = await import("spliterator")

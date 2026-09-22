@@ -6,7 +6,7 @@
  *
  *   A county-scoped join from a WOF county ancestor into a tiger county-keyed extract reads "no data" wherever the two
  *   registers disagree about what a county is, and that absence is indistinguishable from "not there". This measures
- *   the cheap half of the check the issue asks for: for every state extract under `$MAILWOMAN_DATA_ROOT/interpolation`,
+ *   the cheap half of the check the issue asks for: for every state extract under `$MAILWOMAN_DATA_ROOT/db/interpolation`,
  *   the count of distinct `county_fips` values against the count of WOF `county` records whose region ancestor is that
  *   state. Equal counts do not prove the keys correspond. unequal counts prove they cannot.
  *
@@ -104,8 +104,8 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const candidatePath = values.candidate ?? String(dataRootPath("wof", "candidate.db"))
-	const interpolationDir = values.interpolation ?? String(dataRootPath("interpolation"))
+	const candidatePath = values.candidate ?? String(dataRootPath("db", "wof", "candidate.db"))
+	const interpolationDir = values.interpolation ?? String(dataRootPath("db", "interpolation"))
 	const report = await countyKeyParity(candidatePath, interpolationDir)
 	const mismatches = report.filter((row) => row.match === false)
 

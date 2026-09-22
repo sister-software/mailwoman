@@ -67,9 +67,12 @@ const PARENT_PLACETYPES = ["county", "localadmin", "borough"]
  */
 const AURANGABAD_MAHARASHTRA = 102_030_887
 
-using db = new DatabaseClient<WOFDatabase>(String(args.admin ?? dataRootPath("wof", "admin-global-priority.db")), {
-	readOnly: true,
-})
+using db = new DatabaseClient<WOFDatabase>(
+	String(args.admin ?? dataRootPath("db", "wof", "admin-global-priority.db")),
+	{
+		readOnly: true,
+	}
+)
 
 /**
  * The comparison surface.

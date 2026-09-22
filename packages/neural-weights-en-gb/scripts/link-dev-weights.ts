@@ -44,7 +44,7 @@ import { resolvePath } from "path-ts"
  * the build reads — when those two lists drift apart the guard silently blesses a stale artifact.
  */
 const PPD_SOURCE_CSV = String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"))
-const BOROUGH_DB = String(dataRootPath("wof", "admin-global-priority.db"))
+const BOROUGH_DB = String(dataRootPath("db", "wof", "admin-global-priority.db"))
 const LONDON_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "london-pairs-v2.jsonl"))
 /**
  * Northern Ireland neighbourhood pairs (campaign R7).

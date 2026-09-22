@@ -142,7 +142,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		// every time the check itself was worth re-running.
 		if (options.verifyOnly) {
 			return runVerification(
-				options.out ?? String(dataRootPath("soil", "soil.db")),
+				options.out ?? String(dataRootPath("db", "soil", "soil.db")),
 				client,
 				options.verifyPoints ? Number(options.verifyPoints) : undefined
 			)
@@ -151,7 +151,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const acquired = await acquireRegion({
 			client,
 			prefix,
-			cacheRoot: String(dataRootPath("soil", "cache", "archives")),
+			cacheRoot: String(dataRootPath("db", "soil", "cache", "archives")),
 			onProgress: (message) => console.error(`  [acquire] ${message}`),
 		})
 
@@ -185,7 +185,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? String(dataRootPath("soil", "soil.db"))
+		const out = options.out ?? String(dataRootPath("db", "soil", "soil.db"))
 		const buildSHA = resolveBuildSHA(String(repoRootPath()))
 
 		const buildCmd =

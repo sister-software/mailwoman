@@ -64,7 +64,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 		const { buildPlacetypeCensus, toBaseRates } = await import("#gazetteer-pipeline/placetype-census")
 
 		const country = options.country.toLowerCase()
-		const sourcePath = options.source ?? String(dataRootPath("wof", "admin-global-priority.db"))
+		const sourcePath = options.source ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
 
 		if (!(await pathExists(sourcePath))) {
 			throw new Error(`census: source WOF admin DB not found: ${sourcePath}`)

@@ -345,8 +345,8 @@ prerequisite for shipping either independently.
 Instruments B, D and E use shipped tooling:
 
 ```bash
-WOF=$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
-CAND=$MAILWOMAN_DATA_ROOT/wof/candidate-global-1026.db
+WOF=$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
+CAND=$MAILWOMAN_DATA_ROOT/db/wof/candidate-global-1026.db
 
 # Instrument B — POI board, one backend per run
 node mailwoman/out/cli.js eval poi-board --resolve-db $WOF --json

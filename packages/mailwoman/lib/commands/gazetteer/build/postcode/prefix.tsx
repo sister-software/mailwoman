@@ -142,11 +142,11 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 
 		const database = args[0] as DatabaseName
 		const recipe: DatabaseRecipe = DATABASE_RECIPES[database]
-		const sourcePath = options.source ?? String(dataRootPath("wof", recipe.sourceFile))
-		const adminPath = options.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
+		const sourcePath = options.source ?? String(dataRootPath("db", "wof", recipe.sourceFile))
+		const adminPath = options.admin ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
 
 		const polygonPath = recipe.polygonFile
-			? (options.polygons ?? String(dataRootPath("wof", recipe.polygonFile)))
+			? (options.polygons ?? String(dataRootPath("db", "wof", recipe.polygonFile)))
 			: undefined
 
 		for (const [label, path] of [

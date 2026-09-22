@@ -55,7 +55,10 @@ const { values } = parseArguments({
 
 if (!values.out) throw new Error("--out <dir> is required")
 
-const databasePath = values.database!.startsWith("/") ? values.database! : String(dataRootPath("wof", values.database!))
+const databasePath = values.database!.startsWith("/")
+	? values.database!
+	: String(dataRootPath("db", "wof", values.database!))
+
 using con = new DatabaseClient<WOFDatabase>(databasePath, { readOnly: true })
 
 const rows = con

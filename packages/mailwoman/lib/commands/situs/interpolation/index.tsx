@@ -481,7 +481,7 @@ interface StateResult {
 const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const EDGES_DIR = options.edgesDir
-		const OUT_DIR = options.outDir ?? dataRootPath("interpolation")
+		const OUT_DIR = options.outDir ?? dataRootPath("db", "interpolation")
 		const RELEASE = options.release
 		const CONCURRENCY = options.concurrency
 		const FORCE = options.force

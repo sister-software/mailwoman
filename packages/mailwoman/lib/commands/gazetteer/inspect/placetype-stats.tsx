@@ -82,7 +82,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof spec> = ({ options }) => 
 		const { COMPONENT_TAGS } = await import("@mailwoman/codex/component")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
-		const dbPath = options.db ?? dataRootPath("wof", "admin-global-priority.db").toString()
+		const dbPath = options.db ?? dataRootPath("db", "wof", "admin-global-priority.db").toString()
 		const country = options.country
 
 		let db: DatabaseClient<WOFDatabase>

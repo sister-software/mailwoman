@@ -160,6 +160,6 @@ rather than documentation:
 - `release.config.json`'s `softFeed.postcodeDBByCountry` has no `gb` key, so `copy-weights.ts` skips it
   at release time; the publish workflow no longer fetches `postcode-gb.bin` from the bucket.
 
-The artifact stays buildable. `$MAILWOMAN_DATA_ROOT/wof/postalcode-gb.db` is untouched and
+The artifact stays buildable. `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-gb.db` is untouched and
 `mailwoman gazetteer postcode-binary --out neural-weights-en-gb --locale GB:<extract>` still produces the
 binary in seconds. The retrain needs it.

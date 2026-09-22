@@ -123,7 +123,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const annotationCountryFallback = candidateDB ? undefined : "US"
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
-	const tzDBPath = dataRootPath("timezone", "timezone.db")
+	const tzDBPath = dataRootPath("db", "timezone", "timezone.db")
 
 	if (await pathExists(tzDBPath)) {
 		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: resolvePath(tzDBPath) })))

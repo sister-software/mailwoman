@@ -143,7 +143,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			options.out ??
 				(COUNTRY
 					? nationalAddressPointsPath(String(dataRootPath()), COUNTRY)
-					: dataRootPath("address-points", `address-points-us-${STATE.toLowerCase()}.db`))
+					: dataRootPath("db", "address-points", `address-points-us-${STATE.toLowerCase()}.db`))
 		)
 
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)

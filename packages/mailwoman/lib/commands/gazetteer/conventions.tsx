@@ -114,7 +114,7 @@ const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 		const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)
 
 		const src = options.src
-		const output = resolvePath(options.out ?? dataRootPath("wof", "conventions.db"))
+		const output = resolvePath(options.out ?? dataRootPath("db", "wof", "conventions.db"))
 
 		const rows = await readLocalJSONFile<AuthoredConvention[]>(src)
 

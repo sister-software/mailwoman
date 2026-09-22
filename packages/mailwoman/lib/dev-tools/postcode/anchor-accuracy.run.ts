@@ -42,8 +42,8 @@ function parseArgs(): Args {
 	let country = "DE"
 
 	const databases: string[] = [
-		resolvePath(dataRootPath("wof", "postalcode-us.db")),
-		resolvePath(dataRootPath("wof", "postalcode-intl.db")),
+		resolvePath(dataRootPath("db", "wof", "postalcode-us.db")),
+		resolvePath(dataRootPath("db", "wof", "postalcode-intl.db")),
 	]
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)

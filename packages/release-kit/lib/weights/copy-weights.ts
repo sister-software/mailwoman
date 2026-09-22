@@ -295,7 +295,7 @@ export async function copyWeights({
 /**
  * Materialize the per-locale FST gazetteer binary (#1318 FST-distribution arc) into a weights workspace.
  *
- * The source binary lives at $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-<locale>.bin —
+ * The source binary lives at $MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale/fst-<locale>.bin —
  * a verbatim copy (no build step).
  * En-nz has no FST sibling and is skipped silently (byte-stable).
  */
@@ -318,9 +318,10 @@ async function materializeFST(context: MaterializationContext, workspace: string
 }
 
 /**
- * Materialize the locale-general street-morphology FST (`fst-street-morphology.bin`, the #1315
- * street-context check's signal source) into a weights workspace — a verbatim copy of the sealed
- * artifact staged by `mailwoman gazetteer build street-morphology` at $MAILWOMAN_DATA_ROOT/wof/.
+ * Materialize the locale-general street-morphology FST
+ * (`fst-street-morphology.bin`, the #1315 street-context check's signal source)
+ * into a weights workspace — a verbatim copy of the sealed artifact staged by
+ * `mailwoman gazetteer build street-morphology` at $MAILWOMAN_DATA_ROOT/db/wof/.
  *
  * Shipping it as a weights sibling is what carries it to the per-version R2
  * asset layout the browser demo fetches.

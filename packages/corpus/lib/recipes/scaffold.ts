@@ -473,7 +473,7 @@ export interface RecipeOptions {
 	/**
 	 * `german`: the WOF admin database the Ortsteil pool is read from.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db`.
+	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db`.
 	 */
 	adminDB?: string
 	/**
@@ -545,7 +545,7 @@ export interface RecipeOptions {
 	 * `sub-venue`: the `poi.db` spatial layer, read for the en-US and fr-FR venue + confound
 	 * pools (the two of poi.db's four countries this recipe has legs for).
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/poi/poi.db`.
+	 * Default `$MAILWOMAN_DATA_ROOT/db/poi/poi.db`.
 	 */
 	poiDB?: string
 	/**

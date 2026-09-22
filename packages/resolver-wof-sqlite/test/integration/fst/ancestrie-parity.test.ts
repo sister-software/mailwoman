@@ -326,7 +326,7 @@ const CURATED_QUERIES: Record<string, readonly string[]> = {
 }
 
 for (const locale of ["en-gb", "es-es", "it-it"]) {
-	const artifactPath = String(dataRootPath("wof", "fst-per-locale", `fst-${locale}.bin`))
+	const artifactPath = String(dataRootPath("db", "wof", "fst-per-locale", `fst-${locale}.bin`))
 	const present = await pathExists(artifactPath)
 
 	describe.skipIf(!present)(`fst-autocomplete ↔ ancestrie parity — shipped ${locale}`, () => {

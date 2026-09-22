@@ -23,7 +23,7 @@ import { afterAll, describe, expect, test } from "vitest"
 
 import { stubWorker } from "./stub-worker.ts"
 
-const CANDIDATE_DB = dataRootPath("wof", "candidate.db")
+const CANDIDATE_DB = dataRootPath("db", "wof", "candidate.db")
 const present = await pathExists(CANDIDATE_DB)
 
 /**

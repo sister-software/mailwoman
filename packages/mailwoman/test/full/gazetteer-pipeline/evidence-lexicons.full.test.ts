@@ -25,7 +25,7 @@ import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { describe, expect, it } from "vitest"
 
-const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
+const ADMIN_DB = String(dataRootPath("db", "wof", "admin-global-priority.db"))
 
 describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integration (admin DB)", () => {
 	it("applies all three laws end to end", async () => {

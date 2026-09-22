@@ -81,7 +81,7 @@ the reason). Update the `mailwoman-release` skill's Step 2 + `publish-hf.ts` to 
 per-locale FSTs to HF at the next release. **Verify** with a `yarn pack -o /tmp` dry-run per workspace
 that the tarball contains a REAL `fst-<locale>.bin` (no symlink) and the files-guard passes.
 
-**Source path (pinned):** `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-<locale>.bin` — this is exactly
+**Source path (pinned):** `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale/fst-<locale>.bin` — this is exactly
 what `neural-weights-en-us/scripts/link-dev-weights.ts:211` already resolves
 (`dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")`) to create the dev symlink. **link-dev-weights.ts
 is your reference implementation** — copy-weights.ts must materialize from the same source, just with

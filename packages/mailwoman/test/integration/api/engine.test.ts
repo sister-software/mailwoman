@@ -38,8 +38,8 @@ import { createServeEngine } from "mailwoman/api-engine"
 import { $public } from "mailwoman/env"
 import { beforeAll, beforeEach, describe, expect, test } from "vitest"
 
-const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
-const txSitus = String(dataRootPath("address-points", "address-points-us-tx.db"))
+const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
+const txSitus = String(dataRootPath("db", "address-points", "address-points-us-tx.db"))
 const hasStack = (await pathExists(wofPath)) && (await pathExists(txSitus))
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfStack = describe.skipIf(!hasStack)

@@ -122,4 +122,4 @@ useful at all, which is a different question from whether it is doing harm.
 ---
 
 **Reproduce:** `node scratchpad/t1b-gazetteer-feedback.mjs` (needs `fst-global-priority.bin` under
-`$MAILWOMAN_DATA_ROOT/wof/`; the artifact is dated 2026-05-28 — the staleness #1142 flagged).
+`$MAILWOMAN_DATA_ROOT/db/wof/`; the artifact is dated 2026-05-28 — the staleness #1142 flagged).

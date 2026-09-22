@@ -147,7 +147,7 @@ async function main() {
 	const label = stringArgs["label"] || "model"
 	// Comma-separated multi-extract support (night-31): postcodeConsistency needs a resolvable
 	// postcode node, which needs a postalcode extract attached alongside the admin DB.
-	const wofDBArg = String(stringArgs["wof-db"] || dataRootPath("wof", "admin-global-priority.db"))
+	const wofDBArg = String(stringArgs["wof-db"] || dataRootPath("db", "wof", "admin-global-priority.db"))
 	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
 
 	const [{ WOFSQLitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =

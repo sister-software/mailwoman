@@ -148,7 +148,7 @@ export interface POIBoardPipelineHandle extends Disposable {
  * while the grader stayed identical, and the difference would read as a pipeline result.
  */
 export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Promise<POIBoardPipelineHandle> {
-	const db = resolvePath(options.db ?? dataRootPath("poi", "poi.db"))
+	const db = resolvePath(options.db ?? dataRootPath("db", "poi", "poi.db"))
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",

@@ -34,7 +34,7 @@ import { Globerator } from "spliterator/node/fs"
  */
 const MAX_LISTED_ARTIFACTS = 12
 
-const WOF_REPOS = dataRootPath("wof", "repos")
+const WOF_REPOS = dataRootPath("src", "wof-repos")
 
 async function adminRoots(): Promise<string[]> {
 	const pattern = WOF_REPOS("whosonfirst-data/whosonfirst-data-admin-*/data")

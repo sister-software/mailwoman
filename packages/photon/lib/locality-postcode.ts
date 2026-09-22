@@ -29,7 +29,7 @@ export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLo
 	const statements = new Map<string, ReturnType<DatabaseClient["prepare"]>>()
 
 	for (const suffix of POSTCODE_LOCALITY_SUFFIXES) {
-		const path = dataRootPath("wof", `postcode-locality-${suffix}.db`)
+		const path = dataRootPath("db", "wof", `postcode-locality-${suffix}.db`)
 
 		if (!(await pathExists(path))) continue
 

@@ -34,7 +34,7 @@ import { describe, expect, test } from "vitest"
 // MARK: Environment guard
 
 // Same predicate as commands/geocode.test.ts's `hasWOFDB`.
-const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
+const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 

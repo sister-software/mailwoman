@@ -45,7 +45,7 @@ const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 		const { bottomsOutAt, buildGranularityLadder } = await import("#gazetteer-pipeline/granularity/index")
 		const { renderGranularityReport } = await import("#gazetteer-pipeline/granularity/report")
 
-		const sourcePath = options.source ?? String(dataRootPath("wof", "admin-global-priority.db"))
+		const sourcePath = options.source ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
 		const rows = buildGranularityLadder(sourcePath)
 
 		if (!rows.length) {
@@ -55,7 +55,7 @@ const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 		const markdown = renderGranularityReport(rows, {
 			// Display the portable form.
 			// Never bake the resolved lab path into a committed artifact.
-			sourcePath: "$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db",
+			sourcePath: "$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db",
 			sourceMD5: await md5File(sourcePath),
 			buildDate: new Date().toISOString(),
 			floor: options.floor,

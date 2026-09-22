@@ -100,7 +100,7 @@ export interface BuildAdminResult {
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
-	const wofDir = dataRootPath("wof")
+	const wofDir = dataRootPath("db", "wof")
 	const dataDir = opts.dataDir ?? join(wofDir, "repos")
 	const out = opts.out ?? join(wofDir, `admin-global-priority${DEFAULT_ADMIN_STAGING_SUFFIX}`)
 	const overtureCountries = opts.overtureCountries ?? DEFAULT_OVERTURE_COUNTRIES

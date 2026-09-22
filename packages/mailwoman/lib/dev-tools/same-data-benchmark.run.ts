@@ -104,13 +104,13 @@ const GEONAMES = values.geonames || dataRootPath("geonames")
  * The candidate backend below carries no concordance table, which is why the
  * two are separate flags rather than one.
  */
-const GAZETTEER = values.gazetteer || dataRootPath("wof", "admin-global-priority.db")
+const GAZETTEER = values.gazetteer || dataRootPath("db", "wof", "admin-global-priority.db")
 /**
  * The backend the recording drives.
  *
  * Defaults to the promoted candidate table, which is what the shipped geocoder reads.
  */
-const BACKEND = values.backend || dataRootPath("wof", "candidate.db").toString()
+const BACKEND = values.backend || dataRootPath("db", "wof", "candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
 
 /**

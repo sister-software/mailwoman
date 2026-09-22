@@ -11,7 +11,7 @@
  *   binary feeding `neural/fst-prior.ts`:
  *
  *   - `none` — `fst: false`, which suppresses both an explicit matcher and the pipeline's auto-load.
- *   - `pop` — `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/` — the shipped set. Its source DB has no
+ *   - `pop` — `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale/` — the shipped set. Its source DB has no
  *       `place_importance` table, so `fst-builder.ts` took the documented population fallback
  *       (`min(1, log2(1+pop/1000)/14)`). Verified from the artifact's own stamp: `importanceMatches`
  *       743,268 against `admin-global-priority.db`.
@@ -78,9 +78,9 @@ const { values } = parseArguments({
 
 const ARM_DIRS: Record<string, string | null> = {
 	none: null,
-	pop: String(dataRootPath("wof", "fst-per-locale")),
-	imp: String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix")),
-	ref: String(dataRootPath("wof", "fst-staging-2026-08-06-two-score-split")),
+	pop: String(dataRootPath("db", "wof", "fst-per-locale")),
+	imp: String(dataRootPath("db", "wof", "fst-staging-2026-08-05-importance-fanoutfix")),
+	ref: String(dataRootPath("db", "wof", "fst-staging-2026-08-06-two-score-split")),
 }
 
 const arms = values.arms!.split(",").map((a) => a.trim())

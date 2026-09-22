@@ -10,7 +10,7 @@ import { autocomplete, buildFSTFromWOF, FSTMatcher } from "@mailwoman/resolver-w
 import type { PlaceEntry, PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst"
 import { beforeAll, describe, expect, it } from "vitest"
 
-const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
+const WOF_DB = dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db")
 const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {

@@ -162,7 +162,7 @@ export async function buildPostcodeCodePoint(
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
 	const sourceDir = (options.sourceDir ?? dataRootPath("codepoint", stamp)).toString()
-	const out = (options.out ?? dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`)).toString()
+	const out = (options.out ?? dataRootPath("db", "wof", `postalcode-gb-codepoint-${stamp}.db`)).toString()
 
 	// Acquire the Code-Point source archive.
 	//

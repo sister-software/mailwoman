@@ -9,8 +9,8 @@
  *
  *   Usage:
  *     node packages/osm/out/scripts/emit-corpus-jsonl.js \
- *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/pakistan-260819.osm.pbf \
- *       --out $MAILWOMAN_DATA_ROOT/osm/corpus/osm-pk.corpus.jsonl
+ *       --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/pakistan-260819.osm.pbf \
+ *       --out $MAILWOMAN_DATA_ROOT/db/osm/corpus/osm-pk.corpus.jsonl
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"

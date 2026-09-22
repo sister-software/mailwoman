@@ -26,7 +26,7 @@ you are authoring a new layer rather than rebuilding poi.db.
 
 ```bash
 node mailwoman/out/cli.js gazetteer build poi --countries US,CA,MX,FR \
-	--out $MAILWOMAN_DATA_ROOT/poi/poi-full.db
+	--out $MAILWOMAN_DATA_ROOT/db/poi/poi-full.db
 ```
 
 Two phases: DuckDB ingest (Overture Places S3 → per-country parquet under

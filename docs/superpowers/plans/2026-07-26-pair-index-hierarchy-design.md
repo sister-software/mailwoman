@@ -131,7 +131,7 @@ length-prefixed pair key; `serializePairIndex`'s duplicate assert stays the back
    discipline, inverted: the probe pins the one value that is inert).
 2. Filename `pair-index-locality-region-<cc>.bin` does not match the loader's auto-wire pattern
    (`pair-index-<cc>.bin` as a weights-package sibling).
-3. Location `$MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/` — the data root rather than a weights
+3. Location `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/` — the data root rather than a weights
    workspace; nothing ships from there.
 
 ## Measured sizes (2026-07-26, admin-global-priority.db)

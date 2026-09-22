@@ -32,7 +32,7 @@ link "11 W 53rd St" to "11 West 53rd Street" without a string rule for every abb
 
 ```bash
 npx mailwoman registry run customers-messy.csv --infer-mapping \
-  --resolve-db "$MAILWOMAN_DATA_ROOT/wof/candidate.db" --out entities.geojson
+  --resolve-db "$MAILWOMAN_DATA_ROOT/db/wof/candidate.db" --out entities.geojson
 ```
 
 ```

@@ -30,7 +30,7 @@ node packages/mailwoman/out/cli/index.js wof prepare /mnt/playpen/mailwoman-data
 Downloads wikimedia-importance.csv.gz, joins WOF concordances, writes `place_importance` table.
 
 ```bash
-node packages/mailwoman/out/cli/index.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
+node packages/mailwoman/out/cli/index.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 ```
 
 **This step must precede step 3. Check whether it has ever run against the live admin DB:** while
@@ -48,7 +48,7 @@ provenance trailer (see step 5).
 
 ```bash
 node packages/mailwoman/out/cli/index.js gazetteer build fst \
-  --output $MAILWOMAN_DATA_ROOT/wof/fst-staging-$(date -u +%F)
+  --output $MAILWOMAN_DATA_ROOT/db/wof/fst-staging-$(date -u +%F)
 ```
 
 Builds `fst-{en-us,fr-fr,en-gb,de-de}.bin` — the `FST_LOCALES` set. Output goes to a STAGING dir and

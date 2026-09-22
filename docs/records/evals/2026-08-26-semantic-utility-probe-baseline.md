@@ -4,7 +4,7 @@
 packages/mailwoman/lib/eval-harness/semantic-utility/baseline-receipt.json`. **Pre-registration:**
 `packages/mailwoman/lib/eval-harness/semantic-utility/probe-definition.json` v1.0.0, content hash
 `df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c`. **DB:**
-`$MAILWOMAN_DATA_ROOT/poi/poi.db`, `layer_manifest` `poi 2026-07-22.0` (vintage 2026-07-22.0).
+`$MAILWOMAN_DATA_ROOT/db/poi/poi.db`, `layer_manifest` `poi 2026-07-22.0` (vintage 2026-07-22.0).
 **Weights:** en-US 9.1.0. **Resolver:** candidate-table backend. **Tree:** working tree at
 `2b5fa6193` carrying this pull request's harness, which adds no pipeline behaviour.
 

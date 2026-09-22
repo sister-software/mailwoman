@@ -106,7 +106,7 @@ function placed(lat: number, lon: number): boolean {
  */
 function loadIntl(country: string): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	using con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-intl.db"))
+	using con = new DatabaseClient<WOFDatabase>(dataRootPath("db", "wof", "postalcode-intl.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND country=?")
@@ -131,7 +131,7 @@ function loadIntl(country: string): Map<string, Centroid> {
  */
 function loadUs(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	using con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-us.db"))
+	using con = new DatabaseClient<WOFDatabase>(dataRootPath("db", "wof", "postalcode-us.db"))
 	const hasSources = con.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='centroid_source'").get()
 	const srcJoin = hasSources ? "LEFT JOIN centroid_source cs ON cs.id=spr.id" : ""
 	const srcCol = hasSources ? "cs.source" : "NULL"
@@ -214,7 +214,7 @@ const NL_SOURCE = "cbs-pc6"
  */
 function loadGBCodePoint(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	using con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-gb-codepoint.db"))
+	using con = new DatabaseClient<WOFDatabase>(dataRootPath("db", "wof", "postalcode-gb-codepoint.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")
@@ -283,7 +283,7 @@ function addGBOutwardKeys(units: Map<string, Centroid>): number {
  */
 function loadNLPC6(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	using con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-nl-pc6.db"))
+	using con = new DatabaseClient<WOFDatabase>(dataRootPath("db", "wof", "postalcode-nl-pc6.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")

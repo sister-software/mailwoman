@@ -44,7 +44,7 @@ export interface BuildOutlierExposureOptions {
 	/**
 	 * WOF admin SQLite path.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`.
+	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`.
 	 */
 	wof?: PathBuilderLike
 	/**
@@ -168,7 +168,7 @@ export async function buildOutlierExposure(
 	report?: (line: string) => void
 ): Promise<BuildOutlierExposureResult> {
 	const PER = options.perLang ?? 2500
-	const wofPath = options.wof || dataRootPath("wof", "admin-global-priority.db")
+	const wofPath = options.wof || dataRootPath("db", "wof", "admin-global-priority.db")
 	const dataDir = options.data || defaultDataDir()
 
 	using db = new DatabaseClient<WOFNameRead>(wofPath, { readOnly: true })

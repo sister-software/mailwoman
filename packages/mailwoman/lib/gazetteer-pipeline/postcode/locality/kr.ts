@@ -28,8 +28,8 @@
  *
  *   Usage: node scripts/build-postcode-locality-kr.ts\
  *   --geonames $MAILWOMAN_DATA_ROOT/geonames/KR.txt\
- *   --admin-db $MAILWOMAN_DATA_ROOT/wof/dbs-per-country/admin-kr.db\
- *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-kr.db
+ *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/dbs-per-country/admin-kr.db\
+ *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-kr.db
  *
  *   port note (from scripts/build-postcode-locality-kr.py): faithful TypeScript port. No polygons, so
  *   no PIP. Matching is point-nearest via `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python)

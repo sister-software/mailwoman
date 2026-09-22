@@ -41,7 +41,7 @@
  *   [--model neural-weights-en-us/model.onnx]\
  *   [--tokenizer neural-weights-en-us/tokenizer.model]\
  *   [--model-card neural-weights-en-us/model-card.json]\
- *   [--wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,…]\
+ *   [--wof $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db,…]\
  *   [--cal-frac 0.5] [--alpha 0.9] [--seed 20260614]
  *
  *   Do not change the resolver or parser. This script only reads stamped metadata.
@@ -261,7 +261,7 @@ async function main(): Promise<void> {
 
 	const wofPaths = (
 		values["wof"] ||
-		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
+		`${dataRootPath("db", "wof", "admin-global-priority.db")},${dataRootPath("db", "wof", "postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())

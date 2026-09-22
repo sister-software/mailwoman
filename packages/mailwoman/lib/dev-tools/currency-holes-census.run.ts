@@ -37,7 +37,7 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const adminPath = values.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
+	const adminPath = values.admin ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
 	const geonamesDir = values.geonames ?? String(dataRootPath("geonames"))
 	const countries = values.countries!.split(",").map((code) => code.trim().toUpperCase())
 	using src = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })

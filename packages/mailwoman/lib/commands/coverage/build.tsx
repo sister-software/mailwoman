@@ -74,13 +74,13 @@ export const spec = {
 		"exclude-states": { type: "string", default: "AK", description: "Excluded states" },
 		"data-root": {
 			type: "string",
-			default: resolvePath(dataRootPath("address-points")),
+			default: resolvePath(dataRootPath("db", "address-points")),
 			description: "Address-point root",
 		},
 		interp: { type: "boolean", default: true, description: "Blend interpolation" },
 		"interp-root": {
 			type: "string",
-			default: resolvePath(dataRootPath("interpolation")),
+			default: resolvePath(dataRootPath("db", "interpolation")),
 			description: "Interpolation root",
 		},
 		"fine-res": h3("fine resolution", 9),
@@ -98,7 +98,7 @@ export const spec = {
 		},
 		"wof-db": {
 			type: "string",
-			default: resolvePath(dataRootPath("wof", "admin-global-priority-importance.db")),
+			default: resolvePath(dataRootPath("db", "wof", "admin-global-priority-importance.db")),
 			description: "WOF database",
 		},
 		"postcode-ceiling": unit("postcode ceiling", 0.85),

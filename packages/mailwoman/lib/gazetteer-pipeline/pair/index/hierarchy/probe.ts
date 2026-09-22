@@ -6,7 +6,7 @@
  *   probe builder — WOF-hierarchy generalization of the PIX1 placetype-pair index (static-index
  *   survey candidate #3. design: `docs/superpowers/plans/2026-07-26-pair-index-hierarchy-design.md`).
  *   Extracts per-country (locality, region) pairs from the WOF admin DB's `ancestors` table and
- *   writes one PIX1 binary per country to `$MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/`.
+ *   writes one PIX1 binary per country to `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/`.
  *
  *   Lives in the gazetteer pipeline (the sanctioned home for builders — scripts/agents.md's closed
  *   drawer) but is not yet behind a `mailwoman gazetteer` command: it's a probe, runnable directly
@@ -78,7 +78,7 @@ export function resolveHierarchyRunInputs(values: { countries?: string; db?: str
 } {
 	return {
 		countries: (values.countries ?? "us,fr").split(",").map((c) => c.trim().toLowerCase()),
-		dbPath: String(resolvePath(values.db ?? dataRootPath("wof", "admin-global-priority.db"))),
+		dbPath: String(resolvePath(values.db ?? dataRootPath("db", "wof", "admin-global-priority.db"))),
 	}
 }
 
@@ -203,7 +203,7 @@ async function main(): Promise<void> {
 	})
 
 	const { countries, dbPath } = resolveHierarchyRunInputs(values)
-	const outDir = resolvePath(values.out ?? dataRootPath("wof", "pair-index-hierarchy-probe"))
+	const outDir = resolvePath(values.out ?? dataRootPath("db", "wof", "pair-index-hierarchy-probe"))
 
 	if (!(await pathExists(dbPath))) {
 		throw new Error(`pair-index-hierarchy-probe: WOF admin DB not found: ${dbPath}`)

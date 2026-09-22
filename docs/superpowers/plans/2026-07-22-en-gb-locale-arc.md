@@ -771,7 +771,7 @@ git commit -m "feat(train): v3.10.0-gb-probe config — GB extract + dependent_l
 
 ```bash
 yarn compile
-node mailwoman/out/cli.js gazetteer postcode-binary --out /tmp/claude-1000/-home-lab-Projects-mailwoman/fdc2d5da-e8ed-459b-bf6c-2749f4b7021b/scratchpad/gb-bin --locale "GB:$MAILWOMAN_DATA_ROOT/wof/postalcode-gb.db"
+node mailwoman/out/cli.js gazetteer postcode-binary --out /tmp/claude-1000/-home-lab-Projects-mailwoman/fdc2d5da-e8ed-459b-bf6c-2749f4b7021b/scratchpad/gb-bin --locale "GB:$MAILWOMAN_DATA_ROOT/db/wof/postalcode-gb.db"
 ```
 
 Expected: `postcode-gb.bin` written (outward-aggregated, ~3k records). Verify with a node one-liner: `new PostcodeBinaryResolver(...)` from `@mailwoman/neural` resolves `SW1A` and the outward of a full code (`SW1A 1AA` → outward fallback) to plausible London coords.

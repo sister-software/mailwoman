@@ -185,7 +185,7 @@ shape alone vs the system, on the 110 asserted codes
 
 ### M-2: does a GB outward code localize?
 
-`m2-gb-outward.ts`, over `$MAILWOMAN_DATA_ROOT/wof/postalcode-gb-codepoint.db` (read-only). Group
+`m2-gb-outward.ts`, over `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-gb-codepoint.db` (read-only). Group
 every unit postcode by outward part (compact form minus the last 3 chars), take the group centroid,
 report the great-circle radius distribution.
 
@@ -243,7 +243,7 @@ nothing about where inside it. That is the shape mechanism 3's bar is written ar
 ### M-3: what the ZIP-prefix table buys
 
 `m3-zip.ts` / `m3b-zip.ts` / `m3c-zip.ts`, over `codex/us/zipcode.ts` and
-`$MAILWOMAN_DATA_ROOT/wof/postalcode-us.db` + `admin-global-priority.db` (both read-only). Ground
+`$MAILWOMAN_DATA_ROOT/db/wof/postalcode-us.db` + `admin-global-priority.db` (both read-only). Ground
 truth for a ZIP's state is the WOF region ancestor of its `spr.parent_id`.
 
 ```

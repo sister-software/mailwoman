@@ -49,8 +49,8 @@ const { values, positionals } = parseArguments({
  * Both stamps are readable in the binaries' provenance tails.
  */
 const ARMS: Record<string, string> = {
-	pop: String(dataRootPath("wof", "fst-per-locale")),
-	imp: String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix")),
+	pop: String(dataRootPath("db", "wof", "fst-per-locale")),
+	imp: String(dataRootPath("db", "wof", "fst-staging-2026-08-05-importance-fanoutfix")),
 }
 
 const matchers = new Map<string, unknown>()

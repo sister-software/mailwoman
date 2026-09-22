@@ -38,7 +38,7 @@ const values = rawValues as { model?: string; n?: string }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "packages/neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
-const WOF = dataRootPath("wof", "admin-global-priority.db")
+const WOF = dataRootPath("db", "wof", "admin-global-priority.db")
 const MODEL = values["model"] || "out/v191/model.onnx"
 const N = Number(values["n"] || "150")
 

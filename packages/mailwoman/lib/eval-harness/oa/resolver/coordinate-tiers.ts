@@ -108,7 +108,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	if (useAnchor || anchorRerank) {
 		const databases = (
 			options.postcodeDatabases ||
-			`${dataRootPath("wof", "postalcode-us.db")},${dataRootPath("wof", "postalcode-intl.db")}`
+			`${dataRootPath("db", "wof", "postalcode-us.db")},${dataRootPath("db", "wof", "postalcode-intl.db")}`
 		)
 			.split(",")
 			.map((s) => s.trim())

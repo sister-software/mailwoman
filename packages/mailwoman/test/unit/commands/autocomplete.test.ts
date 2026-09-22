@@ -251,7 +251,7 @@ describe("resolveFSTPath", () => {
 			// The name `gazetteer-pipeline/fst.ts` actually writes.
 			// This assertion previously restated the resolver's own spelling,
 			// so it agreed with the code and with no artifact.
-			expect(String(resolveFSTPath())).toBe(String(dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")))
+			expect(String(resolveFSTPath())).toBe(String(dataRootPath("db", "wof", "fst-per-locale", "fst-en-us.bin")))
 		} finally {
 			vi.unstubAllEnvs()
 		}

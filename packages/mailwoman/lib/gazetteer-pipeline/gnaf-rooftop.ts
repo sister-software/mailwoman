@@ -170,7 +170,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 	const standardDir =
 		options.standardDir ?? String(dataRootPath("gnaf", "may26", "extracted", "G-NAF", "G-NAF MAY 2026", "Standard"))
 
-	const out = options.out ?? String(dataRootPath("osm", "address-points-au-au.db"))
+	const out = options.out ?? String(dataRootPath("db", "osm", "address-points-au-au.db"))
 	const log = options.log ?? (() => {})
 
 	if (!new Date(options.createdAt).toISOString() || new Date(options.createdAt).toISOString() !== options.createdAt) {

@@ -31,9 +31,9 @@ set.
 ```bash
 # 1. Download the per-département dumps (or the national adresses-france.csv.gz):
 #    https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-<dept>.csv.gz
-#    → $MAILWOMAN_DATA_ROOT/ban/sources/   (or reuse an existing corpus/sources/ban)
+#    → $MAILWOMAN_DATA_ROOT/db/ban/sources/   (or reuse an existing corpus/sources/ban)
 
-# 2. Build the national extract (writes $MAILWOMAN_DATA_ROOT/ban/address-points-fr.db, sealed 0444):
+# 2. Build the national extract (writes $MAILWOMAN_DATA_ROOT/db/ban/address-points-fr.db, sealed 0444):
 node ban/out/scripts/build-address-point-extract.js \
   --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
 

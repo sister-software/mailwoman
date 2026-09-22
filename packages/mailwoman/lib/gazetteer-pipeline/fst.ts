@@ -187,7 +187,7 @@ export interface FSTFreshnessRow {
  */
 export async function checkAdminDerivedFSTFreshness(dbPath: string): Promise<FSTFreshnessRow[]> {
 	const source = await readWOFSourceIdentity(dbPath)
-	const wofRoot = String(dataRootPath("wof"))
+	const wofRoot = String(dataRootPath("db", "wof"))
 
 	const rows: FSTFreshnessRow[] = []
 
@@ -439,11 +439,11 @@ export interface BuildLocaleFSTsOpts {
 	 */
 	locales?: string[]
 	/**
-	 * WOF admin DB (default: `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`).
+	 * WOF admin DB (default: `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`).
 	 */
 	dbPath?: PathBuilderLike
 	/**
-	 * Output dir (default: `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated`).
+	 * Output dir (default: `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale-curated`).
 	 *
 	 * Never the shipped dir.
 	 */
@@ -465,8 +465,8 @@ export interface BuiltLocaleFST {
 
 export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<BuiltLocaleFST[]> {
 	const locales = opts.locales ?? [...FST_LOCALES.keys()]
-	const dbPath = opts.dbPath ?? dataRootPath("wof", "admin-global-priority.db")
-	const outputDir = resolvePath(opts.outputDir ?? dataRootPath("wof", "fst-per-locale-curated"))
+	const dbPath = opts.dbPath ?? dataRootPath("db", "wof", "admin-global-priority.db")
+	const outputDir = resolvePath(opts.outputDir ?? dataRootPath("db", "wof", "fst-per-locale-curated"))
 	const progress = opts.onProgress ?? (() => {})
 
 	const exclusion = opts.uncurated ? undefined : await loadDegenerateSurfaces()

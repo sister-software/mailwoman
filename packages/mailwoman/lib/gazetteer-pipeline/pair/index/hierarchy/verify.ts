@@ -176,7 +176,7 @@ async function main(): Promise<void> {
 	})
 
 	const { countries, dbPath } = resolveHierarchyRunInputs(values)
-	const dir = values.dir ?? dataRootPath("wof", "pair-index-hierarchy-probe")
+	const dir = values.dir ?? dataRootPath("db", "wof", "pair-index-hierarchy-probe")
 
 	using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 	let failures = 0

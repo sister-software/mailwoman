@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Overture Places source for the sub-venue lexicon (#35 wave 2) — read the sub-venue-containing
- *   category subsets of `poi.db` (spatial layer #1, `$MAILWOMAN_DATA_ROOT/poi/poi.db`) and yield
+ *   category subsets of `poi.db` (spatial layer #1, `$MAILWOMAN_DATA_ROOT/db/poi/poi.db`) and yield
  *   {@link SubVenueHarvestRow}s the lexicon builder consumes exactly like an OSM extract.
  *
  *   ── why overture AT all, when the OSM extractor already exists ────────────────────────────────────
@@ -138,7 +138,7 @@ export interface ReadOvertureSubVenuesOptions {
 	/**
 	 * Path to `poi.db`.
 	 *
-	 * Typically `dataRootPath("poi", "poi.db")`.
+	 * Typically `dataRootPath("db", "poi", "poi.db")`.
 	 */
 	databasePath: string
 	/**

@@ -193,7 +193,7 @@ To rebuild it:
 
 ```bash
 mw gazetteer build poi-coverage \
-  --pbf "$MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf" \
+  --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ile-de-france-260627.osm.pbf" \
   --region "Île-de-France" --admin-level 4 --category pharmacy \
   --country FR --release 260627
 ```

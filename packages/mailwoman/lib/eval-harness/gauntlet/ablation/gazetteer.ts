@@ -176,8 +176,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	static async create(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike } = {}
 	): Promise<AblationGazetteer> {
-		const ancestryPath = opts.ancestryPath ?? dataRootPath("wof", "admin-global-priority.db")
-		const candidatePath = opts.candidatePath ?? dataRootPath("wof", "candidate.db")
+		const ancestryPath = opts.ancestryPath ?? dataRootPath("db", "wof", "admin-global-priority.db")
+		const candidatePath = opts.candidatePath ?? dataRootPath("db", "wof", "candidate.db")
 		const missing: string[] = []
 
 		if (!(await pathExists(ancestryPath))) {
@@ -209,8 +209,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	constructor(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike; missingPaths?: readonly string[] } = {}
 	) {
-		const ancestryPath = opts.ancestryPath ?? dataRootPath("wof", "admin-global-priority.db")
-		const candidatePath = opts.candidatePath ?? dataRootPath("wof", "candidate.db")
+		const ancestryPath = opts.ancestryPath ?? dataRootPath("db", "wof", "admin-global-priority.db")
+		const candidatePath = opts.candidatePath ?? dataRootPath("db", "wof", "candidate.db")
 		const missing = opts.missingPaths ?? []
 
 		if (missing.length) {

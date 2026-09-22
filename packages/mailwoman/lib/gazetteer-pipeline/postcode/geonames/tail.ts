@@ -189,7 +189,7 @@ export async function buildPostcodeGeonamesTail(
 	const now = opts.now ?? new Date()
 	const countries = [...(opts.countries ?? DEFAULT_GEONAMES_TAIL_COUNTRIES)].map((c) => c.toUpperCase())
 	const postalDir = (opts.postalDir ?? dataRootPath("geonames-postal")).toString()
-	const out = (opts.out ?? dataRootPath("wof", `postalcode-geonames-tail-${isoDate(now)}.db`)).toString()
+	const out = (opts.out ?? dataRootPath("db", "wof", `postalcode-geonames-tail-${isoDate(now)}.db`)).toString()
 
 	if (!(await pathExists(postalDir))) {
 		throw new Error(

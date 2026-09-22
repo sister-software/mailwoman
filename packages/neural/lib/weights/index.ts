@@ -593,7 +593,7 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
 export async function resolvePlacetypeCensusPath(country: string): Promise<PathBuilder | null> {
 	if (!country) return null
 
-	const candidate = dataRootPath("wof", `placetype-census-${country.toLowerCase()}.bin`)
+	const candidate = dataRootPath("db", "wof", `placetype-census-${country.toLowerCase()}.bin`)
 
 	return (await pathExists(candidate)) ? candidate : null
 }

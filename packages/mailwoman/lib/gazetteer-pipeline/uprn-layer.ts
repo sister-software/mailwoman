@@ -593,7 +593,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
 	const sourceDir = resolvePath(options.sourceDir ?? dataRootPath("os-uprn", stamp))
-	const out = options.out ?? dataRootPath("uprn", "uprn.db")
+	const out = options.out ?? dataRootPath("db", "uprn", "uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS
 
 	// Acquire the source.

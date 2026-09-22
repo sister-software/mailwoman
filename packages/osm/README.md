@@ -46,14 +46,14 @@ aren't lost.
 ```bash
 # 1. Pull a Geofabrik extract (per-country, or a sub-region to smoke a build):
 #    https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.pbf
-#    → $MAILWOMAN_DATA_ROOT/osm/geofabrik/
+#    → $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/
 
-# 2. Build the extract (writes $MAILWOMAN_DATA_ROOT/osm/address-points-fr-idf.db):
+# 2. Build the extract (writes $MAILWOMAN_DATA_ROOT/db/osm/address-points-fr-idf.db):
 node osm/out/scripts/build-rooftop-extract.js \
   --country fr --slug idf --release 260627 \
   --created-at 2026-06-27T00:00:00.000Z \
   --build-sha "$(git rev-parse HEAD)" \
-  --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
+  --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ile-de-france-260627.osm.pbf
 ```
 
 The build reports an **association gap**: the share of `addr:housenumber` points it had to skip because

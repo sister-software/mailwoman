@@ -42,13 +42,13 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
 		const { CoverageVerdict, triageWOFCurrency } = await import("#gazetteer-pipeline/wof/triage")
 
-		const adminDB = options.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
+		const adminDB = options.admin ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
 		const geonamesDir = options.geonames ?? String(dataRootPath("geonames"))
 
 		const countries = extractDelimited(options.countries)
 
 		const stamp = isoDate()
-		const outPath = options.out ?? String(dataRootPath("wof", "triage", `currency-${stamp}.jsonl`))
+		const outPath = options.out ?? String(dataRootPath("db", "wof", "triage", `currency-${stamp}.jsonl`))
 
 		const { rows, summary } = await triageWOFCurrency({
 			adminDB,

@@ -85,7 +85,7 @@ export interface BuildPostcodeDatabaseResult {
 export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions): Promise<BuildPostcodeDatabaseResult> {
 	const phase = opts.onPhase ?? (() => {})
 	const cc = opts.country.toLowerCase()
-	const wofDir = dataRootPath("wof")
+	const wofDir = dataRootPath("db", "wof")
 	const reposDir = opts.reposDir ?? join(wofDir, "repos")
 	const repoName = wofRepoName("postalcode", cc)
 	const repoDir = await resolveWOFRepo(reposDir, repoName)
