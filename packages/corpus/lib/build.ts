@@ -57,6 +57,7 @@ import { JSONSpliterator } from "spliterator"
 
 import { defaultAdapterRegistry } from "#adapters/utils"
 import { $public } from "#env"
+import { ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import { once, runAdapter, type AdapterRunManifest } from "#runner"
@@ -307,7 +308,7 @@ export interface BuildCorpusManifest {
 export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpusManifest> {
 	const adapters = opts.adapters ?? defaultAdapterRegistry.list()
 	const synthesize = opts.synthesize ?? true
-	const rowsPerFile = opts.rowsPerFile ?? 1_000_000
+	const rowsPerFile = opts.rowsPerFile ?? ROWS_PER_FILE
 	const shuffleWindow = opts.shuffleWindow ?? DEFAULT_SHUFFLE_WINDOW
 	const shuffleSeed = opts.shuffleSeed ?? DEFAULT_SHUFFLE_SEED
 	const built_at = new Date().toISOString()

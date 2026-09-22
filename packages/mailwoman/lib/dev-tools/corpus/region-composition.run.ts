@@ -32,6 +32,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
+import { componentAtIndexSQL } from "@mailwoman/corpus/parquet/span-sql"
 
 import { openMixture, readMixtureFiles } from "#dev-tools/corpus/mixture"
 
@@ -93,7 +94,7 @@ WITH us AS (
 )
 SELECT
 	source,
-	CASE WHEN i IS NULL THEN NULL ELSE substring(raw, span_starts[i] + 1, span_ends[i] - span_starts[i]) END AS region,
+	${componentAtIndexSQL("i")} AS region,
 	has_street,
 	first_tag,
 	bare_admin,

@@ -19,6 +19,10 @@
  *   that tool cannot disagree. Corpus counts are the cached census unless `--refresh` is passed, and
  *   the page states which corpus version they were taken over.
  *
+ *   This writes markdown tables with single-space padding and the repository's formatter aligns their
+ *   columns, so a regeneration shows every table row as changed until the formatter runs. Run it and the
+ *   diff empties when the content has not moved.
+ *
  *   Run:
  *
  *       node packages/mailwoman/lib/dev-tools/corpus/jurisdiction-coverage.run.ts
@@ -31,7 +35,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readScopeConfig } from "@mailwoman/core/scope-config"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { join } from "path-ts"
+import { join, relative } from "path-ts"
 
 import {
 	admittedByShippedGraphs,
@@ -54,11 +58,7 @@ const { values } = parseArguments({
 /**
  * A repo-relative path, so a generated page carries no reader's home directory.
  */
-function relativeToRepo(path: string): string {
-	const root = `${String(repoRootPath())}/`
-
-	return path.startsWith(root) ? path.slice(root.length) : path
-}
+const relativeToRepo = (path: string): string => relative(String(repoRootPath()), path)
 
 const scope = await readScopeConfig()
 const configPath = resolveTrainingConfig(scope, { requested: values.config }).path

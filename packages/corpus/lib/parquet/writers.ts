@@ -52,6 +52,7 @@ import {
 	type ParquetRow,
 	ROW_GROUP_SIZE,
 	rowToParquet,
+	ROWS_PER_FILE,
 } from "#parquet/schema"
 import type { LabeledRow } from "#types"
 import type { SplitName } from "#utils/split"
@@ -255,7 +256,7 @@ export async function writeParquetSplits(
 	perSplit: PerSplitRows,
 	opts: WriteParquetSplitsOptions
 ): Promise<ParquetManifest> {
-	const rowsPerFile = opts.rowsPerFile ?? 1_000_000
+	const rowsPerFile = opts.rowsPerFile ?? ROWS_PER_FILE
 	const corpusDir = join(opts.outputDir, `corpus-v${opts.corpusVersion}`)
 	await makeDirectories(corpusDir)
 

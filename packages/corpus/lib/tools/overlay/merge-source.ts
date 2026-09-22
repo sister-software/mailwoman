@@ -21,7 +21,7 @@
 import { mulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import type { ParquetRow } from "#parquet/schema"
+import { type ParquetRow, ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
 import { openParquetRowStream } from "#parquet/streams"
 import { writeParquetFile } from "#parquet/writers"
@@ -54,11 +54,6 @@ export interface MergeSourceOptions {
 	 */
 	rowsPerFile?: number
 }
-
-/**
- * Rows per output file when the caller names none, matching the corpus writer's own default.
- */
-export const DEFAULT_MERGE_ROWS_PER_FILE = 1_000_000
 
 export interface MergeSourceResult {
 	inputs: readonly string[]
@@ -97,7 +92,7 @@ async function* readAll(inputs: readonly PathBuilderLike[]): AsyncGenerator<Parq
 export async function mergeSourceFiles(options: MergeSourceOptions): Promise<MergeSourceResult> {
 	const inputs = options.inputs.map(String)
 	const random = mulberry32(options.seed ?? DEFAULT_SHUFFLE_SEED)
-	const rowsPerFile = options.rowsPerFile ?? DEFAULT_MERGE_ROWS_PER_FILE
+	const rowsPerFile = options.rowsPerFile ?? ROWS_PER_FILE
 	const stem = String(options.output).replace(/\.parquet$/u, "")
 
 	const byCountry: Record<string, number> = {}

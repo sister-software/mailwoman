@@ -21,6 +21,16 @@ import type { LabeledRow } from "#types"
 export const ROW_GROUP_SIZE = 50_000
 
 /**
+ * Rows per parquet file when a writer's caller names no limit.
+ *
+ * A file is closed here rather than grown, because `writeParquetFile` materializes
+ * one Arrow table and Arrow's list builder raises before a whole source fits:
+ * 4,228,212 rows raised where 1,603,143 wrote.
+ * The manifest records the value in force as `rows_per_slice`.
+ */
+export const ROWS_PER_FILE = 1_000_000
+
+/**
  * Snappy is the codec selected for corpus parquet files.
  */
 export const PARQUET_COMPRESSION = "SNAPPY"

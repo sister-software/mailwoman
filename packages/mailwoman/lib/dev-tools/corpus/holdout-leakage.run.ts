@@ -24,6 +24,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { connectDuckDB, escapeSQLString } from "@mailwoman/corpus/parquet/duckdb"
+import { componentAtSpanSQL } from "@mailwoman/corpus/parquet/span-sql"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
 import { holdoutComponents } from "@mailwoman/corpus/tools"
 import { defaultHoldouts, holdoutPolicyFor, splitForRow } from "@mailwoman/corpus/utils/split"
@@ -46,19 +47,6 @@ if (!corpus) throw new Error("--corpus <corpus dir> is required")
 
 const pattern = String(join(corpus, values.split!, "*.parquet"))
 
-/**
- * The value of one component tag, read back out of `raw` at the offset the span triple records.
- *
- * DuckDB's `list_position` is one-based and returns NULL when the tag is absent,
- * and `substr` takes a one-based start with a length, so the start is `span_starts[i] + 1`
- * and the length is the span's width.
- */
-function componentSQL(tag: string): string {
-	const index = `list_position(span_tags, '${tag}')`
-
-	return `CASE WHEN ${index} IS NULL THEN NULL ELSE substr(raw, span_starts[${index}] + 1, span_ends[${index}] - span_starts[${index}]) END`
-}
-
 const holdouts = defaultHoldouts()
 const clauses: string[] = []
 /**
@@ -76,15 +64,15 @@ for (const [country, holdout] of Object.entries(holdouts)) {
 	const tests: string[] = []
 
 	for (const region of policy.regions ?? []) {
-		tests.push(`${componentSQL("region")} = '${escapeSQLString(region)}'`)
+		tests.push(`${componentAtSpanSQL("region")} = '${escapeSQLString(region)}'`)
 	}
 
 	for (const locality of policy.localities ?? []) {
-		tests.push(`${componentSQL("locality")} = '${escapeSQLString(locality)}'`)
+		tests.push(`${componentAtSpanSQL("locality")} = '${escapeSQLString(locality)}'`)
 	}
 
 	for (const prefix of policy.postcodePrefixes ?? []) {
-		tests.push(`${componentSQL("postcode")} LIKE '${escapeSQLString(prefix)}%'`)
+		tests.push(`${componentAtSpanSQL("postcode")} LIKE '${escapeSQLString(prefix)}%'`)
 	}
 
 	if (!tests.length) continue
