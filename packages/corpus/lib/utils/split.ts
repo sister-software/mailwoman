@@ -132,7 +132,7 @@ export interface SplitManifest {
  *   (a holdout added after a corpus is built is leakage-laundering rather than a holdout).
  * - GB (added 2026-09-21, #2353): Cornwall, north Wales and Halifax, keyed on the postcode area.
  *   GB had no entry at all, so both its splits held zero rows and `macro_f1` said nothing about it.
- *   How many rows it holds out is unmeasured, and the entry's own comment says why and what settles it.
+ *   How many rows it holds out is unmeasured until the next rebuild, and the entry's comment says why.
  *
  * Every entry takes effect at the next base corpus rebuild, for the reason the DE note gives.
  */
@@ -164,15 +164,17 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			// Cornwall alone, so the admin rows held out name the same place the street rows do.
 			regions: ["Cornwall"],
 			//
-			// UNMEASURED, and to be established before a GB validation metric is read as trustworthy.
-			// How many rows this holds out is unknown, because no corpus in the lab
-			// data root carries a natural GB street row.
+			// WHICH ROWS THESE PREFIXES REACH.
+			// Every GB street row in the corpus comes from `synth-gb`, which renders HM Land Registry
+			// Price Paid Data — `ppd/<date>/gb-tuples.csv`, 25,674,049 rows — through a template.
+			// The `synth-` prefix names the recipe rather than the data, the same way `synth-nl`
+			// reads OpenAddresses NL and `synth-nz` reads a LINZ-derived extract.
+			// GB's other two sources, `wof-postalcode` and `wof-admin`, carry no street at all.
 			//
-			// `v0.5.0`, the base corpus, holds 14,812,000 GB rows from `wof-postalcode`
-			// and `wof-admin`, and 0 of them carry a street or house number.
-			// `v0.17.0-batch` holds 831,800 GB rows and every one is synthesized — 800,000 from `synth-gb`
-			// and 31,800 from `synth-sub-venue` — so its postcode-area distribution describes those recipes
-			// rather than GB addresses, and its Scottish areas reading zero is a recipe artifact.
+			// So a Price Paid row's POSTCODE column is what these prefixes match,
+			// and Price Paid covers England and Wales.
+			// Scotland and Northern Ireland register land separately, which is why no
+			// Scottish postcode area was available to hold out.
 			//
 			// Confirm the held-out street-row count against the next base corpus rebuild and check
 			// it against the per-locale floor in `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`.

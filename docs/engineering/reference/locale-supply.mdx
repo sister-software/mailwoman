@@ -9,8 +9,8 @@ owner: operations
 
 A row count answers neither question a locale-isolated graph turns on. The sampler restarts an
 exhausted source with a fresh shuffled pass, so a small source is presented once per pass and its
-row count reads as supply it does not have. And a corpus can carry one street rendered a hundred ways,
-which is still one street.
+row count reads as supply it does not have. And a corpus can carry one street rendered a hundred
+ways, which is still one street.
 
 `locale_supply_census` counts four things a row count cannot give, over a full scan rather than a
 sample, because a distinct count is the one statistic a sample cannot extrapolate. This page records
@@ -18,6 +18,27 @@ what it found.
 
 Measured on `v0.32.0-locality-shape`, all 718 train files, unless a row says otherwise. Receipts live
 on the `mailwoman-training` volume as `audits/locale-supply-<iso2>.json`.
+
+## `synth-` names the recipe that rendered the surface
+
+Read this before the table. A source id beginning `synth-` is a **locale recipe**, and every one of
+them renders real published address tuples through a template:
+
+| source     | reads                                                        |
+| ---------- | ------------------------------------------------------------ |
+| `synth-gb` | HM Land Registry Price Paid Data, `ppd/<date>/gb-tuples.csv` |
+| `synth-nl` | OpenAddresses NL `countrywide.csv`                           |
+| `synth-it` | OpenAddresses IT `countrywide.csv`                           |
+| `synth-es` | the CNIG export, read raw for the pedanía variant            |
+| `synth-nz` | a LINZ-derived OpenAddresses extract                         |
+
+A row carries `synth_method` to record that its **surface** was composed by a template. The address
+in it came from the register above. `recipes/locale.ts` writes that field with the recipe's own
+source id.
+
+The exceptions are the sources that do fabricate: `synth-po-box`, `synth-fragment`,
+`synth-sub-venue` and the other shape recipes build surfaces to teach a form rather than to record a
+place.
 
 ## The five locales with a receipt
 
@@ -35,44 +56,63 @@ train measurement, so the US train figure is unmeasured rather than zero.
 Rows over surfaces is how much of the corpus is the same text written again: 1.04 for FR, 1.01 for
 GB, 1.08 for DE, 1.00 for BE. None of the four is carrying meaningful duplication.
 
-## GB's street rows are synthesized
+## GB's street rows all come from one source, and it is not a gazetteer
 
-GB is the locale this page exists for. Its train supply by source:
+GB's train supply by source:
 
-| source            |       rows |
-| ----------------- | ---------: |
-| `wof-postalcode`  | 13,548,202 |
-| `wof-admin`       |  1,263,798 |
-| `synth-gb`        |    800,000 |
-| `synth-sub-venue` |     31,800 |
-| `synth-fragment`  |        907 |
+| source            |       rows | carries a street |
+| ----------------- | ---------: | ---------------- |
+| `wof-postalcode`  | 13,548,202 | no               |
+| `wof-admin`       |  1,263,798 | no               |
+| `synth-gb`        |    800,000 | yes              |
+| `synth-sub-venue` |     31,800 | shape recipe     |
+| `synth-fragment`  |        907 | shape recipe     |
 
-The two `wof-*` sources are 14,812,000 rows and the three `synth-*` sources are 832,707.
-`street_rows` is 825,083, which fits inside the synthetic subtotal and nothing else.
+`street_rows` is 825,083 against 832,707 rows from the three recipe sources. Scanned locally on
+`v0.5.0`, GB's two `wof-*` sources hold 14,812,000 rows and **0** carry a `street` or `house_number`
+tag, so every GB street row the model sees is a `synth-gb` rendering of a Price Paid row.
 
-Scanned locally on `v0.5.0`, GB carries the same two natural sources — `wof-postalcode` and
-`wof-admin`, 14,812,000 rows — and **0** of them carry a `street` or `house_number` tag. So GB's
-street supply is produced by synthesis recipes over a postcode gazetteer rather than drawn from GB
-address records.
+Price Paid holds 25,674,049 rows and the recipe samples 800,000 of them, which is 3.1%. The cap is
+`RESERVOIR_CAP`, 1,200,000 per part, applied by Algorithm-R reservoir sampling so memory stays
+bounded on a 1.5 GB input.
 
 Two further readings of the same receipt. 13,548,202 of GB's 15,644,707 rows — 86.6% — sit in two
 component sequences, `locality|postcode` and `postcode`. The largest sequence that carries a street,
 `house_number|street|locality|postcode`, holds 268,173 rows, or 1.7%.
 
-`v0.17.0-batch` is not a second opinion on any of this. All 831,800 of its GB rows are synthesized,
-and so is every row it holds for US, FR, ES and DE. It is a recipe output rather than a base corpus,
-and its postcode-area distribution describes `synth-gb` rather than GB.
+**Price Paid covers England and Wales.** Scotland and Northern Ireland register land separately, so
+a GB postcode-area census over these rows finds ZE, HS, KW, IV, DG, PA, PH and AB at zero. That is a
+property of the register rather than of GB addressing, and it is why `defaultHoldouts()` could not
+pick a Scottish area.
+
+## GB source data on disk that no corpus adapter reads
+
+The corpus has 23 adapters and none of them is GB. These sit in the data root, fetched and recorded,
+with no path to a `CanonicalRow`:
+
+| path                | size   | what it is                                  |
+| ------------------- | ------ | ------------------------------------------- |
+| `epc/<date>`        | 26 GB  | UK Energy Performance Certificates, 15 CSVs |
+| `osopenuprn/<date>` | 2.7 GB | OS Open UPRN                                |
+| `codepoint/<date>`  | 184 MB | Code-Point Open                             |
+
+EPC carries `address1`, `address2`, `address3`, `postcode` and `posttown` per certificate. UPRN and
+Code-Point are read by `gazetteer-pipeline` for the retrieval artifacts — `pair-index-gb.bin`,
+`postcode-gb.bin` — rather than for training rows.
+
+So GB's street supply is one 3.1% sample of one register, and three further GB sources are on disk
+unused.
 
 ## What this does not establish
 
-Whether the synthesized rows are good training data. A recipe built from a real postcode gazetteer
-may teach a real grammar, and nothing here measures that.
+Whether a templated surface teaches as well as an attested one. The addresses are real; the rendering
+is the recipe's, and nothing here measures the difference.
 
 Whether GB is worse supplied than the alternatives. Five locales have a receipt, and the funnel's
 opportunity view lists 28 candidate jurisdictions with no corpus rows at all.
 
-What a natural GB street corpus would cost. That is a source-acquisition question, and every one of
-those 28 candidates reads `terms elected: no`.
+What raising GB's sample above 3.1%, or adding an EPC adapter, would be worth. Both are measurable
+and neither is measured.
 
 ## Reading a locale metric against this page
 
