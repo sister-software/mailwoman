@@ -112,6 +112,32 @@ function protectedComment(source: SourceCode, comment: Comment) {
 	)
 }
 
+/**
+ * The lines of a starred block that are missing their `*`, by offset within the block.
+ *
+ * The opener and the closer are skipped, and so is a line holding nothing but whitespace:
+ * a blank line in a starred block is written bare as often as it is written with a star.
+ */
+function missingStarLines(lines: readonly string[]): { at: number; width: number }[] {
+	const found: { at: number; width: number }[] = []
+
+	for (let line = 2; line < lines.length - 1; line++) {
+		const content = lines[line]!
+
+		if (!content.trim() || /^\s*\*/.test(content)) continue
+
+		found.push({ at: line, width: content.length })
+	}
+
+	return found
+}
+
+/**
+ * The rule itself, registered as `mailwoman/comment-reflow` by `oxlint.plugin.ts`.
+ *
+ * Adapted from oxlint-plugin-comment-reflow (MIT, © Diego Haz), whose eligibility
+ * and trailing-comment plumbing this keeps.
+ */
 export const reflowRule: CreateRule = {
 	meta: {
 		type: "layout",
@@ -173,13 +199,16 @@ export const reflowRule: CreateRule = {
 						end < comments.length &&
 						comments[end]!.type === "Line" &&
 						/^\r?\n[\t ]*$/.test(text.slice(comments[end - 1]!.range[1], comments[end]!.range[0]))
-					)
-						{ end++ }
+					) {
+						end++
+					}
 
 					const group = comments.slice(start, end)
 
 					if (group.some((comment) => protectedComments.has(comment))) {
-						for (const comment of group) { protectedComments.add(comment) }
+						for (const comment of group) {
+							protectedComments.add(comment)
+						}
 					}
 
 					start = end - 1
@@ -257,15 +286,11 @@ export const reflowRule: CreateRule = {
 								firstPrefix &&
 								width(firstPrefix[1]!) === width(indent) + 1
 							) {
-								for (let line = 2; line < lines.length - 1; line++) {
-									const content = lines[line]!
-
-									if (!content.trim() || /^\s*\*/.test(content)) continue
-
+								for (const line of missingStarLines(lines)) {
 									context.report({
 										loc: {
-											start: { line: comment.loc.start.line + line, column: 0 },
-											end: { line: comment.loc.start.line + line, column: content.length },
+											start: { line: comment.loc.start.line + line.at, column: 0 },
+											end: { line: comment.loc.start.line + line.at, column: line.width },
 										},
 										messageId: "missingBlockPrefix",
 									})

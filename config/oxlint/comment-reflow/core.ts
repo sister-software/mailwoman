@@ -44,6 +44,11 @@ export interface ReflowOptions {
 	trailingComments?: "ignore" | "always" | "overflow"
 }
 
+/**
+ * The options the rule runs with when a config names none.
+ *
+ * 90 and 120 are this repository's measure and ceiling, and `tabWidth: 2` is what oxfmt renders.
+ */
 export const defaultOptions: Required<ReflowOptions> = {
 	printWidth: 120,
 	targetWidth: 90,
@@ -156,7 +161,9 @@ function balancedEnd(text: string, start: number, open: string, close: string, q
 		}
 
 		if (quote) {
-			if (character === quote) { quote = "" }
+			if (character === quote) {
+				quote = ""
+			}
 
 			continue
 		}
@@ -167,7 +174,9 @@ function balancedEnd(text: string, start: number, open: string, close: string, q
 			continue
 		}
 
-		if (character === open) { depth++ }
+		if (character === open) {
+			depth++
+		}
 
 		if (character === close && --depth === 0) return i + 1
 	}
@@ -183,7 +192,10 @@ function words(text: string): string[] | undefined {
 		const character = text[i]!
 
 		if (/\s/.test(character)) {
-			if (word) { result.push(word) }
+			if (word) {
+				result.push(word)
+			}
+
 			word = ""
 
 			i++
@@ -225,7 +237,9 @@ function words(text: string): string[] | undefined {
 		}
 	}
 
-	if (word) { result.push(word) }
+	if (word) {
+		result.push(word)
+	}
 
 	return result
 }
@@ -314,8 +328,11 @@ function measure(tokens: readonly string[], tabWidth: number): TokenFacts[] {
 
 	return tokens.map((token, index) => {
 		for (const character of token) {
-			if (character === "(" || character === "[") { depth++ }
-			else if (character === ")" || character === "]") { depth = Math.max(0, depth - 1) }
+			if (character === "(" || character === "[") {
+				depth++
+			} else if (character === ")" || character === "]") {
+				depth = Math.max(0, depth - 1)
+			}
 		}
 
 		const next = tokens[index + 1]
@@ -359,7 +376,9 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
 	// prefix[i] is the width of tokens 0..i-1 joined by single spaces.
 	const prefix: number[] = [0]
 
-	for (let i = 0; i < count; i++) { prefix.push(prefix[i]! + facts[i]!.width + (i > 0 ? 1 : 0)) }
+	for (let i = 0; i < count; i++) {
+		prefix.push(prefix[i]! + facts[i]!.width + (i > 0 ? 1 : 0))
+	}
 
 	const lineWidth = (from: number, to: number) =>
 		(from === 0 ? firstWidth : continuationWidth) + prefix[to]! - prefix[from]! - (from > 0 ? 1 : 0)
@@ -383,18 +402,26 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
 		if (last) {
 			const content = width - (from === 0 ? firstWidth : continuationWidth)
 
-			if (from > 0 && (to - from === 1 || content < weights.orphanColumns)) { penalty += weights.orphan }
+			if (from > 0 && (to - from === 1 || content < weights.orphanColumns)) {
+				penalty += weights.orphan
+			}
 
 			return penalty
 		}
 
 		const boundary = facts[to - 1]!
 
-		if (boundary.depth > 0) { penalty += weights.parenSplit }
+		if (boundary.depth > 0) {
+			penalty += weights.parenSplit
+		}
 
-		if (boundary.clause) { penalty += weights.clause }
+		if (boundary.clause) {
+			penalty += weights.clause
+		}
 
-		if (boundary.danglingDash) { penalty += weights.danglingDash }
+		if (boundary.danglingDash) {
+			penalty += weights.danglingDash
+		}
 
 		return penalty
 	}
@@ -422,7 +449,9 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
 
 	const breaks: number[] = []
 
-	for (let at = count; at > 0; at = from[at]!) { breaks.unshift(from[at]!) }
+	for (let at = count; at > 0; at = from[at]!) {
+		breaks.unshift(from[at]!)
+	}
 
 	return breaks
 }
@@ -449,8 +478,11 @@ export function splitSentences(text: string): string[] {
 		current.push(token)
 
 		for (const character of token) {
-			if (character === "(" || character === "[") { depth++ }
-			else if (character === ")" || character === "]") { depth = Math.max(0, depth - 1) }
+			if (character === "(" || character === "[") {
+				depth++
+			} else if (character === ")" || character === "]") {
+				depth = Math.max(0, depth - 1)
+			}
 		}
 
 		const next = tokens[i + 1]
@@ -464,7 +496,9 @@ export function splitSentences(text: string): string[] {
 		current = []
 	}
 
-	if (current.length) { sentences.push(current.join(" ")) }
+	if (current.length) {
+		sentences.push(current.join(" "))
+	}
 
 	return sentences
 }
@@ -486,7 +520,10 @@ function groupSentences(sentences: readonly string[], perParagraph: number, lead
 		rest = rest.slice(1)
 	}
 
-	for (let i = 0; i < rest.length; i += perParagraph) { groups.push(rest.slice(i, i + perParagraph)) }
+	for (let i = 0; i < rest.length; i += perParagraph) {
+		groups.push(rest.slice(i, i + perParagraph))
+	}
+
 	const last = groups.at(-1)
 
 	// A short sentence left over on its own is a stranded paragraph, which reads worse than a paragraph of three.
@@ -553,7 +590,9 @@ function tagParts(line: string): { prefix: string; description: string } | undef
 		if (!typeEnd) return undefined
 		end = typeEnd
 
-		while (line[end] === " " || line[end] === "\t") { end++ }
+		while (line[end] === " " || line[end] === "\t") {
+			end++
+		}
 	}
 
 	if (/^(param|arg|argument|property|prop)$/.test(match[1]!)) {
@@ -569,10 +608,15 @@ function tagParts(line: string): { prefix: string; description: string } | undef
 			end += name[0].length
 		}
 
-		while (line[end] === " " || line[end] === "\t") { end++ }
+		while (line[end] === " " || line[end] === "\t") {
+			end++
+		}
 	}
 
-	if (line.slice(end, end + 2) === "- ") { end += 2 }
+	if (line.slice(end, end + 2) === "- ") {
+		end += 2
+	}
+
 	const prefix = line.slice(0, end)
 
 	return { prefix: /\s$/.test(prefix) ? prefix : prefix + " ", description: line.slice(end) }
@@ -588,6 +632,9 @@ function isStructure(line: string) {
 		/^\s*<(?:[!?]|[^>]*$|.*>\s*$)/.test(line) ||
 		/(?: {2}|\\)$/.test(line) ||
 		/^\s*type\s+[\w$]+(?:\s*<.*>)?\s*=/.test(line) ||
+		// A section marker names what follows rather than saying anything, and `concise-section-marker`
+		// caps its label at 60 characters. Joining the sentence under one onto it breaks that cap.
+		/^\s*MARK:/.test(line) ||
 		// `{@link …}` opens a description rather than an object literal, so the brace test excludes an inline tag.
 		/^\s*(?:const |let |var |function |class |import |export |return |if\s*\(|\/\/|\{(?!@)|\})/.test(line) ||
 		/^[^{}[\]`]*\s\|\s|^[\w.$]+\(.*\)[;]?$|^[\w.$]+\s*=\s*\S/.test(line)
@@ -633,8 +680,9 @@ export function reflowText(
 				fenceMatch[1]![0] === fence.marker &&
 				fenceMatch[1]!.length >= fence.length &&
 				line.trim() === fenceMatch[1]
-			)
-				{ fence = undefined }
+			) {
+				fence = undefined
+			}
 
 			i++
 
@@ -657,8 +705,9 @@ export function reflowText(
 			if (parts) {
 				let end = i + 1
 
-				while (end < lines.length && lines[end]!.trim() && !lines[end]!.startsWith("@") && !isStructure(lines[end]!))
-					{ end++ }
+				while (end < lines.length && lines[end]!.trim() && !lines[end]!.startsWith("@") && !isStructure(lines[end]!)) {
+					end++
+				}
 
 				const text = [parts.description, ...lines.slice(i + 1, end).map((value) => value.trim())].join(" ")
 
@@ -700,8 +749,9 @@ export function reflowText(
 				lines[end]!.startsWith(continuation) &&
 				lines[end]!.trim() &&
 				!isStructure(lines[end]!.slice(continuation.length))
-			)
-				{ end++ }
+			) {
+				end++
+			}
 
 			const text = [list[2]!, ...lines.slice(i + 1, end).map((value) => value.trim())].join(" ")
 			const completeMarkup = [list[2]!, ...lines.slice(i + 1, end)].every((value) => words(value) !== undefined)
@@ -732,8 +782,9 @@ export function reflowText(
 			lines[end]!.trim() &&
 			!isStructure(lines[end]!) &&
 			/^ */.exec(lines[end]!)![0] === indent
-		)
-			{ end++ }
+		) {
+			end++
+		}
 
 		const text = lines
 			.slice(i, end)
@@ -758,7 +809,10 @@ export function reflowText(
 					break
 				}
 
-				if (written) { output.push("") }
+				if (written) {
+					output.push("")
+				}
+
 				output.push(...set)
 				written = true
 			}

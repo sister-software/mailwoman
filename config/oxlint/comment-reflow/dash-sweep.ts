@@ -55,6 +55,34 @@ const COMMA_OPENERS =
 	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|never|with|for|leaving|making|giving|taking)\b/i
 
 /**
+ * Characters of left half a joint needs before its dash becomes a full stop.
+ *
+ * Below this the left half is a label rather than a clause, and a full stop behind it stands a fragment up.
+ * Measured against this repository's own comments, where the shortest left half that
+ * reads as a sentence on its own runs to about this many characters.
+ */
+const LEFT_HALF_FLOOR = 24
+
+/**
+ * Words a comma-opening right half needs before the comma is worth taking.
+ *
+ * Two words behind `which` or `and` is an aside, and the dash is the right mark for one.
+ */
+const COMMA_CLAUSE_FLOOR = 3
+
+/**
+ * Words a right half needs before it can stand as a sentence of its own.
+ *
+ * Four or fewer is a noun phrase in every case read while this was written.
+ */
+const SENTENCE_CLAUSE_FLOOR = 5
+
+/**
+ * Lines a starred block needs before it holds prose: the opener, one line of it, and the closer.
+ */
+const STARRED_BLOCK_LINES = 3
+
+/**
  * A line that carries its own layout, in `mailwoman/comment-reflow`'s own terms.
  *
  * The rule's test is copied here rather than approximated.
@@ -67,6 +95,7 @@ const STRUCTURAL_LINE: readonly RegExp[] = [
 	/^\s*<(?:[!?]|[^>]*$|.*>\s*$)/,
 	/(?: {2}|\\)$/,
 	/^\s*type\s+[\w$]+(?:\s*<.*>)?\s*=/,
+	/^\s*MARK:/,
 	/^\s*(?:const |let |var |function |class |import |export |return |if\s*\(|\/\/|\{(?!@)|\})/,
 	/^[^{}[\]`]*\s\|\s|^[\w.$]+\(.*\)[;]?$|^[\w.$]+\s*=\s*\S/,
 ]
@@ -123,22 +152,25 @@ export function sweepSentence(sentence: string): string {
 	let depth = 0
 
 	for (const character of before) {
-		if (character === "(" || character === "[") { depth++ }
-		else if (character === ")" || character === "]") { depth = Math.max(0, depth - 1) }
+		if (character === "(" || character === "[") {
+			depth++
+		} else if (character === ")" || character === "]") {
+			depth = Math.max(0, depth - 1)
+		}
 	}
 
 	if (depth > 0) return sentence
 
-	if (before.length < 24 || !/\s/.test(before) || /[,;:([]$/.test(before)) return sentence
+	if (before.length < LEFT_HALF_FLOOR || !/\s/.test(before) || /[,;:([]$/.test(before)) return sentence
 
 	const words = after.replace(/[.!?]+$/, "").split(/\s+/)
 
 	// A coordination, a relative clause or an antithesis takes the comma the
 	// sentence wanted, and keeps its own case.
 	// None of them needs a verb of its own, which is why this runs ahead of the clause tests below.
-	if (COMMA_OPENERS.test(after)) return words.length < 3 ? sentence : `${before}, ${after}`
+	if (COMMA_OPENERS.test(after)) return words.length < COMMA_CLAUSE_FLOOR ? sentence : `${before}, ${after}`
 
-	if (words.length < 5) return sentence
+	if (words.length < SENTENCE_CLAUSE_FLOOR) return sentence
 
 	if (!FINITE.test(after) && !IMPERATIVES.test(after)) return sentence
 
@@ -231,7 +263,9 @@ function sweepBody(lines: readonly string[]): string[] {
 
 		flushItem()
 
-		if (!paragraph.length) { paragraphIndent = /^[\t ]*/.exec(line)![0] }
+		if (!paragraph.length) {
+			paragraphIndent = /^[\t ]*/.exec(line)![0]
+		}
 
 		paragraph.push(line.trim())
 	}
@@ -318,7 +352,7 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One comment block, bounded by its own markers.
 		const lines = block.split("\n")
 
-		if (lines.length < 3) return block
+		if (lines.length < STARRED_BLOCK_LINES) return block
 
 		const indent = /^([\t ]*)/.exec(lines[0]!)![1]!
 		const stripped = lines.slice(1, -1).map((line) => /^[\t ]*\*[\t ]?(.*)$/.exec(line)?.[1])
@@ -332,11 +366,10 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 		const lifted = liftTagSentence(sweepBody(prose), tags)
 		const separator = lifted.tags.length && lifted.body.length ? [""] : []
 
-		const rendered = [...lifted.body, ...separator, ...lifted.tags]
-			.join("\n")
-			.replaceAll(/\n{3,}/g, "\n\n")
-			// oxlint-disable-next-line mailwoman/prefer-spliterator -- The block being rendered, still in memory.
-			.split("\n")
+		const joined = [...lifted.body, ...separator, ...lifted.tags].join("\n").replaceAll(/\n{3,}/g, "\n\n")
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- The block being rendered, still in memory.
+		const rendered = joined.split("\n")
 
 		const marked = rendered.map((line) => (line.trim() ? `${indent} * ${line}` : `${indent} *`))
 

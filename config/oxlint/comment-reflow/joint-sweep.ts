@@ -60,6 +60,15 @@ const COMMA_OPENERS =
 	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|not|never|with|for|leaving|making|giving|taking)\b/i
 
 /**
+ * Words a gloss may run to before it reads as a sentence of its own.
+ *
+ * "the scale the map units were digitized at" is eight.
+ * Past this the right half is long enough to carry its own clause, and a last word
+ * that happens to be a verb or a preposition is a coincidence.
+ */
+const GLOSS_CEILING = 14
+
+/**
  * True when the right half names the thing before the dash rather than saying something new about it.
  *
  * "the scale the map units were digitized at" and "the form an override uses" are noun phrases with a
@@ -76,7 +85,7 @@ function glosses(words: readonly string[]): boolean {
 
 	const text = words.join(" ")
 
-	if (words.length > 14 || /[,;:—–]/.test(text)) return false
+	if (words.length > GLOSS_CEILING || /[,;:—–]/.test(text)) return false
 
 	return (text.match(FINITE) ?? []).length === 1
 }
@@ -128,8 +137,11 @@ function jointsIn(sentence: string): Joint[] {
 		let depth = 0
 
 		for (const character of before) {
-			if (character === "(" || character === "[") { depth++ }
-			else if (character === ")" || character === "]") { depth = Math.max(0, depth - 1) }
+			if (character === "(" || character === "[") {
+				depth++
+			} else if (character === ")" || character === "]") {
+				depth = Math.max(0, depth - 1)
+			}
 		}
 
 		// A dash inside a bracket belongs to the aside, and a full stop there closes a sentence the bracket has not.
@@ -200,6 +212,7 @@ const STRUCTURAL_LINE: readonly RegExp[] = [
 	/^\s*<(?:[!?]|[^>]*$|.*>\s*$)/,
 	/(?: {2}|\\)$/,
 	/^\s*type\s+[\w$]+(?:\s*<.*>)?\s*=/,
+	/^\s*MARK:/,
 	/^\s*(?:const |let |var |function |class |import |export |return |if\s*\(|\/\/|\{(?!@)|\})/,
 	/^[^{}[\]`]*\s\|\s|^[\w.$]+\(.*\)[;]?$|^[\w.$]+\s*=\s*\S/,
 ]
@@ -265,7 +278,9 @@ function scanLines(lines: readonly string[]): Edit[] {
 			continue
 		}
 
-		if (!paragraph.length) { base = count }
+		if (!paragraph.length) {
+			base = count
+		}
 
 		paragraph.push(line.trim())
 		count += dashesIn(line)
@@ -313,12 +328,16 @@ function applyEdit(text: string, at: number, punct: string, capitalize: boolean)
 	if (/^[\t ]*(?:\*|\/\/)?[\t ]*$/.test(text.slice(lineStart, at))) {
 		let cutEnd = at + 1
 
-		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) { cutEnd++ }
+		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) {
+			cutEnd++
+		}
 
 		const previous = text.lastIndexOf("\n", lineStart - 1) + 1
 		let insert = lineStart - 1
 
-		while (insert > previous && /\s/.test(text[insert - 1]!)) { insert-- }
+		while (insert > previous && /\s/.test(text[insert - 1]!)) {
+			insert--
+		}
 
 		const head = text.slice(0, insert) + punct + text.slice(insert, at)
 
@@ -329,10 +348,15 @@ function applyEdit(text: string, at: number, punct: string, capitalize: boolean)
 	let cutEnd = at + 1
 	let filler = ""
 
-	while (cutStart > lineStart && /[\t ]/.test(text[cutStart - 1]!)) { cutStart-- }
+	while (cutStart > lineStart && /[\t ]/.test(text[cutStart - 1]!)) {
+		cutStart--
+	}
 
 	if (!/^[\t ]*$/.test(text.slice(at + 1, lineEnd))) {
-		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) { cutEnd++ }
+		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) {
+			cutEnd++
+		}
+
 		filler = " "
 	}
 
@@ -384,7 +408,9 @@ function rewrite(raw: string, lines: readonly string[]): string {
 	const positions: number[] = []
 
 	for (let i = 0; i < raw.length; i++) {
-		if (raw[i] === "—" || raw[i] === "–") { positions.push(i) }
+		if (raw[i] === "—" || raw[i] === "–") {
+			positions.push(i)
+		}
 	}
 
 	let out = raw

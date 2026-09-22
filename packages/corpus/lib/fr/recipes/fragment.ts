@@ -304,7 +304,9 @@ export const frFragmentRecipe: CorpusRecipe = {
 			}
 		}
 
-		// MARK: counter-distribution — bare localities Minted last so the locality pool is complete.
+		// MARK: counter-distribution — bare localities
+		//
+		// Minted last so the locality pool is complete.
 		// Without these the model can satisfy every row above by flipping its default from
 		// "bare => locality" to "bare => street", which trades one broken prior for another
 		// and would show up as bare-locality collapsing on the board.
