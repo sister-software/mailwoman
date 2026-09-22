@@ -5,12 +5,21 @@
  *
  *   `release.clean` removes whole generated trees rather than asking TypeScript to enumerate the outputs it still
  *   knows. That distinction removes orphaned files left behind after a source rename or branch switch.
+ *
+ *   A retired workspace is the case the registered list cannot reach. Removing a workspace takes its manifest and its
+ *   source, and leaves the `out/` tree and `tsconfig.tsbuildinfo` that `tsc` had already written beside them. Those
+ *   sit under a directory `packages/*` still matches, so `sherif` reports it and nothing cleans it. A full clean now
+ *   sweeps those directories too, and the sweep removes only generated names and then the directory itself, once
+ *   nothing else is left in it.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { cleanDirectory, cleanFile } from "@mailwoman/core/module/clean"
+import { removeDirectory } from "@mailwoman/core/fs/writers"
+import { assertDirectoryIsUntracked, cleanDirectory, cleanFile } from "@mailwoman/core/module/clean"
 import { WorkspacePackages, type WorkspacePackage } from "@mailwoman/core/module/workspace"
+import { retiredWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { relative, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { z } from "zod"
 
 import { defineOperation, OperationEffect } from "#operation"
@@ -70,7 +79,14 @@ export const cleanOperation = defineOperation({
 			fileTargets.push(resolvePath(context.repoRoot, "docker", "tsconfig.test.tsbuildinfo"))
 		}
 
-		const allowedRoots = [...directoryTargets, ...fileTargets]
+		// A retired workspace is swept separately from the registered ones,
+		// because `cleanDirectory` recreates what it empties.
+		// That is right for a workspace whose `out/` is about to be written again,
+		// and it would leave exactly the empty shell this sweep exists to remove.
+		const retired = input.workspace ? [] : await retiredWorkspaceDirectories(context.repoRoot)
+		const retiredRoots = retired.map((directory) => resolvePath(context.repoRoot, directory).toString())
+
+		const allowedRoots = [...directoryTargets, ...fileTargets, ...retiredRoots]
 		const directories: string[] = []
 		const files: string[] = []
 
@@ -96,6 +112,62 @@ export const cleanOperation = defineOperation({
 			context.log(`${context.dryRun ? "Would remove" : "Removing"} ${displayPath}`)
 			await cleanFile(target, { allowedRoots, dryRun: context.dryRun, cachedStats: stats })
 			files.push(displayPath)
+		}
+
+		for (const root of retiredRoots) {
+			for (const directoryName of directoryNames) {
+				const target = resolvePath(root, directoryName)
+				const stats = await tryStat(target)
+
+				if (!stats) continue
+
+				assertDirectoryIsUntracked(target, allowedRoots)
+
+				const displayPath = relative(context.repoRoot, target)
+
+				context.log(`${context.dryRun ? "Would clean" : "Cleaning"} ${displayPath}`)
+
+				if (!context.dryRun) {
+					await removeDirectory(target, stats)
+				}
+
+				directories.push(displayPath)
+			}
+
+			for (const fileName of buildMetadataNames) {
+				const target = resolvePath(root, fileName)
+				const stats = await tryStat(target)
+
+				if (!stats) continue
+
+				const displayPath = relative(context.repoRoot, target)
+
+				context.log(`${context.dryRun ? "Would remove" : "Removing"} ${displayPath}`)
+				await cleanFile(target, { allowedRoots, dryRun: context.dryRun, cachedStats: stats })
+				files.push(displayPath)
+			}
+
+			// The shell goes only when the generated names were all it held.
+			// A dry run has removed nothing, so the reading discounts the names it would have taken.
+			const generated = new Set<string>([...directoryNames, ...buildMetadataNames])
+
+			const remaining = (
+				await Globerator.from("*", { cwd: root, withFileTypes: true, onlyFiles: false }).toArray()
+			).filter((dirent) => !(context.dryRun && generated.has(dirent.name)))
+
+			if (remaining.length) continue
+
+			assertDirectoryIsUntracked(root, allowedRoots)
+
+			const displayPath = relative(context.repoRoot, root)
+
+			context.log(`${context.dryRun ? "Would remove" : "Removing"} ${displayPath}`)
+
+			if (!context.dryRun) {
+				await removeDirectory(root)
+			}
+
+			directories.push(displayPath)
 		}
 
 		return { dryRun: context.dryRun, directories, files }

@@ -106,3 +106,57 @@ export async function readWorkspaceDirectories(
 export async function isRegisteredWorkspace(repoRoot: PathBuilderLike, directory: string): Promise<boolean> {
 	return (await readWorkspaceDirectories(repoRoot)).includes(directory)
 }
+
+/**
+ * Directories under a `parent/*` pattern that carry no `package.json`, in name order.
+ *
+ * {@link readWorkspaceDirectories} drops these, and dropping them is right:
+ * a directory with no manifest is no workspace.
+ * What it leaves is a directory nothing reaches.
+ *
+ * Retiring a workspace removes its manifest and its source, and `tsc` has already written `out/`
+ * and a `tsconfig.tsbuildinfo` beside them, so the emit outlives the workspace that produced it.
+ *
+ * Three directories reached that state: `packages/formatter` through 5cc5f6ab9, the workspace
+ * 8a40475c4 renamed to `@mailwoman/locale-hint`, and `packages/neural-web` through 349a5003c.
+ * `sherif` reports each one as `packages-without-package-json`, because the
+ * pattern still matches the directory.
+ *
+ * A literal workspace entry is not examined.
+ * `readWorkspaceDirectories` refuses one whose manifest is absent rather than skipping it,
+ * so a literal entry never produces this shape.
+ */
+// repo-health-ignore export-name-affix -- answers the complement of the shared reader's filter.
+// It names what the glob matched and the manifest test refused.
+export async function retiredWorkspaceDirectories(repoRoot: PathBuilderLike): Promise<string[]> {
+	const manifest = await readPackageJSON(resolvePath(repoRoot, "package.json"))
+	const entries = Array.isArray(manifest.workspaces) ? manifest.workspaces : (manifest.workspaces?.packages ?? [])
+	const retired: string[] = []
+
+	for (const entry of entries) {
+		const parent = TRAILING_STAR.exec(entry)?.groups?.["parent"]
+
+		if (!parent) continue
+
+		const children = (
+			await Globerator.from("*", {
+				cwd: resolvePath(repoRoot, parent),
+				withFileTypes: true,
+				onlyFiles: false,
+			}).toArray()
+		)
+			.filter((dirent) => dirent.isDirectory())
+			.map((dirent) => dirent.name)
+			.toSorted()
+
+		for (const child of children) {
+			const directory = `${parent}/${child}`
+
+			if (!(await isWorkspaceDirectory(repoRoot, directory))) {
+				retired.push(directory)
+			}
+		}
+	}
+
+	return [...new Set(retired)]
+}
