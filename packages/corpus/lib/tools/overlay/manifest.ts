@@ -31,9 +31,10 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, dirname, join } from "path-ts"
 
 import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
+import type { SplitName } from "#utils/split"
 
 interface ParquetFileDescriptor {
-	split: string
+	split: SplitName
 	path: string
 	format: "parquet"
 	compression: string
@@ -108,12 +109,22 @@ function baseRowsPerFile(base: BaseManifest): unknown {
 export interface OverlayFile {
 	parquet: string
 	source: string
+	/**
+	 * Which split the file's rows belong to.
+	 * Defaults to `train`.
+	 *
+	 * An overlay adds train rows in the ordinary case.
+	 * A file produced by `splitOverlaySlice` carries the rows a country's holdout reaches,
+	 * and those belong to `val` or `test`: a held-out row appended as a train row
+	 * is the leakage the holdout exists to prevent.
+	 */
+	split?: SplitName
 }
 
 async function descriptor(
 	localPath: string,
 	modalPath: string,
-	split: string,
+	split: SplitName,
 	source: string
 ): Promise<ParquetFileDescriptor> {
 	const db = await connectDuckDB()
@@ -180,17 +191,24 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	const added: ParquetFileDescriptor[] = []
 
 	for (const file of args.files) {
+		const split = file.split ?? "train"
+
 		added.push(
 			await descriptor(
-				join(args.newDir, "train", file.parquet),
-				`${args.modalRoot}/train/${file.parquet}`,
-				"train",
+				join(args.newDir, split, file.parquet),
+				`${args.modalRoot}/${split}/${file.parquet}`,
+				split,
 				file.source
 			)
 		)
 	}
 
-	const addedRows = added.reduce((total, file) => total + file.rows, 0)
+	const addedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+
+	for (const file of added) {
+		addedRows[file.split] += file.rows
+	}
+
 	const sources = args.files.map((file) => file.source).join(", ")
 
 	const manifest = {
@@ -202,11 +220,11 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		row_group_size: base.row_group_size,
 		slices: [...kept, ...added],
 		counts: {
-			train: base.counts.train + addedRows,
-			val: base.counts.val,
-			test: base.counts.test,
+			train: base.counts.train + addedRows.train,
+			val: base.counts.val + addedRows.val,
+			test: base.counts.test + addedRows.test,
 		},
-		total_rows: base.total_rows + addedRows,
+		total_rows: base.total_rows + addedRows.train + addedRows.val + addedRows.test,
 	}
 
 	const out = join(args.newDir, "MANIFEST.json")
@@ -217,6 +235,6 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	console.log(`  counts: ${stringifyJSON(manifest.counts)}  total: ${manifest.total_rows}`)
 
 	for (const file of added) {
-		console.log(`  ${file.source} train: ${file.rows} rows (${file.bytes} bytes)`)
+		console.log(`  ${file.source} ${file.split}: ${file.rows} rows (${file.bytes} bytes)`)
 	}
 }

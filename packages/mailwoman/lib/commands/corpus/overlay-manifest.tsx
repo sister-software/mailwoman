@@ -33,6 +33,10 @@ export const spec = {
 			deprecatedName: "slice-parquet",
 		},
 		source: { type: "string", required: true, description: "Source label per parquet, comma-separated" },
+		split: {
+			type: "string",
+			description: "Split per parquet, comma-separated. Unset puts every file in train.",
+		},
 		note: { type: "string", required: true, description: "Manifest note" },
 	},
 } as const satisfies CommandSpec
@@ -43,6 +47,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 
 		const parquets = extractDelimited(options.parquet)
 		const sources = extractDelimited(options.source)
+		const splits = options.split ? extractDelimited(options.split) : []
 
 		if (parquets.length !== sources.length) {
 			throw new CommandError(
@@ -50,12 +55,28 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
+		if (splits.length && splits.length !== parquets.length) {
+			throw new CommandError(
+				`--split names ${splits.length} splits and --parquet ${parquets.length} files; give one split per file or omit the flag`
+			)
+		}
+
+		const unknown = splits.filter((split) => split !== "train" && split !== "val" && split !== "test")
+
+		if (unknown.length) {
+			throw new CommandError(`--split takes train, val or test; got ${unknown.join(", ")}`)
+		}
+
 		await assembleOverlayManifest({
 			base: options.base,
 			newDir: options.newDir,
 			modalRoot: options.modalRoot,
 			version: options.corpusVersion,
-			files: parquets.map((parquet, index) => ({ parquet, source: sources[index]! })),
+			files: parquets.map((parquet, index) => ({
+				parquet,
+				source: sources[index]!,
+				split: (splits[index] ?? "train") as "train" | "val" | "test",
+			})),
 			note: options.note,
 		})
 
