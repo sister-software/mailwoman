@@ -107,14 +107,17 @@ describe("holdoutComponents", () => {
 	})
 
 	it("refuses a row carrying no span triple rather than reading it as a row with no postcode", () => {
-		const row = { ...gbRow("gb-9", "Rock Close", "Camborne", "TR14 7TT"), span_tags: undefined }
+		// The key is absent rather than set to `undefined`, which is the shape a file written
+		// before the span triple existed produces.
+		const { span_tags, ...row } = gbRow("gb-9", "Rock Close", "Camborne", "TR14 7TT")
 
-		expect(() => holdoutComponents(row as unknown as ParquetRow, 3, "fixture")).toThrow(/row 3/)
+		expect(span_tags).toHaveLength(3)
+		expect(() => holdoutComponents(row, 3, "fixture")).toThrow(/row 3/)
 	})
 
 	it("refuses a span triple whose three arrays disagree in length", () => {
 		const row = { ...gbRow("gb-10", "Rock Close", "Camborne", "TR14 7TT"), span_ends: [1] }
 
-		expect(() => holdoutComponents(row as unknown as ParquetRow, 4, "fixture")).toThrow(/parallel/)
+		expect(() => holdoutComponents(row, 4, "fixture")).toThrow(/parallel/)
 	})
 })

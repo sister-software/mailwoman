@@ -23,7 +23,7 @@
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { connectDuckDB, escapeSQLString } from "@mailwoman/corpus/parquet/duckdb"
-import { defaultHoldouts, policyFor } from "@mailwoman/corpus/utils/split"
+import { defaultHoldouts, holdoutPolicyFor } from "@mailwoman/corpus/utils/split"
 import { join } from "path-ts"
 
 const { values } = parseArguments({
@@ -56,7 +56,7 @@ const holdouts = defaultHoldouts()
 const clauses: string[] = []
 
 for (const [country, holdout] of Object.entries(holdouts)) {
-	const policy = policyFor(holdout)
+	const policy = holdoutPolicyFor(holdout)
 	const tests: string[] = []
 
 	for (const region of policy.regions ?? []) {

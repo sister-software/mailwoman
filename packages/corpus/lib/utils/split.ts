@@ -187,7 +187,7 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 /**
  * The declared matchers for one country, with a bare array read as its region list.
  */
-export function policyFor(holdout: CountryHoldout | undefined): HoldoutPolicy {
+export function holdoutPolicyFor(holdout: CountryHoldout | undefined): HoldoutPolicy {
 	if (!holdout) return {}
 
 	return Array.isArray(holdout) ? { regions: holdout } : (holdout as HoldoutPolicy)
@@ -206,7 +206,7 @@ export function splitForRow(
 	row: Pick<SplitInputRow, "source_id" | "country" | "components">,
 	holdouts: Record<string, CountryHoldout> = defaultHoldouts()
 ): SplitName {
-	const policy = policyFor(holdouts[row.country])
+	const policy = holdoutPolicyFor(holdouts[row.country])
 	const { region, postcode, locality } = row.components
 
 	const isHeldOut =

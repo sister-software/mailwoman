@@ -38,13 +38,28 @@ import { type CountryHoldout, defaultHoldouts, type SplitName, splitForRow } fro
 const HOLDOUT_TAGS = new Set<string>(["region", "postcode", "locality"])
 
 /**
+ * The fields {@linkcode holdoutComponents} reads, with the span triple optional.
+ *
+ * A {@linkcode ParquetRow} declares all three as present and satisfies this.
+ * Declaring them optional here is what lets the absent-triple case be constructed without a cast,
+ * so the refusal below is reachable from a test rather than only from a corrupt file.
+ */
+export interface SpannedRow {
+	raw: string
+	source_id: string
+	span_starts?: readonly number[]
+	span_ends?: readonly number[]
+	span_tags?: readonly string[]
+}
+
+/**
  * Read the components a holdout decision needs back out of one labeled row.
  *
  * Raises on a row whose span triple is absent or not parallel.
  * A row that cannot be read is not a row with no held-out component: treating it as one
  * would put it in the train split, which is the outcome this whole file exists to prevent.
  */
-export function holdoutComponents(row: ParquetRow, index: number, input: string): CanonicalRow["components"] {
+export function holdoutComponents(row: SpannedRow, index: number, input: string): CanonicalRow["components"] {
 	const { raw, span_starts: starts, span_ends: ends, span_tags: tags } = row
 
 	if (!starts || !ends || !tags) {
