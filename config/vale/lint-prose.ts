@@ -52,6 +52,13 @@ const DOC_EXCLUDES = [
 	"**/THIRD_PARTY_NOTICES.md",
 	"packages/**/data/PROVENANCE.md",
 	"packages/**/lib/**/*.md",
+	// `docs/records/evals/2026-07-31-filer-linkage.md` is regenerated from string literals in
+	// `packages/filer/lib/tools/linkage/report.ts`, and a test compares the two byte for byte.
+	// A vocabulary rule reaching the generated copy and not its generator desynchronizes them,
+	// which is what broke the `Test` workflow on 2026-09-22.
+	// The rest of this directory is dated eval receipts, whose value is that
+	// they say what they said at the time.
+	"docs/records/evals/**",
 	"packages/mailwoman/skills/**",
 	"packages/mailwoman/lib/eval-harness/**",
 	"packages/resolver-wof-sqlite/CONVENTION.md",
