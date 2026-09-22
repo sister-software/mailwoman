@@ -28,6 +28,11 @@ them renders real published address tuples through a template:
 | ---------- | ------------------------------------------------------------ |
 | `synth-gb` | HM Land Registry Price Paid Data, `ppd/<date>/gb-tuples.csv` |
 | `synth-nl` | OpenAddresses NL `countrywide.csv`                           |
+| `synth-pt` | OpenAddresses PT `countrywide.csv`                           |
+| `synth-ch` | OpenAddresses CH `countrywide.csv`                           |
+| `synth-hr` | OpenAddresses HR `countrywide.csv`                           |
+| `synth-sk` | OpenAddresses SK `countrywide.csv`                           |
+| `synth-lu` | OpenAddresses LU `countrywide.csv`                           |
 | `synth-it` | OpenAddresses IT `countrywide.csv`                           |
 | `synth-es` | the CNIG export, read raw for the pedanía variant            |
 | `synth-nz` | a LINZ-derived OpenAddresses extract                         |
@@ -107,6 +112,29 @@ Code-Point are read by `gazetteer-pipeline` for the retrieval artifacts — `pai
 
 So GB's street supply is one 3.1% sample of one register, and three further GB sources are on disk
 unused.
+
+## The five locales added 2026-09-22, and their pools
+
+Read by `COUNTRY_SOURCES` in `packages/corpus/lib/international/recipes/locale.ts` for the first
+time. These are pool sizes reported by the recipe's own reader on the run that generated each
+output, rather than corpus row counts. No corpus carries these rows yet.
+
+| locale | rows in the source CSV | reservoir drew | city-noise drops | rows emitted | skipped |
+| ------ | ---------------------: | -------------: | ---------------: | -----------: | ------: |
+| PT     |              5,667,574 |      1,200,000 |                0 |      800,000 |     332 |
+| CH     |              2,759,181 |      1,200,000 |                0 |      800,000 |      12 |
+| HR     |              1,679,500 |      1,200,000 |            1,003 |      800,000 |      63 |
+| SK     |                219,728 |        219,728 |                0 |      200,000 |       0 |
+| LU     |                164,415 |        164,415 |                0 |      150,000 |       0 |
+
+SK and LU drew their whole source because it is smaller than `RESERVOIR_CAP`'s 1,200,000. Their
+emitted counts are set below the pool so no row is drawn twice.
+
+Three countries with an extract on disk are deliberately absent, each for a reason recorded at the
+`COUNTRY_SOURCES` call site: Saudi Arabia is Arabic script and this repository ships no Arabic
+graph; Iceland carries a locality on 19 of 125,681 rows; Estonia is blocked by `cleanCityNoise`
+rather than by supply, because its `CITY` is two admin levels joined by a comma and rule 1 drops any
+city containing one.
 
 ## What this does not establish
 
