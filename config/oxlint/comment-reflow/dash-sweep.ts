@@ -28,11 +28,16 @@ import ts from "typescript"
 const FINITE =
 	/\b(is|are|was|were|be|been|has|have|had|does|do|did|will|would|can|could|should|must|makes?|leaves?|reads?|names?|holds?|keeps?|gives?|takes?|means?|stays?|comes?|goes?|sits?|carries|carry|returns?|fires?|fails?|needs?|wants?|uses?|writes?|reports?|answers?|drops?|adds?|counts?|costs?|buys?|pays?|prefers?|refuses?|never|only|already|still)\b/i
 
-/** Words a clause can open a sentence with, once the dash in front of it is a full stop. */
+/**
+ * Words a clause can open a sentence with, once the dash in front of it is a full stop.
+ */
 const OPENERS =
 	/^(?:the|a|an|it|this|that|they|we|you|there|each|every|nothing|nobody|its|their|those|these|both|neither|either|one|two|three|most|some|any|no|so|see|read|unlike|without|once|when|if|after|before|together|instead|otherwise|measured|present|kept|held|anything|everything|same|what|where|whatever|here)\b/i
 
-/** A verb the sentence can open with, where the clause behind the dash is an instruction rather than a statement. */
+/**
+ * A verb the sentence can open with, where the clause behind the dash is an
+ * instruction rather than a statement.
+ */
 const IMPERATIVES = /^(?:see|read|revisit|compare|note|use|prefer|check|run|treat|measure|keep|expect)\b/i
 
 /**
@@ -42,9 +47,9 @@ const IMPERATIVES = /^(?:see|read|revisit|compare|note|use|prefer|check|run|trea
  * of either stands a fragment up where the sentence only wanted a comma.
  * `never` and `only` head an antithesis and take the same comma.
  *
- * `not` is deliberately absent. A comma in front of it reads as the antithesis it is, but the
- * `Negation` rule refuses `, not` at error level, and `CommentDashJoint` leaves a dash in front of
- * a noun phrase alone, so the dash stays.
+ * `not` is deliberately absent.
+ * A comma in front of it reads as the antithesis it is, but the `Negation` rule refuses `, not` at
+ * error level, and `CommentDashJoint` leaves a dash in front of a noun phrase alone, so the dash stays.
  */
 const COMMA_OPENERS =
 	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|never|with|for|leaving|making|giving|taking)\b/i
@@ -78,13 +83,18 @@ const LEAD_TAG = /^(Returns|Throws)\b\s+/
 
 const IDENTIFIER = /[._/]|[a-z][A-Z]/
 
-/** Capitalise a clause that is becoming a sentence, unless its first word names something. */
+/**
+ * Capitalise a clause that is becoming a sentence, unless its first word names something.
+ */
 function openClause(clause: string): string {
 	const [first = ""] = clause.split(/\s+/)
+
 	if (!/^[a-z]/.test(first)) return clause
+
 	// `foo`, foo.bar, fooBar and foo_bar are names.
 	// Capitalising one would name something that does not exist.
 	if (/^[`[(]/.test(first) || IDENTIFIER.test(first)) return clause
+
 	return first.charAt(0).toUpperCase() + clause.slice(1)
 }
 
@@ -97,6 +107,7 @@ function openClause(clause: string): string {
  */
 export function sweepSentence(sentence: string): string {
 	const dashes = sentence.match(/[—–]/g)
+
 	if (!dashes || dashes.length !== 1) return sentence
 
 	const index = sentence.search(/[—–]/)
@@ -112,11 +123,12 @@ export function sweepSentence(sentence: string): string {
 	let depth = 0
 
 	for (const character of before) {
-		if (character === "(" || character === "[") depth++
-		else if (character === ")" || character === "]") depth = Math.max(0, depth - 1)
+		if (character === "(" || character === "[") { depth++ }
+		else if (character === ")" || character === "]") { depth = Math.max(0, depth - 1) }
 	}
 
 	if (depth > 0) return sentence
+
 	if (before.length < 24 || !/\s/.test(before) || /[,;:([]$/.test(before)) return sentence
 
 	const words = after.replace(/[.!?]+$/, "").split(/\s+/)
@@ -127,12 +139,14 @@ export function sweepSentence(sentence: string): string {
 	if (COMMA_OPENERS.test(after)) return words.length < 3 ? sentence : `${before}, ${after}`
 
 	if (words.length < 5) return sentence
+
 	if (!FINITE.test(after) && !IMPERATIVES.test(after)) return sentence
 
 	// A right half ending on its own verb is a gloss rather than a statement:
 	// "the form an override uses" names the thing before the dash instead of saying
 	// something new about it, and a full stop would stand a fragment up.
 	if (FINITE.test(words.at(-1)!)) return sentence
+
 	if (!OPENERS.test(after) && !IMPERATIVES.test(after) && !/^[`A-Z]/.test(after)) return sentence
 
 	const head = /[.!?][)"'\]`]*$/.test(before) ? before : `${before}.`
@@ -147,15 +161,18 @@ export function sweepSentence(sentence: string): string {
  * The reflow rule needs the capital to see a sentence, and a reader needs it for the same reason.
  */
 function openSentences(text: string): string {
-	return text.replace(/([.!?])(\s+)([a-z][a-z'’-]*)(?=\s|[.,;:)]|$)/g, (whole, stop, gap, word, offset: number) => {
+	return text.replaceAll(/([.!?])(\s+)([a-z][a-z'’-]*)(?=\s|[.,;:)]|$)/g, (whole, stop, gap, word, offset: number) => {
 		if (ABBREVIATION.test(text.slice(0, offset + 1))) return whole
+
 		if (IDENTIFIER.test(String(word))) return whole
 
 		return `${String(stop)}${String(gap)}${String(word).charAt(0).toUpperCase()}${String(word).slice(1)}`
 	})
 }
 
-/** Rewrite one paragraph, already joined to a single line. */
+/**
+ * Rewrite one paragraph, already joined to a single line.
+ */
 function sweepParagraph(text: string): string {
 	return openSentences(text).split(SENTENCE_BOUNDARY).map(sweepSentence).join(" ")
 }
@@ -176,14 +193,14 @@ function sweepBody(lines: readonly string[]): string[] {
 	const flushParagraph = () => {
 		if (!paragraph.length) return
 
-		output.push(paragraphIndent + sweepParagraph(paragraph.join(" ").replace(/\s+/g, " ")))
+		output.push(paragraphIndent + sweepParagraph(paragraph.join(" ").replaceAll(/\s+/g, " ")))
 		paragraph = []
 	}
 
 	const flushItem = () => {
 		if (!item) return
 
-		output.push(item.marker + sweepParagraph(item.text.join(" ").replace(/\s+/g, " ")))
+		output.push(item.marker + sweepParagraph(item.text.join(" ").replaceAll(/\s+/g, " ")))
 		item = undefined
 	}
 
@@ -192,6 +209,7 @@ function sweepBody(lines: readonly string[]): string[] {
 
 		if (item && line.trim() && /^\s+\S/.test(line) && !list) {
 			item.text.push(line.trim())
+
 			continue
 		}
 
@@ -199,6 +217,7 @@ function sweepBody(lines: readonly string[]): string[] {
 			flushParagraph()
 			flushItem()
 			item = { marker: list[1]!, text: [list[2]!] }
+
 			continue
 		}
 
@@ -206,12 +225,13 @@ function sweepBody(lines: readonly string[]): string[] {
 			flushParagraph()
 			flushItem()
 			output.push(line)
+
 			continue
 		}
 
 		flushItem()
 
-		if (!paragraph.length) paragraphIndent = /^[\t ]*/.exec(line)![0]
+		if (!paragraph.length) { paragraphIndent = /^[\t ]*/.exec(line)![0] }
 
 		paragraph.push(line.trim())
 	}
@@ -271,6 +291,7 @@ function literalSpans(source: string, fileName: string): Array<[number, number]>
 			ts.isRegularExpressionLiteral(node)
 		) {
 			spans.push([node.getStart(file), node.getEnd()])
+
 			return
 		}
 
@@ -285,11 +306,13 @@ function literalSpans(source: string, fileName: string): Array<[number, number]>
 const within = (spans: ReadonlyArray<[number, number]>, offset: number) =>
 	spans.some(([start, end]) => offset >= start && offset < end)
 
-/** Rewrite every comment in one source file. */
+/**
+ * Rewrite every comment in one source file.
+ */
 export function sweepSource(source: string, fileName = "file.ts"): string {
 	const spans = literalSpans(source, fileName)
 
-	const blocks = source.replace(/^[\t ]*\/\*\*[\s\S]*?\*\/$/gm, (block: string, offset: number) => {
+	const blocks = source.replaceAll(/^[\t ]*\/\*\*[\s\S]*?\*\/$/gm, (block: string, offset: number) => {
 		if (within(spans, offset)) return block
 
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One comment block, bounded by its own markers.
@@ -308,9 +331,10 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 		const tags = firstTag === -1 ? [] : body.slice(firstTag)
 		const lifted = liftTagSentence(sweepBody(prose), tags)
 		const separator = lifted.tags.length && lifted.body.length ? [""] : []
+
 		const rendered = [...lifted.body, ...separator, ...lifted.tags]
 			.join("\n")
-			.replace(/\n{3,}/g, "\n\n")
+			.replaceAll(/\n{3,}/g, "\n\n")
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- The block being rendered, still in memory.
 			.split("\n")
 
@@ -323,7 +347,7 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 	// so the spans are taken again from the text this pass actually sees.
 	const shifted = literalSpans(blocks, fileName)
 
-	return blocks.replace(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group: string, offset: number) => {
+	return blocks.replaceAll(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group: string, offset: number) => {
 		if (within(shifted, offset)) return group
 
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One run of `//` lines, bounded by the code around it.
@@ -349,6 +373,7 @@ process.exitCode = await runCLICommand(async () => {
 
 	if (!paths.length) {
 		process.stderr.write("usage: yarn comments:sweep <file> [file …]\n")
+
 		return 1
 	}
 
@@ -361,6 +386,7 @@ process.exitCode = await runCLICommand(async () => {
 		if (swept === source) continue
 
 		await writeLocalTextFile(swept, path)
+
 		changed++
 	}
 

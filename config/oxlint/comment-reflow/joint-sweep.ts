@@ -34,11 +34,15 @@ import ts from "typescript"
 const VERB =
 	"(?:is|are|was|were|has|have|had|does|do|did|will|would|can|could|should|must|makes|leaves|reads|names|holds|keeps|gives|takes|means|stays|comes|goes|sits|carries|returns|fires|fails|needs|wants|uses|writes|reports|answers|drops|adds|counts|costs|pays|prefers|refuses|resolves|produces|reaches|wins)"
 
-/** The determiners a clause behind the dash can open with. */
+/**
+ * The determiners a clause behind the dash can open with.
+ */
 const OPENER =
 	"(?:the|a|an|it|this|that|they|we|there|each|every|its|their|these|those|both|neither|either|one|no|nothing)"
 
-/** The rule's token, split at the dash so each half can be tested against one side of a candidate. */
+/**
+ * The rule's token, split at the dash so each half can be tested against one side of a candidate.
+ */
 const LEFT = new RegExp(`\\b${VERB}\\b[^—–\\n.!?;:()\\[\\]]{0,90}\\s$`, "i")
 const RIGHT = new RegExp(`^${OPENER}\\s+(?:[^\\s—–,.!?;:]+\\s+){0,6}${VERB}\\b\\s`, "i")
 
@@ -87,18 +91,24 @@ const capitalizable = (word: string) =>
 	/^[a-z]/.test(word) && !/^[`[(]/.test(word) && !/[._/]/.test(word) && !/[a-z][A-Z]/.test(word)
 
 interface Joint {
-	/** Position of the dash within the text it was found in. */
+	/**
+	 * Position of the dash within the text it was found in.
+	 */
 	index: number
 	/**
 	 * What the dash becomes.
 	 * Empty when the left half already closes with a full stop.
 	 */
 	punct: string
-	/** Whether the right half opens a sentence of its own. */
+	/**
+	 * Whether the right half opens a sentence of its own.
+	 */
 	capitalize: boolean
 }
 
-/** Every dash in a sentence the rule's token reads as a joint, with the punctuation it should carry instead. */
+/**
+ * Every dash in a sentence the rule's token reads as a joint, with the punctuation it should carry instead.
+ */
 function jointsIn(sentence: string): Joint[] {
 	const found: Joint[] = []
 
@@ -109,6 +119,7 @@ function jointsIn(sentence: string): Joint[] {
 		const after = sentence.slice(i + 1).trimStart()
 
 		if (!before || !after) continue
+
 		if (!LEFT.test(sentence.slice(0, i)) || !RIGHT.test(after)) continue
 
 		// A dash inside a code span is punctuation in something else's language.
@@ -117,14 +128,16 @@ function jointsIn(sentence: string): Joint[] {
 		let depth = 0
 
 		for (const character of before) {
-			if (character === "(" || character === "[") depth++
-			else if (character === ")" || character === "]") depth = Math.max(0, depth - 1)
+			if (character === "(" || character === "[") { depth++ }
+			else if (character === ")" || character === "]") { depth = Math.max(0, depth - 1) }
 		}
 
 		// A dash inside a bracket belongs to the aside, and a full stop there closes a sentence the bracket has not.
 		if (depth > 0) continue
+
 		// A right half that closes a bracket it did not open is the tail of one.
 		if (/^[^([]*[)\]]/.test(after)) continue
+
 		if (/[,;:([]$/.test(before)) continue
 
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One sentence's right half, already in memory.
@@ -138,14 +151,18 @@ function jointsIn(sentence: string): Joint[] {
 	return found
 }
 
-/** A joint, keyed by which dash of the whole comment it sits on. */
+/**
+ * A joint, keyed by which dash of the whole comment it sits on.
+ */
 interface Edit {
 	dash: number
 	punct: string
 	capitalize: boolean
 }
 
-/** Scan one paragraph, already joined to a single line, and key its joints to the comment's dash order. */
+/**
+ * Scan one paragraph, already joined to a single line, and key its joints to the comment's dash order.
+ */
 function scanParagraph(text: string, base: number, out: Edit[]): void {
 	const cuts: [number, string][] = []
 	let last = 0
@@ -208,7 +225,7 @@ function scanLines(lines: readonly string[]): Edit[] {
 	const flush = () => {
 		if (!paragraph.length) return
 
-		scanParagraph(paragraph.join(" ").replace(/\s+/g, " "), base, out)
+		scanParagraph(paragraph.join(" ").replaceAll(/\s+/g, " "), base, out)
 		paragraph = []
 	}
 
@@ -217,11 +234,13 @@ function scanLines(lines: readonly string[]): Edit[] {
 			flush()
 			fenced = !fenced
 			count += dashesIn(line)
+
 			continue
 		}
 
 		if (fenced) {
 			count += dashesIn(line)
+
 			continue
 		}
 
@@ -232,6 +251,7 @@ function scanLines(lines: readonly string[]): Edit[] {
 			base = count + dashesIn(item[1]!)
 			paragraph = [item[2]!]
 			count += dashesIn(line)
+
 			continue
 		}
 
@@ -241,10 +261,11 @@ function scanLines(lines: readonly string[]): Edit[] {
 		if (structural && !(paragraph.length && /^\s+\S/.test(line))) {
 			flush()
 			count += dashesIn(line)
+
 			continue
 		}
 
-		if (!paragraph.length) base = count
+		if (!paragraph.length) { base = count }
 
 		paragraph.push(line.trim())
 		count += dashesIn(line)
@@ -255,7 +276,9 @@ function scanLines(lines: readonly string[]): Edit[] {
 	return out
 }
 
-/** Open the right half in upper case, unless its first word is code or already capitalized. */
+/**
+ * Open the right half in upper case, unless its first word is code or already capitalized.
+ */
 function capitalizeAt(text: string, index: number, capitalize: boolean): string {
 	if (!capitalize) return text
 
@@ -290,12 +313,12 @@ function applyEdit(text: string, at: number, punct: string, capitalize: boolean)
 	if (/^[\t ]*(?:\*|\/\/)?[\t ]*$/.test(text.slice(lineStart, at))) {
 		let cutEnd = at + 1
 
-		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) cutEnd++
+		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) { cutEnd++ }
 
 		const previous = text.lastIndexOf("\n", lineStart - 1) + 1
 		let insert = lineStart - 1
 
-		while (insert > previous && /\s/.test(text[insert - 1]!)) insert--
+		while (insert > previous && /\s/.test(text[insert - 1]!)) { insert-- }
 
 		const head = text.slice(0, insert) + punct + text.slice(insert, at)
 
@@ -306,10 +329,10 @@ function applyEdit(text: string, at: number, punct: string, capitalize: boolean)
 	let cutEnd = at + 1
 	let filler = ""
 
-	while (cutStart > lineStart && /[\t ]/.test(text[cutStart - 1]!)) cutStart--
+	while (cutStart > lineStart && /[\t ]/.test(text[cutStart - 1]!)) { cutStart-- }
 
 	if (!/^[\t ]*$/.test(text.slice(at + 1, lineEnd))) {
-		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) cutEnd++
+		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) { cutEnd++ }
 		filler = " "
 	}
 
@@ -318,7 +341,10 @@ function applyEdit(text: string, at: number, punct: string, capitalize: boolean)
 	return capitalizeAt(head + text.slice(cutEnd), head.length, capitalize)
 }
 
-/** The source ranges a string, template or regular expression owns, which hold text this script must not read. */
+/**
+ * The source ranges a string, template or regular expression owns,
+ * which hold text this script must not read.
+ */
 function literalSpans(source: string, fileName: string): [number, number][] {
 	const kind = fileName.endsWith("tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
 	const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, kind)
@@ -332,6 +358,7 @@ function literalSpans(source: string, fileName: string): [number, number][] {
 			ts.isRegularExpressionLiteral(node)
 		) {
 			spans.push([node.getStart(file), node.getEnd()])
+
 			return
 		}
 
@@ -346,7 +373,9 @@ function literalSpans(source: string, fileName: string): [number, number][] {
 const within = (spans: readonly [number, number][], offset: number) =>
 	spans.some(([start, end]) => offset >= start && offset < end)
 
-/** Rewrite one comment, given the logical lines a reader sees and the raw text they came from. */
+/**
+ * Rewrite one comment, given the logical lines a reader sees and the raw text they came from.
+ */
 function rewrite(raw: string, lines: readonly string[]): string {
 	const edits = scanLines(lines)
 
@@ -355,13 +384,13 @@ function rewrite(raw: string, lines: readonly string[]): string {
 	const positions: number[] = []
 
 	for (let i = 0; i < raw.length; i++) {
-		if (raw[i] === "—" || raw[i] === "–") positions.push(i)
+		if (raw[i] === "—" || raw[i] === "–") { positions.push(i) }
 	}
 
 	let out = raw
 
 	// Last dash first, so an earlier edit never moves a later one's offset.
-	for (const edit of [...edits].sort((a, b) => b.dash - a.dash)) {
+	for (const edit of [...edits].toSorted((a, b) => b.dash - a.dash)) {
 		const at = positions[edit.dash]
 
 		if (at === undefined) continue
@@ -372,12 +401,15 @@ function rewrite(raw: string, lines: readonly string[]): string {
 	return out
 }
 
-/** Rewrite every joint in one file's comments. */
+/**
+ * Rewrite every joint in one file's comments.
+ */
 export function sweepSource(source: string, fileName: string): string {
 	const spans = literalSpans(source, fileName)
 
-	const blocks = source.replace(/^[\t ]*\/\*[\s\S]*?\*\/$/gm, (block: string, offset: number) => {
+	const blocks = source.replaceAll(/^[\t ]*\/\*[\s\S]*?\*\/$/gm, (block: string, offset: number) => {
 		if (within(spans, offset)) return block
+
 		// A shipped banner is copied text rather than this repository's prose.
 		if (block.trimStart().startsWith("/*!")) return block
 
@@ -398,7 +430,7 @@ export function sweepSource(source: string, fileName: string): string {
 	// The first pass's rewrites shift offsets, so the spans are taken again from the text this pass sees.
 	const shifted = literalSpans(blocks, fileName)
 
-	return blocks.replace(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group: string, offset: number) => {
+	return blocks.replaceAll(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group: string, offset: number) => {
 		if (within(shifted, offset)) return group
 
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One run of `//` lines, bounded by the code around it.
@@ -421,6 +453,7 @@ process.exitCode = await runCLICommand(async () => {
 
 	if (!paths.length) {
 		process.stderr.write("usage: yarn comments:joints <file> [file …]\n")
+
 		return 1
 	}
 
@@ -433,6 +466,7 @@ process.exitCode = await runCLICommand(async () => {
 		if (swept === source) continue
 
 		await writeLocalTextFile(swept, path)
+
 		changed++
 	}
 

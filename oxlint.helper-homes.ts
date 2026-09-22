@@ -26,8 +26,9 @@
  * the loop writes no constant of its own and calls whatever generator it was handed.
  *
  * A `template-properties` names the components a template literal interpolates, in order.
- * A hand-written address order carries no literal worth matching. Its quasis are a comma
- * and a space — and what identifies it is which components it puts in which sequence.
+ * A hand-written address order carries no literal worth matching.
+ *
+ * Its quasis are a comma and a space — and what identifies it is which components it puts in which sequence.
  */
 export interface HelperHome {
 	readonly id: string
