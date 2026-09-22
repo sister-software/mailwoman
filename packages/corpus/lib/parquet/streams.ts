@@ -18,7 +18,7 @@ import { connectDuckDB, escapeSQLIdentifier, escapeSQLString } from "#parquet/du
  * Unwrap it so a row reads the way the schema declares it, recursively,
  * because a nested list arrives nested the same way.
  */
-function normalizeDuckDBValue(value: unknown): unknown {
+export function normalizeDuckDBValue(value: unknown): unknown {
 	if (value && typeof value === "object" && "items" in value && Array.isArray(value.items)) {
 		return value.items.map(normalizeDuckDBValue)
 	}
