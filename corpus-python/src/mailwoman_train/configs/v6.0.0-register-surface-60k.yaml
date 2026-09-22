@@ -71,12 +71,13 @@
 #    Closing that needs a holdout change rather than a run that refuses to start, so the floor states
 #    what holds today and the gap stays recorded in CONTRIBUTING_MODEL_WORK.mdx.
 #
-# 5. `data.required_corpus_receipts` gains a 1,000-draw floor for each of the five new locales, so a
-#    run that fails to reach one stops rather than training. 1,000 is a requirement rather than a
-#    prediction: below it a locale has not been taught at all. `audit_epoch_mixture` reports the
-#    realized draw beside each floor, and it now also reports every admitted country's draw including
-#    the zeros, so a country at weight 1.0 that draws nothing is distinguishable from one nobody
-#    admitted.
+# 5. `data.required_corpus_receipts` gains a 1,000-draw floor for each of the five new locales and
+#    one for each of Brazil and Mexico, so a run that fails to reach one stops rather than training.
+#    1,000 is a requirement rather than a prediction: below it a locale has not been taught at all.
+#    Brazil and Mexico draw from the same source, `overture-latam`, so each receipt names its country
+#    as well. `audit_epoch_mixture` reports the realized draw beside each floor, and it now also
+#    reports every admitted country's draw including the zeros, so a country at weight 1.0 that draws
+#    nothing is distinguishable from one nobody admitted.
 #
 # Run shape: from scratch. No `train.init_from`, launched with `--resume none`, the same shape
 # v5.7.0, v5.8.0 and v5.9.0 used. A fine-tune cannot introduce a source the base never saw, and this
@@ -398,6 +399,17 @@ data:
       min_draws: 1000
       source: synth-lu
       country: LU
+    # Brazil and Mexico were admitted in `country_weights` at weight 1.0 while the corpus held no row
+    # for either. These two receipts are what distinguishes admission from being taught: both draw
+    # from `overture-latam`, so a country filter is required to tell one from the other.
+    - name: br-overture-rooftops
+      min_draws: 1000
+      source: overture-latam
+      country: BR
+    - name: mx-overture-rooftops
+      min_draws: 1000
+      source: overture-latam
+      country: MX
   # Held-out coverage floors, iron rule 6's precondition. See the header for why GB and US declare a
   # street floor and FR and DE do not.
   required_validation_coverage:

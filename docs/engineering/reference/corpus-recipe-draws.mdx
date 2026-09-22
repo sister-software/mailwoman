@@ -96,3 +96,28 @@ emitted and skipped, the time, and every option the run resolved:
 
 The recipe outputs listed above predate it and have no sidecar. The table is their only record, and
 it goes stale the moment one of them is rebuilt.
+
+## The five locales drawn for the v0.6.0 corpus
+
+Each of these five ran with a sidecar, so the draw, the seed and the supply it drew from are all
+recorded rather than recovered. The supply column counts the data rows of the country's
+OpenAddresses `countrywide.csv`, measured 2026-09-22, and the pool column is what the reservoir held
+when the draw was taken.
+
+| country | supply rows | pool sampled | `--count` | emitted | skipped | city-noise drops |
+| ------- | ----------: | -----------: | --------: | ------: | ------: | ---------------: |
+| PT      |   5,911,139 |    1,200,000 |   800,000 | 800,000 |     332 |                0 |
+| CH      |   2,759,181 |    1,200,000 |   500,000 | 500,000 |       9 |                0 |
+| HR      |   1,680,503 |    1,200,000 |   300,000 | 300,000 |      27 |            1,003 |
+| SK      |     219,728 |      219,728 |   150,000 | 150,000 |       0 |                0 |
+| LU      |     164,415 |      164,415 |   150,000 | 150,000 |       0 |                0 |
+
+All five ran at `--seed 20260922`.
+
+PT, CH and HR each sampled 1,200,000 rows because `RESERVOIR_CAP` bounds the pool at that number and
+each country supplies more. SK and LU supply fewer rows than the cap, so their pool is the whole
+file and their draw is 68.3% and 91.2% of it. A country whose draw approaches its supply teaches
+that country's addresses close to exhaustively, which is a different regime from PT's 13.5%.
+
+Croatia's 1,003 city-noise drops are the only ones among the five. `cleanCityNoise` removes a row whose
+city value contains a comma, and those rows are excluded from the 1,680,503 the reservoir saw.
