@@ -14,6 +14,31 @@ import type { AstNode } from "@sister.software/oxlint-config/plugin-types"
 import { reflowRule } from "./config/oxlint/comment-reflow/rule.ts"
 import { HELPER_HOMES, type HelperHome } from "./oxlint.helper-homes.ts"
 
+/**
+ * ESTree fields the rules below read that `AstNode` does not declare.
+ *
+ * `AstNode` in `@sister.software/oxlint-config` is curated rather than complete.
+ * Every field it carries has a docstring naming the rule that reads it, and these
+ * three are ones this repository's rules reached for first.
+ *
+ * They are declared here because a consumer cannot widen a dependency's interface,
+ * and the cast at each site says which node type is being read.
+ */
+interface ESTreeNode extends AstNode {
+	/**
+	 * A `ForStatement`'s update expression, read by the descending-loop test.
+	 */
+	update?: AstNode
+	/**
+	 * An `ArrayPattern` or `ArrayExpression`'s elements, read by the same test's swap detection.
+	 */
+	elements?: AstNode[]
+	/**
+	 * A `TaggedTemplateExpression`'s template, read so a plain-template check can skip a tagged one.
+	 */
+	quasi?: AstNode
+}
+
 interface RuleContext {
 	options: unknown[]
 	report(descriptor: { node: unknown; message: string }): void
@@ -609,9 +634,9 @@ function isDescendingFromLength(node: AstNode): boolean {
 
 	const toOne = (node.test?.operator === ">" && bound === 0) || (node.test?.operator === ">=" && bound === 1)
 
-	return (
-		Boolean(fromLength) && Boolean(toOne) && node.update?.type === "UpdateExpression" && node.update.operator === "--"
-	)
+	const update = (node as ESTreeNode).update
+
+	return Boolean(fromLength) && Boolean(toOne) && update?.type === "UpdateExpression" && update.operator === "--"
 }
 
 /**
@@ -629,7 +654,7 @@ function swapsTwoIndices(body: AstNode): boolean {
 
 		if (left?.type !== "ArrayPattern" && left?.type !== "ArrayExpression") continue
 
-		const elements = (left.elements as AstNode[]) ?? []
+		const elements = (left as ESTreeNode).elements ?? []
 		const bases = elements.map((element) => indexedBaseName(element))
 
 		if (bases.length === 2 && bases[0] !== null && bases[0] === bases[1] && elements.every(isVariableIndex)) {
@@ -714,8 +739,10 @@ const preferHomeRule: Rule = {
 
 		return {
 			TaggedTemplateExpression(node: AstNode) {
-				if (node.quasi) {
-					tagged.add(node.quasi as object)
+				const quasi = (node as ESTreeNode).quasi
+
+				if (quasi) {
+					tagged.add(quasi)
 				}
 			},
 			CallExpression(node: AstNode) {
@@ -776,7 +803,11 @@ const preferHomeRule: Rule = {
 				}
 			},
 			ForStatement(node: AstNode) {
-				if (!isDescendingFromLength(node) || !node.body || !swapsTwoIndices(node.body)) return
+				// `AstNode.body` spans both shapes: a statement list on a block, one statement on a loop.
+				// A `ForStatement` carries the second, and an array here would be a node this rule cannot read.
+				const body = Array.isArray(node.body) ? undefined : node.body
+
+				if (!isDescendingFromLength(node) || !body || !swapsTwoIndices(body)) return
 
 				for (const home of HELPER_HOMES) {
 					if (home.signature.kind !== "descending-swap-loop") continue

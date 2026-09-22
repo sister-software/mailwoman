@@ -1,0 +1,35 @@
+// The repository's TypeScript that sits in no workspace: the oxlint plugin and its rules, the Vale
+// and comment-reflow tooling under `config/`, and the formatter and test-runner configs at the root.
+//
+// The root `tsconfig.json` carries `"include": []` and reaches every workspace through `references`,
+// so `tsc -b` never read these files, and `typecheck:tests` and `typecheck:docs` cover their own
+// surfaces rather than this one. Six type errors lived in `oxlint.plugin.ts` on that account, visible
+// to an editor's language service and to nothing a person runs. `docs/tsconfig.json` records the same
+// lesson about the docs site in its own header.
+//
+// This project type-checks and emits nothing, which is why it is a `typecheck:tools` script rather
+// than a `references` entry: a referenced project must be `composite`, and `composite` requires
+// declaration output for files that are configuration rather than a package interface.
+//
+// `docker/` is excluded. It is a root TypeScript project of its own with a manifest that consumes
+// published npm packages, and `release.clean` names it separately for the same reason.
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"noEmit": true,
+		"module": "preserve",
+		"moduleResolution": "bundler",
+		// Reaches a workspace package's `lib/*.ts` the way every other project here does, so this
+		// project type-checks against core's source rather than whatever `out/` holds.
+		"customConditions": ["node"],
+		"allowImportingTsExtensions": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"target": "esnext",
+		"lib": ["ESNext"],
+		"types": ["node"]
+	},
+	"include": ["./*.ts", "./config/**/*.ts"],
+	"exclude": ["docker", "node_modules", "out", "dist"]
+}
