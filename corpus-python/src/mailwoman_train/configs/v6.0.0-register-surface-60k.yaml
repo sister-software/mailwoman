@@ -1,4 +1,5 @@
-# v6.0.0 — the corpus every row of which says where it came from, and five locales it had never read
+# v6.0.0 — the corpus every row of which says where it came from, and five national registers it
+# had never read
 #
 # This config moves several variables at once, and a header claiming one would be false. It reads a
 # corpus rebuilt from source rather than overlaid onto v0.5.0, so every row in it is redrawn. What
@@ -32,22 +33,34 @@
 #    `tests/mailwoman_train/data/test_loader_split_parity.py` pins the seeded row sequence and is
 #    re-pinned against this corpus rather than adjusted until it passes.
 #
-# 3. Five locales the corpus had never read, each a national address register with one countrywide
-#    CSV already on disk and no reader pointed at it:
+# 3. Five national address registers, each one countrywide CSV already on disk with no reader
+#    pointed at it. Rows emitted, and the supply each was drawn from, measured 2026-09-22:
 #
-#      synth-pt  800,000 rows drawn from 5,667,574   Portugal
-#      synth-ch  800,000 rows drawn from 2,759,181   Switzerland
-#      synth-hr  800,000 rows drawn from 1,679,500   Croatia
-#      synth-sk  200,000 rows drawn from   219,728   Slovakia
+#      synth-pt  800,000 rows drawn from 5,911,139   Portugal (5,667,574 reached the reservoir)
+#      synth-ch  500,000 rows drawn from 2,759,181   Switzerland
+#      synth-hr  300,000 rows drawn from 1,680,503   Croatia
+#      synth-sk  150,000 rows drawn from   219,728   Slovakia
 #      synth-lu  150,000 rows drawn from   164,415   Luxembourg
+#
+#    Four of the five countries were already in the corpus, and at a tenth of this volume. The
+#    cached census of `v0.31.0-region-code-and-unit`, taken 2026-09-18, reads PT 165,946 rows of
+#    which 164,021 carry a street, CH 162,436 / 159,009, HR 162,544 / 158,963 and SK 160,188 /
+#    154,828. Of each of those, exactly 150,000 come from one file:
+#    `part-overture-multilocale-3order-train.parquet` draws 150,000 rows apiece for PT, CH, HR, SK,
+#    IT, ES and ten more, all under the source id `overture`. Luxembourg is the one of the five that
+#    held no row at all.
+#
+#    So what these five add is a national register, in each country's native order, under its own
+#    source id — five times PT's previous volume, three times CH's, twice HR's and SK's — rather
+#    than a first reading of four of the countries.
 #
 #    Each at weight 6.0, which is what `synth-gb` and `synth-german` carry, because they are the same
 #    kind of source. The weight is per draw rather than per row, so Luxembourg at 150,000 rows is
-#    presented more often per row it holds than Portugal at 800,000. For a locale the model has never
-#    seen, that is the intended reading rather than an accident.
+#    presented more often per row it holds than Portugal at 800,000. For the one locale the model has
+#    never seen, that is the intended reading rather than an accident.
 #
-#    `country_weights` gains LU. It already admitted PT, CH, HR and SK at 1.0 while the corpus held
-#    no row for any of them, which is the gap #2347's funnel exists to make visible.
+#    `country_weights` gains LU, which it had never admitted. It admitted PT, CH, HR and SK at 1.0
+#    already, and those four were drawing rows.
 #
 #    Three countries with an extract on disk are deliberately absent, each recorded at its
 #    `COUNTRY_SOURCES` call site. Saudi Arabia is Arabic script and this repository ships no Arabic
@@ -376,9 +389,10 @@ data:
     - name: osm-south-asia-formats
       min_draws: 1000
       source: osm
-    # The five locales read for the first time in this corpus. 1,000 is a requirement rather than a
-    # prediction: below it a locale has not been taught at all, and a run that cannot reach one
-    # stops instead of training on a corpus that silently omits it.
+    # The five national registers. 1,000 is a requirement rather than a prediction: below it a
+    # register has not been taught at all, and a run that cannot reach one stops instead of training
+    # on a corpus that silently omits it. Each receipt names the register's own source id, so a draw
+    # that reached the country only through `overture` does not satisfy it.
     - name: pt-native-order
       min_draws: 1000
       source: synth-pt
@@ -399,9 +413,10 @@ data:
       min_draws: 1000
       source: synth-lu
       country: LU
-    # Brazil and Mexico were admitted in `country_weights` at weight 1.0 while the corpus held no row
-    # for either. These two receipts are what distinguishes admission from being taught: both draw
-    # from `overture-latam`, so a country filter is required to tell one from the other.
+    # Brazil held no corpus row at all while `country_weights` admitted it at 1.0. Mexico held
+    # 163,489, of which 156,421 come from `part-latam.parquet`, the file whose source id is
+    # `overture-latam` and which carries no Brazilian row. Both receipts therefore name the country
+    # as well as the source: the source alone cannot tell a Brazilian draw from a Mexican one.
     - name: br-overture-rooftops
       min_draws: 1000
       source: overture-latam
