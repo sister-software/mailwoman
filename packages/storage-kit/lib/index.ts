@@ -7,6 +7,7 @@
  */
 
 export { claimFailures, inspectDevice, rootDeviceName, type BlockDevice, type DeviceClaim } from "#device"
+export { enableUnmap, inspectDiscard, type DiscardSupport } from "#discard"
 export { DEFAULT_MOUNT_OPTIONS, renderFstabEntry, spliceFstab, type FstabEntry } from "#fstab"
 export { assertRoot, StorageEffect, type StorageContext, type StorageOperation } from "#operation"
 export { findStorageOperation, storageOperations } from "#registry"

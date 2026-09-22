@@ -44,7 +44,7 @@ export const verifyOperation = defineOperation({
 	inputSchema: volumeSpec.partial({ device: true, serial: true }).strict(),
 	outputSchema: verifyOutput,
 	async run(input, context) {
-		const mountPoint = input.mountPoint
+		const mountPoint = input["mount-point"]
 		const checks: Array<z.infer<typeof check>> = []
 
 		const fstype = await $({ nothrow: true, quiet: true })`findmnt --noheadings --output FSTYPE --target ${mountPoint}`

@@ -45,7 +45,7 @@ export const statusOperation = defineOperation({
 	inputSchema: volumeSpec.partial({ device: true, serial: true }).strict(),
 	outputSchema: statusOutput,
 	async run(input, context) {
-		const mountPoint = input.mountPoint
+		const mountPoint = input["mount-point"]
 
 		const df = await $({ nothrow: true, quiet: true })`df --block-size=1G --output=size,used,avail ${mountPoint}`
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `df` for one mount point is a header and one row.

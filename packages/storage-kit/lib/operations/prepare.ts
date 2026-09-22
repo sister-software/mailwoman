@@ -20,6 +20,7 @@ import { z } from "zod"
 import { $ } from "zx"
 
 import { claimFailures, inspectDevice, rootDeviceName } from "#device"
+import { enableUnmap, inspectDiscard } from "#discard"
 import { spliceFstab } from "#fstab"
 import { assertRoot, defineOperation, StorageEffect } from "#operation"
 import { volumeSpec } from "#volume"
@@ -77,12 +78,32 @@ export const prepareOperation = defineOperation({
 		const steps: string[] = []
 
 		if (context.dryRun) {
-			return { device: input.device, partition, uuid: "", mountPoint: input.mountPoint, dryRun: true, steps }
+			return { device: input.device, partition, uuid: "", mountPoint: input["mount-point"], dryRun: true, steps }
 		}
 
 		assertRoot(context, "storage.prepare")
 
 		context.log(`preparing ${input.device} (${device.model} ${device.size}, serial ${device.serial})`)
+
+		// TRIM before mkfs, not after.
+		// A drive arriving full of another filesystem has no free erase blocks, and the
+		// resulting read-modify-write collapse looks exactly like failing hardware.
+		const discard = await inspectDiscard(input.device)
+
+		if (!discard.maxBytes && discard.unmapSupported && (await enableUnmap(discard))) {
+			context.log(`  provisioning_mode -> unmap (kernel had discard disabled despite LBPU=1)`)
+			steps.push("provisioning-mode")
+		}
+
+		const refreshed = await inspectDiscard(input.device)
+
+		if (refreshed.maxBytes) {
+			context.log(`  discarding the whole device`)
+			await step(context, "blkdiscard", () => $({ nothrow: true, quiet: true })`blkdiscard -f ${input.device}`)
+			steps.push("discard")
+		} else {
+			context.log(`  WARNING: this device exposes no discard support — expect degraded write throughput`)
+		}
 
 		await step(context, `wipefs ${input.device}`, () => $({ nothrow: true, quiet: true })`wipefs --all ${input.device}`)
 		steps.push("wipefs")
@@ -125,8 +146,8 @@ export const prepareOperation = defineOperation({
 
 		await step(
 			context,
-			`mkdir ${input.mountPoint}`,
-			() => $({ nothrow: true, quiet: true })`mkdir -p ${input.mountPoint}`
+			`mkdir ${input["mount-point"]}`,
+			() => $({ nothrow: true, quiet: true })`mkdir -p ${input["mount-point"]}`
 		)
 
 		const fstab = await readFile("/etc/fstab", "utf8")
@@ -135,7 +156,7 @@ export const prepareOperation = defineOperation({
 
 		await writeFile(
 			"/etc/fstab",
-			spliceFstab(fstab, { uuid, mountPoint: input.mountPoint, options: input.options }),
+			spliceFstab(fstab, { uuid, mountPoint: input["mount-point"], options: input.options }),
 			"utf8"
 		)
 
@@ -143,21 +164,27 @@ export const prepareOperation = defineOperation({
 		context.log(`  fstab updated (previous saved as /etc/fstab.mwops.bak)`)
 
 		await $({ nothrow: true, quiet: true })`systemctl daemon-reload`
-		await step(context, `mount ${input.mountPoint}`, () => $({ nothrow: true, quiet: true })`mount ${input.mountPoint}`)
+
+		await step(
+			context,
+			`mount ${input["mount-point"]}`,
+			() => $({ nothrow: true, quiet: true })`mount ${input["mount-point"]}`
+		)
+
 		steps.push("mount")
 
 		if (input.owner) {
 			await step(
 				context,
 				`chown ${input.owner}`,
-				() => $({ nothrow: true, quiet: true })`chown ${input.owner}:${input.owner} ${input.mountPoint}`
+				() => $({ nothrow: true, quiet: true })`chown ${input.owner}:${input.owner} ${input["mount-point"]}`
 			)
 
 			steps.push("chown")
 		}
 
 		for (const subtree of input.uncompressed) {
-			const path = `${input.mountPoint}/${subtree}`
+			const path = `${input["mount-point"]}/${subtree}`
 
 			await $({ nothrow: true, quiet: true })`mkdir -p ${path}`
 
@@ -177,7 +204,7 @@ export const prepareOperation = defineOperation({
 		await $({ nothrow: true, quiet: true })`systemctl enable --now fstrim.timer`
 		steps.push("fstrim-timer")
 
-		return { device: input.device, partition, uuid, mountPoint: input.mountPoint, dryRun: false, steps }
+		return { device: input.device, partition, uuid, mountPoint: input["mount-point"], dryRun: false, steps }
 	},
 	formatOutput(output) {
 		if (output.dryRun) return `dry run — ${output.device} passes every guard, nothing written`

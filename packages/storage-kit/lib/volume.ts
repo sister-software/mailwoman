@@ -21,6 +21,7 @@
 import { z } from "zod"
 
 import { DEFAULT_MOUNT_OPTIONS } from "#fstab"
+import { commaList } from "#inputs"
 
 /**
  * Which disk, mounted where, with which subtrees opting out of compression.
@@ -33,15 +34,11 @@ export const volumeSpec = z.object({
 	transport: z.string().default("usb").describe("The transport the device must report."),
 	model: z.string().optional().describe("A substring the device model must contain."),
 	label: z.string().default("mw").describe("The btrfs filesystem label."),
-	mountPoint: z.string().default("/mnt/mw").describe("Where the volume mounts."),
-	options: z
-		.array(z.string())
-		.default([...DEFAULT_MOUNT_OPTIONS])
-		.describe("Mount options written to /etc/fstab."),
-	uncompressed: z
-		.array(z.string())
-		.default(["db"])
-		.describe("Subtrees, relative to the mount point, that opt out of compression because they hold SQLite."),
+	"mount-point": z.string().default("/mnt/mw").describe("Where the volume mounts."),
+	options: commaList(DEFAULT_MOUNT_OPTIONS).describe("Mount options written to /etc/fstab."),
+	uncompressed: commaList(["db"]).describe(
+		"Subtrees, relative to the mount point, that opt out of compression because they hold SQLite."
+	),
 	owner: z.string().optional().describe("The user that should own the mount point. Defaults to the sudo invoker."),
 })
 

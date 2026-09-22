@@ -56,9 +56,9 @@ export const planOperation = defineOperation({
 			`sgdisk --zap-all ${input.device}`,
 			`sgdisk --new=1:0:0 --typecode=1:8300 --change-name=1:${input.label} ${input.device}`,
 			`mkfs.btrfs --label ${input.label} --metadata dup ${partition}`,
-			`mount ${partition} at ${input.mountPoint}`,
-			`fstab: ${renderFstabEntry({ uuid: "<new>", mountPoint: input.mountPoint, options: input.options })}`,
-			...input.uncompressed.map((subtree) => `btrfs property set ${input.mountPoint}/${subtree} compression none`),
+			`mount ${partition} at ${input["mount-point"]}`,
+			`fstab: ${renderFstabEntry({ uuid: "<new>", mountPoint: input["mount-point"], options: input.options })}`,
+			...input.uncompressed.map((subtree) => `btrfs property set ${input["mount-point"]}/${subtree} compression none`),
 			"systemctl enable --now fstrim.timer",
 		]
 
