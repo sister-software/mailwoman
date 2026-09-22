@@ -3,16 +3,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The joint sweep: the dash joints `CommentDashJoint` reports, answered in place.
+ * @file Rewrites dash joints reported by `CommentDashJoint` directly in comments.
  *
- *   `comments:sweep` converts a joint by rewriting the sentence and handing the paragraph back to
- *   `mailwoman/comment-reflow` to re-break. That leaves out every comment the rule will not touch, and a legal
- *   header is one of them: joining its paragraphs produces a single 700-column line nothing will ever break again.
- *
- *   This pass uses the Vale rule's own token, so what it leaves behind is exactly what the rule reports. The edit
- *   is local. The dash and the space holding it become a full stop, or a comma where the right half glosses the left
- *   rather than standing on its own, and the author's line structure is untouched. Run `yarn fix:oxlint` afterwards
- *   so the rule can re-break the paragraphs it does own.
+ *   This command edits only the local dash join and keeps existing line layout.
+ *   It changes the dash into a period or comma based on the right-hand clause.
  *
  *   Usage: `yarn comments:joints <file> [file …]`.
  */
@@ -26,22 +20,20 @@ import { runCLICommand } from "@mailwoman/core/scripting/command"
 import ts from "typescript"
 
 /**
- * The finite verbs the rule's token recognizes.
- *
- * It is a closed list rather than a part-of-speech test, and `CommentDashJoint.yml` carries the same one.
- * A verb added to one belongs in the other, or the rule reports a joint this script cannot answer.
+ * Finite verbs used by the rule token.
+ * Keep this list in sync with `CommentDashJoint.yml`.
  */
 const VERB =
 	"(?:is|are|was|were|has|have|had|does|do|did|will|would|can|could|should|must|makes|leaves|reads|names|holds|keeps|gives|takes|means|stays|comes|goes|sits|carries|returns|fires|fails|needs|wants|uses|writes|reports|answers|drops|adds|counts|costs|pays|prefers|refuses|resolves|produces|reaches|wins)"
 
 /**
- * The determiners a clause behind the dash can open with.
+ * Words that may open the right side of a dash clause.
  */
 const OPENER =
 	"(?:the|a|an|it|this|that|they|we|there|each|every|its|their|these|those|both|neither|either|one|no|nothing)"
 
 /**
- * The rule's token, split at the dash so each half can be tested against one side of a candidate.
+ * Rule token split into left and right checks around the dash.
  */
 const LEFT = new RegExp(`\\b${VERB}\\b[^—–\\n.!?;:()\\[\\]]{0,90}\\s$`, "i")
 const RIGHT = new RegExp(`^${OPENER}\\s+(?:[^\\s—–,.!?;:]+\\s+){0,6}${VERB}\\b\\s`, "i")
@@ -51,32 +43,18 @@ const VERB_WORD = new RegExp(`^${VERB}[.,;:)\\]"'\`]*$`, "i")
 const FINITE = new RegExp(`\\b${VERB}\\b`, "gi")
 
 /**
- * A clause that cannot open a sentence, but reads correctly once the dash is a comma.
- *
- * `which` opens a relative clause and `and` a coordination, so a full stop in front
- * of either stands a fragment up where the sentence only wanted a comma.
+ * Openers that usually prefer a comma instead of a sentence break.
  */
 const COMMA_OPENERS =
 	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|not|never|with|for|leaving|making|giving|taking)\b/i
 
 /**
- * Words a gloss may run to before it reads as a sentence of its own.
- *
- * "the scale the map units were digitized at" is eight.
- * Past this the right half is long enough to carry its own clause, and a last word
- * that happens to be a verb or a preposition is a coincidence.
+ * Max words allowed for a short gloss-like right clause.
  */
 const GLOSS_CEILING = 14
 
 /**
- * True when the right half names the thing before the dash rather than saying something new about it.
- *
- * "the scale the map units were digitized at" and "the form an override uses" are noun phrases with a
- * relative clause hanging off them, and a full stop in front of either stands a fragment up.
- * The comma is what the sentence wanted.
- *
- * The gloss is short and holds one verb: a longer right half, or one carrying a second clause,
- * is a sentence whose last word merely happens to be a verb or a stranded preposition.
+ * True when the right side is a short gloss of the left side.
  */
 function glosses(words: readonly string[]): boolean {
 	const last = words.at(-1) ?? ""
@@ -93,30 +71,28 @@ function glosses(words: readonly string[]): boolean {
 const SENTENCE_BOUNDARY = /(?<=[.!?])\s+(?=[A-Z`"(])/g
 
 /**
- * A word that starts a sentence in upper case.
- * Code names keep the spelling the thing they name has.
+ * True when the first word can be capitalized like normal prose.
  */
 const capitalizable = (word: string) =>
 	/^[a-z]/.test(word) && !/^[`[(]/.test(word) && !/[._/]/.test(word) && !/[a-z][A-Z]/.test(word)
 
 interface Joint {
 	/**
-	 * Position of the dash within the text it was found in.
+	 * Dash position in the scanned sentence.
 	 */
 	index: number
 	/**
-	 * What the dash becomes.
-	 * Empty when the left half already closes with a full stop.
+	 * Replacement punctuation; empty if already sentence-closed.
 	 */
 	punct: string
 	/**
-	 * Whether the right half opens a sentence of its own.
+	 * Whether to capitalize the right side.
 	 */
 	capitalize: boolean
 }
 
 /**
- * Every dash in a sentence the rule's token reads as a joint, with the punctuation it should carry instead.
+ * Finds dash joints in one sentence and the punctuation to use.
  */
 function jointsIn(sentence: string): Joint[] {
 	const found: Joint[] = []
@@ -131,7 +107,7 @@ function jointsIn(sentence: string): Joint[] {
 
 		if (!LEFT.test(sentence.slice(0, i)) || !RIGHT.test(after)) continue
 
-		// A dash inside a code span is punctuation in something else's language.
+		// Skip dashes inside inline code spans.
 		if ((before.match(/`/g) ?? []).length % 2 === 1) continue
 
 		let depth = 0
@@ -144,15 +120,15 @@ function jointsIn(sentence: string): Joint[] {
 			}
 		}
 
-		// A dash inside a bracket belongs to the aside, and a full stop there closes a sentence the bracket has not.
+		// Skip dashes inside unmatched brackets.
 		if (depth > 0) continue
 
-		// A right half that closes a bracket it did not open is the tail of one.
+		// Skip tails that start by closing a bracket.
 		if (/^[^([]*[)\]]/.test(after)) continue
 
 		if (/[,;:([]$/.test(before)) continue
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One sentence's right half, already in memory.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Small in-memory sentence slice.
 		const words = after.replace(/[.!?]+$/, "").split(/\s+/)
 		const comma = COMMA_OPENERS.test(after) || glosses(words)
 		const closed = /[.!?][)"'\]`]*$/.test(before)
@@ -164,7 +140,7 @@ function jointsIn(sentence: string): Joint[] {
 }
 
 /**
- * A joint, keyed by which dash of the whole comment it sits on.
+ * Joint edit keyed by dash order in the full comment.
  */
 interface Edit {
 	dash: number
@@ -173,10 +149,10 @@ interface Edit {
 }
 
 /**
- * Scan one paragraph, already joined to a single line, and key its joints to the comment's dash order.
+ * Scans one normalized paragraph and records joint edits by dash index.
  */
 function scanParagraph(text: string, base: number, out: Edit[]): void {
-	const cuts: [number, string][] = []
+	const commentDivisions: [number, string][] = []
 	let last = 0
 
 	SENTENCE_BOUNDARY.lastIndex = 0
@@ -184,13 +160,13 @@ function scanParagraph(text: string, base: number, out: Edit[]): void {
 	let match: RegExpExecArray | null
 
 	while ((match = SENTENCE_BOUNDARY.exec(text))) {
-		cuts.push([last, text.slice(last, match.index)])
+		commentDivisions.push([last, text.slice(last, match.index)])
 		last = match.index + match[0].length
 	}
 
-	cuts.push([last, text.slice(last)])
+	commentDivisions.push([last, text.slice(last)])
 
-	for (const [offset, sentence] of cuts) {
+	for (const [offset, sentence] of commentDivisions) {
 		for (const joint of jointsIn(sentence)) {
 			const at = offset + joint.index
 			const dashes = (text.slice(0, at).match(/[—–]/g) ?? []).length
@@ -201,10 +177,7 @@ function scanParagraph(text: string, base: number, out: Edit[]): void {
 }
 
 /**
- * A line that carries its own layout, in `mailwoman/comment-reflow`'s own terms.
- *
- * The rule's test is copied here rather than approximated, so the paragraphs this
- * script reads are the paragraphs that rule sees.
+ * Lines that keep their own layout and should break paragraph flow.
  */
 const STRUCTURAL_LINE: readonly RegExp[] = [
 	/^\s*https?:\/\/\S+\s*$/i,
@@ -222,11 +195,9 @@ const LIST_ITEM = /^(\s{0,3}(?:[-+*]|\d+[.)])\s+)(.*)$/
 const dashesIn = (line: string) => (line.match(/[—–]/g) ?? []).length
 
 /**
- * Group a comment's logical lines into the paragraphs a reader sees, and scan each one.
+ * Groups comment lines into reader-visible paragraphs, then scans them.
  *
- * A fenced block is passed over whole, because its dashes belong to whatever language it holds.
- * Every line is counted whether it is scanned or not, so the dash index stays
- * in step with the raw text the edits land on.
+ * Fenced blocks are skipped but still counted for dash indexing.
  */
 function scanLines(lines: readonly string[]): Edit[] {
 	const out: Edit[] = []
@@ -270,7 +241,7 @@ function scanLines(lines: readonly string[]): Edit[] {
 
 		const structural = !line.trim() || STRUCTURAL_LINE.some((pattern) => pattern.test(line))
 
-		// An indented line under an open paragraph continues it, which is where a file header keeps its argument.
+		// Keep indented continuation lines with the active paragraph.
 		if (structural && !(paragraph.length && /^\s+\S/.test(line))) {
 			flush()
 			count += dashesIn(line)
@@ -292,7 +263,7 @@ function scanLines(lines: readonly string[]): Edit[] {
 }
 
 /**
- * Open the right half in upper case, unless its first word is code or already capitalized.
+ * Capitalizes the first word at index when allowed.
  */
 function capitalizeAt(text: string, index: number, capitalize: boolean): string {
 	if (!capitalize) return text
@@ -302,7 +273,7 @@ function capitalizeAt(text: string, index: number, capitalize: boolean): string 
 
 	if (offset === -1) return text
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- The first word of a right half, already in memory.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- First word in a tiny in-memory slice.
 	const word = rest.slice(offset).split(/\s/)[0] ?? ""
 
 	if (!capitalizable(word)) return text
@@ -313,12 +284,7 @@ function capitalizeAt(text: string, index: number, capitalize: boolean): string 
 }
 
 /**
- * Replace one dash, and the space holding it, with the punctuation the sentence wanted.
- *
- * The comment's line structure is the author's, so the edit stays inside the dash's own line:
- * a dash between two words closes up to one space, a dash at the end of a line leaves the next line
- * where it is, and a dash at the head of a continuation line puts its punctuation back on the line above.
- * Nothing here re-wraps.
+ * Replaces one dash with chosen punctuation while preserving line layout.
  */
 function applyEdit(text: string, at: number, punct: string, capitalize: boolean): string {
 	const lineStart = text.lastIndexOf("\n", at) + 1
@@ -366,8 +332,7 @@ function applyEdit(text: string, at: number, punct: string, capitalize: boolean)
 }
 
 /**
- * The source ranges a string, template or regular expression owns,
- * which hold text this script must not read.
+ * Returns ranges for string/template/regex literals to skip.
  */
 function literalSpans(source: string, fileName: string): [number, number][] {
 	const kind = fileName.endsWith("tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
@@ -398,7 +363,7 @@ const within = (spans: readonly [number, number][], offset: number) =>
 	spans.some(([start, end]) => offset >= start && offset < end)
 
 /**
- * Rewrite one comment, given the logical lines a reader sees and the raw text they came from.
+ * Rewrites one comment using its logical lines and raw source text.
  */
 function rewrite(raw: string, lines: readonly string[]): string {
 	const edits = scanLines(lines)
@@ -415,7 +380,7 @@ function rewrite(raw: string, lines: readonly string[]): string {
 
 	let out = raw
 
-	// Last dash first, so an earlier edit never moves a later one's offset.
+	// Apply edits from the end so offsets stay valid.
 	for (const edit of [...edits].toSorted((a, b) => b.dash - a.dash)) {
 		const at = positions[edit.dash]
 
@@ -428,7 +393,7 @@ function rewrite(raw: string, lines: readonly string[]): string {
 }
 
 /**
- * Rewrite every joint in one file's comments.
+ * Rewrites all detected joints in comments for one file.
  */
 export function sweepSource(source: string, fileName: string): string {
 	const spans = literalSpans(source, fileName)
@@ -436,10 +401,10 @@ export function sweepSource(source: string, fileName: string): string {
 	const blocks = source.replaceAll(/^[\t ]*\/\*[\s\S]*?\*\/$/gm, (block: string, offset: number) => {
 		if (within(spans, offset)) return block
 
-		// A shipped banner is copied text rather than this repository's prose.
+		// Skip shipped banner comments.
 		if (block.trimStart().startsWith("/*!")) return block
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One block comment, bounded by its own markers.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Single bounded block comment.
 		const raw = block.split("\n")
 
 		if (raw.length === 1) {
@@ -453,13 +418,13 @@ export function sweepSource(source: string, fileName: string): string {
 		return rewrite(block, [raw[0]!.replace(/^[\t ]*\/\*\*?[\t ]?/, ""), ...lines])
 	})
 
-	// The first pass's rewrites shift offsets, so the spans are taken again from the text this pass sees.
+	// Recompute literal spans after block edits shift offsets.
 	const shifted = literalSpans(blocks, fileName)
 
 	return blocks.replaceAll(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group: string, offset: number) => {
 		if (within(shifted, offset)) return group
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One run of `//` lines, bounded by the code around it.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Single contiguous `//` group.
 		const raw = group.replace(/\n$/, "").split("\n")
 		const lines = raw.map((line) => /^[\t ]*\/\/[\t ]?(.*)$/.exec(line)?.[1])
 
@@ -467,7 +432,7 @@ export function sweepSource(source: string, fileName: string): string {
 
 		const body = lines as string[]
 
-		// A directive run belongs to the linter rather than the author.
+		// Skip directive-style comment runs.
 		if (body.some((line) => /^\s*(?:\/|#region|#endregion)/.test(line))) return group
 
 		return rewrite(group.replace(/\n$/, ""), body) + (group.endsWith("\n") ? "\n" : "")

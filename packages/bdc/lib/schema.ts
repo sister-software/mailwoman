@@ -3,37 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for bdc.db — the FCC Broadband Data Collection availability read-side layer (2a
- *   decisions 4, 8). `bdc_availability` holds, in the default (non-`includeLocationIDs`) build mode, one
- *   row per distinct (geoid, provider_id, technology_code, max_advertised_download_speed,
- *   max_advertised_upload_speed, low_latency, business_residential_code) tuple parsed from the FCC's
- *   per-provider CSV (see `sdk/parsing.ts`) — not one row per (block, provider, technology) triple: when
- *   two Broadband Serviceable Locations in the same block file different speeds/flags for the same
- *   provider/technology, both rows survive `build-bdc.ts`'s materialize-time collapse (see that file's
- *   docstring. accepted FCC filing behavior rather than a bug). `bdc_provider` is a small dictionary
- *   keyed on `provider_id`, populated by a later registry-join task — decision 8 keeps FRN/brand/
- *   holding-company resolution out of 2a's scope. The DB also embeds the layer-interface tables from
- *   `@mailwoman/core/layers` (manifest tier `shipped`, license `public-domain` — FCC BDC block-level
- *   availability data, at the granularity this layer ships, is US government public-domain data rather than
- *   redistribution-restricted. the CostQuest Fabric boundary this workspace never crosses is the
- *   licensing edge, see `bdc/readme.md` — spine `h3` res 9 for availability rows, res 6 for coverage
- *   cells, matching poi.db's convention).
+ * Typed schema for `bdc.db`, the FCC BDC availability read-side layer.
  *
- *   Clustering decision (implementer's pick — the brief allows either): a plain rowid table rather than
- *   `without rowid`, and not a composite `(h3_cell, provider_id, technology_code)` primary key.
- *   `without rowid` warrants its keep on small, PK-probed rows — poi.db's clustered key and
- *   `layer_coverage`'s per-cell probe both read by their exact PK and nothing else, so folding the row
- *   into the B-tree removes a second lookup. `bdc_availability` doesn't fit that shape: it's a wider,
- *   10-column row read two different ways — an h3-range scan ("everything near this cell", the
- *   coverage/overlay path) and a geoid point lookup (the public spatial join key tiger and callers
- *   actually probe by) — never a single composite-key point probe. Clustering the full row under a
- *   composite PK would also force the bulk loader to sort-then-insert in that exact key order across
- *   millions of rows spread over per-provider, per-state source files, for a locality win a plain
- *   index already delivers without constraining ingest order. So: a regular rowid table, an index on
- *   `h3_cell` bundled into {@link createBDCAvailabilityTable} (every reader depends on it, same as the
- *   table itself), and {@link createBDCGeoidIndex} as a separate, callable-after-bulk-load secondary
- *   index for the geoid path — the index-after-load discipline used elsewhere in this repo (see
- *   poi-schema.ts's name_key/brand indexes).
+ * In default mode (without `includeLocationIDs`), `bdc_availability` stores one row per distinct
+ * `(geoid, provider_id, technology_code, speeds, low_latency, business_residential_code)` tuple parsed
+ * from FCC provider CSVs. This is intentionally not collapsed to one row per `(block, provider, technology)`
+ * when BSL-level speeds/flags differ.
+ *
+ * `bdc_provider` is a small dictionary keyed by `provider_id`, populated later by the registry join.
+ * The DB also includes shared layer-interface tables from `@mailwoman/core/layers`.
+ *
+ * Storage/indexing choice: `bdc_availability` is a regular rowid table (not `without rowid` and no
+ * composite PK). Access patterns are mixed (h3 range scans + geoid lookups), so a plain table with
+ * indexes fits better than clustered composite-key storage.
+ *
+ * Index plan:
+ * - `h3_cell` index is created with {@link createBDCAvailabilityTable}.
+ * - `geoid` index is created separately via {@link createBDCGeoidIndex} after bulk load.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"

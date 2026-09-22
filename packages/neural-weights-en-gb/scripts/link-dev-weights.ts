@@ -90,32 +90,17 @@ const overlay = await materializeDevOverlay({
 	streetMorphologyFST: true,
 })
 
-// Build postcode-gb.bin only when the model card declares a compatible anchor channel.
+// Build `postcode-gb.bin` only when the model card declares `requires.anchor.span_mode === "shaped"`.
 //
-// The GB anchor binary is the one artifact whose correctness depends on which model is
-// loaded, so it is built only when the card says the model can use it.
+// This binary helps only models trained with shaped (letter-containing) GB anchor lookups.
+// For older models it is a measured regression, and stale bins from old checkouts
+// can silently re-enable that regression if left in place.
 //
-// The history in one paragraph.
-// This script used to build the bin unconditionally. #1467 removed it, because the encoder's GB
-// anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`) had taken no gradient.
-// Every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`, 67,708 keys,
-// zero letter-containing, US/DE/FR only.
-// Feeding slot 4 on a model that never trained it cost 24 exact postcodes on the
-// 120-row gb-golden board (294/318 anchor-on vs 318/318 anchor-off).
-// Then a bare `existsSync` skip turned out to be worse than never building: a bin left by
-// an older checkout is found package-dir-relative and silently re-enables the regression
-// with no warning, because a present artifact is exactly what the loader expects.
+// Policy:
+// - `span_mode: "shaped"` -> build the binary
+// - otherwise -> remove any existing binary
 //
-// The check that resolves both states is the card's `requires.anchor.span_mode`.
-// `shaped` is declared only by a model trained against a lookup with letter-containing keys
-// (`pilot-anchor-lookup-v2` and after), and that is precisely the model for which the bin helps.
-// So: declared `shaped` → build it.
-// Anything else → remove any stale copy, loudly.
-// No flag, no lockstep constant to forget.
-// The same card the loader reads decides.
-//
-// Receipts either way: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (the anchor-off mitigation)
-// and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that warrants it back).
+// The model card is used by both this script and the loader.
 
 /**
  * Where the GB anchor binary lives when the card warrants it.

@@ -33,6 +33,13 @@ export interface Diagnostic {
 	message: string
 	file?: string
 	line?: number
+	/**
+	 * The sites behind the message, one per line, for a check that counts rather than points.
+	 *
+	 * A count on its own tells a reader that something grew and leaves them to find it.
+	 * These print under the message, indented, and ride along in `--json` as they are.
+	 */
+	details?: readonly string[]
 }
 
 export interface RepoContext {

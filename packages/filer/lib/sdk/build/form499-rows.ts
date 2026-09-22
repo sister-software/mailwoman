@@ -22,27 +22,13 @@ import type { Form499Lifecycle } from "#sdk/form499/notes"
  * The cessation date to close a relationship window at, or `null` when closing
  * it would assert something incoherent.
  *
- * **Two clocks, and they disagree on 40% of ceased filers.** Form 499 is an annual filing,
- * so a carrier that ceased operating on 2013-09-08 still files the form on 2014-04-01.
- * `lastFiledAt` is an administrative date; `ceasedAt` is an operational one,
- * and nothing makes the second later than the first.
+ * Form 499 is annual, so `lastFiledAt` (administrative) and `ceasedAt` (operational) can be out of order.
+ * If `ceasedAt <= validFrom`, closing the window would create an empty/inverted interval
+ * (`valid_from <= t < valid_to`), making the filer disappear from `asOf` reads.
  *
- * Measured on the 2025-12-07 vintage: of 9,706 dated cessations, 5,714 postdate the
- * last filing, **3,916 predate it**, and 76 fall on the same day.
- *
- * Writing `valid_to = ceasedAt` unconditionally against `valid_from = lastFiledAt`
- * would produce an inverted or empty window on those 3,992, and the half-open predicate
- * `valid_from <= t < valid_to` matches nothing across one.
- * Every affected filer would vanish from every `asOf` read, silently, with no error
- * and no missing row to notice.
- *
- * That is strictly worse than leaving the window open, which is at least visibly incomplete.
- *
- * So: close the window only when the two dates order coherently, and count the
- * abstentions ({@link BuildFilerResult.cessationWindowAbstained}).
- * The date itself is never lost.
- *
- * It is staged as a `ceased_at` attribute on every ceased filer regardless.
+ * So we only close when `ceasedAt > validFrom`; otherwise we abstain and track it
+ * in {@link BuildFilerResult.cessationWindowAbstained}.
+ * The cessation date is still recorded as `ceased_at`.
  */
 export function closeableCessationDate(ceasedAt: string | undefined, validFrom: string): string | null {
 	if (!ceasedAt) return null

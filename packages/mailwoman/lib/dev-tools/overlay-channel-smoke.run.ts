@@ -3,23 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Do a weights package's declared channels actually feed on real input? (ROAD_TO_V9 §1 A2/A4.)
+ *   Smoke-test that declared channels feed real input (ROAD_TO_V9 §1 A2/A4).
  *
- *   The failure this exists to exclude is not "the channel is missing" — the loader already warns
- *   about that. It is the quieter one: a channel that resolves, loads a real lexicon, and then paints
- *   nothing on every row. Two live examples in one week — the en-gb overlay declaring an evidence
- *   bundle it shipped no lexicons for (#1511), and the shaped anchor keyer finding no span in the
- *   lowercase register (#1512). Both loaded clean.
+ *   This catches channels that resolve and load, but emit only zeros.
+ *   The script loads weights via `loadFromWeights`, rebuilds soft features for one input,
+ *   and reports per-channel non-zero coverage.
  *
- *   So: load the package exactly as production does (`loadFromWeights`), rebuild the soft-feature
- *   channels for one input, and report per channel how many pieces carry a non-zero clue. Zero-with-a-
- *   lexicon-loaded is the answer that matters, and it is called out in place.
+ *   `--cache-root` checks a package-shaped candidate:
+ *   `<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`.
+ *   If omitted, it checks the installed workspace package.
  *
- *   `--cache-root` grades a candidate laid out as a package-shaped weights dir
- *   (`<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`) — the same posture
- *   `score-anchor-v2-boards.run.ts` uses. Omit it to grade the installed workspace package.
- *
- *   Usage: node packages/mailwoman/lib/dev-tools/overlay-channel-smoke.run.ts --locale en-gb [--cache-root <dir>]
+ *   Usage:
+ *   node packages/mailwoman/lib/dev-tools/overlay-channel-smoke.run.ts --locale en-gb [--cache-root <dir>]
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

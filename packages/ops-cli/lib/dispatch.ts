@@ -360,6 +360,10 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 				io.stdout(
 					`    ${diagnostic.severity}: ${diagnostic.message}${diagnostic.file ? ` (${diagnostic.file}${diagnostic.line ? `:${diagnostic.line}` : ""})` : ""}\n`
 				)
+
+				for (const detail of diagnostic.details ?? []) {
+					io.stdout(`        ${detail}\n`)
+				}
 			}
 		}
 	}
