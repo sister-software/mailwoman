@@ -26,7 +26,7 @@ import { join, type PathBuilderLike } from "path-ts"
 import { openParquetRowStream } from "#parquet/streams"
 import { SourceRegister } from "#registers"
 import { jsonlToParquet } from "#tools/jsonl-to-parquet"
-import { surfaceForSource } from "#tools/migrate-recipe-output"
+import { surfaceForSource } from "#tools/migrate/recipe-output"
 
 /**
  * The register each overlay source's rows came from.

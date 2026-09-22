@@ -258,14 +258,14 @@
 			"default": "./out/tools/golden/relabel-street/index.js"
 		},
 		"./tools/migrate-overlay-parquet": {
-			"types": "./out/tools/migrate-overlay-parquet.d.ts",
-			"node": "./lib/tools/migrate-overlay-parquet.ts",
-			"default": "./out/tools/migrate-overlay-parquet.js"
+			"types": "./out/tools/migrate/overlay-parquet.d.ts",
+			"node": "./lib/tools/migrate/overlay-parquet.ts",
+			"default": "./out/tools/migrate/overlay-parquet.js"
 		},
 		"./tools/migrate-recipe-output": {
-			"types": "./out/tools/migrate-recipe-output.d.ts",
-			"node": "./lib/tools/migrate-recipe-output.ts",
-			"default": "./out/tools/migrate-recipe-output.js"
+			"types": "./out/tools/migrate/recipe-output.d.ts",
+			"node": "./lib/tools/migrate/recipe-output.ts",
+			"default": "./out/tools/migrate/recipe-output.js"
 		},
 		"./tools/overture-subvenue": {
 			"types": "./out/tools/overture-subvenue.d.ts",
