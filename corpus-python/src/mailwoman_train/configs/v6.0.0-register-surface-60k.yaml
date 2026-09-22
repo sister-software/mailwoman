@@ -1,0 +1,531 @@
+# v6.0.0 — the corpus every row of which says where it came from, and five locales it had never read
+#
+# This config moves several variables at once, and a header claiming one would be false. It reads a
+# corpus rebuilt from source rather than overlaid onto v0.5.0, so every row in it is redrawn. What
+# follows is each difference from v5.9.0-locality-shape-60k.yaml and what it costs to read.
+#
+# 1. `data.corpus_dir` moves to v0.6.0-register-surface, which is the v0.5.0 base rebuilt from the
+#    same 11 adapters and the same inputs. Every row carries three columns v0.32.0 had not:
+#
+#      recipe    which recipe produced the surface — the old `synth_method` values, renamed
+#      register  which publication the underlying record came from, or null when the row names none
+#      surface   attested | composed | invented
+#
+#    `synth_method` answered two questions with one value. `de/recipes/locale.ts` wrote "german" on a
+#    row built from a German OpenAddresses register and `recipes/intersection.ts` wrote
+#    "intersection" on a row assembled from templates, and `locale_supply_census` read both as
+#    synthesized. It reported GB's 800,000 HM Land Registry rows as fabricated, and a reader
+#    concluded GB had little real supply.
+#
+#    Measured over the 33 overlays, 5,232,708 rows: attested 3,180,624, composed 1,862,561, invented
+#    189,523. The 189,523 rows carrying no register are exactly the 189,523 reading `invented`.
+#
+# 2. The rows are shuffled within a 250,000-row window before they are written (#2347). A source's
+#    epoch draw reads one row-group, a row-group holds 50,000 rows, and a source's draw was measured
+#    at 17,269 — 35% of one group. Rows reached parquet in adapter order. Adapter order is country
+#    order within a source: `wof-admin/part-0000.parquet` row-group 0 held JP, CN, FR and US, while
+#    row-groups 10 and 19 held 50,000 US rows each. 204 of that source's 800 row-groups held exactly
+#    one country. The draw now samples the source instead of a corner of it.
+#
+#    This is the change that makes every row of this corpus a different row from v0.32.0's, and it
+#    is why no arm trained on this corpus is a controlled comparison against one trained on that.
+#    `tests/mailwoman_train/data/test_loader_split_parity.py` pins the seeded row sequence and is
+#    re-pinned against this corpus rather than adjusted until it passes.
+#
+# 3. Five locales the corpus had never read, each a national address register with one countrywide
+#    CSV already on disk and no reader pointed at it:
+#
+#      synth-pt  800,000 rows drawn from 5,667,574   Portugal
+#      synth-ch  800,000 rows drawn from 2,759,181   Switzerland
+#      synth-hr  800,000 rows drawn from 1,679,500   Croatia
+#      synth-sk  200,000 rows drawn from   219,728   Slovakia
+#      synth-lu  150,000 rows drawn from   164,415   Luxembourg
+#
+#    Each at weight 6.0, which is what `synth-gb` and `synth-german` carry, because they are the same
+#    kind of source. The weight is per draw rather than per row, so Luxembourg at 150,000 rows is
+#    presented more often per row it holds than Portugal at 800,000. For a locale the model has never
+#    seen, that is the intended reading rather than an accident.
+#
+#    `country_weights` gains LU. It already admitted PT, CH, HR and SK at 1.0 while the corpus held
+#    no row for any of them, which is the gap #2347's funnel exists to make visible.
+#
+#    Three countries with an extract on disk are deliberately absent, each recorded at its
+#    `COUNTRY_SOURCES` call site. Saudi Arabia is Arabic script and this repository ships no Arabic
+#    graph. Iceland carries a locality on 19 of its 125,681 rows. Estonia is blocked by
+#    `cleanCityNoise`, not by supply: its CITY is two admin levels joined by a comma
+#    (`Rae vald,Rae küla`) and rule 1 drops any city containing one, which is 355,767 of its first
+#    400,000 rows. That rule was derived from an audit of ES, IT and NL and Estonia was never
+#    measured against it.
+#
+# 4. `data.required_validation_coverage` is declared for the first time. `ValidationCoverageConfig`
+#    and the audit that raises on a shortfall were added earlier in this arc, and no config carried
+#    the key, so iron rule 6's precondition — 1,000 validation rows and 1,000 street rows per
+#    locale — was stated in prose and checked by nothing.
+#
+#    GB declares both floors, and that is the test of whether the holdout added to
+#    `defaultHoldouts()` reached its rows. The last census read 0 validation rows and 0 validation
+#    street rows for GB. A holdout takes effect only at a base rebuild, and this is that rebuild.
+#
+#    FR and DE declare a row floor and no street floor. Both carry validation rows and neither
+#    carries a validation street row — FR 12,898 rows and 0 street, DE 33,801 test rows and 0 street.
+#    Closing that needs a holdout change rather than a run that refuses to start, so the floor states
+#    what holds today and the gap stays recorded in CONTRIBUTING_MODEL_WORK.mdx.
+#
+# 5. `data.required_corpus_receipts` gains a 1,000-draw floor for each of the five new locales, so a
+#    run that fails to reach one stops rather than training. 1,000 is a requirement rather than a
+#    prediction: below it a locale has not been taught at all. `audit_epoch_mixture` reports the
+#    realized draw beside each floor, and it now also reports every admitted country's draw including
+#    the zeros, so a country at weight 1.0 that draws nothing is distinguishable from one nobody
+#    admitted.
+#
+# Run shape: from scratch. No `train.init_from`, launched with `--resume none`, the same shape
+# v5.7.0, v5.8.0 and v5.9.0 used. A fine-tune cannot introduce a source the base never saw, and this
+# corpus introduces six.
+#
+# Control: none of the arms before it. v5.9.0 read a corpus this one does not extend, so the placebo
+# for this base has to be run against this base. `mwdev_arc`'s `null=` arm is a no-new-data
+# fine-tune off this corpus, and it has not been run.
+#
+# Everything else — every other weight, every rep target, the model and train blocks, the eval
+# block — is v5.9.0 verbatim.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.6.0-register-surface/corpus-v0.6.0-register-surface
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 128
+  country_weights:
+    AD: 1.0
+    AE: 1.0
+    AF: 1.0
+    AG: 1.0
+    AI: 1.0
+    AL: 1.0
+    AO: 1.0
+    AR: 1.0
+    AS: 1.0
+    AT: 1.0
+    AU: 1.0
+    AW: 1.0
+    BA: 1.0
+    BB: 1.0
+    BD: 1.0
+    BE: 1.0
+    BF: 1.0
+    BI: 1.0
+    BJ: 1.0
+    BM: 1.0
+    BN: 1.0
+    BQ: 1.0
+    BR: 1.0
+    BS: 1.0
+    BT: 1.0
+    BW: 1.0
+    BY: 1.0
+    BZ: 1.0
+    CA: 1.0
+    CD: 1.0
+    CF: 1.0
+    CG: 1.0
+    CH: 1.0
+    CK: 1.0
+    CN: 1.0
+    CO: 1.0
+    CR: 1.0
+    CV: 1.0
+    CW: 1.0
+    CY: 1.0
+    CZ: 1.0
+    DE: 1.0
+    DJ: 1.0
+    DK: 1.0
+    DM: 1.0
+    DO: 1.0
+    EG: 1.0
+    ER: 1.0
+    ES: 1.0
+    FI: 1.0
+    FK: 1.0
+    FM: 1.0
+    FO: 1.0
+    FR: 1.0
+    GB: 1.0
+    GD: 1.0
+    GE: 1.0
+    GH: 1.0
+    GM: 1.0
+    GT: 1.0
+    GW: 1.0
+    HK: 1.0
+    HR: 1.0
+    HU: 1.0
+    ID: 1.0
+    IE: 1.0
+    IL: 1.0
+    IM: 1.0
+    IN: 1.0
+    IO: 1.0
+    IS: 1.0
+    IT: 1.0
+    JO: 1.0
+    JP: 1.0
+    KH: 1.0
+    KR: 1.0
+    KW: 1.0
+    KY: 1.0
+    LB: 1.0
+    LU: 1.0
+    MA: 1.0
+    ML: 1.0
+    MN: 1.0
+    MP: 1.0
+    MS: 1.0
+    MU: 1.0
+    MW: 1.0
+    MX: 1.0
+    MY: 1.0
+    NA: 1.0
+    NE: 1.0
+    NG: 1.0
+    NI: 1.0
+    NL: 1.0
+    # Quoted, because YAML 1.1 reads a bare `no` as the boolean false — the key then never matches a
+    # row's `country`, and `synth-no-fragment` (33,203 rows, all no) becomes unselectable.
+    "NO": 1.0
+    NZ: 1.0
+    OM: 1.0
+    PE: 1.0
+    PG: 1.0
+    PH: 1.0
+    PK: 1.0
+    PL: 1.0
+    PM: 1.0
+    PR: 1.0
+    PT: 1.0
+    RU: 1.0
+    RW: 1.0
+    SA: 1.0
+    SB: 1.0
+    SC: 1.0
+    SE: 1.0
+    SG: 1.0
+    SH: 1.0
+    SI: 1.0
+    SK: 1.0
+    SM: 1.0
+    SO: 1.0
+    SR: 1.0
+    ST: 1.0
+    SV: 1.0
+    SX: 1.0
+    TH: 1.0
+    TK: 1.0
+    TM: 1.0
+    TO: 1.0
+    TR: 1.0
+    TT: 1.0
+    TW: 1.0
+    UA: 1.0
+    US: 1.0
+    VE: 1.0
+    VG: 1.0
+    VI: 1.0
+    VN: 1.0
+    VU: 1.0
+    ZA: 1.0
+  source_weights:
+    synth-house-venue: 2.0
+    synth-reviewed-postcode-tail: 0.05
+    overture-latam: 6.0
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-nad: 1.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    # Declined, and the decline is what keeps this arm v5.7.0's twin. Each of these two sources lives
+    # entirely inside a parquet file whose first row belongs to another source, so the loader v5.7.0
+    # ran — which took a file's first row as the whole file's source — never indexed them and drew
+    # zero rows from either. `_index_by_source` now reads every source in a file, which makes them
+    # visible, and `_apply_source_weights` refuses a source the weights never mention. Naming them at
+    # zero reproduces the exposure v5.7.0 had. Measured on the shared v0.30.0-bare-postcode base,
+    # which this corpus overlays unchanged: state-ia-contractors 74,587 rows in part-0672,
+    # usgov-imls-pls 80,402 rows in the same file.
+    state-ia-contractors: 0.0
+    usgov-imls-pls: 0.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 0.0 # SUPERSEDED by -v30
+    synth-unit-v30: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    synth-anchor-absorption: 6.0
+    synth-fr-bare-street: 0.0 # v0.9.4 vintage, SUPERSEDED by -v22
+    synth-fr-bare-street-v22: 12.0
+    synth-si-bare-village: 12.0
+    synth-no-street-led: 0.0
+    synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED by -v21
+    synth-cz-pcfirst-preposition-v21: 12.0
+    synth-nl-postcode: 6.0
+    synth-fragment: 6.0
+    synth-fr-fragment: 12.0
+    synth-no-fragment: 12.0
+    synth-gb: 6.0
+    synth-pt: 6.0
+    synth-ch: 6.0
+    synth-hr: 6.0
+    synth-sk: 6.0
+    synth-lu: 6.0
+    synth-sub-venue: 12.0
+    synth-suffix-boundary: 2.5
+  # Reps per row rather than weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the nine
+  # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 +
+  # 1.0*20460 + 1.0*15976 + 4.0*13740 = 508,735 draws, 6.6% of the run. The big register sources take
+  # one pass each because they carry their diversity in the rows. the four-to-five-thousand-row ones
+  # take eight, which is the exposure `synth-suffix-boundary` already draws at weight 2.5.
+  #
+  # Every line here is carried from v5.7.0 unchanged. `synth-trailing-region-us` demands 24 fewer
+  # draws than it did there because the rebuilt recipe output emitted 15,976 rows against 16,000, and
+  # the 24 dropped rows are the ones the recipe's own label audit refused.
+  source_reps:
+    synth-sg-register: 1.0
+    synth-pk-register: 1.0
+    synth-bd-register: 8.0
+    synth-trailing-region-es-v28: 8.0
+    synth-po-box-military: 8.0
+    osm: 0.5
+    synth-bare-postcode: 1.0
+    synth-trailing-region-us: 1.0
+    synth-trailing-region-ca-bare: 4.0
+  required_corpus_receipts:
+    # A receipt is what turns "the weights name it" into "the sampler drew it": the generations
+    # dropped before v5.5.0 were named nowhere and cost nothing to omit, which is why nothing failed
+    # for five model versions.
+    #
+    # Each floor is counted. A reps target of 1.0 is exactly rows/samples of the run
+    # (`derive_source_weights`), so 15,976 US rows draw about 2,080 per 1,000,000-row epoch and 500
+    # is a floor a real draw clears four times over. The Canadian source at 4.0 draws about 7,156,
+    # and 1,000 clears seven times over. `synth-unit-v30` inherits its predecessor's weight, which
+    # the v5.6.0 audit measured at 9,013 draws per epoch, so 2,000 is the same four-times margin.
+    - name: us-city-state-postcode
+      min_draws: 500
+      source: synth-trailing-region-us
+      country: US
+      component_sequence:
+        - locality
+        - region
+        - postcode
+    - name: ca-region-code-tail
+      min_draws: 1000
+      source: synth-trailing-region-ca-bare
+      country: CA
+    - name: us-secondary-unit-current-generation
+      min_draws: 2000
+      source: synth-unit-v30
+      country: US
+    # Carried forward from v5.6.0 unchanged.
+    - name: bare-postcode-czech
+      min_draws: 250
+      source: synth-bare-postcode
+      country: CZ
+    - name: cz-postcode-first-current-generation
+      min_draws: 1000
+      source: synth-cz-pcfirst-preposition-v21
+      country: CZ
+    - name: fr-bare-street-current-generation
+      min_draws: 1000
+      source: synth-fr-bare-street-v22
+      country: FR
+    - name: ve-locality-postcode-region
+      min_draws: 250
+      source: synth-reviewed-postcode-tail
+      country: VE
+      component_sequence:
+        - locality
+        - postcode
+        - region
+    - name: sg-registers
+      min_draws: 1000
+      source: synth-sg-register
+      country: SG
+    - name: pk-house-line
+      min_draws: 1000
+      source: synth-pk-register
+      country: PK
+    - name: bd-trailing-postcode
+      min_draws: 500
+      source: synth-bd-register
+      country: BD
+    - name: es-trailing-region-local-surfaces
+      min_draws: 500
+      source: synth-trailing-region-es-v28
+      country: ES
+    - name: us-military-po-box
+      min_draws: 500
+      source: synth-po-box-military
+      country: US
+    - name: osm-south-asia-formats
+      min_draws: 1000
+      source: osm
+    # The five locales read for the first time in this corpus. 1,000 is a requirement rather than a
+    # prediction: below it a locale has not been taught at all, and a run that cannot reach one
+    # stops instead of training on a corpus that silently omits it.
+    - name: pt-native-order
+      min_draws: 1000
+      source: synth-pt
+      country: PT
+    - name: ch-native-order
+      min_draws: 1000
+      source: synth-ch
+      country: CH
+    - name: hr-native-order
+      min_draws: 1000
+      source: synth-hr
+      country: HR
+    - name: sk-native-order
+      min_draws: 1000
+      source: synth-sk
+      country: SK
+    - name: lu-native-order
+      min_draws: 1000
+      source: synth-lu
+      country: LU
+  # Held-out coverage floors, iron rule 6's precondition. See the header for why GB and US declare a
+  # street floor and FR and DE do not.
+  required_validation_coverage:
+    - country: GB
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: FR
+      min_rows: 1000
+    - country: DE
+      min_rows: 1000
+    - country: US
+      min_rows: 1000
+      min_street_rows: 1000
+  augment_exclude_sources:
+    - synth-suffix-boundary
+    # A bare postcode has nothing to augment: a directional, a region or a glue token appended to
+    # `119 00` produces a row whose label sequence no longer matches its surface, and the shape this
+    # source exists to teach is the two-token input with nothing else in it.
+    - synth-bare-postcode
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  augment_ordinal_prob: 0.3
+  augment_punct_drop_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v2.json
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+  street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
+  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
+
+model:
+  hidden_size: 384
+  use_span_boundary_head: true
+  use_deploc_head: false
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  use_country_anchor: true
+  country_feature_dim: 2
+  use_street_type_anchor: true
+  street_type_feature_dim: 1
+  use_locality_surface_anchor: true
+  locality_surface_feature_dim: 2
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v600-register-surface-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 60000
+  eval_every_steps: 2000
+  save_every_steps: 5000
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+  gazetteer_curriculum: true
+  evidence_curriculum: true
+  evidence_noise_prob: 0.15
+  fisher_capture: true
+  fisher_capture_last_n_steps: 2000
+  trackio_project: mailwoman
+  trackio_run_name: v600-register-surface-60k-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.3
+  val_jsonl: ""
