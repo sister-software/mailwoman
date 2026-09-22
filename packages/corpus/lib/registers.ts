@@ -124,6 +124,23 @@ export const SourceRegister = {
 	 * The reviewed file names the publisher it was read from.
 	 */
 	ReviewedByHand: "mailwoman-reviewed",
+	/**
+	 * A tuple extract under `$MAILWOMAN_DATA_ROOT/corpus/tuples/` whose upstream is not recorded.
+	 *
+	 * These files were written by extractions that left no invocation behind, and their shapes
+	 * disagree about what produced them: `trailing-region-us-v33-shape-tuples.jsonl` carries
+	 * a postcode with its place and admin1, which is the GeoNames postal export's shape,
+	 * while `trailing-region-ca-v29-tuples.jsonl` carries a locality and region with no postcode,
+	 * which is the Who's On First ancestor-pair shape `trailing-region.ts`'s own docstring describes.
+	 * One recipe reads both.
+	 *
+	 * Naming a publisher here would be inference recorded as a fact on every row that reads one.
+	 * This id says what is known: the rows came from a derived extract in this repository, and
+	 * which publication stands behind it has to be re-established before a rights record can name one.
+	 *
+	 * A recipe run whose tuples carry a recorded upstream passes that upstream instead.
+	 */
+	DerivedTuples: "mailwoman-derived-tuples",
 } as const
 
 export type SourceRegister = (typeof SourceRegister)[keyof typeof SourceRegister]
