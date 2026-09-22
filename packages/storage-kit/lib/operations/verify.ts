@@ -67,6 +67,21 @@ export const verifyOperation = defineOperation({
 			checks.push({ name: `mount option ${expected}`, ok: present, detail: present ? "active" : "missing" })
 		}
 
+		// `compress-force` silently voids every compression=none property below,
+		// which is invisible until someone measures a query.
+		// Verified on a scratch volume; see DEFAULT_MOUNT_OPTIONS.
+		if (input.uncompressed.length) {
+			const forced = Boolean(options?.includes("compress-force"))
+
+			checks.push({
+				name: "compression is not forced",
+				ok: !forced,
+				detail: forced
+					? "compress-force overrides compression=none on the database subtrees — use compress instead"
+					: "compress (not forced), so the property is respected",
+			})
+		}
+
 		const fstab = await $({ nothrow: true, quiet: true })`grep -c ${mountPoint} /etc/fstab`
 		const inFstab = fstab.exitCode === 0 && Number(fstab.stdout.trim()) > 0
 

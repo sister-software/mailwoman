@@ -8,6 +8,7 @@
 
 import {
 	assertRoot,
+	DEFAULT_MOUNT_OPTIONS,
 	claimFailures,
 	findStorageOperation,
 	renderFstabEntry,
@@ -103,5 +104,18 @@ describe("registry", () => {
 		const writes = storageOperations.filter((operation) => operation.effect === StorageEffect.HostWrite)
 
 		expect(writes.map((operation) => operation.id)).toEqual(["storage.prepare"])
+	})
+})
+
+describe("DEFAULT_MOUNT_OPTIONS", () => {
+	it("uses compress, never compress-force", () => {
+		// compress-force overrides the per-directory `compression=none` property, so the database
+		// subtrees would be compressed and every 4 KiB page read would decompress a 128 KiB extent.
+		expect(DEFAULT_MOUNT_OPTIONS).toContain("compress=zstd:6")
+		expect(DEFAULT_MOUNT_OPTIONS.some((option) => option.startsWith("compress-force"))).toBe(false)
+	})
+
+	it("leaves discard out of the write path", () => {
+		expect(DEFAULT_MOUNT_OPTIONS.some((option) => option.startsWith("discard"))).toBe(false)
 	})
 })

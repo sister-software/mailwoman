@@ -12,14 +12,23 @@
 /**
  * The mount options the data-root volume is mounted with.
  *
- * `compress-force` rather than `compress`: btrfs's heuristic samples the head of a file
- * and skips what it guesses is incompressible, which mis-fires on the corpus.
+ * `compress` rather than `compress-force`, and the difference is load-bearing.
+ * `compress-force` overrides the per-directory `compression=none` property, so the database subtrees
+ * would be compressed anyway and every 4 KiB SQLite page read would decompress a 128 KiB extent.
+ *
+ * Measured on a scratch volume: under `compress-force`, a file in a `compression=none`
+ * directory still came back with 1600 encoded extents; under `compress` it came back with none.
+ * The heuristic that `compress` applies is not a problem for this data — it skips
+ * what looks already compressed, which is what the model and tile artifacts want,
+ * and it compresses the corpus text correctly.
+ *
+ * The volume this replaces ran plain `compress=zstd:3` and achieved 2.3x.
  * `nofail` keeps a missing external drive from blocking boot, and discard is deliberately absent —
  * TRIM passthrough over USB bridges is inconsistent, so `fstrim.timer` does it on a schedule instead.
  */
 export const DEFAULT_MOUNT_OPTIONS = [
 	"noatime",
-	"compress-force=zstd:6",
+	"compress=zstd:6",
 	"space_cache=v2",
 	"nofail",
 	"x-systemd.device-timeout=30",
