@@ -18,8 +18,7 @@
  *   (`@mailwoman/corpus` `LABELED_ROW_SCHEMA`), which already writes the base files this overlay
  *   rides alongside.
  *
- *   Schema: raw, tokens, labels, span_starts, span_ends, span_tags, country, locale, source,
- *   source_id, corpus_version, license, synth_method, synth_base_id.
+ *   Schema: `PARQUET_COLUMNS` from `#parquet/schema`, which is the same list the native writer uses.
  *
  *   The span triple (#519, v0.5.0 char-offset labels) is required on every row: `alignRow` emits it
  *   on every labeled row, so a row arriving without it came from a producer that hasn't migrated —
@@ -37,51 +36,27 @@ import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
-
-const REQUIRED_COLUMNS = [
-	"raw",
-	"tokens",
-	"labels",
-	"span_starts",
-	"span_ends",
-	"span_tags",
-	"country",
-	"locale",
-	"source",
-	"source_id",
-	"corpus_version",
-	"license",
-	"synth_method",
-	"synth_base_id",
-] as const
-
-const SPAN_COLUMNS = ["span_starts", "span_ends", "span_tags"] as const
+import { PARQUET_COLUMNS, PARQUET_COLUMN_TYPES } from "#parquet/schema"
 
 /**
- * The v0.5.0 DuckDB type for each column, in {@link REQUIRED_COLUMNS} order.
+ * The columns this converter writes, and the DuckDB type each is written as.
  *
- * Mirrors the PyArrow schema the Python original declared: `pa.string()` → `varchar`,
- * `pa.list_(pa.string())` → `varchar[]`, `pa.list_(pa.int32())` → `integer[]`.
+ * Both come from `#parquet/schema`, which is the one definition the native writer,
+ * the reader and the manifest already share.
+ * This file restated them, and the restatement went stale the moment `synth_method` became
+ * `recipe`, `register` and `surface`: an overlay converted here would have been written
+ * without the three columns the base files carry, and the loader reads by column name
+ * rather than by position, so the rows would have arrived declaring no surface at all.
+ *
  * The span offsets are INT32 (#519): parallel arrays over `raw`
- * (UTF-16 code units, `[start, end)` exclusive-end, sorted, non-overlapping); `raw` is a short
- * address string, so INT32 round-trips as a plain integer where INT64 would surface as bigint.
+ * (UTF-16 code units, `[start, end)` exclusive-end, sorted, non-overlapping).
+ * `raw` is a short address string, so INT32 round-trips as a plain integer
+ * where INT64 would surface as bigint.
  */
-const COLUMN_TYPES: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
-	raw: "VARCHAR",
-	tokens: "VARCHAR[]",
-	labels: "VARCHAR[]",
-	span_starts: "INTEGER[]",
-	span_ends: "INTEGER[]",
-	span_tags: "VARCHAR[]",
-	country: "VARCHAR",
-	locale: "VARCHAR",
-	source: "VARCHAR",
-	source_id: "VARCHAR",
-	corpus_version: "VARCHAR",
-	license: "VARCHAR",
-	synth_method: "VARCHAR",
-	synth_base_id: "VARCHAR",
-}
+const REQUIRED_COLUMNS = PARQUET_COLUMNS
+const COLUMN_TYPES = PARQUET_COLUMN_TYPES
+
+const SPAN_COLUMNS = ["span_starts", "span_ends", "span_tags"] as const
 
 /**
  * Options for {@linkcode jsonlToParquet}.
