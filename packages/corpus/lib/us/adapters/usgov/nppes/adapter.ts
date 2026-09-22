@@ -22,6 +22,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
@@ -53,7 +54,44 @@ interface NPPESRow {
 	"Provider Second Line Business Practice Location Address": string
 	"Provider Business Practice Location Address City Name": string
 	"Provider Business Practice Location Address State Name": string
-	"Provider Business Practice Location Address Postcode": string
+	// CMS's own column name, and the publisher's spelling is the correct one.
+	// A vocabulary sweep rewrote it to `Postcode` on 2026-09-11 (`f5a98e7b4`); `record[…]`
+	// then read `undefined` on every row, `if (!city || !postcode) continue` dropped all of them,
+	// and the adapter reported `yielded: 0` after reading 11.4 GB without raising.
+	"Provider Business Practice Location Address Postal Code": string
+}
+
+/**
+ * The columns every emitted row needs, in CMS's own spelling.
+ *
+ * Each is read by name off a parsed record, so a column this file does not carry reads
+ * `undefined` rather than raising, and the row filter below drops the row.
+ * Silently, and for every row.
+ */
+const REQUIRED_COLUMNS = [
+	"Provider First Line Business Practice Location Address",
+	"Provider Business Practice Location Address City Name",
+	"Provider Business Practice Location Address State Name",
+	"Provider Business Practice Location Address Postal Code",
+] as const
+
+/**
+ * Refuse a file whose practice-location columns this adapter cannot find.
+ *
+ * Checked against the first parsed record rather than the header line, so it sees the
+ * keys the reader produced rather than the bytes the file opened with.
+ */
+function assertPracticeLocationColumns(record: NPPESRow, inputPath: string): void {
+	const present = new Set(Object.keys(record))
+	const missing = REQUIRED_COLUMNS.filter((column) => !present.has(column))
+
+	if (!missing.length) return
+
+	throw new Error(
+		`usgov-nppes adapter: ${inputPath} carries none of ${missing.map((column) => stringifyJSON(column)).join(", ")}. ` +
+			`Every row would be dropped and the run would report zero rows read from a file it read in full. ` +
+			`Check the publisher's own spelling against this adapter's column names.`
+	)
 }
 
 export function createUsgovNPPESAdapter(): CorpusAdapter {
@@ -76,6 +114,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 			})
 
 			let emitted = 0
+			let checkedHeader = false
 
 			for await (const record of rows as AsyncIterable<NPPESRow>) {
 				if (opts.signal?.aborted) break
@@ -91,7 +130,15 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 				const address2 = (record["Provider Second Line Business Practice Location Address"] ?? "").trim()
 				const city = (record["Provider Business Practice Location Address City Name"] ?? "").trim()
 				const stateRaw = (record["Provider Business Practice Location Address State Name"] ?? "").trim()
-				const postcode = (record["Provider Business Practice Location Address Postcode"] ?? "").trim()
+				const postcode = (record["Provider Business Practice Location Address Postal Code"] ?? "").trim()
+
+				// A column this file does not carry reads `undefined` for every row, and the two
+				// `continue`s below then drop every row while the adapter reports a clean run.
+				// Checking the first record's keys turns a column rename into a refusal that names the column.
+				if (!checkedHeader) {
+					checkedHeader = true
+					assertPracticeLocationColumns(record, opts.inputPath)
+				}
 
 				if (!city || !postcode) continue
 

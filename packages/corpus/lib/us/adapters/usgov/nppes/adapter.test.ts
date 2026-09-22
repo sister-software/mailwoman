@@ -29,7 +29,11 @@ const CSV_HEADER = [
 	"Provider Second Line Business Practice Location Address",
 	"Provider Business Practice Location Address City Name",
 	"Provider Business Practice Location Address State Name",
-	"Provider Business Practice Location Address Postcode",
+	// CMS's own spelling.
+	// This fixture carried `Postcode` after a vocabulary sweep rewrote both it and the adapter,
+	// so the two agreed with each other and with no file CMS publishes.
+	// Every test here passed while the adapter read 11.4 GB of real NPPES and emitted zero rows.
+	"Provider Business Practice Location Address Postal Code",
 ].join(",")
 
 let scratch: PathBuilderLike
@@ -47,6 +51,30 @@ describe("usgov-nppes adapter", () => {
 		const a = createUsgovNPPESAdapter()
 		expect(a.id).toBe(USGOV_NPPES_ADAPTER_ID)
 		expect(a.defaultLicense).toBe(USGOV_NPPES_DEFAULT_LICENSE)
+	})
+
+	it("refuses a file whose practice-location column it cannot find, rather than emitting zero rows", async () => {
+		// The shape that cost a corpus build its NPPES source: a vocabulary sweep rewrote
+		// `Postal Code` to `Postcode` in the adapter on 2026-09-11.
+		// `record[…]` then read `undefined` on every row, the row filter dropped all of them,
+		// and the run reported `yielded: 0` after reading 11.4 GB in 354 seconds without raising.
+		// A rename now names the column it broke.
+		const swept = CSV_HEADER.replace(
+			"Provider Business Practice Location Address Postal Code",
+			"Provider Business Practice Location Address Postcode"
+		)
+
+		const path = await writeDelimitedFixture(join(scratch, "swept.csv"), swept, [
+			"1000000001,2,METRO HEALTH SYSTEM,,,1234 MAIN ST,SUITE 200,NASHVILLE,TN,37203",
+		])
+
+		const adapter = createUsgovNPPESAdapter()
+
+		await expect(async () => {
+			for await (const _row of adapter.rows({ inputPath: path })) {
+				// The refusal lands on the first record, so the loop body never runs.
+			}
+		}).rejects.toThrow(/Postal Code/)
 	})
 
 	it("emits a row for a provider organization with full address", async () => {
