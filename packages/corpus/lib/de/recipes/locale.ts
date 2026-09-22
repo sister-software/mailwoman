@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `german` recipe — German coverage rows from real OpenAddresses tuples (Berlin + Saxony,
- *   cached zips). Each sampled tuple is rendered via {@link synthesizeGermanRow} in both orders —
+ *   cached zips). Each sampled tuple is rendered via {@link renderGermanRow} in both orders —
  *   `--intl-fraction` (default 0.4) in international order (house-first / postcode-after-city), the
  *   rest in idiomatic German order — then aligned to BIO. Generate-mode: it builds a tuple pool
  *   from the cached zips, then draws `--count` rows from it with the passed `random` (so the emit
@@ -35,7 +35,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
-import { synthesizeGermanRow, type LocaleBaseTuple } from "#synthesizers/locale"
+import { renderGermanRow, type LocaleBaseTuple } from "#surfaces/locale"
 import { alignRow } from "#utils"
 
 /**
@@ -211,7 +211,7 @@ async function readGermanTuples(source: GermanSource): Promise<LocaleBaseTuple[]
  */
 export const germanRecipe: CorpusRecipe = {
 	name: "german",
-	description: "German coverage rows from real OA tuples (Berlin/Saxony), both orders → synthesizeGermanRow",
+	description: "German coverage rows from real OA tuples (Berlin/Saxony), both orders → renderGermanRow",
 	mode: "generate",
 	options: [
 		{ flag: "--intl-fraction <f>", description: "Fraction rendered international order. Default 0.4" },
@@ -303,7 +303,7 @@ export const germanRecipe: CorpusRecipe = {
 
 			const base: LocaleBaseTuple = ortsteil ? { ...drawn, dependent_locality: ortsteil } : drawn
 			const separator = order === "native" && random() < commaFreeFraction ? " " : ", "
-			const synth = synthesizeGermanRow(base, { random, order, separator })
+			const synth = renderGermanRow(base, { random, order, separator })
 
 			if (!synth) {
 				skipped++

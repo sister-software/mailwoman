@@ -24,7 +24,7 @@ import {
 	readTuples,
 	resolveLocaleParts,
 } from "@mailwoman/corpus/international/recipes/locale"
-import type { SynthesizedLocaleRow } from "@mailwoman/corpus/synthesizers/locale"
+import type { RenderedLocaleRow } from "@mailwoman/corpus/surfaces/locale"
 import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -263,7 +263,7 @@ describe("readTuples (OA CSV parse)", () => {
 })
 
 describe("applyCountryAppend (country-append fraction, #728 pattern)", () => {
-	const makeRow = (): SynthesizedLocaleRow => ({
+	const makeRow = (): RenderedLocaleRow => ({
 		raw: "14 Beulah Hill, London SE19 3NF",
 		components: { house_number: "14", street: "Beulah Hill", locality: "London", postcode: "SE19 3NF" },
 		locale: "en-GB",

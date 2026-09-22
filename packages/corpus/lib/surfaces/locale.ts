@@ -3,8 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Locale address synthesizer — first introduced for German coverage (night-shift 2026-06-02,
- *   DE-1), now shared by country-oriented recipes.
+ *   Renders a real address tuple into the surface its locale writes. First introduced for German
+ *   coverage (night-shift 2026-06-02, DE-1), now shared by country-oriented recipes.
+ *
+ *   IT RENDERS RATHER THAN INVENTS, and the directory name says so because the old one did not.
+ *   Every caller supplies tuples from a published register: OpenAddresses Berlin and Saxony for DE,
+ *   HM Land Registry Price Paid Data for GB, OpenAddresses countrywide for NL and IT, the CNIG
+ *   export for ES, a LINZ-derived extract for NZ. What this file composes is the ORDER and the
+ *   punctuation, through the OpenCage template for the country.
+ *
+ *   This lived under `synthesizers/` until 2026-09-22, beside the recipes that do invent a surface
+ *   to teach a form — `po-box.ts`, `intersection.ts`, `boundary-stress.ts`, `no-street.ts`. A reader
+ *   took the directory at its word and published twice that GB's street rows were fabricated, when
+ *   they are 25,674,049 Land Registry addresses sampled to 800,000. The two kinds of recipe now sit
+ *   in two directories.
+ *
+ *   The `synth-*` source ids the recipes emit are unchanged and stay unchanged. A source id is a
+ *   wire identifier: it is stored on every row of every built corpus and addressed by the
+ *   `source_weights` keys of 225 training configs, so renaming one breaks loading a corpus that
+ *   already exists. `docs/engineering/reference/locale-supply.mdx` states what each `synth-` id
+ *   reads.
  *
  *   The neural model is out-of-distribution on German: it truncates `Straußstraße`→`Strau` (exits at
  *   the ß-piece boundary), absorbs the house number into the street (`Hauptstraße 5` → one span),
@@ -58,18 +76,18 @@ export interface LocaleBaseTuple {
  */
 export type GermanBaseTuple = LocaleBaseTuple
 
-export interface SynthesizedLocaleRow {
+export interface RenderedLocaleRow {
 	raw: string
 	components: CanonicalRow["components"]
 	locale: string
 }
 
 /**
- * @deprecated Alias — use SynthesizedLocaleRow.
+ * @deprecated Alias — use RenderedLocaleRow.
  */
-export type SynthesizedGermanRow = SynthesizedLocaleRow
+export type RenderedGermanRow = RenderedLocaleRow
 
-export interface LocaleSynthesisOpts {
+export interface LocaleRenderOpts {
 	random?: () => number
 	/**
 	 * Rendering order for the same components.
@@ -128,9 +146,9 @@ export interface LocaleSynthesisOpts {
 }
 
 /**
- * @deprecated Alias — use LocaleSynthesisOpts.
+ * @deprecated Alias — use LocaleRenderOpts.
  */
-export type GermanSynthesisOpts = LocaleSynthesisOpts
+export type GermanRenderOpts = LocaleRenderOpts
 
 /**
  * ISO-3166 alpha-2 → BCP-47 tag for the emitted rows (primary language per country).
@@ -195,14 +213,14 @@ function tokenPresent(raw: string, value: string): boolean {
  * in the tail ("City, Region Postcode" — the US/feed layout the eval uses. v0.9.3 / #327).
  *
  * Pass `opts.order: "international"` to render the same components house-first / postcode-after-city
- * instead (see {@link LocaleSynthesisOpts.order}) — the layout international feeds impose
- * on foreign addresses, and the one a native-order-trained model treats as a "collapse."
+ * instead (see {@link LocaleRenderOpts.order}) — the layout international feeds impose on
+ * foreign addresses, and the one a native-order-trained model treats as a "collapse."
  */
-export function synthesizeLocaleRow(
+export function renderLocaleRow(
 	base: LocaleBaseTuple,
 	country: string,
-	opts: LocaleSynthesisOpts = {}
-): SynthesizedLocaleRow | null {
+	opts: LocaleRenderOpts = {}
+): RenderedLocaleRow | null {
 	const random = opts.random ?? Math.random
 	const order = opts.order ?? "native"
 
@@ -251,7 +269,7 @@ export function synthesizeLocaleRow(
 
 	if (!raw) return null
 
-	// Native-order space-join (see {@link LocaleSynthesisOpts.nativeHouseJoin}):
+	// Native-order space-join (see {@link LocaleRenderOpts.nativeHouseJoin}):
 	// collapse the template's `<street>, <hn>` comma to a space — the OA/feed layout.
 	// A no-op for templates that already space-join (the substring isn't present),
 	// and skipped when the house number was dropped above.
@@ -262,8 +280,8 @@ export function synthesizeLocaleRow(
 		)
 	}
 
-	// `postcodeShape: "as-source"` (see {@link LocaleSynthesisOpts.postcodeShape}):
-	// rewrite both raw and the component back to the source's own surface (NL glued `1011AB`).
+	// `postcodeShape: "as-source"` (see {@link LocaleRenderOpts.postcodeShape}): rewrite both raw
+	// and the component back to the source's own surface (NL glued `1011AB`).
 	// Post-render because the OpenCage NL template normalizes the postcode to the
 	// spaced form no matter what it's given.
 	if (opts.postcodeShape === "as-source" && components.postcode && base.postcode) {
@@ -285,13 +303,10 @@ export function synthesizeLocaleRow(
 }
 
 /**
- * German wrapper over {@link synthesizeLocaleRow}.
+ * German wrapper over {@link renderLocaleRow}.
  *
  * Kept for the `german` recipe (`de/recipes/locale.ts`) + tests.
  */
-export function synthesizeGermanRow(
-	base: LocaleBaseTuple,
-	opts: LocaleSynthesisOpts = {}
-): SynthesizedLocaleRow | null {
-	return synthesizeLocaleRow(base, "DE", opts)
+export function renderGermanRow(base: LocaleBaseTuple, opts: LocaleRenderOpts = {}): RenderedLocaleRow | null {
+	return renderLocaleRow(base, "DE", opts)
 }

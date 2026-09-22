@@ -87,7 +87,7 @@ import {
 	sampleIdentifier,
 	titleCase,
 } from "#recipes/sub/venue/sources"
-import type { LocaleBaseTuple } from "#synthesizers/locale"
+import type { LocaleBaseTuple } from "#surfaces/locale"
 import type { SubVenueLexiconTable } from "#tools"
 import { alignRow } from "#utils"
 

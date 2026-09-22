@@ -32,7 +32,7 @@ import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
-import type { LocaleBaseTuple } from "#synthesizers/locale"
+import type { LocaleBaseTuple } from "#surfaces/locale"
 import { weightedPick } from "#synthesizers/utils"
 import {
 	classifyIdentifier,

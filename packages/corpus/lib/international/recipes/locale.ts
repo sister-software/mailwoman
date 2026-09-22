@@ -5,7 +5,7 @@
  *
  *   `locale` recipe — the multi-locale generalization of the `german` recipe. Reads real
  *   OpenAddresses tuples for a `--country` (DE/FR/NL/IT/ES), renders each via
- *   {@link synthesizeLocaleRow} in both orders (`--intl-fraction`, default 0.4 international / the
+ *   {@link renderLocaleRow} in both orders (`--intl-fraction`, default 0.4 international / the
  *   rest country-native), aligns to BIO, and emits a labeled jsonl. Generate-mode: it streams each
  *   source CSV (a streamed zip member for cached zips, plain `createReadStream` for extracted CSVs) and
  *   reservoir-samples to {@link RESERVOIR_CAP} (so FR/ES countrywide work in bounded memory), then
@@ -38,7 +38,7 @@ import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import type { CorpusRecipe } from "#recipes/scaffold"
-import { type LocaleBaseTuple, type SynthesizedLocaleRow, synthesizeLocaleRow } from "#synthesizers/locale"
+import { type LocaleBaseTuple, type RenderedLocaleRow, renderLocaleRow } from "#surfaces/locale"
 import { alignRow } from "#utils"
 
 /**
@@ -437,7 +437,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
  * Exported for {@link locale.test.ts}.
  */
 export function applyCountryAppend(
-	synth: SynthesizedLocaleRow,
+	synth: RenderedLocaleRow,
 	country: string,
 	countryFraction: number,
 	random: () => number
@@ -491,7 +491,7 @@ export function resolveLocaleParts(countrySource: LocaleCountrySource, override:
  */
 export const localeRecipe: CorpusRecipe = {
 	name: "locale",
-	description: "Per-locale coverage rows (DE/FR/NL/IT/ES/NZ/GB) from real OA tuples, both orders → synthesizeLocaleRow",
+	description: "Per-locale coverage rows (DE/FR/NL/IT/ES/NZ/GB) from real OA tuples, both orders → renderLocaleRow",
 	mode: "generate",
 	options: [
 		{ flag: "--country <cc>", description: "Target country (DE|FR|NL|IT|ES|NZ|GB). Default DE" },
@@ -585,7 +585,7 @@ export const localeRecipe: CorpusRecipe = {
 						: ("conventional" as const)
 					: undefined
 
-			const synth = synthesizeLocaleRow(base, country, { random, order, nativeHouseJoin, postcodeShape })
+			const synth = renderLocaleRow(base, country, { random, order, nativeHouseJoin, postcodeShape })
 
 			if (!synth) {
 				skipped++

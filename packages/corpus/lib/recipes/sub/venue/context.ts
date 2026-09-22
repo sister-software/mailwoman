@@ -11,7 +11,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { readTuples as readLocaleTuples, type LocalePart } from "#international/recipes/locale"
 import { readTuples as readRecipeTuples } from "#recipes/scaffold"
-import type { LocaleBaseTuple } from "#synthesizers/locale"
+import type { LocaleBaseTuple } from "#surfaces/locale"
 
 //#region Address context
 

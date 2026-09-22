@@ -9,7 +9,7 @@
  *   convention the US/FR-trained model never learned.
  */
 
-import { type LocaleBaseTuple, synthesizeGermanRow, synthesizeLocaleRow } from "@mailwoman/corpus/synthesizers/locale"
+import { type LocaleBaseTuple, renderGermanRow, renderLocaleRow } from "@mailwoman/corpus/surfaces/locale"
 import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
@@ -25,9 +25,9 @@ const BERLIN: LocaleBaseTuple = {
 // `() => 0.5` keeps both house number (0.5 < 0.8) and postcode (0.5 < 0.85).
 const keepAll = () => 0.5
 
-describe("synthesizeGermanRow", () => {
+describe("renderGermanRow", () => {
 	it("renders idiomatic German order (street, then house#; postcode before city)", () => {
-		const row = synthesizeGermanRow(BERLIN, { random: keepAll })!
+		const row = renderGermanRow(BERLIN, { random: keepAll })!
 		expect(row).not.toBeNull()
 		expect(row.raw).toContain("Straußstraße 27") // house number after street
 		expect(row.raw).toContain("12623 Berlin") // postcode before city
@@ -36,12 +36,12 @@ describe("synthesizeGermanRow", () => {
 	})
 
 	it("drops region (the DE template absorbs the Bundesland into the city line)", () => {
-		const row = synthesizeGermanRow(BERLIN, { random: keepAll })!
+		const row = renderGermanRow(BERLIN, { random: keepAll })!
 		expect(row.components.region).toBeUndefined()
 	})
 
 	it("aligns to German-order BIO: house_number after street, locality after postcode", () => {
-		const row = synthesizeGermanRow(BERLIN, { random: keepAll })!
+		const row = renderGermanRow(BERLIN, { random: keepAll })!
 		const canonical = { ...row, country: "DE", source: "synth-german", source_id: "synth-german:test" } as CanonicalRow
 		const aligned = alignRow(canonical)
 		expect(aligned.kind).toBe("labeled")
@@ -66,18 +66,18 @@ describe("the comma-free separator (#1946)", () => {
 	}
 
 	it("renders the native order with no commas, every component still verbatim", () => {
-		const row = synthesizeGermanRow(KOELN, { random: keepAll, separator: " " })!
+		const row = renderGermanRow(KOELN, { random: keepAll, separator: " " })!
 
 		expect(row.raw).toBe("Neusser Str. 12 Nippes 50733 Köln")
 		expect(row.components.dependent_locality).toBe("Nippes")
 	})
 
 	it("is the template's comma form with the default separator", () => {
-		expect(synthesizeGermanRow(KOELN, { random: keepAll })!.raw).toBe("Neusser Str. 12, Nippes, 50733 Köln")
+		expect(renderGermanRow(KOELN, { random: keepAll })!.raw).toBe("Neusser Str. 12, Nippes, 50733 Köln")
 	})
 
 	it("aligns the comma-free row to BIO with the district as dependent_locality between street and postcode", () => {
-		const row = synthesizeGermanRow(KOELN, { random: keepAll, separator: " " })!
+		const row = renderGermanRow(KOELN, { random: keepAll, separator: " " })!
 
 		const canonical = {
 			...row,
@@ -98,16 +98,16 @@ describe("the comma-free separator (#1946)", () => {
 	})
 
 	it("leaves the international layout on its own separator", () => {
-		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international", separator: " " })!
+		const row = renderLocaleRow(BERLIN, "DE", { random: keepAll, order: "international", separator: " " })!
 
 		expect(row.raw).toBe("27 Straußstraße, Berlin, Berlin 12623")
 	})
 })
 
-describe("synthesizeLocaleRow (generic)", () => {
+describe("renderLocaleRow (generic)", () => {
 	it("ES renders Spanish order (house after street, postcode before city) and tags the locale", () => {
 		const madrid: LocaleBaseTuple = { house_number: "12", street: "Calle Mayor", locality: "Madrid", postcode: "28013" }
-		const row = synthesizeLocaleRow(madrid, "ES", { random: keepAll })!
+		const row = renderLocaleRow(madrid, "ES", { random: keepAll })!
 		expect(row).not.toBeNull()
 		expect(row.locale).toBe("es-ES")
 		// ES renders "Calle Mayor, 12, 28013 Madrid" — house after street
@@ -117,10 +117,10 @@ describe("synthesizeLocaleRow (generic)", () => {
 		expect(row.raw).toContain("28013 Madrid")
 	})
 
-	it("synthesizeGermanRow is the DE wrapper", () => {
-		const row = synthesizeGermanRow(BERLIN, { random: keepAll })!
+	it("renderGermanRow is the DE wrapper", () => {
+		const row = renderGermanRow(BERLIN, { random: keepAll })!
 		expect(row.locale).toBe("de-DE")
-		expect(synthesizeLocaleRow(BERLIN, "DE", { random: keepAll })!.raw).toBe(row.raw)
+		expect(renderLocaleRow(BERLIN, "DE", { random: keepAll })!.raw).toBe(row.raw)
 	})
 })
 
@@ -132,10 +132,10 @@ const DRESDEN: LocaleBaseTuple = {
 	postcode: "01309",
 }
 
-describe("synthesizeLocaleRow order option (order-robustness)", () => {
+describe("renderLocaleRow order option (order-robustness)", () => {
 	it("international order renders house-FIRST, postcode-AFTER-city, region IN THE TAIL", () => {
 		// keepAll = 0.5 keeps house# + postcode. International uses the US template + the region tail → "27 Straußstraße, Berlin, Berlin 12623" (the layout the eval feeds. v0.9.3 / #327).
-		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
+		const row = renderLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
 		expect(row).not.toBeNull()
 		expect(row.raw.indexOf("27")).toBeLessThan(row.raw.indexOf("Straußstraße")) // house before street
 		expect(row.raw.indexOf("12623")).toBeGreaterThan(row.raw.indexOf("Berlin")) // postcode after city
@@ -143,18 +143,18 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 	})
 
 	it("region tail renders with a DISTINCT region (City, Region Postcode)", () => {
-		const row = synthesizeLocaleRow(DRESDEN, "DE", { random: keepAll, order: "international" })!
+		const row = renderLocaleRow(DRESDEN, "DE", { random: keepAll, order: "international" })!
 		expect(row.raw).toBe("14 Goetheallee, Dresden, Sachsen 01309")
 		expect(row.components.region).toBe("Sachsen")
 	})
 
 	it("keeps the address's own locale tag — only the surface layout changes", () => {
-		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
+		const row = renderLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
 		expect(row.locale).toBe("de-DE") // the render template is US, but it's still a German address
 	})
 
 	it("aligns to international-order BIO: house# before street, region after locality, postcode last", () => {
-		const row = synthesizeLocaleRow(DRESDEN, "DE", { random: keepAll, order: "international" })!
+		const row = renderLocaleRow(DRESDEN, "DE", { random: keepAll, order: "international" })!
 		const canonical = { ...row, country: "DE", source: "synth-german", source_id: "synth-german:intl" } as CanonicalRow
 		const aligned = alignRow(canonical)
 		expect(aligned.kind).toBe("labeled")
@@ -176,8 +176,8 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 			return () => vals[i++ % vals.length]!
 		}
 
-		const withoutOpt = synthesizeLocaleRow(BERLIN, "DE", { random: seq() })!
-		const withNative = synthesizeLocaleRow(BERLIN, "DE", { random: seq(), order: "native" })!
+		const withoutOpt = renderLocaleRow(BERLIN, "DE", { random: seq() })!
+		const withNative = renderLocaleRow(BERLIN, "DE", { random: seq(), order: "native" })!
 		expect(withNative.raw).toBe(withoutOpt.raw)
 	})
 })
@@ -194,7 +194,7 @@ describe("NZ dependent_locality (suburb below city)", () => {
 	}
 
 	it("renders the suburb BEFORE the city, both present, and tags en-NZ", () => {
-		const row = synthesizeLocaleRow(AUCKLAND, "NZ", { random: keepAll })!
+		const row = renderLocaleRow(AUCKLAND, "NZ", { random: keepAll })!
 		expect(row).not.toBeNull()
 		expect(row.locale).toBe("en-NZ")
 		expect(row.raw).toContain("Birkenhead, Auckland") // suburb, then city
@@ -204,7 +204,7 @@ describe("NZ dependent_locality (suburb below city)", () => {
 	})
 
 	it("aligns to BIO with dependent_locality between street and locality", () => {
-		const row = synthesizeLocaleRow(AUCKLAND, "NZ", { random: keepAll })!
+		const row = renderLocaleRow(AUCKLAND, "NZ", { random: keepAll })!
 		const canonical = { ...row, country: "NZ", source: "synth-nz", source_id: "synth-nz:test" } as CanonicalRow
 		const aligned = alignRow(canonical)
 		expect(aligned.kind).toBe("labeled")
@@ -220,7 +220,7 @@ describe("NZ dependent_locality (suburb below city)", () => {
 
 	it("omits dependent_locality when absent (the ~18% of NZ rows with no district)", () => {
 		const noSuburb: LocaleBaseTuple = { house_number: "26A", street: "Henley Road", locality: "Kaukapakapa" }
-		const row = synthesizeLocaleRow(noSuburb, "NZ", { random: keepAll })!
+		const row = renderLocaleRow(noSuburb, "NZ", { random: keepAll })!
 		expect(row).not.toBeNull()
 		expect(row.components.dependent_locality).toBeUndefined()
 		expect(row.components.locality).toBe("Kaukapakapa")
@@ -237,28 +237,28 @@ describe("NL postcode normalization", () => {
 	}
 
 	it("canonicalizes the NL postcode to the spaced form so native order aligns (was rejected)", () => {
-		const row = synthesizeLocaleRow(NL, "NL", { random: keepAll, order: "native" })!
+		const row = renderLocaleRow(NL, "NL", { random: keepAll, order: "native" })!
 		expect(row).not.toBeNull() // previously NULL — the template's "1011 AB" didn't match unspaced "1011AB"
 		expect(row.components.postcode).toBe("1011 AB")
 		expect(row.raw).toContain("1011 AB")
 	})
 
 	it("leaves other countries' postcodes untouched", () => {
-		const de = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll })!
+		const de = renderLocaleRow(BERLIN, "DE", { random: keepAll })!
 		expect(de.components.postcode).toBe("12623")
 	})
 
 	it("postcodeShape: as-source keeps OA's glued NL form (the eval's observed shape, #241)", () => {
-		const row = synthesizeLocaleRow(NL, "NL", { random: keepAll, postcodeShape: "as-source" })!
+		const row = renderLocaleRow(NL, "NL", { random: keepAll, postcodeShape: "as-source" })!
 		expect(row).not.toBeNull()
 		expect(row.components.postcode).toBe("1011AB")
 		expect(row.raw).toContain("1011AB Amsterdam")
 	})
 
 	it("postcodeShape: conventional (and the default) space the two-letter suffix", () => {
-		const explicit = synthesizeLocaleRow(NL, "NL", { random: keepAll, postcodeShape: "conventional" })!
+		const explicit = renderLocaleRow(NL, "NL", { random: keepAll, postcodeShape: "conventional" })!
 		expect(explicit.components.postcode).toBe("1011 AB")
-		expect(explicit.raw).toBe(synthesizeLocaleRow(NL, "NL", { random: keepAll })!.raw)
+		expect(explicit.raw).toBe(renderLocaleRow(NL, "NL", { random: keepAll })!.raw)
 	})
 })
 
@@ -271,22 +271,22 @@ describe("nativeHouseJoin (#241 — ES street→house join diversity)", () => {
 	}
 
 	it("space collapses the ES template's comma join to the OA/eval space join", () => {
-		const template = synthesizeLocaleRow(MADRID, "ES", { random: keepAll })!
-		const spaced = synthesizeLocaleRow(MADRID, "ES", { random: keepAll, nativeHouseJoin: "space" })!
+		const template = renderLocaleRow(MADRID, "ES", { random: keepAll })!
+		const spaced = renderLocaleRow(MADRID, "ES", { random: keepAll, nativeHouseJoin: "space" })!
 		expect(template.raw).toBe("Calle Mayor, 12, 28013 Madrid")
 		expect(spaced.raw).toBe("Calle Mayor 12, 28013 Madrid")
 		expect(spaced.components).toEqual(template.components) // same components — only the surface join moves
 	})
 
 	it("is a no-op for templates that already space-join (DE)", () => {
-		const spaced = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, nativeHouseJoin: "space" })!
-		expect(spaced.raw).toBe(synthesizeLocaleRow(BERLIN, "DE", { random: keepAll })!.raw)
+		const spaced = renderLocaleRow(BERLIN, "DE", { random: keepAll, nativeHouseJoin: "space" })!
+		expect(spaced.raw).toBe(renderLocaleRow(BERLIN, "DE", { random: keepAll })!.raw)
 	})
 
 	it("is ignored for international order (already house-first, space-joined)", () => {
-		const intl = synthesizeLocaleRow(MADRID, "ES", { random: keepAll, order: "international" })!
+		const intl = renderLocaleRow(MADRID, "ES", { random: keepAll, order: "international" })!
 
-		const intlSpace = synthesizeLocaleRow(MADRID, "ES", {
+		const intlSpace = renderLocaleRow(MADRID, "ES", {
 			random: keepAll,
 			order: "international",
 			nativeHouseJoin: "space",
@@ -296,7 +296,7 @@ describe("nativeHouseJoin (#241 — ES street→house join diversity)", () => {
 	})
 
 	it("still aligns to BIO after the join collapse", () => {
-		const row = synthesizeLocaleRow(MADRID, "ES", { random: keepAll, nativeHouseJoin: "space" })!
+		const row = renderLocaleRow(MADRID, "ES", { random: keepAll, nativeHouseJoin: "space" })!
 		const canonical = { ...row, country: "ES", source: "synth-es", source_id: "synth-es:test" } as CanonicalRow
 		const aligned = alignRow(canonical)
 		expect(aligned.kind).toBe("labeled")
@@ -310,9 +310,9 @@ describe("nativeHouseJoin (#241 — ES street→house join diversity)", () => {
 			return () => vals[i++ % vals.length]!
 		}
 
-		const withoutOpts = synthesizeLocaleRow(MADRID, "ES", { random: seq() })!
+		const withoutOpts = renderLocaleRow(MADRID, "ES", { random: seq() })!
 
-		const withDefaults = synthesizeLocaleRow(MADRID, "ES", {
+		const withDefaults = renderLocaleRow(MADRID, "ES", {
 			random: seq(),
 			nativeHouseJoin: "template",
 			postcodeShape: "conventional",

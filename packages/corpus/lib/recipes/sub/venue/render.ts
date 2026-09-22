@@ -11,7 +11,7 @@ import { type ComponentDict, renderAddress } from "@mailwoman/codex/address-rend
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { isPresent } from "@mailwoman/core/objects"
 
-import type { LocaleBaseTuple } from "#synthesizers/locale"
+import type { LocaleBaseTuple } from "#surfaces/locale"
 
 /**
  * One labelled piece of the line.
