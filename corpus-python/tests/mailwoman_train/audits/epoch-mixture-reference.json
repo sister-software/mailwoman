@@ -61,7 +61,11 @@
 				"small": {
 					"US": 198
 				}
-			}
+			},
+			"admitted_countries_drawn": {
+				"US": 400
+			},
+			"admitted_countries_drawing_nothing": []
 		},
 		"emitted_level": {
 			"totals": {

@@ -282,6 +282,16 @@ def audit_mixture(
             "countries_by_source": {
                 src: dict(counts.most_common()) for src, counts in sorted(drawn.countries_by_source.items())
             },
+            # Every admitted country, including the ones that drew nothing.
+            #
+            # `by_country` counts what was drawn, so a country admitted at weight 1.0 whose rows the
+            # sampler never opened is absent from it rather than present at 0. Absent and zero are
+            # different findings and they read identically in that map: #2347's stage 5 asks for the
+            # sampled count beside the epoch denominator precisely so the two can be told apart.
+            "admitted_countries_drawn": {cc: drawn.countries.get(cc, 0) for cc in sorted(country_weights)},
+            "admitted_countries_drawing_nothing": sorted(
+                cc for cc in country_weights if drawn.countries.get(cc, 0) == 0
+            ),
         },
         "emitted_level": {
             "totals": dict(emitted.totals),

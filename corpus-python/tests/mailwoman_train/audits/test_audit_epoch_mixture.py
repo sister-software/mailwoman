@@ -85,6 +85,28 @@ def _audit(corpus: Path, **overrides) -> dict:
     return audit_mixture(corpus, **kwargs)
 
 
+def test_an_admitted_country_that_draws_nothing_reads_zero_rather_than_going_absent(tmp_path: Path) -> None:
+    """`by_country` omits a country the sampler never reached, which reads as if it was never admitted.
+
+    A country at `country_weights` 1.0 whose rows sit in a row-group the sampler never opened draws
+    zero. `by_country` counts what was drawn, so that country is simply not a key in it — the same
+    shape as a country nobody admitted. Those are different findings with different repairs, and
+    #2347's stage 5 exists because the report could not tell them apart.
+    """
+    report = _audit(_write_corpus(tmp_path), country_weights={"US": 1.0, "BE": 1.0, "BR": 1.0})
+    draw = report["draw_level"]
+
+    # The corpus this fixture writes carries US rows and nothing else.
+    assert "BE" not in draw["by_country"]
+    assert "BR" not in draw["by_country"]
+
+    assert draw["admitted_countries_drawn"] == {"BE": 0, "BR": 0, "US": 400}
+    assert draw["admitted_countries_drawing_nothing"] == ["BE", "BR"]
+
+    # The denominator the zeros are read against.
+    assert report["meta"]["draws_realized"] == 400
+
+
 def test_draw_level_windows_show_a_stationary_mixture(tmp_path: Path) -> None:
     report = _audit(_write_corpus(tmp_path))
 
