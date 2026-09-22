@@ -23,6 +23,18 @@ function normalizeDuckDBValue(value: unknown): unknown {
 		return value.items.map(normalizeDuckDBValue)
 	}
 
+	// A DuckDB STRUCT arrives as `{ entries: { field: value } }` rather than as
+	// the plain object its fields describe.
+	// Handing that through makes `row.address_levels[0].value` read `undefined` on every row,
+	// which a consumer counting values reports as a column the file does not populate.
+	// Overture's `address_levels` and `sources` are both lists of structs, and reading
+	// them unwrapped reported all 25,914,431 Italian rows as carrying no locality.
+	if (value && typeof value === "object" && "entries" in value && value.entries && typeof value.entries === "object") {
+		return Object.fromEntries(
+			Object.entries(value.entries as Record<string, unknown>).map(([key, entry]) => [key, normalizeDuckDBValue(entry)])
+		)
+	}
+
 	if (Array.isArray(value)) return value.map(normalizeDuckDBValue)
 
 	return value
