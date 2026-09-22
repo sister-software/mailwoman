@@ -41,7 +41,11 @@ import {
 	admittedByShippedGraphs,
 	censusCoverage,
 	type CountryCoverage,
+	GeocodeReading,
+	geocodeReading,
 	newestManifest,
+	ParseReading,
+	parseReading,
 	readAdmittedCountries,
 	resolveTrainingConfig,
 } from "#coverage"
@@ -103,25 +107,28 @@ const measured = new Map<string, CountryCoverage>(report.countries.map((country)
  * omits a code the gazetteer or the board does hold.
  */
 function parseState(coverage: CountryCoverage | undefined): string {
-	if (!coverage) return "absent"
+	const rows = coverage ? coverage.corpusRows.toLocaleString() : "0"
 
-	if (!coverage.admitted) {
-		return coverage.corpusRows > 0 ? `${coverage.corpusRows.toLocaleString()} rows, declined` : "declined"
-	}
-
-	if (coverage.corpusRows === 0) return "admitted, 0 rows"
-
-	return coverage.corpusStreetRows > 0
-		? `${coverage.corpusRows.toLocaleString()} rows`
-		: `${coverage.corpusRows.toLocaleString()} rows, 0 street`
+	// The street count sits in its own column here, so the phrase omits it
+	// where `mwdev_coverage`'s one-line form names it.
+	// The reading behind both is `parseReading`.
+	return {
+		[ParseReading.Absent]: "absent",
+		[ParseReading.Declined]: "declined",
+		[ParseReading.DeclinedWithRows]: `${rows} rows, declined`,
+		[ParseReading.AdmittedEmpty]: "admitted, 0 rows",
+		[ParseReading.RowsWithStreet]: `${rows} rows`,
+		[ParseReading.RowsWithoutStreet]: `${rows} rows, 0 street`,
+	}[parseReading(coverage)]
 }
 
 function geocodeState(coverage: CountryCoverage | undefined): string {
-	if (!coverage) return "absent"
-
-	if (coverage.geocodeTier === "rooftop-published") return "rooftop"
-
-	return coverage.gazetteerPlaces > 0 ? coverage.gazetteerPlaces.toLocaleString() : "0"
+	return {
+		[GeocodeReading.Absent]: "absent",
+		[GeocodeReading.Rooftop]: "rooftop",
+		[GeocodeReading.Locality]: coverage ? coverage.gazetteerPlaces.toLocaleString() : "0",
+		[GeocodeReading.None]: "0",
+	}[geocodeReading(coverage)]
 }
 
 function boardState(coverage: CountryCoverage | undefined): string {

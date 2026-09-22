@@ -6,3 +6,4 @@
 
 export * from "#coverage/census"
 export * from "#coverage/core"
+export * from "#coverage/readings"

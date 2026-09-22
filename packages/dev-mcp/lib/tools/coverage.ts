@@ -13,7 +13,11 @@ import {
 	censusCoverage,
 	type CountryCoverage,
 	type CoverageReport,
+	GeocodeReading,
+	geocodeReading,
 	newestManifest,
+	ParseReading,
+	parseReading,
 	resolveTrainingConfig,
 } from "mailwoman/coverage"
 import { z } from "zod"
@@ -27,22 +31,27 @@ import type { DevTool, DevToolDeps } from "#tool-kit"
  * with wildly different coverage.
  */
 function line(c: CountryCoverage): string {
-	const parse = !c.admitted
-		? c.corpusRows > 0
-			? `DROPPED (${c.corpusRows.toLocaleString()} rows, not admitted)`
-			: "not trained"
-		: c.corpusRows === 0
-			? "admitted, NO ROWS"
-			: c.corpusStreetRows > 0
-				? `${c.corpusRows.toLocaleString()} rows (${c.corpusStreetRows.toLocaleString()} street)`
-				: `${c.corpusRows.toLocaleString()} rows, NO STREET`
+	const rows = c.corpusRows.toLocaleString()
 
-	const geo =
-		c.geocodeTier === "rooftop-published"
-			? "rooftop"
-			: c.gazetteerPlaces > 0
-				? `locality (${c.gazetteerPlaces.toLocaleString()})`
-				: "none"
+	// The wording differs from `jurisdiction-coverage.run.ts`'s table cell
+	// and the reading behind it does not, because both read `parseReading`.
+	// An agent reads this line without the surrounding columns, so it names the row
+	// count inside the phrase rather than in a neighbouring cell.
+	const parse = {
+		[ParseReading.Absent]: "absent",
+		[ParseReading.Declined]: "not trained",
+		[ParseReading.DeclinedWithRows]: `DROPPED (${rows} rows, not admitted)`,
+		[ParseReading.AdmittedEmpty]: "admitted, NO ROWS",
+		[ParseReading.RowsWithStreet]: `${rows} rows (${c.corpusStreetRows.toLocaleString()} street)`,
+		[ParseReading.RowsWithoutStreet]: `${rows} rows, NO STREET`,
+	}[parseReading(c)]
+
+	const geo = {
+		[GeocodeReading.Absent]: "none",
+		[GeocodeReading.Rooftop]: "rooftop",
+		[GeocodeReading.Locality]: `locality (${c.gazetteerPlaces.toLocaleString()})`,
+		[GeocodeReading.None]: "none",
+	}[geocodeReading(c)]
 
 	const board = c.boardRows ? `${c.boardPassedRows}/${c.boardRows} conditional` : "unmeasured"
 
