@@ -187,7 +187,7 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 /**
  * The declared matchers for one country, with a bare array read as its region list.
  */
-function policyFor(holdout: CountryHoldout | undefined): HoldoutPolicy {
+export function policyFor(holdout: CountryHoldout | undefined): HoldoutPolicy {
 	if (!holdout) return {}
 
 	return Array.isArray(holdout) ? { regions: holdout } : (holdout as HoldoutPolicy)
