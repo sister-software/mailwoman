@@ -252,11 +252,6 @@
 			"node": "./lib/tools/golden/relabel-street/index.ts",
 			"default": "./out/tools/golden/relabel-street/index.js"
 		},
-		"./tools/overture-addresses": {
-			"types": "./out/tools/overture-addresses.d.ts",
-			"node": "./lib/tools/overture-addresses.ts",
-			"default": "./out/tools/overture-addresses.js"
-		},
 		"./tools/overture-subvenue": {
 			"types": "./out/tools/overture-subvenue.d.ts",
 			"node": "./lib/tools/overture-subvenue.ts",

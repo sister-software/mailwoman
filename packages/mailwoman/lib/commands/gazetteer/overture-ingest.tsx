@@ -70,6 +70,8 @@ export const spec = {
 		out: { type: "string", description: "Output root" },
 		"probe-only": { type: "boolean", default: false, description: "Only probe local Parquet" },
 		"corpus-jsonl": { type: "boolean", default: false, description: "Emit corpus JSONL" },
+		sample: { type: "string", description: "Reservoir-sample the corpus JSONL to this many rows" },
+		seed: { type: "string", description: "Seed for --sample. Default 20260922" },
 	},
 } as const satisfies CommandSpec
 
@@ -118,6 +120,9 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		const release = options.release ?? DEFAULT_RELEASE
 		const countries = splitCountryCodes(options.countries)
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
+		// A reservoir sample is reproducible only when its seed is, so the default is fixed
+		// rather than drawn: two runs of the same release and sample size write the same rows.
+		const seed = options.seed ? Number.parseInt(options.seed, 10) : 20_260_922
 		const outRoot = options.out ?? dataRootPath("overture")
 		const outDir = join(outRoot, release)
 		await makeDirectories(outDir)
@@ -186,10 +191,19 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		 * `street` is kept whole (keyword included); the downstream affix-relabel splits `street_prefix`.
 		 * `locality` flattens the `address_levels` municipality (the deepest level)
 		 * with a `postal_city` fallback.
+		 *
+		 * `--sample <n>` draws a reservoir sample rather than writing every row.
+		 * Overture stores a country's rows in spatial order, so the first n rows of Brazil's 89,899,299
+		 * are one corner of it: the first 5,000 rows of `addresses-it.parquet` are all Sardinia.
+		 *
+		 * A recipe or adapter capping its input by taking the head therefore teaches
+		 * one region and reports the country's row count.
+		 * DuckDB's reservoir sample spreads the draw over the whole file for one pass of it.
 		 */
 		const emitCorpusJSONL = async (cc: string): Promise<void> => {
 			const src = countryParquet(cc)
 			const dest = join(outDir, `overture-${cc.toLowerCase()}.corpus.jsonl`)
+			const sampleClause = options.sample ? ` USING SAMPLE ${Number(options.sample)} ROWS (reservoir, ${seed})` : ""
 
 			await db.run(`
 				COPY (
@@ -206,10 +220,11 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 							OR len(address_levels) > 0
 							OR (postal_city IS NOT NULL AND trim(postal_city) <> '')
 						)
+					${sampleClause}
 				) TO '${dest}' (FORMAT JSON)
 			`)
 
-			console.error(`[corpus-jsonl] ${cc} -> ${dest}`)
+			console.error(`[corpus-jsonl] ${cc} -> ${dest}${options.sample ? ` (sample ${options.sample})` : ""}`)
 		}
 
 		/**
