@@ -178,9 +178,10 @@ describe("defaultHoldouts", () => {
 		expect(policyOf(defaultHoldouts().FR).postcodePrefixes).toEqual(["20", "23", "48"])
 	})
 
-	it("names GB by postcode area, since 93.6% of its street rows carry no region", () => {
-		// Measured on `v0.17.0-batch`: 825,083 GB street rows, 771,987 of them with no `region` component.
+	it("names GB by postcode area, since a GB street row carries no region", () => {
 		// GB carried no entry at all before this, so both its splits held zero rows.
+		// How many rows the entry holds out is unmeasured: no corpus in the lab data root
+		// carries a natural GB street row, and `split.ts`'s comment records what settles it.
 		const gb = policyOf(defaultHoldouts().GB)
 
 		expect(gb.postcodePrefixes).toEqual(["TR", "LL", "HX"])
