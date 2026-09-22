@@ -20,9 +20,10 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { recipeSourceID, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
+import { recipeSourceID, requireRegister, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
 import { DEFAULT_US_BASES } from "#synthesizers/intersection"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
+import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
 /**
@@ -95,7 +96,15 @@ export const streetBareRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "street-bare", synth_base_id: null }))
+			write(
+				stringifyJSON({
+					...aligned.row,
+					recipe: "street-bare",
+					base_source_id: null,
+					register: requireRegister(opts, "street-bare"),
+					surface: SurfaceOrigin.Composed,
+				})
+			)
 
 			emitted++
 		}

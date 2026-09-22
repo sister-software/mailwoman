@@ -11,7 +11,7 @@ import {
 	stableSourceID,
 	streamingSha256,
 } from "@mailwoman/corpus/adapters/utils"
-import { AddressRole, type CanonicalRow, type CorpusAdapter } from "@mailwoman/corpus/types"
+import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
 
 function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
@@ -32,6 +32,8 @@ function fixtureAdapter(id: string): CorpusAdapter {
 		id,
 		defaultLicense: "CC0-1.0",
 		addressRole: AddressRole.Premise,
+		register: "test-register",
+		surface: SurfaceOrigin.Attested,
 		description: `fixture adapter ${id}`,
 		async *rows() {
 			yield fixtureRow({ source: id, source_id: `${id}-1` })
@@ -119,8 +121,8 @@ describe("canonicalDedupKey", () => {
 	})
 
 	it("distinguishes synthetic rows by augmentation method", () => {
-		const a = fixtureRow({ synth: { method: "case-upper", base_source_id: "test-1" } })
-		const b = fixtureRow({ synth: { method: "accent-strip", base_source_id: "test-1" } })
+		const a = fixtureRow({ recipe: { recipe: "case-upper", base_source_id: "test-1" } })
+		const b = fixtureRow({ recipe: { recipe: "accent-strip", base_source_id: "test-1" } })
 		const c = fixtureRow()
 		expect(canonicalDedupKey(a)).not.toBe(canonicalDedupKey(b))
 		expect(canonicalDedupKey(a)).not.toBe(canonicalDedupKey(c))

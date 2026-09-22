@@ -17,6 +17,7 @@ import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator, TextSpliterator } from "spliterator"
 
 import { stableSourceIDFromParts } from "#adapters/utils"
+import type { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
 /**
@@ -346,21 +347,78 @@ export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
 }
 
 /**
+ * What a recipe records about the rows it writes, beyond the row itself.
+ *
+ * `register` and `surface` are separate answers.
+ * A recipe that renders a national register's fields through a template names
+ * that register and calls its surface composed.
+ *
+ * A recipe that invents a row to teach a shape names no register and calls its surface invented.
+ * Collapsing the two reports a real record as fabricated, which is the defect this pair replaces.
+ */
+export interface RecipeProvenance {
+	/**
+	 * The published register the underlying record came from, or `null` when the row names none.
+	 */
+	register: string | null
+
+	/**
+	 * How the written `raw` string was produced.
+	 */
+	surface: SurfaceOrigin
+
+	/**
+	 * `source_id` of the row this was derived from, when the recipe read one.
+	 */
+	baseSourceID?: string | null
+}
+
+/**
+ * The register a tuple-reading recipe was invoked with.
+ *
+ * Throws when the flag is absent, naming the recipe.
+ * Every row a recipe writes carries the value, so a default would stamp one register's
+ * id on another register's records and no later reader could tell.
+ */
+export function requireRegister(opts: RecipeOptions, recipe: string): string {
+	if (!opts.register) {
+		throw new Error(
+			`${recipe} requires --register <id>: the register the --input tuples were extracted from, ` +
+				`e.g. whos-on-first, openstreetmap, fr-ban. It is written onto every row this recipe emits.`
+		)
+	}
+
+	return opts.register
+}
+
+/**
  * Run a canonical row through `alignRow` and, on success, write the `LabeledRow`
- * (+ `synth_method` / `synth_base_id`) as one jsonl line.
+ * with its recipe id and provenance as one jsonl line.
+ *
+ * The three provenance columns are flat in the jsonl because the parquet schema is flat,
+ * and the loader reads the jsonl column names directly.
  *
  * @returns True if emitted, false if alignment quarantined it.
  */
 export function alignAndWrite(
 	write: WriteRecipeLine,
 	canonical: CanonicalRecipeRow,
-	synthMethod: string,
-	synthBaseID: string | null = null
+	recipe: string,
+	provenance: RecipeProvenance
 ): boolean {
 	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 	if (!aligned.row) return false
-	write(stringifyJSON({ ...aligned.row, synth_method: synthMethod, synth_base_id: synthBaseID }))
+
+	write(
+		stringifyJSON({
+			...aligned.row,
+			recipe,
+			register: provenance.register,
+			surface: provenance.surface,
+			base_source_id: provenance.baseSourceID ?? null,
+		})
+	)
 
 	return true
 }
@@ -378,6 +436,18 @@ export interface RecipeOptions {
 	count?: number
 	golden?: boolean
 	sourceName?: string
+	/**
+	 * The published register the `--input` tuples were extracted from.
+	 *
+	 * A recipe that reads tuples off disk cannot know where they came from: the same recipe
+	 * reads Who's On First pairs on one invocation and OpenStreetMap rows on the next.
+	 * The id belongs to the invocation, and {@link requireRegister} refuses a run that
+	 * omits it rather than recording a guess on every row it writes.
+	 *
+	 * A recipe that generates its rows from this repository's own tables declares
+	 * its register in code and ignores this flag.
+	 */
+	register?: string
 	// recipe-specific (each recipe reads only what it needs):
 	houseNumberProb?: number
 	pmbRatio?: number

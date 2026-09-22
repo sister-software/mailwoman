@@ -23,7 +23,8 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
  * Registry id for this adapter.
@@ -74,6 +75,8 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 		id: USGOV_IRS_BMF_ADAPTER_ID,
 		defaultLicense: USGOV_IRS_BMF_DEFAULT_LICENSE,
 		addressRole: AddressRole.Mailing,
+		register: SourceRegister.IRSBusinessMasterFile,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"IRS Exempt Organizations Business Master File — US non-profit venue+address (public-domain), with strong PO-box coverage.",
 

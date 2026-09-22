@@ -17,6 +17,7 @@
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 /**
  * What an address is the address OF.
@@ -104,6 +105,64 @@ export function addressRoleOf(row: Pick<CanonicalRow, "addressRole">): AddressRo
 }
 
 /**
+ * How the text a tokenizer reads was produced.
+ *
+ * This answers what a row's surface is, and {@link CanonicalRow.register} answers
+ * where its underlying record came from.
+ * Those are separate questions: a surface composed by a template from a national
+ * land register is not an invented address, and a value that answered both at
+ * once reported Land Registry records as fabricated.
+ *
+ * The constants are the wire values.
+ */
+export const SurfaceOrigin = {
+	/**
+	 * The publisher's own string, carried through.
+	 *
+	 * A TIGER street name or a Who's On First place name reaches the corpus as the register wrote it.
+	 */
+	Attested: "attested",
+	/**
+	 * A template assembled the surface from fields of one real record.
+	 *
+	 * Every component is a value the register published.
+	 * The order, punctuation and casing are the recipe's, because the register
+	 * publishes columns rather than an address line.
+	 */
+	Composed: "composed",
+	/**
+	 * The row names no published record.
+	 *
+	 * A post-office box, an intersection or a boundary-stress row exists to teach a shape,
+	 * and no register asserts that this address is anywhere.
+	 */
+	Invented: "invented",
+} as const
+
+export type SurfaceOrigin = (typeof SurfaceOrigin)[keyof typeof SurfaceOrigin]
+
+const SURFACE_ORIGINS = new Set<string>(Object.values(SurfaceOrigin))
+
+/**
+ * The surface a jsonl row declares, refusing a row that declares none.
+ *
+ * A row written before this field existed carries no `surface`, and a default would
+ * record it as whichever value the reader happened to pick.
+ * Refusing names the file so the row is rewritten by the tool that produced it.
+ */
+export function requireSurface(raw: Record<string, unknown>, producer: string): SurfaceOrigin {
+	const value = raw["surface"]
+
+	if (typeof value === "string" && SURFACE_ORIGINS.has(value)) return value as SurfaceOrigin
+
+	throw new Error(
+		`${producer}: row ${stringifyJSON(raw["source_id"])} declares no surface. ` +
+			`Every row carries one of ${[...SURFACE_ORIGINS].join(", ")}. ` +
+			`A jsonl written before the field existed has to be regenerated rather than read with a default.`
+	)
+}
+
+/**
  * Provenance + augmentation metadata that travels with every corpus row.
  *
  * `synth` is `undefined` for natural (un-augmented) rows.
@@ -142,23 +201,25 @@ export interface SourceProvenance {
 }
 
 /**
- * Marker placed on rows produced by `synthesize.ts`.
+ * Which recipe produced a row, and which row it was derived from.
  *
- * Allows downstream code to weight, stratify, or exclude augmentations.
+ * Naming the recipe says what code ran.
+ * It makes no claim about whether the address is real, which {@link CanonicalRow.surface}
+ * and {@link CanonicalRow.register} answer.
  */
-export interface SynthMarker {
+export interface RecipeMarker {
 	/**
-	 * Pipeline id describing what augmentation produced this row.
+	 * Recipe id describing what produced this row.
 	 *
-	 * Free-form but stable — e.g. `"case-perturb"`, `"accent-strip"`,
-	 * `"abbrev-swap"`, `"compose:case-perturb+typo"`.
+	 * Free-form but stable — e.g. `"german"`, `"intersection"`, `"affix"`,
+	 * `"boundary-stress:tight"`, `"compose:case-perturb+typo"`.
 	 */
-	method: string
+	recipe: string
 
 	/**
-	 * `source_id` of the un-augmented row this was derived from.
+	 * `source_id` of the row this was derived from.
 	 *
-	 * Allows tracing every synthetic row back to its natural ancestor.
+	 * Allows tracing a derived row back to the row it was built from.
 	 */
 	base_source_id: string
 }
@@ -216,9 +277,33 @@ export interface CanonicalRow extends SourceProvenance {
 	addressRole?: AddressRole
 
 	/**
-	 * Present only on synthetic rows.
+	 * The published register this row's underlying record came from.
+	 *
+	 * A stable id for the publication rather than for the adapter that read it, so two adapters
+	 * over one register agree: `"hm-land-registry-ppd"`, `"us-census-tiger"`, `"openaddresses-nl"`.
+	 *
+	 * `null` states that the row names no published record, which is what a
+	 * post-office box or an intersection row is.
+	 * An adapter that reads a register and leaves this unset gets the adapter's
+	 * {@link CorpusAdapter.register} stamped by the runner.
+	 *
+	 * This is what a rights record and a supply census read.
+	 * `source` names the code that emitted the row and cannot answer whose terms govern it.
 	 */
-	synth?: SynthMarker
+	register?: string | null
+
+	/**
+	 * How this row's `raw` string was produced.
+	 *
+	 * The runner stamps the adapter's {@link CorpusAdapter.surface} on every row that omits it.
+	 * A recipe that renders one register through more than one path sets it per row.
+	 */
+	surface?: SurfaceOrigin
+
+	/**
+	 * Which recipe produced this row, present when a recipe rather than an adapter did.
+	 */
+	recipe?: RecipeMarker
 }
 
 /**
@@ -376,6 +461,26 @@ export interface CorpusAdapter {
 	 * and declares the dominant role here.
 	 */
 	readonly addressRole: AddressRole
+
+	/**
+	 * The published register this adapter reads.
+	 *
+	 * Required, and with no default, for the reason {@link CorpusAdapter.addressRole} is:
+	 * only the adapter's author has read the publication.
+	 * `null` states that the adapter emits rows naming no published record, which a fabricating recipe does.
+	 *
+	 * The runner stamps this onto every row the adapter leaves unset.
+	 */
+	readonly register: string | null
+
+	/**
+	 * How this adapter's rows reach their `raw` string.
+	 *
+	 * The runner stamps this onto every row the adapter leaves unset.
+	 * An adapter whose rows take more than one path sets the row field per row
+	 * and declares the dominant one here.
+	 */
+	readonly surface: SurfaceOrigin
 
 	/**
 	 * One-sentence description shown by `npx mailwoman corpus list`.

@@ -27,7 +27,8 @@ import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 
 import { stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
  * Registry id for this adapter.
@@ -66,6 +67,8 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 		id: GEONAMES_POSTAL_ADAPTER_ID,
 		defaultLicense: GEONAMES_POSTAL_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.GeoNamesPostal,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"GeoNames postcodes (CC-BY-4.0) — multi-locale postcode→locality→region, names inline; international postcode-first order.",
 

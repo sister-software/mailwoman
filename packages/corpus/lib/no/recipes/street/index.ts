@@ -20,6 +20,18 @@ import {
 	type CorpusRecipe,
 } from "#recipes/scaffold"
 import { synthesizeNoStreetRow, type NoStreetBaseTuple } from "#synthesizers/no-street"
+import { SurfaceOrigin } from "#types"
+
+/**
+ * A venue or admin-only row asserting that no street-side component is present.
+ *
+ * The components come from the `--input` tuples, and the row exists to teach the absence
+ * rather than to report a record, so no register asserts it.
+ */
+const NO_STREET_PROVENANCE = {
+	register: null,
+	surface: SurfaceOrigin.Invented,
+}
 
 /**
  * Recipe registered with the corpus builder.
@@ -77,7 +89,8 @@ export const noStreetRecipe: CorpusRecipe = {
 						corpus_version: "0.4.0",
 						license: LICENSE,
 					},
-					synth.template
+					synth.template,
+					NO_STREET_PROVENANCE
 				)
 
 				if (ok) {

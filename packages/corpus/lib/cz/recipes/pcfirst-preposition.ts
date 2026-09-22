@@ -16,7 +16,8 @@
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, requireRegister, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { SurfaceOrigin } from "#types"
 /**
  * The order-cycle slot for the street-less form (`«city» «pc», Česko`).
  *
@@ -41,6 +42,11 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 		let read = 0
 		let emitted = 0
 		let skipped = 0
+
+		const CZ_PCFIRST_PROVENANCE = {
+			register: requireRegister(opts, "cz-pcfirst-preposition"),
+			surface: SurfaceOrigin.Composed,
+		}
 
 		for await (const t of readTuples(opts.input!)) {
 			read++
@@ -100,7 +106,7 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 					"Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "cz-pcfirst-preposition")) {
+			if (alignAndWrite(write, canonical, "cz-pcfirst-preposition", CZ_PCFIRST_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++

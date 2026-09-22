@@ -38,7 +38,7 @@ import { JSONSpliterator } from "spliterator"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
 import type { ParquetFileDescriptor, ParquetManifest } from "#parquet/writers"
 import { writeParquetFile } from "#parquet/writers"
-import type { CanonicalRow, LabeledRow } from "#types"
+import { type CanonicalRow, type LabeledRow, requireSurface } from "#types"
 import { alignRow } from "#utils"
 
 export interface TranslitOverlayOptions {
@@ -74,7 +74,9 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
 		source_id: raw["source_id"] as string,
 		corpus_version: corpusVersion,
 		license: (raw["license"] as string) ?? "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",
-		synth: raw["synth"] as CanonicalRow["synth"],
+		recipe: raw["recipe"] as CanonicalRow["recipe"],
+		register: (raw["register"] as string | null) ?? null,
+		surface: requireSurface(raw, "translit"),
 	}
 }
 

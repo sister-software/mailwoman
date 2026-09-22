@@ -109,12 +109,20 @@ function parquetTable(rows: readonly ParquetRow[]) {
 			rows.map((row) => row.license),
 			new Utf8()
 		),
-		synth_method: vectorFromArray(
-			rows.map((row) => row.synth_method ?? null),
+		register: vectorFromArray(
+			rows.map((row) => row.register ?? null),
 			new Utf8()
 		),
-		synth_base_id: vectorFromArray(
-			rows.map((row) => row.synth_base_id ?? null),
+		surface: vectorFromArray(
+			rows.map((row) => row.surface),
+			new Utf8()
+		),
+		recipe: vectorFromArray(
+			rows.map((row) => row.recipe ?? null),
+			new Utf8()
+		),
+		base_source_id: vectorFromArray(
+			rows.map((row) => row.base_source_id ?? null),
 			new Utf8()
 		),
 	})

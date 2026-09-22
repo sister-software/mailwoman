@@ -36,7 +36,20 @@ import { join, type PathBuilderLike } from "path-ts"
 
 import { isReservedBarePostcode } from "#recipes/bare/postcode/eval"
 import { alignAndWrite, type CorpusRecipe, readCSVRecords, recipeSourceID } from "#recipes/scaffold"
+import { SourceRegister } from "#registers"
 import { normalizeGauntletSurface, readGauntletInputs } from "#tools/gauntlet-inputs"
+import { SurfaceOrigin } from "#types"
+
+/**
+ * A postcode written in the form its country uses, with nothing around it.
+ *
+ * The codes come from this repository's postcode-format tables rather than from a national
+ * postcode file, so the register is the codex and the surface is the code as that table writes it.
+ */
+const BARE_POSTCODE_PROVENANCE = {
+	register: SourceRegister.Codex,
+	surface: SurfaceOrigin.Attested,
+}
 
 /**
  * One country's postcodes: the CSV under the extracted OpenAddresses tree, and the country it covers.
@@ -331,7 +344,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 							"Synthetic — bare-postcode; postcodes from OpenAddresses (per-source attribution in the model card)",
 					}
 
-					if (alignAndWrite(write, canonical, "bare-postcode")) {
+					if (alignAndWrite(write, canonical, "bare-postcode", BARE_POSTCODE_PROVENANCE)) {
 						emitted++
 						perCountry.set(country, perCountry.get(country)! + 1)
 					} else {

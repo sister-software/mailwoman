@@ -26,6 +26,7 @@ import {
 } from "@mailwoman/corpus/parquet/schema"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
 import { writeParquetSplits } from "@mailwoman/corpus/parquet/writers"
+import { SurfaceOrigin } from "@mailwoman/corpus/types"
 import type { LabeledRow } from "@mailwoman/corpus/types"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -37,6 +38,8 @@ const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	source_id: "t-1",
 	corpus_version: "0.1.0",
 	license: "CC0-1.0",
+	register: "whos-on-first",
+	surface: SurfaceOrigin.Attested,
 	tokens: ["Paris"],
 	labels: ["B-locality"],
 	span_starts: [0],
@@ -70,22 +73,22 @@ describe("rowToParquet", () => {
 	it("flattens synth + locale onto top-level columns", () => {
 		const row = labeled({
 			locale: "fr-FR",
-			synth: { method: "case-upper", base_source_id: "t-1" },
+			recipe: { recipe: "case-upper", base_source_id: "t-1" },
 			source_id: "t-1+case-upper",
 		})
 
 		const pq = rowToParquet(row)
 		expect(pq.locale).toBe("fr-FR")
-		expect(pq.synth_method).toBe("case-upper")
-		expect(pq.synth_base_id).toBe("t-1")
+		expect(pq.recipe).toBe("case-upper")
+		expect(pq.base_source_id).toBe("t-1")
 		expect(pq.source_id).toBe("t-1+case-upper")
 	})
 
 	it("emits null for missing optional fields", () => {
-		const pq = rowToParquet(labeled({ locale: undefined, synth: undefined }))
+		const pq = rowToParquet(labeled({ locale: undefined, recipe: undefined }))
 		expect(pq.locale).toBeNull()
-		expect(pq.synth_method).toBeNull()
-		expect(pq.synth_base_id).toBeNull()
+		expect(pq.recipe).toBeNull()
+		expect(pq.base_source_id).toBeNull()
 	})
 
 	it("preserves tokens + labels array shape", () => {
@@ -132,10 +135,14 @@ describe("LABELED_ROW_SCHEMA", () => {
 		expect(Object.keys(LABELED_ROW_SCHEMA).toSorted()).toEqual([...PARQUET_COLUMNS].toSorted())
 	})
 
-	it("marks locale / synth_method / synth_base_id optional", () => {
+	it("marks locale / register / recipe / base_source_id optional and surface required", () => {
 		expect(LABELED_ROW_SCHEMA.locale!.optional).toBe(true)
-		expect(LABELED_ROW_SCHEMA.synth_method!.optional).toBe(true)
-		expect(LABELED_ROW_SCHEMA.synth_base_id!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.register!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.recipe!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.base_source_id!.optional).toBe(true)
+		// A null register states that the row names no published record, which is an answer.
+		// A null surface would mean nobody said how the text was produced, so every row carries one.
+		expect(LABELED_ROW_SCHEMA.surface!.optional).toBeUndefined()
 	})
 
 	it("marks tokens / labels REPEATED", () => {
@@ -246,8 +253,10 @@ describe("writeParquetSplits", () => {
 			"source_id",
 			"corpus_version",
 			"license",
-			"synth_method",
-			"synth_base_id",
+			"register",
+			"surface",
+			"recipe",
+			"base_source_id",
 		])
 	})
 

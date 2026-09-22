@@ -12,6 +12,18 @@ import { makeLcg } from "@mailwoman/core/utils"
 import { stableSourceID } from "#adapters/utils"
 import { alignAndWrite, readTuples, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
+import { SurfaceOrigin } from "#types"
+
+/**
+ * The street name is drawn from a pool and joined to a tuple's locality, region and postcode.
+ *
+ * No register asserts that this street runs through this locality, which is what makes
+ * the row invented rather than a rendering of a published record.
+ */
+const STREET_PROVENANCE = {
+	register: null,
+	surface: SurfaceOrigin.Invented,
+}
 
 /**
  * Recipe registered with the corpus builder.
@@ -69,7 +81,8 @@ export const streetRecipe: CorpusRecipe = {
 						corpus_version: "0.4.0",
 						license: "Synthetic — public-domain street name + tuple combination",
 					},
-					"street-decomp"
+					"street-decomp",
+					STREET_PROVENANCE
 				)
 
 				if (ok) {

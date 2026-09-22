@@ -28,6 +28,7 @@ import { renderPmbUs, renderPoBoxUs } from "#recipes/po/box/cedex/us"
 import { CLASS_MIX } from "#recipes/po/box/cedex/vocabulary"
 import { recipeSourceID, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeMilitaryPoBoxRow } from "#synthesizers/po-box"
+import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
 const COMPONENT_ORDER = ["house_number", "street", "po_box", "venue", "locality", "postcode", "region", "cedex"]
@@ -194,7 +195,16 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: kind, synth_base_id: null }))
+			// The CEDEX number is drawn rather than read from La Poste's own file.
+			write(
+				stringifyJSON({
+					...aligned.row,
+					recipe: kind,
+					base_source_id: null,
+					register: null,
+					surface: SurfaceOrigin.Invented,
+				})
+			)
 
 			emitted++
 		}

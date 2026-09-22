@@ -8,7 +8,7 @@ import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { runAdapter, type RunnerProgress } from "@mailwoman/corpus/runner"
-import { AddressRole, type CanonicalRow, type CorpusAdapter } from "@mailwoman/corpus/types"
+import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "@mailwoman/corpus/types"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -26,6 +26,8 @@ function makeAdapter(opts: {
 		id,
 		defaultLicense: license,
 		addressRole: opts.addressRole ?? AddressRole.Premise,
+		register: "test-register",
+		surface: SurfaceOrigin.Attested,
 		description: `synthetic adapter ${id}`,
 		async *rows() {
 			let i = 0
@@ -178,6 +180,8 @@ describe("runAdapter", () => {
 			id: "syn",
 			defaultLicense: "CC0-1.0",
 			addressRole: AddressRole.Premise,
+			register: "test-register",
+			surface: SurfaceOrigin.Attested,
 			description: "",
 			async *rows() {
 				yield { ...baseRow({}), source: "different" }
@@ -199,6 +203,8 @@ describe("runAdapter", () => {
 			id: "syn",
 			defaultLicense: "CC0-1.0",
 			addressRole: AddressRole.Premise,
+			register: "test-register",
+			surface: SurfaceOrigin.Attested,
 			description: "",
 			async *rows() {
 				yield baseRow({ source: "syn", raw: "" })

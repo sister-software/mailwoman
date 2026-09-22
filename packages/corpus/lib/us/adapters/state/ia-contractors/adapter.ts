@@ -27,7 +27,8 @@ import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -59,6 +60,8 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 		id: STATE_IA_CONTRACTORS_ADAPTER_ID,
 		defaultLicense: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
 		addressRole: AddressRole.RegisteredOffice,
+		register: SourceRegister.IowaContractors,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"Iowa Active Construction Contractor Registrations — business name + full street address (public-domain).",
 

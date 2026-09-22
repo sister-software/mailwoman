@@ -20,6 +20,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeAnchorAbsorptionRow } from "#synthesizers/anchor-absorption"
+import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
 /**
@@ -90,7 +91,17 @@ export const anchorAbsorptionRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "anchor-absorption", synth_template: synth.template }))
+			write(
+				stringifyJSON({
+					...aligned.row,
+					recipe: "anchor-absorption",
+					template: synth.template,
+					// The components are drawn from weighted template tables rather than read from a
+					// register, so the row teaches the absorption shape and names no published address.
+					register: null,
+					surface: SurfaceOrigin.Invented,
+				})
+			)
 
 			written++
 			byTemplate[synth.template] = (byTemplate[synth.template] ?? 0) + 1

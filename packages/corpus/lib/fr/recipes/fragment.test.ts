@@ -81,7 +81,7 @@ describe("fr-fragment: the split", () => {
 describe("fr-fragment: the forms", () => {
 	it("mints streets with NO house number — the class the existing recipe cannot reach", async () => {
 		const { rows } = await run(TUPLES, ["nothing"], { hnProb: 0 })
-		const streetRows = rows.filter((r) => String(r.synth_method).startsWith("fr-fragment:") && r.components!.street)
+		const streetRows = rows.filter((r) => String(r.recipe).startsWith("fr-fragment:") && r.components!.street)
 
 		expect(streetRows.length).toBeGreaterThan(0)
 
@@ -115,7 +115,7 @@ describe("fr-fragment: the forms", () => {
 describe("fr-fragment: the counter-distribution", () => {
 	it("mints bare localities carrying NO street-side label", async () => {
 		const { rows } = await run(TUPLES, ["nothing"])
-		const negative = rows.filter((r) => String(r.synth_method) === "fr-fragment:bare-locality")
+		const negative = rows.filter((r) => String(r.recipe) === "fr-fragment:bare-locality")
 
 		expect(negative.length).toBeGreaterThan(0)
 
@@ -127,7 +127,7 @@ describe("fr-fragment: the counter-distribution", () => {
 
 	it("title-cases the locality — BAN stores it normalized, the model must not learn that shape", async () => {
 		const { rows } = await run(TUPLES, ["nothing"])
-		const negative = rows.filter((r) => String(r.synth_method) === "fr-fragment:bare-locality")
+		const negative = rows.filter((r) => String(r.recipe) === "fr-fragment:bare-locality")
 
 		for (const row of negative) {
 			expect(String(row.raw)).not.toBe(String(row.raw).toLowerCase())
@@ -141,7 +141,7 @@ describe("fr-fragment: the counter-distribution", () => {
 		const lots = await run(TUPLES, ["nothing"], { bareProb: 0.5 })
 
 		const count = (r: { rows: RecipeRow[] }) =>
-			r.rows.filter((x) => String(x.synth_method) === "fr-fragment:bare-locality").length
+			r.rows.filter((x) => String(x.recipe) === "fr-fragment:bare-locality").length
 
 		expect(count(none)).toBe(0)
 		expect(count(lots)).toBeGreaterThan(count(none))

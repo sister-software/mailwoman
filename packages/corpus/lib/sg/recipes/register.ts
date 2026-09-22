@@ -28,6 +28,8 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { titlecase } from "#au/adapters/gnaf/assemble"
 import { alignAndWrite, type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"
+import { SourceRegister } from "#registers"
+import { SurfaceOrigin } from "#types"
 
 const SOURCE = "synth-sg-register"
 
@@ -260,7 +262,10 @@ export const sgRegisterRecipe: CorpusRecipe = {
 					license:
 						"CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",
 				},
-				`sg-register:${rendering.register}`
+				`sg-register:${rendering.register}`,
+				// The block number, street and postcode are the Overture-SG register's own values,
+				// re-ordered into the three forms a person in Singapore types.
+				{ register: SourceRegister.Overture, surface: SurfaceOrigin.Composed }
 			)
 
 			if (ok) {

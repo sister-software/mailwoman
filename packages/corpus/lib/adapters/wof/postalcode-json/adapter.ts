@@ -47,7 +47,8 @@ import {
 	nameSlotsFor as wofNameSlotsFor,
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { US_STATE_BY_ABBREVIATION } from "#us/fips-state"
 import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
 
@@ -162,6 +163,8 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 		id: WOF_POSTALCODE_ADAPTER_ID,
 		defaultLicense: "CC0-1.0",
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.WhosOnFirst,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"Who's On First postalcode GeoJSON bundles (postcode → locality/region pairs). Ancestor names from sibling admin repos.",
 

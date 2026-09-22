@@ -32,13 +32,18 @@ them renders real published address tuples through a template:
 | `synth-es` | the CNIG export, read raw for the pedanía variant            |
 | `synth-nz` | a LINZ-derived OpenAddresses extract                         |
 
-A row carries `synth_method` to record that its **surface** was composed by a template. The address
-in it came from the register above. `recipes/locale.ts` writes that field with the recipe's own
-source id.
+Three columns record this, each answering one question. `recipe` names the code that produced the
+row, `register` names the publication its record came from, and `surface` says how the text was
+built: `attested` is the publisher's own string, `composed` is a template over one real record's
+fields, and `invented` names no published record.
 
-The exceptions are the sources that do fabricate: `synth-po-box`, `synth-fragment`,
-`synth-sub-venue` and the other shape recipes build surfaces to teach a form rather than to record a
-place.
+So `synth-gb` writes `recipe: gb`, `register: gb-hm-land-registry-ppd`, `surface: composed` — a
+Land Registry record in the recipe's order. `synth-po-box` writes `register: null`,
+`surface: invented`, because no register asserts that box exists. `synth-fragment`,
+`synth-sub-venue` and the other shape recipes divide the same way.
+
+A single `synth_method` column used to answer both questions and was read as the second. It reported
+every Land Registry record as fabricated, which is why the split exists.
 
 ## The five locales with a receipt
 

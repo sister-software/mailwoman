@@ -34,7 +34,8 @@ import { allRows, getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
  * Ancestry hops walked upward from a WOF record before giving up — deeper than any real JP admin chain.
@@ -141,6 +142,8 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 		id: WOF_ADMIN_JP_ADAPTER_ID,
 		defaultLicense: "CC-BY-4.0",
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.WhosOnFirst,
+		surface: SurfaceOrigin.Attested,
 		description: "Japanese admin hierarchy from WOF (synthesized addresses without house numbers).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

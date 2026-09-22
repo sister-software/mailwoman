@@ -36,7 +36,8 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
  * Registry id for this adapter.
@@ -88,6 +89,8 @@ export function createGNAFAdapter(): CorpusAdapter {
 		id: GNAF_ADAPTER_ID,
 		defaultLicense: GNAF_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.GNAF,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"G-NAF (Australia): assembled address tuples rendered in multiple word orders (canonical / postcode-first / locality-first) — teaches the model AU's postcode-first layout.",
 

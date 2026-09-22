@@ -29,7 +29,8 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { componentsForOSMRow, OSM_LICENSE, sameName } from "#adapters/osm/adapter"
 import { alignAndWrite, type CorpusRecipe, readTuples, type RecipeOptions, recipeSourceID } from "#recipes/scaffold"
-import type { CanonicalRow } from "#types"
+import { SourceRegister } from "#registers"
+import { type CanonicalRow, SurfaceOrigin } from "#types"
 
 /**
  * Islamabad's residential sectors: the lettered rows E to I, the numbered columns the
@@ -174,7 +175,11 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 						corpus_version: "0.1.0",
 						license: OSM_LICENSE,
 					},
-					`${name}:${rendering.register}`
+					`${name}:${rendering.register}`,
+					// The components come from the OpenStreetMap corpus jsonl the `osm` adapter wrote.
+					// This recipe re-orders them into the typed forms, so the address is real
+					// and the line is the recipe's.
+					{ register: SourceRegister.OpenStreetMap, surface: SurfaceOrigin.Composed }
 				)
 
 				if (ok) {

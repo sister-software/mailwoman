@@ -70,7 +70,15 @@ import { lookupCanadianProvince } from "@mailwoman/codex/ca"
 import { lookupUSState } from "@mailwoman/codex/us"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import {
+	alignAndWrite,
+	type PostcodePlacement,
+	readTuples,
+	requireRegister,
+	type CorpusRecipe,
+	recipeSourceID,
+} from "#recipes/scaffold"
+import { SurfaceOrigin } from "#types"
 
 /**
  * The code an address line in this country writes the region as, or null where the name is written out.
@@ -117,6 +125,11 @@ export const trailingRegionRecipe: CorpusRecipe = {
 		let read = 0
 		let emitted = 0
 		let skipped = 0
+
+		const TRAILING_REGION_PROVENANCE = {
+			register: requireRegister(opts, "trailing-region"),
+			surface: SurfaceOrigin.Composed,
+		}
 
 		for await (const t of readTuples(opts.input!)) {
 			read++
@@ -220,7 +233,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 				license: "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
 			}
 
-			if (alignAndWrite(write, canonical, "trailing-region")) {
+			if (alignAndWrite(write, canonical, "trailing-region", TRAILING_REGION_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++

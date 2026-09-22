@@ -25,6 +25,17 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { SourceRegister } from "#registers"
+import { SurfaceOrigin } from "#types"
+
+/**
+ * Real `(street, number, city)` triples from the Base Adresse Nationale,
+ * written without the postcode the source carries.
+ */
+const FR_BARE_STREET_PROVENANCE = {
+	register: SourceRegister.BaseAdresseNationale,
+	surface: SurfaceOrigin.Composed,
+}
 
 /**
  * Canonical voie type (lowercase, accent-kept) → its most common written abbreviation,
@@ -99,7 +110,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 							"Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
 					}
 
-					if (alignAndWrite(write, bare, "fr-bare-street")) {
+					if (alignAndWrite(write, bare, "fr-bare-street", FR_BARE_STREET_PROVENANCE)) {
 						emitted++
 					} else {
 						skipped++
@@ -166,7 +177,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 					"Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
 			}
 
-			if (alignAndWrite(write, canonical, "fr-bare-street")) {
+			if (alignAndWrite(write, canonical, "fr-bare-street", FR_BARE_STREET_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++

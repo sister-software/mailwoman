@@ -74,6 +74,20 @@ import { TextSpliterator } from "spliterator"
 
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { SourceRegister } from "#registers"
+import { SurfaceOrigin } from "#types"
+
+/**
+ * Both halves of this recipe write real Base Adresse Nationale values.
+ *
+ * The fragment half drops the house number from a `(street, commune)` pair,
+ * and the counter-distribution half writes a commune name alone.
+ * Neither invents a name.
+ */
+const FR_FRAGMENT_PROVENANCE = {
+	register: SourceRegister.BaseAdresseNationale,
+	surface: SurfaceOrigin.Composed,
+}
 
 /**
  * House numbers, weighted toward the small values that dominate real BAN rows.
@@ -295,7 +309,8 @@ export const frFragmentRecipe: CorpusRecipe = {
 						corpus_version: "0.9.4",
 						license: "Synthetic — fr-fragment; (street, commune) from BAN (Base Adresse Nationale, Licence Ouverte)",
 					},
-					`fr-fragment:${klass}`
+					`fr-fragment:${klass}`,
+					FR_FRAGMENT_PROVENANCE
 				)
 			) {
 				emitted++
@@ -333,7 +348,8 @@ export const frFragmentRecipe: CorpusRecipe = {
 						corpus_version: "0.9.4",
 						license: "Synthetic — fr-fragment counter-distribution; commune from BAN (Licence Ouverte)",
 					},
-					"fr-fragment:bare-locality"
+					"fr-fragment:bare-locality",
+					FR_FRAGMENT_PROVENANCE
 				)
 			) {
 				emitted++

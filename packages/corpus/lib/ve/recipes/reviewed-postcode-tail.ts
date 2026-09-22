@@ -13,6 +13,8 @@ import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 
 import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { SourceRegister } from "#registers"
+import { SurfaceOrigin } from "#types"
 
 /**
  * A separate sampler bucket so a receipt measures these reviewed after-locality rows
@@ -179,7 +181,16 @@ export const reviewedPostcodeTailRecipe: CorpusRecipe = {
 					license: `Synthetic rendering of reviewed postal facts — ${tuple.provenance.publisher}; source terms recorded in reviewed-ve-postcode-tuples.json`,
 				}
 
-				if (alignAndWrite(write, canonical, "reviewed-postcode-tail", tuple.id)) {
+				if (
+					alignAndWrite(write, canonical, "reviewed-postcode-tail", {
+						// The four facts were read from their publishers by hand and recorded in
+						// `reviewed-ve-postcode-tuples.json`, which names the publisher per tuple.
+						// No bulk source yielded Venezuelan tuples, so there is no upstream file to point at.
+						register: SourceRegister.ReviewedByHand,
+						surface: SurfaceOrigin.Composed,
+						baseSourceID: tuple.id,
+					})
+				) {
 					emitted++
 				} else {
 					skipped++

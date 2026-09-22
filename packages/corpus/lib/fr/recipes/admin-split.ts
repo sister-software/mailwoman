@@ -39,6 +39,8 @@ import { CSVSpliterator, Delimiters } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import type { CorpusRecipe } from "#recipes/scaffold"
+import { SourceRegister } from "#registers"
+import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -237,7 +239,16 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "fr-admin-split", synth_order: order, synth_base_id: null }))
+			write(
+				stringifyJSON({
+					...aligned.row,
+					recipe: "fr-admin-split",
+					order,
+					base_source_id: null,
+					register: SourceRegister.BaseAdresseNationale,
+					surface: SurfaceOrigin.Composed,
+				})
+			)
 
 			emitted++
 			orderCounts[order] = (orderCounts[order] ?? 0) + 1

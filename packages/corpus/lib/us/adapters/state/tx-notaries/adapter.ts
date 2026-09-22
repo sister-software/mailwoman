@@ -20,7 +20,8 @@ import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -52,6 +53,8 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 		id: STATE_TX_NOTARIES_ADAPTER_ID,
 		defaultLicense: STATE_TX_NOTARIES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Mailing,
+		register: SourceRegister.TexasNotaries,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"Texas Notary Public Commissions — name + mailing address with embedded city/state/zip (public-domain).",
 

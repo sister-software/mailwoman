@@ -51,8 +51,8 @@ describe("universal augmentations", () => {
 
 		expect(out.raw).toBe("PORTLAND, OR 97214")
 		expect(out.components.locality).toBe("PORTLAND")
-		expect(out.synth?.method).toBe("case-upper")
-		expect(out.synth?.base_source_id).toBe("t-1")
+		expect(out.recipe?.recipe).toBe("case-upper")
+		expect(out.recipe?.base_source_id).toBe("t-1")
 		expect(out.source_id).toBe("t-1+case-upper")
 	})
 
@@ -73,7 +73,7 @@ describe("universal augmentations", () => {
 		)!
 
 		expect(out.raw).toBe("Portland OR 97214")
-		expect(out.synth?.method).toBe("drop-commas")
+		expect(out.recipe?.recipe).toBe("drop-commas")
 	})
 
 	it("doubleSpace inserts double spaces in raw AND in components (alignment-safe)", () => {
@@ -129,7 +129,7 @@ describe("US augmentations", () => {
 
 		expect(out.raw).toBe("Portland, Oregon 97214")
 		expect(out.components.region).toBe("Oregon")
-		expect(out.synth?.method).toBe("state-expand")
+		expect(out.recipe?.recipe).toBe("state-expand")
 	})
 
 	it("stateAbbreviate Oregon → OR", () => {
@@ -207,7 +207,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 
 		expect(out.components.street).toBe("5th Ave")
 		expect(out.raw).toBe("350 5th Ave, New York, NY 10118")
-		expect(out.synth?.method).toBe("us-street-suffix-abbreviate")
+		expect(out.recipe?.recipe).toBe("us-street-suffix-abbreviate")
 	})
 
 	it("streetSuffixAbbreviate AVENUE → AVE (uppercase preserved, OpenAddresses-style)", () => {
@@ -299,7 +299,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 
 		expect(out.components.street).toBe("5th Avenue")
 		expect(out.raw).toBe("350 5th Avenue, New York, NY 10118")
-		expect(out.synth?.method).toBe("us-street-suffix-expand")
+		expect(out.recipe?.recipe).toBe("us-street-suffix-expand")
 	})
 
 	it("streetSuffixExpand AVE → AVENUE (uppercase preserved)", () => {
@@ -366,7 +366,7 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 		const out = unitDesignatorExpand(unitRow({}))!
 		expect(out.components.unit).toBe("Apartment 4B")
 		expect(out.raw).toBe("123 Main St Apartment 4B, Oakland, CA 94601")
-		expect(out.synth?.method).toBe("us-unit-designator-expand")
+		expect(out.recipe?.recipe).toBe("us-unit-designator-expand")
 	})
 
 	it("unitDesignatorAbbreviate Apartment → Apt", () => {
@@ -464,7 +464,7 @@ describe("FR augmentations", () => {
 		expect(out.raw).toBe("10 Rue République, 75008 Paris")
 		expect(out.components.street_prefix_particle).toBeUndefined()
 		expect(out.components.street_prefix).toBe("Rue")
-		expect(out.synth?.method).toBe("particle-strip")
+		expect(out.recipe?.recipe).toBe("particle-strip")
 	})
 
 	it("particleStrip returns null when no particle is present", () => {
@@ -504,7 +504,7 @@ describe("registry + defaults", () => {
 
 		const out = Array.from(synthesizeRow(row))
 		// Case-upper + case-lower + drop-commas + double-space + state-expand all apply
-		const methods = out.map((r) => r.synth?.method)
+		const methods = out.map((r) => r.recipe?.recipe)
 		expect(methods).toContain("case-upper")
 		expect(methods).toContain("case-lower")
 		expect(methods).toContain("drop-commas")
@@ -519,9 +519,9 @@ describe("registry + defaults", () => {
 		})
 
 		const out = Array.from(synthesizeRow(row))
-		const upper = out.find((r) => r.synth?.method === "case-upper")!
+		const upper = out.find((r) => r.recipe?.recipe === "case-upper")!
 		expect(upper.source_id).toBe("t-1+case-upper")
-		expect(upper.synth?.base_source_id).toBe("t-1")
+		expect(upper.recipe?.base_source_id).toBe("t-1")
 	})
 })
 
@@ -673,7 +673,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		expect(abbreviated.raw).toBe("P.O. Box 5, 100 Main St, Portland, OR 97214")
 		const upper = caseUpper(abbreviated)!
 		expect(upper.source_id).toBe("t-1+us-street-suffix-abbreviate+case-upper")
-		expect(upper.synth?.base_source_id).toBe("t-1")
+		expect(upper.recipe?.base_source_id).toBe("t-1")
 		const aligned = alignRow(upper)
 		expect(aligned.kind).toBe("labeled")
 
@@ -837,8 +837,8 @@ describe("composeAdversarialRow", () => {
 
 		if (result.kind !== "labeled") return
 
-		expect(result.row.synth?.method).toBe("compose:place-name-venue")
-		expect(result.row.synth?.base_source_id).toBe("wof-admin-buffalo")
+		expect(result.row.recipe?.recipe).toBe("compose:place-name-venue")
+		expect(result.row.recipe?.base_source_id).toBe("wof-admin-buffalo")
 		expect(result.row.source_id).toBe("wof-admin-buffalo+compose:place-name-venue")
 	})
 
@@ -1056,7 +1056,7 @@ describe("typoInject (#530)", () => {
 	it("injects exactly one typo into an alpha-name component, applied to raw + the component", () => {
 		const out = typoInject(row)
 		expect(out).not.toBeNull()
-		expect(out!.synth?.method).toBe("typo-inject")
+		expect(out!.recipe?.recipe).toBe("typo-inject")
 
 		const changed = (Object.keys(row.components) as ComponentTag[]).filter(
 			(k) => row.components[k] !== out!.components[k]

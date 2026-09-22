@@ -27,7 +27,10 @@ import type { RecipeOptions } from "#recipes/scaffold"
  */
 export interface RecipeRow {
 	raw: string
-	synth_method?: string
+	recipe?: string
+	register?: string | null
+	surface?: string
+	base_source_id?: string | null
 	source?: string
 	source_id?: string
 	components?: Partial<Record<string, string>>
@@ -66,6 +69,14 @@ export async function scratch(prefix: string, tuples: object[], surfaces: string
 }
 
 /**
+ * The register id a harness-built tuple set carries.
+ *
+ * It names no publisher, so a row written under it can never be mistaken for one of a
+ * real register's records if a fixture were ever loaded as corpus data.
+ */
+export const TEST_REGISTER = "test-harness"
+
+/**
  * Bind a recipe and its seed to a runner the tests call with just the tuples and reserved surfaces.
  *
  * The seed is per-recipe and required — these suites assert on generated distributions.
@@ -80,7 +91,18 @@ export function recipeRunner<TStats>(prefix: string, recipe: CorpusRecipe<TStats
 		const lines: string[] = []
 
 		const stats = await recipe.run(
-			{ output: "", seed, variants: 1, input: inputs.input, excludeSurfaces: inputs.exclude, ...opts },
+			{
+				output: "",
+				seed,
+				variants: 1,
+				input: inputs.input,
+				excludeSurfaces: inputs.exclude,
+				// The tuples come from this harness rather than from a publisher,
+				// and a recipe that reads them refuses to run without a register.
+				// A test asserting on the value passes its own through `opts`.
+				register: TEST_REGISTER,
+				...opts,
+			},
 			(line) => lines.push(line)
 		)
 

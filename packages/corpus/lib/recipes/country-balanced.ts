@@ -34,7 +34,8 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
-import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
+import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaffold"
+import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -512,7 +513,17 @@ export const countryBalancedRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "country", synth_base_id: null }))
+			// Real OpenAddresses tuples rendered in each country's own order, so the address
+			// is the register's and the ordering is this recipe's.
+			write(
+				stringifyJSON({
+					...aligned.row,
+					recipe: "country",
+					base_source_id: null,
+					register: requireRegister(opts, "country-balanced"),
+					surface: SurfaceOrigin.Composed,
+				})
+			)
 
 			emitted++
 		}

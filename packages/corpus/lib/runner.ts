@@ -184,6 +184,11 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 				...row,
 				corpus_version: corpusVersion,
 				addressRole: row.addressRole ?? adapter.addressRole,
+				// `register` is nullable and null is a statement rather than an absence,
+				// so an adapter that means "this row names no published record" says so by setting it.
+				// Only an undefined field takes the adapter's declaration.
+				register: row.register === undefined ? adapter.register : row.register,
+				surface: row.surface ?? adapter.surface,
 			}
 
 			const key = canonicalDedupKey(stamped)

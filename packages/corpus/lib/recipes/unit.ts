@@ -29,8 +29,9 @@ import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"
-import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
+import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaffold"
 import { EVAL_SOURCE, TRAIN_SOURCES, type UnitSource } from "#recipes/unit/sources"
+import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -358,7 +359,18 @@ export const unitRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "unit", synth_base_id: null }))
+			// The unit designator and number are drawn.
+			// The street and admin components come from the `--input` tuples,
+			// whose register the invocation names.
+			write(
+				stringifyJSON({
+					...aligned.row,
+					recipe: "unit",
+					base_source_id: null,
+					register: requireRegister(opts, "unit"),
+					surface: SurfaceOrigin.Composed,
+				})
+			)
 
 			emitted++
 		}

@@ -32,7 +32,8 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator, XLSXSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { type HiSchoolRow, schoolCellText, STATE_HI_SCHOOL_SHEETS } from "#us/adapters/state/hi-schools/workbook"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
@@ -85,6 +86,8 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 		id: STATE_HI_SCHOOLS_ADAPTER_ID,
 		defaultLicense: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
+		register: SourceRegister.HawaiiSchools,
+		surface: SurfaceOrigin.Attested,
 		description: "Hawaii DOE School Directory — ~300 K-12 public + charter schools with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

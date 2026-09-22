@@ -55,8 +55,10 @@ export interface ParquetRow {
 	source_id: string
 	corpus_version: string
 	license: string
-	synth_method?: string | null
-	synth_base_id?: string | null
+	register?: string | null
+	surface: string
+	recipe?: string | null
+	base_source_id?: string | null
 	[key: string]: unknown
 }
 
@@ -78,8 +80,10 @@ export const PARQUET_COLUMNS = [
 	"source_id",
 	"corpus_version",
 	"license",
-	"synth_method",
-	"synth_base_id",
+	"register",
+	"surface",
+	"recipe",
+	"base_source_id",
 ] as const
 
 /**
@@ -101,8 +105,10 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
 	source_id: "VARCHAR",
 	corpus_version: "VARCHAR",
 	license: "VARCHAR",
-	synth_method: "VARCHAR",
-	synth_base_id: "VARCHAR",
+	register: "VARCHAR",
+	surface: "VARCHAR",
+	recipe: "VARCHAR",
+	base_source_id: "VARCHAR",
 }
 
 /* oxlint-disable unicorn/text-encoding-identifier-case -- `"UTF8"` below is a ParquetType enum member rather than a text-encoding identifier. Lowercasing it does not type-check against ParquetSchemaDefinition,
@@ -128,8 +134,10 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	source_id: { type: "UTF8", compression: PARQUET_COMPRESSION },
 	corpus_version: { type: "UTF8", compression: PARQUET_COMPRESSION },
 	license: { type: "UTF8", compression: PARQUET_COMPRESSION },
-	synth_method: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
-	synth_base_id: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
+	register: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
+	surface: { type: "UTF8", compression: PARQUET_COMPRESSION },
+	recipe: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
+	base_source_id: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
 }
 
 /* oxlint-enable unicorn/text-encoding-identifier-case */
@@ -163,6 +171,18 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 		)
 	}
 
+	// The runner stamps the adapter's `surface` on every row that omits one, so an absent
+	// value here means the row reached parquet by a path that bypassed it.
+	// Writing a default would record every such row as the publisher's own string.
+	if (!row.surface) {
+		throw new Error(
+			`rowToParquet: row carries no surface ` +
+				`(source=${row.source}, source_id=${row.source_id}). ` +
+				`An adapter declares CorpusAdapter.surface and the runner stamps it; ` +
+				`a recipe writing rows directly sets the field itself.`
+		)
+	}
+
 	return {
 		raw: row.raw,
 		tokens: row.tokens,
@@ -176,7 +196,9 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 		source_id: row.source_id,
 		corpus_version: row.corpus_version,
 		license: row.license,
-		synth_method: row.synth?.method ?? null,
-		synth_base_id: row.synth?.base_source_id ?? null,
+		register: row.register ?? null,
+		surface: row.surface,
+		recipe: row.recipe?.recipe ?? null,
+		base_source_id: row.recipe?.base_source_id ?? null,
 	}
 }

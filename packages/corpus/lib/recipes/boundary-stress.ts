@@ -17,6 +17,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "#synthesizers/boundary-stress"
+import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
 /**
@@ -96,8 +97,17 @@ export const boundaryStressRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Match the base corpus parquet schema: flat synth_method / synth_base_id rather than a nested `synth`.
-			write(stringifyJSON({ ...aligned.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }))
+			// Match the base corpus parquet schema: flat columns rather than a nested object.
+			write(
+				stringifyJSON({
+					...aligned.row,
+					recipe: `boundary-stress:${row.template}`,
+					base_source_id: null,
+					// Every component is drawn from a template mix built to sit on a tag boundary.
+					register: null,
+					surface: SurfaceOrigin.Invented,
+				})
+			)
 
 			emitted++
 		}

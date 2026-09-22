@@ -35,7 +35,8 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
  * Registry id for this adapter.
@@ -97,6 +98,11 @@ export function createOvertureAdapter(): CorpusAdapter {
 		id: OVERTURE_ADAPTER_ID,
 		defaultLicense: OVERTURE_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
+		// Overture rows carry their own `sources[].dataset` and `sources[].license`,
+		// so a row's real upstream is on the row.
+		// This declares the aggregator rather than asserting a national grant.
+		register: SourceRegister.Overture,
+		surface: SurfaceOrigin.Attested,
 		description: "Overture Maps Addresses (global): per-country JSONL of street/number/postcode/locality.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

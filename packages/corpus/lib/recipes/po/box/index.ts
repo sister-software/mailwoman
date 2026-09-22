@@ -19,6 +19,18 @@ import {
 	type CorpusRecipe,
 } from "#recipes/scaffold"
 import { synthesizeMilitaryPoBoxRow, synthesizePoBoxRow, type PoBoxBaseTuple } from "#synthesizers/po-box"
+import { SurfaceOrigin } from "#types"
+
+/**
+ * The box number is drawn rather than read, so no register asserts that this box exists.
+ *
+ * The locality, region and postcode around it come from the `--input` tuples,
+ * but the row as a whole names no published record and the register field says so.
+ */
+const PO_BOX_PROVENANCE = {
+	register: null,
+	surface: SurfaceOrigin.Invented,
+}
 
 /**
  * Recipe registered with the corpus builder.
@@ -82,7 +94,8 @@ export const poBoxRecipe: CorpusRecipe = {
 						corpus_version: "0.4.0",
 						license: LICENSE,
 					},
-					synth.template
+					synth.template,
+					PO_BOX_PROVENANCE
 				)
 
 				if (ok) {
@@ -116,7 +129,8 @@ export const poBoxRecipe: CorpusRecipe = {
 						corpus_version: "0.4.0",
 						license: LICENSE,
 					},
-					mil.template
+					mil.template,
+					PO_BOX_PROVENANCE
 				)
 
 				if (ok) {

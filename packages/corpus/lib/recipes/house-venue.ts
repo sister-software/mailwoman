@@ -20,6 +20,18 @@ import {
 	type CorpusRecipe,
 } from "#recipes/scaffold"
 import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "#synthesizers/house-venue"
+import { SurfaceOrigin } from "#types"
+
+/**
+ * The venue name and house number are drawn and joined to a tuple's admin components.
+ *
+ * No register asserts that this venue stands at this number, so the row teaches the
+ * co-occurrence shape rather than reporting a published record.
+ */
+const HOUSE_VENUE_PROVENANCE = {
+	register: null,
+	surface: SurfaceOrigin.Invented,
+}
 
 /**
  * Recipe registered with the corpus builder.
@@ -79,7 +91,8 @@ export const houseVenueRecipe: CorpusRecipe = {
 						corpus_version: "0.4.0",
 						license: LICENSE,
 					},
-					synth.template
+					synth.template,
+					HOUSE_VENUE_PROVENANCE
 				)
 
 				if (ok) {

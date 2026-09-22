@@ -111,7 +111,7 @@ describe("pk-register recipe", () => {
 			expect(row.country).toBe("PK")
 			expect(row.locale).toBe("en-PK")
 			expect(row.license).toBe("ODbL-1.0")
-			expect(row.synth_method).toMatch(/^pk-register:(house|plain)$/u)
+			expect(row.recipe).toMatch(/^pk-register:(house|plain)$/u)
 			expect(row.labels?.filter((label) => label.endsWith("house_number"))).toHaveLength(1)
 		}
 

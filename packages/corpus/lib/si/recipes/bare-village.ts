@@ -26,7 +26,8 @@
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, requireRegister, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { SurfaceOrigin } from "#types"
 
 /**
  * Recipe registered with the corpus builder.
@@ -43,6 +44,11 @@ export const siBareVillageRecipe: CorpusRecipe = {
 		let read = 0
 		let emitted = 0
 		let skipped = 0
+
+		const SI_BARE_VILLAGE_PROVENANCE = {
+			register: requireRegister(opts, "si-bare-village"),
+			surface: SurfaceOrigin.Composed,
+		}
 
 		for await (const t of readTuples(opts.input!)) {
 			read++
@@ -89,7 +95,7 @@ export const siBareVillageRecipe: CorpusRecipe = {
 					"Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "si-bare-village")) {
+			if (alignAndWrite(write, canonical, "si-bare-village", SI_BARE_VILLAGE_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++

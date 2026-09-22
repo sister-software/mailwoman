@@ -587,7 +587,14 @@ def locale_supply_census(
     surfaces, and 8-byte digests keep the sets inside this function's memory where the strings would
     not. A blake2b collision at this cardinality is far below the precision any decision here needs.
 
-    Natural and synthetic are counted apart. A synthesized row carries `synth_method`, and counting
+    Rows are counted by `surface`, the field that says how the text was produced: `attested` is the
+    publisher's own string, `composed` is a template over one real record's fields, and `invented`
+    names no published record. The earlier reading counted a row as synthetic whenever it carried a
+    recipe name, which reported HM Land Registry records rendered by `synth-gb` as fabricated.
+    `register` names the publication each row's record came from, so supply is countable per
+    register rather than per adapter.
+
+    The old reading, kept only as the reason the split exists. A synthesized row carried `synth_method`, and counting
     the two together would answer "how much data is there" with a number partly produced by the
     recipe under test.
 
@@ -611,7 +618,7 @@ def locale_supply_census(
     from mailwoman_train.data.loader import _parquet_paths
 
     want = country.strip().upper()
-    columns = ["country", "source", "source_id", "raw", "span_tags", "synth_method"]
+    columns = ["country", "source", "source_id", "raw", "span_tags", "surface", "register"]
 
     # Predicate pushdown rather than reading every row and discarding most. A full scan of this corpus is
     # 681,901,687 rows across 718 files, and one country is a small part of it. `pyarrow.dataset` skips a row
@@ -630,7 +637,9 @@ def locale_supply_census(
         record_ids: set[int] = set()
         sequences: Counter[str] = Counter()
         by_source: Counter[str] = Counter()
-        rows = street_rows = synth_rows = street_and_region_rows = 0
+        by_surface: Counter[str] = Counter()
+        by_register: Counter[str] = Counter()
+        rows = street_rows = invented_rows = street_and_region_rows = 0
 
         started = time.monotonic()
         dataset = ds.dataset([str(path) for path in files], format="parquet")
@@ -643,14 +652,19 @@ def locale_supply_census(
             ids = batch.column("source_id").to_pylist()
             raws = batch.column("raw").to_pylist()
             tags = batch.column("span_tags").to_pylist()
-            synths = batch.column("synth_method").to_pylist()
+            surfaces_col = batch.column("surface").to_pylist()
+            registers_col = batch.column("register").to_pylist()
 
-            for source, source_id, raw, span_tags, synth in zip(sources, ids, raws, tags, synths, strict=True):
+            for source, source_id, raw, span_tags, surface, register in zip(
+                sources, ids, raws, tags, surfaces_col, registers_col, strict=True
+            ):
                 rows += 1
                 by_source[str(source)] += 1
+                by_surface[str(surface)] += 1
+                by_register[str(register) if register else "none"] += 1
 
-                if synth:
-                    synth_rows += 1
+                if surface == "invented":
+                    invented_rows += 1
 
                 if raw:
                     surfaces.add(digest(raw))
@@ -680,7 +694,9 @@ def locale_supply_census(
             "rows": rows,
             "street_rows": street_rows,
             "street_and_region_rows": street_and_region_rows,
-            "synth_rows": synth_rows,
+            "invented_rows": invented_rows,
+            "by_surface": dict(by_surface.most_common()),
+            "by_register": dict(by_register.most_common()),
             "distinct_surfaces": len(surfaces),
             "distinct_source_ids": len(record_ids),
             "distinct_component_sequences": len(sequences),
@@ -696,7 +712,7 @@ def locale_supply_census(
         print(f"  rows                          {rows:>12,}")
         print(f"  of those, street or house no. {street_rows:>12,}")
         print(f"  of those, also with a region  {street_and_region_rows:>12,}")
-        print(f"  of those, synthesized         {synth_rows:>12,}")
+        print(f"  of those, naming no register  {invented_rows:>12,}")
         print(f"  distinct raw surfaces         {len(surfaces):>12,}")
         print(f"  distinct source ids           {len(record_ids):>12,}")
         print(f"  distinct component sequences  {len(sequences):>12,}")

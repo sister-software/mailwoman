@@ -19,7 +19,15 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import {
+	alignAndWrite,
+	foldNOSurface,
+	readTuples,
+	requireRegister,
+	type CorpusRecipe,
+	recipeSourceID,
+} from "#recipes/scaffold"
+import { SurfaceOrigin } from "#types"
 
 /**
  * Recipe registered with the corpus builder.
@@ -75,6 +83,11 @@ export const noStreetLedRecipe: CorpusRecipe = {
 		let skipped = 0
 		let contaminated = 0
 
+		const NO_STREET_LED_PROVENANCE = {
+			register: requireRegister(opts, "no-street-led"),
+			surface: SurfaceOrigin.Composed,
+		}
+
 		for await (const t of readTuples(opts.input!)) {
 			read++
 			const street = String(t.street ?? "").trim()
@@ -127,7 +140,7 @@ export const noStreetLedRecipe: CorpusRecipe = {
 					"Synthetic — no-street-led; (street, number, postcode, city) from OpenAddresses NO (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "no-street-led")) {
+			if (alignAndWrite(write, canonical, "no-street-led", NO_STREET_LED_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++

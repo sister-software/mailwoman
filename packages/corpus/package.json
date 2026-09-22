@@ -81,6 +81,11 @@
 			"node": "./lib/types.ts",
 			"default": "./out/types.js"
 		},
+		"./registers": {
+			"types": "./out/registers.d.ts",
+			"node": "./lib/registers.ts",
+			"default": "./out/registers.js"
+		},
 		"./data/*": "./data/*",
 		"./au/*": {
 			"types": "./out/au/*.d.ts",

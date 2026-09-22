@@ -249,9 +249,9 @@ export function canonicalDedupKey(row: CanonicalRow): string {
 	const sortedKeys = Object.keys(row.components).toSorted() as ComponentTag[]
 	const compPart = sortedKeys.map((k) => `${k}=${row.components[k] ?? ""}`).join("\u001F")
 	const rawNorm = row.raw.toLowerCase().replaceAll(/\s+/g, " ").trim()
-	const synthPart = row.synth ? `\u001E${row.synth.method}` : ""
+	const recipePart = row.recipe ? `\u001E${row.recipe.recipe}` : ""
 
-	return `${row.country}\u001E${rawNorm}\u001E${compPart}${synthPart}`
+	return `${row.country}\u001E${rawNorm}\u001E${compPart}${recipePart}`
 }
 
 /**

@@ -39,7 +39,8 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { splitStreetLine } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -104,6 +105,8 @@ export function createFccBdcAdapter(): CorpusAdapter {
 		id: FCC_BDC_ADAPTER_ID,
 		defaultLicense: FCC_BDC_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.FCCBroadbandData,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"FCC Broadband Data Collection — Fabric-derived BSL addresses (public-domain); SQLite DB the operator builds via the isp-nexus BDC ETL.",
 

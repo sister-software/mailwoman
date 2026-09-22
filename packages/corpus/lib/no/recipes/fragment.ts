@@ -38,7 +38,15 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import {
+	alignAndWrite,
+	foldNOSurface,
+	readTuples,
+	requireRegister,
+	type CorpusRecipe,
+	recipeSourceID,
+} from "#recipes/scaffold"
+import { SurfaceOrigin } from "#types"
 
 /**
  * Title-case a Kartverket all-caps locality (hellvik -> Hellvik); #690, all-caps is OOD.
@@ -141,11 +149,16 @@ export const noFragmentRecipe: CorpusRecipe = {
 				license: "Synthetic — no-fragment; (street, number, postcode, city) from OpenAddresses NO / Kartverket",
 			}
 
-			if (alignAndWrite(write, canonical, "no-fragment")) {
+			if (alignAndWrite(write, canonical, "no-fragment", NO_FRAGMENT_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++
 			}
+		}
+
+		const NO_FRAGMENT_PROVENANCE = {
+			register: requireRegister(opts, "no-fragment"),
+			surface: SurfaceOrigin.Composed,
 		}
 
 		for await (const tuple of readTuples(opts.input!)) {

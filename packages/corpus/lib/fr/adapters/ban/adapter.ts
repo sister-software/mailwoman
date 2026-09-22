@@ -36,7 +36,8 @@ import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
  * Registry id for this adapter.
@@ -80,6 +81,8 @@ export function createBanAdapter(): CorpusAdapter {
 		id: BAN_ADAPTER_ID,
 		defaultLicense: "Licence Ouverte 2.0",
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.BaseAdresseNationale,
+		surface: SurfaceOrigin.Attested,
 		description: "Base Adresse Nationale (FR): house-number-level street addresses (~25M rows).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

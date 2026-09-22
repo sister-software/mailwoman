@@ -32,7 +32,7 @@ import {
 	synthesizePoBoxRow,
 	type PoBoxBaseTuple,
 } from "#synthesizers/po-box"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
  * Registry id for this adapter.
@@ -95,6 +95,10 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 		id: SYNTH_PO_BOX_ADAPTER_ID,
 		defaultLicense: SYNTH_PO_BOX_LICENSE,
 		addressRole: AddressRole.Mailing,
+		// No register asserts that these boxes exist.
+		// They teach the shape of a post-office box line.
+		register: null,
+		surface: SurfaceOrigin.Invented,
 		description:
 			"Synthetic PO box / PMB / Apartado / Boîte Postale rows. Consumes JSONL of (locality, region, postcode, country) tuples and emits locale-appropriate PO box variants.",
 

@@ -49,7 +49,8 @@ import {
 	nameSlotsFor as wofNameSlotsFor,
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
 
 /**
@@ -208,6 +209,8 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 		id: WOF_ADMIN_ADAPTER_ID,
 		defaultLicense: "CC0-1.0",
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.WhosOnFirst,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"Who's On First admin GeoJSON bundles (countries, regions, counties, localities) — multi-name variants per record.",
 

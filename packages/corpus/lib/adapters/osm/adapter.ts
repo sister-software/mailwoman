@@ -42,7 +42,8 @@ import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
  * Registry id for this adapter, stamped into every row it emits.
@@ -236,6 +237,8 @@ export function createOSMAdapter(): CorpusAdapter {
 		id: OSM_ADAPTER_ID,
 		defaultLicense: OSM_LICENSE,
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.OpenStreetMap,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"OpenStreetMap addresses (ODbL, share-alike): per-country JSONL from a Geofabrik extract, for the countries no permissive source covers.",
 

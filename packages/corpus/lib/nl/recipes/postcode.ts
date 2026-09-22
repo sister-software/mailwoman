@@ -20,7 +20,8 @@
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, requireRegister, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { SurfaceOrigin } from "#types"
 
 /**
  * "1012LG" → "1012 LG".
@@ -48,6 +49,11 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 		let read = 0
 		let emitted = 0
 		let skipped = 0
+
+		const NL_POSTCODE_PROVENANCE = {
+			register: requireRegister(opts, "nl-postcode"),
+			surface: SurfaceOrigin.Composed,
+		}
 
 		for await (const t of readTuples(opts.input!)) {
 			read++
@@ -111,7 +117,7 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 					"Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "nl-postcode")) {
+			if (alignAndWrite(write, canonical, "nl-postcode", NL_POSTCODE_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++

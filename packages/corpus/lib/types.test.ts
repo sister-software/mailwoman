@@ -5,6 +5,7 @@
  */
 
 import { BIO_LABELS, COMPONENT_TAGS } from "@mailwoman/codex/component"
+import { SourceRegister } from "@mailwoman/corpus/registers"
 import {
 	AddressRole,
 	addressRoleOf,
@@ -14,6 +15,7 @@ import {
 	type CorpusAdapter,
 	type LabeledRow,
 	type QuarantinedRow,
+	SurfaceOrigin,
 } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
 
@@ -40,7 +42,7 @@ describe("corpus types", () => {
 		expect(row.components.postcode).toBe("value for postcode")
 	})
 
-	it("synth marker is optional, carries method + base_source_id when present", () => {
+	it("the recipe marker is optional, carries recipe + base_source_id when present", () => {
 		const natural: CanonicalRow = {
 			raw: "Paris",
 			components: { locality: "Paris" },
@@ -52,16 +54,50 @@ describe("corpus types", () => {
 			license: "CC0-1.0",
 		}
 
-		const synth: CanonicalRow = {
+		const derived: CanonicalRow = {
 			...natural,
 			raw: "PARIS",
 			source_id: "wof-101751119+case-upper",
-			synth: { method: "case-perturb:upper", base_source_id: "wof-101751119" },
+			recipe: { recipe: "case-perturb:upper", base_source_id: "wof-101751119" },
 		}
 
-		expect(natural.synth).toBeUndefined()
-		expect(synth.synth?.method).toBe("case-perturb:upper")
-		expect(synth.synth?.base_source_id).toBe("wof-101751119")
+		expect(natural.recipe).toBeUndefined()
+		expect(derived.recipe?.recipe).toBe("case-perturb:upper")
+		expect(derived.recipe?.base_source_id).toBe("wof-101751119")
+	})
+
+	it("register and surface answer separate questions on one row", () => {
+		const composed: CanonicalRow = {
+			raw: "9 Pollard Close, London, E16 1LG",
+			components: { house_number: "9", street: "Pollard Close", locality: "London", postcode: "E16 1LG" },
+			country: "GB",
+			source: "synth-gb",
+			source_id: "ppd-1",
+			corpus_version: "0.9.9",
+			license: "OGL-UK-3.0",
+			register: SourceRegister.LandRegistryPricePaid,
+			surface: SurfaceOrigin.Composed,
+		}
+
+		const invented: CanonicalRow = {
+			raw: "PO Box 120, Austin, TX 78701",
+			components: { po_box: "PO Box 120", locality: "Austin", region: "TX", postcode: "78701" },
+			country: "US",
+			source: "synth-po-box",
+			source_id: "po-1",
+			corpus_version: "0.9.9",
+			license: "CC0-1.0",
+			register: null,
+			surface: SurfaceOrigin.Invented,
+		}
+
+		// A template composed the first surface from fields HM Land Registry published,
+		// so the row is a real address written in the recipe's order.
+		// The second names no published record at all.
+		expect(composed.register).toBe("gb-hm-land-registry-ppd")
+		expect(composed.surface).toBe("composed")
+		expect(invented.register).toBeNull()
+		expect(invented.surface).toBe("invented")
 	})
 
 	it("addressRoleOf reads an absent role as the default and an explicit one verbatim", () => {
@@ -128,6 +164,8 @@ describe("corpus types", () => {
 			id: "noop",
 			defaultLicense: "CC0-1.0",
 			addressRole: AddressRole.Premise,
+			register: SourceRegister.WhosOnFirst,
+			surface: SurfaceOrigin.Attested,
 			description: "Smoke-test adapter that yields a single hand-crafted row.",
 			async *rows(_opts) {
 				yield {

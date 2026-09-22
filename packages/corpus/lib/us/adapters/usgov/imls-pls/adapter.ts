@@ -22,7 +22,8 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -52,6 +53,8 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 		id: USGOV_IMLS_PLS_ADAPTER_ID,
 		defaultLicense: USGOV_IMLS_PLS_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
+		register: SourceRegister.IMLSPublicLibraries,
+		surface: SurfaceOrigin.Attested,
 		description: "IMLS Public Libraries Survey — ~17K library outlets with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

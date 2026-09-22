@@ -21,6 +21,19 @@ import { COUNTRY_SURFACE_FORMS, CountryNames, matchCountry } from "@mailwoman/co
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { SourceRegister } from "#registers"
+import { SurfaceOrigin } from "#types"
+
+/**
+ * Every surface this recipe writes is a country name the codex table publishes, standing alone.
+ *
+ * The recipe reads no tuples off disk, so its register is fixed in code rather than passed per run.
+ */
+const BARE_COUNTRY_PROVENANCE = {
+	register: SourceRegister.Codex,
+	surface: SurfaceOrigin.Attested,
+}
+
 /**
  * Surfaces shorter than this are the code register (`JP`, `GER`), not a name —
  * excluded (see the module doc).
@@ -88,7 +101,7 @@ export const bareCountryRecipe: CorpusRecipe = {
 				license: "Synthetic — bare-country; surfaces from the codex country table (ISO 3166 + curated forms)",
 			}
 
-			if (alignAndWrite(write, canonical, "bare-country")) {
+			if (alignAndWrite(write, canonical, "bare-country", BARE_COUNTRY_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++
