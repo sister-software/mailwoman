@@ -24,6 +24,7 @@ import {
 	readTuples,
 	resolveLocaleParts,
 } from "@mailwoman/corpus/international/recipes/locale"
+import { SourceRegister } from "@mailwoman/corpus/registers"
 import type { RenderedLocaleRow } from "@mailwoman/corpus/surfaces/locale"
 import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
@@ -351,12 +352,18 @@ describe("resolveLocaleParts (ES pedanía part-list selection)", () => {
 
 	const esLikeSource: LocaleCountrySource = {
 		source: "synth-es",
+		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: defaultParts,
 		pedaniaParts,
 	}
 
-	const noPedaniaSource: LocaleCountrySource = { source: "synth-de", corpusVersion: "0.4.0", parts: defaultParts }
+	const noPedaniaSource: LocaleCountrySource = {
+		source: "synth-de",
+		register: SourceRegister.OpenAddresses,
+		corpusVersion: "0.4.0",
+		parts: defaultParts,
+	}
 
 	it("override undefined (flag absent): default parts, regardless of whether pedaniaParts exists", () => {
 		expect(resolveLocaleParts(esLikeSource, undefined)).toBe(defaultParts)
