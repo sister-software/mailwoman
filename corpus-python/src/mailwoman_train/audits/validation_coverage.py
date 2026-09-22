@@ -181,15 +181,20 @@ def run(
     *,
     json_path: Path | None = None,
     countries: tuple[str, ...] = ("US", "FR", "DE", "GB"),
+    corpus_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Print the per-country table for each split, then the countries with no street-level signal.
+
+    ``corpus_dir`` overrides ``data.corpus_dir``, which a training config states as the path the
+    corpus has on the Modal volume. On a machine that built the corpus, that path does not exist,
+    and the audit has to run there: it is the check that decides whether a run may start.
 
     Raises {@link ValidationCoverageError} when the config declares ``data.required_validation_coverage``
     and a split falls short of it. The report is written and printed first either way, because a
     reader needs the numbers that failed rather than the fact that something did.
     """
     cfg = load_config(config_path)
-    report = audit(Path(cfg.data.corpus_dir))
+    report = audit(corpus_dir or Path(cfg.data.corpus_dir))
 
     print(f"validation coverage — {config_path.name}")
     print(f"  corpus {report['corpus_dir']}\n")
@@ -264,6 +269,12 @@ def main() -> None:
     parser.add_argument("config", type=Path)
     parser.add_argument("--json", type=Path, default=None)
     parser.add_argument(
+        "--corpus-dir",
+        type=Path,
+        default=None,
+        help="Override data.corpus_dir, which names the path the corpus has on the Modal volume.",
+    )
+    parser.add_argument(
         "--countries",
         type=str,
         default="US,FR,DE,GB",
@@ -275,6 +286,7 @@ def main() -> None:
         args.config,
         json_path=args.json,
         countries=tuple(code.strip().upper() for code in args.countries.split(",") if code.strip()),
+        corpus_dir=args.corpus_dir,
     )
 
 
