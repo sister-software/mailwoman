@@ -3,7 +3,7 @@
 	"exportNameAffix": 42,
 	"danglingDocLinks": 0,
 	"asNever": 0,
-	"doubleCast": 5,
+	"doubleCast": 4,
 	"deepRelativeImports": 0,
 	"filterBoolean": 0,
 	"productionFilesOver1000Lines": 0,
