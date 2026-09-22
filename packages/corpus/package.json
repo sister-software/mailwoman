@@ -257,6 +257,11 @@
 			"node": "./lib/tools/golden/relabel-street/index.ts",
 			"default": "./out/tools/golden/relabel-street/index.js"
 		},
+		"./tools/migrate-recipe-output": {
+			"types": "./out/tools/migrate-recipe-output.d.ts",
+			"node": "./lib/tools/migrate-recipe-output.ts",
+			"default": "./out/tools/migrate-recipe-output.js"
+		},
 		"./tools/overture-subvenue": {
 			"types": "./out/tools/overture-subvenue.d.ts",
 			"node": "./lib/tools/overture-subvenue.ts",

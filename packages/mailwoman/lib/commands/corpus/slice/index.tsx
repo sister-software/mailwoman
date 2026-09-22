@@ -12,7 +12,7 @@
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { movePath, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { RecipeOptions } from "@mailwoman/corpus"
 import { createRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
@@ -141,16 +141,37 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		console.error(`▸ recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.out}`)
 
-		const stream = openWriteStream(options.out, { encoding: "utf8" })
+		// Write beside the target and swap, rather than opening the target itself.
+		//
+		// `openWriteStream` truncates on open, and a recipe validates its inputs
+		// inside `run` — after this point.
+		// A run that then refuses leaves the target at zero bytes with its previous contents gone.
+		// That happened to `intersection-train.jsonl` on 2026-09-22: the recipe threw
+		// on a missing GDAL dataset and took 40,000 rows with it, recoverable only
+		// because the parquet built from that jsonl still held them.
+		const stagedPath = `${options.out}.partial`
+		const stream = openWriteStream(stagedPath, { encoding: "utf8" })
 
 		const write = createRecipeLineWriter(stream)
 
-		const stats = await recipe.run(opts, write)
+		let stats: Awaited<ReturnType<typeof recipe.run>>
+
+		try {
+			stats = await recipe.run(opts, write)
+		} catch (error) {
+			stream.destroy()
+			await removePathIfPresent(stagedPath)
+
+			throw error
+		}
+
 		stream.end()
 
 		await new Promise<void>((res) => {
 			stream.on("finish", () => res())
 		})
+
+		await movePath(stagedPath, options.out)
 
 		// The invocation, beside its output.
 		//
