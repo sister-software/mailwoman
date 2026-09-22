@@ -31,7 +31,7 @@ accurate against main + the ledger). The full dated record is `.superpowers/sdd/
   the morphology EMISSION prior zeroed).
 - **768k importance FST reship: REJECTED** by the fragment board (homonym −13 to −28 + an
   "Avenue Montaigne"→`locality:"Avenue"` hazard). The 220k FST stays shipped. Staged-but-unshipped at
-  `/mnt/playpen/mailwoman-data/scratch-importance/`. Settled — don't revisit without a new fragment win.
+  `$MAILWOMAN_DATA_ROOT/scratch-importance/`. Settled — don't revisit without a new fragment win.
 - **#1143** re-anchored **0.605 (v385) / 0.777 (v3101)** — training is closing it; the roadmap's 0.215
   was stale.
 

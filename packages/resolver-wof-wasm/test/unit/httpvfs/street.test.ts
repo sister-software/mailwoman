@@ -6,7 +6,7 @@
  *   Unit tests for the demo's street tier: the httpvfs situs/interp lookups
  *   (HTTPVFSAddressPointLookup, HTTPVFSInterpolator) against a node:sqlite-backed stub worker that
  *   mimics sql.js-httpvfs's `db.exec` interface ([] on no rows, else [{columns, values}]), plus
- *   `resolveStreet`'s tier ordering with stub lookups. Synthetic in-memory extracts — no /mnt/playpen
+ *   `resolveStreet`'s tier ordering with stub lookups. Synthetic in-memory extracts — no $MAILWOMAN_DATA_ROOT
  *   dependency, CI-safe. Integration against real extracts is the docs site's street-tier browser
  *   spec.
  */

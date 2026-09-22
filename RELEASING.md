@@ -189,7 +189,7 @@ card's `training.tokenizer_version` wins (mismatches have shipped before).
 ## Rebuilding + swapping the canonical admin gazetteer (`admin-global-priority.db`)
 
 The resolver's gazetteer is the custom WOF SQLite DB at
-`/mnt/playpen/mailwoman-data/wof/admin-global-priority.db` — **never** an off-the-shelf geocode.earth dump
+`$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db` — **never** an off-the-shelf geocode.earth dump
 (different WOF ids; see `feedback-custom-wof-db-only`). It is not part of the npm/HF release; it ships
 separately (the demo's slim derivative — see the next section). Rebuild it when you add locale coverage or
 fix a source-ingest bug (#1015). The artifact is SEALED read-only (0444) — never mutate it in place;
@@ -224,20 +224,20 @@ Also run the FORWARD no-regression eval when the change could move coordinates (
 old vs new DB — the two `**neural**` rows must match):
 
 ```bash
-PC=/mnt/playpen/mailwoman-data/wof/postalcode-us.db
+PC=$MAILWOMAN_DATA_ROOT/wof/postalcode-us.db
 for db in admin-global-priority.db admin-global-priority.REBUILD.db; do
   node packages/mailwoman/out/cli/index.js eval oa-resolver \
     --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000 --default-country US \
     --model <v.onnx> --tokenizer <tok.model> --model-card neural-weights-en-us/model-card.json \
     --model-anchor-lookup <anchor.json> \
-    --wof-db "/mnt/playpen/mailwoman-data/wof/$db,$PC" 2>/dev/null | grep '\*\*neural'
+    --wof-db "$MAILWOMAN_DATA_ROOT/wof/$db,$PC" 2>/dev/null | grep '\*\*neural'
 done
 ```
 
 ### Step 4 — swap + record
 
 ```bash
-cd /mnt/playpen/mailwoman-data/wof
+cd $MAILWOMAN_DATA_ROOT/wof
 mv admin-global-priority.db admin-global-priority.db.pre-<change>-bak   # back up the live DB
 mv admin-global-priority.REBUILD.db admin-global-priority.db           # promote (instant; same fs)
 # The hosted drop-in services hold the DB open — restart them to pick up the new file:
@@ -304,17 +304,17 @@ node packages/mailwoman/out/cli/index.js gazetteer build   # admin (fold include
 #    country-checks an ambiguous postcode (10115 = Berlin DE + NYC) by resolving the locality first. GB
 #    (2.6M) is left out for size.
 node resolver-wof-sqlite/out/build-candidate-cli.js \
-  --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority-geonames.db \
-  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-us.db \
-  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-intl.db \
-  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-geonames-intl.db \
-  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-ca-overture.db \
-  $(for cc in at be ch cz dk es fi hr lt lu lv no pl pt si sk; do echo --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-$cc-overture.db; done) \
-  --out /mnt/playpen/mailwoman-data/wof/candidate-global.db
+  --in  $MAILWOMAN_DATA_ROOT/wof/admin-global-priority-geonames.db \
+  --postcodes $MAILWOMAN_DATA_ROOT/wof/postalcode-us.db \
+  --postcodes $MAILWOMAN_DATA_ROOT/wof/postalcode-intl.db \
+  --postcodes $MAILWOMAN_DATA_ROOT/wof/postalcode-geonames-intl.db \
+  --postcodes $MAILWOMAN_DATA_ROOT/wof/postalcode-ca-overture.db \
+  $(for cc in at be ch cz dk es fi hr lt lu lv no pl pt si sk; do echo --postcodes $MAILWOMAN_DATA_ROOT/wof/postalcode-$cc-overture.db; done) \
+  --out $MAILWOMAN_DATA_ROOT/wof/candidate-global.db
 # 2. Bump ADMIN_GAZETTEER_VERSION in docs/src/shared/resources.tsx (the immutable cache needs a fresh URL).
 # 3. Upload to the new path:
 mkdir -p /tmp/stage/gazetteer/<NEW_VERSION>
-ln -s /mnt/playpen/mailwoman-data/wof/candidate-global.db /tmp/stage/gazetteer/<NEW_VERSION>/candidate.db
+ln -s $MAILWOMAN_DATA_ROOT/wof/candidate-global.db /tmp/stage/gazetteer/<NEW_VERSION>/candidate.db
 set -a; . ./.env; set +a
 python3 docs/scripts/publish-demo-assets-to-r2.py --src /tmp/stage --prefix mailwoman
 # 4. The map-highlight sibling (wof-polygons.db) builds from --admin now (the --points wof-hot.db source is
@@ -381,8 +381,8 @@ The end-to-end order that worked: **the promotion eval (revised if needed) → c
 - **`release.config.json` silently drifts from the card, and copy-weights trusts the config.** The card wins for _which_ model ships; `release.config.json#weights.model` is the PATH copy-weights.ts materializes from. They must move in the same commit as the card (Step 1 items 2+3) — when they don't, copy-weights materializes the superseded model and the Gauntlet grades it silently (#1024: config lagged at v220 `a64ad2e6` while the v5.4.0 promote shipped v230 `ea785a70`, costing a bisect detour). **Guardrail (#1024):** the Gauntlet harness now asserts the materialized `neural-weights-en-us/model.onnx` md5 == the card's `files_md5["model.onnx"]` for the shipped default and fails the Gauntlet on mismatch. Since the Gauntlet is the release `before:release` step, a drifted config can no longer ship. #1005 fixed the dev-weights-symlink half of the same class; this is the release-config half.
 - **The floor comparison is `>=`** (`mailwoman eval promote`, `mailwoman/eval-harness/promotion-eval.ts`). A floor set exactly at the measured value passes (95.0 ≥ 95.0) — no need to set it below, and no re-run to find out. A promotion eval that needs a floor lowered gets a **new eval file** with a stated `$revision_*` reason (no silent drift); the full promotion eval is ~12–15 min, so set the floors right the first time.
 - **The R2 demo repoint is "carry-forward + overwrite 2 files."** Between model versions only `model.onnx` and `model-card.json` change — tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json`, `calibration.json` are byte-identical. Fastest path: boto3-`download` all of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend entry + `defaultVersion`), one `publish-demo-assets-to-r2.py --src`. ~60 MB, two commands. (The bucket is `nexus-public`, creds are `RCLONE_S3_PUBLIC_*`.)
-- **npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version but `npm pack` 404s and a raw tarball `curl` returns a tiny error JSON — that's CDN propagation rather than a failed publish. Verify meanwhile via `npm view … dist.unpackedSize` (a code-only pkg is <1 MB; a model-bundled one is ~33 MB) and the md5 chain `/mnt/playpen source == HF upload == R2 staging`. Re-`npm pack` to close the loop once the CDN catches up.
-- **Canonical artifact paths** (so you don't hunt): model int8 → `/mnt/playpen/mailwoman-data/models/quantized/model-v<NNN>-step-<step>-int8.onnx`; tokenizer → `/mnt/playpen/mailwoman-data/models/tokenizer/<ver>/tokenizer.model`; FST → `/mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`); postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`; gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json` (the repo copy the promotion eval ran against — use this rather than the prior bucket's).
+- **npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version but `npm pack` 404s and a raw tarball `curl` returns a tiny error JSON — that's CDN propagation rather than a failed publish. Verify meanwhile via `npm view … dist.unpackedSize` (a code-only pkg is <1 MB; a model-bundled one is ~33 MB) and the md5 chain `$MAILWOMAN_DATA_ROOT source == HF upload == R2 staging`. Re-`npm pack` to close the loop once the CDN catches up.
+- **Canonical artifact paths** (so you don't hunt): model int8 → `$MAILWOMAN_DATA_ROOT/models/quantized/model-v<NNN>-step-<step>-int8.onnx`; tokenizer → `$MAILWOMAN_DATA_ROOT/models/tokenizer/<ver>/tokenizer.model`; FST → `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`); postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`; gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json` (the repo copy the promotion eval ran against — use this rather than the prior bucket's).
 
 ### Step 0 — figure out the version number (the divergence trap)
 
@@ -404,15 +404,15 @@ number is `max(npm-latest, demo-default) + one minor`. For v4.11.0: npm was at 4
 When the model you're shipping isn't the current default, the repo still describes the old model. Update,
 in `main`, before anything is staged:
 
-1. Place the int8 in the canonical dir: `cp <staged>/model.onnx /mnt/playpen/mailwoman-data/models/quantized/model-v<NNN>-step-<step>-int8.onnx` and confirm its md5 against the promotion eval or the postmortem.
+1. Place the int8 in the canonical dir: `cp <staged>/model.onnx $MAILWOMAN_DATA_ROOT/models/quantized/model-v<NNN>-step-<step>-int8.onnx` and confirm its md5 against the promotion eval or the postmortem.
 2. `release.config.json` — bump `version`, repoint `weights.model`, update `weights.lineage` + `weights.trainingStep`, and put the new int8 md5 in the lineage string.
 3. `neural-weights-en-us/model-card.json` — rewrite `version`, `model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block (the promotion eval evidence), and `files_md5`. **State any regression that trips the 2pp threshold** right in the card (no silent drift). `requires` (the ship-config) is unchanged when the model cloned the prior recipe.
 4. Regenerate the capabilities manifest (the fail-closed capabilities delta check reads it; the generator's `$comment` otherwise lies about which model it measured). The generator **refuses if a `capabilities` block already exists**, so rewrite the card without that block first, then:
    ```bash
    yarn compile   # the generator imports COMPILED @mailwoman/neural/scorer from out/
    node packages/mailwoman/out/cli/index.js eval capability-manifest \
-     --model /mnt/playpen/.../model-v<NNN>-step-<step>-int8.onnx \
-     --tokenizer /mnt/playpen/.../tokenizer.model \
+     --model $MAILWOMAN_DATA_ROOT/.../model-v<NNN>-step-<step>-int8.onnx \
+     --tokenizer $MAILWOMAN_DATA_ROOT/.../tokenizer.model \
      --model-card neural-weights-en-us/model-card.json --write
    ```
 5. Commit + **push to main** — CI derives the HF fetch path from the model card on `main`, so it has to be pushed before the CI publish.
@@ -662,13 +662,13 @@ the recovery loop below can finish stragglers from here without OIDC.
 
 ## Common failures
 
-| Symptom                                  | Cause                                              | Fix                                                                                                              |
-| ---------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `403 Forbidden` from npm publish         | Token missing publish rights on `@mailwoman` scope | npmjs.com → tokens → check scope coverage                                                                        |
-| `requireCleanWorkingDir` aborts          | Uncommitted changes                                | `git status`, commit or stash                                                                                    |
-| `requireBranch` aborts                   | Not on `main`                                      | `git switch main`                                                                                                |
-| Hook `yarn test --run` fails             | Pre-existing test breakage                         | Fix tests or temporarily comment the hook in `.release-it.json` and document the divergence in the release notes |
-| `copy-weights.ts` `Missing source model` | Running from a machine without `/mnt/playpen/`     | Set `MAILWOMAN_PUBLISH_MODEL` + `MAILWOMAN_PUBLISH_TOKENIZER` env vars                                           |
+| Symptom                                  | Cause                                                 | Fix                                                                                                              |
+| ---------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `403 Forbidden` from npm publish         | Token missing publish rights on `@mailwoman` scope    | npmjs.com → tokens → check scope coverage                                                                        |
+| `requireCleanWorkingDir` aborts          | Uncommitted changes                                   | `git status`, commit or stash                                                                                    |
+| `requireBranch` aborts                   | Not on `main`                                         | `git switch main`                                                                                                |
+| Hook `yarn test --run` fails             | Pre-existing test breakage                            | Fix tests or temporarily comment the hook in `.release-it.json` and document the divergence in the release notes |
+| `copy-weights.ts` `Missing source model` | Running from a machine without `$MAILWOMAN_DATA_ROOT` | Set `MAILWOMAN_PUBLISH_MODEL` + `MAILWOMAN_PUBLISH_TOKENIZER` env vars                                           |
 
 ## Releasing from CI (manual dispatch + npm Trusted Publishing)
 
@@ -770,7 +770,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
 2. **Publish all packages from CI** — `publish.yml` at the same version. The "Fetch weight binaries from Hugging
    Face" step pulls `model.onnx` + `tokenizer.model` from the public bucket (no auth) into the `neural-weights-*`
    workspaces, and the run publishes every package — code and weights — over OIDC. `copy-weights.ts` stays
-   skipped on CI (its `/mnt/playpen` paths aren't there); it's the local-dev path. A real run therefore requires
+   skipped on CI (its `$MAILWOMAN_DATA_ROOT` paths aren't there); it's the local-dev path. A real run therefore requires
    the model to already be on HF for that version (step 1).
 
 > A previous version of this workflow pulled weights from a Cloudflare R2 bucket (`mailwoman-assets`). That

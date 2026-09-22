@@ -79,7 +79,7 @@ already exists.
 3. **Idiom drift** — repo conventions the code violates: acronym casing (`parseJSON` rather than
    `parseJson`), `erasableSyntaxOnly` (no `enum`, no constructor parameter properties, no runtime
    namespaces), explicit `.ts` extensions on relative imports, raw DDL where the schema builder
-   applies, re-hardcoded `/mnt/playpen`, raw `process.env` / `process.argv`.
+   applies, re-hardcoded `$MAILWOMAN_DATA_ROOT`, raw `process.env` / `process.argv`.
 
 4. **Altitude and boundaries** — modules that have grown past one purpose, or whose internals leak
    into consumers.

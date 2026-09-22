@@ -413,8 +413,8 @@ export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOp
 		sources.push({
 			id: `osm:${extract.region.toLowerCase()}`,
 			// The extract's name, never its path.
-			// `agents.md` forbids re-hardcoding the lab data root anywhere,
-			// and a committed artifact carrying `/mnt/playpen/...` would do exactly that
+			// `agents.md` forbids re-hardcoding the lab data root anywhere, and a
+			// committed artifact carrying `$MAILWOMAN_DATA_ROOT/...` would do exactly that
 			// while telling a reader on another machine nothing.
 			// `great-britain` identifies the Geofabrik region, which is the fact that matters.
 			origin: `OpenStreetMap via Geofabrik (${basename(extract.path, ".jsonl")})`,

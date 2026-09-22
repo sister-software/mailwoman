@@ -18,7 +18,7 @@
 - No `npx tsx`; scripts run with bare `node` (type-stripping). Ink commands need `yarn compile` first; run compiled CLI as `node mailwoman/out/cli.js`.
 - Lint/format: `yarn oxlint <paths>` + `yarn oxfmt <paths>` before each commit. `yarn typecheck:scripts` must stay green.
 - Commits reference the tracking issue for this cleanup; end commit messages with the standard co-author trailer.
-- Data root paths go through `mailwomanDataRoot()` / `dataRootPath()` — never hardcode `/mnt/playpen/...` in shipped code (plan test fixtures use temp dirs).
+- Data root paths go through `mailwomanDataRoot()` / `dataRootPath()` — never hardcode `$MAILWOMAN_DATA_ROOT/...` in shipped code (plan test fixtures use temp dirs).
 - All work on a branch `feat/gazetteer-cli-sealed-artifacts` off current `main`.
 
 ---
@@ -651,7 +651,7 @@ export interface FoldGeonamesResult {
 export function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions): FoldGeonamesResult
 ```
 
-- [ ] **Step 1: Implement** — thin composition over the existing `ingestGeonamesAliases` + `ingestGeonamesPostal` (`@mailwoman/resolver-wof-sqlite`), defaults via `dataRootPath` (this removes `DEFAULT_GEONAMES_DIR`'s hardcoded `/mnt/playpen/...` — the `AGENTS.md` data-root rule).
+- [ ] **Step 1: Implement** — thin composition over the existing `ingestGeonamesAliases` + `ingestGeonamesPostal` (`@mailwoman/resolver-wof-sqlite`), defaults via `dataRootPath` (this removes `DEFAULT_GEONAMES_DIR`'s hardcoded `$MAILWOMAN_DATA_ROOT/...` — the `AGENTS.md` data-root rule).
 - [ ] **Step 2: Re-point the script**, delete its three `DEFAULT_GEONAMES*` constants.
 - [ ] **Step 3: Verify** — `yarn typecheck:scripts && npx tsc -b mailwoman` → exit 0.
 - [ ] **Step 4: Commit** — `git commit -am "refactor(gazetteer): GeoNames folds wrapped in gazetteer-pipeline/admin/fold-geonames (data-root defaults)"`
@@ -914,7 +914,7 @@ export function buildAdmin(opts?: BuildAdminOptions): Promise<BuildAdminResult>
 - [ ] **Step 2: `build/admin.tsx`** — Ink command in the house pattern (zod options schema; progress via `console.error`; summary `<Text>` on stdout; `process.exit` in `useEffect`, exactly like `gazetteer/build.tsx` today). Options: `data?`, `out?`, `overtureCountries?` (csv), `geonamesCountries?` (csv), `overtureRelease?`, `skipVerify` (boolean, default false). Body: `buildAdmin({...})`, phases streamed to stderr; summary lines: output path, rows, `verify: PASS (N checks)`, `sealed 0444`, `next: mailwoman gazetteer build candidate`.
 - [ ] **Step 3: `build/index.tsx`** — the turnkey chain: `buildAdmin()` → `foldGeonamesIntoAdmin` + `buildCandidate` (the exact body of today's bare `gazetteer build`, reusing its defaults) — summary names both artifacts. Zod options: union of admin's and candidate's, all optional.
 - [ ] **Step 4: `verify.tsx`** — options: `db?` (default the live admin DB path), `reversePanel` (boolean, default true). Runs `verifyAdmin` + optionally `verifyReversePanel`, prints one ✓/✗ line per check, exits non-zero on any failure.
-- [ ] **Step 5: Compile + smoke** — `yarn compile && node mailwoman/out/cli.js gazetteer --help` shows `build`, `verify`, …; `node mailwoman/out/cli.js gazetteer build --help` shows `admin`/`candidate` subcommands; `node mailwoman/out/cli.js gazetteer verify --db /mnt/playpen/mailwoman-data/wof/admin-global-priority.db` runs (expect: **node-census fails on the #1026 countries** — correct behavior, the live DB is known-regressed; every other check passes; overall exit 1).
+- [ ] **Step 5: Compile + smoke** — `yarn compile && node mailwoman/out/cli.js gazetteer --help` shows `build`, `verify`, …; `node mailwoman/out/cli.js gazetteer build --help` shows `admin`/`candidate` subcommands; `node mailwoman/out/cli.js gazetteer verify --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db` runs (expect: **node-census fails on the #1026 countries** — correct behavior, the live DB is known-regressed; every other check passes; overall exit 1).
 - [ ] **Step 6: Commit** — `git add -A mailwoman/commands && git commit -m "feat(cli): gazetteer build admin|candidate + turnkey build + structural verify"`
 
 ---
@@ -975,7 +975,7 @@ keeping the existing Step-4 swap/restart text (mv → bak, promote, restart serv
 
 **Files:** none (runbook execution; findings recorded in the PR description)
 
-- [ ] **Step 1: Full staging build** — `node mailwoman/out/cli.js gazetteer build admin --out /mnt/playpen/mailwoman-data/wof/admin-global-priority.E2E-PRB.db` (~8 min). Expected: every phase streams; **verify may FAIL `node-census`** if the Overture/GeoNames country-node interplay (#1026's suspected mechanism) reproduces — that is a CORRECT check result rather than a task failure.
+- [ ] **Step 1: Full staging build** — `node mailwoman/out/cli.js gazetteer build admin --out $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.E2E-PRB.db` (~8 min). Expected: every phase streams; **verify may FAIL `node-census`** if the Overture/GeoNames country-node interplay (#1026's suspected mechanism) reproduces — that is a CORRECT check result rather than a task failure.
 - [ ] **Step 2: If node-census fails** — capture the missing list into #1026 (comment with the exact `(country, placetype)` set). The fix belongs to #1026/PR C (fold-order archaeology) rather than this PR — the check exists precisely to block the swap.
 - [ ] **Step 3: If verify passes** — diff old-vs-new per-country/per-placetype census (`SELECT country, placetype, COUNT(*) FROM spr WHERE is_current!=0 GROUP BY 1,2` on both, joined) — attach the diff summary to the PR; the E2E artifact is a swap candidate for #1026 itself (operator decides; swap follows the RELEASING.md runbook).
 - [ ] **Step 4: Confirm the seal** — `ls -l` shows `-r--r--r--`; `node -e` RW-open via `openBuiltDatabase` throws `SealedArtifactError`.

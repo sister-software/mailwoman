@@ -15,7 +15,7 @@ coarser admin gazetteer lacks) — the cheapest way to broaden the corpus's **lo
 Per-country dumps + two sibling name files, all from the same directory:
 
 ```bash
-DIR=/mnt/playpen/mailwoman-data/geonames
+DIR=$MAILWOMAN_DATA_ROOT/geonames
 mkdir -p "$DIR" && cd "$DIR"
 curl -O https://download.geonames.org/export/dump/US.zip && unzip -o US.zip   # → US.txt (per country)
 curl -O https://download.geonames.org/export/dump/admin1CodesASCII.txt        # <CC>.<admin1> → region name
@@ -30,7 +30,7 @@ component (region / country) is omitted and the adapter still emits locality-onl
 
 ```bash
 # Single country (CLI):
-npx mailwoman corpus run geonames --input /mnt/playpen/mailwoman-data/geonames/US.txt --country US --limit 5000
+npx mailwoman corpus run geonames --input $MAILWOMAN_DATA_ROOT/geonames/US.txt --country US --limit 5000
 
 # In a full build, configure adapterInputs["geonames"] = { inputPath: ".../<CC>.txt", country: "<CC>" }
 # per country you want ingested. `corpus build` skips the adapter when no input is configured.

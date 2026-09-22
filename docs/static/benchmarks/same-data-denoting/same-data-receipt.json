@@ -6,10 +6,10 @@
 	"gitHead": "ec048cef02534750ab2874f01183d0ccbe381176",
 	"weights": {
 		"weightsLocale": "en-US",
-		"weightsModelPath": "/mnt/playpen/mailwoman-data/weights/en-us/model.onnx",
+		"weightsModelPath": "$MAILWOMAN_DATA_ROOT/weights/en-us/model.onnx",
 		"weightsVersion": "9.1.0"
 	},
-	"backendPath": "/mnt/playpen/mailwoman-data/wof/candidate.db",
+	"backendPath": "$MAILWOMAN_DATA_ROOT/wof/candidate.db",
 	"rows": 453,
 	"fixtureDigest": "dc73aa360edc93517d5e4e731f7b41cc2b14a37f30169d5025860b401beb0526",
 	"lookupsTotal": 1467,

@@ -28,7 +28,7 @@ heavy native `@duckdb/node-api`):
 ```bash
 node scripts/ingest-overture-addresses.ts \
   --release 2026-06-17.0 --countries ES,IT,NL,PT --corpus-jsonl
-# → /mnt/playpen/mailwoman-data/overture/2026-06-17.0/overture-<cc>.corpus.jsonl  (+ addresses-<cc>.parquet + fill-rates.{json,md})
+# → $MAILWOMAN_DATA_ROOT/overture/2026-06-17.0/overture-<cc>.corpus.jsonl  (+ addresses-<cc>.parquet + fill-rates.{json,md})
 ```
 
 ## Run
@@ -37,7 +37,7 @@ node scripts/ingest-overture-addresses.ts \
 
 ```bash
 mailwoman corpus run overture \
-  --input /mnt/playpen/mailwoman-data/overture/2026-06-17.0/overture-es.corpus.jsonl \
+  --input $MAILWOMAN_DATA_ROOT/overture/2026-06-17.0/overture-es.corpus.jsonl \
   --country ES --output /data/corpus-staging
 ```
 

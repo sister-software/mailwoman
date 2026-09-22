@@ -16,7 +16,7 @@
 - TS source runs under plain `node`; relative imports use explicit `.ts`; `erasableSyntaxOnly` (no enum/namespace/param-properties).
 - Lint/format: oxlint + oxfmt (pre-commit checks formatting — run `npx oxfmt <file>` before committing).
 - Compiled CLI for runs: `yarn compile` then `node mailwoman/out/cli.js ...`. Never `npx tsx`.
-- Zero raw `process.env`/`process.argv` in shipped code — use `@mailwoman/core/env` + `core/utils/scripting`; data paths via `dataRootPath()` (never hardcode `/mnt/playpen/mailwoman-data`).
+- Zero raw `process.env`/`process.argv` in shipped code — use `@mailwoman/core/env` + `core/utils/scripting`; data paths via `dataRootPath()` (never hardcode `$MAILWOMAN_DATA_ROOT`).
 - Acronym casing: whole camelCase components (`extractPPD` rather than `extractPpd`).
 - never wrap `modal run -d` in shell `timeout`. Launch detached, poll with `run_in_background` + until-loops.
 - PPD snapshot (frozen): `$MAILWOMAN_DATA_ROOT/ppd/2026-07-22/pp-complete.csv` (31,346,259 rows, md5 recorded). Column order: `0 id, 1 price, 2 date, 3 postcode, 4 type, 5 newbuild, 6 tenure, 7 PAON, 8 SAON, 9 street, 10 locality, 11 town, 12 district, 13 county, 14 category, 15 status`. All fields ALL-CAPS. Modern rows fill `locality` only when ≠ town; 1995-era rows pad `locality`=town (~64% of filled) — drop when equal.

@@ -10,7 +10,7 @@ this maps it to one (Expected Calibration Error 0.067 → 0.004 on the held-out 
 ```bash
 # 1. Build the 50/50 OpenAddresses + training-corpus calibration set (needs the corpus parquet).
 python3 scripts/eval/build-calibration-set.py \
-  --corpus /mnt/playpen/mailwoman-data/corpus/versioned/v0.4.0/corpus-v0.4.0/train/part-0000.parquet \
+  --corpus $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0/train/part-0000.parquet \
   --out data/eval/calibration/calibration-set.jsonl
 
 # 2. Run the SHIPPED model over the set → (raw span confidence, correct?) pairs.
@@ -24,11 +24,11 @@ python3 corpus-python/scripts/fit-isotonic-calibration.py
 
 ## What's committed vs regenerated
 
-| File                         | Committed?      | Why                                                                                                                |
-| ---------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `calibration-set.jsonl`      | ✅              | Frozen fit input (the corpus parquet lives on `/mnt/playpen`, not in git) — makes the fit reproducible without it. |
-| `isotonic-en-us-v4.0.0.json` | ✅              | The deliverable: the 20-bin lookup table the decoder calibrator loads.                                             |
-| `confidences.jsonl`          | ❌ (gitignored) | Purely derivable from the set + the model (stage 2). 3 MB.                                                         |
+| File                         | Committed?      | Why                                                                                                                        |
+| ---------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `calibration-set.jsonl`      | ✅              | Frozen fit input (the corpus parquet lives on `$MAILWOMAN_DATA_ROOT`, not in git) — makes the fit reproducible without it. |
+| `isotonic-en-us-v4.0.0.json` | ✅              | The deliverable: the 20-bin lookup table the decoder calibrator loads.                                                     |
+| `confidences.jsonl`          | ❌ (gitignored) | Purely derivable from the set + the model (stage 2). 3 MB.                                                                 |
 
 ## Using the table
 

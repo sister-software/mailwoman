@@ -39,9 +39,9 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
 1. **Build the corpus locally** — for an overlay (base + your new recipe output), assemble the overlay manifest.
 2. **Re-root the manifest paths to `/data`.** The data loader (`data/loader/`) reads each parquet file's
    manifest `path` AS-IS; base parquet files must point at `/data/corpus/versioned/<base>/…` (where the base
-   `sync` lands them) rather than the local `/mnt/playpen` build path. The overlay assembler does this
+   `sync` lands them) rather than the local `$MAILWOMAN_DATA_ROOT` build path. The overlay assembler does this
    (`_reroot`). **Verify: `python -c "...; sum('/mnt' in s['path'] for s in manifest_files(data))"` must be 0.**
-   _This bit us on v1.6.0: the manifest's 690 base parquet files pointed at `/mnt/playpen`, so on the volume
+   _This bit us on v1.6.0: the manifest's 690 base parquet files pointed at `$MAILWOMAN_DATA_ROOT`, so on the volume
    the loader would re-root them under the OVERLAY dir (which holds only the new recipe output) and find nothing._
 3. **Push the deltas to R2.** `set -a; source .env; set +a` then
    `rclone copy corpus-python/src/ :s3:mailwoman-assets/corpus-python/src/ --exclude "**/__pycache__/**"`
@@ -122,7 +122,7 @@ modal run -m launch.train_remote::quantize_onnx \
 mkdir -p ./out/v160
 modal volume get mailwoman-training /models/quantized/model-v160-step-40000-int8.onnx ./out/v160/model.onnx
 
-TOK=/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model
+TOK=$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model
 
 # 4a. The 4-shape TARGET check (the headline — street_suffix/comma-less/fr-prefix/hn-after)
 node packages/mailwoman/lib/dev-tools/boundary-stress-eval.run.ts \

@@ -8,7 +8,7 @@
  *
  *   Ported from the Python original (pyarrow → @duckdb/node-api); behavior preserved
  *   byte-for-byte (same flags, same stdout, same verdicts). The base-root default routes through
- *   `dataRootPath` so the lab `/mnt/playpen` literal stays in its one home
+ *   `dataRootPath` so the lab `$MAILWOMAN_DATA_ROOT` literal stays in its one home
  *   (core/utils/data-root.ts) and `$MAILWOMAN_DATA_ROOT` is honored. with the env unset it equals
  *   the Python default.
  *

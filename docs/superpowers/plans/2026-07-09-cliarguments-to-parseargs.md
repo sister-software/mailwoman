@@ -232,7 +232,7 @@ function parseExtractArgs(): Args {
 			"out-dir": { type: "string" },
 			"corpus-version": { type: "string", default: "0.4.0" },
 			"canonical-path-prefix": { type: "string", default: "/data/" },
-			"legacy-path-prefix": { type: "string", default: "/mnt/playpen/mailwoman-data/" },
+			"legacy-path-prefix": { type: "string", default: "$MAILWOMAN_DATA_ROOT/" },
 		},
 	})
 
@@ -448,7 +448,7 @@ Docstring: fix stale path + grammar + delete the deliberate line:
 ```
  *   Usage: node scripts/eval/extract-tuples.ts\
  *   --output /tmp/tuples.jsonl\
- *   [--sqlite /mnt/playpen/mailwoman-data/wof/admin-global-priority.db]\
+ *   [--sqlite $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db]\
  *   [--limit 50000]\
  *   <extract.parquet>...
 ```

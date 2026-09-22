@@ -23,7 +23,7 @@ against the literal piece text.
 ## Curated mode (committed fixture)
 
     python3 generate-tokenizer-parity.py \\
-        --model /mnt/playpen/mailwoman-data/models/tokenizer/v0.1.0/tokenizer.model \\
+        --model $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.1.0/tokenizer.model \\
         --out  packages/neural/neural/test/fixtures/tokenizer-parity-v0.1.0.json
 
 17 hand-curated inputs covering Latin baseline, multi-word, numerics,
@@ -32,8 +32,8 @@ hyphenation, Latin diacritics. CI-safe size.
 ## Large-scale mode (gitignored fixture, host-only)
 
     python3 generate-tokenizer-parity.py \\
-        --model     /mnt/playpen/mailwoman-data/models/tokenizer/v0.1.0/tokenizer.model \\
-        --from-parquet /mnt/playpen/mailwoman-data/corpus/versioned/v0.2.0/corpus-v0.2.0/val/part-0000.parquet \\
+        --model     $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.1.0/tokenizer.model \\
+        --from-parquet $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.2.0/corpus-v0.2.0/val/part-0000.parquet \\
         --sample 10000 \\
         --seed   42 \\
         --out    packages/neural/neural/test/fixtures/tokenizer-parity-large-v0.1.0.json

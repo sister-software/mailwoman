@@ -394,7 +394,7 @@ reader needs. It now prints unless the change is pinned off.
 ### 7.2 Ride-along condition 1 — the corpus rebuild
 
 ```
-[gauntlet] built /mnt/playpen/mailwoman-data/gauntlet/regression.db — 137 cases
+[gauntlet] built $MAILWOMAN_DATA_ROOT/gauntlet/regression.db — 137 cases
 ```
 
 Up from the 116 the shared artifact held (§4's silent seed drift). The seven #42 cases are now in the built artifact.

@@ -37,7 +37,7 @@ describe("assertDestinationNotARepoName", () => {
 	})
 
 	it("accepts a real destination", () => {
-		for (const destination of ["/mnt/playpen/mailwoman-data/wof/repos", "./repos", "../wof/repos"]) {
+		for (const destination of ["/srv/mailwoman-data/wof/repos", "./repos", "../wof/repos"]) {
 			expect(() => assertDestinationNotARepoName(destination), destination).not.toThrow()
 		}
 	})
