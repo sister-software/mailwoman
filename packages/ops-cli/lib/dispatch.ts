@@ -31,6 +31,7 @@ import {
 	type RepoContext,
 	writeBaseline,
 } from "@mailwoman/repo-health"
+import { findStorageOperation, storageOperations, type StorageContext } from "@mailwoman/storage-kit"
 
 /**
  * How many times `health fix` re-takes a plan before giving up.
@@ -44,6 +45,12 @@ export interface DispatchIO {
 	stderr: (text: string) => void
 	repoRoot: string
 	trackedFiles: () => Promise<readonly string[]>
+	/**
+	 * Whether the process holds root.
+	 *
+	 * Resolved by the bin wrapper — dispatch stays free of `process` so it is unit-testable.
+	 */
+	root?: boolean
 }
 
 /**
@@ -90,11 +97,13 @@ function usage(io: DispatchIO): number {
 			"  mwops health baseline debt        (rewrite packages/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
 			"  mwops health comments [path]      (rebuild the source-comment inventory and its review leads)",
+			"  mwops storage <operation> [--json] [--dry-run] [--key value …]",
 			"",
 			`release operations: ${operations.length ? operations.map((operation) => `${operation.id} (${operation.effect})`).join(", ") : "(none registered yet)"}`,
 			`shop operations:    ${shopOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`health checks:      ${checks.length ? checks.map((check) => check.id).join(", ") : "(none registered yet)"}`,
 			`health fixes:       ${fixes.length ? fixes.map((fix) => fix.id).join(", ") : "(none registered yet)"}`,
+			`storage operations: ${storageOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			"",
 		].join("\n")
 	)
@@ -158,6 +167,58 @@ async function runOperation(
 	io.stdout(`${renderedOutput}\n`)
 
 	return 0
+}
+
+/**
+ * `mwops storage <operation>` — the view over the storage registry.
+ *
+ * Separate from {@link runOperation} because a storage operation's context
+ * carries the privilege the wrapper resolved rather than the repository root:
+ * these operations act on block devices, not on the checkout.
+ */
+async function runStorage(args: readonly string[], io: DispatchIO): Promise<number> {
+	const { options, rest } = parseOptions(args)
+	const id = rest[0]
+
+	if (!id) return usage(io)
+
+	const operation = findStorageOperation(id)
+
+	if (!operation) {
+		io.stderr(
+			`mwops storage: no operation ${stringifyJSON(id)}; registered: ${storageOperations.map((o) => o.id).join(", ")}\n`
+		)
+
+		return 2
+	}
+
+	const json = options.json === true
+
+	const context: StorageContext = {
+		dryRun: options["dry-run"] === true,
+		root: io.root ?? false,
+		log: json ? () => {} : (line) => io.stderr(`${line}\n`),
+	}
+
+	const { json: _json, "dry-run": _dryRun, ...input } = options
+	const parsed = operation.inputSchema.safeParse(input)
+
+	if (!parsed.success) {
+		io.stderr(`mwops storage ${operation.id}: invalid input — ${parsed.error.message}\n`)
+
+		return 2
+	}
+
+	const output = await operation.run(parsed.data, context)
+
+	io.stdout(
+		`${json ? prettyJSON(output) : operation.formatOutput ? operation.formatOutput(output) : prettyJSON(output)}\n`
+	)
+
+	// A verify that found failures is a non-zero exit, so a caller can gate on it.
+	const failed = (output as { failed?: number }).failed
+
+	return typeof failed === "number" && failed > 0 ? 1 : 0
 }
 
 /**
@@ -387,6 +448,8 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 			return await runOperation("shop", shopOperations, rest, io)
 		case "health":
 			return await runHealth(rest, io)
+		case "storage":
+			return await runStorage(rest, io)
 		default:
 			return usage(io)
 	}
