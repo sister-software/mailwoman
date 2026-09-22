@@ -98,21 +98,22 @@ const measured = new Map<string, CountryCoverage>(report.countries.map((country)
 /**
  * The state of one jurisdiction's parse capability, in the four readings that differ.
  *
- * `absent` and `not admitted, no rows` are separate: the first says no layer holds the code,
- * the second says the admission list declines a code the gazetteer or the board does hold.
+ * `absent` and `declined` are separate readings.
+ * `absent` says every layer lacks the code, and `declined` says the admission list
+ * omits a code the gazetteer or the board does hold.
  */
 function parseState(coverage: CountryCoverage | undefined): string {
 	if (!coverage) return "absent"
 
 	if (!coverage.admitted) {
-		return coverage.corpusRows > 0 ? `${coverage.corpusRows.toLocaleString()} rows, not admitted` : "not admitted"
+		return coverage.corpusRows > 0 ? `${coverage.corpusRows.toLocaleString()} rows, declined` : "declined"
 	}
 
-	if (coverage.corpusRows === 0) return "admitted, no rows"
+	if (coverage.corpusRows === 0) return "admitted, 0 rows"
 
 	return coverage.corpusStreetRows > 0
 		? `${coverage.corpusRows.toLocaleString()} rows`
-		: `${coverage.corpusRows.toLocaleString()} rows, no street`
+		: `${coverage.corpusRows.toLocaleString()} rows, 0 street`
 }
 
 function geocodeState(coverage: CountryCoverage | undefined): string {
@@ -229,7 +230,7 @@ ${newlyAdmitted.length} it adds are listed below the table.`
 
 **Corpus rows** counts rows in the training corpus. **Street rows** counts those carrying a \`street\`
 or \`house_number\` label, which are the rows that teach an address rather than a name: a jurisdiction
-can hold millions of rows and no street row.
+can hold millions of rows while its street-row count reads 0. CN reads 11,357,947 and 0.
 
 **Admission** is \`country_weights\` in the training config, a hard filter. A code absent from it
 trains on nothing whatever the corpus holds. A code present in it with no corpus row trains on
@@ -254,7 +255,7 @@ are data-only overlays over it.
 | admitted by \`country_weights\` | ${admitted.length} |
 | admitted, zero corpus rows | ${admittedEmpty.length} |
 | corpus rows no shipped graph admits | ${droppedWithRows.length} |
-| not admitted | ${notAdmitted.length} |
+| declined by every shipped config | ${notAdmitted.length} |
 | absent from every layer | ${absent.length} |
 | rooftop geocoding a consumer can obtain | ${rooftop.length} |
 | carries a weights package | ${packaged.length} |
