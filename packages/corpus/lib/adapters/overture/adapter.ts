@@ -31,7 +31,10 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { sample } from "@mailwoman/core/random"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
@@ -49,6 +52,31 @@ export const OVERTURE_ADAPTER_ID = "overture"
  * so downstream consumers inherit the terms rather than having to look them up.
  */
 export const OVERTURE_DEFAULT_LICENSE = "CDLA-Permissive-2.0"
+
+/**
+ * Seed for the country-append draw when the caller names none.
+ */
+const DEFAULT_COUNTRY_SEED = 20_260_922
+
+/**
+ * One attested written form of a country's name.
+ *
+ * Raises rather than emitting nothing when the codex has no entry.
+ * A requested fraction that silently produced no country rows would read later as
+ * a check failure with no cause attached, which is how the 2026-07-18 Brazil arm's
+ * `country` regression stayed unexplained for a night.
+ */
+function countrySurfaceForm(country: string, random: () => number): string {
+	const forms = COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]
+
+	if (!forms?.length) {
+		throw new Error(
+			`No COUNTRY_SURFACE_FORMS entry for ${country} — add it to codex/country/country.ts before using --country-fraction`
+		)
+	}
+
+	return sample(forms, random)
+}
 
 /**
  * The flattened per-row shape emitted by `ingest-overture-addresses.ts --corpus-jsonl`.
@@ -113,6 +141,8 @@ export function createOvertureAdapter(): CorpusAdapter {
 			}
 
 			const country = opts.country
+			const countryFraction = opts.countryFraction ?? 0
+			const random = makeMulberry32(opts.seed ?? DEFAULT_COUNTRY_SEED)
 
 			// TextSpliterator streams string lines (parseLine keeps tolerating
 			// blank/`#`/malformed lines by returning null); the path string lets the lib
@@ -160,6 +190,13 @@ export function createOvertureAdapter(): CorpusAdapter {
 
 				if (locality) {
 					components.locality = locality
+				}
+
+				// Overture address rows are country-implicit: the country lives in the file's name and on no row.
+				// Placing the surface form in `components` rather than appending it to the rendered
+				// string lets each country's own layout decide where the country goes.
+				if (countryFraction > 0 && random() < countryFraction) {
+					components.country = countrySurfaceForm(country, random)
 				}
 
 				const rendered = formatAddressRow(components, country, { singleLine: true })

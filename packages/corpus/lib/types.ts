@@ -414,6 +414,28 @@ export interface AdapterOptions {
 	limit?: number
 
 	/**
+	 * Fraction of emitted rows that carry an explicit `country` component and its surface form.
+	 *
+	 * A source whose rows name no country teaches the model that a country token is normally absent.
+	 * Measured on 2026-07-18: a 456,230-row Overture CA and MX extract at source weight
+	 * 6.0 moved golden `country` recall −1.6pp, and adding Brazil to make 666,000
+	 * rows moved it −5.3pp, which failed the release check.
+	 *
+	 * The deficit scales with the country-less mass rather than with any property of those countries.
+	 *
+	 * `0` or absent emits no country component and consumes no random draw,
+	 * so a source that already ships stays byte-identical.
+	 */
+	countryFraction?: number
+
+	/**
+	 * Seed for {@linkcode AdapterOptions.countryFraction}'s draw.
+	 *
+	 * Fixed by default so two runs over one input emit the same rows.
+	 */
+	seed?: number
+
+	/**
 	 * Cancellation hook.
 	 *
 	 * Adapters should respect this on every iteration boundary.

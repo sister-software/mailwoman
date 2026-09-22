@@ -42,6 +42,7 @@ export const COUNTRY_SURFACE_FORMS = {
 	BE: ["Belgium", "België", "Belgique", "BE"],
 	IE: ["Ireland", "Éire", "IE", "IRL"],
 	MX: ["Mexico", "México", "MX", "MEX"],
+	BR: ["Brazil", "Brasil", "BR", "BRA"],
 	JP: ["Japan", "日本", "Nippon", "JP", "JPN"],
 } as const satisfies Partial<Record<CountryISO2, readonly string[]>>
 
