@@ -61,7 +61,7 @@ export const defaultOptions: Required<ReflowOptions> = {
  * Penalties in the breaker's cost function.
  * Tuned against the monorepo's own comments.
  */
-export const weights = {
+const weights = {
 	/**
 	 * Squared cost per column a line falls short of the target.
 	 */
@@ -247,7 +247,7 @@ function words(text: string): string[] | undefined {
 /**
  * Widths the breaker works to, in columns of comment content (markers and indent already subtracted).
  */
-export interface WrapLimits {
+interface WrapLimits {
 	target: number
 	max: number
 	tabWidth: number
@@ -465,7 +465,7 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
  *
  * An aside carries its own full stop and the sentence continues past the closing bracket.
  */
-export function splitSentences(text: string): string[] {
+function splitSentences(text: string): string[] {
 	const tokens = words(text)
 
 	if (!tokens) return [text]
@@ -648,7 +648,7 @@ function isStructure(line: string) {
  * which reads as a gap in the code rather than a paragraph break.
  * Those get one sentence per line and nothing else.
  */
-export interface ParagraphShape {
+interface ParagraphShape {
 	paragraphs: boolean
 	perParagraph: number
 }
@@ -656,7 +656,7 @@ export interface ParagraphShape {
 /**
  * Reflow comment contents, with markers already removed by the caller.
  */
-export function reflowText(
+function reflowText(
 	lines: readonly string[],
 	limits: WrapLimits,
 	jsdoc = false,

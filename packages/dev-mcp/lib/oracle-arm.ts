@@ -222,7 +222,7 @@ export class OracleMeter {
  * 2. The package's own header says nothing there should ever decide whether a build ships.
  *    A rule with a list of sets it applies to becomes a rule about which set to pick.
  */
-export const ORACLE_GRADE_MODE = "diff-only" as const
+export const ORACLE_GRADE_MODE = "diff-only"
 
 /**
  * Carried on every oracle comparison so the refusal to grade travels with the result.

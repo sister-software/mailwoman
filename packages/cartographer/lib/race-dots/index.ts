@@ -3,23 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Race-by-dot-density overlay — the Cooper Center "Racial Dot Map" reading, on the demo. One dot
- *   per ~N people, placed at random inside its Census block (built by
- *   `scripts/census/race-dots.ts`
+ * Dot-density race overlay for the demo.
  *
- *   - Tippecanoe), colored by 2020 P.L. 94-171 race/ethnicity category.
+ * One dot represents ~N people in a Census block, colored by 2020 race/ethnicity category.
  *
- *   The PMTiles ships a single `dots` source-layer carrying a `cat` property. we expose each category
- *   as its own default-off circle layer (filtered on `cat`) so the demo's LayerToggleControl gives
- *   each its own checkbox — show the full mosaic, or isolate one group's geography, no extra UI.
- *   Same idiom as the coverage overlay.
+ * The PMTiles has one `dots` source-layer with a `cat` field. Each category is exposed as a
+ * separate default-off circle layer so LayerToggleControl can toggle them individually.
  *
- *   Served as XYZ vector tiles by the tile worker from `nexus-assets/tiles/race-dots-la.pmtiles`; the
- *   consumer passes its TileJSON URL (`tiles.mailwoman.ai/race-dots-la.json`) to
- *   `createRaceDotsSource`.
+ * Served as XYZ vector tiles from `nexus-assets/tiles/race-dots-la.pmtiles`.
+ * Pass the TileJSON URL to `createRaceDotsSource`.
  *
- *   The dot is a _representation_ rather than a record: a random position inside the block, standing in for
- *   ~N real people of that category. It says nothing about any individual address.
+ * Each dot is a randomized placement within its area, standing for a count.
+ * Reading one as an address misreads the layer.
  */
 
 import type { CircleLayerSpecification, VectorSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
@@ -27,19 +22,19 @@ import type { CircleLayerSpecification, VectorSourceSpecification } from "@mapli
 import { TileSetSourceID } from "#styles/sources"
 
 /**
- * Tile set id for the dot-density race layer, one dot per N people (see `tiger/tools/race-dots.ts`).
+ * Tile set id for the race dot-density layer.
  */
 export const RaceDotsTileSetID = TileSetSourceID("race-dots-la")
 
 /**
- * The single source-layer the race-dots PMTiles ships (tippecanoe `-l dots`).
+ * Source-layer name in the race-dots PMTiles.
  */
 export const RACE_DOTS_SOURCE_LAYER = "dots"
 
 /**
- * The togglable categories.
+ * Toggleable categories.
  *
- * Each becomes its own default-off layer + LayerToggleControl checkbox.
+ * Each category maps to a default-off layer.
  */
 export const RaceDotsCategories = [
 	{ id: "race-dots-white", label: "Race · White", color: "#1f78b4", match: ["white"] },
@@ -50,7 +45,7 @@ export const RaceDotsCategories = [
 ] as const
 
 /**
- * Build the race-dots source spec from the tile worker's TileJSON endpoint.
+ * Build a vector source spec from a TileJSON URL.
  */
 export function createRaceDotsSource(url: string): VectorSourceSpecification {
 	return { type: "vector", url }
@@ -62,7 +57,8 @@ function dotLayer(id: string, color: string, cats: readonly string[]): CircleLay
 		type: "circle",
 		source: RaceDotsTileSetID,
 		"source-layer": RACE_DOTS_SOURCE_LAYER,
-		// Default off — an overlay, surfaced via the layer toggle, never on by default.
+		// The layer starts hidden.
+		// A layer toggle reveals it.
 		layout: { visibility: "none" },
 		filter: cats.length === 1 ? ["==", ["get", "cat"], cats[0]!] : ["in", ["get", "cat"], ["literal", cats]],
 		paint: {
@@ -76,8 +72,7 @@ function dotLayer(id: string, color: string, cats: readonly string[]): CircleLay
 /**
  * One default-off circle layer per category.
  *
- * Plain MapLibre specs — the demo adds them imperatively on map-load with a `beforeID`
- * of the first symbol layer, so the dots sit beneath place labels.
+ * Added on map load before symbol layers so dots stay under labels.
  */
 export const RaceDotsLayers: CircleLayerSpecification[] = RaceDotsCategories.map((c) =>
 	dotLayer(c.id, c.color, c.match)

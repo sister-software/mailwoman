@@ -1,12 +1,8 @@
 /**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- * @file Graceful-degradation expectation model for gauntlet component ablations.
+ * Graceful-degradation expectation model for gauntlet ablations.
  *
- * Builds a non-circular resolution ladder from the asserted coordinate, derives the honest rung from only the evidence
- * remaining after deletion, and grades from the undeleted answer’s achieved rung. Every rung carries an explicit radius.
- * ambiguous names abstain. See `ablation-expectation.md` for the design, measurements, and threshold rationale.
+ * Builds a ladder from the asserted coordinate, derives expected depth from surviving
+ * evidence, and grades relative to the undeleted answer.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -14,57 +10,49 @@ import { haversineKm } from "@mailwoman/spatial"
 import type { AblationGrade } from "#eval-harness/gauntlet/ablation/grades"
 
 /**
- * A place as this model needs it: a centroid, a placetype, and either a real bbox or an honest `null`.
+ * Place shape required by this model.
  */
 export interface AblationPlace {
 	id: number
 	name: string
 	placetype: string
 	/**
-	 * ISO-3166 alpha-2.
+	 * ISO-3166 alpha-2 country code.
 	 */
 	country: string
 	lat: number
 	lon: number
 	/**
-	 * `null` when the gazetteer row's bbox is degenerate (`min == max`) — absent, never an extent of zero.
-	 *
-	 * See the module docstring for how often that is (49.2% of localities).
+	 * `null` when bbox is missing/degenerate (`min == max`).
 	 */
 	bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 	/**
-	 * `-log10(population + 1)`, the column the gazetteer ranks by (ascending = most populous first).
-	 *
-	 * Present on every candidate row; `population` itself is frequently unknown,
-	 * which is why the margin is taken on this.
+	 * `-log10(population + 1)` used for ranking (lower = more populous).
 	 */
 	negRank: number
 	population: number | null
 }
 
 /**
- * Where a rung's radius came from.
- *
- * Recorded per rung so the artifact can be re-graded against different numbers without
- * re-running the pipeline, and so a reader can tell a measured extent from a placetype prior.
+ * Source of a rung radius.
  */
 export type RungRadiusSource = "row-tolerance" | "bbox" | "placetype-floor"
 
 /**
- * One rung of the ladder: a disc the answer may honestly land in, and how far down the ladder it is.
+ * One ladder rung.
  */
 export interface AblationRung {
 	/**
-	 * 0 = the undeleted case's own answer. higher = coarser.
+	 * 0 = undeleted answer. Higher = coarser.
 	 */
 	depth: number
 	/**
-	 * `base` for rung 0, else the WOF placetype (`locality`, `county`, `region`, `country`, …).
+	 * `base` for rung 0, otherwise WOF placetype.
 	 */
 	kind: string
 	name: string
 	/**
-	 * WOF id, or `null` for rung 0 (the anchor coordinate is not a gazetteer place).
+	 * WOF id, or `null` for rung 0.
 	 */
 	placeID: number | null
 	lat: number
@@ -74,10 +62,7 @@ export interface AblationRung {
 }
 
 /**
- * A rung the ancestry could not support, and why.
- *
- * Reported rather than dropped: a short ladder and a complete one must never look the same,
- * exactly as a zero-support cell and an unmeasured one must not.
+ * A missing rung and why it is missing.
  */
 export interface AblationLadderGap {
 	placetype: string
@@ -86,7 +71,7 @@ export interface AblationLadderGap {
 }
 
 /**
- * The ladder for one corpus row: rung 0 (its own answer) then its ancestry, deepest first.
+ * Ladder for one row: base rung then ancestry.
  */
 export interface AblationLadder {
 	rungs: AblationRung[]
@@ -94,19 +79,12 @@ export interface AblationLadder {
 }
 
 /**
- * The sentinel depth meaning "no coordinate is honest here".
- *
- * Not a rung with a huge radius.
- * A huge radius would still pass a confident wrong answer, and the whole point of
- * this rung is that answering at all is the defect.
+ * Sentinel meaning "abstain is expected".
  */
-export const ABSTAIN_RUNG = "abstain" as const
+export const ABSTAIN_RUNG = "abstain"
 
 /**
- * What {@linkcode deriveExpectedRung} concluded, with the reason attached.
- *
- * The reason is data: it is how a reader tells "the postcode still pinned it" from
- * "the name was decisive" from "nothing survived".
+ * Expected rung outcome with reason.
  */
 export type ExpectedRung =
 	| { kind: "rung"; depth: number; why: string }
@@ -114,28 +92,10 @@ export type ExpectedRung =
 	| { kind: typeof UNCONSTRAINED_RUNG; why: string }
 
 /**
- * The expectation for a variant whose surviving evidence includes a handle this model cannot evaluate.
- *
- * A venue name (POI resolution lives in `poi.db`, build-local and not a dependency of this layer)
- * or a street name (no street index here).
- *
- * Any rung, including abstention, passes.
- * Only leaving the ladder entirely fails.
- *
- * It exists because the alternative is a confident wrong expectation.
- * `Daniel's Head Beach Park, Scotts Hill` survives a country deletion: `Scotts Hill`
- * alone is a 3-way tie whose top-ranked place is in Austria, so the name cascade would
- * demand abstention, and the pipeline correctly answers Bermuda, off the venue.
- *
- * Declining to constrain that row is honest.
- * Demanding abstention would have scored a correct answer as overconfident.
- *
- * It is not a free pass.
- * The Springfield case keeps its teeth: `742 Evergreen Terrace, Springfield` may answer
- * anywhere on the Springfield-IL ladder or abstain, and answering Springfield MA —
- * 428 km away, off the ladder — is still `wrong`.
+ * Expected state when surviving evidence includes signals this layer cannot evaluate (e.g. venue/street).
+ * Any on-ladder answer or abstention is acceptable.
  */
-export const UNCONSTRAINED_RUNG = "unconstrained" as const
+export const UNCONSTRAINED_RUNG = "unconstrained"
 
 export {
 	ABLATION_GRADES,
@@ -145,9 +105,7 @@ export {
 } from "#eval-harness/gauntlet/ablation/grades"
 
 /**
- * Placetype → fallback rung radius (km): that placetype's measured p90 bbox radius in
- * `admin-global-priority.db` (2026-08-05. Sampled `is_current = 1` rows carrying a non-degenerate
- * bbox, every table under 50k rows scanned whole and the rest sampled `id % 97`).
+ * Placetype fallback rung radius in km (measured p90 bbox radius).
  *
  * | placetype     | rows      | degenerate bbox | p50 km | p90 km  |
  * | ------------- | --------: | --------------: | -----: | ------: |
@@ -163,10 +121,7 @@ export {
  * | neighbourhood | 348,323   | 86.2%           | 0.57   | 2.44    |
  * | microhood     | 1,696     | 8.0%            | 0.69   | 1.76    |
  *
- * P90 rather than p50 on purpose: the floor decides whether a correct coarsening passes,
- * and a p50 disc would fail an answer that landed at the far edge of a bigger-than-median city.
- * A placetype absent from this table has no floor, and a rung whose bbox is also degenerate
- * is dropped into {@linkcode AblationLadder.gaps} rather than given a guessed radius.
+ * Missing placetypes have no floor.
  */
 export const RUNG_RADIUS_FLOOR_KM: Readonly<Record<string, number>> = {
 	country: 2614,
@@ -183,34 +138,22 @@ export const RUNG_RADIUS_FLOOR_KM: Readonly<Record<string, number>> = {
 }
 
 /**
- * Two candidates closer than this are the same physical place rather than namesakes —
- * WOF stores a big city as both a `locality` and a `localadmin`, at the same population.
- *
- * Collapsing them is a precondition of {@linkcode DECISIVE_MARGIN_LOG10} meaning anything
- * (see the module docstring: uncollapsed, Paris reads a 0.01 margin).
+ * Distance under which two candidates are treated as the same place.
  */
 export const COINCIDENT_PLACE_KM = 10
 
 /**
- * The log10 population margin at which a name is decisive.
- *
- * Measured — see the module docstring's table: below 0.5 the top-ranked place is the
- * intended one 52.4% of the time (a coin flip), above it 89.1%.
+ * Decisive log10 population margin for names.
  */
 export const DECISIVE_MARGIN_LOG10 = 0.5
 
 /**
- * A bbox is treated as absent below this extent: `spr` stores an unset bbox as `min == max`,
- * and even non-degenerate rows are frequently a sub-100 m rounding artifact
- * (12,881 of 22,780 sampled localities). 0.1 km is that noise floor.
+ * Bboxes below this size are treated as noise.
  */
 const BBOX_NOISE_FLOOR_KM = 0.1
 
 /**
- * The placetypes a locality-ish name may resolve to.
- *
- * Deliberately excludes `country`/`region` (those are queried explicitly, by their own component)
- * and `postalcode` (queried by the postcode component).
+ * Placetypes used for locality-like lookups.
  */
 export const LOCALITY_PLACETYPES = [
 	"locality",
@@ -223,12 +166,8 @@ export const LOCALITY_PLACETYPES = [
 ] as const
 
 /**
- * WOF containment depth, coarsest = 1 — the same ordering `resolver-wof-sqlite/ancestry.ts`
- * publishes as `PLACETYPE_DEPTH`.
- *
- * Duplicated deliberately rather than imported: this module must rank a placetype string coming off an
- * artifact (an old ablation run being re-graded), where the resolver's table may have moved on.
- * `0` = unknown, which sorts coarsest.
+ * WOF containment depth map.
+ * Coarsest = 1, unknown = 0.
  */
 const PLACETYPE_CONTAINMENT_DEPTH: Readonly<Record<string, number>> = {
 	country: 1,
@@ -242,30 +181,20 @@ const PLACETYPE_CONTAINMENT_DEPTH: Readonly<Record<string, number>> = {
 	macrohood: 9,
 	neighbourhood: 10,
 	microhood: 11,
-	// finer than any admin grain on purpose.
-	// A postcode is a point-grade pin, and `matchRung` refuses to match a pin against a rung
-	// finer than itself, with `postalcode` at the unknown-placetype 0, a surviving postcode
-	// pinned nothing and every postcode-containing variant read as a homonym takeover.
-	// Caught by the "holds the rooftop when a postcode and the street evidence both
-	// survive" test, which is the case the whole layer is about.
+	// Postcode is finer than admin grains so postcode pins can match correctly.
 	postalcode: 12,
 }
 
 /**
- * Containment depth for a placetype — higher is finer, 0 when unknown (sorts coarsest).
- *
- * Mirrors `resolver-wof-sqlite`'s `placetypeDepth`; see {@linkcode PLACETYPE_CONTAINMENT_DEPTH}
- * for why it is not imported.
+ * Lookup containment depth for a placetype.
  */
 export function containmentDepth(placetype: string): number {
 	return PLACETYPE_CONTAINMENT_DEPTH[placetype] ?? 0
 }
 
 /**
- * The radius a bbox implies: the furthest of its four corners from the centroid.
- *
- * `null` when the bbox is absent, degenerate, or below the noise floor — all three of
- * which are "this place has no recorded extent", never "this place has no extent".
+ * Bbox radius from centroid to farthest corner.
+ * Returns `null` when bbox is absent/degenerate/noisy.
  */
 export function bboxRadiusKm(place: Pick<AblationPlace, "lat" | "lon" | "bbox">): number | null {
 	const b = place.bbox
@@ -287,10 +216,8 @@ export function bboxRadiusKm(place: Pick<AblationPlace, "lat" | "lon" | "bbox">)
 }
 
 /**
- * The radius for one ancestry rung, and where it came from.
- *
- * `null` = this place cannot carry a rung (no usable bbox and no floor for its placetype) —
- * the caller records the gap instead of inventing a number.
+ * Resolve rung radius and source for one place.
+ * Returns `null` if no usable radius exists.
  */
 export function rungRadiusKm(place: AblationPlace): { radiusKM: number; radiusSource: RungRadiusSource } | null {
 	const measured = bboxRadiusKm(place)
@@ -306,19 +233,10 @@ export function rungRadiusKm(place: AblationPlace): { radiusKM: number; radiusSo
 }
 
 /**
- * Build the ladder from the anchor's answer plus its resolved place chain
- * (deepest place first, then its ancestors).
+ * Build ladder from anchor plus containing chain (deepest first).
  *
- * Two rules warrant their keep here:
- *
- * - **Radii are made monotonic going up.** A locality with a real 30 km bbox inside a
- *   county whose bbox is degenerate (floor 75 km) is fine, but the reverse happens too.
- *   An ancestor whose recorded extent is tighter than its child's, which would make a
- *   correct coarsening fail at the coarser rung and pass at the finer one.
- *   The running max removes that, and the pre-max value stays visible via `radiusSource`.
- * - **A place with no usable radius is dropped, loudly.** It becomes an
- *   {@linkcode AblationLadderGap}, so a two-rung ladder is attributable to the gazetteer
- *   rather than read as "this address has no ancestry".
+ * Rung radii are monotonic upward.
+ * A place whose radius is absent becomes a gap.
  */
 export function ablationLadderFromChain(
 	anchor: { lat: number; lon: number },
@@ -372,38 +290,29 @@ export function ablationLadderFromChain(
 }
 
 /**
- * The gazetteer probes this model needs.
- *
- * An interface rather than a class, for one reason: {@linkcode deriveExpectedRung} is the
- * piece that must be provably non-circular, and it can only be tested that way against a fake.
+ * Gazetteer operations needed by this model.
  */
 export interface AblationGazetteerProbe {
 	/**
-	 * The place a WOF id names, or `null` when the ancestry DB does not carry it.
+	 * Place by WOF id.
 	 */
 	place(id: number): AblationPlace | null
 	/**
-	 * `id`'s containment chain, nearest-first, self excluded.
+	 * Containment lineage (nearest first, excludes self).
 	 */
 	lineage(id: number): AblationPlace[]
 	/**
-	 * The admin chain containing a coordinate, deepest first — a reverse geocode.
-	 *
-	 * This is what the ladder is built from, and it is why the ladder owes nothing
-	 * to the pipeline: the chain follows from the corpus's own asserted coordinate
-	 * rather than from what the parser did with the address.
+	 * Containing admin chain for a coordinate (deepest first).
 	 */
 	containingChain(lat: number, lon: number): AblationPlace[]
 	/**
-	 * Distinct places sharing a name, most-populous-first, coincident twins already collapsed.
+	 * Named candidates, ranked most-populous first.
 	 */
 	named(name: string, opts?: { country?: string; placetypes?: readonly string[] }): AblationPlace[]
 }
 
 /**
- * The log10 population margin between a candidate list's top two distinct places.
- *
- * `Infinity` for a single candidate (no contest), 0 for an empty one.
+ * Log10 population margin between top two candidates.
  */
 export function dominanceMarginLog10(places: readonly AblationPlace[]): number {
 	if (!places.length) return 0
@@ -414,41 +323,21 @@ export function dominanceMarginLog10(places: readonly AblationPlace[]): number {
 }
 
 /**
- * Is the top candidate decisive — one place, or a population margin at or above the measured threshold?
+ * True if top candidate is decisive.
  */
 export function isDecisive(places: readonly AblationPlace[]): boolean {
 	return places.length > 0 && dominanceMarginLog10(places) >= DECISIVE_MARGIN_LOG10
 }
 
 /**
- * A per-case hand-pin, for the rows where the derived ladder is wrong.
- *
- * Keyed by the deleted component.
- * The value is `"abstain"`, `"base"`, or a WOF placetype naming the rung the
- * deletion should degrade to (`"region"`, `"country"`, …).
- *
- * Absent component = the derived ladder decides, which is the default and should stay
- * the common case: a corpus full of hand-pins is a model nobody can trust.
- *
- * It exists because two classes of place defeat the derivation and no threshold fixes them:
- * territories, whose ancestry chain is politically rather than geographically shaped
- * (a Puerto Rico row's `country` rung is the US, 5,500 km of disc), and dual-role places (#402),
- * where the same name is both a locality and its own county and the ladder double-counts a rung.
- *
- * What IT cannot do: supply a ladder.
- * A pin names a rung on the derived ladder, so a row whose ladder could not be built at all —
- * no asserted coordinate, no containing place, a containment country contradicting
- * the corpus — stays `ungraded` however it is pinned.
- *
- * Those rows need a coordinate in the corpus or a gazetteer fix rather than a pin.
+ * Per-case expectation override keyed by deleted component.
+ * Values are `abstain`, `base`, or a placetype name.
  */
 export type AblationExpectOverride = Record<string, string>
 
 /**
- * Resolve a hand-pin against a ladder.
- *
- * @returns `null` when the pin names a rung this ladder does not have.
- * A pin that cannot be honoured must not silently fall back to the derived answer under the pin's name.
+ * Resolve an override pin to an expected rung.
+ * Returns `null` if the rung is missing on this ladder.
  */
 export function overrideToExpectedRung(pin: string, ladder: AblationLadder): ExpectedRung | null {
 	if (pin === ABSTAIN_RUNG) return { kind: ABSTAIN_RUNG, why: "per-case override" }
@@ -459,23 +348,19 @@ export function overrideToExpectedRung(pin: string, ladder: AblationLadder): Exp
 }
 
 /**
- * The evidence a variant still carries: the case's asserted components minus the one that was deleted.
+ * Surviving components after one deletion.
  */
 export type RemainingComponents = Readonly<Record<string, string>>
 
 /**
- * The deepest rung the remaining components still pin — the normative expectation for one deletion variant.
- *
- * Takes no result argument, by construction: see the module docstring.
- * Everything it reads is either the surviving components, the ladder
- * (built from the undeleted case), or the gazetteer.
+ * Derive expected rung from surviving evidence only.
  */
 export function deriveExpectedRung(
 	remaining: RemainingComponents,
 	ladder: AblationLadder,
 	gz: AblationGazetteerProbe,
 	/**
-	 * Words left in the ablated input that no surviving component accounts for ({@linkcode residualWords}). Untyped evidence: it can only stop an abstain expectation, never deepen a rung one.
+	 * Untyped residual words from input ({@linkcode residualWords}).
 	 */
 	residual: readonly string[] = []
 ): ExpectedRung {
@@ -484,9 +369,7 @@ export function deriveExpectedRung(
 	const postcode = remaining["postcode"]?.trim()
 	const localityName = (remaining["locality"] ?? remaining["dependent_locality"])?.trim()
 
-	// The country component narrows every later probe.
-	// A country name that resolves to nothing (an abbreviation the gazetteer does not carry)
-	// leaves the constraint unset rather than filtering everything out.
+	// Country narrows later probes when resolvable.
 	const countryPlace = countryName ? (gz.named(countryName, { placetypes: ["country"] })[0] ?? null) : null
 	const countryCode = countryPlace?.country || undefined
 
@@ -497,11 +380,7 @@ export function deriveExpectedRung(
 			})[0] ?? null)
 		: null
 
-	// A surviving region narrows the namesake field, and it has to do so by radius
-	// rather than by bbox: 39.3% of WOF regions carry a degenerate bbox, so a bbox
-	// filter would quietly stop constraining on two regions in five.
-	// The radius is the region's own rung radius.
-	// The same measured floor the ladder is built from.
+	// Region narrows candidates using rung radius.
 	const regionRadiusKm = regionPlace ? (rungRadiusKm(regionPlace)?.radiusKM ?? null) : null
 
 	const withinRegion = (places: readonly AblationPlace[]): AblationPlace[] =>
@@ -509,7 +388,7 @@ export function deriveExpectedRung(
 			? places.filter((p) => haversineKm(regionPlace.lat, regionPlace.lon, p.lat, p.lon) <= regionRadiusKm)
 			: [...places]
 
-	// 1. A postcode that resolves to exactly one place is the strongest surviving pin there is.
+	// 1) Unique postcode is the strongest surviving pin.
 	const postcodePlaces = postcode
 		? withinRegion(gz.named(postcode, { placetypes: ["postalcode"], ...(countryCode ? { country: countryCode } : {}) }))
 		: []
@@ -521,25 +400,13 @@ export function deriveExpectedRung(
 		: []
 
 	// Evidence this model cannot evaluate.
-	// Three kinds, one consequence — it may not demand abstention:
-	//
-	//  - No index here.
-	//    A venue resolves from `poi.db` (build-local rather than a dependency of this layer)
-	//    and a street from the address-point / street-centroid databases.
-	//  - A constraint that did not resolve.
-	//    `cr-op3-san-jose` asserts the region as "San José Province" and WOF calls
-	//    it "San José", so the region lookup misses.
-	//    The surviving region is real evidence the pipeline will use, and demanding abstention
-	//    because this model could not look it up would be scoring the model's gap as the parser's.
-	//  - Untyped words the corpus never asserted (`residualWords`).
-	//    The row said less than its input carries.
+	// The case keeps whatever the model answered, and abstention stays unforced.
 	const unevaluable = [
 		remaining["venue"]?.trim(),
 		remaining["street"]?.trim(),
 		regionName && !regionPlace ? `region "${regionName}" (unresolved)` : undefined,
 		countryName && !countryPlace ? `country "${countryName}" (unresolved)` : undefined,
-		// Untyped words still in the input.
-		// Third kind, same consequence — see `residualWords`.
+		// Untyped words still in input.
 		residual.length ? `${residual.length} untyped input word(s) (${residual.slice(0, 3).join(", ")})` : undefined,
 	].filter((entry) => entry != null && entry.length)
 
@@ -565,9 +432,7 @@ export function deriveExpectedRung(
 					? `"${localityName}" is the only place of that name under the surviving evidence`
 					: `"${localityName}" wins its ${localityPlaces.length}-way namesake contest by ${margin.toFixed(2)} log10 population`
 		} else if (postcodePlaces.length) {
-			// An ambiguous postcode still disambiguates an ambiguous name:
-			// keep the namesake nearest a postcode point.
-			// This is the (postcode, locality) coherence #42 exploits, used here only as evidence.
+			// Use postcode proximity to break locality ambiguity.
 			const near = localityPlaces
 				.map((p) => ({
 					p,
@@ -607,15 +472,13 @@ export function deriveExpectedRung(
 	if (!rung) {
 		const takeover = `${why}, but that is ${pinned.name} (${pinned.country}) — not on this row's ladder`
 
-		// A takeover with street/venue evidence still standing is not a settled expectation:
-		// the street may pull the answer back onto the ladder (`8 Rue X, Paris` after `TX` goes).
-		// Decline rather than demand abstention.
+		// With street/venue evidence still present, decline instead of forcing abstain.
 		return unevaluable.length
 			? declineToConstrain(takeover)
 			: { kind: ABSTAIN_RUNG, why: takeover, homonymTakeover: true }
 	}
 
-	// The rooftop only stays required while the street evidence survives alongside the deepest admin pin.
+	// Keep rooftop requirement only when street-level evidence survives.
 	const streetEvidence =
 		(!!remaining["street"]?.trim() && !!remaining["house_number"]?.trim()) || !!remaining["venue"]?.trim()
 
@@ -629,32 +492,15 @@ export function deriveExpectedRung(
 }
 
 /**
- * Does this ladder describe the address the corpus row actually asserts?
- *
- * Returns a reason when it does not, `null` when it does.
- * Only rows that assert no coordinate can fail it — theirs is the ladder built on
- * the pipeline's own undeleted answer, and 342 of the 667 variants in the 2026-08-05
- * corpus come from such rows (72 of 192 cases).
- *
- * When that answer is in the wrong place, the ladder is drawn around the wrong town
- * and every verdict on it is noise wearing a component's name: `gb-op2-east-west-kingsland`
- * asserts London and its undeleted answer resolved elsewhere in the UK, so the
- * expectation for every one of its deletions collapsed to "country".
- * The only rung the two places share.
- *
- * The test: derive the expectation from the full component set (nothing deleted).
- * If the row names a place finer than a region and the ladder can only match it at `macroregion`
- * / `country` grain, the ladder and the row's own components disagree about which city this is.
- *
- * The check reads components and the gazetteer, never the ablated output.
+ * Check whether the ladder matches the row's own components.
+ * Returns a reason if mismatched, else `null`.
  */
 export function ladderComponentDisagreement(
 	components: RemainingComponents,
 	ladder: AblationLadder,
 	gz: AblationGazetteerProbe
 ): string | null {
-	// Only a row that names a city-or-finer place can be checked.
-	// One that names only a country has nothing to disagree about.
+	// Only rows naming locality/postcode can be checked.
 	const namesFinePlace = Boolean(
 		components["locality"]?.trim() || components["dependent_locality"]?.trim() || components["postcode"]?.trim()
 	)
@@ -682,19 +528,13 @@ export function ladderComponentDisagreement(
 }
 
 /**
- * The containment depth of a `region`.
- *
- * A row that names a city and can only be matched to its ladder at a grain coarser
- * than this is a row whose ladder is about somewhere else.
+ * Containment depth for `region`.
  */
 const REGION_GRAIN_DEPTH = 3
 
 /**
- * The ladder rung a pinned place corresponds to: the same WOF id, else the deepest
- * rung whose disc contains it and whose placetype is no finer than the pin's
- * (a country pin must not match the locality rung merely by sitting inside it).
- *
- * `null` = the pin is off this ladder — a homonym takeover.
+ * Match a pinned place to a ladder rung.
+ * Returns `null` if the place is off-ladder.
  */
 export function matchRung(pinned: AblationPlace, ladder: AblationLadder): AblationRung | null {
 	const byID = ladder.rungs.find((r) => r.placeID != null && r.placeID === pinned.id)
@@ -715,9 +555,7 @@ export function matchRung(pinned: AblationPlace, ladder: AblationLadder): Ablati
 }
 
 /**
- * The deepest rung whose disc contains a point, or `null` when the point is outside every rung.
- *
- * The answer left the ladder entirely (the `Ave` → a French locality class).
+ * Deepest rung containing a coordinate, or `null` if none.
  */
 export function achievedRung(lat: number, lon: number, ladder: AblationLadder): AblationRung | null {
 	for (const rung of ladder.rungs) {
@@ -728,15 +566,8 @@ export function achievedRung(lat: number, lon: number, ladder: AblationLadder): 
 }
 
 /**
- * Grade one variant against its expected rung.
- *
- * Substitution fails at every rung.
- * The check runs first and independent of geometry: a slot refilled by a different
- * token (S-2's finding 3 — a house number emitted as the postcode) makes a completion
- * nudge unsafe no matter how good the coordinate is, and letting a coarsening pass
- * would hide exactly the rows the map exists to surface.
- *
- * The achieved depth is still recorded, so a substitution's geometry stays readable.
+ * Grade one variant against expected rung.
+ * Slot substitutions fail regardless of geometry.
  */
 export function gradeAgainstLadder(input: {
 	expected: ExpectedRung
@@ -744,22 +575,14 @@ export function gradeAgainstLadder(input: {
 	lat: number | null
 	lon: number | null
 	/**
-	 * The deleted component's slot outcome (`substituted` is the hard fail).
+	 * Deleted component slot outcome (`substituted` is hard fail).
 	 */
 	slot: "absent" | "recovered" | "substituted"
 	/**
 	 * The rung the undeleted case reached.
-	 * The floor a deletion is judged from.
 	 *
-	 * This layer asks what the deletion cost, and a row whose undeleted answer already
-	 * sits at the locality rung cannot be made to lose a rooftop it never had.
-	 * Without the floor, `ca-op3-lakehead-university` charged its component ledger seven failures
-	 * for a case that was already resolving to the Thunder Bay centroid before anything was deleted.
-	 *
-	 * Every variant displaced 0.00 km from the anchor and still graded as a loss.
-	 *
-	 * `null` means the undeleted answer is not on its own ladder at all, and nothing about
-	 * the deletion can be read off a row like that: the verdict is `ungraded`.
+	 * Grading treats it as the floor.
+	 * `null` means the undeleted answer is off-ladder (`ungraded`).
 	 */
 	anchorRungDepth: number | null
 }): { grade: AblationGrade; achievedRungDepth: number | null; degradedRungs: number | null } {
@@ -772,9 +595,7 @@ export function gradeAgainstLadder(input: {
 		return { grade: "ungraded", achievedRungDepth, degradedRungs: null }
 	}
 
-	// The cost of the deletion: rungs lost relative to where the undeleted case already stood,
-	// never relative to a rooftop the row never reached.
-	// Floored at 0 so a variant that lands finer than its own anchor reads as no loss.
+	// Deletion cost relative to undeleted rung, floored at 0.
 	const fell = achievedRungDepth == null ? null : Math.max(0, achievedRungDepth - anchorRungDepth)
 
 	if (slot === "substituted") {
@@ -792,8 +613,7 @@ export function gradeAgainstLadder(input: {
 	}
 
 	if (expected.kind === UNCONSTRAINED_RUNG) {
-		// Abstention is as acceptable as any rung when the model declined to constrain —
-		// claiming otherwise would be claiming to know what the venue/street index would have found.
+		// For unconstrained cases, abstention and any on-ladder rung are acceptable.
 		if (!resolved) return { grade: "correctlyAbstained", achievedRungDepth: null, degradedRungs: null }
 
 		if (achieved == null) return { grade: "wrong", achievedRungDepth: null, degradedRungs: null }
@@ -803,11 +623,10 @@ export function gradeAgainstLadder(input: {
 
 	if (!resolved) return { grade: "lost", achievedRungDepth: null, degradedRungs: null }
 
-	// Off the ladder entirely (a different place) vs. on it but coarser than the surviving evidence justifies.
-	// Two different defects: the first is resolution, the second is precision.
+	// Distinguish off-ladder wrong place from on-ladder over-coarsening.
 	if (achieved == null) return { grade: "wrong", achievedRungDepth: null, degradedRungs: null }
 
-	// The anchor floor: a deletion cannot be charged for precision the undeleted case never had.
+	// Do not penalize below undeleted precision floor.
 	if (achieved.depth > Math.max(expected.depth, anchorRungDepth)) {
 		return { grade: "coarser", achievedRungDepth, degradedRungs: fell }
 	}
@@ -816,44 +635,18 @@ export function gradeAgainstLadder(input: {
 }
 
 /**
- * The absence marker, shared by the expectation model and every renderer over it.
- *
- * One symbol for "no cell", "support 0" and "no ladder".
- * A consumer that needs to tell those apart can still do so in the JSON, and a reader
- * of the table must not be able to mistake any of them for a score.
+ * Shared marker for absent cell/support/ladder in rendered tables.
  */
 export const ABLATION_ABSENT = "·"
 
 /**
- * Shortest untyped word that counts as evidence in {@linkcode residualWords}.
- *
- * Three, because the corpus's own untyped remainder is dominated by street-type particles
- * and elisions (`de`, `du`, `la`, `st`, `nw`) that pin nothing, while the words
- * that do carry evidence are toponyms and street names.
- * Counting the two-letter tail would make almost every variant unconstrained
- * and hollow out the abstention class this model exists to defend.
+ * Minimum residual token length counted as evidence.
  */
 const RESIDUAL_MIN_WORD_LENGTH = 3
 
 /**
- * Words still in the ablated input that no surviving component accounts for.
- *
- * The corpus types what a case chose to assert, and most rows assert two
- * or three tags out of an address that carries six.
- * `fr-chevaleret-rooftop` asserts `{postcode: "75013"}` and nothing else,
- * so deleting its postcode leaves the model with an empty component set, and an empty
- * component set reads as "nothing names a place", i.e. abstain.
- *
- * The input at that point is `181 Rue du Chevaleret, Paris`, the pipeline resolves
- * the rooftop, and the model calls that overconfident.
- * It is the model that is wrong: there is plenty of evidence, it is just untyped.
- *
- * So untyped residual words count as evidence this model cannot evaluate
- * ({@linkcode UNCONSTRAINED_RUNG}), exactly like a venue.
- * Tokens shorter than three characters and pure digits are ignored.
- *
- * A house number or a bare `de` pins nothing, and treating them as evidence
- * would make every row unconstrained.
+ * Residual input words not covered by surviving typed components.
+ * Short tokens and pure digits are ignored.
  */
 export function residualWords(ablatedInput: string, remaining: RemainingComponents): string[] {
 	const accounted = new Set(
@@ -869,18 +662,14 @@ export function residualWords(ablatedInput: string, remaining: RemainingComponen
 }
 
 /**
- * The case's asserted components minus one — the input to {@linkcode deriveExpectedRung}.
- *
- * A rebuild rather than a `delete`, so the deleted key cannot survive as an
- * `undefined` own property that `in` would still see.
+ * Return components without the deleted key.
  */
 export function withoutComponent(components: Readonly<Record<string, string>>, deleted: string): RemainingComponents {
 	return Object.fromEntries(Object.entries(components).filter(([tag]) => tag !== deleted))
 }
 
 /**
- * An expectation, rendered for the artifact: the rung's name, its depth,
- * the one-sentence derivation, and where it came from.
+ * Render-friendly expected rung description.
  */
 export interface ExpectedRungDescription {
 	expected: ExpectedRung | null
@@ -891,41 +680,20 @@ export interface ExpectedRungDescription {
 }
 
 /**
- * Build the degradation ladder for one corpus row.
+ * Build one case ladder from asserted/pipeline anchor and containment chain.
  *
- * Rung 0 is the corpus's own asserted coordinate when the row has one,
- * and the pipeline's undeleted answer only otherwise.
- * Rungs 1..n are the chain containing that coordinate — a reverse geocode
- * rather than the pipeline's hierarchy.
- *
- * Both choices are the same lesson from the 2026-08-05 smoke run, which built ladders
- * out of the anchor's resolved hierarchy and produced two fictions.
- * `bd-op2-ginza` (an `improvement_target` row, i.e. wrong on purpose) anchored at -34.60, 150.40 —
- * Wollongong, Australia — under a Dhaka hierarchy, so rung 0 sat 9,063 km outside its own country
- * rung and the postcode-deleted variant that resolved Dhaka correctly graded as a failure.
- *
- * `bm-op3-daniels-head-beach- park`, asserted in Bermuda, drew a ladder of Beach Park
- * → Benton Township → Lake → Illinois → United States off a mis-resolved anchor,
- * and the US rung's real bbox is 6,739 km wide, so a Bermuda coordinate sat
- * comfortably inside it and no coherence check could catch it.
- *
- * Containment removes the class: a chain derived from the coordinate cannot disagree with the coordinate.
- * It also removes the last circularity, with an asserted coordinate,
- * nothing in the ladder comes from the parser at all.
- *
- * `null` (with the reason) whenever the ladder would still be a fiction: no coordinate
- * to anchor it, no containing place, or no rung that survived the radius rule.
+ * Returns `null` with reason when no coherent ladder can be built.
  */
 export function buildCaseLadder(
 	anchor: { lat: number | null; lon: number | null },
 	toleranceKm: number,
 	gz: AblationGazetteerProbe,
 	/**
-	 * The row's asserted coordinate (`expect_lat` / `expect_lon`), when it has one.
+	 * Row asserted coordinate (`expect_lat`/`expect_lon`) if present.
 	 */
 	expected?: { lat: number | null; lon: number | null },
 	/**
-	 * The row's stated country (the corpus's `country` column, ISO-3166 alpha-2) — corpus metadata, never a pipeline output, and the only independent check on the containment walk available here.
+	 * Row stated country code used to validate containment.
 	 */
 	statedCountry?: string
 ): { ladder: AblationLadder; anchorSource: "corpus-expected" | "pipeline-anchor" } | { ladder: null; reason: string } {
@@ -945,17 +713,7 @@ export function buildCaseLadder(
 		}
 	}
 
-	// The corpus's own `country` column against the country the walk arrived in.
-	// A mismatch has two very different causes and the message must say which,
-	// because they ask for different work:
-	//
-	//  - Rung 0 came from the asserted coordinate → the containment walk is at fault.
-	//    It starts from `place_bbox`, and a place whose bbox is degenerate is never a candidate,
-	//    so a small country is missed and its points are attributed to a large neighbour.
-	//    The 2026-08-05 Bermuda rows reverse-geocoded to `United States`, whose real bbox spans
-	//    6,739 km, and the one-rung ladder that produced endorsed answers 700 km into Tennessee.
-	//  - Rung 0 came from the pipeline (the row asserts no coordinate) → the undeleted parse
-	//    is already in the wrong country, and no deletion measured against it means anything.
+	// Validate containment country against corpus country and explain mismatch source.
 	const chainCountry = chain.at(-1)!.country
 
 	if (statedCountry && chainCountry && chainCountry !== statedCountry) {
@@ -984,17 +742,7 @@ export function buildCaseLadder(
 }
 
 /**
- * The expectation for one deletion: the per-case pin when there is one,
- * else the derivation from what remains.
- *
- * The remaining set is the case's asserted components minus the deleted one.
- * That is the whole input to the expectation.
- *
- * The ablated arm's result is not a parameter here and must never become one
- * (see `ablation-expectation.ts`; `ablation-expectation.test.ts` pins the invariance).
- *
- * A pin that names a rung the ladder does not have falls back to the derivation and says
- * SO in `why`, rather than quietly reporting a derived verdict under the pin's name.
+ * Build one deletion expectation from override pin or derived evidence.
  */
 export function expectFor(input: {
 	ladder: AblationLadder | null
@@ -1003,12 +751,7 @@ export function expectFor(input: {
 	pin: string | undefined
 	gz: AblationGazetteerProbe
 	/**
-	 * The variant's input text.
-	 *
-	 * Read only to find words no surviving component accounts for ({@linkcode residualWords}).
-	 *
-	 * Not the variant's output.
-	 * The expectation stays non-circular.
+	 * Variant input text, used only for residual word extraction.
 	 */
 	ablatedInput: string
 }): ExpectedRungDescription {
@@ -1058,7 +801,7 @@ function describeExpected(
 }
 
 /**
- * Render a ladder for the artifact — one line per rung, plus its radius and where the radius came from.
+ * Render ladder rows for artifacts.
  */
 export function describeLadder(ladder: AblationLadder): string[] {
 	return ladder.rungs.map((r) => `${r.depth}:${r.kind} ${r.name} ±${r.radiusKM.toFixed(2)}km (${r.radiusSource})`)

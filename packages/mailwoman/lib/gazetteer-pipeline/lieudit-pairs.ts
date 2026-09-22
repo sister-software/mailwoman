@@ -51,7 +51,7 @@ export interface LieuDitPair {
  * The commune column BAN gives as a pair's parent projects onto exactly one tag —
  * see {@link LieuDitPair.parentTag}.
  */
-const LIEU_DIT_PARENT_TAG = "locality" as const
+const LIEU_DIT_PARENT_TAG = "locality"
 
 export interface LieuDitExtractResult {
 	pairs: LieuDitPair[]

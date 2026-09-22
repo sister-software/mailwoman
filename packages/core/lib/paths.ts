@@ -31,7 +31,7 @@ export type OutDirectoryName = typeof OutDirectoryName
 /**
  * The alias used to refer to the root of the repository in path builders.
  */
-export const RepoRootAlias = "mailwoman" as const
+export const RepoRootAlias = "mailwoman"
 
 export type RepoRootAlias = typeof RepoRootAlias
 

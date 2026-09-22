@@ -2,43 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Mailwoman's repo-local oxlint JS plugin (ESLint v9-compatible API), loaded alongside the
- *   bundled Sister Software plugin via `jsPlugins` in `oxlint.config.ts`. Rules encoding
- *   mailwoman-specific guidance live here. anything general enough for other repos graduates to
- *   `@sister.software/oxlint-config`.
- *
- *   `no-sync-fs-in-async`: a synchronous `node:fs` call standing inside an `async` function blocks the event loop
- *   where an `await` is already legal on the same line. The rule fires only in that position. A sync call inside a
- *   sync function is a cascade rather than a defect, and the rule stays silent there.
- *
- *   `no-relative-dynamic-import`: `import("./x.ts")` names a module by the importer's location. the package's
- *   `imports` map names it once.
- *
- *   `no-private-import-in-test`: a test file reaches the package under test through its public exports, never the
- *   `#` map. The map is the package's private naming, and a test that uses it never exercises the surface a consumer
- *   gets.
- *
- *   `no-import-meta-dirname-walk`: `resolvePath(import.meta.dirname, "../..")` counts directories. a package's own
- *   file is `resolvePackagePath`, a repository file is `repoRootPath`.
- *
- *   `no-import-meta-resolve`: `fileURLToPath(import.meta.resolve(…))` has a typed home in
- *   `@mailwoman/core/module/resolvers`.
- *
- *   `prefer-home`: the table is `oxlint.helper-homes.ts` and this file matches its signatures. A row matches a token,
- *   a control shape or an interpolation order: the shuffle writes no constant of its own and a hand-written address
- *   order writes nothing but a comma, so a table that only knew literals could report neither.
- *
- *   `comment-reflow`: one sentence per line.
- *
- *   A sentence that fits takes a line of its own. One that does not wraps at a comma or before a conjunction, with
- *   parentheticals held whole. A block's lead sentence stands alone and the rest travel in pairs. Forked from
- *   oxlint-plugin-comment-reflow (MIT); the breaker and the paragraph shape are ours, in
- *   `config/oxlint/comment-reflow/`.
- *
- *   `prefer-spliterator`: `text.split("\n")` (or `"\t"`) materializes every segment into one array
- *   before the first is read — the whole-buffer parse the spliterator library exists to avoid (the
- *   quadratic-CSV episode in agents.md started exactly there). The rule warns on those two literal
- *   delimiters only. splitting on anything else is not a streaming shape and stays silent.
+ * @file Repo-local oxlint plugin for Mailwoman.
+ *   Loaded with `jsPlugins` in `oxlint.config.ts`.
+ *   Repo-specific rules live here.
+ *   A generic rule moves to `@sister.software/oxlint-config`.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -75,7 +42,7 @@ interface Plugin {
 }
 
 /**
- * The delimiters the rule understands, each mapped to the spliterator entry point that streams it.
+ * Delimiters this rule handles, mapped to suggested spliterators.
  */
 const DELIMITER_HINTS = new Map<string, { rendered: string; hints: string[] }>([
 	[
@@ -86,8 +53,8 @@ const DELIMITER_HINTS = new Map<string, { rendered: string; hints: string[] }>([
 ])
 
 /**
- * The delimiter string when the argument is a plain string literal
- * or an expressionless template literal, else null.
+ * Returns the delimiter string of a plain literal or template.
+ * Any other argument returns null.
  */
 function literalDelimiter(argument: AstNode | undefined): string | null {
 	if (!argument) return null
@@ -139,7 +106,7 @@ const preferSpliteratorRule: Rule = {
 }
 
 /**
- * Kysely calls whose arguments are checked against the database schema.
+ * Kysely boundary methods validated against schema.
  */
 const DATABASE_BOUNDARY_METHODS = new Set([
 	"deleteFrom",
@@ -152,7 +119,7 @@ const DATABASE_BOUNDARY_METHODS = new Set([
 ])
 
 /**
- * Whether an expression contains a cast through `never`, including a nested `as unknown as never`.
+ * True if an expression contains a cast to `never`.
  */
 function containsNeverCast(node: AstNode | undefined): boolean {
 	if (!node) return false
@@ -167,7 +134,7 @@ function containsNeverCast(node: AstNode | undefined): boolean {
 }
 
 /**
- * The identifier name of a non-computed member call, if this is one.
+ * Returns the called member name for non-computed member calls.
  */
 function calledMethod(node: AstNode): string | null {
 	const callee = node.callee
@@ -178,12 +145,12 @@ function calledMethod(node: AstNode): string | null {
 }
 
 /**
- * Type names whose whole purpose is to carry a database schema.
+ * Handle types that carry database schema information.
  */
 const DATABASE_HANDLE_TYPES = new Set(["DatabaseClient", "Kysely", "Transaction"])
 
 /**
- * The type name of a cast's target, when the target is a plain (possibly generic) type reference.
+ * Returns the cast target name for plain type references.
  */
 function castTargetName(node: AstNode): string | null {
 	const annotation = node.typeAnnotation
@@ -311,10 +278,7 @@ const requireDisableReasonRule: Rule = {
 }
 
 /**
- * Each synchronous `node:fs` name, mapped to the asynchronous helper that replaces it.
- *
- * The three removal helpers and the two stat helpers differ in what they treat as an error,
- * so the suggestion names the builtin's own interface rather than the nearest-looking helper.
+ * Sync `node:fs` methods mapped to async helper replacements.
  */
 const GLOBERATOR_DIRECTORY_HINT =
 	'`Globerator.from("*", { cwd: path, absolute: false })`, adding `withFileTypes: true, onlyFiles: false` when entry types are needed (spliterator/node/fs)'
@@ -359,8 +323,7 @@ const FUNCTION_NODE_TYPES = new Set([
 ])
 
 /**
- * Node types that end an `async` scope without being a function: whatever they contain
- * runs synchronously however the surrounding function was declared.
+ * Nodes that reset async scope because their contents run synchronously.
  */
 const SYNC_SCOPE_NODE_TYPES = new Set(["ClassStaticBlock", "StaticBlock", "MethodDefinition", "PropertyDefinition"])
 
@@ -374,8 +337,7 @@ const noSyncFSInAsyncRule: Rule = {
 	},
 	create(context: RuleContext) {
 		/**
-		 * Walked here rather than tracked with `:exit` visitors, so the rule owns the traversal
-		 * and the enclosing-function state cannot desynchronize from it.
+		 * Manual traversal keeps async-scope tracking in one place.
 		 */
 		function walk(node: AstNode, insideAsync: boolean): void {
 			let asyncHere = insideAsync
@@ -423,12 +385,8 @@ const noSyncFSInAsyncRule: Rule = {
 }
 
 /**
- * A dynamic `import("./x.ts")` names a file by where the importer sits, so it breaks the
- * moment either side moves and says nothing about which package boundary it crosses.
- *
- * The package's `imports` map (`#eval-harness/promotion-eval`) names the module once,
- * resolves `.ts` under `node` and `out/*.js` everywhere else, and is what a
- * static import of the same module already uses.
+ * Disallow relative dynamic imports.
+ * Use package `imports` aliases instead.
  */
 const noRelativeDynamicImportRule: Rule = {
 	meta: {
@@ -456,12 +414,9 @@ const noRelativeDynamicImportRule: Rule = {
 }
 
 /**
- * A test file reaches the package under test the way a consumer does — through its public
- * `exports` (`@mailwoman/<pkg>/<subpath>`, `mailwoman/<subpath>`) — and a test helper or an
- * unexported module by relative path, which makes the private dependency visible at the import.
+ * Disallow private `#` import-map specifiers in tests.
  *
- * `#` specifiers are the package's own `imports` map: legal in `lib/`, where the module
- * names its siblings, and a bypass of the public surface everywhere a test uses one.
+ * Tests should use public exports or explicit relative helpers.
  */
 const noPrivateImportInTestRule: Rule = {
 	meta: {
@@ -501,7 +456,7 @@ const noPrivateImportInTestRule: Rule = {
 				}
 			},
 			CallExpression(node: AstNode) {
-				// `vi.mock("#x")`, `vi.doMock`, `vi.importActual`, `vi.importMock`: the specifier is the first argument.
+				// Vitest mock helpers take the module specifier as the first argument.
 				const callee = node.callee
 
 				if (callee?.type !== "MemberExpression" || callee.object?.name !== "vi") return
@@ -523,11 +478,8 @@ const noPrivateImportInTestRule: Rule = {
 }
 
 /**
- * `fileURLToPath(import.meta.resolve(…))` is string plumbing around a question with a typed answer.
- *
- * `@mailwoman/core/module/resolvers` owns it: `resolveModulePath` for a file a
- * specifier names, `resolvePackageDirectory` for a package's root.
- * A module's own neighbours are `resolvePath(import.meta.dirname, …)`.
+ * Disallow `import.meta.resolve`.
+ * Prefer typed helpers in `@mailwoman/core/module/resolvers`.
  */
 const noImportMetaResolveRule: Rule = {
 	meta: {
@@ -563,13 +515,8 @@ const noImportMetaResolveRule: Rule = {
 }
 
 /**
- * `resolvePath(import.meta.dirname, "../../x")` names a file by counting
- * directories up from wherever this module sits.
- *
- * A count that changes when the module moves and differs between the source tree and `out/`.
- *
- * A package's own file is `resolvePackagePath("<package>", …)`; a repository file is `repoRootPath(…)`.
- * Descending from the module's own directory (`"fixtures/x.json"`) is not the problem and stays.
+ * Disallow walking upward from `import.meta.dirname` with `..` segments.
+ * Prefer `resolvePackagePath` or `repoRootPath`.
  */
 const noImportMetaDirnameWalkRule: Rule = {
 	meta: {
@@ -603,9 +550,7 @@ const noImportMetaDirnameWalkRule: Rule = {
 }
 
 /**
- * The method names a call stands on, innermost first: `a.b().c().d()` is `["b", "c", "d"]`.
- *
- * A non-call object (an identifier, a `new` expression, a member read) ends the chain.
+ * Returns method names for a call chain, inner to outer.
  */
 function methodChain(node: AstNode): string[] {
 	const names: string[] = []
@@ -629,9 +574,7 @@ function numericLiteralValue(node: AstNode): number | null {
 }
 
 /**
- * The base object's name in a computed index read or write — `rows` in `rows[i]`.
- *
- * Null for anything else, including a dotted property (`a.b`), which is not an index.
+ * Returns base identifier for computed index access (e.g. `rows` in `rows[i]`).
  */
 function indexedBaseName(node: AstNode | undefined): string | null {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return null
@@ -640,12 +583,7 @@ function indexedBaseName(node: AstNode | undefined): string | null {
 }
 
 /**
- * Whether a computed index is a variable rather than a constant — `xs[i]`, not `xs[0]`.
- *
- * Heapsort's extraction phase counts down from the last index, stops at 1, and swaps two
- * computed indices of one array, so it satisfies every other clause of the shuffle shape.
- * What separates it is that one of its indices is the literal 0: a shuffle swaps the
- * loop variable with a drawn index, and neither is a constant.
+ * True for variable computed indices (`xs[i]`), false for constants (`xs[0]`).
  */
 function isVariableIndex(node: AstNode | undefined): boolean {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return false
@@ -654,18 +592,7 @@ function isVariableIndex(node: AstNode | undefined): boolean {
 }
 
 /**
- * Whether a `for` header counts down from a length to 1: `for (let i = xs.length - 1. I > 0. I--)`,
- * or the same written `i >= 1`.
- *
- * All three clauses are required, and they are not sufficient on their own —
- * heapsort's extraction phase satisfies every one of them.
- * What the body check adds is that both swapped indices are variables.
- * See {@link isVariableIndex}.
- *
- * Known miss: a loop whose bound is hoisted (`const n = xs.length. For (let i = n - 1. …)`)
- * reads as a plain descent and is not reported.
- * Widening the init clause to any identifier would report every backwards loop in
- * the repository, which is a worse trade for a suggestion rule.
+ * True for loops descending from `xs.length - 1` to `1`/`0` with `i--`.
  */
 function isDescendingFromLength(node: AstNode): boolean {
 	const declaration = node.init?.declarations?.[0]?.init
@@ -677,7 +604,7 @@ function isDescendingFromLength(node: AstNode): boolean {
 		declaration.left?.type === "MemberExpression" &&
 		declaration.left.property?.name === "length"
 
-	// `i > 0` and `i >= 1` are the same stopping point, and both are written.
+	// `i > 0` and `i >= 1` are equivalent stop conditions.
 	const bound = node.test?.type === "BinaryExpression" ? numericLiteralValue(node.test.right as AstNode) : null
 
 	const toOne = (node.test?.operator === ">" && bound === 0) || (node.test?.operator === ">=" && bound === 1)
@@ -688,16 +615,7 @@ function isDescendingFromLength(node: AstNode): boolean {
 }
 
 /**
- * Whether a loop body swaps two computed indices of one array.
- *
- * Two forms, because both are written here: the destructured `[xs[i], xs[j]] = [xs[j], xs[i]]`,
- * and the temporary `tmp = xs[i]; xs[i] = xs[j]; xs[j] = tmp`, which shows up
- * as two index writes to the same base.
- *
- * Reads the body's own statements rather than walking the subtree.
- * A generic walk over an oxlint node's values follows its back-references and never terminates,
- * and depth adds nothing here: a shuffle writes its swap at the top of the loop,
- * so a swap nested inside a branch is a different algorithm.
+ * True if the loop body swaps two computed indices of one array.
  */
 function swapsTwoIndices(body: AstNode): boolean {
 	const statements: AstNode[] = body.type === "BlockStatement" ? ((body.body as AstNode[]) ?? []) : [body]
@@ -728,13 +646,7 @@ function swapsTwoIndices(body: AstNode): boolean {
 }
 
 /**
- * The name a template expression interpolates: the property for `place.locality`
- * and `row["locality"]`, the identifier for a bare `locality`.
- *
- * Anything else answers null.
- * It cannot match a row.
- *
- * Therefore, it cannot report one.
+ * Returns interpolated identifier/property name, or null.
  */
 function interpolatedName(node: AstNode): string | null {
 	if (node.type === "Identifier") return node.name ?? null
@@ -747,10 +659,7 @@ function interpolatedName(node: AstNode): string | null {
 }
 
 /**
- * Whether `names` carries every entry of `wanted` in that order, other entries allowed between them.
- *
- * A template that writes a house number before the locality is the same order with
- * an extra component, and the order is what the row names.
+ * True if `names` contains all `wanted` entries in order.
  */
 function containsInOrder(names: readonly (string | null)[], wanted: readonly string[]): boolean {
 	let next = 0
@@ -799,7 +708,7 @@ const preferHomeRule: Rule = {
 	},
 	create(context: RuleContext) {
 		/**
-		 * The quasis of tagged templates seen so far. A tagged template is a DSL rather than a string built by hand — `addr\`${locality} ${region} ${postcode}`` in codex's layout table is the order this rule points people at — and the walk visits the tag before its quasi, so recording it here is enough to skip it below.
+		 * Track tagged template quasis so plain-template checks can skip them.
 		 */
 		const tagged = new WeakSet<object>()
 
@@ -881,15 +790,8 @@ const preferHomeRule: Rule = {
 }
 
 /**
- * A package re-exporting another workspace package's names (`export { X } from "@mailwoman/core"`,
- * `export * from "@mailwoman/core/resolver"`) gives one declaration two public homes,
- * and a reader can no longer tell from an import which package owns a type.
- *
- * The declaring package is the only public home: a consumer imports `Resolver` from
- * `@mailwoman/core/resolver`, never through `@mailwoman/resolver`.
- * `node:*` and third-party re-exports are not in scope — `@mailwoman/core/fs` re-exporting
- * `node:stream` is the funnel that keeps the builtin out of every other package —
- * and a package's own `#` map is the module naming its siblings rather than a foreign name.
+ * Disallow re-exporting symbols from other workspace packages.
+ * Keep one public source package for each declaration.
  */
 const noCrossPackageReexportRule: Rule = {
 	meta: {
@@ -927,11 +829,8 @@ const noCrossPackageReexportRule: Rule = {
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
-		// The only rule here that carries a fixer, so it speaks the full oxlint plugin API —
-		// `messageId`, `loc`, `fix` — rather than the narrow `Rule` shape its neighbours share.
-		//
-		// The cast is where the two meet.
-		// `config/oxlint/comment-reflow/rule.ts` is typed against `@oxlint/plugins`.
+		// This rule supports fixes and is typed against `@oxlint/plugins`.
+		// Cast to the local `Rule` shape for this table.
 		"comment-reflow": reflowRule as unknown as Rule,
 		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
 		"no-cross-package-reexport": noCrossPackageReexportRule,

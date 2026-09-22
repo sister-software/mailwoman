@@ -3,16 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Render an Ink tree to a plain string, once — no TTY, no timers. Doubles as the `DebugFrame`
- *   component-test harness and as the static (non-interactive) capture path a later task's command
- *   drives.
+ *   Render an Ink tree to a plain string once, without TTY or timers.
+ *   Used for `DebugFrame` tests and static, non-interactive capture.
  *
- *   Measured on Ink 7.1.1 (DebugFrame.test.tsx, 2026-08-13): the non-TTY mount's final `write()` lands
- *   on the capture stream synchronously, before `render()` returns — `frames.at(-1)` already holds the
- *   finished frame by the time `unmount()` is called. No `await setImmediate` wait was needed to make
- *   the tests pass. If a future Ink version defers that write past mount (a caller sees an empty or
- *   partial capture), insert `await new Promise((r) => setImmediate(r))` before `instance.unmount()` —
- *   that is the one sanctioned adjustment (see the Task 11 brief).
+ *   On Ink 7.1.1, the final non-TTY `write()` happens before `render()` returns.
+ *   If a future Ink version delays that write, add
+ *   `await new Promise((r) => setImmediate(r))` before `instance.unmount()`.
  */
 
 import { Duplex } from "@mailwoman/core/fs/streams"
@@ -20,25 +16,16 @@ import { render } from "ink"
 import type React from "react"
 
 /**
- * A `WriteStream` stand-in that keeps every frame Ink writes.
+ * `WriteStream` test double that records every frame Ink writes.
  *
- * The assertion at the call site goes through `unknown`, and that is correct here
- * rather than a checker bypass worth removing: Ink types `stdout` as `NodeJS.WriteStream` —
- * a `tty.WriteStream` over a socket, carrying `fd`, `rows`, `cursorTo`, `getColorDepth`
- * and the rest of `net.Socket` — while reading only `columns`, `isTTY` and `write`.
- * No double can be assignable in either direction, so no single assertion is legal.
- *
- * What the shape below provides is that everything other than the gap is still checked:
- * the frames live outside the class and `write` keeps the base signature,
- * so the only unchecked claim is the one the comment names.
+ * The `stdout` cast goes through `unknown` because Ink expects `NodeJS.WriteStream`
+ * (socket-backed), but only uses `columns`, `isTTY`, and `write` here.
+ * The cast isolates that known type gap.
  */
 class CaptureStream extends Duplex {
 	columns: number
-	// `boolean`, not the literal `false`: `WriteStream` declares `isTTY: true`,
-	// and a literal type on this side leaves the two mutually unassignable,
-	// which is what forces an assertion through `unknown`.
-	// The value stays false — Ink resolves its interactive mode from it,
-	// and a static render wants the non-interactive single frame.
+	// Keep this typed as `boolean` (not literal `false`) for assignability.
+	// Value stays false so Ink uses non-interactive rendering.
 	isTTY = false
 
 	readonly #frames: string[]
@@ -49,9 +36,7 @@ class CaptureStream extends Duplex {
 		this.#frames = frames
 	}
 
-	// The base signature rather than a narrowed one: `write(chunk: string)` is a
-	// different member from `WriteStream`'s overloaded `write`, and one mismatched
-	// member is enough to make the two mutually unassignable.
+	// Keep the base signature to stay compatible with `WriteStream` overloads.
 	override write(chunk: unknown, encoding?: unknown, callback?: unknown): boolean {
 		void encoding
 		void callback
@@ -73,7 +58,7 @@ export async function renderInkToString(tree: React.ReactElement, columns: numbe
 
 	instance.unmount()
 
-	// Ink ends a non-interactive render with an empty write on unmount.
-	// The frame is the last one with content.
+	// Unmount writes an empty trailing frame.
+	// The last frame carrying content is the one to return.
 	return frames.findLast((frame) => frame.length) ?? ""
 }

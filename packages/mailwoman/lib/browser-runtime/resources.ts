@@ -160,7 +160,7 @@ export const NATIONAL_STREET_EXTRACT_VERSION = "2026-07-10"
 /**
  * The single national slug the demo's street tier falls back to when no hosted US state claims the query.
  */
-export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
+export const NATIONAL_STREET_FALLBACK_SLUG = "fr"
 
 /**
  * Gazetteer (date) version for the byte-ranged admin DB.

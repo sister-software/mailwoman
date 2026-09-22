@@ -23,7 +23,7 @@ export const ROW_GROUP_SIZE = 50_000
 /**
  * Snappy is the codec selected for corpus parquet files.
  */
-export const PARQUET_COMPRESSION = "SNAPPY" as const
+export const PARQUET_COMPRESSION = "SNAPPY"
 
 export interface ParquetFieldDefinition {
 	// oxlint-disable-next-line unicorn/text-encoding-identifier-case -- Parquet logical type name.

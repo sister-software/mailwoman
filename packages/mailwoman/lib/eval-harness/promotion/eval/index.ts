@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Promotion eval runner (#479) — one command that runs the standard eval battery against a
- *   candidate model, checks every number against an eval spec interface, and emits a single
- *   machine-readable verdict. Exists so promotion evals are enforced rather than night-shift discipline,
- *   and so "why did this model ship?" has a one-file answer.
+ *   Promotion eval runner (#479).
+ *   Runs the standard battery, checks spec floors, and writes one machine-readable verdict.
  *
  *   Usage: mailwoman eval promote\
  *   --model <fp32.onnx> [--int8 <int8.onnx>]\
@@ -15,57 +13,39 @@
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
  *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/eval-<label>]
  *
- *   The --model dual grades raw artifacts: its fp32↔int8 deltas are valid, but its absolute floors
- *   are not for any channel-trained model — the package channel siblings (anchor, gazetteer,
- *   country) never load on that path. Package-shaped grading (--weights-cache) is the only
- *   in-distribution floor read, and a pair of caches (#47) grades floors and the delta cap together
- *   in one run — the release path.
+ *   --model compares raw artifacts: delta checks are valid, absolute floors are not.
+ *   --weights-cache is the in-distribution path, and a paired cache run (#47) checks
+ *   floors and fp32↔int8 deltas together.
  *
  *   Behavior:
  *
- *   - Runs: per-locale-f1 (US/FR, tokenizer-enforced), score-affix (+ unit-real),
- *       score-country-homograph, de-order-eval, preset-compare. When --int8 is given, re-runs
- *       the per-tag battery on the int8 artifact and enforces the fp32↔int8 delta cap.
- *   - Demo-cascade smoke (#524): whole-stack parse→reconcile→resolve against the slim hot DB
- *       (MAILWOMAN_WOF_HOT_DB or the v4.4.0 stage default). Skips with a loud warning when the DB
- *       is absent. floor key `cascade.demo_smoke` (pass-rate %) for specs that eval on it.
- *   - Mask-regression check (#718): when the spec declares requires_conventions, re-runs the ship
- *       artifact mask-off vs mask-on and fails the eval if any tag drops >2pp under the mask — the
- *       "second lock" beside createScorer's load-time capability delta check.
+ *   - Runs per-locale-f1, score-affix (+unit), country-homograph, de-order, and preset compare.
+ *     With --int8, re-runs per-tag checks and enforces the fp32↔int8 delta cap.
+ *   - Runs demo-cascade smoke (#524) when the hot DB exists.
+ *     A missing DB warns and skips the leg.
+ *     Optional floor key: `cascade.demo_smoke`.
+ *   - Runs mask regression (#718) when requires_conventions is set.
+ *     A tag drop over 2pp fails the leg.
  *   - Collects headline numbers into <out-dir>/verdict.json with per-floor pass/fail.
  *   - Exit 0 = every floor met and the mask-regression lock held. exit 1 = any miss.
  *
- *   Every leg runs in-process. The check spawned eight children (`per-locale-f1`, `score-affix` ×6,
- *   `score-country-homograph`, `de-order-eval`, `external-arenas`, `demo-cascade-smoke`,
- *   `fr-parse-recall`), re-serializing typed options into argv and scraping stdout back out of a
- *   pipe. They are now direct calls into sibling modules with typed options and a line sink,
- *   following `presetCompare` / `maskRegressionCheck` / `assemblePromotionVerdict`. The artifact
- *   files are unchanged — same names, same bytes — because the sinks reproduce each child's stdout
- *   line-for-line, and the verdict assembler still reads exactly what it read before.
+ *   All legs run in-process now (no child processes).
+ *   Artifacts are preserved because sinks reproduce line output byte-for-byte.
  *
- *   Error semantics are preserved leg-for-leg, because they are not uniform and the differences are
- *   deliberate. `nothrow` became try/catch-and-continue. a bare `$` (which threw on non-zero) became
- *   a call whose throw propagates. a leg whose non-zero exit aborted the run (arena, fr-recall)
- *   still returns 1. the two legs that merged `${stdout}${stderr}` into one `.md` keep two sinks and
- *   concatenate them in that order. `promotion-eval-sinks.test.ts` pins the table.
+ *   Error handling behavior is kept per leg.
+ *   `nothrow` maps to try/catch.
+ *   Throw-on-nonzero still throws, and an aborting leg still aborts.
+ *   Legs that merged stdout+stderr still do so in that order.
  *
- *   One deliberate difference, and it touches no artifact: a leg whose stderr the runner captured and
- *   then threw away (per-locale-f1's progress narration, the cascade leg's preflight complaints) now
- *   reaches the runner's own stderr, because those modules default `reportError` to `console.error`
- *   and this file only overrides the sinks it actually files. `$.verbose = false` used to swallow
- *   them, which is why a 20-minute per-locale leg looked like a hang. Every `.md` is byte-identical
- *   either way — the runner never wrote those bytes anywhere.
+ *   One intentional change: some previously swallowed stderr now prints to runner stderr.
+ *   Written `.md` artifacts are unchanged.
  *
- *   Lore encoded (the traps that bit before — see CONTRIBUTING_MODEL_WORK.mdx):
+ *   Key guardrails (see CONTRIBUTING_MODEL_WORK.mdx):
  *
- *   - Tokenizer comparability: the tokenizer path must contain the card's tokenizer_version. refuses to
- *       grade otherwise (F1 across tokenizers is meaningless).
- *   - Gaz-fed flags: when the eval spec sets requires_gazetteer_lexicon, every scorer gets
- *       --gazetteer-lexicon + --suppress-gaz-near-postcode (zero-filled clues fake an affix crash
- *       and depress country recall).
- *   - Recompile-before-eval: warns when core/ sources are newer than core/out.
- *   - FoldToComponents: affix floors are graded from score-affix (unfolded), never from per-locale-f1
- *       (whose fold reports 0 even on a perfect split).
+ *   - Tokenizer path must match the card tokenizer version.
+ *   - If requires_gazetteer_lexicon is set, scorers get gazetteer flags.
+ *   - Warn when compiled output is stale.
+ *   - Grade affix floors from score-affix (not folded per-locale output).
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -94,16 +74,9 @@ import { scoreCountryHomograph } from "#eval-harness/score/country-homograph"
 import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
 
 /**
- * Render captured sink lines the way a child process's stdout arrived:
- * one trailing newline per `report()` call.
+ * Render sink lines with one trailing newline per `report()` call.
  *
- * Every `.md` the runner writes goes through this, so the artifacts match the pre-migration bytes.
- *
- * This is the whole migration's required assumption in one line.
- * `console.log(x)` writes `x` then a newline, and zx handed the concatenation of those writes
- * back as `.stdout`; a sink that records one entry per `console.log` call therefore reproduces
- * the same bytes, including a multi-line argument (one call, embedded newlines, one trailing newline)
- * and a bare `console.log()` (the empty string, one newline).
+ * Keeps `.md` artifacts byte-compatible with prior child stdout capture.
  *
  * Exported for `promotion-eval-sinks.test.ts`.
  */
@@ -117,15 +90,12 @@ interface ThresholdSpec {
 	requires_conventions?: string
 	requires_bridge?: boolean
 	/**
-	 * The answer KEY the per-locale battery grades against, e.g. `data/eval/golden/v0.1.3/dev`.
+	 * Answer key path for per-locale grading, e.g. `data/eval/golden/v0.1.3/dev`.
 	 *
-	 * Spec-declared for the same reason the conventions mask is: two eval specs that name different
-	 * golden versions are not comparable, and a default buried in a scorer makes that invisible.
-	 * Omitted = per-locale-f1's own default (v0.1.2/dev).
+	 * Spec-declared for comparability.
+	 * Omitted = per-locale-f1 default (v0.1.2/dev).
 	 *
-	 * Answer-key versions are never comparable across conventions — v0.1.2 folds US
-	 * street spans, v0.1.3 splits them — so a spec that moves this field must re-anchor
-	 * its floors on a fresh reading, never carry the old numbers over.
+	 * If this changes, floors must be re-anchored on fresh measurements.
 	 */
 	golden_dir?: string
 	floors?: Record<string, unknown>
@@ -144,11 +114,12 @@ export interface PromotionEvalOptions {
 	 */
 	model?: string
 	/**
-	 * Quantized int8 sibling — re-runs the per-tag battery and enforces the delta cap.
+	 * Quantized int8 sibling.
+	 * Re-runs per-tag checks and enforces delta cap.
 	 */
 	int8?: string
 	/**
-	 * Check-spec JSON: a path, or a bare spec name resolved against the bundled `checks/` dir (required).
+	 * Check-spec JSON path, or bare name resolved from bundled specs (required).
 	 */
 	check?: string
 	/**
@@ -172,24 +143,20 @@ export interface PromotionEvalOptions {
 	/**
 	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us`.
 	 *
-	 * The #718-safe path that feeds anchor+gazetteer+country via loadFromWeights,
-	 * the only in-distribution grade for a country-channel model (v6.2.0+).
+	 * #718-safe path that feeds anchor+gazetteer+country via loadFromWeights.
 	 *
 	 * Alternative to --model/--int8.
 	 * Takes precedence.
 	 */
 	weightsCache?: string
 	/**
-	 * Package-shaped INT8 candidate dir, same layout as {@linkcode PromotionEvalOptions.weightsCache} —
-	 * pairing them runs the dual fp32+int8 battery entirely package-shaped (#47).
+	 * Package-shaped INT8 dir, same layout as {@linkcode PromotionEvalOptions.weightsCache}.
 	 *
-	 * The `--model`+`--int8` dual under-feeds the country channel (channel siblings never load),
-	 * so its absolute floors are invalid and a release grade needed a second,
-	 * single-artifact `--weights-cache` run.
-	 * A pair makes floors and deltas valid in one run.
+	 * Pairing runs a fully package-shaped fp32+int8 battery (#47).
 	 *
-	 * Requires {@linkcode PromotionEvalOptions.weightsCache} (the fp32 arm)
-	 * and excludes the `--model`/`--int8` flow.
+	 * Requires {@linkcode PromotionEvalOptions.weightsCache} and excludes --model/--int8.
+	 *
+	 * Makes floors and deltas valid in one run.
 	 */
 	int8WeightsCache?: string
 	/**
@@ -199,11 +166,10 @@ export interface PromotionEvalOptions {
 	 */
 	outDir?: PathBuilderLike
 	/**
-	 * Write a per-leg wall-time ledger here.
+	 * Optional per-leg wall-time ledger path.
 	 *
-	 * Profiling only, and the path must name somewhere outside {@linkcode PromotionEvalOptions.outDir}:
-	 * the receipt comparator reads every file under that directory byte-for-byte,
-	 * and a wall time differs between two runs of the same artifact.
+	 * Must be outside {@linkcode PromotionEvalOptions.outDir}.
+	 * Receipt comparison expects stable bytes under outDir.
 	 * Omitted, nothing is written.
 	 */
 	profileJSON?: string
@@ -213,30 +179,21 @@ export interface PromotionEvalOptions {
  * Resolve a `--spec` value to a real file.
  *
  * A path that exists wins verbatim.
- * Otherwise the basename is looked up in the `checks/` dir shipped beside this module.
+ * Otherwise, basename lookup is done in the shipped specs dir.
  *
- * `new URL`-relative for the source tree, with a compiled-tree fallback
- * (tsc does not emit readFileSync'd JSON into `out/`, so `packages/mailwoman/out/eval-harness/` reads
- * the source-tree copy at `packages/mailwoman/lib/eval-harness/specs/`; the lint-rules.json pattern).
- * Old `scripts/eval/checks/<spec>.json` invocations therefore keep working by basename.
+ * Works in source and compiled trees.
  *
- * The `.json` suffix is optional, because the help has always advertised "a spec name"
- * and a spec name is what people type.
- * Before that was true, `--spec v5.3.0-family` fell through to `readFileSync("v5.3.0-family")`
- * and died on a bare enoent naming a file nobody asked for, which is how it read on 2026-07-16.
+ * `.json` suffix is optional.
  */
 /**
- * The eval specs, beside this module in the source tree — tsc emits no `.json`,
- * so the directory is named from the package root.
+ * Eval specs directory in source tree.
  */
 const SPECS_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "specs")
 
 /**
- * The workspaces whose compiled output this battery loads, and therefore the
- * ones whose staleness would change a verdict.
+ * Workspaces used by this battery for compiled-freshness checks.
  *
- * Naming too few buys a `fresh` the run has not earned, so this is the parse and resolve
- * path end to end rather than the two packages the previous check happened to look at.
+ * Keep this list broad enough to cover parse+resolve paths end-to-end.
  */
 const EVAL_HARNESS_WORKSPACES = [
 	"packages/mailwoman",
@@ -267,7 +224,7 @@ export async function resolveThresholdSpecPath(check: string): Promise<string> {
 }
 
 /**
- * Every eval spec shipped beside this module, newest-looking last.
+ * List shipped eval specs, sorted.
  *
  * For `--spec` errors and tooling.
  */
@@ -281,15 +238,12 @@ export async function listEvalSpecs(): Promise<string[]> {
 }
 
 /**
- * The three pre-flight guards, run before any battery: the tokenizer must be comparable
- * to the card's, `core/out` must not be stale, and every graded artifact's md5 +
- * dynamic-quant fingerprint is recorded to `provenance.txt`.
+ * Pre-flight guards before battery: tokenizer comparability, compiled freshness
+ * warning, and artifact provenance.
  *
  * Returns an exit code to propagate, or `null` when the run may proceed.
  *
- * A fail is only trustworthy if you know which bytes were graded. v1.9.2's first eval
- * run false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact —
- * the real model scored 97.5 under every config.
+ * Provenance ensures failures can be tied to exact graded bytes.
  */
 async function runLoreGuards(env: {
 	WC: string
@@ -302,11 +256,11 @@ async function runLoreGuards(env: {
 	card: ModelCard
 }): Promise<number | null> {
 	const { WC, WC_MODEL, WC8_MODEL, MODEL, INT8, TOK, OUT_DIR, card } = env
-	// Verify that the candidate and reference tokenizer versions are comparable.
+	// Ensure tokenizer version matches the card.
 	const CARD_TOK = card.training.tokenizer_version
 
-	// Skipped for --weights-cache: loadFromWeights pairs the package's own tokenizer + card
-	// internally, so the (unused) explicit TOK path won't contain the card's version string.
+	// Skip this check for --weights-cache.
+	// That path resolves the tokenizer and the model card from the package.
 	if (!WC && !TOK.includes(CARD_TOK)) {
 		console.error(
 			`✗ tokenizer path '${TOK}' does not contain card tokenizer_version '${CARD_TOK}' — F1 would be incomparable`
@@ -315,37 +269,18 @@ async function runLoreGuards(env: {
 		return 2
 	}
 
-	// Refuse to evaluate artifacts older than their source inputs.
-	// The battery imports the compiled tree, so a stale `out/` grades code that has
-	// been replaced and reports a verdict rather than an error.
-	//
-	// The rule lives in `@mailwoman/core/module/compiled-freshness` because the dev-MCP
-	// needs the same one for the CLI it spawns, and the two copies disagreed.
-	// This one compared every source against the mtime of the `packages/core/out` DIRECTORY.
-	// `tsc` overwrites files in place and never advances that mtime, so the check warned
-	// after every successful compile.
-	// Its source glob also matched `out/*.d.ts`, comparing the emit against itself.
+	// Warn when compiled output is stale versus source.
 	const freshness = await checkCompiledFreshness(String(repoRootPath()), EVAL_HARNESS_WORKSPACES)
 
 	if (!freshness.fresh && freshness.reason) {
 		console.error(`⚠ ${freshness.reason}`)
 	}
 
-	// Record the exact artifact provenance used for this evaluation.
-	// A fail is only trustworthy if you know which bytes were graded. v1.9.2's first eval
-	// run false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact —
-	// the real model scored 97.5 under every config.
-	// Record md5 + the dynamic-quant fingerprint (count of DynamicQuantizeLinear nodes. 0 = fp32, >0 = int8)
-	// of every graded artifact, and hard-assert the obvious mislabels: --model must be fp32,
-	// --int8 must actually be quantized and differ from --model.
+	// Write provenance (md5 + DynamicQuantizeLinear line-count fingerprint).
+	// Also enforce obvious fp32/int8 labeling checks.
 	//
-	// Was `grep -c -a DynamicQuantizeLinear <path>`.
-	// Grep -c counts matching lines rather than occurrences, and an ONNX file has no meaningful lines.
-	// So the number was only ever read as zero-vs-nonzero, and the scan below
-	// reproduces that reading (it counts newline-delimited chunks carrying the needle,
-	// over the raw bytes, exactly as `grep -a` treated the binary as text).
-	// Kept as a string because it is interpolated verbatim into provenance.txt
-	// and compared against the literal "0".
+	// Mirrors old `grep -c -a DynamicQuantizeLinear <path>` behavior: counts
+	// matching newline-delimited chunks in raw bytes.
 	const dql = async (p: string): Promise<string> => {
 		const needle = Buffer.from("DynamicQuantizeLinear", "latin1")
 		const buffer = await readLocalBuffer(p)
@@ -360,8 +295,7 @@ async function runLoreGuards(env: {
 
 			if (hit === -1) break
 
-			// One count per matching line: charge this line, then resume past its newline
-			// so a second occurrence on the same line cannot be counted twice.
+			// Count at most once per line.
 			count++
 			const lineEnd = buffer.indexOf(NEWLINE, hit)
 
@@ -374,10 +308,8 @@ async function runLoreGuards(env: {
 
 	const md5 = async (p: string): Promise<string> => md5File(p)
 
-	// --weights-cache alone: one artifact (typically the shipped package int8) graded in the primary
-	// slot — log its provenance, skip the dual-artifact assertions (there is no pair to cross-check).
-	// A pair (#47) restores them: the primary arm is the fp32 by interface, so the same three
-	// mislabel assertions the --model flow carries apply, against the package-resolved bytes.
+	// --weights-cache single-arm: log provenance only.
+	// Paired caches (#47): enforce same fp32/int8 mislabel checks as --model flow.
 	if (WC) {
 		const wcDql = await dql(WC_MODEL)
 
@@ -426,10 +358,10 @@ async function runLoreGuards(env: {
 		}
 
 		const provenance = toLinesText(provLines)
-		await writeLocalFile(provenance, `${OUT_DIR}/provenance.txt`) // tee → file …
+		await writeLocalFile(provenance, `${OUT_DIR}/provenance.txt`) // tee to file ...
 		process.stdout.write(provenance)
 
-		//                       … and stdout
+		// ... and stdout
 
 		if (modelDql !== "0") {
 			console.error(`✗ --model '${MODEL}' carries int8 quant nodes — it is not an fp32 artifact`)
@@ -456,16 +388,14 @@ async function runLoreGuards(env: {
 }
 
 /**
- * Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
- * lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer checks).
+ * Demo-cascade smoke (#524): whole-stack parse→reconcile→resolve coverage.
  *
- * Runs on the ship artifact against the slim hot DB the demo serves.
- * Env-restricted like the other artifact-dependent legs: skips with a loud warning
- * when the DB is absent so CI stays green without it, but an eval spec that floors
- * `cascade.demo_smoke` will then fail on the missing sidecar (by design).
+ * Runs on the ship artifact against the slim hot DB.
+ * A missing DB warns and skips.
  *
- * Its own function because it is self-contained and `runPromotionEval` is at the statement ceiling.
- * Nothing about the leg's behavior changed in the comparison.
+ * A spec floor declared on this leg then fails, which is the intended outcome.
+ *
+ * Kept separate for readability and statement count.
  */
 async function runDemoCascadeLeg(env: {
 	outDir: PathBuilderLike
@@ -486,11 +416,8 @@ async function runDemoCascadeLeg(env: {
 		return
 	}
 
-	// nothrow parity: a refusal (missing artifacts / malformed rows) comes back as a
-	// non-zero exitCode, and an unexpected throw is caught and treated the same way.
-	// Only the OUT sink reaches the .md.
-	// The child's stderr went nowhere, so a preflight refusal still leaves an empty
-	// cascade-smoke.md and only the runner's own line below explains it.
+	// nothrow parity: refusal and throw both map to non-zero.
+	// Only stdout sink is written to the .md.
 	const cascadeLines: string[] = []
 	let cascadeExit: number
 
@@ -541,48 +468,17 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 	await using profile = new LegProfile(options.profileJSON ?? "")
 
-	// Every leg takes the library thread resolution, and two ways of raising it were measured and rejected.
-	//
-	// A uniform raise is eaten by de-order's own variance.
-	// Over one battery per `MAILWOMAN_INTRA_OP_THREADS` setting the four parse-only legs
-	// scale monotonically — 279.2 s at 1 thread, 168.9 at 2, 136.1 at 4, 106.1 at 8 —
-	// but de-order does not, and its int8 arm alone spanned 191.5-315.2 s across seven runs,
-	// wider than the 22.7 s the whole battery gains going 2 -> 8.
-	// The library default of 2 stands until a repeated measurement separates the two.
-	//
-	// Raising the parse-only legs alone is worse than either.
-	// It does speed them up (per-locale fp32 79.8 s -> 51.5, the PO-box probe 37.8 -> 23.8,
-	// about 55 s across the four), but de-order, which passes no thread option
-	// and resolves half its rows through SQLite, went 191.5 s -> 311.7 and 315.2 in two runs,
-	// and the battery total 437.7 s -> 548.3 and 532.9.
-	// A leg's classifier is never disposed, so its thread pool outlives it
-	// and the later legs contend with what the earlier ones left running.
+	// Thread tuning was measured and intentionally left at library defaults.
 
-	// package-shaped (#718-safe): when --weights-cache is set, the graded artifact +
-	// its tokenizer/card are the cache's own siblings.
-	// The metric probes load it via loadFromWeights (feeding anchor + gazetteer + country —
-	// the only in-distribution grade for a country-channel model); the country-orthogonal
-	// downstream legs (preset / cascade / arena / fr-recall / mask) stay on the explicit
-	// --model path against these EFF_TOK/EFF_CARD siblings.
-	//
-	// The cache layout comes from `weightsCachePackageDir` — the resolver's own function rather
-	// than a re-typed `node_modules/@mailwoman/neural-weights-en-us` literal (2026-08-06 triage).
-	// The three artifacts are then named as siblings of that directory, which is
-	// what `resolveFromPackageDir` does one layer down.
-	//
-	// Not `resolveWeights({cacheRoot: WC})`, deliberately: its cache rung is a fallback.
-	// A staged bundle missing its binaries falls through to rung 1 (the installed/workspace package),
-	// which in this repo always resolves .
-	// Therefore, a mis-staged candidate would be graded as the shipped model, silently,
-	// and the verdict would carry production's numbers under the candidate's label.
-	// Naming the directory keeps the failure an enoent in the provenance guard's md5 read, three lines down.
+	// Package-shaped mode (#718-safe): resolve model/tokenizer/card from cache package siblings.
+	// Use explicit package-dir paths to avoid silent fallback to installed/workspace package.
 	const WC = options.weightsCache ?? ""
 	const WC_PACKAGE = WC ? weightsCachePackageDir(WC, "en-us") : ""
 	const WC_MODEL = WC ? resolvePath(WC_PACKAGE, "model.onnx") : ""
 	const EFF_TOK = WC ? resolvePath(WC_PACKAGE, "tokenizer.model") : TOK
 	const EFF_CARD = WC ? resolvePath(WC_PACKAGE, "model-card.json") : CARD
 
-	// The int8 arm of a package-shaped pair (#47) — same layout, resolved the same deliberate way.
+	// INT8 arm for package-shaped pair (#47), resolved the same way.
 	const WC8 = options.int8WeightsCache ?? ""
 	const WC8_PACKAGE = WC8 ? weightsCachePackageDir(WC8, "en-us") : ""
 	const WC8_MODEL = WC8 ? resolvePath(WC8_PACKAGE, "model.onnx") : ""
@@ -606,8 +502,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	}
 
 	const check = await readLocalJSONFile<ThresholdSpec>(CHECK)
-	// A label-less spec must not crash the `pass` path (the post-verdict ledger hint
-	// interpolates label — bit on the first v7.0.0-base run, whose spec omitted the field).
+	// Fallback label if spec omits it.
 	const LABEL = check.label ?? basename(CHECK).replace(/\.json$/, "")
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
 
@@ -622,10 +517,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	if (guardExit !== null) return guardExit
 
-	// The spec-declared channel config every scorer shares.
-	// Was an argv fragment (`GAZ_ARGS`) spliced into eight command lines.
-	// It is now one typed object spread into eight calls, which is the same interface
-	// with the stringly-typed step removed.
+	// Shared spec-declared channel options for scorers.
 	const channelOptions: Pick<
 		ScoreAffixOptions,
 		"gazetteerLexicon" | "suppressGazNearPostcode" | "conventions" | "bridgeGaps"
@@ -636,18 +528,14 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		channelOptions.suppressGazNearPostcode = true
 	}
 
-	// Conventions channel (#511 Tier A): when the eval spec declares requires_conventions,
-	// every scorer parses with the address-system conventions mask in the declared
-	// mode ("auto" = locale-head detection).
-	// Same interface discipline as the gaz flags.
-	// The spec is the ship config.
+	// Conventions channel (#511 Tier A): apply declared mask mode to scorers.
 	const CONV_MODE = check.requires_conventions ?? ""
 
 	if (CONV_MODE) {
 		channelOptions.conventions = CONV_MODE
 	}
 
-	// Span-bridge channel (v4.4.0 corrective): spec-declared like the conventions mask.
+	// Span-bridge channel: spec-declared like conventions.
 	let BRIDGE_MODE = ""
 
 	if (check.requires_bridge === true) {
@@ -655,57 +543,42 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		BRIDGE_MODE = "1"
 	}
 
-	// The answer key is part of the ship config, exactly like the gaz flags and the conventions mask.
-	// Recorded in the provenance line so a verdict says which key produced it.
+	// Answer key is part of ship config.
 	if (check.golden_dir) {
 		console.log(`golden dir: ${check.golden_dir} (spec-declared)`)
 	}
 
-	// The ship artifact: the int8 arm when a pair is graded (the int8 is what ships),
-	// else the single cache, else the --model flow's int8-or-fp32.
+	// Ship artifact: paired int8, else single cache, else --model flow int8/fp32.
 	const shipModel = WC ? WC8_MODEL || WC_MODEL : INT8 || MODEL
 
 	const runBattery = async (m: string, tag: string, wc: string = WC): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 
-		// The fp32 arm of a paired run is the one an int8 arm follows, and int8 is what ships.
-		// Unpaired, the single arm carries the shipped package whatever its tag reads,
-		// so it keeps every de-order run.
+		// A paired run treats fp32 as the arm that does not ship.
+		// An unpaired run ships this arm.
 		const pairedNonShipArm = tag === "fp32" && Boolean(WC8 || INT8)
 
-		// Package-shaped (#718): the metric probes (which support weightsCache) load all
-		// channels — anchor + gazetteer + country — from the package.
-		// The country-orthogonal de-order watch lens stays on the explicit path against the
-		// cache siblings (EFF_TOK/EFF_CARD); m = the arm's own model when package-shaped.
-		// `wc` is the PER-battery cache root so a paired int8 arm (#47) loads its
-		// own package rather than the fp32 arm's.
+		// Package-shaped probes load all channels from the selected arm cache.
 		const plOptions = wc
 			? { weightsCache: wc }
 			: { modelPath: m, tokenizerPath: TOK, modelCardPath: CARD, modelAnchorLookupPath: String(LK) }
 
 		const probeOptions = wc ? { weightsCache: wc } : { model: m }
 
-		// The de-order watch lens takes explicit paths, so it names the ARM's own siblings.
-		// A paired int8 arm must not be decoded under the fp32 arm's card if the two bundles ever diverge.
+		// De-order takes explicit arm-specific tokenizer/card paths.
 		const armPackage = wc ? weightsCachePackageDir(wc, "en-us") : ""
 		const armTok = wc ? resolvePath(armPackage, "tokenizer.model") : EFF_TOK
 		const armCard = wc ? resolvePath(armPackage, "model-card.json") : EFF_CARD
 
-		// Each leg below captured a child's stdout into one `.md`.
-		// In-process the sink collects the same lines and `renderLines` re-adds
-		// the newline console.log would have.
-		// A bare `$` threw on a non-zero exit, aborting the run.
-		// These calls throw the same way, so the abort behavior for the metric probes is unchanged.
+		// Capture each leg's output into `.md` with child-stdout-compatible newlines.
+		// Throw behavior on non-zero remains unchanged for metric probes.
 		const perLocaleLines: string[] = []
 
 		await profile.time("per-locale", tag, () =>
 			perLocaleF1(
 				{
 					...plOptions,
-					// Spec-declared, and spelled out rather than spread: per-locale-f1 names
-					// the lexicon field `gazetteerLexiconPath` where the affix probes call it
-					// `gazetteerLexicon`, and a spread would have carried the wrong key silently
-					// past TypeScript into a channel that stayed unfed.
+					// per-locale-f1 uses `gazetteerLexiconPath` (not `gazetteerLexicon`).
 					...(check.golden_dir ? { goldenDir: check.golden_dir } : {}),
 					...(channelOptions.gazetteerLexicon ? { gazetteerLexiconPath: channelOptions.gazetteerLexicon } : {}),
 					...(channelOptions.suppressGazNearPostcode ? { suppressGazNearPostcode: true } : {}),
@@ -719,9 +592,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 		await writeLocalFile(renderLines(perLocaleLines), `${OUT_DIR}/${tag}-per-locale.md`)
 
-		// One helper for the SIX score-affix legs.
-		// The runner's most repeated spawn, and the migration's clearest win:
-		// `file`/`json` are the only things that varied.
+		// Helper for repeated score-affix legs.
 		const runAffix = async (mdName: string, extra: ScoreAffixOptions): Promise<void> => {
 			const lines: string[] = []
 
@@ -746,9 +617,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 				{
 					...probeOptions,
 					...channelOptions,
-					// The country probe always suppresses gaz clues near a postcode, whether
-					// or not the spec asked for the gaz channel.
-					// This flag was hard-coded on its command line.
+					// Country probe always suppresses gaz clues near postcode.
 					suppressGazNearPostcode: true,
 					json: `${OUT_DIR}/${tag}-country.json`,
 				},
@@ -758,7 +627,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 		await writeLocalFile(renderLines(countryLines), `${OUT_DIR}/${tag}-country.md`)
 
-		// v4.4.0 floors: po_box/cedex (the coverage-database val) + intersections (real tiger crossings).
+		// v4.4.0 floors: po_box/cedex + intersections.
 		await runAffix(`${tag}-pobox.md`, {
 			file: "data/eval/external/po-box-cedex-val.jsonl",
 			json: `${OUT_DIR}/${tag}-pobox.json`,
@@ -769,14 +638,13 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 			json: `${OUT_DIR}/${tag}-intersection.json`,
 		})
 
-		// Watch lenses (v4.4.0+, recorded not floored — one release of history before promotion, #488).
-		// No sidecar: these two never passed --json.
+		// Watch lenses (v4.4.0+), recorded but not floored.
+		// No JSON sidecar.
 		await runAffix(`${tag}-watch-intersection-vt.md`, { file: "data/eval/external/intersection-golden-vt.jsonl" })
 		await runAffix(`${tag}-watch-glue.md`, { file: "data/eval/external/glue-rows-perturb.jsonl" })
 
-		// de-order-eval tolerates its own non-zero regression exit (it wrote a valid report).
-		// The try/catch is the in-process `nothrow:`, and the two sinks concatenated
-		// below are the `${stdout}${stderr}` the check wrote before.
+		// de-order tolerates a non-zero regression exit.
+		// Keep nothrow parity and the merged output.
 		const deorderOut: string[] = []
 		const deorderErr: string[] = []
 
@@ -789,19 +657,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						tokenizer: armTok,
 						anchorLookup: String(LK),
 						out: `${OUT_DIR}/${tag}-deorder`,
-						// A repeated gazetteer query answers from a per-run memo: 59-63% of this leg's `findPlace`
-						// calls repeat a key, and US resolve costs 25.5 ms/row without it against 7.4 with.
-						// The databases are sealed, so a query is a pure function of its arguments.
-						// The memo shares hit objects between callers, so a caller that mutated
-						// one would change this leg's report.
+						// Memoize repeated gazetteer lookups for this run.
 						lookupMemo: true,
-						// Five of the six runs feed no floor: the verdict reads one cell,
-						// the `native DE` anchor-on locality.
-						// It is also in the fp32↔int8 delta cap.
-						// Therefore, runs on both arms.
-						// The other five are a record, and a record wants one reading per promotion rather than two.
-						// They run on the arm that ships.
-						// The second one when the battery is paired, the only one when it is not.
+						// On paired non-ship arm, run only the floored/delta-capped de-native-on case.
 						...(pairedNonShipArm ? { runs: ["de-native-on" as const] } : {}),
 					},
 					(line) => deorderOut.push(line),
@@ -815,12 +673,10 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		await writeLocalTextFile(`${renderLines(deorderOut)}${renderLines(deorderErr)}`, `${OUT_DIR}/${tag}-deorder.md`)
 	}
 
-	// --weights-cache alone grades the single shipped package (int8) in the primary slot.
-	// The verdict reads the `fp32-*` files (its primary-artifact slot) with withInt8=false.
-	// Paired (#47), the fp32 arm takes the primary slot and the int8 arm runs the same battery from
-	// its own package, so floors and the delta cap are both graded in-distribution in one run.
-	// The --model path keeps the fp32 + optional int8 dual-artifact flow
-	// (deltas valid. Absolute floors under-fed. The country channel's siblings never load there).
+	// Run batteries by selected mode:
+	// - weights-cache single-arm
+	// - paired weights-cache fp32+int8
+	// - --model fp32 (+optional int8)
 	if (WC) {
 		await runBattery(WC_MODEL, "fp32")
 
@@ -835,9 +691,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		}
 	}
 
-	// In-process since the eval-harness migration (was `node scripts/eval/demo-preset-compare.ts`);
-	// same capture: the report lines land in presets.md, a failure is tolerated like the old
-	// child's self-caught `.catch(console.error)` (partial output kept, check continues).
+	// Preset compare: in-process, tolerant on failure, captured to presets.md.
 	const presetLines: string[] = []
 
 	try {
@@ -850,12 +704,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	await writeLocalTextFile(presetLines.map((line) => `${line}\n`).join(""), `${OUT_DIR}/presets.md`)
 
-	// Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
-	// lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer checks).
-	// Runs on the ship artifact against the slim hot DB the demo serves.
-	// Env-restricted like the other artifact-dependent legs: skips with a loud warning
-	// when the DB is absent so CI stays green without it, but an eval spec that floors
-	// `cascade.demo_smoke` will then fail on the missing sidecar (by design).
+	// Demo-cascade smoke (#524): whole-stack check, skipped with warning if DB is absent.
 	await profile.time("demo-cascade", undefined, () =>
 		runDemoCascadeLeg({
 			outDir: OUT_DIR,
@@ -866,14 +715,10 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		})
 	)
 
-	// Arena leg (v4.4.0+: arena.perturb is a floor when the spec declares it) — heavy, ship artifact only.
+	// Arena leg (v4.4.0+): heavy, ship artifact only, enabled by floor presence.
 	if ("arena.perturb" in (check.floors ?? {})) {
-		// (Historical note: the compiled v0 arena parser used to enoent on libpostal dicts
-		// because repo.ts's __isCompiledTree detection landed CorePackageAbsolutePath at core/out,
-		// so dict reads went to core/out/data/... While the data lives at core/data/....
-		// A local core/out/data symlink bridged the gap. #481 fixed the detection —
-		// the compiled tree now reads core/data directly — so no bridge is needed here anymore.)
-		// Typed options replace the argv the bash-era env threading had already become.
+		// Uses typed options.
+		// Behavior matches the untyped call this replaced.
 		const arenaOut: string[] = []
 		const arenaErr: string[] = []
 		let arenaFailed = false
@@ -896,32 +741,25 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 				)
 			)
 		} catch (error) {
-			// The child's non-zero exit is a throw in-process.
-			// It still lands in arenas.md — the old capture merged stderr in, and a zx
-			// ProcessOutput carried the failing child's output there.
+			// A non-zero exit maps to a throw.
+			// The output still reaches arenas.md.
 			arenaErr.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 			arenaFailed = true
 		}
 
 		await writeLocalTextFile(`${renderLines(arenaOut)}${renderLines(arenaErr)}`, `${OUT_DIR}/arenas.md`)
 
-		// set -e: a non-zero arena run aborts the run before the verdict.
+		// Abort on arena failure.
 		if (arenaFailed) {
 			return 1
 		}
 	}
 
-	// FR bare-street floor (#949) — the class v5.2.0 silently regressed (34/40 → 16/40)
-	// because no standing leg measured FR street parsing without a postcode anchor.
-	// Reads a frozen 40-row OSM sample (committed fixture, no live database needed),
-	// parses each bare + anchored, and fails if the bare-intact rate drops below the spec floor.
-	// The leg self-reports its verdict + exits non-zero.
+	// FR bare-street floor (#949): parse frozen sample and enforce bare-intact floor.
 	const bareStreetFloor = (check.floors ?? {})["fr.bare_street_intact"]
 
 	if (bareStreetFloor !== undefined) {
-		// The `env: childEnv()` this spawn carried is gone with the child.
-		// An in-process call already runs under the runner's own environment,
-		// which is what childEnv() was reconstructing.
+		// In-process call runs under current runner environment.
 		const bareOut: string[] = []
 		const bareErr: string[] = []
 		let barePassed: boolean
@@ -933,10 +771,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						model: shipModel,
 						tokenizer: EFF_TOK,
 						modelCard: EFF_CARD,
-						// The leg's anchor + lexicon siblings must come from the arm being graded
-						// rather than from whatever the checkout happens to have linked.
-						// Without this it read the tracked workspace, which is bare on a dev checkout,
-						// and the enoent surfaced as a bare-street floor failure.
+						// Resolve anchor/lexicon siblings from graded arm when package-shaped.
 						...(WC ? { weightsCache: WC } : {}),
 						floor: String(bareStreetFloor),
 						json: `${OUT_DIR}/fr-bare-street.json`,
@@ -948,7 +783,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 			barePassed = bare.pass
 		} catch (error) {
-			// nothrow parity: a crash was a non-zero exit, which failed the floor.
+			// nothrow parity: crash counts as failed floor.
 			bareErr.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 			barePassed = false
 		}
@@ -964,17 +799,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		console.log(`✓ fr.bare_street_intact PASS (floor ${bareStreetFloor}%)`)
 	}
 
-	// Run the mask-regression check that forms the second promotion lock.
-	// Re-runs the ship artifact mask-off vs the declared conventions mode and fails if any tag's
-	// unfolded F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta
-	// check (it catches indirect mask harms, e.g. forbidding street_suffix depressing street).
-	// Weight-dependent, so it lives on the release path here rather than Test CI (#582).
-	// Only meaningful when the spec declares a conventions mask.
-	// Skipped = pass otherwise.
-	// Its status folds into the final verdict below.
-	// In-process since the eval-harness migration.
-	// The report lines land in mask-regression.md as the child capture did,
-	// and a throw is recorded there like the old child's stderr stack.
+	// Mask-regression is the second promotion lock.
+	// Runs only when conventions mode is declared.
+	// It writes the report and feeds the final verdict.
 	let MASK_CHECK_STATUS = 0
 
 	if (CONV_MODE) {

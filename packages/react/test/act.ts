@@ -3,33 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The one act() change for the browser-mode suite.
+ * Wrap shared test helpers so async React updates happen inside `act()`.
  *
- *   The components under test do async state updates (autocomplete debounce timers, runtime-load and
- *   parse promises, the clipboard write + its transient "copied" flag). A test triggers an interaction
- *   and then asserts, but the resulting `setState` settles in a later microtask/timer — outside any
- *   `act()` scope — so React logs "An update to <X> inside a test was not wrapped in act(...)".
+ * - `userEvent.*`: run each interaction in `act()` and drain one extra tick.
+ * - `vi.waitFor`: poll with a fresh `act()` each round.
  *
- *   Rather than sprinkle `await act(async () => …)` across ~150 call sites, we wrap the two APIs every
- *   test already routes through, once, in place:
- *
- *     • `userEvent` (from `vitest/browser`) — the interaction surface. Each method now runs its
- *       DOM event inside `act()` and then drains one macrotask tick, still inside the same `act()` scope,
- *       so a fire-and-forget `onClick` handler (e.g. `useClipboard`'s `copy()`, whose `setCopied(true)`
- *       lands after the click promise resolves — decoupled from the click) is captured too.
- *
- *     • `vi.waitFor` (from `vitest`) — the settle surface. Reimplemented as a poll that completes one
- *       full `act()` per iteration and checks the assertion synchronously between iterations. Completing
- *       a fresh act each round is what lets an effect chain advance (a held-open act swallows the passive
- *       effect flushes between steps — e.g. `useReleaseRuntime`'s manifest → assets → ready effects would
- *       stall). Because the only code outside act is the synchronous callback invocation (no await, so
- *       no microtask/timer can interleave there), every async `setState` — a debounce firing, a runtime
- *       promise resolving, a parse completing — lands inside an act tick.
- *
- *   Both are singleton objects shared by every importer via the ES-module live binding, so mutating
- *   their methods here — from the setup file, before any test runs — makes every existing
- *   `userEvent.*` / `vi.waitFor` call act-aware with no per-test change. `installActWrappers()` is
- *   idempotent (guarded) so a stray double-import can't double-wrap.
+ * Wrappers are installed once on shared singletons and are idempotent.
  */
 
 import { act } from "react"
@@ -37,7 +16,7 @@ import { vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
 /**
- * Marker so a repeat import can't wrap an already-wrapped method (which would nest act() pointlessly).
+ * Marker to avoid double-wrapping methods.
  */
 const WRAPPED = Symbol.for("mailwoman.react.act-wrapped")
 
@@ -46,7 +25,7 @@ type AnyFn = (...args: unknown[]) => unknown
 type TaggableFn = AnyFn & { [WRAPPED]?: true }
 
 /**
- * Run `fn` inside act() and return its resolved value — the shared primitive both wrappers build on.
+ * Run `fn` in `act()` and return its resolved value.
  */
 async function inAct<T>(fn: () => Promise<T>): Promise<T> {
 	let result: T
@@ -59,7 +38,7 @@ async function inAct<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 /**
- * One drained macrotask tick — lets a fire-and-forget handler's trailing microtasks flush inside act().
+ * Drain one macrotask tick.
  */
 function nextTick(): Promise<void> {
 	return new Promise((resolve) => {
@@ -68,16 +47,10 @@ function nextTick(): Promise<void> {
 }
 
 /**
- * Wrap every function-valued method on `userEvent` so the interaction —
- * and one trailing tick — run inside act().
- *
- * The trailing tick is what captures updates decoupled from the event (the clipboard case); a debounced
- * update lands later still and is caught by the act-wrapped `vi.waitFor` the test awaits next.
+ * Wrap `userEvent` methods so each call runs in `act()` plus one trailing tick.
  */
 function wrapUserEvent(): void {
-	// `UserEvent` is @testing-library's own interface of named methods, so it is not
-	// assignable to an index signature in either direction.
-	// Iterating it by key is the whole point of this wrapper.
+	// Cast for key-based iteration and reassignment.
 	const target = userEvent as unknown as Record<string, TaggableFn>
 
 	for (const key of Object.keys(target)) {
@@ -101,23 +74,14 @@ function wrapUserEvent(): void {
 }
 
 /**
- * Vitest's own `vi.waitFor` defaults (see its `WaitForOptions`) — reproduced so the poll matches.
+ * Defaults matching Vitest `vi.waitFor`.
  */
 const DEFAULT_WAIT_TIMEOUT = 1000
 const DEFAULT_WAIT_INTERVAL = 50
 
 /**
- * Poll `callback` until it stops throwing (or `timeout` elapses), advancing
- * React inside act() between tries.
- *
- * Each iteration awaits a full `act()` (draining that round's microtasks + a timer tick),
- * so effect chains flush a step at a time.
- * The callback then runs synchronously outside act.
- *
- * The only out-of-act code, and being sync it offers no point for a stray update to escape the act scope.
- *
- * Drop-in for `vi.waitFor` over this suite's usage (synchronous assertion callbacks).
- * An async callback is still awaited, but none of the tests here pass one.
+ * Poll `callback` until it passes or times out.
+ * Advances React in `act()` between tries.
  */
 async function actWaitFor<T>(
 	callback: () => T | Promise<T>,
@@ -130,10 +94,8 @@ async function actWaitFor<T>(
 
 	for (;;) {
 		try {
-			// Call synchronously and only `await` a genuinely-thenable result.
-			// `await`-ing a plain value still yields a microtask, and a component promise
-			// queued behind it would fire setState in that gap — outside act.
-			// None of this suite's callbacks are async, so the sync path is the norm.
+			// Call sync first.
+			// Only a real thenable is awaited.
 			const result = callback()
 
 			const isThenable =
@@ -141,11 +103,7 @@ async function actWaitFor<T>(
 
 			const value = isThenable ? await (result as Promise<T>) : (result as T)
 
-			// The condition is met, but an intermediate assertion
-			// (wait for X while Y is still resolving — a parse that fills components before the place
-			// resolves, a runtime whose subject lands before a follow-on) can leave a promise in flight.
-			// Drain one more tick inside act so that trailing setState settles in-scope
-			// instead of firing during the caller's `await` resume gap.
+			// Drain one more tick in act for trailing updates.
 			await act(async () => {
 				await new Promise((resolve) => {
 					setTimeout(resolve, 0)
@@ -159,8 +117,7 @@ async function actWaitFor<T>(
 
 		if (Date.now() >= deadline) throw lastError
 
-		// All waiting happens inside act(): the pending updates for this round settle in-scope,
-		// and the fresh act completes so the next effect in a chain gets flushed before the next check.
+		// Wait inside act between retries.
 		await act(async () => {
 			await new Promise((resolve) => {
 				setTimeout(resolve, interval)
@@ -170,7 +127,7 @@ async function actWaitFor<T>(
 }
 
 /**
- * Swap `vi.waitFor` for the act-advancing poll above.
+ * Replace `vi.waitFor` with the act-aware poll.
  */
 function wrapWaitFor(): void {
 	const original = vi.waitFor as TaggableFn
@@ -183,14 +140,8 @@ function wrapWaitFor(): void {
 }
 
 /**
- * Advance `ms` of real time inside act().
- *
- * For the rare "wait, then assert nothing happened" case a negative assertion can't route
- * through `vi.waitFor` (which waits for a condition to become true): the digit-leading
- * autocomplete test waits past the debounce to prove the fetcher never fired, and the
- * debounce's own `setDebouncedValue` + the abstaining effect still run during that wait.
- * So the wait itself must hold an act scope.
- * Use this instead of a bare `await new Promise(setTimeout)`.
+ * Advance real time inside `act()`.
+ * Use for waits that cannot use `vi.waitFor`.
  */
 export async function actDelay(ms = 0): Promise<void> {
 	await act(async () => {
@@ -201,9 +152,8 @@ export async function actDelay(ms = 0): Promise<void> {
 }
 
 /**
- * Install the act() wrappers on the shared `userEvent` / `vi` singletons.
- *
- * Idempotent.
+ * Install wrappers on shared `userEvent` and `vi` singletons.
+ * Safe to call more than once.
  */
 export function installActWrappers(): void {
 	wrapUserEvent()
