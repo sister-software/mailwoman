@@ -38,7 +38,9 @@ import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import type { CorpusRecipe } from "#recipes/scaffold"
+import { SourceRegister } from "#registers"
 import { type LocaleBaseTuple, type RenderedLocaleRow, renderLocaleRow } from "#surfaces/locale"
+import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
 /**
@@ -81,6 +83,14 @@ export interface LocaleCountrySource {
 	source: string
 	parts: LocalePart[]
 	/**
+	 * The published register these parts came from, stamped on every row this country emits.
+	 *
+	 * `source` names the recipe output and `register` names the publication, which are different questions.
+	 * GB renders HM Land Registry Price Paid Data under the source id `synth-gb`, and a
+	 * reader with only the source id in hand recorded nothing about Land Registry's terms.
+	 */
+	register: SourceRegister
+	/**
 	 * The `corpus_version` stamped on emitted rows.
 	 *
 	 * DE/FR keep the historical `0.4.0` (regenerating those recipe outputs must stay lineage-identical);
@@ -116,6 +126,7 @@ export interface LocaleCountrySource {
 const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	DE: {
 		source: "synth-german",
+		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.4.0",
 		parts: [
 			{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
@@ -124,21 +135,82 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	},
 	FR: {
 		source: "synth-fr",
+		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.4.0",
 		parts: [{ zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }],
 	},
 	NL: {
 		source: "synth-nl",
+		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nl", "countrywide.csv") }],
 	},
 	IT: {
 		source: "synth-it",
+		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ zip: dataRootPath("oa-cache", "it__countrywide.zip"), csv: "it/countrywide.csv" }],
 	},
+	// The five below read the same OA-conformed schema the entries above do
+	// (`LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH`),
+	// and each has one countrywide CSV under `openaddresses/extracted/`.
+	// They were on disk and read by nothing (#2357): 38 of the 83 tiered jurisdictions carry
+	// address data, and eight had neither an entry here nor a recipe of their own.
+	//
+	// Three countries with an extract on disk are deliberately absent.
+	//
+	// Saudi Arabia's is 847 MB, and its street and locality values are Arabic script.
+	// This repository ships no Arabic graph, and the CJK graph routes by script without covering Arabic.
+	// Rows in a script the model cannot segment teach it the wrong boundaries rather than a locale.
+	//
+	// Iceland's is 8 MB and carries a locality on 19 of its 125,681 rows, against a postcode on 125,563.
+	// This recipe needs a locality to render a row, so an entry for it emits 0 rows:
+	// a 400-row draw read `0 sampled of 0 rows`.
+	// The extract is a postcode-and-street file rather than a short one.
+	//
+	// Estonia's is 244 MB and blocked by {@link cleanCityNoise} rather than by its own supply.
+	// Its `CITY` is two admin levels joined by a comma (`Rae vald,Rae küla` — the rural
+	// municipality and the village), and rule 1 drops any city containing a comma.
+	// Measured over the first 400,000 rows: 355,767 carry a comma, 44,225 do not, 8 carry no city.
+	// That rule was derived from a full-stream audit of ES, IT and NL, where a comma marks
+	// a cadastral aggregate, and Estonia is a country it was never measured on.
+	// An entry here would teach Estonian addresses at 11% of their rows and without their village level.
+	// The repair is to read `vald,küla` as locality plus dependent_locality,
+	// which this recipe already carries a field for, and it needs measuring against
+	// the three audited countries before `cleanCityNoise` changes.
+	PT: {
+		source: "synth-pt",
+		register: SourceRegister.OpenAddresses,
+		corpusVersion: "0.9.9",
+		parts: [{ path: dataRootPath("openaddresses", "extracted", "pt", "countrywide.csv") }],
+	},
+	CH: {
+		source: "synth-ch",
+		register: SourceRegister.OpenAddresses,
+		corpusVersion: "0.9.9",
+		parts: [{ path: dataRootPath("openaddresses", "extracted", "ch", "countrywide.csv") }],
+	},
+	HR: {
+		source: "synth-hr",
+		register: SourceRegister.OpenAddresses,
+		corpusVersion: "0.9.9",
+		parts: [{ path: dataRootPath("openaddresses", "extracted", "hr", "countrywide.csv") }],
+	},
+	SK: {
+		source: "synth-sk",
+		register: SourceRegister.OpenAddresses,
+		corpusVersion: "0.9.9",
+		parts: [{ path: dataRootPath("openaddresses", "extracted", "sk", "countrywide.csv") }],
+	},
+	LU: {
+		source: "synth-lu",
+		register: SourceRegister.OpenAddresses,
+		corpusVersion: "0.9.9",
+		parts: [{ path: dataRootPath("openaddresses", "extracted", "lu", "countrywide.csv") }],
+	},
 	ES: {
 		source: "synth-es",
+		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
 		// Pedanía source (`synth-es-pedania`, `--district-as-locality`).
@@ -161,6 +233,7 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// city (Auckland), city the suburb (Birkenhead).
 		// NZ OA carries no postcode.
 		source: "synth-nz",
+		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		// Eval holdout: a probe build excludes ~12% of NZ localities (a locality-bucket split)
 		// for a source-disjoint coord board.
@@ -175,6 +248,7 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// The `readTuples` check above only drops a row when both are empty,
 		// so the majority empty-city rows survive.
 		source: "synth-gb",
+		register: SourceRegister.LandRegistryPricePaid,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"), districtAsLocality: true }],
 	},
@@ -649,7 +723,20 @@ export const localeRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: source, synth_order: order, synth_base_id: null }))
+			// Every component here is a value the register published.
+			// The order, punctuation and casing are this recipe's, because a register
+			// publishes columns rather than an address line — which is what `composed` names,
+			// and why GB's Land Registry records stopped being counted as fabricated.
+			write(
+				stringifyJSON({
+					...aligned.row,
+					recipe: source,
+					order,
+					base_source_id: null,
+					register: countrySource.register,
+					surface: SurfaceOrigin.Composed,
+				})
+			)
 
 			emitted++
 		}
