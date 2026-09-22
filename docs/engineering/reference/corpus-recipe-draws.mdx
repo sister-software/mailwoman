@@ -1,0 +1,98 @@
+---
+title: The row count each recipe was asked for
+role: reference
+audience: maintainer
+owner: operations
+---
+
+# The row count each recipe was asked for
+
+A recipe emits the number of rows its `--count` flag names. The flag is required and carries no
+default, so the number that decides how much of a country the corpus teaches lives in the command
+that built it rather than in any committed file.
+
+This page is that number, recovered by counting the rows of every recipe output on this machine's
+data root on 2026-09-22. It exists because #2357 asked where a country's share of the corpus is set
+and nothing in the repository answered.
+
+## What each recipe output holds
+
+`$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/` and `corpus/recipe-outputs-boundary-family/`, counted
+line by line rather than estimated from file size.
+
+| recipe output                                 |    rows |
+| --------------------------------------------- | ------: |
+| `synth-es-pedania-v1.jsonl`                   | 800,000 |
+| `synth-gb-v1.jsonl`                           | 800,000 |
+| `synth-nz-v2.jsonl`                           | 800,000 |
+| `synth-fr-lieudit-v1.jsonl`                   | 799,997 |
+| `house-venue-v2.jsonl`                        | 116,244 |
+| `synth-trailing-region-es-v23.jsonl`          |  53,078 |
+| `synth-unit-v30.jsonl`                        |  50,000 |
+| `synth-trailing-region-gb-v23.jsonl`          |  35,826 |
+| `synth-trailing-region-placement-v25.jsonl`   |  32,125 |
+| `synth-trailing-region-leftcontext-v26.jsonl` |  31,815 |
+| `suffix-boundary-v2.jsonl`                    |  30,000 |
+| `house-venue-intl-v27.jsonl`                  |  18,000 |
+| `synth-trailing-region-structured-v24.jsonl`  |  17,908 |
+| `synth-trailing-region-us-v29.jsonl`          |  16,000 |
+| `synth-trailing-region-us-v33.jsonl`          |  15,976 |
+| `synth-trailing-region-us-v34-shape.jsonl`    |  15,976 |
+| `synth-trailing-region-ca-v29.jsonl`          |  13,740 |
+| `no-street-led.jsonl`                         |  12,000 |
+| `fr-bare-street.jsonl`                        |  10,803 |
+| `cz-pcfirst-preposition.jsonl`                |   8,501 |
+| `si-bare-village.jsonl`                       |   6,285 |
+| `synth-bare-country-v23.jsonl`                |     277 |
+
+`corpus/overlays-v0.5.0/jsonl/`:
+
+| overlay                    |    rows |
+| -------------------------- | ------: |
+| `german-train.jsonl`       | 200,000 |
+| `affix-train.jsonl`        |  90,000 |
+| `country-train.jsonl`      |  50,000 |
+| `fr-order-train.jsonl`     |  50,000 |
+| `pobox-train.jsonl`        |  50,000 |
+| `unit-train.jsonl`         |  50,000 |
+| `intersection-train.jsonl` |  40,000 |
+| `kryptonite-train.jsonl`   |   4,822 |
+| `german-val.jsonl`         |   4,000 |
+
+## What this answers, and what it does not
+
+**GB's 800,000 street rows are a `--count 800000`.** They are not a cap the reader imposes.
+`RESERVOIR_CAP` in `packages/corpus/lib/international/recipes/locale.ts` is 1,200,000 and bounds the
+pool held in memory while a source is streamed, which never binds a draw of 800,000. The four
+largest locale outputs — ES pedanía, GB, NZ and the FR lieu-dit recipe — were each drawn at that
+same 800,000, so the number is a convention rather than a per-country decision.
+
+A row count recovered this way is the count the recipe emitted, which equals `--count` for a recipe
+that reached its target. `synth-fr-lieudit-v1.jsonl` at 799,997 is three short of 800,000, so that
+one either ran with a different flag or exhausted its pool.
+
+**Where these numbers came from is still not recorded.** Counting an artifact recovers what a
+recipe emitted. It does not recover the invocation, the seed, or the flags beside `--count`, and no
+file on this machine carries them. A recipe output rebuilt from a different seed would count the
+same and contain different rows.
+
+## What records it from now on
+
+`mailwoman corpus slice` writes `<out>.invocation.json` beside every recipe output, after the rows,
+so a sidecar exists only beside a run that finished. It carries the recipe name, its mode, the rows
+emitted and skipped, the time, and every option the run resolved:
+
+```json
+{
+	"recipe": "locale",
+	"mode": "generate",
+	"emitted": 200,
+	"skipped": 0,
+	"read": null,
+	"ranAt": "2026-09-22T06:10:56.983Z",
+	"options": { "output": "…/lu.jsonl", "seed": 20260922, "variants": 1, "count": 200, "golden": false, "country": "LU" }
+}
+```
+
+The recipe outputs listed above predate it and have no sidecar. The table is their only record, and
+it goes stale the moment one of them is rebuilt.

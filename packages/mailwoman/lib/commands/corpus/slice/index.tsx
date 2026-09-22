@@ -12,6 +12,7 @@
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { RecipeOptions } from "@mailwoman/corpus"
 import { createRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
@@ -148,6 +149,26 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 		await new Promise<void>((res) => {
 			stream.on("finish", () => res())
 		})
+
+		// The invocation, beside its output.
+		//
+		// A recipe output's row count records what a recipe emitted and nothing about what it was asked for.
+		// The seed, `--count` and every fraction lived only in the shell that ran it,
+		// so a corpus could not say how a country's share of it was decided.
+		//
+		// Written after the rows, so a sidecar exists only beside a run that finished.
+		await writeLocalJSONFile(
+			{
+				recipe: name,
+				mode: recipe.mode,
+				emitted: stats.emitted,
+				skipped: stats.skipped,
+				read: stats.read ?? null,
+				ranAt: new Date().toISOString(),
+				options: Object.fromEntries(Object.entries(opts).filter(([, value]) => value !== undefined)),
+			},
+			`${options.out}.invocation.json`
+		)
 
 		return [
 			`recipe: ${name}`,
