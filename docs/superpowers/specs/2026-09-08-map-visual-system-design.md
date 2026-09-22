@@ -170,7 +170,7 @@ address field. The right-hand panel lists internal style-layer counts (`Roads (3
 8. **Base UI is deferred behind a trigger.** No UI library exists in any of the 74 workspaces today, and
    the whole inventory across `@mailwoman/react`, `packages/earth` and `packages/planetary` is six element
    types: 13 `<button>`, 10 `<label>`, 10 `<input>`, 6 `<summary>`, 6 `<select>`, 6 `<details>`. Two
-   places want behavior that is a mistake to hand-roll — the layers panel wants a popover with dismissal
+   places want behavior that is a mistake to hand-roll. The layers panel wants a popover with dismissal
    and focus return, and the result view wants a sheet. When Phase 2 reaches either, take `@base-ui/react`
    for those two alone, behind our own component names. Not a fourteen-component build-out.
 9. **No control depends on glass to be usable.** Every material carries an opaque fallback under

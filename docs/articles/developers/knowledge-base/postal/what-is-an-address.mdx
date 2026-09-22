@@ -15,7 +15,7 @@ to a town four states from where you expected. What is an address, such that thi
 
 ## The analog
 
-An address is an instruction for reaching a delivery point — the smallest unit a postal service will
+An address is an instruction for reaching a delivery point, the smallest unit a postal service will
 deliver to. One letterbox. One post office box. One loading dock behind a warehouse. The UK's unit
 postcode groups about fifteen of them, and never more than a hundred
 ([Office for National Statistics](https://www.ons.gov.uk/methodology/geography/ukgeographies/postalgeography)).
@@ -52,7 +52,7 @@ disagree can both be usable, and the disagreement is information: it tells you w
 string came out of.
 
 That is the division of labor Mailwoman is built around. A parse takes the string apart and labels
-the spans — this run of characters is a house number, that one is a locality — without deciding which
+the spans. This run of characters is a house number, that one is a locality — without deciding which
 postal system the writer had in mind; the label vocabulary is on
 [Component tags](../../reference/component-tags.mdx). Attaching coordinates is a second pass over the
 labeled result, and it reports which tier of data answered, because a rooftop point and a city

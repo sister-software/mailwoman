@@ -96,7 +96,7 @@ Instrument the data loader to log per-tag token counts per source per epoch. The
 
 ### 4. Keep int8 quantization for browser deployment
 
-The 29M model quantizes from 66 MB (fp32) to 17 MB (int8) with negligible accuracy loss. This is correct for the browser cold-load budget (~60 MB total). Do not increase model size — the architecture is sufficient for the task. Fix the recipe rather than the model.
+The 29M model quantizes from 66 MB (fp32) to 17 MB (int8) with negligible accuracy loss. This is correct for the browser cold-load budget (~60 MB total). Do not increase model size. The architecture is sufficient for the task. Fix the recipe rather than the model.
 
 ## Demo preset results (v0.5.2 weights + inference enhancements)
 
@@ -143,7 +143,7 @@ The pipeline path reveals the truth: the grouper-audit fills those gaps with pro
 2. **The phrase grouper's structural proposals are low quality for these gaps.** It proposes `LOCALITY_PHRASE("Pennsylvania")` based on capitalization rather than semantics. When injected at 0.55 × grouper confidence, these wrong provisional nodes appear in the output.
 3. **The JSON dedup (first-occurrence-wins) is not the issue.** The grouper-audit nodes aren't competing with neural nodes — they're filling spans the neural model left completely empty.
 
-The 4/6 "correct" neural-only results for v0.5.2 are correct by omission — the model gets the tags it does emit right but doesn't emit tags for most of the address.
+The 4/6 "correct" neural-only results for v0.5.2 are correct by omission. The model gets the tags it does emit right but doesn't emit tags for most of the address.
 
 ### v0.5.3 (step-028000, best checkpoint) — neural-only
 
@@ -214,7 +214,7 @@ This session had measured thrashing. Documenting the confusion points so future 
 | --- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | 1   | Ran uncompiled TSX via `npx tsx`, blamed missing React import. Created PR, then reverted. | Didn't know the CLI must be run from compiled output (`node mailwoman/out/cli.js`).                                                 | ~30 min                                     |
 | 2   | Compared val_macro_f1 across tokenizer versions (0.579 vs 0.638), concluded regression.   | Different tokenizers produce incomparable BIO alignments. No guard against this comparison.                                         | ~2 hours of wrong-direction analysis        |
-| 3   | Blamed grouper-audit for "overriding neural output" (pipeline 1/6 vs neural 4/6).         | `decodeAsJSON` hides all-O spans. The neural model was barely emitting tags — the audit was correctly filling gaps.                 | ~1 hour                                     |
+| 3   | Blamed grouper-audit for "overriding neural output" (pipeline 1/6 vs neural 4/6).         | `decodeAsJSON` hides all-O spans. The neural model was barely emitting tags. The audit was correctly filling gaps.                  | ~1 hour                                     |
 | 4   | Printed `tree.roots.map(tag)` and reported 4% coverage. Concluded tag collapse.           | Tree uses containment nesting (`region → locality → street → house_number`). Only top-level roots visible without traversal.        | ~30 min                                     |
 | 5   | DeepSeek recommended "do not ship, revert to v0.5.1 recipe."                              | Trusted the same invalid F1 comparison. Wrote 150 lines of analysis before running a single functional test.                        | ~1 hour of wrong-direction planning         |
 | 6   | DeepSeek diagnosed wof-admin downweight as "caused tag collapse."                         | Confirmation bias — once the F1 comparison "proved" regression, every observation confirmed it. The downweight was the correct fix. | Cascading effect on all subsequent analysis |

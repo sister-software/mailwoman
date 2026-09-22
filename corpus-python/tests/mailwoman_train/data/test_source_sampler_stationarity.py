@@ -157,8 +157,8 @@ def test_source_absent_from_source_weights_raises(tmp_path: Path) -> None:
 
 
 def test_source_named_at_zero_is_declined_without_raising(tmp_path: Path) -> None:
-    """Naming a source at zero is how the config declines it, so that path stays silent and legal —
-    the refusal above must not make ``synth-no-street-led: 0.0`` unexpressible."""
+    """Naming a source at zero is how the config declines it, so that path stays silent and legal.
+    The refusal above must not make ``synth-no-street-led: 0.0`` unexpressible."""
     corpus = _write_corpus(
         tmp_path,
         {

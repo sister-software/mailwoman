@@ -14,7 +14,7 @@ locality, region, US venue) are at usable parity; the campaign over the starved
 long-tail tags has banked `unit` (shipped v4.1.0), conditional `street_prefix`/`street_suffix`
 (#462), and brought `country` alive (0 → 65 F1 on the hard homograph check, perfect
 precision, zero over-fire, across v0.9.10/v0.9.11). What remains is the apex of the
-last 80% — the part where each move has to be the \_right* move, nota move.
+last 80%. The part where each move has to be the \_right* move, nota move.
 
 This doc fixes the direction for that stretch, distilled from the 2026-06-09 design
 review (the model-first reversal, the synonymy/homonymy framing, and the gazetteer-
@@ -32,7 +32,7 @@ Progression: v0.9.10 balanced extract 57.9 → v0.9.11 +class-weight 65.0 → v0
 `B-region → B-postcode` CRF transition (US-only; FR's postcode precedes the
 locality, so it never sees this). The fix is **train-time channel choreography**:
 zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, at _both_ train
-and inference (the pairing is essential — the harm is weight-baked, so an
+and inference (the pairing is essential, because the harm is weight-baked, so an
 inference-only patch can't undo it). Operator decision: **accept v0.9.12/13 as the
 country change and carry the choreography into the consolidation retrain** (move 4),
 where the dip washes out — no standalone fix-retrain. Choreography ships

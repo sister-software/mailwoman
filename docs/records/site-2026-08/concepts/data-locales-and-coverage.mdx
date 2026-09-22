@@ -54,7 +54,7 @@ hierarchy:
   locality             Kraków [wof:9000000568126] (50.0614, 19.9366)
 ```
 
-Both addresses parse equally well. The Polish one comes out fully labeled — `street: "ul. Floriańska"`, `house_number: "3"`, `postcode: "31-019"`, `locality: "Kraków"` — exactly as the French one does. What differs is the data available to pin those labels. France has BAN, a national open address register wired into the resolver's rooftop tier, so the French run reports `address_point` and a 1 m uncertainty: a registered doorway. Poland has no open register wired in, so the ladder walks down to its floor and returns the locality centroid, labeled `admin`, with no uncertainty line at all — a town-grade point carries no radius worth promising. The house number in the Polish query contributed nothing to the coordinate. On the Polish eval panel the median miss from this kind of centroid resolution is 2.45 km.
+Both addresses parse equally well. The Polish one comes out fully labeled — `street: "ul. Floriańska"`, `house_number: "3"`, `postcode: "31-019"`, `locality: "Kraków"` — exactly as the French one does. What differs is the data available to pin those labels. France has BAN, a national open address register wired into the resolver's rooftop tier, so the French run reports `address_point` and a 1 m uncertainty: a registered doorway. Poland has no open register wired in, so the ladder walks down to its floor and returns the locality centroid, labeled `admin`, with no uncertainty line at all. A town-grade point carries no radius worth promising. The house number in the Polish query contributed nothing to the coordinate. On the Polish eval panel the median miss from this kind of centroid resolution is 2.45 km.
 
 One operational footnote from the second command: `--default-country none`. The default `en-US` locale scopes the resolver to the United States, and under that scope this same query returns Krakow, Michigan. Coverage questions are routing questions too; if your input spans countries, unpin the scope or set it per batch.
 
@@ -92,7 +92,7 @@ Provenance is a design constraint. The shipped core is built entirely from permi
 
 ## Where coverage runs out
 
-Coverage gives out by degrees. [The precision ladder](./how-mailwoman-resolves-a-place.mdx#the-precision-ladder) consults each rung only when the finer one has nothing, so a missing register degrades the answer rather than emptying it: no rooftop point means an interpolated estimate, no street segment means a postcode or locality centroid, and the output names the rung it used. What you must not do is ignore `resolution_tier` and treat every coordinate as a delivery point — the Kraków result is a correct town rather than a correct door.
+Coverage gives out by degrees. [The precision ladder](./how-mailwoman-resolves-a-place.mdx#the-precision-ladder) consults each rung only when the finer one has nothing, so a missing register degrades the answer rather than emptying it: no rooftop point means an interpolated estimate, no street segment means a postcode or locality centroid, and the output names the rung it used. What you must not do is ignore `resolution_tier` and treat every coordinate as a delivery point. The Kraków result is a correct town rather than a correct door.
 
 The floor drops away only when the gazetteer has never heard of the place. Then the parse survives and the coordinate does not:
 

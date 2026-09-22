@@ -5,7 +5,7 @@ of libpostal's dictionaries and maintains a **patch layer** on top: a `!token` l
 says this is a street type / place name / surname; we say no."_
 
 **94 of the 276 non-comment lines are deletions.** A third of the vendored dictionary exists to
-un-say something. This is not a criticism of the engineers — every line is a defensible call. It is a
+un-say something. This is not a criticism of the engineers. Every line is a defensible call. It is a
 record of what the _architecture_ charges for a homograph.
 
 ## Each line is a headstone

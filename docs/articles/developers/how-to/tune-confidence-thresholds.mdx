@@ -82,7 +82,7 @@ const tree = await classifier.parse(raw, { calibrate })
 ```
 
 `createCalibrator` returns a pure `(raw: number) => number`, monotone and piecewise-linear over the
-table's twenty bins. Outside the range of bin centers it does not clamp to `[0, 1]` — it returns the
+table's twenty bins. Outside the range of bin centers it does not clamp to `[0, 1]`. It returns the
 nearest bin's own calibrated value, which for the shipped `en-us` table is 0.0444 below and 0.9908
 above. A raw 1.0 therefore calibrates to 0.991, and no input to this function can ever produce a
 calibrated 1.0. Nothing else in the call changes: the same spans, the same tags, the same offsets,

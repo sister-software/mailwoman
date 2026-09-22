@@ -211,7 +211,7 @@ mailwoman geocode --default-country US "20500" | jq -c '{lat, lon, postcode, cou
 ```
 
 Null. The candidate gazetteer's US postcode coverage is partial, so scoping to the right country turns a
-wrong answer into no answer. That is the better failure — a null is checkable and a Spanish coordinate is
+wrong answer into no answer. That is the better failure. A null is checkable and a Spanish coordinate is
 not — but plan for it: a bare US ZIP Code is not a reliable geocoding input on its own. Adding a city
 makes it one.
 

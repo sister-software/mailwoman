@@ -41,7 +41,7 @@ unrecognized scenario key throws rather than answering as an absence, because "n
 **Nothing here is a statement about a property.** The layer reports what the authority's map assigns
 at a location under a named scenario, which is a fact about the map. The Environment Agency states
 that its data "cannot provide details for individual properties", and every reading carries the
-product's own exclusions — an erosion answer is silent about flooding and about foreshore features.
+product's own exclusions. An erosion answer is silent about flooding and about foreshore features.
 
 ## The twelve scenarios
 
@@ -119,7 +119,7 @@ Each is encoded in the code rather than written down somewhere else:
 1. **The OGC service slug is `ncern`, a misspelling of the product.**
    `…/spatialdata/ncerm-national-2024/wfs?…GetCapabilities` answers HTTP 404;
    `…/spatialdata/ncern-national-2024/wfs?…` answers HTTP 200 with 110,478 bytes. Any client must
-   use the misspelling — a build that "corrected" it would lose the service half of the two-path
+   use the misspelling. A build that "corrected" it would lose the service half of the two-path
    verification while reporting a clean run.
 2. **`HEAD` answers 405 and `Range` is ignored.** A ranged GET returns HTTP 200 with the whole
    70,296,882-byte body, so freshness can never be probed by content length. The cached archive is
@@ -205,8 +205,8 @@ takes 4,372 whole cells to 3,826 at its most useful, and 95 to 95 at resolution 
 Resolution 9 is refused because its index answers 0.5 % to 0.7 % of in-layer probes: it would narrow
 candidates and nothing more. Resolution 11 costs **3.9× the rows** (2.28 M against 0.59 M) to raise
 the index-answered share from about 5.5 % to about 24 %, and the ray cast stays the common path
-either way. Since the candidate set per cell is tiny — a coastal frontage is not a river network —
-the probe saving does not add four times the cell tier. Resolution 10 keeps that tier under 600 k
+either way. Since the candidate set per cell is tiny. A coastal frontage is not a river network.
+The probe saving does not add four times the cell tier. Resolution 10 keeps that tier under 600 k
 rows and still narrows every probe to a handful of polygons.
 
 ## The build, as it ran

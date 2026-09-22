@@ -55,7 +55,7 @@
 # 31,815 rows: 16,803 leading (FR DE ES IT NL PT MX) + 16,000 after_region (IN).
 #
 # PRE-registered check, tightened by what v4.8.0 measured:
-#   1. the 11 venue-led rows v4.8.0 regressed must all hold — that is the defect this run exists to fix;
+#   1. the 11 venue-led rows v4.8.0 regressed must all hold. That is the defect this run exists to fix;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. net improved-minus-regressed >= 0 on the full board;
 #   4. the 4 ve_city_postcode_trailing_state rows remain the improvement metric rather than the check.
@@ -80,7 +80,7 @@
 #   leading       16,435 rows  FR DE ES IT NL PT MX   "8600-315 Lagos, Algarve, Portugal"     (pt_structured)
 #   after_region  16,000 rows  IN                     "Bengaluru, Karnataka 560038, India"    (in_structured)
 #
-# The leading arm is not filler — it is the counter-distribution. `no-fragment.ts`'s header records
+# The leading arm is not filler. It is the counter-distribution. `no-fragment.ts`'s header records
 # what happens without one: teaching a new surface alone flips the model's default rather than
 # teaching it a distinction. FR/DE/ES/IT pass on the leading form today and must keep passing.
 #

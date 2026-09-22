@@ -37,7 +37,7 @@ Each is built for a different purpose: postal delivery (USPS), land registration
 
 OSM's `addr:*` tags are volunteer-contributed, uneven in coverage, and structurally different from government gazetteers. OSM tags individual buildings (`addr:housenumber=12`, `addr:street=République`) rather than mailing addresses. An apartment building with 50 units is one OSM node with one housenumber. The mailing addresses for those 50 units (Apt 1A through Apt 5J) are not in OSM.
 
-OSM is a collaborative map of the physical world rather than an address database — it was never designed to be one.
+OSM is a collaborative map of the physical world rather than an address database. It was never designed to be one.
 
 ### The union of all sources
 
@@ -91,7 +91,7 @@ Municipalities annex, de-annex, incorporate, dissolve, and rename themselves. Po
 | New construction        | Continuous         | ~1.4M new US housing units per year                            |
 | Building renumbering    | Rare but impactful | Entire blocks renumbered when addressing standards change      |
 
-A database snapshot taken in 2024 is wrong in 2026 for some fraction of its entries. The error is not random — it concentrates in the places that are changing the most: growing cities, developing economies, regions with active administrative reform. These are exactly the places where geocoding accuracy matters most.
+A database snapshot taken in 2024 is wrong in 2026 for some fraction of its entries. The error is not random. It concentrates in the places that are changing the most: growing cities, developing economies, regions with active administrative reform. These are exactly the places where geocoding accuracy matters most.
 
 ### The maintenance cost
 
@@ -101,7 +101,7 @@ For a geocoder that consumes these databases, the maintenance burden is lower �
 
 ## What this means for a parser
 
-The parser should not try to be a database — it should not store every address, or attempt to resolve "Springfield" to a coordinate without context.
+The parser should not try to be a database. It should not store every address, or attempt to resolve "Springfield" to a coordinate without context.
 
 [The parser's job](../../concepts/how-mailwoman-parses-an-address.mdx) is to **extract structured components from a string** — to say "this token is a locality, this token is a region, and their relationship to each other is administrative containment." The resolver's job is to look up those components in a gazetteer and return candidates with confidence scores. The resolver can be updated independently of the parser when gazetteers change.
 

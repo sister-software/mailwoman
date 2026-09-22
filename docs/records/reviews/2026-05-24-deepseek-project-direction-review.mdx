@@ -41,7 +41,7 @@ This decomposition is bitter-lesson-aligned in exactly the right way. The bitter
 
 ### 2. Parse/resolve split stays intact
 
-Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The `alternatives` field and `--candidates` CLI direction are aligned with graceful failure — this is where Mailwoman can be meaningfully better than old geocoders: only "more correct top-1," but more direct about ambiguity.
+Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The `alternatives` field and `--candidates` CLI direction are aligned with graceful failure. This is where Mailwoman can be meaningfully better than old geocoders: only "more correct top-1," but more direct about ambiguity.
 
 ### 3. Small, TypeScript-first neural runtime
 

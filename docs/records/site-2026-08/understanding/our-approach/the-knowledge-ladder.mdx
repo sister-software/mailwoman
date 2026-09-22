@@ -203,7 +203,7 @@ The missing rungs were _information layers_. v0.4.0 wasn't doing the joint reaso
 
 Both v0.4.0 and v0.5.0 training runs diverge in the same fingerprint: loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate. The May 2026 diagnostic work identified that the **CRF-NLL gradient dominates the CE gradient by 8-20×** — the CRF is pulling the model toward a degenerate attractor that CE opposes.
 
-Resolution (answered): **CE-only training is the shipped recipe** — every release since has
+Resolution (answered): **CE-only training is the shipped recipe**. Every release since has
 trained CE-only with the CRF applied at inference over the frozen structural mask. The
 "sequence correct" rung moved permanently to "applied at inference only," which is also what
 made the conventions mask (rung 4.2) a zero-retrain layer: decode-time constraints compose

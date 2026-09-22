@@ -45,7 +45,7 @@ chevron near Houston       -> {"kind":"poi_query","confidence":0.9,...}
 ```
 
 Both fire `poi_query` as the top kind, confirming `poiTaxonomyLookup` and the classifier wiring
-are live — the golden-set zero is a real result rather than a no-op harness.
+are live. The golden-set zero is a real result rather than a no-op harness.
 
 Script: `scratchpad/poi-battery/leg1-golden-poi-misroute.ts` (gitignored rather than committed —
 reproducible from this doc's method description).

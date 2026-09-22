@@ -68,7 +68,7 @@ The plan specifies "lowercase + trim" with a diacritic policy TBD. `fst-prior.ts
 - **Checkpoint choice:** the rung-3 table shows feed-8k at δ=6.0 is 95.5% NZ / 100% GB — within the −5pp tolerance of feed-2k's 100/100, with its guards already measured. The digit-FAIL-vs-guards trade the plan frames as feed-2k's risk reduces both ways; the battery deciding is correct, but the decision matrix should include "feed-8k at δ=6 with a slightly lower NZ ceiling" as a first-class option rather than a fallback.
 - **Perf:** segmentation + hash probes are negligible next to ONNX inference, but state the budget (sub-millisecond per parse, census resident in memory) so it survives review.
 - **Multi-word/nested names:** with window probing (change 4), the "Little Whinging cum Hardwick" class becomes a window-size question, answerable from the PPD CITY length distribution — check it during the builder task and record the percentile that N covers.
-- **Eval attribution:** with the new `TracePriorKind` (change 2), add a ledger/eval row dimension that reports how several board flips had the census prior `applied: true` — the talk's "decoder reaches into the gazetteer" section will want that number.
+- **Eval attribution:** with the new `TracePriorKind` (change 2), add a ledger/eval row dimension that reports how several board flips had the census prior `applied: true`. The talk's "decoder reaches into the gazetteer" section will want that number.
 
 ## Suggested additions to pre-registered acceptance
 

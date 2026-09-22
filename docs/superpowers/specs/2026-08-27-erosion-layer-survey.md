@@ -5,7 +5,7 @@ could carry, what each one's own words permit and forbid, **what spatial claim e
 supports**, and whether any of them supports a layer at all. The issue named a valid negative
 outcome, and this record delivers a split verdict: **one viable coastal pilot, and a recorded finding
 that no surveyed source supports a soil-erosion layer.** Both are completions, and the second is not a
-consolation — it is the answer to the question the issue asked first.
+consolation. It is the answer to the question the issue asked first.
 
 The consuming implementation already exists, so nothing below proposes new architecture. The layer interface
 (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
@@ -111,8 +111,8 @@ GET, all HTTP 206). The RCA erosion dashboard is Tableau, named `…ErosionbySta
 And on what the report publishes: "This report presents selected NRI summary data at the **national and
 State levels**."
 
-**No sentence of the form "not designed for areas smaller than X" exists.** That absence was checked —
-both PDFs were swept for `not designed | smaller than | not intended | should not be used | cannot be
+**No sentence of the form "not designed for areas smaller than X" exists.** That absence was checked.
+Both PDFs were swept for `not designed | smaller than | not intended | should not be used | cannot be
 used | county-level | sub-state` — and it matters, because USDA expresses the limit **positively** (what
 reliability the design provides) and enforces it per query. LUCID's own legend: "**Yellow**: Margin of
 error is 75 – 99% of the estimate. **Red**: Margin of error is > or = 100% of the estimate", beside a
@@ -196,7 +196,7 @@ Whole Soil":
 > tons per acre per year."
 
 The five it is not include C (cover management) and P (support practices), which are properties of what
-someone is doing with the land — the very thing the NRI samples and does not release per location.
+someone is doing with the land. The very thing the NRI samples and does not release per location.
 
 **The T factor is a threshold rather than a rate.** Its whole published description, 214 characters:
 
@@ -318,7 +318,7 @@ linear regression rate based on available shoreline data for **a minimum 50-year
 
 So bluffs, armoured shore, muddy and marsh shore, most sheltered bay and estuary shore, and the Great
 Lakes are outside the product — as are Alaska (separate regional releases), Hawaii (only OFR 2011-1009,
-covering Kauai, Oahu and Maui) and the territories. **There is no national short-term rate file** — the
+covering Kauai, Oahu and Maui) and the territories. **There is no national short-term rate file**. The
 item has exactly one child and one data archive, `..._Rates_LT.zip`; short-term rates exist only in the
 regional releases. Two metadata disagreements worth carrying: `<ptvctcnt>` says 126,831 against the
 measured 133,113, and `<transize>` says 9.8 MB against 10,063,056 bytes.
@@ -735,7 +735,7 @@ NatureScot is blunter still: "Dynamic Coast analyses cannot be used for property
 **A scenario is part of the claim rather than a parameter of it.** NCERM ships twelve layers because the answer
 depends on which management scenario, which horizon and which sea-level-rise allowance the reader means.
 A layer that folded them into one "erosion risk" value would be answering a question no authority asked.
-`absence-route.ts` already holds this line for classes — it refuses unless the layer holds exactly one
+`absence-route.ts` already holds this line for classes. It refuses unless the layer holds exactly one
 class and the answered class is it — and the same rule extends to scenarios: **one artifact holds one
 scenario, or the scenario is a column the reader must supply and the observation must name.**
 
@@ -894,7 +894,7 @@ nor a grid, and the polygon rule's implementation does not apply to it:
 - **The authority's polylines or transect points are the truth table**, stored unsimplified with a
   precomputed bounding box, exactly as the polygon rule stores rings.
 - **The cell table records intersection rather than containment.** There is no `whole` / `partial` distinction,
-  because a line has no interior — a cell either is touched by the feature or is not. `compactCells` has
+  because a line has no interior. A cell either is touched by the feature or is not. `compactCells` has
   nothing to collapse, and that is fine: a linear layer is small by construction, because its index
   scales with the length of the feature rather than with the area the feature sits in. A res-9 cell is
   200.8 m on an edge and 347.8 m across the flats (measured with h3-js 4.5.0), so a 1,000 km shoreline
@@ -1011,7 +1011,7 @@ geometric edge. `pointInPolygonRings` and `bboxAround` in `@mailwoman/spatial` a
 
 **Candidate resolutions: 9, 10 and 11.** H3 average areas, measured locally with h3-js 4.5.0: res 9
 105,333 m² (edge 200.8 m), res 10 15,048 m² (edge 75.9 m), res 11 2,150 m² (edge 28.7 m). Res 8 and
-coarser are named only to be excluded — a 531 m edge is wider than several English erosion bands, so a
+coarser are named only to be excluded. A 531 m edge is wider than several English erosion bands, so a
 coarse cell would report the band and the land behind it as one answer.
 
 **Expect the `partial` share to be high, and design for that rather than be surprised by it.** NCERM's
@@ -1125,7 +1125,7 @@ layer open on the default construction path. The flag lands with its row in the
 invariant 5 makes a flag with no register row a smell.
 
 **Ranking untouched, and the receipt is byte-stability.** The same query, with and without the layer
-attached, returns an identical result plus one advisory. That is a statement about construction — the
+attached, returns an identical result plus one advisory. That is a statement about construction. The
 carrier reads no candidate, no coordinate and no ordering — and a test pins it.
 
 **What the observation says.** The scenario, horizon and climate allowance it answered under; the

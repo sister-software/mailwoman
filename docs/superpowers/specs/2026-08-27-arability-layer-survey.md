@@ -221,7 +221,7 @@ is 2025-09-09, and both of these then return HTTP 200:
 template database.** Confirmed on a second area: `wss_SSA_IA015_soildb_IA_2003_[2025-09-08].zip` is
 41,104,724 bytes with 98 entries including `soildb_IA_2003.mdb`, against 38,981,269 bytes for the bare
 form; and `wss_SSA_TX299_[2025-09-04].zip` is 13,455,641 bytes with 97 files and no `.mdb` at all. **A
-builder wants the bare form** — the template is an empty Access container for a workflow we do not use.
+builder wants the bare form**. The template is an empty Access container for a workflow we do not use.
 
 A wrong date returns HTTP 400 rather than 404. The square brackets need `--globoff` or `%5B`/`%5D`. The archive holds
 ESRI shapefiles under `spatial/` (`soilmu_a` map-unit polygons, `soilmu_l`/`soilmu_p` lines and points,
@@ -243,7 +243,7 @@ successfully through SDA:
 - `mapunit.farmlndcl` — Farmland Classification. **23 distinct values plus NULL (11,486 map units).**
   The top values are `Not prime farmland` (192,120), `All areas are prime farmland` (48,253),
   `Farmland of statewide importance` (46,754), `Prime farmland if drained` (15,253), `Prime farmland if
-irrigated` (10,833), `Farmland of local importance` (5,481). **The vocabulary is conditional** — a
+irrigated` (10,833), `Farmland of local importance` (5,481). **The vocabulary is conditional**. A
   long tail reads `Prime farmland if drained and either protected from flooding or not frequently
 flooded during the growing season`, `Prime farmland if irrigated and reclaimed of excess salts and
 sodium`, `Prime farmland if subsoiled, completely removing the root inhibiting soil layer`. A boolean
@@ -317,7 +317,7 @@ One acquisition detail that also explains a measurement above: **`www.nrcs.usda.
 browser-like request headers.** A plain `curl` or fetcher hangs after the TLS handshake; adding a normal
 browser `User-Agent`, `Accept` and `Sec-Fetch-*` set makes it answer. That is the real explanation for
 the "intermittent" row in the reachability table, and it is a constraint on any automated ingest that
-reads NRCS content pages — the distribution hosts themselves have no such requirement.
+reads NRCS content pages. The distribution hosts themselves have no such requirement.
 
 ### 2.2 United States — USDA NASS Cropland Data Layer
 
@@ -394,7 +394,7 @@ a growing season is published in the following calendar year. The 2025 layer is 
 are different questions, and the difference decides §4: a CDL cell that says "not cropped in 2025" is
 not a statement that the land cannot be cropped, and nothing in the product distinguishes fallow,
 pasture, a parking lot and a field the classifier got wrong. The per-class accuracy metadata, the
-projection, the full class-value table and NASS's own use caveats are in §8 as unverified — the two
+projection, the full class-value table and NASS's own use caveats are in §8 as unverified. The two
 facts the pilot decision needs (license and reachability) are verified above.
 
 **Why it is not the pilot, and the reason is structural rather than a preference.** A CDL ingest is a
@@ -580,7 +580,7 @@ and never
 NRCS says the second reading is wrong, in the metadata it ships with every survey area: the data "do
 not eliminate the need for onsite sampling, testing, and detailed study of specific sites for intensive
 uses. Thus, these data and their interpretations are intended for planning purposes only." That is the
-same constraint the Environment Agency imposes on flood zones — a map that is authoritative about an
+same constraint the Environment Agency imposes on flood zones. A map that is authoritative about an
 area and explicitly declines to be authoritative about a point. The pilot resolves addresses, so the
 constraint binds directly, and it has to survive into the observation's wording rather than only into
 this document.
@@ -858,7 +858,7 @@ The `layer_coverage` row and these shares answer different questions and both ar
 `supportsExclusion(cell)` licenses only that NRCS made a determination somewhere in the cell; **what the
 determination says is the class distribution**, and a cell that is 100 % `unrated_share` is
 `designated`-complete and carries no capability reading whatsoever. That pairing is the exact shape of
-the flood survey's Zone D trap — a cell that is complete and holds a determination that no determination
+the flood survey's Zone D trap. A cell that is complete and holds a determination that no determination
 was made. Here it is not a corner case: **17.1 % of components carry no capability rating**, and for the
 irrigated rating the figure is 85.1 %. The frequency in FEMA's data was not measured, so no ratio between
 the two is claimed.
@@ -985,7 +985,7 @@ inside one zone and `compactCells` collapses long uniform interiors. Soil deline
 measured on `IA153`, **85.4 % of them are smaller than one res-9 cell** (§4.4). Small polygons against
 large cells means most cells are crossed by a boundary, so at res 9 the `partial` share should be high,
 `compactCells` should yield little, and the index alone will rarely answer a point probe. That is not an
-argument against the polygon rule — the unsimplified geometry is still the truth and the ray-cast is
+argument against the polygon rule. The unsimplified geometry is still the truth and the ray-cast is
 still bounded to the candidates one cell names — but it **is** the argument for why this layer carries
 the reduced `soil_capability_cell` alongside the index rather than relying on the index the way the
 flood layer can. Going coarser makes the `partial` share better and the mixture worse; the two numbers
@@ -1095,7 +1095,7 @@ layer open on the default construction path. The flag lands with its row in the
 [runtime-flag register](../../engineering/reference/runtime-flags.mdx) in the same change.
 
 **Ranking untouched, and the receipt is byte-stability.** The same query, with and without the layer
-attached, returns an identical result plus one advisory. That is a statement about construction — the
+attached, returns an identical result plus one advisory. That is a statement about construction. The
 carrier reads no candidate, no coordinate and no ordering — and a test pins it.
 
 **What the observation says.** The top capability class as published **with the share it rests on**, the

@@ -126,7 +126,7 @@ features in isolation; solvers handle cross-token coherence.
 
 The encoder's bidirectional attention does this all at once. There's no
 distinction between "what does this token look like in isolation" and
-"how does this token fit with its neighbors" — those are folded together in
+"how does this token fit with its neighbors". Those are folded together in
 the attention computation. The result is more general: the model can
 handle co-occurrence patterns the rule writers didn't anticipate.
 

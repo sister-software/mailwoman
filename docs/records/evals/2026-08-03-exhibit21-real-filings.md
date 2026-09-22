@@ -187,4 +187,4 @@ Lumen's manifest is vendored for that test. It carries 161 `<DOCUMENT>` blocks w
 
 Beyond that: the CIK corroboration rule, the share-class collapse, and the orchestrator that
 walks corroborated registrants into `filer_family` rows. Until those land, nothing from EDGAR
-reaches `filer.db` in production — this change makes the parser correct rather than the ingest live.
+reaches `filer.db` in production. This change makes the parser correct rather than the ingest live.

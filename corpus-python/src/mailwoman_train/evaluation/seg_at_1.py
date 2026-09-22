@@ -102,8 +102,8 @@ def main() -> int:
             out = model(input_ids=ids, attention_mask=mask)
 
         # token@1 — the shipped decode's shape: BIO argmax over street-family pieces.
-        # strict=True: pieces and labels are the same sequence — a length mismatch is a bug rather than
-        # something to silently truncate past.
+        # strict=True: pieces and labels are the same sequence. A length mismatch is a bug rather
+        # than something to silently truncate past.
         bio = [ID_TO_LABEL[int(i)] for i in out.logits[0].argmax(-1)]
         token_street = _join_runs(
             text,

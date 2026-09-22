@@ -11,7 +11,7 @@ experimental — hold promotion pending #560.
 ## RESULT (check, post-training)
 
 `v1.4.0-charoffset` step-40000, graded bridge-OFF against `v0.5.0-bridge.json` and bridge-ON against
-`v4.4.0-boundary.json` (apples-to-apples). The two are **byte-identical on every tag** — the bridge is
+`v4.4.0-boundary.json` (apples-to-apples). The two are **byte-identical on every tag**. The bridge is
 a confirmed NO-OP for this model (it never fragments po_box, so there's nothing to merge).
 
 - **Bridge retirement VALIDATED:** `us.po_box_real = 90.0` bridge-OFF (floor 89.1). The char-offset
@@ -46,8 +46,8 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 
 - **Verify-before-assert paid off repeatedly.** The "overlay gap" alarm was real, but I confirmed the
   mechanism (loader buckets extracts by parquet `source`; an unweighted source's rows train but at the
-  wrong sampling weight) before crying wolf. The "2 base adapters missing" alarm was a FALSE alarm —
-  they were packed into mixed tail extracts, present and training, same as v4.4.0. Both checks took
+  wrong sampling weight) before crying wolf. The "2 base adapters missing" alarm was a FALSE alarm.
+  They were packed into mixed tail extracts, present and training, same as v4.4.0. Both checks took
   minutes and prevented wrong conclusions.
 - **The R2 reroute used the architecture's own grain.** Once CLI `volume put` proved container-blind,
   the fix was `sync_corpus`'s existing pattern (R2 → container-side rclone) rather than a bespoke hack.

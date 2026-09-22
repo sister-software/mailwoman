@@ -1,6 +1,6 @@
 """What each corpus version stages onto the volume, as data.
 
-One row per version. A new version is a row here rather than a new Modal function — the variation between
+One row per version. A new version is a row here rather than a new Modal function. The variation between
 versions is which directories move and which files must land afterwards, and that is a manifest
 rather than code. `launch/plan.py` turns a row into commands; `launch/sync.py` runs them.
 

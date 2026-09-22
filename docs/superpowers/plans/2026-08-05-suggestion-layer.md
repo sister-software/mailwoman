@@ -159,7 +159,7 @@ single-record path either ships a prebuilt table or drops the adjustment and say
 | Metamorphic DIR             | `gauntlet/metamorphic.ts:420-434`, bases `:67-81`                          | **3**     | Dropping a 5-digit postcode must land within 5 km of the with-postcode anchor                              |
 
 The mailfail fixture's own commit message says it was committed "so these cases can become a check".
-It never did — there is no `mailfail-board.ts` beside `digit-board.ts` / `fragment-board.ts` /
+It never did. There is no `mailfail-board.ts` beside `digit-board.ts` / `fragment-board.ts` /
 `poi-board.ts`. The only executable residue is `core/pipeline/runtime-pipeline.test.ts:803-882`,
 which asserts the fault interface against synthetic throwing stubs and says nothing about the 105
 rows.

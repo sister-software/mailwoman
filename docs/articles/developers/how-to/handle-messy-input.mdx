@@ -59,7 +59,7 @@ model does with the raw register.
 
 The all-lowercase row is the one to look at. With case normalization off, `pennsylvania ave nw`
 fragments into two `street` spans with a `street_suffix` between them. With it on, the same input
-returns one street. Lowercase is a register real users type — it is what a map search box receives all
+returns one street. Lowercase is a register real users type. It is what a map search box receives all
 day — so the fix is in the shipped path rather than in your code.
 
 Both directions are handled, and the mechanism is one function. `normalizeInputCase`
@@ -138,7 +138,7 @@ safe set — the abbreviations that mean one thing everywhere:
 ```
 
 `Ave` is left alone because it is unambiguous to the model already; the set targets the forms that are
-not. `caseFold` is the other opt-in, and you want it off — the classifier's own case handling is
+not. `caseFold` is the other opt-in, and you want it off. The classifier's own case handling is
 better-targeted, and folding first destroys the case signal that proper nouns and directionals carry.
 
 ## Verify

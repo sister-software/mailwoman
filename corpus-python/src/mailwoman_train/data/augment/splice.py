@@ -194,7 +194,7 @@ def lowercase_row(row: dict[str, Any]) -> dict[str, Any] | None:
 
 # Separator punctuation the punct-drop augmentation strips: the delimiters that separate fields but
 # carry no component identity (comma between "Portland" and "or", wrapping quotes). Apostrophes inside a
-# name ("Ben & Jerry's") sit inside the entity span and are never touched — the drop is gap-only.
+# name ("Ben & Jerry's") sit inside the entity span and are never touched. The drop is gap-only.
 DROP_PUNCT: frozenset[str] = frozenset(",\"'")
 
 

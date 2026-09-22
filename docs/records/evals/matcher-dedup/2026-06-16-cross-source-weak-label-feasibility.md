@@ -9,7 +9,7 @@ data. This documents why, so the idea isn't re-tread without a new data source._
 
 The dedup (within-NPPES) matcher has a learned scorer (the GBT, #603) because it has clean ground
 truth: the NPI groups records, so labels are free. Cross-**source** matching (NPPES ↔ FCC RHC ↔ TX
-HHSC) has no such key — that is the whole difficulty, and the reason FS is **pinned** for cross-source
+HHSC) has no such key. That is the whole difficulty, and the reason FS is **pinned** for cross-source
 by design (#664 showed a re-thresholded GBT can't beat it there). Option 2 asks: could a _weak-label_
 pipeline manufacture enough signal to train a cross-source scorer anyway?
 
@@ -50,7 +50,7 @@ across all sources reduce to: **organization name**, **address / geocode**, and 
 
 **The check #655 option 2 was conditioned on does not open with the current data.** There is no
 cross-source signal that is both _strong enough_ to label and _independent_ of the features a scorer
-would use. So FS stays pinned for cross-source — that is a property of the data (no shared clean key) rather than a modeling shortfall. The direct move is to record this rather than run a circular experiment that
+would use. So FS stays pinned for cross-source. That is a property of the data (no shared clean key) rather than a modeling shortfall. The direct move is to record this rather than run a circular experiment that
 would post a misleadingly-positive number.
 
 **What would change the answer:** a new source carrying a shared strong identifier (an NPI or EIN that

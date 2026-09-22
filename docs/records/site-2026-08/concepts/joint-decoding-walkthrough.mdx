@@ -36,7 +36,7 @@ These three stages are not the interesting part for this example. Skip ahead.
 
 ## Stage 2.7 — phrase grouper proposes spans
 
-The phrase grouper is the new layer at the top. Its job is **boundary discovery only** — it does not decide what type each span is, only "which tokens belong together". It emits a list of proposals with confidence scores.
+The phrase grouper is the new layer at the top. Its job is **boundary discovery only**. It does not decide what type each span is, only "which tokens belong together". It emits a list of proposals with confidence scores.
 
 For our input it produces (the actual scores come from [`phrase-grouper/kryptonite.test.ts`](https://github.com/sister-software/mailwoman/blob/main/phrase-grouper/kryptonite.test.ts)):
 

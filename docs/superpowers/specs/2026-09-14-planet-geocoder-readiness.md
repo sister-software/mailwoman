@@ -16,7 +16,7 @@ boards were built when it shipped two. This records where those have kept up and
 | Release list   | eleven locales over eleven countries — AU CN DE ES FR GB IN IT JP NZ US                                                    | `release.config.json` (`locales` + `charWeights[].overlays`) |
 | Country tables | 35 country sets across 29 files, each its own subset                                                                       | measured, below                                              |
 
-The three do not agree, and they are not meant to identically — a tier is a claim about measurement, the release
+The three do not agree, and they are not meant to identically. A tier is a claim about measurement, the release
 list is a claim about artifacts, a table is a claim about one mechanism. What follows is the places where they
 contradict rather than merely differ.
 
@@ -130,7 +130,7 @@ This is adjacent to #2266, whose failures are all cross-country: `WA Sammamish` 
 and `Fort Worth` answering Fořt in Czechia (8,666 km) are the shape a bbox guard exists to refuse. For a Japanese
 or Chinese answer there is no box to check against.
 
-Adding four boxes is a small data change and a real behaviour change — the guard would begin firing where it
+Adding four boxes is a small data change and a real behaviour change. The guard would begin firing where it
 never has — so it needs the board rather than a commit.
 
 ## Where the country tables' center of gravity still is

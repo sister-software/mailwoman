@@ -118,7 +118,7 @@ def test_emitted_level_equals_draw_level_when_augmentation_is_off(tmp_path: Path
 
 def test_emitted_level_counts_augmented_copies_against_the_row_budget(tmp_path: Path) -> None:
     """Augmented copies (original + upper-cased twin at prob 1.0) fill the same row_limit
-    budget, so emitted totals still sum to ``draws`` and upper-cased twins are present —
+    budget, so emitted totals still sum to ``draws`` and upper-cased twins are present,
     the distortion the quota design must account for."""
     report = _audit(_write_corpus(tmp_path), augment={"upper_case": 1.0})
 

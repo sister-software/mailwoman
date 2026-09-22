@@ -142,7 +142,7 @@ model:
   # CONVENTIONS_FORBIDDEN_TAGS forbids FR street_prefix/street_suffix, but the recipe output's fr-prefix shape
   # labels exactly that ("Rue" -> street_prefix). Enabling it -inf'd the gold label the recipe output teaches and
   # exploded train_loss to ~7M (a broken run, killed at step 2000). v1.5.1 trained fine without it. The
-  # "non-confounding, different axis" call (DeepSeek + me) was wrong — the FR convention is inconsistent
+  # "non-confounding, different axis" call (DeepSeek + me) was wrong. The FR convention is inconsistent
   # with the FR training data. Revisit only after reconciling the conventions table with the FR labels.
   use_conventions_loss_mask: false
   use_postcode_anchor: true

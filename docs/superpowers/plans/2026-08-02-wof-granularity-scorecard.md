@@ -219,7 +219,7 @@ macrohood/microhood/venue/building rows that this source does not stock." Replac
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/placetype-census.test.ts`
 Expected: PASS, all describe blocks. The three `buildPlacetypeCensus` tests and both `toBaseRates`
-tests must still pass unchanged — the fixture DB carries only `metroarea` as a non-counting
+tests must still pass unchanged. The fixture DB carries only `metroarea` as a non-counting
 placetype, and that projection is untouched.
 
 - [ ] **Step 7: Verify nothing else asserted on the old key set**
@@ -459,7 +459,7 @@ postcode is excluded: an orthogonal channel rather than a containment rung."
 
 1. `spr` carries `id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, …`. Every query filters `is_current != 0 AND is_deprecated = 0`, matching `verifyAdmin`.
 2. `ancestors(id, ancestor_id)` is the transitive closure the freeze phase builds. `buildPlacetypeCensus` joins through it, and so does this.
-3. Rows with `id >= OVERTURE_ID_BASE` (8e12) are Overture-backfilled rather than real WOF. They are counted **separately** and never silently merged, because for the 86-country backfill set the locality rung and above are partly Overture already — those cells are self-comparison and the report must say so.
+3. Rows with `id >= OVERTURE_ID_BASE` (8e12) are Overture-backfilled rather than real WOF. They are counted **separately** and never silently merged, because for the 86-country backfill set the locality rung and above are partly Overture already. Those cells are self-comparison and the report must say so.
 
 **Why the projection happens in SQL.** A parent with both a `borough` child and a `neighbourhood`
 child must count **once** toward `dependent_locality` parent-coverage. Counting distinct parents per
@@ -1017,8 +1017,8 @@ country with a validated reading, sits near 33%."
 
 **Context the implementer needs.** The report is a committed artifact under
 `docs/articles/evals/coverage/`, following the `fill-rates.md` precedent
-(`$MAILWOMAN_DATA_ROOT/overture/<release>/fill-rates.md`). It must state its own limits inline —
-this is the spec's Section 5, and the reason is that the numbers will outlive the conversation that
+(`$MAILWOMAN_DATA_ROOT/overture/<release>/fill-rates.md`). It must state its own limits inline.
+This is the spec's Section 5, and the reason is that the numbers will outlive the conversation that
 produced them. Someone reading the table in six months must be told, in the file, that counts are
 not quality and that the locality rung is self-comparison for backfilled countries.
 

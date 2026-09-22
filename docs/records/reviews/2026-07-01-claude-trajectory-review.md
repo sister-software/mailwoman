@@ -11,7 +11,7 @@ The project matured from "does the model parse" into "does the system geocode" �
 Three facts frame everything below:
 
 1. **The early model climb was real and has flattened.** Micro-F1 went from ~0.72 (v0.2.0) to 84.8 → 85.1 → 86.1 across v4.2 → v4.4, with starved tags rescued outright (street_suffix 48.8 → 96.6, po_box 0 → 89.1). Since v4.4.0 no full per-tag re-score has landed; the ledger rows for 4.2.0–4.4.0 carry `null` headline F1 and nothing newer exists.
-2. **The wins moved downstream of the model.** The largest recent gains came from resolver logic and data relabeling rather than weights: #822 lifted bare "City, Country" resolve from 54.2% → 77.9% with no retrain; the v4.13.0 multi-locale extract lifted EU resolve (IT 79 → 92.7%, PT 52 → 82%, AT 50 → 81.3%). This is healthy — it is what the parse/resolve split was _for_ — but it changed what "progress" means without the measurement or the roadmap being updated to match.
+2. **The wins moved downstream of the model.** The largest recent gains came from resolver logic and data relabeling rather than weights: #822 lifted bare "City, Country" resolve from 54.2% → 77.9% with no retrain; the v4.13.0 multi-locale extract lifted EU resolve (IT 79 → 92.7%, PT 52 → 82%, AT 50 → 81.3%). This is healthy. It is what the parse/resolve split was _for_ — but it changed what "progress" means without the measurement or the roadmap being updated to match.
 3. **Nobody outside the lab can see any of it.** The public demo runs its own `runCascade` that skips the shared joint-consistency resolver passes entirely (#861), and it has trailed the npm model by multiple versions before (#203). The +23.7pp resolve win is invisible at the exact URL the project points people to.
 
 The process discipline that got the project here — pre-registered checks, falsified changes reverted rather than shipped (#305: measured −21pp, rolled back), documented check revisions, ~30 postmortems — is strong and should not change. What needs to change is where the effort points next.
@@ -38,11 +38,11 @@ None of this is condemnation — scope expansion driven by real wins is how solo
 
 **R1 — Metric substitution without a re-anchor.** The north-star moved from label-F1 to "grade the coordinate, never label-F1" (v4.15.0 promotion doc). Defensible — the coordinate is what users get. But since the switch, five label-F1 regressions shipped as "coordinate-invisible" (three in v4.13.0, two postcode floors lowered in v4.15.0, each with written justification). Each call was individually sound and documented. The pattern is the risk: the label metric can now erode indefinitely as long as each step is small, because nothing forces a periodic full re-score. The ledger that would catch drift (`evals/scores-by-version.json`) stopped being populated at v4.4.0 and `AGENTS.md` still names it authoritative.
 
-**R2 — The hardest model problem is stalled with no probe.** Slavic/accented diacritic tokenization is the dominant open defect: CZ 84% and PL 77% content-gap rates root-caused to mis-tokenization (`Grudziądz` splits at `ą` and eats trailing digits; `Montréal, QC` drops the `C`; `ß` splits). There is no CPU fix — it is a rendering/retrain change (#825), deferred twice, and the shift notes themselves concluded "only the RENDERING fixes it." Every locale past the original scope makes this defect more expensive to leave open, and there is currently no cheap probe defined that would inform the go/no-go.
+**R2 — The hardest model problem is stalled with no probe.** Slavic/accented diacritic tokenization is the dominant open defect: CZ 84% and PL 77% content-gap rates root-caused to mis-tokenization (`Grudziądz` splits at `ą` and eats trailing digits; `Montréal, QC` drops the `C`; `ß` splits). There is no CPU fix. It is a rendering/retrain change (#825), deferred twice, and the shift notes themselves concluded "only the RENDERING fixes it." Every locale past the original scope makes this defect more expensive to leave open, and there is currently no cheap probe defined that would inform the go/no-go.
 
 **R3 — The demo lies about the product.** #861 (browser cascade skips the joint-consistency passes) means the marquee resolver wins do not execute in the browser at all. #203 showed the demo can silently trail npm by two model versions. The stated long-term goal is that the demo _becomes_ the geocoder; today it is the least accurate rendition of the system that exists anywhere.
 
-**R4 — Operator-conditional decisions are accumulating.** #825 (GPU budget go/no-go), #875 (breaking `Us`/`Json` rename batch → next major), #861 (demo parity), #378 (blocked on Chrome hardware for in-browser P95), #379 (tar 7.x), the #493 serializer interface (#864), ODbL counsel sign-off (#260/B3), the Sweden license clock (#202). None are code-blocked. Several are weeks old. Each one an autonomous shift re-reads, re-defers, and re-documents costs real shift time — the backlog itself has a carrying cost.
+**R4 — Operator-conditional decisions are accumulating.** #825 (GPU budget go/no-go), #875 (breaking `Us`/`Json` rename batch → next major), #861 (demo parity), #378 (blocked on Chrome hardware for in-browser P95), #379 (tar 7.x), the #493 serializer interface (#864), ODbL counsel sign-off (#260/B3), the Sweden license clock (#202). None are code-blocked. Several are weeks old. Each one an autonomous shift re-reads, re-defers, and re-documents costs real shift time. The backlog itself has a carrying cost.
 
 **R5 — The record of record is stale.** `releases.mdx` said "4.11.0 (current)" while shifts referenced v4.15.0+; the last full parity scorecard is 2026-06-11; the two version series (npm 4.x/5.x vs training v0.x) still confuse, and the doc built to disambiguate them is itself out of date. Small individually; together they mean no single document currently tells the truth about the project's state.
 
@@ -84,7 +84,7 @@ A single sitting, decisions pre-framed so each is a yes/no/date rather than an i
 | #260/B3 ODbL, #202 Sweden | External-blocked: set a check-back date each and stop re-reading them every shift                                |
 | #379 tar 7.x              | Delegate to a night shift as a bounded chore                                                                     |
 
-The output is not the decisions themselves — it is that autonomous shifts stop paying the re-triage tax.
+The output is not the decisions themselves. It is that autonomous shifts stop paying the re-triage tax.
 
 ### Track 4 — The #825 campaign, probe-first (the funded one)
 
@@ -96,7 +96,7 @@ The diacritic defect (R2) is the only thing on the board that requires training 
 
 ### Track 5 — Re-declare the scope (one document, half a day) — #886
 
-Write the successor to `plan/README.mdx` — a short "what mailwoman is now" scope doc that: names the real locale set and its tiers; admits record-matching as a second workstream with its own epics rather than a footnote; states the demo-is-the-geocoder goal and its parity requirement (Track 1) as a standing invariant; and marks the phase directory as historical. The 06-25 review found the internals excellent and the front door fictional; the same is true one level up — the plan is the internal front door, and it should stop describing a US+FR parser.
+Write the successor to `plan/README.mdx` — a short "what mailwoman is now" scope doc that: names the real locale set and its tiers; admits record-matching as a second workstream with its own epics rather than a footnote; states the demo-is-the-geocoder goal and its parity requirement (Track 1) as a standing invariant; and marks the phase directory as historical. The 06-25 review found the internals excellent and the front door fictional; the same is true one level up. The plan is the internal front door, and it should stop describing a US+FR parser.
 
 ### What not to do
 

@@ -89,7 +89,7 @@ Middlesex, Scunthorpe, Penistone, and several others are real English place name
 
 - **Mixed-script addresses.** An address like `Moscow, ул. Тверская 12` — English city, Cyrillic street — requires the model to handle two scripts in one input. The tokenizer can handle both scripts, but the model's per-token embeddings may not have strong representations for tokens in scripts that are sparse in the training corpus.
 - **Character encoding recovery.** A parcel label where Cyrillic was mangled by the wrong character encoding (latin1 instead of UTF-8) produces garbage text. A Russian postal worker might reverse the mapping and deliver the parcel. A parser cannot — this is a pre-parsing input-quality problem.
-- **Addresses that have changed since the corpus was built.** The model learns from the training data's address formats. If an administrative region was renamed after the corpus freeze, the model will not recognize the new name — it will classify it based on structural features (position, surrounding tokens) rather than semantic knowledge. This is acceptable because the model's job is structural parsing rather than gazetteer lookup.
+- **Addresses that have changed since the corpus was built.** The model learns from the training data's address formats. If an administrative region was renamed after the corpus freeze, the model will not recognize the new name. It will classify it based on structural features (position, surrounding tokens) rather than semantic knowledge. This is acceptable because the model's job is structural parsing rather than gazetteer lookup.
 
 ## References
 

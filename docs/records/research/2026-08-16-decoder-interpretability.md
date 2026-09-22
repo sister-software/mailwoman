@@ -77,13 +77,13 @@ Fergus 2014 [M]) ablates input pieces and measures output change; DeepLIFT (Shri
 **Cost/feasibility.** Trivial. IG is ~50 forwards+backwards per token decision on the PyTorch side;
 occlusion of _channels_ (not tokens) is one extra ONNX forward per channel group and works in
 production, browser included. Because our channels are _named, human-meaningful input columns_, IG
-over the channel inputs is far more meaningful than IG over token embeddings is for an LLM — the
+over the channel inputs is far more meaningful than IG over token embeddings is for an LLM. The
 concept bottleneck is at the input, so input attribution _is_ concept attribution.
 
 **What it provides.** The cheapest deployable "evidence-silent" detector: per decision, the share of
 attribution mass on channel inputs vs. token embeddings. Report it per parse; alarm when a
 high-confidence parse carries ~zero channel share. Note the degenerate case: when channels are
-all-zero, occlusion is a no-op and IG attribution to them is trivially ~0 — the flag can be
+all-zero, occlusion is a no-op and IG attribution to them is trivially ~0. The flag can be
 computed _without any attribution at all_ as an input predicate ("all channel confidences zero"),
 which soft-features.ts can emit today. Attribution warrants its keep on the _mixed_ cases where
 channels fired but may have been ignored.
@@ -124,7 +124,7 @@ the labels came out right.
   detector spanning the model/resolver boundary, which is where the actual failure lived.
 - **Exact interchange interventions as _input_ experiments**: because the interpretable concepts
   are input columns, swapping channel values between paired inputs is a causal experiment needing
-  no model surgery at all — a luxury LLM interpretability does not have.
+  no model surgery at all. A luxury LLM interpretability does not have.
 
 ---
 

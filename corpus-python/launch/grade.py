@@ -443,7 +443,7 @@ def grade_evidence_bundle(
     for r in rows:
         raw = r["input"]
         # Case variant (`case`): lower = production passthrough for uncapitalized users. upper = raw
-        # all-caps (production would title-case via normalizeCase first — this is the worst case).
+        # all-caps. Production would title-case via normalizeCase first, so this is the worst case.
         if case == "lower":
             raw = raw.lower()
         elif case == "upper":

@@ -124,7 +124,7 @@ def load_lexicons(cfg_data: DataConfig) -> Lexicons:
 def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> EncodedExample:
     """One row on the CharCNN path: per-unit char windows, labels straight from the span triple.
 
-    Span-schema is required here — the per-char label array comes from the span triple with no
+    Span-schema is required here. The per-char label array comes from the span triple with no
     whitespace-token quantization, and a token-only frozen parquet file has no honest char-level labels to
     offer. Loud failure, never a silent fallback (#519).
     """

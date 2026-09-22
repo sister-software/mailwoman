@@ -55,7 +55,7 @@ postcode and a locality.
 
 ### The geocode-path wrinkle
 
-Rooftop and street-centroid extracts are selected before the resolve — they are resolver inputs — off
+Rooftop and street-centroid extracts are selected before the resolve. They are resolver inputs — off
 `defaultCountry ?? placedCountry`. A US-scoped call therefore picks no BAN/OSM extract, and a corrected
 FR address would sit at its commune centroid with the national register never consulted. So when the
 resolver reports an override (the `postcode_country_scope` stamp it writes onto the postcode and
@@ -195,7 +195,7 @@ Identical to Leg A except three rows, all of which resolve to the extract set ra
 Both are DATA abstentions rather than mechanism failures, and each was measured rather than reasoned to:
 
 - **P04 `Munchen`.** On the FTS backend, `findPlace({text:"Munchen", country:"DE"})` returns `München`
-  with `exactMatch: FALSE` — the FTS exact-match tier does not fold `ü` → `u`. The pass requires an
+  with `exactMatch: FALSE`. The FTS exact-match tier does not fold `ü` → `u`. The pass requires an
   exact match, so it abstains. The candidate backend keys on `name_key = "munchen"` and does fold it,
   which is why Leg B fixes the row. The gap is in the FTS exact-match tiering rather than here.
 - **P07 `M5V 3L9`.** The production extract set has **zero** CA postcode rows reachable as
@@ -229,7 +229,7 @@ files, and the aggregate table matches to the digit (locality-match 98.2%, regio
 
 That number is **vacuous as written.** The eval's default extract set is
 `admin-global-priority.db,postcode-locality-intl.db`, and probing it directly for the panel's own ZIPs
-returns `pc-MISS` on every one — the intl extract carries GB/NL/JP/FR/DE/ES/IT and no US rows at all. So
+returns `pc-MISS` on every one. The intl extract carries GB/NL/JP/FR/DE/ES/IT and no US rows at all. So
 the pass abstained on all 10,000 rows for want of a postcode, and the identical dump proves only that
 the mechanism costs nothing where there is no postcode coverage. A magnitude never carries its own
 absence; this one had to be asked directly.
@@ -260,7 +260,7 @@ question. What remains open is narrower:
 ### Recommendation
 
 **Land opt-in now (done). Propose default-on once the gauntlet has a pin and the FTS-backend leg is
-measured** — those are the two real gaps, and both are small pieces of work rather than open questions.
+measured**. Those are the two real gaps, and both are small pieces of work rather than open questions.
 
 The evidence for default-on is otherwise strong and unusually clean. 28,000 pair evaluations across
 US/FR/GB and both mis-scope directions produce **zero false positives**, and — the part that matters

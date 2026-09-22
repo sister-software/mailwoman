@@ -15,13 +15,13 @@ Deepparse ships two pretrained models (fastText, BPEmb) trained on a subset of t
 libpostal-derived SubwayGroup _structured multinational address_ dataset (Yassine et al.,
 ["Changeaging Subword Embeddings for Multinational Address Parsing", arXiv:2006.16152](https://arxiv.org/abs/2006.16152)).
 The dataset spans **61 countries**, split into a **20-country training set** and a **41-country
-zero-shot test set**. Deepparse does **not** group countries into formal "zones" — the only grouping
+zero-shot test set**. Deepparse does **not** group countries into formal "zones". The only grouping
 is trained vs zero-shot.
 
 - Coverage list (train + zero-shot): [Deepparse README, GRAAL-Research/deepparse](https://github.com/GRAAL-Research/deepparse)
   (fetched 2026-07-18) and the [dataset docs](https://deepparse.org/).
 - Both pretrained models parse all 61; accuracy is _reported_ on all 61, but only the 20 training
-  countries carry supervised signal — the 41 are zero-shot generalization.
+  countries carry supervised signal. The 41 are zero-shot generalization.
 
 ### Trained (20) — ISO-3166 alpha-2
 

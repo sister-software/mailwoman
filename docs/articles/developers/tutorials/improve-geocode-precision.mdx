@@ -110,7 +110,7 @@ PASS (2/2 checks)
 
 21 seconds on this connection. The `[DEBUG]` lines are the download client asking the remote how big the
 file is before it starts; `content-length verified` is that same number checked against what landed.
-There is no checksum in that check, because the bucket publishes no checksum sidecar — a truncated
+There is no checksum in that check, because the bucket publishes no checksum sidecar. A truncated
 transfer is caught, a corrupted one of the right length is not.
 
 No configuration follows. The databases are found by filename under the data root, keyed to the region the
@@ -214,7 +214,7 @@ postcode:         20004
 ```
 
 That is in Germany. `20004` is a valid postcode in at least Germany, Spain, the United States and
-Poland — this gazetteer holds a row for each — and a bare five-digit string carries nothing that says
+Poland. This gazetteer holds a row for each — and a bare five-digit string carries nothing that says
 which. `--locale en-US` does not rescue it: with the candidate backend active the locale stops implying
 a country filter, which is the same design that lets a French address resolve in France while the locale
 still reads `en-US`. Nothing scoped this query, so the global ranking decided it.
@@ -277,7 +277,7 @@ The `hierarchy` block survives the tier change here exactly as it did in DC: Par
 centroid, underneath a rooftop coordinate 1,257 m away from it.
 
 One gap to plan around, and it is structural rather than temporary. France ships a rooftop register and
-no interpolation database, so a house number BAN does not carry falls straight to `admin` — there is no
+no interpolation database, so a house number BAN does not carry falls straight to `admin`. There is no
 middle tier to catch it, the way `620 H St NE` was caught in DC. Rue de Rivoli runs to number 258 in
 BAN, so 500 is off the end of it:
 
@@ -303,7 +303,7 @@ than as a coarse hit. Parsing French addresses well is a separate download,
 ## What you have now
 
 A data root that answers rooftop coordinates for one jurisdiction and city centroids everywhere else,
-which is the shape every deployment has — the question is only which jurisdictions you downloaded. Pull
+which is the shape every deployment has. The question is only which jurisdictions you downloaded. Pull
 the states your customers are in with `--only`, check `resolution_tier` on every result, and read
 `uncertainty_m` as a bound rather than as an error bar.
 

@@ -56,7 +56,7 @@ node osm/out/scripts/build-rooftop-extract.js \
   --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
 ```
 
-The build reports an **association gap** — the share of `addr:housenumber` points it had to skip because
+The build reports an **association gap**: the share of `addr:housenumber` points it had to skip because
 they carry no `addr:street`. A point with no street is unqueryable, so we count it rather than guess. When
 that gap is large for a country, the fix is a street-association recovery pass (`associatedStreet` relations
 → enclosing-polygon `addr:street` → point-in-polygon), sized to the measured gap — not built blind.

@@ -8,7 +8,7 @@ prerequisites: "@mailwoman/registry, plus resolved entities to plot"
 verified-with: mailwoman v6.1.0
 ---
 
-Coordinates in a JSON array tell you the geocoder worked. They don't tell you whether the _answers_ are right — that a cluster of clinics really sits where you'd expect, that the three records you merged into one entity share a building. For that you need to see them on a map, and you'd rather not stand up a tile server and a frontend to glance at a few hundred points.
+Coordinates in a JSON array tell you the geocoder worked. They don't tell you whether the _answers_ are right. That a cluster of clinics really sits where you'd expect, that the three records you merged into one entity share a building. For that you need to see them on a map, and you'd rather not stand up a tile server and a frontend to glance at a few hundred points.
 
 `@mailwoman/registry` renders a self-contained map for you. You hand it resolved entities; it hands back a single HTML file you open in a browser. By the end you'll have a `map.html` you can open locally or serve from anywhere. [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers how `resolveEntities` gets from raw records to the entities this recipe maps.
 
@@ -26,7 +26,7 @@ const html = toMapHTML(toGeoJSON(entities), { title: "Clinics — resolved" })
 writeFileSync("map.html", html)
 ```
 
-`toGeoJSON` is also the export your analysts want — the same FeatureCollection drops straight into QGIS — so you're not rendering to a dead end. The HTML isthe quick-look view over the same data.
+`toGeoJSON` is also the export your analysts want. The same FeatureCollection drops straight into QGIS — so you're not rendering to a dead end. The HTML isthe quick-look view over the same data.
 
 ## What you're looking at
 

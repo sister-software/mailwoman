@@ -41,7 +41,7 @@ The architecture has rightful homes for this instinct, in escalating order of am
 3. **Stage 5 second emitter (#478's capstone — where this is ultimately heading).** Codex
    matchers emit full CANDIDATES (`po_box="P.O. Box 19"` at chars 0–11, conf from matcher
    precision) into reconcile's beam alongside the classifier's top-K; arbitration picks per
-   evidence. This is "the rules system lives on as a candidate source" — the model-first
+   evidence. This is "the rules system lives on as a candidate source". The model-first
    answer to v0's remaining edge-format wins (the postal arena's label formats are exactly
    where v0 still beats neural).
 
@@ -50,7 +50,7 @@ The architecture has rightful homes for this instinct, in escalating order of am
 Slot 2 is the natural first build: it needs no retrain (priors are inference-side), its
 implementation is shared with the #518 revival verdict, and the v0.5.0 char-offset format makes its
 proposals directly storable as supervision later. Slot 1 rides whichever retrain comes after
-v0.5.0. Slot 3 is #478's existing capstone — this note adds the sub-premise family as its
+v0.5.0. Slot 3 is #478's existing capstone. This note adds the sub-premise family as its
 first candidate-emitter vocabulary, with the proposer (slot 2) as its dress rehearsal.
 
 Levels/floors join the family when their codex sourcing pass lands (noted on #517 — the AMAS

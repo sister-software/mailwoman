@@ -259,7 +259,7 @@ publish **no** zoning data at all — the word appears zero times on both resear
 ### 2.4 United States — the states that do aggregate, and what each one's layer is
 
 All measurements taken **2026-08-27** against the live services. **More states aggregate than the issue
-expected, and the reason none of them adds up to a national layer is not coverage — it is that each
+expected, and the reason none of them adds up to a national layer is not coverage. It is that each
 answers a different question, at a different vintage, under different terms.**
 
 | state              | verdict                                         | measured                                                                                                               | the catch                                                                                                          |
@@ -708,7 +708,7 @@ Commission Regulation (EU) No 1089/2010 Annex IV §4, whose definitions are verb
 
 The Technical Guidelines (D2.8.III.4 v3.1.1, 2024-07-31, 16,706,807 bytes, 329 pages, CC-BY 4.0) bound it
 twice: "Only the spatial planning documents that are or have to be legally adopted by an authority and are
-opposable to third parties are considered within INSPIRE", and — the sentence a consumer most needs —
+opposable to third parties are considered within INSPIRE", and. The sentence a consumer most needs —
 "**Although the original planned Land Use documents are legally binding the derived INSPIRE dataset is
 not.**"
 
@@ -819,12 +819,12 @@ wrong answer indistinguishable from a real absence:
    identical full-corpus count of **1,893,030**. The control key is what caught it; any per-country figure
    taken from that API is fabricated.
 2. **A SPARQL exact-literal keyword match returns zero for a keyword that is present.** `?d dcat:keyword
-"PlannedLandUse"` returns **0**, while `FILTER(STR(?k) = "PlannedLandUse")` returns **267,072** — the
+"PlannedLandUse"` returns **0**, while `FILTER(STR(?k) = "PlannedLandUse")` returns **267,072**. The
    literals are language-tagged. The zero reads as "nobody publishes planned land use", which is the
    interesting-sounding wrong answer.
 
 **One defect in the authoritative register, found by reading it rather than the specification.** The
-`1_PrimaryProduction` definition is an orphaned rider clause — it says what is _additionally included_
+`1_PrimaryProduction` definition is an orphaned rider clause. It says what is _additionally included_
 ("Areas where the manufacturing industries aggregate, package, purify or process the primary products
 close to the primary producers are included…") and never states what primary production **is**. Every
 sibling class carries a head definition and its own children are coherent. The specification's normative
@@ -1149,7 +1149,7 @@ Four reasons, in the order they bind.
 3. **The authority's own crosswalk is a fact about the authority**, and repeating it is what this layer
    does. Ireland's Department published the generic type and said, in the item description, that it
    "**complements (rather than replaces) the existing statutory zoning used for each individual plan**".
-   Carrying both columns is not a compromise between two designs — it is a transcription of what the
+   Carrying both columns is not a compromise between two designs. It is a transcription of what the
    publisher did.
 4. **A reduction that keeps the original is reversible; one that discards it is not.** If a consumer later
    needs a coarse rollup and the authority ships none, the National Zoning Atlas's three published values
@@ -1443,7 +1443,7 @@ Five reasons, in the order they bind.
    drafting convention moves the national zoned-area figure by 41 %.
 5. **Its traps are the useful kind.** A ring-orientation convention that flips point-in-polygon answers
    inside 1,210 features, a `crs` member the format removed, a currency flag that does not mean current,
-   and a documentation host with no DNS record — each is silent, each produces a well-formed wrong answer,
+   and a documentation host with no DNS record. Each is silent, each produces a well-formed wrong answer,
    and each has an exact check.
 
 **One thing the pilot may not do.** It ships at **`tier: build-local`** rather than `shipped`, until the license
@@ -1726,7 +1726,7 @@ Recorded as gaps rather than filled in. Nothing below was completed with a plaus
   reached through a commercial catalogue rather than through INSPIRE.
 
 **Measurement traps found while running this survey.** Seven, all of the shape this repository keeps
-writing down — a confident number that is not counting what was asked — and each caught only by a second
+writing down. A confident number that is not counting what was asked — and each caught only by a second
 path:
 
 1. **ArcGIS Online's search `total` is capped at 10,000.** Five different zoning queries all returned
@@ -1754,5 +1754,5 @@ path:
 9. **A statewide layer can score 100 % on jurisdictions and hold no zoning at all.** New Jersey's
    "Municipal Zoning" has one row per municipality and the rows are hyperlinks to PDFs.
 10. **An owner name is not an organisation identifier.** Searching the catalogue for `owner:COHGIS`
-    returns the City of Hyattsville, Maryland — a false lead that would produce a confident wrong answer
+    returns the City of Hyattsville, Maryland. A false lead that would produce a confident wrong answer
     about Houston.

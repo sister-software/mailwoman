@@ -1124,7 +1124,7 @@ git log -1 --oneline
 
 - [ ] **Step 1: Debug surface**
 
-In `mailwoman/commands/parse.tsx`, locate where the debug JSON includes `kind` (≈line 648). Add `poiIntent` alongside, same conditional style the file uses for optional result fields — the field must appear only when present on the result (never `"poiIntent": undefined`). Mirror the surrounding code exactly; this is a one-to-three-line change.
+In `mailwoman/commands/parse.tsx`, locate where the debug JSON includes `kind` (≈line 648). Add `poiIntent` alongside, same conditional style the file uses for optional result fields. The field must appear only when present on the result (never `"poiIntent": undefined`). Mirror the surrounding code exactly; this is a one-to-three-line change.
 
 - [ ] **Step 2: Flag-register row**
 
@@ -1164,6 +1164,6 @@ git log -1 --oneline
 
 ## Execution notes
 
-- Task 4 Step 5b: the file's lazy stage wiring (placeCountry/streetEvidence resolve on first call) is why the plan mandates the **inline-spread** `parseAnchor` form — it reads `stages` at call time, immune to mutation ordering. Do not "optimize" it into a pre-built anchorStages object.
+- Task 4 Step 5b: the file's lazy stage wiring (placeCountry/streetEvidence resolve on first call) is why the plan mandates the **inline-spread** `parseAnchor` form. It reads `stages` at call time, immune to mutation ordering. Do not "optimize" it into a pre-built anchorStages object.
 - Deferred to Plan 3 (do not build here): the poi.db executor, brand table + brand detection wiring, `variant-aliases` slang→taxonomy wiring, the landmark-leader abstain path, ResolveOpts kind-threading, MCP server, API/photon response variants.
 - The golden-2pp / demo-preset check applies at DEFAULT-FLIP time rather than merge time (flag ships off; register row records the promotion check).

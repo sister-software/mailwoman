@@ -80,7 +80,7 @@ This is a **major**. Three breaks, none subtle:
 
 1. **`onnxruntime-node` moves from `dependencies` to an optional peer.** Any Node consumer relying on
    it arriving transitively gets a runtime failure on first inference. That is the intended
-   correction — the dependency was always the consumer's to choose — but it is a break.
+   correction. The dependency was always the consumer's to choose — but it is a break.
 2. **`@mailwoman/neural-web` stops being where the browser runtime lives.** It is published (8.6.0),
    so it becomes a thin re-export shim rather than disappearing: deprecated with a pointer, removed a
    major later.
@@ -89,7 +89,7 @@ This is a **major**. Three breaks, none subtle:
 
 ## The resolution question, answered
 
-Export conditions do carry the boundary — the confusion was about which compiler was failing.
+Export conditions do carry the boundary. The confusion was about which compiler was failing.
 
 Docusaurus builds two bundles. The **client** resolves under `browser` and picked the counterpart
 correctly from the first attempt. The **server** (SSR) resolves under `node`, correctly, because it

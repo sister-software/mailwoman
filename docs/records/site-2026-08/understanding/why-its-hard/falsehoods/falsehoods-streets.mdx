@@ -63,7 +63,7 @@ Mannheim, Germany uses a grid system: `R 5, 6-13, D-68161 Mannheim` — block R,
 
 **libpostal** handles suffix-less streets through its CRF's transition model: a token between a house number and a locality is likely a street, even without a suffix. It handles prefix-descriptor streets (European) through locale-specific training — the French model learns `rue` as a street prefix, the US model learns `Street` as a suffix. But libpostal's per-locale models are separate binaries; a single deployment serving multiple locales needs to know which model to invoke.
 
-**Pelias** uses a suffix dictionary with locale-specific entries. `street` classification in Pelias relies on suffix matching plus adjacency to known components. `Piccadilly` without a suffix would be classified as `street` only if it appears between a house number and a locality — a positional heuristic that fails when the address has non-standard ordering.
+**Pelias** uses a suffix dictionary with locale-specific entries. `street` classification in Pelias relies on suffix matching plus adjacency to known components. `Piccadilly` without a suffix would be classified as `street` only if it appears between a house number and a locality. A positional heuristic that fails when the address has non-standard ordering.
 
 **Google's API** handles most of these cases well in practice. It correctly parses `rue de Rivoli` and Japanese block addresses. But the parser is proprietary — you cannot inspect how it handles the Dutch `Gondel 2695` case or whether it distinguishes Ten Post Office Sq from 10 Post Office Sq.
 
@@ -71,7 +71,7 @@ Mannheim, Germany uses a grid system: `R 5, 6-13, D-68161 Mannheim` — block R,
 
 The staged pipeline addresses the falsehoods in layers:
 
-**Locale check (Stage 2)** detects the language/script family before classification. A French address triggers French ordering expectations (postcode before locality, street type before street name). A Japanese address skips street classification entirely and routes to block-based component tags. The classifier does not need to handle every locale's ordering — it only needs to handle the locale the check has detected.
+**Locale check (Stage 2)** detects the language/script family before classification. A French address triggers French ordering expectations (postcode before locality, street type before street name). A Japanese address skips street classification entirely and routes to block-based component tags. The classifier does not need to handle every locale's ordering. It only needs to handle the locale the check has detected.
 
 **Phrase grouper (Stage 2.7)** proposes spans based on structural cues rather than dictionaries. `Gondel 2695` would be proposed as a single span (no whitespace, no punctuation boundary) — the grouper does not need to know that "26" and "95" have different semantic roles. The classifier then types the span, and the Joint Decoder (Stage 5) can split it if needed.
 

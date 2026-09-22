@@ -18,7 +18,7 @@ Not every application needs sub-meter accuracy. For most applications, "in the r
 2. **Choose the cheapest geocoder that meets the requirement.** City-level accuracy → locality-only geocoding (free, a few hundred lines of code). ZIP-level accuracy → postcode-only geocoding plus a ZIP-to-centroid table (free, trivially updateable). Block-level accuracy → a geocoding API (Google, geocode.earth — costs money but requires zero infrastructure).
 3. **Stop.** Don't optimize past your requirement. A geocode that is accurate to 5 meters when your application needs 5 kilometers is wasted engineering effort. The last 10% of accuracy costs 90% of the infrastructure.
 
-This is the economic argument for "close enough" — the cost of higher precision is not linear, and the value of higher precision drops off sharply after you meet your application's requirement.
+This is the economic argument for "close enough". The cost of higher precision is not linear, and the value of higher precision drops off sharply after you meet your application's requirement.
 
 ## When it works
 
@@ -33,7 +33,7 @@ This is the economic argument for "close enough" — the cost of higher precisio
 - **The last mile.** A package placed at the ZIP centroid in rural Montana is 15 miles from the actual delivery point. The regional sort correctly routes it to the right post office, and the carrier who delivers it knows the route. The geocode was wrong, but the package arrived anyway, because the postal system's last mile is human rather than algorithmic.
 - **The false confidence of high precision.** A coordinate with 8 decimal places looks authoritative and implies sub-millimeter accuracy, so the consumer trusts it. A coordinate with 1 decimal place (10-kilometer precision) looks approximate, so the consumer treats it accordingly. The high-precision coordinate may in fact be less accurate: the extra digits can be noise rather than signal, yet the consumer still trusts the precise-looking one more.
 - **The misuse case.** You built a geocoder for market analysis. Someone uses it for delivery routing. The geocoder was "close enough" for its intended use case. It is catastrophically wrong for the unintended one. The geocoder has no way to signal its intended precision level. The consumer has no way to know.
-- **The concentrated tail.** 90% of your addresses geocode to within acceptable precision. The 10% that don't are concentrated in rural areas, new construction, and informal settlements — the populations where precision matters most and is hardest to get.
+- **The concentrated tail.** 90% of your addresses geocode to within acceptable precision. The 10% that don't are concentrated in rural areas, new construction, and informal settlements. The populations where precision matters most and is hardest to get.
 - **The changing requirement.** You built a geocoder for statistical aggregation. Two years later, the business wants delivery routing. The geocoder that was "close enough" is now wrong by an order of magnitude. Retooling to higher precision requires rebuilding the geocoding infrastructure.
 
 ## Precision spectrum

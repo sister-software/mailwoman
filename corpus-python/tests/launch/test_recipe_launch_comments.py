@@ -132,7 +132,7 @@ def test_no_recipe_tells_the_reader_to_stage_blind(recipe: Path) -> None:
 
     The file lands, `modal volume ls/get` shows it, and `vol.reload()` does not bridge the gap
     (verified 2026-06-12 with a marker file). A run staged that way reads whatever was on the volume
-    already and reports success — the corpus is wrong and nothing says so. Sixteen v0.9.x headers
+    already and reports success. The corpus is wrong and nothing says so. Sixteen v0.9.x headers
     instructed it, written before the blindness was found.
 
     Naming it to warn against it is the point of the warning, so a mention the warning form covers

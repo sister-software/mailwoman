@@ -237,7 +237,7 @@ stays the answer.
 
 **`nuts.db` is unresolved.** The repo records an attribution string (© EuroGeographics) for
 Eurostat GISCO NUTS boundaries and no license identifier at all. Until the actual terms are
-determined it is neither gateable nor confidently ungateable — it is unknown, and unknown means
+determined it is neither gateable nor confidently ungateable. It is unknown, and unknown means
 it does not enter the line.
 
 > **PENDING COUNSEL — L5.** Eurostat GISCO NUTS boundary terms (the EuroGeographics component in

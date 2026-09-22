@@ -41,7 +41,7 @@ du -sb node_modules
 
 `onnxruntime-node` publishes prebuilt binaries for three platforms in one tarball: 311 MB of Linux,
 134 MB of Windows, 78 MB of macOS. Two of the three are dead weight on any given machine. In a
-container image, deleting the platform directories you do not run reclaims most of that — the paths
+container image, deleting the platform directories you do not run reclaims most of that. The paths
 are under `node_modules/onnxruntime-node/bin/napi-v6/`. See [Deploy with
 Docker](../how-to/deploy-docker.mdx).
 

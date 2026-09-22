@@ -115,7 +115,7 @@ npx mailwoman gazetteer overture-ingest --countries US --release 2026-06-17.0
 21 minutes and 6.93 GB on the machine this page was verified on, for 126,672,517 rows. Most of the clock
 is the scan rather than the write: Overture's addresses theme is partitioned by type and not by country, so a
 one-country ingest reads the planet's address parquet and filters. Liechtenstein, the smallest country in
-the theme, takes 132 s for 12,950 rows on the same connection — the floor is the scan.
+the theme, takes 132 s for 12,950 rows on the same connection. The floor is the scan.
 
 The run writes a fill-rate report beside the parquet, and it is worth opening before you build anything on
 top of it:
@@ -387,7 +387,7 @@ npx mailwoman situs build --release 2026-06-17.0 --concurrency 4
 npx mailwoman situs interpolation
 ```
 
-Those two are the only commands on this page that were not run to produce it — a national build is days of
+Those two are the only commands on this page that were not run to produce it. A national build is days of
 wall clock rather than an afternoon. So the numbers below are the published national tier's, which was built by
 these same two commands, read off the bundle registry the CLI ships:
 

@@ -108,7 +108,7 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 #   "Eingang 2"   -> entrance="Eingang 2" ; "Stiege 4" -> staircase="Stiege 4"
 #
 # The existing STAGE3 ``unit`` tag is deliberately kept as the bare unit-id role rather than renamed to
-# ``unit_id`` — a rename would rewrite every ``unit``-labeled corpus row. A ``unit`` → ``unit_id``
+# ``unit_id``. A rename would rewrite every ``unit``-labeled corpus row. A ``unit`` → ``unit_id``
 # rename, plus reconciling the JP ``building_number``/``building_name`` declarations against
 # ``building_designator``/``building_id``, is a version-conditional batch for the activation bump rather than
 # piecemeal here (same discipline as the #875 casing batch).
@@ -212,7 +212,7 @@ STAGE3_CJK_BIO_LABELS: Final[tuple[str, ...]] = (
 # region Active set (points at the most-recent stage)
 
 # Bump to STAGE3 when training with v0.6.0 corpus. Until then, STAGE2 is active so
-# existing v0.5.x models keep working. STAGE4 is defined above but not active — its
+# existing v0.5.x models keep working. STAGE4 is defined above but not active. Its
 # activation is coupled to a retrain + the JS union bump (see the Stage 4 block).
 
 ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE3_TAGS
@@ -282,7 +282,7 @@ IGNORE_INDEX: Final[int] = -100
 # LocalePosterior the resolver consumes. The posterior does not feed the FiLM path: model.py sends
 # the same pooled vector through a sibling projection, so the aux loss shapes what both read rather
 # than one selecting the other. The probe behind PR3 showed the postcode alone pins the country only
-# 28–44% of the time, so the model must infer it from the whole string — this map is the
+# 28–44% of the time, so the model must infer it from the whole string. This map is the
 # aux head's target vocabulary.
 #
 # Stable order: never reorder, only append, so a checkpoint's locale-head ids stay

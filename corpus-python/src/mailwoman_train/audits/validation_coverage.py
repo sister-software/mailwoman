@@ -133,7 +133,7 @@ def failing_requirements(
     """Each declared coverage floor the measured splits do not meet, with both numbers beside it.
 
     A country absent from a split is reported as observing zero rather than skipped. Skipping it
-    would make the strongest failure — a locale the split holds nothing for — the one case the
+    would make the strongest failure. A locale the split holds nothing for — the one case the
     check says nothing about.
     """
     failures: list[dict[str, Any]] = []

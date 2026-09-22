@@ -211,7 +211,7 @@ Three findings:
 3. **The D-rule core is base-inherited and unchanged at every weight.** FR 2 / GB 4 / DE 1 are identical across
    base, null, and fix: the GB venue cluster (`St Andrew Undershaft…`, `30 St Mary Axe…`,
    `Cafe at St Mary's…`, `Milford on Sea…`), `Unter den Linden`, and the bare-street coin flips. More
-   suffix-boundary weight is not the change for these — the venue-boundary class needs its own treatment
+   suffix-boundary weight is not the change for these. The venue-boundary class needs its own treatment
    (#1366's territory), or this lineage does not ship default-on.
 
 Artifacts: null int8 `f52ceaf164c4e01d1682dd80f3c6ac8c`, fix int8 `f2d264f09b7d6f269158ab97d1843346`.

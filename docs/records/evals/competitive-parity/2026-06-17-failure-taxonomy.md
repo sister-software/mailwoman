@@ -44,7 +44,7 @@ artifact (#694) — see §4.
 | non-Latin / thin-coverage locales        | in-map right-country ~26–35% (NL, KR) | neural | open     | en-US-centric training; no locale-native eval set for non-Latin script                                                                                                          | 2026-06-14-coarse-placer-arc-postmortem       |
 
 Locale is the deepest open frontier and the one least amenable to a code change: the recurring finding
-(fr.house_number) is that **weight tuning is exhausted** — the next move is real reordered/native data rather than another loss-mask or weight bump.
+(fr.house_number) is that **weight tuning is exhausted**. The next move is real reordered/native data rather than another loss-mask or weight bump.
 
 ## 3. Format failures (po_box, intersection, unit, delimiters)
 
@@ -113,7 +113,7 @@ gap.
 ## What the table says about the roadmap
 
 1. **Boundary instability is the highest-changeage parser change** — it's one family (§1 dotted, §5 street/glue, §6 within-token) under several names; a boundary-aware decode would move several rows at once.
-2. **Geocoder accuracy is solved; coverage is the frontier** — the ~40% admin fallback is a extract-data problem rather than a model one (§4).
+2. **Geocoder accuracy is solved; coverage is the frontier**. The ~40% admin fallback is a extract-data problem rather than a model one (§4).
 3. **Locale is a data problem rather than a weight problem** — fr.house_number falsified weight tuning; real reordered/native data is the only remaining change (§2).
 4. **The eval check warrants its keep** — the rejected paired-delimiter proposer (§3) and the deferred geocoder wiring (§4, #694) are both cases where a plausible change was stopped by a measured regression. Keep grading the assembled output rather than label-F1 (the #566 discipline).
 

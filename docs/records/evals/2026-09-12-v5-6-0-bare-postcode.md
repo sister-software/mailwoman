@@ -157,7 +157,7 @@ says "locality Zulia", Colombia is the only country that satisfies the claim, th
 follows the mis-tag, and `Venezuela` is then looked up inside Colombia and returns nothing. A parse
 mis-tag becomes a country error because the resolver infers the country that makes the mis-tag true.
 
-Venezuelan postcodes are absent from the gazetteer entirely — every VE postcode lookup returns 0
+Venezuelan postcodes are absent from the gazetteer entirely. Every VE postcode lookup returns 0
 candidates, against a US control where `Chicago 60601, Illinois, United States` returns 1 postalcode
 candidate and resolves it at rank 1. So locality-level with a 25 km tolerance is the ceiling for these
 rows until that data exists, and the tolerance is a ceiling rather than slack.

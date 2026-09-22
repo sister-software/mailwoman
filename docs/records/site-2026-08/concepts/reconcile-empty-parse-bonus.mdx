@@ -91,7 +91,7 @@ Any future stage that composes confidences multiplicatively will need the same t
 
 - The v0.5.1 learned span proposer ([`PHASE_8_E_learned_span_proposer.md`](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_8_E_learned_span_proposer.mdx)) will produce its own confidence distribution. If it feeds into a search with multiplicative scoring, the inclusion bonus needs to be applied again — adding a layer of factors does not change the trap.
 - The "optimal-cover" solver mentioned in earlier design notes (a candidate decoder that picks a non-overlapping set of spans to cover the input) is structurally identical. Same trap, same fix.
-- Any joint decoding over additional axes (e.g., `× alternative-language candidate`) needs the bonus scaled — the empty parse cost goes up as the axes multiply, so the bonus per accepted slot may need to grow with them.
+- Any joint decoding over additional axes (e.g., `× alternative-language candidate`) needs the bonus scaled. The empty parse cost goes up as the axes multiply, so the bonus per accepted slot may need to grow with them.
 
 ## See also
 

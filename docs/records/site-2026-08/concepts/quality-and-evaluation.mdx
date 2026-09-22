@@ -71,7 +71,7 @@ A change that fails its check is reverted, and the falsification is written up w
 
 ## What a confidence of 0.88 means
 
-Each parsed span carries a `conf=` value; the parsing page noted a calibrated version exists. What calibration buys: a calibrated 0.88 means the span is right about 88% of the time — a frequency you can set a threshold on, rather than a report of the model's mood.
+Each parsed span carries a `conf=` value; the parsing page noted a calibrated version exists. What calibration buys: a calibrated 0.88 means the span is right about 88% of the time. A frequency you can set a threshold on, rather than a report of the model's mood.
 
 The mechanism is an isotonic lookup table fitted on addresses with known answers and graded on a subset the fit never touched. Measured there, expected calibration error dropped from 0.060 to 0.0055, and [the calibration page](./confidence-calibration.mdx) reports the real-world-only figure (0.019, on OpenAddresses rows) next to the combined one, because the in-domain half flatters the result, and the flattery should stay visible. A single global table also leaves error on specific locales: raw Dutch spans measured 0.156 against 0.005 with their own table (the [per-locale report](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/calibration/2026-07-04-per-locale-calibration-v530.md) has the full set), so the weights package ships both `calibration.json` and `calibration-per-locale.json`.
 

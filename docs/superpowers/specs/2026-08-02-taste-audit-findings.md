@@ -74,12 +74,12 @@ in the audit), B1 (three point-in-polygon implementations in three published pac
 file duplicated with a written exit plan nobody executed).
 
 **The pattern underneath most of this.** Three of the largest clusters are not "nobody wrote a
-home" — they are "the home exists, and the call site could not use it as shaped." A3 is the clearest:
+home". They are "the home exists, and the call site could not use it as shaped." A3 is the clearest:
 `SeededRandom` in `core/utils/python-random.ts` is mulberry32 by its own docstring, but it is a class
 with a `.random()` method, and all sixteen call sites want a `() => number` thunk. So sixteen sites
 rebuilt the generator rather than adapt to the class. A2 has the same shape from the other side: two
 functions named `percentile`, one taking percent and one taking a fraction. When a home's interface
-does not match the call shape, deduplicating by pointing everyone at the home is the wrong fix — the
+does not match the call shape, deduplicating by pointing everyone at the home is the wrong fix. The
 home's surface has to change first.
 
 ## A — the home exists and the code bypasses it
@@ -257,7 +257,7 @@ Nine files import `readJSONL`/`writeJSONL`/`iterateJSONL` correctly. Ten do not:
 `mailwoman/dev-tools/failure-report.run.ts`, `poi-taxonomy/scripts/generate-taxonomy.ts`,
 `scripts/eval/postcode-anchor-accuracy.ts`, and five `corpus/src/**/*.test.ts` files.
 
-This is drift against a known home rather than an unknown one — the adoption split is roughly even.
+This is drift against a known home rather than an unknown one. The adoption split is roughly even.
 
 **Cost of leaving it: low** (until a file needs the streaming `iterateJSONL` and grows a second
 hand-rolled reader). **Cost of fixing it: low, mechanical.**
@@ -636,7 +636,7 @@ them.
     the code it deduplicates (`@mailwoman/spatial` → `@mailwoman/core` → ~11 MB of data;
     `@mailwoman/match` has no core dependency at all today). Recorded in each file so the next sweep
     finds the reasoning instead of the copy. **A duplicate with a priced reason is a decision rather than a
-    defect** — this is the category the audit's own B-axis was missing.
+    defect**. This is the category the audit's own B-axis was missing.
 
 ## What this audit did not cover
 

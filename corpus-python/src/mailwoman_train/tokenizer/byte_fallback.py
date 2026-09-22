@@ -1,7 +1,7 @@
 """How often a trained tokenizer falls back to raw bytes, overall and per script.
 
 A byte-fallback piece is one character's byte emitted as its own token because the vocabulary held
-nothing better. It is not an error — it is the reason a model can encode text it never saw — but a
+nothing better. It is not an error. It is the reason a model can encode text it never saw — but a
 high rate on a script means the vocabulary is spending the model's sequence budget on bytes. The
 per-script split is what says WHERE, which the headline number cannot.
 """
@@ -84,7 +84,7 @@ def measure_byte_fallback(sp: spm.SentencePieceProcessor, lines: Iterable[str]) 
           }
         }
 
-    The "rate" denominator is piece count rather than line count — a byte-fallback piece is a
+    The "rate" denominator is piece count rather than line count. A byte-fallback piece is a
     *piece*, not a *line*, so the rate that matters for downstream model wastage is the
     fraction of pieces that landed on the byte block.
     """

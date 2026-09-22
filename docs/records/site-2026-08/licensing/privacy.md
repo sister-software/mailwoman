@@ -18,7 +18,7 @@ the few surfaces we do operate, and lists the legal frameworks the design addres
 The Mailwoman libraries, CLI, and self-hosted API servers contain **no telemetry, no analytics,
 no phone-home behavior, and no query logging by default**. Addresses you geocode are processed
 on your own machine or your own server. When you run the in-browser engine, the model and data
-files are downloaded once and every query is processed inside your browser — the text you type
+files are downloaded once and every query is processed inside your browser. The text you type
 is never transmitted anywhere.
 
 Addresses can constitute personal data when they are linked to a person. Mailwoman's deployment

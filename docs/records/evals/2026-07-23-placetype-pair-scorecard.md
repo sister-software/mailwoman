@@ -1,7 +1,7 @@
 # 2026-07-23 — placetype-pair-prior arc: ship-prep scorecard (Task 8)
 
 Branch `feat/placetype-pair-prior` (unswitched throughout the arc). This is the ship-PREP
-scorecard for Task 8 — no release was dispatched, nothing was promoted, no npm version was
+scorecard for Task 8. No release was dispatched, nothing was promoted, no npm version was
 bumped. It documents every number blocking the decision, both checkpoints, and the one new
 ship-blocking finding this task surfaced (the Gauntlet). Full battery/ablation source:
 `.superpowers/sdd/task-7-report.md`; this task's own additions (Gauntlet, model cards, release
@@ -242,7 +242,7 @@ the same training lineage, two different NY/DC-class admin-resolution robustness
 pattern reads as a lineage-wide `v3.11.0-deploc-feed` cost rather than a single-step artifact. Full
 transcripts: `.superpowers/sdd/task-8-prep-report.md`.
 
-**Ship-checkpoint choice is unaffected by this finding** — the operator-ratified reasoning
+**Ship-checkpoint choice is unaffected by this finding**. The operator-ratified reasoning
 (feed-2k's FR-fragment failure is the more dangerous, unbounded class; feed-8k's digit miss is
 narrower and now covered by the check revision) stands regardless of which checkpoint also happens
 to fail the Gauntlet. Both do. The Gauntlet failure blocks promotion of **either** checkpoint until

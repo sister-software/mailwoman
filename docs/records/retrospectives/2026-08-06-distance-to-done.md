@@ -266,19 +266,19 @@ serves `/` and `/openapi.json`.
 
 ### 2.6 Per-surface summary
 
-| Surface              | Where we sit                                                                                                                                                     |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Parse (US)           | Check pass on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                            |
-| Parse (FR)           | Check pass. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                  |
-| Parse (GB)           | The v9 fix landed: gb-golden 318/318 with the anchor fed; dependent_locality 0 → 205/207. **GB is not a declared tier** — it has capability without a tier claim |
-| Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                             |
-| Geocode              | 71% on the 393-row oracle sweep; 27 rows resolve to nothing; last competitor measurement had Pelias ahead 88 to 80                                               |
-| Drop-in APIs         | Routes ship, zero upstream parity tests, named parameter gaps in all three                                                                                       |
-| Demo                 | Structurally pinned to the shipped weights package (invariant 2 enforced by construction rather than by memory)                                                  |
-| npm                  | Clean. 48 workspaces at 9.0.0, lockstep, Trusted Publishing                                                                                                      |
-| Docs                 | Site ships; the repo-root documents have drifted (§5.4)                                                                                                          |
-| Record matching      | Parked pending funding or a pilot, with measured evidence banked (NPPES coord-blocked F1 68.1%)                                                                  |
-| Spatial layers / POI | 13.68M-row `poi.db`, read-time ancestry and `gersID` landed 2026-07-19                                                                                           |
+| Surface              | Where we sit                                                                                                                                                    |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Parse (US)           | Check pass on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                           |
+| Parse (FR)           | Check pass. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                 |
+| Parse (GB)           | The v9 fix landed: gb-golden 318/318 with the anchor fed; dependent_locality 0 → 205/207. **GB is not a declared tier**. It has capability without a tier claim |
+| Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                            |
+| Geocode              | 71% on the 393-row oracle sweep; 27 rows resolve to nothing; last competitor measurement had Pelias ahead 88 to 80                                              |
+| Drop-in APIs         | Routes ship, zero upstream parity tests, named parameter gaps in all three                                                                                      |
+| Demo                 | Structurally pinned to the shipped weights package (invariant 2 enforced by construction rather than by memory)                                                 |
+| npm                  | Clean. 48 workspaces at 9.0.0, lockstep, Trusted Publishing                                                                                                     |
+| Docs                 | Site ships; the repo-root documents have drifted (§5.4)                                                                                                         |
+| Record matching      | Parked pending funding or a pilot, with measured evidence banked (NPPES coord-blocked F1 68.1%)                                                                 |
+| Spatial layers / POI | 13.68M-row `poi.db`, read-time ancestry and `gersID` landed 2026-07-19                                                                                          |
 
 ---
 
@@ -321,7 +321,7 @@ New capability rather than debt: #13, #29, #35–#40 (eight adapter clusters, pa
 Two are worth naming. **#1176 (the v8 CJK epic)** states its success criterion as _"v8 ships a model
 that parses JP… the first non-Latin parse claim mailwoman makes."_ v8 shipped without it and v9
 shipped without it; ROAD_TO_V9 §8 parks it explicitly. The epic has outlived two majors of its own
-name. **#598 (record matching)** is parked by an operator decision with the evidence banked — that is
+name. **#598 (record matching)** is parked by an operator decision with the evidence banked. That is
 a healthy park rather than a stall.
 
 ### (d) STALE — recommend closing with receipts, 5

@@ -7,7 +7,7 @@ stays off-by-default."_
 
 **Verdict: the kill condition is met. The flag stays off by default.**
 
-The span decode invents streets on inputs that have none — a failure class the shipped decode does not
+The span decode invents streets on inputs that have none. A failure class the shipped decode does not
 have to this degree, and one that **every street metric in the arc is structurally incapable of
 measuring**.
 
@@ -45,7 +45,7 @@ The within-model cross-tab (v301 token × v301 seg) is the same shape: +1 net, 1
 
 ## 2. The observed class matches the thesis
 
-All 17 are the target class — the token decode is **too timid** and the span decode recovers the phrase:
+All 17 are the target class. The token decode is **too timid** and the span decode recovers the phrase:
 
 ```
 FR "Rue de Paris"             v264=""                  seg="rue de paris"            ✓
@@ -109,7 +109,7 @@ Six are pure locality/postcode rows (indefensible). Five are venue rows (softer 
 street is arguable). Both partitions get worse: pure +6/−3, venue +5/−1.
 
 **Not a grammar defect.** The exported grammar carries explicit `start_transitions`, `end_transitions`,
-and an `O` segment type at index 0 — an all-`O` parse is representable and cheap to express. The decode
+and an `O` segment type at index 0. An all-`O` parse is representable and cheap to express. The decode
 chooses street anyway. This is **learned miscalibration** rather than a structural hole. (Checked, because the
 structural story was the attractive one.)
 

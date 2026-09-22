@@ -266,7 +266,7 @@ export const reverseQueryParams = z.object({
 })
 ```
 
-(If the emitted parameter schemas surface the union instead of the override, that is adjudicated at Task 4's check — the override mechanism is the intent; verify with `emitOpenAPIDocuments` during Task 3's doc test.)
+(If the emitted parameter schemas surface the union instead of the override, that is adjudicated at Task 4's check, and the override mechanism is the intent; verify with `emitOpenAPIDocuments` during Task 3's doc test.)
 
 - [ ] **Step 6: Rewire `photon/index.ts`.** Delete the moved blocks; add `export * from "./engine.ts"`, `export * from "./projection.ts"`, `export * from "./schema.ts"` above the remaining express code; add the minimal imports the remaining express router needs (`type PhotonEngine`, `photonCollection`, etc. — `export *` doesn't bind local names; phase-1 Task 3 did the same). Express router stays functional.
 

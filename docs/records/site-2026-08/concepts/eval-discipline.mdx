@@ -53,7 +53,7 @@ When the model emits nothing for a component that the golden set expects, the fa
 
 In v0.4.0, 65% of postcode false-negatives were empty predictions on mid-position postcodes like `Paris 75008`. The NAD downweight (the most aggressive change in the source rebalance) removed "postcode-first" positional patterns from the training mix. The model learned to tag mid-position numeric tokens as `house_number` instead of `postcode`.
 
-This is a real regression — the recipe change had an unintended side effect — but it's a training-data distribution problem rather than a model architecture problem. It suggests a targeted fix (bump NAD weight back up, synthesize component-order permutations) rather than a rollback.
+This is a real regression. The recipe change had an unintended side effect — but it's a training-data distribution problem rather than a model architecture problem. It suggests a targeted fix (bump NAD weight back up, synthesize component-order permutations) rather than a rollback.
 
 ### Pattern 3: Label confusion
 
@@ -74,7 +74,7 @@ This is a decoder problem rather than a model problem — no retraining required
 The golden eval set (`v0.1.2`, 4,535 entries) is the single most important artifact in the eval pipeline. A few rules:
 
 - **Adversarial entries belong in their own set.** Report F1 with and without them. The adversarial set is a stress test rather than a release check.
-- **Golden-set versions are pinned.** Every eval report references a specific golden-set version. If the golden set is expanded, the old reports are not retroactively recomputed — that would falsify the historical record.
+- **Golden-set versions are pinned.** Every eval report references a specific golden-set version. If the golden set is expanded, the old reports are not retroactively recomputed. That would falsify the historical record.
 - **Annotation noise is real.** At typical 1% annotator error rates in human-labeled NER data, a 0.5–1.5pt macro_F1 shift can be noise. When a regression appears in this band, manually inspect the disagreement entries before deciding.
 - **Small eval sets amplify noise.** 4,535 entries means a 1pt macro_F1 regression is ~45 flipped entries. At 1% annotator error, the false-positive rate on "regression detected" is ~10%.
 
@@ -82,7 +82,7 @@ The golden eval set (`v0.1.2`, 4,535 entries) is the single most important artif
 
 The discipline above grades parser spans against a golden. The resolver — the stage that turns a parsed address into a place on Earth — needs its own, and it fails differently. The trap here is grading resolution by **name-match**: did the resolved place carry the same name string as the gold? That question can only fail when the name is wrong, and the name is almost never wrong. There are ten US localities called "Sheldon"; "New York" is a city, a state, and a village 280km apart. A name-match metric scores every one of those a tie and gives the resolver full marks for picking any of them.
 
-The 2026-06-08 `honest-eval` run made the cost concrete: on the leakage-free Vermont rows the resolver scored **93.7% locality name-match while its median coordinate was 326km from the truth** — it was finding the right _name_ in the wrong _state_, and name-match could not see it. Two disciplines follow.
+The 2026-06-08 `honest-eval` run made the cost concrete: on the leakage-free Vermont rows the resolver scored **93.7% locality name-match while its median coordinate was 326km from the truth**. It was finding the right _name_ in the wrong _state_, and name-match could not see it. Two disciplines follow.
 
 ### Evaluate on geography the model never trained on
 

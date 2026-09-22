@@ -48,7 +48,7 @@ def test_quoted_no_survives():
 
 
 def test_dataconfig_rejects_a_retyped_country_key():
-    """Raise, don't coerce. A config saying `false` does not MEAN Norway — it means YAML changed the
+    """Raise, don't coerce. A config saying `false` does not MEAN Norway. It means YAML changed the
     author's meaning, and repairing it silently would hide the same class of bug in the next field
     that grows a bare-token key."""
     with pytest.raises(ValueError, match="Norway problem"):

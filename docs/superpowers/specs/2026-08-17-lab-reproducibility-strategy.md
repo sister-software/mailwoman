@@ -43,13 +43,13 @@ Two smaller facts worth carrying, because they shape what "reproducible" can mea
 **Provenance rather than configuration.**
 
 A manifest describes what _was_ built. Configuration describes what _should_ be built. Reproduction needs
-the first. This distinction is not stylistic — it is the lesson of #1015, where
+the first. This distinction is not stylistic. It is the lesson of #1015, where
 `scripts/wof-build-manifest.json` lagged the live database by 71 Overture and 161 GeoNames countries and the
 real recipe had to be reconstructed from the artifact's synthetic-id ranges. `RELEASING.md` records the fix:
 the recipe moved into code, reviewed like code, and the manifest was demoted to a LOG.
 
 So the test for every artifact this strategy adds is: **can it be re-derived from the thing it describes?**
-A file that can is a log and cannot lag — a stale entry fails its own check. A file that cannot is a
+A file that can is a log and cannot lag. A stale entry fails its own check. A file that cannot is a
 register, and registers disagree silently.
 
 That test is why the layered config file from `scratchpad/config-file-plan.md` is **not** being built. Its
@@ -71,7 +71,7 @@ Recorded because later phases depend on them.
 
 Two things from that work carry into this plan. The **worktree arm** (`{kind:"worktree", ref}`, and
 `ref: "WORKTREE"` for uncommitted edits) is the instrument for measuring any change in this strategy, and it
-is the reason phase 0 exists — it was blocked by exactly the empty-worktree failure. And **place-id
+is the reason phase 0 exists. It was blocked by exactly the empty-worktree failure. And **place-id
 provenance** is the pattern the manifests generalise: an id or an artifact that states its own source, so a
 reader never has to infer one.
 
@@ -115,7 +115,7 @@ The design left three questions open. Resolving them here.
 
 3. **A machine that has never trained fails loudly, naming the path it wanted.** The recipe names a file
    under `$MAILWOMAN_DATA_ROOT/models/`, which exists only because someone trained there. Phase 0 does not
-   pretend otherwise — that gap is the subject of phases 1–3, and a phase 0 that appeared to work on a fresh
+   pretend otherwise. That gap is the subject of phases 1–3, and a phase 0 that appeared to work on a fresh
    box would hide the very thing this strategy is for.
 
 **Acceptance**, with status as of 2026-08-17:
@@ -201,7 +201,7 @@ discipline working rather than a gap.
 
 The `wof/` family is 79 databases and four of its sub-families are still unstamped: the 24 `postcode-*`
 extracts, the 13 `postalcode-*` WOF ingests, the 2 `wof-polygons`, and assorted one-offs. None is on the
-resolution path a geocode takes — the resolver reads `candidate.db`, and the postcode extracts are INPUTS to
+resolution path a geocode takes. The resolver reads `candidate.db`, and the postcode extracts are INPUTS to
 the candidate build rather than things it reads at query time. They are worth stamping and they are not
 what the acceptance criterion asked for.
 

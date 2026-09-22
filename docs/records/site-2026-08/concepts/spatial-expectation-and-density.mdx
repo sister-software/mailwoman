@@ -23,7 +23,7 @@ At the value level, the question is: "how surprised am I that these two records 
 
 The Fellegi-Sunter model underlying the matcher assigns each field agreement a weight: `log₂(m / u)`, where `m` is how frequently a true match agrees on that field and `u` is how frequently a non-match agrees by coincidence. The `u` term is the one to fix your eye on. For any given field, `u` is roughly how common that value is.
 
-Two records that agree on the value `"Smith"` are barely evidence of anything. Agreement on `"Smith"` happens all the time among non-matches, because `"Smith"` is everywhere. Two records that agree on `"Vijayan"` are strong evidence — that agreement is unlikely to be coincidental. The math is the same in both cases; what differs is the value's frequency.
+Two records that agree on the value `"Smith"` are barely evidence of anything. Agreement on `"Smith"` happens all the time among non-matches, because `"Smith"` is everywhere. Two records that agree on `"Vijayan"` are strong evidence. That agreement is unlikely to be coincidental. The math is the same in both cases; what differs is the value's frequency.
 
 This is the Winkler extension to Fellegi-Sunter: replace the level's average `u` with the agreeing value's actual frequency, and you get a per-value adjustment that makes rare agreements count more and common ones count less (Winkler, 1988; "Frequency-based matching in the Fellegi-Sunter model," _Journal of Applied Statistics_ 49:11, 2022). The implementation in `match/tf.ts` (`withTermFrequency`) does exactly this — it computes the adjustment on-the-fly from the input column itself, so there's no external lookup or pre-trained prior required:
 
@@ -105,7 +105,7 @@ Population is already in the system. The admin hierarchy is already in the syste
 
 **`#602` / `#603` — config auto-tuning and selective models** are where a regionally-aware density weight might eventually live. A population-weighted distance threshold — the "50 m same-building" bucket that's right downtown but too tight in a rural county — is one concrete change. The geocoder already knows the density context (WOF hierarchy + population data); the matcher can condition its distance comparisons on that context. This is a tunable config surface rather than a new model: it's the kind of adjustment that AutoER's sampling-based tuner (AutoER, IEEE Access 2025, ~100 trials to recover >95% of exhaustive search) can find automatically once the surface is exposed.
 
-**`#615` — real-data validation (epic)** is the check the density model must pass through. The NPPES NPI dedup benchmark gives us a measurable ground truth; the coverage reconciliation (#621) gives us the product output. The density expectation model is most useful after the basic matcher is graded — it is a signal to layer on top of a working resolution pipeline rather than a prerequisite for it.
+**`#615` — real-data validation (epic)** is the check the density model must pass through. The NPPES NPI dedup benchmark gives us a measurable ground truth; the coverage reconciliation (#621) gives us the product output. The density expectation model is most useful after the basic matcher is graded. It is a signal to layer on top of a working resolution pipeline rather than a prerequisite for it.
 
 ---
 
@@ -115,9 +115,9 @@ The density model is not on the critical path. The critical path is: get the cla
 
 Two specific pieces are worth building early because they're essential to the anti-join's interpretability, notanalytical color:
 
-1. **Attach HRSA HPSA/MUA designation to each resolved entity.** The FCC RHC forms already reference whether the HCP is in a designated shortage area. Cross-referencing the resolved entity cluster against the HRSA designation data (available via `data.hrsa.gov`) gives the anti-join output a "designated shortage area" column — a standard federal signal the data consumer can use to prioritize. This is a join rather than a model.
+1. **Attach HRSA HPSA/MUA designation to each resolved entity.** The FCC RHC forms already reference whether the HCP is in a designated shortage area. Cross-referencing the resolved entity cluster against the HRSA designation data (available via `data.hrsa.gov`) gives the anti-join output a "designated shortage area" column. A standard federal signal the data consumer can use to prioritize. This is a join rather than a model.
 
-2. **Surface address frequency in the match score attribution.** The per-pair contribution breakdown in `match/fellegi-sunter.ts` (`PairScore.contributions`) already attributes every match-weight to a field. When the term-frequency adjustment suppresses an address match because the building is shared, that suppression should be visible in the output: `address: weight=0.2 (shared-building penalty)`. This is reporting infrastructure rather than new math — the `contributions` array is already there.
+2. **Surface address frequency in the match score attribution.** The per-pair contribution breakdown in `match/fellegi-sunter.ts` (`PairScore.contributions`) already attributes every match-weight to a field. When the term-frequency adjustment suppresses an address match because the building is shared, that suppression should be visible in the output: `address: weight=0.2 (shared-building penalty)`. This is reporting infrastructure rather than new math. The `contributions` array is already there.
 
 The 2SFCA accessibility index and a full Central Place Theory-based expected-facility model are downstream: useful for characterizing coverage gaps once the entity resolution is working, but not needed to ship the anti-join.
 

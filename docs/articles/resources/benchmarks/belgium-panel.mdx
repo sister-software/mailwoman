@@ -25,7 +25,7 @@ option fixes all six.
 The panel is [`be-panel.json`](/benchmarks/be-panel.json): thirty address lines built from public
 street names, each paired with the postcode and commune it belongs to. Ten are the five bilingual
 Brussels pairs; nine are in Flanders, nine in Wallonia, and two in the German-speaking Community. No
-Belgian rooftop register ships, so the house number is parsed and never looked up — the panel does not
+Belgian rooftop register ships, so the house number is parsed and never looked up. The panel does not
 depend on any particular number existing at any of these streets.
 
 Three arms, each named for the question a reader arrives with:
@@ -48,7 +48,7 @@ rooftop register we can grade distances against, so this page claims no distance
   does the result name `BE`. A coordinate outside the box did not land in Belgium; one inside it is
   not thereby correct.
 - **Locality**, split in three, because the two obvious versions of it are each wrong on their own.
-  `parsed` reads the span the model labeled, which is close to circular — the commune is right there
+  `parsed` reads the span the model labeled, which is close to circular. The commune is right there
   in the input string. `name matched` reads only the nodes the resolver decorated, which says the
   gazetteer returned an accepted spelling and says nothing about where. `resolved` is the name match
   conjoined with the bounding-box check, and it is the one to read: a place name is not unique on

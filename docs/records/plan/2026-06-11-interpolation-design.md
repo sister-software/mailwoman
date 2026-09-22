@@ -109,7 +109,7 @@ Given `{ street, number, postcode? }`:
    integer (non-numeric → no answer, this tier doesn't guess).
 2. **Candidate fetch** — rows with `street_norm` equal and `min_hn ≤ n ≤ max_hn`,
    postcode-scoped when a postcode is given. A given ZIP that scopes to nothing is a
-   MISS rather than a statewide guess — the statewide retry was built and MEASURED (2026-06-11
+   MISS rather than a statewide guess. The statewide retry was built and MEASURED (2026-06-11
    VT eval): +2.3pp coverage but a poisoned tail (p99 1.0 → 20.8 km, max 204 km — a
    statewide-unique name can live in a far-away town), so it was reverted. Queries
    WITHOUT a postcode match statewide and abstain unless every candidate agrees on a
@@ -161,7 +161,7 @@ deterministic held-out sample of Vermont points:
 - graded against the #483 pre-registered check: **p50 ≤ 50 m, p90 ≤ 150 m** on the VT
   holdout before any rollout.
 
-These are points the exact tier would mostly HIT — the eval uses them precisely because
+These are points the exact tier would mostly HIT. The eval uses them precisely because
 truth is known. The production value is the complement (numbers with no point), where
 truth is unknowable; measuring on known points is the only direct proxy.
 
@@ -195,7 +195,7 @@ builder's new `--county-fips` flag; 1,460,216 points, 231 ZIPs).
 | Cook IL (dense)         |    87.8% | 41 m |  79 m | **PASS**             |
 | Vermont (rural, re-run) |    82.0% | 66 m | 249 m | **MISS** (unchanged) |
 
-Cook's median claimed uncertainty (half segment length) is 80 m vs Vermont's 137 m — the
+Cook's median claimed uncertainty (half segment length) is 80 m vs Vermont's 137 m. The
 segment geometry itself is the divide. **Verdict: the VT check miss is substantially a
 rural-geometry artifact rather than a method error.** TIGER uniform-spacing interpolation clears
 the check where segments are short; long sparse rural segments cap precision below the

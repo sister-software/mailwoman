@@ -84,17 +84,17 @@ The reverse geocode is answering "what place is at this coordinate?" not "what a
 
 ## How traditional geocoders handled these
 
-**libpostal** does not produce coordinates — it produces labeled text spans. The precision question is downstream. This is architecturally correct: the parser's confidence is about label correctness rather than spatial accuracy. The resolver owns the spatial question.
+**libpostal** does not produce coordinates. It produces labeled text spans. The precision question is downstream. This is architecturally correct: the parser's confidence is about label correctness rather than spatial accuracy. The resolver owns the spatial question.
 
 **Pelias** returns coordinates from Elasticsearch queries against gazetteer data. The coordinate is the centroid of the matched record — a locality centroid for city-level matches, a building centroid for address-level matches. Pelias does not distinguish between "building entrance" and "parcel centroid" coordinates because the underlying data (WOF, OSM, OpenAddresses) doesn't consistently model that distinction.
 
 **Google's API** returns `location_type` as described above. Google's Places API returns multiple `types` for each result (street_address, premise, subpremise, point_of_interest, etc.) and a `viewport` bounding box. This gives the consumer enough metadata to distinguish "this coordinate is the building" from "this coordinate is the street" — but most consumers ignore the metadata and take the coordinate.
 
-**SmartyStreets / Melissa Data** (commercial address verification) return multiple coordinates per address: a delivery point (mailbox), a rooftop (building center), and sometimes a street frontage point (where the driveway meets the road). This is the right model — the API returns the available coordinates and labels what each one means. It costs money and covers US addresses only.
+**SmartyStreets / Melissa Data** (commercial address verification) return multiple coordinates per address: a delivery point (mailbox), a rooftop (building center), and sometimes a street frontage point (where the driveway meets the road). This is the right model. The API returns the available coordinates and labels what each one means. It costs money and covers US addresses only.
 
 ## What the neural approach changes
 
-**The resolver (Stage 6) returns candidates with placetypes rather than a single coordinate.** A WOF record has a `placetype` and optionally a bounding box. The resolver returns the placetype alongside the coordinate, so the downstream system knows whether it received a building-level coordinate or a locality centroid. But WOF does not distinguish between "building entrance" and "building centroid" — both are the same coordinate in WOF's data model.
+**The resolver (Stage 6) returns candidates with placetypes rather than a single coordinate.** A WOF record has a `placetype` and optionally a bounding box. The resolver returns the placetype alongside the coordinate, so the downstream system knows whether it received a building-level coordinate or a locality centroid. But WOF does not distinguish between "building entrance" and "building centroid". Both are the same coordinate in WOF's data model.
 
 **The resolver can return multiple candidates per address component.** `locality=Springfield` returns 34 candidates, each with a different coordinate. The downstream system can choose the one that matches additional context (state, postcode) or surface all of them. The resolver does not pretend to know which Springfield when it doesn't.
 

@@ -20,7 +20,7 @@ for all 8k steps).
 
 ## The run (one variable vs v3.12.0-comma-resilient)
 
-Clone `v3.12.0-comma-robust.yaml` verbatim (NZ allowlist stays; punct-drop 0.6 stays — it did no
+Clone `v3.12.0-comma-robust.yaml` verbatim (NZ allowlist stays; punct-drop 0.6 stays, because it did no
 harm and the matched share is principled) + the single change:
 
 - **Phase 1 (steps 0–2000):** `classifier_learning_rate: 0.001` (the resurrection window, as

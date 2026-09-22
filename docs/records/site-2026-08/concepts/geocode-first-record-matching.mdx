@@ -20,7 +20,7 @@ Normalize, geocode, drop it into QGIS, see who's covered, build the lead list.
 The pipeline imploded on the matching. Pelias and libpostal weren't good enough
 at the parse, which is what spawned mailwoman's v0 TypeScript rewrite and then
 the neural pivot. But the parse was only ever the on-ramp. The thing we never
-shipped was the matcher — the part that decides two messy records are the same
+shipped was the matcher. The part that decides two messy records are the same
 real-world entity. This page is the strategy for finally building it, and the
 one idea that makes it tractable now when it wasn't then.
 
@@ -192,7 +192,7 @@ evidence says they pay — never the foundation:
   `resolveEntities({ learnedScorer: false })`. One sharp caveat we measured: the GBT
   is calibrated for **dedup** — where "same address, different name" means distinct
   co-located providers, so it's trained to _reject_ that. **Cross-dataset link
-  discovery is the opposite objective** — that same pattern is the prototypical
+  discovery is the opposite objective**. That same pattern is the prototypical
   signal of one facility under different operational names across sources — so the
   cross-dataset and reconciliation flows pin the FS core (`learnedScorer: false`),
   where recall rather than over-merge precision, is what matters. Same model, opposite
@@ -219,7 +219,7 @@ The four rules the geocoder already lives by govern the matcher too:
   regression taught this the hard way. Match quality is measured on linked
   entities versus reality rather than on a scorer's pairwise F1.
 - **No silent caps.** When blocking drops a region or a tier, say so. A matcher
-  that silently never compares two records reads as "no match found" — the most
+  that silently never compares two records reads as "no match found". The most
   dangerous lie an ER system can tell.
 
 ## The address-frequency change needs a corpus
@@ -234,7 +234,7 @@ But rarity is only meaningful against a population. The change counts how freque
 address appears across the records you hand it — so when you dedupe a _whole_
 dataset, the input is the corpus and it works. Hand it a thin sample and
 there's nothing to be rare against: every address looks unique, the signal
-flattens, and the change degrades to baseline with no warning. The fix is cheap — the frequency
+flattens, and the change degrades to baseline with no warning. The fix is cheap. The frequency
 table is a parse-free string scan, no geocoding — so when you're matching a subset,
 build the table over the full source and pass it in. The one thing you can't do is
 conjure rarity from a single record with nothing to compare it to.

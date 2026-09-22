@@ -21,7 +21,7 @@ LAD filter E09*, wd25cd → ward name → **459 (ward, London) pairs**
 (`scratch-gbvenue/london-ward-pairs.jsonl`), incl. Nine Elms + the Clapham ward family. Boundary
 recorded: "Clapham North" is a neighborhood rather than a ward — ward grain covers part of the
 neighborhood class; the residual wants a finer source (OS Open Names) in a later increment. NI:
-ward names exist (N08*) but the PAIR parent needs post towns — an outcode→post-town table is the
+ward names exist (N08*) but the PAIR parent needs post towns. An outcode→post-town table is the
 missing piece, deferred. IE: license survey still open (Tailte Éireann/logainm).
 
 ---
@@ -93,7 +93,7 @@ change nobody measured.
 - **D-C4 (required disclosure rather than a pass/fail bar).** Report the census's dep-loc mass on the
   56-row law-1 confound board. The expected result is ~100% coverage, because every row shares the
   London parent: **the census cannot discriminate at span level by construction.** That is the
-  finding to state directly rather than to bury — it is precisely why the census is a parent-scoped prior
+  finding to state directly rather than to bury. It is precisely why the census is a parent-scoped prior
   that must compose with span-level evidence, and why this rung ships un-wired.
 
 ### R4c Addendum 1 — B-C2 is mis-specified; the amended bar, pre-registered before reading it
@@ -115,7 +115,7 @@ it is **presence and magnitude across the parent population** — most localitie
 children at all and never enter the artifact.
 
 - **B-C2′ (amended, pre-registered before computing it).** Of GB locality-class places in the
-  source, the fraction carrying ≥1 dependent-locality child is **≤ 50%** — a census hit must rule
+  source, the fraction carrying ≥1 dependent-locality child is **≤ 50%**. A census hit must rule
   out at least half the parent population to be evidence — AND the median dependent-locality child
   count on covered nodes is **≥ 2**. Failing either closes the discrimination question NEGATIVE.
 - **D-C2″ (disclosure).** Report the covered fraction among LARGE parents separately. The expected

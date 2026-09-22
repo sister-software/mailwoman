@@ -45,7 +45,7 @@ resolver-wof-sqlite/street-centroid.ts
 match/distance.ts
 ```
 
-Reading `match/distance.ts:25` shows it is **not** a reimplementation — it is a documented adapter
+Reading `match/distance.ts:25` shows it is **not** a reimplementation. It is a documented adapter
 from `match`'s `LatLon` shape onto `greatCircleKm` in `spatial`, and says so in its docstring. Grep
 alone would have shipped a false finding on the first candidate it produced.
 

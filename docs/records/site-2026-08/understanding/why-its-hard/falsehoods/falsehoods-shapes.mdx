@@ -18,11 +18,11 @@ _An address is not always a point on a map, a polygon, or a discrete building. I
 
 Postcodes, rural routes, and descriptive addresses all represent areas or paths rather than points. A ZIP code centroid in rural Montana is off by 10-15 miles from any actual delivery point. The centroid is a convenience for map rendering rather than a geographic truth about the address.
 
-The US Census Bureau's ZIP Code Tabulation Areas (ZCTAs) generalize ZIP codes into polygons, but ZCTAs are explicitly NOT USPS ground truth. USPS does not publish ZIP code boundaries as polygons — they are carrier routes rather than areas. A ZIP code follows the path a carrier walks.
+The US Census Bureau's ZIP Code Tabulation Areas (ZCTAs) generalize ZIP codes into polygons, but ZCTAs are explicitly NOT USPS ground truth. USPS does not publish ZIP code boundaries as polygons. They are carrier routes rather than areas. A ZIP code follows the path a carrier walks.
 
 UK postcodes cover ~15 addresses on average — effectively points. But UK postcode sectors (the first half of the postcode, e.g., `SW1A`) cover neighborhoods. The same postcode system produces both point-level and area-level resolution depending on which part you use.
 
-Irish Eircodes are unique per delivery point — the postcode is the point. French postcodes correspond to commune boundaries — the postcode is the polygon. The same concept ("postcode") has fundamentally different spatial semantics in different countries.
+Irish Eircodes are unique per delivery point. The postcode is the point. French postcodes correspond to commune boundaries — the postcode is the polygon. The same concept ("postcode") has fundamentally different spatial semantics in different countries.
 
 ### "An address is a polygon."
 
@@ -59,7 +59,7 @@ Z-dimension matters. Buildings have floors, and different floors can have differ
 
 A shopping mall at one lat/lon can have 100+ addresses — one per store. An office tower can have one address per floor, per suite, or per tenant. Each address shares the same horizontal coordinates but differs in vertical position or internal routing.
 
-A marina has addresses for each berth — the berths are adjacent rather than stacked, but they share approximate coordinates and differ by a few meters. A trailer park has addresses for each pad — same lat/lon to within 10 meters, differentiated by pad number.
+A marina has addresses for each berth. The berths are adjacent rather than stacked, but they share approximate coordinates and differ by a few meters. A trailer park has addresses for each pad — same lat/lon to within 10 meters, differentiated by pad number.
 
 A post office with PO boxes has hundreds of addresses (the PO box numbers) all at one lat/lon — the post office building. Geocoding a PO box to the post office building is correct at the building level but wrong for the recipient's actual location.
 

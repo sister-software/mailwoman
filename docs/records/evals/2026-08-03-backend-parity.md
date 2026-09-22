@@ -161,11 +161,11 @@ The single failure is `cat-ca-02`, `"gas station near Ottawa ON"` — candidate 
 | **nm-05**     | `post office near Ottawa, ON` |    **0.03 km ✅** |
 | brand-ca-01   | `Tim Hortons near Toronto ON` |        1.76 km ✅ |
 
-`Ottawa ON` fails, `Ottawa, ON` passes — the comma is the whole difference, and every other
+`Ottawa ON` fails, `Ottawa, ON` passes. The comma is the whole difference, and every other
 province-abbreviation anchor passes. It is not a gazetteer-content problem either: the candidate
 table's own ranking already puts Ottawa CA on top (county 1,000,000 pop at `neg_rank` −6.000,
 locality 934,243 at −5.970) with Ottawa IL sixth at 18,752. Plain `mailwoman parse "Ottawa ON"`
-resolves correctly on **both** backends — the defect is confined to the POI anchor path. Worth its
+resolves correctly on **both** backends. The defect is confined to the POI anchor path. Worth its
 own issue; it is the only reproducible candidate loss in this whole investigation.
 
 ## Instrument C — where the difference lives (41-case class probe)
@@ -247,7 +247,7 @@ The decision-critical leg, since `--locale` defaults to `en-US`.
 
 Two clean results:
 
-1. **The country filter is a complete no-op on well-formed US addresses** — the rows are
+1. **The country filter is a complete no-op on well-formed US addresses**. The rows are
    byte-identical between `dc=US` and `dc=none` on both backends, because the parse already carries
    its own region and postcode. The filter only bites on bare, country-less city names.
 2. **The backend is a strict improvement on US data**: equal locality-match and region-match, better
@@ -308,11 +308,11 @@ policy:
 **Defaulting the candidate backend on is safe.** It costs one known POI-anchor case (`Ottawa ON`
 without a comma) and provides the exonym class plus a materially shorter error tail on both US and
 international data. There is no country, no placetype, and no query shape where it loses
-systematically — the one loss is a reproducible singleton with a clear owner, and the fine-precision
+systematically. The one loss is a reproducible singleton with a clear owner, and the fine-precision
 p50 cost (1.5 → 2.4 km international) is real but small next to the coordinate improvement (180 → 47 km).
 
 **Two caveats on the way the flip is framed.** First, ship the backend flip _without_ also flipping
-the country filter, or the change is untestable against these numbers — they are separate changes
+the country filter, or the change is untestable against these numbers. They are separate changes
 with separate risk, and it is the filter rather than the backend, that carries the +10 on bare
 international city names. Second, `mailwoman/resolver-backend.ts` currently makes them one change;
 splitting `resolverDefaultCountry`'s `candidateActive` branch from the backend selection is a
@@ -361,7 +361,7 @@ node mailwoman/out/cli.js eval oa-resolver --eval <rows.jsonl> --default-country
 
 Instruments A and C used a throwaway 2×2 runner (both lookups in one process, `createRuntimePipeline`
 
-- `createWOFResolver`, re-parse per arm) that was not committed — the `scripts/` drawer is closed to
+- `createWOFResolver`, re-parse per arm) that was not committed. The `scripts/` drawer is closed to
   one-offs. The essential interface to rebuild it: construct `WOFSQLitePlaceLookup({ databasePath })`
   and `WOFCandidateTableLookup({ databasePath })` directly rather than through `createResolverBackend`
   (which reads `$MAILWOMAN_CANDIDATE_DB` and can only yield one backend per call), pass

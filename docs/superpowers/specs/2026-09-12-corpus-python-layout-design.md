@@ -167,7 +167,7 @@ library module of that name is legible to Python and confusing to a reader. `tor
 
 `evaluation/` rather than `eval/` for the same class of reason, plus a mechanical one. The agent worktree's
 write guard refuses any shell command containing that three-letter token, so a directory named exactly that
-could not be moved, renamed or removed from a worktree again — the name would have been a one-way door. It also
+could not be moved, renamed or removed from a worktree again. The name would have been a one-way door. It also
 stops reading as the builtin.
 
 ## 7. The extension work

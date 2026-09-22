@@ -86,7 +86,7 @@ OGL v3.0 requires that a re-user
 > a link to this license"
 
 The WFS `GetCapabilities` reports `<ows:Fees>NONE`. This is a license that permits redistribution
-with a named acknowledgement — the posture that makes a `shipped` layer possible.
+with a named acknowledgement. The posture that makes a `shipped` layer possible.
 
 **Acquisition — direct whole-England file URLs, sizes measured by GET.** The download base is
 `https://environment.data.gov.uk/api/file/download?fileDataSetId=455d2eb3-3065-4d20-871b-c4d5dee23f67&fileName=…`:
@@ -108,7 +108,7 @@ API Features at `…/ogc/features/v1`. Advertised WFS output formats include `GE
 `csv`, `KML`, `gml3`, `gml32`.
 
 **Cadence.** ISO `MD_MaintenanceFrequencyCode` is `asNeeded` on every current EA flood dataset
-checked — there is no fixed schedule in the metadata. The product description (published 30/06/2026)
+checked. There is no fixed schedule in the metadata. The product description (published 30/06/2026)
 states an intent rather than a commitment:
 
 > "In the future we plan to publish the data every three months and update it in locations where new
@@ -143,7 +143,7 @@ All facts in this section read **2026-08-27**.
 `msc.fema.gov` and `floodmaps.fema.gov` accept a TCP connection on 443 from this network and then
 reset the TLS handshake. Reproduced with both curl and a real Chromium against both DNSSEC-validated
 addresses (18.253.155.176 and 182.30.81.39; Cloudflare and Google DoH agree, `AD=true`), so it is not
-a resolution failure — the behavior is consistent with a geographic block. Separately, `www.fema.gov`
+a resolution failure. The behavior is consistent with a geographic block. Separately, `www.fema.gov`
 answers non-browser clients with HTTP 403. **Every FEMA fact below was therefore obtained through a
 real browser, an Internet Archive capture of FEMA's own URL, a US-egress reader proxy, or a named
 non-FEMA mirror**, and each is labeled as such in the source notes. The distribution endpoints an
@@ -428,7 +428,7 @@ Wales, Scotland or Northern Ireland, and each has a different authority with a d
 
 1. **Non-uniform vintage inside one layer.** "For particular areas, sections of the previous Flood
    Zone dataset (November 2023) have been retained whilst we make improvements to the data." This is a
-   currency limit rather than a coverage gap — those areas are mapped, to an older model. The attribute set
+   currency limit rather than a coverage gap. Those areas are mapped, to an older model. The attribute set
    (`Origin`, `Flood_zone`, `Flood_source`) carries no per-feature date, so **the layer cannot state a
    per-feature vintage**, and the manifest's single `source_vintage` is the only direct granularity
    available. Recording that limit is the requirement; inferring a per-feature date is not available.
@@ -476,7 +476,7 @@ reports as "Digital Data Available"; **no row at all** for "No Digital Data Avai
 to `layer_coverage` of any source in this survey.
 
 **The trap that follows, and it is the reason §3.1 is worded as it is.** A cell can be `designated`
-complete and still hold a Zone D or `ANI` polygon — a determination that no determination was made.
+complete and still hold a Zone D or `ANI` polygon. A determination that no determination was made.
 If a reader took `supportsExclusion(cell) === true` as license to answer "no flood hazard here", it
 would fire identically on a Zone X location (determined to be outside the SFHA) and on a Zone D
 location (nobody looked). **The coverage row licenses only that the authority made a determination;
@@ -505,8 +505,8 @@ EA's own restatement differs slightly and is recorded here as such):
 | Zone 3a High Probability          | "Land having a 1% or greater annual probability of river flooding; or Land having a 0.5% or greater annual probability of sea."                                        |
 | Zone 3b The Functional Floodplain | "This zone comprises land where water from rivers or the sea has to flow or be stored in times of flood… (Not separately distinguished from Zone 3a on the Flood Map)" |
 
-Three consequences a builder must carry rather than smooth over. **3a and 3b are not in the data** —
-the published layer's `Flood_zone` holds "Flood Zone 2" or "Flood Zone 3", and the EA states "The
+Three consequences a builder must carry rather than smooth over. **3a and 3b are not in the data**.
+The published layer's `Flood_zone` holds "Flood Zone 2" or "Flood Zone 3", and the EA states "The
 Environment Agency are not required to map the outer boundary of the extent of Flood Zone 3b, and it
 is typically included within our mapped extent of Flood Zone 3". **The EA's own Zone 2 restatement adds
 a clause the PPG probability definition does not carry** — "or accepted recorded flood outlines" — so
@@ -720,7 +720,7 @@ a layer open on the default construction path. The flag lands with its row in th
 invariant 5 makes a flag with no register row a smell.
 
 **Ranking untouched, and the receipt is byte-stability.** The same query, with and without the layer
-attached, returns an identical result plus one advisory. That is a statement about construction — the
+attached, returns an identical result plus one advisory. That is a statement about construction. The
 carrier reads no candidate, no coordinate and no ordering — and a test pins it.
 
 **What the observation says.** The zone code as published, the product and authority that published
@@ -880,5 +880,5 @@ Recorded as gaps rather than filled in.
   was located and none was verified. Wales in particular uses a four-zone TAN15 scheme that is not
   interchangeable with England's, so a "UK flood zone" layer built by pooling them would pool
   incompatible vocabularies.
-- **Whether the retired Flood Zone 2 / Flood Zone 3 spatial data is archived anywhere** — the CKAN
+- **Whether the retired Flood Zone 2 / Flood Zone 3 spatial data is archived anywhere**. The CKAN
   records confirm the resources are gone; no archive copy was located.

@@ -76,9 +76,9 @@ complete, one-upload-away training package:
   PATH (node→v26). Worked around: `tsc -b` + `node_modules/.bin/*` directly; feature-branch commits skip
   the main-only yarn hook.
 - **Verify-before-building** paid off repeatedly: #518/#618/#471/#621 were already shipped despite open
-  status — the record-matcher + Overture epics are substantially complete; the open issues are follow-on
+  status. The record-matcher + Overture epics are substantially complete; the open issues are follow-on
   phases. (Memory saved.)
-- The corpus base extracts are source-homogeneous + ordered — a naive by-index lint sample is biased;
+- The corpus base extracts are source-homogeneous + ordered. A naive by-index lint sample is biased;
   stratify (or use the full base-stats) for the #511 lint.
 
 ## Post-merge verification (the feature commits skipped the main-only lint+test check)

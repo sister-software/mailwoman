@@ -80,7 +80,7 @@ training_image = (
         "onnxscript==0.7.2",
         # --- non-graph deps
         # sentencepiece is pinned rather than floored (2026-08-01). It was `>=0.2.0` under a comment saying
-        # unpinned floors are fine here — that assumption was false, because SP decides the token IDS
+        # unpinned floors are fine here. That assumption was false, because SP decides the token IDS
         # the model trains on. Measured: 0.2.1 and 0.2.2 disagree on a Viterbi tie-break for repeated
         # digit runs ("...555" segments ['55','5'] under 0.2.1 and ['5','55'] under 0.2.2), which fired
         # on 5/10,000 real corpus rows in the TS↔Python parity fixture. The shipped wasm runtime

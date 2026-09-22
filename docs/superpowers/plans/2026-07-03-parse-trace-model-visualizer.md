@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - **Git on this machine:** `~/.gitconfig` is TCC-blocked. Every git write: `export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null` then `git -c user.name="Teffen Ellis" -c user.email="teffen@sister.software" commit …`. Commit messages end with `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
-- **#481 invariant:** `#decode` stays the single decode path. Trace capture happens inside it, blocked on a flag. `parse` / `parseWithLogits` must stay byte-stable — the existing neural suite is the guard and must pass untouched.
+- **#481 invariant:** `#decode` stays the single decode path. Trace capture happens inside it, blocked on a flag. `parse` / `parseWithLogits` must stay byte-stable. The existing neural suite is the guard and must pass untouched.
 - **File conventions:** every new `.ts`/`.tsx` file starts with the 4-line `@copyright Sister Software / @license AGPL-3.0 / @author Teffen Ellis, et al.` docblock plus a purpose paragraph. Indentation is tabs. Workspace files live at workspace root (no `src/`); docs components live in `docs/src/components/<Name>/`.
 - **Acronym casing:** whole-component caps (`parseJSON` rather than `parseJson`). No new acronym identifiers are expected in this plan; if one appears, cap it whole.
 - **Docs type discipline:** `docs/src/shared/resources.tsx` uses locally-defined structural `*Like` types — do NOT import types from `@mailwoman/neural` into docs.
@@ -1555,7 +1555,7 @@ export function LiveModelVisualizer(): JSX.Element {
 Implementation notes:
 
 - Check `DemoEmbedState`'s exact field names in `docs/src/contexts/DemoEmbed.tsx` before wiring (`loadingProgress` may be structured rather than a string) — adjust the loading line to whatever the context exposes (the GuidedTour usage at `docs/src/components/GuidedTour/GuidedTour.tsx:102` is the reference consumer).
-- `useDemoEmbed().classifier` is typed `MailwomanClassifierLike | null` — the optional `traceParse` added in Task 3 makes the feature-detect type-check.
+- `useDemoEmbed().classifier` is typed `MailwomanClassifierLike | null`. The optional `traceParse` added in Task 3 makes the feature-detect type-check.
 
 - [ ] **Step 2: Implement the page**
 

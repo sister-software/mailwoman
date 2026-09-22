@@ -73,8 +73,8 @@ def test_each_exempt_row_really_is_unreadable_here() -> None:
     """An exemption that stops being necessary is a row this side should be reading.
 
     The one entry today is the 〒-marked Japanese row: `(?<=〒\\s?)` is a variable-width lookbehind,
-    which JavaScript accepts and Python refuses. Asserting the refusal keeps the exemption honest —
-    a stale one would silently cost a shape.
+    which JavaScript accepts and Python refuses. Asserting the refusal keeps the exemption honest.
+    A stale one would silently cost a shape.
     """
     assert set(UNREADABLE_HERE) == {"JP-marked"}, f"the exempt set changed: {sorted(UNREADABLE_HERE)}"
     for label, _kind, pattern in ALL_POSTCODE_SHAPES:

@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript (Node 26 type-stripping for the module; TSX compile for Ink commands), `node:sqlite` `DatabaseSync`, Pastel file-based commands, vitest, DuckDB (`@duckdb/node-api`, lazy-optional) for the Overture S3 pull.
 
-**Spec:** `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md`. This plan implements PR A (Tasks 1–2) and PR B (Tasks 3–16). **PR C (the augment-script archaeology + remaining builders/diagnostics sweep) is planned separately after PR B lands** — its work is characterized _with_ Task 11's census tooling.
+**Spec:** `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md`. This plan implements PR A (Tasks 1–2) and PR B (Tasks 3–16). **PR C (the augment-script archaeology + remaining builders/diagnostics sweep) is planned separately after PR B lands**. Its work is characterized _with_ Task 11's census tooling.
 
 ## Global Constraints
 

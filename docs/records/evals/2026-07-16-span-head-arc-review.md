@@ -43,7 +43,7 @@ in the objective or the decode that represents _the solution_.
 
 This has two consequences we can point at in the data:
 
-**(a) Nothing rewards governance.** `Rue` is deterministic in French — it can only be a street prefix,
+**(a) Nothing rewards governance.** `Rue` is deterministic in French. It can only be a street prefix,
 governing what follows. A transformer's attention is perfectly capable of carrying that implication
 forward; the representation is not the constraint, and we should not claim it is. What's missing is
 narrower and more fixable: **nothing in the objective or the decode rewards segment-level coherence,
@@ -262,7 +262,7 @@ third goes to review before it goes to a branch.
 
 ### The other half nobody's built yet
 
-The span head provably does **not** fix the 17 locality-refusals — that was never its job. That's
+The span head provably does **not** fix the 17 locality-refusals. That was never its job. That's
 `option C`: feed the kind-classifier posterior as a soft channel (established plumbing — the postcode
 anchor and country lexicon work this way) plus a recall-weighted street loss. The kind posterior is a
 synthetic anchor standing in for the missing house number.

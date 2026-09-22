@@ -47,7 +47,7 @@ Most of the implementation is built. The gap is narrower than it looks.
 
 `candidateSystemsForPostcode` is already overlap-aware: `62701` is accepted by the US, DE and FR
 shapes, and it returns all three. Resolving that ambiguity by picking one locale up front is the
-failure to avoid — the caller's country scope is what narrows it.
+failure to avoid. The caller's country scope is what narrows it.
 
 ## The granularity spectrum is the design constraint
 
@@ -256,7 +256,7 @@ no postcode node"_, which reads as a coverage catastrophe and was a extract-sele
 ### 11. The currency flags are not empty, they are CONSTANT
 
 The note recorded ZIP currency as unanswerable. It is, but the reason matters: the columns that would
-answer it are not missing and not sparse — they are **constants written by the builder**, and they
+answer it are not missing and not sparse. They are **constants written by the builder**, and they
 look exactly like data.
 
 Across all 42,319 rows of `postalcode-us.db`:
@@ -314,7 +314,7 @@ cannot say.** Concretely —
    reads as though it selected something, which is worse than no filter at all.
 2. **A retired code answers like a live one.** Treat a US ZIP hit as "this code existed in a 2021-era
    register" rather than as "this code is deliverable today".
-3. **The absent coordinate is the closest thing to a signal we hold** — the 414 unplaceable codes are
+3. **The absent coordinate is the closest thing to a signal we hold**. The 414 unplaceable codes are
    enriched in PO-box-only and organisation codes, the class where retirement concentrates. It is a
    correlate rather than an answer, and #1786 now makes that absence visible rather than a Gulf-of-Guinea
    coordinate.
@@ -327,7 +327,7 @@ HUD's quarterly USPS crosswalk is free and covers active codes; neither has been
 **Built 2026-08-22 (#1784)** — 915 nodes, 42,313 units, 906 carrying a centroid, median
 `radiusP95Km` 53.56 km, 25,773 bytes. Leave-one-out against the arm a caller otherwise gets, 40,004
 units: SCF centroid p50 **29.9 km** against the region centroid's **154.6 km**, closer on 94.9%. It
-does not meet the GB ≥60%-within-10 km bar (17.7%) and should not — that bar is calibrated for outward
+does not meet the GB ≥60%-within-10 km bar (17.7%) and should not. That bar is calibrated for outward
 codes with a 3.24 km median p95 radius.
 
 - **US SCF coordinate + `radiusP95Km`**: buildable now. Median p95 radius **53.7 km** on placed codes

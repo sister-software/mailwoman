@@ -350,7 +350,7 @@ https://claude.ai/code/session_01QTpYm118V3tGk4FRhKi8Sr
 
 ## Notes for the operator (not tasks)
 
-- **Semver:** removing the public `./lifecycle` subpath is breaking for `@mailwoman/core` — the release that ships this is a core major (or rides the next planned major, e.g. v8). The subpath's flagship exports were defective (guards inert), so external breakage is unlikely, but the version check is the release-time call rather than this PR's.
+- **Semver:** removing the public `./lifecycle` subpath is breaking for `@mailwoman/core`. The release that ships this is a core major (or rides the next planned major, e.g. v8). The subpath's flagship exports were defective (guards inert), so external breakage is unlikely, but the version check is the release-time call rather than this PR's.
 - The historical spec/plan docs keep the `lifecycle-ts` name; the package on npm is `async-init@1.0.0`. Dated docs are point-in-time records — not renamed.
 
 ## Out of scope

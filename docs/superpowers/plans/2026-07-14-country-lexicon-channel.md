@@ -29,7 +29,7 @@ half is TRUE, the conclusion is FALSE:**
   `requires.gazetteer.required = true`; the ONNX graph carries `gazetteer_features` /
   `gazetteer_confidence`.
 
-**So "extend the gazetteer with country data" is a no-op — the data is already there, already fed, and
+**So "extend the gazetteer with country data" is a no-op. The data is already there, already fed, and
 the WOF-admin case still fails (#1104).** The failure is not a data gap; it is a signal-salience gap.
 Two concrete code-level reasons the shared slot is insufficient:
 

@@ -94,7 +94,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 | B/I-venue              | 0.5           | 1.5           | Underperforming. Upweight.                                                                                             |
 | B/I-house_number       | 0.5           | 1.5           | Underperforming on golden. Upweight.                                                                                   |
 
-**How we got here.** The v0.5.0 eval matrix showed the 956 dependent_locality FPs and 272 subregion FPs as the most concrete failure. Setting their weight to 0.3 makes mislabeling a token as dependent_locality cheap — the model has no incentive to emit it. Meanwhile upweighting street, locality, venue, and house_number pulls the model's attention toward the tags that matter for exact-match accuracy.
+**How we got here.** The v0.5.0 eval matrix showed the 956 dependent_locality FPs and 272 subregion FPs as the most concrete failure. Setting their weight to 0.3 makes mislabeling a token as dependent_locality cheap. The model has no incentive to emit it. Meanwhile upweighting street, locality, venue, and house_number pulls the model's attention toward the tags that matter for exact-match accuracy.
 
 **Whether it worked.** Pending — v0.5.1 training is still running. The eval at step 55K showed val_macro_f1=0.633 but we need the per-component breakdown to know if the hallucination was suppressed.
 

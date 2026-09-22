@@ -102,7 +102,7 @@ population-first ranking could not be moved by a soft prior for low-population F
 
 `baseline-assert.ts` checks a reading against a registered value by relative deviation. At
 `value: 0` the relative band is undefined: every reading is either exactly right or infinitely wrong.
-The fix there was `tolerance_abs`, which is the same move in miniature — the row declares what "zero"
+The fix there was `tolerance_abs`, which is the same move in miniature. The row declares what "zero"
 means instead of letting the arithmetic guess.
 
 `span_scorer.py`'s `_NEG_INF = -1e4` is the sentinel-inside-the-value-domain version: a magic number

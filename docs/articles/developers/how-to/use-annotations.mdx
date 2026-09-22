@@ -121,7 +121,7 @@ opencage: {
 }
 ```
 
-`toNative` is an identity pass over the same object — it exists so that "the native shape" is a
+`toNative` is an identity pass over the same object. It exists so that "the native shape" is a
 function call rather than a convention you have to remember. `toOpenCage` renames to OpenCage's own
 keys and casing: `dms` becomes `DMS` with `lng` instead of `lon`, `qiblaBearing` becomes `qibla`,
 `callingCode` becomes `callingcode`, `currency.isoCode` becomes `currency.iso_code`, and the sun times
@@ -159,7 +159,7 @@ it, build each lookup database per its package README first.
 | `makeNUTSAnnotator(lookup)`     | `@mailwoman/nuts-lookup`      | `nuts`     | `nuts.db`, and an EU coordinate |
 
 Switch each one on only when its file is present rather than assuming it, which is what the Nominatim drop-in
-does — the shape below is that call site, reduced to one annotator:
+does. The shape below is that call site, reduced to one annotator:
 
 ```js
 const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
@@ -176,7 +176,7 @@ no timezone".
 
 ## Verify
 
-The round trip is checkable in one line — the OpenCage projection of a set must carry the same
+The round trip is checkable in one line. The OpenCage projection of a set must carry the same
 coordinate formats under its own names:
 
 ```bash

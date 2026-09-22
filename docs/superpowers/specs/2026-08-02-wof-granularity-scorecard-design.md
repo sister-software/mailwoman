@@ -188,7 +188,7 @@ Overture's 992, and mailwoman ships **zero** because the repo was never cloned. 
 Ireland at a different scale.
 
 So "is WOF granular enough?" has no country-independent answer, and neither does "should we prefer
-Overture?" The scorecard carrying both columns per country is therefore not redundancy — it is the
+Overture?" The scorecard carrying both columns per country is therefore not redundancy. It is the
 only defensible shape. This is what makes the ABSENT/MISTYPED name match required rather than a
 refinement.
 
@@ -214,7 +214,7 @@ Overture is a node-count artifact; in the campaign's actual currency it yields 2
 Overture's 992 macrohoods carry `parent_division_id`.
 
 **Conversion ranges from 15% to 99%.** Ranking gazetteer work by node count is therefore not a
-shortcut with acceptable error — it is wrong by up to 6×, and wrong in a way that inverts the
+shortcut with acceptable error. It is wrong by up to 6×, and wrong in a way that inverts the
 ordering. The pair-yield column is required rather than a refinement, and the scorecard must never
 present a node count as an opportunity estimate.
 
@@ -271,7 +271,7 @@ that is the vocabulary the decoder consumes:
 
 Context-only and out-of-grammar placetypes (`metroarea`, `marketarea`, `postalregion`, `timezone`,
 `continent`, `ocean`, `marinearea`, `planet`, `empire`) project to `null` and are **excluded from the
-ladder** — they are conditioning features and annotation surfaces, never emitted spans. They still
+ladder**. They are conditioning features and annotation surfaces, never emitted spans. They still
 appear in a footer count so "we looked and deliberately skipped these" stays distinguishable from
 "we never looked."
 

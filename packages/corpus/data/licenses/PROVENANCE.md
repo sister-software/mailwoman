@@ -5,7 +5,7 @@ so a later reviewer checks the same text rather than today's page.
 
 A publisher's page moves. A license is versioned and the page carrying it is not, so a decision recorded against what
 the page said cannot be rechecked once it says something else. Each file here is the text as retrieved, with the URL
-and the retrieval date at its head, and it is never edited after that — a correction is a new retrieval.
+and the retrieval date at its head, and it is never edited after that. A correction is a new retrieval.
 
 Nothing here elects anything. These are the texts a reading would be made from, and every license decision in
 `address-source-register.json` still reads `unchecked`.

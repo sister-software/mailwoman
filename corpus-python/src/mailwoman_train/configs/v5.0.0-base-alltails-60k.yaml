@@ -16,7 +16,7 @@
 #   v4.13.0   NULL — no added data at all             -5    10
 #
 # The NULL is the best arm. A plain fine-tune of that base costs ten rows before any data is involved,
-# and the tax is paid in the first 1,000 steps and flat to 4,000 — it is not proportional to distance
+# and the tax is paid in the first 1,000 steps and flat to 4,000. It is not proportional to distance
 # travelled, it is a fixed cost of touching the base. It is charged before the added source is read, so no
 # corpus-side change can avoid it, and every arm that adds data is worse than adding none.
 #

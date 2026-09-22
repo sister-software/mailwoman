@@ -8,11 +8,11 @@ prerequisites: "@mailwoman/registry; a CSV too big for memory; gazetteer data fo
 verified-with: mailwoman v6.1.0
 ---
 
-Someone hands you a national dataset as a single CSV — the NPPES provider registry (millions of rows), an FCC broadband availability drop, a state address export. You need every row normalized into the same shape, and ideally a coordinate on each one. Two things stand in the way: the file won't fit in memory, and geocoding a million addresses one after another takes hours. This recipe is the shape that handles both — a streaming normalize core you can hold in your head, plus an optional threaded geocode stage you bolt on only when the per-row cost warrants it.
+Someone hands you a national dataset as a single CSV — the NPPES provider registry (millions of rows), an FCC broadband availability drop, a state address export. You need every row normalized into the same shape, and ideally a coordinate on each one. Two things stand in the way: the file won't fit in memory, and geocoding a million addresses one after another takes hours. This recipe is the shape that handles both. A streaming normalize core you can hold in your head, plus an optional threaded geocode stage you bolt on only when the per-row cost warrants it.
 
 ## Start with a stream rather than a file
 
-`normalizeCSV` (from `@mailwoman/registry`) takes a path and a column mapping and hands back an async iterable of `SourceRecord`s. It reads the header, then yields one normalized record per row — it never holds more than a row or two in memory, so the file size doesn't matter.
+`normalizeCSV` (from `@mailwoman/registry`) takes a path and a column mapping and hands back an async iterable of `SourceRecord`s. It reads the header, then yields one normalized record per row. It never holds more than a row or two in memory, so the file size doesn't matter.
 
 ```ts
 import { normalizeCSV } from "@mailwoman/registry"

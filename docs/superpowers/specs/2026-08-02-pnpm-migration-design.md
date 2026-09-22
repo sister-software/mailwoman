@@ -46,7 +46,7 @@ them. `smoke-clean-install.ts`, whose stated purpose is catching undeclared runt
 holding the line.
 
 Fix is mechanical: add the three to the workspaces that use them, or one `public-hoist-pattern` for
-`vitest`. Preference is declaring them — it is what the strictness is for, and it keeps
+`vitest`. Preference is declaring them. It is what the strictness is for, and it keeps
 `smoke-clean-install.ts` direct.
 
 ### Finding 2 — the publish pipeline is the risk

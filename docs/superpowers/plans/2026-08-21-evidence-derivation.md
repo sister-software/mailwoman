@@ -85,7 +85,7 @@ that produces three distinct failures. Record which one each row is:
 | `fold_admin_suffix` | `São Paulo - SP` | `sao paulo - sp` | `sao paulo`           |
 | `fold_designator`   | `Co. Westmeath`  | `co westmeath`   | `westmeath`           |
 
-For every row you classify `fold_failure`, confirm it by probing the gazetteer for the same place under a repaired surface. Use the `mwdev_lookup` MCP tool. A row you cannot confirm is `unknown` rather than `fold_failure` — a magnitude never carries its own absence.
+For every row you classify `fold_failure`, confirm it by probing the gazetteer for the same place under a repaired surface. Use the `mwdev_lookup` MCP tool. A row you cannot confirm is `unknown` rather than `fold_failure`. A magnitude never carries its own absence.
 
 - [ ] **Step 5: Write the verdict**
 
@@ -752,7 +752,7 @@ yarn compile
 yarn vitest run packages/core/lib/layers
 ```
 
-Expected: pass. `packages/core/lib/layers/schema.test.ts` already asserts `supportsExclusion` admits `Designated`/`Surveyed` and refuses `SourcePresent`/absent — those assertions must still pass unchanged, now against the moved implementation.
+Expected: pass. `packages/core/lib/layers/schema.test.ts` already asserts `supportsExclusion` admits `Designated`/`Surveyed` and refuses `SourcePresent`/absent. Those assertions must still pass unchanged, now against the moved implementation.
 
 - [ ] **Step 9: Add `foldIdentity` — a fold is identified by what it computes rather than what it is called**
 
@@ -1182,7 +1182,7 @@ Expected: PASS, 5 tests.
 
 `uprn.db` is build-local, so this is a manual check rather than a test. Confirm the two cases the fixture
 cannot: a real GB postcode centroid inside coverage returns `null` (points exist there), and a Northern
-Ireland coordinate returns `null` for the other reason (NI is outside OS Open UPRN coverage — the
+Ireland coordinate returns `null` for the other reason (NI is outside OS Open UPRN coverage, and the
 `uprn-lookup.ts` docstring names it). If NI returns an exclusion, the coverage read is wrong.
 
 - [ ] **Step 7: Commit**
@@ -1321,7 +1321,7 @@ Add to `StreetEvidencePick`:
 	demoted: number[]
 ```
 
-In the body: build the demoted index set first, then run the existing G1/G2 loop over the un-excluded candidates in their original order; if that finds no pick, run it again over the excluded ones; if still none, return rank-1. **Do not blend the exclusion into `score`** — the anti-Pelias rule is one bit rather than a weight.
+In the body: build the demoted index set first, then run the existing G1/G2 loop over the un-excluded candidates in their original order; if that finds no pick, run it again over the excluded ones; if still none, return rank-1. **Do not blend the exclusion into `score`**. The anti-Pelias rule is one bit rather than a weight.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
@@ -1754,7 +1754,7 @@ whether that is true of the data or only of the sentence."
 
 ## Self-review notes
 
-**Spec coverage.** §1 → Tasks 2, 3. §2 three states → Task 1 (measure), Task 3 (fold check). §3 package → Task 2. §3.1 union → Tasks 2, 3. §3.2 two axes → Task 7. §3.3 check → Task 3. §3.4 demote-only → Task 6. §4.1 GB → Task 5. §4.2 US → Task 9. §4.3 plausibility → Task 4. §4.4 FR → Task 10. §5 derivation → Task 8. §6 falsifiers → Task 1 (F1), Task 6 step 6 (F3), Task 4 step 5 (F4), Task 8 step 6 (F5). **Gap: falsifier 2** (the GB arm's own board measurement) has no task — it cannot be written until Task 1 returns PROCEED and Task 5 lands, because the arm's shape depends on Task 1's verdict. Write it as a follow-up plan.
+**Spec coverage.** §1 → Tasks 2, 3. §2 three states → Task 1 (measure), Task 3 (fold check). §3 package → Task 2. §3.1 union → Tasks 2, 3. §3.2 two axes → Task 7. §3.3 check → Task 3. §3.4 demote-only → Task 6. §4.1 GB → Task 5. §4.2 US → Task 9. §4.3 plausibility → Task 4. §4.4 FR → Task 10. §5 derivation → Task 8. §6 falsifiers → Task 1 (F1), Task 6 step 6 (F3), Task 4 step 5 (F4), Task 8 step 6 (F5). **Gap: falsifier 2** (the GB arm's own board measurement) has no task. It cannot be written until Task 1 returns PROCEED and Task 5 lands, because the arm's shape depends on Task 1's verdict. Write it as a follow-up plan.
 
 **Type consistency.** `requireExclusionBasis` takes `RequireExclusionInput` in Tasks 3, 5 and 8 with the same field names. `Exclusion.scope` is `CoverageScope` throughout. `pickByStreetEvidence` keeps its existing name; `StreetEvidencePick.demoted` is `number[]` in both the test and the interface. `EpistemicStatus` values are lower-case strings in every assertion.
 

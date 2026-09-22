@@ -12,7 +12,7 @@ and no artifact says so. This pins every one of them: the rendered rows in emiss
 board, the vocabulary and the report.
 
 The fixture supplies all 47 prefectures because the builder RAISES below that, and it names each
-municipality by searching for the bucket it must land in — the board split is md5 of the
+municipality by searching for the bucket it must land in. The board split is md5 of the
 municipality, so a fixture that does not construct board municipalities pins an empty board.
 """
 

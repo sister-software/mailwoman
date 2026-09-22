@@ -20,7 +20,7 @@
 #     and keep the #690 shim).
 #   guards (noise-read at 2k, binding at 8k): golden us/fr micro within noise of v381. FR fragment
 #     board + digit board no worse than -2pp. BIO decode quality unchanged on presets (the span head
-#     is an additional output — the token path must stay byte-stable-ish under the shared encoder).
+#     is an additional output, so the token path must stay byte-stable-ish under the shared encoder).
 #   Not a promote check. The 8k full run pre-registers the standing battery (golden 2pp check,
 #   gauntlet, metamorphic, fragment boards) + oracle@5 / seg@1 on the JS harness via the PR #1154
 #   decode surface + the isotonic ambiguity-check fit (plan req 4).

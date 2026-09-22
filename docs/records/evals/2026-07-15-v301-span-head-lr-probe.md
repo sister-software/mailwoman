@@ -87,7 +87,7 @@ in Phase 2; not claimed as a shipped win here.
 
 ## Next
 
-Phase 2 (ONNX export of the span scores + the #378 SLO check) is now justified — it was blocked on
+Phase 2 (ONNX export of the span scores + the #378 SLO check) is now justified. It was blocked on
 exactly this crossing. Then Phase 3 (JS k-best) and Phase 4 (resolver rerank + option C).
 
 The one thing worth deciding first: an **8k run at this LR** would tell us whether seg@1 keeps

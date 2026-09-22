@@ -61,7 +61,7 @@ For the frontend, `@mailwoman/react` is the parse, geocode, and POI components t
 
 ## What it costs you
 
-You bring the gazetteer. The model is in the image, but geocoding needs the admin database, and that's a download or a build — the worldwide candidate file is about 1.4&nbsp;GB, and it's read-only, so it mounts `:ro` and you never think about it again. Until it's in place, the server parses but won't geocode, which is a degrade with a clear message rather than a crash. If you're not sure what's present, `mailwoman doctor` checks the weights, the data root, the gazetteer, and the runtime and tells you the one command to fix each gap.
+You bring the gazetteer. The model is in the image, but geocoding needs the admin database, and that's a download or a build. The worldwide candidate file is about 1.4&nbsp;GB, and it's read-only, so it mounts `:ro` and you never think about it again. Until it's in place, the server parses but won't geocode, which is a degrade with a clear message rather than a crash. If you're not sure what's present, `mailwoman doctor` checks the weights, the data root, the gazetteer, and the runtime and tells you the one command to fix each gap.
 
 The other cost is the shape. This is SQLite rather than a cluster, so one instance is one node. That's the point on a single box or inside an app, and it means you scale by running more copies behind a balancer rather than by tuning a shared database. If your plan was a managed Postgres fleet, this isn't that, on purpose.
 

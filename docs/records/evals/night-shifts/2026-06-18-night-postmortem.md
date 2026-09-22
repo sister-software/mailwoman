@@ -61,7 +61,7 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
 - **Stretch #1 — record-matcher curve** (`ed89dd4d` + reports): added a model-swap to `nppes-dedup-benchmark.ts`
   and ran the v1.5.1 + v1.6.0 baselines (TX, 300 NPIs). **Result: flat within noise** — org-name F1 68.0%
   (v1.5.1) vs 67.9% (v1.6.0), NPI 62.8 vs 62.6, baseline 61.0 vs 60.9. The read: **the boundary-parse
-  change does not move the NPPES dedup F1** — the benchmark's own pre-registered finding is "config dominates
+  change does not move the NPPES dedup F1**. The benchmark's own pre-registered finding is "config dominates
   the model," and dedup is bottlenecked on org-name over-merge (#625/#603) rather than parse boundaries. So the
   synthetic boundary wins are real for the PARSE but don't translate to this real-world dedup task. v1.7.0
   joins as the 3rd point when it lands (expected ~flat).
@@ -196,7 +196,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The check is t
 ## Addendum — promote retracted on re-eval (2026-06-18)
 
 The shift's verdict (§6: "PROMOTE v1.7.0, a net improvement over v1.5.1") rested on a wrong baseline.
-**v1.5.1 was never promoted** — it was the falsified weight-6.0 experiment (worse than v1.5.0's
+**v1.5.1 was never promoted**. It was the falsified weight-6.0 experiment (worse than v1.5.0's
 weight-3.0). The production default is **v1.5.0** (model-card 4.6.0; md5 `4674d3…` ==
 `model-v150-step-40000-int8.onnx`, the fr-order recovery model). Every §6 delta ("+5.1 locality",
 "fr.house_number +10.2, v1.5.1 was failing its floor", "stale country floor") was measured against
@@ -252,7 +252,7 @@ all along and the eval couldn't see it.
 The Addendum (above) concluded "the US coordinate misses are rural-gazetteer coverage (SD 62%, VT
 31%)." Both halves were measurement artifacts: the SD/VT locality-match was the localadmin scoring
 bug, and the coordinate "bottleneck" was the eval grading the admin centroid instead of the shipped
-cascade. The change was never the model nor the gazetteer — it was the measurement. The shipped US
+cascade. The change was never the model nor the gazetteer. It was the measurement. The shipped US
 coordinate is meter-grade.
 
 ### Shipped

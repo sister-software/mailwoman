@@ -32,7 +32,7 @@ python3 corpus-python/scripts/fit-isotonic-calibration.py
 
 ## Using the table
 
-The table is OPT-IN — the default decode path is byte-stable. Build a calibrator and pass it via
+The table is OPT-IN. The default decode path is byte-stable. Build a calibrator and pass it via
 `ParseOpts.calibrate` (neural) / `BuildTreeOpts.calibrate` (decoder):
 
 ```ts

@@ -41,8 +41,8 @@ never the assembled pipeline. That is the single most important input to this sp
 > ASSEMBLED PIPELINE against truth. Grading raw-neural per-tag F1 will hide an arbitration regression
 > exactly as it hid the reconcile one.**
 
-So #478's pre-registered check, as originally written (arena re-run), is necessary but **not sufficient** —
-it must run the assembled pipeline, and it must include the non-circular precondition/coordinate metrics
+So #478's pre-registered check, as originally written (arena re-run), is necessary but **not sufficient**.
+It must run the assembled pipeline, and it must include the non-circular precondition/coordinate metrics
 the geocoder campaign added, notper-tag F1.
 
 ## The design

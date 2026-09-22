@@ -20,7 +20,7 @@ corpus fetch knobs, and the switches the evaluation scripts read. None of those 
 installed package, and several are declared but read nowhere. If a variable is not on this page,
 setting it changes nothing you can observe.
 
-Behavior defaults are listed after the variables. They are not environment variables — each is an
+Behavior defaults are listed after the variables. They are not environment variables. Each is an
 option on `createRuntimePipeline`, `geocodeAddress`, or the resolver, and the table states where.
 
 ## Environment variables
@@ -83,7 +83,7 @@ are on [CLI](./cli.mdx); each flag's description gives the variable it falls bac
 
 The candidate row has one wrinkle the other two do not. Each position is used only if the file it
 names is on disk, so a stale `$MAILWOMAN_CANDIDATE_DB` pointing at a deleted file does not fall
-through to the convention path — it resolves to nothing and you land on the search backend. And
+through to the convention path. It resolves to nothing and you land on the search backend. And
 `none` at either of the first two positions is a pin rather than a path: it stops the search there.
 
 A `.env` file in the working directory is read once at startup and the live environment layers on top
@@ -153,7 +153,7 @@ The behavior defaults are on rather than opt-in because a default nobody turns o
 does not exist. Each one shipped on by default only after clearing an evaluation against the shipped model,
 and turning one off takes `false` rather than a rebuild.
 
-The environment schema is broader than this page because its split is about logging safety — a
+The environment schema is broader than this page because its split is about logging safety. A
 variable is in the non-secret half when printing it cannot leak a credential. That is the right axis
 for a log line and the wrong axis for a configuration reference, so this page draws the line
 somewhere else and says where.

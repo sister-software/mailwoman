@@ -9,7 +9,7 @@ role: explanation
 ## The question
 
 At the end of scoring, every piece of the input carries a number for each of the 33 available labels.
-Taking each piece's highest-scoring label is the obvious next move, and it is wrong — it produces
+Taking each piece's highest-scoring label is the obvious next move, and it is wrong. It produces
 sequences that are not readings of anything, like a "continues the locality" label with no locality
 open in front of it. The standard symptom is `Saint Petersburg, FL` coming back with a locality of
 `Petersburg`.
@@ -122,7 +122,7 @@ would see if the scores were being produced without reference to their neighbors
 
 **It cannot fix a confidently wrong label.** Best-path search redistributes among readings the scores
 make close. When the model is sure and wrong, every legal reading agrees with it, and the decoder
-returns the wrong answer in structurally valid form. Valid is not the same as correct — the tree that
+returns the wrong answer in structurally valid form. Valid is not the same as correct. The tree that
 comes out is always well-formed, and being well-formed is not evidence about the content.
 
 **The guarantee stops at the decoder.** Span construction downstream is lenient by design: hand it an

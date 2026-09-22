@@ -20,7 +20,7 @@ rows fall into the shipped-era collapse (venue absorbed as locality/street).
 2. **Venue pool**: a GB-flavored pool alongside PLAIN_VENUES — institutional forms (Club/center/
    House/Arms/Station), "Ye"-archaic, and brand–dash–place compounds, INCLUDING directional-led
    names (the target class is venue-leading compass words). **The six probe venues themselves are
-   excluded** — the gauntlet fixtures must stay held-out rather than taught to.
+   excluded**, the gauntlet fixtures must stay held-out rather than taught to.
 3. **Tuples**: extend `build_house_venue_tuples.py` with `--gb` sampling from the on-disk PPD
    derivation (`$MAILWOMAN_DATA_ROOT/ppd/2026-07-22/gb-tuples.csv`: NUMBER/STREET/CITY/DISTRICT/
    REGION/POSTCODE) → house-venue-tuples-v3.jsonl (FR 60k + US 60k + GB 60k).
@@ -45,7 +45,7 @@ becomes the B11 template default. Ties break to the larger λ.
   config. No partial credit — six of six.
 - **B1 (the guarantee check, the sellable sentence)**: the full `v7.0.0-base` spec passes with NO
   floor waivers; gauntlet regression + metamorphic pass; canary zero-flip; the P0 fragment grid
-  within noise of the base. A Fisher-guarded fine-tune must hold every base capability — that
+  within noise of the base. A Fisher-guarded fine-tune must hold every base capability. That
   is the product claim this run dogfoods.
 - **Receipt**: per-λ probe table, the chosen λ with its rationale, before/after on the six
   fixtures, battery deltas vs base.
@@ -61,7 +61,7 @@ becomes the B11 template default. Ties break to the larger λ.
 
 ## What ships on PASS
 
-Model 7.0.1 (a venue increment off the 7.0.0 base) is **staged rather than auto-promoted** — the promote
+Model 7.0.1 (a venue increment off the 7.0.0 base) is **staged rather than auto-promoted**. The promote
 decision is the operator's with the verdict in hand. The gauntlet fixtures flip
 `improvement_target` → `pass` only at promote time.
 

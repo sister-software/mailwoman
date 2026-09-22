@@ -166,7 +166,7 @@ Every runtime lookup opens its database with `readOnly: true`, the FTS admin bac
 only writable open is an explicit FTS index build, which is not a serve path.
 
 Set `$MAILWOMAN_DATA_ROOT` to the mount point. If the gazetteer sits at `wof/candidate.db` underneath
-it, that is the whole configuration — the candidate database is resolved from the convention path when
+it, that is the whole configuration. The candidate database is resolved from the convention path when
 nothing overrides it:
 
 ```bash

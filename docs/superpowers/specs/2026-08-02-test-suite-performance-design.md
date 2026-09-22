@@ -78,7 +78,7 @@ branch, same day:
 | 30757682542 | 16:54 | 61.0s (MISS) |          ~83s |
 
 The 16:54 run's Setup Node log says `yarn cache is not found` outright. That is a ~59s coin-flip on
-each of three hosted legs. Nothing about the yarn configuration is wrong — there is no room.
+each of three hosted legs. Nothing about the yarn configuration is wrong. There is no room.
 
 Note the Link step is a flat **20.7–22.7s regardless** of cache state: yarn writing 74,244 files and
 10,444 directories.

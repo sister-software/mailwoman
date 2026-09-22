@@ -8,7 +8,7 @@ government register (26M addresses) instead of the sparse community fallback (OS
 
 It is the French counterpart of the 50-state US situs layer (#1012). It closes the measured FR rooftop
 gap: commune resolution was already ~99% @25 km, but @1 km sat at ~37% and was _flat_ from clean to messy
-input — the flatness is the tell of a coverage ceiling rather than a parse problem. BAN is the coverage.
+input. The flatness is the tell of a coverage ceiling rather than a parse problem. BAN is the coverage.
 
 ## The licensing boundary
 
@@ -51,4 +51,4 @@ file and never touches the OSM database beside it.
 `osmExtracts` tier (a national authoritative register outranks the community fallback) and only for a non-US
 parse. BAN rows carry their own postcode + commune, so the lookup keys on the scoped
 (`postcode` → `locality`) probes; no bbox fall-through is needed. Interpolation for house numbers BAN
-doesn't carry is not built yet — the exact-point tier is what BAN adds (BAN's density is the point).
+doesn't carry is not built yet. The exact-point tier is what BAN adds (BAN's density is the point).

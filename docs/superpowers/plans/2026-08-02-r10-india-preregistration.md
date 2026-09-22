@@ -33,7 +33,7 @@ number that includes aliases and ~2.8× without them.
 `eng` VARIANT rather than the preferred name). The pair existed and could never fire.
 
 `extractBoroughPairs` now expands parent surfaces from `names` where `language = 'eng'` and the name
-is longer than three characters — the short tail is airport and agency codes (`BLR`, `BBMP`), the
+is longer than three characters. The short tail is airport and agency codes (`BLR`, `BBMP`), the
 shape most likely to collide with an unrelated word.
 
 **Enabled for India only, deliberately.** Applied globally it took the US index from 47,878 to
@@ -87,5 +87,5 @@ under the scorecard's 5% floor.
 The practical reading: **the India pair index is a city instrument.** Bangalore (605 children),
 Delhi (583), Chennai (382), Hyderabad (338) and Varanasi (337) carry real depth; the long rural tail
 carries none. That is the right expectation to set for it, and it is exactly the distinction the
-scorecard's parent-coverage statistic exists to make — a raw node count would have called India the
+scorecard's parent-coverage statistic exists to make. A raw node count would have called India the
 best-covered country in the table.

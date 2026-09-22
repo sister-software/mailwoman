@@ -8,7 +8,7 @@ was verified against the code rather than the docstrings alone.
 ## The one structural finding that reshapes the answer set
 
 **The split comma-free recall needs is exactly the split v385 provably cannot make.** The target
-population's failure is "dep-loc not separated from post town" — that is the dead-tag deficit. Any
+population's failure is "dep-loc not separated from post town". That is the dead-tag deficit. Any
 segmentation derived from the model's own first pass (Q1's pseudo-segments) therefore cannot
 recover the target population: on `St Bedes Avenue Fishburn Stockton-on-Tees`, v385's best case is
 one fused `locality` span over `Fishburn Stockton-on-Tees`, and a fused pseudo-segment probes as

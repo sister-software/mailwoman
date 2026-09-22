@@ -1,12 +1,12 @@
 # Wrap handoff — close out the FST / comma-free / #1143 arc (2026-07-26)
 
 **For:** DeepSeek (fresh context, executing lead) · **From:** the coordinating lead (Claude) · **Repo:** mailwoman @ `main`
-(`426379e4` or later). **The arc is ~90% done and merged** — this doc is the remaining wrap-up rather than a
+(`426379e4` or later). **The arc is ~90% done and merged**. This doc is the remaining wrap-up rather than a
 build brief. Read the prior session's own report first:
 `docs/superpowers/plans/2026-07-25-SESSION-REPORT-fst-arcs.md` (your predecessor's verdicts, verified
 accurate against main + the ledger). The full dated record is `.superpowers/sdd/progress.md`
 (pre-registrations #1–#6). The two earlier handoffs (`2026-07-25-LEAD-HANDOFF.md`,
-`STALE_FST_HANDOFF.md`) are now HISTORICAL — they were executed; don't re-do them.
+`STALE_FST_HANDOFF.md`) are now HISTORICAL. They were executed; don't re-do them.
 
 > **Spec-clarity review (DeepSeek pro, 2026-07-26).** This work order was adversarially reviewed by a
 > repo-blind model as a spec-clarity test. Verdict after resolving repo facts: **Tasks 1–3 GREEN**

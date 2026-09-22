@@ -89,7 +89,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
   mechanism: the model faithfully reproducing a corpus prior that says long digit-run continuations
   are postcode. It also explains why B4 barely moved — a extract fights that prior uphill.
   `docs/articles/evals/2026-07-16-digit-incoherence-is-cross-lingual.md`.
-- **The 2k probe did its job — it stopped an 8k run I would otherwise have wanted.** The instrument
+- **The 2k probe did its job. It stopped an 8k run I would otherwise have wanted.** The instrument
   and extract were correct; the read was clean; the target missed its pre-registered bar and the French
   guard drifted, so the expensive run does not happen on a hunch. ~$1-2 of A100 to avoid ~$8. And I
   held my own bar rather than relaxing it once the number disappointed — the discipline reduces both
@@ -114,7 +114,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
 | decision                                                                | alternatives                                     | why                                                                                                                                                                                                                                 |
 | ----------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Fix all 44 configs, notthe live one                                     | fix `v3.1.0` only; or fix none and file an issue | The dead configs are the historical record of what each run trained on. Leaving them lying is how the next salvage-a-config reintroduces it. The sweep is mechanical and parser-verified.                                           |
-| Guard **raises** rather than coerces `False` → `"NO"`                   | silently repair the key                          | A config saying `false` does not _mean_ Norway — it means YAML changed the author's meaning. Coercing hides the identical bug in the next field that grows a bare-token key.                                                        |
+| Guard **raises** rather than coerces `False` → `"NO"`                   | silently repair the key                          | A config saying `false` does not _mean_ Norway. It means YAML changed the author's meaning. Coercing hides the identical bug in the next field that grows a bare-token key.                                                         |
 | Did **not** add NZ (8,967 rows, absent from `country_weights` entirely) | add it while I'm in there                        | Not a type bug — a scope decision about which countries the product serves. That is the operator's call, and bundling it would smuggle a scope change into a bug fix.                                                               |
 | Did **not** retrain on the now-Norway-inclusive corpus                  | launch a run overnight                           | The night-shift rule: >30min GPU with no falsifiable probe is a guess. The retrain is warranted but the _read_ has to be pre-registered against a board that does not exist yet (B3). Order: B3 → register baselines → then launch. |
 
@@ -136,7 +136,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
    cherry-pickable if you want it in main faster than the investigation commits.
 6. **NZ is undeclared.** The completeness audit found 8,967 New Zealand corpus rows, a tier-A LINZ
    source (`.notes/data-sources.md`), and NZ in **no `SCOPE.mdx` tier and no blocked/queued list**.
-   It is neither trained nor explicitly scoped-out — the one country-filter gap the audit could not
+   It is neither trained nor explicitly scoped-out, the one country-filter gap the audit could not
    account for. Decide: add it to a tier (it's Latin-script, English, tier-2 caliber with open data),
    or list it as blocked/queued like GB/IE. Not a code change tonight — a scope declaration.
 

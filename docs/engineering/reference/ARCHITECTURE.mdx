@@ -250,7 +250,7 @@ spaCy validates the family choice — when the industry-standard NER toolkit's f
 
 - **Smaller** (10× fewer parameters): we're a narrower task. General-purpose Japanese NER must handle 22 entity types across all of news text; address parsing handles 23 component types in addresses only. Narrow task tolerates narrower model.
 - **From scratch rather than fine-tuned**: their cl-tohoku backbone was pretrained on Japanese Wikipedia + news. Our domain is far enough from natural-language text that the pretraining transfer is weak; training from scratch on a domain-pure corpus gets us a smaller, faster, more accurate model.
-- **Single head rather than multi-head**: they share one encoder across morphologizer + parser + NER. We have one head only — the encoder can fully specialize for component disambiguation. (Multi-head is a future extension: see below.)
+- **Single head rather than multi-head**: they share one encoder across morphologizer + parser + NER. We have one head only. The encoder can fully specialize for component disambiguation. (Multi-head is a future extension: see below.)
 
 ### Multi-head extension (Phase 4+)
 

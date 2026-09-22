@@ -199,7 +199,7 @@ class Indexer {
 registry.register(IIndexer, Indexer)
 ```
 
-- Constructor signature must match the token tuple — a mismatch is a compile
+- Constructor signature must match the token tuple. A mismatch is a compile
   error.
 - The registry awaits all declared dependencies (resolved **and**
   `[asyncInit]`-initialized), then constructs. **The old "cannot use a

@@ -82,7 +82,7 @@ literature and the independent DeepSeek consult judged the 91% floor mis-calibra
 respectable for this stratum; DeepSeek's phrasing: *"87.4% on the single hardest subfield in the hardest
 order permutation is not a miss — it's plausibly state-of-the-art for this specific slice."\_
 
-This **does not** mean re-baseline silently — that would violate the no-silent-check-drift discipline.
+This **does not** mean re-baseline silently. That would violate the no-silent-check-drift discipline.
 It means: if we lower the floor, do it as a _stated, reasoned_ decision anchored to this literature
 (a defensible bar is ~85–90% for the postcode-first stratum), recorded in the check config and the ledger.
 

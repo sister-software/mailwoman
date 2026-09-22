@@ -1,7 +1,7 @@
 """Turning a harvested surface into a labeled row.
 
 Each renderer builds `raw` by joining pieces and the char offsets by advancing a cursor over the
-same pieces, so the two can disagree without anything downstream noticing — the char label array
+same pieces, so the two can disagree without anything downstream noticing. The char label array
 is painted from the offsets, and a row labelling the wrong characters still trains and still
 scores. `tests/mailwoman_train/corpora/test_fragment_rows.py` asserts the agreement: every span
 must cover the surface it claims, and the span tags must name the same fields as the BIO labels.
@@ -189,7 +189,7 @@ def render_country_context(
     street: str, number: str, city: str, country_name: str, trailing: bool, comma: bool
 ) -> dict[str, Any]:
     """#1104 country counterweight: a full address ENDING in a country token, comma'd or comma-free, so the
-    fine-tune keeps the country class alive — the recipe-v5 mass (bare streets/localities/admin pairs) is
+    fine-tune keeps the country class alive. The recipe-v5 mass (bare streets/localities/admin pairs) is
     country-SPARSE and eroded country recall 88.6%→82.0%. Fields are groups (number+street space-joined as
     one unit); groups are joined by ", " (comma'd) or " " (comma-free). Cursor-tracks char-offset spans."""
     groups: list[list[tuple[str, str]]] = (

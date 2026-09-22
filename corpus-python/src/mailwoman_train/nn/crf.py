@@ -259,7 +259,7 @@ class LinearChainCRF(nn.Module):
     ) -> list[list[int]]:
         """Best path per row. Returns a list of variable-length tag sequences.
 
-        Padding positions are dropped from the output — each returned list has length
+        Padding positions are dropped from the output. Each returned list has length
         ``mask[row].sum()`` real tokens.
         """
         bsz, seq_len, num_tags = emissions.shape

@@ -65,7 +65,7 @@ def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
 
     A file appears under each of its sources, and `_file_row_iter` filters per row against the one it was asked
     for, so a file carrying two is read twice and yields each source only its own rows. That per-row filter has
-    always been there — the defect this replaced was upstream of it: taking the first row's source as the whole
+    always been there. The defect this replaced was upstream of it: taking the first row's source as the whole
     file's meant a source that never opens a file was invisible to the index, to `_apply_source_weights`' unnamed
     guard, and to the epoch audit alike. Measured on `v0.31.0-region-code-and-unit`: 8 of 718 train files carry
     more than one source, one carries four, and two sources appear in no other file.
@@ -171,7 +171,7 @@ def _stationary_mixture(
     each ~7,812-step epoch and silent afterwards — the v4.3.3 B1 board oscillated in lockstep with
     those exposure windows. The multinomial is fixed now: an exhausted source restarts with a fresh
     shuffled pass (weighted sampling with replacement at the pass level), and the epoch ends once
-    every source has completed >= 1 full pass — the largest source is seen exactly once, and no
+    every source has completed >= 1 full pass. The largest source is seen exactly once, and no
     source ever silently leaves the mixture.
     """
     iters = {src: fresh_iter(src) for src in weights}

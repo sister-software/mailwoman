@@ -9,7 +9,7 @@ package an ImportError; `-m` imports it as `launch.train_remote` with the packag
 launcher is a package because a single file grew to fifty-seven near-identical sync functions and
 three thousand lines, and nobody could answer what it staged without reading all of them.
 
-A GPU run is DETACHED and never started from a shell directly — a `modal run` is a local client
+A GPU run is DETACHED and never started from a shell directly. A `modal run` is a local client
 whose death cancels the remote input, so a harness that kills the client loses the run:
 
     node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log <file> --cwd corpus-python \\
@@ -36,7 +36,7 @@ What lives where:
 
 This file defines nothing. It imports each module so that the one `app` carries every function,
 because `modal run -m launch.train_remote::<name>` resolves `<name>` against this module's
-namespace — a function whose module is never imported is a function nobody can launch.
+namespace. A function whose module is never imported is a function nobody can launch.
 """
 
 from __future__ import annotations

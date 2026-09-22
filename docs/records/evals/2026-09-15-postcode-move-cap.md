@@ -95,7 +95,7 @@ Each is a re-pick: the same name, a different instance, and the cap does not rea
 come from the step a cap bounds. The tradeoff paragraph's premise does not hold here.
 
 **Does not settle**: this population prices no cap VALUE against another, because step 3 never fires
-on it. That is the same limit the frozen same-data fixture has, reached from the other side — there
+on it. That is the same limit the frozen same-data fixture has, reached from the other side. There
 the fallback fires and never helps; here the pass helps and the fallback never fires. Neither holds a
 row where the fallback is the thing that produced a win, and after 5,300 real addresses across four
 countries no such row has been observed.
@@ -146,5 +146,5 @@ the eval's shape.
 
 A refused move now reaches a caller: `GeocodeResult.unfollowed_components` carries the postcode, the
 reason `postcode_move_refused`, and the distance following it would have moved the answer. It is
-separate from `dropped_components`, which names a span the flat projection deleted — a refused
+separate from `dropped_components`, which names a span the flat projection deleted. A refused
 postcode is KEPT, and reads as if it had been honoured without this field.

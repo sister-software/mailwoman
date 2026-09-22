@@ -73,7 +73,7 @@ The canonical short-form, from the operator's "Paris, Texas" talk (PeerTube: `pe
 
 > A geocoder is a **contextual parser + constraint solver**. Not a tokenizer. Not a dumb database lookup.
 
-The neural model is the contextual-parser part. The constraint solver still has a role — it weighs which hierarchy interpretation is consistent (see the Arc-de-Triomphe disambiguation in slides 12→13 of that talk). The "dumb database lookup" pattern is what's being deprecated.
+The neural model is the contextual-parser part. The constraint solver still has a role. It weighs which hierarchy interpretation is consistent (see the Arc-de-Triomphe disambiguation in slides 12→13 of that talk). The "dumb database lookup" pattern is what's being deprecated.
 
 The current `ExclusiveCartesianSolver` inherited from Pelias is what slide 17 calls "Sparkling Bogosort":
 

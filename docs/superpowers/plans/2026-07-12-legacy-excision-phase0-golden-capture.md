@@ -20,7 +20,7 @@
 - **Acronym casing:** whole camelCase components (`readJSONL`, not `readJsonl`).
 - **`yarn compile` before spawning any `out/cli.js`** — stale `out/` runs old code (Task 6).
 - **Never kill by pattern** — the nominatim capture kills only the child PID it spawned (house rule after the photon outage).
-- **Goldens are readonly artifacts once committed** — a bad capture is fixed by re-running the script, never by editing the JSONL.
+- **Goldens are readonly artifacts once committed**. A bad capture is fixed by re-running the script, never by editing the JSONL.
 - **Commit per task**, message prefix `feat(phase0):` / `test(phase0):` / `docs(phase0):` as appropriate. Do not push; PR at the end of the plan.
 
 ---
@@ -33,7 +33,7 @@
 
 **Interfaces:**
 
-- Produces: a committed probe transcript. The seal step (plan 5) cites it; if the probe fails, STOP the plan and report — the fix is a 6.x patch release, decided by the operator.
+- Produces: a committed probe transcript. The seal step (plan 5) cites it; if the probe fails, STOP the plan and report. The fix is a 6.x patch release, decided by the operator.
 
 - [ ] **Step 1: Run the cold-install probe**
 

@@ -40,7 +40,7 @@ The model learns the frequency-dominant pattern (Washington = region) because th
 
 ## BIO boundaries are correct
 
-The model emits `B-region` for "Washington" and a separate `B-region` for "DC" (not `I-region`). This is structurally correct — they are separate entities separated by comma+space (O-tokens). The CRF transition mask is working. The problem is tag assignment on the first entity rather than boundary detection.
+The model emits `B-region` for "Washington" and a separate `B-region` for "DC" (not `I-region`). This is structurally correct. They are separate entities separated by comma+space (O-tokens). The CRF transition mask is working. The problem is tag assignment on the first entity rather than boundary detection.
 
 ## Fix plan (priority order)
 

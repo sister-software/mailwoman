@@ -37,7 +37,7 @@ per-tier (interpolated, n=1562):
 ```
 
 The half-segment heuristic **underestimates** the true spread by 1.70×. Reporting the raw radius would
-tell a user "±87 m" when the direct 90% bound is ±148 m. (The situs tier is the opposite — its fixed 10 m
+tell a user "±87 m" when the direct 90% bound is ±148 m. (The situs tier is the opposite. Its fixed 10 m
 floor is conservative vs the ~1 m doorstep error we measure, which is safe; under-reporting confidence,
 as interpolation did, is the dangerous direction.)
 

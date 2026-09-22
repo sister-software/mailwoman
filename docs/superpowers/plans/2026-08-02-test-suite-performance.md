@@ -202,7 +202,7 @@ sleep 30 && gh run list --workflow=cache-prune.yml --limit 1
 
 Expected: the run is green and the log lists `KEEP (newest <lang>)` lines and `DELETE` lines, with **no** deletions performed.
 
-⚠ Read the `DELETE` list before proceeding. If it names anything that is not a `codeql-overlay-base-database-*` key, stop — the filter is wrong.
+⚠ Read the `DELETE` list before proceeding. If it names anything that is not a `codeql-overlay-base-database-*` key, stop. The filter is wrong.
 
 - [ ] **Step 4: Apply it once by hand**
 
@@ -210,7 +210,7 @@ Expected: the run is green and the log lists `KEEP (newest <lang>)` lines and `D
 gh workflow run cache-prune.yml -f apply=true
 ```
 
-⚠ Do not verify with `/actions/cache/usage` — it is eventually consistent and lagged badly here: it
+⚠ Do not verify with `/actions/cache/usage`. It is eventually consistent and lagged badly here: it
 still read 10.7 GB / 77 entries immediately after 51 confirmed deletions. Sum the live listing:
 
 ```bash
@@ -1205,7 +1205,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 
 Run: `yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts`
 
-Expected: it runs in under a second. Some assertions will likely fail on the first pass — the seeded populations are computed from the importance formula but the curation sets (`loadDegenerateSurfaces`, `loadUSRegionVocabulary`, `loadPersonNameSurfaces`) are real files, so a surface may be excluded for a different reason than the test assumes.
+Expected: it runs in under a second. Some assertions will likely fail on the first pass. The seeded populations are computed from the importance formula but the curation sets (`loadDegenerateSurfaces`, `loadUSRegionVocabulary`, `loadPersonNameSurfaces`) are real files, so a surface may be excluded for a different reason than the test assumes.
 
 ⚠ For each failure, diagnose before adjusting. Print the build's counters and the produced keys:
 
@@ -1830,7 +1830,7 @@ Two small things. The excludes fix a confirmed local flake. The worker cap has t
 
 - [ ] **Step 1: Reproduce the `.venv` collection**
 
-Run (from the **main checkout**, which has the virtualenv — the worktree does not):
+Run from the **main checkout**, which is the one that has the virtualenv:
 
 ```bash
 cd /home/lab/Projects/mailwoman

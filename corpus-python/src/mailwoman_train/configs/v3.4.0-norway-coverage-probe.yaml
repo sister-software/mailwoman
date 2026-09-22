@@ -8,7 +8,7 @@
 # contributed a row. init_from v310, 2k, to see if coverage alone moves the needle fast.
 #
 # why IT matters: the deepparse rematch (scratchpad/deepparse-cmp/rematch-after-trackb.md) showed two
-# of four contextful house_number losses are Norwegian rows the model simply never saw — the street
+# of four contextful house_number losses are Norwegian rows the model simply never saw. The street
 # reads as a locality (B0's unseen-street signature):
 #     Epleskogen 39A        -> locality "Epleskogen" + postcode 39A     (should be street + hn)
 #     Tindvegen nedre 44B   -> locality "Tindvegen" + street "nedre"    (should be street + hn)

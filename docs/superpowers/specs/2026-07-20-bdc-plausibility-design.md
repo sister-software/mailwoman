@@ -116,7 +116,7 @@ posture; decide at 2a exit.
 **snapshot** of one vintage: `freshness_policy = versioned-refresh` (re-issued under the same
 name per vintage), each issue itself sealed. `source_vintage` carries the `as_of_date`;
 `build_sha` + `build_cmd` pin the exact filing files. A filing landscape is only ever "as of
-vintage X" — the vintage is required on every answer rather than metadata.
+vintage X". The vintage is required on every answer rather than metadata.
 
 **Meaning-of-zero.** `layer_coverage` at res 6 records which blocks the ingested vintage
 covered. A block with no filing row is **UNKNOWN** — no provider filed availability there in this
@@ -158,11 +158,11 @@ infrastructure-extension namespace gains the categories:
 
 There is no separate `infra.db`: infrastructure classes are POI categories in the build-local OSM
 layer, exactly as Phase-1 §3.5 established for `fire_hydrant`/`data_center`. When that layer is
-absent, plausibility_check degrades to "requires the locally-built OSM infra layer" — the answer
+absent, plausibility_check degrades to "requires the locally-built OSM infra layer". The answer
 names the missing layer, never fabricates a distance.
 
 **Tier / freshness / meaning-of-zero.** `build-local`, `freshness_policy = sealed` (rebuild-only),
-`layer_coverage` from the OSM survey extent. OSM telecom coverage is sparse and uneven — the
+`layer_coverage` from the OSM survey extent. OSM telecom coverage is sparse and uneven. The
 coverage table is not decoration here, it is what stops a sparse cell from reading as "no fiber
 plant near, therefore implausible" (§4).
 
@@ -277,7 +277,7 @@ temptation to read absence as disproof is constant. The rules, pre-registered:
    absence. The strongest negative it can emit is "no supporting evidence found, and coverage is
    good enough that this is informative" — still framed as absence-of-evidence.
 4. **coverage_confidence is mandatory on every answer.** A sparse-coverage cell collapses the
-   bundle to "insufficient survey data," which is a legitimate output — the product's honesty is
+   bundle to "insufficient survey data," which is a legitimate output. The product's honesty is
    this refusal to guess.
 
 The physical-plausibility angle is a **falsifier that only fires positively**: physics can raise

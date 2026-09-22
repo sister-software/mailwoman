@@ -46,7 +46,7 @@ def inject_soft_feed(
     """Add one soft-feed channel to the token representations.
 
     Every channel is the same additive form: `h_i + c_i · (W · features_i + cue)`. The confidence
-    scaling is what keeps a channel continuous rather than a switch — a token with no clue has
+    scaling is what keeps a channel continuous rather than a switch. A token with no clue has
     c=0 and contributes exactly nothing, so an encoder given no features computes what an encoder
     built without the channel computes.
 

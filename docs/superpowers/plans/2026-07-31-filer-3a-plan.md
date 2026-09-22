@@ -248,9 +248,9 @@ MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod
 - `https://data.fcc.gov/api/frn/getInfo?frn=0001753557&format=json` → **403 Access Denied** at the Akamai edge (`errors.edgesuite.net` reference). The identifying UA did not change the outcome, so the block is host/IP-based rather than agent-based.
 - `https://apps.fcc.gov/cores/api/frn/0001753557` → an HTML **"Invalid Request"** page rather than JSON. That guessed path is not the documented interface.
 
-Per the check's own terms — _"if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape"_ — no fallback was attempted and no code was written. Note `broadbandmap.fcc.gov` continues to work with credentials, so this is specific to these hosts rather than a blanket FCC block.
+Per the check's own terms — _"if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape"_. No fallback was attempted and no code was written. Note `broadbandmap.fcc.gov` continues to work with credentials, so this is specific to these hosts rather than a blanket FCC block.
 
-**What remains true:** the FRN Conversions API is documented publicly and reportedly returns parent and subsidiary names, which would make it a family-edge source rather than mere enrichment. Nothing about that claim was disproven — it only could not be verified from here.
+**What remains true:** the FRN Conversions API is documented publicly and reportedly returns parent and subsidiary names, which would make it a family-edge source rather than mere enrichment. Nothing about that claim was disproven. It only could not be verified from here.
 
 **Carried to 3b** with two prerequisites: (1) run Step 0 from a network path that can reach `data.fcc.gov` (the operator's own machine is the obvious candidate) and record the real response shape, auth requirements, and terms; (2) only then implement, keeping the bounded-enumeration posture — the FRN universe comes from the already-built crosswalk, so this is enrichment over a known key set, never a crawl.
 

@@ -57,7 +57,7 @@ because writing belongs to `lib/move/`.
 
 `lib/move/` is the operation the fixes share, and it holds one rule: a replacement specifier is written only if it
 RESOLVES to the moved file. Candidates come from the owning package's own `imports`/`exports` patterns, so the
-replacement stays in the family the author wrote — a `#` import stays private, a package subpath stays public, a
+replacement stays in the family the author wrote. A `#` import stays private, a package subpath stays public, a
 relative path stays relative. A specifier with no candidate that resolves refuses the whole plan.
 
 A move rewrites three kinds of reference: module specifiers, `exports`/`imports` TARGETS (never a subpath key — that

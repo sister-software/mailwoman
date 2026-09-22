@@ -20,7 +20,7 @@ street→locality leak explains it. It is the single clean digit-ownership failu
 
 ## The piece-level trace (shipped v310, package-shaped)
 
-Every street piece reads `B-street`/`I-street` — the street is fine. The failure is entirely in the
+Every street piece reads `B-street`/`I-street`. The street is fine. The failure is entirely in the
 digit run:
 
 ```

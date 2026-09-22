@@ -70,7 +70,7 @@ At $5/1K requests, geocoding 1 million addresses per month costs $5,000. That is
 | Customization | You can run your own instance               |
 | Parser        | The same rule-based engine Mailwoman forked |
 
-geocode.earth is a better deal: the core is open-source, the licensing is more permissive, and you can run your own instance if the hosted service doesn't meet your needs. But the parser is the same Pelias rule engine that Mailwoman v1 was built on — it has the same tokenization-tautology ceiling. Running your own instance means you own the infrastructure but not the parser's failure modes.
+geocode.earth is a better deal: the core is open-source, the licensing is more permissive, and you can run your own instance if the hosted service doesn't meet your needs. But the parser is the same Pelias rule engine that Mailwoman v1 was built on. It has the same tokenization-tautology ceiling. Running your own instance means you own the infrastructure but not the parser's failure modes.
 
 ### What owning gets you
 
@@ -96,7 +96,7 @@ Reducing the failure rate from 10% to 5% halves the manual-correction cost. Redu
 Mailwoman does not target 100% accuracy. No parser does. It targets:
 
 - **[Calibrated confidence](../../concepts/confidence-calibration.mdx).** When the parser is uncertain, it says so, instead of returning a confident wrong answer. The downstream system can decide: escalate to manual review, surface the ambiguity to the user, or accept the best guess with a caveat.
-- **Retrainability.** When a specific address class fails, you can add it to the corpus and retrain. The corpus pipeline is designed for this — the adapter pattern makes adding a new data source a few hundred lines of TypeScript.
+- **Retrainability.** When a specific address class fails, you can add it to the corpus and retrain. The corpus pipeline is designed for this. The adapter pattern makes adding a new data source a few hundred lines of TypeScript.
 - **Component-level improvement.** The policy registry lets you improve one component at a time. If the neural model is weak on `region` but strong on `street`, you can use the neural model for `street` and keep the rule classifier for `region`. You don't have to wait for every component to beat the baseline before shipping.
 
 The economic argument for owning your parser is that you can make it better where you need it — the cost of the failures you can't fix at Google is higher than the cost of running your own.

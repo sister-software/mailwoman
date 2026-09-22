@@ -123,7 +123,7 @@ def _stub_phrase_features(bsz: int, seq_len: int) -> torch.Tensor:
 def test_phrase_kind_taxonomy_matches_ts_interface():
     """Drift guard: the Python-side PHRASE_KINDS must match the TS-side ``PhraseKind`` union.
 
-    Order is the encoding interface — the i-th kind here is the same kind that downstream
+    Order is the encoding interface. The i-th kind here is the same kind that downstream
     corpus loaders one-hot at slot ``PHRASE_BIE_DIM + i``. If TS adds a new kind, this
     list and ``core/pipeline/types.ts``'s ``PhraseKind`` must move together in the same
     commit. otherwise the model card's ``phrase_kind_vocab`` silently mis-aligns.

@@ -12,7 +12,7 @@ district polygons — supplied the geometry both halves needed.
 
 **Keying source** (the postal authority, since Overture/GeoNames have no TW postcodes): Chunghwa
 Post's 3-digit postal-code → district table with official district centers (data.gov.tw dataset
-25489, OGDL v1; 371 rows, all county-prefixed). The 3-digit code is the admin-granularity key — the
+25489, OGDL v1; 371 rows, all county-prefixed). The 3-digit code is the admin-granularity key. The
 "+3" tail is road-segment level, and the full 3+3 file has been account-conditional at fpp.post.gov.tw
 since 2025. Sub-district resolution is therefore out of reach for now (noted rather than chased).
 

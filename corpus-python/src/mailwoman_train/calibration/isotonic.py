@@ -419,7 +419,7 @@ def _table_lines(fit: Fit) -> list[str]:
 
 
 def render_report(args: argparse.Namespace, fit: Fit) -> str:
-    """The self-reported markdown. Every figure is read off `fit` — an eval number is never hand-typed."""
+    """The self-reported markdown. Every figure is read off `fit`. An eval number is never hand-typed."""
     lines = [
         *_headline_lines(args, fit),
         *_reliability_lines("raw confidence", fit.reliability_raw, "conf"),

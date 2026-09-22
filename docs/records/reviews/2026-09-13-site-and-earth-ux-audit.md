@@ -9,8 +9,8 @@ Every claim states the file:line or the live observation it came from.
 ## Verification, 2026-09-13
 
 Everything below was checked against the Docusaurus build output and a `docusaurus serve` of it. The
-docs build is the check that matters, because `onBrokenLinks` and `onBrokenAnchors` are both `"throw"`
-— it passing means every link added here resolves.
+docs build is the check that matters, because `onBrokenLinks` and `onBrokenAnchors` are both `"throw"`.
+It passing means every link added here resolves.
 
 Why half of this was hard to check at all is its own record: `.yarnrc.yml` declared
 `supportedArchitectures` for `cpu` and `os` but not `libc`, so a macOS install silently dropped every
@@ -83,7 +83,7 @@ Three leaks, fixed in 86e85929f:
    aborted load cannot leak the session it was half-way through building.
 3. `useReleaseRuntime` now takes `disposeAssets` and calls it in the three places a bundle stopped being
    anybody's: the outgoing bundle when a reload begins (before the replacement is built, so two models
-   are never resident at once — the peak is what kills a tab), a bundle whose load was aborted after it
+   are never resident at once, because the peak is what kills a tab), a bundle whose load was aborted after it
    had already resolved, and the last bundle on unmount.
 
 This is separate from the main-thread stall below, and does not fix it. It does reduce what the page
@@ -115,9 +115,9 @@ What is settled is that the camera is correct. `computeMapPlaceRenderSpec`
 (`packages/react/lib/map/place-render.ts:126`) flies an interpolated hit to z15, well inside the
 Protomaps source's `maxzoom: 15`, and the marker lands on the right building. The viewport is
 nevertheless black for tens of seconds and then fills in on its own with no interaction. Why it does
-that is the open question below — an earlier answer to it has also been withdrawn.
+that is the open question below. An earlier answer to it has also been withdrawn.
 
-The cause is not established. The 2026-09-14 entry that claimed it was has been withdrawn — this is the
+The cause is not established. The 2026-09-14 entry that claimed it was has been withdrawn. This is the
 second confident wrong answer about this one symptom, and the pattern is worth naming in place.
 
 **Fact, from source.** Inference runs on the page's main thread.
@@ -244,7 +244,7 @@ column. Then decide whether `PricingTiers` gets mounted on `/docs/pricing` or de
 `/license`, `/license/terms/commercial-2026-10` and `/license/issued` are `src/pages` routes, so they get
 no sub-header band, no breadcrumb, no sidebar. `DocsSubHeader` only mounts for pages whose sidebar is one
 of `DOCS_SECTIONS` (`docs/src/components/DocsSubHeader/index.tsx:27`). Moving from `/docs/pricing` to
-`/license` drops the band and **shifts the whole page up by its height** — that jump is a large part of
+`/license` drops the band and **shifts the whole page up by its height**. That jump is a large part of
 what reads as disjointed.
 
 ### 6. Two nav rows disagree about where you are
@@ -555,7 +555,7 @@ existed to hold identity fixed across exactly that change, which is the one time
 **The rest.** A test reaching into `#map/graticule`, the package's private imports map, instead of a public
 export (`./map/graticule` added, and the test now imports it the way the geometry test does); two missing
 hook dependencies; two unnamed thresholds in the drawer gestures (`3` for a press that has travelled far
-enough to be a drag, `8` for a pull at the top of the scroll that has travelled far enough to be one — the
+enough to be a drag, `8` for a pull at the top of the scroll that has travelled far enough to be one, and the
 second is larger on purpose, because that gesture starts on content that could still turn out to be
 scrolling); `180` written out where `MAX_LONGITUDE` belonged beside the `MAX_LATITUDE` already there; and
 `beforeId`, which title-cases an acronym the house style capitalizes whole.

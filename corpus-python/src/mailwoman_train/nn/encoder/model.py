@@ -333,7 +333,7 @@ class MailwomanCoarseEncoder(
         Mirrors ``forward``'s encoder body, then projects hidden states through the TIED token-
         embedding matrix (no new parameters -> the pretrain checkpoint's ``state_dict`` is identical
         to a supervised model's, so it loads via ``from_pretrained`` for fine-tuning). The classifier
-        / CRF heads are untouched here — they stay at init through pretraining and are trained in the
+        / CRF heads are untouched here. They stay at init through pretraining and are trained in the
         later supervised fine-tune. Phrase priors are intentionally not threaded (pretraining runs on
         raw text only).
         """

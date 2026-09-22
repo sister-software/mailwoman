@@ -71,7 +71,7 @@ Manhattan, NY 10001 (borough-level: "Manhattan")
 New York County, NY (county-level)
 ```
 
-All four administrative labels refer to the same location at different levels of the hierarchy. A parser that expects exactly one `locality` per address will produce different results depending on which label the input uses. "New York" and "Manhattan" are different strings that describe the same place — the resolver must treat them as equivalent without losing the distinction in the output.
+All four administrative labels refer to the same location at different levels of the hierarchy. A parser that expects exactly one `locality` per address will produce different results depending on which label the input uses. "New York" and "Manhattan" are different strings that describe the same place. The resolver must treat them as equivalent without losing the distinction in the output.
 
 ### Buildings that straddle borders
 

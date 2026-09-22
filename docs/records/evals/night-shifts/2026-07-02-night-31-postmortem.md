@@ -48,7 +48,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
   into a day campaign with #914). Recommendation: the unified family — the mechanism is identical
   in all three, only the leading name's referent differs.
 - US stayed byte-identical through every checkpoint of both runs. Notable historical correction:
-  v1.9.4 (the demo-only v4.16 model) was never SI-measured — its damage was invisible until the
+  v1.9.4 (the demo-only v4.16 model) was never SI-measured. Its damage was invisible until the
   SI sets existed (two days old).
 
 ## The taxonomy arc (the night's biggest strategic finding)

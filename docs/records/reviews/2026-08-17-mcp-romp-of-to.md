@@ -16,7 +16,7 @@ Specifically:
 | `wof/candidate.db`             | symlink → `candidate-global-2026-08-15-icu.db` | also unmanifested; the `-icu` suffix suggests an in-progress fold change                               |
 
 Neither artifact can state its own provenance, which is the exact gap phase 3 closes going forward. So
-where this document says "the gazetteer does X", read it as "this build does X" — a rebuild may already
+where this document says "the gazetteer does X", read it as "this build does X". A rebuild may already
 have changed it, and there is currently no way to tell from the file.
 
 Two further honesty markers used throughout:

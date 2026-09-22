@@ -98,7 +98,7 @@ this correctly: "`$MAILWOMAN_CANDIDATE_DB` → the demo-parity candidate backend
 A nonexistent path satisfies that requirement.
 
 So: set `$MAILWOMAN_CANDIDATE_DB` and pass anything to `--resolve-db`. Do not pass `candidate.db` to
-`--resolve-db` with the environment variable unset — the flag is believed on that path, and the admin
+`--resolve-db` with the environment variable unset. The flag is believed on that path, and the admin
 backend queries `place_search`/`spr`, which a candidate gazetteer does not have.
 
 Requiring an argument in order to discard it is a defect in this command. Documented rather than fixed.

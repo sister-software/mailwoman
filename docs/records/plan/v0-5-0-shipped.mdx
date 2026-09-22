@@ -19,7 +19,7 @@ The [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-c
 
 Patching each ceiling individually meant three medium iterations. v0.5.0 bundles them into one **fresh-slate** ship — pay the cost once, clear all three at once.
 
-The "fresh-slate" framing is described in the operator's [sharpen-the-axe note](../site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx#what-v040-taught-us-about-the-missing-rungs) — it is the right shape when several improvements share a common cost (a retrain, an interface change) and bundling avoids paying that cost three times.
+The "fresh-slate" framing is described in the operator's [sharpen-the-axe note](../site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx#what-v040-taught-us-about-the-missing-rungs). It is the right shape when several improvements share a common cost (a retrain, an interface change) and bundling avoids paying that cost three times.
 
 ## The six threads
 
@@ -66,7 +66,7 @@ flowchart LR
 
 Solid boxes are merged. The A1 tokenizer was retrained on corpus-v0.4.0 and halved byte-fallback (36.7% → 18.2%). The C-train (full classifier training run) is the remaining item — CE-only training in progress as of 2026-05-25.
 
-The single biggest schedule reframe was **A0** — the plan originally said "A is blocked by B" because the tokenizer trains on the same corpus as the classifier. We split that into:
+The single biggest schedule reframe was **A0**. The plan originally said "A is blocked by B" because the tokenizer trains on the same corpus as the classifier. We split that into:
 
 - **A0** trains on `corpus-v0.3.0` immediately to validate the harness and establish a byte-fallback baseline.
 - **A1** retrains on `corpus-v0.4.0` (= v0.3.0 + B + B2) when the corpus is complete.

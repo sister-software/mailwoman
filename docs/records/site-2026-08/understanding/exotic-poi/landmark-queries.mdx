@@ -37,7 +37,7 @@ Landmark queries differ from address queries in that the user knows the name of 
 
 Buildings, bridges, towers, monuments: Eiffel Tower, Empire State Building, Big Ben, Colosseum, CN Tower. These are the easiest landmarks to geocode — they typically exist in gazetteers (WOF, OSM, GeoNames) with a single name and coordinate.
 
-The complication: some named structures have the same name in multiple cities. There are replica Eiffel Towers in Las Vegas, Paris (Texas), and Tokyo. The user searching for "Eiffel Tower" from Paris, France wants the real one. The user in Las Vegas wants the replica. The geocoder needs a **prominence signal** — the original Eiffel Tower is more prominent than the replica, and users searching without a location constraint probably mean the prominent one.
+The complication: some named structures have the same name in multiple cities. There are replica Eiffel Towers in Las Vegas, Paris (Texas), and Tokyo. The user searching for "Eiffel Tower" from Paris, France wants the real one. The user in Las Vegas wants the replica. The geocoder needs a **prominence signal**. The original Eiffel Tower is more prominent than the replica, and users searching without a location constraint probably mean the prominent one.
 
 ### Named natural features
 
@@ -47,7 +47,7 @@ The geocoder should return the feature's centroid for map display and the most r
 
 ### Named venues
 
-Stadiums, theaters, museums, arenas: Wrigley Field, Sydney Opera House, the Louvre, Madison Square Garden. These are easier — they are buildings with street addresses, and gazetteers typically have them. But a venue may have multiple entrances (main entrance, box office, VIP entrance, loading dock), and the geocoder's single coordinate is an implicit choice about which entrance matters.
+Stadiums, theaters, museums, arenas: Wrigley Field, Sydney Opera House, the Louvre, Madison Square Garden. These are easier. They are buildings with street addresses, and gazetteers typically have them. But a venue may have multiple entrances (main entrance, box office, VIP entrance, loading dock), and the geocoder's single coordinate is an implicit choice about which entrance matters.
 
 ### Named areas
 

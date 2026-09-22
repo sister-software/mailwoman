@@ -20,7 +20,7 @@
 #   leading       16,435 rows  FR DE ES IT NL PT MX   "8600-315 Lagos, Algarve, Portugal"     (pt_structured)
 #   after_region  16,000 rows  IN                     "Bengaluru, Karnataka 560038, India"    (in_structured)
 #
-# The leading arm is not filler — it is the counter-distribution. `no-fragment.ts`'s header records
+# The leading arm is not filler. It is the counter-distribution. `no-fragment.ts`'s header records
 # what happens without one: teaching a new surface alone flips the model's default rather than
 # teaching it a distinction. FR/DE/ES/IT pass on the leading form today and must keep passing.
 #

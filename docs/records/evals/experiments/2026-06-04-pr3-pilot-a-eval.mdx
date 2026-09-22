@@ -74,7 +74,7 @@ US resolver eval, n=2000, `--default-country US`:
 
 The pilot is within 1.6pp of v0.7.2 on US locality **and still beats the rules parser** — at 20k from-scratch steps against v0.7.2's 100k. The US street parse-F1 regression (−18pp) doesn't reach the resolver because US locality is position-resilient. So the conditioning architecture didn't poison the dominant locale; the damage is confined to German order. That localizes the problem directly: this is the boundary bug rather than a training blow-up.
 
-## The corpus is correct — this is not garbage-in
+## The corpus is correct, so the defect lies downstream of the data
 
 Every German training row labels the trailing city properly (`/tmp/german-train.jsonl`):
 

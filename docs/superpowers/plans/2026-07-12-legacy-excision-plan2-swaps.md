@@ -14,7 +14,7 @@
 
 ## Global Constraints
 
-- **Pre-registered check floors (set before any check run; do not adjust to green a failing check — a miss is an adjudication rather than a threshold bug):** after case-folding (`.toLowerCase()`) and street assembly: `house_number` agreement ≥ 0.97, `postcode` ≥ 0.97, `road`/street-family ≥ 0.90, measured over golden rows where the rules engine emitted that label.
+- **Pre-registered check floors (set before any check run; do not adjust to green a failing check, because a miss is an adjudication rather than a threshold bug):** after case-folding (`.toLowerCase()`) and street assembly: `house_number` agreement ≥ 0.97, `postcode` ≥ 0.97, `road`/street-family ≥ 0.90, measured over golden rows where the rules engine emitted that label.
 - **Raw `classifier.parse(text, { postcodeRepair: true })` is the parse entry point** — never `createRuntimePipeline`/`runPipeline` for parse-only surfaces (#566).
 - **Wire interfaces:** libpostal + nominatim response SHAPES are frozen (compat drop-ins); `/v1/parse`'s shape changes deliberately (v7 major) and its schema edit auto-cascades to the emitted OpenAPI + regenerated clients (client publish stays a separate manual dispatch — no action here).
 - **Goldens are readonly** — checks read them, never rewrite them.

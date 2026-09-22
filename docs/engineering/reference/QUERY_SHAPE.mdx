@@ -165,7 +165,7 @@ flowchart LR
     S6 --> O["Top-k places"]
 ```
 
-QueryShape is computed once, at the boundary between Stage 1 and Stage 2, and passed to the rest of the pipeline as additional context. It is not its own stage — it is a shared data structure that Stages 2, 2.5, 3 (optional), and 6 all consume.
+QueryShape is computed once, at the boundary between Stage 1 and Stage 2, and passed to the rest of the pipeline as additional context. It is not its own stage. It is a shared data structure that Stages 2, 2.5, 3 (optional), and 6 all consume.
 
 ## Packaging decision
 

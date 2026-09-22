@@ -86,7 +86,7 @@ Three different stories:
   | po-box          |   4 |  0% |     0% |
   | rural-route     |   1 |  0% |     0% |
 
-  PO boxes, military APO/FPO, and rural routes are **0% for both** — neither parser was
+  PO boxes, military APO/FPO, and rural routes are **0% for both**. Neither parser was
   built or trained for them.
 
 ## Scoreboard 2 — the resolver, on real addresses, end to end
@@ -127,7 +127,7 @@ Stripping out the harness bias, the real neural deficits are:
    **DC directional quadrants** (`…Street Ne` → tags `Ne` as a locality), and literal
    `<Null>` tokens in dirty input that `v0` shrugs off.
 
-Every one of these is **corpus-addressable** — they are gaps in what the model was shown rather than architectural limits.
+Every one of these is **corpus-addressable**. They are gaps in what the model was shown rather than architectural limits.
 
 ## Where neural wins — and why we run it
 
@@ -154,7 +154,7 @@ arms to the task ceiling, single variable = encoder init — the gains **vanishe
 The 40k "gains" were an **under-training artifact**: a pre-trained init is only ahead
 before a scratch encoder catches up; given 100k steps it does. Per a pre-registered
 kill-point, we **dropped pre-training**. v0.7.2 stays the default. The code is kept for a
-possible future larger model — the negative result is specific to this 29M-param encoder,
+possible future larger model. The negative result is specific to this 29M-param encoder,
 20k-step pre-train, en-us corpus.
 
 ## What we'd do differently / lessons

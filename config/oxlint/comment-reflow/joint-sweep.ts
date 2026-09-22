@@ -3,10 +3,16 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Rewrites dash joints reported by `CommentDashJoint` directly in comments.
+ * @file Rewrites dash joints reported by `CommentDashJoint` directly in the prose that carries them.
  *
  *   This command edits only the local dash join and keeps existing line layout.
  *   It changes the dash into a period or comma based on the right-hand clause.
+ *
+ *   It reads the same surfaces `config/vale/lint-prose.ts` lints, and each one carries prose in a
+ *   different place.
+ *   A `.ts` or `.tsx` file carries it in a block comment or a `//` run.
+ *   A `.py` file carries it in a `#` run or a docstring, and a `.yaml` or `.yml` file in a `#` run.
+ *   A `.md` or `.mdx` document is prose throughout, below its frontmatter.
  *
  *   Usage: `yarn comments:joints <file> [file …]`.
  */
@@ -82,7 +88,8 @@ interface Joint {
 	 */
 	index: number
 	/**
-	 * Replacement punctuation; empty if already sentence-closed.
+	 * Replacement punctuation.
+	 * An already sentence-closed clause takes the empty string.
 	 */
 	punct: string
 	/**
@@ -291,7 +298,7 @@ function applyEdit(text: string, at: number, punct: string, capitalize: boolean)
 	const found = text.indexOf("\n", at)
 	const lineEnd = found === -1 ? text.length : found
 
-	if (/^[\t ]*(?:\*|\/\/)?[\t ]*$/.test(text.slice(lineStart, at))) {
+	if (/^[\t ]*(?:\*|\/\/|#)?[\t ]*$/.test(text.slice(lineStart, at))) {
 		let cutEnd = at + 1
 
 		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) {
@@ -393,9 +400,140 @@ function rewrite(raw: string, lines: readonly string[]): string {
 }
 
 /**
- * Rewrites all detected joints in comments for one file.
+ * Strips the indentation every non-empty line shares.
+ *
+ * `scanLines` reads a four-space indent as a structural line, which is right for a
+ * markdown code block and wrong for the body of an indented docstring.
+ * Removing the common prefix first lets an indented paragraph group as a paragraph.
+ */
+function dedent(lines: readonly string[]): string[] {
+	let common = Infinity
+
+	for (const line of lines) {
+		if (!line.trim()) continue
+
+		common = Math.min(common, line.length - line.trimStart().length)
+	}
+
+	if (!Number.isFinite(common) || common === 0) return [...lines]
+
+	return lines.map((line) => (line.trim() ? line.slice(common) : line))
+}
+
+/**
+ * Rewrites the joints of a markdown or MDX document, whose whole body is prose.
+ *
+ * Leading YAML frontmatter is held out.
+ * Vale strips it before linting, so a dash inside it was never reported,
+ * and a key there is data rather than a sentence.
+ *
+ * `scanLines` handles the fenced blocks, list items and indented code the body still carries.
+ */
+function sweepMarkdown(source: string): string {
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- One document, already resident.
+	const lines = source.split("\n")
+	let start = 0
+
+	if (lines[0]?.trim() === "---") {
+		const close = lines.findIndex((line, index) => index > 0 && line.trim() === "---")
+
+		if (close !== -1) {
+			start = close + 1
+		}
+	}
+
+	const head = lines.slice(0, start)
+	const body = lines.slice(start)
+	const swept = rewrite(body.join("\n"), body)
+
+	return start ? `${head.join("\n")}\n${swept}` : swept
+}
+
+/**
+ * A triple-quoted Python string, with any prefix letters the literal carries.
+ */
+const DOCSTRING = /(?:[A-Za-z]*)("""|''')[\s\S]*?\1/g
+
+/**
+ * A run of whole-line `#` comments.
+ *
+ * The run must begin the line, so a `#` inside a YAML scalar (`key: "a # b"`) is left alone.
+ */
+const HASH_RUN = /(?:^[\t ]*#[^\n]*\n?)+/gm
+
+/**
+ * Rewrites the joints of a file whose comments open with `#`, which is Python and YAML here.
+ *
+ * Python carries prose in two places, and both are linted: a `#` run and a docstring.
+ * A docstring is swept first, because sweeping the `#` runs afterwards must not
+ * read the lines of a triple-quoted block as comments.
+ */
+function sweepHashLanguages(source: string, fileName: string): string {
+	const docstrings = fileName.endsWith(".py")
+
+	const withDocstrings = docstrings
+		? source.replaceAll(DOCSTRING, (literal: string) => {
+				// oxlint-disable-next-line mailwoman/prefer-spliterator -- One bounded literal.
+				const raw = literal.split("\n")
+
+				if (raw.length === 1) return literal
+
+				const opened = raw[0]!.replace(/^(?:[A-Za-z]*)(?:"""|''')/, "")
+				const closed = raw.at(-1)!.replace(/(?:"""|''')[\t ]*$/, "")
+				const middle = dedent(raw.slice(1, -1))
+
+				return rewrite(literal, [opened, ...middle, closed])
+			})
+		: source
+
+	const spans: [number, number][] = []
+
+	if (docstrings) {
+		DOCSTRING.lastIndex = 0
+
+		let found: RegExpExecArray | null
+
+		while ((found = DOCSTRING.exec(withDocstrings))) {
+			spans.push([found.index, found.index + found[0].length])
+		}
+	}
+
+	return withDocstrings.replaceAll(HASH_RUN, (group: string, offset: number) => {
+		if (within(spans, offset)) return group
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Single contiguous `#` run.
+		const raw = group.replace(/\n$/, "").split("\n")
+		const lines = raw.map((line) => /^[\t ]*#[\t ]?(.*)$/.exec(line)?.[1])
+
+		if (lines.some((line) => line === undefined)) return group
+
+		const body = lines as string[]
+
+		// Skip directive runs: a shebang, a coding declaration, a linter pragma.
+		if (body.some((line) => line.startsWith("!")) || group.startsWith("#!")) return group
+
+		return rewrite(group.replace(/\n$/, ""), body) + (group.endsWith("\n") ? "\n" : "")
+	})
+}
+
+/**
+ * Rewrites all detected joints in the prose of one file.
+ *
+ * The dispatch follows the surfaces `config/vale/lint-prose.ts` lints: `.ts` and `.tsx` under the code
+ * surface, `.py`, `.yaml` and `.yml` beside them, and `.md` and `.mdx` under the docs surface.
  */
 export function sweepSource(source: string, fileName: string): string {
+	if (/[.]mdx?$/.test(fileName)) return sweepMarkdown(source)
+
+	if (/[.](?:py|ya?ml)$/.test(fileName)) return sweepHashLanguages(source, fileName)
+
+	return sweepTypeScript(source, fileName)
+}
+
+/**
+ * Rewrites all detected joints in the comments of one TypeScript file.
+ */
+function sweepTypeScript(source: string, fileName: string): string {
 	const spans = literalSpans(source, fileName)
 
 	const blocks = source.replaceAll(/^[\t ]*\/\*[\s\S]*?\*\/$/gm, (block: string, offset: number) => {

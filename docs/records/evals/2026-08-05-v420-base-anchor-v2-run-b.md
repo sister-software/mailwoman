@@ -64,7 +64,7 @@ lower  fired 106/120 (unit 106 · outward-fallback 0) · no shaped span 14 · sp
 upper  fired 106/120 (unit 106 · outward-fallback 0) · no shaped span 14 · span-but-no-key 0
 ```
 
-106/120 is every row on the board carrying a postcode, and every hit is a UNIT key — the outward
+106/120 is every row on the board carrying a postcode, and every hit is a UNIT key. The outward
 fallback is never needed and no shaped span misses the lookup. Register-flat, but only because of
 `normalizeInputCase`: on the RAW text the shaped recognizer fires 0/120 on lowercase, because the
 alphanumeric shape patterns require uppercase letters by design. Anything that bypasses case

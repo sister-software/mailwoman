@@ -369,7 +369,7 @@ def digit_prior(
         table(by_source[src], f"source {src}")
 
     # The control: the countries whose rows actually fail in production, at the shapes that fail.
-    # Absence is not a low probability — a country with no rows has no prior at all, and its
+    # Absence is not a low probability. A country with no rows has no prior at all, and its
     # failures are OOD rather than mis-taught. The census prints before the conditional table so a missing
     # row reads as "no data" rather than "zero probability".
     print("\n--- COUNTRY CENSUS: rows drawn per country (absence != a prior of zero) ---")
@@ -570,8 +570,8 @@ def locale_supply_census(
     row count reads as supply it does not have. And a corpus can carry one street rendered a hundred
     ways, which is one street.
 
-    So this counts four things a row count cannot give, over a full scan rather than a sample —
-    a distinct count is the one statistic a sample cannot extrapolate:
+    So this counts four things a row count cannot give, over a full scan rather than a sample.
+    A distinct count is the one statistic a sample cannot extrapolate:
 
     - **rows**, per split, which is the number already in hand from the epoch-mixture audit.
     - **distinct raw surfaces**, the strings the tokenizer actually sees. Rows over surfaces is how

@@ -52,7 +52,7 @@ shallow-fusion pattern modern speech recognizers use to blend an acoustic
 model with a language model.
 
 It is **not** a context-free grammar. v0 mailwoman (the rule-based ancestor)
-was closer to one — each rule classifier fires independently on token features,
+was closer to one. Each rule classifier fires independently on token features,
 and solvers reconcile globally. The neural model doesn't enumerate productions;
 it learns continuous-valued biases where each token's interpretation depends
 on every other token via attention weights.

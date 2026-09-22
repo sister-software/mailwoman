@@ -60,8 +60,8 @@ only re-ranks, tier-safe — so a wrong off-map guess costs ~nothing (the M1 + M
 **asymmetric** → bias toward in-map recall, and set the threshold on the **assembled pipeline** rather than the
 component min.
 
-On the assembled check the threshold is a **flat optimum** in [0.5, 0.9] (identical 9 wins / 0 regressions —
-the homograph wins are all high-mass). So we keep **`abstainBelow` 0.9**: it captures every win, keeps
+On the assembled check the threshold is a **flat optimum** in [0.5, 0.9] (identical 9 wins / 0 regressions,
+because the homograph wins are all high-mass). So we keep **`abstainBelow` 0.9**: it captures every win, keeps
 off-map catch high on the component (≈88% at 0.9-ish), and minimizes in-map _misrouting_ exposure (inject
 only when confident). The rule — not the threshold — is the M2 change (+5.9pp in-map over max-prob).
 
@@ -74,7 +74,7 @@ only when confident). The rule — not the threshold — is the M2 change (+5.9p
   (`scripts/eval/coarse-placer-inmap-misroute.ts`, report
   `docs/articles/evals/2026-06-14-coarse-placer-inmap-misroute.md`) resolves 2 000 in-map addresses
   (200/country × 10; TW excluded — 0 WOF rows) with the country token **stripped** so the country must be
-  inferred — the case where the prior can bite. Result: **0 misroutes, 0 regressions**, 58 wins, right-country
+  inferred. The case where the prior can bite. Result: **0 misroutes, 0 regressions**, 58 wins, right-country
   50.7 → 53.6%. The tier-safe soft re-rank never pushed an in-map address to a wrong in-map country, even on
   OOD-parsed inputs. (Caveat — direct read: absolute rates are depressed by the en-US model being OOD on
   non-US addresses + thin WOF coverage for NL/DE/KR, so the eval is _conservative_; it directly answers the
@@ -86,7 +86,7 @@ only when confident). The rule — not the threshold — is the M2 change (+5.9p
   weighted by mass, so the resolver breaks country-ambiguous ties with its own place-level evidence and can
   never be committed to a wrong argmax. New `inMapPosterior()` on the core placer; `placeCountry` stage gained
   an optional `posterior` (consumers fall back to the one-hot when absent); the default placer emits it. A/B
-  on both checks (`--distribution`): homograph **identical** (91.2%, 9 wins, 0 regressions — those wins are
+  on both checks (`--distribution`): homograph **identical** (91.2%, 9 wins, 0 regressions, and those wins are
   confidently single-country, so distribution ≈ one-hot), misroute **+1 win (59 vs 58), still 0 regressions /
   0 misroutes** — a strict, principled improvement (larger on data with more in-map ambiguity, e.g. European
   cross-border namesakes).

@@ -91,7 +91,7 @@ A query that assumes every record has a valid parent chain will fail silently on
 
 ### Name normalization is critical
 
-WOF stores "São Paulo" with the accent. User input might arrive as "Sao Paulo" or "SAO PAULO". Case folding and accent stripping are not optional — they are required for matching. The resolver's placename index normalizes all names to a canonical form (NFC, lowercase, accent-stripped) before insertion.
+WOF stores "São Paulo" with the accent. User input might arrive as "Sao Paulo" or "SAO PAULO". Case folding and accent stripping are not optional. They are required for matching. The resolver's placename index normalizes all names to a canonical form (NFC, lowercase, accent-stripped) before insertion.
 
 ## How Mailwoman uses WOF
 

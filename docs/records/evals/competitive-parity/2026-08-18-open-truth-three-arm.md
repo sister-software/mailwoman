@@ -23,7 +23,7 @@ Pre-registered before the first import as §4 of
   Pelias and Photon captures were each run twice with byte-identical A/B output (checksums in the
   receipts); the Mailwoman capture is a single run of the same harness.
 - Results reported per `truth_type` stratum, never blended silently. Every row in this record is the
-  `rooftop` stratum — the withheld strata are named below.
+  `rooftop` stratum. The withheld strata are named below.
 
 ## What is published, and what is withheld
 

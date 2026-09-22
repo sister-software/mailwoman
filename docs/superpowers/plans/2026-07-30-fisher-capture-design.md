@@ -55,6 +55,6 @@ v2 refinement once a real engagement asks for it.
 ## What this deliberately does not claim
 
 EWC guards against drift in _parameter space_, calibrated on _our_ distributions. It does not
-guarantee arbitrary customer data can't find a pathological direction — that is what the battery
+guarantee arbitrary customer data can't find a pathological direction. That is what the battery
 check is for. The two together (parameter-space brake + behavior-space check) are the direct
 guarantee; neither alone is.

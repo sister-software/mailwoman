@@ -186,7 +186,7 @@ positives (`docs/plugins/glossary/remark.ts`), so a term does not need a manual 
 
 **Define, then link.** On first use in a page, define the term in one sentence in the running prose, and let
 the registry link carry the depth. Do not send a first-time reader to the registry mid-sentence for the
-concept the page is about — that is the recursive-hop failure the Mapbox survey records. Do not re-derive a
+concept the page is about. That is the recursive-hop failure the Mapbox survey records. Do not re-derive a
 definition on the third page that needs it either; that is the repetition cost the Felt survey records. One
 sentence locally, the registry for the rest.
 

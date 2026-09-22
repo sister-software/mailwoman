@@ -168,7 +168,7 @@ Three inputs, run in order against one loaded classifier:
 
 The indentation is containment rather than reading order: the region contains the locality, the locality
 contains the street and the postcode, and the street carries its own number, prefix and suffix. That
-is why the second input has no `region` level at all — a British address has no state to nest under —
+is why the second input has no `region` level at all. A British address has no state to nest under —
 and the structure is what makes a resolver's job tractable later.
 [Read everything a parse returns](./understand-a-parse.mdx) walks the same tree with its spans and
 confidences. Everything that page shows is available here; the runner underneath is the only
@@ -178,7 +178,7 @@ All three inputs are lowercase, because that is the register a person types in.
 
 Per-parse cost above is 20–30 ms on the WASM backend, on a warm session. The first parse after load
 is not in that range, which is why the loader runs a warm-up inference before handing the classifier
-back — that cost is inside step 2's number rather than step 3's.
+back. That cost is inside step 2's number rather than step 3's.
 
 ## What the load costs
 

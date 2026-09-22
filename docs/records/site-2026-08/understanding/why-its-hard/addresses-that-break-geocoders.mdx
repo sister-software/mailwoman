@@ -95,7 +95,7 @@ Behind gas station
 
 What breaks: regex-based house-number classifiers expect `\d+`. They miss `One`, `12½`, `12 1/2`, `4-6-8`. Leading zeros (`0007`) may match a postcode regex by accident. "No Fixed Address" and "Behind gas station" are legitimate inputs in some workflows but are not addresses at all — they describe locations.
 
-Mailwoman's defence: the subword tokenizer ([Tokenization](../../concepts/tokenization.mdx)) does not require numeric tokens; the neural classifier can learn that `"One"` in `"One Infinite Loop"` is a `B-house_number`. The "Corner of 5th and Main" case maps to the `intersection_a` / `intersection_b` tags in the component vocabulary ([What is an address?](../the-problem/what-is-an-address.mdx#the-data-model)). The "Behind gas station" landmark case has no good answer — that is reverse-geocoding territory rather than parsing territory.
+Mailwoman's defence: the subword tokenizer ([Tokenization](../../concepts/tokenization.mdx)) does not require numeric tokens; the neural classifier can learn that `"One"` in `"One Infinite Loop"` is a `B-house_number`. The "Corner of 5th and Main" case maps to the `intersection_a` / `intersection_b` tags in the component vocabulary ([What is an address?](../the-problem/what-is-an-address.mdx#the-data-model)). The "Behind gas station" landmark case has no good answer. That is reverse-geocoding territory rather than parsing territory.
 
 ## 4. Street/locality collisions
 

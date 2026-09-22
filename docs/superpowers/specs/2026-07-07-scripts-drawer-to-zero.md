@@ -59,7 +59,7 @@ Everything else either moves into a package (as a module), becomes an Ink comman
 
 ### ▸ Phase 0 — Already covered by the gazetteer-CLI spec (do not duplicate)
 
-These are addressed in `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md`. The spec is approved; implementation is pending (3 PRs). The items below are listed for completeness — their fate is already decided.
+These are addressed in `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md`. The spec is approved; implementation is pending (3 PRs). The items below are listed for completeness. Their fate is already decided.
 
 | Script(s)                                                                                                                                                                                                                                                                                                                                                                                     | Fate                                                      | Details                                                                                      |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------- |

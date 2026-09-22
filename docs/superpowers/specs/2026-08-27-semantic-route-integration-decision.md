@@ -57,7 +57,7 @@ This half is attested on committed data and does not depend on the probe at all.
 The committed category lexicon is exact-phrase over venue nouns. The boundary record's §5.2 ran nine
 queries through the shipped `matchPOISubject` against the shipped `poiTaxonomyLookup`: every
 activity phrasing returns `NO SUBJECT MATCH`, `createScorePOIQuery` returns `0`, and the input
-leaves the POI branch entirely — an activity query is answered as an address parse of a sentence.
+leaves the POI branch entirely. An activity query is answered as an address parse of a sentence.
 The miss is structural rather than a lexicon omission: locale-normalized matching folds diacritics
 over the same phrase index, and the one-edit typo path needs a length difference of at most 1
 against an existing phrase.
@@ -201,7 +201,7 @@ branch, and this record keeps it.
 `packages/mailwoman/lib/eval-harness/semantic-utility/observation-route.ts`. A consumer must not reach
 into an eval harness for a runtime capability, so the builder moves into the `mailwoman` runtime
 tree with a real export subpath, and the harness imports it from there. The probe's frozen
-definition and freeze record are untouched by that move — they must show an empty diff, the same
+definition and freeze record are untouched by that move. They must show an empty diff, the same
 obligation #1960 carries.
 
 ### 3.2 Dependency direction
@@ -243,7 +243,7 @@ So the published `0.0.0` is a functioning package rather than a name reservation
 JavaScript, type declarations and the compiled artifact. What makes a runtime dependency unsafe
 **today** is the version number rather than the contents. `yarn pack` freezes `workspace:*` to whatever the
 sibling reads at pack time, so a `mailwoman` packed before the next coordinated release would pin
-`0.0.0` permanently — a version that will never be republished once the workspace is in the bump
+`0.0.0` permanently, and that version will never be republished once the workspace is in the bump
 set, which is the frozen-workspace hazard `AGENTS.md` describes from the other side.
 
 **The decision:** the edge moves from `devDependencies` to `dependencies` in the change that ships
@@ -319,7 +319,7 @@ prerequisite.
 implementation bound both to the caller. Recognition is the caller's: a phrase's locale scope says who
 uses that wording, so it is read against the caller's locale. Semantics are the place's: an
 assertion's `countries` says where the establishments it describes exist, so it is judged against the
-country the ANCHOR resolved to — the caller's locale is a lens through which the phrase is read rather than a
+country the ANCHOR resolved to. The caller's locale is a lens through which the phrase is read rather than a
 definition of where the condition is true. Under the caller binding an `en-US` caller asking about
 Garancières admitted the US-scoped `drugstore` claim into a French search (#1996's receipts, #1998's
 three refusals). The route now returns every reached kind with the assertion's scope on the match
@@ -396,7 +396,7 @@ route hands them out through a `takeObservations()` drain the harness owns, and
 and none of the authority behind it.
 
 There is an existing interface shaped for exactly this. `QueryKindResult.intentMarkers` carries
-`QueryIntentMarker`, whose own docstring states that a marker never changes which answer wins — it
+`QueryIntentMarker`, whose own docstring states that a marker never changes which answer wins. It
 is additive, attributed, and always accompanied by the ordinary result — with `mechanism` naming the
 rule that produced it in a `family:rule` form and `evidence` carrying the measurement so the marker
 is auditable rather than assertive. `QueryIntentCode.POICategory` already exists for a query that
@@ -448,7 +448,7 @@ this refusal must exist before it merges or the collapse ships unobserved.
 
 **Landed 2026-08-28 (#1980), and the interim refusal is gone.** `POIPhraseMatch` gained one field
 saying whether a lookup's several hits are one set to search together or a preference list whose head
-is the subject — the committed phrase index keeps the second reading, which is #1933's territory and is
+is the subject. The committed phrase index keeps the second reading, which is #1933's territory and is
 unchanged. `matchPOISubject` carries the whole set, `POIIntent`'s category subject holds
 `categoryIDs`, and the executor probes them in ONE `#searchKRing` call, so the reader's own
 distance sort ranks the union and nothing on the path authors a weight or a per-category preference.
@@ -488,15 +488,15 @@ probe's definition and freeze record show an empty diff across the move.
 
 ## 9. Sequencing
 
-| Issue                       | Relationship to this record                                                                                                                                                                                                                                                                         |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **#1960 / PR #1969**        | Merges first; it is the measurement surface §5 rows 1 and 5 read. Its three `improvement_target` rows name **this issue** as their blocker, so when #1966 closes they must be re-pointed at the implementation issue §8 authorizes — a tracked row naming a closed issue is a row nobody is holding |
-| **#1962** (recognition)     | **Blocks the opt-in surface.** A supported capability may not rest on a table whose provenance reads `AUTHORED FOR ONE EXPERIMENT`. Its per-entry locale scoping is half of §4.3's admission control, and its phrase-collision census is what stops another `Somewhere`                             |
-| **#1963** (semantics)       | **Blocked by §8.1 and §8.2.** It lands the first plural affordance and the first country-scoped assertion, and both defects in §1.4 become live at that moment. Its own re-measurement obligation (§4.1's closing paragraph) is unchanged by this record                                            |
-| **#1964 / #1965** (absence) | **Independent of the default posture.** Observation-only by construction, blocked on exclusion-grade coverage cells rather than on this record. It shares §8.3's route to the caller and should not build a second one                                                                              |
-| **#1967** (phase-2 ruler)   | **Consumes this record.** §5's nine rows are what the ruler must contain; rows 5, 6 and 7 have no committed instruments today and must be built into the pre-registration rather than discovered after the arms run                                                                                 |
-| **#1039**                   | Owns `sem-act-fr-01`'s structural blocker. Not this program's, and not on the path to the opt-in surface                                                                                                                                                                                            |
-| **#1933**                   | Owns the `drugstore`/`pharmacy` retrieval split. §8.1's union search is adjacent to it and must not be mistaken for it — one is which categories a subject reaches, the other is which category a typed phrase reaches                                                                              |
+| Issue                       | Relationship to this record                                                                                                                                                                                                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **#1960 / PR #1969**        | Merges first; it is the measurement surface §5 rows 1 and 5 read. Its three `improvement_target` rows name **this issue** as their blocker, so when #1966 closes they must be re-pointed at the implementation issue §8 authorizes. A tracked row naming a closed issue is a row nobody is holding |
+| **#1962** (recognition)     | **Blocks the opt-in surface.** A supported capability may not rest on a table whose provenance reads `AUTHORED FOR ONE EXPERIMENT`. Its per-entry locale scoping is half of §4.3's admission control, and its phrase-collision census is what stops another `Somewhere`                            |
+| **#1963** (semantics)       | **Blocked by §8.1 and §8.2.** It lands the first plural affordance and the first country-scoped assertion, and both defects in §1.4 become live at that moment. Its own re-measurement obligation (§4.1's closing paragraph) is unchanged by this record                                           |
+| **#1964 / #1965** (absence) | **Independent of the default posture.** Observation-only by construction, blocked on exclusion-grade coverage cells rather than on this record. It shares §8.3's route to the caller and should not build a second one                                                                             |
+| **#1967** (phase-2 ruler)   | **Consumes this record.** §5's nine rows are what the ruler must contain; rows 5, 6 and 7 have no committed instruments today and must be built into the pre-registration rather than discovered after the arms run                                                                                |
+| **#1039**                   | Owns `sem-act-fr-01`'s structural blocker. Not this program's, and not on the path to the opt-in surface                                                                                                                                                                                           |
+| **#1933**                   | Owns the `drugstore`/`pharmacy` retrieval split. §8.1's union search is adjacent to it and must not be mistaken for it. One is which categories a subject reaches, the other is which category a typed phrase reaches                                                                              |
 
 **A default change is not authorized by this record, and cannot be authorized by #1967 alone.** It
 needs §5's bar cleared, an operator recording, and — if the bar itself moves — an amendment here.

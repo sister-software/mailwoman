@@ -15,7 +15,7 @@ the FS baseline (the recall-correct baseline the flows currently pin) and the bu
 across link thresholds from −8 up through its dedup threshold (2.71). The GBT logit **replaces** the
 FS weight, so lowering the threshold is the only knob.
 
-**Precision proxy (label-free):** there is no cross-source ground truth — no shared key across the
+**Precision proxy (label-free):** there is no cross-source ground truth. No shared key across the
 three datasets is the whole premise. So we use **phone corroboration**: of the cross-source entities
 whose records carry a phone in ≥2 different sources, the fraction whose phones **match**. Phone is not
 the join key, so a match is independent evidence of same-facility. (Small-N + noisy — see caveats.)
@@ -58,7 +58,7 @@ place, names differ across sources) lands in the same logit band as an actual de
 place, different co-located provider). One threshold cannot separate the two when the objectives are
 opposite — which is the definition of needing a different model rather than a different cutoff.
 
-**FS stays pinned for the cross-source flows** — it is the recall-correct _and_ best-precision tool
+**FS stays pinned for the cross-source flows**. It is the recall-correct _and_ best-precision tool
 here, by design. The only way to "do better than FS" (#655) is a **cross-objective retrain**
 (option 2): a GBT trained on the cross-source objective, where `spatial-exact × name-disagree` carries
 the _opposite_ sign. That is blocked on cross-source labels, which don't exist (no shared key) — it

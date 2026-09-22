@@ -28,7 +28,7 @@ cases that parse correctly today:
 | "Manhattan"  | en-US  | 0.18% (rank 11)          | locality 91.9% |
 
 US surfaces carry more raw dependent-locality mass than the GB ones that work. The shipped GB
-behaviour is not the model preferring the tag — it is the pair index at δ=10 clearing a deficit the
+behaviour is not the model preferring the tag. It is the pair index at δ=10 clearing a deficit the
 en-GB model card already measured as "large but UNIFORM (~7.0 logits mean)". The origin is a
 training-side class weight of 0.3 on `B/I-dependent_locality` carried from v0.5.1 through v0.8.0
 ("penalize hallucination of rare tags"), since corrected to 1.0 but not retrained into the shipped
@@ -112,7 +112,7 @@ package nobody installs by accident) does not cover it.
 ## The finding worth carrying past this rung
 
 The doc's claim that the US instance is blocked on "the tag's _contextual_ aliveness for US" is
-**wrong, and was wrong for GB too**. The tag is dead uniformly — the en-GB model card had already
+**wrong, and was wrong for GB too**. The tag is dead uniformly. The en-GB model card had already
 measured the deficit as "large but UNIFORM (~7.0 logits mean)" — and no locale's dependent-locality
 emission comes from the model preferring it. GB emits because an artifact clears a uniform deficit;
 the US does not emit because no artifact exists. Every other locale in the campaign's wave 2–4 list

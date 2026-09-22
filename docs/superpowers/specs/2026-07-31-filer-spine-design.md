@@ -75,7 +75,7 @@ Three findings that change the design:
 3. **The DC agent is an anti-pattern for family inference.** The 499 "DC agent" is the agent for
    service of process, and that role is dominated by a handful of firms (CT Corporation, CSC, Cogency
    Global) serving tens of thousands of unrelated companies. Shared registered agent must **never**
-   produce a family edge — it is the single most likely false-positive generator in this whole design.
+   produce a family edge. It is the single most likely false-positive generator in this whole design.
    Record it as an attribute; never as evidence of relatedness.
 
 **Salvage verdict: take the vocabulary and the classification mapping; rewrite the loader.** The Nexus
@@ -103,7 +103,7 @@ edge: { from, to, assertion: "authoritative" | "inferred", source, source_vintag
   contact, with FRN/SPIN/ASN as `exactDiscriminator`s when present and name/address as scored
   comparators. This is the existing Fellegi-Sunter path rather than a new subsystem.
 
-**Edges are time-scoped — this is required rather than bookkeeping.** Ownership changes faster than
+**Edges are time-scoped. This is required rather than bookkeeping.** Ownership changes faster than
 filing vintages update (worked example: a filer acquired ~7 months before the BDC vintage under
 inspection still files under its pre-acquisition identity — see
 `2026-07-31-evidence-axes-beyond-filings.md` §2.1). Every family rollup query therefore takes a date,
@@ -194,7 +194,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
   pair (499 holding company + EDGAR Exhibit 21) covers the entities the analysis is about.
   OpenCorporates is excluded by the same call, which moots its licensing question for v1.
 - **D5 — Publication posture: split the two artifacts.** Controller call. The **record-linkage eval**
-  (§5) is publishable early and safely — it is a methods result about matching, naming no company's
+  (§5) is publishable early and safely. It is a methods result about matching, naming no company's
   conduct. The **filers-vs-families competition analysis** ships as an internal/product capability
   first and becomes public only as a separate, deliberate operator decision after real output has
   been reviewed. Different wording bar, different risk; do not bundle them.

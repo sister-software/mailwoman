@@ -23,7 +23,7 @@ SEARCH address_point USING INDEX idx_ap_postcode (postcode=? AND street_norm=? A
 ```
 
 The index B-tree is depth 4, so a lookup descends ~6 pages ≈ **24 KB**, out of 3.3 GB (0.0007%). The
-total file size is irrelevant to lookup cost — that is the entire point of byte-range over an indexed
+total file size is irrelevant to lookup cost. That is the entire point of byte-range over an indexed
 SQLite. **If CA works, every state works**, exactly as the plan predicted. A full geocode fires a few
 such lookups (situs by postcode, situs by locality fallback, interp), so the data-fetch cost is a
 handful of round-trips ≈ low-hundreds of KB, RTT-bound (~350 ms/query same-region from the spike) rather than

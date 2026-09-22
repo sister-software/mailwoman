@@ -65,7 +65,7 @@ The gravity table assigns each cross-package family a proposed owner:
 | `core` _(designated home)_   |        6 |    22 |
 | `codex` _(designated home)_  |        1 |     7 |
 
-The three homes total 95 lines. They are not waiting to receive code — they have already received it. The strongest
+The three homes total 95 lines. They are not waiting to receive code. They have already received it. The strongest
 package pairs are the layer packages (`coastal ~ zoning` 98L, `coastal ~ flood` 91L, `flood ~ zoning` 75L) and the
 drop-in servers (`nominatim ~ photon` 69L).
 
@@ -80,7 +80,7 @@ hand-written one, a helper moved to the package that already owns the concept.
 **Out of scope.** Relocating the 36,088 lines of declared table literals or the 44,723 lines of type declarations
 out of TypeScript. That reaches the 15% and is a different project; the operator chose reuse at its real size.
 
-**Non-goals.** Deleting features. Removing docstrings. Splitting files because they are long — the mechanical
+**Non-goals.** Deleting features. Removing docstrings. Splitting files because they are long. The mechanical
 cleanup lane stays closed except where this campaign's own work touches a file.
 
 ## Lanes
@@ -114,7 +114,7 @@ The kebab-to-property derivation already exists as `optionPropertyName` in `@mai
 with an `OPTION_INITIALISMS` table naming the segments that capitalize a whole acronym. A mapped type mirroring
 that derivation makes `Options` derived.
 
-The runtime table and the type-level table must not drift, and matched constants would not prevent it — this
+The runtime table and the type-level table must not drift, and matched constants would not prevent it. This
 repository's own rule is to share the function rather than the constants. The action is one declaration: keep
 `OPTION_INITIALISMS` as a single `as const` object, take the type side from `typeof` it and the runtime side from
 `Object.entries` of it.
@@ -122,7 +122,7 @@ repository's own rule is to share the function rather than the constants. The ac
 `packages/repo-health/lib/checks/cli-flag-properties.ts` exists because these two can drift; its docstring records
 the cost, ten flags across seven commands reaching the component under a name nothing read, `eval oa-resolver
 --out-json` among them. Derivation turns that class into a compile error. Whether the check retires entirely is
-decided after A1 lands, by reading what it still catches — a flag whose property is declared but unread is a
+decided after A1 lands, by reading what it still catches. A flag whose property is declared but unread is a
 different finding and may survive.
 
 **A2. Shared option groups.** 450 of 881 option declarations restate a key another command already declares, at

@@ -184,7 +184,7 @@ ISP-adjacent categories are one part of it. It therefore splits from `variant-al
 `fire_hydrant`, `post_box`, `drinking_water`, `data_center` etc. have no permissive source:
 they live in OSM and in Overture's _base_ theme, both ODbL. Ship `poi build --source osm`
 (reuse `osm/sdk` ingestion) producing a build-local layer conforming to the same schema.
-The category lexicon still recognizes these subjects when the layer is absent — the answer is
+The category lexicon still recognizes these subjects when the layer is absent. The answer is
 then "requires the locally-built OSM layer," not a mangled parse.
 
 ### 3.6 Checks (pre-registered)

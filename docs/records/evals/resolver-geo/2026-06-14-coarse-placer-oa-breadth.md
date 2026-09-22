@@ -75,5 +75,5 @@ node scripts/coarse-placer/eval.mjs            --model <model> --abstain {0.5,0.
 ```
 
 Caveats: char-ngram linear model (the boundary ceiling is the point); OA middle-east rows are
-romanized/non-Latin (a script-handled subset); the threshold's in-map cost is real — the 90/90 target wants
+romanized/non-Latin (a script-handled subset); the threshold's in-map cost is real. The 90/90 target wants
 the open-set method, tracked as the next #244 step.

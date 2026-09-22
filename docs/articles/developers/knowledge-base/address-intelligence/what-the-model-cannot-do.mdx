@@ -18,8 +18,8 @@ constructed examples.
 ## The analog
 
 A postal sorting machine reads what it can and passes the rest to a person. The machine's designers
-did not consider that a defect, because the machine's job was never to be right about everything —
-it was to be right about most things, fast, and clear about which envelopes it was handing over.
+did not consider that a defect, because the machine's job was never to be right about everything.
+It was to be right about most things, fast, and clear about which envelopes it was handing over.
 
 The parser has no equivalent hand-off, and that is the single most important thing to know about it.
 There is no envelope it declines. Everything below follows from that.
@@ -46,7 +46,7 @@ upstream, and the parse result is not the place to make it.
 [What Mailwoman is](../../get-started/what-mailwoman-is.mdx) states the boundary and it is worth
 restating with the mechanism: a parse tells you a string reads like an address and where the
 components sit. It does not consult a register of real delivery points, because it does not have
-one — those are licensed products from postal authorities, and open data does not substitute for
+one. Those are licensed products from postal authorities, and open data does not substitute for
 them.
 
 The failure mode is specific. A completely invented address parses with high scores on every
@@ -141,7 +141,7 @@ montreal qc     →  locality = "Montreal",   region = "QC"
 montréal qc     →  locality = "montréal"
 ```
 
-One accent, and the region is gone — the restoration did not run, so `qc` reached the model in a form
+One accent, and the region is gone. The restoration did not run, so `qc` reached the model in a form
 it has little training signal for, and there was no comma to supply the structure instead. Add the
 comma back and `montréal, qc` recovers the region, in the lowercase form it arrived in.
 
@@ -180,7 +180,7 @@ contexts — `Georgia` as a state and as a country is the canonical case — and
 about both without a hand-written guard. Where the collision does not exist, the lookup wins.
 
 **Format validation.** Whether a string is a well-formed United Kingdom postcode is a question about a
-grammar, answerable exactly by a pattern. The model has no notion of validity — it labels a span
+grammar, answerable exactly by a pattern. The model has no notion of validity. It labels a span
 `postcode` because that is where a postcode goes, and `00000` scores as well as a real one.
 
 **Rendering.** Turning components back into a correctly ordered address string for a country is

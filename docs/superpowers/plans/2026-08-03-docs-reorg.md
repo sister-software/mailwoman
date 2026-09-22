@@ -31,7 +31,7 @@ Phase 3  content, door by door, tutorials executed                    (tasks 9�
 Phase 4  full-site audit + PR                                         (tasks 23–24)
 ```
 
-Raw material note: Task 4 parks the old `articles/` tree at `docs/records/site-2026-08/` (unpublished) so Phase 3 writers can mine it without archaeology. It stays there — the repo keeps its own history browsable.
+Raw material note: Task 4 parks the old `articles/` tree at `docs/records/site-2026-08/` (unpublished) so Phase 3 writers can mine it without archaeology. It stays there. The repo keeps its own history browsable.
 
 ---
 
@@ -334,5 +334,5 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 ## Self-review
 
 - **Spec coverage:** decisions 1–7 → Tasks 5 (shape), 3–5 (publicness), 6–8 (CLI), 9–22 (content), 1–2+23 (style enforcement), 24 (PR). Acceptance bullets each map: cold trial (9, 23), executed builds (12), build/check/Vale (23), publicness (4, 23), doors-from-front-page (5), drop-ins cold (7, 23).
-- **Placeholder scan:** the R2 artifact inventory (Task 6 step 1) and measured numbers (12, 15) are deliberately gathered-at-execution measurements rather than placeholders — the steps that gather them are explicit.
+- **Placeholder scan:** the R2 artifact inventory (Task 6 step 1) and measured numbers (12, 15) are deliberately gathered-at-execution measurements rather than placeholders. The steps that gather them are explicit.
 - **Type consistency:** `validatePage` (Task 2) used only in-check; `DataBundle`/`resolveBundleArtifacts`/`needsDownload` names consistent across Task 6 steps; sidebar ids from Task 5 used verbatim in Phase 3 tasks.

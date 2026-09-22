@@ -8,7 +8,7 @@
 
 Each is a thin wrapper: the audit itself lives in `mailwoman_train.audits`, where it is unit-tested
 and can run anywhere, and this supplies the volume, the CPU and the committed JSON path. They are
-CPU-only by design — an audit that needed the GPU would be an audit nobody runs before a launch.
+CPU-only by design. An audit that needed the GPU would be an audit nobody runs before a launch.
 
 Pull a receipt with `modal volume get mailwoman-training /audits/<name>.json <local>`.
 """
@@ -146,7 +146,7 @@ def census_comma_segment_number(config_name: str = "v5.6.0-bare-postcode-60k.yam
     """Count what a bare number standing alone between commas teaches.
 
     `301 College Ave, 101, Athens, GA 30601` is the surface #2298 proposes to teach as a unit, and it
-    carries no token that decides the reading — the same surface is already attested as a house
+    carries no token that decides the reading. The same surface is already attested as a house
     number and as a postcode. Leading and later positions are counted apart, because only the later
     one is in competition with the proposed unit.
     """

@@ -34,7 +34,7 @@ Rerank rule, applied only when rank-1's street is not the evidence pick:
 
 This stays inside the anti-Pelias rule from `resolver/rerank.ts`: one bit of evidence, no score
 blending, model order preserved among candidates with equal evidence. G1 is a lexicon fact
-(libpostal street-type dictionaries) rather than a tuned weight; G2's 2.5 is the one scalar — it must be
+(libpostal street-type dictionaries) rather than a tuned weight; G2's 2.5 is the one scalar. It must be
 re-fit (or replaced by the isotonic ambiguity check the plan pre-registered) when the span head
 retrains, since raw score margins are not calibrated across models.
 

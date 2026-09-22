@@ -1,7 +1,7 @@
 # PIX1 whole-edge — bar verdicts (2026-08-04)
 
 Grades the four bars pre-registered for the PIX1 whole-edge arm. Those bars were never committed as their own
-document, so this record and the four verdicts below are the whole of it — the four bars are restated in place.
+document, so this record and the four verdicts below are the whole of it. The four bars are restated in place.
 Defect record: [`2026-08-04-pix1-parent-assumption.md`](./2026-08-04-pix1-parent-assumption.md).
 
 Model: shipped en-US weights, `model-v401-base-step-060000-int8.onnx` (md5 `c968c24a`). Gazetteer: the
@@ -114,7 +114,7 @@ residual FP class. The parent bias adds nothing to it at any δ through 20.
 
 parentDelta ∈ [5, 20] clears B-2 (98.3% ≥ 70% on both boards) and B-3 (0.00% ≤ 2%) at once. δ=4
 clears both too (83.3% / 0.00%); δ=2 fails B-2's sub-board at 45.0%. **δ=5 is the smallest that
-saturates B-2**, and the curve is flat from there to 20 — the choice is not knife-edge.
+saturates B-2**, and the curve is flat from there to 20. The choice is not knife-edge.
 
 **Verdict: PASS.**
 

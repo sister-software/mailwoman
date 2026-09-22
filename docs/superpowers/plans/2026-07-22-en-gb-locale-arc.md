@@ -541,7 +541,7 @@ Add an `emitSpans`-level case: token sequence for `"Plimmerton, Porirua"` labele
 - [ ] **Step 2: Run**
 
 Run: `yarn vitest run core/decoder/build-tree.test.ts neural/span-bridge.test.ts`
-Expected: PASS with no production change. If it passes: the "heal lumps" claim is falsified at pipeline level — the lumping seen in the NZ probes was the MODEL emitting one span (which the resurrection addresses). Update the spec's Phase 3 heal bullet with this finding and delete the heal-fix acceptance criterion. If it fails: keep the test, fix the merge guard it exposes, and record which mechanism it was.
+Expected: PASS with no production change. If it passes: the "heal lumps" claim is falsified at pipeline level. The lumping seen in the NZ probes was the MODEL emitting one span (which the resurrection addresses). Update the spec's Phase 3 heal bullet with this finding and delete the heal-fix acceptance criterion. If it fails: keep the test, fix the merge guard it exposes, and record which mechanism it was.
 
 - [ ] **Step 3: Commit (either outcome)**
 

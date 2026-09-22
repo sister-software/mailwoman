@@ -107,7 +107,7 @@ The three changes on this branch — `spanRescore`, `postcodeConsistency`, `addr
 3. **No extra queries.** `postcodeConsistency` reuses the node's already-captured `alternatives`; `spanRescore` runs exact-match queries that are cheap against the gazetteer.
 4. **Tests cover: on/off, corner cases, byte-stability.** The 8 + 5 new tests keep the pattern.
 
-This is a maintainable extension surface. The risk is flag proliferation — each new change adds two options to `ResolveOpts`. At 4 changes (addressPoints, interpolation, spanRescore, postcodeConsistency), the API is still manageable. Beyond 6–7, consider a `changes: ResolverChange[]` enum-bundle or a policy-driven resolver config.
+This is a maintainable extension surface. The risk is flag proliferation. Each new change adds two options to `ResolveOpts`. At 4 changes (addressPoints, interpolation, spanRescore, postcodeConsistency), the API is still manageable. Beyond 6–7, consider a `changes: ResolverChange[]` enum-bundle or a policy-driven resolver config.
 
 ### haversineKm duplication
 
@@ -119,7 +119,7 @@ This is a maintainable extension surface. The risk is flag proliferation — eac
 - `scripts/eval/failure-dump.ts`
 - `scripts/eval/competitive-benchmark.ts`
 
-Five near-identical implementations of the same 6-line function. The resolver copies differ only in variable naming (`la1`/`la2` vs inline). This is not a correctness bug — the math is trivial — but it is a maintenance hazard if the Earth's radius ever needs updating (joke) or if a precision issue surfaces in one copy. Consolidate into `core/spatial/haversine.ts` or a shared utility. Low priority; consistency cleanup.
+Five near-identical implementations of the same 6-line function. The resolver copies differ only in variable naming (`la1`/`la2` vs inline). This is not a correctness bug. The math is trivial — but it is a maintenance hazard if the Earth's radius ever needs updating (joke) or if a precision issue surfaces in one copy. Consolidate into `core/spatial/haversine.ts` or a shared utility. Low priority; consistency cleanup.
 
 ### The eval tooling ecosystem is healthy
 
@@ -132,7 +132,7 @@ The branch ships four eval scripts that form a coherent diagnostic pipeline:
 | `au-order-probe.ts`        | Quantify word-order ceiling             | OA AU goldens |
 | `span-rescore-e2e.ts`      | A/B the flag on/off through resolveTree | OA goldens    |
 
-This is a mature eval posture: start with a benchmark, classify the failures, drill into the worst locale's root cause, verify the fix end-to-end. The failure classifier's taxonomy (`EMPTY_postcode-parsed-unresolved`, `WRONG_locality_postcode-AVAILABLE`, `EMPTY_no-place-tag-parsed`, etc.) is directly actionable — each bucket names a change.
+This is a mature eval posture: start with a benchmark, classify the failures, drill into the worst locale's root cause, verify the fix end-to-end. The failure classifier's taxonomy (`EMPTY_postcode-parsed-unresolved`, `WRONG_locality_postcode-AVAILABLE`, `EMPTY_no-place-tag-parsed`, etc.) is directly actionable. Each bucket names a change.
 
 ### Demo wiring is appropriately cautious
 
@@ -140,7 +140,7 @@ PR #782 ports span-rescore into the browser demo cascade. Design choices are cor
 
 - Reuses `findRescoreCandidate` from `core/resolver` (exported via the barrel — browser-safe, no node deps).
 - Recovery fires only when the cascade produced zero hits (the demo's #685 brake).
-- Unconditional recoveries are labeled "unverified" — the precision signal is surfaced rather than hidden.
+- Unconditional recoveries are labeled "unverified". The precision signal is surfaced rather than hidden.
 
 ---
 
@@ -165,7 +165,7 @@ The issues that are ALREADY SHIPPED but still open (a recurring pattern in this 
 
 ### 1. The blog post is draft:true but publication-ready
 
-`docs/research/2026-06-23-we-graded-ourselves-against-the-incumbents.mdx` is marked `draft: true`. It is a polished, direct narrative — the centroid-vs-rooftop trade is stated directly, the AU drag is quantified, the two-fix story is clear. The draft flag should be removed and the post published. The trade-show differentiator (calibrated confidence, browser deployment, no Elasticsearch) is the story this post tells best, and it's the one the project should be telling right now.
+`docs/research/2026-06-23-we-graded-ourselves-against-the-incumbents.mdx` is marked `draft: true`. It is a polished, direct narrative. The centroid-vs-rooftop trade is stated directly, the AU drag is quantified, the two-fix story is clear. The draft flag should be removed and the post published. The trade-show differentiator (calibrated confidence, browser deployment, no Elasticsearch) is the story this post tells best, and it's the one the project should be telling right now.
 
 ### 2. The competitive benchmark's `--messy` flag is implemented but the run wasn't done
 

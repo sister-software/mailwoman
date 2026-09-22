@@ -1,4 +1,4 @@
-# The shipped US coordinate is meter-grade — the eval was grading the admin centroid (2026-06-18)
+# The shipped US coordinate is meter-grade, and the eval was grading the admin centroid (2026-06-18)
 
 ## TL;DR
 
@@ -15,7 +15,7 @@ production coordinate.
 ## What happened
 
 The eval builds a neural parse, resolves it through the WOF admin gazetteer, and takes the resolved
-place's centroid as the coordinate. That centroid is direct as far as it goes — a city centroid is
+place's centroid as the coordinate. That centroid is direct as far as it goes. A city centroid is
 legitimately tens of km from an edge address, which is exactly why we lead with admin-_match_ rate
 there rather than the coordinate. The trouble is we then carried the 3.3 km admin number into the
 head-to-head, the model card, and the docs as if it were the coordinate the product delivers.
@@ -30,7 +30,7 @@ running a different, blunter path than production.
 
 `--cascade` closes that: it builds a multi-state `RegionDatabaseProvider` (per-row state selection), routes
 the neural resolve through the same `address_point > interpolated > admin` cascade the geocoder
-ships, and reports it as the `neural+cascade` arm. The default (no flag) stays byte-identical — the
+ships, and reports it as the `neural+cascade` arm. The default (no flag) stays byte-identical. The
 admin-centroid headline is unchanged, so this adds the shipped coordinate beside it rather than
 rewriting history.
 
@@ -64,7 +64,7 @@ a coverage gap — #723.
 
 This is the same trap as the #375 localadmin scoring artifact and the #566 reconcile regression:
 **grade the assembled output the product ships rather than an intermediate.** The new twist is the
-direction — every prior instance had us _over_-reporting (a metric looking better than the shipped
+direction. Every prior instance had us _over_-reporting (a metric looking better than the shipped
 behavior); this one had us _under_-reporting by three orders of magnitude. A model can win on labels
 while the assembled address resolves wrong (the #566 case); it can also resolve street-accurate while
 the eval reports a city centroid (this case). Both are fixed by the same discipline: pull the rows,
@@ -82,7 +82,7 @@ retrain and not more gazetteer breadth.
 - **The cascade needs the data layer.** The bare `@mailwoman/neural-weights-*` weights plus the admin
   gazetteer give the admin centroid; the meter-grade coordinate requires the per-state situs +
   interpolation extracts wired in (the server's `RegionDatabaseProvider`, the CLI's `--address-points` /
-  `--interpolation`, or `--cascade` here). The extracts are not in the npm package — they are the data
+  `--interpolation`, or `--cascade` here). The extracts are not in the npm package. They are the data
   release the geocoder consumes.
 - **Ship-config parity is partial.** The eval feeds the postcode **anchor** (the dominant channel for
   admin recovery, which reproduces the 98.0% headline) but builds the classifier manually, so it does

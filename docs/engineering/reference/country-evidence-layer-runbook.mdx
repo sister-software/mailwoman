@@ -211,7 +211,7 @@ classifier deficit for the tag is large but uniform (~7.0 logits mean), so a δ 
 the whole board at once — δ=10 saturates recall. NZ replicated the shape (gap mean 7.8 logits, same
 δ=10 works). Treat δ≈10 as the expected landing zone for a fresh country; a wildly different optimum
 is a signal to re-check the deficit-uniformity premise (step-0) rather than to keep sweeping. FP grows
-**monotonically** with δ (roughly 6–10× from δ=3 to δ=7), so δ is a working recall/FP dial — the
+**monotonically** with δ (roughly 6–10× from δ=3 to δ=7), so δ is a working recall/FP dial. The
 smallest δ clearing the recall bar is required, and the trade lives entirely in the
 venue-confound floor.
 
@@ -276,7 +276,7 @@ construction — assert it, then measure it anyway.
 ## 6. Package the overlay
 
 The artifact ships as a **data-only** `neural-weights-en-<cc>` workspace that carries no model of
-its own — it resolves the model + tokenizer from the `en-us` base (`baseWeights`) and adds only the
+its own. It resolves the model + tokenizer from the `en-us` base (`baseWeights`) and adds only the
 `pair-index-<cc>.bin` sibling. Clone `neural-weights-fr-fr`'s
 `package.json` / `.npmignore` / `scripts/link-dev-weights.ts` and edit for the locale (this is
 exactly what `git show b764309e` did for `en-gb`). Then wire **every** list below — the arc touched

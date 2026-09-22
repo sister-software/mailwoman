@@ -1,7 +1,7 @@
 # === v4.2.0-base-anchor-v2 — draft rather than launch-ready. The base rebuild that closes the GB anchor hole. ===
 #
 # naming: the next base in the v4 line (v4.0.0/v4.0.1 were the from-scratch base runs. v4.1.x were
-# GB-venue fine-tunes off v4.0.1). Nothing here is the npm major — that is a separate number.
+# GB-venue fine-tunes off v4.0.1). Nothing here is the npm major. That is a separate number.
 #
 # why this RUN exists. `docs/records/evals/2026-08-05-en-gb-anchor-off.md`. The shared encoder's
 # anchor input reserves one slot per country (`neural/anchor-inference.ts`'s
@@ -206,7 +206,7 @@ model: # Verbatim from v4.0.1.
     # 1.0 rather than the 0.3 that ran from v0.5.1 through v0.8.0 under "penalize hallucination of rare
     # tags". The R5 diagnosis (`docs/superpowers/plans/2026-08-01-r5-us-deploc-preregistration.md`)
     # traced the shipped model's dead US dependent_locality to exactly that weight: US surfaces
-    # carry more raw dep-loc mass than the GB ones that work, so the tag was never dead — it was
+    # carry more raw dep-loc mass than the GB ones that work, so the tag was never dead. It was
     # weighted down. Corrected in v4.0.1 and carried here. the shipped lineage still predates the
     # correction, so this run is the first base to retrain it in.
     B-dependent_locality: 1.0

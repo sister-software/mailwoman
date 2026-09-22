@@ -54,7 +54,7 @@ The reconciler weighs phrase proposals against classifier proposals against reso
 
 - **Multi-locale ensembling** — one model per locale vs one model handling all locales. Pre-evaluation, lean toward one shared model trained on the full multi-script corpus; the tokenizer + the encoder already do the locale-aware work.
 - **Joint training with the main classifier** — could pass phrase-proposer embeddings into the classifier as conditioning. Mentioned in Thread C as the eventual integration; whether the proposer trains jointly or stays a frozen feature extractor is a v0.6.0+ question.
-- **Replacing the rule version.** The rule version stays in tree as the explainable fallback + the test oracle. The learned version is additive — both can coexist behind a runtime flag, and the reconciler can consume proposals from either (or both, with source attribution).
+- **Replacing the rule version.** The rule version stays in tree as the explainable fallback + the test oracle. The learned version is additive. Both can coexist behind a runtime flag, and the reconciler can consume proposals from either (or both, with source attribution).
 
 ## See also
 

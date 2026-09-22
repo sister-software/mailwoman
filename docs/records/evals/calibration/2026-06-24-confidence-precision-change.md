@@ -19,7 +19,7 @@ Sweep τ; at each, precision is right-place @25km among the answers at or above 
 | 0.94 |       37 |           97.3% |  15.7% |
 | 0.97 |       29 |           96.6% |  12.3% |
 
-Precision climbs from 84.3% to 97.3% as the threshold rises; recall is the price, falling from 67% to 16%. The confidence is not decoration — it ranks answers by how likely they are to be right.
+Precision climbs from 84.3% to 97.3% as the threshold rises; recall is the price, falling from 67% to 16%. The confidence is not decoration. It ranks answers by how likely they are to be right.
 
 ## The honesty check (held-out 50%, 236 rows the curve was not drawn on)
 

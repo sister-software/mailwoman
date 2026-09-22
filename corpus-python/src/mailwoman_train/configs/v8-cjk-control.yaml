@@ -7,7 +7,7 @@
 # CJK char vocabulary, same seed, schedule and precision. This arm answers one question: does the 49-label head over
 # the JP source alone also drop the generic on that municipality? If yes, the 0.9653 is head-width or run-to-run
 # variance on a single held-out name and the CN rows are not the cause. if this arm reads like the JP record, the
-# mixture is. Nothing here is a CN reading — the CN source is off.
+# mixture is. Nothing here is a CN reading. The CN source is off.
 #
 # Launch:
 #   cd corpus-python && modal run -m launch.train_remote::sync --version v8cjk

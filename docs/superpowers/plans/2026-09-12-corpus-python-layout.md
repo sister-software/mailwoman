@@ -5,7 +5,7 @@
 > and format clean over 315, bandit 0 issues, the Python prefix check at zero groups, root `yarn health`
 > and root `yarn test` (9,460 tests) green, and **no module over 500 lines, no function over 120**.
 >
-> The step checkboxes below were never ticked during execution and are left as written — they are the
+> The step checkboxes below were never ticked during execution and are left as written. They are the
 > plan as authored rather than a record of what happened. The record is the commit range and the criteria
 > above. One deviation from the spec is deliberate and documented there: the package is `evaluation/`,
 > not `eval/`.
@@ -90,7 +90,7 @@ uv run python -X importtime -c "import mailwoman_train.tokenizer" 2>&1 | tail -1
 uv run python -X importtime -c "import mailwoman_train.gazetteer_anchor, mailwoman_train.country_lexicon" 2>&1 | tail -1
 ```
 
-Record both cumulative microsecond figures in the task's commit message. If the second is more than 50 ms above the first, stop and report — the comment's claim would then be real and the design needs revisiting.
+Record both cumulative microsecond figures in the task's commit message. If the second is more than 50 ms above the first, stop and report. The comment's claim would then be real and the design needs revisiting.
 
 - [ ] **Step 2: Write the failing test**
 
@@ -198,7 +198,7 @@ uv run --extra dev --extra train pytest tests/mailwoman_train/test_import_hygien
 
 Expected: both tests fail. The first lists exactly the five `tokenizer.py` sites at lines 541, 550, 566, 583 and 598 — and nothing else. The second fails with `ModuleNotFoundError: No module named 'mailwoman_train.types'`.
 
-If the first test names more than those five, the cycle reachability walk is over-reaching; read the extra entries before weakening the assertion. If it names fewer, the walk is under-reaching and the detector is worthless — a false negative here is indistinguishable from a clean tree.
+If the first test names more than those five, the cycle reachability walk is over-reaching; read the extra entries before weakening the assertion. If it names fewer, the walk is under-reaching and the detector is worthless. A false negative here is indistinguishable from a clean tree.
 
 - [ ] **Step 4: Create `types.py`**
 
@@ -643,7 +643,7 @@ PY
 
 - [ ] **Step 3: Extract `CharCNNEmbedding` and `EncoderBlock`**
 
-`git mv` is not usable here — these are classes inside a file. Move `CharCNNEmbedding` (former `model.py:133-194`) into `nn/char_cnn.py` and `EncoderBlock` (former `model.py:84-132`) into `nn/blocks.py`, each with its docstring. Add to `nn/encoder.py`:
+`git mv` is not usable here. These are classes inside a file. Move `CharCNNEmbedding` (former `model.py:133-194`) into `nn/char_cnn.py` and `EncoderBlock` (former `model.py:84-132`) into `nn/blocks.py`, each with its docstring. Add to `nn/encoder.py`:
 
 ```python
 from .blocks import EncoderBlock
@@ -1406,7 +1406,7 @@ Path('tests/launch/sync-census.json').write_text(json.dumps(
 wc -l tests/launch/sync-census.json
 ```
 
-The fixture is the pre-collapse behavior, frozen. Do not regenerate it after Task 13 — that would make the test assert the new code against itself.
+The fixture is the pre-collapse behavior, frozen. Do not regenerate it after Task 13. That would make the test assert the new code against itself.
 
 - [ ] **Step 5: Commit**
 

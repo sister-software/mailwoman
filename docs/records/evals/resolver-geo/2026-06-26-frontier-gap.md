@@ -15,7 +15,7 @@
 > `Sydney`, `Warsaw`, `Toronto` resolve to their US namesakes _even with a candidate DB loaded_, because
 > the population-first ranking can't break the tie without a country prior. That's #822. And the
 > **default drop-in's non-US recall is poor** without a candidate DB. A separate exonym-sizing pass
-> (try-the-alternatenames) was withdrawn — it was both cap-buggy and confounded by this same config gap.
+> (try-the-alternatenames) was withdrawn. It was both cap-buggy and confounded by this same config gap.
 
 _geonames cities15000, top 3/country by population (≥ 50000). "Resolved" = within
 50 km of the city's true coordinate. **Bare** = no country constraint (what the drop-in sends

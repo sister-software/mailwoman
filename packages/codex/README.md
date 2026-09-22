@@ -202,7 +202,7 @@ candidateSystemsForPostcode("SW1A 1AA") // → ["gb"]
 ```
 
 Note the first answer. This is a **shape** test rather than a gazetteer membership test, and
-returning all three is the correct answer rather than a hedge — the caller's country scope is
+returning all three is the correct answer rather than a hedge. The caller's country scope is
 what narrows it. Picking one locale here would be a guess wearing a fact's clothes.
 
 ### Postcode granularity: three tiers, each earned by measurement

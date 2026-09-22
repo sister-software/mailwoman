@@ -6,7 +6,7 @@ receipts, and the parked CJK char-encoder decision blocking the acquired JP/KR d
 
 ## The one-sentence fit
 
-The from-scratch retrain is not a competitor to the enterprise fine-tune product — it is its
+The from-scratch retrain is not a competitor to the enterprise fine-tune product. It is its
 **first deliverable**: the golden master every customer fine-tune starts from, the training run
 where forgetting-protection gets built in at the only point it is cheap, and the base whose QA
 harness becomes the per-customer acceptance battery.

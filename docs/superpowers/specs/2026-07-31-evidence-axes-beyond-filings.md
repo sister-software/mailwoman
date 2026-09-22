@@ -71,7 +71,7 @@ Two design consequences follow, and the second is a correction of the first revi
    Never an intent word in any direction.
 
 **Before reading any divergence as error, encode the reporting standard.** BDC's availability
-definition is not "a customer is connected today" — a location is reportable when the provider could
+definition is not "a customer is connected today". A location is reportable when the provider could
 provision service there within a defined short window without extraordinary construction (verify the
 exact current wording against the FCC's BDC reporting instructions before this ships). Franchise-area
 or plant-passing interpretations of that standard produce large, entirely rule-compliant gaps between
@@ -111,7 +111,7 @@ This is not a data-quality complaint; it is a **schema requirement**:
    spans a known ownership change, that fact is surfaced alongside the answer.
 3. **M&A is a first-class event rather than noise.** Consolidation is frequent enough in this sector that
    "the filer of record no longer exists as an independent entity" is a routine state. The spine
-   should be able to say so — it is one of the more useful things it can say — sourced to the
+   should be able to say so. It is one of the more useful things it can say — sourced to the
    transaction record, with no characterization of the transaction.
 
 This strengthens the case for Phase 3 generally: without a time-aware identity layer, every

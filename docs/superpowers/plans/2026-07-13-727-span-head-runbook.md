@@ -16,7 +16,7 @@ messy input) points at structured span prediction.
    (B-*) + END (entity token whose successor doesn't continue it), supervised from the BIO labels,
    fp32 BCE, weight 0.5. init_from stable v257, 2k. **Result: US region→street flips 5 → 2** (3 of
    the VT cases fixed), gauntlet regression + metamorphic both still pass, aggregate parity street
-   flat (boundary cases are a small share of the 267 slots — the result is in the targeted class).
+   flat (boundary cases are a small share of the 267 slots, so the result is in the targeted class).
    Inference-invariant (head off the logits path, never exported → no #378 SLO cost — that is what
    made it the cheap falsifier). The hypothesis held: span-consistency pressure fixes boundary
    absorption without touching the BIO head. **v2.6.1 (full 8k, same head/weight) running** to test
@@ -103,10 +103,10 @@ morphology (`Chat-qui-Pêche`, `l'Hôtel-de-Ville`, `18-Juin-1940`) is not the p
 bare-fragment/famous is **3/15** and `Avenue des Champs-Élysées` returns the **empty string**.
 
 Structurally: under flat BIO each token votes independently, so `Rue` has no mechanism to _govern_
-what follows — it can only vote for its own label. That is why the decode-time street-morphology
+what follows. It can only vote for its own label. That is why the decode-time street-morphology
 bias ([#1103](https://github.com/sister-software/mailwoman/issues/1103)) measured net-negative: it
 competes with the BIO head at the same decode position. **#1103's own pre-registered revisit
-condition is "after the #727 span-head work changes boundary placement" — that condition has now
+condition is "after the #727 span-head work changes boundary placement". That condition has now
 landed.** Under a segment decode a prefix clue can govern a whole span's type via the segment
 transition grammar (`street_prefix → street`), which is the level where "Rue governs the next thing"
 is well-posed. Re-probe it locale-hintd per #1103's criteria; do not re-probe it globally

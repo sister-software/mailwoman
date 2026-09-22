@@ -65,7 +65,7 @@ mailwoman parse --debug "$ADDRESS" | jq '{input, path, kind: {kind: .kind.kind, 
 ```
 
 `path` and `kind` are the two that explain the result before anyone reads the tree. `path:
-"fast-path"` means the model never ran — the input was classified confidently enough to synthesize a
+"fast-path"` means the model never ran. The input was classified confidently enough to synthesize a
 node directly, so a wrong answer there is a classifier bug rather than a model one. A surprising `kind`
 explains a surprising set of components.
 

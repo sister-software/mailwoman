@@ -19,7 +19,7 @@ def apply_smoke_mode(args: argparse.Namespace, cfg: Any) -> None:
     """Translate `--smoke-mode` into `cfg.train.lr_schedule`.
 
     `long-tail` keeps cosine and only warns when `max_steps` is short, because the operator may
-    know something the threshold does not — a wrong warning costs a line of output, a wrong error
+    know something the threshold does not. A wrong warning costs a line of output, a wrong error
     costs the run.
     """
     mode = getattr(args, "smoke_mode", None)

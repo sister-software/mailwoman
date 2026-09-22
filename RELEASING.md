@@ -245,7 +245,7 @@ systemctl --user restart mailwoman-photon.service                       # + nomi
 ```
 
 The build freezes to `journal_mode=delete` + VACUUM, so there are no `-wal`/`-shm` sidecars to carry. A
-long-running server that already opened the old inode keeps serving it until restarted — the `mv` is atomic
+long-running server that already opened the old inode keeps serving it until restarted. The `mv` is atomic
 on-disk but processes don't re-`open()` on their own. The build log
 (`data/gazetteer/wof-build-manifest.json`) was already appended by the build command — commit it with the swap.
 
@@ -354,7 +354,7 @@ minutes to propagate to all edges — don't conclude it's broken from a test in 
   own identity (filename, training step, tokenizer) under `release.config.json#weights` and in the model card's
   `model_lineage`; the published `version` is the unified release number (e.g. the Stage-3 / step-100000
   model shipped as `4.0.0`). This replaces the old "weights versioned to the model" scheme, which the sync-mode
-  plugin could never express — that mismatch is what produced the version drift before 4.0.0.
+  plugin could never express. That mismatch is what produced the version drift before 4.0.0.
 
 ## Promoting a NON-default model (the full promotion flow)
 
@@ -397,7 +397,7 @@ curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq -r .defau
 
 **The new release must exceed the npm `latest`** (npm refuses to republish an existing version), so the
 number is `max(npm-latest, demo-default) + one minor`. For v4.11.0: npm was at 4.10.0, demo at v4.6.0 → ship
-`4.11.0`. Do not assume the next number after the demo's model version — it will collide with npm.
+`4.11.0`. Do not assume the next number after the demo's model version. It will collide with npm.
 
 ### Step 1 — promotion is a model-card REWRITE rather than a relabel
 
@@ -617,7 +617,7 @@ promotion always touches both: a new row on the releases matrix, a re-verified b
 Step 5 used to rely on discipline, and discipline slipped: when 6.4.0 shipped, the eval ledger, the
 `releases.mdx` `(current)` row, and the `status.mdx` info box were all silently left on 6.3.0 and
 only caught at 6.5.0 (all three hand-backfilled during that ship). `yarn mwops release verify-metadata`
-now fails the publish fast if those three surfaces haven't caught up — the CI step **Verify release
+now fails the publish fast if those three surfaces haven't caught up. The CI step **Verify release
 metadata is propagated** runs it after the Hugging Face weight preflight and before release-it, on
 both dry and real runs (skipped only on `publish_only` recovery). Run it locally any time:
 
@@ -646,7 +646,7 @@ warning as the top of this doc, restated because it recurs.
 
 The CI publish can land most packages then die mid-publish (seen on v4.11.0: a transient npm OIDC
 `E401 … Failed to generate Web Auth URLs` hit `record` + `registry` while the other 15 published).
-`mode=publish` is idempotent by construction — the tag and GitHub release are create-if-missing, and
+`mode=publish` is idempotent by construction. The tag and GitHub release are create-if-missing, and
 each workspace publish rides `--tolerate-republish` (already-published ones are no-ops) — so the
 recovery is the same dispatch again:
 
@@ -765,7 +765,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
    >
    > Verify with `curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq .defaultVersion`
    > and an md5 of the served `model.onnx` against the artifact the promotion eval passed. CI's weight fetch reads HF; the
-   > demo reads R2 — a release is done when both backends agree.
+   > demo reads R2. A release is done when both backends agree.
 
 2. **Publish all packages from CI** — `publish.yml` at the same version. The "Fetch weight binaries from Hugging
    Face" step pulls `model.onnx` + `tokenizer.model` from the public bucket (no auth) into the `neural-weights-*`
@@ -845,7 +845,7 @@ Provisioned by the operator:
   `publish-clients.yml` (migrated from the retired `publish-python.yml` when publishing consolidated). Before the first dispatch, double-check the PyPI-side pending-publisher entry:
   project name must be **`mailwoman-client`** (what the generator stamps), repository
   `sister-software/mailwoman`, workflow filename `publish-clients.yml`, and — if the publisher config
-  names an environment — it must say `pypi` (the job declares it either way; a mismatch fails the OIDC
+  names an environment. It must say `pypi` (the job declares it either way; a mismatch fails the OIDC
   exchange with a readable PyPI error).
 - **`cargo` GitHub environment** carrying `CARGO_REGISTRY_TOKEN`. crates.io has no pre-claim step —
   the first successful `cargo publish` creates the crate. Confirm the crates.io account email is
@@ -882,7 +882,7 @@ Emits all 8 OpenAPI documents, generates the Python package and assembles the Ru
 both build (`uv build` + a wheel import-check; `cargo check --examples`) — the same 7-check
 pipeline the `clients` CI job replays on every dispatch. Output lands under gitignored `clients-build/`;
 nothing it produces is committed. `--skip-verify` exists for a faster template-only loop but should
-never be used to validate a real change — the verify step is the entire point.
+never be used to validate a real change. The verify step is the entire point.
 
 ## What's not automated yet
 

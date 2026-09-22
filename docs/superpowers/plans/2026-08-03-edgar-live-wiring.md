@@ -196,7 +196,7 @@ The mapping CARRIES FORWARD to subsequent sibling top-level tables until another
 Two rules govern what happens when the mapped name column is blank on a row:
 
 1. **Indented corporate tree.** If the mapped name column is blank, take the first non-blank column strictly BETWEEN the name column and the jurisdiction column. Telephone and Data Systems indents each subsidiary one column right of its parent — `["", "ADI FINANCIAL, LLC", "", "ILLINOIS"]` under a header of `["SUBSIDIARY COMPANIES", "", "STATE OF ORGANIZATION"]` — and 132 of its 183 subsidiaries sit on such rows. The nesting depth is discarded (an Exhibit 21 row becomes a registrant→subsidiary edge either way); the name itself is not in doubt, because the header says the jurisdiction is to its right. A row like `["", "Delaware", ""]` under a mapping whose jurisdiction column is index 1 has no column between 0 and 1 and still abstains.
-2. **Otherwise fall through** rather than abstain. A row the mapping cannot name is handed to the generic rules below rather than counted immediately — a ragged table (`anterix-2025.htm`'s rows are 5 and 6 cells under a 6-cell header) misaligns the mapping without making the row unreadable.
+2. **Otherwise fall through** rather than abstain. A row the mapping cannot name is handed to the generic rules below rather than counted immediately. A ragged table (`anterix-2025.htm`'s rows are 5 and 6 cells under a 6-cell header) misaligns the mapping without making the row unreadable.
 
 Add a hand-written indented-tree case to `exhibit21.test.ts` covering rule 1 — a 4-row table with a two-column header, one top-level row and two indented rows — plus the `["", "Delaware", ""]` counter-case that must still abstain. TDS itself is 176 KB and is not vendored.
 

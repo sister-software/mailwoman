@@ -51,7 +51,7 @@ This is the distinction that costs people the most, so it is worth being slow ab
 When a geocoder resolves `Springfield, IL`, two separate things come back. There is the **place**: a
 record in a gazetteer, with a stable identifier, a name, a type (this is a city rather than a county), and a
 chain of parents (in Sangamon County, in Illinois, in the United States). And there is the
-**coordinate**, which is a property of that record — the center of whatever geometry the gazetteer
+**coordinate**, which is a property of that record. The center of whatever geometry the gazetteer
 holds for it, where it holds one at all.
 
 Those two can fail independently, and that is the whole reason to keep them apart in your head:
@@ -96,7 +96,7 @@ output and the download that moves a result from the bottom tier to the top one.
 two people answering different ones.
 
 **Did it pick the right place?** A yes/no question about identity. Either the record it resolved is
-the one you meant or it is not, and the distance between them is beside the point — a geocoder that
+the one you meant or it is not, and the distance between them is beside the point. A geocoder that
 returns the wrong Springfield is not 400 km accurate, it is wrong.
 
 **How far is the coordinate from the true location?** A distance question, and the only one of the

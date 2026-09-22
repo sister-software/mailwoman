@@ -24,7 +24,7 @@ zero.
 BOTH LEVELS, BECAUSE THEY DISAGREE. Pass 1 counts rows straight off the sampler. Pass 2 expands the same
 stream through the augmentation policy and counts what fills the trainer's row budget, which is what the
 model reads. Augmentation expands long addresses, so a short-row source keeps a smaller part of a fixed
-budget and the two levels differ by more than 20% for one — a ratio mixing them is meaningless.
+budget and the two levels differ by more than 20% for one. A ratio mixing them is meaningless.
 
 The sampling mirrors `audit_epoch_mixture` exactly — same stream, same seed convention, same budget — so
 a count here is comparable with an exposure reported there. The one deliberate difference is
@@ -52,7 +52,7 @@ def _digits(token: str) -> bool:
 
 
 def _opening_counts(tokens: list[str], labels: list[str]) -> list[str]:
-    """Name every opening the row matches. A row can match more than one — they are nested rather than rival."""
+    """Name every opening the row matches. A row can match more than one. They are nested rather than rival."""
     if not tokens or not labels:
         return []
 

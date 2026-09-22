@@ -12,7 +12,7 @@ that reaches it.
 
 The short version: inference blocks the JavaScript thread, so running more geocodes concurrently inside
 one process changes nothing. Throughput comes from more processes. This page measures both claims on one
-machine so you can repeat the measurement on yours — the peak worker count is a property of your box rather than
+machine so you can repeat the measurement on yours. The peak worker count is a property of your box rather than
 a constant.
 
 ## Prerequisites
@@ -87,7 +87,7 @@ startup 0.68 s
 Run it three times. During the sweep this page reports, the three runs landed at 136.0, 138.9 and 137.9
 rows/s; a later run on the same machine under lighter load reached 153.3. Re-running the same script on
 the same box a day later, against `8.7.0` at head, gave 111.0, 111.6 and 113.3. That is a 27% spread
-across sessions on one machine with one model and one gazetteer, and none of it is a code change — it
+across sessions on one machine with one model and one gazetteer, and none of it is a code change. It
 is what a shared box does. It is also why the table in step 4 is worth more than any single figure in
 it: every row of that table was measured in one sitting, so the ratios hold even where the absolute
 rates drift. Compare your ratios to ours rather than your rows per second.

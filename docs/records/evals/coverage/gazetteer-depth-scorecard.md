@@ -26,7 +26,7 @@ appears in exactly the countries whose repo is ingested, and that correspondence
 property of the data.
 
 The column is read off the **artifact** (synthetic id ranges) rather than the recipe. `rebuild pending`
-means the recipe now names a country the shipped gazetteer has not been rebuilt for — its rows are
+means the recipe now names a country the shipped gazetteer has not been rebuilt for. Its rows are
 still Overture or GeoNames, and its rungs say nothing about WOF yet.
 
 ## What this report does not tell you

@@ -313,7 +313,7 @@ caches a stamp verdict.
 `model.onnx` md5 disagrees with the model-card's `files_md5`, because a config/card drift once shipped
 a superseded model past a silent check. `assertDeclaredAnchorBins` (#1516, `:184`) refuses when a
 weights package is missing the anchor artifact **its own card declares**, because that failure has no
-signal of its own — the channel resolves off, the run scores three or four cases lower, and the
+signal of its own. The channel resolves off, the run scores three or four cases lower, and the
 operator reads a model regression.
 
 _Answer:_ every engine runs both guards at construction and records their output in the engine's
@@ -539,7 +539,7 @@ out: { job_id } → { exit_code, verdict_json, floors: [{metric, floor, observed
 ```
 
 Passthrough to `runPromotionEval`. Runs its own lore guards, which will refuse a stale `packages/core/out`
-even though the daemon itself runs source — that refusal is correct and should be surfaced verbatim
+even though the daemon itself runs source. That refusal is correct and should be surfaced verbatim
 rather than worked around.
 
 `mwdev_promotion_eval` **never writes the eval ledger.** `mailwoman eval ledger-append` is state change (§7).
@@ -591,7 +591,7 @@ Passthrough to `node packages/mailwoman/out/cli.js`, with three guards:
    through this tool.
 
 This tool exists because the CLI's surface is larger than the daemon's and will stay that way. It is a
-deliberate override rather than the main road — every call pays the full cold start measured in §1.2, and
+deliberate override rather than the main road. Every call pays the full cold start measured in §1.2, and
 the result says so.
 
 ### 4.11 `mwdev_job`
@@ -710,7 +710,7 @@ Three refusals, all drawn from `docs/engineering/reference/resolver-backends.mdx
   carries 3.66 M postcodes the FTS admin extract has none of, so "deepest" silently means _postcode_ on
   one arm and _locality_ on the other; grading that way once reported a 54-row sub-kilometer collapse
   that was a commune centroid compared against a postcode-area centroid (`:111-127`).
-- **Stratum.** Panel results are reported per `truth_type`, never blended — the benchmark plan's own
+- **Stratum.** Panel results are reported per `truth_type`, never blended. The benchmark plan's own
   words are "@1km lives or dies on `truth_type`."
 - **Incomparable fields.** `node.metadata.resolver_score` is bm25-derived on FTS (≈19–41) and
   population-derived on candidate (≈5–7); the tool refuses to compare it across backends, and refuses
@@ -876,13 +876,13 @@ constrains this package specifically because it is a _lab_ tool:
   path.
 - **No credentials, and no credential-shaped defaults.** `GOOGLE_MAPS_API_KEY` is read through
   `$private` (`packages/core/lib/env/schema.ts:211`) and is never echoed into a result, a cache key, a log
-  or a URL — the oracle client already takes care of the last one by injecting it as an Axios
+  or a URL. The oracle client already takes care of the last one by injecting it as an Axios
   instance-level default.
 - **Result payloads are model-visible.** Anything the daemon puts in a tool result may end up in a
   transcript. Absolute paths under the data root, internal issue numbers and unpublished eval numbers
   are fine in a _result_ (the operator's own session) but must not be baked into _committed_ defaults,
   fixtures or docstrings.
-- **No vendor names or attributions in committed artifacts**, per standing project policy — the
+- **No vendor names or attributions in committed artifacts**, per standing project policy. The
   external-arm engine identifiers are unavoidable and factual; marketing comparisons are not.
 
 ### 7.3 Oracles are metered and off by default
@@ -986,7 +986,7 @@ These need a decision from the operator; each is a real fork rather than a detai
    for a spend decision is the wrong signature. Therefore, an agent cannot talk its way into spending money. The
    cap is checked for the whole run before the first query, so a set the caller cannot afford costs zero
    calls rather than a partial arm that can still be graded as a whole one. And the meter counts queries
-   rather than issued requests, so a warm cache over-counts — the direction whose failure is refusing an
+   rather than issued requests, so a warm cache over-counts. The direction whose failure is refusing an
    affordable run. See `oracle-arm.ts`.
 
 7. **Who runs the external arms? RESOLVED 2026-08-16 — the operator does; the daemon refuses.** The
@@ -1021,7 +1021,7 @@ These need a decision from the operator; each is a real fork rather than a detai
 
 ---
 
-## 10. The debug evidence is already structured — it is only unreachable
+## 10. The debug evidence is already structured, and only its reachability is missing
 
 Raised by the operator 2026-08-16: the rich per-stage debug output exists for JSON or for the Ink
 `--debug` view, and this surface should carry it too. Reading the code changes the shape of that
@@ -1096,7 +1096,7 @@ out: { rows: [{ input,
                 … }] }
 ```
 
-The structured form is what makes a trace _diffable_ — the thing no rendering can do, and the thing that
+The structured form is what makes a trace _diffable_. The thing no rendering can do, and the thing that
 would have answered "which stage introduced this node?" without `pgn-probe.ts`. The rendered form is what
 makes it _legible_ in a transcript without the agent paraphrasing it, which is where detail gets lost.
 Returning only the first recreates the 2026-08-15 failure in a new place: an agent summarising evidence
@@ -1104,7 +1104,7 @@ it alone can see.
 
 ### 10.4 The one thing to watch
 
-`trace: true` is not free — it is the decode-path record, kept per run. `mwdev_trace` is capped at 20
+`trace: true` is not free. It is the decode-path record, kept per run. `mwdev_trace` is capped at 20
 inputs (§4.5) and is explicitly not a measurement tool; the measuring tools run their sessions with
 tracing **off**. If a future caller wants traces over a board-sized set, that is a different tool with a
 different cost rather than a larger `n` on this one.
@@ -1151,7 +1151,7 @@ store, recorded arms, external arms and the oracles. Seven of the ten §9 questi
 of those and cost nothing to defer — regression.db writes, the memory budget, oracle billing, who starts
 Pelias, retention, board-case writes, `run_id` tracing.
 
-**How the increment reports on itself.** After it exists, the check is not "is it faster" — that is already
+**How the increment reports on itself.** After it exists, the check is not "is it faster". That is already
 measured at 7.8× (§1.2) and was never in doubt. The check is whether the next investigation's panel is
 the board or a hand-picked ten. Count it: over the following working period, what fraction of measurement
 claims cite `n ≥ 100` versus a self-chosen sample, and how several new one-off scripts land in `scratchpad/`.

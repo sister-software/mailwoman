@@ -157,7 +157,7 @@ Two requirements follow, and the second is what makes the first checkable.
    publishes `Shape__Area` on the service and drops it from the bulk export, which is what makes the
    comparison a second path rather than a file agreeing with itself: read with their holes the rings
    total 5,444.5 km² and the publisher's column sums to 5,444.5 km²; read without them, 5,666.6 km².
-   The 4.1% is the harmless half — the harmful half is a ray cast answering "inside" for every
+   The 4.1% is the harmless half. The harmful half is a ray cast answering "inside" for every
    location the plan carved out.
 
 ### An authority's designation rides the query-intent carrier and names the verdict's own kind
@@ -291,7 +291,7 @@ absent" apart from "unmapped."
 recorded at `1.0` because an authority designates the set complete, and a cell recorded at `1.0`
 because the source happened to return rows there, license entirely different conclusions. Only
 `designated` (an authority declares the set complete) and `surveyed` (we measured completeness against
-an independent reference) can support an **exclusion** — a claim that the thing asked for is not
+an independent reference) can support an **exclusion**. A claim that the thing asked for is not
 there. `source_present` supports presence and nothing else: the source looked, which is not the same
 as the source found everything. A caller building negative evidence asks `supportsExclusion(cell)`
 first and stops when it answers false, never reading `completeness` alone — otherwise the exclusion
@@ -367,7 +367,7 @@ Building a new layer? The interface obligations, in order:
 4. Populate `layer_coverage` from your source's actual survey extent — one row per surveyed
    cell, `completeness` accurate, unsurveyed cells left absent (not zero-filled). Declare a `basis`,
    and default to `source_present` unless you can name the data the completeness was measured
-   against — a stronger basis is earned, never assumed.
+   against. A stronger basis is earned, never assumed.
 5. Write the manifest with real provenance: `source` + `source_vintage` + `build_cmd` +
    `build_sha`, the correct `tier` and `license`, and a caller-supplied `created_at`.
 6. Build to a temp path, verify, then swap into place under `$MAILWOMAN_DATA_ROOT` and seal 0444. Never mutate a shipped or live layer — rebuild it.

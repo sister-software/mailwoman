@@ -90,7 +90,7 @@ Only two architectural changes from the proven-stable v0.4.0 baseline remain:
 
 2. **A1 tokenizer**. New 48K vocab (up from v0.1.0's 16K), trained on corpus-v0.4.0 including the transliteration adapter. The embedding table is sized to that vocab and the model has never trained against it before.
 
-Both are real architectural changes from v0.4.0. Either could plausibly produce a confident-wrong degenerate minimum that the loss bottoms out at and then escapes from. We can't tell from the curves alone — the shape is the same regardless.
+Both are real architectural changes from v0.4.0. Either could plausibly produce a confident-wrong degenerate minimum that the loss bottoms out at and then escapes from. We can't tell from the curves alone. The shape is the same regardless.
 
 The cheapest next bisect is **phrase priors off** (revert PR #128's input-layer features, keep A1 tokenizer). One YAML knob change, ~15min smoke + a partial train if smoke passes. That isolates whether the destabilizer is the phrase-prior projection or the new tokenizer's interaction.
 

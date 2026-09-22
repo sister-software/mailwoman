@@ -395,7 +395,7 @@ current at table `0.4.0` / Overture `v1.17.0`.
 shipped `poi.db` — manifest `2026-07-22.0`, `build_sha` `3610771ec`, sealed `2026-08-19` — reproduces §5.3
 cell for cell: `pharmacy` 82,168 (US 44,945 · GB 7,694 · FR 11,984 · CA 9,617 · MX 7,928) and `drugstore`
 7,168 (US 6,679 · GB 117 · **FR 0** · CA 369 · MX 3), over 14,664,001 rows in five countries. **The FR
-exclusion stays closed** — the zero is confirmed twice, by the full group-by scan and by a direct count —
+exclusion stays closed**. The zero is confirmed twice, by the full group-by scan and by a direct count —
 and **W1-2's US target is unmoved** at 6,679 of 7,168. One correction to how the figure is taken: joining
 `poi.category_id` through `poi_category_codes` silently drops 773,210 rows carrying the sentinel
 `category_id = 0`, so the layer total must be read unjoined; neither pharmacy-adjacent leaf is affected.
@@ -479,8 +479,8 @@ Running the shipped `matchPOISubject` against the shipped `poiTaxonomyLookup`:
 Every activity phrase misses. All 55 committed synonyms are venue nouns, the taxonomy is exact-phrase,
 and the fallbacks cannot bridge the gap by construction: locale-normalized matching folds diacritics
 over the same phrase index, and the one-edit typo path requires a length difference ≤ 1 against an
-existing phrase. So `createScorePOIQuery` returns `0` and the input leaves the POI branch entirely —
-an activity query is answered as an address parse of a sentence.
+existing phrase. So `createScorePOIQuery` returns `0` and the input leaves the POI branch entirely.
+An activity query is answered as an address parse of a sentence.
 
 ### 5.3 Why the class is _deliberately underdetermined_
 
@@ -503,8 +503,8 @@ The two leaves sit in **disjoint top-level branches**, so containment cannot joi
 declares no `overtureCategories`, so the executor probes `["pharmacy"]` only and `#searchKRing` never
 sees a `drugstore` row: **7,168 of the 89,336 rows under the two leaves (8.0%; 12.9% within the US)
 are structurally out of reach of the shipped `pharmacy` query.** Whether a given `drugstore` row
-affords `obtain_medication` is exactly the claim the affordance edge would carry, with provenance —
-the row counts here bound the population that claim would range over, and assert nothing about it.
+affords `obtain_medication` is exactly the claim the affordance edge would carry, with provenance.
+The row counts here bound the population that claim would range over, and assert nothing about it.
 The proportions are not uniform across countries, which is the country-conditionality made concrete.
 
 The same measurement exposes a second, sharper witness. The curated overlay ships a locale-hintd

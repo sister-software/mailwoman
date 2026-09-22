@@ -169,7 +169,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   but it took two corrections in one shift to internalize.
 - **A stale banned-prose stash sat undiscovered until I tripped over it** mid-PR. It predates
   tonight and now conflicts with main. Not my defect, but it means uncommitted rule-compliance work
-  has been stranded on the working tree for days — the operator should reconcile or drop it.
+  has been stranded on the working tree for days. The operator should reconcile or drop it.
 - **The span-head plateau (2k ≈ 8k on the decode check) means the 6k extra steps bought little.** Not
   a mistake — the plateau was only knowable after running it — but the next span retrain can stop at
   ~2-3k on the decode metrics and save the compute (train_loss keeps falling, but seg@1/oracle don't).

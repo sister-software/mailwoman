@@ -124,7 +124,7 @@ Any training setup where you sum two loss terms with a hand-tuned weight, and ob
 2. Compute per-loss gradient norms via separate backwards.
 3. Read the ratio. Far-from-one means one loss is dominating; the loss-value-weighted multiplier you set may not produce the gradient-magnitude balance you assumed.
 
-The bug shape is symmetric — it could be the auxiliary loss dominating (mailwoman's case) or the primary loss dominating (rarer; would look like the auxiliary loss being ignored). Either way the diagnostic is the same and so is the repair frame: if a loss term is destabilising training, drop it from training and reintroduce it at inference if its structural contribution justifies the integration cost.
+The bug shape is symmetric. It could be the auxiliary loss dominating (mailwoman's case) or the primary loss dominating (rarer; would look like the auxiliary loss being ignored). Either way the diagnostic is the same and so is the repair frame: if a loss term is destabilising training, drop it from training and reintroduce it at inference if its structural contribution justifies the integration cost.
 
 ## Beginner's companion — the cooperative-vs-conflict model
 

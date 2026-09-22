@@ -61,7 +61,7 @@ We don't decide it — we **report enough that the consumer can**. Every resolve
 
 1. a **tier** (the grain we reached), and
 2. a **calibrated radius** (the calibrated 90% bound), so that
-3. the consumer compares the radius to **their** tolerance and either uses the point or **abstains** — the same calibrated-radius downgrade the resolver already makes when its candidates scatter.
+3. the consumer compares the radius to **their** tolerance and either uses the point or **abstains**. The same calibrated-radius downgrade the resolver already makes when its candidates scatter.
 
 "Close enough" is not a property of the geocoder. It's a comparison, and our job is to make that comparison truthful: never a bare point, always a point with a tier and a radius that means what it says.
 

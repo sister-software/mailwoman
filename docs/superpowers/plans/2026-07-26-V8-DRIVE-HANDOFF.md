@@ -19,7 +19,7 @@ the operator-only decisions, and the non-negotiable discipline.
 - **Release implementation is outage-safe.** `scripts/copy-weights.ts` now materializes `fst-<locale>.bin`
   into the weights packages (VERIFIED end-to-end: packs a real 3.8M file, zero symlinks in the
   tarball, files-guard passes). Before this, the next release would have shipped broken packages.
-- **Comma-free is settled as a decode dead end** — the real fix is training (#1102). Do not reopen a
+- **Comma-free is settled as a decode dead end**. The real fix is training (#1102). Do not reopen a
   decode mechanism for it; the open-vocab wall is structural.
 
 ## The mission

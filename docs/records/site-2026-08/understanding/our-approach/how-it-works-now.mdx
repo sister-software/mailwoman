@@ -45,7 +45,7 @@ Unicode normalization (NFD-decomposed accents → composed), locale-aware case f
 
 ### Stage 1.5 — Coarse-placer
 
-A separate, small model (#244) reads the whole normalized string and guesses its country, with a confidence. It is **on by default,** and it is the second model in the system. It has exactly one job: a fast, coarse country guess. It does _not_ feed the main classifier — its guess is held back and handed to the resolver (Stage 6), where it gently boosts in-country candidates when two places share a name. A confident "this looks French" never forces a French reading; it only tips the scale at resolution time. This is the same discipline as the anchors below: knowledge informs, it never overrides.
+A separate, small model (#244) reads the whole normalized string and guesses its country, with a confidence. It is **on by default,** and it is the second model in the system. It has exactly one job: a fast, coarse country guess. It does _not_ feed the main classifier. Its guess is held back and handed to the resolver (Stage 6), where it gently boosts in-country candidates when two places share a name. A confident "this looks French" never forces a French reading; it only tips the scale at resolution time. This is the same discipline as the anchors below: knowledge informs, it never overrides.
 
 ### Stage 2 — Locale check
 

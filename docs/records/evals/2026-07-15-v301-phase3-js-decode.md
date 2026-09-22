@@ -80,7 +80,7 @@ BIO path byte-unaffected). The decoder itself is pure TS with no ORT dependency,
 serves both hosts**.
 
 The read is now duplicated across `neural/onnx-runner.ts` and `neural-web/web-onnx-runner.ts`, which
-is a real drift hazard — a transposed unflatten in one host would mis-tag every span (the
+is a real drift hazard. A transposed unflatten in one host would mis-tag every span (the
 PLACETYPE_ORDER failure mode, one layer down). A **cross-runner parity test** pins them: the same
 flat buffer must produce the same nested array on both sides.
 

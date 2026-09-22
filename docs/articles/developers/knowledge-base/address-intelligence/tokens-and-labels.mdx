@@ -35,7 +35,7 @@ Mailwoman spells input with [SentencePiece](https://github.com/google/sentencepi
 open-source subword tokenizer. The inventory holds 73,143 pieces, chosen by a unigram language-model
 fit over training text, and the `▁` prefix marks a piece that begins a new word. Common words are one
 piece; `▁Washington` is a single unit. Uncommon ones fragment, and the fragmentation carries
-information — a word that splits into five pieces is a word the training text did not see much of.
+information. A word that splits into five pieces is a word the training text did not see much of.
 
 Two properties matter downstream.
 
@@ -79,7 +79,7 @@ boundary. If every piece of `Saint Petersburg, FL` were labeled just `locality`,
 `region`, there would be no way to tell one two-word town from two one-word towns sitting side by
 side.
 
-BIO labeling is the standard fix, and it is older than any of this — it is what named-entity
+BIO labeling is the standard fix, and it is older than any of this. It is what named-entity
 recognition has used since the 1990s. Each label carries a position as well as a type:
 
 - `B-locality` — a locality span **begins** at this piece.
