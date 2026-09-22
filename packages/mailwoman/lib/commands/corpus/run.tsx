@@ -48,6 +48,10 @@ export const spec = {
 			description: "Fraction of rows carrying an explicit country component",
 		},
 		seed: { type: "string", description: "Seed for --country-fraction. Default 20260922" },
+		"source-name": {
+			type: "string",
+			description: "The `source` id stamped on every row, when it differs from the adapter id",
+		},
 		"corpus-version": { type: "string", default: "0.1.0-dev", description: "Corpus version" },
 		"progress-every": positiveIntegerOption("--progress-every", 1000),
 	},
@@ -88,6 +92,7 @@ const CorpusRun: CommandComponent<typeof spec, [string]> = ({ options, args }) =
 			},
 			outputDir: options.out,
 			corpusVersion: options.corpusVersion,
+			sourceName: options.sourceName,
 			progressEvery: options.progressEvery,
 			onProgress: (snap) => {
 				setProgress({ yielded: snap.yielded, written: snap.written, bytes: snap.bytes })

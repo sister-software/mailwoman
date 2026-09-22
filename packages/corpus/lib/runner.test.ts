@@ -123,6 +123,42 @@ describe("runAdapter", () => {
 		expect(lines.map((line) => line.addressRole)).toEqual(["registered-office", "facility"])
 	})
 
+	it("stamps sourceName over the adapter id, after holding the adapter to emitting its own", async () => {
+		// One adapter reads every Overture country, and a config has to weight
+		// Brazilian rows apart from European ones.
+		// `overture-latam` exists for that and the runner had no way to ask for it.
+		const adapter = makeAdapter({ id: "syn", rows: [baseRow({ source_id: "syn-1", raw: "Paris" })] })
+
+		await runAdapter({
+			adapter,
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+			sourceName: "syn-latam",
+		})
+
+		// The jsonl still lands under the adapter's own directory: the rename is the
+		// row's `source`, not the adapter's identity.
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
+
+		expect(lines.map((line) => line.source)).toEqual(["syn-latam"])
+	})
+
+	it("leaves the adapter id in place when sourceName is absent", async () => {
+		const adapter = makeAdapter({ id: "syn", rows: [baseRow({ source_id: "syn-1", raw: "Paris" })] })
+
+		await runAdapter({
+			adapter,
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
+
+		expect(lines.map((line) => line.source)).toEqual(["syn"])
+	})
+
 	it("dedupes by canonical key (count visible in manifest)", async () => {
 		const adapter = makeAdapter({
 			id: "syn",

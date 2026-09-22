@@ -95,6 +95,25 @@ export interface RunAdapterOptions {
 	corpusVersion: string
 
 	/**
+	 * The `source` id stamped on every emitted row, when it differs from the adapter's own id.
+	 *
+	 * One adapter can produce slices that a training config has to weight apart.
+	 * The `overture` adapter reads every country through the same code, and a run that weights
+	 * Brazilian rows at the weight the European rows carry dilutes both: the 2026-07-18 arm
+	 * created `overture-latam` for exactly that reason and had no way to ask the runner for it.
+	 *
+	 * A source id is a wire identifier, stored on every row of every built corpus
+	 * and keyed by `source_weights`.
+	 * Naming a new one is additive.
+	 *
+	 * Re-using a name that a built corpus already carries makes this run's rows
+	 * indistinguishable from that corpus's, so pass one the config means.
+	 *
+	 * Absent, rows carry `adapter.id`, which is what every run before this option produced.
+	 */
+	sourceName?: string
+
+	/**
 	 * Optional progress callback.
 	 *
 	 * Invoked every `progressEvery` rows yielded (default 1000) and once at the end of the run.
@@ -182,6 +201,9 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 			const stamped: CanonicalRow = {
 				...row,
+				// After `assertEmittedRow`, which holds every adapter to emitting its own id.
+				// The rename is the runner's, so an adapter cannot quietly claim to be another one.
+				source: opts.sourceName ?? row.source,
 				corpus_version: corpusVersion,
 				addressRole: row.addressRole ?? adapter.addressRole,
 				// `register` is nullable and null is a statement rather than an absence,
