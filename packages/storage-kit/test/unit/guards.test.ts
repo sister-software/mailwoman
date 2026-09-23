@@ -11,6 +11,8 @@ import {
 	DEFAULT_MOUNT_OPTIONS,
 	claimFailures,
 	findStorageOperation,
+	renderSudoersRule,
+	renderUdevRule,
 	renderFstabEntry,
 	spliceFstab,
 	StorageEffect,
@@ -100,10 +102,14 @@ describe("registry", () => {
 		expect(findStorageOperation("storage.prepare")?.id).toBe("storage.prepare")
 	})
 
-	it("declares exactly one host write — everything else reads", () => {
+	it("names every operation that writes host state, so a new one is a deliberate addition", () => {
 		const writes = storageOperations.filter((operation) => operation.effect === StorageEffect.HostWrite)
 
-		expect(writes.map((operation) => operation.id)).toEqual(["storage.prepare"])
+		expect(writes.map((operation) => operation.id).toSorted()).toEqual([
+			"storage.install-sudoers",
+			"storage.install-udev-rule",
+			"storage.prepare",
+		])
 	})
 })
 
@@ -117,5 +123,27 @@ describe("DEFAULT_MOUNT_OPTIONS", () => {
 
 	it("leaves discard out of the write path", () => {
 		expect(DEFAULT_MOUNT_OPTIONS.some((option) => option.startsWith("discard"))).toBe(false)
+	})
+})
+
+describe("host rules", () => {
+	it("pins both absolute paths in the sudoers rule, because a stale pin falls through to a prompt", () => {
+		const rule = renderSudoersRule(
+			"lab",
+			"/home/lab/.nvm/versions/node/v26.2.0/bin/node",
+			"/repo/packages/ops-cli/lib/cli.ts"
+		)
+
+		expect(rule).toContain(
+			"lab ALL=(root) NOPASSWD: /home/lab/.nvm/versions/node/v26.2.0/bin/node /repo/packages/ops-cli/lib/cli.ts *"
+		)
+	})
+
+	it("matches the device by vendor and product, since provisioning_mode resets on replug", () => {
+		const rule = renderUdevRule("04e8", "61fb")
+
+		expect(rule).toContain('ATTRS{idVendor}=="04e8"')
+		expect(rule).toContain('ATTRS{idProduct}=="61fb"')
+		expect(rule).toContain('ATTR{provisioning_mode}="unmap"')
 	})
 })

@@ -9,6 +9,7 @@
  */
 
 import type { StorageOperation } from "#operation"
+import { installSudoersOperation, installUdevRuleOperation } from "#operations/install-rules"
 import { planOperation } from "#operations/plan"
 import { prepareOperation } from "#operations/prepare"
 import { statusOperation } from "#operations/status"
@@ -23,6 +24,8 @@ export const storageOperations: ReadonlyArray<StorageOperation<unknown, unknown>
 	prepareOperation,
 	verifyOperation,
 	statusOperation,
+	installUdevRuleOperation,
+	installSudoersOperation,
 ] as ReadonlyArray<StorageOperation<unknown, unknown>>
 
 /**
