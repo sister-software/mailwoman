@@ -40,15 +40,6 @@ def open_delimited(path: Path, encoding: str = "utf-8") -> io.TextIOBase:
     return io.TextIOWrapper(reader, encoding=encoding)
 
 
-def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
-    """Stream one JSONL file, compressed or not, one parsed row at a time."""
-    with open_delimited(path) as handle:
-        for line in handle:
-            line = line.strip()
-            if line:
-                yield json.loads(line)
-
-
 def prefer_compressed(path: Path) -> Path:
     """The path to read, preferring a ``.zst`` sibling when one exists.
 
@@ -61,3 +52,16 @@ def prefer_compressed(path: Path) -> Path:
     compressed = path.with_suffix(path.suffix + ZSTD_EXTENSION)
 
     return compressed if compressed.exists() else path
+
+
+def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
+    """Stream one JSONL file, compressed or not, one parsed row at a time.
+
+    Callers name the plain ``.jsonl``; a ``.zst`` sibling is preferred when one is on
+    disk, so a corpus converted in place reads exactly like one that was not.
+    """
+    with open_delimited(prefer_compressed(path)) as handle:
+        for line in handle:
+            line = line.strip()
+            if line:
+                yield json.loads(line)

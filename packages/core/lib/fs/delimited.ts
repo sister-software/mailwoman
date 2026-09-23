@@ -22,6 +22,7 @@ import { TextSpliterator, TSVSpliterator } from "spliterator"
 import type { AsyncDataResource } from "spliterator"
 
 import { zstdDecompressor } from "#fs/compression"
+import { tryStat } from "#fs/readers/stat"
 
 /**
  * Stream the records of an unquoted tab-separated file.
@@ -137,7 +138,6 @@ export async function preferCompressed(path: PathBuilderLike): Promise<PathBuild
 
 	if (plain.endsWith(ZSTD_EXTENSION)) return path
 
-	const { tryStat } = await import("#fs/readers/stat")
 	const compressed = `${plain}${ZSTD_EXTENSION}`
 
 	return (await tryStat(compressed)) ? compressed : path

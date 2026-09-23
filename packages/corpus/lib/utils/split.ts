@@ -32,7 +32,7 @@
  *   (under `corpus/splits/<version>/`) so reruns are reproducible bit-for-bit.
  */
 
-import { delimitedSource } from "@mailwoman/core/fs/delimited"
+import { delimitedSource, preferCompressed } from "@mailwoman/core/fs/delimited"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { createHash } from "@mailwoman/core/hash"
@@ -377,7 +377,9 @@ async function streamSortedSourceIDs(labeledJsonlPath: string, outPath: string):
 	// SyntaxError out of the loop, matching the prior `reject(err)` fail-loud behavior.
 	// `finally` always ends the write stream so `sort` reads a complete file even if the read throws.
 	try {
-		for await (const obj of JSONSpliterator.fromAsync<{ source_id?: string }>(delimitedSource(labeledJsonlPath))) {
+		for await (const obj of JSONSpliterator.fromAsync<{ source_id?: string }>(
+			delimitedSource(await preferCompressed(labeledJsonlPath))
+		)) {
 			if (typeof obj.source_id === "string") {
 				out.write(`${obj.source_id}\n`)
 			}

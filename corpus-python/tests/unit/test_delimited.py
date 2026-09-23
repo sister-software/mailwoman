@@ -53,3 +53,12 @@ def test_prefer_compressed_picks_the_sibling_when_present(tmp_path: Path) -> Non
     compressed.unlink()
 
     assert prefer_compressed(plain) == plain
+
+
+def test_read_jsonl_prefers_the_compressed_sibling(tmp_path: Path) -> None:
+    """Asking for the plain name must read the compressed file when that is what exists."""
+    plain, compressed = _write_pair(tmp_path)
+    plain.unlink()
+
+    assert list(read_jsonl(plain)) == ROWS
+    assert compressed.exists()

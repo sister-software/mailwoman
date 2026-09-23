@@ -8,7 +8,7 @@
  */
 
 import { unzstd, zstd } from "@mailwoman/core/fs/compression"
-import { delimitedSource, ZSTD_EXTENSION } from "@mailwoman/core/fs/delimited"
+import { delimitedSource, preferCompressed, ZSTD_EXTENSION } from "@mailwoman/core/fs/delimited"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -138,5 +138,31 @@ describe("the count-then-read shape", () => {
 
 		expect(first).toBe(ROWS.length)
 		expect(second).toBe(0)
+	})
+})
+
+describe("preferCompressed", () => {
+	it("answers with the .zst sibling when one exists", async () => {
+		expect(String(await preferCompressed(plain))).toBe(compressed)
+	})
+
+	it("answers with the plain path when no sibling exists", async () => {
+		const absent = String(resolvePath(scratch.path, "no-such-part.jsonl"))
+
+		expect(String(await preferCompressed(absent))).toBe(absent)
+	})
+
+	it("is idempotent on a path that is already compressed", async () => {
+		expect(String(await preferCompressed(compressed))).toBe(compressed)
+	})
+
+	it("closes the loop: ask for the plain name, read the compressed rows", async () => {
+		const rows: Row[] = []
+
+		for await (const row of JSONSpliterator.fromAsync<Row>(delimitedSource(await preferCompressed(plain)))) {
+			rows.push(row)
+		}
+
+		expect(rows).toHaveLength(ROWS.length)
 	})
 })
