@@ -139,8 +139,24 @@ export interface OverlayFile {
 	 * A file produced by `splitOverlaySlice` carries the rows a country's holdout reaches,
 	 * and those belong to `val` or `test`: a held-out row appended as a train row
 	 * is the leakage the holdout exists to prevent.
+	 *
+	 * `val` and `test` are accepted only for a filename `splitOverlaySlice` wrote,
+	 * which {@link splitFromFilename} reads.
+	 * See {@link assembleOverlayManifest} for what a hand-assigned holdout split cost.
 	 */
 	split?: SplitName
+}
+
+/**
+ * The split `splitOverlaySlice` encoded in a filename, or null for a name it did not write.
+ *
+ * It writes `<stem>.<split>.parquet`, so the split of a routed file is readable from its name.
+ * A name without that suffix was not routed through the holdout policy.
+ */
+export function splitFromFilename(parquet: string): SplitName | null {
+	const match = /\.(train|val|test)\.parquet$/.exec(parquet)
+
+	return match ? (match[1] as SplitName) : null
 }
 
 async function descriptor(
@@ -206,6 +222,16 @@ export function localManifestFilePath(path: string): string {
 	return path.startsWith("/data/") ? String(dataRootPath(path.slice("/data/".length))) : path
 }
 
+/**
+ * Write a new corpus manifest that keeps every file of `args.base` verbatim and adds `args.files`.
+ *
+ * A `val` or `test` file must carry the `.<split>.parquet` name `splitOverlaySlice` writes,
+ * because that name is the evidence the holdout policy chose its rows.
+ * A caller naming one of those splits for any other filename is refused:
+ * it would be selecting a country's held-out rows by hand.
+ *
+ * `train` is unrestricted, since appending rows to train holds nothing out.
+ */
 export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {
 	if (!args.files.length) throw new Error("an overlay must add at least one parquet file")
 
@@ -228,6 +254,32 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		if (baseFiles.some((s) => s.source === file.source)) {
 			console.log(`WARN: base already contains source '${file.source}' — is this the right base?`)
 		}
+	}
+
+	// A held-out split has to come from the holdout policy rather than from the caller.
+	// `splitOverlaySlice` applies the policy and encodes the split in the filename
+	// it writes, so a `val` or `test` file names itself.
+	// A caller asserting one for a file with no such name is choosing which rows are held out,
+	// and `v0.6.0-register-surface` records what that costs: `part-synth-german-val.parquet`
+	// was placed by a script's hardcoded list, with no test file beside it,
+	// and 770 of the 3,987 `source_id`s in it are also in train.
+	// `train` stays free to assert, because appending an overlay to train holds nothing out.
+	for (const file of args.files) {
+		if (!file.split || file.split === "train") continue
+
+		const named = splitFromFilename(file.parquet)
+
+		if (named === file.split) continue
+
+		throw new Error(
+			named
+				? `${file.parquet} names split '${named}' and the caller asked for '${file.split}'. The filename is ` +
+						`what splitOverlaySlice wrote, so it decides; pass the split the name carries or route the file again.`
+				: `${file.parquet} was asked for split '${file.split}' and carries no '.${file.split}.parquet' suffix, ` +
+						`so it did not come from 'mailwoman corpus split-slice' and its held-out rows were chosen by the ` +
+						`caller rather than by the holdout policy. Route it through split-slice and add the per-split ` +
+						`outputs it writes. A file appended to 'train' needs none of this.`
+		)
 	}
 
 	const kept = baseFiles.map((s) => ({ ...s, path: rerootBaseFilePath(s.path, args.base) }))

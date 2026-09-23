@@ -4,7 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
-import { baseManifestFiles, rerootBaseFilePath } from "@mailwoman/corpus/tools"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { useScratchDir } from "@mailwoman/corpus/test-kit"
+import {
+	assembleOverlayManifest,
+	baseManifestFiles,
+	rerootBaseFilePath,
+	splitFromFilename,
+} from "@mailwoman/corpus/tools"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const BASE_MANIFEST = "/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
@@ -28,6 +36,84 @@ function manifestWith(key: string, paths: readonly string[]): Parameters<typeof 
 		[key]: paths.map((path) => ({ path })),
 	} as Parameters<typeof baseManifestFiles>[0]
 }
+
+describe("splitFromFilename", () => {
+	it("reads the split splitOverlaySlice encodes, and answers null for a name it did not write", () => {
+		// `part-gb.val.parquet` was routed; `part-synth-german-val.parquet` names a split in its stem
+		// and carries no suffix, which is exactly the file whose 4,000 val rows the policy never saw.
+		expect(splitFromFilename("part-gb.val.parquet")).toBe("val")
+		expect(splitFromFilename("part-gb.test.parquet")).toBe("test")
+		expect(splitFromFilename("part-anchor-absorption-train.val.parquet")).toBe("val")
+
+		expect(splitFromFilename("part-synth-german-val.parquet")).toBeNull()
+		expect(splitFromFilename("part-synth-german-train.parquet")).toBeNull()
+		expect(splitFromFilename("part-0000.parquet")).toBeNull()
+		expect(splitFromFilename("val.parquet")).toBeNull()
+	})
+})
+
+describe("assembleOverlayManifest, on who chose a held-out split", () => {
+	const scratch = useScratchDir("overlay-manifest")
+
+	/**
+	 * A base manifest on disk with one file, which is all the guard runs after.
+	 */
+	async function writeBase(): Promise<string> {
+		const path = String(join(scratch.path, "MANIFEST.json"))
+
+		await writeLocalJSONFile(
+			{
+				corpus_version: "0.1.0",
+				schema: {},
+				row_group_size: 50_000,
+				rows_per_slice: 1_000_000,
+				counts: { train: 1, val: 0, test: 0 },
+				total_rows: 1,
+				slices: [{ split: "train", path: "/data/corpus/versioned/v0.1.0/corpus-v0.1.0/train/part-0000.parquet" }],
+			},
+			path
+		)
+
+		return path
+	}
+
+	const overlay = (parquet: string, split: "train" | "val" | "test") => ({
+		base: "",
+		newDir: String(scratch.path),
+		modalRoot: "/data/corpus/versioned/v0.2.0/corpus-v0.2.0",
+		version: "0.2.0",
+		files: [{ parquet, source: "syn-de", split }],
+		note: "",
+	})
+
+	it("refuses a val split asserted for a file split-slice did not write", async () => {
+		// `part-synth-german-val.parquet` is the real one: placed by a script's hardcoded list,
+		// with no test file beside it, and 770 of its 3,987 source_ids also in train.
+		const base = await writeBase()
+
+		await expect(assembleOverlayManifest({ ...overlay("part-synth-german-val.parquet", "val"), base })).rejects.toThrow(
+			/did not come from 'mailwoman corpus split-slice'/
+		)
+	})
+
+	it("refuses a split that contradicts the one the filename carries", async () => {
+		const base = await writeBase()
+
+		await expect(assembleOverlayManifest({ ...overlay("part-gb.val.parquet", "test"), base })).rejects.toThrow(
+			/names split 'val' and the caller asked for 'test'/
+		)
+	})
+
+	it("lets a train file through without a routed name, since train holds nothing out", async () => {
+		// The guard admits it, so the run proceeds to the next check and fails there on the absent parquet.
+		// The assertion reads the message to confirm which check stopped it.
+		const base = await writeBase()
+
+		await expect(
+			assembleOverlayManifest({ ...overlay("part-synth-german-train.parquet", "train"), base })
+		).rejects.not.toThrow(/split-slice/)
+	})
+})
 
 describe("rerootBaseFilePath", () => {
 	it("preserves versioned ancestry when a base overlay used /data/train", () => {

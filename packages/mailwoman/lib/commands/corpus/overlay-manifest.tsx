@@ -35,7 +35,8 @@ export const spec = {
 		source: { type: "string", required: true, description: "Source label per parquet, comma-separated" },
 		split: {
 			type: "string",
-			description: "Split per parquet, comma-separated. Unset puts every file in train.",
+			description:
+				"Split per parquet, comma-separated. Unset puts every file in train. val or test is accepted only for a file `corpus split-slice` wrote, whose name ends .val.parquet or .test.parquet.",
 		},
 		note: { type: "string", required: true, description: "Manifest note" },
 	},
