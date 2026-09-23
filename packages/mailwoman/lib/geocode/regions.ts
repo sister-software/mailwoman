@@ -8,6 +8,7 @@
  */
 
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
+import { databaseRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -129,21 +130,21 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 }
 
 /**
- * Per-state situs database path under `<dataRoot>/address-points/`, or null if the slug/file is absent.
+ * Per-state situs database path under `<dataRoot>/db/address-points/`, or null if the slug/file is absent.
  */
 export async function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
-	const candidate = `${dataRoot}/address-points/address-points-us-${stateSlug}.db`
+	const candidate = String(databaseRootPath(dataRoot, "address-points", `address-points-us-${stateSlug}.db`))
 
 	return (await pathExists(candidate)) ? candidate : null
 }
 
 /**
- * Per-state interpolation database path under `<dataRoot>/interpolation/`, or null if absent.
+ * Per-state interpolation database path under `<dataRoot>/db/interpolation/`, or null if absent.
  */
 export async function selectInterpolationDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
-	const candidate = `${dataRoot}/interpolation/interpolation-us-${stateSlug}.db`
+	const candidate = String(databaseRootPath(dataRoot, "interpolation", `interpolation-us-${stateSlug}.db`))
 
 	return (await pathExists(candidate)) ? candidate : null
 }

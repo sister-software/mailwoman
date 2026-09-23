@@ -144,7 +144,7 @@ export interface BuildPostcodeGeonamesTailOptions {
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/wof/postalcode-geonames-tail-<yyyy-MM-DD>.db` — a new dated path every build.
+	 * Default `<data-root>/db/wof/postalcode-geonames-tail-<yyyy-MM-DD>.db` — a new dated path every build.
 	 * Promoting it over the shipped `postalcode-geonames-tail.db` is a deliberate, separate swap.
 	 */
 	out?: PathBuilderLike

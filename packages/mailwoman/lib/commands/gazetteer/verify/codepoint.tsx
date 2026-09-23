@@ -24,11 +24,12 @@ export const spec = {
 	options: {
 		codepoint: {
 			type: "string",
-			description: "Candidate database. Default <data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db",
+			description: "Candidate database. Default <data-root>/db/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db",
 		},
 		incumbent: {
 			type: "string",
-			description: "Incumbent database. Default <data-root>/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db",
+			description:
+				"Incumbent database. Default <data-root>/db/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db",
 		},
 		json: { type: "boolean", description: "Emit the raw report as JSON instead of the rendered table" },
 	},

@@ -10,14 +10,26 @@
  *   never an exception that takes the whole census down with it.
  */
 
+import { databaseRootPath } from "@mailwoman/core/data-root"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { censusArtifact, gazetteerArtifacts } from "@mailwoman/dev-mcp/source-census"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { dirname } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let root: TemporaryDirectory
+
+/**
+ * One planted extract's path, resolved through the same builder `gazetteerArtifacts` uses.
+ *
+ * Composing `wof` against the root by hand would let the fixture and the reader disagree about
+ * the data root's database group, and the reader would then report the planted extracts absent.
+ */
+function extract(name: string): string {
+	return String(databaseRootPath(root.path, "wof", name))
+}
 
 /**
  * A extract with `spr` and the ancestry tables.
@@ -57,24 +69,24 @@ function writeCountOnly(path: string, country: string, n: number): void {
 
 beforeAll(async () => {
 	root = await temporaryDirectory("mw-source-census-")
-	await makeDirectories(root.resolve("wof"))
+	await makeDirectories(dirname(extract("any.db")))
 
-	writeJoinable(root.resolve("wof", "postalcode-intl.db"), [
+	writeJoinable(extract("postalcode-intl.db"), [
 		["FR", 3],
 		["DE", 2],
 	])
 
-	writeCountOnly(root.resolve("wof", "postalcode-geonames-intl.db"), "PT", 5)
-	new DatabaseClient<WOFDatabase>(root.resolve("wof", "postalcode-fr.db")).destroy()
-	writeJoinable(root.resolve("wof", "postalcode-us.db.prev"), [["US", 9]])
-	await writeLocalTextFile("not a database", root.resolve("wof", "notes.txt"))
+	writeCountOnly(extract("postalcode-geonames-intl.db"), "PT", 5)
+	new DatabaseClient<WOFDatabase>(extract("postalcode-fr.db")).destroy()
+	writeJoinable(extract("postalcode-us.db.prev"), [["US", 9]])
+	await writeLocalTextFile("not a database", extract("notes.txt"))
 })
 
 afterAll(() => root[Symbol.asyncDispose]())
 
 describe("censusArtifact", () => {
 	it("reports rows AND what the extract can be joined through", async () => {
-		const row = await censusArtifact(root.resolve("wof", "postalcode-intl.db"))
+		const row = await censusArtifact(extract("postalcode-intl.db"))
 
 		expect(row.readable).toBe(true)
 		expect(row.countries).toEqual({ FR: 3, DE: 2 })
@@ -86,7 +98,7 @@ describe("censusArtifact", () => {
 		// 395,544 PT postcodes in a extract with no ancestry table is not 395,544 usable triples.
 		// This is the exact shape that made a real config declare PT unbuildable
 		// while the rows were sitting there.
-		const row = await censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db"))
+		const row = await censusArtifact(extract("postalcode-geonames-intl.db"))
 
 		expect(row.readable).toBe(true)
 		expect(row.countries).toEqual({ PT: 5 })
@@ -94,19 +106,19 @@ describe("censusArtifact", () => {
 	})
 
 	it("reports parent_id being the -1 sentinel, which no row count can show", async () => {
-		expect((await censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db"))).parentLinked).toBe(false)
+		expect((await censusArtifact(extract("postalcode-geonames-intl.db"))).parentLinked).toBe(false)
 	})
 
 	it("reports a country asked for and ABSENT as a zero, not a missing key", async () => {
 		// A missing key reads as "not measured".
 		// The caller is deciding whether to go and acquire data, and those are opposite conclusions.
-		const row = await censusArtifact(root.resolve("wof", "postalcode-intl.db"), ["FR", "VE"])
+		const row = await censusArtifact(extract("postalcode-intl.db"), ["FR", "VE"])
 
 		expect(row.countries).toEqual({ FR: 3, VE: 0 })
 	})
 
 	it("treats a zero-byte extract as a FINDING, not an exception", async () => {
-		const row = await censusArtifact(root.resolve("wof", "postalcode-fr.db"))
+		const row = await censusArtifact(extract("postalcode-fr.db"))
 
 		expect(row.readable).toBe(false)
 		expect(row.reason).toMatch(/zero bytes/)
@@ -114,7 +126,7 @@ describe("censusArtifact", () => {
 	})
 
 	it("reports a file that is not there rather than throwing", async () => {
-		const row = await censusArtifact(root.resolve("wof", "nothing-here.db"))
+		const row = await censusArtifact(extract("nothing-here.db"))
 
 		expect(row.readable).toBe(false)
 		expect(row.reason).toBe("not on disk")

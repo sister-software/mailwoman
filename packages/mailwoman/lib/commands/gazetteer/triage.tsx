@@ -29,10 +29,13 @@ export const spec = {
 	name: "triage",
 	description: "Report WOF currency holes (deprecated / not-current records) as a reviewable ledger",
 	options: {
-		admin: { type: "string", description: "WOF admin DB. Default <data-root>/wof/admin-global-priority.db" },
+		admin: { type: "string", description: "WOF admin DB. Default <data-root>/db/wof/admin-global-priority.db" },
 		geonames: { type: "string", description: "GeoNames dump dir for attestation. Default <data-root>/geonames" },
 		countries: { type: "string", description: "Comma-separated ISO codes. Default: every country in the artifact" },
-		out: { type: "string", description: "JSONL ledger output. Default <data-root>/wof/triage/currency-<date>.jsonl" },
+		out: {
+			type: "string",
+			description: "JSONL ledger output. Default <data-root>/db/wof/triage/currency-<date>.jsonl",
+		},
 		uncoveredOnly: { type: "boolean", default: false, description: "Write only rows no live record covers" },
 	},
 } as const satisfies CommandSpec

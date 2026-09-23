@@ -30,7 +30,7 @@ export const spec = {
 		"source-dir": { type: "string", description: "Acquisition dir for codepo_gb.zip and extracted CSVs" },
 		out: {
 			type: "string",
-			description: "Output path. Default <data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db",
+			description: "Output path. Default <data-root>/db/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db",
 		},
 		offline: { type: "boolean", description: "Skip the download and use --source-dir contents" },
 	},

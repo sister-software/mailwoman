@@ -36,7 +36,7 @@ export const spec = {
 	options: {
 		"out-dir": {
 			type: "string",
-			description: "Directory holding the address-points-us-<st>.db databases. Default <data-root>/address-points",
+			description: "Directory holding the address-points-us-<st>.db databases. Default <data-root>/db/address-points",
 		},
 		release: {
 			type: "string",

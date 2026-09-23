@@ -42,7 +42,6 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
-		"path-ts": "^2.4.1",
 		"zod": "^4.5.4",
 		"zx": "^8.8.5"
 	}

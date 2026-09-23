@@ -15,10 +15,9 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { resolvePath } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-import { BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data/bundles"
+import { bundleArtifactPath, BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data/bundles"
 
 /**
  * Shown at the top of `mailwoman data --help`.
@@ -56,7 +55,7 @@ function listBundles(dataRoot: string): string {
 	for (const bundle of Object.values(BUNDLES)) {
 		const totalBytes = bundle.artifacts.reduce((sum, artifact) => sum + artifact.approxBytes, 0)
 		const files = bundle.artifacts.length
-		const destinations = new Set(bundle.artifacts.map((artifact) => resolvePath(dataRoot, artifact.localPath)))
+		const destinations = new Set(bundle.artifacts.map((artifact) => bundleArtifactPath(dataRoot, artifact)))
 		const destination = destinations.size === 1 ? [...destinations][0]! : `${dataRoot} (${destinations.size} paths)`
 
 		lines.push(

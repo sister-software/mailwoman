@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer build nsul` — the GB uprn → unit-postcode register (`nsul.db`): the ONS
  *   National Statistics uprn Lookup joined to OS Open uprn's coordinates, under the layer interface.
- *   Reads a hand-acquired archive from a vintage-dated `<data-root>/nsul/<yyyy-MM>/` directory
+ *   Reads a hand-acquired archive from a vintage-dated `<data-root>/db/nsul/<yyyy-MM>/` directory
  *   (there is no download step, since the portal item is fetched by hand beside its `.md5` sidecar and
  *   `item.json`), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
  *   Nothing on the parse/resolve path reads it yet. the runtime surface is a separate proposal
@@ -33,12 +33,13 @@ export const spec = {
 	options: {
 		"source-dir": {
 			type: "string",
-			description: "Acquisition dir holding NSUL_E<epoch>_<MON>_<YYYY>.zip. Default: newest <data-root>/nsul/<YYYY-MM>",
+			description:
+				"Acquisition dir holding NSUL_E<epoch>_<MON>_<YYYY>.zip. Default: newest <data-root>/db/nsul/<YYYY-MM>",
 		},
-		out: { type: "string", description: "Output path. Default <data-root>/nsul/nsul.db" },
+		out: { type: "string", description: "Output path. Default <data-root>/db/nsul/nsul.db" },
 		"uprn-db": {
 			type: "string",
-			description: "The uprn.db to take coordinates from. Default <data-root>/uprn/uprn.db",
+			description: "The uprn.db to take coordinates from. Default <data-root>/db/uprn/uprn.db",
 		},
 	},
 } as const satisfies CommandSpec

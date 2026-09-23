@@ -22,7 +22,7 @@ export const spec = {
 			type: "string",
 			description: "LINZ-derived OA NZ countrywide CSV. Default <data-root>/openaddresses/extracted/nz/countrywide.csv",
 		},
-		out: { type: "string", description: "Output database. Default <data-root>/wof/localities-nz-linz.db" },
+		out: { type: "string", description: "Output database. Default <data-root>/db/wof/localities-nz-linz.db" },
 	},
 } as const satisfies CommandSpec
 

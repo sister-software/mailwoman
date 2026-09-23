@@ -54,7 +54,7 @@ const EXAMPLES_PER_LINE = 6
 
 interface DatabaseRecipe {
 	/**
-	 * Database filename under `<data-root>/wof/`.
+	 * Database filename under `<data-root>/db/wof/`.
 	 */
 	sourceFile: string
 	country: string
@@ -64,8 +64,8 @@ interface DatabaseRecipe {
 	scope: string
 	level: PostcodePrefixLevel
 	/**
-	 * WOF polygon database under `<data-root>/wof/`, for a recipe whose ancestry is
-	 * point-in-polygon rather than a documented area table.
+	 * WOF polygon database under `<data-root>/db/wof/`, for a recipe whose ancestry
+	 * is point-in-polygon rather than a documented area table.
 	 *
 	 * Absent means the recipe does not use geometry.
 	 */

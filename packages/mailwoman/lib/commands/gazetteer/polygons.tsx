@@ -27,7 +27,7 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofReposRoot } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
@@ -68,7 +68,7 @@ export const spec = {
 		tol: { type: "number", default: 0.004, description: "Simplification tolerance in degrees" },
 		repos: {
 			type: "string",
-			default: resolvePath(dataRootPath("src", "wof-repos", "whosonfirst-data")),
+			default: resolvePath(wofReposRoot("whosonfirst-data")),
 			description: "WOF GeoJSON repository root",
 		},
 	},
@@ -94,7 +94,7 @@ interface RawGeometry {
 /**
  * Where a country's admin record sits under a repositories root.
  *
- * `--repos` defaults to the owner directory (`<data-root>/wof/repos/whosonfirst-data`),
+ * `--repos` defaults to the owner directory (`<data-root>/src/wof-repos/whosonfirst-data`),
  * so the repository name is appended flat to whatever root the caller gave.
  * The id-to-path rule itself belongs to `wofIDPathSegments`.
  */

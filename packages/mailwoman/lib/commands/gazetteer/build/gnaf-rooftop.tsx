@@ -25,7 +25,7 @@ export const spec = {
 			type: "string",
 			description: "Extracted G-NAF Standard/ PSV directory. Default <data-root>/gnaf/may26/extracted/…/Standard",
 		},
-		out: { type: "string", description: "Output database. Default <data-root>/osm/address-points-au-au.db" },
+		out: { type: "string", description: "Output database. Default <data-root>/db/osm/address-points-au-au.db" },
 		states: {
 			type: "string",
 			description: "Comma-separated state prefixes (e.g. ACT,NSW) — the smoke rung. Default all",

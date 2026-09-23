@@ -18,7 +18,7 @@ export const spec = {
 	description: "Build the Netherlands PC6 postcode database.",
 	options: {
 		csv: { type: "string", description: "CBS PC6 centroid CSV. Default <data-root>/cbs/pc6-centroids.csv" },
-		out: { type: "string", description: "Output database. Default <data-root>/wof/postalcode-nl-pc6.db" },
+		out: { type: "string", description: "Output database. Default <data-root>/db/wof/postalcode-nl-pc6.db" },
 	},
 } as const satisfies CommandSpec
 

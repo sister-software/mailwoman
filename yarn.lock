@@ -6722,7 +6722,6 @@ __metadata:
   resolution: "@mailwoman/storage-kit@workspace:packages/storage-kit"
   dependencies:
     "@mailwoman/core": "workspace:*"
-    path-ts: "npm:^2.4.1"
     zod: "npm:^4.5.4"
     zx: "npm:^8.8.5"
   languageName: unknown

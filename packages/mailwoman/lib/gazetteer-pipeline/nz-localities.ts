@@ -69,7 +69,7 @@ export interface BuildNZLocalitiesOptions {
 	/**
 	 * Output database.
 	 *
-	 * Default `<data-root>/wof/localities-nz-linz.db`.
+	 * Default `<data-root>/db/wof/localities-nz-linz.db`.
 	 */
 	out?: PathBuilderLike
 }

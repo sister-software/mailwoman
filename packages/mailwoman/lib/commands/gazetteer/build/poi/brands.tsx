@@ -27,7 +27,7 @@ export const spec = {
 	name: "poi-brands",
 	description: "Build the POI brand lexicon from poi.db.",
 	options: {
-		db: { type: "string", description: "Built poi.db to read. Default <data-root>/poi/poi.db" },
+		db: { type: "string", description: "Built poi.db to read. Default <data-root>/db/poi/poi.db" },
 		out: { type: "string", description: "brands.json output path" },
 		"min-rows": { type: "number", description: `Minimum total rows to keep a brand. Default ${DEFAULT_MIN_ROWS}` },
 		dominance: { type: "number", description: `Minimum modal-name fraction. Default ${DEFAULT_DOMINANCE}` },

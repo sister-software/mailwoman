@@ -51,7 +51,7 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/*
 
 # MAILWOMAN_DATA_ROOT is the only gazetteer setting this image needs. Since mailwoman 8.7.0 the
-# resolver falls back to `<data-root>/wof/candidate.db`, so mounting a volume at /data is the whole
+# resolver falls back to `<data-root>/db/wof/candidate.db`, so mounting a volume at /data is the whole
 # configuration and no `-e MAILWOMAN_CANDIDATE_DB=...` follows it. This image used to bake that variable
 # too; it is redundant now, and setting it is actively worse when it is wrong, because a variable that
 # names a missing file does NOT fall through to the convention path. Set it only for a gazetteer that

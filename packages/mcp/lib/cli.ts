@@ -146,7 +146,7 @@ function loadCore(): Promise<{
 		// the first thing a stranger saw from `mailwoman_parse` on a fresh install
 		// (measured 2026-08-03 against a standalone `npm install @mailwoman/mcp`).
 		// Same preflight as `photon`/`nominatim`/`mailwoman serve`, and the same discovery:
-		// #1444 moved the `<data-root>/wof/candidate.db` convention fallback into
+		// #1444 moved the `<data-root>/db/wof/candidate.db` convention fallback into
 		// `resolveCandidateDBPath`, so this bare call picks a pulled gazetteer up with nothing exported.
 		// The `MAILWOMAN_DATA_ROOT` in the client's `env` block is enough on its own.
 		if (!candidateDB && !wofPaths.length) {

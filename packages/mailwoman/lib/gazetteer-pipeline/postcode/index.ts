@@ -38,13 +38,13 @@ export interface BuildPostcodeDatabaseOptions {
 	/**
 	 * WOF repos root.
 	 *
-	 * Default `<data-root>/wof/repos`.
+	 * Default `<data-root>/src/wof-repos`.
 	 */
 	reposDir?: string
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
+	 * Default `<data-root>/db/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: string
 	/**

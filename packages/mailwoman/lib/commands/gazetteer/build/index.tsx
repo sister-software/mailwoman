@@ -23,7 +23,7 @@ export const spec = {
 	name: "build",
 	description: "Build the admin and candidate gazetteers.",
 	options: {
-		data: { type: "string", description: "WOF repos root. Default <data-root>/wof/repos" },
+		data: { type: "string", description: "WOF repos root. Default <data-root>/src/wof-repos" },
 		"skip-verify": { type: "boolean", default: false, description: "Skip the admin verify check (development only)" },
 	},
 } as const satisfies CommandSpec

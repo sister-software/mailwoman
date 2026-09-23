@@ -93,7 +93,7 @@ export interface BuildPostcodeCodePointOptions {
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/wof/postalcode-gb-codepoint-<yyyy-MM-DD>.db` — a new dated path every build.
+	 * Default `<data-root>/db/wof/postalcode-gb-codepoint-<yyyy-MM-DD>.db` — a new dated path every build.
 	 * Promoting it into `DEFAULT_POSTCODE_DATABASES` is a deliberate, separate swap.
 	 */
 	out?: PathBuilderLike

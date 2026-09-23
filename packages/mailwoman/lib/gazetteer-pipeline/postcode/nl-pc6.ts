@@ -41,7 +41,7 @@ export interface BuildNLPC6Options {
 	/**
 	 * Output database.
 	 *
-	 * Default `<data-root>/wof/postalcode-nl-pc6.db`.
+	 * Default `<data-root>/db/wof/postalcode-nl-pc6.db`.
 	 */
 	out?: PathBuilderLike
 }

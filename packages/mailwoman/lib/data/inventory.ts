@@ -228,7 +228,10 @@ async function inventoryEntry(dataRoot: string, path: string): Promise<Inventory
  * Walk the data root and classify every database in it.
  */
 export async function takeInventory(options: { dataRoot: string; maxDepth?: number }): Promise<InventoryReport> {
-	const maxDepth = options.maxDepth ?? 2
+	// A database sits three segments down, at `db/<layer>/<file>.db`, since the `db/` group added a level.
+	// A bound of two stops the walk at `db/<layer>/`, and the report then describes
+	// a data root holding zero databases.
+	const maxDepth = options.maxDepth ?? 3
 	const { paths, skippedForeign } = await findDatabases(options.dataRoot, maxDepth)
 	const entries = await Promise.all(paths.map((path) => inventoryEntry(options.dataRoot, path)))
 

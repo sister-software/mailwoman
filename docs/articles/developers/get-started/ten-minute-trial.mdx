@@ -127,7 +127,7 @@ PASS (1/1 checks)
 Took about four minutes on this connection. The two `[DEBUG]` lines are the download client checking
 the remote file's size before it starts; harmless.
 
-Ignore the `export` line. The file landed at `<data-root>/wof/candidate.db`, and that path is where
+Ignore the `export` line. The file landed at `<data-root>/db/wof/candidate.db`, and that path is where
 every entry point looks when nothing points it elsewhere, so the download is the whole setup. The
 line is a leftover from when the variable was required; setting it changes nothing here. What the
 variable is still for is on [Runtime flags](../reference/runtime-flags.mdx#environment-variables) —
@@ -281,7 +281,7 @@ switch that holds the filter fixed if you ever need to compare the two backends 
 
 A parser and a geocoder, both running against your own disk. `mailwoman parse` (or
 `createRuntimePipeline`) gives you tagged components; `mailwoman geocode` gives you a coordinate, once
-`candidate.db` is on disk at `<data-root>/wof/candidate.db`. You also have the command that will
+`candidate.db` is on disk at `<data-root>/db/wof/candidate.db`. You also have the command that will
 answer the "which half do I have" question again after any change to your install.
 
 ## Next

@@ -59,6 +59,40 @@ export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[
 }) as PathBuilderResolver
 
 /**
+ * A path under the data root's database group, `$MAILWOMAN_DATA_ROOT/db/`.
+ *
+ * Every built or published SQLite artifact lives under this directory, one subdirectory per
+ * layer: `db/wof`, `db/poi`, `db/address-points`, `db/interpolation`, `db/ban`, `db/flood`,
+ * `db/soil`, `db/coastal`, `db/zoning`, `db/nsul`, `db/osm`, `db/timezone`, `db/uprn`.
+ * Source downloads, corpora, weights, evaluation receipts and caches stay at the
+ * data root's top level and do not pass through here.
+ *
+ * The group name is a bare string in every path a caller composes, so the compiler
+ * reports nothing when a call site keeps a pre-grouping prefix.
+ * Such a call site resolves to a directory that does not exist, and every reader of
+ * a layer database treats an absent file as an absent layer.
+ *
+ * Compose a database path through this function so one edit moves all of them.
+ */
+export function databaseRootPath(dataRoot: PathBuilderLike = mailwomanDataRoot(), ...segments: string[]): PathBuilder {
+	return resolvePathBuilder(dataRoot, "db", ...segments)
+}
+
+/**
+ * The Who's On First git checkouts: `$MAILWOMAN_DATA_ROOT/src/wof-repos/`.
+ *
+ * These are cloned sources rather than built artifacts, so they sit under `src/`
+ * and not under the `db/` group {@link databaseRootPath} names.
+ * `mailwoman gazetteer repos-sync` writes them and the admin, postcode and polygon builds read them.
+ *
+ * It takes no root override, unlike {@link databaseRootPath}: each of the five callers
+ * either uses the configured data root or replaces the whole path with a `--repos` argument.
+ */
+export function wofReposRoot(...segments: string[]): PathBuilder {
+	return dataRootPath("src", "wof-repos", ...segments)
+}
+
+/**
  * The dev-weights overlay for a locale: `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
  *
  * One definition of the convention, because it is written by ten `link-dev-weights.ts`
@@ -204,12 +238,7 @@ export interface WOFExtractPaths {
  * {@link wofExtractPaths} as a named record, in the same order the runtime attaches them.
  */
 export function wofExtractPathsByName(dataRoot: PathBuilderLike = mailwomanDataRoot()): WOFExtractPaths {
-	// `db/wof`, not `wof`: the 2026-09-15 regrouping moved every database artifact under `db/`
-	// so the volume's carve-out stops being a list, and this call site kept the old prefix.
-	// The compiler cannot see it, because the segments are strings.
-	// `mailwoman geocode` therefore found no resolver database on a data root
-	// where all six extracts were present.
-	const wof = resolvePathBuilder(dataRoot, "db", "wof")
+	const wof = databaseRootPath(dataRoot, "wof")
 
 	return {
 		adminGlobalPriority: wof("admin-global-priority.db").toString(),

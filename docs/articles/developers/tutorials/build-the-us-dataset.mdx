@@ -288,7 +288,7 @@ PASS — core checks ok (weights + runtime); parse is ready
 
 The POI layer is a separate artifact and geocoding does not need it, which is why `doctor` marks it
 optional and passes anyway. `(convention path)` on the gazetteer line means it was found at
-`<data root>/wof/candidate.db` with nothing configured — which is why step 6 was one command and no
+`<data root>/db/wof/candidate.db` with nothing configured — which is why step 6 was one command and no
 `export`, and why the `export` line the pull printed can be ignored.
 
 Now run the other check, and read its verdict carefully:

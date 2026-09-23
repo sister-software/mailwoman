@@ -8,12 +8,13 @@
  *   session would attach, and the reverse.
  */
 
-import { resolvePath, type PathBuilderLike } from "path-ts"
+import { databaseRootPath } from "@mailwoman/core/data-root"
+import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
  * The layer databases the session attaches when present, keyed by the layer's short id,
- * each as the path segments under the data root.
+ * each as the directory and filename under the data root's `db/` group.
  */
 const LAYER_DATABASES = {
 	flood: { label: "Flood zones (EA England)", segments: ["flood", "flood.db"] },
@@ -38,7 +39,7 @@ export interface LayerDatabaseRef {
  * The absolute path of one layer database under `dataRoot`.
  */
 export function layerDatabasePath(dataRoot: PathBuilderLike, id: LayerID): string {
-	return resolvePath(dataRoot, ...LAYER_DATABASES[id].segments)
+	return String(databaseRootPath(dataRoot, ...LAYER_DATABASES[id].segments))
 }
 
 /**
@@ -68,7 +69,7 @@ export async function layerDatabaseAlternates(dataRoot: PathBuilderLike, id: Lay
 	try {
 		return (
 			await Globerator.files("db", {
-				cwd: resolvePath(dataRoot, directory),
+				cwd: String(databaseRootPath(dataRoot, directory)),
 				absolute: false,
 				recursive: false,
 			}).toSorted()

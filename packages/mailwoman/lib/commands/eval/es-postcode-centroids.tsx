@@ -27,7 +27,7 @@ export const spec = {
 			type: "string",
 			description: "Overture addresses parquet (default: the pinned release under the data root)",
 		},
-		out: { type: "string", description: "Output SQLite DB (default <data-root>/wof/postalcode-<cc>-overture.db)" },
+		out: { type: "string", description: "Output SQLite DB (default <data-root>/db/wof/postalcode-<cc>-overture.db)" },
 	},
 } as const satisfies CommandSpec
 

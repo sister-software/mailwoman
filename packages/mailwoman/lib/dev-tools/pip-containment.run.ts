@@ -19,7 +19,7 @@
  *   name] [--json OUT]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofReposRoot } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { pyFixed } from "@mailwoman/core/numeric"
@@ -34,7 +34,7 @@ import { Globerator } from "spliterator/node/fs"
  */
 const MAX_LISTED_ARTIFACTS = 12
 
-const WOF_REPOS = dataRootPath("src", "wof-repos")
+const WOF_REPOS = wofReposRoot()
 
 async function adminRoots(): Promise<string[]> {
 	const pattern = WOF_REPOS("whosonfirst-data/whosonfirst-data-admin-*/data")

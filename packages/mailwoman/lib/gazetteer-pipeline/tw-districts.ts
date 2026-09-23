@@ -148,13 +148,13 @@ export interface BuildTWDistrictsOptions {
 	/**
 	 * The admin WOF database the 縣市 names are matched against.
 	 *
-	 * Default `<data-root>/wof/admin-global-priority.db`.
+	 * Default `<data-root>/db/wof/admin-global-priority.db`.
 	 */
 	adminPath?: string
 	/**
 	 * Output database.
 	 *
-	 * Default `<data-root>/wof/localities-tw-districts.db`.
+	 * Default `<data-root>/db/wof/localities-tw-districts.db`.
 	 */
 	out?: string
 	/**

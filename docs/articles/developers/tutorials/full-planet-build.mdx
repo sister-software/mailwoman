@@ -84,12 +84,12 @@ PASS (1/1 checks)
 ```
 
 Four minutes for 1.65 GB here. The `export` line is a leftover the pull still prints; the file landed at
-`<data root>/wof/candidate.db` and is found there without it. Take the download unless you have a reason
+`<data root>/db/wof/candidate.db` and is found there without it. Take the download unless you have a reason
 not to, because the build behind it is the heaviest thing in this repository, and this page does not run
 it. What it involves, so you can price it:
 
 ```bash
-# 1. Clone the Who's On First data repositories into <data-root>/wof/repos.
+# 1. Clone the Who's On First data repositories into <data-root>/src/wof-repos.
 #    `--countries` takes ISO-2 codes and pulls each country's admin + postalcode
 #    repositories; `--repos` names them individually. One of the two is required —
 #    the org holds 823 non-archived repositories, several hundred GB checked out.

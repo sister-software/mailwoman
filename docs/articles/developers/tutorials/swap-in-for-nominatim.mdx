@@ -33,7 +33,7 @@ Read the last two before you start. They decide whether this page can answer the
   can diff the two answers before you switch over.
 - **`/reverse` needs a database this page does not download.** Reverse geocoding on the Photon and
   Nominatim drop-ins runs point-in-polygon over a full WOF distribution at
-  `<data-root>/wof/admin-global-priority.db`. `mailwoman data pull` does not ship one, so `/reverse`
+  `<data-root>/db/wof/admin-global-priority.db`. `mailwoman data pull` does not ship one, so `/reverse`
   answers an empty result until you put one there. Step 3 shows what that looks like so you don't
   mistake it for a broken install. Forward geocoding — the path most callers use — works from step 1.
 - **There is no authentication in front of any of them,** and `--host` defaults to `0.0.0.0`. Bind
@@ -74,7 +74,7 @@ PASS (1/1 checks)
 ```
 
 The paths in every transcript on this page are the data root it was verified against; yours read
-differently. The file lands at `<data-root>/wof/candidate.db` and every entry point finds it there on
+differently. The file lands at `<data-root>/db/wof/candidate.db` and every entry point finds it there on
 its own — the drop-ins, `mailwoman geocode` and `mailwoman serve` alike. The `export` line the pull
 prints is a leftover from `8.6.0`, when only the drop-ins had that fallback; following it changes
 nothing. Pass `--candidate-db <path>` if your copy lives somewhere else.
@@ -100,7 +100,7 @@ npx @mailwoman/photon serve --port 2323
 Four of those lines are the deployment describing itself, and they are the ones to read in a log when
 two hosts disagree. `resolver:` names the gazetteer that will answer. `wof:` is the reverse-geocoding
 database from the prerequisites, absent here — and the variable that line suggests is read by
-`mailwoman serve` rather than by this server, which looks only at `<data-root>/wof/`. Permissive CORS is on
+`mailwoman serve` rather than by this server, which looks only at `<data-root>/db/wof/`. Permissive CORS is on
 by default because browser geocoder widgets call these endpoints cross-origin; `--no-cors` turns it
 off when a reverse proxy already sets the headers.
 
@@ -169,7 +169,7 @@ curl -s "http://127.0.0.1:2323/reverse?lat=52.52&lon=13.405" | jq -c
 
 An empty collection rather than an error. That is the `wof: (none found)` line from step 2 showing through:
 with no full WOF distribution on disk the reverse geocoder is never constructed, and the route answers
-the empty shape rather than a 500. Put `admin-global-priority.db` in `<data-root>/wof/` and restart
+the empty shape rather than a 500. Put `admin-global-priority.db` in `<data-root>/db/wof/` and restart
 to change that answer.
 
 ## 4. Point your existing client at it

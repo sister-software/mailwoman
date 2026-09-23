@@ -23,8 +23,8 @@ export const spec = {
 			type: "string",
 			description: "Taiwan addresses parquet. Default <data-root>/overture/<release>/addresses-tw.parquet",
 		},
-		admin: { type: "string", description: "Admin WOF database. Default <data-root>/wof/admin-global-priority.db" },
-		out: { type: "string", description: "Output database. Default <data-root>/wof/localities-tw-districts.db" },
+		admin: { type: "string", description: "Admin WOF database. Default <data-root>/db/wof/admin-global-priority.db" },
+		out: { type: "string", description: "Output database. Default <data-root>/db/wof/localities-tw-districts.db" },
 		threads: { type: "string", description: "DuckDB thread cap" },
 	},
 } as const satisfies CommandSpec

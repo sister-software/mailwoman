@@ -19,7 +19,7 @@ export const spec = {
 	description: "Build the Prague municipal-district locality database.",
 	options: {
 		source: { type: "string", description: "GeoNames CZ places file. Default <data-root>/geonames/CZ.txt" },
-		out: { type: "string", description: "Output database. Default <data-root>/wof/localities-cz-districts.db" },
+		out: { type: "string", description: "Output database. Default <data-root>/db/wof/localities-cz-districts.db" },
 	},
 } as const satisfies CommandSpec
 

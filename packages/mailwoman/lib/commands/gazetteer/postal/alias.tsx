@@ -46,7 +46,7 @@ export const spec = {
 			validate: (value: number) => Number.isInteger(value) && value > 0,
 			description: "Minimum aggregate observation count",
 		},
-		out: { type: "string", description: "Output DB path. Default <data-root>/wof/postal-city-alias-us.db" },
+		out: { type: "string", description: "Output DB path. Default <data-root>/db/wof/postal-city-alias-us.db" },
 	},
 } as const satisfies CommandSpec
 

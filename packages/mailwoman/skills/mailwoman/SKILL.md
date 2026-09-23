@@ -64,7 +64,7 @@ npx mailwoman data pull candidate
 npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 ```
 
-The file lands at `<data-root>/wof/candidate.db`, and since `8.7.0` every entry point looks there —
+The file lands at `<data-root>/db/wof/candidate.db`, and since `8.7.0` every entry point looks there —
 `geocode`, `parse --resolve`, `serve`, `registry`, the MCP server and the drop-in servers alike. The
 `export MAILWOMAN_CANDIDATE_DB=...` line the pull prints is a leftover from when that was required;
 ignore it. Set the variable only for a gazetteer outside the data root, or to the literal `none` to

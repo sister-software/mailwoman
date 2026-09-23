@@ -101,7 +101,7 @@ export interface DoctorDeps {
 	 */
 	envCandidatePath(): Promise<string | undefined>
 	/**
-	 * The `<data-root>/wof/candidate.db` convention path if it exists on disk —
+	 * The `<data-root>/db/wof/candidate.db` convention path if it exists on disk —
 	 * used to detect the env-unset trap.
 	 */
 	conventionCandidatePath(): Promise<string | undefined>
@@ -194,7 +194,7 @@ async function readEnginesFloor(): Promise<string> {
 }
 
 /**
- * The `<data-root>/wof/candidate.db` convention path if it exists on disk —
+ * The `<data-root>/db/wof/candidate.db` convention path if it exists on disk —
  * the file a fresh consumer downloads.
  */
 async function defaultConventionCandidatePath(dataRoot: string): Promise<string | undefined> {

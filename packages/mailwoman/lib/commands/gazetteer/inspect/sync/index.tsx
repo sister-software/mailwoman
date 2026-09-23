@@ -6,7 +6,7 @@
  *   `mailwoman gazetteer inspect sync` — clone or pull the Who's On First country repositories that the gazetteer
  *   builds read.
  *
- *   The destination defaults to `<data-root>/wof/repos`, matching every consumer of these repositories
+ *   The destination defaults to `<data-root>/src/wof-repos`, matching every consumer of these repositories
  *   (`gazetteer build admin`, `gazetteer build`, `build postcode-database`, `gazetteer polygons` all document that same
  *   default). Which repositories to sync is decided in `sync-plan.ts` before any network work, so a mistake is a
  *   message rather than a directory full of clones.
@@ -19,7 +19,7 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofReposRoot } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -67,7 +67,7 @@ export const spec = {
 	positionals: [
 		{
 			name: "local-repo-directory",
-			description: "Repository root. Default <data-root>/wof/repos",
+			description: "Repository root. Default <data-root>/src/wof-repos",
 		},
 	],
 	options: {
@@ -118,7 +118,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				assertDestinationNotARepoName(requested)
 			}
 
-			const destination = PathBuilder.from(requested ?? dataRootPath("src", "wof-repos"))
+			const destination = PathBuilder.from(requested ?? wofReposRoot())
 
 			const { Placetype, PLACETYPES_REPO_SOURCE, synchronizeRepo } = await import("@mailwoman/core")
 			const { parallelMap } = await import("spliterator")

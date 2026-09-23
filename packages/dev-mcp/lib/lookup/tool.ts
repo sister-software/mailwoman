@@ -16,7 +16,7 @@
  *   server spends its resident memory, and it spends it on sessions.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { databaseRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
@@ -131,7 +131,7 @@ export async function runLookup(
 				// The score source's split channels ride along whenever the conventional
 				// importance DB exists beside the artifacts.
 				// The join every fame-contest diagnosis needs, attached rather than scripted.
-				const importancePath = String(resolvePath(dataRoot, "wof", "admin-global-priority-importance.db"))
+				const importancePath = String(databaseRootPath(dataRoot, "wof", "admin-global-priority-importance.db"))
 
 				const importanceDB = (await pathExists(importancePath))
 					? new DatabaseClient<PlaceImportanceDatabase>(importancePath, { readOnly: true })
@@ -223,7 +223,7 @@ export async function runLookup(
 		}
 
 		case LookupSource.POI: {
-			return await withArtifact(source, resolvePath(dataRoot, "poi", "poi.db"), (db, path) => ({
+			return await withArtifact(source, String(databaseRootPath(dataRoot, "poi", "poi.db")), (db, path) => ({
 				source,
 				provenance: { artifact: path },
 				rows: lookupPOI(db, queries, {

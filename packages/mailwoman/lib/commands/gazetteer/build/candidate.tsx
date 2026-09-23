@@ -32,8 +32,8 @@ export const spec = {
 	name: "candidate",
 	description: "Build the byte-range gazetteer candidate database",
 	options: {
-		admin: { type: "string", description: "Admin source DB. Default <data-root>/wof/admin-global-priority.db" },
-		out: { type: "string", description: "Candidate DB output. Default <data-root>/wof/candidate-global.db" },
+		admin: { type: "string", description: "Admin source DB. Default <data-root>/db/wof/admin-global-priority.db" },
+		out: { type: "string", description: "Candidate DB output. Default <data-root>/db/wof/candidate-global.db" },
 		fold: { type: "boolean", default: false, description: "Re-run the GeoNames alias fold before building" },
 		countries: {
 			type: "string",
@@ -45,7 +45,10 @@ export const spec = {
 			default: false,
 			description: "Build from a fold output older than its admin database on purpose",
 		},
-		importance: { type: "string", description: `Importance source. Default <data-root>/wof/${DEFAULT_IMPORTANCE_DB}` },
+		importance: {
+			type: "string",
+			description: `Importance source. Default <data-root>/db/wof/${DEFAULT_IMPORTANCE_DB}`,
+		},
 		"skip-importance": { type: "boolean", default: false, description: "Build with an empty importance column" },
 	},
 } as const satisfies CommandSpec

@@ -29,8 +29,8 @@ export const spec = {
 	name: "admin",
 	description: "Build and verify the global admin gazetteer.",
 	options: {
-		data: { type: "string", description: "WOF repos root. Default <data-root>/wof/repos" },
-		out: { type: "string", description: "Output path. Default <data-root>/wof/admin-global-priority.REBUILD.db" },
+		data: { type: "string", description: "WOF repos root. Default <data-root>/src/wof-repos" },
+		out: { type: "string", description: "Output path. Default <data-root>/db/wof/admin-global-priority.REBUILD.db" },
 		"overture-countries": { type: "string", description: "CSV override of the Overture country set" },
 		"geonames-countries": { type: "string", description: "CSV override of the GeoNames country set" },
 		"overture-release": { type: "string", description: "Pinned Overture release" },

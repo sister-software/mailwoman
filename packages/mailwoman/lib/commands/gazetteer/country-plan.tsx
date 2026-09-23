@@ -17,11 +17,10 @@
  *   tall as the viewport emits `\x1b[3J`, which wipes the scrollback.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { wofExtractPathsByName, wofReposRoot } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { resolvePath } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import {
@@ -77,7 +76,7 @@ function wofRepoNames(country: string): string[] {
 const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
-			const adminDB = options.adminDB ?? String(resolvePath(mailwomanDataRoot(), "wof", "admin-global-priority.db"))
+			const adminDB = options.adminDB ?? wofExtractPathsByName().adminGlobalPriority
 
 			const lists = {
 				wofCountries: DEFAULT_WOF_PRIORITY_COUNTRIES as readonly string[],
@@ -89,7 +88,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 			// The WOF leg is presence-driven, so a clone nobody declared becomes coverage
 			// on the next build and a declaration nobody cloned silently does not,
 			// and only comparing the two can tell those apart.
-			const reposRoot = String(resolvePath(mailwomanDataRoot(), "wof", "repos"))
+			const reposRoot = String(wofReposRoot())
 			const audit = await auditReposRoot(reposRoot)
 			const cloned = clonedCountries(audit)
 

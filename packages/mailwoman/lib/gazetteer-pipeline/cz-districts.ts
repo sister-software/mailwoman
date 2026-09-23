@@ -40,7 +40,7 @@ export interface BuildCZDistrictsOptions {
 	/**
 	 * Output database.
 	 *
-	 * Default `<data-root>/wof/localities-cz-districts.db`.
+	 * Default `<data-root>/db/wof/localities-cz-districts.db`.
 	 */
 	out?: string
 }

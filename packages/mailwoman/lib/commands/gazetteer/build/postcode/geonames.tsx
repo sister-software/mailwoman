@@ -40,7 +40,7 @@ export const spec = {
 		},
 		out: {
 			type: "string",
-			description: "Output path. Default <data-root>/wof/postalcode-geonames-tail-<YYYY-MM-DD>.db",
+			description: "Output path. Default <data-root>/db/wof/postalcode-geonames-tail-<YYYY-MM-DD>.db",
 		},
 		"geonames-postal": { type: "string", description: "GeoNames postal dump dir. Default <data-root>/geonames-postal" },
 	},

@@ -126,7 +126,7 @@ export interface BuildPostcodeNIOSMOptions {
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/wof/postalcode-ni-osm-<yyyy-MM-DD>.db` — a new dated path every build.
+	 * Default `<data-root>/db/wof/postalcode-ni-osm-<yyyy-MM-DD>.db` — a new dated path every build.
 	 * Copying it to the canonical `postalcode-ni-osm.db` is a deliberate, separate step.
 	 */
 	out?: PathBuilderLike

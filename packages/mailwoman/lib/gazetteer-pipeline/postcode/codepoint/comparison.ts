@@ -230,11 +230,11 @@ function areaOf(name: string): string {
 
 export interface RunCodePointCheckOptions {
 	/**
-	 * The candidate database, e.g. `<data-root>/wof/postalcode-gb-codepoint-<date>.db`.
+	 * The candidate database, e.g. `<data-root>/db/wof/postalcode-gb-codepoint-<date>.db`.
 	 */
 	codepointPath: string
 	/**
-	 * The incumbent, e.g. the frozen `<data-root>/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db`.
+	 * The incumbent, e.g. the frozen `<data-root>/db/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db`.
 	 *
 	 * Opened read-only — this tool never writes to either input.
 	 */

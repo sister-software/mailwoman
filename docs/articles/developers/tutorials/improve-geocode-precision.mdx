@@ -14,7 +14,7 @@ which; and you'll know what `uncertainty_m` is measuring in each one. About twen
 
 ## Prerequisites
 
-- **`candidate.db` on disk**, at `<data root>/wof/candidate.db`.
+- **`candidate.db` on disk**, at `<data root>/db/wof/candidate.db`.
   [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) covers the download.
 - **About 127 MB of free disk** for the street databases this page pulls, and `$MAILWOMAN_DATA_ROOT`
   pointing where you want them. The full US street tier is 103 files and about 41.3 GB, so this page
@@ -28,7 +28,7 @@ which; and you'll know what `uncertainty_m` is measuring in each one. About twen
 
 One paragraph of recap, because everything below depends on it. The candidate-table gazetteer ranks
 same-named places population-first, is the backend the hosted demo uses, and since `8.7.0` is the
-default: a `candidate.db` at `<data root>/wof/candidate.db` is picked up with nothing configured. The
+default: a `candidate.db` at `<data root>/db/wof/candidate.db` is picked up with nothing configured. The
 alternative is a full-text-search path over a WOF admin distribution, which ranks by relevance instead
 and answers some queries differently. You reach it by pinning `--candidate-db none`, and it is not a
 comparison you can run here anyway, because `data pull` publishes no bundle for that database and it

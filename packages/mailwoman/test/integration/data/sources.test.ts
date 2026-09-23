@@ -13,11 +13,12 @@
  *   while 68.2% of its 125,276,536 rows carried `overture:NAD`.
  */
 
+import { databaseRootPath } from "@mailwoman/core/data-root"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type DataBundle, censusBundleSources, renderSourceCensus } from "mailwoman/data"
-import { join, resolvePath } from "path-ts"
+import { dirname } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -52,12 +53,11 @@ function bundleOver(localPaths: readonly string[], census: DataBundle["sourceCen
 async function plant(rowsBySource: Record<string, number>, localPath = "points.db") {
 	const scratch = fixtures.use(await temporaryDirectory("mw-data-sources-"))
 	const dataRoot = String(scratch.path)
-	const path = resolvePath(dataRoot, localPath)
+	// Plant through the same builder the census resolves with, so a change to the data
+	// root's database group moves the fixture and the reader together.
+	const path = String(databaseRootPath(dataRoot, localPath))
 
-	const separator = localPath.lastIndexOf("/")
-	const directory = separator > 0 ? localPath.slice(0, separator) : ""
-
-	await makeDirectories(join(dataRoot, directory))
+	await makeDirectories(dirname(path))
 
 	using database = new DatabaseClient<{ address_point: { source: string } }>(path)
 

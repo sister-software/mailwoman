@@ -26,7 +26,7 @@ export const spec = {
 	name: "publish",
 	description: "Publish a candidate gazetteer to R2.",
 	positionals: [
-		{ name: "candidate-db", description: `Candidate DB. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}` },
+		{ name: "candidate-db", description: `Candidate DB. Default <data-root>/db/wof/${DEFAULT_CANDIDATE_OUT}` },
 	],
 	options: {
 		"gazetteer-version": { type: "string", description: "Immutable gazetteer version" },

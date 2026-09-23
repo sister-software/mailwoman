@@ -47,7 +47,7 @@ Claude Code reads `.mcp.json` in the project root:
 }
 ```
 
-One variable is enough. The server finds the gazetteer at `<data root>/wof/candidate.db`, the path
+One variable is enough. The server finds the gazetteer at `<data root>/db/wof/candidate.db`, the path
 `mailwoman data pull candidate` writes to, so pointing at the data root wires up all four model-backed
 tools. Add `"MAILWOMAN_CANDIDATE_DB"` beside it only for a gazetteer that lives outside that root.
 
@@ -208,7 +208,7 @@ data still connects and lists all nine tools; the failure arrives inside the fir
 
   Or point at your own:
     --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB   (candidate gazetteer)
-    $MAILWOMAN_WOF_DB / <data-root>/wof/*.db          (admin WOF distribution)
+    $MAILWOMAN_WOF_DB / <data-root>/db/wof/*.db       (admin WOF distribution)
 
   Docs: https://mailwoman.ai/docs/developers/how-to/use-the-mcp-server
 

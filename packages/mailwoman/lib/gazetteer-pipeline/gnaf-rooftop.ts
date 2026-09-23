@@ -82,7 +82,7 @@ export interface GNAFRooftopOptions {
 	/**
 	 * Output database path.
 	 *
-	 * Default: `<data-root>/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
+	 * Default: `<data-root>/db/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
 	 */
 	out?: string
 	/**

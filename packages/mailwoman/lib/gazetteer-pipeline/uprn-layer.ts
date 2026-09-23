@@ -473,7 +473,7 @@ export interface BuildUPRNLayerOptions {
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/uprn/uprn.db`.
+	 * Default `<data-root>/db/uprn/uprn.db`.
 	 * Built to a staging path and atomically swapped into place.
 	 */
 	out?: PathBuilderLike

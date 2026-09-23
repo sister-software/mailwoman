@@ -30,7 +30,7 @@ import {
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
-import { isoDate, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { databaseRootPath, isoDate, mailwomanDataRoot } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an optional peer dep of mailwoman (geocoding is opt-in) — import it
 // dynamically inside the functions (the geocode.tsx convention) rather than at module load,
 // so that merely loading these commands (e.g. `mailwoman --help`, which eagerly imports every command)
@@ -55,7 +55,7 @@ import {
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * The canonical postcode-database set (filenames under `<data-root>/wof/`):
+ * The canonical postcode-database set (filenames under `<data-root>/db/wof/`):
  * US + the WOF intl database (NL/FR/DE/ES/IT)
  *
  * - The GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM
@@ -137,22 +137,18 @@ export const DEFAULT_POSTCODE_DATABASES = [
 export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
 
 /**
- * `<data-root>/wof`, where the admin DB, candidate DB, postcode databases, and the convention symlink live.
+ * `<data-root>/db/wof`, where the admin database, the candidate database,
+ * the postcode databases and the `candidate.db` convention symlink live.
  *
- * This helper and its two siblings below compose with path-ts's `resolvePath`
- * rather than `node:path`'s `join`.
- * The same builder `wofExtractPaths` (`core/utils/data-root.ts`) uses for the identical
- * shape, a caller-supplied root plus a fixed subdirectory.
+ * It resolves through {@link databaseRootPath}, so the `db/` group has one definition
+ * and the sixteen callers of this function share it.
  *
- * It also makes the return absolute, which the docstrings above have always claimed:
- * the default root is absolute.
- *
- * Therefore, `join` only differed for a caller that passed a relative `--data-root`,
- * and for that caller it silently produced a cwd-relative path the sealed-artifact
- * swap would then resolve somewhere else.
+ * The return is absolute, which the docstrings above have always claimed: the default root is absolute,
+ * and `node:path`'s `join` differed only for a caller passing a relative `--data-root`, for
+ * which it produced a cwd-relative path that the sealed-artifact swap then resolved somewhere else.
  */
 export function wofDir(dataRoot: string = mailwomanDataRoot()): string {
-	return resolvePath(dataRoot, "wof")
+	return String(databaseRootPath(dataRoot, "wof"))
 }
 
 /**
@@ -507,7 +503,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 }
 
 /**
- * Point the drop-in convention path `<data-root>/wof/candidate.db` at `candidateDB`
+ * Point the drop-in convention path `<data-root>/db/wof/candidate.db` at `candidateDB`
  * (a symlink — a pointer swap, never a DB mutation).
  *
  * The nominatim/photon CLIs auto-use this path.

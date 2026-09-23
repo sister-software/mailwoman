@@ -52,13 +52,13 @@ export interface BuildAdminOptions {
 	/**
 	 * WOF repos root.
 	 *
-	 * Default `<data-root>/wof/repos`.
+	 * Default `<data-root>/src/wof-repos`.
 	 */
 	dataDir?: string
 	/**
 	 * Output artifact path.
 	 *
-	 * Default `<data-root>/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
+	 * Default `<data-root>/db/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: string
 	overtureCountries?: readonly string[]

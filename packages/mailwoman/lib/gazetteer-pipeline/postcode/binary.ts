@@ -48,7 +48,7 @@ export interface PostcodeBinarySource {
 	 */
 	country: string
 	/**
-	 * Database filename under `<data-root>/wof/`.
+	 * Database filename under `<data-root>/db/wof/`.
 	 */
 	database: string
 	/**

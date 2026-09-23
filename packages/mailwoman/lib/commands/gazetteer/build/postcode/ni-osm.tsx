@@ -77,7 +77,7 @@ const GazetteerBuildPostcodeNIOSM: CommandComponent<typeof spec> = ({ options })
 			"a miss on a BT code means NOT ATTESTED IN OSM — not that the postcode does not exist (see meta.coverage_meaning_of_zero)",
 			"licence: ODbL 1.0 — BUILD-LOCAL, never published to npm/R2/demo; attribution in the `meta` table",
 			"sealed 0444",
-			"next: copy to <data-root>/wof/postalcode-ni-osm.db to activate it (DEFAULT_POSTCODE_DATABASES is existsSync-filtered)",
+			"next: copy to <data-root>/db/wof/postalcode-ni-osm.db to activate it (DEFAULT_POSTCODE_DATABASES is existsSync-filtered)",
 		]
 	})
 

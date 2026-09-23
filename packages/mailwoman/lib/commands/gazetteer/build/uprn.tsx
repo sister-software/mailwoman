@@ -31,7 +31,7 @@ export const spec = {
 	description: "Build the OS Open UPRN layer database.",
 	options: {
 		"source-dir": { type: "string", description: "Acquisition dir for osopenuprn_*.zip and extracted CSV" },
-		out: { type: "string", description: "Output path. Default <data-root>/uprn/uprn.db" },
+		out: { type: "string", description: "Output path. Default <data-root>/db/uprn/uprn.db" },
 		offline: { type: "boolean", description: "Skip the download and use --source-dir contents" },
 	},
 } as const satisfies CommandSpec

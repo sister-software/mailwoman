@@ -19,7 +19,7 @@
  *   (or `--candidate-db none`) pins the FTS backend.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { databaseRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
@@ -34,7 +34,7 @@ import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema
 import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { resolvePath, type PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
 import { $public } from "#env"
 
@@ -45,13 +45,7 @@ import { $public } from "#env"
  * when nothing points somewhere else.
  */
 export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanDataRoot()): string {
-	// `db/wof`, not `wof`: the 2026-09-15 regrouping moved every database artifact under `db/`.
-	// It updated the three call sites in `provenance.ts`, `census.ts` and the gazetteer ablation
-	// and missed the two here, which are the ones that pick the resolver backend.
-	// Measured on this host before the repair: this answered `/mnt/mw/wof/candidate.db`,
-	// nothing was there, `resolveCandidateDBPath` answered undefined, and the resolver
-	// fell back to the FTS backend without saying so.
-	return resolvePath(dataRoot, "db", "wof", "candidate.db")
+	return String(databaseRootPath(dataRoot, "wof", "candidate.db"))
 }
 
 /**
@@ -151,7 +145,7 @@ export function buildNoGazetteerMessage(opts: { dataRoot: string; docsPath: stri
 		"",
 		"  Or point at your own:",
 		"    --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB   (candidate gazetteer)",
-		"    $MAILWOMAN_WOF_DB / <data-root>/wof/*.db          (admin WOF distribution)",
+		"    $MAILWOMAN_WOF_DB / <data-root>/db/wof/*.db       (admin WOF distribution)",
 		"",
 		`  Docs: https://mailwoman.ai${opts.docsPath}`,
 	].join("\n")

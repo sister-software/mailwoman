@@ -19,7 +19,7 @@ link "11 W 53rd St" to "11 West 53rd Street" without a string rule for every abb
 
 - The library install and a candidate gazetteer, as in
   [Geocode a CSV of customer addresses](../tutorials/geocode-a-csv.mdx), sitting at
-  `<data root>/wof/candidate.db`. Every transcript below found it there, with nothing exported.
+  `<data root>/db/wof/candidate.db`. Every transcript below found it there, with nothing exported.
 - [customers-messy.csv](/examples/customers-messy.csv) — twenty rows, in which five organizations appear
   two or three times each with different spellings. Thirteen distinct organizations, twenty rows.
 - Per-state rooftop databases, at your data root, for the states in your file. Every transcript below ran
@@ -74,7 +74,7 @@ get past the boot check.** Passing the gazetteer's own path is the tidiest thing
 page and the tutorial both do it — but it is satisfying a check rather than selecting a backend.
 
 There is one shape where the flag is believed, and it got narrower in `8.7.0`. If no candidate gazetteer
-is reachable at all — nothing at `<data root>/wof/candidate.db`, nothing in `$MAILWOMAN_CANDIDATE_DB` —
+is reachable at all — nothing at `<data root>/db/wof/candidate.db`, nothing in `$MAILWOMAN_CANDIDATE_DB` —
 then `--resolve-db` is the only path there is, registry opens it as an admin database, and `candidate.db`
 has neither table that backend queries:
 

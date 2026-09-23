@@ -7,6 +7,9 @@
  *   and whether local state is current. the data commands own network and filesystem I/O.
  */
 
+import { databaseRootPath } from "@mailwoman/core/data-root"
+import type { PathBuilderLike } from "path-ts"
+
 import type { DataReleaseManifest } from "#data/release"
 
 /**
@@ -24,7 +27,11 @@ export interface BundleArtifact {
 	 */
 	remotePath: string
 	/**
-	 * Where the artifact lands, relative to the data root (e.g. `"wof/candidate.db"`).
+	 * Where the artifact lands, relative to the data root's `db/` group
+	 * (e.g. `"wof/candidate.db"`, which lands at `<data-root>/db/wof/candidate.db`).
+	 *
+	 * Resolve it with {@link bundleArtifactPath} rather than against the data root directly,
+	 * so a download lands in the directory every reader probes.
 	 *
 	 * For a `family`-tagged (`"us"` bundle) artifact this is the legacy unversioned path;
 	 * {@link resolveBundleArtifacts} substitutes the manifest-pinned versioned name when one is configured.
@@ -446,6 +453,19 @@ export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataRelease
 			localPath: `${artifact.family}/${artifact.family}-us-${artifact.stateSlug}-${version}.db`,
 		}
 	})
+}
+
+/**
+ * The absolute path a bundle artifact downloads to: its {@link BundleArtifact.localPath}
+ * under the data root's `db/` group.
+ *
+ * Four commands resolve a destination — `data pull`, `data status`, `data` itself
+ * and the source inventory — and a reader that disagreed with the download
+ * about the directory would report the artifact absent rather than misplaced,
+ * because every probe degrades a missing file to a missing layer.
+ */
+export function bundleArtifactPath(dataRoot: PathBuilderLike, artifact: BundleArtifact): string {
+	return String(databaseRootPath(dataRoot, artifact.localPath))
 }
 
 /**

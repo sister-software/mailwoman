@@ -20,7 +20,6 @@ import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
-import { resolvePath } from "path-ts"
 
 import {
 	type Check,
@@ -30,7 +29,14 @@ import {
 	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type BundleArtifact } from "#data/bundles"
+import {
+	artifactURL,
+	bundleArtifactPath,
+	BUNDLES,
+	needsDownload,
+	resolveBundleArtifacts,
+	type BundleArtifact,
+} from "#data/bundles"
 import { existingLocalPath, readReleaseManifest } from "#data/release"
 
 /**
@@ -98,7 +104,7 @@ async function statusForBundles(
 
 		for (const artifact of resolveBundleArtifacts(bundle, manifest)) {
 			const label = `${name}: ${artifact.localPath}`
-			const localAbsPath = resolvePath(dataRoot, artifact.localPath)
+			const localAbsPath = bundleArtifactPath(dataRoot, artifact)
 			const existing = await existingLocalPath(dataRoot, manifest, artifact, localAbsPath)
 
 			if (!existing) {

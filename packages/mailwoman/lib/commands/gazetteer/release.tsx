@@ -32,8 +32,8 @@ export const spec = {
 	name: "release",
 	description: "Build, promote, and publish a gazetteer release",
 	options: {
-		admin: { type: "string", description: "Admin source DB. Default <data-root>/wof/admin-global-priority.db" },
-		out: { type: "string", description: "Candidate-DB output. Default <data-root>/wof/candidate-global.db" },
+		admin: { type: "string", description: "Admin source DB. Default <data-root>/db/wof/admin-global-priority.db" },
+		out: { type: "string", description: "Candidate-DB output. Default <data-root>/db/wof/candidate-global.db" },
 		countries: {
 			type: "string",
 			description: `Fold countries (comma-separated). Default: the ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`,

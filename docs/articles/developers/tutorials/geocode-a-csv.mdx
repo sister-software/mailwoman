@@ -23,7 +23,7 @@ Three things, and the second one will stop you partway through if it isn't done.
   npm install @mailwoman/resolver @mailwoman/resolver-wof-sqlite spliterator
   ```
 
-- **`candidate.db` on disk**, at `<data root>/wof/candidate.db`. Coordinates come from the gazetteer,
+- **`candidate.db` on disk**, at `<data root>/db/wof/candidate.db`. Coordinates come from the gazetteer,
   which is a 1.65 GB download you do once, and it lands at that path.
   [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) has the command. Every
   transcript below assumes you ran it; none of them exports anything.
@@ -69,7 +69,7 @@ import { mailwomanDataRoot, resolveCandidateDBPath } from "mailwoman/resolver-ba
 import { CSVSpliterator } from "spliterator"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-// The same search the CLI runs: --candidate-db, then $MAILWOMAN_CANDIDATE_DB, then <data root>/wof/candidate.db.
+// The same search the CLI runs: --candidate-db, then $MAILWOMAN_CANDIDATE_DB, then <data root>/db/wof/candidate.db.
 using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
 // Street extracts, when any are on disk under $MAILWOMAN_DATA_ROOT. Absent ones degrade to admin.

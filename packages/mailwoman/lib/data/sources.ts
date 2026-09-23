@@ -22,9 +22,8 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { resolvePath } from "path-ts"
 
-import { type BundleSourceCensus, type DataBundle, resolveBundleArtifacts } from "#data/bundles"
+import { bundleArtifactPath, type BundleSourceCensus, type DataBundle, resolveBundleArtifacts } from "#data/bundles"
 import { readReleaseManifest } from "#data/release"
 
 /**
@@ -151,7 +150,7 @@ export async function censusBundleSources(bundle: DataBundle, dataRoot: string):
 			continue
 		}
 
-		const path = String(resolvePath(dataRoot, artifact.localPath))
+		const path = bundleArtifactPath(dataRoot, artifact)
 
 		if (!(await pathExists(path))) {
 			artifactsAbsent += 1

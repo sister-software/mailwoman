@@ -21,8 +21,8 @@ const PORT = Number(process.env.PORT ?? 3000)
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 // Geocoding is opt-in on a gazetteer being there, not on anything being configured.
-// `resolveCandidateDBPath` is the shipped helper for exactly this: it tries an
-// explicit path, then `$MAILWOMAN_CANDIDATE_DB`, then `<data-root>/wof/candidate.db`,
+// `resolveCandidateDBPath` is the shipped helper for exactly this: it tries an explicit
+// path, then `$MAILWOMAN_CANDIDATE_DB`, then `<data-root>/db/wof/candidate.db`,
 // and returns undefined unless one of them is a file that exists.
 // That last position is why an image needs only its volume mount, and the existence check is
 // why a first run without one still boots: a truthiness check on the variable would open a
@@ -57,7 +57,8 @@ createServer(async (req, res) => {
 		}
 
 		if (url.pathname === "/geocode") {
-			if (!resolver) return send(res, 503, { error: "no gazetteer found — mount one at <data-root>/wof/candidate.db" })
+			if (!resolver)
+				return send(res, 503, { error: "no gazetteer found — mount one at <data-root>/db/wof/candidate.db" })
 
 			return send(res, 200, await geocodeAddress(address, { classifier, resolver, defaultCountry: "US" }))
 		}

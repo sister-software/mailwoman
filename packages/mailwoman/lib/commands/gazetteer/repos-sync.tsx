@@ -36,7 +36,7 @@ export const spec = {
 	name: "repos-sync",
 	description: "Report each WOF repo's origin, vintage and clone state; re-point an existing clone onto our fork",
 	options: {
-		root: { type: "string", description: "WOF repos root. Default <data-root>/wof/repos" },
+		root: { type: "string", description: "WOF repos root. Default <data-root>/src/wof-repos" },
 		countries: { type: "string", description: "Comma-separated ISO codes to ensure present, beyond what is cloned" },
 		apply: { type: "boolean", default: false, description: "Perform the clones and fast-forwards" },
 		repoint: { type: "boolean", default: false, description: "With --apply, re-point a remote onto our fork" },
@@ -57,12 +57,12 @@ const ACTION_MARK: Record<string, string> = {
 const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { join } = await import("path-ts")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath, wofReposRoot } = await import("@mailwoman/core/utils")
 		const { auditReposRoot } = await import("#gazetteer-pipeline/repos/audit")
 		const { planReposSync, SyncAction, syncSentence } = await import("#gazetteer-pipeline/repos/sync")
 		const { githubForkProbe, UPSTREAM_ORG } = await import("#gazetteer-pipeline/wof/repo-origin")
 
-		const root = options.root ?? String(dataRootPath("src", "wof-repos"))
+		const root = options.root ?? String(wofReposRoot())
 
 		const requested = extractDelimited(options.countries).map((cc) => `whosonfirst-data-admin-${cc.toLowerCase()}`)
 

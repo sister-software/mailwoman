@@ -347,7 +347,7 @@ export function dataRootCheck(o: DataRootObservation): DoctorCheck {
  * Facts about the admin gazetteer discovery, mirroring exactly what the tools pick up.
  *
  * `resolveCandidateDBPath` reads an explicit option, then `$MAILWOMAN_CANDIDATE_DB`,
- * then the `<data-root>/wof/candidate.db` convention path, and falls back to the
+ * then the `<data-root>/db/wof/candidate.db` convention path, and falls back to the
  * WOF FTS databases only when none of the three is on disk.
  */
 export interface GazetteerObservation {

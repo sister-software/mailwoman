@@ -26,6 +26,7 @@
  */
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { conventionCandidateDBPath } from "mailwoman/resolver-backend"
 
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { resolveInputSet, type InputSetRef } from "#input-sets"
@@ -196,7 +197,7 @@ export async function runConstraintCensus(
 	// Neither can change an answer, so neither is a change.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 	const dataRoot = String(engine.effective.dataRoot ?? "")
-	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(`${dataRoot}/wof/candidate.db`)
+	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(conventionCandidateDBPath(dataRoot))
 
 	if (!("db" in opened)) {
 		throw new Error(

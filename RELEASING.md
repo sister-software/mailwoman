@@ -275,7 +275,7 @@ set -a; . ./.env; set +a
 mailwoman gazetteer release                     # add --dry-run to preview the R2 upload
 # …or run the stages independently:
 mailwoman gazetteer build                       # durable fold → candidate build (FTS baked in)
-mailwoman gazetteer promote                      # symlink <data-root>/wof/candidate.db → the build
+mailwoman gazetteer promote                      # symlink <data-root>/db/wof/candidate.db → the build
 mailwoman gazetteer publish [--gazetteer-version 2026-06-27a]   # R2 upload + demo ADMIN_GAZETTEER_VERSION bump
 ```
 

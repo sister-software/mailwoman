@@ -397,7 +397,7 @@ export async function openNSULArchive(sourceDir: string): Promise<{
 }
 
 /**
- * The newest vintage directory under `<data-root>/nsul/` holding an nsul archive.
+ * The newest vintage directory under `<data-root>/db/nsul/` holding an nsul archive.
  * The default source when the caller names none.
  *
  * Vintage directories are `yyyy-MM`, so lexical order is chronological order.
@@ -431,21 +431,21 @@ export interface BuildNSULLayerOptions {
 	/**
 	 * Acquisition directory holding the archive, its `.md5` sidecar and `item.json`.
 	 *
-	 * Default: the newest vintage directory under `<data-root>/nsul/` that holds
+	 * Default: the newest vintage directory under `<data-root>/db/nsul/` that holds
 	 * an archive ({@link resolveLatestNSULSourceDir}).
 	 */
 	sourceDir?: PathBuilderLike
 	/**
 	 * Output artifact.
 	 *
-	 * Default `<data-root>/nsul/nsul.db`.
+	 * Default `<data-root>/db/nsul/nsul.db`.
 	 * Built to a staging path and atomically swapped into place.
 	 */
 	out?: string
 	/**
 	 * The `uprn.db` whose coordinates are joined in.
 	 *
-	 * Default `<data-root>/uprn/uprn.db`.
+	 * Default `<data-root>/db/uprn/uprn.db`.
 	 */
 	uprnDatabasePath?: string
 	/**

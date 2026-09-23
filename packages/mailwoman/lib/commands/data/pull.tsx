@@ -56,6 +56,7 @@ import {
 } from "#cli-kit"
 import {
 	artifactURL,
+	bundleArtifactPath,
 	BUNDLES,
 	describeBundleRights,
 	filterArtifacts,
@@ -64,6 +65,7 @@ import {
 	type RemoteArtifactState,
 } from "#data/bundles"
 import { existingLocalPath, readReleaseManifest } from "#data/release"
+import { conventionCandidateDBPath } from "#resolver-backend"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -252,7 +254,7 @@ async function pullBundles(
 
 		for (const artifact of artifacts) {
 			const label = `${name}: ${artifact.remotePath}`
-			const localAbsPath = resolvePath(dataRoot, artifact.localPath)
+			const localAbsPath = bundleArtifactPath(dataRoot, artifact)
 			const existing = await existingLocalPath(dataRoot, manifest, artifact, localAbsPath)
 
 			if (existing && !opts.force) {
@@ -356,7 +358,7 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 			})
 
 			if (result.pulledCandidate) {
-				console.error(`\nexport MAILWOMAN_CANDIDATE_DB=${resolvePath(dataRoot, "wof/candidate.db")}`)
+				console.error(`\nexport MAILWOMAN_CANDIDATE_DB=${conventionCandidateDBPath(dataRoot)}`)
 			}
 
 			return result
