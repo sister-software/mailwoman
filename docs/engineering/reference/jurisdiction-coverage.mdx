@@ -17,7 +17,7 @@ carries. Regenerate with:
 node packages/mailwoman/lib/dev-tools/corpus/jurisdiction-coverage.run.ts --refresh
 ```
 
-Corpus counts were taken over `v0.31.0-region-code-and-unit`, cached 2026-09-18T00:06:11.166Z, 681,901,687 rows.
+Corpus counts were taken over `0.6.0-register-surface`, counted in this run, 697,675,170 rows.
 **Admitted by** names the shipped graph whose training config admits the jurisdiction. Admission is per
 graph and the two shipped graphs partition the world between them, so the column reads the union of
 `scope.config.json`'s registered configs rather than any one of them. `corpus-python/src/mailwoman_train/configs/v4.4.0-suffix-boundary-v2-base-60k.yaml`
@@ -55,11 +55,11 @@ are data-only overlays over it.
 | reading                                 | jurisdictions |
 | --------------------------------------- | ------------: |
 | declared in this table                  |           250 |
-| corpus holds at least one row           |            40 |
-| of those, at least one street row       |            35 |
+| corpus holds at least one row           |            42 |
+| of those, at least one street row       |            37 |
 | admitted by `country_weights`           |            29 |
 | admitted, zero corpus rows              |             2 |
-| corpus rows no shipped graph admits     |            13 |
+| corpus rows no shipped graph admits     |            15 |
 | declined by every shipped config        |           218 |
 | absent from every layer                 |             3 |
 | rooftop geocoding a consumer can obtain |             2 |
@@ -69,46 +69,48 @@ are data-only overlays over it.
 
 | code | name                                         | corpus rows               | street rows | admitted by | gazetteer | weights |   board |
 | ---- | -------------------------------------------- | ------------------------- | ----------: | ----------- | --------: | ------- | ------: |
-| `US` | United States                                | 487,234,195 rows          | 474,911,566 | en-us       |   rooftop | en-us   |  94/143 |
-| `FR` | France                                       | 149,866,617 rows          | 145,528,200 | en-us       |   rooftop | fr-fr   |   55/67 |
-| `GB` | United Kingdom                               | 15,644,707 rows           |     825,083 | en-us       | 3,642,151 | en-gb   | 106/152 |
-| `CN` | China                                        | 11,357,947 rows, declined |           0 | cjk         | 1,660,173 | zh-cn   |    2/23 |
-| `NL` | Netherlands                                  | 3,255,053 rows            |     179,144 | en-us       |   416,037 | —       |     2/2 |
-| `IT` | Italy                                        | 2,958,244 rows            |     160,275 | en-us       |   315,086 | it-it   |    6/13 |
-| `DE` | Germany                                      | 2,891,912 rows            |     383,712 | en-us       |   286,179 | de-de   |    8/16 |
-| `JP` | Japan                                        | 2,092,821 rows, declined  |           0 | cjk         |   323,024 | ja-jp   |    6/11 |
-| `ES` | Spain                                        | 1,713,660 rows            |     175,972 | en-us       |   178,099 | es-es   |   12/26 |
-| `KR` | Korea, Republic of                           | 1,083,156 rows, declined  |           0 | cjk         |   178,391 | —       |       — |
-| `TW` | Taiwan (Province of China)                   | 678,660 rows, declined    |           0 | cjk         |    83,650 | —       |       — |
-| `CA` | Canada                                       | 321,577 rows              |     299,809 | en-us       |   862,914 | —       |   22/26 |
+| `US` | United States                                | 487,527,075 rows          | 474,953,813 | en-us       |   rooftop | en-us   |  94/143 |
+| `FR` | France                                       | 147,725,972 rows          | 143,387,337 | en-us       |   rooftop | fr-fr   |   55/67 |
+| `IN` | India                                        | 18,179,272 rows, declined |       6,000 | —           | 1,565,157 | en-in   |     2/3 |
+| `GB` | United Kingdom                               | 13,822,140 rows           |     813,781 | en-us       | 3,642,151 | en-gb   | 106/152 |
+| `CN` | China                                        | 7,624,794 rows, declined  |           0 | cjk         | 1,660,173 | zh-cn   |    2/23 |
+| `NL` | Netherlands                                  | 3,283,535 rows            |     179,176 | en-us       |   416,037 | —       |     2/2 |
+| `DE` | Germany                                      | 3,269,242 rows            |     383,693 | en-us       |   286,179 | de-de   |    8/16 |
+| `IT` | Italy                                        | 2,959,301 rows            |     160,305 | en-us       |   315,086 | it-it   |    6/13 |
+| `JP` | Japan                                        | 1,764,537 rows, declined  |           0 | cjk         |   323,024 | ja-jp   |    6/11 |
+| `ES` | Spain                                        | 1,715,427 rows            |     175,972 | en-us       |   178,099 | es-es   |   12/26 |
+| `CA` | Canada                                       | 1,521,502 rows            |   1,499,734 | en-us       |   862,914 | —       |   22/26 |
+| `BR` | Brazil                                       | 1,146,913 rows, declined  |   1,146,913 | —           |    98,435 | —       |    4/15 |
+| `MX` | Mexico                                       | 1,132,452 rows            |   1,132,003 | en-us       |    93,926 | —       |     1/7 |
+| `KR` | Korea, Republic of                           | 968,736 rows, declined    |           0 | cjk         |   178,391 | —       |       — |
+| `PT` | Portugal                                     | 965,946 rows              |     964,021 | en-us       |   421,448 | —       |     3/7 |
+| `CH` | Switzerland                                  | 662,436 rows              |     659,009 | en-us       |    40,318 | —       |     2/2 |
+| `TW` | Taiwan (Province of China)                   | 500,742 rows, declined    |           0 | cjk         |    83,650 | —       |       — |
+| `HR` | Croatia                                      | 462,544 rows              |     458,963 | en-us       |    43,537 | —       |       — |
+| `SK` | Slovakia                                     | 310,188 rows              |     304,828 | en-us       |    33,168 | —       |     2/2 |
 | `CZ` | Czech Republic                               | 225,292 rows              |     205,660 | en-us       |    71,463 | —       |     2/3 |
 | `NO` | Norway                                       | 208,329 rows              |     203,210 | en-us       |    54,372 | —       |       — |
 | `SI` | Slovenia                                     | 168,920 rows              |     165,310 | en-us       |    37,763 | —       |     5/5 |
 | `AU` | Australia                                    | 166,688 rows              |     157,182 | en-us       |    22,345 | en-au   |   25/25 |
-| `PT` | Portugal                                     | 165,946 rows              |     164,021 | en-us       |   421,448 | —       |     3/7 |
-| `MX` | Mexico                                       | 163,489 rows              |     163,026 | en-us       |    93,926 | —       |     1/7 |
 | `DK` | Denmark                                      | 163,416 rows              |     160,776 | en-us       |    26,393 | —       |       — |
 | `FI` | Finland                                      | 162,584 rows              |     158,955 | en-us       |    62,425 | —       |     0/1 |
 | `PL` | Poland                                       | 162,564 rows              |     158,950 | en-us       |   341,713 | —       |     1/2 |
-| `HR` | Croatia                                      | 162,544 rows              |     158,963 | en-us       |    43,537 | —       |       — |
-| `CH` | Switzerland                                  | 162,436 rows              |     159,009 | en-us       |    40,318 | —       |     2/2 |
-| `SK` | Slovakia                                     | 160,188 rows              |     154,828 | en-us       |    33,168 | —       |     2/2 |
 | `PK` | Pakistan                                     | 159,994 rows, declined    |     159,994 | —           |    47,547 | —       |     0/1 |
 | `AT` | Austria                                      | 159,587 rows              |     158,955 | en-us       |    60,468 | —       |     3/3 |
 | `BE` | Belgium                                      | 150,000 rows              |     150,000 | en-us       |    34,349 | —       |     1/2 |
+| `LU` | Luxembourg                                   | 150,000 rows, declined    |     150,000 | —           |     8,355 | —       |       — |
 | `SG` | Singapore                                    | 142,083 rows, declined    |     142,083 | —           |   124,343 | —       |  90/248 |
 | `VN` | Viet Nam                                     | 62,898 rows, declined     |      62,898 | —           |    24,841 | —       |     1/1 |
 | `BD` | Bangladesh                                   | 15,705 rows, declined     |      15,705 | —           |    14,963 | —       |     1/2 |
 | `SE` | Sweden                                       | 12,178 rows               |       8,710 | en-us       |    83,116 | —       |     1/1 |
 | `NZ` | New Zealand                                  | 11,957 rows, declined     |       7,149 | —           |     7,514 | en-nz   |   14/14 |
-| `IN` | India                                        | 6,000 rows, declined      |       6,000 | —           | 1,565,157 | en-in   |     2/3 |
-| `PE` | Peru                                         | 1,135 rows, declined      |         644 | —           |    56,658 | —       |       — |
-| `TR` | Turkey                                       | 1,124 rows, declined      |         684 | —           |    86,378 | —       |     1/1 |
-| `LB` | Lebanon                                      | 1,117 rows, declined      |         685 | —           |     5,734 | —       |     1/1 |
-| `JO` | Jordan                                       | 1,101 rows, declined      |         650 | —           |     3,142 | —       |     1/1 |
-| `GE` | Georgia                                      | 1,071 rows, declined      |         647 | —           |    11,135 | —       |     2/2 |
+| `LB` | Lebanon                                      | 1,109 rows, declined      |         695 | —           |     5,734 | —       |     1/1 |
+| `TR` | Turkey                                       | 1,097 rows, declined      |         672 | —           |    86,378 | —       |     1/1 |
+| `GE` | Georgia                                      | 1,088 rows, declined      |         657 | —           |    11,135 | —       |     2/2 |
+| `PE` | Peru                                         | 1,073 rows, declined      |         638 | —           |    56,658 | —       |       — |
+| `JO` | Jordan                                       | 1,066 rows, declined      |         660 | —           |     3,142 | —       |     1/1 |
 | `VE` | Venezuela                                    | 22 rows, declined         |           4 | —           |    19,112 | —       |    7/13 |
-| `AS` | American Samoa                               | 5 rows, declined          |           0 | —           |       198 | —       |     0/1 |
+| `AS` | American Samoa                               | 1 rows, declined          |           0 | —           |       198 | —       |     0/1 |
 | `AD` | Andorra                                      | declined                  |           0 | —           |       304 | —       |     2/2 |
 | `AE` | United Arab Emirates                         | declined                  |           0 | —           |     2,420 | —       |     5/5 |
 | `AF` | Afghanistan                                  | declined                  |           0 | —           |   155,598 | —       |     2/2 |
@@ -134,7 +136,6 @@ are data-only overlays over it.
 | `BN` | Brunei Darussalam                            | declined                  |           0 | —           |       964 | —       |     2/2 |
 | `BO` | Bolivia                                      | declined                  |           0 | —           |    19,448 | —       |       — |
 | `BQ` | Bonaire, Sint Eustatius and Saba             | declined                  |           0 | —           |       224 | —       |     1/1 |
-| `BR` | Brazil                                       | declined                  |           0 | —           |    98,435 | —       |    4/15 |
 | `BS` | Bahamas                                      | declined                  |           0 | —           |     1,146 | —       |     1/2 |
 | `BT` | Bhutan                                       | declined                  |           0 | —           |     1,075 | —       |     2/2 |
 | `BV` | Bouvet Island                                | absent                    |           0 | —           |    absent | —       |       — |
@@ -219,7 +220,6 @@ are data-only overlays over it.
 | `LR` | Liberia                                      | declined                  |           0 | —           |    10,890 | —       |       — |
 | `LS` | Lesotho                                      | declined                  |           0 | —           |       802 | —       |       — |
 | `LT` | Lithuania                                    | declined                  |           0 | —           |    82,115 | —       |       — |
-| `LU` | Luxembourg                                   | declined                  |           0 | —           |     8,355 | —       |       — |
 | `LV` | Latvia                                       | declined                  |           0 | —           |    25,981 | —       |       — |
 | `LY` | Libya                                        | declined                  |           0 | —           |     3,282 | —       |       — |
 | `MA` | Morocco                                      | declined                  |           0 | —           |    30,767 | —       |     1/1 |
@@ -322,7 +322,7 @@ are data-only overlays over it.
 
 ## Corpus rows no shipped graph admits
 
-`PK` (159,994), `SG` (142,083), `VN` (62,898), `BD` (15,705), `NZ` (11,957), `IN` (6,000), `PE` (1,135), `TR` (1,124), `LB` (1,117), `JO` (1,101), `GE` (1,071), `VE` (22), `AS` (5)
+`IN` (18,179,272), `BR` (1,146,913), `PK` (159,994), `LU` (150,000), `SG` (142,083), `VN` (62,898), `BD` (15,705), `NZ` (11,957), `LB` (1,109), `TR` (1,097), `GE` (1,088), `PE` (1,073), `JO` (1,066), `VE` (22), `AS` (1)
 
 Each of these holds corpus rows and appears in neither shipped graph's `country_weights`, so those
 rows train nothing that ships. This is the mechanism that left Norway untaught while its rows sat in
@@ -331,7 +331,7 @@ over a graph that was never taught it.
 
 ## Jurisdictions the second config would newly admit
 
-`PK` `SG` `VN` `BD` `NZ` `IN` `PE` `TR` `LB` `JO` `GE` `VE` `AS` `AD` `AE` `AF` `AG` `AI` `AL` `AO` `AR` `AW` `BA` `BB` `BF` `BI` `BJ` `BM` `BN` `BQ` `BR` `BS` `BT` `BW` `BY` `BZ` `CD` `CF` `CG` `CK` `CO` `CR` `CV` `CW` `CY` `DJ` `DM` `DO` `EG` `ER` `FK` `FM` `FO` `GD` `GH` `GM` `GT` `GW` `HK` `ID` `IL` `IM` `IO` `IS` `KH` `KW` `KY` `LU` `MA` `ML` `MN` `MP` `MS` `MU` `MW` `MY` `NA` `NE` `NG` `NI` `OM` `PG` `PH` `PM` `PR` `RU` `RW` `SA` `SB` `SC` `SH` `SM` `SO` `SR` `ST` `SV` `SX` `TH` `TK` `TM` `TO` `TT` `UA` `VG` `VI` `VU` `ZA`
+`IN` `BR` `PK` `LU` `SG` `VN` `BD` `NZ` `LB` `TR` `GE` `PE` `JO` `VE` `AS` `AD` `AE` `AF` `AG` `AI` `AL` `AO` `AR` `AW` `BA` `BB` `BF` `BI` `BJ` `BM` `BN` `BQ` `BS` `BT` `BW` `BY` `BZ` `CD` `CF` `CG` `CK` `CO` `CR` `CV` `CW` `CY` `DJ` `DM` `DO` `EG` `ER` `FK` `FM` `FO` `GD` `GH` `GM` `GT` `GW` `HK` `ID` `IL` `IM` `IO` `IS` `KH` `KW` `KY` `MA` `ML` `MN` `MP` `MS` `MU` `MW` `MY` `NA` `NE` `NG` `NI` `OM` `PG` `PH` `PM` `PR` `RU` `RW` `SA` `SB` `SC` `SH` `SM` `SO` `SR` `ST` `SV` `SX` `TH` `TK` `TM` `TO` `TT` `UA` `VG` `VI` `VU` `ZA`
 
 Admission is not teaching. Each of these trains on nothing until the corpus holds a row for it.
 
