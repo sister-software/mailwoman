@@ -332,6 +332,21 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 		throw new Error(`adapter ${adapter.id}: row.country is empty for source_id=${row.source_id}`)
 	}
 
+	// The shape as well as the presence.
+	// `country` is the key `country_weights` is looked up by and the value every country
+	// filter compares, so a code outside the ISO 3166-1 alpha-2 shape reaches a training run
+	// as rows nothing admits and nothing selects, while every count of them looks ordinary.
+	// WOF record 1141959953 publishes `Nl`, and `v0.6.0-register-surface` carries 431 rows under it.
+	// `ZZ` is admitted here deliberately: the fragment recipes use it for a row whose country
+	// is undetermined, which is a claim about the row rather than a malformed code (#2358).
+	if (!/^[A-Z]{2}$/.test(row.country)) {
+		throw new Error(
+			`adapter ${adapter.id}: row.country ${stringifyJSON(row.country)} is not two upper-case letters ` +
+				`for source_id=${row.source_id}. ISO 3166-1 alpha-2 is the shape country_weights and every ` +
+				`country filter key on, so a code outside it trains on nothing and matches no filter.`
+		)
+	}
+
 	if (!row.license) {
 		throw new Error(`adapter ${adapter.id}: row.license is empty for source_id=${row.source_id}`)
 	}

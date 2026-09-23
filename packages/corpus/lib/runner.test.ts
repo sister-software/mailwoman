@@ -257,6 +257,38 @@ describe("runAdapter", () => {
 		).rejects.toThrow(/row\.raw is empty/)
 	})
 
+	it("rejects a country code outside the ISO 3166-1 alpha-2 shape", async () => {
+		// `Nl` is what WOF record 1141959953 publishes, and 431 rows reached `v0.6.0-register-surface`
+		// under it: admitted by no `country_weights` entry, selected by no country filter,
+		// and indistinguishable from an ordinary country in any count of them.
+		const emitting = (country: string): CorpusAdapter => ({
+			id: "syn",
+			defaultLicense: "CC0-1.0",
+			addressRole: AddressRole.Premise,
+			register: "test-register",
+			surface: SurfaceOrigin.Attested,
+			description: "",
+			async *rows() {
+				yield baseRow({ source: "syn", country })
+			},
+		})
+
+		const run = (country: string) =>
+			runAdapter({
+				adapter: emitting(country),
+				adapterOptions: { inputPath: "ignored" },
+				outputDir: scratch.path,
+				corpusVersion: "0.1.0",
+			})
+
+		await expect(run("Nl")).rejects.toThrow(/is not two upper-case letters/)
+		await expect(run("nl")).rejects.toThrow(/is not two upper-case letters/)
+		await expect(run("NLD")).rejects.toThrow(/is not two upper-case letters/)
+
+		// `ZZ` states that the row's country is undetermined, which the fragment recipes rely on.
+		await expect(run("ZZ")).resolves.toBeDefined()
+	})
+
 	it("honors AbortSignal raised mid-run", async () => {
 		const adapter = makeAdapter({
 			id: "syn",

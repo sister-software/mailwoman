@@ -1,0 +1,15 @@
+{
+	"type": "Feature",
+	"id": 3001,
+	"properties": {
+		"wof:id": 3001,
+		"wof:name": "Netherlands",
+		"wof:placetype": "country",
+		"wof:country": "Nl",
+		"wof:parent_id": -1,
+		"mz:is_current": -1,
+		"name:nld_x_preferred": ["Nederland"],
+		"name:eng_x_preferred": ["Netherlands"]
+	},
+	"geometry": null
+}

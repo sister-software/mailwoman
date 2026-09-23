@@ -193,6 +193,26 @@ describe("wof-admin-json adapter against fixture", () => {
 		expect(rows.map((r) => r.raw)).toContain("Paris, Île-de-France")
 	})
 
+	it("upper-cases a country code the publisher spelled in mixed case, and the filter still selects it", async () => {
+		// The `whosonfirst-data-admin-nl` fixture publishes `Nl`, which is what WOF
+		// record 1141959953 (`Achter de Hoven`, Friesland) carries.
+		// Left as published it reached `v0.6.0-register-surface` as 431 rows under a code
+		// no ISO list holds: no `country_weights` entry admits it, and this filter's
+		// own string comparison skips it on a `--country NL` run.
+		await runAdapter({
+			adapter: createWOFAdminAdapter(),
+			adapterOptions: { inputPath: fixtureRoot, country: "NL" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const rows = await loadRows()
+
+		expect(rows.length).toBeGreaterThan(0)
+		expect(rows.every((r) => r.country === "NL")).toBe(true)
+		expect(rows.map((r) => r.raw)).toContain("Friesland")
+	})
+
 	it("treats mz:is_current=-1 as live (Pelias convention) and mz:is_current=0 as superseded", async () => {
 		await runAdapter({
 			adapter: createWOFAdminAdapter(),

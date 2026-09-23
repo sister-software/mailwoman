@@ -57,7 +57,15 @@ export interface WOFRecord {
 	name: string
 	placetype: string
 	/**
-	 * ISO 3166-1 alpha-2 from `wof:country`.
+	 * ISO 3166-1 alpha-2 from `wof:country`, upper-cased.
+	 *
+	 * The standard's codes are upper case and the publisher's spelling is not always,
+	 * so this is normalized on read rather than at each consumer.
+	 * WOF record 1141959953, `Achter de Hoven` in Friesland, carries `Nl`.
+	 *
+	 * Left as published it reached `v0.6.0-register-surface` as 431 rows under a country
+	 * code no ISO list contains, invisible to a `country_weights` lookup and skipped by the
+	 * adapter's own `--country NL` filter, which compares the two strings directly.
 	 */
 	country: string
 	/**
@@ -159,9 +167,11 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 
 	if (typeof placetype !== "string" || !placetype) return null
 
-	const country = props["wof:country"]
+	const rawCountry = props["wof:country"]
 
-	if (typeof country !== "string" || !country) return null
+	if (typeof rawCountry !== "string" || !rawCountry) return null
+
+	const country = rawCountry.toUpperCase()
 
 	if (!isCurrentFeature(props)) return null
 
