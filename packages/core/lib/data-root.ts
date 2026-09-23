@@ -204,7 +204,12 @@ export interface WOFExtractPaths {
  * {@link wofExtractPaths} as a named record, in the same order the runtime attaches them.
  */
 export function wofExtractPathsByName(dataRoot: PathBuilderLike = mailwomanDataRoot()): WOFExtractPaths {
-	const wof = resolvePathBuilder(dataRoot, "wof")
+	// `db/wof`, not `wof`: the 2026-09-15 regrouping moved every database artifact under `db/`
+	// so the volume's carve-out stops being a list, and this call site kept the old prefix.
+	// The compiler cannot see it, because the segments are strings.
+	// `mailwoman geocode` therefore found no resolver database on a data root
+	// where all six extracts were present.
+	const wof = resolvePathBuilder(dataRoot, "db", "wof")
 
 	return {
 		adminGlobalPriority: wof("admin-global-priority.db").toString(),

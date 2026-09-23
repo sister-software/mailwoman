@@ -27,6 +27,7 @@ import { constraintsTool } from "#tools/constraints"
 import { coverageTool } from "#tools/coverage"
 import { daemonTool } from "#tools/daemon"
 import { diagnoseTool } from "#tools/diagnose"
+import { diffGeocodeTool } from "#tools/diff-geocode"
 import { diffParseTool } from "#tools/diff-parse"
 import { inputsTool } from "#tools/inputs"
 import { interfaceTool } from "#tools/interface"
@@ -69,6 +70,7 @@ const FACTORIES = [
 	provenanceTool,
 	coverageTool,
 	diffParseTool,
+	diffGeocodeTool,
 	sourcesTool,
 	symbolTool,
 	vocabTool,

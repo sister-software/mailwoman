@@ -14,7 +14,7 @@ import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mai
 import type { GeocodeRun } from "mailwoman/geocode"
 import { z } from "zod"
 
-import type { EngineRegistryLike } from "#engine/registry"
+import type { Engine, EngineRegistryLike } from "#engine/registry"
 import type { EvalReport } from "#eval-report"
 import { summarizeEvalReport } from "#eval-report"
 import { summarizeGauntletReport, type GauntletReport } from "#gauntlet-report"
@@ -252,6 +252,67 @@ export interface DevTool {
 	description: string
 	inputSchema: z.ZodObject<z.ZodRawShape>
 	handler: (args: Record<string, unknown>) => Promise<unknown>
+}
+
+/**
+ * How many diffs a two-arm tool renders in full before falling back to its machine-readable list alone.
+ *
+ * Reading addresses is the point of a diff tool, and rendering three hundred of them is not:
+ * past this a caller is comparing models rather than reading addresses, and should narrow the input set.
+ */
+export const RENDERED_DIFF_LIMIT = 40
+
+/**
+ * Two engines to compare, or the reason the comparison would have been meaningless.
+ *
+ * `error` is present when the candidate resolved to the same engine as the baseline,
+ * and a caller returns it unchanged rather than running the arms.
+ */
+export type TwoArms =
+	| { base: Engine; candidate: Engine; error?: undefined }
+	| { base?: undefined; candidate?: undefined; error: Record<string, unknown> }
+
+/**
+ * Acquire a baseline arm and a candidate arm, and refuse a candidate that did not take.
+ *
+ * `EngineConfig` is a plain object, so a mistyped key is dropped in silence
+ * and both arms run the same weights.
+ * A diff tool would then report every row identical, which reads as "the candidate
+ * moved nothing" and is really "the change never ran".
+ *
+ * That happened on `mwdev_diff_parse`'s first live call, with `weightsCacheRoot` written for
+ * `weights_cache`, so the engine is asked what it loaded rather than trusted to have taken the key.
+ *
+ * Shared because every two-arm tool needs the same guard, and a copy of it is a
+ * guard that can rot in one tool while holding in another.
+ */
+export async function acquireTwoArms(
+	registry: EngineRegistryLike,
+	options: { locale?: string | undefined; weightsCache?: string | undefined }
+): Promise<TwoArms> {
+	const { locale, weightsCache } = options
+	const base = await registry.acquire(locale ? { locale } : {})
+
+	const candidate = await registry.acquire({
+		...(locale ? { locale } : {}),
+		...(weightsCache ? { weights_cache: weightsCache } : {}),
+	})
+
+	if (weightsCache && base.engineID === candidate.engineID) {
+		return {
+			error: {
+				error: "weights_cache did not take",
+				requested: weightsCache,
+				engine_id: candidate.engineID,
+				summary:
+					"Both arms resolved to the SAME engine, so the candidate weights were not applied and any " +
+					"zero-difference result here would be meaningless. Check the path is a package-shaped directory " +
+					"(<root>/node_modules/@mailwoman/neural-weights-<locale>/) and that it exists.",
+			},
+		}
+	}
+
+	return { base, candidate }
 }
 
 export function componentsOf(run: GeocodeRun): Record<string, string> {

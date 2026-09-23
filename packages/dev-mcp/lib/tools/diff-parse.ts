@@ -10,15 +10,7 @@
 import { diffParse, isChange, renderParseDiff } from "@mailwoman/core/decoder/parse-diff"
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "#tool-kit"
-
-/**
- * How many diffs to render in full before falling back to a one-line-per-input summary.
- *
- * Rendering every changed row is the point of the tool, and rendering three hundred of them is not —
- * past this a caller is comparing models rather than reading addresses, and should narrow the input set.
- */
-const RENDERED_LIMIT = 40
+import { acquireTwoArms, type DevTool, type DevToolDeps, RENDERED_DIFF_LIMIT } from "#tool-kit"
 
 export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 	name: "mwdev_diff_parse",
@@ -52,32 +44,11 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 		const locale = args["locale"] as string | undefined
 		const changesOnly = args["changes_only"] !== false
 
-		const base = await deps.registry.acquire(locale ? { locale } : {})
+		const arms = await acquireTwoArms(deps.registry, { locale, weightsCache })
 
-		const candidate = await deps.registry.acquire({
-			...(locale ? { locale } : {}),
-			...(weightsCache ? { weights_cache: weightsCache } : {}),
-		})
+		if (arms.error) return arms.error
 
-		// participation guard.
-		// `EngineConfig` is a plain object, so a mistyped key is dropped in silence
-		// and both arms run the same weights.
-		// The tool then reports "0 differ", which reads as "the candidate is identical"
-		// and is really "the change never ran".
-		// That happened on this tool's first live call (`weightsCacheRoot` for `weights_cache`),
-		// so the engine is asked what it actually loaded rather than trusted to have taken the key.
-		if (weightsCache && base.engineID === candidate.engineID) {
-			return {
-				error: "weights_cache did not take",
-				requested: weightsCache,
-				engine_id: candidate.engineID,
-				summary:
-					"Both arms resolved to the SAME engine, so the candidate weights were not applied and any zero-difference " +
-					"result here would be meaningless. Check the path is a package-shaped directory " +
-					"(<root>/node_modules/@mailwoman/neural-weights-<locale>/) and that it exists.",
-			}
-		}
-
+		const { base, candidate } = arms
 		const diffs = []
 
 		for (const input of inputs) {
@@ -96,7 +67,7 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 		}
 
 		const shown = changesOnly ? diffs.filter((d) => !d.identical) : diffs
-		const rendered = shown.slice(0, RENDERED_LIMIT).map((d) => renderParseDiff(d))
+		const rendered = shown.slice(0, RENDERED_DIFF_LIMIT).map((d) => renderParseDiff(d))
 
 		// Which event dominates is the diagnosis.
 		// A run whose changes are mostly `retagged` is mislabelling.
@@ -116,9 +87,9 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 			arm_b: weightsCache ?? "(same weights as arm A)",
 			events,
 			rendered,
-			...(shown.length > RENDERED_LIMIT
+			...(shown.length > RENDERED_DIFF_LIMIT
 				? {
-						not_rendered: shown.length - RENDERED_LIMIT,
+						not_rendered: shown.length - RENDERED_DIFF_LIMIT,
 						note: "Narrow the input set — past 40 you are comparing models, not reading addresses.",
 					}
 				: {}),
