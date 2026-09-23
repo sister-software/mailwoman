@@ -193,7 +193,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// the quote placeholder and the refusal named `quoted` — a word nobody typed,
 		// for a command admitted the moment the quotes came off.
 		// Quoting a value that carries `$PWD` or a space is how anyone writes one.
-		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/mnt/playpen/x" yarn test`],
+		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/srv/mailwoman-data/x" yarn test`],
 		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node config/vale/check-rules.ts`],
 		// A quote nested inside another kind of quote.
 		// The pair must be read as one span.

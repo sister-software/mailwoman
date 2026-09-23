@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Coarse-placer (#244) loader + int8 round-trip. Builds a tiny synthetic artifact on disk (no
- *   /mnt/playpen dependency) so `CoarsePlacer.fromArtifactDir` is exercised end-to-end for both the
+ *   $MAILWOMAN_DATA_ROOT dependency) so `CoarsePlacer.fromArtifactDir` is exercised end-to-end for both the
  *   fp32 and the int8-per-row formats, and asserts the int8 path predicts the same class with near-
  *   identical confidence. Also covers `featurize` determinism and `dequantizeInt8Weights`.
  */

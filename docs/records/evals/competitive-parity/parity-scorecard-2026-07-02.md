@@ -122,7 +122,7 @@ US-2k coord p50 3.31 km / resolve 1.000 / region 0.999; CZ-1k resolved-p50 3.29 
 
 ## Provenance
 
-- Battery out-dir: `/mnt/playpen/mailwoman-data/scratch-825/rescore-885/` (`verdict.json`,
+- Battery out-dir: `$MAILWOMAN_DATA_ROOT/scratch-825/rescore-885/` (`verdict.json`,
   per-leg JSON + md, `provenance.txt` with artifact md5s).
 - Runner: `scripts/eval/promotion-check.ts` @ branch `feat/885-measurement-reanchor`; NAD-native
   v2 row from a standalone `score-affix.ts --file street-affix-real-v2.jsonl` run (not a battery

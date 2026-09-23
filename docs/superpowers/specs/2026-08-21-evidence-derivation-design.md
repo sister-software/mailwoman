@@ -242,7 +242,7 @@ applicable basis, and it is defined as measuring completeness ourselves against 
 reference. That reference is Census PL 94-171 table H1, verified:
 
 ```
-/mnt/playpen/mailwoman-data/census/pl2020/ca000022020.pl   152 fields, 669,172 records
+$MAILWOMAN_DATA_ROOT/census/pl2020/ca000022020.pl   152 fields, 669,172 records
   last three fields = H1: 14,392,140 total / 13,475,623 occupied / 916,517 vacant
   matches published CA 2020 figures exactly
 ```

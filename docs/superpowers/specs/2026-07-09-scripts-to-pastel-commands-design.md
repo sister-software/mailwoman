@@ -127,7 +127,7 @@ New core helpers follow the acronym-casing convention (`readJSONL` rather than `
 | 3   | `sha256OfFile` clones                                         | ~12                       | `core/utils`: `sha256File()`                                                                       |
 | 4   | `downloadToFile` + `isTransientStatus` + MANIFEST read/write  | ~9 files each, same files | `corpus/tools/fetch/shared.ts` (owning package — corpus-fetch-specific shape)                      |
 | 5   | local `mulberry32`/`shuffle` re-rolls                         | 4                         | delete; use `SeededRandom` (`core/utils`, exists)                                                  |
-| 6   | hardcoded `/mnt/playpen`/`/data` literals                     | ~13                       | `dataRootPath()` (exists) — excludes `build-transliteration-extract`'s deliberate rewrite prefixes |
+| 6   | hardcoded `$MAILWOMAN_DATA_ROOT`/`/data` literals             | ~13                       | `dataRootPath()` (exists) — excludes `build-transliteration-extract`'s deliberate rewrite prefixes |
 | 7   | coarse-placer FNV-1a `hash`                                   | 4                         | `core/coarse-placer/tools/shared.ts`                                                               |
 
 **Deliberately left:** byte-size formatting (1 file), CSV parsing (`ingest-csv`'s is deliberate), exec wrappers (three styles, no shared shape), padEnd table grids (37 bespoke), progress ticks (bespoke phrasing).

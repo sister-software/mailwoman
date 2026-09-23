@@ -15,7 +15,7 @@ uses for ten other countries, and it closes 99.9975% of the hole.
 
 ## Where the data is
 
-`/mnt/playpen/mailwoman-data/geonames/allCountries-postal.txt` — 140 MB, CC BY 4.0, downloaded
+`$MAILWOMAN_DATA_ROOT/geonames/allCountries-postal.txt` — 140 MB, CC BY 4.0, downloaded
 2026-06-23.
 
 ```

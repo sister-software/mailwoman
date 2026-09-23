@@ -6,7 +6,7 @@
 	"generatedAt": "2026-08-26T06:23:36.396Z",
 	"gitCommit": "2b5fa6193",
 	"artifact": {
-		"poiDatabasePath": "/mnt/playpen/mailwoman-data/poi/poi.db",
+		"poiDatabasePath": "$MAILWOMAN_DATA_ROOT/poi/poi.db",
 		"poiLayerManifest": {
 			"name": "poi",
 			"version": "2026-07-22.0",
@@ -24,7 +24,7 @@
 		},
 		"resolverBackend": "candidate",
 		"weightsLocale": "en-US",
-		"weightsModelPath": "/mnt/playpen/mailwoman-data/weights/en-us/model.onnx",
+		"weightsModelPath": "$MAILWOMAN_DATA_ROOT/weights/en-us/model.onnx",
 		"weightsVersion": "9.1.0"
 	},
 	"rows": [

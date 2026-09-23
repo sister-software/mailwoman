@@ -366,7 +366,7 @@
 		{
 			"run_id": "v1.0.2-consolidation-runB-step020000",
 			"model_version": "4.2.0",
-			"model_path": "/mnt/playpen/mailwoman-data/models/quantized/model-v102-runB-step-20000-int8.onnx",
+			"model_path": "$MAILWOMAN_DATA_ROOT/models/quantized/model-v102-runB-step-20000-int8.onnx",
 			"corpus_version": "0.4.12-consolidation",
 			"corpus_sha256": "see corpus MANIFEST (v0.4.12-consolidation)",
 			"eval_set_version": "golden v0.1.2 + real-OOD set (affix/unit/country-homograph) + honest-eval VT",
@@ -424,7 +424,7 @@
 		{
 			"run_id": "v1.1.0-relabel-consolidation-step040000",
 			"model_version": "4.3.0",
-			"model_path": "/mnt/playpen/mailwoman-data/models/quantized/model-v110-step-40000-locale-int8.onnx",
+			"model_path": "$MAILWOMAN_DATA_ROOT/models/quantized/model-v110-step-40000-locale-int8.onnx",
 			"corpus_version": "0.4.12-consolidation + loader affix-relabel pass (lexicon affix-relabel-v1, #511)",
 			"corpus_sha256": "see corpus MANIFEST (v0.4.12-consolidation); relabel is a load-time transform stamped in the training config",
 			"eval_set_version": "golden v0.1.2 + real-OOD (affix 32-row + NAD-native v2 + unit + country-homograph) + honest-eval VT",
@@ -472,7 +472,7 @@
 		{
 			"run_id": "v1.3.0-boundary-consolidation-step040000",
 			"model_version": "4.4.0",
-			"model_path": "/mnt/playpen/mailwoman-data/models/quantized/model-v130-step-40000-int8.onnx",
+			"model_path": "$MAILWOMAN_DATA_ROOT/models/quantized/model-v130-step-40000-int8.onnx",
 			"corpus_version": "0.4.15-boundary",
 			"corpus_sha256": "see corpus MANIFEST (v0.4.15-boundary)",
 			"eval_set_version": "golden v0.1.2 + real-OOD (affix/v2/unit/country/po_box-cedex/intersection) + arena perturb + honest-eval VT",
@@ -546,7 +546,7 @@
 					"perturb": 78
 				}
 			},
-			"notes": "The #885 measurement re-anchor: first full per-tag re-score since v4.4.0 (17/17 PASS; scorecard parity-scorecard-2026-07-02.md). Rows for 4.5.0-4.16.2 were never populated (the ledger froze at v4.4.0) - their per-release headlines live in releases.mdx + each version's model-card.json; the re-score cadence rule in CONTRIBUTING_MODEL_WORK.mdx now backstops the gap going forward. Scored 2026-07-02 on the shipped int8. [graded_artifact=int8; check=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/rescore-885]"
+			"notes": "The #885 measurement re-anchor: first full per-tag re-score since v4.4.0 (17/17 PASS; scorecard parity-scorecard-2026-07-02.md). Rows for 4.5.0-4.16.2 were never populated (the ledger froze at v4.4.0) - their per-release headlines live in releases.mdx + each version's model-card.json; the re-score cadence rule in CONTRIBUTING_MODEL_WORK.mdx now backstops the gap going forward. Scored 2026-07-02 on the shipped int8. [graded_artifact=int8; check=v4.15.0-boundary; out-dir=$MAILWOMAN_DATA_ROOT/scratch-825/rescore-885]"
 		},
 		{
 			"run_id": "bsplice-meaninit-v193a3-step080000-postship-20260702",
@@ -587,7 +587,7 @@
 					"perturb": 78
 				}
 			},
-			"notes": "The #884 vocab-splice ship (training-free; v1.9.3a3 encoder unchanged + 10,582 mean-init rows; coordinated model+tokenizer bump). POST-SHIP battery on the published pair: 17/17 PASS incl. both zero-margin postcode floors exactly held — per-tag F1 unmoved at check precision across the tokenizer change (cross-lingual leakage measured separately: 52/15k EU rows re-tokenize, net-positive, FR coord ni PASS). Coordinate wins: wrong-city CZ 22.4->14.8, PL 27.9->7.9, SK 22.2->13.2, SI 18.9->10.6 (n=1k). Re-score cadence entry #1. [graded_artifact=int8; check=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/check-v510]"
+			"notes": "The #884 vocab-splice ship (training-free; v1.9.3a3 encoder unchanged + 10,582 mean-init rows; coordinated model+tokenizer bump). POST-SHIP battery on the published pair: 17/17 PASS incl. both zero-margin postcode floors exactly held — per-tag F1 unmoved at check precision across the tokenizer change (cross-lingual leakage measured separately: 52/15k EU rows re-tokenize, net-positive, FR coord ni PASS). Coordinate wins: wrong-city CZ 22.4->14.8, PL 27.9->7.9, SK 22.2->13.2, SI 18.9->10.6 (n=1k). Re-score cadence entry #1. [graded_artifact=int8; check=v4.15.0-boundary; out-dir=$MAILWOMAN_DATA_ROOT/scratch-825/check-v510]"
 		},
 		{
 			"run_id": "nsplice-v2-exonym-meaninit-20260703",
@@ -628,7 +628,7 @@
 					"perturb": 78
 				}
 			},
-			"notes": "Coordinated model+code reduce on check v5.2.0-nordic (one $revision: us.postcode 95→94.8, measurement identity — shipped-fp32 reads the same 94.8, 0/2660 parse diffs; operator-approved). Nordic vocab-splice: SE 83.8→90.2 (p90res 113→12.7km), NO 92.7→98.1, DK 91.4→95.2, Åbo 0.12km; 14/14 ni; US byte-identical. Post-ship gauntlet 19/19 + metamorphic PASS. Carries the resolver arc #910/#920/#922/#923/#927/#929/#930/#931. [graded_artifact=fp32; check=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/check-v193/v520-check-out]"
+			"notes": "Coordinated model+code reduce on check v5.2.0-nordic (one $revision: us.postcode 95→94.8, measurement identity — shipped-fp32 reads the same 94.8, 0/2660 parse diffs; operator-approved). Nordic vocab-splice: SE 83.8→90.2 (p90res 113→12.7km), NO 92.7→98.1, DK 91.4→95.2, Åbo 0.12km; 14/14 ni; US byte-identical. Post-ship gauntlet 19/19 + metamorphic PASS. Carries the resolver arc #910/#920/#922/#923/#927/#929/#930/#931. [graded_artifact=fp32; check=v4.15.0-boundary; out-dir=$MAILWOMAN_DATA_ROOT/scratch-825/check-v193/v520-check-out]"
 		},
 		{
 			"run_id": "v220-full-family-100k-postship-20260704",
@@ -669,7 +669,7 @@
 					"perturb": 79
 				}
 			},
-			"notes": "v2.2.0-full-family promoted from the 2026-07-03 archive at the #901 operator fork (fixes #949: FR bare street 16->34/40; CZ wrong-city 13.7->6.6, SK 13.3->6.6; SE +4.6pp; Abo fixed; US/FR ni identical; SI +2.7pp trade floored by #942 default-ON). POST-SHIP battery on the published pair: every floor PASS incl. fr.postcode at exactly its revised 99.2 floor (check v5.3.0-family.json) and fr.cedex_real recovered 89.4->93.1 (the 07-02 scorecard's unsigned drift substantially healed). Re-score cadence entry #2. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the check spec's revision comment): int8_delta.us.country_homograph_f1. [graded_artifact=int8; check=v5.3.0-family; out-dir=/mnt/playpen/mailwoman-data/scratch-825/check-v530-postship]"
+			"notes": "v2.2.0-full-family promoted from the 2026-07-03 archive at the #901 operator fork (fixes #949: FR bare street 16->34/40; CZ wrong-city 13.7->6.6, SK 13.3->6.6; SE +4.6pp; Abo fixed; US/FR ni identical; SI +2.7pp trade floored by #942 default-ON). POST-SHIP battery on the published pair: every floor PASS incl. fr.postcode at exactly its revised 99.2 floor (check v5.3.0-family.json) and fr.cedex_real recovered 89.4->93.1 (the 07-02 scorecard's unsigned drift substantially healed). Re-score cadence entry #2. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the check spec's revision comment): int8_delta.us.country_homograph_f1. [graded_artifact=int8; check=v5.3.0-family; out-dir=$MAILWOMAN_DATA_ROOT/scratch-825/check-v530-postship]"
 		},
 		{
 			"run_id": "v2-4-1-fr-nsplice-ft-20260709",

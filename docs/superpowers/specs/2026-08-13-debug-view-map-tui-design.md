@@ -70,7 +70,7 @@ New workspace `map-tui/`, source at the workspace root per convention, published
 - **`style.ts`** — one curated dark-terminal style table for the protomaps basemap schema:
   layer → `{kind: fill | line | label, color, minZoom, widthByZoom}` across the nine layers
   (`boundaries, buildings, earth, landcover, landuse, places, pois, roads, water` — verified
-  against the lab dump `/mnt/playpen/protomaps/20260521.pmtiles`, z0–15 MVT gzip, planetiler
+  against the lab dump `$MAILWOMAN_DATA_ROOT/tiles/planet.pmtiles`, z0–15 MVT gzip, planetiler
   build). Data-driven; no theming engine in v1.
 - **`raster.ts`** — geometry rasterizer: web-mercator projection, Bresenham polylines with
   width, scanline polygon fill, viewport clip — into an RGBA subpixel buffer at asciify's

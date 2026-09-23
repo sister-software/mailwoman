@@ -138,7 +138,7 @@ describe("generate-cli-reference", () => {
 
 describe("renderDefault", () => {
 	it("suppresses an absolute path", () => {
-		expect(renderDefault("/mnt/playpen/mailwoman-data")).toBe("environment-dependent")
+		expect(renderDefault("/srv/mailwoman-data")).toBe("environment-dependent")
 	})
 
 	it("renders scalars and arrays as inline code, and no default as an em dash", () => {

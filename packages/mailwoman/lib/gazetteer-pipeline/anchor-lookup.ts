@@ -56,7 +56,7 @@
  *   serializer reproduces Python's `json.dumps(..., ensure_ascii=False)` formatting (", " / ": "
  *   separators, integer-valued floats rendered with a trailing `.0`) so the emitted file matches
  *   the original. The WOF data root is resolved through `dataRootPath` (the one home for the
- *   `/mnt/playpen` default) instead of the Python's hardcoded literal — identical default path, now
+ *   `$MAILWOMAN_DATA_ROOT` default) instead of the Python's hardcoded literal — identical default path, now
  *   also `$MAILWOMAN_DATA_ROOT` overridable.
  */
 

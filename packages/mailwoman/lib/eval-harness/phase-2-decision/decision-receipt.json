@@ -5,7 +5,7 @@
 	"generatedAt": "2026-09-05T12:33:13.203Z",
 	"gitCommit": "82d96d859",
 	"artifact": {
-		"poiDatabasePath": "/mnt/playpen/mailwoman-data/poi/poi.db",
+		"poiDatabasePath": "$MAILWOMAN_DATA_ROOT/poi/poi.db",
 		"poiLayerManifestVersion": "2026-07-22.0",
 		"poiLayerBuildSHA": "3610771ec",
 		"weightsLocale": "en-US",
@@ -55,7 +55,7 @@
 		},
 		{
 			"instrument": "poi_board",
-			"identity": "/mnt/playpen/mailwoman-data/poi/poi.db · 56 committed rows, 51 counted, 5 tracked"
+			"identity": "$MAILWOMAN_DATA_ROOT/poi/poi.db · 56 committed rows, 51 counted, 5 tracked"
 		},
 		{
 			"instrument": "conformance_laws",

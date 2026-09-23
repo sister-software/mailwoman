@@ -24,7 +24,7 @@ empty), and the 5% parent-coverage floor wants a second calibration point, which
 - **No `enum`, no constructor parameter properties, no runtime namespaces** — `erasableSyntaxOnly: true` is enforced repo-wide. Use `const X = {…} as const` plus `type X = (typeof X)[keyof typeof X]`.
 - **Relative imports carry explicit `.ts` extensions.** Source runs directly under `node`.
 - **Acronyms capitalize as whole camelCase components** — `parseJSON`, `readID`, `WOFPlacetype`. Not `parseJson` / `readId`. Does not apply to `snake_case` DB columns.
-- **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath("wof", "admin-global-priority.db")`. Never hardcode `/mnt/playpen/mailwoman-data`; reference `$MAILWOMAN_DATA_ROOT` in prose and help text.
+- **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath("wof", "admin-global-priority.db")`. Never hardcode `$MAILWOMAN_DATA_ROOT`; reference `$MAILWOMAN_DATA_ROOT` in prose and help text.
 - **Databases are read-only artifacts.** This plan only ever opens the admin DB with `{ readOnly: true }`.
 - **The meaning-of-zero rule is structural.** A measured-and-empty rung is a present row with a zero count; a never-measured rung is an absent row. These must never collapse into the same representation.
 - **Positive evidence only.** Nothing in this plan checks, masks, or forbids anything at decode time. It measures and reports.

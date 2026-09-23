@@ -10,8 +10,8 @@ that was error-prone in the v0.5.2/v0.5.3 sessions (forgot importance step, stal
 
 ## Prerequisites
 
-- WOF GeoJSON repos cloned to `/mnt/playpen/mailwoman-data/wof/repos/` (or `$WOF_REPOS_DIR`)
-- WOF admin SQLite at `/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db` (or `$WOF_ADMIN_DB`)
+- WOF GeoJSON repos cloned to `$MAILWOMAN_DATA_ROOT/wof/repos/` (or `$WOF_REPOS_DIR`)
+- WOF admin SQLite at `$MAILWOMAN_DATA_ROOT/wof/whosonfirst-data-admin-us-latest.db` (or `$WOF_ADMIN_DB`)
 - Compiled workspace: `yarn compile`
 
 ## Pipeline steps
@@ -21,8 +21,8 @@ that was error-prone in the v0.5.2/v0.5.3 sessions (forgot importance step, stal
 Only needed when GeoJSON repos have been updated. Skip if the existing unified DB is current.
 
 ```bash
-node packages/mailwoman/out/cli/index.js wof prepare /mnt/playpen/mailwoman-data/wof/repos/ \
-  --unified-db /mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-unified.db
+node packages/mailwoman/out/cli/index.js wof prepare $MAILWOMAN_DATA_ROOT/wof/repos/ \
+  --unified-db $MAILWOMAN_DATA_ROOT/wof/whosonfirst-data-admin-us-unified.db
 ```
 
 ### 2. Build Wikipedia importance scores (~15s)
@@ -64,8 +64,8 @@ names only artifacts a command can regenerate.
 
 ```bash
 node resolver-wof-sqlite/out/build-slim-cli.js \
-  --in /mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db \
-  --in /mnt/playpen/mailwoman-data/wof/whosonfirst-data-postalcode-us-latest.db \
+  --in $MAILWOMAN_DATA_ROOT/wof/whosonfirst-data-admin-us-latest.db \
+  --in $MAILWOMAN_DATA_ROOT/wof/whosonfirst-data-postalcode-us-latest.db \
   --out docs/static/mailwoman/wof-hot.db \
   --top 1000
 ```

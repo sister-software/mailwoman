@@ -17,7 +17,7 @@ every battery, every verdict).
 
 Also: the 768k importance FST was **rebuilt and measured** (provenance byte-equivalent to the 07-18
 build: 768,643 importance matches) — and the reship was **rejected by the fragment board**. It stays
-staged at `/mnt/playpen/mailwoman-data/scratch-importance/`, unshipped; the 220k FST remains the
+staged at `$MAILWOMAN_DATA_ROOT/scratch-importance/`, unshipped; the 220k FST remains the
 shipped gazetteer.
 
 ## 2. The measurements that drove each decision

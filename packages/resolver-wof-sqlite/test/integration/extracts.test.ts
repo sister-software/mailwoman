@@ -17,7 +17,7 @@ describe("deriveSchemaName", () => {
 	})
 
 	test("handles full paths (basename only)", () => {
-		expect(deriveSchemaName("/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db")).toBe("admin_us")
+		expect(deriveSchemaName("/srv/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db")).toBe("admin_us")
 	})
 
 	test("replaces non-identifier chars with underscores", () => {

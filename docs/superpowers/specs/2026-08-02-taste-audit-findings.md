@@ -262,9 +262,9 @@ This is drift against a known home rather than an unknown one. The adoption spli
 **Cost of leaving it: low** (until a file needs the streaming `iterateJSONL` and grows a second
 hand-rolled reader). **Cost of fixing it: low, mechanical.**
 
-### A7. Data root — the `/mnt/playpen` literal is meant to live in exactly one file
+### A7. Data root — the `$MAILWOMAN_DATA_ROOT` literal is meant to live in exactly one file
 
-`AGENTS.md`: "The lab `/mnt/playpen/mailwoman-data` default lives in **exactly one place**
+`AGENTS.md`: "The lab `$MAILWOMAN_DATA_ROOT` default lives in **exactly one place**
 (`data-root.ts`); never re-hardcode it in shipped code or scripts. In docs/comments/help-text
 reference `$MAILWOMAN_DATA_ROOT` rather than the literal."
 
@@ -277,7 +277,7 @@ reference `$MAILWOMAN_DATA_ROOT` rather than the literal."
 | **prose** | `corpus/src/tools/corpus-stats.ts:35`; `corpus/src/tools/fetch/{index.ts:68,nad.ts:29,openaddresses.ts:47}`; `mailwoman/gazetteer-pipeline/postcode/zcta-centroids.ts:23`; `mailwoman/commands/corpus/extract/translit.tsx:9` |
 
 The `extract-translit` pair is the one that matters: the literal is a **runtime default value**
-(`options.legacyPathPrefix ?? "/mnt/playpen/mailwoman-data/"`), so a lab with a different data root
+(`options.legacyPathPrefix ?? "$MAILWOMAN_DATA_ROOT/"`), so a lab with a different data root
 gets a silently wrong path rewrite.
 
 **Cost of leaving it: low-medium** (one real behavioural default; the rest is prose hygiene).

@@ -90,7 +90,7 @@ symlinks). Restoring it takes 48–54s on the two `mailwoman-data` legs ≈ **1.
 documented-degraded path to GitHub's cache service.
 
 Meanwhile `release.config.json` points the source model at
-`/mnt/playpen/mailwoman-data/models/quantized/model-v3230-guard-step-004000-int8.onnx` — local disk,
+`$MAILWOMAN_DATA_ROOT/models/quantized/model-v3230-guard-step-004000-int8.onnx` — local disk,
 on the same host the leg runs on. Only the derived `postcode-*.bin` / `pair-index-*.bin` need
 building, via `spawnSync` of `mailwoman gazetteer postcode-binary` and `gazetteer pair-index`. That
 is the "~5 min" the cache exists to avoid rather than the copy.

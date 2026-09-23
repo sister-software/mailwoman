@@ -1013,7 +1013,7 @@ export function resolveTilesPath(flagValue?: string): string | null {
 }
 ```
 
-- [ ] **Step 3: Lab convenience (manual rather than in code):** `mkdir -p $MAILWOMAN_DATA_ROOT/tiles && ln -s /mnt/playpen/protomaps/20260521.pmtiles $MAILWOMAN_DATA_ROOT/tiles/planet.pmtiles` — record the command in the PR description, do not script it.
+- [ ] **Step 3: Lab convenience (manual rather than in code):** `mkdir -p $MAILWOMAN_DATA_ROOT/tiles && ln -s <protomaps-planet-dump>.pmtiles $MAILWOMAN_DATA_ROOT/tiles/planet.pmtiles` — record the command in the PR description, do not script it.
 
 - [ ] **Step 4: Commit.** `geocode: tiles path resolution for the debug map pane`
 

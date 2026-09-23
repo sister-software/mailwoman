@@ -15,7 +15,7 @@
 - **Node runs source directly** (type stripping, no flags). Relative imports carry explicit `.ts` extensions.
 - **`erasableSyntaxOnly: true`** repo-wide — no `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), no constructor parameter properties, no runtime namespaces.
 - **zero raw `process.env` / `process.argv`** — CI-enforced by oxlint (`sister-software/no-process-globals`). The only blessed accessors are `@mailwoman/core/env` (`$public`) and `@mailwoman/core/utils/scripting`.
-- **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath(...)` / `mailwomanDataRoot()`. The `/mnt/playpen/mailwoman-data` default lives in exactly one place (`core/utils/data-root.ts`). Never re-hardcode it; in docs and help text reference `$MAILWOMAN_DATA_ROOT`.
+- **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath(...)` / `mailwomanDataRoot()`. The `$MAILWOMAN_DATA_ROOT` default lives in exactly one place (`core/utils/data-root.ts`). Never re-hardcode it; in docs and help text reference `$MAILWOMAN_DATA_ROOT`.
 - **Acronym casing:** acronyms capitalize as whole camelCase components — `parseJSON`, `readID`, `modelURL`. Not `parseJson` / `readId`. Does not apply to `snake_case` DB columns or wire keys.
 - **Two pre-commit checks fire on every commit** and both reject silently-looking failures:
   1. `oxfmt --check` on staged files — it reformats **markdown tables** too. Run `yarn oxfmt <paths>` before committing docs.
@@ -264,7 +264,7 @@ EOF
 
 ### Task 2: Materialize weights from the data root rather than GitHub's cache
 
-The `weights-*` cache payload is 76.3 MB of real files and takes 48–54s to restore on the two `mailwoman-data` legs — about 1.6 MB/s over the lab's degraded path to the cache service. The source model is already on local disk on that same host (`release.config.json` → `dataRoot: /mnt/playpen/mailwoman-data`). Only the derived `postcode-*.bin` / `pair-index-*.bin` are expensive to produce; those get a content-keyed store in the data root.
+The `weights-*` cache payload is 76.3 MB of real files and takes 48–54s to restore on the two `mailwoman-data` legs — about 1.6 MB/s over the lab's degraded path to the cache service. The source model is already on local disk on that same host (`release.config.json` → `dataRoot: $MAILWOMAN_DATA_ROOT`). Only the derived `postcode-*.bin` / `pair-index-*.bin` are expensive to produce; those get a content-keyed store in the data root.
 
 **Files:**
 

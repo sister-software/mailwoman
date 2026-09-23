@@ -65,7 +65,7 @@ authored entries. The `.db` is the compiled, queryable form.
 # build from source (validates strategy names; rejects unknown ones loudly)
 node scripts/build-conventions.ts \
   --src data/conventions/conventions.json \
-  --output /mnt/playpen/mailwoman-data/wof/conventions.db
+  --output $MAILWOMAN_DATA_ROOT/wof/conventions.db
 ```
 
 `scripts/build-conventions.ts` validates each entry (numeric unique `wof_id`, non-empty `source`,

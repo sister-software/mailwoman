@@ -7,7 +7,7 @@
 		"declaredPhrases": 11
 	},
 	"poiDatabase": {
-		"path": "/mnt/playpen/mailwoman-data/poi/poi.db",
+		"path": "$MAILWOMAN_DATA_ROOT/poi/poi.db",
 		"layerManifest": {
 			"name": "poi",
 			"version": "2026-07-22.0",
