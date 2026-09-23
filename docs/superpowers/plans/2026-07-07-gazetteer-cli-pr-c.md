@@ -60,7 +60,7 @@ Each is subsumed: incremental Overture augment → edit `defaults.ts` + rebuild 
 
 ### Task 4: E2E — the recipe now reproduces the artifact (the #1026 candidate)
 
-- [ ] `yarn compile && node mailwoman/out/cli.js gazetteer build admin --out $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.PRC.db` (~12 min).
+- [ ] `yarn compile && node mailwoman/out/cli.js gazetteer build admin --out $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.PRC.db` (~12 min).
 - [ ] Expected: **verify pass 21/21** (node-census restored — the check that failed on the E2E in PR B), sealed, build-log appended.
 - [ ] Per-country/per-placetype census diff vs the live DB + vs the pre-936 backup (GE must have country+regions again). Post findings to #1026.
 - [ ] **Do not swap** — present the artifact + census to the operator (runbook swap is a deliberate step: bak → mv → seal check → service restarts → demo propagation).

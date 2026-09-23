@@ -10,9 +10,8 @@
  *   able to do. Operations receive the resulting privilege as a plain boolean on their context.
  *
  *   The re-exec resolves symlinks before handing argv to `sudo`, so the path matches the absolute one pinned in
- *   `/etc/sudoers.d/mailwoman-storage`. Without that, invoking through a symlink on `PATH` produces an argv the
- *   NOPASSWD rule does not match, and sudo falls through to a password prompt — the unattended case the rule exists
- *   to serve.
+ *   `/etc/sudoers.d/mailwoman-storage`. Invoking through a symlink on `PATH` produces an argv the NOPASSWD rule
+ *   misses, and sudo then asks for a password. That defeats the unattended case the rule exists to serve.
  */
 
 import { realPath } from "@mailwoman/core/fs/readers/stat"
@@ -28,7 +27,8 @@ export function isRoot(): boolean {
 /**
  * If not already root, re-exec this entry point under `sudo` and exit with the child's status.
  *
- * Resolves only when the process already holds root; otherwise the process is replaced and never returns.
+ * Resolves when the process already holds root.
+ * Otherwise the process is replaced and never returns.
  */
 export async function ensureRoot(): Promise<void> {
 	if (isRoot()) return

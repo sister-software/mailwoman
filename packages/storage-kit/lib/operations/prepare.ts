@@ -52,12 +52,13 @@ async function step(
 }
 
 /**
- * `storage.prepare` — erase a device and bring it up as the data-root volume, then verify the result.
+ * `storage.prepare` — erase a device, bring it up as the data-root volume,
+ * then assert every property it set.
  */
 export const prepareOperation = defineOperation({
 	id: "storage.prepare",
 	description:
-		"Partition, format, and mount a device as the data-root volume, then verify it. Destructive — guarded by an expected serial.",
+		"Partition, format, and mount a device as the data-root volume, then check every property it set. Destructive: the operator states the serial it must match.",
 	effect: StorageEffect.HostWrite,
 	inputSchema: volumeSpec.strict(),
 	outputSchema: prepareOutput,
@@ -85,7 +86,7 @@ export const prepareOperation = defineOperation({
 
 		context.log(`preparing ${input.device} (${device.model} ${device.size}, serial ${device.serial})`)
 
-		// TRIM before mkfs, not after.
+		// TRIM runs before mkfs.
 		// A drive arriving full of another filesystem has no free erase blocks, and the
 		// resulting read-modify-write collapse looks exactly like failing hardware.
 		const discard = await inspectDiscard(input.device)

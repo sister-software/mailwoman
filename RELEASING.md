@@ -189,7 +189,7 @@ card's `training.tokenizer_version` wins (mismatches have shipped before).
 ## Rebuilding + swapping the canonical admin gazetteer (`admin-global-priority.db`)
 
 The resolver's gazetteer is the custom WOF SQLite DB at
-`$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db` — **never** an off-the-shelf geocode.earth dump
+`$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db` — **never** an off-the-shelf geocode.earth dump
 (different WOF ids; see `feedback-custom-wof-db-only`). It is not part of the npm/HF release; it ships
 separately (the demo's slim derivative — see the next section). Rebuild it when you add locale coverage or
 fix a source-ingest bug (#1015). The artifact is SEALED read-only (0444) — never mutate it in place;
@@ -224,20 +224,20 @@ Also run the FORWARD no-regression eval when the change could move coordinates (
 old vs new DB — the two `**neural**` rows must match):
 
 ```bash
-PC=$MAILWOMAN_DATA_ROOT/wof/postalcode-us.db
+PC=$MAILWOMAN_DATA_ROOT/db/wof/postalcode-us.db
 for db in admin-global-priority.db admin-global-priority.REBUILD.db; do
   node packages/mailwoman/out/cli/index.js eval oa-resolver \
     --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000 --default-country US \
     --model <v.onnx> --tokenizer <tok.model> --model-card neural-weights-en-us/model-card.json \
     --model-anchor-lookup <anchor.json> \
-    --wof-db "$MAILWOMAN_DATA_ROOT/wof/$db,$PC" 2>/dev/null | grep '\*\*neural'
+    --wof-db "$MAILWOMAN_DATA_ROOT/db/wof/$db,$PC" 2>/dev/null | grep '\*\*neural'
 done
 ```
 
 ### Step 4 — swap + record
 
 ```bash
-cd $MAILWOMAN_DATA_ROOT/wof
+cd $MAILWOMAN_DATA_ROOT/db/wof
 mv admin-global-priority.db admin-global-priority.db.pre-<change>-bak   # back up the live DB
 mv admin-global-priority.REBUILD.db admin-global-priority.db           # promote (instant; same fs)
 # The hosted drop-in services hold the DB open — restart them to pick up the new file:
@@ -304,17 +304,17 @@ node packages/mailwoman/out/cli/index.js gazetteer build   # admin (fold include
 #    country-checks an ambiguous postcode (10115 = Berlin DE + NYC) by resolving the locality first. GB
 #    (2.6M) is left out for size.
 node resolver-wof-sqlite/out/build-candidate-cli.js \
-  --in  $MAILWOMAN_DATA_ROOT/wof/admin-global-priority-geonames.db \
-  --postcodes $MAILWOMAN_DATA_ROOT/wof/postalcode-us.db \
-  --postcodes $MAILWOMAN_DATA_ROOT/wof/postalcode-intl.db \
-  --postcodes $MAILWOMAN_DATA_ROOT/wof/postalcode-geonames-intl.db \
-  --postcodes $MAILWOMAN_DATA_ROOT/wof/postalcode-ca-overture.db \
-  $(for cc in at be ch cz dk es fi hr lt lu lv no pl pt si sk; do echo --postcodes $MAILWOMAN_DATA_ROOT/wof/postalcode-$cc-overture.db; done) \
-  --out $MAILWOMAN_DATA_ROOT/wof/candidate-global.db
+  --in  $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-geonames.db \
+  --postcodes $MAILWOMAN_DATA_ROOT/db/wof/postalcode-us.db \
+  --postcodes $MAILWOMAN_DATA_ROOT/db/wof/postalcode-intl.db \
+  --postcodes $MAILWOMAN_DATA_ROOT/db/wof/postalcode-geonames-intl.db \
+  --postcodes $MAILWOMAN_DATA_ROOT/db/wof/postalcode-ca-overture.db \
+  $(for cc in at be ch cz dk es fi hr lt lu lv no pl pt si sk; do echo --postcodes $MAILWOMAN_DATA_ROOT/db/wof/postalcode-$cc-overture.db; done) \
+  --out $MAILWOMAN_DATA_ROOT/db/wof/candidate-global.db
 # 2. Bump ADMIN_GAZETTEER_VERSION in docs/src/shared/resources.tsx (the immutable cache needs a fresh URL).
 # 3. Upload to the new path:
 mkdir -p /tmp/stage/gazetteer/<NEW_VERSION>
-ln -s $MAILWOMAN_DATA_ROOT/wof/candidate-global.db /tmp/stage/gazetteer/<NEW_VERSION>/candidate.db
+ln -s $MAILWOMAN_DATA_ROOT/db/wof/candidate-global.db /tmp/stage/gazetteer/<NEW_VERSION>/candidate.db
 set -a; . ./.env; set +a
 python3 docs/scripts/publish-demo-assets-to-r2.py --src /tmp/stage --prefix mailwoman
 # 4. The map-highlight sibling (wof-polygons.db) builds from --admin now (the --points wof-hot.db source is
@@ -382,7 +382,7 @@ The end-to-end order that worked: **the promotion eval (revised if needed) → c
 - **The floor comparison is `>=`** (`mailwoman eval promote`, `mailwoman/eval-harness/promotion-eval.ts`). A floor set exactly at the measured value passes (95.0 ≥ 95.0) — no need to set it below, and no re-run to find out. A promotion eval that needs a floor lowered gets a **new eval file** with a stated `$revision_*` reason (no silent drift); the full promotion eval is ~12–15 min, so set the floors right the first time.
 - **The R2 demo repoint is "carry-forward + overwrite 2 files."** Between model versions only `model.onnx` and `model-card.json` change — tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json`, `calibration.json` are byte-identical. Fastest path: boto3-`download` all of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend entry + `defaultVersion`), one `publish-demo-assets-to-r2.py --src`. ~60 MB, two commands. (The bucket is `nexus-public`, creds are `RCLONE_S3_PUBLIC_*`.)
 - **npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version but `npm pack` 404s and a raw tarball `curl` returns a tiny error JSON — that's CDN propagation rather than a failed publish. Verify meanwhile via `npm view … dist.unpackedSize` (a code-only pkg is <1 MB; a model-bundled one is ~33 MB) and the md5 chain `$MAILWOMAN_DATA_ROOT source == HF upload == R2 staging`. Re-`npm pack` to close the loop once the CDN catches up.
-- **Canonical artifact paths** (so you don't hunt): model int8 → `$MAILWOMAN_DATA_ROOT/models/quantized/model-v<NNN>-step-<step>-int8.onnx`; tokenizer → `$MAILWOMAN_DATA_ROOT/models/tokenizer/<ver>/tokenizer.model`; FST → `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`); postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`; gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json` (the repo copy the promotion eval ran against — use this rather than the prior bucket's).
+- **Canonical artifact paths** (so you don't hunt): model int8 → `$MAILWOMAN_DATA_ROOT/models/quantized/model-v<NNN>-step-<step>-int8.onnx`; tokenizer → `$MAILWOMAN_DATA_ROOT/models/tokenizer/<ver>/tokenizer.model`; FST → `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`); postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`; gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json` (the repo copy the promotion eval ran against — use this rather than the prior bucket's).
 
 ### Step 0 — figure out the version number (the divergence trap)
 

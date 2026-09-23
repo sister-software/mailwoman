@@ -448,7 +448,7 @@ Docstring: fix stale path + grammar + delete the deliberate line:
 ```
  *   Usage: node scripts/eval/extract-tuples.ts\
  *   --output /tmp/tuples.jsonl\
- *   [--sqlite $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db]\
+ *   [--sqlite $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db]\
  *   [--limit 50000]\
  *   <extract.parquet>...
 ```

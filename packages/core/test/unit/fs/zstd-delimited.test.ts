@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Reading a delimited file that is compressed at rest must be indistinguishable from reading one
- *   that is not — that equivalence is the whole basis for storing the corpus as `.zst`.
+ *   that is not. That equivalence is the whole basis for storing the corpus as `.zst`.
  */
 
 import { unzstd, zstd } from "@mailwoman/core/fs/compression"
@@ -104,8 +104,9 @@ describe("zstd round-trip", () => {
 
 describe("the count-then-read shape", () => {
 	// `readUnquotedTSVChecked` counts a file and then reads it, passing the same path twice.
-	// With a path each pass opens independently; with one hoisted stream the second pass sees
-	// an exhausted iterator and reads nothing, which that function reports as swallowed rows.
+	// With a path each pass opens independently.
+	// With one hoisted stream the second pass sees an exhausted iterator and reads nothing,
+	// which that function reports as swallowed rows.
 	it("survives two sequential passes when the source is built per call", async () => {
 		const count = async (path: string) => {
 			let n = 0

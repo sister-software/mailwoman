@@ -7,9 +7,9 @@
  *   The `mwops` binary: argv in, exit code out. Everything else is `dispatch.ts`, so the routing is testable without a
  *   process.
  *
- *   Elevation lives here rather than in an operation. `storage prepare` writes a partition table and `/etc/fstab`, so
+ *   Elevation lives at the entry point. `storage prepare` writes a partition table and `/etc/fstab`, so
  *   it needs root — and acquiring root means re-exec'ing, which replaces the process. That is a property of an entry
- *   point, not something a capability deep in a call graph should be able to do. The wrapper therefore resolves the
+ *   point, and a capability deep in a call graph should leave it alone. The wrapper resolves the
  *   privilege once, elevates if the requested operation declares a host write, and hands dispatch a plain boolean.
  */
 

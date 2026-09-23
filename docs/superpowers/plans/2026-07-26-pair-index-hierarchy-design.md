@@ -231,7 +231,7 @@ implementation (flat SQL CTE derivation vs the builder's JS-side joins) whose co
 receipt. Full verifier output (exit 0):
 
 ```
-$MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/pair-index-locality-region-us.bin (3,270,483 bytes)
+$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/pair-index-locality-region-us.bin (3,270,483 bytes)
   header: country=us delta=0 edge=locality→region namePolicy=spr-name+official-names-v1 buildDate=2026-07-26T21:50:18.636Z
   COUNT OK: artifact pairCount 138,366 == DB-derived 138,366
   SWEEP OK: all 138,366 expected pairs probe → locality
@@ -241,7 +241,7 @@ $MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/pair-index-locality-region-u
   PROBE OK: ("Springfield", "Bretagne") → (no entry) [expect absent]
   PROBE OK: ("Springfield", "Ontario") → (no entry) [expect absent]
 
-$MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/pair-index-locality-region-fr.bin (4,449,304 bytes)
+$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/pair-index-locality-region-fr.bin (4,449,304 bytes)
   header: country=fr delta=0 edge=locality→region namePolicy=spr-name+official-names-v1 buildDate=2026-07-26T21:50:19.708Z
   COUNT OK: artifact pairCount 161,749 == DB-derived 161,749
   SWEEP OK: all 161,749 expected pairs probe → locality

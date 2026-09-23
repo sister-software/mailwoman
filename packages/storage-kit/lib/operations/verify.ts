@@ -69,7 +69,8 @@ export const verifyOperation = defineOperation({
 
 		// `compress-force` silently voids every compression=none property below,
 		// which is invisible until someone measures a query.
-		// Verified on a scratch volume; see DEFAULT_MOUNT_OPTIONS.
+		// Verified on a scratch volume.
+		// See DEFAULT_MOUNT_OPTIONS.
 		if (input.uncompressed.length) {
 			const forced = Boolean(options?.includes("compress-force"))
 

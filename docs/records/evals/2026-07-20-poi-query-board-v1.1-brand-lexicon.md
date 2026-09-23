@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-20. **Command:** `mailwoman eval poi-board`. **Fixtures:**
 `mailwoman/eval-harness/fixtures/poi-board.jsonl` (51 cases, committed — v1's 45 + 6 new brand
-cases). **DB:** `$MAILWOMAN_DATA_ROOT/poi/poi-full.db` (the full 4-country build,
+cases). **DB:** `$MAILWOMAN_DATA_ROOT/db/poi/poi-full.db` (the full 4-country build,
 release 2026-05-20.0; regenerated `poi-taxonomy/data/brands.json` against this same db — see
 below). **Resolver:** default FTS admin extract (`admin-global-priority.db`).
 
@@ -50,7 +50,7 @@ existed from part 1's scaffolding; both were verified live, unchanged.
 ## v1.1 numbers
 
 ```
-POI query board (spec §3.6) — v1, REPORT-ONLY (no floors yet) — db: $MAILWOMAN_DATA_ROOT/poi/poi-full.db
+POI query board (spec §3.6) — v1, REPORT-ONLY (no floors yet) — db: $MAILWOMAN_DATA_ROOT/db/poi/poi-full.db
 51 cases, 92.2% overall pass rate
 
   expect kind     n     pass    rate

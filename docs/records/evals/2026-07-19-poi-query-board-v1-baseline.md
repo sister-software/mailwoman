@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-19. **Command:** `mailwoman eval poi-board`. **Fixtures:**
 `mailwoman/eval-harness/fixtures/poi-board.jsonl` (45 cases, committed). **DB:**
-`$MAILWOMAN_DATA_ROOT/poi/poi-full.db` (the full 4-country build — 13,681,698 rows,
+`$MAILWOMAN_DATA_ROOT/db/poi/poi-full.db` (the full 4-country build — 13,681,698 rows,
 release 2026-05-20.0; **not** a `--limit` sample, per the poi-layer-runbook's warning against
 grading coverage off a limited build). **Resolver:** default FTS admin extract
 (`admin-global-priority.db`).
@@ -36,7 +36,7 @@ fixtures — see `eval-harness/poi-board.ts`'s header comment.
 ## v1 numbers
 
 ```
-POI query board (spec §3.6) — v1, REPORT-ONLY (no floors yet) — db: $MAILWOMAN_DATA_ROOT/poi/poi-full.db
+POI query board (spec §3.6) — v1, REPORT-ONLY (no floors yet) — db: $MAILWOMAN_DATA_ROOT/db/poi/poi-full.db
 45 cases, 93.3% overall pass rate
 
   expect kind     n     pass    rate

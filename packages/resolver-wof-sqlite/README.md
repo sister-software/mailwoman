@@ -256,7 +256,7 @@ This package itself is AGPL-3.0; the WOF data it indexes is CC-BY 4.0. The two l
 
 ## Integration tests
 
-`resolver-wof-sqlite/integration.test.ts` exercises the resolver against a real WOF SQLite distribution. The suite is **skipped** when no DB is present — set `MAILWOMAN_WOF_DB` to override the lookup path, otherwise it defaults to `$MAILWOMAN_DATA_ROOT/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location). CI runs against the fixture-only suites; operators with real WOF data locally get an extra layer of validation.
+`resolver-wof-sqlite/integration.test.ts` exercises the resolver against a real WOF SQLite distribution. The suite is **skipped** when no DB is present — set `MAILWOMAN_WOF_DB` to override the lookup path, otherwise it defaults to `$MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location). CI runs against the fixture-only suites; operators with real WOF data locally get an extra layer of validation.
 
 Coverage includes: placetype filtering, country filtering, the empty-result case, FTS5 special-character sanitization, Japanese alt-name resolution, parent-constrained lookup, and a performance budget (`findPlace` < 250 ms against the 142 k-row US admin database).
 

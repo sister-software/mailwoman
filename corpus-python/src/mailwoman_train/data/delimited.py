@@ -20,7 +20,7 @@ from typing import Any
 ZSTD_EXTENSION = ".zst"
 
 # Python 3.14 has `compression.zstd` in the standard library. This is 3.12, so the
-# dependency is required rather than optional; importing lazily keeps the cost off
+# dependency is required rather than optional. Importing lazily keeps the cost off
 # the modules that never touch a compressed part file.
 
 

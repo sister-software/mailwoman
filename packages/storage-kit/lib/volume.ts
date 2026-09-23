@@ -6,11 +6,10 @@
  *   The volume spec every storage operation shares: which disk, mounted where, and which subtrees opt out of
  *   compression.
  *
- *   The uncompressed list is not a performance preference. btrfs compresses in 128 KiB extents while a SQLite page
- *   read is 4 KiB, so a random page read decompresses the whole extent. The retrieval databases are built once and
- *   then read randomly, which is precisely the access pattern that amplification punishes, so they opt out through a
- *   btrfs property rather than through `chattr +C` — the property leaves copy-on-write and checksums intact, and
- *   `+C` would drop both.
+ *   btrfs compresses in 128 KiB extents while a SQLite page read is 4 KiB, so a random page read decompresses the
+ *   whole extent. The retrieval databases are built once and then read randomly. That access pattern pays the
+ *   amplification on every read, so they opt out through a btrfs property. The property leaves copy-on-write and
+ *   checksums in place, where `chattr +C` drops both.
  *
  *   One entry rather than a list of every directory that happens to hold a database. The property propagates to
  *   children created after it is set, at any depth, so a database written into `db/` next year is uncompressed

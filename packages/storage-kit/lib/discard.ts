@@ -11,8 +11,8 @@
  *   no free erase blocks, and every write becomes read-modify-write.
  *
  *   Measured on this drive: 2.1 MB/s with 636 ms write latency at the raw block device, against 755 MB/s once the
- *   mode was corrected and the device trimmed. The symptom is indistinguishable from a failing disk, which is why
- *   `prepare` checks rather than assumes.
+ *   mode was corrected and the device trimmed. That symptom reads as a failing disk, so `prepare` checks both the
+ *   kernel's limit and the device's own claim before it formats anything.
  */
 
 import { $ } from "zx"
@@ -28,7 +28,7 @@ export interface DiscardSupport {
 	 */
 	unmapSupported: boolean
 	/**
-	 * The `scsi_disk` provisioning mode, when the device has one (USB/SCSI only; NVMe does not).
+	 * The `scsi_disk` provisioning mode, which USB and SCSI devices carry and NVMe leaves absent.
 	 */
 	provisioningMode?: string
 	/**

@@ -172,9 +172,8 @@ async function runOperation(
 /**
  * `mwops storage <operation>` — the view over the storage registry.
  *
- * Separate from {@link runOperation} because a storage operation's context
- * carries the privilege the wrapper resolved rather than the repository root:
- * these operations act on block devices, not on the checkout.
+ * Separate from {@link runOperation} because a storage operation's context carries the privilege
+ * the wrapper resolved rather than the repository root: these operations act on block devices.
  */
 async function runStorage(args: readonly string[], io: DispatchIO): Promise<number> {
 	const { options, rest } = parseOptions(args)
@@ -215,7 +214,7 @@ async function runStorage(args: readonly string[], io: DispatchIO): Promise<numb
 		`${json ? prettyJSON(output) : operation.formatOutput ? operation.formatOutput(output) : prettyJSON(output)}\n`
 	)
 
-	// A verify that found failures is a non-zero exit, so a caller can gate on it.
+	// A verify that found failures exits non-zero, so a caller can branch on the status.
 	const failed = (output as { failed?: number }).failed
 
 	return typeof failed === "number" && failed > 0 ? 1 : 0

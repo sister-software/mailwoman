@@ -8,7 +8,7 @@
 		"weightsModelPath": "$MAILWOMAN_DATA_ROOT/weights/en-us/model.onnx",
 		"weightsVersion": "9.1.0"
 	},
-	"backendPath": "$MAILWOMAN_DATA_ROOT/wof/candidate.db",
+	"backendPath": "$MAILWOMAN_DATA_ROOT/db/wof/candidate.db",
 	"countries": ["FR", "DE", "GB", "JP"],
 	"rows": 1000,
 	"fixtureDigest": "626e4f6f4192f1c04e40eb681bc44ac81b9f64ca2beae2fba8ea9f133a047fb0",

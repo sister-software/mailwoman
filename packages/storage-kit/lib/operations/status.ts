@@ -5,9 +5,9 @@
  *
  *   `storage.status` — capacity and the compression ratio the volume is actually achieving.
  *
- *   The ratio is the number worth watching: it is what decides whether a 2 TB drive behaves like 2 TB or like 4 TB,
- *   and it drifts as the mix of text and already-compressed artifacts changes. Reported as logical bytes over bytes
- *   btrfs has allocated, which is the same arithmetic `df` cannot do.
+ *   The ratio decides whether a 2 TB drive holds 2 TB or 4 TB, and it drifts as the mix of text and
+ *   already-compressed artifacts changes. Reported as logical bytes over bytes btrfs has allocated, which is the
+ *   arithmetic `df` leaves out.
  */
 
 import { z } from "zod"
@@ -54,7 +54,7 @@ export const statusOperation = defineOperation({
 		const usage = await $({ nothrow: true, quiet: true })`btrfs filesystem usage --raw ${mountPoint}`
 		const dataUsedGiB = usage.exitCode === 0 ? parseDataUsed(usage.stdout) : null
 
-		// `du --apparent-size` is the logical total; btrfs's allocated figure is what it cost.
+		// `du --apparent-size` gives the logical total. btrfs's allocated figure gives what it cost.
 		const logical = await $({
 			nothrow: true,
 			quiet: true,

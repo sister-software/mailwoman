@@ -307,7 +307,7 @@ async function copyFromSource(
 	// attach avoids any "load source into memory" step — SQLite walks both files in place.
 	// We need a fresh temp copy because some WOF distributions ship as read-only filesystem
 	// mounts and attach will still want a writable journal on the side.
-	// Copying to /tmp dodges that without mutating the canonical files in $MAILWOMAN_DATA_ROOT/wof/.
+	// Copying to /tmp dodges that without mutating the canonical files in $MAILWOMAN_DATA_ROOT/db/wof/.
 	// Attach / detach stay raw — Kysely doesn't model them.
 	await using tmpScratch = await temporaryDirectory("mailwoman-slim-src-")
 	const scratchPath = tmpScratch.resolve("src.db")

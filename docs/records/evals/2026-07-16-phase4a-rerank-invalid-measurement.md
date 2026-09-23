@@ -48,7 +48,7 @@ Both results are explained by the confound rather than by the thesis:
   wrong parse (`Rue Montmartre` → locality). It fired 44 times and broke 18 by _rewarding the failure
   mode the arc exists to fix_.
 
-The extracts exist locally and I only did not wire them: `$MAILWOMAN_DATA_ROOT/interpolation/`
+The extracts exist locally and I only did not wire them: `$MAILWOMAN_DATA_ROOT/db/interpolation/`
 (per-state US), `/ban/` (FR rooftop), `/osm/`. A valid test runs the **geocode cascade**
 (`geocodeAddress` / `parseForGeocode` + a `RegionDatabaseResolver`) rather than the bare WOF admin resolver.
 

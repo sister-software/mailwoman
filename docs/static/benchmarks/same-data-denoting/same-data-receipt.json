@@ -9,7 +9,7 @@
 		"weightsModelPath": "$MAILWOMAN_DATA_ROOT/weights/en-us/model.onnx",
 		"weightsVersion": "9.1.0"
 	},
-	"backendPath": "$MAILWOMAN_DATA_ROOT/wof/candidate.db",
+	"backendPath": "$MAILWOMAN_DATA_ROOT/db/wof/candidate.db",
 	"rows": 453,
 	"fixtureDigest": "dc73aa360edc93517d5e4e731f7b41cc2b14a37f30169d5025860b401beb0526",
 	"lookupsTotal": 1467,

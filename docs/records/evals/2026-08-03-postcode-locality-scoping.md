@@ -308,7 +308,7 @@ narrowing predicate wants measuring on the resolver gauntlet before anyone belie
 ## Reproduction
 
 ```bash
-WOF=$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
+WOF=$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 
 # the reported behaviour
 node mailwoman/out/cli.js parse "12 Rue de Rivoli, 75001 Paris" \

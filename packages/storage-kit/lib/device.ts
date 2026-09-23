@@ -5,8 +5,8 @@
  *
  *   Block-device inspection and the guards that stand between `storage prepare` and someone's root filesystem.
  *
- *   Every guard is expressed as a claim the operator states up front — the serial they expect, the transport they
- *   expect — and the device has to match all of them. A device that has drifted (re-enumerated as a different node,
+ *   Each check reads a claim the operator states up front: the serial they expect, the transport they expect.
+ *   The device has to match all of them. A device that has drifted (re-enumerated as a different node,
  *   swapped for another enclosure) fails the claim rather than getting formatted, because `/dev/sdX` names are
  *   assigned in discovery order and are not stable across reboots.
  */
@@ -75,7 +75,8 @@ export interface DeviceClaim {
 	/**
 	 * The serial the operator expects, from `lsblk -dno SERIAL`.
 	 *
-	 * This is the guard that actually distinguishes one disk from another — the `/dev/sdX` node does not.
+	 * The serial distinguishes one disk from another.
+	 * A `/dev/sdX` node is assigned in discovery order.
 	 */
 	serial: string
 	/**
