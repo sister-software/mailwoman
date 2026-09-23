@@ -86,14 +86,21 @@ interface BaseManifest {
  * and the trainer measured the cost on 2026-09-09: `v0.28.0-reviewed-postcode-tail`
  * declares 706 train files under the old key and the loader resolved one.
  * An overlay assembled from a base read as empty would carry no base files at all.
+ *
+ * The parameter names the two keys this reads and nothing else, because the corpus
+ * census passes a manifest it parsed as `Record<string, unknown>` and needs no `counts`
+ * or `schema` to ask for the file list.
  */
-export function baseManifestFiles(base: BaseManifest): ManifestFile[] {
-	const files = base.slices?.length ? base.slices : base[PRE_RENAME_FILES_KEY]
+export function baseManifestFiles(manifest: { slices?: unknown; [PRE_RENAME_FILES_KEY]?: unknown }): ManifestFile[] {
+	const slices = manifest.slices
+	const preRename = manifest[PRE_RENAME_FILES_KEY]
+	const files = Array.isArray(slices) && slices.length ? slices : preRename
 
-	if (files?.length) return files
+	if (Array.isArray(files) && files.length) return files as ManifestFile[]
 
 	throw new Error(
-		`base manifest lists no files under "slices" or the pre-rename key — refusing to assemble an overlay whose base would be empty`
+		`manifest lists no files under "slices" or the pre-rename key. Answering an empty list here reports a corpus ` +
+			`of zero rows, which reads the same as a corpus that holds none, so the shape is refused instead.`
 	)
 }
 

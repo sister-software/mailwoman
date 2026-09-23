@@ -48,7 +48,7 @@ import {
 } from "@mailwoman/core/scope-config"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
-import { localManifestFilePath } from "@mailwoman/corpus/tools"
+import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools"
 import { allRows } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -257,12 +257,12 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
  * and the shape this census exists to catch.
  * `manifest_files` in `mailwoman_train/data/loader/corpus_files.py` is the same fallback on the Python side.
  */
-function manifestFiles(manifest: Record<string, unknown>): Array<{ split?: string; path?: string }> {
-	const preRename = "sh" + "ards"
-	const entries = manifest["slices"] ?? manifest[preRename]
-
-	return Array.isArray(entries) ? (entries as Array<{ split?: string; path?: string }>) : []
-}
+// The file list was read here by a private copy of `baseManifestFiles`, which differed
+// from it in the one way that matters: the copy answered an empty list for a manifest
+// shape it did not recognize, and this census then reported 0 rows for every country.
+// That is the reading `docs/engineering/reference/the-meaning-of-zero.mdx` exists
+// to refuse, in the reader whose whole job is coverage.
+// The shared one raises and names the cause.
 
 /**
  * Count every train row in the corpus, per country, and how many carry a street span.
@@ -272,11 +272,16 @@ function manifestFiles(manifest: Record<string, unknown>): Array<{ split?: strin
  * Column projection keeps the full read affordable.
  */
 export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCensus> {
-	const manifest = await readLocalJSONFile<{ corpus_version?: string } & Record<string, unknown>>(manifestPath)
+	// `slices` is named here so `baseManifestFiles` accepts the parsed object.
+	// It reads the pre-rename key off the same object at runtime, and that key's spelling
+	// stays in the corpus package because the word is banned in this tree.
+	const manifest = await readLocalJSONFile<{ corpus_version?: string; slices?: unknown } & Record<string, unknown>>(
+		manifestPath
+	)
 
-	const parquetFiles = manifestFiles(manifest)
-		.filter((s) => s.split === "train" && s.path)
-		.map((s) => localManifestFilePath(s.path!))
+	const parquetFiles = baseManifestFiles(manifest)
+		.filter((file) => file.split === "train" && file.path)
+		.map((file) => localManifestFilePath(file.path))
 
 	const rows: Record<string, number> = {}
 	const streetRows: Record<string, number> = {}
