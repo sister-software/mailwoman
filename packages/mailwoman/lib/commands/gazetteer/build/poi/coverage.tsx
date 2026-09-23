@@ -71,7 +71,7 @@ export const spec = {
 		category: { type: "string", default: DEFAULT_CATEGORY, description: "POI taxonomy category id" },
 		country: { type: "string", description: "ISO country code stamped onto OSM rows" },
 		release: { type: "string", description: "OSM extract vintage, e.g. 260627" },
-		reference: { type: "string", description: "Sealed reference layer. Default $MAILWOMAN_DATA_ROOT/poi/poi.db" },
+		reference: { type: "string", description: "Sealed reference layer. Default $MAILWOMAN_DATA_ROOT/db/poi/poi.db" },
 		resolution: { type: "string", default: DEFAULT_COVERAGE_RESOLUTION, description: "Coverage H3 resolution" },
 		out: { type: "string", description: "Output layer database" },
 	},
@@ -123,8 +123,8 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 			throw new Error(`--resolution must be an H3 resolution in [0, 15], got ${stringifyJSON(options.resolution)}`)
 		}
 
-		const referencePath = options.reference ?? dataRootPath("poi", "poi.db")
-		const out = options.out ?? dataRootPath("poi", `poi-coverage-${options.category}-${slugify(region)}.db`)
+		const referencePath = options.reference ?? dataRootPath("db", "poi", "poi.db")
+		const out = options.out ?? dataRootPath("db", "poi", `poi-coverage-${options.category}-${slugify(region)}.db`)
 		const buildSHA = resolveBuildSHA(String(repoRootPath()))
 
 		// dynamic import, required: @mailwoman/osm is unpublished (ODbL counsel sign-off pending —

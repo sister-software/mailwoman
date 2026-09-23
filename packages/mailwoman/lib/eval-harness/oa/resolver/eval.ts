@@ -59,7 +59,7 @@ export async function oaResolverEval(
 	// Default WOF DBs.
 	const wofPaths = (
 		options.wof ||
-		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
+		`${dataRootPath("db", "wof", "admin-global-priority.db")},${dataRootPath("db", "wof", "postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())

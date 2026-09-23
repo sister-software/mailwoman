@@ -371,8 +371,8 @@ export async function readTriplesFromParentJoin(
 	countries: readonly string[],
 	options: { postcodeDB?: string; adminDB?: string } = {}
 ): Promise<PostcodeTriple[]> {
-	const postcodeDB = options.postcodeDB ?? String(dataRootPath("wof", "postalcode-intl.db"))
-	const adminDB = options.adminDB ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
+	const postcodeDB = options.postcodeDB ?? String(dataRootPath("db", "wof", "postalcode-intl.db"))
+	const adminDB = options.adminDB ?? String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))
 
 	if (!(await pathExists(postcodeDB)) || !(await pathExists(adminDB))) return []
 
@@ -539,7 +539,7 @@ export async function readPairsFromAdmin(
 	countries: readonly string[],
 	options: { adminDB?: string; locale?: (cc: string) => string } = {}
 ): Promise<AdminPair[]> {
-	const adminDB = options.adminDB ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
+	const adminDB = options.adminDB ?? String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))
 
 	if (!(await pathExists(adminDB))) return []
 
@@ -606,7 +606,7 @@ export async function readPairsFromAdmin(
  * so a checkout without it builds the same rows it did before rather than silently emitting none.
  */
 export async function createKnownLocalityCheck(country: string, adminDB?: string): Promise<(name: string) => boolean> {
-	const path = adminDB ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
+	const path = adminDB ?? String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))
 
 	if (!(await pathExists(path))) return () => true
 

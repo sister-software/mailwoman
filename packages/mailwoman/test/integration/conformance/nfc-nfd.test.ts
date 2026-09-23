@@ -46,8 +46,8 @@ async function weightsPresent(): Promise<boolean> {
 }
 
 const gazetteerPresent = async (): Promise<boolean> =>
-	(await pathExists(String(dataRootPath("wof", "admin-global-priority.db")))) &&
-	(await pathExists(String(dataRootPath("wof", "postcode-locality-intl.db"))))
+	(await pathExists(String(dataRootPath("db", "wof", "admin-global-priority.db")))) &&
+	(await pathExists(String(dataRootPath("db", "wof", "postcode-locality-intl.db"))))
 
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 	"canonical-form invariance — live pipeline",

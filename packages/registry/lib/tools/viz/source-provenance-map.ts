@@ -29,7 +29,7 @@ export interface SourceProvenanceMapOptions {
 	/**
 	 * Address-point DB path.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<state>.db`.
+	 * Default `$MAILWOMAN_DATA_ROOT/db/address-points/address-points-us-<state>.db`.
 	 */
 	db?: string
 	/**
@@ -88,7 +88,7 @@ export async function sourceProvenanceMap(
 	report?: (line: string) => void
 ): Promise<{ outHTML: string; points: number }> {
 	const STATE = (options.state || "ny").toLowerCase()
-	const DB = options.db || String(dataRootPath("address-points", `address-points-us-${STATE}.db`))
+	const DB = options.db || String(dataRootPath("db", "address-points", `address-points-us-${STATE}.db`))
 	const OUT = options.outHTML || tempRootPath("source-provenance.html")
 	const NAD_MOD = options.nadMod ?? 700 // keep ~1/700 of NAD points
 	const OA_MOD = options.oaMod ?? 120 // keep ~1/120 of OpenAddresses points

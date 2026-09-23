@@ -86,7 +86,7 @@ for (const c of cases) {
  * A missing artifact leaves the column unmeasured rather than zero.
  * A zero would read as "this country has no places", which is a finding and not what a missing file says.
  */
-const gazetteerPath = String(args.gazetteer ?? dataRootPath("wof", "admin-global-priority.db"))
+const gazetteerPath = String(args.gazetteer ?? dataRootPath("db", "wof", "admin-global-priority.db"))
 
 if (await pathExists(gazetteerPath)) {
 	using db = new DatabaseClient<WOFDatabase>(gazetteerPath, { readOnly: true })

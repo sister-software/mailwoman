@@ -23,10 +23,10 @@ export const spec = {
 	description: "Build curated per-locale decode-bias FST gazetteers.",
 	options: {
 		locales: { type: "string", description: "Comma-separated locales (default: all shipped FST locales)" },
-		db: { type: "string", description: "WOF admin DB (default: $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)" },
+		db: { type: "string", description: "WOF admin DB (default: $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db)" },
 		out: {
 			type: "string",
-			description: "Output dir (default: $MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated)",
+			description: "Output dir (default: $MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale-curated)",
 			deprecatedName: "output",
 		},
 		uncurated: { type: "boolean", default: false, description: "A/B control build: same DB, no curation" },

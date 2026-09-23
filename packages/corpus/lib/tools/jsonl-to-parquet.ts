@@ -29,6 +29,7 @@
  *   /tmp/part-po-box.parquet
  */
 
+import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -144,7 +145,7 @@ export async function jsonlToParquet(
 	// so a re-serialized JSONSpliterator row would defeat the point.
 	// Crlf is handled by the existing `rawLine.trim()` (strips a trailing \r),
 	// same as readline's crlfDelay:Infinity did.
-	for await (const rawLine of TextSpliterator.fromAsync(options.input)) {
+	for await (const rawLine of TextSpliterator.fromAsync(delimitedSource(options.input))) {
 		lineNo++
 		const line = rawLine.trim()
 

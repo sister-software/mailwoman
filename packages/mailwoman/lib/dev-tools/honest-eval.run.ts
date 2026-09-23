@@ -52,7 +52,7 @@ async function main() {
 	let MODEL = "packages/neural-weights-en-us/model.onnx"
 	let CARD = "packages/neural-weights-en-us/model-card.json"
 	let TOK = "packages/neural-weights-en-us/tokenizer.model"
-	const WOF_DEFAULT = `${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
+	const WOF_DEFAULT = `${dataRootPath("db", "wof", "admin-global-priority.db")},${dataRootPath("db", "wof", "postcode-locality-intl.db")}`
 	let WOF = WOF_DEFAULT
 	let LABEL = "run"
 	let OUT = ""

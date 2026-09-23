@@ -16,7 +16,7 @@
  *   nsul is published on the ONS Open Geography portal as an ArcGIS Hub "CSV Collection" item — a zip
  *   holding one CSV per nsul region (eleven for Great Britain) plus the user guide and code lists.
  *   There is no download step here: the item is acquired by hand into a vintage-dated
- *   `$MAILWOMAN_DATA_ROOT/nsul/<yyyy-MM>/` directory holding the zip, its `.md5` sidecar and the
+ *   `$MAILWOMAN_DATA_ROOT/db/nsul/<yyyy-MM>/` directory holding the zip, its `.md5` sidecar and the
  *   portal's `item.json` record, and the builder reads provenance from those three files. A missing
  *   sidecar is recorded in words (the Code-Point discipline), never as an empty string.
  *
@@ -402,7 +402,7 @@ export async function openNSULArchive(sourceDir: string): Promise<{
  *
  * Vintage directories are `yyyy-MM`, so lexical order is chronological order.
  */
-export async function resolveLatestNSULSourceDir(root = String(dataRootPath("nsul"))): Promise<string> {
+export async function resolveLatestNSULSourceDir(root = String(dataRootPath("db", "nsul"))): Promise<string> {
 	const candidates = await Globerator.from("*", {
 		cwd: root,
 		absolute: false,
@@ -750,8 +750,8 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const started = Date.now()
 	const now = options.now ?? new Date()
 	const sourceDir = options.sourceDir ? resolvePath(options.sourceDir) : await resolveLatestNSULSourceDir()
-	const out = options.out ?? String(dataRootPath("nsul", "nsul.db"))
-	const uprnDatabasePath = options.uprnDatabasePath ?? String(dataRootPath("uprn", "uprn.db"))
+	const out = options.out ?? String(dataRootPath("db", "nsul", "nsul.db"))
+	const uprnDatabasePath = options.uprnDatabasePath ?? String(dataRootPath("db", "uprn", "uprn.db"))
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? NSUL_MINIMUM_PLAUSIBLE_ROWS
 
 	// Acquire and verify the archive against its sidecar, recording a missing sidecar explicitly.

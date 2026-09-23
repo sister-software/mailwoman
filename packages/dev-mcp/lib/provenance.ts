@@ -130,10 +130,10 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	const { resolveWOFHotDB } = await import("mailwoman/eval-harness/wof-hot-db")
 
 	const standard: Array<readonly [string, string]> = [
-		["admin", String(dataRootPath("wof", "admin-global-priority.db"))],
-		["candidate", String(dataRootPath("wof", "candidate.db"))],
-		["importance", String(dataRootPath("wof", "admin-global-priority-importance.db"))],
-		["poi", String(dataRootPath("poi", "poi.db"))],
+		["admin", String(dataRootPath("db", "wof", "admin-global-priority.db"))],
+		["candidate", String(dataRootPath("db", "wof", "candidate.db"))],
+		["importance", String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))],
+		["poi", String(dataRootPath("db", "poi", "poi.db"))],
 		["wof-hot", resolveWOFHotDB()],
 	]
 
@@ -142,7 +142,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 		...(await Promise.all((options.extra ?? []).map(async (path) => artifactState("extra", path)))),
 	]
 
-	const reposStampPath = String(dataRootPath("wof", "repos-vintage.json"))
+	const reposStampPath = String(dataRootPath("db", "wof", "repos-vintage.json"))
 	let repos: RepoVintage[] | null = null
 	let reposStampAge: string | null = null
 

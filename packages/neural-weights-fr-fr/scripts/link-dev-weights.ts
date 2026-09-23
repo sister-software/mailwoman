@@ -55,7 +55,7 @@ await materializeDevOverlay({
 	model: { kind: "inherit" },
 	softFeed: [softFeed.anchor, softFeed.country],
 	evidenceLexiconsFromCard: true,
-	postcodeBinary: { country: "fr", database: String(dataRootPath("wof", "postalcode-intl.db")) },
+	postcodeBinary: { country: "fr", database: String(dataRootPath("db", "wof", "postalcode-intl.db")) },
 	pairIndex: {
 		country: "fr",
 		delta: PAIR_INDEX_DELTA,

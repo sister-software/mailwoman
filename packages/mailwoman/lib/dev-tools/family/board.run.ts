@@ -33,7 +33,7 @@ const { values } = parseArguments({
 	},
 })
 
-const ADMIN_DB = values["admin-db"] ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
+const ADMIN_DB = values["admin-db"] ?? String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))
 const SOURCE = `family-board:${isoDate()}`
 const ADDED_AT = isoDate()
 

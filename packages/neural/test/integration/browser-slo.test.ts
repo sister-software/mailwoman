@@ -299,7 +299,7 @@ const haveBrowser = (await tryChromiumExecutable()) !== null
 const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
 
 const SQLJS_ENTRY_FILE = await tryResolveFile("sql.js-httpvfs/dist/index.js")
-const CANDIDATE_DB_PATH = String(dataRootPath("wof", "candidate.db"))
+const CANDIDATE_DB_PATH = String(dataRootPath("db", "wof", "candidate.db"))
 
 const haveGazetteer = SQLJS_ENTRY_FILE !== null && (await pathExists(CANDIDATE_DB_PATH))
 const canRun = haveModel && haveBrowser && ORT_DIST_LOCATOR !== null

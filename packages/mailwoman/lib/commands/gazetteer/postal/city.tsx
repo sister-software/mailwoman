@@ -46,8 +46,8 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 
 		const candidateDB = options.candidateDB
 
-		const aliasDB = options.aliasDB ?? dataRootPath("wof", "postal-city-alias-us.db")
-		const postcodeLocalityDB = options.postcodeLocalityDB ?? dataRootPath("wof", "postcode-locality-us.db")
+		const aliasDB = options.aliasDB ?? dataRootPath("db", "wof", "postal-city-alias-us.db")
+		const postcodeLocalityDB = options.postcodeLocalityDB ?? dataRootPath("db", "wof", "postcode-locality-us.db")
 
 		const { createPostalCityCandidateTable, POSTAL_CITY_CANDIDATE_COLUMNS, POSTAL_CITY_CANDIDATE_TABLE } =
 			await import("@mailwoman/resolver-wof-sqlite")

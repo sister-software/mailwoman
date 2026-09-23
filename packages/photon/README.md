@@ -8,7 +8,7 @@ MAILWOMAN_DATA_ROOT="${MAILWOMAN_DATA_ROOT:-/tmp/mailwoman-data}" npx mailwoman 
 
 MAILWOMAN_DATA_ROOT="${MAILWOMAN_DATA_ROOT:-/tmp/mailwoman-data}" \
   npx @mailwoman/photon serve --port 2322
-# The pulled candidate.db is auto-detected at $MAILWOMAN_DATA_ROOT/wof/candidate.db — no export needed.
+# The pulled candidate.db is auto-detected at $MAILWOMAN_DATA_ROOT/db/wof/candidate.db — no export needed.
 # Or point at your own data: --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB
 ```
 

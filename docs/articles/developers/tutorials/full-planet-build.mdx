@@ -128,9 +128,9 @@ core, and it is why France is the one non-US country with a published rooftop da
 Take three départements rather than the whole country, so the step finishes while you watch:
 
 ```bash
-mkdir -p "$MAILWOMAN_DATA_ROOT/ban/sources"
+mkdir -p "$MAILWOMAN_DATA_ROOT/db/ban/sources"
 for d in 48 2A 05; do
-  curl -sL -o "$MAILWOMAN_DATA_ROOT/ban/sources/adresses-$d.csv.gz" \
+  curl -sL -o "$MAILWOMAN_DATA_ROOT/db/ban/sources/adresses-$d.csv.gz" \
     "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-$d.csv.gz"
 done
 ```
@@ -139,8 +139,8 @@ done
 
 ```bash
 node node_modules/@mailwoman/ban/out/scripts/build/address-point-database.js \
-  --csv-dir "$MAILWOMAN_DATA_ROOT/ban/sources" --depts 48,2A,05 \
-  --release 2026-08-03 --out "$MAILWOMAN_DATA_ROOT/ban/address-points-fr-sample.db"
+  --csv-dir "$MAILWOMAN_DATA_ROOT/db/ban/sources" --depts 48,2A,05 \
+  --release 2026-08-03 --out "$MAILWOMAN_DATA_ROOT/db/ban/address-points-fr-sample.db"
 ```
 
 ```
@@ -213,13 +213,13 @@ which is why the list grows one considered country at a time.
 Pull an extract and build. The Corsica extract is 34 MB, small enough to finish in seconds:
 
 ```bash
-mkdir -p "$MAILWOMAN_DATA_ROOT/osm/geofabrik"
-curl -sL -o "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf" \
+mkdir -p "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik"
+curl -sL -o "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf" \
   "https://download.geofabrik.de/europe/france/corse-latest.osm.pbf"
 
 node osm/out/scripts/build-rooftop-extract.js \
   --country fr --slug corse --release 260803 \
-  --pbf "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf"
+  --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf"
 ```
 
 ```
@@ -241,7 +241,7 @@ attaches each orphan to the nearest named highway within 30 m.
 ```bash
 node osm/out/scripts/build-rooftop-extract.js \
   --country fr --slug corse --release 260803 --recover \
-  --pbf "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf"
+  --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf"
 ```
 
 ```
@@ -267,7 +267,7 @@ points the geocoder at an explicit file instead of the per-state US convention:
 
 ```bash
 npx mailwoman geocode "12 Cours Napoléon, 20000 Ajaccio" --default-country FR \
-  --address-points-db "$MAILWOMAN_DATA_ROOT/ban/address-points-fr-sample.db" --format text
+  --address-points-db "$MAILWOMAN_DATA_ROOT/db/ban/address-points-fr-sample.db" --format text
 ```
 
 ```
@@ -283,7 +283,7 @@ hierarchy:
 
 ```bash
 npx mailwoman geocode "12 Cours Napoléon, 20000 Ajaccio" --default-country FR \
-  --address-points-db "$MAILWOMAN_DATA_ROOT/osm/address-points-fr-corse.db" --format text
+  --address-points-db "$MAILWOMAN_DATA_ROOT/db/osm/address-points-fr-corse.db" --format text
 ```
 
 ```

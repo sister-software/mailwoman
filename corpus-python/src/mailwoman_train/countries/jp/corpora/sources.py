@@ -21,7 +21,7 @@ from ..text import JP_PREFECTURES, normalize_name, normalize_number
 #: root at import would raise for a caller who passes the flag and never needs it.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-jp.parquet")
 KENALL_PARTS = ("KEN_ALL_ROME", "KEN_ALL_ROME.CSV")
-ADMIN_DB_PARTS = ("wof", "admin-global-priority.db")
+ADMIN_DB_PARTS = ("db", "wof", "admin-global-priority.db")
 
 _KENALL_PAREN = re.compile(r"[（(].*?[）)]")
 _KENALL_CATCH_ALL = "以下に掲載がない場合"

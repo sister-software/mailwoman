@@ -57,7 +57,7 @@ export async function buildCZDistrictsDatabase(
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 	const sourcePath = opts.sourcePath ?? String(dataRootPath("geonames", "CZ.txt"))
-	const outPath = opts.out ?? String(dataRootPath("wof", "localities-cz-districts.db"))
+	const outPath = opts.out ?? String(dataRootPath("db", "wof", "localities-cz-districts.db"))
 	const tmpPath = `${outPath}.tmp`
 
 	const raw = await readLocalTextFile(sourcePath)

@@ -188,7 +188,7 @@ export function createSoilDataAccessClient(options: CreateSoilDataAccessClientOp
 		caching: {
 			ttl: SDA_CACHE_TTL_MS,
 			storage: buildDiskStorage({
-				directory: (options.cacheDirectory ?? dataRootPath("soil", "cache", "http")).toString(),
+				directory: (options.cacheDirectory ?? dataRootPath("db", "soil", "cache", "http")).toString(),
 			}),
 		},
 	})

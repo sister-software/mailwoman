@@ -138,8 +138,8 @@ const STREET_TAGS = ["street_prefix", "street", "street_prefix_particle", "stree
 /**
  * WOF databases the receipt harness resolved against (`admin-global-priority.db` + `postcode-locality-intl.db`).
  */
-const ADMIN_DB = dataRootPath("wof", "admin-global-priority.db")
-const POSTCODE_DB = dataRootPath("wof", "postcode-locality-intl.db")
+const ADMIN_DB = dataRootPath("db", "wof", "admin-global-priority.db")
+const POSTCODE_DB = dataRootPath("db", "wof", "postcode-locality-intl.db")
 
 const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 

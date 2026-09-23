@@ -12,7 +12,7 @@
  *   Resolution order for the DB path:
  *
  *   1. `MAILWOMAN_WOF_DB` env var (explicit operator override).
- *   2. `$MAILWOMAN_DATA_ROOT/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location
+ *   2. `$MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location
  *        documented in the readme + handover doc).
  *
  *   Assumes the `place_search` FTS5 table is already built (run `mailwoman gazetteer build fts` ahead of
@@ -25,7 +25,7 @@ import { $public } from "@mailwoman/resolver-wof-sqlite/env"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
+const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 

@@ -47,6 +47,7 @@
  *   self-contained.
  */
 
+import { delimitedSource, preferCompressed } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
@@ -631,5 +632,11 @@ async function* streamJSONL<T>(path: string): AsyncIterable<T> {
 	// JSONSpliterator yields already-parsed rows (skipEmpty is on by default, so blank
 	// lines are dropped at the row level) and throws SyntaxError on a malformed row.
 	// Same fail-loud behavior as the prior readline + bare `JSON.parse`.
-	yield* JSONSpliterator.fromAsync<T>(path)
+	//
+	// Callers name the plain `.jsonl`.
+	// `preferCompressed` answers with the `.zst` sibling when that is what is on disk,
+	// and `delimitedSource` then reads it through a decompressing pipe — so a corpus converted in place
+	// reads exactly like one that was not, and a half-converted one reads correctly either way.
+	// Both are called inline, because each yields a source that may only be consumed once.
+	yield* JSONSpliterator.fromAsync<T>(delimitedSource(await preferCompressed(path)))
 }

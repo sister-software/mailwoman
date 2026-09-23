@@ -815,7 +815,7 @@ export const subVenueRecipe: CorpusRecipe = {
 		},
 		{
 			flag: "--poi-db <path>",
-			description: "poi.db for the en-US / fr-FR pools (default: $MAILWOMAN_DATA_ROOT/poi/poi.db)",
+			description: "poi.db for the en-US / fr-FR pools (default: $MAILWOMAN_DATA_ROOT/db/poi/poi.db)",
 		},
 		{ flag: "--sub-venue-tuples <path>", description: "GB/US/FR address-context tuples JSONL" },
 		{
@@ -828,7 +828,7 @@ export const subVenueRecipe: CorpusRecipe = {
 		const count = opts.count
 		const negativeFraction = opts.negativeFraction ?? DEFAULT_NEGATIVE_FRACTION
 		const extractsDir = opts.extractsDir ?? dataRootPath("sub-venue", "extracts")
-		const poiDB = opts.poiDB ?? dataRootPath("poi", "poi.db")
+		const poiDB = opts.poiDB ?? dataRootPath("db", "poi", "poi.db")
 		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v3.jsonl")
 		const lexicon: SubVenueLexiconTable = await readSubVenueLexicon(opts.lexicon ?? defaultLexiconPath())
 

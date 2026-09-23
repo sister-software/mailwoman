@@ -98,7 +98,7 @@ export interface AbsenceProbeOptions extends POIBoardOptions {
 	/**
 	 * The sealed coverage layer whose cells qualify the absence.
 	 *
-	 * Absent resolves the definition's own `coverageLayerFile` under `$MAILWOMAN_DATA_ROOT/poi/`.
+	 * Absent resolves the definition's own `coverageLayerFile` under `$MAILWOMAN_DATA_ROOT/db/poi/`.
 	 */
 	coverageDatabasePath?: string
 	/**
@@ -120,7 +120,8 @@ export interface AbsenceProbeOptions extends POIBoardOptions {
 export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = {}): Promise<AbsenceProbeReceipt> {
 	const definition = await loadAbsenceProbeDefinition(options.definitionPath, options.freezePath)
 
-	const coverageDatabasePath = options.coverageDatabasePath ?? String(dataRootPath("poi", definition.coverageLayerFile))
+	const coverageDatabasePath =
+		options.coverageDatabasePath ?? String(dataRootPath("db", "poi", definition.coverageLayerFile))
 
 	const needsSemanticRoute = definition.rows.some((row) => row.requiresSemanticRoute)
 	const semanticRoute = needsSemanticRoute ? await createSemanticObservationRoute() : undefined

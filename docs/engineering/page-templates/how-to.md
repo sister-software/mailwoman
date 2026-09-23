@@ -46,7 +46,7 @@ line rather than the fourth step.
 <!-- illustrative -->
 
 ```bash
-npx @mailwoman/nominatim serve --port 8080 --candidate-db "$MAILWOMAN_DATA_ROOT/wof/candidates.db"
+npx @mailwoman/nominatim serve --port 8080 --candidate-db "$MAILWOMAN_DATA_ROOT/db/wof/candidates.db"
 ```
 
 <!-- illustrative -->

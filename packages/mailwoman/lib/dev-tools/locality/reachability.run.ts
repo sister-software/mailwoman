@@ -50,7 +50,7 @@ const { values } = parseArguments({
 	options: {
 		"out-json": { type: "string" },
 		"weights-cache": { type: "string" },
-		"candidate-db": { type: "string", default: String(dataRootPath("wof", "candidate.db")) },
+		"candidate-db": { type: "string", default: String(dataRootPath("db", "wof", "candidate.db")) },
 		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
 		// The country a panel row belongs to, when the panel does not carry one per row.
 		// It selects the codex layout the row is written through, so it is a rendering

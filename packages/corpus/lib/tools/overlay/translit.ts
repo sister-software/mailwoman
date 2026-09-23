@@ -29,6 +29,7 @@
  */
 
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
@@ -151,7 +152,7 @@ export async function buildTranslitOverlay(
 	const quarantine: string[] = []
 	let totalIn = 0
 
-	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(options.jsonl)) {
+	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(delimitedSource(options.jsonl))) {
 		totalIn++
 		const canon = toCanonicalRow(raw, corpusVersion)
 		const result = alignRow(canon)

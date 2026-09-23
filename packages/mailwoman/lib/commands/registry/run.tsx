@@ -216,7 +216,7 @@ export interface EvalGeocoderFlags {
 	/**
 	 * WOF admin SQLite path.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`.
+	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`.
 	 */
 	wof?: string
 	/**
@@ -263,7 +263,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 			import("#geocode/regions"),
 		])
 
-		const wof = flags.wof || String(dataRootPath("wof", "admin-global-priority.db"))
+		const wof = flags.wof || String(dataRootPath("db", "wof", "admin-global-priority.db"))
 		const dataRoot = flags.dataRoot || mailwomanDataRoot()
 
 		const classifier = await NeuralAddressClassifier.loadFromWeights({

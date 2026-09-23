@@ -193,7 +193,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
 	const sourceDir = (options.sourceDir ?? dataRootPath("osm-ni-postcodes", stamp)).toString()
-	const out = (options.out ?? dataRootPath("wof", `postalcode-ni-osm-${stamp}.db`)).toString()
+	const out = (options.out ?? dataRootPath("db", "wof", `postalcode-ni-osm-${stamp}.db`)).toString()
 	const responsePath = join(sourceDir, "response.json")
 
 	// Acquire the source.

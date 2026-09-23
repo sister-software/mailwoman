@@ -55,7 +55,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
-		const out = options.out ?? dataRootPath("wof", "postal-city-alias-us.db")
+		const out = options.out ?? dataRootPath("db", "wof", "postal-city-alias-us.db")
 		const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")
 		const minCount = options.minCount
 

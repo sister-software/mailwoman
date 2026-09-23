@@ -145,7 +145,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 			geodatabasePath = await downloadCoastalGeodatabase({
 				url,
 				revisionDate: sourceVintage,
-				cacheRoot: dataRootPath("coastal", "cache").toString(),
+				cacheRoot: dataRootPath("db", "coastal", "cache").toString(),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}
@@ -169,7 +169,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? dataRootPath("coastal", "coastal-england.db").toString()
+		const out = options.out ?? dataRootPath("db", "coastal", "coastal-england.db").toString()
 		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
 		// The declared count comes from the source's own per-layer totals, so a short

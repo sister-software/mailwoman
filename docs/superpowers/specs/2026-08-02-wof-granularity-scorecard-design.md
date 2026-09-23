@@ -61,7 +61,7 @@ coverage are independent axes, and the scorecard must not conflate them.
 **The 11 are exactly the countries whose WOF repo the build clones.**
 `DEFAULT_WOF_PRIORITY_COUNTRIES` (`gazetteer-pipeline/defaults.ts:20`) is CN, DE, ES, FR, GB, IT,
 JP, KR, NL, TW, US — the same eleven, in the same set. Verified against
-`$MAILWOMAN_DATA_ROOT/wof/repos`, which holds those repos and no others.
+`$MAILWOMAN_DATA_ROOT/src/wof-repos`, which holds those repos and no others.
 
 **WOF publishes 260 per-country admin repos.** The recipe ingests 11. Everything else arrives via
 Overture divisions — whose `OVERTURE_DIVISION_SUBTYPES` carries no hood-level subtype — or the
@@ -324,7 +324,7 @@ report's `source` column. Attribution (3) requires counting placetypes on disk i
 discovery and a per-(country, placetype) tally, which means parsing `wof:placetype` out of each
 feature — the repos carry no `meta/` CSV shortcut.
 
-**Open question 1 is resolved.** The repos are at `$MAILWOMAN_DATA_ROOT/wof/repos` (the default the
+**Open question 1 is resolved.** The repos are at `$MAILWOMAN_DATA_ROOT/src/wof-repos` (the default the
 `gazetteer build admin --data` flag documents), holding the eleven priority admin repos plus eight
 `whosonfirst-data-postalcode-*`. The design-stage claim that they were missing was a truncated
 directory listing rather than a fact.
@@ -460,7 +460,7 @@ ships with the source-gap leg reporting "unknown" rather than blocking.
 ## Open questions for the plan stage
 
 1. ~~Where are the cloned `whosonfirst-data*` repos?~~ **Resolved 2026-08-02:**
-   `$MAILWOMAN_DATA_ROOT/wof/repos`, holding the eleven priority admin repos. The source-gap leg is
+   `$MAILWOMAN_DATA_ROOT/src/wof-repos`, holding the eleven priority admin repos. The source-gap leg is
    unblocked for those eleven; for the other 249 it needs the repo cloned first, which is now its own
    piece of work (see the new open question 4).
 2. Whether the venue sub-structure rungs collapse into one `venue` row for v1. `poi.db` answers venue

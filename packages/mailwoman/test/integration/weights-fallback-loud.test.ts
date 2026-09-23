@@ -205,7 +205,7 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 // Runs only where a WOF DB is on disk.
 // Proves the warning + degraded output + exit 0 combination the audit's test
 // (1) calls for on the full --resolve path.
-const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
+const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 

@@ -54,7 +54,7 @@ export const BRAND_TABLE_VERSION = "0.2.0"
  * Same default `build/poi.tsx`'s command uses for its `--out`.
  */
 export function defaultPOIDatabasePath(): PathBuilder {
-	return dataRootPath("poi", "poi.db")
+	return dataRootPath("db", "poi", "poi.db")
 }
 
 /**

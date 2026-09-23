@@ -57,7 +57,7 @@ const SitusAttributionManifest: CommandComponent<typeof spec> = ({ options }) =>
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
-		const outDir = options.outDir ?? dataRootPath("address-points")
+		const outDir = options.outDir ?? dataRootPath("db", "address-points")
 
 		// Canonical per-state databases only: address-points-us-<2-letter-slug>.db.
 		// Excludes county-scoped dev artifacts (e.g. Address-points-us-il-cook.db) that

@@ -10,7 +10,7 @@ import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { FSTMatcher, BuildFSTResult, FSTProvenance } from "@mailwoman/resolver-wof-sqlite/fst"
 import { beforeAll, describe, expect, it } from "vitest"
 
-const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
+const WOF_DB = dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db")
 const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
@@ -97,7 +97,7 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 // The curation block runs against the canonical admin DB
 // (the artifact the shipped per-locale FSTs are actually built from).
 // The per-repo DB above is a legacy fixture absent on newer hosts.
-const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
+const ADMIN_DB = String(dataRootPath("db", "wof", "admin-global-priority.db"))
 const HAS_ADMIN = await pathExists(ADMIN_DB)
 
 describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", () => {

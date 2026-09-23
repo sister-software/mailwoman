@@ -333,7 +333,7 @@ The reader rides the geocode path only, after the resolver has produced a coordi
 `mailwoman/observations`' `createCoastalErosionRoute` turns one reading into an additive
 `authority_designation` marker with `mechanism: layer:coastal_erosion` — the third rule under the
 `layer` family. **Default off, and the switch is the presence of
-`$MAILWOMAN_DATA_ROOT/coastal/coastal-england.db`** rather than a boolean; no layer file, no route,
+`$MAILWOMAN_DATA_ROOT/db/coastal/coastal-england.db`** rather than a boolean; no layer file, no route,
 and the geocode result is byte-identical to a build without the field.
 
 The artifact is named for its **extent** rather than for its subject, because the alternatives are not

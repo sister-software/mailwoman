@@ -21,7 +21,7 @@
  *   rides the artifact trailer via `serializeFST`, readable back with `readFSTProvenance` /
  *   `readFSTProvenanceWeb`.
  *
- *   Output defaults to `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin` — staged beside the
+ *   Output defaults to `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin` — staged beside the
  *   per-locale FST dir (`fst-per-locale/`), never inside it. Sealed-artifact discipline: write to a
  *   staging sibling, rename into place (a previously-sealed 0444 file can't be overwritten
  *   in-place), then seal read-only.
@@ -49,7 +49,7 @@ export interface BuildStreetMorphologyArtifactOpts {
 	 */
 	minVariantLength?: number
 	/**
-	 * Output path (default: `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`).
+	 * Output path (default: `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`).
 	 */
 	output?: string
 	onProgress?: (line: string) => void
@@ -73,7 +73,7 @@ export async function buildStreetMorphologyArtifact(
 ): Promise<BuiltStreetMorphologyArtifact> {
 	const progress = opts.onProgress ?? (() => {})
 	const dictionariesDir = opts.dictionariesDir ?? resourceDictionaryPath("libpostal")
-	const outPath = resolvePath(opts.output ?? String(dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)))
+	const outPath = resolvePath(opts.output ?? String(dataRootPath("db", "wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)))
 
 	progress(`building street-morphology FST from ${dictionariesDir}`)
 

@@ -25,7 +25,7 @@ export const spec = {
 			type: "string",
 			description: "Comma-separated child placetypes (default locality,localadmin,neighbourhood)",
 		},
-		db: { type: "string", description: "WOF admin DB (default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)" },
+		db: { type: "string", description: "WOF admin DB (default $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db)" },
 		out: {
 			type: "string",
 			description: "Output path (default $MAILWOMAN_DATA_ROOT/gazetteer/…-v5.json)",

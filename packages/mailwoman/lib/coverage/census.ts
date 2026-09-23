@@ -711,7 +711,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 
 	const admitted = await readAdmittedCountries(options.configPath)
 	const board = await readBoardCoverage(options.casesRoot)
-	const gazetteerPath = options.gazetteerPath ?? String(dataRootPath("wof", "candidate.db"))
+	const gazetteerPath = options.gazetteerPath ?? String(dataRootPath("db", "wof", "candidate.db"))
 	const gazetteer = await readGazetteerCoverage(gazetteerPath)
 	// derived from `release.config.json` rather than restated here.
 	// This was a hand-written eleven-entry table, and `repo-health`'s `locale-tables`

@@ -6,7 +6,7 @@
  *   `mailwoman gazetteer build street-morphology` — the sealed street-morphology FST artifact
  *   (`fst-street-morphology.bin`), the #1315 street-context check's signal source serialized once at
  *   build time instead of rebuilt from the libpostal dictionaries per process (and never in the
- *   browser). Lands at `$MAILWOMAN_DATA_ROOT/wof/` by default — beside, never inside, the
+ *   browser). Lands at `$MAILWOMAN_DATA_ROOT/db/wof/` by default — beside, never inside, the
  *   per-locale FST dir. See `mailwoman/gazetteer-pipeline/street-morphology.ts` for the rationale.
  */
 
@@ -32,7 +32,7 @@ export const spec = {
 		out: {
 			type: "string",
 			deprecatedName: "output",
-			description: "Output path (default: $MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin)",
+			description: "Output path (default: $MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin)",
 		},
 	},
 } as const satisfies CommandSpec

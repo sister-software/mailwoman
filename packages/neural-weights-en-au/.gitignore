@@ -23,7 +23,7 @@
 /pair-index-*.bin
 
 # The locale-general street-morphology FST (static-index candidate 1, 2026-07-26) — dev
-# symlink from $MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, real binary staged at
+# symlink from $MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin, real binary staged at
 # publish time. (en-nz ships no per-locale fst-*.bin, hence the narrower pattern here.)
 /fst-street-morphology.bin
 

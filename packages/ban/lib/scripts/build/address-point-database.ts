@@ -83,7 +83,7 @@ async function parse(): Promise<BuildArgs> {
 
 	if (!(await pathExists(csvDir))) throw new Error(`BAN CSV dir not found: ${csvDir}`)
 	const release = values.release ?? "2026-05-18"
-	const output = resolvePath(values.out ?? dataRootPath("ban", `address-points-${country}.db`))
+	const output = resolvePath(values.out ?? dataRootPath("db", "ban", `address-points-${country}.db`))
 
 	const depts = values.depts ? extractDelimited(values.depts) : null
 
@@ -229,7 +229,7 @@ async function main(): Promise<void> {
 	// Only for a full national build (the fast --depts validation builds are transient
 	// and don't rewrite the record).
 	if (!args.depts) {
-		const attributionPath = dataRootPath("ban", "ATTRIBUTION.json")
+		const attributionPath = dataRootPath("db", "ban", "ATTRIBUTION.json")
 
 		await writeLocalTextFile(
 			prettyJSON({

@@ -718,7 +718,7 @@
 		"$comment": "Hierarchy campaign R5 (2026-08-01). The US instance of the placetype-pair prior — the first non-postal-register one.",
 		"pair_index_us_bin": {
 			"format": "PIX1 placetype-pair index — a retrieval-augmented (child, parent) dependent_locality prior, e.g. (\"Park Slope\", \"Brooklyn\")",
-			"source": "Who's On First admin hierarchy ($MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db). NO postal register: USPS routes city/state/ZIP, so unlike GB's PPD there is no mail source carrying US dependent localities. Children: borough + neighbourhood. Parents: locality, localadmin AND borough — WOF parents US neighbourhoods to the locality (\"Astoria\" hangs off New York, not Queens), so a locality-only parent rule drops the borough-level pairs this instance exists for.",
+			"source": "Who's On First admin hierarchy ($MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db). NO postal register: USPS routes city/state/ZIP, so unlike GB's PPD there is no mail source carrying US dependent localities. Children: borough + neighbourhood. Parents: locality, localadmin AND borough — WOF parents US neighbourhoods to the locality (\"Astoria\" hangs off New York, not Queens), so a locality-only parent rule drops the borough-level pairs this instance exists for.",
 			"pairs": 47878,
 			"bytes": 1341264,
 			"md5": "31e7cd899dab5af0b8d7ec03fe5cb548",

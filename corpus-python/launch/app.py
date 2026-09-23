@@ -92,6 +92,11 @@ training_image = (
         "pyarrow>=15",
         "pyyaml>=6",
         "numpy>=1.26,<3",
+        # The corpus is stored zstd-compressed at rest, so the loader imports this to read it.
+        # Floored rather than pinned: it decodes a format, it does not decide a token id or a
+        # graph, and a corpus part file written by one version reads back identically under any
+        # other. The stdlib gains `compression.zstd` in 3.14, which would retire this.
+        "zstandard>=0.23",
         "datasets>=2.19",
         "tqdm>=4.66",
         # `mailwoman_train.env` reads it for the platform data root, and `paths.py` imports env at

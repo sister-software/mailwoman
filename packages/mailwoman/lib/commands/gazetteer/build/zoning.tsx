@@ -149,7 +149,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			exportPath = await downloadZoningExport({
 				url: await client.readExportURL(),
 				vintage,
-				cacheRoot: dataRootPath("zoning", "cache").toString(),
+				cacheRoot: dataRootPath("db", "zoning", "cache").toString(),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}
@@ -181,7 +181,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		const sourceVintage = vintage
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? dataRootPath("zoning", "zoning-ireland.db").toString()
+		const out = options.out ?? dataRootPath("db", "zoning", "zoning-ireland.db").toString()
 		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
 		// A narrowed run reads a subset on purpose, so its declared count is the subset's own

@@ -107,10 +107,10 @@ path. Noted rather than chased.
 
 ## Artifacts
 
-- `$MAILWOMAN_DATA_ROOT/wof/postcode-locality-tw.db` (new, 1,087 rows, provenance in meta)
-- `$MAILWOMAN_DATA_ROOT/wof/dbs-per-country/admin-tw.db` (new, 18,597 places, built from
+- `$MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-tw.db` (new, 1,087 rows, provenance in meta)
+- `$MAILWOMAN_DATA_ROOT/db/wof/dbs-per-country/admin-tw.db` (new, 18,597 places, built from
   whosonfirst-data-admin-tw via `build-unified-wof.ts`, beside the KR/JP siblings)
-- `$MAILWOMAN_DATA_ROOT/wof/conventions.db` (new — first compiled convention asset, 1 row)
+- `$MAILWOMAN_DATA_ROOT/db/wof/conventions.db` (new — first compiled convention asset, 1 row)
 - `$MAILWOMAN_DATA_ROOT/overture/2026-06-17.0/addresses-{tw,jp}.parquet` + `divisions-tw-admin.jsonl`
   (release-pinned; fill-rates report regenerated with all 22 countries)
 - `$MAILWOMAN_DATA_ROOT/tw-postal/district-centroids.xml` (Chunghwa Post source file)

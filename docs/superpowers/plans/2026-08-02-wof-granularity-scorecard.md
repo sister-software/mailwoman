@@ -1068,7 +1068,7 @@ function row(
 }
 
 const META = {
-	sourcePath: "$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db",
+	sourcePath: "$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db",
 	sourceMD5: "d41d8cd98f00b204e9800998ecf8427e",
 	buildDate: "2026-08-02T00:00:00.000Z",
 	floor: 0.05,
@@ -1326,7 +1326,10 @@ const OptionsSchema = zod.object({
 		.string()
 		.default("docs/articles/evals/coverage/gazetteer-depth-scorecard.md")
 		.describe("Output path for the markdown scorecard"),
-	source: zod.string().optional().describe("WOF admin DB. Default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db"),
+	source: zod
+		.string()
+		.optional()
+		.describe("WOF admin DB. Default $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db"),
 	floor: zod
 		.number()
 		.default(DEFAULT_COVERAGE_FLOOR)
@@ -1349,7 +1352,7 @@ const GazetteerGranularity: CommandComponent<typeof OptionsSchema> = ({ options 
 
 		const markdown = renderGranularityReport(rows, {
 			// Display the portable form; never bake the resolved lab path into a committed artifact.
-			sourcePath: "$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db",
+			sourcePath: "$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db",
 			sourceMD5: await md5File(sourcePath),
 			buildDate: new Date().toISOString(),
 			floor: options.floor,

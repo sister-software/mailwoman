@@ -43,9 +43,9 @@ const { values } = parseArguments({ options: { out: { type: "string" } } })
 const OUT = values.out ?? HARD_CASE_BOARD_PATH
 
 const ADDED_AT = "2026-08-06"
-const WOF_DB = String(dataRootPath("wof", "fst-staging-2026-08-05", "admin-global-priority-importance.db"))
-const POP_FST_DIR = String(dataRootPath("wof", "fst-per-locale"))
-const IMP_FST_DIR = String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix"))
+const WOF_DB = String(dataRootPath("db", "wof", "fst-staging-2026-08-05", "admin-global-priority-importance.db"))
+const POP_FST_DIR = String(dataRootPath("db", "wof", "fst-per-locale"))
+const IMP_FST_DIR = String(dataRootPath("db", "wof", "fst-staging-2026-08-05-importance-fanoutfix"))
 
 using db = new DatabaseClient<WOFDatabase>(WOF_DB, { readOnly: true })
 const pointStmt = db.prepare("SELECT name, latitude, longitude FROM spr WHERE id = ?")

@@ -20,9 +20,9 @@
  *   dump).
  *
  *   Usage: node scripts/build-postcode-locality.ts --country DE\
- *   --admin-repo $MAILWOMAN_DATA_ROOT/wof/repos/whosonfirst-data/whosonfirst-data-admin-de\
- *   --postcode-db $MAILWOMAN_DATA_ROOT/wof/postalcode-intl.db\
- *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-de.db\
+ *   --admin-repo $MAILWOMAN_DATA_ROOT/src/wof-repos/whosonfirst-data/whosonfirst-data-admin-de\
+ *   --postcode-db $MAILWOMAN_DATA_ROOT/db/wof/postalcode-intl.db\
+ *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-de.db\
  *   --radius-km 10 --max-candidates 4
  *
  *   port note (from scripts/build-postcode-locality.py): faithful TypeScript port. Point-in-polygon

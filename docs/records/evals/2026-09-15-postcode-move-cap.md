@@ -135,7 +135,7 @@ mailwoman eval oa-resolver \
   --tokenizer $MAILWOMAN_DATA_ROOT/weights/en-us/tokenizer.model \
   --model-card $MAILWOMAN_DATA_ROOT/weights/en-us/model-card.json \
   --default-country none \
-  --candidate-db $MAILWOMAN_DATA_ROOT/wof/candidate.db \
+  --candidate-db $MAILWOMAN_DATA_ROOT/db/wof/candidate.db \
   [--postcode-consistency-off | --postcode-max-move-km <n>] \
   --out-rows <arm>.json
 ```

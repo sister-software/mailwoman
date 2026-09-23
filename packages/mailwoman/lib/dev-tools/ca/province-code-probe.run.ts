@@ -40,7 +40,7 @@ const { values } = parseArguments({
 	options: {
 		"out-json": { type: "string" },
 		"weights-cache": { type: "string" },
-		"postcode-db": { type: "string", default: String(dataRootPath("wof", "postalcode-ca-overture.db")) },
+		"postcode-db": { type: "string", default: String(dataRootPath("db", "wof", "postalcode-ca-overture.db")) },
 	},
 })
 

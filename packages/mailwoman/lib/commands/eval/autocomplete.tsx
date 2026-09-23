@@ -27,7 +27,7 @@ export const spec = {
 		"candidate-db": { type: "string", description: "Byte-range candidate.db" },
 		"fst-dir": {
 			type: "string",
-			description: "Per-locale FST directory (default $MAILWOMAN_DATA_ROOT/wof/fst-per-locale)",
+			description: "Per-locale FST directory (default $MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale)",
 		},
 		"admin-db": { type: "string", description: "WOF admin database for suggestion coordinates" },
 		out: { type: "string", description: "Write the full report JSON here" },

@@ -62,7 +62,7 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 		const { planReposSync, SyncAction, syncSentence } = await import("#gazetteer-pipeline/repos/sync")
 		const { githubForkProbe, UPSTREAM_ORG } = await import("#gazetteer-pipeline/wof/repo-origin")
 
-		const root = options.root ?? String(dataRootPath("wof", "repos"))
+		const root = options.root ?? String(dataRootPath("src", "wof-repos"))
 
 		const requested = extractDelimited(options.countries).map((cc) => `whosonfirst-data-admin-${cc.toLowerCase()}`)
 
@@ -138,7 +138,7 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 
 		// The vintage stamp lives outside the repos root: `ingestWOF` globs the root
 		// and a stray file inside it is one more thing for that glob to consider.
-		const vintagePath = String(dataRootPath("wof", "repos-vintage.json"))
+		const vintagePath = String(dataRootPath("db", "wof", "repos-vintage.json"))
 
 		await makeDirectories(dirname(vintagePath))
 

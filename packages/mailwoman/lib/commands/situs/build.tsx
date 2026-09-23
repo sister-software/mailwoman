@@ -153,7 +153,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		const { scriptEntryPath } = await import("@mailwoman/core/scripting/utils")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
-		const outDir = options.outDir ?? dataRootPath("address-points")
+		const outDir = options.outDir ?? dataRootPath("db", "address-points")
 
 		const states = options.states ? splitUSStateCodes(options.states) : [...STATES_BY_COVERAGE]
 

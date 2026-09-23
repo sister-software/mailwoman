@@ -195,7 +195,7 @@ pass on an artifact that answered class 8 for the whole planet.
 
 ## The observation
 
-Default off, and the switch is the presence of `$MAILWOMAN_DATA_ROOT/soil/soil.db` rather than a boolean.
+Default off, and the switch is the presence of `$MAILWOMAN_DATA_ROOT/db/soil/soil.db` rather than a boolean.
 The reading reaches a caller as one additive `QueryIntentMarker` with `code: "authority_designation"` and
 `mechanism: "layer:soil_capability"` — the same code the flood layer's marker uses, under the same `layer`
 family, with a rule of its own. The class never travels without the share it rests on. Ranking, abstention

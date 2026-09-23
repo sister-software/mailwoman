@@ -11,7 +11,7 @@
  *
  *   1. An explicit `artifactPath` (e.g. the weights-package sibling surfaced by
  *      `NeuralAddressClassifier.streetMorphologyPath`). When given, it is the only artifact probed.
- *   2. Otherwise the staged sealed artifact at `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`.
+ *   2. Otherwise the staged sealed artifact at `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`.
  *   3. Build-from-dictionaries fallback: `buildStreetMorphologyFST` over core's bundled libpostal
  *      `street_types.txt` files — the pre-artifact behavior, kept so a missing artifact degrades to
  *      a per-process build rather than a crash.
@@ -38,10 +38,10 @@ import { buildStreetMorphologyFST } from "#street/morphology/fst/builder"
 export const STREET_MORPHOLOGY_ARTIFACT_FILENAME = "fst-street-morphology.bin"
 
 /**
- * The staged artifact's default location: `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`.
+ * The staged artifact's default location: `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`.
  */
 export function defaultStreetMorphologyArtifactPath(): PathBuilder {
-	return dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)
+	return dataRootPath("db", "wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)
 }
 
 export interface LoadStreetMorphologyFSTOpts {

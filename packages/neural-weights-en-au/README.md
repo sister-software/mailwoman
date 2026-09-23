@@ -6,7 +6,7 @@ Mailwoman neural-classifier weights for locale `en-au`. Data-only overlay — sh
 ## What this package ships
 
 - Country-surface lexicon (shared gazetteer artifact, symlinked from `data/gazetteer/`)
-- Street-morphology FST (locale-general, symlinked from `$MAILWOMAN_DATA_ROOT/wof/`)
+- Street-morphology FST (locale-general, symlinked from `$MAILWOMAN_DATA_ROOT/db/wof/`)
 
 ## What this package does not ship (yet)
 

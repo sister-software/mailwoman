@@ -112,7 +112,7 @@ export async function buildNZLocalitiesDatabase(
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 	const csvPath = (opts.csvPath ?? dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")).toString()
-	const outPath = (opts.out ?? dataRootPath("wof", "localities-nz-linz.db")).toString()
+	const outPath = (opts.out ?? dataRootPath("db", "wof", "localities-nz-linz.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 
 	// Provenance check: the md5 sidecar must exist and match.

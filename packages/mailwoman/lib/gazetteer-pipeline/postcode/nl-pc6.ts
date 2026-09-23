@@ -59,7 +59,7 @@ export async function buildNLPC6Database(
 	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const csvPath = (opts.csvPath ?? dataRootPath("cbs", "pc6-centroids.csv")).toString()
-	const outPath = (opts.out ?? dataRootPath("wof", "postalcode-nl-pc6.db")).toString()
+	const outPath = (opts.out ?? dataRootPath("db", "wof", "postalcode-nl-pc6.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 
 	await removePathIfPresent(tmpPath)

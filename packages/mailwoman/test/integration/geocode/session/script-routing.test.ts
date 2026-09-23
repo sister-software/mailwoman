@@ -18,7 +18,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { afterAll, describe, expect, it } from "vitest"
 
-const CANDIDATE_DB = String(dataRootPath("wof", "candidate.db"))
+const CANDIDATE_DB = String(dataRootPath("db", "wof", "candidate.db"))
 
 const haveArtifacts =
 	(await pathExists(CANDIDATE_DB)) && (await pathExists(dataRootPath("weights", "cjk", "model.onnx")))

@@ -23,7 +23,7 @@ import { describe, expect, test } from "vitest"
 
 const cliBin = await mailwomanCLIPath()
 
-const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
+const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked

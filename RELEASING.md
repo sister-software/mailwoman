@@ -483,7 +483,7 @@ HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/index
 
 #### FST artifacts with no builder — what not to re-publish (#1493)
 
-Four FST binaries in `$MAILWOMAN_DATA_ROOT/wof/` predate the `FST_LOCALES` registry (#1318) and
+Four FST binaries in `$MAILWOMAN_DATA_ROOT/db/wof/` predate the `FST_LOCALES` registry (#1318) and
 **nothing in the tree can rebuild them.** `mailwoman gazetteer build fst` throws on any locale absent
 from `FST_LOCALES` (`mailwoman/gazetteer-pipeline/fst.ts:428`), and its output template
 (`fst-<locale>.bin`) cannot even express the global one. `mailwoman gazetteer verify` reports them as

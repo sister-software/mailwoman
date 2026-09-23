@@ -130,7 +130,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 
 // Real-WOF cases exercise the format against production-scale source data.
 
-const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
+const WOF_DB = dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db")
 const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () => {

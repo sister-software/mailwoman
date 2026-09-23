@@ -90,7 +90,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 		const { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES } =
 			await import("#gazetteer-pipeline/postcode/binary")
 
-		const wof = dataRootPath("wof")
+		const wof = dataRootPath("db", "wof")
 		const outDir = options.out
 
 		const locales: LocaleSource[] = []

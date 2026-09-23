@@ -227,7 +227,7 @@ export const germanRecipe: CorpusRecipe = {
 		{
 			flag: "--admin-db <path>",
 			description:
-				"WOF admin database for the Ortsteil pool. Default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db",
+				"WOF admin database for the Ortsteil pool. Default $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db",
 		},
 	],
 	async run(opts, write) {
@@ -248,7 +248,7 @@ export const germanRecipe: CorpusRecipe = {
 			}
 		}
 
-		const adminDB = opts.adminDB ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
+		const adminDB = opts.adminDB ?? String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))
 		const ortsteile = ortsteilFraction > 0 ? await readOrtsteilPool(adminDB) : new Map<string, string[]>()
 
 		if (ortsteilFraction > 0) {

@@ -11,7 +11,10 @@ from ...paths import data_root_path
 
 #: One database per state, named `address-points-us-<state>.db`. The state code comes off the
 #: filename, which is the only place the row carries it.
-SITUS_DIR_PARTS = ("address-points",)
+SITUS_DIR_PARTS = (
+    "db",
+    "address-points",
+)
 SITUS_GLOB = "address-points-us-*.db"
 
 

@@ -26,8 +26,8 @@
  *   Usage (JP): node scripts/build-postcode-locality-cjk.ts --country JP\
  *   --postal-names $MAILWOMAN_DATA_ROOT/KEN_ALL_ROME/KEN_ALL_ROME.CSV\
  *   --geonames $MAILWOMAN_DATA_ROOT/geonames/JP.txt\
- *   --admin-db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db\
- *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-jp.db
+ *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db\
+ *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-jp.db
  *
  *   port note (from scripts/build-postcode-locality-cjk.py): faithful TypeScript port. No polygons
  *   here, so there is no PIP — matching is name + haversine proximity, via `@mailwoman/spatial`'s

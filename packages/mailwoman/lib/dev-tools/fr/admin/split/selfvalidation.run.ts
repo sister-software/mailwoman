@@ -26,7 +26,7 @@
  *   the premise is false and no retrain can fix it.
  *
  *   Run (compiled CLI): node packages/mailwoman/lib/dev-tools/fr/admin/split/selfvalidation.run.ts\
- *   --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
+ *   --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
  */
 
 import type { ClassificationRecord } from "@mailwoman/core"
@@ -69,7 +69,7 @@ const values = rawValues as { db?: string; n?: string; out?: string }
 /**
  * --- args ----------------------------------------------------------------------------------------.
  */
-const DB = resolvePath(values["db"] || dataRootPath("wof", "admin-global-priority.db"))
+const DB = resolvePath(values["db"] || dataRootPath("db", "wof", "admin-global-priority.db"))
 /**
  * Per stratum.
  */

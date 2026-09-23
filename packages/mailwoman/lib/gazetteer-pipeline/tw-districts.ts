@@ -264,7 +264,7 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 	const release = opts.release ?? OVERTURE_ADDRESSES_RELEASE
 	const parquetPath = opts.parquetPath ?? String(dataRootPath("overture", release, "addresses-tw.parquet"))
 	const adminPath = opts.adminPath ?? resolvePath(wofDir(), DEFAULT_ADMIN_DB)
-	const outPath = opts.out ?? String(dataRootPath("wof", "localities-tw-districts.db"))
+	const outPath = opts.out ?? String(dataRootPath("db", "wof", "localities-tw-districts.db"))
 	const tmpPath = `${outPath}.tmp`
 
 	const sourceMD5 = await md5File(parquetPath)

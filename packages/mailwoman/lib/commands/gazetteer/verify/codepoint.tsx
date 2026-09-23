@@ -44,9 +44,10 @@ const GazetteerVerifyPostcodeCodePoint: CommandComponent<typeof spec> = ({ optio
 		const stamp = isoDate()
 
 		const report = runCodePointCheck({
-			codepointPath: options.codepoint ?? String(dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`)),
+			codepointPath: options.codepoint ?? String(dataRootPath("db", "wof", `postalcode-gb-codepoint-${stamp}.db`)),
 			incumbentPath:
-				options.incumbent ?? String(dataRootPath("wof", "frozen-backup-2026-08-04", "postalcode-geonames-tail.db")),
+				options.incumbent ??
+				String(dataRootPath("db", "wof", "frozen-backup-2026-08-04", "postalcode-geonames-tail.db")),
 			onPhase: phaseReporter(),
 		})
 

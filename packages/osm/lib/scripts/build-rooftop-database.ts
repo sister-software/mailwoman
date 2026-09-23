@@ -18,7 +18,7 @@
  *     node osm/scripts/build-rooftop-extract.ts \
  *       --country fr --slug idf --release 260627 \
  *       --created-at 2026-06-27T00:00:00.000Z --build-sha $(git rev-parse head) \
- *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
+ *       --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -103,7 +103,7 @@ async function parse(): Promise<BuildArgs> {
 	}
 
 	if (!buildSHA) throw new Error("required: --build-sha <git-sha>")
-	const output = resolvePath(values.out || dataRootPath("osm", `address-points-${country}-${slug}.db`))
+	const output = resolvePath(values.out || dataRootPath("db", "osm", `address-points-${country}-${slug}.db`))
 	const recover = Boolean(values.recover)
 	const recoverRadiusKm = Number(values["recover-radius-m"] ?? "30") / 1000
 

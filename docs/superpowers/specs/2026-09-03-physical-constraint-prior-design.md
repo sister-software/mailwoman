@@ -104,12 +104,12 @@ postcodes and UPRNs in `PO` are filled by the run, with the arithmetic stated.
 
 **Inputs on disk.**
 
-| Input                     | Artifact                                                                | Rows                                        | License                                                      |
-| ------------------------- | ----------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------ |
-| Unit postcode centroids   | `$MAILWOMAN_DATA_ROOT/wof/postalcode-gb-codepoint.db` (Code-Point Open) | 1,746,976 (`spr`)                           | OGL-UK-3.0                                                   |
-| Addressable-object points | `$MAILWOMAN_DATA_ROOT/uprn/uprn.db` (OS Open UPRN, release 2026-08)     | 41,629,393; coverage `designated` 1.0       | OGL-UK-3.0 (manifest)                                        |
-| Building footprints       | none on disk                                                            | —                                           | OS Open Map – Local `Building` layer, OGL-UK-3.0, to acquire |
-| Truth for grading         | none on disk; ~487 MB CSV collection to acquire                         | one row per GB UPRN, `PCDS` = unit postcode | ONS NSUL, OGL-UK-3.0 (F1 answered)                           |
+| Input                     | Artifact                                                                   | Rows                                        | License                                                      |
+| ------------------------- | -------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------ |
+| Unit postcode centroids   | `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-gb-codepoint.db` (Code-Point Open) | 1,746,976 (`spr`)                           | OGL-UK-3.0                                                   |
+| Addressable-object points | `$MAILWOMAN_DATA_ROOT/db/uprn/uprn.db` (OS Open UPRN, release 2026-08)     | 41,629,393; coverage `designated` 1.0       | OGL-UK-3.0 (manifest)                                        |
+| Building footprints       | none on disk                                                               | —                                           | OS Open Map – Local `Building` layer, OGL-UK-3.0, to acquire |
+| Truth for grading         | none on disk; ~487 MB CSV collection to acquire                            | one row per GB UPRN, `PCDS` = unit postcode | ONS NSUL, OGL-UK-3.0 (F1 answered)                           |
 
 OSM buildings (ODbL) are excluded from the GB prototype on purpose, so the GB artifact's posture is
 OGL throughout. They return in section 7, where no OGL footprint source exists.

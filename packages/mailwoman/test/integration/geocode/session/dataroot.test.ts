@@ -22,7 +22,7 @@ import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geo
 import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
-const REAL_CANDIDATE_DB = String(dataRootPath("wof", "candidate.db"))
+const REAL_CANDIDATE_DB = String(dataRootPath("db", "wof", "candidate.db"))
 const haveArtifacts = await pathExists(REAL_CANDIDATE_DB)
 
 const BOGUS_ROOT = await temporaryDirectory("mw-bogus-root-")

@@ -190,7 +190,7 @@ names this in its own text.
 Scripts in the session scratchpad under `scripts/diagnostic/suggestion/` (gitignored, per the
 convention `docs/articles/reviews/2026-08-02-mailfail-robustness.md:402` established). Every number is
 a run against the shipped weights (`model.onnx` md5 `c968c24a`, the candidate-table backend at
-`$MAILWOMAN_DATA_ROOT/wof/candidate.db`) rather than an estimate.
+`$MAILWOMAN_DATA_ROOT/db/wof/candidate.db`) rather than an estimate.
 
 ### S-1: round-trip fidelity — the nudge inventory
 

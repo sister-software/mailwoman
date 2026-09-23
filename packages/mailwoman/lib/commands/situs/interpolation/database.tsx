@@ -161,7 +161,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		const STATE = options.state.toUpperCase()
 
 		const finalOut = resolvePath(
-			options.out ?? dataRootPath("interpolation", `interpolation-us-${STATE.toLowerCase()}.db`)
+			options.out ?? dataRootPath("db", "interpolation", `interpolation-us-${STATE.toLowerCase()}.db`)
 		)
 
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)

@@ -106,7 +106,7 @@ export interface AbsenceProbeDefinition {
 	claim: string
 	asymmetry: string
 	/**
-	 * The coverage layer the rows were registered against, by filename under `$MAILWOMAN_DATA_ROOT/poi/`.
+	 * The coverage layer the rows were registered against, by filename under `$MAILWOMAN_DATA_ROOT/db/poi/`.
 	 *
 	 * Never an absolute path: the definition is committed and the data root is per-machine.
 	 */

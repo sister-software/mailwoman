@@ -367,7 +367,7 @@ export const REQUIRED_PAIR_INDEX_SCHEMA = 3
 export async function warnIfFSTStale(fstPath: string, locale: string): Promise<void> {
 	const warning = await fstFreshnessWarning({
 		fstPath,
-		sourceDBPath: resolvePath(dataRootPath("wof", "admin-global-priority.db")),
+		sourceDBPath: resolvePath(dataRootPath("db", "wof", "admin-global-priority.db")),
 		rebuildCommand: `node packages/mailwoman/out/cli/index.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-conditional)`,
 	})
 
@@ -378,14 +378,14 @@ export async function warnIfFSTStale(fstPath: string, locale: string): Promise<v
 
 /**
  * Symlink the per-locale FST gazetteer (`fst-<locale>.bin`) from the shared build area
- * (`$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/`) into an overlay so `resolveWeights`
+ * (`$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale/`) into an overlay so `resolveWeights`
  * surfaces `fstPath` in dev and the runtime pipeline can auto-wire the gazetteer +
  * street-context check, then run {@link warnIfFSTStale} on the linked artifact.
  *
  * The publish flow stages the real binary (release-sequenced).
  */
 export async function linkLocaleFST(destDir: string, locale: string): Promise<void> {
-	const source = resolvePath(dataRootPath("wof", "fst-per-locale", `fst-${locale}.bin`))
+	const source = resolvePath(dataRootPath("db", "wof", "fst-per-locale", `fst-${locale}.bin`))
 
 	const linked = await linkSoftFeedSibling(
 		source,
@@ -400,7 +400,7 @@ export async function linkLocaleFST(destDir: string, locale: string): Promise<vo
 
 /**
  * Symlink the sealed locale-general street-morphology FST
- * (`$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`, `mailwoman gazetteer build street-morphology`)
+ * (`$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`, `mailwoman gazetteer build street-morphology`)
  * into an overlay so `resolveWeights` surfaces `streetMorphologyPath` in dev
  * and the street-context check (#1315) deserializes the artifact instead of
  * rebuilding from the libpostal dictionaries per process.
@@ -409,7 +409,7 @@ export async function linkLocaleFST(destDir: string, locale: string): Promise<vo
  */
 export async function linkStreetMorphologyFST(destDir: string): Promise<void> {
 	await linkSoftFeedSibling(
-		resolvePath(dataRootPath("wof", "fst-street-morphology.bin")),
+		resolvePath(dataRootPath("db", "wof", "fst-street-morphology.bin")),
 		resolvePath(destDir, "fst-street-morphology.bin"),
 		"the street-context check falls back to the per-process dictionary build."
 	)
@@ -532,7 +532,7 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 	 * Checked-in WOF-derived admin pairs — the default source, and the whole
 	 * source list for the small overlays.
 	 */
-	const WOF_ADMIN_DB = resolvePath(dataRootPath("wof", "admin-global-priority.db"))
+	const WOF_ADMIN_DB = resolvePath(dataRootPath("db", "wof", "admin-global-priority.db"))
 	const sources = overlay.sources ?? [WOF_ADMIN_DB]
 	const inputs = overlay.inputs ?? sources
 	const extraArgs = overlay.extraArgs ?? ["--borough-db", WOF_ADMIN_DB]
