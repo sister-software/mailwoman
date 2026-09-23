@@ -259,6 +259,52 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		expect(splitForRow(gbRow("gb-liverpool", "L1 8JQ"))).toBe("train")
 	})
 
+	it("names DE by postcode area as well as by region, since its street source emits neither Land", () => {
+		// `synth-german` is the source of every DE street row, and over `v0.6.0-register-surface`
+		// it emits exactly two region values, `Sachsen` and `Berlin`.
+		// The region list therefore reaches `wof-admin` rows alone, and `02` reaches the street rows.
+		const de = policyOf(defaultHoldouts().DE)
+
+		expect(de.regions).toEqual(["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"])
+		expect(de.postcodePrefixes).toEqual(["02"])
+	})
+
+	it("holds out a DE street row in postcode area 02 and trains on the rest of Sachsen", () => {
+		// A `synth-german` row's shape: a street row carrying a postcode, with a region on some rows.
+		const deRow = (id: string, postcode: string): MinRow => ({
+			source_id: id,
+			country: "DE",
+			corpus_version: "0.1.0",
+			components: { postcode, locality: "Görlitz", street: "Berliner Straße", house_number: "14" },
+		})
+
+		// Görlitz, Bautzen and Zittau — Upper Lusatia, the declared area.
+		expect(splitForRow(deRow("de-goerlitz", "02826"))).not.toBe("train")
+		expect(splitForRow(deRow("de-bautzen", "02625"))).not.toBe("train")
+
+		// The rest of Sachsen, which the corpus holds in quantity, stays in train.
+		expect(splitForRow(deRow("de-dresden", "01067"))).toBe("train")
+		expect(splitForRow(deRow("de-leipzig", "04103"))).toBe("train")
+		expect(splitForRow(deRow("de-chemnitz", "09126"))).toBe("train")
+		// Berlin, the other region `synth-german` emits.
+		expect(splitForRow(deRow("de-berlin", "13469"))).toBe("train")
+	})
+
+	it("holds out a DE admin row by its Land, which carries no postcode", () => {
+		// `wof-admin` is the only DE source carrying a region and it emits no postcode,
+		// so the region list is what reaches it.
+		const adminRow = (id: string, region: string): MinRow => ({
+			source_id: id,
+			country: "DE",
+			corpus_version: "0.1.0",
+			components: { region, locality: "Saarbrücken" },
+		})
+
+		expect(splitForRow(adminRow("de-sl", "Saarland"))).not.toBe("train")
+		expect(splitForRow(adminRow("de-mv", "Mecklenburg-Vorpommern"))).not.toBe("train")
+		expect(splitForRow(adminRow("de-sn", "Sachsen"))).toBe("train")
+	})
+
 	it("holds out nothing for a country whose policy declares no matcher", () => {
 		expect(splitForRow(banRow("ban-corse", "20000"), { FR: {} })).toBe("train")
 	})

@@ -79,10 +79,17 @@
 #    `defaultHoldouts()` reached its rows. The last census read 0 validation rows and 0 validation
 #    street rows for GB. A holdout takes effect only at a base rebuild, and this is that rebuild.
 #
-#    FR and DE declare a row floor and no street floor. Both carry validation rows and neither
-#    carries a validation street row — FR 12,898 rows and 0 street, DE 33,801 test rows and 0 street.
-#    Closing that needs a holdout change rather than a run that refuses to start, so the floor states
-#    what holds today and the gap stays recorded in CONTRIBUTING_MODEL_WORK.mdx.
+#    FR and DE were declared with a row floor and no street floor, on a prediction that both would
+#    carry 0 validation street rows. The built corpus falsified that for FR: measured over
+#    v0.6.0-register-surface, FR holds 1,072,041 test street rows and 1,069,306 val, because the FR
+#    postcode prefixes reached BAN's rows. GB holds 5,649 and 5,653 for the same reason. Both now
+#    declare the street floor, so all four D-rule locales enforce what iron rule 6 states.
+#
+#    DE holds 0 test street rows and fails its floor. `synth-german` composes the only DE street rows
+#    and reads two OpenAddresses members, `de/berlin.csv` and `de/sn/statewide.csv`, so it can name
+#    only `Sachsen` and `Berlin` — the Saarland and Mecklenburg-Vorpommern region list matched none of
+#    its 204,000 rows. `defaultHoldouts()` gained postcode area `02`, Upper Lusatia, reaching 25,120
+#    street rows. A run against this corpus stops at the CPU preflight until the base is rebuilt.
 #
 # 5. `data.required_corpus_receipts` gains a 1,000-draw floor for each of the five new locales and
 #    one for each of Brazil and Mexico, so a run that fails to reach one stops rather than training.
@@ -425,16 +432,26 @@ data:
       min_draws: 1000
       source: overture-latam
       country: MX
-  # Held-out coverage floors, iron rule 6's precondition. See the header for why GB and US declare a
-  # street floor and FR and DE do not.
+  # Held-out coverage floors, iron rule 6's precondition. All four D-rule locales declare both floors,
+  # which is what CONTRIBUTING_MODEL_WORK.mdx states and what this key previously left unenforced for
+  # FR and DE. Measured over the built v0.6.0-register-surface, test/val street rows: US
+  # 1,784,529/1,785,036, FR 1,072,041/1,069,306, GB 5,649/5,653, DE 0/4,000.
+  #
+  # DE is the one locale that fails, and it fails on purpose rather than by omission. Its test split
+  # holds no street row, and the 4,000 in its val split were placed by hand rather than selected by
+  # the holdout policy, with 770 of their 3,987 source_ids also in train. A run against this corpus
+  # therefore stops at the CPU preflight. `defaultHoldouts()` gained DE postcode area `02` to close
+  # it, which takes effect at the next base rebuild.
   required_validation_coverage:
     - country: GB
       min_rows: 1000
       min_street_rows: 1000
     - country: FR
       min_rows: 1000
+      min_street_rows: 1000
     - country: DE
       min_rows: 1000
+      min_street_rows: 1000
     - country: US
       min_rows: 1000
       min_street_rows: 1000

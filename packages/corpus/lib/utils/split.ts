@@ -125,11 +125,12 @@ export interface SplitManifest {
  *
  * - US: Vermont, Wyoming, North Dakota (low density, easy to identify in WOF/admin sources).
  * - FR: Corse, Lozère, Creuse (small departments / regions).
- * - DE (added 2026-06-11, night-11): Saarland + Mecklenburg-Vorpommern — small Länder
- *   so the training cost is low while the holdout clears the honest-eval 1000-row trust floor.
- *   DE has had no trustable honest-eval holdout since the harness shipped
- *   (flagged 2026-06-08); this takes effect at the next base corpus rebuild —
- *   existing versioned corpora keep their committed SPLIT_MANIFESTs
+ * - DE (added 2026-06-11, night-11, with the postcode key added 2026-09-23 under #2353): Saarland and
+ *   Mecklenburg-Vorpommern reach the `wof-admin` rows, and postcode area `02` reaches the street rows.
+ *   The region list alone matched no DE street row, because the recipe behind those rows
+ *   reads two OpenAddresses members and can therefore name only `Sachsen` and `Berlin`.
+ *   The entry's own comment carries the measurement.
+ *   Existing versioned corpora keep their committed SPLIT_MANIFESTs
  *   (a holdout added after a corpus is built is leakage-laundering rather than a holdout).
  * - GB (added 2026-09-21, #2353): Cornwall, north Wales and Halifax, keyed on the postcode area.
  *   GB had no entry at all, so both its splits held zero rows and `macro_f1` said nothing about it.
@@ -148,7 +149,38 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			// Those rows carry a region and no street, so FR validates on locality and region rows only (#2353).
 			postcodePrefixes: ["20", "23", "48"],
 		},
-		DE: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
+		DE: {
+			// `wof-admin` is the only DE source carrying a region, and these two Länder
+			// reached 73,526 of its 2,847,630 rows in `v0.6.0-register-surface`.
+			// It emits no street, so these matchers give DE an admin-level holdout
+			// and cannot give it a street-level one.
+			regions: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
+			// Keyed on the postcode for the reason FR and GB are, and the reason is sharper here.
+			//
+			// WHICH LÄNDER DE'S STREET ROWS CAN NAME.
+			// `synth-german` composes OpenAddresses rows into German order, and `de/recipes/locale.ts`
+			// reads exactly two OA members: `de/berlin.csv` and `de/sn/statewide.csv`.
+			// OA's `region` column is empty for DE, so that file stamps the Bundesland per member.
+			// Two members, therefore two region values across all 204,000 rows — `Sachsen` (58,600)
+			// and `Berlin` (23,106), measured over `v0.6.0-register-surface`.
+			// Saarland and Mecklenburg-Vorpommern have no OA member in the cache, so the region
+			// list above matches zero DE street rows however the splits are routed.
+			// Adding a Land to that list cannot change this.
+			// Adding an OA member for it would.
+			//
+			// `02` is Görlitz, Bautzen, Zittau and Hoyerswerda — Upper Lusatia, the eastern
+			// edge of Sachsen, so it comes out of `de/sn/statewide.csv`.
+			// One coherent peripheral area on the principle Corse, Creuse and Lozère
+			// were picked on, and one suffices where FR and GB each needed three:
+			// it reaches 25,816 DE rows across `synth-german`, `synth-affix`, `synth-country`,
+			// `synth-sub-venue` and `wof-postalcode`, 25,120 of them street rows.
+			// That clears the 1000-row honest-eval trust floor on both sides of the 50/50
+			// val/test bucketing, at 0.77% of DE's 3,346,768 rows.
+			//
+			// A German postcode is five digits, so `02` matches 02000 through 02999 and nothing else.
+			// The prefix-collision trap GB's comment describes does not arise.
+			postcodePrefixes: ["02"],
+		},
 		GB: {
 			// Keyed on the postcode area for the reason FR is keyed on the department: a source that emits
 			// a GB street row emits no `region` with it, so a region-keyed holdout cannot reach one.

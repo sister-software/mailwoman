@@ -284,8 +284,18 @@ re-tokenized, measured only after the fact. Net-positive that time; the check re
 2. Audit format diversity against the real eval's observed forms _before_ generating — thin
    diversity teaches lexical pattern-matching rather than the boundary.
 3. Overlay manifests declare lineage against a base corpus version
-   (`mailwoman corpus overlay-manifest` writes one); never hand-edit a manifest.
-4. Train via `modal run -d corpus-python/launch/train_remote.py --config <yaml> --resume auto`
+   (`mailwoman corpus overlay-manifest` writes one). Never hand-edit a manifest.
+4. Route every overlay parquet through `mailwoman corpus split-slice`, then register the per-split
+   outputs with `mailwoman corpus overlay-manifest --split`. An overlay appended as a train file
+   leaves a country whose only rows of some kind live in that overlay with no held-out row of that
+   kind. Choosing the split by hand produces the same result with no record that a choice was made:
+   in `v0.6.0-register-surface` the `synth-german` overlay — 204,000 OpenAddresses rows composed into
+   German order, `surface` `composed` rather than `invented` — was placed by a script carrying a
+   hardcoded `(filename, split)` list that named a val file and no test file. DE's test split
+   therefore held 36,595 rows and zero street rows, and 770 of the 3,987 `source_id`s in its val file
+   are also in train. The eight overlays routed through `split-slice` in the same corpus each carry a
+   `.val.parquet` and a `.test.parquet`, and `part-gb` leaks 37 of 4,453.
+5. Train via `modal run -d corpus-python/launch/train_remote.py --config <yaml> --resume auto`
    (~1h A100). Config lives in `corpus-python/src/mailwoman_train/configs/` — copy the latest,
    change one variable, write the acceptance-bar comment.
 
