@@ -24,6 +24,7 @@
  *   # then push the overlay to R2 + sync + `modal run -d ... --config <recipe>.yaml --resume none`.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -173,6 +174,15 @@ export function rerootBaseFilePath(path: string, baseManifestPath: string): stri
 	}
 
 	return path
+}
+
+/**
+ * Resolve a manifest file path on the Modal volume (`/data/…`) to the same file under the local data root.
+ *
+ * A path outside `/data/` is returned unchanged.
+ */
+export function localManifestFilePath(path: string): string {
+	return path.startsWith("/data/") ? String(dataRootPath(path.slice("/data/".length))) : path
 }
 
 export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {

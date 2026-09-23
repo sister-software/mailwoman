@@ -48,6 +48,7 @@ import {
 } from "@mailwoman/core/scope-config"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
+import { localManifestFilePath } from "@mailwoman/corpus/tools"
 import { allRows } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -275,7 +276,7 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 
 	const parquetFiles = manifestFiles(manifest)
 		.filter((s) => s.split === "train" && s.path)
-		.map((s) => s.path!.replace("/data/", `${String(dataRootPath())}/`))
+		.map((s) => localManifestFilePath(s.path!))
 
 	const rows: Record<string, number> = {}
 	const streetRows: Record<string, number> = {}

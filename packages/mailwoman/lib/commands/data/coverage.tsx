@@ -48,6 +48,11 @@ export const spec = {
 			default: false,
 			description: "Recount the corpus instead of reading the cache (costs minutes)",
 		},
+		manifest: {
+			type: "string",
+			description:
+				"Corpus MANIFEST.json to count with --refresh. Defaults to the newest manifest under the data root's corpus/versioned/.",
+		},
 		json: { type: "boolean", default: false, description: "Emit the full report as JSON" },
 	},
 } as const satisfies CommandSpec
@@ -65,7 +70,7 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 		// and the version scheme sorts neither lexically nor numerically.
 		// The report names the config it read either way.
 		const config = resolveTrainingConfig(await readScopeConfig(), { requested: options.config })
-		const manifestPath = await newestManifest()
+		const manifestPath = options.manifest ?? (await newestManifest())
 
 		const report = await censusCoverage({
 			configPath: config.path,

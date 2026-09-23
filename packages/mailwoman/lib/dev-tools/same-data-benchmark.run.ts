@@ -24,6 +24,10 @@
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts score
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts sweep
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts knob
+ *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts knob --arms <arms.json> --knob-out <report.md>
+ *
+ *   `knob --arms` replays a JSON array of `{ "label", "opts" }` arms in place of the default floor matrix and writes
+ *   its table to `--knob-out`. `readKnobArms` rejects an option name that is not a `ResolveOpts` field.
  *
  *   `record --withhold-every-denoting-row` removes every row denoting the gold settlement instead of every id the
  *   concordance links. The gazetteer carries 10.6% of its populated localities at two admin tiers, so under the
@@ -56,6 +60,7 @@ import {
 	type SameDataPanelRow,
 	validateFixture,
 } from "#eval-harness/same-data/fixture"
+import { type KnobArm, readKnobArms } from "#eval-harness/same-data/knob-arms"
 import { buildPanel, readCities, readCountryNames, readPostcodeByAdmin } from "#eval-harness/same-data/panel"
 import { recordFixture } from "#eval-harness/same-data/record"
 import {
@@ -92,6 +97,8 @@ const { values, positionals } = parseArguments({
 		out: { type: "string" },
 		panel: { type: "string" },
 		limit: { type: "string" },
+		arms: { type: "string" },
+		"knob-out": { type: "string" },
 		"withhold-every-denoting-row": { type: "boolean" },
 	},
 	allowPositionals: true,
@@ -469,22 +476,32 @@ async function sweepPhase(): Promise<void> {
  * when the tree already holds a resolved place (`resolve/passes.ts`), so a floor's refusal
  * leaves exactly the state that invites the recovery pass to answer instead.
  */
-const KNOB_ARMS: Array<[string, ResolveOpts]> = [
-	["default", {}],
-	["minWinningScore 1", { minWinningScore: 1 }],
-	["minWinningScore 2", { minWinningScore: 2 }],
-	["minWinningScore 3", { minWinningScore: 3 }],
-	["minWinningScore 4", { minWinningScore: 4 }],
-	["minWinningScore 5", { minWinningScore: 5 }],
-	["spanRescore off", { spanRescore: false }],
-	["minWinningScore 4 + spanRescore off", { minWinningScore: 4, spanRescore: false }],
+const DEFAULT_KNOB_ARMS: KnobArm[] = [
+	{ label: "default", opts: {} },
+	{ label: "minWinningScore 1", opts: { minWinningScore: 1 } },
+	{ label: "minWinningScore 2", opts: { minWinningScore: 2 } },
+	{ label: "minWinningScore 3", opts: { minWinningScore: 3 } },
+	{ label: "minWinningScore 4", opts: { minWinningScore: 4 } },
+	{ label: "minWinningScore 5", opts: { minWinningScore: 5 } },
+	{ label: "spanRescore off", opts: { spanRescore: false } },
+	{ label: "minWinningScore 4 + spanRescore off", opts: { minWinningScore: 4, spanRescore: false } },
 	// The narrower refusal beside the blanket one: span rescore still runs, and a
 	// sub-span that drops a word of the name is refused while one that drops a qualifier,
 	// a number or a street the parse read is kept.
-	["spanRescore context remainder", { spanRescoreRequireContextRemainder: true }],
+	{ label: "spanRescore context remainder", opts: { spanRescoreRequireContextRemainder: true } },
 ]
 
 async function knobPhase(): Promise<void> {
+	// The committed `same-data-knob.md` and its prose describe the default arms, so a custom arm set writes elsewhere.
+	if (values.arms && !values["knob-out"]) {
+		throw new Error(
+			"same-data-benchmark knob: --arms needs --knob-out, so the committed knob report is not overwritten"
+		)
+	}
+
+	const arms = values.arms ? await readKnobArms(values.arms) : DEFAULT_KNOB_ARMS
+	const knobPath = values["knob-out"] || KNOB_PATH
+
 	const { panel, fixture } = await allKeyed({
 		panel: JSONSpliterator.fromAsync<SameDataPanelRow>(PANEL_PATH).toArray(),
 		fixture: JSONSpliterator.fromAsync<SameDataFixtureRow>(FIXTURE_PATH).toArray(),
@@ -495,7 +512,7 @@ async function knobPhase(): Promise<void> {
 
 	const byArm = new Map<string, ArmRowResult[]>()
 
-	for (const [label, opts] of KNOB_ARMS) {
+	for (const { label, opts } of arms) {
 		const results: ArmRowResult[] = []
 
 		for (const row of rows) {
@@ -518,7 +535,7 @@ async function knobPhase(): Promise<void> {
 	const commonByID = new Map(common.map((row) => [row.id, row]))
 	const commonIDs = new Set(commonByID.keys())
 
-	const knobRows = KNOB_ARMS.map(([label]) => {
+	const knobRows = arms.map(({ label }) => {
 		const results = byArm.get(label)!
 
 		const metrics = armMetrics(
@@ -537,7 +554,24 @@ async function knobPhase(): Promise<void> {
 		]
 	})
 
-	const lines = [
+	const table = renderMarkdownTable(
+		["arm", "replay misses", "selection accuracy", "wrong-area rate", "false-selection rate"],
+		knobRows
+	)
+
+	const customLines = [
+		`# Resolver option arms from \`${values.arms}\`, replayed`,
+		"",
+		"Replayed against the frozen fixture. A walk that asks a question the recording never answered is counted in",
+		"`replay misses`, and its row is dropped from every arm's denominator.",
+		"",
+		`Every rate below is measured over the ${common.length} of ${rows.length} rows that every arm scored without a`,
+		"replay miss.",
+		"",
+		...table,
+	]
+
+	const defaultLines = [
 		"# The shipped knob, replayed",
 		"",
 		"`ResolveOpts.minWinningScore` compares against the candidate backend's score, which is a log-population",
@@ -550,10 +584,7 @@ async function knobPhase(): Promise<void> {
 		"how much the floors move; all 100 withheld-gold rows survive every arm, so the false-selection column is",
 		"complete.",
 		"",
-		...renderMarkdownTable(
-			["arm", "replay misses", "selection accuracy", "wrong-area rate", "false-selection rate"],
-			knobRows
-		),
+		...table,
 		"",
 		"Before #2265, a floor alone was inert: it moved the false-selection rate by one row across the whole",
 		"populated range of the scale, because `applySpanRescore` recovers any tree holding no resolved place and a",
@@ -566,10 +597,12 @@ async function knobPhase(): Promise<void> {
 		"correct answer here by construction. A panel whose gold all clears a floor cannot measure that floor.",
 	]
 
-	await writeLocalTextFile(lines, KNOB_PATH)
+	const lines = values.arms ? customLines : defaultLines
+
+	await writeLocalTextFile(lines, knobPath)
 
 	console.log(lines.join("\n"))
-	console.log(`\nknob → ${KNOB_PATH}`)
+	console.log(`\nknob → ${knobPath}`)
 }
 
 const PHASES: Record<string, () => Promise<void>> = {
