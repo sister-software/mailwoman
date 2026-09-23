@@ -1,6 +1,6 @@
 ---
 sidebar_position: 15
-title: Training environment — playpen container setup
+title: Training environment — lab container setup
 ---
 
 # Training environment
@@ -11,9 +11,9 @@ title: Training environment — playpen container setup
 
 ## :::
 
-# Training environment — playpen container setup
+# Training environment — lab container setup
 
-How to bring a fresh playpen container to the point where it can train a classifier or run a tokenizer build. Captures the gap that bit v0.5.0 Thread C-train.
+How to bring a fresh lab container to the point where it can train a classifier or run a tokenizer build. Captures the gap that bit v0.5.0 Thread C-train.
 
 ## What you start with
 
@@ -112,7 +112,7 @@ Without the override, kernel launches will fail with cryptic GPU errors. Persist
 ## Step 5 — Other env quirks
 
 - **`hipBLASLt unsupported`**: PyTorch emits a `UserWarning: Attempting to use hipBLASLt on an unsupported architecture! Overriding blas backend to hipblas` on every Linear layer call. Harmless — the `hipblas` fallback works correctly on gfx1103. Future PyTorch versions may stop logging this.
-- **`amdgpu.ids: No such file or directory`**: also harmless. The file is shipped with `mesa-amdgpu-vulkan-drivers` which isn't installed in the playpen base image. Nothing fails as a result.
+- **`amdgpu.ids: No such file or directory`**: also harmless. The file is shipped with `mesa-amdgpu-vulkan-drivers` which isn't installed in the lab base image. Nothing fails as a result.
 - **Math SDPA**: per [the lab GPU notes](https://github.com/sister-software/mailwoman/blob/main/docs/articles/concepts/training-pipeline.mdx), set `torch.backends.cuda.enable_flash_sdp(False)` and use `math` SDPA backend if attention kernels misbehave. The current corpus-python configs already do this.
 
 ## Cost summary
@@ -130,7 +130,7 @@ Without the override, kernel launches will fail with cryptic GPU errors. Persist
 
 Two reasons the mailwoman container template doesn't ship a training-venv:
 
-1. **Image size**: torch + transformers + onnxruntime add ~5 GB to the container image. Multiplied across every playpen container (most of which never train), this is wasteful.
+1. **Image size**: torch + transformers + onnxruntime add ~5 GB to the container image. Multiplied across every lab container (most of which never train), this is wasteful.
 2. **Use-case split**: tokenizer training and corpus utility scripts use only the lighter `sentencepiece` + `pyarrow` deps. They don't want or need torch. Splitting via `[train]` extras keeps the common case small.
 
 The right time to bake it in is when classifier-training becomes a routine container spawn (multiple times per week). Until then the 15-min one-time setup is cheaper than the per-container image bloat.

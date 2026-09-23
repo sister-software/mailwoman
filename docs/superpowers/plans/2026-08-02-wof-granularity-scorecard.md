@@ -1464,5 +1464,5 @@ Before opening the PR:
 - [ ] `yarn vitest --run mailwoman/gazetteer-pipeline/` passes — census, granularity, and report suites.
 - [ ] The committed scorecard's GB/DE/JP row counts match the spec's Finding 1 and Finding 3 tables exactly.
 - [ ] IE and NZ render `0` at `dependent_locality`, never `—`.
-- [ ] `rg -n "mnt/playpen" mailwoman/gazetteer-pipeline/granularity*.ts mailwoman/commands/gazetteer/granularity.tsx` returns nothing.
+- [ ] `rg -n "/mnt/" mailwoman/gazetteer-pipeline/granularity*.ts mailwoman/commands/gazetteer/granularity.tsx` returns nothing.
 - [ ] `mailwoman gazetteer census --country gb` still succeeds — PR A widened the projection map and must not have broken it.

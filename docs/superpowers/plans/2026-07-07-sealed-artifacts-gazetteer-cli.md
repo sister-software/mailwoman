@@ -639,7 +639,7 @@ export function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promise<Ing
 ```ts
 export interface FoldGeonamesOptions {
 	countries: readonly string[]
-	geonamesDir?: string // default dataRootPath("geonames") — NOTE: current script hardcodes the playpen path; fix to dataRootPath here
+	geonamesDir?: string // default dataRootPath("geonames") — NOTE: current script hardcodes an absolute lab path; fix to dataRootPath here
 	alternateDir?: string // default dataRootPath("geonames-alternate")
 	postalCountries?: readonly string[]
 	postalDir?: string // default dataRootPath("geonames-postal")

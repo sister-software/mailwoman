@@ -5,7 +5,7 @@
 57 local-helper/inline-scan files → `parseArgs` (codemod v2), the 4 gitignored diagnostic files with
 broken cli-args imports fixed (`rg` respects .gitignore — always recount with `--no-ignore`),
 promotion-eval converted STRICT with exit-2 parity, photon/libpostal/nominatim dispatch →
-positionals, smoke-resolve's hardcoded playpen path → `dataRootPath`. Deliberately not converted:
+positionals, smoke-resolve's hardcoded absolute path → `dataRootPath`. Deliberately not converted:
 the lookup CLIs' documented negative-coordinate hand-parse and the resolver build CLIs' structured
 tested parsers — neither is the scan anti-pattern.
 

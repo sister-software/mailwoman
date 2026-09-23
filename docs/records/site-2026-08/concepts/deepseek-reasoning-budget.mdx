@@ -37,7 +37,7 @@ Three changes to the worker:
 
 Reasoning models are still pricing in compute differently than vanilla generation. Reasoning tokens cost the same as output tokens but are not returned to the caller. Charging them against the same budget is the simple model — one number, predictable cost ceiling. The trap is that the parameter name does not advertise the semantic.
 
-DeepSeek's documentation does state this, in a sentence buried under the reasoning-effort overview. If you discover the trap by reading the docs, well done. If you discover it by watching your corpus get silently truncated, you are in good company — Thread B2's first run was the first time we hit it inside the playpen workflow, and the patch took longer than the original generation would have if we had set the budget right at the start.
+DeepSeek's documentation does state this, in a sentence buried under the reasoning-effort overview. If you discover the trap by reading the docs, well done. If you discover it by watching your corpus get silently truncated, you are in good company — Thread B2's first run was the first time we hit it inside the lab workflow, and the patch took longer than the original generation would have if we had set the budget right at the start.
 
 ## Carry forward
 

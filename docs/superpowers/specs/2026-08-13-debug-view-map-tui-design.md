@@ -135,7 +135,7 @@ Components live in `mailwoman/debug-view/` (a sibling family to `cli-kit/`):
 
 Tiles path resolution (CLI layer, never inside map-tui): `--tiles <path>` flag →
 `$MAILWOMAN_TILES` (new variable in `core/env/schema.ts`) → `dataRootPath("tiles",
-"planet.pmtiles")` existence probe. On the lab host the playpen dump symlinks into the data
+"planet.pmtiles")` existence probe. On the lab host the protomaps dump symlinks into the data
 root.
 
 ## 4. Static render interface
