@@ -47,6 +47,7 @@ import { type ChildProcess, runFile, spawnProcess } from "@mailwoman/core/proces
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { $public } from "mailwoman/env"
+import { conventionCandidateDBPath } from "mailwoman/resolver-backend"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { join } from "path-ts"
 import { afterAll, afterEach, describe, expect, test } from "vitest"
@@ -531,7 +532,10 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 						timeout: PREFLIGHT_TIMEOUT_MS,
 						env: childEnv({
 							MAILWOMAN_DATA_ROOT: dataRoot,
-							MAILWOMAN_CANDIDATE_DB: join(dataRoot, "wof", "candidate.db"),
+							// The path `data pull candidate` above wrote to, read from its one home
+							// rather than composed here: a literal would drift from the writer, which is what
+							// moved the gazetteer under the data root's `db/` group without moving this line.
+							MAILWOMAN_CANDIDATE_DB: conventionCandidateDBPath(dataRoot),
 						}),
 					})
 				)

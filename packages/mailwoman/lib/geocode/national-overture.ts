@@ -14,10 +14,10 @@
  *   is a no-op for a country with no registered locale or no database on disk.
  */
 
+import { databaseRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
-import { join } from "path-ts"
 
 import type { RegionDatabases } from "#geocode/regions"
 
@@ -73,9 +73,15 @@ export function supportedOvertureCountries(): string[] {
 /**
  * Where a country's national address-point database lives: beside the US per-state databases,
  * since both are Overture addresses keyed by the shared schema.
+ *
+ * It resolves under the data root's `db/` group through {@link databaseRootPath},
+ * which is where `selectAddressPointsDB` reads the per-state databases from.
+ * Composing `address-points` against the data root directly answered a directory that does
+ * not exist, and the caller below treats an absent file as a country without a rooftop tier:
+ * Taiwan's 3.1 GB `address-points-tw.db` is on disk and read as absent.
  */
 export function nationalAddressPointsPath(dataRoot: string, countryCode: string): string {
-	return join(dataRoot, "address-points", `address-points-${countryCode.toLowerCase()}.db`)
+	return String(databaseRootPath(dataRoot, "address-points", `address-points-${countryCode.toLowerCase()}.db`))
 }
 
 /**

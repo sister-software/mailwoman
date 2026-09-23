@@ -69,15 +69,18 @@ describe("takeInventory — the four states stay distinct", () => {
 	it("separates manifested, unprovenanced, foreign and unreadable", async () => {
 		const root = await dataRoot()
 
-		await makeDirectories(join(root, "poi"))
-		await makeDirectories(join(root, "wof"))
+		// `db/<layer>/<file>.db`, three segments down, which is where the data root's
+		// database group puts every artifact.
+		// Planting at two would pass whatever the walk's depth bound is.
+		await makeDirectories(join(root, "db", "poi"))
+		await makeDirectories(join(root, "db", "wof"))
 		await makeDirectories(join(root, "pelias-rig", "deep"))
 
-		await manifested(join(root, "poi", "poi.db"), "poi", "mailwoman gazetteer build poi")
-		bare(join(root, "wof", "candidate.db"))
+		await manifested(join(root, "db", "poi", "poi.db"), "poi", "mailwoman gazetteer build poi")
+		bare(join(root, "db", "wof", "candidate.db"))
 		// Not SQLite at all.
 		// "We could not look" must not read as "it has no manifest".
-		await writeLocalTextFile("this is not a database", join(root, "wof", "broken.db"))
+		await writeLocalTextFile("this is not a database", join(root, "db", "wof", "broken.db"))
 
 		const report = await takeInventory({ dataRoot: root })
 
@@ -90,9 +93,9 @@ describe("takeInventory — the four states stay distinct", () => {
 		const root = await dataRoot()
 
 		await makeDirectories(join(root, "pelias-rig", "data"))
-		await makeDirectories(join(root, "poi"))
+		await makeDirectories(join(root, "db", "poi"))
 		bare(join(root, "pelias-rig", "data", "theirs.db"))
-		await manifested(join(root, "poi", "poi.db"), "poi", "mailwoman gazetteer build poi")
+		await manifested(join(root, "db", "poi", "poi.db"), "poi", "mailwoman gazetteer build poi")
 
 		const report = await takeInventory({ dataRoot: root })
 
@@ -107,14 +110,18 @@ describe("takeInventory — the four states stay distinct", () => {
 	it("reports a symlinked artifact's target, because the link IS the choice", async () => {
 		const root = await dataRoot()
 
-		await makeDirectories(join(root, "wof"))
-		bare(join(root, "wof", "candidate-2026-08-15.db"))
-		await createSymbolicLink(join(root, "wof", "candidate-2026-08-15.db"), join(root, "wof", "candidate.db"))
+		await makeDirectories(join(root, "db", "wof"))
+		bare(join(root, "db", "wof", "candidate-2026-08-15.db"))
+
+		await createSymbolicLink(
+			join(root, "db", "wof", "candidate-2026-08-15.db"),
+			join(root, "db", "wof", "candidate.db")
+		)
 
 		const report = await takeInventory({ dataRoot: root })
-		const link = report.entries.find((e) => e.path === "wof/candidate.db")
+		const link = report.entries.find((e) => e.path === "db/wof/candidate.db")
 
-		expect(link?.linkTarget).toBe("wof/candidate-2026-08-15.db")
+		expect(link?.linkTarget).toBe("db/wof/candidate-2026-08-15.db")
 		// And it still reports the size of what it points at rather than the size of the link.
 		expect(link?.bytes).toBeGreaterThan(0)
 	})
@@ -128,6 +135,22 @@ describe("takeInventory — the four states stay distinct", () => {
 		expect((await takeInventory({ dataRoot: root, maxDepth: 1 })).entries).toHaveLength(0)
 		expect((await takeInventory({ dataRoot: root, maxDepth: 3 })).entries).toHaveLength(1)
 		expect((await takeInventory({ dataRoot: root, maxDepth: 1 })).maxDepth).toBe(1)
+	})
+
+	it("reaches a database at the depth the data root's db/ group puts it", async () => {
+		// `db/<layer>/<file>.db` is three segments from the root.
+		// The default bound was two, which stopped the walk at `db/<layer>/`
+		// and made the report describe a data root holding no database at all —
+		// a coverage reading produced by the walk rather than by the disk.
+		const root = await dataRoot()
+
+		await makeDirectories(join(root, "db", "wof"))
+		bare(join(root, "db", "wof", "candidate.db"))
+
+		const report = await takeInventory({ dataRoot: root })
+
+		expect(report.entries.map((entry) => entry.path)).toEqual(["db/wof/candidate.db"])
+		expect(report.maxDepth).toBeGreaterThanOrEqual(3)
 	})
 })
 
@@ -155,11 +178,11 @@ describe("the reported rate", () => {
 	it("excludes foreign and unreadable from the denominator, so the number is improvable", async () => {
 		const root = await dataRoot()
 
-		await makeDirectories(join(root, "poi"))
-		await makeDirectories(join(root, "wof"))
-		await manifested(join(root, "poi", "poi.db"), "poi", "cmd")
-		bare(join(root, "wof", "a.db"))
-		await writeLocalTextFile("nope", join(root, "wof", "junk.db"))
+		await makeDirectories(join(root, "db", "poi"))
+		await makeDirectories(join(root, "db", "wof"))
+		await manifested(join(root, "db", "poi", "poi.db"), "poi", "cmd")
+		bare(join(root, "db", "wof", "a.db"))
+		await writeLocalTextFile("nope", join(root, "db", "wof", "junk.db"))
 
 		const sentence = inventorySentence(await takeInventory({ dataRoot: root }))
 
