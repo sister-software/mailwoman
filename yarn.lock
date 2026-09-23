@@ -6385,6 +6385,7 @@ __metadata:
     "@mailwoman/license-worker": "workspace:*"
     "@mailwoman/release-kit": "workspace:*"
     "@mailwoman/repo-health": "workspace:*"
+    "@mailwoman/storage-kit": "workspace:*"
   bin:
     mwops: ./lib/cli.ts
   languageName: unknown
@@ -6713,6 +6714,17 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     kysely: "npm:^0.29.5"
     path-ts: "npm:^2.4.1"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/storage-kit@workspace:*, @mailwoman/storage-kit@workspace:packages/storage-kit":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/storage-kit@workspace:packages/storage-kit"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    path-ts: "npm:^2.4.1"
+    zod: "npm:^4.5.4"
+    zx: "npm:^8.8.5"
   languageName: unknown
   linkType: soft
 
