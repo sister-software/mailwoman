@@ -27,23 +27,33 @@ afterEach(() => {
 })
 
 test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM database paths under a data root (#920/#977)", () => {
+	// The 2026-09-15 regrouping moved every database artifact under `db/`,
+	// and this test pinned the old prefix as six absolute string literals.
+	// It therefore passed while `wofExtractPaths` named a directory holding nothing,
+	// and `mailwoman geocode` found no resolver database on a data root carrying all six extracts.
+	//
+	// The layout is stated once here and composed with the same path builder the rest of the tree uses,
+	// so a future regrouping fails this assertion in one place instead of drifting from it in six.
+	const extract = (name: string): string => String(join("/data", "db", "wof", name))
+
 	expect(wofExtractPaths("/data")).toEqual([
-		"/data/wof/admin-global-priority.db",
-		"/data/wof/postalcode-us.db",
-		"/data/wof/postalcode-geonames-tail.db",
-		"/data/wof/postalcode-intl.db",
-		"/data/wof/postalcode-nl-pc6.db",
+		extract("admin-global-priority.db"),
+		extract("postalcode-us.db"),
+		extract("postalcode-geonames-tail.db"),
+		extract("postalcode-intl.db"),
+		extract("postalcode-nl-pc6.db"),
 		// Build-local (ODbL): present only on the machine that built it, which is
 		// exactly why it can be listed unconditionally.
 		// Every caller filters with `existsSync`, and that filter is the tier.
-		"/data/wof/postalcode-ni-osm.db",
+		extract("postalcode-ni-osm.db"),
 	])
 })
 
 test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT and threads it into wofExtractPaths", () => {
 	setEnv("MAILWOMAN_DATA_ROOT", "/custom/root")
 	expect(mailwomanDataRoot()).toBe("/custom/root")
-	expect(wofExtractPaths()[0]).toBe("/custom/root/wof/admin-global-priority.db") // default arg uses the env
+	// The default argument reads the env, which is the property under test here rather than the layout.
+	expect(wofExtractPaths()[0]).toBe(String(join("/custom/root", "db", "wof", "admin-global-priority.db")))
 
 	setEnv("MAILWOMAN_DATA_ROOT", DefaultMailwomanPaths.data)
 	expect(mailwomanDataRoot()).toBe(DefaultMailwomanPaths.data)

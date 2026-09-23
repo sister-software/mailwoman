@@ -68,9 +68,20 @@ describe("baseManifestFiles", () => {
 		expect(baseManifestFiles(both)).toEqual([{ path: "new.parquet" }])
 	})
 
-	it("REFUSES a base that lists no files under either key", () => {
-		// Assembling against an unreadable base is the failure this whole function exists to make loud:
-		// the overlay would be written with its own files and nothing else, and read as a complete corpus.
-		expect(() => baseManifestFiles(manifestWith("slices", []))).toThrow(/no files/u)
+	it("REFUSES a manifest that names no file list under either key", () => {
+		// Neither key holds an array, so the manifest says nothing about how many files there are.
+		// Answering an empty list for that reports a corpus of no files, which is the
+		// false absence `the-meaning-of-zero.mdx` refuses.
+		const neither = { corpus_version: "v0.0.0" } as Parameters<typeof baseManifestFiles>[0]
+
+		expect(() => baseManifestFiles(neither)).toThrow(/names no file list/u)
+	})
+
+	it("answers an empty list for a manifest that declares one, because that is a measurement", () => {
+		// `slices: []` says the corpus holds no file, and a census counting zero rows
+		// from it has read the corpus rather than failed to.
+		// The overlay assembler's own requirement for a non-empty base lives in
+		// `assembleOverlayManifest`, which is the caller that has it.
+		expect(baseManifestFiles(manifestWith("slices", []))).toEqual([])
 	})
 })

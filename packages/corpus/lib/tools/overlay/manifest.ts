@@ -90,17 +90,31 @@ interface BaseManifest {
  * The parameter names the two keys this reads and nothing else, because the corpus
  * census passes a manifest it parsed as `Record<string, unknown>` and needs no `counts`
  * or `schema` to ask for the file list.
+ *
+ * AN EMPTY LIST AND A MISSING KEY ARE DIFFERENT READINGS, and only the second is refused.
+ * A manifest whose `slices` is `[]` says the corpus holds no file, and a census counting
+ * zero rows from it has measured the corpus rather than failed to read it.
+ *
+ * A manifest naming its file list under neither key says nothing about how
+ * many files there are, and answering `[]` for that is the false absence
+ * `docs/engineering/reference/the-meaning-of-zero.mdx` refuses.
+ *
+ * A caller that needs a non-empty list says so itself. {@linkcode assembleOverlayManifest}
+ * does, because an overlay whose base carries no file is not an overlay.
  */
 export function baseManifestFiles(manifest: { slices?: unknown; [PRE_RENAME_FILES_KEY]?: unknown }): ManifestFile[] {
 	const slices = manifest.slices
 	const preRename = manifest[PRE_RENAME_FILES_KEY]
-	const files = Array.isArray(slices) && slices.length ? slices : preRename
 
-	if (Array.isArray(files) && files.length) return files as ManifestFile[]
+	if (Array.isArray(slices) && slices.length) return slices as ManifestFile[]
+
+	if (Array.isArray(preRename)) return preRename as ManifestFile[]
+
+	if (Array.isArray(slices)) return slices as ManifestFile[]
 
 	throw new Error(
-		`manifest lists no files under "slices" or the pre-rename key. Answering an empty list here reports a corpus ` +
-			`of zero rows, which reads the same as a corpus that holds none, so the shape is refused instead.`
+		`manifest names no file list: neither "slices" nor the pre-rename key holds an array. An empty list here ` +
+			`would read as a corpus of no files, which is a measurement this manifest does not support.`
 	)
 }
 
@@ -197,6 +211,18 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 
 	const base = await readLocalJSONFile<BaseManifest>(args.base)
 	const baseFiles = baseManifestFiles(base)
+
+	// The reader returns an empty list for a manifest that declares one, because a
+	// census counting zero rows from it has measured the corpus.
+	// An overlay is the other case: it keeps every base file verbatim and adds to them,
+	// so a base carrying none would produce a corpus of only the added files under
+	// a name that claims to extend something.
+	if (!baseFiles.length) {
+		throw new Error(
+			`${args.base} lists no files, so an overlay on it would carry only the ${args.files.length} file(s) added ` +
+				`here while naming itself an extension of that base.`
+		)
+	}
 
 	for (const file of args.files) {
 		if (baseFiles.some((s) => s.source === file.source)) {
