@@ -92,8 +92,8 @@ describe("buildAddressTree", () => {
 })
 
 // Boundary-trim regression coverage.
-// Samples sourced from v0.4.0's post-hoc regression
-// diagnostic (.playpen/control/drafts/v0_4_0-regression-diagnostic.md).
+// Samples sourced from v0.4.0's post-hoc regression diagnostic
+// (v0_4_0-regression-diagnostic.md, written in the training container).
 // The shipped v0.4.0 model occasionally emits BIO spans with leading/trailing punctuation.
 // The decoder now trims the span boundary past non-word characters. start/end tighten in sync
 // so consumers slicing raw[start:end] get the same string as node.value.

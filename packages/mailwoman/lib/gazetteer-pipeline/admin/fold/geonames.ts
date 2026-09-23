@@ -6,7 +6,7 @@
  *   The GeoNames alias fold for the admin gazetteer: the bilingual/alt-name tail (#743/#193 — the
  *   Karjaa↔Karis class, ids @ 9e12). Thin composition over the canonical
  *   `@mailwoman/resolver-wof-sqlite` ingest functions. directory defaults go through `dataRootPath` —
- *   the previous script hardcoded the lab playpen path for the dump dir, which the data-root rule
+ *   the previous script hardcoded an absolute lab path for the dump dir, which the data-root rule
  *   forbids in shipped code.
  *
  *   Not the postal fold. This file carried `postalCountries`/`postalDir` passthroughs to

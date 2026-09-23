@@ -81,7 +81,7 @@
  *   A register that issues an identifier and holds an address somebody filed with it asserts both, in
  *   different fields, and one verdict over the whole source discards the identity it does assign.
  *
- *   License tiers per `docs/licensing-strategy.md` (or the playpen knowledge base mirror at
+ *   License tiers per `docs/licensing-strategy.md` (or the lab knowledge-base mirror at
  *   `docs/docs/projects/mailwoman/licensing-strategy.md`). `openaddresses` is a **Tier-mixed**
  *   source: the downloaded collection includes CC0, CC-BY, OGL, and ODbL/CC-BY-SA rows. The per-row
  *   `LICENSE` filter in the `openaddresses` adapter is essential — Tier-C (ODbL, CC-BY-SA) rows are
