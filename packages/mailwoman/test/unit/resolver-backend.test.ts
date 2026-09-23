@@ -73,16 +73,21 @@ test("resolveCandidateDBPath: returns an explicit/env path only when it exists o
 	expect(await resolveCandidateDBPath()).toBeUndefined() // env path missing
 })
 
-test("resolveCandidateDBPath: falls back to <data-root>/wof/candidate.db, and 'none' pins the FTS backend", async () => {
-	// The fallback is what makes the candidate table the default backend.
-	// Pointed at this file's own directory tree so the convention path is a real
-	// file: `<root>/wof/candidate.db`.
+test("resolveCandidateDBPath: falls back to the convention path under the data root, and 'none' pins the FTS backend", async () => {
+	// The fallback is what makes the candidate table the default backend, so the path
+	// it reaches has to be the one `data pull candidate` writes.
+	// This asserted `<root>/wof/candidate.db` while the 2026-09-15 regrouping moved
+	// the artifact to `<root>/db/wof/`, and the fixture carried the old layout too —
+	// so the pair agreed with each other and with no data root on disk.
+	// `resolveCandidateDBPath()` answered undefined on a host holding the file,
+	// and the resolver fell back to FTS without saying so.
 	const root = resolvePackagePath("mailwoman", "lib", "test-fixtures", "candidate-root")
+	const conventionPath = join(root, "db", "wof", "candidate.db")
 
 	setEnv("MAILWOMAN_DATA_ROOT", root)
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
-	expect(conventionCandidateDBPath()).toBe(join(root, "wof", "candidate.db"))
-	expect(await resolveCandidateDBPath()).toBe(join(root, "wof", "candidate.db"))
+	expect(conventionCandidateDBPath()).toBe(conventionPath)
+	expect(await resolveCandidateDBPath()).toBe(conventionPath)
 
 	// An explicit path still outranks the convention.
 	expect(await resolveCandidateDBPath(THIS_FILE)).toBe(THIS_FILE)
@@ -100,7 +105,7 @@ test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN
 	setEnv("MAILWOMAN_DATA_ROOT", "/no/such/root")
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
 
-	expect(await resolveCandidateDBPath(undefined, root)).toBe(join(root, "wof", "candidate.db"))
+	expect(await resolveCandidateDBPath(undefined, root)).toBe(join(root, "db", "wof", "candidate.db"))
 })
 
 test("loadCapitalIndex prefers the artifact's capital table, falls back to the repo file, and throws with neither (#1880)", async () => {

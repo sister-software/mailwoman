@@ -34,7 +34,7 @@ import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema
 import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, resolvePath, type PathBuilderLike } from "path-ts"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { $public } from "#env"
 
@@ -45,7 +45,13 @@ import { $public } from "#env"
  * when nothing points somewhere else.
  */
 export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanDataRoot()): string {
-	return resolvePath(dataRoot, "wof", "candidate.db")
+	// `db/wof`, not `wof`: the 2026-09-15 regrouping moved every database artifact under `db/`.
+	// It updated the three call sites in `provenance.ts`, `census.ts` and the gazetteer ablation
+	// and missed the two here, which are the ones that pick the resolver backend.
+	// Measured on this host before the repair: this answered `/mnt/mw/wof/candidate.db`,
+	// nothing was there, `resolveCandidateDBPath` answered undefined, and the resolver
+	// fell back to the FTS backend without saying so.
+	return resolvePath(dataRoot, "db", "wof", "candidate.db")
 }
 
 /**
@@ -129,7 +135,9 @@ export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<s
  * reaches the convention path this message names, so no export follows the download.
  */
 export function buildNoGazetteerMessage(opts: { dataRoot: string; docsPath: string }): string {
-	const conventionCandidate = join(opts.dataRoot, "wof", "candidate.db")
+	// The path this message names has to be the one `resolveCandidateDBPath` reaches,
+	// or the guidance sends a reader to a directory the resolver does not read.
+	const conventionCandidate = conventionCandidateDBPath(opts.dataRoot)
 
 	const afterPull = [`  The file lands at ${conventionCandidate} and is auto-detected there — just re-run.`]
 
