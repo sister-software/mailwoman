@@ -1,3 +1,18 @@
+import {
+	constants,
+	createZstdCompress,
+	createZstdDecompress,
+	zstdCompressSync,
+	zstdDecompressSync,
+	type ZstdCompress,
+} from "node:zlib"
+
+/**
+ * The shape a `node:zlib` zstd transform presents: a duplex that is async-iterable
+ * over bytes, which is exactly what a spliterator accepts as a source.
+ */
+type ZlibTransform = ZstdCompress
+
 /**
  * Byte input accepted by the platform compression helpers.
  */
@@ -67,3 +82,42 @@ export function gunzipChunks(source: AsyncIterable<Uint8Array | string>): Readab
  * Everything streamed goes through {@linkcode gunzipChunks}.
  */
 export { crc32, gzipSync } from "node:zlib"
+
+/**
+ * Compresses one bounded input with zstd.
+ *
+ * `node:zlib` rather than a `CompressionStream`, because the web streams take a fixed enum
+ * of formats and zstd is not among them — `new CompressionStream("zstd")` throws on Node 26.
+ */
+export function zstd(input: CompressionInput, level = 6): Uint8Array {
+	return new Uint8Array(zstdCompressSync(inputBytes(input), { params: { [constants.ZSTD_c_compressionLevel]: level } }))
+}
+
+/**
+ * Decompresses one bounded zstd input.
+ */
+export function unzstd(input: CompressionInput): Uint8Array {
+	return new Uint8Array(zstdDecompressSync(inputBytes(input)))
+}
+
+/**
+ * A zstd decompressor as a byte stream, for handing to a spliterator.
+ *
+ * Returned as a `node:stream` duplex rather than a `ReadableStream` because that is what
+ * `AsyncDataResource` already accepts — its `AsyncChunkIterator` arm names "a Node `Readable`
+ * (child-process stdout, a gunzip pipe)" explicitly, and a zlib transform is async-iterable over bytes.
+ * Pipe a file into this and pass the result straight to `JSONSpliterator.fromAsync`;
+ * no adapter belongs in between.
+ *
+ * Nothing here materializes a whole file: a corpus part file is tens of gigabytes decompressed.
+ */
+export function zstdDecompressor(): ZlibTransform {
+	return createZstdDecompress()
+}
+
+/**
+ * A zstd compressor as a byte stream, the counterpart of {@linkcode zstdDecompressor}.
+ */
+export function zstdCompressor(level = 6): ZlibTransform {
+	return createZstdCompress({ params: { [constants.ZSTD_c_compressionLevel]: level } })
+}

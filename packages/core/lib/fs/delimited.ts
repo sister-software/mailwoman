@@ -15,8 +15,13 @@
  *   sits past the first `"` in its dump and vanished from the gazetteer.
  */
 
+import { createReadStream } from "node:fs"
+
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator, TSVSpliterator } from "spliterator"
+import type { AsyncDataResource } from "spliterator"
+
+import { zstdDecompressor } from "#fs/compression"
 
 /**
  * Stream the records of an unquoted tab-separated file.
@@ -79,4 +84,61 @@ export async function readUnquotedTSVChecked(path: PathBuilderLike): Promise<str
 	}
 
 	return rows
+}
+
+/**
+ * The extension that marks a delimited file as zstd-compressed at rest.
+ */
+export const ZSTD_EXTENSION = ".zst"
+
+/**
+ * A byte source for a delimited file, transparently decompressing a `.zst` input.
+ *
+ * **Call this inline at each read, and never hoist the result.** An uncompressed
+ * path is returned unchanged and a spliterator opens it independently every time —
+ * which is what lets {@linkcode readUnquotedTSVChecked} count a file and then read it.
+ * A compressed one becomes a stream, and spliterator's own documentation is blunt
+ * about what that means: `count` notes that "a path or URL is opened independently...
+ * an arbitrary async iterable is inherently consumed."
+ *
+ * Reusing one stream across two passes therefore yields the rows once and nothing the second time,
+ * which a checked reader reports as swallowed data and an unchecked one reports as a smaller file.
+ *
+ * Each call returns a fresh stream, so the count-then-read shape stays correct
+ * as long as the call sits at the point of use.
+ *
+ * What a compressed source gives up is segmentation: `AsyncSpliterator.asManyWorkers`
+ * and `asMany` take "a file path or URL (file handles cannot cross threads)", because
+ * delimiter-aligned `[start, end)` ranges need a seekable source and a zstd frame is not one.
+ * That costs nothing here — spliterator's own guidance is that for `JSON.parse`-per-row
+ * work "threads lose (0.3–0.9x)" and plain sequential `fromAsync` is the right primitive —
+ * and nothing in this repository segments a corpus part file.
+ *
+ * It would matter for a scan-dominated pass over an uncompressed file,
+ * which is the case to leave uncompressed.
+ *
+ * Nothing is buffered either way.
+ * The part files this exists for are tens of gigabytes decompressed.
+ */
+export function delimitedSource(path: PathBuilderLike): AsyncDataResource {
+	if (!String(path).endsWith(ZSTD_EXTENSION)) return path
+
+	return createReadStream(String(path)).pipe(zstdDecompressor())
+}
+
+/**
+ * The path a delimited file is read from, preferring a `.zst` sibling when one exists.
+ *
+ * Lets a corpus be converted one part file at a time: a reader asks for `part-0000.jsonl`
+ * and gets the compressed copy if the conversion has reached it, the plain one if it has not.
+ */
+export async function preferCompressed(path: PathBuilderLike): Promise<PathBuilderLike> {
+	const plain = String(path)
+
+	if (plain.endsWith(ZSTD_EXTENSION)) return path
+
+	const { tryStat } = await import("#fs/readers/stat")
+	const compressed = `${plain}${ZSTD_EXTENSION}`
+
+	return (await tryStat(compressed)) ? compressed : path
 }

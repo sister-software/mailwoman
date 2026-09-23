@@ -16,6 +16,7 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
+import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { join } from "path-ts"
@@ -41,7 +42,7 @@ export interface KryptoniteOverlayOptions {
 }
 
 async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
-	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(jsonl)) {
+	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(delimitedSource(jsonl))) {
 		// Strip sidecar underscore-prefixed fields the generator left behind for debugging.
 		const components = raw["components"] as Record<string, string>
 
