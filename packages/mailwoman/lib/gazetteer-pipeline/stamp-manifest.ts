@@ -36,7 +36,7 @@ import type { PathBuilderLike } from "path-ts"
  * @throws When the database is already sealed, which is the ordering mistake
  * this function exists to make loud.
  */
-export async function stampLayerManifest(path: string, manifest: LayerManifest): Promise<void> {
+export async function stampLayerManifest(path: PathBuilderLike, manifest: LayerManifest): Promise<void> {
 	using kdb = new DatabaseClient<layerschemadatabase>(path)
 
 	await createLayerManifestTable(kdb)

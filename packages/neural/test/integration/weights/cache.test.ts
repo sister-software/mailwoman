@@ -12,10 +12,10 @@
  *   falls through to the cache on every host, lab or CI.
  */
 
+import { cacheRootPath } from "@mailwoman/core/data-root"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { cacheRootPath } from "@mailwoman/core/utils"
 import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "@mailwoman/neural/weights"
 import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"

@@ -6,7 +6,7 @@
  *   admin centroid and the street-level point.
  */
 
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/core/resolver"
 
 import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
@@ -82,7 +82,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// --cascade supersedes them with multi-state per-row selection. --data-root locates
 	// the databases (<root>/address-points/, <root>/interpolation/).
 	const cascadeOn = options.cascade ?? false
-	const dataRoot = options.dataRoot || mailwomanDataRoot()
+	const dataRoot = options.dataRoot || dataRootPath()
 	let cascadeProvider: RegionDatabaseProvider | null = null
 
 	if (cascadeOn) {

@@ -32,7 +32,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { SeededRandom } from "@mailwoman/core/utils"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
 import { isReservedBarePostcode } from "#recipes/bare/postcode/eval"
 import { alignAndWrite, type CorpusRecipe, readCSVRecords, recipeSourceID } from "#recipes/scaffold"
@@ -100,11 +100,11 @@ const SWEDISH_MUNICIPALITIES = [
  * they teach until a Greek source with postcodes exists, but no row here claims to be Greek.
  */
 const SOURCES: PostcodeSource[] = [
-	{ csv: join(EXTRACTED, "cz", "countrywide.csv"), country: "CZ" },
-	{ csv: join(EXTRACTED, "sk", "countrywide.csv"), country: "SK" },
-	{ csv: join(EXTRACTED, "nl", "countrywide.csv"), country: "NL" },
+	{ csv: EXTRACTED("cz", "countrywide.csv"), country: "CZ" },
+	{ csv: EXTRACTED("sk", "countrywide.csv"), country: "SK" },
+	{ csv: EXTRACTED("nl", "countrywide.csv"), country: "NL" },
 	...SWEDISH_MUNICIPALITIES.map((name) => ({
-		csv: join(EXTRACTED, "se", `municipality_of_${name}.csv`),
+		csv: EXTRACTED("se", `municipality_of_${name}.csv`),
 		country: "SE",
 	})),
 ]

@@ -211,7 +211,8 @@ export const spec = {
 
 const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { md5File } = await import("@mailwoman/core/utils")
 		// Both `@mailwoman/neural` subpaths are self-contained — `fst-prior` type-imports from a sibling
 		// and `pair-index-resolver` reaches only `core/types` — so neither load pulls the ONNX runtime.
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")

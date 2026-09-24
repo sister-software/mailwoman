@@ -20,7 +20,6 @@
 
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 
 import { CheckList, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -42,7 +41,7 @@ const GazetteerVerify: CommandComponent<typeof spec> = ({ options }) => {
 		async () => {
 			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel, wofDir } = await import("#gazetteer-pipeline")
 
-			const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
+			const dbPath = options.db ?? wofDir("admin-global-priority.db")
 
 			console.error(`Verifying ${dbPath}...`)
 

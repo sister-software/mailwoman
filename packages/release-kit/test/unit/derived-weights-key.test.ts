@@ -184,35 +184,35 @@ describe("derivedStoreServeViolation — the serve-time floor (#1528)", () => {
 	})
 
 	it("refuses the #1528 reproduction: an empty GB binary is never a valid entry", async () => {
-		const path = join(dir, "postcode-gb.bin")
+		const path = dir("postcode-gb.bin")
 		await writeLocalFile(pcb1(0), path)
 
 		expect(await derivedStoreServeViolation("postcode-gb.bin", path)).toMatch(/below the GB floor/)
 	})
 
 	it("refuses a collapsed FR binary below its calibrated floor", async () => {
-		const path = join(dir, "postcode-fr.bin")
+		const path = dir("postcode-fr.bin")
 		await writeLocalFile(pcb1(500), path)
 
 		expect(await derivedStoreServeViolation("postcode-fr.bin", path)).toMatch(/below the FR floor of 13,000/)
 	})
 
 	it("serves a GB binary at outward granularity — the LOWEST GB floor is the serve check", async () => {
-		const path = join(dir, "postcode-gb.bin")
+		const path = dir("postcode-gb.bin")
 		await writeLocalFile(pcb1(1500), path)
 
 		expect(await derivedStoreServeViolation("postcode-gb.bin", path)).toBeNull()
 	})
 
 	it("refuses bytes that are not a PCB1 at all", async () => {
-		const path = join(dir, "postcode-de.bin")
+		const path = dir("postcode-de.bin")
 		await writeLocalBuffer(Buffer.from("not a binary"), path)
 
 		expect(await derivedStoreServeViolation("postcode-de.bin", path)).toMatch(/not a PCB1/)
 	})
 
 	it("passes non-postcode entries untouched — pair indexes validate their own header on load", async () => {
-		const path = join(dir, "pair-index-gb.bin")
+		const path = dir("pair-index-gb.bin")
 		await writeLocalBuffer(Buffer.from("anything"), path)
 
 		expect(await derivedStoreServeViolation("pair-index-gb.bin", path)).toBeNull()

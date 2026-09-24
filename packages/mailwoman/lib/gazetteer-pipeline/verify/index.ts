@@ -21,6 +21,7 @@
 
 import { tableExists } from "@mailwoman/sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { DEFAULT_VERIFY_BASELINE } from "#gazetteer-pipeline/verify/baseline"
 
@@ -214,7 +215,7 @@ export const REVERSE_PANEL_CASES: ReadonlyArray<readonly [string, number, number
  * Opens the DB read-only.
  * Lazy-imports the resolver (an optional peer).
  */
-export async function verifyReversePanel(adminDBPath: string): Promise<VerifyResult> {
+export async function verifyReversePanel(adminDBPath: PathBuilderLike): Promise<VerifyResult> {
 	const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
 	using rg = new WOFReverseGeocoder({ adminDBPath })
 	const checks: VerifyCheckResult[] = []

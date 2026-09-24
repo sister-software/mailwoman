@@ -24,7 +24,7 @@
  *   [--country JP] [--rows 300] [--seed 42] [--normalize false] [--tolerance-km 15] [--trace 2] [--json <out>]
  */
 
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 } from "@mailwoman/core/random"
@@ -112,7 +112,7 @@ async function main(): Promise<void> {
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
 	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = await createResolverBackend(mod, { dataRoot: mailwomanDataRoot(), wofPaths: [] })
+	const lookup = await createResolverBackend(mod, { dataRoot: dataRootPath(), wofPaths: [] })
 	const resolver = instrumented(createWOFResolver(lookup), traceRows > 0)
 
 	const graded: GradedRow[] = []

@@ -38,7 +38,7 @@ export const spec = {
 
 const GazetteerBuildUPRN: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { repoRootPath } = await import("@mailwoman/core/utils")
+		const { repoRootPath } = await import("@mailwoman/core/paths")
 		const { buildSHA } = await import("#gazetteer/stamp-manifest")
 		const { buildUPRNLayer, OPEN_UPRN_COVERAGE_NOTE } = await import("#gazetteer/uprn-layer")
 

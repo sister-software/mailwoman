@@ -34,7 +34,6 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { join } from "path-ts"
 
 import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts"
 
@@ -301,11 +300,11 @@ const packagePath = resolvePackageDirectory("mailwoman")
  * The compiled command tree this generator reads, resolved from this file rather than a
  * working directory so the script behaves the same from the repo root and from `docs/`.
  */
-export const COMMANDS_DIRECTORY = join(packagePath, "out", "commands")
+export const COMMANDS_DIRECTORY = packagePath("out", "commands")
 /**
  * Compiled direct-command directory merged with the filesystem command tree.
  */
-export const NATIVE_COMMANDS_DIRECTORY = join(packagePath, "out", "cli", "native", "commands")
+export const NATIVE_COMMANDS_DIRECTORY = packagePath("out", "cli", "native", "commands")
 
 /**
  * Read the compiled command tree and partition it by {@link DOCUMENTED_GROUPS}.

@@ -125,7 +125,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 			continue
 		}
 
-		await createSymbolicLink(source, join(packageDir, name))
+		await createSymbolicLink(source, packageDir(name))
 
 		linked++
 	}

@@ -26,6 +26,7 @@ import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
+import type { PathBuilderLike } from "path-ts"
 
 import { probeManifest } from "#data/inventory"
 
@@ -36,7 +37,7 @@ import { probeManifest } from "#data/inventory"
  * The admin build had no manifest — and is deliberately distinguishable from an admin
  * build whose manifest says its version is literally unknown.
  */
-export async function ancestorIdentity(adminDBPath: string): Promise<string> {
+export async function ancestorIdentity(adminDBPath: PathBuilderLike): Promise<string> {
 	if (!(await pathExists(adminDBPath))) return "unknown (admin gazetteer not found)"
 
 	const probed = probeManifest(adminDBPath)
@@ -63,7 +64,7 @@ export interface CandidateManifestInput {
 	 *
 	 * Read for its manifest, never for its rows.
 	 */
-	adminDBPath: string
+	adminDBPath: PathBuilderLike
 	/**
 	 * How many postcode and locality databases contributed.
 	 *

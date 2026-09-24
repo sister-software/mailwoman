@@ -15,7 +15,7 @@ import {
 	selectReportable,
 	type DeclarationSite,
 } from "@mailwoman/dev-mcp/symbol/index"
-import { join, type PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -28,22 +28,22 @@ afterAll(() => fixtures.disposeAsync())
 async function seedFixture(): Promise<PathBuilder> {
 	const root = fixtures.use(await temporaryDirectory("mw-symbol-index-")).path
 
-	await makeDirectories(join(root, "packages", "core", "utils"))
-	await makeDirectories(join(root, "packages", "api-kit"))
+	await makeDirectories(root("packages", "core", "utils"))
+	await makeDirectories(root("packages", "api-kit"))
 
 	await writeLocalTextFile(
 		"/** `p` in [0, 100]. */\nexport function percentile(xs: readonly number[], p: number): number | null {\n\treturn null\n}\n",
-		join(root, "packages", "core", "utils", "stats.ts")
+		root("packages", "core", "utils", "stats.ts")
 	)
 
 	await writeLocalTextFile(
 		"/** Deliberately NOT core's. */\nfunction percentile(sorted: number[], p: number): number {\n\tfunction unreachable() {}\n\treturn 0\n}\n",
-		join(root, "packages", "api-kit", "metrics.ts")
+		root("packages", "api-kit", "metrics.ts")
 	)
 
 	await writeLocalTextFile(
 		"export function percentile(sortedAsc: readonly number[], p: number): number {\n\treturn 0\n}\n",
-		join(root, "packages", "api-kit", "panel.tsx")
+		root("packages", "api-kit", "panel.tsx")
 	)
 
 	return root

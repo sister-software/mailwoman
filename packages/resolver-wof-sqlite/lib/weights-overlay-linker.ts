@@ -7,7 +7,7 @@
  * `scripts/link-dev-weights.ts` declares itself in.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
 import {
 	pathExists,
 	readLocalJSONFile,
@@ -28,7 +28,6 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath, repoRootPathBuilder, workspacePathBuilder } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
-import { weightsOverlayPath } from "@mailwoman/core/utils"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 import { $public } from "#env"

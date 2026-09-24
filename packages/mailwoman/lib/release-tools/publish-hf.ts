@@ -39,7 +39,7 @@ import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/read
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { basename } from "path-ts"
+import { basename, type PathBuilderLike } from "path-ts"
 
 import { runProcessOrFail } from "#cli/kit/shared"
 
@@ -304,7 +304,7 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
  *
  * A release that records nothing at all is the one this refuses.
  */
-export async function verifyTrainingProvenance(cardPath: string): Promise<void> {
+export async function verifyTrainingProvenance(cardPath: PathBuilderLike): Promise<void> {
 	const card = await readLocalJSONFile<{ attribution?: unknown; training?: { data_attribution?: unknown } }>(cardPath)
 
 	// Both spellings the two graph packages use.

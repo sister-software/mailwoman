@@ -14,7 +14,7 @@
  *   The wiring mirrors `mailwoman/api-engine.ts` (`createServeEngine`) using only that package's own
  *   exported building blocks — `mailwoman/geocode-core` (`geocodeAddress`, `RegionDatabaseProvider`) and
  *   `mailwoman/resolver-backend` (`createResolverBackend`, `resolveCandidateDBPath`, `wofExtractPaths`,
- *   `mailwomanDataRoot`) — so the geocode path does not drift from the real server. Model weights ship
+ *   `dataRootPath`) — so the geocode path does not drift from the real server. Model weights ship
  *   IN the image via `@mailwoman/neural-weights-en-us`; the gazetteer / resolver DBs are volume-mounted
  *   read-only at `$MAILWOMAN_DATA_ROOT` (the image sets it to `/data`).
  *
@@ -35,8 +35,8 @@ import { createMailwomanAPI } from "@mailwoman/api"
 import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike, BatchResultEntry } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { $public } from "mailwoman/env"
@@ -46,7 +46,7 @@ import { AsyncSequence } from "spliterator"
 
 const PORT = 3000
 const HOST = "0.0.0.0"
-const DATA_ROOT = mailwomanDataRoot()
+const DATA_ROOT = dataRootPath()
 
 /**
  * The WOF extract set to attach: {@link resolveWOFDatabasePaths} selects it

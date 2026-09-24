@@ -121,9 +121,10 @@ export interface ProvenanceOptions {
  * file is reported as absent rather than defaulted.
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
-	const { dataRootPath, mailwomanDataRoot, repoRootPath } = await import("@mailwoman/core/utils")
+	const { dataRootPath } = await import("@mailwoman/core/data-root")
+	const { repoRootPath } = await import("@mailwoman/core/paths")
 
-	const dataRoot = mailwomanDataRoot()
+	const dataRoot = dataRootPath()
 
 	// wof-hot.db belongs to the staged demo rather than the data root.
 	// Use `promotion-eval.ts`'s lookup order so this report states the path that
@@ -214,5 +215,13 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 		)
 	}
 
-	return { dataRoot, artifacts, repos, reposStampPath: reposStampPath.toString(), reposStampAge, buildLog, notes }
+	return {
+		dataRoot: dataRoot.toString(),
+		artifacts,
+		repos,
+		reposStampPath: reposStampPath.toString(),
+		reposStampAge,
+		buildLog,
+		notes,
+	}
 }

@@ -111,7 +111,7 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 
 const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 
 		if (!options.countries) {
 			throw new CommandError("--countries is required (ISO 3166-1 alpha-2, comma-separated, e.g. US,DE,FR)")

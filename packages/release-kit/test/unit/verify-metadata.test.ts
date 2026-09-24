@@ -14,7 +14,6 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { verifyReleaseMetadata } from "@mailwoman/release-kit/release/verify-metadata"
-import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -62,8 +61,8 @@ async function plant(options: { status: string; statusVersion?: string }) {
 	}
 
 	for (const [file, text] of Object.entries(files)) {
-		await makeDirectories(join(repoRoot, file.slice(0, file.lastIndexOf("/"))))
-		await writeLocalTextFile(text, resolvePath(repoRoot, file))
+		await makeDirectories(repoRoot(file.slice(0, file.lastIndexOf("/"))))
+		await writeLocalTextFile(text, repoRoot(file))
 	}
 
 	return repoRoot

@@ -23,10 +23,10 @@ import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { COUNTRIES, IN_MAP_EU, NEW_EU } from "#coarse-placer/tools/country-sets"
 import { defaultDataDir } from "#coarse-placer/tools/paths"
+import { dataRootPath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { makeDirectories, writeLocalJSONLFile } from "#fs/writers"
 import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
-import { dataRootPath } from "#utils"
 
 interface DatasetRow {
 	raw: string

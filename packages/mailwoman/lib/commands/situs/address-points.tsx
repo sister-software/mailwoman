@@ -86,7 +86,7 @@ const BBOX_FIELDS = 4
 const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { swapDatabaseIntoPlace } = await import("@mailwoman/sqlite/sealed-db")
 
 		// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
@@ -407,7 +407,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		// database is: the swap is the moment the artifact becomes live.
 		const { buildSHA, stampLayerManifest } = await import("#gazetteer-pipeline/stamp-manifest")
 		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
-		const { repoRootPath } = await import("@mailwoman/core/utils")
+		const { repoRootPath } = await import("@mailwoman/core/paths")
 
 		await stampLayerManifest(tmpOut, {
 			name: COUNTRY ? `address-points-${COUNTRY.toLowerCase()}` : `address-points-us-${STATE.toLowerCase()}`,

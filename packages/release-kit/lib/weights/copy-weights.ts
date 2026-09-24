@@ -10,7 +10,7 @@
  *
  *   The source model + tokenizer filenames come from `release.config.json` (`weights.model` /
  *   `weights.tokenizer`) so the versioned names live in one place rather than hardcoded here.
- *   They resolve against `mailwomanDataRoot()`, which is the one home for the root itself. Override
+ *   They resolve against `dataRootPath()`, which is the one home for the root itself. Override
  *   at release time via env vars:
  *
  *   - MAILWOMAN_DATA_ROOT: the machine's data dir
@@ -33,7 +33,7 @@
  *   Idempotent. Used by .release-it.json's before:init hook through `mwops release copy-weights`.
  */
 
-import { databaseRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { spawnProcessSync } from "@mailwoman/core/process"
@@ -196,7 +196,7 @@ export async function copyWeights({
 	}
 
 	const config = await readReleaseConfig(repoRoot)
-	const dataRoot = mailwomanDataRoot().toString()
+	const dataRoot = dataRootPath().toString()
 	const softFeed: SoftFeedRecipe = config.softFeed ?? {}
 
 	const context: MaterializationContext = {

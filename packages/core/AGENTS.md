@@ -52,7 +52,7 @@ The tokenizer in `@mailwoman/neural` is the one documented exception. It dynamic
 
 ## Data, package, and repository roots
 
-Use `dataRootPath` and `mailwomanDataRoot` from `@mailwoman/core/data-root` for data artifacts. Use
+Use `dataRootPath` and `dataRootPath` from `@mailwoman/core/data-root` for data artifacts. Use
 `configRootPath` for configuration artifacts. Shipped code and documentation refer to
 `$MAILWOMAN_DATA_ROOT`; they do not contain a lab-specific path.
 

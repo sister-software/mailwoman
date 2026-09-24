@@ -217,7 +217,7 @@ This loop is single-threaded, and on one core it's already at about 300 addresse
 Coordinates need the gazetteer, and that's the ms-scale per-row work worth putting on threads. [`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts) wraps spliterator's `parallelMap`: it normalizes on the main thread and hands each row to a worker that rebuilds its own classifier, resolver, and extracts.
 
 ```ts
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { normalizeCSV } from "@mailwoman/registry"
 import { geocodeStream } from "mailwoman/geocode-stream"
 import { createNewlineWriter } from "spliterator"
@@ -228,7 +228,7 @@ const geocoded = geocodeStream(normalizeCSV("addresses.csv", { mapping }), {
 	mapping,
 	geocode: {
 		wofDBPath: dataRootPath("wof", "admin-global-priority.db").toString(),
-		dataRoot: mailwomanDataRoot().toString(),
+		dataRoot: dataRootPath().toString(),
 		locale: "en-US",
 		country: "US",
 	},

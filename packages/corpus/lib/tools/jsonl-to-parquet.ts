@@ -33,7 +33,7 @@ import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
@@ -134,7 +134,7 @@ export async function jsonlToParquet(
 	// The staging directory owns the write stream, so it is closed before the directory
 	// is removed, and a mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
-	const stagePath = join(staging.path, "rows.ndjson")
+	const stagePath = staging.path("rows.ndjson")
 	const stage = staging.use(openWriteStream(stagePath, { encoding: "utf8" }))
 
 	let rows = 0
@@ -176,7 +176,7 @@ export async function jsonlToParquet(
 	await db.run("SET preserve_insertion_order=true")
 
 	await db.run(
-		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
+		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath.toString())}', ` +
 			`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
 			`TO '${escapeSQLString(output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${rowGroupSize})`
 	)

@@ -42,7 +42,8 @@ export const spec = {
 
 const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
+		const { isoDate } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { CoverageVerdict, triageWOFCurrency } = await import("#gazetteer-pipeline/wof/triage")
 
 		const adminDB = options.admin ?? dataRootPath("db", "wof", "admin-global-priority.db")

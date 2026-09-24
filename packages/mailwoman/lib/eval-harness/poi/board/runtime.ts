@@ -4,10 +4,10 @@
  * @file POI board runtime construction.
  */
 
+import { dataRootPath, wofExtractPaths } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
-import { dataRootPath, wofExtractPaths } from "@mailwoman/core/utils"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"

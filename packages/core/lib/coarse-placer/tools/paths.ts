@@ -10,9 +10,10 @@
 import { type PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { dataRootPath } from "#data-root"
 import { delimitedSource } from "#fs/delimited"
 import { pathExists } from "#fs/readers"
-import { corePackagePathBuilder, dataRootPath, repoRootPathBuilder } from "#utils"
+import { corePackagePathBuilder, repoRootPathBuilder } from "#paths"
 
 /**
  * The Latin off-map test sets, one per outlier builder.

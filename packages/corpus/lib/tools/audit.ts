@@ -38,7 +38,7 @@ const MAX_TOP_TO_RUNNER_UP_RATIO = 1.5
  */
 export interface AuditOpts {
 	corpusDir: PathBuilderLike
-	configPath?: string
+	configPath?: PathBuilderLike
 	/**
 	 * Sample at most N parquet files per split when counting sources.
 	 *
@@ -77,7 +77,7 @@ interface ParsedConfig {
  * The syntax is so small that a regex over the source_weights block is
  * sufficient + keeps the script dep-free.
  */
-async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
+async function parseConfig(configPath: PathBuilderLike): Promise<ParsedConfig | null> {
 	if (!(await pathExists(configPath))) return null
 	const weights: Record<string, number> = {}
 	let inBlock = false
@@ -335,7 +335,7 @@ function formatPct(v: number | "—"): string {
 
 function printReport(
 	corpusDir: PathBuilderLike,
-	configPath: string | undefined,
+	configPath: PathBuilderLike | undefined,
 	stats: FileCountStats,
 	rows: AuditRow[]
 ): void {

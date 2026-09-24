@@ -69,7 +69,7 @@ already exists.
 ## The four finding axes
 
 1. **Declared-home violation** — logic reimplemented locally when `AGENTS.md` names an owning module.
-   Register: `APIClient`, `dataRootPath`/`mailwomanDataRoot`, `core/env`, `cli-kit`, `test-kit`,
+   Register: `APIClient`, `dataRootPath`/`dataRootPath`, `core/env`, `cli-kit`, `test-kit`,
    Kysely `DatabaseClient` + the co-located schema builders, `@mailwoman/spatial`,
    `@mailwoman/annotations`, `api-kit`.
 

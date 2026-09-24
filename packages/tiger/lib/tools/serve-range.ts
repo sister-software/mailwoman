@@ -13,9 +13,9 @@
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { statPath, type Stats } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { extname, join, normalize } from "path-ts"
 
 /**

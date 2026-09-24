@@ -36,6 +36,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 
 import type { Phase2Comparability, Phase2Counts, Phase2Verdict } from "#eval-harness/phase-2-decision/outcomes"
 import { definitionContentHash, loadFrozenDefinition, preregistrationPath } from "#eval-harness/preregistration"
@@ -712,8 +713,8 @@ export function auditPhase2Definition(definition: Phase2DecisionDefinition): str
  * A caller never receives a definition it may only partly trust.
  */
 export async function loadPhase2Definition(
-	definitionPath: string = PHASE2_DEFINITION_PATH,
-	freezePath: string = PHASE2_FREEZE_PATH
+	definitionPath: PathBuilderLike = PHASE2_DEFINITION_PATH,
+	freezePath: PathBuilderLike = PHASE2_FREEZE_PATH
 ): Promise<Phase2DecisionDefinition> {
 	return loadFrozenDefinition({
 		definitionPath,

@@ -38,7 +38,7 @@ const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 		const { AbbreviationToDirectional, DirectionalToAbbreviationMap, NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } =
 			await import("@mailwoman/codex/us")
 
-		const { repoRootPathBuilder } = await import("@mailwoman/core/utils")
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
 
 		const output = options.out ?? repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json")
 

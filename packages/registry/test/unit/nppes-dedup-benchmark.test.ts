@@ -22,7 +22,6 @@ import {
 	collectPrimaryCoordinates,
 } from "@mailwoman/registry/tools/nppes/truth-grains"
 import type { ResolvedEntity, SourceRecord } from "@mailwoman/registry/types"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 function record(id: string, latitude?: number, longitude?: number): SourceRecord {
@@ -245,7 +244,7 @@ describe("writeOvermergePacket", () => {
 	it("writes only the multi-label clusters and returns their count", async () => {
 		await using dirDirectory = await temporaryDirectory("nppes-packet-")
 		const dir = dirDirectory.path
-		const path = join(dir, "packet.md")
+		const path = dir("packet.md")
 
 		try {
 			const clusters = await writeOvermergePacket(path, {

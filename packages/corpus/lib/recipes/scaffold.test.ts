@@ -15,7 +15,6 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { type CSVRecord, readCSVRecords, readTuples } from "@mailwoman/corpus/recipes/scaffold"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 async function* byteAtATime(csv: string): AsyncGenerator<Uint8Array> {
@@ -94,7 +93,7 @@ describe("readCSVRecords", () => {
 describe("readTuples", () => {
 	it("returns a chainable sequence and skips blank or malformed JSONL records", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-recipe-tuples-")
-		const path = join(scratch.path, "tuples.jsonl")
+		const path = scratch.path("tuples.jsonl")
 
 		await writeLocalTextFile('{"locality":"Paris"}\n\nnot-json\n{"postcode":"75001"}\n', path)
 

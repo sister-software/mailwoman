@@ -10,17 +10,17 @@ import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { isSealed, SealedArtifactError, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
-import { dirname, join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function makeDB(): Promise<string> {
+async function makeDB(): Promise<PathBuilder> {
 	const dir = fixtures.use(await temporaryDirectory("sealed-db-")).path
-	const path = join(dir, "artifact.db")
-	using db = new DatabaseSync(path)
+	const path = dir("artifact.db")
+	using db = new DatabaseSync(path.toString())
 	db.exec("PRAGMA journal_mode = WAL")
 	db.exec("CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT)")
 	db.exec("INSERT INTO t (v) VALUES ('x')")
@@ -34,7 +34,7 @@ describe("sealDatabase", () => {
 		await sealDatabase(path)
 		expect((await statPath(path)).mode & 0o777).toBe(0o444)
 		expect(await isSealed(path)).toBe(true)
-		using db = new DatabaseSync(path, { readOnly: true })
+		using db = new DatabaseSync(path.toString(), { readOnly: true })
 		expect((db.prepare("PRAGMA journal_mode").get() as { journal_mode: string }).journal_mode).toBe("delete")
 	})
 
@@ -73,15 +73,15 @@ describe("openBuiltClient", () => {
 describe("swapDatabaseIntoPlace", () => {
 	it("replaces the prior version and clears the aside copy", async () => {
 		const final = await makeDB()
-		const tmp = join(dirname(final), "replacement.db")
-		const db = new DatabaseSync(tmp)
+		const tmp = final.dirname()("replacement.db")
+		const db = new DatabaseSync(tmp.toString())
 		db.exec("CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT)")
 		db.exec("INSERT INTO t (v) VALUES ('replacement')")
 		db[Symbol.dispose]()
 
 		await swapDatabaseIntoPlace(tmp, final)
 
-		const swapped = new DatabaseSync(final, { readOnly: true })
+		const swapped = new DatabaseSync(final.toString(), { readOnly: true })
 		expect((swapped.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("replacement")
 		swapped[Symbol.dispose]()
 		expect(await pathExists(`${final}.old-${process.pid}`)).toBe(false)
@@ -89,14 +89,14 @@ describe("swapDatabaseIntoPlace", () => {
 
 	it("restores the prior version when the forward rename fails — the slot is never left empty", async () => {
 		const final = await makeDB()
-		const missingTmp = join(dirname(final), "never-built.db")
+		const missingTmp = final.dirname()("never-built.db")
 
 		// A nonexistent tmp makes the forward rename throw after the prior version was
 		// moved aside — the exact crash window the restore closes.
 		await expect(swapDatabaseIntoPlace(missingTmp, final)).rejects.toThrow(/ENOENT/)
 
 		expect(await pathExists(final)).toBe(true)
-		using restored = new DatabaseSync(final, { readOnly: true })
+		using restored = new DatabaseSync(final.toString(), { readOnly: true })
 		expect((restored.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("x")
 	})
 })

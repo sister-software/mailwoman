@@ -54,6 +54,7 @@ import {
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
 import { cellToLatLng } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import { createSoilTables, type SoilDatabase, type SoilSurveyAreaTable } from "#schema"
 import { reduceCells, resolveCells } from "#sdk/cell-tiers"
@@ -152,7 +153,7 @@ export interface BuildSoilOptions {
 	 *
 	 * The build writes beside it and swaps.
 	 */
-	out: string
+	out: PathBuilderLike
 	/**
 	 * The refresh the build ingested — `layer_manifest.version` and `source_vintage`.
 	 */
@@ -343,7 +344,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			const totalCellRows = cells.wholeRows + cells.partialRows
 
 			return {
-				out: options.out,
+				out: options.out.toString(),
 				region: options.region,
 				surveyAreas: options.areas.length,
 				delineations: ingested.delineations,

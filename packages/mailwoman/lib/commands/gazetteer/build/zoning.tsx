@@ -101,7 +101,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			},
 			{ GZT_LICENSE_CONTRADICTION },
 		] = await Promise.all([
-			import("@mailwoman/core/utils"),
+			import("@mailwoman/core/data-root"),
 			import("@mailwoman/zoning/sdk"),
 			import("@mailwoman/zoning/vocabulary"),
 		])

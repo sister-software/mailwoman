@@ -1001,7 +1001,7 @@ describe("resolveTilesPath", () => {
 ```ts
 import { existsSync } from "node:fs"
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 
 export function resolveTilesPath(flagValue?: string): string | null {
 	if (flagValue) return flagValue

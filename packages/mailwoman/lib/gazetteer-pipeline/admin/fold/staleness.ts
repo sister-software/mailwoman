@@ -13,14 +13,16 @@
  *   refused here rather than left to a compare.
  */
 
+import type { PathBuilderLike } from "path-ts"
+
 /**
  * The admin database a fold output was made from, by name: `<x>-geonames.db`
  * or `<x>-geonames-<stamp>.db` → `<x>.db`.
  *
  * Null when the path does not look like a fold output.
  */
-export function foldSourceAdminPath(foldPath: string): string | null {
-	const match = /^(.*)-geonames(?:-[^/]*)?\.db$/u.exec(foldPath)
+export function foldSourceAdminPath(foldPath: PathBuilderLike): string | null {
+	const match = /^(.*)-geonames(?:-[^/]*)?\.db$/u.exec(foldPath.toString())
 
 	return match ? `${match[1]}.db` : null
 }
@@ -39,14 +41,14 @@ export interface FoldStaleness {
  * Null when the fold is at least as new as its source, or when `adminModified` is absent (no source found).
  */
 export function foldStaleness(
-	foldPath: string,
-	adminPath: string,
+	foldPath: PathBuilderLike,
+	adminPath: PathBuilderLike,
 	foldModified: Date,
 	adminModified: Date | null
 ): FoldStaleness | null {
 	if (!adminModified || adminModified.getTime() <= foldModified.getTime()) return null
 
-	return { foldPath, adminPath, foldModified, adminModified }
+	return { foldPath: foldPath.toString(), adminPath: adminPath.toString(), foldModified, adminModified }
 }
 
 /**

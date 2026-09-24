@@ -25,7 +25,7 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -38,7 +38,7 @@ import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable 
 import { initializeTIGERSchema, TIGER_PRAGMAS } from "#sdk/schema"
 
 const CENSUS_HOST = "https://www2.census.gov"
-const DEFAULT_DATA_ROOT = mailwomanDataRoot()
+const DEFAULT_DATA_ROOT = dataRootPath()
 
 /**
  * Supported tiger levels.

@@ -13,7 +13,6 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
 import { writeParquetFile } from "@mailwoman/corpus/parquet/writers"
 import { holdoutComponents, splitOverlaySlice } from "@mailwoman/corpus/tools"
-import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const root = await temporaryDirectory("mw-split-slice-")
@@ -53,7 +52,7 @@ function gbRow(sourceID: string, street: string, locality: string, postcode: str
 
 describe("splitOverlaySlice", () => {
 	it("moves a row whose postcode area the GB holdout names out of the train split", async () => {
-		const input = join(root.path, "part-gb.parquet")
+		const input = root.path("part-gb.parquet")
 
 		await writeParquetFile(
 			[
@@ -74,7 +73,7 @@ describe("splitOverlaySlice", () => {
 	})
 
 	it("keeps a Liverpool postcode in train, because `L` is not one of the holdout's prefixes", async () => {
-		const input = join(root.path, "part-liverpool.parquet")
+		const input = root.path("part-liverpool.parquet")
 
 		await writeParquetFile([gbRow("gb-6", "Hope Street", "Liverpool", "L1 9BP")], input)
 
@@ -86,7 +85,7 @@ describe("splitOverlaySlice", () => {
 	})
 
 	it("writes no file for a split that drew no row", async () => {
-		const input = join(root.path, "part-london.parquet")
+		const input = root.path("part-london.parquet")
 
 		await writeParquetFile([gbRow("gb-7", "Baker Street", "London", "NW1 6XE")], input)
 

@@ -657,7 +657,7 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 				// still passes and every later test in the run would grade against the corrupted file.
 				// Same write-through-the-symlink hazard agents.md documents for `fs.copyFile` in the publish path.
 				if ((await isFile(source)) && entry !== "pair-index-us.bin") {
-					await createSymbolicLink(source, join(fakePackageDir, entry))
+					await createSymbolicLink(source, fakePackageDir(entry))
 				}
 			}
 
@@ -673,7 +673,7 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 					},
 					[{ child: "holland fen", parent: "boston", tag: "dependent_locality", parentTag: "locality" }]
 				),
-				join(fakePackageDir, "pair-index-us.bin")
+				fakePackageDir("pair-index-us.bin")
 			)
 
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})

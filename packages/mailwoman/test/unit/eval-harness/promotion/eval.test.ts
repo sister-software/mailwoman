@@ -17,7 +17,6 @@ import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { listEvalSpecs, resolveThresholdSpecPath, runPromotionEval } from "mailwoman/eval-harness/promotion/eval/index"
-import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -192,11 +191,11 @@ describe("paired weights-caches (#47)", () => {
 
 		await writeLocalFile(
 			kind === "int8" ? `fake-onnx ${salt}\nDynamicQuantizeLinear\n` : `fake-onnx ${salt}\n`,
-			join(pkg, "model.onnx")
+			pkg("model.onnx")
 		)
 
-		await writeLocalTextFile("fake-tokenizer", join(pkg, "tokenizer.model"))
-		await writeLocalJSONFile({ training: { tokenizer_version: "v0.6.0-a0" } }, join(pkg, "model-card.json"))
+		await writeLocalTextFile("fake-tokenizer", pkg("tokenizer.model"))
+		await writeLocalJSONFile({ training: { tokenizer_version: "v0.6.0-a0" } }, pkg("model-card.json"))
 
 		return root.toString()
 	}

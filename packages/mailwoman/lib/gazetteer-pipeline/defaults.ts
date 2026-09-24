@@ -16,6 +16,9 @@
  * 	 TODO: Move most of this to JSON configuration files.
  */
 
+import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
+import type { PathBuilder } from "path-ts"
+
 /**
  * The locales whose WOF GeoJSON repos are cloned + ingested directly (`<repos>/whosonfirst-data*`).
  */
@@ -353,6 +356,22 @@ export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
  * The conventional candidate-build output.
  */
 export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
+
+/**
+ * The conventional admin source the fold copies from.
+ */
+export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
+
+/**
+ * `<data-root>/db/wof`, which holds the admin, candidate and postcode databases.
+ *
+ * It resolves through {@link databaseRootPath}, so the `db/` group has one definition.
+ * The data root is read when a path is requested.
+ *
+ * A caller holding another data root composes `databaseRootPath(root)("wof", …)`.
+ */
+export const wofDir: PathBuilder = databaseRootPath(dataRootPath())("wof")
+
 /**
  * The conventional source of the `importance` column (#28) — a WOF admin database
  * carrying `place_importance`, built by `mailwoman gazetteer importance`.

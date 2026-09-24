@@ -14,6 +14,7 @@
  */
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import type { PathBuilderLike } from "path-ts"
 
 import { DatabaseClient } from "#client"
 import { sealDatabase, swapDatabaseIntoPlace } from "#sealed/db"
@@ -24,7 +25,7 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	 *
 	 * The build writes beside it and swaps.
 	 */
-	out: string
+	out: PathBuilderLike
 	/**
 	 * Create every table the build writes.
 	 *

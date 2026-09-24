@@ -25,6 +25,7 @@
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { compactPostcode, type NSULDatabase } from "#nsul/schema"
 import { prepareAll, prepareGet } from "#sqlite-utils"
@@ -62,7 +63,7 @@ export interface NSULLookupOpts {
 	 *
 	 * Opened read-only.
 	 */
-	databasePath?: string
+	databasePath?: PathBuilderLike
 	/**
 	 * Pre-opened handle (tests / shared connections).
 	 *

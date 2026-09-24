@@ -14,7 +14,6 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
@@ -39,11 +38,10 @@ export const spec = {
 
 const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
 		const { defaultGazetteerVersion, publishGazetteer, wofDir } = await import("#gazetteer-pipeline")
 
-		const root = mailwomanDataRoot()
-		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const candidateDB = args[0] ?? wofDir(DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
 		const uploadScript = repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py")
 

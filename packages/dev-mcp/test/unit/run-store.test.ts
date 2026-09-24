@@ -8,7 +8,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { getRun, listRuns, pruneRuns, putRun, RETENTION_DAYS } from "@mailwoman/dev-mcp/run-store"
 import type { StoredRun } from "@mailwoman/dev-mcp/run-store"
-import { join, type PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -57,7 +57,7 @@ describe("putRun / getRun", () => {
 	it("returns null rather than throwing on a corrupt file", async () => {
 		const dir = await store()
 
-		await writeLocalTextFile('{"run_id":"half"', join(dir, "half.json"))
+		await writeLocalTextFile('{"run_id":"half"', dir("half.json"))
 
 		expect(await getRun("half", dir)).toBeNull()
 	})
@@ -87,7 +87,7 @@ describe("listRuns", () => {
 		const dir = await store()
 
 		await putRun(run("good"), dir)
-		await writeLocalTextFile("not json at all", join(dir, "bad.json"))
+		await writeLocalTextFile("not json at all", dir("bad.json"))
 
 		expect((await listRuns(dir)).map((r) => r.run_id)).toEqual(["good"])
 	})
@@ -96,7 +96,7 @@ describe("listRuns", () => {
 		const dir = await store()
 
 		await putRun(run("good"), dir)
-		await writeLocalTextFile("notes", join(dir, "README.txt"))
+		await writeLocalTextFile("notes", dir("README.txt"))
 
 		expect(await listRuns(dir)).toHaveLength(1)
 	})
@@ -176,7 +176,7 @@ describe("pruneRuns — the retention rule", () => {
 	})
 
 	it("is a no-op on a store that does not exist yet", async () => {
-		expect(await pruneRuns(NOW, join(await store(), "never-created"))).toEqual({
+		expect(await pruneRuns(NOW, (await store())("never-created"))).toEqual({
 			pruned_by_age: [],
 			pruned_by_count: [],
 			kept: 0,

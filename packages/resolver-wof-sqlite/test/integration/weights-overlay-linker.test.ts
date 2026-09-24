@@ -13,17 +13,17 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, setTimestamps, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { md5FileWithSidecar } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function scratchFile(content: string): Promise<string> {
+async function scratchFile(content: string): Promise<PathBuilder> {
 	const root = fixtures.use(await temporaryDirectory("mw-md5-sidecar-")).path
 
-	const path = join(root, "source.bin")
+	const path = root("source.bin")
 
 	await writeLocalFile(content, path)
 

@@ -17,8 +17,8 @@
 import { serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
 import { pyTitle } from "@mailwoman/core"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import {
 	corsBannerLine,
@@ -90,13 +90,13 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
-	const extracts = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
+	const extracts = await RegionDatabaseProvider.create(resolverMod, dataRootPath())
 	const postcodeOfLocality = await createLocalityPostcodeLookup()
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse.
 	// A no-op when the extract isn't on disk (conditioned on existsSync inside the provider),
 	// so the endpoint degrades cleanly.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
-	const banExtracts = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
+	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 
 	const engine: PhotonEngine = {

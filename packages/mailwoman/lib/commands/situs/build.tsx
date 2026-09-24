@@ -151,7 +151,7 @@ interface StateManifestEntry {
 const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { scriptEntryPath } = await import("@mailwoman/core/scripting/utils")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 
 		const outDir = options.outDir ?? dataRootPath("db", "address-points")
 

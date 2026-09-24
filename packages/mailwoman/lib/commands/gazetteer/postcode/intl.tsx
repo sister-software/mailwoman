@@ -365,7 +365,7 @@ async function foldIntoCandidate(
 
 const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 
 		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
 		const out = options.out ?? dataRootPath("db", "wof", "postalcode-geonames-intl.db")

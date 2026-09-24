@@ -8,6 +8,7 @@
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { formatPersonName } from "@mailwoman/record/name"
+import type { PathBuilderLike } from "path-ts"
 
 import type { ResolvedEntity, SourceRecord } from "#index"
 import type { MessyRow } from "#tools/nppes/sample"
@@ -44,7 +45,7 @@ export interface OvermergePacketInput {
  * Per-pair human adjudication is the only instrument that separates model error from
  * yardstick error once the residual is near the measured irreducible ceiling.
  */
-export async function writeOvermergePacket(path: string, input: OvermergePacketInput): Promise<number> {
+export async function writeOvermergePacket(path: PathBuilderLike, input: OvermergePacketInput): Promise<number> {
 	const { entities, rows, recordCount, maxNpis, state, orgNameLabel } = input
 	const rowByID = new Map(rows.map((r) => [r.npi, r]))
 

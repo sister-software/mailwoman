@@ -14,7 +14,7 @@
  *   scrollback. A full listing is 200+ lines, so on any terminal it would.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { repoRootPath } from "@mailwoman/core/paths"
 
@@ -86,7 +86,7 @@ function rollup(entries: readonly InventoryEntry[]): string[] {
 
 const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const dataRoot = options.dataRoot ?? mailwomanDataRoot()
+		const dataRoot = options.dataRoot ?? dataRootPath()
 
 		const report = await takeInventory({
 			dataRoot,

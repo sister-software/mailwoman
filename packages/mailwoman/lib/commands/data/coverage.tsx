@@ -60,7 +60,7 @@ export const spec = {
 const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { censusCoverage, newestManifest, resolveTrainingConfig } = await import("#coverage/census")
-		const { repoRootPath } = await import("@mailwoman/core/utils")
+		const { repoRootPath } = await import("@mailwoman/core/paths")
 		const { readScopeConfig } = await import("@mailwoman/core/scope-config")
 
 		const repoRoot = repoRootPath()

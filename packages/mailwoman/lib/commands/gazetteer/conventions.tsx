@@ -107,7 +107,7 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { assertDatabaseIntegrity } = await import("@mailwoman/sqlite/sealed-db")
 
 		const { BUILTIN_STRATEGY_NAMES } = await import("@mailwoman/resolver-wof-sqlite")

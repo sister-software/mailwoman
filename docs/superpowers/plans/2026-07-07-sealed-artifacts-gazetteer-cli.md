@@ -18,7 +18,7 @@
 - No `npx tsx`; scripts run with bare `node` (type-stripping). Ink commands need `yarn compile` first; run compiled CLI as `node mailwoman/out/cli.js`.
 - Lint/format: `yarn oxlint <paths>` + `yarn oxfmt <paths>` before each commit. `yarn typecheck:scripts` must stay green.
 - Commits reference the tracking issue for this cleanup; end commit messages with the standard co-author trailer.
-- Data root paths go through `mailwomanDataRoot()` / `dataRootPath()` — never hardcode `$MAILWOMAN_DATA_ROOT/...` in shipped code (plan test fixtures use temp dirs).
+- Data root paths go through `dataRootPath()` / `dataRootPath()` — never hardcode `$MAILWOMAN_DATA_ROOT/...` in shipped code (plan test fixtures use temp dirs).
 - All work on a branch `feat/gazetteer-cli-sealed-artifacts` off current `main`.
 
 ---

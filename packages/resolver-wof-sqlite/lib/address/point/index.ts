@@ -17,6 +17,7 @@
 
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { AddressPointDatabase, AddressPointTable } from "#address/point/schema"
 import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
@@ -87,7 +88,10 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * A key like that can steer which row answers but cannot refuse one, so it never contradicts.
 	 * Defaults from the street locale: `"us"` is abbreviated, the rest full.
 	 */
-	constructor(dbPath: string, opts: { streetLocale?: StreetLocale; localityKeys?: "full" | "abbreviated" } = {}) {
+	constructor(
+		dbPath: PathBuilderLike,
+		opts: { streetLocale?: StreetLocale; localityKeys?: "full" | "abbreviated" } = {}
+	) {
 		this.#db = new DatabaseClient<DB>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "us"
 		this.#localityKeys = opts.localityKeys ?? (this.#locale === "us" ? "abbreviated" : "full")

@@ -13,7 +13,7 @@
  *   geocode` uses, and the POI path from `gazetteer build poi`'s own default.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
@@ -22,6 +22,7 @@ import { confirmLicenseKeyPublished, type LicenseKeyPublication } from "@mailwom
 import { checkLicenseStatus, type LicenseStatusAnswer } from "@mailwoman/core/license/status"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { readMailwomanManifest } from "#cli/kit/metadata"
 import {
@@ -197,7 +198,7 @@ async function readEnginesFloor(): Promise<string> {
  * The `<data-root>/db/wof/candidate.db` convention path if it exists on disk —
  * the file a fresh consumer downloads.
  */
-async function defaultConventionCandidatePath(dataRoot: string): Promise<string | undefined> {
+async function defaultConventionCandidatePath(dataRoot: PathBuilderLike): Promise<string | undefined> {
 	if ($public.MAILWOMAN_CANDIDATE_DB === "none") return undefined
 
 	const convention = conventionCandidateDBPath(dataRoot)
@@ -238,7 +239,7 @@ async function readRuntimeLicense(): Promise<string> {
  * The production dependencies — the real filesystem, env, weights resolver, and dynamic imports.
  */
 export async function defaultDoctorDeps(): Promise<DoctorDeps> {
-	const dataRoot = mailwomanDataRoot()
+	const dataRoot = dataRootPath()
 
 	return {
 		exists: pathExists,
@@ -252,7 +253,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		isWritable,
 		resolveWeights: (locale) => resolveWeights({ locale }),
 		weightsPackageName,
-		dataRoot: () => ({ path: dataRoot, fromEnv: dataRoot !== DefaultMailwomanPaths.data }),
+		dataRoot: () => ({ path: dataRoot.toString(), fromEnv: dataRoot.toString() !== DefaultMailwomanPaths.data }),
 		envCandidatePath: async () =>
 			$public.MAILWOMAN_CANDIDATE_DB ? await resolveCandidateDBPath(undefined, dataRoot) : undefined,
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),

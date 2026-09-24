@@ -44,7 +44,7 @@ import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { resolvePath, type PathBuilderLike } from "path-ts"
+import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import { resolverDefaultCountry } from "#country-scope"
 import { geocodeAddress, geocodeParseInputs, parseForGeocode, type GeocodeDeps } from "#geocode/core"
@@ -696,7 +696,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	try {
 		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
-		nationalDatabases = (await BANRegionDatabaseProvider.create(resolvePath(options.dataRoot))).for
+		nationalDatabases = (await BANRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))).for
 	} catch {
 		nationalDatabases = undefined
 	}
@@ -722,7 +722,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	try {
 		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
-		osmProvider = await OSMRegionDatabaseProvider.create(resolvePath(options.dataRoot))
+		osmProvider = await OSMRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))
 	} catch {
 		osmProvider = undefined
 	}

@@ -44,6 +44,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { POPULATION_CORRECTIONS } from "#build/population-corrections"
 import { explodeAliasBags } from "#candidate/alias-bags"
@@ -77,11 +78,11 @@ export interface BuildCandidateOptions {
 	/**
 	 * Source unified admin DB — needs spr, place_population, place_search, place_abbr, ancestors.
 	 */
-	input: string
+	input: PathBuilderLike
 	/**
 	 * Output candidate DB path (overwritten if present).
 	 */
-	output: string
+	output: PathBuilderLike
 	/**
 	 * The capital-status reference entries (#1880) to carry in-artifact.
 	 *

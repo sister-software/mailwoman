@@ -35,7 +35,6 @@ import {
 	type PlacetypePairProbeTrace,
 } from "@mailwoman/neural/placetype"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { join } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -239,7 +238,7 @@ describe("census observability — end-to-end through loadFromWeights", () => {
 		"a wired census fills the trace record and moves nothing else",
 		async () => {
 			const dir = fixtures.use(await temporaryDirectory("mailwoman-census-")).path
-			const censusPath = join(dir, "placetype-census-us.bin")
+			const censusPath = dir("placetype-census-us.bin")
 
 			await writeLocalFile(
 				serializePlacetypeCensus(

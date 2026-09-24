@@ -24,9 +24,10 @@ import { TSVSpliterator } from "spliterator"
 
 import { CoarsePlacer, type CoarsePlacerMeta } from "#coarse-placer/coarse-placer"
 import { shippedModelDir } from "#coarse-placer/tools/paths"
+import { dataRootPath } from "#data-root"
 import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalTextFile } from "#fs/writers"
-import { dataRootPath, formatPercent, median } from "#utils"
+import { formatPercent, median } from "#utils"
 
 /**
  * False-positive rate above which the in-class frontier is judged to have degraded.

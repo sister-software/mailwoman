@@ -75,7 +75,7 @@ export const spec = {
 
 const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 
 		const {
 			buildFloodDatabase,

@@ -17,6 +17,7 @@
  *   passed in.
  */
 
+import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile, readLocalTextFile, statLink } from "@mailwoman/core/fs/readers"
 import {
 	changeMode,
@@ -30,7 +31,7 @@ import {
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
-import { databaseRootPath, isoDate, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { isoDate } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an optional peer dep of mailwoman (geocoding is opt-in) — import it
 // dynamically inside the functions (the geocode.tsx convention) rather than at module load,
 // so that merely loading these commands (e.g. `mailwoman --help`, which eagerly imports every command)
@@ -42,7 +43,7 @@ import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join, resolvePath, type PathBuilderLike } from "path-ts"
+import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import { candidateLayerManifest } from "#gazetteer-pipeline/candidate-manifest"
 import { emitCoverageManifest } from "#gazetteer-pipeline/coverage-manifest"
@@ -132,36 +133,16 @@ export const DEFAULT_POSTCODE_DATABASES = [
 ]
 
 /**
- * The conventional admin source the fold copies from.
- */
-export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
-
-/**
- * `<data-root>/db/wof`, where the admin database, the candidate database,
- * the postcode databases and the `candidate.db` convention symlink live.
- *
- * It resolves through {@link databaseRootPath}, so the `db/` group has one definition
- * and the sixteen callers of this function share it.
- *
- * The return is absolute, which the docstrings above have always claimed: the default root is absolute,
- * and `node:path`'s `join` differed only for a caller passing a relative `--data-root`, for
- * which it produced a cwd-relative path that the sealed-artifact swap then resolved somewhere else.
- */
-export function wofDir(dataRoot: string = mailwomanDataRoot()): string {
-	return databaseRootPath(dataRoot)("wof").toString()
-}
-
-/**
  * `<data-root>/geonames`, the per-country GeoNames dump dir.
  */
-export function geonamesDir(dataRoot: string = mailwomanDataRoot()): string {
+export function geonamesDir(dataRoot: PathBuilderLike = dataRootPath()): string {
 	return resolvePath(dataRoot, "geonames")
 }
 
 /**
  * `<data-root>/geonames-alternate`, the per-country alternateNamesV2 dump dir (#936 language tags).
  */
-export function geonamesAlternateDir(dataRoot: string = mailwomanDataRoot()): string {
+export function geonamesAlternateDir(dataRoot: PathBuilderLike = dataRootPath()): string {
 	return resolvePath(dataRoot, "geonames-alternate")
 }
 
@@ -170,15 +151,15 @@ export function geonamesAlternateDir(dataRoot: string = mailwomanDataRoot()): st
  */
 export async function resolvePostcodeDatabases(
 	databases: readonly string[] = DEFAULT_POSTCODE_DATABASES,
-	dataRoot: string = mailwomanDataRoot()
+	dataRoot: PathBuilderLike = dataRootPath()
 ): Promise<string[]> {
 	const paths: string[] = []
 
 	for (const database of databases) {
-		const path = resolvePath(wofDir(dataRoot), database)
+		const path = databaseRootPath(dataRoot)("wof", database)
 
 		if (await pathExists(path)) {
-			paths.push(path)
+			paths.push(path.toString())
 		}
 	}
 
@@ -210,15 +191,15 @@ export const DEFAULT_LOCALITY_DATABASES: readonly string[] = [
  */
 export async function resolveLocalityDatabases(
 	databases: readonly string[] = DEFAULT_LOCALITY_DATABASES,
-	dataRoot: string = mailwomanDataRoot()
+	dataRoot: PathBuilderLike = dataRootPath()
 ): Promise<string[]> {
 	const paths: string[] = []
 
 	for (const database of databases) {
-		const path = resolvePath(wofDir(dataRoot), database)
+		const path = databaseRootPath(dataRoot)("wof", database)
 
 		if (await pathExists(path)) {
-			paths.push(path)
+			paths.push(path.toString())
 		}
 	}
 
@@ -235,11 +216,11 @@ export async function resolveLocalityDatabases(
  */
 export async function resolveImportanceDB(
 	filename: string = DEFAULT_IMPORTANCE_DB,
-	dataRoot: string = mailwomanDataRoot()
+	dataRoot: PathBuilderLike = dataRootPath()
 ): Promise<string | undefined> {
-	const path = resolvePath(wofDir(dataRoot), filename)
+	const path = databaseRootPath(dataRoot)("wof", filename)
 
-	return (await pathExists(path)) ? path : undefined
+	return (await pathExists(path)) ? path.toString() : undefined
 }
 
 export interface FoldOptions {
@@ -247,13 +228,13 @@ export interface FoldOptions {
 	 * Source admin (unified-WOF) DB.
 	 * Read via the copy, never mutated.
 	 */
-	adminIn: string
+	adminIn: PathBuilderLike
 	/**
 	 * Destination admin DB carrying the folded GeoNames names.
 	 *
 	 * Must differ from `adminIn`.
 	 */
-	adminOut: string
+	adminOut: PathBuilderLike
 	/**
 	 * ISO 3166-1 alpha-2 codes whose GeoNames dumps to fold (default {@link DEFAULT_FOLD_COUNTRIES}).
 	 */
@@ -324,7 +305,7 @@ export interface FoldResult {
  * The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} says otherwise.
  */
 export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResult> {
-	if (opts.adminIn === opts.adminOut) {
+	if (opts.adminIn.toString() === opts.adminOut.toString()) {
 		throw new Error("fold must write a distinct adminOut (build-on-copy, never in place)")
 	}
 
@@ -392,11 +373,11 @@ export interface BuildOptions {
 	/**
 	 * Admin DB to build the candidate from (the folded one for the durable recipe).
 	 */
-	adminDB: string
+	adminDB: PathBuilderLike
 	/**
 	 * Candidate-DB output path.
 	 */
-	out: string
+	out: PathBuilderLike
 	/**
 	 * Absolute postcode-database paths to fold in (default {@link resolvePostcodeDatabases}).
 	 */
@@ -509,9 +490,12 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
  * The nominatim/photon CLIs auto-use this path.
  * Returns the link.
  */
-export async function promoteCandidate(candidateDB: string, dataRoot: string = mailwomanDataRoot()): Promise<string> {
+export async function promoteCandidate(
+	candidateDB: PathBuilderLike,
+	dataRoot: PathBuilderLike = dataRootPath()
+): Promise<string> {
 	if (!(await pathExists(candidateDB))) throw new Error(`candidate DB not found: ${candidateDB}`)
-	const linkPath = join(wofDir(dataRoot), "candidate.db")
+	const linkPath = databaseRootPath(dataRoot)("wof", "candidate.db")
 
 	// Replace any existing pointer (symlink or stray file), never the build it points at.
 	try {
@@ -524,14 +508,14 @@ export async function promoteCandidate(candidateDB: string, dataRoot: string = m
 
 	await createSymbolicLink(candidateDB, linkPath)
 
-	return linkPath
+	return linkPath.toString()
 }
 
 export interface PublishOptions {
 	/**
 	 * Candidate DB to publish.
 	 */
-	candidateDB: string
+	candidateDB: PathBuilderLike
 	/**
 	 * Dated, immutable gazetteer version, e.g. `2026-06-27a` (see {@link defaultGazetteerVersion}).
 	 */
@@ -581,9 +565,9 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 	if (!(await pathExists(opts.uploadScript))) throw new Error(`upload script not found: ${opts.uploadScript}`)
 
 	const prefix = opts.prefix ?? "mailwoman"
-	const versionDir = join(opts.stageDir, "gazetteer", opts.version)
+	const versionDir = resolvePathBuilder(opts.stageDir, "gazetteer", opts.version)
 	await makeDirectories(versionDir)
-	const staged = join(versionDir, "candidate.db")
+	const staged = versionDir("candidate.db")
 
 	try {
 		await removePath(staged)

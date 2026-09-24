@@ -20,7 +20,7 @@
  *   Run: node packages/mailwoman/lib/dev-tools/fr/parse-recall.run.ts
  */
 
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -237,7 +237,7 @@ export async function frParseRecall(
 
 	const rows: FRRow[] = args.fromDB
 		? (() => {
-				const db = new DatabaseClient<OSMAddressPointDatabase>(`${mailwomanDataRoot()}/osm/address-points-fr-fr.db`, {
+				const db = new DatabaseClient<OSMAddressPointDatabase>(`${dataRootPath()}/osm/address-points-fr-fr.db`, {
 					readOnly: true,
 				})
 

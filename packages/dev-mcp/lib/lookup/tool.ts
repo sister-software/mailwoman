@@ -16,7 +16,7 @@
  *   server spends its resident memory, and it spends it on sessions.
  */
 
-import { databaseRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
@@ -28,7 +28,7 @@ import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/pla
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolveCandidateDBPath, resolveWOFDatabasePaths } from "mailwoman/resolver-backend"
-import { basename, resolvePath } from "path-ts"
+import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import {
@@ -101,7 +101,7 @@ export async function runLookup(
 ): Promise<LookupResult | CandidateCompareResult> {
 	const { source, queries } = args
 	const config = args.config ?? {}
-	const dataRoot = config.data_root ?? mailwomanDataRoot()
+	const dataRoot = config.data_root ?? dataRootPath()
 
 	switch (source) {
 		case LookupSource.Normalize: {
@@ -266,7 +266,7 @@ export async function runLookup(
  * but a probe that reported the third as "no path was resolved" would tell someone
  * who typo'd `--candidate-db` that the gazetteer is missing.
  */
-async function resolveCandidateDB(config: EngineConfig, dataRoot: string): Promise<string | undefined> {
+async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | undefined> {
 	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)
 
 	if (resolved || !config.candidate_db || config.candidate_db === "none") return resolved
@@ -315,7 +315,7 @@ const UNAVAILABLE_NOTE =
  * A partial set is reported in the notes, because "three of six extracts" is a
  * different reading of a miss than "all six".
  */
-async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupResult> {
+async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promise<LookupResult> {
 	const paths = resolveWOFDatabasePaths(args.config?.resolve_db, dataRoot)
 	const extracts: WOFExtract<WOFDatabase>[] = []
 	const skipped: string[] = []

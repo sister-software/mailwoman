@@ -13,7 +13,6 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -48,7 +47,8 @@ export const spec = {
 
 const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
 
 		const {
 			buildCandidate,
@@ -62,9 +62,9 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			wofDir,
 		} = await import("#gazetteer-pipeline")
 
-		const root = mailwomanDataRoot()
-		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
-		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const root = dataRootPath()
+		const adminIn = options.admin ?? wofDir(DEFAULT_ADMIN_DB)
+		const out = options.out ?? wofDir(DEFAULT_CANDIDATE_OUT)
 
 		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
 

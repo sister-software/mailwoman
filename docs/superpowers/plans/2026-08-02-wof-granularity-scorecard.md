@@ -790,7 +790,7 @@ Run:
 ```bash
 node --input-type=module -e '
 import { buildGranularityLadder } from "./mailwoman/gazetteer-pipeline/granularity.ts"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 const rows = buildGranularityLadder((dataRootPath("wof", "admin-global-priority.db")))
 console.log("countries:", rows.length)
 for (const cc of ["GB", "IE", "JP", "DE"]) {

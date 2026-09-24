@@ -36,7 +36,7 @@ import {
 	resolveControlRows,
 	type SemanticProbeDefinition,
 } from "mailwoman/eval-harness/semantic-utility/probe"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -67,14 +67,14 @@ const receipt = await readLocalJSONFile<BaselineReceipt>(PROBE_BASELINE_RECEIPT_
 async function scratchPair(
 	mutate: (definition: SemanticProbeDefinition) => void,
 	freezeOverride?: Partial<ProbeFreezeRecord>
-): Promise<{ definitionPath: string; freezePath: string }> {
+): Promise<{ definitionPath: PathBuilder; freezePath: PathBuilder }> {
 	const dir = fixtures.use(await temporaryDirectory("semantic-utility-probe-")).path
 	const copy = await readLocalJSONFile<SemanticProbeDefinition>(PROBE_DEFINITION_PATH)
 
 	mutate(copy)
 
-	const definitionPath = join(dir, "probe-definition.json")
-	const freezePath = join(dir, "probe-freeze.json")
+	const definitionPath = dir("probe-definition.json")
+	const freezePath = dir("probe-freeze.json")
 
 	await writeLocalJSONFile(copy, definitionPath)
 	await writeLocalJSONFile({ ...freeze, ...freezeOverride }, freezePath)

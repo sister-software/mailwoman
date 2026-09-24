@@ -10,11 +10,10 @@
  * or link local binaries into the weights package.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { cacheRootPathBuilder, dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackageDirectory, tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
-import { cacheRootPathBuilder, weightsOverlayPath } from "@mailwoman/core/utils"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
 import { scriptFamilyBase } from "#char-encoder"
@@ -620,7 +619,7 @@ export async function resolvePlacetypeCensusPath(country: string): Promise<PathB
  */
 export async function loadPlacetypeCensus(
 	country: string,
-	explicitPath?: string
+	explicitPath?: PathBuilderLike
 ): Promise<PlacetypeCensusResolver | null> {
 	const path = explicitPath ?? (await resolvePlacetypeCensusPath(country))
 

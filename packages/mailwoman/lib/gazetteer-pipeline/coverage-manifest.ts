@@ -34,6 +34,7 @@ import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resol
 import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite/coverage-manifest-schema"
 import { COUNTRY_BBOX } from "@mailwoman/resolver/plausibility"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Shared source string for the #743 promote measurements.
@@ -130,7 +131,7 @@ export interface EmitCoverageManifestOptions {
 	/**
 	 * The candidate DB under construction — must be pre-seal (a shipped DB is never patched, rebuild instead).
 	 */
-	dbPath: string
+	dbPath: PathBuilderLike
 	/**
 	 * Coverage rows to bake (default {@link MEASURED_COUNTRY_COVERAGE}).
 	 */

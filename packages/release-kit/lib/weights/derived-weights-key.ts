@@ -23,7 +23,7 @@ import { pathExists, readLocalBuffer, statPath } from "@mailwoman/core/fs/reader
 import { createHash } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
-import { join, relative, resolvePath } from "path-ts"
+import { join, type PathBuilderLike, relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -217,7 +217,7 @@ export function derivedWeightsDir(key: string): string {
  */
 const PCB1_HEADER_BYTES = 9
 
-export async function derivedStoreServeViolation(filename: string, path: string): Promise<string | null> {
+export async function derivedStoreServeViolation(filename: string, path: PathBuilderLike): Promise<string | null> {
 	const match = /^postcode-([a-z]{2})\.bin$/.exec(filename)
 
 	if (!match) return null

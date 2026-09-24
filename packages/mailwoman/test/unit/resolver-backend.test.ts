@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
+import { dataRootPath, wofExtractPaths } from "@mailwoman/core/data-root"
 import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { conventionCandidateDBPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { join } from "path-ts"
@@ -49,14 +49,14 @@ test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-O
 	])
 })
 
-test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT and threads it into wofExtractPaths", () => {
+test("dataRootPath: honors MAILWOMAN_DATA_ROOT and threads it into wofExtractPaths", () => {
 	setEnv("MAILWOMAN_DATA_ROOT", "/custom/root")
-	expect(mailwomanDataRoot()).toBe("/custom/root")
+	expect(dataRootPath().toString()).toBe("/custom/root")
 	// The default argument reads the env, which is the property under test here rather than the layout.
 	expect(wofExtractPaths()[0]).toBe(join("/custom/root", "db", "wof", "admin-global-priority.db"))
 
 	setEnv("MAILWOMAN_DATA_ROOT", DefaultMailwomanPaths.data)
-	expect(mailwomanDataRoot()).toBe(DefaultMailwomanPaths.data)
+	expect(dataRootPath().toString()).toBe(DefaultMailwomanPaths.data)
 })
 
 test("resolveCandidateDBPath: returns an explicit/env path only when it exists on disk", async () => {
@@ -117,7 +117,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	const dir = dirDirectory.path
 
 	// An artifact carrying the table: the CR capital only.
-	const artifactPath = join(dir, "candidate.db")
+	const artifactPath = dir("candidate.db")
 	using artifact = new DatabaseClient<CandidateDatabase>(artifactPath)
 
 	await createCapitalTable<CandidateDatabase>(artifact)
@@ -127,7 +127,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 		.run("CR", 9.9333, -84.0833, "national", stringifyJSON(["san jose"]))
 
 	// A repo-style file carrying a different entry (GD), so which source served is observable.
-	const repoPath = join(dir, "capitals-v1.json")
+	const repoPath = dir("capitals-v1.json")
 
 	await writeLocalJSONFile(
 		{
@@ -144,7 +144,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	expect(fromArtifact!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(0)
 
 	// An artifact without the table falls through to the repo file.
-	const barePath = join(dir, "bare.db")
+	const barePath = dir("bare.db")
 
 	new DatabaseClient<CandidateDatabase>(barePath).destroy()
 	const fromRepo = await loadCapitalIndex({ candidateDB: barePath, path: repoPath })
@@ -152,17 +152,15 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	expect(fromRepo!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(2)
 
 	// Neither source: the explicitly-asked-for key must fail loudly rather than no-op.
-	await expect(loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json") })).rejects.toThrow(
-		/capital_tier/
-	)
+	await expect(loadCapitalIndex({ candidateDB: barePath, path: dir("missing.json") })).rejects.toThrow(/capital_tier/)
 
 	// The default-on path degrades on the same absence instead of failing session construction.
 	expect(
-		await loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json"), missing: "degrade" })
+		await loadCapitalIndex({ candidateDB: barePath, path: dir("missing.json"), missing: "degrade" })
 	).toBeUndefined()
 
 	// A reference that exists but is malformed throws under both modes — corruption is a defect, never an absence.
-	const corruptPath = join(dir, "corrupt.json")
+	const corruptPath = dir("corrupt.json")
 
 	await writeLocalJSONFile({ version: 99, entries: [] }, corruptPath)
 	await expect(loadCapitalIndex({ candidateDB: barePath, path: corruptPath, missing: "degrade" })).rejects.toThrow(/v1/)

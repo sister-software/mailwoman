@@ -29,7 +29,7 @@ import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -175,5 +175,5 @@ export async function gazetteerArtifacts(source: PathBuilderLike = dataRootPath(
 	return (await Globerator.files("db", { cwd: wof, absolute: false, recursive: false }).toArray())
 		.filter((name) => !/\.(?:prev\d*|bak)\b/.test(name))
 		.toSorted()
-		.map((name) => join(wof, name))
+		.map((name) => wof(name).toString())
 }

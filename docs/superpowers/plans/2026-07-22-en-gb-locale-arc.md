@@ -268,7 +268,7 @@ Expected: FAIL — `Cannot find module './ppd.ts'`
 import { createReadStream, createWriteStream } from "node:fs"
 import { parseArgs } from "node:util"
 import { CSVSpliterator } from "spliterator"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { titleCaseGB } from "../gb-title-case.ts"
 
 const HOUSE_NUMBER_PATTERN = /^\d+[A-Za-z]?(\s*-\s*\d+[A-Za-z]?)?$/

@@ -27,13 +27,6 @@ export const configRootPath = createPathBuilderResolver<"~env/config-root">(() =
 export const dataRootPath = createPathBuilderResolver<"~env/data-root">(() => $public.MAILWOMAN_DATA_ROOT)
 
 /**
- * The Mailwoman data root as a primitive string.
- */
-export function mailwomanDataRoot(): string {
-	return dataRootPath().toString()
-}
-
-/**
  * A path under the data root's database group, `$MAILWOMAN_DATA_ROOT/db/`.
  *
  * Every built or published SQLite artifact lives under this directory, one subdirectory per
@@ -127,7 +120,7 @@ export function cacheRootPath(...segments: string[]): string {
  * Routing in `pickExtractForPlacetype` sends each postcode query to the extract
  * that claims that country (#920).
  *
- * All paths are under `dataRoot` (default: {@link mailwomanDataRoot}; callers may pass `--data-root`).
+ * All paths are under `dataRoot` (default: {@link dataRootPath}; callers may pass `--data-root`).
  * Returns a fresh array each call.
  *
  * Callers usually filter with `existsSync`, so missing files are skipped.
@@ -141,7 +134,7 @@ export function cacheRootPath(...segments: string[]): string {
  *   A missing file is filtered out.
  *   It is the only GB-claiming extract here, and Code-Point Open is not in this list.
  */
-export function wofExtractPaths(source: PathBuilderLike = mailwomanDataRoot()): string[] {
+export function wofExtractPaths(source: PathBuilderLike = dataRootPath()): string[] {
 	return Object.values(wofExtractPathsByName(source))
 }
 
@@ -187,7 +180,7 @@ export interface WOFExtractPaths {
 /**
  * {@link wofExtractPaths} as a named record, in the same order the runtime attaches them.
  */
-export function wofExtractPathsByName(source: PathBuilderLike = mailwomanDataRoot()): WOFExtractPaths {
+export function wofExtractPathsByName(source: PathBuilderLike = dataRootPath()): WOFExtractPaths {
 	const wof = databaseRootPath(source)("wof")
 
 	return {

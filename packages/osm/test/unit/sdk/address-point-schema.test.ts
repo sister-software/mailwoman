@@ -13,7 +13,6 @@ import {
 	normalizeStreetForKeyLocale,
 } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 describe("OSM address-point layer schema", () => {
@@ -74,7 +73,7 @@ describe("OSM address-point layer schema", () => {
 	it("remains readable through the unchanged shared address-point lookup", async () => {
 		await using dirDirectory = await temporaryDirectory("mailwoman-osm-address-schema-")
 		const dir = dirDirectory.path
-		const path = join(dir, "address-points-fr.db")
+		const path = dir("address-points-fr.db")
 
 		try {
 			using db = new DatabaseClient<OSMAddressPointDatabase>(path)

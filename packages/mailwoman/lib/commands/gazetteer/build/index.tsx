@@ -12,7 +12,6 @@
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
@@ -41,7 +40,7 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 			onPhase: phaseReporter(),
 		})
 
-		const candidateOut = join(wofDir(), DEFAULT_CANDIDATE_OUT)
+		const candidateOut = wofDir(DEFAULT_CANDIDATE_OUT)
 
 		console.error(`▸ build candidate ← ${admin.out}`)
 

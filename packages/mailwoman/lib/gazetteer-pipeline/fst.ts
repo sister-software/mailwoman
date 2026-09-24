@@ -28,11 +28,10 @@
  *   operator-approved after the battery.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { resourceDictionaryPath } from "@mailwoman/core/paths"
+import { resourceDictionaryPathBuilder } from "@mailwoman/core/paths"
 import {
 	buildFSTFromWOF,
 	fstStaleReason,
@@ -43,8 +42,10 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, resolvePath, type PathBuilderLike } from "path-ts"
+import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+
+import { DEFAULT_ADMIN_DB, wofDir } from "#gazetteer-pipeline/defaults"
 
 /**
  * The served Latin-script language tiers (see scope.mdx) — uniform curation set for every locale FST.
@@ -185,14 +186,13 @@ export interface FSTFreshnessRow {
  * Naming a policy for `fst-ja-jp.bin` would report the true-but-useless "(none) → v1.1"
  * on an artifact no command can rebuild, burying the reason that matters.
  */
-export async function checkAdminDerivedFSTFreshness(dbPath: string): Promise<FSTFreshnessRow[]> {
+export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Promise<FSTFreshnessRow[]> {
 	const source = await readWOFSourceIdentity(dbPath)
-	const wofRoot = dataRootPath("db", "wof")
 
 	const rows: FSTFreshnessRow[] = []
 
 	for (const relative of ADMIN_DERIVED_FST_ARTIFACTS) {
-		const path = join(wofRoot, relative)
+		const path = wofDir(relative)
 		const locale = /fst-per-locale\/fst-(?<locale>[a-z]{2}-[a-z]{2})\.bin$/.exec(relative)?.groups?.locale
 		const buildable = locale !== undefined && FST_LOCALES.has(locale)
 
@@ -288,7 +288,7 @@ async function scanDegenerateSurfaces(
 	surfaces: Set<string>
 	stopwordTokens: Set<string>
 }> {
-	const dictionariesDir = resourceDictionaryPath("libpostal")
+	const dictionariesDir = resourceDictionaryPathBuilder("libpostal")
 	const surfaces = new Set<string>()
 	const stopwordTokens = new Set<string>()
 
@@ -297,7 +297,7 @@ async function scanDegenerateSurfaces(
 			["stopwords.txt", true],
 			["street_types.txt", false],
 		] as const) {
-			const path = join(dictionariesDir, lang, file)
+			const path = dictionariesDir(lang, file)
 
 			if (!(await pathExists(path))) continue
 
@@ -341,7 +341,8 @@ async function scanDegenerateSurfaces(
  * a place-surface elsewhere (and, one day, that "paris" is).
  * Primary spr names + all alt names.
  */
-export async function computeSurfaceCountryCounts(dbPath: string): Promise<Map<string, number>> {
+export async function computeSurfaceCountryCounts(source: PathBuilderLike): Promise<Map<string, number>> {
+	const dbPath = resolvePath(source)
 	const { mtimeMs, size } = await statPath(dbPath)
 	const memoKey = `${dbPath}\0${mtimeMs}\0${size}`
 	const hit = surfaceCountryCountsMemo.get(memoKey)
@@ -465,8 +466,8 @@ export interface BuiltLocaleFST {
 
 export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<BuiltLocaleFST[]> {
 	const locales = opts.locales ?? [...FST_LOCALES.keys()]
-	const dbPath = opts.dbPath ?? dataRootPath("db", "wof", "admin-global-priority.db")
-	const outputDir = resolvePath(opts.outputDir ?? dataRootPath("db", "wof", "fst-per-locale-curated"))
+	const dbPath = opts.dbPath ?? wofDir(DEFAULT_ADMIN_DB)
+	const outputDir = resolvePathBuilder(opts.outputDir ?? wofDir("fst-per-locale-curated"))
 	const progress = opts.onProgress ?? (() => {})
 
 	const exclusion = opts.uncurated ? undefined : await loadDegenerateSurfaces()
@@ -480,7 +481,7 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 	// Ambiguity classes (survey #4) ride the curated builds only.
 	// The uncurated control stays a pure pre-curation byte baseline.
 	// One global scan shared by every locale.
-	const surfaceCountryCounts = opts.uncurated ? undefined : await computeSurfaceCountryCounts(dbPath.toString())
+	const surfaceCountryCounts = opts.uncurated ? undefined : await computeSurfaceCountryCounts(dbPath)
 
 	if (surfaceCountryCounts) {
 		progress(`ambiguity: ${surfaceCountryCounts.size} surfaces scanned across all countries`)
@@ -511,13 +512,13 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 			onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
 		})
 
-		const outPath = join(outputDir, `fst-${locale}${opts.uncurated ? ".uncurated" : ""}.bin`)
+		const outPath = outputDir(`fst-${locale}${opts.uncurated ? ".uncurated" : ""}.bin`)
 		const bytes = serializeFST(matcher, provenance)
 		await writeLocalFile(bytes, outPath)
 
 		built.push({
 			locale,
-			path: outPath,
+			path: outPath.toString(),
 			bytes: bytes.length,
 			nameInsertions: provenance.nameInsertions,
 			excludedInsertions: provenance.excludedInsertions ?? 0,

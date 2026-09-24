@@ -17,7 +17,7 @@
 - **`@mailwoman/evidence` has zero runtime dependencies.** Not `@mailwoman/core` rather than `@mailwoman/spatial`. Adding one defeats the reason the workspace exists.
 - **Acronym casing:** whole camelCase components — `parseJSON`, `readID`, `POILookup`. `ID` never `Id`. Enforced by `sister-software/no-title-case-acronym` in `yarn lint:oxlint`.
 - **No raw `process.env` / `process.argv`** — CI-enforced. Use `core/env/schema.ts` + `env-paths`.
-- **Data-root paths go through `@mailwoman/core/utils`** (`dataRootPath`, `mailwomanDataRoot`). Never hard-code `$MAILWOMAN_DATA_ROOT`.
+- **Data-root paths go through `@mailwoman/core/utils`** (`dataRootPath`, `dataRootPath`). Never hard-code `$MAILWOMAN_DATA_ROOT`.
 - **Never hand-assemble a path into another package's install directory.** Use `import.meta.resolve`, a real `exports` subpath, or `dataRootPath`.
 - **Exclusions demote only.** No task in this plan may remove a candidate from a result set.
 - **Run `yarn compile` before any test run** that crosses a workspace boundary — a stale `out/` reads as a broken test.

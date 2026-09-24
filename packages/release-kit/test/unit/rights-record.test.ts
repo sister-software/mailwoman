@@ -23,7 +23,7 @@ import {
 	VersionSeries,
 } from "@mailwoman/release-kit/weights/rights/record"
 import { weightsRightsRecords } from "@mailwoman/release-kit/weights/rights/write"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 interface Fixture {
@@ -32,17 +32,15 @@ interface Fixture {
 	card?: object
 }
 
-async function treeWith(
-	fixtures: readonly Fixture[]
-): Promise<{ root: PathBuilderLike; dispose: () => Promise<void> }> {
+async function treeWith(fixtures: readonly Fixture[]): Promise<{ root: PathBuilder; dispose: () => Promise<void> }> {
 	const directory = await temporaryDirectory("mw-rights-record-")
 
 	for (const fixture of fixtures) {
-		await makeDirectories(join(directory.path, fixture.workspace))
-		await writeLocalJSONFile(fixture.manifest, join(directory.path, fixture.workspace, "package.json"))
+		await makeDirectories(directory.path(fixture.workspace))
+		await writeLocalJSONFile(fixture.manifest, directory.path(fixture.workspace, "package.json"))
 
 		if (fixture.card) {
-			await writeLocalJSONFile(fixture.card, join(directory.path, fixture.workspace, "model-card.json"))
+			await writeLocalJSONFile(fixture.card, directory.path(fixture.workspace, "model-card.json"))
 		}
 	}
 

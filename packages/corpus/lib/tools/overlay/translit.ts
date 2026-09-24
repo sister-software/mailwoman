@@ -28,7 +28,7 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
@@ -58,7 +58,7 @@ export interface TranslitOverlayOptions {
 	 * Prefix the base manifest's file paths currently carry, to be rewritten
 	 * to {@link TranslitOverlayOptions.canonicalPathPrefix}.
 	 *
-	 * Defaults to `mailwomanDataRoot()` with a trailing slash — the root that wrote those paths.
+	 * Defaults to `dataRootPath()` with a trailing slash — the root that wrote those paths.
 	 * Pass it explicitly when translating a manifest generated under a different
 	 * `$MAILWOMAN_DATA_ROOT` than the one you are running with.
 	 */
@@ -136,7 +136,7 @@ export async function buildTranslitOverlay(
 	const corpusVersion = options.corpusVersion ?? "0.4.0"
 	// This is a portable manifest namespace rather than a host filesystem default.
 	const canonicalPathPrefix = options.canonicalPathPrefix ?? "/data/"
-	const legacyPathPrefix = options.legacyPathPrefix ?? `${mailwomanDataRoot()}/`
+	const legacyPathPrefix = options.legacyPathPrefix ?? `${dataRootPath()}/`
 
 	if (!(await pathExists(options.jsonl))) throw new Error(`jsonl not found: ${options.jsonl}`)
 

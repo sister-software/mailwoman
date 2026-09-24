@@ -36,7 +36,7 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
@@ -44,7 +44,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { streamToDisk } from "@mailwoman/core/utils"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Text } from "ink"
-import { basename, dirname, resolvePath } from "path-ts"
+import { basename, dirname, type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	type Check,
@@ -204,7 +204,7 @@ interface PullOutcome {
 
 async function pullBundles(
 	bundleNames: string[],
-	opts: { dryRun: boolean; only?: string; force: boolean; dataRoot: string; host?: string }
+	opts: { dryRun: boolean; only?: string; force: boolean; dataRoot: PathBuilderLike; host?: string }
 ): Promise<PullOutcome> {
 	const { dataRoot } = opts
 	const manifest = await readReleaseManifest(dataRoot)
@@ -347,7 +347,7 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 				throw new CommandError(`mailwoman data pull <bundle...> — known bundles: ${Object.keys(BUNDLES).join(", ")}`)
 			}
 
-			const dataRoot = options.dataRoot ?? mailwomanDataRoot()
+			const dataRoot = options.dataRoot ?? dataRootPath()
 
 			const result = await pullBundles(args, {
 				dryRun: options.dryRun,

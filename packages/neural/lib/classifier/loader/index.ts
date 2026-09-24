@@ -10,6 +10,7 @@
 
 import type { SystemCode } from "@mailwoman/codex"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import type { PathBuilderLike } from "path-ts"
 
 import type { AnchorLookup } from "#anchor-inference"
 import { parseCharVocabulary } from "#char-encoder"
@@ -81,7 +82,7 @@ export async function loadClassifierFromWeights(
 		 *
 		 * A wrong-country file is still refused by the loader's header check.
 		 */
-		placetypeCensusPath?: string
+		placetypeCensusPath?: PathBuilderLike
 		/**
 		 * Override the card's `suppress_gazetteer_near_postcode` declaration —
 		 * the near-postcode gazetteer choreography.

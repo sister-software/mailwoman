@@ -33,6 +33,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	type CaseGrade,
@@ -453,8 +454,8 @@ function auditThresholds(definition: SemanticProbeDefinition): string[] {
  * A caller never receives a definition it may only partly trust.
  */
 export async function loadProbeDefinition(
-	definitionPath: string = PROBE_DEFINITION_PATH,
-	freezePath: string = PROBE_FREEZE_PATH
+	definitionPath: PathBuilderLike = PROBE_DEFINITION_PATH,
+	freezePath: PathBuilderLike = PROBE_FREEZE_PATH
 ): Promise<SemanticProbeDefinition> {
 	return loadFrozenDefinition({
 		definitionPath,

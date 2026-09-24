@@ -22,7 +22,7 @@ import {
 	SANCTIONED_RELEASE_ABSENCES,
 } from "@mailwoman/release-kit/release/stage"
 import { planWeightsMaterialization } from "@mailwoman/release-kit/weights/fetch-hf-weights"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
 import { $ } from "zx"
@@ -46,23 +46,20 @@ describe("checkReleaseListIdentity", () => {
 		await using rootDirectory = await temporaryDirectory("mw-release-identity-")
 		const root = rootDirectory.path
 
-		await writeLocalJSONFile(
-			{ workspaces: ["packages/a", "packages/b", "packages/frozen-one"] },
-			join(root, "package.json")
-		)
+		await writeLocalJSONFile({ workspaces: ["packages/a", "packages/b", "packages/frozen-one"] }, root("package.json"))
 
 		// A workspace the field names must carry a manifest.
 		// The reader refuses a literal that does not.
 		for (const workspace of ["packages/a", "packages/b", "packages/frozen-one"]) {
-			await makeDirectories(join(root, workspace))
-			await writeLocalJSONFile({ name: workspace }, join(root, workspace, "package.json"))
+			await makeDirectories(root(workspace))
+			await writeLocalJSONFile({ name: workspace }, root(workspace, "package.json"))
 		}
 
 		await writeLocalJSONFile(
 			{
 				plugins: { "@release-it-plugins/workspaces": { workspaces: ["packages/a", "packages/b"] } },
 			},
-			join(root, ".release-it.json")
+			root(".release-it.json")
 		)
 
 		const identity = await checkReleaseListIdentity(root)
@@ -104,19 +101,19 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 	 * No yarn project needed — the audit reads the archive, and these fixtures pin
 	 * its refusals without packing a real workspace.
 	 */
-	async function tarballWith(manifest: object, payloadFiles: string[]): Promise<string> {
+	async function tarballWith(manifest: object, payloadFiles: string[]): Promise<PathBuilder> {
 		const dir = fixtures.use(await temporaryDirectory("mw-tarball-fixture-")).path
-		const pkgDir = join(dir, "package")
+		const pkgDir = dir("package")
 
 		await makeDirectories(pkgDir)
-		await writeLocalJSONFile(manifest, join(pkgDir, "package.json"))
+		await writeLocalJSONFile(manifest, pkgDir("package.json"))
 
 		for (const file of payloadFiles) {
-			await makeDirectories(join(pkgDir, ...file.split("/").slice(0, -1)))
-			await writeLocalTextFile("payload", join(pkgDir, file))
+			await makeDirectories(pkgDir(...file.split("/").slice(0, -1)))
+			await writeLocalTextFile("payload", pkgDir(file))
 		}
 
-		const tarball = join(dir, "fixture.tgz")
+		const tarball = dir("fixture.tgz")
 
 		const packed = $.sync({ nothrow: true })`tar czf ${tarball} -C ${dir} package`
 

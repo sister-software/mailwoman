@@ -51,6 +51,7 @@ import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import type { SoilDatabase } from "#schema"
 import { SOIL_LAYER_NAME_PREFIX, SSURGO_PRODUCT_LIMITS } from "#vocabulary"
@@ -209,7 +210,7 @@ export interface SoilLayerIdentity {
 }
 
 export interface SoilCapabilityLookupOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 }
 
 /**
@@ -379,7 +380,7 @@ export class SoilCapabilityLookup implements Disposable {
  */
 function readIdentity(
 	database: DatabaseClient<SoilDatabase>,
-	databasePath: string
+	databasePath: PathBuilderLike
 ): {
 	identity: SoilLayerIdentity
 	definitions: Map<string, string>
@@ -486,7 +487,7 @@ function readIdentity(
 			})),
 			classCodes: [...definitions.keys()],
 			weighting: { code: weighting.code, description: weighting.definition },
-			databasePath,
+			databasePath: databasePath.toString(),
 		},
 		definitions,
 		bounds: areaRows.map((area) => ({

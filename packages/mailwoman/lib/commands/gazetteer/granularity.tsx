@@ -41,7 +41,8 @@ export const spec = {
 
 const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { md5File } = await import("@mailwoman/core/utils")
 		const { bottomsOutAt, buildGranularityLadder } = await import("#gazetteer-pipeline/granularity/index")
 		const { renderGranularityReport } = await import("#gazetteer-pipeline/granularity/report")
 

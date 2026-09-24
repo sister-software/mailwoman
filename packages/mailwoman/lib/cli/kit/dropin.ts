@@ -14,10 +14,10 @@
  */
 
 import { printOpenAPIDocument } from "@mailwoman/api-kit"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { failScript } from "@mailwoman/core/scripting/utils"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { printLicenseNotice, resolveEngineStamp, type ResolvedEngineStamp } from "#cli/kit/engine-stamp"
@@ -118,7 +118,7 @@ export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined
 	const candidateDB = await resolveCandidateDBPath(candidateDBFlag)
 
 	if (!candidateDB && !wofPaths.length) {
-		fail(buildNoGazetteerMessage({ dataRoot: mailwomanDataRoot(), docsPath: GAZETTEER_DOCS_PATH }))
+		fail(buildNoGazetteerMessage({ dataRoot: dataRootPath(), docsPath: GAZETTEER_DOCS_PATH }))
 	}
 
 	return { adminDBPath: wofPaths[0], candidateDB, wofPaths }

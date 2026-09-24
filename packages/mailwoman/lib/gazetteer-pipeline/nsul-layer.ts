@@ -74,7 +74,7 @@ import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spat
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent } from "h3-js"
-import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
+import { dirname, type PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -339,7 +339,7 @@ interface NSULItemRecord {
  * Locate the archive in `sourceDir` and turn its eleven region members into streaming sources,
  * refusing a region set that is not exactly {@link NSUL_REGIONS}.
  */
-export async function openNSULArchive(sourceDir: string): Promise<{
+export async function openNSULArchive(sourceDir: PathBuilderLike): Promise<{
 	archivePath: string
 	archiveName: string
 	vintage: NSULVintage
@@ -361,7 +361,7 @@ export async function openNSULArchive(sourceDir: string): Promise<{
 		throw new Error(`buildNSULLayer: cannot read a vintage out of ${archiveName}`)
 	}
 
-	const archivePath = join(sourceDir, archiveName)
+	const archivePath = resolvePath(sourceDir, archiveName)
 	const members = await listZipEntries(archivePath)
 	const found = new Map<string, string>()
 
@@ -402,7 +402,7 @@ export async function openNSULArchive(sourceDir: string): Promise<{
  *
  * Vintage directories are `yyyy-MM`, so lexical order is chronological order.
  */
-export async function resolveLatestNSULSourceDir(root = dataRootPath("db", "nsul")): Promise<string> {
+export async function resolveLatestNSULSourceDir(root = dataRootPath("db", "nsul")): Promise<PathBuilder> {
 	const candidates = await Globerator.from("*", {
 		cwd: root,
 		absolute: false,
@@ -413,7 +413,7 @@ export async function resolveLatestNSULSourceDir(root = dataRootPath("db", "nsul
 		.toArray()
 
 	for (const name of candidates.toSorted().toReversed()) {
-		const dir = join(root, name)
+		const dir = root(name)
 
 		const hasArchive = await Globerator.from("*", {
 			cwd: dir,
@@ -749,7 +749,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const phase = options.onPhase ?? (() => {})
 	const started = Date.now()
 	const now = options.now ?? new Date()
-	const sourceDir = options.sourceDir ? resolvePath(options.sourceDir) : await resolveLatestNSULSourceDir()
+	const sourceDir = options.sourceDir ? resolvePathBuilder(options.sourceDir) : await resolveLatestNSULSourceDir()
 	const out = options.out ?? dataRootPath("db", "nsul", "nsul.db")
 	const uprnDatabasePath = options.uprnDatabasePath ?? dataRootPath("db", "uprn", "uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? NSUL_MINIMUM_PLAUSIBLE_ROWS
@@ -785,7 +785,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 		}
 	}
 
-	const itemRaw = await readLocalTextFile(join(sourceDir, "item.json")).catch(() => null)
+	const itemRaw = await readLocalTextFile(sourceDir("item.json")).catch(() => null)
 	const item = itemRaw ? tryParsingJSON<NSULItemRecord>(itemRaw) : null
 
 	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
@@ -973,7 +973,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 
 	return {
 		out: out.toString(),
-		sourceDir,
+		sourceDir: sourceDir.toString(),
 		read,
 		inserted,
 		skippedMalformed,

@@ -43,7 +43,7 @@ import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/addres
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { geocodeAddress } from "mailwoman/geocode"
-import { basename, join, resolvePath } from "path-ts"
+import { basename, join, PathBuilder, resolvePath } from "path-ts"
 
 const HERE = import.meta.dirname
 
@@ -132,10 +132,10 @@ if (!dataRoot) {
  * Module-level narrowing does not reach into a function body, so the guard's result
  * is bound once here rather than re-asserted at every use.
  */
-const DATA_ROOT: string = dataRoot
+const DATA_ROOT = PathBuilder.from(dataRoot)
 
-const banPath = join(DATA_ROOT, "ban", "address-points-fr.db")
-const candidatePath = join(DATA_ROOT, "wof", "candidate.db")
+const banPath = DATA_ROOT("ban", "address-points-fr.db")
+const candidatePath = DATA_ROOT("wof", "candidate.db")
 
 /**
  * The committed sample file: the draw's provenance plus the rows it produced.

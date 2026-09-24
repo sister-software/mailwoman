@@ -37,7 +37,8 @@ export const spec = {
 
 const GazetteerVerifyPostcodeCodePoint: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
+		const { isoDate } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 
 		const { runCodePointCheck, formatCodePointCheckReport } =
 			await import("#gazetteer-pipeline/postcode/codepoint/comparison")

@@ -16,7 +16,7 @@
  *   https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -30,7 +30,7 @@ import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "
 const REDISTRICTING_BASE =
 	"https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171"
 
-const DEFAULT_DATA_ROOT = mailwomanDataRoot()
+const DEFAULT_DATA_ROOT = dataRootPath()
 
 /**
  * P.L. 94-171 (2020) pipe-delimited field offsets (0-based).

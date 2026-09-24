@@ -31,7 +31,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -48,13 +48,13 @@ const POINT_C = { uprn: 906_700_601_612, lat: 55.9533, lon: -3.1883 }
 
 const FIXTURE_POINTS = [POINT_A, POINT_B, POINT_C]
 
-let databasePath: string
+let databasePath: PathBuilder
 let lookup: UPRNLookup
 
 beforeAll(async () => {
 	const dir = fixtures.use(await temporaryDirectory("uprn-lookup-")).path
 
-	databasePath = join(dir, "uprn.db")
+	databasePath = dir("uprn.db")
 
 	using kdb = new DatabaseClient<UPRNDatabase>(databasePath)
 	const database = kdb

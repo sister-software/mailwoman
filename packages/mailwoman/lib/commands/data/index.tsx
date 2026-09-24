@@ -15,6 +15,7 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import type { PathBuilderLike } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import { bundleArtifactPath, BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data/bundles"
@@ -49,7 +50,7 @@ export const spec = {
  * The same numbers `data pull --dry-run` plans against, so a reader can budget disk
  * before starting a 41 GB download.
  */
-function listBundles(dataRoot: string): string {
+function listBundles(dataRoot: PathBuilderLike): string {
 	const lines: string[] = ["Downloadable bundles (mailwoman data pull <bundle>)", ""]
 
 	for (const bundle of Object.values(BUNDLES)) {
@@ -85,7 +86,7 @@ function listBundles(dataRoot: string): string {
  * Keeps the reader from having to guess that `pull` and `status` exist,
  * or that `doctor` is the thing that names the gap.
  */
-function overview(dataRoot: string): string {
+function overview(dataRoot: PathBuilderLike): string {
 	return [
 		"mailwoman data — the reference databases geocoding needs",
 		"",
@@ -107,9 +108,9 @@ function overview(dataRoot: string): string {
 
 const DataIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 
-		const dataRoot = mailwomanDataRoot()
+		const dataRoot = dataRootPath()
 
 		return options.list ? listBundles(dataRoot) : overview(dataRoot)
 	})

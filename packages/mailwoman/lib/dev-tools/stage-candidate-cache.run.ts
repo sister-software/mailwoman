@@ -112,7 +112,7 @@ for (const locale of locales) {
 
 	if (!values["dry-run"]) {
 		await makeDirectories(packageDirectory)
-		await createSymbolicLink(manifestPath, join(packageDirectory, "package.json"))
+		await createSymbolicLink(manifestPath, packageDirectory("package.json"))
 	}
 
 	for (const name of declared) {
@@ -127,7 +127,7 @@ for (const locale of locales) {
 		linked += 1
 
 		if (!values["dry-run"]) {
-			await createSymbolicLink(source, join(packageDirectory, name))
+			await createSymbolicLink(source, packageDirectory(name))
 		}
 	}
 

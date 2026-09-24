@@ -15,7 +15,7 @@ import {
 	ingestRows,
 	streamRows,
 } from "@mailwoman/registry/ingest"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -91,10 +91,10 @@ describe("ingestRows", () => {
 	}
 
 	// `streamRows` reads a path, so the fixture goes to disk once for the block.
-	let csvPath: string
+	let csvPath: PathBuilder
 
 	beforeAll(async () => {
-		csvPath = join(fixtures.use(await temporaryDirectory("mw-ingest-")).path, "rows.csv")
+		csvPath = fixtures.use(await temporaryDirectory("mw-ingest-")).path("rows.csv")
 
 		await writeLocalTextFile(CSV, csvPath)
 	})
@@ -139,9 +139,9 @@ describe("ingestRows", () => {
 })
 
 describe("streamRows (lazy delimited ingest)", () => {
-	const dirs: PathBuilderLike[] = []
+	const dirs: PathBuilder[] = []
 
-	const tmp = async (): Promise<PathBuilderLike> => {
+	const tmp = async (): Promise<PathBuilder> => {
 		const d = fixtures.use(await temporaryDirectory("mw-stream-")).path
 		dirs.push(d)
 
@@ -158,7 +158,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("streams a TSV as header-keyed rows, preserving the original header names", async () => {
-		const file = join(await tmp(), "f.tsv")
+		const file = (await tmp())("f.tsv")
 
 		await writeLocalTextFile(
 			"Facility Name\tPhysical Address\tCITY\nAVIR\t214 Jones Rd\tElkhart\nFoo Clinic\t1 Main St\tPalestine\n",
@@ -183,7 +183,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 		// (a 330-col NPPES row collapses to ~40 + misaligns).
 		// Fixed upstream in 3.2.0.
 		// Pinned here because it's fatal if it regresses.
-		const file = join(await tmp(), "f.tsv")
+		const file = (await tmp())("f.tsv")
 		await writeLocalTextFile("npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n", file)
 		const rows: Record<string, string>[] = []
 
@@ -198,7 +198,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 	it("parses quoted fields — embedded delimiters, embedded newlines, doubled quotes (NPPES-style quoting)", async () => {
 		// New with spliterator 3.2.0's end-to-end quote handling.
 		// The previous manual-split implementation assumed unquoted files.
-		const file = join(await tmp(), "f.csv")
+		const file = (await tmp())("f.csv")
 		await writeLocalTextFile('npi,org,city\n123,"Acme, LLC",Portland\n456,"Multi\nLine ""Quoted"" Org",Seattle\n', file)
 		const rows: Record<string, string>[] = []
 
@@ -212,7 +212,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("normalizes CRLF row terminators — no stray \\r on the last column or header keys", async () => {
-		const file = join(await tmp(), "f.csv")
+		const file = (await tmp())("f.csv")
 		await writeLocalTextFile("npi,state\r\n123,NE\r\n", file)
 		const rows: Record<string, string>[] = []
 
@@ -224,7 +224,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("closes the file handle on an early break (no leaked fd)", async () => {
-		const file = join(await tmp(), "f.tsv")
+		const file = (await tmp())("f.tsv")
 		await writeLocalTextFile("a\tb\n1\t2\n3\t4\n5\t6\n", file)
 		let count = 0
 
@@ -246,7 +246,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("threads straight into ingestRows (async-iterable source)", async () => {
-		const file = join(await tmp(), "f.tsv")
+		const file = (await tmp())("f.tsv")
 		await writeLocalTextFile("name\taddress\nJohn Smith\t123 Main St\nMaria Garcia\t50 Elm Ave\n", file)
 		const records = await ingestRows(streamRows(file), { name: "name", address: "address" })
 		expect(records).toHaveLength(2)

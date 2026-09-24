@@ -26,7 +26,7 @@ import {
 	mergeGeographicModelFiles,
 	MODEL_MANIFEST_FILENAME,
 } from "@mailwoman/geographic-model/load"
-import { dirname, join, resolvePath } from "path-ts"
+import { dirname, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -130,7 +130,7 @@ async function writeModelDirectory(files: readonly GeographicModelSourceFile[]):
 	const root = fixtures.use(await temporaryDirectory("geographic-model-")).path
 
 	for (const entry of files) {
-		const path = join(root, entry.path)
+		const path = root(entry.path)
 
 		await makeDirectories(dirname(path))
 		await writeLocalFile(entry.text, path)

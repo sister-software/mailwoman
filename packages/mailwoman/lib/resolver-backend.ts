@@ -19,11 +19,10 @@
  *   (or `--candidate-db none`) pins the FTS backend.
  */
 
-import { databaseRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { databaseRootPath, dataRootPath, wofExtractPaths } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
-import { wofExtractPaths } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -44,7 +43,7 @@ import { $public } from "#env"
  * Where `mailwoman data pull candidate` writes it, and where every caller looks
  * when nothing points somewhere else.
  */
-export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanDataRoot()): string {
+export function conventionCandidateDBPath(dataRoot: PathBuilderLike = dataRootPath()): string {
 	return databaseRootPath(dataRoot)("wof", "candidate.db").toString()
 }
 
@@ -61,7 +60,7 @@ export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanD
  */
 export async function resolveCandidateDBPath(
 	explicit?: string,
-	dataRoot: PathBuilderLike = mailwomanDataRoot()
+	dataRoot: PathBuilderLike = dataRootPath()
 ): Promise<string | undefined> {
 	const pinned = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
 
@@ -89,7 +88,7 @@ export async function resolveCandidateDBPath(
  * silently probes different databases than the runtime on any box where the env is set,
  * which is the exact class of wrong answer a data-source probe exists to rule out.
  */
-export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
+export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilderLike = dataRootPath()): string[] {
 	const raw = explicit ?? $public.MAILWOMAN_WOF_DB
 
 	if (raw) {
@@ -128,7 +127,7 @@ export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<s
  * A bare `data pull candidate` is the whole fix everywhere: {@link resolveCandidateDBPath}
  * reaches the convention path this message names, so no export follows the download.
  */
-export function buildNoGazetteerMessage(opts: { dataRoot: string; docsPath: string }): string {
+export function buildNoGazetteerMessage(opts: { dataRoot: PathBuilder; docsPath: string }): string {
 	// The path this message names has to be the one `resolveCandidateDBPath` reaches,
 	// or the guidance sends a reader to a directory the resolver does not read.
 	const conventionCandidate = conventionCandidateDBPath(opts.dataRoot)
@@ -243,8 +242,8 @@ export function conventionCapitalsPath(): PathBuilder {
  * A corrupt file is a defect, never an absence.
  */
 export async function loadCapitalIndex(opts: {
-	candidateDB?: string
-	path?: string
+	candidateDB?: PathBuilderLike
+	path?: PathBuilderLike
 	missing?: "throw" | "degrade"
 }): Promise<CapitalIndex | undefined> {
 	if (opts.candidateDB && (await pathExists(opts.candidateDB))) {

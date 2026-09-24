@@ -41,9 +41,9 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
-import { type PathBuilderLike, resolvePath } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
-import { DEFAULT_ADMIN_DB, wofDir } from "#gazetteer-pipeline"
+import { DEFAULT_ADMIN_DB, wofDir } from "#gazetteer-pipeline/defaults"
 
 /**
  * The license expression the artifact carries — Overture's theme license and the
@@ -266,7 +266,7 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 	const release = opts.release ?? OVERTURE_ADDRESSES_RELEASE
 	const parquetPath = opts.parquetPath ?? dataRootPath("overture", release, "addresses-tw.parquet")
-	const adminPath = opts.adminPath ?? resolvePath(wofDir(), DEFAULT_ADMIN_DB)
+	const adminPath = opts.adminPath ?? wofDir(DEFAULT_ADMIN_DB)
 	const outPath = opts.out ?? dataRootPath("db", "wof", "localities-tw-districts.db")
 	const tmpPath = `${outPath}.tmp`
 

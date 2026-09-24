@@ -29,7 +29,7 @@ import { CSVSpliterator } from "spliterator"
 
 import { open } from "#fs/readers"
 import { stringifyJSON } from "#json"
-import { resourceDictionaryPath, workspacePath } from "#utils/index"
+import { resourceDictionaryPath, workspacePath } from "#paths"
 
 /**
  * Options for {@linkcode generateLanguageTypes}.

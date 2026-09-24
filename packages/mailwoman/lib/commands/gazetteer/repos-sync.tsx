@@ -57,7 +57,7 @@ const ACTION_MARK: Record<string, string> = {
 const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { join } = await import("path-ts")
-		const { dataRootPath, wofReposPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath, wofReposPath } = await import("@mailwoman/core/data-root")
 		const { auditReposRoot } = await import("#gazetteer-pipeline/repos/audit")
 		const { planReposSync, SyncAction, syncSentence } = await import("#gazetteer-pipeline/repos/sync")
 		const { githubForkProbe, UPSTREAM_ORG } = await import("#gazetteer-pipeline/wof/repo-origin")

@@ -35,9 +35,9 @@ import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { COUNTRIES } from "#coarse-placer/tools/country-sets"
 import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#coarse-placer/tools/outlier-rows"
 import { defaultDataDir } from "#coarse-placer/tools/paths"
+import { dataRootPath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { appendLocalTextFile, writeLocalJSONLFile } from "#fs/writers"
-import { dataRootPath } from "#utils"
 
 interface OaTestRow {
 	raw: string

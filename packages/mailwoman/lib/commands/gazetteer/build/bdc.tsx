@@ -76,7 +76,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 		} = await import("@mailwoman/bdc/sdk")
 
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { parseProviderList } = await import("@mailwoman/filer/sdk")
 
 		// Fail-fast guards — checked before any network/download work starts.

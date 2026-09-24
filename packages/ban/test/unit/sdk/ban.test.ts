@@ -13,7 +13,7 @@ import { cleanLieuDit, extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
 import { streetLocaleForBANCountry, supportedBANCountries } from "@mailwoman/ban/sdk/street-locale"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -30,9 +30,9 @@ function lieuDitRow(id: string, nomLd: string, commune = "Altier"): string {
 	return `${id};;6;;Route de Pomaret;48800;48004;${commune};;;766812;6375458;3.840026;44.474983;entrée;;${nomLd};;;;;1;`
 }
 
-async function fixtureCSV(rows: string[]): Promise<string> {
+async function fixtureCSV(rows: string[]): Promise<PathBuilder> {
 	const dir = fixtures.use(await temporaryDirectory("ban-test-")).path
-	const path = join(dir, "adresses-48.csv")
+	const path = dir("adresses-48.csv")
 	await writeLocalTextFile([HEADER, ...rows], path)
 
 	return path

@@ -18,7 +18,7 @@ import { tempRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -28,8 +28,8 @@ import { describe, expect, it } from "vitest"
  * The layout belongs to the weights package, and a hand-assembled path into it reads
  * a missing artifact as "absent" rather than "looked in the wrong place".
  */
-function stagedModel(cacheName: string): string {
-	return join(weightsCachePackageDir(tempRootPath(cacheName), "en-us"), "model.onnx")
+function stagedModel(cacheName: string): PathBuilder {
+	return weightsCachePackageDir(tempRootPath(cacheName), "en-us")("model.onnx")
 }
 
 const V264 = stagedModel("v264-cache")
@@ -40,7 +40,7 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 	it("reports the browser-runtime cost of the span graph", async () => {
 		const ids = Array.from({ length: 24 }, (_, i) => 100 + i)
 
-		const bench = async (path: string): Promise<{ ms: number; spans: boolean }> => {
+		const bench = async (path: PathBuilder): Promise<{ ms: number; spans: boolean }> => {
 			const runner = await WebONNXRunner.fromBytes(new Uint8Array(await readLocalBuffer(path)), { useWebGPU: false })
 
 			for (let i = 0; i < 8; i++) {

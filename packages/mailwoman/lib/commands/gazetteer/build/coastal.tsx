@@ -77,7 +77,7 @@ export const spec = {
 
 const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 
 		const {
 			assertAttributionUnchanged,

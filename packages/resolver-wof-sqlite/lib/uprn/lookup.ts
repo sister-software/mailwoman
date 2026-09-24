@@ -29,6 +29,7 @@ import { allRows } from "@mailwoman/core/utils"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { gridDisk } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import type { UPRNDatabase } from "#uprn/schema"
 import { uprnFullCell } from "#uprn/schema"
@@ -87,7 +88,7 @@ export interface UPRNLookupOpts {
 	 *
 	 * Opened read-only.
 	 */
-	databasePath?: string
+	databasePath?: PathBuilderLike
 	/**
 	 * Pre-opened handle (tests / shared connections).
 	 *

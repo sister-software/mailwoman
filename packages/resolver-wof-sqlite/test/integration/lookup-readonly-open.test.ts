@@ -18,7 +18,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, type PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -68,7 +68,7 @@ const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lo
  *
  * Writable.
  */
-function seedFixture(path: string): void {
+function seedFixture(path: PathBuilder): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -92,8 +92,8 @@ function seedFixture(path: string): void {
 /**
  * The readOnly option recorded for the main-extract open of `path` (asserts exactly one such open).
  */
-function readOnlyForOpenOf(path: string): boolean | undefined {
-	const opens = spy.opens.filter((o) => o.path === path)
+function readOnlyForOpenOf(path: PathBuilder): boolean | undefined {
+	const opens = spy.opens.filter((o) => o.path === path.toString())
 	expect(opens).toHaveLength(1)
 
 	return opens[0]!.readOnly
@@ -101,11 +101,11 @@ function readOnlyForOpenOf(path: string): boolean | undefined {
 
 describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {
 	let dir: PathBuilder
-	let dbPath: string
+	let dbPath: PathBuilder
 
 	beforeEach(async () => {
 		dir = fixtures.use(await temporaryDirectory("mw-wof-openmode-")).path
-		dbPath = join(dir, "admin-fixture.db")
+		dbPath = dir("admin-fixture.db")
 		seedFixture(dbPath)
 	})
 

@@ -25,7 +25,7 @@ import {
 import { ENGINE_CONFIG_SCHEMA } from "@mailwoman/dev-mcp/tool-kit"
 import { computeTreeFingerprint } from "@mailwoman/dev-mcp/tree-fingerprint"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join, type PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -50,18 +50,18 @@ async function stageCache(
 
 	if (stage === "wrong-shape") return root
 
-	await writeLocalTextFile("not a real model", join(packageDir, "model.onnx"))
-	await writeLocalTextFile("not a real tokenizer", join(packageDir, "tokenizer.model"))
+	await writeLocalTextFile("not a real model", packageDir("model.onnx"))
+	await writeLocalTextFile("not a real tokenizer", packageDir("tokenizer.model"))
 
 	await writeLocalJSONFile(
 		{ files_md5: Object.fromEntries(declared.map((name) => [name, "0"])) },
-		join(packageDir, "model-card.json")
+		packageDir("model-card.json")
 	)
 
 	if (stage === "under-staged") return root
 
 	for (const name of declared) {
-		await writeLocalTextFile("", join(packageDir, name))
+		await writeLocalTextFile("", packageDir(name))
 	}
 
 	return root

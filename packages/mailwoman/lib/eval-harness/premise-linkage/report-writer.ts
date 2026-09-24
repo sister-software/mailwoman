@@ -28,6 +28,7 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilderLike } from "path-ts"
 
 import type { PremiseLinkageReport, PremiseLinkageResultRow } from "#eval-harness/premise-linkage/schema"
 import { PREMISE_LINKAGE_SHAPE_CLASSES } from "#eval-harness/premise-linkage/schema"
@@ -282,7 +283,7 @@ export function publishableReport(input: PremiseLinkagePreflightInput): PremiseL
  * One `writeFile` after every check, so a refusal leaves no file behind.
  */
 export async function writePremiseLinkageReport(
-	path: string,
+	path: PathBuilderLike,
 	input: PremiseLinkagePreflightInput
 ): Promise<PremiseLinkageReport> {
 	const report = publishableReport(input)

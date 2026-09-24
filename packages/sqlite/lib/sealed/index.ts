@@ -12,6 +12,8 @@
  *   seal check against the filesystem before the handle is constructed.
  */
 
+import type { PathBuilderLike } from "path-ts"
+
 import { DatabaseClient } from "#client"
 import type { Database } from "#database-schema"
 import { assertUnsealedForWrite } from "#sealed/db"
@@ -27,7 +29,7 @@ import { assertUnsealedForWrite } from "#sealed/db"
  * so no caller holds a raw handle and no database ends up described by two schemas.
  */
 export async function openBuiltClient<DB = Database>(
-	path: string,
+	path: PathBuilderLike,
 	opts: { write?: boolean } = {}
 ): Promise<DatabaseClient<DB>> {
 	if (opts.write) {

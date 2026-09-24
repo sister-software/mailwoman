@@ -14,7 +14,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 
 import { streetLocaleForCountry, supportedOSMCountries } from "#sdk/street/locale"
 
@@ -40,7 +40,7 @@ export interface OSMExtracts {
  * or it answers `{}` for every country.
  */
 export class OSMRegionDatabaseProvider implements Disposable {
-	readonly #dataRoot: string
+	readonly #dataRoot: PathBuilder
 	readonly #cache = new Map<string, OSMExtracts>()
 	/**
 	 * Extract paths {@linkcode warm} observed on disk — the synchronous existence source `for` consults.
@@ -48,7 +48,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 	readonly #onDisk = new Set<string>()
 	#warmPromise?: Promise<void>
 
-	constructor(dataRoot: string) {
+	constructor(dataRoot: PathBuilder) {
 		this.#dataRoot = dataRoot
 	}
 
@@ -58,7 +58,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 	 * The constructor cannot await the probe, so this static factory does.
 	 * A caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
-	static async create(dataRoot: string): Promise<OSMRegionDatabaseProvider> {
+	static async create(dataRoot: PathBuilder): Promise<OSMRegionDatabaseProvider> {
 		const provider = new OSMRegionDatabaseProvider(dataRoot)
 
 		await provider.warm()
@@ -66,8 +66,8 @@ export class OSMRegionDatabaseProvider implements Disposable {
 		return provider
 	}
 
-	#addressPointsPath(countryCode: string): string {
-		return join(this.#dataRoot, "osm", `address-points-${countryCode}-${countryCode}.db`)
+	#addressPointsPath(countryCode: string): PathBuilder {
+		return this.#dataRoot("osm", `address-points-${countryCode}-${countryCode}.db`)
 	}
 
 	/**
@@ -82,7 +82,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 
 	async #probeExtracts(): Promise<void> {
 		for (const cc of supportedOSMCountries()) {
-			const path = this.#addressPointsPath(cc)
+			const path = this.#addressPointsPath(cc).toString()
 
 			if (await pathExists(path)) {
 				this.#onDisk.add(path)
@@ -106,7 +106,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 
 		// Only countries with a registered street locale and an on-disk extract, never key with the wrong rules.
 		if (supportedOSMCountries().includes(cc)) {
-			const path = this.#addressPointsPath(cc)
+			const path = this.#addressPointsPath(cc).toString()
 
 			if (this.#onDisk.has(path)) {
 				entry = { addressPoints: new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForCountry(cc) }) }

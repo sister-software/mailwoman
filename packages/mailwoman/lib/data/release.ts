@@ -17,7 +17,7 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import type { BundleArtifact } from "#data/bundles"
 
@@ -55,7 +55,7 @@ export async function readReleaseManifest(dataRoot: PathBuilderLike): Promise<Da
  * when present, else the legacy unversioned `<family>-us-<slug>.db`, else null if neither exists.
  */
 export async function resolveDatabasePath(
-	dataRoot: string,
+	dataRoot: PathBuilderLike,
 	family: string,
 	slug: string,
 	manifest: DataReleaseManifest | null
@@ -63,12 +63,12 @@ export async function resolveDatabasePath(
 	const version = manifest?.[family]
 
 	if (version) {
-		const versioned = join(dataRoot, family, `${family}-us-${slug}-${version}.db`)
+		const versioned = resolvePath(dataRoot, family, `${family}-us-${slug}-${version}.db`)
 
 		if (await pathExists(versioned)) return versioned
 	}
 
-	const legacy = join(dataRoot, family, `${family}-us-${slug}.db`)
+	const legacy = resolvePath(dataRoot, family, `${family}-us-${slug}.db`)
 
 	return (await pathExists(legacy)) ? legacy : null
 }
@@ -81,7 +81,7 @@ export async function resolveDatabasePath(
  * Shared by `data pull` and `data status`, so "already present" means the same thing to both.
  */
 export async function existingLocalPath(
-	dataRoot: string,
+	dataRoot: PathBuilderLike,
 	manifest: DataReleaseManifest | null,
 	artifact: BundleArtifact,
 	resolvedAbsPath: string

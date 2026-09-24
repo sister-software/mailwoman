@@ -11,16 +11,17 @@
  *   read-only from the moment it exists.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { ingestWOF, type IngestWOFResult } from "#gazetteer-pipeline/admin/ingest-wof"
+import { wofDir } from "#gazetteer-pipeline/defaults"
 import { buildFTS } from "#gazetteer-pipeline/fts"
 import { type CentroidFillResult, fillPostcodeCentroids } from "#gazetteer-pipeline/postcode/centroid-fills"
 import {
@@ -40,13 +41,13 @@ export interface BuildPostcodeDatabaseOptions {
 	 *
 	 * Default `<data-root>/src/wof-repos`.
 	 */
-	reposDir?: string
+	reposDir?: PathBuilderLike
 	/**
 	 * Output artifact.
 	 *
 	 * Default `<data-root>/db/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * Census zcta Gazetteer file (US pass 1).
 	 *
@@ -64,7 +65,7 @@ export interface BuildPostcodeDatabaseOptions {
 	 *
 	 * Default the live `admin-global-priority.db`.
 	 */
-	adminPath?: string
+	adminPath?: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
 }
 
@@ -85,11 +86,10 @@ export interface BuildPostcodeDatabaseResult {
 export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions): Promise<BuildPostcodeDatabaseResult> {
 	const phase = opts.onPhase ?? (() => {})
 	const cc = opts.country.toLowerCase()
-	const wofDir = dataRootPath("db", "wof")
-	const reposDir = opts.reposDir ?? join(wofDir, "repos")
+	const reposDir = opts.reposDir ?? wofDir("repos")
 	const repoName = wofRepoName("postalcode", cc)
 	const repoDir = await resolveWOFRepo(reposDir, repoName)
-	const out = opts.out ?? join(wofDir, `postalcode-${cc}.REBUILD.db`)
+	const out = PathBuilder.from(opts.out ?? wofDir(`postalcode-${cc}.REBUILD.db`))
 
 	if (!repoDir) {
 		throw new Error(
@@ -156,10 +156,10 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 				phase("fill-zcta", `SKIPPED (${zctaPath} not present)`)
 			}
 
-			const usPostal = join(opts.geonamesPostalDir ?? dataRootPath("geonames-postal"), "US.txt")
+			const usPostal = resolvePathBuilder(opts.geonamesPostalDir ?? dataRootPath("geonames-postal"), "US.txt")
 
 			if (await pathExists(usPostal)) {
-				phase("fill-geonames-us", usPostal)
+				phase("fill-geonames-us", usPostal.toString())
 				geonamesUSFilled = fillGeonamesPlaceholders(db, parseGeonamesCentroids(await readLocalTextFile(usPostal)))
 			}
 		}
@@ -167,7 +167,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		// The general ladder (GeoNames postal → parent-borrow → ancestor fallback).
 		fills = await fillPostcodeCentroids(db, {
 			geonamesDir: opts.geonamesPostalDir ?? dataRootPath("geonames-postal"),
-			adminPath: opts.adminPath ?? join(wofDir, "admin-global-priority.db"),
+			adminPath: opts.adminPath ?? wofDir("admin-global-priority.db"),
 			reposDir,
 			onPhase: phase,
 		})
@@ -182,13 +182,13 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		db.exec("PRAGMA journal_mode = DELETE")
 		db.exec("ANALYZE")
 
-		phase("vacuum", out)
+		phase("vacuum", out.toString())
 
 		if (await pathExists(out)) {
 			await removePath(out)
 		}
 
-		db.prepare("VACUUM INTO ?").run(out)
+		db.prepare("VACUUM INTO ?").run(out.toString())
 	}
 
 	await removePath(ingestPath)
@@ -209,7 +209,14 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 	phase("seal")
 	await sealDatabase(out)
 
-	return { out, postcodesIngested: ingest.placesIngested, zctaFilled, geonamesUSFilled, fills, sealed: true }
+	return {
+		out: out.toString(),
+		postcodesIngested: ingest.placesIngested,
+		zctaFilled,
+		geonamesUSFilled,
+		fills,
+		sealed: true,
+	}
 }
 
 export * from "#gazetteer-pipeline/postcode/binary"

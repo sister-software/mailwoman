@@ -99,7 +99,7 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 		}
 
 		const { LayerTier } = await import("@mailwoman/core/layers")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy/lookup")
 
 		const { buildPOIDatabase } = await import("#gazetteer-pipeline/poi/build/poi")

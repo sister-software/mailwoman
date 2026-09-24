@@ -14,14 +14,14 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { verifyTrainingProvenance } from "mailwoman/release-tools/publish-hf"
-import { join, resolvePath } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-async function cardWith(card: object): Promise<{ path: string; dispose: () => Promise<void> }> {
+async function cardWith(card: object): Promise<{ path: PathBuilder; dispose: () => Promise<void> }> {
 	const directory = await temporaryDirectory("mw-hf-provenance-")
-	const path = join(directory.path, "model-card.json")
+	const path = directory.path("model-card.json")
 
 	await writeLocalJSONFile({ name: "fixture", version: "1.0.0", ...card }, path)
 
@@ -86,13 +86,13 @@ describe("verifyTrainingProvenance", () => {
 	})
 
 	it("admits the card this repository would publish today", async () => {
-		const card = resolvePath(repoRootPath(), "packages/neural-weights-en-us/model-card.json")
+		const card = repoRootPathBuilder("packages/neural-weights-en-us/model-card.json")
 
 		await expect(verifyTrainingProvenance(card)).resolves.toBeUndefined()
 	})
 
 	it("admits the character-path card, whose six entries sit under the other spelling", async () => {
-		const card = resolvePath(repoRootPath(), "packages/neural-weights-cjk/model-card.json")
+		const card = repoRootPathBuilder("packages/neural-weights-cjk/model-card.json")
 
 		await expect(verifyTrainingProvenance(card)).resolves.toBeUndefined()
 	})

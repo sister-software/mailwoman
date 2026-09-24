@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import type { PathBuilderLike } from "path-ts"
 
 export interface GeocodeCommandOptions {
@@ -62,7 +62,7 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 	return {
 		locale: "en-US",
 		countryScope: "auto",
-		dataRoot: mailwomanDataRoot(),
+		dataRoot: dataRootPath(),
 		localeCountryPrior: false,
 		gazetteerPrior: true,
 		placeCountry: true,

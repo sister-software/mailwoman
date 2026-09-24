@@ -29,7 +29,7 @@ import { join } from "path-ts"
 
 import { APIClient, pluckResponseData } from "#api/index"
 import { makeDirectories, writeLocalFile } from "#fs/writers"
-import { corePackagePath } from "#utils"
+import { corePackagePath } from "#paths"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 

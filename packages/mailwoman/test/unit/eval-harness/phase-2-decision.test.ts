@@ -44,7 +44,7 @@ import {
 import { MARKER_PROBE_EXPECTED_CODE } from "mailwoman/eval-harness/phase-2-decision/run"
 import { PROBE_FREEZE_PATH, type ProbeFreezeRecord } from "mailwoman/eval-harness/semantic-utility/probe"
 import { SEMANTIC_AFFORDS_MECHANISM } from "mailwoman/observations"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -82,14 +82,14 @@ const receipt = await readLocalJSONFile<CommittedReceipt>(PHASE2_RECEIPT_PATH)
 async function scratchPair(
 	mutate: (definition: Phase2DecisionDefinition) => void,
 	freezeOverride?: Partial<Phase2FreezeRecord>
-): Promise<{ definitionPath: string; freezePath: string }> {
+): Promise<{ definitionPath: PathBuilder; freezePath: PathBuilder }> {
 	const dir = fixtures.use(await temporaryDirectory("phase-2-decision-")).path
 	const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 	mutate(copy)
 
-	const definitionPath = join(dir, "decision-definition.json")
-	const freezePath = join(dir, "decision-freeze.json")
+	const definitionPath = dir("decision-definition.json")
+	const freezePath = dir("decision-freeze.json")
 
 	await writeLocalJSONFile(copy, definitionPath)
 
