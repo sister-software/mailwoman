@@ -198,7 +198,7 @@ export async function buildPostcodeGeonamesTail(
 		)
 	}
 
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
 		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 

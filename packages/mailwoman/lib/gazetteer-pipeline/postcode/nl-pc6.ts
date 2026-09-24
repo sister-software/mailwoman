@@ -55,7 +55,7 @@ export interface BuildNLPC6Options {
 export async function buildNLPC6Database(
 	opts: BuildNLPC6Options = {}
 ): Promise<{ out: string; inserted: number; skipped: number }> {
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")

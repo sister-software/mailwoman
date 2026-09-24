@@ -32,11 +32,11 @@ import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
-// resolver-wof-sqlite is an optional peer dep of mailwoman (geocoding is opt-in) — import it
-// dynamically inside the functions (the geocode.tsx convention) rather than at module load,
-// so that merely loading these commands (e.g. `mailwoman --help`, which eagerly imports every command)
-// doesn't fault when the peer isn't installed.
-// Types are erased, so type-only imports are safe at module level.
+// resolver-wof-sqlite's runtime modules are imported inside the functions that use them.
+// `mailwoman --help` imports every command, and a module-level value import would
+// evaluate the resolver's module graph on that path.
+// Type-only imports are erased, and `@mailwoman/resolver-wof-sqlite/paths`
+// imports only core's path builders.
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"

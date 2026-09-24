@@ -42,8 +42,7 @@ export async function freezeAdmin(
 	db: DatabaseClient<WOFDatabase>,
 	opts: FreezeAdminOptions = {}
 ): Promise<FreezeAdminResult> {
-	// resolver-wof-sqlite is an optional peer of mailwoman — import it lazily
-	// (the gazetteer-pipeline convention) so importing this module never faults without it.
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
 		await import("@mailwoman/resolver-wof-sqlite/ancestry")
 

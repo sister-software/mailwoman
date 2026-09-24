@@ -788,7 +788,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const itemRaw = await readLocalTextFile(sourceDir("item.json")).catch(() => null)
 	const item = itemRaw ? tryParsingJSON<NSULItemRecord>(itemRaw) : null
 
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const {
 		createUPRNPostcodeTable,
 		createNSULMetaTable,
