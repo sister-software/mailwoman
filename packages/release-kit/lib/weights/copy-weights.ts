@@ -451,13 +451,14 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		return
 	}
 
-	// Inputs resolve against different roots, and conflating them is a real failure
-	// mode (it broke CI once): `source` and `boroughDB` are large acquired datasets
-	// under the data root, while `pairsJsonl` is a curated file checked into the
-	// repository (`data/gazetteer/london-pairs-v2.jsonl`).
-	// `resolvePath` lets an absolute entry pass through untouched either way.
+	// Each input resolves against its own root.
+	// `source` is relative to the data root.
+	// `boroughDB` is a filename under the data root's `db/wof/`.
+	// `pairsJsonl` is relative to the repository.
+	// An absolute entry is used as given.
 	const source = entry.source ? resolvePath(context.dataRoot, entry.source) : undefined
-	const boroughDB = entry.boroughDB ? resolvePath(context.dataRoot, entry.boroughDB) : undefined
+
+	const boroughDB = entry.boroughDB ? resolvePath(wofDatabaseRoot(context.dataRoot), entry.boroughDB) : undefined
 
 	// A comma-separated list since R7 (London + NI): resolve each entry, then rejoin.
 	const pairsJsonl = entry.pairsJsonl

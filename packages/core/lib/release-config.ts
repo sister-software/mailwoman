@@ -27,6 +27,9 @@ export interface PairIndexInputs {
 	delta: number
 	transitionBeta?: number
 	parentDelta?: number
+	/**
+	 * A WOF database filename, resolved under the data root's `db/wof/` directory.
+	 */
 	boroughDB?: string
 	// oxlint-disable-next-line sister-software/no-title-case-acronym -- mirrors release.config.json's literal `pairsJsonl` wire key. renaming the member would stop it typing the parsed JSON
 	pairsJsonl?: string
