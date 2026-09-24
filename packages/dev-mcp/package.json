@@ -59,9 +59,9 @@
 		"path-ts": "^2.5.0",
 		"spliterator": "^7.11.0",
 		"typescript": "npm:@typescript/typescript6@^6.0.2",
-		"zod": "^4.5.4"
+		"zod": "^4.6.5"
 	},
 	"devDependencies": {
-		"@vvago/vale": "^3.20.0"
+		"@vvago/vale": "^3.22.0"
 	}
 }
