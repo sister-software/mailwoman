@@ -26,10 +26,9 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { htmlToLayoutText } from "@mailwoman/core/html/text"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { parseExhibit21 } from "@mailwoman/filer/sdk/exhibit21"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 interface ExpectedSubsidiary {
@@ -41,16 +40,16 @@ interface ExpectedFixtures {
 	fixtures: Record<string, { subsidiaries: ExpectedSubsidiary[] }>
 }
 
-const FIXTURE_DIRECTORY = resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar")
+const FIXTURE_DIRECTORY = resolvePackageDirectory("@mailwoman/filer")("test-fixtures", "edgar")
 
 // parseJSONStrict rather than tryParsingJSON: a corrupt expected.json must fail the suite loudly
 // rather than degrade to a fallback, since it is the interface every assertion below is measured against.
-const expected = await readLocalJSONFile<ExpectedFixtures>(join(FIXTURE_DIRECTORY, "expected.json"))
+const expected = await readLocalJSONFile<ExpectedFixtures>(FIXTURE_DIRECTORY("expected.json"))
 
 const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
 
 async function fixture(name: string): Promise<string> {
-	return await readLocalTextFile(join(FIXTURE_DIRECTORY, name))
+	return await readLocalTextFile(FIXTURE_DIRECTORY(name))
 }
 
 /**

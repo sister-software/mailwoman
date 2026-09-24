@@ -5,7 +5,6 @@
  */
 
 import { resolveWOFHotDB } from "mailwoman/eval-harness/wof-hot-db"
-import { join } from "path-ts"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 afterEach(() => {
@@ -16,13 +15,13 @@ describe("resolveWOFHotDB", () => {
 	it("uses the caller's stage directory when the environment variable is absent", () => {
 		vi.stubEnv("MAILWOMAN_WOF_HOT_DB", undefined)
 
-		expect(resolveWOFHotDB("/tmp/demo-stage")).toBe(join("/tmp/demo-stage", "wof-hot.db"))
+		expect(resolveWOFHotDB("/tmp/demo-stage")).toBe("/tmp/demo-stage/wof-hot.db")
 	})
 
 	it("treats an empty environment variable as unset", () => {
 		vi.stubEnv("MAILWOMAN_WOF_HOT_DB", "")
 
-		expect(resolveWOFHotDB("/tmp/demo-stage")).toBe(join("/tmp/demo-stage", "wof-hot.db"))
+		expect(resolveWOFHotDB("/tmp/demo-stage")).toBe("/tmp/demo-stage/wof-hot.db")
 	})
 
 	it("uses a non-empty environment override", () => {

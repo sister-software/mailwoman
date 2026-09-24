@@ -32,7 +32,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample, shuffleWith } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { stableSourceID } from "#adapters/utils"
@@ -68,10 +68,11 @@ interface LieuDitTuple {
  * uncompressed `.csv` — mirrors `packages/ban/lib/scripts/build/address-point-database.ts`'s
  * `departementFiles`, which hit and fixed this exact double-count trap first.
  */
-async function departementFiles(banDir: PathBuilderLike): Promise<string[]> {
+async function departementFiles(banDir: PathBuilderLike): Promise<PathBuilder[]> {
+	const directory = PathBuilder.from(banDir)
 	const byDept = new Map<string, string>()
 
-	for (const name of await Globerator.from("*", { cwd: banDir, absolute: false }).toSorted()) {
+	for (const name of await Globerator.from("*", { cwd: directory, absolute: false }).toSorted()) {
 		const m = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!m) continue
@@ -83,11 +84,11 @@ async function departementFiles(banDir: PathBuilderLike): Promise<string[]> {
 		const existing = byDept.get(dept)
 
 		if (!existing || (existing.endsWith(".gz") && !name.endsWith(".gz"))) {
-			byDept.set(dept, join(banDir, name))
+			byDept.set(dept, name)
 		}
 	}
 
-	return [...byDept.keys()].toSorted().map((dept) => byDept.get(dept)!)
+	return [...byDept.keys()].toSorted().map((dept) => directory(byDept.get(dept)!))
 }
 
 /**

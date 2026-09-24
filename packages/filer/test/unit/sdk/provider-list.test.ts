@@ -8,19 +8,19 @@
  *   sharing a `provider_id` into one, no matter how tempting a `Map` keyed by `provider_id` looks.
  */
 
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { parseProviderList, type ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-const FIXTURES_DIR = resolvePackagePath("@mailwoman/filer", "test-fixtures")
-const SAMPLE_CSV = join(FIXTURES_DIR, "provider-list-sample.csv")
-const MALFORMED_CSV = join(FIXTURES_DIR, "provider-list-malformed.csv")
-const MISSING_COLUMN_CSV = join(FIXTURES_DIR, "provider-list-missing-column.csv")
-const BAD_FRN_CSV = join(FIXTURES_DIR, "provider-list-bad-frn.csv")
-const BAD_PROVIDER_ID_CSV = join(FIXTURES_DIR, "provider-list-bad-provider-id.csv")
+const FIXTURES_DIR = resolvePackageDirectory("@mailwoman/filer")("test-fixtures")
+const SAMPLE_CSV = FIXTURES_DIR("provider-list-sample.csv")
+const MALFORMED_CSV = FIXTURES_DIR("provider-list-malformed.csv")
+const MISSING_COLUMN_CSV = FIXTURES_DIR("provider-list-missing-column.csv")
+const BAD_FRN_CSV = FIXTURES_DIR("provider-list-bad-frn.csv")
+const BAD_PROVIDER_ID_CSV = FIXTURES_DIR("provider-list-bad-provider-id.csv")
 
-async function collect(csvPath: string): Promise<ProviderListRow[]> {
+async function collect(csvPath: PathBuilder): Promise<ProviderListRow[]> {
 	const rows: ProviderListRow[] = []
 
 	for await (const row of parseProviderList(csvPath)) {

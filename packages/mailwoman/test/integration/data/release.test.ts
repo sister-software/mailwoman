@@ -13,17 +13,15 @@ import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwo
 import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { readReleaseManifest, resolveDatabasePath } from "mailwoman/data"
 import { RegionDatabaseProvider } from "mailwoman/geocode"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function tmp(): Promise<string> {
-	const d = fixtures.use(await temporaryDirectory("mw-data-release-")).path.toString()
-
-	return d
+async function tmp(): Promise<PathBuilder> {
+	return fixtures.use(await temporaryDirectory("mw-data-release-")).path
 }
 
 /**
@@ -64,7 +62,7 @@ const factory = { AddressPointSqliteLookup: FakeAddressPoints, StreetInterpolato
 /**
  * Ensure a directory exists and return it.
  */
-async function dirEnsure(d: string): Promise<string> {
+async function dirEnsure(d: PathBuilder): Promise<PathBuilder> {
 	await makeDirectories(d)
 
 	return d
@@ -77,7 +75,7 @@ describe("readReleaseManifest", () => {
 
 		await writeLocalJSONFile(
 			{ "address-points": "2026-05-20.0", interpolation: "TIGER2023" },
-			join(await root, "releases.json")
+			(await root)("releases.json")
 		)
 
 		expect(await readReleaseManifest(await root)).toEqual({
@@ -85,7 +83,7 @@ describe("readReleaseManifest", () => {
 			interpolation: "TIGER2023",
 		})
 
-		await writeLocalTextFile("{ not json", join(await root, "releases.json"))
+		await writeLocalTextFile("{ not json", (await root)("releases.json"))
 		expect(await readReleaseManifest(await root)).toBeNull()
 	})
 })
@@ -93,24 +91,24 @@ describe("readReleaseManifest", () => {
 describe("resolveDatabasePath", () => {
 	test("prefers the versioned name; falls back to legacy; null if neither", async () => {
 		const root = tmp()
-		const apDir = await dirEnsure(addressPointDatabaseRoot(await root).toString())
+		const apDir = await dirEnsure(addressPointDatabaseRoot(await root))
 		// legacy only
-		await writeLocalTextFile("", join(apDir, "address-points-us-tx.db"))
+		await writeLocalTextFile("", apDir("address-points-us-tx.db"))
 
 		expect(await resolveDatabasePath(await root, "address-points", "tx", null)).toBe(
-			join(apDir, "address-points-us-tx.db")
+			apDir("address-points-us-tx.db").toString()
 		)
 
 		// versioned present + pinned → wins
-		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v2.db"))
+		await writeLocalTextFile("", apDir("address-points-us-tx-v2.db"))
 
 		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v2" })).toBe(
-			join(apDir, "address-points-us-tx-v2.db")
+			apDir("address-points-us-tx-v2.db").toString()
 		)
 
 		// pinned version with no file → legacy fallback
 		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v9" })).toBe(
-			join(apDir, "address-points-us-tx.db")
+			apDir("address-points-us-tx.db").toString()
 		)
 
 		// nothing for an unknown slug
@@ -121,9 +119,9 @@ describe("resolveDatabasePath", () => {
 describe("RegionDatabaseProvider atomic switchover", () => {
 	test("reload() flips to the new version + retires the old handle with one-gen grace", async () => {
 		const root = tmp()
-		const apDir = await dirEnsure(addressPointDatabaseRoot(await root).toString())
-		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v1.db"))
-		await writeLocalJSONFile({ "address-points": "v1" }, join(await root, "releases.json"))
+		const apDir = await dirEnsure(addressPointDatabaseRoot(await root))
+		await writeLocalTextFile("", apDir("address-points-us-tx-v1.db"))
+		await writeLocalJSONFile({ "address-points": "v1" }, (await root)("releases.json"))
 
 		const provider = await RegionDatabaseProvider.create(factory, await root)
 		const v1 = provider.for("tx").addressPoints as FakeAddressPoints
@@ -131,8 +129,8 @@ describe("RegionDatabaseProvider atomic switchover", () => {
 		expect(provider.versions()).toEqual({ "address-points": "v1" })
 
 		// Publish v2 alongside, flip the manifest, reload.
-		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v2.db"))
-		await writeLocalJSONFile({ "address-points": "v2" }, join(await root, "releases.json"))
+		await writeLocalTextFile("", apDir("address-points-us-tx-v2.db"))
+		await writeLocalJSONFile({ "address-points": "v2" }, (await root)("releases.json"))
 		expect(await provider.reload()).toEqual({ "address-points": "v2" })
 
 		const v2 = provider.for("tx").addressPoints as FakeAddressPoints
@@ -150,10 +148,10 @@ describe("RegionDatabaseProvider atomic switchover", () => {
 
 	test("unchanged version keeps the same open handle (no churn)", async () => {
 		const root = tmp()
-		const apDir = await dirEnsure(addressPointDatabaseRoot(await root).toString())
+		const apDir = await dirEnsure(addressPointDatabaseRoot(await root))
 
-		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v1.db"))
-		await writeLocalJSONFile({ "address-points": "v1" }, join(await root, "releases.json"))
+		await writeLocalTextFile("", apDir("address-points-us-tx-v1.db"))
+		await writeLocalJSONFile({ "address-points": "v1" }, (await root)("releases.json"))
 
 		await using provider = await RegionDatabaseProvider.create(factory, await root)
 

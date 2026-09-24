@@ -23,7 +23,7 @@ import {
 	parseRepoName,
 	reposSentence,
 } from "mailwoman/gazetteer-pipeline/repos/audit"
-import { join, type PathBuilder, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -48,14 +48,14 @@ async function reposRoot(): Promise<PathBuilder> {
  *
  * With the dates fixed, identical content ⇒ identical hash, always.
  */
-async function clone(dir: PathBuilderLike, marker: string): Promise<void> {
+async function clone(dir: PathBuilder, marker: string): Promise<void> {
 	const env = childEnv({
 		GIT_AUTHOR_DATE: "2026-01-01T00:00:00Z",
 		GIT_COMMITTER_DATE: "2026-01-01T00:00:00Z",
 	})
 
 	await makeDirectories(dir)
-	await writeLocalFile(marker, join(dir, "README.md"))
+	await writeLocalFile(marker, dir("README.md"))
 
 	runFileSync("git", ["init", "-q", "-b", "main"], { cwd: dir })
 	runFileSync("git", ["config", "user.email", "t@example.com"], { cwd: dir })

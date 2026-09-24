@@ -53,6 +53,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { ResourceError } from "@mailwoman/core/errors"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { GeoPoint, type GeoPointInput, isGooglePlaceID } from "@mailwoman/spatial"
+import type { PathBuilderLike } from "path-ts"
 
 import { $private } from "#env"
 import type { OracleGeocodeResult } from "#result"
@@ -194,7 +195,7 @@ export interface CreateGoogleGeocoderClientOptions {
 	 * Defaults to `dataRootPath("geocode-oracle", "google")`, resolved once at construction —
 	 * construct the client after setting `$MAILWOMAN_DATA_ROOT` rather than before.
 	 */
-	cacheDir?: string
+	cacheDir?: PathBuilderLike
 	/**
 	 * How long a cached geocode stays fresh, in milliseconds.
 	 *

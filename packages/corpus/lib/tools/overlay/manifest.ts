@@ -29,7 +29,7 @@ import { readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { basename, dirname, join } from "path-ts"
+import { basename, dirname, PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
 import type { SplitName } from "#utils/split"
@@ -185,7 +185,7 @@ async function descriptor(
 
 export interface OverlayManifestOptions {
 	base: string
-	newDir: string
+	newDir: PathBuilderLike
 	modalRoot: string
 	version: string
 	/**
@@ -285,12 +285,15 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	const kept = baseFiles.map((s) => ({ ...s, path: rerootBaseFilePath(s.path, args.base) }))
 	const added: ParquetFileDescriptor[] = []
 
+	const newDir = PathBuilder.from(args.newDir)
+
 	for (const file of args.files) {
 		const split = file.split ?? "train"
 
 		added.push(
 			await descriptor(
-				join(args.newDir, split, file.parquet),
+				// A string, because DuckDB reads it inside SQL text.
+				newDir(split, file.parquet).toString(),
 				`${args.modalRoot}/${split}/${file.parquet}`,
 				split,
 				file.source
@@ -322,7 +325,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		total_rows: base.total_rows + addedRows.train + addedRows.val + addedRows.test,
 	}
 
-	const out = join(args.newDir, "MANIFEST.json")
+	const out = newDir("MANIFEST.json")
 	await writeLocalJSONFile(manifest, out)
 
 	console.log(`wrote ${out}`)

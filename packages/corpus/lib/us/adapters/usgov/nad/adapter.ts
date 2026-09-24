@@ -33,7 +33,7 @@
 import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
-import { join } from "path-ts"
+import { resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -255,9 +255,9 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				// The per-line tryParsingJSON below keeps the reader tolerant of malformed
 				// rows (skip silently), so TextSpliterator + a non-throwing parse
 				// rather than JSONSpliterator, which would throw.
-				// The path string lets the lib own + dispose each file's handle,
+				// Passing a path lets the lib own + dispose each file's handle,
 				// including on the `break outer` early exit.
-				const lines = TextSpliterator.fromAsync(join(opts.inputPath, file))
+				const lines = TextSpliterator.fromAsync(resolvePathBuilder(opts.inputPath, file))
 
 				for await (const line of lines) {
 					if (opts.signal?.aborted) break outer

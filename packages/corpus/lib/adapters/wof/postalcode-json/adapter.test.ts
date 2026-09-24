@@ -13,7 +13,6 @@ import {
 } from "@mailwoman/corpus/adapters/wof/postalcode-json/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("wof-postalcode-json")
@@ -176,7 +175,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, WOF_POSTALCODE_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(WOF_POSTALCODE_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),

@@ -38,7 +38,7 @@ import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import type { WOFDatabase } from "#schema"
 
@@ -252,7 +252,7 @@ export async function ingestGeonamesPostal(
 
 	for (const country of countries) {
 		const cc = country.toUpperCase()
-		const file = join(postalDir, `${cc}.txt`)
+		const file = resolvePathBuilder(postalDir, `${cc}.txt`)
 
 		if (!(await pathExists(file))) {
 			missing.push(cc)

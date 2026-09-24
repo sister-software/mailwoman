@@ -67,7 +67,7 @@ import {
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { basename, join, resolvePath } from "path-ts"
+import { basename, PathBuilder, resolvePath } from "path-ts"
 
 /**
  * The argument tail both hierarchy runners share: the country list, lower-cased, and the admin DB they read.
@@ -203,7 +203,7 @@ async function main(): Promise<void> {
 	})
 
 	const { countries, dbPath } = resolveHierarchyRunInputs(values)
-	const outDir = resolvePath(values.out ?? wofDatabasePath("pair-index-hierarchy-probe"))
+	const outDir = PathBuilder.from(values.out ?? wofDatabasePath("pair-index-hierarchy-probe"))
 
 	if (!(await pathExists(dbPath))) {
 		throw new Error(`pair-index-hierarchy-probe: WOF admin DB not found: ${dbPath}`)
@@ -317,8 +317,8 @@ async function main(): Promise<void> {
 
 		const bytes = serializePairIndex(header, entries)
 		const outName = `pair-index-locality-region-${country}.bin`
-		const outPath = join(outDir, outName)
-		const tmpPath = join(outDir, `.tmp-${outName}`)
+		const outPath = outDir(outName)
+		const tmpPath = outDir(`.tmp-${outName}`)
 
 		// Temp-write + rename: the artifact is never observable half-written
 		// (agents.md sealed-artifact discipline, applied to a flat binary).

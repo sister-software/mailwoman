@@ -33,7 +33,6 @@ import {
 } from "mailwoman/eval-harness/conformance/refinement-monotonicity"
 import { CASES_DIR, loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
-import { join } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
 
 let fixtures: ConformanceFixture[]
@@ -80,7 +79,7 @@ describe("the committed refinement suite", () => {
 			expect(chain.tip, `${chain.rowRef}: the chain's fullest query is not the committed input`).toBe(seedCase!.input)
 
 			expect(
-				await pathExists(join(CASES_DIR, file.replace(/^cases\//u, ""))),
+				await pathExists(CASES_DIR(file.replace(/^cases\//u, ""))),
 				`${chain.rowRef}: names no file (${file})`
 			).toBe(true)
 		}

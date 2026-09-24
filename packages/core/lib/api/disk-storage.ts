@@ -24,7 +24,7 @@
  */
 
 import { type AxiosStorage, buildStorage, type NotEmptyStorageValue, type StorageValue } from "axios-cache-interceptor"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { errorMessage } from "#errors/schema"
 import { readLocalTextFile } from "#fs/readers"
@@ -111,7 +111,8 @@ function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
  *    requests to one URL, i.e. the stampede guard fully defeated.
  */
 export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
-	const { directory, validate } = options
+	const { validate } = options
+	const directory = PathBuilder.from(options.directory)
 	const logger = options.logger ?? ConsoleLogger.prefix("disk-storage")
 
 	/**
@@ -122,8 +123,8 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 	 */
 	const overlay = new Map<string, StorageValue>()
 
-	function entryPath(key: string): string {
-		return join(directory, `${sha256Hex(key)}.json`)
+	function entryPath(key: string): PathBuilder {
+		return directory(`${sha256Hex(key)}.json`)
 	}
 
 	async function removeEntry(key: string): Promise<void> {

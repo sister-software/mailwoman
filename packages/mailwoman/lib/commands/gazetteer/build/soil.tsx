@@ -153,7 +153,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const acquired = await acquireRegion({
 			client,
 			prefix,
-			cacheRoot: soilDatabasePath("cache", "archives").toString(),
+			cacheRoot: soilDatabasePath("cache", "archives"),
 			onProgress: (message) => console.error(`  [acquire] ${message}`),
 		})
 

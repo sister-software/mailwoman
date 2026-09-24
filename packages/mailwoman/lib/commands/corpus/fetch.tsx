@@ -12,6 +12,7 @@
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { FetchSourceID, FetchSummary } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
+import { PathBuilder } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -94,7 +95,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		fetchWikidataSubVenue,
 	} = await import("@mailwoman/corpus/tools")
 
-	const base = { outRoot: options.outRoot }
+	const base = { outRoot: PathBuilder.from(options.outRoot) }
 
 	switch (source) {
 		case "acra-sg":

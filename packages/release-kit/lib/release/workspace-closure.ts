@@ -10,7 +10,7 @@
 
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
-import { join, type PathBuilderLike, resolvePath } from "path-ts"
+import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { packWorkspaceForPublish } from "#pack/pack-workspace"
 
@@ -88,12 +88,14 @@ export async function walkWorkspaceClosure(
 export async function packWorkspaces(
 	repoRoot: PathBuilderLike,
 	workspaces: ReadonlyMap<string, string>,
-	tarDir: string
+	tarDir: PathBuilderLike
 ): Promise<Record<string, string>> {
+	const tarballs = PathBuilder.from(tarDir)
 	const dependencies: Record<string, string> = {}
 
 	for (const [name, dir] of workspaces) {
-		const tarball = join(tarDir, `${dir}.tgz`)
+		// A string, because the `file:` specifier embeds it.
+		const tarball = tarballs(`${dir}.tgz`).toString()
 
 		await packWorkspaceForPublish(resolvePath(repoRoot, dir), tarball)
 		dependencies[name] = `file:${tarball}`

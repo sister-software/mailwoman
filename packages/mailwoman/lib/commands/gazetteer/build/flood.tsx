@@ -134,7 +134,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			geodatabasePath = await downloadFloodGeodatabase({
 				url,
 				revisionDate: sourceVintage,
-				cacheRoot: floodDatabasePath("cache").toString(),
+				cacheRoot: floodDatabasePath("cache"),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}

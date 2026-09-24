@@ -31,7 +31,7 @@ import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { dirname, join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { downloadIfNeeded } from "#sdk/download"
 import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "#sdk/schema"
@@ -208,20 +208,20 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<FetchTIGEREvent, FetchTIGERResult> {
 	const level = options.level ?? "tabblock20"
 	const vintage = options.vintage ?? (level === "tabblock20" ? 2020 : 2024)
-	const dataRoot = options.dataRoot ?? DEFAULT_DATA_ROOT
+	const dataRoot = PathBuilder.from(options.dataRoot ?? DEFAULT_DATA_ROOT)
 	const batchSize = options.batchSize ?? 1000
 	const state = options.stateFIPS
 	const table = LEVEL_TABLE[level]
 
-	const cacheDir = join(dataRoot, "tiger", String(vintage), state)
+	const cacheDir = dataRoot("tiger", String(vintage), state)
 	// Default to a stable, vintage-agnostic `tiger.db`.
 	// The filename the corpus `tiger` adapter reads (run-corpus-build → `${root}/tiger/tiger.db`).
 	// The vintage is a content detail rather than a path one.
 	// The per-table idempotent delete keeps a re-fetch (newer vintage) clean.
 	// The download cache stays vintage-partitioned below so zips don't collide across vintages.
-	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")
+	const outPath = PathBuilder.from(options.outPath ?? dataRoot("tiger", "tiger.db"))
 	await makeDirectories(cacheDir)
-	await makeDirectories(dirname(outPath))
+	await makeDirectories(outPath.dirname())
 
 	// Source units: one (per-state) for block/place.
 	// One per county for addrfeat.
@@ -285,7 +285,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 		for (const geo of geoCodes) {
 			const unit = level === "addrfeat" ? state + geo : state
 			const zipName = `tl_${vintage}_${unit}_${level}.zip`
-			const zipPath = join(cacheDir, zipName)
+			const zipPath = cacheDir(zipName)
 			const url = `${CENSUS_HOST}/geo/tiger/TIGER${vintage}/${LEVEL_DIR[level]}/${zipName}`
 
 			const cached = await downloadIfNeeded(url, zipPath)
@@ -293,7 +293,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 			await extractZipEntries(zipPath, cacheDir)
 			const layer = `tl_${vintage}_${unit}_${level}`
-			const shpPath = join(cacheDir, layer + ".shp")
+			const shpPath = cacheDir(layer + ".shp")
 			yield { phase: "extract", file: layer + ".shp" }
 
 			const args = [
@@ -328,7 +328,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE);")
 
-		return { outPath, table, inserted }
+		return { outPath: outPath.toString(), table, inserted }
 	} finally {
 		await kdb.destroy()
 	}

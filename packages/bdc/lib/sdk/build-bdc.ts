@@ -76,7 +76,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"
-import { basename, dirname, join } from "path-ts"
+import { basename, PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import {
@@ -524,7 +524,9 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		await removePath(buildingPath)
 	}
 
-	await makeDirectories(dirname(options.out))
+	const outDir = PathBuilder.from(options.out).dirname()
+
+	await makeDirectories(outDir)
 
 	// A crash inside a prior run's swap can leave the slot empty while the previous version sits parked
 	// aside — restore it before building, so a failure in this run still leaves an artifact serving.
@@ -532,12 +534,12 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	if (!(await pathExists(options.out))) {
 		const base = basename(options.out)
 
-		const parked = await Globerator.from("*", { cwd: dirname(options.out), absolute: false }).find(
+		const parked = await Globerator.from("*", { cwd: outDir, absolute: false }).find(
 			(name) => name === `${base}.prev` || name.startsWith(`${base}.old-`)
 		)
 
 		if (parked) {
-			await movePath(join(dirname(options.out), parked), options.out)
+			await movePath(outDir(parked), options.out)
 			progress(`restored ${parked} into place (a prior run crashed mid-swap)`)
 		}
 	}

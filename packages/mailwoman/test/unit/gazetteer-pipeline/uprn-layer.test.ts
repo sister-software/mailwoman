@@ -25,7 +25,7 @@ import {
 	parseOpenUPRNVersions,
 	type ExtractOpenUPRNResult,
 } from "mailwoman/gazetteer-pipeline/uprn-layer"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -115,9 +115,9 @@ function fixtureCSV(headerLine: string = OPEN_UPRN_HEADER): string {
 
 async function writeFixtureSource(
 	headerLine?: string
-): Promise<{ sourceDir: string; extracted: ExtractOpenUPRNResult }> {
-	const sourceDir = fixtures.use(await temporaryDirectory("uprn-build-")).path.toString()
-	const csvPath = join(sourceDir, "osopenuprn_fixture.csv")
+): Promise<{ sourceDir: PathBuilder; extracted: ExtractOpenUPRNResult }> {
+	const sourceDir = fixtures.use(await temporaryDirectory("uprn-build-")).path
+	const csvPath = sourceDir("osopenuprn_fixture.csv")
 	const csv = fixtureCSV(headerLine)
 
 	await writeLocalFile(csv, csvPath)
@@ -136,7 +136,7 @@ async function writeFixtureSource(
 describe("buildUPRNLayer (fixture)", () => {
 	it("builds a sealed layer the production reader answers from", async () => {
 		const { sourceDir, extracted } = await writeFixtureSource()
-		const out = join(sourceDir, "uprn.db")
+		const out = sourceDir("uprn.db")
 
 		const result = await buildUPRNLayer({
 			sourceDir,
@@ -186,7 +186,7 @@ describe("buildUPRNLayer (fixture)", () => {
 
 	it("fails loudly on header drift", async () => {
 		const { sourceDir, extracted } = await writeFixtureSource("UPRN,EASTING,NORTHING,LATITUDE,LONGITUDE")
-		const out = join(sourceDir, "uprn.db")
+		const out = sourceDir("uprn.db")
 
 		await expect(
 			buildUPRNLayer({ sourceDir, out, extracted, buildSHA: "fixture", minimumPlausibleRows: 1 })
@@ -195,14 +195,14 @@ describe("buildUPRNLayer (fixture)", () => {
 
 	it("reports a malformed row and an under-floor count as mismatches, not silence", async () => {
 		await using sourceDirDirectory = await temporaryDirectory("uprn-build-")
-		const sourceDir = sourceDirDirectory.path.toString()
-		const csvPath = join(sourceDir, "osopenuprn_fixture.csv")
+		const sourceDir = sourceDirDirectory.path
+		const csvPath = sourceDir("osopenuprn_fixture.csv")
 
 		await writeLocalTextFile(`${BOM}${OPEN_UPRN_HEADER}\r\n1,0.0,0.0,51.5,\r\n26,0.0,0.0,51.5,-2.6\r\n`, csvPath)
 
 		const result = await buildUPRNLayer({
 			sourceDir,
-			out: join(sourceDir, "uprn.db"),
+			out: sourceDir("uprn.db"),
 			extracted: {
 				csvPath,
 				csvBytes: 0,

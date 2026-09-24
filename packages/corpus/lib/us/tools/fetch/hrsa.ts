@@ -15,7 +15,6 @@
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
 import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
@@ -27,9 +26,9 @@ const SOURCE_URL = `https://data.hrsa.gov/DataDownload/DD_Files/${FILENAME}`
 export type FetchHRSAOptions = BaseFetchOptions
 
 export async function fetchHRSA(options: FetchHRSAOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
-	const dest = join(destDir, FILENAME)
+	const dest = destDir(FILENAME)
 
 	report?.(`=== ${SLUG} / ${FILENAME}`)
 
@@ -51,7 +50,7 @@ export async function fetchHRSA(options: FetchHRSAOptions, report?: (line: strin
 		bytes,
 	}
 
-	await writeManifest(join(destDir, "MANIFEST.json"), manifest)
+	await writeManifest(destDir("MANIFEST.json"), manifest)
 
 	report?.(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)
 

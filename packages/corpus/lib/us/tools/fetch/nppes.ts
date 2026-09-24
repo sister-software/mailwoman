@@ -29,7 +29,7 @@ import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
-import { basename, join } from "path-ts"
+import { basename, type PathBuilderLike } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
@@ -69,16 +69,16 @@ async function discoverLatestZip(): Promise<string | undefined> {
  * The main registry CSV (npidata_pfile_*.csv), which the archive also carries
  * alongside a header file and a per-month change file.
  */
-async function findNpidataCSV(zipPath: string): Promise<string | undefined> {
+async function findNpidataCSV(zipPath: PathBuilderLike): Promise<string | undefined> {
 	const entries = await listZipEntries(zipPath)
 
 	return entries.find((entry) => /npidata_pfile\S+\.csv/i.test(entry.name))?.name
 }
 
 export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
-	const manifestPath = join(destDir, "MANIFEST.json")
+	const manifestPath = destDir("MANIFEST.json")
 
 	report?.(`=== ${SLUG}`)
 	report?.(`  Discovering latest full-replacement ZIP from ${INDEX_URL} ...`)
@@ -92,14 +92,14 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	}
 
 	const zipURL = `${BASE_URL}/${zipFilename}`
-	const zipDest = join(destDir, zipFilename)
+	const zipDest = destDir(zipFilename)
 	report?.(`  Latest full file: ${zipFilename}`)
 
 	// Idempotency check: if the main CSV already exists and sha matches, skip re-download.
 	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
 
 	if (recorded?.sha256 && recorded.filename) {
-		const recordedPath = join(destDir, recorded.filename)
+		const recordedPath = destDir(recorded.filename)
 
 		if ((await pathExists(recordedPath)) && (await sha256File(recordedPath)) === recorded.sha256) {
 			report?.("  ✓ Already current (sha256 matches MANIFEST) — skipping download.")
@@ -135,7 +135,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 
 	report?.(`  Extracting: ${csvName}`)
 
-	const csvDest = join(destDir, basename(csvName))
+	const csvDest = destDir(basename(csvName))
 
 	await extractZipEntry(zipDest, csvName, csvDest)
 	const csvSize = (await statPath(csvDest)).size

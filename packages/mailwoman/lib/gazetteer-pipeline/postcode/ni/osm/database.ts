@@ -52,7 +52,7 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	applyStagingPragmas,
@@ -193,9 +193,9 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
-	const sourceDir = (options.sourceDir ?? dataRootPath("osm-ni-postcodes", stamp)).toString()
+	const sourceDir = PathBuilder.from(options.sourceDir ?? dataRootPath("osm-ni-postcodes", stamp))
 	const out = (options.out ?? wofDatabasePath(`postalcode-ni-osm-${stamp}.db`)).toString()
-	const responsePath = join(sourceDir, "response.json")
+	const responsePath = sourceDir("response.json")
 
 	// Acquire the source.
 	// Offline operation is the normal path described by the option.
@@ -352,7 +352,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 
 	return {
 		out,
-		sourceDir,
+		sourceDir: sourceDir.toString(),
 		inserted,
 		stats,
 		districts: districts.size,

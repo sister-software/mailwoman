@@ -27,7 +27,7 @@
  */
 
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter, PSVSpliterator, TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -35,7 +35,7 @@ export interface GNAFAssembleOptions {
 	/**
 	 * G-NAF `Standard` directory (holds the per-state `*_psv.psv` tables).
 	 */
-	standardDir: string
+	standardDir: PathBuilderLike
 	/**
 	 * Target sample size (uniform reservoir → population-proportional across states).
 	 */
@@ -125,10 +125,12 @@ async function loadHoldout(path: string): Promise<Set<string>> {
 
 export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssembleResult> {
 	const progress = opts.onProgress ?? (() => {})
-	const files = await Globerator.from("*", { cwd: opts.standardDir, absolute: false }).toArray()
+	const standardDir = PathBuilder.from(opts.standardDir)
+	const files = await Globerator.from("*", { cwd: standardDir, absolute: false }).toArray()
 
+	// Strings, because the address loop reads the state code out of each path.
 	const pick = (re: RegExp, exclude?: RegExp) =>
-		files.filter((f) => re.test(f) && !(exclude && exclude.test(f))).map((f) => join(opts.standardDir, f))
+		files.filter((f) => re.test(f) && !(exclude && exclude.test(f))).map((f) => standardDir(f).toString())
 
 	// `*_LOCALITY_psv.psv` also globs `*_STREET_LOCALITY_psv.psv` — exclude the latter explicitly.
 	const streetPaths = pick(/_STREET_LOCALITY_psv\.psv$/)

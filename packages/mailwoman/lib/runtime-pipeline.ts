@@ -313,7 +313,7 @@ async function autoLoadWeightsFST(
 ): Promise<FSTMatcher | undefined> {
 	const fstPath =
 		classifier && typeof classifier === "object" && "fstPath" in classifier
-			? (classifier as { fstPath?: string }).fstPath
+			? (classifier as { fstPath?: PathBuilderLike }).fstPath
 			: undefined
 
 	if (!fstPath) return undefined

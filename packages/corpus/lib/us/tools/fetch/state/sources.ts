@@ -20,7 +20,6 @@
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
 import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
@@ -87,9 +86,9 @@ export async function fetchStateSources(
 	const failedCodes: string[] = []
 
 	for (const { slug, filename, url } of SOURCES) {
-		const destDir = join(options.outRoot, slug)
+		const destDir = options.outRoot(slug)
 		await makeDirectories(destDir)
-		const dest = join(destDir, filename)
+		const dest = destDir(filename)
 
 		report?.(`=== ${slug} / ${filename}`)
 
@@ -131,7 +130,7 @@ export async function fetchStateSources(
 			bytes,
 		}
 
-		await writeManifest(join(destDir, "MANIFEST.json"), manifest)
+		await writeManifest(destDir("MANIFEST.json"), manifest)
 
 		report?.(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)
 

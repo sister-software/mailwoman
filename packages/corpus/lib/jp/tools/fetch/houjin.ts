@@ -25,7 +25,6 @@
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest } from "#tools/fetch/download/index"
 import {
@@ -63,7 +62,7 @@ export async function fetchHoujinJP(
 	options: FetchHoujinJPOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 
 	const page = await fetch(PAGE_URL, { headers: { "user-agent": USER_AGENT, accept: "text/html" } })
@@ -116,7 +115,7 @@ export async function fetchHoujinJP(
 
 				filename = attachmentFilename(res, filename)
 
-				return streamBodyToFile(res, join(destDir, filename))
+				return streamBodyToFile(res, destDir(filename))
 			},
 			{ report, label: filename }
 		)
@@ -126,7 +125,7 @@ export async function fetchHoujinJP(
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: ["zenkoku-csv-unicode"] }
 	}
 
-	const dest = join(destDir, filename)
+	const dest = destDir(filename)
 	const sha = await sha256File(dest)
 	report?.(`  ✓ ${filename} ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)
 
@@ -139,7 +138,7 @@ export async function fetchHoujinJP(
 		files: [{ source_url: FORM_URL, downloaded_at: new Date().toISOString(), filename, sha256: sha, bytes }],
 	}
 
-	await writeManifest(join(destDir, "MANIFEST.json"), manifest)
+	await writeManifest(destDir("MANIFEST.json"), manifest)
 
 	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
 }

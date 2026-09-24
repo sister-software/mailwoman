@@ -24,8 +24,8 @@
 
 import { sha256Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { basename, join, type PathBuilderLike } from "path-ts"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -55,7 +55,7 @@ const MALFORMED_EXCERPT_CHARS = 60
  * Same bridge as `baseline-assert.ts`'s `resolveBaselineFilePath`
  * and `promotion-eval.ts`'s `resolveThresholdSpecPath`.
  */
-export const CASES_DIR: string = resolvePackagePath("mailwoman", "lib", "eval-harness", "gauntlet", "cases")
+export const CASES_DIR: PathBuilder = resolvePackageDirectory("mailwoman")("lib", "eval-harness", "gauntlet", "cases")
 
 /**
  * A malformed corpus row, named by file and line.
@@ -77,7 +77,9 @@ export class CorpusRowError extends Error {
  * Blank lines are skipped.
  * The line counter still counts them, so the number in an error is the number your editor shows.
  */
-async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCase[]> {
+async function loadCorpusFile(source: PathBuilder, expectedCC: string): Promise<SeedCase[]> {
+	// Row errors carry the file as a string field.
+	const path = source.toString()
 	const rows: SeedCase[] = []
 	let line = 0
 
@@ -142,15 +144,15 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 		.toSorted()
 
 	const cases: SeedCase[] = []
-	const seen = new Map<string, string>()
+	const seen = new Map<string, PathBuilder>()
 
 	for (const cc of ccDirs) {
-		const ccPath = join(dir, cc)
+		const ccPath = resolvePathBuilder(dir, cc)
 		const files = await Globerator.files("jsonl", { cwd: ccPath, absolute: false, recursive: false }).toSorted()
 		const ccCases: SeedCase[] = []
 
 		for (const file of files) {
-			ccCases.push(...(await loadCorpusFile(join(ccPath, file), cc)))
+			ccCases.push(...(await loadCorpusFile(ccPath(file), cc)))
 		}
 
 		for (const c of ccCases.toSorted((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
@@ -160,7 +162,7 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 				// `id` is the regression DB's primary KEY, so a duplicate would fail the
 				// build with a constraint error naming neither file.
 				// Fail here instead, naming both.
-				throw new Error(`duplicate case id "${c.id}" — in ${basename(previous)} and cases/${cc}/`)
+				throw new Error(`duplicate case id "${c.id}" — in ${previous.basename()} and cases/${cc}/`)
 			}
 
 			seen.set(c.id, ccPath)

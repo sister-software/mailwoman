@@ -17,9 +17,9 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { corePackagePath } from "@mailwoman/core/paths"
+import { corePackagePathBuilder } from "@mailwoman/core/paths"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 export interface EnrichAdminOptions {
 	/**
@@ -27,7 +27,7 @@ export interface EnrichAdminOptions {
 	 *
 	 * Default: the dataset packaged with `@mailwoman/core`.
 	 */
-	specsDir?: string
+	specsDir?: PathBuilderLike
 }
 
 export interface EnrichAdminResult {
@@ -45,7 +45,7 @@ export async function enrichAdmin<DB>(
 	db: DatabaseClient<DB>,
 	opts: EnrichAdminOptions = {}
 ): Promise<EnrichAdminResult> {
-	const specsDir = opts.specsDir ?? corePackagePath("data", "chromium-i18n", "ssl-address")
+	const specsDir = PathBuilder.from(opts.specsDir ?? corePackagePathBuilder("data", "chromium-i18n", "ssl-address"))
 
 	db.exec("DELETE FROM names WHERE language = 'abbr'")
 
@@ -77,7 +77,7 @@ export async function enrichAdmin<DB>(
 	let added = 0
 
 	for (const [cc, regions] of regionsByCountry) {
-		const specPath = join(specsDir, `${cc}.json`)
+		const specPath = specsDir(`${cc}.json`)
 
 		if (!(await pathExists(specPath))) continue
 		const spec = await readLocalJSONFile<{ sub_keys?: string; sub_names?: string }>(specPath)

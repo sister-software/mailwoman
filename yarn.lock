@@ -6697,6 +6697,7 @@ __metadata:
     "@types/google.maps": "npm:^3.66.2"
     geo-coordinates-parser: "npm:^1.7.4"
     h3-js: "npm:^4.5.0"
+    path-ts: "npm:^2.4.1"
     type-fest: "npm:^5.9.0"
     wkx: "npm:^0.5.0"
   dependenciesMeta:

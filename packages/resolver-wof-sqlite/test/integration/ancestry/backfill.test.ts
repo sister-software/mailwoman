@@ -9,7 +9,6 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { backfillAncestorsFromHierarchy, discoverAdminDataRoots } from "@mailwoman/resolver-wof-sqlite/ancestry"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 let root: TemporaryDirectory
@@ -29,7 +28,7 @@ beforeAll(async () => {
 afterAll(() => root[Symbol.asyncDispose]())
 
 test("discoverAdminDataRoots: finds nested + flat whosonfirst data roots, skips non-WOF + too-deep", async () => {
-	const roots = await discoverAdminDataRoots(root.path)
+	const roots = (await discoverAdminDataRoots(root.path)).map((dataRoot) => dataRoot.toString())
 
 	expect(roots).toContain(root.resolve("whosonfirst-data", "whosonfirst-data-admin-us", "data"))
 	expect(roots).toContain(root.resolve("whosonfirst-data-admin-gb", "data"))
@@ -57,8 +56,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(85_633_793, 85_633_793)
 
 	// Source geojson with a populated wof:hierarchy (region + country), even though parent_id is -4.
-	const dataRoot = root.resolve("whosonfirst-data", "whosonfirst-data-admin-us", "data")
-	await makeDirectories(join(dataRoot, "859", "775", "39"))
+	const dataRoot = root.path("whosonfirst-data", "whosonfirst-data-admin-us", "data")
 
 	await writeLocalJSONFile(
 		{
@@ -70,7 +68,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 				],
 			},
 		},
-		join(dataRoot, "859", "775", "39", `${orphanID}.geojson`)
+		dataRoot("859", "775", "39", `${orphanID}.geojson`)
 	)
 
 	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
@@ -123,8 +121,7 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'borough', 0)").run(brooklynID, brooklynID)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(brooklynID, nycID)
 
-	const dataRoot = root.resolve("whosonfirst-data", "whosonfirst-data-admin-us", "data")
-	await makeDirectories(join(dataRoot, "421", "205", "765"))
+	const dataRoot = root.path("whosonfirst-data", "whosonfirst-data-admin-us", "data")
 
 	// Brooklyn's real source hierarchy.
 	// The whole chain is present even though parent_id is not -4.
@@ -144,7 +141,7 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 				],
 			},
 		},
-		join(dataRoot, "421", "205", "765", `${brooklynID}.geojson`)
+		dataRoot("421", "205", "765", `${brooklynID}.geojson`)
 	)
 
 	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
@@ -221,7 +218,7 @@ test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stop
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(id, id)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(id, 85_633_793)
 
-	const dataRoot = root.resolve("whosonfirst-data", "whosonfirst-data-admin-us", "data")
+	const dataRoot = root.path("whosonfirst-data", "whosonfirst-data-admin-us", "data")
 	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
 
 	expect(result.placesFixed).toBe(0)

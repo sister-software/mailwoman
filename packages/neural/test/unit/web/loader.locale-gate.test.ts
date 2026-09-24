@@ -22,14 +22,14 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "@mailwoman/neural/web-loader"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 import { describe, expect, test } from "vitest"
 
 const browserSafePackageRoots = {
-	"locale-hint": resolvePackageDirectory("@mailwoman/locale-hint").toString(),
-	"query-shape": resolvePackageDirectory("@mailwoman/query-shape").toString(),
+	"locale-hint": resolvePackageDirectory("@mailwoman/locale-hint"),
+	"query-shape": resolvePackageDirectory("@mailwoman/query-shape"),
 } as const
 
 // ── Browser-safety scope ─────────────────────────────────────────────────────────────────────────────
@@ -37,12 +37,12 @@ const browserSafePackageRoots = {
 /**
  * Every non-test `.ts` under `dir`, recursively (the runtime source the browser bundle would pull).
  */
-async function sourceFiles(dir: string): Promise<string[]> {
-	const out: string[] = []
+async function sourceFiles(dir: PathBuilder): Promise<PathBuilder[]> {
+	const out: PathBuilder[] = []
 
 	for await (const entry of Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false })) {
 		if (entry.name === "out" || entry.name === "node_modules") continue
-		const full = join(dir, entry.name)
+		const full = dir(entry.name)
 
 		if (entry.isDirectory()) {
 			out.push(...(await sourceFiles(full)))

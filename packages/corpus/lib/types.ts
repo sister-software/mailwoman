@@ -18,6 +18,7 @@
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * What an address is the address OF.
@@ -394,7 +395,7 @@ export interface AdapterOptions {
 	/**
 	 * Path to the adapter's input data (file, directory, or URL — adapter-specific).
 	 */
-	inputPath: string
+	inputPath: PathBuilderLike
 
 	/**
 	 * Optional output directory, available to adapters that maintain side state (rare).

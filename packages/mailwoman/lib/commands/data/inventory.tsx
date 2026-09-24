@@ -16,7 +16,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import {
@@ -112,7 +112,7 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 		// failing that were found on the shipped artifacts: a path the workspace regroup moved,
 		// and a path under gitignored `scratchpad/` that exists only on the machine that built it.
 		// Reported separately from the count, because these artifacts pass every "has a manifest" check.
-		const repoRoot = repoRootPath()
+		const repoRoot = repoRootPathBuilder()
 
 		const manifested = report.entries.filter((e) => e.provenance === Provenance.Manifested)
 

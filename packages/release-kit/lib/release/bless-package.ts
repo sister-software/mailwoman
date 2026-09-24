@@ -23,7 +23,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { type PackageJSONLike, readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { join, resolvePath } from "path-ts"
+import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 import { $, type ProcessPromise } from "zx"
 
 import { packWorkspaceForPublish } from "#pack/pack-workspace"
@@ -156,8 +156,8 @@ async function assertWorkflowExists(options: BlessPackageOptions): Promise<void>
  * `name` is required because every caller below publishes, tags or reports under it,
  * and a manifest without one cannot be blessed at all.
  */
-async function readPkg(dir: string): Promise<PackageJSONLike<{ name: string }>> {
-	return await readPackageJSON<{ name: string }>(join(dir, "package.json"))
+async function readPkg(dir: PathBuilderLike): Promise<PackageJSONLike<{ name: string }>> {
+	return await readPackageJSON<{ name: string }>(PathBuilder.from(dir)("package.json"))
 }
 
 function parseRepo(repository: PackageJSONLike["repository"]): string | undefined {

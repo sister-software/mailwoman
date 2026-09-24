@@ -89,9 +89,10 @@ import {
 	routeFamilyWithPostcode,
 } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
+
+import { CASES_DIR } from "#eval-harness/gauntlet/cases/load"
 
 const { values } = parseArguments({
 	options: {
@@ -244,7 +245,7 @@ interface Disagreement {
 	scripts: string
 }
 
-const casesRoot = repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases")
+const casesRoot = CASES_DIR
 
 /**
  * A case directory the board loads from: a two-letter country code, non-recursively.
@@ -324,7 +325,7 @@ const countryDirs = (await Globerator.from("*", { cwd: casesRoot, onlyFiles: fal
 
 for (const dir of countryDirs) {
 	const files = await Globerator.files("jsonl", {
-		cwd: join(casesRoot, dir),
+		cwd: casesRoot(dir),
 		absolute: true,
 		recursive: false,
 	}).toArray()
@@ -547,7 +548,7 @@ if (values["out-json"]) {
 				ranAt: isoSeconds(),
 				gitCommit: await gitHead(repoRootPath()),
 				gitDirtyTrackedFiles: (await dirtyTrackedFiles(repoRootPath())).length,
-				casesRoot,
+				casesRoot: casesRoot.toString(),
 				checkingOnly: values["checking-only"],
 				rowsRead,
 				graded,

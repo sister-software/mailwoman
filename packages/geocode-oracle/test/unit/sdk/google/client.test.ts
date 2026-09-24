@@ -21,7 +21,7 @@ import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -95,12 +95,12 @@ async function captureError(promise: Promise<unknown>): Promise<ResourceErrorSha
 	throw new Error("Expected the call to reject, but it resolved.")
 }
 
-let cacheDir: string
+let cacheDir: PathBuilder
 let dataRoot: TemporaryDirectory
 
 beforeEach(async () => {
 	dataRoot = await temporaryDirectory("geocode-oracle-google-")
-	cacheDir = dataRoot.resolve("http-cache")
+	cacheDir = dataRoot.path("http-cache")
 
 	await makeDirectoryExclusive(cacheDir)
 	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())
@@ -257,7 +257,7 @@ describe("the response cache", () => {
 
 		for (const entry of entries) {
 			expect(entry).not.toContain(API_KEY)
-			expect(await readLocalTextFile(join(cacheDir, entry))).not.toContain(API_KEY)
+			expect(await readLocalTextFile(cacheDir(entry))).not.toContain(API_KEY)
 		}
 	})
 

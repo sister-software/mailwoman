@@ -31,7 +31,7 @@ import { tryReadLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/read
 import { makeDirectories, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -129,8 +129,8 @@ export interface RunSummary {
 	fingerprint_matches_now: boolean | null
 }
 
-function runPath(runID: string, dir: PathBuilderLike): string {
-	return join(dir, `${runID}.json`)
+function runPath(runID: string, dir: PathBuilderLike): PathBuilder {
+	return resolvePathBuilder(dir, `${runID}.json`)
 }
 
 /**
@@ -219,7 +219,7 @@ interface StoredRunFile {
  * @returns `null` if the file is corrupt or cannot be read.
  */
 async function readStoredRunFile(dir: PathBuilderLike, file: string): Promise<StoredRunFile | null> {
-	return readLocalTextFile(join(dir, file))
+	return readLocalTextFile(resolvePathBuilder(dir, file))
 		.then((raw) => ({ run: parseJSONStrict<StoredRun>(raw), bytes: raw.length, file }))
 		.catch(() => null)
 }
@@ -278,7 +278,7 @@ export async function pruneRuns(
 		if (!Number.isFinite(created) || created < cutoff) {
 			byAge.push(entry.run_id)
 
-			await removePathIfPresent(join(dir, entry.file))
+			await removePathIfPresent(resolvePathBuilder(dir, entry.file))
 
 			continue
 		}
@@ -290,7 +290,7 @@ export async function pruneRuns(
 
 	for (const entry of survivors.slice(keep)) {
 		byCount.push(entry.run_id)
-		await removePathIfPresent(join(dir, entry.file))
+		await removePathIfPresent(resolvePathBuilder(dir, entry.file))
 	}
 
 	return {

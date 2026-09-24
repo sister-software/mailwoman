@@ -441,13 +441,13 @@ export interface BuildNSULLayerOptions {
 	 * Default `<data-root>/db/nsul/nsul.db`.
 	 * Built to a staging path and atomically swapped into place.
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * The `uprn.db` whose coordinates are joined in.
 	 *
 	 * Default `<data-root>/db/uprn/uprn.db`.
 	 */
-	uprnDatabasePath?: string
+	uprnDatabasePath?: PathBuilderLike
 	/**
 	 * Build clock — the `created_at` fallback.
 	 *

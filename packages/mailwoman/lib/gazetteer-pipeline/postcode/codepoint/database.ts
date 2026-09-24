@@ -48,7 +48,7 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	applyStagingPragmas,
@@ -162,7 +162,7 @@ export async function buildPostcodeCodePoint(
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
-	const sourceDir = (options.sourceDir ?? dataRootPath("codepoint", stamp)).toString()
+	const sourceDir = PathBuilder.from(options.sourceDir ?? dataRootPath("codepoint", stamp))
 	const out = (options.out ?? wofDatabasePath(`postalcode-gb-codepoint-${stamp}.db`)).toString()
 
 	// Acquire the Code-Point source archive.
@@ -192,7 +192,7 @@ export async function buildPostcodeCodePoint(
 		osVersion = download.version
 	}
 
-	const archivePath = join(sourceDir, "codepo_gb.zip")
+	const archivePath = sourceDir("codepo_gb.zip")
 	const extracted = await extractCodePointOpen({ archivePath, destDir: sourceDir, onPhase: phase })
 
 	phase(
@@ -310,7 +310,7 @@ export async function buildPostcodeCodePoint(
 
 	return {
 		out,
-		sourceDir,
+		sourceDir: sourceDir.toString(),
 		inserted,
 		stats,
 		metadata: extracted.metadata,

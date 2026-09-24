@@ -101,7 +101,7 @@ export interface ResolveWeightsOpts {
 	/**
 	 * Optional override for the probed data-root overlay root.
 	 */
-	overlayRoot?: string
+	overlayRoot?: PathBuilderLike
 }
 
 /**
@@ -360,9 +360,7 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 	}
 
 	// 2. Data-root overlay.
-	const overlayDir = opts.overlayRoot
-		? PathBuilder.from(resolvePath(opts.overlayRoot, locale))
-		: weightsOverlayDir(locale)
+	const overlayDir = opts.overlayRoot ? resolvePathBuilder(opts.overlayRoot, locale) : weightsOverlayDir(locale)
 
 	// Probe overlays by directory existence.
 	// The base fallback is handled downstream.

@@ -37,7 +37,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * Archive-internal prefix of the per-area CSVs.
@@ -127,12 +127,12 @@ export interface ExtractCodePointOptions {
 	/**
 	 * The downloaded `codepo_gb.zip`.
 	 */
-	archivePath: string
+	archivePath: PathBuilderLike
 	/**
 	 * Directory the `Data/CSV` and `Doc` trees are written under — normally the same
 	 * dated acquisition directory the archive sits in.
 	 */
-	destDir: string
+	destDir: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
 }
 
@@ -165,12 +165,13 @@ export interface ExtractCodePointResult {
  */
 export async function extractCodePointOpen(options: ExtractCodePointOptions): Promise<ExtractCodePointResult> {
 	const phase = options.onPhase ?? (() => {})
-	const csvDir = join(options.destDir, "Data", "CSV")
-	const docDir = join(options.destDir, "Doc")
+	const destDir = PathBuilder.from(options.destDir)
+	const csvDir = destDir("Data", "CSV")
+	const docDir = destDir("Doc")
 
 	await makeDirectories(csvDir, docDir)
 
-	phase("extract", options.archivePath)
+	phase("extract", options.archivePath.toString())
 
 	const entries = await listZipEntries(options.archivePath)
 
@@ -190,7 +191,7 @@ export async function extractCodePointOpen(options: ExtractCodePointOptions): Pr
 
 	const csvPaths = csvEntries
 		.map((entry) => {
-			return join(csvDir, entry.name.slice(entry.name.lastIndexOf("/") + 1))
+			return csvDir(entry.name.slice(entry.name.lastIndexOf("/") + 1)).toString()
 		})
 		.toSorted()
 
@@ -200,13 +201,12 @@ export async function extractCodePointOpen(options: ExtractCodePointOptions): Pr
 
 	phase("extract", `${csvPaths.length} area CSVs, ${ByteFormatter.formatIEC(totalBytes)}`)
 
-	const metadataPath = join(docDir, "metadata.txt")
-	const metadata = parseCodePointMetadata(await readLocalTextFile(metadataPath))
+	const metadata = parseCodePointMetadata(await readLocalTextFile(docDir("metadata.txt")))
 
 	// Latin-1, deliberately — see `ExtractCodePointResult.licenseText`.
-	const licenseText = await readLocalBuffer(join(docDir, "licence.txt"))
+	const licenseText = await readLocalBuffer(docDir("licence.txt"))
 		.then((bytes) => bytes.toString("latin1"))
 		.catch(() => "")
 
-	return { csvPaths, docDir, metadata, licenseText, totalBytes }
+	return { csvPaths, docDir: docDir.toString(), metadata, licenseText, totalBytes }
 }

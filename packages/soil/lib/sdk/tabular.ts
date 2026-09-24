@@ -28,7 +28,7 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 /**
@@ -98,8 +98,9 @@ const MSTABCOL_WIDTH = 14
  * @throws {Error} When either bootstrap file is missing or is not the declared width.
  */
 export async function readTabularDictionary(tabularDirectory: PathBuilderLike): Promise<TabularDictionary> {
-	const mstab = await readPipeDelimited(join(tabularDirectory, "mstab.txt"))
-	const mstabcol = await readPipeDelimited(join(tabularDirectory, "mstabcol.txt"))
+	const directory = PathBuilder.from(tabularDirectory)
+	const mstab = await readPipeDelimited(directory("mstab.txt"))
+	const mstabcol = await readPipeDelimited(directory("mstabcol.txt"))
 
 	assertWidth(mstab, MSTAB_WIDTH, "mstab.txt")
 	assertWidth(mstabcol, MSTABCOL_WIDTH, "mstabcol.txt")
@@ -197,7 +198,7 @@ export async function readTable(
 	}
 
 	const rows: Array<Record<string, string>> = []
-	const raw = await readPipeDelimited(join(tabularDirectory, `${file}.txt`))
+	const raw = await readPipeDelimited(resolvePathBuilder(tabularDirectory, `${file}.txt`))
 
 	for (const [index, row] of raw.entries()) {
 		const record: Record<string, string> = {}
@@ -244,7 +245,7 @@ const MSDOMDET_WIDTH = 5
  * @throws {Error} When the file is not the declared width.
  */
 export async function readDeclaredDomains(tabularDirectory: PathBuilderLike): Promise<DomainMember[]> {
-	const rows = await readPipeDelimited(join(tabularDirectory, "msdomdet.txt"))
+	const rows = await readPipeDelimited(resolvePathBuilder(tabularDirectory, "msdomdet.txt"))
 
 	assertWidth(rows, MSDOMDET_WIDTH, "msdomdet.txt")
 

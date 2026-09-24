@@ -12,7 +12,7 @@ import {
 	STATE_HI_SCHOOLS_ADAPTER_ID,
 	STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/us/adapters/state/hi-schools/adapter"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 import writeXlsxFile, { type SheetData } from "write-excel-file/node"
 
@@ -42,18 +42,18 @@ const SCHOOL_HEADER = [
 
 const CSV_HEADER = SCHOOL_HEADER.join(",")
 
-let scratch: PathBuilderLike
+let scratch: PathBuilder
 
 beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-hi-schools-")).path
 })
 
-function writeCSV(...lines: string[]): Promise<string> {
-	return writeDelimitedFixture(join(scratch, "test.csv"), CSV_HEADER, lines)
+function writeCSV(...lines: string[]): Promise<PathBuilder> {
+	return writeDelimitedFixture(scratch("test.csv"), CSV_HEADER, lines)
 }
 
-async function writeWorkbook(): Promise<string> {
-	const path = join(scratch, "test.xlsx")
+async function writeWorkbook(): Promise<PathBuilder> {
+	const path = scratch("test.xlsx")
 	const sheet = (rows: Array<Array<string | number | boolean | null>>): SheetData => rows as SheetData
 
 	await writeXlsxFile([
@@ -65,7 +65,7 @@ async function writeWorkbook(): Promise<string> {
 			sheet: "PCS",
 			data: sheet([SCHOOL_HEADER, [901, "Voyager Public Charter School", "2428 Wilder Avenue", "Honolulu", 96_822]]),
 		},
-	]).toFile(path)
+	]).toFile(path.toString())
 
 	return path
 }

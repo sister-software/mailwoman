@@ -21,6 +21,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
+import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -169,7 +170,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		// The classifier's own weights-package sibling.
 		// The same artifact the runtime loads, so this grades the prior production would use
 		// rather than one resolved by a second ladder.
-		const fstPath = (classifier as { fstPath?: string }).fstPath
+		const fstPath = (classifier as { fstPath?: PathBuilderLike }).fstPath
 
 		if (fstPath) {
 			const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst")

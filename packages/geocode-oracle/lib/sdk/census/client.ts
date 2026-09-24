@@ -41,6 +41,7 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { ResourceError } from "@mailwoman/core/errors"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 
 import type { OracleGeocodeResult } from "#result"
 import { parseCensusAddressMatch } from "#sdk/census/parser"
@@ -143,7 +144,7 @@ export interface CreateCensusGeocoderClientOptions {
 	 *
 	 * Defaults to `dataRootPath("geocode-oracle", "census")`, resolved once at construction.
 	 */
-	cacheDir?: string
+	cacheDir?: PathBuilderLike
 	/**
 	 * How long a cached match stays fresh, in milliseconds.
 	 *

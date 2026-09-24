@@ -50,7 +50,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 import { GEONAMES_POSTAL_COLUMNS } from "#adapters/geonames/postal/adapter"
@@ -680,7 +680,7 @@ export async function createKnownLocalityCheck(country: string, adminDB?: string
  */
 export async function readTriplesFromGeonames(
 	country: string,
-	path: string,
+	path: PathBuilderLike,
 	countryName: string,
 	options: { isKnownLocality?: (name: string) => boolean } = {}
 ): Promise<PostcodeTriple[]> {
@@ -742,8 +742,9 @@ export async function readTriplesFromGeonames(
 /**
  * Resolve a GeoNames export path under the standard fetch out-root.
  */
-export function geonamesPostalPath(country: string, sourcesRoot?: string): string {
-	const root = sourcesRoot ?? dataRootPath("corpus", "sources")
-
-	return join(root, "geonames-postal", `${country.toUpperCase()}.txt`)
+export function geonamesPostalPath(country: string, sourcesRoot?: PathBuilderLike): PathBuilder {
+	return PathBuilder.from(sourcesRoot ?? dataRootPath("corpus", "sources"))(
+		"geonames-postal",
+		`${country.toUpperCase()}.txt`
+	)
 }

@@ -15,7 +15,7 @@ import { buildFSTFromWOF, serializeFST } from "@mailwoman/resolver-wof-sqlite/fs
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -24,8 +24,8 @@ import { describe, expect, it } from "vitest"
  *
  * @returns The written file path.
  */
-async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
-	const dbPath = join(dir, "tiny-wof.db")
+async function writeTinyFST(dir: PathBuilder): Promise<PathBuilder> {
+	const dbPath = dir("tiny-wof.db")
 	using db = new DatabaseClient<WOFDatabase>(dbPath)
 
 	db.exec(
@@ -43,7 +43,7 @@ async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
 	db.prepare("INSERT INTO place_importance (id, importance) VALUES (1, 0.5)").run()
 
 	const { matcher, provenance } = await buildFSTFromWOF({ dbPath, countries: ["US"], languages: ["*"] })
-	const fstPath = join(dir, "fst-en-us.bin")
+	const fstPath = dir("fst-en-us.bin")
 	await writeLocalFile(serializeFST(matcher, provenance), fstPath)
 
 	return fstPath
@@ -52,7 +52,7 @@ async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
 /**
  * Minimal classifier stand-in: records the opts it was called with, returns an empty tree.
  */
-function fakeClassifier(fstPath?: string) {
+function fakeClassifier(fstPath?: PathBuilder) {
 	const calls: Array<Record<string, unknown>> = []
 
 	return {

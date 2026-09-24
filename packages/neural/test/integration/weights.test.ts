@@ -57,7 +57,7 @@ import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
 import { $public } from "@mailwoman/neural/env"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { dirname, join } from "path-ts"
+import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
@@ -642,13 +642,13 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 			// They now land in the data-root overlay, and a fixture mirroring an empty
 			// directory produces a cache with no binaries.
 			// So the resolve under test silently answers from somewhere else and the eval never fires.
-			const packageDir = dirname((await resolveWeights({ locale: "en-us" })).modelPath)
+			const packageDir = PathBuilder.from((await resolveWeights({ locale: "en-us" })).modelPath).dirname()
 			const cacheRoot = fixtures.use(await temporaryDirectory("mailwoman-pair-check-")).path
 			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
 			await makeDirectories(fakePackageDir)
 
 			for await (const entry of Globerator.from("*", { cwd: packageDir, absolute: false })) {
-				const source = join(packageDir, entry)
+				const source = packageDir(entry)
 
 				// Never symlink the artifact this test is about to overwrite.
 				// `writeFileSync` follows a symlink, so once en-us started shipping a real

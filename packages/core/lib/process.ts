@@ -179,7 +179,7 @@ export type SpawnProcessOptions = Omit<SpawnOptions, "cwd"> & { cwd?: PathBuilde
 export function spawnProcess(
 	file: PathBuilderLike,
 	args?: readonly PathBuilderLike[],
-	options?: SpawnOptionsWithoutStdio & { cwd?: PathBuilderLike }
+	options?: Omit<SpawnOptionsWithoutStdio, "cwd"> & { cwd?: PathBuilderLike }
 ): ChildProcessWithoutNullStreams
 
 export function spawnProcess<
@@ -189,7 +189,7 @@ export function spawnProcess<
 >(
 	file: PathBuilderLike,
 	args: readonly PathBuilderLike[],
-	options: SpawnOptionsWithStdioTuple<Stdin, Stdout, Stderr> & { cwd?: PathBuilderLike }
+	options: Omit<SpawnOptionsWithStdioTuple<Stdin, Stdout, Stderr>, "cwd"> & { cwd?: PathBuilderLike }
 ): ChildProcessByStdio<
 	Stdin extends StdioPipe ? Writable : null,
 	Stdout extends StdioPipe ? Readable : null,

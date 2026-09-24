@@ -31,6 +31,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { toFRN, type FRN } from "#frn"
@@ -166,11 +167,13 @@ function toProviderListRow(
  *
  * The crosswalk graph is where that cardinality belongs rather than here.
  */
-export async function* parseProviderList(csvPath: string): AsyncIterable<ProviderListRow> {
+export async function* parseProviderList(source: PathBuilderLike): AsyncIterable<ProviderListRow> {
+	// The error messages and each row's provenance name the file as text.
+	const csvPath = source.toString()
 	let lineNumber = 0
 	let header: string[] | null = null
 
-	for await (const fields of CSVSpliterator.fromAsync<string[]>(csvPath, { header: false })) {
+	for await (const fields of CSVSpliterator.fromAsync<string[]>(source, { header: false })) {
 		lineNumber++
 
 		if (!fields.length || (fields.length === 1 && !fields[0])) continue

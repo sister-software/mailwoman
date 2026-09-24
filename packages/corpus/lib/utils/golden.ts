@@ -22,7 +22,7 @@
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -141,7 +141,9 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
  * `JSONSpliterator` parses each row for you and throws on the first bad one — correct for
  * consumers that want the rows, wrong for the validator whose whole job is locating the bad ones.
  */
-export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
+export async function validateGoldenFile(source: PathBuilderLike): Promise<GoldenIssue[]> {
+	// Each issue names the file as text.
+	const path = source.toString()
 	const issues: GoldenIssue[] = []
 	// Counted over every row including blanks, so the number matches what an editor shows.
 	let lineNumber = 0
@@ -175,13 +177,14 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 /**
  * Validate every `.jsonl` in a golden directory.
  */
-export async function validateGoldenDir(dir: string): Promise<GoldenReport> {
-	const files = await Globerator.files("jsonl", { cwd: dir, absolute: false, recursive: false }).toSorted()
+export async function validateGoldenDir(dir: PathBuilderLike): Promise<GoldenReport> {
+	const root = PathBuilder.from(dir)
+	const files = await Globerator.files("jsonl", { cwd: root, absolute: false, recursive: false }).toSorted()
 	const issues: GoldenIssue[] = []
 	let entries = 0
 
 	for (const name of files) {
-		const fullPath = join(dir, name)
+		const fullPath = root(name)
 		const fileIssues = await validateGoldenFile(fullPath)
 		issues.push(...fileIssues)
 

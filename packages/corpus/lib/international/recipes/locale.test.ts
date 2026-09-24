@@ -26,7 +26,7 @@ import {
 } from "@mailwoman/corpus/international/recipes/locale"
 import { SourceRegister } from "@mailwoman/corpus/registers"
 import type { RenderedLocaleRow } from "@mailwoman/corpus/surfaces/locale"
-import { join, resolvePath } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -74,10 +74,10 @@ describe("cleanCityNoise", () => {
 })
 
 describe("readTuples (OA CSV parse)", () => {
-	const dirs: string[] = []
+	const dirs: PathBuilder[] = []
 
-	const tmp = async (): Promise<string> => {
-		const d = resolvePath(fixtures.use(await temporaryDirectory("mw-locale-")).path)
+	const tmp = async (): Promise<PathBuilder> => {
+		const d = fixtures.use(await temporaryDirectory("mw-locale-")).path
 		dirs.push(d)
 
 		return d
@@ -92,7 +92,7 @@ describe("readTuples (OA CSV parse)", () => {
 	const OA_HEADER = "LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH"
 
 	it("parses quoted fields, CRLF terminators, and the region fallback", async () => {
-		const file = join(await tmp(), "part.csv")
+		const file = (await tmp())("part.csv")
 
 		await writeLocalTextFile(
 			[
@@ -115,7 +115,7 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("districtAsLocality (NZ) maps DISTRICT→locality, CITY→dependent_locality; falls back when DISTRICT empty", async () => {
-		const file = join(await tmp(), "part.csv")
+		const file = (await tmp())("part.csv")
 
 		await writeLocalTextFile(
 			[
@@ -145,7 +145,7 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("GB tuples: CITY→dependent_locality, DISTRICT→locality via districtAsLocality (empty CITY kept)", async () => {
-		const file = join(await tmp(), "gb.csv")
+		const file = (await tmp())("gb.csv")
 
 		await writeLocalTextFile(
 			[
@@ -172,7 +172,7 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("districtAsLocality: drops dependent_locality when it equals locality (case-insensitive) instead of emitting a same-value pair", async () => {
-		const file = join(await tmp(), "part.csv")
+		const file = (await tmp())("part.csv")
 
 		await writeLocalTextFile(
 			[
@@ -205,7 +205,7 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("ES pedanía (cnigRaw): joins tipo_vial+nombre_via→street, poblacion→dependent_locality, municipio→locality", async () => {
-		const file = join(await tmp(), "es-raw.csv")
+		const file = (await tmp())("es-raw.csv")
 
 		await writeLocalTextFile(
 			[
@@ -242,7 +242,7 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("skips rows missing street or city, and drops city-noise rows", async () => {
-		const file = join(await tmp(), "part.csv")
+		const file = (await tmp())("part.csv")
 
 		await writeLocalTextFile(
 			[

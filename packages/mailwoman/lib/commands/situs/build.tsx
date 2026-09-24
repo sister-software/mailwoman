@@ -42,7 +42,7 @@ import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/addres
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { countRows, indexExists } from "@mailwoman/sqlite/introspection"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -153,7 +153,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		const { scriptEntryPath } = await import("@mailwoman/core/scripting/utils")
 		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const outDir = options.outDir ?? addressPointDatabasePath
+		const outDir = PathBuilder.from(options.outDir ?? addressPointDatabasePath)
 
 		const states = options.states ? splitUSStateCodes(options.states) : [...STATES_BY_COVERAGE]
 
@@ -178,7 +178,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 
 		// A database is complete iff its address_point table has rows and the streetkey index exists.
 		// The index is the last build step, so its presence means insert + index + vacuum all finished.
-		const isComplete = async (dbPath: string): Promise<boolean> => {
+		const isComplete = async (dbPath: PathBuilder): Promise<boolean> => {
 			if (!(await pathExists(dbPath))) return false
 
 			try {
@@ -191,7 +191,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const buildOneState = async (stateCode: string): Promise<StateResult> => {
-			const dbPath = join(outDir, `address-points-us-${stateCode.toLowerCase()}.db`)
+			const dbPath = outDir(`address-points-us-${stateCode.toLowerCase()}.db`)
 
 			if (!options.force && (await isComplete(dbPath))) return { state: stateCode, skipped: true }
 
@@ -250,7 +250,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			failed = 0,
 			totalRows = 0
 
-		const attributionPath = join(outDir, "ATTRIBUTION.json")
+		const attributionPath = outDir("ATTRIBUTION.json")
 
 		// parallelMap yields results AS they complete (out of order), capped at `concurrency` in flight.
 		// Each result includes its own state, so out-of-order is fine for the state-keyed manifest.

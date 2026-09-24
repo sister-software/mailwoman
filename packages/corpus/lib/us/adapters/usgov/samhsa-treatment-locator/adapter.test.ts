@@ -14,7 +14,6 @@ import {
 	createUsgovSamhsaTreatmentLocatorAdapter,
 } from "@mailwoman/corpus/us/adapters/usgov/samhsa-treatment-locator/adapter"
 import { alignRow } from "@mailwoman/corpus/utils"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("samhsa")
@@ -190,7 +189,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, USGOV_SAMHSA_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(USGOV_SAMHSA_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),

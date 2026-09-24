@@ -15,7 +15,7 @@
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -60,8 +60,10 @@ export async function readGauntletInputs(dir: PathBuilderLike = GAUNTLET_CASES_D
 	const entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 	const directories = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name)
 
+	const root = PathBuilder.from(dir)
+
 	for (const directory of [".", ...directories]) {
-		const here = directory === "." ? dir : join(dir, directory)
+		const here = directory === "." ? root : root(directory)
 
 		for (const file of await Globerator.files("jsonl", {
 			cwd: here,
@@ -69,7 +71,7 @@ export async function readGauntletInputs(dir: PathBuilderLike = GAUNTLET_CASES_D
 			recursive: false,
 		}).toArray()) {
 			try {
-				for await (const row of JSONSpliterator.fromAsync<{ input?: unknown }>(join(here, file))) {
+				for await (const row of JSONSpliterator.fromAsync<{ input?: unknown }>(here(file))) {
 					if (typeof row.input === "string" && row.input.trim()) {
 						inputs.add(normalizeGauntletSurface(row.input))
 					}

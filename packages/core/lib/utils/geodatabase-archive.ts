@@ -21,7 +21,7 @@
  *   an extraction. What stays with each caller is where the URL came from and what the two names are.
  */
 
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { tryStat } from "#fs/readers"
 import { makeDirectories } from "#fs/writers"
@@ -43,7 +43,7 @@ export interface DownloadZippedGeodatabaseOptions {
 	/**
 	 * Where vintages are kept.
 	 */
-	cacheRoot: string
+	cacheRoot: PathBuilderLike
 	/**
 	 * The archive's file name, as the catalogue entry names the resource.
 	 */
@@ -67,18 +67,18 @@ export interface DownloadZippedGeodatabaseOptions {
  * The same discipline the database build uses, for the same reason.
  */
 export async function downloadZippedGeodatabase(options: DownloadZippedGeodatabaseOptions): Promise<string> {
-	const vintageDir = join(options.cacheRoot, options.revisionDate)
-	const geodatabasePath = join(vintageDir, options.directory)
+	const vintageDir = PathBuilder.from(options.cacheRoot)(options.revisionDate)
+	const geodatabasePath = vintageDir(options.directory)
 
 	if (await tryStat(geodatabasePath)) {
 		options.onProgress?.(`geodatabase for ${options.revisionDate} already unzipped`)
 
-		return geodatabasePath
+		return geodatabasePath.toString()
 	}
 
 	await makeDirectories(vintageDir)
 
-	const archivePath = join(vintageDir, options.resource)
+	const archivePath = vintageDir(options.resource)
 
 	if (await tryStat(archivePath)) {
 		options.onProgress?.(`archive for ${options.revisionDate} already downloaded`)
@@ -96,5 +96,5 @@ export async function downloadZippedGeodatabase(options: DownloadZippedGeodataba
 	await makeDirectories(geodatabasePath)
 	await runFile("unzip", ["-o", "-q", archivePath, "-d", geodatabasePath])
 
-	return geodatabasePath
+	return geodatabasePath.toString()
 }

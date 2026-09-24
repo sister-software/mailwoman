@@ -149,7 +149,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			exportPath = await downloadZoningExport({
 				url: await client.readExportURL(),
 				vintage,
-				cacheRoot: zoningDatabasePath("cache").toString(),
+				cacheRoot: zoningDatabasePath("cache"),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}

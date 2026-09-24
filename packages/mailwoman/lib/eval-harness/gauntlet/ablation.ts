@@ -62,7 +62,7 @@ import { makeDirectories, writeLocalFile, writeLocalJSONFile } from "@mailwoman/
 import { sha256Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	ABLATION_ABSENT,
@@ -299,7 +299,7 @@ export interface AblationLayerOptions extends GauntletLayerOptions {
 	 * The `promotion-eval.ts` convention, and deliberately not under `$MAILWOMAN_DATA_ROOT`,
 	 * which this layer only ever reads.
 	 */
-	outDir?: string
+	outDir?: PathBuilderLike
 	/**
 	 * Restrict the deleted components (default: all of {@linkcode ABLATABLE_COMPONENTS}).
 	 */
@@ -391,10 +391,10 @@ export function ablationBoardID(cases: readonly { id: string; input: string }[])
 	return `gauntlet-regression@${cases.length}:${sha256Hex(fingerprint).slice(0, 12)}`
 }
 
-function timestampDir(now: Date): string {
+function timestampDir(now: Date): PathBuilder {
 	const iso = now.toISOString()
 
-	return `/tmp/ablation-${iso.slice(0, 10).replaceAll("-", "")}-${iso.slice(11, 16).replace(":", "")}`
+	return PathBuilder.from(`/tmp/ablation-${iso.slice(0, 10).replaceAll("-", "")}-${iso.slice(11, 16).replace(":", "")}`)
 }
 
 /**
@@ -437,7 +437,7 @@ export async function runAblationLayer(
 
 	const boardID = ablationBoardID(allCases)
 	const measuredAt = new Date().toISOString()
-	const outDir = options.outDir ?? timestampDir(new Date())
+	const outDir = PathBuilder.from(options.outDir ?? timestampDir(new Date()))
 	const cases = options.limit ? allCases.slice(0, options.limit) : allCases
 
 	const only = options.components?.length
@@ -641,7 +641,7 @@ export async function runAblationLayer(
 		skips,
 	}
 
-	await writeLocalJSONFile(artifact, join(outDir, "ablation-map.json"))
+	await writeLocalJSONFile(artifact, outDir("ablation-map.json"))
 
 	await writeLocalFile(
 		renderAblationMarkdown(cells, rows, {
@@ -652,14 +652,14 @@ export async function runAblationLayer(
 			skips,
 			pins: pinLine,
 		}),
-		join(outDir, "ablation-map.md")
+		outDir("ablation-map.md")
 	)
 
-	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir, pinLine, skips })
+	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir: outDir.toString(), pinLine, skips })
 
 	// The instrument rather than a check: a map of zero cells means the run measured nothing, and a "pass"
 	// printed over an empty map is precisely the reading the meaning-of-zero rule exists to forbid.
-	return { pass: cells.length > 0, outDir, cells }
+	return { pass: cells.length > 0, outDir: outDir.toString(), cells }
 }
 
 function describePins(options: AblationLayerOptions): string {

@@ -22,8 +22,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -163,7 +162,7 @@ console.log(
 )
 
 if (args.json) {
-	await writeLocalTextFile(prettyJSON({ totals, floor: FLOOR, countries: all }), args.json)
+	await writeLocalJSONFile({ totals, floor: FLOOR, countries: all }, args.json)
 
 	console.log(`\njson → ${args.json}`)
 }

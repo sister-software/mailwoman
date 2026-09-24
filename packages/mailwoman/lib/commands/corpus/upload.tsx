@@ -26,7 +26,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { Box, Text } from "ink"
-import type { PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { useState } from "react"
 import { Globerator } from "spliterator/node/fs"
 
@@ -74,9 +74,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { $ } = await import("zx")
 
-		const { join } = await import("path-ts")
-
-		const corpusRoot = options.corpusDir ?? dataRootPath("corpus", "versioned")
+		const corpusRoot = PathBuilder.from(options.corpusDir ?? dataRootPath("corpus", "versioned"))
 
 		const versions = extractDelimited(options.corpusVersion)
 
@@ -123,8 +121,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 
 		for (const version of versions) {
 			// The on-disk layout nests the corpus under its own name: <root>/<version>/corpus-<version>/.
-			const nested = join(corpusRoot, version, `corpus-${version}`)
-			const source = (await pathExists(nested)) ? nested : join(corpusRoot, version)
+			const nested = corpusRoot(version, `corpus-${version}`)
+			const source = (await pathExists(nested)) ? nested : corpusRoot(version)
 
 			jobs.push({
 				label: `corpus ${version}`,

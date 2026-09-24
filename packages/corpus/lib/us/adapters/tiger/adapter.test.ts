@@ -16,7 +16,7 @@ import {
 } from "@mailwoman/corpus/us/adapters/tiger/adapter"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { beforeEach, describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("tiger")
@@ -25,11 +25,11 @@ const loadRows = () => readCanonicalRows(scratch.path, TIGER_ADAPTER_ID)
 
 const fixtureSQLPath = workspacePath("corpus", "fixtures", "tiger", "fixture.sql")
 
-let dbPath: string
+let dbPath: PathBuilder
 
-async function buildFixtureDB(): Promise<string> {
+async function buildFixtureDB(): Promise<PathBuilder> {
 	const sql = await readLocalTextFile(fixtureSQLPath)
-	const path = join(scratch.path, "tiger-fixture.db")
+	const path = scratch.path("tiger-fixture.db")
 	await using db = new DatabaseClient<TIGERDatabase>(path)
 	db.exec(sql)
 
@@ -132,7 +132,7 @@ describe("tiger adapter against fixture.sql", () => {
 
 	it("zipl !== zipr produces two street variants (one per side)", async () => {
 		// Build a mini DB with one segment whose left and right ZIPs differ.
-		const inline = join(scratch.path, "split-zip.db")
+		const inline = scratch.path("split-zip.db")
 		using db = new DatabaseClient<TIGERDatabase>(inline)
 
 		db.exec(`
@@ -161,7 +161,7 @@ describe("tiger adapter against fixture.sql", () => {
 	})
 
 	it("street with no ZIPs emits a single zipless variant", async () => {
-		const inline = join(scratch.path, "no-zip.db")
+		const inline = scratch.path("no-zip.db")
 		using db = new DatabaseClient<TIGERDatabase>(inline)
 
 		db.exec(`
@@ -185,7 +185,7 @@ describe("tiger adapter against fixture.sql", () => {
 	})
 
 	it("rows with an unrecognized state FIPS code are dropped", async () => {
-		const inline = join(scratch.path, "bad-fips.db")
+		const inline = scratch.path("bad-fips.db")
 		using db = new DatabaseClient<TIGERDatabase>(inline)
 
 		db.exec(`
@@ -237,7 +237,7 @@ describe("tiger adapter against fixture.sql", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, TIGER_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(TIGER_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createTigerAdapter(),

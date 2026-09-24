@@ -24,7 +24,6 @@ import { isFile, readLocalBuffer, tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { downloadToFile, loadManifestEntries, writeManifest } from "#tools/fetch/download/index"
@@ -157,8 +156,8 @@ export interface BanManifestEntry {
 export type FetchBanOptions = BaseFetchOptions
 
 export async function fetchBan(options: FetchBanOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const banDir = join(options.outRoot, "ban")
-	const manifestPath = join(banDir, "MANIFEST.json")
+	const banDir = options.outRoot("ban")
+	const manifestPath = banDir("MANIFEST.json")
 	await makeDirectories(banDir)
 
 	// Load existing entries (code -> entry): skip detection + preservation of untouched codes.
@@ -171,8 +170,8 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 
 	for (const code of DEPT_CODES) {
 		const filename = `adresses-${code}.csv`
-		const gzFile = join(banDir, `${filename}.gz`)
-		const csvFile = join(banDir, filename)
+		const gzFile = banDir(`${filename}.gz`)
+		const csvFile = banDir(filename)
 		const url = `${BASE_URL}/adresses-${code}.csv.gz`
 
 		report?.(`=== dept ${code}`)

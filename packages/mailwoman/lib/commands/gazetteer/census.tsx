@@ -27,7 +27,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -122,7 +122,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const bytes = serializePlacetypeCensus(header, nodes)
-		const outPath = join(options.out, `placetype-census-${country}.bin`)
+		const outPath = PathBuilder.from(options.out)(`placetype-census-${country}.bin`)
 
 		await writeLocalFile(bytes, outPath)
 

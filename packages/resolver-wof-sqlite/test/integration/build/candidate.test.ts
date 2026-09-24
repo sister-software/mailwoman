@@ -31,7 +31,6 @@ import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: TemporaryDirectory
@@ -834,7 +833,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	async function buildWithBackfill(withOption: boolean): Promise<DatabaseClient<CandidateDatabase>> {
 		const input = scratch.resolve("admin-currency.db")
 		const output = scratch.resolve("candidate-currency.db")
-		const geonamesDir = scratch.resolve("geonames")
+		const geonamesDir = scratch.path("geonames")
 
 		buildFixtureCurrency(input)
 
@@ -848,7 +847,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 				// an S-class row must never attest
 				geonamesLine(4, "Oldblob", 52.001, -1.001, "S", 90_000),
 			],
-			join(geonamesDir, "GB.txt")
+			geonamesDir("GB.txt")
 		)
 
 		await buildCandidateTable({

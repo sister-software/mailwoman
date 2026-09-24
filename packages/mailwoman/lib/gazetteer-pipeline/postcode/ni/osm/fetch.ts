@@ -37,7 +37,7 @@ import { tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalBuffer, writeLocalJSONFile, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { md5Hex } from "@mailwoman/core/utils"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * The public Overpass API endpoint.
@@ -234,7 +234,7 @@ export interface AcquireNIPostcodesOptions {
 	 * (`$MAILWOMAN_DATA_ROOT/osm-ni-postcodes/<yyyy-MM-DD>/`), so an acquisition
 	 * never overwrites an earlier one.
 	 */
-	destDir: string
+	destDir: PathBuilderLike
 	/**
 	 * Reuse an existing `response.json` instead of re-querying.
 	 *
@@ -265,11 +265,11 @@ export interface AcquireNIPostcodesResult {
 	 * Absolute path of the saved response.
 	 * The only file the builder reads.
 	 */
-	responsePath: string
+	responsePath: PathBuilder
 	/**
 	 * Absolute path of the retrieval-metadata sidecar.
 	 */
-	acquisitionPath: string
+	acquisitionPath: PathBuilder
 	bytes: number
 	/**
 	 * Md5 of the response bytes on disk.
@@ -308,11 +308,12 @@ export function niPostcodeQueryMD5(): string {
  * then the md5 in the provenance would describe bytes nobody can reproduce.
  */
 export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Promise<AcquireNIPostcodesResult> {
-	const { destDir, reuseExisting = true, endpoint = OVERPASS_ENDPOINT } = options
+	const { reuseExisting = true, endpoint = OVERPASS_ENDPOINT } = options
+	const destDir = PathBuilder.from(options.destDir)
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
-	const responsePath = join(destDir, "response.json")
-	const acquisitionPath = join(destDir, "acquisition.json")
+	const responsePath = destDir("response.json")
+	const acquisitionPath = destDir("acquisition.json")
 	const queryMD5 = niPostcodeQueryMD5()
 
 	await makeDirectories(destDir)
@@ -372,7 +373,7 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 
 	phase("saved", `${body.byteLength.toLocaleString()} bytes → ${responsePath} (md5 ${md5})`)
 
-	await writeLocalTextFile(`${md5}  response.json\n`, `${responsePath}.md5`)
+	await writeLocalTextFile(`${md5}  response.json\n`, destDir("response.json.md5"))
 
 	await writeAcquisitionSidecar(acquisitionPath, {
 		endpoint,
@@ -418,7 +419,7 @@ export interface NIAcquisitionSidecar {
  * which branch wrote the file is an obligation waiting to be missed.
  */
 async function writeAcquisitionSidecar(
-	path: string,
+	path: PathBuilder,
 	input: {
 		endpoint: string
 		queryMD5: string

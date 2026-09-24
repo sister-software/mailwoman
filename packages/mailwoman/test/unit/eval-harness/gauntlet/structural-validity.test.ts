@@ -25,10 +25,9 @@
 import { validateTree } from "@mailwoman/core/decoder"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { repoRootPath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { CASES_DIR } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { parseForGeocode } from "mailwoman/geocode"
-import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 
@@ -84,24 +83,23 @@ interface Row {
 }
 
 async function boardRows(): Promise<Row[]> {
-	const root = repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases")
 	const rows: Row[] = []
 
-	for await (const entry of Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false })) {
+	for await (const entry of Globerator.from("*", { cwd: CASES_DIR, absolute: false, onlyFiles: false })) {
 		let files: string[]
 
 		try {
 			// A country directory carries more than `regression.jsonl` —
 			// street-name-boundaries, gloss-keys, others.
 			// Reading only the first name silently measured 326 of 854 rows.
-			files = await Globerator.files("jsonl", { cwd: join(root, entry), absolute: false, recursive: false }).toArray()
+			files = await Globerator.files("jsonl", { cwd: CASES_DIR(entry), absolute: false, recursive: false }).toArray()
 		} catch {
 			continue
 		}
 
 		for (const name of files) {
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- committed board files, read whole and bounded
-			for (const line of (await readLocalTextFile(join(root, entry, name))).split("\n")) {
+			for (const line of (await readLocalTextFile(CASES_DIR(entry, name))).split("\n")) {
 				if (!line.trim()) continue
 
 				const row = parseJSONStrict(line) as Partial<Row>

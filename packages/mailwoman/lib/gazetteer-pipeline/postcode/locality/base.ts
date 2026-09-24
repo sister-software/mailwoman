@@ -42,7 +42,7 @@ import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { finalizeSealedBuild } from "#gazetteer-pipeline/database-lifecycle"
@@ -252,7 +252,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 /**
  * Recursively collect every `.geojson` file under `dir` (Python's recursive `glob` over `data`).
  */
-async function geojsonFiles(dir: string): Promise<string[]> {
+async function geojsonFiles(dir: PathBuilderLike): Promise<string[]> {
 	if (!(await pathExists(dir))) return []
 
 	return Globerator.files("geojson", { cwd: dir, absolute: true }).toArray()
@@ -265,7 +265,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	const locs: Locality[] = []
 
-	for (const fp of await geojsonFiles(join(adminRepo!, "data"))) {
+	for (const fp of await geojsonFiles(PathBuilder.from(adminRepo!)("data"))) {
 		try {
 			const g = tryParsingJSON<{ properties?: Record<string, unknown>; geometry?: ParsedGeometry }>(
 				await readLocalTextFile(fp)

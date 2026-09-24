@@ -23,7 +23,7 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { interpolationDatabasePath, wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 interface StateParity {
@@ -75,7 +75,7 @@ export async function countyKeyParity(
 	for (const file of files) {
 		const state = EXTRACT_NAME.exec(file)![1]!.toUpperCase() as USStateAbbreviation
 		const name = US_STATE_BY_ABBREVIATION[state] ?? state
-		using db = new DatabaseClient<never>(join(interpolationDir, file), { readOnly: true })
+		using db = new DatabaseClient<never>(resolvePathBuilder(interpolationDir, file), { readOnly: true })
 
 		const tigerKeys = (
 			db.prepare("select distinct county_fips from street_segment order by county_fips").all() as Array<{

@@ -18,15 +18,15 @@ import {
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { SHARE_ALIKE_PATTERN } from "@mailwoman/corpus/utils/license"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("osm")
 
 const loadRows = () => readCanonicalRows(scratch.path, OSM_ADAPTER_ID)
 
-async function writeFixture(name: string, rows: Record<string, unknown>[]): Promise<string> {
-	const p = join(scratch.path, name)
+async function writeFixture(name: string, rows: Record<string, unknown>[]): Promise<PathBuilder> {
+	const p = scratch.path(name)
 	await writeLocalJSONLFile(rows, p)
 
 	return p

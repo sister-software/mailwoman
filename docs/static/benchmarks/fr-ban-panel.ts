@@ -45,9 +45,9 @@ import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { geocodeAddress } from "mailwoman/geocode"
-import { basename, join, PathBuilder, resolvePath } from "path-ts"
+import { basename, PathBuilder, resolvePath } from "path-ts"
 
-const HERE = import.meta.dirname
+const HERE = PathBuilder.from(import.meta.dirname)
 
 /**
  * The weights locale.
@@ -105,8 +105,9 @@ const ROUTING_KM = 15
 const { values: flags } = parseArguments({
 	options: {
 		"data-root": { type: "string" },
-		out: { type: "string", default: join(HERE, "fr-ban-results.json") },
-		sample: { type: "string", default: join(HERE, "fr-ban-sample.json") },
+		// Strings, because an option default has the option's type.
+		out: { type: "string", default: HERE("fr-ban-results.json").toString() },
+		sample: { type: "string", default: HERE("fr-ban-sample.json").toString() },
 		resample: { type: "boolean", default: false },
 		limit: { type: "string" },
 	},

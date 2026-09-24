@@ -10,7 +10,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { connectDuckDB, escapeSQLString } from "@mailwoman/corpus/parquet/duckdb"
 import type { ParquetManifest } from "@mailwoman/corpus/parquet/writers"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * The manifest records the path the builder wrote under, which is the Modal volume mount
@@ -49,13 +49,18 @@ export interface MixtureFiles {
  * A missing file read as an empty result would report a composition for a corpus that is
  * only partly materialized, and nothing downstream can tell that from a real absence.
  */
-export async function readMixtureFiles(corpusDirectory: string, split: string, limit?: number): Promise<MixtureFiles> {
-	const manifest = await readLocalJSONFile<ParquetManifest>(join(corpusDirectory, "MANIFEST.json"))
+export async function readMixtureFiles(
+	corpusDirectory: PathBuilderLike,
+	split: string,
+	limit?: number
+): Promise<MixtureFiles> {
+	const manifestPath = PathBuilder.from(corpusDirectory)("MANIFEST.json")
+	const manifest = await readLocalJSONFile<ParquetManifest>(manifestPath)
 	const entries = manifest.slices.filter((entry) => entry.split === split)
 
 	if (!entries.length) {
 		throw new Error(
-			`${corpusDirectory}/MANIFEST.json records no ${split} split — it carries ` +
+			`${manifestPath} records no ${split} split — it carries ` +
 				`${[...new Set(manifest.slices.map((entry) => entry.split))].toSorted().join(", ")}.`
 		)
 	}

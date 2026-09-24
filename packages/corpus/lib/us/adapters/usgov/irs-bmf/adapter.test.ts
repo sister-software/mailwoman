@@ -12,7 +12,7 @@ import {
 	USGOV_IRS_BMF_ADAPTER_ID,
 	USGOV_IRS_BMF_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/us/adapters/usgov/irs-bmf/adapter"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -21,17 +21,17 @@ afterAll(() => fixtures.disposeAsync())
 
 const HEADER = "EIN,NAME,STREET,CITY,STATE,ZIP"
 
-let scratch: PathBuilderLike
+let scratch: PathBuilder
 
 beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-irsbmf-")).path
 })
 
-function writeCSV(...lines: string[]): Promise<string> {
-	return writeDelimitedFixture(join(scratch, "eo.csv"), HEADER, lines)
+function writeCSV(...lines: string[]): Promise<PathBuilder> {
+	return writeDelimitedFixture(scratch("eo.csv"), HEADER, lines)
 }
 
-async function collect(p: string, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
+async function collect(p: PathBuilder, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
 	const out: CanonicalRow[] = []
 
 	for await (const r of createUSGovIRSBMFAdapter().rows({ inputPath: p, ...extra })) {

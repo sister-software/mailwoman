@@ -29,10 +29,9 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "path-ts"
 
 const { values } = parseArguments({
 	options: {
@@ -87,8 +86,8 @@ const missingByPackage = new Map<string, string[]>()
 let linked = 0
 
 for (const locale of locales) {
-	const workspace = repoRootPath("packages", `neural-weights-${locale}`)
-	const manifestPath = join(workspace, "package.json")
+	const workspace = workspacePathBuilder(`neural-weights-${locale}`)
+	const manifestPath = workspace("package.json")
 
 	if (!(await pathExists(manifestPath))) {
 		throw new Error(`no workspace for locale ${locale} at ${workspace}`)

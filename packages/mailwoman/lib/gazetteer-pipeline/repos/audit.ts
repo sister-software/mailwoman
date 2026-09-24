@@ -26,7 +26,7 @@
 
 import { entryLeadsToDirectory, pathExists, realPath } from "@mailwoman/core/fs/readers"
 import { runFileSync } from "@mailwoman/core/process"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -114,7 +114,7 @@ export function parseRepoName(name: string): { theme?: string; country?: string 
  * It is a directory someone extracted from an archive, and reporting the vintage
  * as absent is more useful than refusing to audit the root.
  */
-function headOf(dir: string): string | undefined {
+function headOf(dir: PathBuilder): string | undefined {
 	try {
 		return runFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: dir, encoding: "utf8", stdio: "pipe" }).trim()
 	} catch {
@@ -137,7 +137,7 @@ export async function auditReposRoot(
 
 	const realPaths = new Map<string, string[]>()
 
-	const record = async (name: string, layout: CloneLayout, dir: string): Promise<void> => {
+	const record = async (name: string, layout: CloneLayout, dir: PathBuilder): Promise<void> => {
 		const existing = byName.get(name) ?? { name, layouts: [], commits: {}, aliased: false, ...parseRepoName(name) }
 
 		existing.layouts.push(layout)
@@ -173,7 +173,7 @@ export async function auditReposRoot(
 	}
 
 	for await (const entry of Globerator.from("*", { cwd: root, withFileTypes: true, onlyFiles: false })) {
-		const full = join(root, entry.name)
+		const full = resolvePathBuilder(root, entry.name)
 
 		if (!(await entryLeadsToDirectory(entry))) continue
 
@@ -187,7 +187,7 @@ export async function auditReposRoot(
 		// Its children are the nested layout.
 		// A name that is itself a repo was handled above.
 		for await (const child of Globerator.from("*", { cwd: full, withFileTypes: true, onlyFiles: false })) {
-			const childPath = join(full, child.name)
+			const childPath = full(child.name)
 
 			if (child.name.startsWith("whosonfirst-") && (await entryLeadsToDirectory(child))) {
 				await record(child.name, CloneLayout.Nested, childPath)

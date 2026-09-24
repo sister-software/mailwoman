@@ -39,7 +39,7 @@ import {
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { join, resolvePath as resolve } from "path-ts"
+import { PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-ts"
 
 /**
  * How many stabilization passes the worker makes before giving up.
@@ -61,12 +61,12 @@ export interface TodoItem {
 	activeForm?: string
 }
 
-function stateDir(cwd: string): string {
-	return join(cwd, ".claude", "state")
+function stateDir(cwd: PathBuilderLike): PathBuilder {
+	return PathBuilder.from(cwd)(".claude", "state")
 }
 
-async function linkedIssue(cwd: string): Promise<number | null> {
-	const path = join(stateDir(cwd), "linked-issue")
+async function linkedIssue(cwd: PathBuilderLike): Promise<number | null> {
+	const path = stateDir(cwd)("linked-issue")
 
 	if (!(await pathExists(path))) return null
 
@@ -107,11 +107,11 @@ async function hookMain(): Promise<void> {
 
 	if (!Array.isArray(todos)) return
 
-	const dir = join(stateDir(cwd), "todo-sync")
+	const dir = stateDir(cwd)("todo-sync")
 
 	await makeDirectories(dir)
-	const payloadPath = join(dir, "payload.json")
-	const pendingPath = join(dir, `payload.${process.pid}.json`)
+	const payloadPath = dir("payload.json")
+	const pendingPath = dir(`payload.${process.pid}.json`)
 
 	await writeLocalJSONFile({ issue, todos }, pendingPath)
 	await movePath(pendingPath, payloadPath)
@@ -136,7 +136,7 @@ const delay: Delay = (milliseconds) =>
 		setTimeout(done, milliseconds)
 	})
 
-async function acquireLock(lock: string, wait: Delay): Promise<boolean> {
+async function acquireLock(lock: PathBuilder, wait: Delay): Promise<boolean> {
 	for (let attempt = 0; attempt < MAX_LOCK_ATTEMPTS; attempt++) {
 		try {
 			await makeDirectoryExclusive(lock)
@@ -151,13 +151,13 @@ async function acquireLock(lock: string, wait: Delay): Promise<boolean> {
 }
 
 export async function workerMain(
-	cwd: string,
+	cwd: PathBuilderLike,
 	dryRun: boolean,
 	sync: SyncIssue = syncIssue,
 	wait: Delay = delay
 ): Promise<void> {
-	const dir = join(stateDir(cwd), "todo-sync")
-	const lock = join(dir, "lock")
+	const dir = stateDir(cwd)("todo-sync")
+	const lock = dir("lock")
 
 	// A worker that loses the lock must wait for its own turn.
 	// Its payload can arrive after the lock holder's final read.
@@ -170,7 +170,7 @@ export async function workerMain(
 		// Re-read until stable: a burst of TodoWrites overwrites payload.json, and publishing anything
 		// but the final state would show the operator a stale list with a fresh timestamp.
 		for (let pass = 0; pass < MAX_SYNC_PASSES; pass++) {
-			const raw = await readLocalTextFile(join(dir, "payload.json"))
+			const raw = await readLocalTextFile(dir("payload.json"))
 
 			if (raw === previous) break
 

@@ -25,6 +25,7 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { formatPersonName } from "@mailwoman/record/name"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
@@ -81,7 +82,7 @@ const REQUIRED_COLUMNS = [
  * Checked against the first parsed record rather than the header line, so it sees the
  * keys the reader produced rather than the bytes the file opened with.
  */
-function assertPracticeLocationColumns(record: NPPESRow, inputPath: string): void {
+function assertPracticeLocationColumns(record: NPPESRow, inputPath: PathBuilderLike): void {
 	const present = new Set(Object.keys(record))
 	const missing = REQUIRED_COLUMNS.filter((column) => !present.has(column))
 

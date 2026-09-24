@@ -31,7 +31,7 @@
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dirname, join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
 import { SourceRegister } from "#registers"
@@ -84,9 +84,9 @@ const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
  *
  * Empty map if absent.
  */
-async function loadAdmin1(dir: string): Promise<Map<string, string>> {
+async function loadAdmin1(dir: PathBuilder): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
-	const fp = join(dir, "admin1CodesASCII.txt")
+	const fp = dir("admin1CodesASCII.txt")
 
 	if (!(await pathExists(fp))) return map
 
@@ -106,9 +106,9 @@ async function loadAdmin1(dir: string): Promise<Map<string, string>> {
  * Empty map if absent.
  * The file is `#`-commented.
  */
-async function loadCountries(dir: string): Promise<Map<string, string>> {
+async function loadCountries(dir: PathBuilder): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
-	const fp = join(dir, "countryInfo.txt")
+	const fp = dir("countryInfo.txt")
 
 	if (!(await pathExists(fp))) return map
 
@@ -137,7 +137,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 			"GeoNames populated places (CC-BY-4.0) — global locality coverage incl. small towns, with region/country names from the sibling admin1/countryInfo files.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			const dir = dirname(opts.inputPath)
+			const dir = PathBuilder.from(opts.inputPath).dirname()
 			const admin1 = await loadAdmin1(dir)
 			const countries = await loadCountries(dir)
 

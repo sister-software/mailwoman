@@ -29,7 +29,6 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { join } from "path-ts"
 
 import type {
 	BaseFetchOptions,
@@ -101,9 +100,9 @@ async function fileURLFor(dataset: Dataset): Promise<string | undefined> {
 }
 
 export async function fetchGCISTW(options: FetchGCISTWOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
-	const manifestPath = join(destDir, "MANIFEST.json")
+	const manifestPath = destDir("MANIFEST.json")
 
 	const datasets = await listBulkDatasets()
 	report?.(`=== ${SLUG}: ${datasets.length} bulk register files in the catalog`)
@@ -116,7 +115,7 @@ export async function fetchGCISTW(options: FetchGCISTWOptions, report?: (line: s
 
 	for (const dataset of datasets) {
 		const filename = filenameFor(dataset.title)
-		const dest = join(destDir, filename)
+		const dest = destDir(filename)
 		const before = previous.get(filename)
 
 		if (before && (await pathExists(dest))) {

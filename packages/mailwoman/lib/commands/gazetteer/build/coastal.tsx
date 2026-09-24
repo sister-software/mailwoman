@@ -145,7 +145,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 			geodatabasePath = await downloadCoastalGeodatabase({
 				url,
 				revisionDate: sourceVintage,
-				cacheRoot: coastalDatabasePath("cache").toString(),
+				cacheRoot: coastalDatabasePath("cache"),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}

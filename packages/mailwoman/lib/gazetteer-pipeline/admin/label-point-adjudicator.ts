@@ -30,7 +30,7 @@
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { haversineKm } from "@mailwoman/spatial"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 /**
  * A candidate or anchor coordinate pair, WGS-84 decimal degrees.
@@ -123,7 +123,7 @@ export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): 
 
 		const pending = (async (): Promise<Map<string, PointPair>> => {
 			const points = new Map<string, PointPair>()
-			const path = join(geonamesDir, `${country.toUpperCase()}.txt`)
+			const path = resolvePathBuilder(geonamesDir, `${country.toUpperCase()}.txt`)
 
 			// Missing country extract → empty map, cached: absence of anchors, never an error.
 			// `from` parses content (a path argument would be parsed as one row of itself),

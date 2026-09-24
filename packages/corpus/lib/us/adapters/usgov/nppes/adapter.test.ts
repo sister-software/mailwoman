@@ -12,7 +12,7 @@ import {
 	USGOV_NPPES_ADAPTER_ID,
 	USGOV_NPPES_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/us/adapters/usgov/nppes/adapter"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -36,14 +36,14 @@ const CSV_HEADER = [
 	"Provider Business Practice Location Address Postal Code",
 ].join(",")
 
-let scratch: PathBuilderLike
+let scratch: PathBuilder
 
 beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-nppes-")).path
 })
 
-function writeCSV(...lines: string[]): Promise<string> {
-	return writeDelimitedFixture(join(scratch, "test.csv"), CSV_HEADER, lines)
+function writeCSV(...lines: string[]): Promise<PathBuilder> {
+	return writeDelimitedFixture(scratch("test.csv"), CSV_HEADER, lines)
 }
 
 describe("usgov-nppes adapter", () => {
@@ -64,7 +64,7 @@ describe("usgov-nppes adapter", () => {
 			"Provider Business Practice Location Address Postcode"
 		)
 
-		const path = await writeDelimitedFixture(join(scratch, "swept.csv"), swept, [
+		const path = await writeDelimitedFixture(scratch("swept.csv"), swept, [
 			"1000000001,2,METRO HEALTH SYSTEM,,,1234 MAIN ST,SUITE 200,NASHVILLE,TN,37203",
 		])
 

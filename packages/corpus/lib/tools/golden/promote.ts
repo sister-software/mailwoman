@@ -36,7 +36,7 @@ import { copyFileTo, makeDirectories, writeLocalJSONFile } from "@mailwoman/core
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -86,7 +86,7 @@ export interface PromoteGoldenOptions {
 	 *
 	 * Default `data/eval/golden`.
 	 */
-	goldenRoot?: string
+	goldenRoot?: PathBuilderLike
 	/**
 	 * Skip the human-typed-likelihood filters (keep everything that passed expand-golden's validator).
 	 */
@@ -160,7 +160,7 @@ export async function promoteGolden(
 	report?: (line: string) => void
 ): Promise<PromoteStats> {
 	const prior = options.prior ?? "v0.1.0"
-	const goldenRoot = options.goldenRoot ?? "data/eval/golden"
+	const goldenRoot = PathBuilder.from(options.goldenRoot ?? "data/eval/golden")
 	const applyFilters = !options.noFilters
 	const dryRun = options.dryRun ?? false
 
@@ -176,14 +176,14 @@ export async function promoteGolden(
 
 	// Forward-copy base: existing entries from the prior golden version go forward verbatim,
 	// and we dedupe new candidates against them so v_new = v_old ∪ accepted_candidates.
-	const priorDir = join(goldenRoot, prior)
+	const priorDir = goldenRoot(prior)
 	const priorEntries: { country: string; entries: GoldenEntry[] }[] = []
 	const seenNormalized = new Set<string>()
 
 	if (await pathExists(priorDir)) {
 		for await (const f of Globerator.files("jsonl", { cwd: priorDir, absolute: false, recursive: false })) {
 			const country = f.replace(".jsonl", "").toUpperCase()
-			const entries = await JSONSpliterator.fromAsync<GoldenEntry>(join(priorDir, f)).toArray()
+			const entries = await JSONSpliterator.fromAsync<GoldenEntry>(priorDir(f)).toArray()
 
 			priorEntries.push({ country, entries })
 
@@ -275,7 +275,7 @@ export async function promoteGolden(
 	}
 
 	// Output
-	const outDir = join(goldenRoot, options.bumpTo)
+	const outDir = goldenRoot(options.bumpTo)
 	report?.(`=== plan ===`)
 	report?.(`output dir: ${outDir}${dryRun ? " (dry-run)" : ""}`)
 
@@ -319,7 +319,7 @@ export async function promoteGolden(
 
 	for (const [key, entries] of buckets) {
 		const filename = `${key.toLowerCase()}.jsonl`
-		const path = join(outDir, filename)
+		const path = outDir(filename)
 
 		{
 			await using out = createNewlineWriter(path)
@@ -336,12 +336,12 @@ export async function promoteGolden(
 	if (await pathExists(priorDir)) {
 		for await (const f of Globerator.from("*", { cwd: priorDir, absolute: false })) {
 			if (f.endsWith(".jsonl")) continue
-			await copyFileTo(join(priorDir, f), join(outDir, f))
+			await copyFileTo(priorDir(f), outDir(f))
 			report?.(`  forward-copied: ${f}`)
 		}
 	}
 
-	await writeLocalJSONFile(manifest, join(outDir, "MANIFEST.json"))
+	await writeLocalJSONFile(manifest, outDir("MANIFEST.json"))
 	report?.(`✓ promoted to ${outDir}`)
 
 	return stats

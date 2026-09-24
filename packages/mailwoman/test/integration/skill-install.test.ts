@@ -17,7 +17,7 @@ import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -54,14 +54,8 @@ const CLI_TEST_TIMEOUT_MS = 120_000
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
 describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
-	const tempDirs: string[] = []
-
-	async function makeTempDir(prefix: string): Promise<string> {
-		const dir = fixtures.use(await temporaryDirectory(prefix)).path.toString()
-
-		tempDirs.push(dir)
-
-		return dir
+	async function makeTempDir(prefix: string): Promise<PathBuilder> {
+		return fixtures.use(await temporaryDirectory(prefix)).path
 	}
 
 	test("installs into <cwd>/.claude/skills/mailwoman/SKILL.md by default", async () => {
@@ -75,7 +69,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 			})
 		)
 
-		const skillPath = join(cwd, ".claude", "skills", "mailwoman", "SKILL.md")
+		const skillPath = cwd(".claude", "skills", "mailwoman", "SKILL.md")
 
 		expect(await pathExists(skillPath)).toBe(true)
 		expect(await readLocalTextFile(skillPath)).toMatch(/^---\nname: mailwoman\n/)
@@ -100,7 +94,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		await spawn()
 		await spawn()
 
-		const skillPath = join(cwd, ".claude", "skills", "mailwoman", "SKILL.md")
+		const skillPath = cwd(".claude", "skills", "mailwoman", "SKILL.md")
 
 		expect(await pathExists(skillPath)).toBe(true)
 	})
@@ -117,14 +111,14 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 			})
 		)
 
-		expect(await pathExists(join(dest, ".claude", "skills", "mailwoman", "SKILL.md"))).toBe(true)
-		expect(await pathExists(join(cwd, ".claude"))).toBe(false)
+		expect(await pathExists(dest(".claude", "skills", "mailwoman", "SKILL.md"))).toBe(true)
+		expect(await pathExists(cwd(".claude"))).toBe(false)
 	})
 
 	test("a stale file left over from an older shipped skill is removed, not merged", async () => {
 		const cwd = await makeTempDir("mw-skill-install-stale-")
-		const skillDir = join(cwd, ".claude", "skills", "mailwoman")
-		const staleFile = join(skillDir, "stale-reference.md")
+		const skillDir = cwd(".claude", "skills", "mailwoman")
+		const staleFile = skillDir("stale-reference.md")
 
 		// Plant a file that a hypothetical older install left behind and the current
 		// shipped skill no longer carries.
@@ -141,6 +135,6 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		)
 
 		expect(await pathExists(staleFile)).toBe(false)
-		expect(await pathExists(join(skillDir, "SKILL.md"))).toBe(true)
+		expect(await pathExists(skillDir("SKILL.md"))).toBe(true)
 	})
 })

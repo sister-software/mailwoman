@@ -21,7 +21,7 @@
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
-import { join, resolvePath, type PathBuilderLike } from "path-ts"
+import { PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"
 import { $ } from "zx"
 
 import { packWorkspaceForPublish } from "#pack/pack-workspace"
@@ -166,21 +166,24 @@ export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promi
  * The caller owns `stagingRoot`'s lifecycle.
  * An existing tree at that path is replaced.
  */
-export async function stageReleaseTree(repoRoot: string, stagingRoot: string): Promise<void> {
-	await removePathIfPresent(stagingRoot)
-	await makeDirectories(stagingRoot)
+export async function stageReleaseTree(repoRoot: string, stagingRoot: PathBuilderLike): Promise<void> {
+	const staging = PathBuilder.from(stagingRoot)
+	const root = PathBuilder.from(repoRoot)
 
-	await $({ cwd: repoRoot })`git archive HEAD`.pipe($`tar -x -C ${stagingRoot}`)
+	await removePathIfPresent(staging)
+	await makeDirectories(staging)
+
+	await $({ cwd: repoRoot })`git archive HEAD`.pipe($`tar -x -C ${staging.toString()}`)
 
 	for (const workspace of await releaseWorkspaces(repoRoot)) {
-		const compiled = resolvePath(repoRoot, workspace, "out")
+		const compiled = root(workspace, "out")
 
 		if (await pathExists(compiled)) {
-			await copyPath(compiled, join(stagingRoot, workspace, "out"))
+			await copyPath(compiled, staging(workspace, "out"))
 		}
 	}
 
-	await createSymbolicLink(resolvePath(repoRoot, "node_modules"), join(stagingRoot, "node_modules"))
+	await createSymbolicLink(root("node_modules"), staging("node_modules"))
 }
 
 /**
@@ -210,10 +213,11 @@ export interface WorkspaceAuditResult {
  * loop's per-workspace isolation was the only sweep that existed).
  */
 export async function auditStagedWorkspaces(
-	stagingRoot: string,
+	stagingRoot: PathBuilderLike,
 	workspaces: readonly string[]
 ): Promise<WorkspaceAuditResult[]> {
-	const tarballDir = join(stagingRoot, ".preflight-tarballs")
+	const staging = PathBuilder.from(stagingRoot)
+	const tarballDir = staging(".preflight-tarballs")
 
 	await makeDirectories(tarballDir)
 
@@ -223,10 +227,10 @@ export async function auditStagedWorkspaces(
 	// and it must have finished before the audit opens the tarball.
 	// An un-awaited pack audits a file that does not exist yet.
 	for (const workspace of workspaces) {
-		const tarball = join(tarballDir, `${workspace.replaceAll("/", "__")}.tgz`)
+		const tarball = tarballDir(`${workspace.replaceAll("/", "__")}.tgz`)
 
 		try {
-			await packWorkspaceForPublish(join(stagingRoot, workspace), tarball)
+			await packWorkspaceForPublish(staging(workspace), tarball)
 
 			// Throws with every violation listed when the tarball does not honor its manifest.
 			// The catch below is the collection point, so one sweep reports every broken package.

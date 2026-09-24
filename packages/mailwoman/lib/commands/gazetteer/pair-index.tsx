@@ -38,7 +38,7 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -376,7 +376,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const bytes = serializePairIndex(pairIndexHeader, entries)
-		const outPath = join(options.out, `pair-index-${country}.bin`)
+		const outPath = PathBuilder.from(options.out)(`pair-index-${country}.bin`)
 
 		await writeLocalFile(bytes, outPath)
 

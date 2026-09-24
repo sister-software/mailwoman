@@ -42,7 +42,7 @@ import { serializePostcodeBinary } from "@mailwoman/neural/postcode"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { buildPostcodeBinaryEntries } from "#gazetteer-pipeline/postcode/binary"
 
@@ -66,7 +66,7 @@ const rows = con
 const { entries, skipped, outwardKeys } = buildPostcodeBinaryEntries("GB", rows, { gbGranularity: "unit" })
 
 const bytes = serializePostcodeBinary(entries)
-const outPath = join(values.out, "postcode-gb.bin")
+const outPath = PathBuilder.from(values.out)("postcode-gb.bin")
 await writeLocalFile(bytes, outPath)
 
 console.log(

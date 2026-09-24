@@ -24,7 +24,7 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
-import { dirname } from "path-ts"
+import { dirname, PathBuilder } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { RepoSyncPlan } from "#gazetteer-pipeline/repos/sync"
@@ -56,14 +56,13 @@ const ACTION_MARK: Record<string, string> = {
 
 const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { join } = await import("path-ts")
 		const { wofReposPath } = await import("@mailwoman/core/data-root")
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { auditReposRoot } = await import("#gazetteer-pipeline/repos/audit")
 		const { planReposSync, SyncAction, syncSentence } = await import("#gazetteer-pipeline/repos/sync")
 		const { githubForkProbe, UPSTREAM_ORG } = await import("#gazetteer-pipeline/wof/repo-origin")
 
-		const root = options.root ?? wofReposPath()
+		const root = PathBuilder.from(options.root ?? wofReposPath())
 
 		const requested = extractDelimited(options.countries).map((cc) => `whosonfirst-data-admin-${cc.toLowerCase()}`)
 
@@ -74,11 +73,11 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 		// Prefer wherever the repo already is.
 		// The existence probes are materialized up front because `planReposSync`'s
 		// `directoryFor` is a synchronous callback.
-		const directories = new Map<string, string>()
+		const directories = new Map<string, PathBuilder>()
 
 		for (const repo of repos) {
-			const nested = join(root, UPSTREAM_ORG, repo)
-			const flat = join(root, repo)
+			const nested = root(UPSTREAM_ORG, repo)
+			const flat = root(repo)
 
 			if (await pathExists(nested)) {
 				directories.set(repo, nested)
@@ -90,7 +89,7 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const plans = await planReposSync({
-			root: root.toString(),
+			root,
 			repos,
 			probe: githubForkProbe,
 			directoryFor: (repo) => directories.get(repo)!,
@@ -141,7 +140,7 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 		// and a stray file inside it is one more thing for that glob to consider.
 		const vintagePath = wofDatabasePath("repos-vintage.json")
 
-		await makeDirectories(dirname(vintagePath))
+		await makeDirectories(vintagePath.dirname())
 
 		await writeLocalJSONFile(
 			{

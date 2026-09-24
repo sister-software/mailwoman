@@ -13,13 +13,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import {
-	makeDirectories,
-	removePath,
-	writeLocalBuffer,
-	writeLocalFile,
-	writeLocalTextFile,
-} from "@mailwoman/core/fs/writers"
+import { removePath, writeLocalBuffer, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	DERIVED_WEIGHTS_INPUTS,
 	type DerivedWeightsInput,
@@ -28,7 +22,7 @@ import {
 	derivedWeightsKey,
 	derivedWeightsKeyFrom,
 } from "@mailwoman/release-kit/weights/derived-weights-key"
-import { join, type PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -125,18 +119,17 @@ describe("derivedWeightsKeyFrom", () => {
 		// and a local worktree each computed a different key over byte-identical inputs and none
 		// ever saw another's work: four store directories holding the same eleven artifacts,
 		// and a 41s pair-index-nz.bin rebuild on a runner that already had the file.
-		const checkoutA = scratch.resolve("runner-1", "_work", "mailwoman")
-		const checkoutB = scratch.resolve("runner-2", "_work", "mailwoman")
+		const checkoutA = scratch.path("runner-1", "_work", "mailwoman")
+		const checkoutB = scratch.path("runner-2", "_work", "mailwoman")
 
 		for (const root of [checkoutA, checkoutB]) {
-			await makeDirectories(root)
-			await writeLocalTextFile('{"weights":{"model":"m.onnx"}}', join(root, "release.config.json"))
-			await writeLocalTextFile("export const delta = 10", join(root, "pair-index.tsx"))
+			await writeLocalTextFile('{"weights":{"model":"m.onnx"}}', root("release.config.json"))
+			await writeLocalTextFile("export const delta = 10", root("pair-index.tsx"))
 		}
 
-		const inputsFor = (root: string) => [
-			at(join(root, "release.config.json"), "release.config.json"),
-			at(join(root, "pair-index.tsx"), "packages/mailwoman/lib/commands/gazetteer/pair-index.tsx"),
+		const inputsFor = (root: PathBuilder) => [
+			at(root("release.config.json").toString(), "release.config.json"),
+			at(root("pair-index.tsx").toString(), "packages/mailwoman/lib/commands/gazetteer/pair-index.tsx"),
 		]
 
 		expect(await derivedWeightsKeyFrom(inputsFor(checkoutA))).toBe(await derivedWeightsKeyFrom(inputsFor(checkoutB)))

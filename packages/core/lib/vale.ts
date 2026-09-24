@@ -9,7 +9,7 @@
  *   from the caller's own location keeps the lookup inside the package that declares the dependency.
  */
 
-import { dirname, join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { pathExists } from "#fs/readers"
 import { readPackageJSON, resolvePackageJSON, resolvePackageSpecifier } from "#module/resolve-from"
@@ -70,8 +70,10 @@ async function assertNativeBinaryPresent(manifestPath: string): Promise<void> {
 	// The binary is a postinstall artifact and no `exports` entry names it,
 	// so a subpath resolution throws `MODULE_NOT_FOUND` for a missing download
 	// and for a package that never declared the path, which are different facts.
-	const packageRoot = dirname(manifestPath)
-	const nativePath = join(packageRoot, "native", process.platform === "win32" ? "vale.exe" : "vale")
+	const nativePath = PathBuilder.from(manifestPath).dirname()(
+		"native",
+		process.platform === "win32" ? "vale.exe" : "vale"
+	)
 
 	if (await pathExists(nativePath)) return
 

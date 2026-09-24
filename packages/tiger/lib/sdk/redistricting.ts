@@ -20,7 +20,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { dirname, join } from "path-ts"
+import { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { downloadIfNeeded } from "#sdk/download"
@@ -171,7 +171,7 @@ export interface FetchRedistrictingResult {
 // Spliterator keeps crlf's trailing CR where readline stripped it, but every field
 // this parser reads (geo geocode/logrecno ≤ 9, segment-1 logrecno + P2 ≤ 86) sits well
 // before the final column, so the retained CR only ever lands on an unread trailing field.
-async function eachLine(path: string, fn: (line: string) => void): Promise<void> {
+async function eachLine(path: PathBuilder, fn: (line: string) => void): Promise<void> {
 	for await (const line of TextSpliterator.fromAsync(path)) {
 		if (line) {
 			fn(line)
@@ -189,7 +189,7 @@ export async function* fetchRedistricting(
 	options: FetchRedistrictingOptions
 ): AsyncGenerator<FetchRedistrictingEvent, FetchRedistrictingResult> {
 	const vintage = options.vintage ?? 2020
-	const dataRoot = options.dataRoot ?? DEFAULT_DATA_ROOT
+	const dataRoot = PathBuilder.from(options.dataRoot ?? DEFAULT_DATA_ROOT)
 	const batchSize = options.batchSize ?? 2000
 	const state = options.stateFIPS
 
@@ -200,23 +200,23 @@ export async function* fetchRedistricting(
 	const dirName = stateName.replaceAll(" ", "_")
 	const fileAbbr = abbr.toLowerCase()
 
-	const cacheDir = join(dataRoot, "census", "redistricting", String(vintage), state)
+	const cacheDir = dataRoot("census", "redistricting", String(vintage), state)
 	// Same stable `tiger.db` default as fetchTIGER — pl_block lives alongside tabblock20 in one DB.
-	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")
+	const outPath = PathBuilder.from(options.outPath ?? dataRoot("tiger", "tiger.db"))
 	await makeDirectories(cacheDir)
-	await makeDirectories(dirname(outPath))
+	await makeDirectories(outPath.dirname())
 
 	const zipName = `${fileAbbr}${vintage}.pl.zip`
-	const zipPath = join(cacheDir, zipName)
+	const zipPath = cacheDir(zipName)
 	const url = `${REDISTRICTING_BASE}/${dirName}/${zipName}`
 
 	const cached = await downloadIfNeeded(url, zipPath)
 	yield { phase: "download", file: zipName, cached }
 
 	await extractZipEntries(zipPath, cacheDir)
-	const geoPath = join(cacheDir, `${fileAbbr}geo${vintage}.pl`)
-	const seg1Path = join(cacheDir, `${fileAbbr}00001${vintage}.pl`)
-	const seg2Path = join(cacheDir, `${fileAbbr}00002${vintage}.pl`)
+	const geoPath = cacheDir(`${fileAbbr}geo${vintage}.pl`)
+	const seg1Path = cacheDir(`${fileAbbr}00001${vintage}.pl`)
+	const seg2Path = cacheDir(`${fileAbbr}00002${vintage}.pl`)
 	yield { phase: "extract", file: `${fileAbbr}geo${vintage}.pl` }
 
 	// Pass 1: header → logrecno → geoid for the blocks we want.
@@ -314,7 +314,7 @@ export async function* fetchRedistricting(
 		yield { phase: "load", inserted, total }
 		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE);")
 
-		return { outPath, table: "pl_block", inserted }
+		return { outPath: outPath.toString(), table: "pl_block", inserted }
 	} finally {
 		await kdb.destroy()
 	}

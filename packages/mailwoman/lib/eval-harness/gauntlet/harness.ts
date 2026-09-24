@@ -684,7 +684,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		// Default-on since 2026-08-16: only an explicit `false` withholds the prior.
 		if (opts.pins?.gazetteerPrior === false) return {}
 
-		const fstPath = (forClassifier as { fstPath?: string }).fstPath
+		// A string, because it keys `priorDepsByPath`; a builder would key by object identity.
+		const fstPath = (forClassifier as { fstPath?: PathBuilderLike }).fstPath?.toString()
 
 		if (!fstPath) {
 			// Loud, once per locale.

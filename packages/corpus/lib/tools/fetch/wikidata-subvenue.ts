@@ -59,7 +59,7 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { prettyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { writeManifest } from "#tools/fetch/download/index"
@@ -242,7 +242,7 @@ export interface CreateWikidataClientOptions {
 	 *
 	 * Defaults to a `http-cache` directory beside the fetch output.
 	 */
-	cacheDir: string
+	cacheDir: PathBuilderLike
 	/**
 	 * Time source powering the pacer and the retry backoff.
 	 *
@@ -342,12 +342,12 @@ interface WikidataManifest {
  * Write a JSON payload and return its manifest entry.
  */
 async function writePayload(
-	destDir: string,
+	destDir: PathBuilder,
 	filename: string,
 	query: string,
 	results: SPARQLResults
 ): Promise<WikidataFileEntry> {
-	const path = join(destDir, filename)
+	const path = destDir(filename)
 	const body = prettyJSON(results)
 	await writeLocalFile(body, path)
 
@@ -372,10 +372,10 @@ export async function fetchWikidataSubVenue(
 	options: FetchWikidataSubVenueOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 
-	await using client = createWikidataClient({ cacheDir: join(destDir, "http-cache") })
+	await using client = createWikidataClient({ cacheDir: destDir("http-cache") })
 
 	const jobs: Array<{ filename: string; query: string }> = [
 		{ filename: "designator-labels.json", query: buildDesignatorLabelQuery() },
@@ -415,7 +415,7 @@ export async function fetchWikidataSubVenue(
 		files,
 	}
 
-	await writeManifest(join(destDir, "MANIFEST.json"), manifest)
+	await writeManifest(destDir("MANIFEST.json"), manifest)
 
 	return { fetched, skipped: 0, failed, failedCodes }
 }

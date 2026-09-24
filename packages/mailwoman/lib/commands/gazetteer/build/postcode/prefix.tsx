@@ -32,7 +32,7 @@ import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode"
 import { Box, Text } from "ink"
-import { dirname, join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { PostcodePrefixLevel } from "#gazetteer-pipeline/postcode/prefix"
@@ -168,7 +168,9 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		const buildDate = new Date().toISOString()
 		const day = buildDate.slice(0, 10)
 
-		const outPath = options.out ?? dataRootPath("postcode-prefix", `postcode-prefix-${recipe.scope}-${day}.bin`)
+		const outPath = PathBuilder.from(
+			options.out ?? dataRootPath("postcode-prefix", `postcode-prefix-${recipe.scope}-${day}.bin`)
+		)
 
 		// The database's own meta is the authority on where it came from and what it does not cover —
 		// re-deriving that prose here would let the two drift, and the database is the one that knows.
@@ -201,7 +203,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 
 		const bytes = serializePostcodePrefixIndex(header, built.nodes)
 
-		await makeDirectories(dirname(outPath))
+		await makeDirectories(outPath.dirname())
 
 		if (await pathExists(outPath)) {
 			throw new Error(
@@ -211,7 +213,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		}
 
 		// Write-then-rename so a reader can never observe a half-written index, then seal.
-		const tmpPath = join(dirname(outPath), `.${recipe.scope}-${process.pid}.tmp`)
+		const tmpPath = outPath.dirname()(`.${recipe.scope}-${process.pid}.tmp`)
 
 		await writeLocalFile(bytes, tmpPath)
 		await movePath(tmpPath, outPath)

@@ -11,10 +11,9 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { findLocaleTables, localeTablesCheck } from "@mailwoman/repo-health/checks/locale/tables"
-import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -47,7 +46,7 @@ async function plant(options: {
 	weights?: ReadonlyArray<readonly [string, string]>
 	extra?: Record<string, string>
 }) {
-	const repoRoot = fixtures.use(await temporaryDirectory("locale-tables-")).path.toString()
+	const root = fixtures.use(await temporaryDirectory("locale-tables-")).path
 
 	const files: Record<string, string> = {
 		"release.config.json": stringifyJSON(options.config),
@@ -56,11 +55,10 @@ async function plant(options: {
 	}
 
 	for (const [file, text] of Object.entries(files)) {
-		await makeDirectories(join(repoRoot, file.slice(0, file.lastIndexOf("/"))))
-		await writeLocalTextFile(text, resolvePath(repoRoot, file))
+		await writeLocalTextFile(text, root(file))
 	}
 
-	return { repoRoot, trackedFiles: Object.keys(files).filter((file) => file.endsWith(".ts")) }
+	return { repoRoot: root.toString(), trackedFiles: Object.keys(files).filter((file) => file.endsWith(".ts")) }
 }
 
 describe("findLocaleTables", () => {

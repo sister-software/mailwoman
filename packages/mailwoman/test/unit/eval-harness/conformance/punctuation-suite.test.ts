@@ -41,7 +41,6 @@ import {
 } from "mailwoman/eval-harness/conformance/punctuation"
 import { CASES_DIR, loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
-import { join } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
 
 let fixtures: ConformanceFixture[]
@@ -90,7 +89,7 @@ describe("the committed punctuation suite", () => {
 			expect(fixture.base, `${fixture.id}: base is not the committed input`).toBe(seedCase!.input)
 
 			expect(
-				await pathExists(join(CASES_DIR, file.replace(/^cases\//, ""))),
+				await pathExists(CASES_DIR(file.replace(/^cases\//, ""))),
 				`${fixture.id}: rowRef names no file (${file})`
 			).toBe(true)
 		}

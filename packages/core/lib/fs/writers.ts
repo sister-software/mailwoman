@@ -77,6 +77,7 @@ export type BufferLike =
  * An empty iterable writes an empty file rather than a lone newline, because "no lines"
  * and "one blank line" are different files and a bare `join` produces the second.
  *
+ * @see {@linkcode writeLocalJSONFile} for a JSON-specific writer that pretty-prints and adds a trailing newline.
  * @category Files
  * @runtime node
  */

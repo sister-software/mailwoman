@@ -27,7 +27,7 @@ import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoDate, mulberry32 } from "@mailwoman/core/utils"
 import { isBuildingName, renderSGRegister, type SGRegister } from "@mailwoman/corpus/sg/recipes/register"
-import { join, PathBuilder } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { gradeSeedCases, reportGradedGroups, writeSeedCaseFile } from "#dev-tools/grade-seed-cases"
 import { CASES_DIR } from "#eval-harness/gauntlet/cases/load"
@@ -50,7 +50,7 @@ const PARQUET = PathBuilder.from(
 	values.parquet ?? dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE, "addresses-sg.parquet")
 )
 
-const OUT = values.out ?? join(CASES_DIR, "sg", "register.jsonl")
+const OUT = PathBuilder.from(values.out ?? CASES_DIR("sg", "register.jsonl"))
 const RELEASE = /\d{4}-\d{2}-\d{2}\.\d+/u.exec(PARQUET.toString())?.[0] ?? "unknown"
 const SOURCE = `sg-register-board:${isoDate()}`
 const ADDED_AT = isoDate()

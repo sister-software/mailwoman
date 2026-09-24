@@ -50,7 +50,7 @@ import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { latLngToCell } from "h3-js"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -139,7 +139,7 @@ function titleCase(s: string): string {
 }
 
 async function loadMap(
-	path: string,
+	path: PathBuilder,
 	build: (rec: Record<string, string>) => [string, string] | null
 ): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
@@ -167,8 +167,9 @@ async function loadMap(
 export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Promise<GNAFRooftopResult> {
 	const release = options.release ?? "may26-gda2020"
 
-	const standardDir =
+	const standardDir = PathBuilder.from(
 		options.standardDir ?? dataRootPath("gnaf", "may26", "extracted", "G-NAF", "G-NAF MAY 2026", "Standard")
+	)
 
 	const out = options.out ?? databaseRootPath(dataRootPath())("osm", "address-points-au-au.db")
 	const log = options.log ?? (() => {})
@@ -219,7 +220,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 		const BATCH = 50_000
 
 		for (const state of states) {
-			const p = (family: string) => join(standardDir, `${state}_${family}_psv.psv`)
+			const p = (family: string) => standardDir(`${state}_${family}_psv.psv`)
 
 			const localities = await loadMap(p("LOCALITY"), (r) =>
 				r["LOCALITY_PID"] && r["LOCALITY_NAME"] ? [r["LOCALITY_PID"], r["LOCALITY_NAME"]] : null
@@ -378,7 +379,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 	return counts
 }
 
-async function loadGeocodes(path: string): Promise<Map<string, [number, number]>> {
+async function loadGeocodes(path: PathBuilder): Promise<Map<string, [number, number]>> {
 	const map = new Map<string, [number, number]>()
 	let read: ((line: string) => Record<string, string>) | null = null
 

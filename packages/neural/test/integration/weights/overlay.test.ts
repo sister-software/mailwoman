@@ -18,17 +18,15 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolveWeights, WeightsOrigin } from "@mailwoman/neural/weights"
-import { join, resolvePath } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function scratch(): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("mw-weights-overlay-")).path
-
-	return resolvePath(root)
+async function scratch(): Promise<PathBuilder> {
+	return fixtures.use(await temporaryDirectory("mw-weights-overlay-")).path
 }
 
 /**
@@ -37,13 +35,13 @@ async function scratch(): Promise<string> {
  * The same fixed filenames `resolveFromPackageDir` reads, which is exactly why
  * the overlay needs no logic of its own.
  */
-async function weightsDir(root: string, locale: string, files: Record<string, string>): Promise<string> {
-	const dir = join(root, locale)
+async function weightsDir(root: PathBuilder, locale: string, files: Record<string, string>): Promise<PathBuilder> {
+	const dir = root(locale)
 
 	await makeDirectories(dir)
 
 	for (const [name, body] of Object.entries(files)) {
-		await writeLocalFile(body, join(dir, name))
+		await writeLocalFile(body, dir(name))
 	}
 
 	return dir
@@ -67,8 +65,8 @@ describe("resolveWeights — the data-root overlay rung", () => {
 
 		const resolved = await resolveWeights({ locale: ABSENT, overlayRoot: root })
 
-		expect(resolved.modelPath).toBe(join(root, ABSENT, "model.onnx"))
-		expect(resolved.tokenizerPath).toBe(join(root, ABSENT, "tokenizer.model"))
+		expect(resolved.modelPath).toBe(root(ABSENT, "model.onnx").toString())
+		expect(resolved.tokenizerPath).toBe(root(ABSENT, "tokenizer.model").toString())
 		expect(resolved.source).toContain("overlay")
 	})
 
@@ -86,8 +84,8 @@ describe("resolveWeights — the data-root overlay rung", () => {
 		const overlay = await scratch()
 		const cache = await scratch()
 
-		await makeDirectories(join(overlay, ABSENT))
-		await weightsDir(join(cache, "node_modules", "@mailwoman"), `neural-weights-${ABSENT}`, BINARIES)
+		await makeDirectories(overlay(ABSENT))
+		await weightsDir(cache("node_modules", "@mailwoman"), `neural-weights-${ABSENT}`, BINARIES)
 
 		const resolved = await resolveWeights({ locale: ABSENT, overlayRoot: overlay, cacheRoot: cache })
 
@@ -109,9 +107,9 @@ describe("resolveWeights — the data-root overlay rung", () => {
 		// An explicit candidate cache is an isolation boundary.
 		// It must name the failed cache package and must not report an overlay probe,
 		// because consulting that overlay would mix installed artifacts into the candidate run.
-		expect(message).toContain(cache)
+		expect(message).toContain(cache.toString())
 		expect(message).toContain(`@mailwoman/neural-weights-${ABSENT}`)
-		expect(message).not.toContain(join(overlay, ABSENT))
+		expect(message).not.toContain(overlay(ABSENT).toString())
 	})
 })
 
@@ -156,8 +154,8 @@ describe("resolveWeights — the artifact report", () => {
 		const dir = await weightsDir(root, ABSENT, BINARIES)
 
 		const { artifacts } = await resolveWeights({
-			modelPath: join(dir, "model.onnx"),
-			tokenizerPath: join(dir, "tokenizer.model"),
+			modelPath: dir("model.onnx"),
+			tokenizerPath: dir("tokenizer.model"),
 		})
 
 		const model = artifacts.find((a) => a.name === "model.onnx")

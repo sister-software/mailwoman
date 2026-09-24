@@ -16,7 +16,7 @@
  */
 
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { basename, join, type PathBuilderLike } from "path-ts"
+import { basename, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -125,7 +125,7 @@ async function scanParquetFiles(corpusDir: PathBuilderLike, sampleCount: number)
 	const stats: FileCountStats = { bySplit: {}, totalCounted: 0, totalFiles: 0 }
 
 	for (const split of ["train", "val", "test"]) {
-		const splitDir = join(corpusDir, split)
+		const splitDir = resolvePathBuilder(corpusDir, split)
 
 		if (!(await pathExists(splitDir))) continue
 
@@ -236,7 +236,7 @@ async function manifestScan(
 	corpusDir: PathBuilderLike,
 	knownPrefixes: readonly string[]
 ): Promise<FileCountStats | null> {
-	const manifestPath = join(corpusDir, "MANIFEST.json")
+	const manifestPath = resolvePathBuilder(corpusDir, "MANIFEST.json")
 
 	if (!(await pathExists(manifestPath))) return null
 

@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { join } from "path-ts"
 import type z from "zod"
 
 import { PrivateEnvSchema, PublicEnvSchema } from "#env/schema"
@@ -22,8 +21,9 @@ export { DefaultMailwomanPaths } from "#env/paths"
  * An absent `.env` is the common case and is not an error.
  */
 try {
+	// Without an argument, the runtime reads `.env` in the working directory.
 	// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
-	process.loadEnvFile(join(process.cwd(), ".env"))
+	process.loadEnvFile()
 } catch {
 	// No `.env` beside the working directory.
 	// `process.env` alone is the environment.

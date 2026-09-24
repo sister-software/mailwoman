@@ -42,8 +42,8 @@ import {
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
-import { join } from "path-ts"
+import { workspacePath, repoRootPathBuilder } from "@mailwoman/core/paths"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import type { Check } from "#cli-kit"
@@ -110,9 +110,9 @@ const LICENSE_FILENAMES = ["LICENSE.md", "COMMERCIAL-LICENSE.md"] as const
  * Copy the repo-root license files into `destDir` (a package/crate root) —
  * shared by the Python + Rust assembly steps.
  */
-async function copyLicenseFiles(destDir: string): Promise<void> {
+async function copyLicenseFiles(destDir: PathBuilder): Promise<void> {
 	for (const filename of LICENSE_FILENAMES) {
-		await copyFileTo(repoRootPath(filename), join(destDir, filename))
+		await copyFileTo(repoRootPathBuilder(filename), destDir(filename))
 	}
 }
 
@@ -145,7 +145,7 @@ export interface GenerateClientsOptions {
 	 *
 	 * Default `<repo>/clients-build` (gitignored).
 	 */
-	outDir?: string
+	outDir?: PathBuilderLike
 	/**
 	 * Skip `uv build`/import-check + `cargo check --examples`
 	 * (dev only — an unverified pipeline must never be trusted as a release proof).
@@ -172,7 +172,7 @@ function fail(message: string): never {
  * Run a child process with inherited stdio (the `publish-hf.ts` convention — the child's own output is
  * the progress log) and throw on nonzero exit or a launch failure (e.g. The binary isn't installed).
  */
-function run(cmd: string, args: string[], options: { cwd?: string } = {}): void {
+function run(cmd: string, args: string[], options: { cwd?: PathBuilderLike } = {}): void {
 	runProcessOrFail(cmd, args, { ...options, echo: true })
 }
 
@@ -199,7 +199,7 @@ async function checkCompiled(): Promise<void> {
 /**
  * Emit all 8 documents (4 surfaces × 2 flavors) into `<outDir>/specs/`.
  */
-async function emitSpecs(specsDir: string, phase: (p: string, d?: string) => void): Promise<SpecPaths> {
+async function emitSpecs(specsDir: PathBuilder, phase: (p: string, d?: string) => void): Promise<SpecPaths> {
 	await makeDirectories(specsDir)
 
 	const v31 = {} as Record<ClientSurface, string>
@@ -209,7 +209,8 @@ async function emitSpecs(specsDir: string, phase: (p: string, d?: string) => voi
 		const cli = await emitterCLIPath(surface)
 
 		for (const flavor of FLAVORS) {
-			const out = join(specsDir, `${surface}-${flavor}.json`)
+			// A string, because it is a process argument and a recorded spec path.
+			const out = specsDir(`${surface}-${flavor}.json`).toString()
 
 			phase("emit-spec", `${surface} ${flavor} → ${out}`)
 
@@ -228,10 +229,10 @@ async function emitSpecs(specsDir: string, phase: (p: string, d?: string) => voi
  */
 async function generatePythonModules(
 	specPaths: SpecPaths,
-	pythonDir: string,
+	pythonDir: PathBuilder,
 	phase: (p: string, d?: string) => void
 ): Promise<void> {
-	const packageDir = join(pythonDir, "mailwoman_client")
+	const packageDir = pythonDir("mailwoman_client")
 	await makeDirectories(packageDir)
 
 	for (const surface of CLIENT_SURFACES) {
@@ -245,14 +246,14 @@ async function generatePythonModules(
 			"--meta",
 			"none",
 			"--output-path",
-			join(packageDir, surface),
+			packageDir(surface).toString(),
 			"--overwrite",
 		])
 	}
 
 	// The generator drops a .ruff_cache under each output dir (salvaged readme precedent) — remove it.
 	for (const surface of CLIENT_SURFACES) {
-		await removePathIfPresent(join(packageDir, surface, ".ruff_cache"))
+		await removePathIfPresent(packageDir(surface, ".ruff_cache"))
 	}
 }
 
@@ -528,15 +529,15 @@ function pythonReadme(): string {
  * so it isn't lost — just not duplicated as a file that never shipped.
  */
 async function assemblePythonPackage(
-	pythonDir: string,
+	pythonDir: PathBuilder,
 	version: string,
 	phase: (p: string, d?: string) => void
 ): Promise<void> {
-	phase("python-assemble", pythonDir)
-	await writeLocalFile(pythonPyproject(version), join(pythonDir, "pyproject.toml"))
-	await writeLocalFile(pythonReadme(), join(pythonDir, "README.md"))
-	await writeLocalFile(pythonInitPy(), join(pythonDir, "mailwoman_client", "__init__.py"))
-	await writeLocalTextFile("", join(pythonDir, "mailwoman_client", "py.typed"))
+	phase("python-assemble", pythonDir.toString())
+	await writeLocalFile(pythonPyproject(version), pythonDir("pyproject.toml"))
+	await writeLocalFile(pythonReadme(), pythonDir("README.md"))
+	await writeLocalFile(pythonInitPy(), pythonDir("mailwoman_client", "__init__.py"))
+	await writeLocalTextFile("", pythonDir("mailwoman_client", "py.typed"))
 	// agpl conveyance + the LicenseRef-Commercial target (see license-files above):
 	// copied into the package root rather than the mailwoman_client/ subpackage,
 	// matching where setuptools looks relative to pyproject.toml.
@@ -548,14 +549,14 @@ async function assemblePythonPackage(
  * (`--no-project` so `uv run` doesn't treat `pythonDir` itself as the active project).
  */
 async function verifyPython(
-	pythonDir: string,
+	pythonDir: PathBuilder,
 	phase: (p: string, d?: string) => void
 ): Promise<{ wheel: string; sdist: string }> {
-	phase("python-build", pythonDir)
-	await removePathIfPresent(join(pythonDir, "dist"))
-	run("uv", ["build"], { cwd: pythonDir })
+	const distDir = pythonDir("dist")
 
-	const distDir = join(pythonDir, "dist")
+	phase("python-build", pythonDir.toString())
+	await removePathIfPresent(distDir)
+	run("uv", ["build"], { cwd: pythonDir })
 
 	const entries = (await pathExists(distDir))
 		? await Globerator.from("*", { cwd: distDir, absolute: false }).toArray()
@@ -572,7 +573,8 @@ async function verifyPython(
 		fail(`uv build did not produce a .tar.gz under ${distDir}`)
 	}
 
-	const wheelPath = join(distDir, wheel)
+	// A string, because it is a process argument and a recorded artifact path.
+	const wheelPath = distDir(wheel).toString()
 
 	phase("python-import-check", wheelPath)
 
@@ -586,7 +588,7 @@ async function verifyPython(
 		"import mailwoman_client as m; assert all([m.PhotonClient, m.NominatimClient, m.LibpostalClient, m.MailwomanClient]); print('mailwoman_client import OK:', m.__all__)",
 	])
 
-	return { wheel: wheelPath, sdist: join(distDir, sdist) }
+	return { wheel: wheelPath, sdist: distDir(sdist).toString() }
 }
 
 export function rustCargoToml(version: string): string {
@@ -821,24 +823,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
  */
 async function assembleRustCrate(
 	specPaths: SpecPaths,
-	rustDir: string,
+	rustDir: PathBuilder,
 	version: string,
 	phase: (p: string, d?: string) => void
 ): Promise<void> {
-	phase("rust-assemble", rustDir)
-	const openapiDir = join(rustDir, "openapi")
+	phase("rust-assemble", rustDir.toString())
+	const openapiDir = rustDir("openapi")
 	await makeDirectories(openapiDir)
-	await makeDirectories(join(rustDir, "src"))
-	await makeDirectories(join(rustDir, "examples"))
+	await makeDirectories(rustDir("src"))
+	await makeDirectories(rustDir("examples"))
 
 	for (const surface of CLIENT_SURFACES) {
-		await copyFileTo(specPaths.v30[surface], join(openapiDir, `${surface}.json`))
+		await copyFileTo(specPaths.v30[surface], openapiDir(`${surface}.json`))
 	}
 
-	await writeLocalFile(rustCargoToml(version), join(rustDir, "Cargo.toml"))
-	await writeLocalFile(rustLibRs(), join(rustDir, "src", "lib.rs"))
-	await writeLocalFile(rustReadme(), join(rustDir, "README.md"))
-	await writeLocalFile(rustExample(), join(rustDir, "examples", "basic.rs"))
+	await writeLocalFile(rustCargoToml(version), rustDir("Cargo.toml"))
+	await writeLocalFile(rustLibRs(), rustDir("src", "lib.rs"))
+	await writeLocalFile(rustReadme(), rustDir("README.md"))
+	await writeLocalFile(rustExample(), rustDir("examples", "basic.rs"))
 	// agpl conveyance + the LicenseRef-Commercial target (see the Cargo.toml `include` list above).
 	await copyLicenseFiles(rustDir)
 }
@@ -849,8 +851,8 @@ async function assembleRustCrate(
  *
  * See the module docstring for why this matters: the salvaged example had already drifted once.
  */
-function verifyRust(rustDir: string, phase: (p: string, d?: string) => void): void {
-	phase("cargo-check", rustDir)
+function verifyRust(rustDir: PathBuilder, phase: (p: string, d?: string) => void): void {
+	phase("cargo-check", rustDir.toString())
 	run("cargo", ["check", "--examples"], { cwd: rustDir })
 }
 
@@ -862,10 +864,10 @@ function verifyRust(rustDir: string, phase: (p: string, d?: string) => void): vo
 export async function generateClients(opts: GenerateClientsOptions = {}): Promise<GenerateClientsResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
-	const outDir = opts.outDir ?? repoRootPath("clients-build")
-	const specsDir = join(outDir, "specs")
-	const pythonDir = join(outDir, "python")
-	const rustDir = join(outDir, "rust")
+	const outDir = PathBuilder.from(opts.outDir ?? repoRootPathBuilder("clients-build"))
+	const specsDir = outDir("specs")
+	const pythonDir = outDir("python")
+	const rustDir = outDir("rust")
 	const version = await readMailwomanVersion()
 
 	let specPaths: SpecPaths | null = null
@@ -887,7 +889,7 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 				await makeDirectories(outDir)
 				specPaths = await emitSpecs(specsDir, phase)
 
-				return specsDir
+				return specsDir.toString()
 			},
 		},
 		{
@@ -901,7 +903,7 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 			run: async () => {
 				await assemblePythonPackage(pythonDir, version, phase)
 
-				return pythonDir
+				return pythonDir.toString()
 			},
 		},
 		{
@@ -909,7 +911,7 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 			run: async () => {
 				await assembleRustCrate(specPaths!, rustDir, version, phase)
 
-				return rustDir
+				return rustDir.toString()
 			},
 		},
 	]
@@ -954,10 +956,10 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 
 	const receipt: GenerateClientsReceipt = {
 		version,
-		outDir,
-		specsDir,
-		pythonDir,
-		rustDir,
+		outDir: outDir.toString(),
+		specsDir: specsDir.toString(),
+		pythonDir: pythonDir.toString(),
+		rustDir: rustDir.toString(),
 		specs: specPaths,
 		pythonWheel,
 		pythonSdist,

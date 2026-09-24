@@ -9,6 +9,7 @@ import { tryStat } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { movePath } from "@mailwoman/core/fs/writers"
 import { sleep } from "@mailwoman/core/utils/sleep"
+import type { PathBuilderLike } from "path-ts"
 
 import { DEFAULT_RETRY_DELAY_MS, HTTPStatusError } from "#tools/fetch/download/network"
 
@@ -84,7 +85,7 @@ async function bytesOnDisk(path: string): Promise<number> {
  */
 export async function resumableDownload(options: {
 	url: string
-	dest: string
+	dest: PathBuilderLike
 	headers?: Record<string, string>
 	maxConnections?: number
 	retryDelayMs?: number

@@ -463,7 +463,7 @@ function normalizeFGDCDate(value: string): string {
  * @throws {Error} When the shapefile holds anything other than exactly one feature.
  * Taking the first of several would silently choose which ground the coverage claim is about.
  */
-export async function readSurveyAreaOutline(shapefilePath: string): Promise<ParsedGeometry> {
+export async function readSurveyAreaOutline(shapefilePath: PathBuilderLike): Promise<ParsedGeometry> {
 	const { stdout } = await runFile("ogr2ogr", ["-f", "GeoJSON", "/vsistdout/", "-t_srs", "EPSG:4326", shapefilePath], {
 		maxBuffer: 256 * 1024 * 1024,
 	})

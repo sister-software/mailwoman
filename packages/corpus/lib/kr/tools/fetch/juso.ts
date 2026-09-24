@@ -24,7 +24,6 @@
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
 
 import type {
 	BaseFetchOptions,
@@ -114,7 +113,7 @@ function downloadURL(file: ListedFile, regYmd: string): string {
 }
 
 export async function fetchJusoKR(options: FetchJusoKROptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 
 	const now = new Date()
@@ -133,7 +132,7 @@ export async function fetchJusoKR(options: FetchJusoKROptions, report?: (line: s
 		}
 
 		const url = downloadURL(file, String(now.getFullYear()))
-		const dest = join(destDir, file.tmprFileNm)
+		const dest = destDir(file.tmprFileNm)
 		report?.(`=== ${SLUG} / ${product.name} ${file.crtrYm} → ${file.tmprFileNm}`)
 		let bytes: number
 
@@ -170,7 +169,7 @@ export async function fetchJusoKR(options: FetchJusoKROptions, report?: (line: s
 		files,
 	}
 
-	await writeManifest(join(destDir, "MANIFEST.json"), manifest)
+	await writeManifest(destDir("MANIFEST.json"), manifest)
 
 	return { fetched: files.length, skipped: 0, failed: failedCodes.length, failedCodes }
 }

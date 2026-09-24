@@ -32,7 +32,7 @@
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
@@ -161,11 +161,11 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 	const { adapter, adapterOptions, outputDir, corpusVersion } = opts
 	const progressEvery = opts.progressEvery ?? 1000
 
-	const adapterDir = join(outputDir, adapter.id)
+	const adapterDir = resolvePathBuilder(outputDir, adapter.id)
 	await makeDirectories(adapterDir)
 
-	const jsonlPath = join(adapterDir, "canonical.jsonl")
-	const manifestPath = join(adapterDir, "MANIFEST.json")
+	const jsonlPath = adapterDir("canonical.jsonl")
+	const manifestPath = adapterDir("MANIFEST.json")
 
 	const startedAt = new Date()
 	const t0 = performance.now()
@@ -268,7 +268,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 		deduped: yielded - written,
 		bytes,
 		sha256: hasher.digest(),
-		jsonl_path: jsonlPath,
+		jsonl_path: jsonlPath.toString(),
 		started_at: startedAt.toISOString(),
 		ended_at: endedAt.toISOString(),
 		elapsed_ms,

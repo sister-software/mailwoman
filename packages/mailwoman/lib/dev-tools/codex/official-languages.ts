@@ -23,7 +23,7 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 /**
  * The committed output path, anchored at the `@mailwoman/codex` package root rather than at
  * this module, so it names the same file from the source tree, `out/`, and a published tarball.
@@ -37,7 +37,7 @@ export interface GenerateOfficialLanguagesOptions {
 	/**
 	 * Read cldr-territoryInfo.json + cldr-aliases.json from this directory instead of fetching.
 	 */
-	cldrDir?: string
+	cldrDir?: PathBuilderLike
 	/**
 	 * Pinned cldr-core release fetched from jsdelivr when
 	 * {@linkcode GenerateOfficialLanguagesOptions.cldrDir} is absent.
@@ -72,9 +72,9 @@ interface LanguagePopulation {
 	_officialStatus?: string
 }
 
-async function loadCLDR(file: string, cldrDir: string | undefined, cldrVersion: string): Promise<unknown> {
+async function loadCLDR(file: string, cldrDir: PathBuilderLike | undefined, cldrVersion: string): Promise<unknown> {
 	if (cldrDir) {
-		return await readLocalJSONFile(join(cldrDir, `cldr-${file}.json`))
+		return await readLocalJSONFile(PathBuilder.from(cldrDir)(`cldr-${file}.json`))
 	}
 
 	const url = `https://cdn.jsdelivr.net/npm/cldr-core@${cldrVersion}/supplemental/${file}.json`

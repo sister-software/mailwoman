@@ -52,7 +52,6 @@
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download/index"
@@ -134,7 +133,7 @@ export async function fetchGeonamesPostal(
 	options: FetchGeonamesPostalOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 
 	const countries = (options.countries ?? GEONAMES_POSTAL_DEFAULT_COUNTRIES).map((code) => code.trim().toUpperCase())
@@ -149,7 +148,7 @@ export async function fetchGeonamesPostal(
 	for (const country of countries) {
 		const filename = `${country}.zip`
 		const url = `${baseURL}/${filename}`
-		const dest = join(destDir, filename)
+		const dest = destDir(filename)
 
 		report?.(`=== ${SLUG} / ${country}`)
 
@@ -190,7 +189,7 @@ export async function fetchGeonamesPostal(
 		unavailable,
 	}
 
-	await writeManifest(join(destDir, "MANIFEST.json"), manifest)
+	await writeManifest(destDir("MANIFEST.json"), manifest)
 
 	return { fetched, skipped: 0, failed, failedCodes }
 }

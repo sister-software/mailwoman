@@ -34,6 +34,7 @@
  *   design rather than by oversight.
  */
 
+import type { PathBuilderLike } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 import { toFRN, type FRN } from "#frn"
@@ -277,7 +278,7 @@ function toForm499Row(raw: Record<Form499Column, string>): Form499Row {
  *
  * A blank trailing line (a lone `\n` at EOF) is skipped rather than treated as malformed.
  */
-export async function* parseForm499(tsvPath: string): AsyncIterable<Form499Row> {
+export async function* parseForm499(tsvPath: PathBuilderLike): AsyncIterable<Form499Row> {
 	let lineNumber = 0
 
 	for await (const fields of TSVSpliterator.fromAsync<string[]>(tsvPath, { header: false })) {
@@ -285,6 +286,6 @@ export async function* parseForm499(tsvPath: string): AsyncIterable<Form499Row> 
 
 		if (!fields.length || (fields.length === 1 && !fields[0])) continue
 
-		yield toForm499Row(toForm499Raw(fields, tsvPath, lineNumber))
+		yield toForm499Row(toForm499Raw(fields, tsvPath.toString(), lineNumber))
 	}
 }

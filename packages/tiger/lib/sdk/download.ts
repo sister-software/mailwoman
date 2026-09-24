@@ -18,6 +18,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { movePath } from "@mailwoman/core/fs/writers"
 import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Download `url` to `dest` unless a valid copy is already there.
@@ -30,7 +31,7 @@ import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
  *
  * Writes to a `.tmp` sibling and renames, so `dest` is never a partial archive.
  */
-export async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
+export async function downloadIfNeeded(url: string, dest: PathBuilderLike): Promise<boolean> {
 	if (await pathExists(dest)) {
 		try {
 			await verifyZipIntegrity(dest)

@@ -157,7 +157,7 @@ export interface BuildCandidateOptions {
 	 * absent dumps are skipped loudly.
 	 */
 	currencyBackfill?: {
-		geonamesDir: string
+		geonamesDir: PathBuilderLike
 		countries: readonly string[]
 		/**
 		 * The dead placetypes the resurrection judges; `resurrectCurrencyHoles`'s

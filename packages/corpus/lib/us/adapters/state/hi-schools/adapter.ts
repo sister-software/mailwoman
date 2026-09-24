@@ -29,6 +29,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator, XLSXSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
@@ -64,7 +65,11 @@ function normalizeZip(raw: HiSchoolRow["zip"]): string {
 	return trimmed
 }
 
-async function* readSchoolRows(inputPath: string): AsyncGenerator<HiSchoolRow> {
+async function* readSchoolRows(source: PathBuilderLike): AsyncGenerator<HiSchoolRow> {
+	// XLSXSpliterator opens a string, URL, or byte source.
+	// A PathBuilder is none of those.
+	const inputPath = source.toString()
+
 	if (inputPath.toLowerCase().endsWith(".xlsx")) {
 		for (const sheet of STATE_HI_SCHOOL_SHEETS) {
 			yield* XLSXSpliterator.fromAsync<HiSchoolRow>(inputPath, {

@@ -11,14 +11,14 @@
 
 import { realPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
 import {
 	findStalePathLiterals,
 	isRepositoryPathLiteral,
 	stalePathLiteralsCheck,
 } from "@mailwoman/repo-health/checks/stale-path-literals"
-import { join, resolvePath } from "path-ts"
+import { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -36,9 +36,11 @@ const git = (repoRoot: string, args: string[]) =>
  * plus whatever sources the caller plants afterwards.
  */
 async function plant(sources: Record<string, string>) {
+	// The real path, because the check compares it against the paths git reports.
 	const repoRoot = await realPath(fixtures.use(await temporaryDirectory("stale-paths-")).path)
+	const root = PathBuilder.from(repoRoot)
 
-	await writeLocalTextFile("export const thing = 1\n", resolvePath(repoRoot, "packages/thing/lib/old-name.ts"))
+	await writeLocalTextFile("export const thing = 1\n", root("packages/thing/lib/old-name.ts"))
 	await git(repoRoot, ["init", "--quiet"])
 	await git(repoRoot, ["add", "-A"])
 	await git(repoRoot, ["commit", "--quiet", "-m", "first"])
@@ -46,8 +48,7 @@ async function plant(sources: Record<string, string>) {
 	await git(repoRoot, ["commit", "--quiet", "-m", "rename"])
 
 	for (const [file, text] of Object.entries(sources)) {
-		await makeDirectories(join(repoRoot, file.slice(0, file.lastIndexOf("/"))))
-		await writeLocalTextFile(text, resolvePath(repoRoot, file))
+		await writeLocalTextFile(text, root(file))
 	}
 
 	return {

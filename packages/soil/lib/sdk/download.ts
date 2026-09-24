@@ -34,7 +34,7 @@ import { tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
 import { streamToDisk } from "@mailwoman/core/utils"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * The download service's survey-area cache.
@@ -66,7 +66,7 @@ export interface DownloadSurveyAreaOptions {
 	 * Each version date gets its own directory, so a new refresh never overwrites the old
 	 * one in place and a re-run against the same vintage never re-transfers.
 	 */
-	cacheRoot: string
+	cacheRoot: PathBuilderLike
 	onProgress?: (message: string) => void
 }
 
@@ -97,15 +97,15 @@ export interface SurveyAreaArchive {
 	/**
 	 * The extracted `<areasymbol>/` directory, holding `spatial/` and `tabular/`.
 	 */
-	root: string
-	spatialDirectory: string
-	tabularDirectory: string
+	root: PathBuilder
+	spatialDirectory: PathBuilder
+	tabularDirectory: PathBuilder
 	/**
 	 * The archive as transferred.
 	 *
 	 * Kept so a re-run costs nothing and so the bytes are re-checkable.
 	 */
-	archivePath: string
+	archivePath: PathBuilder
 }
 
 /**
@@ -119,9 +119,9 @@ export interface SurveyAreaArchive {
  * does not hold the two directories every survey area publishes.
  */
 export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Promise<SurveyAreaArchive> {
-	const vintageDirectory = join(options.cacheRoot, options.versionDate)
-	const root = join(vintageDirectory, options.areaSymbol)
-	const archivePath = join(vintageDirectory, `wss_SSA_${options.areaSymbol}.zip`)
+	const vintageDirectory = PathBuilder.from(options.cacheRoot)(options.versionDate)
+	const root = vintageDirectory(options.areaSymbol)
+	const archivePath = vintageDirectory(`wss_SSA_${options.areaSymbol}.zip`)
 
 	if (!(await tryStat(root))) {
 		await makeDirectories(vintageDirectory)
@@ -152,8 +152,8 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 		options.onProgress?.(`${options.areaSymbol}: already extracted for ${options.versionDate}`)
 	}
 
-	const spatialDirectory = join(root, "spatial")
-	const tabularDirectory = join(root, "tabular")
+	const spatialDirectory = root("spatial")
+	const tabularDirectory = root("tabular")
 
 	for (const directory of [spatialDirectory, tabularDirectory]) {
 		if (!(await tryStat(directory))) {

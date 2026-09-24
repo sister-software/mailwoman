@@ -28,6 +28,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { runFileSync } from "@mailwoman/core/process"
+import type { PathBuilderLike } from "path-ts"
 
 import { type ForkProbe, type RepoOrigin, resolveWOFRepoOrigin } from "#gazetteer-pipeline/wof/repo-origin"
 
@@ -253,17 +254,18 @@ export async function inspectClone(directory: string): Promise<CloneState> {
  * Therefore, it defaults on, and turning it off is for offline inspection.
  */
 export async function planReposSync(options: {
-	root: string
+	root: PathBuilderLike
 	repos: readonly string[]
 	probe: ForkProbe
-	directoryFor: (repo: string) => string
+	directoryFor: (repo: string) => PathBuilderLike
 	fetchFirst?: boolean
 }): Promise<RepoSyncPlan[]> {
 	const plans: RepoSyncPlan[] = []
 
 	for (const repo of options.repos) {
 		const origin = await resolveWOFRepoOrigin(repo, options.probe)
-		const directory = options.directoryFor(repo)
+		// A string, because the plan records it.
+		const directory = options.directoryFor(repo).toString()
 
 		if (options.fetchFirst !== false && (await pathExists(directory))) {
 			try {

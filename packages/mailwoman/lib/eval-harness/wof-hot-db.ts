@@ -13,24 +13,25 @@
  *   neural or resolver modules.
  */
 
-import { tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/resolver-wof-wasm/env"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * The default demo stage directory.
  *
  * This is a staged release path rather than a data-root artifact.
  */
-export function wofHotStageDir(): string {
-	return tempRootPath("v440-stage", "en-us", "v4.4.0")
+export function wofHotStageDir(): PathBuilder {
+	return tempRootPathBuilder("v440-stage", "en-us", "v4.4.0")
 }
 
 /**
  * Resolve the `wof-hot.db` path: `$MAILWOMAN_WOF_HOT_DB` when set and non-empty, then the staged database.
  *
  * `||` on purpose — an empty env var means unset, never "resolve against the empty string".
+ * The answer is a string because the environment variable, the other source, is one.
  */
-export function resolveWOFHotDB(stageDir?: string): string {
-	return $public.MAILWOMAN_WOF_HOT_DB || join(stageDir ?? wofHotStageDir(), "wof-hot.db")
+export function resolveWOFHotDB(stageDir?: PathBuilderLike): string {
+	return $public.MAILWOMAN_WOF_HOT_DB || PathBuilder.from(stageDir ?? wofHotStageDir())("wof-hot.db").toString()
 }

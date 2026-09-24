@@ -31,7 +31,7 @@
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
 // Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one),
@@ -123,8 +123,8 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		// A reservoir sample is reproducible only when its seed is, so the default is fixed
 		// rather than drawn: two runs of the same release and sample size write the same rows.
 		const seed = options.seed ? Number.parseInt(options.seed, 10) : 20_260_922
-		const outRoot = options.out ?? dataRootPath("overture")
-		const outDir = join(outRoot, release)
+		const outRoot = PathBuilder.from(options.out ?? dataRootPath("overture"))
+		const outDir = outRoot(release)
 		await makeDirectories(outDir)
 
 		// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load
@@ -144,7 +144,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		await db.run("SET threads=4;")
 		await db.run("SET memory_limit='8GB';")
 
-		const countryParquet = (cc: string) => join(outDir, `addresses-${cc.toLowerCase()}.parquet`)
+		const countryParquet = (cc: string) => outDir(`addresses-${cc.toLowerCase()}.parquet`)
 
 		/**
 		 * Materialize one country into local Parquet.
@@ -202,7 +202,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		 */
 		const emitCorpusJSONL = async (cc: string): Promise<void> => {
 			const src = countryParquet(cc)
-			const dest = join(outDir, `overture-${cc.toLowerCase()}.corpus.jsonl`)
+			const dest = outDir(`overture-${cc.toLowerCase()}.corpus.jsonl`)
 			const sampleClause = options.sample ? ` USING SAMPLE ${Number(options.sample)} ROWS (reservoir, ${seed})` : ""
 
 			await db.run(`
@@ -308,7 +308,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		await writeLocalJSONFile({ release, probes }, outDir, "fill-rates.json")
 		await writeLocalTextFile(renderMarkdown(release, probes), outDir, "fill-rates.md")
 
-		console.error(`[done] report -> ${join(outDir, "fill-rates.{json,md}")}`)
+		console.error(`[done] report -> ${outDir("fill-rates.{json,md}")}`)
 
 		db.closeSync()
 

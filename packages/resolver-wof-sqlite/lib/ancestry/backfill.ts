@@ -47,7 +47,7 @@
 
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, resolvePath, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import type { WOFDatabase } from "#schema"
@@ -82,10 +82,10 @@ export interface AncestryBackfillResult {
  * Accepts both the nested lab layout (a `whosonfirst-data` group dir holding the admin repos)
  * and a flat layout (admin repos directly under the root); searches at most two directory levels deep.
  */
-export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promise<string[]> {
-	const roots: string[] = []
+export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promise<PathBuilder[]> {
+	const roots: PathBuilder[] = []
 
-	const visit = async (dir: string, depth: number): Promise<void> => {
+	const visit = async (dir: PathBuilder, depth: number): Promise<void> => {
 		if (depth > 2) return
 
 		let names: string[]
@@ -99,7 +99,7 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 		}
 
 		for (const name of names) {
-			const child = join(dir, name)
+			const child = dir(name)
 
 			if (name === "data") {
 				roots.push(child)
@@ -109,7 +109,7 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 		}
 	}
 
-	await visit(resolvePath(reposRoot), 0)
+	await visit(PathBuilder.from(reposRoot), 0)
 
 	return roots
 }
@@ -147,7 +147,7 @@ function placetypeFromKey(key: string): string | null {
  */
 export async function backfillAncestorsFromHierarchy(
 	db: DatabaseClient<WOFDatabase>,
-	geojsonRoots: readonly string[],
+	geojsonRoots: readonly PathBuilderLike[],
 	opts: { maxID?: number } = {}
 ): Promise<AncestryBackfillResult> {
 	const maxID = opts.maxID ?? Number.MAX_SAFE_INTEGER

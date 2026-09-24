@@ -36,7 +36,7 @@ import { streamToDisk } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { Box, Text } from "ink"
-import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
+import { basename, dirname, PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -265,7 +265,7 @@ async function fetchText(url: string): Promise<string> {
  * (`.part` + rename, so an interrupted transfer never presents as a complete archive),
  * with retry on 5xx / network errors.
  */
-async function downloadFile(url: string, dest: string, retries = 3): Promise<void> {
+async function downloadFile(url: string, dest: PathBuilderLike, retries = 3): Promise<void> {
 	// oxlint-disable-next-line eslint/no-unreachable-loop -- the catch falls through to the next attempt when the error is retryable
 	for (let attempt = 1; attempt <= retries; attempt++) {
 		try {
@@ -304,7 +304,7 @@ const SHAPEFILE_MEMBERS = /\.(?:shp|dbf|prj|shx)$/i
  *
  * Silently overwrites existing files (idempotent at the shapefile level).
  */
-async function extractEdgesZip(zipPath: string, destDir: string): Promise<void> {
+async function extractEdgesZip(zipPath: PathBuilderLike, destDir: PathBuilderLike): Promise<void> {
 	const { extractZipEntries } = await import("@mailwoman/core/fs/zip")
 
 	await extractZipEntries(zipPath, destDir, { selector: SHAPEFILE_MEMBERS, flatten: true })
@@ -317,7 +317,7 @@ async function extractEdgesZip(zipPath: string, destDir: string): Promise<void> 
 interface DownloadTask {
 	geoid: string
 	zipURL: string
-	zipPath: string
+	zipPath: PathBuilder
 }
 
 /**
@@ -326,7 +326,7 @@ interface DownloadTask {
 async function downloadParallel(
 	tasks: DownloadTask[],
 	concurrency: number,
-	edgesDir: string
+	edgesDir: PathBuilder
 ): Promise<{ downloaded: number; skipped: number; failed: string[] }> {
 	let downloaded = 0
 	let skipped = 0
@@ -337,7 +337,7 @@ async function downloadParallel(
 		while (idx < tasks.length) {
 			const task = tasks[idx++]!
 			const shpBase = `tl_2023_${task.geoid}_edges.shp`
-			const shpPath = join(edgesDir, shpBase)
+			const shpPath = edgesDir(shpBase)
 
 			// Idempotency: skip if the SHP is already present (the ZIP may be gone after extraction)
 			if (await pathExists(shpPath)) {
@@ -402,7 +402,7 @@ async function buildStateDatabase(
 	release: string,
 	force: boolean
 ): Promise<DatabaseBuildResult | null> {
-	const outDB = join(outDir, `interpolation-us-${stateAbbr.toLowerCase()}.db`)
+	const outDB = resolvePathBuilder(outDir, `interpolation-us-${stateAbbr.toLowerCase()}.db`)
 
 	if ((await pathExists(outDB)) && !force) {
 		console.error(`  [skip] ${stateAbbr}: database already exists at ${outDB} (--force to rebuild)`)
@@ -481,7 +481,7 @@ interface StateResult {
 
 const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const EDGES_DIR = options.edgesDir
+		const EDGES_DIR = PathBuilder.from(options.edgesDir)
 		const OUT_DIR = options.outDir ?? interpolationDatabasePath
 		const RELEASE = options.release
 		const CONCURRENCY = options.concurrency
@@ -548,7 +548,7 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 				return {
 					geoid,
 					zipURL: `${BASE}/${zipFile}`,
-					zipPath: join(EDGES_DIR, zipFile),
+					zipPath: EDGES_DIR(zipFile),
 				}
 			})
 

@@ -39,7 +39,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { pyRound } from "@mailwoman/core/numeric"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { connectDuckDB, type DuckDBConnection } from "#parquet/duckdb"
@@ -241,7 +241,7 @@ export interface LintRecipeVocabSummary {
  */
 export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<LintRecipeVocabSummary> {
 	const baseVersion = options.baseVersion ?? "v0.5.0"
-	const baseRoot = options.baseRoot ?? dataRootPath("corpus", "versioned")
+	const baseRoot = PathBuilder.from(options.baseRoot ?? dataRootPath("corpus", "versioned"))
 	const threshold = options.threshold ?? 0.7
 	const minCount = options.minCount ?? 50
 	const fraction = options.fraction ?? 1
@@ -278,7 +278,7 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 	console.log(`recipe output: ${outputRows.length} rows, ${outputVocab.size} unique tokens`)
 
 	// 2. base parts — full by default. fraction<1 takes a proportional per-source sample (still big)
-	const trainDir = join(baseRoot, baseVersion, `corpus-${baseVersion}`, "train")
+	const trainDir = baseRoot(baseVersion, `corpus-${baseVersion}`, "train")
 
 	let parts = (
 		await Globerator.from("*.parquet", {

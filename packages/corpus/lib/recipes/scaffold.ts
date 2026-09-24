@@ -502,7 +502,7 @@ export interface RecipeOptions {
 	 *
 	 * Default `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`.
 	 */
-	banDir?: string
+	banDir?: PathBuilderLike
 	multilocaleCount?: number
 	/**
 	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list.

@@ -24,7 +24,7 @@ import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-import { dirname, join, type PathBuilderLike } from "path-ts"
+import { dirname, PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * One capital or admin-1 seat.
@@ -201,7 +201,8 @@ export interface BuildCapitalsResult {
  * files exist" cannot state what it failed to cover.
  */
 export async function buildCapitalsReference(options: BuildCapitalsOptions): Promise<BuildCapitalsResult> {
-	const countryInfoPath = join(options.geonamesDir, "countryInfo.txt")
+	const geonamesDir = PathBuilder.from(options.geonamesDir)
+	const countryInfoPath = geonamesDir("countryInfo.txt")
 
 	if (!(await pathExists(countryInfoPath))) {
 		throw new Error(
@@ -220,7 +221,7 @@ export async function buildCapitalsReference(options: BuildCapitalsOptions): Pro
 	let scanned = 0
 
 	for (const { country, capital } of catalog) {
-		const dumpPath = join(options.geonamesDir, `${country}.txt`)
+		const dumpPath = geonamesDir(`${country}.txt`)
 
 		if (!(await pathExists(dumpPath))) {
 			missingDumps.push(country)

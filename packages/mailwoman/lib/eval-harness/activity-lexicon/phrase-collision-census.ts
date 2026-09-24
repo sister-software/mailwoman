@@ -35,7 +35,7 @@ import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -362,7 +362,7 @@ async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ input
 	let files = 0
 
 	for (const relative of COMMITTED_INPUT_ROOTS) {
-		const root = join(repositoryRoot, relative)
+		const root = resolvePathBuilder(repositoryRoot, relative)
 
 		if (!(await pathExists(root))) continue
 

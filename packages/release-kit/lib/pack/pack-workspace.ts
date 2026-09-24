@@ -16,7 +16,7 @@ import { copyFileTo, removePath, writeLocalFile, writeLocalJSONFile } from "@mai
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { spawnProcessSync } from "@mailwoman/core/process"
-import { dirname, resolvePath } from "path-ts"
+import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { assertNoSourceTargets, transformExportsForPublish, transformImportsForPublish } from "#pack/publish/exports"
 
@@ -32,17 +32,18 @@ import { assertNoSourceTargets, transformExportsForPublish, transformImportsForP
  * pre-pack invocation as the documented safety net (see agents.md "symlinks in the publish tarball"),
  * and `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
  */
-export async function dereferenceWorkspaceSymlinks(workspaceDir: string): Promise<void> {
-	const pkg = await readPackageJSON(resolvePath(workspaceDir, "package.json"))
+export async function dereferenceWorkspaceSymlinks(workspaceDir: PathBuilderLike): Promise<void> {
+	const root = PathBuilder.from(workspaceDir)
+	const pkg = await readPackageJSON(root("package.json"))
 
 	for (const entry of pkg.files ?? []) {
 		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs
-		const target = resolvePath(workspaceDir, entry)
+		const target = root(entry)
 		const st = await tryStatLink(target)
 
 		if (!st?.isSymbolicLink()) continue
 		const linkDest = await readLink(target)
-		const resolved = resolvePath(dirname(target), linkDest)
+		const resolved = resolvePath(target.dirname(), linkDest)
 		await removePath(target)
 		await copyFileTo(resolved, target)
 
@@ -58,8 +59,8 @@ export async function dereferenceWorkspaceSymlinks(workspaceDir: string): Promis
  *
  * Symlinked `files` entries are dereferenced first (see {@link dereferenceWorkspaceSymlinks}).
  */
-export async function packWorkspaceForPublish(workspaceDir: string, outFile: string): Promise<void> {
-	const manifestPath = resolvePath(workspaceDir, "package.json")
+export async function packWorkspaceForPublish(workspaceDir: PathBuilderLike, outFile: PathBuilderLike): Promise<void> {
+	const manifestPath = PathBuilder.from(workspaceDir)("package.json")
 	const originalManifest = await readLocalTextFile(manifestPath)
 
 	await dereferenceWorkspaceSymlinks(workspaceDir)

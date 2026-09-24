@@ -28,10 +28,10 @@
  *   --out /tmp/v092-eval
  */
 
-import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join, PathBuilder, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
@@ -123,9 +123,9 @@ export interface DeOrderEvalOptions {
 	/**
 	 * Where the six per-run `.md`/`.log` pairs land.
 	 *
-	 * Default `/tmp/order-eval`.
+	 * Default `<temp-root>/order-eval`.
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * Row cap applied to each of the six runs (0/omitted = all rows).
 	 *
@@ -161,7 +161,7 @@ export interface DeOrderEvalOptions {
 	 * the receipt comparator reads every file under that directory byte-for-byte,
 	 * and a timing number differs between two runs of the same artifact.
 	 */
-	profileDirectory?: string
+	profileDirectory?: PathBuilderLike
 }
 
 /**
@@ -190,15 +190,15 @@ export async function deOrderEval(
 	const card = options.card ?? ""
 	const tok = PathBuilder.from(options.tokenizer ?? dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 	const lookup = PathBuilder.from(options.anchorLookup ?? dataRootPath("anchor", "pilot-anchor-lookup.json"))
-	const out = options.out ?? tempRootPath("order-eval")
+	const out = PathBuilder.from(options.out ?? tempRootPathBuilder("order-eval"))
 
 	if (!model || !card) {
 		reportError("need --model and --card")
 
-		return { ok: false, out }
+		return { ok: false, out: out.toString() }
 	}
 
-	const profileDirectory = options.profileDirectory ?? ""
+	const profileDirectory = options.profileDirectory ? PathBuilder.from(options.profileDirectory) : undefined
 
 	await makeDirectories(out)
 
@@ -235,7 +235,7 @@ export async function deOrderEval(
 					defaultCountry: country,
 					...(options.limit ? { limit: options.limit } : {}),
 					...(options.lookupMemo ? { lookupMemo: true } : {}),
-					...(profileDirectory ? { profileJSON: join(profileDirectory, `${outName}.json`) } : {}),
+					...(profileDirectory ? { profileJSON: profileDirectory(`${outName}.json`).toString() } : {}),
 				},
 				(line) => outLines.push(line),
 				(line) => errLines.push(line)
@@ -244,8 +244,8 @@ export async function deOrderEval(
 			errLines.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 		}
 
-		await writeLocalTextFile(outLines.map((line) => `${line}\n`).join(""), join(out, `${outName}.md`))
-		await writeLocalTextFile(errLines.map((line) => `${line}\n`).join(""), join(out, `${outName}.log`))
+		await writeLocalTextFile(outLines.map((line) => `${line}\n`).join(""), out(`${outName}.md`))
+		await writeLocalTextFile(errLines.map((line) => `${line}\n`).join(""), out(`${outName}.log`))
 	}
 
 	// Pull the neural locality-match % out of a result .md (the "| **neural** | XX.X% |" row).
@@ -258,7 +258,7 @@ export async function deOrderEval(
 		let md: string
 
 		try {
-			md = await readLocalTextFile(join(out, `${name}.md`))
+			md = await readLocalTextFile(out(`${name}.md`))
 		} catch {
 			return ""
 		}
@@ -294,5 +294,5 @@ export async function deOrderEval(
 	report("")
 	report(`no-regression: US ${await loc("us-on")} · FR ${await loc("fr-on")}`)
 
-	return { ok: true, out }
+	return { ok: true, out: out.toString() }
 }

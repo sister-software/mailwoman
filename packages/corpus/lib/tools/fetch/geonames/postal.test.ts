@@ -16,7 +16,7 @@ import type { AddressInfo } from "node:net"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { fetchGeonamesPostal } from "@mailwoman/corpus/tools"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -25,7 +25,7 @@ afterAll(() => fixtures.disposeAsync())
 
 let server: Server
 let baseURL: string
-let outRoot: PathBuilderLike
+let outRoot: PathBuilder
 
 /**
  * The manifest as written.
@@ -38,7 +38,7 @@ async function readManifest(): Promise<{
 	files: Array<Record<string, unknown>>
 	[key: string]: unknown
 }> {
-	return await readLocalJSONFile(join(outRoot, "geonames-postal", "MANIFEST.json"))
+	return await readLocalJSONFile(outRoot("geonames-postal", "MANIFEST.json"))
 }
 
 beforeAll(async () => {

@@ -11,9 +11,8 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataProvenanceCheck } from "@mailwoman/repo-health/checks/data-provenance"
-import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -27,14 +26,13 @@ afterAll(() => fixtures.disposeAsync())
  * An untracked artifact is a local build output and not a committed claim.
  */
 async function plant(files: Record<string, string>) {
-	const repoRoot = fixtures.use(await temporaryDirectory("data-provenance-")).path.toString()
+	const root = fixtures.use(await temporaryDirectory("data-provenance-")).path
 
 	for (const [file, text] of Object.entries(files)) {
-		await makeDirectories(join(repoRoot, file.slice(0, file.lastIndexOf("/"))))
-		await writeLocalTextFile(text, resolvePath(repoRoot, file))
+		await writeLocalTextFile(text, root(file))
 	}
 
-	return { repoRoot, trackedFiles: Object.keys(files) }
+	return { repoRoot: root.toString(), trackedFiles: Object.keys(files) }
 }
 
 describe("dataProvenanceCheck", () => {
@@ -103,17 +101,12 @@ describe("dataProvenanceCheck", () => {
 
 	it("leaves an untracked subdirectory out, so a build's scratch output is not reported", async () => {
 		// The directory list is derived from git's tracked files rather than from a filesystem walk.
-		const repoRoot = fixtures.use(await temporaryDirectory("data-provenance-")).path.toString()
+		const root = fixtures.use(await temporaryDirectory("data-provenance-")).path
 
-		await makeDirectories(join(repoRoot, "packages/example/data/scratch"))
-		await writeLocalTextFile("{}\n", resolvePath(repoRoot, "packages/example/data/scratch/out.json"))
+		await writeLocalTextFile("{}\n", root("packages/example/data/scratch/out.json"))
+		await writeLocalTextFile("# provenance\n\nNothing here yet.\n", root("packages/example/data/PROVENANCE.md"))
 
-		await writeLocalTextFile(
-			"# provenance\n\nNothing here yet.\n",
-			resolvePath(repoRoot, "packages/example/data/PROVENANCE.md")
-		)
-
-		const context = { repoRoot, trackedFiles: ["packages/example/data/PROVENANCE.md"] }
+		const context = { repoRoot: root.toString(), trackedFiles: ["packages/example/data/PROVENANCE.md"] }
 
 		expect(await dataProvenanceCheck.run(context)).toEqual([])
 	})

@@ -22,6 +22,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 
 import { probeManifest } from "#data/inventory"
 
@@ -119,7 +120,7 @@ export interface FreshnessReport {
  */
 export interface FreshnessArtifact {
 	name: string
-	path: string
+	path: PathBuilderLike
 }
 
 /**
@@ -134,7 +135,10 @@ export interface FreshnessArtifact {
  * Rejecting the date over an unrelated field would report absence where a fact exists,
  * which is the failure this whole reader is built against.
  */
-async function readArtifact({ name, path }: FreshnessArtifact): Promise<ArtifactFreshness> {
+async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Promise<ArtifactFreshness> {
+	// The report carries the path as a string field.
+	const path = artifactPath.toString()
+
 	if (!(await pathExists(path))) {
 		return { name, path, manifest: ManifestState.Absent, reason: "artifact is not on disk" }
 	}

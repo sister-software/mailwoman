@@ -24,7 +24,7 @@
  */
 
 import { isDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -47,7 +47,7 @@ export interface BuildStreetMorphologyFSTOpts {
 	/**
 	 * Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders.
 	 */
-	dictionariesDir: string
+	dictionariesDir: PathBuilderLike
 	/**
 	 * Optional locale filter — only ingest these locale subfolders.
 	 *
@@ -112,6 +112,7 @@ export async function buildStreetMorphologyFST(
 ): Promise<BuildStreetMorphologyFSTResult> {
 	const progress = opts.onProgress ?? (() => {})
 	const minVariantLength = opts.minVariantLength ?? 3
+	const dictionariesDir = PathBuilder.from(opts.dictionariesDir)
 
 	// Discover locales — either provided explicitly, or all directories containing street_types.txt.
 	let locales: string[]
@@ -121,7 +122,7 @@ export async function buildStreetMorphologyFST(
 		locales = opts.locales
 	} else {
 		const entries = await Globerator.from("*", {
-			cwd: opts.dictionariesDir,
+			cwd: dictionariesDir,
 			absolute: false,
 			onlyFiles: false,
 		}).toArray()
@@ -129,7 +130,7 @@ export async function buildStreetMorphologyFST(
 		const localeProbes: Array<[string, boolean]> = []
 
 		for (const entry of entries) {
-			const localePath = join(opts.dictionariesDir, entry)
+			const localePath = dictionariesDir(entry)
 
 			if (!(await isDirectory(localePath))) {
 				localeProbes.push([entry, false])
@@ -138,7 +139,7 @@ export async function buildStreetMorphologyFST(
 			}
 
 			try {
-				await statPath(join(localePath, STREET_TYPES_FILENAME))
+				await statPath(localePath(STREET_TYPES_FILENAME))
 
 				localeProbes.push([entry, true])
 			} catch {
@@ -156,7 +157,7 @@ export async function buildStreetMorphologyFST(
 	const canonicalToVariants = new Map<string, Set<string>>()
 
 	for (const locale of locales) {
-		const filePath = join(opts.dictionariesDir, locale, STREET_TYPES_FILENAME)
+		const filePath = dictionariesDir(locale, STREET_TYPES_FILENAME)
 		const content = await readLocalTextFile(filePath)
 
 		for (const line of TextSpliterator.from(content)) {
@@ -266,7 +267,7 @@ export async function buildStreetMorphologyFST(
 		edgeCount,
 		nameInsertions: insertCount,
 		importanceMatches: 0, // No importance scoring for morphology — fixed at 1.0.
-		sourceDB: opts.dictionariesDir,
+		sourceDB: dictionariesDir.toString(),
 	}
 
 	return {

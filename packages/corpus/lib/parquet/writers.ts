@@ -42,7 +42,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
 import { Field, Int32, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { connectDuckDB, escapeSQLIdentifier, escapeSQLString } from "#parquet/duckdb"
 import {
@@ -257,7 +257,7 @@ export async function writeParquetSplits(
 	opts: WriteParquetSplitsOptions
 ): Promise<ParquetManifest> {
 	const rowsPerFile = opts.rowsPerFile ?? ROWS_PER_FILE
-	const corpusDir = join(opts.outputDir, `corpus-v${opts.corpusVersion}`)
+	const corpusDir = resolvePathBuilder(opts.outputDir, `corpus-v${opts.corpusVersion}`)
 	await makeDirectories(corpusDir)
 
 	const files: ParquetFileDescriptor[] = []
@@ -280,9 +280,10 @@ export async function writeParquetSplits(
 		let lastSourceID = ""
 
 		const openFile = async (): Promise<void> => {
-			const splitDir = join(corpusDir, split)
+			const splitDir = corpusDir(split)
 			await makeDirectories(splitDir)
-			path = join(splitDir, `part-${String(fileIndex).padStart(4, "0")}.parquet`)
+			// A string, because the manifest records it.
+			path = splitDir(`part-${String(fileIndex).padStart(4, "0")}.parquet`).toString()
 
 			stagePath = staging.resolve(`part-${String(fileIndex).padStart(4, "0")}.ndjson`)
 			stage = staging.use(openWriteStream(stagePath))
@@ -368,7 +369,7 @@ export async function writeParquetSplits(
 		total_rows: totalRows,
 	}
 
-	await writeLocalJSONFile(manifest, corpusDir, "MANIFEST.json")
+	await writeLocalJSONFile(manifest, corpusDir("MANIFEST.json"))
 
 	return manifest
 }

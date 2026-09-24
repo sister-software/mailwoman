@@ -53,7 +53,7 @@ import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tool
 import { allRows } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, type PathBuilder, type PathBuilderLike } from "path-ts"
+import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -452,7 +452,7 @@ export async function readBoardCoverage(
 	for await (const dir of Globerator.from("*", { cwd: casesRoot, onlyFiles: false })) {
 		if (!/^[a-z]{2}$/.test(dir)) continue
 
-		const dirPath = join(casesRoot, dir)
+		const dirPath = resolvePathBuilder(casesRoot, dir)
 
 		if (!(await isDirectory(dirPath))) continue
 
@@ -460,7 +460,7 @@ export async function readBoardCoverage(
 
 			// A line that does not parse is skipped rather than failing the census,
 			// so a hand-edited fixture never hides the rest of its file.
-			for await (const line of TextSpliterator.fromAsync(join(dirPath, file))) {
+			for await (const line of TextSpliterator.fromAsync(dirPath(file))) {
 				if (!line.trim()) continue
 
 				const row = tryParsingJSON<{ country?: string; status?: string }>(line)

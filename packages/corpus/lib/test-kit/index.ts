@@ -18,7 +18,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { join, resolvePath } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach } from "vitest"
 
@@ -27,11 +27,11 @@ import type { CanonicalRow } from "#types"
 /**
  * A per-test scratch directory.
  *
- * `path` is only meaningful inside a test body.
- * It is `""` until the `beforeEach` runs.
+ * `path` exists only inside a test body.
+ * Reading it before the `beforeEach` runs or after the `afterEach` throws.
  */
 export interface ScratchDir {
-	readonly path: string
+	readonly path: PathBuilder
 }
 
 /**
@@ -43,12 +43,10 @@ export interface ScratchDir {
  * that holds a handle open, must not turn a passing assertion into a failing suite.
  */
 export function useScratchDir(slug: string): ScratchDir {
-	const dir = { path: "" }
 	let owned: TemporaryDirectory | undefined
 
 	beforeEach(async () => {
 		owned = await temporaryDirectory(`mailwoman-${slug}-`)
-		dir.path = resolvePath(owned.path)
 	})
 
 	// The directory is owned by the test, never by a module-scoped stack.
@@ -69,15 +67,23 @@ export function useScratchDir(slug: string): ScratchDir {
 		owned = undefined
 	})
 
-	return dir
+	return {
+		get path(): PathBuilder {
+			if (!owned) throw new Error(`useScratchDir("${slug}"): the scratch directory exists only inside a test body`)
+
+			return owned.path
+		},
+	}
 }
 
 /**
  * Read back the canonical rows a `runAdapter` call wrote — `<outputDir>/<adapterID>/canonical.jsonl`,
  * streamed through `JSONSpliterator` and collected.
  */
-export function readCanonicalRows(outputDir: string, adapterID: string): Promise<CanonicalRow[]> {
-	return Array.fromAsync(JSONSpliterator.fromAsync<CanonicalRow>(join(outputDir, adapterID, "canonical.jsonl")))
+export function readCanonicalRows(outputDir: PathBuilderLike, adapterID: string): Promise<CanonicalRow[]> {
+	return Array.fromAsync(
+		JSONSpliterator.fromAsync<CanonicalRow>(PathBuilder.from(outputDir)(adapterID, "canonical.jsonl"))
+	)
 }
 
 /**
@@ -88,11 +94,11 @@ export function readCanonicalRows(outputDir: string, adapterID: string): Promise
  * `createNewlineWriter` terminates every line it writes, so the file round-trips through `CSVSpliterator`
  * the same way whichever suite produced it, and a caller passes content without a delimiter.
  */
-export async function writeDelimitedFixture(
-	filePath: string,
+export async function writeDelimitedFixture<P extends PathBuilderLike>(
+	filePath: P,
 	header: string,
 	rows: readonly string[]
-): Promise<string> {
+): Promise<P> {
 	await using out = createNewlineWriter(filePath)
 
 	await out.write(header)
