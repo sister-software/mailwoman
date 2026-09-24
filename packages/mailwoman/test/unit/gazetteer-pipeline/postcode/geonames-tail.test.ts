@@ -56,7 +56,7 @@ beforeAll(async () => {
 afterAll(() => root[Symbol.asyncDispose]())
 
 test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump is reported", async () => {
-	const out = root.resolve("tail.db")
+	const out = root.path("tail.db")
 
 	const result = await buildPostcodeGeonamesTail({
 		countries: ["CZ", "PL", "ZZ"],

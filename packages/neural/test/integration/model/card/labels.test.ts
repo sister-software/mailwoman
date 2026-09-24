@@ -21,6 +21,7 @@ import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/write
 import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readLabelsFromModelCard } from "@mailwoman/neural/weights-channels"
+import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
@@ -33,8 +34,8 @@ beforeEach(async () => {
 
 afterEach(() => dir[Symbol.asyncDispose]())
 
-async function writeCard(payload: unknown): Promise<string> {
-	const p = dir.resolve("model-card.json")
+async function writeCard(payload: unknown): Promise<PathBuilder> {
+	const p = dir.path("model-card.json")
 	await writeLocalJSONFile(payload, p)
 
 	return p
@@ -63,11 +64,11 @@ describe("readLabelsFromModelCard", () => {
 	})
 
 	test("returns undefined when the file does not exist", async () => {
-		expect(await readLabelsFromModelCard(dir.resolve("missing.json"))).toBeUndefined()
+		expect(await readLabelsFromModelCard(dir.path("missing.json"))).toBeUndefined()
 	})
 
 	test("returns undefined when the file is not valid JSON", async () => {
-		const p = dir.resolve("model-card.json")
+		const p = dir.path("model-card.json")
 		await writeLocalTextFile("{ not: json,", p)
 		expect(await readLabelsFromModelCard(p)).toBeUndefined()
 	})

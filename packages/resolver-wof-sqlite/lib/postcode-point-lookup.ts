@@ -20,6 +20,7 @@
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { WOFDatabase } from "#schema"
 
@@ -44,7 +45,7 @@ export class WOFPostcodeLookup {
 	/**
 	 * Open each extract read-only and prepare its exact-match statement.
 	 */
-	constructor(dbPaths: readonly string[]) {
+	constructor(dbPaths: readonly PathBuilderLike[]) {
 		this.#dbs = dbPaths.map((p) => new DatabaseClient<WOFDatabase>(p, { readOnly: true }))
 		this.#stmts = this.#dbs.map((db) => db.prepare(LOOKUP_SQL))
 	}

@@ -32,6 +32,7 @@ import {
 } from "@mailwoman/soil/test-kit"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createSoilCapabilityRoute } from "mailwoman/observations"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
@@ -103,11 +104,11 @@ const INSIDE_UNRATED = {
 const OUTSIDE_SURVEY = { latitude: FIXTURE_ORIGIN.lat + 5, longitude: FIXTURE_ORIGIN.lon + 5 }
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-soil-route-")
-	databasePath = scratch.resolve("soil.db")
+	databasePath = scratch.path("soil.db")
 
 	const delineations = fixtureDelineations()
 

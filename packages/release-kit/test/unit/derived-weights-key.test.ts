@@ -22,7 +22,7 @@ import {
 	derivedWeightsKey,
 	derivedWeightsKeyFrom,
 } from "@mailwoman/release-kit/weights/derived-weights-key"
-import type { PathBuilder } from "path-ts"
+import { basename, type PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -34,8 +34,8 @@ afterAll(() => fixtures.disposeAsync())
  *
  * The shape production uses (repo-relative name, absolute read path).
  */
-function at(path: string, name?: string): DerivedWeightsInput {
-	return { name: name ?? path.slice(path.lastIndexOf("/") + 1), path }
+function at(path: PathBuilder, name?: string): DerivedWeightsInput {
+	return { name: name ?? basename(path), path }
 }
 
 let scratch: TemporaryDirectory
@@ -48,14 +48,14 @@ afterEach(() => scratch[Symbol.asyncDispose]())
 
 describe("derivedWeightsKeyFrom", () => {
 	it("is stable for identical inputs", async () => {
-		const a = scratch.resolve("a.json")
+		const a = scratch.path("a.json")
 		await writeLocalTextFile('{"x":1}', a)
 
 		expect(await derivedWeightsKeyFrom([at(a)])).toBe(await derivedWeightsKeyFrom([at(a)]))
 	})
 
 	it("changes when a hashed input's CONTENT changes", async () => {
-		const a = scratch.resolve("a.json")
+		const a = scratch.path("a.json")
 		await writeLocalTextFile('{"x":1}', a)
 		const before = await derivedWeightsKeyFrom([at(a)])
 
@@ -65,8 +65,8 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("changes when a GENERATING MODULE changes — the currency-filter regression", async () => {
-		const config = scratch.resolve("release.config.json")
-		const generator = scratch.resolve("pair-index.tsx")
+		const config = scratch.path("release.config.json")
+		const generator = scratch.path("pair-index.tsx")
 		await writeLocalTextFile('{"weights":{"model":"m.onnx"}}', config)
 		await writeLocalTextFile("export const delta = 1", generator)
 		const before = await derivedWeightsKeyFrom([at(config), at(generator)])
@@ -79,8 +79,8 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("is order-independent across the input list", async () => {
-		const a = scratch.resolve("a.json")
-		const b = scratch.resolve("b.json")
+		const a = scratch.path("a.json")
+		const b = scratch.path("b.json")
 		await writeLocalTextFile("1", a)
 		await writeLocalTextFile("2", b)
 
@@ -88,14 +88,14 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("treats a MISSING input as a distinct state, not as empty", async () => {
-		const a = scratch.resolve("a.json")
+		const a = scratch.path("a.json")
 		await writeLocalTextFile("1", a)
 		const present = await derivedWeightsKeyFrom([at(a)])
 
 		await removePath(a)
 		const absent = await derivedWeightsKeyFrom([at(a)])
 
-		const empty = scratch.resolve("empty.json")
+		const empty = scratch.path("empty.json")
 		await writeLocalTextFile("", empty)
 
 		// Absence is not zero: a file that is gone must not hash like a file that is empty.
@@ -104,8 +104,8 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("distinguishes inputs by NAME", async () => {
-		const a = scratch.resolve("a.json")
-		const b = scratch.resolve("b.json")
+		const a = scratch.path("a.json")
+		const b = scratch.path("b.json")
 		await writeLocalTextFile("same", a)
 		await writeLocalTextFile("same", b)
 
@@ -128,8 +128,8 @@ describe("derivedWeightsKeyFrom", () => {
 		}
 
 		const inputsFor = (root: PathBuilder) => [
-			at(root("release.config.json").toString(), "release.config.json"),
-			at(root("pair-index.tsx").toString(), "packages/mailwoman/lib/commands/gazetteer/pair-index.tsx"),
+			at(root("release.config.json"), "release.config.json"),
+			at(root("pair-index.tsx"), "packages/mailwoman/lib/commands/gazetteer/pair-index.tsx"),
 		]
 
 		expect(await derivedWeightsKeyFrom(inputsFor(checkoutA))).toBe(await derivedWeightsKeyFrom(inputsFor(checkoutB)))

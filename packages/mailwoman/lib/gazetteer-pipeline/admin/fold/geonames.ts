@@ -21,6 +21,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 export interface FoldGeonamesOptions {
 	/**
@@ -32,13 +33,13 @@ export interface FoldGeonamesOptions {
 	 *
 	 * Default `<data-root>/geonames`.
 	 */
-	geonamesDir?: string
+	geonamesDir?: PathBuilderLike
 	/**
 	 * AlternateNamesV2 dir (…/export/dump/alternatenames).
 	 *
 	 * Default `<data-root>/geonames-alternate`.
 	 */
-	alternateDir?: string
+	alternateDir?: PathBuilderLike
 	/**
 	 * #267/#1026: countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link
 	 * locality ancestry.

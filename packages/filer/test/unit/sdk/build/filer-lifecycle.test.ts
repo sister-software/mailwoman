@@ -52,7 +52,7 @@ function filerRow(overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID">
 }
 
 async function build(rows: Form499Row[]) {
-	const out = scratch.resolve("filer.db")
+	const out = scratch.path("filer.db")
 
 	const result = await buildFilerDatabase({
 		form499Rows: rows,

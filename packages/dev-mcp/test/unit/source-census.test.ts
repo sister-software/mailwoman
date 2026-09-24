@@ -142,6 +142,6 @@ describe("gazetteerArtifacts", () => {
 	})
 
 	it("returns nothing rather than throwing when the data root.path has no wof directory", async () => {
-		expect(await gazetteerArtifacts(root.resolve("does-not-exist"))).toEqual([])
+		expect(await gazetteerArtifacts(root.path("does-not-exist"))).toEqual([])
 	})
 })

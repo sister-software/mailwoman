@@ -11,7 +11,7 @@
  *   | --weights-cache <fp32-pkg-root> [--int8-weights-cache <int8-pkg-root>]\
  *   --spec packages/mailwoman/lib/eval-harness/specs/<spec>.json\
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
- *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/eval-<label>]
+ *   [--gazetteer-lexicon <lexicon.json>] [--out-dir <temp-root>/eval-<label>]
  *
  *   --model compares raw artifacts: delta checks are valid, absolute floors are not.
  *   --weights-cache is the in-distribution path, and a paired cache run (#47) checks
@@ -48,7 +48,7 @@
  *   - Grade affix floors from score-affix (not folded per-locale output).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, toLinesText, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
@@ -162,7 +162,7 @@ export interface PromotionEvalOptions {
 	/**
 	 * Battery output dir.
 	 *
-	 * Default `/tmp/eval-<label>-<hhmm>`.
+	 * Default `<temp-root>/eval-<label>-<hhmm>`, under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	outDir?: PathBuilderLike
 	/**
@@ -507,7 +507,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
 
 	if (!OUT_DIR) {
-		OUT_DIR = `/tmp/eval-${LABEL}-${hhmm}`
+		OUT_DIR = tempRootPathBuilder(`eval-${LABEL}-${hhmm}`)
 	}
 
 	await makeDirectories(OUT_DIR)

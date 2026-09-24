@@ -115,7 +115,7 @@
 		"@mailwoman/core": "workspace:*",
 		"geo-coordinates-parser": "^1.7.4",
 		"h3-js": "^4.5.0",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"wkx": "^0.5.0"
 	},
 	"devDependencies": {

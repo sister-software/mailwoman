@@ -54,6 +54,7 @@ import { ingestChunkArguments, mergeCountsInto, runChunkProcess } from "@mailwom
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
+import type { PathBuilderLike } from "path-ts"
 
 import { createCoastalTables, type CoastalDatabase } from "#schema"
 import type { CoastalChunkResult } from "#sdk/ingest/chunk"
@@ -138,7 +139,7 @@ export type BuildCoastalOptions = BuildCoastalInput & {
 	 *
 	 * The build writes beside it and swaps.
 	 */
-	out: string
+	out: PathBuilderLike
 	/**
 	 * The product's ISO revision date — `layer_manifest.version` and `source_vintage`.
 	 */
@@ -325,7 +326,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 			const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
 
 			return {
-				out: options.out,
+				out: options.out.toString(),
 				erosionFeatures: ingested.erosionFeatures,
 				instabilityFeatures: ingested.instabilityFeatures,
 				scenarioCounts: ingested.scenarioCounts,

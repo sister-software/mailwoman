@@ -39,6 +39,7 @@
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { SubVenueHarvestRow } from "#tools/sub/venue/lexicon"
 
@@ -122,7 +123,7 @@ interface POIReadDatabase {
  * see `docs/engineering/reference/ layer-interface.mdx` — so there is no version
  * of poi.db where this is absent.
  */
-export async function readOvertureLayerVintage(databasePath: string): Promise<string> {
+export async function readOvertureLayerVintage(databasePath: PathBuilderLike): Promise<string> {
 	using kdb = new DatabaseClient<POIReadDatabase>(databasePath, { readOnly: true })
 
 	const row = await kdb
@@ -140,7 +141,7 @@ export interface ReadOvertureSubVenuesOptions {
 	 *
 	 * Typically `poiDatabasePath("poi.db")` from `@mailwoman/resolver-wof-sqlite/paths`.
 	 */
-	databasePath: string
+	databasePath: PathBuilderLike
 	/**
 	 * Category → designator map.
 	 *

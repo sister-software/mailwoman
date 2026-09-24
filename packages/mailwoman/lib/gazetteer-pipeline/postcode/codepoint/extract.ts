@@ -204,9 +204,8 @@ export async function extractCodePointOpen(options: ExtractCodePointOptions): Pr
 	const metadata = parseCodePointMetadata(await readLocalTextFile(docDir("metadata.txt")))
 
 	// Latin-1, deliberately — see `ExtractCodePointResult.licenseText`.
-	const licenseText = await readLocalBuffer(docDir("licence.txt"))
-		.then((bytes) => bytes.toString("latin1"))
-		.catch(() => "")
+	// A missing file throws, because the database must quote the attribution text.
+	const licenseText = (await readLocalBuffer(docDir("licence.txt"))).toString("latin1")
 
 	return { csvPaths, docDir: docDir.toString(), metadata, licenseText, totalBytes }
 }

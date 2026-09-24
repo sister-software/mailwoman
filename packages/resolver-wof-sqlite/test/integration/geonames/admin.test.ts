@@ -58,7 +58,7 @@ beforeAll(async () => {
 		}),
 	].join("\n")
 
-	await writeLocalFile(lines, dir.resolve("GE.txt"))
+	await writeLocalFile(lines, dir.path("GE.txt"))
 
 	db = DatabaseClient.temp<WOFDatabase>()
 

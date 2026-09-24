@@ -307,7 +307,7 @@ export async function ingestRows(
  * and its counter is the row's index — the id a row without a mapped `id` column falls back to.
  */
 export function normalizeCSV(
-	source: string,
+	source: PathBuilderLike,
 	opts: { mapping: ColumnMapping; delimiter?: Delimiter }
 ): AsyncSequence<SourceRecord> {
 	return streamRows(source, { delimiter: opts.delimiter }).map((row, index) => ingestRow(row, opts.mapping, index))

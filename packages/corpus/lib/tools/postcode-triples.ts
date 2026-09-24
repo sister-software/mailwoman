@@ -46,7 +46,7 @@
 import { officialLanguagesAlpha3, regionLanguagesAlpha3 } from "@mailwoman/codex/country"
 import { foldName } from "@mailwoman/codex/normalize"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { assertPathExists } from "@mailwoman/core/fs/readers"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -370,12 +370,13 @@ export function localityWrittenForm(sprName: string, names: PreferredNames): str
  */
 export async function readTriplesFromParentJoin(
 	countries: readonly string[],
-	options: { postcodeDB?: string; adminDB?: string } = {}
+	options: { postcodeDB?: PathBuilderLike; adminDB?: PathBuilderLike } = {}
 ): Promise<PostcodeTriple[]> {
 	const postcodeDB = options.postcodeDB ?? wofDatabasePath("postalcode-intl.db")
 	const adminDB = options.adminDB ?? wofDatabasePath("admin-global-priority-importance.db")
 
-	if (!(await pathExists(postcodeDB)) || !(await pathExists(adminDB))) return []
+	await assertPathExists(postcodeDB, `readTriplesFromParentJoin: no postcode database at ${postcodeDB}`)
+	await assertPathExists(adminDB, `readTriplesFromParentJoin: no admin gazetteer at ${adminDB}`)
 
 	using db = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })
 
@@ -538,11 +539,11 @@ export type AdminPair = Omit<PostcodeTriple, "postcode" | "postcodePlacement">
  */
 export async function readPairsFromAdmin(
 	countries: readonly string[],
-	options: { adminDB?: string; locale?: (cc: string) => string } = {}
+	options: { adminDB?: PathBuilderLike; locale?: (cc: string) => string } = {}
 ): Promise<AdminPair[]> {
 	const adminDB = options.adminDB ?? wofDatabasePath("admin-global-priority-importance.db")
 
-	if (!(await pathExists(adminDB))) return []
+	await assertPathExists(adminDB, `readPairsFromAdmin: no admin gazetteer at ${adminDB}`)
 
 	using db = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })
 
@@ -603,13 +604,16 @@ export async function readPairsFromAdmin(
  *
  * Dropping the row instead costs coverage and teaches nothing false, which is the better of the two.
  *
- * @returns A predicate that answers `true` for everything when the gazetteer is not on disk,
- * so a checkout without it builds the same rows it did before rather than silently emitting none.
+ * @throws When the gazetteer is not on disk.
+ * A predicate that accepted every name would emit the unfiltered rows as though the filter had run.
  */
-export async function createKnownLocalityCheck(country: string, adminDB?: string): Promise<(name: string) => boolean> {
+export async function createKnownLocalityCheck(
+	country: string,
+	adminDB?: PathBuilderLike
+): Promise<(name: string) => boolean> {
 	const path = adminDB ?? wofDatabasePath("admin-global-priority-importance.db")
 
-	if (!(await pathExists(path))) return () => true
+	await assertPathExists(path, `createKnownLocalityCheck: no admin gazetteer at ${path}`)
 
 	using db = new DatabaseClient<WOFDatabase>(path, { readOnly: true })
 
@@ -686,7 +690,9 @@ export async function readTriplesFromGeonames(
 ): Promise<PostcodeTriple[]> {
 	const convention = POSTCODE_CONVENTIONS.get(country)
 
-	if (!convention || !(await pathExists(path))) return []
+	if (!convention) return []
+
+	await assertPathExists(path, `readTriplesFromGeonames: no GeoNames postal export at ${path}`)
 
 	const isKnownLocality = options.isKnownLocality ?? (await createKnownLocalityCheck(country))
 	const out: PostcodeTriple[] = []

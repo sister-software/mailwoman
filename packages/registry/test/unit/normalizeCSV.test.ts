@@ -8,13 +8,14 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { normalizeCSV } from "@mailwoman/registry/ingest"
 import type { SourceRecord } from "@mailwoman/registry/types"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const dir = await temporaryDirectory("normalize-csv-")
 afterAll(() => dir[Symbol.asyncDispose]())
 
-async function fixture(name: string, text: string): Promise<string> {
-	const p = dir.resolve(name)
+async function fixture(name: string, text: string): Promise<PathBuilder> {
+	const p = dir.path(name)
 
 	await writeLocalFile(text, p)
 

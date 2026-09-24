@@ -44,6 +44,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { sql } from "kysely"
 import type { Kysely } from "kysely"
+import type { PathBuilderLike } from "path-ts"
 
 import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "#fts/index"
 import type { NamesTable, SprTable, WOFDatabase } from "#schema"
@@ -54,13 +55,13 @@ export interface BuildSlimOptions {
 	 *
 	 * Each should already have spr / names / place_population tables.
 	 */
-	inputs: string[]
+	inputs: readonly PathBuilderLike[]
 	/**
 	 * Output path for the slim DB.
 	 *
 	 * Will be overwritten if it exists.
 	 */
-	output: string
+	output: PathBuilderLike
 	/**
 	 * Country codes to keep (ISO 2-letter).
 	 *
@@ -169,7 +170,8 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	// Callers pass `""` for extracts that don't exist yet (e.g. A not-yet-built custom postcode DB).
 	// Skip empties up front.
 	// Require every remaining path to exist.
-	const inputs = opts.inputs.filter((p) => p.length)
+	// Compared as strings, because the empty string is the marker for an input not built yet.
+	const inputs = opts.inputs.map((input) => input.toString()).filter((p) => p.length)
 
 	if (!inputs.length) throw new Error("no input WOF dbs provided")
 
@@ -282,7 +284,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		progress("done", stringifyJSON(rowCounts))
 
 		result = {
-			outputPath: opts.output,
+			outputPath: opts.output.toString(),
 			outputBytes: (await statPath(opts.output)).size,
 			rowCounts,
 		}
@@ -307,14 +309,14 @@ async function copyFromSource(
 	// attach avoids any "load source into memory" step — SQLite walks both files in place.
 	// We need a fresh temp copy because some WOF distributions ship as read-only filesystem
 	// mounts and attach will still want a writable journal on the side.
-	// Copying to /tmp dodges that without mutating the canonical files in $MAILWOMAN_DATA_ROOT/db/wof/.
+	// A scratch copy dodges that without mutating the canonical files in $MAILWOMAN_DATA_ROOT/db/wof/.
 	// Attach / detach stay raw — Kysely doesn't model them.
 	await using tmpScratch = await temporaryDirectory("mailwoman-slim-src-")
-	const scratchPath = tmpScratch.resolve("src.db")
+	const scratchPath = tmpScratch.path("src.db")
 
 	await copyFileTo(inputPath, scratchPath)
 
-	out.exec(`ATTACH DATABASE '${scratchPath.replaceAll("'", "''")}' AS src;`)
+	out.exec(`ATTACH DATABASE '${scratchPath.toString().replaceAll("'", "''")}' AS src;`)
 
 	try {
 		// Does this extract carry the pre-built population aux table?

@@ -16,12 +16,13 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { loadSlimWOFDatabase } from "@mailwoman/resolver-wof-wasm/loader"
 import { WOFWasmPlaceLookup } from "@mailwoman/resolver-wof-wasm/lookup"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 let scratch: TemporaryDirectory
 let slimBytes: Uint8Array
 
-function buildFixtureWOF(path: string): void {
+function buildFixtureWOF(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -113,8 +114,8 @@ function buildFixtureWOF(path: string): void {
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mailwoman-wasm-")
-	const source = scratch.resolve("src.db")
-	const output = scratch.resolve("slim.db")
+	const source = scratch.path("src.db")
+	const output = scratch.path("slim.db")
 	buildFixtureWOF(source)
 	await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 10 })
 	slimBytes = await readLocalBuffer(output)

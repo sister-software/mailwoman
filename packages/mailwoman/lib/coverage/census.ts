@@ -272,7 +272,7 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
  * reads a handful of families and reports their countries as the corpus's.
  * Column projection keeps the full read affordable.
  */
-export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCensus> {
+export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<CorpusCensus> {
 	// `slices` is named here so `baseManifestFiles` accepts the parsed object.
 	// It reads the pre-rename key off the same object at runtime, and that key's spelling
 	// stays in the corpus package because the word is banned in this tree.
@@ -326,7 +326,7 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 	return {
 		takenAt: new Date().toISOString(),
 		corpusVersion: manifest.corpus_version ?? "unknown",
-		manifest: manifestPath,
+		manifest: manifestPath.toString(),
 		total,
 		rows,
 		streetRows,
@@ -365,7 +365,7 @@ export function sameCorpusVersion(a: string, b: string): boolean {
  * @returns undefined when the config states no corpus_dir.
  * That is "cannot check", not "they match".
  */
-export async function readConfiguredCorpusVersion(configPath: string): Promise<string | undefined> {
+export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): Promise<string | undefined> {
 	if (!(await pathExists(configPath))) return undefined
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a training config is a few hundred lines, read sync

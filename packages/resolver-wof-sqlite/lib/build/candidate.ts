@@ -104,7 +104,7 @@ export interface BuildCandidateOptions {
 	 * That's where the GeoNames delivery-city names live ("Brooklyn" for 11201),
 	 * and they were previously reachable only through FTS.
 	 */
-	postcodes?: string[]
+	postcodes?: readonly PathBuilderLike[]
 	/**
 	 * Optional locality extracts (`spr` rows with `placetype='locality'` + real coords,
 	 * e.g. localities-nz-linz.db — the #1564 NZ suburb tier) — folded through the same
@@ -118,7 +118,7 @@ export interface BuildCandidateOptions {
 	 * scope (`region_id`) plus closure rows for the region and the region's own chain above it.
 	 * An extract without one stays unscoped, as before.
 	 */
-	localities?: string[]
+	localities?: readonly PathBuilderLike[]
 	/**
 	 * Optional WOF admin database carrying a `place_importance` table.
 	 *
@@ -136,7 +136,7 @@ export interface BuildCandidateOptions {
 	 * That is the honest degradation and it is the default: a caller with no score source
 	 * must not get a population-derived stand-in written into a column that means fame.
 	 */
-	importance?: string
+	importance?: PathBuilderLike
 	/**
 	 * Cross-source currency backfill (#1737).
 	 *

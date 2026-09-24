@@ -86,7 +86,7 @@ beforeAll(async () => {
 			8: "FI",
 			14: "175945",
 		}),
-		dir.resolve("FI.txt")
+		dir.path("FI.txt")
 	)
 
 	// "Santa Isabel" reproduces the Malabo shape: one language-tagged unflagged row + a
@@ -103,7 +103,7 @@ beforeAll(async () => {
 			altRow("633679", "sv", "Santa Isabel"), // official language, unflagged row…
 			santaIsabelHistoric, // …but a sibling row marks the NAME historic
 		].join("\n"),
-		altDir.resolve("FI.txt")
+		altDir.path("FI.txt")
 	)
 })
 
@@ -135,7 +135,7 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", async () => {
 	await using db = freshDB()
 
-	await ingestGeonamesAliases(db, ["FI"], dir.path, () => {}, { alternateDir: altDir.resolve("nope") })
+	await ingestGeonamesAliases(db, ["FI"], dir.path, () => {}, { alternateDir: altDir.path("nope") })
 
 	const rows = db.prepare(`SELECT name, language, privateuse, official FROM names ORDER BY name`).all() as Row[]
 

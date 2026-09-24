@@ -89,7 +89,6 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const plans = await planReposSync({
-			root,
 			repos,
 			probe: githubForkProbe,
 			directoryFor: (repo) => directories.get(repo)!,

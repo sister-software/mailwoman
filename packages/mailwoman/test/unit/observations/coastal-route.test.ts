@@ -33,6 +33,7 @@ import type { QueryKind } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createCoastalErosionRoute, describeCoastalErosion } from "mailwoman/observations"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
@@ -100,11 +101,11 @@ const INSIDE_BAND = {
 const NO_DESIGNATION = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 }
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-coastal-route-")
-	databasePath = scratch.resolve("coastal-england.db")
+	databasePath = scratch.path("coastal-england.db")
 
 	await buildCoastalDatabase({
 		source: fixtureSource(fixtureFeatures()),

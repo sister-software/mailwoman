@@ -81,7 +81,7 @@ describe("resolveWeights cache fallback", () => {
 
 	test("the not-found error names the probed cache path", async () => {
 		await expect(resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).rejects.toThrow(
-			new RegExp(cacheRoot.resolve("node_modules", PACKAGE_NAME).replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+			new RegExp(cacheRoot.path("node_modules", PACKAGE_NAME).replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
 		)
 	})
 
@@ -170,12 +170,12 @@ describe("resolveWeights cache fallback", () => {
 	// an eval run that silently graded the wrong bundle.
 	test("weightsCachePackageDir builds exactly the layout this file pins", () => {
 		expect(weightsCachePackageDir(cacheRoot.path, LOCALE).toString()).toBe(
-			cacheRoot.resolve("node_modules", PACKAGE_NAME)
+			cacheRoot.path("node_modules", PACKAGE_NAME).toString()
 		)
 
 		// Locale casing is normalized the same way the package name is.
 		expect(weightsCachePackageDir(cacheRoot.path).toString()).toBe(
-			cacheRoot.resolve("node_modules", "@mailwoman/neural-weights-en-us")
+			cacheRoot.path("node_modules", "@mailwoman/neural-weights-en-us").toString()
 		)
 	})
 })

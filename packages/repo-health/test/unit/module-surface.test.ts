@@ -16,7 +16,7 @@ afterAll(() => fixtures.disposeAsync())
 
 async function plant(path: string, text: string): Promise<{ repoRoot: string; trackedFiles: string[] }> {
 	const root = fixtures.use(await temporaryDirectory("module-surface-"))
-	await makeDirectories(root.resolve("packages", "fixture", "lib"))
+	await makeDirectories(root.path("packages", "fixture", "lib"))
 	await writeLocalTextFile(text, resolvePath(root.path, path))
 
 	return { repoRoot: root.path.toString(), trackedFiles: [path] }

@@ -209,7 +209,7 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 		expect(one).toHaveLength(1)
 
 		await using directory = await temporaryDirectory("mw-census-real-")
-		const scratch = directory.resolve("MANIFEST.json")
+		const scratch = directory.path("MANIFEST.json")
 
 		// Only the one file, under the current key: spreading the manifest would leave
 		// its full list in place and the census would read all of it.
@@ -229,7 +229,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 		// A manifest naming train files and a total of zero cannot both be true,
 		// so the zero is the instrument failing rather than a measurement.
 		await using directory = await temporaryDirectory("mw-census-empty-")
-		const scratch = directory.resolve("MANIFEST.json")
+		const scratch = directory.path("MANIFEST.json")
 
 		await writeLocalJSONFile(
 			{
@@ -276,7 +276,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 		// The counterpart reading, and it is a real one: a corpus whose manifest names no train
 		// file holds no train rows, so zero is the measurement rather than a failure to read.
 		await using directory = await temporaryDirectory("mw-census-none-")
-		const scratch = directory.resolve("MANIFEST.json")
+		const scratch = directory.path("MANIFEST.json")
 
 		await writeLocalJSONFile({ corpus_version: "v0.0.0-empty", slices: [] }, scratch)
 
@@ -309,9 +309,9 @@ describe("readConfiguredCorpusVersion", () => {
 	 * A config file the caller owns: the reader below opens it by path,
 	 * so the directory has to outlive this helper.
 	 */
-	async function config(body: string): Promise<TemporaryDirectory & { configPath: string }> {
+	async function config(body: string): Promise<TemporaryDirectory & { configPath: PathBuilder }> {
 		const scratch = await temporaryDirectory("mw-cfg-")
-		const configPath = scratch.resolve("c.yaml")
+		const configPath = scratch.path("c.yaml")
 
 		await writeLocalFile(body, configPath)
 
@@ -352,7 +352,7 @@ describe("readAdmittedCountries — the Norway shape", () => {
 		// A quoted "no" must still be counted.
 		// A regex requiring a bare key silently drops Norway and reports it as never admitted.
 		await using scratch = await temporaryDirectory("mw-cfg-no-")
-		const path = scratch.resolve("c.yaml")
+		const path = scratch.path("c.yaml")
 
 		await writeLocalTextFile('data:\n  country_weights:\n    US: 1.0\n    "NO": 1.0\n    FR: 1.0\n', path)
 
@@ -364,7 +364,7 @@ describe("readAdmittedCountries — the Norway shape", () => {
 
 	it("does not admit a country at weight zero — that is a hard drop, not a low weight", async () => {
 		await using scratch = await temporaryDirectory("mw-cfg-zero-")
-		const path = scratch.resolve("c.yaml")
+		const path = scratch.path("c.yaml")
 
 		await writeLocalTextFile("data:\n  country_weights:\n    US: 1.0\n    PE: 0\n", path)
 

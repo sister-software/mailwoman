@@ -34,6 +34,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { BuiltLexicon } from "mailwoman/gazetteer-pipeline/evidence-lexicons"
 import { buildLocalitySurfaceLexicon } from "mailwoman/gazetteer-pipeline/evidence-lexicons"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 let scratch: TemporaryDirectory
@@ -43,7 +44,7 @@ let scratch: TemporaryDirectory
  * `spr` (primaries), `names` (aliases), `place_population` (the law-2/3 importance input),
  * and `ancestors` (the v4 parent-prominence proxy).
  */
-function buildFixtureAdmin(path: string): void {
+function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	// Throwaway fixture, so durability is worthless and expensive.
@@ -157,8 +158,8 @@ async function buildAgainstFixture(
 	// Two tests build twice — the sub-phrase one covers both country sets, and the invariance
 	// one runs the same build twice on purpose — and `create table` is not idempotent.
 	const seq = buildSeq++
-	const dbPath = scratch.resolve(`admin-${seq}.db`)
-	const output = scratch.resolve(`lexicon-${seq}.json`)
+	const dbPath = scratch.path(`admin-${seq}.db`)
+	const output = scratch.path(`lexicon-${seq}.json`)
 	buildFixtureAdmin(dbPath)
 
 	const built = await buildLocalitySurfaceLexicon({ countries, placetypes, dbPath, output })

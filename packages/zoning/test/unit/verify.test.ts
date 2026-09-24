@@ -38,10 +38,11 @@ import {
 	FIXTURE_SIDE,
 	holeRing,
 } from "@mailwoman/zoning/test-kit"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 /**
  * The service's rendering of the first fixture zone, in the publisher's own
@@ -87,7 +88,7 @@ const alwaysEmpty: ServiceFeatureReader = async () => []
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-zoning-verify-")
-	databasePath = scratch.resolve("zoning-ireland.db")
+	databasePath = scratch.path("zoning-ireland.db")
 
 	await buildZoningDatabase({
 		source: fixtureSource(fixtureFeatures()),

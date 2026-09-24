@@ -8,6 +8,7 @@
 import { expandH3Cell, strideSampleInteriorPoints, type H3CellShort } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import type { FloodDatabase } from "#schema"
 
@@ -24,7 +25,7 @@ import type { FloodDatabase } from "#schema"
  * rather than random — is `strideSampleInteriorPoints`'s.
  */
 export function sampleAgreementPoints(
-	databasePath: string,
+	databasePath: PathBuilderLike,
 	options: { insideCount?: number; absenceCount?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number }> {
 	const insideCount = options.insideCount ?? 40

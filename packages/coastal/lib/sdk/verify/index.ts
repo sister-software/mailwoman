@@ -31,6 +31,7 @@
  */
 
 import { geometryContains, nearestRingEdgeMetres } from "@mailwoman/spatial"
+import type { PathBuilderLike } from "path-ts"
 
 import { CoastalErosionLookup, CoastalReadingKind, type CoastalErosionReading } from "#index"
 import type { ServiceFeatureReader } from "#sdk/verify/service"
@@ -124,7 +125,7 @@ export const OUTSIDE_MAPPING_POINTS: ReadonlyArray<{ label: string; latitude: nu
 ]
 
 export interface VerifyCoastalOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 	readServiceFeatures: ServiceFeatureReader
 	/**
 	 * Points to re-ask the service about.

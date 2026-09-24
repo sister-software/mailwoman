@@ -15,9 +15,9 @@ import { WorkerHost } from "@mailwoman/dev-mcp/worker/host"
 import { afterAll, describe, expect, it } from "vitest"
 
 const STUB_DIR = await temporaryDirectory("mwdev-stub-worker-")
-const STUB_PATH = STUB_DIR.resolve("stub-worker.mjs")
-const TOOLS_PATH = STUB_DIR.resolve("tools.json")
-const JOBS_PATH = STUB_DIR.resolve("jobs.json")
+const STUB_PATH = STUB_DIR.path("stub-worker.mjs")
+const TOOLS_PATH = STUB_DIR.path("tools.json")
+const JOBS_PATH = STUB_DIR.path("jobs.json")
 
 /**
  * A minimal worker speaking the IPC protocol: ready on handshake with the
@@ -125,7 +125,7 @@ describe("WorkerHost restart", () => {
 		// An empty list here would tell the caller a relaunch is unnecessary, which is the one wrong answer.
 		await using host = new WorkerHost({
 			workerPath: STUB_PATH,
-			workerArgs: [TOOLS_PATH, STUB_DIR.resolve("absent.json").toString()],
+			workerArgs: [TOOLS_PATH, STUB_DIR.path("absent.json")],
 		})
 
 		await host.start()

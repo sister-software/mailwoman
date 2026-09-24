@@ -27,6 +27,7 @@ import { runFileSync } from "@mailwoman/core/process"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
 
+import { installedMailwomanBin } from "#release/smoke/installed-bin"
 import { packWorkspaces, walkWorkspaceClosure } from "#release/workspace-closure"
 
 /**
@@ -137,7 +138,7 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	const tarDir = tmp.path("tarballs")
 	const project = tmp.path("project")
 	// doctor's own "data root does not exist" branch needs the directory to be missing rather than empty.
-	const doctorRoot = tmp.resolve("doctor-root-absent")
+	const doctorRoot = tmp.path("doctor-root-absent").toString()
 
 	await makeDirectories(tarDir, project)
 
@@ -155,7 +156,7 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	log("[get-started] npm install (tarballs only — no hoisting)…")
 	run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], project)
 
-	const cli = project("node_modules", "mailwoman", "out", "cli.js")
+	const cli = await installedMailwomanBin(project)
 
 	log("[get-started] install-and-first-parse.mdx: the parse script…")
 	await writeLocalTextFile(FIRST_PARSE_SCRIPT, project("parse.mjs"))
@@ -200,7 +201,8 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 		return { packed: closure.size, legs }
 	}
 
-	const dataRoot = options.dataRoot ?? tmp.resolve("data-root")
+	// A string, because the child processes receive it as an environment variable.
+	const dataRoot = (options.dataRoot ?? tmp.path("data-root")).toString()
 
 	await makeDirectories(dataRoot)
 

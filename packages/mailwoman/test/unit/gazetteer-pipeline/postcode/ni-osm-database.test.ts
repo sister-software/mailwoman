@@ -83,7 +83,7 @@ beforeAll(async () => {
 afterAll(() => root[Symbol.asyncDispose]())
 
 test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of-zero provenance", async () => {
-	const out = root.resolve("ni.db")
+	const out = root.path("ni.db")
 
 	const result = await buildPostcodeNIOSM({
 		sourceDir,
@@ -207,7 +207,7 @@ test("buildPostcodeNIOSM: a response modified since acquisition is refused, not 
 		dir("acquisition.json")
 	)
 
-	await expect(buildPostcodeNIOSM({ sourceDir: dir, out: root.resolve("tampered.db"), offline: true })).rejects.toThrow(
+	await expect(buildPostcodeNIOSM({ sourceDir: dir, out: root.path("tampered.db"), offline: true })).rejects.toThrow(
 		/has been modified since acquisition/
 	)
 })

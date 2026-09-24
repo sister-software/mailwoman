@@ -51,6 +51,7 @@ import {
 	type ZoningLayerIdentity,
 	type ZoningReading,
 } from "@mailwoman/zoning"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	createDesignationRoute,
@@ -160,7 +161,7 @@ export interface ZoningDesignationRouteOptions {
 	 * Required: there is no default layer, and a route that guessed one would report
 	 * a designation from an authority nobody asked about.
 	 */
-	databasePath: string
+	databasePath: PathBuilderLike
 }
 
 /**
@@ -181,7 +182,7 @@ export function createZoningDesignationRoute(options: ZoningDesignationRouteOpti
 		read: (latitude, longitude) => lookup.lookup(latitude, longitude),
 		refusalFor: (reading) => (reading.kind !== ZoningReadingKind.Designated ? "no_designation_here" : undefined),
 		toObservation: (reading, latitude, longitude) =>
-			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath),
+			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 	})
 }
 

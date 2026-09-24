@@ -15,11 +15,12 @@ import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: TemporaryDirectory
 
-function buildAdminExtract(path: string): void {
+function buildAdminExtract(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -39,7 +40,7 @@ function buildAdminExtract(path: string): void {
 	buildPlaceSearchFTS(db)
 }
 
-async function buildPostcodeExtract(path: string): Promise<void> {
+async function buildPostcodeExtract(path: PathBuilderLike): Promise<void> {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -69,7 +70,7 @@ afterEach(async () => {
 
 describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
 	test("opens a single extract via string path (backwards compatible)", async () => {
-		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
+		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
 		buildAdminExtract(adminPath)
 		using lookup = new WOFSQLitePlaceLookup({ databasePath: adminPath })
 
@@ -79,8 +80,8 @@ describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
 	})
 
 	test("opens admin + postcode extracts via array, auto-routes by placetype", async () => {
-		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
-		const pcPath = scratch.resolve("whosonfirst-data-postalcode-us-latest.db")
+		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
+		const pcPath = scratch.path("whosonfirst-data-postalcode-us-latest.db")
 		buildAdminExtract(adminPath)
 		await buildPostcodeExtract(pcPath)
 
@@ -99,8 +100,8 @@ describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
 	})
 
 	test("ExtractConfig.schemaName override + explicit placetypes hint", async () => {
-		const adminPath = scratch.resolve("admin.db")
-		const oddlyNamed = scratch.resolve("wherever-they-put-postcodes.db")
+		const adminPath = scratch.path("admin.db")
+		const oddlyNamed = scratch.path("wherever-they-put-postcodes.db")
 		buildAdminExtract(adminPath)
 		await buildPostcodeExtract(oddlyNamed)
 
@@ -114,8 +115,8 @@ describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
 	})
 
 	test("postcode bbox + proximity work via R*Tree on the attached extract", async () => {
-		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
-		const pcPath = scratch.resolve("whosonfirst-data-postalcode-us-latest.db")
+		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
+		const pcPath = scratch.path("whosonfirst-data-postalcode-us-latest.db")
 		buildAdminExtract(adminPath)
 		await buildPostcodeExtract(pcPath)
 
@@ -133,8 +134,8 @@ describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
 	})
 
 	test("query without placetype routes to main (admin) regardless of extracts", async () => {
-		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
-		const pcPath = scratch.resolve("whosonfirst-data-postalcode-us-latest.db")
+		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
+		const pcPath = scratch.path("whosonfirst-data-postalcode-us-latest.db")
 		buildAdminExtract(adminPath)
 		await buildPostcodeExtract(pcPath)
 
@@ -146,7 +147,7 @@ describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
 	})
 
 	test("placetype with no matching extract falls back to main", async () => {
-		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
+		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
 		buildAdminExtract(adminPath)
 		// Only admin extract — no postcode extract.
 		// A postalcode query falls back to main, returns nothing because admin has no postalcodes.

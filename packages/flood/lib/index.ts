@@ -49,6 +49,7 @@ import { ancestorChainCells, bboxContains, shortCellToInt, type H3Cell, pointInE
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import type { FloodDatabase } from "#schema"
 import { FloodCellContainment } from "#schema"
@@ -183,7 +184,7 @@ export interface FloodLayerIdentity {
 }
 
 export interface FloodZoneLookupOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 }
 
 /**
@@ -210,7 +211,7 @@ export class FloodZoneLookup implements Disposable {
 		this.#database = new DatabaseClient<FloodDatabase>(options.databasePath, { readOnly: true })
 
 		try {
-			this.identity = readIdentity(this.#database, options.databasePath)
+			this.identity = readIdentity(this.#database, options.databasePath.toString())
 			this.#definitions = readDefinitions(this.#database)
 		} catch (error) {
 			this.#database.destroy()

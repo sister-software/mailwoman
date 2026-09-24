@@ -25,6 +25,7 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
 import { afterEach, describe, expect, it } from "vitest"
 
 let scratch: TemporaryDirectory | undefined
@@ -40,9 +41,9 @@ afterEach(() => {
  * `openBDCDatabaseIfPresent` and `assertBDCDatabaseExists` only ever re-open read-only and never query
  * anything in these tests, so a schema-less empty db is a faithful "file present" fixture for both.
  */
-async function emptySqliteFile(name: string): Promise<string> {
+async function emptySqliteFile(name: string): Promise<PathBuilder> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")
-	const path = scratch.resolve(name)
+	const path = scratch.path(name)
 
 	new DatabaseClient<POIDatabase>(path).destroy()
 
@@ -56,9 +57,9 @@ async function emptySqliteFile(name: string): Promise<string> {
  * and queries `poi_category_codes` (see `poi-lookup.ts`), so an arbitrary empty file won't do.
  * `openPlausibilityPOIDeps`'s "file present" branch needs these tables to actually exist.
  */
-async function poiFixtureFile(name: string): Promise<string> {
+async function poiFixtureFile(name: string): Promise<PathBuilder> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")
-	const path = scratch.resolve(name)
+	const path = scratch.path(name)
 	await using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)

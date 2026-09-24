@@ -21,14 +21,14 @@ describe("hash", () => {
 
 	it("sha256File streams a file to the same digest", async () => {
 		await using scratch = await temporaryDirectory("hash-")
-		const path = scratch.resolve("f.txt")
+		const path = scratch.path("f.txt")
 		await writeLocalTextFile("mailwoman", path)
 		expect(await sha256File(path)).toBe(MAILWOMAN_SHA256)
 	})
 
 	it("md5File streams a file to the known MD5 digest", async () => {
 		await using scratch = await temporaryDirectory("hash-")
-		const path = scratch.resolve("f.txt")
+		const path = scratch.path("f.txt")
 		await writeLocalTextFile("mailwoman", path)
 		expect(await md5File(path)).toBe(MAILWOMAN_MD5)
 	})

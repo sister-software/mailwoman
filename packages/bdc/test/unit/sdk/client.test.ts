@@ -34,6 +34,7 @@ import { crc32 } from "@mailwoman/core/fs/compression"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
+import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -102,12 +103,12 @@ function bdcTransport(outcomes: StubOutcome[], clock?: { now(): number }): StubT
 	return stubTransport(outcomes, { clock, defaultBody: BDC_EMPTY_ENVELOPE })
 }
 
-let cacheDir: string
+let cacheDir: PathBuilder
 let dataRoot: TemporaryDirectory
 
 beforeEach(async () => {
 	dataRoot = await temporaryDirectory("bdc-client-test-")
-	cacheDir = dataRoot.resolve("http-cache")
+	cacheDir = dataRoot.path("http-cache")
 
 	// Created up front so "the cache is empty" is a readable directory rather than an enoent.
 	// The distinction the never-cached assertions below depend on.
@@ -611,7 +612,7 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 		const client = clientFor(transport)
 
 		const file = { fileID: 7, fileName: "already-here" } as BDCFile
-		const destination = dataRoot.resolve("availability")
+		const destination = dataRoot.path("availability")
 
 		await downloadBDCFile(client, file, destination)
 		expect(transport.calls).toHaveLength(1)

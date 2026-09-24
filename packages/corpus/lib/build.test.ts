@@ -128,7 +128,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 	it("synthesis fan-out increases row count over the non-synth path", async () => {
 		const noSynth = await buildCorpus({
-			outputDir: scratch.resolve("no-synth"),
+			outputDir: scratch.path("no-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -136,7 +136,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		})
 
 		const withSynth = await buildCorpus({
-			outputDir: scratch.resolve("with-synth"),
+			outputDir: scratch.path("with-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -148,7 +148,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 	it("admits every row under the exploratory profile, which asks the register nothing", async () => {
 		const manifest = await buildCorpus({
-			outputDir: scratch.resolve("exploratory"),
+			outputDir: scratch.path("exploratory"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -167,7 +167,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		// Both refusals land in the same place: a source nobody reviewed contributes
 		// nothing to a corpus that reaches a published model.
 		const manifest = await buildCorpus({
-			outputDir: scratch.resolve("release-eligible"),
+			outputDir: scratch.path("release-eligible"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -189,7 +189,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		// The eligibility check runs before `synthesizeRow`, so the ancestor's
 		// refusal covers everything derived from it.
 		const withSynth = await buildCorpus({
-			outputDir: scratch.resolve("release-eligible-synth"),
+			outputDir: scratch.path("release-eligible-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -198,7 +198,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		})
 
 		const withoutSynth = await buildCorpus({
-			outputDir: scratch.resolve("release-eligible-nosynth"),
+			outputDir: scratch.path("release-eligible-nosynth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -214,7 +214,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 	it("notes skipped adapters when no inputs configured", async () => {
 		const manifest = await buildCorpus({
-			outputDir: scratch.resolve("build"),
+			outputDir: scratch.path("build"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: {}, // no input for wof-admin

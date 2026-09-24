@@ -127,6 +127,6 @@
 		"@mailwoman/spatial": "workspace:*"
 	},
 	"devDependencies": {
-		"path-ts": "^2.4.1"
+		"path-ts": "^2.5.0"
 	}
 }

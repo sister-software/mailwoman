@@ -21,12 +21,13 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/postal"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: TemporaryDirectory
-let candidatePath: string
+let candidatePath: PathBuilder
 
-function buildFixtureAdmin(path: string): void {
+function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<PostalCityCandidateDatabase>(path)
 
 	db.exec(`
@@ -52,7 +53,7 @@ function buildFixtureAdmin(path: string): void {
 /**
  * Attach the #741 side-index with one edge: the postal city "Antioch" at 37013 → Nashville (id 1).
  */
-async function attachPostalCityIndex(path: string): Promise<void> {
+async function attachPostalCityIndex(path: PathBuilderLike): Promise<void> {
 	using kdb = new DatabaseClient<PostalCityCandidateDatabase>(path)
 
 	await createPostalCityCandidateTable(kdb)
@@ -72,8 +73,8 @@ async function attachPostalCityIndex(path: string): Promise<void> {
 
 beforeEach(async () => {
 	scratch = await temporaryDirectory("mailwoman-pcc-")
-	const input = scratch.resolve("admin.db")
-	candidatePath = scratch.resolve("candidate.db")
+	const input = scratch.path("admin.db")
+	candidatePath = scratch.path("candidate.db")
 	buildFixtureAdmin(input)
 	await buildCandidateTable({ input, output: candidatePath, postcodes: [] })
 })

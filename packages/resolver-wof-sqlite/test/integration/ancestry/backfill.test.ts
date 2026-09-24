@@ -16,13 +16,13 @@ let root: TemporaryDirectory
 beforeAll(async () => {
 	root = await temporaryDirectory("ancestry-backfill-")
 	// Nested lab layout: <root.path>/whosonfirst-data/whosonfirst-data-admin-us/data
-	await makeDirectories(root.resolve("whosonfirst-data", "whosonfirst-data-admin-us", "data"))
+	await makeDirectories(root.path("whosonfirst-data", "whosonfirst-data-admin-us", "data"))
 	// Flat layout: <root.path>/whosonfirst-data-admin-gb/data
-	await makeDirectories(root.resolve("whosonfirst-data-admin-gb", "data"))
+	await makeDirectories(root.path("whosonfirst-data-admin-gb", "data"))
 	// A non-WOF sibling dir that must be ignored
-	await makeDirectories(root.resolve("some-other-repo", "data"))
+	await makeDirectories(root.path("some-other-repo", "data"))
 	// A `data` dir buried too deep (depth 3+) that must not be discovered
-	await makeDirectories(root.resolve("whosonfirst-data", "nested", "deeper", "data"))
+	await makeDirectories(root.path("whosonfirst-data", "nested", "deeper", "data"))
 })
 
 afterAll(() => root[Symbol.asyncDispose]())
@@ -30,16 +30,16 @@ afterAll(() => root[Symbol.asyncDispose]())
 test("discoverAdminDataRoots: finds nested + flat whosonfirst data roots, skips non-WOF + too-deep", async () => {
 	const roots = (await discoverAdminDataRoots(root.path)).map((dataRoot) => dataRoot.toString())
 
-	expect(roots).toContain(root.resolve("whosonfirst-data", "whosonfirst-data-admin-us", "data"))
-	expect(roots).toContain(root.resolve("whosonfirst-data-admin-gb", "data"))
+	expect(roots).toContain(root.path("whosonfirst-data", "whosonfirst-data-admin-us", "data").toString())
+	expect(roots).toContain(root.path("whosonfirst-data-admin-gb", "data").toString())
 	// non-WOF sibling is not traversed (its name doesn't start with whosonfirst-data)
-	expect(roots).not.toContain(root.resolve("some-other-repo", "data"))
+	expect(roots).not.toContain(root.path("some-other-repo", "data").toString())
 	// `nested/deeper/data` sits at depth 3 from root.path — beyond the 2-level cap
-	expect(roots).not.toContain(root.resolve("whosonfirst-data", "nested", "deeper", "data"))
+	expect(roots).not.toContain(root.path("whosonfirst-data", "nested", "deeper", "data").toString())
 })
 
 test("discoverAdminDataRoots: missing root.path yields empty list, never throws", async () => {
-	expect(await discoverAdminDataRoots(root.resolve("does-not-exist"))).toEqual([])
+	expect(await discoverAdminDataRoots(root.path("does-not-exist"))).toEqual([])
 })
 
 test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-self places, idempotent", async () => {

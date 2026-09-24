@@ -91,7 +91,7 @@ afterAll(() => server[Symbol.asyncDispose]())
 describe("downloadToFile", () => {
 	it("writes the body and reports bytes", async () => {
 		await using scratch = await temporaryDirectory("dl-")
-		const dest = scratch.resolve("ok.txt")
+		const dest = scratch.path("ok.txt")
 		const { bytes } = await downloadToFile({ url: `${base}/ok`, dest })
 		expect(bytes).toBe(7)
 		expect(await readLocalTextFile(dest)).toBe("payload")
@@ -100,7 +100,7 @@ describe("downloadToFile", () => {
 	it("retries transient statuses until success", async () => {
 		flakyHits = 0
 		await using scratch = await temporaryDirectory("dl-")
-		const dest = scratch.resolve("flaky.txt")
+		const dest = scratch.path("flaky.txt")
 		const { bytes } = await downloadToFile({ url: `${base}/flaky`, dest, retries: 3, retryDelayMs: 10 })
 		expect(bytes).toBe(7)
 		expect(flakyHits).toBe(3)
@@ -108,7 +108,7 @@ describe("downloadToFile", () => {
 
 	it("throws immediately on a non-transient status", async () => {
 		await using scratch = await temporaryDirectory("dl-")
-		const dest = scratch.resolve("missing.txt")
+		const dest = scratch.path("missing.txt")
 
 		await expect(downloadToFile({ url: `${base}/missing`, dest, retries: 2, retryDelayMs: 10 })).rejects.toThrow(
 			/HTTP 404/
@@ -119,7 +119,7 @@ describe("downloadToFile", () => {
 describe("manifest helpers", () => {
 	it("round-trips and keys entries; corrupt reads as null", async () => {
 		await using scratch = await temporaryDirectory("manifest-")
-		const path = scratch.resolve("MANIFEST.json")
+		const path = scratch.path("MANIFEST.json")
 
 		const entries = [
 			{ id: "a", sha256: "x" },
@@ -146,7 +146,7 @@ describe("manifest helpers", () => {
 
 	it("loadCollectionFiles keys a collection manifest by file name and reads a bare array as empty", async () => {
 		await using scratch = await temporaryDirectory("collection-")
-		const path = scratch.resolve("MANIFEST.json")
+		const path = scratch.path("MANIFEST.json")
 
 		await writeManifest(path, {
 			source: "juso-kr",
@@ -166,14 +166,14 @@ describe("manifest helpers", () => {
 
 		await writeManifest(path, [{ filename: "bare.zip", sha256: "c" }])
 		expect((await loadCollectionFiles(path)).size).toBe(0)
-		expect((await loadCollectionFiles(scratch.resolve("absent.json"))).size).toBe(0)
+		expect((await loadCollectionFiles(scratch.path("absent.json"))).size).toBe(0)
 	})
 })
 
 describe("streamBodyToFile", () => {
 	it("pipes a response the caller built and leaves no .tmp sibling behind", async () => {
 		await using scratch = await temporaryDirectory("stream-")
-		const dest = scratch.resolve("ok.txt")
+		const dest = scratch.path("ok.txt")
 		const bytes = await streamBodyToFile(await fetch(`${base}/ok`), dest)
 		expect(bytes).toBe(7)
 		expect(await readLocalTextFile(dest)).toBe("payload")
@@ -220,7 +220,7 @@ describe("withRetries", () => {
 describe("resumableDownload", () => {
 	it("keeps the bytes each dropped connection landed and asks for the remainder", async () => {
 		await using scratch = await temporaryDirectory("resume-")
-		const dest = scratch.resolve("body.bin")
+		const dest = scratch.path("body.bin")
 		rangeConnections = 0
 		const lines: string[] = []
 
@@ -241,7 +241,7 @@ describe("resumableDownload", () => {
 
 	it("reads a 416 past the end as the whole body already on disk", async () => {
 		await using scratch = await temporaryDirectory("resume-")
-		const dest = scratch.resolve("body.bin")
+		const dest = scratch.path("body.bin")
 		await writeLocalTextFile(RANGE_BODY.toString(), dest + ".tmp")
 		rangeConnections = 0
 		const bytes = await resumableDownload({ url: `${base}/range`, dest, retryDelayMs: 1 })
@@ -254,7 +254,7 @@ describe("resumableDownload", () => {
 		await using scratch = await temporaryDirectory("resume-")
 
 		await expect(
-			resumableDownload({ url: `${base}/no-range`, dest: scratch.resolve("body.bin"), retryDelayMs: 1 })
+			resumableDownload({ url: `${base}/no-range`, dest: scratch.path("body.bin"), retryDelayMs: 1 })
 		).rejects.toThrow(/HTTP 200 for a range request/)
 	})
 })

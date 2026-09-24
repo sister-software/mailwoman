@@ -61,6 +61,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
@@ -141,7 +142,7 @@ function cellFor(latitude: number, longitude: number): number {
  * Builds a minimal poi.db fixture straight against `poi-schema.ts` (the `poi-lookup.test.ts` idiom),
  * not `buildPOIDatabase`, see this file's header docstring for why.
  */
-async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promise<void> {
+async function buildPOIFixture(path: PathBuilder, rows: readonly FixtureRow[]): Promise<void> {
 	using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
@@ -217,11 +218,11 @@ async function openemptyschemadb(): Promise<DatabaseClient<layerschemadatabase>>
 }
 
 let scratch: TemporaryDirectory
-let poiDBPath: string
+let poiDBPath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("bdc-nearest-infrastructure-")
-	poiDBPath = scratch.resolve("poi.db")
+	poiDBPath = scratch.path("poi.db")
 
 	await buildPOIFixture(poiDBPath, ALL_ROWS)
 })

@@ -84,7 +84,7 @@
 		"@mailwoman/spatial": "workspace:*",
 		"ink": "^7.1.1",
 		"mailwoman": "workspace:*",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"react": "^19.2.8",
 		"spliterator": "^7.11.0",
 		"wrangler": "^4.129.0",

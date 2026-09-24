@@ -52,9 +52,9 @@ let built: ReturnType<typeof buildPostcodePrefixIndex>
 beforeAll(async () => {
 	dir = await temporaryDirectory("pfx1-us-")
 
-	const sourcePath = dir.resolve("postalcode.db")
-	const adminPath = dir.resolve("admin.db")
-	const polygonPath = dir.resolve("polygons.db")
+	const sourcePath = dir.path("postalcode.db")
+	const adminPath = dir.path("admin.db")
+	const polygonPath = dir.path("polygons.db")
 
 	using source = new DatabaseClient<WOFDatabase>(sourcePath)
 
@@ -197,9 +197,9 @@ describe("the level guard", () => {
 	it("refuses a level the US arm does not index", () => {
 		expect(() =>
 			buildPostcodePrefixIndex({
-				sourcePath: dir.resolve("postalcode.db"),
-				adminPath: dir.resolve("admin.db"),
-				polygonPath: dir.resolve("polygons.db"),
+				sourcePath: dir.path("postalcode.db"),
+				adminPath: dir.path("admin.db"),
+				polygonPath: dir.path("polygons.db"),
 				country: "us",
 				level: "outward",
 			})
@@ -209,8 +209,8 @@ describe("the level guard", () => {
 	it("refuses to substitute a gazetteer join for the polygons", () => {
 		expect(() =>
 			buildPostcodePrefixIndex({
-				sourcePath: dir.resolve("postalcode.db"),
-				adminPath: dir.resolve("admin.db"),
+				sourcePath: dir.path("postalcode.db"),
+				adminPath: dir.path("admin.db"),
 				country: "us",
 				level: "3",
 			})

@@ -13,28 +13,28 @@ import { describe, expect, test } from "vitest"
 describe("clean", () => {
 	test("allows only declared generated roots and their descendants", async () => {
 		await using scratch = await temporaryDirectory("mw-clean-guard-")
-		const output = scratch.resolve("packages/core/out")
+		const output = scratch.path("packages/core/out")
 
 		expect(() => assertDirectoryIsUntracked(output, [output])).not.toThrow()
-		expect(() => assertDirectoryIsUntracked(scratch.resolve("packages/core/out/generated"), [output])).not.toThrow()
+		expect(() => assertDirectoryIsUntracked(scratch.path("packages/core/out/generated"), [output])).not.toThrow()
 
-		expect(() => assertDirectoryIsUntracked(scratch.resolve("packages/core/outside"), [output])).toThrow(
+		expect(() => assertDirectoryIsUntracked(scratch.path("packages/core/outside"), [output])).toThrow(
 			/outside declared generated directories/u
 		)
 
-		expect(() => assertDirectoryIsUntracked(scratch.resolve("packages/core/lib"), [output])).toThrow(
+		expect(() => assertDirectoryIsUntracked(scratch.path("packages/core/lib"), [output])).toThrow(
 			/outside declared generated directories/u
 		)
 
-		expect(() => assertDirectoryIsUntracked(scratch.resolve("packages"), [output])).toThrow(
+		expect(() => assertDirectoryIsUntracked(scratch.path("packages"), [output])).toThrow(
 			/outside declared generated directories/u
 		)
 	})
 
 	test("dry-run validates without changing directories or files", async () => {
 		await using scratch = await temporaryDirectory("mw-clean-dry-run-")
-		const output = scratch.resolve("packages/core/out")
-		const artifact = scratch.resolve("packages/core/out/stale.js")
+		const output = scratch.path("packages/core/out")
+		const artifact = scratch.path("packages/core/out/stale.js")
 
 		await makeDirectories(output)
 		await writeLocalTextFile("stale", artifact)
@@ -47,8 +47,8 @@ describe("clean", () => {
 
 	test("cleans existing artifacts and creates an allowed missing directory", async () => {
 		await using scratch = await temporaryDirectory("mw-clean-write-")
-		const output = scratch.resolve("packages/core/out")
-		const artifact = scratch.resolve("packages/core/out/stale.js")
+		const output = scratch.path("packages/core/out")
+		const artifact = scratch.path("packages/core/out/stale.js")
 
 		await makeDirectories(output)
 		await writeLocalTextFile("stale", artifact)
@@ -57,12 +57,12 @@ describe("clean", () => {
 		expect(await pathExists(output)).toBe(true)
 		expect(await pathExists(artifact)).toBe(false)
 
-		const missing = scratch.resolve("packages/core/dist")
+		const missing = scratch.path("packages/core/dist")
 
 		await cleanDirectory(missing, { allowedRoots: [missing] })
 		expect(await pathExists(missing)).toBe(true)
 
-		const buildMetadata = scratch.resolve("packages/core/tsconfig.tsbuildinfo")
+		const buildMetadata = scratch.path("packages/core/tsconfig.tsbuildinfo")
 
 		await writeLocalTextFile("metadata", buildMetadata)
 		await cleanFile(buildMetadata, { allowedRoots: [buildMetadata] })

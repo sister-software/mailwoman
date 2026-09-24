@@ -241,9 +241,9 @@ export interface FoldOptions {
 	 */
 	countries?: readonly string[]
 	/**
-	 * Dir holding `<CC>.txt` GeoNames dumps (default {@link DEFAULT_FOLD_COUNTRIES}).
+	 * Dir holding `<CC>.txt` GeoNames dumps (default {@link geonamesDir}).
 	 */
-	geonamesDir?: string
+	geonamesDir?: PathBuilderLike
 	/**
 	 * #267: the countries to also fold A-class admin (pcli + ADM1) for, linking the locality→region→country ancestry.
 	 * Zero-coverage gap countries only (the coverage-expansion targets).
@@ -259,7 +259,7 @@ export interface FoldOptions {
 	 *
 	 * Countries without a file fold untagged, exactly as before.
 	 */
-	alternateDir?: string
+	alternateDir?: PathBuilderLike
 	/**
 	 * #1514 override: proceed even when `adminIn` already carries alias rows for countries this run does not list. The
 	 * fold owns its whole id range and rewrites it wholesale, so those countries are dropped.

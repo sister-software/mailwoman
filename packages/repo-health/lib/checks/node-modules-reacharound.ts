@@ -35,11 +35,13 @@ const MINIMUM_REASON_LENGTH = 20
  * The path-building functions this guard watches: `node:path`'s two composers and path-ts's, in bare or
  * `path.`- qualified form (the callee name is what's matched, so `path.posix.join(…)` lands on `join`).
  *
+ * `path` is the `TemporaryDirectory` builder, called as `scratch.path("node_modules", …)`.
+ *
  * The check is on the name alone, so a rename-import (`join as pathJoin`) slips past.
  * That is the accepted hole: it has no instances today, and closing it would mean resolving imports.
  * The surface this file deliberately does without.
  */
-const PATH_BUILDERS = new Set(["join", "resolve", "resolvePath", "resolvePathBuilder"])
+const PATH_BUILDERS = new Set(["join", "path", "resolve", "resolvePath", "resolvePathBuilder"])
 
 /**
  * Every site allowed to spell a `node_modules` path by hand, with the reason it is not a reach-around.
@@ -58,8 +60,8 @@ const ALLOWED: Record<string, string> = {
 	// from the monorepo's graph — the exact thing the clean- install smoke exists to not consult.
 	"packages/release-kit/lib/release/smoke/clean-install.ts":
 		"inspects a scratch project's install layout from outside, by design",
-	"packages/release-kit/lib/release/smoke/get-started.ts":
-		"inspects a scratch project's install layout from outside, by design — the get-started pages' cold trial",
+	"packages/release-kit/lib/release/smoke/installed-bin.ts":
+		"reads the bin entry from a scratch project's installed manifest, for both clean-install smokes",
 	// builds a node_modules tree rather than reading one.
 	// The symlink farm a worktree arm needs, because a git worktree has none and symlinking the
 	// main checkout's directory across resolves every workspace back into the main checkout

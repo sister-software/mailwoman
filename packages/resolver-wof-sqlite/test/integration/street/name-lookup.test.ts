@@ -13,15 +13,16 @@ import { foldStreetSurface } from "@mailwoman/resolver"
 import type { StreetCentroidDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { SQLiteStreetNameLookup } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 let dir: TemporaryDirectory
-let dbPath: string
-let emptyPath: string
+let dbPath: PathBuilder
+let emptyPath: PathBuilder
 
 beforeAll(async () => {
 	dir = await temporaryDirectory("mw-street-name-")
-	dbPath = dir.resolve("street-centroids-fr.db")
+	dbPath = dir.path("street-centroids-fr.db")
 	using seed = new DatabaseClient<StreetCentroidDatabase>(dbPath)
 
 	// The real extract shape: the geocoding `street_norm` plus the #727 phase-4c `name_key` (interface fold).
@@ -46,7 +47,7 @@ beforeAll(async () => {
 		ins.run("ZZ-wrong-street-norm", pc, foldStreetSurface(loc), foldStreetSurface(raw))
 	}
 
-	emptyPath = dir.resolve("empty.db")
+	emptyPath = dir.path("empty.db")
 	using empty = new DatabaseClient<StreetCentroidDatabase>(emptyPath)
 	empty.exec("CREATE TABLE unrelated (x)")
 })
@@ -94,7 +95,7 @@ describe("SQLiteStreetNameLookup", () => {
 	})
 
 	test("legacy extract (no name_key column) falls back to street_norm", () => {
-		const legacyPath = dir.resolve("legacy.db")
+		const legacyPath = dir.path("legacy.db")
 		using legacy = new DatabaseClient<StreetCentroidDatabase>(legacyPath)
 		legacy.exec("CREATE TABLE street_centroid (street_norm TEXT NOT NULL, postcode TEXT, locality_base TEXT NOT NULL)")
 

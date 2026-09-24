@@ -28,6 +28,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type ChildProcess, forkProcess } from "@mailwoman/core/process"
 import { once } from "@mailwoman/core/utils/events"
+import type { PathBuilderLike } from "path-ts"
 
 export interface WorkerToolMeta {
 	name: string
@@ -59,8 +60,8 @@ export interface WorkerHostOptions {
 	 * A parameter rather than a constant so the crash/restart implementation is testable
 	 * against a stub child that can be told to hang, crash, or answer garbage.
 	 */
-	workerPath: string
-	workerArgs: string[]
+	workerPath: PathBuilderLike
+	workerArgs: readonly PathBuilderLike[]
 	/**
 	 * Milliseconds to wait for the handshake before declaring a boot failure.
 	 *

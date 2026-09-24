@@ -18,6 +18,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { AssertedProposition } from "@mailwoman/evidence/status"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	BackboneState,
@@ -543,7 +544,7 @@ function auditUnresolvedClaim(register: AddressSourceRegister): string[] {
  * @throws When the file does not parse, or when the audit reports anything,
  * with every problem in the message.
  */
-export async function readAddressSourceRegister(path?: string): Promise<AddressSourceRegister> {
+export async function readAddressSourceRegister(path?: PathBuilderLike): Promise<AddressSourceRegister> {
 	const resolved = path ?? addressSourceRegisterPath()
 	const register = await readLocalJSONFile<AddressSourceRegister>(resolved)
 	const problems = [...auditContentDigest(register), ...auditAddressSourceRegister(register)]

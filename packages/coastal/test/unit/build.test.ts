@@ -40,6 +40,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 import { rectangleRing } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 10
@@ -49,7 +50,7 @@ const NFI = FIXTURE_SCENARIOS.noIntervention.key
 const SMP = FIXTURE_SCENARIOS.withPlan.key
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 let result: BuildCoastalResult
 let lookup: CoastalErosionLookup
 
@@ -76,8 +77,8 @@ const OUTSIDE_EVERY_BAND = {
 async function build(
 	features: CoastalSourceFeature[] = fixtureFeatures(),
 	out = "coastal-england.db"
-): Promise<{ path: string; result: BuildCoastalResult }> {
-	const path = scratch.resolve(out)
+): Promise<{ path: PathBuilder; result: BuildCoastalResult }> {
+	const path = scratch.path(out)
 
 	const built = await buildCoastalDatabase({
 		source: fixtureSource(features),
@@ -249,7 +250,7 @@ describe("the meaning-of-zero inversion", () => {
 	})
 
 	it("refuses to OPEN an artifact whose coverage would license a negative claim", () => {
-		const path = scratch.resolve("tampered.db")
+		const path = scratch.path("tampered.db")
 
 		// The sealed artifact is copied and one coverage row is promoted to `designated`,
 		// which is exactly what a builder generalizing the flood layer's rule would have produced.

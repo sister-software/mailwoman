@@ -24,6 +24,7 @@ import {
 	parseCensusAddressMatch,
 } from "@mailwoman/geocode-oracle/sdk/census-parser"
 import type { CensusAddressComponents, CensusAddressMatch } from "@mailwoman/geocode-oracle/sdk/census-types"
+import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -75,12 +76,12 @@ async function captureError(promise: Promise<unknown>): Promise<ResourceErrorSha
 	throw new Error("Expected the call to reject, but it resolved.")
 }
 
-let cacheDir: string
+let cacheDir: PathBuilder
 let dataRoot: TemporaryDirectory
 
 beforeEach(async () => {
 	dataRoot = await temporaryDirectory("geocode-oracle-census-")
-	cacheDir = dataRoot.resolve("http-cache")
+	cacheDir = dataRoot.path("http-cache")
 
 	await makeDirectoryExclusive(cacheDir)
 	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())

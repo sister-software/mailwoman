@@ -497,7 +497,7 @@
 		"ink": "^7.1.1",
 		"kysely": "^0.29.5",
 		"onnxruntime-node": "^1.29.0",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"react": "^19.2.8",
 		"spliterator": "^7.11.0",
 		"zod": "^4.5.4",
@@ -508,17 +508,13 @@
 		"@mailwoman/resolver-wof-wasm": "workspace:*"
 	},
 	"peerDependencies": {
-		"@duckdb/node-api": "1.5.3-r.3",
-		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+		"@duckdb/node-api": "1.5.3-r.3"
 	},
 	"peerDependenciesMeta": {
 		"@duckdb/node-api": {
 			"optional": true
 		},
 		"@inkjs/ui": {
-			"optional": true
-		},
-		"@mailwoman/resolver-wof-sqlite": {
 			"optional": true
 		},
 		"ink": {

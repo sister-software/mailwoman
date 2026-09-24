@@ -57,7 +57,7 @@
  *   Run: mailwoman eval gauntlet --layer ablation [--components postcode,street] [--limit 20] [--out DIR]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -295,9 +295,10 @@ export interface AblationLayerOptions extends GauntletLayerOptions {
 	/**
 	 * Where the artifacts land.
 	 *
-	 * Defaults to `/tmp/ablation-<yyyymmdd-HHmm>`.
-	 * The `promotion-eval.ts` convention, and deliberately not under `$MAILWOMAN_DATA_ROOT`,
-	 * which this layer only ever reads.
+	 * Defaults to `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
+	 * The promotion eval uses the same convention.
+	 *
+	 * The directory is deliberately not under `$MAILWOMAN_DATA_ROOT`, which this layer only ever reads.
 	 */
 	outDir?: PathBuilderLike
 	/**
@@ -394,7 +395,7 @@ export function ablationBoardID(cases: readonly { id: string; input: string }[])
 function timestampDir(now: Date): PathBuilder {
 	const iso = now.toISOString()
 
-	return PathBuilder.from(`/tmp/ablation-${iso.slice(0, 10).replaceAll("-", "")}-${iso.slice(11, 16).replace(":", "")}`)
+	return tempRootPathBuilder(`ablation-${iso.slice(0, 10).replaceAll("-", "")}-${iso.slice(11, 16).replace(":", "")}`)
 }
 
 /**

@@ -35,7 +35,7 @@ const PROBES = ["rue", "avenue", "straße"] as const
 const keyOf = (entries: PlaceEntry[]) => entries.map((e) => [e.wofID, e.placetype, e.name])
 
 const tempDir = await temporaryDirectory("morphology-fst-loader-")
-const artifactPath = tempDir.resolve("fst-street-morphology.bin")
+const artifactPath = tempDir.path("fst-street-morphology.bin")
 const built = await buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR })
 
 await writeLocalFile(serializeFST(built.matcher, built.provenance), artifactPath)
@@ -80,7 +80,7 @@ describe("loadStreetMorphologyFST", () => {
 
 	it("falls back to the dictionary build when the explicit artifact is missing", async () => {
 		const loaded = await loadStreetMorphologyFST({
-			artifactPath: tempDir.resolve("does-not-exist.bin"),
+			artifactPath: tempDir.path("does-not-exist.bin"),
 			dictionariesDir: DICTIONARIES_DIR,
 		})
 
@@ -90,7 +90,7 @@ describe("loadStreetMorphologyFST", () => {
 	})
 
 	it("falls back with a warning when the explicit artifact is unreadable — never a throw", async () => {
-		const corruptPath = tempDir.resolve("corrupt.bin")
+		const corruptPath = tempDir.path("corrupt.bin")
 
 		await writeLocalBuffer(Buffer.from("not an FST artifact"), corruptPath)
 		const warnings: string[] = []

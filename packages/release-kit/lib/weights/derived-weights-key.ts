@@ -120,7 +120,7 @@ export interface DerivedWeightsInput {
 	 *
 	 * Not hashed — see {@link derivedWeightsKeyFrom}.
 	 */
-	path: string
+	path: PathBuilderLike
 }
 
 /**

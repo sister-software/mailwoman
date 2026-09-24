@@ -57,6 +57,7 @@ import { CoverageBasis } from "@mailwoman/evidence"
 import { M2_PER_KM2 } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
+import type { PathBuilderLike } from "path-ts"
 
 import { createZoningTables, type ZoningDatabase } from "#schema"
 import type { CrosswalkPair, ObservedTerm, ZoningChunkResult } from "#sdk/ingest/chunk"
@@ -141,7 +142,7 @@ export type BuildZoningOptions = BuildZoningInput & {
 	 *
 	 * The build writes beside it and swaps.
 	 */
-	out: string
+	out: PathBuilderLike
 	/**
 	 * The product vintage — `layer_manifest.version` and `source_vintage`.
 	 */
@@ -423,7 +424,7 @@ async function buildZoningResult(
 	const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
 
 	return {
-		out: options.out,
+		out: options.out.toString(),
 		features: ingested.features,
 		jurisdictions: ingested.jurisdictions.length,
 		plans: ingested.plans.length,

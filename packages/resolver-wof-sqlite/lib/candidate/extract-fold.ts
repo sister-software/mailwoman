@@ -7,6 +7,7 @@
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
+import type { PathBuilderLike } from "path-ts"
 
 import { CANDIDATE_ANCESTOR_COLUMNS, CANDIDATE_ANCESTOR_TABLE } from "#candidate/ancestors/schema"
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
@@ -68,7 +69,7 @@ export function foldExtract(ctx: {
 	 * The extract itself is opened read-only here and closed before returning.
 	 */
 	out: DatabaseClient<CandidateDatabase>
-	extractPath: string
+	extractPath: PathBuilderLike
 	extractPlacetype: "postalcode" | "locality"
 	ccID: (code: string | null) => number
 	ptID: (pt: string | null) => number

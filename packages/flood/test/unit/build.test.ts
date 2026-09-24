@@ -27,13 +27,14 @@ import {
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL, EA_FLOOD_LAYER_NAME } from "@mailwoman/flood/vocabulary"
 import { rectangleRing } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 9
 const COVERAGE_RESOLUTION = 6
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 let result: BuildFloodResult
 let lookup: FloodZoneLookup
 
@@ -43,8 +44,8 @@ let lookup: FloodZoneLookup
 async function build(
 	features = fixtureFeatures(),
 	out = "flood.db"
-): Promise<{ path: string; result: BuildFloodResult }> {
-	const path = scratch.resolve(out)
+): Promise<{ path: PathBuilder; result: BuildFloodResult }> {
+	const path = scratch.path(out)
 
 	const built = await buildFloodDatabase({
 		source: fixtureSource(features),
@@ -134,7 +135,7 @@ describe("buildFloodDatabase", () => {
 		await expect(
 			buildFloodDatabase({
 				source: fixtureSource(fixtureFeatures()),
-				out: scratch.resolve("inverted.db"),
+				out: scratch.path("inverted.db"),
 				sourceVintage: "2026-05-20",
 				buildCmd: "vitest",
 				buildSHA: "fixture",
@@ -158,7 +159,7 @@ describe("buildFloodDatabase", () => {
 		await expect(
 			buildFloodDatabase({
 				source: { ...fixtureSource(features), declaredFeatureCount: features.length + 1 },
-				out: scratch.resolve("short.db"),
+				out: scratch.path("short.db"),
 				sourceVintage: "2026-05-20",
 				buildCmd: "vitest",
 				buildSHA: "fixture",

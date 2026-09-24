@@ -432,7 +432,7 @@ export interface RecipeOptions {
 	output: string
 	seed: number
 	variants: number
-	input?: string
+	input?: PathBuilderLike
 	count?: number
 	golden?: boolean
 	sourceName?: string
@@ -510,7 +510,7 @@ export interface RecipeOptions {
 	 * Required for those recipes — a recipe output that trains on its own eval set measures memorization.
 	 * See their docstrings.
 	 */
-	excludeSurfaces?: string
+	excludeSurfaces?: PathBuilderLike
 	/**
 	 * `no-fragment`: share of rows that are counter-distribution (bare locality or bare postcode).
 	 */

@@ -40,12 +40,12 @@ const scratchRoot = await temporaryDirectory("collision-census-")
 
 afterAll(() => scratchRoot[Symbol.asyncDispose]())
 
-await makeDirectories(scratchRoot.resolve("packages/mailwoman/lib/eval-harness/fixtures"))
+await makeDirectories(scratchRoot.path("packages/mailwoman/lib/eval-harness/fixtures"))
 
 await writeLocalTextFile(
 	`${stringifyJSON({ id: "sem-act-fr-01", query: "somewhere to fill a prescription near Toulouse" })}\n` +
 		`${stringifyJSON({ id: "cat-fr-03", query: "pharmacy near Toulouse" })}\n`,
-	scratchRoot.resolve("packages/mailwoman/lib/eval-harness/fixtures/rows.jsonl")
+	scratchRoot.path("packages/mailwoman/lib/eval-harness/fixtures/rows.jsonl")
 )
 
 afterAll(async () => {
@@ -54,7 +54,7 @@ afterAll(async () => {
 
 function census(venues: CensusVenue[]): Promise<PhraseCollisionCensus> {
 	return runPhraseCollisionCensus({
-		databasePath: scratchRoot.resolve("absent.db"),
+		databasePath: scratchRoot.path("absent.db"),
 		repositoryRoot: scratchRoot.path,
 		reader: {
 			candidates: () => venues,

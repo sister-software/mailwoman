@@ -8,6 +8,7 @@
  *   `docs/articles/evals/` comes from a run of this emitter.
  */
 
+import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { formatPercent, percentile } from "@mailwoman/core/stats"
 
@@ -162,9 +163,10 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 			// (segment-not-found vs in-database-range-miss vs normalization).
 			// Bump cap done at collection site.
 			if (diagMisses.length) {
-				await writeLocalTextFile(diagMisses.join("\n"), "/tmp/interp-misses.txt")
+				const missesPath = tempRootPathBuilder("interp-misses.txt")
+				await writeLocalTextFile(diagMisses.join("\n"), missesPath)
 				lines.push("")
-				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → /tmp/interp-misses.txt`)
+				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → ${missesPath}`)
 				lines.push("sample (house_number | street | postcode ← input):")
 
 				for (const m of diagMisses.slice(0, 12)) {

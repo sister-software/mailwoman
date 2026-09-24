@@ -442,13 +442,9 @@ export async function extractOpenUPRN(options: {
 	const licensePath = extractedDir("licence.txt")
 	const versionsPath = extractedDir("versions.txt")
 
-	const licenseText = await readLocalBuffer(licensePath)
-		.then(decodeProvenanceText)
-		.catch(() => "")
-
-	const versionsText = await readLocalBuffer(versionsPath)
-		.then(decodeProvenanceText)
-		.catch(() => "")
+	// A missing file throws: the database quotes the license text and records the extraction date.
+	const licenseText = decodeProvenanceText(await readLocalBuffer(licensePath))
+	const versionsText = decodeProvenanceText(await readLocalBuffer(versionsPath))
 
 	if (licenseText) {
 		await writeLocalFile(licenseText, licensePath)

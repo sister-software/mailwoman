@@ -254,7 +254,6 @@ export async function inspectClone(directory: string): Promise<CloneState> {
  * Therefore, it defaults on, and turning it off is for offline inspection.
  */
 export async function planReposSync(options: {
-	root: PathBuilderLike
 	repos: readonly string[]
 	probe: ForkProbe
 	directoryFor: (repo: string) => PathBuilderLike

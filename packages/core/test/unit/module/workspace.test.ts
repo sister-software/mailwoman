@@ -15,9 +15,9 @@ describe("WorkspacePackages", () => {
 		await using scratch = await temporaryDirectory("mw-workspace-packages-")
 
 		await writeLocalJSONFile({ workspaces: ["docs", "packages/*"] }, resolvePath(scratch.path, "package.json"))
-		await makeDirectories(scratch.resolve("docs"), scratch.resolve("packages/core"))
-		await writeLocalJSONFile({ name: "@mailwoman/docs" }, scratch.resolve("docs/package.json"))
-		await writeLocalJSONFile({ name: "@mailwoman/core" }, scratch.resolve("packages/core/package.json"))
+		await makeDirectories(scratch.path("docs"), scratch.path("packages/core"))
+		await writeLocalJSONFile({ name: "@mailwoman/docs" }, scratch.path("docs/package.json"))
+		await writeLocalJSONFile({ name: "@mailwoman/core" }, scratch.path("packages/core/package.json"))
 
 		const packages = await WorkspacePackages.read(scratch.path)
 		const core = "@mailwoman/core"
@@ -27,8 +27,8 @@ describe("WorkspacePackages", () => {
 
 		if (!packages.validate(core)) throw new Error("Expected core fixture to be a workspace package")
 
-		expect(packages.packagePathBuilder(core).toString()).toBe(scratch.resolve("packages/core"))
-		expect(packages.tsOutPathBuilder(core).toString()).toBe(scratch.resolve("packages/core/out"))
-		expect(packages.distPathBuilder(core).toString()).toBe(scratch.resolve("packages/core/dist"))
+		expect(packages.packagePathBuilder(core).toString()).toBe(scratch.path("packages/core").toString())
+		expect(packages.tsOutPathBuilder(core).toString()).toBe(scratch.path("packages/core/out").toString())
+		expect(packages.distPathBuilder(core).toString()).toBe(scratch.path("packages/core/dist").toString())
 	})
 })

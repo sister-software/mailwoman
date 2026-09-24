@@ -346,7 +346,7 @@
 		"apache-arrow": "^21.2.0",
 		"fastest-levenshtein": "^1.0.16",
 		"parquet-wasm": "0.7.2",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"read-excel-file": "^9.3.10",
 		"spliterator": "^7.11.0",
 		"zod": "^4.5.4"

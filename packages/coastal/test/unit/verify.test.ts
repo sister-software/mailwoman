@@ -32,12 +32,13 @@ import {
 } from "@mailwoman/coastal/test-kit"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { rectangleRing } from "@mailwoman/spatial"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const NFI = FIXTURE_SCENARIOS.noIntervention.key
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 /**
  * The service's rendering of the first fixture band, as an OGC API Features item.
@@ -66,7 +67,7 @@ const alwaysEmpty: ServiceFeatureReader = async () => []
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-coastal-verify-")
-	databasePath = scratch.resolve("coastal-england.db")
+	databasePath = scratch.path("coastal-england.db")
 
 	await buildCoastalDatabase({
 		source: fixtureSource(fixtureFeatures()),

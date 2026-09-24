@@ -64,7 +64,7 @@
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"path-ts": "^2.4.1"
+		"path-ts": "^2.5.0"
 	},
 	"devDependencies": {
 		"@mailwoman/spatial": "workspace:*"

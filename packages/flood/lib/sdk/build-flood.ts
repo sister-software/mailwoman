@@ -54,6 +54,7 @@ import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spat
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
 import { compactCells, getResolution } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import { createFloodTables, FloodCellContainment, type FloodDatabase } from "#schema"
 import type { FloodMapExtent } from "#sdk/extent"
@@ -123,7 +124,7 @@ export type BuildFloodOptions = BuildFloodInput & {
 	 *
 	 * The build writes beside it and swaps.
 	 */
-	out: string
+	out: PathBuilderLike
 	/**
 	 * The product's ISO revision date — `layer_manifest.version` and `source_vintage`.
 	 */
@@ -294,7 +295,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			const totalCellRows = cells.wholeRows + cells.partialRows
 
 			return {
-				out: options.out,
+				out: options.out.toString(),
 				features: ingested.features,
 				zoneCounts: ingested.zoneCounts,
 				indexResolution: options.indexResolution,

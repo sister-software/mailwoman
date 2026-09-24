@@ -41,6 +41,7 @@ import {
 	type FloodLayerIdentity,
 	type FloodZoneReading,
 } from "@mailwoman/flood"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	createDesignationRoute,
@@ -153,7 +154,7 @@ export interface AuthorityDesignationRouteOptions {
 	 * Required: there is no default layer, and a route that guessed one would report
 	 * a designation from an authority nobody asked about.
 	 */
-	databasePath: string
+	databasePath: PathBuilderLike
 }
 
 /**
@@ -172,7 +173,7 @@ export function createAuthorityDesignationRoute(options: AuthorityDesignationRou
 		read: (latitude, longitude) => lookup.lookup(latitude, longitude),
 		refusalFor: (reading) => (reading.kind === FloodReadingKind.Unknown ? "outside_authority_footprint" : undefined),
 		toObservation: (reading, latitude, longitude) =>
-			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath),
+			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 	})
 }
 

@@ -17,6 +17,7 @@ import { removePath } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { computeSurfaceCountryCounts } from "mailwoman/gazetteer-pipeline/fst"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 let scratch: TemporaryDirectory
@@ -24,7 +25,7 @@ let scratch: TemporaryDirectory
 /**
  * The columns {@link computeSurfaceCountryCounts} reads: `spr` primaries plus the `names` alias table.
  */
-function buildFixture(path: string, extraName?: string): void {
+function buildFixture(path: PathBuilderLike, extraName?: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -51,7 +52,7 @@ afterEach(() => scratch[Symbol.asyncDispose]())
 
 describe("computeSurfaceCountryCounts memoization", () => {
 	it("counts distinct countries per folded surface", async () => {
-		const path = scratch.resolve("a.db")
+		const path = scratch.path("a.db")
 		buildFixture(path)
 
 		const counts = await computeSurfaceCountryCounts(path)
@@ -61,14 +62,14 @@ describe("computeSurfaceCountryCounts memoization", () => {
 	})
 
 	it("returns the SAME map instance on a repeat call for an unchanged file", async () => {
-		const path = scratch.resolve("a.db")
+		const path = scratch.path("a.db")
 		buildFixture(path)
 
 		expect(await computeSurfaceCountryCounts(path)).toBe(await computeSurfaceCountryCounts(path))
 	})
 
 	it("re-scans when the file is REPLACED — the sealed-artifact rebuild case", async () => {
-		const path = scratch.resolve("a.db")
+		const path = scratch.path("a.db")
 		buildFixture(path)
 		const first = await computeSurfaceCountryCounts(path)
 
@@ -84,8 +85,8 @@ describe("computeSurfaceCountryCounts memoization", () => {
 	})
 
 	it("keeps separate entries for separate paths", async () => {
-		const a = scratch.resolve("a.db")
-		const b = scratch.resolve("b.db")
+		const a = scratch.path("a.db")
+		const b = scratch.path("b.db")
 		buildFixture(a)
 		buildFixture(b, "Roazhon")
 

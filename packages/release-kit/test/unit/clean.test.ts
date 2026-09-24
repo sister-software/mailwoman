@@ -17,12 +17,12 @@ if (!cleanOperation) throw new Error("release.clean is not registered")
 async function fixture() {
 	const scratch = await temporaryDirectory("mw-clean-operation-")
 
-	await writeLocalJSONFile({ workspaces: ["packages/*"] }, scratch.resolve("package.json"))
-	await makeDirectories(scratch.resolve("packages/core/out"), scratch.resolve("docker/out"))
-	await writeLocalJSONFile({ name: "@mailwoman/core" }, scratch.resolve("packages/core/package.json"))
-	await writeLocalTextFile("stale", scratch.resolve("packages/core/out/stale.js"))
-	await writeLocalTextFile("metadata", scratch.resolve("packages/core/tsconfig.tsbuildinfo"))
-	await writeLocalTextFile("stale", scratch.resolve("docker/out/stale.js"))
+	await writeLocalJSONFile({ workspaces: ["packages/*"] }, scratch.path("package.json"))
+	await makeDirectories(scratch.path("packages/core/out"), scratch.path("docker/out"))
+	await writeLocalJSONFile({ name: "@mailwoman/core" }, scratch.path("packages/core/package.json"))
+	await writeLocalTextFile("stale", scratch.path("packages/core/out/stale.js"))
+	await writeLocalTextFile("metadata", scratch.path("packages/core/tsconfig.tsbuildinfo"))
+	await writeLocalTextFile("stale", scratch.path("docker/out/stale.js"))
 
 	return scratch
 }
@@ -44,8 +44,8 @@ describe("release.clean", () => {
 		})
 
 		expect(log).toContain("Would clean packages/core/out")
-		expect(await pathExists(scratch.resolve("packages/core/out/stale.js"))).toBe(true)
-		expect(await pathExists(scratch.resolve("packages/core/tsconfig.tsbuildinfo"))).toBe(true)
+		expect(await pathExists(scratch.path("packages/core/out/stale.js"))).toBe(true)
+		expect(await pathExists(scratch.path("packages/core/tsconfig.tsbuildinfo"))).toBe(true)
 	})
 
 	test("removes stale outputs, recreates output directories, and removes build metadata", async () => {
@@ -53,9 +53,9 @@ describe("release.clean", () => {
 		const result = await cleanOperation.run({}, { repoRoot: scratch.path.toString(), dryRun: false, log: () => {} })
 
 		expect(result).toMatchObject({ dryRun: false })
-		expect(await pathExists(scratch.resolve("packages/core/out"))).toBe(true)
-		expect(await pathExists(scratch.resolve("packages/core/out/stale.js"))).toBe(false)
-		expect(await pathExists(scratch.resolve("packages/core/tsconfig.tsbuildinfo"))).toBe(false)
-		expect(await pathExists(scratch.resolve("docker/out/stale.js"))).toBe(false)
+		expect(await pathExists(scratch.path("packages/core/out"))).toBe(true)
+		expect(await pathExists(scratch.path("packages/core/out/stale.js"))).toBe(false)
+		expect(await pathExists(scratch.path("packages/core/tsconfig.tsbuildinfo"))).toBe(false)
+		expect(await pathExists(scratch.path("docker/out/stale.js"))).toBe(false)
 	})
 })

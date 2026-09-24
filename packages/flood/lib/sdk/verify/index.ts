@@ -33,6 +33,7 @@
  */
 
 import { geometryContains, nearestRingEdgeMetres } from "@mailwoman/spatial"
+import type { PathBuilderLike } from "path-ts"
 
 import { FloodReadingKind, FloodZoneLookup, type FloodZoneReading } from "#index"
 import type { ServiceFeatureReader } from "#sdk/verify/service"
@@ -133,7 +134,7 @@ export const OUTSIDE_ENGLAND_POINTS: ReadonlyArray<{ label: string; latitude: nu
 ]
 
 export interface VerifyFloodOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 	readServiceFeatures: ServiceFeatureReader
 	/**
 	 * Points to re-ask the service about.

@@ -40,6 +40,7 @@ import { API_CLIENT_DEFAULTS, APIClient, type APIClientConfig, type ClockLike, s
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { ResourceError } from "@mailwoman/core/errors"
+import type { PathBuilderLike } from "path-ts"
 
 import { $private } from "#env"
 
@@ -182,7 +183,7 @@ export interface CreateBDCClientOptions {
 	 * Defaults to `dataRootPath("bdc", "cache", "http")`, resolved once at construction —
 	 * construct the client after setting `$MAILWOMAN_DATA_ROOT` rather than before.
 	 */
-	cacheDir?: string
+	cacheDir?: PathBuilderLike
 	/**
 	 * How long a cached JSON response stays fresh, in milliseconds.
 	 *

@@ -23,7 +23,7 @@
  *   `fst-street-morphology.bin`.
  */
 
-import { isDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { isDirectory, isFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -138,13 +138,7 @@ export async function buildStreetMorphologyFST(
 				continue
 			}
 
-			try {
-				await statPath(localePath(STREET_TYPES_FILENAME))
-
-				localeProbes.push([entry, true])
-			} catch {
-				localeProbes.push([entry, false])
-			}
+			localeProbes.push([entry, await isFile(localePath(STREET_TYPES_FILENAME))])
 		}
 
 		locales = localeProbes.filter(([, hasFile]) => hasFile).map(([entry]) => entry)

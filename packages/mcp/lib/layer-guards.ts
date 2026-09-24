@@ -29,6 +29,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Open a bdc.db, or return `undefined` when `databasePath` is unset
@@ -37,7 +38,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  * See the module header.
  */
 export async function openBDCDatabaseIfPresent(
-	databasePath: string | undefined
+	databasePath: PathBuilderLike | undefined
 ): Promise<DatabaseClient<BDCDatabase> | undefined> {
 	if (!databasePath || !(await pathExists(databasePath))) return undefined
 
@@ -60,7 +61,9 @@ export async function openBDCDatabaseIfPresent(
  * so disposing `schemadb` (which closes the shared handle) is enough; `POILookup` never owns it
  * (constructed with `{database}`, not `{databasePath}` — see `poi-lookup.ts`), so it never double-closes.
  */
-export async function openPlausibilityPOIDeps(databasePath: string | undefined): Promise<PlausibilityDeps["poi"]> {
+export async function openPlausibilityPOIDeps(
+	databasePath: PathBuilderLike | undefined
+): Promise<PlausibilityDeps["poi"]> {
 	if (!databasePath || !(await pathExists(databasePath))) return undefined
 
 	const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi")
@@ -79,7 +82,7 @@ export async function openPlausibilityPOIDeps(databasePath: string | undefined):
  * `toolName` is threaded through so the message matches whichever tool calls this
  * (today: only `mailwoman_bdc_filing_landscape`).
  */
-export async function assertBDCDatabaseExists(toolName: string, databasePath: string): Promise<void> {
+export async function assertBDCDatabaseExists(toolName: string, databasePath: PathBuilderLike): Promise<void> {
 	if (!(await pathExists(databasePath))) {
 		throw new Error(`${toolName}: bdc.db not found at "${databasePath}"`)
 	}
@@ -93,7 +96,7 @@ export async function assertBDCDatabaseExists(toolName: string, databasePath: st
  * has already confirmed the file is present.
  */
 export async function openFilerDatabaseIfPresent(
-	databasePath: string | undefined
+	databasePath: PathBuilderLike | undefined
 ): Promise<DatabaseClient<FilerDatabase> | undefined> {
 	if (!databasePath || !(await pathExists(databasePath))) return undefined
 
@@ -108,7 +111,7 @@ export async function openFilerDatabaseIfPresent(
  * (criterion 4 makes it throw rather than answer unstamped), so filer.db is required
  * unconditionally, same as bdc.db is for `mailwoman_bdc_filing_landscape`.
  */
-export async function assertFilerDatabaseExists(toolName: string, databasePath: string): Promise<void> {
+export async function assertFilerDatabaseExists(toolName: string, databasePath: PathBuilderLike): Promise<void> {
 	if (!(await pathExists(databasePath))) {
 		throw new Error(`${toolName}: filer.db not found at "${databasePath}"`)
 	}

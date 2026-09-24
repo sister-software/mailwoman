@@ -12,12 +12,16 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite/postcode-point-lookup"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
  * Create a minimal postcode extract with the columns the lookup reads.
  */
-function seedExtract(path: string, rows: Array<[number, string, string, string, number, number, number]>): void {
+function seedExtract(
+	path: PathBuilderLike,
+	rows: Array<[number, string, string, string, number, number, number]>
+): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
@@ -38,8 +42,8 @@ let lookup: WOFPostcodeLookup
 
 beforeAll(async () => {
 	dir = await temporaryDirectory("mailwoman-pc-lookup-")
-	const intl = dir.resolve("postalcode-intl.db")
-	const us = dir.resolve("postalcode-us.db")
+	const intl = dir.path("postalcode-intl.db")
+	const us = dir.path("postalcode-us.db")
 
 	seedExtract(intl, [
 		[1, "75008", "postalcode", "FR", 48.873, 2.313, 1],

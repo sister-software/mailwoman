@@ -40,6 +40,7 @@ import {
 import { toFRN } from "@mailwoman/filer/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const GEOID_SF = "060750001001001"
@@ -120,11 +121,11 @@ function fixtureRows(): BDCAvailabilityRow[] {
 }
 
 let scratch: TemporaryDirectory
-let out: string
+let out: PathBuilder
 
 beforeEach(async () => {
 	scratch = await temporaryDirectory("bdc-build-")
-	out = scratch.resolve("bdc.db")
+	out = scratch.path("bdc.db")
 })
 
 afterEach(() => scratch[Symbol.asyncDispose]())
@@ -187,7 +188,7 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("(d) populates location_id when includeLocationIDs is true", async () => {
-		const includeOut = scratch.resolve("bdc-with-location-ids.db")
+		const includeOut = scratch.path("bdc-with-location-ids.db")
 
 		await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -256,8 +257,8 @@ describe("buildBDCDatabase", () => {
 		vi.setSystemTime(frozenNow)
 
 		try {
-			const firstOut = scratch.resolve("bdc-determinism-a.db")
-			const secondOut = scratch.resolve("bdc-determinism-b.db")
+			const firstOut = scratch.path("bdc-determinism-a.db")
+			const secondOut = scratch.path("bdc-determinism-b.db")
 
 			await buildBDCDatabase({
 				rows: fixtureRows(),
@@ -282,7 +283,7 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("bootstraps missing intermediate output directories", async () => {
-		const nestedOut = scratch.resolve("nested", "deeper", "bdc.db")
+		const nestedOut = scratch.path("nested", "deeper", "bdc.db")
 
 		const nestedResult = await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -342,7 +343,7 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 	}
 
 	it("collapses multiple BSLs at the same triple to exactly 1 row by default", async () => {
-		const collapsedOut = scratch.resolve("bdc-multi-bsl-default.db")
+		const collapsedOut = scratch.path("bdc-multi-bsl-default.db")
 
 		const result = await buildBDCDatabase({
 			rows: multiBSLRows(),
@@ -370,7 +371,7 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 	})
 
 	it("keeps every distinct BSL as its own row when includeLocationIDs is true", async () => {
-		const perBSLOut = scratch.resolve("bdc-multi-bsl-included.db")
+		const perBSLOut = scratch.path("bdc-multi-bsl-included.db")
 
 		const result = await buildBDCDatabase({
 			rows: multiBSLRows(),
@@ -574,7 +575,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		using filerDB = openFilerMemory()
 		await seedTwoFRNFixture(filerDB)
 
-		const providerOut = scratch.resolve("bdc-providers.db")
+		const providerOut = scratch.path("bdc-providers.db")
 
 		const result = await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -662,7 +663,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	})
 
 	it("throws naming the offending provider_id when a multi-FRN provider is given without `filerDB`", async () => {
-		const providerOut = scratch.resolve("bdc-providers-no-filerdb.db")
+		const providerOut = scratch.path("bdc-providers-no-filerdb.db")
 
 		await expect(
 			buildBDCDatabase({
@@ -690,7 +691,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		// No filer_edge rows at all.
 		// Neither FRN has a form-499 filing edge to rank by.
 
-		const providerOut = scratch.resolve("bdc-providers-no-candidates.db")
+		const providerOut = scratch.path("bdc-providers-no-candidates.db")
 
 		const result = await buildBDCDatabase({
 			rows: fixtureRows(),

@@ -253,7 +253,9 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
  * Recursively collect every `.geojson` file under `dir` (Python's recursive `glob` over `data`).
  */
 async function geojsonFiles(dir: PathBuilderLike): Promise<string[]> {
-	if (!(await pathExists(dir))) return []
+	if (!(await pathExists(dir))) {
+		throw new Error(`buildPostcodeLocalityBase: the admin repository has no data directory at ${dir}`)
+	}
 
 	return Globerator.files("geojson", { cwd: dir, absolute: true }).toArray()
 }
@@ -264,6 +266,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	console.log(`loading ${country} locality polygons from source GeoJSON…`)
 
 	const locs: Locality[] = []
+	let unreadable = 0
 
 	for (const fp of await geojsonFiles(PathBuilder.from(adminRepo!)("data"))) {
 		try {
@@ -310,11 +313,12 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 				geom,
 			})
 		} catch {
-			// ignore unreadable / malformed files (Python's bare except: pass)
+			// A malformed file is skipped and counted in the summary line below.
+			unreadable++
 		}
 	}
 
-	console.log(`  ${locs.length} localities`)
+	console.log(`  ${locs.length} localities; ${unreadable} unreadable files skipped`)
 
 	// Two 0.1°-cell (~11km) grid indexes.
 	// `grid` (by centroid) drives the radius candidate set; `bgrid`

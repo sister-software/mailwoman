@@ -44,6 +44,7 @@ import {
 	type PolygonRings,
 } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { ZoningLookup, ZoningReadingKind, type ZoningReading } from "#index"
 import { resolveRingRoles } from "#rings"
@@ -191,7 +192,7 @@ export function createServiceReader(client: Pick<GZTClient, "readFeaturesNear">)
 }
 
 export interface VerifyZoningOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 	readServiceFeatures: ServiceFeatureReader
 	/**
 	 * Points to re-ask the service about.
@@ -337,7 +338,7 @@ async function readServiceContainment(
  * rather than random — is `strideSampleInteriorPoints`'s.
  */
 export function sampleAgreementPoints(
-	databasePath: string,
+	databasePath: PathBuilderLike,
 	options: { count?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number; localCode: string }> {
 	const count = options.count ?? 48

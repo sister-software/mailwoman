@@ -69,7 +69,7 @@ describe("manifest-targets", () => {
 	test("reports a compiled target whose tracked source the workspace tsconfig does not compile", async () => {
 		await using scratch = await temporaryDirectory("manifest-targets-")
 
-		await writeLocalJSONFile({ workspaces: ["pkg"] }, scratch.resolve("package.json"))
+		await writeLocalJSONFile({ workspaces: ["pkg"] }, scratch.path("package.json"))
 
 		await writeLocalJSONFile(
 			{
@@ -81,12 +81,12 @@ describe("manifest-targets", () => {
 					"./raw/*": { default: "./lib/excluded/*.ts" },
 				},
 			},
-			scratch.resolve("pkg", "package.json")
+			scratch.path("pkg", "package.json")
 		)
 
 		await writeLocalTextFile(
 			`{\n\t// a line comment, as the workspace configs carry\n\t"include": ["./lib/**/*"],\n\t"exclude": ["./lib/excluded/**/*", "./lib/recipes/**/*"]\n}\n`,
-			scratch.resolve("pkg", "tsconfig.json")
+			scratch.path("pkg", "tsconfig.json")
 		)
 
 		const diagnostics = await manifestTargetsCheck.run({

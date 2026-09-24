@@ -189,7 +189,7 @@ describe("readers", () => {
 		// The whole reason the two names exist.
 		// A caller that wants "no corpus yet" to read as an empty list must ASK for that, because
 		// `?? []` over the raising one produces the silent zero this package exists to prevent.
-		const absent = scratch.resolve("nothing-here.parquet")
+		const absent = scratch.path("nothing-here.parquet")
 
 		await expect(readParquetRows(absent)).rejects.toThrow(/No parquet file at/)
 		expect(await tryReadParquetRows(absent)).toBeNull()
@@ -211,7 +211,7 @@ describe("readers", () => {
 			2
 		)
 
-		await expect(countParquetRows(scratch.resolve("nothing-here.parquet"))).rejects.toThrow(/No parquet file at/)
+		await expect(countParquetRows(scratch.path("nothing-here.parquet"))).rejects.toThrow(/No parquet file at/)
 	})
 
 	it("parquetColumnNames answers the file's own schema, in PARQUET_COLUMNS order", async () => {
@@ -305,7 +305,7 @@ describe("writeParquetSplits", () => {
 		expect(valBack[0]!.locale).toBe("fr-FR")
 
 		const manifestOnDisk = await readLocalJSONFile<{ total_rows: number; schema: string[]; row_group_size: number }>(
-			scratch.resolve("corpus-v0.1.0", "MANIFEST.json")
+			scratch.path("corpus-v0.1.0", "MANIFEST.json")
 		)
 
 		expect(manifestOnDisk.total_rows).toBe(4)
@@ -401,7 +401,7 @@ describe("writeParquetSplits", () => {
 	it("two runs over the same rows produce a byte-identical parquet file (deterministic sha256)", async () => {
 		const rows = [labeled({ source_id: "t-1", raw: "A" }), labeled({ source_id: "t-2", raw: "B" })]
 		const a = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
-		await removePathIfPresent(scratch.resolve("corpus-v0.1.0"))
+		await removePathIfPresent(scratch.path("corpus-v0.1.0"))
 		const b = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
 		expect(a.slices[0]!.sha256).toBe(b.slices[0]!.sha256)
 	})

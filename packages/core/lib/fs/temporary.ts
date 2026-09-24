@@ -9,11 +9,10 @@
  */
 
 import { mkdtempDisposable } from "node:fs/promises"
-import { join } from "node:path"
 
-import { PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { tempRootPath } from "#data-root"
+import { tempRootPathBuilder } from "#data-root"
 import { makeDirectories } from "#fs/writers"
 
 /**
@@ -21,7 +20,8 @@ import { makeDirectories } from "#fs/writers"
  * together with everything registered on it.
  *
  * ```ts
- * await using scratch = await temporaryDirectory("filer-build-") const out = scratch.resolve("filer.db")
+ * await using scratch = await temporaryDirectory("filer-build-")
+ * const out = scratch.path("filer.db")
  * ```
  *
  * {@linkcode move} answers this same shape rather than a bare `AsyncDisposableStack`,
@@ -32,12 +32,10 @@ import { makeDirectories } from "#fs/writers"
 export interface TemporaryDirectory extends AsyncDisposable {
 	/**
 	 * The directory itself.
+	 *
+	 * Call it with segments for a path inside the directory.
 	 */
 	readonly path: PathBuilder
-	/**
-	 * A path inside the directory.
-	 */
-	resolve(...segments: string[]): string
 	/**
 	 * Take ownership of a resource.
 	 *
@@ -63,8 +61,6 @@ function asTemporaryDirectory(_path: PathBuilderLike, resources: AsyncDisposable
 
 	return {
 		path: pathBuilder,
-		resolve: (...segments: PathBuilderLike[]) =>
-			resolvePath(pathBuilder, ...segments.map((segment) => segment.toString())),
 		use: (resource) => resources.use(resource),
 		move: () => asTemporaryDirectory(pathBuilder, resources.move()),
 		moveWith: (extras) => Object.assign(asTemporaryDirectory(pathBuilder, resources.move()), extras),
@@ -79,12 +75,13 @@ function asTemporaryDirectory(_path: PathBuilderLike, resources: AsyncDisposable
  * configured root that nothing has written to yet is the normal state on a fresh machine.
  */
 export async function temporaryDirectory(prefix = "mailwoman-"): Promise<TemporaryDirectory> {
-	const root = tempRootPath()
+	const root = tempRootPathBuilder()
 
 	await makeDirectories(root)
 
 	const resources = new AsyncDisposableStack()
-	const directory = resources.use(await mkdtempDisposable(join(root, prefix)))
+	// A string, because `mkdtemp` appends its random suffix to the prefix as text.
+	const directory = resources.use(await mkdtempDisposable(root(prefix).toString()))
 
 	return asTemporaryDirectory(directory.path, resources)
 }

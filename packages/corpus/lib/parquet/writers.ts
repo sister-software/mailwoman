@@ -285,7 +285,8 @@ export async function writeParquetSplits(
 			// A string, because the manifest records it.
 			path = splitDir(`part-${String(fileIndex).padStart(4, "0")}.parquet`).toString()
 
-			stagePath = staging.resolve(`part-${String(fileIndex).padStart(4, "0")}.ndjson`)
+			// A string, because DuckDB reads it inside SQL text.
+			stagePath = staging.path(`part-${String(fileIndex).padStart(4, "0")}.ndjson`).toString()
 			stage = staging.use(openWriteStream(stagePath))
 			fileRows = 0
 			firstSourceID = ""

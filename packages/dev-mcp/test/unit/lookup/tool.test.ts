@@ -58,7 +58,8 @@ describe("runLookup", () => {
 		const result = await runLookup(noRegistry, {
 			source: "wof",
 			queries: ["Vaduz"],
-			config: { resolve_db: emptyRoot.resolve("no-such-extract.db") },
+			// A string, because the engine config is the JSON a caller sends.
+			config: { resolve_db: emptyRoot.path("no-such-extract.db").toString() },
 		})
 
 		expect(result.rows).toEqual([])

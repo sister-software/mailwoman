@@ -12,6 +12,7 @@ import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-sche
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { foldGeonamesIntoAdmin } from "mailwoman/gazetteer-pipeline"
+import type { PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 let root: TemporaryDirectory
@@ -29,7 +30,7 @@ afterAll(() => root[Symbol.asyncDispose]())
  * the file and switch its journal mode, and refuses while another writer still holds it.
  */
 async function buildSealed(
-	path: string,
+	path: PathBuilderLike,
 	populate: (db: DatabaseClient<WOFDatabase>) => void | Promise<void> = () => {}
 ): Promise<void> {
 	{
@@ -46,11 +47,11 @@ test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging cop
 	// copyFileSync stamps the source mode onto the copy, so without the write-bit
 	// restore the fold's first write dies with "attempt to write a readonly database" —
 	// exactly how the 2026-08-04 candidate rebuild failed against the freshly-sealed admin DB.
-	const adminIn = root.resolve("admin-sealed.db")
+	const adminIn = root.path("admin-sealed.db")
 	await buildSealed(adminIn)
 
-	const adminOut = root.resolve("admin-folded.db")
-	const emptyDumps = root.resolve("geonames-empty")
+	const adminOut = root.path("admin-folded.db")
+	const emptyDumps = root.path("geonames-empty")
 	await makeDirectories(emptyDumps)
 
 	// Zero countries: no dump files needed.
@@ -69,13 +70,13 @@ test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging cop
 })
 
 test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", async () => {
-	const adminIn = root.resolve("admin-sealed-2.db")
+	const adminIn = root.path("admin-sealed-2.db")
 	await buildSealed(adminIn)
 
 	// A prior fold output at the destination — itself sealed, the worst case:
 	// copyFileSync writes through an existing destination and keeps its mode, so a stale
 	// 0444 copy re-poisons every subsequent fold unless the fold removes it first.
-	const adminOut = root.resolve("admin-folded-2.db")
+	const adminOut = root.path("admin-folded-2.db")
 
 	{
 		using stale = new DatabaseClient<WOFDatabase>(adminOut)
@@ -84,7 +85,7 @@ test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", asyn
 
 	await sealDatabase(adminOut)
 
-	const emptyDumps = root.resolve("geonames-empty-2")
+	const emptyDumps = root.path("geonames-empty-2")
 	await makeDirectories(emptyDumps)
 
 	await foldGeonamesIntoAdmin({
@@ -103,7 +104,7 @@ test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", asyn
 
 test("foldGeonamesIntoAdmin: refuses a fold that would drop the source's existing alias coverage", async () => {
 	// #1514. `buildAdmin` bakes a 161-country fold into every admin artifact, and the fold rewrites its whole id range — so folding a narrower list against one deletes the difference. The 2026-08-05 build did exactly that with the old 14-country default and nothing said a word.
-	const adminIn = root.resolve("admin-prefolded.db")
+	const adminIn = root.path("admin-prefolded.db")
 
 	await buildSealed(adminIn, (db) => {
 		const insert = db.prepare(
@@ -116,13 +117,13 @@ test("foldGeonamesIntoAdmin: refuses a fold that would drop the source's existin
 		insert.run(9_000_000_000_001, "Wien", "AT")
 	})
 
-	const emptyDumps = root.resolve("geonames-empty-3")
+	const emptyDumps = root.path("geonames-empty-3")
 	await makeDirectories(emptyDumps)
 
 	await expect(
 		foldGeonamesIntoAdmin({
 			adminIn,
-			adminOut: root.resolve("admin-folded-3.db"),
+			adminOut: root.path("admin-folded-3.db"),
 			countries: ["AT"],
 			geonamesDir: emptyDumps,
 			alternateDir: emptyDumps,
@@ -131,7 +132,7 @@ test("foldGeonamesIntoAdmin: refuses a fold that would drop the source's existin
 })
 
 test("foldGeonamesIntoAdmin: a country list covering the source's coverage passes the guard", async () => {
-	const adminIn = root.resolve("admin-prefolded-2.db")
+	const adminIn = root.path("admin-prefolded-2.db")
 
 	await buildSealed(adminIn, (db) => {
 		db.prepare(
@@ -141,9 +142,9 @@ test("foldGeonamesIntoAdmin: a country list covering the source's coverage passe
 		).run(9_000_000_000_000)
 	})
 
-	const emptyDumps = root.resolve("geonames-empty-4")
+	const emptyDumps = root.path("geonames-empty-4")
 	await makeDirectories(emptyDumps)
-	const adminOut = root.resolve("admin-folded-4.db")
+	const adminOut = root.path("admin-folded-4.db")
 
 	const result = await foldGeonamesIntoAdmin({
 		adminIn,

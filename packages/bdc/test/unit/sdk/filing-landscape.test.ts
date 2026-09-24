@@ -57,6 +57,7 @@ import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { latLngToCell } from "h3-js"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -164,11 +165,11 @@ function fixtureRows(): BDCAvailabilityRow[] {
 }
 
 let scratch: TemporaryDirectory
-let out: string
+let out: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("bdc-filing-landscape-")
-	out = scratch.resolve("bdc.db")
+	out = scratch.path("bdc.db")
 
 	await buildBDCDatabase({
 		rows: fixtureRows(),
@@ -246,7 +247,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 	// shortcut available at all — against a cell that was never surveyed.
 	it("(a) a geoid with real rows but a deleted coverage row is unknown, and its rows do not leak into filings", async () => {
 		await using coverageScratch = await temporaryDirectory("bdc-filing-landscape-coverage-corrupt-")
-		const corruptOut = coverageScratch.resolve("bdc.db")
+		const corruptOut = coverageScratch.path("bdc.db")
 
 		await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -399,7 +400,7 @@ describe("filingLandscape — Check 3: hand-verified census", () => {
 describe("filingLandscape — Check 4: vintage-or-throw", () => {
 	it("throws when the manifest row is missing, rather than answering unstamped", async () => {
 		await using corruptScratch = await temporaryDirectory("bdc-filing-landscape-corrupt-")
-		const corruptOut = corruptScratch.resolve("bdc.db")
+		const corruptOut = corruptScratch.path("bdc.db")
 
 		await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -445,10 +446,10 @@ describe("speed bucket boundaries", () => {
 		const BOUNDARY_SPEEDS = [0, 24, 25, 99, 100, 999, 1000] as const
 		const boundaryGeoid = (speed: number) => `boundary-${speed}`
 
-		let boundaryOut: string
+		let boundaryOut: PathBuilder
 
 		beforeAll(async () => {
-			boundaryOut = fixtures.use(await temporaryDirectory("bdc-filing-landscape-buckets-")).resolve("bdc.db")
+			boundaryOut = fixtures.use(await temporaryDirectory("bdc-filing-landscape-buckets-")).path("bdc.db")
 
 			const rows: BDCAvailabilityRow[] = BOUNDARY_SPEEDS.map((speed) => ({
 				geoid: boundaryGeoid(speed),
