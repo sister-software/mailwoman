@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Classifier policy types (per #6). A `ClassifierPolicy` declares which classifier family (rule /
- *   neural / both / preferred) has authority for each `ComponentTag`, optionally narrowed by
- *   locale. The default table starts every component in `rule_only` mode. migrations to
- *   neural-backed modes happen one component at a time, conditioned on golden-set metrics.
+ *   Policy types for selecting rule and neural proposals by component and locale.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -14,61 +11,40 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import type { ClassificationProposal } from "#types"
 
 /**
- * How a component is sourced.
- *
- * - `rule_only`: keep only `source === "rule"` proposals (default).
- * - `neural_only`: keep only `source === "neural"` proposals.
- * - `both`: keep proposals from any source.
- * - `neural_preferred`: keep all proposals, but drop rule proposals when at least
- *   one neural proposal exists for the same component.
- * - `rule_preferred`: mirror of `neural_preferred`, with rule winning.
+ * Which classifier proposals to retain for a component.
  */
 export type PolicyMode = "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
 
 /**
- * A single policy entry.
- *
- * Locale-less entries are the global default.
- * Locale-scoped entries override the global default for that locale.
+ * Policy for one component, optionally scoped to a locale.
  */
 export interface ClassifierPolicy {
 	component: ComponentTag
 	mode: PolicyMode
 
 	/**
-	 * Minimum confidence for a proposal to be retained.
-	 *
-	 * Applied before the policy-mode filter.
-	 * Inclusive ([threshold, 1.0]).
-	 * Undefined means "no threshold."
+	 * Inclusive minimum confidence applied before mode filtering.
 	 */
 	confidence_threshold?: number
 
 	/**
-	 * Locale scope.
-	 *
-	 * If absent, the entry applies to every locale unless overridden by a locale-specific entry.
+	 * Locale this entry applies to.
+	 * Unset entries are global defaults.
 	 */
 	locale?: string
 }
 
 /**
- * Read-side view of the policy table.
+ * Read-only policy lookup and filtering interface.
  */
 export interface PolicyRegistry {
 	/**
-	 * Look up the effective policy for a (component, locale) pair.
-	 *
-	 * A locale-specific entry wins over a global one.
-	 * If neither exists, the registry-wide default (`rule_only`, no threshold) is returned.
+	 * Return the locale-specific policy, global policy, or default policy for a component.
 	 */
 	lookup(component: ComponentTag, locale?: string): ClassifierPolicy
 
 	/**
-	 * Apply policy filtering to a flat list of proposals.
-	 *
-	 * Output is a new array.
-	 * The input is not mutated.
+	 * Return filtered proposals without mutating the input.
 	 */
 	apply(proposals: readonly ClassificationProposal[], locale?: string): ClassificationProposal[]
 }

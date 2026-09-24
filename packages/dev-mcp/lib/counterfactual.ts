@@ -3,21 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The smallest single-setting flip that changes a row's answer (#1722).
- *
- *   An account says what the pipeline did. A counterfactual says what it would have done under one different setting,
- *   which is the only way to turn "this mechanism ran" into "this mechanism decided". The L2 rung the activation
- *   census deliberately does not measure. One setting moves per flip, always, because a flip that moves two settings
- *   cannot attribute the change to either.
- *
- *   The setting space is fixed and enumerated here rather than derived from `EngineConfig`. Every setting in that
- *   interface is flippable in principle. these five are the ones whose flip is cheap (no second gazetteer, no second
- *   model) and whose meaning is stateable in one sentence. A setting that cannot apply to a row is reported as skipped
- *   with its reason, never omitted — an absent setting and a setting that changed nothing are different facts.
- *
- *   Runs are engine-major: every row needing one flip is measured before the next flip's engine is built. The
- *   registry holds two engines at a time (`EngineRegistry`'s cap, set by the measured throughput ceiling on a shared
- *   WOF SQLite), so a row-major loop would evict and rebuild a multi-second engine on nearly every iteration.
+ *   Measure one-setting-at-a-time counterfactuals for selected rows. Unavailable flips are reported with reasons.
+ *   Runs are grouped by setting so rows can reuse each constructed engine.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -30,42 +17,26 @@ import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { DISTANCE_THRESHOLDS_KM } from "#geo-grade"
 
 /**
- * The fixed setting space, in the CLI's own vocabulary.
- *
- * The same keys `EngineConfig` uses, so a flip a reader wants to reproduce is a
- * `config` they can paste into any other tool.
+ * Settings measured by this counterfactual pass, in CLI vocabulary.
  */
 export const COUNTERFACTUAL_SETTINGS = ["locale", "gazetteer_prior", "country_scope", "fork_entity"] as const
 
 export type CounterfactualSetting = (typeof COUNTERFACTUAL_SETTINGS)[number]
 
 /**
- * How far an answer must move before the flip is reported, in kilometres.
+ * Minimum coordinate movement reported, using the finest registered grading threshold.
  *
- * The finest of the pre-registered distance thresholds, borrowed rather than chosen:
- * a flip that moves the answer less than the tightest threshold anything here grades at
- * cannot change a verdict, so reporting it would fill the result with coordinate jitter.
- * A flip that changes abstention is reported at any distance.
- * There is no distance to measure, which is the point.
+ * Any change in abstention is reported regardless of distance.
  */
 export const COUNTERFACTUAL_MOVED_KM = DISTANCE_THRESHOLDS_KM[0]
 
 /**
- * The self-contained base weights locale.
- *
- * Every other `@mailwoman/neural-weights-*` package is a data overlay sharing
- * this one's `model.onnx` byte-for-byte, so it is the locale a flip returns TO
- * when the row is already running under its own overlay.
+ * Base weights locale used as the destination when a row's overlay is removed.
  */
 export const BASE_LOCALE = "en-US"
 
 /**
- * Repo-relative home of the release manifest, whose `locales` array is the
- * list of weights overlays that exist.
- *
- * Read rather than re-typed: an overlay added by
- * `packages/release-kit/lib/weights/scaffold-weights-overlay.ts` lands there, and a hand-kept
- * copy here would make the locale setting silently stop offering the newest locale.
+ * Path to the manifest listing published locale overlays.
  */
 const RELEASE_CONFIG_RELATIVE_PATH = "release.config.json"
 
@@ -76,13 +47,9 @@ interface ReleaseLocales {
 let overlayLocaleCache: Map<string, string> | null = null
 
 /**
- * Country (ISO alpha-2, upper) → the canonical locale tag of the weights overlay that scopes it.
+ * Map each overlay's region subtag to its locale tag.
  *
- * Derived from each overlay's own region subtag, which is what makes this a derivation
- * rather than a second table: `en-gb` scopes GB because that is what the tag says.
- * A country with two overlays would keep the first listed.
- *
- * None exists today, and the manifest is the place that would have to decide.
+ * When multiple overlays share a country, the first manifest entry wins.
  */
 async function overlayLocaleByCountry(): Promise<Map<string, string>> {
 	if (overlayLocaleCache) return overlayLocaleCache
@@ -109,7 +76,7 @@ async function overlayLocaleByCountry(): Promise<Map<string, string>> {
 }
 
 /**
- * One flip: which setting, what it moved from, what it moved to, and the config patch that expresses it.
+ * One setting change and its corresponding configuration patch.
  */
 export interface CounterfactualFlip {
 	setting: CounterfactualSetting
@@ -119,10 +86,7 @@ export interface CounterfactualFlip {
 }
 
 /**
- * A setting that could not be flipped for this row, and why.
- *
- * Reported so an empty flip list is readable: no setting applied, or every
- * setting applied and none moved the answer.
+ * Setting that could not be flipped for a row and the reason.
  */
 export interface SettingSkip {
 	setting: CounterfactualSetting
@@ -130,13 +94,7 @@ export interface SettingSkip {
 }
 
 /**
- * The single-setting flips available for one row.
- *
- * `effective` is the resolved session options — the production defaults already filled in —
- * because the flip has to be stated against what the engine will actually do
- * rather than against what the caller happened to type.
- * An unset setting in a caller's `EngineConfig` means the production default, so reading the
- * caller's object would report every unset setting as absent and flip it in the wrong direction.
+ * Enumerate applicable flips from fully resolved session options.
  */
 export async function enumerateFlips(
 	effective: GeocodeSessionOptions,
@@ -180,12 +138,7 @@ export async function enumerateFlips(
 }
 
 /**
- * The locale flip, or the reason there is none.
- *
- * Two directions, never one: a row running under the base weights flips TO its country's
- * overlay, and a row already running under its country's overlay flips back to the base.
- * The second direction is what prices the overlay — "the overlay is required
- * here" is a claim only its removal can support.
+ * Return a locale flip, or explain why no country overlay applies.
  */
 async function localeCounterfactual(
 	current: string,
@@ -217,7 +170,7 @@ async function localeCounterfactual(
 }
 
 /**
- * One row as the counterfactual pass reads it: what to re-run, and the answer to measure the flip against.
+ * Row and baseline answer used for counterfactual measurement.
  */
 export interface CounterfactualTarget {
 	id: string
@@ -233,15 +186,7 @@ export interface CounterfactualAnswer {
 }
 
 /**
- * A flip that moved the answer.
- *
- * Flips that changed nothing are counted, never listed.
- * The list is the finding.
- *
- * `moved_km` is `null` when one side has no coordinate: an abstention has no
- * distance from anything, and turning that into a number (zero, or infinity) is
- * the projection this whole surface exists to avoid.
- * `changed_abstention` is the fact in that case.
+ * Flip that moved coordinates beyond the threshold or changed abstention.
  */
 interface CounterfactualMove extends MoveReading {
 	setting: CounterfactualSetting
@@ -250,8 +195,7 @@ interface CounterfactualMove extends MoveReading {
 }
 
 /**
- * The distance half of a move, with no setting attached.
- * What {@link measureMove} can know from two answers alone.
+ * Movement between two answers, independent of the changed setting.
  */
 export interface MoveReading {
 	moved_km: number | null
@@ -268,7 +212,7 @@ export interface RowCounterfactuals {
 }
 
 /**
- * Whether one flip's answer counts as a move, and how far.
+ * Return a movement record when answers differ enough to affect grading.
  */
 export function measureMove(base: CounterfactualAnswer, flipped: CounterfactualAnswer): MoveReading | null {
 	const baseAbstained = base.lat === null || base.lon === null
@@ -290,7 +234,7 @@ export interface CounterfactualError {
 }
 
 /**
- * Re-run every applicable flip and report the ones that moved the answer.
+ * Run applicable flips and report those that change an answer.
  */
 export async function runCounterfactuals(
 	registry: EngineRegistryLike,
@@ -327,8 +271,7 @@ export async function runCounterfactuals(
 	}
 
 	for (const { flip, targets: batched } of batches.values()) {
-		// Tracing is off on a flip arm: the flip is graded on its answer, and a traced
-		// session pays an extra decode per input for evidence nothing here reads.
+		// Disable tracing because this pass compares answers only.
 		const engine = await registry.acquire({ ...baseConfig, ...flip.patch, trace: false })
 
 		for (const target of batched) {

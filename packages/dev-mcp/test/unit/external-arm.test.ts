@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The external client against a scripted wire — the real parsing, the real refusals, no network.
- *
- *   The bodies below are shortened captures of what the three engines actually answer rather than shapes invented from their
- *   documentation. A parser tested against its author's idea of the format is a parser tested against nothing.
+ *   Test external geocoder parsing and refusals against scripted responses without network access.
  */
 
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
@@ -86,9 +83,7 @@ describe("ExternalGeocoderClient.search", () => {
 	})
 
 	it("refuses a transposed position instead of scoring the distance to it", async () => {
-		// A latitude past ±90 is what a lat/lon swap looks like on the wire.
-		// Accepting it would produce a finite haversine distance and an ordinary-looking miss,
-		// which is indistinguishable from a real answer that is wrong.
+		// The swapped latitude is outside the valid range and must not be scored.
 		const swapped = {
 			features: [{ type: "Feature", geometry: { type: "Point", coordinates: [37.3, -120.4] }, properties: {} }],
 		}
@@ -130,9 +125,7 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 	})
 
 	it("refuses an endpoint that will not say what it is, because a drop-in answers identically", async () => {
-		// Photon's search path has no version anywhere in it, so a 404 on /status
-		// leaves nothing to identify the arm by.
-		// Scoring it anyway is how a benchmark ends up comparing mailwoman against mailwoman.
+		// Photon exposes no version on its search path, so a missing status endpoint cannot identify it.
 		const search = {
 			features: [{ type: "Feature", geometry: { type: "Point", coordinates: [2.35, 48.85] }, properties: {} }],
 		}
@@ -166,9 +159,7 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 
 describe("ExternalGeocoderClient pacing", () => {
 	it("spaces dispatches at the configured interval, which is the check that actually holds a rate", async () => {
-		// Asserted rather than assumed: `requestsPerMinute` alone does not deliver N requests per
-		// minute (agents.md records 100/min measured against a budget of 10), so the claim that
-		// this client is paced rests entirely on the interval limit being the one configured.
+		// Verify actual dispatch spacing; a requests-per-minute setting alone does not enforce pacing.
 		const clock = createFakeClock()
 		const transport = stubTransport([{ body: PELIAS_HIT }], { clock })
 

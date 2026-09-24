@@ -3,17 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The command toolkit for `mailwoman/commands/*` — Ink helper types, the one-shot
- *   {@linkcode useCommandTask} runner, and the {@linkcode CheckList} renderer. Lives outside
- *   `commands/` (the router treats every file there as a command) and outside `sdk/` (`sdk/` submodules
- *   mean data acquisition). Built with `createElement`, not JSX, so the module stays plain `.ts` —
- *   importable under node's type stripping (the dev `node →` exports condition).
+ *   Shared Ink helpers and types for CLI commands. Kept outside `commands/` so the router does not treat it as a
+ *   command, and written without JSX for Node type stripping.
  */
 
 import { formatAsCountryISO2, type CountryISO2 } from "@mailwoman/codex/country"
 import { formatAsUSStateAbbreviation, type USStateAbbreviation } from "@mailwoman/codex/us"
-// Never the `@mailwoman/core` barrel: this is shared by every interactive command,
-// and the barrel needlessly widens each selected command's import graph.
+// Import specific core modules to keep each command's dependency graph small.
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { spawnProcessSync } from "@mailwoman/core/process"
@@ -29,7 +25,7 @@ import type * as React from "react"
 import type { CommandSpec, OptionsOf } from "#cli/native/spec"
 
 /**
- * Props shared by commands parsed through the native command specification.
+ * Props for commands parsed from a native specification.
  */
 export interface ParsedCommandProps<Options, Args extends unknown[] = string[]> {
 	options: Options
@@ -37,28 +33,20 @@ export interface ParsedCommandProps<Options, Args extends unknown[] = string[]> 
 }
 
 /**
- * React component whose arguments have already been parsed by the native command specification.
+ * Component receiving parsed command arguments.
  */
 export type ParsedCommandComponent<Options = Record<string, never>, Args extends unknown[] = string[]> = React.FC<
 	ParsedCommandProps<Options, Args>
 >
 
 /**
- * A command component whose options are derived from the command's own `spec`.
- *
- * This is the annotation a command wants: naming `typeof spec` leaves the flags as the
- * one declaration, where {@linkcode ParsedCommandComponent} takes an options type a
- * command had to write beside its spec and keep in agreement with it.
- * `ParsedCommandComponent` stays for a command that names its options type for another reason.
+ * Command component whose option type is inferred from its `spec`.
  */
 export type CommandComponent<Spec extends CommandSpec, Args extends unknown[] = string[]> = ParsedCommandComponent<
 	OptionsOf<Spec>,
 	Args
 >
 
-/**
- * Type-helper to infer the positional arguments of a command.
- */
 /**
  * The lifecycle of a command's one-shot async task.
  */
@@ -68,16 +56,9 @@ export type CommandTaskState<T> =
 	| { status: "error"; message: string }
 
 /**
- * Run a command's one-shot async task and own the exit-code discipline:
- * rejection renders the error state and exits 1.
- *
- * Resolution exits with `exitCode(result)` (default 0) — always after the final frame committed.
- *
- * Replaces the copy-pasted useEffect/useState/setImmediate dance in every command.
+ * Run a one-shot task, render its state, then exit with the result code or 1 on failure.
  */
-/* oxlint-disable react-hooks/exhaustive-deps -- One-shot by design: the task/exitCode closures
-	 capture their options at mount. tracking them (fresh closure per render) would re-run the task
-	 every render. The empty/[state] deps are the point. */
+/* oxlint-disable react-hooks/exhaustive-deps -- Task closures are captured once; rerunning on each render is incorrect. */
 export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T) => number): CommandTaskState<T> {
 	const [state, setState] = useState<CommandTaskState<T>>({ status: "running" })
 
@@ -100,10 +81,7 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 /* oxlint-enable react-hooks/exhaustive-deps */
 
 /**
- * The lifecycle of a {@linkcode lazyComponent}'s import.
- *
- * Deliberately the same three states as {@linkcode CommandTaskState}: a deferred import
- * is a one-shot async task that happens to resolve to a component.
+ * State of a deferred component import.
  */
 type LazyComponentState<P extends object> =
 	| { status: "loading" }
@@ -111,28 +89,9 @@ type LazyComponentState<P extends object> =
 	| { status: "error"; message: string }
 
 /**
- * Wrap a heavy child component so its module loads on first render rather than at import.
+ * Defer loading a heavy child until first render.
  *
- * A component reached from JSX normally needs a top-level import, so one
- * `import { DebugView } from "…"` in a branch nobody took still widens the selected command's graph.
- * `load` runs in an effect instead, and the wrapper renders nothing until it resolves.
- *
- * Nothing on screen for one frame is the right fallback here and not a placeholder:
- * Ink erases the previous frame when it draws, so a "loading…" line taller than
- * zero is a line the real first frame has to scrub.
- * Commands that want a spinner own one inside the loaded component, where it can outlive the load.
- *
- * A rejected import is a command failure, and it takes {@linkcode useCommandTask}'s exact interface:
- * the message renders red and the process exits 1 from a `setImmediate`, after the frame has committed.
- * That matters here more than for an ordinary task.
- *
- * The usual reason a deferred import rejects is a missing optional peer dependency,
- * and the alternative is an unhandled rejection: node's default handler prints a
- * react-reconciler stack over whatever the command had drawn and takes the exit code with it.
- *
- * `React.lazy`/`Suspense` would express the happy path too, but its fallback lands
- * in the same erase path and Ink has no error boundary.
- * A throw in render escapes `render()` itself, which is the reconciler stack this exists to avoid.
+ * Render nothing while loading and show import failures before exiting.
  */
 export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>): React.FC<P> {
 	return function LazyComponent(props: P) {
@@ -160,8 +119,7 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
 			return () => {
 				live = false
 			}
-			// oxlint-disable-next-line react-hooks/exhaustive-deps -- `load` closes over a module specifier, which
-			// cannot change for the life of the process. tracking it would re-import on every render.
+			// oxlint-disable-next-line react-hooks/exhaustive-deps -- Module specifier is fixed for the process lifetime.
 		}, [])
 
 		useEffect(() => {
@@ -179,18 +137,8 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
 }
 
 /**
- * Emit a command's final output as raw bytes, bypassing Ink's `<Text>` renderer.
- *
- * Ink word-wraps rendered text at the terminal width — and at 80 columns when stdout is piped —
- * which corrupts machine-readable output: a JSON string value longer than the width
- * gets real newlines inserted mid-string, breaking the document (observed 2026-08-07:
- * `geocode --format json` on "Toledo Ohio" wrapped `intent_markers[].message` at 80 cols).
- * Machine formats (json/jsonld/xml/tuple, `--json` flags) must never pass through `<Text>`.
- *
- * @returns `null` so the caller can `return writeRawStdout(result)` from the done branch.
- * Safe to call from render: {@linkcode useCommandTask} renders the done frame
- * exactly once before its `process.exit`.
- * Same pattern as `commands/gazetteer/inspect/graph.tsx`.
+ * Write machine-readable output directly to stdout to avoid Ink wrapping.
+ * Return `null` for use in a render branch.
  */
 export function writeRawStdout(text: string | object): null {
 	const normalized = typeof text === "string" ? text + "\n" : prettyJSON(text)
@@ -201,7 +149,7 @@ export function writeRawStdout(text: string | object): null {
 }
 
 /**
- * One ✓/✗ line in a {@linkcode CheckList}.
+ * One check-list entry.
  */
 export interface Check {
 	ok: boolean
@@ -210,9 +158,7 @@ export interface Check {
 }
 
 /**
- * The ✓/✗ check-list + pass/fail renderer (extracted from `gazetteer verify`).
- *
- * Pass `verdict` to append the summary line.
+ * Render check results and an optional pass/fail summary.
  */
 export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdict?: boolean }): React.ReactElement {
 	const lines = checks.map((c, i) =>
@@ -236,11 +182,7 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 }
 
 /**
- * Parse a `--roles a,b,c` flag into validated {@link PlacetypeRole}s, or `undefined`
- * when the flag is absent (which every caller reads as "all roles").
- *
- * Rejects an unknown role with {@link CommandError} rather than silently filtering it.
- * A typo in a role name would otherwise produce an empty, entirely plausible-looking result.
+ * Parse and validate comma-separated placetype roles; return `undefined` when absent.
  */
 export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 	if (!raw) return undefined
@@ -259,42 +201,29 @@ export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined
 }
 
 /**
- * Write one progress line to stderr.
- *
- * The `report` callback every long-running command threads through its pipeline.
- *
- * Stderr, so stdout stays machine-readable.
+ * Write progress to stderr so stdout remains machine-readable.
  */
 export function reportToStderr(line: string): void {
 	console.error(line)
 }
 
 /**
- * Props for {@linkcode CommandTaskResult}.
+ * Props for the standard command-task result renderer.
  */
 export interface CommandTaskResultProps<T> {
 	state: CommandTaskState<T>
 	/**
-	 * Rendered while the task runs.
-	 *
-	 * A string is wrapped in `<Text>`; omit it to render nothing.
+	 * Content shown while the task runs; omit to render nothing.
 	 */
 	running?: React.ReactNode
 	/**
-	 * The done line's body, rendered after the `✓ `.
-	 *
-	 * Defaults to `String(result)` — the plain-string result shape.
+	 * Content shown after success; defaults to `String(result)`.
 	 */
 	done?: (result: T) => React.ReactNode
 }
 
 /**
- * The standard ✓/✗ tail of a one-shot command: red `✗ message` on error, green `✓ …`
- * on completion, and the `running` node (or nothing) in between.
- *
- * A command with a custom done frame guards with
- * `if (state.status !== "done") return <CommandTaskResult state={state} … />`
- * and renders its own done branch below.
+ * Render running, error, and success states for a one-shot command.
  */
 export function CommandTaskResult<T>({ state, running, done }: CommandTaskResultProps<T>): React.ReactElement | null {
 	if (state.status === "running") {
@@ -311,21 +240,21 @@ export function CommandTaskResult<T>({ state, running, done }: CommandTaskResult
 }
 
 /**
- * The `onPhase` reporter the gazetteer builds thread through their pipelines: ` [phase] detail` on stderr.
+ * Create a stderr phase reporter for build pipelines.
  */
 export function phaseReporter(prefix = "  "): (phase: string, detail?: string) => void {
 	return (phase, detail) => console.error(`${prefix}[${phase}]${detail ? ` ${detail}` : ""}`)
 }
 
 /**
- * Parse a comma-separated country-code flag into validated ISO 3166-1 alpha-2 codes.
+ * Parse comma-separated ISO 3166-1 alpha-2 country codes.
  */
 export function splitCountryCodes(raw: string | undefined): CountryISO2[] {
 	return extractDelimited(raw).map(formatAsCountryISO2)
 }
 
 /**
- * Parse a comma-separated state flag into valid USPS state-or-territory abbreviations.
+ * Parse comma-separated USPS state and territory abbreviations.
  */
 export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[] {
 	return extractDelimited(raw).flatMap((value) => {
@@ -336,24 +265,13 @@ export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[
 }
 
 /**
- * A count flag: a non-negative integer, or `fallback` when the flag is absent.
- *
- * Throws on anything else.
- *
- * The reason this is a function and not `Number(raw) || fallback`: zero is falsy, so that idiom
- * silently answers the fallback for a flag whose whole purpose is to switch something off.
- * `corpus slice --variants 0` asks the po-box recipe to emit its self-contained
- * military rows and none of its tuple-driven ones; `Number("0") || 1` read it as one
- * and the recipe output came out at 10,558 rows against the 5,279 requested.
- *
- * A typo is refused for the same reason rather than falling back.
- * A count nobody asked for is a row count nobody chose.
+ * Parse a non-negative integer count, or return `fallback` when absent.
+ * Reject invalid values and preserve zero.
  */
 export function countOption(raw: string | undefined, fallback: number): number {
 	if (raw == null) return fallback
 
-	// `Number("")` and `Number(" ")` are zero, so a blank flag value would switch the variants off with
-	// no one asking — the same defect the falsy-zero idiom caused, arriving from the other side.
+	// Treat blank input as invalid rather than zero.
 	const parsed = raw.trim() === "" ? Number.NaN : Number(raw)
 
 	if (!Number.isInteger(parsed) || parsed < 0) {
@@ -364,9 +282,7 @@ export function countOption(raw: string | undefined, fallback: number): number {
 }
 
 /**
- * {@linkcode extractDelimited} as numbers — resolution and size flags.
- *
- * Blank entries are dropped before conversion, so a trailing comma is not a NaN.
+ * Parse comma-separated numeric values, ignoring blank entries.
  */
 export function splitNumberList(raw: string | undefined): number[] {
 	return extractDelimited(raw).map(Number)
@@ -375,15 +291,14 @@ export function splitNumberList(raw: string | undefined): number[] {
 const ANSI_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;?]*[A-Za-z]`, "gu")
 
 /**
- * Drop ansi escape sequences from captured child-process output.
+ * Remove ANSI escape sequences from child-process output.
  */
 export function stripAnsi(value: string): string {
 	return value.replace(ANSI_PATTERN, "")
 }
 
 /**
- * The shape every polygon-layer verification result shares.
- * See `@mailwoman/flood`, `soil`, `coastal`, `zoning`.
+ * Shared result shape for polygon-layer verification.
  */
 export interface LayerVerificationLike<Row extends { outcome: string; label: string }> {
 	agreement: readonly Row[]
@@ -399,34 +314,29 @@ export interface LayerVerificationLike<Row extends { outcome: string; label: str
  */
 export interface FormatLayerVerificationOptions<Row> {
 	/**
-	 * Who the artifact was checked against — "the live service", "Soil Data Access".
+	 * Service used for comparison.
 	 */
 	serviceLabel: string
 	/**
-	 * The out-of-coverage line's scope — "outside England", "outside the built survey areas".
+	 * Scope described by the out-of-coverage line.
 	 */
 	outsideLabel: string
 	/**
-	 * One disagreement row as the stderr line naming its point.
+	 * Format one disagreement row for stderr.
 	 */
 	describeRow: (row: Row) => string
 	/**
-	 * Appended to the agreement summary — zoning's local-code mismatch count.
+	 * Optional detail appended to the agreement summary.
 	 */
 	extraSummary?: string
 	/**
-	 * The out-of-coverage line's all-clear tail.
-	 * Default "none read a designation".
+	 * All-clear text for the out-of-coverage summary.
 	 */
 	outsideNoneLabel?: string
 }
 
 /**
- * The two verification summary lines every polygon-layer build prints,
- * plus the per-row disagreement dump to stderr.
- *
- * A disagreement count is not actionable on its own.
- * The rows are, and the first thing anyone does with a non-zero count is ask which points.
+ * Format verification summaries and print each disagreement to stderr.
  */
 export function formatLayerVerification<Row extends { outcome: string; label: string }>(
 	verified: LayerVerificationLike<Row>,
@@ -450,10 +360,7 @@ export function formatLayerVerification<Row extends { outcome: string; label: st
 }
 
 /**
- * Run a child process with inherited stdio — the child's own output is the progress log —
- * and throw {@linkcode CommandError} on a launch failure or nonzero exit.
- *
- * `echo` prints the invocation first; `cwd` runs the child elsewhere.
+ * Run a child with inherited stdio and throw on launch failure or nonzero exit.
  */
 export function runProcessOrFail(
 	cmd: string,
@@ -478,17 +385,10 @@ export function runProcessOrFail(
 }
 
 /**
- * Load the neural classifier, degrading to `undefined` with a precise warning (#1108)
- * so a consumer can't attribute silently-degraded output to the neural parser.
+ * Load the neural classifier.
  *
- * Two failure modes are distinguished:
- *
- * - Weights absent (package not installed / carries no binaries) → an install hint, no scary error text.
- * - Weights present but the encoder failed to load (corrupt / partial bundle, a bad explicit path)
- *   → the underlying error is surfaced rather than swallowed.
- *
- * `onDegrade` receives the warning line.
- * Callers send it to stderr so piped stdout parsing is unaffected.
+ * Report missing weights as a warning, but propagate errors from a present invalid bundle.
+ * Callers should send `onDegrade` messages to stderr.
  */
 export async function loadClassifierTolerant(
 	locale: string,

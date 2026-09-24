@@ -2,15 +2,8 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for `edgar-filings.ts` — CIK resolution + 10-K discovery + Exhibit 21 document discovery.
- *
- *   No live network anywhere here: `fetchCompanyTickers`/`fetchTenKFilings`/`fetchExhibit21Documents` are
- *   exercised against hand-rolled stubs satisfying {@link SECGetClient}/{@link SECDocumentClient} (one method
- *   each), never a real `createSECClient()` or an axios harness. Everything else is a pure function over an
- *   authored fixture or `filer/test-fixtures/edgar/lumen-2025-index-headers.html` — a real, vendored edgar
- *   accession manifest (162 documents per its own `public-document-count` header field. this file's own sgml
- *   `&lt.document&gt.` block count is 161 — four sequence numbers, including 18, have no block of their own in
- *   this manifest, a real-edgar quirk this suite counts rather than papers over).
+ * @file Test CIK resolution, 10-K selection, and Exhibit 21 discovery without live network requests.
+ *   SEC calls use stubs; parsing uses authored data and a vendored EDGAR manifest.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -141,10 +134,7 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	})
 
 	it("reports ONE candidate for a registrant filed under several share classes", () => {
-		// `company_tickers.json` carries one row per ticker, so a registrant with several
-		// share classes appears several times under one CIK.
-		// Measured 2026-08-03: "Liberty Broadband Corporation" came back as the
-		// same CIK four times, each scoring 1.0.
+		// The SEC ticker index has one row per ticker; share classes may repeat a CIK.
 		const shareClasses: CompanyTickerEntry[] = [
 			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
 			{ cik: toCIK("0001611983")!, ticker: "LBRDB", title: "Liberty Broadband Corp" },
@@ -158,9 +148,7 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	})
 
 	it("does not let share classes manufacture a tie that suppresses `limit`", () => {
-		// The phantom tie is the actual damage: three rows at the top score made the tie
-		// rule fire, so `limit` stopped trimming and a caller asking for one answer got
-		// the same CIK back three times alongside nothing else.
+		// Duplicate share classes must not fill the top-score tie and bypass `limit`.
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
 			{ cik: toCIK("0001611983")!, ticker: "LBRDK", title: "Liberty Broadband Corp" },
@@ -220,9 +208,7 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	it("`limit` still trims the low-scoring tail when there is no tie at the top", () => {
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: toCIK("0000320193")!, ticker: "AAPL", title: "Apple Inc." },
-			// Shares the "apple" token but is not the same canonical string, so it scores
-			// below the exact match (but still above minScore) — a genuine ranking
-			// rather than a tie, so `limit` may safely trim it.
+			// This lower-scoring match verifies that `limit` trims a genuine ranking.
 			{ cik: toCIK("0000320194")!, ticker: "AAPQ", title: "Apple Group Holdings Inc" },
 		]
 
@@ -283,7 +269,7 @@ describe("parseTenKFilings", () => {
 			filings: {
 				recent: {
 					form: ["10-K", "10-K"],
-					accessionNumber: ["0000320193-23-000106"], // one short
+					accessionNumber: ["0000320193-23-000106"], // One entry short.
 					filingDate: ["2023-11-03", "2022-11-01"],
 					primaryDocument: ["a.htm", "b.htm"],
 				},
@@ -345,8 +331,7 @@ describe("Exhibit 21 document discovery", () => {
 	it("reads every document in the manifest, not only the exhibits", () => {
 		const documents = parseFilingDocuments(LUMEN_CIK, "0000018926-26-000014", headerHTML)
 
-		// The fixture's own sgml manifest carries 161 `<document>` blocks.
-		// See the module docstring above for why this differs from the header's `public-document-count: 162`.
+		// The manifest has 161 document blocks; its header reports 162 public documents.
 		expect(documents).toHaveLength(161)
 		expect(documents[0]).toMatchObject({ type: "10-K", filename: "lumn-20251231.htm" })
 	})

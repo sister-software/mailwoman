@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for `runPipeline` — every stage stubbed with a fake so the test exercises the
- *   coordinator's composition + branching logic without depending on neural / resolver concretes.
+ *   Test pipeline order, branching, stage composition, and defaults with stubbed stages.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
@@ -73,7 +72,7 @@ describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", ()
 
 describe("runPipeline — artifact-manifest safelist precedence (survey candidate #2)", () => {
 	/**
-	 * A resolver whose loaded gazetteer artifact declares its own coverage manifest.
+	 * Create resolver coverage metadata for a test artifact.
 	 */
 	const artifactWith = (safelist: string[]): GazetteerArtifactCoverage => ({
 		countryCoverage: new Map(),
@@ -246,9 +245,7 @@ describe("runPipeline — stage composition", () => {
 			queryShape: shape,
 			postcodeRepair: true,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-			// Decision A: the pipeline passes an explicit register on every parse.
-			// The default kind classifier (no fast-path) reads structured_address → formatted.
-			// An explicit PipelineOpts.inputMode overrides (see the dedicated inputMode tests).
+			// Structured addresses use formatted mode unless the caller overrides it.
 			inputMode: "formatted",
 		})
 	})
@@ -308,7 +305,7 @@ describe("runPipeline — fast-path routing", () => {
 		expect(result.path).toBe("fast-path")
 		expect(classifier.parse).not.toHaveBeenCalled()
 		expect(resolver.resolveTree).toHaveBeenCalled()
-		// Fast-path tree is built from the QueryShape format hit.
+		// Build the postcode node from the recognized span.
 		expect(result.tree.roots[0]?.tag).toBe("postcode")
 		expect(result.tree.roots[0]?.value).toBe("10118")
 	})
@@ -390,10 +387,7 @@ describe("runPipeline — fast-path routing", () => {
 	})
 
 	it("fast-paths even when resolver is absent (fast-path tree is built from QueryShape alone)", async () => {
-		// Previously the coordinator required a resolver for fast-path to fire.
-		// As of the kind- classifier ship, the fast-path tree from QueryShape is useful standalone.
-		// A consumer who just wants the parsed structure for "10118" shouldn't be
-		// forced to pay for the classifier.
+		// A postcode fast-path tree is useful without a resolver or classifier.
 		const classifier = fakeClassifier(fakeTree("10118"))
 
 		const stages: RuntimePipelineStages = {
@@ -455,7 +449,7 @@ describe("runPipeline — abort signal", () => {
 		const computeQueryShape = vi.fn(() => ({ knownFormats: [] }))
 
 		const normalize = vi.fn((raw: string) => {
-			// Abort during normalize — coordinator catches it on the next checkpoint (before queryShape).
+			// Abort during normalization; the next checkpoint runs before query-shape computation.
 			controller.abort()
 
 			return { raw, normalized: raw }
@@ -596,11 +590,7 @@ describe("runPipeline — timing budget shape", () => {
 })
 
 describe("runPipeline — non-graceful stage failures", () => {
-	// Interface: classifier + resolver are wrapped in safe* helpers (graceful).
-	// The pre-classifier stages — detectLocale, classifyKind — are not wrapped
-	// because their failure modes indicate a genuine interface violation
-	// (locale detector returning null, kind classifier crashing on its own rules), not external-data noise.
-	// These tests pin the asymmetry as a interface.
+	// Classifier and resolver failures are handled gracefully; earlier stage failures propagate.
 
 	it("detectLocale throwing propagates (not swallowed)", async () => {
 		const detectLocale = vi.fn(async () => {
@@ -635,8 +625,7 @@ describe("runPipeline — non-graceful stage failures", () => {
 	})
 
 	it("resolver throwing on fast-path returns the fast-path tree unchanged (graceful)", async () => {
-		// Fast-path uses safeResolve, so a resolver failure does not propagate.
-		// The fast-path tree built from QueryShape is the fallback.
+		// On the fast path, resolver failure returns the tree built from QueryShape.
 		const postcodeShape: QueryShapeLite = {
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 			totalLength: 5,
@@ -701,7 +690,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 	it("byte-stable when no placeCountry stage is wired (resolveOpts passed through verbatim)", async () => {
 		const { resolver, seen } = captureResolveOpts()
 		await runPipeline("hello", { resolver }, { resolveOpts: { maxLookups: 3 } })
-		// No coarse-placer ⇒ effectiveOpts === opts ⇒ resolver sees exactly the caller's resolveOpts.
+		// Without a placer, pass the caller's resolver options through unchanged.
 		expect(seen[0]).toEqual({ maxLookups: 3 })
 	})
 
@@ -719,8 +708,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 
 	it("uses the placer's full posterior distribution when supplied (vs the one-hot argmax)", async () => {
 		const { resolver, seen } = captureResolveOpts()
-		// A country-ambiguous in-map guess: argmax FR, but GB nearly as likely.
-		// The distribution lets the resolver break the tie with its own evidence instead of committing to FR.
+		// Preserve the full distribution so resolver evidence can distinguish FR from GB.
 		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.45, posterior: { FR: 0.45, GB: 0.4 } }))
 		await runPipeline("Birmingham", { resolver, placeCountry })
 		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.45, GB: 0.4 }, anchorWeight: 1 })
@@ -757,8 +745,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 			{ resolveOpts: { anchorPosterior: { GB: 1 }, anchorWeight: 2 } }
 		)
 
-		// Caller's posterior wins.
-		// The coarse-placer is a no-op here.
+		// Preserve the caller's stronger postcode posterior.
 		expect(seen[0]).toEqual({ anchorPosterior: { GB: 1 }, anchorWeight: 2 })
 	})
 
@@ -800,16 +787,9 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 })
 
 /**
- * #40 / mailfail finding 4 — the defensive `safeClassify` wrapper caught every classifier throw and returned an empty
- * tree, which the grouper-audit then repopulated from rule-based phrase proposals.
+ * Verify swallowed stage failures appear in `PipelineResult.faults`.
  *
- * The caller got a normal-looking parse with no indication the model never ran:
- * measured on the mailfail probes, 10 of 110 inputs crashed the classifier while the pipeline
- * reported success (`size-10kb` produced a tidy five-field parse off a 3,031-node tree).
- *
- * The interface now is that the wrapper still degrades.
- * It does not abort the pipeline — but it records what it caught on `PipelineResult.faults`,
- * so "the model faulted" is distinguishable from "the model found nothing".
+ * Previously, 10 of 110 mailfail probes crashed without a reported fault.
  */
 describe("stage faults — a swallowed stage crash is recorded, never silent (#40)", () => {
 	const throwingClassifier = (error: unknown): AddressClassifier => ({
@@ -827,7 +807,7 @@ describe("stage faults — a swallowed stage crash is recorded, never silent (#4
 	})
 
 	it("records a classifier throw as a `classifier` fault while still returning a tree", async () => {
-		// The real shape from the 128-piece desync (neural/word-consistency.ts:238).
+		// Reproduce the 128-piece desync error shape.
 		const boom = new TypeError("emissions[pi] is not iterable")
 
 		const result = await runPipeline("350 5th Ave, New York, NY 10118", { classifier: throwingClassifier(boom) })
@@ -841,7 +821,7 @@ describe("stage faults — a swallowed stage crash is recorded, never silent (#4
 			message: "emissions[pi] is not iterable",
 		})
 
-		// The thrown value is kept verbatim so a caller can rethrow it or read its stack.
+		// Preserve the original thrown value for callers.
 		expect(result.faults[0]!.cause).toBe(boom)
 	})
 

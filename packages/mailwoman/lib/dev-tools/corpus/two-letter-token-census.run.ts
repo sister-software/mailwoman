@@ -3,22 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What a two-letter uppercase token teaches: a region, a country, a street suffix, or something else (#2311).
- *
- *   `Marble Falls, AR 72648` answers no locality while `Beacon Falls, CT 06403` answers one, and a 2x2 over the same
- *   60 Arkansas names shows the region code carrying about half the recovery. The mixture's region mass does not
- *   explain which regions it favours — Arkansas holds 2.59% of US exposure and reads 2.3%, Vermont 0.05% and 100.0%.
- *   What is left is the surface: a code that opens a `country` span as often as a `region` one teaches both readings,
- *   and the decode has to pick.
- *
- *   No code list is typed. Every two-letter uppercase token that covers a whole span is counted with the tag it
- *   carries, and the contested set falls out of the data — `CT` is Connecticut and Court, `NL` is Newfoundland and the
- *   Netherlands, `AR` is Arkansas and Argentina. A typed list can only confirm a collision someone already suspected.
- *
- *   This counts the corpus pool. `census_region_code_token` in `mailwoman_train.audits` counts the emitted mixture,
- *   which is the pool after `source_weights` and after `augment_region_prob` writes region surfaces onto rows that
- *   carried none. The two answer different questions and the emitted one is the one an exposure decision is set
- *   against. this one needs no GPU, no Modal volume and no config.
+ *   Count uppercase two-letter spans by tag and country to identify tokens used ambiguously as regions, countries, or
+ *   other components. This reports corpus counts; the training audit reports the emitted mixture after weighting and
+ *   augmentation.
  *
  *   Run:
  *
@@ -46,14 +33,11 @@ const { values } = parseArguments({
 		split: { type: "string", default: "train" },
 		"out-json": { type: "string" },
 		/**
-		 * Print these codes in full regardless of rank.
-		 *
-		 * Everything else is ranked by total occurrences.
+		 * Show these codes regardless of rank; rank other codes by frequency.
 		 */
 		codes: { type: "string" },
 		/**
-		 * Rows are also grouped by the row's `country`, so a code's two readings can
-		 * be attributed to the countries that write them.
+		 * Also group counts by country.
 		 */
 		"by-country": { type: "boolean", default: false },
 		detail: { type: "string", default: "30" },
@@ -71,11 +55,7 @@ const { db, fileList } = await openMixture(mixture.files, {
 })
 
 /**
- * Unnesting three parallel lists in one select zips them positionally, so each row
- * of `spans` is one span with its own offsets and tag.
- *
- * `regexp_full_match` keeps only a span whose entire text is two uppercase letters,
- * which is the surface an address line writes a region code as.
+ * Unnest aligned span arrays and count spans consisting of exactly two uppercase letters.
  */
 const sql = `
 WITH spans AS (
@@ -102,7 +82,7 @@ console.log(
 )
 
 /**
- * One two-letter token: how often it opens each tag, and which countries write it that way.
+ * Counts for one token by tag and country.
  */
 interface TokenCensus {
 	text: string
@@ -137,10 +117,7 @@ for (const row of reader.getRowObjects()) {
 }
 
 /**
- * The share of a token's occurrences held by its commonest tag.
- *
- * A token that teaches one reading is 1.0.
- * One the decode has to disambiguate is lower, and how much lower is the size of the contest.
+ * Fraction of occurrences assigned to the most common tag.
  */
 function dominance(entry: TokenCensus): number {
 	return entry.total === 0 ? 0 : Math.max(...entry.byTag.values()) / entry.total
@@ -158,18 +135,12 @@ function tagBreakdown(entry: TokenCensus): string {
 }
 
 /**
- * A token whose commonest tag holds less than this share teaches more than one
- * reading at a rate the decode has to resolve.
- *
- * Set where a rounding artifact stops and a real second reading starts
- * rather than against a measured separation.
+ * Maximum dominant-tag share for the contested-token report.
  */
 const CONTESTED_DOMINANCE = 0.95
 
 /**
- * Tokens below this many spans are dropped from the contested table.
- *
- * A handful of occurrences splitting two ways is a ratio over noise.
+ * Minimum frequency for inclusion in the contested-token report.
  */
 const CONTESTED_FLOOR = 1000
 

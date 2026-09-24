@@ -3,11 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `GET /health`: the issuance switch, the environment's Stripe mode, the signing self-test's last result, whether the
- *   ledger answers a query, and whether any token's email has stayed `failed` for over an hour. 503 when the ledger
- *   does not answer, so a monitor sees a worker that cannot mint or answer a claim. a failing email is a 200 with
- *   `email: failing`, since the worker itself is well and the action is at the provider. One route, so one external
- *   check covers both alerts. No customer data, no key material.
+ *   `GET /health` reports issuance, Stripe mode, signing, ledger availability, and prolonged email failures. It returns
+ *   503 when the ledger is unreachable; email-provider failures remain a 200 with `email: failing`. No customer or key
+ *   data is exposed.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -44,8 +42,7 @@ const healthRoute = createRoute({
 })
 
 /**
- * How long a failed email may stand before the report says so: past the mint's
- * own attempt, short of the next resend.
+ * Email failure duration that triggers a health warning.
  */
 const EMAIL_FAILURE_GRACE_MS = 60 * 60 * 1000
 

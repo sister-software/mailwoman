@@ -3,36 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `no-fragment` — the Norwegian house-number-licence change (Track B, 2026-07-16). The mirror of
- *   `fr-fragment`, which earned +50pp on the same defect shape in French.
- *
- *   why this exists and `no-street-led` does not suffice. Board 3 (the Norwegian digit board) measured that
- *   `synth-no-street-led`'s three forms — all carrying postcode+city — are already at 0.940-0.968 on
- *   a model with zero Norwegian rows. The headroom is in the forms that recipe never emits:
- *
- *     bare-street-hn   "Hallingrudveien 32"     0.693   — no postcode competing, still fails 31%
- *     slash-hn         "Øvrabø 124/1"           0.650   — cadastral gnr/bnr, one component
- *
- *   the mechanism the board exposed: `Hallingrudveien 32` -> locality + postcode, while
- *   `Hallingrudveien 32, 3370 Vikersund` parses perfectly. The street loses its street reading and
- *   the digit loses its anchor together. That is Track A's bare-street licence in Norwegian. The
- *   model will not read a street without its postcode/locality partner — not a digit-ownership prior.
- *   fr-fragment fixed exactly this in French by teaching the street without its partners.
- *
- *   the counter-distribution is the point (fr-fragment's lesson, and board 2's bare-locality guard).
- *   Teaching bare `{street} {number}` alone lets the model satisfy every row by flipping its default
- *   from "bare toponym -> locality" to "bare toponym -> street", trading one broken prior for
- *   another. Two counter-classes hold the line:
- *     - bare localities (no street) so "bare -> street" is not free.
- *     - bare postcodes so the model does not learn to stop emitting postcode to win the digit. The
- *       board 3 bare-pc negative class must stay at 1.000.
- *
- *   slash hazard, pinned deliberately: Norwegian `124/1` is one house_number (cadastral gnr/bnr). AU
- *   `12/345` is two (unit + house_number). This recipe teaches the Norwegian reading. a future AU
- *   intra-word-split recipe (B5) must not generalize over it. The two are locale-restricted by design.
- *
- *   split: `--exclude-surfaces` is required (the recipe throws without it) — the digit board's reserved surface
- *   list. Diacritic-keeping normalizer, matching the board (see the norm docstring).
+ *   Generate Norwegian street/number fragments and bare locality/postcode counterexamples.
+ *   Require reserved digit-board surfaces to prevent train/evaluation overlap.
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -49,7 +21,7 @@ import {
 import { SurfaceOrigin } from "#types"
 
 /**
- * Title-case a Kartverket all-caps locality (hellvik -> Hellvik); #690, all-caps is OOD.
+ * Convert a Norwegian locality to title case.
  */
 const titleNO = (value: string): string =>
 	value
@@ -58,10 +30,7 @@ const titleNO = (value: string): string =>
 		.join(" ")
 
 /**
- * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Norwegian fragment recipe.
  */
 export const noFragmentRecipe: CorpusRecipe = {
 	name: "no-fragment",
@@ -121,9 +90,7 @@ export const noFragmentRecipe: CorpusRecipe = {
 		const longNumberBoost = Math.max(1, Math.floor(opts.longNumberBoost ?? 1))
 		const longNumberMinDigits = opts.longNumberMinDigits ?? 3
 
-		// Harvested from the tuples.
-		// Every Norwegian row carries its locality and postcode, so the two
-		// counter-classes need no second source.
+		// Collect locality and postcode counterexamples.
 		const localities = new Set<string>()
 		const postcodes = new Set<string>()
 
@@ -134,8 +101,7 @@ export const noFragmentRecipe: CorpusRecipe = {
 		let emitSeq = 0
 
 		const emit = (raw: string, components: Record<string, string>, klass: string): void => {
-			// emitSeq keeps every emit distinct — knob 3 emits N copies of one long-number row, and
-			// (components, read) alone would collide their source_id and let downstream dedup drop the boost.
+			// Give boosted copies distinct source IDs.
 			const source_id = recipeSourceID("synth-no-fragment", { ...components, k: klass, v: `${read}:${emitSeq++}` })
 
 			const canonical = {
@@ -182,17 +148,14 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// the split.
-			// A surface on the digit board never enters training.
+			// Keep evaluation surfaces out of training data.
 			if (excluded.has(foldNOSurface(street))) {
 				contaminated++
 
 				continue
 			}
 
-			// counter-distribution — drawn from the harvested pools rather than this row's street.
-			// Half bare localities (so "bare -> street" is not free), half bare postcodes
-			// (so the model does not stop emitting postcode to win the digit — board 3's bare-pc must hold).
+			// Sample bare locality and postcode counterexamples.
 			if (random() < counterProb) {
 				if (random() < 0.5 && localities.size) {
 					const loc = [...localities][Math.floor(random() * localities.size)]!
@@ -207,18 +170,12 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// the signal.
-			// A street with no postcode/locality partner.
-			// Either bare, or street+number.
-			// Both are the forms board 3 measured as the headroom (bare-street-hn 0.693, slash-hn 0.650).
+			// Emit a bare street or street with house number.
 			if (!number || random() < bareStreetProb) {
 				emit(street, { street }, "bare-street")
 			} else {
 				const klass = number.includes("/") ? "slash-hn" : "street-hn"
-				// knob 3: the failing class is street + long number (Leppdalsvegen 1285 -> postcode).
-				// The digit count rather than the slash, is what tips the length prior toward postcode.
-				// Oversample those rows to fight the prior with volume and teach the
-				// street/number boundary directly.
+				// Oversample long numbers to reduce postcode misclassification and reinforce the street/number boundary.
 				const digits = (number.match(/\d/g) ?? []).length
 				const copies = digits >= longNumberMinDigits ? longNumberBoost : 1
 

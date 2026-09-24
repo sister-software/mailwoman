@@ -3,18 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Span-level parse dump for a named row set under one weights arm, so two arms can be diffed line for
- *   line. Built for the v4.2.0-base-anchor-v2 (Run B) regression triage: the gauntlet reports a coord or a
- *   single-tag miss, which cannot distinguish "the parse moved" from "the resolver ranked differently".
- *   This dumps the parse alone (classifier-only pipeline, no resolver, exactly the gauntlet's parse half).
- *
- *   Registers are the invariance suite's own transforms, so a row can be read across the register axis the
- *   #690 case-normalization work made required: `asis` / `lower` / `upper` / `comma-drop`.
- *
- *   Usage:
- *     node packages/mailwoman/lib/dev-tools/diff-territory-spans.run.ts --rows <file.txt> --cache-root <dir> --label cand-on
- *
- *   `--rows` is a plain text file of `id<TAB>input` lines (blank lines and `#` comments skipped).
+ *   Dump classifier spans for a supplied row set and selected text registers, allowing line-by-line comparison
+ *   between model arms. Use `--rows` with `id<TAB>input` lines; blank lines and `#` comments are ignored.
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
@@ -37,11 +27,7 @@ const { values } = parseArguments({
 		locale: { type: "string", default: "en-US" },
 		registers: { type: "string", default: "asis,lower,upper,comma-drop" },
 		/**
-		 * Parse through the RAW classifier (`classifier.parse`) instead of `createRuntimePipeline`.
-		 *
-		 * This is what `mailwoman/eval-harness/invariance/runner.ts`'s `buildParseFn` does,
-		 * and the two instruments do not agree: the raw path skips `@mailwoman/normalize` entirely,
-		 * so #690 case normalization never runs and the register legs see genuinely different text.
+		 * Use `classifier.parse` directly instead of the normalization pipeline.
 		 */
 		raw: { type: "boolean", default: false },
 	},
@@ -52,7 +38,7 @@ const selected = new Set(values.registers!.split(",")) as Set<Register>
 
 function applyRegister(text: string, reg: Register): string {
 	if (reg === "comma-drop") {
-		// Verbatim `mailwoman/eval-harness/invariance/transforms.ts::commaDrop` — the whitespace collapse matters.
+		// Match the invariance suite's comma-drop transform, including whitespace collapse.
 		return text.replaceAll(",", "").replaceAll(/\s+/gu, " ").trim()
 	}
 

@@ -3,30 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generates `docs/articles/developers/reference/cli.mdx` — the published CLI interface — from the
- *   command specifications themselves, so the page cannot drift from the binary. Runs in the docs
- *   `prebuild` beside the four OpenAPI emits (`docs/package.json`), and the committed page is
- *   asserted byte-for-byte by `generate-cli-reference.test.ts`.
+ *   Generate the published CLI reference from compiled command specifications. The docs prebuild
+ *   runs this script, and a test compares its output with the committed page. Run `yarn compile`
+ *   first because the command modules are TSX.
  *
- *   how the surface is derived. `mailwoman/commands/**` is walked as a directory tree, with each executable module
- *   exporting the same native `CommandSpec` used by runtime parsing and help.
- *
- *   The walk reads the compiled tree (`mailwoman/out/commands`), not source: the commands are TSX,
- *   which Node cannot type-strip. `docs` already depends on that tree — every OpenAPI emit in
- *   `prebuild` shells `mailwoman/out/cli.js` — so this adds no new prerequisite. Run `yarn compile`
- *   first.
- *
- *   scope. The CLI carries 125 commands across 25 groups. most are the repo's own data-build,
- *   training and evaluation tooling, which only runs inside a checkout. {@link DOCUMENTED_GROUPS}
- *   names the groups a consumer of the published package runs, and every command in those groups is
- *   emitted — a new sibling appears on the page with no edit here. The remaining groups are listed
- *   by name with a count and a one-line purpose from {@link GROUP_NOTES}; a group absent from that
- *   map is a hard error, so a new group can never vanish from the page silently.
- *
- *   determinism. Same tree in, same bytes out: no timestamps, no version stamps, no host paths (an
- *   absolute-path default renders as `environment-dependent` — `geocode --data-root` otherwise bakes
- *   this machine's data root into a published page), groups in declared order, commands sorted.
- *   Table cells are padded the way `oxfmt` pads them, so the emitted file is already formatted.
+ *   {@link DOCUMENTED_GROUPS} lists consumer-facing command groups. Other groups require a summary
+ *   in {@link GROUP_NOTES}. Output order and formatting are deterministic; environment-specific
+ *   absolute defaults are omitted to avoid publishing host paths.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -42,17 +25,13 @@ import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts
 /**
  * The command groups this page documents in full.
  *
- * `""` is the root of `commands/`, i.e. the commands invoked as `mailwoman <name>` with no group.
- * Every command found in these groups is emitted, so adding a sibling command needs no edit here.
+ * `""` denotes top-level commands.
+ * Every command in these groups is included automatically.
  */
 export const DOCUMENTED_GROUPS: readonly string[] = ["", "data", "skill", "clients", "registry"]
 
 /**
- * One line per top-level group the page does not document, stating what the group is for.
- *
- * Every group discovered outside {@link DOCUMENTED_GROUPS} must appear here —
- * {@link collectCLISurface} throws otherwise, so a new group is impossible to add
- * without deciding whether a consumer needs it.
+ * Short descriptions for groups not documented command by command.
  */
 export const GROUP_NOTES: Readonly<Record<string, string>> = {
 	corpus: "Builds and audits the BIO-labeled training corpus.",
@@ -179,9 +158,7 @@ function renderFlag(name: string, option: OptionSpec): string {
 /**
  * The `Default` column.
  *
- * Absolute paths are suppressed: `geocode --data-root` defaults to the resolved data root,
- * so printing the value would bake the generating machine's filesystem into a published page.
- * Each such flag's description already states which variable it reads.
+ * Hide absolute paths so generated documentation does not expose the build machine's filesystem.
  */
 export function renderDefault(value: unknown): string {
 	if (value === undefined) return "—"
@@ -204,14 +181,7 @@ export function renderDefault(value: unknown): string {
 /**
  * Make a source-authored help string safe as MDX table-cell text.
  *
- * Docusaurus compiles `.mdx` through micromark's JSX extension, so a bare `<address>`
- * is an element and a bare `{ checks: [...] }` is an expression — both build-breaking
- * or content-eating (the class `mailwoman dev lint mdx-angles` catches).
- * Entities render as the literal characters and cannot be parsed as syntax.
- *
- * The pipe escape is the table's own requirement, and the asterisk escape is
- * `oxfmt`'s: a literal `*` in prose (`place_bbox R*Tree`) is emphasis syntax,
- * and leaving it raw makes the emitted file fail `--check`.
+ * Escape syntax characters that MDX, Markdown tables, or `oxfmt` would otherwise interpret.
  */
 export function escapeCell(text: string): string {
 	return text
@@ -227,8 +197,7 @@ export function escapeCell(text: string): string {
 }
 
 /**
- * Render a GitHub-flavored table with cells padded to the widest in their column — the shape `oxfmt`
- * normalizes markdown tables to, so the emitted file passes `oxfmt --check` without a reformat pass.
+ * Render a table with the column widths expected by `oxfmt`.
  */
 export function renderTable(headers: readonly string[], rows: readonly (readonly string[])[]): string {
 	const widths = headers.map((header, column) =>
@@ -246,7 +215,7 @@ export function renderTable(headers: readonly string[], rows: readonly (readonly
 //#region Collection
 
 /**
- * Walk one command node into flat {@link CLICommand} records, deepest path first.
+ * Flatten a command node and its path into {@link CLICommand} records.
  */
 function collectCommands(node: CommandNode, prefix: readonly string[], into: CLICommand[]): void {
 	const path = [...prefix, node.name]
@@ -289,25 +258,20 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 	}
 }
 
-// The package root rather than the directory of the package's entry file.
-// `dirname(resolveModulePath("mailwoman"))` answered the same thing only
-// while the entry sat at the package root.
-// Once source moved under `lib/` it started answering `mailwoman/lib`, and the
-// `out/` joins below silently became `mailwoman/lib/out/…`.
+// Resolve paths from the package root, not from the entry module under `lib/`.
 const packagePath = resolvePackageDirectory("mailwoman")
 
 /**
- * The compiled command tree this generator reads, resolved from this file rather than a
- * working directory so the script behaves the same from the repo root and from `docs/`.
+ * Compiled command directory, resolved independently of the current working directory.
  */
 export const COMMANDS_DIRECTORY = packagePath("out", "commands")
 /**
- * Compiled direct-command directory merged with the filesystem command tree.
+ * Compiled native commands merged into the command tree.
  */
 export const NATIVE_COMMANDS_DIRECTORY = packagePath("out", "cli", "native", "commands")
 
 /**
- * Read the compiled command tree and partition it by {@link DOCUMENTED_GROUPS}.
+ * Read compiled commands and divide them into documented and summarized groups.
  *
  * @throws When a group outside {@link DOCUMENTED_GROUPS} has no {@link GROUP_NOTES} entry.
  */
@@ -323,7 +287,7 @@ export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY):
 	const undocumented: CLIGroupSummary[] = []
 	let totalCommands = 0
 
-	// Root commands first.
+	// Collect top-level commands separately from named groups.
 	const rootCommands: CLICommand[] = []
 	const groups = new Map<string, CommandNode>()
 
@@ -347,7 +311,7 @@ export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY):
 			collectCommands(child, [name], commands)
 		}
 
-		// A group whose own index.tsx is a command (`corpus extract`) contributes it too.
+		// Include a group entry point when it is itself a command.
 		if (node.component) {
 			collectCommands({ ...node, commands: undefined }, [], commands)
 		}
@@ -410,7 +374,7 @@ const FRONTMATTER = [
 ].join("\n")
 
 /**
- * The heading a group's section carries.
+ * Return the heading for a command group.
  */
 function groupHeading(name: string): string {
 	return name === "" ? "Top-level commands" : `\`mailwoman ${name}\``
@@ -460,9 +424,7 @@ function renderCommand(command: CLICommand): string {
 }
 
 /**
- * Render the whole page.
- *
- * Pure — the same {@link CLISurface} always produces the same bytes.
+ * Render a deterministic reference page from the command surface.
  */
 export function renderCLIReference(surface: CLISurface): string {
 	const documentedCount = surface.documented.reduce((total, group) => total + group.commands.length, 0)

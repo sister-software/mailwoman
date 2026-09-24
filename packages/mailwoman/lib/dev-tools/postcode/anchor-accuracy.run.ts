@@ -3,19 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Gazetteer-quality eval for the postcode anchor (#240): how close does the anchor's centroid land
- *   to the true address? For each OpenAddresses point with a postcode and real coordinates, look
- *   the postcode up in the databases, take the centroid for that country, and measure the haversine
- *   distance to the true point.
- *
- *   This measures the parent-borrow backfill rather than rooftop accuracy. A backfilled centroid is the
- *   parent locality's centre, so the expected distance is "how far is this address from the middle
- *   of its town" — a few km in a city, more in a large rural postcode. That is exactly the
- *   resolution a "which city/region" anchor needs. the eval just confirms the borrow lands in the
- *   right town.
- *
- *   Run: node packages/mailwoman/lib/dev-tools/postcode/anchor-accuracy.run.ts\
- *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
+ *   Measure the distance from OpenAddresses points to matching postcode centroids. This evaluates locality-level
+ *   parent-borrow accuracy, not rooftop accuracy.
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -65,11 +54,7 @@ function parseArgs(): Args {
 }
 
 /**
- * One eval row as this probe reads it.
- *
- * The three postcode spellings and the top-level coordinates are all optional because the
- * eval files it runs against were written by different generations of the harness.
- * The loop skips a row that carries none of them.
+ * Compatible input row shape across evaluation-file versions.
  */
 interface EvalRow {
 	expected?: { postcode?: string; lat?: number; lon?: number }

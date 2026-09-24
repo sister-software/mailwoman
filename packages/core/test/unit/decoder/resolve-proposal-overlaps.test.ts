@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #478 increment 3 — the coherence pass. Verifies `resolveProposalOverlaps` produces a
- *   non-overlapping set (the invariant `proposalsToTree` needs) and that the selection policy
- *   (confidence desc → finer span → earlier start) preserves the street+house_number
- *   decomposition.
+ *   Tests that overlap resolution returns non-overlapping spans and applies confidence, span-length,
+ *   and start-position ordering.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -16,7 +14,7 @@ import type { ClassificationProposal } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
 
 /**
- * Build a proposal with an explicit span (`new Span(body, start)` derives `end = start + len`).
+ * Create a proposal whose span end is derived from its text.
  */
 function p(component: ComponentTag, body: string, start: number, confidence: number): ClassificationProposal {
 	return {
@@ -30,7 +28,7 @@ function p(component: ComponentTag, body: string, start: number, confidence: num
 }
 
 /**
- * Assert no two spans in the result overlap.
+ * Return whether the proposals have disjoint spans.
  */
 function noOverlaps(out: readonly ClassificationProposal[]): boolean {
 	for (let i = 0; i < out.length; i++) {
@@ -53,7 +51,7 @@ describe("resolveProposalOverlaps — trivial cases", () => {
 	})
 
 	test("non-overlapping (adjacent) spans are all kept, in span order", () => {
-		// "350" [0,3], "5th Ave" [4,11] — a space at index 3, no overlap.
+		// The spans are separated by whitespace.
 		const out = resolveProposalOverlaps([p("street", "5th Ave", 4, 0.9), p("house_number", "350", 0, 0.9)])
 		expect(out.map((x) => x.component)).toEqual(["house_number", "street"])
 		expect(noOverlaps(out)).toBe(true)
@@ -69,8 +67,8 @@ describe("resolveProposalOverlaps — trivial cases", () => {
 describe("resolveProposalOverlaps — overlap resolution", () => {
 	test("containment: higher-confidence span wins, the other is dropped", () => {
 		const out = resolveProposalOverlaps([
-			p("street", "350 5th Ave", 0, 0.8), // coarse, lower conf
-			p("house_number", "350", 0, 0.9), // finer, higher conf
+			p("street", "350 5th Ave", 0, 0.8), // Coarser and less confident.
+			p("house_number", "350", 0, 0.9), // Finer and more confident.
 		])
 
 		expect(out).toHaveLength(1)
@@ -79,9 +77,7 @@ describe("resolveProposalOverlaps — overlap resolution", () => {
 	})
 
 	test("PRECONDITION: equal-confidence decomposition beats the coarse subsuming span", () => {
-		// street[0,11] vs {house_number[0,3], street[4,11]} all at conf 0.9.
-		// Finer-span-first tiebreak accepts the two small spans.
-		// The coarse [0,11] overlaps both → dropped.
+		// Equal confidence lets the two finer spans beat the overlapping whole-street span.
 		const out = resolveProposalOverlaps([
 			p("street", "350 5th Ave", 0, 0.9),
 			p("house_number", "350", 0, 0.9),
@@ -109,7 +105,7 @@ describe("resolveProposalOverlaps — overlap resolution", () => {
 	})
 
 	test("confidence is primary: a confident coarse span evicts finer low-confidence spans", () => {
-		// Documents the policy tradeoff — a high-confidence subsuming span wins over a finer decomposition.
+		// Confidence takes precedence over span length.
 		const out = resolveProposalOverlaps([
 			p("street", "350 5th Ave", 0, 0.95),
 			p("house_number", "350", 0, 0.7),
@@ -133,7 +129,7 @@ describe("resolveProposalOverlaps — coherence invariant", () => {
 
 		expect(out).toHaveLength(4)
 		expect(noOverlaps(out)).toBe(true)
-		expect(out.map((x) => x.span.start)).toEqual([0, 4, 12, 21]) // span-start order
+		expect(out.map((x) => x.span.start)).toEqual([0, 4, 12, 21]) // Sorted by start position.
 	})
 
 	test("output never overlaps even from a messy multi-source pile", () => {

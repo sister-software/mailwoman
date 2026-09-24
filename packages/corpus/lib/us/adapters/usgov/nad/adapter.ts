@@ -3,29 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `usgov-nad`: US DOT National Address Database — ~97M structured address-point records.
+ *   Adapter for the US DOT National Address Database (NAD), a federal collection of structured address points.
  *
- *   The single largest US address source available — federal aggregation of state + local 911-grade
- *   address points (every addressable location). Compared to tiger addrfeat (~20M segment-level, no
- *   city/locality) and NPPES (~7M provider-centric venues), NAD covers the entire residential +
- *   commercial address space with full structured components.
+ *   Reads NDJSON files produced by `fetch-nad.ts` featureserver mode. Files are grouped by OID range; legacy
+ *   quarantined files are kept outside the input directory.
  *
- *   The adapter consumes ndjson files produced by `fetch-nad.ts`'s featureserver mode (operator
- *   pre-downloads via `mailwoman corpus fetch nad`). Each file is per-OID-range
- *   `oids_<start>-<end>.ndjson` with a sibling `.manifest.json`. Adapter iterates every `.ndjson`
- *   in the input directory, skipping the `quarantined-bash-bug/` subdir (legacy of the bash-
- *   fetcher's silent-page-failure bug).
+ *   NAD v9 field mapping:
  *
- *   Field mapping (NAD v9 → CanonicalRow components):
+ *   - House number: `AddNo_Full`, or `AddNum_Pre` + `Add_Number` + `AddNum_Suf`.
+ *   - Street: `StNam_Full`, or the structured street fields.
  *
- *   - House_number: `AddNo_Full` (pre-composed); falls back to AddNum_Pre + Add_Number + AddNum_Suf
- *   - Street: `StNam_Full` (pre-composed); falls back to St_PreDir + St_PreTyp + St_Name + St_PosTyp
- *
- *       - St_PosDir + St_PosMod composition
- *   - Locality: `Post_City` > `Inc_Muni` > `Census_Plc` > `Uninc_Comm` (first non-empty)
- *   - Region: `State` (2-char USPS code, including territories: PR, GU, VI, AS, MP)
- *   - Postcode: `Zip_Code` + `Plus_4` (joined as `xxxxx-nnnn` when both present)
- *   - Venue: `LandmkName` (typically a park, school, hospital, named facility — when present)
+ *   - Structured street fields provide prefix, name, and suffix where available.
+ *   - Locality: first non-empty of `Post_City`, `Inc_Muni`, `Census_Plc`, and `Uninc_Comm`.
+ *   - Region: USPS state or territory code.
+ *   - Postcode: `Zip_Code`, with `Plus_4` appended when present.
+ *   - Venue: `LandmkName`, when present.
  *
  *   License: stamped `"Public Domain"` per 17 U.S.C. § 105 (US federal works).
  */
@@ -41,14 +33,11 @@ import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
- * Registry id for this adapter.
- *
- * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
+ * Adapter id stamped on every emitted row.
  */
 export const USGOV_NAD_ADAPTER_ID = "usgov-nad"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
- * consumers inherit the terms rather than having to look them up.
+ * Public-domain license attached to each emitted row.
  */
 export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"
 
@@ -239,9 +228,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				throw new Error(`usgov-nad adapter: only US supported, got country=${opts.country}`)
 			}
 
-			// inputPath is a directory of ndjson files (per fetch-nad.ts featureserver output).
-			// Single-file inputs (e.g. A bulk-extracted CSV) are not currently supported.
-			// The featureserver per-OID-range file pattern is the primary distribution.
+			// Input is a directory of NDJSON files; single-file inputs are unsupported.
 			const files = await Globerator.files("ndjson", {
 				cwd: opts.inputPath,
 				absolute: false,
@@ -251,12 +238,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			let emitted = 0
 			outer: for (const file of files) {
 				if (opts.signal?.aborted) break
-				// TextSpliterator streams string lines.
-				// The per-line tryParsingJSON below keeps the reader tolerant of malformed
-				// rows (skip silently), so TextSpliterator + a non-throwing parse
-				// rather than JSONSpliterator, which would throw.
-				// Passing a path lets the lib own + dispose each file's handle,
-				// including on the `break outer` early exit.
+				// Stream lines so malformed JSON can be skipped; the spliterator closes the file on early exit.
 				const lines = TextSpliterator.fromAsync(resolvePathBuilder(opts.inputPath, file))
 
 				for await (const line of lines) {

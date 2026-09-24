@@ -3,52 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The POI query board (spec §3.6, exotic-POI arc) — a curated, committed panel of ~45 POI-shaped
- *   queries graded on the assembled answer (a matched category id + a coordinate near the expected
- *   place), not on label F1. Runs the real `createRuntimePipeline({ poiQueryKind: { poiDatabasePath
- *   } })` surface end-to-end: subject match → anchor parse → anchor resolve → poi.db search, the same
- *   construction `mailwoman poi` uses.
- *
- *   floors (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`
- *   (`POI_BOARD_FLOORS` / `evaluateFloors`, pre-registered in
- *   `docs/articles/evals/2026-07-19-poi-query-board-v1-baseline.md`). Floors are graded and printed on
- *   every run. a breach only turns into a non-zero exit under `--enforce`. Without `--enforce` the
- *   command stays report-only (exit 0 on case failures. a non-zero exit then means the harness broke —
- *   missing fixtures, missing db, a pipeline construction error — not a graded case failing).
- *
- *   Composition (`fixtures/poi-board.jsonl`, committed): ~22 category+anchor cases spanning all four
- *   currently-shipped poi.db countries (US/CA/MX/FR), ~5 locale-restricted-synonym cases (exercising
- *   `@mailwoman/poi-taxonomy`'s locale filtering — exact-locale, cross-language, and unrestricted phrases),
- *   ~6 abstains (3 build-local infra categories that poi.db structurally can't answer, 3 bare
- *   shipped categories with no anchor to search from), ~6 address-guards (full addresses + the
- *   venue-led "category, address" shape — the poi branch must not claim these), ~6
- *   near-miss/robustness cases (comma anchors, multiword synonyms, multi-segment anchors), the
- *   4-row activity-phrased family promoted from the semantic-utility pre-registration, and one further
- *   activity-phrased row committed for the US drugstore recall gap the wave-1 semantics address.
- *
- *   the activity family needs the `--semantic-observation` ARM. Its five subjects reach no committed
- *   lexicon entry, so with the opt-in rung absent the query takes no POI branch at all and every one of
- *   them reads as `path=full`. They are tracked for that reason, and the floors are registered against
- *   the arm-off construction — the one that ships. Turning the arm on measures the capability. it does
- *   not move the floors, and a row that would move them is a row being counted.
- *
- *   tracked rows. A fixture may carry `status` + `bugRef`, the conformance layer's own convention
- *   ({@linkcode POI_BOARD_STATUSES}). A tracked row is run and reported and its grade never reaches the
- *   floors, so a failure class can live on the surface every candidate is graded on before the work that
- *   answers it exists. Two rules keep the tracked list from becoming a place rows go to be forgotten: a
- *   tracked row must name a live issue, and a tracked row that starts passing is printed as a promotion
- *   instruction. A red row is never deleted to make a run green, and it is never re-stated as a weaker
- *   expectation either — a row rewritten to assert the current wrong answer would fail the moment the
- *   defect is repaired.
- *
- *   Only reachable behavior is scored — no brand/name-subject cases. that detection doesn't exist yet
- *   (spec §3.1 Phase 2). A `results` expectation's `maxNearestKm` is deliberately city-scale (25 km):
- *   this board grades whether the anchor resolved to roughly the right place and the subject matched
- *   the right category rather than sub-block precision.
- *
- *   grading (pure, unit-testable without a db — see `poi-board.test.ts`): `gradeCase` takes a fixture
- *   and the pipeline's own outcome shape (`path` + optional `poiIntent`), never the pipeline itself,
- *   so the interval/distance math is tested against synthetic outcomes.
+ *   Grade committed POI queries against the production pipeline's assembled result.
+ *   Floors cover overall results, required abstentions, and address-path guards; `--enforce`
+ *   makes breaches fail the command. Tracked rows are reported but excluded from floors and
+ *   require a live issue reference. Only currently reachable POI behavior is scored.
+ *   `gradeCase` is pure and tested without a database.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -79,21 +38,9 @@ export {
 export const POI_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl"
 
 /**
- * What a row's grade is allowed to mean for the floors.
+ * Row statuses: `pass` rows count toward floors; tracked failures do not.
  *
- * The conformance layer's own `ConformanceStatus` vocabulary (`conformance/fixture.ts`),
- * restated here because this board grades an assembled answer rather than a law relation
- * and must not import a law schema to say so.
- *
- * - `pass` — the default, and the only status the floors read.
- *   A `pass` row that fails lowers the floor rates.
- * - `known_fail` — the row fails because of a live defect: the default path answers,
- *   and the answer is wrong.
- * - `improvement_target` — the row fails because a capability it needs is not on the default path at all.
- *
- * The difference between the two tracked statuses is what would move the row:
- * a repair for `known_fail`, a capability for `improvement_target`.
- * Both are run and reported, and neither reaches the floors.
+ * `known_fail` needs a repair, while `improvement_target` needs a new capability.
  */
 export const POI_BOARD_STATUSES = ["pass", "known_fail", "improvement_target"] as const
 
@@ -105,24 +52,15 @@ export interface POIBoardFixture {
 	locale?: string
 	expect: POIBoardExpect
 	/**
-	 * Whether this row's grade is counted toward the floors.
-	 *
-	 * Absent means `pass` — a row says nothing about its status only when it is expected to hold.
+	 * Whether this row counts toward floors; defaults to `pass`.
 	 */
 	status?: POIBoardStatus
 	/**
-	 * The live issue a tracked row's diagnosis lives on, e.g. `#1039`.
-	 *
-	 * Required on a tracked row, and refused on a counted one: a counted row that
-	 * names a defect asserts the defect is already repaired.
+	 * Required live issue reference for tracked rows; disallowed on counted rows.
 	 */
 	bugRef?: string
 	/**
-	 * The committed record this row was promoted from, as `file#id` —
-	 * e.g. `semantic-utility/probe-definition.json#sem-act-us-01`, relative
-	 * to `packages/mailwoman/lib/eval-harness/`.
-	 *
-	 * Carried so a promoted row names the population it came from rather than reading as authored here.
+	 * Optional source fixture reference, relative to the eval-harness directory.
 	 */
 	rowRef?: string
 	/**
@@ -134,19 +72,12 @@ export interface POIBoardFixture {
 }
 
 /**
- * Every key a fixture record may carry.
- *
- * An unknown key is refused rather than dropped: a plain object silently discards a
- * misspelled field, so a row meant to be tracked would reach the floors while reading
- * as authored, and the board would then turn red for a reason nobody wrote.
+ * Allowed fixture keys; unknown keys are rejected rather than ignored.
  */
 const FIXTURE_KEYS = new Set<string>(["id", "query", "locale", "expect", "status", "bugRef", "rowRef", "note"])
 
 /**
- * The status a row grades under.
- *
- * Absent is `pass`, so every committed row before the tracked convention existed
- * keeps counting toward the floors without carrying a field.
+ * Return the row status, defaulting to `pass`.
  */
 function fixtureStatus(fixture: POIBoardFixture): POIBoardStatus {
 	return fixture.status ?? "pass"
@@ -160,13 +91,7 @@ export function isCountedFixture(fixture: POIBoardFixture): boolean {
 }
 
 /**
- * Everything that must be true of the committed fixture set, checked without running anything.
- *
- * One message per problem, each naming the row id.
- * Empty means the set is loadable.
- *
- * Pure, so `poi-board.test.ts` exercises every refusal against synthetic rows,
- * and `runPOIBoard` refuses the real file before it builds a pipeline.
+ * Validate committed fixtures before pipeline construction.
  */
 export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 	const problems: string[] = []
@@ -216,9 +141,7 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 }
 
 /**
- * The subset of a `PipelineResult` grading needs.
- *
- * Kept narrow so tests can hand in a fake without building a tree.
+ * Pipeline fields needed for grading.
  */
 export interface POIBoardOutcome {
 	path: PipelineResult["path"]
@@ -239,10 +162,7 @@ export interface CaseGrade {
 }
 
 /**
- * Grade one case against the pipeline's outcome.
- *
- * Pure — no I/O, no pipeline construction — so this is the unit-tested core (`poi-board.test.ts`)
- * and the live runner (`runPOIBoard`) is just fixture-load + pipeline-call + this.
+ * Grade one case without pipeline construction or I/O.
  */
 export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): CaseGrade {
 	const tookPoiPath = outcome.path === "poi" && outcome.poiIntent !== undefined
@@ -452,34 +372,9 @@ export interface QuantileStats {
 }
 
 /**
- * Pre-registered pass-rate floors for the board (spec §3.6).
+ * Pre-registered assembled-answer floors (spec §3.6).
  *
- * Set in the follow-up PR after the v1 baseline
- * (`docs/articles/evals/2026-07-19-poi-query-board-v1-baseline.md`) established numbers to hold against.
- *
- * RE-registered when the activity-phrased family was promoted (#1960),
- * and the three numbers are the whole argument.
- * Before: 51 rows, 49 pass, 96.1% against a 0.90 floor.
- *
- * After, with the four promoted activity rows tracked: the floors read 51 rows, 49 pass,
- * 96.1% — the same denominator, the same numerator, the same comparison.
- * The counterfactual is why the tracked convention is what carries them: had the four counted,
- * 49/55 = 89.1% would sit below the 0.90 floor, so committing a known failure class
- * would have turned the board red without any candidate changing, and lowering the floor
- * to admit them would have loosened the bar every other row is held to.
- *
- * That is also why a later tracked row needs no re-registration and must not get one:
- * it moves the committed total and leaves the counted set the floors read exactly where it was.
- * A row that would move these numbers is a row being counted, and that is the change to argue for.
- *
- * - `overall` ≥ 0.90 — the assembled-answer pass rate over the rows the floors read.
- *   A soft floor: coverage gaps in poi.db (the `trail`/`supermarket` holdouts) are
- *   allowed to cost a few points without failing the board.
- * - `abstain` = 1.00 — every abstain case must abstain for the right reason.
- *   A hard floor: an abstain miss means the poi branch claimed a query poi.db structurally
- *   cannot answer, the exact false-positive this board guards.
- * - `address` = 1.00 — every address-guard case must stay on the address path.
- *   A hard floor for the same reason: the poi branch must never hijack a full address.
+ * Overall pass rate must reach 90%; abstain and address-guard cases require 100%.
  */
 export const POI_BOARD_FLOORS = {
 	overall: 0.9,
@@ -488,7 +383,7 @@ export const POI_BOARD_FLOORS = {
 } as const
 
 /**
- * One graded floor line — printed on every run, and the breach unit `--enforce` keys its exit code off.
+ * One evaluated floor, printed on every run and enforced by `--enforce`.
  */
 export interface FloorLine {
 	/**
@@ -508,7 +403,7 @@ export interface FloorLine {
 	 */
 	floor: number
 	/**
-	 * `observed >= floor` — an absent kind (no cases of it) counts as not met.
+	 * Whether the observed rate meets the floor; empty categories do not pass.
 	 */
 	met: boolean
 	/**
@@ -535,11 +430,7 @@ export interface FloorInput {
 }
 
 /**
- * Grade a report against {@link POI_BOARD_FLOORS}.
- *
- * Pure — no I/O, no pipeline — so breach detection is unit-tested against synthetic
- * reports (`poi-board.test.ts`) without a live board run.
- * A category floor over an absent kind (zero cases of it) is treated as unmet rather than vacuously met.
+ * Evaluate registered floors against a report; an empty category does not pass.
  */
 export function evaluateFloors(report: FloorInput): FloorEvaluation {
 	const categoryLine = (key: "abstain" | "address", label: string): FloorLine => {
@@ -632,15 +523,7 @@ export interface POIBoardRunResult {
 }
 
 /**
- * Linear-interpolated quantile — deliberately not `percentile` from `@mailwoman/core/utils`.
- *
- * They are different estimators rather than two copies of one.
- * Core's is nearest-rank and its docstring warns against "upgrading" it, because the
- * resolver eval baselines were measured with that exact semantics.
- *
- * This one interpolates between the bracketing order statistics, which is what the
- * POI board's distance summaries have always reported.
- * Pointing this at core would shift published board numbers without changing a single measurement.
+ * Linearly interpolate between adjacent order statistics for distance summaries.
  */
 function quantile(sorted: number[], q: number): number {
 	if (!sorted.length) return Number.NaN

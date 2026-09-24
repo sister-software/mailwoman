@@ -3,23 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Drift check for the generated CLI reference (`generate-cli-reference.ts`). Three things are
- *   asserted, and each fails for a different reason:
- *
- *   1. Two known commands render exactly as snapshotted. A flag added, removed, renamed or
- *      re-defaulted on `doctor` or `data pull` fails here with the diff in the message. `doctor`
- *      pins the smallest shape (one boolean flag, no arguments); `data pull` pins the rest of the
- *      grammar in one command — a variadic required argument, a `--no-`-free boolean pair, an
- *      optional string, and a description carrying a `$variable`.
- *   2. The committed page equals a fresh render. This is the one that catches a flag changed
- *      anywhere in the documented surface without a regenerate, which no per-command snapshot can
- *      see.
- *   3. The render is a pure function of the surface — same input, same bytes, and no host path or
- *      timestamp anywhere in the output.
- *
- *   The walk reads `mailwoman/out/commands`, so `yarn compile` is a prerequisite. That is already
- *   true of every CI test leg (each runs `yarn compile` before `vitest`), and a missing tree throws
- *   with that instruction rather than skipping — a silently-skipped drift check is not a check.
+ * Checks representative command snapshots, the committed generated page, deterministic rendering,
+ * and omission of host paths and timestamps. Run `yarn compile` first to create `mailwoman/out/commands`.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -36,8 +21,7 @@ import {
 import { beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Pull one command's rendered section out of the whole page, so a snapshot
- * pins that command rather than the page.
+ * Extract one command section for its focused snapshot.
  */
 function sectionFor(page: string, commandPath: string): string {
 	const heading = `### \`mailwoman ${commandPath}\``
@@ -113,8 +97,7 @@ describe("generate-cli-reference", () => {
 	it("renders deterministically and leaks no host path or timestamp", () => {
 		expect(renderCLIReference(surface)).toBe(page)
 
-		// A default that resolves from the environment is suppressed rather than printed,
-		// so the generating machine's data root can never reach a published page.
+		// Environment-derived defaults must not expose the build machine's data root.
 		expect(page).not.toContain("/mnt/")
 		expect(page).not.toContain("/home/")
 		expect(page).toContain("environment-dependent")

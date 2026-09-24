@@ -3,30 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Two-source capture-recapture over a POI class in a bounded region — the measuring instrument behind a
- *   `CoverageBasis.Surveyed` completeness value. Pure: no ogr2ogr, no SQLite, no network, so the estimator
- *   and the match protocol are testable over synthetic points.
- *
- *   What it computes. Two independently-built inventories of the same class in the same region hold `n1`
- *   and `n2` rows and agree on `m` of them. Chapman's bias-corrected Lincoln-Petersen estimator reads the
- *   population as `N̂ = (n1+1)(n2+1)/(m+1) - 1`, and a source's completeness is its own count over that
- *   population.
- *
- *   Two disciplines are wired in rather than left to the caller, because both control the direction the
- *   number is wrong in:
- *
- *   1. **The recorded value is a lower confidence bound rather than a point estimate.** `N̂` sits in the
- *      denominator, so the conservative completeness comes from the upper end of `N̂`'s interval.
- *   2. **The protocol is a grid rather than a threshold.** A single match rule makes the completeness an artifact
- *      of one threshold choice; {@link completenessAcrossProtocols} runs a pre-registered grid and reports
- *      the weakest bound any of them supports.
- *
- *   What it does not correct, and no two-source design can: positive dependence between the sources. If
- *   the same POI is more likely to be in both inventories than chance would have it — a chain branch on a
- *   high street against a single pharmacy on a village lane — then `m` runs high, `N̂` runs low, and
- *   completeness runs high. That is the direction that turns a data gap into confident negative evidence,
- *   so the estimate bounds sampling error only. Breadth past a pilot needs a third source or an
- *   authoritative register rather than a wider run of this.
+ *   Estimate POI-layer completeness with two-source capture-recapture.
+ *   Use Chapman's estimator, a pre-registered match-protocol grid, and the weakest
+ *   lower confidence bound. Positive dependence between sources can still overstate coverage;
+ *   this method bounds sampling error only.
  */
 
 import { foldName } from "@mailwoman/codex/normalize"
@@ -43,13 +23,7 @@ export interface CaptureRow {
 }
 
 /**
- * One match rule.
- *
- * A candidate pair is accepted when it clears the near band, or the FAR band, or —
- * when either row is unnamed, so no name evidence exists — the unnamed distance alone.
- *
- * The two named bands express one idea: the further apart two rows are, the more the names have to agree.
- * The unnamed band is the only place position decides alone, which is why it is the tightest of the three.
+ * One name-and-distance matching protocol.
  */
 export interface MatchProtocol {
 	label: string
@@ -69,13 +43,7 @@ export interface MatchProtocol {
 }
 
 /**
- * The pre-registered grid.
- *
- * Fixed before any completeness value was read off it, and the spread between its ends is the
- * honest width of the measurement — on the pharmacy/Île-de-France pilot it ran 0.6665 to 0.8423.
- *
- * `strict` is the conservative end: it accepts only rows that agree on both position
- * and name, so it under-counts `m`, over-states `N̂`, and under-states completeness.
+ * Pre-registered matching protocols; `strict` is the conservative end.
  */
 export const MATCH_PROTOCOL_GRID: readonly MatchProtocol[] = [
 	{ label: "strict", near: [25, 0.85], far: [25, 0.85], unnamedMetres: 25 },
@@ -84,11 +52,7 @@ export const MATCH_PROTOCOL_GRID: readonly MatchProtocol[] = [
 ]
 
 /**
- * `@mailwoman/codex`'s match-key fold, widened to the nullable name a POI row carries.
- *
- * The fold itself is not re-implemented here: it is the same lossy ascii key the codex
- * tables are probed by, and a private copy would drift from it silently.
- * `Pharmacie de l'Église` and `pharmacie DE L eglise` have to reach the comparator as one string.
+ * Apply the shared codex match-key fold to nullable POI names.
  */
 function foldPOIName(name: string | null): string {
 	return name ? foldName(name) : ""
@@ -146,18 +110,9 @@ export interface CapturePair {
 }
 
 /**
- * One-to-one greedy assignment over the accepted pairs, best first (highest similarity, then closest).
+ * Greedily assign accepted pairs one-to-one, preferring similarity then distance.
  *
- * One-to-one is required rather than tidiness: `m` is a count of agreements between two
- * inventories, so letting one row of the first inventory answer for three rows of the
- * second counts one agreement three times, deflates `N̂`, and inflates completeness —
- * again in the direction that turns a gap into negative evidence.
- *
- * The candidate scan is quadratic in the two inputs.
- * That is deliberate at pilot scale (a few thousand rows a side, a few seconds)
- * and is the wrong shape for a region an order of magnitude larger.
- *
- * The spatial pre-bucket that fixes it belongs with the breadth work rather than ahead of the basis review.
+ * Candidate generation is quadratic and intended for pilot-scale inputs.
  */
 export function matchInventories(
 	first: readonly CaptureRow[],
@@ -212,10 +167,7 @@ export interface ChapmanEstimate {
 const Z_95 = 1.96
 
 /**
- * Chapman's estimator and its variance.
- *
- * Chapman rather than plain Lincoln-Petersen because the plain form is undefined at `m = 0`
- * and badly biased at small `m`; the `+1` terms make it defined everywhere and near-unbiased.
+ * Compute Chapman's population estimate and variance.
  */
 export function chapmanEstimate(n1: number, n2: number, m: number): ChapmanEstimate {
 	if (!Number.isSafeInteger(n1) || !Number.isSafeInteger(n2) || !Number.isSafeInteger(m) || n1 < 0 || n2 < 0 || m < 0) {

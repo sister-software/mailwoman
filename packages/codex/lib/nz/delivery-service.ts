@@ -3,73 +3,41 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   NZ Post delivery-service types — the second half of the Commonwealth po_box vocabulary: `PO Box
- *   24999`, `Private Bag 106999`, `CMB B99`, plus the identifier-less counter services, plus the
- *   colloquial "Private Box" alias documented here for recognition with its 'invalid' citation.
- *
- *   Sourcing (accessed 2026-06-11):
- *
- *   - NZ Post Address Standards (ADV358, October 2021 edition hosted on nzpost.co.nz) is the
- *       authoritative document. Verbatim: "The Delivery Service Type is mandatory. It may be PO
- *       Box, Private Bag, CMB, Response Bag, Counter Delivery or Poste Restante." Its Delivery
- *       Service Elements table gives the descriptions reproduced in
- *       {@link NZ_DELIVERY_SERVICE_TYPES}, and the identifier rules: "The Delivery Service
- *       Identifier must have no leading zeros and no spaces, separators or other punctuation"; "The
- *       Delivery Service Identifier is not used for Counter Delivery or Poste Restante. It is also
- *       not used for Private Bags that do not have an identifier allocated by New Zealand Post".
- *       Examples: `PO Box 24999`, `Private Bag 106999`, `Response Bag 500999`, `CMB B99`, `Counter
- *       Delivery`, `Poste Restante`. The standard's incorrect-form examples show `P O Box 4 099`
- *       and `PB 39990` as wrong — `PB` is a common error rather than a designator, so it is not in this
- *       table.
- *   - The live addressing-standards page repeats the format rules: "PO Box and Private Bag numbers are
- *       space-free (eg. 'PO Box 23226', not 'PO Box 23 226')", "'PO' is space-free … and
- *       punctuation-free".
- *
- *   All six types are current in the October 2021 ADV358 (including CMB — no legacy flag is needed
- *   for the NZ address system).
- *
- *   **"Private Box" — colloquial alias, officially invalid:** ADV358 does not list "Private Box" as a
- *   Delivery Service Type and NZ Post's live standards pages (addressing-standards, how-to-address-
- *   mail, accessed 2026-06-11) name only the six types above. However, real NZ mail and the postal
- *   arena's gold rows carry "Private Box" as a colloquial synonym for a numbered PO Box (same
- *   numbered format, different label). Operator ruling 2026-06-11: "Private Box = recognize-as-used
- *   — codex documents it unofficial/colloquial with the 'officially invalid' citation. the extract
- *   teaches recognition (validity and recognition are separate disciplines, same as the AU legacy
- *   flags)." This is encoded in {@link NZ_PRIVATE_BOX_ALIAS} — a distinct export from
- *   {@link NZ_DELIVERY_SERVICE_TYPES} so callers can choose whether to include the unofficial form.
+ *   NZ Post delivery-service types from ADV358, including the identifier rules for numbered and
+ *   counter services. "Private Box" is also recognized as an unofficial alias for numbered PO Boxes;
+ *   it remains separate from the six valid types. Sources were checked on 2026-06-11.
  * @see {@link https://www.nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf NZ Post Address Standards (ADV358, Oct 2021)}
  * @see {@link https://www.nzpost.co.nz/business/shipping-in-nz/addressing-standards NZ Post addressing standards}
  * @see {@link https://www.nzpost.co.nz/personal/sending-in-nz/how-to-address-mail NZ Post — how to address mail}
  */
 
 /**
- * Identifier requirement per ADV358's Delivery Service Elements rules.
+ * Identifier rule from ADV358.
  */
 export type NZIdentifierRule = "required-if-allocated" | "optional" | "not-used"
 
 /**
- * One Delivery Service Type row from ADV358.
+ * One ADV358 delivery-service type.
  */
 export interface NZDeliveryServiceType {
 	/**
-	 * The Delivery Service Type, verbatim casing per ADV358 ("PO Box", "Private Bag", "CMB").
+	 * Delivery Service Type as published in ADV358.
 	 */
 	type: string
 	/**
-	 * The ADV358 description, verbatim.
+	 * Description from ADV358.
 	 */
 	description: string
 	/**
-	 * Identifier rule: PO Box/Response Bag/CMB identifiers are mandatory if allocated.
+	 * PO Box, Response Bag, and CMB require an allocated identifier.
 	 *
-	 * Private Bag may legitimately have none ("not used … for Private Bags that do not have an
-	 * identifier allocated by New Zealand Post"); Counter Delivery and Poste Restante never carry one.
+	 * Private Bag may omit it; Counter Delivery and Poste Restante never use one.
 	 */
 	identifier: NZIdentifierRule
 }
 
 /**
- * The six Delivery Service Types, verbatim from ADV358 (see the module header).
+ * The six valid delivery-service types listed in ADV358.
  */
 export const NZ_DELIVERY_SERVICE_TYPES = [
 	{ type: "PO Box", description: "Post Box, PO Box", identifier: "required-if-allocated" },
@@ -93,58 +61,36 @@ export const NZ_DELIVERY_SERVICE_TYPES = [
 ] as const satisfies readonly NZDeliveryServiceType[]
 
 /**
- * A canonical NZ Delivery Service Type.
+ * A valid ADV358 delivery-service type.
  */
 export type NZDeliveryServiceTypeName = (typeof NZ_DELIVERY_SERVICE_TYPES)[number]["type"]
 
 /**
- * Metadata for the colloquial "Private Box" alias (see the module header and operator ruling 2026-06-11).
+ * Metadata for "Private Box", a colloquial alias absent from ADV358 and current NZ Post standards.
  *
- * Kept separate from {@link NZ_DELIVERY_SERVICE_TYPES} because it is not a valid ADV358
- * Delivery Service Type — recognition and validity are separate concerns.
- *
- * Sourcing: ADV358 (Oct 2021) omits "Private Box" from its Delivery Service Type list entirely.
- * NZ Post's live standards pages (nzpost.co.nz/business/shipping-in-nz/addressing-standards
- * and nzpost.co.nz/personal/sending-in-nz/how-to-address-mail, accessed 2026-06-11)
- * do not list it as a valid type.
- *
- * Real NZ mail and the postal arena's gold rows nonetheless carry it as a
- * colloquial synonym for a numbered PO Box.
- * Operator ruling 2026-06-11 authorizes its inclusion here for recognition only, with this citation.
- *
- * Corpus synthesis should treat it as a non-prescriptive form.
+ * It is recognized for parsing only and should not be treated as a prescribed form.
  */
 export const NZ_PRIVATE_BOX_ALIAS = {
 	/**
-	 * The surface form as it appears on real mail and in postal-arena gold rows.
+	 * Colloquial surface used on real mail.
 	 */
 	type: "Private Box",
 	/**
-	 * The description of validity status rather than a valid ADV358 Delivery Service Type.
-	 *
-	 * A colloquial NZ synonym for a numbered PO Box (same format as "PO Box <number>").
+	 * Status and meaning of the alias.
 	 */
 	description: "Colloquial NZ synonym for a numbered PO Box — NOT a valid ADV358 Delivery Service Type",
 	/**
-	 * Identifier rule mirrors PO Box: a number is expected when the alias is used with one.
+	 * Identifier rule inherited from PO Box.
 	 */
 	identifier: "required-if-allocated" satisfies NZIdentifierRule,
 	/**
-	 * True — this form is not valid per ADV358 or NZ Post's live standards pages (accessed 2026-06-11).
+	 * True because this alias is not an ADV358 type.
 	 */
 	officiallyInvalid: true,
 } as const
 
 /**
- * Per-type surface patterns (designator phrase only).
- *
- * Recognition is deliberately wider than the prescriptive standard — mail in the wild writes "P.O.
- * Box" even though ADV358 says `PO` is punctuation-free, but it does not admit
- * forms the standard names as errors of type (`PB`).
- *
- * The colloquial "Private Box" alias is included for recognition
- * (see {@link NZ_PRIVATE_BOX_ALIAS} and operator ruling 2026-06-11); it maps to a distinct
- * synthetic type string so callers can distinguish it from the ADV358 types.
+ * Accepted surface patterns, including punctuation variants and the separate "Private Box" alias.
  */
 const TYPE_PATTERNS: ReadonlyArray<readonly [NZDeliveryServiceTypeName | "Private Box", string]> = [
 	["PO Box", String.raw`p\.?\s*o\.?\s*box|post\s+box`],
@@ -163,15 +109,12 @@ export type NZDeliveryServiceMatchTypeName = NZDeliveryServiceTypeName | "Privat
 
 const IDENTIFIER_RULES = new Map<NZDeliveryServiceMatchTypeName, NZIdentifierRule>([
 	...NZ_DELIVERY_SERVICE_TYPES.map((t) => [t.type, t.identifier] as const),
-	// "Private Box" mirrors PO Box identifier rules (required-if-allocated) per the alias metadata.
+	// Apply the PO Box identifier rule to the colloquial alias.
 	["Private Box", NZ_PRIVATE_BOX_ALIAS.identifier],
 ])
 
 /**
- * One anchored regex per type.
- *
- * The identifier shape follows ADV358 (alphanumeric, no spaces or separators — `24999`, `B99`);
- * the identifier-less counter services take no tail at all.
+ * Anchored matcher for each type, using ADV358's identifier format.
  */
 const MATCHERS: ReadonlyArray<{ type: NZDeliveryServiceMatchTypeName; re: RegExp }> = TYPE_PATTERNS.map(
 	([type, src]) => {
@@ -183,19 +126,16 @@ const MATCHERS: ReadonlyArray<{ type: NZDeliveryServiceMatchTypeName; re: RegExp
 )
 
 /**
- * Result of an NZ delivery-service parse.
+ * Parsed New Zealand delivery-service line.
  */
 export interface NZDeliveryServiceMatch {
 	/**
-	 * The designator phrase as it appeared ("PO Box", "private bag", "Private Box").
+	 * Designator as written in the input.
 	 */
 	matched: string
 	/**
-	 * The canonical Delivery Service Type or recognized alias
-	 * ("PO Box", "Private Bag", "CMB", …, "Private Box").
-	 *
-	 * When `type` is "Private Box", `colloquial` is true and `officiallyInvalid` is true.
-	 * The form is not a valid ADV358 type.
+	 * Canonical type or recognized alias.
+	 * "Private Box" is colloquial, not an ADV358 type.
 	 */
 	type: NZDeliveryServiceMatchTypeName
 	/**
@@ -203,24 +143,16 @@ export interface NZDeliveryServiceMatch {
 	 */
 	id?: string
 	/**
-	 * True when the matched form is the colloquial "Private Box" alias
-	 * rather than a valid ADV358 Delivery Service Type.
-	 *
-	 * Absent (undefined) for all standard ADV358 types.
+	 * Present only when the input uses the colloquial alias.
 	 */
 	colloquial?: true
 }
 
 /**
- * If `input` is a standalone NZ delivery-service phrase ("PO Box 24999", "Private Bag 106999",
- * "CMB B99", bare "Private Bag", "Counter Delivery", "Private Box 102"),
- * return the canonical type and identifier.
+ * Parse a standalone delivery-service phrase.
  *
- * Null otherwise — including for "PB 39990" (an error of form per ADV358).
- *
- * When `type` is "Private Box", the result has `colloquial: true` — indicating the colloquial alias
- * (not an ADV358 Delivery Service Type. See {@link NZ_PRIVATE_BOX_ALIAS} and operator ruling 2026-06-11).
- * Callers that want only formally-valid ADV358 types should check `!result.colloquial`.
+ * Return `null` for unrecognized forms; results for "Private Box" include `colloquial: true`
+ * so callers can exclude the unofficial alias.
  */
 export function matchNZDeliveryService(input: unknown): NZDeliveryServiceMatch | null {
 	if (typeof input !== "string") return null
@@ -238,14 +170,14 @@ export function matchNZDeliveryService(input: unknown): NZDeliveryServiceMatch |
 }
 
 /**
- * Type-predicate: does the input look like a standalone NZ delivery-service address line?
+ * Return whether the input is a recognized delivery-service line.
  */
 export function isNZDeliveryService(input: unknown): boolean {
 	return matchNZDeliveryService(input) !== null
 }
 
 /**
- * Normalize a recognized phrase to the ADV358 form (`"p.o. Box 24999"` → `"PO Box 24999"`).
+ * Normalize a recognized phrase to its canonical type and identifier.
  *
  * @returns The input unchanged if it isn't a delivery-service phrase.
  */

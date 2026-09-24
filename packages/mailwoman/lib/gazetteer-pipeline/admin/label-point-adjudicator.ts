@@ -3,28 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Anchor-adjudicated point choice for the WOF admin ingest (#1905).
- *
- *   The ingest prefers `lbl:` over `geom:` because the math centroid is wrong exactly where it
- *   matters (France's `geom:` point is in Spain). But the label point carries its own upstream
- *   defects: WOF's `lbl:` for `Washington` (wof:85931779) sits at 38.82652, −77.01712 — the
- *   district's southern tip, 7.8 km from the city — and the shipped preference imported it
- *   faithfully, which is what put four metamorphic band rows 8.1 km out.
- *
- *   Neither point can arbitrate itself, so where the two disagree the record's own GeoNames
- *   concordance is the independent anchor. Census over the 2026-08-25 artifact's repo-backed
- *   localities above 100,000 population (1,612 records carrying both points): 144 disagree by more
- *   than {@link LABEL_GEOM_DISAGREEMENT_KM}; adjudicated against their `gn:id` anchor, 48 have the
- *   label point closer (the Chinese prefecture-city shape — the label marks the urban seat, the
- *   centroid the vast polygon), 40 have the geometric point at least
- *   {@link ANCHOR_DECISIVE_RATIO}× closer (Washington, Frankfurt am Main at 10.8 km, Stuttgart at
- *   9.5 km, Oklahoma City at 11.3 km, Chennai at 12.5 km, Yokohama at 14.5 km), 52 separate by less
- *   than the ratio and 4 carry no anchor.
- *
- *   The rule is therefore conservative by construction: the anchor overrides the label preference
- *   only when the two points disagree beyond the threshold and the anchor separates them at the
- *   decisive ratio. Agreeing points, anchorless records, and unclear separations all keep the
- *   existing label-first behavior byte-identically.
+ *   Choose between WOF label and geometric points using a GeoNames anchor.
+ *   Override the label preference only when points disagree beyond the registered distance
+ *   and the anchor is decisively closer to one. Otherwise retain the label point.
  */
 
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
@@ -41,15 +22,12 @@ export interface PointPair {
 }
 
 /**
- * Below this label-versus-geometric disagreement the anchor is never consulted —
- * the pair agrees to within ordinary centroid noise and the label preference stands.
+ * Minimum label/geometric separation before consulting the anchor, in kilometers.
  */
 export const LABEL_GEOM_DISAGREEMENT_KM = 5
 
 /**
- * The anchor must be this many times closer to one point than the other to override the default.
- *
- * At less separation the anchor cannot say which point is the settlement, and the label keeps winning.
+ * Required anchor-distance ratio to override the label preference.
  */
 export const ANCHOR_DECISIVE_RATIO = 2
 
@@ -68,11 +46,7 @@ export interface AdjudicatedPoint extends PointPair {
 export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => Promise<PointPair | undefined>
 
 /**
- * Choose the stored point for a record carrying both a label and a geometric centroid.
- *
- * With no disagreement, no anchor, or an anchor that does not separate the pair decisively,
- * the label point wins — the existing preference, unchanged.
- * The anchor speaks only in the narrow band the module docstring's census measured.
+ * Choose the stored point; ambiguous or unanchored cases retain the label point.
  */
 export function choosePoint(geom: PointPair, lbl: PointPair, anchor: PointPair | undefined): AdjudicatedPoint {
 	const disagreement = haversineKm(geom.latitude, geom.longitude, lbl.latitude, lbl.longitude)
@@ -96,22 +70,16 @@ export function choosePoint(geom: PointPair, lbl: PointPair, anchor: PointPair |
 }
 
 /**
- * GeoNames tab-separated column offsets (the standard country-file dump layout): id first, then name fields.
- * Latitude and longitude sit at columns 4 and 5.
+ * GeoNames country-file columns for id, latitude, and longitude.
  */
 const GN_COLUMN_ID = 0
 const GN_COLUMN_LAT = 4
 const GN_COLUMN_LON = 5
 
 /**
- * Build a lazy per-country anchor lookup over a GeoNames country-file directory (`<dir>/<CC>.txt`).
+ * Build a lazy, cached lookup from GeoNames country files.
  *
- * A country file loads on the first anchor request for that country and is cached as an id → point map.
- * A country whose file is absent caches an empty map, so a data root without GeoNames extracts degrades
- * to "no anchor anywhere" — the label preference, byte-identical to a build without this module.
- *
- * Loading is lazy by design: the consult fires only for the rare wide-disagreement records,
- * so the cost is one asynchronous file read per country that has such a record.
+ * Missing files produce empty maps; files load on the first country lookup.
  */
 export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): Promise<GeoNamesAnchorLookup> {
 	const byCountry = new Map<string, Promise<Map<string, PointPair>>>()
@@ -125,9 +93,7 @@ export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): 
 			const points = new Map<string, PointPair>()
 			const path = resolvePathBuilder(geonamesDir, `${country.toUpperCase()}.txt`)
 
-			// Missing country extract → empty map, cached: absence of anchors, never an error.
-			// `from` parses content (a path argument would be parsed as one row of itself),
-			// so the file is read once and streamed through the TSV parser.
+			// Cache missing extracts as empty maps; parse file contents, not the path string.
 			if (await pathExists(path)) {
 				for (const cols of readUnquotedTSVText(await readLocalTextFile(path))) {
 					const latitude = Number(cols[GN_COLUMN_LAT])

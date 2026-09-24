@@ -2,56 +2,38 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Bounded retry policy for {@linkcode APIClient} — which failures are worth another attempt, how
- *   long to wait, and the hard ceiling on both.
- *
- *   Lifted from `98c4dda1:filer/sdk/sec-client.ts`, where the `Retry-After` handling (the http-date
- *   form, the long fallback for a present-but-unparseable value, and the RFC 9110 `1*digit`
- *   tightening) was settled over two review rounds. The classifier is the same taxonomy that client
- *   used, restated against Axios's error shape rather than a raw `Response`.
+ * @file Bounded retry policy for `APIClient`, including RFC 9110 `Retry-After` parsing and Axios error classification.
  */
 
 import { AxiosError, isAxiosError } from "axios"
 
 /**
- * Rate limited — retryable, the server is asking us to back off.
+ * HTTP status for rate limiting.
  */
 const HTTP_TOO_MANY_REQUESTS = 429
 
 /**
- * The request took too long at the origin — retryable.
+ * HTTP status for an origin timeout.
  */
 const HTTP_REQUEST_TIMEOUT = 408
 
 /**
- * Lowest 5xx status.
- *
- * Server-side failures are retryable.
+ * First HTTP server-error status.
  */
 const HTTP_SERVER_ERROR_MIN = 500
 
 /**
- * Highest 5xx status.
+ * Last HTTP server-error status.
  */
 const HTTP_SERVER_ERROR_MAX = 599
 
 /**
- * A hard ceiling on how long a single retry wait is ever allowed to be,
- * regardless of what a server-supplied `Retry-After` asks for.
- *
- * Honoring `Retry-After` is the right side of most fair-access policies, but an unbounded
- * honor-anything policy would let a pathological (or misconfigured) server hang a bulk crawl
- * for hours. 60s is generous for anything a real rate limiter would plausibly ask for.
- * Also the fallback used when `Retry-After` is present but unparseable.
- *
- * A malformed header is still the server asking us to back off, and guessing long is the safe failure mode.
- * Guessing short (the exponential default) risks hammering a server that explicitly asked for space.
+ * Maximum wait for `Retry-After`, also used when a present header cannot be parsed.
  */
 export const MAX_RETRY_AFTER_MS = 60_000
 
 /**
- * Attempts a retrying client makes by default (including the first) —
- * a stated ceiling rather than "until it works."
+ * Default maximum attempts, including the initial request.
  */
 export const DEFAULT_MAX_ATTEMPTS = 3
 
@@ -61,26 +43,12 @@ export const DEFAULT_MAX_ATTEMPTS = 3
 export const DEFAULT_BASE_RETRY_DELAY_MS = 500
 
 /**
- * RFC 9110 §10.2.3: `Retry-After` is either `delay-seconds`
- * (`1*digit` — one or more ascii digits, no sign, no decimal point, no hex) or an http-date.
- *
- * `Number("0x10")` and `Number("1.5")` both parse as valid JS numbers but are not valid `delay-seconds`,
- * so the numeric branch matches the RFC grammar directly instead of delegating to `Number()`.
+ * RFC 9110 delay-seconds syntax: one or more ASCII digits.
  */
 const RETRY_AFTER_DELAY_SECONDS_PATTERN = /^\d+$/
 
 /**
- * A necessary (not sufficient) pre-check before trusting `Date.parse` on the http-date
- * branch: `Date.parse` is FAR more lenient than RFC 9110's http-date grammar
- * and will parse plausible-looking garbage.
- *
- * `Date.parse("1.5")` returns a valid timestamp (~Jan 2001, some locale-ish `M.D` reading),
- * which very nearly slipped a bare fractional-seconds typo through as an accepted
- * http-date instead of falling back to the long ceiling.
- *
- * Every valid RFC 9110 http-date form (the preferred IMF-fixdate and the obsolete RFC 850 form)
- * ends in the literal `GMT`; requiring that suffix rejects `Date.parse`'s stray non-date
- * parses without needing a full http-date grammar implementation.
+ * Require the `GMT` suffix before passing a value to lenient `Date.parse`.
  */
 const HTTP_DATE_SUFFIX_PATTERN = /GMT$/
 
@@ -139,24 +107,8 @@ export function parseRetryAfterMs(header: string | null | undefined): number | n
 }
 
 /**
- * Whether an http status is worth another attempt: 408 and 429 by name, plus the whole 5xx range.
- *
- * Everything else — every other 4xx, every 2xx/3xx that still produced an error — is terminal.
- *
- * The 4xx exclusion prevents retries that cannot succeed.
- * A 403 from a rate-limited public API means the request failed to identify itself
- * (for SEC edgar, a missing or non-descriptive `User-Agent`); it does not mean
- * the resource is gone or that this client is banned.
- *
- * Retrying it cannot succeed and burns rate budget on a request that was never going to be served.
- * An earlier revision spelled this out as a redundant `if (status === 403) return false`
- * ahead of the range check.
- *
- * No mutation could kill it, because the range check already excluded 403,
- * so it was removed rather than left as unfalsifiable decoration.
- *
- * The property is proved by mutating this range instead: broadening it to
- * `>= 400` makes the 403 and 404 tests fail.
+ * Return whether the status is 408, 429, or in the 5xx range.
+ * Other statuses are terminal.
  */
 export function isRetryableStatus(status: number): boolean {
 	if (status === HTTP_TOO_MANY_REQUESTS || status === HTTP_REQUEST_TIMEOUT) return true

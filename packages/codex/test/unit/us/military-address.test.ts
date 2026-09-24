@@ -85,7 +85,7 @@ describe("matchMilitaryUnitLine", () => {
 	})
 
 	it("isMilitaryUnitLine: returns false for malformed PSC/CMR (no BOX) rather than throwing", () => {
-		expect(isMilitaryUnitLine("PSC 1520")).toBe(false) // malformed — requiresBox, no box
+		expect(isMilitaryUnitLine("PSC 1520")).toBe(false) // PSC lines require BOX.
 		expect(isMilitaryUnitLine("PSC 1520 BOX 4620")).toBe(true)
 		expect(isMilitaryUnitLine("UNIT 7")).toBe(true)
 	})

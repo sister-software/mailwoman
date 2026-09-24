@@ -3,37 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The six-role frontmatter interface for the docs-reorg site (docs-architecture cleanup, Phase 0,
- *   task 2 — `docs/superpowers/plans/2026-08-03-docs-reorg.md`). Every published page declares which
- *   of six roles it plays, and each role carries required fields on top of `role:` itself:
- *
- *   - `tutorial`, `guide` — `verified-with:` (the version a page's captured command output ran
- *     against).
- *   - `reference` — `source-of-truth:`.
- *   - `landing` — `audience:`.
- *   - `explanation`, `evidence` — no fields beyond `role:`.
- *
- *   `validatePage` is pure — no filesystem, no process, no sidebar — so it's unit-tested directly in
- *   `check-docs-structure.test.ts`. The check (`check-docs-structure.ts`) wires it against the real
- *   corpus under `--strict`; without the flag the check keeps enforcing the old seven-role vocabulary
- *   (guide/tutorial/concept/reference/decision/evidence/landing) this module deliberately does not
- *   know about. That vocabulary is retired by this interface rather than extended by it.
+ * Frontmatter validation for the six published-page roles. Guides and tutorials require
+ * `verified-with`, references require `source-of-truth`, and landing pages require `audience`.
+ * Explanations and evidence pages require only `role`. The legacy seven-role policy is enforced by
+ * the structural check, not by this module.
  */
 
 /**
- * The six-role page vocabulary the docs-reorg site is built around.
+ * Roles accepted by the published documentation.
  */
 export const PAGE_ROLES = ["tutorial", "guide", "reference", "explanation", "landing", "evidence"] as const
 
 /**
- * One of the six page roles.
+ * A supported published-page role.
  */
 export type PageRole = (typeof PAGE_ROLES)[number]
 
 /**
- * Roles that must carry `verified-with:`.
- *
- * A task/guide's captured command output is only as good as the version it was run against.
+ * Roles whose captured command output must name the version used.
  */
 const VERIFIED_WITH_ROLES = new Set<PageRole>(["tutorial", "guide"])
 
@@ -42,10 +29,7 @@ function isRoleValue(value: unknown): value is PageRole {
 }
 
 /**
- * A field counts as declared when it has a non-empty scalar value, or is present as a non-scalar value
- * the caller has already normalized to `true` (see `check-docs-structure.ts`'s `toFrontmatterRecord`).
- *
- * `undefined`, `null`, and `""` all count as not-declared.
+ * Return whether a frontmatter field has a non-empty value.
  */
 function isDeclared(frontmatter: Record<string, unknown>, key: string): boolean {
 	const value = frontmatter[key]
@@ -54,12 +38,7 @@ function isDeclared(frontmatter: Record<string, unknown>, key: string): boolean 
 }
 
 /**
- * Validate one page's frontmatter against the six-role interface.
- *
- * @returns human-readable failure strings prefixed with `path`, or `[]` when the page is valid.
- * A missing or unrecognized `role:` short-circuits.
- * The role-conditional field rules below don't apply until the role itself is known-good,
- * so each of those cases returns a single failure rather than compounding with the field-level checks.
+ * Validate one page and return path-prefixed errors, or an empty array when valid.
  */
 export function validatePage(frontmatter: Record<string, unknown>, path: string): string[] {
 	if (!isDeclared(frontmatter, "role")) {

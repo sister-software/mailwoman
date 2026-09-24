@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The scaffolding every tool shares: the provenance block, the two input schemas, and the small readings that more
- *   than one tool needs. Extracted from `tools.ts` when the eighth tool pushed that file past its line cap — the tool
- *   definitions are the part worth reading top to bottom, and this is the part they all repeat.
+ *   Shared provenance types, input schemas, and formatting helpers for developer tools.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -23,9 +21,7 @@ import { HOLDOUT_DEFAULT_N, HOLDOUT_SOURCES, type ResolvedInputSet } from "#inpu
 import type { JobRegistry } from "#jobs"
 
 /**
- * On every result of every tool.
- *
- * What produced this number, under what source, with what actually fed.
+ * Provenance attached to each result.
  */
 export interface Provenance {
 	engine_id: string
@@ -51,11 +47,7 @@ export interface Provenance {
 }
 
 /**
- * The input-set half of a provenance block, on its own.
- *
- * An external arm has no engine, no tree fingerprint and no effective config, but it is
- * measured over exactly the same rows, and the denominators, hash and selection kind are
- * the half that must be identical across a comparison's two arms whatever either arm is.
+ * Convert input-set metadata to the provenance shape.
  */
 export function inputSetProvenance(set: ResolvedInputSet): Provenance["input_set"] {
 	return {
@@ -96,15 +88,7 @@ export function provenanceFor(
 }
 
 /**
- * One hand-picked input, with or without a truth point.
- *
- * The coordinate is an assertion by the caller — nothing here verifies it,
- * and an invented pin looks identical to a surveyed one in the output.
- * That is why the set's `why` is required, and why this describes where a point
- * should come from rather than merely accepting a number.
- *
- * Declared out of line because the union nests four calls deep inside the set schema, which
- * `unicorn/max-nested-calls` refuses, and rightly: a reader should meet this shape under its own name.
+ * Literal input with caller-supplied truth coordinates.
  */
 const LITERAL_INPUT_WITH_TRUTH_SCHEMA = z.object({
 	input: z.string().min(1),
@@ -132,13 +116,9 @@ const LITERAL_INPUTS_DESCRIPTION =
 	"file, rather than writing rows and discovering the score afterwards."
 
 /**
- * Which inputs a measuring tool runs over.
+ * Input selection for measurement tools.
  *
- * `{"kind":"board"}` is the shortest legal value and the default everywhere,
- * so the well-powered choice is the cheapest one to type.
- * The hand-picked branch is deliberately wordier — an array and a `why` —
- * because choosing a small panel is a claim about what is worth measuring,
- * and the claim is echoed into every number the set produces.
+ * Defaults to the regression board; literal inputs require a rationale.
  */
 export const INPUT_SET_SCHEMA = z
 	.union([
@@ -199,12 +179,9 @@ export const INPUT_SET_SCHEMA = z
 	.describe('Which inputs to measure. `{"kind":"board"}` is the full 558-row regression board and is the default.')
 
 /**
- * Every construction- and call-time pin, in the CLI's own vocabulary.
+ * Configuration pins in CLI naming.
  *
- * Unset means the production default, never "off".
- * The rule `GauntletResolverPins` states in `harness.ts`: "the library defaults are the thing under test".
- *
- * A schema that coerced undefined to false would grade a configuration nobody ships.
+ * Unset values retain production defaults; they do not mean "off".
  */
 export const ENGINE_CONFIG_SCHEMA = z
 	.object({
@@ -255,36 +232,22 @@ export interface DevTool {
 }
 
 /**
- * How many diffs a two-arm tool renders in full before falling back to its machine-readable list alone.
- *
- * Reading addresses is the point of a diff tool, and rendering three hundred of them is not:
- * past this a caller is comparing models rather than reading addresses, and should narrow the input set.
+ * Maximum number of diffs rendered before returning only the machine-readable list.
  */
 export const RENDERED_DIFF_LIMIT = 40
 
 /**
- * Two engines to compare, or the reason the comparison would have been meaningless.
- *
- * `error` is present when the candidate resolved to the same engine as the baseline,
- * and a caller returns it unchanged rather than running the arms.
+ * Two acquired engines, or the error that prevented comparison.
  */
 export type TwoArms =
 	| { base: Engine; candidate: Engine; error?: undefined }
 	| { base?: undefined; candidate?: undefined; error: Record<string, unknown> }
 
 /**
- * Acquire a baseline arm and a candidate arm, and refuse a candidate that did not take.
+ * Acquire baseline and candidate engines, rejecting a candidate whose weights did not load.
  *
- * `EngineConfig` is a plain object, so a mistyped key is dropped in silence
- * and both arms run the same weights.
- * A diff tool would then report every row identical, which reads as "the candidate
- * moved nothing" and is really "the change never ran".
- *
- * That happened on `mwdev_diff_parse`'s first live call, with `weightsCacheRoot` written for
- * `weights_cache`, so the engine is asked what it loaded rather than trusted to have taken the key.
- *
- * Shared because every two-arm tool needs the same guard, and a copy of it is a
- * guard that can rot in one tool while holding in another.
+ * Configuration keys can be silently ignored, so verify the resolved engine
+ * rather than assuming the pin took.
  */
 export async function acquireTwoArms(
 	registry: EngineRegistryLike,
@@ -320,23 +283,11 @@ export function componentsOf(run: GeocodeRun): Record<string, string> {
 }
 
 /**
- * The rendered evidence rows for one run, or a stated absence.
- *
- * `trace-rows` is pure and Ink-free by its own design, so the same strings the
- * `--debug` pane shows are returnable here.
- * Both forms go back: the structured trace is what makes evidence diffable across arms,
- * and the rendered rows are what let a human read it in a transcript without an
- * agent paraphrasing, which is where detail goes missing.
+ * The rendered evidence rows for a run, or a stated absence.
  */
 /**
- * The parse trace without its matrices.
- *
- * The full `NeuralParseTrace` ships per-token logit and emission rows (33 floats × tokens, twice)
- * plus per-channel feature matrices — thousands of numbers that no reader consumes inline
- * and that crowd a context window the rendered rows already serve.
- * The slim form keeps everything discrete and diagnostic (pieces, tokens with labels + confidences,
- * the viterbi path, priors, locale head, repairs, per-channel confidence vectors) and states
- * what it dropped; `full_parse_trace: true` returns the raw object for the rare numeric dig.
+ * Return diagnostic parse fields without large numeric matrices.
+ * Set `full_parse_trace: true` to include raw matrices.
  */
 export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"]): Record<string, unknown> {
 	const { logits, emissions, anchor, gazetteer, country, ...rest } = parse
@@ -359,16 +310,7 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 }
 
 /**
- * The #1649 intent check's verdict, when it fired.
- *
- * A refusal is not a parse failure, and everything downstream of it looks exactly like one:
- * the eval discards a completed tree and hands back `roots: []`, so `decodeAsJSON`
- * answers `{}` and the resolver-interior records are empty.
- * Rendered without this line, `Cafe at St Mary's, Oxford` reads as an input the parser could make
- * nothing of, when in fact it parsed to `locality=Oxford › dependent_locality=St Mary's › street=Cafe`
- * and was refused as a thing-query.
- *
- * Reporting the refusal is what separates "we could not" from "we would not".
+ * Render an intent refusal separately from a parse failure.
  */
 function droppedRow(run: GeocodeRun): string[] {
 	const dropped = (run.result as { dropped_components?: Array<{ tag: string; value: string; kept: string }> })
@@ -389,11 +331,7 @@ function refusalRow(run: GeocodeRun): string[] {
 
 	if (!markers?.length) return []
 
-	// `evidence` is the marker's measurement (`Record<string, unknown>`),
-	// so it is serialized rather than interpolated.
-	// A template literal renders it `[object Object]` and the line then names a refusal it cannot justify.
-	// `mechanism` is the `family:rule` that fired and is what a reader acts on.
-	// The kind alone does not say which rule refused.
+	// Serialize evidence and include the firing mechanism; the marker kind alone is insufficient.
 	const named = markers
 		.map((marker) => {
 			const evidence = marker.evidence ? ` ${stringifyJSON(marker.evidence)}` : ""
@@ -433,11 +371,9 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 }
 
 /**
- * The #1721 resolver-interior rows — one line per backend lookup: the query as sent,
- * the checks that fired, the pick, and the candidate table with each row's per-stage rank vector.
+ * Render one line per resolver lookup, including query, checks, selection, and candidate ranks.
  *
- * `resolver: []` renders as its own claim (the walk performed no lookups) rather than nothing,
- * because an absent line is indistinguishable from a section that predates the field.
+ * Distinguish no lookups from traces that lack resolver records.
  */
 function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 	const records = trace.resolver
@@ -500,12 +436,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 }
 
 /**
- * Firing signals a {@link GauntletResult} carries for free — a mechanism reporting
- * that it spoke, separately from whether the outcome moved.
- *
- * `postcode_country_scope` is the worked example and the harness's own reason for carrying it
- * (`harness.ts`): it is "the firing count, so a pinned run can say how many rows the mechanism actually
- * spoke on rather than leaving an unchanged verdict to mean either 'harmless' or 'never ran'."
+ * Count mechanism firings separately from outcome changes.
  */
 export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; b: number }> {
 	const scoped = (row: ComparedRow, arm: "a" | "b"): boolean =>
@@ -534,10 +465,8 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 }
 
 /**
- * One input under both arms.
- *
- * `differed` and `grade` answer different questions and are reported separately,
- * because an unchanged verdict from a mechanism that never ran proves nothing (`run.ts:32`).
+ * One input measured under both arms.
+ * `differed` and `grade` report separate facts.
  */
 export interface ComparedRow {
 	id: string
@@ -552,46 +481,28 @@ export interface ComparedRow {
 	issues_a: string[]
 	issues_b: string[]
 	/**
-	 * Whether the two arms' place-identity chains differ.
-	 *
-	 * Present only when both arms stated one (see `ExternalAnswer.place_ids`).
-	 *
-	 * Deliberately outside `differed`: the coordinate-level zero-diff interface
-	 * batteries pin on is unchanged, and identity is its own claim.
+	 * Whether place-identity chains differ; present only when both arms provide them.
 	 */
 	identity_differed?: boolean
 	/**
-	 * Whether the two arms answered with different result tiers.
-	 * Present only when both arms answered and stated one.
-	 *
-	 * Outside `differed` for the same reason as identity: a tier is a claim about
-	 * the answer rather than its coordinate.
+	 * Whether result tiers differ; present only when both arms provide a tier.
 	 */
 	tier_differed?: boolean
 }
 
 /**
- * Which column a output is invalid out by.
- *
- * `truth_tolerance_m` is meaningful only where rows are graded against a coordinate: it separates
- * rows whose truth is a rooftop from rows whose truth is a 25 km area centroid, which is the
- * difference between a sub-kilometre column that measures the arm and one that measures the corpus.
+ * Valid stratification keys.
+ * `truth_tolerance_m` applies only to coordinate-graded rows.
  */
 export type StratumKey = "country" | "address_kind" | "status" | "truth_tolerance_m" | "truth_type"
 
 /**
- * Every legal stratum, for a runtime check the type cannot give a caller that reached the handler directly.
- *
- * An unrecognised key used to bucket every row as `unknown` and report a single stratum.
- * A table that looks like a stratified result and is not one.
- *
- * Measured 2026-08-16: `stratify_by: "truth_type"` against a 60-row FR panel returned
- * `{"unknown": {n: 60}}` rather than saying the key did not exist.
+ * Allowed strata for runtime validation of untyped handler input.
  */
 const STRATUM_KEYS: readonly StratumKey[] = ["country", "address_kind", "status", "truth_tolerance_m", "truth_type"]
 
 /**
- * @throws When `by` is not a known stratum — silence here manufactures a fake one-bucket table.
+ * @throws If `by` is not a known stratum.
  */
 export function assertStratumKey(by: string): asserts by is StratumKey {
 	if (!STRATUM_KEYS.includes(by as StratumKey)) {
@@ -603,9 +514,7 @@ export function assertStratumKey(by: string): asserts by is StratumKey {
 }
 
 /**
- * Group rows by a key.
- *
- * One implementation so two stratifiers cannot drift on what an absent value is called.
+ * Group rows by key, using one shared implementation for all stratifiers.
  */
 export function bucketRows<Row>(rows: Row[], key: (row: Row) => string): Map<string, Row[]> {
 	const buckets = new Map<string, Row[]>()
@@ -624,10 +533,7 @@ export function bucketRows<Row>(rows: Row[], key: (row: Row) => string): Map<str
 }
 
 /**
- * Per-stratum counts.
- *
- * Reported rather than blended because the benchmark plan's own rule is that a headline number "lives
- * or dies on `truth_type`" — a blended figure hides an arm that won one stratum and lost another.
+ * Report counts by stratum rather than blending results across groups.
  */
 export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, unknown> {
 	const buckets = bucketRows(
@@ -651,13 +557,8 @@ export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, un
 }
 
 /**
- * One sentence for a job, whichever kind it is.
- *
- * A still-running check gets no partial reading: its numbers live in `verdict.json`.
- * It the assembler writes at the END.
- *
- * Therefore, anything read before then is not a partial answer.
- * It is no answer.
+ * Summarize a completed job.
+ * Checks expose no result until `verdict.json` is written.
  */
 export function summarizeJob(
 	state: string,

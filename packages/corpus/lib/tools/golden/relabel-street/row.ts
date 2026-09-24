@@ -3,57 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Golden-set street-suffix relabel — v0.1.2 → v0.1.3.
- *
- *   ## Why this exists
- *
- *   The golden answer key and the training corpus disagreed about one thing, and the v9.0.0
- *   promotion eval read the disagreement as a model regression (`us.street` 87.4 vs a floor of
- *   87.8). The corpus splits a US street into `street` + `street_suffix` — tiger's adapter
- *   decomposes at `corpus/src/adapters/tiger/street-decompose.ts`, the `street-affix` recipe
- *   teaches it from USPS Pub-28, and `ComponentTag` carries `street_suffix` as a first-class tag.
- *   The golden set folded it: 2,216 US rows carry a `street`, and exactly 2 of them label a
- *   `street_suffix`. Operator ruling, 2026-08-06: **the split is canonical**; the golden is the
- *   stale side. This tool moves the answer key onto the corpus convention.
- *
- *   ## The instrument
- *
- *   `matchTrailingSuffix` from `@mailwoman/codex/us` — the USPS Pub-28 Appendix C table, which is
- *   also what the corpus recipe splits on. The table is not re-implemented here, and the
- *   libpostal dictionary tiger reads is deliberately not used: measured on this golden set the two
- *   disagree on 51 US rows, and the disagreements run in the codex table's favour (libpostal's
- *   `directionals.txt` lists `center|c`, so tiger reads the `C` of "C street" as a directional
- *   prefix and then emits no suffix at all).
- *
- *   ## What it changes, and what it refuses to
- *
- *   Applied only to rows whose `country` is `US`. Three branches, mirroring the shape of tiger's
- *   `decomposeStreet` on codex tables:
- *
- *   - **street type** — the last whitespace-separated word is a Pub-28 suffix, and something is left
- *       over: "Main St" → `street: "Main"`, `street_suffix: "St"` (1,559 rows).
- *   - **street type + post-directional** — the last word is a directional and the one before it is a
- *       Pub-28 suffix: "Pennsylvania Avenue NW" → `street: "Pennsylvania"`,
- *       `street_suffix: "Avenue NW"` (347 rows). The post-directional joins the suffix rather than
- *       becoming a tag of its own, because that is what the corpus adapter emits. there is no
- *       `street_postfix` tag to move it to.
- *   - **everything else is left folded** and reported. In particular a bare post-directional tail
- *       ("Seymour East", "broadway N" — 16 rows) is not split: a directional is not a Pub-28 suffix,
- *       and the observed rows in that class are unit-contaminated ("1ST AVE SW BOX E", where the
- *       trailing "E" is a box letter).
- *
- *   FR rows are untouched, deliberately and permanently as far as this tool is concerned. French
- *   street typology puts the type first ("Rue de la Paix") and the golden labels only 7 of 665 FR
- *   street rows with a `street_prefix`; whether FR should split at all is a different question with
- *   a different table behind it, and nothing here should be read as having answered it.
- *
- *   ## Surface bytes
- *
- *   The split is a break at a whitespace run in the original string — no trimming, no case
- *   normalization, no re-joining of tokens. `street + gap + street_suffix` reconstructs the input
- *   byte-for-byte, so the whitespace between them belongs to neither span (the same shape the corpus
- *   adapter's spans have). The tool asserts this per row and refuses to write a file if it ever
- *   fails.
+ *   Relabel US golden rows to match the corpus's `street` / `street_suffix` convention, using the
+ *   codex USPS Pub-28 suffix table. Split recognized trailing suffixes, including a post-directional
+ *   when present; leave other rows unchanged. French rows are outside scope. Splits preserve original
+ *   whitespace and must reconstruct the source text byte-for-byte.
  */
 
 import {
@@ -68,10 +21,8 @@ import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 // ── Types ──────────────────────────────────────────────────────────────────
 
 /**
- * A golden-set row, as stored one-per-line in `us.jsonl` / `fr.jsonl` / `adversarial.jsonl`.
- *
- * Only the fields this tool reads are modeled.
- * Every other key rides through untouched.
+ * Golden row fields used by this relabeler.
+ * Other fields are preserved.
  */
 export interface GoldenStreetRow {
 	raw: string
@@ -83,9 +34,7 @@ export interface GoldenStreetRow {
 }
 
 /**
- * What the tool decided about one row.
- *
- * Every value except the two `split-*` classes means "left folded".
+ * Relabel decision for one row.
  */
 export type GoldenRelabelClass =
 	| "split-suffix"
@@ -101,10 +50,8 @@ export type GoldenRelabelClass =
 	| "untrimmed-street"
 
 /**
- * A review trigger on a row the tool did change.
- *
- * A flag is never an adjudication.
- * It marks the row for the operator's deck, and the split is applied either way.
+ * Review note for a changed row.
+ * It does not change the relabel decision.
  */
 export interface GoldenRelabelFlag {
 	kind: "name-prone-suffix" | "venue-context" | "remainder-is-affix"
@@ -137,16 +84,7 @@ export interface GoldenRelabelResult {
 // ── The name-prone suffix set ──────────────────────────────────────────────
 
 /**
- * Pub-28 canonicals that are also ordinary head nouns of proper names —
- * "Lincoln Park", "Boston Common", "Willow Brook".
- *
- * A split on one of these is still applied (the table is the table), but the row lands in the
- * review deck because the trailing word may belong to the name rather than to the street type.
- *
- * Chosen against the surfaces this golden set actually carries (park 6, green 5, hill 7,
- * heights 3, hollow 3, brook 3, pass 3 — the whole flagged class is 60 rows of 1,906)
- * rather than from the whole 200-entry table: flagging every possible name-head would
- * mark a third of the corrections and stop being a review artifact.
+ * Pub-28 suffixes that can also be ordinary name words; split them but flag for review.
  */
 // ── Byte-exact tail split ──────────────────────────────────────────────────
 

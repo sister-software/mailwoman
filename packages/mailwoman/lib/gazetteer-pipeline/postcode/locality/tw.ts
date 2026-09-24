@@ -3,51 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the TW postcode → WOF admin table by authoritative name + polygon bridge (#473, unblocks
- *   #294 — Direction E / the CJK arena).
- *
- *   This is the Taiwan sibling of `build-postcode-locality-cjk.ts` (JP) and
- *   `build-postcode-locality-kr.ts` (KR). It emits the same `postcode_locality` table, so the
- *   existing `postcode_area_resolution` resolver strategy consumes it unchanged — one strategy,
- *   many builds. TW's data shape differs from both siblings:
- *
- *   - Overture's addresses theme carries zero postcodes for TW (0/9,732,009 on release 2026-06-17.0,
- *       re-verified after the 2026-05-20.0 probe on #473 — the issue's original "group Overture by
- *       postcode" plan is structurally impossible), and GeoNames has no TW postal file (the original
- *       #294 blocker). The keying source is therefore the national postal authority directly:
- *       Chunghwa Post's 3-digit postal-code → administrative-district table with official district
- *       center coordinates (data.gov.tw dataset 25489, `1050812_行政區經緯度(toPost).xml`, ogdl v1).
- *   - The 3-digit code is the admin-granularity key: TW's "3+3" system appends a road-segment /
- *       delivery-point tail below district level (and the full 3+3 file is account-conditional at
- *       fpp.post.gov.tw since 2025). A resolver that answers "which district" needs exactly the
- *       3-digit table. Queries carrying a full 3+3 code need a prefix-truncation normalization
- *       upstream (noted on #473. not this table's concern).
- *   - name-only matching (the JP/KR recipe) tops out at 63% here: WOF models TW districts across
- *       `county` (direct-municipality districts), `localadmin`, and `locality`, and the `county`
- *       rows carry no Chinese names at all (eng/fra only — verified against both admin-tw.db and
- *       the shipped admin-global-priority.db). The bridge is geometric instead: the postal row's
- *       official district center → the Overture `divisions` district polygon that contains it
- *       (Chinese full-form names, fetched release-pinned by `scripts/eval/
- *       fetch-tw-division-polygons.ts`) → the WOF district-tier row whose point falls inside that
- *       polygon. Real containment, no romanization guesswork.
- *
- *   Match target: our custom-built admin-tw.db (from the whosonfirst-data-admin-tw GeoJSON repo via
- *   scripts/build-unified-wof.ts — WOF ids identical to the shipped admin-global-priority.db, so
- *   the table works attached beside either).
- *
- *   Output rows: `is_containing=1` for the polygon-confirmed district row, plus up to NEARBY_KEEP
- *   nearby non-containing candidates for the soft-score set, same tiering semantics as the JP/KR
- *   builders. `aliases` carries the Chinese forms (full 行政區名, bare district, 台-variant) so
- *   `softNameScore` can match CJK query text against the romanized canonical name.
- *
- *   Build-then-move: the table is written to `<output>.building` and renamed into place on success,
- *   so the destination is never a half-built artifact.
- *
- *   Usage: node scripts/build-postcode-locality-tw.ts\
- *   --postal-xml $MAILWOMAN_DATA_ROOT/tw-postal/district-centroids.xml\
- *   --divisions $MAILWOMAN_DATA_ROOT/overture/2026-06-17.0/divisions-tw-admin.jsonl\
- *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/dbs-per-country/admin-tw.db\
- *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-tw.db
+ *   Build Taiwan's 3-digit postcode-to-WOF district table using Chunghwa Post centers,
+ *   Overture division polygons, and WOF points. Polygon containment selects the district;
+ *   name and proximity fallbacks add candidates. Output uses the shared postcode-locality schema.
+ *   Build to a temporary file and move it into place only after success.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -86,30 +45,22 @@ const NEARBY_KEEP = 2
  */
 const FALLBACK_RADIUS_KM = 20
 /**
- * Cross-placetype spread, one wider than JP/KR: TW districts land on `county`
- * (direct-municipality districts), `localadmin`, `locality` (county-administered townships/cities),
- * and `neighbourhood` (the Kaohsiung/Taichung inner districts — 前金/苓雅/三民/… are `neighbourhood` in WOF).
- *
- * Neighbourhood rows are only ever accepted name-conditional
- * (their Chinese name must match the postal district), never as bare geometric fallback —
- * 1,450 TW neighbourhoods would otherwise swallow the district tier.
+ * WOF placetypes that may represent a district; neighbourhoods require a name match.
  */
 const PLACETYPES = ["locality", "county", "localadmin", "borough", "neighbourhood"] as const
 /**
- * District-tier placetypes.
- *
- * The rows that are the 區/鄉/鎮/市 tier when present inside the polygon.
+ * District-level WOF placetypes preferred inside a polygon.
  */
 const DISTRICT_TIER = new Set(["county", "localadmin"])
 const DISTRICT_SUFFIX = /[區鄉鎮市]$/
 
 /**
- * The county/city prefix (直轄市/縣/市) is always exactly 3 characters (371/371 rows verified).
+ * Length of the county/city prefix in postal district names.
  */
 const COUNTY_PREFIX_LENGTH = 3
 
 /**
- * Fold the 臺/台 orthographic variants (both are current. Sources disagree row-by-row).
+ * Normalize 臺/台 variants and remove whitespace and hyphens.
  */
 export function normHan(s: string): string {
 	return s
@@ -119,9 +70,7 @@ export function normHan(s: string): string {
 }
 
 /**
- * Romanized-name stem: lowercase, diacritics stripped, tier suffix words dropped —
- * so Overture's "Wanhua District" meets WOF's "Wanhua", and WOF's "Lingya Village"
- * (a mislabeled district) meets "Lingya District".
+ * Normalize romanized names and remove common tier suffixes.
  */
 export function normEn(s: string): string {
 	return (

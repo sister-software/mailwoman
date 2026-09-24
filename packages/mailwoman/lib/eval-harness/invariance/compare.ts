@@ -3,41 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Component-level comparison for the invariance mini-suite — pure, no model, no I/O. Compares two
- *   decoded component maps (order-insensitive: a plain key→value record has no order) and classifies the
- *   pair invariant / degraded / lost.
- *
- *   `house_number` / `street` / `postcode` are treated as critical: they're the required tags a
- *   downstream geocoder needs to resolve a rooftop (the same three the #251/#1101 DIR-test failures broke
- *   on). A value change on a critical tag that's present in the original — including one token bleeding
- *   from a neighboring tag, e.g. a stripped comma pulling a directional suffix into the locality — is `lost`
- *   even when the transformed parse is non-empty, because the address is no longer resolvable to the same
- *   place. A drift confined to non-critical tags (locality, region, dependent_locality, unit, …) is
- *   degraded: recoverable, worth flagging rather than ship-blocking on its own.
- *
- *   A critical tag that's absent in the original parse but present in the transformed one — a hallucination
- *   — is also `lost`, not `degraded` and not ignored. A missing
- *   critical tag degrades gracefully to a coarser admin-tier fallback. a hallucinated one can resolve to a
- *   specific wrong rooftop with high apparent confidence — worse than falling back, because nothing
- *   downstream knows to distrust it.
+ *   Compare decoded component maps without loading a model or data.
+ *   Critical-tag changes or hallucinations are `LOST`; other component drift is `DEGRADED`.
+ *   Equal maps are `INVARIANT`. Map order does not affect the result.
  */
 
 /**
- * Tags whose change under a transform counts as a real failure.
- *
- * A shifted venue, unit or locality is tolerable.
- * A shifted house number, street or postcode is not.
+ * Tags whose changes produce a `LOST` verdict.
  */
 export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const
 
 export type Verdict = "INVARIANT" | "DEGRADED" | "LOST"
 
 /**
- * Ordinal severity — invariant < degraded < lost.
- *
- * Used by the runner's `--baseline` regression check to decide whether a candidate's
- * verdict on a (row, transform) pair is "at least as bad as" the baseline's rather than
- * merely "also non-invariant" (see runner.ts's `preExisting` computation).
+ * Severity order used to compare candidate and baseline verdicts.
  */
 export const VERDICT_SEVERITY: Record<Verdict, number> = { INVARIANT: 0, DEGRADED: 1, LOST: 2 }
 

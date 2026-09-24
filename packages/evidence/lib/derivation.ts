@@ -2,10 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The derivation behind an answer, as a projection: which constraints took part, what evidence each rested on,
- *   and what it contributed. A pure shaping function over records something else kept — no I/O, no ranking, no
- *   weights. Its one guarantee is that an answer's status is carried with the constraints that produced it, so an
- *   inferred value cannot be reported as a retrieved one without the record disagreeing.
+ * @file Project the constraints, evidence, and contributions behind an answer. This function performs no I/O or
+ *   ranking and preserves the answer's epistemic status alongside its constraints.
  */
 
 import type { Evidence } from "#evidence"
@@ -13,13 +11,12 @@ import type { EpistemicStatus } from "#status"
 
 export interface DerivationNode {
 	/**
-	 * What the constraint was about, in the caller's vocabulary — a component tag
-	 * and its value, a layer, a probe.
+	 * Constraint target, such as a component, layer, or probe.
 	 */
 	label: string
 	evidence: Evidence
 	/**
-	 * What this constraint did to the answer, as a sentence fragment a reader can audit.
+	 * Auditable description of the constraint's effect on the answer.
 	 */
 	contribution: string
 }
@@ -28,7 +25,7 @@ export interface DerivationProjection {
 	status: EpistemicStatus
 	constraints: readonly DerivationNode[]
 	/**
-	 * The answer's uncertainty radius in meters; `null` when the answer carries none, never a fabricated one.
+	 * Uncertainty radius in meters, or `null` when unknown.
 	 */
 	uncertaintyM: number | null
 }
@@ -40,10 +37,7 @@ export interface DerivationInput {
 }
 
 /**
- * Shape a derivation for a reader.
- *
- * The result is frozen and holds copies of the nodes, so a caller that keeps
- * mutating its own record cannot change what was reported.
+ * Freeze a derivation projection and copies of its constraint nodes.
  */
 export function projectDerivation(input: DerivationInput): DerivationProjection {
 	const constraints = Object.freeze(input.nodes.map((node) => Object.freeze({ ...node })))

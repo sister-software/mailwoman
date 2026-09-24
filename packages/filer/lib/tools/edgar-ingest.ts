@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman filer edgar-ingest`'s library half — the edgar chain against a live SEC client, with the
- *   full registrant index. No argv, no `process.exit`: the command owns argument parsing, rendering, and
- *   exit codes. Every field on the result is a number the command can render without importing another
- *   module.
+ *   Library interface for running the EDGAR ingest against the SEC and writing subsidiary rows. The CLI handles
+ *   arguments, rendering, and exit codes; this module returns the data it needs.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -21,26 +19,24 @@ export type { EdgarIngestReport, EdgarSkipReason } from "#sdk/edgar/ingest"
 
 export interface FilerEdgarIngestOptions {
 	/**
-	 * Company names to resolve — one per line in a file, or passed as an array.
-	 *
-	 * Every name is tried.
-	 * A blank line is skipped rather than producing an outcome.
+	 * Company names to resolve.
+	 * Blank lines are skipped.
 	 */
 	queries: string[]
 	/**
-	 * Output directory for the subsidiary rows as jsonl.
+	 * Output directory for subsidiary JSONL rows.
 	 */
 	outDir: string
 	/**
-	 * Optional CIK lookup-data file path (`cik-lookup-data.txt`, one `name:CIK:` per line).
+	 * Optional CIK lookup file, with one `name:CIK:` entry per line.
 	 */
 	cikLookupPath?: string
 	/**
-	 * CIKs pinned as corroborated regardless of SIC.
+	 * CIKs treated as corroborated regardless of SIC.
 	 */
 	pinnedCIKs?: string[]
 	/**
-	 * Called once per registrant as it completes.
+	 * Called when each registrant finishes.
 	 */
 	onOutcome?: (outcome: { query: string; ok: boolean; subsidiaries: number; detail: string }) => void
 }
@@ -52,10 +48,8 @@ export interface FilerEdgarIngestResult {
 }
 
 /**
- * Run the edgar ingest chain against a live SEC client and write the subsidiary rows to `outDir` as jsonl.
- *
- * The ticker index is read from `cikLookupPath` when given.
- * It is parsed to `CompanyTickerEntry[]` once and reused across every query.
+ * Run EDGAR ingestion and write subsidiary rows to `outDir`.
+ * Parse the optional CIK lookup file once and reuse it.
  */
 export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promise<FilerEdgarIngestResult> {
 	const client = createSECClient()

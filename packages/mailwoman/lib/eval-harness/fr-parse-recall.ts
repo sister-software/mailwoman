@@ -3,21 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Diagnose the FR street parse-recall gap (#148): the en-US model fragments a French street when no
- *   postcode anchors it ("Rue du Chevaleret, Paris" → street="Rue du", locality="Chevaleret"). Sample
- *   real FR addresses from the OSM database, parse each bare ("<n> <street>, <city>") and anchored
- *   ("<n> <street>, <pc> <city>"), assemble the street key (FR locale) and check it matches the database's
- *   street_norm. The bare-vs-anchored match-rate delta is the gap, and isolates whether the model only
- *   learned FR structure in the postcode-anchored context.
- *
- *   check-required (#949). This is a promotion-eval battery leg — the `fr.bare_street_intact`
- *   floor — not a one-off probe, which is why it lives here and not in `scripts/diagnostic/`. It sat
- *   in that drawer until the de-shell migration. the drawer is `.gitignore`d wholesale
- *   (`scripts/diagnostic/`), so the file survived only because it had been force-added to the index,
- *   and any sibling helper swept in beside it would have vanished. See `demo-cascade-rows.ts` for
- *   what that looks like when it goes wrong.
- *
- *   Run: node packages/mailwoman/lib/dev-tools/fr/parse-recall.run.ts
+ *   Compare French street recall with and without postcode context using OSM addresses.
+ *   This is the promotion battery leg for the `fr.bare_street_intact` floor.
+ *   Run through `packages/mailwoman/lib/dev-tools/fr/parse-recall.run.ts`.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -53,35 +41,14 @@ const FR_BARE_STREET_FIXTURE_PATH = resolvePackagePath(
 )
 
 /**
- * How many bare-street failures the report lists before it stops.
- *
- * The fixture is 40 rows, so a dozen is enough to see the failure shape without
- * burying the rates underneath it.
+ * Maximum bare-street failures shown in the report.
  */
 const MAX_REPORTED_FAILURES = 12
 
 /**
- * Locate a weights sibling artifact — `postcode-us.bin`, `anchor-lexicon-v1.json` —
- * the way the runtime does.
+ * Resolve a weights sibling, preferring candidate, data-root, then package paths.
  *
- * These were read from `packages/neural-weights-en-us/` directly, which is empty on
- * a dev checkout: the linkers write into the data-root overlay.
- * Therefore, the tracked workspace stays bare.
- *
- * So this leg threw enoent, and the check rendered the throw as
- * `fr.bare_street_intact fail (floor 75%)` — a crash reported as a measurement,
- * and one indistinguishable from the French regression this floor exists to catch.
- *
- * Order matters.
- * A candidate's own siblings come first, so grading a candidate never silently mixes in the shipped lexicon.
- *
- * The data-root overlay is the dev-checkout answer.
- * The tracked workspace is last and is only non-empty on a release checkout
- * where `copy-weights.ts` has run.
- *
- * @throws With every path it tried rather than returning a default.
- * A missing anchor lexicon changes the parse, so a silent fallback here would
- * produce a well-formed wrong floor reading.
+ * Throws with attempted paths; missing artifacts must not become misleading scores.
  */
 async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<PathBuilderLike> {
 	const candidates = [
@@ -105,19 +72,13 @@ async function resolveWeightsSibling(fileName: string, weightsCache?: string): P
 }
 
 /**
- * Options for {@linkcode frParseRecall} — one field per flag the check used to serialize into argv.
+ * Options for {@linkcode frParseRecall}.
  */
 export interface FRParseRecallOptions {
 	/**
-	 * Candidate-pair override (the v2.2.0 salvage read).
+	 * Candidate ONNX and tokenizer paths; otherwise use installed weights.
 	 *
-	 * Omitting {@linkcode FRParseRecallOptions.model} / {@linkcode FRParseRecallOptions.tokenizer}
-	 * uses the installed weights package via `loadFromWeights`, unchanged.
-	 * When a pair is given, the classifier is built manually with the ship-config channels fed from
-	 * the installed package's model-independent artifacts (postcode bins + gazetteer lexicon).
-	 *
-	 * The explicit-path `resolveWeights` drops the soft-feed siblings,
-	 * and an unfed arm vs a fed arm is not a comparison.
+	 * Candidate runs also load model-independent sibling artifacts.
 	 */
 	model?: string
 	tokenizer?: PathBuilderLike
@@ -126,23 +87,15 @@ export interface FRParseRecallOptions {
 	 */
 	modelCard?: string
 	/**
-	 * Printed as a `[pair]` provenance line when set.
-	 *
-	 * Default `""` (no line).
+	 * Optional label printed in the `[pair]` provenance line.
 	 */
 	label?: string
 	/**
-	 * Eval-leg mode (#949): the frozen 40-row sample, so the bare-street floor is
-	 * reproducible anywhere (incl. CI, which has no database).
-	 *
-	 * Default `lib/eval-harness/fixtures/fr-bare-street-40.jsonl` in this package.
+	 * Frozen fixture used by the promotion leg, including in database-free CI.
 	 */
 	fixture?: string
 	/**
-	 * Re-derive from the live OSM database instead of the fixture.
-	 *
-	 * The only way the fixture should ever change, and it must be committed deliberately
-	 * (the "pin the golden" discipline. A moving sample is a flaky floor).
+	 * Rebuild the fixture from the live OSM database.
 	 */
 	fromDB?: boolean
 	/**
@@ -150,26 +103,17 @@ export interface FRParseRecallOptions {
 	 */
 	json?: string
 	/**
-	 * Package-shaped candidate weights root.
-	 *
-	 * When set, the anchor + lexicon siblings are taken from the candidate rather than from
-	 * the shipped overlay — grading a candidate against the shipped lexicon measures neither.
+	 * Candidate weights root for resolving its anchor and lexicon siblings.
 	 */
 	weightsCache?: string
 	/**
-	 * The enforced floor, in percent.
-	 *
-	 * When set, {@linkcode FRParseRecallResult.pass} is false if the bare-intact rate falls
-	 * below it, which is how the leg's old `process.exit(1)` reaches the runner now.
+	 * Optional minimum bare-intact rate, in percent.
 	 */
 	floor?: string
 }
 
 /**
- * What {@linkcode frParseRecall} returns.
- *
- * `pass` carries the floor verdict the script used to signal with its exit code:
- * true when no floor was given, otherwise `bareRate >= floor`.
+ * Parse-recall rates and optional floor verdict.
  */
 export interface FRParseRecallResult {
 	bareIntact: number

@@ -3,33 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The frozen ruler for the first geographic-model semantic-utility probe (#1928), and the arithmetic
- *   that reads it. Pure — no model, no database, no pipeline — so every refusal and every threshold is
- *   testable without loading an engine.
- *
- *   what A frozen ruler is. `probe-definition.json` states the target rows, the control rows, the
- *   comparator, the metric arithmetic, the measured baseline, and the three decision thresholds. #1929
- *   supplies one semantic observation and re-runs; #1930 reads the two runs against these numbers. None
- *   of them may choose a row or define "better" after a result is visible, so the definition is content-
- *   hashed into `probe-freeze.json` and {@linkcode loadProbeDefinition} refuses a definition whose hash
- *   has moved. The refusal is at load rather than only in CI: a ruler that can be edited between the two arms
- *   measures nothing, and a test that runs an hour later cannot un-measure it.
- *
- *   the comparator is the board'S own. `poi_board_assembled_answer` is {@linkcode gradeCase} from
- *   `poi-board.ts` — the top result's category id and the nearest returned coordinate, and nothing else.
- *   That is the anti-Pelias commitment applied to this probe: it grades what comes out, never how it was
- *   produced, so a semantic arm cannot pass by reporting that it consulted an affordance.
- *
- *   the outcome shapes are POI shapes. {@linkcode POI_OUTCOME_SHAPES} is derived from `PipelineResult`'s
- *   own `path` and `POIIntentOutcome`'s own `type`. It is deliberately not a `DIAGNOSE_SHAPES` value:
- *   that vocabulary describes address-path mechanism states and carries no state for the POI branch, so
- *   borrowing one would name a state this probe never observes.
- *
- *   controls come IN two groups, and both decide. `same_category` rows are the venue-noun form of the
- *   same intent, which passes today. they catch a semantic arm that breaks what already works.
- *   `adjacent` rows are a different category at the same anchor and a bare-category abstain. they catch
- *   the opposite failure — an arm that answers `pharmacy` for everything would leave the first group
- *   green. A control set that cannot fail is not a control set.
+ *   Define and audit the frozen semantic-utility probe.
+ *   The pre-registration pins targets, controls, comparator, metrics, baseline, and thresholds.
+ *   It grades assembled POI answers and records distinct POI outcome shapes.
+ *   Both same-category and adjacent-category controls are required.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -51,8 +28,7 @@ import {
 } from "#eval-harness/preregistration"
 
 /**
- * The closed set of outcome shapes this probe reads, derived from `PipelineResult["path"]`
- * and `POIIntentOutcome["type"]`.
+ * Outcome shapes derived from `PipelineResult.path` and `POIIntentOutcome.type`.
  *
  * - `no_poi_branch` — the coordinator never took the POI branch, so there is no POI outcome at all.
  *   This is the measured baseline shape for every target row: an activity phrase scores `0`
@@ -74,11 +50,7 @@ export const POI_OUTCOME_SHAPES = [
 export type POIOutcomeShape = (typeof POI_OUTCOME_SHAPES)[number]
 
 /**
- * Read the outcome shape off the projection of one pipeline result.
- *
- * Total over the vocabulary above.
- * Every reachable combination of `path` and `poiIntent` names exactly one shape,
- * so a caller never has to represent "could not tell".
+ * Classify the POI outcome shape from a pipeline result.
  */
 export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 	if (outcome.path !== "poi" || !outcome.poiIntent) return "no_poi_branch"
@@ -89,21 +61,14 @@ export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 }
 
 /**
- * The closed set of comparators this probe may register.
- *
- * One entry today.
- * Adding one is a reviewed instrument, never an inline callback in the definition file.
+ * Registered comparators; additions require a reviewed instrument.
  */
 export const PROBE_COMPARATORS = ["poi_board_assembled_answer"] as const
 
 export type ProbeComparatorName = (typeof PROBE_COMPARATORS)[number]
 
 /**
- * Grade one row with a registered comparator.
- *
- * Refuses an unregistered name with the name in the message.
- * A comparator silently defaulted to another instrument would report a number
- * nobody could trace to a interface.
+ * Grade one row with a registered comparator; reject unknown names.
  */
 export function gradeWithComparator(
 	comparator: ProbeComparatorName,
@@ -118,24 +83,18 @@ export function gradeWithComparator(
 }
 
 /**
- * The three decisions the parent program admits.
- *
- * Exactly one is recorded at #1930.
+ * Decisions admitted by the parent program.
  */
 export const PROBE_DECISIONS = ["GO", "DIAGNOSTIC-ONLY", "STOP-REDESIGN"] as const
 
 export type ProbeDecision = (typeof PROBE_DECISIONS)[number]
 
 /**
- * One frozen target row: a POI-board fixture plus the record of where its query form
- * and its anchor came from, and what the baseline cannot distinguish about it.
+ * Frozen target fixture with query provenance, anchor, and baseline limitations.
  */
 export interface ProbeTargetRow extends POIBoardFixture {
 	/**
-	 * Where the query form is attested.
-	 *
-	 * Route (a) commits these rows before the semantic arm exists, so the record
-	 * has to say what the form is not: invented to pass.
+	 * Source attesting the query form.
 	 */
 	attestedIn: string
 	/**
@@ -158,10 +117,7 @@ export interface ProbeTargetRow extends POIBoardFixture {
 }
 
 /**
- * The two control groups.
- *
- * Both decide.
- * See the module header for why one alone is vacuous.
+ * Both registered control groups are required.
  */
 export const PROBE_CONTROL_GROUPS = ["same_category", "adjacent"] as const
 
@@ -467,11 +423,7 @@ export async function loadProbeDefinition(
 }
 
 /**
- * Refuse a control reference that does not resolve against its committed fixture file,
- * or that resolves to a row whose contents have moved.
- *
- * A drifted control is worse than a missing one: it still grades, still produces a number,
- * and the number is about a different row than the one the pre-registration named.
+ * Resolve frozen control references and reject missing or changed fixtures.
  */
 export function resolveControlRows(
 	definition: SemanticProbeDefinition,
@@ -534,11 +486,7 @@ export interface ProbeCounts {
 }
 
 /**
- * Count one run.
- *
- * A target row that produced no outcome at all still counts against the denominator.
- * The denominators are the registered row counts, never the rows that happened to answer,
- * so a probe that stops being able to read a row reports a lower rate rather than a smaller board.
+ * Count a run using registered row counts as denominators.
  */
 export function computeProbeCounts(
 	definition: SemanticProbeDefinition,
@@ -570,14 +518,7 @@ export interface ProbeVerdict {
 }
 
 /**
- * Map measured counts onto exactly one decision, against the frozen thresholds and the frozen baseline.
- *
- * Order is required.
- * A control regression is checked first and stops under both decisions: a target delta bought
- * by breaking the venue-noun form of the same query is not a result the program can act on.
- *
- * GO is checked before diagnostic-only because a row that passes the comparator necessarily
- * reached the POI branch, so the diagnostic condition holds whenever the primary one does.
+ * Apply frozen thresholds in order: controls, GO, diagnostic-only, then stop.
  */
 export function decideProbe(definition: SemanticProbeDefinition, counts: ProbeCounts): ProbeVerdict {
 	const thresholds = definition.thresholds

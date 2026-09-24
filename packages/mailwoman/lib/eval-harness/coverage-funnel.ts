@@ -3,49 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The funnel from every jurisdiction the source register knows to the few a named release check would fail a
- *   regression on, over one denominator.
- *
- *   `#coverage/census` already assembles five registers — corpus rows, `country_weights` admission, the gauntlet
- *   board, the serving gazetteer, and the published weights packages — into one row per country, and names five ways
- *   they disagree. This module reads that report rather than recomputing it, and changes two things about how it is
- *   presented.
- *
- *   The first is the denominator. `censusCoverage` takes the union of the five registers' keys, so its row set is
- *   every country that appears in at least one of them. A jurisdiction in none of the five is absent from the report
- *   entirely, which is the shape this module exists to correct: a country with no corpus, no board and no package
- *   produces no row, and a reader scanning for failures sees nothing rather than seeing an unmeasured jurisdiction.
- *   Here the denominator is the source register's 250 records, and a jurisdiction the census never reached still gets
- *   a row stating that at every stage.
- *
- *   The second is that a stage may decline to answer. {@linkcode StageState.Unknown} is this instrument saying it
- *   cannot measure the stage from a checkout, with the reason attached, and it is never a statement about the
- *   jurisdiction. `absent` is the measured negative. Collapsing the two would print "we cannot see whether this
- *   country is evaluated" as "this country is not evaluated", which is the reading that makes an unmeasured
- *   jurisdiction look solved. The rule is `docs/engineering/reference/the-meaning-of-zero.mdx`.
- *
- *   Each stage's own scope is narrower than its name, so every reading states what it read. `evaluated` and `checking`
- *   count gauntlet board rows. `corpusRows` counts what the corpus manifest the census read carries. `admitted`
- *   describes the one training config named in the provenance block. A reader comparing two runs of this report
- *   compares their provenance blocks first.
- *
- *   The twelve stages are not one pipeline, and reading them as one would be the mistake this report most invites.
- *   `licensed`, `addressRole` and `coverage` describe the SOURCE REGISTER's 389 researched sources. `corpusRows`,
- *   `admitted` and `sampled` describe the TRAINING CORPUS, which is fed by adapters and carries its own per-row
- *   `SourceProvenance.license`. The two populations overlap without matching: NPPES is `us-health-1` in the register
- *   and `usgov-nppes` at weight 2.0 in the training config, while TIGER and the National Address Database feed the
- *   corpus and appear in no register row. So a jurisdiction does not pass from `licensed` into `corpusRows`. It holds
- *   both readings at once, about different sets of sources.
- *
- *   That is why the United States reads 9 of 12: 487,234,195 corpus rows and a published package, and 23 registered
- *   sources of which none is ingest-eligible. The register describes what could be ingested next rather than what
- *   trains today. #2323's second task, retiring `SourceProvenance.license` for a `licenseID` into the register, is
- *   what would make the two one population and these twelve stages one sequence.
- *
- *   Nothing here scores need. {@linkcode OPPORTUNITY_INPUTS} lists the five inputs a work-selection ranking reads and
- *   marks the two this instrument supplies, and {@linkcode opportunityCandidates} filters on those two and orders by
- *   how far a jurisdiction's source research got. Ordering by packages, boards or tiers instead would put the
- *   jurisdictions already measured on top, which is the selection the funnel exists to expose.
+ *   Present source-register jurisdictions across twelve distinct coverage stages.
+ *   Census data supplies corpus, admission, board, gazetteer, and package readings;
+ *   the register supplies the denominator, including jurisdictions absent from the census.
+ *   `absent` is measured absence; `unknown` means this checkout cannot answer.
+ *   Stages describe different source populations and must not be read as one pipeline.
+ *   Opportunity candidates use source research and corpus presence, not existing coverage.
  */
 
 import {
@@ -58,21 +21,15 @@ import {
 import type { CountryCoverage } from "#coverage/census"
 
 /**
- * What one jurisdiction's stage reads.
+ * State of a jurisdiction at one stage.
  *
- * `absent` and `unknown` are the pair this report keeps apart.
- * `absent` means the funnel looked and the stage is not reached.
- *
- * `unknown` means the funnel declined, and the reason says what answering would take.
+ * `absent` is measured; `unknown` means the stage could not be measured.
  */
 export const StageState = {
 	Reached: "reached",
 	Absent: "absent",
 	/**
-	 * Reached, and a named condition prevents the next stage.
-	 *
-	 * A researched absence and a source with no elected terms are both this rather than
-	 * `absent`: somebody looked, and what they found is the finding.
+	 * Reached, but a measured condition blocks progress.
 	 */
 	Blocked: "blocked",
 	/**
@@ -84,14 +41,9 @@ export const StageState = {
 export type StageState = (typeof StageState)[keyof typeof StageState]
 
 /**
- * The twelve stages, in the order a jurisdiction passes through them.
+ * Twelve coverage stages; source-register, corpus, and evaluation stages are distinct populations.
  *
- * `licensed`, `addressRole` and `coverage` are the three conditions `ingestEligibilityProblems`
- * applies to every source, and they are listed together because each one alone blocks ingestion.
- * An earlier version carried `licensed` and neither of the others, so the one universal
- * blocker it could see is the one it reported, and the license step read as the bottleneck.
- *
- * Electing all twelve license decisions would move the ingest-eligible count from 0 to 0.
+ * Ingestion requires license, address role, and measured coverage.
  */
 export const FUNNEL_STAGES = [
 	"researched",
@@ -124,17 +76,12 @@ export interface JurisdictionFunnelRow {
 	iso2: string
 	name: string
 	/**
-	 * The register's research state for this jurisdiction's own premise-address
-	 * backbone — `A`, `A~`, `B`, `C` or `D`.
-	 *
-	 * A backlog position rather than a quality score, and deliberately not called a tier.
+	 * Source-register research state for the premise-address backbone.
 	 */
 	backboneState: string
 	stages: Record<FunnelStage, StageReading>
 	/**
-	 * How many of the ten stages read `reached`.
-	 *
-	 * The incumbency view groups on this.
+	 * Number of stages marked `reached`.
 	 */
 	reached: number
 }
@@ -142,16 +89,14 @@ export interface JurisdictionFunnelRow {
 export interface CoverageFunnel {
 	rows: readonly JurisdictionFunnelRow[]
 	/**
-	 * Per stage, how many jurisdictions read each state, over the register's own denominator.
+	 * Jurisdiction counts by stage state, using the register denominator.
 	 */
 	byStage: Record<FunnelStage, Record<StageState, number>>
 	provenance: {
 		registerVersion: string
 		jurisdictions: number
 		/**
-		 * Jurisdictions the census report carried a row for.
-		 *
-		 * The difference between this and `jurisdictions` is what the union denominator drops.
+		 * Countries represented in the census report.
 		 */
 		censusCountries: number
 		mixtureAudit: string | null
@@ -160,10 +105,7 @@ export interface CoverageFunnel {
 
 export interface CoverageFunnelInput {
 	/**
-	 * `censusCoverage`'s per-country rows.
-	 *
-	 * Keyed by ISO alpha-2 here, and a jurisdiction missing from it reads as a
-	 * jurisdiction the five registers never mention.
+	 * Per-country rows from `censusCoverage`, keyed here by ISO-2.
 	 */
 	coverage: readonly CountryCoverage[]
 	register?: AddressSourceRegister
@@ -176,22 +118,18 @@ export interface CoverageFunnelInput {
 	 */
 	protectedCountries: readonly string[]
 	/**
-	 * An `audit_epoch_mixture` output path.
-	 *
-	 * Without one the `sampled` stage reads `unknown`, because how many rows a country
-	 * contributes per epoch is a property of a run rather than of a checkout.
+	 * `audit_epoch_mixture` output path; without it, sampling is unknown.
 	 */
 	mixtureAudit?: string
 	/**
-	 * Rows sampled per country in one epoch, and the epoch's own denominator,
-	 * when a mixture audit supplied them.
+	 * Per-country rows sampled and the audit's denominator.
 	 */
 	sampledRows?: ReadonlyMap<string, number>
 	sampledTotal?: number
 }
 
 /**
- * Read the ten-stage funnel over every jurisdiction the source register carries.
+ * Read all coverage stages for jurisdictions in the source register.
  */
 export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<CoverageFunnel> {
 	const register = input.register ?? (await readAddressSourceRegister())
@@ -231,13 +169,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 					}
 				: { state: StageState.Absent, detail: "no source to license" }
 
-		// `addressRole` and `coverage` are the other two conditions `ingestEligibilityProblems`
-		// applies to every source, and they are read from the sources themselves
-		// rather than from a separate register.
-		// A jurisdiction whose sources carry neither is blocked on both however its licenses read.
-		// `upstreamLineage`, the third field the register declares unresolved,
-		// is deliberately absent here: eligibility does not check it, and it costs
-		// correctness in the spec's linkage rules rather than admission.
+		// Ingestion also requires each source to declare its address role and coverage.
+		// `upstreamLineage` affects linkage correctness, not admission.
 		const withRole = sources.filter((source) => source.addressRole !== undefined)
 		const withCoverage = sources.filter((source) => source.coverage !== undefined)
 
@@ -262,10 +195,7 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 						detail: `${sources.length} source(s), none with measured coverage`,
 					}
 
-		// The census counts a country's rows from the corpus manifest.
-		// A jurisdiction absent from the census report is absent from all five of its registers.
-		// The corpus is one of those five, so zero rows here is a measured reading
-		// rather than a gap in this instrument.
+		// The corpus manifest is one of the census registers, so zero is measured absence.
 		const corpusRows: StageReading = country?.corpusRows
 			? {
 					state: StageState.Reached,
@@ -277,16 +207,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 			? { state: StageState.Reached, detail: "named in the training config's country_weights" }
 			: { state: StageState.Absent, detail: "absent from the training config's country_weights" }
 
-		// The sampler decides at run time how many rows a country contributes.
-		// The config states a weight, and a country admitted at weight 1.0 whose
-		// sources hold no rows still draws nothing.
-		//
-		// An audit's `by_country` enumerates every country it drew, so a country missing
-		// from it drew zero of the audit's own denominator.
-		// That is a measured zero over a stated sample rather than an unknown, which is why an
-		// admitted country absent from the audit reads `blocked` and carries the denominator.
-		// A country the config never admitted reads `absent` instead: it cannot draw, and reporting
-		// it as a sampling failure would blame the sampler for the admission filter's decision.
+		// Sampling is run-specific: admitted countries absent from the audit drew zero;
+		// countries not admitted are absent, not sampler failures.
 		const sampledCount = input.sampledRows?.get(iso2)
 
 		const sampled: StageReading = !input.sampledRows
@@ -309,14 +231,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 							detail: "not admitted by the training config, so it has nothing to draw",
 						}
 
-		// Both stages read the GAUNTLET board alone.
-		// `censusCoverage`'s `casesRoot`, which is `eval-harness/gauntlet/cases`.
-		// The golden answer keys, the coordinate panels and the per-locale probe boards are separate sets
-		// and are not counted: `golden/us.jsonl` holds 2,660 rows while the gauntlet tree holds 143 for US.
-		// So `absent` here means "no gauntlet row names this country" rather than "this country
-		// has no evaluation", and a country graded only on a coordinate panel reads absent.
-		// Widening this stage means teaching the census to read those sets, which is a
-		// change to `censusCoverage` rather than to this module.
+		// Both stages count gauntlet rows only, not golden, panel, or locale-probe sets.
+		// `absent` therefore means no gauntlet row names this country.
 		const boardRows = country?.boardRows ?? 0
 		const checkingRows = country?.boardPassedRows ?? 0
 
@@ -395,18 +311,14 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 
 export interface IncumbencyGroup {
 	/**
-	 * How many of the ten stages the jurisdictions in this group reached.
+	 * Number of stages reached by each jurisdiction in the group.
 	 */
 	reached: number
 	jurisdictions: readonly string[]
 }
 
 /**
- * Jurisdictions grouped by how many stages they reached, deepest first.
- *
- * The group a roadmap item was selected from is what this view exists to make visible.
- * A repository cannot derive that selection, so the caller states it beside the groups
- * rather than this function inferring it.
+ * Group jurisdictions by stages reached, deepest first.
  */
 export function incumbencyGroups(funnel: CoverageFunnel): readonly IncumbencyGroup[] {
 	const byDepth = new Map<number, string[]>()
@@ -424,39 +336,21 @@ export interface OpportunityCandidate {
 	iso2: string
 	name: string
 	/**
-	 * The register's research state for this jurisdiction's own premise-address backbone.
-	 *
-	 * `A` is a verified open nationwide source, `A~` a strong one that is federated or partial.
+	 * Research state of the premise-address backbone.
 	 */
 	backboneState: string
 	/**
-	 * Whether the training config admits the country.
-	 *
-	 * An admitted country with no corpus rows is a config promising a locale it
-	 * cannot deliver — `censusCoverage` calls the same shape `admittedButEmpty` —
-	 * and is a different piece of work from a country the config never named.
+	 * Whether the training config admits this country.
 	 */
 	admitted: boolean
 	licensed: boolean
 }
 
 /**
- * Jurisdictions whose source research is furthest along and whose corpus carries nothing.
+ * Filter for researched backbones with no corpus rows; this is not a ranking.
  *
- * A filter rather than a ranking.
- * It reads two of the five inputs {@linkcode OPPORTUNITY_INPUTS} names —
- * how far the source is researched, and whether any row exists — and the three it
- * cannot read are the ones that would order the result.
- *
- * A caller choosing between these states the other three itself.
- *
- * The filter is deliberately blind to packages, boards and tiers.
- * Ordering by those would put the jurisdictions already measured on top,
- * which is the selection the funnel exists to expose.
- *
- * `backboneState` orders the output because it is a statement about the source
- * rather than about this repository's attention: `A` means somebody verified an open
- * nationwide premise-address source and the corpus still holds no row from it.
+ * Callers supply other opportunity inputs.
+ * Existing packages, boards, and tiers are excluded.
  */
 export function opportunityCandidates(
 	funnel: CoverageFunnel,
@@ -481,11 +375,9 @@ export function opportunityCandidates(
 }
 
 /**
- * The inputs a work-selection ranking reads, and which of them this instrument supplies today.
+ * Work-selection inputs and whether this instrument supplies them.
  *
- * Existing package and board coverage is absent from this list by design.
- * It reduces what a piece of work costs, and reading it as need would rank the jurisdictions
- * already measured above the ones nobody has measured — the selection the funnel exists to expose.
+ * Existing package and board coverage is excluded because it measures cost, not need.
  */
 export const OPPORTUNITY_INPUTS = [
 	{

@@ -3,15 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The board-pin interface as a script API (#1895): measure the committed corpus's three pins, read
- *   the constants the pin test carries, compare them, and rewrite exactly those constants. The Ink
- *   command (`mailwoman eval pins`) formats this. the admin-merge wrapper and the cheap CI check
- *   call it directly. Loads only the committed jsonl — no model, no gazetteer, no warm engine —
- *   measured at ~2 s on the 651-row corpus.
- *
- *   The committed constants stay a deliberate review regression check: check mode compares measured against
- *   committed, never deriving both sides from the live corpus, and update mode rewrites only the
- *   three constant lines so the pin test's dated history comments survive byte-identically.
+ *   Measure, check, and update the committed corpus pins without loading a model or gazetteer.
+ *   Check mode compares corpus measurements with committed constants; update mode changes only
+ *   those constants, preserving the pin test's history comments.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

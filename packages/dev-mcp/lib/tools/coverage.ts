@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_coverage` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The census itself lives in `../coverage-census.ts`; this file is the interface.
+ *   MCP interface for per-country parse, geocoding, and training coverage reports.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -25,18 +24,12 @@ import { z } from "zod"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
- * One country as a line a reader can act on.
- *
- * Parse and geocode stay in separate columns because they are separate capabilities
- * with wildly different coverage.
+ * Format one country's parse and geocoding coverage separately.
  */
 function line(c: CountryCoverage): string {
 	const rows = c.corpusRows.toLocaleString()
 
-	// The wording differs from `jurisdiction-coverage.run.ts`'s table cell
-	// and the reading behind it does not, because both read `parseReading`.
-	// An agent reads this line without the surrounding columns, so it names the row
-	// count inside the phrase rather than in a neighbouring cell.
+	// Include the row count because this line is shown without a table context.
 	const parse = {
 		[ParseReading.Absent]: "absent",
 		[ParseReading.Declined]: "not trained",
@@ -124,14 +117,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 })
 
 /**
- * Project a {@linkcode CoverageReport} into the tool's response shape.
- *
- * Pure and exported so the projection can be tested.
- * It builds its result field by field, which means a field the report grows and this function
- * does not name is dropped in silence, and the consumer reads that as the field not existing.
- *
- * The corpus-mismatch guard shipped inert for exactly that reason: the census computed it,
- * fifteen tests passed, and the first live call showed nothing, because this function did not carry it.
+ * Convert a coverage report into the tool response, preserving mismatch and requested-country details.
  */
 export function projectCoverage(report: CoverageReport, wantedCountries?: string[]): Record<string, unknown> {
 	const wanted = wantedCountries?.map((c) => c.toUpperCase())
@@ -152,9 +138,7 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		corpus_rows_total: report.corpusRowsTotal,
 		corpus_census_taken_at: report.corpusCensusTakenAt ?? "just now (recounted)",
 		config: report.configPath,
-		// This tool takes no manifest argument, so the corpus was chosen rather than named.
-		// Saying so lets a reader tell a census of the corpus they meant from a census
-		// of whichever one was written to most recently (#2349).
+		// Identify how the manifest was selected.
 		manifest_chosen_by: "newest modification time under the data root",
 		n_trained: trained.length,
 		n_trained_with_street_data: withStreet.length,

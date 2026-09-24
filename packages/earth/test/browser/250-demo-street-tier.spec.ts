@@ -1,19 +1,10 @@
 /**
- * @file Integration probe for the client-side street geocoder (#377), the real-extract half of the resolver package's
- *   `httpvfs/street.test.ts`. Drives the real page against the production R2 situs extract (byte-ranged) and asserts
- *   that "1600 Pennsylvania Avenue NW, Washington, DC 20500" resolves to the White House at the `address_point` (exact
- *   building) tier — not the DC admin centroid. This is the marquee: a fully client-side geocoder that places an exact
- *   building from a byte-ranged extract, no server. The second test guards the byte-range efficiency: a lookup must
- *   transfer a tiny fraction of the extract, never the whole file. It counts only GET response bodies —
- *   sql.js-httpvfs's `serverMode: "full"` open does one `head` to learn the file length (the length-discovery probe),
- *   and a head's `content-length` reports the full size but transfers zero bytes. summing it was the #638 false-alarm
- *   (the original report + an earlier version of this guard counted the head as a 114 MB download). Measured against
- *   prod: 1 head (0 bytes) + ~5 ranged 206 reads ≈ 280 KB of the 114 MB extract. There is no full-extract download —
- *   #638 was a measurement artifact, closed not fixed. Ground truth (confirmed against the extract): street_norm
- *   "pennsylvania avenue northwest", number 1600, postcode 20500 → lat 38.89768, lon -77.03655 (overture:NAD). Postcode
- *   disambiguates from the SE "1600 Pennsylvania" rows. The browser e2e suite is local/manual (not wired into CI), like
- *   `200-demo-resolve.spec.ts`. Run: `MAILWOMAN_EARTH_URL=http://localhost:7780 yarn test:browser
- *   250-demo-street-tier`.
+ * @file Check the client-side street geocoder against the production R2 situs extract.
+ *   The White House query must resolve to its exact `address_point`, not the DC centroid. A second test verifies that
+ *   the lookup transfers only ranged response bodies. The HEAD request discovers file size but transfers no body;
+ *   counting its `content-length` caused the #638 false alarm. Production measured about 280 KB across five range reads
+ *   from a 114 MB extract. Ground truth from the extract: `pennsylvania avenue northwest`, 1600, postcode 20500 →
+ *   38.89768, -77.03655 (overture:NAD); the postcode distinguishes nearby southeast records. This suite is local/manual.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -23,7 +14,7 @@ import { expect, test } from "../e2e/index.ts"
 const WHITE_HOUSE = { lat: 38.8977, lon: -77.0365 }
 const DC_SITUS_BYTES = 119_889_920
 
-// the full extract — a byte-ranged lookup must transfer a tiny fraction
+// Ensure a lookup transfers only a small fraction of the extract.
 
 const QUERY = "1600 Pennsylvania Avenue NW, Washington, DC 20500"
 
@@ -34,12 +25,12 @@ test.describe("Demo — street tier (#377)", () => {
 
 		const { resolved, markerCount } = await demo.readResult()
 
-		// The street tier fired (exact building), not the WOF admin centroid.
+		// Confirm the exact-building street tier, not the WOF centroid.
 		expect(resolved["placetype"]).toBe("address_point")
 		expect(resolved["precision"]).toContain("exact")
 		expect(markerCount).toBeGreaterThan(0)
 
-		// The pin lands on the White House (within ~50 m of the known building point).
+		// Require the pin to fall within 50 m of the known building point.
 		const pin = await demo.readCoords()
 		expect(Number.isFinite(pin.lat) && Number.isFinite(pin.lon)).toBe(true)
 		expect(haversineKm(pin.lat, pin.lon, WHITE_HOUSE.lat, WHITE_HOUSE.lon) * 1000).toBeLessThan(50)
@@ -47,7 +38,7 @@ test.describe("Demo — street tier (#377)", () => {
 		demo.console.assertNoFailEvents()
 	})
 
-	// Un-fixme when #638 lands: the open must not download the whole extract to learn its length.
+	// Guard against downloading the full extract during a lookup.
 	test("byte-range: a lookup transfers a fraction of the extract, never the whole file (#638)", async ({
 		demo,
 		page,
@@ -58,11 +49,7 @@ test.describe("Demo — street tier (#377)", () => {
 		page.on("response", (res) => {
 			if (!res.url().includes("/street/us/dc/situs.db")) return
 
-			// Only GET responses transfer a body.
-			// A head (sql.js-httpvfs's length probe on open) carries the full file size in
-			// `content-length` but transfers zero bytes — counting it would falsely read
-			// as a whole-extract download (the #638 measurement trap).
-			// The 206 page reads are the lookup.
+			// Count GET bodies only: HEAD reports the full size but transfers no bytes.
 			if (res.request().method() !== "GET") return
 
 			if (res.status() === 206) {
@@ -77,6 +64,6 @@ test.describe("Demo — street tier (#377)", () => {
 		await demo.readResult()
 
 		expect(rangeReads).toBeGreaterThan(0)
-		expect(situsBytes).toBeLessThan(DC_SITUS_BYTES / 10) // a few MB of ranged reads rather than the whole 114 MB
+		expect(situsBytes).toBeLessThan(DC_SITUS_BYTES / 10) // Under one tenth of the extract.
 	})
 })

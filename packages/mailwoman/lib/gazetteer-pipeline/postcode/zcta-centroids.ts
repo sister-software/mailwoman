@@ -3,30 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Census zcta centroid fill + GeoNames postal fill for placeholder US postcodes (#525).
- *
- *   WOF ships `(0,0)` for ~22% of US postcode records. every downstream artifact (pilot anchor
- *   lookup, `postcode-us.bin`, the slim hot DB's postcode cascade leg) inherits the holes. Two
- *   passes fill what they can:
- *
- *   1. **Census zcta Gazetteer** (public domain, ~33k ZCTAs, real internal-point centroids). Fills most
- *        standard delivery ZIPs. zcta != ZIP — PO-box-only and single-building ZIPs have no zcta
- *        and stay placeholder after this pass.
- *   2. **GeoNames postal** (CC-BY 4.0, `US.txt` from download.geonames.org/export/zip/US.zip). Covers
- *        some PO-box and unique ZIPs that appear in GeoNames but have no zcta. Multiple GeoNames
- *        rows for the same postcode are averaged into a single centroid. Source tag: `geonames-us`.
- *        License requires attribution in any DB that ships these coordinates.
- *
- *   Both passes record per-row provenance in a `centroid_source` table (`id` → `source`) and never
- *   overwrite a real coordinate. Both are idempotent (the update re-checks `latitude=0`).
- *
- *   Data file notes: `$MAILWOMAN_DATA_ROOT/census/readme.md` (zcta);
- *   download.geonames.org/export/zip/US.zip (GeoNames. CC-BY 4.0, attribute "GeoNames (CC-BY
- *   4.0)").
- *
- *   This module owns the parse + fill logic; `gazetteer build postcode-database` runs these fills;
- *   `scripts/build-pilot-anchor-lookup.ts` mirrors the same join for lookup-build-time fills.
- *   Tested by the sibling `zcta-centroids.test.ts`.
+ *   Fill placeholder US postcode coordinates from Census ZCTAs, then GeoNames postal data.
+ *   Preserve existing coordinates and record per-row source provenance.
+ *   GeoNames-derived coordinates require CC-BY 4.0 attribution in distributed databases.
  */
 
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"

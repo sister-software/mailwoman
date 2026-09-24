@@ -3,19 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The read surface over a compiled artifact: every question answered by one map probe, none by
- *   walking the graph.
- *
- *   The shape is deliberate. `@mailwoman/geographic-model` compiles authored records into an artifact
- *   precisely so a runtime consumer never traverses anything — so the index exposes lookups
- *   (`concept`, `ancestorsOf`, `derivedFactsAbout`, `conceptsForExternalID`) and no walk, no cursor,
- *   and no query language.
- *
- *   Two absences are distinguished everywhere, because they are different answers. A lookup for a
- *   concept the artifact does not carry returns `undefined` — the model cannot speak to it. A lookup
- *   for a concept it does carry, which nothing was derived about, returns an empty list. The model
- *   carries it and states nothing. A reader that collapsed the two would report "no ancestors" for a
- *   concept it had never heard of.
+ *   Read-only lookups over a compiled artifact. Queries use prebuilt maps rather than traversing the graph.
+ *   Missing concepts return `undefined`; known concepts with no related facts return an empty list.
  */
 
 import { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"
@@ -32,39 +21,32 @@ import type {
 } from "#schema"
 
 /**
- * Lookups over one compiled artifact.
+ * Lookup methods for one compiled artifact.
  */
 export interface GeographicModelIndex {
 	/**
-	 * The artifact these lookups read, so a consumer holding the index never has to carry both.
+	 * Compiled artifact used by this index.
 	 */
 	readonly model: CompiledGeographicModel
 	/**
-	 * One concept record, or `undefined` when the artifact does not carry it.
+	 * Concept record, or `undefined` if absent.
 	 */
 	concept(id: ConceptID): ConceptRecord | undefined
 	/**
-	 * One relation definition, or `undefined` when the artifact does not carry it.
+	 * Relation definition, or `undefined` if absent.
 	 */
 	relation(id: RelationID): RelationRecord | undefined
 	/**
-	 * Every concept this one is a kind of, transitively, in code-point order.
-	 *
-	 * Empty for a concept that is a kind of nothing; `undefined` for a concept the artifact does not carry.
+	 * Transitive ancestors in code-point order; `undefined` if the concept is absent.
 	 */
 	ancestorsOf(id: ConceptID): readonly ConceptID[] | undefined
 	/**
-	 * Every derived fact whose subject is this concept, in artifact order.
-	 *
-	 * Empty for a concept nothing was derived about; `undefined` for a concept the artifact does not carry.
+	 * Derived facts in artifact order; `undefined` if the concept is absent.
 	 */
 	derivedFactsAbout(id: ConceptID): readonly DerivedFactRecord[] | undefined
 	/**
-	 * The concepts a mapping translates this external identifier into, in code-point order.
-	 *
-	 * An empty list is a true negative rather than an unread answer: the artifact
-	 * carries every mapping the document authored, so nothing having declared this
-	 * identifier is the whole of what there is to know about it.
+	 * Concepts mapped from this external ID, in code-point order.
+	 * An empty list means no mapping is recorded.
 	 */
 	conceptsForExternalID(vocabulary: ExternalVocabulary, externalID: POICategoryID): readonly ConceptID[]
 }
@@ -74,11 +56,9 @@ function externalKey(vocabulary: ExternalVocabulary, externalID: string): string
 }
 
 /**
- * Index a compiled artifact for reading.
+ * Build lookup maps over a compiled artifact.
  *
- * Every table is walked once here so that no table is ever walked again.
- * Nothing is copied.
- * The records handed back are the artifact's own.
+ * Return references to the artifact's records without copying them.
  */
 export function createGeographicModelIndex(model: CompiledGeographicModel): GeographicModelIndex {
 	const concepts = new Map<string, ConceptRecord>(model.concepts.map((concept) => [String(concept.id), concept]))

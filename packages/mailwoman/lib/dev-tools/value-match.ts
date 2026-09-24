@@ -2,11 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Span-value comparison shared by the eval scripts: a unicode-aware fold plus the token-subset match.
+ * @file Shared Unicode-aware normalization and token-subset matching for evaluation scripts.
  */
 
 /**
- * Lowercase, strip non-alphanumeric (unicode-aware) to single spaces, collapse + trim.
+ * Lowercase, replace non-alphanumeric runs with spaces, and collapse whitespace.
  */
 export function norm(s: string): string {
 	return s
@@ -17,21 +17,14 @@ export function norm(s: string): string {
 }
 
 /**
- * Lower-case + trim only — no punctuation stripping, no whitespace collapse.
- *
- * The loose fold the harness-side comparisons share.
- * Unlike {@link norm} it keeps interior whitespace and punctuation byte-for-byte,
- * so substring containment still sees them.
+ * Lowercase and trim while preserving punctuation and interior whitespace.
  */
 export function normLoose(s: string | undefined): string {
 	return (s ?? "").toLowerCase().trim()
 }
 
 /**
- * Normalized exact, or either-direction token-subset (fragmentation + decomposition tolerant).
- *
- * Token subset rather than raw substring, so "Saint" ⊆ "Saint Paul" and "Ave" ⊆ "Elm
- * Ave" match while "Park" does not spuriously match "Parkway".
+ * Match normalized equality or token-subset in either direction.
  */
 export function valueMatch(pred: string, gold: string): boolean {
 	const a = norm(pred)

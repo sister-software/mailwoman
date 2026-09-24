@@ -3,16 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The register of committed conformance-law suites. Pure — the law modules and the fixture interface, no
- *   engine, so a test can assert the register without a model or a gazetteer.
- *
- *   A suite outside this register never runs. `mailwoman eval conformance` reads it to decide what a default
- *   run covers and which audit each law gets, so a committed `.jsonl` nobody registered is not a suite that
- *   runs unaudited. It is a suite that runs never, and reports as an absence. `conformance-suites.test.ts`
- *   walks the directory and refuses a file no entry names, which is the only check that can see that gap.
- *
- *   It lives apart from `command.ts` because that module imports the Gauntlet harness, and the harness pulls
- *   the neural runtime and the resolver behind it. The register itself needs neither.
+ *   Register committed conformance suites without importing an engine.
+ *   Unregistered suite files never run; `conformance-suites.test.ts` checks the directory.
+ *   This module stays separate from `command.ts` to avoid loading its runtime dependencies.
  */
 
 import { dirname } from "path-ts"
@@ -52,35 +45,21 @@ import {
 } from "#eval-harness/conformance/whitespace"
 
 /**
- * One committed law suite: where its rows live, what refuses a row that does not
- * state its law, and the law-specific detail its findings carry.
+ * A committed law suite and its audit and reporting functions.
  */
 export interface ConformanceSuite {
 	law: string
 	path: string
 	/**
-	 * Suite-wide checks, run before the engine loads.
-	 *
-	 * One message per problem, empty when the suite is runnable.
+	 * Check suite rows before loading the engine; return one message per problem.
 	 */
 	audit: (fixtures: readonly ConformanceFixture[]) => string[]
 	/**
-	 * The extra line a finding prints under its head.
-	 *
-	 * Every shipped law names the transformation, without which a violation reads as
-	 * "these two strings disagreed" rather than "uppercasing broke it".
+	 * Format the law-specific detail shown with each finding.
 	 */
 	detail: (fixture: ConformanceFixture) => string
 	/**
-	 * How much of the population the suite reached, printed beside the law's own hold count.
-	 *
-	 * Optional because most laws can be stated over any row: the arms a query refuses are reported per
-	 * row by the applicability rules, and the verdict already names the denominator that decides it.
-	 * A law whose eligibility is a property of the text — canonical form is the one shipped
-	 * example, where 83 of 651 committed rows carry a character either form can act on —
-	 * needs the second denominator as well, or its hold count implies a breadth it never exercised.
-	 *
-	 * `corpusInputs` is every committed board row's query text, supplied by the runner.
+	 * Optionally report coverage against the corpus inputs supplied by the runner.
 	 */
 	coverage?: (fixtures: readonly ConformanceFixture[], corpusInputs: readonly string[]) => string
 }
@@ -118,9 +97,7 @@ export const CONFORMANCE_SUITES: readonly ConformanceSuite[] = [
 		law: REFINEMENT_MONOTONICITY_LAW,
 		path: REFINEMENT_MONOTONICITY_SUITE_PATH,
 		audit: auditRefinementSuite,
-		// The step is named from the fuller query to the coarser one, because that
-		// is the direction the derivation runs.
-		// The law itself is stated the other way, which the head line already prints as base → variant.
+		// Derivation runs from the fuller query to the coarser one.
 		detail: (fixture) => `    xform   : variant −${describeRefinementStep(fixture)} → base`,
 		coverage: describeRefinementCoverage,
 	},
@@ -146,10 +123,6 @@ export function describeLaw(fixture: ConformanceFixture): string {
 }
 
 /**
- * The directory the committed suites live in — what `conformance-suites.test.ts`
- * walks to find a suite file the register does not name.
- *
- * Derived from a suite path rather than from `import.meta.url`, which under a compiled tree names `out/`.
- * Where no `.jsonl` is emitted, so a walk would find nothing and report a clean register.
+ * Directory of committed suites, derived from a suite path rather than compiled `import.meta.url`.
  */
 export const CONFORMANCE_SUITE_DIR = dirname(CASE_FOLDING_SUITE_PATH)

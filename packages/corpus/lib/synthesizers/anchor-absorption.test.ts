@@ -1,11 +1,5 @@
 /**
- * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1).
- *
- * The required checks: (1) every template aligns cleanly (no quarantine) so the recipe
- * output is trainable, and (2) the leading 5-digit gets the context-correct label —
- * house_number when a trailing postcode is present (case-H), postcode when not (case-P).
- * That contrast is exactly what the model must learn instead of flipping the
- * default (the Probe A0 erosion this recipe fixes).
+ * Test alignment and context-dependent labels for leading five-digit values.
  */
 
 import { makeLcg } from "@mailwoman/core/random"
@@ -16,7 +10,7 @@ import {
 import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
 
-// A deterministic RNG so the assertions are stable.
+// Seed fixtures for reproducible output.
 function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 	const synth = synthesizeAnchorAbsorptionRow({ random: makeLcg(seed), forceTemplate: template })
 
@@ -34,7 +28,7 @@ function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 }
 
 /**
- * The BIO tag on the first token of raw (the leading 5-digit's label).
+ * Get the first token's BIO tag.
  */
 function leadingTag(aligned: ReturnType<typeof alignRow>): string | null {
 	if (aligned.kind !== "labeled") return null
@@ -65,23 +59,21 @@ describe("synthesize anchor-absorption", () => {
 
 	it("CASE-H: leading real-ZIP + trailing postcode → house_number", () => {
 		const { synth, aligned } = rowFor("h-adversarial", 3)
-		expect(synth.components.postcode).toBeTruthy() // a TRAILING postcode is present
+		expect(synth.components.postcode).toBeTruthy() // A trailing postcode is present.
 		expect(leadingTag(aligned)).toBe("house_number")
 	})
 
 	it("CASE-P (US rural): leading postcode, NO trailing → postcode", () => {
 		const { synth, aligned } = rowFor("p-us-rural", 3)
-		expect(synth.components.house_number).toBeUndefined() // no house number — the leading is the postcode
+		expect(synth.components.house_number).toBeUndefined() // The leading value is a postcode.
 		expect(leadingTag(aligned)).toBe("postcode")
 	})
 
 	it("h-no-trailing-locality: leading number + LOCALITY + state, no trailing → house_number (the A3 fix)", () => {
-		// The contrast to p-us-rural: same no-trailing state-containing shape,
-		// but a locality is present, so the leading number is the house number —
-		// the discriminator the A2 recipe output lacked (98 house#->postcode).
+		// A locality distinguishes this from the rural postcode-first form.
 		const { synth, aligned } = rowFor("h-no-trailing-locality", 3)
-		expect(synth.components.locality).toBeTruthy() // a locality is present (vs p-us-rural's none)
-		expect(synth.components.postcode).toBeUndefined() // no trailing postcode
+		expect(synth.components.locality).toBeTruthy() // A locality is present.
+		expect(synth.components.postcode).toBeUndefined() // No trailing postcode.
 		expect(leadingTag(aligned)).toBe("house_number")
 	})
 

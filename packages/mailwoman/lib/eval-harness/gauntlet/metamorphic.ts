@@ -3,26 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Metamorphic Gauntlet (CheckList INV/DIR/band) — the un-gameable layer. It asserts relations between
- *   outputs rather than stored expected values, so a curated corpus can't breed false trust here.
- *
- *   - INV (invariance, ≤1m): a label-preserving perturbation (casing, whitespace, trailing punctuation,
- *       expanded↔abbreviated suffix) must not move the assembled coordinate or tier. A drift is a
- *       surface-form robustness bug. `abbrev` inverts the `normalize/abbreviations.ts` table — the model
- *       trains on both `Avenue` and `Ave`, so the coordinate must not budge.
- *   - DIR (directional, ≤5km): dropping the postcode must not break resolution. The result must still
- *       land near the with-postcode coordinate. This is exactly the #251 failure class, frozen as a
- *       standing property.
- *   - band (tolerance, ≤5km): a corrupting perturbation (single-char transpose / substitution, ordinal
- *       or house-number spelling) may legitimately shift the parse — byte-identical output is the wrong
- *       interface — but it must still land within a tolerance band of the clean coordinate. Perturbations
- *       the pipeline neither normalizes nor trained on (number-spelling) are expected to miss the band.
- *       those are recorded in KNOWN_BAND_XFAIL so the gap is documented, non-blocking, and can't be
- *       silently hidden.
- *
- *   check: any INV violation, a DIR that fails to resolve near the anchor, or a new (untracked) band miss
- *   fails the run. Run:
- *     mailwoman eval gauntlet --layer metamorphic [--candidate <candidate.onnx>]
+ *   Check output relations under input perturbations without stored expected answers.
+ *   INV requires stable coordinates and tier; DIR tests postcode removal; BAND allows bounded
+ *   movement for corrupting edits. Known deterministic misses remain visible as tracked xfails.
+ *   Run with `mailwoman eval gauntlet --layer metamorphic`.
  */
 
 import { abbreviationDictionary } from "@mailwoman/normalize"
@@ -32,20 +16,20 @@ import { buildGauntletDeps, runOne } from "#eval-harness/gauntlet/harness"
 import { type GauntletLayerOptions, layerDepsOptions } from "#eval-harness/gauntlet/regression"
 
 /**
- * Shortest span body worth mutating — below it a perturbation changes the token entirely.
+ * Minimum token length eligible for mutation.
  */
 const MIN_MUTABLE_BODY_LENGTH = 5
 
 /**
- * 1m — same address, identical resolution expected.
+ * Maximum distance for invariant perturbations.
  */
 const INV_EPSILON_KM = 0.001
 /**
- * Dropping the postcode may lose the rooftop, but must still land in the right area.
+ * Maximum distance after dropping a postcode.
  */
 const DIR_NEAR_KM = 5
 /**
- * A corrupted surface may shift the parse, but must stay within the tolerance band.
+ * Maximum distance for corrupting perturbations.
  */
 const BAND_NEAR_KM = 5
 
@@ -305,59 +289,16 @@ const BAND: Perturbation[] = [
 ]
 
 /**
- * Known, deterministic INV failures (the pipeline is argmax + SQL — failures don't flap).
+ * Known deterministic invariance failures, tracked as non-blocking xfails.
  *
- * Each is tracked by an issue and reported as xfail: visible, but NON-blocking,
- * so the check fails only on new regressions.
- * The loop also flags any xfail that has started passing ("newly passing → drop it"),
- * so this list can't rot into false comfort — the Pelias-pass-list trap, inverted.
- */
-/**
- * Casing/spacing are fully green (the #829 lowercase restore + trailing-punct
- * trim cleared every prior xfail with no retrain).
- *
- * `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model trains on
- * both forms, but the FR street-type swap below is a resolver gap rather than a model one,
- * and it is a finding rather than a reflex xfail (see note).
- * A new deterministic INV break belongs here with a tracked note, never silently conditional.
- *
- * The #1002 FR `Boulevard→Bd` xfail was removed 2026-07-06 with its fix:
- * the root cause was not the FR gazetteer (street_norm expands `bd` fine)
- * but the model absorbing the undertrained "Bd" into house_number ("2 Bd") pre-lookup —
- * fixed by enabling Stage-1 `expandAbbreviations` in the geocode path with the
- * locale-unknown safe set (Bd/Bvd/Av/Imp. EN suffixes deliberately untouched).
- * Keep the anti-rot loop honest: a new deterministic INV break belongs here with
- * a tracked note, never silently conditional.
- *
- * The #1101 FR comma-drop xfail ("181 Rue du Chevaleret, Paris" losing its rooftop)
- * was removed 2026-08-12 when the anti-rot loop flagged it newly passing.
- * The comma-free base now holds its rooftop.
+ * The runner flags tracked cases that begin passing so stale entries can be removed.
  */
 const KNOWN_INV_XFAIL = new Map<string, string>()
 
 /**
- * Known, deterministic band misses — the tolerance-band analog of KNOWN_INV_XFAIL,
- * same anti-rot bookkeeping.
- *
- * These are perturbation classes the pipeline neither normalizes nor was trained on,
- * so a corrupted surface legitimately lands outside the band.
- * Tracked (visible, non-blocking) rather than hidden or conditional.
- *
- * See the input-robustness coverage matrix (docs/articles/concepts/input-robustness.mdx) for the gaps these pin.
+ * Known deterministic band misses, tracked as non-blocking xfails.
+ * Tracked cases that begin passing are reported for removal.
  */
-/**
- * All measured anchor-off/gazetteer-off (the harness default. The weights package ships no anchor artifacts).
- *
- * The gazetteer soft-feed is exactly the channel that recovers a typo'd locality/street
- * in ship-config, so some of these may hold with the retrieval channels on —
- * tracked here as the anchor-off floor rather than a claim about production.
- */
-// Empty on the shipped stack.
-// An entry belongs here only while a band perturbation misses deterministically.
-// The self-check names an entry that has started passing, and it leaves
-// then (the Damrak locality pair left once the word-level fuzzy measure corrected the
-// corrupted locality. The `100 Centre Street, New York, NY` trio — the spelled house number
-// and the two street-token corruptions — left once the rooftop survived them).
 const KNOWN_BAND_XFAIL = new Map<string, string>()
 
 /**

@@ -1,12 +1,8 @@
 /**
- * @file Production functional-smoke — the check the 2026-07-04 demo triple outage went missing for.
- *   `version-parity.yml` confirmed the demo's pinned version tracked npm, and stayed green for three days while the
- *   demo served no WOF hits, no FST, and no street tier — version parity is not functional parity. Every one of those
- *   three failures produced zero console errors. the only symptom was degraded results. So this smoke grades the
- *   results rather than the absence of errors. Tagged `@smoke`: `earth-smoke.yml` runs this spec (and only this)
- *   against the deployed app daily via `MAILWOMAN_EARTH_URL`. It also runs in the local build check like every other
- *   browser spec, so a refactor that breaks the cascade fails in CI before it ships. Two addresses, chosen to light up
- *   all three tiers at once:
+ * @file Production functional smoke test for the deployed demo.
+ *   Version parity alone did not catch the 2026-07-04 outage: WOF, FST, and street-tier failures produced no console
+ *   errors. This `@smoke` spec checks results and runs daily against `MAILWOMAN_EARTH_URL`, as well as in local checks.
+ *   Its addresses exercise the resolver tiers:
  *
  *   - 1600 Pennsylvania Ave NW → the street tier (situs/interp extracts) + an address_point rooftop.
  *   - Zabiče 8, 6250 Zabiče → the WOF admin cascade and the #942/#961 postal-compound floor. If either regresses to
@@ -20,9 +16,7 @@ import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — production functional smoke @smoke", () => {
 	test("the basemap requests a vector tile (the tile worker is alive)", async ({ demo, page }) => {
-		// MapLibre fetches vector tiles inside its worker.
-		// A map that composes its style, sizes its canvas and never requests a tile is the
-		// shape of a worker that failed to start, which the console does not report.
+		// Tile requests run inside MapLibre's worker, so this catches a worker that fails silently.
 		const tileRequest = page.waitForRequest(/\/basemap-v4\/\d+\/\d+\/\d+\.mvt/, { timeout: 60_000 })
 		await demo.goto()
 
@@ -60,8 +54,7 @@ test.describe("Demo — production functional smoke @smoke", () => {
 
 		const { markerCount } = await demo.readResult()
 
-		// The tell: NL Amsterdam is ~52.37, 4.90.
-		// The pre-v5.4.0 mis-parse landed on Amsterdam, NY (~42.94, -74.19).
+		// Distinguish Amsterdam, Netherlands (~52.37, 4.90) from the pre-v5.4.0 result in New York (~42.94, -74.19).
 		demo.expectNear(await demo.readCoords(), { lat: 52.35, lon: 4.9 }, 0.2)
 		expect(markerCount, "no marker rendered").toBeGreaterThan(0)
 		demo.console.assertNoFailEvents()

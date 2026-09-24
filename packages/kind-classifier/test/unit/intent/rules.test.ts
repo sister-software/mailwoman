@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixtures for the ROAD_TO_V9 §4 intent vocabulary. Every kind is exercised in both registers —
- *   as-written and lowercase — because lowercase is the primary user register and a rule that only
- *   works on title case is a rule that only works on our test data.
+ *   Test intent rules in original and lowercase forms, including cases where intent kinds appear only as alternatives.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -24,10 +22,7 @@ function shapeOf(text: string): { input: NormalizedInputLite; shape: QueryShapeL
 }
 
 /**
- * Every kind present in a verdict — top plus alternatives.
- *
- * The two ranked-below-incumbent intent kinds live in `alternatives` by design,
- * so a test that only reads `.kind` cannot see them.
+ * Collect the top kind and all alternatives.
  */
 function kindsOf(text: string): Set<QueryKind> {
 	const { input, shape } = shapeOf(text)
@@ -37,20 +32,14 @@ function kindsOf(text: string): Set<QueryKind> {
 }
 
 /**
- * Both registers of one query.
- *
- * Lowercase is not a variant here.
- * It is the register most users type in.
+ * Return the original and lowercase forms of a query.
  */
 function registers(text: string): string[] {
 	return text === text.toLowerCase() ? [text] : [text, text.toLowerCase()]
 }
 
 describe("bare_toponym — one place-name, no address grammar", () => {
-	// The hard-case board's `bare_namesake` class
-	// (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`,
-	// scored by `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`),
-	// which is the population ROAD_TO_V9 §3 assembled for exactly this register.
+	// Representative bare-name cases from the hard-case board.
 	const POSITIVE = [
 		"Fulda",
 		"Jena",
@@ -85,7 +74,7 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 		"PO Box 1234",
 		"corner of 5th and Main",
 		"12 rue de Rome Paris",
-		// Admin context present — `locality_only` owns this, and a tail is exactly what makes it not bare.
+		// Admin context belongs to `locality_only`, not `bare_toponym`.
 		"Paris, FR",
 		"Athens, OH",
 	]
@@ -127,8 +116,7 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 	}
 
 	const NEGATIVE = [
-		// Toponymic head particles: one place, two tokens.
-		// The class this guard exists for.
+		// These are multiword places, not route pairs.
 		"New York",
 		"San Francisco",
 		"Santa Monica",
@@ -139,13 +127,12 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 		"Port Elizabeth",
 		"Lake Charles",
 		"Saint Denis",
-		// Address grammar of any kind disqualifies.
+		// Address structure disqualifies route-pair intent.
 		"350 5th Ave, New York, NY 10118",
 		"12 rue de Rome Paris",
 		"10118",
 		"Paris London Berlin",
-		// A comma is the admin-context marker.
-		// The hard-case board's `comma_control` register.
+		// Commas mark administrative context.
 		"Athens, Georgia",
 		"Portland, ME",
 	]
@@ -194,14 +181,13 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 	}
 
 	const NEGATIVE = [
-		// An anchor is present.
-		// This is answerable without a focus point, so it is not `near_me`.
+		// A named anchor makes these answerable without user location.
 		"gas station near Austin",
 		"restaurants near Times Square",
 		"coffee in Paris",
 		"350 5th Ave, New York, NY 10118",
 		"Paris",
-		// The landmark leaders keep their own rule: a relative description of a real anchor.
+		// Relative descriptions of named landmarks belong to the landmark rule.
 		"near the Empire State Building",
 	]
 

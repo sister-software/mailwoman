@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The cell classification: the zero-cell trap the zoning survey measured, the whole/partial split, and
- *   the adaptive resolution that keeps a continental polygon inside h3's allocator.
+ *   Test whole/partial cell classification, zero-cell handling, adaptive resolution, and allocator equivalence.
  */
 
 import { FIXTURE_ORIGIN } from "@mailwoman/flood/test-kit"
@@ -20,11 +19,7 @@ import { POLYGON_TO_CELLS_FLAGS, polygonToCells, polygonToCellsExperimental } fr
 import { describe, expect, it } from "vitest"
 
 /**
- * The first feature of the real EA product, verbatim from the published geodatabase:
- * a 128 m² square off Great Yarmouth.
- *
- * Carried here because it is the smallest real thing the source contains,
- * and the trap it demonstrates is not hypothetical.
+ * Smallest feature in the published EA dataset: a 128 m² square near Great Yarmouth.
  */
 const TINY_REAL_FEATURE = [
 	[
@@ -41,8 +36,7 @@ const TINY_REAL_FEATURE = [
 describe("classifyFeatureCells", () => {
 	it("indexes a polygon smaller than a cell, which a centre-containment polyfill drops entirely", () => {
 		for (const resolution of [7, 8, 9, 10]) {
-			// The trap, stated as a measurement rather than a worry: h3's default polyfill keeps a cell whose
-			// centre is inside, and this real feature contains no cell centre at any of these resolutions.
+			// Centre-based polyfill misses this real feature at each tested resolution.
 			expect(polygonToCells(TINY_REAL_FEATURE[0] as number[][][], resolution, true)).toHaveLength(0)
 
 			const cells = classifyFeatureCells(TINY_REAL_FEATURE, resolution, "1")
@@ -61,12 +55,12 @@ describe("classifyFeatureCells", () => {
 		expect(cells.partial.length).toBeGreaterThan(0)
 		expect(cells.resolution).toBe(9)
 
-		// A cell is one or the other, never both.
+		// Whole and partial cells are disjoint.
 		expect(new Set([...cells.whole, ...cells.partial]).size).toBe(cells.whole.length + cells.partial.length)
 	})
 
 	it("coarsens a polygon whose bounding box would overrun h3's allocator, and says which resolution it used", () => {
-		// A degenerate polygon spanning most of Great Britain — the shape a long meandering river's bounding box takes.
+		// Approximate the wide bounding box of a meandering river.
 		const wide = [[rectangleRing(-6, 50, 2, 56)]]
 
 		expect(estimateCellCount(wide, 9)).toBeGreaterThan(CELL_ESTIMATE_BUDGET)
@@ -83,15 +77,12 @@ describe("classifyFeatureCells", () => {
 	})
 
 	it("throws rather than skipping a feature that reaches no cell", () => {
-		// A feature whose geometry carries no ring reaches nothing.
-		// A build that skipped it would publish an absence it invented, indistinguishable
-		// downstream from the designated Zone 1 absence this layer exists to report.
+		// Reject empty geometry rather than inventing an absence.
 		expect(() => classifyFeatureCells([], 9, "empty")).toThrow(/reaches no cell/u)
 	})
 
 	it("still indexes a ring collapsed to a single point, because overlapping containment touches its cell", () => {
-		// Recorded rather than assumed: the zero-cell guard above does not fire on a degenerate ring,
-		// so a source that published one would be indexed to the cell containing it rather than dropped.
+		// A collapsed ring touches and indexes its containing cell.
 		const collapsed = [
 			[
 				[
@@ -108,14 +99,7 @@ describe("classifyFeatureCells", () => {
 })
 
 /**
- * The unconditional allocator path: every part through h3, no fast paths at all.
- *
- * The differential below is the two-path discipline applied to this module's own optimization.
- * Two of its shortcuts — a part that fits inside one cell, and a part too narrow to
- * contain one — replace an h3 call with a claim about geometry, and a claim about geometry
- * that is subtly wrong produces a well-formed wrong index rather than an error.
- *
- * Measured over the real product before it landed: 60,000 features at resolution 9, zero disagreements.
+ * Reference classification using H3's overlapping and full-containment modes without shortcuts.
  */
 function referenceClassification(polygons: number[][][][], resolution: number) {
 	const touched = new Set<string>()
@@ -171,7 +155,7 @@ describe("the allocator-free shortcuts agree with the allocator", () => {
 			for (const resolution of [7, 9, 11]) {
 				const fast = classifyFeatureCells(polygons, resolution, label)
 
-				// The comparison is only meaningful where the adaptive path did not coarsen.
+				// Compare only when both paths use the requested resolution.
 				if (fast.resolution !== resolution) continue
 
 				const reference = referenceClassification(polygons, resolution)

@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Coarse-placer (#244) loader + int8 round-trip. Builds a tiny synthetic artifact on disk (no
- *   $MAILWOMAN_DATA_ROOT dependency) so `CoarsePlacer.fromArtifactDir` is exercised end-to-end for both the
- *   fp32 and the int8-per-row formats, and asserts the int8 path predicts the same class with near-
- *   identical confidence. Also covers `featurize` determinism and `dequantizeInt8Weights`.
+ *   Test artifact loading, int8 dequantization, feature stability, open-set routing, and posterior filtering.
  */
 
 import {
@@ -26,7 +23,7 @@ const tmpRoot = await temporaryDirectory("coarse-placer-test-")
 afterAll(() => tmpRoot[Symbol.asyncDispose]())
 
 /**
- * Deterministic pseudo-random weights in [-0.05, 0.05], LCG-seeded so the test is reproducible.
+ * Generate seeded weights in `[-0.05, 0.05]`.
  */
 function seededWeights(classCount: number, dim: number, seed: number): Float32Array {
 	const w = new Float32Array(classCount * dim)
@@ -40,7 +37,7 @@ function seededWeights(classCount: number, dim: number, seed: number): Float32Ar
 }
 
 /**
- * Per-row symmetric int8 quantization (mirrors scripts/coarse-placer/quantize.mjs).
+ * Symmetrically quantize each row to int8.
  */
 function quantize(w: Float32Array, classCount: number, dim: number) {
 	const int8 = new Int8Array(classCount * dim)
@@ -66,8 +63,7 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
 }
 
 /**
- * Write an fp32 and an int8 artifact dir for the same weights.
- * Return both paths.
+ * Write fp32 and int8 versions of the same weights.
  */
 async function writeArtifacts(
 	classes: string[],
@@ -114,7 +110,7 @@ describe("featurize", () => {
 	test("different scripts produce different feature sets", () => {
 		const latin = new Set(featurize("Main Street"))
 		const cyrillic = new Set(featurize("Тверская улица"))
-		// Script-presence tokens differ, so the sets are not equal.
+		// Script-specific features should differ.
 		expect([...cyrillic].some((i) => !latin.has(i))).toBe(true)
 	})
 })
@@ -125,7 +121,7 @@ describe("dequantizeInt8Weights", () => {
 		const scales = [0.01, 0.5]
 		const out = dequantizeInt8Weights(int8, scales, 2, 4)
 
-		// Float32 storage, so compare with tolerance (1.27 round-trips to 1.26999998…).
+		// Account for Float32 rounding.
 		for (const [i, want] of [1.27, -1.27, 0, 0.64].entries()) {
 			expect(out[i]).toBeCloseTo(want, 6)
 		}
@@ -140,7 +136,7 @@ describe("dequantizeInt8Weights", () => {
 	})
 })
 
-// Hoisted to module scope: a `describe` body cannot await, and the artifacts are written once for every case below.
+// Create artifacts once; test declarations cannot await.
 const ARTIFACT_CLASSES = ["AA", "BB", "CC"]
 const ARTIFACT_BIAS = [0.1, -0.2, 0.05]
 const ARTIFACT_WEIGHTS = seededWeights(ARTIFACT_CLASSES.length, FEATURE_DIM, 12_345)
@@ -190,10 +186,9 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 })
 
 describe("open-set reject rule (#244 M2)", () => {
-	// Zero weights ⇒ logits == bias ⇒ probs == softmax(bias), independent of the input string.
-	// Lets us engineer an exact class distribution and assert the reject/route decoupling deterministically.
+	// Zero weights make the predictions depend only on bias.
 	const classes = ["US", "FR", "OTHER"]
-	// dim must be FEATURE_DIM: featurize() returns hashed indices in [0, FEATURE_DIM); a smaller dim would index past the (zero) weight rows → NaN logits. Zero weights ⇒ logits == bias regardless.
+	// Match the feature-vector width to the hashed feature indices.
 	const dim = FEATURE_DIM
 
 	const make = (bias: number[], opts: { abstainBelow?: number; openSet?: boolean }) =>
@@ -203,7 +198,7 @@ describe("open-set reject rule (#244 M2)", () => {
 		)
 
 	test("keeps an in-map-but-country-ambiguous address the max-prob rule rejects", () => {
-		// US .4 / FR .4 / other .2 — max-prob 0.4 < 0.5 (reject), but in-map mass 0.8 ≥ 0.5 (keep).
+		// The top-class probability is below 0.5, but total in-map probability is above it.
 		const bias = [Math.log(0.4), Math.log(0.4), Math.log(0.2)]
 		const def = make(bias, { abstainBelow: 0.5 })
 		const open = make(bias, { abstainBelow: 0.5, openSet: true })
@@ -214,19 +209,18 @@ describe("open-set reject rule (#244 M2)", () => {
 
 		const o = open.predict("x")
 		expect(o.abstained).toBe(false)
-		expect(o.country).toBe("US") // argmax over the in-map classes
-		expect(o.confidence).toBeCloseTo(0.4, 5) // routed country's marginal (the posterior weight)
+		expect(o.country).toBe("US") // Highest-probability in-map class.
+		expect(o.confidence).toBeCloseTo(0.4, 5) // Routed class probability.
 	})
 
 	test("rejects to null (never 'OTHER' as a country) when off-map mass dominates", () => {
-		const bias = [Math.log(0.1), Math.log(0.1), Math.log(0.8)] // other .8
+		const bias = [Math.log(0.1), Math.log(0.1), Math.log(0.8)] // OTHER probability is 0.8.
 		const def = make(bias, { abstainBelow: 0.5 })
 		const open = make(bias, { abstainBelow: 0.5, openSet: true })
 
-		// Default rule: `other` wins outright (0.8 ≥ 0.5) → a confident `other`, not an abstain.
+		// Default mode may route to OTHER.
 		expect(def.predict("x").country).toBe("OTHER")
-		// Open-set: in-map mass 0.2 < 0.5 → abstain.
-		// A reject is null, never the `other` class.
+		// Open-set mode rejects with null.
 		const o = open.predict("x")
 		expect(o.abstained).toBe(true)
 		expect(o.country).toBeNull()
@@ -242,7 +236,7 @@ describe("open-set reject rule (#244 M2)", () => {
 
 describe("abstention", () => {
 	test("abstains when no class clears the threshold", () => {
-		// All-zero weights → logits are the (equal) bias → near-uniform softmax → top prob ≈ 1/C < 0.5.
+		// Equal logits keep every class below the threshold.
 		const classes = ["AA", "BB", "CC", "DD"]
 
 		const placer = new CoarsePlacer(
@@ -263,7 +257,7 @@ describe("abstention", () => {
 	})
 })
 
-// #928: the epsilon floor — tail mass below the floor is dropped before the resolver sees the posterior (the GB→US misroute class: correct argmax, damaging tail), genuine above-floor ambiguity passes through, and floor 0 reproduces the untempered distribution.
+// Check posterior filtering, including ambiguity above the floor and the default full distribution.
 describe("inMapPosterior — #928 epsilon floor", () => {
 	const pred = {
 		country: "GB",

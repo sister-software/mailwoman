@@ -3,44 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Docs structural check (docs-architecture cleanup, Phase 4. frontmatter interface rewrite, docs-reorg
- *   Phase 0 task 2). Static frontmatter parse only — no install, no Docusaurus build — so it runs in
- *   seconds as the first step of the Docs workflow (`.github/workflows/docs-build.yml`) and locally
- *   via `yarn workspace @mailwoman/docs lint:structure` (or `node docs/scripts/check/docs-structure.ts`
- *   from the repo root).
- *
- *   Five checks:
- *
- *   1. Frontmatter validity — two modes, chosen by the `--strict` CLI flag:
- *        - Strict (`--strict`) — the live mode. Both CI (`.github/workflows/docs-build.yml`) and
- *          `yarn workspace @mailwoman/docs lint:structure` pass the flag as of the docs-reorg
- *          Task 5 skeleton cutover. It enforces the six-role interface
- *          (`docs-frontmatter-metadata.ts`): `role:` is required on every published page, value ∈
- *          {tutorial, guide, reference, explanation, landing, evidence}, with role-conditional
- *          required fields (`validatePage`).
- *        - Legacy (default, no flag): the seven-role vocabulary the interface replaced
- *          (guide/tutorial/concept/reference/decision/evidence/landing), required only on a
- *          manifest of entry pages and every recipe (`ROLE_REQUIRED_PAGES` /
- *          `ROLE_REQUIRED_DIRECTORIES`). Nothing invokes it now. It is kept because the pages it
- *          describes still exist unpublished under `docs/records/site-2026-08/`, so pointing the
- *          script at that tree remains a way to check them. delete it once nothing does.
- *   2. Exact duplicate `title:` frontmatter across the published site.
- *   3. Orphan pages — published docs absent from every sidebar in `docs/sidebars.ts`.
- *   4. Relative links (`./`, `../`) that resolve to nothing, over the whole docs tree rather than the
- *      published pages — see `../docs/links.ts` for why that scope differs from the other three.
- *   5. Backticked repository paths (`packages/core/lib/fs/writers.ts`) that name no file — the other
- *      spelling a document uses for a path, over living documents only. See `../docs/path-citations.ts`
- *      for what it refuses before resolving, and why a point-in-time record is out of scope.
- *
- *   Checks 2 through 5 are unconditional — the `--strict` flag affects check 1 only. Known-intentional
- *   findings live in `docs-structure-allowlist.ts`, each with a reason. The evals/retrospectives
- *   trees are a delegated workstream and are skipped by the frontmatter check (both modes) and by
- *   the legacy `role:` requirement (see `isDelegatedWorkstream`).
+ *   Check documentation frontmatter, duplicate titles, sidebar coverage, relative links, and cited
+ *   repository paths. The script uses static parsing and runs before installation in CI. Use
+ *   `--strict` for the current six-role frontmatter rules; without it, the legacy rules apply.
+ *   Checks for duplicate titles, orphan pages, links, and path citations run in either mode.
+ *   Intentional findings are listed in `docs-structure-allowlist.ts`.
  */
 
-// Node builtins on purpose. The "Docs structure checks" step in .github/workflows/docs-build.yml runs this before
-// `yarn install`, so there is no node_modules and a workspace specifier cannot resolve.
-// packages/repo-health/test/unit/preinstall-scripts.test.ts holds this whole import graph to builtins and relative paths.
+// CI runs this script before installation, so its imports must use Node builtins or relative paths.
 // oxlint-disable-next-line typescript/no-restricted-imports -- runs before `yarn install`; see above
 import { parseArgs } from "node:util"
 
@@ -59,15 +29,10 @@ const { values: flags } = parseArgs({
 
 const strict = flags.strict
 
-//#region Policy vocabulary
+//#region Frontmatter policy
 
 /**
- * The page-role vocabulary and each role's required frontmatter fields — the content-model table
- * from the cleanup plan, reproduced on the policy page (`docs/articles/contributing-docs.mdx`).
- *
- * `landing` is the site-specific addition for pure navigation surfaces.
- * `reference` and `decision` carry conditional requirements handled below
- * (`generated-from` or `owner`; `superseded-by` once closed).
+ * Required frontmatter fields for each legacy page role.
  */
 const ROLE_REQUIRED_FIELDS: Record<string, string[]> = {
 	guide: ["audience", "prerequisites", "verified-with"],
@@ -80,14 +45,12 @@ const ROLE_REQUIRED_FIELDS: Record<string, string[]> = {
 }
 
 /**
- * The `status:` vocabulary the record-class chrome renders (`src/theme/DocItem/Content`).
+ * Status values supported by the documentation theme.
  */
 const STATUS_VOCABULARY = new Set(["active-decision", "superseded"])
 
 /**
- * Pages that must declare `role:` (relative to `docs/articles`): the front door,
- * the entry pages, the four canonical concept pages, the docs policy itself —
- * plus every recipe, matched by directory below.
+ * Entry pages that require `role:` in legacy mode.
  */
 const ROLE_REQUIRED_PAGES = [
 	"index.mdx",
@@ -107,10 +70,7 @@ const ROLE_REQUIRED_DIRECTORIES = ["recipes/"]
 //#region Check 1 — frontmatter validity
 
 /**
- * Legacy frontmatter check — the original policy, unchanged.
- *
- * Used when `--strict` is absent so CI keeps passing against the current tree
- * until a later task deletes it and flips the flag.
+ * Validate pages against the legacy role rules.
  */
 function checkFrontmatterLegacy(pages: DocPage[]): string[] {
 	const failures: string[] = []
@@ -174,13 +134,7 @@ function checkFrontmatterLegacy(pages: DocPage[]): string[] {
 }
 
 /**
- * Flattens a `DocPage`'s parsed frontmatter into the plain `Record<string, unknown>`
- * shape `validatePage` expects.
- *
- * Declared keys with a scalar value carry that value.
- * A declared key whose value is nested/non-scalar (an array, a block scalar —
- * `docs-frontmatter.ts`'s parser records the key but not the value) carries `true`,
- * which is enough for a presence check but nothing a role rule here reads for content.
+ * Convert parsed frontmatter to the shape expected by `validatePage`.
  */
 function toFrontmatterRecord(page: DocPage): Record<string, unknown> {
 	const record: Record<string, unknown> = {}
@@ -193,14 +147,7 @@ function toFrontmatterRecord(page: DocPage): Record<string, unknown> {
 }
 
 /**
- * Strict frontmatter check — the six-role interface, enforced on every published page
- * (minus the delegated evals/retrospectives workstream, same boundary as the legacy check).
- *
- * This is what CI runs and what the corpus satisfies: 79 of 79 published pages pass.
- *
- * It carries no `status:` check, which the legacy mode does.
- * That is the one thing lost by deleting the legacy path, and the reason a
- * deletion is not simply a subtraction.
+ * Validate published pages against the six-role interface, excluding delegated workstreams.
  */
 function checkFrontmatterStrict(pages: DocPage[]): string[] {
 	const failures: string[] = []
@@ -226,7 +173,7 @@ function checkDuplicateTitles(pages: DocPage[]): string[] {
 	for (const page of pages) {
 		const title = page.frontmatter.get("title")
 
-		if (!title) continue // Half the corpus titles from its first H1 — only declared titles can collide exactly.
+		if (!title) continue // Only explicit frontmatter titles are checked for duplicates.
 
 		const paths = byTitle.get(title) ?? []
 		paths.push(page.relativePath)
@@ -247,7 +194,7 @@ function checkDuplicateTitles(pages: DocPage[]): string[] {
 //#region Check 3 — orphan pages
 
 /**
- * Recursively gather explicit doc ids and autogenerated directory roots from a sidebar item.
+ * Collect document ids and autogenerated directory roots from a sidebar item.
  */
 function walkSidebarItem(item: unknown, ids: Set<string>, autogeneratedDirs: Set<string>): void {
 	if (typeof item === "string") {
@@ -292,7 +239,7 @@ function checkOrphans(pages: DocPage[]): string[] {
 	}
 
 	for (const page of pages) {
-		// Autogenerated sidebars pull in every doc under their directory by file location.
+		// Autogenerated entries include every document beneath their directory.
 		const coveredByDirectory = [...autogeneratedDirs].some((dir) => page.relativePath.startsWith(`${dir}/`))
 
 		if (coveredByDirectory || ids.has(page.id) || allowedIDs.has(page.id)) continue
@@ -308,11 +255,7 @@ function checkOrphans(pages: DocPage[]): string[] {
 //#region Check 4 — relative links resolve
 
 /**
- * Unlike the three checks above, this one reads the whole docs tree rather than the published
- * pages: 62 of the 109 broken links this check was written for sit under `docs/engineering`,
- * which `collectDocPages` never walks and Docusaurus never builds.
- *
- * Therefore, nothing had ever resolved a path there.
+ * Check relative links throughout the docs tree, including unpublished pages.
  */
 async function checkRelativeLinks(): Promise<string[]> {
 	const broken = await findBrokenLinks(await collectMarkdownFiles())
@@ -325,11 +268,7 @@ async function checkRelativeLinks(): Promise<string[]> {
 //#region Check 5 — backticked repository paths resolve
 
 /**
- * The same tree as check 4, over the other spelling a document uses to name a file.
- *
- * Scope stops at living documents: a point-in-time record states what was true when it was
- * written, so a path it names is evidence rather than a claim about the current tree.
- * `../docs/path-citations.ts` holds that rule and the classes of text it refuses before resolution.
+ * Check repository paths cited in current documents; historical records are excluded.
  */
 async function checkPathCitations(): Promise<string[]> {
 	const { broken } = await censusPathCitations(await collectMarkdownFiles())

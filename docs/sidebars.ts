@@ -1,43 +1,12 @@
 import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-//
-// One sidebar per top-level door.
-// The docs sub-header (src/components/DocsSubHeader) is the door switcher,
-// so a sidebar never wraps its contents in a collapsible section category.
-// Every doc sits at the top level of its own sidebar.
-// The ids here are the authority the switcher reads
-// (src/components/DocsSubHeader/sections.ts must list the same ids, in display order).
-// Each doc belongs to exactly one sidebar, so Docusaurus picks the right one automatically.
-//
-// State as of the docs-reorg Task 5 skeleton cutover: the old seven-sidebar tree
-// (startHere / use / understand / reference / contribute / legal) is gone with the content
-// it indexed — everything it listed now lives unpublished under docs/records/site-2026-08/.
-// Five doors ship here, and they are the whole published site:
-//
-// - `product` — what the engine does, where it runs, what it replaces, what data it pulls.
-// - `solutions` — the same engine addressed by the pain a buyer arrives with rather than by feature.
-// - `developers` — the get-started trio, what ships today, and where to get help.
-// - `about` — the open-strategy pages, the compliance boundary, contact, and pricing.
-// - `resources` — the evidence door: published benchmarks with their runnable scripts,
-//   and the capability-shape comparisons against the alternatives.
-//
-// `pricing` is a root-level doc that sits in the `about` sidebar so it has a home in
-// the nav tree (the orphan check in scripts/check-docs-structure.ts requires one),
-// while the navbar links it directly at /docs/pricing.
+// Node-only navigation configuration.
+// Keep these five sidebars synchronized with the switcher sections
+// in `src/components/DocsSubHeader/sections.ts`.
+// Every published document belongs to one sidebar.
+// The root-level pricing page is grouped under `about` and linked directly from the navbar.
 const sidebars: SidebarsConfig = {
-	// Evaluation order, and every page here routes rather than instructs: a reader arrives
-	// deciding whether Mailwoman fits rather than building against it.
-	// Overview defines the thing.
-	// Capabilities answers what it does.
-	// Deployment options answers where it runs.
-	// Drop-in replacements answers what it can stand in for.
-	// Data products answers what you carry.
-	// Each page hands off into the `developers` door, so this sidebar is the shallow end
-	// rather than a parallel set of instructions.
-	//
-	// Flat, no lead category: `useLayoutDocsSidebar("product").link` resolves to the
-	// first entry, so the switcher tab lands on the overview.
+	// Keep the overview first; the switcher uses it as the product landing page.
 	product: [
 		"product/overview",
 		"product/capabilities",
@@ -45,20 +14,7 @@ const sidebars: SidebarsConfig = {
 		"product/drop-in-replacements",
 		"product/data-products",
 	],
-	// Indexed by the pain a reader arrives with rather than by the feature that
-	// answers it, so a manager scanning the switcher recognizes their own problem
-	// before they have learned any of this project's vocabulary.
-	// Every page runs the same four beats — problem, what changes, what you still carry, the same
-	// two closing links — because the repetition is what makes the door scannable at the fifth page.
-	//
-	// Order is by how early the question lands in an evaluation: cost is the question
-	// that starts one, storage rights and residency are the two that stop one,
-	// and the last two are workload-shaped rather than commercial.
-	// They are read by someone who has already decided the commercial part
-	// and is now checking a specific job.
-	//
-	// Flat, no lead category, for the same reason as `product`: the switcher tab resolves
-	// through `useLayoutDocsSidebar("solutions").link` to the first entry.
+	// Lead with the questions that typically arise first in an evaluation.
 	solutions: [
 		"solutions/eliminate-the-per-request-bill",
 		"solutions/own-what-you-look-up",
@@ -70,9 +26,7 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Get started",
-			// Reading order rather than alphabetical: what it is → install → the trial arc.
-			// `useLayoutDocsSidebar("developers").link` resolves through this category to its first doc,
-			// which is why the switcher tab still gets a destination with a category in the lead position.
+			// The switcher resolves this category to its first document.
 			items: [
 				"developers/get-started/what-mailwoman-is",
 				"developers/get-started/install-and-first-parse",
@@ -82,24 +36,7 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Tutorials",
-			// Reading order again, and it is a dependency order: the parse walk needs
-			// only the install, the CSV loop needs candidate.db, the server needs both,
-			// and the precision page needs a second download on top.
-			// Each page's prerequisites name the one before it.
-			//
-			// The next two are the wave-2 destinations rather than further rungs on that
-			// ladder: the drop-in swap re-uses the same candidate.db as the server page
-			// but answers a different question (an existing client rather than a new one),
-			// and the browser page needs no data root at all.
-			// Both sit after the ladder so a reader following it in order reaches them
-			// having already met every artifact they name.
-			//
-			// The last two are the build pages, and they come last because they invert the
-			// direction of every page above: those consume published artifacts, these produce them.
-			// Each is hours of wall clock and tens of gigabytes, so a reader arrives at them
-			// having already established they need something the downloads do not give.
-			// US before planet — the planet page's per-country loop assumes the US ladder
-			// (rooftop, then interpolation, then the gazetteer under both) is already familiar.
+			// Tutorials progress from parsing and geocoding to deployment, then data builds.
 			items: [
 				"developers/tutorials/understand-a-parse",
 				"developers/tutorials/geocode-a-csv",
@@ -114,15 +51,7 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "How-to guides",
-			// Not a ladder.
-			// Each page is one task a reader arrives already wanting, so the order is by how
-			// early in a build the question lands rather than by dependency: get the data
-			// clean (messy input, edge kinds), check it (validate, confidence), move volume
-			// (batch, records), then the surfaces that sit beside the parse rather than inside it
-			// (autocomplete, reverse, annotations), then the operational questions that only arrive once
-			// something works (data currency, the two deploy shapes, the agent surfaces, filing a bug).
-			// Every page names its own prerequisites and links the tutorial that establishes them,
-			// so arriving at any one of them cold works.
+			// Group related tasks from input cleanup through validation, scale, and operations.
 			items: [
 				"developers/how-to/handle-messy-input",
 				"developers/how-to/handle-po-boxes-and-edge-kinds",
@@ -144,12 +73,8 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Reference",
-			// Look-up order rather than reading order: a reader arrives here knowing the
-			// fact they want, so the surfaces come first (library, CLI, http), then the
-			// vocabularies those surfaces speak (component tags), then the things you decide
-			// before you install (packages, runtime flags, locales, footprints).
-			// `cli` is generated by docs/scripts/generate-cli-reference.ts on every build —
-			// edit the command specs rather than the page.
+			// Put API references first.
+			// The CLI page is generated from command specifications.
 			items: [
 				"developers/reference/library-api",
 				"developers/reference/cli",
@@ -164,10 +89,7 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Knowledge base",
-			// Background rather than instruction: nothing here changes a reader's filesystem,
-			// and every page hands off to the tutorial, how-to or reference that does.
-			// Shelves are separate categories so a reader can tell domain knowledge
-			// (postal systems) apart from the implementation.
+			// Background material is grouped by subject rather than by task.
 			items: [
 				{
 					type: "category",
@@ -177,14 +99,7 @@ const sidebars: SidebarsConfig = {
 				{
 					type: "category",
 					label: "Postal systems",
-					// Reading order.
-					// The first four build one idea: an address is an instruction to a postal
-					// service (what an address is), the routing code inside it is a path through a
-					// sorting network (postcodes), the network is why the format is ordered as it is
-					// (how mail gets delivered), and every country ordered it differently (around the world).
-					// The next two are the hard cases that follow from the idea, and falsehoods sits last
-					// because it distills all six into one line each — useful as a checklist once the
-					// reasoning is familiar, and reachable cold for a reader who arrives at it directly.
+					// Explain address structure and delivery before covering edge cases and misconceptions.
 					items: [
 						"developers/knowledge-base/postal/what-is-an-address",
 						"developers/knowledge-base/postal/postcodes-and-zip-codes",
@@ -198,17 +113,7 @@ const sidebars: SidebarsConfig = {
 				{
 					type: "category",
 					label: "Geocoding",
-					// Reading order, and it builds the same way the postal shelf does.
-					// The first page defines the job (forward and reverse, place against coordinate, precision tiers);
-					// the second is the shelf's argument.
-					// The two ways the job is built, and what each costs to run.
-					// The third is the place database both designs sit on.
-					// Those three are the implementation.
-					// The last three are the judgment calls that follow from it: how to decide
-					// whether a coordinate is good enough, how to choose among the shapes on the market,
-					// and why the parsing half resists rules in the first place.
-					// `why-addresses-are-hard` sits last for the same reason `falsehoods` does next door.
-					// It is the distillation, and it reads better once the implementation is familiar.
+					// Introduce geocoding, its architectures and data, then discuss quality and alternatives.
 					items: [
 						"developers/knowledge-base/geocoding/what-geocoding-is",
 						"developers/knowledge-base/geocoding/the-two-architectures",
@@ -221,16 +126,7 @@ const sidebars: SidebarsConfig = {
 				{
 					type: "category",
 					label: "Address intelligence",
-					// Reading order, and it follows one parse from end to end.
-					// The first page is the whole chain on one messy input.
-					// The next three take a stage each in the order the parse runs them
-					// (pieces and labels, the gazetteer prior on the scores, the decode that picks a reading).
-					// Calibration comes fifth because it is about the number the first four produce,
-					// and training sixth because it explains where all of it was learned.
-					// `what-the-model-cannot-do` sits last for the same reason `falsehoods`
-					// and `why-addresses-are-hard` do on the shelves above.
-					// It is the distillation, and its limits read as limits rather than as
-					// a list once the implementation is familiar.
+					// Follow the parse pipeline from tokenization through decoding, calibration, and training.
 					items: [
 						"developers/knowledge-base/address-intelligence/how-a-model-reads-an-address",
 						"developers/knowledge-base/address-intelligence/tokens-and-labels",
@@ -247,31 +143,13 @@ const sidebars: SidebarsConfig = {
 		"developers/support",
 	],
 	about: ["about/mission", "about/security-and-compliance", "about/contact", "pricing"],
-	// The evidence door.
-	// Benchmarks lead because they are the door's claim.
-	// The pages carry numbers, and every number's script, inputs and result file are
-	// published beside it under `static/benchmarks/`.
-	// Compare follows because a reader who has read a measurement is better equipped
-	// to read a capability comparison than the other way round.
-	//
-	// `benchmarks/index` sits first inside its own category so `useLayoutDocsSidebar("resources").link`
-	// resolves to it and the switcher tab lands on the evidence door's front page rather than mid-panel.
-	//
-	// Field notes moved here from the navbar in this task: it is long-form research writing,
-	// which is what this door is for, and the navbar was gaining a sixth item.
-	// It stays a `link` item because `/research` is a plugin route rather than a doc,
-	// and it sits last so it never resolves as the door's entry link.
-	// The footer keeps its own link, unchanged.
+	// Benchmarks lead; comparisons and research notes follow.
+	// The benchmark inputs and scripts are published under `static/benchmarks/`.
 	resources: [
 		{
 			type: "category",
 			label: "Benchmarks",
-			// Reading order: the door's front page, then the two panels in the order
-			// they were run, then the reading guide.
-			// The guide sits last on purpose.
-			// It is written against the two panels above it and illustrates every trap with one
-			// of their numbers, so it lands better once the measurements are familiar.
-			// It is reachable cold from either panel.
+			// Show the overview and measurements before the guide to interpreting them.
 			items: [
 				"resources/benchmarks/index",
 				"resources/benchmarks/france-ban",
@@ -282,11 +160,7 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Compare",
-			// Ordered by how a reader arrives: hosted API first
-			// (the default alternative anyone has already found), then the self-hosted engine,
-			// then the open-source stack you meet when you decide to build rather than buy.
-			// Each page ends in a "when to choose them" section and none of them carries
-			// an accuracy claim about another system.
+			// Compare hosted, self-hosted, and open-source alternatives in that order.
 			items: [
 				"resources/compare/index",
 				"resources/compare/google-maps",

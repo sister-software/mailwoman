@@ -3,12 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pure-codex guard for the FR conventions row (#719). The shipped neural model emits the FR leading
- *   `street_prefix` (Rue/Avenue/Cours/…) correctly, but the #511 forbid masked it to −1e9 before
- *   Viterbi and destroyed it on real French addresses (F1 0.0 vs 80.0 mask-off. the larger real-FR
- *   eval saw ~96 → ~0.6). These assertions fail in CI — no model, no weights — if a future change
- *   re-forbids `street_prefix`, so the live bug cannot silently reappear. The model-level
- *   regression check is a separate, later build step.
+ *   Guards the French street-prefix convention and the GB postcode pattern without loading model
+ *   weights. The FR assertion prevents `street_prefix` from being forbidden again.
  */
 
 import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "@mailwoman/codex/address-system-conventions"
@@ -37,8 +33,7 @@ describe("GB address-system conventions (#1275)", () => {
 	it("declares the codex UK postcode shape — the reference, not a re-declared regex", () => {
 		const gb = conventionsForSystem("gb")
 		expect(gb).not.toBeNull()
-		// Same object as gb/postcode.ts's UK_POSTCODE_PATTERN.
-		// The shape family is declared once in the codex.
+		// The codex and GB postcode parser share one pattern.
 		expect(gb!.postcodePattern).toBe(UK_POSTCODE_PATTERN)
 	})
 
@@ -49,19 +44,14 @@ describe("GB address-system conventions (#1275)", () => {
 			expect(valid).toMatch(pattern)
 		}
 
-		// Clip fragments from the #1275 board ("1 9PD" for SK11 9PD, "2LH" for CV31 2LH,
-		// "3 2GL" for WF3 2GL) are shape-invalid.
-		// (A letter-led fragment like "K11 9PD" can still be shape-valid in isolation —
-		// the repair pass operates on raw-text sub-match rather than fragment shape,
-		// so the pattern only needs to describe the canonical form.)
+		// These truncated postcode fragments do not match the canonical pattern.
 		for (const clipped of ["1 9PD", "2LH", "3 2GL"]) {
 			expect(clipped).not.toMatch(pattern)
 		}
 	})
 
 	it("forbids NO tags — the row exists for the postcode snap-repair check only", () => {
-		// A forbid needs measured zero-cost receipts (the FR street_prefix lesson, #719).
-		// GB has none.
+		// No GB tag forbids have been measured.
 		expect(conventionsForSystem("gb")!.forbiddenTags).toBeUndefined()
 	})
 })

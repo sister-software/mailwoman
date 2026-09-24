@@ -59,9 +59,9 @@ describe("synth-po-box adapter", () => {
 
 	it("skips rows missing required fields", async () => {
 		const path = await writeFixture([
-			{ locality: "OK", region: "VT", postcode: "05401", country: "US" }, // valid
-			{ locality: "Missing postcode", region: "VT", country: "US" }, // invalid
-			{ region: "VT", postcode: "05401", country: "US" }, // invalid (no locality)
+			{ locality: "OK", region: "VT", postcode: "05401", country: "US" }, // Complete.
+			{ locality: "Missing postcode", region: "VT", country: "US" }, // No postcode.
+			{ region: "VT", postcode: "05401", country: "US" }, // No locality.
 		])
 
 		const rows = await collect(path)
@@ -97,7 +97,7 @@ describe("synth-po-box adapter", () => {
 		}
 
 		expect(rows).toHaveLength(5)
-		// At least 2 unique raw strings out of 5 (with seed=42, leader selection varies)
+		// Confirm the variants differ in wording.
 		const unique = new Set(rows.map((r) => r.raw))
 		expect(unique.size).toBeGreaterThanOrEqual(2)
 	})
@@ -157,7 +157,7 @@ describe("synth-po-box adapter", () => {
 		const path = await writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
 		const adapter = createSynthPoBoxAdapter({ seed: 42, militaryRatio: 1 })
 		const rows = await collect(path, adapter)
-		// One standard po_box row + one self-contained military row.
+		// Expect one standard and one military variant.
 		expect(rows).toHaveLength(2)
 		const mil = rows.find((r) => /^(PSC|CMR|Unit) /.test(String(r.components.po_box)))
 		expect(mil).toBeDefined()

@@ -10,7 +10,7 @@ import { matchPOISubject, type POIPhraseLookup } from "@mailwoman/kind-classifie
 import { describe, expect, it } from "vitest"
 
 /**
- * Stub lexicon: knows `hospital` and the two-token `drinking fountain`.
+ * Test lexicon with single- and multi-token entries.
  */
 const LOOKUP: POIPhraseLookup = (phrase) => {
 	const norm = phrase.trim().toLowerCase()
@@ -110,15 +110,7 @@ describe("matchPOISubject", () => {
 })
 
 /**
- * What a lookup's second hit means, which decides whether narrowing to the first
- * is an answer or an invented ordering.
- *
- * The committed phrase index returns the categories one typed phrase could name,
- * most specific first, and the first entry is the subject, which category a typed
- * phrase reaches is #1933's question and is unchanged here.
- * An affordance rung returns every kind that affords one activity, in an enumeration
- * that is not a preference, and flags each member `searchAsSet`; the whole set is
- * then carried and the POI branch searches their union.
+ * Distinguish ordered preference results from unordered affordance sets.
  */
 describe("a lookup returning several hits", () => {
 	const preferenceList: POIPhraseLookup = (phrase) =>
@@ -170,9 +162,7 @@ describe("a lookup returning several hits", () => {
 		expect(m?.remainder).toBe("")
 	})
 
-	// `match` is the hit the subject scores under, and it is always the head of `matches`.
-	// Two names for one value, so a scorer reading the kind and a branch reading the
-	// set can never disagree about which subject was matched.
+	// `match` is the head of `matches`, so scoring and set handling use the same subject.
 	it("scores under the head of the set", () => {
 		const m = matchPOISubject("prescription near Denver CO", "en-US", affordedSet)
 
@@ -181,23 +171,10 @@ describe("a lookup returning several hits", () => {
 })
 
 /**
- * ANCHOR_SEPARATOR behaviour-preservation + ReDoS safety.
- *
- * The separator regex was linearized (`\s*,\s*|\s+(?:…)\s+` → `,\s*|\s(?:…)\s+`)
- * to clear CodeQL's `js/polynomial-redos` alert.
- * `matchPOISubject` trims both the subject and the remainder, so surrounding
- * whitespace on the separator is redundant.
- * The split behaviour must be byte-identical.
- *
- * These cases pin the split point, subject, remainder, and match for every branch,
- * anchor word, and whitespace shape.
- * Values are the exact output of the pre-linearization regex (each anchor word is flanked
- * by whitespace on both sides, a comma splits regardless of surrounding whitespace).
+ * Verify anchor-separator behavior after regex linearization, including whitespace and comma variants.
  */
 describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearization)", () => {
-	// Fixed subject lexicon: hits only these short leading phrases.
-	// The whole inputs below are longer (they carry the place), so the whole-input path misses
-	// and the separator scan runs — surfacing the split point itself.
+	// Match only short leading phrases so tests exercise separator splitting.
 	const SUBJECTS = new Set(["cafe", "gas station", "hotel", "atm", "trails", "x"])
 
 	const subjectLookup: POIPhraseLookup = (phrase) => {
@@ -207,27 +184,26 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 	}
 
 	const cases: Array<{ text: string; subject: string; remainder: string }> = [
-		// comma branch — whitespace variants around the comma all trim to the same split
+		// Comma splits are invariant to surrounding whitespace.
 		{ text: "cafe, Boston", subject: "cafe", remainder: "Boston" },
 		{ text: "cafe ,Boston", subject: "cafe", remainder: "Boston" },
 		{ text: "cafe , Boston", subject: "cafe", remainder: "Boston" },
 		{ text: "cafe  ,  Boston", subject: "cafe", remainder: "Boston" },
 		{ text: "cafe\t,\tBoston", subject: "cafe", remainder: "Boston" },
 		{ text: "cafe,Boston", subject: "cafe", remainder: "Boston" },
-		// each anchor word, single-space flanks
+		// Anchor words with single spaces.
 		{ text: "gas station near Ottawa", subject: "gas station", remainder: "Ottawa" },
 		{ text: "hotel in Paris", subject: "hotel", remainder: "Paris" },
 		{ text: "atm at JFK", subject: "atm", remainder: "JFK" },
 		{ text: "trails around Denver", subject: "trails", remainder: "Denver" },
-		// anchor word, multi-space + tab flanks (greedy trailing consumption preserved)
+		// Anchor words with repeated spaces or tabs.
 		{ text: "gas station   near   Ottawa", subject: "gas station", remainder: "Ottawa" },
 		{ text: "hotel\tin\tParis", subject: "hotel", remainder: "Paris" },
 		{ text: "atm  at  JFK", subject: "atm", remainder: "JFK" },
-		// multi-separator: first split wins (subject "cafe"), remainder keeps the rest verbatim after trim
+		// The first separator wins; the remainder keeps later separators.
 		{ text: "cafe, Boston, MA", subject: "cafe", remainder: "Boston, MA" },
 		{ text: "cafe near town in Denver", subject: "cafe", remainder: "town in Denver" },
-		// shared whitespace between comma and a following anchor: comma's trailing \s* consumes it,
-		// so the anchor does not re-split — remainder carries "near y" intact
+		// Comma consumes the shared whitespace, preserving `near y` in the remainder.
 		{ text: "x,  near y", subject: "x", remainder: "near y" },
 	]
 
@@ -253,18 +229,17 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 	})
 
 	it("returns null when nothing matches (no whole hit, no lexicon-hitting prefix)", () => {
-		// Separators exist ("in"), but no split prefix hits the lexicon → null, exactly as the old regex.
+		// No separator prefix matches the lexicon.
 		expect(matchPOISubject("Empire State Building", "en-US", subjectLookup)).toBeNull()
 	})
 
 	it("skips a leading separator (index === 0 guard) — no split before the first token", () => {
-		// Leading comma: the sole separator is at index 0 and is skipped.
-		// The whole-input path already missed → null.
+		// Ignore a leading separator.
 		expect(matchPOISubject(", Boston", "en-US", subjectLookup)).toBeNull()
 	})
 
 	it("substring anchor words without whitespace flanks do NOT split (identical to the old regex)", () => {
-		// "maintain" contains "in" and "at"; "nearby" contains "near" — none are whitespace-flanked, so no split.
+		// Embedded anchor words without whitespace boundaries do not split.
 		expect(matchPOISubject("maintainnearby", "en-US", subjectLookup)).toBeNull()
 	})
 })
@@ -332,7 +307,7 @@ describe("span-first multilingual anchors", () => {
 })
 
 describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
-	// Never-hitting lexicon forces the full separator scan over the whole input on every call.
+	// Force a full separator scan on every call.
 	const neverHits: POIPhraseLookup = () => []
 
 	it("returns quickly on a long adversarial whitespace run (no polynomial backtracking)", () => {
@@ -341,9 +316,7 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 		const m = matchPOISubject(pathological, "en-US", neverHits)
 		const elapsed = performance.now() - start
 		expect(m).toBeNull()
-		// The old O(n²) form took seconds on 1e5 chars.
-		// The linear form completes in single-digit ms. 100ms is a generous ceiling that
-		// still fails loudly if quadratic backtracking returns.
+		// Keep the generous limit low enough to catch quadratic backtracking.
 		expect(elapsed).toBeLessThan(100)
 	})
 
@@ -360,10 +333,8 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 describe("createKindClassifier with a poi lexicon", () => {
 	const classify = createKindClassifier({ poiLexicon: LOOKUP })
 
-	// ROAD_TO_V9 §4.4 split this row's population off `poi_query`: a bare category is
-	// `poi_category` now, and `poi_query` stays underneath it as the alternative.
-	// Both kinds take the coordinator's POI branch, so the routing this test was protecting is unchanged.
-	// `core/pipeline/poi-branch.test.ts` is where that is asserted.
+	// A bare category is `poi_category`; `poi_query` remains an alternative.
+	// Both use the POI branch.
 	it("emits poi_category for a bare category phrase, with poi_query underneath", async () => {
 		const result = await classify(input("hospital"), shape(), LOCALE)
 		expect(result.kind).toBe("poi_category")

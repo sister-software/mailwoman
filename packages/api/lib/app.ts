@@ -25,7 +25,7 @@ import { DEFAULT_BATCH_MAX, registerMailwomanAPIRoutes } from "#routes"
 import type { GeocodeOutcomeLike } from "#schema"
 
 /**
- * 2 MiB — carried from the express server's `express.json({ limit: "2mb" })` (`mailwoman/server/index.ts`).
+ * Maximum request body size, matching the former Express server.
  */
 const DEFAULT_BODY_LIMIT_BYTES = 2 * 1024 * 1024
 
@@ -68,20 +68,14 @@ export interface MailwomanAPIOptions {
 }
 
 /**
- * Short, single-line summary of a zod validation failure for the envelope's `detail` field
- * rather than the full `ZodError`, which is multi-line and carries internal
- * path/code detail not meant for a wire response.
+ * Format validation issues as one concise response detail.
  */
 function summarizeValidationError(error: { issues: Array<{ path: PropertyKey[]; message: string }> }): string {
 	return error.issues.map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`).join("; ")
 }
 
 /**
- * The document info stamped into the emitted OpenAPI document.
- *
- * Exported (not inlined) so the `mailwoman openapi` command can call `emitOpenAPIDocuments`
- * with the same info the mounted `/openapi.json` route (below, via {@link attachOpenAPIDocs})
- * uses — one source of truth, no risk of the two drifting.
+ * OpenAPI metadata shared by the mounted endpoint and document generator.
  */
 export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
 	...(await readServedDocumentInfo(import.meta.url, "@mailwoman/api")),
@@ -111,12 +105,8 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 	options: MailwomanAPIOptions = {}
 ): OpenAPIHono {
 	const app = new OpenAPIHono({
-		// This surface is ours (no vendor interface to preserve): every declared body/query
-		// schema is validator-enforced, and a failure maps through the shared api-kit envelope,
-		// never the raw zod `{success, error}` shape.
-		// Individual routes (routes.ts) override this per-call to answer their own
-		// friendly business message (e.g. "address is required"); this is the fallback
-		// for the rest (currently just `/v1/format`).
+		// Validate declared schemas and format failures with the shared API envelope.
+		// Routes can override this fallback with endpoint-specific messages.
 		defaultHook: (result, c) => {
 			if (!result.success) {
 				return errorResponse(c, 400, "invalid request body", summarizeValidationError(result.error))
@@ -126,9 +116,7 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		},
 	})
 
-	// Browser-embedded clients need cors or their cross-origin XHR
-	// (including the mutating `/v1/*` preflight) is blocked before it completes (#1017).
-	// GET+post, unlike the read-only drop-ins (photon, nominatim).
+	// Browser clients need CORS for cross-origin requests and POST preflights.
 	if (options.cors !== false) {
 		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
@@ -137,14 +125,10 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		app.use(engineHeaders(options.engine))
 	}
 
-	// Safety net: an engine fault answers the native envelope, never a crash.
-	// `detail` carries the raw message.
-	// This surface is ours to design, so (unlike the vendor-constrained drop-in envelopes) we can be helpful.
+	// Return engine failures in the API's error envelope, including the message in `detail`.
 	app.onError((error, c) => {
-		// A malformed request body is a client-side syntax error rather than a server fault —
-		// Hono's zod-openapi validator throws before a route's own hook ever sees the body,
-		// so it lands here instead of the per-route 400s in routes.ts.
-		// Answer 400 rather than the 500 net (which stays reserved for engine faults).
+		// Hono rejects malformed JSON before route-level validation hooks run.
+		// Treat that client syntax error as 400; reserve 500 for engine faults.
 		if (error instanceof Error && error.message.includes("Malformed JSON")) {
 			return errorResponse(c, 400, "invalid request body", "malformed JSON")
 		}
@@ -152,8 +136,7 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		return errorResponse(c, 500, "internal error", error instanceof Error ? error.message : String(error))
 	})
 
-	// Ahead of the handlers (which buffer the body into memory) so an oversized post is rejected
-	// before that buffering happens rather than after — mirrors the libpostal precedent.
+	// Enforce the limit before handlers buffer request bodies.
 	app.use(
 		"/v1/*",
 		bodyLimit({

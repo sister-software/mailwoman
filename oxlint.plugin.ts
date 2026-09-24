@@ -2,10 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Repo-local oxlint plugin for Mailwoman.
- *   Loaded with `jsPlugins` in `oxlint.config.ts`.
- *   Repo-specific rules live here.
- *   A generic rule moves to `@sister.software/oxlint-config`.
+ * @file Repository-specific oxlint rules, loaded through `jsPlugins` in `oxlint.config.ts`.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -15,26 +12,19 @@ import { reflowRule } from "./config/oxlint/comment-reflow/rule.ts"
 import { HELPER_HOMES, type HelperHome } from "./oxlint.helper-homes.ts"
 
 /**
- * ESTree fields the rules below read that `AstNode` does not declare.
- *
- * `AstNode` in `@sister.software/oxlint-config` is curated rather than complete.
- * Every field it carries has a docstring naming the rule that reads it, and these
- * three are ones this repository's rules reached for first.
- *
- * They are declared here because a consumer cannot widen a dependency's interface,
- * and the cast at each site says which node type is being read.
+ * Additional ESTree fields used by local rules but not declared on the shared `AstNode` type.
  */
 interface ESTreeNode extends AstNode {
 	/**
-	 * A `ForStatement`'s update expression, read by the descending-loop test.
+	 * A `ForStatement` update expression.
 	 */
 	update?: AstNode
 	/**
-	 * An `ArrayPattern` or `ArrayExpression`'s elements, read by the same test's swap detection.
+	 * Elements of an array pattern or expression.
 	 */
 	elements?: AstNode[]
 	/**
-	 * A `TaggedTemplateExpression`'s template, read so a plain-template check can skip a tagged one.
+	 * Template of a tagged-template expression.
 	 */
 	quasi?: AstNode
 }
@@ -67,7 +57,7 @@ interface Plugin {
 }
 
 /**
- * Delimiters this rule handles, mapped to suggested spliterators.
+ * Supported delimiters and suggested streaming readers.
  */
 const DELIMITER_HINTS = new Map<string, { rendered: string; hints: string[] }>([
 	[
@@ -78,8 +68,7 @@ const DELIMITER_HINTS = new Map<string, { rendered: string; hints: string[] }>([
 ])
 
 /**
- * Returns the delimiter string of a plain literal or template.
- * Any other argument returns null.
+ * Read a string delimiter from a literal or expression-free template.
  */
 function literalDelimiter(argument: AstNode | undefined): string | null {
 	if (!argument) return null
@@ -131,7 +120,7 @@ const preferSpliteratorRule: Rule = {
 }
 
 /**
- * Kysely boundary methods validated against schema.
+ * Kysely methods that accept schema-bound table or column names.
  */
 const DATABASE_BOUNDARY_METHODS = new Set([
 	"deleteFrom",
@@ -144,7 +133,7 @@ const DATABASE_BOUNDARY_METHODS = new Set([
 ])
 
 /**
- * True if an expression contains a cast to `never`.
+ * Check whether an expression contains a `never` cast.
  */
 function containsNeverCast(node: AstNode | undefined): boolean {
 	if (!node) return false
@@ -159,7 +148,7 @@ function containsNeverCast(node: AstNode | undefined): boolean {
 }
 
 /**
- * Returns the called member name for non-computed member calls.
+ * Get a called member's name when it is not computed.
  */
 function calledMethod(node: AstNode): string | null {
 	const callee = node.callee
@@ -170,12 +159,12 @@ function calledMethod(node: AstNode): string | null {
 }
 
 /**
- * Handle types that carry database schema information.
+ * Database handle types parameterized by schema.
  */
 const DATABASE_HANDLE_TYPES = new Set(["DatabaseClient", "Kysely", "Transaction"])
 
 /**
- * Returns the cast target name for plain type references.
+ * Get the name of a simple type-reference cast target.
  */
 function castTargetName(node: AstNode): string | null {
 	const annotation = node.typeAnnotation
@@ -303,7 +292,7 @@ const requireDisableReasonRule: Rule = {
 }
 
 /**
- * Sync `node:fs` methods mapped to async helper replacements.
+ * Map synchronous `node:fs` methods to async helper suggestions.
  */
 const GLOBERATOR_DIRECTORY_HINT =
 	'`Globerator.from("*", { cwd: path, absolute: false })`, adding `withFileTypes: true, onlyFiles: false` when entry types are needed (spliterator/node/fs)'
@@ -348,7 +337,7 @@ const FUNCTION_NODE_TYPES = new Set([
 ])
 
 /**
- * Nodes that reset async scope because their contents run synchronously.
+ * AST nodes whose contents execute synchronously and reset async scope.
  */
 const SYNC_SCOPE_NODE_TYPES = new Set(["ClassStaticBlock", "StaticBlock", "MethodDefinition", "PropertyDefinition"])
 
@@ -362,7 +351,7 @@ const noSyncFSInAsyncRule: Rule = {
 	},
 	create(context: RuleContext) {
 		/**
-		 * Manual traversal keeps async-scope tracking in one place.
+		 * Traverse the AST while tracking whether each node is inside an async function.
 		 */
 		function walk(node: AstNode, insideAsync: boolean): void {
 			let asyncHere = insideAsync
@@ -410,8 +399,7 @@ const noSyncFSInAsyncRule: Rule = {
 }
 
 /**
- * Disallow relative dynamic imports.
- * Use package `imports` aliases instead.
+ * Prefer package import aliases over relative dynamic imports.
  */
 const noRelativeDynamicImportRule: Rule = {
 	meta: {
@@ -430,7 +418,7 @@ const noRelativeDynamicImportRule: Rule = {
 					node,
 					message:
 						`import(${stringifyJSON(specifier)}) names a module by the importer's location. Use the package's ` +
-						"`imports` map instead (`#<path-from-package-root>`, no extension) — it resolves `.ts` under `node` and " +
+						"`imports` map instead (`#<path-from-package-root>`, without an extension) — it resolves `.ts` under `node` and " +
 						"`out/*.js` everywhere else, and moves with the file.",
 				})
 			},
@@ -439,9 +427,7 @@ const noRelativeDynamicImportRule: Rule = {
 }
 
 /**
- * Disallow private `#` import-map specifiers in tests.
- *
- * Tests should use public exports or explicit relative helpers.
+ * Prevent tests from importing package-private `#` aliases.
  */
 const noPrivateImportInTestRule: Rule = {
 	meta: {
@@ -503,8 +489,7 @@ const noPrivateImportInTestRule: Rule = {
 }
 
 /**
- * Disallow `import.meta.resolve`.
- * Prefer typed helpers in `@mailwoman/core/module/resolvers`.
+ * Prefer typed module-resolution helpers over `import.meta.resolve`.
  */
 const noImportMetaResolveRule: Rule = {
 	meta: {
@@ -540,8 +525,7 @@ const noImportMetaResolveRule: Rule = {
 }
 
 /**
- * Disallow walking upward from `import.meta.dirname` with `..` segments.
- * Prefer `resolvePackagePath` or `repoRootPath`.
+ * Prefer package and repository path helpers over walking up from `import.meta.dirname`.
  */
 const noImportMetaDirnameWalkRule: Rule = {
 	meta: {
@@ -575,7 +559,7 @@ const noImportMetaDirnameWalkRule: Rule = {
 }
 
 /**
- * Returns method names for a call chain, inner to outer.
+ * Get called method names from inner to outer.
  */
 function methodChain(node: AstNode): string[] {
 	const names: string[] = []
@@ -599,7 +583,7 @@ function numericLiteralValue(node: AstNode): number | null {
 }
 
 /**
- * Returns base identifier for computed index access (e.g. `rows` in `rows[i]`).
+ * Get the base identifier of computed index access, such as `rows` in `rows[i]`.
  */
 function indexedBaseName(node: AstNode | undefined): string | null {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return null
@@ -608,7 +592,7 @@ function indexedBaseName(node: AstNode | undefined): string | null {
 }
 
 /**
- * True for variable computed indices (`xs[i]`), false for constants (`xs[0]`).
+ * Check whether a computed index uses a variable rather than a constant.
  */
 function isVariableIndex(node: AstNode | undefined): boolean {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return false
@@ -617,7 +601,7 @@ function isVariableIndex(node: AstNode | undefined): boolean {
 }
 
 /**
- * True for loops descending from `xs.length - 1` to `1`/`0` with `i--`.
+ * Match a descending loop from `xs.length - 1` to zero or one.
  */
 function isDescendingFromLength(node: AstNode): boolean {
 	const declaration = node.init?.declarations?.[0]?.init
@@ -629,7 +613,7 @@ function isDescendingFromLength(node: AstNode): boolean {
 		declaration.left?.type === "MemberExpression" &&
 		declaration.left.property?.name === "length"
 
-	// `i > 0` and `i >= 1` are equivalent stop conditions.
+	// These two conditions have the same lower bound.
 	const bound = node.test?.type === "BinaryExpression" ? numericLiteralValue(node.test.right as AstNode) : null
 
 	const toOne = (node.test?.operator === ">" && bound === 0) || (node.test?.operator === ">=" && bound === 1)
@@ -640,7 +624,7 @@ function isDescendingFromLength(node: AstNode): boolean {
 }
 
 /**
- * True if the loop body swaps two computed indices of one array.
+ * Check whether the body swaps two computed indices of the same array.
  */
 function swapsTwoIndices(body: AstNode): boolean {
 	const statements: AstNode[] = body.type === "BlockStatement" ? ((body.body as AstNode[]) ?? []) : [body]
@@ -671,7 +655,7 @@ function swapsTwoIndices(body: AstNode): boolean {
 }
 
 /**
- * Returns interpolated identifier/property name, or null.
+ * Get an identifier or property name, or return `null`.
  */
 function interpolatedName(node: AstNode): string | null {
 	if (node.type === "Identifier") return node.name ?? null
@@ -684,7 +668,7 @@ function interpolatedName(node: AstNode): string | null {
 }
 
 /**
- * True if `names` contains all `wanted` entries in order.
+ * Check whether `names` contains `wanted` as an ordered subsequence.
  */
 function containsInOrder(names: readonly (string | null)[], wanted: readonly string[]): boolean {
 	let next = 0
@@ -733,7 +717,7 @@ const preferHomeRule: Rule = {
 	},
 	create(context: RuleContext) {
 		/**
-		 * Track tagged template quasis so plain-template checks can skip them.
+		 * Track tagged templates so plain-template checks can ignore them.
 		 */
 		const tagged = new WeakSet<object>()
 
@@ -803,8 +787,7 @@ const preferHomeRule: Rule = {
 				}
 			},
 			ForStatement(node: AstNode) {
-				// `AstNode.body` spans both shapes: a statement list on a block, one statement on a loop.
-				// A `ForStatement` carries the second, and an array here would be a node this rule cannot read.
+				// A loop body is one statement; a block body is an array of statements.
 				const body = Array.isArray(node.body) ? undefined : node.body
 
 				if (!isDescendingFromLength(node) || !body || !swapsTwoIndices(body)) return
@@ -821,8 +804,7 @@ const preferHomeRule: Rule = {
 }
 
 /**
- * Disallow re-exporting symbols from other workspace packages.
- * Keep one public source package for each declaration.
+ * Keep declarations public only through their owning workspace package.
  */
 const noCrossPackageReexportRule: Rule = {
 	meta: {
@@ -860,8 +842,7 @@ const noCrossPackageReexportRule: Rule = {
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
-		// This rule supports fixes and is typed against `@oxlint/plugins`.
-		// Cast to the local `Rule` shape for this table.
+		// Adapt the fix-capable shared rule to this plugin's local rule type.
 		"comment-reflow": reflowRule as unknown as Rule,
 		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
 		"no-cross-package-reexport": noCrossPackageReexportRule,

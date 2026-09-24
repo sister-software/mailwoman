@@ -2,10 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for {@linkcode parseProviderList} — the BDC provider-list streaming CSV parser that
- *   preserves multi-FRN / multi-holding-company cardinality (decision 6). The required
- *   assertions here are the two tests that yield every row: nothing in this file may collapse two rows
- *   sharing a `provider_id` into one, no matter how tempting a `Map` keyed by `provider_id` looks.
+ * @file Test streaming BDC provider-list parsing, including preservation of repeated provider IDs and row values.
  */
 
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"

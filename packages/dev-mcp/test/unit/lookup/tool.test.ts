@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The dispatch half of `mwdev_lookup`: which artifact each source resolves, and what it says when that artifact is
- *   not there. Every case here pins the same rule — an absent artifact returns `unavailable_reason` and no rows, never
- *   a row per query saying "no", which is the shape a genuine absence has.
+ *   Test source artifact resolution and ensure missing artifacts return `unavailable_reason`, not query misses.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -14,8 +12,7 @@ import { runLookup } from "@mailwoman/dev-mcp/lookup/tool"
 import { afterAll, describe, expect, it } from "vitest"
 
 /**
- * The five artifact-backed sources never touch the registry.
- * Passing one that would throw proves it.
+ * Fail if a source that should not use the engine registry tries to access it.
  */
 const noRegistry = new Proxy({} as EngineRegistryLike, {
 	get() {
@@ -29,9 +26,7 @@ afterAll(() => emptyRoot[Symbol.asyncDispose]())
 
 describe("runLookup", () => {
 	it("reports a pinned candidate path BY NAME rather than as an unresolved one", async () => {
-		// `resolveCandidateDBPath` answers `undefined` for a pinned path that does not exist,
-		// which is right for the runtime and wrong to relay: someone who typo'd the
-		// flag would be told the gazetteer is missing.
+		// Preserve a missing pinned path so a typo is distinguishable from an absent gazetteer.
 		const result = await runLookup(noRegistry, {
 			source: "candidate",
 			queries: ["Vaduz"],
@@ -58,7 +53,7 @@ describe("runLookup", () => {
 		const result = await runLookup(noRegistry, {
 			source: "wof",
 			queries: ["Vaduz"],
-			// A string, because the engine config is the JSON a caller sends.
+			// Engine config values arrive as JSON strings.
 			config: { resolve_db: emptyRoot.path("no-such-extract.db").toString() },
 		})
 

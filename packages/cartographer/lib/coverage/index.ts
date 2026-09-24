@@ -3,23 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The "fog of war" address-coverage overlay. An H3 hexbin tileset (built by `mailwoman coverage
- *   build`) shading "where do we need data" at a glance. Two layers in one tileset: the US rooftop
- *   fine map (address-point density, street/block detail) and a global "work to do" layer — populated
- *   places (WOF, importance-weighted) we can't geocode yet show as gray-fog holes, and postcode/rooftop
- *   coverage clears them. Covered → clear (basemap shows through), uncovered civilization → gray fog.
- *
- *   Each cell carries two baked fog values in [0,1] (0 = covered, 1 = empty), so the same tiles drive
- *   either reading without a rebuild:
- *     • `fog_opt` — optimistic: partial coverage lifted toward clear, so a region "looks covered" when
- *       zoomed out and the gaps only surface on zoom-in.
- *     • `fog`     — honest: true coverage fraction, so the gap is visible even at low zoom.
- *   We expose each as its own default-off fill layer (`coverage-opt-fog`, `coverage-honest-fog`) so the
- *   demo's LayerToggleControl gives each its own checkbox — pick the reading you want, no extra UI.
- *
- *   Served as XYZ vector tiles by the tile worker from `nexus-assets/tiles/coverage-v5.pmtiles` (same
- *   as `basemap-v4`); the consumer passes its TileJSON URL (`tiles.mailwoman.ai/coverage-v5.json`)
- *   to `createCoverageSource`.
+ *   Address-coverage overlays rendered from the `mailwoman coverage build` H3 tile set. Each cell
+ *   supplies optimistic (`fog_opt`) and observed-coverage (`fog`) values. The demo exposes both as
+ *   default-off layers. Tiles are served from `coverage-v5.pmtiles`.
  */
 
 import type { FillLayerSpecification, VectorSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
@@ -27,35 +13,28 @@ import type { FillLayerSpecification, VectorSourceSpecification } from "@maplibr
 import { TileSetSourceID } from "#styles/sources"
 
 /**
- * The MapLibre source id the address-coverage overlay is registered under.
- *
- * The `-v5` suffix is part of the id rather than a version to bump casually: a style and the PMTiles
- * archive it points at agree by this string, so changing it orphans every layer that names the old one.
+ * MapLibre source ID for the v5 coverage tiles.
+ * Keep it aligned with the archive and layer specs.
  */
 export const CoverageTileSetID = TileSetSourceID("coverage-v5")
 
 /**
- * The single source-layer the coverage PMTiles ships (see `build-coverage-tiles.ts` → tippecanoe `-l`).
+ * Source-layer name stored in the coverage archive.
  */
 export const COVERAGE_SOURCE_LAYER = "coverage"
 
 /**
- * Fog tint — a near-black indigo reading as "unknown / unsurveyed".
- *
- * Pushed dark (vs a mid indigo) so it holds contrast over the demo's terrain+hillshade basemap,
- * which is itself dark-green over forest where a lighter fog would simply vanish.
+ * Near-black indigo used to mark unknown or unsurveyed areas.
  */
 export const COVERAGE_FOG_COLOR = "#663399" // Rebecca Purple
 
 /**
- * Opacity of a fully-empty (`fog = 1`) cell.
- *
- * Covered cells scale down from here toward transparent.
+ * Maximum opacity for an uncovered cell.
  */
 export const COVERAGE_MAX_FOG_OPACITY = 0.9
 
 /**
- * Layer IDs, exported so the demo (toggle wiring, imperative add) and tests can reference them.
+ * IDs for the optimistic and observed-coverage layers.
  */
 export const CoverageLayerID = {
 	optimistic: "coverage-opt-fog",
@@ -63,8 +42,7 @@ export const CoverageLayerID = {
 } as const
 
 /**
- * Build the coverage source spec from the tile worker's TileJSON
- * endpoint (`https://tiles.mailwoman.ai/coverage-v5.json`).
+ * Create a vector source from its TileJSON URL.
  */
 export function createCoverageSource(url: string): VectorSourceSpecification {
 	return { type: "vector", url }
@@ -76,23 +54,18 @@ function fogFill(id: string, fogProperty: "fog" | "fog_opt"): FillLayerSpecifica
 		type: "fill",
 		source: CoverageTileSetID,
 		"source-layer": COVERAGE_SOURCE_LAYER,
-		// Default off — an overlay, surfaced via the layer toggle, never on by default.
+		// Keep coverage overlays hidden until selected.
 		layout: { visibility: "none" },
 		paint: {
 			"fill-color": COVERAGE_FOG_COLOR,
-			// Opacity tracks the cell's fog value.
-			// Coalesce guards a missing prop to 0 (fully clear).
+			// Missing coverage values render as clear.
 			"fill-opacity": ["*", ["coalesce", ["to-number", ["get", fogProperty]], 0], COVERAGE_MAX_FOG_OPACITY],
 		},
 	}
 }
 
 /**
- * The two default-off fog fills (optimistic + honest).
- *
- * Plain MapLibre specs — the demo adds them imperatively on map-load with a `beforeID`
- * of the first symbol layer, so the fog sits beneath place labels but above basemap
- * geometry (roads/water vanish under fog where we have no data).
+ * The two hidden fog layers, added beneath place labels by the demo.
  */
 export const CoverageLayers: FillLayerSpecification[] = [
 	fogFill(CoverageLayerID.optimistic, "fog_opt"),

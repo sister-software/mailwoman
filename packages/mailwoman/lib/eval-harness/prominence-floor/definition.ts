@@ -3,17 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The frozen ruler for the prominence-floor benchmark (#2264), and the audit that refuses an unexecutable
- *   one. Pure — no model, no database, no resolver — so every refusal is testable without loading an engine.
- *
- *   It exists because the same-data benchmark measured `minWinningScore` and could not interpret the answer.
- *   Every one of that panel's 453 gold entities carries population above 15,151, so a floor of 4.0 — which is
- *   a population floor of 10,000 — admits every correct answer it contains by construction. A panel whose
- *   gold all clears a floor cannot measure that floor, whatever the rate says.
- *
- *   So the population band is the unit here, and the decision is stated per band rather than pooled: pooling
- *   is the operation that hid the confound the first time. A floor that wins pooled while losing a band fails
- *   this claim.
+ *   Define and audit the frozen prominence-floor benchmark without loading an engine.
+ *   The benchmark stratifies by population and decides per band to avoid pooled results
+ *   hiding regressions in underrepresented populations.
  */
 
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
@@ -28,17 +20,14 @@ import {
 import { WITHHELD_CANDIDATE_FIELDS } from "#eval-harness/same-data/fixture"
 
 /**
- * The two registered strata, in fill order.
- *
- * They draw from disjoint geonameid pools, so the withheld-gold rows are never
- * the rows whose gold was also graded present.
+ * Registered strata in fill order; their source pools are disjoint.
  */
 export const PROMINENCE_STRATA = ["unambiguous", "gold_absent"] as const
 
 export type ProminenceStratum = (typeof PROMINENCE_STRATA)[number]
 
 /**
- * The registered arms: the production defaults, and the four floors.
+ * Production defaults and the four floor arms.
  */
 export const PROMINENCE_ARMS = ["default", "floor_1", "floor_2", "floor_3", "floor_4"] as const
 
@@ -48,10 +37,8 @@ export interface ProminenceBand {
 	id: string
 	min: number
 	/**
-	 * Zero means unbounded.
-	 *
-	 * A band is `min <= population <= max`, and a row with no recorded population is
-	 * in no band — absence of a count is not a count of zero.
+	 * Inclusive upper bound; zero means unbounded.
+	 * Missing populations match no band.
 	 */
 	max: number
 }
@@ -69,10 +56,7 @@ export interface ProminenceArmDefinition {
 	id: ProminenceArm
 	description: string
 	/**
-	 * The `ResolveOpts` the arm pins.
-	 *
-	 * Absent on the default arm, where an empty object and "the defaults" would
-	 * be indistinguishable in the record.
+	 * Pinned `ResolveOpts`; absent on the default arm.
 	 */
 	resolveOpts?: { minWinningScore: number }
 }
@@ -130,25 +114,17 @@ export interface ProminenceFloorDefinition {
 }
 
 /**
- * The committed ruler: the population bands, the two selection rules, the arm floors,
- * the sampling seed and the decision rule.
- *
- * Named from the package root because `tsc` emits no `.json` into `out/`.
+ * Path to the committed benchmark definition.
  */
 export const PROMINENCE_DEFINITION_PATH = preregistrationPath("prominence-floor", "benchmark-definition.json")
 
 /**
- * The freeze record pinning that ruler's content hash.
- *
- * A definition change bumps both the version and this hash.
+ * Path to the freeze record pinning the definition hash.
  */
 export const PROMINENCE_FREEZE_PATH = preregistrationPath("prominence-floor", "benchmark-freeze.json")
 
 /**
- * The population band a count falls in, or null when it falls in none.
- *
- * A row with no recorded population reaches here as `undefined` and is refused
- * rather than bucketed at zero.
+ * Find the population band, or return `null` for missing or unmatched values.
  */
 export function bandFor(bands: readonly ProminenceBand[], population: number | undefined): ProminenceBand | null {
 	if (population === undefined || !Number.isFinite(population)) return null
@@ -157,10 +133,7 @@ export function bandFor(bands: readonly ProminenceBand[], population: number | u
 }
 
 /**
- * Whether the benchmark is executable as written.
- *
- * Each problem names what a runner could not do with the definition, so a refusal
- * reads as an instruction rather than a verdict.
+ * Validate the benchmark definition and report execution blockers.
  */
 export function auditProminenceDefinition(definition: ProminenceFloorDefinition): string[] {
 	const problems: string[] = [
@@ -253,9 +226,7 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 }
 
 /**
- * Load the frozen benchmark definition, refusing anything that would let the ruler move:
- * the freeze record must name this benchmark and version, the content hash must
- * equal the frozen hash, and the audit must be clean.
+ * Load the frozen definition, requiring matching identity, hash, and a clean audit.
  */
 export async function loadProminenceDefinition(): Promise<ProminenceFloorDefinition> {
 	return loadFrozenDefinition<ProminenceFloorDefinition>({

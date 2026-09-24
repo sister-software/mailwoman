@@ -2,12 +2,8 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for {@linkcode createCensusGeocoderClient} and the Census match → `ComponentTag`
- *   mapping. Stub adapter plus injected clock throughout. no live network call, no wall-clock sleep.
- *
- *   The fixture is the Census Bureau's own documentation example (4600 Silver Hill Rd), with the
- *   component slots filled the way the live API fills them — every value uppercase, the house number
- *   present only in `matchedAddress`, and the address range on `fromAddress`/`toAddress`.
+ * @file Test Census geocoder requests and component mapping with stubbed transports and an injected clock.
+ *   The fixture is the Census documentation example for 4600 Silver Hill Rd.
  */
 
 import { isTransientResourceError } from "@mailwoman/core/api"
@@ -127,8 +123,7 @@ describe("buildStreetComponents", () => {
 
 describe("buildCensusComponents", () => {
 	it("recovers the house number from matchedAddress", () => {
-		// `addressComponents` carries the address range (4600–4698) but never the matched number,
-		// so a Census-sourced record came out of the original with a street and no number on it.
+		// Recover the matched number because the component range omits it.
 		expect(buildCensusComponents(match()).house_number).toBe("4600")
 	})
 
@@ -152,9 +147,7 @@ describe("parseCensusAddressMatch", () => {
 	})
 
 	it("always reports the interpolated tier", () => {
-		// Not a hedge — the mechanism.
-		// The Census geocoder has no parcel or structure layer, so it cannot produce
-		// a rooftop coordinate even for a perfect match.
+		// Census uses address ranges, not parcel or building locations.
 		expect(parseCensusAddressMatch(match()).address.geocode?.tier).toBe(CENSUS_RESOLUTION_TIER)
 		expect(CENSUS_RESOLUTION_TIER).toBe("interpolated")
 	})
@@ -185,8 +178,7 @@ describe("createCensusGeocoderClient", () => {
 
 		expect(params?.address).toBe("4600 Silver Hill Rd, Washington, DC 20233")
 		expect(params?.benchmark).toBe("Public_AR_Current")
-		// `vintage` is a `geographies/*` parameter only.
-		// The original sent it on every call.
+		// `vintage` applies only to `geographies/*`.
 		expect(params?.vintage).toBeUndefined()
 	})
 
@@ -202,7 +194,7 @@ describe("createCensusGeocoderClient", () => {
 		const params = (transport.configs[0] as { params?: Record<string, string> }).params
 
 		expect(params?.street).toBe("4600 Silver Hill Rd")
-		// A blank `zip` is a filter nothing matches, so it must not be sent.
+		// An empty ZIP would filter out every match.
 		expect(params?.zip).toBeUndefined()
 	})
 
@@ -233,10 +225,7 @@ describe("createCensusGeocoderClient", () => {
 	})
 
 	it("issues no request at all for a PO Box", async () => {
-		// The original short-circuited a `PO BOX` input to a local parse and returned an
-		// address record with no coordinate, under the same return type as a real match.
-		// An oracle must not do that: a PO Box now takes the normal path and comes
-		// back as the same 404 as any other no-match.
+		// PO Boxes use the normal provider path and return its no-match response.
 		const transport = stubTransport([{ body: NO_MATCH_BODY }])
 
 		await using client = createCensusGeocoderClient({ cacheDir, axios: transport.axios })

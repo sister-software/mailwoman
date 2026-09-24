@@ -3,25 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The five data sources behind `mwdev_lookup` that are not the FST: the candidate gazetteer, the WOF admin extracts,
- *   `poi.db`, the codex reference tables, and the postcode-anchor artifact the model is fed. `lookup.ts` owns the
- *   interface these all answer under. this file owns the probes.
- *
- *   **Every one of them keys on something other than the string a human types**, and that is the whole reason this tool
- *   exists rather than a `select … where name = ?`:
- *
- *   - `candidate.db` and `poi.db` key on `name_key` — {@link normalizeLocalityForKey}, applied at build and at query
- *     time. Probing `name` instead reports three places as missing from the gazetteer that are all present:
- *     `Porto Petro` is stored under `porto petro`, `Illes Balears` under `illes balears` (whose stored `name` is
- *     "Balearic Islands"), `St. Margaret's Hope` under `st margarets hope`.
- *   - the WOF extracts answer through an FTS5 index over `name` and `alt_names`, so a hit may be an alias or a postcode
- *     row's parent locality — and that index is built with the `is_current`/`is_deprecated` filter already applied, so
- *     seeing a deprecated record at all takes a second route.
- *   - the postcode anchor keys `span.replace(" ", "").toUpperCase()`, the train painter's normalization, so `SW1A 2AA`
- *     is `SW1A2AA`.
- *
- *   Each probe therefore reports the KEY it used next to the value it found, so the difference between them is visible
- *   instead of being the silent cause of a wrong "absent".
+ *   Read candidate, WOF, POI, codex, and postcode-anchor sources for `mwdev_lookup`. Each probe reports
+ *   the normalized key used so a miss can be distinguished from a normalization mismatch.
  */
 
 import { candidateSystemsForPostcode, us } from "@mailwoman/codex"
@@ -37,40 +20,26 @@ import type { LookupRow } from "#lookup/index"
 import { type PlaceIDProvenance, placeIDProvenance } from "#place-id-provenance"
 
 /**
- * How many rows a probe returns per query before it stops.
- *
- * PER probe rather than per query: a source that reads several extracts on several routes binds
- * this to each one, so a set of six extracts on two routes can return up to twelve times this number.
- * Every probe therefore reports `returned` beside `matched` — the count the source actually
- * holds, measured by its own count rather than inferred from the list — because a truncated
- * list whose length is presented as a total reads as coverage it does not have.
+ * Default maximum rows returned by each probe.
+ * Total match counts are reported separately.
  */
 const DEFAULT_ENTRY_LIMIT = 10
 
 /**
- * Which key reached a candidate row.
- *
- * The runtime cascade tries these in order and a caller who only saw `exact`
- * would read a qualifier hit as an absence.
- * `fuzzy` is deliberately not here: the FTS5-trigram typo tier corrects a misspelling into a
- * different string, so running it would report a hit for a surface the gazetteer has never held.
+ * Normalization route used to find a candidate row.
+ * Fuzzy matching is excluded.
  */
 const CandidateRoute = {
 	/**
-	 * `normalizeLocalityForKey(query)` — the key the build wrote.
+	 * Key produced by `normalizeLocalityForKey`.
 	 */
 	Exact: "exact",
 	/**
-	 * The key with a locality qualifier removed ("Lenk im Simmental" → `lenk`).
-	 *
-	 * Primary-name rows only, matching the runtime: a stripped probe that answers
-	 * through an alias is a scrape rather than a qualifier match.
+	 * Key after removing a locality qualifier; only primary-name rows qualify.
 	 */
 	QualifierStrip: "qualifier-strip",
 	/**
-	 * The key with internal whitespace deleted.
-	 *
-	 * The fold postcode rows are built under, so `624 66` is stored `62466`.
+	 * Key with internal whitespace removed.
 	 */
 	PostcodeFold: "postcode-fold",
 } as const
@@ -81,20 +50,12 @@ export interface CandidateLookupOptions {
 	/**
 	 * ISO alpha-2 filter.
 	 *
-	 * A country the artifact carries no dictionary entry for is reported as a
-	 * coverage gap, never as a miss on the name.
+	 * Countries absent from the artifact are reported as coverage gaps.
 	 */
 	country?: string
 	limit?: number
 	/**
-	 * An open `admin-global-priority-importance.db` handle plus the path it came from.
-	 *
-	 * When present, every returned entry carries `importance_split` — the score source's
-	 * `referential` / `encyclopedic` columns joined by `spr_id` — so a fame-contest
-	 * diagnosis reads both channels beside the blend instead of scripting the join.
-	 * The id join is same-generation only: a cross-era pair re-keys Overture-minted ids,
-	 * and the miss surfaces as `importance_split: null` on rows whose blended `importance`
-	 * is measured, which is why the caller's note reports the join rate.
+	 * Optional importance database used to include the source's referential and encyclopedic scores.
 	 */
 	importance?: { db: DatabaseClient<PlaceImportanceDatabase>; artifact: string }
 }
@@ -111,34 +72,22 @@ interface CandidateEntry extends PlaceIDProvenance {
 	is_primary: number | null
 	importance: number | null
 	/**
-	 * The #1730 name-role stamp (`abbr` / `gloss` / `variant`), `null` for an unstamped row.
-	 *
-	 * Absent (not null) when the artifact predates the column.
-	 * The same tri-state the runtime reader uses.
+	 * Name-role stamp, `null` when unstamped, or absent in older artifacts.
 	 */
 	name_role?: string | null
 	/**
-	 * The score source's split channels for this place, joined by `spr_id`
-	 * when {@link CandidateLookupOptions.importance} was provided: an object
-	 * when the source holds a row, `null` when it does not.
-	 *
-	 * Absent when no importance DB was given, never conflate the two.
+	 * Source scores when an importance database was supplied; `null` when it has no row.
 	 */
 	importance_split?: { referential: number; encyclopedic: number | null } | null
 	/**
-	 * The place id this row points at, named for WOF's `spr` table (Standard Place Response)
-	 * because that is the schema it came from.
-	 *
-	 * It is a real WOF id only when {@link PlaceIDProvenance.wof_id} is non-null —
-	 * roughly half the gazetteer is Overture- or GeoNames-minted and carries an id
-	 * in a reserved synthetic range that looks identical.
+	 * Source place ID.
+	 * Consult `wof_id` to determine whether it is a WOF ID.
 	 */
 	spr_id: number
 }
 
 /**
- * The candidate probe's select, built per artifact because `name_role` (#1730) is generation-dependent:
- * a pre-role artifact simply omits the property rather than faking a NULL stamp.
+ * Build the SELECT for the artifact's schema, omitting `name_role` when unavailable.
  */
 function candidateSelect(hasNameRole: boolean): string {
 	return (
@@ -150,22 +99,10 @@ function candidateSelect(hasNameRole: boolean): string {
 }
 
 /**
- * Probe `candidate.db` on `name_key`, the key the build writes and the reader probes.
+ * Probe `candidate.db` using the same normalized `name_key` as the build and reader.
  *
- * Reports the matched key beside the stored `name`, because they routinely differ
- * and the difference is the answer: a hit on `illes balears` whose `name` reads
- * "Balearic Islands" and whose `is_primary` is 0 was reached through an alias row,
- * which is a different fact from a canonical match.
- *
- * Two values in a hit are zeros that must not be read as absences, and two absences are not zeros:
- *
- * - `importance: null` is unmeasured.
- *   The score source had no row for that place — while `population: 0` and a `(0, 0)`
- *   centroid are the build's own written values (the latter its unlocated sentinel).
- * - A `country` naming no `country_codes` entry means the artifact carries no rows
- *   for that country at all, so the miss is a coverage gap.
- *   A country it does carry, with rows under the key elsewhere, is a filter miss
- *   and reports the third state (`hit`, no entries).
+ * Results include the stored display name and distinguish missing score data
+ * from explicit zero values and country gaps.
  */
 export function lookupCandidate<DB>(
 	db: DatabaseClient<DB>,

@@ -4,32 +4,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mwdev-mcp` — the never-stale shim. Speaks MCP stdio to the client. every tool call is forwarded over IPC to a
- *   forked worker (`worker.ts`) that holds the actual mailwoman module graph.
- *
- *   the split is the feature. Node cannot evict an imported ES module, so the old single-process server had to refuse
- *   after any source edit until the operator restarted the client — which locked the person developing the measurement
- *   tools out of them precisely while the tree was moving (measured cost: most of two working days routed through
- *   scratch scripts, 2026-08-16..18). This file therefore imports nothing from the repo's runtime — Node builtins and
- *   the MCP SDK only — and `mwdev_restart` kills and re-forks the worker: a fresh module graph, new source live, no
- *   client restart. A change to the shim itself (rare by design) still needs the client restart. keep it boring.
- *
- *   Tools are registered from the worker's handshake as plain JSON Schema — the low-level `Server` API, deliberately,
- *   because the high-level one wants zod shapes and zod schemas live on the stale side of the boundary. After a
- *   restart the shim diffs the tool list and emits `notifications/tools/list_changed`, so a client that honors the
- *   capability re-lists.
- *
- *   Engines stay lazy end to end: forking the worker imports modules but builds nothing. the first call that needs an
- *   engine builds it, per the registry's own interface.
- *
- *   prior ART + the rejected alternative (verified 2026-08-18): the MCP ecosystem converged on exactly this
- *   proxy+restartable-child shape — mizchi/mcp-reloader and cameroncooke/reloaderoo wrap a child MCP process and
- *   restart it. mcp-hmr (Python) reloads modules in place. all emit `tools/list_changed` after a swap. The genuinely
- *   newer primitive, `process.execve` (re-exec preserving only stdio), was considered and rejected: it discards the
- *   initialized MCP session along with the module graph, so the fresh image receives post-`initialize` traffic cold —
- *   and no surviving code exists to bridge the boundary or emit list_changed. The shim keeps the session in a process
- *   that cannot go stale, and a child process (not a worker thread) is what guarantees the sqlite mmaps and ORT
- *   native sessions are actually released on restart.
+ *   MCP stdio shim that forwards tool calls to a worker process. The shim imports only Node builtins and the
+ *   MCP SDK, so it remains usable while the worker's source graph is stale. Restarting the worker loads current
+ *   source without restarting the client. Tool schemas come from the worker handshake; changes trigger
+ *   `notifications/tools/list_changed`. Engines build lazily on first use.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
@@ -50,27 +28,17 @@ const { values } = parseArguments({
 	},
 })
 
-// Not a `..` walk from this file.
-// It was one — `resolvePath(shimDir, "..", "..")` — and when source moved under `lib/` the
-// walk landed on `<repo>/packages`, which fingerprinted zero files and refused to boot.
-// The comment beside it had been updated to say `lib/` while the arithmetic still said two,
-// which is precisely the drift a counted walk invites.
-// `repoRootPath()` owns this arithmetic in one place.
-// Not `cwd`, because an MCP client spawns the server from wherever it happens to be.
+// Resolve the repository root independently of the MCP client's working directory.
 const repoRoot = values["repo-root"] ? resolvePath(values["repo-root"]) : repoRootPath()
 
 const host = new WorkerHost({
-	// Anchored at the package rather than at this file's directory: `shimDir` is
-	// a statement about where the shim sits, and moving the shim one level down
-	// silently pointed it at a worker that was never there.
+	// Resolve the worker from the package root so moving this shim does not change its path.
 	workerPath: resolvePackagePath("@mailwoman/dev-mcp", "lib", "worker", "index.ts"),
 	workerArgs: ["--repo-root", repoRoot, ...(values["max-resident"] ? ["--max-resident", values["max-resident"]] : [])],
 })
 
 /**
- * The one tool the shim owns, so it exists whatever state the worker is in,
- * including crashed, degraded, or holding a tree so broken the worker cannot boot
- * (start() failures surface here as the restart error, stderr tail included).
+ * Restart tool owned by the shim, available even when the worker cannot start.
  */
 const RESTART_TOOL = {
 	name: "mwdev_restart",

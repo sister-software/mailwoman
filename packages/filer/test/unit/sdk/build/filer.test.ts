@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode buildFilerDatabase} — the stage/materialize/seal build of `filer.db`. Feeds
- *   the loader synthetic {@link Form499Row}/{@link ProviderListRow} sources directly (the
- *   `form499Rows`/`providerRows` injection points), so the suite exercises the whole build without touching the
- *   filesystem — matches `build-bdc.test.ts`'s injected-row convention.
+ * Tests for {@linkcode buildFilerDatabase}. Synthetic rows exercise the full build without
+ * touching source files.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -37,11 +35,7 @@ const FRN_EPSILON = toFRN("0003333333")!
 const FRN_ZETA = toFRN("0004444444")!
 
 /**
- * Row A: a fully-populated 499 filing — FRN present, both company fields present,
- * every attribute-containing field populated.
- *
- * Row B: an unregistered filer (no FRN — legitimate per decision 3 rather than malformed)
- * with most optional fields blank.
+ * Returns one complete filing and one unregistered filer with most optional fields blank.
  */
 function form499FixtureRows(): Form499Row[] {
 	return [
@@ -87,11 +81,10 @@ function form499FixtureRows(): Form499Row[] {
 }
 
 /**
- * `providerID` 130077 carries two rows with different FRNs
- * (decision 6 cardinality — must survive as two distinct edges, never folded/last-wins).
+ * Provider 130077 has two FRNs; both should produce separate edges.
  *
- * Row 2's `holdingCompany` is `null` (legitimate — must be counted as `skipped`, never thrown).
- * `providerID` 130080 is a second, independent provider.
+ * One row has no holding company and should count as skipped.
+ * Provider 130080 is separate.
  */
 function providerFixtureRows(): ProviderListRow[] {
 	return [
@@ -440,10 +433,7 @@ describe("buildFilerDatabase", () => {
 
 	describe("idempotent write path", () => {
 		/**
-		 * A single fully-populated row, deliberately small so every count below is hand-verifiable:
-		 * 3 nodes (form499ID, FRN, holdingCompanyName — managementCompany is blank,
-		 * so no management-company node/edge), 2 edges (FRN↔form499ID, FRN↔holdingCompanyName),
-		 * 2 attributes (legal_name, classification), 1 skip (the blank managementCompany).
+		 * A small fixture with predictable node, edge, attribute, and skip counts.
 		 */
 		function idempotencyFixtureRow(): Form499Row {
 			return {
@@ -610,9 +600,7 @@ describe("buildFilerDatabase", () => {
 		const SOURCE_VINTAGE = "2026-Q3"
 
 		/**
-		 * A minimal, fully-blank Form499Row overridden per test — keeps each
-		 * fixture below down to just the fields that matter for what it's testing,
-		 * matching `idempotencyFixtureRow`'s intent one describe block up.
+		 * Builds a filing row with defaults; each test overrides only relevant fields.
 		 */
 		function familyFixtureRow(overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID" | "frn">): Form499Row {
 			return {
@@ -869,8 +857,7 @@ describe("buildFilerDatabase", () => {
 		}
 
 		/**
-		 * A minimal, fully-blank Form499Row overridden per test — matches `familyFixtureRow`'s convention one
-		 * describe block up (that one is function-scoped there, so this describe block needs its own copy).
+		 * Builds a filing row with defaults for EDGAR matching tests.
 		 */
 		function corroborationForm499Row(
 			overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID" | "frn" | "legalNameOfCarrier">
@@ -1068,21 +1055,7 @@ describe("buildFilerDatabase", () => {
 		})
 
 		/**
-		 * The subsidiary→FRN score must not be a constant.
-		 *
-		 * The join is on the canonicalized name, and `canonicalizeOrganizationName` maps
-		 * `"American Broadband LLC"`, `"American Broadband, Inc."` and `"American Broadband Corp"`
-		 * all to `"american broadband"` (`record/organization.test.ts` pins the collapse),
-		 * so a single score across all three would claim a confidence the match provably cannot hold.
-		 *
-		 * The existing abstention does not cover it, and these fixtures show why:
-		 * it fires only on a collision within the 499 file, so a 499 carrying only
-		 * the LLC against an Exhibit 21 disclosing the Inc. Matches exactly one FRN
-		 * and writes an edge for what may be a different company.
-		 *
-		 * Every case below goes through the real builder and reads the score off the sealed artifact.
-		 * Three distinct values, asserted against each other as well as against their literals —
-		 * pin the score back to a constant and the ordering assertions die rather than just the value ones.
+		 * The score should reflect how closely the original names agree, not just their canonical forms.
 		 */
 		describe("the subsidiary→FRN match score varies with what the match actually knows", () => {
 			async function scoreFor(legalNameOfCarrier: string, subsidiaryName: string): Promise<number | null> {

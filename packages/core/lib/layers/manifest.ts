@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read/write helpers over the layer-interface tables. The parsed {@link LayerManifest} is the
- *   camelCase face of `layer_manifest`; validation happens at both ends so a hand-built or
- *   corrupted layer fails loudly at open time rather than misbehaving downstream.
+ *   Read and write layer manifests and coverage records, validating them on both paths.
  */
 
 import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
@@ -15,38 +13,27 @@ import { LayerFreshnessPolicy, LayerTier, type layerschemahandle } from "#layers
 import { assertAdmissibleLicenseExpression } from "#license/obligations"
 
 /**
- * Which spine columns a layer carries.
- *
+ * Join keys available in a layer.
  * At least one key is required.
  */
 export interface SpineKeys {
 	h3?: { column: string; resolution: number }
 	/**
-	 * Column name holding WOF ids, when present.
+	 * Column containing WOF IDs.
 	 */
 	wofID?: string
 	/**
-	 * Column name holding `@mailwoman/address-id` keys, when present.
+	 * Column containing address IDs.
 	 */
 	addressID?: string
 	/**
-	 * The normalized-street column a extract is probed by, for layers keyed by street
-	 * rather than by cell or id.
-	 *
-	 * Added because the interface's first three keys describe the two layer
-	 * shapes that existed when it was written — a cellular one (`poi.db`, H3)
-	 * and an id-joined one — and the situs extracts are a third.
-	 * `address_point` and `street_segment` carry no H3 cell, no WOF id and no address-id.
-	 *
-	 * They are probed on `(postcode | locality, street_norm, number)`.
-	 * Declaring one of the other three for them would name a column that does not exist,
-	 * in the field a consumer uses to join.
+	 * Normalized street column used to join address-point or street-segment layers.
 	 */
 	street?: { column: string }
 }
 
 /**
- * Parsed manifest — see {@link LayerManifestTable} for the storage form.
+ * Parsed form of a layer manifest.
  */
 export interface LayerManifest {
 	name: string
@@ -68,11 +55,8 @@ export interface CoverageCell {
 	h3Cell: number
 	completeness: number
 	/**
-	 * What `completeness` rests on.
-	 *
-	 * A writer that omits it is declaring {@link CoverageBasis.SourcePresent} —
-	 * the weakest reading — because a builder that has not thought about basis is
-	 * recording source presence whether or not it says so.
+	 * Evidence basis for completeness.
+	 * Defaults to `SourcePresent`.
 	 */
 	basis?: CoverageBasis
 	observedRows: number
@@ -81,13 +65,7 @@ export interface CoverageCell {
 const BASES = new Set<string>(Object.values(CoverageBasis))
 
 /**
- * Reject a malformed coverage cell at both ends, the way
- * {@link assertManifestInvariants} does for the manifest.
- *
- * The magnitudes here are read as epistemics, so a well-formed wrong one is worse than a throw:
- * a `completeness` above 1 or an unknown `basis` reaching {@link supportsExclusion} turns into confident
- * negative evidence, and a negative `observedRows` reads as a survey that found less than nothing.
- * None of that is distinguishable downstream from a real measurement.
+ * Validate a coverage cell before storing or returning it.
  */
 function assertCoverageCellInvariants(cell: CoverageCell): void {
 	if (!Number.isFinite(cell.completeness) || cell.completeness < 0 || cell.completeness > 1) {
@@ -144,19 +122,9 @@ export interface CoverageRow {
 }
 
 /**
- * A stored coverage row as the parsed {@link CoverageCell}, with the cell's own index
- * and resolution beside it.
+ * Convert a stored row to a coverage cell.
  *
- * Shared BY every polygon layer'S reader, and the reason is the second line of it.
- * A NULL `basis` is an artifact built before the column existed.
- *
- * It was recording source presence, so that is what it must read back as,
- * never a stronger basis than the builder actually had.
- *
- * Four readers writing that rule separately is four places for one of them to write
- * `?? CoverageBasis.Designated` and license an exclusion nobody measured.
- *
- * `undefined` in, `undefined` out: a cell with no coverage row is unknown, never `{completeness: 0}`.
+ * Legacy NULL bases map to `SourcePresent`; missing rows remain undefined.
  */
 export function toCoverageCell(
 	row: CoverageRow | undefined,
@@ -176,12 +144,7 @@ export function toCoverageCell(
 }
 
 /**
- * The single `layer_manifest` row of `rows`, refused if there is not exactly one.
- *
- * A layer with no identity, or with two, must fail loudly rather than answer from whichever row came first.
- *
- * @param context Names the caller in the refusal.
- * @throws {Error} When the table does not hold exactly one row.
+ * Return the only manifest row, throwing unless exactly one exists.
  */
 export function singleManifestRow(
 	rows: ReadonlyArray<Record<string, string | number | null>>,
@@ -195,20 +158,8 @@ export function singleManifestRow(
 }
 
 /**
- * One `layer_manifest` row as a synchronous reader gets it back, mapped onto {@link LayerManifest}.
- *
- * Shared BY every layer reader, and separate from the identity check on purpose.
- * `readLayerManifest` above is the Kysely path.
- *
- * A reader that opens the artifact with `node:sqlite` for its own synchronous probes
- * reads the same single row and needs the same mapping.
- *
- * What such readers do not share is how they recognize their own layer — most match a
- * fixed name, and a layer whose name carries a build's region suffix matches a prefix
- * instead — so the mapping lives here and the assertion stays with the caller.
- * {@link parseManifestRows} is the fixed-name case, wired for the callers that have one.
- *
- * @throws {Error} When the manifest's invariants do not hold.
+ * Convert a stored row to a validated manifest.
+ * Callers check the layer identity separately.
  */
 export function toLayerManifest(row: Record<string, string | number | null>): LayerManifest {
 	const manifest: LayerManifest = {
@@ -233,12 +184,7 @@ export function toLayerManifest(row: Record<string, string | number | null>): La
 }
 
 /**
- * The manifest of a layer whose name is fixed, checked against `expectedName`.
- *
- * @param rows Every row of `layer_manifest`.
- * @param context Names the caller in every refusal.
- * @throws {Error} When the table does not hold exactly one row, when the layer is not
- * `expectedName`, or when the manifest's invariants do not hold.
+ * Parse one manifest row and verify its layer name.
  */
 export function parseManifestRows(
 	rows: ReadonlyArray<Record<string, string | number | null>>,
@@ -257,17 +203,7 @@ export function parseManifestRows(
 }
 
 /**
- * Refuse an artifact whose coverage would license a claim that the thing asked for is not there.
- *
- * A condition rather than A convention, and shared because the rule is the interface's
- * rather than any product's: a layer whose source publishes no footprint may record presence
- * and nothing else, and the day someone writes a stronger basis without settling the
- * footprint question the layer must refuse to open rather than answer confidently.
- * Checked over the distinct bases, so the cost is one query however large the table.
- *
- * @param bases Every distinct `basis` in `layer_coverage`, NULL included.
- * @param reason The layer's own sentence saying why its coverage licenses no negative claim.
- * @throws {Error} When the table is empty, or when any basis supports an exclusion.
+ * Reject empty coverage tables and bases that permit exclusion claims.
  */
 export function assertCoverageLicensesNoExclusion(
 	bases: ReadonlyArray<string | null>,
@@ -293,31 +229,27 @@ export function assertCoverageLicensesNoExclusion(
 }
 
 /**
- * The build options every polygon-layer manifest reads the same way.
+ * Shared build metadata for polygon-layer manifests.
  */
 export interface PolygonLayerBuildStamp {
 	/**
-	 * The product vintage — `layer_manifest.version` and `source_vintage`.
+	 * Product vintage stored in `version` and `source_vintage`.
 	 */
 	sourceVintage: string
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller.
-	 *
-	 * Never generated here: the interface says so, and a library-generated timestamp
-	 * makes two builds of the same inputs differ.
+	 * Caller-supplied ISO-8601 timestamp for reproducible builds.
 	 */
 	createdAt: string
 	/**
-	 * The resolution the cell index was built at — the h3 spine key's resolution.
+	 * Resolution of the H3 index.
 	 */
 	indexResolution: number
 }
 
 /**
- * The manifest every polygon layer stamps: the build's own options plus the product's
- * identity, under the `versioned-refresh` freshness policy and an h3 spine key.
+ * Create a versioned-refresh manifest for a polygon layer.
  */
 export function polygonLayerManifest(
 	options: PolygonLayerBuildStamp,
@@ -328,12 +260,11 @@ export function polygonLayerManifest(
 		attribution: string
 		source: string
 		/**
-		 * The table-qualified cell column a consumer joins on.
+		 * H3 column used by consumers to join.
 		 */
 		cellColumn: string
 		/**
-		 * Defaults to {@link LayerTier.Shipped}; a product whose licence holds it
-		 * at `build-local` passes its own.
+		 * Defaults to `Shipped`.
 		 */
 		tier?: LayerTier
 	}
@@ -358,9 +289,7 @@ export function polygonLayerManifest(
 }
 
 /**
- * Insert the single manifest row.
- *
- * Call exactly once, from the layer's build script.
+ * Insert one validated manifest row.
  */
 export async function writeLayerManifest(db: layerschemahandle, manifest: LayerManifest): Promise<void> {
 	assertManifestInvariants(manifest)
@@ -386,9 +315,7 @@ export async function writeLayerManifest(db: layerschemahandle, manifest: LayerM
 }
 
 /**
- * Read + validate the manifest.
- *
- * @throws If the table is empty, multi-row, or invalid.
+ * Read and validate the manifest.
  */
 export async function readLayerManifest(db: layerschemahandle): Promise<LayerManifest> {
 	const rows = await db.selectFrom("layer_manifest").selectAll().execute()
@@ -421,17 +348,12 @@ export async function readLayerManifest(db: layerschemahandle): Promise<LayerMan
 }
 
 /**
- * Rows per insert statement (4 bound params/row = 16,000 params/statement),
- * kept safely under SQLite's default 32,766 bound-variable ceiling.
- *
- * A continental-scale build's res-6 coverage cell count blows past that limit in
- * a single `.values()` call (found 2026-07-19).
+ * Rows per coverage insert, kept below SQLite's bound-variable limit.
  */
 export const COVERAGE_INSERT_BATCH = 5000
 
 /**
- * Bulk-insert coverage cells (build-time. Cold path, so Kysely inserts are fine),
- * chunked to stay under SQLite's bound-variable limit.
+ * Insert coverage cells in batches below SQLite's parameter limit.
  */
 export async function writeLayerCoverage(db: layerschemahandle, cells: CoverageCell[]): Promise<void> {
 	if (!cells.length) return
@@ -458,10 +380,7 @@ export async function writeLayerCoverage(db: layerschemahandle, cells: CoverageC
 }
 
 /**
- * Look up coverage for one short H3 cell.
- *
- * `undefined` = the cell was never surveyed (unknown) — callers must not
- * conflate this with `{completeness: 0}`.
+ * Read coverage for one H3 cell, or return `undefined` when no row exists.
  */
 export async function readLayerCoverage(db: layerschemahandle, h3Cell: number): Promise<CoverageCell | undefined> {
 	const row = await db.selectFrom("layer_coverage").selectAll().where("h3_cell", "=", h3Cell).executeTakeFirst()
@@ -471,9 +390,7 @@ export async function readLayerCoverage(db: layerschemahandle, h3Cell: number): 
 	const cell: CoverageCell = {
 		h3Cell: row.h3_cell,
 		completeness: row.completeness,
-		// A NULL basis is an artifact built before the column existed.
-		// It was recording source presence, so that is what it reads back as,
-		// never a stronger basis than the builder actually had.
+		// Legacy rows without a basis represent source presence.
 		basis: (row.basis as CoverageBasis | null) ?? CoverageBasis.SourcePresent,
 		observedRows: row.observed_rows,
 	}

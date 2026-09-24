@@ -3,14 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The database build lifecycle every sealed gazetteer artifact shares: the staging pragma block, the
- *   stale-staging cleanup, the freeze + `vacuum into` publish, the FTS pass over the published file, the
- *   in-place close ceremony for the builders that write their output directly, and the acquisition-sidecar
- *   reader the offline rebuilds recover provenance from.
- *
- *   Extracted from the postcode database builders (`geonames-tail`, `codepoint-database`, `ni-osm-database`) and the
- *   CJK postcode-locality builders, which each carried a byte-identical copy. The pragma strings are part of
- *   the artifacts' build interface — keep them byte-identical when touching this file.
+ *   Shared lifecycle helpers for sealed gazetteer builds: staging, publishing, FTS,
+ *   finalization, and acquisition provenance. Keep staging pragmas byte-identical.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"

@@ -22,7 +22,7 @@ test("createLightSpec: an override shadows the matching default key", () => {
 	const spec = createLightSpec({ intensity: 0.5 })
 
 	expect(spec.intensity).toBe(0.5)
-	// non-overridden defaults survive
+	// Unchanged defaults remain.
 	expect(spec.color).toBe("white")
 	expect(spec.anchor).toBe("viewport")
 })
@@ -76,10 +76,7 @@ test("Composer: partial light/sky options merge over the defaults", () => {
 	expect(composer.sky["sky-color"]).toBe("#abcdef")
 })
 
-// Terrain + DEM-source tests parked (mobile performance): the `terrain` getter
-// and the terrain DEM source are commented out in `composition.ts`.
-// Re-enable the code and these tests together when DEM is reconsidered.
-// (The hillshade DEM source is still injected.)
+// Parked with terrain support because of mobile performance; hillshade remains active.
 /* oxlint-disable vitest/no-commented-out-tests -- parked deliberately. see the note above */
 /*
 test("Composer: terrain source defaults to the terrain tileset id", () => {
@@ -120,7 +117,7 @@ test("Composer.layers: exposes the base layer list as an array", () => {
 
 test("Composer.layers: an inserted layer is present in the composed list", () => {
 	const composer = new StyleSpecificationComposer({ sources: {} })
-	// `insert` requires an anchor (`beforeID`/`afterID`) — anchor against an existing base layer.
+	// Insertion requires an existing layer anchor.
 	const anchorID = composer.layers[0]!.id
 
 	const withCustom = new StyleSpecificationComposer({
@@ -173,8 +170,7 @@ test("Composer.toJSON: carries the composed light, sky, terrain, sources and lay
 
 	expect(style.light).toEqual(createLightSpec(composer.light))
 	expect(style.sky).toEqual(createSkySpec(composer.sky))
-	// `terrain` is parked with the tests below.
-	// The getter is commented out in composition.ts.
+	// Terrain is omitted from serialization.
 	expect(style.sources).toBe(composer.sources)
 	expect(style.layers).toEqual(composer.layers)
 })
@@ -208,13 +204,12 @@ test("Composer: a composition can bring its own base layers, no hillshade source
 })
 
 test("Composer: two instances from the shared BaseLayers have independent layer lists", () => {
-	// Regression for the shared-mutable-link bug: LayerSpecificationList now copies its input,
-	// so constructing a second composer no longer rewrites the first's kNext/kPrev links in place.
+	// Each instance must have an independent layer list.
 	const a = new StyleSpecificationComposer({ sources: {} })
 	const baseCount = a.layers.length
 	const b = new StyleSpecificationComposer({ sources: {} })
-	expect(b.layers).toHaveLength(baseCount) // b built a full list rather than a corrupted remnant
-	expect(a.layers).toHaveLength(baseCount) // a's list wasn't mutated by b's construction
+	expect(b.layers).toHaveLength(baseCount) // The second composer has a complete list.
+	expect(a.layers).toHaveLength(baseCount) // The first composer remains unchanged.
 })
 
 //#endregion

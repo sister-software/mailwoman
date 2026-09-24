@@ -3,19 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The frozen ruler for the same-data resolver benchmark (#2261), and the audit that refuses an
- *   unexecutable one. Pure — no model, no database, no resolver — so every refusal is testable without
- *   loading an engine.
- *
- *   The strata are defined by selection rules rather than by listed rows, and a rule editable after a result
- *   is visible asserts nothing: the rule that produced the losing panel can be rewritten into the one that
- *   produces the winning panel. The content hash pins the rules, the sampling seed and the decision rule
- *   together, so a rebuilt panel is the panel that was scored.
- *
- *   The benchmark is admin-only because `resolveTree` picks a place per node, and the rooftop tier answers
- *   through `AddressPointLookup` / `InterpolationLookup` / `StreetCentroidLookup`, each returning one hit or
- *   null. `ResolverBackend.findPlace` is the only interface in the ladder returning a candidate set, so it
- *   is the only layer where "same evidence, different selection" describes the code rather than two indexes.
+ *   Define and audit the frozen same-data resolver benchmark.
+ *   Hashed strata rules, sampling, and decision criteria make reruns comparable.
+ *   The benchmark targets admin selection, where the resolver returns candidate sets.
  */
 
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
@@ -30,10 +20,7 @@ import {
 import { WITHHELD_CANDIDATE_FIELDS } from "#eval-harness/same-data/fixture"
 
 /**
- * The five registered strata, in fill order.
- *
- * Order is meaningful: strata draw from disjoint geonameid pools, and a later stratum's
- * eligibility rule excludes every row an earlier one took.
+ * Registered strata in fill order; eligibility rules keep their pools disjoint.
  */
 export const SAME_DATA_STRATA = [
 	"unambiguous",
@@ -46,7 +33,7 @@ export const SAME_DATA_STRATA = [
 export type SameDataStratum = (typeof SAME_DATA_STRATA)[number]
 
 /**
- * The three registered arms.
+ * Registered benchmark arms.
  */
 export const SAME_DATA_ARMS = ["mailwoman", "baseline", "ablation"] as const
 
@@ -71,11 +58,7 @@ export interface SameDataArmDefinition {
 	id: SameDataArm
 	description: string
 	/**
-	 * The `ResolveOpts` the arm pins.
-	 *
-	 * Present on the ablation arm.
-	 * Absent on the arms that run library defaults, where an empty object
-	 * and "the defaults" would be indistinguishable.
+	 * Pinned `ResolveOpts`; absent for arms using library defaults.
 	 */
 	resolveOpts?: Record<string, boolean>
 }
@@ -109,13 +92,11 @@ export interface SameDataBenchmarkDefinition {
 		seed: number
 		order: string
 		/**
-		 * The target row count per stratum.
-		 *
-		 * A stratum whose eligible pool cannot reach it is reported at its achieved n.
+		 * Target rows per stratum; underfilled strata report their achieved count.
 		 */
 		rowsPerStratum: number
 		/**
-		 * Below this, a stratum is reported and excluded from the pooled decision.
+		 * Minimum rows for inclusion in the pooled decision.
 		 */
 		minimumRowsPerStratum: number
 		underfillRule: string
@@ -139,34 +120,24 @@ export interface SameDataBenchmarkDefinition {
 }
 
 /**
- * The committed ruler: the claim boundary, the five selection rules,
- * the sampling seed and the decision rule.
- *
- * Named from the package root because `tsc` emits no `.json` into `out/`.
+ * Path to the committed benchmark definition.
  */
 export const SAME_DATA_DEFINITION_PATH = preregistrationPath("same-data", "benchmark-definition.json")
 
 /**
- * The freeze record pinning that ruler's content hash.
- *
- * A definition change bumps both the version and this hash.
+ * Path to the freeze record that pins the definition hash.
  */
 export const SAME_DATA_FREEZE_PATH = preregistrationPath("same-data", "benchmark-freeze.json")
 
 /**
- * The fields a fixture must not carry, read from the frozen definition
- * rather than re-typed here: a second copy of the list would let the fixture builder
- * and the ruler disagree about what equal evidence means.
+ * Return fields withheld from fixtures, as registered in the definition.
  */
 export function withheldFixtureFields(definition: SameDataBenchmarkDefinition): ReadonlySet<string> {
 	return new Set(definition.withheldFixtureFields.fields)
 }
 
 /**
- * Whether the benchmark is executable as written.
- *
- * Each problem names what a runner could not do with the definition, so a refusal
- * reads as an instruction rather than a verdict.
+ * Validate the benchmark definition and report execution blockers.
  */
 export function auditSameDataDefinition(definition: SameDataBenchmarkDefinition): string[] {
 	const problems: string[] = [...duplicateRowIDProblems(definition.strata), ...duplicateRowIDProblems(definition.arms)]
@@ -217,9 +188,7 @@ export function auditSameDataDefinition(definition: SameDataBenchmarkDefinition)
 }
 
 /**
- * Load the frozen benchmark definition, refusing anything that would let the ruler move:
- * the freeze record must name this benchmark and version, the content hash must
- * equal the frozen hash, and the audit must be clean.
+ * Load the frozen definition and refuse identity, hash, or audit mismatches.
  */
 export async function loadSameDataDefinition(): Promise<SameDataBenchmarkDefinition> {
 	return loadFrozenDefinition<SameDataBenchmarkDefinition>({

@@ -17,11 +17,7 @@ import styles from "./styles.module.css"
 export { DOCS_SECTIONS } from "./sections.ts"
 
 /**
- * True when the active sidebar is one of the switcher's sections —
- * i.e. a docs page that should show the band.
- *
- * The single-category licensing sidebar is excluded, so its pages keep the
- * stock layout (no band, no offsets).
+ * Returns true when the current page is in a switcher section.
  */
 export function useIsDocsSection(): boolean {
 	const sidebar = useDocsSidebar()
@@ -35,12 +31,7 @@ interface SectionLinkProps {
 }
 
 /**
- * One section tab.
- *
- * Its own hook (`useLayoutDocsSidebar`) resolves the destination from the _target_ sidebar's entry link.
- * So cross-section links work even though only the active sidebar's items are in context.
- *
- * One hook per instance keeps the rules-of-hooks interface clean across the fixed `DOCS_SECTIONS` list.
+ * A tab linking to a section's first page.
  */
 const SectionLink: FC<SectionLinkProps> = ({ section, active }) => {
 	const href = useLayoutDocsSidebar(section.id).link?.path
@@ -63,30 +54,24 @@ const SectionLink: FC<SectionLinkProps> = ({ section, active }) => {
 
 export interface DocsSubHeaderProps {
 	/**
-	 * From `useHideableNavbar` — measures the band so its height sets the hide threshold.
+	 * Ref used to measure the band's height.
 	 */
 	navbarRef: Ref<HTMLElement>
 	/**
-	 * Slide the band up out of view (scrolled down); the parent reclaims its space in sync.
+	 * Whether to hide the band while scrolling.
 	 */
 	hidden: boolean
 }
 
 /**
- * Sticky, horizontally-scrollable switcher for the docs' top-level categories,
- * rendered as a sub-header band between the navbar and the sidebar/content row
- * (mounted from the ejected `theme/DocRoot/Layout`).
- *
- * Each section is its own sidebar (see sidebars.ts), so this bar — not a collapsible
- * sidebar category — is how a reader moves between sections.
- * The active sidebar's contents sit one level shallower as a result.
+ * Sticky, scrollable tabs for switching between top-level docs sections.
  */
 export const DocsSubHeader: FC<DocsSubHeaderProps> = ({ navbarRef, hidden }) => {
 	const activeName = useDocsSidebar()?.name
 	const { pathname } = useLocation()
 	const listRef = useRef<HTMLUListElement>(null)
 
-	// Keep the active section in view when the bar overflows (mobile / narrow).
+	// Keep the active tab visible when the bar overflows.
 	useEffect(() => {
 		listRef.current
 			?.querySelector<HTMLElement>("[data-active='true']")

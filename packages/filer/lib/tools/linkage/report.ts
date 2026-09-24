@@ -19,16 +19,14 @@ function formatScoreValue(value: number | null): string {
 }
 
 /**
- * The shared padded-table renderer, under this file's original name
- * so the seven call sites below read unchanged.
+ * Alias the shared table renderer for existing call sites.
  */
 const renderTable = renderMarkdownTable
 
 /**
- * Per-field commentary for the input-shape table.
+ * Input-shape notes.
  *
- * Typed as a total `Record` over `keyof Form499Row` so adding a field to the parser
- * is a compile error here rather than a silently stale published claim.
+ * The total record makes new parser fields require an explicit report entry.
  */
 const FORM_499_FIELD_NOTES: Record<keyof Form499Row, string> = {
 	form499ID: "",
@@ -65,18 +63,9 @@ function isPopulated(value: unknown): boolean {
 }
 
 /**
- * How many corpus rows actually carry a value for a field — computed from the
- * corpus, never asserted by hand.
- *
- * Hand assertion gets this wrong in the most misleading direction available: `hqAddress`,
- * both `customerInquiries*` fields and all five `dcAgent*` fields look like channels "given to
- * the matcher" while being `""` on every row, which is the opposite of the impression a reader
- * takes from that column, and those are the same channels the caveats name as the way forward.
+ * Count populated values in the corpus rather than relying on hand-entered totals.
  */
-// repo-health-ignore private-name-shadows-export -- a name collision rather than a copy:
-// this counts populated corpus rows for one field and answers a markdown cell, where
-// `@mailwoman/observations/layer-record`'s takes an ObservationCoverageRecord and describes an H3 cell.
-// Importing it would point a layer provider at the top-level app.
+// repo-health-ignore private-name-shadows-export -- This corpus-field count is unrelated to the H3 coverage helper.
 function describeCoverage<Row>(rows: readonly Row[], field: keyof Row, heldOut: boolean): string {
 	if (heldOut) return "**withheld**"
 
@@ -223,7 +212,7 @@ function renderPairsTable(
 }
 
 /**
- * One pass of the eval — one corpus projection, one built artifact, one score.
+ * Inputs for one evaluation pass.
  */
 interface RenderLinkageEvalReportInput {
 	date: string
@@ -236,10 +225,7 @@ interface RenderLinkageEvalReportInput {
 	truthGroupOf: ReadonlyMap<FRN, string>
 }
 
-// repo-health-ignore private-name-shadows-export -- a name collision rather than a copy:
-// this writes the corporate-family linkage paragraph, where `@mailwoman/dev-mcp`'s
-// grades ValeAlert[] into a ProseVerdict.
-// The two share no argument and no return.
+// repo-health-ignore private-name-shadows-export -- This renders a corporate-family verdict, not a Vale report.
 function renderVerdict(withheld: LinkageEvalRun, control: LinkageEvalRun): string {
 	return (
 		"**Corporate-family membership resolves correctly when the filer discloses its parent, and not at all when it " +
@@ -282,15 +268,7 @@ function renderWhySection(withheld: LinkageEvalRun): string {
 }
 
 /**
- * The precondition a future run has to satisfy to beat this baseline,
- * stated as narrowly as the code supports.
- *
- * The tempting broader claim — that "any channel that actually correlates with ownership —
- * a shared headquarters address, a shared officer, an external corporate filing that names a parent —
- * would show up here as recall above zero" — is false, and has been falsified by probe twice.
- * The page carries both falsified probes rather than dropping them: a stated causal
- * relation the data contradicts is exactly the defect this page exists not to commit,
- * and its whole value is that its claims survive being checked.
+ * State what evidence can change this baseline, based on measured pipeline behavior.
  */
 function renderWhatWouldMoveItSection(): string {
 	return (

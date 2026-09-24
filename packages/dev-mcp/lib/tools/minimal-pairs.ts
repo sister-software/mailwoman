@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_minimal_pairs` tool definition — the description an agent reads, the input schema, and the handler
- *   wiring. The measurement lives in `../minimal-pairs.ts`.
+ *   MCP interface for sequential minimal-pair measurements.
  */
 
 import { z } from "zod"

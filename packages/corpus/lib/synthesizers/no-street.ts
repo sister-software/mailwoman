@@ -3,38 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   No-street address synthesizer — the counter-distribution that v0.6.1's synth-street source is
- *   missing. Generates BIO-labelable rows where there is no street, no house_number, no
- *   street_prefix, no street_suffix, no intersection — only some subset of {venue, locality,
- *   region, postcode, country}.
- *
- *   Rationale: the [2026-05-28 night-2
- *   postmortem](../../docs/articles/evals/night-shifts/2026-05-28-night-2-postmortem.md) and the [layer-1
- *   eval](../../docs/articles/evals/experiments/2026-05-28-layer-1-morphology-fst.md) showed that synth-street
- *   pushed the model into a high-confidence "decompose mode" that leaked into `dependent_locality`.
- *   Per DeepSeek's turn-2 recipe, the model needs explicit counter-examples: addresses where the
- *   model should not emit street labels. This synthesizer is that source.
- *
- *   Six row templates, each producing a {raw, components} pair with no street-side tags:
- *
- *   1. **Plain venue + locality + region + postcode** `"Bob's Pizza, Boston, MA 02101"`
- *   2. **Adversarial venue (containing street-typing words)** `"Wall Street Industries, NY 10005"`,
- *        `"5th Avenue Theater, Seattle, WA"`, `"Highway 61 Diner, Memphis TN"`. These are the rows
- *        that v0.6.1's decompose-mode would mis-tag as street_prefix/suffix. explicit negative
- *        training kills that signal.
- *   3. **Locality + region + postcode (minimal)** — `"Boston, MA 02101"`
- *   4. **Locality + region** — `"Boston, MA"`
- *   5. **Postcode-only** — `"02101"`
- *   6. **Country-only** — `"United States"`, `"France"` (rare in real data, but the model has seen these
- *        and should not hallucinate streets on them).
- *
- *   Output is a `CanonicalRow` with no street-side components. Alignment will produce BIO labels
- *   where every token is one of {`B-venue`, `I-venue`, `B-locality`, `I-locality`, `B-region`,
- *   `B-postcode`, `B-country`, `I-country`, `O`} — explicitly never any street tag. That is the
- *   counter-example signal the model is missing.
- *
- *   This complements (does not replace) the existing US-base-tuple source used by
- *   `po-box.ts`; the same `NoStreetBaseTuple` shape is consumed.
+ *   Generate addresses without street components as counterexamples for street-heavy training data.
+ *   Templates cover venues, localities, postcodes, and countries, including venue names that contain
+ *   street-like words. Output components never include street-side tags.
  */
 
 import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address-format"
@@ -87,9 +58,7 @@ export interface SynthesizedNoStreetRow {
 //#region Venue name pools
 
 /**
- * Plain venue names — businesses without street-typing words in the name.
- *
- * Used as the easy-mode positive class for venue detection.
+ * Venue names without street-like words.
  */
 const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Bob's Pizza",
@@ -115,19 +84,10 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 ]
 
 /**
- * Adversarial venue names — businesses whose names contain street-typing
- * tokens (Avenue, Street, Highway, Lane, Drive, Court, Plaza, Park, ...)
- * but are themselves venues rather than streets.
+ * Venue names containing street-like words.
  *
- * The model must learn that these are venues despite the street-typing tokens.
- *
- * **No leading digit+ordinal venues** (e.g. "5th Avenue Theatre", "7th Street Bistro").
- * The v0.6.2 2026-05-29 step-20K eval showed that synthesized rows starting with
- * `<digits><ordinal>` confused the model about house_number recognition — tokens like "5th"
- * (which should be `B-house_number` in real addresses) were being labeled `B-venue`
- * because adversarial venues placed them in venue position. v0.6.3 omits these patterns.
- *
- * The `synth-house-venue` source separately teaches that house_number and venue coexist.
+ * Avoid leading digit-plus-ordinal forms, which can confuse house-number labels;
+ * `synth-house-venue` covers house-number and venue co-occurrence.
  */
 const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
 	"Wall Street Industries",
@@ -187,10 +147,7 @@ const COUNTRY_NAMES = new Map<string, ReadonlyArray<string>>([
 //#region Synthesis
 
 /**
- * Generate one no-street counter-example row for a base (locality, region, postcode, country) tuple.
- *
- * Picks a template by weighted random.
- * The venue templates are the critical counter-distribution against synth-street's decompose-mode pressure.
+ * Generate one no-street row from a base locality, region, postcode, and country.
  */
 export function synthesizeNoStreetRow(
 	base: NoStreetBaseTuple,
@@ -201,19 +158,13 @@ export function synthesizeNoStreetRow(
 
 	const template: NoStreetTemplate = opts.forceTemplate ?? pickTemplate(random)
 
-	// A tuple's `country` is whatever its source wrote — `ES`, `ESP` or `Spain` —
-	// and a layout is keyed by the alpha-2 code.
+	// Address layouts are keyed by ISO alpha-2 codes.
 	const iso2 = countryCodeForTable(base.country)
 
 	if (!iso2) return null
 
 	/**
-	 * Write `extra` on top of the base tuple's admin components through the country's own layout.
-	 *
-	 * The layout decides the order, the separators and which components it has a slot for,
-	 * and reports the subset it printed.
-	 * France absorbs the region into its postcode line, so a row that emitted `region` regardless would
-	 * carry a label whose text is not in `raw`, and the aligner would have nothing to attach it to.
+	 * Render components with the country's address layout and return only fields present in the output.
 	 */
 	const render = (
 		extra: ComponentDict,
@@ -245,11 +196,7 @@ export function synthesizeNoStreetRow(
 			return render({ venue: sample(PLAIN_VENUES, random) }, { locality: true, region: true, postcode: true })
 		}
 		case "venue-adversarial": {
-			// The venue-adversarial template name is descriptive — when selected,
-			// this branch always draws from the adversarial pool.
-			// The `adversarialVenueRatio` opt is what the outer template picker uses to
-			// bias toward this template versus the plain one.
-			// Once we're inside this branch the choice is already made.
+			// The template picker already selected the adversarial venue form.
 			return render({ venue: sample(ADVERSARIAL_VENUES, random) }, { locality: true, region: true, postcode: true })
 		}
 		case "locality-region-postcode": {
@@ -281,8 +228,7 @@ export function synthesizeNoStreetRow(
 }
 
 /**
- * Template weights chosen so that the venue-* templates dominate
- * (they're the counter-example shape that matters), with the minimal templates as long-tail noise.
+ * Select a template, favoring venue examples over minimal address forms.
  */
 function pickTemplate(random: () => number): NoStreetTemplate {
 	const r = random()

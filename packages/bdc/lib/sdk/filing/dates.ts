@@ -2,20 +2,8 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file FCC BDC filing-date discovery + vintage resolution.
- *
- *   Re-homed from Nexus's `sync/fcc/bdc/filing-dates.ts` (relicense-by-copy, no provenance
- *   headers): the `$BCDClient`-bound `retrieveFilingDates()` → a plain function taking a
- *   {@linkcode BDCClient}.
- *
- *   caching moved TO the client. Both the Nexus original (one `<filingType>-dates.json` per filing
- *   type) and this port's first version (`dataRootPath("bdc", "cache", "filing-dates.json")`, unfiltered)
- *   hand-rolled a JSON file cache here. `BDCClient` is built on `APIClient` and now carries an on-disk
- *   response cache of its own, so the hand-rolled one was the exact duplication that migration exists to
- *   remove — and it was worse than what replaced it: it had no expiry, so a machine that resolved a
- *   vintage once would never see the next one FCC published without an explicit `skipCache`. The
- *   client's cache has a TTL chosen against the filing cadence, and `skipCache` now maps onto a
- *   per-request cache bypass with the same meaning it always had.
+ *   @file Discover FCC filing dates and select the latest vintage. The client caches the full API
+ *   response; `skipCache` requests a fresh response.
  */
 
 import type { BDCClient } from "#sdk/client"
@@ -38,26 +26,20 @@ interface ListAsOfDatesResponseBody {
 
 export interface RetrieveFilingDatesParams {
 	/**
-	 * Which filing type's dates to return.
-	 * The full cached/fetched set is filtered down to this type.
+	 * Filing type to select from the API response.
 	 */
 	filingType: BDCFilingDataType
 	/**
-	 * Bypass the client's response cache and always fetch fresh from the API.
-	 *
+	 * Bypass the response cache.
 	 * Defaults to `false`.
 	 */
 	skipCache?: boolean
 }
 
 /**
- * Retrieve the FCC BDC's available filing `as_of_date`s for a given filing type.
+ * Return the available filing dates for one type.
  *
- * One `listAsOfDates` call answers every filing type.
- * The full unfiltered response is what the client caches, and this filters it down on read —
- * so asking for a second filing type inside the TTL costs no request at all.
- *
- * At ten requests per minute that is worth six seconds each time.
+ * The API response covers all types and is cached before this function filters it.
  */
 export async function retrieveFilingDates(
 	client: BDCClient,
@@ -69,11 +51,7 @@ export async function retrieveFilingDates(
 }
 
 /**
- * Pick the latest (most recent) `as_of_date` among `entries` for the given `dataType`.
- *
- * Comparison is by parsed `Date` value rather than string ordering.
- * The FCC's `as_of_date` values are `date`-formatted (`yyyy-MM-DD`), which happens to
- * sort correctly as strings too, but comparing as dates is the honest interface.
+ * Return the latest filing date for a data type, comparing parsed dates.
  */
 export function resolveLatestVintage(entries: readonly FCCAsOfDateEntry[], dataType: BDCFilingDataType): string {
 	const matching = entries.filter((entry) => entry.data_type === dataType)

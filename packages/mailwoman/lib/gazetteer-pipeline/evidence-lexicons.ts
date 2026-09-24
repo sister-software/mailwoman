@@ -3,51 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Evidence-lexicon builders (`mailwoman gazetteer build street-type-lexicon` / `build
- *   locality-surface-lexicon`) — the Option-A bundle's training/inference input artifacts, promoted
- *   from the probe-era diagnostic scripts (Phase 1 of
- *   `docs/superpowers/plans/2026-07-27-option-a-productionization-plan.md`).
- *
- *   Both lexicons follow the anchor-lexicon JSON schema (feature_dim/slots/bits/entries/
- *   code_entries + rules) so the Python painter (`gazetteer_anchor.py`) and the future TS painter
- *   consume them identically — train and inference share one computation.
- *
- *   the four-LAW selectivity (laws 1–3 each bought with a falsified training run, v3.16→v3.18. law
- *   4 + the hygiene clauses bought with the v3.19.0 golden-US collapse — the flip census in
- *   `.superpowers/sdd/progress.md` 2026-07-28):
- *
- *   1. Degenerate exclusion — bare function words, bare street-type words, bare directionals
- *      (libpostal `directionals.txt` — the v3.19 gap: US neighbourhoods literally named
- *      "Northeast"/"East" painted locality evidence onto street directionals, truncating "3rd Ave
- *      East" to "3rd"), and all-function-word compositions are never evidence (unselective evidence
- *      trained into pure damage — bare-locality −0.180).
- *   2. Prominence floor — 1-token locality surfaces need population-backed importance ≥ 0.25
- *      (≈11k population): hamlet-long-tail surfaces fire on ordinary street text and are noise.
- *   3. Person-name tier — 1-token surfaces in libpostal given_names/surnames/personal_titles need
- *      importance ≥ 0.45: French given names are prominent-place homographs ("Rue Joseph[paint]
- *      Gagnier" started a phantom locality mid-street), while paris/lyon/nancy — also in the name
- *      lists — clear the metropolis tier.
- *   4. Region-vocabulary exclusion — surfaces that are US state names/abbreviations are region
- *      vocabulary, never locality evidence (v3.19: homograph-flagged state-name surfaces taught a
- *      locality-evidence→region rotation — "Washington, DC" parsed region="Washington"
- *      locality=null; "Missouri Break Ln, WY" region="Missouri"; "Frannie, Wyoming" lost its
- *      locality). Washington-the-city rows parse correctly without evidence — withholding beats
- *      corrupting. Scoped to US while US is the only covered country with single-word region names
- *      colliding this way. revisit per-country at each locale fold.
- *
- *   ALT-name SUB-phrase hygiene (also v3.19 tuition): a names-table alias whose folded form is a
- *   contiguous sub-phrase of its own primary name ("East" ⊂ "East Nashville", "Washington" ⊂
- *   "Mount Washington") adds ambiguity and zero discrimination — rejected. Genuine nicknames
- *   survive.
- *
- *   The locality lexicon's v4 register change (operator doctrine 2026-07-27): neighbourhood
- *   surfaces fold in as single-token evidence — a web user types "montmartre" as a fragment, never
- *   "Montmartre, Paris", so neighbourhood value ships inside the bundle channel rather than as a
- *   pair index (see the pair-hierarchy design doc's dispositions).
- *
- *   Artifacts: street-type → `data/gazetteer/` (small, committed); locality-surface →
- *   `$MAILWOMAN_DATA_ROOT/gazetteer/` (≥13 MB — ships as a weights-package sibling at the Phase-3
- *   promote, never in git).
+ *   Build street-type and locality-surface evidence lexicons for training and inference.
+ *   Both use the anchor-lexicon schema and shared painter normalization.
+ *   Curation excludes degenerate, low-prominence, person-name, region, and redundant alias surfaces.
+ *   Street-type data is committed; locality-surface data is stored under the data root.
  */
 
 import { wordNorm } from "@mailwoman/codex"
@@ -83,16 +42,9 @@ export const PERSON_NAME_IMPORTANCE_FLOOR = 0.45
 const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
 
 /**
- * The painter fold (word_norm) — the rule both painters apply at lookup
- * (`gazetteer_anchor.py` / `neural/gazetteer-inference.ts`): per whitespace word, strip leading/trailing
- * non-letter/digit chars (keep internal — "saint-thomas", "d'azur"), lowercase, single-space join.
- *
- * Lexicon entry keys must use this fold or they are unreachable at paint time.
- * Not the FST fold (`normalizeTokens` strips internal punctuation too) — the FST
- * and painter worlds fold differently by design.
- *
- * Caught at Phase 2 when the locality builder briefly used the FST fold
- * ("Saint-Thomas" → "saintthomas" could never match the painter's "saint-thomas").
+ * Normalize surface tokens as both anchor painters do: trim boundary punctuation,
+ * lowercase, and preserve internal punctuation.
+ * This differs from the FST fold.
  */
 export function painterFold(surface: string): string[] {
 	return surface
@@ -103,34 +55,15 @@ export function painterFold(surface: string): string[] {
 }
 
 /**
- * Evidence-side supplemental degenerate surfaces (the `SUPPLEMENTAL_DEGENERATE_SURFACES`
- * pattern from `fst.ts`, scoped to the evidence-lexicon policy).
- *
- * Each entry carries its receipt — a v3.19.0 flip-census row where the surface,
- * admitted through a WOF data-noise carrier, painted evidence that broke a golden parse:
- *
- * - `school` — WOF neighbourhood 85872377 / locality 1226662441 named "School"
- *   (pop-row 4019, parent-vouched); "maplehill school, E hill road, plainfield,
- *   VT" parsed locality="School".
- * - `state` — WOF alias rows pairing alt-name "State" with places primary-named "Manor"
- *   (85879785 et al., not a sub-phrase so hygiene passes it); "05857 State Rte 14,
- *   VT" truncated street to "Rte 14".
+ * Additional degenerate surfaces excluded from evidence lexicons.
  */
 export const EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES: readonly string[] = ["school", "state"]
 
 /**
- * Law-1 directional closure (v5): whole surfaces from libpostal `directionals.txt` per curation language.
- *
- * Loaded separately from `loadDegenerateSurfaces` on purpose.
- * That loader is the shipped FST curation policy (degenerate-surface-exclusion v1.1, baked into
- * FST artifact trailers); evidence-lexicon curation extends it without moving the FST policy.
+ * Load direction words without changing the FST curation policy.
  */
 export async function loadDirectionalSurfaces(fold: (surface: string) => string[] = painterFold): Promise<Set<string>> {
-	// Memoized on the same grounds as loadPersonNameSurfaces: static dictionaries,
-	// process-lifetime, no invalidation key.
-	// Keyed by fold identity — the FST and painter folds must not share.
-	// The returned set is shared.
-	// Every caller only iterates it.
+	// Cache per fold function; the FST and painter folds differ.
 	let hit = directionalSurfacesMemo.get(fold)
 
 	if (!hit) {
@@ -167,10 +100,7 @@ async function scanDirectionalSurfaces(fold: (surface: string) => string[]): Pro
 }
 
 /**
- * Law-4 region vocabulary (v5): US state names + abbreviations, painter-folded.
- *
- * Per-country scoping lives at the call site.
- * The set only applies when the build covers the country whose region vocabulary it is.
+ * Return painter-folded US state names and abbreviations.
  */
 export function loadUSRegionVocabulary(fold: (surface: string) => string[] = painterFold): Set<string> {
 	const surfaces = new Set<string>()
@@ -187,27 +117,12 @@ export function loadUSRegionVocabulary(fold: (surface: string) => string[] = pai
 }
 
 /**
- * The three German city-states: Land and Stadt are the same coextensive place, and the locality
- * reading dominates user text ("10115 berlin", "hamburg altona") — see {@link loadDERegionVocabulary}.
+ * German city-states where state and locality names are coextensive.
  */
 const DE_CITY_STATES: ReadonlySet<GermanStateCode> = new Set(["BE", "HB", "HH"])
 
 /**
- * Law-4 region vocabulary for DE (v7, the per-country revisit the law reserves at each locale fold):
- * the 13 territorial-state names — native, English exonym, and the everyday aliases the codex
- * alias map carries (NRW, Thueringen, …) — are region vocabulary, never locality evidence.
- *
- * Painting "bayern" as a locality teaches the same evidence→region rotation the
- * v3.19 US flip census measured for state names.
- *
- * The city-states (Berlin, Hamburg, Bremen) are deliberately absent from the exclusion:
- * the US analogy does not transfer.
- * Washington-the-state and Washington-the-city are different places (a rotation hazard),
- * while Berlin-the-Land and Berlin-the-Stadt are one coextensive place whose
- * dominant reading in user text is the locality.
- *
- * Withholding evidence there would gut the DE fold's value on the three largest cities.
- * The model owns the residual region/locality call (model-first).
+ * Return German state names and aliases, excluding coextensive city-states.
  */
 export function loadDERegionVocabulary(fold: (surface: string) => string[] = painterFold): Set<string> {
 	const surfaces = new Set<string>()
@@ -237,10 +152,7 @@ export function loadDERegionVocabulary(fold: (surface: string) => string[] = pai
 }
 
 /**
- * Alt-name sub-phrase hygiene (v5): is `alt` a contiguous token subsequence
- * of `primary` (both painter-folded)?
- *
- * Equality doesn't count — re-adding the primary through the names table is harmless.
+ * Check whether `alt` is a strict contiguous token subphrase of `primary`.
  */
 export function isSubPhraseAlias(alt: readonly string[], primary: readonly string[]): boolean {
 	if (!alt.length || alt.length >= primary.length) return false

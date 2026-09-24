@@ -3,31 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The conformance-law fixture interface: what a law row is allowed to say, and what makes one
- *   unloadable. Pure — no model, no I/O beyond reading a jsonl file.
- *
- *   A law row states a relation between two runs of the same pipeline: a base query, a variant query, one
- *   context held constant across both, a named law, a named outcome comparator, and the relation the two
- *   outcomes are expected to stand in. The comparators themselves live in `comparators.ts`; the runner in
- *   `run.ts`. This module owns the vocabulary and the refusal.
- *
- *   three closed vocabularies, and closing them is the point. `outcomeComparator` names one of five
- *   instruments, because "did the answer change" is not one question: a stable entity identity, an
- *   assembled coordinate, a strict parse, a component map and a mechanism-account shape are different
- *   observable interfaces, and a universal equality function would either reject a legitimate
- *   transformation or hide a changed identity behind a nearby coordinate. `expect` names one of three
- *   relations, and `status` one of three verdict roles. A violated row is tracked rather than deleted, and
- *   never re-stated as `expect: diverges`, which would make the suite assert the defect. A fixture that
- *   omits the comparator, or names one that does not exist, is refused at load with its own id in the
- *   message — never skipped, never defaulted. A skipped row reports as an absence, and an absence is what a
- *   law suite is measuring.
- *
- *   one context rather than two. A law varies the query and holds the configuration fixed. Two contexts would let
- *   a row vary the country prior and the surface form at once, and the comparator could not say which one
- *   moved the answer.
- *
- *   The `law` name is a free string, on the same reasoning as the Gauntlet's own `AddressKind`: the
- *   taxonomy grows with the suites, and each suite owns the names it uses. Blank is still refused.
+ *   Schema and validation for conformance-law fixtures. Each row compares base and variant queries under one fixed
+ *   context, using a named comparator and expected relation. Comparator, relation, and status vocabularies are closed;
+ *   invalid rows fail loading rather than being skipped or defaulted.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -38,24 +16,9 @@ import { JSONSpliterator } from "spliterator"
 import type { GauntletGeocodeOpts } from "#eval-harness/gauntlet/harness"
 
 /**
- * The closed set of outcome comparators.
+ * Supported outcome comparators.
  *
- * Each names an observable interface a law can preserve.
- * Adding one is a reviewed instrument in `comparators.ts`, never an inline callback in a fixture.
- *
- * - `resolution_identity` — which entity was resolved, read from the namespaced place ids and nothing else.
- *   It never reads a coordinate, so an identity law cannot pass because two
- *   different places happen to sit close together.
- * - `assembled_coordinate` — where the answer landed, graded on the Gauntlet's
- *   own great-circle tolerance and tier.
- * - `parse_whole_strict` — the whole component map, key set included,
- *   under the Gauntlet's exact case-folded equality.
- * - `component_map` — the invariance suite's critical/non-critical severity reading over the same map.
- * - `mechanism_shape` — the mechanism-account shapes the two runs matched.
- * - `candidate_admissibility` — which candidates the resolver's own lookups held,
- *   read from the recorded candidate tables with their fetch windows.
- *   The only comparator that reads the pipeline's interior rather than its answer,
- *   and the only one whose observation can fail to decide: see `candidate-admissibility.ts`.
+ * Each checks one observable interface; implementations live in `comparators.ts`.
  */
 export const OUTCOME_COMPARATORS = [
 	"resolution_identity",
@@ -69,57 +32,24 @@ export const OUTCOME_COMPARATORS = [
 export type OutcomeComparatorName = (typeof OUTCOME_COMPARATORS)[number]
 
 /**
- * The closed set of relations a law can expect between the base and variant outcomes.
- *
- * - `equivalent` — a normalization law: the variant carries the same information,
- *   so the comparator must find no difference on its axis.
- * - `refines` — a refinement law: the variant carries more information,
- *   so the variant's outcome must contain the base's and add to it.
- * - `diverges` — a contradiction law: the variant carries different information,
- *   so the outcomes must differ.
+ * Relations a fixture may require between base and variant outcomes.
  */
 export const CONFORMANCE_RELATIONS = ["equivalent", "refines", "diverges"] as const
 
 export type ConformanceRelation = (typeof CONFORMANCE_RELATIONS)[number]
 
 /**
- * What a row's outcome is allowed to mean for the verdict.
+ * Verdict role of a fixture.
  *
- * The Gauntlet regression layer's own `CaseStatus`, spelled again here because a law suite
- * grades relations rather than cases and must not import the corpus schema to say so.
- *
- * - `pass` — the default, and the only status that checks.
- *   A `pass` row whose law is violated fails the run.
- * - `known_fail` / `improvement_target`.
- *   The row is run and reported, and does not block.
- *   A tracked row that starts holding is printed as a promotion instruction,
- *   which is what keeps the tracked list from becoming a place rows go to be forgotten.
- *
- * A red row is never deleted to make a run green, and it is never re-stated as `expect: diverges`
- * either: that would make the suite assert the defect, so fixing the defect would fail the suite.
+ * `pass` blocks on failure; tracked statuses report without blocking.
  */
 export const CONFORMANCE_STATUSES = ["pass", "known_fail", "improvement_target"] as const
 
 export type ConformanceStatus = (typeof CONFORMANCE_STATUSES)[number]
 
 /**
- * Which relations each comparator can actually express.
- *
- * `parse_whole_strict` and `mechanism_shape` are two-valued by construction: a strict parse is identical
- * or it is not, and a set of mechanism shapes has no containment order that means "more specific".
- * A fixture asking either of them for `refines` is refused at load rather than
- * graded against a relation the instrument cannot report.
- *
- * An unreachable expectation is a row that can only ever fail, which reads as a
- * defect in the pipeline instead of a defect in the fixture.
- *
- * `candidate_admissibility` is two-valued for the opposite reason: it reads a candidate pool, where
- * "unchanged" is the degenerate case of "nothing admissible was lost" rather than a separate finding.
- * Splitting the two would make a fixture's expectation a claim about whether the added
- * text reaches the resolver at all, which is behaviour rather than law .
- *
- * Therefore, an identical pool reports `refines` and says so in its basis,
- * and only a lost or unexplained candidate reports `diverges`.
+ * Relations supported by each comparator.
+ * Reject expectations the instrument cannot evaluate.
  */
 export const RELATIONS_BY_COMPARATOR: Record<OutcomeComparatorName, readonly ConformanceRelation[]> = {
 	resolution_identity: ["equivalent", "refines", "diverges"],
@@ -131,62 +61,43 @@ export const RELATIONS_BY_COMPARATOR: Record<OutcomeComparatorName, readonly Con
 }
 
 /**
- * The per-query priors a law row may pin, held constant across both sides.
- *
- * Aliased from the Gauntlet's own {@linkcode GauntletGeocodeOpts} rather than re-declared:
- * a law row's context is the same thing a Gauntlet case's context is, and a second copy
- * would let the two vocabularies drift while looking identical at the call site.
+ * Per-query options shared by base and variant, using the Gauntlet's option type.
  */
 export type ConformanceContext = GauntletGeocodeOpts
 
 /**
- * The keys {@linkcode ConformanceContext} accepts.
- *
- * Kept beside the alias because a structural type has no runtime membership test,
- * and the loader needs one to refuse a misspelled key.
+ * Runtime-validated keys accepted in a conformance context.
  */
 const CONTEXT_KEYS = ["defaultCountry", "caseCountry", "fuzzyCountryScope"] as const
 
 type ContextKey = (typeof CONTEXT_KEYS)[number]
 
 /**
- * One conformance-law fixture.
+ * One conformance-law test case.
  */
 export interface ConformanceFixture {
 	/**
-	 * Stable fixture id, unique within its file.
-	 *
-	 * Named in every refusal and every failure line.
+	 * Stable ID, unique within the file and used in diagnostics.
 	 */
 	id: string
 	/**
-	 * The law this row belongs to, e.g. `case-folding-invariance`.
-	 *
-	 * Owned by the suite that declares it.
+	 * Law name, owned by the declaring suite.
 	 */
 	law: string
 	/**
-	 * The query the law's relation is stated from.
+	 * Base query.
 	 */
 	base: string
 	/**
-	 * The query the law's relation is stated to.
-	 *
-	 * May equal {@linkcode ConformanceFixture.base}.
-	 * An idempotence law states that running the same input twice agrees,
-	 * which is a relation between two runs rather than two strings.
+	 * Variant query; may equal the base for idempotence checks.
 	 */
 	variant: string
 	/**
-	 * Per-query priors applied to both sides.
-	 *
-	 * Absent means production defaults on both.
+	 * Options shared by both sides; absent means production defaults.
 	 */
 	context?: ConformanceContext
 	/**
-	 * The instrument that decides the relation.
-	 *
-	 * Required — see the module docstring.
+	 * Required comparator for the expected relation.
 	 */
 	outcomeComparator: OutcomeComparatorName
 	/**
@@ -194,47 +105,29 @@ export interface ConformanceFixture {
 	 */
 	expect: ConformanceRelation
 	/**
-	 * Whether this row checks the run.
-	 *
-	 * Absent means {@linkcode CONFORMANCE_STATUSES}'s `pass`.
-	 * A row says nothing about its status only when it is expected to hold.
+	 * Whether failure blocks the run; defaults to `pass`.
 	 */
 	status?: ConformanceStatus
 	/**
-	 * Issue or record this row's tracked status points at, e.g. `#1919`.
-	 *
-	 * Free-form and never graded.
-	 * It exists so a tracked row names where its diagnosis lives.
+	 * Issue or record associated with a tracked row.
 	 */
 	bugRef?: string
 	/**
-	 * The committed row or input set this fixture was drawn from, e.g. `parity-corpus.jsonl#fr-0042`.
-	 *
-	 * Carried into the failure line so a violation names the population it came from
-	 * rather than only the synthetic pair.
+	 * Source row or input set for this fixture.
 	 */
 	rowRef?: string
 	/**
-	 * Great-circle tolerance for `assembled_coordinate`, in metres.
-	 *
-	 * Absent uses the Gauntlet's own default.
-	 * Refused on any other comparator: a stored expectation no branch reads is the
-	 * defect this interface exists to make loud.
+	 * Coordinate tolerance in metres; supported only by `assembled_coordinate`.
 	 */
 	toleranceM?: number
 	/**
-	 * Free-form authoring note.
-	 *
-	 * Never graded.
+	 * Authoring note, not graded.
 	 */
 	note?: string
 }
 
 /**
- * Every key a fixture record may carry.
- *
- * An unknown key is refused rather than dropped: a plain object silently discards a misspelled
- * field, and the row then grades under a default nobody wrote while reading as authored.
+ * Accepted fixture keys; reject unknown fields instead of silently dropping typos.
  */
 const FIXTURE_KEYS = new Set<string>([
 	"id",
@@ -302,11 +195,7 @@ function readContext(raw: unknown, label: string): ConformanceContext | undefine
 }
 
 /**
- * Validate one fixture record and return it typed, or throw naming the fixture.
- *
- * `origin` is the file (and row) the record came from.
- * It is prefixed to every message so a refusal points at the line to edit even
- * when the record has no usable id of its own.
+ * Validate a fixture and include its source location in any error.
  */
 export function parseConformanceFixture(raw: unknown, origin: string): ConformanceFixture {
 	if (!isPlainObject(raw)) {
@@ -378,9 +267,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 		throw new Error(`${label}: "bugRef" must be a non-empty string when present (got ${stringifyJSON(bugRef)})`)
 	}
 
-	// A `bugRef` on a enforcing row points at a diagnosis for a row that is expected to hold,
-	// which reads as a tracked row to everyone but the verdict.
-	// Refused for the same reason `toleranceM` is refused off its comparator.
+	// `bugRef` is only valid on non-blocking tracked rows.
 	if (bugRef !== undefined && (status === undefined || status === "pass")) {
 		throw new Error(
 			`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
@@ -434,11 +321,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 }
 
 /**
- * Read a jsonl law suite, validating every row.
- *
- * Loud on the first bad row rather than collecting the good ones: a partially-loaded
- * suite reports fewer violations than it has rows, and a smaller violation count
- * is indistinguishable from a law that holds.
+ * Load and validate every JSONL fixture, rejecting the first invalid row.
  */
 export async function loadConformanceFixtures(source: PathBuilderLike): Promise<ConformanceFixture[]> {
 	const path = source.toString()
@@ -462,21 +345,19 @@ export async function loadConformanceFixtures(source: PathBuilderLike): Promise<
 }
 
 /**
- * The population clause the invariance suites share: a base query that names
- * no committed row names no population.
+ * Shared audit message for fixtures without a source row reference.
  */
 export const MISSING_ROW_REF_PROBLEM =
 	"no rowRef — every base query is drawn from a committed row, so a row without one names no population"
 
 /**
- * The locale clause every suite shares: `context.caseCountry` selects the
- * weights overlay the row grades through.
+ * Shared audit message for fixtures without a country-specific context.
  */
 export const MISSING_CASE_COUNTRY_PROBLEM =
 	"no context.caseCountry — it selects the weights overlay the row grades through, and without it the row is graded base-only against a locale that is not its own"
 
 /**
- * The invariance suites' shared relation clause, or `null` where the row states the one relation it may.
+ * Check the relation required by an invariance suite.
  */
 export function invarianceExpectProblem(fixture: ConformanceFixture, lawNoun: string): string | null {
 	return fixture.expect === "equivalent"
@@ -485,11 +366,7 @@ export function invarianceExpectProblem(fixture: ConformanceFixture, lawNoun: st
 }
 
 /**
- * The per-fixture frame every law-suite audit opens with: the label a problem line names
- * the row by, and the refusal of a row filed under another suite's law.
- *
- * Suite-specific clauses run in `auditFixture`, in the order the suite states them.
- * A clause that disqualifies the rest of a row's checks returns early.
+ * Apply shared law checks and suite-specific validation to every fixture.
  */
 export function auditCommonFixtureFields(
 	fixtures: readonly ConformanceFixture[],

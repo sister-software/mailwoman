@@ -3,22 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The local comparison rigs — start them, stop them, ask them a question.
- *
- *   `mwdev_compare`'s external arm grades an already-running engine but deliberately never starts one, so bringing a rig
- *   up was a shell exercise in `$MAILWOMAN_TEMP_ROOT/*-rig/*.sh` that a fresh context has no way to know about, and
- *   that no checkout carries. This module owns the small durable half: container
- *   lifecycle and a one-off query. The heavyweight half stays in those scripts, and stays manual on purpose — dump
- *   downloads, checksum verification, index extraction and atomic promotion are one-time operations with real disk and
- *   licence consequences, and nothing here will perform them.
- *
- *   Endpoints are pinned TO loopback by the registry below and cannot be overridden. That is the same commitment
- *   `REFUSED_ENDPOINT_HOSTS` makes on the grading path, arrived at from the other side: a tool that can be pointed
- *   anywhere eventually gets pointed at `photon.komoot.io`, and a volunteer endpoint is not ours to spend. A comparison
- *   against some other host is `mwdev_compare`'s external arm, which refuses the shared instances by name.
- *
- *   Queries here are observations rather than measurements: no grading, no rate, no verdict. `mwdev_compare` is what turns two
- *   engines into a number.
+ *   Manage local Pelias and Photon containers and query their loopback endpoints. Building indexes and downloading
+ *   source data remain manual. Queries report observations only; `mwdev_compare` performs scored comparisons.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -29,20 +15,14 @@ import { TextSpliterator } from "spliterator"
 import { assertScorableEndpoint } from "#external-arm"
 
 /**
- * Pacing for rig traffic, ms between dispatches.
- *
- * These are our own containers on our own host, so the interval is not politeness.
- * It is the same discipline the graded arm uses, kept identical so an observation here
- * and a measurement there cannot differ by request pattern.
+ * Delay between requests, matching the comparison client.
  */
 const RIG_MIN_REQUEST_INTERVAL_MS = 250
 
 const RIG_TIMEOUT_MS = 15_000
 
 /**
- * One paced client per rig, built on first use and reused — the house `APIClient` rather than
- * raw `fetch`, so rig traffic gets the same pacing, bounded retry and `ResourceError` mapping
- * as every other http caller in the repo (and so this tool exercises the client we ship).
+ * Reuse one paced API client per rig.
  */
 const clients = new Map<EngineRigName, APIClient>()
 
@@ -60,9 +40,7 @@ function clientFor(name: EngineRigName): APIClient {
 			baseURL: assertScorableEndpoint(rig.endpoint),
 			timeout: RIG_TIMEOUT_MS,
 			headers: { "User-Agent": "mailwoman-dev-mcp" },
-			// A rig that is still warming answers 4xx/5xx.
-			// Those are states here, read from the status field rather than exceptions to throw.
-			// `rigQuery` reports the code per row.
+			// Return HTTP errors as response statuses for the caller to report.
 			validateStatus: () => true,
 		},
 	})
@@ -73,47 +51,33 @@ function clientFor(name: EngineRigName): APIClient {
 }
 
 /**
- * Container runtime the rigs were built with.
- *
- * Podman rather than Docker because that is what the lab host runs and what the
- * rig scripts already created these containers under.
- * A `docker` invocation here would report "no such container" for containers that exist.
+ * Container runtime used by the local rig scripts.
  */
 const CONTAINER_RUNTIME = "podman"
 
 /**
- * How long to wait for a rig to answer after `start`, ms.
- *
- * Elasticsearch dominates: a cold Pelias stack answers its first query around 30s after the
- * containers report running, and a fixed sleep would either lie or waste the difference.
+ * Maximum time to wait for the endpoint after starting containers.
  */
 const HEALTH_TIMEOUT_MS = 180_000
 
 const HEALTH_POLL_MS = 3000
 
 /**
- * The 2xx band — a rig's answer counts only when the response is one, and both call
- * sites read the same pair rather than re-typing the numbers.
+ * Bounds of the successful HTTP status range.
  */
 const HTTP_OK_MIN = 200
 const HTTP_OK_MAX = 300
 
 /**
- * Where a rig's lifecycle script lives: under `$MAILWOMAN_TEMP_ROOT`, because these
- * are maintainer-authored scripts that no checkout carries.
- *
- * The value is quoted back to a maintainer who has to run one, so it has to name a path
- * that exists on their machine rather than one relative to a repository that never held it.
+ * Resolve a rig lifecycle script from the temporary root.
  */
 function rigScriptPath(...segments: string[]): string {
 	return tempRootPath(...segments)
 }
 
 /**
- * The rigs this tool can drive.
- *
- * `containers` is in start order.
- * Stop reverses it, because Elasticsearch must outlive the API that queries it.
+ * Local rig containers, endpoints, and query paths.
+ * Containers are listed in startup order.
  */
 export const ENGINE_RIGS = {
 	pelias: {
@@ -139,10 +103,7 @@ export type EngineRigName = keyof typeof ENGINE_RIGS
 interface ContainerState {
 	name: string
 	/**
-	 * The runtime's own status string (`Up 2 minutes`, `Exited (0) 3 days ago`, `Created`),
-	 * or `absent` when no container by that name exists, which is a different fact
-	 * from a stopped one: absent means the rig was never built here, and building
-	 * it is the manual half this module refuses to do.
+	 * Container status, or `absent` when no such container exists.
 	 */
 	status: string
 }
@@ -152,25 +113,19 @@ export interface RigStatus {
 	endpoint: string
 	containers: ContainerState[]
 	/**
-	 * Whether the endpoint answered its health query just now.
-	 *
-	 * `false` with running containers is the normal state during an Elasticsearch warm-up rather than a fault.
+	 * Whether the health endpoint answered.
+	 * It may be false while containers are warming up.
 	 */
 	answering: boolean
 	/**
-	 * Absent when every container is absent.
-	 * The rig has to be built by its script first.
+	 * Whether any rig container exists.
 	 */
 	built: boolean
 }
 
 /**
- * One result as this tool reports it — engine-neutral, so a reader compares two
- * engines without learning two payload shapes.
- *
- * `sourceID` is the thing worth reading: Pelias's `gid` says which dataset supplied
- * the answer (`whosonfirst:locality:101750331` vs `geonames:locality:2639268`),
- * which is how a coverage question gets settled.
+ * Engine-neutral result.
+ * `sourceID` identifies the source dataset when available.
  */
 export interface RigResult {
 	name: string | null
@@ -193,8 +148,7 @@ async function runtime(args: string[]): Promise<string> {
 }
 
 /**
- * Container states for one rig — absent containers reported as `absent`
- * rather than omitted, so a partially built rig is legible.
+ * Return the status of each configured container, including absent containers.
  */
 async function containerStates(rig: (typeof ENGINE_RIGS)[EngineRigName]): Promise<ContainerState[]> {
 	let listing: string
@@ -219,9 +173,7 @@ async function containerStates(rig: (typeof ENGINE_RIGS)[EngineRigName]): Promis
 }
 
 /**
- * Does the endpoint answer right now?
- *
- * A failed fetch is `false`, never a throw: "not answering" is the answer.
+ * Return whether the endpoint currently answers its health query.
  */
 async function answering(name: EngineRigName): Promise<boolean> {
 	try {
@@ -247,10 +199,7 @@ export async function rigStatus(name: EngineRigName): Promise<RigStatus> {
 }
 
 /**
- * Start a rig and wait for it to answer rather than merely to be running.
- *
- * A container that is up while Elasticsearch is still loading serves 500s,
- * and a caller told "started" would read those as the engine's opinion.
+ * Start existing containers and wait for the endpoint to respond.
  */
 export async function rigStart(name: EngineRigName): Promise<RigStatus & { waitedMs: number }> {
 	const rig = ENGINE_RIGS[name]
@@ -279,10 +228,7 @@ export async function rigStart(name: EngineRigName): Promise<RigStatus & { waite
 }
 
 /**
- * Stop a rig in reverse start order.
- *
- * Never removes a container or its data.
- * The rigs carry frozen indices that cost hours to rebuild, and `podman rm` is not a verb this tool has.
+ * Stop running containers in reverse order without removing them or their data.
  */
 export async function rigStop(name: EngineRigName): Promise<RigStatus> {
 	const rig = ENGINE_RIGS[name]
@@ -296,14 +242,7 @@ export async function rigStop(name: EngineRigName): Promise<RigStatus> {
 }
 
 /**
- * Normalize one engine's payload into {@link RigResult}s.
- *
- * Both rigs answer GeoJSON, and both put the interesting identity in `properties` under different keys:
- * Pelias carries `gid` + `layer`, Photon carries `osm_type`/`osm_id` + `osm_key`/`osm_value`.
- * Reading the position is the classic hazard.
- *
- * GeoJSON orders it [lon, lat], and reading it the other way lands every result in
- * the wrong hemisphere while still looking plausible near the equator.
+ * Convert a rig's GeoJSON features into shared result fields.
  */
 export function normalizeRigResults(engine: EngineRigName, body: unknown): RigResult[] {
 	const features = (body as { features?: unknown[] })?.features
@@ -339,10 +278,7 @@ export function normalizeRigResults(engine: EngineRigName, body: unknown): RigRe
 }
 
 /**
- * Ask a running rig about a handful of strings.
- *
- * Sequential by construction.
- * These are observations, and a rig sharing a host with a build has no business being flooded.
+ * Query a rig sequentially and return observations without grading them.
  */
 export async function rigQuery(name: EngineRigName, queries: readonly string[]): Promise<RigQueryRow[]> {
 	const rig = ENGINE_RIGS[name]

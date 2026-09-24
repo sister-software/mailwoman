@@ -3,31 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   what can mailwoman do, PER country — parse and geocode kept apart, from primary sources.
+ *   Report country coverage across five independent sources: weights package, training rows, training admission,
+ *   gazetteer availability, and passing board cases. Keep parsing and geocoding distinct and report mismatches.
  *
- *   This exists because establishing it by hand took a full session and produced four wrong answers on the way. The
- *   question sounds like one question and is five, held in five places that do not agree:
- *
- *   1. **A weights package exists** — `@mailwoman/neural-weights-<locale>`. Says nothing about training: only `en-us`
- *      ships a `model.onnx` at all, the other eight are data-only overlays over it, and `en-nz` / `en-in` ship for
- *      locales the shipped model has never seen a training row from.
- *   2. **The corpus holds rows** — but a country can hold 11 million rows and none of them a street.
- *   3. **The training config admits the country** — `country_weights` is a hard filter (`data_loader.py`: `weight is
- *      None -> continue`), so a country absent from it trains on nothing no matter how many rows exist. That is the
- *      Norway bug's mechanism, and it was still live for every country outside the map.
- *   4. **The gazetteer can resolve it** — 244 countries, which is a different and much wider set than the parser's.
- *   5. **The board measures it** — and a country with rows that are all `improvement_target` has nothing verified.
- *
- *   Conflating any two of those produces a confident wrong answer, which is why the report keeps them in separate
- *   columns and names the mismatches explicitly rather than leaving them to be noticed.
- *
- *   ## The corpus census is cached, and says when it was taken
- *
- *   Counting rows means reading every train parquet file. Measured on 681M rows across 705 files: ~6 minutes projecting
- *   `country` alone, and ~19 minutes once `labels` comes too — and `labels` cannot be dropped, because the street count
- *   is the column that separates "we taught this country's addresses" from "we taught its name". Exact and far too slow
- *   for a tool call, so it is cached to the data root and refreshed on request. A stale cache is reported with its age
- *   rather than silently served as current.
+ *   Corpus counts require scanning training parquet files, so cache them under the data root and recount only on
+ *   request. Reports include the cache timestamp and identify when corpus and training-config versions differ.
  */
 
 import {
@@ -58,38 +38,29 @@ import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * How well a country can be geocoded, in the three tiers the resolution ladder actually has.
- *
- * `published` means a consumer can get it with `mailwoman data pull`.
- * `build-local` means the artifact exists on a lab machine and cannot be shipped — ODbL sources,
- * mostly — which reads identically to `published` from inside the repo and not at all from outside it.
+ * Country geocoding tier, distinguishing consumer-published data from local-only data.
  */
 export type GeocodeTier = "rooftop-published" | "rooftop-build-local" | "locality" | "none"
 
 /**
- * One country's row.
+ * Coverage summary for one country.
  */
 export interface CountryCoverage {
 	country: string
 	/**
-	 * Rows in the training corpus, all sources.
+	 * Training rows across all sources.
 	 */
 	corpusRows: number
 	/**
-	 * Of those, rows carrying a `street` or `house_number` label.
-	 * The ones that teach an address rather than a name.
+	 * Rows labeled with a street or house number.
 	 */
 	corpusStreetRows: number
 	/**
-	 * Whether the training config's `country_weights` admits it.
-	 *
-	 * A false here means the rows train nothing.
+	 * Whether `country_weights` admits this country.
 	 */
 	admitted: boolean
 	/**
-	 * The locale package serving it, if one ships.
-	 *
-	 * Existence is not training — see the file header.
+	 * Locale package, if one ships.
 	 */
 	weightsPackage?: string
 	/**
@@ -98,50 +69,41 @@ export interface CountryCoverage {
 	gazetteerPlaces: number
 	geocodeTier: GeocodeTier
 	/**
-	 * Board rows, and how many of them check rather than merely track.
+	 * Total board rows and passing checks.
 	 */
 	boardRows: number
 	boardPassedRows: number
 }
 
 /**
- * Whether a country actually trains: admitted by `country_weights` and holding corpus rows.
- *
- * The Norway-bug predicate, shared with `mailwoman data coverage`'s renderer
- * so the two reports cannot disagree about what "trained" means.
+ * A country trains only when admitted and represented in the corpus.
  */
 export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boolean {
 	return c.admitted && c.corpusRows > 0
 }
 
 /**
- * The four ways the five registers disagree.
- *
- * Each one is a real defect class that has shipped at least once.
+ * Mismatch categories across coverage sources.
  */
 export interface CoverageMismatches {
 	/**
-	 * Rows in the corpus rather than admitted by `country_weights` — trains on nothing.
-	 *
-	 * The Norway shape.
+	 * Corpus rows exist, but the training config excludes the country.
 	 */
 	presentButDropped: string[]
 	/**
-	 * Admitted by `country_weights`, no corpus rows — the config promises a locale it cannot deliver.
+	 * The config admits the country, but no corpus rows exist.
 	 */
 	admittedButEmpty: string[]
 	/**
-	 * A published weights package exists for a country the model was never trained on.
+	 * A weights package exists, but the country is not trained.
 	 */
 	packageWithoutTraining: string[]
 	/**
-	 * Trained (admitted, with rows) but no board row checks it.
-	 * A locale nothing would catch regressing.
+	 * The country trains, but no board case passes for it.
 	 */
 	trainedButUnmeasured: string[]
 	/**
-	 * Board rows exist but the country trains on nothing.
-	 * Measured against a capability we never taught.
+	 * Board rows exist for a country that is not trained.
 	 */
 	measuredButUntrained: string[]
 }
@@ -151,19 +113,16 @@ export interface CoverageReport {
 	mismatches: CoverageMismatches
 	corpusVersion: string
 	/**
-	 * The corpus version the config points at, which is not always the one the census counted.
+	 * Corpus version referenced by the config.
 	 */
 	configuredCorpusVersion?: string
 	/**
-	 * Set when the censused corpus and the configured corpus differ.
-	 *
-	 * Its presence means every row count in this report is about a corpus the run
-	 * does not read, so a zero is not evidence of absence.
+	 * Present when the censused corpus differs from the configured corpus.
 	 */
 	corpusMismatch?: string
 	corpusRowsTotal: number
 	/**
-	 * ISO timestamp the cached corpus census was taken, or `null` when it was computed in this call.
+	 * Cached census timestamp, or `null` when recounted now.
 	 */
 	corpusCensusTakenAt: string | null
 	configPath: string
@@ -172,10 +131,7 @@ export interface CoverageReport {
 }
 
 /**
- * Where the cached corpus census lives.
- *
- * Under the data root rather than the repo: it describes a build artifact
- * rather than source, and it is regenerated rather than edited.
+ * Path to the cached corpus census under the data root.
  */
 export function corpusCensusPath(): PathBuilder {
 	return dataRootPath("corpus", "coverage-census.json")
@@ -189,11 +145,7 @@ interface CorpusCensus {
 	rows: Record<string, number>
 	streetRows: Record<string, number>
 	/**
-	 * Train files the manifest listed that this count could not read, and how many it did read.
-	 *
-	 * A census that skipped a file still answers a number, and that number is a floor rather than the corpus.
-	 * Carrying both counts is what lets a reader tell a country with no rows from a
-	 * country whose rows were in a file nobody opened.
+	 * Counts and paths of unreadable train files, so partial totals are identifiable.
 	 */
 	filesRead: number
 	filesListed: number
@@ -201,10 +153,7 @@ interface CorpusCensus {
 }
 
 /**
- * Arrow list columns arrive as `{list:[{element:v}]}`.
- *
- * Reading one as a plain array yields nothing and every label-based count comes back zero —
- * a false negative that looks exactly like a real absence.
+ * Normalize Arrow list encodings and reject absent or unreadable columns.
  */
 export function normalizeArrowListColumn(value: unknown, column: string): string[] {
 	const entries = Array.isArray(value)
@@ -247,35 +196,14 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
 }
 
 /**
- * The manifest's parquet-file list, under whichever key the manifest on disk writes.
- *
- * The key is a string interface with every corpus ever built, so it is read and never renamed.
- * Both spellings are live: of the 41 manifests under `$MAILWOMAN_DATA_ROOT/corpus/versioned`,
- * 8 write `slices` and 33 write the pre-rename key.
- *
- * A reader that knows only one of them finds no files, counts no rows, and reports
- * every country as untrained — an absence indistinguishable from the real thing,
- * and the shape this census exists to catch.
- * `manifest_files` in `mailwoman_train/data/loader/corpus_files.py` is the same fallback on the Python side.
+ * Shared manifest reader supports both current and legacy parquet-list keys
+ * and fails on unreadable manifests.
  */
-// The file list was read here by a private copy of `baseManifestFiles`, which differed
-// from it in the one way that matters: the copy answered an empty list for a manifest
-// shape it did not recognize, and this census then reported 0 rows for every country.
-// That is the reading `docs/engineering/reference/the-meaning-of-zero.mdx` exists
-// to refuse, in the reader whose whole job is coverage.
-// The shared one raises and names the cause.
-
 /**
- * Count every train row in the corpus, per country, and how many carry a street span.
- *
- * Exact rather than sampled: parquet files are grouped by source, so a stride over them
- * reads a handful of families and reports their countries as the corpus's.
- * Column projection keeps the full read affordable.
+ * Count all training rows and street-labeled rows per country.
  */
 export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<CorpusCensus> {
-	// `slices` is named here so `baseManifestFiles` accepts the parsed object.
-	// It reads the pre-rename key off the same object at runtime, and that key's spelling
-	// stays in the corpus package because the word is banned in this tree.
+	// Include the legacy manifest key so `baseManifestFiles` can read either schema.
 	const manifest = await readLocalJSONFile<{ corpus_version?: string; slices?: unknown } & Record<string, unknown>>(
 		manifestPath
 	)
@@ -310,10 +238,7 @@ export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<
 		}
 	}
 
-	// A manifest that lists train files and a count of zero cannot both be true,
-	// so the count is the instrument failing.
-	// Answering zero here writes "every country trains on nothing" over a cache that held
-	// the real numbers, and the reading it produces is the one this census exists to catch.
+	// If train files are listed but none are read, report a read failure instead of a false zero.
 	if (parquetFiles.length && total === 0) {
 		throw new Error(
 			`Corpus census read 0 rows from ${parquetFiles.length} train file(s) listed by ${manifestPath}, ` +
@@ -337,13 +262,7 @@ export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<
 }
 
 /**
- * Whether two corpus-version strings name the same corpus.
- *
- * The two sides are written differently by construction: a manifest's `corpus_version`
- * carries the `v` prefix the directory does (`v0.31.0-region-code-and-unit`),
- * and {@linkcode readConfiguredCorpusVersion} strips it.
- * Comparing the raw strings declares a mismatch on every correct pairing, and a warning that
- * fires when nothing is wrong stops being read, which costs the reading it exists to give.
+ * Compare corpus versions after removing an optional leading `v`.
  */
 export function sameCorpusVersion(a: string, b: string): boolean {
 	const bare = (version: string): string => version.trim().replace(/^v/, "")
@@ -352,18 +271,7 @@ export function sameCorpusVersion(a: string, b: string): boolean {
 }
 
 /**
- * The corpus version the training config points at, from its `corpus_dir`.
- *
- * This exists so a cached census can be checked against the corpus the run actually reads.
- * The two are separate artifacts that both look authoritative: the census names the corpus
- * it counted, the config names the corpus it trains on, and nothing made them agree.
- *
- * A census of `0.26.0` answering a question about a `0.27.0` run reports a country's
- * rows as zero when the newer corpus added them.
- * An absence indistinguishable from the real thing, which is the failure this whole file exists to prevent.
- *
- * @returns undefined when the config states no corpus_dir.
- * That is "cannot check", not "they match".
+ * Read the corpus version from `corpus_dir`, or return `undefined` when the config has none.
  */
 export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): Promise<string | undefined> {
 	if (!(await pathExists(configPath))) return undefined
@@ -374,7 +282,7 @@ export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): 
 
 		if (!match) continue
 
-		// .../versioned/<version>/corpus-<version> — the directory segment is the version.
+		// Versioned corpus paths include the version as a directory segment.
 		const segments = match[1]!.split("/").filter((segment) => segment.length)
 		const versioned = segments.indexOf("versioned")
 
@@ -387,16 +295,8 @@ export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): 
 }
 
 /**
- * Read `country_weights` out of a training config without a YAML dependency.
- *
- * The block is a flat `CC: weight` list, so a line scan is enough, and it preserves the
- * one thing a YAML parser would destroy here: a bare `no` key stays the string `"no"`
- * rather than becoming the boolean `false`.
- * That retyping is the exact bug this file exists partly to surface, so the reader must not reproduce it.
- *
- * @throws when the path names no file.
- * An empty set means the config admits no country, and a caller cannot tell that apart
- * from a config nobody could open once both answer the same value.
+ * Read `country_weights` without YAML coercion, preserving two-letter keys such as `no` as strings.
+ * @throws If the config file is missing.
  */
 export async function readAdmittedCountries(configPath: PathBuilderLike): Promise<Set<string>> {
 	if (!(await pathExists(configPath))) {
@@ -409,9 +309,7 @@ export async function readAdmittedCountries(configPath: PathBuilderLike): Promis
 	const admitted = new Set<string>()
 	let inBlock = false
 
-	// A training config is a few hundred lines, and this reader must stay synchronous: the whole point is to read the
-	// block without a YAML parser, so a bare `no` key stays the string it is rather than becoming the boolean YAML 1.1
-	// makes of it.
+	// Scan the small config directly to avoid YAML 1.1 coercing the country code `no` to boolean.
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and sync by interface
 	for (const line of (await readLocalTextFile(configPath)).split("\n")) {
 		if (/^\s*country_weights:\s*$/.test(line)) {
@@ -422,7 +320,7 @@ export async function readAdmittedCountries(configPath: PathBuilderLike): Promis
 
 		if (!inBlock) continue
 
-		// Any key at the block's own indent or shallower ends it.
+		// Stop when the country_weights block ends.
 		if (/^\s{0,2}\S/.test(line) && !/^\s*["']?[A-Za-z]{2}["']?\s*:/.test(line)) break
 
 		const match = /^\s*["']?([A-Za-z]{2})["']?\s*:\s*([0-9.eE+-]+)/.exec(line)
@@ -436,11 +334,7 @@ export async function readAdmittedCountries(configPath: PathBuilderLike): Promis
 }
 
 /**
- * Board rows per country, and how many of them check.
- *
- * Reads the cases tree the loader reads: two-letter directories only.
- * `generalization/` is excluded by that same filter and holds 279 rows,
- * so a glob over `*\u200B/*.jsonl` overstates the board by 43%.
+ * Count board rows and passing cases in the loader's two-letter country directories.
  */
 export async function readBoardCoverage(
 	casesRoot: PathBuilderLike
@@ -458,8 +352,7 @@ export async function readBoardCoverage(
 
 		for await (const file of Globerator.files("jsonl", { cwd: dirPath, recursive: false })) {
 
-			// A line that does not parse is skipped rather than failing the census,
-			// so a hand-edited fixture never hides the rest of its file.
+			// Skip malformed fixture lines and continue counting.
 			for await (const line of TextSpliterator.fromAsync(dirPath(file))) {
 				if (!line.trim()) continue
 
@@ -485,7 +378,7 @@ export async function readBoardCoverage(
 }
 
 /**
- * Admin places per country in the serving gazetteer.
+ * Count admin places per country in the serving gazetteer.
  */
 export async function readGazetteerCoverage(dbPath: PathBuilderLike): Promise<Map<string, number>> {
 	const out = new Map<string, number>()
@@ -498,9 +391,7 @@ export async function readGazetteerCoverage(dbPath: PathBuilderLike): Promise<Ma
 		const tables = allRows<{ name: string }>(db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'"))
 		const names = new Set(tables.map((t) => t.name))
 
-		// The serving DB is the candidate table.
-		// The older admin build exposes `spr`.
-		// Support both rather than hard-coding one, because which is live is expressed in a symlink and changes.
+		// Support both candidate and legacy admin schemas.
 		const sql = names.has("candidate")
 			? "SELECT c.code AS cc, COUNT(*) AS n FROM candidate x JOIN country_codes c ON c.id = x.country_id GROUP BY c.code"
 			: "SELECT country AS cc, COUNT(*) AS n FROM spr GROUP BY country"
@@ -511,23 +402,19 @@ export async function readGazetteerCoverage(dbPath: PathBuilderLike): Promise<Ma
 			}
 		}
 	} catch {
-		// An unreadable gazetteer is a missing column rather than a failed report.
+		// Treat an unreadable gazetteer as unavailable.
 	}
 
 	return out
 }
 
 /**
- * Countries whose rooftop address points a consumer can actually obtain.
- *
- * `data-bundles.ts` is the authority and it has four entries — candidate, poi, us, fr.
- * Every other rooftop database on a lab machine is ODbL `build-local` and cannot be shipped,
- * which reads identically to published from inside the repo.
+ * Countries with consumer-published rooftop address points.
  */
 export const ROOFTOP_PUBLISHED = new Set(["US", "FR"])
 
 /**
- * How a report came to read the training config it read.
+ * How the training config was selected.
  */
 export const ConfigProvenance = {
 	/**
@@ -543,7 +430,7 @@ export const ConfigProvenance = {
 export type ConfigProvenance = (typeof ConfigProvenance)[keyof typeof ConfigProvenance]
 
 /**
- * A training config a report read, and why that file.
+ * Resolved training config and its source.
  */
 export interface ResolvedTrainingConfig {
 	path: string
@@ -555,27 +442,9 @@ export interface ResolvedTrainingConfig {
 }
 
 /**
- * The training config whose `country_weights` decides admission, resolved from
- * what the caller named or from the register.
+ * Resolve the requested config or the registered config for a weights family.
  *
- * Discovery does not work here and the register replaced it.
- * Sorting the directory by modification time sorts a total tie, because `git checkout`
- * writes all 225 configs at one timestamp.
- *
- * One run took a config admitting 2 countries and the coverage funnel printed `admitted 2 of 250` (#2349).
- * Sorting by filename fails differently: the version scheme is `v0.9.9-si-bare-village`,
- * `v0.26.0-trailing-region-leftcontext` and `v8-cjk-regs` together,
- * which orders neither lexically nor numerically.
- *
- * Under both sorts the premise is still wrong.
- * Two graphs ship at once from two configs — the Latin config's `country_weights` names
- * 25 countries and the character config's names 4 — so no single file is the newest one.
- *
- * `family` selects among the registered configs and defaults to the Latin family,
- * which is the graph every untiered shipping locale resolves through.
- * Pass `requested` to read any other file. {@linkcode ResolvedTrainingConfig.provenance}
- * then reads `given` or `registered`, so a report can print whether its config
- * was named by a caller or taken from the register.
+ * Defaults to the Latin family and records whether the path was caller-supplied or registered.
  */
 export function resolveTrainingConfig(
 	scope: ScopeConfig,

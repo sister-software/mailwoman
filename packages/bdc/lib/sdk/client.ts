@@ -4,28 +4,17 @@
  * @author Teffen Ellis, et al.
  * @file FCC Broadband Data Collection (BDC) public-API client, built on {@linkcode APIClient}.
  *
- *   Originally re-homed from Nexus's `sync/fcc/bdc/client.ts` (relicense-by-copy, no provenance
- *   headers) as a raw-`fetch` factory. That version had no throttle, no cache and no retry at all, and
- *   threw a bespoke `Error` a caller could only branch on by reading its prose. All four now come from
- *   `@mailwoman/core/api`, the repo's default base for http clients (see `agents.md`).
- *   `filer/sdk/sec-client.ts` is the worked example this follows. What stays BDC-specific:
+ *   FCC Broadband Data Collection API client. `APIClient` supplies caching, throttling, retries, and
+ *   structured errors. BDC-specific behavior includes:
  *
- *     1. The credential fail-fast off `$private.FCC_MAP_USERNAME`/`FCC_MAP_API_KEY`. A
- *        silently-unauthenticated client just 401s on first use, which is a worse failure mode than
- *        failing at construction.
- *     2. The `username` + `hash_value` plain header pair — read carefully off the Nexus original's
- *        `axios.headers` config, this is not bearer or basic auth.
- *     3. The request budget: {@linkcode BDC_DEFAULT_REQUESTS_PER_MINUTE} requests per minute, six
- *        seconds apart. See that constant for the sourcing and for why the interval limit is set too.
- *     4. UN-unwrapped response bodies. Every BDC endpoint nests its payload under a `data` key
- *        (`{ data: [...] }`), and callers pluck `.data` themselves at the call site — `filing-dates.ts`
- *        and `list-files.ts` both do. {@linkcode BDCClient.get} deliberately does not unwrap, so the
- *        envelope stays visible in the caller's own response type.
- *     5. The zip path ({@linkcode BDCClient.getArrayBuffer}), which is binary and uncached. See its
- *        docstring.
+ *   1. Credentials are validated during construction.
+ *   2. Requests use FCC's `username` and `hash_value` headers.
+ *   3. The configured request budget defaults to {@linkcode BDC_DEFAULT_REQUESTS_PER_MINUTE}.
+ *   4. JSON response envelopes remain intact for callers to interpret.
+ *   5. ZIP downloads use {@linkcode BDCClient.getArrayBuffer} and bypass the JSON cache.
  *
- *   error interface. Every failure past construction is a {@linkcode ResourceError}, so an ingestion run
- *   branches on `status` plus {@linkcode isTransientResourceError} and never on message prose:
+ *   Requests fail with {@linkcode ResourceError}. Callers inspect status and
+ *   {@linkcode isTransientResourceError}, not error-message text:
  *
  *   | Outcome                           | Caller action    | Test                                       |
  *   | --------------------------------- | ---------------- | ------------------------------------------ |
@@ -47,73 +36,35 @@ import { $private } from "#env"
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 
 /**
- * The FCC BDC public-API base URL every request is resolved against.
+ * Base URL for FCC BDC public API requests.
  */
 export const BDC_API_BASE_URL = "https://broadbandmap.fcc.gov/api/public"
 
 /**
- * The FCC's published request ceiling for the Broadband Map public API:
- * **10 requests per minute**, i.e. one every six seconds.
+ * Default request budget, based on the operator's reading of FCC documentation
+ * and not independently verified.
  *
- * Sixty times tighter than SEC edgar's per-second cap, so it is the dominant cost of any BDC ingestion run.
- *
- * Sourcing, stated precisely because it could not be verified from here: this figure
- * comes from the operator's reading of the FCC's own API documentation.
- * It was not confirmed against a fetchable source.
- *
- * The API spec is a Box-hosted PDF, and `broadbandmap.fcc.gov/api-documentation` does not resolve.
- *
- * Treat it as the published limit as reported rather than as something this repo checked.
- *
- * This is the default rather than a clamp.
- * `createSECClient` clamps because SEC's limit is verifiable, actively policed,
- * and published in fetchable html.
- *
- * None of that holds here, so pinning an unverified number as law would be false
- * precision. {@linkcode CreateBDCClientOptions.requestsPerMinute} tunes it in either
- * direction, and the throttle meter (see {@linkcode BDCClient.throttleStats}) is
- * how a real run reports what the setting actually cost.
- *
- * If FCC ever answers with a 429, drop this to 9 before anything else:
- * pacing exactly AT a published rate leaves no headroom for event-loop jitter,
- * and a grant that lands a millisecond late shifts into the following window.
- * See `core/api/pacer.ts`'s real-clock caveat, and `SEC_DEFAULT_REQUESTS_PER_SECOND`
- * for the same decision taken under a measurement.
+ * Callers can tune it with `requestsPerMinute`; review throttle statistics during ingestion.
  */
 export const BDC_DEFAULT_REQUESTS_PER_MINUTE = 10
 
 /**
- * Milliseconds in a minute — the numerator when turning a requests/minute budget into a pacing interval.
+ * Milliseconds per minute for request-interval calculations.
  */
 const MS_PER_MINUTE = 60_000
 
 /**
- * Divisors and the percentage scale {@linkcode formatBDCThrottleStats} renders through.
+ * Time and percentage units used by {@linkcode formatBDCThrottleStats}.
  */
 const MS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60
 const PERCENT = 100
 
 /**
- * How long a cached BDC JSON response stays fresh by default.
+ * Default cache lifetime for BDC JSON responses.
  *
- * 24h, chosen against the filing cadence rather than a wall-clock intuition.
- * `listAsOfDates` gains an entry when FCC publishes a new BDC vintage — twice a year
- * (a June 30 and a December 31 `as_of_date`) — and `listAvailabilityData` gains entries when a provider
- * refiles inside an existing vintage, which happens in bursts over the weeks after a vintage drops.
- *
- * Neither moves hour to hour, so a shorter TTL adds nothing except six seconds of throttle
- * per repeat call: at 10 requests/minute every cache hit is worth six seconds, and a
- * `gazetteer build bdc` re-run over a handful of states re-asks the same two endpoints many times.
- *
- * Not longer, either: the whole point of re-reading `listAsOfDates` is to notice a new
- * vintage, and an entry that outlived the day it was written would silently hide one —
- * the same failure mode `createSECClient`'s mutable-endpoint TTL exists to prevent.
- * A day is far inside the weeks-long window in which anyone acts on a new filing.
- *
- * There is no immutable-forever class here the way `/Archives/` is for SEC.
- * Every BDC JSON endpoint this client reaches is an index that can gain a revision,
- * so one TTL covers all of them.
+ * A 24-hour TTL balances filing updates with the API's request limit;
+ * all JSON endpoints may change and share this policy.
  */
 const DEFAULT_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 

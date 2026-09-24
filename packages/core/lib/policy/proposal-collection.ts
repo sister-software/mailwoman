@@ -3,17 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generic proposal collection + policy filtering.
- *
- *   Fan a list of `ProposalClassifier`s out across a list of sections, then optionally filter the
- *   merged proposal stream through a `PolicyRegistry`. Both classifier families (neural, and any
- *   future rule wrapper) satisfy the same `ProposalClassifier` shape, so this pair is engine-neutral.
- *
- *   Rehomed here from the (deleted) `core/parser/proposal-pipeline.ts` during the v7 rules-parser
- *   excision — the parser-era `TokenContext` writeback half went with the solver. these two generic
- *   helpers survive because the neural `--policy` CLI path still uses them.
- *
- *   Pure module: no resource imports, no top-level await. Safe to import from anywhere.
+ *   Run proposal classifiers over sections and optionally filter their results by policy.
  */
 
 import type { PolicyRegistry } from "#policy/policy"
@@ -21,13 +11,8 @@ import type { Section } from "#types/classifier"
 import type { ClassificationProposal, ClassifierContext, ProposalClassifier } from "#types/index"
 
 /**
- * Run every classifier against every section, concatenate the results.
- *
- * Classifiers that throw are isolated.
- * Their failure logs but does not block other classifiers' proposals from being collected.
- *
- * (Per the `ProposalClassifier` interface, implementations are supposed to swallow
- * errors, but defense-in-depth lives here.)
+ * Run each classifier on each section.
+ * Log failures and continue collecting other results.
  */
 export async function collectProposals(
 	sections: readonly Section[],
@@ -54,10 +39,7 @@ export async function collectProposals(
 }
 
 /**
- * Optional policy filter.
- *
- * An explicit `policy` registry is authoritative.
- * Without one the input is returned unchanged.
+ * Apply the supplied policy, or return a copy of the proposals when no policy is configured.
  */
 export function filterByPolicy(
 	proposals: readonly ClassificationProposal[],

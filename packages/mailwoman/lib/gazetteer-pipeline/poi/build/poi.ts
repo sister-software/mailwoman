@@ -3,34 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `poi.db` builder (spec §3.4) — the Overture Places ingest + the clustered res-9 `poi` table
- *   `poi-schema.ts` defines, queried by {@link POILookup}.
- *
- *   Two phases, split so the load/materialize/seal phase is testable without DuckDB or network:
- *
- *   1. {@linkcode ingestPlaces} — DuckDB (lazy-imported, the `overture-ingest.tsx` convention) over
- *        the Overture places theme on S3, per-country predicate pushdown into local Parquet. The
- *        Places schema's category/brand columns are STRUCTs whose shape has churned across releases
- *        (the `taxonomy` property is newer than `categories`); {@linkcode chooseCategoryColumn} +
- *        {@linkcode hasBrandColumn} are pure functions over a `describe` result, so the column-choice
- *        logic is unit-testable without touching the network (see `overture-places-schema.test.ts`).
- *   2. {@linkcode buildPOIDatabase} — stream rows (from the ingested Parquet by default, or an
- *        injected `Iterable`/`AsyncIterable<POISourceRow>` for tests) into a `poi_stage` staging
- *        table, dictionary-encode categories (insert-on-first-sight, 0 = uncategorized), pack each
- *        row's res-9 H3 cell via `@mailwoman/spatial`'s `shortCellToInt` (never reimplemented — see
- *        agents.md), materialize the clustered `without rowid` `poi` table pre-sorted by
- *        `(h3_cell, category_id, neg_rank, rowid_key)`, build the name-key index + FTS5 name search,
- *        write the layer-interface manifest + per-res-6-cell coverage, then seal.
- *
- *   Build-on-copy: `build-candidate.ts` (the closer anchor for "dictionaries + clustered
- *   materialize") writes directly to its output path (removing any
- *   stale file first) and lets the caller `sealDatabase` once the connection closes — no
- *   `<out>.building`-suffix temp-swap. This builder mirrors that precedent rather than the
- *   `admin/index.ts` staging-suffix + `vacuum into` dance (which exists there for a much longer,
- *   multi-source, resumable build where a mid-build crash mustn't corrupt a promoted artifact); a
- *   single-pass POI build has no such intermediate-promotion concern, and `sealDatabase` itself
- *   already refuses to run against a live writer. Deviation from the task brief's literal
- *   `<out>.building` instruction, per the brief's own "follow the anchor, record the deviation" rule.
+ *   Build `poi.db` from Overture Parquet or injected rows.
+ *   The build streams rows, encodes categories, creates clustered H3 storage and indexes,
+ *   writes coverage and manifest data, then seals the database.
+ *   Overture ingestion and database materialization are separate so the latter can be tested
+ *   without DuckDB or network access.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -173,26 +150,9 @@ export interface BBox {
 }
 
 /**
- * Extract-bbox coverage polyfill (decision 5): every res-6 H3 cell whose center falls inside
- * `bbox` gets a coverage entry, paired with how many `rows` actually landed in it (0 permitted).
+ * Return res-6 cells covered by an extract bbox, including cells with zero rows.
  *
- * This is the `--source osm` build branch's coverage strategy, used in place of the
- * default Overture path's "a cell gets a row only if a POI fell in it".
- * An OSM telecom-infrastructure extract is sparse BY category, so most of a well-surveyed
- * region would otherwise report as unsurveyed (missing from `layer_coverage`) even
- * though the whole extract region was in fact covered by the source.
- *
- * An explicit `observedRows: 0` cell carries the meaning "surveyed, nothing found
- * here", never conflate it with a cell absent from `layer_coverage` entirely
- * (unsurveyed/unknown, the interface's meaning-of-zero rule).
- *
- * Rows whose H3 cell falls outside the bbox's own polyfilled cell set are not represented
- * in the returned coverage (their observed count is silently uncounted) — acceptable
- * because `bbox` is expected to describe the same extract region the rows were pulled from.
- * A caller passing a bbox narrower than its rows' actual extent will undercount.
- *
- * Pure function: no DuckDB/ogr2ogr/network involved, so it's directly
- * unit-testable over synthetic coordinates.
+ * Rows outside the bbox are omitted; callers must supply the extract's full extent.
  */
 export function bboxCoverageCells(
 	bbox: BBox,

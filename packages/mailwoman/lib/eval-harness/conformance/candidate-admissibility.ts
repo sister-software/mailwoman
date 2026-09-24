@@ -3,93 +3,41 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Refinement monotonicity read off the resolver's own candidate tables (#1923). Pure — it takes two lists
- *   of {@linkcode ResolveNodeTrace} and returns a reading. it never runs a geocode and never asks a backend
- *   anything.
- *
- *   what the LAW says. Adding information to a query must not make an admissible candidate inadmissible. It
- *   may reorder the pool, it may add to it, and it may remove a candidate the added information contradicts.
- *   What it may not do is drop a candidate that is still compatible with everything the query says.
- *
- *   `top5(refined) ⊆ top5(base)` is not that LAW, and the difference is the whole reason this module exists.
- *   A subset assertion fails on a valid refinement that surfaces a candidate which was sixth before, and it
- *   passes on a real violation whenever the dropped candidate happened to sit past the window. Both readings
- *   are measured here instead of assumed: the walk's fetch window is recorded per lookup as
- *   {@linkcode ResolveNodeTrace.query.limit} (5 by default) and the trace's own cap reports its overflow as
- *   `candidatesTruncated`, so "absent" and "absent from what we looked at" are different findings.
- *
- *   five accounts, and `unexplained` is the only one that fails. Every candidate on either side is assigned
- *   exactly one — see {@linkcode CANDIDATE_ACCOUNTS}. A candidate the refined lookup's country scope
- *   contradicts is an explained removal. A candidate that left a lookup re-scoped through a different
- *   hierarchy path is an explained removal too, and the account names the path. A candidate absent from a
- *   table that was sitting at its window is not evidence of anything, and says so.
- *
- *   A removal AT the window leaves the row `unmeasured`, not passing. That is the one place this instrument
- *   is deliberately less conclusive than a verdict: the observation could not decide the question, and
- *   reporting the law as holding there would count a blind spot as evidence. An addition at the window is a
- *   different matter and does not hold the row back — the law constrains what refinement removes, so a
- *   candidate the coarse table was too small to show is explained by the window rather than unexplained by it.
- *
- *   lookups are paired BY what was asked rather than BY when. The pairing key is tag + placetype + folded value, so
- *   the base's unscoped `Springfield` lookup pairs with the refined query's `Springfield` lookup under
- *   Illinois, which is exactly the pair the law is about. Repeats of one lookup within a single run are folded
- *   into one pool: the walk records `#lookupAndPick` per call and a query can reach the same lookup twice, so
- *   counting them apart would report one pool as two.
+ *   Compare resolver candidate tables to test refinement monotonicity: adding query information may reorder or expand
+ *   candidates, and may remove candidates contradicted by that information, but must not remove compatible candidates.
+ *   Account for country contradictions, hierarchy re-scoping, and fetch-window limits separately. A removal at the
+ *   fetch window is unmeasured, not a pass. Pair lookups by tag, placetype, and folded value; fold repeated lookups
+ *   within each run before comparison.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/resolver"
 
 /**
- * The closed set of accounts a candidate can be assigned.
- *
- * Every candidate observed on either side gets exactly one, and the name states
- * what was read rather than what it implies for the verdict.
- *
- * - `held` — present in both pools.
- *   Its rank may have moved.
- *   A rank change is reported and never fails, because the law is about admissibility
- *   and a reordering leaves every candidate admissible.
- * - `contradicted` — gone, and the refined lookup ran under a country scope
- *   the candidate's own country fails.
- *   The removal is explained by the information the query added, which is the one removal the law permits.
- * - `rescoped` — gone (or new), and the refined lookup ran through a hierarchy path the
- *   base's did not: a `parentID` or a region qualifier the coarse query could not supply.
- *   The pool is a different population, and the account names the path that made it one.
- * - `beyond_window` — gone (or new), and the table on the other side was sitting at its
- *   recorded fetch window, so the candidate may be one row past the edge.
- *   An observation rather than a finding.
- * - `unexplained` — gone (or new) with no contradiction, no re-scope, and a table that had room to spare.
- *   On a removal this is the law failing.
- *   On an addition it is the unrelated candidate-set expansion the law also refuses.
+ * Mutually exclusive candidate accounts: held, contradicted, rescoped,
+ * beyond the observed window, or unexplained.
  */
 export const CANDIDATE_ACCOUNTS = ["held", "contradicted", "rescoped", "beyond_window", "unexplained"] as const
 
 export type CandidateAccount = (typeof CANDIDATE_ACCOUNTS)[number]
 
 /**
- * Which pool a candidate was observed in.
- *
- * `held` candidates are in both.
- * The other two name the side that has it.
+ * Side on which a candidate was observed.
  */
 export const CANDIDATE_DIRECTIONS = ["held", "removed", "added"] as const
 
 export type CandidateDirection = (typeof CANDIDATE_DIRECTIONS)[number]
 
 /**
- * One candidate's reading.
+ * Classification and ranks for one candidate.
  */
 export interface CandidateReading {
 	/**
-	 * The lookup this candidate belongs to, as {@linkcode LookupFold.key}.
+	 * Key of the lookup containing this candidate.
 	 */
 	lookup: string
 	/**
-	 * Stable identity — `${placetype}:${id}`.
-	 *
-	 * The placetype travels with the id because the walk probes several bands
-	 * and a bare gazetteer id says nothing about which band answered.
+	 * Stable identity including placetype, `${placetype}:${id}`.
 	 */
 	key: string
 	name: string
@@ -105,16 +53,13 @@ export interface CandidateReading {
 	 */
 	variantRank?: number
 	/**
-	 * What the account was read from, in the resolver's own vocabulary.
-	 *
-	 * Carried on every reading, including the ones that hold: an account stated only
-	 * on failures cannot be checked against the run that passed.
+	 * Resolver evidence supporting the account, including held candidates.
 	 */
 	reason: string
 }
 
 /**
- * The scope one lookup ran under, as the walk recorded it.
+ * Scope recorded for one lookup.
  */
 interface LookupScope {
 	country?: string
@@ -124,38 +69,31 @@ interface LookupScope {
 }
 
 /**
- * One candidate as pooled across the repeats of a single lookup.
+ * Candidate pooled across repeated instances of one lookup.
  */
 interface PooledCandidate {
 	key: string
 	name: string
 	country: string
 	/**
-	 * The best final rank observed across the repeats.
-	 *
-	 * A candidate that ranked 5th once and 2nd another time was reachable at 2,
-	 * and the pessimistic reading would invent a demotion the walk never performed.
+	 * Best rank across repeated lookups.
 	 */
 	rank: number
 }
 
 /**
- * Every record of one lookup, folded into a single observation.
+ * Repeated records of one lookup folded into one observation.
  */
 export interface LookupFold {
 	/**
-	 * `tag|placetype|foldedValue` — what was asked rather than when.
-	 *
-	 * See the module docstring.
+	 * `tag|placetype|foldedValue` key.
 	 */
 	key: string
 	tag: string
 	placetype: string
 	value: string
 	/**
-	 * How many records folded into this one.
-	 *
-	 * Greater than one means the walk reached the same lookup more than once.
+	 * Number of records combined.
 	 */
 	records: number
 	pool: Map<string, PooledCandidate>
@@ -164,31 +102,22 @@ export interface LookupFold {
 	 */
 	limit: number
 	/**
-	 * Did any record fill or overflow its window?
-	 *
-	 * True means absence from this pool is not evidence of inadmissibility.
+	 * Whether any record filled or overflowed its candidate window.
 	 */
 	windowed: boolean
 	scope: LookupScope
 	/**
-	 * Every `checks` entry across the records, in first-seen order — the resolver's own mechanism vocabulary.
+	 * Distinct resolver checks, in first-seen order.
 	 */
 	checks: string[]
 	/**
-	 * The provenance of the pick, or `null` when the lookup resolved nothing.
-	 *
-	 * `null` is a claim.
-	 * Absence of the fold is the thing that means nobody asked.
+	 * Pick source, or `null` when no candidate was selected.
 	 */
 	pickedSource: string | null
 }
 
 /**
- * Fold a run's trace records into one observation per lookup.
- *
- * Exported because both the comparator and the law suite's own tests read the folds directly.
- * A reading that could only be inspected through its final relation would make every
- * disagreement about this module a debugging exercise.
+ * Fold trace records into one observation per lookup.
  */
 export function foldLookups(records: readonly ResolveNodeTrace[]): Map<string, LookupFold> {
 	const folds = new Map<string, LookupFold>()
@@ -219,9 +148,7 @@ export function foldLookups(records: readonly ResolveNodeTrace[]): Map<string, L
 		fold.records += 1
 		fold.limit = Math.max(fold.limit, record.query.limit)
 
-		// Two independent ways a table can be short of the candidate universe: the walk asked
-		// for `limit` rows and got that many (so the backend had at least one more to give),
-		// or the trace's own cap dropped a tail it counted.
+		// Mark pools at their fetch limit or with trace-truncated candidates as windowed.
 		if (record.candidatesTruncated > 0 || record.candidates.length >= record.query.limit) {
 			fold.windowed = true
 		}
@@ -277,14 +204,7 @@ function candidateKeyOf(candidate: ResolveCandidateTrace): string {
 }
 
 /**
- * Did the refined lookup run through a hierarchy path the base's did not?
- *
- * A `parentID` or a region qualifier the coarse query could not supply re-points
- * the lookup at a different population.
- * A country scope is deliberately not read here.
- *
- * It is a per-candidate predicate the candidate row can be tested against, so it warrants
- * the sharper {@linkcode CANDIDATE_ACCOUNTS} `contradicted` account instead.
+ * Identify hierarchy scopes that make the refined lookup a different population.
  */
 function rescopedPath(base: LookupScope, variant: LookupScope): string | null {
 	const parts: string[] = []
@@ -305,21 +225,17 @@ function rescopedPath(base: LookupScope, variant: LookupScope): string | null {
 }
 
 /**
- * Per-account totals across every paired lookup.
+ * Counts by candidate account.
  */
 export type CandidateAccountCounts = Record<CandidateAccount, number>
 
 /**
- * What one refinement pair's candidate tables said.
+ * Result of comparing one pair of candidate tables.
  */
 export interface RefinementReading {
 	/**
-	 * - `refines` — every removal is accounted for and every addition is explained.
-	 *   The law holds over the observed pool.
-	 * - `diverges` — a candidate left the pool unexplained, or one entered it unexplained.
-	 * - `unmeasured` — no unexplained movement, but at least one removal sat at a
-	 *   fetch window, so the law is unproven rather than holding.
-	 * - `undecidable` — no lookup ran on both sides, so there is no pool to compare.
+	 * `refines` when all movement is explained; `diverges` when movement is unexplained;
+	 * `unmeasured` when removals hit a fetch window; `undecidable` when no lookups pair.
 	 */
 	relation: "refines" | "diverges" | "unmeasured" | "undecidable"
 	basis: string
@@ -327,22 +243,15 @@ export interface RefinementReading {
 	counts: CandidateAccountCounts
 	readings: CandidateReading[]
 	/**
-	 * Lookups both runs performed.
-	 * The denominator every count above is stated over.
+	 * Lookups performed in both runs; denominator for account counts.
 	 */
 	pairedLookups: number
 	/**
-	 * Lookups only the refined query performed, as {@linkcode LookupFold.key}.
-	 *
-	 * Expected on a refinement: the added text names a place the coarse query never mentioned.
+	 * Lookups performed only by the refined query.
 	 */
 	addedLookups: string[]
 	/**
-	 * Lookups only the base performed.
-	 *
-	 * Reported rather than graded.
-	 * A refinement that stops probing a value it still carries has changed its hierarchy path,
-	 * and that is a finding a reader wants beside the pool counts.
+	 * Lookups performed only by the base; reported but not graded.
 	 */
 	droppedLookups: string[]
 }
@@ -374,7 +283,7 @@ function describeScope(scope: LookupScope): string {
 }
 
 /**
- * Account for one paired lookup's candidates, appending to `readings`.
+ * Classify candidates for a paired lookup.
  */
 function accountLookup(base: LookupFold, variant: LookupFold, readings: CandidateReading[]): void {
 	const rescope = rescopedPath(base.scope, variant.scope)
@@ -401,9 +310,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 			continue
 		}
 
-		// Country first: it is the one constraint the candidate row can be tested against,
-		// so it is provable whatever the window did.
-		// Window second, because an unprovable removal must not read as an explained one.
+		// Country contradiction is directly testable, even when the pool is windowed.
 		if (variant.scope.country && candidate.country && candidate.country !== variant.scope.country) {
 			readings.push({
 				lookup: base.key,
@@ -468,9 +375,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 	for (const candidate of variant.pool.values()) {
 		if (base.pool.has(candidate.key)) continue
 
-		// The base's own window is what explains an addition: a candidate the coarse table was
-		// too small to show was never observed as absent, so its arrival is not expansion.
-		// This is the reading a top-K subset assertion gets wrong in the direction that fails valid refinements.
+		// A candidate beyond the base window was not observed absent, so its addition is not unexplained.
 		if (base.windowed) {
 			readings.push({
 				lookup: variant.key,
@@ -601,9 +506,7 @@ export function accountRefinement(
 		}
 	}
 
-	// Only a removal at the window holds the row back.
-	// The law constrains what refinement removes, so a candidate the coarse table was too
-	// small to show is explained by that window rather than left unproven by it.
+	// Only windowed removals make the comparison unmeasured; windowed additions are explained.
 	const unprovable = readings.filter(
 		(reading) => reading.account === "beyond_window" && reading.direction === "removed"
 	)

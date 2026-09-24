@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for the CIK corroboration check.
  *
- *   Every CIK and SIC below was pulled live from edgar's submissions API on 2026-08-03/07, including both
- *   false matches the check exists to reject.
+ *   CIK and SIC fixtures were retrieved from EDGAR's submissions API on 2026-08-03 and 2026-08-07.
  */
 
 import { CIKCorroborationBasis, corroborateCIK, TELECOM_SIC_CODES } from "@mailwoman/filer/sdk/cik-corroboration"
@@ -15,7 +14,7 @@ import { describe, expect, it } from "vitest"
 const cik = (value: string): CIK => toCIK(value)!
 
 /**
- * The measured corpus: [label, CIK, SIC, should the check corroborate it].
+ * Measured fixtures: [label, CIK, SIC, expected corroboration].
  */
 const REGISTRANTS: ReadonlyArray<readonly [string, string, string, boolean]> = [
 	["Lumen Technologies", "0000018926", "4813", true],
@@ -24,12 +23,10 @@ const REGISTRANTS: ReadonlyArray<readonly [string, string, string, boolean]> = [
 	["Cable One", "0001632127", "4841", true],
 	["Liberty Broadband", "0001611983", "4841", true],
 	["Gogo", "0001537054", "4899", true],
-	// The two false matches.
-	// Name scores were 0.829 and 0.886 — confident, and pointing at the wrong company.
+	// False matches with high name scores (0.829 and 0.886).
 	["AlTi Global (matched 'Altice USA')", "0001838615", "6282", false],
 	["WidePoint (matched 'WideOpenWest')", "0001034760", "7373", false],
-	// Real carriers SEC files under software classifications.
-	// The check's known cost.
+	// Real carriers with software SIC classifications; these are known false negatives.
 	["Bandwidth", "0001514416", "7372", false],
 	["Ooma", "0001327688", "7374", false],
 ]
@@ -69,8 +66,7 @@ describe("corroborateCIK — pins", () => {
 	})
 
 	it("checks the pin BEFORE the SIC, so a pin is a decision rather than a tiebreak", () => {
-		// Same registrant, no SIC published at all.
-		// A pin still carries it.
+		// A pin applies even when the SIC is missing.
 		const pinnedCIKs = new Set([cik("0001514416")])
 
 		expect(corroborateCIK(cik("0001514416"), null, { pinnedCIKs }).basis).toBe(CIKCorroborationBasis.Pinned)
@@ -85,9 +81,7 @@ describe("corroborateCIK — pins", () => {
 
 describe("corroborateCIK — abstention is not denial", () => {
 	it("reports a missing SIC as its own basis, distinct from a rejecting one", () => {
-		// edgar published nothing to corroborate against.
-		// That is a gap in the source rather than a judgment about the company,
-		// and a caller reporting a run must be able to tell the two apart.
+		// Missing SIC is a source-data gap, not a judgment about the registrant.
 		for (const absent of [null, undefined, "", "   "]) {
 			expect(corroborateCIK(cik("0000018926"), absent)).toEqual({
 				corroborated: false,
@@ -110,15 +104,13 @@ describe("the allowlist itself", () => {
 	it("is enumerated, not a 48xx prefix test — 4899 is in, 4813 is in, 4899's neighbours are not", () => {
 		expect(TELECOM_SIC_CODES.has("4813")).toBe(true)
 		expect(TELECOM_SIC_CODES.has("4899")).toBe(true)
-		// A prefix test would admit these.
-		// Each entry above is a decision someone made.
+		// A prefix rule would incorrectly include these codes.
 		expect(TELECOM_SIC_CODES.has("4800")).toBe(false)
 		expect(TELECOM_SIC_CODES.has("4890")).toBe(false)
 	})
 
 	it("excludes the software classifications, because including them readmits WidePoint", () => {
-		// 7372 (Bandwidth) and 7374 (Ooma) sit beside 7373 (WidePoint, a false match).
-		// There is no range that admits the first two and excludes the third, which is why pins exist.
+		// These codes include both false negatives and a false match, so use explicit pins when needed.
 		for (const sic of ["7372", "7373", "7374"]) {
 			expect(TELECOM_SIC_CODES.has(sic)).toBe(false)
 		}

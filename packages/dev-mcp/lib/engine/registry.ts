@@ -3,28 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The warm state, and the reason this server exists.
- *
- *   Measured on this box (spec §1.2): ~1.37 s of fixed cost before a cold process answers its first query — of which
- *   ~1.0 s is loading the weights — then ~123 ms per query once warm. Feeding 20 inputs through one warm process took
- *   3.83 s against roughly 30 s spawned per row, 7.8×. That ratio is why the existing benchmark rig spends about ten
- *   minutes of pure process startup per 420-row arm, and it is why a small panel is the rational choice for anyone
- *   paying the cold start each time.
- *
- *   An engine is one {@link GeocodeSession} plus the configuration that produced it, addressed by a content hash of
- *   that configuration. Two flag settings over one model share nothing at construction and are nearly free to compare.
- *   two models or two gazetteers are two resident multi-gigabyte footprints, which is a fact a caller should know
- *   before it waits.
- *
- *   **Deviation from spec §3.1, stated rather than buried.** The spec puts the registry in a long-lived supervisor
- *   behind a Unix socket, with one forked worker per configuration, so warmth survives agent restarts and an engine can
- *   be evicted by killing a process. This holds the registry IN the MCP server process instead. An MCP stdio server
- *   already lives as long as the agent that spawned it, so warmth spans every tool call in a session — the dominant
- *   win — while the socket, the supervisor and the fork protocol are deferred. The costs are paid
- *   explicitly: eviction returns less RSS than killing a worker would, and there is no in-process module reload, which
- *   is why {@link EngineRegistry.acquire} refuses on a source edit rather than pretending to reload (see
- *   `tree-fingerprint.ts`). Building the supervisor is the right next step if warmth across agent restarts proves to
- *   matter. it is not needed to test whether a warm engine changes which panel gets measured.
+ *   Cache geocoding sessions by effective configuration and source fingerprint. Warm sessions avoid repeated startup.
+ *   The registry lives in the MCP server process; source edits invalidate sessions because Node cannot reload modules
+ *   in place.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -41,13 +22,8 @@ import { missingWeightsCacheArtifacts } from "#eval-report"
 import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#tree-fingerprint"
 
 /**
- * Every change a caller can set, in the CLI's own vocabulary.
- *
- * `undefined` means the production default, never "off".
- * The rule `GauntletResolverChanges` states in `harness.ts:69`: "the library
- * defaults are the thing under test".
- *
- * A tool that coerced undefined to false would grade a configuration nobody ships.
+ * CLI configuration pins.
+ * `undefined` selects the production default.
  */
 export interface EngineConfig {
 	locale?: string
@@ -58,13 +34,7 @@ export interface EngineConfig {
 	resolve_db?: string
 	data_root?: string
 	/**
-	 * Grade a candidate weights bundle rather than the installed one — the change
-	 * that turns a model question into a comparison.
-	 *
-	 * Unset means whatever the resolution ladder finds, which is what production loads.
-	 *
-	 * Guarded by {@link assertWeightsCacheStaged} at {@link EngineRegistry.acquire}
-	 * because the ladder's fall-through is silent: see that function.
+	 * Candidate weights bundle to load instead of the installed package.
 	 */
 	weights_cache?: string
 	gazetteer_prior?: boolean
@@ -77,70 +47,29 @@ export interface EngineConfig {
 	postcode_containment_coherence?: boolean
 	admin_containment_rerank?: boolean
 	/**
-	 * The opt-in venue tier (#1684's POI half) — off by default in production.
-	 *
-	 * This change exists so the promotion battery measures it with the standard tooling.
+	 * Opt-in POI venue tier.
 	 */
 	poi_venue_tier?: boolean
 	/**
-	 * The capital-status ranking axis (#1880) — bounded national-capital promotion on the bare-toponym class.
-	 *
-	 * Off by default (D-rule).
+	 * Opt-in capital-status ranking.
 	 */
 	capital_tier?: boolean
 	/**
-	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Effective only against
-	 * an artifact whose `name_role` column carries the stamp.
-	 *
-	 * Off by default (D-rule).
+	 * Exempt own-name variant aliases from the cross-country primary-preference penalty.
 	 */
 	variant_alias_exemption?: boolean
 	/**
-	 * Record the decode-path evidence on every run.
-	 *
-	 * Off by default and left off by the measuring tools: the trace is kept per run,
-	 * so it is a per-row cost paid only where the evidence is the answer.
+	 * Record decode-path evidence for each run.
 	 */
 	trace?: boolean
 	/**
-	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it.
-	 *
-	 * Not a change and deliberately absent from the tool schemas: the answer is
-	 * byte-identical either way, so declaring it as a variable in a comparison would
-	 * be declaring a variable that cannot move an outcome.
-	 * The measuring tools that read misses force it on, the same way they force `trace`.
+	 * Recheck failed lookups against other administrative bands for diagnosis.
 	 */
 	diagnose_unreachable?: boolean
 }
 
 /**
- * The session options a config resolves to, with every default made explicit.
- *
- * Resolving before recording is what makes a confound check possible at all.
- * Two arms whose stated configs differ in one field can differ in three effective ones.
- *
- * `--country-scope auto` means "scope on FTS, no scope on candidate"
- * (`docs/engineering/reference/resolver-backends.mdx`), so switching backend also switches country scoping.
- *
- * A comparison that reads stated configs cannot see that.
- * One that reads effective configs can.
- */
-/**
- * Which `GeocodeSessionOptions` key each `EngineConfig` key becomes.
- *
- * The two vocabularies differ by design — a caller writes the CLI's snake_case,
- * a session reads camelCase — and {@link resolveConfig} performs the translation inline,
- * where it is invisible to anyone else who needs it.
- * This map is the same translation, named, because `confound.ts` compares a caller's
- * declared keys against the keys that actually differ between two resolved configs.
- *
- * Without it, declaring `["place_country"]` and having `placeCountry` move reads as
- * two separate facts — one change declared and unmoved, one moved and undeclared —
- * and every correctly-declared comparison grades itself ambiguous.
- *
- * `configKeyMapping.test.ts` asserts this stays in step with `resolveConfig`,
- * which is the only thing that can: a change added to one and not the other is a
- * silent regression to exactly the behaviour above.
+ * Map CLI snake_case keys to effective session option names for confound checks.
  */
 export const EFFECTIVE_KEY_FOR = {
 	locale: "locale",
@@ -168,38 +97,20 @@ export const EFFECTIVE_KEY_FOR = {
 } as const satisfies Record<keyof EngineConfig, string>
 
 /**
- * Translate a caller's declared key into the effective key it becomes, or return it unchanged.
- *
- * Unchanged rather than rejected: a caller may legitimately declare something that is not
- * an `EngineConfig` key at all — `["engine"]` across two geocoders is the common one —
- * and turning that into an error would refuse the correct declaration for the one
- * comparison where no config key can express the variable.
+ * Translate a CLI key to its session-option name.
+ * Preserve unknown keys for cross-engine comparisons.
  */
 export function effectiveKeyFor(declared: string): string {
 	return (EFFECTIVE_KEY_FOR as Record<string, string>)[declared] ?? declared
 }
 
 /**
- * {@link GeocodeSessionOptions} in a form a JSON record accepts.
- *
- * Structurally the same type, field for field.
- *
- * It exists because TypeScript withholds an implicit index signature from an interface —
- * declaration merging could add a member later — so an interface value is not
- * assignable to `Record<string, unknown>` however it is one.
- * The mapping is checked property by property and keeps each field's own type,
- * which a cast through `unknown` would discard.
+ * Geocode session options mapped to a record while preserving each field's type.
  */
 export type EffectiveConfig = { [Key in keyof GeocodeSessionOptions]: GeocodeSessionOptions[Key] }
 
 export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
-	// The production defaults, from the geocode command's own factory, never re-typed here (#1732).
-	// The hand-copied table this replaces drifted on three values (postcodeShapeCoherence,
-	// postcodeContainmentCoherence, placeCountryThreshold: true/true/0.5 vs the shipped false/false/0.9),
-	// so every unset-change measurement graded a configuration production does not ship.
-	// Comparisons where both arms shared the drift stayed internally valid.
-	// Absolute numbers did not.
-	// `resolve-config.test.ts` pins this function against the factory field by field.
+	// Use the command's option factory so unset pins resolve to production defaults.
 	const production = createGeocodeCommandOptions()
 
 	return {
@@ -229,22 +140,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 }
 
 /**
- * Refuse a candidate weights root that would not actually be loaded.
- *
- * `resolveWeights` honours an explicit `cacheRoot` only when that directory holds
- * `model.onnx` and `tokenizer.model`, and otherwise walks on to the installed
- * workspace package, which in this repo always resolves.
- * So the failure mode of a mis-typed or half-staged candidate is not an error: it is a full
- * run of the shipped model, reported under the candidate's label, with every number plausible.
- *
- * `promotion-eval.ts` refuses the same way and for the same reason.
- * This is that guard on the warm path, sharing its check rather than re-deriving the layout.
- *
- * Runs before the session build, so a bad path costs a `stat` rather than the ~1.4 s construction.
- *
- * @throws When the root is wrong-shaped (no binaries) or under-staged
- * (binaries present, but siblings its own card declares are missing — the #1516 shape,
- * which degrades a channel silently and reads as a model regression).
+ * Refuse missing or incomplete candidate bundles before constructing an engine.
  */
 export async function assertWeightsCacheStaged(cacheRoot: PathBuilderLike, locale = "en-us"): Promise<void> {
 	const { kind, paths } = await missingWeightsCacheArtifacts(cacheRoot, locale)
@@ -289,34 +185,13 @@ export interface EngineSummary {
 	uses: number
 	tree_fingerprint: string
 	/**
-	 * The model this engine actually loaded, and the ladder rung that produced it.
-	 *
-	 * Reported beside the config rather than derived from it, because the two can disagree in the one
-	 * direction that matters: `weights_cache` names what was asked FOR, and only this says what answered.
+	 * Model artifact actually loaded, including its resolution source.
 	 */
 	weights: { model_path: string; source: string } | null
 }
 
 /**
- * Resident engines, evicted least-recently-used first.
- *
- * The cap is small on purpose.
- * `geocode-stream.ts:23-28` records the measurement that sets it: on a shared multi-GB WOF
- * SQLite, throughput peaked at 2 workers (~1.4×) and degraded beyond — memory bandwidth
- * and the shared database are the ceiling rather than core count.
- *
- * Two resident candidate gazetteers are already several GB before the ONNX sessions,
- * so holding more engines adds nothing and can cost the box.
- */
-/**
- * What a tool needs from the engine registry.
- *
- * The tools take this rather than {@linkcode EngineRegistry}, for one reason a test
- * finds immediately: the class carries private fields, so no object literal can ever be
- * assignable to it, and every stub in this package's tests had to assert through `unknown`,
- * which then keeps compiling after a method is renamed or its signature changes,
- * and the stub silently stops standing for the thing it doubles.
- * `OracleGeocoderLike` in `oracle-arm.ts` is the same idea, arrived at earlier.
+ * Minimal registry interface used by tools and test doubles.
  */
 export interface EngineRegistryLike {
 	readonly repoRoot: string
@@ -324,7 +199,7 @@ export interface EngineRegistryLike {
 	readonly size: number
 	readonly maxResident: number
 	/**
-	 * Whether the working tree has moved since this process imported its modules.
+	 * Whether source files changed after this process imported modules.
 	 */
 	sourceMoved(): Promise<boolean>
 	/**
@@ -337,6 +212,9 @@ export interface EngineRegistryLike {
 	summaries(): EngineSummary[]
 }
 
+/**
+ * Resident engine cache with least-recently-used eviction.
+ */
 export class EngineRegistry implements EngineRegistryLike {
 	readonly #engines = new Map<string, Engine>()
 	readonly #maxResident: number
@@ -344,13 +222,7 @@ export class EngineRegistry implements EngineRegistryLike {
 	readonly #bootFingerprint: TreeFingerprint
 
 	/**
-	 * Compute the boot fingerprint, then construct.
-	 *
-	 * The boot fingerprint is the tree the process imported rather than the tree
-	 * any individual engine was built from.
-	 * Those differ after a reload, and the difference is required: a registry with no resident
-	 * engine has nothing stale to compare against, so without this the first call after a
-	 * reload builds and stamps the new fingerprint onto answers produced by the old modules.
+	 * Capture the imported source fingerprint before constructing the registry.
 	 */
 	static async create(repoRoot: string, maxResident = 2): Promise<EngineRegistry> {
 		return new EngineRegistry(repoRoot, maxResident, await computeTreeFingerprint(repoRoot))
@@ -367,20 +239,14 @@ export class EngineRegistry implements EngineRegistryLike {
 	}
 
 	/**
-	 * The tree this process imported its modules from.
-	 *
-	 * Equality with {@link fingerprint} is the only condition under which any answer
-	 * from this registry describes the source on disk.
+	 * Fingerprint of the source loaded by this process.
 	 */
 	get bootFingerprint(): TreeFingerprint {
 		return this.#bootFingerprint
 	}
 
 	/**
-	 * Whether the working tree has moved since this process imported its modules.
-	 *
-	 * When true, every engine — resident or not yet built — can only serve the old code,
-	 * and no in-process action can change that.
+	 * Whether source changed since this process imported its modules.
 	 */
 	async sourceMoved(): Promise<boolean> {
 		return (await this.fingerprint()).digest !== this.#bootFingerprint.digest
@@ -391,11 +257,8 @@ export class EngineRegistry implements EngineRegistryLike {
 	}
 
 	/**
-	 * Get or build the engine for a configuration.
-	 *
-	 * @throws When a resident engine was built against different source.
-	 * The refusal is the honest answer: Node cannot evict an imported module, so "reloaded" would be a
-	 * lie and serving the old code silently is the failure this whole surface exists to prevent.
+	 * Return a cached engine or build one for this configuration.
+	 * Throws if source changed after boot.
 	 */
 	async acquire(config: EngineConfig): Promise<Engine> {
 		const current = await this.fingerprint()
@@ -411,17 +274,12 @@ export class EngineRegistry implements EngineRegistryLike {
 			return existing
 		}
 
-		// Refuse against the boot fingerprint rather than merely against whatever is resident.
-		// A resident engine under a different digest is one symptom of a moved tree.
-		// An empty registry under a moved tree is the other, and it is the dangerous one,
-		// because there is nothing stale left to notice.
-		// Both are the same fact — this process cannot import the new source — so both refuse here.
+		// Compare against the boot fingerprint even when no engines are resident.
 		if (current.digest !== this.#bootFingerprint.digest) {
 			throw new Error(staleEngineMessage(this.#bootFingerprint, current))
 		}
 
-		// After the stale-tree refusal (a moved tree invalidates every answer, candidate or not)
-		// and before the build, so a mis-staged candidate costs a stat rather than a construction.
+		// Validate candidate artifacts before paying the engine construction cost.
 		if (effective.weightsCacheRoot) {
 			await assertWeightsCacheStaged(effective.weightsCacheRoot, effective.locale)
 		}

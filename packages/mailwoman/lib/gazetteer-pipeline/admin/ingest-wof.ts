@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   WOF GeoJSON ingest — Phase 1 (enumerate) + Phase 2 (parallel reads, single-thread writer) of the
- *   admin-gazetteer build. Moved from `scripts/build-unified-wof.ts` (the WAL + Freeze design brief,
- *   docs/articles/reviews/2026-05-28-sqlite-wal-strategy.md). The caller owns the staging DB (WAL
- *   pragmas + `createUnifiedSchema`); this function only enumerates + ingests.
+ *   Enumerate and ingest WOF GeoJSON into the admin-gazetteer staging database.
+ *   Reads run in parallel; writes use one thread. The caller owns database setup.
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
@@ -31,25 +29,11 @@ import {
 const BBOX_2D_LENGTH = 4
 
 /**
- * The admin placetype allowlist (postalcode builds pass their own set).
+ * Admin placetypes to ingest.
  *
- * `macrohood`/`microhood` are the nesting-depth siblings of `neighbourhood` and map to the same
- * `dependent_locality` ComponentTag (`docs/engineering/reference/placetype-evidence.mdx`).
- * WOF stocks them in quantity.
- *
- * A 20,000-file sample of `whosonfirst-data-admin-us` holds 561 microhood
- * and 99 macrohood against 1,532 neighbourhood.
- *
- * They are ingested without being reachable by name.
- * No `PLACETYPE_FILTER_GROUPS` entry lists either, and placetypes absent from that table pass
- * through unfiltered, so a `locality` query expands to exactly `[locality, borough, localadmin]`.
- *
- * Those rows answer only an unfiltered query, which ranks population-first
- * and sorts a hood carrying no population last.
- *
- * `campus` is deliberately not here despite being commoner than macrohood in the same sample (1,368).
- * It is a venue tier — universities, hospitals, airports — not an admin one,
- * and it belongs to the sub-venue work, where its terminals and wings are the point.
+ * Postalcode builds supply their own allowlist.
+ * `macrohood` and `microhood` map to `dependent_locality`; venues such as `campus`
+ * belong to the sub-venue layer, not this admin index.
  */
 export const ADMIN_PLACETYPES: ReadonlySet<string> = new Set([
 	"country",
@@ -94,12 +78,7 @@ async function parseFeature(
 	placetypes: ReadonlySet<string>,
 	anchorLookup?: GeoNamesAnchorLookup
 ): Promise<ParsedFeature | null> {
-	// Typed against the schema `@mailwoman/core/resources/whosonfirst` already owns
-	// (`WOFFeature`/`WOFProperties`, admin.ts) rather than reading `any`.
-	// This file used to name all seventeen `wof:`/`geom:`/`edtf:`/`mz:` keys as bare strings,
-	// which meant a typo — `wof:superceded_by` — would have compiled, read `undefined`,
-	// and silently ingested every superseded record in the corpus.
-	// A type-only import: erased at build, zero runtime cost.
+	// Use the shared WOF schema so property-key typos fail type checking.
 	const feature = parseJSONStrict<WOFFeature>(text)
 	const props: WOFProperties | undefined = feature.properties
 
@@ -115,18 +94,8 @@ async function parseFeature(
 
 	const mzIsCurrent = props["mz:is_current"]
 
-	// Label centroid first, math centroid as the fallback — same preference the
-	// postcode-locality builder applies.
-	// The math centroid is wrong exactly where it matters most: a multipolygon
-	// spanning overseas territories pulls it off the mainland entirely
-	// (France's geom: point is in Spain. Lbl: is metropolitan France).
-	// Both coordinates are taken from the same source or neither: a lbl:latitude paired
-	// with a geom:longitude would be a point on neither centroid.
-	//
-	// The label point carries its own upstream defects (#1905: WOF's lbl: for Washington DC is 7.8 km out),
-	// so when both pairs exist and disagree widely, the record's GeoNames concordance adjudicates.
-	// See choosePoint's rule and the census in label-point-adjudicator.ts.
-	// No anchor, no disagreement, or no decisive separation → the label preference, byte-identical to before.
+	// Prefer paired label coordinates, then paired geometry coordinates.
+	// When both exist, GeoNames can adjudicate large disagreements.
 	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
 	const hasGeom = typeof props["geom:latitude"] === "number" && typeof props["geom:longitude"] === "number"
 
@@ -134,11 +103,7 @@ async function parseFeature(
 	let lon = hasLbl ? props["lbl:longitude"]! : hasGeom ? props["geom:longitude"]! : 0
 	let pointChoice: PointChoice | undefined
 
-	// Settlement records only: a GeoNames locality anchor marks the urban seat, but its records for
-	// regions/counties are centroids, so consulting them there re-imports the very defect class this
-	// exists to fix (measured: the anchor moved the Texas region 172 km off its label placement).
-	// The census the rule is sized against is locality-scoped.
-	// So is the check.
+	// Use GeoNames adjudication for localities only; region and county anchors are centroids.
 	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
 		const gnID = props["wof:concordances"]?.["gn:id"]
 
@@ -156,9 +121,7 @@ async function parseFeature(
 		pointChoice = chosen.choice
 	}
 
-	// WOF `geom:bbox` is "minLon,minLat,maxLon,maxLat".
-	// Fall back to the centroid (a point bbox) when absent — still correct for
-	// point-in-box proximity, the resolver's main bbox use.
+	// WOF bbox order is west, south, east, north; default to a point bbox.
 	let [minLon, minLat, maxLon, maxLat] = [lon, lat, lon, lat]
 	const bboxStr = props["geom:bbox"]
 
@@ -179,7 +142,7 @@ async function parseFeature(
 		if (!match || !value) continue
 		const lang = match[1]!
 		const privateuse = match[2]!
-		// #936: only preferred forms in an official language are official names — x_variant rows tagged with an official language are abbreviations/codes ("MSP", "Frisco"), and marking them official scored 13× the collision count in the risk probe.
+		// Only preferred forms in official languages count as official names.
 		const official = privateuse === "preferred" && isOfficialLanguage(country, lang) ? 1 : 0
 		const vals = Array.isArray(value) ? value : [value]
 
@@ -239,13 +202,11 @@ export interface IngestWOFOptions {
 	 */
 	batchCommitSize?: number
 	/**
-	 * Progress callback — invoked every 25,000 processed files.
+	 * Progress callback, invoked every 25,000 ingested records.
 	 */
 	onProgress?: (processed: number, skipped: number, total: number) => void
 	/**
-	 * GeoNames anchor lookup for the label-point adjudication (#1905) — see `label-point-adjudicator.ts`.
-	 *
-	 * Absent = the plain label preference, byte-identical to a build before the adjudicator existed.
+	 * Optional GeoNames anchor lookup for label-point adjudication.
 	 */
 	anchorLookup?: GeoNamesAnchorLookup
 }
@@ -255,22 +216,16 @@ export interface IngestWOFResult {
 	placesIngested: number
 	skipped: number
 	/**
-	 * Records whose stored point is the geometric centroid because the GeoNames anchor
-	 * overrode the label preference (`choice === "geom-by-anchor"`).
-	 *
-	 * Zero with no anchor lookup configured.
-	 * A build that expected the adjudicator to run reads this instead of assuming.
+	 * Records where GeoNames adjudication selected the geometry point.
 	 */
 	labelPointOverrides: number
 }
 
 /**
- * Enumerate + ingest WOF GeoJSON into an already-open unified staging DB
- * (parallel reads, single-thread writer, batched transactions).
+ * Ingest WOF GeoJSON into an open staging database.
  *
- * The `whosonfirst-data-postalcode-*` repos are excluded unless the placetype set asks
- * for `postalcode` — enumerating + reading millions of postcode files the admin build
- * filters out anyway was the bulk of the ingest time (#1015/#1021).
+ * Reads are parallel; writes are serialized and batched.
+ * Postalcode repositories are skipped unless `postalcode` is requested.
  */
 export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOFOptions): Promise<IngestWOFResult> {
 	const placetypes = opts.placetypes ?? ADMIN_PLACETYPES

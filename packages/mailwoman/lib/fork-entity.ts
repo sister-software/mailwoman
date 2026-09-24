@@ -3,26 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The declared_fork marker's first consumer (#1585's entity half): when the decoder declares that a
- *   surface reads two ways and the incumbent resolution produced no coordinate, ask the entity layer
- *   whether it simply knows the thing — positive evidence only, per the registry doctrine (registries
- *   are soft priors that add candidates. they never veto). `comer parís.méxico` is the worked case:
- *   structure cannot decide it, no gazetteer row bears the name, and poi.db holds the exact
- *   restaurant 6 m from truth under a worldwide-unique name key.
- *
- *   Three checks, all required, each with a receipt behind it:
- *
- *   1. **The incumbent abstained** (no coordinate). The probe never contests a resolved answer — only
- *      a null can change, which is what makes the mechanism default-on under the D-rule.
- *   2. **No token of the query is a street generic** (the street-morphology FST — libpostal's
- *      thoroughfare vocabulary). The fork population's street-flavored surfaces (`Savile Row`,
- *      `Kärntner Straße`, `Gran Vía`) belong to the street tier, and poi.db holds exactly one poi
- *      named `savile row` — without this check the famous street would resolve to a shop
- *      (`gb-fork-entity-savile-row-guard` is the live regression check).
- *   3. **Exactly one entity worldwide bears the name** (name-key exact equality, duplicate rows of
- *      the same physical venue collapsed by proximity). Zero is a miss. two is an ambiguity the
- *      query gave no anchor to break — both abstain. The uniqueness bar is what lets an anchorless
- *      query resolve at all.
+ *   Resolve declared forks only when incumbent resolution has no coordinate.
+ *   Require no street-generic token and one exact-name entity worldwide.
+ *   Venue-led addresses use a separate, opt-in near-anchor lookup.
  */
 
 import { isUnitGradePostcodeHit } from "@mailwoman/codex"
@@ -35,11 +18,7 @@ import { epistemicStatusFor } from "#geocode/epistemic-status"
 import type { POIExecutorLookup } from "#poi/executor"
 
 /**
- * Two poi rows closer than this are the same physical venue
- * (door + terrace, or a chain's duplicate ingest of one location), not two entities.
- *
- * Overture duplicates of one venue measure meters apart.
- * Distinct same-name venues (a franchise) are city-scale apart.
+ * Maximum separation for collapsing duplicate rows of one physical venue.
  */
 const SAME_ENTITY_M = 150
 
@@ -54,33 +33,24 @@ export interface ForkEntityHit {
 
 export interface ForkEntityProbeOpts {
 	/**
-	 * The poi.db reader (`POILookup` satisfies this) — absent handled by the caller (no lookup, no probe).
+	 * poi.db reader; the caller skips probing when absent.
 	 */
 	lookup: POIExecutorLookup
 	/**
-	 * `true` when a token is a thoroughfare generic (the street-morphology FST).
-	 *
-	 * The probe requires this signal: without it criterion 2 cannot run,
-	 * and an unrestricted probe is the Savile Row hijack.
-	 * So the caller must not invoke the probe at all when no matcher is loaded.
+	 * Detect street-type tokens; required to prevent street-to-venue matches.
 	 */
 	isStreetGeneric: (token: string) => boolean
 }
 
 /**
- * Great-circle distance in meters.
- *
- * `@mailwoman/spatial`'s haversine, in the unit this file's thresholds are stated in.
+ * Return great-circle distance in meters.
  */
 function distanceM(latA: number, lonA: number, latB: number, lonB: number): number {
 	return haversineKm(latA, lonA, latB, lonB) * 1000
 }
 
 /**
- * Probe the entity layer for a fork surface.
- *
- * @returns The single entity the world knows by this exact name, or `null`
- * (check failed / no entity / ambiguous).
+ * Find the unique exact-name entity for a fork surface, or return `null`.
  */
 export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): ForkEntityHit | null {
 	const nameKey = normalizeLocalityForKey(rawQuery)
@@ -134,8 +104,7 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 }
 
 /**
- * The subset of the geocode outcome a forked answer writes — structural, so this module does
- * not import the outcome type back out of `geocode-core` (which imports the probe from here).
+ * Outcome fields written by a fork answer, defined structurally to avoid an import cycle.
  */
 export interface ForkEntityAnswerTarget {
 	lat: number | null
@@ -149,11 +118,7 @@ export interface ForkEntityAnswerTarget {
 }
 
 /**
- * Write a fork-to-entity answer onto the outcome: coordinate, venue tier, the entity block,
- * and — like any other resolved answer — a coherence verdict (#1724).
- *
- * The entity offers a country and no ancestor chain, so a stated region grades
- * `unverifiable` rather than going silently unchecked.
+ * Add entity coordinates, venue tier, and coherence to the outcome.
  */
 function applyForkEntityAnswer(
 	result: ForkEntityAnswerTarget,
@@ -182,31 +147,17 @@ function applyForkEntityAnswer(
 }
 
 /**
- * How far a venue entity may sit from the resolved admin anchor and still be "this address's venue", meters.
- *
- * Wide on purpose: the anchor is a locality centroid (a metro's centroid can sit 20+ km from its edges),
- * and the check exists to separate the local bearer from same-named entities in
- * other cities rather than to assert rooftop precision.
+ * Maximum venue distance from an admin-centroid anchor, in meters.
  */
 const VENUE_ANCHOR_THRESHOLD_M = 30_000
 
 /**
- * The same bound when the anchor is a unit-grade postcode hit rather than a centroid, meters.
- *
- * A unit postcode names a handful of doors, so a same-named entity kilometers from it is
- * another bearer (a second campus, a chain's other branch), and the locality bound admits
- * exactly that: it replaced an answer 80 m from a venue with its namesake 9.9 km away.
- * Every board row the tier improves moves its answer under 1.6 km from a locality anchor.
- *
- * A unit anchor is finer still, so the bound is tighter than any of those moves.
+ * Maximum venue distance from a unit-grade postcode anchor, in meters.
  */
 const VENUE_UNIT_ANCHOR_THRESHOLD_M = 1000
 
 /**
- * The anchor the venue tier measures from, with the reach its grade allows.
- *
- * The answer coordinate is the anchor; `radiusM` defaults to {@link VENUE_ANCHOR_THRESHOLD_M}
- * and {@link venueAnchorRadiusM} tightens it.
+ * Venue lookup anchor and optional search radius.
  */
 export interface VenueAnchor {
 	lat: number
@@ -215,13 +166,7 @@ export interface VenueAnchor {
 }
 
 /**
- * How far the venue tier may reach from the answer it is replacing.
- *
- * A unit-grade postcode hit ({@link isUnitGradePostcodeHit}) whose coordinate is the answer resolved
- * the walk to a handful of doors, so the venue must sit within {@link VENUE_UNIT_ANCHOR_THRESHOLD_M};
- * every other admin or street answer is a centroid and keeps {@link VENUE_ANCHOR_THRESHOLD_M}.
- * The coordinate equality is exact on purpose: result assembly copies the winning node's
- * coordinate verbatim, so a postcode node that is not the answer never narrows the bound.
+ * Select the venue radius based on the postcode node matching the current answer coordinate.
  */
 export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: readonly AddressNode[]): number {
 	const postcode = collectNodes(
@@ -239,16 +184,7 @@ export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: 
 }
 
 /**
- * Probe the entity layer for a parsed venue near a resolved anchor — the #1684 POI-half's
- * first mechanism, and the anchored sibling of {@link probeForkEntity}.
- *
- * The fork probe requires worldwide uniqueness because a bare fork surface has no other evidence.
- * A venue-led address does — the walk already resolved its admin anchor — so the discipline here
- * is local uniqueness: exact name-key entities only, and exactly one of them within the anchor's
- * reach ({@link VenueAnchor}, {@link VENUE_ANCHOR_THRESHOLD_M} unless the caller tightened it).
- *
- * Two same-named venues in one metro is a genuine ambiguity and abstains.
- * Entities beyond the check are other cities' bearers and never contest.
+ * Find the unique exact-name venue within the resolved anchor's radius.
  */
 export function probeVenueNearAnchor(
 	venueRaw: string,
@@ -300,22 +236,9 @@ export function probeVenueNearAnchor(
 }
 
 /**
- * The entity answers, applied in tier order — extracted from `geocodeAddressOnce`
- * as one cohesive unit (the ceiling-extraction discipline):
+ * Apply fork rescue first, then optional near-anchor venue refinement.
  *
- * 1. The fork→entity probe (#1585's entity half): a declared fork whose incumbent
- *    resolution produced no coordinate takes the worldwide-unique entity.
- *    Default-on under the D-rule.
- *    A null is the only thing that can change.
- * 2. The venue tier (#1684's POI half) — opt-in, default off: a venue-led address that
- *    resolved only to its admin anchor upgrades to the entity with the venue's exact name-key
- *    near that anchor ({@link probeVenueNearAnchor} owns the local-uniqueness discipline).
- *    Measured ceiling before any mechanism existed: 30 of 55 gb_venue* board rows
- *    name a poi.db-visible venue, 15 of them tracked failures.
- *    Measured effect at first light: 7 of 57 rows upgrade admin→venue, all within 0.14 km of their anchors.
- *    Never fires over an address_point/interpolated answer.
- *    A street+number that resolved rooftop is the venue's address — and the flag stays opt-in
- *    until a full-board battery warrants the D-rule promotion.
+ * Venue refinement does not replace address-point or interpolation results.
  */
 export function applyEntityTiers(
 	result: ForkEntityAnswerTarget & {

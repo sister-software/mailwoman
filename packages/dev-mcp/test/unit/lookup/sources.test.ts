@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixtures are built by the production schema builders and populated with rows copied off the shipped artifacts, so
- *   what these tests pin is the real behaviour rather than a restatement of the probe. Two cases exist only because
- *   driving the real artifacts falsified the first implementation: `1012 LG` (route order) and the deprecated-only WOF
- *   name (the FTS index cannot show one, so a second route has to).
+ *   Fixtures use production schemas and rows from shipped artifacts to test real behavior. Two cases caught problems
+ *   in the first implementation: `1012 LG` (lookup order) and a deprecated-only WOF name (not in FTS, so it needs a
+ *   second lookup route).
  */
 
 import { openSealedArtifact, type LookupRow } from "@mailwoman/dev-mcp/lookup/index"
@@ -38,7 +37,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { aroundAll, describe, expect, it } from "vitest"
 
 /**
- * Every connection these fixtures open, ended together at the end of the file.
+ * Close all fixture connections after the tests finish.
  */
 let openHandles: DisposableStack
 
@@ -58,8 +57,9 @@ function memoryDatabase<DB>(): DatabaseClient<DB> {
 }
 
 /**
- * Rows measured against the shipped `candidate.db` on 2026-08-16 — the operator's three
- * false absences plus the NL PC6 pair whose stem hides the unit code.
+ * Rows from the shipped `candidate.db`, measured on 2026-08-16.
+ *
+ * They cover three false absences and an NL PC6 pair whose stem hides the unit code.
  */
 const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name_key" | "spr_id">> = [
 	// Each key is minted from the surface the build folds, never written folded by hand,
@@ -251,8 +251,8 @@ describe("lookupCandidate", () => {
 })
 
 /**
- * Rows measured against the shipped `admin-global-priority.db`: one live place,
- * and the GB name whose thirteen records are every one deprecated.
+ * Rows from the shipped `admin-global-priority.db`: one current place
+ * and a GB name with thirteen deprecated records.
  */
 async function wofFixture(): Promise<DatabaseClient<WOFDatabase>> {
 	const db = memoryDatabase<WOFDatabase>()
@@ -399,9 +399,8 @@ describe("lookupCodex", () => {
 
 describe("lookupPostcodeAnchor", () => {
 	/**
-	 * Centroids measured off the shipped binaries and rounded: `10118` carries one,
-	 * `01477` is one of the 414 keys in `postcode-us.bin` that carry none,
-	 * and `SW1A2AA` is a GB key the US bundle does not hold.
+	 * Rounded values from shipped binaries: `10118` has a centroid, `01477` is one of 414
+	 * US keys without one, and `SW1A2AA` is a GB key missing from the US bundle.
 	 */
 	const resolver = {
 		lookup: (postcode: string) =>

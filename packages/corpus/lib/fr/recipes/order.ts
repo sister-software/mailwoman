@@ -3,31 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-order` recipe — French reversed-order coverage (#560). Reads real OpenAddresses FR
- *   tuples (`fr/countrywide.csv` from the cached zip), then for each row picks — by
- *   `--reversed-fraction` (default 0.5) — whether to render in canonical French order
- *   (number-street, postcode-city) or one of four reversed / postcode-first variants the
- *   v4.4.0→v0.5.0 regression exposed (the model misses house_number in every reversed one):
- *
- *   - A: "47110 Sainte-Livrade-sur-Lot, 69 Allée du Bugatel" (postcode city, HN street)
- *   - B: "Sainte-Livrade-sur-Lot, 47110, 619 Impasse de la Rose" (city, postcode, HN street)
- *   - C: "Sainte-Livrade-sur-Lot 59 bis Rue des Ecuries 47110" (city HN street postcode — no commas)
- *   - D: "47110, 6 rue de la république, Sainte-Livrade-sur-Lot" (postcode, HN street, city)
- *
- *   Sub-modes ride alongside order: `bis`/`ter`/`quater` ordinal suffixes in house_number, and
- *   all-caps locality. `--golden` emits a held-out reversed-order eval set with a different
- *   seed.
- *
- *   The inline synthesis (the OA-CSV reader, the ordinal/all-caps tables, the canonical + reversed
- *   renderers) is ported faithfully from the root build script it replaced. This is a
- *   `generate`-mode recipe that still reads real tuples off disk — `--count` bounds the output rather than
- *   the input. The passed `random` (the framework LCG) is consumed in the exact call order the
- *   legacy script used.
- *
- *   Not ported (diagnostic-only, no effect on emitted bytes): the post-run `runSpanCheck` self-check
- *   (it reads the finished file back with a separate prng and prints to stderr. the recipe's output
- *   stream is still open during `run`), and the dead `renderReversed` helper (the legacy `main`
- *   inlined the variant logic and never called it).
+ *   Generate canonical and reversed French addresses from real OpenAddresses tuples. Reversed forms
+ *   vary postcode, locality, and street order. Optional sub-modes add ordinal house numbers and
+ *   uppercase localities. `--golden` emits a held-out evaluation set.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -45,20 +23,20 @@ import { alignRow } from "#utils"
 const SOURCE = { zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
 
 /**
- * Ordinal suffixes used in French house numbers (BAN corpus), to cover the "8 bis" sub-mode.
+ * French house-number ordinal suffixes.
  */
 const ORDINAL_SUFFIXES: readonly string[] = ["bis", "ter", "quater"]
 /**
- * Probability that a row gets an ordinal suffix injected (matches the golden's ~10-15% rate).
+ * Probability of adding an ordinal suffix.
  */
 const ORDINAL_PROB = 0.12
 /**
- * Probability that a locality renders all-caps (another sub-mode: "sainte-livrade-SUR-LOT").
+ * Probability of rendering a locality in uppercase.
  */
 const ALLCAPS_PROB = 0.1
 
 /**
- * A real FR tuple read out of the cached OA zip.
+ * French tuple read from the cached OpenAddresses archive.
  */
 interface FrTuple {
 	house_number: string
@@ -68,12 +46,7 @@ interface FrTuple {
 }
 
 /**
- * Stream FR tuples out of the cached OA zip.
- *
- * The countrywide extract is GB-scale, so this reads only as far as `limit` distinct
- * tuples — the `break` closes the reader and releases the archive.
- * Only keeps rows with a house_number (the recipe's core signal) and a postcode
- * (required for reversed-order rendering to be meaningful. It is also part of this recipe's dedup key).
+ * Read up to `limit` distinct tuples with house numbers and postcodes.
  */
 async function readTuples(limit: number): Promise<FrTuple[]> {
 	return readOATuples(SOURCE, {
@@ -85,21 +58,18 @@ async function readTuples(limit: number): Promise<FrTuple[]> {
 }
 
 /**
- * Optionally augment a house_number with a French ordinal suffix ("59 bis", "4 ter").
- *
- * Appended with a space so it forms one multi-token house_number string that
- * alignRow can still locate verbatim.
+ * Optionally append an ordinal suffix to a house number.
  */
 function maybeAddOrdinal(random: () => number, house_number: string): string {
 	if (random() >= ORDINAL_PROB) return house_number
 	const suffix = sample(ORDINAL_SUFFIXES, random)
 
-	// Vary suffix case: "bis" (lower) vs "BIS" (upper) — a real-world split in the golden.
+	// Include lowercase and uppercase suffix forms.
 	return `${house_number} ${random() < 0.5 ? suffix : suffix.toUpperCase()}`
 }
 
 /**
- * Render a tuple in canonical French order: "9 Rue de la Promenade, 01200 Villes".
+ * Render a tuple in canonical French order.
  */
 function renderCanonical(
 	hn: string,
@@ -112,19 +82,13 @@ function renderCanonical(
 	return { raw, components: { house_number: hn, street, postcode, locality } }
 }
 
-// Reversed layouts, a quarter each: A postcode+city then HN+street.
-// B city, postcode, HN+street.
-// C run-together.
-// D postcode, HN+street, city.
+// Cumulative cutoffs for four reversed layouts.
 const REVERSED_VARIANT_A_CUTOFF = 0.25
 const REVERSED_VARIANT_B_CUTOFF = 0.5
 const REVERSED_VARIANT_C_CUTOFF = 0.75
 
 /**
  * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
  */
 export const frOrderRecipe: CorpusRecipe = {
 	name: "fr-order",
@@ -137,13 +101,12 @@ export const frOrderRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		if (opts.count == null) throw new Error("fr-order recipe requires --count <N>")
 		const count = opts.count
-		// The legacy build script seeded mulberry32 with the raw seed: `const random = mulberry32(opts.seed)`.
-		// (The omitted diagnostic runSpanCheck used a separate mulberry32(opts.seed + 1) — not part of generation.)
+		// Preserve the legacy random stream for generated rows.
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-fr-order"
 		const reversedFraction = opts.reversedFraction ?? 0.5
 
-		// Over-read from the CSV so the dedup + filter pass can fill `count` rows.
+		// Read extra rows to account for filtering and deduplication.
 		const poolLimit = Math.max(count * 8, 40_000)
 		const pool = await readTuples(poolLimit)
 
@@ -164,7 +127,7 @@ export const frOrderRecipe: CorpusRecipe = {
 			const locality = random() < ALLCAPS_PROB ? base.locality.toUpperCase() : base.locality
 			const house_number = maybeAddOrdinal(random, base.house_number)
 
-			// Pick canonical vs reversed by --reversed-fraction.
+			// Choose canonical or reversed order.
 			const isReversed = random() < reversedFraction
 
 			let rendered: { raw: string; components: Partial<Record<ComponentTag, string>> }
@@ -174,16 +137,16 @@ export const frOrderRecipe: CorpusRecipe = {
 				let raw: string
 
 				if (variantRoll < REVERSED_VARIANT_A_CUTOFF) {
-					// Variant A: postcode+city as a unit, then HN+street
+					// Postcode and locality before number and street.
 					raw = `${postcode} ${locality}, ${house_number} ${street}`
 				} else if (variantRoll < REVERSED_VARIANT_B_CUTOFF) {
-					// Variant B: city, then postcode, then HN+street (comma-separated, postcode isolated)
+					// Locality, postcode, number, and street.
 					raw = `${locality}, ${postcode}, ${house_number} ${street}`
 				} else if (variantRoll < REVERSED_VARIANT_C_CUTOFF) {
-					// Variant C: no commas — locality HN street postcode (the "run-together" format)
+					// Locality, number, street, and postcode without commas.
 					raw = `${locality} ${house_number} ${street} ${postcode}`
 				} else {
-					// Variant D: postcode, HN+street, city (reversed top-to-bottom)
+					// Postcode, number, street, then locality.
 					raw = `${postcode}, ${house_number} ${street}, ${locality}`
 				}
 
@@ -194,7 +157,7 @@ export const frOrderRecipe: CorpusRecipe = {
 
 			const { raw, components } = rendered
 
-			// Safety check: every component must appear verbatim in raw (alignment precondition).
+			// Require each component value to appear verbatim in the address.
 			const componentValues = Object.values(components).filter(isPresent)
 
 			if (!componentValues.every((v) => raw.includes(v))) {
@@ -203,7 +166,7 @@ export const frOrderRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// --golden: emit per-locale-f1 eval rows ({raw, components, country:"FR"}).
+			// Golden output carries parse truth without corpus metadata.
 			if (opts.golden) {
 				write(stringifyJSON({ raw, components, country: "FR" }))
 

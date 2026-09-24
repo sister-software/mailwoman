@@ -3,19 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Assemble a balanced (address → country) dataset for the #244 coarse-placer from the v0.5.0
- *   corpus. stratified: a flat random sample is 94% US+FR, so we sample up to N rows PER country
- *   and union.
- *
- *   Two gotchas this handles:
- *
- *   - DuckDB `using sample n rows` samples the table, then where filters the sample — so we
- *       filter-then-sample in a subquery to get a true per-country sample.
- *   - The corpus val/test extracts only carry US/FR/DE, so we draw all splits from the rich `train`
- *       extracts and do our own per-country 80/10/10 split (dedup on raw → no row crosses splits).
- *
- *   Run: `mailwoman placer build-dataset [--per-country 50000]` Output:
- *   `<repo>/data/coarse-placer/{train,val,test}.jsonl` (rows: {raw, country})
+ *   Build balanced coarse-placer train, validation, and test datasets. Sample each country
+ *   separately, deduplicate addresses, then split each country's rows 80/10/10.
  */
 
 import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
@@ -64,9 +53,11 @@ export interface BuildDatasetResult {
 const VAL_FRAC = 0.1
 const TEST_FRAC = 0.1
 
-// #743 EU expansion: draw the new in-map countries from the Overture per-country addresses theme. The raw fields are formatted into native address strings with format variety (4 templates picked deterministically per row) so the model can't shortcut on a single template shape. It must use the actual street-type words + locality n-grams (Finnish "katu/tie", Polish "ul.", Norwegian "veien") that include the country signal. Same 80/10/10 dedup split as the corpus path.
+// Format Overture addresses in varied native forms so country prediction uses
+// address features, not one fixed template.
+// Apply the same deduplicated 80/10/10 split as the corpus data.
 /**
- * Format a (street, number, postcode, locality) quad into a native address string.
+ * Format a street, number, postcode, and locality as an address.
  */
 function formatEU(street: unknown, number: unknown, postcode: unknown, loc: string, t: number): string {
 	const s = String(street).trim()
@@ -75,18 +66,18 @@ function formatEU(street: unknown, number: unknown, postcode: unknown, loc: stri
 
 	switch (t) {
 		case 1:
-			return `${s}${num} ${loc}` // no postcode, no comma
+			return `${s}${num} ${loc}` // Omit postcode and comma.
 		case 2:
-			return `${s}${num}, ${loc}${pc ? `, ${pc}` : ""}` // postcode trailing
+			return `${s}${num}, ${loc}${pc ? `, ${pc}` : ""}` // Put postcode last.
 		case 3:
-			return `${s}, ${pc ? `${pc} ` : ""}${loc}` // no house number
+			return `${s}, ${pc ? `${pc} ` : ""}${loc}` // Omit house number.
 		default:
 			return `${s}${num}, ${pc ? `${pc} ` : ""}${loc}` // {street number, postcode locality}
 	}
 }
 
 /**
- * Coarse-placer dataset builder — see the module doc.
+ * Build the coarse-placer dataset files.
  */
 export async function buildDataset(
 	options: BuildDatasetOptions = {},
@@ -97,7 +88,7 @@ export async function buildDataset(
 
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
 
-	// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows. The v0.9.2 G-NAF extract carries 150k real Australian addresses. AU rides the same corpus sampling path as `countries`, just from its own glob — the (country, glob) pairs below unify the two.
+	// Use the newer G-NAF corpus for AU, which has more address rows than the v0.5.0 pin.
 	const AU_GLOB = dataRootPath(
 		"corpus",
 		"versioned",
@@ -110,7 +101,7 @@ export async function buildDataset(
 	const OVERTURE_DIR = dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE)
 	await makeDirectories(OUT_DIR)
 
-	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
+	// Load DuckDB only when the dataset builder runs.
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const duck = await (await DuckDBInstance.create()).connect()
 
@@ -126,7 +117,7 @@ export async function buildDataset(
 	]
 
 	for (const [country, glob] of CORPUS_SOURCES) {
-		// filter-then-sample: the subquery restricts to the country, sample draws from that filtered set.
+		// Filter by country before sampling to preserve the per-country quota.
 		const q = `SELECT raw FROM (
 				SELECT raw FROM read_parquet('${glob}') WHERE country = '${country}' AND nullif(trim(raw), '') IS NOT NULL
 			) USING SAMPLE ${Math.ceil(PER * 1.3)} ROWS`
@@ -226,7 +217,8 @@ export async function buildDataset(
 	]
 
 	for (const [name, rows] of splits) {
-		rows.sort((a, b) => hashFNV1a(a.raw + a.country) - hashFNV1a(b.raw + b.country)) // deterministic class-interleave
+		// Interleave classes deterministically.
+		rows.sort((a, b) => hashFNV1a(a.raw + a.country) - hashFNV1a(b.raw + b.country))
 		const p = resolvePath(OUT_DIR, `${name}.jsonl`)
 
 		await writeLocalJSONLFile(rows, p)

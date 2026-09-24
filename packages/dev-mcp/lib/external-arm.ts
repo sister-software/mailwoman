@@ -3,29 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Speaking to a geocoder this repo did not build.
- *
- *   The protocol is neither new nor negotiable. `docs/superpowers/plans/2026-08-06-local-pelias-benchmark-rig.md` §4
- *   pre-registered it before any arm had been measured, and spec §6.4 adopts it verbatim: **top-1 result only**, the
- *   **same raw query string** to every arm with no per-arm normalization, and a no-result counted as a **miss at every
- *   threshold**. Most of what this module declines to do follows from that one paragraph — no per-engine query
- *   rewriting, no reading past the first feature when it carries no coordinate, no widening `size` and picking the
- *   closest. A protocol chosen after seeing the numbers is not a protocol.
- *
- *   Three refusals it makes on its own account:
- *
- *   1. **It never starts anything.** An endpoint that is not already up is a refusal with the reason rather than a run that
- *      scores every row as a miss. Spec §7's open question 7, resolved the conservative way: this surface gathers
- *      evidence and does not change state anything else reads, and "the benchmark rig was down" is a fact about the
- *      box that must reach the reader instead of arriving disguised as an arm that lost.
- *   2. **It never scores an unpinned public instance.** {@link REFUSED_ENDPOINT_HOSTS} is refused outright, because the
- *      benchmark plan classifies those two as sanity checks that are never a scored arm — and a tool that makes it
- *      easy to score them will eventually score them.
- *   3. **It never scores an arm whose identity the endpoint will not confirm** without the caller saying, in the call,
- *      what they believe is running there. This one is not decoration. Every engine here has a drop-in reimplementation
- *      inside this very repo answering the identical paths with the identical response shape, so a URL and a port are
- *      not evidence of what is behind them; `version` on the arm spec is how a caller puts their claim on the record,
- *      and the result marks it `caller-declared` rather than observed.
+ *   Query an already-running external geocoder under the pre-registered protocol: send the same raw input to
+ *   each arm, score only the top result, and count missing coordinates as misses at every threshold. The client
+ *   never starts services or scores shared public endpoints. If the endpoint cannot identify itself, the caller
+ *   must declare its version.
  */
 
 import { APIClient, type APIClientConfig, isTransientResourceError } from "@mailwoman/core/api"
@@ -34,10 +15,7 @@ import { isRecordLike } from "@mailwoman/core/objects"
 import { type GeoFeatureCollection, isPointLiteral, isValidLatitude, isValidLongitude } from "@mailwoman/spatial"
 
 /**
- * The engines this arm can speak to.
- *
- * Each is a drop-in target mailwoman already ships a compatible server for,
- * which is exactly why the identity probe below exists.
+ * External geocoder engines supported by this client.
  */
 export const ExternalEngine = {
 	Pelias: "pelias",
@@ -48,133 +26,73 @@ export const ExternalEngine = {
 export type ExternalEngine = (typeof ExternalEngine)[keyof typeof ExternalEngine]
 
 /**
- * Hosts that may never be a scored arm, whatever the caller asks for.
- *
- * The benchmark plan names both as **unpinned sanity checks**: they are shared community instances
- * on unknown data vintages under rate limits nobody here controls, so a number measured against
- * one is not reproducible and its operators did not consent to being a benchmark subject.
- * Refused rather than warned.
- *
- * A warning on the cheapest thing to type is a warning that gets typed.
+ * Shared public endpoints that cannot be scored as reproducible arms.
  */
 const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstreetmap.org"])
 
 /**
- * Minimum spacing between two dispatches to an external arm, in milliseconds.
- *
- * A judgement rather than a measurement, and stated as one: these endpoints are self-hosted,
- * so no upstream publishes a rate for them and there is no limit to honour.
- * What the interval provides is that a 400-row loop cannot saturate a
- * service sharing this box's memory bandwidth with the resident gazetteer —
- * 20 dispatches per second is far above what a sequential comparison reaches anyway,
- * so it costs a well-behaved run nothing and bounds a pathological one.
- *
- * Set through `minRequestIntervalMs` rather than `requestsPerMinute` deliberately:
- * agents.md records that the budget budget alone does not deliver N requests per
- * minute (measured at 100/min for `requestsPerMinute: 10`), and the interval
- * limit is the one that actually holds a rate.
+ * Minimum delay between requests to a local external arm.
  */
 export const EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS = 50
 
 /**
- * Total attempts, including the first, before one row's query is recorded as a failure.
- *
- * Three, matching the pre-registered rig's own scorer, so a row that fails here would have failed there.
+ * Maximum attempts per input, including the first request.
  */
 const MAX_ATTEMPTS = 3
 
 /**
- * Base delay for the retry backoff, in milliseconds.
- *
- * Attempt n waits `BASE_RETRY_DELAY_MS * 2^(n-1)` unless the response carried a `Retry-After`, which wins.
+ * Base exponential retry delay in milliseconds.
+ * `Retry-After` takes precedence.
  */
 const BASE_RETRY_DELAY_MS = 250
 
 /**
- * Per-attempt socket-inactivity timeout for one geocode query, in milliseconds.
- *
- * Matches the rig scorer's 20 s, which is generous for a loopback service
- * and is really a bound on "the process is up but wedged".
+ * Socket-inactivity timeout for one query attempt.
  */
 const REQUEST_TIMEOUT_MS = 20_000
 
 /**
- * The query the identity probe sends.
- *
- * Never scored, and never mixed with the input set.
- * Its only job is to make the search path answer once so the response envelope can be read for a version.
- *
- * A short, unambiguous, universally-indexed place name, so an endpoint holding
- * any data at all responds to it.
+ * Query used only to inspect the endpoint's identity response.
  */
 const IDENTITY_PROBE_QUERY = "Paris"
 
 /**
- * How many results to ask for.
- *
- * One, always: the protocol scores top-1, and asking for more invites a later
- * reader to quietly pick a better one.
+ * Number of results requested under the top-1 protocol.
  */
 const TOP_N = 1
 
 /**
- * What one arm answered for one input.
- *
- * `noResultReason` is the whole point of the shape.
- * A geocoder that returns an empty array has said something specific.
- *
- * It does not hold this address — and that is not the same fact as a query that failed, nor a score of zero.
- *
- * Both still count as a miss at every threshold under the pre-registered protocol,
- * but the result reports which happened.
+ * One external result, including a reason when no coordinate is available.
  */
 export interface ExternalAnswer {
 	lat: number | null
 	lon: number | null
 	/**
-	 * The engine's own label for what it matched, verbatim.
-	 *
-	 * Not compared across engines.
-	 * It is here so a human reading a changed row can see that one arm answered
-	 * with a country and the other with a rooftop.
+	 * Engine-provided result label, shown for inspection and not compared across engines.
 	 */
 	label: string | null
 	/**
-	 * The answer's place-identity chain (mailwoman arms only — the resolved hierarchy's placeIDs, finest first).
-	 *
-	 * A coordinate diff is blind to a wrong-instance win under a nearly-right coordinate
-	 * (the Astoria class: the correct Queens point under the Oregon placeID), and the
-	 * 2026-08-18 band-injection battery needed a hand-written probe for exactly this.
-	 * Absent when the arm cannot state identity — external engines, oracles, and runs recorded
-	 * before this field existed — and an identity comparison only runs when both sides carry one.
+	 * Place IDs from mailwoman results, finest first.
+	 * Compared only when both arms provide IDs.
 	 */
 	place_ids?: string[]
 	/**
-	 * The engine's own type/layer for the top result (Pelias `layer`, Photon `type`, Nominatim `addresstype`).
-	 *
-	 * Reported, never thresholded: these vocabularies are not the same vocabulary.
+	 * Engine-specific type or layer for the top result; reported but not compared.
 	 */
 	resultType: string | null
 	noResultReason: string | null
 }
 
 /**
- * What an endpoint says about itself, with `null` everywhere it says nothing.
- *
- * The columns are the ones the benchmark plan's §7 already specifies for a scored arm.
- * Reporting them as `null` rather than omitting them is the meaning-of-zero rule
- * applied to provenance: "this endpoint does not expose its data vintage" is a fact
- * a reader needs, and a missing key reads as nobody having looked.
+ * Endpoint identity and provenance, with `null` for unavailable fields.
  */
 export interface ExternalArmIdentity {
 	engine: ExternalEngine
 	endpoint: string
 	version: string | null
 	/**
-	 * Where {@link ExternalArmIdentity.version} came from.
-	 *
-	 * `caller-declared` means the endpoint would not confirm it and the caller asserted it —
-	 * a claim on the record rather than an observation.
+	 * Source of the version value.
+	 * `caller-declared` is an assertion, not an observation.
 	 */
 	version_source: "endpoint" | "caller-declared" | null
 	data_vintage: string | null
@@ -182,29 +100,24 @@ export interface ExternalArmIdentity {
 	interpolation_enabled: boolean | null
 	response_version: string | null
 	/**
-	 * Which path answered the reachability probe, and what the search path said.
-	 *
-	 * Present so a failure to identify the arm can be read rather than guessed at.
+	 * Reachability and identity-probe outcomes.
 	 */
 	probe: { status_path: string | null; status_http: number | null; search_ok: boolean }
 	warnings: string[]
 }
 
 /**
- * Per-engine wire protocol.
- *
- * One record per engine rather than a switch at each call site, so adding an
- * engine is a table entry and cannot half-land.
+ * Wire paths and response readers for one engine.
  */
 interface EngineProtocol {
 	/**
-	 * The engine's own health/version path, relative to the endpoint root.
+	 * Health or version path relative to the endpoint.
 	 */
 	statusPath: string
 	searchPath: (query: string) => string
 	readTop: (body: unknown) => ExternalAnswer
 	/**
-	 * Identity fields, read from the status body and the identity probe's search body.
+	 * Identity fields extracted from status and search responses.
 	 */
 	readIdentity: (
 		statusBody: unknown,
@@ -213,11 +126,7 @@ interface EngineProtocol {
 }
 
 /**
- * Index into an unknown JSON body.
- *
- * `isRecordLike` (`@mailwoman/core/objects`) is the shared predicate and does the actual test.
- * This only adapts its `input is object` narrowing into something indexable,
- * and answers `{}` for a non-record so a reader can chain without a guard at every step.
+ * Return an indexable record, or an empty object for other values.
  */
 function fields(value: unknown): Record<string, unknown> {
 	return isRecordLike(value) ? (value as Record<string, unknown>) : {}
@@ -228,14 +137,7 @@ function readString(value: unknown): string | null {
 }
 
 /**
- * A coordinate from either a JSON number or the decimal string Nominatim answers with,
- * range-checked by `@mailwoman/spatial`'s own bounds.
- *
- * Two traps, both closed by the validator rather than by a finiteness test.
- * `Number("")` is 0, so an empty string would otherwise become a point in the Gulf of Guinea.
- *
- * And a latitude past ±90 is what a transposed pair looks like, which a finite-number
- * check waves through and a distance metric then reports as an ordinary miss.
+ * Parse a numeric coordinate or Nominatim string and validate its geographic range.
  */
 function readCoordinate(value: unknown, isValid: (candidate: number) => boolean): number | null {
 	const parsed =
@@ -245,21 +147,9 @@ function readCoordinate(value: unknown, isValid: (candidate: number) => boolean)
 }
 
 /**
- * Top-1 out of a GeoJSON FeatureCollection — the shape Pelias and Photon share.
+ * Read the first GeoJSON feature only.
  *
- * Typed and validated through `@mailwoman/spatial` (`GeoFeatureCollection`, `isPointLiteral`)
- * rather than through either drop-in's own schema.
- * `@mailwoman/photon` and `@mailwoman/nominatim` do define the response shapes,
- * and reusing one here would have been the obvious economy, but this client exists to
- * measure an upstream engine, and parsing its answer through our reimplementation's idea
- * of the format would make it blind to exactly the divergences the comparison is for.
- *
- * RFC 7946 is shared ground.
- * A drop-in's schema is a claim under test.
- *
- * A feature whose geometry is not a point is a no-result with a reason rather than a skip to
- * the second feature: the protocol scores position one, and an engine that answered with an
- * unplaceable feature has said something different from an engine that answered with nothing.
+ * An unplaceable top feature is a miss, not a reason to inspect later results.
  */
 function readGeoJSONTop(body: unknown, typeKey: string): ExternalAnswer {
 	const features = (body as Partial<GeoFeatureCollection<unknown, Record<string, unknown>>> | null)?.features
@@ -281,9 +171,7 @@ function readGeoJSONTop(body: unknown, typeKey: string): ExternalAnswer {
 		return { lat: null, lon: null, label, resultType, noResultReason: "the top feature carried no point geometry" }
 	}
 
-	// GeoJSON orders a position [lon, lat].
-	// Reading it the other way round is the classic silent failure: it lands every result in the
-	// wrong hemisphere and still produces a plausible distance for anything near the equator.
+	// GeoJSON positions are ordered longitude, latitude.
 	const [lon, lat] = feature.geometry.coordinates
 
 	if (!isValidLatitude(lat) || !isValidLongitude(lon)) {
@@ -365,9 +253,7 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 }
 
 /**
- * Validate an endpoint and strip it to an origin plus path prefix.
- *
- * @throws When the URL is unparseable, is not http(S), or names a host that may never be scored.
+ * Validate an HTTP(S) endpoint and reject prohibited public hosts.
  */
 export function assertScorableEndpoint(endpoint: string): string {
 	let url: URL
@@ -396,13 +282,8 @@ export function assertScorableEndpoint(endpoint: string): string {
 }
 
 /**
- * One external geocoder, paced and bounded-retried, answering the pre-registered protocol and nothing else.
- *
- * Response caching is deliberately off.
- * Every other client in this repo caches because it is re-reading a slow remote index.
- *
- * Here the endpoint's answer is the measurement, and a cached one would be scored against
- * an identity probe taken now — reporting a vintage the number did not come from.
+ * Paced external geocoder client using the registered top-1 protocol.
+ * Responses are not cached.
  */
 export class ExternalGeocoderClient extends APIClient {
 	readonly engine: ExternalEngine
@@ -417,9 +298,7 @@ export class ExternalGeocoderClient extends APIClient {
 			...overrides,
 			axios: {
 				timeout: REQUEST_TIMEOUT_MS,
-				// Nominatim's usage policy requires a caller to identify itself, and a local
-				// rig inherits the upstream default configuration that enforces it.
-				// Sent to all three: no engine minds being told who is asking.
+				// Identify this client to every engine.
 				headers: { "User-Agent": "mailwoman-dev-mcp" },
 				...overrides.axios,
 			},
@@ -431,12 +310,8 @@ export class ExternalGeocoderClient extends APIClient {
 	}
 
 	/**
-	 * Top-1 for one raw query string.
-	 *
-	 * @throws On a transport or http failure that survived the retry ceiling.
-	 * Throwing rather than returning a no-result is what lets the caller separate "this
-	 * endpoint does not hold this address" from "this endpoint is gone". the second
-	 * must not be able to accumulate silently into a row of misses.
+	 * Return the top result for one raw query.
+	 * Throws if the endpoint remains unavailable.
 	 */
 	async search(query: string): Promise<ExternalAnswer> {
 		const response = await this.fetch<unknown>({ url: `${this.endpoint}${this.#protocol.searchPath(query)}` })
@@ -445,16 +320,8 @@ export class ExternalGeocoderClient extends APIClient {
 	}
 
 	/**
-	 * Ask the endpoint what it is, without scoring anything.
-	 *
-	 * Two requests: the engine's own status path, then one throwaway search.
-	 * Both are needed.
-	 *
-	 * The status path is where Nominatim keeps its data vintage and upstream Photon its import date.
-	 * The search envelope is where Pelias keeps its version.
-	 *
-	 * An endpoint that 404s the status path is not thereby broken — a compatible drop-in need not
-	 * implement it — but it is thereby unidentified, which the caller is told rather than left to assume.
+	 * Read endpoint identity from its status and search responses.
+	 * The probe query is not scored.
 	 */
 	async probeIdentity(declaredVersion?: string): Promise<ExternalArmIdentity> {
 		let statusBody: unknown
@@ -468,9 +335,7 @@ export class ExternalGeocoderClient extends APIClient {
 			statusHTTP = status.status
 			statusPath = this.#protocol.statusPath
 		} catch (error) {
-			// A status path that answers 404 is a fact about the implementation rather than
-			// about reachability, so the probe continues to the search path.
-			// Only a transport-class failure means "not up", and the search attempt below is what settles that.
+			// Continue to search even if the optional status path fails.
 			statusHTTP = readErrorStatus(error)
 		}
 
@@ -529,14 +394,11 @@ export class ExternalGeocoderClient extends APIClient {
 			version,
 			version_source: read.version === null ? "caller-declared" : "endpoint",
 			data_vintage: read.data_vintage,
-			// Neither is exposed by any of these APIs.
-			// Carried as explicit nulls because the benchmark plan's §7 names them as arm columns,
-			// and an absent key reads as unexamined rather than as unavailable.
+			// These engines do not expose these fields.
 			system_scope: null,
 			interpolation_enabled: null,
 			response_version: read.response_version,
-			// Always true by the time this is reached: a search path that did not answer threw above,
-			// because a search path that does not answer is the definition of an arm that cannot be scored.
+			// Search failures throw before identity is returned.
 			probe: { status_path: statusPath, status_http: statusHTTP, search_ok: true },
 			warnings,
 		}
@@ -561,8 +423,7 @@ function unreachableMessage(
 	return (
 		`External arm ${engine} at ${endpoint} did not answer its search path: ${reason}` +
 		(statusHTTP === null ? "" : ` (its status path answered HTTP ${statusHTTP})`) +
-		". This server does not start or stop external services — it gathers evidence and changes nothing another " +
-		"process reads. Bring the rig up yourself and re-run. " +
+		". This server does not start external services. Start the rig and retry. " +
 		(transient
 			? "The failure looks transport-class, so the likeliest cause is that nothing is listening on that port."
 			: "The failure is not transport-class, so the port is answering but not with this engine's API — check that " +

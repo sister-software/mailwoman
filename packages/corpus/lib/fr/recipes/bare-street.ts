@@ -3,21 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-bare-street` recipe (#251) — the postcode-anchoring-imbalance change. BAN (and every
- *   other comprehensive FR source) is postcode-complete, so the model learned the French
- *   street→locality boundary as "the token after the 5-digit postcode," never as "comma + city." Strip
- *   the postcode and it leaks the street's proper-noun tokens into the following locality ("Rue René
- *   Cassin, Paris" → street="Rue Ren", locality="Cassin"). This recipe mints the missing distribution:
- *   the bare comma form, no postcode, real `(street, number, city)` tuples from BAN (Licence Ouverte —
- *   permissive. the model stays clean of ODbL, unlike the opt-in OSM rooftop sources).
- *
- *   Each tuple → `<n> <Rue/Avenue/…> <proper-noun name>, <City>` with the FR prefix split
- *   ({@link decomposeFrStreet}: "Rue" → street_prefix, the rest → street). Tuples whose street carries
- *   no recognized FR type word are skipped. The failing class is precisely the prefix-led street.
- *
- *   ⚠ Convention loss-mask: this recipe teaches FR `street_prefix`. The conventions loss-mask forbids it
- *   for FR and will `-inf` these gold labels (the v1.6.0 ~7M-loss blow-up). Disable that mask for any
- *   run including this recipe's output.
+ *   Generate postcode-free French examples from BAN with separate street-prefix labels.
  */
 
 import { FR_VOIE_TYPES } from "@mailwoman/codex/fr"
@@ -29,8 +15,7 @@ import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
 /**
- * Real `(street, number, city)` triples from the Base Adresse Nationale,
- * written without the postcode the source carries.
+ * Shared provenance for postcode-free BAN rows.
  */
 const FR_BARE_STREET_PROVENANCE = {
 	register: SourceRegister.BaseAdresseNationale,
@@ -38,26 +23,19 @@ const FR_BARE_STREET_PROVENANCE = {
 }
 
 /**
- * Canonical voie type (lowercase, accent-kept) → its most common written abbreviation,
- * from the codex table's first entry.
- *
- * Types with no attested abbreviation stay canonical in the abbreviated form.
+ * First abbreviation listed for each street type.
  */
 const FR_VOIE_ABBREV: Record<string, string> = Object.fromEntries(
 	Object.entries(FR_VOIE_TYPES).flatMap(([canonical, abbrevs]) => (abbrevs[0] ? [[canonical, abbrevs[0]]] : []))
 )
 
 /**
- * The order-cycle slot for the bare-street-only form (`«voie» «name»`, no number, no locality) —
- * the absence counterweight to the locality-terminated comma-free forms (see the cycle comment).
+ * Index of the street-only form.
  */
 const BARE_STREET_ONLY_FORM = 3
 
 /**
- * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Register the French bare-street recipe.
  */
 export const frBareStreetRecipe: CorpusRecipe = {
 	name: "fr-bare-street",
@@ -65,8 +43,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 		"FR bare street+city, NO postcode (#251): comma / comma-free / abbreviated-voie surfaces over one label set",
 	mode: "tuples",
 	async run(opts, write) {
-		// Seeded for parity with the other recipes.
-		// Unused beyond reproducibility (the tuples drive the content).
+		// Preserve the recipe's seeded initialization.
 		makeMulberry32(opts.seed)
 		let read = 0
 		let emitted = 0
@@ -86,12 +63,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 
 			const { prefix, street } = decomposeFrStreet(fullStreet)
 
-			// A no-prefix nom_voie ("La Ville Mois") is not the prefix-led class the numbered
-			// forms exercise, but as a bare surface it is exactly the non-voie-led counterweight
-			// the v4.5.1 probe showed missing ('Savile Row'-shaped spans still fell to the
-			// trailing-locality prior. The voie-led bare form guarded only voie-led spans).
-			// Alternate rows emit the whole span as a bare street.
-			// The rest skip as before.
+			// Retain some multiword streets without a recognized type as counterexamples.
 			if (!prefix || !street) {
 				if (read % 2 === 0 && fullStreet.split(" ").length >= 2) {
 					const bare = {
@@ -124,19 +96,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Four surfaces over the same tuple, cycled deterministically.
-			// The comma form was the original change.
-			// The comma-free form is the colloquial register users actually type ('12 rue de Rome
-			// Paris' — the street↔locality boundary with no delimiter, the fr-fr panel's named loss);
-			// the abbreviated form is the typeahead register the geocoder-tester FR sample attests at scale.
-			// And the bare-street-only form is the absence counterweight.
-			// Without it, every delimiter-free surface in the mix ends in a locality,
-			// the model learns "trailing span = locality" as categorical, and bare street names
-			// across locales flip to locality wholesale (the v4.5.0 no-promote's measured erosion:
-			// 'Calle de Alcalá', 'Madison Square West', and comer's fork all fell to that prior).
-			// Tags are identical where present.
-			// Each component value is the span as written (BIO alignment binds value to surface);
-			// the bare form carries no number and no locality because the surface has neither.
+			// Rotate comma-separated, compact, abbreviated, and street-only variants.
 			const form = read % 4
 			const prefixSurface = form >= 2 ? (FR_VOIE_ABBREV[prefix.toLowerCase()] ?? prefix) : prefix
 
@@ -145,9 +105,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 					? { street_prefix: prefix, street }
 					: { house_number: number, street_prefix: prefixSurface, street, locality }
 
-			// When the tuple carries a WOF-attested neighbourhood, the comma slot renders
-			// the three-slot middle surface — the dependent-locality counterweight
-			// (the v4.5.1 erosion's untouched half: the two-slot comma-free endings squeezed the middle tag out).
+			// Include a neighborhood in the comma-separated form when available.
 			const hood = String(t.neighbourhood ?? "").trim()
 
 			if (form === 0 && hood) {

@@ -3,11 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #244 coarse-placer: a tiny always-resident linear classifier over hashed char-n-gram + script
- *   features ({@link featurize}). Maps an address string → a coarse country/region with a
- *   temperature-calibrated confidence, and abstains below a threshold ("probably off my loaded
- *   map") rather than emit a confident mis-placement. Pure + dependency-free — runs in node and the
- *   browser.
+ *   Lightweight country/region classifier using hashed character n-gram and script features.
+ *   Confidence is temperature-calibrated; low-confidence predictions can abstain. The module runs
+ *   in Node and browsers.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -20,22 +18,16 @@ export { COARSE_CLASSES, FEATURE_DIM, featurize } from "#coarse-placer/featurize
 
 export interface CoarsePlacerArtifact {
 	/**
-	 * The coarse placer's classes (the country/region codes it routes to).
+	 * Country or region labels predicted by the model.
 	 */
 	classes: readonly string[]
 	featureDim: number
 	/**
-	 * Temperature for confidence calibration (logits are divided by this before softmax).
+	 * Calibration temperature applied to logits before softmax.
 	 */
 	temperature: number
 	/**
-	 * Bias vector.
-	 *
-	 * The bias is the log-prior of each class (the model's belief before seeing any input).
-	 * The bias is learned during training, and the temperature is fit on the
-	 * validation set to calibrate the confidence.
-	 *
-	 * The bias is added to the weighted sum of features for each class before applying the softmax.
+	 * Per-class bias added to the feature scores before softmax.
 	 */
 	bias: number[]
 	/**
@@ -45,12 +37,10 @@ export interface CoarsePlacerArtifact {
 }
 
 /**
- * On-disk `meta.json` shape.
+ * Metadata stored beside model weights.
  *
- * The fp32 artifact omits `quantization`/`scales`; the int8 artifact
- * (from `scripts/coarse-placer/quantize.mjs`) sets `quantization: "int8-per-row"`
- * and carries one `scale` per class, so `weights.bin` can be a 4×-smaller
- * `Int8Array` dequantized as `int8 * scales[class]`.
+ * Int8 artifacts specify per-class scales and `quantization: "int8-per-row"`;
+ * fp32 artifacts omit those fields.
  */
 export interface CoarsePlacerMeta {
 	classes: string[]
@@ -59,17 +49,13 @@ export interface CoarsePlacerMeta {
 	bias: number[]
 	quantization?: "int8-per-row"
 	/**
-	 * Per-class dequantization scale.
-	 * Present iff `quantization === "int8-per-row"`.
+	 * Per-class scale, present for int8 weights.
 	 */
 	scales?: number[]
 }
 
 /**
- * Dequantize a per-row int8 weight matrix back to fp32: `W[c][i] = int8[c*dim + i] * scales[c]`.
- *
- * The predict path stays fp32 (identical math); quantization only shrinks the serialized/wire artifact.
- * Pure — usable in the browser loader too.
+ * Convert per-class int8 weights to fp32 using the class's scale.
  */
 export function dequantizeInt8Weights(
 	int8: Int8Array,
@@ -97,12 +83,7 @@ export function dequantizeInt8Weights(
 }
 
 /**
- * Read an artifact directory's `weights.bin` into a fresh `ArrayBuffer` — fp32
- * or int8, the caller picks the view.
- *
- * Copies out of the (possibly pooled, possibly mis-aligned) Buffer: `readFile` serves small
- * files out of a shared 8 KiB pool, so a typed-array view over `.buffer` alone would start
- * at the pool's origin and run its full length — the wrong floats, and 2048 of them.
+ * Read `weights.bin` into a buffer with the correct byte offset and length.
  */
 export async function readWeightsBin(dir: PathBuilderLike): Promise<ArrayBufferLike> {
 	const { PathBuilder } = await import("path-ts")
@@ -113,11 +94,11 @@ export async function readWeightsBin(dir: PathBuilderLike): Promise<ArrayBufferL
 
 export interface CoarsePrediction {
 	/**
-	 * The predicted class, or `null` when the model abstained (confidence below the threshold).
+	 * Predicted class, or `null` when confidence is below the threshold.
 	 */
 	country: string | null
 	/**
-	 * Calibrated probability of the top class (the abstention signal).
+	 * Calibrated confidence used by the abstention rule.
 	 */
 	confidence: number
 	abstained: boolean
@@ -128,12 +109,7 @@ export interface CoarsePrediction {
 }
 
 /**
- * With the explicit `other` class, an off-map input is handled when the model
- * routes it to `other` or abstains.
- *
- * Either way it is not a confident mis-placement onto a wrong (trained) country.
- *
- * The shared predicate of the off-map evals.
+ * Return whether an off-map input was routed to `OTHER` or rejected.
  */
 export function isOffMapHandled(prediction: CoarsePrediction): boolean {
 	return prediction.abstained || prediction.country === "OTHER"
@@ -141,27 +117,14 @@ export function isOffMapHandled(prediction: CoarsePrediction): boolean {
 
 export interface CoarsePlacerOpts {
 	/**
-	 * Abstain when the calibrated top-class confidence is below this (default 0.5).
+	 * Minimum confidence required to return a prediction.
+	 * Defaults to `0.5`.
 	 */
 	abstainBelow?: number
 	/**
-	 * Open-set reject rule (#244 M2).
-	 *
-	 * When `true`, the abstain decision uses the total IN-MAP probability mass `1 - P(other)`
-	 * instead of the single top-class prob, and a keep routes to the argmax IN-MAP class (never `other`).
-	 * This decouples "is it in-map at all?"
-	 *
-	 * (the reject question) from "which country?"
-	 * (the routing question).
-	 *
-	 * So a clearly-in-map-but-country-ambiguous address (mass split across several in-map countries)
-	 * is kept rather than wrongly rejected.
-	 * It clears the 90/90 the default max-prob rule cannot (post-hoc, no retrain: heldout-family
-	 * generalization 89→91 — see docs/articles/evals/resolver-geo/2026-06-14-coarse-placer-m2-openset.md).
-	 *
-	 * The returned `confidence` becomes the routed in-map country's marginal
-	 * probability (the soft-prior posterior weight).
-	 * Default `false` = the M1 max-prob rule (byte-stable. Can still return `other`).
+	 * Reject using total in-map probability rather than the top-class probability,
+	 * then route to the highest-probability in-map class.
+	 * Defaults to `false`.
 	 */
 	openSet?: boolean
 }
@@ -191,12 +154,8 @@ export class CoarsePlacer {
 	}
 
 	/**
-	 * Load a placer from an artifact directory holding `meta.json` + `weights.bin`
-	 * (the layout `scripts/coarse-placer/train.mjs` and `quantize.mjs` write).
-	 *
-	 * Handles both the fp32 artifact (`weights.bin` is a `Float32Array`) and the int8 artifact
-	 * (`meta.quantization === "int8-per-row"`, `weights.bin` is an `Int8Array` dequantized via `meta.scales`).
-	 * Node-only — the `node:` imports are dynamic so bundling the class for the browser doesn't pull them in.
+	 * Load fp32 or per-row int8 weights from an artifact directory.
+	 * This method is Node-only.
 	 */
 	static async fromArtifactDir(dir: PathBuilderLike, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
 		const { PathBuilder } = await import("path-ts")
@@ -218,14 +177,7 @@ export class CoarsePlacer {
 	}
 
 	/**
-	 * Load the int8 model bundled in `@mailwoman/core` (`core/data/coarse-placer/`).
-	 *
-	 * Node-only — uses the package path builder (the #481-corrected `__isCompiledTree` makes
-	 * this resolve to the shipped `data/` in source, compiled, and installed-package layouts).
-	 * Override the directory with `$MAILWOMAN_COARSE_PLACER_DIR`.
-	 *
-	 * Callers set `abstainBelow` per their use (the soft-country-prior wiring passes 0.9 —
-	 * see docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md).
+	 * Load the bundled model, or use `$MAILWOMAN_COARSE_PLACER_DIR` to select another artifact.
 	 */
 	static async fromBundled(opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
 		const dir = $public.MAILWOMAN_COARSE_PLACER_DIR
@@ -252,10 +204,7 @@ export class CoarsePlacer {
 			logits[c] = s / this.#temp
 		}
 
-		// Numerically-stable softmax, kept inline rather than routed through `softmaxInto`: the fp32
-		// `probs` buffer rounds each exponent before the lazy divide below, so `p` is `f32(exp)/f64(sum)`.
-		// A float path a normalizing helper cannot reproduce, and this is the
-		// inference path whose bytes are interface.
+		// Preserve the fp32 exponent rounding used by the inference path.
 		let maxLogit = -Infinity
 
 		for (let c = 0; c < C; c++)
@@ -275,7 +224,7 @@ export class CoarsePlacer {
 		let topIdx = 0
 		let topProb = -1
 		let otherProb = 0
-		// argmax + prob over the in-map classes only (excludes `other`) — used by the open-set rule.
+		// Track the highest-probability class other than `OTHER`.
 		let inMapIdx = -1
 		let inMapProb = -1
 		const distribution: Record<string, number> = {}
@@ -297,9 +246,7 @@ export class CoarsePlacer {
 			}
 		}
 
-		// Open-set rule (#244 M2): reject on total in-map mass, route on the in-map argmax.
-		// Decouples "is it in-map?" from "which country?".
-		// The posterior weight is the routed country's marginal.
+		// Open-set mode rejects on total in-map mass and routes to the in-map argmax.
 		if (this.#openSet) {
 			const inMapMass = 1 - otherProb
 			const abstained = inMapMass < this.#threshold
@@ -324,37 +271,17 @@ export class CoarsePlacer {
 }
 
 /**
- * The coarse placer's country posterior, shaped for the resolver: a per-country probability
- * map like `{GB: 0.8, FR: 0.06}` — "given this address text, how likely is each country?"
+ * Return the unnormalized probabilities for all in-map classes, or `null`
+ * when prediction abstains or selects `OTHER`.
  *
- * ("posterior" in the Bayesian sense: the model's belief after seeing the input. See the glossary).
- * Every in-map class except `other` is included.
- *
- * Returns `null` when the model abstained or routed off-map.
- * The resolver consumes it as `anchorPosterior`: each candidate's rank gains
- * `anchorWeight × posterior[candidate.country]`, so every plausible country is boosted
- * proportionally, and country-ambiguous inputs (mass split DK↔no) let the resolver's own place
- * evidence break the tie — strictly more informative than committing to the single argmax.
- *
- * Values are raw marginals in [0, 1] (un-renormalized. They sum to the in-map mass `1 − P(other)`),
- * matching the one-hot `confidence` scale so `anchorWeight` needs no retuning.
+ * The resolver can use the distribution to rank candidates across countries.
  */
 export function inMapPosterior(
 	prediction: CoarsePrediction,
 	opts?: {
 		/**
-		 * Epsilon floor (see the glossary): drop countries whose probability falls below this cutoff
-		 * before the resolver sees the posterior, so implausible tails cannot influence ranking.
-		 *
-		 * Domain [0, 1]: `0` (the default) passes the full distribution through unchanged.
-		 * Raising it keeps only stronger beliefs — at the extreme only the argmax survives (a one-hot).
-		 *
-		 * The default is 0 deliberately: the #928 investigation swept 0.05–0.30
-		 * against the misroute battery and every value was byte-identical
-		 * (the drift's real cause was the anchor re-rank's score key, fixed separately) — no nonzero
-		 * default has a measured basis, and the shipped distribution interface stays byte-identical.
-		 *
-		 * The knob exists for distribution-mode experiments (`--posterior-floor` on the misroute eval).
+		 * Exclude classes below this probability.
+		 * Defaults to `0`, which preserves the full distribution.
 		 */
 		epsilonFloor?: number
 	}
@@ -369,8 +296,7 @@ export function inMapPosterior(
 		}
 	}
 
-	// The argmax always survives (it is ≥ every other marginal. If even it fell below the floor the
-	// prediction would have abstained upstream), but guard anyway so the posterior is never empty.
+	// Preserve a non-empty result if all classes were filtered.
 	if (!Object.keys(posterior).length) {
 		posterior[prediction.country] = prediction.confidence
 	}
@@ -379,7 +305,7 @@ export function inMapPosterior(
 }
 
 /**
- * Load a coarse-placer from a JSON metadata file + a sibling `.weights.bin` (Float32).
+ * Build a coarse placer from metadata and fp32 weights.
  */
 export async function loadCoarsePlacer(
 	metaJson: { classes: string[]; featureDim: number; temperature: number; bias: number[] },

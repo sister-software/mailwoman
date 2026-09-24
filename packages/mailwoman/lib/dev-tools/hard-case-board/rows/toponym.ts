@@ -3,28 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The hard-case board's toponym-register rows — inputs whose difficulty is the name rather than the shape.
- *
- *   The four classes here are the ways one surface can mean several places, ordered by what decides:
- *
- *   - `homonym_confound` — a trailing region determines the result (#267/#833/#905).
- *   - `bare_namesake` — nothing determines the result but ranking. the answer has to be dominant enough to pin.
- *   - `wiki_pop_conflict` — population and encyclopedic importance pick different bearers, so the row is
- *       the disagreement itself. Saint-Denis is the canonical member.
- *   - `street_head_control` — the surface is a toponym in street-head position and must not be pulled to
- *       locality (#1142). These are the arm comparison's cost side: where a bigger bias is dangerous.
- *
- *   The shape-driven half lives in `rows/index.ts`; both are concatenated by the builder.
+ *   Toponym cases where names, rather than address structure, create ambiguity. Classes cover contextual homonyms,
+ *   bare namesakes, ranking conflicts, and toponyms appearing as street heads.
  */
 
 import { ADMIN_TOL, CITY_TOL, type Curated } from "#dev-tools/hard-case-board/rows/index"
 
 /**
- * See the file header — the four toponym-ambiguity classes, grouped by what disambiguates them.
+ * Curated toponym cases grouped by ambiguity type.
  */
 export const TOPONYM_ROWS: Curated[] = [
 	//#region homonym_confound
-	// The #267/#833/#905 lineage, region-abbreviated form.
+	// Region-abbreviation homonyms.
 	{
 		id: "us-hc-portland-maine",
 		input: "Portland, ME",
@@ -121,7 +111,7 @@ export const TOPONYM_ROWS: Curated[] = [
 	//#endregion
 
 	//#region bare_namesake
-	// A bare toponym whose referential answer is dominant enough to pin.
+	// Bare namesakes with a pinned referential answer.
 	{
 		id: "fr-bn-bordeaux",
 		input: "Bordeaux",
@@ -301,7 +291,7 @@ export const TOPONYM_ROWS: Curated[] = [
 	//#endregion
 
 	//#region wiki_pop_conflict
-	// The two scorings disagree, and the disagreement is the row.
+	// Cases where population and importance rankings disagree.
 	{
 		id: "fr-wpc-saint-denis-suburb",
 		input: "Saint-Denis",
@@ -383,10 +373,7 @@ export const TOPONYM_ROWS: Curated[] = [
 	//#endregion
 
 	//#region street_head_control
-	// A toponym in street-head position. The bias must not pull it to locality.
-	// #1142's measured failure mode: real gazetteer importance dragged the leading token of a comma-free
-	// street into `locality` ("Sweeney Ranch Road" → loc "Sweeney"), costing US golden 22 points. These rows
-	// are where a bigger bias is dangerous, so they are the arm comparison's cost side.
+	// Street-head controls ensure name bias does not misclassify a street token as locality.
 	{
 		id: "us-shc-sweeney-ranch-road",
 		input: "1000 Sweeney Ranch Road Half Moon Bay CA",

@@ -3,13 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/ban` SDK — the Base Adresse Nationale ingestion surface. permissive code only: this
- *   workspace contains no BAN data bytes. It reads the open `adresses-<dept>.csv` dumps
- *   (adresse.data.gouv.fr) and writes a national FR rooftop address-point extract on the shared situs
- *   schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`). BAN is published under the Licence
- *   Ouverte / Etalab (attribution, no share-alike), so — unlike the ODbL OSM tier — the built extract
- *   ships under the same terms as the permissive core. only the per-row attribution obligation rides
- *   on it. See `ban/readme.md` for the licensing boundary.
+ * BAN ingestion code reads open département CSVs and builds French rooftop address-point extracts
+ * using the shared situs schema. The workspace contains no BAN data. The source uses Licence Ouverte
+ * / Etalab; published results must retain the required row attribution. See `ban/readme.md` for details.
  */
 
 export * from "#sdk/fetch"

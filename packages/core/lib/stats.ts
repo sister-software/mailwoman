@@ -3,13 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Statistical helpers using nearest-rank percentiles.
+ *   Statistical helpers for percentiles, averages, and percentages.
  */
 
 /**
- * Nearest-rank percentile over an unsorted sample; `null` on an empty sample.
- *
- * `p` in [0, 100].
+ * Return the nearest-rank percentile for `p` in [0, 100], or `null` for an empty sample.
  */
 export function percentile(xs: readonly number[], p: number): number | null {
 	if (!xs.length) return null
@@ -19,17 +17,16 @@ export function percentile(xs: readonly number[], p: number): number | null {
 }
 
 /**
- * `percentile(xs, 50)`.
+ * Return the median using the nearest-rank percentile rule.
  */
 export function median(xs: readonly number[]): number | null {
 	return percentile(xs, 50)
 }
 
 /**
- * Format `numerator / denominator` as a fixed-digit percentage (`"12.5%"`).
+ * Format a ratio as a percentage.
  *
- * A zero denominator renders the absence marker `"—"` by default; `zero: "clamp"` divides by 1
- * instead, for reports where an empty bucket should read `"0%"` rather than as an absence.
+ * A zero denominator renders `"—"` unless `zero` is `"clamp"`.
  */
 export function formatPercent(
 	numerator: number,
@@ -47,7 +44,7 @@ export function formatPercent(
 }
 
 /**
- * The arithmetic mean, or null for an empty list — the same absence convention as {@link percentile}.
+ * Return the arithmetic mean, or `null` for an empty list.
  */
 export function mean(xs: readonly number[]): number | null {
 	if (!xs.length) return null
@@ -56,9 +53,7 @@ export function mean(xs: readonly number[]): number | null {
 }
 
 /**
- * {@link percentile} over an already-sorted ascending list.
- *
- * Same nearest-rank convention, no copy, for the callers that sort once and read many percentiles.
+ * Return a nearest-rank percentile from an ascending list without copying it.
  */
 export function percentileSorted(sorted: readonly number[], p: number): number | null {
 	if (!sorted.length) return null

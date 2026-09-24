@@ -3,40 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   How often does the decoded tree violate its own structural interface?
- *
- *   `validateTree` states two invariants a tree can settle about itself — no illegal parent edge, no strict dependent
- *   left without an anchor. A parse can satisfy every asserted component and break both: the orphan fragments are
- *   invisible to any outcome test, because a component-match harness never looks at the edges. This asks the question
- *   at board scale — which classes fire, on what, and which never fire at all.
- *
- *   `mwdev_census` is the model for the discipline and this is its sibling one layer over: the census asks whether a
- *   parse-path operations signal on any row, this asks whether a decoder interface check fails on any row. Both refuse to
- *   let a zero stand unexplained.
- *
- *   **A zero means opposite things for the two checks, and blending them is the trap.** `illegal-edge` is enforced by
- *   `build-tree.ts` at construction, so zero is the designed state and any nonzero count is a regression in the
- *   builder. `stranded-dependent` is a real model behaviour, so zero there is ambiguous until you know whether the tag
- *   appeared at all — a `cedex` stranding count of 0 on a US-heavy board says nothing about stranding if no row ever
- *   produced a `cedex`. So the report carries tag presence beside every stranding count, and the two are never summed.
+ *   Count structural violations in decoded trees. Illegal parent edges are builder defects; stranded
+ *   dependent tags are model behavior, so their counts are reported alongside tag presence.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { STRICT_DEPENDENTS, validateTree, type AddressTree, type TreeViolation } from "@mailwoman/core/decoder"
 
 /**
- * The tag this violation is about, and the class it belongs to — the key a tally groups on.
+ * Return the grouping key for a violation.
  */
 export function violationKey(violation: TreeViolation): string {
 	return `${violation.type}:${violation.tag}`
 }
 
 /**
- * Addresses kept per violation class.
- *
- * Enough to see whether a class is one recurring shape or several unrelated ones,
- * which is the distinction that decides whether it is a single defect.
- * The full list is recoverable by re-running against a filtered input set.
+ * Example rows retained per violation class.
  */
 const EXAMPLES_PER_CLASS = 5
 
@@ -45,8 +27,7 @@ export interface ViolationClass {
 	tag: string
 	n: number
 	/**
-	 * Rows that produced it, with the offending value, so a count leads back to an address
-	 * rather than stopping at a number.
+	 * Example inputs and offending values for this class.
 	 */
 	examples: { id: string; input: string; value: string; detail: string }[]
 }
@@ -54,16 +35,12 @@ export interface ViolationClass {
 export interface StrandingReading {
 	tag: string
 	/**
-	 * Rows whose parse produced this tag AT all.
-	 *
-	 * The denominator that makes the stranding count readable: 0 stranded out of 0
-	 * produced is not a measurement of the model's stranding behaviour.
+	 * Rows whose parse produced this tag; denominator for the stranding rate.
 	 */
 	produced_on_rows: number
 	stranded: number
 	/**
-	 * `null` when the tag never appeared — a rate over an empty denominator,
-	 * stated as absent rather than as 0.
+	 * `null` when the tag was never produced.
 	 */
 	stranding_rate: number | null
 }
@@ -73,13 +50,11 @@ export interface InterfaceCensus {
 	rows_violating: number
 	classes: ViolationClass[]
 	/**
-	 * Every strict dependent, whether or not it fired — the check's full denominator.
+	 * All strict dependent tags, including those never produced.
 	 */
 	stranding: StrandingReading[]
 	/**
-	 * Tags that never appeared in any parse, so their stranding count carries no information.
-	 *
-	 * Named because the alternative is a table of zeros a reader will read as a clean bill of health.
+	 * Tags absent from all evaluated parses; their stranding rates are unmeasured.
 	 */
 	never_produced: string[]
 	illegal_edges: {
@@ -95,9 +70,7 @@ export interface DuplicateTagClass {
 	tag: ComponentTag
 	topology: DuplicateTagTopology
 	/**
-	 * Rows rather than node pairs.
-	 *
-	 * One pathological tree contributes at most once to this class.
+	 * Number of rows containing this duplicate topology.
 	 */
 	n: number
 	examples: { id: string; input: string; values: string[] }[]
@@ -105,15 +78,15 @@ export interface DuplicateTagClass {
 
 export interface DuplicateTagCensus {
 	/**
-	 * Rows containing two or more nodes with the same component tag.
+	 * Rows containing duplicate component tags.
 	 */
 	rows: number
 	/**
-	 * `rows / InterfaceCensus.n_evaluated`; null when no tree was evaluated.
+	 * Fraction of evaluated rows with duplicate tags, or `null` when none were evaluated.
 	 */
 	rate: number | null
 	/**
-	 * Complete topology inventory, including zero-event classes.
+	 * Counts for every topology, including zero counts.
 	 */
 	topologies: { topology: DuplicateTagTopology; rows: number }[]
 	classes: DuplicateTagClass[]
@@ -128,10 +101,7 @@ export interface InterfaceRow {
 }
 
 /**
- * Tally one corpus of already-parsed trees.
- *
- * Takes trees rather than inputs so the walk is pure and testable.
- * The parse is the caller's, and the cost of a warm engine is not this function's concern.
+ * Tally violations and duplicate tags across pre-parsed rows.
  */
 export function censusTrees(rows: readonly InterfaceRow[]): InterfaceCensus {
 	const classes = new Map<string, ViolationClass>()
@@ -258,12 +228,7 @@ interface TaggedNode {
 }
 
 /**
- * Classify every repeated tag by the relationships among its nodes.
- *
- * A row may enter more than one topology for one tag: three nodes can contain a
- * nested pair while the third sits on a separate branch.
- * Counts stay row-based within each `(tag, topology)` class, so pair multiplication
- * cannot inflate the result.
+ * Classify repeated tags by sibling, nested, or separate-branch relationships.
  */
 function duplicateTagTopologies(tree: AddressTree): Map<ComponentTag, Map<DuplicateTagTopology, string[]>> {
 	const nodes: TaggedNode[] = []

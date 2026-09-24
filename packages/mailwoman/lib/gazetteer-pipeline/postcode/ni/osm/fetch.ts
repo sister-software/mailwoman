@@ -3,33 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Northern Ireland `BT` postcode acquisition from **OpenStreetMap**, via one Overpass query.
- *
- *   This is option (b) of the three `NORTHERN_IRELAND_OPTIONS_NOTE` (in `../codepoint/fetch.ts`) lays
- *   out for the `BT` hole that Code-Point Open leaves and that no OGL source can fill. Option (a) is
- *   licensing LPS Pointer at ~£9,224. option (c) — ship nothing — is what the GB database does today. (b)
- *   is partial and ODbL, so it lands at the **build-local tier**: this machine builds it, it never
- *   enters an npm tarball, and `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered, which is the
- *   build-local mechanism. Same posture as `poi.db` and `@mailwoman/osm`.
- *
- *   ## Why one query, saved verbatim
- *
- *   Overpass is a volunteer-run public endpoint with a published fair-use policy. The acquisition is a
- *   single request whose response is written to a dated directory and never re-fetched. every later
- *   build reads that file. So the reproducibility artifact is the response rather than the query — a rebuilt
- *   database from the same `response.json` is byte-comparable, while a re-query against a live OSM would
- *   not be (OSM changes hourly, and that is a feature of the source rather than a defect of the build).
- *
- *   ## Why not `@mailwoman/poi-taxonomy`'s emitter
- *
- *   `emitOverpassQL` renders a query from a POI intent (a category/brand/name subject plus an anchor).
- *   This query has no subject. It is a bounding box plus a tag regex — so the emitter has nothing to
- *   emit from. The query text is a constant here, which is also what makes it hashable into provenance.
- *
- *   ## Licence
- *
- *   ODbL 1.0, share-alike on a Derived Database. The attribution is mandatory and rides in the database's
- *   own `meta` table. see {@link OSM_ATTRIBUTION} and {@link NI_OSM_BUILD_LOCAL_NOTE}.
+ *   Acquire Northern Ireland BT postcodes from OpenStreetMap with one Overpass query.
+ *   Save the response verbatim in a dated directory for reproducible builds.
+ *   The ODbL database is build-local and must not be published; attribution is embedded in its metadata.
  */
 
 import { APIClient } from "@mailwoman/core/api"

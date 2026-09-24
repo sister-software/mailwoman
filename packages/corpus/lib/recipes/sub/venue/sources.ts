@@ -3,26 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The read half of the `sub-venue` recipe (#35 step 4): which surfaces a locale may emit,
- *   what identifier follows them in that region, and which real names become the confound negatives.
- *   `sub-venue.ts` owns the write half (line rendering + the emit loop) and the recipe registration.
- *   split because the two halves together run past the 750-line file cap, and this is the split. One
- *   side reads disk and the ledger, the other side never touches either.
- *
- *   Every rule in this file is a rule about evidence, and each one has a measurement behind it:
- *
- *   - {@link promotedSurfacesFor} — a promotion names a designator, a phrase and a locale, because the
- *       same token is a designator in one language and a disaster in another (`hall` is 0-of-3,273 in
- *       Great Britain and 35-of-40 in France).
- *   - {@link hasPromotedShape} — an `identifier-required` promotion is exercised only as
- *       `<phrase> <identifier>`. The de-DE `halle` board is the founding case: its 168-hit confound
- *       includes the city Halle (Saale), and only the identifier-containing shape separates them.
- *   - {@link buildIdentifierModel} — the identifier distribution is measured per region, because it
- *       differs by country far more than the shared vocabulary suggests (GB gates 71% bare digit, ES
- *       35% ranges).
- *   - {@link isVenueSlotName} / {@link isSignIdentifier} — the filters that keep bus-stop codes, route
- *       descriptions and street names out of the slots they would mislabel. Both were written from
- *       smoke output rather than predicted. the docstrings name the strings that produced them.
+ *   Locale-specific vocabulary, identifier rules, and source pools for `sub-venue`.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -45,16 +26,14 @@ import {
 //#region Lexicon
 
 /**
- * The committed lexicon, resolved through the package manifest.
+ * Resolve the packaged lexicon path.
  */
 export function defaultLexiconPath(): string {
 	return resolveModulePath("@mailwoman/corpus/data/sub-venue-lexicon.json")
 }
 
 /**
- * Read and parse the lexicon.
- *
- * Strict: a corrupt lexicon is a build failure rather than a fallback.
+ * Read the lexicon; invalid JSON fails the build.
  */
 export async function readSubVenueLexicon(path: string = defaultLexiconPath()): Promise<SubVenueLexiconTable> {
 	return await readLocalJSONFile<SubVenueLexiconTable>(path)
@@ -65,68 +44,39 @@ export async function readSubVenueLexicon(path: string = defaultLexiconPath()): 
 //#region Name filters
 
 /**
- * Longest venue name kept for the venue slot.
- *
- * The extracts carry a tail of route descriptions and junction names
- * ("Furnival Gate/Moorhead MH2", "speke hall road/hillfoot AVE") that are not venue names at all.
- * A length cap plus {@link isCleanName} removes the bulk of them without a hand list.
+ * Maximum venue-name length; longer values are likely descriptions.
  */
 const MAX_VENUE_NAME_LENGTH = 44
 
 /**
- * Shortest kept name.
- *
- * Below four characters a "name" is an airport code or a platform letter
- * rather than something that can stand in a venue slot.
+ * Minimum venue-name length.
  */
 const MIN_NAME_LENGTH = 4
 
 /**
- * Longest attested sub-venue string, in whitespace tokens.
- *
- * `Terminal 1 Flugsteig B` is four and real.
- * Anything longer is a venue's own name that happens to contain a designator.
+ * Maximum token count for attested sub-venue names.
  */
 const MAX_ATTESTED_TOKENS = 4
 
 /**
- * Reject a name that is a route description, a junction, or a code rather than a name:
- * embedded `/`, `;`, `,`, `:`, parentheses, no letters, or a bare source code.
- *
- * Measured motivation rather than taste.
- * The GB extract's `platform` tier contributes 7,549 `other`-shaped names like
- * `kntgwdgj` and `speke hall road/hillfoot AVE`.
+ * Reject names with route punctuation, no letters, or a single lowercase code.
  */
 export function isCleanName(name: string): boolean {
 	if (name.length < MIN_NAME_LENGTH || name.length > MAX_VENUE_NAME_LENGTH) return false
 
-	// A colon in a name is a qualifier rather than part of it — "Porte 4 : Ferrys", "Derby College: Ilkeston Campus".
+	// Reject punctuation used to separate route qualifiers.
 	if (/[/;,:()[\]<>|]/.test(name)) return false
 
 	if (!/\p{L}/u.test(name)) return false
 
-	// A name that is all lower-case with no space is a source code (`kntgwdgj`), not a name.
+	// Reject lowercase single-token codes.
 	if (!name.includes(" ") && name === name.toLowerCase()) return false
 
 	return true
 }
 
 /**
- * Head words that make a "name" something other than a venue name, checked on the first token.
- *
- * Two populations, both found by reading the 2026-08-05 smoke output rather than predicted:
- *
- * - **Street types.** A bus stop is routinely named after the street it stands on,
- *   so the FR extract offers `Rue de la Porte Bergault` as a `porte` confound.
- *   It is a confound, but it is a street, and putting it in the venue slot would train
- *   `Rue …` as a venue name — trading one mislabel for another.
- * - **Stop qualifiers.** British stop names carry a position prefix
- *   (`opposite bricklehampton hall`, `ADJ the green`) that names a relationship rather than a place.
- *
- * Per-language and short on purpose: this is a head-token filter over four Latin
- * languages rather than a street-type gazetteer.
- * `@mailwoman/corpus` cannot reach the shipped street-type lexicon (it lives behind the gazetteer build),
- * and a longer list here would be a second, drifting copy of it.
+ * Leading words that indicate street types or stop descriptions.
  */
 const NON_VENUE_HEAD_WORDS: ReadonlySet<string> = new Set([
 	// en
@@ -173,16 +123,7 @@ const NON_VENUE_HEAD_WORDS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Street types that appear at the end of an anglophone street name, checked on the last token.
- *
- * The head-word filter cannot see these.
- * English streets are `<name> <type>`, so `Strawberry Hall Lane` and `Guinea Hall Mews`
- * reached the venue slot in the second smoke and would have trained a street as a venue name.
- *
- * The street-side confound already has its own class (`designator-street`), drawn from
- * real (street, locality, postcode) pairings, so nothing is lost by refusing these here.
- * German is suffix-compounded rather than suffix-worded and is handled by
- * {@link GERMAN_STREET_TAIL} instead.
+ * English street-type words rejected at the end of names.
  */
 const STREET_TAIL_WORDS: ReadonlySet<string> = new Set([
 	"street",
@@ -208,7 +149,7 @@ const STREET_TAIL_WORDS: ReadonlySet<string> = new Set([
 const GERMAN_STREET_TAIL = /(?:straße|strasse|weg|platz|gasse|allee|ring|damm)$/
 
 /**
- * Is this name usable as a venue-slot string (positive venue or negative confound venue)?
+ * Check whether a name can fill the venue slot.
  */
 export function isVenueSlotName(name: string): boolean {
 	if (!isCleanName(name)) return false
@@ -227,13 +168,13 @@ export function isVenueSlotName(name: string): boolean {
 //#region Promotions
 
 /**
- * A (designator, surface) pair usable in one locale, with the shape constraint the ledger attached to it.
+ * Locale-specific designator and surface, with its shape constraints.
  */
 export interface PromotedSurface {
 	designatorID: string
 	phrase: string
 	/**
-	 * Rendering form — the phrase title-cased, which is how a sign writes it.
+	 * Title-cased rendering form.
 	 */
 	surface: string
 	identifierRequired: boolean
@@ -241,21 +182,14 @@ export interface PromotedSurface {
 }
 
 /**
- * Title-case a designator phrase for rendering (`flugsteig` → `Flugsteig`).
- *
- * Single-token by construction: every promoted phrase in the ledger is one word.
+ * Title-case a single-token designator phrase for rendering.
  */
 export function titleCase(phrase: string): string {
 	return phrase.charAt(0).toUpperCase() + phrase.slice(1)
 }
 
 /**
- * Word-boundary containment, script-aware enough for the Latin legs this recipe runs.
- *
- * The boundary matters: without it `gate` matches Briggate and `wing` matches Wingate,
- * which is how a harvest teaches itself that a Yorkshire street is a sub-venue.
- * (The lexicon's own harvest applies the same rule, and it drops the boundary only
- * for Han/Kana, which has no word boundaries and no leg here.)
+ * Match phrases at word boundaries, avoiding cases such as `gate` in `Briggate`.
  */
 export function containsPhrase(lowerName: string, phrase: string): boolean {
 	let from = 0
@@ -273,11 +207,9 @@ export function containsPhrase(lowerName: string, phrase: string): boolean {
 }
 
 /**
- * Identifier-shape classes a sub-venue string may sample.
+ * Identifier shapes suitable for sampling.
  *
- * `other` is excluded: it is the junk bucket the lexicon's own examples advertise —
- * `C15/C15A+C15B`, `Segelflug Start 06`, `152, 240`, `de.05374048.drabenderhoehezeithstrasse`.
- * Everything else is a real identifier register.
+ * Exclude the `other` bucket, which contains malformed or unrelated codes.
  */
 const USABLE_IDENTIFIER_SHAPES: ReadonlySet<string> = new Set([
 	"digit",
@@ -288,25 +220,16 @@ const USABLE_IDENTIFIER_SHAPES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * One atom of a sign identifier: a short number (`5`, `205`), a single letter (`B`),
- * a letter-then-number (`A12`, `B05`), or a number-then-letter (`2F`, `4S`).
+ * Sign identifier atom: a short number, one letter, letter-number, or number-letter.
  *
- * The **single** leading letter is the required part, and it is what the third smoke found.
- * A letter-digit ref with a multi-letter prefix is not an identifier read off a sign,
- * it is a network code: the lexicon's own examples of that shape are `BS04`, `BS07`,
- * `PWP2`, `WSW3687`, `RQ8` — campus and platform codes — and the GB extract offers
- * `Arundel Gate AG1` … `AG124`, fourteen bus stops on a Sheffield street called
- * Arundel Gate whose stop codes begin with its initials.
- *
- * Admitting two-letter prefixes put all fourteen in the attested pool as `unit`.
+ * Multi-letter prefixes are excluded because they commonly encode network
+ * or campus codes rather than visible sign identifiers.
  */
 const SIGN_IDENTIFIER_ATOM = /^(?:[0-9]{1,3}|[A-Za-z]|[A-Za-z][0-9]{1,3}|[0-9]{1,3}[A-Za-z]{1,2})$/
 
 /**
- * Is `value` what a sub-venue identifier looks like on a sign — an atom, or a range of two?
- *
- * Applied on top of {@link USABLE_IDENTIFIER_SHAPES}, which classifies but does not bound:
- * `WSW3687` classifies as `letter-digit` and is a station code.
+ * Check whether a value is a sign identifier or a range of two; shape
+ * classification alone does not validate it.
  */
 export function isSignIdentifier(value: string): boolean {
 	const parts = value.split(/[/-]/)
@@ -317,20 +240,10 @@ export function isSignIdentifier(value: string): boolean {
 }
 
 /**
- * Does a real extract name exercise `promoted` in one of the two shapes this recipe teaches?
+ * Check whether an extract name matches an allowed promoted shape: `<phrase> <identifier>`,
+ * or an eligible English `<modifier> <phrase>`.
  *
- * Only `<phrase> <identifier>` and (English legs) `<modifier> <phrase>` qualify.
- * That is stricter than "contains the phrase", and the 2026-08-05 smoke is why:
- * the loose test put `Glasgow Clyde College - Langside Campus`, `Terminal de Ferry de Bilbao`
- * and — worst — `Halle Wohnstadt Nord` into the attested pool, the last of which is a
- * bare German `Halle` wearing a name where the ledger requires an identifier.
- *
- * A whole venue's name is not a sub-venue string, and an attested string that violates
- * the promotion's own shape constraint is not attestation of it.
- *
- * The follower is checked with {@link classifyIdentifier} plus {@link isSignIdentifier}
- * rather than "any following word": `Wohnstadt` is a word, `8` is an identifier,
- * and the de-DE board turns on exactly that difference.
+ * A phrase mention alone does not attest a sub-venue; validate its follower as an identifier.
  */
 export function hasPromotedShape(
 	lowerName: string,
@@ -356,13 +269,7 @@ export function hasPromotedShape(
 }
 
 /**
- * {@link hasPromotedShape} plus the length cap that makes a string usable AS a sub-venue span.
- *
- * The two are separate because the difference decides which pool a name lands in.
- *
- * `navette n2 vers terminal 2g` carries the promoted shape and is five tokens: too long to be a
- * sub-venue string, and disqualified from being a negative precisely because it does contain the shape.
- * It belongs to neither pool, and only splitting the test says so.
+ * Match a promoted shape and enforce the maximum sub-venue token count.
  */
 export function matchesPromotedShape(
 	lowerName: string,
@@ -376,18 +283,10 @@ export function matchesPromotedShape(
 }
 
 /**
- * The surfaces a locale may emit as `unit`.
+ * Return locale-eligible `unit` surfaces.
  *
- * Two inputs, and the difference between them is the advisory/binding split the ledger's docstring names:
- *
- * - The shipped English vocabulary (`neural/venue-structure.ts`, re-declared in the
- *   lexicon as `shipped: true`) is a flat English list with no locale gate.
- *   It is promoted-by-shipping for the English legs, because the span proposer fires
- *   on it there today and the eval board's target cases are drawn from it.
- * - {@link SUBVENUE_PROMOTIONS} adds the localized surfaces and subtracts the rejections.
- *   A rejection of a shipped designator cannot un-ship it
- *   (nothing here stops the proposer firing on "Red Wing"), but it absolutely stops this
- *   recipe generating a positive: en-US `wing` produces negatives instead.
+ * English uses shipped designators; promotions add localized forms and rejections
+ * prevent this recipe from generating positives for rejected terms.
  */
 export function promotedSurfacesFor(
 	locale: string,
@@ -431,9 +330,7 @@ export function promotedSurfacesFor(
 			phrase: promotion.phrase,
 			surface: titleCase(promotion.phrase),
 			identifierRequired: promotion.shape === "identifier-required",
-			// A promotion marks a surface usable.
-			// It does not widen the modifier grammar (the ledger's own words).
-			// Modifier eligibility stays the designator's, and only English legs read it.
+			// Promotions do not expand modifier eligibility; only English legs use it.
 			modifierEligible: Boolean(designator?.modifierEligible) && promotion.shape !== "identifier-required",
 		})
 	}
@@ -442,7 +339,7 @@ export function promotedSurfacesFor(
 }
 
 /**
- * The phrases rejected in a locale — the negatives' vocabulary.
+ * Return phrases rejected for this locale.
  */
 export function rejectedPhrasesFor(
 	locale: string,
@@ -462,7 +359,7 @@ interface ShapeBucket {
 }
 
 /**
- * A region's identifier distributions: per designator, plus the pooled fallback.
+ * Per-designator distributions and a pooled fallback for one region.
  */
 export interface IdentifierModel {
 	byDesignator: Map<string, ShapeBucket[]>
@@ -470,27 +367,18 @@ export interface IdentifierModel {
 }
 
 /**
- * Designators whose refs the pooled fallback is built from.
- *
- * `platform` and `station` are excluded deliberately even though they are by far the largest
- * buckets (GB alone has 25,109 platform digits): a platform ref is a network identifier,
- * and its `other` bucket is 7,549 rows of `kntgwdgj`-style source codes.
- * The three kept here are the ones whose refs are what a person reads off a sign.
+ * Sign-oriented designators used for the pooled fallback; exclude platform and station network codes.
  */
 const POOLED_IDENTIFIER_DESIGNATORS: readonly string[] = ["gate", "terminal", "campus"]
 
 /**
- * Minimum usable observations before a (region, designator) uses its own identifier distribution.
- *
- * Below this the sample is noise — ES `terminal` has 5 usable refs —
- * so the leg falls back to the region's pooled gate+terminal+campus distribution,
- * which is what the lexicon measured at volume (452–655 refs per region).
- * The fallback keeps the axis that matters (the region) and drops only the per-designator refinement.
+ * Minimum observations required to use a region/designator distribution;
+ * smaller samples use the regional pool.
  */
 const MIN_OWN_SHAPE_OBSERVATIONS = 20
 
 /**
- * Build the per-region identifier model out of the lexicon's `identifierShapes`.
+ * Build a regional identifier model from the lexicon's `identifierShapes`.
  */
 export function buildIdentifierModel(lexicon: SubVenueLexiconTable, region: string): IdentifierModel {
 	const byDesignator = new Map<string, ShapeBucket[]>()
@@ -521,13 +409,10 @@ export function buildIdentifierModel(lexicon: SubVenueLexiconTable, region: stri
 }
 
 /**
- * Draw one identifier for `designatorID` in this region.
+ * Sample an identifier using the designator's distribution when sufficiently populated,
+ * otherwise the regional pool.
  *
- * Own distribution when it has {@link MIN_OWN_SHAPE_OBSERVATIONS} usable observations,
- * else the region's pooled one.
- * Shapes are weighted by observation count and an example is drawn uniformly inside the chosen shape.
- *
- * The lexicon ships up to eight per shape, which is the resolution available.
+ * Weight shapes by observation count and choose an example uniformly within the selected shape.
  */
 export function sampleIdentifier(model: IdentifierModel, designatorID: string, random: () => number): string | null {
 	const own = model.byDesignator.get(designatorID) ?? []
@@ -536,7 +421,7 @@ export function sampleIdentifier(model: IdentifierModel, designatorID: string, r
 
 	if (!buckets.length) return null
 
-	// `inclusive: false` keeps this draw's original strict `r < 0` boundary, so the bucket stream is unchanged.
+	// Preserve the existing strict bucket boundary and seeded output.
 	const bucket = weightedPick(buckets, random, (b) => b.observations, { inclusive: false })
 
 	return sample(bucket.examples, random)
@@ -547,54 +432,42 @@ export function sampleIdentifier(model: IdentifierModel, designatorID: string, r
 //#region Pools
 
 /**
- * Per-leg pools read off disk once.
+ * Source pools loaded once per recipe leg.
  */
 export interface LegPools {
 	context: LocaleBaseTuple[]
 	/**
-	 * Real venue names for the venue slot (stations, airports, campuses. US: airports, terminals, hospitals, rail).
+	 * Real names for the venue slot, such as stations, airports, campuses, hospitals, and rail venues.
 	 */
 	venues: string[]
 	/**
-	 * Real sub-venue strings, already filtered to this locale's promoted surfaces and their shape constraint.
+	 * Extract names matching promoted surfaces and their shape constraints.
 	 */
 	attested: string[]
 	/**
-	 * Real names carrying a surface rejected in this locale, for the venue slot of a negative row.
+	 * Names containing locale-rejected surfaces, used in negative venue rows.
 	 */
 	rejectedVenues: string[]
 	/**
-	 * Real names that contain a designator inside a longer proper name —
-	 * "Lochaline Ferry Terminal", "Kingdom Hall".
-	 *
-	 * The whole string is `venue`; nothing in it is `unit`.
+	 * Names containing a designator as part of a longer name; label the whole string as `venue`, not `unit`.
 	 */
 	longerNames: string[]
 	/**
-	 * Real names carrying a promoted phrase in a shape the promotion does not cover —
-	 * `Halle Rosengarten`, `phoenix Halle`, `Halle-Südstadt`.
-	 *
-	 * The other half of an `identifier-required` ruling, and the only thing that teaches
-	 * the shape boundary rather than the word: de-DE has no `reject` row at all,
-	 * so without this class its 168-hit confound (97 of them the city Halle) would
-	 * go untaught while its 32-hit promotion got 11,000 rows.
+	 * Names containing a promoted phrase without its required shape,
+	 * teaching the model the promotion boundary.
 	 */
 	unpromotedShapes: string[]
 }
 
 /**
- * The name pools a source contributes.
+ * Name pools supplied by a source.
  *
- * `attested` and `unpromotedShapes` come only from an extract — poi.db carries no `tier`
- * and no localized names, so it cannot say which side of a shape boundary a name sits on.
+ * Only extracts provide `attested` and `unpromotedShapes`, because POI data has no tier or localized names.
  */
 export type NamePools = Pick<LegPools, "venues" | "attested" | "rejectedVenues" | "longerNames" | "unpromotedShapes">
 
 /**
- * The pools a source that has nothing to say contributes — en-US has no OSM extract,
- * and DE/ES/GB are outside poi.db's four countries.
- *
- * Empty rather than absent so a leg's merge is unconditional.
+ * Empty pools for sources unavailable to a locale; keeping arrays present allows unconditional merging.
  */
 export const EMPTY_NAME_POOLS: NamePools = {
 	venues: [],
@@ -605,7 +478,7 @@ export const EMPTY_NAME_POOLS: NamePools = {
 }
 
 /**
- * What every pool reader needs to know about the leg it is reading for.
+ * Locale-specific filters required by pool readers.
  */
 export interface PoolQuery {
 	promoted: readonly PromotedSurface[]
@@ -616,17 +489,14 @@ export interface PoolQuery {
 }
 
 /**
- * Is this name a designator sitting inside a longer proper name.
- *
- * The "Grand Central Terminal" class the span proposer's second structural guard
- * already knows about, and which the corpus has to agree with?
+ * Check whether a designator occurs inside a longer proper name without a numeric identifier.
  */
 function isLongerProperName(low: string, name: string, designatorPhrases: readonly string[]): boolean {
 	return designatorPhrases.some((phrase) => containsPhrase(low, phrase) && !low.startsWith(phrase) && !/\d/.test(name))
 }
 
 /**
- * Read one OSM extract and split it into name pools.
+ * Read an OSM extract and classify names into source pools.
  */
 export async function readExtractPools(path: string, query: PoolQuery): Promise<NamePools> {
 	const rows = await readSubVenueJSONL(path)
@@ -680,15 +550,8 @@ export async function readExtractPools(path: string, query: PoolQuery): Promise<
 }
 
 /**
- * Poi.db category ids this recipe reads, by category name
- * (ids are assigned per build, so they are resolved at run time out of `poi_category_codes`).
- *
- * The venue set is the transport + institution categories whose rows name a whole venue —
- * exactly what `overture-subvenue.ts` rejected as a lexicon source ("4,071 of them are the
- * token `airport` in the aerodrome's own name") and exactly what a venue slot wants.
- * The confound set is that file's rejection list read as a source of negatives:
- * `shoe_store` contributes 708 hits of `wing` because Red Wing sells boots,
- * and that is the row this recipe needs to see with `wing` not tagged `unit`.
+ * POI categories used for venue examples and confound negatives.
+ * Resolve IDs from `poi_category_codes` at runtime.
  */
 const POI_VENUE_CATEGORIES: readonly string[] = [
 	"airport",
@@ -709,11 +572,9 @@ const POI_CONFOUND_CATEGORIES: readonly string[] = [
 ]
 
 /**
- * Read the venue + confound pools for a country out of `poi.db`.
+ * Read venue and confound pools from `poi.db`.
  *
- * Poi.db is four countries — US 11,521,612 / CA 794,418 / FR 721,352 / MX 644,316 —
- * so this is reachable for en-US and fr-FR and nothing else, and a zero here is
- * evidence of absence in four countries rather than in the world.
+ * Its limited country coverage means an empty result does not prove global absence.
  */
 export function readPOIPools(dbPath: PathBuilderLike, country: string, query: PoolQuery): NamePools {
 	using db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
@@ -730,9 +591,7 @@ export function readPOIPools(dbPath: PathBuilderLike, country: string, query: Po
 
 	if (!wanted.length) throw new Error(`poi.db at ${dbPath} has none of the expected categories`)
 
-	// One filtered full scan (measured 4.3 s over all 13,681,698 rows, 2026-08-05)
-	// rather than one query per category: `poi` is `without rowid` on (h3_cell, category_id, …),
-	// so a category predicate scans either way and scanning once is the cheaper shape.
+	// Scan once for all requested categories; separate queries would repeat the table scan.
 	const rows = db
 		.prepare(
 			`select name, category_id from poi where country = ? and name is not null and category_id in (${wanted.map(() => "?").join(",")})`
@@ -773,7 +632,7 @@ export function readPOIPools(dbPath: PathBuilderLike, country: string, query: Po
 }
 
 /**
- * Merge two sources' name pools.
+ * Combine two sources' name pools.
  */
 export function mergeNamePools(a: NamePools, b: NamePools): NamePools {
 	return {

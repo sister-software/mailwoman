@@ -152,26 +152,17 @@ const speedBucketCaseSQL = sql<string>`CASE
 END`
 
 /**
- * Reconstruct the res-6 ancestor of a res-9 short-cell int without a centroid.
- *
- * See the module docstring for why the centroid is the wrong input.
- *
- * Exported so tests can assert this agrees, cell-for-cell, with `build-bdc.ts`'s own
- * coverage-cell derivation (the two must share this derivation — see that file's docstring).
+ * Convert a stored res-9 cell to its res-6 coverage parent.
  */
 export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
 	return shortCellToParentInt(h3CellShortInt, BDC_H3_RESOLUTION, BDC_COVERAGE_H3_RESOLUTION)
 }
 
 /**
- * Read the provider/technology/speed-bucket filing census over a set of queried
- * blocks (by `geoid` or by `h3Cell`, never both).
+ * Count provider filings by technology and speed bucket for a set of blocks.
  *
- * Always vintage-stamped.
- * Always throws on a broken manifest rather than answering unstamped.
- *
- * A queried block with no coverage evidence is reported in `unknown_block_count`
- * and never folded into a zero-filing claim.
+ * Supply either GEOIDs or H3 cells.
+ * The result includes its source vintage and reports blocks without coverage as unknown.
  */
 export async function filingLandscape(
 	db: DatabaseClient<BDCDatabase>,
@@ -183,27 +174,18 @@ export async function filingLandscape(
 		throw new Error("filingLandscape: exactly one of `geoids` or `h3Cells` is required")
 	}
 
-	// `[]` is truthy, so it passes the XOR check above undetected.
-	// Without this guard an empty array sails straight through to a vacuous all-zero landscape
-	// (surveyed_block_count: 0, unknown_block_count: 0, no filings), which reads exactly like
-	// a real "nothing queried" answer instead of the malformed-query error it should be.
-	// Checked before the manifest read so a bad query fails fast without even opening the db further.
+	// Reject empty input so it cannot produce a misleading all-zero result.
 	if (!(query.geoids ?? query.h3Cells)!.length) {
 		throw new Error("filingLandscape: `geoids`/`h3Cells` must not be an empty array")
 	}
 
-	// Read (and validate) the manifest first.
-	// A broken/missing manifest must throw before any block is classified,
-	// never fall through to an "unstamped" answer (criterion 4).
+	// Validate the manifest before classifying blocks.
 	const manifest = await readLayerManifest(db)
 
 	const requestedUnits: ReadonlyArray<string | number> = query.geoids ?? query.h3Cells!
 	const unitColumn = query.geoids ? ("geoid" as const) : ("h3_cell" as const)
 
-	// Candidate res-9 cell per requested unit.
-	// `h3Cells` queries already carry the cell directly; `geoids` queries can only
-	// derive one from the block's own rows.
-	// A geoid with none has no candidate at all (never guessed), so it falls straight to unknown below.
+	// GEOID queries derive cells from stored rows; H3 queries already provide the cell.
 	const candidateCellByUnit = new Map<string | number, number>()
 
 	if (query.geoids) {
@@ -225,12 +207,7 @@ export async function filingLandscape(
 
 	let surveyedBlockCount = 0
 	let unknownBlockCount = 0
-	// Only units that pass the coverage check feed the census below — a unit with rows but no coverage
-	// evidence (a corrupted/inconsistent db — see filing-landscape.test.ts's "coverage row deleted" case)
-	// is `unknown`, and its rows must not leak into `filings` either: `surveyed_block_count`
-	// and the blocks backing `filings` must always agree, or a caller cross-referencing
-	// the two gets a contradiction (an "unknown" block whose filings still show up looks
-	// exactly like the false-negative bug this reader exists to prevent).
+	// Only covered units contribute filings; rows from an uncovered unit must not appear in the census.
 	const surveyedUnits: Array<string | number> = []
 
 	for (const unit of requestedUnits) {

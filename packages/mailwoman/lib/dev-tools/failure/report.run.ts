@@ -3,22 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Failure report (#1104-adjacent): run N models over the schema-correct parity corpus, collect the
- *   per-floor-label disagreements with structural metadata, and emit a cross-model html report — which
- *   addresses remain beyond reach, which are model-specific regressions/fixes, and what those failures
- *   correlate with (country, delimiter class, script, source). The tool that would have caught the v261
- *   country regression as "a shared class across the fragment lineage" at a glance.
- *
- *   Emits a Docusaurus MDX report into the evals tree so it folds into the docs build and accumulates a
- *   model-comparison history alongside the other eval reports. MDX-safe (every dynamic cell is
- *   backtick-wrapped + pipe/backtick-escaped, so an address can't break the table or trip the angle-lint).
- *
- *   Usage (label=cacheRoot pairs. label=shipped uses the installed default):
- *     node packages/mailwoman/lib/dev-tools/failure/report.run.ts \
- *       [--corpus golden:<dir>[:N]] [--out docs/articles/evals/competitive-parity/<file>.mdx] [--date yyyy-MM-DD] \
- *       shipped=shipped v257=$MAILWOMAN_TEMP_ROOT/v257-cache v261=$MAILWOMAN_TEMP_ROOT/v261-cache
- *   Writes the MDX (default docs/articles/evals/competitive-parity/failure-report.mdx) plus
- *   `$MAILWOMAN_TEMP_ROOT/failure-report.json`.
+ *   Compare labeled parse failures across model caches and report persistent failures, model-specific changes, and
+ *   correlations with input structure. Write an MDX report and a machine-readable JSON summary.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -36,17 +22,17 @@ import { Globerator } from "spliterator/node/fs"
 import { PARITY_FIXTURES_PATH, PARITY_FLOORS, type ParityFixture } from "#eval-harness/parity-corpus"
 
 /**
- * Token count at or below which a query is bucketed as short.
+ * Maximum token count for the short-query bucket.
  */
 const SHORT_QUERY_TOKENS = 3
 
 /**
- * Gap from the leading count at which a row is emphasised in the report.
+ * Failure-count increase that highlights a report cell.
  */
 const NOTABLE_COUNT_GAP = 3
 
 /**
- * Common fixture shape both corpora reduce to.
+ * Shared shape for loaded fixtures.
  */
 interface Fixture {
 	id: string
@@ -57,14 +43,8 @@ interface Fixture {
 }
 
 /**
- * Load the corpus.
- *
- * Default = the schema-correct parity corpus (street-family aware, campaign check). `golden:<dir>[:<sampleN>]` = the
- * golden dev set (broad label coverage including country/region, which parity is sparse on).
- * Note its `street` gold is flat-schema (pre-split).
- *
- * Therefore, street reads confounded there. country/region/locality/postcode/house_number
- * are single-tag and valid.
+ * Load the parity corpus or a golden JSONL directory.
+ * Golden street labels use the flat, pre-split schema.
  */
 async function loadCorpus(
 	spec: string | undefined
@@ -110,7 +90,7 @@ async function loadCorpus(
 }
 
 interface StructuralFlags {
-	whitespaceOnly: boolean // no separator punctuation — only whitespace between tokens
+	whitespaceOnly: boolean // No separator punctuation between tokens.
 	hasComma: boolean
 	hasNonAscii: boolean
 	tokenCount: number
@@ -135,7 +115,7 @@ interface FixtureFailures {
 	country: string
 	source: string
 	flags: StructuralFlags
-	// modelLabel -> the floor labels that disagreed, with expected/got.
+	// Model label to failed tags and values.
 	failsByModel: Record<string, { label: string; expected: string; got: string }[]>
 }
 
@@ -197,10 +177,7 @@ async function runFailureReport(): Promise<void> {
 			const byTag = await parseTags(cls, f.input)
 			const fails: { label: string; expected: string; got: string }[] = []
 
-			// Grade every gold label (not just the floors) so country/region/locality/venue
-			// failures — the classes a candidate silently trades — are captured.
-			// Floor labels compare their tag family (street = prefix/street/suffix/particle);
-			// all others compare by direct tag name.
+			// Grade every label; street floors compare their tag family, other labels compare directly.
 			for (const [goldLabel, gold] of Object.entries(f.expect)) {
 				if (!gold?.length) continue
 				const tags = floorTags.get(goldLabel) ?? [goldLabel]
@@ -220,11 +197,10 @@ async function runFailureReport(): Promise<void> {
 	const all = [...records.values()]
 	const labels = specs.map((s) => s.label)
 	const anyFail = all.filter((r) => Object.keys(r.failsByModel).length)
-	// "Beyond reach": failed on every graded model.
+	// Fixtures failing on every model.
 	const beyondReach = anyFail.filter((r) => labels.every((l) => r.failsByModel[l]))
 
-	// Per-label failure count per model — the view where a silently-traded class
-	// (e.g. Country on the fragment lineage) jumps out: a label whose failure count rises across candidates.
+	// Count failures by label and model to expose class regressions.
 	const allLabels = [
 		...new Set(
 			all.flatMap((r) =>
@@ -239,7 +215,7 @@ async function runFailureReport(): Promise<void> {
 		return all.filter((r) => r.failsByModel[model]?.some((x) => x.label === label)).length
 	}
 
-	// Correlation: failure rate per attribute bucket, per model.
+	// Failure rate per structural bucket and model.
 	function rate(pred: (r: FixtureFailures) => boolean, model: string): [number, number] {
 		const pool = all.filter(pred)
 		const failed = pool.filter((r) => r.failsByModel[model]).length
@@ -267,19 +243,14 @@ async function runFailureReport(): Promise<void> {
 		beyondReachCount: beyondReach.length,
 	}
 
-	// Render the MDX report that Docusaurus includes in the evaluation tree.
-	// MDX-safe: every dynamic cell is backtick-wrapped
-	// (angle brackets / braces stay literal in a code span) with pipes + backticks escaped,
-	// so an address like "U12/345 <x>" can't break the table or trip the MDX angle-lint.
-	// Trades are marked in markdown (**N (+Δ)**), not color.
+	// Render the MDX report.
+	// Escape dynamic cells so addresses cannot break MDX tables.
 
 	const outPath = flags.out || "docs/articles/evals/competitive-parity/failure-report.mdx"
 	const stamp = flags.date || isoDate()
 
 	const cell = (s: string): string => "`" + (s || "∅").replaceAll("`", "ˋ").replaceAll("|", "\\|") + "`"
-	// Not `formatPercent`: this rounds `(n / d) * 100` where core computes `(100 * n) / d`,
-	// and the two can differ in the last bit at a .5 rounding boundary.
-	// The report's zero-decimal cells stay byte-stable under their own arithmetic.
+	// Keep percentage rounding stable within this report.
 	const pct2 = (n: number, d: number): string => (d ? `${((n / d) * 100).toFixed(0)}%` : "—")
 	const mdRow = (cells: (string | number)[]): string => `| ${cells.join(" | ")} |`
 
@@ -288,7 +259,7 @@ async function runFailureReport(): Promise<void> {
 
 		if (!fails) return "✓"
 
-		// " · " (not <br />) keeps the cell pure markdown — no JSX in a GFM table cell, no angle-lint risk.
+		// Keep table cells as plain Markdown.
 		return fails.map((f) => `${f.label}→${cell(f.got)}`).join(" · ")
 	}
 
@@ -424,9 +395,7 @@ ${diffTable}
 
 	await writeLocalFile(mdx, outPath)
 
-	// The machine-readable twin of the MDX above.
-	// It goes under `$MAILWOMAN_TEMP_ROOT` rather than a repo-relative path, which git ignores.
-	// A file written there exists only on the machine that wrote it.
+	// Write machine-readable output outside the repository.
 	const jsonPath = tempRootPath("failure-report.json")
 
 	await writeLocalJSONFile({ summary, records: all }, jsonPath)

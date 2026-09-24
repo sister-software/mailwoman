@@ -31,7 +31,7 @@ let flakyHits = 0
 let rangeConnections = 0
 
 /**
- * The body the `/range` route serves: 40 bytes, so a 16-byte-per-connection host needs three connections.
+ * Range-test payload: 40 bytes served in 16-byte chunks.
  */
 const RANGE_BODY = Buffer.from("0123456789abcdefghijklmnopqrstuvwxyz!@#$")
 const RANGE_CHUNK = 16
@@ -42,11 +42,7 @@ beforeAll(async () => {
 			res.writeHead(200)
 			res.end("payload")
 		} else if (req.url === "/range") {
-			// A host that answers `Range` with 206 and closes after a few bytes, the shape the
-			// Korean address portal has: the client must keep what landed and ask for the remainder.
-			// The body ends cleanly rather than by `destroy()`, because a reset can discard
-			// bytes the socket already carried and the connection count then depends on timing.
-			// The client's path (bytes on disk, next range from there) is the same either way.
+			// Return partial content so the client must request the remainder.
 			rangeConnections++
 			const start = Number(/bytes=(\d+)-/.exec(req.headers.range ?? "")?.[1] ?? 0)
 
@@ -234,7 +230,7 @@ describe("resumableDownload", () => {
 		expect(bytes).toBe(RANGE_BODY.length)
 		expect(await readLocalTextFile(dest)).toBe(RANGE_BODY.toString())
 		expect(await pathExists(dest + ".tmp")).toBe(false)
-		// 40 bytes at 16 per connection: three connections, one progress line each.
+		// Three 16-byte range requests transfer the 40-byte body.
 		expect(rangeConnections).toBe(3)
 		expect(lines).toHaveLength(3)
 	})

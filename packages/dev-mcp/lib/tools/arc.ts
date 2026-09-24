@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_arc` tool definition. The protocol lives in `../arc.ts`; this file is the interface, and the description
- *   is the required half. It is what stops the next agent reaching for a bare two-arm compare.
+ *   MCP interface for the control-first candidate model grading protocol.
  */
 
 import { z } from "zod"

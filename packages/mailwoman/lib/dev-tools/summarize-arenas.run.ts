@@ -3,17 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Summarize-arenas.ts — per-arena pass-rate table from external-arenas.ts output.
- *
- *   Reads the per-arena `*.results.json` sidecars written by harness-neural. For the
- *   postal-standards arena it also joins back to the source jsonl (on `input`) to break the rates
- *   down by edge_class — the dimension the harness sidecar drops.
- *
- *   Ported faithfully from the retired Python implementation (pure JSON, no numpy); the v0 buckets
- *   went with the rules parser (v7 excision #1151 — harness-v0-neural was deleted with it).
- *
- *   Usage: node packages/mailwoman/lib/dev-tools/summarize-arenas.run.ts <out-dir>
- *   <postal-cases.jsonl>
+ *   Summarize per-arena pass rates from result sidecars. Join postal results to source cases to group by edge class.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -31,9 +21,7 @@ interface Result {
 }
 
 function pct(x: number, n: number): string {
-	// Local rather than `formatPercent`: this port renders with `pyFixed`
-	// (Python's round-half-even), and `toFixed` rounds half-away.
-	// The bytes must match the retired .py report.
+	// Match the rounding used by the original Python report.
 	return n ? `${pyFixed((100 * x) / n, 0)}%` : "—"
 }
 
@@ -50,8 +38,7 @@ async function main(): Promise<void> {
 		let res: Result[]
 
 		try {
-			// Strict: the catch below re-throws anything that is not a missing file,
-			// so a corrupt sidecar must surface rather than read as an empty arena.
+			// Re-throw corrupt files; only missing sidecars are skipped.
 			res = await readLocalJSONFile<Result[]>(`${outDir}/${a}.results.json`)
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === "ENOENT") {
@@ -71,7 +58,7 @@ async function main(): Promise<void> {
 		console.log(`| ${a} | ${n} | ${pct(ne, n)} | ${pct(n - ne, n)} | ${pct(treeOk, n)} |`)
 	}
 
-	// postal edge-class breakdown (join on input)
+	// Join postal results to source cases by input.
 	if ("postal" in loaded) {
 		const ec: Record<string, string> = {}
 

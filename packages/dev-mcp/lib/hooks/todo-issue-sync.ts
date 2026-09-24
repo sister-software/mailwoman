@@ -4,28 +4,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   PostToolUse hook: mirror the session's todo list into the linked GitHub issue's task list.
- *
- *   The plan an agent keeps in its head — or in a session todo list — dies with the session, and the operator's
- *   window into an autonomous session is GitHub rather than the transcript. The `task-intake` skill creates an issue whose
- *   `## Task list` section carries a marker-delimited block. this hook rewrites that block on every `TodoWrite`, so
- *   the issue stays a live mirror of the working plan without the agent spending a turn on bookkeeping.
- *
- *   It never blocks, on the same reasoning as `symbol-precheck.ts`: every failure path is silence, and the sync work
- *   itself runs in a detached worker so the hook adds no latency to the turn. Three conditions check the worker, each
- *   making a no-op explicit rather than accidental:
- *
- *   - `.claude/state/linked-issue` must exist (the skill writes it. no link, no sync — most sessions have none).
- *   - The tool must be `TodoWrite`, whose payload carries the whole list. `TaskCreate`/`TaskUpdate` carry deltas a
- *     stateless hook cannot fold into a list, so those sessions keep the issue current by hand at milestones.
- *   - The issue body must already carry both markers. The hook never invents structure in an issue it did not shape.
- *     absent markers mean the issue was not created by the skill, and rewriting it would clobber someone's prose.
- *
- *   Concurrency: rapid TodoWrite bursts atomically replace one payload file (last write wins). A worker holds a lock
- *   directory while it syncs and re-reads the payload after each pass. A worker that finds the lock waits for its turn,
- *   so a payload written during the lock holder's final pass still gets published.
- *
- *   Register in `.claude/settings.json` under `hooks.PostToolUse` with a `TodoWrite` matcher.
+ *   Mirror `TodoWrite` payloads into the marker-delimited task list of the linked GitHub issue. The hook
+ *   runs asynchronously and does nothing unless the checkout has a linked issue, the tool is `TodoWrite`,
+ *   and the issue contains both markers. A lock and replaceable payload file serialize concurrent updates.
  */
 
 import { pathExists, readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
@@ -36,17 +17,13 @@ import {
 	removePath,
 	writeLocalJSONFile,
 } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-ts"
 
 /**
- * How many stabilization passes the worker makes before giving up.
- *
- * Each pass costs two `gh` round trips (~2s), so five bounds one worker's `gh`
- * calls at ~10s of background work.
- * A waiting worker then reads the latest payload.
+ * Maximum reads of the payload while waiting for it to stabilize.
  */
 const MAX_SYNC_PASSES = 5
 const LOCK_RETRY_MS = 100
@@ -62,7 +39,7 @@ export interface TodoItem {
 }
 
 function stateDir(cwd: PathBuilderLike): PathBuilder {
-	return PathBuilder.from(cwd)(".claude", "state")
+	return PathBuilder.from(cwd, ".claude", "state")
 }
 
 async function linkedIssue(cwd: PathBuilderLike): Promise<number | null> {
@@ -93,7 +70,7 @@ export function renderTaskList(todos: TodoItem[]): string {
  * Hook mode: stash the payload and hand off to a detached worker, so the turn never waits on `gh`.
  */
 async function hookMain(): Promise<void> {
-	// A malformed payload is a hook that does nothing rather than a hook that throws into the turn.
+	// Ignore malformed hook input.
 	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
 
 	if (payload?.tool_name !== "TodoWrite") return
@@ -159,16 +136,13 @@ export async function workerMain(
 	const dir = stateDir(cwd)("todo-sync")
 	const lock = dir("lock")
 
-	// A worker that loses the lock must wait for its own turn.
-	// Its payload can arrive after the lock holder's final read.
-	// Exiting here would leave that payload unpublished until another TodoWrite happened.
+	// Wait for the lock so this worker's payload is not left unsynced.
 	if (!(await acquireLock(lock, wait))) return
 
 	try {
 		let previous = ""
 
-		// Re-read until stable: a burst of TodoWrites overwrites payload.json, and publishing anything
-		// but the final state would show the operator a stale list with a fresh timestamp.
+		// Re-read after each sync to publish the latest update in a burst.
 		for (let pass = 0; pass < MAX_SYNC_PASSES; pass++) {
 			const raw = await readLocalTextFile(dir("payload.json"))
 
@@ -196,7 +170,7 @@ function syncIssue(issue: number, todos: TodoItem[], dryRun: boolean): void {
 	const begin = body.indexOf(SYNC_BEGIN)
 	const end = body.indexOf(SYNC_END)
 
-	// No markers, no write: this issue was not shaped by task-intake, and its body is someone's prose.
+	// Leave issues without task-intake markers untouched.
 	if (begin === -1 || end === -1 || end < begin) return
 
 	const next = body.slice(0, begin + SYNC_BEGIN.length) + "\n" + renderTaskList(todos) + "\n" + body.slice(end)
@@ -215,6 +189,77 @@ function syncIssue(issue: number, todos: TodoItem[], dryRun: boolean): void {
 	})
 }
 
+export interface GitHubUser {
+	login: string
+	name: string | null
+}
+
+export interface GitHubLabel {
+	name: string
+	color: string
+}
+
+export interface GitHubMilestone {
+	title: string
+	dueOn: string | null
+}
+
+export type GitHubIssueState = "OPEN" | "CLOSED"
+
+export interface GitHubIssue {
+	number: number
+	title: string
+	url: string
+	state: GitHubIssueState
+	issueType: string | null
+	author: GitHubUser
+	assignees: GitHubUser[]
+	labels: GitHubLabel[]
+	milestone: GitHubMilestone | null
+	createdAt: string
+	updatedAt: string
+	closedAt: string | null
+	body: string
+}
+
+const ISSUE_FIELDS = [
+	"number",
+	"title",
+	"url",
+	"state",
+	"issueType",
+	"author",
+	"assignees",
+	"labels",
+	"milestone",
+	"createdAt",
+	"updatedAt",
+	"closedAt",
+	"body",
+].join(",")
+
+interface RawIssueType {
+	name: string
+}
+
+interface RawGitHubIssue extends Omit<GitHubIssue, "issueType"> {
+	issueType: RawIssueType | null
+}
+
+/**
+ * Fetch one issue with `gh` and normalize its issue type to a name.
+ */
+export async function fetchGitHubIssue(repo: string, issueNumber: number): Promise<GitHubIssue> {
+	const body = runFileSync("gh", ["issue", "view", String(issueNumber), "--repo", repo, "--json", ISSUE_FIELDS])
+
+	const raw = parseJSONStrict<RawGitHubIssue>(body)
+
+	return {
+		...raw,
+		issueType: raw.issueType?.name ?? null,
+	}
+}
+
 async function main(): Promise<void> {
 	const { values } = parseArguments({
 		options: {
@@ -227,10 +272,11 @@ async function main(): Promise<void> {
 	try {
 		await (values.worker ? workerMain(values.cwd ?? process.cwd(), values["dry-run"] ?? false) : hookMain())
 	} catch {
-		// Silence on every failure path: a sync hook that can break a turn is a hook that gets switched off.
+		// Hook failures must not interrupt the caller's turn.
 	}
 }
 
+// TODO: I don't believe this is true. Use node's `parseArgs`
 // oxlint-disable-next-line sister-software/no-process-globals -- executable-entry detection has no project helper.
 const entryPath = process.argv[1]
 

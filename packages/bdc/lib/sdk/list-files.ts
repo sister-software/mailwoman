@@ -2,13 +2,8 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file FCC BDC availability-file listing.
- *
- *   Re-homed from Nexus's `sync/fcc/bdc/list-files.ts` (relicense-by-copy, no provenance headers):
- *   the `URLRoutePattern`-compiled route → a plain template literal (this port has no routing
- *   dependency), the `$BCDClient`-bound `retrieveAvailabilityFiles()` → a plain function taking a
- *   {@linkcode BDCClient}. Raw entries are parsed via `parseRawBDCFile` and returned sorted
- *   ascending by revision (`compareRevisionAsc`) rather than in API order.
+ *   @file List FCC BDC availability files by filing date and category. Results are parsed and sorted
+ *   by revision date.
  */
 
 import type { BDCClient } from "#sdk/client"
@@ -54,8 +49,7 @@ interface ListAvailabilityDataResponseBody {
 }
 
 /**
- * List the BDC availability files for a given `as_of_date`/category/subcategory, parsed into
- * {@linkcode BDCFile} records and sorted ascending by revision date ({@linkcode compareRevisionAsc}).
+ * List parsed availability files for a filing date, category, and subcategory, sorted by revision date.
  */
 export async function retrieveAvailabilityFiles(
 	client: BDCClient,

@@ -3,36 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The frozen ruler for the phase-2 decision (#1967), and the arithmetic that reads it. Pure — no model,
- *   no database, no pipeline — so every refusal and every threshold is testable without loading an engine.
- *
- *   why A fourth PRE-registration and not A fourth copy. #1928's ruler decides one lane against one frozen
- *   baseline; #1965's asserts one asymmetry. Phase 2 spans four lanes whose combined effect neither covers,
- *   so this file registers the lanes and the checks that read them, and takes the implementation from
- *   {@linkcode canonicalJSON} rather than re-typing it. Two encoders hashing the same content drift at the
- *   first key ordering either one changes.
- *
- *   A blocked lane is registered and never measured. Mapping breadth (#1963) authored W1-1 and W1-2 and
- *   held W1-3 behind #1980, so its operational half cannot be measured at all today. There are two ways to
- *   get that wrong and the audit refuses both: a ruler that scores a blocked lane reports a number about
- *   nothing, and a ruler that omits it reports full coverage over three quarters of the phase. So a lane
- *   carries `status`, a `blocked` lane may register no check ({@linkcode auditPhase2Definition} refuses
- *   one), it must name what blocks it and what its rows will read once unblocked, and every verdict carries
- *   {@linkcode Phase2Verdict.coverage} plus the blocked lane ids in its reasons.
- *
- *   every lane'S baseline is A merged-PR receipt, and the ruler says SO. All six phase-2 implementation
- *   issues closed before this pre-registration was written, so there is no arm that ran first here. Each
- *   check therefore names the receipt standing in for a baseline — the PR that recorded it, and the number —
- *   and the run reproduces it. A baseline nobody can point at is indistinguishable from one chosen after the
- *   result was visible.
- *
- *   the measurements are whole row counts. Every reading is an integer over a stated denominator, including
- *   the identity checks: a definition hash that has not moved reads `1`, a moved one reads `0`. That keeps
- *   every threshold a row count, the property #1928's audit already enforces, and keeps one comparison rule
- *   for the whole ruler instead of one per field type.
- *
- *   this file decides what the ruler maps TO. It does not record it. The recording is the operator's, and
- *   the definition's `recordingNote` says so on the receipt.
+ *   Define and evaluate the frozen phase-2 decision ruler without loading an engine.
+ *   Registered measurements use whole-row counts and explicit baselines.
+ *   Blocked lanes remain visible but are not scored; verdicts report coverage and comparability.
+ *   This module computes the decision but does not record the operator's receipt.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -48,10 +22,7 @@ export {
 } from "#eval-harness/phase-2-decision/outcomes"
 
 /**
- * The closed set of instruments a check may read.
- *
- * Adding one is a reviewed change to this file and to the runner that produces its
- * readings, never a string invented in the definition.
+ * Instruments that may produce registered measurements.
  */
 export const PHASE2_INSTRUMENTS = [
 	"semantic_utility_probe",
@@ -66,11 +37,7 @@ export const PHASE2_INSTRUMENTS = [
 export type Phase2Instrument = (typeof PHASE2_INSTRUMENTS)[number]
 
 /**
- * Every reading the runner produces, and which instrument produces it.
- *
- * The registry is closed for the same reason the comparator register is: a definition
- * naming a measurement nothing produces would report a check that silently never ran,
- * and a check that cannot fail reads exactly like one that passed.
+ * Registered measurements and their producing instruments.
  */
 export const PHASE2_MEASUREMENTS = {
 	"semantic_utility.baseline.primary_passes": "semantic_utility_probe",
@@ -112,10 +79,7 @@ export function instrumentFor(measurement: Phase2Measurement): Phase2Instrument 
 }
 
 /**
- * A lane is either measurable now or blocked.
- *
- * There is no third state: a lane whose instrument merely happens not to have run is a
- * harness break, and the runner refuses rather than reporting it as a lane state.
+ * A lane is measurable or blocked; an unrun instrument is a harness error.
  */
 export const PHASE2_LANE_STATUSES = ["measurable", "blocked"] as const
 
@@ -131,15 +95,7 @@ export const PHASE2_CHECK_ROLES = ["target", "control"] as const
 export type Phase2CheckRole = (typeof PHASE2_CHECK_ROLES)[number]
 
 /**
- * Which decision a target check speaks to.
- *
- * - `resolution` — the recognition capability itself: an activity phrase reaching the
- *   entity kinds that afford it, graded on the assembled answer.
- *   These are what "proceed to what the integration record authorized" rests on.
- * - `evidence` — the observation surface: the phrase attestations, the coverage-qualified
- *   absence rows, and the marker that carries an observation to a caller.
- *   The integration record's §7 names exactly this half as what a diagnostic-strength
- *   result would justify on its own.
+ * Target tier: recognition capability (`resolution`) or observation surface (`evidence`).
  */
 export const PHASE2_TARGET_TIERS = ["resolution", "evidence"] as const
 
@@ -155,10 +111,7 @@ export const PHASE2_BAR_KINDS = ["at_least", "at_most", "exactly"] as const
 export type Phase2BarKind = (typeof PHASE2_BAR_KINDS)[number]
 
 /**
- * Where a check's baseline number comes from.
- *
- * No lane of this phase ran before its implementation merged, so `merged-pr-receipt`
- * is the ordinary case rather than the exception.
+ * Source type for a check's baseline number.
  */
 export const PHASE2_BASELINE_SOURCES = ["merged-pr-receipt", "committed-receipt", "committed-artifact"] as const
 
@@ -172,11 +125,7 @@ export const PHASE2_DECISIONS = ["PROCEED-AS-AUTHORIZED", "EVIDENCE-ONLY", "STOP
 export type Phase2Decision = (typeof PHASE2_DECISIONS)[number]
 
 /**
- * What one row of the integration record's default-change bar reads today.
- *
- * The last two are their own states rather than kinds of `unmet`, because the three are
- * different findings and a reader acts on each differently: a row nobody can measure,
- * a row whose instrument exists and this ruler does not run, and a row measured and failing.
+ * Current status of one integration-record default-change requirement.
  */
 export const PHASE2_DEFAULT_BAR_STATES = ["met", "unmet", "no_committed_instrument", "not_measured_here"] as const
 
@@ -188,7 +137,7 @@ export interface Phase2Bar {
 }
 
 /**
- * The number a check is compared against, and the receipt that recorded it.
+ * Baseline value and its source receipt.
  */
 export interface Phase2Baseline {
 	source: Phase2BaselineSource
@@ -201,45 +150,38 @@ export interface Phase2Baseline {
 }
 
 /**
- * One registered check.
+ * One registered measurement check.
  */
 export interface Phase2Check {
 	id: string
 	/**
-	 * The lane this check belongs to.
-	 *
-	 * A check naming a `blocked` lane is refused.
+	 * Owning lane; blocked lanes cannot have checks.
 	 */
 	lane: string
 	role: Phase2CheckRole
 	/**
-	 * Required on a `target` check, refused on a `control` one.
+	 * Required for target checks and disallowed for controls.
 	 */
 	tier?: Phase2TargetTier
 	measurement: Phase2Measurement
 	/**
-	 * What is counted, in words, so a reader never has to infer it from the measurement key.
+	 * Description of the counted numerator.
 	 */
 	numerator: string
 	/**
-	 * The registered denominator.
-	 *
-	 * Never "the rows that answered".
-	 * A probe that stops being able to read a row reports a lower numerator rather than a smaller board.
+	 * Fixed denominator; unread rows reduce the numerator rather than the board size.
 	 */
 	denominator: number
 	baseline: Phase2Baseline
 	bar: Phase2Bar
 	/**
-	 * The failure this check would catch.
+	 * Failure this check is intended to catch.
 	 */
 	guards: string
 }
 
 /**
- * A row a blocked lane will measure once it is unblocked.
- *
- * Registered so the blocked lane is described rather than omitted, and never scored.
+ * Planned measurement for a blocked lane; documented but not scored.
  */
 export interface Phase2PlannedCheck {
 	id: string
@@ -270,12 +212,9 @@ export interface Phase2Lane {
 }
 
 /**
- * One row of the integration record's default-change bar, recorded with what it reads today.
+ * Integration-record default-change requirement and its current reading.
  *
- * This register is never an input to {@linkcode decidePhase2}.
- * It exists because "proceed to what the record authorized" is a claim about a specific
- * authorization — the opt-in surface — and a reader has to be able to see that the separate
- * bar for a default change is not met, rather than infer it from the absence of a claim.
+ * This register is reported but does not affect {@linkcode decidePhase2}.
  */
 export interface Phase2DefaultBarRow {
 	row: number
@@ -293,40 +232,25 @@ export interface Phase2DefaultBarRow {
 
 export interface Phase2Thresholds {
 	/**
-	 * How many control checks may miss their bar.
-	 *
-	 * Zero: a capability bought by moving something that already worked is not
-	 * a result this program can act on.
+	 * Allowed control misses; zero regressions are permitted.
 	 */
 	controlRegressionTolerance: number
 	/**
-	 * How many `resolution`-tier target checks must hold for proceed-AS-authorized.
+	 * Minimum resolution checks required to proceed.
 	 */
 	minimumResolutionChecks: number
 	/**
-	 * How many `evidence`-tier target checks must hold.
-	 *
-	 * Required by both decisions: the authorized surface serves a category with the authority
-	 * that chose it, so the evidence half is not an alternative to the resolution half.
+	 * Minimum evidence checks required by either positive decision.
 	 */
 	minimumEvidenceChecks: number
 	/**
-	 * How many lanes must report.
-	 *
-	 * Equal to the registered measurable-lane count.
-	 * An instrument that could not run leaves a lane unreported, and an unreported lane is not a passing one.
+	 * Required number of measurable lanes reporting.
 	 */
 	requiredMeasurableLanes: number
 }
 
 /**
- * The artifacts every measurement was registered against.
- *
- * Recorded, compared, and reported, never a decision input.
- *
- * A run on a rebuilt `poi.db` or a bumped weights package is still a run.
- * It is just not comparable to the receipts this ruler names as baselines,
- * and {@linkcode Phase2Verdict.comparability} is where a reader sees that.
+ * Artifact versions used for comparability reporting; not decision inputs.
  */
 export interface Phase2ArtifactPins {
 	poiLayerManifestVersion: string
@@ -345,7 +269,7 @@ export interface Phase2ArtifactPins {
 }
 
 /**
- * The one query the marker measurement runs, frozen here rather than written into the runner.
+ * Marker probe input, frozen in the definition.
  */
 export interface Phase2MarkerProbe {
 	query: string
@@ -356,7 +280,7 @@ export interface Phase2MarkerProbe {
 }
 
 /**
- * The whole pre-registration, as committed.
+ * Complete phase-2 pre-registration.
  */
 export interface Phase2DecisionDefinition {
 	decisionID: string
@@ -364,7 +288,7 @@ export interface Phase2DecisionDefinition {
 	issue: string
 	program: string
 	/**
-	 * What proceed-AS-authorized authorizes, named so the decision cannot be read as authorizing more.
+	 * Scope authorized by `PROCEED-AS-AUTHORIZED`.
 	 */
 	authorizedOutcome: string
 	scopeNote: string
@@ -382,7 +306,7 @@ export interface Phase2DecisionDefinition {
 }
 
 /**
- * The freeze record: the definition's identity and the content hash that pins it.
+ * Definition identity and frozen content hash.
  */
 export interface Phase2FreezeRecord {
 	definition: string
@@ -394,21 +318,17 @@ export interface Phase2FreezeRecord {
 }
 
 /**
- * The committed pre-registration.
+ * Path to the committed pre-registration.
  */
 export const PHASE2_DEFINITION_PATH = preregistrationPath("phase-2-decision", "decision-definition.json")
 
 /**
- * The committed freeze record for it.
+ * Path to its committed freeze record.
  */
 export const PHASE2_FREEZE_PATH = preregistrationPath("phase-2-decision", "decision-freeze.json")
 
 /**
- * The committed receipt — the measured run the decision package on #1967 lays its arithmetic out of.
- *
- * Committed rather than left in a PR body for the reason this whole ruler exists:
- * the numbers a decision rests on have to be readable next to the definition that
- * registered them, by someone who was not there.
+ * Path to the committed measurement receipt.
  */
 export const PHASE2_RECEIPT_PATH = preregistrationPath("phase-2-decision", "decision-receipt.json")
 
@@ -775,12 +695,7 @@ export function describeBar(bar: Phase2Bar): string {
 }
 
 /**
- * Measure every registered check against the readings one run produced.
- *
- * Refuses a check whose measurement no reading answers, rather than treating the absence as a miss.
- * An unread measurement is a broken instrument, and a broken instrument reporting
- * `0` is indistinguishable from a real zero.
- * The one reading a decision must never be built on.
+ * Evaluate registered checks; missing readings are errors, not zeroes.
  */
 export function evaluatePhase2Checks(
 	definition: Phase2DecisionDefinition,
@@ -812,9 +727,7 @@ export function evaluatePhase2Checks(
 }
 
 /**
- * Count one run.
- *
- * The denominators are the registered check counts.
+ * Count one run using registered check counts as denominators.
  */
 export function computePhase2Counts(
 	definition: Phase2DecisionDefinition,
@@ -836,20 +749,9 @@ export function computePhase2Counts(
 }
 
 /**
- * Map measured checks onto exactly one decision, against the frozen thresholds.
+ * Apply frozen thresholds in order: controls, complete reporting, proceed, evidence-only, stop.
  *
- * Order is required, and it is #1928's order.
- * A control miss is checked first and stops under both decisions: a capability bought by
- * moving something that already worked is not a result to act on. proceed-AS-authorized
- * is checked before evidence-only, and requires both tiers.
- *
- * The surface the integration record authorizes serves a category together with the authority that
- * chose it, so the evidence half is a component of proceeding rather than an alternative to it.
- * Evidence-only is then exactly the record's §7 outcome: the observation surface holds
- * and the recognition capability did not reach its bar.
- *
- * A blocked lane changes no arithmetic.
- * It changes `coverage`, and it is named in the reasons on every run.
+ * Blocked lanes affect coverage reporting, not the check arithmetic.
  */
 export function decidePhase2(
 	definition: Phase2DecisionDefinition,

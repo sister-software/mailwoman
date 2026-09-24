@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The shell smoke: every route serves the app, `?q=` pre-fills the query, the fake runtime completes a query, and the
- *   static deployment records exist. No model, no gazetteer, no tile is fetched.
+ *   Smoke-test application routes, query prefill, fake-runtime results, and static deployment assets without loading model data.
  */
 
 import { expect, test } from "@playwright/test"
@@ -16,25 +15,16 @@ test.describe("Mailwoman Earth shell", () => {
 		await expect(page.locator("main[data-route='geocoder']")).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toHaveValue("90210")
 
-		// The search pill carries no submit button, the way the reference map apps carry none:
-		// the field submits on Enter, and the leading magnifier is a mark rather than a control.
+		// The input submits on Enter; the magnifier is decorative.
 		await page.locator("#mw-pipeline-input").press("Enter")
 
 		await expect(page.getByText("New York").first()).toBeVisible()
 	})
 
 	test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
-		// The real runtime's footer rather than the canned one's.
-		// The app mounts two, and when each built its own the commit link went into the
-		// fake path and rendered nowhere a visitor could see it.
-		// A smoke that checked the canned footer would have passed the whole time.
-		// `?runtime=fake` is absent here for that reason.
+		// Check the real runtime footer; the fake runtime can hide a missing commit link.
 		//
-		// The data origin is refused for the whole page so no model or gazetteer byte is fetched:
-		// the origin throttles on download count and the rest of this suite spends that budget on results.
-		// Refusing it also states the requirement more sharply than a successful load would.
-		// The identity strip is the page's own chrome, so it must render before,
-		// during and after a load that never finishes.
+		// Block model and gazetteer downloads; the footer must render independently of data loading.
 		await page.route("https://public.mailwoman.ai/**", (route) => route.abort())
 
 		await page.goto("/")
@@ -46,9 +36,7 @@ test.describe("Mailwoman Earth shell", () => {
 			"https://mailwoman.ai/docs"
 		)
 
-		// The commit link resolves against build.json.
-		// It only a built deployment serves.
-		// Therefore, this asserts the shape rather than a particular sha.
+		// Validate the built commit URL's format without pinning a specific hash.
 		const commit = footer.locator("a[href*='/commit/']")
 
 		await expect(commit).toBeVisible()
@@ -83,8 +71,7 @@ test.describe("Mailwoman Earth shell", () => {
 		expect(info.revision.length).toBeGreaterThanOrEqual(7)
 		expect(info.buildTime.endsWith("Z")).toBe(true)
 
-		// The footer links this one, so it has to be a whole sha and the same revision `revision` abbreviates.
-		// A link built from a different commit than the page was built from is worse than no link.
+		// The linked commit must be complete and match the abbreviated build revision.
 		expect(info.commit).toHaveLength(40)
 		expect(info.commit.startsWith(info.revision)).toBe(true)
 

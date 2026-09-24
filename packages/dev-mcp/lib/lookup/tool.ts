@@ -3,17 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mwdev_lookup`'s handler: resolve each source's artifact the way the runtime resolves it, open it read-only, ask
- *   the probe, close it.
- *
- *   Resolution is the part worth reading. Every path here comes from the function the running system uses —
- *   `resolveCandidateDBPath`, `resolveWOFDatabasePaths`, `resolveWeights` — never from a literal assembled here. A probe
- *   that reads a different `candidate.db` than the session does answers a question nobody asked, and the failure is
- *   invisible: it looks exactly like the gazetteer being wrong.
- *
- *   Handles are opened per call rather than held. The probes are B-tree and FTS reads measured in single-digit
- *   milliseconds against a warm page cache, and the artifacts are multi-gigabyte. The engine registry is where this
- *   server spends its resident memory, and it spends it on sessions.
+ *   Resolve and probe the same artifacts used by the runtime. Open databases read-only for each call and close them
+ *   afterward.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -56,8 +47,7 @@ import {
 import { syntheticIDNote } from "#place-id-provenance"
 
 /**
- * The `candidate` source's two-artifact answer: the primary artifact's rows, the compare
- * artifact's rows for the same queries, and the per-query delta between the returned sets.
+ * Primary and comparison rows, with per-query differences, for candidate lookups.
  */
 export interface CandidateCompareResult extends LookupResult {
 	rows_compare: LookupRow[]
@@ -65,36 +55,31 @@ export interface CandidateCompareResult extends LookupResult {
 }
 
 /**
- * Everything a caller can pass, beyond the source and the queries.
+ * Optional lookup settings.
  */
 export interface LookupArgs {
 	source: LookupSource
 	queries: string[]
 	locale?: string
 	/**
-	 * Sweep the same queries across several locales' own artifacts.
-	 *
-	 * FST sources only.
+	 * Probe each locale's FST artifact.
+	 * Applies only to FST sources.
 	 */
 	locales?: string[]
 	country?: string
 	limit?: number
 	config?: EngineConfig
 	/**
-	 * `candidate` only — a second candidate.db to run the same queries against, answering both row sets
-	 * plus a per-query delta (rows only one artifact holds. Shared rows whose ranking fields moved).
-	 *
-	 * The two-artifact probe every staged gazetteer diagnosis previously scripted by hand.
+	 * For candidate lookups, compare results against a second database
+	 * and report per-query row and ranking changes.
 	 */
 	compareCandidateDB?: string
 }
 
 /**
- * Run one source and close whatever it opened.
+ * Probe a source and close any artifacts opened.
  *
- * `unavailable_reason` and no rows is the answer for a missing artifact.
- * The alternative — a row per query saying "no" — is the same shape a genuine absence has,
- * and a caller reading it would conclude the gazetteer lacks fifty places when what it lacks is a file.
+ * Missing artifacts return `unavailable_reason`, not per-query misses.
  */
 export async function runLookup(
 	registry: EngineRegistryLike,
@@ -129,9 +114,7 @@ export async function runLookup(
 
 		case LookupSource.Candidate: {
 			return await withArtifact(source, await resolveCandidateDB(config, dataRoot), async (db, path) => {
-				// The score source's split channels ride along whenever the conventional
-				// importance DB exists beside the artifacts.
-				// The join every fame-contest diagnosis needs, attached rather than scripted.
+				// Join split importance scores when the companion database exists.
 				const importancePath = wofDatabaseRoot(dataRoot)("admin-global-priority-importance.db").toString()
 
 				const importanceDB = (await pathExists(importancePath))
@@ -258,28 +241,21 @@ export async function runLookup(
 }
 
 /**
- * The candidate gazetteer, resolved exactly as the session resolves it, with the one
- * thing `resolveCandidateDBPath` cannot say folded back in.
- *
- * That function answers `undefined` for three different situations: nothing was pinned and the convention
- * path is absent, `none` was pinned to force the FTS backend, and a pinned path does not exist.
- * The runtime is right not to distinguish them (all three mean "no candidate backend"),
- * but a probe that reported the third as "no path was resolved" would tell someone
- * who typo'd `--candidate-db` that the gazetteer is missing.
+ * Resolve the candidate database like the runtime, preserving a missing
+ * explicitly pinned path for diagnostics.
  */
 async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | undefined> {
 	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)
 
 	if (resolved || !config.candidate_db || config.candidate_db === "none") return resolved
 
-	// Hand back the path AS pinned so `openSealedArtifact` reports it by name.
+	// Preserve the pinned path so the open error identifies it.
 	return config.candidate_db
 }
 
 /**
- * Open one sealed artifact, hand it to `build`, and close it whatever happens.
- *
- * An unopenable path short-circuits to the unavailable envelope with no rows.
+ * Open a sealed artifact for one lookup and always close it.
+ * Unavailable artifacts return no rows.
  */
 async function withArtifact<T extends LookupResult>(
 	source: LookupSource,
@@ -302,19 +278,14 @@ async function withArtifact<T extends LookupResult>(
 }
 
 /**
- * The one sentence every unavailable source returns, so the reason a result is
- * empty can never be mistaken for the answer.
+ * Explain that an unavailable source is not evidence of a query miss.
  */
 const UNAVAILABLE_NOTE =
 	"No row is reported, because a source whose artifact is missing answers 'no' to everything — which would read as " +
 	"absence for every query rather than as an unavailable source."
 
 /**
- * The WOF extracts, opened as a set.
- *
- * Unavailable only when no extract opens.
- * A partial set is reported in the notes, because "three of six extracts" is a
- * different reading of a miss than "all six".
+ * Probe all resolvable WOF extracts and report any that could not be opened.
  */
 async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promise<LookupResult> {
 	const paths = resolveWOFDatabasePaths(args.config?.resolve_db, dataRoot)
@@ -374,12 +345,7 @@ async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promis
 }
 
 /**
- * The postcode→anchor artifact for one locale's weights package.
- *
- * The span mode comes from the package's own model card.
- * Defaulting it here instead would describe a configuration the loader never runs.
- *
- * `alnum-run` is the loader's default only when the card declares nothing.
+ * Probe a locale's postcode anchor artifact using its model-card span mode.
  */
 async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	const locale = args.locale ?? args.config?.locale ?? "en-us"
@@ -435,12 +401,7 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 }
 
 /**
- * Read the anchor artifact behind the resolver interface.
- *
- * The binary is probed by binary search, never decoded whole: `postcode-gb.bin` holds
- * 1,749,839 keys and `toAnchorLookup()` builds all of them into a Map in 2,035 ms
- * (against 24 ms to construct the reader), which is the wrong trade for a handful of queries.
- * The JSON form has no search interface, so it is parsed and wrapped.
+ * Load binary anchors through the indexed resolver; parse and wrap JSON anchors for the same interface.
  */
 async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Promise<PostcodeAnchorResolver> {
 	if (artifact.binary) {
@@ -461,14 +422,7 @@ async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): 
 }
 
 /**
- * The two FST sources, which need a warm session to learn which artifact the decoder would read.
- *
- * `gazetteer_prior: true` is forced.
- * A session resolves the FST paths only when it will actually feed the prior, and it is
- * right to: `artifacts` reports what a session read rather than what it could have.
- *
- * A lookup wants the artifact the decoder would consult, so it asks for an engine that loads one —
- * resolving the path any other way would answer about an FST no runtime configuration reads.
+ * Probe the FST artifacts loaded by a session with the gazetteer prior enabled.
  */
 async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Promise<LookupResult> {
 	const notes =
@@ -483,9 +437,7 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 	if (args.locales?.length) {
 		const byLocale: NonNullable<LookupResult["by_locale"]> = {}
 
-		// Sequential, and each locale costs a full session build: `artifacts` reports what a session read,
-		// so learning which artifact a locale's decoder consults means building that locale's decoder.
-		// The registry evicts to its cap as this walks, so a wide sweep rebuilds rather than accumulating.
+		// Build locales sequentially; the registry evicts sessions at its configured cap.
 		for (const locale of args.locales) {
 			byLocale[locale] = await probeLocaleFST(registry, args, locale)
 		}
@@ -508,10 +460,7 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 }
 
 /**
- * One locale's answer, with a missing artifact reported IN place rather than by omission.
- *
- * Five shipped overlays carry no FST at all, so a sweep that dropped those locales
- * would read as a set of locales that knew nothing about the queries.
+ * Probe one locale and report a missing artifact explicitly.
  */
 async function probeLocaleFST(
 	registry: EngineRegistryLike,

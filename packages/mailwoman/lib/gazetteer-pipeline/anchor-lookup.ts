@@ -3,60 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the postcode→anchor lookup for the de-risk pilot (#239/#240).
- *
- *   Emits a JSON `{normalized_postcode: [posterior_dict, lat, lon, source]}` for the pilot locales
- *   (DE/FR/US), loaded once at training-loader init (`data.anchor_lookup_path`) so the training
- *   loop carries no gazetteer dependency. This is the offline, deterministic precompute DeepSeek
- *   recommended.
- *
- *   - **posterior**: uniform over the countries whose postal gazetteer contains the code (the posterior
- *       the A/B measurement settled on —
- *       `docs/articles/evals/calibration/2026-06-05-postcode-posterior-ab.md`). A German PLZ that collides with
- *       a US ZIP (e.g. 10115) comes back `{"DE": 0.5, "US": 0.5}`.
- *   - **centroid**: taken from the first source that has a real centroid, in DE→FR→US order, so the
- *       collapse-relevant European rows get a European centroid on a collision. The centroid is the
- *       secondary signal (the posterior + the categorical anchor cue do the work).
- *   - **source** (#525, the provenance-first rule): names the dataset the centroid came from — `wof`
- *       (our WOF postcode databases, which may carry provenanced backfills. see the `centroid_source`
- *       table), `census-zcta-2024` (Census zcta Gazetteer fill, either already in the DB or joined
- *       here via `--zcta`), or `null` for a placeholder (membership only).
- *
- *   Sources (build-from-source, never prebuilt): postalcode-intl.db (DE/FR/ES/IT, inline centroids),
- *   postalcode-us.db (US. spr centroids are real post-backfill), postalcode-gb-codepoint.db (GB, OS
- *   Code-Point Open under OGL v3), postalcode-nl-pc6.db (NL, CBS PC6 via pdok under CC-BY 4.0).
- *
- *   zcta caveat: ZCTAs approximate delivery areas rather than ZIPs — PO-box-only/unique ZIPs have no zcta
- *   and stay placeholder. Vintage + URL: $MAILWOMAN_DATA_ROOT/census/readme.md.
- *
- *   Usage: node scripts/build-pilot-anchor-lookup.ts\
- *   --zcta $MAILWOMAN_DATA_ROOT/census/2024_Gaz_zcta_national.txt\
- *   --output $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json
- *
- *   the letter-containing hole (2026-08-05, `docs/records/evals/2026-08-05-en-gb-anchor-off.md`). The
- *   pilot set is DE/FR/US only, and every one of its 67,708 keys is five digits — zero letter-containing.
- *   The encoder's anchor input reserves one slot per country (`neural/anchor-inference.ts`'s
- *   `LOCALE_ORDER = [US, FR, DE, CA, GB, JP, ES, IT, NL]`), so slots 3–8 took no gradient across every
- *   run in the tree: a GB outward code is letter-containing by construction and could never appear as a
- *   key. Shipping `postcode-gb.bin` at inference then fed slot 4 a value the model had never seen, and
- *   cost 24 exact postcodes on the 120-row gb-golden board. `--include` is the fix — it widens the key
- *   set so the letter-containing systems get a gradient at all. Widening the lookup alone is not enough:
- *   the retrain must ride with the inference-side parity fix (`buildAnchorFeatures`'s
- *   `spanMode: "shaped"`), because the default inference scan keys on `[A-Za-z0-9]+` runs and so can
- *   never produce the space-stripped `SW1A2AA` key the train painter writes.
- *
- *   KEY normalization is the interface. `mailwoman_train/tokenizer.py::_paint_anchor_chars` looks up
- *   `raw[begin:end].replace(" ", "").upper()`. So every key here is the space-stripped, uppercase
- *   surface: GB `SW1A 2AA` → `SW1A2AA`, NL `1012 LG` → `1012LG`. A key with a space in it can never be
- *   read. The databases already store exactly that form (`#920`'s sanitized-query token shape), so the
- *   loaders below pass `name` through unchanged.
- *
- *   port note (from scripts/build-pilot-anchor-lookup.py): faithful TypeScript port. The output is a
- *   JSON file written directly to `--output` (no DB, no temp-then-move. matches the Python). The
- *   serializer reproduces Python's `json.dumps(..., ensure_ascii=False)` formatting (", " / ": "
- *   separators, integer-valued floats rendered with a trailing `.0`) so the emitted file matches
- *   the original. The WOF databases resolve through `wofDatabasePath`, which reads
- *   `$MAILWOMAN_DATA_ROOT`, instead of the Python's hardcoded literal.
+ *   Build a deterministic postcode-to-country/coordinate lookup for model anchors.
+ *   Keys are normalized postcodes; country posterior is uniform across matching datasets.
+ *   Coordinates use the first available source in requested order, with optional ZCTA fill.
+ *   The JSON format preserves the Python builder's serialization for reproducibility.
  */
 
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"

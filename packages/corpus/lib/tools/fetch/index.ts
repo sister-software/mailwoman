@@ -3,121 +3,27 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mailwoman corpus fetch <source>` family — reproducible bulk-download recovery modules for
- *   the open-data sources the corpus build pipeline consumes. Each module writes the raw download
- *   files **plus** a sibling `manifest.json` capturing the origin URL, fetch timestamp, byte count,
- *   and sha256 so downstream adapters can verify provenance.
+ * Register reproducible downloads for corpus sources. Fetchers write raw files and manifests; adapters consume those
+ * files separately. Operators download data before building a corpus and can use these commands for refreshes,
+ * recovery, or new-environment setup.
  *
- *   The corpus build pipeline itself does not call these modules. The existing convention is for
- *   operators to pre-download into an out-root and point adapters at the resulting files. These
- *   modules exist for **reproducibility** (disk-loss recovery, weekly refresh, fresh-environment
- *   bootstrap).
+ * Source and license details belong with each fetcher and adapter. OpenAddresses is license-mixed: its adapter filters
+ * out restricted rows by default. See `docs/licensing-strategy.md` for tier definitions.
  *
- *   ## Usage
+ * OpenAddresses bulk downloads require a free account. `fetchOpenAddresses` reads `OA_BATCH_TOKEN`; without it, the
+ * command prints setup instructions. Register at `https://batch.openaddresses.io/register` and provide the token via
+ * the environment.
  *
- *   ```sh
- *   # Default: writes under ./data/corpus/sources/ relative to the working directory
- *   mailwoman corpus fetch state-sources
- *   mailwoman corpus fetch hrsa
+ * To add a source, register its slug, filename, and URL; verify the URL and manifest with a scratch output directory;
+ * then add or update its corpus adapter.
  *
- *   # Or point at the standard mailwoman data root
- *   mailwoman corpus fetch state-sources --out-root /data/corpus/sources
- *   ```
+ * Usage:
  *
- *   Each adapter under `corpus/src/adapters/<adapter>/readme.md` documents the specific URL its
- *   input was pulled from. these modules mirror those URLs in a single executable place.
- *
- *   ## Coverage
- *
- *   - `ban` — French BAN (Base Adresse Nationale), all départements incl. DOM/TOM. Tier B (Licence
- *       Ouverte 2.0).
- *   - `nad` — US DOT National Address Database (~97M address points, ArcGIS FeatureServer). Tier A
- *       (US PD).
- *   - `geonames-postal` — GeoNames per-country postal exports (~80 countries). Tier B (CC-BY-4.0,
- *       attribute "GeoNames"). The only source in this family carrying `(postcode, locality, region)`
- *       with the names inline, which is why it exists: the `parent_id` join route covers exactly five
- *       countries and the nearest-centroid fallback measured under 50% agreement on four of those five.
- *       GeoNames does not publish every country — Venezuela 404s.
- *   - `hrsa` — HRSA Health Center Service Delivery Sites (federal). Tier A (US PD).
- *   - `imls-pls` — IMLS Public Libraries Survey, outlet-level (~17K library branches, FY 2023).
- *       Tier A (US PD).
- *   - `nppes` — NPPES NPI registry, full monthly dissemination (~7M provider venue+address rows).
- *       Tier A (US PD).
- *   - `openaddresses` — OpenAddresses country collections (default: Canada / `ca`). Tier B/C mixed
- *       — per-row filter.
- *   - `ourairports` — OurAirports global airport CSVs (~83K airports + the country/region/runway
- *       joins). Tier A (public domain). The venue half of the sub-venue arc (#35); it carries no
- *       interior structure, which comes from `@mailwoman/osm/sdk`'s `extractOSMSubVenues`.
- *   - `wikidata-subvenue` — the multilingual sub-venue designator vocabulary, pulled as the labels
- *       and aliases of eight Wikidata concepts (terminal, gate, concourse, campus, …) plus the
- *       airport-terminal instance labels as attested usage. Tier A (CC0). The only module in this
- *       family built on `APIClient` — see its docstring for why.
- *   - `state-sources` — NY/TX/DE/or notaries, IA contractors, WA health providers, HI lobbyists.
- *       Tier A (state PD-equivalent).
- *   - `state-hi-schools` — Hawaii DOE school directory (original xlsx. hidoe + PCS sheets). Tier A
- *       (state PD-equivalent).
- *   - `tiger-full` — US Census tiger 2024 addrfeat, all US counties. Tier A (US PD).
- *   - `juso-kr` — the Korean road-name address register (주소DB, plus the English road-name DB) from
- *       business.juso.go.kr. Asserts `address` on `premise` rows: the ministry assigns the road name and
- *       the building number. Tier B ("이용허락범위 제한 없음", attribution).
- *   - `localdata-kr` — Korea's local-government permit registry, one CSV per category, each row carrying
- *       the lot-number and road-name address of one premises plus a coordinate. Asserts `identity` for
- *       the permit it grants and `observation` for the address string a clerk typed, both on `premise`
- *       rows. Tier B (same label as `juso-kr`).
- *   - `gcis-tw` — Taiwan's company and business registers from the economic ministry's open-data
- *       platform, 148 files by region and industry. Asserts `identity` for the company number and
- *       `observation` for two address columns in different roles — 公司地址 is `registered-office`,
- *       營業地址 is `facility`. Tier B (Open Government Data License v1.0 — the prescribed attribution is
- *       a condition of the grant).
- *   - `acra-sg` — Singapore's acra corporate-entity register, 27 CSVs with the address fielded. Asserts
- *       `identity` for the entity number and `observation` for the address, on `registered-office` rows.
- *       Tier B (Singapore Open Data Licence 1.0).
- *   - `houjin-jp` — the National Tax Agency's corporate-number register, the nationwide Unicode CSV.
- *       Asserts `identity` for the corporate number and `observation` for the head-office string, on
- *       `registered-office` rows. Tier A-equivalent (free use, no attribution condition stated).
- *
- *   Each entry above names what the publisher asserts, per field, using `@mailwoman/evidence`'s
- *   `AssertedProposition`, and the role its addresses carry, using `@mailwoman/corpus/types`' `AddressRole`.
- *   A register that issues an identifier and holds an address somebody filed with it asserts both, in
- *   different fields, and one verdict over the whole source discards the identity it does assign.
- *
- *   License tiers per `docs/licensing-strategy.md` (or the lab knowledge-base mirror at
- *   `docs/docs/projects/mailwoman/licensing-strategy.md`). `openaddresses` is a **Tier-mixed**
- *   source: the downloaded collection includes CC0, CC-BY, OGL, and ODbL/CC-BY-SA rows. The per-row
- *   `LICENSE` filter in the `openaddresses` adapter is essential — Tier-C (ODbL, CC-BY-SA) rows are
- *   dropped at ingest by default to guard proprietary-weights training.
- *
- *   ### OpenAddresses authentication (as of 2026-05-18)
- *
- *   `batch.openaddresses.io` now requires a free registered account for bulk downloads (auth check
- *   prevents CDN abuse. data remains openly licensed). `fetchOpenAddresses` reads `OA_BATCH_TOKEN`
- *   from the environment:
- *
- *   ```sh
- *   # One-time: register at https://batch.openaddresses.io/register
- *   # Log in → Profile → "Create Token" → copy token
- *   export OA_BATCH_TOKEN=<your-token>
- *
- *   # Download Canada (~2 GiB compressed, ~7 GiB uncompressed)
- *   mailwoman corpus fetch openaddresses --country ca \
- *     --out-root $MAILWOMAN_DATA_ROOT/corpus/sources
- *
- *   # Or any other OA country code
- *   mailwoman corpus fetch openaddresses --country fr
- *   ```
- *
- *   Without a token the command prints setup instructions and reports the failure.
- *
- *   ## Adding a new source
- *
- *   1. Pick the right module (or create a sibling one if the source is from a meaningfully
- *      different family).
- *   2. Append to the `sources` array: `{ slug, filename, url }`.
- *   3. Confirm the destination URL via `curl -sI -L <url> | head` before committing — state
- *      open-data portals occasionally rotate Socrata view IDs.
- *   4. Run the command against a scratch `--out-root` to verify the download succeeds + the
- *      manifest is well-formed.
- *   5. Add the source's adapter (or extend an existing one) under `corpus/src/adapters/`.
+ * ```sh
+ * mailwoman corpus fetch state-sources
+ * mailwoman corpus fetch hrsa --out-root /data/corpus/sources
+ * mailwoman corpus fetch openaddresses --country ca --out-root "$MAILWOMAN_DATA_ROOT/corpus/sources"
+ * ```
  */
 
 import { fetchBan } from "#fr/tools/fetch/ban"
@@ -159,9 +65,7 @@ export * from "#us/tools/fetch/tiger-full"
 export * from "#tools/fetch/wikidata-subvenue"
 
 /**
- * The fetch-source registry: id → module entry point.
- *
- * Each entry point takes its own options interface.
+ * Map source IDs to their fetcher entry points.
  */
 export const FETCH_SOURCES = {
 	"acra-sg": fetchACRASG,

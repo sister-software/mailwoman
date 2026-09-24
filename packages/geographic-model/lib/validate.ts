@@ -3,28 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Deterministic validation of a {@link GeographicModelDocument}. Plain TypeScript: no reasoner, no
- *   query engine, no schema library, and no I/O — the same input always produces the same issue list.
+ *   Deterministically validate a {@link GeographicModelDocument} without I/O or external schema libraries. Report all
+ *   issues in traversal order and return either the complete valid document or the full issue list.
  *
- *   The validator reports every violation it finds. A record set is authored by hand and read by a
- *   compiler, so a validator that stops at the first problem hands its author one defect per run. It
- *   also never returns a partial document: either the input satisfies every rule and is returned
- *   whole, or nothing is returned and every issue is named with the path it was found at. There is no
- *   third answer in which some records were dropped quietly, because a dropped record is
- *   indistinguishable from a world that does not contain it.
- *
- *   Two passes, in this order, and both always run:
- *
- *   1. **Shape.** Field presence, field types, closed-vocabulary membership, and unknown keys. An
- *      unknown key whose name announces ranking policy — a boost, a penalty, a weight, a rank, a
- *      score — is reported under its own code rather than as an anonymous stray field, because that
- *      is the one authoring mistake this package exists to refuse.
- *   2. **Whole-table references.** Duplicate identifiers, `isA` self-reference and cycles, relation
- *      and concept resolution, relation domain and range kinds, inverse reciprocity, and derivation
- *      inputs. These are answerable only once every table has been read, which is why they are
- *      reported after the shape issues rather than interleaved with them.
- *
- *   Consumed by #1926's compiler, which validates before it emits, and by #1927's authored document.
+ *   Validate record shapes first, then whole-table references such as duplicate IDs, inheritance cycles, relation
+ *   constraints, inverses, and derivation inputs.
  */
 
 import { isPlainObject } from "@mailwoman/core/objects"
@@ -96,10 +79,7 @@ const DERIVED_FACT_FIELDS = [
 const DERIVATION_INPUT_FIELDS = ["kind", "id"] as const
 
 /**
- * ISO 3166-1 alpha-2, upper case.
- *
- * A lower-case or three-letter value is an authoring mistake that would otherwise
- * scope a claim to a country nothing else in the system names.
+ * Uppercase ISO 3166-1 alpha-2 country code.
  */
 const COUNTRY_PATTERN = /^[A-Z]{2}$/
 
@@ -211,7 +191,7 @@ function readProvenance(issues: ValidationIssue[], path: string, container: Reco
 }
 
 /**
- * Read the `label` and `description` an authored record carries.
+ * Read required label and description fields.
  */
 function readNarration(issues: ValidationIssue[], path: string, value: Record<string, unknown>): void {
 	readString(issues, path, value, "label", true)
@@ -452,34 +432,26 @@ function collectIssues(input: unknown): ValidationIssue[] {
 /**
  * Validate an authored geographic-model document.
  *
- * @returns the document whole, or every reason it is not one.
- * Issues arrive in traversal order — shape issues per record in table order,
- * then whole-table reference issues — so two runs over the same input produce the same list.
+ * @returns The full document or every validation issue in deterministic order.
  */
 export function validateGeographicModelDocument(input: unknown): ValidationResult {
 	const issues = collectIssues(input)
 
 	if (issues.length) return { ok: false, issues }
 
-	// A clean input is the document.
-	// The validator reads, it never rewrites.
-	// Keeping the assertion in this function, where `input` is still `unknown`,
-	// is what makes it a single step rather than a cast through `unknown`.
+	// Return the original document without rewriting it.
 	return { ok: true, document: input as GeographicModelDocument }
 }
 
 /**
- * Render every issue as one line, `path: message [code]`, in the order the validator produced them.
+ * Format issues as `path: message [code]`, preserving their order.
  */
 export function formatValidationIssues(issues: readonly ValidationIssue[]): string {
 	return issues.map((issue) => `${issue.path}: ${issue.message} [${issue.code}]`).join("\n")
 }
 
 /**
- * Thrown by {@link parseGeographicModelDocument}.
- *
- * Carries the whole issue list, and states the whole issue list in its message,
- * so a caller that only ever prints `error.message` still sees every violation.
+ * Validation error carrying the complete issue list in both `issues` and `message`.
  */
 export class GeographicModelValidationError extends Error {
 	readonly issues: readonly ValidationIssue[]
@@ -493,11 +465,8 @@ export class GeographicModelValidationError extends Error {
 }
 
 /**
- * Validate and return an authored document, throwing {@link GeographicModelValidationError}
- * with every violation if it does not validate.
- *
- * The throwing form is for callers with no partial-result behavior to offer —
- * a compiler, a build step, a test.
+ * Validate and return the document, or throw with all issues.
+ * Use when partial results are not meaningful.
  */
 export function parseGeographicModelDocument(input: unknown): GeographicModelDocument {
 	const result = validateGeographicModelDocument(input)

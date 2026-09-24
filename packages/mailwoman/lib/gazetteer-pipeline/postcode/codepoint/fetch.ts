@@ -262,17 +262,7 @@ export const NORTHERN_IRELAND_OPTIONS_NOTE =
 	"counts 50,032 live NI postcodes."
 
 /**
- * Build the OS Downloads API client.
- *
- * `APIClient` per `agents.md`: these are small JSON API requests, which is
- * exactly the population the rule binds.
- * Pacing is set anyway even though OS publishes no documented limit for the open Downloads API.
- *
- * Two requests per acquisition cannot approach any ceiling, and an unpaced client
- * is a trap for the next caller who loops it.
- *
- * Retry is bounded because a transient 5xx on a metadata call should not fail a
- * 14 MB acquisition that has not started yet.
+ * Create a paced API client with bounded retries for metadata requests.
  */
 export function createOSDownloadsClient(): APIClient {
 	return new APIClient({
@@ -365,22 +355,9 @@ export interface DownloadCodePointResult {
 }
 
 /**
- * Download the Code-Point Open archive into `destDir`, verifying it against OS's published md5.
+ * Stream the archive to disk and verify its MD5 against the Downloads API record.
  *
- * RAW `fetch` FOR the archive body is deliberate, and `agents.md` draws exactly this line:
- * the rule binds API requests — small bodies, repeated calls, rate-limited hosts —
- * and the two metadata GETs above honour it through {@link createOSDownloadsClient}.
- * The archive is a file transfer streamed to disk.
- *
- * Caching a 14 MB body in the response cache is pointless when the dated directory is the cache,
- * there is one request to pace, and axios buffers a non-stream response type in memory.
- * Same call as `osm/sdk/fetch.ts` and `tiger/sdk/download.ts`.
- *
- * The md5 check is not ceremony.
- * A truncated or CDN-corrupted archive still unzips far enough to yield plausible CSVs,
- * and the failure would surface as a quietly short postcode count in a 1.7 M-row database.
- *
- * The kind of defect that reads as a data change rather than a transfer error.
+ * Metadata uses `APIClient`; the archive transfer bypasses its JSON response cache.
  */
 export async function downloadCodePointOpen(options: DownloadCodePointOptions): Promise<DownloadCodePointResult> {
 	const { format = "CSV", reuseExisting = true } = options

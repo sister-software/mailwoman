@@ -3,25 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the national FR rooftop address-point extract from the BAN `adresses-<dept>.csv` dumps
- *   (adresse.data.gouv.fr), on the shared situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`)
- *   so the existing `AddressPointSqliteLookup` reads it with zero changes (#1012). BAN is a structured
- *   government register. Every row carries `numero`/`nom_voie`/`code_postal`/`nom_commune`/`lon`/`lat`,
- *   so there is no OSM-style association gap: we write the exact source coordinate for every valid row.
+ *   Build the French rooftop address-point extract from BAN département CSV files using the shared
+ *   address-point schema. Each valid row supplies its own number, street, postcode, locality, and
+ *   coordinates, which are written directly to the database.
  *
- *   The `rep` (repetition: bis/ter/…) is folded into the house-number key (`"8 bis"`), so a parsed
- *   `"8 bis Rue X"` matches. plain-number rows are keyed on the bare number, unchanged. Keying uses the
- *   shared FR normalizer (`normalizeStreetForKeyLocale(street, "fr")`) — the identical function the
- *   lookup tier applies at query time, so build-side and probe-side can't drift.
+ *   The `rep` suffix is appended to the house number (for example, `8 bis`). Street keys use the
+ *   same French normalizer as the lookup tier.
  *
- *   Build discipline (house rules): stream → positional prepared insert (batched) → indexes → analyze →
- *   atomic swap into place → seal 0444 → record md5 + provenance in `ban/attribution.json`. The output
- *   is a new, purely-additive artifact (`ban/address-points-fr.db`); it never touches the OSM extract.
+ *   The builder streams rows into a temporary database, creates indexes, analyzes, swaps the result
+ *   into place, seals it as mode 0444, and records its checksum and provenance. It writes a separate
+ *   BAN artifact and does not modify the OSM extract.
  *
- *   BAN is published under the Licence Ouverte / Etalab 2.0 (attribution, no share-alike), so the built
- *   extract ships under the same terms as the permissive core — no ODbL counsel sign-off. `source = "ban:fr"`.
+ *   BAN uses the Licence Ouverte / Etalab 2.0, which requires attribution and has no share-alike
+ *   clause. The extract uses `source = "ban:fr"`.
  *
- *   Usage:
+ *   Examples:
  *     node packages/ban/lib/scripts/build/address-point-database.ts \
  *       --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
  *     # validate on a few départements first:
@@ -78,7 +74,7 @@ async function parse(): Promise<BuildArgs> {
 	})
 
 	const country = (values.country ?? "fr").toLowerCase()
-	// Throws for an unsupported country — fail loud, never key with the wrong normalizer.
+	// Reject unsupported countries rather than selecting an incompatible normalizer.
 	streetLocaleForBANCountry(country)
 	const csvDir = resolvePath(values["csv-dir"] ?? dataRootPath("corpus", "sources", "ban"))
 
@@ -92,11 +88,10 @@ async function parse(): Promise<BuildArgs> {
 }
 
 /**
- * Enumerate the per-département BAN dumps in `csvDir`, keyed by département code.
+ * Return département dumps keyed by code.
  *
- * Excludes the `merged` / `france` aggregates (they duplicate the per-département rows),
- * and prefers an uncompressed `.csv` over a `.csv.gz` when both exist (the same dept, faster read).
- * When `depts` is set, restricts to that list (for a fast validation build).
+ * Skip aggregate files, prefer uncompressed CSVs, and optionally restrict the
+ * result to selected départements.
  */
 async function departementFiles(csvDir: string, depts: string[] | null): Promise<Map<string, string>> {
 	const byDept = new Map<string, string>()
@@ -108,7 +103,7 @@ async function departementFiles(csvDir: string, depts: string[] | null): Promise
 		if (!m) continue
 		const dept = m[1]!
 
-		// The aggregate dumps double-count the per-département rows — skip them.
+		// Aggregate files duplicate the département rows.
 		if (dept === "merged" || dept === "france") continue
 
 		if (wanted && !wanted.has(dept.toLowerCase())) continue
@@ -116,7 +111,7 @@ async function departementFiles(csvDir: string, depts: string[] | null): Promise
 		const path = `${csvDir}/${name}`
 		const existing = byDept.get(dept)
 
-		// Prefer the uncompressed .csv over a .csv.gz for the same dept.
+		// Prefer the uncompressed file when both formats exist.
 		if (!existing || (existing.endsWith(".gz") && !name.endsWith(".gz"))) {
 			byDept.set(dept, path)
 		}
@@ -172,21 +167,17 @@ async function main(): Promise<void> {
 					continue
 				}
 
-				// Fold `rep` into the house-number key: "8" + "bis" → "8 bis" (matches a parsed "8 bis Rue X").
+				// Append the repetition suffix so the key matches parsed numbers such as "8 bis".
 				const number = rec.rep ? `${numTrim} ${rec.rep}` : numTrim
 
-				// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number,
-				// unit, postcode, locality_norm, street_raw, lat, lon, source, release.
+				// Values follow ADDRESS_POINT_COLUMNS order.
 				insert.run(
 					streetNorm,
 					canonicalizeRouteKey(streetNorm),
 					number,
 					null,
 					rec.postcode,
-					// Arrondissement communes fold to the base city ("paris 13e arrondissement" → "paris").
-					// The same both-sides discipline the #1042 street-centroid key uses,
-					// so a query's "Paris" hits directly (fr-chevaleret-bare).
-					// No-op for every other commune.
+					// Normalize arrondissement names to their base city; other commune names are unchanged.
 					rec.city ? stripArrondissement(normalizeLocalityForKey(rec.city)) : null,
 					rec.street,
 					rec.lat,

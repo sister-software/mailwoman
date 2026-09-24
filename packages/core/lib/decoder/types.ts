@@ -3,69 +3,40 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Output-shape types for the neural classifier decoder.
- *
- *   The decoder turns a flat stream of BIO-labeled tokens (the raw output of the sequence model) into
- *   an `AddressTree` — a containment-nested representation that downstream code projects into JSON
- *   (libpostal-compat), tuple pairs (order-preserving), or XML (hierarchy + attributes).
- *
- *   Why three shapes:
- *
- *   - JSON is the libpostal-compat surface. downstream users with existing pipelines.
- *   - Tuples preserve repetition + source order — fixes the lossy cases JSON can't handle.
- *   - XML preserves containment hierarchy and per-node attributes (conf today, src in Phase 4 when the
- *       Resolver lands). XML chosen over S-expression for LLM-tooling alignment and off-the-shelf
- *       parser availability.
- *
- *   See `containment.ts` for the parent-of mapping that drives nesting.
- *
- *   Phase 4.1 added optional `source` / `sourceID` on `AddressNode` so the XML serializer can emit
- *   provenance via `src="<source>:<sourceID>"`. The neural pipeline stamps these via
- *   `BuildTreeOpts`; the proposal-derived path threads them through from `ClassificationProposal`.
- *   JSON / tuple projections deliberately do not surface provenance — libpostal compat is
- *   essential.
+ *   Types for decoded address trees and their token-level input. The tree preserves component
+ *   containment and supports JSON, tuple, and XML projections.
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 
 /**
- * A single token emitted by the model, paired with its predicted label and confidence.
- *
- * `start`/`end` are character offsets into the original raw input.
- * The tokenizer is responsible for producing these (SentencePiece's `encode` returns offsets);
- * they are not recomputed by the decoder.
+ * Tokenizer output with predicted label, confidence, and offsets into the original input.
  */
 export interface DecoderToken {
 	/**
-	 * The token piece as the tokenizer emitted it (with any leading-space sentinel preserved).
+	 * Token piece as emitted, including any leading-space sentinel.
 	 */
 	piece: string
 	/**
-	 * Inclusive start char offset in the original raw text.
+	 * Inclusive character offset in the original input.
 	 */
 	start: number
 	/**
-	 * Exclusive end char offset in the original raw text.
+	 * Exclusive character offset in the original input.
 	 */
 	end: number
 	/**
-	 * The argmax BIO label for this token.
+	 * Predicted BIO label.
 	 */
 	label: BIOLabel
 	/**
-	 * Softmax confidence for the chosen label, in [0, 1].
+	 * Softmax confidence for the label, in `[0, 1]`.
 	 */
 	confidence: number
 }
 
 /**
- * One node of the address tree — a component span plus any nested child components.
- *
- * `value` is the raw text covered by this span, taken from the original input by `[start, end)`.
- * `confidence` is aggregated across the span's tokens (currently mean. See `build-tree.ts`).
- *
- * `children` are tagged subcomponents whose spans fall within this node's span
- * and whose tag's containment rule names this node's tag as a permitted parent.
+ * Address component span with any contained child components.
  */
 export interface AddressNode {
 	tag: ComponentTag
@@ -75,112 +46,61 @@ export interface AddressNode {
 	confidence: number
 	children: AddressNode[]
 	/**
-	 * Broad category of the assertion's origin.
-	 *
-	 * `"rule"` and `"neural"` come from classifier proposals; `"resolver"` is
-	 * set by Phase 4.3's resolver when it overwrites the classifier attribution
-	 * (the displaced classifier source lands in `metadata.classifier_source`).
+	 * Origin of the assertion, such as `rule`, `neural`, or `resolver`.
 	 */
 	source?: string
 	/**
-	 * Specific identifier within `source`: a rule classifier id like `"whos_on_first"`,
-	 * a neural model card version like `"neural-v0.3.1-en-us"`, or a resolver-supplied
-	 * place id like `"wof-admin:101751119"`.
+	 * Identifier within `source`, such as a rule ID, model version, or place ID.
 	 */
 	sourceID?: string
 	/**
-	 * Resolver-supplied centroid latitude (Phase 4.3).
-	 *
-	 * Optional — only set when a resolver wins.
+	 * Resolver-selected centroid latitude.
 	 */
 	lat?: number
 	/**
-	 * Resolver-supplied centroid longitude (Phase 4.3).
-	 *
-	 * Optional — only set when a resolver wins.
+	 * Resolver-selected centroid longitude.
 	 */
 	lon?: number
 	/**
-	 * Resolver-supplied normalized place URI (Phase 4.3) — `"wof:101751119"` for a WOF place.
-	 *
-	 * Distinct from `sourceID` (which includes the resolver vendor) so consumers that
-	 * want the canonical place id without the vendor prefix have one.
+	 * Normalized place URI, distinct from the resolver-specific `sourceID`.
 	 */
 	placeID?: string
 	/**
-	 * Opaque per-node metadata bag.
-	 *
-	 * Phase 4.3 uses keys `classifier_source` and `classifier_source_id` to preserve
-	 * the displaced classifier attribution when a resolver wins.
-	 * Never consulted by the decoder or serializers — debugging + downstream telemetry only.
+	 * Optional metadata for diagnostics and downstream telemetry.
 	 */
 	metadata?: Record<string, unknown>
 	/**
-	 * Top-k alternative resolutions for this node, ranked by score (highest first).
+	 * Runner-up places ordered by score.
 	 *
-	 * The winning candidate is reflected in `placeID` / `lat` / `lon` / `sourceID`.
-	 * Surfaced for failure mode #8 (Springfield-class ambiguity) — callers needing
-	 * disambiguation see the runners-up.
-	 *
-	 * Empty / absent when the resolver returned a single candidate.
-	 *
-	 * Typed as `unknown[]` here to avoid a circular import on `ResolvedPlace`; resolver-emitting code
-	 * sets the concrete shape, consumers may cast to `ResolvedPlace[]` from `@mailwoman/core/resolver`.
+	 * The selected place is stored in `placeID`, `lat`, and `lon`.
+	 * Typed as `unknown[]` to avoid importing the resolver's `ResolvedPlace` type.
 	 */
 	alternatives?: ReadonlyArray<unknown>
 	/**
-	 * Additional roles this single span plays, beyond `tag` (#413).
+	 * Additional tags assigned to the same span, each with its own resolved place.
 	 *
-	 * A place can hold multiple admin tiers under one name.
-	 * A city-state (Berlin is region and locality) or a capital-seat province
-	 * (Milano province ~ Milano comune).
-	 *
-	 * Rather than synthesize a second node with a borrowed span, the resolver records the extra role(s)
-	 * here, so one node = one span = many roles (the model Google's `address_components[].types` uses).
-	 * `tag`/`placeID`/`lat`/`lon` remain the primary role.
-	 *
-	 * Each interpretation is a distinct secondary role with its own resolved place.
-	 * Serializers surface every role (a city-state emits both `region` and `locality`).
-	 *
-	 * Distinct from `alternatives`.
-	 * Those are same-role runner-up places (Springfield IL vs MA); interpretations
-	 * are different tags, same span.
-	 * Empty / absent for the common single-role node.
-	 *
-	 * Both completion (#415) and a future concordance decode write into this one slot.
+	 * Unlike `alternatives`, these entries represent different roles rather than runner-up places.
 	 */
 	interpretations?: ReadonlyArray<Interpretation>
 	/**
-	 * The ISO 15924 script this span is written in.
-	 *
-	 * The one that writes most of its script-containing codepoints.
-	 *
-	 * The span is where the question is answerable.
-	 * A whole input folds to one answer and loses which part carried which writing system:
-	 * `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is majority Latin, so a reader of
-	 * the input's script cannot tell that the venue is Han.
-	 *
-	 * `Zyyy` is the abstention.
-	 * A span holding only a house number borrows no neighbour's script.
-	 *
-	 * Absent on a tree built without a query shape to read it from, so a consumer
-	 * treats absence as unknown rather than as `Zyyy`.
+	 * ISO 15924 script used by this span.
+	 * `Zyyy` indicates no specific script; absence means unknown.
 	 */
 	script?: string
 }
 
 /**
- * One additional role a span plays (#413) — see {@link AddressNode.interpretations}.
+ * Secondary role assigned to an address span.
  */
 export interface Interpretation {
 	tag: ComponentTag
 	/**
-	 * Resolver-supplied normalized place URI for this role (e.g. `wof:101909779`).
+	 * Normalized place URI for this role.
 	 */
 	placeID?: string
 	sourceID?: string
 	/**
-	 * Centroid for this role's place (a capital-seat comune differs from its province).
+	 * Centroid for this role's place.
 	 */
 	lat?: number
 	lon?: number
@@ -189,55 +109,28 @@ export interface Interpretation {
 }
 
 /**
- * The full decoded tree for one parsed address.
- *
- * `roots` is the list of top-level components in source order.
- * Components that don't have a containing parent in the labeled output become roots
- * themselves (e.g. A bare "house_number" with no labeled street parent).
+ * Decoded address with top-level components in source order.
  */
 export interface AddressTree {
 	/**
-	 * The original raw input text — preserved for round-trip and XML root @raw attribute.
+	 * Original input, preserved for round-tripping and XML output.
 	 */
 	raw: string
 	roots: AddressNode[]
 	/**
-	 * The addressing system this tree was decoded under, which selects the containment
-	 * hierarchy (`containmentFor(system)` in `./containment.ts`).
-	 *
-	 * Absent means the default Western hierarchy (`house_number → street → locality → …`).
-	 *
-	 * This is forward-compat insurance rather than yet a behavioral switch: every system currently
-	 * resolves to the same map, so an absent or present `system` produces identical trees today.
-	 * It exists so that when a distinct system lands (e.g. Japanese block addressing,
-	 * where `building_number` nests under `sub_block`/`block` with no `street` parent), consumers
-	 * and the tree builder already carry the discriminator — no `AddressTree` shape change later.
-	 *
-	 * A locale pre-classifier (Phase 6+) is the intended source of this value.
+	 * Addressing system used to select the containment hierarchy.
+	 * Defaults to the Western hierarchy.
 	 */
 	system?: AddressSystem
 	/**
-	 * The parse-time locale-head verdict when it was confident (softmax >= the action threshold):
-	 * the model's own read of which country's addressing this text is shaped like.
-	 *
-	 * Absent = under threshold or the head never ran — unknown, never "domestic".
-	 * Evidence about the text rather than a resolved country: the head is a 9-way classifier,
-	 * so a Chinese address may read GB — right about "not the locale's country", wrong about which.
-	 *
-	 * The scope check this exists for (#1684) therefore only ever drops an inferred scope on a mismatch.
-	 * It never re-points one.
+	 * Confident country prediction from the parse-time locale classifier.
+	 * Absence means unknown.
 	 */
 	localeCountry?: { country: string; confidence: number }
 }
 
 /**
- * The addressing system a tree was decoded under — selects the containment hierarchy.
- *
- * Western covers US/EU/most-Latin-script street addressing (`house_number → street → locality`).
- * `japanese` is declared for forward-compat
- * (block addressing: `building_number → sub_block → block → district`, no street);
- * it currently shares the Western map until Phase 6 gives it a distinct one.
- *
- * Open string union so a new system can be added without a breaking enum change.
+ * Addressing hierarchy selected for a decoded tree.
+ * `japanese` currently uses the Western map.
  */
 export type AddressSystem = "western" | "japanese" | (string & {})

@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The libpostal-compatible Hono app: cors + error safety net + routes + the emitted OpenAPI
- *   document. Engine-agnostic — the CLI wires the real parser. tests inject fixtures.
+ *   Engine-agnostic libpostal-compatible Hono app with routes, CORS, error handling, and OpenAPI docs.
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -17,11 +16,7 @@ import type { LibpostalEngine } from "#engine"
 import { registerLibpostalRoutes } from "#routes"
 
 /**
- * 100 KiB — express.json's default cap, the closest thing to a legacy precedent for this endpoint.
- *
- * There is no legacy 413 interface to match.
- * The `{ error: "request body too large" }` envelope below is a recorded free choice,
- * shaped like the rest of this API's error responses.
+ * Request-body limit, matching the common 100 KiB JSON parser default.
  */
 const MAX_BODY_BYTES = 102_400
 
@@ -30,31 +25,19 @@ const MAX_BODY_BYTES = 102_400
  */
 export interface LibpostalAppOptions {
 	/**
-	 * Emit permissive cors headers (`Access-Control-Allow-Origin: *`) on every response
-	 * and answer preflight `options` with `204`.
-	 *
-	 * Default `true` — without it, a cross-origin XHR (including the `post /parse` preflight)
-	 * is blocked outright, and browser clients need this to work at all (#1017).
-	 * Set `false` for deployments where a reverse proxy already owns the cors headers.
+	 * Enable permissive CORS by default; disable when a reverse proxy supplies these headers.
 	 */
 	cors?: boolean
 
 	/**
-	 * The engine stamp behind the `Server` + `Link: rel="license"` headers on every response.
-	 *
-	 * Headers only: `/parse` answers a bare array by protocol, so there is no body field to carry it.
-	 * Absent when an embedding application builds the app without the `mailwoman` package.
-	 * The `libpostal` bin always passes one.
+	 * Engine stamp for response headers.
+	 * Optional for embedding applications; the CLI provides it.
 	 */
 	engine?: EngineStamp
 }
 
 /**
- * The document info stamped into the emitted OpenAPI document.
- *
- * Exported (not inlined) so the CLI's `openapi` subcommand can call `emitOpenAPIDocuments`
- * with the same info the mounted `/openapi.json` route (below, via {@link attachOpenAPIDocs})
- * uses — one source of truth, no risk of the two drifting.
+ * Shared metadata for the mounted OpenAPI document and CLI-generated documents.
  */
 export const LIBPOSTAL_DOC_INFO: OpenAPIDocInfo = {
 	...(await readServedDocumentInfo(import.meta.url, "@mailwoman/libpostal")),
@@ -78,7 +61,7 @@ export const LIBPOSTAL_DOC_INFO: OpenAPIDocInfo = {
 }
 
 /**
- * Build the libpostal-compatible app around an injected {@link LibpostalEngine}.
+ * Create the app around an injected {@link LibpostalEngine}.
  */
 export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
@@ -91,11 +74,10 @@ export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAp
 		app.use(engineHeaders(options.engine))
 	}
 
-	// Safety net: an engine fault returns the clean legacy JSON error, never a crash (wire interface).
+	// Return a stable JSON error when the engine throws.
 	app.onError((_error, c) => c.json({ error: "internal error" }, 500))
 
-	// Ahead of the canonicalizers (which buffer the full body into memory) so an oversized
-	// post is rejected before that buffering happens rather than after.
+	// Reject oversized bodies before the route buffers them.
 	const guardBodySize = bodyLimit({
 		maxSize: MAX_BODY_BYTES,
 		onError: (c) => c.json({ error: "request body too large" }, 413),

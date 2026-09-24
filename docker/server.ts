@@ -3,32 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Container entrypoint for the `ghcr.io/sister-software/mailwoman` image — a batteries-included
- *   native `/v1` http API (parse, geocode, batch, format, health, metrics) over the published
- *   `@mailwoman/*` npm packages baked into the image. This is deliberately not the `mailwoman serve`
- *   CLI: that command's `createServeEngine` exits(1) when no gazetteer is on disk (a supervisor-must-
- *   see-nonzero policy that suits a hand-run server), which would defeat the container's first-run
- *   story. Here the caller (this file) chooses the other branch the engine builder documents — "boot
- *   degraded (parse+health only)" — so `docker run` with no data volume still answers `/v1/parse`.
+ *   Container entrypoint for the `ghcr.io/sister-software/mailwoman` image. It serves the native
+ *   `/v1` API from packages bundled in the image. Unlike `mailwoman serve`, it starts without a
+ *   gazetteer and exposes parsing and health checks until data is available.
  *
- *   The wiring mirrors `mailwoman/api-engine.ts` (`createServeEngine`) using only that package's own
- *   exported building blocks — `mailwoman/geocode-core` (`geocodeAddress`, `RegionDatabaseProvider`) and
- *   `mailwoman/resolver-backend` (`createResolverBackend`, `resolveCandidateDBPath`, `wofExtractPaths`,
- *   `dataRootPath`) — so the geocode path does not drift from the real server. Model weights ship
- *   IN the image via `@mailwoman/neural-weights-en-us`; the gazetteer / resolver DBs are volume-mounted
- *   read-only at `$MAILWOMAN_DATA_ROOT` (the image sets it to `/data`).
+ *   The engine uses the same exported geocoding and resolver building blocks as the CLI. English
+ *   model weights are bundled; gazetteer databases are mounted read-only at `$MAILWOMAN_DATA_ROOT`.
  *
- *   Boot policy:
- *     - `parse` + `health` are always wired (weights-only, no gazetteer needed).
- *     - `geocode` + `batch` are wired only when a gazetteer is resolvable (a candidate.db under
- *       `$MAILWOMAN_DATA_ROOT/db/wof`, an explicit `$MAILWOMAN_CANDIDATE_DB`, or FTS admin extracts via
- *       `$MAILWOMAN_WOF_DB` / the conventional `wof/` extract paths). Absent → `@mailwoman/api` answers
- *       `503` on `/v1/geocode` + `/v1/batch` (a clean degrade rather than a crash).
- *     - When the weights themselves are unresolvable, `parse` is absent and `/v1/parse` answers `501`.
+ *   Parsing and health are available when weights load. Geocoding and batch processing also require
+ *   a resolvable gazetteer; otherwise their routes return `503`. Missing weights disable parsing with
+ *   `501`.
  *
- *   The container always listens on port 3000 on 0.0.0.0. remap with `docker run -p <host>:3000`. The
- *   drop-in servers (`@mailwoman/nominatim`, `@mailwoman/photon`, `@mailwoman/libpostal`) are also in
- *   the image and can be run as alternative commands — see `docker/readme.md`.
+ *   The container listens on `0.0.0.0:3000`; publish another host port with `docker run -p`.
+ *   Nominatim, Photon, and libpostal drop-in servers are also available in the image; see
+ *   `docker/readme.md`.
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
@@ -49,11 +37,10 @@ const HOST = "0.0.0.0"
 const DATA_ROOT = dataRootPath()
 
 /**
- * The WOF extract set to attach: {@link resolveWOFDatabasePaths} selects it
- * (the `$MAILWOMAN_WOF_DB` comma-separated override, else the conventional per-extract `wof/` paths).
+ * Resolve WOF extract paths.
  *
- * An explicit list is the operator's statement and passes through unfiltered.
- * The conventional set is probed, so a deployment missing a extract degrades to what is present.
+ * An explicit `$MAILWOMAN_WOF_DB` list is used as supplied; conventional paths
+ * are filtered to files that exist.
  */
 function wofPaths(): Promise<string[]> {
 	const paths = resolveWOFDatabasePaths()
@@ -64,9 +51,7 @@ function wofPaths(): Promise<string[]> {
 }
 
 /**
- * Build the wired engine.
- *
- * `parse` + `health` always; `geocode` + `batch` only when a gazetteer resolves.
+ * Build the engine, enabling geocoding only when weights and a gazetteer are available.
  */
 async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() {
 	const engine: MailwomanAPIEngine<T> = {
@@ -77,9 +62,7 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 		}),
 	}
 
-	// Parse needs only the model weights (baked in via @mailwoman/neural-weights-en-us).
-	// Load them in their own try so a later gazetteer failure can never disable
-	// /v1/parse — the two are independent.
+	// Load weights independently so gazetteer failures do not disable parsing.
 	const classifier: NeuralAddressClassifier | null = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 		.then((c) => {
 			engine.parse = (address, opts) =>
@@ -95,15 +78,13 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 			return c
 		})
 		.catch((error) => {
-			// Weights unresolvable — leave parse undefined; /v1/parse answers 501 with its existing guard.
+			// Leave parsing unavailable; the API returns 501 for this route.
 			console.error(`[mailwoman] neural weights not found — /v1/parse disabled (501): ${error}`)
 
 			return null
 		})
 
-	// Geocode/batch need both the weights (for the parse step) and a gazetteer.
-	// A missing/unopenable gazetteer leaves these methods undefined so @mailwoman/api answers
-	// 503 (the clean degrade), and, in its own try, never takes parse down with it.
+	// Geocoding and batch processing require both the classifier and a gazetteer.
 	if (classifier) {
 		const candidateDB = await resolveCandidateDBPath()
 		const paths = await wofPaths()
@@ -114,7 +95,7 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 				const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 				const resolver = createWOFResolver(backend)
 				const extracts = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
-				// Candidate backend → country-agnostic (population-first, demo parity); FTS backend keeps US.
+				// Candidate lookup is country-agnostic; the FTS backend defaults to US.
 				const defaultCountry = candidateDB ? undefined : "US"
 
 				const oneGeocode: GeocodeCallback<T> = (address: string) =>
@@ -141,8 +122,7 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 
 				console.error(`[mailwoman] gazetteer found — /v1/geocode + /v1/batch enabled (data root: ${DATA_ROOT})`)
 			} catch (error) {
-				// Gazetteer present but unopenable (e.g. A WAL-mode DB on a read-only mount).
-				// Degrade to parse-only rather than crash; /v1/geocode + /v1/batch answer 503.
+				// Keep parsing available if the gazetteer cannot be opened.
 				console.error(
 					`[mailwoman] gazetteer at ${DATA_ROOT} could not be opened — /v1/geocode + /v1/batch answer 503: ${error}`
 				)

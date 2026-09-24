@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which repositories a sync will clone, decided before any network or disk work happens.
- *
- *   Split out of the command so the decisions are testable without Ink: every refusal here is one a caller should meet
- *   as a message rather than as a directory full of unwanted clones.
+ *   Select WOF repositories before network or filesystem changes. Pure helpers keep selection and refusals testable.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -15,40 +12,29 @@ import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 /**
- * The GitHub organization holding the country data repositories.
+ * GitHub owner of the country data repositories.
  */
 export const WOF_REPO_OWNER = WOF_DATA_OWNER
 
 /**
- * A repository as `gh repo list` reports it.
+ * Repository details returned by `gh repo list`.
  */
 export interface DiscoveredRepo {
 	name: string
 	url: string
 	/**
-	 * GitHub's reported size.
-	 *
-	 * It under-states the checkout by roughly 7×: GitHub reports the packed size,
-	 * and these repos unpack to millions of small GeoJSON files.
-	 * Measured on a `--countries tr` sync: three repositories reported as 83.4 MB occupied 633 MB once cloned.
+	 * GitHub's packed size in KB; checkout size may be much larger.
 	 */
 	diskUsageKB?: number
 }
 
 /**
- * A repository name, as opposed to a path that happens to contain one.
- *
- * `whosonfirst-data` alone is excluded: that is the owner directory this command
- * writes into rather than a repository.
+ * Match WOF repository names, excluding the owner directory itself.
  */
 const REPO_NAME_PATTERN = /^whosonfirst(?:-data)?-[a-z0-9-]+$/
 
 /**
- * Refuse a destination that is really a repository name.
- *
- * The destination is a directory, so a repository name in that slot is accepted by
- * every check the filesystem can make: the directory is created, no `--repos` filter
- * is applied, and the whole organization syncs into it.
+ * Reject a repository name used as the destination directory.
  */
 export function assertDestinationNotARepoName(destination: string): void {
 	const basename = destination.trim().replace(/\/+$/, "").split("/").pop() ?? ""
@@ -63,10 +49,7 @@ export function assertDestinationNotARepoName(destination: string): void {
 }
 
 /**
- * Expand ISO-2 country codes to the repositories a country build reads.
- *
- * Venue repositories are deliberately absent: no country in the data root has one cloned,
- * and including them would roughly double the transfer for data no build on the parse path consumes.
+ * Map ISO-2 codes to admin and postalcode repositories.
  */
 export function countryRepoNames(raw: string | undefined): string[] {
 	return extractDelimited(raw).flatMap((code) => [wofRepoName("admin", code), wofRepoName("postalcode", code)])
@@ -93,12 +76,7 @@ export interface RepoSelection {
 }
 
 /**
- * The closest discovered name, by shared prefix.
- *
- * A prefix comparison is enough because these names are structured — `whosonfirst-data-<theme>-<cc>` —
- * so a typo diverges at a known position and the correct name is the one that agrees for longest.
- * An edit-distance comparator exists in `@mailwoman/match`, but this is the only
- * caller in the package and would be its only reason to depend on it.
+ * Find the discovered name with the longest shared prefix.
  */
 function nearestName(candidate: string, discovered: readonly DiscoveredRepo[]): string | null {
 	let best: string | null = null
@@ -117,7 +95,7 @@ function nearestName(candidate: string, discovered: readonly DiscoveredRepo[]): 
 		}
 	}
 
-	// Every repository in the org shares `whosonfirst-`, so a match no longer than that carries no information.
+	// Ignore the common prefix shared by every repository.
 	return bestShared > "whosonfirst-data-".length ? best : null
 }
 
@@ -126,23 +104,18 @@ function totalKB(entries: readonly DiscoveredRepo[]): number {
 }
 
 /**
- * Decide which discovered repositories to sync, or refuse with the reason.
+ * Select discovered repositories or throw a descriptive error.
  */
 export function selectRepos(discovered: readonly DiscoveredRepo[], options: SelectReposOptions): RepoSelection {
 	const byName = new Map(discovered.map((entry) => [entry.name, entry]))
 	const wanted = new Set<string>()
 
-	// An explicitly named repository must exist.
-	// Before this check an unmatched name filtered the list to nothing and the command reported
-	// a successful sync of the placetypes repo alone, so a typo read as a completed job.
+	// Reject unknown names instead of silently syncing an empty selection.
 	for (const name of extractDelimited(options.repos)) {
 		if (!byName.has(name)) {
 			const suggestion = nearestName(name, discovered)
 
-			// The near miss is a string comparison and cannot recover intent:
-			// `whosonfirst-data-admin-turkey` is nearer to `-tu` than to `-tr` by any metric.
-			// So the country hint is unconditional.
-			// A caller who wrote a country name in a repository slot is the case this refusal exists for.
+			// A country-name hint is more reliable than a near-spelling suggestion.
 			throw new CommandError(
 				`No repository named \`${name}\` in ${WOF_REPO_OWNER}.` +
 					(suggestion ? ` Did you mean \`${suggestion}\`?` : "") +
@@ -153,10 +126,7 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		wanted.add(name)
 	}
 
-	// A country expands to the repositories it might have.
-	// Only a country with none at all is an error.
-	// Most countries carry an admin repository and no postalcode one,
-	// so requiring both would refuse the common case.
+	// Include available admin and postalcode repositories; either may be absent.
 	for (const code of extractDelimited(options.countries)) {
 		const candidates = countryRepoNames(code).filter((name) => byName.has(name))
 
@@ -184,7 +154,7 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		return { selected: [...discovered], totalDiskUsageKB: totalKB(discovered) }
 	}
 
-	// Discovered order, so a plan reads the same way twice.
+	// Preserve GitHub's discovered order for stable plans.
 	const selected = discovered.filter((entry) => wanted.has(entry.name))
 
 	return { selected, totalDiskUsageKB: totalKB(selected) }

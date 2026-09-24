@@ -25,22 +25,18 @@ import {
 export interface PlanetaryStyleOptions {
 	body: PlanetaryStyleBody
 	/**
-	 * The TileJSON document of the body's nomenclature tileset.
+	 * TileJSON URL for the body's nomenclature tiles.
 	 */
 	nomenclatureTileJSONURL: string
 	/**
-	 * The TileJSON document of the body's hillshade tileset.
-	 *
-	 * Without one the style draws labels over bare space.
+	 * Optional hillshade TileJSON URL.
+	 * Without it, the style omits terrain shading.
 	 */
 	hillshadeTileJSONURL?: string
 }
 
 /**
- * A body's whole style: space, the hillshade when a tileset exists,
- * the nomenclature labels, and the selection ring.
- *
- * No Earth layer, no Earth DEM and no sprite reach the result, so a viewer loads nothing Earth-shaped.
+ * Create a style for a planetary body with space, optional hillshade, labels, and selection layers.
  */
 export function createPlanetaryStyle(options: PlanetaryStyleOptions): StyleSpecification {
 	const palette = PALETTES[options.body]
@@ -68,8 +64,6 @@ export function createPlanetaryStyle(options: PlanetaryStyleOptions): StyleSpeci
 		sky: { "sky-color": palette.space, "horizon-color": palette.space },
 	}).toJSON()
 
-	// MapLibre 6 reads the projection from the style.
-	// Passed as a map option instead it is ignored and the body renders flat,
-	// which is a mercator sheet of terrain rather than a world.
+	// MapLibre 6 reads globe projection from the style, not the map options.
 	return { ...style, projection: { type: "globe" } }
 }
